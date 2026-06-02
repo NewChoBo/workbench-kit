@@ -15,7 +15,14 @@ export type {
 export { SplitView } from './SplitView';
 export type { SplitViewProps } from './SplitView';
 export { StatusBar, StatusBarItem, StatusBarSection } from './StatusBar';
-export type { StatusBarItemProps, StatusBarProps, StatusBarSectionProps } from './StatusBar';
+export type {
+  StatusBarItemModel,
+  StatusBarItemProps,
+  StatusBarProps,
+  StatusBarSectionAlign,
+  StatusBarSectionModel,
+  StatusBarSectionProps,
+} from './StatusBar';
 export { WorkbenchSettingsModal } from './settings';
 export type {
   WorkbenchSettingsCategory,
