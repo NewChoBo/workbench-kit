@@ -1,5 +1,6 @@
 import { useMemo, useState, type MouseEvent } from 'react';
 import {
+  canExecuteCommand,
   commandMenuSeparator,
   createCommandRegistry,
   executeCommand,
@@ -23,23 +24,42 @@ interface FileDraft {
   savedContent: string;
 }
 
-interface EditorTabCommandContext {
+interface EditorCommandContext {
   canCloseAll: boolean;
   canCloseOthers: boolean;
   canClosePath: boolean;
   canCopyPath: boolean;
   canDeletePath: boolean;
+  canDiscardFile: boolean;
+  canSaveFile: boolean;
   closeAll: () => void;
   closeOthers: () => void;
   closePath: () => void;
   copyPath: () => void;
   deletePath: () => void;
+  discardFile: () => void;
   filePath?: string;
   hasMultipleOpenFiles: boolean;
   hasOpenFiles: boolean;
+  hasUnsavedChanges: boolean;
+  saveFile: () => void;
 }
 
-const editorTabCommandRegistry = createCommandRegistry<EditorTabCommandContext>([
+const editorCommandRegistry = createCommandRegistry<EditorCommandContext>([
+  {
+    id: 'editor.save',
+    label: 'Save',
+    icon: 'codicon-save',
+    isEnabled: ({ canSaveFile, hasUnsavedChanges }) => canSaveFile && hasUnsavedChanges,
+    run: ({ saveFile }) => saveFile(),
+  },
+  {
+    id: 'editor.discardChanges',
+    label: 'Discard changes',
+    icon: 'codicon-discard',
+    isEnabled: ({ canDiscardFile, hasUnsavedChanges }) => canDiscardFile && hasUnsavedChanges,
+    run: ({ discardFile }) => discardFile(),
+  },
   {
     id: 'editor.copyPath',
     label: 'Copy path',
@@ -79,11 +99,11 @@ const editorTabCommandRegistry = createCommandRegistry<EditorTabCommandContext>(
   },
 ]);
 
-const editorTabListMenuEntries: CommandMenuEntry<EditorTabCommandContext>[] = [
+const editorTabListMenuEntries: CommandMenuEntry<EditorCommandContext>[] = [
   { commandId: 'editor.closeAll' },
 ];
 
-const editorTabMenuEntries: CommandMenuEntry<EditorTabCommandContext>[] = [
+const editorTabMenuEntries: CommandMenuEntry<EditorCommandContext>[] = [
   { commandId: 'editor.copyPath' },
   commandMenuSeparator('tab-file-separator'),
   { commandId: 'editor.close' },
@@ -156,7 +176,6 @@ export function WorkspaceEditorPanel({
     ? resolveDraft(selectedFile, draftsByPath[selectedFile.path])
     : null;
   const selectedContent = selectedDraft?.content ?? '';
-  const isSelectedDirty = Boolean(selectedFile && selectedContent !== selectedFile.content);
 
   const updateDraft = (path: string, content: string) => {
     setDraftsByPath((currentDrafts) => {
@@ -203,43 +222,56 @@ export function WorkspaceEditorPanel({
     setTabContextMenu({ path, x: event.clientX, y: event.clientY });
   };
 
-  const createEditorTabCommandContext = (
-    filePath: string | undefined,
-  ): EditorTabCommandContext => ({
-    canCloseAll: Boolean(onCloseAll),
-    canCloseOthers: Boolean(onCloseOthers),
-    canClosePath: Boolean(onClosePath),
-    canCopyPath: Boolean(onCopyPath),
-    canDeletePath: Boolean(onDeletePath),
-    closeAll: () => onCloseAll?.(),
-    closeOthers: () => {
-      if (filePath) onCloseOthers?.(filePath);
-    },
-    closePath: () => {
-      if (filePath) onClosePath?.(filePath);
-    },
-    copyPath: () => {
-      if (filePath) onCopyPath?.(filePath);
-    },
-    deletePath: () => {
-      if (filePath) setDeletePath(filePath);
-    },
-    filePath,
-    hasMultipleOpenFiles: openFiles.length > 1,
-    hasOpenFiles: openFiles.length > 0,
-  });
+  const createEditorCommandContext = (file: WorkspaceFile | undefined): EditorCommandContext => {
+    const filePath = file?.path;
+    const draft = file ? resolveDraft(file, draftsByPath[file.path]) : undefined;
+    const content = draft?.content ?? '';
+
+    return {
+      canCloseAll: Boolean(onCloseAll),
+      canCloseOthers: Boolean(onCloseOthers),
+      canClosePath: Boolean(onClosePath),
+      canCopyPath: Boolean(onCopyPath),
+      canDeletePath: Boolean(onDeletePath),
+      canDiscardFile: Boolean(filePath),
+      canSaveFile: Boolean(filePath),
+      closeAll: () => onCloseAll?.(),
+      closeOthers: () => {
+        if (filePath) onCloseOthers?.(filePath);
+      },
+      closePath: () => {
+        if (filePath) onClosePath?.(filePath);
+      },
+      copyPath: () => {
+        if (filePath) onCopyPath?.(filePath);
+      },
+      deletePath: () => {
+        if (filePath) setDeletePath(filePath);
+      },
+      discardFile: () => {
+        if (file) discardFile(file);
+      },
+      filePath,
+      hasMultipleOpenFiles: openFiles.length > 1,
+      hasOpenFiles: openFiles.length > 0,
+      hasUnsavedChanges: Boolean(file && content !== file.content),
+      saveFile: () => {
+        if (filePath) saveFile(filePath, content);
+      },
+    };
+  };
 
   const createTabContextItems = (path: string | null): ContextMenuItem[] => {
-    const filePath = path && filesByPath.has(path) ? path : undefined;
-    const context = createEditorTabCommandContext(filePath);
+    const file = path ? filesByPath.get(path) : undefined;
+    const context = createEditorCommandContext(file);
 
     return commandMenuItemsToContextMenuItems(
       resolveCommandMenuItems({
         context,
-        entries: filePath ? editorTabMenuEntries : editorTabListMenuEntries,
-        registry: editorTabCommandRegistry,
+        entries: file ? editorTabMenuEntries : editorTabListMenuEntries,
+        registry: editorCommandRegistry,
       }),
-      (commandId) => executeCommand(editorTabCommandRegistry, commandId, context),
+      (commandId) => executeCommand(editorCommandRegistry, commandId, context),
     );
   };
 
@@ -249,6 +281,7 @@ export function WorkspaceEditorPanel({
     }
     setDeletePath(null);
   };
+  const selectedCommandContext = createEditorCommandContext(selectedFile);
 
   return (
     <Panel className="workspace-panel">
@@ -301,16 +334,36 @@ export function WorkspaceEditorPanel({
               {selectedFile ? (
                 <Toolbar className="workspace-editor__actions">
                   <IconButton
-                    disabled={!isSelectedDirty}
+                    disabled={
+                      !canExecuteCommand(
+                        editorCommandRegistry,
+                        'editor.save',
+                        selectedCommandContext,
+                      )
+                    }
                     icon="codicon-save"
                     label="Save"
-                    onClick={() => saveFile(selectedFile.path, selectedContent)}
+                    onClick={() =>
+                      executeCommand(editorCommandRegistry, 'editor.save', selectedCommandContext)
+                    }
                   />
                   <IconButton
-                    disabled={!isSelectedDirty}
+                    disabled={
+                      !canExecuteCommand(
+                        editorCommandRegistry,
+                        'editor.discardChanges',
+                        selectedCommandContext,
+                      )
+                    }
                     icon="codicon-discard"
                     label="Discard changes"
-                    onClick={() => discardFile(selectedFile)}
+                    onClick={() =>
+                      executeCommand(
+                        editorCommandRegistry,
+                        'editor.discardChanges',
+                        selectedCommandContext,
+                      )
+                    }
                   />
                   <IconButton
                     disabled={!onDeletePath}
