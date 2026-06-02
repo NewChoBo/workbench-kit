@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
+import { useState, type MouseEvent, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SideBarHeaderControl, SideBarViewFrame } from '../layout/SideBarViewFrame';
 import { ConfirmDialog } from '../modal/ConfirmDialog';
@@ -20,7 +20,7 @@ import {
   WorkspaceEditorPanel,
   type WorkspaceEditorTheme,
   WorkspaceExplorer,
-  WorkspaceSearchResults,
+  WorkspaceSearchPanel,
   fileNameOfPath,
   getAvailableWorkspaceEntryName,
   getWorkspaceFileMovePlan,
@@ -920,20 +920,6 @@ function IntegratedWorkbenchShell() {
     ];
   };
 
-  const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && filteredSearchResults[0]) {
-      event.preventDefault();
-      activateSearchResult(filteredSearchResults[0]);
-      return;
-    }
-
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      setSearchQuery('');
-      setLastCommandLabel('Search cleared');
-    }
-  };
-
   const editorArea = (
     <main className="workbench-editor-area">
       <WorkspaceEditorPanel
@@ -1021,6 +1007,28 @@ function IntegratedWorkbenchShell() {
                     }}
                     onValueChange={setChatDraft}
                   />
+                ) : activeActivityId === 'search' ? (
+                  <WorkspaceSearchPanel
+                    activePath={selectedPath}
+                    query={searchQuery}
+                    results={filteredSearchResults}
+                    onActivateResult={activateSearchResult}
+                    onQueryChange={setSearchQuery}
+                    onRefresh={() => setLastCommandLabel('Search refreshed')}
+                    onResultContextMenu={(event, result) =>
+                      openContextMenu(
+                        event,
+                        createWorkspaceMenuItems({
+                          children: [],
+                          file: result.file,
+                          name: fileNameOfPath(result.path),
+                          path: result.path,
+                          type: 'file',
+                        }),
+                        'Search result menu',
+                      )
+                    }
+                  />
                 ) : (
                   <SideBarViewFrame
                     title={activeActivity.label}
@@ -1045,94 +1053,49 @@ function IntegratedWorkbenchShell() {
                     }
                     headerAddon={
                       <SideBarHeaderControl>
-                        {activeActivityId === 'search' ? (
-                          <div className="workbench-search-control">
-                            <TextInput
-                              aria-label="Search workspace"
-                              controlWidth="full"
-                              placeholder="Search"
-                              value={searchQuery}
-                              onChange={(event) => setSearchQuery(event.currentTarget.value)}
-                              onKeyDown={handleSearchKeyDown}
-                            />
-                            <IconButton
-                              disabled={!searchQuery}
-                              icon="codicon-close"
-                              label="Clear search"
-                              onClick={() => {
-                                setSearchQuery('');
-                                setLastCommandLabel('Search cleared');
-                              }}
-                            />
-                          </div>
-                        ) : (
-                          <TextInput
-                            aria-label={`Filter ${activeActivity.label}`}
-                            controlWidth="full"
-                            placeholder="Filter"
-                            value={filterQuery}
-                            onChange={(event) => setFilterQuery(event.currentTarget.value)}
-                          />
-                        )}
+                        <TextInput
+                          aria-label={`Filter ${activeActivity.label}`}
+                          controlWidth="full"
+                          placeholder="Filter"
+                          value={filterQuery}
+                          onChange={(event) => setFilterQuery(event.currentTarget.value)}
+                        />
                       </SideBarHeaderControl>
                     }
                   >
-                    {activeActivityId === 'explorer' ? (
-                      <WorkspaceExplorer
-                        activePath={selectedPath}
-                        expandedPaths={expandedPaths}
-                        filterQuery={filterQuery}
-                        inlineEdit={explorerInlineEdit}
-                        nodes={workspaceTree}
-                        selectedPaths={explorerSelection.paths}
-                        selectionAnchorPath={explorerSelection.anchorPath}
-                        onActivateFile={activateFile}
-                        onInlineEditCancel={() => {
-                          setExplorerInlineEdit(undefined);
-                          setLastCommandLabel('Inline edit canceled');
-                        }}
-                        onInlineEditCommit={handleExplorerInlineEditCommit}
-                        onInlineEditValueChange={handleExplorerInlineEditValueChange}
-                        onItemContextMenu={(event, node, meta) =>
-                          openContextMenu(
-                            event,
-                            createWorkspaceMenuItems(node, meta.actionPaths),
-                            'Workspace item menu',
-                          )
+                    <WorkspaceExplorer
+                      activePath={selectedPath}
+                      expandedPaths={expandedPaths}
+                      filterQuery={filterQuery}
+                      inlineEdit={explorerInlineEdit}
+                      nodes={workspaceTree}
+                      selectedPaths={explorerSelection.paths}
+                      selectionAnchorPath={explorerSelection.anchorPath}
+                      onActivateFile={activateFile}
+                      onInlineEditCancel={() => {
+                        setExplorerInlineEdit(undefined);
+                        setLastCommandLabel('Inline edit canceled');
+                      }}
+                      onInlineEditCommit={handleExplorerInlineEditCommit}
+                      onInlineEditValueChange={handleExplorerInlineEditValueChange}
+                      onItemContextMenu={(event, node, meta) =>
+                        openContextMenu(
+                          event,
+                          createWorkspaceMenuItems(node, meta.actionPaths),
+                          'Workspace item menu',
+                        )
+                      }
+                      onRequestDelete={handleExplorerRequestDelete}
+                      onRequestMove={handleExplorerRequestMove}
+                      onRequestRename={handleExplorerRequestRename}
+                      onSelectionChange={(selection, meta) => {
+                        setExplorerSelection(selection);
+                        if (meta.mode !== 'single') {
+                          setLastCommandLabel(`${selection.paths.length} files selected`);
                         }
-                        onRequestDelete={handleExplorerRequestDelete}
-                        onRequestMove={handleExplorerRequestMove}
-                        onRequestRename={handleExplorerRequestRename}
-                        onSelectionChange={(selection, meta) => {
-                          setExplorerSelection(selection);
-                          if (meta.mode !== 'single') {
-                            setLastCommandLabel(`${selection.paths.length} files selected`);
-                          }
-                        }}
-                        onToggleFolder={toggleFolder}
-                      />
-                    ) : null}
-                    {activeActivityId === 'search' ? (
-                      <WorkspaceSearchResults
-                        activePath={selectedPath}
-                        query={searchQuery}
-                        results={filteredSearchResults}
-                        onActivateResult={activateSearchResult}
-                        onResultContextMenu={(event, result) =>
-                          openContextMenu(
-                            event,
-                            createWorkspaceMenuItems({
-                              children: [],
-                              file: result.file,
-                              name: fileNameOfPath(result.path),
-                              path: result.path,
-                              type: 'file',
-                            }),
-                            'Search result menu',
-                          )
-                        }
-                      />
-                    ) : null}
+                      }}
+                      onToggleFolder={toggleFolder}
+                    />
                   </SideBarViewFrame>
                 )}
               </aside>

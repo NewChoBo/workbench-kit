@@ -110,29 +110,32 @@ The package should evolve beyond a single React package.
 - `WorkspaceExplorer` has component-level Storybook play coverage for root and
   folder create, `F2` rename, keyboard delete, multi-selection recovery, and
   multi-file drag/drop.
+- `WorkspaceSearchPanel` is a sidebar-oriented controlled component with query
+  input, clear action, result count, empty states, `Enter` first-result
+  activation, `Escape` clear behavior, and result context-menu hooks.
 - Unit tests cover path operations, search, selection, create, rename, move, and
   delete behavior.
-- The next migration step is to promote `WorkspaceSearchPanel` into a
-  sidebar-oriented real-use component with keyboard and result-menu workflows.
+- The next migration step is to add product-neutral command helpers and use them
+  across Explorer, Search, Editor, ActivityBar, and integrated stories.
 
 ## Current Differences From Real Use Cases
 
 The integrated workbench story is closer to an app shell than before, but it is
 still not a complete real-use workflow.
 
-| Area                   | Current package behavior                                                                                     | Real-use expectation                                                                        | Todo                                                      |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Explorer selection     | Controlled file selection props with selected-row styles and selection-aware menu/keyboard/drag targets      | Multi-select should stay aligned through inline edit and drag/drop workflows                | Component play coverage added; keep expanding edge cases  |
-| Explorer creation      | Controlled inline create row with root/folder entry and path validation                                      | New file/folder at root or inside a folder                                                  | Component play coverage added; add test-runner gate later |
-| Explorer rename        | Controlled inline rename row from context menu or `F2`, with path validation                                 | Inline rename, `F2`, blur commit/cancel                                                     | Component play coverage added; add blur/cancel variants   |
-| Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets    | File, multi-file, and folder deletion with controlled component callbacks                   | Component play coverage added; add folder-delete variant  |
-| Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves | Drag one or many files to folder/root with visual and interaction test coverage             | Component play coverage added; add root-drop variant      |
-| Search                 | Search utility and result list exist                                                                         | Sidebar search with query field, clear button, result count, keyboard actions, context menu | Promote sidebar search panel as a first-class component   |
-| Workspace editor       | Monaco editor, tabs, dirty state, save/discard, tab menu exist                                               | Tab actions should coordinate with shared workspace state                                   | Extract tab and draft state helpers                       |
-| Chat                   | Generic chat UI exists                                                                                       | Runtime-driven send/cancel, streaming chunks, status integration                            | Add mock-runtime story adapter and streaming fixture      |
-| Workbench shell state  | Story-local state only                                                                                       | Active view, sidebar visibility, theme, status, and settings should be reusable             | Add shell state contract or controlled shell component    |
-| Settings               | Generic settings modal exists                                                                                | App-specific sections are injected, not hardcoded                                           | Keep modal generic and add section/story examples         |
-| Storybook              | Integrated story owns too much state and behavior                                                            | Stories should compose components with fixtures and mock adapters                           | Move reusable logic into package modules                  |
+| Area                   | Current package behavior                                                                                                                 | Real-use expectation                                                            | Todo                                                      |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Explorer selection     | Controlled file selection props with selected-row styles and selection-aware menu/keyboard/drag targets                                  | Multi-select should stay aligned through inline edit and drag/drop workflows    | Component play coverage added; keep expanding edge cases  |
+| Explorer creation      | Controlled inline create row with root/folder entry and path validation                                                                  | New file/folder at root or inside a folder                                      | Component play coverage added; add test-runner gate later |
+| Explorer rename        | Controlled inline rename row from context menu or `F2`, with path validation                                                             | Inline rename, `F2`, blur commit/cancel                                         | Component play coverage added; add blur/cancel variants   |
+| Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets                                | File, multi-file, and folder deletion with controlled component callbacks       | Component play coverage added; add folder-delete variant  |
+| Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves                             | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add root-drop variant      |
+| Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and context menu hooks | Search panel should share command/menu projection with other workspace surfaces | Add command-backed result menu projection                 |
+| Workspace editor       | Monaco editor, tabs, dirty state, save/discard, tab menu exist                                                                           | Tab actions should coordinate with shared workspace state                       | Extract tab and draft state helpers                       |
+| Chat                   | Generic chat UI exists                                                                                                                   | Runtime-driven send/cancel, streaming chunks, status integration                | Add mock-runtime story adapter and streaming fixture      |
+| Workbench shell state  | Story-local state only                                                                                                                   | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component    |
+| Settings               | Generic settings modal exists                                                                                                            | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
+| Storybook              | Integrated story owns too much state and behavior                                                                                        | Stories should compose components with fixtures and mock adapters               | Move reusable logic into package modules                  |
 
 ## Missing Or Incomplete Features From The Reference Workbench
 
@@ -204,8 +207,11 @@ still not a complete real-use workflow.
 - Empty state for no results.
 - First-result open on `Enter`.
 - Query clear on `Escape`.
-- Result context menu with open, copy path, and delete actions.
+- Result context menu hook with story coverage for open, copy path, and delete
+  actions.
 - Result preview and highlighting shared with the search helper.
+- Remaining: project command helpers should provide the search result menu
+  projection instead of each story building menu arrays manually.
 
 ### Workspace Editor
 
@@ -346,6 +352,8 @@ independently.
    and context menu props.
 4. Replace the Storybook explorer mock logic with the new model.
 5. Promote `WorkspaceSearchPanel` to the sidebar-oriented real-use component.
+   - Done for controlled query, keyboard, empty state, result count, and result
+     menu hooks.
 6. Add command helpers and use them in Explorer, Search, Editor, ActivityBar,
    and integrated stories.
 7. Add mock runtime fixtures for Chat and mock workspace file updates.

@@ -6,6 +6,7 @@ import type { WorkspaceSearchResult } from './types';
 
 export interface WorkspaceSearchResultsProps {
   activePath?: string;
+  compactRows?: boolean;
   onActivateResult: (result: WorkspaceSearchResult) => void;
   onResultContextMenu?: (event: MouseEvent<HTMLElement>, result: WorkspaceSearchResult) => void;
   query: string;
@@ -14,6 +15,7 @@ export interface WorkspaceSearchResultsProps {
 
 export function WorkspaceSearchResults({
   activePath,
+  compactRows,
   onActivateResult,
   onResultContextMenu,
   query,
@@ -25,6 +27,7 @@ export function WorkspaceSearchResults({
         <SideBarListItem
           key={result.id}
           active={activePath === result.path}
+          style={compactRows ? { minHeight: 46 } : undefined}
           variant="stacked"
           onClick={() => onActivateResult(result)}
           onContextMenu={(event) => onResultContextMenu?.(event, result)}
