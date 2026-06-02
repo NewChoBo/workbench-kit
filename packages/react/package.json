@@ -1,0 +1,24 @@
+{
+  "name": "@newchobo-ui/react",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./workbench": "./src/workbench/index.ts",
+    "./styles.css": "./src/styles.css"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@newchobo-ui/tokens": "workspace:*",
+    "@vscode/codicons": "^0.0.45"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}
