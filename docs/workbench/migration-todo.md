@@ -123,14 +123,16 @@ The package should evolve beyond a single React package.
 - The integrated Workbench story uses command-backed menu projection for the
   Activity bar, primary sidebar, Explorer root, Workspace item, and Search
   result context menus.
+- The integrated Workbench story has Storybook play coverage for command-backed
+  Activity bar, Search result, Editor tab, and primary sidebar menu flows.
 - `WorkspaceEditorPanel` uses command-backed menu projection for editor tab
   context menus including copy path, close, close others, close all, and delete.
 - `WorkspaceEditorPanel` routes Save and Discard toolbar actions through the
   same command registry enabled-state and execution helpers.
 - Unit tests cover path operations, search, selection, create, rename, move, and
   delete behavior, plus core command menu projection and execution.
-- The next migration step is to add Storybook play coverage for command menu
-  flows and extract reusable editor draft state.
+- The next migration step is to extract reusable editor draft state and add mock
+  runtime fixtures.
 
 ## Current Differences From Real Use Cases
 
@@ -145,7 +147,7 @@ still not a complete real-use workflow.
 | Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets                                                       | File, multi-file, and folder deletion with controlled component callbacks       | Component play coverage added; add folder-delete variant  |
 | Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves                                                    | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add root-drop variant      |
 | Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage             |
-| Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, and command-backed tab context menus exist                                       | Tab actions should coordinate with shared workspace state                       | Extract draft state helpers and add command menu coverage |
+| Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, and command-backed tab context menus exist                                       | Tab actions should coordinate with shared workspace state                       | Extract draft state helpers                               |
 | Chat                   | Generic chat UI exists                                                                                                                                          | Runtime-driven send/cancel, streaming chunks, status integration                | Add mock-runtime story adapter and streaming fixture      |
 | Workbench shell state  | Story-local state only                                                                                                                                          | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component    |
 | Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
@@ -386,7 +388,9 @@ independently.
      command-backed projection.
    - Editor Save and Discard toolbar actions now use command-backed enabled-state
      and execution.
-   - Remaining: integrated command menu Storybook play coverage.
+   - Integrated Workbench command menus now have Storybook play coverage.
+   - Remaining: shared command definition presets if the package should provide
+     default command IDs.
 7. Add mock runtime fixtures for Chat and mock workspace file updates.
 8. Add Storybook `play` tests for the main workflows.
 9. Run `pnpm validate` and browser smoke after each major feature group.
