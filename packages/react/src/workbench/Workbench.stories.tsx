@@ -29,6 +29,7 @@ import { ActivityBar } from './ActivityBar';
 import { ChatPanel, type ChatMessage } from './chat';
 import { commandMenuItemsToContextMenuItems } from './commands';
 import { WorkbenchSettingsModal, WorkbenchSettingsSection } from './settings';
+import { useWorkbenchShellState } from './shellState';
 import { SplitView } from './SplitView';
 import { StatusBar, StatusBarItem, StatusBarSection } from './StatusBar';
 import {
@@ -629,7 +630,6 @@ function SettingsDialogPreview() {
 }
 
 function IntegratedWorkbenchShell() {
-  const [activeActivityId, setActiveActivityId] = useState<StoryActivityId>('explorer');
   const [chatDraft, setChatDraft] = useState('');
   const chatRuntime = useMemo(
     () =>
@@ -659,7 +659,6 @@ function IntegratedWorkbenchShell() {
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus>(() => chatRuntime.getStatus());
   const [compactRows, setCompactRows] = useState(true);
   const [contextMenu, setContextMenu] = useState<StoryContextMenuState | null>(null);
-  const [colorTheme, setColorTheme] = useState<StoryTheme>('dark');
   const [filterQuery, setFilterQuery] = useState('');
   const [explorerSelection, setExplorerSelection] = useState<WorkspaceSelectionState>({
     anchorPath: defaultSelectionByActivity.explorer,
@@ -668,14 +667,25 @@ function IntegratedWorkbenchShell() {
   const [explorerInlineEdit, setExplorerInlineEdit] = useState<
     WorkspaceExplorerInlineEditState | undefined
   >();
-  const [isPrimarySideBarVisible, setIsPrimarySideBarVisible] = useState(true);
   const [lastCommandLabel, setLastCommandLabel] = useState('Idle');
   const [pendingDelete, setPendingDelete] = useState<StoryPendingDelete | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsCategoryId, setSettingsCategoryId] = useState('appearance');
-  const [settingsScopeId, setSettingsScopeId] = useState('user');
-  const [settingsSearchValue, setSettingsSearchValue] = useState('');
-  const [sideBarSizePercent, setSideBarSizePercent] = useState(24);
+  const shell = useWorkbenchShellState<StoryActivityId, StoryTheme>({
+    activeActivityId: 'explorer',
+    primarySidebarSizePercent: 24,
+    settingsCategoryId: 'appearance',
+    settingsScopeId: 'user',
+    theme: 'dark',
+  });
+  const {
+    activeActivityId,
+    isPrimarySidebarVisible: isPrimarySideBarVisible,
+    isSettingsOpen: settingsOpen,
+    primarySidebarSizePercent: sideBarSizePercent,
+    settingsCategoryId,
+    settingsScopeId,
+    settingsSearchValue,
+    theme: colorTheme,
+  } = shell.state;
   const workspace = useVirtualWorkspace({
     expandedPaths: ['src', 'src/components'],
     files: workspaceFiles,
@@ -765,14 +775,13 @@ function IntegratedWorkbenchShell() {
   };
 
   const showActivity = (activityId: StoryActivityId) => {
-    setActiveActivityId(activityId);
-    setIsPrimarySideBarVisible(true);
+    shell.showActivity(activityId);
     setLastCommandLabel(`${storyActivities[activityId].label} opened`);
   };
 
   const activateActivityFromBar = (activityId: StoryActivityId) => {
     if (activityId === activeActivityId && isPrimarySideBarVisible) {
-      setIsPrimarySideBarVisible(false);
+      shell.setPrimarySidebarVisible(false);
       setLastCommandLabel('Primary sidebar hidden');
       return;
     }
@@ -1055,14 +1064,14 @@ function IntegratedWorkbenchShell() {
     fileActionPaths: [],
     isPrimarySideBarVisible,
     multiFileAction: false,
-    openSettings: () => setSettingsOpen(true),
+    openSettings: shell.openSettings,
     openWorkspaceTarget: () => undefined,
     renameWorkspaceTarget: () => undefined,
     copyWorkspaceTarget: () => undefined,
     showActivity,
     targetPaths: [],
     togglePrimarySideBar: () => {
-      setIsPrimarySideBarVisible((current) => !current);
+      shell.togglePrimarySidebar();
       setLastCommandLabel('Primary sidebar toggled');
     },
     workspaceTargetKind: 'file',
@@ -1183,7 +1192,7 @@ function IntegratedWorkbenchShell() {
           }
           onItemActivate={(item) => {
             if (item.id === 'settings') {
-              setSettingsOpen(true);
+              shell.openSettings();
               return;
             }
 
@@ -1198,7 +1207,7 @@ function IntegratedWorkbenchShell() {
             minPrimarySizePercent={16}
             maxPrimarySizePercent={40}
             primarySizePercent={sideBarSizePercent}
-            onPrimarySizePercentChange={setSideBarSizePercent}
+            onPrimarySizePercentChange={shell.setPrimarySidebarSizePercent}
             primary={
               <aside
                 aria-label="Primary sidebar"
@@ -1347,14 +1356,14 @@ function IntegratedWorkbenchShell() {
           </StatusBarItem>
           <StatusBarItem
             icon={<i className="codicon codicon-color-mode" />}
-            onClick={() => setColorTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+            onClick={() => shell.setTheme(colorTheme === 'dark' ? 'light' : 'dark')}
           >
             {colorTheme === 'dark' ? 'Dark' : 'Light'}
           </StatusBarItem>
           <StatusBarItem
             icon={<i className="codicon codicon-layout-sidebar-left" />}
             onClick={() => {
-              setIsPrimarySideBarVisible((current) => !current);
+              shell.togglePrimarySidebar();
               setLastCommandLabel('Primary sidebar toggled');
             }}
           >
@@ -1416,19 +1425,19 @@ function IntegratedWorkbenchShell() {
                 variant="danger"
                 onClick={() => {
                   setCompactRows(true);
-                  setColorTheme('dark');
+                  shell.setTheme('dark');
                   setSearchQuery('button');
-                  setSettingsCategoryId('appearance');
-                  setSettingsScopeId('user');
-                  setSettingsSearchValue('');
+                  shell.setSettingsCategoryId('appearance');
+                  shell.setSettingsScopeId('user');
+                  shell.setSettingsSearchValue('');
                   setLastCommandLabel('Settings reset');
                 }}
               >
                 Reset
               </Button>
               <span className="workbench-settings-footer__spacer" />
-              <Button onClick={() => setSettingsOpen(false)}>Cancel</Button>
-              <Button variant="primary" onClick={() => setSettingsOpen(false)}>
+              <Button onClick={shell.closeSettings}>Cancel</Button>
+              <Button variant="primary" onClick={shell.closeSettings}>
                 Apply
               </Button>
             </>
@@ -1444,10 +1453,10 @@ function IntegratedWorkbenchShell() {
           searchValue={settingsSearchValue}
           title="Settings"
           titleSuffix={<Badge>{settingsScopeId}</Badge>}
-          onActiveCategoryIdChange={setSettingsCategoryId}
-          onClose={() => setSettingsOpen(false)}
-          onScopeChange={setSettingsScopeId}
-          onSearchValueChange={setSettingsSearchValue}
+          onActiveCategoryIdChange={shell.setSettingsCategoryId}
+          onClose={shell.closeSettings}
+          onScopeChange={shell.setSettingsScopeId}
+          onSearchValueChange={shell.setSettingsSearchValue}
           renderCategory={(category) =>
             renderSettingsCategory({
               categoryId: category.id,
@@ -1462,11 +1471,11 @@ function IntegratedWorkbenchShell() {
                 setSearchQuery('');
                 setLastCommandLabel('Search cleared from settings');
               },
-              onColorThemeChange: setColorTheme,
+              onColorThemeChange: shell.setTheme,
               onCompactRowsChange: setCompactRows,
               onSearchQueryChange: setSearchQuery,
-              onSettingsSearchValueChange: setSettingsSearchValue,
-              onSideBarSizePercentChange: setSideBarSizePercent,
+              onSettingsSearchValueChange: shell.setSettingsSearchValue,
+              onSideBarSizePercentChange: shell.setPrimarySidebarSizePercent,
             })
           }
         />

@@ -103,6 +103,9 @@ The package should evolve beyond a single React package.
   workspace exports available through the React binding package.
 - `@newchobo-ui/react` consumes `@newchobo-ui/core` through a small adapter that
   converts resolved command menu items into `ContextMenuItem` values.
+- `@newchobo-ui/react` exposes a reusable `useWorkbenchShellState` hook and
+  reducer for active activity, primary sidebar visibility and size, theme, and
+  settings modal state.
 - `WorkspaceExplorer` accepts controlled file selection props and emits
   selection changes for single, toggle, range, and toggle-range interactions.
 - Explorer context menus receive selection-aware action paths, and the
@@ -164,7 +167,7 @@ still not a complete real-use workflow.
 | Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage             |
 | Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Component play coverage added; add test-runner gate later |
 | Chat                   | Generic chat UI plus mock runtime story coverage for send, cancel, streaming chunks, status, workspace write patches, and workspace delete patches              | Runtime-driven send/cancel, streaming chunks, status integration                | Add test-runner gate later if desired                     |
-| Workbench shell state  | Story-local state only                                                                                                                                          | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component    |
+| Workbench shell state  | Reusable shell state hook covers active activity, primary sidebar visibility and size, theme, and settings modal state                                          | Active view, sidebar visibility, theme, status, and settings should be reusable | Add reusable status model and optional shell presets      |
 | Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
 | Storybook              | Integrated story owns too much state and behavior                                                                                                               | Stories should compose components with fixtures and mock adapters               | Move reusable logic into package modules                  |
 
@@ -273,12 +276,13 @@ still not a complete real-use workflow.
 ### Workbench Shell
 
 - Reusable shell component or hook for:
-  - active view container,
-  - primary sidebar visibility,
-  - sidebar size,
-  - theme preference,
-  - status item model,
-  - settings open state.
+  - active view container: done through `useWorkbenchShellState`,
+  - primary sidebar visibility: done through `useWorkbenchShellState`,
+  - sidebar size: done through `useWorkbenchShellState`,
+  - theme preference: done through `useWorkbenchShellState`,
+  - settings open, navigation, scope, and search state: done through
+    `useWorkbenchShellState`,
+  - status item model: remaining.
 - Activity bar and primary sidebar command menus consume the generic command
   model in the integrated story.
 - Remaining: decide whether shell command definitions should be exported as
@@ -341,6 +345,11 @@ Move these out of `Workbench.stories.tsx`:
   - query state,
   - first result activation,
   - result context menu actions.
+- Workbench shell state:
+  - active activity,
+  - primary sidebar visibility and size,
+  - theme preference,
+  - settings modal open, category, scope, and search state.
 - Mock runtime helpers:
   - `@newchobo-ui/runtime` now owns message send, cancel, streaming response
     sequence, and mock write-file events.
@@ -446,7 +455,11 @@ independently.
      added.
    - Component-level Explorer drop-target highlight coverage added.
    - Remaining: optional automated test-runner gate.
-9. Run `pnpm validate` and browser smoke after each major feature group.
+9. Extract reusable shell state.
+   - Done for active activity, primary sidebar visibility and size, theme, and
+     settings modal state.
+   - Remaining: reusable status model and optional shell command presets.
+10. Run `pnpm validate` and browser smoke after each major feature group.
 
 ## Additional Decisions Needed
 
@@ -458,8 +471,12 @@ independently.
   configurable path-list MIME type?
 - Should command IDs be exported as package defaults, or should consumers supply
   their own IDs and labels?
+- Should the workbench package export default shell command presets for
+  activity switching, sidebar toggling, and settings opening?
 - Which folder operations should stay as controlled UI callbacks, and which
   should be demonstrated through the `@newchobo-ui/workspace` reducer?
+- Should status bar items use a reusable package model, or remain plain
+  host-rendered children?
 - Should Storybook interaction tests be mandatory in `pnpm validate`, or only
   used in targeted UI validation at first?
 - Should the package add MSW, or keep mock runtime adapters in plain TypeScript
