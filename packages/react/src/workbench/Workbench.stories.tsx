@@ -889,13 +889,13 @@ function IntegratedWorkbenchShell() {
               return;
             }
 
-            if (patch.type === 'delete-file') {
-              setLastCommandLabel(`Runtime deleted ${patch.path}`);
+            if (result.patch.type === 'delete-file') {
+              setLastCommandLabel(`Runtime deleted ${result.patch.path}`);
               return;
             }
 
-            openFile(patch.path);
-            setLastCommandLabel(`Runtime wrote ${patch.path}`);
+            openFile(result.patch.path);
+            setLastCommandLabel(`Runtime wrote ${result.patch.path}`);
           });
         },
         transport: chatRuntimeTransport,

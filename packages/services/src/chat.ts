@@ -18,6 +18,7 @@ export class WorkbenchChatService {
   private readonly transport: ChatTransport;
   private status: ChatServiceSnapshot['status'] = 'idle';
   private unsubscribeTransport?: () => void;
+  private disposed = false;
 
   constructor({ onPatch, transport }: WorkbenchChatServiceOptions) {
     this.onPatch = onPatch;
@@ -26,11 +27,21 @@ export class WorkbenchChatService {
   }
 
   dispose() {
+    if (this.disposed) {
+      return;
+    }
+
+    this.disposed = true;
     this.unsubscribeTransport?.();
+    this.unsubscribeTransport = undefined;
     this.listeners.clear();
   }
 
   subscribe(listener: ChatTransportListener) {
+    if (this.disposed) {
+      return () => undefined;
+    }
+
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);
@@ -38,15 +49,28 @@ export class WorkbenchChatService {
   }
 
   async sendMessage(message: string, context?: Record<string, unknown>) {
+    if (this.disposed) {
+      return undefined;
+    }
+
     const request = message.trim();
     if (!request) return undefined;
 
-    return this.transport.sendMessage(request, {
-      context,
-    });
+    try {
+      return await this.transport.sendMessage(request, {
+        context,
+      });
+    } catch (error) {
+      this.status = 'error';
+      throw error;
+    }
   }
 
   cancel() {
+    if (this.disposed) {
+      return;
+    }
+
     this.transport.cancel();
     this.status = 'cancelled';
   }
@@ -56,6 +80,10 @@ export class WorkbenchChatService {
   }
 
   private emit(event: ChatStreamEvent) {
+    if (this.disposed) {
+      return;
+    }
+
     if (event.type === 'status') {
       this.status = event.status;
     }

@@ -258,6 +258,19 @@ packages/
 - 기존 사용자 동작 기준(Workspace/Chat 기본 플로우) 회귀 없음
 - 문서(설계/결정기록)가 코드 변경과 동기화되어 업데이트됨
 
+### Stage 4 Hardening Progress (2026-06-03)
+
+- Completed listener lifecycle hardening in `WorkbenchChatService`:
+  - disposal becomes idempotent,
+  - disposed services ignore transport callbacks and subscriptions,
+  - transport send after dispose is a no-op,
+  - transport errors set chat snapshot status to `error`.
+- Added shared path normalization in `@newchobo-ui/services`:
+  - common `normalizeServiceWorkspacePath` helper,
+  - `WorkspaceSaveService` and `WorkspacePatchService` now share normalization logic,
+  - patch results return normalized `patch.path` for host actions.
+- Added focused unit tests for path normalization and lifecycle edge cases.
+
 ## Acceptance Criteria
 
 - A save action can be executed entirely through `@newchobo-ui/services` with explicit success/failure
