@@ -162,7 +162,7 @@ still not a complete real-use workflow.
 | Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets                                                       | File, multi-file, and folder deletion with controlled component callbacks       | Component play coverage added; add test-runner gate later |
 | Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves, root drops, and blocked conflicts                 | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add test-runner gate later |
 | Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage             |
-| Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Add delete/open-tab coordination coverage                 |
+| Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Component play coverage added; add test-runner gate later |
 | Chat                   | Generic chat UI plus mock runtime story coverage for send, cancel, streaming chunks, status, workspace write patches, and workspace delete patches              | Runtime-driven send/cancel, streaming chunks, status integration                | Add test-runner gate later if desired                     |
 | Workbench shell state  | Story-local state only                                                                                                                                          | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component    |
 | Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
@@ -262,6 +262,11 @@ still not a complete real-use workflow.
 - Framework-neutral draft state helpers so stories do not own editor persistence
   rules.
 - Delete confirmation that coordinates with open tabs and selected path.
+- Component-level `WorkspaceEditorPanel` stories cover tab selection, close
+  recovery, close-all empty state, delete confirmation, and selected-tab
+  recovery after deleting active and inactive open files.
+- Remaining: add a test-runner gate if these play flows should become mandatory
+  in `pnpm validate`.
 - Optional split-editor affordance should stay visual-only until a real split
   contract exists.
 
