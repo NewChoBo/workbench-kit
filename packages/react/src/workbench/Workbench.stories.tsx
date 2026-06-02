@@ -297,6 +297,7 @@ function IntegratedWorkbenchShell() {
   const [primarySizePercent, setPrimarySizePercent] = useState(62);
   const [searchQuery, setSearchQuery] = useState('button');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [sideBarSizePercent, setSideBarSizePercent] = useState(24);
   const activeActivity = storyActivities[activeActivityId];
   const activeLabel = getActiveLabel(activeActivityId, activeItemId);
 
@@ -310,6 +311,12 @@ function IntegratedWorkbenchShell() {
         result.preview.toLowerCase().includes(normalizedQuery),
     );
   }, [searchQuery]);
+  const statusCountLabel =
+    activeActivityId === 'search'
+      ? `${filteredSearchResults.length} results`
+      : activeActivityId === 'chat'
+        ? `${chatMessages.length} messages`
+        : `${explorerItems.length} files`;
 
   const activateActivity = (activityId: StoryActivityId) => {
     setActiveActivityId(activityId);
@@ -340,135 +347,172 @@ function IntegratedWorkbenchShell() {
             }
           }}
         />
-        <aside
-          aria-label="Primary sidebar"
-          className="workbench-primary-side-bar"
-          style={{
-            width: 296,
-            flex: '0 0 296px',
-            borderRight: '1px solid var(--color-border)',
-          }}
-        >
-          <SideBarViewFrame
-            title={activeActivity.label}
-            actions={<IconButton icon="codicon-refresh" label="Refresh" />}
-            headerAddon={
-              <SideBarHeaderControl>
-                {activeActivityId === 'search' ? (
-                  <TextInput
-                    aria-label="Search workspace"
-                    controlWidth="full"
-                    placeholder="Search"
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.currentTarget.value)}
-                  />
-                ) : (
-                  <TextInput
-                    aria-label={`Filter ${activeActivity.label}`}
-                    controlWidth="full"
-                    placeholder="Filter"
-                    value={filterQuery}
-                    onChange={(event) => setFilterQuery(event.currentTarget.value)}
-                  />
-                )}
-              </SideBarHeaderControl>
-            }
-          >
-            {activeActivityId === 'explorer' ? (
-              <StoryNavigationList
-                activeItemId={activeItemId}
-                items={explorerItems}
-                onActivate={setActiveItemId}
-              />
-            ) : null}
-            {activeActivityId === 'search' ? (
-              <SideBarList fill aria-label="Search results">
-                {filteredSearchResults.map((result) => (
-                  <SideBarListItem
-                    key={result.id}
-                    active={activeItemId === result.id}
-                    variant="stacked"
-                    onClick={() => setActiveItemId(result.id)}
-                  >
-                    <strong>{result.path}</strong>
-                    <span>
-                      Line {result.line}: {result.preview}
-                    </span>
-                  </SideBarListItem>
-                ))}
-                {filteredSearchResults.length === 0 ? (
-                  <SideBarListItem disabled>No results</SideBarListItem>
-                ) : null}
-              </SideBarList>
-            ) : null}
-            {activeActivityId === 'chat' ? (
-              <StoryNavigationList
-                activeItemId={activeItemId}
-                items={chatSessions}
-                onActivate={setActiveItemId}
-              />
-            ) : null}
-          </SideBarViewFrame>
-        </aside>
-        <section className="workbench-editor-area">
-          <Panel>
-            <PanelHeader
-              actions={
-                <Toolbar>
-                  <Badge>ready</Badge>
-                  <Button variant="primary" onClick={() => setSettingsOpen(true)}>
-                    Settings
-                  </Button>
-                </Toolbar>
-              }
+        <SplitView
+          className="ui-workbench-story-shell-split"
+          minPrimarySizePercent={16}
+          maxPrimarySizePercent={40}
+          primarySizePercent={sideBarSizePercent}
+          onPrimarySizePercentChange={setSideBarSizePercent}
+          primary={
+            <aside
+              aria-label="Primary sidebar"
+              className="workbench-primary-side-bar"
+              style={{ borderRight: '1px solid var(--color-border)' }}
             >
-              {activeActivity.label} / {activeLabel}
-            </PanelHeader>
-            <PanelBody style={{ display: 'flex', overflow: 'hidden' }}>
-              <SplitView
-                primarySizePercent={primarySizePercent}
-                onPrimarySizePercentChange={setPrimarySizePercent}
-                primary={renderPrimarySurface({
-                  activeActivityId,
-                  activeItemId,
-                  activeLabel,
-                  chatDraft,
-                  compactRows,
-                  filteredSearchResults,
-                  searchQuery,
-                  setChatDraft,
-                })}
-                secondary={
-                  <Panel style={{ minWidth: 0 }}>
-                    <PanelHeader>Inspector</PanelHeader>
-                    <PanelBody style={{ padding: 16 }}>
-                      <div style={{ display: 'grid', gap: 12 }}>
-                        <div style={storyCardStyle}>
-                          <strong style={{ display: 'block', color: 'var(--color-text)' }}>
-                            Activity
-                          </strong>
-                          <span>{activeActivity.label}</span>
-                        </div>
-                        <div style={storyCardStyle}>
-                          <strong style={{ display: 'block', color: 'var(--color-text)' }}>
-                            Selection
-                          </strong>
-                          <span>{activeLabel}</span>
-                        </div>
-                        <div style={storyCardStyle}>
-                          <strong style={{ display: 'block', color: 'var(--color-text)' }}>
-                            Split
-                          </strong>
-                          <span>{Math.round(primarySizePercent)}%</span>
-                        </div>
-                      </div>
-                    </PanelBody>
-                  </Panel>
+              <SideBarViewFrame
+                title={activeActivity.label}
+                actions={<IconButton icon="codicon-refresh" label="Refresh" />}
+                headerAddon={
+                  activeActivityId === 'chat' ? null : (
+                    <SideBarHeaderControl>
+                      {activeActivityId === 'search' ? (
+                        <TextInput
+                          aria-label="Search workspace"
+                          controlWidth="full"
+                          placeholder="Search"
+                          value={searchQuery}
+                          onChange={(event) => setSearchQuery(event.currentTarget.value)}
+                        />
+                      ) : (
+                        <TextInput
+                          aria-label={`Filter ${activeActivity.label}`}
+                          controlWidth="full"
+                          placeholder="Filter"
+                          value={filterQuery}
+                          onChange={(event) => setFilterQuery(event.currentTarget.value)}
+                        />
+                      )}
+                    </SideBarHeaderControl>
+                  )
                 }
-              />
-            </PanelBody>
-          </Panel>
-        </section>
+                footer={
+                  activeActivityId === 'chat' ? (
+                    <form
+                      aria-label="Sidebar chat composer"
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'minmax(0, 1fr) auto',
+                        gap: 6,
+                        padding: 8,
+                        borderTop: '1px solid var(--color-border)',
+                        background: 'var(--panel-bg)',
+                      }}
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        setChatDraft('');
+                      }}
+                    >
+                      <TextInput
+                        aria-label="Sidebar chat message"
+                        controlWidth="full"
+                        placeholder="Ask about this workspace"
+                        value={chatDraft}
+                        onChange={(event) => setChatDraft(event.currentTarget.value)}
+                      />
+                      <IconButton icon="codicon-send" label="Send message" type="submit" />
+                    </form>
+                  ) : undefined
+                }
+              >
+                {activeActivityId === 'explorer' ? (
+                  <StoryNavigationList
+                    activeItemId={activeItemId}
+                    items={explorerItems}
+                    onActivate={setActiveItemId}
+                  />
+                ) : null}
+                {activeActivityId === 'search' ? (
+                  <SideBarList fill aria-label="Search results">
+                    {filteredSearchResults.map((result) => (
+                      <SideBarListItem
+                        key={result.id}
+                        active={activeItemId === result.id}
+                        variant="stacked"
+                        onClick={() => setActiveItemId(result.id)}
+                      >
+                        <strong>{result.path}</strong>
+                        <span>
+                          Line {result.line}: {result.preview}
+                        </span>
+                      </SideBarListItem>
+                    ))}
+                    {filteredSearchResults.length === 0 ? (
+                      <SideBarListItem disabled>No results</SideBarListItem>
+                    ) : null}
+                  </SideBarList>
+                ) : null}
+                {activeActivityId === 'chat' ? (
+                  <SidebarChatMessages compactRows={compactRows} messages={chatMessages} />
+                ) : null}
+              </SideBarViewFrame>
+            </aside>
+          }
+          secondary={
+            <section className="workbench-editor-area">
+              <Panel>
+                <PanelHeader
+                  actions={
+                    <Toolbar>
+                      <Badge>ready</Badge>
+                      <Button variant="primary" onClick={() => setSettingsOpen(true)}>
+                        Settings
+                      </Button>
+                    </Toolbar>
+                  }
+                >
+                  {activeActivity.label} / {activeLabel}
+                </PanelHeader>
+                <PanelBody style={{ display: 'flex', overflow: 'hidden' }}>
+                  <SplitView
+                    primarySizePercent={primarySizePercent}
+                    onPrimarySizePercentChange={setPrimarySizePercent}
+                    primary={renderPrimarySurface({
+                      activeActivityId,
+                      activeItemId,
+                      activeLabel,
+                      compactRows,
+                      filteredSearchResults,
+                      searchQuery,
+                    })}
+                    secondary={
+                      <Panel style={{ minWidth: 0 }}>
+                        <PanelHeader>Inspector</PanelHeader>
+                        <PanelBody style={{ padding: 16 }}>
+                          <div style={{ display: 'grid', gap: 12 }}>
+                            <div style={storyCardStyle}>
+                              <strong style={{ display: 'block', color: 'var(--color-text)' }}>
+                                Activity
+                              </strong>
+                              <span>{activeActivity.label}</span>
+                            </div>
+                            <div style={storyCardStyle}>
+                              <strong style={{ display: 'block', color: 'var(--color-text)' }}>
+                                Selection
+                              </strong>
+                              <span>{activeLabel}</span>
+                            </div>
+                            <div style={storyCardStyle}>
+                              <strong style={{ display: 'block', color: 'var(--color-text)' }}>
+                                Editor split
+                              </strong>
+                              <span>{Math.round(primarySizePercent)}%</span>
+                            </div>
+                            <div style={storyCardStyle}>
+                              <strong style={{ display: 'block', color: 'var(--color-text)' }}>
+                                Sidebar
+                              </strong>
+                              <span>{Math.round(sideBarSizePercent)}%</span>
+                            </div>
+                          </div>
+                        </PanelBody>
+                      </Panel>
+                    }
+                  />
+                </PanelBody>
+              </Panel>
+            </section>
+          }
+        />
       </div>
       <StatusBar compact>
         <StatusBarSection>
@@ -480,7 +524,10 @@ function IntegratedWorkbenchShell() {
           <StatusBarItem>{activeLabel}</StatusBarItem>
         </StatusBarSection>
         <StatusBarSection align="end">
-          <StatusBarItem>{filteredSearchResults.length} results</StatusBarItem>
+          <StatusBarItem>{statusCountLabel}</StatusBarItem>
+          <StatusBarItem icon={<i className="codicon codicon-layout-sidebar-left" />}>
+            {Math.round(sideBarSizePercent)}%
+          </StatusBarItem>
           <StatusBarItem icon={<i className="codicon codicon-layout" />}>
             {Math.round(primarySizePercent)}%
           </StatusBarItem>
@@ -538,24 +585,67 @@ function IntegratedWorkbenchShell() {
   );
 }
 
+function SidebarChatMessages({
+  compactRows,
+  messages,
+}: {
+  compactRows: boolean;
+  messages: StoryMessage[];
+}) {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gap: compactRows ? 8 : 12,
+        padding: '0 8px 8px',
+      }}
+    >
+      {messages.map((message) => (
+        <article
+          key={message.id}
+          style={{
+            padding: 10,
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--color-text-muted)',
+            background:
+              message.author === 'user' ? 'var(--color-surface-hover)' : 'var(--color-surface)',
+          }}
+        >
+          <header
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 8,
+              marginBottom: 4,
+              color: 'var(--color-text)',
+              fontSize: 'var(--font-size-sm)',
+            }}
+          >
+            <strong>{message.author === 'user' ? 'User' : 'Assistant'}</strong>
+            <span>{message.time}</span>
+          </header>
+          <p style={{ margin: 0, lineHeight: 1.45 }}>{message.body}</p>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function renderPrimarySurface({
   activeActivityId,
   activeItemId,
   activeLabel,
-  chatDraft,
   compactRows,
   filteredSearchResults,
   searchQuery,
-  setChatDraft,
 }: {
   activeActivityId: StoryActivityId;
   activeItemId: string;
   activeLabel: string;
-  chatDraft: string;
   compactRows: boolean;
   filteredSearchResults: StorySearchResult[];
   searchQuery: string;
-  setChatDraft: (value: string) => void;
 }) {
   if (activeActivityId === 'chat') {
     return (
@@ -563,74 +653,32 @@ function renderPrimarySurface({
         <PanelHeader
           actions={
             <Toolbar>
-              <Badge variant="muted">chat</Badge>
-              <IconButton icon="codicon-add" label="New chat" />
+              <Badge variant="muted">{chatMessages.length} messages</Badge>
+              <IconButton icon="codicon-references" label="Open references" />
             </Toolbar>
           }
         >
-          {activeLabel}
+          Conversation context
         </PanelHeader>
-        <PanelBody style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 16 }}>
-            <div style={{ display: 'grid', gap: compactRows ? 8 : 14 }}>
-              {chatMessages.map((message) => (
-                <article
-                  key={message.id}
-                  style={{
-                    maxWidth: message.author === 'user' ? 520 : 620,
-                    justifySelf: message.author === 'user' ? 'end' : 'start',
-                    padding: 12,
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-sm)',
-                    color: 'var(--color-text-muted)',
-                    background:
-                      message.author === 'user'
-                        ? 'var(--color-surface-hover)'
-                        : 'var(--color-surface)',
-                  }}
-                >
-                  <header
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      gap: 16,
-                      marginBottom: 6,
-                      color: 'var(--color-text)',
-                      fontSize: 'var(--font-size-sm)',
-                    }}
-                  >
-                    <strong>{message.author === 'user' ? 'User' : 'Assistant'}</strong>
-                    <span>{message.time}</span>
-                  </header>
-                  <p style={{ margin: 0, lineHeight: 1.5 }}>{message.body}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-          <form
+        <PanelBody style={{ padding: 16 }}>
+          <section
             style={{
-              flexShrink: 0,
               display: 'grid',
-              gridTemplateColumns: 'minmax(0, 1fr) auto',
-              gap: 8,
-              padding: 12,
-              borderTop: '1px solid var(--color-border)',
-              background: 'var(--color-surface)',
-            }}
-            onSubmit={(event) => {
-              event.preventDefault();
-              setChatDraft('');
+              gap: 12,
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+              marginBottom: 12,
             }}
           >
-            <TextInput
-              aria-label="Chat message"
-              controlWidth="full"
-              placeholder="Ask about this workspace"
-              value={chatDraft}
-              onChange={(event) => setChatDraft(event.currentTarget.value)}
-            />
-            <Button variant="primary">Send</Button>
-          </form>
+            {['Current file', 'Selection', 'Prompt context'].map((label) => (
+              <div key={label} style={storyCardStyle}>
+                <strong style={{ display: 'block', color: 'var(--color-text)' }}>{label}</strong>
+                <span>{activeLabel}</span>
+              </div>
+            ))}
+          </section>
+          <EmptyState compact icon="codicon-comment-discussion">
+            No referenced files
+          </EmptyState>
         </PanelBody>
       </Panel>
     );
