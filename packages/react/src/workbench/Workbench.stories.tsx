@@ -27,7 +27,12 @@ import { Select } from '../primitives/Select';
 import { TextInput } from '../primitives/TextInput';
 import { ActivityBar } from './ActivityBar';
 import { ChatPanel, type ChatMessage } from './chat';
-import { commandMenuItemsToContextMenuItems } from './commands';
+import {
+  commandMenuItemsToContextMenuItems,
+  createWorkbenchShellCommands,
+  createWorkbenchShellMenuEntries,
+  type WorkbenchShellCommandContext,
+} from './commands';
 import { WorkbenchSettingsModal, WorkbenchSettingsSection } from './settings';
 import { useWorkbenchShellState } from './shellState';
 import { SplitView } from './SplitView';
@@ -87,20 +92,16 @@ interface StoryPendingDelete {
   type: 'files' | 'folder';
 }
 
-interface StoryCommandContext {
+interface StoryCommandContext extends WorkbenchShellCommandContext<StoryActivityId> {
   createWorkspaceFile: () => void;
   createWorkspaceFolder: () => void;
   deleteWorkspaceTarget: () => void;
   fileActionPaths: string[];
-  isPrimarySideBarVisible: boolean;
   multiFileAction: boolean;
-  openSettings: () => void;
   openWorkspaceTarget: () => void;
   renameWorkspaceTarget: () => void;
   copyWorkspaceTarget: () => void;
-  showActivity: (activityId: StoryActivityId) => void;
   targetPaths: string[];
-  togglePrimarySideBar: () => void;
   workspaceTargetKind: 'file' | 'folder';
 }
 
@@ -124,38 +125,19 @@ const storyActivities: Record<StoryActivityId, StoryActivity> = {
   },
 };
 
+const storyShellCommandActivities = storyActivityOrder.map((id) => ({
+  id,
+  label: storyActivities[id].label,
+  icon:
+    id === 'explorer'
+      ? 'codicon-files'
+      : id === 'search'
+        ? 'codicon-search'
+        : 'codicon-comment-discussion',
+}));
+
 const storyCommandRegistry = createCommandRegistry<StoryCommandContext>([
-  {
-    id: 'workbench.showExplorer',
-    label: 'Explorer',
-    icon: 'codicon-files',
-    run: ({ showActivity }) => showActivity('explorer'),
-  },
-  {
-    id: 'workbench.showSearch',
-    label: 'Search',
-    icon: 'codicon-search',
-    run: ({ showActivity }) => showActivity('search'),
-  },
-  {
-    id: 'workbench.showChat',
-    label: 'Chat',
-    icon: 'codicon-comment-discussion',
-    run: ({ showActivity }) => showActivity('chat'),
-  },
-  {
-    id: 'workbench.togglePrimarySideBar',
-    label: ({ isPrimarySideBarVisible }) =>
-      isPrimarySideBarVisible ? 'Hide primary sidebar' : 'Show primary sidebar',
-    icon: 'codicon-layout-sidebar-left',
-    run: ({ togglePrimarySideBar }) => togglePrimarySideBar(),
-  },
-  {
-    id: 'workbench.openSettings',
-    label: 'Settings',
-    icon: 'codicon-settings-gear',
-    run: ({ openSettings }) => openSettings(),
-  },
+  ...createWorkbenchShellCommands({ activities: storyShellCommandActivities }),
   {
     id: 'workspace.newFile',
     label: 'New file',
@@ -211,14 +193,8 @@ const storyCommandRegistry = createCommandRegistry<StoryCommandContext>([
   },
 ]);
 
-const workbenchMenuEntries: CommandMenuEntry<StoryCommandContext>[] = [
-  { commandId: 'workbench.showExplorer' },
-  { commandId: 'workbench.showSearch' },
-  { commandId: 'workbench.showChat' },
-  commandMenuSeparator('workbench-separator'),
-  { commandId: 'workbench.togglePrimarySideBar' },
-  { commandId: 'workbench.openSettings' },
-];
+const workbenchMenuEntries: CommandMenuEntry<StoryCommandContext>[] =
+  createWorkbenchShellMenuEntries({ activities: storyShellCommandActivities });
 
 const workspaceCreateMenuEntries: CommandMenuEntry<StoryCommandContext>[] = [
   { commandId: 'workspace.newFile' },
@@ -1137,7 +1113,7 @@ function IntegratedWorkbenchShell() {
     createWorkspaceFolder: () => startWorkspaceCreate('create-folder'),
     deleteWorkspaceTarget: () => undefined,
     fileActionPaths: [],
-    isPrimarySideBarVisible,
+    isPrimarySidebarVisible: isPrimarySideBarVisible,
     multiFileAction: false,
     openSettings: shell.openSettings,
     openWorkspaceTarget: () => undefined,
@@ -1145,7 +1121,7 @@ function IntegratedWorkbenchShell() {
     copyWorkspaceTarget: () => undefined,
     showActivity,
     targetPaths: [],
-    togglePrimarySideBar: () => {
+    togglePrimarySidebar: () => {
       shell.togglePrimarySidebar();
       setLastCommandLabel('Primary sidebar toggled');
     },

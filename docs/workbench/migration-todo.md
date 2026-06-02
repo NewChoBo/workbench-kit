@@ -103,6 +103,8 @@ The package should evolve beyond a single React package.
   workspace exports available through the React binding package.
 - `@newchobo-ui/react` consumes `@newchobo-ui/core` through a small adapter that
   converts resolved command menu items into `ContextMenuItem` values.
+- `@newchobo-ui/react` exposes shell command presets for activity switching,
+  primary sidebar toggling, and settings opening.
 - `@newchobo-ui/react` exposes a reusable `useWorkbenchShellState` hook and
   reducer for active activity, primary sidebar visibility and size, theme, and
   settings modal state.
@@ -169,7 +171,7 @@ still not a complete real-use workflow.
 | Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage             |
 | Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Component play coverage added; add test-runner gate later |
 | Chat                   | Generic chat UI plus mock runtime story coverage for send, cancel, streaming chunks, status, workspace write patches, and workspace delete patches              | Runtime-driven send/cancel, streaming chunks, status integration                | Add test-runner gate later if desired                     |
-| Workbench shell state  | Reusable shell state hook and StatusBar item model cover active activity, sidebar visibility and size, theme, settings, and status surfaces                     | Active view, sidebar visibility, theme, status, and settings should be reusable | Decide whether to add optional shell command presets      |
+| Workbench shell state  | Reusable shell state hook, shell command presets, and StatusBar item model cover activity, sidebar, theme, settings, and status surfaces                        | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell component composition only if needed            |
 | Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
 | Storybook              | Integrated story owns too much state and behavior                                                                                                               | Stories should compose components with fixtures and mock adapters               | Move reusable logic into package modules                  |
 
@@ -287,8 +289,8 @@ still not a complete real-use workflow.
   - status item model: done through `StatusBar` section and item models.
 - Activity bar and primary sidebar command menus consume the generic command
   model in the integrated story.
-- Remaining: decide whether shell command definitions should be exported as
-  package presets or supplied only by host applications.
+- Shell command presets are exported for activity switching, primary sidebar
+  toggling, and settings opening.
 - Status bar accepts generic section and item models while still supporting
   custom children for host-rendered content.
 
@@ -341,8 +343,10 @@ Move these out of `Workbench.stories.tsx`:
 - Command model:
   - `@newchobo-ui/core` now owns the command registry, separator helper, menu
     projection, and command executor.
-  - Remaining: shared command definition presets for common workspace, editor,
-    and shell actions if the package should provide default command IDs.
+  - `@newchobo-ui/react` now owns shell command presets for activity switching,
+    primary sidebar toggling, and settings opening.
+  - Remaining: shared command definition presets for common workspace and
+    editor actions if the package should provide default command IDs.
 - Search helpers:
   - query state,
   - first result activation,
@@ -404,19 +408,19 @@ Recommended setup:
 Create or promote these components/modules so stories can test each layer
 independently.
 
-| Module                                     | Responsibility                                                       | Story target                                          |
-| ------------------------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------- |
-| `workspace/WorkspaceExplorer`              | Tree rendering, selection, inline create/rename, context menu hooks  | Explorer selection, create, rename, delete, drag/drop |
-| `workspace/WorkspaceSearchPanel`           | Sidebar search input, results, empty states, result menu hooks       | Search empty, results, keyboard, context menu         |
-| `workspace/WorkspaceEditorPanel`           | Open tabs, dirty state, Monaco editor, tab menus                     | Save/discard, close actions, delete confirmation      |
-| `workspace/useVirtualWorkspace` or reducer | Headless workspace state and file/folder operations                  | Reducer tests and integrated story                    |
-| `workbench/WorkbenchShell`                 | Activity bar, sidebar split, editor area, status bar slots           | Shell layout and sidebar toggle                       |
-| `workbench/StatusBar`                      | Generic status sections and status item projection                   | Model-based status footer                             |
-| `@newchobo-ui/core/commands`               | Framework-neutral command registry, execution, and menu projection   | Unit tests and integrated command menu wiring         |
-| `workbench/commands`                       | React adapter from resolved command menu items to context menu items | Command menu story and integration tests              |
-| `chat/ChatPanel`                           | Message list and composer                                            | Empty, streaming, running, disabled, cancel           |
-| `@newchobo-ui/runtime/mockRuntime`         | Public mock send/cancel/stream events and workspace patches          | Chat integration story                                |
-| `settings/WorkbenchSettingsModal`          | Generic settings layout and category rendering                       | Scope tabs, search, footer actions                    |
+| Module                                     | Responsibility                                                      | Story target                                          |
+| ------------------------------------------ | ------------------------------------------------------------------- | ----------------------------------------------------- |
+| `workspace/WorkspaceExplorer`              | Tree rendering, selection, inline create/rename, context menu hooks | Explorer selection, create, rename, delete, drag/drop |
+| `workspace/WorkspaceSearchPanel`           | Sidebar search input, results, empty states, result menu hooks      | Search empty, results, keyboard, context menu         |
+| `workspace/WorkspaceEditorPanel`           | Open tabs, dirty state, Monaco editor, tab menus                    | Save/discard, close actions, delete confirmation      |
+| `workspace/useVirtualWorkspace` or reducer | Headless workspace state and file/folder operations                 | Reducer tests and integrated story                    |
+| `workbench/WorkbenchShell`                 | Activity bar, sidebar split, editor area, status bar slots          | Shell layout and sidebar toggle                       |
+| `workbench/StatusBar`                      | Generic status sections and status item projection                  | Model-based status footer                             |
+| `@newchobo-ui/core/commands`               | Framework-neutral command registry, execution, and menu projection  | Unit tests and integrated command menu wiring         |
+| `workbench/commands`                       | React adapter and shell command presets                             | Command menu story and preset tests                   |
+| `chat/ChatPanel`                           | Message list and composer                                           | Empty, streaming, running, disabled, cancel           |
+| `@newchobo-ui/runtime/mockRuntime`         | Public mock send/cancel/stream events and workspace patches         | Chat integration story                                |
+| `settings/WorkbenchSettingsModal`          | Generic settings layout and category rendering                      | Scope tabs, search, footer actions                    |
 
 ## Recommended Todo Order
 
@@ -441,8 +445,9 @@ independently.
    - Editor Save and Discard toolbar actions now use command-backed enabled-state
      and execution.
    - Integrated Workbench command menus now have Storybook play coverage.
-   - Remaining: shared command definition presets if the package should provide
-     default command IDs.
+   - Shell command presets are exported and covered by unit tests.
+   - Remaining: shared workspace/editor command definition presets if the
+     package should provide default command IDs.
 7. Add mock runtime fixtures for Chat and mock workspace file updates.
    - Done for framework-neutral runtime events, send/cancel/stream helpers,
      and integrated mock workspace write patches.
@@ -463,7 +468,7 @@ independently.
    - Done for active activity, primary sidebar visibility and size, theme, and
      settings modal state.
    - Done for generic StatusBar section and item models.
-   - Remaining: optional shell command presets.
+   - Done for shell command presets.
 10. Run `pnpm validate` and browser smoke after each major feature group.
 
 ## Additional Decisions Needed
@@ -476,8 +481,6 @@ independently.
   configurable path-list MIME type?
 - Should command IDs be exported as package defaults, or should consumers supply
   their own IDs and labels?
-- Should the workbench package export default shell command presets for
-  activity switching, sidebar toggling, and settings opening?
 - Which folder operations should stay as controlled UI callbacks, and which
   should be demonstrated through the `@newchobo-ui/workspace` reducer?
 - Should StatusBar items support host-provided ordering/grouping metadata beyond
