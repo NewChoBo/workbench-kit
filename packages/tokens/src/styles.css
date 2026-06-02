@@ -1,5 +1,5 @@
 :root,
-[data-theme="dark"] {
+[data-theme='dark'] {
   --color-bg: #0d1117;
   --color-bg-75: rgba(13, 17, 23, 0.75);
   --color-primary-side-bar-bg: #111720;
@@ -37,7 +37,7 @@
   --file-icon-yaml: #d2a8ff;
 }
 
-[data-theme="light"] {
+[data-theme='light'] {
   --color-bg: #ffffff;
   --color-bg-75: rgba(255, 255, 255, 0.75);
   --color-primary-side-bar-bg: #f6f8fa;

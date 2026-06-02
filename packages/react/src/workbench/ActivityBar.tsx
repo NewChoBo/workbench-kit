@@ -43,11 +43,7 @@ export function ActivityBar({
   );
 
   return (
-    <nav
-      aria-label={ariaLabel}
-      className={cx('ui-workbench-activity-bar', className)}
-      {...props}
-    >
+    <nav aria-label={ariaLabel} className={cx('ui-workbench-activity-bar', className)} {...props}>
       {items.map(renderItem)}
       {secondaryItems.length ? <span className="ui-workbench-activity-bar__spacer" /> : null}
       {secondaryItems.map(renderItem)}

@@ -3,19 +3,19 @@ import { cx } from '../utils/cx';
 
 export type ContextMenuItem =
   | {
-    type: 'separator';
-    id?: string;
-  }
+      type: 'separator';
+      id?: string;
+    }
   | {
-    type?: 'item';
-    id?: string;
-    label: ReactNode;
-    icon?: string;
-    shortcut?: ReactNode;
-    disabled?: boolean;
-    danger?: boolean;
-    onSelect: () => void;
-  };
+      type?: 'item';
+      id?: string;
+      label: ReactNode;
+      icon?: string;
+      shortcut?: ReactNode;
+      disabled?: boolean;
+      danger?: boolean;
+      onSelect: () => void;
+    };
 
 export interface ContextMenuProps {
   ariaLabel?: string;
@@ -114,7 +114,7 @@ export function ContextMenu({
       }}
       onContextMenu={(event) => event.preventDefault()}
     >
-      {items.map((item, index) => (
+      {items.map((item, index) =>
         item.type === 'separator' ? (
           <div key={itemKey(item, index)} className="ui-context-menu__separator" role="separator" />
         ) : (
@@ -134,10 +134,12 @@ export function ContextMenu({
               {item.icon ? <i className={`codicon ${item.icon}`} /> : null}
             </span>
             <span className="ui-context-menu__label">{item.label}</span>
-            {item.shortcut ? <span className="ui-context-menu__shortcut">{item.shortcut}</span> : null}
+            {item.shortcut ? (
+              <span className="ui-context-menu__shortcut">{item.shortcut}</span>
+            ) : null}
           </button>
-        )
-      ))}
+        ),
+      )}
     </div>
   );
 }

@@ -5,14 +5,15 @@
 
 ## Validation Lanes
 
-| 변경 surface | 최소 검증 | 확장 검증 |
-| --- | --- | --- |
-| workspace, package export, lockfile | `pnpm validate` | 공개 경계 검색 |
-| `packages/tokens` CSS 변수 | `pnpm validate` | 샘플 또는 Storybook 시각 확인 |
-| `packages/react` primitive | `pnpm --filter @newchobo-ui/react typecheck` | `pnpm validate`, 브라우저 smoke |
-| `examples/react-sample` | `pnpm --filter @newchobo-ui/react-sample typecheck` | `pnpm --filter @newchobo-ui/react-sample build` |
-| Storybook 설정 또는 stories | `pnpm build:storybook` | interaction test, 브라우저 smoke |
-| README, conventions | 수동 문서 검토 | 공개 경계 검색 |
+| 변경 surface                        | 최소 검증                                           | 확장 검증                                       |
+| ----------------------------------- | --------------------------------------------------- | ----------------------------------------------- |
+| workspace, package export, lockfile | `pnpm validate`                                     | 공개 경계 검색                                  |
+| `packages/tokens` CSS 변수          | `pnpm validate`                                     | 샘플 또는 Storybook 시각 확인                   |
+| `packages/react` primitive          | `pnpm --filter @newchobo-ui/react typecheck`        | `pnpm validate`, 브라우저 smoke                 |
+| `examples/react-sample`             | `pnpm --filter @newchobo-ui/react-sample typecheck` | `pnpm --filter @newchobo-ui/react-sample build` |
+| Storybook 설정 또는 stories         | `pnpm build:storybook`                              | interaction test, 브라우저 smoke                |
+| lint/format 설정                    | `pnpm lint && pnpm format:check`                    | `pnpm validate`                                 |
+| README, conventions                 | 수동 문서 검토                                      | 공개 경계 검색                                  |
 
 ## UI Smoke
 
@@ -45,4 +46,3 @@ UI 변경은 가능한 한 실제 브라우저에서 확인한다.
 - 두 브랜치가 같은 컴포넌트나 CSS token을 건드렸다면 브라우저 smoke 또는
   Storybook build를 병합 후 한 번 더 실행한다.
 - 서로 다른 worktree의 dev server는 포트를 다르게 잡아 결과를 혼동하지 않는다.
-

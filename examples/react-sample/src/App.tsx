@@ -66,7 +66,7 @@ export function App() {
           <SideBarViewFrame
             title="Newchobo UI"
             actions={<IconButton icon="codicon-refresh" label="Refresh" />}
-            headerAddon={(
+            headerAddon={
               <SideBarHeaderControl>
                 <TextInput
                   aria-label="Filter components"
@@ -74,7 +74,7 @@ export function App() {
                   placeholder="Filter"
                 />
               </SideBarHeaderControl>
-            )}
+            }
           >
             <SideBarList fill>
               <SideBarListItem active>Primitives</SideBarListItem>
@@ -93,7 +93,7 @@ export function App() {
         <section className="workbench-editor-area">
           <Panel>
             <PanelHeader
-              actions={(
+              actions={
                 <Toolbar>
                   <Button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
                     {theme === 'dark' ? 'Light' : 'Dark'}
@@ -102,7 +102,7 @@ export function App() {
                     Open dialog
                   </Button>
                 </Toolbar>
-              )}
+              }
             >
               React Sample
             </PanelHeader>
@@ -110,12 +110,7 @@ export function App() {
               <SplitView
                 defaultPrimarySizePercent={58}
                 primary={<PreviewPane denseRows={denseRows} />}
-                secondary={(
-                  <ControlsPane
-                    denseRows={denseRows}
-                    onDenseRowsChange={setDenseRows}
-                  />
-                )}
+                secondary={<ControlsPane denseRows={denseRows} onDenseRowsChange={setDenseRows} />}
               />
             </PanelBody>
           </Panel>
@@ -139,12 +134,12 @@ function PreviewPane({ denseRows }: { denseRows: boolean }) {
   return (
     <Panel className="sample-pane">
       <PanelHeader
-        actions={(
+        actions={
           <Toolbar>
             <Badge>ready</Badge>
             <Badge variant="muted">react</Badge>
           </Toolbar>
-        )}
+        }
       >
         Preview
       </PanelHeader>
@@ -171,13 +166,15 @@ function PreviewPane({ denseRows }: { denseRows: boolean }) {
           </div>
         </div>
         <div className="sample-list" data-density={denseRows ? 'dense' : 'comfortable'}>
-          {['Navigation row', 'Selection row', 'Scrollable content row', 'Action row'].map((item) => (
-            <div key={item} className="sample-list__row">
-              <i className="codicon codicon-file" />
-              <span>{item}</span>
-              <Badge variant="muted">item</Badge>
-            </div>
-          ))}
+          {['Navigation row', 'Selection row', 'Scrollable content row', 'Action row'].map(
+            (item) => (
+              <div key={item} className="sample-list__row">
+                <i className="codicon codicon-file" />
+                <span>{item}</span>
+                <Badge variant="muted">item</Badge>
+              </div>
+            ),
+          )}
         </div>
       </PanelBody>
     </Panel>
@@ -196,7 +193,11 @@ function ControlsPane({
       <PanelHeader>Controls</PanelHeader>
       <PanelBody className="sample-controls">
         <Field label="Display density" description="A compact desktop rhythm for repeated rows.">
-          <Select controlWidth="full" value={denseRows ? 'dense' : 'comfortable'} onChange={(event) => onDenseRowsChange(event.target.value === 'dense')}>
+          <Select
+            controlWidth="full"
+            value={denseRows ? 'dense' : 'comfortable'}
+            onChange={(event) => onDenseRowsChange(event.target.value === 'dense')}
+          >
             <option value="dense">Dense</option>
             <option value="comfortable">Comfortable</option>
           </Select>

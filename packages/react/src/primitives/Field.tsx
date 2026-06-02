@@ -10,9 +10,18 @@ export interface FieldProps {
   label?: ReactNode;
 }
 
-export function Field({ label, children, className, description, htmlFor, inline = false }: FieldProps) {
+export function Field({
+  label,
+  children,
+  className,
+  description,
+  htmlFor,
+  inline = false,
+}: FieldProps) {
   const labelElement = !label ? null : htmlFor ? (
-    <label className="ui-field__label" htmlFor={htmlFor}>{label}</label>
+    <label className="ui-field__label" htmlFor={htmlFor}>
+      {label}
+    </label>
   ) : (
     <span className="ui-field__label">{label}</span>
   );

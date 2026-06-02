@@ -37,14 +37,14 @@ export function ConfirmDialog({
       className={cx('ui-confirm-dialog', className)}
       bodyClassName="ui-confirm-dialog__body"
       onClose={onCancel}
-      footer={(
+      footer={
         <>
           <Button onClick={onCancel}>{cancelLabel}</Button>
           <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </>
-      )}
+      }
     >
       <p className="ui-confirm-dialog__message">{message}</p>
       {detail ? <div className="ui-confirm-dialog__detail">{detail}</div> : null}

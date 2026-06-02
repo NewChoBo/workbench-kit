@@ -51,7 +51,7 @@ export function SideBarViewFrame({
     const scrollHeight = element.scrollHeight;
     const maxScrollTop = scrollHeight - viewportHeight;
     if (viewportHeight <= 0 || maxScrollTop <= 1) {
-      setScrollbar((current) => current.needed ? { needed: false, top: 0, height: 0 } : current);
+      setScrollbar((current) => (current.needed ? { needed: false, top: 0, height: 0 } : current));
       return;
     }
 
@@ -105,8 +105,8 @@ export function SideBarViewFrame({
       if (!element || !dragState || dragState.maxThumbTop <= 0) return;
 
       const deltaY = event.clientY - dragState.startY;
-      element.scrollTop = dragState.startScrollTop
-        + (deltaY / dragState.maxThumbTop) * dragState.maxScrollTop;
+      element.scrollTop =
+        dragState.startScrollTop + (deltaY / dragState.maxThumbTop) * dragState.maxScrollTop;
     };
 
     const handlePointerUp = () => {
@@ -172,9 +172,9 @@ export function SideBarViewFrame({
 
     const updateFooterHeight = () => {
       const nextHeight = Math.ceil(element.getBoundingClientRect().height);
-      setFooterHeight((currentHeight) => (
-        currentHeight === nextHeight ? currentHeight : nextHeight
-      ));
+      setFooterHeight((currentHeight) =>
+        currentHeight === nextHeight ? currentHeight : nextHeight,
+      );
     };
 
     updateFooterHeight();
@@ -194,11 +194,7 @@ export function SideBarViewFrame({
       <PanelHeader actions={actions} className="ui-side-bar-view__header">
         {title}
       </PanelHeader>
-      {headerAddon ? (
-        <div className="ui-side-bar-view__header-addon">
-          {headerAddon}
-        </div>
-      ) : null}
+      {headerAddon ? <div className="ui-side-bar-view__header-addon">{headerAddon}</div> : null}
       <div className="ui-side-bar-view__scroll-region">
         <PanelBody
           {...resolvedBodyProps}

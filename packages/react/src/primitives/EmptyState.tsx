@@ -15,7 +15,10 @@ export function EmptyState({
   ...props
 }: EmptyStateProps) {
   return (
-    <div className={cx('ui-empty-state', compact && 'ui-empty-state--compact', className)} {...props}>
+    <div
+      className={cx('ui-empty-state', compact && 'ui-empty-state--compact', className)}
+      {...props}
+    >
       <i className={`codicon ${icon}`} />
       <span>{children}</span>
     </div>

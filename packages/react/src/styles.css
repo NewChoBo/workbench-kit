@@ -1,5 +1,5 @@
-@import "@newchobo-ui/tokens/styles.css";
-@import "@vscode/codicons/dist/codicon.css";
+@import '@newchobo-ui/tokens/styles.css';
+@import '@vscode/codicons/dist/codicon.css';
 
 .ide-root {
   height: 100%;
@@ -225,7 +225,7 @@
 }
 
 .ui-confirm-dialog__detail code {
-  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
 }
 
 .ui-context-menu {
@@ -272,12 +272,12 @@
   cursor: default;
 }
 
-.ui-context-menu__item[data-danger="true"] {
+.ui-context-menu__item[data-danger='true'] {
   color: var(--color-danger);
 }
 
-.ui-context-menu__item[data-danger="true"]:hover,
-.ui-context-menu__item[data-danger="true"]:focus-visible {
+.ui-context-menu__item[data-danger='true']:hover,
+.ui-context-menu__item[data-danger='true']:focus-visible {
   color: #fff;
   background: var(--color-danger);
 }
@@ -585,10 +585,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  padding:
-    0
-    var(--ui-side-bar-inline-padding)
-    0
+  padding: 0 var(--ui-side-bar-inline-padding) 0
     calc(var(--ui-side-bar-inline-padding) + (var(--depth) * var(--ui-side-bar-tree-indent-step)));
   border: 0;
   border-radius: 0;
@@ -666,13 +663,13 @@
   background: var(--color-accent);
 }
 
-.ui-badge[data-variant="muted"] {
+.ui-badge[data-variant='muted'] {
   color: var(--color-text-muted);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
 }
 
-.ui-badge[data-variant="danger"] {
+.ui-badge[data-variant='danger'] {
   color: #fff;
   background: var(--color-danger);
 }
@@ -697,21 +694,21 @@
   background: var(--color-surface-hover);
 }
 
-.ui-button[data-variant="primary"] {
+.ui-button[data-variant='primary'] {
   border-color: var(--color-accent);
   color: #fff;
   background: var(--color-accent);
 }
 
-.ui-button[data-variant="primary"]:hover {
+.ui-button[data-variant='primary']:hover {
   background: var(--color-accent-hover);
 }
 
-.ui-button[data-variant="danger"] {
+.ui-button[data-variant='danger'] {
   color: var(--color-danger);
 }
 
-.ui-button[data-variant="danger"]:hover {
+.ui-button[data-variant='danger']:hover {
   border-color: var(--color-danger);
   color: #fff;
   background: var(--color-danger);
@@ -743,7 +740,7 @@
   cursor: default;
 }
 
-.ui-icon-button[data-variant="danger"]:hover {
+.ui-icon-button[data-variant='danger']:hover {
   border-color: var(--color-danger);
   color: #fff;
   background: var(--color-danger);
@@ -772,18 +769,18 @@
   padding: 0 8px;
 }
 
-.ui-input[data-width="wide"],
-.ui-select[data-width="wide"] {
+.ui-input[data-width='wide'],
+.ui-select[data-width='wide'] {
   width: 420px;
 }
 
-.ui-input[data-width="full"],
-.ui-select[data-width="full"] {
+.ui-input[data-width='full'],
+.ui-select[data-width='full'] {
   width: 100%;
 }
 
 .ui-input--monospace {
-  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
 }
 
 .ui-input:focus,

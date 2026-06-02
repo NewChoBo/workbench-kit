@@ -8,11 +8,5 @@ export interface BadgeProps extends ComponentPropsWithRef<'span'> {
 }
 
 export function Badge({ className, variant = 'accent', ...props }: BadgeProps) {
-  return (
-    <span
-      className={cx('ui-badge', className)}
-      data-variant={variant}
-      {...props}
-    />
-  );
+  return <span className={cx('ui-badge', className)} data-variant={variant} {...props} />;
 }
