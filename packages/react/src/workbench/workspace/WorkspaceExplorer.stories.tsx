@@ -692,6 +692,35 @@ export const FolderDeleteFlow: Story = {
   },
 };
 
+export const DropTargetHighlightFlow: Story = {
+  render: () => <ExplorerHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const workspaceRoot = canvas.getByRole('list', { name: 'Workspace files' });
+    const docsFolder = canvas.getByRole('button', { name: 'docs' });
+    const appFile = canvas.getByRole('button', { name: 'App.tsx' });
+
+    const dataTransfer = createStoryDataTransfer();
+    await fireEvent.dragStart(appFile, { dataTransfer });
+
+    await fireEvent.dragOver(docsFolder, { dataTransfer });
+    await expect(docsFolder).toHaveClass('ui-side-bar-list-item--drop-target');
+    await expect(workspaceRoot).not.toHaveClass('ui-side-bar-list--drop-target');
+
+    await fireEvent.dragLeave(docsFolder, { dataTransfer, relatedTarget: null });
+    await waitFor(() => expect(docsFolder).not.toHaveClass('ui-side-bar-list-item--drop-target'));
+
+    await fireEvent.dragOver(workspaceRoot, { dataTransfer });
+    await expect(workspaceRoot).toHaveClass('ui-side-bar-list--drop-target');
+    await expect(docsFolder).not.toHaveClass('ui-side-bar-list-item--drop-target');
+
+    await fireEvent.dragLeave(workspaceRoot, { dataTransfer, relatedTarget: null });
+    await waitFor(() => expect(workspaceRoot).not.toHaveClass('ui-side-bar-list--drop-target'));
+
+    await fireEvent.dragEnd(appFile, { dataTransfer });
+  },
+};
+
 export const RootDropFlow: Story = {
   render: () => <ExplorerHarness />,
   play: async ({ canvasElement }) => {

@@ -222,7 +222,9 @@ still not a complete real-use workflow.
     same-parent invalid root drop recovery.
   - Component-level Storybook play coverage covers path-conflict invalid-drop
     recovery.
-  - Remaining: drop-target highlight and automated test-runner gate if desired.
+  - Component-level Storybook play coverage covers folder/root drop-target
+    highlight state.
+  - Remaining: automated test-runner gate if desired.
 - Context menus:
   - Root menu: new file, new folder.
   - File menu: open, rename, copy path, delete.
@@ -437,8 +439,8 @@ independently.
    - Component-level Explorer duplicate-name validation, default name
      suggestion, rename conflict/folder rename, and multi-file delete coverage
      added.
-   - Remaining: Explorer drop-target highlight visual coverage and optional
-     automated test-runner gate.
+   - Component-level Explorer drop-target highlight coverage added.
+   - Remaining: optional automated test-runner gate.
 9. Run `pnpm validate` and browser smoke after each major feature group.
 
 ## Additional Decisions Needed
