@@ -42,6 +42,33 @@ const commands: CommandDefinition<TestContext>[] = [
 ];
 
 describe('commands', () => {
+  it('keeps the last command definition when command IDs collide', () => {
+    const registry = createCommandRegistry<TestContext>([
+      {
+        id: 'dup-open',
+        label: 'first open',
+        run: ({ log }) => log.push('first'),
+      },
+      {
+        id: 'dup-open',
+        label: 'second open',
+        run: ({ log }) => log.push('second'),
+      },
+      {
+        id: 'open',
+        icon: 'codicon-go-to-file',
+        label: ({ target }) => `Open ${target}`,
+        run: ({ log, target }) => log.push(`open:${target}`),
+        shortcut: 'Enter',
+      },
+    ]);
+
+    const context: TestContext = { enabled: false, hidden: false, log: [], target: 'file.ts' };
+
+    expect(executeCommand(registry, 'dup-open', context)).toBe(true);
+    expect(context.log).toEqual(['second']);
+  });
+
   it('projects command definitions into compact menu items', () => {
     const registry = createCommandRegistry(commands);
     const items = resolveCommandMenuItems({
