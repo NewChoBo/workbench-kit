@@ -21,6 +21,7 @@ import { Panel, PanelBody } from '../../layout/Panel';
 import {
   WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
   WORKBENCH_EDITOR_SAVE_COMMAND_ID,
+  WORKBENCH_COMMAND_SURFACE_EDITOR,
   commandMenuItemsToContextMenuItems,
   createWorkbenchEditorCommands,
   createWorkbenchEditorTabListMenuEntries,
@@ -175,6 +176,7 @@ export function WorkspaceEditorPanel({
     return commandMenuItemsToContextMenuItems(
       resolveCommandMenuItems({
         context,
+        surface: WORKBENCH_COMMAND_SURFACE_EDITOR,
         entries: file ? editorTabMenuEntries : editorTabListMenuEntries,
         registry: editorCommandRegistry,
       }),

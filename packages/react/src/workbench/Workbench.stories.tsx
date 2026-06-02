@@ -31,6 +31,8 @@ import {
   commandMenuItemsToContextMenuItems,
   createWorkbenchShellCommands,
   createWorkbenchShellMenuEntries,
+  WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
+  WORKBENCH_COMMAND_SURFACE_WORKSPACE,
   createWorkbenchWorkspaceCommands,
   createWorkbenchWorkspaceCreateMenuEntries,
   createWorkbenchWorkspaceFolderMenuEntries,
@@ -1066,18 +1068,24 @@ function IntegratedWorkbenchShell() {
   const createCommandMenuItems = (
     entries: CommandMenuEntry<StoryCommandContext>[],
     context: StoryCommandContext,
+    surface?: string,
   ): ContextMenuItem[] =>
     commandMenuItemsToContextMenuItems(
       resolveCommandMenuItems({
         context,
         entries,
+        surface,
         registry: storyCommandRegistry,
       }),
       (commandId) => executeCommand(storyCommandRegistry, commandId, context),
     );
 
   const createWorkbenchMenuItems = (): ContextMenuItem[] =>
-    createCommandMenuItems(workbenchMenuEntries, createCommandContext());
+    createCommandMenuItems(
+      workbenchMenuEntries,
+      createCommandContext(),
+      WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
+    );
 
   const createExplorerRootMenuItems = (): ContextMenuItem[] =>
     createCommandMenuItems(
@@ -1132,6 +1140,7 @@ function IntegratedWorkbenchShell() {
         targetPaths,
         workspaceTargetKind: node.type,
       }),
+      WORKBENCH_COMMAND_SURFACE_WORKSPACE,
     );
   };
 
