@@ -154,19 +154,19 @@ The package should evolve beyond a single React package.
 The integrated workbench story is closer to an app shell than before, but it is
 still not a complete real-use workflow.
 
-| Area                   | Current package behavior                                                                                                                                        | Real-use expectation                                                            | Todo                                                        |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Explorer selection     | Controlled file selection props with selected-row styles and selection-aware menu/keyboard/drag targets                                                         | Multi-select should stay aligned through inline edit and drag/drop workflows    | Component play coverage added; keep expanding edge cases    |
-| Explorer creation      | Controlled inline create row with root/folder entry and path validation                                                                                         | New file/folder at root or inside a folder                                      | Component play coverage added; add test-runner gate later   |
-| Explorer rename        | Controlled inline rename row from context menu or `F2`, with path validation                                                                                    | Inline rename, `F2`, blur commit/cancel                                         | Component play coverage added; add folder/conflict variants |
-| Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets                                                       | File, multi-file, and folder deletion with controlled component callbacks       | Component play coverage added; add multi-file variant       |
-| Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves, root drops, and blocked conflicts                 | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add test-runner gate later   |
-| Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage               |
-| Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Add delete/open-tab coordination coverage                   |
-| Chat                   | Generic chat UI plus mock runtime story coverage for send, cancel, streaming chunks, status, workspace write patches, and workspace delete patches              | Runtime-driven send/cancel, streaming chunks, status integration                | Add test-runner gate later if desired                       |
-| Workbench shell state  | Story-local state only                                                                                                                                          | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component      |
-| Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples           |
-| Storybook              | Integrated story owns too much state and behavior                                                                                                               | Stories should compose components with fixtures and mock adapters               | Move reusable logic into package modules                    |
+| Area                   | Current package behavior                                                                                                                                        | Real-use expectation                                                            | Todo                                                      |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Explorer selection     | Controlled file selection props with selected-row styles and selection-aware menu/keyboard/drag targets                                                         | Multi-select should stay aligned through inline edit and drag/drop workflows    | Component play coverage added; keep expanding edge cases  |
+| Explorer creation      | Controlled inline create row with root/folder entry and path validation                                                                                         | New file/folder at root or inside a folder                                      | Component play coverage added; add test-runner gate later |
+| Explorer rename        | Controlled inline rename row from context menu or `F2`, with path validation                                                                                    | Inline rename, `F2`, blur commit/cancel                                         | Component play coverage added; add test-runner gate later |
+| Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets                                                       | File, multi-file, and folder deletion with controlled component callbacks       | Component play coverage added; add test-runner gate later |
+| Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves, root drops, and blocked conflicts                 | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add test-runner gate later |
+| Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage             |
+| Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Add delete/open-tab coordination coverage                 |
+| Chat                   | Generic chat UI plus mock runtime story coverage for send, cancel, streaming chunks, status, workspace write patches, and workspace delete patches              | Runtime-driven send/cancel, streaming chunks, status integration                | Add test-runner gate later if desired                     |
+| Workbench shell state  | Story-local state only                                                                                                                                          | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component    |
+| Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
+| Storybook              | Integrated story owns too much state and behavior                                                                                                               | Stories should compose components with fixtures and mock adapters               | Move reusable logic into package modules                  |
 
 ## Missing Or Incomplete Features From The Reference Workbench
 
@@ -186,9 +186,9 @@ still not a complete real-use workflow.
   - `Escape` cancel and blur/Enter commit behavior.
   - Component-level Storybook play coverage covers root file creation,
     folder-level file creation, root folder creation, folder-level folder
-    creation, `Escape` cancel, and blur/Enter commit.
-  - Remaining: duplicate-name suffixing and simple-name validation variants in
-    component play coverage.
+    creation, duplicate-name suffixing, simple-name validation, duplicate-name
+    validation, `Escape` cancel, and blur/Enter commit.
+  - Remaining: automated test-runner gate if desired.
 - Inline rename:
   - File rename.
   - Folder rename.
@@ -196,19 +196,18 @@ still not a complete real-use workflow.
   - Path conflict validation.
   - Folder rename updates descendant paths, expanded paths, open tabs, and
     selection state.
-  - Component-level Storybook play coverage covers `F2` file rename, `Escape`
-    cancel, and blur commit.
-  - Remaining: folder rename and conflict validation variants in component play
-    coverage.
+  - Component-level Storybook play coverage covers `F2` file rename, folder
+    rename, conflict validation, `Escape` cancel, and blur commit.
+  - Remaining: automated test-runner gate if desired.
 - Delete workflows:
   - File delete confirmation.
   - Multi-file delete confirmation.
   - Folder delete confirmation.
   - Recursive folder deletion.
   - Selection and active tab recovery after deletion.
-  - Component-level Storybook play coverage covers keyboard file delete, folder
-    delete, and selection recovery.
-  - Remaining: multi-file delete component play variants.
+  - Component-level Storybook play coverage covers keyboard file delete,
+    multi-file delete, folder delete, and selection recovery.
+  - Remaining: automated test-runner gate if desired.
 - Drag and drop:
   - Single-file drag through a configurable Explorer drag payload.
   - Multi-file drag through the current Explorer selection.
@@ -435,8 +434,11 @@ independently.
      added.
    - Component-level Explorer blur/cancel, folder delete, and path-conflict
      invalid-drop coverage added.
-   - Remaining: Explorer duplicate-name validation, rename conflict/folder
-     rename, multi-file delete, and optional automated test-runner gate.
+   - Component-level Explorer duplicate-name validation, default name
+     suggestion, rename conflict/folder rename, and multi-file delete coverage
+     added.
+   - Remaining: Explorer drop-target highlight visual coverage and optional
+     automated test-runner gate.
 9. Run `pnpm validate` and browser smoke after each major feature group.
 
 ## Additional Decisions Needed
