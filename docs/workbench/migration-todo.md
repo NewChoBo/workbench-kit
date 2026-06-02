@@ -57,8 +57,9 @@ The stronger architecture reference covers workbench-scale package boundaries.
 
 ### VS Code Reference
 
-VS Code is the public product reference for workbench interaction conventions.
-The package should use VS Code as a behavioral benchmark, not as a visual clone.
+VS Code is the added public product reference for workbench interaction
+conventions. The package should use VS Code as a behavioral benchmark, not as a
+visual clone.
 
 - Explorer workflows should align with familiar file tree behavior: active item
   versus multi-selection, range selection, inline create and rename, drag and
@@ -94,7 +95,7 @@ The package should evolve beyond a single React package.
 - `@newchobo-ui/core` owns framework-neutral command registry, execution,
   separator, visibility/enabled-state, and menu projection helpers.
 - `@newchobo-ui/workspace` owns framework-neutral path, tree, search, selection,
-  type, and virtual workspace model helpers.
+  type, editor draft, and virtual workspace model helpers.
 - `@newchobo-ui/react` consumes `@newchobo-ui/workspace` and keeps existing
   workspace exports available through the React binding package.
 - `@newchobo-ui/react` consumes `@newchobo-ui/core` through a small adapter that
@@ -129,10 +130,12 @@ The package should evolve beyond a single React package.
   context menus including copy path, close, close others, close all, and delete.
 - `WorkspaceEditorPanel` routes Save and Discard toolbar actions through the
   same command registry enabled-state and execution helpers.
+- `WorkspaceEditorPanel` consumes framework-neutral editor draft helpers from
+  `@newchobo-ui/workspace` for dirty-state, save, and discard behavior.
 - Unit tests cover path operations, search, selection, create, rename, move, and
-  delete behavior, plus core command menu projection and execution.
-- The next migration step is to extract reusable editor draft state and add mock
-  runtime fixtures.
+  delete behavior, workspace editor draft helpers, plus core command menu
+  projection and execution.
+- The next migration step is to add mock runtime fixtures.
 
 ## Current Differences From Real Use Cases
 
@@ -147,7 +150,7 @@ still not a complete real-use workflow.
 | Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets                                                       | File, multi-file, and folder deletion with controlled component callbacks       | Component play coverage added; add folder-delete variant  |
 | Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves                                                    | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add root-drop variant      |
 | Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage             |
-| Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, and command-backed tab context menus exist                                       | Tab actions should coordinate with shared workspace state                       | Extract draft state helpers                               |
+| Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Add delete/open-tab coordination coverage                 |
 | Chat                   | Generic chat UI exists                                                                                                                                          | Runtime-driven send/cancel, streaming chunks, status integration                | Add mock-runtime story adapter and streaming fixture      |
 | Workbench shell state  | Story-local state only                                                                                                                                          | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component    |
 | Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
@@ -238,7 +241,8 @@ still not a complete real-use workflow.
 
 - Shared command integration for tab close, close others, close all, copy path,
   delete, save, and discard.
-- Draft state extraction so stories do not own editor persistence rules.
+- Framework-neutral draft state helpers so stories do not own editor persistence
+  rules.
 - Delete confirmation that coordinates with open tabs and selected path.
 - Optional split-editor affordance should stay visual-only until a real split
   contract exists.
