@@ -9,6 +9,7 @@ import {
   joinWorkspacePath,
   parentPathOf,
   type WorkspaceSelectionState,
+  type WorkspaceFile,
   type WorkspaceTreeNode,
 } from '@newchobo-ui/workspace';
 import { SideBarViewFrame } from '../../layout/SideBarViewFrame';
@@ -36,7 +37,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const fixtureFiles = [
+const fixtureFiles: WorkspaceFile[] = [
   {
     content: 'Project notes and setup instructions.',
     mimeType: 'text/markdown',
@@ -61,6 +62,15 @@ const fixtureFiles = [
 
 const fixtureFolders = ['docs', 'src', 'src/components'];
 
+const pathConflictFixtureFiles: WorkspaceFile[] = [
+  ...fixtureFiles,
+  {
+    content: 'Existing button example.',
+    mimeType: 'application/typescript',
+    path: 'docs/Button.tsx',
+  },
+];
+
 interface StoryContextMenuState {
   items: ContextMenuItem[];
   x: number;
@@ -68,20 +78,32 @@ interface StoryContextMenuState {
 }
 
 interface ExplorerHarnessProps {
+  expandedPaths?: string[];
+  files?: WorkspaceFile[];
+  folders?: string[];
+  openPaths?: string[];
+  selectedPath?: string;
   statusLabel?: string;
 }
 
-function ExplorerHarness({ statusLabel = 'Ready' }: ExplorerHarnessProps) {
+function ExplorerHarness({
+  expandedPaths = ['docs', 'src', 'src/components'],
+  files = fixtureFiles,
+  folders = fixtureFolders,
+  openPaths = ['src/App.tsx'],
+  selectedPath = 'src/App.tsx',
+  statusLabel = 'Ready',
+}: ExplorerHarnessProps) {
   const workspace = useVirtualWorkspace({
-    expandedPaths: ['docs', 'src', 'src/components'],
-    files: fixtureFiles,
-    folders: fixtureFolders,
-    openPaths: ['src/App.tsx'],
-    selectedPath: 'src/App.tsx',
+    expandedPaths,
+    files,
+    folders,
+    openPaths,
+    selectedPath,
   });
   const [selection, setSelection] = useState<WorkspaceSelectionState>({
-    anchorPath: 'src/App.tsx',
-    paths: ['src/App.tsx'],
+    anchorPath: selectedPath,
+    paths: selectedPath ? [selectedPath] : [],
   });
   const [inlineEdit, setInlineEdit] = useState<WorkspaceExplorerInlineEditState | undefined>();
   const [contextMenu, setContextMenu] = useState<StoryContextMenuState | null>(null);
@@ -252,6 +274,15 @@ function ExplorerHarness({ statusLabel = 'Ready' }: ExplorerHarnessProps) {
       sourcePaths,
       targetFolderPath,
     });
+
+    if (plan.moves.length === 0) {
+      setStatus(
+        plan.blockedPaths.length === 1
+          ? `Move blocked for ${plan.blockedPaths[0]}`
+          : `Move blocked for ${plan.blockedPaths.length} files`,
+      );
+      return;
+    }
 
     plan.moves.forEach(({ sourcePath }) => workspace.moveFile(sourcePath, targetFolderPath));
     setSelection({
@@ -427,6 +458,61 @@ export const CreateAndRenameFlow: Story = {
   },
 };
 
+export const InlineEditBoundaryFlow: Story = {
+  render: () => <ExplorerHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const eventLog = canvas.getByLabelText('Explorer event log');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'New folder' }));
+    const canceledFolderInput = await canvas.findByLabelText('Workspace item name');
+    await expect(canceledFolderInput).toHaveValue('new-folder');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(canvas.queryByLabelText('Workspace item name')).toBeNull());
+    await expect(canvas.queryByRole('button', { name: 'new-folder' })).toBeNull();
+    await expect(eventLog).toHaveTextContent('Inline edit canceled');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'New folder' }));
+    const rootFolderInput = await canvas.findByLabelText('Workspace item name');
+    await userEvent.clear(rootFolderInput);
+    await userEvent.type(rootFolderInput, 'assets');
+    await userEvent.tab();
+    await expect(await canvas.findByRole('button', { name: 'assets' })).toBeVisible();
+    await expect(eventLog).toHaveTextContent('Created folder assets');
+
+    await fireEvent.contextMenu(canvas.getByRole('button', { name: 'docs' }));
+    await userEvent.click(await canvas.findByRole('menuitem', { name: 'New folder' }));
+    const nestedFolderInput = await canvas.findByLabelText('Workspace item name');
+    await userEvent.clear(nestedFolderInput);
+    await userEvent.type(nestedFolderInput, 'guides');
+    await userEvent.keyboard('{Enter}');
+    await expect(await canvas.findByRole('button', { name: 'guides' })).toBeVisible();
+    await expect(eventLog).toHaveTextContent('Created folder docs/guides');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'App.tsx' }));
+    await userEvent.keyboard('{F2}');
+    const canceledRenameInput = await canvas.findByLabelText('Workspace item name');
+    await expect(canceledRenameInput).toHaveValue('App.tsx');
+    await userEvent.clear(canceledRenameInput);
+    await userEvent.type(canceledRenameInput, 'Draft.tsx');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(canvas.queryByLabelText('Workspace item name')).toBeNull());
+    await expect(canvas.getByRole('button', { name: 'App.tsx' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Draft.tsx' })).toBeNull();
+    await expect(eventLog).toHaveTextContent('Inline edit canceled');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'App.tsx' }));
+    await userEvent.keyboard('{F2}');
+    const blurRenameInput = await canvas.findByLabelText('Workspace item name');
+    await userEvent.clear(blurRenameInput);
+    await userEvent.type(blurRenameInput, 'Main.tsx');
+    await userEvent.tab();
+    await expect(await canvas.findByRole('button', { name: 'Main.tsx' })).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'App.tsx' })).toBeNull();
+    await expect(eventLog).toHaveTextContent('Renamed src/App.tsx to src/Main.tsx');
+  },
+};
+
 export const DeleteAndDragDropFlow: Story = {
   render: () => <ExplorerHarness />,
   play: async ({ canvasElement }) => {
@@ -471,6 +557,26 @@ export const DeleteAndDragDropFlow: Story = {
   },
 };
 
+export const FolderDeleteFlow: Story = {
+  render: () => <ExplorerHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await fireEvent.contextMenu(canvas.getByRole('button', { name: 'docs' }));
+    await userEvent.click(await canvas.findByText('Delete'));
+
+    await expect(canvas.queryByRole('button', { name: 'docs' })).toBeNull();
+    await expect(canvas.queryByRole('button', { name: 'intro.md' })).toBeNull();
+    await expect(canvas.getByRole('button', { name: 'App.tsx' })).toHaveAttribute(
+      'data-selected',
+      'true',
+    );
+    await expect(canvas.getByLabelText('Explorer event log')).toHaveTextContent(
+      'Deleted folder docs',
+    );
+  },
+};
+
 export const RootDropFlow: Story = {
   render: () => <ExplorerHarness />,
   play: async ({ canvasElement }) => {
@@ -506,6 +612,36 @@ export const RootDropFlow: Story = {
     );
   },
 };
+
+export const PathConflictDropFlow: Story = {
+  render: () => <ExplorerHarness files={pathConflictFixtureFiles} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const docsFolder = canvas.getByRole('button', { name: 'docs' });
+    const sourceButton = getWorkspaceItem(canvasElement, 'src/components/Button.tsx');
+
+    const dataTransfer = createStoryDataTransfer();
+    await fireEvent.dragStart(sourceButton, { dataTransfer });
+    await fireEvent.dragOver(docsFolder, { dataTransfer });
+    await fireEvent.drop(docsFolder, { dataTransfer });
+
+    await expect(canvas.getByLabelText('Explorer event log')).toHaveTextContent(
+      'Move blocked for src/components/Button.tsx',
+    );
+    await expect(getWorkspaceItem(canvasElement, 'src/components/Button.tsx')).toBeVisible();
+    await expect(getWorkspaceItem(canvasElement, 'docs/Button.tsx')).toBeVisible();
+    await expect(getWorkspaceItem(canvasElement, 'src/components/Button.tsx')).toHaveAttribute(
+      'data-selected',
+      'true',
+    );
+  },
+};
+
+function getWorkspaceItem(canvasElement: HTMLElement, path: string) {
+  const item = canvasElement.querySelector<HTMLButtonElement>(`[data-workspace-path="${path}"]`);
+  if (!item) throw new Error(`Missing workspace item for ${path}`);
+  return item;
+}
 
 function isUnderWorkspacePath(path: string, parentPath: string) {
   return path === parentPath || path.startsWith(`${parentPath}/`);
