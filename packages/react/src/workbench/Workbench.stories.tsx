@@ -1,5 +1,6 @@
 import { useState, type MouseEvent, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, fireEvent, userEvent, within } from 'storybook/test';
 import {
   commandMenuSeparator,
   createCommandRegistry,
@@ -445,6 +446,35 @@ export const SettingsDialog: Story = {
 
 export const IntegratedShell: Story = {
   render: () => <IntegratedWorkbenchShell />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const statusBar = canvas.getByLabelText('Status bar');
+
+    await fireEvent.contextMenu(canvas.getByRole('button', { name: 'Explorer' }));
+    await expect(await canvas.findByRole('menu', { name: 'Activity bar menu' })).toBeVisible();
+    await userEvent.click(await canvas.findByRole('menuitem', { name: 'Search' }));
+    await expect(await canvas.findByRole('textbox', { name: 'Search workspace' })).toBeVisible();
+    await expect(statusBar).toHaveTextContent('Search opened');
+
+    await fireEvent.contextMenu(
+      await canvas.findByRole('button', { name: /src\/components\/.*Button.*\.tsx/ }),
+    );
+    await expect(await canvas.findByRole('menu', { name: 'Search result menu' })).toBeVisible();
+    await userEvent.click(await canvas.findByRole('menuitem', { name: 'Copy path' }));
+    await expect(statusBar).toHaveTextContent('Copied src/components/Button.tsx');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Explorer' }));
+    await expect(await canvas.findByRole('textbox', { name: 'Filter Explorer' })).toBeVisible();
+    await fireEvent.contextMenu(canvas.getByRole('tab', { name: /App\.tsx/ }));
+    await expect(await canvas.findByRole('menu', { name: 'Editor tab menu' })).toBeVisible();
+    await userEvent.click(await canvas.findByRole('menuitem', { name: 'Copy path' }));
+    await expect(statusBar).toHaveTextContent('Copied src/App.tsx');
+
+    await fireEvent.contextMenu(canvas.getByLabelText('Primary sidebar'));
+    await expect(await canvas.findByRole('menu', { name: 'Primary sidebar menu' })).toBeVisible();
+    await expect(await canvas.findByRole('menuitem', { name: 'New file' })).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+  },
 };
 
 function SettingsDialogPreview() {
