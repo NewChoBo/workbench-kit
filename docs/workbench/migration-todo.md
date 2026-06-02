@@ -602,59 +602,18 @@ independently.
 
 ## 확인 필요사항
 
-- `resolveCommandMenuItems(..., surface)`를 호출하지 않고 메뉴를 결합하는 통합 지점이
-  향후 추가되지 않도록, 새 통합 지점에서 policy 준수 여부 점검이 필요합니다.
-- 플러그인 기여가 기존 명령(`commandId`)과 충돌할 때 우선순위/오버레이 규칙(현재 기본은
-  마지막 등록값 우선)을 명확히 하고, 하드 에러 정책 도입 필요 여부를 결정해야 합니다.
-- Storybook `play` 시나리오를 `pnpm validate`의 필수 게이트로 올릴지에 대한 최소
-  기준(Explorer/Search/Editor/Chat 중 어떤 흐름이 mandatory인지)을 확정해야 합니다.
-- `surface` 제약이 단일 surface(`'search'`)만 허용해야 하는지, 아니면 다중 surface
-  설정이 필요한 케이스를 위해 배열/목록 확장 정책이 필요한지 정리해야 합니다.
-- `pnpm test:storybook-play`는 현재 `@storybook/test-runner` 미설치로 스킵됩니다.  
-  이 검증을 `pnpm validate:full`에서 필수로 돌릴지, 또는 별도 실행 의존성으로
-  유지할지 결정이 필요합니다.
-
-## 현재 상태 기반 추가 확인필요사항 (2026-06-03 기준)
-
-- `test:storybook-play:required`가 실제 CI에서 실패 전파 규칙으로 동작하려면,
-  `@storybook/test-runner` 설치와 함께 `test-storybook` 실행 채널(`test-storybook`/`storybook test`)
-  정책을 먼저 확정해야 합니다.
-- Storybook play 게이트의 우선순위 기준을 무엇으로 고정할지 결정이 필요합니다.
-  - 제안: `WorkspaceExplorer/CreateAndRenameFlow`,
-    `WorkspaceSearchPanel/ResultMenuFlow`,
-    `WorkspaceEditorPanel/OpenTabCoordinationFlow`,
-    `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`,
-    `ChatPanel/CancelRuntimeFlow`
-    를 최소 필수 세트로 고정하고, 첫 2회 연속 실패 시 원인 분류(환경 이슈/동기 이슈/테스트 이슈) 규칙을 문서화.
-- plugin 설치 범위를 1차 기능으로 제한할 때 (`command/view/settings`), 2차 확장(권한/추천/업데이트/신뢰)
-  전환 임계조건을 정량 기준(리스크, 사용자 스토리, API 변동 범위)으로 정해야 합니다.
-- `StatusBar`의 섹션/아이템 정렬/그룹 동작이 요구되는 경우, 현재 정렬 규칙이
-  단순 배열 인덱스 의존인지 또는 `priority/group` 메타 확장인지 사전 결정이 필요합니다.
-- `openSettings`의 surface를 `activityBar`에만 고정한 상태에서, settings 전용 메뉴/호출점이 필요해지면
-  surface 정책 확장 또는 별도 command 그룹 설계를 어떻게 연결할지 결정이 필요합니다.
-
-## 추가작업 권장사항 검토 결과
-
-- 상태: `test:storybook-play`는 실행 환경이 준비되면 바로 `validate:full`에 포함 가능하되,
-  지금은 의존성 준비 미완성으로 `test:storybook-play:required`는 `optional` 게이트로만 둠.
-- `openSettings`는 초기 정책(`activityBar` surface만 노출)을 유지하며, settings 전용 surface는
-  독립 메뉴 전략이 추가되는 마일스톤에서만 도입.
-- 플러그인 충돌 정책은 현재 `last-write-wins`로 문서화되어 있고 동작이 테스트로 보장되어 있음.
-- `surface` 메타는 현재 `string[]` 스펙으로 충분하나, host merge에서 정렬/그룹 규칙이
-  필요해지면 `priority/group` 메타 확장과 정렬 규칙 고정이 선행되어야 함.
-
-### 권장되는 1차 액션 (다음 2개 마일스톤)
-
-- 1. `validate:full`에서는 `test:storybook-play:required`로 전환(환경 준비 완료 시).
-  - 기준: `WorkspaceExplorer/CreateAndRenameFlow`,
-    `WorkspaceSearchPanel/ResultMenuFlow`,
-    `WorkspaceEditorPanel/OpenTabCoordinationFlow`,
-    `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`,
-    `ChatPanel/CancelRuntimeFlow` 5종을 필수 baseline.
-- 2. plugin 기여 범위를 `command/view/settings`로 제한해 최소 API를 먼저 안정화한 뒤,
-     다음 단계에서 trust/enable/recommend/update를 추가.
-- 3. package-manager hard-block은 현재 preinstall 가드로 충분하나,
-     운영 문서에서 `npm` 실행 시 정식 대응 메시지와 예외 시나리오를 한 페이지에 통합.
+| 항목                        | 상태   | 모호 포인트                                  | 다음 확인/결정 액션                                                                                                                                                                                                       |
+| --------------------------- | ------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storybook play 필수 게이트  | 진행중 | `storybook-play` 실행 채널/의존성 미확정     | `@storybook/test-runner` 설치 후 `test:storybook-play:required`를 `validate:full`에서 실행되도록 전환할지 결정                                                                                                            |
+| Play 플로우 최소 기준       | 진행중 | 필수 baseline 최소 5개 흐름 미확정           | `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`, `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`, `ChatPanel/CancelRuntimeFlow` 우선 적용 |
+| `openSettings` surface 정책 | 반영됨 | settings surface 확장 타이밍 미확정          | settings 전용 surface는 전용 메뉴 체인 필요 시 별도 milestone에서 도입                                                                                                                                                    |
+| plugin command 충돌 정책    | 반영됨 | 하드 오버레이 정책 미결정                    | 기본은 `last-write-wins`; hard-error overlay 정책의 전환 조건을 다음 마일스톤에서 확정                                                                                                                                    |
+| surface 메타 구조           | 미결정 | 정렬/그룹 메타가 필요한지 미정               | `string[] surfaces`로 `command/menu` 동작은 충족되며, 다중 surface 병합 시 ordering/grouping 메타 요구 여부를 사용성 테스트로 검증                                                                                        |
+| plugin 기여 범위(기본/확장) | 미결정 | trust/enable/recommend/update 범위 미정      | 1차 기여는 `command/view/settings`로 고정, 2차 확장은 리스크/스토리/변경 범위 기준으로 별도 정량문턱치 설정                                                                                                               |
+| package-manager 운영 정책   | 진행중 | 예외 시나리오(문서/CI 가드) 문서화 필요      | `npm` accidental 실행 가드는 preinstall에서 제어 중이나 대응 문서(문제 대응/예외 절차)를 루트 문서로 통합                                                                                                                 |
+| workspace API boundary      | 미결정 | fixture/state adapter 경계 미정              | `@newchobo-ui/workspace`는 도메인 공통/필수 유틸 우선, story-only fixture는 테스트/스토리 전용으로 분리 기준 문서화                                                                                                       |
+| folder 작업 소유권          | 미결정 | side-effect(입출력/확인/알림) 책임 선점 미정 | reducer는 상태변경·검증, 호스트 콜백은 I/O/확인/알림/권한 분기 규칙을 문서·테스트로 명시                                                                                                                                  |
+| StatusBar merge 정렬        | 미결정 | deterministic ordering 메타 미정             | host 병합 시 정렬 규칙(삽입 순/우선순위) 1개를 결정해 테스트로 회귀 검증                                                                                                                                                  |
 
 ## Milestone Decisions Completed
 
