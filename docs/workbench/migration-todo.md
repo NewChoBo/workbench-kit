@@ -634,3 +634,29 @@ workbench platform:
 - Which recommendation becomes the gate for the next milestone?
 - What is the minimum acceptance criteria for plugin-contribution support?
 - Which Storybook interaction flows must be mandatory for CI baseline confidence?
+
+## Current Verification Baseline (2026-06-03)
+
+- `pnpm validate` passes on clean working tree (typecheck/lint/test/format/storybook build).
+- `pnpm test:storybook-play` currently exits `0` with explicit skip notice because
+  `@storybook/test-runner` is not installed.
+- `Workspace.stories.tsx` integration menu wiring now passes surface through:
+  - workbench/activity menus: `WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR`
+  - explorer root menu: `WORKBENCH_COMMAND_SURFACE_WORKSPACE`
+  - workspace item menus: `WORKBENCH_COMMAND_SURFACE_WORKSPACE`
+  - search panel menu: `WORKBENCH_COMMAND_SURFACE_SEARCH`
+  - editor tab menus: `WORKBENCH_COMMAND_SURFACE_EDITOR`
+- `migration-todo.md` now records that explorer root 메뉴 is constrained to
+  workspace-only menu entries in Storybook integration.
+
+## Next Clarification Questions (for next milestone)
+
+- Which Storybook `play` flows are mandatory by default in CI?
+  - Suggested minimum (for confidence with low flake risk): Explorer root/create+rename,
+    multi-file delete, Search open/copy/delete one path, Editor close/save/discard,
+    Chat send/cancel/first chunk.
+- Should `play` execution remain optional while adding `@storybook/test-runner`
+  later, or become part of `validate:full` immediately once flake profile is measured?
+- For plugin command conflicts, which policy is chosen first: override-by-source,
+  source-order overlay, or hard error on duplicate `commandId`?
+- Should settings surface for `workspace.openSettings` remain dual surface or be narrowed?
