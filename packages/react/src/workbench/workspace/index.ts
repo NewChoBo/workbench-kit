@@ -15,11 +15,23 @@ export type { WorkspaceSearchResultsProps } from './WorkspaceSearchResults';
 export {
   extensionOfPath,
   fileNameOfPath,
+  isSimpleWorkspaceName,
+  joinWorkspacePath,
   normalizeWorkspacePath,
+  parentPathOf,
+  parentPathsOf,
   workspacePathSegments,
 } from './path';
 export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
 export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
+export { useVirtualWorkspace } from './useVirtualWorkspace';
+export type {
+  CreateWorkspaceFileInput,
+  VirtualWorkspaceApi,
+  VirtualWorkspaceInitialState,
+  VirtualWorkspaceState,
+  WriteWorkspaceFileInput,
+} from './useVirtualWorkspace';
 export type {
   VisibleWorkspaceNode,
   WorkspaceFile,

@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
+import { useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SideBarHeaderControl, SideBarViewFrame } from '../layout/SideBarViewFrame';
 import { ContextMenu, type ContextMenuItem } from '../overlay/ContextMenu';
@@ -20,11 +20,9 @@ import {
   type WorkspaceEditorTheme,
   WorkspaceExplorer,
   WorkspaceSearchResults,
-  buildWorkspaceTree,
   fileNameOfPath,
-  searchWorkspaceFiles,
+  useVirtualWorkspace,
   type WorkspaceFile,
-  type WorkspaceSearchResult,
   type WorkspaceTreeNode,
 } from './workspace';
 
@@ -253,14 +251,6 @@ function getActivityItems(activeActivityId = 'explorer') {
   }));
 }
 
-function getActiveFile(activeItemId: string, files: WorkspaceFile[]) {
-  return (
-    files.find((file) => file.path === activeItemId) ??
-    files.find((file) => file.path === defaultSelectionByActivity.explorer) ??
-    files[0]
-  );
-}
-
 export const ActivityRail: Story = {
   render: () => (
     <div style={{ height: 360, background: 'var(--color-bg)' }}>
@@ -427,36 +417,45 @@ function SettingsDialogPreview() {
 }
 
 function IntegratedWorkbenchShell() {
-  const [files, setFiles] = useState(workspaceFiles);
   const [activeActivityId, setActiveActivityId] = useState<StoryActivityId>('explorer');
-  const [activeItemId, setActiveItemId] = useState(defaultSelectionByActivity.explorer);
   const [chatDraft, setChatDraft] = useState('');
   const [compactRows, setCompactRows] = useState(true);
   const [contextMenu, setContextMenu] = useState<StoryContextMenuState | null>(null);
   const [colorTheme, setColorTheme] = useState<StoryTheme>('dark');
-  const [expandedPaths, setExpandedPaths] = useState(() => new Set(['src', 'src/components']));
   const [filterQuery, setFilterQuery] = useState('');
   const [isPrimarySideBarVisible, setIsPrimarySideBarVisible] = useState(true);
   const [, setLastCommandLabel] = useState('Idle');
-  const [searchQuery, setSearchQuery] = useState('button');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsCategoryId, setSettingsCategoryId] = useState('appearance');
   const [settingsScopeId, setSettingsScopeId] = useState('user');
   const [settingsSearchValue, setSettingsSearchValue] = useState('');
   const [sideBarSizePercent, setSideBarSizePercent] = useState(24);
-  const [openPaths, setOpenPaths] = useState([
-    'src/App.tsx',
-    'src/components/Button.tsx',
-    'src/workbench/Shell.tsx',
-  ]);
-  const workspaceTree = useMemo(() => buildWorkspaceTree(workspaceFolders, files), [files]);
+  const workspace = useVirtualWorkspace({
+    expandedPaths: ['src', 'src/components'],
+    files: workspaceFiles,
+    folders: workspaceFolders,
+    openPaths: ['src/App.tsx', 'src/components/Button.tsx', 'src/workbench/Shell.tsx'],
+    searchQuery: 'button',
+    selectedPath: defaultSelectionByActivity.explorer,
+  });
+  const {
+    closeAll: closeAllFiles,
+    closeOthers: closeOtherFiles,
+    closePath: closeWorkspacePath,
+    deleteFile: deleteWorkspaceFile,
+    expandedPaths,
+    files,
+    openFile,
+    openPaths,
+    saveFile: saveWorkspaceFile,
+    searchQuery,
+    searchResults: filteredSearchResults,
+    selectedPath,
+    setSearchQuery,
+    toggleFolder,
+    workspaceTree,
+  } = workspace;
   const activeActivity = storyActivities[activeActivityId];
-  const activeFile = getActiveFile(activeItemId, files);
-
-  const filteredSearchResults = useMemo(
-    () => searchWorkspaceFiles(files, searchQuery),
-    [files, searchQuery],
-  );
   const openContextMenu = (
     event: MouseEvent<HTMLElement>,
     items: ContextMenuItem[],
@@ -468,7 +467,6 @@ function IntegratedWorkbenchShell() {
 
   const showActivity = (activityId: StoryActivityId) => {
     setActiveActivityId(activityId);
-    setActiveItemId(defaultSelectionByActivity[activityId]);
     setIsPrimarySideBarVisible(true);
     setLastCommandLabel(`${storyActivities[activityId].label} opened`);
   };
@@ -484,72 +482,37 @@ function IntegratedWorkbenchShell() {
   };
 
   const activateFile = (path: string) => {
-    setActiveItemId(path);
-    setOpenPaths((current) => (current.includes(path) ? current : [...current, path]));
+    openFile(path);
     setLastCommandLabel(`Opened ${path}`);
   };
 
-  const activateSearchResult = (result: WorkspaceSearchResult) => {
+  const activateSearchResult = (result: (typeof filteredSearchResults)[number]) => {
     activateFile(result.path);
   };
 
   const closePath = (path: string) => {
-    setOpenPaths((current) => {
-      const next = current.filter((openPath) => openPath !== path);
-      if (activeItemId === path) {
-        setActiveItemId(next[0] ?? defaultSelectionByActivity.explorer);
-      }
-      return next;
-    });
+    closeWorkspacePath(path);
     setLastCommandLabel(`Closed ${path}`);
   };
 
   const closeOthers = (path: string) => {
-    setOpenPaths([path]);
-    setActiveItemId(path);
+    closeOtherFiles(path);
     setLastCommandLabel(`Closed other files`);
   };
 
   const closeAll = () => {
-    setOpenPaths([]);
+    closeAllFiles();
     setLastCommandLabel('Closed all files');
   };
 
   const saveFile = (path: string, content: string) => {
-    setFiles((current) =>
-      current.map((file) =>
-        file.path === path
-          ? {
-              ...file,
-              content,
-              source: 'user',
-              updatedAt: new Date().toISOString(),
-            }
-          : file,
-      ),
-    );
+    saveWorkspaceFile(path, { content, source: 'user' });
     setLastCommandLabel(`Saved ${path}`);
   };
 
   const deleteFile = (path: string) => {
-    setFiles((current) => current.filter((file) => file.path !== path));
-    setOpenPaths((current) => current.filter((openPath) => openPath !== path));
-    if (activeItemId === path) {
-      setActiveItemId(defaultSelectionByActivity.explorer);
-    }
+    deleteWorkspaceFile(path);
     setLastCommandLabel(`Deleted ${path}`);
-  };
-
-  const toggleFolder = (path: string) => {
-    setExpandedPaths((current) => {
-      const next = new Set(current);
-      if (next.has(path)) {
-        next.delete(path);
-      } else {
-        next.add(path);
-      }
-      return next;
-    });
   };
 
   const createWorkbenchMenuItems = (): ContextMenuItem[] => [
@@ -596,7 +559,9 @@ function IntegratedWorkbenchShell() {
       icon: node.type === 'folder' ? 'codicon-folder-opened' : 'codicon-go-to-file',
       onSelect: () => {
         if (node.type === 'folder') {
-          setExpandedPaths((current) => new Set(current).add(node.path));
+          if (!expandedPaths.has(node.path)) {
+            toggleFolder(node.path);
+          }
           setLastCommandLabel(`Revealed ${node.path}`);
           return;
         }
@@ -644,7 +609,7 @@ function IntegratedWorkbenchShell() {
       <WorkspaceEditorPanel
         files={files}
         openPaths={openPaths}
-        selectedPath={activeFile.path}
+        selectedPath={selectedPath}
         theme={colorTheme}
         onCloseAll={closeAll}
         onCloseOthers={closeOthers}
@@ -760,7 +725,7 @@ function IntegratedWorkbenchShell() {
                   >
                     {activeActivityId === 'explorer' ? (
                       <WorkspaceExplorer
-                        activePath={activeItemId}
+                        activePath={selectedPath}
                         expandedPaths={expandedPaths}
                         filterQuery={filterQuery}
                         nodes={workspaceTree}
@@ -777,7 +742,7 @@ function IntegratedWorkbenchShell() {
                     ) : null}
                     {activeActivityId === 'search' ? (
                       <WorkspaceSearchResults
-                        activePath={activeItemId}
+                        activePath={selectedPath}
                         query={searchQuery}
                         results={filteredSearchResults}
                         onActivateResult={activateSearchResult}
