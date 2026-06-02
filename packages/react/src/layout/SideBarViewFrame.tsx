@@ -265,33 +265,43 @@ export interface SideBarListItemProps extends ComponentPropsWithRef<'button'> {
   variant?: 'default' | 'stacked';
 }
 
-export function SideBarListItem({
-  active,
-  className,
-  depth = 0,
-  dropTarget,
-  style,
-  type = 'button',
-  variant = 'default',
-  ...props
-}: SideBarListItemProps) {
-  const depthStyle = { '--depth': depth, ...style } as CSSProperties;
+export const SideBarListItem = forwardRef<HTMLButtonElement, SideBarListItemProps>(
+  function SideBarListItem(
+    {
+      active,
+      'aria-current': ariaCurrent,
+      className,
+      depth = 0,
+      dropTarget,
+      style,
+      type = 'button',
+      variant = 'default',
+      ...props
+    },
+    ref,
+  ) {
+    const depthStyle = { '--depth': depth, ...style } as CSSProperties;
 
-  return (
-    <button
-      type={type}
-      className={cx(
-        'ui-side-bar-list-item',
-        variant === 'stacked' && 'ui-side-bar-list-item--stacked',
-        active && 'ui-side-bar-list-item--active',
-        dropTarget && 'ui-side-bar-list-item--drop-target',
-        className,
-      )}
-      style={depthStyle}
-      {...props}
-    />
-  );
-}
+    return (
+      <li className="ui-side-bar-list-entry">
+        <button
+          ref={ref}
+          type={type}
+          aria-current={ariaCurrent ?? (active ? 'true' : undefined)}
+          className={cx(
+            'ui-side-bar-list-item',
+            variant === 'stacked' && 'ui-side-bar-list-item--stacked',
+            active && 'ui-side-bar-list-item--active',
+            dropTarget && 'ui-side-bar-list-item--drop-target',
+            className,
+          )}
+          style={depthStyle}
+          {...props}
+        />
+      </li>
+    );
+  },
+);
 
 export type SideBarRowProps = ComponentPropsWithRef<'div'>;
 
