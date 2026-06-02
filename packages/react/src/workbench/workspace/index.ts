@@ -1,5 +1,5 @@
-export { WorkspaceEditor, languageForFile } from './WorkspaceEditor';
-export type { WorkspaceEditorProps } from './WorkspaceEditor';
+export { WorkspaceEditor, languageForFile, monacoThemeForWorkspaceTheme } from './WorkspaceEditor';
+export type { WorkspaceEditorProps, WorkspaceEditorTheme } from './WorkspaceEditor';
 export { WorkspaceEditorPanel } from './WorkspaceEditorPanel';
 export type { WorkspaceEditorPanelProps } from './WorkspaceEditorPanel';
 export { WorkspaceExplorer } from './WorkspaceExplorer';

@@ -6,7 +6,7 @@ import { IconButton } from '../../primitives/IconButton';
 import { Toolbar } from '../../primitives/Toolbar';
 import { Panel, PanelBody } from '../../layout/Panel';
 import { fileNameOfPath } from './path';
-import { WorkspaceEditor } from './WorkspaceEditor';
+import { WorkspaceEditor, type WorkspaceEditorTheme } from './WorkspaceEditor';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceFile } from './types';
 
@@ -27,6 +27,7 @@ export interface WorkspaceEditorPanelProps {
   onSelectedPathChange: (path: string) => void;
   openPaths: string[];
   selectedPath?: string;
+  theme?: WorkspaceEditorTheme;
 }
 
 function resolveDraft(file: WorkspaceFile, draft: FileDraft | undefined): FileDraft {
@@ -59,6 +60,7 @@ export function WorkspaceEditorPanel({
   onSelectedPathChange,
   openPaths,
   selectedPath,
+  theme,
 }: WorkspaceEditorPanelProps) {
   const filesByPath = useMemo(() => new Map(files.map((file) => [file.path, file])), [files]);
   const openFiles = openPaths
@@ -266,6 +268,7 @@ export function WorkspaceEditorPanel({
                 file={selectedFile}
                 readOnly={false}
                 showHeader={false}
+                theme={theme}
                 value={selectedContent}
                 onChange={(content) => updateDraft(selectedFile.path, content)}
                 onSave={(content) => saveFile(selectedFile.path, content)}

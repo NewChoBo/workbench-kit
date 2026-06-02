@@ -1047,6 +1047,14 @@
 
 .workbench-monaco-panel__body {
   overflow: hidden;
+  background: var(--color-bg);
+}
+
+.workspace-editor__monaco {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--color-bg);
 }
 
 .workbench-status-dot {

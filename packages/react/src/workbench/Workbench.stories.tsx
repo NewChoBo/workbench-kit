@@ -19,6 +19,7 @@ import { SplitView } from './SplitView';
 import { StatusBar, StatusBarItem, StatusBarSection } from './StatusBar';
 import {
   WorkspaceEditorPanel,
+  type WorkspaceEditorTheme,
   WorkspaceExplorer,
   WorkspaceSearchPanel,
   WorkspaceSearchResults,
@@ -41,6 +42,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 type StoryActivityId = 'explorer' | 'search' | 'chat';
+type StoryTheme = WorkspaceEditorTheme;
 
 interface StoryActivity {
   icon: ReactNode;
@@ -371,10 +373,10 @@ function SettingsDialogPreview() {
   const [compactRows, setCompactRows] = useState(true);
   const [isOpen, setIsOpen] = useState(true);
   const [searchValue, setSearchValue] = useState('');
-  const [theme, setTheme] = useState('Dark Modern');
+  const [theme, setTheme] = useState<StoryTheme>('dark');
 
   return (
-    <div style={{ minHeight: 640, background: 'var(--color-bg)' }}>
+    <div data-theme={theme} style={{ minHeight: 640, background: 'var(--color-bg)' }}>
       <div style={{ padding: 20 }}>
         <Button variant="primary" onClick={() => setIsOpen(true)}>
           Open settings
@@ -472,11 +474,10 @@ function SettingsDialogPreview() {
                     id="settings-preview-theme"
                     controlWidth="full"
                     value={theme}
-                    onChange={(event) => setTheme(event.currentTarget.value)}
+                    onChange={(event) => setTheme(event.currentTarget.value as StoryTheme)}
                   >
-                    <option>Dark Modern</option>
-                    <option>Light Modern</option>
-                    <option>High Contrast</option>
+                    <option value="dark">Dark Modern</option>
+                    <option value="light">Light Modern</option>
                   </Select>
                 </Field>
               </WorkbenchSettingsSection>
@@ -495,7 +496,7 @@ function IntegratedWorkbenchShell() {
   const [chatDraft, setChatDraft] = useState('');
   const [compactRows, setCompactRows] = useState(true);
   const [contextMenu, setContextMenu] = useState<StoryContextMenuState | null>(null);
-  const [colorTheme, setColorTheme] = useState('Dark Modern');
+  const [colorTheme, setColorTheme] = useState<StoryTheme>('dark');
   const [expandedPaths, setExpandedPaths] = useState(() => new Set(['src', 'src/components']));
   const [filterQuery, setFilterQuery] = useState('');
   const [isPrimarySideBarVisible, setIsPrimarySideBarVisible] = useState(true);
@@ -734,6 +735,7 @@ function IntegratedWorkbenchShell() {
               activeFile,
               activeItemId,
               activeLabel,
+              colorTheme,
               compactRows,
               files,
               filteredSearchResults,
@@ -796,7 +798,7 @@ function IntegratedWorkbenchShell() {
   );
 
   return (
-    <main className="ide-root" style={{ height: 640, minHeight: 0 }}>
+    <main className="ide-root" data-theme={colorTheme} style={{ height: 640, minHeight: 0 }}>
       <div className="ide-body">
         <ActivityBar
           items={getActivityItems(activeActivityId)}
@@ -1000,6 +1002,7 @@ function IntegratedWorkbenchShell() {
                 variant="danger"
                 onClick={() => {
                   setCompactRows(true);
+                  setColorTheme('dark');
                   setSearchQuery('button');
                   setSettingsCategoryId('appearance');
                   setSettingsScopeId('user');
@@ -1084,7 +1087,7 @@ function renderSettingsCategory({
   onSideBarSizePercentChange,
 }: {
   categoryId: string;
-  colorTheme: string;
+  colorTheme: StoryTheme;
   compactRows: boolean;
   fileCount: number;
   primarySizePercent: number;
@@ -1093,7 +1096,7 @@ function renderSettingsCategory({
   settingsSearchValue: string;
   sideBarSizePercent: number;
   onClearSearch: () => void;
-  onColorThemeChange: (theme: string) => void;
+  onColorThemeChange: (theme: StoryTheme) => void;
   onCompactRowsChange: (compactRows: boolean) => void;
   onPrimarySizePercentChange: (sizePercent: number) => void;
   onSearchQueryChange: (query: string) => void;
@@ -1221,11 +1224,10 @@ function renderSettingsCategory({
           id="integrated-settings-theme"
           controlWidth="full"
           value={colorTheme}
-          onChange={(event) => onColorThemeChange(event.currentTarget.value)}
+          onChange={(event) => onColorThemeChange(event.currentTarget.value as StoryTheme)}
         >
-          <option>Dark Modern</option>
-          <option>Light Modern</option>
-          <option>High Contrast</option>
+          <option value="dark">Dark Modern</option>
+          <option value="light">Light Modern</option>
         </Select>
       </Field>
     </WorkbenchSettingsSection>
@@ -1237,6 +1239,7 @@ function renderPrimarySurface({
   activeFile,
   activeItemId,
   activeLabel,
+  colorTheme,
   compactRows,
   files,
   filteredSearchResults,
@@ -1255,6 +1258,7 @@ function renderPrimarySurface({
   activeFile: WorkspaceFile;
   activeItemId: string;
   activeLabel: string;
+  colorTheme: StoryTheme;
   compactRows: boolean;
   files: WorkspaceFile[];
   filteredSearchResults: WorkspaceSearchResult[];
@@ -1303,6 +1307,7 @@ function renderPrimarySurface({
             files={files}
             openPaths={openPaths}
             selectedPath={activeFile.path}
+            theme={colorTheme}
             onCloseAll={onCloseAll}
             onCloseOthers={onCloseOthers}
             onClosePath={onClosePath}
@@ -1333,6 +1338,7 @@ function renderPrimarySurface({
       files={files}
       openPaths={openPaths}
       selectedPath={activeFile.path}
+      theme={colorTheme}
       onCloseAll={onCloseAll}
       onCloseOthers={onCloseOthers}
       onClosePath={onClosePath}
