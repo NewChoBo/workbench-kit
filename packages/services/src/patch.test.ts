@@ -67,6 +67,28 @@ describe('WorkspacePatchService', () => {
     });
   });
 
+  it('normalizes path for write and delete patches', async () => {
+    const repository = new InMemoryWorkspaceFileRepository();
+    const service = new WorkspacePatchService({ repository });
+
+    await service.applyPatch({
+      content: 'windows path',
+      path: 'docs\\\\notes\\\\runtime.md',
+      type: 'write-file',
+    });
+
+    const writeBack = await service.applyPatch({
+      path: ' /docs//notes/runtime.md ',
+      type: 'delete-file',
+    });
+
+    expect(writeBack).toMatchObject({
+      type: 'patch:applied',
+      patch: { path: 'docs/notes/runtime.md', type: 'delete-file' },
+    });
+    expect(await repository.getFile('docs/notes/runtime.md')).toBeNull();
+  });
+
   it('deletes existing file for delete-file patches', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
     const service = new WorkspacePatchService({ repository });
