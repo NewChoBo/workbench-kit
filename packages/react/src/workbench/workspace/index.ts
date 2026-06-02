@@ -24,9 +24,14 @@ export {
 } from './path';
 export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
 export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
-export { useVirtualWorkspace } from './useVirtualWorkspace';
+export {
+  initializeVirtualWorkspaceState,
+  useVirtualWorkspace,
+  virtualWorkspaceReducer,
+} from './useVirtualWorkspace';
 export type {
   CreateWorkspaceFileInput,
+  VirtualWorkspaceAction,
   VirtualWorkspaceApi,
   VirtualWorkspaceInitialState,
   VirtualWorkspaceState,
