@@ -200,6 +200,9 @@ The package should evolve beyond a single React package.
   one command/menu extension shape.
 - `@newchobo-ui/react` command presets consume the shared menu entry helpers
   instead of repeating raw command-entry object literals.
+- `@newchobo-ui/core` command menu entries support optional `surfaces` metadata so
+  one shared command registry can serve different workbench surfaces (for example,
+  Explorer, Search, Editor, Settings) with menu filtering done at projection time.
 - The next migration step is to expand Storybook play coverage around remaining
   Explorer edge cases or decide whether Storybook play functions should be part
   of `pnpm validate`.
@@ -549,7 +552,7 @@ independently.
   or start with command/view/settings contributions only?
 - Should installed plugin contributions be merged into one command registry, or
   scoped per surface such as Activity Bar, Explorer, Search, Editor, Settings,
-  and Status Bar?
+  and Status Bar? (Partially implemented: single-registry + `surfaces` filtering.)
 - Should the package add MSW, or keep mock runtime adapters in plain TypeScript
   until HTTP semantics are needed?
 
@@ -576,7 +579,7 @@ workbench platform:
    - Decide which helpers are exported from `@newchobo-ui/workspace`.
    - Decide folder/file operations that stay as reducer actions versus host callbacks.
 4. **Runtime and integration model**
-  - Decide storage/persistence model and plugin installation scope.
+   - Decide storage/persistence model and plugin installation scope.
 
 ## Proposed Answers (subject to approval)
 

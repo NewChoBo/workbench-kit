@@ -27,6 +27,7 @@ export interface CommandMenuCommandEntry<TContext = void> {
   id?: string;
   isEnabled?: CommandPredicate<TContext>;
   isVisible?: CommandPredicate<TContext>;
+  surfaces?: readonly string[];
   label?: CommandValue<TContext, string>;
   shortcut?: CommandValue<TContext, string | undefined>;
   type?: 'command';
@@ -72,6 +73,7 @@ export interface CommandMenuItemsInput<TContext = void> {
   context: TContext;
   entries: CommandMenuEntry<TContext>[];
   registry: CommandRegistry<TContext>;
+  surface?: string;
 }
 
 function resolveValue<TContext, TValue>(
@@ -104,6 +106,15 @@ function isEnabled<TContext>(
   context: TContext,
 ) {
   return command.isEnabled?.(context) !== false && entry?.isEnabled?.(context) !== false;
+}
+
+function matchesSurface<TContext>(
+  entry: CommandMenuCommandEntry<TContext>,
+  surface: string | undefined,
+) {
+  if (!surface) return true;
+  if (!entry.surfaces?.length) return true;
+  return entry.surfaces.includes(surface);
 }
 
 export function createCommandRegistry<TContext>(
@@ -199,9 +210,11 @@ export function resolveCommandMenuItems<TContext>({
   context,
   entries,
   registry,
+  surface,
 }: CommandMenuItemsInput<TContext>) {
   const items = entries.flatMap<CommandMenuItem>((entry) => {
     if (entry.type === 'separator') return [entry];
+    if (!matchesSurface(entry, surface)) return [];
 
     const command = registry.get(entry.commandId);
     if (!command || !isVisible(command, entry, context)) return [];
