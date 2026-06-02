@@ -452,6 +452,84 @@
   flex: 1;
 }
 
+.ui-workbench-status-bar {
+  flex-shrink: 0;
+  min-height: 24px;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 0 8px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  font-size: 12px;
+}
+
+.ui-workbench-status-bar--compact {
+  min-height: 22px;
+}
+
+.ui-workbench-status-bar__section {
+  min-width: 0;
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.ui-workbench-status-bar__section--end {
+  margin-left: auto;
+}
+
+.ui-workbench-status-bar__item {
+  min-width: 0;
+  min-height: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  color: var(--color-text-muted);
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.ui-workbench-status-bar__item:hover,
+.ui-workbench-status-bar__item:focus-visible,
+.ui-workbench-status-bar__item--active {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.ui-workbench-status-bar__item:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.ui-workbench-status-bar__item:disabled {
+  color: var(--color-text-subtle);
+  background: transparent;
+  cursor: default;
+}
+
+.ui-workbench-status-bar__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-workbench-status-bar__icon .codicon {
+  font-size: 13px;
+}
+
+.ui-workbench-status-bar__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ui-panel-header__title {
   min-width: 0;
   overflow: hidden;
