@@ -568,6 +568,9 @@ independently.
   기준(Explorer/Search/Editor/Chat 중 어떤 흐름이 mandatory인지)을 확정해야 합니다.
 - `surface` 제약이 단일 surface(`'search'`)만 허용해야 하는지, 아니면 다중 surface
   설정이 필요한 케이스를 위해 배열/목록 확장 정책이 필요한지 정리해야 합니다.
+- `pnpm test:storybook-play`는 현재 `@storybook/test-runner` 미설치로 스킵됩니다.  
+  이 검증을 `pnpm validate:full`에서 필수로 돌릴지, 또는 별도 실행 의존성으로
+  유지할지 결정이 필요합니다.
 
 ## Milestone Decisions Completed
 
