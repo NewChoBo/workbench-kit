@@ -6,12 +6,20 @@ import {
   createWorkbenchEditorCommands,
   createWorkbenchEditorTabListMenuEntries,
   createWorkbenchEditorTabMenuEntries,
+  createWorkbenchSearchResultCommands,
+  createWorkbenchSearchResultMenuEntries,
   createWorkbenchShellCommands,
   createWorkbenchShellMenuEntries,
+  createWorkbenchWorkspaceCommands,
+  createWorkbenchWorkspaceCreateMenuEntries,
+  createWorkbenchWorkspaceFolderMenuEntries,
+  createWorkbenchWorkspaceTargetMenuEntries,
   getWorkbenchShowActivityCommandId,
   type WorkbenchEditorCommandContext,
+  type WorkbenchSearchResultCommandContext,
   type WorkbenchShellCommandActivity,
   type WorkbenchShellCommandContext,
+  type WorkbenchWorkspaceCommandContext,
 } from './commands';
 
 type TestActivityId = 'explorer' | 'search';
@@ -55,6 +63,35 @@ function createEditorContext(
     hasOpenFiles: true,
     hasUnsavedChanges: true,
     saveFile: () => undefined,
+    ...overrides,
+  };
+}
+
+function createWorkspaceContext(
+  overrides: Partial<WorkbenchWorkspaceCommandContext> = {},
+): WorkbenchWorkspaceCommandContext {
+  return {
+    copyWorkspaceTarget: () => undefined,
+    createWorkspaceFile: () => undefined,
+    createWorkspaceFolder: () => undefined,
+    deleteWorkspaceTarget: () => undefined,
+    fileActionPaths: ['src/App.tsx'],
+    multiFileAction: false,
+    openWorkspaceTarget: () => undefined,
+    renameWorkspaceTarget: () => undefined,
+    targetPaths: ['src/App.tsx'],
+    workspaceTargetKind: 'file',
+    ...overrides,
+  };
+}
+
+function createSearchResultContext(
+  overrides: Partial<WorkbenchSearchResultCommandContext> = {},
+): WorkbenchSearchResultCommandContext {
+  return {
+    copyPath: () => undefined,
+    deleteResult: () => undefined,
+    openResult: () => undefined,
     ...overrides,
   };
 }
@@ -241,5 +278,155 @@ describe('workbench editor command presets', () => {
       'closeAll',
       'delete',
     ]);
+  });
+});
+
+describe('workbench workspace command presets', () => {
+  it('creates create, target, and folder menu entries', () => {
+    const registry = createCommandRegistry(createWorkbenchWorkspaceCommands());
+    const fileItems = resolveCommandMenuItems({
+      context: createWorkspaceContext({
+        fileActionPaths: ['README.md', 'src/App.tsx'],
+        multiFileAction: true,
+        targetPaths: ['README.md', 'src/App.tsx'],
+      }),
+      entries: createWorkbenchWorkspaceTargetMenuEntries(),
+      registry,
+    });
+    const folderItems = resolveCommandMenuItems({
+      context: createWorkspaceContext({
+        fileActionPaths: [],
+        targetPaths: ['docs'],
+        workspaceTargetKind: 'folder',
+      }),
+      entries: createWorkbenchWorkspaceFolderMenuEntries(),
+      registry,
+    });
+    const createItems = resolveCommandMenuItems({
+      context: createWorkspaceContext(),
+      entries: createWorkbenchWorkspaceCreateMenuEntries(),
+      registry,
+    });
+
+    expect(fileItems.map((item) => item.type === 'command' && item.label)).toEqual([
+      'Open selected files',
+      'Copy paths',
+      false,
+      'Rename',
+      'Delete 2 files',
+    ]);
+    expect(
+      fileItems.find((item) => item.type === 'command' && item.label === 'Rename'),
+    ).toMatchObject({
+      disabled: true,
+      icon: 'codicon-edit',
+      shortcut: 'F2',
+    });
+    expect(
+      fileItems.find((item) => item.type === 'command' && item.label === 'Delete 2 files'),
+    ).toMatchObject({
+      danger: true,
+      icon: 'codicon-trash',
+      shortcut: 'Del',
+    });
+    expect(folderItems.map((item) => item.type === 'command' && item.label)).toEqual([
+      'New file',
+      'New folder',
+      false,
+      'Reveal folder',
+      'Copy path',
+      false,
+      'Rename',
+      'Delete folder',
+    ]);
+    expect(createItems.map((item) => item.type === 'command' && item.label)).toEqual([
+      'New file',
+      'New folder',
+    ]);
+  });
+
+  it('executes workspace command handlers through the provided context', () => {
+    const calls: string[] = [];
+    const registry = createCommandRegistry(createWorkbenchWorkspaceCommands());
+    const context = createWorkspaceContext({
+      copyWorkspaceTarget: () => calls.push('copy'),
+      createWorkspaceFile: () => calls.push('newFile'),
+      createWorkspaceFolder: () => calls.push('newFolder'),
+      deleteWorkspaceTarget: () => calls.push('delete'),
+      openWorkspaceTarget: () => calls.push('open'),
+      renameWorkspaceTarget: () => calls.push('rename'),
+    });
+
+    [
+      'workspace.newFile',
+      'workspace.newFolder',
+      'workspace.open',
+      'workspace.copyPath',
+      'workspace.rename',
+      'workspace.delete',
+    ].forEach((commandId) => executeCommand(registry, commandId, context));
+
+    expect(calls).toEqual(['newFile', 'newFolder', 'open', 'copy', 'rename', 'delete']);
+  });
+});
+
+describe('workbench search result command presets', () => {
+  it('creates search result menu entries', () => {
+    const registry = createCommandRegistry(createWorkbenchSearchResultCommands());
+    const items = resolveCommandMenuItems({
+      context: createSearchResultContext(),
+      entries: createWorkbenchSearchResultMenuEntries(),
+      registry,
+    });
+
+    expect(items).toEqual([
+      {
+        commandId: 'search.openResult',
+        danger: undefined,
+        disabled: false,
+        icon: 'codicon-folder-opened',
+        id: 'search.openResult',
+        label: 'Open',
+        shortcut: 'Enter',
+        type: 'command',
+      },
+      {
+        commandId: 'search.copyResultPath',
+        danger: undefined,
+        disabled: false,
+        icon: 'codicon-copy',
+        id: 'search.copyResultPath',
+        label: 'Copy path',
+        shortcut: undefined,
+        type: 'command',
+      },
+      { id: 'result-menu-separator', type: 'separator' },
+      {
+        commandId: 'search.deleteResult',
+        danger: true,
+        disabled: false,
+        icon: 'codicon-trash',
+        id: 'search.deleteResult',
+        label: 'Delete',
+        shortcut: undefined,
+        type: 'command',
+      },
+    ]);
+  });
+
+  it('executes search result command handlers through the provided context', () => {
+    const calls: string[] = [];
+    const registry = createCommandRegistry(createWorkbenchSearchResultCommands());
+    const context = createSearchResultContext({
+      copyPath: () => calls.push('copy'),
+      deleteResult: () => calls.push('delete'),
+      openResult: () => calls.push('open'),
+    });
+
+    ['search.openResult', 'search.copyResultPath', 'search.deleteResult'].forEach((commandId) =>
+      executeCommand(registry, commandId, context),
+    );
+
+    expect(calls).toEqual(['open', 'copy', 'delete']);
   });
 });

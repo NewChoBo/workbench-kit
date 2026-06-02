@@ -31,7 +31,12 @@ import {
   commandMenuItemsToContextMenuItems,
   createWorkbenchShellCommands,
   createWorkbenchShellMenuEntries,
+  createWorkbenchWorkspaceCommands,
+  createWorkbenchWorkspaceCreateMenuEntries,
+  createWorkbenchWorkspaceFolderMenuEntries,
+  createWorkbenchWorkspaceTargetMenuEntries,
   type WorkbenchShellCommandContext,
+  type WorkbenchWorkspaceCommandContext,
 } from './commands';
 import { WorkbenchSettingsModal, WorkbenchSettingsSection } from './settings';
 import { useWorkbenchShellState } from './shellState';
@@ -92,18 +97,8 @@ interface StoryPendingDelete {
   type: 'files' | 'folder';
 }
 
-interface StoryCommandContext extends WorkbenchShellCommandContext<StoryActivityId> {
-  createWorkspaceFile: () => void;
-  createWorkspaceFolder: () => void;
-  deleteWorkspaceTarget: () => void;
-  fileActionPaths: string[];
-  multiFileAction: boolean;
-  openWorkspaceTarget: () => void;
-  renameWorkspaceTarget: () => void;
-  copyWorkspaceTarget: () => void;
-  targetPaths: string[];
-  workspaceTargetKind: 'file' | 'folder';
-}
+interface StoryCommandContext
+  extends WorkbenchShellCommandContext<StoryActivityId>, WorkbenchWorkspaceCommandContext {}
 
 const storyActivityOrder: StoryActivityId[] = ['explorer', 'search', 'chat'];
 
@@ -138,76 +133,15 @@ const storyShellCommandActivities = storyActivityOrder.map((id) => ({
 
 const storyCommandRegistry = createCommandRegistry<StoryCommandContext>([
   ...createWorkbenchShellCommands({ activities: storyShellCommandActivities }),
-  {
-    id: 'workspace.newFile',
-    label: 'New file',
-    icon: 'codicon-new-file',
-    run: ({ createWorkspaceFile }) => createWorkspaceFile(),
-  },
-  {
-    id: 'workspace.newFolder',
-    label: 'New folder',
-    icon: 'codicon-new-folder',
-    run: ({ createWorkspaceFolder }) => createWorkspaceFolder(),
-  },
-  {
-    id: 'workspace.open',
-    label: ({ multiFileAction, workspaceTargetKind }) =>
-      workspaceTargetKind === 'folder'
-        ? 'Reveal folder'
-        : multiFileAction
-          ? 'Open selected files'
-          : 'Open file',
-    icon: ({ workspaceTargetKind }) =>
-      workspaceTargetKind === 'folder' ? 'codicon-folder-opened' : 'codicon-go-to-file',
-    run: ({ openWorkspaceTarget }) => openWorkspaceTarget(),
-  },
-  {
-    id: 'workspace.copyPath',
-    label: ({ targetPaths }) => (targetPaths.length > 1 ? 'Copy paths' : 'Copy path'),
-    icon: 'codicon-copy',
-    run: ({ copyWorkspaceTarget }) => copyWorkspaceTarget(),
-  },
-  {
-    id: 'workspace.rename',
-    label: 'Rename',
-    icon: 'codicon-edit',
-    shortcut: 'F2',
-    isEnabled: ({ targetPaths }) => targetPaths.length === 1,
-    run: ({ renameWorkspaceTarget }) => renameWorkspaceTarget(),
-  },
-  {
-    id: 'workspace.delete',
-    label: ({ fileActionPaths, multiFileAction, workspaceTargetKind }) =>
-      workspaceTargetKind === 'folder'
-        ? 'Delete folder'
-        : multiFileAction
-          ? `Delete ${fileActionPaths.length} files`
-          : 'Delete',
-    icon: 'codicon-trash',
-    shortcut: 'Del',
-    danger: true,
-    isEnabled: ({ fileActionPaths, workspaceTargetKind }) =>
-      workspaceTargetKind === 'folder' || fileActionPaths.length > 0,
-    run: ({ deleteWorkspaceTarget }) => deleteWorkspaceTarget(),
-  },
+  ...createWorkbenchWorkspaceCommands(),
 ]);
 
 const workbenchMenuEntries: CommandMenuEntry<StoryCommandContext>[] =
   createWorkbenchShellMenuEntries({ activities: storyShellCommandActivities });
 
-const workspaceCreateMenuEntries: CommandMenuEntry<StoryCommandContext>[] = [
-  { commandId: 'workspace.newFile' },
-  { commandId: 'workspace.newFolder' },
-];
-
-const workspaceTargetMenuEntries: CommandMenuEntry<StoryCommandContext>[] = [
-  { commandId: 'workspace.open' },
-  { commandId: 'workspace.copyPath' },
-  commandMenuSeparator('workspace-separator'),
-  { commandId: 'workspace.rename' },
-  { commandId: 'workspace.delete' },
-];
+const workspaceCreateMenuEntries = createWorkbenchWorkspaceCreateMenuEntries<StoryCommandContext>();
+const workspaceTargetMenuEntries = createWorkbenchWorkspaceTargetMenuEntries<StoryCommandContext>();
+const workspaceFolderMenuEntries = createWorkbenchWorkspaceFolderMenuEntries<StoryCommandContext>();
 
 const defaultSelectionByActivity: Record<StoryActivityId, string> = {
   explorer: 'src/App.tsx',
@@ -1166,13 +1100,7 @@ function IntegratedWorkbenchShell() {
     const multiFileAction = fileActionPaths.length > 1;
 
     const entries =
-      node.type === 'folder'
-        ? [
-            ...workspaceCreateMenuEntries,
-            commandMenuSeparator('workspace-create-separator'),
-            ...workspaceTargetMenuEntries,
-          ]
-        : workspaceTargetMenuEntries;
+      node.type === 'folder' ? workspaceFolderMenuEntries : workspaceTargetMenuEntries;
 
     return createCommandMenuItems(
       entries,
