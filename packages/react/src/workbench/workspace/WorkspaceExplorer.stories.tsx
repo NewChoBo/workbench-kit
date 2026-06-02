@@ -71,6 +71,17 @@ const pathConflictFixtureFiles: WorkspaceFile[] = [
   },
 ];
 
+const nameSuggestionFixtureFiles: WorkspaceFile[] = [
+  ...fixtureFiles,
+  {
+    content: 'Existing untitled note.',
+    mimeType: 'text/markdown',
+    path: 'untitled.md',
+  },
+];
+
+const nameSuggestionFixtureFolders = [...fixtureFolders, 'new-folder'];
+
 interface StoryContextMenuState {
   items: ContextMenuItem[];
   x: number;
@@ -513,6 +524,81 @@ export const InlineEditBoundaryFlow: Story = {
   },
 };
 
+export const InlineValidationFlow: Story = {
+  render: () => <ExplorerHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const eventLog = canvas.getByLabelText('Explorer event log');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'New file' }));
+    const input = await canvas.findByLabelText('Workspace item name');
+
+    await userEvent.clear(input);
+    await userEvent.type(input, 'nested/file.md');
+    await userEvent.keyboard('{Enter}');
+    await expect(eventLog).toHaveTextContent('Use a simple file or folder name.');
+    await expect(input).toHaveValue('nested/file.md');
+
+    await userEvent.clear(input);
+    await userEvent.type(input, 'README.md');
+    await userEvent.keyboard('{Enter}');
+    await expect(eventLog).toHaveTextContent('A file or folder already uses this name.');
+    await expect(input).toHaveValue('README.md');
+
+    await userEvent.clear(input);
+    await userEvent.type(input, 'notes.md');
+    await userEvent.keyboard('{Enter}');
+    await expect(await canvas.findByRole('button', { name: 'notes.md' })).toBeVisible();
+    await expect(eventLog).toHaveTextContent('Created notes.md');
+  },
+};
+
+export const InlineNameSuggestionFlow: Story = {
+  render: () => (
+    <ExplorerHarness files={nameSuggestionFixtureFiles} folders={nameSuggestionFixtureFolders} />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole('button', { name: 'New file' }));
+    const fileInput = await canvas.findByLabelText('Workspace item name');
+    await expect(fileInput).toHaveValue('untitled-2.md');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(canvas.queryByLabelText('Workspace item name')).toBeNull());
+
+    await userEvent.click(canvas.getByRole('button', { name: 'New folder' }));
+    const folderInput = await canvas.findByLabelText('Workspace item name');
+    await expect(folderInput).toHaveValue('new-folder-2');
+  },
+};
+
+export const FolderRenameValidationFlow: Story = {
+  render: () => <ExplorerHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const eventLog = canvas.getByLabelText('Explorer event log');
+
+    await fireEvent.contextMenu(canvas.getByRole('button', { name: 'src' }));
+    await userEvent.click(await canvas.findByText('Rename'));
+    const conflictInput = await canvas.findByLabelText('Workspace item name');
+    await expect(conflictInput).toHaveValue('src');
+    await userEvent.clear(conflictInput);
+    await userEvent.type(conflictInput, 'docs');
+    await userEvent.keyboard('{Enter}');
+    await expect(eventLog).toHaveTextContent('A file or folder already uses this name.');
+    await expect(conflictInput).toHaveValue('docs');
+
+    await userEvent.clear(conflictInput);
+    await userEvent.type(conflictInput, 'source');
+    await userEvent.keyboard('{Enter}');
+    await expect(await canvas.findByRole('button', { name: 'source' })).toBeVisible();
+    await expect(getWorkspaceItem(canvasElement, 'source/App.tsx')).toBeVisible();
+    await expect(getWorkspaceItem(canvasElement, 'source/components/Button.tsx')).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'src' })).toBeNull();
+    await expect(eventLog).toHaveTextContent('Renamed src to source');
+  },
+};
+
 export const DeleteAndDragDropFlow: Story = {
   render: () => <ExplorerHarness />,
   play: async ({ canvasElement }) => {
@@ -554,6 +640,35 @@ export const DeleteAndDragDropFlow: Story = {
       'data-selected',
       'true',
     );
+  },
+};
+
+export const MultiFileDeleteFlow: Story = {
+  render: () => <ExplorerHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole('button', { name: 'README.md' }));
+    await fireEvent.click(canvas.getByRole('button', { name: 'App.tsx' }), { ctrlKey: true });
+    await waitFor(async () => {
+      await expect(canvas.getByRole('button', { name: 'README.md' })).toHaveAttribute(
+        'data-selected',
+        'true',
+      );
+      await expect(canvas.getByRole('button', { name: 'App.tsx' })).toHaveAttribute(
+        'data-selected',
+        'true',
+      );
+    });
+
+    await fireEvent.contextMenu(canvas.getByRole('button', { name: 'App.tsx' }));
+    await userEvent.click(await canvas.findByText('Delete 2 files'));
+
+    await expect(canvas.queryByRole('button', { name: 'README.md' })).toBeNull();
+    await expect(canvas.queryByRole('button', { name: 'App.tsx' })).toBeNull();
+    await expect(canvas.getByRole('button', { name: 'Button.tsx' })).toBeVisible();
+    await expect(canvas.getByLabelText('Explorer event log')).toHaveTextContent('Deleted 2 files');
+    await expect(canvasElement.querySelector('[data-selected="true"]')).toBeNull();
   },
 };
 
