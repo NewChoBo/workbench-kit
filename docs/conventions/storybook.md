@@ -31,8 +31,8 @@ Use these root scripts:
 
 ```json
 {
-  "storybook": "storybook dev --port 6010 --host 127.0.0.1 --no-open",
-  "build:storybook": "storybook build"
+  "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
+  "build:storybook": "pnpm exec storybook build"
 }
 ```
 

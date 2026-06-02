@@ -167,6 +167,9 @@ The package should evolve beyond a single React package.
 - Unit tests cover path operations, search, selection, create, rename, move, and
   delete behavior, workspace editor draft helpers, runtime send/cancel/stream
   events, plus core command menu projection and execution.
+- Root package scripts execute tools through `pnpm`, so `npm run <script>`
+  delegates script execution to the pnpm-managed toolchain while the pnpm
+  lockfile remains the source of truth.
 - The next migration step is to expand Storybook play coverage around remaining
   Explorer edge cases or decide whether Storybook play functions should be part
   of `pnpm validate`.
@@ -511,5 +514,7 @@ independently.
   the current section and item arrays?
 - Should Storybook interaction tests be mandatory in `pnpm validate`, or only
   used in targeted UI validation at first?
+- Should accidental `npm install` be hard-blocked, or is the current
+  documentation plus `package-lock=false` guard sufficient?
 - Should the package add MSW, or keep mock runtime adapters in plain TypeScript
   until HTTP semantics are needed?

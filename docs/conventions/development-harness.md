@@ -4,6 +4,11 @@ Choose the narrowest validation lane that covers the changed surface. Do not
 report a validation as passed if it was not run. Include the executed commands
 in the final report and in non-trivial commit bodies.
 
+The repository is pnpm-first. Use `pnpm install` for dependency installation.
+Root package scripts shell through `pnpm`, so `npm run <script>` delegates the
+actual tool execution to pnpm. Do not use npm for dependency installation or
+lockfile updates.
+
 ## Validation Lanes
 
 | Changed surface                      | Minimum validation                           | Extended validation            |

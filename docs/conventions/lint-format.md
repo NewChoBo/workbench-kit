@@ -16,6 +16,10 @@ Do not use TSLint. TSLint is deprecated, and TypeScript linting should use
 
 ## Commands
 
+Root scripts execute tools through `pnpm`, so `npm run lint` and similar script
+calls still delegate to pnpm. Dependency installation and lockfile updates must
+use `pnpm`.
+
 ```powershell
 pnpm lint
 pnpm lint:fix
