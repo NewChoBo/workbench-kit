@@ -7,6 +7,13 @@ import {
   resolveCommandMenuItems,
   type CommandMenuEntry,
 } from '@newchobo-ui/core';
+import {
+  discardWorkspaceFileDraft,
+  resolveWorkspaceFileDraft,
+  saveWorkspaceFileDraft,
+  updateWorkspaceFileDraft,
+  type WorkspaceFileDraftMap,
+} from '@newchobo-ui/workspace';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { EmptyState } from '../../primitives/EmptyState';
@@ -18,11 +25,6 @@ import { fileNameOfPath } from './path';
 import { WorkspaceEditor, type WorkspaceEditorTheme } from './WorkspaceEditor';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceFile } from './types';
-
-interface FileDraft {
-  content: string;
-  savedContent: string;
-}
 
 interface EditorCommandContext {
   canCloseAll: boolean;
@@ -128,24 +130,6 @@ export interface WorkspaceEditorPanelProps {
   theme?: WorkspaceEditorTheme;
 }
 
-function resolveDraft(file: WorkspaceFile, draft: FileDraft | undefined): FileDraft {
-  if (!draft) {
-    return {
-      content: file.content,
-      savedContent: file.content,
-    };
-  }
-
-  if (draft.savedContent !== file.content && draft.content === draft.savedContent) {
-    return {
-      content: file.content,
-      savedContent: file.content,
-    };
-  }
-
-  return draft;
-}
-
 export function WorkspaceEditorPanel({
   emptyLabel = 'Open a file from Explorer or Search.',
   files,
@@ -166,54 +150,49 @@ export function WorkspaceEditorPanel({
     .filter((file): file is WorkspaceFile => Boolean(file));
   const selectedFile = selectedPath ? filesByPath.get(selectedPath) : openFiles[0];
   const [deletePath, setDeletePath] = useState<string | null>(null);
-  const [draftsByPath, setDraftsByPath] = useState<Record<string, FileDraft>>({});
+  const [draftsByPath, setDraftsByPath] = useState<WorkspaceFileDraftMap>({});
   const [tabContextMenu, setTabContextMenu] = useState<{
     path: string | null;
     x: number;
     y: number;
   } | null>(null);
   const selectedDraft = selectedFile
-    ? resolveDraft(selectedFile, draftsByPath[selectedFile.path])
+    ? resolveWorkspaceFileDraft({
+        draft: draftsByPath[selectedFile.path],
+        file: selectedFile,
+      })
     : null;
   const selectedContent = selectedDraft?.content ?? '';
 
   const updateDraft = (path: string, content: string) => {
-    setDraftsByPath((currentDrafts) => {
-      const fileContent = filesByPath.get(path)?.content ?? '';
-      const currentDraft = currentDrafts[path] ?? {
-        content: fileContent,
-        savedContent: fileContent,
-      };
-
-      return {
-        ...currentDrafts,
-        [path]: {
-          ...currentDraft,
-          content,
-        },
-      };
-    });
+    setDraftsByPath((currentDrafts) =>
+      updateWorkspaceFileDraft({
+        content,
+        drafts: currentDrafts,
+        fileContent: filesByPath.get(path)?.content ?? '',
+        path,
+      }),
+    );
   };
 
   const saveFile = (path: string, content: string) => {
     onSaveFile?.(path, content);
-    setDraftsByPath((currentDrafts) => ({
-      ...currentDrafts,
-      [path]: {
+    setDraftsByPath((currentDrafts) =>
+      saveWorkspaceFileDraft({
         content,
-        savedContent: content,
-      },
-    }));
+        drafts: currentDrafts,
+        path,
+      }),
+    );
   };
 
   const discardFile = (file: WorkspaceFile) => {
-    setDraftsByPath((currentDrafts) => ({
-      ...currentDrafts,
-      [file.path]: {
-        content: file.content,
-        savedContent: file.content,
-      },
-    }));
+    setDraftsByPath((currentDrafts) =>
+      discardWorkspaceFileDraft({
+        drafts: currentDrafts,
+        file,
+      }),
+    );
   };
 
   const handleTabContextMenu = (event: MouseEvent<HTMLElement>, path: string | null) => {
@@ -224,7 +203,12 @@ export function WorkspaceEditorPanel({
 
   const createEditorCommandContext = (file: WorkspaceFile | undefined): EditorCommandContext => {
     const filePath = file?.path;
-    const draft = file ? resolveDraft(file, draftsByPath[file.path]) : undefined;
+    const draft = file
+      ? resolveWorkspaceFileDraft({
+          draft: draftsByPath[file.path],
+          file,
+        })
+      : undefined;
     const content = draft?.content ?? '';
 
     return {
@@ -297,7 +281,10 @@ export function WorkspaceEditorPanel({
               >
                 {openFiles.map((file) => {
                   const isActive = file.path === selectedFile?.path;
-                  const draft = resolveDraft(file, draftsByPath[file.path]);
+                  const draft = resolveWorkspaceFileDraft({
+                    draft: draftsByPath[file.path],
+                    file,
+                  });
                   const isDirty = draft.content !== file.content;
 
                   return (

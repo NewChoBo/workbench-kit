@@ -8,6 +8,20 @@ export {
   parentPathsOf,
   workspacePathSegments,
 } from './path';
+export {
+  createWorkspaceFileDraft,
+  discardWorkspaceFileDraft,
+  isWorkspaceFileDraftDirty,
+  resolveWorkspaceFileDraft,
+  saveWorkspaceFileDraft,
+  updateWorkspaceFileDraft,
+  type DiscardWorkspaceFileDraftInput,
+  type ResolveWorkspaceFileDraftInput,
+  type SaveWorkspaceFileDraftInput,
+  type UpdateWorkspaceFileDraftInput,
+  type WorkspaceFileDraft,
+  type WorkspaceFileDraftMap,
+} from './draft';
 export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
 export {
   getWorkspaceSelectionActionPaths,
