@@ -36,3 +36,13 @@ UI 변경은 가능한 한 실제 브라우저에서 확인한다.
 
 검증이 실패하면 제품 결함, 테스트 결함, 환경 결함 중 어느 쪽인지 먼저 분류한다.
 
+## Parallel Work Validation
+
+여러 worktree에서 동시에 작업한 경우 병합 전후 검증을 나눈다.
+
+- 각 worktree에서는 변경 surface에 맞는 최소 검증을 먼저 실행한다.
+- main에 병합한 뒤에는 `pnpm validate`를 다시 실행한다.
+- 두 브랜치가 같은 컴포넌트나 CSS token을 건드렸다면 브라우저 smoke 또는
+  Storybook build를 병합 후 한 번 더 실행한다.
+- 서로 다른 worktree의 dev server는 포트를 다르게 잡아 결과를 혼동하지 않는다.
+
