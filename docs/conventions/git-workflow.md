@@ -197,4 +197,3 @@ Modal과 ConfirmDialog의 제목 연결 방식을 공통화해 dialog accessible
 
 검증: pnpm --filter @newchobo-ui/react typecheck 통과.
 ```
-

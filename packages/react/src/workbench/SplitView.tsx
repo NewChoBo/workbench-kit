@@ -26,10 +26,7 @@ export function SplitView({
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const pct = ((clientX - rect.left) / rect.width) * 100;
-    setPrimarySizePercent(Math.max(
-      minPrimarySizePercent,
-      Math.min(maxPrimarySizePercent, pct),
-    ));
+    setPrimarySizePercent(Math.max(minPrimarySizePercent, Math.min(maxPrimarySizePercent, pct)));
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -53,9 +50,11 @@ export function SplitView({
     <div
       ref={containerRef}
       className={cx('ui-workbench-split-view', className)}
-      style={{
-        '--ui-workbench-split-primary-size': `${primarySizePercent}%`,
-      } as CSSProperties}
+      style={
+        {
+          '--ui-workbench-split-primary-size': `${primarySizePercent}%`,
+        } as CSSProperties
+      }
     >
       <div className="ui-workbench-split-view__primary">{primary}</div>
       <div

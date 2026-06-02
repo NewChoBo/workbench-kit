@@ -8,11 +8,5 @@ export interface SelectProps extends ComponentPropsWithRef<'select'> {
 }
 
 export function Select({ className, controlWidth = 'default', ...props }: SelectProps) {
-  return (
-    <select
-      className={cx('ui-select', className)}
-      data-width={controlWidth}
-      {...props}
-    />
-  );
+  return <select className={cx('ui-select', className)} data-width={controlWidth} {...props} />;
 }

@@ -9,11 +9,6 @@ export interface ButtonProps extends ComponentPropsWithRef<'button'> {
 
 export function Button({ className, type = 'button', variant = 'default', ...props }: ButtonProps) {
   return (
-    <button
-      className={cx('ui-button', className)}
-      data-variant={variant}
-      type={type}
-      {...props}
-    />
+    <button className={cx('ui-button', className)} data-variant={variant} type={type} {...props} />
   );
 }
