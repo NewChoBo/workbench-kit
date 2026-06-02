@@ -536,10 +536,6 @@ independently.
   `@newchobo-ui/workspace` versus kept as React story-local examples?
 - Should persistence be excluded, optional, or provided through a storage
   adapter?
-- Should drag payloads support host-provided metadata beyond the current
-  configurable path-list MIME type?
-- Should command presets expose label/icon override options beyond the current
-  package default command IDs?
 - Which folder operations should stay as controlled UI callbacks, and which
   should be demonstrated through the `@newchobo-ui/workspace` reducer?
 - Should StatusBar items support host-provided ordering/grouping metadata beyond
@@ -557,6 +553,14 @@ independently.
 - Should the package add MSW, or keep mock runtime adapters in plain TypeScript
   until HTTP semantics are needed?
 
+## Milestone Decisions Completed
+
+- Drag payload metadata is implemented in `WorkspaceExplorer` via optional metadata
+  payload support (`dragMetadataFactory`) while preserving path-list MIME as the base
+  contract.
+- Command preset label/icon/shortcut overrides are implemented in command preset
+  constructors.
+
 ## Recommended Decision Order
 
 The following order keeps risk low while moving toward a public, reusable
@@ -572,8 +576,7 @@ workbench platform:
    - Decide which helpers are exported from `@newchobo-ui/workspace`.
    - Decide folder/file operations that stay as reducer actions versus host callbacks.
 4. **Runtime and integration model**
-   - Decide drag payload metadata contract.
-   - Decide storage/persistence model and plugin installation scope.
+  - Decide storage/persistence model and plugin installation scope.
 
 ## Proposed Answers (subject to approval)
 

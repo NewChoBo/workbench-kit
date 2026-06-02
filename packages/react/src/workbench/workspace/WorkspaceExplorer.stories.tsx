@@ -16,13 +16,18 @@ import { SideBarViewFrame } from '../../layout/SideBarViewFrame';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { IconButton } from '../../primitives/IconButton';
 import { Toolbar } from '../../primitives/Toolbar';
-import { WorkspaceExplorer } from './WorkspaceExplorer';
+import {
+  WORKSPACE_EXPLORER_DRAG_DATA_TYPE,
+  WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE,
+  WorkspaceExplorer,
+  type WorkspaceExplorerDragMetadataContext,
+  type WorkspaceExplorerMoveRequestMeta,
+} from './WorkspaceExplorer';
 import type {
   WorkspaceExplorerInlineEditCommitMeta,
   WorkspaceExplorerInlineEditKind,
   WorkspaceExplorerInlineEditState,
   WorkspaceExplorerItemKeyboardActionMeta,
-  WorkspaceExplorerMoveRequestMeta,
 } from './WorkspaceExplorer';
 import { useVirtualWorkspace } from './useVirtualWorkspace';
 
@@ -93,6 +98,8 @@ interface ExplorerHarnessProps {
   files?: WorkspaceFile[];
   folders?: string[];
   openPaths?: string[];
+  dragMetadataDataType?: string;
+  dragMetadataFactory?: (meta: WorkspaceExplorerDragMetadataContext) => unknown;
   selectedPath?: string;
   statusLabel?: string;
 }
@@ -102,6 +109,8 @@ function ExplorerHarness({
   files = fixtureFiles,
   folders = fixtureFolders,
   openPaths = ['src/App.tsx'],
+  dragMetadataDataType = WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE,
+  dragMetadataFactory,
   selectedPath = 'src/App.tsx',
   statusLabel = 'Ready',
 }: ExplorerHarnessProps) {
@@ -386,6 +395,8 @@ function ExplorerHarness({
       >
         <WorkspaceExplorer
           activePath={workspace.selectedPath}
+          dragMetadataDataType={dragMetadataDataType}
+          dragMetadataFactory={dragMetadataFactory}
           expandedPaths={workspace.expandedPaths}
           inlineEdit={inlineEdit}
           nodes={workspace.workspaceTree}
@@ -718,6 +729,37 @@ export const DropTargetHighlightFlow: Story = {
     await waitFor(() => expect(workspaceRoot).not.toHaveClass('ui-side-bar-list--drop-target'));
 
     await fireEvent.dragEnd(appFile, { dataTransfer });
+  },
+};
+
+export const DragMetadataFlow: Story = {
+  render: () => (
+    <ExplorerHarness
+      dragMetadataDataType="application/x-newchobo-ui-workspace-metadata"
+      dragMetadataFactory={({ sourcePaths, node, selection }) => ({
+        sourcePaths,
+        sourcePath: node.path,
+        selectedCount: selection.paths.length,
+      })}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const dataTransfer = createStoryDataTransfer();
+    await fireEvent.dragStart(canvas.getByRole('button', { name: 'App.tsx' }), { dataTransfer });
+
+    expect(dataTransfer.getData(WORKSPACE_EXPLORER_DRAG_DATA_TYPE)).toBe(
+      JSON.stringify(['src/App.tsx']),
+    );
+    const metadata = JSON.parse(
+      dataTransfer.getData('application/x-newchobo-ui-workspace-metadata'),
+    ) as { sourcePath: string; sourcePaths: string[]; selectedCount: number };
+    expect(metadata).toEqual({
+      sourcePath: 'src/App.tsx',
+      sourcePaths: ['src/App.tsx'],
+      selectedCount: 1,
+    });
+    expect(dataTransfer.getData('text/plain')).toBe('src/App.tsx');
   },
 };
 
