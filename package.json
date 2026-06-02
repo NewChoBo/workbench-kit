@@ -8,13 +8,15 @@
     "preinstall": "node -e \"const execPath = process.env.npm_execpath || ''; if (!/pnpm/.test(execPath)) { console.error('This repository requires pnpm. Please run `pnpm install`.'); process.exit(1); }\"",
     "format": "pnpm exec prettier . --write",
     "format:check": "pnpm exec prettier . --check",
+    "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",
     "lint": "pnpm exec eslint .",
     "lint:fix": "pnpm exec eslint . --fix",
     "test": "pnpm exec vitest run",
     "build:storybook": "pnpm exec storybook build",
     "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
     "typecheck": "pnpm --filter @newchobo-ui/core typecheck && pnpm --filter @newchobo-ui/workspace typecheck && pnpm --filter @newchobo-ui/runtime typecheck && pnpm --filter @newchobo-ui/react typecheck",
-    "validate": "pnpm typecheck && pnpm lint && pnpm test && pnpm format:check && pnpm build:storybook"
+    "validate": "pnpm typecheck && pnpm lint && pnpm test && pnpm format:check && pnpm build:storybook",
+    "validate:full": "pnpm validate && pnpm test:storybook-play"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
