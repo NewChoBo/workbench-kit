@@ -16,6 +16,15 @@ export const WORKBENCH_EDITOR_CLOSE_COMMAND_ID = 'editor.close';
 export const WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID = 'editor.closeOthers';
 export const WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID = 'editor.closeAll';
 export const WORKBENCH_EDITOR_DELETE_COMMAND_ID = 'editor.delete';
+export const WORKBENCH_WORKSPACE_NEW_FILE_COMMAND_ID = 'workspace.newFile';
+export const WORKBENCH_WORKSPACE_NEW_FOLDER_COMMAND_ID = 'workspace.newFolder';
+export const WORKBENCH_WORKSPACE_OPEN_COMMAND_ID = 'workspace.open';
+export const WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID = 'workspace.copyPath';
+export const WORKBENCH_WORKSPACE_RENAME_COMMAND_ID = 'workspace.rename';
+export const WORKBENCH_WORKSPACE_DELETE_COMMAND_ID = 'workspace.delete';
+export const WORKBENCH_SEARCH_OPEN_RESULT_COMMAND_ID = 'search.openResult';
+export const WORKBENCH_SEARCH_COPY_RESULT_PATH_COMMAND_ID = 'search.copyResultPath';
+export const WORKBENCH_SEARCH_DELETE_RESULT_COMMAND_ID = 'search.deleteResult';
 
 export interface WorkbenchShellCommandActivity<TActivityId extends string = string> {
   icon?: string;
@@ -59,6 +68,25 @@ export interface WorkbenchEditorCommandContext {
   hasOpenFiles: boolean;
   hasUnsavedChanges: boolean;
   saveFile: () => void;
+}
+
+export interface WorkbenchWorkspaceCommandContext {
+  copyWorkspaceTarget: () => void;
+  createWorkspaceFile: () => void;
+  createWorkspaceFolder: () => void;
+  deleteWorkspaceTarget: () => void;
+  fileActionPaths: string[];
+  multiFileAction: boolean;
+  openWorkspaceTarget: () => void;
+  renameWorkspaceTarget: () => void;
+  targetPaths: string[];
+  workspaceTargetKind: 'file' | 'folder';
+}
+
+export interface WorkbenchSearchResultCommandContext {
+  copyPath: () => void;
+  deleteResult: () => void;
+  openResult: () => void;
 }
 
 export function getWorkbenchShowActivityCommandId(activityId: string) {
@@ -202,6 +230,135 @@ export function createWorkbenchEditorTabMenuEntries(): CommandMenuEntry<Workbenc
     { commandId: WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID },
     commandMenuSeparator('tab-danger-separator'),
     { commandId: WORKBENCH_EDITOR_DELETE_COMMAND_ID },
+  ];
+}
+
+export function createWorkbenchWorkspaceCommands<
+  TContext extends WorkbenchWorkspaceCommandContext = WorkbenchWorkspaceCommandContext,
+>(): CommandDefinition<TContext>[] {
+  return [
+    {
+      id: WORKBENCH_WORKSPACE_NEW_FILE_COMMAND_ID,
+      icon: 'codicon-new-file',
+      label: 'New file',
+      run: ({ createWorkspaceFile }) => createWorkspaceFile(),
+    },
+    {
+      id: WORKBENCH_WORKSPACE_NEW_FOLDER_COMMAND_ID,
+      icon: 'codicon-new-folder',
+      label: 'New folder',
+      run: ({ createWorkspaceFolder }) => createWorkspaceFolder(),
+    },
+    {
+      id: WORKBENCH_WORKSPACE_OPEN_COMMAND_ID,
+      icon: ({ workspaceTargetKind }) =>
+        workspaceTargetKind === 'folder' ? 'codicon-folder-opened' : 'codicon-go-to-file',
+      label: ({ multiFileAction, workspaceTargetKind }) =>
+        workspaceTargetKind === 'folder'
+          ? 'Reveal folder'
+          : multiFileAction
+            ? 'Open selected files'
+            : 'Open file',
+      run: ({ openWorkspaceTarget }) => openWorkspaceTarget(),
+    },
+    {
+      id: WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID,
+      icon: 'codicon-copy',
+      label: ({ targetPaths }) => (targetPaths.length > 1 ? 'Copy paths' : 'Copy path'),
+      run: ({ copyWorkspaceTarget }) => copyWorkspaceTarget(),
+    },
+    {
+      id: WORKBENCH_WORKSPACE_RENAME_COMMAND_ID,
+      icon: 'codicon-edit',
+      isEnabled: ({ targetPaths }) => targetPaths.length === 1,
+      label: 'Rename',
+      run: ({ renameWorkspaceTarget }) => renameWorkspaceTarget(),
+      shortcut: 'F2',
+    },
+    {
+      id: WORKBENCH_WORKSPACE_DELETE_COMMAND_ID,
+      danger: true,
+      icon: 'codicon-trash',
+      isEnabled: ({ fileActionPaths, workspaceTargetKind }) =>
+        workspaceTargetKind === 'folder' || fileActionPaths.length > 0,
+      label: ({ fileActionPaths, multiFileAction, workspaceTargetKind }) =>
+        workspaceTargetKind === 'folder'
+          ? 'Delete folder'
+          : multiFileAction
+            ? `Delete ${fileActionPaths.length} files`
+            : 'Delete',
+      run: ({ deleteWorkspaceTarget }) => deleteWorkspaceTarget(),
+      shortcut: 'Del',
+    },
+  ];
+}
+
+export function createWorkbenchWorkspaceCreateMenuEntries<
+  TContext extends WorkbenchWorkspaceCommandContext = WorkbenchWorkspaceCommandContext,
+>(): CommandMenuEntry<TContext>[] {
+  return [
+    { commandId: WORKBENCH_WORKSPACE_NEW_FILE_COMMAND_ID },
+    { commandId: WORKBENCH_WORKSPACE_NEW_FOLDER_COMMAND_ID },
+  ];
+}
+
+export function createWorkbenchWorkspaceTargetMenuEntries<
+  TContext extends WorkbenchWorkspaceCommandContext = WorkbenchWorkspaceCommandContext,
+>(): CommandMenuEntry<TContext>[] {
+  return [
+    { commandId: WORKBENCH_WORKSPACE_OPEN_COMMAND_ID },
+    { commandId: WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID },
+    commandMenuSeparator('workspace-separator'),
+    { commandId: WORKBENCH_WORKSPACE_RENAME_COMMAND_ID },
+    { commandId: WORKBENCH_WORKSPACE_DELETE_COMMAND_ID },
+  ];
+}
+
+export function createWorkbenchWorkspaceFolderMenuEntries<
+  TContext extends WorkbenchWorkspaceCommandContext = WorkbenchWorkspaceCommandContext,
+>(): CommandMenuEntry<TContext>[] {
+  return [
+    ...createWorkbenchWorkspaceCreateMenuEntries(),
+    commandMenuSeparator('workspace-create-separator'),
+    ...createWorkbenchWorkspaceTargetMenuEntries(),
+  ];
+}
+
+export function createWorkbenchSearchResultCommands<
+  TContext extends WorkbenchSearchResultCommandContext = WorkbenchSearchResultCommandContext,
+>(): CommandDefinition<TContext>[] {
+  return [
+    {
+      id: WORKBENCH_SEARCH_OPEN_RESULT_COMMAND_ID,
+      icon: 'codicon-folder-opened',
+      label: 'Open',
+      run: ({ openResult }) => openResult(),
+      shortcut: 'Enter',
+    },
+    {
+      id: WORKBENCH_SEARCH_COPY_RESULT_PATH_COMMAND_ID,
+      icon: 'codicon-copy',
+      label: 'Copy path',
+      run: ({ copyPath }) => copyPath(),
+    },
+    {
+      id: WORKBENCH_SEARCH_DELETE_RESULT_COMMAND_ID,
+      danger: true,
+      icon: 'codicon-trash',
+      label: 'Delete',
+      run: ({ deleteResult }) => deleteResult(),
+    },
+  ];
+}
+
+export function createWorkbenchSearchResultMenuEntries<
+  TContext extends WorkbenchSearchResultCommandContext = WorkbenchSearchResultCommandContext,
+>(): CommandMenuEntry<TContext>[] {
+  return [
+    { commandId: WORKBENCH_SEARCH_OPEN_RESULT_COMMAND_ID },
+    { commandId: WORKBENCH_SEARCH_COPY_RESULT_PATH_COMMAND_ID },
+    commandMenuSeparator('result-menu-separator'),
+    { commandId: WORKBENCH_SEARCH_DELETE_RESULT_COMMAND_ID },
   ];
 }
 

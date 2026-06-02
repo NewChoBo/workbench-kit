@@ -107,6 +107,10 @@ The package should evolve beyond a single React package.
   primary sidebar toggling, and settings opening.
 - `@newchobo-ui/react` exposes editor command presets for save, discard, copy
   path, close, close others, close all, and delete.
+- `@newchobo-ui/react` exposes workspace command presets for new file, new
+  folder, open/reveal, copy path, rename, and delete menus.
+- `@newchobo-ui/react` exposes search result command presets for open, copy
+  path, and delete menus.
 - `@newchobo-ui/react` exposes a reusable `useWorkbenchShellState` hook and
   reducer for active activity, primary sidebar visibility and size, theme, and
   settings modal state.
@@ -136,6 +140,8 @@ The package should evolve beyond a single React package.
 - The integrated Workbench story uses command-backed menu projection for the
   Activity bar, primary sidebar, Explorer root, Workspace item, and Search
   result context menus.
+- The integrated Workbench story consumes shared workspace command presets
+  rather than owning local workspace command definitions.
 - The integrated Workbench story has Storybook play coverage for command-backed
   Activity bar, Search result, Editor tab, and primary sidebar menu flows.
 - `WorkspaceEditorPanel` uses command-backed menu projection for editor tab
@@ -263,6 +269,8 @@ still not a complete real-use workflow.
 - Component-level Storybook play coverage uses core command projection for
   Search result menu shortcut metadata, danger styling, copy path, and delete
   execution.
+- Component-level Search result menus consume shared search result command
+  presets rather than owning local command definitions.
 - Remaining: add a test-runner gate if Storybook play functions should become
   part of `pnpm validate`.
 
@@ -351,8 +359,8 @@ Move these out of `Workbench.stories.tsx`:
     primary sidebar toggling, and settings opening.
   - `@newchobo-ui/react` now owns editor command presets for save, discard,
     copy path, close, close others, close all, and delete.
-  - Remaining: shared workspace command definition presets if the package
-    should provide default command IDs.
+  - `@newchobo-ui/react` now owns workspace and search result command presets
+    for common Explorer, Search, and integrated workbench menus.
 - Search helpers:
   - query state,
   - first result activation,
@@ -423,7 +431,7 @@ independently.
 | `workbench/WorkbenchShell`                 | Activity bar, sidebar split, editor area, status bar slots          | Shell layout and sidebar toggle                       |
 | `workbench/StatusBar`                      | Generic status sections and status item projection                  | Model-based status footer                             |
 | `@newchobo-ui/core/commands`               | Framework-neutral command registry, execution, and menu projection  | Unit tests and integrated command menu wiring         |
-| `workbench/commands`                       | React adapter plus shell and editor command presets                 | Command menu story and preset tests                   |
+| `workbench/commands`                       | React adapter plus shell, editor, workspace, and search presets     | Command menu story and preset tests                   |
 | `chat/ChatPanel`                           | Message list and composer                                           | Empty, streaming, running, disabled, cancel           |
 | `@newchobo-ui/runtime/mockRuntime`         | Public mock send/cancel/stream events and workspace patches         | Chat integration story                                |
 | `settings/WorkbenchSettingsModal`          | Generic settings layout and category rendering                      | Scope tabs, search, footer actions                    |
@@ -453,8 +461,8 @@ independently.
    - Integrated Workbench command menus now have Storybook play coverage.
    - Shell command presets are exported and covered by unit tests.
    - Editor command presets are exported and covered by unit tests.
-   - Remaining: shared workspace command definition presets if the package
-     should provide default command IDs.
+   - Workspace and Search result command presets are exported and covered by
+     unit tests.
 7. Add mock runtime fixtures for Chat and mock workspace file updates.
    - Done for framework-neutral runtime events, send/cancel/stream helpers,
      and integrated mock workspace write patches.
@@ -486,8 +494,8 @@ independently.
   adapter?
 - Should drag payloads support host-provided metadata beyond the current
   configurable path-list MIME type?
-- Should command IDs be exported as package defaults, or should consumers supply
-  their own IDs and labels?
+- Should command presets expose label/icon override options beyond the current
+  package default command IDs?
 - Which folder operations should stay as controlled UI callbacks, and which
   should be demonstrated through the `@newchobo-ui/workspace` reducer?
 - Should StatusBar items support host-provided ordering/grouping metadata beyond

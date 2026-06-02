@@ -1,16 +1,15 @@
 import { useMemo, useState, type MouseEvent } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, within } from 'storybook/test';
-import {
-  commandMenuSeparator,
-  createCommandRegistry,
-  executeCommand,
-  resolveCommandMenuItems,
-  type CommandMenuEntry,
-} from '@newchobo-ui/core';
+import { createCommandRegistry, executeCommand, resolveCommandMenuItems } from '@newchobo-ui/core';
 import { searchWorkspaceFiles, type WorkspaceFile } from '@newchobo-ui/workspace';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
-import { commandMenuItemsToContextMenuItems } from '../commands';
+import {
+  commandMenuItemsToContextMenuItems,
+  createWorkbenchSearchResultCommands,
+  createWorkbenchSearchResultMenuEntries,
+  type WorkbenchSearchResultCommandContext,
+} from '../commands';
 import { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 import type { WorkspaceSearchResult } from './types';
 
@@ -58,41 +57,8 @@ interface StoryContextMenuState {
   y: number;
 }
 
-interface SearchResultCommandContext {
-  copyPath: () => void;
-  deleteResult: () => void;
-  openResult: () => void;
-}
-
-const searchResultCommandRegistry = createCommandRegistry<SearchResultCommandContext>([
-  {
-    id: 'search.openResult',
-    label: 'Open',
-    icon: 'codicon-folder-opened',
-    shortcut: 'Enter',
-    run: ({ openResult }) => openResult(),
-  },
-  {
-    id: 'search.copyResultPath',
-    label: 'Copy path',
-    icon: 'codicon-copy',
-    run: ({ copyPath }) => copyPath(),
-  },
-  {
-    id: 'search.deleteResult',
-    label: 'Delete',
-    icon: 'codicon-trash',
-    danger: true,
-    run: ({ deleteResult }) => deleteResult(),
-  },
-]);
-
-const searchResultMenuEntries: CommandMenuEntry<SearchResultCommandContext>[] = [
-  { commandId: 'search.openResult' },
-  { commandId: 'search.copyResultPath' },
-  commandMenuSeparator('result-menu-separator'),
-  { commandId: 'search.deleteResult' },
-];
+const searchResultCommandRegistry = createCommandRegistry(createWorkbenchSearchResultCommands());
+const searchResultMenuEntries = createWorkbenchSearchResultMenuEntries();
 
 function SearchHarness({ initialQuery = '' }: SearchHarnessProps) {
   const [activePath, setActivePath] = useState<string>();
@@ -109,7 +75,7 @@ function SearchHarness({ initialQuery = '' }: SearchHarnessProps) {
 
   const openResultMenu = (event: MouseEvent<HTMLElement>, result: WorkspaceSearchResult) => {
     event.preventDefault();
-    const context: SearchResultCommandContext = {
+    const context: WorkbenchSearchResultCommandContext = {
       copyPath: () => setStatus(`Copied ${result.path}`),
       deleteResult: () => {
         setFiles((currentFiles) => currentFiles.filter((file) => file.path !== result.path));
