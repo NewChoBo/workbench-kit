@@ -1,6 +1,5 @@
 import { useMemo, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
 import { SideBarHeaderControl, SideBarViewFrame } from '../layout/SideBarViewFrame';
 import { ContextMenu, type ContextMenuItem } from '../overlay/ContextMenu';
 import { Badge } from '../primitives/Badge';
@@ -11,7 +10,6 @@ import { Field } from '../primitives/Field';
 import { IconButton } from '../primitives/IconButton';
 import { Select } from '../primitives/Select';
 import { TextInput } from '../primitives/TextInput';
-import { Toolbar } from '../primitives/Toolbar';
 import { ActivityBar } from './ActivityBar';
 import { ChatPanel, type ChatMessage } from './chat';
 import { WorkbenchSettingsModal, WorkbenchSettingsSection } from './settings';
@@ -21,7 +19,6 @@ import {
   WorkspaceEditorPanel,
   type WorkspaceEditorTheme,
   WorkspaceExplorer,
-  WorkspaceSearchPanel,
   WorkspaceSearchResults,
   buildWorkspaceTree,
   fileNameOfPath,
@@ -48,14 +45,6 @@ interface StoryActivity {
   icon: ReactNode;
   id: StoryActivityId;
   label: string;
-}
-
-interface StoryNavigationItem {
-  description?: string;
-  icon?: string;
-  id: string;
-  label: string;
-  variant?: 'default' | 'stacked';
 }
 
 interface StoryContextMenuState {
@@ -88,7 +77,7 @@ const storyActivities: Record<StoryActivityId, StoryActivity> = {
 const defaultSelectionByActivity: Record<StoryActivityId, string> = {
   explorer: 'src/App.tsx',
   search: 'src/components/Button.tsx',
-  chat: 'review-session',
+  chat: 'src/App.tsx',
 };
 
 const workspaceFolders = ['src', 'src/components', 'src/workbench', 'docs', 'public'];
@@ -230,30 +219,6 @@ Import shared styles once, then compose the workbench primitives in your app she
   },
 ];
 
-const chatSessions: StoryNavigationItem[] = [
-  {
-    id: 'review-session',
-    label: 'Review session',
-    description: 'Workbench shell handoff',
-    icon: 'codicon-comment-discussion',
-    variant: 'stacked',
-  },
-  {
-    id: 'release-notes',
-    label: 'Release notes',
-    description: 'Component package summary',
-    icon: 'codicon-note',
-    variant: 'stacked',
-  },
-  {
-    id: 'accessibility-check',
-    label: 'Accessibility check',
-    description: 'Keyboard and semantics',
-    icon: 'codicon-checklist',
-    variant: 'stacked',
-  },
-];
-
 const chatMessages: ChatMessage[] = [
   {
     id: 'm1',
@@ -275,15 +240,6 @@ const chatMessages: ChatMessage[] = [
   },
 ];
 
-const storyCardStyle = {
-  minHeight: 88,
-  padding: 12,
-  border: '1px solid var(--color-border)',
-  borderRadius: 'var(--radius-sm)',
-  background: 'var(--color-surface)',
-  color: 'var(--color-text-muted)',
-} as const;
-
 function isStoryActivityId(id: string): id is StoryActivityId {
   return id === 'explorer' || id === 'search' || id === 'chat';
 }
@@ -303,21 +259,6 @@ function getActiveFile(activeItemId: string, files: WorkspaceFile[]) {
     files.find((file) => file.path === defaultSelectionByActivity.explorer) ??
     files[0]
   );
-}
-
-function getActiveLabel(
-  activeActivityId: StoryActivityId,
-  activeItemId: string,
-  files: WorkspaceFile[],
-) {
-  if (activeActivityId === 'chat') {
-    return chatSessions.find((item) => item.id === activeItemId)?.label ?? 'Review session';
-  }
-
-  const activeFile = files.find((file) => file.path === activeItemId);
-  if (activeFile) return fileNameOfPath(activeFile.path);
-
-  return activeActivityId === 'search' ? 'Search results' : fileNameOfPath(activeItemId);
 }
 
 export const ActivityRail: Story = {
@@ -342,16 +283,12 @@ export const StatusFooter: Story = {
     <div style={{ width: '100%', background: 'var(--color-bg)', paddingTop: 80 }}>
       <StatusBar compact>
         <StatusBarSection>
-          <StatusBarItem icon={<i className="codicon codicon-source-control" />}>
-            main
-          </StatusBarItem>
-          <StatusBarItem icon={<i className="codicon codicon-check" />}>Ready</StatusBarItem>
-          <StatusBarItem>Explorer</StatusBarItem>
+          <StatusBarItem icon={<span className="workbench-status-dot" />}>Idle</StatusBarItem>
         </StatusBarSection>
         <StatusBarSection align="end">
-          <StatusBarItem>2 warnings</StatusBarItem>
-          <StatusBarItem icon={<i className="codicon codicon-settings-gear" />}>
-            Settings
+          <StatusBarItem icon={<i className="codicon codicon-color-mode" />}>Dark</StatusBarItem>
+          <StatusBarItem icon={<i className="codicon codicon-layout-sidebar-left" />}>
+            Hide sidebar
           </StatusBarItem>
         </StatusBarSection>
       </StatusBar>
@@ -500,8 +437,7 @@ function IntegratedWorkbenchShell() {
   const [expandedPaths, setExpandedPaths] = useState(() => new Set(['src', 'src/components']));
   const [filterQuery, setFilterQuery] = useState('');
   const [isPrimarySideBarVisible, setIsPrimarySideBarVisible] = useState(true);
-  const [lastCommandLabel, setLastCommandLabel] = useState('Ready');
-  const [primarySizePercent, setPrimarySizePercent] = useState(62);
+  const [, setLastCommandLabel] = useState('Idle');
   const [searchQuery, setSearchQuery] = useState('button');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsCategoryId, setSettingsCategoryId] = useState('appearance');
@@ -515,20 +451,12 @@ function IntegratedWorkbenchShell() {
   ]);
   const workspaceTree = useMemo(() => buildWorkspaceTree(workspaceFolders, files), [files]);
   const activeActivity = storyActivities[activeActivityId];
-  const activeLabel = getActiveLabel(activeActivityId, activeItemId, files);
   const activeFile = getActiveFile(activeItemId, files);
 
   const filteredSearchResults = useMemo(
     () => searchWorkspaceFiles(files, searchQuery),
     [files, searchQuery],
   );
-  const statusCountLabel =
-    activeActivityId === 'search'
-      ? `${filteredSearchResults.length} results`
-      : activeActivityId === 'chat'
-        ? `${chatMessages.length} messages`
-        : `${files.length} files`;
-
   const openContextMenu = (
     event: MouseEvent<HTMLElement>,
     items: ContextMenuItem[],
@@ -712,93 +640,25 @@ function IntegratedWorkbenchShell() {
   };
 
   const editorArea = (
-    <section className="workbench-editor-area">
-      <Panel>
-        <PanelHeader
-          actions={
-            <Toolbar>
-              <Badge>ready</Badge>
-              <Button variant="primary" onClick={() => setSettingsOpen(true)}>
-                Settings
-              </Button>
-            </Toolbar>
-          }
-        >
-          {activeActivity.label} / {activeLabel}
-        </PanelHeader>
-        <PanelBody style={{ display: 'flex', overflow: 'hidden' }}>
-          <SplitView
-            primarySizePercent={primarySizePercent}
-            onPrimarySizePercentChange={setPrimarySizePercent}
-            primary={renderPrimarySurface({
-              activeActivityId,
-              activeFile,
-              activeItemId,
-              activeLabel,
-              colorTheme,
-              compactRows,
-              files,
-              filteredSearchResults,
-              onCloseAll: closeAll,
-              onCloseOthers: closeOthers,
-              onClosePath: closePath,
-              onCopyPath: (path) => setLastCommandLabel(`Copied ${path}`),
-              onDeletePath: deleteFile,
-              onActivateSearchResult: activateSearchResult,
-              onSaveFile: saveFile,
-              onSelectedPathChange: activateFile,
-              openPaths,
-              searchQuery,
-            })}
-            secondary={
-              <Panel style={{ minWidth: 0 }}>
-                <PanelHeader>Inspector</PanelHeader>
-                <PanelBody style={{ padding: 16 }}>
-                  <div style={{ display: 'grid', gap: 12 }}>
-                    <div style={storyCardStyle}>
-                      <strong style={{ display: 'block', color: 'var(--color-text)' }}>
-                        Activity
-                      </strong>
-                      <span>{activeActivity.label}</span>
-                    </div>
-                    <div style={storyCardStyle}>
-                      <strong style={{ display: 'block', color: 'var(--color-text)' }}>
-                        Selection
-                      </strong>
-                      <span>{activeFile.path}</span>
-                    </div>
-                    <div style={storyCardStyle}>
-                      <strong style={{ display: 'block', color: 'var(--color-text)' }}>
-                        Editor split
-                      </strong>
-                      <span>{Math.round(primarySizePercent)}%</span>
-                    </div>
-                    <div style={storyCardStyle}>
-                      <strong style={{ display: 'block', color: 'var(--color-text)' }}>
-                        Sidebar
-                      </strong>
-                      <span>
-                        {isPrimarySideBarVisible ? `${Math.round(sideBarSizePercent)}%` : 'Hidden'}
-                      </span>
-                    </div>
-                    <div style={storyCardStyle}>
-                      <strong style={{ display: 'block', color: 'var(--color-text)' }}>
-                        Command
-                      </strong>
-                      <span>{lastCommandLabel}</span>
-                    </div>
-                  </div>
-                </PanelBody>
-              </Panel>
-            }
-          />
-        </PanelBody>
-      </Panel>
-    </section>
+    <main className="workbench-editor-area">
+      <WorkspaceEditorPanel
+        files={files}
+        openPaths={openPaths}
+        selectedPath={activeFile.path}
+        theme={colorTheme}
+        onCloseAll={closeAll}
+        onCloseOthers={closeOthers}
+        onClosePath={closePath}
+        onCopyPath={(path) => setLastCommandLabel(`Copied ${path}`)}
+        onDeletePath={deleteFile}
+        onSaveFile={saveFile}
+        onSelectedPathChange={activateFile}
+      />
+    </main>
   );
 
   return (
-    <main className="ide-root" data-theme={colorTheme} style={{ height: 640, minHeight: 0 }}>
+    <div className="ide-root" data-theme={colorTheme} style={{ height: 640, minHeight: 0 }}>
       <div className="ide-body">
         <ActivityBar
           items={getActivityItems(activeActivityId)}
@@ -948,15 +808,15 @@ function IntegratedWorkbenchShell() {
       </div>
       <StatusBar compact>
         <StatusBarSection>
-          <StatusBarItem icon={<i className="codicon codicon-source-control" />}>
-            main
-          </StatusBarItem>
-          <StatusBarItem icon={<span className="workbench-status-dot" />}>Ready</StatusBarItem>
-          <StatusBarItem active>{activeActivity.label}</StatusBarItem>
-          <StatusBarItem>{activeFile.path}</StatusBarItem>
+          <StatusBarItem icon={<span className="workbench-status-dot" />}>Idle</StatusBarItem>
         </StatusBarSection>
         <StatusBarSection align="end">
-          <StatusBarItem>{statusCountLabel}</StatusBarItem>
+          <StatusBarItem
+            icon={<i className="codicon codicon-color-mode" />}
+            onClick={() => setColorTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+          >
+            {colorTheme === 'dark' ? 'Dark' : 'Light'}
+          </StatusBarItem>
           <StatusBarItem
             icon={<i className="codicon codicon-layout-sidebar-left" />}
             onClick={() => {
@@ -964,16 +824,7 @@ function IntegratedWorkbenchShell() {
               setLastCommandLabel('Primary sidebar toggled');
             }}
           >
-            {isPrimarySideBarVisible ? `${Math.round(sideBarSizePercent)}%` : 'Hidden'}
-          </StatusBarItem>
-          <StatusBarItem icon={<i className="codicon codicon-layout" />}>
-            {Math.round(primarySizePercent)}%
-          </StatusBarItem>
-          <StatusBarItem
-            icon={<i className="codicon codicon-settings-gear" />}
-            onClick={() => setSettingsOpen(true)}
-          >
-            Settings
+            {isPrimarySideBarVisible ? 'Hide sidebar' : 'Show sidebar'}
           </StatusBarItem>
         </StatusBarSection>
       </StatusBar>
@@ -1040,7 +891,6 @@ function IntegratedWorkbenchShell() {
               colorTheme,
               compactRows,
               fileCount: files.length,
-              primarySizePercent,
               searchQuery,
               searchResultCount: filteredSearchResults.length,
               settingsSearchValue,
@@ -1051,7 +901,6 @@ function IntegratedWorkbenchShell() {
               },
               onColorThemeChange: setColorTheme,
               onCompactRowsChange: setCompactRows,
-              onPrimarySizePercentChange: setPrimarySizePercent,
               onSearchQueryChange: setSearchQuery,
               onSettingsSearchValueChange: setSettingsSearchValue,
               onSideBarSizePercentChange: setSideBarSizePercent,
@@ -1059,7 +908,7 @@ function IntegratedWorkbenchShell() {
           }
         />
       ) : null}
-    </main>
+    </div>
   );
 }
 
@@ -1073,7 +922,6 @@ function renderSettingsCategory({
   colorTheme,
   compactRows,
   fileCount,
-  primarySizePercent,
   searchQuery,
   searchResultCount,
   settingsSearchValue,
@@ -1081,7 +929,6 @@ function renderSettingsCategory({
   onClearSearch,
   onColorThemeChange,
   onCompactRowsChange,
-  onPrimarySizePercentChange,
   onSearchQueryChange,
   onSettingsSearchValueChange,
   onSideBarSizePercentChange,
@@ -1090,7 +937,6 @@ function renderSettingsCategory({
   colorTheme: StoryTheme;
   compactRows: boolean;
   fileCount: number;
-  primarySizePercent: number;
   searchQuery: string;
   searchResultCount: number;
   settingsSearchValue: string;
@@ -1098,7 +944,6 @@ function renderSettingsCategory({
   onClearSearch: () => void;
   onColorThemeChange: (theme: StoryTheme) => void;
   onCompactRowsChange: (compactRows: boolean) => void;
-  onPrimarySizePercentChange: (sizePercent: number) => void;
   onSearchQueryChange: (query: string) => void;
   onSettingsSearchValueChange: (query: string) => void;
   onSideBarSizePercentChange: (sizePercent: number) => void;
@@ -1138,18 +983,6 @@ function renderSettingsCategory({
             onChange={(event) =>
               onSideBarSizePercentChange(
                 clampStoryPercent(event.currentTarget.valueAsNumber, sideBarSizePercent),
-              )
-            }
-          />
-        </Field>
-        <Field label="Editor split width" description="Sets the current editor split percentage.">
-          <TextInput
-            controlWidth="full"
-            type="number"
-            value={Math.round(primarySizePercent)}
-            onChange={(event) =>
-              onPrimarySizePercentChange(
-                clampStoryPercent(event.currentTarget.valueAsNumber, primarySizePercent),
               )
             }
           />
@@ -1231,122 +1064,6 @@ function renderSettingsCategory({
         </Select>
       </Field>
     </WorkbenchSettingsSection>
-  );
-}
-
-function renderPrimarySurface({
-  activeActivityId,
-  activeFile,
-  activeItemId,
-  activeLabel,
-  colorTheme,
-  compactRows,
-  files,
-  filteredSearchResults,
-  onCloseAll,
-  onCloseOthers,
-  onClosePath,
-  onCopyPath,
-  onDeletePath,
-  onActivateSearchResult,
-  onSaveFile,
-  onSelectedPathChange,
-  openPaths,
-  searchQuery,
-}: {
-  activeActivityId: StoryActivityId;
-  activeFile: WorkspaceFile;
-  activeItemId: string;
-  activeLabel: string;
-  colorTheme: StoryTheme;
-  compactRows: boolean;
-  files: WorkspaceFile[];
-  filteredSearchResults: WorkspaceSearchResult[];
-  onCloseAll: () => void;
-  onCloseOthers: (path: string) => void;
-  onClosePath: (path: string) => void;
-  onCopyPath: (path: string) => void;
-  onDeletePath: (path: string) => void;
-  onActivateSearchResult: (result: WorkspaceSearchResult) => void;
-  onSaveFile: (path: string, content: string) => void;
-  onSelectedPathChange: (path: string) => void;
-  openPaths: string[];
-  searchQuery: string;
-}) {
-  if (activeActivityId === 'chat') {
-    return (
-      <Panel style={{ minWidth: 0 }}>
-        <PanelHeader
-          actions={
-            <Toolbar>
-              <Badge variant="muted">{chatMessages.length} messages</Badge>
-              <IconButton icon="codicon-references" label="Open references" />
-            </Toolbar>
-          }
-        >
-          Conversation context
-        </PanelHeader>
-        <PanelBody style={{ padding: 16 }}>
-          <section
-            style={{
-              display: 'grid',
-              gap: 12,
-              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-              marginBottom: 12,
-            }}
-          >
-            {['Current file', 'Selection', 'Prompt context'].map((label) => (
-              <div key={label} style={storyCardStyle}>
-                <strong style={{ display: 'block', color: 'var(--color-text)' }}>{label}</strong>
-                <span>{label === 'Current file' ? activeFile.path : activeLabel}</span>
-              </div>
-            ))}
-          </section>
-          <WorkspaceEditorPanel
-            emptyLabel="Open a file to add it as conversation context."
-            files={files}
-            openPaths={openPaths}
-            selectedPath={activeFile.path}
-            theme={colorTheme}
-            onCloseAll={onCloseAll}
-            onCloseOthers={onCloseOthers}
-            onClosePath={onClosePath}
-            onCopyPath={onCopyPath}
-            onDeletePath={onDeletePath}
-            onSaveFile={onSaveFile}
-            onSelectedPathChange={onSelectedPathChange}
-          />
-        </PanelBody>
-      </Panel>
-    );
-  }
-
-  if (activeActivityId === 'search') {
-    return (
-      <WorkspaceSearchPanel
-        activePath={activeItemId}
-        compactRows={compactRows}
-        query={searchQuery}
-        results={filteredSearchResults}
-        onActivateResult={onActivateSearchResult}
-      />
-    );
-  }
-
-  return (
-    <WorkspaceEditorPanel
-      files={files}
-      openPaths={openPaths}
-      selectedPath={activeFile.path}
-      theme={colorTheme}
-      onCloseAll={onCloseAll}
-      onCloseOthers={onCloseOthers}
-      onClosePath={onClosePath}
-      onCopyPath={onCopyPath}
-      onDeletePath={onDeletePath}
-      onSaveFile={onSaveFile}
-      onSelectedPathChange={onSelectedPathChange}
-    />
   );
 }
 
