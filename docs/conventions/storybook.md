@@ -4,18 +4,17 @@ Storybook owns component-level documentation and state matrices. Keep the sample
 app for integrated composition smoke checks, and use Storybook to show primitive
 and layout components in small isolated states.
 
-## Recommended Shape
+## Current Shape
 
-- Add a root `.storybook` directory.
+- Keep a root `.storybook` directory.
 - Use `@storybook/react-vite`.
 - Collect stories from `packages/react/src/**/*.stories.tsx` and
   `stories/**/*.stories.tsx`.
-- Resolve workspace packages to source entries through Vite aliases.
 - Keep `examples/react-sample` as the integrated sample app.
 
 ## Initial Stories
 
-Add initial stories in this order:
+Initial stories are added in this order:
 
 1. `Badge`, `Button`, `IconButton`
 2. `TextInput`, `Select`, `Checkbox`, `Field`
@@ -28,7 +27,7 @@ instead of private business data.
 
 ## Scripts
 
-When Storybook is added, start with these root scripts:
+Use these root scripts:
 
 ```json
 {
@@ -37,13 +36,13 @@ When Storybook is added, start with these root scripts:
 }
 ```
 
-Keep `build:storybook` as a separate validation at first. Add it to `validate`
-only after the story set is stable.
+`pnpm validate` includes `build:storybook` so Storybook drift is caught with the
+rest of the package gate.
 
 ## Interaction Tests
 
-Do not add interaction tests to every story at once. Start with components where
-accessibility or state regressions are most likely.
+Interaction tests are not part of the baseline yet. Add them first to components
+where accessibility or state regressions are most likely.
 
 - `ConfirmDialog`: open state, accessible name, confirm/cancel
 - `Checkbox`: checked state
