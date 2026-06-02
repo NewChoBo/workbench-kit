@@ -55,6 +55,27 @@ The stronger architecture reference covers workbench-scale package boundaries.
   and product-specific naming, so only the package boundaries and contracts
   should be reused.
 
+### VS Code Reference
+
+VS Code is the public product reference for workbench interaction conventions.
+The package should use VS Code as a behavioral benchmark, not as a visual clone.
+
+- Explorer workflows should align with familiar file tree behavior: active item
+  versus multi-selection, range selection, inline create and rename, drag and
+  drop, context menus, and keyboard actions such as `F2` and `Delete`.
+- Search workflows should follow sidebar search expectations: query input,
+  result counts, result previews, match highlighting, first-result activation,
+  and clear/cancel keyboard behavior.
+- Editor workflows should follow tab and dirty-state conventions: active tab,
+  close, close others, close all, save, discard, copy path, and delete
+  coordination with shared workspace state.
+- Command and menu APIs should support command IDs, labels, icons, shortcuts,
+  visibility/enabled state, and context-aware menu projection in a product-neutral
+  form.
+- Workbench shell components should preserve the mental model of activity bar,
+  primary sidebar, editor area, panel/status surfaces, and settings entry points
+  while keeping styling and product identity independent.
+
 ## Target Package Map
 
 The package should evolve beyond a single React package.
@@ -62,40 +83,55 @@ The package should evolve beyond a single React package.
 | Package                    | Role                                                                                 | Initial source of truth                                    |
 | -------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
 | `@newchobo-ui/tokens`      | CSS variables, base theme, visual tokens                                             | Existing tokens package                                    |
-| `@newchobo-ui/core`        | Framework-neutral command registry, context keys, event/disposable helpers           | Architecture reference patterns                            |
+| `@newchobo-ui/core`        | Framework-neutral command registry, context keys, event/disposable helpers           | Architecture reference patterns and VS Code conventions    |
 | `@newchobo-ui/workspace`   | Framework-neutral workspace paths, tree, search, selection, mutations, draft helpers | Existing React workspace helpers plus functional behaviors |
 | `@newchobo-ui/runtime`     | Framework-neutral chat/runtime events, mock runtime, workspace patch adapters        | Product-neutral runtime event shape                        |
-| `@newchobo-ui/react`       | React primitives and workbench components bound to the neutral packages              | Existing React package                                     |
+| `@newchobo-ui/react`       | React primitives and workbench components bound to the neutral packages              | Existing React package and VS Code interaction conventions |
 | Story/test fixture modules | Public mock files, mock messages, scenario adapters                                  | Storybook only unless consumers need them                  |
 
 ## Current Implementation Progress
 
-- A headless virtual workspace reducer exists in `@newchobo-ui/react`, with unit
-  tests for path, search, create, rename, move, and delete behavior.
-- The next migration step is to move path, tree, search, types, and the pure
-  virtual workspace model into `@newchobo-ui/workspace`, then keep
-  `@newchobo-ui/react` as a binding layer.
+- `@newchobo-ui/workspace` owns framework-neutral path, tree, search, selection,
+  type, and virtual workspace model helpers.
+- `@newchobo-ui/react` consumes `@newchobo-ui/workspace` and keeps existing
+  workspace exports available through the React binding package.
+- `WorkspaceExplorer` accepts controlled file selection props and emits
+  selection changes for single, toggle, range, and toggle-range interactions.
+- Explorer context menus receive selection-aware action paths, and the
+  integrated story uses them for multi-file open, copy, and delete confirmation.
+- Explorer rows emit selection-aware `F2` rename and `Delete` delete requests so
+  host applications can keep confirmation and inline edit state controlled.
+- Explorer rows support configurable drag payloads and emit move requests for
+  folder and workspace-root drops; `@newchobo-ui/workspace` exposes a move-plan
+  helper that validates multi-file moves before reducer actions are dispatched.
+- Explorer renders controlled inline create and rename rows; the integrated
+  story validates simple names and path availability before dispatching create
+  or rename reducer actions.
+- Unit tests cover path operations, search, selection, create, rename, move, and
+  delete behavior.
+- The next migration step is to add component-level Storybook play coverage for
+  create, rename, delete, and drag/drop workflows.
 
 ## Current Differences From Real Use Cases
 
 The integrated workbench story is closer to an app shell than before, but it is
 still not a complete real-use workflow.
 
-| Area                   | Current package behavior                                        | Real-use expectation                                                                        | Todo                                                    |
-| ---------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Explorer selection     | Single active item only                                         | Multi-select with range and toggle selection                                                | Add selection model and selected-row styles             |
-| Explorer creation      | No inline create flow                                           | New file/folder at root or inside a folder                                                  | Add inline create component and validation              |
-| Explorer rename        | Context menu item is present in stories, but no rename flow     | Inline rename, `F2`, blur commit/cancel                                                     | Add rename state and input row                          |
-| Explorer deletion      | File deletion exists mainly through editor/story handlers       | File, multi-file, and folder deletion with confirmation                                     | Add folder and multi-file delete flows                  |
-| Explorer drag and drop | Drop target styling primitive exists, but no file move workflow | Drag one or many files to folder/root                                                       | Add drag payload abstraction and move validation        |
-| Search                 | Search utility and result list exist                            | Sidebar search with query field, clear button, result count, keyboard actions, context menu | Promote sidebar search panel as a first-class component |
-| Workspace editor       | Monaco editor, tabs, dirty state, save/discard, tab menu exist  | Tab actions should coordinate with shared workspace state                                   | Extract tab and draft state helpers                     |
-| Chat                   | Generic chat UI exists                                          | Runtime-driven send/cancel, streaming chunks, status integration                            | Add mock-runtime story adapter and streaming fixture    |
-| Workbench shell state  | Story-local state only                                          | Active view, sidebar visibility, theme, status, and settings should be reusable             | Add shell state contract or controlled shell component  |
-| Settings               | Generic settings modal exists                                   | App-specific sections are injected, not hardcoded                                           | Keep modal generic and add section/story examples       |
-| Storybook              | Integrated story owns too much state and behavior               | Stories should compose components with fixtures and mock adapters                           | Move reusable logic into package modules                |
+| Area                   | Current package behavior                                                                                     | Real-use expectation                                                                        | Todo                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Explorer selection     | Controlled file selection props with selected-row styles and selection-aware menu/keyboard/drag targets      | Multi-select should stay aligned through inline edit and drag/drop workflows                | Add interaction coverage for selection recovery         |
+| Explorer creation      | Controlled inline create row with root/folder entry and path validation                                      | New file/folder at root or inside a folder                                                  | Add component-level create story/play coverage          |
+| Explorer rename        | Controlled inline rename row from context menu or `F2`, with path validation                                 | Inline rename, `F2`, blur commit/cancel                                                     | Add component-level rename story/play coverage          |
+| Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets    | File, multi-file, and folder deletion with controlled component callbacks                   | Add component-level delete story/play coverage          |
+| Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves | Drag one or many files to folder/root with visual and interaction test coverage             | Add component-level drag/drop story/play coverage       |
+| Search                 | Search utility and result list exist                                                                         | Sidebar search with query field, clear button, result count, keyboard actions, context menu | Promote sidebar search panel as a first-class component |
+| Workspace editor       | Monaco editor, tabs, dirty state, save/discard, tab menu exist                                               | Tab actions should coordinate with shared workspace state                                   | Extract tab and draft state helpers                     |
+| Chat                   | Generic chat UI exists                                                                                       | Runtime-driven send/cancel, streaming chunks, status integration                            | Add mock-runtime story adapter and streaming fixture    |
+| Workbench shell state  | Story-local state only                                                                                       | Active view, sidebar visibility, theme, status, and settings should be reusable             | Add shell state contract or controlled shell component  |
+| Settings               | Generic settings modal exists                                                                                | App-specific sections are injected, not hardcoded                                           | Keep modal generic and add section/story examples       |
+| Storybook              | Integrated story owns too much state and behavior                                                            | Stories should compose components with fixtures and mock adapters                           | Move reusable logic into package modules                |
 
-## Missing Features From The Reference Workbench
+## Missing Or Incomplete Features From The Reference Workbench
 
 ### Explorer
 
@@ -110,7 +146,8 @@ still not a complete real-use workflow.
   - Default names such as `untitled.md` and `new-folder`.
   - Duplicate-name suffixing.
   - Simple-name validation.
-  - `Escape` cancel and blur commit/cancel behavior.
+  - `Escape` cancel and blur/Enter commit behavior.
+  - Remaining: dedicated component-level Storybook play coverage.
 - Inline rename:
   - File rename.
   - Folder rename.
@@ -118,6 +155,7 @@ still not a complete real-use workflow.
   - Path conflict validation.
   - Folder rename updates descendant paths, expanded paths, open tabs, and
     selection state.
+  - Remaining: dedicated component-level Storybook play coverage.
 - Delete workflows:
   - File delete confirmation.
   - Multi-file delete confirmation.
@@ -125,12 +163,14 @@ still not a complete real-use workflow.
   - Recursive folder deletion.
   - Selection and active tab recovery after deletion.
 - Drag and drop:
-  - Single-file drag.
-  - Multi-file drag.
+  - Single-file drag through a configurable Explorer drag payload.
+  - Multi-file drag through the current Explorer selection.
   - Drop into a folder.
   - Drop to workspace root.
   - Drop target highlight.
-  - Invalid drop prevention for same parent or path conflicts.
+  - Invalid drop prevention for same parent or path conflicts through a
+    framework-neutral move-plan helper.
+  - Remaining: dedicated component-level Storybook play coverage.
 - Context menus:
   - Root menu: new file, new folder.
   - File menu: open, rename, copy path, delete.

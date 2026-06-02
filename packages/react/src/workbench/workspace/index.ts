@@ -2,8 +2,18 @@ export { WorkspaceEditor, languageForFile, monacoThemeForWorkspaceTheme } from '
 export type { WorkspaceEditorProps, WorkspaceEditorTheme } from './WorkspaceEditor';
 export { WorkspaceEditorPanel } from './WorkspaceEditorPanel';
 export type { WorkspaceEditorPanelProps } from './WorkspaceEditorPanel';
-export { WorkspaceExplorer } from './WorkspaceExplorer';
-export type { WorkspaceExplorerProps } from './WorkspaceExplorer';
+export { WORKSPACE_EXPLORER_DRAG_DATA_TYPE, WorkspaceExplorer } from './WorkspaceExplorer';
+export type {
+  WorkspaceExplorerItemActionMeta,
+  WorkspaceExplorerItemContextMenuMeta,
+  WorkspaceExplorerItemKeyboardActionMeta,
+  WorkspaceExplorerInlineEditCommitMeta,
+  WorkspaceExplorerInlineEditKind,
+  WorkspaceExplorerInlineEditState,
+  WorkspaceExplorerMoveRequestMeta,
+  WorkspaceExplorerProps,
+  WorkspaceExplorerSelectionChangeMeta,
+} from './WorkspaceExplorer';
 export { WorkspaceFileIcon, codiconForFileKind, fileIconKindForPath } from './WorkspaceFileIcon';
 export type { WorkspaceFileIconKind, WorkspaceFileIconProps } from './WorkspaceFileIcon';
 export { WorkspaceHighlightedText } from './WorkspaceHighlightedText';
@@ -23,9 +33,23 @@ export {
   workspacePathSegments,
 } from './path';
 export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
+export {
+  getWorkspaceSelectionActionPaths,
+  getWorkspaceSelectionRange,
+  normalizeWorkspaceSelectionPaths,
+  pruneWorkspaceSelection,
+  updateWorkspaceSelection,
+  type UpdateWorkspaceSelectionInput,
+  type WorkspaceSelectionActionPathsInput,
+  type WorkspaceSelectionMode,
+  type WorkspaceSelectionState,
+} from '@newchobo-ui/workspace';
 export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
 export {
+  getAvailableWorkspaceEntryName,
+  getWorkspaceFileMovePlan,
   initializeVirtualWorkspaceState,
+  isWorkspaceEntryPathAvailable,
   useVirtualWorkspace,
   virtualWorkspaceReducer,
 } from './useVirtualWorkspace';
@@ -35,6 +59,11 @@ export type {
   VirtualWorkspaceApi,
   VirtualWorkspaceInitialState,
   VirtualWorkspaceState,
+  WorkspaceEntryNameSuggestionInput,
+  WorkspaceEntryPathAvailabilityInput,
+  WorkspaceFileMove,
+  WorkspaceFileMovePlan,
+  WorkspaceFileMovePlanInput,
   WriteWorkspaceFileInput,
 } from './useVirtualWorkspace';
 export type {

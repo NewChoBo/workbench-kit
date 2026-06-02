@@ -262,6 +262,7 @@ export interface SideBarListItemProps extends ComponentPropsWithRef<'button'> {
   active?: boolean;
   depth?: number;
   dropTarget?: boolean;
+  selected?: boolean;
   variant?: 'default' | 'stacked';
 }
 
@@ -273,6 +274,7 @@ export const SideBarListItem = forwardRef<HTMLButtonElement, SideBarListItemProp
       className,
       depth = 0,
       dropTarget,
+      selected,
       style,
       type = 'button',
       variant = 'default',
@@ -292,9 +294,11 @@ export const SideBarListItem = forwardRef<HTMLButtonElement, SideBarListItemProp
             'ui-side-bar-list-item',
             variant === 'stacked' && 'ui-side-bar-list-item--stacked',
             active && 'ui-side-bar-list-item--active',
+            selected && 'ui-side-bar-list-item--selected',
             dropTarget && 'ui-side-bar-list-item--drop-target',
             className,
           )}
+          data-selected={selected ? 'true' : undefined}
           style={depthStyle}
           {...props}
         />

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getAvailableWorkspaceEntryName,
+  getWorkspaceFileMovePlan,
   initializeVirtualWorkspaceState,
+  isWorkspaceEntryPathAvailable,
   virtualWorkspaceReducer,
   type VirtualWorkspaceAction,
   type VirtualWorkspaceInitialState,
@@ -50,6 +53,43 @@ describe('virtual workspace model', () => {
     expect(state.expandedPaths.has('src')).toBe(true);
   });
 
+  it('suggests available entry names without colliding with files or folders', () => {
+    expect(
+      getAvailableWorkspaceEntryName({
+        files: [{ content: 'readme', path: 'src/untitled.md' }],
+        folders: ['src/untitled-2.md'],
+        parentPath: 'src',
+        preferredName: 'untitled.md',
+      }),
+    ).toBe('untitled-3.md');
+  });
+
+  it('checks path availability with optional excluded source paths', () => {
+    const files = [
+      { content: 'app', path: 'src/App.tsx' },
+      { content: 'button', path: 'src/components/Button.tsx' },
+    ];
+    const folders = ['src/components'];
+
+    expect(isWorkspaceEntryPathAvailable({ files, folders, path: 'src/App.tsx' })).toBe(false);
+    expect(
+      isWorkspaceEntryPathAvailable({
+        excludedPaths: ['src/App.tsx'],
+        files,
+        folders,
+        path: 'src/App.tsx',
+      }),
+    ).toBe(true);
+    expect(
+      isWorkspaceEntryPathAvailable({
+        excludedPaths: ['src/components'],
+        files,
+        folders,
+        path: 'src/ui',
+      }),
+    ).toBe(true);
+  });
+
   it('renames folders and updates descendants, open tabs, selection, and expansion', () => {
     const state = reduceWorkspace(
       {
@@ -83,6 +123,40 @@ describe('virtual workspace model', () => {
     expect(state.files[0]?.path).toBe('docs/notes.md');
     expect(state.openPaths).toEqual(['docs/notes.md']);
     expect(state.selectedPath).toBe('docs/notes.md');
+  });
+
+  it('plans multi-file moves and blocks same-parent or conflicting destinations', () => {
+    const plan = getWorkspaceFileMovePlan({
+      files: [
+        { content: 'app', path: 'src/App.tsx' },
+        { content: 'button', path: 'src/components/Button.tsx' },
+        { content: 'conflict', path: 'docs/Button.tsx' },
+      ],
+      folders: ['src/components', 'docs'],
+      sourcePaths: ['src/App.tsx', 'src/components/Button.tsx', 'missing.ts'],
+      targetFolderPath: 'docs',
+    });
+
+    expect(plan).toEqual({
+      blockedPaths: ['src/components/Button.tsx', 'missing.ts'],
+      moves: [{ destinationPath: 'docs/App.tsx', sourcePath: 'src/App.tsx' }],
+      targetFolderPath: 'docs',
+    });
+  });
+
+  it('blocks moves to the same parent folder', () => {
+    expect(
+      getWorkspaceFileMovePlan({
+        files: [{ content: 'app', path: 'src/App.tsx' }],
+        folders: ['src'],
+        sourcePaths: ['src/App.tsx'],
+        targetFolderPath: 'src',
+      }),
+    ).toEqual({
+      blockedPaths: ['src/App.tsx'],
+      moves: [],
+      targetFolderPath: 'src',
+    });
   });
 
   it('deletes folders recursively and recovers selection to a remaining open file', () => {

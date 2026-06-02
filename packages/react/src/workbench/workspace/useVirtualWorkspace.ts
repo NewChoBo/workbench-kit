@@ -1,13 +1,21 @@
 import { useMemo, useReducer } from 'react';
 import {
   buildWorkspaceTree,
+  getAvailableWorkspaceEntryName,
+  getWorkspaceFileMovePlan,
   initializeVirtualWorkspaceState,
+  isWorkspaceEntryPathAvailable,
   searchWorkspaceFiles,
   virtualWorkspaceReducer,
   type CreateWorkspaceFileInput,
   type VirtualWorkspaceAction,
   type VirtualWorkspaceInitialState,
   type VirtualWorkspaceState,
+  type WorkspaceEntryNameSuggestionInput,
+  type WorkspaceEntryPathAvailabilityInput,
+  type WorkspaceFileMove,
+  type WorkspaceFileMovePlan,
+  type WorkspaceFileMovePlanInput,
   type WorkspaceSearchResult,
   type WorkspaceTreeNode,
   type WriteWorkspaceFileInput,
@@ -72,11 +80,19 @@ export function useVirtualWorkspace(
 }
 
 export {
+  getAvailableWorkspaceEntryName,
+  getWorkspaceFileMovePlan,
   initializeVirtualWorkspaceState,
+  isWorkspaceEntryPathAvailable,
   virtualWorkspaceReducer,
   type CreateWorkspaceFileInput,
   type VirtualWorkspaceAction,
   type VirtualWorkspaceInitialState,
   type VirtualWorkspaceState,
+  type WorkspaceEntryNameSuggestionInput,
+  type WorkspaceEntryPathAvailabilityInput,
+  type WorkspaceFileMove,
+  type WorkspaceFileMovePlan,
+  type WorkspaceFileMovePlanInput,
   type WriteWorkspaceFileInput,
 };
