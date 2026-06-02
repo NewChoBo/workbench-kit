@@ -96,6 +96,9 @@ The package should evolve beyond a single React package.
   separator, visibility/enabled-state, and menu projection helpers.
 - `@newchobo-ui/workspace` owns framework-neutral path, tree, search, selection,
   type, editor draft, and virtual workspace model helpers.
+- `@newchobo-ui/runtime` owns framework-neutral runtime chat message,
+  status, workspace patch event types, and a public mock runtime helper for
+  send/cancel/stream fixtures.
 - `@newchobo-ui/react` consumes `@newchobo-ui/workspace` and keeps existing
   workspace exports available through the React binding package.
 - `@newchobo-ui/react` consumes `@newchobo-ui/core` through a small adapter that
@@ -132,10 +135,15 @@ The package should evolve beyond a single React package.
   same command registry enabled-state and execution helpers.
 - `WorkspaceEditorPanel` consumes framework-neutral editor draft helpers from
   `@newchobo-ui/workspace` for dirty-state, save, and discard behavior.
+- The integrated Workbench story wires `@newchobo-ui/runtime` to Chat,
+  runtime status, streaming response chunks, and mock workspace write patches.
+- The integrated Workbench story has Storybook play coverage for a runtime
+  Chat submit that writes a mock workspace file.
 - Unit tests cover path operations, search, selection, create, rename, move, and
-  delete behavior, workspace editor draft helpers, plus core command menu
-  projection and execution.
-- The next migration step is to add mock runtime fixtures.
+  delete behavior, workspace editor draft helpers, runtime send/cancel/stream
+  events, plus core command menu projection and execution.
+- The next migration step is to expand Storybook play coverage around Chat
+  cancel/streaming timing and runtime workspace patch edge cases.
 
 ## Current Differences From Real Use Cases
 
@@ -151,7 +159,7 @@ still not a complete real-use workflow.
 | Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves                                                    | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add root-drop variant      |
 | Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage             |
 | Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Add delete/open-tab coordination coverage                 |
-| Chat                   | Generic chat UI exists                                                                                                                                          | Runtime-driven send/cancel, streaming chunks, status integration                | Add mock-runtime story adapter and streaming fixture      |
+| Chat                   | Generic chat UI plus integrated mock runtime adapter for send, cancel, streaming chunks, status, and workspace write patches                                    | Runtime-driven send/cancel, streaming chunks, status integration                | Add cancel and streaming timing play coverage             |
 | Workbench shell state  | Story-local state only                                                                                                                                          | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component    |
 | Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
 | Storybook              | Integrated story owns too much state and behavior                                                                                                               | Stories should compose components with fixtures and mock adapters               | Move reusable logic into package modules                  |
@@ -265,10 +273,14 @@ still not a complete real-use workflow.
 
 ### Chat
 
-- Streaming message fixture support.
-- Send/cancel flow through a mock runtime adapter.
-- Runtime status to composer disabled/running state.
-- Event-to-message derivation helper that stays product-neutral.
+- `@newchobo-ui/runtime` provides streaming message fixture support.
+- Integrated story send/cancel flow runs through a mock runtime adapter.
+- Runtime status maps to composer disabled/running state in the integrated
+  story.
+- Runtime workspace write patches are applied through the virtual workspace
+  reducer in the integrated story.
+- Remaining: add focused play coverage for cancellation and chunk-by-chunk
+  streaming timing.
 - Assistant label should remain configurable and generic.
 
 ### Settings
@@ -313,10 +325,9 @@ Move these out of `Workbench.stories.tsx`:
   - first result activation,
   - result context menu actions.
 - Mock runtime helpers:
-  - message send,
-  - cancel,
-  - streaming response sequence,
-  - mock write-file events.
+  - `@newchobo-ui/runtime` now owns message send, cancel, streaming response
+    sequence, and mock write-file events.
+  - Remaining: story-specific response plans and edge-case play flows.
 
 Keep these in Storybook:
 
@@ -335,10 +346,14 @@ Recommended setup:
 
 1. Add a small `createMockWorkbenchRuntime()` helper under a test or story
    fixture module.
+   - Done in `@newchobo-ui/runtime`.
 2. Expose generic methods such as `sendMessage`, `cancel`, `subscribe`, and
    `emitWorkspacePatch`.
+   - Done in `@newchobo-ui/runtime`.
 3. Use Storybook stories to wire the mock runtime to Chat, Search, Explorer,
    and Workspace Editor.
+   - Partially done for integrated Chat status, streaming, and workspace write
+     patches.
 4. Add interaction tests with Storybook `play` functions for:
    - creating a file,
    - renaming a folder,
@@ -367,7 +382,7 @@ independently.
 | `@newchobo-ui/core/commands`               | Framework-neutral command registry, execution, and menu projection   | Unit tests and integrated command menu wiring         |
 | `workbench/commands`                       | React adapter from resolved command menu items to context menu items | Command menu story and integration tests              |
 | `chat/ChatPanel`                           | Message list and composer                                            | Empty, streaming, running, disabled, cancel           |
-| `chat/mockRuntime` fixture                 | Public mock send/cancel/stream events                                | Chat integration story                                |
+| `@newchobo-ui/runtime/mockRuntime`         | Public mock send/cancel/stream events and workspace patches          | Chat integration story                                |
 | `settings/WorkbenchSettingsModal`          | Generic settings layout and category rendering                       | Scope tabs, search, footer actions                    |
 
 ## Recommended Todo Order
@@ -396,7 +411,11 @@ independently.
    - Remaining: shared command definition presets if the package should provide
      default command IDs.
 7. Add mock runtime fixtures for Chat and mock workspace file updates.
+   - Done for framework-neutral runtime events, send/cancel/stream helpers,
+     and integrated mock workspace write patches.
 8. Add Storybook `play` tests for the main workflows.
+   - Integrated Chat submit plus runtime workspace write patch coverage added.
+   - Remaining: focused cancel, streaming timing, and patch edge cases.
 9. Run `pnpm validate` and browser smoke after each major feature group.
 
 ## Additional Decisions Needed

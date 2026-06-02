@@ -98,10 +98,20 @@ export function ChatComposer({
             {toolbarStart}
             {showTools ? (
               <>
-                <button className="composer__tool-btn" title={contextLabel} type="button">
+                <button
+                  aria-label={contextLabel}
+                  className="composer__tool-btn"
+                  title={contextLabel}
+                  type="button"
+                >
                   <i className="codicon codicon-add" />
                 </button>
-                <button className="composer__tool-btn" title={commandLabel} type="button">
+                <button
+                  aria-label={commandLabel}
+                  className="composer__tool-btn"
+                  title={commandLabel}
+                  type="button"
+                >
                   <i className="codicon codicon-terminal" />
                 </button>
               </>
@@ -110,6 +120,7 @@ export function ChatComposer({
           <div className="composer__toolbar-right">
             {isRunning ? (
               <button
+                aria-label={cancelLabel}
                 className="composer__send-btn composer__send-btn--cancel"
                 title={cancelLabel}
                 type="button"
@@ -119,6 +130,7 @@ export function ChatComposer({
               </button>
             ) : (
               <button
+                aria-label={submitLabel}
                 className="composer__send-btn"
                 disabled={disabled || !value.trim()}
                 title={submitLabel}

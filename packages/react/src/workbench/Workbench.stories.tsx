@@ -1,6 +1,6 @@
-import { useState, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fireEvent, userEvent, within } from 'storybook/test';
+import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 import {
   commandMenuSeparator,
   createCommandRegistry,
@@ -8,6 +8,12 @@ import {
   resolveCommandMenuItems,
   type CommandMenuEntry,
 } from '@newchobo-ui/core';
+import {
+  createMockWorkbenchRuntime,
+  type RuntimeChatMessage,
+  type RuntimeStatus,
+  type RuntimeWorkspacePatch,
+} from '@newchobo-ui/runtime';
 import { SideBarHeaderControl, SideBarViewFrame } from '../layout/SideBarViewFrame';
 import { ConfirmDialog } from '../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../overlay/ContextMenu';
@@ -371,7 +377,7 @@ Import shared styles once, then compose the workbench primitives in your app she
   },
 ];
 
-const chatMessages: ChatMessage[] = [
+const initialRuntimeMessages: RuntimeChatMessage[] = [
   {
     id: 'm1',
     source: 'user',
@@ -391,6 +397,22 @@ const chatMessages: ChatMessage[] = [
       'Search results, file icons, and the editor preview are driven by the same virtual workspace.',
   },
 ];
+
+function runtimeMessagesToChatMessages(messages: RuntimeChatMessage[]): ChatMessage[] {
+  return messages.map((message) => ({
+    content: message.content,
+    id: message.id,
+    label: message.label,
+    source: message.source,
+  }));
+}
+
+function runtimeStatusLabel(status: RuntimeStatus) {
+  if (status === 'running') return 'Runtime running';
+  if (status === 'cancelled') return 'Runtime stopped';
+  if (status === 'error') return 'Runtime error';
+  return 'Runtime idle';
+}
 
 function isStoryActivityId(id: string): id is StoryActivityId {
   return id === 'explorer' || id === 'search' || id === 'chat';
@@ -474,6 +496,13 @@ export const IntegratedShell: Story = {
     await expect(await canvas.findByRole('menu', { name: 'Primary sidebar menu' })).toBeVisible();
     await expect(await canvas.findByRole('menuitem', { name: 'New file' })).toBeVisible();
     await userEvent.keyboard('{Escape}');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Chat' }));
+    const chatComposer = await canvas.findByPlaceholderText('Ask about this workspace');
+    await expect(chatComposer).toBeVisible();
+    await userEvent.type(chatComposer, 'Create runtime notes');
+    await userEvent.click(canvas.getByRole('button', { name: 'Send message' }));
+    await waitFor(() => expect(statusBar).toHaveTextContent('Runtime wrote docs/runtime-notes.md'));
   },
 };
 
@@ -602,6 +631,32 @@ function SettingsDialogPreview() {
 function IntegratedWorkbenchShell() {
   const [activeActivityId, setActiveActivityId] = useState<StoryActivityId>('explorer');
   const [chatDraft, setChatDraft] = useState('');
+  const chatRuntime = useMemo(
+    () =>
+      createMockWorkbenchRuntime({
+        initialMessages: initialRuntimeMessages,
+        response: (message) => ({
+          chunks: [
+            'Mock runtime received the workspace request. ',
+            'A workspace patch is ready in `docs/runtime-notes.md`.',
+          ],
+          intervalMs: 20,
+          workspacePatches: [
+            {
+              content: `# Runtime Notes\n\nLast request: ${message.content}\n\nThis file was produced by the public mock runtime fixture.\n`,
+              mimeType: 'text/markdown',
+              path: 'docs/runtime-notes.md',
+              source: 'assistant',
+              type: 'write-file',
+              updatedAt: '2026-06-02T10:05:00.000Z',
+            },
+          ],
+        }),
+      }),
+    [],
+  );
+  const [runtimeMessages, setRuntimeMessages] = useState(() => chatRuntime.getMessages());
+  const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus>(() => chatRuntime.getStatus());
   const [compactRows, setCompactRows] = useState(true);
   const [contextMenu, setContextMenu] = useState<StoryContextMenuState | null>(null);
   const [colorTheme, setColorTheme] = useState<StoryTheme>('dark');
@@ -653,6 +708,52 @@ function IntegratedWorkbenchShell() {
     toggleFolder,
     workspaceTree,
   } = workspace;
+  const applyRuntimeWorkspacePatch = (patch: RuntimeWorkspacePatch) => {
+    if (patch.type === 'delete-file') {
+      deleteWorkspaceFile(patch.path);
+      setLastCommandLabel(`Runtime deleted ${patch.path}`);
+      return;
+    }
+
+    const fileExists = files.some((file) => file.path === patch.path);
+    if (fileExists) {
+      saveWorkspaceFile(patch.path, {
+        content: patch.content,
+        source: patch.source,
+        updatedAt: patch.updatedAt,
+      });
+    } else {
+      createWorkspaceFile({
+        content: patch.content,
+        mimeType: patch.mimeType,
+        path: patch.path,
+        source: patch.source,
+        updatedAt: patch.updatedAt,
+      });
+    }
+    openFile(patch.path);
+    setLastCommandLabel(`Runtime wrote ${patch.path}`);
+  };
+  useEffect(
+    () =>
+      chatRuntime.subscribe((event) => {
+        if (event.type === 'message' || event.type === 'message-delta') {
+          setRuntimeMessages(chatRuntime.getMessages());
+        }
+
+        if (event.type === 'status') {
+          setRuntimeStatus(event.status);
+          if (event.status === 'cancelled') {
+            setLastCommandLabel('Chat response stopped');
+          }
+        }
+
+        if (event.type === 'workspace-patch') {
+          applyRuntimeWorkspacePatch(event.patch);
+        }
+      }),
+    [chatRuntime, files],
+  );
   const activeActivity = storyActivities[activeActivityId];
   const openContextMenu = (
     event: MouseEvent<HTMLElement>,
@@ -1119,16 +1220,18 @@ function IntegratedWorkbenchShell() {
                 {activeActivityId === 'chat' ? (
                   <ChatPanel
                     assistantLabel="Assistant"
+                    disabled={runtimeStatus === 'error'}
                     emptyLabel="Ask about this workspace."
-                    isRunning={false}
-                    messages={chatMessages}
+                    isRunning={runtimeStatus === 'running'}
+                    messages={runtimeMessagesToChatMessages(runtimeMessages)}
                     placeholder="Ask about this workspace"
                     showTools
                     title="Chat"
                     value={chatDraft}
-                    onCancel={() => setLastCommandLabel('Chat response stopped')}
-                    onSubmit={() => {
+                    onCancel={() => chatRuntime.cancel()}
+                    onSubmit={(message) => {
                       setChatDraft('');
+                      chatRuntime.sendMessage(message);
                       setLastCommandLabel('Chat draft sent');
                     }}
                     onValueChange={setChatDraft}
@@ -1239,6 +1342,9 @@ function IntegratedWorkbenchShell() {
           </StatusBarItem>
         </StatusBarSection>
         <StatusBarSection align="end">
+          <StatusBarItem icon={<i className="codicon codicon-debug-start" />}>
+            {runtimeStatusLabel(runtimeStatus)}
+          </StatusBarItem>
           <StatusBarItem
             icon={<i className="codicon codicon-color-mode" />}
             onClick={() => setColorTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
