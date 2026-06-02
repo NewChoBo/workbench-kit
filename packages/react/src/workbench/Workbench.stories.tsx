@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'r
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 import {
-  commandMenuSeparator,
   createCommandRegistry,
   executeCommand,
   resolveCommandMenuItems,
@@ -1089,12 +1088,9 @@ function IntegratedWorkbenchShell() {
 
   const createExplorerRootMenuItems = (): ContextMenuItem[] =>
     createCommandMenuItems(
-      [
-        ...workspaceCreateMenuEntries,
-        commandMenuSeparator('explorer-root-separator'),
-        ...workbenchMenuEntries,
-      ],
+      workspaceCreateMenuEntries,
       createCommandContext(),
+      WORKBENCH_COMMAND_SURFACE_WORKSPACE,
     );
 
   const createWorkspaceMenuItems = (

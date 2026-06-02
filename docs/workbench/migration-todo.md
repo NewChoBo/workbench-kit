@@ -560,8 +560,8 @@ independently.
 
 - Settings 커맨드의 surface 바인딩은 Activity Bar 전용으로 둘지, Settings 전용으로 둘지,
   아니면 `activityBar`와 `settings` 모두 허용할지 최종 확정이 필요합니다.
-- `resolveCommandMenuItems(..., surface)`를 호출하지 않는 혼합 메뉴(예: Explorer 루트
-  메뉴)가 있는지와, 이러한 메뉴를 의도적으로 허용/차단할지 정책 정의가 필요합니다.
+- `resolveCommandMenuItems(..., surface)`를 호출하지 않고 메뉴를 결합하는 통합 지점이
+  향후 추가되지 않도록, 새 통합 지점에서 policy 준수 여부 점검이 필요합니다.
 - 플러그인 기여가 기존 명령(`commandId`)과 충돌할 때 우선순위/오버레이 규칙(기본
   기여 우선, 설치 기여 우선, 또는 오류 강제 중단)을 명확히 해야 합니다.
 - Storybook `play` 시나리오를 `pnpm validate`의 필수 게이트로 올릴지에 대한 최소
@@ -579,6 +579,9 @@ independently.
   contract.
 - Command preset label/icon/shortcut overrides are implemented in command preset
   constructors.
+- Explorer root context menus in the integrated Workbench story now use
+  `WORKBENCH_COMMAND_SURFACE_WORKSPACE` with workspace-only create menu entries,
+  so mixed-menu surface behavior is explicitly constrained in Storybook.
 
 ## Recommended Decision Order
 
@@ -603,6 +606,9 @@ workbench platform:
   script to avoid accidental lockfile drift.
 - **storybook play in `pnpm validate`**: keep optional for now; make it mandatory
   after low-flake coverage stabilizes.
+- **mixed-menu policy for `resolveCommandMenuItems`**: do not allow surface-less
+  calls in integration code paths that intentionally compose multiple menu
+  sources; if a menu is context-specific, pass a surface explicitly.
 - **workspace helper exports**: export neutral domain helpers in
   `@newchobo-ui/workspace` (path/tree/search/selection/mutations); keep fixture
   builders and state adapters in Storybook/tests.
