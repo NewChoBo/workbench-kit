@@ -14,6 +14,15 @@ public boundary before merging.
 - Confirm that public source does not contain private product names, customer
   names, server addresses, credentials, or private repository paths.
 
+### staging
+
+- Use as an integration buffer before `main`.
+- Merge feature branches here when you need grouped validation or a release
+  milestone boundary.
+- Run the selected validation lane before merging `staging` into `main`.
+- Keep only validated and coherent integration commits on `staging`.
+- Use lowercase branch name exactly: `staging`.
+
 ### Working Branches
 
 Branch names use this format:
@@ -54,11 +63,21 @@ git switch -c feature/codex/chatting-ui
 4. Write a body for each non-trivial commit.
 5. Run the validation lane selected for the changed surface.
 6. Confirm that no private knowledge or internal sample data entered public source.
-7. Merge back into `main`.
+7. Merge by policy:
+   - single-topic work can merge directly to `main`;
+   - grouped work should merge through `staging` first.
 
 ```powershell
 git switch main
 git merge --ff-only feature/codex/chatting-ui
+git branch -d feature/codex/chatting-ui
+```
+
+```powershell
+git switch staging
+git merge --ff-only feature/codex/chatting-ui
+git switch main
+git merge --no-ff staging
 git branch -d feature/codex/chatting-ui
 ```
 
@@ -107,6 +126,8 @@ of these is true:
 - You need to record that multiple independent sub-workstreams were integrated.
 - A release, milestone, or external pull request makes the merge event itself
   worth recording.
+- A planned merge from `staging` into `main` where preserving the milestone
+  boundary is a deliverable signal.
 
 When using a merge commit, pass `--no-ff` and explain why fast-forward was not
 used in the merge commit body.
@@ -118,6 +139,50 @@ git merge --no-ff feature/codex/chatting-ui
 
 Summary: fast-forward is the default, squash cleans up noisy branches, and merge
 commits are reserved for integration events worth preserving.
+
+## Staging Merge Pattern
+
+Use `staging` when multiple feature branches should land together.
+
+```text
+1. Ensure `staging` is aligned with `main` (`git switch staging; git pull --ff-only`).
+2. Merge topic branches into `staging`.
+3. Validate the combined state on `staging`.
+4. Merge `staging` into `main` with `--no-ff` to preserve the integration commit.
+```
+
+```powershell
+git switch staging
+git pull --ff-only
+git merge --ff-only feature/codex/chat-service-hardening
+git merge --ff-only feature/codex/save-service-tests
+git merge --ff-only feature/codex/patch-service-edge-cases
+pnpm validate
+```
+
+```powershell
+git switch main
+git merge --no-ff staging
+pnpm validate
+git tag -a milestone/2026-06-03 -m "chore: merge staging milestone"
+```
+
+For branches in `staging` that must keep internal structure, use `--no-ff` at
+that specific merge.
+
+```powershell
+git switch staging
+git merge --no-ff feature/codex/plugin-runtime
+```
+
+> If `staging` does not exist yet, create it once from `main`:
+
+```powershell
+git switch main
+git pull --ff-only
+git switch -c staging
+git push -u origin staging
+```
 
 ## Parallel Workspaces
 
