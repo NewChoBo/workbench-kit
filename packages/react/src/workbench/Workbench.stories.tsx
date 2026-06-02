@@ -2,7 +2,6 @@ import { useMemo, useState, type KeyboardEvent, type MouseEvent, type ReactNode 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
 import { SideBarHeaderControl, SideBarViewFrame } from '../layout/SideBarViewFrame';
-import { Modal } from '../modal/Modal';
 import { ContextMenu, type ContextMenuItem } from '../overlay/ContextMenu';
 import { Badge } from '../primitives/Badge';
 import { Button } from '../primitives/Button';
@@ -15,6 +14,7 @@ import { TextInput } from '../primitives/TextInput';
 import { Toolbar } from '../primitives/Toolbar';
 import { ActivityBar } from './ActivityBar';
 import { ChatPanel, type ChatMessage } from './chat';
+import { WorkbenchSettingsModal, WorkbenchSettingsSection } from './settings';
 import { SplitView } from './SplitView';
 import { StatusBar, StatusBarItem, StatusBarSection } from './StatusBar';
 import {
@@ -357,9 +357,136 @@ export const StatusFooter: Story = {
   ),
 };
 
+export const SettingsDialog: Story = {
+  render: () => <SettingsDialogPreview />,
+};
+
 export const IntegratedShell: Story = {
   render: () => <IntegratedWorkbenchShell />,
 };
+
+function SettingsDialogPreview() {
+  const [activeCategoryId, setActiveCategoryId] = useState('appearance');
+  const [activeScopeId, setActiveScopeId] = useState('user');
+  const [compactRows, setCompactRows] = useState(true);
+  const [isOpen, setIsOpen] = useState(true);
+  const [searchValue, setSearchValue] = useState('');
+  const [theme, setTheme] = useState('Dark Modern');
+
+  return (
+    <div style={{ minHeight: 640, background: 'var(--color-bg)' }}>
+      <div style={{ padding: 20 }}>
+        <Button variant="primary" onClick={() => setIsOpen(true)}>
+          Open settings
+        </Button>
+      </div>
+      {isOpen ? (
+        <WorkbenchSettingsModal
+          activeCategoryId={activeCategoryId}
+          activeScopeId={activeScopeId}
+          categories={[
+            { id: 'appearance', label: 'Appearance' },
+            { id: 'workbench', label: 'Workbench' },
+            { id: 'workspace', label: 'Workspace' },
+          ]}
+          footer={
+            <>
+              <Button onClick={() => setIsOpen(false)}>Cancel</Button>
+              <Button variant="primary" onClick={() => setIsOpen(false)}>
+                Apply
+              </Button>
+            </>
+          }
+          scopes={[
+            { id: 'user', label: 'User' },
+            { id: 'workspace', label: 'Workspace' },
+          ]}
+          searchValue={searchValue}
+          title="Settings"
+          titleSuffix={<Badge>Preview</Badge>}
+          onActiveCategoryIdChange={setActiveCategoryId}
+          onClose={() => setIsOpen(false)}
+          onScopeChange={setActiveScopeId}
+          onSearchValueChange={setSearchValue}
+          renderCategory={(category) => {
+            if (category.id === 'workbench') {
+              return (
+                <WorkbenchSettingsSection
+                  id="settings-preview-workbench"
+                  title="Workbench"
+                  description="Configure shell density and visible workbench surfaces."
+                >
+                  <Field label="Workbench density" description="Controls compact shell surfaces.">
+                    <Select
+                      controlWidth="full"
+                      value={compactRows ? 'compact' : 'comfortable'}
+                      onChange={(event) => setCompactRows(event.currentTarget.value === 'compact')}
+                    >
+                      <option value="compact">Compact</option>
+                      <option value="comfortable">Comfortable</option>
+                    </Select>
+                  </Field>
+                  <Field inline label="Compact rows">
+                    <Checkbox
+                      checked={compactRows}
+                      label="Use compact explorer, search, and chat rows"
+                      onChange={(event) => setCompactRows(event.currentTarget.checked)}
+                    />
+                  </Field>
+                </WorkbenchSettingsSection>
+              );
+            }
+
+            if (category.id === 'workspace') {
+              return (
+                <WorkbenchSettingsSection
+                  id="settings-preview-workspace"
+                  title="Workspace"
+                  description="Preview settings that can be scoped to a user or workspace."
+                >
+                  <Field label="Default search query">
+                    <TextInput
+                      controlWidth="full"
+                      value={searchValue}
+                      onChange={(event) => setSearchValue(event.currentTarget.value)}
+                    />
+                  </Field>
+                  <Field label="Active scope">
+                    <div className="workbench-settings-badge-list">
+                      <Badge>{activeScopeId}</Badge>
+                      <Badge variant="muted">public mock data</Badge>
+                    </div>
+                  </Field>
+                </WorkbenchSettingsSection>
+              );
+            }
+
+            return (
+              <WorkbenchSettingsSection
+                id="settings-preview-appearance"
+                title="Appearance"
+                description="Choose visual preferences for the workbench shell."
+              >
+                <Field label="Color theme" htmlFor="settings-preview-theme">
+                  <Select
+                    id="settings-preview-theme"
+                    controlWidth="full"
+                    value={theme}
+                    onChange={(event) => setTheme(event.currentTarget.value)}
+                  >
+                    <option>Dark Modern</option>
+                    <option>Light Modern</option>
+                    <option>High Contrast</option>
+                  </Select>
+                </Field>
+              </WorkbenchSettingsSection>
+            );
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
 
 function IntegratedWorkbenchShell() {
   const [files, setFiles] = useState(workspaceFiles);
@@ -368,6 +495,7 @@ function IntegratedWorkbenchShell() {
   const [chatDraft, setChatDraft] = useState('');
   const [compactRows, setCompactRows] = useState(true);
   const [contextMenu, setContextMenu] = useState<StoryContextMenuState | null>(null);
+  const [colorTheme, setColorTheme] = useState('Dark Modern');
   const [expandedPaths, setExpandedPaths] = useState(() => new Set(['src', 'src/components']));
   const [filterQuery, setFilterQuery] = useState('');
   const [isPrimarySideBarVisible, setIsPrimarySideBarVisible] = useState(true);
@@ -375,6 +503,9 @@ function IntegratedWorkbenchShell() {
   const [primarySizePercent, setPrimarySizePercent] = useState(62);
   const [searchQuery, setSearchQuery] = useState('button');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsCategoryId, setSettingsCategoryId] = useState('appearance');
+  const [settingsScopeId, setSettingsScopeId] = useState('user');
+  const [settingsSearchValue, setSettingsSearchValue] = useState('');
   const [sideBarSizePercent, setSideBarSizePercent] = useState(24);
   const [openPaths, setOpenPaths] = useState([
     'src/App.tsx',
@@ -854,48 +985,250 @@ function IntegratedWorkbenchShell() {
         />
       ) : null}
       {settingsOpen ? (
-        <Modal
-          title="Settings"
-          bodyClassName="ui-workbench-story-settings"
-          onClose={() => setSettingsOpen(false)}
+        <WorkbenchSettingsModal
+          activeCategoryId={settingsCategoryId}
+          activeScopeId={settingsScopeId}
+          categories={[
+            { id: 'appearance', label: 'Appearance' },
+            { id: 'workbench', label: 'Workbench' },
+            { id: 'workspace', label: 'Workspace' },
+            { id: 'maintenance', label: 'Maintenance' },
+          ]}
           footer={
             <>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  setCompactRows(true);
+                  setSearchQuery('button');
+                  setSettingsCategoryId('appearance');
+                  setSettingsScopeId('user');
+                  setSettingsSearchValue('');
+                  setLastCommandLabel('Settings reset');
+                }}
+              >
+                Reset
+              </Button>
+              <span className="workbench-settings-footer__spacer" />
               <Button onClick={() => setSettingsOpen(false)}>Cancel</Button>
               <Button variant="primary" onClick={() => setSettingsOpen(false)}>
                 Apply
               </Button>
             </>
           }
-        >
-          <div style={{ padding: 20 }}>
-            <Field label="Workbench density" description="Controls compact shell surfaces.">
-              <Select
-                controlWidth="full"
-                value={compactRows ? 'compact' : 'comfortable'}
-                onChange={(event) => setCompactRows(event.currentTarget.value === 'compact')}
-              >
-                <option value="compact">Compact</option>
-                <option value="comfortable">Comfortable</option>
-              </Select>
-            </Field>
-            <Field inline label="Compact rows">
-              <Checkbox
-                checked={compactRows}
-                label="Use compact explorer, search, and chat rows"
-                onChange={(event) => setCompactRows(event.currentTarget.checked)}
-              />
-            </Field>
-            <Field label="Search seed">
-              <TextInput
-                controlWidth="full"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.currentTarget.value)}
-              />
-            </Field>
-          </div>
-        </Modal>
+          scopes={[
+            { id: 'user', label: 'User' },
+            {
+              id: 'workspace',
+              label: 'Workspace',
+              title: 'Workspace-scoped settings are represented with mock data in this story.',
+            },
+          ]}
+          searchValue={settingsSearchValue}
+          title="Settings"
+          titleSuffix={<Badge>{settingsScopeId}</Badge>}
+          onActiveCategoryIdChange={setSettingsCategoryId}
+          onClose={() => setSettingsOpen(false)}
+          onScopeChange={setSettingsScopeId}
+          onSearchValueChange={setSettingsSearchValue}
+          renderCategory={(category) =>
+            renderSettingsCategory({
+              categoryId: category.id,
+              colorTheme,
+              compactRows,
+              fileCount: files.length,
+              primarySizePercent,
+              searchQuery,
+              searchResultCount: filteredSearchResults.length,
+              settingsSearchValue,
+              sideBarSizePercent,
+              onClearSearch: () => {
+                setSearchQuery('');
+                setLastCommandLabel('Search cleared from settings');
+              },
+              onColorThemeChange: setColorTheme,
+              onCompactRowsChange: setCompactRows,
+              onPrimarySizePercentChange: setPrimarySizePercent,
+              onSearchQueryChange: setSearchQuery,
+              onSettingsSearchValueChange: setSettingsSearchValue,
+              onSideBarSizePercentChange: setSideBarSizePercent,
+            })
+          }
+        />
       ) : null}
     </main>
+  );
+}
+
+function clampStoryPercent(value: number, fallback: number) {
+  if (!Number.isFinite(value)) return fallback;
+  return Math.min(90, Math.max(10, value));
+}
+
+function renderSettingsCategory({
+  categoryId,
+  colorTheme,
+  compactRows,
+  fileCount,
+  primarySizePercent,
+  searchQuery,
+  searchResultCount,
+  settingsSearchValue,
+  sideBarSizePercent,
+  onClearSearch,
+  onColorThemeChange,
+  onCompactRowsChange,
+  onPrimarySizePercentChange,
+  onSearchQueryChange,
+  onSettingsSearchValueChange,
+  onSideBarSizePercentChange,
+}: {
+  categoryId: string;
+  colorTheme: string;
+  compactRows: boolean;
+  fileCount: number;
+  primarySizePercent: number;
+  searchQuery: string;
+  searchResultCount: number;
+  settingsSearchValue: string;
+  sideBarSizePercent: number;
+  onClearSearch: () => void;
+  onColorThemeChange: (theme: string) => void;
+  onCompactRowsChange: (compactRows: boolean) => void;
+  onPrimarySizePercentChange: (sizePercent: number) => void;
+  onSearchQueryChange: (query: string) => void;
+  onSettingsSearchValueChange: (query: string) => void;
+  onSideBarSizePercentChange: (sizePercent: number) => void;
+}) {
+  if (categoryId === 'workbench') {
+    return (
+      <WorkbenchSettingsSection
+        id="integrated-settings-workbench"
+        title="Workbench"
+        description="Tune layout density and pane sizes for the integrated shell."
+      >
+        <Field label="Workbench density" description="Controls compact shell surfaces.">
+          <Select
+            controlWidth="full"
+            value={compactRows ? 'compact' : 'comfortable'}
+            onChange={(event) => onCompactRowsChange(event.currentTarget.value === 'compact')}
+          >
+            <option value="compact">Compact</option>
+            <option value="comfortable">Comfortable</option>
+          </Select>
+        </Field>
+        <Field inline label="Compact rows">
+          <Checkbox
+            checked={compactRows}
+            label="Use compact explorer, search, and chat rows"
+            onChange={(event) => onCompactRowsChange(event.currentTarget.checked)}
+          />
+        </Field>
+        <Field
+          label="Primary sidebar width"
+          description="Sets the current sidebar split percentage."
+        >
+          <TextInput
+            controlWidth="full"
+            type="number"
+            value={Math.round(sideBarSizePercent)}
+            onChange={(event) =>
+              onSideBarSizePercentChange(
+                clampStoryPercent(event.currentTarget.valueAsNumber, sideBarSizePercent),
+              )
+            }
+          />
+        </Field>
+        <Field label="Editor split width" description="Sets the current editor split percentage.">
+          <TextInput
+            controlWidth="full"
+            type="number"
+            value={Math.round(primarySizePercent)}
+            onChange={(event) =>
+              onPrimarySizePercentChange(
+                clampStoryPercent(event.currentTarget.valueAsNumber, primarySizePercent),
+              )
+            }
+          />
+        </Field>
+      </WorkbenchSettingsSection>
+    );
+  }
+
+  if (categoryId === 'workspace') {
+    return (
+      <WorkbenchSettingsSection
+        id="integrated-settings-workspace"
+        title="Workspace"
+        description="Preview workspace-facing settings without binding to a runtime or storage layer."
+      >
+        <Field label="Search seed" description="Updates the shared search query used by the story.">
+          <TextInput
+            controlWidth="full"
+            value={searchQuery}
+            onChange={(event) => onSearchQueryChange(event.currentTarget.value)}
+          />
+        </Field>
+        <Field label="Settings search">
+          <TextInput
+            controlWidth="full"
+            value={settingsSearchValue}
+            onChange={(event) => onSettingsSearchValueChange(event.currentTarget.value)}
+          />
+        </Field>
+        <Field label="Workspace summary">
+          <div className="workbench-settings-badge-list">
+            <Badge>{fileCount} files</Badge>
+            <Badge variant="muted">{searchResultCount} search results</Badge>
+          </div>
+        </Field>
+      </WorkbenchSettingsSection>
+    );
+  }
+
+  if (categoryId === 'maintenance') {
+    return (
+      <WorkbenchSettingsSection
+        id="integrated-settings-maintenance"
+        title="Maintenance"
+        description="Keep destructive or app-specific operations injected by the host application."
+      >
+        <Field
+          inline
+          label="Search state"
+          description="Clears the current public mock search query."
+        >
+          <Button variant="danger" onClick={onClearSearch}>
+            Clear
+          </Button>
+        </Field>
+      </WorkbenchSettingsSection>
+    );
+  }
+
+  return (
+    <WorkbenchSettingsSection
+      id="integrated-settings-appearance"
+      title="Appearance"
+      description="Choose visual preferences for the workbench shell."
+    >
+      <Field
+        description="This story stores the setting locally to demonstrate the reusable UI surface."
+        htmlFor="integrated-settings-theme"
+        label="Color theme"
+      >
+        <Select
+          id="integrated-settings-theme"
+          controlWidth="full"
+          value={colorTheme}
+          onChange={(event) => onColorThemeChange(event.currentTarget.value)}
+        >
+          <option>Dark Modern</option>
+          <option>Light Modern</option>
+          <option>High Contrast</option>
+        </Select>
+      </Field>
+    </WorkbenchSettingsSection>
   );
 }
 
