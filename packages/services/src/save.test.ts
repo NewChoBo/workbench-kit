@@ -1,0 +1,147 @@
+import { describe, expect, it } from 'vitest';
+import { WorkspaceSaveService } from './save';
+import type { WorkspaceFile, WorkspaceFileRepository } from '@newchobo-ui/contracts';
+
+class InMemoryWorkspaceFileRepository implements WorkspaceFileRepository {
+  private files = new Map<string, WorkspaceFile>();
+
+  async deleteFile(path: string) {
+    this.files.delete(path);
+  }
+
+  async getFile(path: string) {
+    return this.files.get(path) ?? null;
+  }
+
+  async listFiles() {
+    return [...this.files.values()];
+  }
+
+  async writeFile(input: {
+    content: string;
+    expectedUpdatedAt?: string;
+    mimeType?: string;
+    path: string;
+    source?: WorkspaceFile['source'];
+    updatedAt?: string;
+  }) {
+    const previous = this.files.get(input.path);
+    if (previous && input.expectedUpdatedAt && previous.updatedAt !== input.expectedUpdatedAt) {
+      throw new Error('stale');
+    }
+
+    const next: WorkspaceFile = {
+      content: input.content,
+      mimeType: input.mimeType,
+      path: input.path,
+      source: input.source ?? previous?.source,
+      updatedAt: input.updatedAt,
+    };
+    this.files.set(input.path, next);
+    return next;
+  }
+}
+
+describe('WorkspaceSaveService', () => {
+  it('creates a file when saveDraft is called first time', async () => {
+    const repository = new InMemoryWorkspaceFileRepository();
+    const service = new WorkspaceSaveService({ repository });
+
+    const result = await service.saveDraft({
+      content: 'first content',
+      path: 'src/index.ts',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'save:success',
+      outcome: 'created',
+      file: {
+        content: 'first content',
+        path: 'src/index.ts',
+      },
+    });
+  });
+
+  it('updates saved content when unchanged baseline is still valid', async () => {
+    const repository = new InMemoryWorkspaceFileRepository();
+    const service = new WorkspaceSaveService({ repository, now: () => '2026-06-03T00:00:00.000Z' });
+    await repository.writeFile({
+      content: 'old',
+      path: 'src/index.ts',
+      updatedAt: '2026-06-03T00:00:00.000Z',
+    });
+
+    const result = await service.saveDraft({
+      content: 'next',
+      path: 'src/index.ts',
+      previousUpdatedAt: '2026-06-03T00:00:00.000Z',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'save:success',
+      outcome: 'updated',
+      file: {
+        content: 'next',
+        path: 'src/index.ts',
+        updatedAt: '2026-06-03T00:00:00.000Z',
+      },
+    });
+  });
+
+  it('returns unchanged for same content and matching baseline', async () => {
+    const repository = new InMemoryWorkspaceFileRepository();
+    const service = new WorkspaceSaveService({ repository });
+    const existing = await repository.writeFile({
+      content: 'same',
+      path: 'src/index.ts',
+      updatedAt: '2026-06-03T00:00:00.000Z',
+    });
+
+    const result = await service.saveDraft({
+      content: 'same',
+      path: 'src/index.ts',
+      previousUpdatedAt: existing.updatedAt,
+    });
+
+    expect(result).toMatchObject({
+      kind: 'save:success',
+      outcome: 'unchanged',
+      file: { content: 'same', path: 'src/index.ts' },
+    });
+  });
+
+  it('returns stale-update when baseline timestamp has changed', async () => {
+    const repository = new InMemoryWorkspaceFileRepository();
+    const service = new WorkspaceSaveService({ repository });
+    await repository.writeFile({
+      content: 'old',
+      path: 'src/index.ts',
+      updatedAt: '2026-06-02T00:00:00.000Z',
+    });
+
+    const result = await service.saveDraft({
+      content: 'next',
+      path: 'src/index.ts',
+      previousUpdatedAt: '2026-06-01T00:00:00.000Z',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'save:failure',
+      code: 'stale-update',
+      path: 'src/index.ts',
+    });
+  });
+
+  it('returns invalid-path for blank path', async () => {
+    const repository = new InMemoryWorkspaceFileRepository();
+    const service = new WorkspaceSaveService({ repository });
+
+    const result = await service.saveDraft({ content: 'x', path: '   ' });
+
+    expect(result).toMatchObject({
+      kind: 'save:failure',
+      code: 'invalid-path',
+      path: '   ',
+    });
+  });
+});

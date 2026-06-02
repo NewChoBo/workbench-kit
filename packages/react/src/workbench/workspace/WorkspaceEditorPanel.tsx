@@ -5,6 +5,7 @@ import {
   executeCommand,
   resolveCommandMenuItems,
 } from '@newchobo-ui/core';
+import { isSaveSuccess, type SaveResult } from '@newchobo-ui/contracts';
 import {
   discardWorkspaceFileDraft,
   resolveWorkspaceFileDraft,
@@ -45,7 +46,11 @@ export interface WorkspaceEditorPanelProps {
   onClosePath?: (path: string) => void;
   onCopyPath?: (path: string) => void;
   onDeletePath?: (path: string) => void;
-  onSaveFile?: (path: string, content: string) => void;
+  onSaveFile?: (
+    path: string,
+    content: string,
+    previousUpdatedAt?: string,
+  ) => SaveResult | Promise<SaveResult | undefined> | undefined;
   onSelectedPathChange: (path: string) => void;
   openPaths: string[];
   selectedPath?: string;
@@ -98,14 +103,21 @@ export function WorkspaceEditorPanel({
   };
 
   const saveFile = (path: string, content: string) => {
-    onSaveFile?.(path, content);
-    setDraftsByPath((currentDrafts) =>
-      saveWorkspaceFileDraft({
-        content,
-        drafts: currentDrafts,
-        path,
-      }),
-    );
+    Promise.resolve(onSaveFile?.(path, content, filesByPath.get(path)?.updatedAt))
+      .then((result) => {
+        if (!result || isSaveSuccess(result)) {
+          setDraftsByPath((currentDrafts) =>
+            saveWorkspaceFileDraft({
+              content,
+              drafts: currentDrafts,
+              path,
+            }),
+          );
+        }
+      })
+      .catch(() => {
+        // keep draft intact when persistence fails
+      });
   };
 
   const discardFile = (file: WorkspaceFile) => {

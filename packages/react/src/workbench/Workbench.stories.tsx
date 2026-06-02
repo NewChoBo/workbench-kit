@@ -11,8 +11,23 @@ import {
   createMockWorkbenchRuntime,
   type RuntimeChatMessage,
   type RuntimeStatus,
-  type RuntimeWorkspacePatch,
+  type WorkbenchRuntimeEvent,
 } from '@newchobo-ui/runtime';
+import {
+  isSaveFailure,
+  type ChatStreamEvent,
+  isSaveSuccess,
+  type ChatTransport,
+  type SaveInput,
+  type SaveFailure,
+  type WorkspacePatchEvent,
+  type WorkspaceFileRepository,
+} from '@newchobo-ui/contracts';
+import {
+  WorkbenchChatService,
+  WorkspacePatchService,
+  WorkspaceSaveService,
+} from '@newchobo-ui/services';
 import { SideBarHeaderControl, SideBarViewFrame } from '../layout/SideBarViewFrame';
 import { ConfirmDialog } from '../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../overlay/ContextMenu';
@@ -50,14 +65,17 @@ import {
   WorkspaceSearchPanel,
   fileNameOfPath,
   getAvailableWorkspaceEntryName,
+  normalizeWorkspacePath,
   getWorkspaceFileMovePlan,
   isSimpleWorkspaceName,
   isWorkspaceEntryPathAvailable,
   joinWorkspacePath,
   parentPathOf,
   pruneWorkspaceSelection,
+  type CreateWorkspaceFileInput,
   useVirtualWorkspace,
   type WorkspaceFile,
+  type WriteWorkspaceFileInput,
   type WorkspaceExplorerInlineEditCommitMeta,
   type WorkspaceExplorerInlineEditKind,
   type WorkspaceExplorerInlineEditState,
@@ -324,6 +342,158 @@ function runtimeStatusLabel(status: RuntimeStatus) {
   if (status === 'cancelled') return 'Runtime stopped';
   if (status === 'error') return 'Runtime error';
   return 'Runtime idle';
+}
+
+function toChatServiceTransport(
+  runtime: ReturnType<typeof createMockWorkbenchRuntime>,
+): ChatTransport {
+  return {
+    cancel: () => runtime.cancel(),
+    sendMessage: async (message: string) => {
+      const next = runtime.sendMessage(message);
+      if (!next) return undefined;
+
+      return {
+        content: next.content,
+        createdAt: next.createdAt,
+        id: next.id,
+        label: next.label,
+        source: next.source,
+      };
+    },
+    subscribe: (listener: (event: ChatStreamEvent) => void) =>
+      runtime.subscribe((event: WorkbenchRuntimeEvent) => {
+        if (event.type === 'message') {
+          listener({
+            message: {
+              content: event.message.content,
+              createdAt: event.message.createdAt,
+              id: event.message.id,
+              label: event.message.label,
+              source: event.message.source,
+            },
+            type: 'message',
+          });
+          return;
+        }
+
+        if (event.type === 'message-delta') {
+          listener({
+            delta: event.delta,
+            message: {
+              content: event.message.content,
+              createdAt: event.message.createdAt,
+              id: event.message.id,
+              label: event.message.label,
+              source: event.message.source,
+            },
+            type: 'message-delta',
+          });
+          return;
+        }
+
+        if (event.type === 'status') {
+          listener({
+            previousStatus: event.previousStatus,
+            status: event.status,
+            type: 'status',
+          });
+          return;
+        }
+
+        if (event.patch.type === 'delete-file') {
+          listener({
+            patch: { path: event.patch.path, type: 'delete-file' },
+            type: 'workspace-patch',
+          });
+          return;
+        }
+
+        listener({
+          patch: {
+            content: event.patch.content,
+            mimeType: event.patch.mimeType,
+            path: event.patch.path,
+            source: event.patch.source,
+            type: 'write-file',
+            updatedAt: event.patch.updatedAt,
+          },
+          type: 'workspace-patch',
+        });
+      }),
+  };
+}
+
+function createWorkspaceFileRepository({
+  createFile,
+  deleteFile,
+  files,
+  saveFile,
+}: {
+  createFile: (file: CreateWorkspaceFileInput) => void;
+  deleteFile: (path: string) => void;
+  files: WorkspaceFile[];
+  saveFile: (path: string, file: WriteWorkspaceFileInput) => void;
+}): WorkspaceFileRepository {
+  const normalizedFiles = () => files.map((file) => ({ ...file }));
+  const getFileByPath = async (path: string) => {
+    const normalizedPath = normalizeWorkspacePath(path);
+    if (!normalizedPath) return null;
+
+    return normalizedFiles().find((file) => file.path === normalizedPath) ?? null;
+  };
+
+  return {
+    deleteFile: async (path: string) => {
+      const normalizedPath = normalizeWorkspacePath(path);
+      if (!normalizedPath) return;
+      deleteFile(normalizedPath);
+    },
+    getFile: async (path: string) => {
+      const normalizedPath = normalizeWorkspacePath(path);
+      if (!normalizedPath) return null;
+
+      return normalizedFiles().find((file) => file.path === normalizedPath) ?? null;
+    },
+    listFiles: async () => normalizedFiles(),
+    writeFile: async (input: SaveInput) => {
+      const normalizedPath = normalizeWorkspacePath(input.path);
+      if (!normalizedPath) {
+        throw new Error('Invalid workspace path.');
+      }
+
+      const current = await getFileByPath(normalizedPath);
+      if (current && input.expectedUpdatedAt && current.updatedAt !== input.expectedUpdatedAt) {
+        throw new Error('Stale file version.');
+      }
+
+      const next: WorkspaceFile = {
+        content: input.content,
+        mimeType: input.mimeType ?? current?.mimeType,
+        path: normalizedPath,
+        source: input.source ?? current?.source,
+        updatedAt: input.updatedAt ?? current?.updatedAt,
+      };
+
+      if (current) {
+        saveFile(normalizedPath, {
+          content: input.content,
+          source: input.source,
+          updatedAt: input.updatedAt,
+        });
+      } else {
+        createFile({
+          content: input.content,
+          mimeType: input.mimeType,
+          path: normalizedPath,
+          source: input.source,
+          updatedAt: input.updatedAt,
+        });
+      }
+
+      return next;
+    },
+  };
 }
 
 function getStatusFooterSections(): StatusBarSectionModel[] {
@@ -623,7 +793,9 @@ function IntegratedWorkbenchShell() {
       }),
     [],
   );
-  const [runtimeMessages, setRuntimeMessages] = useState(() => chatRuntime.getMessages());
+  const [runtimeMessages, setRuntimeMessages] = useState<ChatMessage[]>(() =>
+    runtimeMessagesToChatMessages(chatRuntime.getMessages()),
+  );
   const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus>(() => chatRuntime.getStatus());
   const [compactRows, setCompactRows] = useState(true);
   const [contextMenu, setContextMenu] = useState<StoryContextMenuState | null>(null);
@@ -686,51 +858,82 @@ function IntegratedWorkbenchShell() {
     toggleFolder,
     workspaceTree,
   } = workspace;
-  const applyRuntimeWorkspacePatch = (patch: RuntimeWorkspacePatch) => {
-    if (patch.type === 'delete-file') {
-      deleteWorkspaceFile(patch.path);
-      setLastCommandLabel(`Runtime deleted ${patch.path}`);
-      return;
-    }
-
-    const fileExists = files.some((file) => file.path === patch.path);
-    if (fileExists) {
-      saveWorkspaceFile(patch.path, {
-        content: patch.content,
-        source: patch.source,
-        updatedAt: patch.updatedAt,
-      });
-    } else {
-      createWorkspaceFile({
-        content: patch.content,
-        mimeType: patch.mimeType,
-        path: patch.path,
-        source: patch.source,
-        updatedAt: patch.updatedAt,
-      });
-    }
-    openFile(patch.path);
-    setLastCommandLabel(`Runtime wrote ${patch.path}`);
-  };
-  useEffect(
+  const workspaceRepository = useMemo(
     () =>
-      chatRuntime.subscribe((event) => {
-        if (event.type === 'message' || event.type === 'message-delta') {
-          setRuntimeMessages(chatRuntime.getMessages());
-        }
-
-        if (event.type === 'status') {
-          setRuntimeStatus(event.status);
-          if (event.status === 'cancelled') {
-            setLastCommandLabel('Chat response stopped');
-          }
-        }
-
-        if (event.type === 'workspace-patch') {
-          applyRuntimeWorkspacePatch(event.patch);
-        }
+      createWorkspaceFileRepository({
+        createFile: createWorkspaceFile,
+        deleteFile: deleteWorkspaceFile,
+        files,
+        saveFile: saveWorkspaceFile,
       }),
-    [chatRuntime, files],
+    [createWorkspaceFile, deleteWorkspaceFile, files, saveWorkspaceFile],
+  );
+  const workspaceSaveService = useMemo(
+    () => new WorkspaceSaveService({ repository: workspaceRepository }),
+    [workspaceRepository],
+  );
+  const workspacePatchService = useMemo(
+    () => new WorkspacePatchService({ repository: workspaceRepository }),
+    [workspaceRepository],
+  );
+  const chatRuntimeTransport = useMemo(() => toChatServiceTransport(chatRuntime), [chatRuntime]);
+  const chatService = useMemo(
+    () =>
+      new WorkbenchChatService({
+        onPatch: (patch: WorkspacePatchEvent) => {
+          void workspacePatchService.applyPatch(patch).then((result) => {
+            if (result.type === 'patch:failed') {
+              setLastCommandLabel(
+                `Runtime patch failed: ${result.message ?? `Error ${result.code}`}`,
+              );
+              return;
+            }
+
+            if (patch.type === 'delete-file') {
+              setLastCommandLabel(`Runtime deleted ${patch.path}`);
+              return;
+            }
+
+            openFile(patch.path);
+            setLastCommandLabel(`Runtime wrote ${patch.path}`);
+          });
+        },
+        transport: chatRuntimeTransport,
+      }),
+    [chatRuntimeTransport, openFile, workspacePatchService],
+  );
+  const updateRuntimeMessage = (message: ChatMessage) => {
+    setRuntimeMessages((currentMessages) => {
+      const index = currentMessages.findIndex((entry) => entry.id === message.id);
+      if (index < 0) return [...currentMessages, message];
+
+      const nextMessages = [...currentMessages];
+      nextMessages[index] = message;
+      return nextMessages;
+    });
+  };
+  useEffect(() => {
+    const unsubscribe = chatService.subscribe((event: ChatStreamEvent) => {
+      if (event.type === 'message' || event.type === 'message-delta') {
+        updateRuntimeMessage(event.message);
+      }
+
+      if (event.type === 'status') {
+        setRuntimeStatus(event.status);
+        if (event.status === 'cancelled') {
+          setLastCommandLabel('Chat response stopped');
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [chatService, updateRuntimeMessage]);
+  useEffect(
+    () => () => {
+      chatService.dispose();
+      chatRuntime.dispose();
+    },
+    [chatRuntime, chatService],
   );
   const activeActivity = storyActivities[activeActivityId];
   const statusSections = getIntegratedStatusSections({
@@ -799,9 +1002,40 @@ function IntegratedWorkbenchShell() {
     setLastCommandLabel('Closed all files');
   };
 
-  const saveFile = (path: string, content: string) => {
-    saveWorkspaceFile(path, { content, source: 'user' });
-    setLastCommandLabel(`Saved ${path}`);
+  const saveFile = (path: string, content: string, previousUpdatedAt?: string) => {
+    return Promise.resolve(
+      workspaceSaveService.saveDraft({
+        content,
+        mimeType: files.find((file) => file.path === path)?.mimeType,
+        path,
+        previousUpdatedAt,
+        source: 'user',
+      }),
+    )
+      .then((result) => {
+        if (isSaveSuccess(result)) {
+          setLastCommandLabel(`Saved ${path}`);
+          return result;
+        }
+
+        if (isSaveFailure(result)) {
+          setLastCommandLabel(
+            `Save failed for ${path}: ${result.message ?? 'Unknown save failure'}`,
+          );
+        }
+
+        return result;
+      })
+      .catch(() => {
+        setLastCommandLabel(`Save failed for ${path}`);
+        const failure: SaveFailure = {
+          code: 'unknown',
+          kind: 'save:failure',
+          message: 'Failed to save file.',
+          path,
+        };
+        return failure;
+      });
   };
 
   const deleteFiles = (paths: string[]) => {
@@ -1216,15 +1450,15 @@ function IntegratedWorkbenchShell() {
                     disabled={runtimeStatus === 'error'}
                     emptyLabel="Ask about this workspace."
                     isRunning={runtimeStatus === 'running'}
-                    messages={runtimeMessagesToChatMessages(runtimeMessages)}
+                    messages={runtimeMessages}
                     placeholder="Ask about this workspace"
                     showTools
                     title="Chat"
                     value={chatDraft}
-                    onCancel={() => chatRuntime.cancel()}
+                    onCancel={() => chatService.cancel()}
                     onSubmit={(message) => {
                       setChatDraft('');
-                      chatRuntime.sendMessage(message);
+                      void chatService.sendMessage(message);
                       setLastCommandLabel('Chat draft sent');
                     }}
                     onValueChange={setChatDraft}

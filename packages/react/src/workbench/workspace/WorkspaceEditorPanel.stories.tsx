@@ -69,6 +69,7 @@ function EditorHarness() {
         onSaveFile={(path, content) => {
           workspace.saveFile(path, { content, source: 'user' });
           setStatus(`Saved ${path}`);
+          return undefined;
         }}
         onSelectedPathChange={(path) => {
           workspace.openFile(path);
