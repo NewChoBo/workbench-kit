@@ -163,8 +163,37 @@ describe('workbench shell command presets', () => {
       [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR],
       [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR],
       [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR],
-      [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR, WORKBENCH_COMMAND_SURFACE_SETTINGS],
+      [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR],
     ]);
+  });
+
+  it('keeps openSettings menu command bound to activity bar surface only', () => {
+    const registry = createCommandRegistry(createWorkbenchShellCommands({ activities }));
+    const entries = createWorkbenchShellMenuEntries({ activities });
+
+    const activityItems = resolveCommandMenuItems({
+      context: createContext(),
+      entries,
+      surface: WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
+      registry,
+    });
+    const settingsItems = resolveCommandMenuItems({
+      context: createContext(),
+      entries,
+      surface: WORKBENCH_COMMAND_SURFACE_SETTINGS,
+      registry,
+    });
+
+    expect(
+      activityItems.some(
+        (item) => item.type === 'command' && item.commandId === WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
+      ),
+    ).toBe(true);
+    expect(
+      settingsItems.some(
+        (item) => item.type === 'command' && item.commandId === WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
+      ),
+    ).toBe(false);
   });
 
   it('executes shell command handlers through the provided context', () => {
