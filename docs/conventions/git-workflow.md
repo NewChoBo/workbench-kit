@@ -169,7 +169,8 @@ git branch -d feature/codex/chatting-ui
 ```
 
 Use separate dev server ports for simultaneous worktrees. For example, keep the
-sample app on `5177` and run another worktree with `vite --port 5178`.
+main Storybook server on `6010` and run another worktree with
+`storybook dev --port 6011`.
 
 ## Commit Message
 

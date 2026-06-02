@@ -10,11 +10,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "build:storybook": "storybook build",
-    "sample:build": "pnpm --filter @newchobo-ui/react-sample build",
-    "sample:dev": "pnpm --filter @newchobo-ui/react-sample dev",
     "storybook": "storybook dev --port 6010 --host 127.0.0.1 --no-open",
-    "typecheck": "pnpm --filter @newchobo-ui/react typecheck && pnpm --filter @newchobo-ui/react-sample typecheck",
-    "validate": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm sample:build && pnpm build:storybook"
+    "typecheck": "pnpm --filter @newchobo-ui/react typecheck",
+    "validate": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm build:storybook"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,8 +1,8 @@
 # Storybook Direction
 
-Storybook owns component-level documentation and state matrices. Keep the sample
-app for integrated composition smoke checks, and use Storybook to show primitive
-and layout components in small isolated states.
+Storybook owns component-level documentation, state matrices, and integrated
+composition smoke checks. Keep public UI scenarios in Storybook so the package
+has one visual validation surface.
 
 ## Current Shape
 
@@ -10,7 +10,7 @@ and layout components in small isolated states.
 - Use `@storybook/react-vite`.
 - Collect stories from `packages/react/src/**/*.stories.tsx` and
   `stories/**/*.stories.tsx`.
-- Keep `examples/react-sample` as the integrated sample app.
+- Keep integrated workbench scenarios in Storybook rather than a separate app.
 
 ## Initial Stories
 

@@ -6,15 +6,14 @@ in the final report and in non-trivial commit bodies.
 
 ## Validation Lanes
 
-| Changed surface                      | Minimum validation                                  | Extended validation                             |
-| ------------------------------------ | --------------------------------------------------- | ----------------------------------------------- |
-| Workspace, package exports, lockfile | `pnpm validate`                                     | Public-boundary search                          |
-| `packages/tokens` CSS variables      | `pnpm validate`                                     | Sample or Storybook visual check                |
-| `packages/react` primitives          | `pnpm --filter @newchobo-ui/react typecheck`        | `pnpm validate`, browser smoke                  |
-| `examples/react-sample`              | `pnpm --filter @newchobo-ui/react-sample typecheck` | `pnpm --filter @newchobo-ui/react-sample build` |
-| Storybook config or stories          | `pnpm build:storybook`                              | Browser smoke                                   |
-| Lint/format config                   | `pnpm lint && pnpm format:check`                    | `pnpm validate`                                 |
-| README and conventions               | Manual docs review                                  | Public-boundary search                          |
+| Changed surface                      | Minimum validation                           | Extended validation            |
+| ------------------------------------ | -------------------------------------------- | ------------------------------ |
+| Workspace, package exports, lockfile | `pnpm validate`                              | Public-boundary search         |
+| `packages/tokens` CSS variables      | `pnpm validate`                              | Storybook visual check         |
+| `packages/react` primitives          | `pnpm --filter @newchobo-ui/react typecheck` | `pnpm validate`, browser smoke |
+| Storybook config or stories          | `pnpm build:storybook`                       | Browser smoke                  |
+| Lint/format config                   | `pnpm lint && pnpm format:check`             | `pnpm validate`                |
+| README and conventions               | Manual docs review                           | Public-boundary search         |
 
 ## UI Smoke
 
@@ -24,7 +23,7 @@ For UI changes, verify the result in a real browser whenever practical.
 - Do text, inputs, and buttons stay inside their parent containers?
 - Do dialogs, menus, and form controls have accessible names?
 - Do basic interactions such as click, check, select, and close work?
-- Does the public sample avoid private product knowledge and internal sample data?
+- Do Storybook fixtures avoid private product knowledge and internal sample data?
 
 ## Reporting
 
