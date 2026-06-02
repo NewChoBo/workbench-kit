@@ -189,6 +189,58 @@ describe('workbench shell command presets', () => {
       'Search',
     ]);
   });
+
+  it('applies shell command label and icon overrides', () => {
+    const registry = createCommandRegistry(
+      createWorkbenchShellCommands({
+        activities,
+        commandOverrides: {
+          [WORKBENCH_OPEN_SETTINGS_COMMAND_ID]: {
+            label: 'Preferences',
+            icon: 'codicon-settings',
+          },
+          [WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID]: {
+            label: ({ isPrimarySidebarVisible }) =>
+              isPrimarySidebarVisible ? 'Hide panel' : 'Show panel',
+            icon: 'codicon-panel-left',
+          },
+          [getWorkbenchShowActivityCommandId('explorer')]: { icon: 'codicon-folder' },
+        },
+      }),
+    );
+    const items = resolveCommandMenuItems({
+      context: createContext(),
+      entries: createWorkbenchShellMenuEntries({ activities }),
+      registry,
+    });
+
+    expect(
+      items.find(
+        (item) => item.type === 'command' && item.commandId === WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
+      ),
+    ).toMatchObject({
+      label: 'Preferences',
+      icon: 'codicon-settings',
+    });
+
+    expect(
+      items.find(
+        (item) =>
+          item.type === 'command' && item.commandId === WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID,
+      ),
+    ).toMatchObject({
+      label: 'Hide panel',
+      icon: 'codicon-panel-left',
+    });
+
+    expect(
+      items.find(
+        (item) => item.type === 'command' && item.commandId === getWorkbenchShowActivityCommandId('explorer'),
+      ),
+    ).toMatchObject({
+      icon: 'codicon-folder',
+    });
+  });
 });
 
 describe('workbench editor command presets', () => {
