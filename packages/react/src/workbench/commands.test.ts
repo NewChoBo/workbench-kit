@@ -3,6 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
   WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID,
+  WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
+  WORKBENCH_COMMAND_SURFACE_EDITOR,
+  WORKBENCH_COMMAND_SURFACE_SEARCH,
+  WORKBENCH_COMMAND_SURFACE_SETTINGS,
+  WORKBENCH_COMMAND_SURFACE_WORKSPACE,
   createWorkbenchEditorCommands,
   createWorkbenchEditorTabListMenuEntries,
   createWorkbenchEditorTabMenuEntries,
@@ -148,6 +153,18 @@ describe('workbench shell command presets', () => {
         type: 'command',
       },
     ]);
+
+    const menuEntries = createWorkbenchShellMenuEntries({ activities });
+    const menuSurfaces = menuEntries
+      .filter((entry) => entry.type !== 'separator')
+      .map((entry) => entry.surfaces?.[0]);
+
+    expect(menuSurfaces).toEqual([
+      WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
+      WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
+      WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
+      WORKBENCH_COMMAND_SURFACE_SETTINGS,
+    ]);
   });
 
   it('executes shell command handlers through the provided context', () => {
@@ -235,7 +252,9 @@ describe('workbench shell command presets', () => {
 
     expect(
       items.find(
-        (item) => item.type === 'command' && item.commandId === getWorkbenchShowActivityCommandId('explorer'),
+        (item) =>
+          item.type === 'command' &&
+          item.commandId === getWorkbenchShowActivityCommandId('explorer'),
       ),
     ).toMatchObject({
       icon: 'codicon-folder',
@@ -274,6 +293,18 @@ describe('workbench editor command presets', () => {
       danger: true,
       icon: 'codicon-trash',
     });
+
+    const tabEntries = createWorkbenchEditorTabMenuEntries();
+    const editorSurfaces = tabEntries
+      .filter((entry) => entry.type !== 'separator')
+      .map((entry) => entry.surfaces?.[0]);
+    expect(editorSurfaces).toEqual([
+      WORKBENCH_COMMAND_SURFACE_EDITOR,
+      WORKBENCH_COMMAND_SURFACE_EDITOR,
+      WORKBENCH_COMMAND_SURFACE_EDITOR,
+      WORKBENCH_COMMAND_SURFACE_EDITOR,
+      WORKBENCH_COMMAND_SURFACE_EDITOR,
+    ]);
   });
 
   it('creates tab-list entries for close all only', () => {
@@ -395,6 +426,13 @@ describe('workbench workspace command presets', () => {
       'New file',
       'New folder',
     ]);
+
+    const workspaceEntries =
+      createWorkbenchWorkspaceFolderMenuEntries<WorkbenchWorkspaceCommandContext>();
+    const workspaceSurfaces = workspaceEntries
+      .filter((entry) => entry.type !== 'separator')
+      .map((entry) => entry.surfaces?.[0]);
+    expect(new Set(workspaceSurfaces)).toEqual(new Set([WORKBENCH_COMMAND_SURFACE_WORKSPACE]));
   });
 
   it('executes workspace command handlers through the provided context', () => {
@@ -463,6 +501,16 @@ describe('workbench search result command presets', () => {
         shortcut: undefined,
         type: 'command',
       },
+    ]);
+
+    const searchEntries = createWorkbenchSearchResultMenuEntries();
+    const searchSurfaces = searchEntries
+      .filter((entry) => entry.type !== 'separator')
+      .map((entry) => entry.surfaces?.[0]);
+    expect(searchSurfaces).toEqual([
+      WORKBENCH_COMMAND_SURFACE_SEARCH,
+      WORKBENCH_COMMAND_SURFACE_SEARCH,
+      WORKBENCH_COMMAND_SURFACE_SEARCH,
     ]);
   });
 

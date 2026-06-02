@@ -29,6 +29,19 @@ export const WORKBENCH_SEARCH_OPEN_RESULT_COMMAND_ID = 'search.openResult';
 export const WORKBENCH_SEARCH_COPY_RESULT_PATH_COMMAND_ID = 'search.copyResultPath';
 export const WORKBENCH_SEARCH_DELETE_RESULT_COMMAND_ID = 'search.deleteResult';
 
+export const WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR = 'activityBar';
+export const WORKBENCH_COMMAND_SURFACE_EDITOR = 'editor';
+export const WORKBENCH_COMMAND_SURFACE_SEARCH = 'search';
+export const WORKBENCH_COMMAND_SURFACE_SETTINGS = 'settings';
+export const WORKBENCH_COMMAND_SURFACE_WORKSPACE = 'workspace';
+
+export type WorkbenchCommandSurface =
+  | typeof WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR
+  | typeof WORKBENCH_COMMAND_SURFACE_EDITOR
+  | typeof WORKBENCH_COMMAND_SURFACE_SEARCH
+  | typeof WORKBENCH_COMMAND_SURFACE_SETTINGS
+  | typeof WORKBENCH_COMMAND_SURFACE_WORKSPACE;
+
 export interface WorkbenchShellCommandActivity<TActivityId extends string = string> {
   icon?: string;
   id: TActivityId;
@@ -190,6 +203,7 @@ export function createWorkbenchShellMenuEntries<TActivityId extends string>({
   >((activity) =>
     commandMenuEntry<WorkbenchShellCommandContext<TActivityId>>(
       getWorkbenchShowActivityCommandId(activity.id),
+      { surfaces: [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR] },
     ),
   );
   const shellEntries: CommandMenuEntry<WorkbenchShellCommandContext<TActivityId>>[] = [];
@@ -198,6 +212,7 @@ export function createWorkbenchShellMenuEntries<TActivityId extends string>({
     shellEntries.push(
       commandMenuEntry<WorkbenchShellCommandContext<TActivityId>>(
         WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID,
+        { surfaces: [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR] },
       ),
     );
   }
@@ -206,6 +221,7 @@ export function createWorkbenchShellMenuEntries<TActivityId extends string>({
     shellEntries.push(
       commandMenuEntry<WorkbenchShellCommandContext<TActivityId>>(
         WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
+        { surfaces: [WORKBENCH_COMMAND_SURFACE_SETTINGS] },
       ),
     );
   }
@@ -280,26 +296,40 @@ export function createWorkbenchEditorCommands({
 }
 
 export function createWorkbenchEditorTabListMenuEntries(): CommandMenuEntry<WorkbenchEditorCommandContext>[] {
-  return commandMenuEntries<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID);
+  return [
+    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID, {
+      surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
+    }),
+  ];
 }
 
 export function createWorkbenchEditorTabMenuEntries(): CommandMenuEntry<WorkbenchEditorCommandContext>[] {
   return [
-    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID),
+    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID, {
+      surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
+    }),
     commandMenuSeparator('tab-file-separator'),
-    ...commandMenuEntries<WorkbenchEditorCommandContext>(
-      WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
-      WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID,
-      WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
-    ),
+    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_CLOSE_COMMAND_ID, {
+      surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
+    }),
+    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID, {
+      surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
+    }),
+    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID, {
+      surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
+    }),
     commandMenuSeparator('tab-danger-separator'),
-    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_DELETE_COMMAND_ID),
+    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_DELETE_COMMAND_ID, {
+      surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
+    }),
   ];
 }
 
 export function createWorkbenchWorkspaceCommands<
   TContext extends WorkbenchWorkspaceCommandContext = WorkbenchWorkspaceCommandContext,
->({ commandOverrides }: WorkbenchCommandPresetOptions<TContext> = {}): CommandDefinition<TContext>[] {
+>({
+  commandOverrides,
+}: WorkbenchCommandPresetOptions<TContext> = {}): CommandDefinition<TContext>[] {
   const commands: CommandDefinition<TContext>[] = [
     {
       id: WORKBENCH_WORKSPACE_NEW_FILE_COMMAND_ID,
@@ -365,7 +395,7 @@ export function createWorkbenchWorkspaceCreateMenuEntries<
   return commandMenuEntries<TContext>(
     WORKBENCH_WORKSPACE_NEW_FILE_COMMAND_ID,
     WORKBENCH_WORKSPACE_NEW_FOLDER_COMMAND_ID,
-  );
+  ).map((entry) => ({ ...entry, surfaces: [WORKBENCH_COMMAND_SURFACE_WORKSPACE] }));
 }
 
 export function createWorkbenchWorkspaceTargetMenuEntries<
@@ -375,12 +405,12 @@ export function createWorkbenchWorkspaceTargetMenuEntries<
     ...commandMenuEntries<TContext>(
       WORKBENCH_WORKSPACE_OPEN_COMMAND_ID,
       WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID,
-    ),
+    ).map((entry) => ({ ...entry, surfaces: [WORKBENCH_COMMAND_SURFACE_WORKSPACE] })),
     commandMenuSeparator('workspace-separator'),
     ...commandMenuEntries<TContext>(
       WORKBENCH_WORKSPACE_RENAME_COMMAND_ID,
       WORKBENCH_WORKSPACE_DELETE_COMMAND_ID,
-    ),
+    ).map((entry) => ({ ...entry, surfaces: [WORKBENCH_COMMAND_SURFACE_WORKSPACE] })),
   ];
 }
 
@@ -396,7 +426,9 @@ export function createWorkbenchWorkspaceFolderMenuEntries<
 
 export function createWorkbenchSearchResultCommands<
   TContext extends WorkbenchSearchResultCommandContext = WorkbenchSearchResultCommandContext,
->({ commandOverrides }: WorkbenchCommandPresetOptions<TContext> = {}): CommandDefinition<TContext>[] {
+>({
+  commandOverrides,
+}: WorkbenchCommandPresetOptions<TContext> = {}): CommandDefinition<TContext>[] {
   const commands: CommandDefinition<TContext>[] = [
     {
       id: WORKBENCH_SEARCH_OPEN_RESULT_COMMAND_ID,
@@ -430,9 +462,11 @@ export function createWorkbenchSearchResultMenuEntries<
     ...commandMenuEntries<TContext>(
       WORKBENCH_SEARCH_OPEN_RESULT_COMMAND_ID,
       WORKBENCH_SEARCH_COPY_RESULT_PATH_COMMAND_ID,
-    ),
+    ).map((entry) => ({ ...entry, surfaces: [WORKBENCH_COMMAND_SURFACE_SEARCH] })),
     commandMenuSeparator('result-menu-separator'),
-    commandMenuEntry<TContext>(WORKBENCH_SEARCH_DELETE_RESULT_COMMAND_ID),
+    commandMenuEntry<TContext>(WORKBENCH_SEARCH_DELETE_RESULT_COMMAND_ID, {
+      surfaces: [WORKBENCH_COMMAND_SURFACE_SEARCH],
+    }),
   ];
 }
 
