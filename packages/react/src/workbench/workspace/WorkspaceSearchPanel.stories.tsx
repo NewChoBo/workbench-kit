@@ -1,8 +1,16 @@
 import { useMemo, useState, type MouseEvent } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, within } from 'storybook/test';
+import {
+  commandMenuSeparator,
+  createCommandRegistry,
+  executeCommand,
+  resolveCommandMenuItems,
+  type CommandMenuEntry,
+} from '@newchobo-ui/core';
 import { searchWorkspaceFiles, type WorkspaceFile } from '@newchobo-ui/workspace';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
+import { commandMenuItemsToContextMenuItems } from '../commands';
 import { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 import type { WorkspaceSearchResult } from './types';
 
@@ -50,6 +58,42 @@ interface StoryContextMenuState {
   y: number;
 }
 
+interface SearchResultCommandContext {
+  copyPath: () => void;
+  deleteResult: () => void;
+  openResult: () => void;
+}
+
+const searchResultCommandRegistry = createCommandRegistry<SearchResultCommandContext>([
+  {
+    id: 'search.openResult',
+    label: 'Open',
+    icon: 'codicon-folder-opened',
+    shortcut: 'Enter',
+    run: ({ openResult }) => openResult(),
+  },
+  {
+    id: 'search.copyResultPath',
+    label: 'Copy path',
+    icon: 'codicon-copy',
+    run: ({ copyPath }) => copyPath(),
+  },
+  {
+    id: 'search.deleteResult',
+    label: 'Delete',
+    icon: 'codicon-trash',
+    danger: true,
+    run: ({ deleteResult }) => deleteResult(),
+  },
+]);
+
+const searchResultMenuEntries: CommandMenuEntry<SearchResultCommandContext>[] = [
+  { commandId: 'search.openResult' },
+  { commandId: 'search.copyResultPath' },
+  commandMenuSeparator('result-menu-separator'),
+  { commandId: 'search.deleteResult' },
+];
+
 function SearchHarness({ initialQuery = '' }: SearchHarnessProps) {
   const [activePath, setActivePath] = useState<string>();
   const [files, setFiles] = useState(fixtureFiles);
@@ -65,42 +109,26 @@ function SearchHarness({ initialQuery = '' }: SearchHarnessProps) {
 
   const openResultMenu = (event: MouseEvent<HTMLElement>, result: WorkspaceSearchResult) => {
     event.preventDefault();
+    const context: SearchResultCommandContext = {
+      copyPath: () => setStatus(`Copied ${result.path}`),
+      deleteResult: () => {
+        setFiles((currentFiles) => currentFiles.filter((file) => file.path !== result.path));
+        setStatus(`Deleted ${result.path}`);
+      },
+      openResult: () => activateResult(result),
+    };
+
     setContextMenu({
       x: event.clientX,
       y: event.clientY,
-      items: [
-        {
-          icon: 'codicon-folder-opened',
-          id: 'open',
-          label: 'Open',
-          shortcut: 'Enter',
-          onSelect: () => {
-            activateResult(result);
-            setContextMenu(null);
-          },
-        },
-        {
-          icon: 'codicon-copy',
-          id: 'copy-path',
-          label: 'Copy path',
-          onSelect: () => {
-            setStatus(`Copied ${result.path}`);
-            setContextMenu(null);
-          },
-        },
-        { id: 'result-menu-separator', type: 'separator' },
-        {
-          danger: true,
-          icon: 'codicon-trash',
-          id: 'delete',
-          label: 'Delete',
-          onSelect: () => {
-            setFiles((currentFiles) => currentFiles.filter((file) => file.path !== result.path));
-            setStatus(`Deleted ${result.path}`);
-            setContextMenu(null);
-          },
-        },
-      ],
+      items: commandMenuItemsToContextMenuItems(
+        resolveCommandMenuItems({
+          context,
+          entries: searchResultMenuEntries,
+          registry: searchResultCommandRegistry,
+        }),
+        (commandId) => executeCommand(searchResultCommandRegistry, commandId, context),
+      ),
     });
   };
 
@@ -168,11 +196,14 @@ export const ResultMenuFlow: Story = {
     const readmeResult = await canvas.findByRole('button', { name: /READ.*ME\.md/i });
 
     await fireEvent.contextMenu(readmeResult);
+    await expect(await canvas.findByRole('menuitem', { name: /Open/ })).toHaveTextContent('Enter');
     await userEvent.click(await canvas.findByRole('menuitem', { name: 'Copy path' }));
     await expect(canvas.getByLabelText('Search event log')).toHaveTextContent('Copied README.md');
 
     await fireEvent.contextMenu(readmeResult);
-    await userEvent.click(await canvas.findByRole('menuitem', { name: 'Delete' }));
+    const deleteItem = await canvas.findByRole('menuitem', { name: 'Delete' });
+    await expect(deleteItem).toHaveAttribute('data-danger', 'true');
+    await userEvent.click(deleteItem);
     await expect(canvas.getByLabelText('Search event log')).toHaveTextContent('Deleted README.md');
     await expect(canvas.queryByRole('button', { name: /READ.*ME\.md/i })).toBeNull();
     await expect(canvas.getByText('No results')).toBeVisible();
