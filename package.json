@@ -1,0 +1,22 @@
+{
+  "name": "newchobo-ui-package",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "sample:build": "pnpm --filter @newchobo-ui/react-sample build",
+    "sample:dev": "pnpm --filter @newchobo-ui/react-sample dev",
+    "typecheck": "pnpm --filter @newchobo-ui/react typecheck && pnpm --filter @newchobo-ui/react-sample typecheck",
+    "validate": "pnpm typecheck && pnpm sample:build"
+  },
+  "devDependencies": {
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.0.0"
+  }
+}

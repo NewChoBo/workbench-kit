@@ -1,0 +1,84 @@
+:root,
+[data-theme="dark"] {
+  --color-bg: #0d1117;
+  --color-bg-75: rgba(13, 17, 23, 0.75);
+  --color-primary-side-bar-bg: #111720;
+  --color-primary-side-bar-bg-75: rgba(17, 23, 32, 0.75);
+  --color-surface: #161b22;
+  --color-surface-hover: #21262d;
+  --color-border: #30363d;
+  --color-text: #f0f6fc;
+  --color-text-muted: #a9b4c0;
+  --color-text-subtle: #7d8590;
+  --color-accent: #2f81f7;
+  --color-accent-hover: #388bfd;
+  --color-danger: #da3633;
+  --color-danger-hover: #f85149;
+  --file-icon-archive: #a9b4c0;
+  --file-icon-config: #a5d6ff;
+  --file-icon-css: #ce9178;
+  --file-icon-default: #a9b4c0;
+  --file-icon-env: #7ee787;
+  --file-icon-folder: #d7ba7d;
+  --file-icon-git: #f85149;
+  --file-icon-html: #e37933;
+  --file-icon-image: #d2a8ff;
+  --file-icon-javascript: #f2cc60;
+  --file-icon-json: #f2cc60;
+  --file-icon-lock: #8b949e;
+  --file-icon-markdown: #6cb6ff;
+  --file-icon-package: #f0883e;
+  --file-icon-pdf: #ff7b72;
+  --file-icon-sql: #7ee787;
+  --file-icon-text: #a9b4c0;
+  --file-icon-typescript: #58a6ff;
+  --file-icon-vue: #42d392;
+  --file-icon-xml: #ffa657;
+  --file-icon-yaml: #d2a8ff;
+}
+
+[data-theme="light"] {
+  --color-bg: #ffffff;
+  --color-bg-75: rgba(255, 255, 255, 0.75);
+  --color-primary-side-bar-bg: #f6f8fa;
+  --color-primary-side-bar-bg-75: rgba(246, 248, 250, 0.75);
+  --color-surface: #f6f8fa;
+  --color-surface-hover: #eaeef2;
+  --color-border: #d0d7de;
+  --color-text: #1f2328;
+  --color-text-muted: #57606a;
+  --color-text-subtle: #6e7781;
+  --color-accent: #0969da;
+  --color-accent-hover: #0860ca;
+  --color-danger: #cf222e;
+  --color-danger-hover: #a40e26;
+  --file-icon-archive: #57606a;
+  --file-icon-config: #0969da;
+  --file-icon-css: #bc4c00;
+  --file-icon-default: #57606a;
+  --file-icon-env: #1a7f37;
+  --file-icon-folder: #9a6700;
+  --file-icon-git: #cf222e;
+  --file-icon-html: #bc4c00;
+  --file-icon-image: #8250df;
+  --file-icon-javascript: #9a6700;
+  --file-icon-json: #9a6700;
+  --file-icon-lock: #6e7781;
+  --file-icon-markdown: #0969da;
+  --file-icon-package: #bc4c00;
+  --file-icon-pdf: #cf222e;
+  --file-icon-sql: #1a7f37;
+  --file-icon-text: #57606a;
+  --file-icon-typescript: #0969da;
+  --file-icon-vue: #1a7f37;
+  --file-icon-xml: #bc4c00;
+  --file-icon-yaml: #8250df;
+}
+
+:root {
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --font-size-sm: 0.8125rem;
+  --font-size-base: 0.875rem;
+  --workbench-header-height: 35px;
+}
