@@ -1,10 +1,18 @@
 import { useMemo, useState, type MouseEvent } from 'react';
+import {
+  commandMenuSeparator,
+  createCommandRegistry,
+  executeCommand,
+  resolveCommandMenuItems,
+  type CommandMenuEntry,
+} from '@newchobo-ui/core';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { EmptyState } from '../../primitives/EmptyState';
 import { IconButton } from '../../primitives/IconButton';
 import { Toolbar } from '../../primitives/Toolbar';
 import { Panel, PanelBody } from '../../layout/Panel';
+import { commandMenuItemsToContextMenuItems } from '../commands';
 import { fileNameOfPath } from './path';
 import { WorkspaceEditor, type WorkspaceEditorTheme } from './WorkspaceEditor';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
@@ -14,6 +22,76 @@ interface FileDraft {
   content: string;
   savedContent: string;
 }
+
+interface EditorTabCommandContext {
+  canCloseAll: boolean;
+  canCloseOthers: boolean;
+  canClosePath: boolean;
+  canCopyPath: boolean;
+  canDeletePath: boolean;
+  closeAll: () => void;
+  closeOthers: () => void;
+  closePath: () => void;
+  copyPath: () => void;
+  deletePath: () => void;
+  filePath?: string;
+  hasMultipleOpenFiles: boolean;
+  hasOpenFiles: boolean;
+}
+
+const editorTabCommandRegistry = createCommandRegistry<EditorTabCommandContext>([
+  {
+    id: 'editor.copyPath',
+    label: 'Copy path',
+    icon: 'codicon-copy',
+    isEnabled: ({ canCopyPath, filePath }) => Boolean(filePath && canCopyPath),
+    run: ({ copyPath }) => copyPath(),
+  },
+  {
+    id: 'editor.close',
+    label: 'Close',
+    icon: 'codicon-close',
+    isEnabled: ({ canClosePath, filePath }) => Boolean(filePath && canClosePath),
+    run: ({ closePath }) => closePath(),
+  },
+  {
+    id: 'editor.closeOthers',
+    label: 'Close others',
+    icon: 'codicon-close-all',
+    isEnabled: ({ canCloseOthers, filePath, hasMultipleOpenFiles }) =>
+      Boolean(filePath && canCloseOthers && hasMultipleOpenFiles),
+    run: ({ closeOthers }) => closeOthers(),
+  },
+  {
+    id: 'editor.closeAll',
+    label: 'Close all',
+    icon: 'codicon-close-all',
+    isEnabled: ({ canCloseAll, hasOpenFiles }) => canCloseAll && hasOpenFiles,
+    run: ({ closeAll }) => closeAll(),
+  },
+  {
+    id: 'editor.delete',
+    label: 'Delete',
+    icon: 'codicon-trash',
+    danger: true,
+    isEnabled: ({ canDeletePath, filePath }) => Boolean(filePath && canDeletePath),
+    run: ({ deletePath }) => deletePath(),
+  },
+]);
+
+const editorTabListMenuEntries: CommandMenuEntry<EditorTabCommandContext>[] = [
+  { commandId: 'editor.closeAll' },
+];
+
+const editorTabMenuEntries: CommandMenuEntry<EditorTabCommandContext>[] = [
+  { commandId: 'editor.copyPath' },
+  commandMenuSeparator('tab-file-separator'),
+  { commandId: 'editor.close' },
+  { commandId: 'editor.closeOthers' },
+  { commandId: 'editor.closeAll' },
+  commandMenuSeparator('tab-danger-separator'),
+  { commandId: 'editor.delete' },
+];
 
 export interface WorkspaceEditorPanelProps {
   emptyLabel?: string;
@@ -125,61 +203,44 @@ export function WorkspaceEditorPanel({
     setTabContextMenu({ path, x: event.clientX, y: event.clientY });
   };
 
+  const createEditorTabCommandContext = (
+    filePath: string | undefined,
+  ): EditorTabCommandContext => ({
+    canCloseAll: Boolean(onCloseAll),
+    canCloseOthers: Boolean(onCloseOthers),
+    canClosePath: Boolean(onClosePath),
+    canCopyPath: Boolean(onCopyPath),
+    canDeletePath: Boolean(onDeletePath),
+    closeAll: () => onCloseAll?.(),
+    closeOthers: () => {
+      if (filePath) onCloseOthers?.(filePath);
+    },
+    closePath: () => {
+      if (filePath) onClosePath?.(filePath);
+    },
+    copyPath: () => {
+      if (filePath) onCopyPath?.(filePath);
+    },
+    deletePath: () => {
+      if (filePath) setDeletePath(filePath);
+    },
+    filePath,
+    hasMultipleOpenFiles: openFiles.length > 1,
+    hasOpenFiles: openFiles.length > 0,
+  });
+
   const createTabContextItems = (path: string | null): ContextMenuItem[] => {
-    const file = path ? filesByPath.get(path) : null;
+    const filePath = path && filesByPath.has(path) ? path : undefined;
+    const context = createEditorTabCommandContext(filePath);
 
-    if (!file) {
-      return [
-        {
-          id: 'close-all',
-          label: 'Close all',
-          icon: 'codicon-close-all',
-          disabled: openFiles.length === 0 || !onCloseAll,
-          onSelect: () => onCloseAll?.(),
-        },
-      ];
-    }
-
-    return [
-      {
-        id: 'copy-path',
-        label: 'Copy path',
-        icon: 'codicon-copy',
-        disabled: !onCopyPath,
-        onSelect: () => onCopyPath?.(file.path),
-      },
-      { id: 'tab-file-separator', type: 'separator' },
-      {
-        id: 'close',
-        label: 'Close',
-        icon: 'codicon-close',
-        disabled: !onClosePath,
-        onSelect: () => onClosePath?.(file.path),
-      },
-      {
-        id: 'close-others',
-        label: 'Close others',
-        icon: 'codicon-close-all',
-        disabled: openFiles.length <= 1 || !onCloseOthers,
-        onSelect: () => onCloseOthers?.(file.path),
-      },
-      {
-        id: 'close-all',
-        label: 'Close all',
-        icon: 'codicon-close-all',
-        disabled: !onCloseAll,
-        onSelect: () => onCloseAll?.(),
-      },
-      { id: 'tab-danger-separator', type: 'separator' },
-      {
-        id: 'delete',
-        label: 'Delete',
-        icon: 'codicon-trash',
-        danger: true,
-        disabled: !onDeletePath,
-        onSelect: () => setDeletePath(file.path),
-      },
-    ];
+    return commandMenuItemsToContextMenuItems(
+      resolveCommandMenuItems({
+        context,
+        entries: filePath ? editorTabMenuEntries : editorTabListMenuEntries,
+        registry: editorTabCommandRegistry,
+      }),
+      (commandId) => executeCommand(editorTabCommandRegistry, commandId, context),
+    );
   };
 
   const handleConfirmDelete = () => {
