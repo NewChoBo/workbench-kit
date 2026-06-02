@@ -614,6 +614,48 @@ independently.
   이 검증을 `pnpm validate:full`에서 필수로 돌릴지, 또는 별도 실행 의존성으로
   유지할지 결정이 필요합니다.
 
+## 현재 상태 기반 추가 확인필요사항 (2026-06-03 기준)
+
+- `test:storybook-play:required`가 실제 CI에서 실패 전파 규칙으로 동작하려면,
+  `@storybook/test-runner` 설치와 함께 `test-storybook` 실행 채널(`test-storybook`/`storybook test`)
+  정책을 먼저 확정해야 합니다.
+- Storybook play 게이트의 우선순위 기준을 무엇으로 고정할지 결정이 필요합니다.
+  - 제안: `WorkspaceExplorer/CreateAndRenameFlow`,
+    `WorkspaceSearchPanel/ResultMenuFlow`,
+    `WorkspaceEditorPanel/OpenTabCoordinationFlow`,
+    `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`,
+    `ChatPanel/CancelRuntimeFlow`
+    를 최소 필수 세트로 고정하고, 첫 2회 연속 실패 시 원인 분류(환경 이슈/동기 이슈/테스트 이슈) 규칙을 문서화.
+- plugin 설치 범위를 1차 기능으로 제한할 때 (`command/view/settings`), 2차 확장(권한/추천/업데이트/신뢰)
+  전환 임계조건을 정량 기준(리스크, 사용자 스토리, API 변동 범위)으로 정해야 합니다.
+- `StatusBar`의 섹션/아이템 정렬/그룹 동작이 요구되는 경우, 현재 정렬 규칙이
+  단순 배열 인덱스 의존인지 또는 `priority/group` 메타 확장인지 사전 결정이 필요합니다.
+- `openSettings`의 surface를 `activityBar`에만 고정한 상태에서, settings 전용 메뉴/호출점이 필요해지면
+  surface 정책 확장 또는 별도 command 그룹 설계를 어떻게 연결할지 결정이 필요합니다.
+
+## 추가작업 권장사항 검토 결과
+
+- 상태: `test:storybook-play`는 실행 환경이 준비되면 바로 `validate:full`에 포함 가능하되,
+  지금은 의존성 준비 미완성으로 `test:storybook-play:required`는 `optional` 게이트로만 둠.
+- `openSettings`는 초기 정책(`activityBar` surface만 노출)을 유지하며, settings 전용 surface는
+  독립 메뉴 전략이 추가되는 마일스톤에서만 도입.
+- 플러그인 충돌 정책은 현재 `last-write-wins`로 문서화되어 있고 동작이 테스트로 보장되어 있음.
+- `surface` 메타는 현재 `string[]` 스펙으로 충분하나, host merge에서 정렬/그룹 규칙이
+  필요해지면 `priority/group` 메타 확장과 정렬 규칙 고정이 선행되어야 함.
+
+### 권장되는 1차 액션 (다음 2개 마일스톤)
+
+- 1. `validate:full`에서는 `test:storybook-play:required`로 전환(환경 준비 완료 시).
+  - 기준: `WorkspaceExplorer/CreateAndRenameFlow`,
+    `WorkspaceSearchPanel/ResultMenuFlow`,
+    `WorkspaceEditorPanel/OpenTabCoordinationFlow`,
+    `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`,
+    `ChatPanel/CancelRuntimeFlow` 5종을 필수 baseline.
+- 2. plugin 기여 범위를 `command/view/settings`로 제한해 최소 API를 먼저 안정화한 뒤,
+     다음 단계에서 trust/enable/recommend/update를 추가.
+- 3. package-manager hard-block은 현재 preinstall 가드로 충분하나,
+     운영 문서에서 `npm` 실행 시 정식 대응 메시지와 예외 시나리오를 한 페이지에 통합.
+
 ## Milestone Decisions Completed
 
 - Drag payload metadata is implemented in `WorkspaceExplorer` via optional metadata
