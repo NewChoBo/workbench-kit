@@ -1,0 +1,20 @@
+html,
+body,
+#storybook-root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.sbdocs,
+.sbdocs-content {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.docs-story {
+  background: var(--color-bg);
+}

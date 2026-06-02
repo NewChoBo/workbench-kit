@@ -38,6 +38,8 @@ pnpm format:check
 pnpm validate
 pnpm sample:dev
 pnpm sample:build
+pnpm storybook
+pnpm build:storybook
 ```
 
 ## Conventions

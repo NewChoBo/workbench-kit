@@ -1,0 +1,45 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+
+const meta = {
+  title: 'Introduction',
+  parameters: {
+    layout: 'fullscreen',
+  },
+} satisfies Meta;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const Overview: Story = {
+  render: () => (
+    <main
+      style={{
+        minHeight: '100vh',
+        padding: 40,
+        background: 'var(--color-bg)',
+        color: 'var(--color-text)',
+        fontFamily:
+          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}
+    >
+      <div style={{ maxWidth: 720 }}>
+        <h1 style={{ margin: '0 0 8px', fontSize: 28 }}>Newchobo UI</h1>
+        <p style={{ margin: '0 0 28px', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
+          Reusable workbench primitives for compact desktop-style React interfaces.
+        </p>
+        <ul style={{ display: 'grid', gap: 10, margin: 0, padding: 0, listStyle: 'none' }}>
+          <li>
+            <strong>Primitives</strong>: buttons, badges, fields, inputs, and empty states
+          </li>
+          <li>
+            <strong>Layout</strong>: panels, sidebar frames, and workbench composition
+          </li>
+          <li>
+            <strong>Overlays</strong>: modal dialogs and context menus
+          </li>
+        </ul>
+      </div>
+    </main>
+  ),
+};

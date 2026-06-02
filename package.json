@@ -9,13 +9,17 @@
     "format:check": "prettier . --check",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "build:storybook": "storybook build",
     "sample:build": "pnpm --filter @newchobo-ui/react-sample build",
     "sample:dev": "pnpm --filter @newchobo-ui/react-sample dev",
+    "storybook": "storybook dev --port 6010 --host 127.0.0.1 --no-open",
     "typecheck": "pnpm --filter @newchobo-ui/react typecheck && pnpm --filter @newchobo-ui/react-sample typecheck",
-    "validate": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm sample:build"
+    "validate": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm sample:build && pnpm build:storybook"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@storybook/addon-docs": "^10.4.1",
+    "@storybook/react-vite": "^10.4.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",
@@ -25,6 +29,7 @@
     "prettier": "^3.8.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "storybook": "^10.4.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.60.1",
     "vite": "^6.0.0"
