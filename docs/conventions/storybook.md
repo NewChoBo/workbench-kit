@@ -48,3 +48,21 @@ where accessibility or state regressions are most likely.
 - `Checkbox`: checked state
 - `Select`: value changes
 - `ContextMenu`: open state, menu item selection, close behavior
+
+## Workbench Stories
+
+Workbench stories should validate realistic product-like UI flows while keeping
+the reusable behavior in package modules.
+
+- Stories provide public fixture data and scenario-specific initial state.
+- Components, hooks, reducers, and command helpers own reusable behavior.
+- Integrated stories should compose Explorer, Search, Chat, Editor, Settings,
+  ActivityBar, SplitView, and StatusBar through the same public APIs that a host
+  app would use.
+- Mock runtime adapters may be used for send/cancel/streaming and workspace
+  update scenarios when a real service is not required.
+- Do not encode private runtime details, storage keys, server addresses, or
+  project-specific command names in stories.
+
+See [Workbench Migration Todo](../workbench/migration-todo.md) for the current
+workbench migration and Storybook validation plan.
