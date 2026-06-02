@@ -221,7 +221,7 @@ export function createWorkbenchShellMenuEntries<TActivityId extends string>({
     shellEntries.push(
       commandMenuEntry<WorkbenchShellCommandContext<TActivityId>>(
         WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
-        { surfaces: [WORKBENCH_COMMAND_SURFACE_SETTINGS] },
+        { surfaces: [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR, WORKBENCH_COMMAND_SURFACE_SETTINGS] },
       ),
     );
   }

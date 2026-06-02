@@ -6,6 +6,7 @@ import { searchWorkspaceFiles, type WorkspaceFile } from '@newchobo-ui/workspace
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import {
   commandMenuItemsToContextMenuItems,
+  WORKBENCH_COMMAND_SURFACE_SEARCH,
   createWorkbenchSearchResultCommands,
   createWorkbenchSearchResultMenuEntries,
   type WorkbenchSearchResultCommandContext,
@@ -91,6 +92,7 @@ function SearchHarness({ initialQuery = '' }: SearchHarnessProps) {
         resolveCommandMenuItems({
           context,
           entries: searchResultMenuEntries,
+          surface: WORKBENCH_COMMAND_SURFACE_SEARCH,
           registry: searchResultCommandRegistry,
         }),
         (commandId) => executeCommand(searchResultCommandRegistry, commandId, context),

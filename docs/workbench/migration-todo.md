@@ -556,6 +556,19 @@ independently.
 - Should the package add MSW, or keep mock runtime adapters in plain TypeScript
   until HTTP semantics are needed?
 
+## 확인 필요사항
+
+- Settings 커맨드의 surface 바인딩은 Activity Bar 전용으로 둘지, Settings 전용으로 둘지,
+  아니면 `activityBar`와 `settings` 모두 허용할지 최종 확정이 필요합니다.
+- `resolveCommandMenuItems(..., surface)`를 호출하지 않는 혼합 메뉴(예: Explorer 루트
+  메뉴)가 있는지와, 이러한 메뉴를 의도적으로 허용/차단할지 정책 정의가 필요합니다.
+- 플러그인 기여가 기존 명령(`commandId`)과 충돌할 때 우선순위/오버레이 규칙(기본
+  기여 우선, 설치 기여 우선, 또는 오류 강제 중단)을 명확히 해야 합니다.
+- Storybook `play` 시나리오를 `pnpm validate`의 필수 게이트로 올릴지에 대한 최소
+  기준(Explorer/Search/Editor/Chat 중 어떤 흐름이 mandatory인지)을 확정해야 합니다.
+- `surface` 제약이 단일 surface(`'search'`)만 허용해야 하는지, 아니면 다중 surface
+  설정이 필요한 케이스를 위해 배열/목록 확장 정책이 필요한지 정리해야 합니다.
+
 ## Milestone Decisions Completed
 
 - Drag payload metadata is implemented in `WorkspaceExplorer` via optional metadata

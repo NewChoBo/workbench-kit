@@ -157,13 +157,13 @@ describe('workbench shell command presets', () => {
     const menuEntries = createWorkbenchShellMenuEntries({ activities });
     const menuSurfaces = menuEntries
       .filter((entry) => entry.type !== 'separator')
-      .map((entry) => entry.surfaces?.[0]);
+      .map((entry) => entry.surfaces ?? []);
 
     expect(menuSurfaces).toEqual([
-      WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
-      WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
-      WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
-      WORKBENCH_COMMAND_SURFACE_SETTINGS,
+      [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR],
+      [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR],
+      [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR],
+      [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR, WORKBENCH_COMMAND_SURFACE_SETTINGS],
     ]);
   });
 
