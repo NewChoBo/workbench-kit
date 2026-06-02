@@ -423,6 +423,7 @@ export function WorkspaceExplorer({
           <Fragment key={node.path}>
             <SideBarListItem
               active={activePath === node.path}
+              data-workspace-path={node.path}
               depth={depth}
               draggable={node.type === 'file' && Boolean(onRequestMove)}
               dropTarget={dropTarget}
