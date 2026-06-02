@@ -556,3 +556,53 @@ independently.
   and Status Bar?
 - Should the package add MSW, or keep mock runtime adapters in plain TypeScript
   until HTTP semantics are needed?
+
+## Recommended Decision Order
+
+The following order keeps risk low while moving toward a public, reusable
+workbench platform:
+
+1. **Policy and guardrails**
+   - Decide hard package-manager enforcement, then make it executable in tooling.
+   - Decide Storybook interaction test inclusion in `pnpm validate`.
+2. **Command and menu surface behavior**
+   - Decide label/icon override and command grouping/ordering metadata.
+   - Decide plugin command contribution merge strategy.
+3. **Workspace API shape**
+   - Decide which helpers are exported from `@newchobo-ui/workspace`.
+   - Decide folder/file operations that stay as reducer actions versus host callbacks.
+4. **Runtime and integration model**
+   - Decide drag payload metadata contract.
+   - Decide storage/persistence model and plugin installation scope.
+
+## Proposed Answers (subject to approval)
+
+- **pkg manager hard-block (`npm install`)**: enforce pnpm through a local guard
+  script to avoid accidental lockfile drift.
+- **storybook play in `pnpm validate`**: keep optional for now; make it mandatory
+  after low-flake coverage stabilizes.
+- **workspace helper exports**: export neutral domain helpers in
+  `@newchobo-ui/workspace` (path/tree/search/selection/mutations); keep fixture
+  builders and state adapters in Storybook/tests.
+- **persistence**: provide optional storage adapter; no built-in persistence side effect.
+- **drag payload metadata**: keep path-list MIME as the base contract, allow optional
+  `metadata` extension fields.
+- **label/icon override**: add lightweight override support in command preset
+  constructors.
+- **folder operation ownership**: reducer updates shared state and conflict checks;
+  host callbacks handle confirmation, I/O side effects, and domain prompts.
+- **StatusBar ordering/grouping**: keep section/item arrays, add optional ordering
+  metadata for host merges and deterministic rendering.
+- **plugin install lifecycle**: start with command/view/settings contributions first;
+  extend trust / enable-disable / recommendations / updates after contribution APIs
+  are stable.
+- **plugin contribution merge**: use one registry with surface filters in the current
+  architecture.
+- **MSW vs TS mock**: keep plain TS mock runtime until HTTP transport is part of
+  public surface.
+
+## Clarification Checklist
+
+- Which recommendation becomes the gate for the next milestone?
+- What is the minimum acceptance criteria for plugin-contribution support?
+- Which Storybook interaction flows must be mandatory for CI baseline confidence?

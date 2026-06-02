@@ -33,6 +33,7 @@ policies, credentials, or private sample data.
 Use `pnpm` for install and dependency operations. Root package scripts invoke
 tooling through `pnpm`, so `npm run <script>` delegates script execution to
 `pnpm` while keeping the pnpm lockfile as the source of truth.
+`npm install` is hard-blocked by the repository preinstall check.
 
 ```powershell
 pnpm install
