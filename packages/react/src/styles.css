@@ -572,6 +572,11 @@
   outline-offset: -1px;
 }
 
+.ui-side-bar-list-entry {
+  margin: 0;
+  padding: 0;
+}
+
 .ui-side-bar-row {
   display: flex;
   align-items: center;
