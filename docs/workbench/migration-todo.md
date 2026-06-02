@@ -556,6 +556,28 @@ independently.
 - Should the package add MSW, or keep mock runtime adapters in plain TypeScript
   until HTTP semantics are needed?
 
+## Open Ambiguity Register (Actionable)
+
+| 항목                             | 현재 근거                                                                                              | 미확정 포인트                                                      | 다음 확인/결정 액션                                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `openSettings` surface 정책      | `WORKBENCH_OPEN_SETTINGS_COMMAND_ID` currently registered on `activityBar` + `settings`                | 공개 API 노출 범위와 사용자 기대치(두 surface 동시 노출 필요 여부) | Milestone gate에서 정책 문자열 하나를 최종 확정 후 `commands.test.ts`에서 최소 스냅샷 1건으로 고정           |
+| 통합 지점의 surface 누락 방지    | 핵심 호출부는 surface 지정됨(활성 파일/컴포넌트 목록 참조)                                             | 신규 통합 코드의 누락 가능성                                       | 통합 리뷰 체크리스트에 `resolveCommandMenuItems(..., surface)` 필수 규칙 추가 및 스토리북 리뷰 포인트 문서화 |
+| plugin `commandId` 충돌 처리     | `createCommandRegistry`는 Map 기반이라 마지막 등록값 우선(`packages/core/src/commands.test.ts`로 고정) | 소스-확장 충돌 정책의 공개화 부재                                  | 최소 우선순위 정책을 `last-write-wins`로 문서화하고, 단계적으로 hard-error 정책 도입 여부를 검토             |
+| Storybook Play 필수 범위         | `pnpm test:storybook-play`는 현재 의존성 없으면 스킵                                                   | 필수 플로우 미정(Explorer/Search/Editor/Chat)                      | `validate` 또는 `validate:full`에서 mandatory 대상 최소 1개 플로우를 선택하고 근거 문서화                    |
+| surface 메타 구조                | 현재 `surfaces?: string[]` 사용 중                                                                     | 우선순위/그룹 메타가 필요한지 미정                                 | 다중 surface가 충분한지 증빙하고, 필요시 타입 확장 제안 작성                                                 |
+| plugin 설치 범위(기본/확장)      | 시작 단계 제안: command/view/settings 기반                                                             | trust/enable/recommend/update 확장 여부 미정                       | 단계별 출시 플랜(기본→확장) 작성 및 acceptance criteria 분리                                                 |
+| Storybook 테스트 미들웨어 의존성 | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                                  | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                   |
+| package-manager 보호 정책        | `preinstall` 가드 존재                                                                                 | `npm` 실행 가드 외 정책 문서/실행 절차 정합성 미정                 | 정책 문서에서 강제 조건과 예외 처리 범위를 1곳에 모아 정리                                                   |
+| workspace API 범위               | `@newchobo-ui/workspace` export 목록 존재                                                              | story-only fixture/state 어댑터와 분리선 미정                      | export 경계 원칙 1개(도메인 공통/구성 편의/fixture) 정의                                                     |
+| 폴더 작업 소유권                 | reducer와 호스트 콜백 분리 설계가 진행됨                                                               | side-effect(입출력, 확인 다이얼로그) 책임선 미완성                 | API 시그니처/문서에 host-callback 규칙을 확정하고 테스트 케이스로 반영                                       |
+| StatusBar 정렬/그룹 메타         | 기본 section/item 모델만 사용 중                                                                       | host merge에서 ordering/grouping 필요성 미정                       | 최소 1개의 deterministic ordering 규칙을 문서와 테스트로 명시                                                |
+
+## 다음 액션 우선순위
+
+- 1순위(P1): `openSettings` surface 확정
+- 2순위(P2): `storybook-play` mandatory 범위 확정 + 실행 게이트 정리
+- 3순위(P3): plugin 설치 범위 확대/StatusBar 메타 필요성 정리
+
 ## Ambiguity Review (2026-06-03)
 
 - Settings command surface policy는 public API 관점에서 아직 미결정입니다. 구현상으로는
@@ -565,9 +587,9 @@ independently.
   이미 적용되어 있습니다(`packages/react/src/workbench/Workbench.stories.tsx`,
   `WorkspaceEditorPanel.tsx`, `WorkspaceSearchPanel.stories.tsx`). 다만 새 통합 지점 추가 시
   누락 방지 체크리스트가 별도 운영 규칙으로 필요합니다.
-- 플러그인 기여와 기존 command registry 충돌 정책은 미정입니다. 현재 구현은
-  `createCommandRegistry`의 Map 동작으로 "마지막 덮어쓰기" 성격이지만, 충돌 정책을
-  문서/테스트로 명시하지 않았습니다.
+- 플러그인 기여와 기존 command registry 충돌 정책은 기본값은 정해졌습니다. 현재 구현은
+  `createCommandRegistry`의 Map 동작으로 `commandId` 충돌 시 "마지막 등록값 우선"입니다. 다만
+  hard-error overlay 정책이 필요할지 여부는 다음 단계에서 정책 결정이 필요합니다.
 - `storybook-play`는 현재 `@storybook/test-runner`가 없으면 스킵되므로, CI 필수화 여부와
   최소 mandatory 플로우(Explorer/Search/Editor/Chat 중 선택)는 여전히 결정이 필요합니다.
 - 다중 surface 제약은 현재 `surfaces` 배열 기반으로 지원되므로 기능적으로는 준비되어
@@ -583,8 +605,8 @@ independently.
   아니면 `activityBar`와 `settings` 모두 허용할지 최종 확정이 필요합니다.
 - `resolveCommandMenuItems(..., surface)`를 호출하지 않고 메뉴를 결합하는 통합 지점이
   향후 추가되지 않도록, 새 통합 지점에서 policy 준수 여부 점검이 필요합니다.
-- 플러그인 기여가 기존 명령(`commandId`)과 충돌할 때 우선순위/오버레이 규칙(기본
-  기여 우선, 설치 기여 우선, 또는 오류 강제 중단)을 명확히 해야 합니다.
+- 플러그인 기여가 기존 명령(`commandId`)과 충돌할 때 우선순위/오버레이 규칙(현재 기본은
+  마지막 등록값 우선)을 명확히 하고, 하드 에러 정책 도입 필요 여부를 결정해야 합니다.
 - Storybook `play` 시나리오를 `pnpm validate`의 필수 게이트로 올릴지에 대한 최소
   기준(Explorer/Search/Editor/Chat 중 어떤 흐름이 mandatory인지)을 확정해야 합니다.
 - `surface` 제약이 단일 surface(`'search'`)만 허용해야 하는지, 아니면 다중 surface
@@ -662,7 +684,7 @@ workbench platform:
 | --------------------------------------------- | ----------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Settings surface 바인딩 정책 (`openSettings`) | 미결정            | P1       | `settings` 메뉴가 설정 화면 진입용인지, Activity Bar/Settings surface 모두 노출 가능한지 정리하고, 단위/스토리북 메뉴 스냅샷으로 표본 1개 이상 검증 |
 | 통합 지점에서 Surface 누락 허용 여부          | 반영됨(코드 레벨) | P1       | `resolveCommandMenuItems` 호출부에 surface 전달 규칙 문서 + 통합 컴포넌트에서 surface 미지정 호출 부재 확인                                         |
-| 플러그인 명령 충돌 정책                       | 미결정            | P1       | 동일 `commandId` 충돌 시 동작(오버레이/오류/우선순위)와 테스트 시나리오 문서화(최소 1개 충돌 케이스)                                                |
+| 플러그인 명령 충돌 정책                       | 기본정책 확정     | P1       | 동일 `commandId` 충돌 시 동작은 `last-write-wins`. 근거: `packages/core/src/commands.test.ts`의 충돌 테스트(5번째 테스트)                           |
 | `storybook-play` CI 필수화 범위               | 미결정            | P2       | `validate`/`validate:full`에서 어떤 플로우를 필수로 둘지(예: Explorer/Searh/Editor/Chat 중 최소 1개) 및 실패 허용/재시도 규칙 정의                  |
 | 다중 surface 메타 확장 필요성                 | 미결정            | P2       | `surface` 배열이 현재 요구에 충분하지 않을 경우 메타데이터(예: surface group/우선순위) 제안 후 타입/테스트 추가                                     |
 | 플러그인 기여 범위(기본/확장)                 | 미결정            | P3       | command/view/settings부터 시작할지, publisher trust/enable/추천/업데이트까지 확장할지 단계 정의                                                     |
@@ -680,6 +702,7 @@ workbench platform:
   - editor tab menus: `WORKBENCH_COMMAND_SURFACE_EDITOR`
 - `migration-todo.md` now records that explorer root 메뉴 is constrained to
   workspace-only menu entries in Storybook integration.
+- `packages/core/src/commands.test.ts` now verifies 충돌시 마지막 `commandId` 등록값이 실제 실행 커맨드를 결정함을 확인합니다.
 
 ## Next Clarification Questions (for next milestone)
 
@@ -689,6 +712,6 @@ workbench platform:
     Chat send/cancel/first chunk.
 - Should `play` execution remain optional while adding `@storybook/test-runner`
   later, or become part of `validate:full` immediately once flake profile is measured?
-- For plugin command conflicts, which policy is chosen first: override-by-source,
-  source-order overlay, or hard error on duplicate `commandId`?
+- For plugin command conflicts, 기본값은 source-order overlay(`last-write-wins`)이며,
+  hard error 정책으로 전환할지 다음 마일스톤에서 결정합니다.
 - Should settings surface for `workspace.openSettings` remain dual surface or be narrowed?
