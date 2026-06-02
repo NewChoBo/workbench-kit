@@ -3,6 +3,7 @@ import {
   commandMenuEntry,
   commandMenuSeparator,
   type CommandDefinition,
+  type CommandValue,
   type CommandMenuEntry,
   type CommandMenuItem,
 } from '@newchobo-ui/core';
@@ -41,6 +42,40 @@ export interface WorkbenchShellCommandContext<TActivityId extends string = strin
   togglePrimarySidebar: () => void;
 }
 
+export interface WorkbenchCommandOverride<TContext = void> {
+  icon?: CommandValue<TContext, string | undefined>;
+  label?: CommandValue<TContext, string>;
+  shortcut?: CommandValue<TContext, string | undefined>;
+}
+
+export type WorkbenchCommandOverrides<TContext = void> = Partial<
+  Record<string, WorkbenchCommandOverride<TContext>>
+>;
+
+interface WorkbenchCommandPresetOptions<TContext = void> {
+  commandOverrides?: WorkbenchCommandOverrides<TContext>;
+}
+
+function applyWorkbenchCommandOverrides<TContext>(
+  commands: CommandDefinition<TContext>[],
+  options: WorkbenchCommandPresetOptions<TContext> = {},
+): CommandDefinition<TContext>[] {
+  const { commandOverrides } = options;
+  if (!commandOverrides) return commands;
+
+  return commands.map((command) => {
+    const override = commandOverrides[command.id];
+    if (!override) return command;
+
+    return {
+      ...command,
+      icon: override.icon ?? command.icon,
+      label: override.label ?? command.label,
+      shortcut: override.shortcut ?? command.shortcut,
+    };
+  });
+}
+
 export interface WorkbenchShellCommandPresetOptions<TActivityId extends string = string> {
   activities: WorkbenchShellCommandActivity<TActivityId>[];
   includeSettings?: boolean;
@@ -49,6 +84,7 @@ export interface WorkbenchShellCommandPresetOptions<TActivityId extends string =
   settingsIcon?: string;
   settingsLabel?: string;
   sidebarIcon?: string;
+  commandOverrides?: WorkbenchCommandOverrides<WorkbenchShellCommandContext<TActivityId>>;
 }
 
 export interface WorkbenchEditorCommandContext {
@@ -102,6 +138,7 @@ export function createWorkbenchShellCommands<TActivityId extends string>({
   settingsIcon = 'codicon-settings-gear',
   settingsLabel = 'Settings',
   sidebarIcon = 'codicon-layout-sidebar-left',
+  commandOverrides,
 }: WorkbenchShellCommandPresetOptions<TActivityId>): CommandDefinition<
   WorkbenchShellCommandContext<TActivityId>
 >[] {
@@ -135,7 +172,9 @@ export function createWorkbenchShellCommands<TActivityId extends string>({
     });
   }
 
-  return [...activityCommands, ...shellCommands];
+  return applyWorkbenchCommandOverrides([...activityCommands, ...shellCommands], {
+    commandOverrides,
+  });
 }
 
 export function createWorkbenchShellMenuEntries<TActivityId extends string>({
@@ -175,60 +214,69 @@ export function createWorkbenchShellMenuEntries<TActivityId extends string>({
   return [...activityEntries, commandMenuSeparator(menuSeparatorId), ...shellEntries];
 }
 
-export function createWorkbenchEditorCommands(): CommandDefinition<WorkbenchEditorCommandContext>[] {
-  return [
-    {
-      id: WORKBENCH_EDITOR_SAVE_COMMAND_ID,
-      icon: 'codicon-save',
-      isEnabled: ({ canSaveFile, hasUnsavedChanges }) => canSaveFile && hasUnsavedChanges,
-      label: 'Save',
-      run: ({ saveFile }) => saveFile(),
-    },
-    {
-      id: WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
-      icon: 'codicon-discard',
-      isEnabled: ({ canDiscardFile, hasUnsavedChanges }) => canDiscardFile && hasUnsavedChanges,
-      label: 'Discard changes',
-      run: ({ discardFile }) => discardFile(),
-    },
-    {
-      id: WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID,
-      icon: 'codicon-copy',
-      isEnabled: ({ canCopyPath, filePath }) => Boolean(filePath && canCopyPath),
-      label: 'Copy path',
-      run: ({ copyPath }) => copyPath(),
-    },
-    {
-      id: WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
-      icon: 'codicon-close',
-      isEnabled: ({ canClosePath, filePath }) => Boolean(filePath && canClosePath),
-      label: 'Close',
-      run: ({ closePath }) => closePath(),
-    },
-    {
-      id: WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID,
-      icon: 'codicon-close-all',
-      isEnabled: ({ canCloseOthers, filePath, hasMultipleOpenFiles }) =>
-        Boolean(filePath && canCloseOthers && hasMultipleOpenFiles),
-      label: 'Close others',
-      run: ({ closeOthers }) => closeOthers(),
-    },
-    {
-      id: WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
-      icon: 'codicon-close-all',
-      isEnabled: ({ canCloseAll, hasOpenFiles }) => canCloseAll && hasOpenFiles,
-      label: 'Close all',
-      run: ({ closeAll }) => closeAll(),
-    },
-    {
-      id: WORKBENCH_EDITOR_DELETE_COMMAND_ID,
-      danger: true,
-      icon: 'codicon-trash',
-      isEnabled: ({ canDeletePath, filePath }) => Boolean(filePath && canDeletePath),
-      label: 'Delete',
-      run: ({ deletePath }) => deletePath(),
-    },
-  ];
+export interface WorkbenchEditorCommandPresetOptions {
+  commandOverrides?: WorkbenchCommandOverrides<WorkbenchEditorCommandContext>;
+}
+
+export function createWorkbenchEditorCommands({
+  commandOverrides,
+}: WorkbenchEditorCommandPresetOptions = {}): CommandDefinition<WorkbenchEditorCommandContext>[] {
+  return applyWorkbenchCommandOverrides(
+    [
+      {
+        id: WORKBENCH_EDITOR_SAVE_COMMAND_ID,
+        icon: 'codicon-save',
+        isEnabled: ({ canSaveFile, hasUnsavedChanges }) => canSaveFile && hasUnsavedChanges,
+        label: 'Save',
+        run: ({ saveFile }) => saveFile(),
+      },
+      {
+        id: WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
+        icon: 'codicon-discard',
+        isEnabled: ({ canDiscardFile, hasUnsavedChanges }) => canDiscardFile && hasUnsavedChanges,
+        label: 'Discard changes',
+        run: ({ discardFile }) => discardFile(),
+      },
+      {
+        id: WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID,
+        icon: 'codicon-copy',
+        isEnabled: ({ canCopyPath, filePath }) => Boolean(filePath && canCopyPath),
+        label: 'Copy path',
+        run: ({ copyPath }) => copyPath(),
+      },
+      {
+        id: WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
+        icon: 'codicon-close',
+        isEnabled: ({ canClosePath, filePath }) => Boolean(filePath && canClosePath),
+        label: 'Close',
+        run: ({ closePath }) => closePath(),
+      },
+      {
+        id: WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID,
+        icon: 'codicon-close-all',
+        isEnabled: ({ canCloseOthers, filePath, hasMultipleOpenFiles }) =>
+          Boolean(filePath && canCloseOthers && hasMultipleOpenFiles),
+        label: 'Close others',
+        run: ({ closeOthers }) => closeOthers(),
+      },
+      {
+        id: WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
+        icon: 'codicon-close-all',
+        isEnabled: ({ canCloseAll, hasOpenFiles }) => canCloseAll && hasOpenFiles,
+        label: 'Close all',
+        run: ({ closeAll }) => closeAll(),
+      },
+      {
+        id: WORKBENCH_EDITOR_DELETE_COMMAND_ID,
+        danger: true,
+        icon: 'codicon-trash',
+        isEnabled: ({ canDeletePath, filePath }) => Boolean(filePath && canDeletePath),
+        label: 'Delete',
+        run: ({ deletePath }) => deletePath(),
+      },
+    ],
+    { commandOverrides },
+  );
 }
 
 export function createWorkbenchEditorTabListMenuEntries(): CommandMenuEntry<WorkbenchEditorCommandContext>[] {
@@ -251,8 +299,8 @@ export function createWorkbenchEditorTabMenuEntries(): CommandMenuEntry<Workbenc
 
 export function createWorkbenchWorkspaceCommands<
   TContext extends WorkbenchWorkspaceCommandContext = WorkbenchWorkspaceCommandContext,
->(): CommandDefinition<TContext>[] {
-  return [
+>({ commandOverrides }: WorkbenchCommandPresetOptions<TContext> = {}): CommandDefinition<TContext>[] {
+  const commands: CommandDefinition<TContext>[] = [
     {
       id: WORKBENCH_WORKSPACE_NEW_FILE_COMMAND_ID,
       icon: 'codicon-new-file',
@@ -307,6 +355,8 @@ export function createWorkbenchWorkspaceCommands<
       shortcut: 'Del',
     },
   ];
+
+  return applyWorkbenchCommandOverrides(commands, { commandOverrides });
 }
 
 export function createWorkbenchWorkspaceCreateMenuEntries<
@@ -346,8 +396,8 @@ export function createWorkbenchWorkspaceFolderMenuEntries<
 
 export function createWorkbenchSearchResultCommands<
   TContext extends WorkbenchSearchResultCommandContext = WorkbenchSearchResultCommandContext,
->(): CommandDefinition<TContext>[] {
-  return [
+>({ commandOverrides }: WorkbenchCommandPresetOptions<TContext> = {}): CommandDefinition<TContext>[] {
+  const commands: CommandDefinition<TContext>[] = [
     {
       id: WORKBENCH_SEARCH_OPEN_RESULT_COMMAND_ID,
       icon: 'codicon-folder-opened',
@@ -369,6 +419,8 @@ export function createWorkbenchSearchResultCommands<
       run: ({ deleteResult }) => deleteResult(),
     },
   ];
+
+  return applyWorkbenchCommandOverrides(commands, { commandOverrides });
 }
 
 export function createWorkbenchSearchResultMenuEntries<
