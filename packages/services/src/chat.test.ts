@@ -134,4 +134,49 @@ describe('WorkbenchChatService', () => {
     await expect(service.sendMessage('hello')).rejects.toThrow('Transport failed');
     expect(service.getSnapshot().status).toBe('error');
   });
+
+  it('moves to running before transport send starts', async () => {
+    const transport = new MockChatTransport();
+    const service = new WorkbenchChatService({ transport });
+
+    const sendPromise = service.sendMessage('  hello  ');
+
+    expect(service.getSnapshot().status).toBe('running');
+    await sendPromise;
+  });
+
+  it('isolates onPatch callback failures from listeners and records error status', () => {
+    const transport = new MockChatTransport();
+    const service = new WorkbenchChatService({
+      onPatch: () => {
+        throw new Error('patch failed');
+      },
+      transport,
+    });
+
+    transport.emit({
+      patch: { path: 'docs/readme.md', type: 'delete-file' },
+      type: 'workspace-patch',
+    });
+
+    expect(service.getSnapshot().status).toBe('error');
+  });
+
+  it('isolates listener callback failures from future events', () => {
+    const transport = new MockChatTransport();
+    const service = new WorkbenchChatService({ transport });
+    const errorSpy = vi.fn();
+    service.subscribe(() => {
+      throw new Error('listener failed');
+    });
+    service.subscribe(errorSpy);
+
+    transport.emit({
+      patch: { path: 'docs/readme.md', type: 'delete-file' },
+      type: 'workspace-patch',
+    });
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(service.getSnapshot().status).toBe('error');
+  });
 });
