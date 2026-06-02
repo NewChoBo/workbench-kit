@@ -635,6 +635,17 @@ workbench platform:
 - What is the minimum acceptance criteria for plugin-contribution support?
 - Which Storybook interaction flows must be mandatory for CI baseline confidence?
 
+## Decision Checklist with Acceptance Criteria
+
+| 결정 항목                                     | 상태              | 우선순위 | 승인 기준(문서화된 증빙)                                                                                                                            |
+| --------------------------------------------- | ----------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Settings surface 바인딩 정책 (`openSettings`) | 미결정            | P1       | `settings` 메뉴가 설정 화면 진입용인지, Activity Bar/Settings surface 모두 노출 가능한지 정리하고, 단위/스토리북 메뉴 스냅샷으로 표본 1개 이상 검증 |
+| 통합 지점에서 Surface 누락 허용 여부          | 반영됨(코드 레벨) | P1       | `resolveCommandMenuItems` 호출부에 surface 전달 규칙 문서 + 통합 컴포넌트에서 surface 미지정 호출 부재 확인                                         |
+| 플러그인 명령 충돌 정책                       | 미결정            | P1       | 동일 `commandId` 충돌 시 동작(오버레이/오류/우선순위)와 테스트 시나리오 문서화(최소 1개 충돌 케이스)                                                |
+| `storybook-play` CI 필수화 범위               | 미결정            | P2       | `validate`/`validate:full`에서 어떤 플로우를 필수로 둘지(예: Explorer/Searh/Editor/Chat 중 최소 1개) 및 실패 허용/재시도 규칙 정의                  |
+| 다중 surface 메타 확장 필요성                 | 미결정            | P2       | `surface` 배열이 현재 요구에 충분하지 않을 경우 메타데이터(예: surface group/우선순위) 제안 후 타입/테스트 추가                                     |
+| 플러그인 기여 범위(기본/확장)                 | 미결정            | P3       | command/view/settings부터 시작할지, publisher trust/enable/추천/업데이트까지 확장할지 단계 정의                                                     |
+
 ## Current Verification Baseline (2026-06-03)
 
 - `pnpm validate` passes on clean working tree (typecheck/lint/test/format/storybook build).
