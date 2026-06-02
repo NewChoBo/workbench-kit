@@ -1,0 +1,21 @@
+{
+  "name": "@newchobo-ui/services",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./save": "./src/save.ts",
+    "./chat": "./src/chat.ts",
+    "./patch": "./src/patch.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@newchobo-ui/contracts": "workspace:*"
+  }
+}
