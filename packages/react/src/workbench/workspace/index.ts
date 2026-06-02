@@ -2,12 +2,18 @@ export { WorkspaceEditor, languageForFile, monacoThemeForWorkspaceTheme } from '
 export type { WorkspaceEditorProps, WorkspaceEditorTheme } from './WorkspaceEditor';
 export { WorkspaceEditorPanel } from './WorkspaceEditorPanel';
 export type { WorkspaceEditorPanelProps } from './WorkspaceEditorPanel';
-export { WORKSPACE_EXPLORER_DRAG_DATA_TYPE, WorkspaceExplorer } from './WorkspaceExplorer';
+export {
+  WORKSPACE_EXPLORER_DRAG_DATA_TYPE,
+  WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE,
+  WorkspaceExplorer,
+} from './WorkspaceExplorer';
 export type {
   WorkspaceExplorerItemActionMeta,
   WorkspaceExplorerItemContextMenuMeta,
   WorkspaceExplorerItemKeyboardActionMeta,
   WorkspaceExplorerInlineEditCommitMeta,
+  WorkspaceExplorerDragMetadataContext,
+  WorkspaceExplorerDragMetadataFactory,
   WorkspaceExplorerInlineEditKind,
   WorkspaceExplorerInlineEditState,
   WorkspaceExplorerMoveRequestMeta,

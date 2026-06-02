@@ -24,6 +24,8 @@ import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceTreeNode } from './types';
 
 export const WORKSPACE_EXPLORER_DRAG_DATA_TYPE = 'application/x-newchobo-ui-workspace-paths';
+export const WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE =
+  `${WORKSPACE_EXPLORER_DRAG_DATA_TYPE}.metadata`;
 
 export interface WorkspaceExplorerSelectionChangeMeta {
   event: DragEvent<HTMLButtonElement> | MouseEvent<HTMLButtonElement>;
@@ -39,6 +41,19 @@ export interface WorkspaceExplorerItemActionMeta {
 }
 
 export type WorkspaceExplorerItemContextMenuMeta = WorkspaceExplorerItemActionMeta;
+
+export interface WorkspaceExplorerDragMetadataContext {
+  event: DragEvent<HTMLButtonElement>;
+  node: WorkspaceTreeNode;
+  sourcePaths: string[];
+  selection: WorkspaceSelectionState;
+}
+
+export type WorkspaceExplorerDragMetadata = unknown;
+
+export type WorkspaceExplorerDragMetadataFactory<TMetadata = WorkspaceExplorerDragMetadata> = (
+  meta: WorkspaceExplorerDragMetadataContext,
+) => TMetadata | undefined;
 
 export interface WorkspaceExplorerItemKeyboardActionMeta extends WorkspaceExplorerItemActionMeta {
   event: KeyboardEvent<HTMLButtonElement>;
@@ -75,6 +90,8 @@ export interface WorkspaceExplorerInlineEditCommitMeta {
 export interface WorkspaceExplorerProps {
   activePath?: string;
   dragDataType?: string;
+  dragMetadataDataType?: string;
+  dragMetadataFactory?: WorkspaceExplorerDragMetadataFactory;
   expandedPaths: Set<string>;
   filterQuery?: string;
   inlineEdit?: WorkspaceExplorerInlineEditState;
@@ -103,6 +120,8 @@ export interface WorkspaceExplorerProps {
 export function WorkspaceExplorer({
   activePath,
   dragDataType = WORKSPACE_EXPLORER_DRAG_DATA_TYPE,
+  dragMetadataDataType = WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE,
+  dragMetadataFactory,
   expandedPaths,
   filterQuery = '',
   inlineEdit,
@@ -262,6 +281,18 @@ export function WorkspaceExplorer({
 
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData(dragDataType, JSON.stringify(sourcePaths));
+    if (dragMetadataFactory) {
+      const metadata = dragMetadataFactory({
+        event,
+        node,
+        sourcePaths,
+        selection: meta.selection,
+      });
+
+      if (metadata !== undefined) {
+        event.dataTransfer.setData(dragMetadataDataType, JSON.stringify(metadata));
+      }
+    }
     event.dataTransfer.setData('text/plain', sourcePaths.join('\n'));
     draggedPathsRef.current = sourcePaths;
     setDropTargetPath(null);
