@@ -556,6 +556,27 @@ independently.
 - Should the package add MSW, or keep mock runtime adapters in plain TypeScript
   until HTTP semantics are needed?
 
+## Ambiguity Review (2026-06-03)
+
+- Settings command surface policy는 public API 관점에서 아직 미결정입니다. 구현상으로는
+  `WORKBENCH_OPEN_SETTINGS_COMMAND_ID`가 `activityBar`와 `settings` 두 surface에 모두
+  등록되어 있어, 문서 결정 없이 배포 시 동작 범위가 애매해질 수 있습니다.
+- `resolveCommandMenuItems(..., surface)` surface 전달 규칙은 핵심 통합 포인트에서
+  이미 적용되어 있습니다(`packages/react/src/workbench/Workbench.stories.tsx`,
+  `WorkspaceEditorPanel.tsx`, `WorkspaceSearchPanel.stories.tsx`). 다만 새 통합 지점 추가 시
+  누락 방지 체크리스트가 별도 운영 규칙으로 필요합니다.
+- 플러그인 기여와 기존 command registry 충돌 정책은 미정입니다. 현재 구현은
+  `createCommandRegistry`의 Map 동작으로 "마지막 덮어쓰기" 성격이지만, 충돌 정책을
+  문서/테스트로 명시하지 않았습니다.
+- `storybook-play`는 현재 `@storybook/test-runner`가 없으면 스킵되므로, CI 필수화 여부와
+  최소 mandatory 플로우(Explorer/Search/Editor/Chat 중 선택)는 여전히 결정이 필요합니다.
+- 다중 surface 제약은 현재 `surfaces` 배열 기반으로 지원되므로 기능적으로는 준비되어
+  있습니다. 배열에 우선순위/그룹 메타가 필요한지 여부는 향후 plugin 병합 정책과 함께
+  결정해야 합니다.
+- 플러그인 기여 범위는 command/view/settings 레벨부터 시작하는 방향이 실무적으로
+  합리적이지만, publisher trust / enable-disable / update lifecycle까지 확장할지 여부는
+  별도 단계에서 결정해야 합니다.
+
 ## 확인 필요사항
 
 - Settings 커맨드의 surface 바인딩은 Activity Bar 전용으로 둘지, Settings 전용으로 둘지,
