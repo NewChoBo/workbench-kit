@@ -5,8 +5,6 @@ A public UI package for building workbench-style desktop interfaces quickly.
 The package starts with small React workbench primitives, then expands toward
 framework-neutral tokens and framework-specific component bindings.
 
-Korean companion documentation is available in [README.ko.md](./README.ko.md).
-
 ## Packages
 
 - `@newchobo-ui/tokens`: framework-neutral CSS variables and base theme values
@@ -27,9 +25,8 @@ policies, credentials, or private sample data.
 
 - English is the canonical language for public docs, commit messages, release
   notes, changelogs, and package metadata.
-- Korean docs may be provided as companion translations for local onboarding.
-- If English and Korean docs disagree, update the English document first, then
-  refresh the Korean companion.
+- Korean notes may be used in conversations or temporary local planning, but
+  tracked project documentation stays English-only to avoid translation drift.
 
 ## Commands
 
@@ -50,8 +47,3 @@ pnpm sample:build
 - [Lint & Format](./docs/conventions/lint-format.md)
 - [Language Policy](./docs/conventions/language-policy.md)
 - [Storybook Direction](./docs/conventions/storybook.md)
-
-Korean companion docs:
-
-- [Korean README](./README.ko.md)
-- [Korean conventions](./docs/ko/conventions/README.md)

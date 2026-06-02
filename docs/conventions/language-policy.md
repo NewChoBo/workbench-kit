@@ -1,10 +1,10 @@
 # Language Policy
 
-English is the canonical language for public project communication.
+English is the project documentation language. Public source should stay
+English-only so docs, changelogs, releases, and examples do not drift across
+translations.
 
-## Canonical English
-
-Use English for:
+## Use English For
 
 - Public documentation
 - Commit summaries and commit bodies
@@ -13,33 +13,28 @@ Use English for:
 - Storybook story titles and public examples
 - Public API names and user-facing component copy
 
-English docs are the source of truth. If a Korean companion document disagrees
-with the English document, update the English document first and then refresh
-the Korean companion.
+## Korean Notes
 
-## Korean Companion Docs
+Korean can be used in conversations, implementation discussions, and temporary
+local planning. Do not add tracked Korean translations unless the project
+explicitly decides to support documentation localization as a maintained
+deliverable.
 
-Korean companion docs may be provided for local onboarding and collaboration.
-They should live beside or under the canonical document in a predictable place:
-
-- `README.md` -> `README.ko.md`
-- `docs/conventions/*.md` -> `docs/ko/conventions/*.md`
-
-Korean companion docs should avoid adding decisions that are not present in the
-English canonical version.
+Avoid partial bilingual documentation. It creates review overhead and stale
+translation risk without enough value for the current package stage.
 
 ## Commit Messages
 
 Commit messages use English Conventional Commits:
 
 ```text
-docs(conventions): adopt bilingual documentation policy
+docs(conventions): use English-only project documentation
 
-Set English as the canonical language for public docs and commits, while keeping
-Korean companion docs for local onboarding.
+Set English as the project language for public docs and commits to avoid
+translation drift.
 
 Validation: pnpm validate passed.
 ```
 
-Do not rewrite old commits only to change language. Apply the policy to new
-commits from this point forward.
+Do not rewrite old commits only to change language. Apply this policy to new
+commits and docs from this point forward.
