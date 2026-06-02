@@ -139,11 +139,15 @@ The package should evolve beyond a single React package.
   runtime status, streaming response chunks, and mock workspace write patches.
 - The integrated Workbench story has Storybook play coverage for a runtime
   Chat submit that writes a mock workspace file.
+- `ChatPanel` has component-level Storybook play coverage for mock runtime
+  streaming completion, cancellation after the first chunk, workspace write
+  patch events, and workspace delete patch events.
 - Unit tests cover path operations, search, selection, create, rename, move, and
   delete behavior, workspace editor draft helpers, runtime send/cancel/stream
   events, plus core command menu projection and execution.
-- The next migration step is to expand Storybook play coverage around Chat
-  cancel/streaming timing and runtime workspace patch edge cases.
+- The next migration step is to expand Storybook play coverage around remaining
+  Explorer edge cases or decide whether Storybook play functions should be part
+  of `pnpm validate`.
 
 ## Current Differences From Real Use Cases
 
@@ -159,7 +163,7 @@ still not a complete real-use workflow.
 | Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves                                                    | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add root-drop variant      |
 | Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage             |
 | Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Add delete/open-tab coordination coverage                 |
-| Chat                   | Generic chat UI plus integrated mock runtime adapter for send, cancel, streaming chunks, status, and workspace write patches                                    | Runtime-driven send/cancel, streaming chunks, status integration                | Add cancel and streaming timing play coverage             |
+| Chat                   | Generic chat UI plus mock runtime story coverage for send, cancel, streaming chunks, status, workspace write patches, and workspace delete patches              | Runtime-driven send/cancel, streaming chunks, status integration                | Add test-runner gate later if desired                     |
 | Workbench shell state  | Story-local state only                                                                                                                                          | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component    |
 | Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
 | Storybook              | Integrated story owns too much state and behavior                                                                                                               | Stories should compose components with fixtures and mock adapters               | Move reusable logic into package modules                  |
@@ -279,8 +283,10 @@ still not a complete real-use workflow.
   story.
 - Runtime workspace write patches are applied through the virtual workspace
   reducer in the integrated story.
-- Remaining: add focused play coverage for cancellation and chunk-by-chunk
-  streaming timing.
+- Component-level `ChatPanel` stories cover streaming completion, cancellation
+  timing, workspace write patch logging, and workspace delete patch logging.
+- Remaining: add a test-runner gate if these play flows should become mandatory
+  in `pnpm validate`.
 - Assistant label should remain configurable and generic.
 
 ### Settings
@@ -327,7 +333,10 @@ Move these out of `Workbench.stories.tsx`:
 - Mock runtime helpers:
   - `@newchobo-ui/runtime` now owns message send, cancel, streaming response
     sequence, and mock write-file events.
-  - Remaining: story-specific response plans and edge-case play flows.
+  - `ChatPanel` stories now own focused streaming, cancellation, write patch,
+    and delete patch response plans.
+  - Remaining: decide whether these play flows should be included in automated
+    validation beyond Storybook build and browser smoke.
 
 Keep these in Storybook:
 
@@ -415,7 +424,10 @@ independently.
      and integrated mock workspace write patches.
 8. Add Storybook `play` tests for the main workflows.
    - Integrated Chat submit plus runtime workspace write patch coverage added.
-   - Remaining: focused cancel, streaming timing, and patch edge cases.
+   - Component-level Chat streaming, cancel, write patch, and delete patch
+     coverage added.
+   - Remaining: Explorer blur/cancel, folder delete, root drop, invalid drop,
+     and optional automated test-runner gate.
 9. Run `pnpm validate` and browser smoke after each major feature group.
 
 ## Additional Decisions Needed
