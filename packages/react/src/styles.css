@@ -242,6 +242,181 @@
   font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
 }
 
+.workbench-settings-modal {
+  --ui-modal-width: 1120px;
+  --ui-modal-height: 760px;
+}
+
+.workbench-settings-modal__body {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+}
+
+.workbench-settings-search {
+  flex-shrink: 0;
+  padding: 14px 24px 8px;
+  background: var(--color-bg);
+}
+
+.workbench-settings-tabs {
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.workbench-settings-tab {
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  color: var(--color-text-muted);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.workbench-settings-tab:hover {
+  color: var(--color-text);
+}
+
+.workbench-settings-tab:disabled,
+.workbench-settings-tab:disabled:hover {
+  color: var(--color-text-subtle);
+  cursor: default;
+}
+
+.workbench-settings-tab--active {
+  color: var(--color-text);
+  border-bottom-color: var(--color-text);
+}
+
+.workbench-settings-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+}
+
+.workbench-settings-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 12px 14px 24px;
+  border-right: 1px solid var(--color-border);
+  overflow-y: auto;
+}
+
+.workbench-settings-nav-item {
+  width: 100%;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.workbench-settings-nav-item:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.workbench-settings-nav-item:disabled,
+.workbench-settings-nav-item:disabled:hover {
+  color: var(--color-text-subtle);
+  background: transparent;
+  cursor: default;
+}
+
+.workbench-settings-nav-item--active,
+.workbench-settings-nav-item--active:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+  font-weight: 600;
+}
+
+.workbench-settings-content {
+  min-width: 0;
+  padding: 0 24px 32px;
+  overflow-y: auto;
+  scrollbar-color: var(--color-border) transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.workbench-settings-section {
+  max-width: 920px;
+  padding-top: 20px;
+}
+
+.workbench-settings-section__title {
+  margin: 0 0 10px;
+  color: var(--color-text);
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.workbench-settings-section__description {
+  max-width: 760px;
+  margin: 0 0 18px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.workbench-settings-footer__spacer {
+  flex: 1;
+}
+
+.workbench-settings-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+@media (max-width: 760px) {
+  .workbench-settings-modal {
+    --ui-modal-max-width: calc(100vw - 24px);
+    --ui-modal-max-height: calc(100vh - 24px);
+  }
+
+  .workbench-settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workbench-settings-sidebar {
+    flex-direction: row;
+    padding: 8px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .workbench-settings-nav-item {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .workbench-settings-content {
+    padding-inline: 16px;
+  }
+}
+
 .ui-context-menu {
   position: fixed;
   z-index: var(--ui-context-menu-z-index, 260);
