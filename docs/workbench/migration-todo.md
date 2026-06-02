@@ -91,10 +91,14 @@ The package should evolve beyond a single React package.
 
 ## Current Implementation Progress
 
+- `@newchobo-ui/core` owns framework-neutral command registry, execution,
+  separator, visibility/enabled-state, and menu projection helpers.
 - `@newchobo-ui/workspace` owns framework-neutral path, tree, search, selection,
   type, and virtual workspace model helpers.
 - `@newchobo-ui/react` consumes `@newchobo-ui/workspace` and keeps existing
   workspace exports available through the React binding package.
+- `@newchobo-ui/react` consumes `@newchobo-ui/core` through a small adapter that
+  converts resolved command menu items into `ContextMenuItem` values.
 - `WorkspaceExplorer` accepts controlled file selection props and emits
   selection changes for single, toggle, range, and toggle-range interactions.
 - Explorer context menus receive selection-aware action paths, and the
@@ -113,29 +117,32 @@ The package should evolve beyond a single React package.
 - `WorkspaceSearchPanel` is a sidebar-oriented controlled component with query
   input, clear action, result count, empty states, `Enter` first-result
   activation, `Escape` clear behavior, and result context-menu hooks.
+- The integrated Workbench story uses command-backed menu projection for the
+  Activity bar, primary sidebar, Explorer root, Workspace item, and Search
+  result context menus.
 - Unit tests cover path operations, search, selection, create, rename, move, and
-  delete behavior.
-- The next migration step is to add product-neutral command helpers and use them
-  across Explorer, Search, Editor, ActivityBar, and integrated stories.
+  delete behavior, plus core command menu projection and execution.
+- The next migration step is to extend command-backed menus into editor tab
+  workflows and add Storybook play coverage for command menu flows.
 
 ## Current Differences From Real Use Cases
 
 The integrated workbench story is closer to an app shell than before, but it is
 still not a complete real-use workflow.
 
-| Area                   | Current package behavior                                                                                                                 | Real-use expectation                                                            | Todo                                                      |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Explorer selection     | Controlled file selection props with selected-row styles and selection-aware menu/keyboard/drag targets                                  | Multi-select should stay aligned through inline edit and drag/drop workflows    | Component play coverage added; keep expanding edge cases  |
-| Explorer creation      | Controlled inline create row with root/folder entry and path validation                                                                  | New file/folder at root or inside a folder                                      | Component play coverage added; add test-runner gate later |
-| Explorer rename        | Controlled inline rename row from context menu or `F2`, with path validation                                                             | Inline rename, `F2`, blur commit/cancel                                         | Component play coverage added; add blur/cancel variants   |
-| Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets                                | File, multi-file, and folder deletion with controlled component callbacks       | Component play coverage added; add folder-delete variant  |
-| Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves                             | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add root-drop variant      |
-| Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and context menu hooks | Search panel should share command/menu projection with other workspace surfaces | Add command-backed result menu projection                 |
-| Workspace editor       | Monaco editor, tabs, dirty state, save/discard, tab menu exist                                                                           | Tab actions should coordinate with shared workspace state                       | Extract tab and draft state helpers                       |
-| Chat                   | Generic chat UI exists                                                                                                                   | Runtime-driven send/cancel, streaming chunks, status integration                | Add mock-runtime story adapter and streaming fixture      |
-| Workbench shell state  | Story-local state only                                                                                                                   | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component    |
-| Settings               | Generic settings modal exists                                                                                                            | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
-| Storybook              | Integrated story owns too much state and behavior                                                                                        | Stories should compose components with fixtures and mock adapters               | Move reusable logic into package modules                  |
+| Area                   | Current package behavior                                                                                                                                                                                   | Real-use expectation                                                            | Todo                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Explorer selection     | Controlled file selection props with selected-row styles and selection-aware menu/keyboard/drag targets                                                                                                    | Multi-select should stay aligned through inline edit and drag/drop workflows    | Component play coverage added; keep expanding edge cases     |
+| Explorer creation      | Controlled inline create row with root/folder entry and path validation                                                                                                                                    | New file/folder at root or inside a folder                                      | Component play coverage added; add test-runner gate later    |
+| Explorer rename        | Controlled inline rename row from context menu or `F2`, with path validation                                                                                                                               | Inline rename, `F2`, blur commit/cancel                                         | Component play coverage added; add blur/cancel variants      |
+| Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets                                                                                                  | File, multi-file, and folder deletion with controlled component callbacks       | Component play coverage added; add folder-delete variant     |
+| Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves                                                                                               | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add root-drop variant         |
+| Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and context menu hooks; the integrated story resolves result menus through core commands | Search panel should share command/menu projection with other workspace surfaces | Add component story coverage for command-backed result menus |
+| Workspace editor       | Monaco editor, tabs, dirty state, save/discard, tab menu exist                                                                                                                                             | Tab actions should coordinate with shared workspace state                       | Extract tab and draft state helpers                          |
+| Chat                   | Generic chat UI exists                                                                                                                                                                                     | Runtime-driven send/cancel, streaming chunks, status integration                | Add mock-runtime story adapter and streaming fixture         |
+| Workbench shell state  | Story-local state only                                                                                                                                                                                     | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component       |
+| Settings               | Generic settings modal exists                                                                                                                                                                              | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples            |
+| Storybook              | Integrated story owns too much state and behavior                                                                                                                                                          | Stories should compose components with fixtures and mock adapters               | Move reusable logic into package modules                     |
 
 ## Missing Or Incomplete Features From The Reference Workbench
 
@@ -210,13 +217,15 @@ still not a complete real-use workflow.
 - Result context menu hook with story coverage for open, copy path, and delete
   actions.
 - Result preview and highlighting shared with the search helper.
-- Remaining: project command helpers should provide the search result menu
-  projection instead of each story building menu arrays manually.
+- Integrated story menus now use core command projection for Search result
+  actions.
+- Remaining: add component-level Storybook play coverage for Search result menu
+  command execution.
 
 ### Workspace Editor
 
-- Shared command integration for open, close, close others, close all, copy path,
-  delete, save, and discard.
+- Shared command integration for tab open, close, close others, close all, copy
+  path, delete, save, and discard.
 - Draft state extraction so stories do not own editor persistence rules.
 - Delete confirmation that coordinates with open tabs and selected path.
 - Optional split-editor affordance should stay visual-only until a real split
@@ -231,8 +240,10 @@ still not a complete real-use workflow.
   - theme preference,
   - status item model,
   - settings open state.
-- Activity bar and primary sidebar command menus should consume a generic command
-  model rather than story-local menu arrays.
+- Activity bar and primary sidebar command menus consume the generic command
+  model in the integrated story.
+- Remaining: decide whether shell command definitions should be exported as
+  package presets or supplied only by host applications.
 - Status bar should accept a generic status model and avoid product-specific
   status labels.
 
@@ -277,11 +288,10 @@ Move these out of `Workbench.stories.tsx`:
   - create/rename validation,
   - drag/drop move validation.
 - Command model:
-  - command definitions,
-  - menu item builder,
-  - command separator helper,
-  - workbench command executor,
-  - workspace command executor.
+  - `@newchobo-ui/core` now owns the command registry, separator helper, menu
+    projection, and command executor.
+  - Remaining: shared command definition presets for common workspace, editor,
+    and shell actions if the package should provide default command IDs.
 - Search helpers:
   - query state,
   - first result activation,
@@ -331,17 +341,18 @@ Recommended setup:
 Create or promote these components/modules so stories can test each layer
 independently.
 
-| Module                                     | Responsibility                                                      | Story target                                          |
-| ------------------------------------------ | ------------------------------------------------------------------- | ----------------------------------------------------- |
-| `workspace/WorkspaceExplorer`              | Tree rendering, selection, inline create/rename, context menu hooks | Explorer selection, create, rename, delete, drag/drop |
-| `workspace/WorkspaceSearchPanel`           | Sidebar search input, results, empty states, result menu hooks      | Search empty, results, keyboard, context menu         |
-| `workspace/WorkspaceEditorPanel`           | Open tabs, dirty state, Monaco editor, tab menus                    | Save/discard, close actions, delete confirmation      |
-| `workspace/useVirtualWorkspace` or reducer | Headless workspace state and file/folder operations                 | Reducer tests and integrated story                    |
-| `workbench/WorkbenchShell`                 | Activity bar, sidebar split, editor area, status bar slots          | Shell layout and sidebar toggle                       |
-| `workbench/commands`                       | Generic command definitions and menu helpers                        | Command menu story and integration tests              |
-| `chat/ChatPanel`                           | Message list and composer                                           | Empty, streaming, running, disabled, cancel           |
-| `chat/mockRuntime` fixture                 | Public mock send/cancel/stream events                               | Chat integration story                                |
-| `settings/WorkbenchSettingsModal`          | Generic settings layout and category rendering                      | Scope tabs, search, footer actions                    |
+| Module                                     | Responsibility                                                       | Story target                                          |
+| ------------------------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------- |
+| `workspace/WorkspaceExplorer`              | Tree rendering, selection, inline create/rename, context menu hooks  | Explorer selection, create, rename, delete, drag/drop |
+| `workspace/WorkspaceSearchPanel`           | Sidebar search input, results, empty states, result menu hooks       | Search empty, results, keyboard, context menu         |
+| `workspace/WorkspaceEditorPanel`           | Open tabs, dirty state, Monaco editor, tab menus                     | Save/discard, close actions, delete confirmation      |
+| `workspace/useVirtualWorkspace` or reducer | Headless workspace state and file/folder operations                  | Reducer tests and integrated story                    |
+| `workbench/WorkbenchShell`                 | Activity bar, sidebar split, editor area, status bar slots           | Shell layout and sidebar toggle                       |
+| `@newchobo-ui/core/commands`               | Framework-neutral command registry, execution, and menu projection   | Unit tests and integrated command menu wiring         |
+| `workbench/commands`                       | React adapter from resolved command menu items to context menu items | Command menu story and integration tests              |
+| `chat/ChatPanel`                           | Message list and composer                                            | Empty, streaming, running, disabled, cancel           |
+| `chat/mockRuntime` fixture                 | Public mock send/cancel/stream events                                | Chat integration story                                |
+| `settings/WorkbenchSettingsModal`          | Generic settings layout and category rendering                       | Scope tabs, search, footer actions                    |
 
 ## Recommended Todo Order
 
@@ -356,6 +367,11 @@ independently.
      menu hooks.
 6. Add command helpers and use them in Explorer, Search, Editor, ActivityBar,
    and integrated stories.
+   - Core command registry, executor, separator, and menu projection helpers are
+     implemented.
+   - Integrated ActivityBar, Explorer root, Workspace item, and Search result
+     menus now use command-backed projection.
+   - Remaining: editor tab menus and command menu Storybook play coverage.
 7. Add mock runtime fixtures for Chat and mock workspace file updates.
 8. Add Storybook `play` tests for the main workflows.
 9. Run `pnpm validate` and browser smoke after each major feature group.

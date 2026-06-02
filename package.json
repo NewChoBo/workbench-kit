@@ -12,7 +12,7 @@
     "test": "vitest run",
     "build:storybook": "storybook build",
     "storybook": "storybook dev --port 6010 --host 127.0.0.1 --no-open",
-    "typecheck": "pnpm --filter @newchobo-ui/workspace typecheck && pnpm --filter @newchobo-ui/react typecheck",
+    "typecheck": "pnpm --filter @newchobo-ui/core typecheck && pnpm --filter @newchobo-ui/workspace typecheck && pnpm --filter @newchobo-ui/react typecheck",
     "validate": "pnpm typecheck && pnpm lint && pnpm test && pnpm format:check && pnpm build:storybook"
   },
   "devDependencies": {
