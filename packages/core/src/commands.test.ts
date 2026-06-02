@@ -127,4 +127,41 @@ describe('commands', () => {
       { commandId: 'hidden' },
     ]);
   });
+
+  it('filters menu entries by surface metadata', () => {
+    const registry = createCommandRegistry(commands);
+    const entries = [
+      { commandId: 'open', surfaces: ['explorer', 'editor'] },
+      { commandId: 'rename', surfaces: ['search'] },
+      { commandId: 'open', surfaces: ['search', 'settings'] },
+      { commandId: 'hidden', surfaces: ['explorer'] },
+    ];
+
+    expect(
+      resolveCommandMenuItems({
+        context: { enabled: true, hidden: false, log: [], target: 'file.ts' },
+        entries,
+        registry,
+        surface: 'search',
+      }).map((item) => item.type === 'command' && item.commandId),
+    ).toEqual(['rename', 'open']);
+
+    expect(
+      resolveCommandMenuItems({
+        context: { enabled: false, hidden: false, log: [], target: 'file.ts' },
+        entries,
+        registry,
+        surface: 'search',
+      }).map((item) => item.type === 'command' && item.commandId),
+    ).toEqual(['rename', 'open']);
+
+    expect(
+      resolveCommandMenuItems({
+        context: { enabled: true, hidden: false, log: [], target: 'file.ts' },
+        entries,
+        registry,
+        surface: 'explorer',
+      }).map((item) => item.type === 'command' && item.commandId),
+    ).toEqual(['open', 'hidden']);
+  });
 });

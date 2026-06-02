@@ -42,7 +42,9 @@ pnpm lint
 pnpm format:check
 pnpm validate
 pnpm storybook
+pnpm test:storybook-play
 pnpm build:storybook
+pnpm validate:full
 ```
 
 ## Conventions
