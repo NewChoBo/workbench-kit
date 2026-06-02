@@ -8,7 +8,9 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./workbench/chat": "./src/workbench/chat/index.ts",
     "./workbench": "./src/workbench/index.ts",
+    "./workbench/workspace": "./src/workbench/workspace/index.ts",
     "./styles.css": "./src/styles.css"
   },
   "files": [
@@ -19,6 +21,20 @@
     "@vscode/codicons": "^0.0.45"
   },
   "peerDependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "monaco-editor": "^0.55.1",
+    "react-markdown": "^10.1.0",
     "react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@monaco-editor/react": {
+      "optional": true
+    },
+    "monaco-editor": {
+      "optional": true
+    },
+    "react-markdown": {
+      "optional": true
+    }
   }
 }
