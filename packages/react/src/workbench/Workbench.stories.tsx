@@ -1,5 +1,12 @@
 import { useState, type MouseEvent, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import {
+  commandMenuSeparator,
+  createCommandRegistry,
+  executeCommand,
+  resolveCommandMenuItems,
+  type CommandMenuEntry,
+} from '@newchobo-ui/core';
 import { SideBarHeaderControl, SideBarViewFrame } from '../layout/SideBarViewFrame';
 import { ConfirmDialog } from '../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../overlay/ContextMenu';
@@ -13,6 +20,7 @@ import { Select } from '../primitives/Select';
 import { TextInput } from '../primitives/TextInput';
 import { ActivityBar } from './ActivityBar';
 import { ChatPanel, type ChatMessage } from './chat';
+import { commandMenuItemsToContextMenuItems } from './commands';
 import { WorkbenchSettingsModal, WorkbenchSettingsSection } from './settings';
 import { SplitView } from './SplitView';
 import { StatusBar, StatusBarItem, StatusBarSection } from './StatusBar';
@@ -71,6 +79,23 @@ interface StoryPendingDelete {
   type: 'files' | 'folder';
 }
 
+interface StoryCommandContext {
+  createWorkspaceFile: () => void;
+  createWorkspaceFolder: () => void;
+  deleteWorkspaceTarget: () => void;
+  fileActionPaths: string[];
+  isPrimarySideBarVisible: boolean;
+  multiFileAction: boolean;
+  openSettings: () => void;
+  openWorkspaceTarget: () => void;
+  renameWorkspaceTarget: () => void;
+  copyWorkspaceTarget: () => void;
+  showActivity: (activityId: StoryActivityId) => void;
+  targetPaths: string[];
+  togglePrimarySideBar: () => void;
+  workspaceTargetKind: 'file' | 'folder';
+}
+
 const storyActivityOrder: StoryActivityId[] = ['explorer', 'search', 'chat'];
 
 const storyActivities: Record<StoryActivityId, StoryActivity> = {
@@ -90,6 +115,115 @@ const storyActivities: Record<StoryActivityId, StoryActivity> = {
     icon: <i className="codicon codicon-comment-discussion" />,
   },
 };
+
+const storyCommandRegistry = createCommandRegistry<StoryCommandContext>([
+  {
+    id: 'workbench.showExplorer',
+    label: 'Explorer',
+    icon: 'codicon-files',
+    run: ({ showActivity }) => showActivity('explorer'),
+  },
+  {
+    id: 'workbench.showSearch',
+    label: 'Search',
+    icon: 'codicon-search',
+    run: ({ showActivity }) => showActivity('search'),
+  },
+  {
+    id: 'workbench.showChat',
+    label: 'Chat',
+    icon: 'codicon-comment-discussion',
+    run: ({ showActivity }) => showActivity('chat'),
+  },
+  {
+    id: 'workbench.togglePrimarySideBar',
+    label: ({ isPrimarySideBarVisible }) =>
+      isPrimarySideBarVisible ? 'Hide primary sidebar' : 'Show primary sidebar',
+    icon: 'codicon-layout-sidebar-left',
+    run: ({ togglePrimarySideBar }) => togglePrimarySideBar(),
+  },
+  {
+    id: 'workbench.openSettings',
+    label: 'Settings',
+    icon: 'codicon-settings-gear',
+    run: ({ openSettings }) => openSettings(),
+  },
+  {
+    id: 'workspace.newFile',
+    label: 'New file',
+    icon: 'codicon-new-file',
+    run: ({ createWorkspaceFile }) => createWorkspaceFile(),
+  },
+  {
+    id: 'workspace.newFolder',
+    label: 'New folder',
+    icon: 'codicon-new-folder',
+    run: ({ createWorkspaceFolder }) => createWorkspaceFolder(),
+  },
+  {
+    id: 'workspace.open',
+    label: ({ multiFileAction, workspaceTargetKind }) =>
+      workspaceTargetKind === 'folder'
+        ? 'Reveal folder'
+        : multiFileAction
+          ? 'Open selected files'
+          : 'Open file',
+    icon: ({ workspaceTargetKind }) =>
+      workspaceTargetKind === 'folder' ? 'codicon-folder-opened' : 'codicon-go-to-file',
+    run: ({ openWorkspaceTarget }) => openWorkspaceTarget(),
+  },
+  {
+    id: 'workspace.copyPath',
+    label: ({ targetPaths }) => (targetPaths.length > 1 ? 'Copy paths' : 'Copy path'),
+    icon: 'codicon-copy',
+    run: ({ copyWorkspaceTarget }) => copyWorkspaceTarget(),
+  },
+  {
+    id: 'workspace.rename',
+    label: 'Rename',
+    icon: 'codicon-edit',
+    shortcut: 'F2',
+    isEnabled: ({ targetPaths }) => targetPaths.length === 1,
+    run: ({ renameWorkspaceTarget }) => renameWorkspaceTarget(),
+  },
+  {
+    id: 'workspace.delete',
+    label: ({ fileActionPaths, multiFileAction, workspaceTargetKind }) =>
+      workspaceTargetKind === 'folder'
+        ? 'Delete folder'
+        : multiFileAction
+          ? `Delete ${fileActionPaths.length} files`
+          : 'Delete',
+    icon: 'codicon-trash',
+    shortcut: 'Del',
+    danger: true,
+    isEnabled: ({ fileActionPaths, workspaceTargetKind }) =>
+      workspaceTargetKind === 'folder' || fileActionPaths.length > 0,
+    run: ({ deleteWorkspaceTarget }) => deleteWorkspaceTarget(),
+  },
+]);
+
+const workbenchMenuEntries: CommandMenuEntry<StoryCommandContext>[] = [
+  { commandId: 'workbench.showExplorer' },
+  { commandId: 'workbench.showSearch' },
+  { commandId: 'workbench.showChat' },
+  commandMenuSeparator('workbench-separator'),
+  { commandId: 'workbench.togglePrimarySideBar' },
+  { commandId: 'workbench.openSettings' },
+];
+
+const workspaceCreateMenuEntries: CommandMenuEntry<StoryCommandContext>[] = [
+  { commandId: 'workspace.newFile' },
+  { commandId: 'workspace.newFolder' },
+];
+
+const workspaceTargetMenuEntries: CommandMenuEntry<StoryCommandContext>[] = [
+  { commandId: 'workspace.open' },
+  { commandId: 'workspace.copyPath' },
+  commandMenuSeparator('workspace-separator'),
+  { commandId: 'workspace.rename' },
+  { commandId: 'workspace.delete' },
+];
 
 const defaultSelectionByActivity: Record<StoryActivityId, string> = {
   explorer: 'src/App.tsx',
@@ -781,59 +915,54 @@ function IntegratedWorkbenchShell() {
     );
   };
 
-  const createWorkbenchMenuItems = (): ContextMenuItem[] => [
-    {
-      id: 'view.explorer',
-      label: 'Explorer',
-      icon: 'codicon-files',
-      onSelect: () => showActivity('explorer'),
+  const createCommandContext = (
+    overrides: Partial<StoryCommandContext> = {},
+  ): StoryCommandContext => ({
+    createWorkspaceFile: () => startWorkspaceCreate('create-file'),
+    createWorkspaceFolder: () => startWorkspaceCreate('create-folder'),
+    deleteWorkspaceTarget: () => undefined,
+    fileActionPaths: [],
+    isPrimarySideBarVisible,
+    multiFileAction: false,
+    openSettings: () => setSettingsOpen(true),
+    openWorkspaceTarget: () => undefined,
+    renameWorkspaceTarget: () => undefined,
+    copyWorkspaceTarget: () => undefined,
+    showActivity,
+    targetPaths: [],
+    togglePrimarySideBar: () => {
+      setIsPrimarySideBarVisible((current) => !current);
+      setLastCommandLabel('Primary sidebar toggled');
     },
-    {
-      id: 'view.search',
-      label: 'Search',
-      icon: 'codicon-search',
-      onSelect: () => showActivity('search'),
-    },
-    {
-      id: 'view.chat',
-      label: 'Chat',
-      icon: 'codicon-comment-discussion',
-      onSelect: () => showActivity('chat'),
-    },
-    { id: 'workbench-separator', type: 'separator' },
-    {
-      id: 'toggle-sidebar',
-      label: isPrimarySideBarVisible ? 'Hide primary sidebar' : 'Show primary sidebar',
-      icon: 'codicon-layout-sidebar-left',
-      onSelect: () => {
-        setIsPrimarySideBarVisible((current) => !current);
-        setLastCommandLabel('Primary sidebar toggled');
-      },
-    },
-    {
-      id: 'open-settings',
-      label: 'Settings',
-      icon: 'codicon-settings-gear',
-      onSelect: () => setSettingsOpen(true),
-    },
-  ];
+    workspaceTargetKind: 'file',
+    ...overrides,
+  });
 
-  const createExplorerRootMenuItems = (): ContextMenuItem[] => [
-    {
-      id: 'workspace.new-file',
-      label: 'New file',
-      icon: 'codicon-new-file',
-      onSelect: () => startWorkspaceCreate('create-file'),
-    },
-    {
-      id: 'workspace.new-folder',
-      label: 'New folder',
-      icon: 'codicon-new-folder',
-      onSelect: () => startWorkspaceCreate('create-folder'),
-    },
-    { id: 'explorer-root-separator', type: 'separator' },
-    ...createWorkbenchMenuItems(),
-  ];
+  const createCommandMenuItems = (
+    entries: CommandMenuEntry<StoryCommandContext>[],
+    context: StoryCommandContext,
+  ): ContextMenuItem[] =>
+    commandMenuItemsToContextMenuItems(
+      resolveCommandMenuItems({
+        context,
+        entries,
+        registry: storyCommandRegistry,
+      }),
+      (commandId) => executeCommand(storyCommandRegistry, commandId, context),
+    );
+
+  const createWorkbenchMenuItems = (): ContextMenuItem[] =>
+    createCommandMenuItems(workbenchMenuEntries, createCommandContext());
+
+  const createExplorerRootMenuItems = (): ContextMenuItem[] =>
+    createCommandMenuItems(
+      [
+        ...workspaceCreateMenuEntries,
+        commandMenuSeparator('explorer-root-separator'),
+        ...workbenchMenuEntries,
+      ],
+      createCommandContext(),
+    );
 
   const createWorkspaceMenuItems = (
     node: WorkspaceTreeNode,
@@ -845,34 +974,24 @@ function IntegratedWorkbenchShell() {
       node.type === 'file' ? targetPaths.filter((path) => filePathSet.has(path)) : [];
     const multiFileAction = fileActionPaths.length > 1;
 
-    return [
-      ...(node.type === 'folder'
-        ? ([
-            {
-              id: 'workspace.new-file',
-              label: 'New file',
-              icon: 'codicon-new-file',
-              onSelect: () => startWorkspaceCreate('create-file', node.path),
-            },
-            {
-              id: 'workspace.new-folder',
-              label: 'New folder',
-              icon: 'codicon-new-folder',
-              onSelect: () => startWorkspaceCreate('create-folder', node.path),
-            },
-            { id: 'workspace-create-separator', type: 'separator' },
-          ] satisfies ContextMenuItem[])
-        : []),
-      {
-        id: 'open',
-        label:
-          node.type === 'folder'
-            ? 'Reveal folder'
-            : multiFileAction
-              ? 'Open selected files'
-              : 'Open file',
-        icon: node.type === 'folder' ? 'codicon-folder-opened' : 'codicon-go-to-file',
-        onSelect: () => {
+    const entries =
+      node.type === 'folder'
+        ? [
+            ...workspaceCreateMenuEntries,
+            commandMenuSeparator('workspace-create-separator'),
+            ...workspaceTargetMenuEntries,
+          ]
+        : workspaceTargetMenuEntries;
+
+    return createCommandMenuItems(
+      entries,
+      createCommandContext({
+        createWorkspaceFile: () => startWorkspaceCreate('create-file', node.path),
+        createWorkspaceFolder: () => startWorkspaceCreate('create-folder', node.path),
+        deleteWorkspaceTarget: () => requestWorkspaceDelete(node, targetPaths),
+        fileActionPaths,
+        multiFileAction,
+        openWorkspaceTarget: () => {
           if (node.type === 'folder') {
             if (!expandedPaths.has(node.path)) {
               toggleFolder(node.path);
@@ -886,38 +1005,15 @@ function IntegratedWorkbenchShell() {
             multiFileAction ? `Opened ${fileActionPaths.length} files` : `Opened ${node.path}`,
           );
         },
-      },
-      {
-        id: 'copy-path',
-        label: targetPaths.length > 1 ? 'Copy paths' : 'Copy path',
-        icon: 'codicon-copy',
-        onSelect: () =>
+        copyWorkspaceTarget: () =>
           setLastCommandLabel(
             targetPaths.length > 1 ? `Copied ${targetPaths.length} paths` : `Copied ${node.path}`,
           ),
-      },
-      { id: 'workspace-separator', type: 'separator' },
-      {
-        id: 'rename',
-        label: 'Rename',
-        icon: 'codicon-edit',
-        disabled: targetPaths.length !== 1,
-        onSelect: () => requestWorkspaceRename(node, targetPaths),
-      },
-      {
-        id: 'delete',
-        label:
-          node.type === 'folder'
-            ? 'Delete folder'
-            : multiFileAction
-              ? `Delete ${fileActionPaths.length} files`
-              : 'Delete',
-        icon: 'codicon-trash',
-        danger: true,
-        disabled: node.type === 'file' && fileActionPaths.length === 0,
-        onSelect: () => requestWorkspaceDelete(node, targetPaths),
-      },
-    ];
+        renameWorkspaceTarget: () => requestWorkspaceRename(node, targetPaths),
+        targetPaths,
+        workspaceTargetKind: node.type,
+      }),
+    );
   };
 
   const editorArea = (

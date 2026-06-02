@@ -1,5 +1,6 @@
 export { Modal } from './modal/Modal';
 export type { ModalProps } from './modal/Modal';
+export { commandMenuItemsToContextMenuItems } from './workbench/commands';
 export { ConfirmDialog } from './modal/ConfirmDialog';
 export type { ConfirmDialogProps } from './modal/ConfirmDialog';
 export { ContextMenu } from './overlay/ContextMenu';
