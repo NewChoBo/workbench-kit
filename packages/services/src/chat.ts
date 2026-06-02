@@ -55,13 +55,16 @@ export class WorkbenchChatService {
 
     const request = message.trim();
     if (!request) return undefined;
+    this.status = 'running';
 
     try {
       return await this.transport.sendMessage(request, {
         context,
       });
     } catch (error) {
-      this.status = 'error';
+      if (!this.disposed) {
+        this.status = 'error';
+      }
       throw error;
     }
   }
@@ -89,9 +92,20 @@ export class WorkbenchChatService {
     }
 
     if (event.type === 'workspace-patch') {
-      this.onPatch?.(event.patch);
+      try {
+        this.onPatch?.(event.patch);
+      } catch {
+        this.status = 'error';
+        return;
+      }
     }
 
-    this.listeners.forEach((listener) => listener(event));
+    this.listeners.forEach((listener) => {
+      try {
+        listener(event);
+      } catch {
+        this.status = 'error';
+      }
+    });
   }
 }
