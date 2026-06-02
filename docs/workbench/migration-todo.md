@@ -144,6 +144,11 @@ The package should evolve beyond a single React package.
   rather than owning local workspace command definitions.
 - The integrated Workbench story has Storybook play coverage for command-backed
   Activity bar, Search result, Editor tab, and primary sidebar menu flows.
+- `WorkbenchSettingsModal` has component-level Storybook examples for generic
+  appearance, workspace, permissions, and maintenance categories.
+- `WorkbenchSettingsModal` has component-level Storybook play coverage for
+  controlled dirty-state, save, reset, category navigation, and injected
+  maintenance actions.
 - `WorkspaceEditorPanel` uses command-backed menu projection for editor tab
   context menus including copy path, close, close others, close all, and delete.
 - `WorkspaceEditorPanel` routes Save and Discard toolbar actions through the
@@ -182,7 +187,7 @@ still not a complete real-use workflow.
 | Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Component play coverage added; add test-runner gate later |
 | Chat                   | Generic chat UI plus mock runtime story coverage for send, cancel, streaming chunks, status, workspace write patches, and workspace delete patches              | Runtime-driven send/cancel, streaming chunks, status integration                | Add test-runner gate later if desired                     |
 | Workbench shell state  | Reusable shell state hook, shell command presets, and StatusBar item model cover activity, sidebar, theme, settings, and status surfaces                        | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell component composition only if needed            |
-| Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
+| Settings               | Generic settings modal plus controlled category examples and dirty-state play coverage exists                                                                   | App-specific sections are injected, not hardcoded                               | Add test-runner gate later if desired                     |
 | Storybook              | Integrated story owns too much state and behavior                                                                                                               | Stories should compose components with fixtures and mock adapters               | Move reusable logic into package modules                  |
 
 ## Missing Or Incomplete Features From The Reference Workbench
@@ -323,10 +328,12 @@ still not a complete real-use workflow.
 ### Settings
 
 - Keep the current modal, navigation, scope tabs, footer, and section slots.
-- Add generic examples for appearance, workspace, permissions, and maintenance
-  without binding them to a real runtime.
-- Add dirty-state and save/reset examples through controlled props or story
-  fixtures.
+- Generic component-level examples cover appearance, workspace, permissions, and
+  maintenance without binding them to a real runtime.
+- Component-level Storybook play coverage validates controlled dirty-state,
+  save, reset, category navigation, and injected maintenance actions.
+- Remaining: add a test-runner gate if these play flows should become mandatory
+  in `pnpm validate`.
 
 ## Storybook Logic To Move Into Core Modules
 
@@ -478,6 +485,8 @@ independently.
      suggestion, rename conflict/folder rename, and multi-file delete coverage
      added.
    - Component-level Explorer drop-target highlight coverage added.
+   - Component-level Settings dirty-state, save/reset, category navigation, and
+     maintenance action coverage added.
    - Remaining: optional automated test-runner gate.
 9. Extract reusable shell state.
    - Done for active activity, primary sidebar visibility and size, theme, and
