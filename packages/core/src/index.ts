@@ -1,10 +1,16 @@
 export {
   canExecuteCommand,
+  commandMenuEntries,
+  commandMenuEntry,
   commandMenuSeparator,
   compactCommandMenuItems,
   createCommandRegistry,
+  defineCommandContribution,
   executeCommand,
+  mergeCommandContributions,
   resolveCommandMenuItems,
+  type CommandContribution,
+  type CommandContributionInput,
   type CommandDefinition,
   type CommandHandler,
   type CommandMenuCommandEntry,
@@ -17,4 +23,5 @@ export {
   type CommandValue,
   type ResolvedCommandMenuCommandItem,
   type ResolvedCommandMenuSeparatorItem,
+  type SourcedCommandContribution,
 } from './commands';

@@ -77,6 +77,31 @@ visual clone.
   primary sidebar, editor area, panel/status surfaces, and settings entry points
   while keeping styling and product identity independent.
 
+### VS Code UX Audit
+
+The current implementation should be compared against public VS Code UX
+documentation, not private app behavior.
+
+- Shell layout: VS Code documents editor, primary sidebar, secondary sidebar,
+  status bar, activity bar, and panel regions. The package currently covers
+  editor, primary sidebar, status bar, and activity bar conventions; secondary
+  sidebar and panel are future extension points.
+- State restoration: VS Code restores folder, layout, and opened files between
+  sessions. The package has reusable virtual workspace state, but persistence
+  remains an adapter decision.
+- Tabs: VS Code uses editor tabs and supports reorder plus multi-tab actions.
+  The package covers tab selection, close, dirty state, context menus, save, and
+  discard; tab reorder and multi-tab selection are not modeled yet.
+- Settings: VS Code separates user and workspace scopes, supports searchable
+  settings, and lets extensions contribute settings. The package covers generic
+  scopes, categories, search, dirty state, save, and reset; installed
+  contribution settings are not modeled yet.
+- Extensions: VS Code installs and manages extensions from an Extensions view,
+  command palette, command line, and VSIX packages, with publisher trust,
+  recommendations, enable/disable, uninstall, and update concerns. A future
+  plugin installation model should adapt installed plugins into command, menu,
+  view, and settings contributions instead of mutating component internals.
+
 ## Target Package Map
 
 The package should evolve beyond a single React package.
@@ -170,6 +195,11 @@ The package should evolve beyond a single React package.
 - Root package scripts execute tools through `pnpm`, so `npm run <script>`
   delegates script execution to the pnpm-managed toolchain while the pnpm
   lockfile remains the source of truth.
+- `@newchobo-ui/core` exposes reusable command menu entry and command
+  contribution helpers so built-in presets and future plugin adapters can share
+  one command/menu extension shape.
+- `@newchobo-ui/react` command presets consume the shared menu entry helpers
+  instead of repeating raw command-entry object literals.
 - The next migration step is to expand Storybook play coverage around remaining
   Explorer edge cases or decide whether Storybook play functions should be part
   of `pnpm validate`.
@@ -365,6 +395,8 @@ Move these out of `Workbench.stories.tsx`:
 - Command model:
   - `@newchobo-ui/core` now owns the command registry, separator helper, menu
     projection, and command executor.
+  - `@newchobo-ui/core` now owns command menu entry and command contribution
+    helpers for built-in and future installed-plugin command sources.
   - `@newchobo-ui/react` now owns shell command presets for activity switching,
     primary sidebar toggling, and settings opening.
   - `@newchobo-ui/react` now owns editor command presets for save, discard,
@@ -516,5 +548,11 @@ independently.
   used in targeted UI validation at first?
 - Should accidental `npm install` be hard-blocked, or is the current
   documentation plus `package-lock=false` guard sufficient?
+- Should future plugin installation track publisher trust, enabled/disabled
+  state, update state, recommendations, and per-workspace installation scope,
+  or start with command/view/settings contributions only?
+- Should installed plugin contributions be merged into one command registry, or
+  scoped per surface such as Activity Bar, Explorer, Search, Editor, Settings,
+  and Status Bar?
 - Should the package add MSW, or keep mock runtime adapters in plain TypeScript
   until HTTP semantics are needed?

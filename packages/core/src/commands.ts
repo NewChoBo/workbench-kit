@@ -36,6 +36,20 @@ export type CommandMenuEntry<TContext = void> =
   | CommandMenuCommandEntry<TContext>
   | CommandMenuSeparatorEntry;
 
+export interface CommandContribution<TContext = void> {
+  commands: CommandDefinition<TContext>[];
+  menuEntries: CommandMenuEntry<TContext>[];
+}
+
+export interface CommandContributionInput<TContext = void> {
+  commands?: Iterable<CommandDefinition<TContext>>;
+  menuEntries?: Iterable<CommandMenuEntry<TContext>>;
+}
+
+export interface SourcedCommandContribution<TContext = void> extends CommandContribution<TContext> {
+  sourceId: string;
+}
+
 export interface ResolvedCommandMenuSeparatorItem {
   id?: string;
   type: 'separator';
@@ -98,8 +112,40 @@ export function createCommandRegistry<TContext>(
   return new Map([...commands].map((command) => [command.id, command]));
 }
 
+export function commandMenuEntry<TContext = void>(
+  commandId: string,
+  entry: Omit<CommandMenuCommandEntry<TContext>, 'commandId' | 'type'> = {},
+): CommandMenuCommandEntry<TContext> {
+  return { ...entry, commandId };
+}
+
+export function commandMenuEntries<TContext = void>(
+  ...commandIds: string[]
+): CommandMenuCommandEntry<TContext>[] {
+  return commandIds.map((commandId) => commandMenuEntry<TContext>(commandId));
+}
+
 export function commandMenuSeparator(id?: string): CommandMenuSeparatorEntry {
   return { id, type: 'separator' };
+}
+
+export function defineCommandContribution<TContext = void>({
+  commands = [],
+  menuEntries = [],
+}: CommandContributionInput<TContext>): CommandContribution<TContext> {
+  return {
+    commands: [...commands],
+    menuEntries: [...menuEntries],
+  };
+}
+
+export function mergeCommandContributions<TContext = void>(
+  ...contributions: CommandContributionInput<TContext>[]
+): CommandContribution<TContext> {
+  return defineCommandContribution({
+    commands: contributions.flatMap((contribution) => [...(contribution.commands ?? [])]),
+    menuEntries: contributions.flatMap((contribution) => [...(contribution.menuEntries ?? [])]),
+  });
 }
 
 export function canExecuteCommand<TContext>(

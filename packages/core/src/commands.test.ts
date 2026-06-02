@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  commandMenuEntries,
+  commandMenuEntry,
   commandMenuSeparator,
   createCommandRegistry,
+  defineCommandContribution,
   executeCommand,
+  mergeCommandContributions,
   resolveCommandMenuItems,
   type CommandDefinition,
+  type SourcedCommandContribution,
 } from './commands';
 
 interface TestContext {
@@ -90,5 +95,36 @@ describe('commands', () => {
     context.enabled = false;
     expect(executeCommand(registry, 'rename', context)).toBe(false);
     expect(context.log).toEqual(['open:file.ts']);
+  });
+
+  it('builds reusable menu entries and command contributions', () => {
+    const primaryContribution = defineCommandContribution({
+      commands,
+      menuEntries: [
+        commandMenuEntry<TestContext>('open', { id: 'open-current' }),
+        ...commandMenuEntries<TestContext>('rename'),
+      ],
+    });
+    const secondaryContribution = defineCommandContribution<TestContext>({
+      menuEntries: [commandMenuSeparator('after-primary'), commandMenuEntry('hidden')],
+    });
+    const merged = mergeCommandContributions(primaryContribution, secondaryContribution);
+    const sourcedContribution = {
+      ...merged,
+      sourceId: 'installed.plugin',
+    } satisfies SourcedCommandContribution<TestContext>;
+
+    expect(primaryContribution.menuEntries).toEqual([
+      { commandId: 'open', id: 'open-current' },
+      { commandId: 'rename' },
+    ]);
+    expect(sourcedContribution.sourceId).toBe('installed.plugin');
+    expect(merged.commands).toHaveLength(3);
+    expect(merged.menuEntries).toEqual([
+      { commandId: 'open', id: 'open-current' },
+      { commandId: 'rename' },
+      { id: 'after-primary', type: 'separator' },
+      { commandId: 'hidden' },
+    ]);
   });
 });
