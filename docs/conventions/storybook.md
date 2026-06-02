@@ -34,16 +34,17 @@ Use these root scripts:
   "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
   "build:storybook": "pnpm exec storybook build",
   "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",
-  "validate:full": "pnpm validate && pnpm test:storybook-play"
+  "validate:full": "pnpm validate && pnpm test:storybook-play:required"
 }
 ```
 
 `pnpm validate` includes `build:storybook` so Storybook drift is caught with the
 rest of the package gate.
 
-`validate:full` adds Storybook interaction playback validation. The playback script
-does not fail when the test-runner dependency or Storybook `test` command is
-missing; it emits a skip signal until the full stack is installed and stable.
+`validate:full` adds baseline Storybook interaction playback validation via the
+required baseline-mode runner. It currently executes stories tagged with
+`storybook-play-baseline`; add `--all-stories` to include non-baseline stories
+in follow-up runs.
 
 ## Interaction Tests
 

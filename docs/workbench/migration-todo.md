@@ -558,19 +558,19 @@ independently.
 
 ## Open Ambiguity Register (Actionable)
 
-| 항목                             | 현재 근거                                                                                              | 미확정 포인트                                      | 다음 확인/결정 액션                                                                                          |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `openSettings` surface 정책      | `WORKBENCH_OPEN_SETTINGS_COMMAND_ID`가 현재 `activityBar` surface에만 등록됨                           | 추가 surface 확장 여부                             | Settings surface 확장 필요 시 별도 milestone 결정안으로 이동                                                 |
-| 통합 지점의 surface 누락 방지    | 핵심 호출부는 surface 지정됨(활성 파일/컴포넌트 목록 참조)                                             | 신규 통합 코드의 누락 가능성                       | 통합 리뷰 체크리스트에 `resolveCommandMenuItems(..., surface)` 필수 규칙 추가 및 스토리북 리뷰 포인트 문서화 |
-| plugin `commandId` 충돌 처리     | `createCommandRegistry`는 Map 기반이라 마지막 등록값 우선(`packages/core/src/commands.test.ts`로 고정) | 소스-확장 충돌 정책의 공개화 부재                  | 최소 우선순위 정책을 `last-write-wins`로 문서화하고, 단계적으로 hard-error 정책 도입 여부를 검토             |
-| Storybook Play 필수 범위         | pnpm test:storybook-play는 현재 의존성/커맨드 부재로 스킵                                              | 의존성 미확보로 실행 보류                          | baseline 후보 5개 플로우를 지정 후 의존성 준비 시 `test:storybook-play:required`로 강제 게이트 전환          |
-| surface 메타 구조                | 현재 `surfaces?: string[]` 사용 중                                                                     | 우선순위/그룹 메타가 필요한지 미정                 | 다중 surface가 충분한지 증빙하고, 필요시 타입 확장 제안 작성                                                 |
-| plugin 설치 범위(기본/확장)      | 시작 단계 제안: command/view/settings 기반                                                             | trust/enable/recommend/update 확장 여부 미정       | 단계별 출시 플랜(기본→확장) 작성 및 acceptance criteria 분리                                                 |
-| Storybook 테스트 미들웨어 의존성 | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                  | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                   |
-| package-manager 보호 정책        | `preinstall` 가드 존재                                                                                 | `npm` 실행 가드 외 정책 문서/실행 절차 정합성 미정 | 정책 문서에서 강제 조건과 예외 처리 범위를 1곳에 모아 정리                                                   |
-| workspace API 범위               | `@newchobo-ui/workspace` export 목록 존재                                                              | story-only fixture/state 어댑터와 분리선 미정      | export 경계 원칙 1개(도메인 공통/구성 편의/fixture) 정의                                                     |
-| 폴더 작업 소유권                 | reducer와 호스트 콜백 분리 설계가 진행됨                                                               | side-effect(입출력, 확인 다이얼로그) 책임선 미완성 | API 시그니처/문서에 host-callback 규칙을 확정하고 테스트 케이스로 반영                                       |
-| StatusBar 정렬/그룹 메타         | 기본 section/item 모델만 사용 중                                                                       | host merge에서 ordering/grouping 필요성 미정       | 최소 1개의 deterministic ordering 규칙을 문서와 테스트로 명시                                                |
+| 항목                             | 현재 근거                                                                                              | 미확정 포인트                                                 | 다음 확인/결정 액션                                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `openSettings` surface 정책      | `WORKBENCH_OPEN_SETTINGS_COMMAND_ID`가 현재 `activityBar` surface에만 등록됨                           | 추가 surface 확장 여부                                        | Settings surface 확장 필요 시 별도 milestone 결정안으로 이동                                                        |
+| 통합 지점의 surface 누락 방지    | 핵심 호출부는 surface 지정됨(활성 파일/컴포넌트 목록 참조)                                             | 신규 통합 코드의 누락 가능성                                  | 통합 리뷰 체크리스트에 `resolveCommandMenuItems(..., surface)` 필수 규칙 추가 및 스토리북 리뷰 포인트 문서화        |
+| plugin `commandId` 충돌 처리     | `createCommandRegistry`는 Map 기반이라 마지막 등록값 우선(`packages/core/src/commands.test.ts`로 고정) | 소스-확장 충돌 정책의 공개화 부재                             | 최소 우선순위 정책을 `last-write-wins`로 문서화하고, 단계적으로 hard-error 정책 도입 여부를 검토                    |
+| Storybook Play 필수 범위         | baseline 태그 기반 게이트로 정비되어 있음                                                              | baseline 후보 5개를 태그화 후 `validate:full`에서 필수로 실행 | `storybook-play`를 baseline 5개 플로우(`storybook-play-baseline`) 중심으로 `test:storybook-play:required` 실행 전환 |
+| surface 메타 구조                | 현재 `surfaces?: string[]` 사용 중                                                                     | 우선순위/그룹 메타가 필요한지 미정                            | 다중 surface가 충분한지 증빙하고, 필요시 타입 확장 제안 작성                                                        |
+| plugin 설치 범위(기본/확장)      | 시작 단계 제안: command/view/settings 기반                                                             | trust/enable/recommend/update 확장 여부 미정                  | 단계별 출시 플랜(기본→확장) 작성 및 acceptance criteria 분리                                                        |
+| Storybook 테스트 미들웨어 의존성 | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                             | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                          |
+| package-manager 보호 정책        | `preinstall` 가드 존재                                                                                 | `npm` 실행 가드 외 정책 문서/실행 절차 정합성 미정            | 정책 문서에서 강제 조건과 예외 처리 범위를 1곳에 모아 정리                                                          |
+| workspace API 범위               | `@newchobo-ui/workspace` export 목록 존재                                                              | story-only fixture/state 어댑터와 분리선 미정                 | export 경계 원칙 1개(도메인 공통/구성 편의/fixture) 정의                                                            |
+| 폴더 작업 소유권                 | reducer와 호스트 콜백 분리 설계가 진행됨                                                               | side-effect(입출력, 확인 다이얼로그) 책임선 미완성            | API 시그니처/문서에 host-callback 규칙을 확정하고 테스트 케이스로 반영                                              |
+| StatusBar 정렬/그룹 메타         | 기본 section/item 모델만 사용 중                                                                       | host merge에서 ordering/grouping 필요성 미정                  | 최소 1개의 deterministic ordering 규칙을 문서와 테스트로 명시                                                       |
 
 ## 다음 액션 우선순위
 
@@ -591,8 +591,11 @@ independently.
 - 플러그인 기여와 기존 command registry 충돌 정책은 기본값은 정해졌습니다. 현재 구현은
   `createCommandRegistry`의 Map 동작으로 `commandId` 충돌 시 "마지막 등록값 우선"입니다. 다만
   hard-error overlay 정책이 필요할지 여부는 다음 단계에서 정책 결정이 필요합니다.
-- `storybook-play`는 현재 `@storybook/test-runner` 미설치 및 `test-storybook` 커맨드 부재로 스킵되며,
-  baseline mandatory 후보는 다음으로 지정했습니다: `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`, `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`, `ChatPanel/CancelRuntimeFlow`. 의존성/커맨드가 준비되면 `test:storybook-play:required`로 필수 게이트를 열 수 있습니다.
+- `storybook-play`는 baseline 태그(`storybook-play-baseline`)를 부여한 5개 플로우를 지정했고,
+  `validate:full`에서 `test:storybook-play:required`를 통해 강제 실행되도록 전환했습니다.
+  대상 플로우: `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`,
+  `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`,
+  `ChatPanel/CancelRuntimeFlow`.
 - 다중 surface 제약은 현재 `surfaces` 배열 기반으로 지원되므로 기능적으로는 준비되어
   있습니다. 배열에 우선순위/그룹 메타가 필요한지 여부는 향후 plugin 병합 정책과 함께
   결정해야 합니다.
@@ -602,18 +605,18 @@ independently.
 
 ## 확인 필요사항
 
-| 항목                        | 상태   | 모호 포인트                                  | 다음 확인/결정 액션                                                                                                                                                                                                       |
-| --------------------------- | ------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Storybook play 필수 게이트  | 진행중 | `storybook-play` 실행 채널/의존성 미확정     | `@storybook/test-runner` 설치 후 `test:storybook-play:required`를 `validate:full`에서 실행되도록 전환할지 결정                                                                                                            |
-| Play 플로우 최소 기준       | 진행중 | 필수 baseline 최소 5개 흐름 미확정           | `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`, `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`, `ChatPanel/CancelRuntimeFlow` 우선 적용 |
-| `openSettings` surface 정책 | 반영됨 | settings surface 확장 타이밍 미확정          | settings 전용 surface는 전용 메뉴 체인 필요 시 별도 milestone에서 도입                                                                                                                                                    |
-| plugin command 충돌 정책    | 반영됨 | 하드 오버레이 정책 미결정                    | 기본은 `last-write-wins`; hard-error overlay 정책의 전환 조건을 다음 마일스톤에서 확정                                                                                                                                    |
-| surface 메타 구조           | 미결정 | 정렬/그룹 메타가 필요한지 미정               | `string[] surfaces`로 `command/menu` 동작은 충족되며, 다중 surface 병합 시 ordering/grouping 메타 요구 여부를 사용성 테스트로 검증                                                                                        |
-| plugin 기여 범위(기본/확장) | 미결정 | trust/enable/recommend/update 범위 미정      | 1차 기여는 `command/view/settings`로 고정, 2차 확장은 리스크/스토리/변경 범위 기준으로 별도 정량문턱치 설정                                                                                                               |
-| package-manager 운영 정책   | 진행중 | 예외 시나리오(문서/CI 가드) 문서화 필요      | `npm` accidental 실행 가드는 preinstall에서 제어 중이나 대응 문서(문제 대응/예외 절차)를 루트 문서로 통합                                                                                                                 |
-| workspace API boundary      | 미결정 | fixture/state adapter 경계 미정              | `@newchobo-ui/workspace`는 도메인 공통/필수 유틸 우선, story-only fixture는 테스트/스토리 전용으로 분리 기준 문서화                                                                                                       |
-| folder 작업 소유권          | 미결정 | side-effect(입출력/확인/알림) 책임 선점 미정 | reducer는 상태변경·검증, 호스트 콜백은 I/O/확인/알림/권한 분기 규칙을 문서·테스트로 명시                                                                                                                                  |
-| StatusBar merge 정렬        | 미결정 | deterministic ordering 메타 미정             | host 병합 시 정렬 규칙(삽입 순/우선순위) 1개를 결정해 테스트로 회귀 검증                                                                                                                                                  |
+| 항목                        | 상태   | 모호 포인트                                              | 다음 확인/결정 액션                                                                                                                                                                                             |
+| --------------------------- | ------ | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storybook play 필수 게이트  | 반영됨 | baseline 실행 채널 확정 (run baseline tags + `required`) | `test:storybook-play:required`가 `validate:full`에서 실행되도록 전환됨                                                                                                                                          |
+| Play 플로우 최소 기준       | 반영됨 | 필수 baseline 5개 흐름 확정                              | `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`, `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`, `ChatPanel/CancelRuntimeFlow` |
+| `openSettings` surface 정책 | 반영됨 | settings surface 확장 타이밍 미확정                      | settings 전용 surface는 전용 메뉴 체인 필요 시 별도 milestone에서 도입                                                                                                                                          |
+| plugin command 충돌 정책    | 반영됨 | 하드 오버레이 정책 미결정                                | 기본은 `last-write-wins`; hard-error overlay 정책의 전환 조건을 다음 마일스톤에서 확정                                                                                                                          |
+| surface 메타 구조           | 미결정 | 정렬/그룹 메타가 필요한지 미정                           | `string[] surfaces`로 `command/menu` 동작은 충족되며, 다중 surface 병합 시 ordering/grouping 메타 요구 여부를 사용성 테스트로 검증                                                                              |
+| plugin 기여 범위(기본/확장) | 미결정 | trust/enable/recommend/update 범위 미정                  | 1차 기여는 `command/view/settings`로 고정, 2차 확장은 리스크/스토리/변경 범위 기준으로 별도 정량문턱치 설정                                                                                                     |
+| package-manager 운영 정책   | 진행중 | 예외 시나리오(문서/CI 가드) 문서화 필요                  | `npm` accidental 실행 가드는 preinstall에서 제어 중이나 대응 문서(문제 대응/예외 절차)를 루트 문서로 통합                                                                                                       |
+| workspace API boundary      | 미결정 | fixture/state adapter 경계 미정                          | `@newchobo-ui/workspace`는 도메인 공통/필수 유틸 우선, story-only fixture는 테스트/스토리 전용으로 분리 기준 문서화                                                                                             |
+| folder 작업 소유권          | 미결정 | side-effect(입출력/확인/알림) 책임 선점 미정             | reducer는 상태변경·검증, 호스트 콜백은 I/O/확인/알림/권한 분기 규칙을 문서·테스트로 명시                                                                                                                        |
+| StatusBar merge 정렬        | 미결정 | deterministic ordering 메타 미정                         | host 병합 시 정렬 규칙(삽입 순/우선순위) 1개를 결정해 테스트로 회귀 검증                                                                                                                                        |
 
 ## Milestone Decisions Completed
 
@@ -647,8 +650,9 @@ workbench platform:
 
 - **pkg manager hard-block (`npm install`)**: enforce pnpm through a local guard
   script to avoid accidental lockfile drift.
-- **storybook play in `pnpm validate`**: keep optional for now; make it mandatory
-  after low-flake coverage stabilizes.
+- **storybook play in `pnpm validate`**: run baseline-tagged interaction tests in
+  `validate:full` using `test:storybook-play:required`; extend scope after flake
+  profile review.
 - **mixed-menu policy for `resolveCommandMenuItems`**: do not allow surface-less
   calls in integration code paths that intentionally compose multiple menu
   sources; if a menu is context-specific, pass a surface explicitly.
@@ -689,16 +693,17 @@ workbench platform:
 | Settings surface 바인딩 정책 (`openSettings`) | 반영됨            | P1       | `workbench.openSettings`는 현재 `activityBar` surface에만 노출되며, `packages/react/src/workbench/commands.test.ts`의 신규 테스트로 고정 |
 | 통합 지점에서 Surface 누락 허용 여부          | 반영됨(코드 레벨) | P1       | `resolveCommandMenuItems` 호출부에 surface 전달 규칙 문서 + 통합 컴포넌트에서 surface 미지정 호출 부재 확인                              |
 | 플러그인 명령 충돌 정책                       | 기본정책 확정     | P1       | 동일 `commandId` 충돌 시 동작은 `last-write-wins`. 근거: `packages/core/src/commands.test.ts`의 충돌 테스트(5번째 테스트)                |
-| `storybook-play` CI 필수화 범위               | 진행중            | P1       | baseline 플로우 후보 5개를 지정하고, 의존성 준비 시 `test:storybook-play:required`로 강제화 전환                                         |
+| `storybook-play` CI 필수화 범위               | 진행중            | P1       | `storybook-play-baseline` 태그 대상 5개 플로우를 지정하고 `validate:full`을 통해 필수 실행으로 전환                                      |
 | 다중 surface 메타 확장 필요성                 | 미결정            | P2       | `surface` 배열이 현재 요구에 충분하지 않을 경우 메타데이터(예: surface group/우선순위) 제안 후 타입/테스트 추가                          |
 | 플러그인 기여 범위(기본/확장)                 | 미결정            | P3       | command/view/settings부터 시작할지, publisher trust/enable/추천/업데이트까지 확장할지 단계 정의                                          |
 
 ## Current Verification Baseline (2026-06-03)
 
 - `pnpm validate` passes on clean working tree (typecheck/lint/test/format/storybook build).
-- `pnpm test:storybook-play` currently exits `0` with explicit skip notice because
-  `@storybook/test-runner` is not installed and `test-storybook` command is also not available.
-- `test:storybook-play:required` is now available and fails fast when dependencies or command prerequisites are missing.
+- `pnpm test:storybook-play` now runs baseline-tagged storybook interaction tests (default),
+  auto-starting Storybook on `http://127.0.0.1:6010` if needed.
+- `test:storybook-play:required` is used by `validate:full` and fails fast when dependencies
+  or command prerequisites are missing.
   - workbench/activity menus: `WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR`
   - explorer root menu: `WORKBENCH_COMMAND_SURFACE_WORKSPACE`
   - workspace item menus: `WORKBENCH_COMMAND_SURFACE_WORKSPACE`
@@ -712,11 +717,9 @@ workbench platform:
 
 ## Next Clarification Questions (for next milestone)
 
-- Which Storybook `play` flows are mandatory by default in CI?
-  - Suggested minimum (for confidence with low flake risk): Explorer root/create+rename,
-    multi-file delete, Search open/copy/delete one path, Editor close/save/discard,
-    Chat send/cancel/first chunk.
-- Should `play` execution remain optional while adding `@storybook/test-runner`
-  later, or become part of `validate:full` immediately once flake profile is measured?
+- Which Storybook `play` flows should be promoted to mandatory next after baseline?
+  - Current baseline: Explorer create+rename, Search result menu, Editor tab
+    coordination/recovery, Chat cancel runtime flow.
+- How and when should `storybook-play-baseline` scope be expanded beyond baseline?
 - For plugin command conflicts, 기본값은 source-order overlay(`last-write-wins`)이며,
   hard error 정책으로 전환할지 다음 마일스톤에서 결정합니다.

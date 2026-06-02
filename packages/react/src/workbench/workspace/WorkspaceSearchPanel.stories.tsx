@@ -176,4 +176,5 @@ export const ResultMenuFlow: Story = {
     await expect(canvas.queryByRole('button', { name: /READ.*ME\.md/i })).toBeNull();
     await expect(canvas.getByText('No results')).toBeVisible();
   },
+  tags: ['storybook-play-baseline'],
 };

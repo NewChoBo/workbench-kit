@@ -182,6 +182,7 @@ export const CancelRuntimeFlow: Story = {
     await expect(canvas.queryByText(/Second chunk should not render/)).toBeNull();
     await expect(canvas.getByRole('button', { name: 'Send message' })).toBeDisabled();
   },
+  tags: ['storybook-play-baseline'],
 };
 
 export const WorkspacePatchRuntimeFlow: Story = {
