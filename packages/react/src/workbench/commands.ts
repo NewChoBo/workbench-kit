@@ -9,6 +9,13 @@ import type { ContextMenuItem } from '../overlay/ContextMenu';
 
 export const WORKBENCH_OPEN_SETTINGS_COMMAND_ID = 'workbench.openSettings';
 export const WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID = 'workbench.togglePrimarySidebar';
+export const WORKBENCH_EDITOR_SAVE_COMMAND_ID = 'editor.save';
+export const WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID = 'editor.discardChanges';
+export const WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID = 'editor.copyPath';
+export const WORKBENCH_EDITOR_CLOSE_COMMAND_ID = 'editor.close';
+export const WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID = 'editor.closeOthers';
+export const WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID = 'editor.closeAll';
+export const WORKBENCH_EDITOR_DELETE_COMMAND_ID = 'editor.delete';
 
 export interface WorkbenchShellCommandActivity<TActivityId extends string = string> {
   icon?: string;
@@ -31,6 +38,27 @@ export interface WorkbenchShellCommandPresetOptions<TActivityId extends string =
   settingsIcon?: string;
   settingsLabel?: string;
   sidebarIcon?: string;
+}
+
+export interface WorkbenchEditorCommandContext {
+  canCloseAll: boolean;
+  canCloseOthers: boolean;
+  canClosePath: boolean;
+  canCopyPath: boolean;
+  canDeletePath: boolean;
+  canDiscardFile: boolean;
+  canSaveFile: boolean;
+  closeAll: () => void;
+  closeOthers: () => void;
+  closePath: () => void;
+  copyPath: () => void;
+  deletePath: () => void;
+  discardFile: () => void;
+  filePath?: string;
+  hasMultipleOpenFiles: boolean;
+  hasOpenFiles: boolean;
+  hasUnsavedChanges: boolean;
+  saveFile: () => void;
 }
 
 export function getWorkbenchShowActivityCommandId(activityId: string) {
@@ -103,6 +131,78 @@ export function createWorkbenchShellMenuEntries<TActivityId extends string>({
 
   if (!shellEntries.length) return activityEntries;
   return [...activityEntries, commandMenuSeparator(menuSeparatorId), ...shellEntries];
+}
+
+export function createWorkbenchEditorCommands(): CommandDefinition<WorkbenchEditorCommandContext>[] {
+  return [
+    {
+      id: WORKBENCH_EDITOR_SAVE_COMMAND_ID,
+      icon: 'codicon-save',
+      isEnabled: ({ canSaveFile, hasUnsavedChanges }) => canSaveFile && hasUnsavedChanges,
+      label: 'Save',
+      run: ({ saveFile }) => saveFile(),
+    },
+    {
+      id: WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
+      icon: 'codicon-discard',
+      isEnabled: ({ canDiscardFile, hasUnsavedChanges }) => canDiscardFile && hasUnsavedChanges,
+      label: 'Discard changes',
+      run: ({ discardFile }) => discardFile(),
+    },
+    {
+      id: WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID,
+      icon: 'codicon-copy',
+      isEnabled: ({ canCopyPath, filePath }) => Boolean(filePath && canCopyPath),
+      label: 'Copy path',
+      run: ({ copyPath }) => copyPath(),
+    },
+    {
+      id: WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
+      icon: 'codicon-close',
+      isEnabled: ({ canClosePath, filePath }) => Boolean(filePath && canClosePath),
+      label: 'Close',
+      run: ({ closePath }) => closePath(),
+    },
+    {
+      id: WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID,
+      icon: 'codicon-close-all',
+      isEnabled: ({ canCloseOthers, filePath, hasMultipleOpenFiles }) =>
+        Boolean(filePath && canCloseOthers && hasMultipleOpenFiles),
+      label: 'Close others',
+      run: ({ closeOthers }) => closeOthers(),
+    },
+    {
+      id: WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
+      icon: 'codicon-close-all',
+      isEnabled: ({ canCloseAll, hasOpenFiles }) => canCloseAll && hasOpenFiles,
+      label: 'Close all',
+      run: ({ closeAll }) => closeAll(),
+    },
+    {
+      id: WORKBENCH_EDITOR_DELETE_COMMAND_ID,
+      danger: true,
+      icon: 'codicon-trash',
+      isEnabled: ({ canDeletePath, filePath }) => Boolean(filePath && canDeletePath),
+      label: 'Delete',
+      run: ({ deletePath }) => deletePath(),
+    },
+  ];
+}
+
+export function createWorkbenchEditorTabListMenuEntries(): CommandMenuEntry<WorkbenchEditorCommandContext>[] {
+  return [{ commandId: WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID }];
+}
+
+export function createWorkbenchEditorTabMenuEntries(): CommandMenuEntry<WorkbenchEditorCommandContext>[] {
+  return [
+    { commandId: WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID },
+    commandMenuSeparator('tab-file-separator'),
+    { commandId: WORKBENCH_EDITOR_CLOSE_COMMAND_ID },
+    { commandId: WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID },
+    { commandId: WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID },
+    commandMenuSeparator('tab-danger-separator'),
+    { commandId: WORKBENCH_EDITOR_DELETE_COMMAND_ID },
+  ];
 }
 
 export function commandMenuItemsToContextMenuItems(
