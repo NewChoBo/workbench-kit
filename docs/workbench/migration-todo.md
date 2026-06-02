@@ -105,6 +105,8 @@ The package should evolve beyond a single React package.
   converts resolved command menu items into `ContextMenuItem` values.
 - `@newchobo-ui/react` exposes shell command presets for activity switching,
   primary sidebar toggling, and settings opening.
+- `@newchobo-ui/react` exposes editor command presets for save, discard, copy
+  path, close, close others, close all, and delete.
 - `@newchobo-ui/react` exposes a reusable `useWorkbenchShellState` hook and
   reducer for active activity, primary sidebar visibility and size, theme, and
   settings modal state.
@@ -140,6 +142,8 @@ The package should evolve beyond a single React package.
   context menus including copy path, close, close others, close all, and delete.
 - `WorkspaceEditorPanel` routes Save and Discard toolbar actions through the
   same command registry enabled-state and execution helpers.
+- `WorkspaceEditorPanel` consumes shared editor command presets rather than
+  owning local command definitions.
 - `WorkspaceEditorPanel` consumes framework-neutral editor draft helpers from
   `@newchobo-ui/workspace` for dirty-state, save, and discard behavior.
 - The integrated Workbench story wires `@newchobo-ui/runtime` to Chat,
@@ -345,8 +349,10 @@ Move these out of `Workbench.stories.tsx`:
     projection, and command executor.
   - `@newchobo-ui/react` now owns shell command presets for activity switching,
     primary sidebar toggling, and settings opening.
-  - Remaining: shared command definition presets for common workspace and
-    editor actions if the package should provide default command IDs.
+  - `@newchobo-ui/react` now owns editor command presets for save, discard,
+    copy path, close, close others, close all, and delete.
+  - Remaining: shared workspace command definition presets if the package
+    should provide default command IDs.
 - Search helpers:
   - query state,
   - first result activation,
@@ -417,7 +423,7 @@ independently.
 | `workbench/WorkbenchShell`                 | Activity bar, sidebar split, editor area, status bar slots          | Shell layout and sidebar toggle                       |
 | `workbench/StatusBar`                      | Generic status sections and status item projection                  | Model-based status footer                             |
 | `@newchobo-ui/core/commands`               | Framework-neutral command registry, execution, and menu projection  | Unit tests and integrated command menu wiring         |
-| `workbench/commands`                       | React adapter and shell command presets                             | Command menu story and preset tests                   |
+| `workbench/commands`                       | React adapter plus shell and editor command presets                 | Command menu story and preset tests                   |
 | `chat/ChatPanel`                           | Message list and composer                                           | Empty, streaming, running, disabled, cancel           |
 | `@newchobo-ui/runtime/mockRuntime`         | Public mock send/cancel/stream events and workspace patches         | Chat integration story                                |
 | `settings/WorkbenchSettingsModal`          | Generic settings layout and category rendering                      | Scope tabs, search, footer actions                    |
@@ -446,8 +452,9 @@ independently.
      and execution.
    - Integrated Workbench command menus now have Storybook play coverage.
    - Shell command presets are exported and covered by unit tests.
-   - Remaining: shared workspace/editor command definition presets if the
-     package should provide default command IDs.
+   - Editor command presets are exported and covered by unit tests.
+   - Remaining: shared workspace command definition presets if the package
+     should provide default command IDs.
 7. Add mock runtime fixtures for Chat and mock workspace file updates.
    - Done for framework-neutral runtime events, send/cancel/stream helpers,
      and integrated mock workspace write patches.

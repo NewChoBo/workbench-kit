@@ -1,14 +1,25 @@
 export { ActivityBar } from './ActivityBar';
 export type { ActivityBarItem, ActivityBarProps } from './ActivityBar';
 export {
+  WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
+  WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
+  WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID,
+  WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID,
+  WORKBENCH_EDITOR_DELETE_COMMAND_ID,
+  WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
+  WORKBENCH_EDITOR_SAVE_COMMAND_ID,
   WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
   WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID,
   commandMenuItemsToContextMenuItems,
+  createWorkbenchEditorCommands,
+  createWorkbenchEditorTabListMenuEntries,
+  createWorkbenchEditorTabMenuEntries,
   createWorkbenchShellCommands,
   createWorkbenchShellMenuEntries,
   getWorkbenchShowActivityCommandId,
 } from './commands';
 export type {
+  WorkbenchEditorCommandContext,
   WorkbenchShellCommandActivity,
   WorkbenchShellCommandContext,
   WorkbenchShellCommandPresetOptions,

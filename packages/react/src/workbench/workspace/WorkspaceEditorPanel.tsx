@@ -1,11 +1,9 @@
 import { useMemo, useState, type MouseEvent } from 'react';
 import {
   canExecuteCommand,
-  commandMenuSeparator,
   createCommandRegistry,
   executeCommand,
   resolveCommandMenuItems,
-  type CommandMenuEntry,
 } from '@newchobo-ui/core';
 import {
   discardWorkspaceFileDraft,
@@ -20,100 +18,23 @@ import { EmptyState } from '../../primitives/EmptyState';
 import { IconButton } from '../../primitives/IconButton';
 import { Toolbar } from '../../primitives/Toolbar';
 import { Panel, PanelBody } from '../../layout/Panel';
-import { commandMenuItemsToContextMenuItems } from '../commands';
+import {
+  WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
+  WORKBENCH_EDITOR_SAVE_COMMAND_ID,
+  commandMenuItemsToContextMenuItems,
+  createWorkbenchEditorCommands,
+  createWorkbenchEditorTabListMenuEntries,
+  createWorkbenchEditorTabMenuEntries,
+  type WorkbenchEditorCommandContext,
+} from '../commands';
 import { fileNameOfPath } from './path';
 import { WorkspaceEditor, type WorkspaceEditorTheme } from './WorkspaceEditor';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceFile } from './types';
 
-interface EditorCommandContext {
-  canCloseAll: boolean;
-  canCloseOthers: boolean;
-  canClosePath: boolean;
-  canCopyPath: boolean;
-  canDeletePath: boolean;
-  canDiscardFile: boolean;
-  canSaveFile: boolean;
-  closeAll: () => void;
-  closeOthers: () => void;
-  closePath: () => void;
-  copyPath: () => void;
-  deletePath: () => void;
-  discardFile: () => void;
-  filePath?: string;
-  hasMultipleOpenFiles: boolean;
-  hasOpenFiles: boolean;
-  hasUnsavedChanges: boolean;
-  saveFile: () => void;
-}
-
-const editorCommandRegistry = createCommandRegistry<EditorCommandContext>([
-  {
-    id: 'editor.save',
-    label: 'Save',
-    icon: 'codicon-save',
-    isEnabled: ({ canSaveFile, hasUnsavedChanges }) => canSaveFile && hasUnsavedChanges,
-    run: ({ saveFile }) => saveFile(),
-  },
-  {
-    id: 'editor.discardChanges',
-    label: 'Discard changes',
-    icon: 'codicon-discard',
-    isEnabled: ({ canDiscardFile, hasUnsavedChanges }) => canDiscardFile && hasUnsavedChanges,
-    run: ({ discardFile }) => discardFile(),
-  },
-  {
-    id: 'editor.copyPath',
-    label: 'Copy path',
-    icon: 'codicon-copy',
-    isEnabled: ({ canCopyPath, filePath }) => Boolean(filePath && canCopyPath),
-    run: ({ copyPath }) => copyPath(),
-  },
-  {
-    id: 'editor.close',
-    label: 'Close',
-    icon: 'codicon-close',
-    isEnabled: ({ canClosePath, filePath }) => Boolean(filePath && canClosePath),
-    run: ({ closePath }) => closePath(),
-  },
-  {
-    id: 'editor.closeOthers',
-    label: 'Close others',
-    icon: 'codicon-close-all',
-    isEnabled: ({ canCloseOthers, filePath, hasMultipleOpenFiles }) =>
-      Boolean(filePath && canCloseOthers && hasMultipleOpenFiles),
-    run: ({ closeOthers }) => closeOthers(),
-  },
-  {
-    id: 'editor.closeAll',
-    label: 'Close all',
-    icon: 'codicon-close-all',
-    isEnabled: ({ canCloseAll, hasOpenFiles }) => canCloseAll && hasOpenFiles,
-    run: ({ closeAll }) => closeAll(),
-  },
-  {
-    id: 'editor.delete',
-    label: 'Delete',
-    icon: 'codicon-trash',
-    danger: true,
-    isEnabled: ({ canDeletePath, filePath }) => Boolean(filePath && canDeletePath),
-    run: ({ deletePath }) => deletePath(),
-  },
-]);
-
-const editorTabListMenuEntries: CommandMenuEntry<EditorCommandContext>[] = [
-  { commandId: 'editor.closeAll' },
-];
-
-const editorTabMenuEntries: CommandMenuEntry<EditorCommandContext>[] = [
-  { commandId: 'editor.copyPath' },
-  commandMenuSeparator('tab-file-separator'),
-  { commandId: 'editor.close' },
-  { commandId: 'editor.closeOthers' },
-  { commandId: 'editor.closeAll' },
-  commandMenuSeparator('tab-danger-separator'),
-  { commandId: 'editor.delete' },
-];
+const editorCommandRegistry = createCommandRegistry(createWorkbenchEditorCommands());
+const editorTabListMenuEntries = createWorkbenchEditorTabListMenuEntries();
+const editorTabMenuEntries = createWorkbenchEditorTabMenuEntries();
 
 export interface WorkspaceEditorPanelProps {
   emptyLabel?: string;
@@ -201,7 +122,9 @@ export function WorkspaceEditorPanel({
     setTabContextMenu({ path, x: event.clientX, y: event.clientY });
   };
 
-  const createEditorCommandContext = (file: WorkspaceFile | undefined): EditorCommandContext => {
+  const createEditorCommandContext = (
+    file: WorkspaceFile | undefined,
+  ): WorkbenchEditorCommandContext => {
     const filePath = file?.path;
     const draft = file
       ? resolveWorkspaceFileDraft({
@@ -324,21 +247,25 @@ export function WorkspaceEditorPanel({
                     disabled={
                       !canExecuteCommand(
                         editorCommandRegistry,
-                        'editor.save',
+                        WORKBENCH_EDITOR_SAVE_COMMAND_ID,
                         selectedCommandContext,
                       )
                     }
                     icon="codicon-save"
                     label="Save"
                     onClick={() =>
-                      executeCommand(editorCommandRegistry, 'editor.save', selectedCommandContext)
+                      executeCommand(
+                        editorCommandRegistry,
+                        WORKBENCH_EDITOR_SAVE_COMMAND_ID,
+                        selectedCommandContext,
+                      )
                     }
                   />
                   <IconButton
                     disabled={
                       !canExecuteCommand(
                         editorCommandRegistry,
-                        'editor.discardChanges',
+                        WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
                         selectedCommandContext,
                       )
                     }
@@ -347,7 +274,7 @@ export function WorkspaceEditorPanel({
                     onClick={() =>
                       executeCommand(
                         editorCommandRegistry,
-                        'editor.discardChanges',
+                        WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
                         selectedCommandContext,
                       )
                     }
