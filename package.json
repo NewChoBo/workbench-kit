@@ -17,13 +17,14 @@
     "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
     "typecheck": "pnpm --filter @newchobo-ui/core typecheck && pnpm --filter @newchobo-ui/workspace typecheck && pnpm --filter @newchobo-ui/runtime typecheck && pnpm --filter @newchobo-ui/react typecheck",
     "validate": "pnpm typecheck && pnpm lint && pnpm test && pnpm format:check && pnpm build:storybook",
-    "validate:full": "pnpm validate && pnpm test:storybook-play"
+    "validate:full": "pnpm validate && pnpm test:storybook-play:required"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@monaco-editor/react": "^4.7.0",
     "@storybook/addon-docs": "^10.4.1",
     "@storybook/react-vite": "^10.4.1",
+    "@storybook/test-runner": "^0.24.4",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",

@@ -478,6 +478,7 @@ export const CreateAndRenameFlow: Story = {
       'Renamed src/App.tsx to src/Main.tsx',
     );
   },
+  tags: ['storybook-play-baseline'],
 };
 
 export const InlineEditBoundaryFlow: Story = {
