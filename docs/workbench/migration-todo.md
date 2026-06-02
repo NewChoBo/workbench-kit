@@ -125,6 +125,8 @@ The package should evolve beyond a single React package.
   result context menus.
 - `WorkspaceEditorPanel` uses command-backed menu projection for editor tab
   context menus including copy path, close, close others, close all, and delete.
+- `WorkspaceEditorPanel` routes Save and Discard toolbar actions through the
+  same command registry enabled-state and execution helpers.
 - Unit tests cover path operations, search, selection, create, rename, move, and
   delete behavior, plus core command menu projection and execution.
 - The next migration step is to add Storybook play coverage for command menu
@@ -143,7 +145,7 @@ still not a complete real-use workflow.
 | Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets                                                       | File, multi-file, and folder deletion with controlled component callbacks       | Component play coverage added; add folder-delete variant  |
 | Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves                                                    | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add root-drop variant      |
 | Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage             |
-| Workspace editor       | Monaco editor, tabs, dirty state, save/discard, and command-backed tab context menus exist                                                                      | Tab actions should coordinate with shared workspace state                       | Extract draft state helpers and add command menu coverage |
+| Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, and command-backed tab context menus exist                                       | Tab actions should coordinate with shared workspace state                       | Extract draft state helpers and add command menu coverage |
 | Chat                   | Generic chat UI exists                                                                                                                                          | Runtime-driven send/cancel, streaming chunks, status integration                | Add mock-runtime story adapter and streaming fixture      |
 | Workbench shell state  | Story-local state only                                                                                                                                          | Active view, sidebar visibility, theme, status, and settings should be reusable | Add shell state contract or controlled shell component    |
 | Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
@@ -233,9 +235,7 @@ still not a complete real-use workflow.
 ### Workspace Editor
 
 - Shared command integration for tab close, close others, close all, copy path,
-  and delete.
-- Remaining: command integration for save/discard toolbar actions if those
-  should be projected through the same command model.
+  delete, save, and discard.
 - Draft state extraction so stories do not own editor persistence rules.
 - Delete confirmation that coordinates with open tabs and selected path.
 - Optional split-editor affordance should stay visual-only until a real split
@@ -384,8 +384,9 @@ independently.
    - Editor tab context menus now use command-backed projection.
    - `WorkspaceSearchPanel` result menu story coverage now exercises
      command-backed projection.
-   - Remaining: save/discard command projection and integrated command menu
-     Storybook play coverage.
+   - Editor Save and Discard toolbar actions now use command-backed enabled-state
+     and execution.
+   - Remaining: integrated command menu Storybook play coverage.
 7. Add mock runtime fixtures for Chat and mock workspace file updates.
 8. Add Storybook `play` tests for the main workflows.
 9. Run `pnpm validate` and browser smoke after each major feature group.
