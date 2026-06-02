@@ -106,6 +106,8 @@ The package should evolve beyond a single React package.
 - `@newchobo-ui/react` exposes a reusable `useWorkbenchShellState` hook and
   reducer for active activity, primary sidebar visibility and size, theme, and
   settings modal state.
+- `@newchobo-ui/react` exposes a reusable StatusBar section/item model while
+  keeping children-based custom status bar content supported.
 - `WorkspaceExplorer` accepts controlled file selection props and emits
   selection changes for single, toggle, range, and toggle-range interactions.
 - Explorer context menus receive selection-aware action paths, and the
@@ -167,7 +169,7 @@ still not a complete real-use workflow.
 | Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage             |
 | Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Component play coverage added; add test-runner gate later |
 | Chat                   | Generic chat UI plus mock runtime story coverage for send, cancel, streaming chunks, status, workspace write patches, and workspace delete patches              | Runtime-driven send/cancel, streaming chunks, status integration                | Add test-runner gate later if desired                     |
-| Workbench shell state  | Reusable shell state hook covers active activity, primary sidebar visibility and size, theme, and settings modal state                                          | Active view, sidebar visibility, theme, status, and settings should be reusable | Add reusable status model and optional shell presets      |
+| Workbench shell state  | Reusable shell state hook and StatusBar item model cover active activity, sidebar visibility and size, theme, settings, and status surfaces                     | Active view, sidebar visibility, theme, status, and settings should be reusable | Decide whether to add optional shell command presets      |
 | Settings               | Generic settings modal exists                                                                                                                                   | App-specific sections are injected, not hardcoded                               | Keep modal generic and add section/story examples         |
 | Storybook              | Integrated story owns too much state and behavior                                                                                                               | Stories should compose components with fixtures and mock adapters               | Move reusable logic into package modules                  |
 
@@ -282,13 +284,13 @@ still not a complete real-use workflow.
   - theme preference: done through `useWorkbenchShellState`,
   - settings open, navigation, scope, and search state: done through
     `useWorkbenchShellState`,
-  - status item model: remaining.
+  - status item model: done through `StatusBar` section and item models.
 - Activity bar and primary sidebar command menus consume the generic command
   model in the integrated story.
 - Remaining: decide whether shell command definitions should be exported as
   package presets or supplied only by host applications.
-- Status bar should accept a generic status model and avoid product-specific
-  status labels.
+- Status bar accepts generic section and item models while still supporting
+  custom children for host-rendered content.
 
 ### Chat
 
@@ -349,7 +351,8 @@ Move these out of `Workbench.stories.tsx`:
   - active activity,
   - primary sidebar visibility and size,
   - theme preference,
-  - settings modal open, category, scope, and search state.
+  - settings modal open, category, scope, and search state,
+  - reusable status bar sections and items.
 - Mock runtime helpers:
   - `@newchobo-ui/runtime` now owns message send, cancel, streaming response
     sequence, and mock write-file events.
@@ -408,6 +411,7 @@ independently.
 | `workspace/WorkspaceEditorPanel`           | Open tabs, dirty state, Monaco editor, tab menus                     | Save/discard, close actions, delete confirmation      |
 | `workspace/useVirtualWorkspace` or reducer | Headless workspace state and file/folder operations                  | Reducer tests and integrated story                    |
 | `workbench/WorkbenchShell`                 | Activity bar, sidebar split, editor area, status bar slots           | Shell layout and sidebar toggle                       |
+| `workbench/StatusBar`                      | Generic status sections and status item projection                   | Model-based status footer                             |
 | `@newchobo-ui/core/commands`               | Framework-neutral command registry, execution, and menu projection   | Unit tests and integrated command menu wiring         |
 | `workbench/commands`                       | React adapter from resolved command menu items to context menu items | Command menu story and integration tests              |
 | `chat/ChatPanel`                           | Message list and composer                                            | Empty, streaming, running, disabled, cancel           |
@@ -458,7 +462,8 @@ independently.
 9. Extract reusable shell state.
    - Done for active activity, primary sidebar visibility and size, theme, and
      settings modal state.
-   - Remaining: reusable status model and optional shell command presets.
+   - Done for generic StatusBar section and item models.
+   - Remaining: optional shell command presets.
 10. Run `pnpm validate` and browser smoke after each major feature group.
 
 ## Additional Decisions Needed
@@ -475,8 +480,8 @@ independently.
   activity switching, sidebar toggling, and settings opening?
 - Which folder operations should stay as controlled UI callbacks, and which
   should be demonstrated through the `@newchobo-ui/workspace` reducer?
-- Should status bar items use a reusable package model, or remain plain
-  host-rendered children?
+- Should StatusBar items support host-provided ordering/grouping metadata beyond
+  the current section and item arrays?
 - Should Storybook interaction tests be mandatory in `pnpm validate`, or only
   used in targeted UI validation at first?
 - Should the package add MSW, or keep mock runtime adapters in plain TypeScript

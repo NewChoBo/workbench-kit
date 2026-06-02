@@ -31,7 +31,7 @@ import { commandMenuItemsToContextMenuItems } from './commands';
 import { WorkbenchSettingsModal, WorkbenchSettingsSection } from './settings';
 import { useWorkbenchShellState } from './shellState';
 import { SplitView } from './SplitView';
-import { StatusBar, StatusBarItem, StatusBarSection } from './StatusBar';
+import { StatusBar, type StatusBarItemModel, type StatusBarSectionModel } from './StatusBar';
 import {
   WorkspaceEditorPanel,
   type WorkspaceEditorTheme,
@@ -415,6 +415,73 @@ function runtimeStatusLabel(status: RuntimeStatus) {
   return 'Runtime idle';
 }
 
+function getStatusFooterSections(): StatusBarSectionModel[] {
+  return [
+    {
+      id: 'main',
+      items: [{ id: 'status', icon: <span className="workbench-status-dot" />, label: 'Idle' }],
+    },
+    {
+      align: 'end',
+      id: 'actions',
+      items: [
+        { id: 'theme', icon: <i className="codicon codicon-color-mode" />, label: 'Dark' },
+        {
+          id: 'sidebar',
+          icon: <i className="codicon codicon-layout-sidebar-left" />,
+          label: 'Hide sidebar',
+        },
+      ],
+    },
+  ];
+}
+
+function getIntegratedStatusSections({
+  colorTheme,
+  isPrimarySideBarVisible,
+  lastCommandLabel,
+  runtimeStatus,
+}: {
+  colorTheme: StoryTheme;
+  isPrimarySideBarVisible: boolean;
+  lastCommandLabel: string;
+  runtimeStatus: RuntimeStatus;
+}): StatusBarSectionModel[] {
+  return [
+    {
+      id: 'main',
+      items: [
+        {
+          id: 'last-command',
+          icon: <span className="workbench-status-dot" />,
+          label: lastCommandLabel,
+        },
+      ],
+    },
+    {
+      align: 'end',
+      id: 'actions',
+      items: [
+        {
+          id: 'runtime-status',
+          icon: <i className="codicon codicon-debug-start" />,
+          label: runtimeStatusLabel(runtimeStatus),
+        },
+        {
+          id: 'theme',
+          icon: <i className="codicon codicon-color-mode" />,
+          label: colorTheme === 'dark' ? 'Dark' : 'Light',
+        },
+        {
+          id: 'primary-sidebar',
+          icon: <i className="codicon codicon-layout-sidebar-left" />,
+          label: isPrimarySideBarVisible ? 'Hide sidebar' : 'Show sidebar',
+        },
+      ],
+    },
+  ];
+}
+
 function isStoryActivityId(id: string): id is StoryActivityId {
   return id === 'explorer' || id === 'search' || id === 'chat';
 }
@@ -448,17 +515,7 @@ export const ActivityRail: Story = {
 export const StatusFooter: Story = {
   render: () => (
     <div style={{ width: '100%', background: 'var(--color-bg)', paddingTop: 80 }}>
-      <StatusBar compact>
-        <StatusBarSection>
-          <StatusBarItem icon={<span className="workbench-status-dot" />}>Idle</StatusBarItem>
-        </StatusBarSection>
-        <StatusBarSection align="end">
-          <StatusBarItem icon={<i className="codicon codicon-color-mode" />}>Dark</StatusBarItem>
-          <StatusBarItem icon={<i className="codicon codicon-layout-sidebar-left" />}>
-            Hide sidebar
-          </StatusBarItem>
-        </StatusBarSection>
-      </StatusBar>
+      <StatusBar compact sections={getStatusFooterSections()} />
     </div>
   ),
 };
@@ -765,6 +822,12 @@ function IntegratedWorkbenchShell() {
     [chatRuntime, files],
   );
   const activeActivity = storyActivities[activeActivityId];
+  const statusSections = getIntegratedStatusSections({
+    colorTheme,
+    isPrimarySideBarVisible,
+    lastCommandLabel,
+    runtimeStatus,
+  });
   const openContextMenu = (
     event: MouseEvent<HTMLElement>,
     items: ContextMenuItem[],
@@ -796,6 +859,18 @@ function IntegratedWorkbenchShell() {
 
   const activateSearchResult = (result: (typeof filteredSearchResults)[number]) => {
     activateFile(result.path);
+  };
+
+  const activateStatusItem = (item: StatusBarItemModel) => {
+    if (item.id === 'theme') {
+      shell.setTheme(colorTheme === 'dark' ? 'light' : 'dark');
+      return;
+    }
+
+    if (item.id === 'primary-sidebar') {
+      shell.togglePrimarySidebar();
+      setLastCommandLabel('Primary sidebar toggled');
+    }
   };
 
   const closePath = (path: string) => {
@@ -1344,33 +1419,7 @@ function IntegratedWorkbenchShell() {
           editorArea
         )}
       </div>
-      <StatusBar compact>
-        <StatusBarSection>
-          <StatusBarItem icon={<span className="workbench-status-dot" />}>
-            {lastCommandLabel}
-          </StatusBarItem>
-        </StatusBarSection>
-        <StatusBarSection align="end">
-          <StatusBarItem icon={<i className="codicon codicon-debug-start" />}>
-            {runtimeStatusLabel(runtimeStatus)}
-          </StatusBarItem>
-          <StatusBarItem
-            icon={<i className="codicon codicon-color-mode" />}
-            onClick={() => shell.setTheme(colorTheme === 'dark' ? 'light' : 'dark')}
-          >
-            {colorTheme === 'dark' ? 'Dark' : 'Light'}
-          </StatusBarItem>
-          <StatusBarItem
-            icon={<i className="codicon codicon-layout-sidebar-left" />}
-            onClick={() => {
-              shell.togglePrimarySidebar();
-              setLastCommandLabel('Primary sidebar toggled');
-            }}
-          >
-            {isPrimarySideBarVisible ? 'Hide sidebar' : 'Show sidebar'}
-          </StatusBarItem>
-        </StatusBarSection>
-      </StatusBar>
+      <StatusBar compact sections={statusSections} onItemActivate={activateStatusItem} />
       {contextMenu ? (
         <ContextMenu
           ariaLabel={contextMenu.ariaLabel}

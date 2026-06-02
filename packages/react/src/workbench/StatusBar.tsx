@@ -1,8 +1,30 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { cx } from '../utils/cx';
 
+export type StatusBarSectionAlign = 'end' | 'start';
+
+export interface StatusBarItemModel {
+  active?: boolean;
+  ariaLabel?: string;
+  disabled?: boolean;
+  hidden?: boolean;
+  icon?: ReactNode;
+  id: string;
+  label: ReactNode;
+  title?: string;
+}
+
+export interface StatusBarSectionModel {
+  align?: StatusBarSectionAlign;
+  hidden?: boolean;
+  id: string;
+  items: StatusBarItemModel[];
+}
+
 export interface StatusBarProps extends ComponentPropsWithRef<'footer'> {
   compact?: boolean;
+  onItemActivate?: (item: StatusBarItemModel) => void;
+  sections?: StatusBarSectionModel[];
 }
 
 export function StatusBar({
@@ -10,8 +32,34 @@ export function StatusBar({
   children,
   className,
   compact,
+  onItemActivate,
+  sections,
   ...props
 }: StatusBarProps) {
+  const content =
+    children ??
+    sections
+      ?.filter((section) => !section.hidden)
+      .map((section) => (
+        <StatusBarSection key={section.id} align={section.align}>
+          {section.items
+            .filter((item) => !item.hidden)
+            .map((item) => (
+              <StatusBarItem
+                key={item.id}
+                active={item.active}
+                aria-label={item.ariaLabel}
+                disabled={item.disabled}
+                icon={item.icon}
+                title={item.title}
+                onClick={() => onItemActivate?.(item)}
+              >
+                {item.label}
+              </StatusBarItem>
+            ))}
+        </StatusBarSection>
+      ));
+
   return (
     <footer
       aria-label={ariaLabel}
@@ -22,13 +70,13 @@ export function StatusBar({
       )}
       {...props}
     >
-      {children}
+      {content}
     </footer>
   );
 }
 
 export interface StatusBarSectionProps extends ComponentPropsWithRef<'div'> {
-  align?: 'start' | 'end';
+  align?: StatusBarSectionAlign;
 }
 
 export function StatusBarSection({ align = 'start', className, ...props }: StatusBarSectionProps) {
