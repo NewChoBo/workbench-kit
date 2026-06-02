@@ -242,6 +242,22 @@
   font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
 }
 
+.workbench-delete-targets {
+  display: flex;
+  max-height: 160px;
+  flex-direction: column;
+  gap: 4px;
+  overflow: auto;
+  white-space: normal;
+}
+
+.workbench-delete-targets code {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .workbench-settings-modal {
   --ui-modal-width: 1120px;
   --ui-modal-height: 760px;
@@ -893,12 +909,60 @@
   background: var(--color-surface-hover);
 }
 
+.ui-side-bar-list-item--selected {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+}
+
+.ui-side-bar-list-item--selected:hover {
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.ui-side-bar-list-item--active.ui-side-bar-list-item--selected {
+  background: color-mix(in srgb, var(--color-accent) 28%, var(--color-surface-hover));
+}
+
 .ui-side-bar-list-item--drop-target,
 .ui-side-bar-list-item--drop-target:hover {
   color: var(--color-text);
   background: color-mix(in srgb, var(--color-accent) 20%, transparent);
   outline: 1px solid var(--color-accent);
   outline-offset: -1px;
+}
+
+.ui-side-bar-inline-edit {
+  --depth: 0;
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px var(--ui-side-bar-inline-padding) 2px
+    calc(var(--ui-side-bar-inline-padding) + (var(--depth) * var(--ui-side-bar-tree-indent-step)));
+}
+
+.ui-side-bar-inline-edit__input {
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--color-accent);
+  border-radius: 2px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  font: inherit;
+  outline: none;
+}
+
+.ui-side-bar-inline-edit__error {
+  --depth: 0;
+  padding: 1px var(--ui-side-bar-inline-padding) 4px
+    calc(
+      var(--ui-side-bar-inline-padding) + 19px +
+        (var(--depth) * var(--ui-side-bar-tree-indent-step))
+    );
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+  line-height: 1.35;
 }
 
 .ui-side-bar-list-item--stacked {

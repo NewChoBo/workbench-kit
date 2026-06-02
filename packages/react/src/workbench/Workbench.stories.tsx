@@ -1,6 +1,7 @@
 import { useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SideBarHeaderControl, SideBarViewFrame } from '../layout/SideBarViewFrame';
+import { ConfirmDialog } from '../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../overlay/ContextMenu';
 import { Badge } from '../primitives/Badge';
 import { Button } from '../primitives/Button';
@@ -21,8 +22,21 @@ import {
   WorkspaceExplorer,
   WorkspaceSearchResults,
   fileNameOfPath,
+  getAvailableWorkspaceEntryName,
+  getWorkspaceFileMovePlan,
+  isSimpleWorkspaceName,
+  isWorkspaceEntryPathAvailable,
+  joinWorkspacePath,
+  parentPathOf,
+  pruneWorkspaceSelection,
   useVirtualWorkspace,
   type WorkspaceFile,
+  type WorkspaceExplorerInlineEditCommitMeta,
+  type WorkspaceExplorerInlineEditKind,
+  type WorkspaceExplorerInlineEditState,
+  type WorkspaceExplorerItemKeyboardActionMeta,
+  type WorkspaceExplorerMoveRequestMeta,
+  type WorkspaceSelectionState,
   type WorkspaceTreeNode,
 } from './workspace';
 
@@ -50,6 +64,11 @@ interface StoryContextMenuState {
   items: ContextMenuItem[];
   x: number;
   y: number;
+}
+
+interface StoryPendingDelete {
+  paths: string[];
+  type: 'files' | 'folder';
 }
 
 const storyActivityOrder: StoryActivityId[] = ['explorer', 'search', 'chat'];
@@ -423,8 +442,16 @@ function IntegratedWorkbenchShell() {
   const [contextMenu, setContextMenu] = useState<StoryContextMenuState | null>(null);
   const [colorTheme, setColorTheme] = useState<StoryTheme>('dark');
   const [filterQuery, setFilterQuery] = useState('');
+  const [explorerSelection, setExplorerSelection] = useState<WorkspaceSelectionState>({
+    anchorPath: defaultSelectionByActivity.explorer,
+    paths: [defaultSelectionByActivity.explorer],
+  });
+  const [explorerInlineEdit, setExplorerInlineEdit] = useState<
+    WorkspaceExplorerInlineEditState | undefined
+  >();
   const [isPrimarySideBarVisible, setIsPrimarySideBarVisible] = useState(true);
-  const [, setLastCommandLabel] = useState('Idle');
+  const [lastCommandLabel, setLastCommandLabel] = useState('Idle');
+  const [pendingDelete, setPendingDelete] = useState<StoryPendingDelete | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsCategoryId, setSettingsCategoryId] = useState('appearance');
   const [settingsScopeId, setSettingsScopeId] = useState('user');
@@ -442,11 +469,18 @@ function IntegratedWorkbenchShell() {
     closeAll: closeAllFiles,
     closeOthers: closeOtherFiles,
     closePath: closeWorkspacePath,
+    createFile: createWorkspaceFile,
+    createFolder: createWorkspaceFolder,
     deleteFile: deleteWorkspaceFile,
+    deleteFolder: deleteWorkspaceFolder,
     expandedPaths,
     files,
+    folders,
+    moveFile: moveWorkspaceFile,
     openFile,
     openPaths,
+    renameFile: renameWorkspaceFile,
+    renameFolder: renameWorkspaceFolder,
     saveFile: saveWorkspaceFile,
     searchQuery,
     searchResults: filteredSearchResults,
@@ -510,9 +544,241 @@ function IntegratedWorkbenchShell() {
     setLastCommandLabel(`Saved ${path}`);
   };
 
+  const deleteFiles = (paths: string[]) => {
+    const pendingPathSet = new Set(paths);
+    const filePaths = files
+      .filter((file) => pendingPathSet.has(file.path))
+      .map((file) => file.path);
+    if (filePaths.length === 0) return;
+
+    filePaths.forEach(deleteWorkspaceFile);
+    setExplorerSelection((selection) =>
+      pruneWorkspaceSelection(
+        selection,
+        files.filter((file) => !pendingPathSet.has(file.path)).map((file) => file.path),
+      ),
+    );
+    setLastCommandLabel(
+      filePaths.length === 1 ? `Deleted ${filePaths[0]}` : `Deleted ${filePaths.length} files`,
+    );
+  };
+
+  const deleteFolder = (path: string) => {
+    if (!path) return;
+
+    const folderPrefix = `${path}/`;
+    const deletedFilePaths = new Set(
+      files
+        .filter((file) => file.path === path || file.path.startsWith(folderPrefix))
+        .map((file) => file.path),
+    );
+
+    deleteWorkspaceFolder(path);
+    setExplorerSelection((selection) =>
+      pruneWorkspaceSelection(
+        selection,
+        files.filter((file) => !deletedFilePaths.has(file.path)).map((file) => file.path),
+      ),
+    );
+    setLastCommandLabel(`Deleted folder ${path}`);
+  };
+
   const deleteFile = (path: string) => {
-    deleteWorkspaceFile(path);
-    setLastCommandLabel(`Deleted ${path}`);
+    deleteFiles([path]);
+  };
+
+  const confirmPendingDelete = () => {
+    if (!pendingDelete) return;
+
+    if (pendingDelete.type === 'folder') {
+      deleteFolder(pendingDelete.paths[0] ?? '');
+    } else {
+      deleteFiles(pendingDelete.paths);
+    }
+
+    setPendingDelete(null);
+  };
+
+  const setExplorerInlineEditError = (edit: WorkspaceExplorerInlineEditState, error: string) => {
+    setExplorerInlineEdit({ ...edit, error });
+    setLastCommandLabel(error);
+  };
+
+  const startWorkspaceCreate = (
+    kind: Extract<WorkspaceExplorerInlineEditKind, 'create-file' | 'create-folder'>,
+    parentPath = '',
+  ) => {
+    const value = getAvailableWorkspaceEntryName({
+      files,
+      folders,
+      parentPath,
+      preferredName: kind === 'create-file' ? 'untitled.md' : 'new-folder',
+    });
+
+    if (parentPath && !expandedPaths.has(parentPath)) {
+      toggleFolder(parentPath);
+    }
+
+    setExplorerInlineEdit({
+      id: `${kind}:${parentPath}:${value}`,
+      kind,
+      parentPath,
+      value,
+    });
+    setLastCommandLabel(kind === 'create-file' ? 'New file queued' : 'New folder queued');
+  };
+
+  const requestWorkspaceRename = (node: WorkspaceTreeNode, actionPaths: string[] = [node.path]) => {
+    const targetPath = actionPaths[0] ?? node.path;
+    setExplorerInlineEdit({
+      id: `rename:${targetPath}`,
+      kind: node.type === 'folder' ? 'rename-folder' : 'rename-file',
+      path: targetPath,
+      value: fileNameOfPath(targetPath),
+    });
+    setLastCommandLabel(`Rename queued for ${targetPath}`);
+  };
+
+  const handleExplorerInlineEditValueChange = (
+    value: string,
+    edit: WorkspaceExplorerInlineEditState,
+  ) => {
+    setExplorerInlineEdit({ ...edit, error: undefined, value });
+  };
+
+  const handleExplorerInlineEditCommit = ({
+    edit,
+    value,
+  }: WorkspaceExplorerInlineEditCommitMeta) => {
+    const name = value.trim();
+    if (!isSimpleWorkspaceName(name)) {
+      setExplorerInlineEditError(edit, 'Use a simple file or folder name.');
+      return;
+    }
+
+    if (edit.kind === 'create-file' || edit.kind === 'create-folder') {
+      const parentPath = edit.parentPath ?? '';
+      const path = joinWorkspacePath(parentPath, name);
+      if (!isWorkspaceEntryPathAvailable({ files, folders, path })) {
+        setExplorerInlineEditError(edit, `${name} already exists.`);
+        return;
+      }
+
+      if (edit.kind === 'create-file') {
+        createWorkspaceFile({ content: '', path, source: 'user' });
+        setExplorerSelection({ anchorPath: path, paths: [path] });
+        setLastCommandLabel(`Created ${path}`);
+      } else {
+        createWorkspaceFolder(path);
+        setLastCommandLabel(`Created folder ${path}`);
+      }
+
+      setExplorerInlineEdit(undefined);
+      return;
+    }
+
+    const sourcePath = edit.path ?? '';
+    const destinationPath = joinWorkspacePath(parentPathOf(sourcePath), name);
+    if (
+      !sourcePath ||
+      !destinationPath ||
+      !isWorkspaceEntryPathAvailable({
+        excludedPaths: [sourcePath],
+        files,
+        folders,
+        path: destinationPath,
+      })
+    ) {
+      setExplorerInlineEditError(edit, `${name} already exists.`);
+      return;
+    }
+
+    if (sourcePath === destinationPath) {
+      setExplorerInlineEdit(undefined);
+      return;
+    }
+
+    if (edit.kind === 'rename-file') {
+      renameWorkspaceFile(sourcePath, name);
+      setExplorerSelection((selection) => ({
+        anchorPath: selection.anchorPath === sourcePath ? destinationPath : selection.anchorPath,
+        paths: selection.paths.map((path) => (path === sourcePath ? destinationPath : path)),
+      }));
+      setLastCommandLabel(`Renamed ${sourcePath} to ${destinationPath}`);
+      setExplorerInlineEdit(undefined);
+      return;
+    }
+
+    const renameDescendantPath = (currentPath: string) =>
+      currentPath === sourcePath
+        ? destinationPath
+        : currentPath.startsWith(`${sourcePath}/`)
+          ? `${destinationPath}/${currentPath.slice(sourcePath.length + 1)}`
+          : currentPath;
+
+    renameWorkspaceFolder(sourcePath, name);
+    setExplorerSelection((selection) => ({
+      anchorPath: selection.anchorPath
+        ? renameDescendantPath(selection.anchorPath)
+        : selection.anchorPath,
+      paths: selection.paths.map(renameDescendantPath),
+    }));
+    setLastCommandLabel(`Renamed folder ${sourcePath} to ${destinationPath}`);
+    setExplorerInlineEdit(undefined);
+  };
+
+  const requestWorkspaceDelete = (node: WorkspaceTreeNode, actionPaths: string[] = [node.path]) => {
+    const targetPaths = actionPaths.length > 0 ? actionPaths : [node.path];
+    if (node.type === 'folder') {
+      setPendingDelete({ paths: [node.path], type: 'folder' });
+      return;
+    }
+
+    const filePathSet = new Set(files.map((file) => file.path));
+    const fileActionPaths = targetPaths.filter((path) => filePathSet.has(path));
+    if (fileActionPaths.length === 0) return;
+
+    setPendingDelete({ paths: fileActionPaths, type: 'files' });
+  };
+
+  const handleExplorerRequestDelete = (meta: WorkspaceExplorerItemKeyboardActionMeta) => {
+    requestWorkspaceDelete(meta.node, meta.actionPaths);
+  };
+
+  const handleExplorerRequestRename = (meta: WorkspaceExplorerItemKeyboardActionMeta) => {
+    requestWorkspaceRename(meta.node, meta.actionPaths);
+  };
+
+  const handleExplorerRequestMove = (meta: WorkspaceExplorerMoveRequestMeta) => {
+    const plan = getWorkspaceFileMovePlan({
+      files,
+      folders,
+      sourcePaths: meta.sourcePaths,
+      targetFolderPath: meta.targetFolderPath,
+    });
+
+    plan.moves.forEach((move) => {
+      moveWorkspaceFile(move.sourcePath, plan.targetFolderPath);
+    });
+
+    if (plan.moves.length > 0) {
+      setExplorerSelection({
+        anchorPath: plan.moves[plan.moves.length - 1]?.destinationPath,
+        paths: plan.moves.map((move) => move.destinationPath),
+      });
+    }
+
+    const targetLabel = plan.targetFolderPath || 'workspace root';
+    if (plan.moves.length === 0) {
+      setLastCommandLabel(`Move blocked for ${plan.blockedPaths.length} files`);
+      return;
+    }
+
+    setLastCommandLabel(
+      plan.blockedPaths.length > 0
+        ? `Moved ${plan.moves.length} files to ${targetLabel}, blocked ${plan.blockedPaths.length}`
+        : `Moved ${plan.moves.length} files to ${targetLabel}`,
+    );
   };
 
   const createWorkbenchMenuItems = (): ContextMenuItem[] => [
@@ -552,43 +818,107 @@ function IntegratedWorkbenchShell() {
     },
   ];
 
-  const createWorkspaceMenuItems = (node: WorkspaceTreeNode): ContextMenuItem[] => [
+  const createExplorerRootMenuItems = (): ContextMenuItem[] => [
     {
-      id: 'open',
-      label: node.type === 'folder' ? 'Reveal folder' : 'Open file',
-      icon: node.type === 'folder' ? 'codicon-folder-opened' : 'codicon-go-to-file',
-      onSelect: () => {
-        if (node.type === 'folder') {
-          if (!expandedPaths.has(node.path)) {
-            toggleFolder(node.path);
-          }
-          setLastCommandLabel(`Revealed ${node.path}`);
-          return;
-        }
-        activateFile(node.path);
-      },
+      id: 'workspace.new-file',
+      label: 'New file',
+      icon: 'codicon-new-file',
+      onSelect: () => startWorkspaceCreate('create-file'),
     },
     {
-      id: 'copy-path',
-      label: 'Copy path',
-      icon: 'codicon-copy',
-      onSelect: () => setLastCommandLabel(`Copied ${node.path}`),
+      id: 'workspace.new-folder',
+      label: 'New folder',
+      icon: 'codicon-new-folder',
+      onSelect: () => startWorkspaceCreate('create-folder'),
     },
-    { id: 'workspace-separator', type: 'separator' },
-    {
-      id: 'rename',
-      label: 'Rename',
-      icon: 'codicon-edit',
-      onSelect: () => setLastCommandLabel(`Rename queued for ${node.path}`),
-    },
-    {
-      id: 'delete',
-      label: 'Delete',
-      icon: 'codicon-trash',
-      danger: true,
-      onSelect: () => setLastCommandLabel(`Delete queued for ${node.path}`),
-    },
+    { id: 'explorer-root-separator', type: 'separator' },
+    ...createWorkbenchMenuItems(),
   ];
+
+  const createWorkspaceMenuItems = (
+    node: WorkspaceTreeNode,
+    actionPaths: string[] = [node.path],
+  ): ContextMenuItem[] => {
+    const targetPaths = actionPaths.length > 0 ? actionPaths : [node.path];
+    const filePathSet = new Set(files.map((file) => file.path));
+    const fileActionPaths =
+      node.type === 'file' ? targetPaths.filter((path) => filePathSet.has(path)) : [];
+    const multiFileAction = fileActionPaths.length > 1;
+
+    return [
+      ...(node.type === 'folder'
+        ? ([
+            {
+              id: 'workspace.new-file',
+              label: 'New file',
+              icon: 'codicon-new-file',
+              onSelect: () => startWorkspaceCreate('create-file', node.path),
+            },
+            {
+              id: 'workspace.new-folder',
+              label: 'New folder',
+              icon: 'codicon-new-folder',
+              onSelect: () => startWorkspaceCreate('create-folder', node.path),
+            },
+            { id: 'workspace-create-separator', type: 'separator' },
+          ] satisfies ContextMenuItem[])
+        : []),
+      {
+        id: 'open',
+        label:
+          node.type === 'folder'
+            ? 'Reveal folder'
+            : multiFileAction
+              ? 'Open selected files'
+              : 'Open file',
+        icon: node.type === 'folder' ? 'codicon-folder-opened' : 'codicon-go-to-file',
+        onSelect: () => {
+          if (node.type === 'folder') {
+            if (!expandedPaths.has(node.path)) {
+              toggleFolder(node.path);
+            }
+            setLastCommandLabel(`Revealed ${node.path}`);
+            return;
+          }
+
+          fileActionPaths.forEach(openFile);
+          setLastCommandLabel(
+            multiFileAction ? `Opened ${fileActionPaths.length} files` : `Opened ${node.path}`,
+          );
+        },
+      },
+      {
+        id: 'copy-path',
+        label: targetPaths.length > 1 ? 'Copy paths' : 'Copy path',
+        icon: 'codicon-copy',
+        onSelect: () =>
+          setLastCommandLabel(
+            targetPaths.length > 1 ? `Copied ${targetPaths.length} paths` : `Copied ${node.path}`,
+          ),
+      },
+      { id: 'workspace-separator', type: 'separator' },
+      {
+        id: 'rename',
+        label: 'Rename',
+        icon: 'codicon-edit',
+        disabled: targetPaths.length !== 1,
+        onSelect: () => requestWorkspaceRename(node, targetPaths),
+      },
+      {
+        id: 'delete',
+        label:
+          node.type === 'folder'
+            ? 'Delete folder'
+            : multiFileAction
+              ? `Delete ${fileActionPaths.length} files`
+              : 'Delete',
+        icon: 'codicon-trash',
+        danger: true,
+        disabled: node.type === 'file' && fileActionPaths.length === 0,
+        onSelect: () => requestWorkspaceDelete(node, targetPaths),
+      },
+    ];
+  };
 
   const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && filteredSearchResults[0]) {
@@ -665,7 +995,13 @@ function IntegratedWorkbenchShell() {
                   const target = event.target as HTMLElement;
                   if (target.closest('button, input, textarea, .ui-context-menu')) return;
 
-                  openContextMenu(event, createWorkbenchMenuItems(), 'Primary sidebar menu');
+                  openContextMenu(
+                    event,
+                    activeActivityId === 'explorer'
+                      ? createExplorerRootMenuItems()
+                      : createWorkbenchMenuItems(),
+                    'Primary sidebar menu',
+                  );
                 }}
               >
                 {activeActivityId === 'chat' ? (
@@ -688,7 +1024,25 @@ function IntegratedWorkbenchShell() {
                 ) : (
                   <SideBarViewFrame
                     title={activeActivity.label}
-                    actions={<IconButton icon="codicon-refresh" label="Refresh" />}
+                    actions={
+                      activeActivityId === 'explorer' ? (
+                        <>
+                          <IconButton
+                            icon="codicon-new-file"
+                            label="New file"
+                            onClick={() => startWorkspaceCreate('create-file')}
+                          />
+                          <IconButton
+                            icon="codicon-new-folder"
+                            label="New folder"
+                            onClick={() => startWorkspaceCreate('create-folder')}
+                          />
+                          <IconButton icon="codicon-refresh" label="Refresh" />
+                        </>
+                      ) : (
+                        <IconButton icon="codicon-refresh" label="Refresh" />
+                      )
+                    }
                     headerAddon={
                       <SideBarHeaderControl>
                         {activeActivityId === 'search' ? (
@@ -728,15 +1082,33 @@ function IntegratedWorkbenchShell() {
                         activePath={selectedPath}
                         expandedPaths={expandedPaths}
                         filterQuery={filterQuery}
+                        inlineEdit={explorerInlineEdit}
                         nodes={workspaceTree}
+                        selectedPaths={explorerSelection.paths}
+                        selectionAnchorPath={explorerSelection.anchorPath}
                         onActivateFile={activateFile}
-                        onItemContextMenu={(event, node) =>
+                        onInlineEditCancel={() => {
+                          setExplorerInlineEdit(undefined);
+                          setLastCommandLabel('Inline edit canceled');
+                        }}
+                        onInlineEditCommit={handleExplorerInlineEditCommit}
+                        onInlineEditValueChange={handleExplorerInlineEditValueChange}
+                        onItemContextMenu={(event, node, meta) =>
                           openContextMenu(
                             event,
-                            createWorkspaceMenuItems(node),
+                            createWorkspaceMenuItems(node, meta.actionPaths),
                             'Workspace item menu',
                           )
                         }
+                        onRequestDelete={handleExplorerRequestDelete}
+                        onRequestMove={handleExplorerRequestMove}
+                        onRequestRename={handleExplorerRequestRename}
+                        onSelectionChange={(selection, meta) => {
+                          setExplorerSelection(selection);
+                          if (meta.mode !== 'single') {
+                            setLastCommandLabel(`${selection.paths.length} files selected`);
+                          }
+                        }}
                         onToggleFolder={toggleFolder}
                       />
                     ) : null}
@@ -773,7 +1145,9 @@ function IntegratedWorkbenchShell() {
       </div>
       <StatusBar compact>
         <StatusBarSection>
-          <StatusBarItem icon={<span className="workbench-status-dot" />}>Idle</StatusBarItem>
+          <StatusBarItem icon={<span className="workbench-status-dot" />}>
+            {lastCommandLabel}
+          </StatusBarItem>
         </StatusBarSection>
         <StatusBarSection align="end">
           <StatusBarItem
@@ -800,6 +1174,35 @@ function IntegratedWorkbenchShell() {
           x={contextMenu.x}
           y={contextMenu.y}
           onClose={() => setContextMenu(null)}
+        />
+      ) : null}
+      {pendingDelete ? (
+        <ConfirmDialog
+          confirmLabel="Delete"
+          detail={
+            <div className="workbench-delete-targets">
+              {pendingDelete.paths.map((path) => (
+                <code key={path}>{path}</code>
+              ))}
+            </div>
+          }
+          message={
+            pendingDelete.type === 'folder'
+              ? 'Delete this folder and its files?'
+              : pendingDelete.paths.length > 1
+                ? 'Delete selected workspace files?'
+                : 'Delete this workspace file?'
+          }
+          title={
+            pendingDelete.type === 'folder'
+              ? 'Delete Folder'
+              : pendingDelete.paths.length > 1
+                ? 'Delete Files'
+                : 'Delete File'
+          }
+          variant="danger"
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={confirmPendingDelete}
         />
       ) : null}
       {settingsOpen ? (

@@ -22,6 +22,38 @@ export interface WriteWorkspaceFileInput {
   updatedAt?: string;
 }
 
+export interface WorkspaceFileMove {
+  destinationPath: string;
+  sourcePath: string;
+}
+
+export interface WorkspaceFileMovePlan {
+  blockedPaths: string[];
+  moves: WorkspaceFileMove[];
+  targetFolderPath: string;
+}
+
+export interface WorkspaceFileMovePlanInput {
+  files: WorkspaceFile[];
+  folders?: string[];
+  sourcePaths: Iterable<string>;
+  targetFolderPath?: string;
+}
+
+export interface WorkspaceEntryPathAvailabilityInput {
+  excludedPaths?: Iterable<string>;
+  files: WorkspaceFile[];
+  folders?: string[];
+  path: string;
+}
+
+export interface WorkspaceEntryNameSuggestionInput {
+  files: WorkspaceFile[];
+  folders?: string[];
+  parentPath?: string;
+  preferredName: string;
+}
+
 export interface VirtualWorkspaceInitialState {
   expandedPaths?: Iterable<string>;
   files?: WorkspaceFile[];
@@ -158,6 +190,110 @@ function expandParents(expandedPaths: Set<string>, path: string) {
 function pruneExpandedPaths(expandedPaths: Set<string>, files: WorkspaceFile[], folders: string[]) {
   const foldersByPath = folderPathSet(files, folders);
   return new Set([...expandedPaths].filter((path) => foldersByPath.has(path)));
+}
+
+export function isWorkspaceEntryPathAvailable({
+  excludedPaths = [],
+  files,
+  folders = [],
+  path,
+}: WorkspaceEntryPathAvailabilityInput) {
+  const normalizedPath = normalizeWorkspacePath(path);
+  if (!normalizedPath) return false;
+
+  const ignoredPaths = [...excludedPaths].map(normalizeWorkspacePath).filter(Boolean);
+  const isIgnoredPath = (currentPath: string) =>
+    ignoredPaths.some((ignoredPath) => isUnderPath(currentPath, ignoredPath));
+
+  return !hasPathConflict(
+    normalizeFiles(files).filter((file) => !isIgnoredPath(file.path)),
+    normalizeFolders(folders).filter((folder) => !isIgnoredPath(folder)),
+    normalizedPath,
+  );
+}
+
+export function getAvailableWorkspaceEntryName({
+  files,
+  folders = [],
+  parentPath = '',
+  preferredName,
+}: WorkspaceEntryNameSuggestionInput) {
+  const normalizedParentPath = normalizeWorkspacePath(parentPath);
+  const trimmedName = preferredName.trim();
+  if (!isSimpleWorkspaceName(trimmedName)) return trimmedName;
+
+  const extensionIndex = trimmedName.lastIndexOf('.');
+  const hasExtension = extensionIndex > 0;
+  const baseName = hasExtension ? trimmedName.slice(0, extensionIndex) : trimmedName;
+  const extension = hasExtension ? trimmedName.slice(extensionIndex) : '';
+  let candidateName = trimmedName;
+  let suffix = 2;
+
+  while (
+    !isWorkspaceEntryPathAvailable({
+      files,
+      folders,
+      path: joinWorkspacePath(normalizedParentPath, candidateName),
+    })
+  ) {
+    candidateName = `${baseName}-${suffix}${extension}`;
+    suffix += 1;
+  }
+
+  return candidateName;
+}
+
+export function getWorkspaceFileMovePlan({
+  files,
+  folders = [],
+  sourcePaths,
+  targetFolderPath = '',
+}: WorkspaceFileMovePlanInput): WorkspaceFileMovePlan {
+  const normalizedFiles = normalizeFiles(files);
+  const normalizedFolders = normalizeFolders(folders);
+  const targetPath = normalizeWorkspacePath(targetFolderPath);
+  const sourcePathSet = new Set([...sourcePaths].map(normalizeWorkspacePath).filter(Boolean));
+  const blockedPaths = new Set<string>();
+  const moves: WorkspaceFileMove[] = [];
+  const filesByPath = fileMap(normalizedFiles);
+  const foldersByPath = folderPathSet(normalizedFiles, normalizedFolders);
+  const destinationPathSet = new Set<string>();
+
+  if (targetPath && !foldersByPath.has(targetPath)) {
+    return {
+      blockedPaths: [...sourcePathSet],
+      moves,
+      targetFolderPath: targetPath,
+    };
+  }
+
+  const filesOutsideSources = normalizedFiles.filter((file) => !sourcePathSet.has(file.path));
+
+  sourcePathSet.forEach((sourcePath) => {
+    if (!filesByPath.has(sourcePath) || parentPathOf(sourcePath) === targetPath) {
+      blockedPaths.add(sourcePath);
+      return;
+    }
+
+    const destinationPath = joinWorkspacePath(targetPath, fileNameOfPath(sourcePath));
+    if (
+      !destinationPath ||
+      destinationPathSet.has(destinationPath) ||
+      hasPathConflict(filesOutsideSources, normalizedFolders, destinationPath)
+    ) {
+      blockedPaths.add(sourcePath);
+      return;
+    }
+
+    destinationPathSet.add(destinationPath);
+    moves.push({ destinationPath, sourcePath });
+  });
+
+  return {
+    blockedPaths: [...blockedPaths],
+    moves,
+    targetFolderPath: targetPath,
+  };
 }
 
 export function initializeVirtualWorkspaceState({
