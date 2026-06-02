@@ -19,6 +19,7 @@
   ],
   "dependencies": {
     "@newchobo-ui/tokens": "workspace:*",
+    "@newchobo-ui/workspace": "workspace:*",
     "@vscode/codicons": "^0.0.45"
   },
   "peerDependencies": {

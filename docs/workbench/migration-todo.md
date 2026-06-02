@@ -13,6 +13,68 @@ internal command names into this package.
   headless state helpers.
 - Keep Storybook as the visual and interaction validation surface.
 - Use public mock data and mock runtime adapters for integration scenarios.
+- Split product-neutral logic into framework-neutral packages before expanding
+  React components, so Vue, desktop, and future bindings can share the same
+  workspace, command, and runtime contracts.
+
+## Reference Analysis
+
+The migration should use nearby reference implementations as behavior and
+architecture examples, not as source to copy wholesale. Public documentation
+must avoid naming private projects, local repository paths, internal package
+names, storage keys, service names, or product-specific command IDs.
+
+### Functional Reference
+
+The closest functional reference covers the missing workspace and chat behavior.
+
+- The virtual workspace state model provides file, folder, tab, selection,
+  expansion, rename, move, delete, and search-query behavior. The package should
+  reuse the behavior shape, but not the framework store, persistence key,
+  actor naming, or product-specific defaults.
+- The Explorer implementation covers most missing workflows: multi-select,
+  range select, inline create, inline rename, folder delete, drag and drop, root
+  drop, context menus, and keyboard shortcuts. The reusable parts should be
+  extracted as headless helpers and controlled component props rather than
+  copied as one large component.
+- The command/menu implementation should inform workspace command IDs, labels,
+  shortcut metadata, menu item projection, and command execution wiring.
+- The runtime implementation provides a useful event shape for chat, status,
+  streaming chunks, and file write events. Public runtime contracts must avoid
+  private service and domain terminology.
+
+### Architecture Reference
+
+The stronger architecture reference covers workbench-scale package boundaries.
+
+- The core command model shows a framework-neutral command registry with
+  context-key based visibility and enabled state.
+- The workbench chrome model shows how shell UI can be separated into activity
+  bar, shell, tabs, toolbar, panes, breadcrumbs, and status surfaces.
+- The UI implementation depends on internal aliases, Tailwind utility classes,
+  and product-specific naming, so only the package boundaries and contracts
+  should be reused.
+
+## Target Package Map
+
+The package should evolve beyond a single React package.
+
+| Package                    | Role                                                                                 | Initial source of truth                                    |
+| -------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `@newchobo-ui/tokens`      | CSS variables, base theme, visual tokens                                             | Existing tokens package                                    |
+| `@newchobo-ui/core`        | Framework-neutral command registry, context keys, event/disposable helpers           | Architecture reference patterns                            |
+| `@newchobo-ui/workspace`   | Framework-neutral workspace paths, tree, search, selection, mutations, draft helpers | Existing React workspace helpers plus functional behaviors |
+| `@newchobo-ui/runtime`     | Framework-neutral chat/runtime events, mock runtime, workspace patch adapters        | Product-neutral runtime event shape                        |
+| `@newchobo-ui/react`       | React primitives and workbench components bound to the neutral packages              | Existing React package                                     |
+| Story/test fixture modules | Public mock files, mock messages, scenario adapters                                  | Storybook only unless consumers need them                  |
+
+## Current Implementation Progress
+
+- A headless virtual workspace reducer exists in `@newchobo-ui/react`, with unit
+  tests for path, search, create, rename, move, and delete behavior.
+- The next migration step is to move path, tree, search, types, and the pure
+  virtual workspace model into `@newchobo-ui/workspace`, then keep
+  `@newchobo-ui/react` as a binding layer.
 
 ## Current Differences From Real Use Cases
 
