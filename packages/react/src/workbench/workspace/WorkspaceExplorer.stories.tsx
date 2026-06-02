@@ -471,6 +471,42 @@ export const DeleteAndDragDropFlow: Story = {
   },
 };
 
+export const RootDropFlow: Story = {
+  render: () => <ExplorerHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const workspaceRoot = canvas.getByRole('list', { name: 'Workspace files' });
+    const docsIntro = canvas.getByRole('button', { name: 'intro.md' });
+
+    const rootDropDataTransfer = createStoryDataTransfer();
+    await fireEvent.dragStart(docsIntro, { dataTransfer: rootDropDataTransfer });
+    await fireEvent.dragOver(workspaceRoot, { dataTransfer: rootDropDataTransfer });
+    await fireEvent.drop(workspaceRoot, { dataTransfer: rootDropDataTransfer });
+
+    await expect(canvas.getByLabelText('Explorer event log')).toHaveTextContent(
+      'Moved docs/intro.md to intro.md',
+    );
+    await expect(await canvas.findByRole('button', { name: 'intro.md' })).toHaveAttribute(
+      'data-selected',
+      'true',
+    );
+
+    const invalidDropDataTransfer = createStoryDataTransfer();
+    await fireEvent.dragStart(canvas.getByRole('button', { name: 'intro.md' }), {
+      dataTransfer: invalidDropDataTransfer,
+    });
+    await fireEvent.dragOver(workspaceRoot, { dataTransfer: invalidDropDataTransfer });
+    await fireEvent.drop(workspaceRoot, { dataTransfer: invalidDropDataTransfer });
+
+    await expect(canvas.getByLabelText('Explorer event log')).toHaveTextContent(
+      'Moved docs/intro.md to intro.md',
+    );
+    await expect(canvas.getByLabelText('Explorer event log')).not.toHaveTextContent(
+      'Moved intro.md to intro.md',
+    );
+  },
+};
+
 function isUnderWorkspacePath(path: string, parentPath: string) {
   return path === parentPath || path.startsWith(`${parentPath}/`);
 }

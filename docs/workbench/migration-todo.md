@@ -117,7 +117,7 @@ The package should evolve beyond a single React package.
   or rename reducer actions.
 - `WorkspaceExplorer` has component-level Storybook play coverage for root and
   folder create, `F2` rename, keyboard delete, multi-selection recovery, and
-  multi-file drag/drop.
+  folder/root drag-drop flows.
 - `WorkspaceSearchPanel` is a sidebar-oriented controlled component with query
   input, clear action, result count, empty states, `Enter` first-result
   activation, `Escape` clear behavior, and result context-menu hooks.
@@ -160,7 +160,7 @@ still not a complete real-use workflow.
 | Explorer creation      | Controlled inline create row with root/folder entry and path validation                                                                                         | New file/folder at root or inside a folder                                      | Component play coverage added; add test-runner gate later |
 | Explorer rename        | Controlled inline rename row from context menu or `F2`, with path validation                                                                                    | Inline rename, `F2`, blur commit/cancel                                         | Component play coverage added; add blur/cancel variants   |
 | Explorer deletion      | Explorer emits controlled delete requests; integrated story confirms file, multi-file, and folder targets                                                       | File, multi-file, and folder deletion with controlled component callbacks       | Component play coverage added; add folder-delete variant  |
-| Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves                                                    | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add root-drop variant      |
+| Explorer drag and drop | Explorer emits configurable drag payloads and move requests; story validates and dispatches multi-file moves plus root drops                                    | Drag one or many files to folder/root with visual and interaction test coverage | Component play coverage added; add conflict variants      |
 | Search                 | Sidebar search panel owns the controlled query field, clear action, result count, keyboard actions, empty states, and command-backed result menu story coverage | Search panel should share command/menu projection with other workspace surfaces | Add test-runner gate for Search play coverage             |
 | Workspace editor       | Monaco editor, tabs, dirty state, command-backed save/discard toolbar actions, command-backed tab context menus, and framework-neutral draft helpers exist      | Tab actions should coordinate with shared workspace state                       | Add delete/open-tab coordination coverage                 |
 | Chat                   | Generic chat UI plus mock runtime story coverage for send, cancel, streaming chunks, status, workspace write patches, and workspace delete patches              | Runtime-driven send/cancel, streaming chunks, status integration                | Add test-runner gate later if desired                     |
@@ -217,8 +217,9 @@ still not a complete real-use workflow.
     framework-neutral move-plan helper.
   - Component-level Storybook play coverage covers multi-file drop into a
     folder.
-  - Remaining: single-file drop, root drop, and invalid-drop component play
-    variants.
+  - Component-level Storybook play coverage covers single-file root drop and
+    same-parent invalid root drop recovery.
+  - Remaining: path-conflict invalid-drop component play variants.
 - Context menus:
   - Root menu: new file, new folder.
   - File menu: open, rename, copy path, delete.
@@ -426,7 +427,9 @@ independently.
    - Integrated Chat submit plus runtime workspace write patch coverage added.
    - Component-level Chat streaming, cancel, write patch, and delete patch
      coverage added.
-   - Remaining: Explorer blur/cancel, folder delete, root drop, invalid drop,
+   - Component-level Explorer root-drop and same-parent invalid-drop coverage
+     added.
+   - Remaining: Explorer blur/cancel, folder delete, path-conflict invalid drop,
      and optional automated test-runner gate.
 9. Run `pnpm validate` and browser smoke after each major feature group.
 
