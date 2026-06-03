@@ -224,7 +224,12 @@ describe('WorkspaceSaveService', () => {
 
   it('commit delegates through saveDraft and returns failure for repository errors', async () => {
     const repository = new FailingSaveWorkspaceFileRepository();
-    const service = new WorkspaceSaveService({ repository });
+    let requestCounter = 0;
+    const service = new WorkspaceSaveService({
+      repository,
+      requestId: () => `save-commit-failed-${++requestCounter}`,
+      now: () => '2026-06-03T00:00:00.000Z',
+    });
 
     const result = await service.commit({
       content: 'x',
@@ -236,6 +241,36 @@ describe('WorkspaceSaveService', () => {
       code: 'unknown',
       message: 'save failed',
       path: 'src/index.ts',
+      requestId: 'save-commit-failed-1',
+      requestedAt: '2026-06-03T00:00:00.000Z',
     });
+    expect(requestCounter).toBe(1);
+  });
+
+  it('commit keeps request metadata from outer entrypoint and does not regenerate it internally', async () => {
+    const repository = new InMemoryWorkspaceFileRepository();
+    let requestCounter = 0;
+    const service = new WorkspaceSaveService({
+      repository,
+      requestId: () => `save-commit-${++requestCounter}`,
+      now: () => '2026-06-03T00:00:00.001Z',
+    });
+
+    const result = await service.commit({
+      content: 'committed',
+      path: 'src/index.ts',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'save:success',
+      outcome: 'created',
+      file: {
+        content: 'committed',
+        path: 'src/index.ts',
+      },
+      requestId: 'save-commit-1',
+      requestedAt: '2026-06-03T00:00:00.001Z',
+    });
+    expect(requestCounter).toBe(1);
   });
 });

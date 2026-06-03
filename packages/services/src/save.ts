@@ -52,7 +52,7 @@ export class WorkspaceSaveService {
       };
     }
 
-    return this.saveDraft({ content, path: sanitizedPath, source, mimeType });
+    return this.saveDraftWithMetadata({ content, path: sanitizedPath, source, mimeType }, requestMetadata);
   }
 
   async discard({ path }: { path: string }): Promise<SaveResult> {
@@ -96,6 +96,28 @@ export class WorkspaceSaveService {
     source,
   }: SaveDraftInput): Promise<SaveResult> {
     const requestMetadata = this.createRequestMetadata();
+    return this.saveDraftWithMetadata(
+      {
+        content,
+        mimeType,
+        path,
+        previousUpdatedAt,
+        source,
+      },
+      requestMetadata,
+    );
+  }
+
+  private async saveDraftWithMetadata(
+    {
+      content,
+      mimeType,
+      path,
+      previousUpdatedAt,
+      source,
+    }: SaveDraftInput,
+    requestMetadata: { requestId: string; requestedAt: string },
+  ): Promise<SaveResult> {
     const sanitizedPath = this.sanitizePath(path);
     if (!sanitizedPath) {
       return {
