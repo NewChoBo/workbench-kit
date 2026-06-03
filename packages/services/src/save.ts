@@ -3,6 +3,7 @@ import {
   type SaveDraftInput,
   type SaveInput,
   type SaveResult,
+  normalizeServiceFailureMessage,
   type WorkspaceFile,
   type WorkspaceFileRepository,
 } from '@newchobo-ui/contracts';
@@ -123,7 +124,7 @@ export class WorkspaceSaveService {
         file,
       };
     } catch (error) {
-      return this.failure('unknown', sanitizedPath, this.normalizeError(error));
+      return this.failure('unknown', sanitizedPath, normalizeServiceFailureMessage(error));
     }
   }
 
@@ -146,9 +147,5 @@ export class WorkspaceSaveService {
 
   private sanitizePath(path: string) {
     return normalizeServiceWorkspacePath(path);
-  }
-
-  private normalizeError(error: unknown) {
-    return error instanceof Error ? error.message : 'Unknown repository error';
   }
 }

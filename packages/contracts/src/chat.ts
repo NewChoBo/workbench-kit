@@ -1,4 +1,5 @@
 import type { WorkspacePatchEvent } from './patch';
+import type { ServiceListener } from './result';
 
 export type ChatMessageSource = 'assistant' | 'user';
 export type ChatSessionStatus = 'cancelled' | 'error' | 'idle' | 'running';
@@ -31,7 +32,7 @@ export type ChatStreamEvent =
   | ({ type: 'status' } & ChatStreamStatusPayload)
   | { type: 'workspace-patch'; patch: WorkspacePatchEvent };
 
-export type ChatTransportListener = (event: ChatStreamEvent) => void;
+export type ChatTransportListener = ServiceListener<ChatStreamEvent>;
 
 export interface ChatSendOptions {
   context?: Record<string, unknown>;
@@ -45,9 +46,7 @@ export interface ChatTransport {
   subscribe(listener: ChatTransportListener): () => void;
 }
 
-export interface ChatEventServiceListener {
-  (event: ChatStreamEvent): void;
-}
+export type ChatEventServiceListener = ServiceListener<ChatStreamEvent>;
 
 export interface ChatEventDispatcher {
   dispatch(event: ChatStreamEvent): void;
