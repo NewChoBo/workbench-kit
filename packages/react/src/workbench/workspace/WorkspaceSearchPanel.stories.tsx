@@ -101,7 +101,10 @@ function SearchHarness({ initialQuery = '' }: SearchHarnessProps) {
   };
 
   return (
-    <div className="workspace-search-panel-story" style={{ height: 460, width: 340 }}>
+    <div
+      className="workspace-search-panel-story"
+      style={{ height: 'min(calc(100% - 120px), 560px)', width: 'min(100%, 380px)' }}
+    >
       <WorkspaceSearchPanel
         activePath={activePath}
         query={query}

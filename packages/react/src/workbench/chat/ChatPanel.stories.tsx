@@ -103,7 +103,14 @@ function ChatRuntimeHarness({ response, title = 'Runtime Chat' }: ChatRuntimeHar
   }, [chatService, runtime]);
 
   return (
-    <div style={{ display: 'grid', gridTemplateRows: '1fr auto', height: 520, width: 360 }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateRows: '1fr auto',
+        height: 'min(calc(100% - 120px), 620px)',
+        width: 'min(100%, 420px)',
+      }}
+    >
       <ChatPanel
         assistantLabel="Assistant"
         emptyLabel="Start a runtime conversation."

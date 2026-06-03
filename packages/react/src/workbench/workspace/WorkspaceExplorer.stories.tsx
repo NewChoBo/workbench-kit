@@ -391,7 +391,7 @@ function ExplorerHarness({
             {status}
           </div>
         }
-        style={{ height: 480, width: 320 }}
+        style={{ height: 'min(calc(100% - 120px), 560px)', width: 'min(100%, 380px)' }}
       >
         <WorkspaceExplorer
           activePath={workspace.selectedPath}
