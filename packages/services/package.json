@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./save": "./src/save.ts",
     "./chat": "./src/chat.ts",
-    "./patch": "./src/patch.ts"
+    "./patch": "./src/patch.ts",
+    "./library": "./src/library.ts"
   },
   "files": [
     "src"
