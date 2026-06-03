@@ -69,6 +69,10 @@ export interface WorkbenchStandaloneEntryState<TActivityId extends string = stri
   primarySidebarMinPercent?: number;
   primarySidebarMaxPercent?: number;
   theme: WorkbenchTheme;
+  isSettingsOpen?: boolean;
+  settingsCategoryId?: string;
+  settingsScopeId?: string;
+  settingsSearchValue?: string;
   selectedFilePath?: string;
   openFilePaths?: readonly string[];
 }

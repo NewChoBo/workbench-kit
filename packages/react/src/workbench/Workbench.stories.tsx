@@ -55,7 +55,7 @@ import {
   type WorkbenchWorkspaceCommandContext,
 } from './commands';
 import { WorkbenchSettingsModal, WorkbenchSettingsSection } from './settings';
-import { WorkbenchShell } from './WorkbenchShell';
+import { WorkbenchStandaloneShell } from './WorkbenchStandaloneShell';
 import { useWorkbenchShellState } from './shellState';
 import { SplitView } from './SplitView';
 import { StatusBar, type StatusBarItemModel, type StatusBarSectionModel } from './StatusBar';
@@ -148,9 +148,17 @@ const storyShellCommandActivities = storyActivityOrder.map((id) => ({
         : 'codicon-comment-discussion',
 }));
 
+const storyWorkbenchShellCommands = createWorkbenchShellCommands<StoryActivityId>({
+  activities: storyShellCommandActivities,
+});
+
+const workbenchShellCommandRegistry = createCommandRegistry<WorkbenchShellCommandContext<StoryActivityId>>(
+  storyWorkbenchShellCommands,
+);
+
 const storyCommandRegistry = createCommandRegistry<StoryCommandContext>([
-  ...createWorkbenchShellCommands({ activities: storyShellCommandActivities }),
-  ...createWorkbenchWorkspaceCommands(),
+  ...storyWorkbenchShellCommands,
+  ...createWorkbenchWorkspaceCommands<StoryCommandContext>(),
 ]);
 
 const workbenchMenuEntries: CommandMenuEntry<StoryCommandContext>[] =
@@ -1254,176 +1262,199 @@ function IntegratedWorkbenchShell() {
       />
     </main>
   );
+const workbenchBootstrap = {
+  contract: {
+    activities: storyShellCommandActivities,
+    commandRegistry: workbenchShellCommandRegistry,
+      statusSections: [],
+      initialTheme: colorTheme,
+    },
+    initialFiles: workspaceFiles,
+    workspace: {
+      openFile,
+      saveFile,
+      deleteFiles,
+      moveFiles: (paths: string[], targetParentPath?: string) => {
+        paths.forEach((path: string) => moveWorkspaceFile(path, targetParentPath ?? ''));
+      },
+      rename: renameWorkspaceFile,
+    },
+    chat: {
+      onChatSubmit: () => undefined,
+      onCancelChat: () => {
+        chatService.cancel();
+      },
+    },
+    patch: {
+      onPatchApply: (patch: WorkspacePatchEvent) => workspacePatchService.applyPatch(patch),
+    },
+    save: {},
+    status: {},
+    initialState: {
+      activeActivityId,
+      isPrimarySidebarVisible: isPrimarySideBarVisible,
+      primarySidebarSizePercent: sideBarSizePercent,
+      primarySidebarMinPercent: 16,
+      primarySidebarMaxPercent: 40,
+      theme: colorTheme,
+      selectedFilePath: selectedPath,
+      openFilePaths: openPaths,
+    },
+  };
 
   return (
-    <WorkbenchShell
-      activityBar={{
-        items: getActivityItems(activeActivityId),
-        secondaryItems: [
-          {
-            id: 'settings',
-            label: 'Settings',
-            icon: <i className="codicon codicon-settings-gear" />,
-            active: settingsOpen,
-          },
-        ],
-        onContextMenu: (event) =>
-          openContextMenu(event, createWorkbenchMenuItems(), 'Activity bar menu'),
-        onItemActivate: (item) => {
-          if (item.id === 'settings') {
-            shell.openSettings();
-            return;
-          }
-
-          if (isStoryActivityId(item.id)) {
-            activateActivityFromBar(item.id);
-          }
-        },
-      }}
+    <WorkbenchStandaloneShell<StoryActivityId, StoryTheme>
+      bootstrap={workbenchBootstrap}
       compactStatus
-      onStatusItemActivate={activateStatusItem}
-      primarySidebar={{
-        className: 'ui-workbench-story-shell-split',
-        isVisible: isPrimarySideBarVisible,
-        maxPrimarySizePercent: 40,
-        minPrimarySizePercent: 16,
-        onSizePercentChange: shell.setPrimarySidebarSizePercent,
-        primarySizePercent: sideBarSizePercent,
-        node: (
-          <aside
-            aria-label="Primary sidebar"
-            className="workbench-primary-side-bar"
-            style={{ borderRight: '1px solid var(--color-border)' }}
-            onContextMenu={(event) => {
-              const target = event.target as HTMLElement;
-              if (target.closest('button, input, textarea, .ui-context-menu')) return;
-
-              openContextMenu(
-                event,
-                activeActivityId === 'explorer' ? createExplorerRootMenuItems() : createWorkbenchMenuItems(),
-                'Primary sidebar menu',
-              );
-            }}
-          >
-            {activeActivityId === 'chat' ? (
-              <ChatPanel
-                assistantLabel="Assistant"
-                disabled={runtimeStatus === 'error'}
-                emptyLabel="Ask about this workspace."
-                isRunning={runtimeStatus === 'running'}
-                messages={runtimeMessages}
-                placeholder="Ask about this workspace"
-                showTools
-                title="Chat"
-                value={chatDraft}
-                onCancel={() => chatService.cancel()}
-                onSubmit={(message) => {
-                  setChatDraft('');
-                  void chatService.sendMessage(message);
-                  setLastCommandLabel('Chat draft sent');
-                }}
-                onValueChange={setChatDraft}
-              />
-            ) : activeActivityId === 'search' ? (
-              <WorkspaceSearchPanel
-                activePath={selectedPath}
-                query={searchQuery}
-                results={filteredSearchResults}
-                onActivateResult={activateSearchResult}
-                onQueryChange={setSearchQuery}
-                onRefresh={() => setLastCommandLabel('Search refreshed')}
-                onResultContextMenu={(event, result) =>
-                  openContextMenu(
-                    event,
-                    createWorkspaceMenuItems({
-                      children: [],
-                      file: result.file,
-                      name: fileNameOfPath(result.path),
-                      path: result.path,
-                      type: 'file',
-                    }),
-                    'Search result menu',
-                  )
-                }
-              />
-            ) : (
-              <SideBarViewFrame
-                title={activeActivity.label}
-                actions={
-                  activeActivityId === 'explorer' ? (
-                    <>
-                      <IconButton
-                        icon="codicon-new-file"
-                        label="New file"
-                        onClick={() => startWorkspaceCreate('create-file')}
-                      />
-                      <IconButton
-                        icon="codicon-new-folder"
-                        label="New folder"
-                        onClick={() => startWorkspaceCreate('create-folder')}
-                      />
-                      <IconButton icon="codicon-refresh" label="Refresh" />
-                    </>
-                  ) : (
-                    <IconButton icon="codicon-refresh" label="Refresh" />
-                  )
-                }
-                headerAddon={
-                  <SideBarHeaderControl>
-                    <TextInput
-                      aria-label={`Filter ${activeActivity.label}`}
-                      controlWidth="full"
-                      placeholder="Filter"
-                      value={filterQuery}
-                      onChange={(event) => setFilterQuery(event.currentTarget.value)}
-                    />
-                  </SideBarHeaderControl>
-                }
-              >
-                <WorkspaceExplorer
-                  activePath={selectedPath}
-                  expandedPaths={expandedPaths}
-                  filterQuery={filterQuery}
-                  inlineEdit={explorerInlineEdit}
-                  nodes={workspaceTree}
-                  selectedPaths={explorerSelection.paths}
-                  selectionAnchorPath={explorerSelection.anchorPath}
-                  onActivateFile={activateFile}
-                  onInlineEditCancel={() => {
-                    setExplorerInlineEdit(undefined);
-                    setLastCommandLabel('Inline edit canceled');
-                  }}
-                  onInlineEditCommit={handleExplorerInlineEditCommit}
-                  onInlineEditValueChange={handleExplorerInlineEditValueChange}
-                  onItemContextMenu={(event, node, meta) =>
-                    openContextMenu(
-                      event,
-                      createWorkspaceMenuItems(node, meta.actionPaths),
-                      'Workspace item menu',
-                    )
-                  }
-                  onRequestDelete={handleExplorerRequestDelete}
-                  onRequestMove={handleExplorerRequestMove}
-                  onRequestRename={handleExplorerRequestRename}
-                  onSelectionChange={(selection, meta) => {
-                    setExplorerSelection(selection);
-                    if (meta.mode !== 'single') {
-                      setLastCommandLabel(`${selection.paths.length} files selected`);
-                    }
-                  }}
-                  onToggleFolder={toggleFolder}
-                />
-              </SideBarViewFrame>
-            )}
-          </aside>
-        ),
+      getStatusSections={() => statusSections}
+      minPrimarySidebarSizePercent={16}
+      maxPrimarySidebarSizePercent={40}
+      onActivityActivate={({ nextActivityId }) => {
+        activateActivityFromBar(nextActivityId);
+        setLastCommandLabel(`${storyActivities[nextActivityId].label} opened`);
       }}
+      onActivityBarContextMenu={(event) =>
+        openContextMenu(event, createWorkbenchMenuItems(), 'Activity bar menu')
+      }
+      onActivityBarItemActivate={(itemId) => {
+        if (isStoryActivityId(itemId)) {
+          activateActivityFromBar(itemId);
+        }
+      }}
+      onStatusItemActivate={activateStatusItem}
+      primarySidebarClassName="ui-workbench-story-shell-split"
       rootClassName="ide-root"
       rootStyle={{ height: 640, minHeight: 0 }}
-      secondaryArea={editorArea}
-      statusSections={statusSections}
-      theme={colorTheme}
-      overlays={
+      renderPrimarySidebar={() => (
+        <aside
+          aria-label="Primary sidebar"
+          className="workbench-primary-side-bar"
+          style={{ borderRight: '1px solid var(--color-border)' }}
+          onContextMenu={(event) => {
+            const target = event.target as HTMLElement;
+            if (target.closest('button, input, textarea, .ui-context-menu')) return;
+
+            openContextMenu(
+              event,
+              activeActivityId === 'explorer' ? createExplorerRootMenuItems() : createWorkbenchMenuItems(),
+              'Primary sidebar menu',
+            );
+          }}
+        >
+          {activeActivityId === 'chat' ? (
+            <ChatPanel
+              assistantLabel="Assistant"
+              disabled={runtimeStatus === 'error'}
+              emptyLabel="Ask about this workspace."
+              isRunning={runtimeStatus === 'running'}
+              messages={runtimeMessages}
+              placeholder="Ask about this workspace"
+              showTools
+              title="Chat"
+              value={chatDraft}
+              onCancel={() => chatService.cancel()}
+              onSubmit={(message) => {
+                setChatDraft('');
+                void chatService.sendMessage(message);
+                setLastCommandLabel('Chat draft sent');
+              }}
+              onValueChange={setChatDraft}
+            />
+          ) : activeActivityId === 'search' ? (
+            <WorkspaceSearchPanel
+              activePath={selectedPath}
+              query={searchQuery}
+              results={filteredSearchResults}
+              onActivateResult={activateSearchResult}
+              onQueryChange={setSearchQuery}
+              onRefresh={() => setLastCommandLabel('Search refreshed')}
+              onResultContextMenu={(event, result) =>
+                openContextMenu(
+                  event,
+                  createWorkspaceMenuItems({
+                    children: [],
+                    file: result.file,
+                    name: fileNameOfPath(result.path),
+                    path: result.path,
+                    type: 'file',
+                  }),
+                  'Search result menu',
+                )
+              }
+            />
+          ) : (
+            <SideBarViewFrame
+              title={activeActivity.label}
+              actions={
+                activeActivityId === 'explorer' ? (
+                  <>
+                    <IconButton
+                      icon="codicon-new-file"
+                      label="New file"
+                      onClick={() => startWorkspaceCreate('create-file')}
+                    />
+                    <IconButton
+                      icon="codicon-new-folder"
+                      label="New folder"
+                      onClick={() => startWorkspaceCreate('create-folder')}
+                    />
+                    <IconButton icon="codicon-refresh" label="Refresh" />
+                  </>
+                ) : (
+                  <IconButton icon="codicon-refresh" label="Refresh" />
+                )
+              }
+              headerAddon={
+                <SideBarHeaderControl>
+                  <TextInput
+                    aria-label={`Filter ${activeActivity.label}`}
+                    controlWidth="full"
+                    placeholder="Filter"
+                    value={filterQuery}
+                    onChange={(event) => setFilterQuery(event.currentTarget.value)}
+                  />
+                </SideBarHeaderControl>
+              }
+            >
+              <WorkspaceExplorer
+                activePath={selectedPath}
+                expandedPaths={expandedPaths}
+                filterQuery={filterQuery}
+                inlineEdit={explorerInlineEdit}
+                nodes={workspaceTree}
+                selectedPaths={explorerSelection.paths}
+                selectionAnchorPath={explorerSelection.anchorPath}
+                onActivateFile={activateFile}
+                onInlineEditCancel={() => {
+                  setExplorerInlineEdit(undefined);
+                  setLastCommandLabel('Inline edit canceled');
+                }}
+                onInlineEditCommit={handleExplorerInlineEditCommit}
+                onInlineEditValueChange={handleExplorerInlineEditValueChange}
+                onItemContextMenu={(event, node, meta) =>
+                  openContextMenu(
+                    event,
+                    createWorkspaceMenuItems(node, meta.actionPaths),
+                    'Workspace item menu',
+                  )
+                }
+                onRequestDelete={handleExplorerRequestDelete}
+                onRequestMove={handleExplorerRequestMove}
+                onRequestRename={handleExplorerRequestRename}
+                onSelectionChange={(selection, meta) => {
+                  setExplorerSelection(selection);
+                  if (meta.mode !== 'single') {
+                    setLastCommandLabel(`${selection.paths.length} files selected`);
+                  }
+                }}
+                onToggleFolder={toggleFolder}
+              />
+            </SideBarViewFrame>
+          )}
+        </aside>
+      )}
+      renderSecondaryArea={() => editorArea}
+      renderOverlays={() => (
         <>
           {contextMenu ? (
             <ContextMenu
@@ -1535,7 +1566,7 @@ function IntegratedWorkbenchShell() {
             />
           ) : null}
         </>
-      }
+      )}
     />
   );
 }

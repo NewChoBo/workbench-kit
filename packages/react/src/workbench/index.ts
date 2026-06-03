@@ -77,6 +77,11 @@ export type {
 } from './settings';
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';
+export { WorkbenchStandaloneShell } from './WorkbenchStandaloneShell';
+export type {
+  WorkbenchStandaloneShellContext,
+  WorkbenchStandaloneShellProps,
+} from './WorkbenchStandaloneShell';
 export type {
   WorkbenchActivityChangeEvent,
   WorkbenchActivityDescriptor,
