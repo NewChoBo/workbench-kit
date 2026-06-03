@@ -83,7 +83,7 @@ so existing `react` workbench can keep UI behavior while separating domain logic
 - [x] Stage 5: Failure-hygiene hardening.
 - [x] Stage 6: Service result metadata propagation.
 - [x] Stage 7: Adapter package extraction.
-- [ ] Stage 9: Library domain foundation.
+- [x] Stage 9: Library domain foundation.
 
 Current milestone is **standalone application launch hardening** (app shell + host runtime + services).
 VS Code extension packaging is intentionally deferred to the next milestone, and extension

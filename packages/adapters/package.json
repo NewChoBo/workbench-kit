@@ -9,6 +9,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./library": "./src/library.ts",
     "./runtime": "./src/runtime.ts",
     "./workspace": "./src/workspace.ts"
   },
