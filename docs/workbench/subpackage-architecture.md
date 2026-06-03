@@ -58,9 +58,19 @@ so existing `react` workbench can keep UI behavior while separating domain logic
    - Add adapter unit tests and include package in repository typecheck pipeline.
    - Exit condition: story runtime path flows through adapter APIs with unchanged behavior.
 
+9. **Stage 9: Library Domain Foundation (Non-UI)**
+   - Move appstore-style library manifest parsing and drag payload contracts into
+     `@newchobo-ui/contracts`.
+   - Aggregate library provider items through a dedicated service in `@newchobo-ui/services`.
+   - Add filtering/sorting/query support and provider cache with graceful error surfacing.
+   - Exit condition:
+     - manifest parser + drag payload helpers are validated by contract tests.
+     - library catalog service supports provider aggregation, query filtering, and cache reuse.
+     - failure provider entries are surfaced via provider summary state while preserving existing items.
+
 ### Stage Dependencies and Delivery Order
 
-- Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6 → Stage 7
+- Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6 → Stage 7 → Stage 9
 - No later stage proceeds until previous stage exit criteria and validation gates are completed.
 
 ## Branch Execution Status
@@ -73,6 +83,7 @@ so existing `react` workbench can keep UI behavior while separating domain logic
 - [x] Stage 5: Failure-hygiene hardening.
 - [x] Stage 6: Service result metadata propagation.
 - [x] Stage 7: Adapter package extraction.
+- [ ] Stage 9: Library domain foundation.
 
 Current milestone is **standalone application launch hardening** (app shell + host runtime + services).
 VS Code extension packaging is intentionally deferred to the next milestone, and extension

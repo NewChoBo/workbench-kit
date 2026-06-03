@@ -73,6 +73,33 @@ export {
   isPluginLifecycleFailure,
   isPluginLifecycleSuccess,
 } from './plugin';
+export type {
+  LibraryDragPayload,
+  LibraryCatalogSnapshot,
+  LibraryItemDescriptor,
+  LibraryItemKind,
+  LibraryManifest,
+  LibraryManifestErrorCode,
+  LibraryProvider,
+  LibraryProviderSummary,
+  LibraryQuery,
+  LibraryQueryOptions,
+  LibraryServiceResult,
+  LibrarySource,
+  LibrarySourceKind,
+  LibrarySortMode,
+  ServiceLibraryFailure,
+  ServiceLibrarySuccess,
+} from './library';
+export {
+  LIBRARY_DRAG_DATA_TYPE,
+  LIBRARY_DRAG_IDS_DATA_TYPE,
+  createLibraryDragPayload,
+  matchesLibraryItem,
+  parseLibraryDragPayload,
+  parseLibraryManifest,
+  parseLibraryManifestText,
+} from './library';
 export type { ServiceFailure, ServiceFailureCode, ServiceListener, ServiceResultEnvelope } from './result';
 export { normalizeServiceFailureMessage } from './result';
 export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from './save';
