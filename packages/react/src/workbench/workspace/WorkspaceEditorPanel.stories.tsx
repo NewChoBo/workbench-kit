@@ -44,7 +44,14 @@ function EditorHarness() {
   const [status, setStatus] = useState('Ready');
 
   return (
-    <div style={{ display: 'grid', gridTemplateRows: 'minmax(0, 1fr) auto', height: 520 }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateRows: 'minmax(0, 1fr) auto',
+        height: 'min(calc(100% - 96px), 680px)',
+        width: 'min(100%, 920px)',
+      }}
+    >
       <WorkspaceEditorPanel
         files={workspace.files}
         openPaths={workspace.openPaths}

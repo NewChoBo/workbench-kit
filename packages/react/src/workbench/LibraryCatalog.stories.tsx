@@ -4,15 +4,16 @@ import {
   LIBRARY_DRAG_DATA_TYPE,
   LIBRARY_DRAG_IDS_DATA_TYPE,
   createLibraryDragPayload,
+  createLibraryItemIdentity,
+  resolveLibraryItemProviderId,
   type LibraryCatalogSnapshot,
-  type LibraryItemDescriptor,
   type LibraryItemKind,
   type LibraryQuery,
   type LibrarySortMode,
 } from '@newchobo-ui/contracts';
 import {
-  createLibraryManifestObjectProvider,
   createStaticLibraryManifestProvider,
+  createLibraryManifestUrlProvider,
 } from '@newchobo-ui/adapters';
 import { LibraryCatalogService } from '@newchobo-ui/services';
 import { Badge } from '../primitives/Badge';
@@ -129,6 +130,8 @@ const remoteLibraryManifest = {
   ],
 };
 
+const remoteLibraryManifestText = JSON.stringify(remoteLibraryManifest);
+
 const libraryService = new LibraryCatalogService({
   providers: [
     createStaticLibraryManifestProvider({
@@ -136,10 +139,11 @@ const libraryService = new LibraryCatalogService({
       id: 'core',
       manifestText: JSON.stringify(staticLibraryManifest),
     }),
-    createLibraryManifestObjectProvider({
+    createLibraryManifestUrlProvider({
       displayName: 'Remote Apps',
       id: 'remote',
-      manifest: remoteLibraryManifest,
+      manifestUrl: 'https://cdn.example/library-manifest.json',
+      readText: async () => remoteLibraryManifestText,
     }),
   ],
 });
@@ -156,11 +160,6 @@ const itemKindLabel: Record<LibraryItemKind, string> = {
   tile: 'Tile',
   url: 'URL',
 };
-
-function itemCatalogKey(item: LibraryItemDescriptor): string {
-  const sourceId = item.source?.sourceId ?? item.providerId ?? 'unknown';
-  return `${sourceId}:${item.id}`;
-}
 
 function buildQuery({
   installedOnly,
@@ -232,10 +231,11 @@ function LibraryCatalogStory() {
         setLoading(false);
 
         setSelectedKey((currentSelectedKey) =>
-          currentSelectedKey && next.items.some((item) => itemCatalogKey(item) === currentSelectedKey)
+          currentSelectedKey &&
+          next.items.some((item) => createLibraryItemIdentity(item) === currentSelectedKey)
             ? currentSelectedKey
             : next.items.length > 0
-              ? itemCatalogKey(next.items[0])
+              ? createLibraryItemIdentity(next.items[0])
               : null,
         );
       })
@@ -259,10 +259,11 @@ function LibraryCatalogStory() {
         setLoading(false);
 
         setSelectedKey((currentSelectedKey) =>
-          currentSelectedKey && next.items.some((item) => itemCatalogKey(item) === currentSelectedKey)
+          currentSelectedKey &&
+          next.items.some((item) => createLibraryItemIdentity(item) === currentSelectedKey)
             ? currentSelectedKey
             : next.items.length > 0
-              ? itemCatalogKey(next.items[0])
+              ? createLibraryItemIdentity(next.items[0])
               : null,
         );
       } catch (err) {
@@ -283,7 +284,7 @@ function LibraryCatalogStory() {
   const selectedItem =
     selectedKey === null
       ? null
-      : items.find((item) => itemCatalogKey(item) === selectedKey) ?? null;
+      : (items.find((item) => createLibraryItemIdentity(item) === selectedKey) ?? null);
 
   const statusSections = useMemo<StatusBarSectionModel[]>(
     () => [
@@ -369,7 +370,9 @@ function LibraryCatalogStory() {
                     <Select
                       controlWidth="full"
                       value={kindFilter}
-                      onChange={(event) => setKindFilter(event.currentTarget.value as LibraryItemKind | 'all')}
+                      onChange={(event) =>
+                        setKindFilter(event.currentTarget.value as LibraryItemKind | 'all')
+                      }
                     >
                       <option value="all">All kinds</option>
                       {allItemKinds.map((kind) => (
@@ -410,7 +413,7 @@ function LibraryCatalogStory() {
             ) : null}
             <SideBarList>
               {items.map((item) => {
-                const key = itemCatalogKey(item);
+                const key = createLibraryItemIdentity(item);
                 return (
                   <SideBarListItem
                     key={key}
@@ -419,12 +422,15 @@ function LibraryCatalogStory() {
                     draggable
                     onClick={() => setSelectedKey(key)}
                     onDragStart={(event) => {
-                      const sourceId = item.source.sourceId ?? item.providerId ?? 'library';
+                      const sourceId = resolveLibraryItemProviderId(item);
                       event.dataTransfer.setData(
                         LIBRARY_DRAG_DATA_TYPE,
                         createLibraryDragPayload([item.id], sourceId ? [sourceId] : []),
                       );
-                      event.dataTransfer.setData(LIBRARY_DRAG_IDS_DATA_TYPE, JSON.stringify([item.id]));
+                      event.dataTransfer.setData(
+                        LIBRARY_DRAG_IDS_DATA_TYPE,
+                        JSON.stringify([item.id]),
+                      );
                       event.dataTransfer.effectAllowed = 'copy';
                     }}
                   >
@@ -465,7 +471,9 @@ function LibraryCatalogStory() {
               <dl style={{ margin: 0, display: 'grid', gap: 6 }}>
                 <div>
                   <dt style={{ fontWeight: 600 }}>Provider</dt>
-                  <dd style={{ margin: 0 }}>{selectedItem.providerId ?? selectedItem.source.sourceId ?? 'unknown'}</dd>
+                  <dd style={{ fontWeight: 600, margin: 0 }}>
+                    {resolveLibraryItemProviderId(selectedItem)}
+                  </dd>
                 </div>
                 <div>
                   <dt style={{ fontWeight: 600 }}>Source</dt>
@@ -473,7 +481,9 @@ function LibraryCatalogStory() {
                 </div>
                 <div>
                   <dt style={{ fontWeight: 600 }}>Tags</dt>
-                  <dd style={{ margin: 0 }}>{selectedItem.tags?.length ? selectedItem.tags.join(', ') : 'No tags'}</dd>
+                  <dd style={{ margin: 0 }}>
+                    {selectedItem.tags?.length ? selectedItem.tags.join(', ') : 'No tags'}
+                  </dd>
                 </div>
               </dl>
             </article>
@@ -486,7 +496,7 @@ function LibraryCatalogStory() {
       }
       statusSections={statusSections}
       rootClassName="ide-root"
-      rootStyle={{ height: 520, minHeight: 0 }}
+      rootStyle={{ height: 'min(calc(100% - 140px), 720px)', minHeight: 0 }}
     />
   );
 }

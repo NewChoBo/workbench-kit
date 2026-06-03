@@ -152,9 +152,9 @@ const storyWorkbenchShellCommands = createWorkbenchShellCommands<StoryActivityId
   activities: storyShellCommandActivities,
 });
 
-const workbenchShellCommandRegistry = createCommandRegistry<WorkbenchShellCommandContext<StoryActivityId>>(
-  storyWorkbenchShellCommands,
-);
+const workbenchShellCommandRegistry = createCommandRegistry<
+  WorkbenchShellCommandContext<StoryActivityId>
+>(storyWorkbenchShellCommands);
 
 const storyCommandRegistry = createCommandRegistry<StoryCommandContext>([
   ...storyWorkbenchShellCommands,
@@ -432,7 +432,7 @@ function getActivityItems(activeActivityId = 'explorer') {
 
 export const ActivityRail: Story = {
   render: () => (
-    <div style={{ height: 360, background: 'var(--color-bg)' }}>
+    <div style={{ height: 'min(calc(100% - 120px), 500px)', background: 'var(--color-bg)' }}>
       <ActivityBar
         items={getActivityItems()}
         secondaryItems={[
@@ -1262,10 +1262,10 @@ function IntegratedWorkbenchShell() {
       />
     </main>
   );
-const workbenchBootstrap = {
-  contract: {
-    activities: storyShellCommandActivities,
-    commandRegistry: workbenchShellCommandRegistry,
+  const workbenchBootstrap = {
+    contract: {
+      activities: storyShellCommandActivities,
+      commandRegistry: workbenchShellCommandRegistry,
       statusSections: [],
       initialTheme: colorTheme,
     },
@@ -1324,7 +1324,7 @@ const workbenchBootstrap = {
       onStatusItemActivate={activateStatusItem}
       primarySidebarClassName="ui-workbench-story-shell-split"
       rootClassName="ide-root"
-      rootStyle={{ height: 640, minHeight: 0 }}
+      rootStyle={{ height: 'min(calc(100% - 72px), 760px)', minHeight: 0 }}
       renderPrimarySidebar={() => (
         <aside
           aria-label="Primary sidebar"
@@ -1336,7 +1336,9 @@ const workbenchBootstrap = {
 
             openContextMenu(
               event,
-              activeActivityId === 'explorer' ? createExplorerRootMenuItems() : createWorkbenchMenuItems(),
+              activeActivityId === 'explorer'
+                ? createExplorerRootMenuItems()
+                : createWorkbenchMenuItems(),
               'Primary sidebar menu',
             );
           }}
@@ -1728,7 +1730,13 @@ function renderSettingsCategory({
 
 export const SplitWorkspace: Story = {
   render: () => (
-    <div style={{ width: '100%', height: 420, background: 'var(--color-bg)' }}>
+    <div
+      style={{
+        width: '100%',
+        height: 'min(calc(100% - 96px), 500px)',
+        background: 'var(--color-bg)',
+      }}
+    >
       <SplitView
         defaultPrimarySizePercent={62}
         primary={
