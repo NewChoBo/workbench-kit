@@ -90,6 +90,7 @@ describe('WorkspacePatchService', () => {
     const service = new WorkspacePatchService({
       repository,
       now: () => '2026-06-03T00:00:00.000Z',
+      requestId: () => 'patch-metadata-1',
     });
 
     const result = await service.applyPatch({
@@ -106,6 +107,8 @@ describe('WorkspacePatchService', () => {
         path: 'docs/readme.md',
         type: 'write-file',
       },
+      requestId: 'patch-metadata-1',
+      requestedAt: '2026-06-03T00:00:00.000Z',
     });
     expect(await repository.getFile('docs/readme.md')).toMatchObject({
       content: 'patched',
@@ -166,11 +169,19 @@ describe('WorkspacePatchService', () => {
 
   it('returns failed for blank patch paths', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
-    const service = new WorkspacePatchService({ repository });
+    const service = new WorkspacePatchService({
+      repository,
+      now: () => '2026-06-03T00:00:00.000Z',
+      requestId: () => 'patch-metadata-2',
+    });
 
     const result = await service.applyPatch({ path: '   ', type: 'delete-file' });
 
     expect(result).toMatchObject({ type: 'patch:failed', code: 'invalid-path' });
+    expect(result).toMatchObject({
+      requestId: 'patch-metadata-2',
+      requestedAt: '2026-06-03T00:00:00.000Z',
+    });
   });
 
   it('returns failed for repository errors on write patches', async () => {

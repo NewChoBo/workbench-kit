@@ -138,7 +138,11 @@ describe('WorkspaceSaveService', () => {
 
   it('returns unchanged for same content and matching baseline', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
-    const service = new WorkspaceSaveService({ repository });
+    const service = new WorkspaceSaveService({
+      repository,
+      now: () => '2026-06-03T00:00:00.001Z',
+      requestId: () => 'save-metadata-1',
+    });
     const existing = await repository.writeFile({
       content: 'same',
       path: 'src/index.ts',
@@ -155,6 +159,8 @@ describe('WorkspaceSaveService', () => {
       kind: 'save:success',
       outcome: 'unchanged',
       file: { content: 'same', path: 'src/index.ts' },
+      requestId: 'save-metadata-1',
+      requestedAt: '2026-06-03T00:00:00.001Z',
     });
   });
 
@@ -182,7 +188,11 @@ describe('WorkspaceSaveService', () => {
 
   it('returns invalid-path for blank path', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
-    const service = new WorkspaceSaveService({ repository });
+    const service = new WorkspaceSaveService({
+      repository,
+      now: () => '2026-06-03T00:00:00.000Z',
+      requestId: () => 'save-metadata-blank',
+    });
 
     const result = await service.saveDraft({ content: 'x', path: '   ' });
 
@@ -190,6 +200,8 @@ describe('WorkspaceSaveService', () => {
       kind: 'save:failure',
       code: 'invalid-path',
       path: '   ',
+      requestId: 'save-metadata-blank',
+      requestedAt: '2026-06-03T00:00:00.000Z',
     });
   });
 

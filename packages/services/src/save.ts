@@ -9,9 +9,12 @@ import {
 } from '@newchobo-ui/contracts';
 import { normalizeServiceWorkspacePath } from './path';
 
+let saveRequestCounter = 0;
+
 export interface WorkspaceSaveServiceOptions {
   repository: WorkspaceFileRepository;
   now?: () => string;
+  requestId?: () => string;
 }
 
 export interface WorkspaceCommitInput {
@@ -24,16 +27,24 @@ export interface WorkspaceCommitInput {
 export class WorkspaceSaveService {
   private readonly repository: WorkspaceFileRepository;
   private readonly now: () => string;
+  private readonly requestId: () => string;
 
-  constructor({ now = () => new Date().toISOString(), repository }: WorkspaceSaveServiceOptions) {
+  constructor({
+    now = () => new Date().toISOString(),
+    requestId = defaultRequestId,
+    repository,
+  }: WorkspaceSaveServiceOptions) {
     this.now = now;
+    this.requestId = requestId;
     this.repository = repository;
   }
 
   async commit({ content, path, source, mimeType }: WorkspaceCommitInput): Promise<SaveResult> {
+    const requestMetadata = this.createRequestMetadata();
     const sanitizedPath = this.sanitizePath(path);
     if (!sanitizedPath) {
       return {
+        ...requestMetadata,
         code: 'invalid-path',
         kind: 'save:failure',
         message: 'Empty path is not supported.',
@@ -45,9 +56,11 @@ export class WorkspaceSaveService {
   }
 
   async discard({ path }: { path: string }): Promise<SaveResult> {
+    const requestMetadata = this.createRequestMetadata();
     const sanitizedPath = this.sanitizePath(path);
     if (!sanitizedPath) {
       return {
+        ...requestMetadata,
         code: 'invalid-path',
         kind: 'save:failure',
         message: 'Empty path is not supported.',
@@ -58,6 +71,7 @@ export class WorkspaceSaveService {
     return this.get(sanitizedPath).then((file): SaveResult => {
       if (!file) {
         return {
+          ...requestMetadata,
           code: 'not-found',
           kind: 'save:failure',
           message: `No file exists at '${sanitizedPath}'.`,
@@ -66,6 +80,7 @@ export class WorkspaceSaveService {
       }
 
       return {
+        ...requestMetadata,
         file,
         kind: 'save:success',
         outcome: 'unchanged',
@@ -80,9 +95,11 @@ export class WorkspaceSaveService {
     previousUpdatedAt,
     source,
   }: SaveDraftInput): Promise<SaveResult> {
+    const requestMetadata = this.createRequestMetadata();
     const sanitizedPath = this.sanitizePath(path);
     if (!sanitizedPath) {
       return {
+        ...requestMetadata,
         code: 'invalid-path',
         kind: 'save:failure',
         message: 'Empty path is not supported.',
@@ -97,6 +114,7 @@ export class WorkspaceSaveService {
       (previousUpdatedAt === undefined || existing.updatedAt === previousUpdatedAt)
     ) {
       return {
+        ...requestMetadata,
         file: existing,
         kind: 'save:success',
         outcome: 'unchanged',
@@ -104,7 +122,12 @@ export class WorkspaceSaveService {
     }
 
     if (existing && previousUpdatedAt !== undefined && existing.updatedAt !== previousUpdatedAt) {
-      return this.failure('stale-update', sanitizedPath, 'Workspace file changed before save.');
+      return this.failure(
+        'stale-update',
+        sanitizedPath,
+        'Workspace file changed before save.',
+        requestMetadata,
+      );
     }
 
     const input: SaveInput = {
@@ -119,12 +142,13 @@ export class WorkspaceSaveService {
     try {
       const file = await this.repository.writeFile(input);
       return {
+        ...requestMetadata,
         kind: 'save:success',
         outcome: existing ? 'updated' : 'created',
         file,
       };
     } catch (error) {
-      return this.failure('unknown', sanitizedPath, normalizeServiceFailureMessage(error));
+      return this.failure('unknown', sanitizedPath, normalizeServiceFailureMessage(error), requestMetadata);
     }
   }
 
@@ -136,8 +160,10 @@ export class WorkspaceSaveService {
     code: SaveConflictCode,
     path: string,
     message: string,
-  ): { code: SaveConflictCode; kind: 'save:failure'; message: string; path: string } {
+    requestMetadata: { requestId: string; requestedAt: string },
+  ): SaveResult {
     return {
+      ...requestMetadata,
       code,
       kind: 'save:failure',
       message,
@@ -148,4 +174,16 @@ export class WorkspaceSaveService {
   private sanitizePath(path: string) {
     return normalizeServiceWorkspacePath(path);
   }
+
+  private createRequestMetadata() {
+    return {
+      requestId: this.requestId(),
+      requestedAt: this.now(),
+    };
+  }
+}
+
+function defaultRequestId() {
+  saveRequestCounter += 1;
+  return `save-${saveRequestCounter}`;
 }
