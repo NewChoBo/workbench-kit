@@ -113,6 +113,9 @@ through the existing workbench command registry.
   - `enable(pluginId, enabled) -> PluginLifecycleResult`
   - `update(pluginId, source?) -> PluginLifecycleResult`
 - Keep implementation host-driven: transport and storage are injected through adapters.
+- Current status (2026-06-03): baseline `InMemoryPluginLifecycleService` has state-transition
+  unit tests in `@newchobo-ui/vscode-host` covering install/enable/update/uninstall success and
+  duplicate/error paths.
 
 ### M3: Integration Safety
 
