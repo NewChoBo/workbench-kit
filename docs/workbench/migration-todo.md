@@ -102,6 +102,33 @@ documentation, not private app behavior.
   plugin installation model should adapt installed plugins into command, menu,
   view, and settings contributions instead of mutating component internals.
 
+## Current Cycle Priorities (Standalone First)
+
+- 목표: `@newchobo-ui/react` + `@newchobo-ui/services` + `@newchobo-ui/vscode-host`를 사용한 standalone 런치 안정성 고정.
+- 핵심 결론: 현재 UI 동작은 story 조립(`IntegratedWorkbenchShell`)로 구현되어 있으며,
+  shell 레이아웃 진입점(`WorkbenchShell`)은 이미 추출되어 있다.
+- 이번 사이클 운영 규칙(Cycle Guardrail):
+  - `@newchobo-ui/vscode-extension` 소스/설정 수정은 하지 않는다.
+  - Standalone 런치 정합성이 확보될 때까지 extension 래퍼는 `Track C`로 이월한다.
+- 이번 사이클 액션:
+   1. 쉘 어셈블리(`WorkbenchShell`)는 추출 완료 상태이므로, 앱 진입점 계약(상태/서비스/커맨드 바인딩)을 정렬한다.
+   2. host runtime/브릿지 에러 격리와 구독 정리 동작을 스토리/통합 시나리오로 회귀 검증.
+   3. `pnpm test:storybook-play:required` + `vscode-host`/`services`/`react` typecheck 통합 게이트 고정.
+4. `vscode-extension` bootstrap은 별도 마일스톤(`Track A`)으로 분리하고 문서와 브랜치 플래닝 반영.
+5. `vscode-extension` 패키지는 소스 수정 대상에서 제외하고, 현 단계에서는 스탠드얼론 조합 경로만 운영한다.
+
+### Current Cycle Deep-Dive Conclusion
+
+- `@newchobo-ui/react` 쪽에서 이미 UI 표면(Explorer/Search/Editor/Chat/Settings/Status)은
+  Storybook 통합으로 구현되어 있고, playflow도 확인됨.
+- 공백은 기능 부재가 아니라 **조립 계약(export boundary)**이다:
+  - `@newchobo-ui/react`에서 story형 shell은 가능하나, 앱 진입점으로 쓰기 위해서는 저장/삭제/커맨드 컨텍스트/서비스 주입 계약이 별도 정리되어야 한다.
+  - 현재 통합 로직은 `Workbench.stories.tsx`의 `IntegratedWorkbenchShell`에 집중되어 있다.
+- 따라서 이번 우선순위는 다음으로 고정:
+  1) Track A shell entrypoint 추출 + 인터페이스 계약 고정  
+  2) Track B host/runtime의 에러 격리/구독 정리/중복 dispose 검증  
+  3) Track C는 `standalone` 스테이블 이후로 이월
+
 ## Target Package Map
 
 The package should evolve beyond a single React package.
@@ -110,10 +137,31 @@ The package should evolve beyond a single React package.
 | -------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
 | `@newchobo-ui/tokens`      | CSS variables, base theme, visual tokens                                             | Existing tokens package                                    |
 | `@newchobo-ui/core`        | Framework-neutral command registry, context keys, event/disposable helpers           | Architecture reference patterns and VS Code conventions    |
+| `@newchobo-ui/contracts`   | Cross-package contracts and result/error models for save/chat/patch/domain services | Contracts package ownership                                  |
 | `@newchobo-ui/workspace`   | Framework-neutral workspace paths, tree, search, selection, mutations, draft helpers | Existing React workspace helpers plus functional behaviors |
 | `@newchobo-ui/runtime`     | Framework-neutral chat/runtime events, mock runtime, workspace patch adapters        | Product-neutral runtime event shape                        |
 | `@newchobo-ui/react`       | React primitives and workbench components bound to the neutral packages              | Existing React package and VS Code interaction conventions |
+| `@newchobo-ui/services`    | Save/chat/patch orchestration services                                                | Existing service implementations and tests                  |
+| `@newchobo-ui/adapters`    | Story/test adapters for repository and runtime transport                              | Storybook integration needs and adapter tests                |
+| `@newchobo-ui/vscode-host` | Host bridge/runtime binding and plugin service adapters                                | vscode-host source and runtime tests                        |
+| `@newchobo-ui/vscode-extension` | Extension bootstrap wrapper for host package consumers                               | Existing extension bootstrap source                          |
 | Story/test fixture modules | Public mock files, mock messages, scenario adapters                                  | Storybook only unless consumers need them                  |
+
+## Package Skeleton Goals (v0.1, To-Do)
+
+| Package                     | Skeleton Goal (요약)                                                                                                                                      | To-Do (핵심만)                                                                                                                                                                                                 |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@newchobo-ui/tokens`       | 최소한의 디자인 토큰 인터페이스를 export해 테마/모양 일관성을 보장                                                                                         | - 라이트/다크 토큰 기본셋 정합성 점검<br>- 토큰 export와 네임스페이스 문서화<br>- 필요 시 컴포넌트 바인딩 가이드 추가                                                             |
+| `@newchobo-ui/core`         | 커맨드 등록/실행/메뉴 투영을 프레임워크 독립적으로 제공                                                                                                     | - command 충돌/우선순위 정책 문서화<br>- menu `surfaces` 메타 확장 정책 결정<br>- 메뉴/명령 노출 정렬 규칙 테스트 추가                                                         |
+| `@newchobo-ui/contracts`    | 저장/채팅/패치/플러그인 관련 공용 타입을 도메인에 독립된 결과 모델로 표준화                                                                | - 요청 메타(`requestId`/타임스탬프) 기본 계약 고정<br>- plugin lifecycle 계약 최소 필드 확정<br>- 공통 실패 모델(`SaveError` 계열) 사용처 정합성 점검                                      |
+| `@newchobo-ui/workspace`    | 경로/트리/검색/선택/드래프트 유틸을 UI에서 독립적으로 재사용 가능한 API로 제공                                                            | - public export 범위 축소(도메인 vs fixture 분리)<br>- path 정규화/이동 계획(move-plan) 테스트 보강<br>- save/draft 경계에서 부수효과 최소화 규칙 정리                                                      |
+| `@newchobo-ui/runtime`      | 채팅/상태/패치 이벤트의 중립형 런타임 contract와 mock runtime 제공                                                                             | - 이벤트 타입 스키마 문서화<br>- mock runtime 시나리오별 예측 가능한 순서 보장 테스트<br>- 런타임 이벤트 메타 전파 규칙 정리                                                 |
+| `@newchobo-ui/react`        | Storybook 기준 UI 컴포넌트/훅/워크벤치 조립 블록을 앱 조립 가능한 API로 제공                                                                        | - Workbench shell 진입점 타입 계약 고정<br>- Integrated story를 fixture 역할로 축소<br>- baseline 5개 시나리오 회귀 토글 자동 유지                                                                             |
+| `@newchobo-ui/services`     | 저장/채팅/패치 흐름을 contracts 기반으로 오케스트레이션하고 실패 경계를 명확화                                                                       | - callback 실패 격리/리스너 격리 경로 하드닝<br>- metadata 보존 및 상태 전이 테스트 확대<br>- save/patch 동시 처리 경합 케이스 문서화                              |
+| `@newchobo-ui/adapters`     | story/runtime 계층에 종속적인 adapter를 통해 도메인 계약과 실제 구현을 분리                                                                  | - 계약 위임 경계 문서 정리<br>- `create*` factory 실패 케이스 테스트 추가<br>- 패키지 export surface 최소화 및 안정화                                                         |
+| `@newchobo-ui/vscode-host`  | host/runtime bridge와 plugin service adapter의 초기 bootstrap 경로를 안정적으로 제공                                                                   | - 구독/해제/재구독 idempotent 처리 점검<br>- 브리지 에러/교착 상태 회복 경로 테스트 보강<br>- plugin 기여 포인트를 wrapper 단계로 분리                                         |
+| `@newchobo-ui/vscode-extension` | standalone 경로 고정 이후 extension wrapper 진입점으로 사용될 기본 조립 API를 준비                                                           | - 현재 사이클에서 코드 변경 보류(이월)<br>- 다음 마일스톤에서 bootstrap API 사용 가이드 초안 작성<br>- 기존 runtime/service 계약과의 1:1 대응표 작성                                    |
+| Story/test fixture modules  | 샘플/검증 시나리오에 필요한 최소 fixture만 유지                                                                                                         | - public export에서 제외 대상 정리<br>- story 전용 목 데이터와 어댑터 분리 규칙 강화                                                                                         |
 
 ## Current Implementation Progress
 

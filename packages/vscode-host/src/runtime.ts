@@ -15,6 +15,16 @@ import {
 } from './bridge';
 import { resolveHostCommandFromBridgeMessage } from './commands';
 import type { HostCommandMessage, HostTransport } from './bridge';
+type HostChatService = Pick<
+  WorkbenchChatService,
+  'cancel' | 'dispose' | 'sendMessage' | 'subscribe'
+>;
+type HostPatchService = {
+  applyPatch: (...args: Parameters<WorkspacePatchService['applyPatch']>) => Promise<unknown>;
+};
+type HostSaveService = {
+  commit: (...args: Parameters<WorkspaceSaveService['commit']>) => Promise<unknown>;
+};
 
 const CHAT_SEND = 'workbench/chat/send';
 const CHAT_CANCEL = 'workbench/chat/cancel';
@@ -35,20 +45,20 @@ interface RuntimeCommandPayload {
 }
 
 export interface WorkbenchHostRuntimeOptions<TContext = void> {
-  chatService?: WorkbenchChatService;
+  chatService?: HostChatService;
   commandRegistry?: CommandRegistry<TContext>;
   contextFactory?: () => TContext;
-  patchService?: WorkspacePatchService;
-  saveService?: WorkspaceSaveService;
+  patchService?: HostPatchService;
+  saveService?: HostSaveService;
   transport: HostTransport;
 }
 
 export interface WorkbenchHostRuntime {
   dispose: () => void;
-  getChatService?: () => WorkbenchChatService | undefined;
+  getChatService?: () => HostChatService | undefined;
   getMessageBridge: () => MessageBridge;
-  getPatchService?: () => WorkspacePatchService | undefined;
-  getSaveService?: () => WorkspaceSaveService | undefined;
+  getPatchService?: () => HostPatchService | undefined;
+  getSaveService?: () => HostSaveService | undefined;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -57,14 +67,8 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 export function createHostRuntime<TContext>(
   options: WorkbenchHostRuntimeOptions<TContext>,
 ): WorkbenchHostRuntime {
-  const {
-    chatService,
-    commandRegistry,
-    contextFactory,
-    patchService,
-    saveService,
-    transport,
-  } = options;
+  const { chatService, commandRegistry, contextFactory, patchService, saveService, transport } =
+    options;
 
   const messageBridge = createMessageBridge({ transport });
   const subscriptions = new Set<() => void>();
@@ -83,18 +87,20 @@ export function createHostRuntime<TContext>(
   const handlePatchApply = async (payload: unknown, requestId?: string) => {
     if (!patchService) return;
 
-    const result = await patchService.applyPatch(
-      payload as Parameters<WorkspacePatchService['applyPatch']>[0],
-    );
+    const patchPayload = normalizePatchPayload(payload);
+    if (!patchPayload) return;
+
+    const result = await patchService.applyPatch(patchPayload);
     messageBridge.sendPatchResult(result as WorkspacePatchApplyResult, requestId);
   };
 
   const handleSaveCommit = async (payload: unknown, requestId?: string) => {
     if (!saveService) return;
 
-    const result = await saveService.commit(
-      payload as Parameters<WorkspaceSaveService['commit']>[0],
-    );
+    const commitPayload = normalizeSavePayload(payload);
+    if (!commitPayload) return;
+
+    const result = await saveService.commit(commitPayload);
     messageBridge.sendSaveResult(result as SaveResult, requestId);
   };
 
@@ -148,19 +154,25 @@ export function createHostRuntime<TContext>(
     }
 
     if (isHostMessageOfType(message, PATCH_APPLY)) {
-      const { payload, requestId } = message as MessageWithPayload<'workbench/patch/apply', unknown>;
+      const { payload, requestId } = message as MessageWithPayload<
+        'workbench/patch/apply',
+        unknown
+      >;
       void handlePatchApply(payload, requestId);
       return;
     }
 
     if (isHostMessageOfType(message, SAVE_COMMIT)) {
-      const { payload, requestId } = message as MessageWithPayload<'workbench/save/commit', unknown>;
+      const { payload, requestId } = message as MessageWithPayload<
+        'workbench/save/commit',
+        unknown
+      >;
       void handleSaveCommit(payload, requestId);
       return;
     }
 
     if (isHostMessageOfType(message, COMMAND)) {
-      handleCommand(message);
+      handleCommand(message as HostCommandMessage);
       return;
     }
   });
@@ -184,7 +196,7 @@ function createChatEventBridge({
   chatService,
   messageBridge,
 }: {
-  chatService?: WorkbenchChatService;
+  chatService?: HostChatService;
   messageBridge: MessageBridge;
 }) {
   if (!chatService) {
@@ -207,4 +219,43 @@ function normalizeChatPayload(payload: unknown): ChatSendPayload {
   const context = isRecord(payload.context) ? payload.context : undefined;
 
   return { content, context };
+}
+
+function normalizePatchPayload(
+  payload: unknown,
+): Parameters<WorkspacePatchService['applyPatch']>[0] | undefined {
+  if (!isRecord(payload)) return;
+
+  const path = typeof payload.path === 'string' ? payload.path : undefined;
+  const type =
+    payload.type === 'write-file' || payload.type === 'delete-file' ? payload.type : undefined;
+  if (!path || !type) return;
+
+  if (type === 'delete-file') {
+    return { path, type };
+  }
+
+  if (typeof payload.content !== 'string') return;
+
+  return {
+    path,
+    content: payload.content,
+    type,
+  };
+}
+
+function normalizeSavePayload(
+  payload: unknown,
+): Parameters<WorkspaceSaveService['commit']>[0] | undefined {
+  if (!isRecord(payload)) return;
+
+  const path = typeof payload.path === 'string' ? payload.path : undefined;
+  if (!path) return;
+  const content = typeof payload.content === 'string' ? payload.content : undefined;
+  if (content === undefined) return;
+
+  return {
+    content,
+    path,
+  };
 }

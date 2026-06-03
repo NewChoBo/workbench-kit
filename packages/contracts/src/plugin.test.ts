@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  InstalledPlugin,
   isPluginEnabled,
   isPluginLifecycleFailure,
   isPluginLifecycleSuccess,
+  type InstalledPlugin,
   type PluginContributions,
   type PluginDescriptor,
   type PluginLifecycleFailure,

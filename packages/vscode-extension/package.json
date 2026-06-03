@@ -1,0 +1,26 @@
+{
+  "name": "@newchobo-ui/vscode-extension",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run src",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@newchobo-ui/adapters": "workspace:*",
+    "@newchobo-ui/contracts": "workspace:*",
+    "@newchobo-ui/core": "workspace:*",
+    "@newchobo-ui/services": "workspace:*",
+    "@newchobo-ui/vscode-host": "workspace:*"
+  },
+  "peerDependencies": {
+    "@newchobo-ui/services": "0.0.0"
+  }
+}
