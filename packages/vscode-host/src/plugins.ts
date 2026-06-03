@@ -12,8 +12,6 @@ export interface InMemoryPluginLifecycleServiceOptions {
   plugins?: Iterable<InstalledPlugin>;
 }
 
-export interface InMemoryPluginLifecycleService extends PluginLifecycleService {}
-
 export class InMemoryPluginLifecycleService implements PluginLifecycleService {
   private readonly now: () => string;
   private readonly plugins = new Map<string, InstalledPlugin>();
@@ -51,12 +49,12 @@ export class InMemoryPluginLifecycleService implements PluginLifecycleService {
 
     const timestamp = this.now();
     const installed: InstalledPlugin = {
-      ...existing,
-      contributions: existing?.contributions,
       descriptor,
+      description: existing?.description ?? descriptor.description,
+      contributions: existing?.contributions,
       enabled: 'enabled',
       error: undefined,
-      installedAt: timestamp,
+      installedAt: existing?.installedAt ?? timestamp,
       source,
       state: 'installing',
       trust: existing?.trust ?? 'unknown',
@@ -64,7 +62,7 @@ export class InMemoryPluginLifecycleService implements PluginLifecycleService {
     };
     this.plugins.set(descriptor.pluginId, installed);
 
-    const completed = {
+    const completed: InstalledPlugin = {
       ...installed,
       state: 'installed',
       updatedAt: this.now(),
@@ -114,27 +112,20 @@ export class InMemoryPluginLifecycleService implements PluginLifecycleService {
       );
     }
 
-    this.plugins.delete(pluginId);
-    return this.success({
+    const removed: InstalledPlugin = {
       ...existing,
       state: 'uninstalled',
       updatedAt: this.now(),
       enabled: 'disabled',
-    });
+    };
+    this.plugins.delete(pluginId);
+    return this.success(removed);
   }
 
-  async update(
-    pluginId: string,
-    source?: PluginSource,
-  ): Promise<PluginLifecycleResult> {
+  async update(pluginId: string, source?: PluginSource): Promise<PluginLifecycleResult> {
     const existing = this.plugins.get(pluginId);
     if (!existing) {
-      return this.failure(
-        source,
-        pluginId,
-        'not-found',
-        `Plugin '${pluginId}' is not installed.`,
-      );
+      return this.failure(source, pluginId, 'not-found', `Plugin '${pluginId}' is not installed.`);
     }
 
     const next: InstalledPlugin = {

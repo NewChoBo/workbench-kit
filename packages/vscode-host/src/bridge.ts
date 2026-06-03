@@ -21,14 +21,15 @@ export interface HostMessageEnvelope<
   type: TType;
 }
 
-export interface HostCommandMessage
-  extends HostMessageEnvelope<
-    'workbench/command',
-    { commandId: string; context?: Record<string, unknown> }
-  > {}
+export type HostCommandMessage = HostMessageEnvelope<
+  'workbench/command',
+  { commandId: string; context?: Record<string, unknown> }
+>;
 
-export interface HostCommandResultMessage
-  extends HostMessageEnvelope<'workbench/command-result', { commandId: string; executed: boolean }> {}
+export type HostCommandResultMessage = HostMessageEnvelope<
+  'workbench/command-result',
+  { commandId: string; executed: boolean }
+>;
 
 export interface HostCommandFailure {
   commandId: string;
@@ -106,22 +107,46 @@ export function createMessageBridge({ transport, filter }: MessageBridgeOptions)
   };
 }
 
+type MessageEventListener = (event: Event) => void;
+type MessagePostTarget = { postMessage: (message: unknown, targetOrigin?: string) => void };
+type MessagePostTargetLike = MessagePostTarget | Window;
+
+function isMessagePostTarget(value: unknown): value is MessagePostTargetLike {
+  return (
+    Boolean(value) &&
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { postMessage?: unknown }).postMessage === 'function'
+  );
+}
+
 export interface HostMessageEventTarget {
-  addEventListener: (type: 'message', listener: (event: MessageEvent) => void) => void;
+  addEventListener: (type: 'message', listener: MessageEventListener) => void;
   parent?: Window | null;
-  removeEventListener: (type: 'message', listener: (event: MessageEvent) => void) => void;
+  removeEventListener: (type: 'message', listener: MessageEventListener) => void;
 }
 
 export interface PostMessageTransportOptions {
   eventTarget?: HostMessageEventTarget | null;
-  messageTarget?: { postMessage: (message: unknown) => void };
+  messageTarget?: MessagePostTarget;
 }
 
-export function createWindowMessageTransport(options: PostMessageTransportOptions = {}): HostTransport {
+export function createWindowMessageTransport(
+  options: PostMessageTransportOptions = {},
+): HostTransport {
   const eventTarget = options.eventTarget ?? (typeof window === 'undefined' ? undefined : window);
-  const messageTarget =
+  const messageTarget: MessagePostTargetLike | undefined =
     options.messageTarget ??
-    (eventTarget && 'parent' in eventTarget && eventTarget.parent ? eventTarget.parent : eventTarget);
+    (eventTarget && isMessagePostTarget(eventTarget) ? eventTarget : undefined);
+
+  const resolvedParent =
+    messageTarget ||
+    (eventTarget &&
+      isMessagePostTarget((eventTarget as HostMessageEventTarget | Window).parent) &&
+      (eventTarget as HostMessageEventTarget).parent);
+  const postTarget = isMessagePostTarget(resolvedParent)
+    ? (resolvedParent as MessagePostTarget)
+    : undefined;
   const listeners = new Set<(message: HostMessageEnvelope) => void>();
 
   if (!eventTarget) {
@@ -131,7 +156,9 @@ export function createWindowMessageTransport(options: PostMessageTransportOption
     };
   }
 
-  const eventListener = (event: MessageEvent) => {
+  const eventListener: MessageEventListener = (event) => {
+    if (!(event instanceof MessageEvent)) return;
+
     const message = event.data as HostMessageEnvelope;
     if (!isHostMessageEnvelope(message)) return;
     listeners.forEach((listener) => listener(message));
@@ -141,8 +168,8 @@ export function createWindowMessageTransport(options: PostMessageTransportOption
 
   return {
     postMessage: (message) => {
-      if (!messageTarget || typeof messageTarget.postMessage !== 'function') return;
-      messageTarget.postMessage(message);
+      if (!postTarget) return;
+      postTarget.postMessage(message, '*');
     },
     subscribe: (listener) => {
       listeners.add(listener);

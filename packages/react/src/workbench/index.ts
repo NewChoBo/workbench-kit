@@ -75,3 +75,19 @@ export type {
   WorkbenchSettingsModalProps,
   WorkbenchSettingsScope,
 } from './settings';
+export { WorkbenchShell } from './WorkbenchShell';
+export type { WorkbenchShellProps } from './WorkbenchShell';
+export type {
+  WorkbenchActivityChangeEvent,
+  WorkbenchActivityDescriptor,
+  WorkbenchChatController,
+  WorkbenchPatchController,
+  WorkbenchSaveController,
+  WorkbenchShellContract,
+  WorkbenchStandaloneBootstrap,
+  WorkbenchStandaloneBootstrapEvent,
+  WorkbenchStandaloneEntryState,
+  WorkbenchStatusController,
+  WorkbenchTheme,
+  WorkbenchWorkspaceController,
+} from './standalone';
