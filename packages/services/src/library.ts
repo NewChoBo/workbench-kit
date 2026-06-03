@@ -1,4 +1,6 @@
 import {
+  createLibraryItemIdentity,
+  resolveLibraryItemProviderId,
   type LibraryCatalogSnapshot,
   type LibraryItemDescriptor,
   type LibraryProvider,
@@ -77,7 +79,9 @@ export class LibraryCatalogService {
     return result.catalog;
   }
 
-  async listCatalog(options: LibraryQueryOptions & LibraryCatalogRequest = {}): Promise<LibraryCatalogSnapshot> {
+  async listCatalog(
+    options: LibraryQueryOptions & LibraryCatalogRequest = {},
+  ): Promise<LibraryCatalogSnapshot> {
     const result = await this.fetchCatalog(options, this.createRequestMetadata());
     return result.catalog;
   }
@@ -198,8 +202,8 @@ export class LibraryCatalogService {
 }
 
 function compareProvider(left: LibraryItemDescriptor, right: LibraryItemDescriptor): number {
-  const leftProvider = (left.providerId ?? left.source?.sourceId ?? '').toLowerCase();
-  const rightProvider = (right.providerId ?? right.source?.sourceId ?? '').toLowerCase();
+  const leftProvider = resolveLibraryItemProviderId(left).toLowerCase();
+  const rightProvider = resolveLibraryItemProviderId(right).toLowerCase();
   if (leftProvider === rightProvider) return 0;
   return leftProvider.localeCompare(rightProvider);
 }
@@ -209,7 +213,7 @@ function dedupeItems(items: readonly LibraryItemDescriptor[]): readonly LibraryI
   const result: LibraryItemDescriptor[] = [];
 
   for (const item of items) {
-    const key = `${item.source?.sourceId ?? item.providerId ?? 'default'}:${item.id}`;
+    const key = createLibraryItemIdentity(item);
     if (seen.has(key)) {
       continue;
     }
