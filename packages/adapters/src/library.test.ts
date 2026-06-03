@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { createLibraryManifestUrlProvider, createStaticLibraryManifestProvider } from './library';
+import {
+  createLibraryManifestObjectProvider,
+  createLibraryManifestUrlProvider,
+  createStaticLibraryManifestProvider,
+} from './library';
 
 const manifestText = (sourceRef: string, itemSourceRef?: string) =>
   JSON.stringify({
@@ -29,6 +33,53 @@ const manifestText = (sourceRef: string, itemSourceRef?: string) =>
   });
 
 describe('library adapters', () => {
+  it('accepts object manifest descriptors and normalizes missing manifest sourceId', async () => {
+    const provider = createLibraryManifestObjectProvider({
+      displayName: 'Object Library',
+      id: 'object-lib',
+      manifest: {
+        id: 'object-library',
+        name: 'Object Library',
+        schemaVersion: 1,
+        source: {
+          displayName: 'Provider Source',
+          kind: 'json-file',
+          ref: '/manifests/object.json',
+        },
+        version: '1.0.0',
+        items: [
+          {
+            id: 'tile-a',
+            kind: 'tile',
+            title: 'Tile A',
+          },
+        ],
+      },
+    });
+
+    const items = await provider.listItems();
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      id: 'tile-a',
+      source: {
+        displayName: 'Provider Source',
+        kind: 'json-file',
+        ref: '/manifests/object.json',
+        sourceId: 'object-lib',
+      },
+    });
+  });
+
+  it('throws for invalid static manifest text', async () => {
+    const provider = createStaticLibraryManifestProvider({
+      displayName: 'Invalid',
+      id: 'invalid-lib',
+      manifestText: '{',
+    });
+
+    await expect(provider.listItems()).rejects.toThrow('invalid JSON');
+  });
+
   it('provides stable provider ids for items when manifest/source has no sourceId', async () => {
     const provider = createStaticLibraryManifestProvider({
       displayName: 'Static Library',

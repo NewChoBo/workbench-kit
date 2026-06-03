@@ -3,7 +3,7 @@ import type {
   LibraryManifest,
   LibraryProvider,
 } from '@newchobo-ui/contracts';
-import { parseLibraryManifestText } from '@newchobo-ui/contracts';
+import { parseLibraryManifest, parseLibraryManifestText } from '@newchobo-ui/contracts';
 
 type ManifestTextLoader = () => Promise<string> | string;
 
@@ -17,6 +17,12 @@ export interface StaticLibraryManifestProviderOptions {
   displayName: string;
   id: string;
   manifestText: string;
+}
+
+export interface ObjectLibraryManifestProviderOptions {
+  displayName: string;
+  id: string;
+  manifest: unknown;
 }
 
 export interface HttpLibraryManifestProviderOptions {
@@ -53,6 +59,21 @@ export function createStaticLibraryManifestProvider({
   });
 }
 
+export function createLibraryManifestObjectProvider({
+  displayName,
+  id,
+  manifest,
+}: ObjectLibraryManifestProviderOptions): LibraryProvider {
+  return {
+    displayName,
+    id,
+    async listItems() {
+      const parsedManifest = parseLibraryManifestSourceData(id, manifest);
+      return parsedManifest.items.map((item) => normalizeLibraryItemProviderSource(item, id));
+    },
+  };
+}
+
 export function createLibraryManifestUrlProvider({
   displayName,
   id,
@@ -75,11 +96,30 @@ function parseLibraryManifestSourceText(
 ): LibraryManifest {
   const manifest = parseLibraryManifestText(rawManifestText, `library-manifest:${providerId}`);
 
-  if (!manifest.source.sourceId) {
-    manifest.source.sourceId = providerId;
+  return normalizeManifestSourceId(manifest, providerId);
+}
+
+function parseLibraryManifestSourceData(
+  providerId: string,
+  rawManifestData: unknown,
+): LibraryManifest {
+  const manifest = parseLibraryManifest(rawManifestData, `library-manifest:${providerId}`);
+
+  return normalizeManifestSourceId(manifest, providerId);
+}
+
+function normalizeManifestSourceId(manifest: LibraryManifest, providerId: string): LibraryManifest {
+  if (manifest.source.sourceId) {
+    return manifest;
   }
 
-  return manifest;
+  return {
+    ...manifest,
+    source: {
+      ...manifest.source,
+      sourceId: providerId,
+    },
+  };
 }
 
 function normalizeLibraryItemProviderSource(
