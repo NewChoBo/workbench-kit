@@ -12,6 +12,22 @@ has one visual validation surface.
   `stories/**/*.stories.tsx`.
 - Keep integrated workbench scenarios in Storybook rather than a separate app.
 
+## Screen Size Presets
+
+- Common monitor presets are maintained in
+  `.storybook/monitor-viewports.ts`.
+- `@storybook/addon-viewport` is enabled in `.storybook/main.ts`.
+- `monitor-1366x768` is configured as the default Storybook viewport in
+  `.storybook/preview.ts`.
+- If you need to add or tune a preset, update the `monitorViewports` object in
+  `.storybook/monitor-viewports.ts` and keep names/pixel values stable.
+- Storybook canvas grid is enabled by default through `storybookGrid` parameters in
+  `.storybook/preview.ts` and uses 16px cells with low-contrast lines.
+- To disable grid for a single story, set `parameters: { storybookGrid: { enabled: false } }`.
+- Workbench stories were changed to use iframe-relative sizing (`min(calc(100% - Xpx), Y)`) so
+  changing Storybook viewport size affects layout more realistically than component-fixed
+  pixel sizes.
+
 ## Initial Stories
 
 Initial stories are added in this order:
