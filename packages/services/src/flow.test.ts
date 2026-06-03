@@ -74,13 +74,17 @@ class MockChatTransport implements ChatTransport {
 describe('service flow integration', () => {
   it('routes workspace-patch events to patch service then allows deterministic save follow-up', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
+    let requestCounter = 0;
+    const requestId = () => `result-${++requestCounter}`;
     const patchService = new WorkspacePatchService({
       repository,
       now: () => '2026-06-03T00:00:00.000Z',
+      requestId,
     });
     const saveService = new WorkspaceSaveService({
       repository,
       now: () => '2026-06-03T00:00:00.001Z',
+      requestId,
     });
     const transport = new MockChatTransport();
     let patchResult: Promise<WorkspacePatchApplyResult> | undefined;
@@ -107,6 +111,8 @@ describe('service flow integration', () => {
     expect(resolvedPatchResult).toMatchObject({
       type: 'patch:applied',
       patch: { path: 'docs/runtime-notes.md', type: 'write-file' },
+      requestId: 'result-1',
+      requestedAt: '2026-06-03T00:00:00.000Z',
     });
 
     const patchFile = await repository.getFile('docs/runtime-notes.md');
@@ -127,6 +133,8 @@ describe('service flow integration', () => {
       kind: 'save:success',
       outcome: 'unchanged',
       file: { path: 'docs/runtime-notes.md', content: 'runtime content' },
+      requestId: 'result-2',
+      requestedAt: '2026-06-03T00:00:00.001Z',
     });
 
     chatService.dispose();

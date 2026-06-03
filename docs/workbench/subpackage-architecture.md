@@ -37,12 +37,15 @@ so existing `react` workbench can keep UI behavior while separating domain logic
    - Add adapters, contract guards, and cleanup for subscriptions/error boundaries.
    - Exit condition: repeatable integration smoke test passes and no newly introduced regressions.
 6. **Stage 5: Failure Hygiene**
-   - Make service failures explicit and isolated from unrelated event handlers.
-   - Exit condition: callback and transport failures do not corrupt service state or event delivery.
+  - Make service failures explicit and isolated from unrelated event handlers.
+  - Exit condition: callback and transport failures do not corrupt service state or event delivery.
+7. **Stage 6: Service Result Metadata**
+   - Propagate request metadata (`requestId`, `requestedAt`) across save/patch service results.
+   - Exit condition: every save/patch result includes observability metadata when created by services.
 
 ### Stage Dependencies and Delivery Order
 
-- Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5
+- Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6
 - No later stage proceeds until previous stage exit criteria and validation gates are completed.
 
 ## Branch Execution Status (Current Branch: `feature/codex/stage4-subpackage-hardening`)
@@ -53,6 +56,7 @@ so existing `react` workbench can keep UI behavior while separating domain logic
 - [x] Stage 3: Story refactoring through adapters.
 - [x] Stage 4: Stability hardening.
 - [x] Stage 5: Failure-hygiene hardening.
+- [ ] Stage 6: Service result metadata propagation.
 
 ## Guiding Decision
 
@@ -323,6 +327,17 @@ packages/
   - `pnpm exec vitest run packages/services/src` passes.
   - `pnpm --filter @newchobo-ui/services typecheck` passes.
 
+### Stage 6 Result-Metadata Progress (2026-06-03)
+
+- Added shared result-envelope foundation for request metadata in `@newchobo-ui/contracts`.
+- Updated service result types to consistently expose optional metadata (`requestId`, `requestedAt`).
+- Implemented service-side metadata injection with deterministic-friendly request id factory support.
+- Added integration test coverage to verify metadata presence in patch/save flow paths.
+- Evidence:
+  - `fdcb5c7`: standardize contract failure model and flow tests.
+  - `pnpm exec vitest run packages/contracts/src packages/services/src` passes.
+  - `pnpm --filter @newchobo-ui/contracts typecheck` passes.
+
 ## Acceptance Criteria
 
 - A save action can be executed entirely through `@newchobo-ui/services` with explicit success/failure
@@ -348,3 +363,4 @@ that do not produce tests or usage value.
 | 2026-06-03 | Start with contracts + services          | Align domain separation before external publishing | Approved |
 | 2026-06-03 | Add optional adapters package in phase 3 | Keeps story/test dependencies isolated             | Approved |
 | 2026-06-03 | Continue Stage 5 hardening inside services | Keep callback failures from crashing event fan-out    | Approved |
+| 2026-06-03 | Start Stage 6 service-result metadata hardening | Standardize request-id/request-time propagation for save/patch services | Approved |

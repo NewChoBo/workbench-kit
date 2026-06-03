@@ -1,6 +1,6 @@
 import type { ChatMessageSource } from './chat';
 import type { WorkspaceFile } from './save';
-import type { ServiceFailure, ServiceFailureCode } from './result';
+import type { ServiceFailure, ServiceFailureCode, ServiceResultEnvelope } from './result';
 
 export type WorkspacePatchSource = ChatMessageSource;
 
@@ -22,12 +22,12 @@ export type WorkspacePatchEvent = WorkspacePatchWriteFile | WorkspacePatchDelete
 
 export type WorkspacePatchConflictCode = Exclude<ServiceFailureCode, 'stale-update'>;
 
-export interface WorkspacePatchApplySuccess {
+export interface WorkspacePatchApplySuccess extends ServiceResultEnvelope {
   patch: WorkspacePatchEvent;
   type: 'patch:applied';
 }
 
-export interface WorkspacePatchApplyFailure extends ServiceFailure {
+export interface WorkspacePatchApplyFailure extends ServiceFailure, ServiceResultEnvelope {
   code: WorkspacePatchConflictCode;
   patch: WorkspacePatchEvent;
   type: 'patch:failed';
