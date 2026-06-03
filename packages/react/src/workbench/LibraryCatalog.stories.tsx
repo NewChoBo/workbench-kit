@@ -11,7 +11,7 @@ import {
   type LibrarySortMode,
 } from '@newchobo-ui/contracts';
 import {
-  createLibraryManifestUrlProvider,
+  createLibraryManifestObjectProvider,
   createStaticLibraryManifestProvider,
 } from '@newchobo-ui/adapters';
 import { LibraryCatalogService } from '@newchobo-ui/services';
@@ -136,11 +136,10 @@ const libraryService = new LibraryCatalogService({
       id: 'core',
       manifestText: JSON.stringify(staticLibraryManifest),
     }),
-    createLibraryManifestUrlProvider({
+    createLibraryManifestObjectProvider({
       displayName: 'Remote Apps',
       id: 'remote',
-      manifestUrl: 'https://example.com/library-manifest.json',
-      readText: async () => JSON.stringify(remoteLibraryManifest),
+      manifest: remoteLibraryManifest,
     }),
   ],
 });
