@@ -6,6 +6,7 @@ import {
   type WorkspacePatchEvent,
   type WorkspacePatchSource,
   type WorkspacePatchWriteFile,
+  normalizeServiceFailureMessage,
 } from '@newchobo-ui/contracts';
 import { normalizeServiceWorkspacePath } from './path';
 
@@ -52,7 +53,7 @@ export class WorkspacePatchService {
       } catch (error) {
         return {
           code: 'unknown',
-          message: this.normalizeError(error),
+          message: normalizeServiceFailureMessage(error),
           patch: normalizedPatch,
           type: 'patch:failed',
         };
@@ -67,7 +68,7 @@ export class WorkspacePatchService {
       } catch (error) {
         return {
           code: 'unknown',
-          message: this.normalizeError(error),
+          message: normalizeServiceFailureMessage(error),
           patch: normalizedPatch,
           type: 'patch:failed',
         };
@@ -91,7 +92,7 @@ export class WorkspacePatchService {
     } catch (error) {
       return {
         code: 'unknown',
-        message: this.normalizeError(error),
+        message: normalizeServiceFailureMessage(error),
         patch: normalizedPatch,
         type: 'patch:failed',
       };
@@ -100,10 +101,6 @@ export class WorkspacePatchService {
 
   private normalizePath(path: string) {
     return normalizeServiceWorkspacePath(path);
-  }
-
-  private normalizeError(error: unknown) {
-    return error instanceof Error ? error.message : 'Unknown repository error';
   }
 }
 

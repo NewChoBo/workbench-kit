@@ -1,8 +1,8 @@
 export type {
   ChatMessage,
   ChatMessageSource,
-  ChatSessionStatus,
   ChatStreamEvent,
+  ChatSessionStatus,
   ChatStreamMessageDeltaPayload,
   ChatStreamMessagePayload,
   ChatStreamStatusPayload,
@@ -47,4 +47,6 @@ export type {
   WorkspaceFileSource,
   SaveSuccess,
 } from './save';
+export type { ServiceFailure, ServiceFailureCode, ServiceListener, ServiceResultEnvelope } from './result';
+export { normalizeServiceFailureMessage } from './result';
 export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from './save';

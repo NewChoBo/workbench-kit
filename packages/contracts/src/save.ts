@@ -1,3 +1,5 @@
+import type { ServiceFailure, ServiceFailureCode } from './result';
+
 export type WorkspaceFileSource = 'assistant' | 'user';
 
 export interface WorkspaceFile {
@@ -28,12 +30,7 @@ export interface WorkspaceFileRepository {
   writeFile(input: SaveInput): Promise<WorkspaceFile>;
 }
 
-export type SaveConflictCode =
-  | 'invalid-path'
-  | 'not-found'
-  | 'path-conflict'
-  | 'stale-update'
-  | 'unknown';
+export type SaveConflictCode = ServiceFailureCode;
 
 export interface SaveSuccess {
   file: WorkspaceFile;
@@ -41,10 +38,9 @@ export interface SaveSuccess {
   outcome: 'created' | 'updated' | 'unchanged';
 }
 
-export interface SaveFailure {
+export interface SaveFailure extends ServiceFailure {
   code: SaveConflictCode;
   kind: 'save:failure';
-  message?: string;
   path?: string;
 }
 

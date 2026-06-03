@@ -5,6 +5,8 @@ import {
   isSaveSuccess,
   isWorkspacePatchDeleteFile,
   isWorkspacePatchWriteFile,
+  normalizeServiceFailureMessage,
+  type ServiceFailureCode,
 } from './index';
 
 const writePatch = {
@@ -64,5 +66,18 @@ describe('contract helpers', () => {
     expect(isSaveSuccess(failure)).toBe(false);
     expect(isSaveFailure(success)).toBe(false);
     expect(isSaveFailure(failure)).toBe(true);
+  });
+
+  it('normalizes service failures with stable fallback messages', () => {
+    expect(normalizeServiceFailureMessage(new Error('boom'))).toBe('boom');
+    expect(normalizeServiceFailureMessage('unknown', 'fallback')).toBe('fallback');
+  });
+
+  it('shares a single failure-code vocabulary', () => {
+    const invalid: ServiceFailureCode = 'invalid-path';
+    const stale: ServiceFailureCode = 'stale-update';
+
+    expect(invalid).toBe('invalid-path');
+    expect(stale).toBe('stale-update');
   });
 });
