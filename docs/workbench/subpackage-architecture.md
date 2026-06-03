@@ -37,17 +37,27 @@ so existing `react` workbench can keep UI behavior while separating domain logic
    - Add adapters, contract guards, and cleanup for subscriptions/error boundaries.
    - Exit condition: repeatable integration smoke test passes and no newly introduced regressions.
 6. **Stage 5: Failure Hygiene**
-  - Make service failures explicit and isolated from unrelated event handlers.
-  - Exit condition: callback and transport failures do not corrupt service state or event delivery.
+
+- Make service failures explicit and isolated from unrelated event handlers.
+- Exit condition: callback and transport failures do not corrupt service state or event delivery.
+
 7. **Stage 6: Service Result Metadata**
-   - Propagate request metadata (`requestId`, `requestedAt`) across save/patch service results.
-   - Exit condition: every save/patch result includes observability metadata when created by services.
-   - Additional closeout condition: composed entrypoints (for example, `commit` → `saveDraft`) must preserve
-     caller-issued metadata without regenerating request identity.
+
+- Propagate request metadata (`requestId`, `requestedAt`) across save/patch service results.
+- Exit condition: every save/patch result includes observability metadata when created by services.
+- Additional closeout condition: composed entrypoints (for example, `commit` → `saveDraft`) must preserve
+  caller-issued metadata without regenerating request identity.
+
+8. **Stage 7: Adapter Package Extraction**
+   - Extract story-only adaptation logic into `@newchobo-ui/adapters` package.
+   - Provide shared runtime transport + in-memory repository adapters.
+   - Replace inline story helpers with package adapter usage.
+   - Add adapter unit tests and include package in repository typecheck pipeline.
+   - Exit condition: story runtime path flows through adapter APIs with unchanged behavior.
 
 ### Stage Dependencies and Delivery Order
 
-- Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6
+- Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6 → Stage 7
 - No later stage proceeds until previous stage exit criteria and validation gates are completed.
 
 ## Branch Execution Status (Current Branch: `feature/codex/next-target`)
@@ -59,6 +69,7 @@ so existing `react` workbench can keep UI behavior while separating domain logic
 - [x] Stage 4: Stability hardening.
 - [x] Stage 5: Failure-hygiene hardening.
 - [x] Stage 6: Service result metadata propagation.
+- [x] Stage 7: Adapter package extraction.
 
 ## Guiding Decision
 
@@ -344,6 +355,27 @@ packages/
   - `pnpm exec vitest run packages/contracts/src packages/services/src` passes.
   - `pnpm --filter @newchobo-ui/contracts typecheck` passes.
 
+### Stage 7 Adapter Package Progress (2026-06-03)
+
+- Added `packages/adapters` package with:
+  - `workspace.ts` adapter (`InMemoryWorkspaceFileRepository`, `createWorkspaceFileRepository`)
+  - `runtime.ts` adapter (`createChatTransportFromRuntime`, `emitRuntimeWorkspacePatch`)
+  - root `index.ts` and package `exports`.
+- Updated story integration to consume adapters:
+  - workspace repository now comes from `createWorkspaceFileRepository` in adapters.
+  - chat transport conversion now comes from `createChatTransportFromRuntime`.
+- Added adapter unit tests:
+  - `packages/adapters/src/workspace.test.ts`
+  - `packages/adapters/src/runtime.test.ts`
+- Wiring updates:
+  - `@newchobo-ui/react` depends on `@newchobo-ui/adapters`.
+  - root `typecheck` includes adapters package.
+- Acceptance targets:
+  - `pnpm --filter @newchobo-ui/adapters typecheck` passes.
+  - `pnpm --filter @newchobo-ui/adapters test` passes.
+  - `pnpm --filter @newchobo-ui/react typecheck` continues passing with adapter-based story wiring.
+  - Verified 2026-06-03: adapter typecheck and adapter tests pass; react typecheck remains green.
+
 ## Acceptance Criteria
 
 - A save action can be executed entirely through `@newchobo-ui/services` with explicit success/failure
@@ -363,10 +395,11 @@ that do not produce tests or usage value.
 
 ## Decision Log
 
-| Date       | Decision                                 | Rationale                                          | Status   |
-| ---------- | ---------------------------------------- | -------------------------------------------------- | -------- |
-| 2026-06-03 | Use in-repo subpackages first            | Faster validation with lower operational overhead  | Approved |
-| 2026-06-03 | Start with contracts + services          | Align domain separation before external publishing | Approved |
-| 2026-06-03 | Add optional adapters package in phase 3 | Keeps story/test dependencies isolated             | Approved |
-| 2026-06-03 | Continue Stage 5 hardening inside services | Keep callback failures from crashing event fan-out    | Approved |
+| Date       | Decision                                        | Rationale                                                               | Status   |
+| ---------- | ----------------------------------------------- | ----------------------------------------------------------------------- | -------- |
+| 2026-06-03 | Use in-repo subpackages first                   | Faster validation with lower operational overhead                       | Approved |
+| 2026-06-03 | Start with contracts + services                 | Align domain separation before external publishing                      | Approved |
+| 2026-06-03 | Add optional adapters package in phase 3        | Keeps story/test dependencies isolated                                  | Approved |
+| 2026-06-03 | Continue Stage 5 hardening inside services      | Keep callback failures from crashing event fan-out                      | Approved |
 | 2026-06-03 | Start Stage 6 service-result metadata hardening | Standardize request-id/request-time propagation for save/patch services | Approved |
+| 2026-06-03 | Start Stage 7 adapter extraction                | Move story/runtime adaptation to reusable package boundaries            | Approved |

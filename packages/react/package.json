@@ -19,6 +19,7 @@
   ],
   "dependencies": {
     "@newchobo-ui/core": "workspace:*",
+    "@newchobo-ui/adapters": "workspace:*",
     "@newchobo-ui/contracts": "workspace:*",
     "@newchobo-ui/runtime": "workspace:*",
     "@newchobo-ui/services": "workspace:*",
