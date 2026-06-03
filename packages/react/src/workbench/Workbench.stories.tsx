@@ -8,20 +8,20 @@ import {
   type CommandMenuEntry,
 } from '@newchobo-ui/core';
 import {
+  createChatTransportFromRuntime,
+  createWorkspaceFileRepository,
+} from '@newchobo-ui/adapters';
+import {
   createMockWorkbenchRuntime,
   type RuntimeChatMessage,
   type RuntimeStatus,
-  type WorkbenchRuntimeEvent,
 } from '@newchobo-ui/runtime';
 import {
   isSaveFailure,
   type ChatStreamEvent,
   isSaveSuccess,
-  type ChatTransport,
-  type SaveInput,
   type SaveFailure,
   type WorkspacePatchEvent,
-  type WorkspaceFileRepository,
 } from '@newchobo-ui/contracts';
 import {
   WorkbenchChatService,
@@ -65,17 +65,14 @@ import {
   WorkspaceSearchPanel,
   fileNameOfPath,
   getAvailableWorkspaceEntryName,
-  normalizeWorkspacePath,
   getWorkspaceFileMovePlan,
   isSimpleWorkspaceName,
   isWorkspaceEntryPathAvailable,
   joinWorkspacePath,
   parentPathOf,
   pruneWorkspaceSelection,
-  type CreateWorkspaceFileInput,
   useVirtualWorkspace,
   type WorkspaceFile,
-  type WriteWorkspaceFileInput,
   type WorkspaceExplorerInlineEditCommitMeta,
   type WorkspaceExplorerInlineEditKind,
   type WorkspaceExplorerInlineEditState,
@@ -342,158 +339,6 @@ function runtimeStatusLabel(status: RuntimeStatus) {
   if (status === 'cancelled') return 'Runtime stopped';
   if (status === 'error') return 'Runtime error';
   return 'Runtime idle';
-}
-
-function toChatServiceTransport(
-  runtime: ReturnType<typeof createMockWorkbenchRuntime>,
-): ChatTransport {
-  return {
-    cancel: () => runtime.cancel(),
-    sendMessage: async (message: string) => {
-      const next = runtime.sendMessage(message);
-      if (!next) return undefined;
-
-      return {
-        content: next.content,
-        createdAt: next.createdAt,
-        id: next.id,
-        label: next.label,
-        source: next.source,
-      };
-    },
-    subscribe: (listener: (event: ChatStreamEvent) => void) =>
-      runtime.subscribe((event: WorkbenchRuntimeEvent) => {
-        if (event.type === 'message') {
-          listener({
-            message: {
-              content: event.message.content,
-              createdAt: event.message.createdAt,
-              id: event.message.id,
-              label: event.message.label,
-              source: event.message.source,
-            },
-            type: 'message',
-          });
-          return;
-        }
-
-        if (event.type === 'message-delta') {
-          listener({
-            delta: event.delta,
-            message: {
-              content: event.message.content,
-              createdAt: event.message.createdAt,
-              id: event.message.id,
-              label: event.message.label,
-              source: event.message.source,
-            },
-            type: 'message-delta',
-          });
-          return;
-        }
-
-        if (event.type === 'status') {
-          listener({
-            previousStatus: event.previousStatus,
-            status: event.status,
-            type: 'status',
-          });
-          return;
-        }
-
-        if (event.patch.type === 'delete-file') {
-          listener({
-            patch: { path: event.patch.path, type: 'delete-file' },
-            type: 'workspace-patch',
-          });
-          return;
-        }
-
-        listener({
-          patch: {
-            content: event.patch.content,
-            mimeType: event.patch.mimeType,
-            path: event.patch.path,
-            source: event.patch.source,
-            type: 'write-file',
-            updatedAt: event.patch.updatedAt,
-          },
-          type: 'workspace-patch',
-        });
-      }),
-  };
-}
-
-function createWorkspaceFileRepository({
-  createFile,
-  deleteFile,
-  files,
-  saveFile,
-}: {
-  createFile: (file: CreateWorkspaceFileInput) => void;
-  deleteFile: (path: string) => void;
-  files: WorkspaceFile[];
-  saveFile: (path: string, file: WriteWorkspaceFileInput) => void;
-}): WorkspaceFileRepository {
-  const normalizedFiles = () => files.map((file) => ({ ...file }));
-  const getFileByPath = async (path: string) => {
-    const normalizedPath = normalizeWorkspacePath(path);
-    if (!normalizedPath) return null;
-
-    return normalizedFiles().find((file) => file.path === normalizedPath) ?? null;
-  };
-
-  return {
-    deleteFile: async (path: string) => {
-      const normalizedPath = normalizeWorkspacePath(path);
-      if (!normalizedPath) return;
-      deleteFile(normalizedPath);
-    },
-    getFile: async (path: string) => {
-      const normalizedPath = normalizeWorkspacePath(path);
-      if (!normalizedPath) return null;
-
-      return normalizedFiles().find((file) => file.path === normalizedPath) ?? null;
-    },
-    listFiles: async () => normalizedFiles(),
-    writeFile: async (input: SaveInput) => {
-      const normalizedPath = normalizeWorkspacePath(input.path);
-      if (!normalizedPath) {
-        throw new Error('Invalid workspace path.');
-      }
-
-      const current = await getFileByPath(normalizedPath);
-      if (current && input.expectedUpdatedAt && current.updatedAt !== input.expectedUpdatedAt) {
-        throw new Error('Stale file version.');
-      }
-
-      const next: WorkspaceFile = {
-        content: input.content,
-        mimeType: input.mimeType ?? current?.mimeType,
-        path: normalizedPath,
-        source: input.source ?? current?.source,
-        updatedAt: input.updatedAt ?? current?.updatedAt,
-      };
-
-      if (current) {
-        saveFile(normalizedPath, {
-          content: input.content,
-          source: input.source,
-          updatedAt: input.updatedAt,
-        });
-      } else {
-        createFile({
-          content: input.content,
-          mimeType: input.mimeType,
-          path: normalizedPath,
-          source: input.source,
-          updatedAt: input.updatedAt,
-        });
-      }
-
-      return next;
-    },
-  };
 }
 
 function getStatusFooterSections(): StatusBarSectionModel[] {
@@ -876,7 +721,10 @@ function IntegratedWorkbenchShell() {
     () => new WorkspacePatchService({ repository: workspaceRepository }),
     [workspaceRepository],
   );
-  const chatRuntimeTransport = useMemo(() => toChatServiceTransport(chatRuntime), [chatRuntime]);
+  const chatRuntimeTransport = useMemo(
+    () => createChatTransportFromRuntime({ runtime: chatRuntime }),
+    [chatRuntime],
+  );
   const chatService = useMemo(
     () =>
       new WorkbenchChatService({

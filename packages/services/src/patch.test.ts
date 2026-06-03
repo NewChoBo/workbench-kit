@@ -37,12 +37,60 @@ class InMemoryWorkspaceFileRepository implements WorkspaceFileRepository {
   }
 }
 
+class FailingWriteWorkspaceFileRepository implements WorkspaceFileRepository {
+  async deleteFile(_path: string): Promise<void> {
+    return undefined;
+  }
+
+  async getFile(_path: string): Promise<WorkspaceFile | null> {
+    return null;
+  }
+
+  async listFiles() {
+    return [];
+  }
+
+  async writeFile(_input: {
+    content: string;
+    expectedUpdatedAt?: string;
+    mimeType?: string;
+    path: string;
+    source?: WorkspaceFile['source'];
+    updatedAt?: string;
+  }): Promise<WorkspaceFile> {
+    throw new Error('write failed');
+  }
+}
+
+class FailingDeleteWorkspaceFileRepository extends InMemoryWorkspaceFileRepository {
+  override async deleteFile() {
+    throw new Error('delete failed');
+  }
+
+  override async getFile() {
+    return {
+      content: 'existing',
+      mimeType: 'text/plain',
+      path: 'fail-delete.md',
+      updatedAt: '2026-06-03T00:00:00.000Z',
+    };
+  }
+}
+
+class FailingGetOnlyWorkspaceFileRepository extends InMemoryWorkspaceFileRepository {
+  override async getFile(_path: string): Promise<WorkspaceFile | null> {
+    throw new Error('getFile failed');
+  }
+}
+
+
 describe('WorkspacePatchService', () => {
   it('creates or updates file for write-file patches', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
     const service = new WorkspacePatchService({
       repository,
       now: () => '2026-06-03T00:00:00.000Z',
+      requestId: () => 'patch-metadata-1',
     });
 
     const result = await service.applyPatch({
@@ -59,6 +107,8 @@ describe('WorkspacePatchService', () => {
         path: 'docs/readme.md',
         type: 'write-file',
       },
+      requestId: 'patch-metadata-1',
+      requestedAt: '2026-06-03T00:00:00.000Z',
     });
     expect(await repository.getFile('docs/readme.md')).toMatchObject({
       content: 'patched',
@@ -119,10 +169,64 @@ describe('WorkspacePatchService', () => {
 
   it('returns failed for blank patch paths', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
-    const service = new WorkspacePatchService({ repository });
+    const service = new WorkspacePatchService({
+      repository,
+      now: () => '2026-06-03T00:00:00.000Z',
+      requestId: () => 'patch-metadata-2',
+    });
 
     const result = await service.applyPatch({ path: '   ', type: 'delete-file' });
 
     expect(result).toMatchObject({ type: 'patch:failed', code: 'invalid-path' });
+    expect(result).toMatchObject({
+      requestId: 'patch-metadata-2',
+      requestedAt: '2026-06-03T00:00:00.000Z',
+    });
+  });
+
+  it('returns failed for repository errors on write patches', async () => {
+    const repository = new FailingWriteWorkspaceFileRepository();
+    const service = new WorkspacePatchService({ repository });
+
+    const result = await service.applyPatch({
+      content: 'patch content',
+      path: 'fail-write.md',
+      type: 'write-file',
+    });
+
+    expect(result).toMatchObject({
+      type: 'patch:failed',
+      code: 'unknown',
+      message: 'write failed',
+      patch: { path: 'fail-write.md', type: 'write-file' },
+    });
+  });
+
+  it('returns failed for repository errors on delete patches', async () => {
+    const repository = new FailingDeleteWorkspaceFileRepository();
+    const service = new WorkspacePatchService({ repository });
+
+    const result = await service.applyPatch({ path: 'fail-delete.md', type: 'delete-file' });
+
+    expect(result).toMatchObject({
+      type: 'patch:failed',
+      code: 'unknown',
+      message: 'delete failed',
+      patch: { path: 'fail-delete.md', type: 'delete-file' },
+    });
+  });
+
+  it('returns failed for repository get failure before delete', async () => {
+    const repository = new FailingGetOnlyWorkspaceFileRepository();
+    const service = new WorkspacePatchService({ repository });
+
+    const result = await service.applyPatch({ path: 'docs/readme.md', type: 'delete-file' });
+
+    expect(result).toMatchObject({
+      type: 'patch:failed',
+      code: 'unknown',
+      message: 'getFile failed',
+      patch: { path: 'docs/readme.md', type: 'delete-file' },
+    });
   });
 });
