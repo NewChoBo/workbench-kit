@@ -42,6 +42,31 @@ class InMemoryWorkspaceFileRepository implements WorkspaceFileRepository {
   }
 }
 
+class FailingSaveWorkspaceFileRepository implements WorkspaceFileRepository {
+  async deleteFile(_path: string) {
+    return undefined;
+  }
+
+  async getFile(_path: string) {
+    return null;
+  }
+
+  async listFiles() {
+    return [];
+  }
+
+  async writeFile(_input: {
+    content: string;
+    expectedUpdatedAt?: string;
+    mimeType?: string;
+    path: string;
+    source?: WorkspaceFile['source'];
+    updatedAt?: string;
+  }): Promise<WorkspaceFile> {
+    throw new Error('save failed');
+  }
+}
+
 describe('WorkspaceSaveService', () => {
   it('creates a file when saveDraft is called first time', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
@@ -165,6 +190,40 @@ describe('WorkspaceSaveService', () => {
       kind: 'save:failure',
       code: 'invalid-path',
       path: '   ',
+    });
+  });
+
+  it('returns unknown failure when repository write fails', async () => {
+    const repository = new FailingSaveWorkspaceFileRepository();
+    const service = new WorkspaceSaveService({ repository });
+
+    const result = await service.saveDraft({
+      content: 'x',
+      path: 'src/index.ts',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'save:failure',
+      code: 'unknown',
+      message: 'save failed',
+      path: 'src/index.ts',
+    });
+  });
+
+  it('commit delegates through saveDraft and returns failure for repository errors', async () => {
+    const repository = new FailingSaveWorkspaceFileRepository();
+    const service = new WorkspaceSaveService({ repository });
+
+    const result = await service.commit({
+      content: 'x',
+      path: 'src/index.ts',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'save:failure',
+      code: 'unknown',
+      message: 'save failed',
+      path: 'src/index.ts',
     });
   });
 });
