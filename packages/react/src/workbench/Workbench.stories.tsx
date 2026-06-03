@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 import {
@@ -55,6 +55,7 @@ import {
   type WorkbenchWorkspaceCommandContext,
 } from './commands';
 import { WorkbenchSettingsModal, WorkbenchSettingsSection } from './settings';
+import { WorkbenchShell } from './WorkbenchShell';
 import { useWorkbenchShellState } from './shellState';
 import { SplitView } from './SplitView';
 import { StatusBar, type StatusBarItemModel, type StatusBarSectionModel } from './StatusBar';
@@ -451,6 +452,7 @@ export const SettingsDialog: Story = {
 };
 
 export const IntegratedShell: Story = {
+  tags: ['storybook-play-baseline'],
   render: () => <IntegratedWorkbenchShell />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -486,7 +488,10 @@ export const IntegratedShell: Story = {
     await expect(chatComposer).toBeVisible();
     await userEvent.type(chatComposer, 'Create runtime notes');
     await userEvent.click(canvas.getByRole('button', { name: 'Send message' }));
-    await waitFor(() => expect(statusBar).toHaveTextContent('Runtime wrote docs/runtime-notes.md'));
+    await waitFor(() => {
+      expect(statusBar).toHaveTextContent('Runtime wrote docs/runtime-notes.md');
+    });
+    await waitFor(() => expect(statusBar).toHaveTextContent('Runtime idle'));
   },
 };
 
@@ -703,6 +708,10 @@ function IntegratedWorkbenchShell() {
     toggleFolder,
     workspaceTree,
   } = workspace;
+  const openFileRef = useRef(openFile);
+  useEffect(() => {
+    openFileRef.current = openFile;
+  }, [openFile]);
   const workspaceRepository = useMemo(
     () =>
       createWorkspaceFileRepository({
@@ -742,13 +751,17 @@ function IntegratedWorkbenchShell() {
               return;
             }
 
-            openFile(result.patch.path);
+            // Workspace updates come from repository callbacks that may be
+            // processed in a later React update cycle than the patch callback.
+            setTimeout(() => {
+              openFileRef.current(result.patch.path);
+            }, 0);
             setLastCommandLabel(`Runtime wrote ${result.patch.path}`);
           });
         },
         transport: chatRuntimeTransport,
       }),
-    [chatRuntimeTransport, openFile, workspacePatchService],
+    [chatRuntimeTransport, workspacePatchService],
   );
   const updateRuntimeMessage = (message: ChatMessage) => {
     setRuntimeMessages((currentMessages) => {
@@ -774,14 +787,16 @@ function IntegratedWorkbenchShell() {
       }
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      chatService.dispose();
+    };
   }, [chatService, updateRuntimeMessage]);
   useEffect(
     () => () => {
-      chatService.dispose();
       chatRuntime.dispose();
     },
-    [chatRuntime, chatService],
+    [chatRuntime],
   );
   const activeActivity = storyActivities[activeActivityId];
   const statusSections = getIntegratedStatusSections({
@@ -1241,286 +1256,287 @@ function IntegratedWorkbenchShell() {
   );
 
   return (
-    <div className="ide-root" data-theme={colorTheme} style={{ height: 640, minHeight: 0 }}>
-      <div className="ide-body">
-        <ActivityBar
-          items={getActivityItems(activeActivityId)}
-          secondaryItems={[
-            {
-              id: 'settings',
-              label: 'Settings',
-              icon: <i className="codicon codicon-settings-gear" />,
-              active: settingsOpen,
-            },
-          ]}
-          onContextMenu={(event) =>
-            openContextMenu(event, createWorkbenchMenuItems(), 'Activity bar menu')
+    <WorkbenchShell
+      activityBar={{
+        items: getActivityItems(activeActivityId),
+        secondaryItems: [
+          {
+            id: 'settings',
+            label: 'Settings',
+            icon: <i className="codicon codicon-settings-gear" />,
+            active: settingsOpen,
+          },
+        ],
+        onContextMenu: (event) =>
+          openContextMenu(event, createWorkbenchMenuItems(), 'Activity bar menu'),
+        onItemActivate: (item) => {
+          if (item.id === 'settings') {
+            shell.openSettings();
+            return;
           }
-          onItemActivate={(item) => {
-            if (item.id === 'settings') {
-              shell.openSettings();
-              return;
-            }
 
-            if (isStoryActivityId(item.id)) {
-              activateActivityFromBar(item.id);
-            }
-          }}
-        />
-        {isPrimarySideBarVisible ? (
-          <SplitView
-            className="ui-workbench-story-shell-split"
-            minPrimarySizePercent={16}
-            maxPrimarySizePercent={40}
-            primarySizePercent={sideBarSizePercent}
-            onPrimarySizePercentChange={shell.setPrimarySidebarSizePercent}
-            primary={
-              <aside
-                aria-label="Primary sidebar"
-                className="workbench-primary-side-bar"
-                style={{ borderRight: '1px solid var(--color-border)' }}
-                onContextMenu={(event) => {
-                  const target = event.target as HTMLElement;
-                  if (target.closest('button, input, textarea, .ui-context-menu')) return;
+          if (isStoryActivityId(item.id)) {
+            activateActivityFromBar(item.id);
+          }
+        },
+      }}
+      compactStatus
+      onStatusItemActivate={activateStatusItem}
+      primarySidebar={{
+        className: 'ui-workbench-story-shell-split',
+        isVisible: isPrimarySideBarVisible,
+        maxPrimarySizePercent: 40,
+        minPrimarySizePercent: 16,
+        onSizePercentChange: shell.setPrimarySidebarSizePercent,
+        primarySizePercent: sideBarSizePercent,
+        node: (
+          <aside
+            aria-label="Primary sidebar"
+            className="workbench-primary-side-bar"
+            style={{ borderRight: '1px solid var(--color-border)' }}
+            onContextMenu={(event) => {
+              const target = event.target as HTMLElement;
+              if (target.closest('button, input, textarea, .ui-context-menu')) return;
 
+              openContextMenu(
+                event,
+                activeActivityId === 'explorer' ? createExplorerRootMenuItems() : createWorkbenchMenuItems(),
+                'Primary sidebar menu',
+              );
+            }}
+          >
+            {activeActivityId === 'chat' ? (
+              <ChatPanel
+                assistantLabel="Assistant"
+                disabled={runtimeStatus === 'error'}
+                emptyLabel="Ask about this workspace."
+                isRunning={runtimeStatus === 'running'}
+                messages={runtimeMessages}
+                placeholder="Ask about this workspace"
+                showTools
+                title="Chat"
+                value={chatDraft}
+                onCancel={() => chatService.cancel()}
+                onSubmit={(message) => {
+                  setChatDraft('');
+                  void chatService.sendMessage(message);
+                  setLastCommandLabel('Chat draft sent');
+                }}
+                onValueChange={setChatDraft}
+              />
+            ) : activeActivityId === 'search' ? (
+              <WorkspaceSearchPanel
+                activePath={selectedPath}
+                query={searchQuery}
+                results={filteredSearchResults}
+                onActivateResult={activateSearchResult}
+                onQueryChange={setSearchQuery}
+                onRefresh={() => setLastCommandLabel('Search refreshed')}
+                onResultContextMenu={(event, result) =>
                   openContextMenu(
                     event,
-                    activeActivityId === 'explorer'
-                      ? createExplorerRootMenuItems()
-                      : createWorkbenchMenuItems(),
-                    'Primary sidebar menu',
-                  );
-                }}
-              >
-                {activeActivityId === 'chat' ? (
-                  <ChatPanel
-                    assistantLabel="Assistant"
-                    disabled={runtimeStatus === 'error'}
-                    emptyLabel="Ask about this workspace."
-                    isRunning={runtimeStatus === 'running'}
-                    messages={runtimeMessages}
-                    placeholder="Ask about this workspace"
-                    showTools
-                    title="Chat"
-                    value={chatDraft}
-                    onCancel={() => chatService.cancel()}
-                    onSubmit={(message) => {
-                      setChatDraft('');
-                      void chatService.sendMessage(message);
-                      setLastCommandLabel('Chat draft sent');
-                    }}
-                    onValueChange={setChatDraft}
-                  />
-                ) : activeActivityId === 'search' ? (
-                  <WorkspaceSearchPanel
-                    activePath={selectedPath}
-                    query={searchQuery}
-                    results={filteredSearchResults}
-                    onActivateResult={activateSearchResult}
-                    onQueryChange={setSearchQuery}
-                    onRefresh={() => setLastCommandLabel('Search refreshed')}
-                    onResultContextMenu={(event, result) =>
-                      openContextMenu(
-                        event,
-                        createWorkspaceMenuItems({
-                          children: [],
-                          file: result.file,
-                          name: fileNameOfPath(result.path),
-                          path: result.path,
-                          type: 'file',
-                        }),
-                        'Search result menu',
-                      )
-                    }
-                  />
-                ) : (
-                  <SideBarViewFrame
-                    title={activeActivity.label}
-                    actions={
-                      activeActivityId === 'explorer' ? (
-                        <>
-                          <IconButton
-                            icon="codicon-new-file"
-                            label="New file"
-                            onClick={() => startWorkspaceCreate('create-file')}
-                          />
-                          <IconButton
-                            icon="codicon-new-folder"
-                            label="New folder"
-                            onClick={() => startWorkspaceCreate('create-folder')}
-                          />
-                          <IconButton icon="codicon-refresh" label="Refresh" />
-                        </>
-                      ) : (
-                        <IconButton icon="codicon-refresh" label="Refresh" />
-                      )
-                    }
-                    headerAddon={
-                      <SideBarHeaderControl>
-                        <TextInput
-                          aria-label={`Filter ${activeActivity.label}`}
-                          controlWidth="full"
-                          placeholder="Filter"
-                          value={filterQuery}
-                          onChange={(event) => setFilterQuery(event.currentTarget.value)}
-                        />
-                      </SideBarHeaderControl>
-                    }
-                  >
-                    <WorkspaceExplorer
-                      activePath={selectedPath}
-                      expandedPaths={expandedPaths}
-                      filterQuery={filterQuery}
-                      inlineEdit={explorerInlineEdit}
-                      nodes={workspaceTree}
-                      selectedPaths={explorerSelection.paths}
-                      selectionAnchorPath={explorerSelection.anchorPath}
-                      onActivateFile={activateFile}
-                      onInlineEditCancel={() => {
-                        setExplorerInlineEdit(undefined);
-                        setLastCommandLabel('Inline edit canceled');
-                      }}
-                      onInlineEditCommit={handleExplorerInlineEditCommit}
-                      onInlineEditValueChange={handleExplorerInlineEditValueChange}
-                      onItemContextMenu={(event, node, meta) =>
-                        openContextMenu(
-                          event,
-                          createWorkspaceMenuItems(node, meta.actionPaths),
-                          'Workspace item menu',
-                        )
-                      }
-                      onRequestDelete={handleExplorerRequestDelete}
-                      onRequestMove={handleExplorerRequestMove}
-                      onRequestRename={handleExplorerRequestRename}
-                      onSelectionChange={(selection, meta) => {
-                        setExplorerSelection(selection);
-                        if (meta.mode !== 'single') {
-                          setLastCommandLabel(`${selection.paths.length} files selected`);
-                        }
-                      }}
-                      onToggleFolder={toggleFolder}
+                    createWorkspaceMenuItems({
+                      children: [],
+                      file: result.file,
+                      name: fileNameOfPath(result.path),
+                      path: result.path,
+                      type: 'file',
+                    }),
+                    'Search result menu',
+                  )
+                }
+              />
+            ) : (
+              <SideBarViewFrame
+                title={activeActivity.label}
+                actions={
+                  activeActivityId === 'explorer' ? (
+                    <>
+                      <IconButton
+                        icon="codicon-new-file"
+                        label="New file"
+                        onClick={() => startWorkspaceCreate('create-file')}
+                      />
+                      <IconButton
+                        icon="codicon-new-folder"
+                        label="New folder"
+                        onClick={() => startWorkspaceCreate('create-folder')}
+                      />
+                      <IconButton icon="codicon-refresh" label="Refresh" />
+                    </>
+                  ) : (
+                    <IconButton icon="codicon-refresh" label="Refresh" />
+                  )
+                }
+                headerAddon={
+                  <SideBarHeaderControl>
+                    <TextInput
+                      aria-label={`Filter ${activeActivity.label}`}
+                      controlWidth="full"
+                      placeholder="Filter"
+                      value={filterQuery}
+                      onChange={(event) => setFilterQuery(event.currentTarget.value)}
                     />
-                  </SideBarViewFrame>
-                )}
-              </aside>
-            }
-            secondary={editorArea}
-          />
-        ) : (
-          editorArea
-        )}
-      </div>
-      <StatusBar compact sections={statusSections} onItemActivate={activateStatusItem} />
-      {contextMenu ? (
-        <ContextMenu
-          ariaLabel={contextMenu.ariaLabel}
-          items={contextMenu.items}
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onClose={() => setContextMenu(null)}
-        />
-      ) : null}
-      {pendingDelete ? (
-        <ConfirmDialog
-          confirmLabel="Delete"
-          detail={
-            <div className="workbench-delete-targets">
-              {pendingDelete.paths.map((path) => (
-                <code key={path}>{path}</code>
-              ))}
-            </div>
-          }
-          message={
-            pendingDelete.type === 'folder'
-              ? 'Delete this folder and its files?'
-              : pendingDelete.paths.length > 1
-                ? 'Delete selected workspace files?'
-                : 'Delete this workspace file?'
-          }
-          title={
-            pendingDelete.type === 'folder'
-              ? 'Delete Folder'
-              : pendingDelete.paths.length > 1
-                ? 'Delete Files'
-                : 'Delete File'
-          }
-          variant="danger"
-          onCancel={() => setPendingDelete(null)}
-          onConfirm={confirmPendingDelete}
-        />
-      ) : null}
-      {settingsOpen ? (
-        <WorkbenchSettingsModal
-          activeCategoryId={settingsCategoryId}
-          activeScopeId={settingsScopeId}
-          categories={[
-            { id: 'appearance', label: 'Appearance' },
-            { id: 'workbench', label: 'Workbench' },
-            { id: 'workspace', label: 'Workspace' },
-            { id: 'maintenance', label: 'Maintenance' },
-          ]}
-          footer={
-            <>
-              <Button
-                variant="danger"
-                onClick={() => {
-                  setCompactRows(true);
-                  shell.setTheme('dark');
-                  setSearchQuery('button');
-                  shell.setSettingsCategoryId('appearance');
-                  shell.setSettingsScopeId('user');
-                  shell.setSettingsSearchValue('');
-                  setLastCommandLabel('Settings reset');
-                }}
+                  </SideBarHeaderControl>
+                }
               >
-                Reset
-              </Button>
-              <span className="workbench-settings-footer__spacer" />
-              <Button onClick={shell.closeSettings}>Cancel</Button>
-              <Button variant="primary" onClick={shell.closeSettings}>
-                Apply
-              </Button>
-            </>
-          }
-          scopes={[
-            { id: 'user', label: 'User' },
-            {
-              id: 'workspace',
-              label: 'Workspace',
-              title: 'Workspace-scoped settings are represented with mock data in this story.',
-            },
-          ]}
-          searchValue={settingsSearchValue}
-          title="Settings"
-          titleSuffix={<Badge>{settingsScopeId}</Badge>}
-          onActiveCategoryIdChange={shell.setSettingsCategoryId}
-          onClose={shell.closeSettings}
-          onScopeChange={shell.setSettingsScopeId}
-          onSearchValueChange={shell.setSettingsSearchValue}
-          renderCategory={(category) =>
-            renderSettingsCategory({
-              categoryId: category.id,
-              colorTheme,
-              compactRows,
-              fileCount: files.length,
-              searchQuery,
-              searchResultCount: filteredSearchResults.length,
-              settingsSearchValue,
-              sideBarSizePercent,
-              onClearSearch: () => {
-                setSearchQuery('');
-                setLastCommandLabel('Search cleared from settings');
-              },
-              onColorThemeChange: shell.setTheme,
-              onCompactRowsChange: setCompactRows,
-              onSearchQueryChange: setSearchQuery,
-              onSettingsSearchValueChange: shell.setSettingsSearchValue,
-              onSideBarSizePercentChange: shell.setPrimarySidebarSizePercent,
-            })
-          }
-        />
-      ) : null}
-    </div>
+                <WorkspaceExplorer
+                  activePath={selectedPath}
+                  expandedPaths={expandedPaths}
+                  filterQuery={filterQuery}
+                  inlineEdit={explorerInlineEdit}
+                  nodes={workspaceTree}
+                  selectedPaths={explorerSelection.paths}
+                  selectionAnchorPath={explorerSelection.anchorPath}
+                  onActivateFile={activateFile}
+                  onInlineEditCancel={() => {
+                    setExplorerInlineEdit(undefined);
+                    setLastCommandLabel('Inline edit canceled');
+                  }}
+                  onInlineEditCommit={handleExplorerInlineEditCommit}
+                  onInlineEditValueChange={handleExplorerInlineEditValueChange}
+                  onItemContextMenu={(event, node, meta) =>
+                    openContextMenu(
+                      event,
+                      createWorkspaceMenuItems(node, meta.actionPaths),
+                      'Workspace item menu',
+                    )
+                  }
+                  onRequestDelete={handleExplorerRequestDelete}
+                  onRequestMove={handleExplorerRequestMove}
+                  onRequestRename={handleExplorerRequestRename}
+                  onSelectionChange={(selection, meta) => {
+                    setExplorerSelection(selection);
+                    if (meta.mode !== 'single') {
+                      setLastCommandLabel(`${selection.paths.length} files selected`);
+                    }
+                  }}
+                  onToggleFolder={toggleFolder}
+                />
+              </SideBarViewFrame>
+            )}
+          </aside>
+        ),
+      }}
+      rootClassName="ide-root"
+      rootStyle={{ height: 640, minHeight: 0 }}
+      secondaryArea={editorArea}
+      statusSections={statusSections}
+      theme={colorTheme}
+      overlays={
+        <>
+          {contextMenu ? (
+            <ContextMenu
+              ariaLabel={contextMenu.ariaLabel}
+              items={contextMenu.items}
+              x={contextMenu.x}
+              y={contextMenu.y}
+              onClose={() => setContextMenu(null)}
+            />
+          ) : null}
+          {pendingDelete ? (
+            <ConfirmDialog
+              confirmLabel="Delete"
+              detail={
+                <div className="workbench-delete-targets">
+                  {pendingDelete.paths.map((path) => (
+                    <code key={path}>{path}</code>
+                  ))}
+                </div>
+              }
+              message={
+                pendingDelete.type === 'folder'
+                  ? 'Delete this folder and its files?'
+                  : pendingDelete.paths.length > 1
+                    ? 'Delete selected workspace files?'
+                    : 'Delete this workspace file?'
+              }
+              title={
+                pendingDelete.type === 'folder'
+                  ? 'Delete Folder'
+                  : pendingDelete.paths.length > 1
+                    ? 'Delete Files'
+                    : 'Delete File'
+              }
+              variant="danger"
+              onCancel={() => setPendingDelete(null)}
+              onConfirm={confirmPendingDelete}
+            />
+          ) : null}
+          {settingsOpen ? (
+            <WorkbenchSettingsModal
+              activeCategoryId={settingsCategoryId}
+              activeScopeId={settingsScopeId}
+              categories={[
+                { id: 'appearance', label: 'Appearance' },
+                { id: 'workbench', label: 'Workbench' },
+                { id: 'workspace', label: 'Workspace' },
+                { id: 'maintenance', label: 'Maintenance' },
+              ]}
+              footer={
+                <>
+                  <Button
+                    variant="danger"
+                    onClick={() => {
+                      setCompactRows(true);
+                      shell.setTheme('dark');
+                      setSearchQuery('button');
+                      shell.setSettingsCategoryId('appearance');
+                      shell.setSettingsScopeId('user');
+                      shell.setSettingsSearchValue('');
+                      setLastCommandLabel('Settings reset');
+                    }}
+                  >
+                    Reset
+                  </Button>
+                  <span className="workbench-settings-footer__spacer" />
+                  <Button onClick={shell.closeSettings}>Cancel</Button>
+                  <Button variant="primary" onClick={shell.closeSettings}>
+                    Apply
+                  </Button>
+                </>
+              }
+              scopes={[
+                { id: 'user', label: 'User' },
+                {
+                  id: 'workspace',
+                  label: 'Workspace',
+                  title: 'Workspace-scoped settings are represented with mock data in this story.',
+                },
+              ]}
+              searchValue={settingsSearchValue}
+              title="Settings"
+              titleSuffix={<Badge>{settingsScopeId}</Badge>}
+              onActiveCategoryIdChange={shell.setSettingsCategoryId}
+              onClose={shell.closeSettings}
+              onScopeChange={shell.setSettingsScopeId}
+              onSearchValueChange={shell.setSettingsSearchValue}
+              renderCategory={(category) =>
+                renderSettingsCategory({
+                  categoryId: category.id,
+                  colorTheme,
+                  compactRows,
+                  fileCount: files.length,
+                  searchQuery,
+                  searchResultCount: filteredSearchResults.length,
+                  settingsSearchValue,
+                  sideBarSizePercent,
+                  onClearSearch: () => {
+                    setSearchQuery('');
+                    setLastCommandLabel('Search cleared from settings');
+                  },
+                  onColorThemeChange: shell.setTheme,
+                  onCompactRowsChange: setCompactRows,
+                  onSearchQueryChange: setSearchQuery,
+                  onSettingsSearchValueChange: shell.setSettingsSearchValue,
+                  onSideBarSizePercentChange: shell.setPrimarySidebarSizePercent,
+                })
+              }
+            />
+          ) : null}
+        </>
+      }
+    />
   );
 }
 
