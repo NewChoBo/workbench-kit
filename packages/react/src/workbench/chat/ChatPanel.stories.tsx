@@ -4,10 +4,11 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
   createMockWorkbenchRuntime,
   type MockRuntimeResponsePlan,
-  type RuntimeChatMessage,
   type RuntimeStatus,
-  type RuntimeWorkspacePatch,
 } from '@newchobo-ui/runtime';
+import { createChatTransportFromRuntime } from '@newchobo-ui/adapters';
+import { WorkbenchChatService } from '@newchobo-ui/services';
+import type { ChatStreamEvent, WorkspacePatchEvent } from '@newchobo-ui/contracts';
 import { ChatPanel } from './ChatPanel';
 import type { ChatMessage } from './types';
 
@@ -27,15 +28,6 @@ interface ChatRuntimeHarnessProps {
   title?: string;
 }
 
-function runtimeMessagesToChatMessages(messages: RuntimeChatMessage[]): ChatMessage[] {
-  return messages.map((message) => ({
-    content: message.content,
-    id: message.id,
-    label: message.label,
-    source: message.source,
-  }));
-}
-
 function runtimeStatusLabel(status: RuntimeStatus) {
   if (status === 'running') return 'Runtime running';
   if (status === 'cancelled') return 'Runtime stopped';
@@ -43,9 +35,18 @@ function runtimeStatusLabel(status: RuntimeStatus) {
   return 'Runtime idle';
 }
 
-function workspacePatchLabel(patch: RuntimeWorkspacePatch) {
+function workspacePatchLabel(patch: WorkspacePatchEvent) {
   if (patch.type === 'delete-file') return `Patch delete: ${patch.path}`;
   return `Patch write: ${patch.path}`;
+}
+
+function updateMessages(currentMessages: ChatMessage[], message: ChatMessage): ChatMessage[] {
+  const index = currentMessages.findIndex((entry) => entry.id === message.id);
+  if (index < 0) return [...currentMessages, message];
+
+  const nextMessages = [...currentMessages];
+  nextMessages[index] = message;
+  return nextMessages;
 }
 
 function ChatRuntimeHarness({ response, title = 'Runtime Chat' }: ChatRuntimeHarnessProps) {
@@ -58,30 +59,48 @@ function ChatRuntimeHarness({ response, title = 'Runtime Chat' }: ChatRuntimeHar
     [response],
   );
   const [draft, setDraft] = useState('');
-  const [messages, setMessages] = useState(() => runtime.getMessages());
+  const [messages, setMessages] = useState<ChatMessage[]>(() =>
+    runtime.getMessages().map((message) => ({
+      content: message.content,
+      id: message.id,
+      label: message.label,
+      source: message.source,
+    })),
+  );
   const [status, setStatus] = useState<RuntimeStatus>(() => runtime.getStatus());
   const [workspacePatchLog, setWorkspacePatchLog] = useState<string[]>([]);
+  const chatRuntimeTransport = useMemo(
+    () => createChatTransportFromRuntime({ runtime }),
+    [runtime],
+  );
+  const chatService = useMemo(
+    () =>
+      new WorkbenchChatService({
+        onPatch: (patch) => {
+          setWorkspacePatchLog((currentLog) => [...currentLog, workspacePatchLabel(patch)]);
+        },
+        transport: chatRuntimeTransport,
+      }),
+    [chatRuntimeTransport],
+  );
 
   useEffect(() => {
-    const unsubscribe = runtime.subscribe((event) => {
+    const unsubscribe = chatService.subscribe((event: ChatStreamEvent) => {
       if (event.type === 'message' || event.type === 'message-delta') {
-        setMessages(runtime.getMessages());
+        setMessages((currentMessages) => updateMessages(currentMessages, event.message));
       }
 
       if (event.type === 'status') {
         setStatus(event.status);
       }
-
-      if (event.type === 'workspace-patch') {
-        setWorkspacePatchLog((currentLog) => [...currentLog, workspacePatchLabel(event.patch)]);
-      }
     });
 
     return () => {
       unsubscribe();
+      chatService.dispose();
       runtime.dispose();
     };
-  }, [runtime]);
+  }, [chatService, runtime]);
 
   return (
     <div style={{ display: 'grid', gridTemplateRows: '1fr auto', height: 520, width: 360 }}>
@@ -89,15 +108,15 @@ function ChatRuntimeHarness({ response, title = 'Runtime Chat' }: ChatRuntimeHar
         assistantLabel="Assistant"
         emptyLabel="Start a runtime conversation."
         isRunning={status === 'running'}
-        messages={runtimeMessagesToChatMessages(messages)}
+        messages={messages}
         placeholder="Ask the mock runtime"
         showTools={false}
         title={title}
         value={draft}
-        onCancel={() => runtime.cancel()}
+        onCancel={() => chatService.cancel()}
         onSubmit={(message) => {
           setDraft('');
-          runtime.sendMessage(message);
+          chatService.sendMessage(message);
         }}
         onValueChange={setDraft}
       />
