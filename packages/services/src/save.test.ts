@@ -62,6 +62,29 @@ describe('WorkspaceSaveService', () => {
     });
   });
 
+  it('normalizes path before save', async () => {
+    const repository = new InMemoryWorkspaceFileRepository();
+    const service = new WorkspaceSaveService({ repository });
+
+    const result = await service.saveDraft({
+      content: 'hello',
+      path: '  /src//components//new-file.ts ',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'save:success',
+      outcome: 'created',
+      file: {
+        content: 'hello',
+        path: 'src/components/new-file.ts',
+      },
+    });
+    expect(await repository.getFile('src/components/new-file.ts')).toMatchObject({
+      path: 'src/components/new-file.ts',
+      content: 'hello',
+    });
+  });
+
   it('updates saved content when unchanged baseline is still valid', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
     const service = new WorkspaceSaveService({ repository, now: () => '2026-06-03T00:00:00.000Z' });

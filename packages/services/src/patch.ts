@@ -7,6 +7,7 @@ import {
   type WorkspacePatchSource,
   type WorkspacePatchWriteFile,
 } from '@newchobo-ui/contracts';
+import { normalizeServiceWorkspacePath } from './path';
 
 export interface WorkspacePatchServiceOptions {
   repository: WorkspaceFileRepository;
@@ -24,11 +25,15 @@ export class WorkspacePatchService {
 
   async applyPatch(patch: WorkspacePatchEvent): Promise<WorkspacePatchApplyResult> {
     const path = this.normalizePath(patch.path);
+    const normalizedPatch = {
+      ...patch,
+      path,
+    } as WorkspacePatchEvent;
     if (!path) {
       return {
         code: 'invalid-path',
         message: 'Patch path is required.',
-        patch,
+        patch: normalizedPatch,
         type: 'patch:failed',
       };
     }
@@ -39,14 +44,14 @@ export class WorkspacePatchService {
         return {
           code: 'not-found',
           message: `No file exists at '${path}'.`,
-          patch,
+          patch: normalizedPatch,
           type: 'patch:failed',
         };
       }
 
       await this.repository.deleteFile(path);
       return {
-        patch,
+        patch: normalizedPatch,
         type: 'patch:applied',
       };
     }
@@ -61,13 +66,13 @@ export class WorkspacePatchService {
     };
     await this.repository.writeFile(file);
     return {
-      patch,
+      patch: normalizedPatch,
       type: 'patch:applied',
     };
   }
 
   private normalizePath(path: string) {
-    return path.trim().replace(/\\+/, '/').replace(/\/+/g, '/');
+    return normalizeServiceWorkspacePath(path);
   }
 }
 
