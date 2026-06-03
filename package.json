@@ -15,7 +15,8 @@
     "test": "pnpm exec vitest run",
     "build:storybook": "pnpm exec storybook build",
     "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
-    "typecheck": "pnpm --filter @newchobo-ui/core typecheck && pnpm --filter @newchobo-ui/contracts typecheck && pnpm --filter @newchobo-ui/services typecheck && pnpm --filter @newchobo-ui/workspace typecheck && pnpm --filter @newchobo-ui/runtime typecheck && pnpm --filter @newchobo-ui/adapters typecheck && pnpm --filter @newchobo-ui/react typecheck",
+    "typecheck": "pnpm --filter @newchobo-ui/core typecheck && pnpm --filter @newchobo-ui/contracts typecheck && pnpm --filter @newchobo-ui/services typecheck && pnpm --filter @newchobo-ui/workspace typecheck && pnpm --filter @newchobo-ui/runtime typecheck && pnpm --filter @newchobo-ui/adapters typecheck && pnpm --filter @newchobo-ui/react typecheck && pnpm --filter @newchobo-ui/vscode-host typecheck",
+    "typecheck:all": "pnpm typecheck && pnpm --filter @newchobo-ui/vscode-extension typecheck",
     "validate": "pnpm typecheck && pnpm lint && pnpm test && pnpm format:check && pnpm build:storybook",
     "validate:full": "pnpm validate && pnpm test:storybook-play:required"
   },

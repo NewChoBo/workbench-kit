@@ -14,6 +14,9 @@ subpackage extraction** before deciding to publish these packages separately.
 Build reusable, testable `contracts` and `services` subpackages that own save/chat/patch orchestration
 so existing `react` workbench can keep UI behavior while separating domain logic for later publish.
 
+개별 패키지별 뼈대 목표와 To-Do는 추후 실행 우선순위 분해용으로 [`migration-todo`](./migration-todo.md)의
+`Package Skeleton Goals` 표를 참조하도록 정리해 둔다.
+
 ### Stage Goal Decomposition
 
 1. **Stage 0: Design Alignment and Scope Lock**
@@ -60,7 +63,7 @@ so existing `react` workbench can keep UI behavior while separating domain logic
 - Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6 → Stage 7
 - No later stage proceeds until previous stage exit criteria and validation gates are completed.
 
-## Branch Execution Status (Current Branch: `feature/codex/next-target`)
+## Branch Execution Status
 
 - [x] Stage 0: Design alignment and scope lock.
 - [x] Stage 1: Contract foundation.
@@ -70,6 +73,27 @@ so existing `react` workbench can keep UI behavior while separating domain logic
 - [x] Stage 5: Failure-hygiene hardening.
 - [x] Stage 6: Service result metadata propagation.
 - [x] Stage 7: Adapter package extraction.
+
+Current milestone is **standalone application launch hardening** (app shell + host runtime + services).
+VS Code extension packaging is intentionally deferred to the next milestone, and extension
+bootstrap work should be treated as the next-track reference only.
+
+### Open gap from Stage targets
+
+- `WorkbenchShell` shell layout has been extracted and exported from `@newchobo-ui/react`, so the app-wide frame is now reusable.
+- Remaining gap is **composition-to-runtime binding**: side effects (저장, 삭제 확인, 스트리밍/패치 적용, 플러그인 주입, 영속성) are still wired inside `Workbench.stories.tsx` fixtures.
+- `@newchobo-ui/vscode-extension` package exists for host-style bootstrapping, but all extension-specific packaging and API commitments are deferred while we complete standalone app launch hardening.
+- Plugin lifecycle is contract-defined and service-implemented in host service, but install/enable/update flow remains in design/planning state and is not in the current milestone.
+
+### Track alignment (2026-06-03)
+
+- Immediate priority is Track A/B (standalone app path), while Track C (extension bootstrap) is deferred.
+  - Track A: `@newchobo-ui/react` shell entrypoint and story-level composition split.
+  - Track B: `@newchobo-ui/vscode-host` + `@newchobo-ui/services` runtime path hardening.
+  - Track C: `@newchobo-ui/vscode-extension` bootstrap formalization (next milestone).
+
+This means the remaining immediate gap is composition boundary hardening, not raw feature absence:
+- the behaviors and UX are already in Storybook integration, but not yet fully exposed as reusable, app-bootstrap-ready assembly contracts.
 
 ## Guiding Decision
 
@@ -189,6 +213,13 @@ packages/
   - External npm publishing
   - MSW/REST transport migration
   - Full plugin marketplace lifecycle (install/update/rollback)
+
+### Current-cycle Constraint
+
+- This milestone prioritizes **standalone application runtime hardening**.
+- vscode-extension bootstrap work is intentionally deferred to the next milestone.
+- Targeted work should be limited to runtime stability, lifecycle cleanup, and baseline
+  scenario parity in `@newchobo-ui/react` + `@newchobo-ui/services` + `@newchobo-ui/vscode-host`.
 
 ## Migration Phases
 
@@ -330,10 +361,14 @@ packages/
 
 ## Branch Completion for This Cycle
 
-- Objective status: complete.
-- Documentation and implementation are now aligned for stages 0~5 in this branch.
+- Current branch includes stage 0~7 foundations and runtime stability improvements.
+- Current next-cycle focus (standalone-first):
+  - stabilize standalone runtime entrypoints (`@newchobo-ui/react`, `@newchobo-ui/services`, `@newchobo-ui/vscode-host`),
+  - validate app launch via story-driven baseline flows,
+  - keep `@newchobo-ui/vscode-extension` bootstrap work as a deferred follow-up.
 - Next branch objective candidates:
-  - plugin installation lifecycle design (install/update/enable/disable),
+  - standalone app launch stability and baseline UX parity,
+  - plugin install/enable/disable design confirmation,
   - editor/session persistence adapter extraction,
   - contract versioning strategy for cross-package compatibility.
 
@@ -404,13 +439,32 @@ packages/
   - `pnpm --filter @newchobo-ui/react typecheck` continues passing with adapter-based story wiring.
   - Verified 2026-06-03: adapter typecheck and adapter tests pass; react typecheck remains green.
 
-## Acceptance Criteria
+### Stage 8 Extension Bootstrap Plan (Deferred, 2026-06-03)
 
-- A save action can be executed entirely through `@newchobo-ui/services` with explicit success/failure
-  result.
-- A chat patch event reaches a dedicated patch service before reducer mutation.
-- Story-level integration no longer owns patch application logic directly.
-- Existing UI behavior remains unchanged for users when using current story adapters.
+- Created `docs/workbench/vscode-extension-bootstrap-roadmap.md` for multi-track extension bootstrap extraction.
+- Planned direction for extension packaging phase: keep UI layer unchanged and introduce a dedicated package-level orchestration layer:
+  `@newchobo-ui/vscode-extension`.
+- For the current milestone, extension orchestration is postponed in favor of standalone launch hardening.
+- Planned composition entrypoints (deferred):
+  - command + transport + service + host-runtime 통합 팩토리 제공
+  - story에서 bootstrap API를 사용해 통합 동작 검증
+  - plugin-lifecycle 바인딩은 2차 마일스톤에서 옵션으로 노출
+- Exit plan:
+  - `pnpm typecheck`는 `core/contracts/services/workspace/runtime/adapters/react/vscode-host` 중심의 standalone lane만 검증
+  - `pnpm test:storybook-play:required` (baseline 태그 포함)
+  - `pnpm --filter @newchobo-ui/vscode-extension typecheck` (deferred)
+  - `pnpm --filter @newchobo-ui/vscode-extension test` (deferred)
+  - `pnpm typecheck:all` (확장 단계에서 전체 lane 검증용, 차기 사이클)
+
+## Acceptance Criteria (Current Cycle Baseline)
+
+- **현재 기준(확인 완료):**
+  - Save/patch/chat 이벤트는 각각 대응하는 서비스 계약으로 라우팅된다.
+  - 런타임 패치 경로는 최소한 `WorkspacePatchService.applyPatch` 검증을 거친다.
+- **다음 사이클 필수 목표(미완료):**
+  - A save action can be executed entirely through `@newchobo-ui/services` with explicit `SaveResult` and routed through bootstrap assembly.
+  - Story-level integration no longer owns patch application logic directly (bootstrap/host service owns apply orchestration).
+  - Existing UI behavior remains unchanged when using `Workbench.stories.tsx` baseline scenarios.
 
 ## Risks
 
@@ -431,3 +485,4 @@ that do not produce tests or usage value.
 | 2026-06-03 | Continue Stage 5 hardening inside services      | Keep callback failures from crashing event fan-out                      | Approved |
 | 2026-06-03 | Start Stage 6 service-result metadata hardening | Standardize request-id/request-time propagation for save/patch services | Approved |
 | 2026-06-03 | Start Stage 7 adapter extraction                | Move story/runtime adaptation to reusable package boundaries            | Approved |
+| 2026-06-03 | Defer vscode-extension bootstrap | extension packaging is second-phase; standalone application launch is current focus | Approved |

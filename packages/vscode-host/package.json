@@ -1,0 +1,25 @@
+{
+  "name": "@newchobo-ui/vscode-host",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run src",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./bridge": "./src/bridge.ts",
+    "./commands": "./src/commands.ts",
+    "./plugins": "./src/plugins.ts",
+    "./runtime": "./src/runtime.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@newchobo-ui/contracts": "workspace:*",
+    "@newchobo-ui/core": "workspace:*",
+    "@newchobo-ui/services": "workspace:*"
+  }
+}
