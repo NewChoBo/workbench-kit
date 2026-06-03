@@ -322,7 +322,7 @@ packages/
   - 근거: 서비스 구현 전에 정책 고정
 - [ ] 2순위: `migration-todo.md`에 단계별 acceptance criteria 반영
   - 대상: plugin 기여 범위, 기본/확장 scope, 테스트 후보
-- [ ] 3순위: services에서 `PluginLifecycleService` 초기 구현(옵션)
+- [x] 3순위: `@newchobo-ui/vscode-host`에서 `InMemoryPluginLifecycleService` 상태 전이 테스트 완성
   - 대상: 설치/삭제/활성화/업데이트 파이프라인, 요청 메타데이터 규약 준수
   - 근거: 저장/채팅/패치와 동일한 결과형태 계약 일관성 확보
 
@@ -330,6 +330,8 @@ packages/
 
 - `pnpm --filter @newchobo-ui/contracts test` 통과
 - `pnpm --filter @newchobo-ui/contracts typecheck` 통과
+- `pnpm --filter @newchobo-ui/vscode-host test` 통과
+- `pnpm --filter @newchobo-ui/vscode-host typecheck` 통과
 - 문서 상태 반영: `subpackage-architecture.md`, `migration-todo.md`, `docs/workbench/plugin-lifecycle.md`
 
 ## Validation Plan
