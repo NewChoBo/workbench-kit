@@ -162,6 +162,30 @@ describe('WorkbenchChatService', () => {
     expect(service.getSnapshot().status).toBe('error');
   });
 
+  it('still dispatches workspace-patch events after onPatch callback failure', () => {
+    const transport = new MockChatTransport();
+    const listener = vi.fn();
+    const service = new WorkbenchChatService({
+      onPatch: () => {
+        throw new Error('patch failed');
+      },
+      transport,
+    });
+
+    service.subscribe(listener);
+    transport.emit({
+      patch: { path: 'docs/readme.md', type: 'delete-file' },
+      type: 'workspace-patch',
+    });
+
+    expect(service.getSnapshot().status).toBe('error');
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith({
+      patch: { path: 'docs/readme.md', type: 'delete-file' },
+      type: 'workspace-patch',
+    });
+  });
+
   it('isolates listener callback failures from future events', () => {
     const transport = new MockChatTransport();
     const service = new WorkbenchChatService({ transport });
