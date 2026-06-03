@@ -1,0 +1,23 @@
+{
+  "name": "@newchobo-ui/adapters",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run src",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./runtime": "./src/runtime.ts",
+    "./workspace": "./src/workspace.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@newchobo-ui/contracts": "workspace:*",
+    "@newchobo-ui/runtime": "workspace:*",
+    "@newchobo-ui/workspace": "workspace:*"
+  }
+}
