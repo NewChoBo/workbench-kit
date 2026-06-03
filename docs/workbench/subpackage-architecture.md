@@ -36,11 +36,23 @@ so existing `react` workbench can keep UI behavior while separating domain logic
 5. **Stage 4: Stability Hardening**
    - Add adapters, contract guards, and cleanup for subscriptions/error boundaries.
    - Exit condition: repeatable integration smoke test passes and no newly introduced regressions.
+6. **Stage 5: Failure Hygiene**
+   - Make service failures explicit and isolated from unrelated event handlers.
+   - Exit condition: callback and transport failures do not corrupt service state or event delivery.
 
 ### Stage Dependencies and Delivery Order
 
-- Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4
+- Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5
 - No later stage proceeds until previous stage exit criteria and validation gates are completed.
+
+## Branch Execution Status (Current Branch: `feature/codex/stage4-subpackage-hardening`)
+
+- [x] Stage 0: Design alignment and scope lock.
+- [x] Stage 1: Contract foundation.
+- [x] Stage 2: Domain service bootstrap.
+- [x] Stage 3: Story refactoring through adapters.
+- [x] Stage 4: Stability hardening.
+- [x] Stage 5: Failure-hygiene hardening.
 
 ## Guiding Decision
 
@@ -220,6 +232,19 @@ packages/
 - 최소 1개 이상의 adapter를 통해 서비스 교체 테스트가 작동
 - 주요 경계에서 불필요한 side effect가 없는지 문서화 + 회귀 테스트 등록
 
+### Phase 5: Failure Hygiene
+
+- Isolate service callbacks from callback failure and keep event delivery deterministic.
+- Add hardening around state transitions and callback fan-out.
+- Ensure transport failure and callback failure transitions are explicit and test-covered.
+
+**Phase 5 Exit Criteria**
+
+- `WorkbenchChatService` status transitions cover explicit lifecycle states (`idle`, `running`,
+  `cancelled`, `error`).
+- Patch listeners and `onPatch` callbacks are exception-safe.
+- Service failure modes are verified by unit tests and do not degrade integration flow integrity.
+
 ## Validation Plan
 
 ### Test Strategy
@@ -254,9 +279,18 @@ packages/
 
 ### Exit Conditions (전체)
 
-- Phase 1~4의 exit criteria 충족
+- Phase 1~5의 exit criteria 충족
 - 기존 사용자 동작 기준(Workspace/Chat 기본 플로우) 회귀 없음
 - 문서(설계/결정기록)가 코드 변경과 동기화되어 업데이트됨
+
+## Branch Completion for This Cycle
+
+- Objective status: complete.
+- Documentation and implementation are now aligned for stages 0~5 in this branch.
+- Next branch objective candidates:
+  - plugin installation lifecycle design (install/update/enable/disable),
+  - editor/session persistence adapter extraction,
+  - contract versioning strategy for cross-package compatibility.
 
 ### Stage 4 Hardening Progress (2026-06-03)
 
@@ -270,6 +304,24 @@ packages/
   - `WorkspaceSaveService` and `WorkspacePatchService` now share normalization logic,
   - patch results return normalized `patch.path` for host actions.
 - Added focused unit tests for path normalization and lifecycle edge cases.
+
+### Stage 5 Reliability Progress (2026-06-03)
+
+- Completed `WorkbenchChatService` callback and status hardening:
+  - `sendMessage()` sets status to `running` before transport send.
+  - `onPatch` callback exceptions are isolated and set snapshot status to `error`.
+  - Listener callback exceptions are isolated; a failing listener does not prevent others from
+    receiving events.
+  - Error status transitions are deterministic on transport failures.
+- Added explicit regression coverage:
+  - status transition to `running`,
+  - `onPatch` failure isolation,
+  - listener failure isolation.
+- Evidence:
+  - `6a1bf6b`: harden workspace save and chat services foundation.
+  - `d6ff767`: lifecycle/error isolation hardening in chat service.
+  - `pnpm exec vitest run packages/services/src` passes.
+  - `pnpm --filter @newchobo-ui/services typecheck` passes.
 
 ## Acceptance Criteria
 
@@ -295,3 +347,4 @@ that do not produce tests or usage value.
 | 2026-06-03 | Use in-repo subpackages first            | Faster validation with lower operational overhead  | Approved |
 | 2026-06-03 | Start with contracts + services          | Align domain separation before external publishing | Approved |
 | 2026-06-03 | Add optional adapters package in phase 3 | Keeps story/test dependencies isolated             | Approved |
+| 2026-06-03 | Continue Stage 5 hardening inside services | Keep callback failures from crashing event fan-out    | Approved |
