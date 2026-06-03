@@ -202,4 +202,94 @@ describe('library adapters', () => {
     expect(loadedUrl).toBe('https://cdn.example/library.json');
     expect(items[0].title).toBe('Tile A');
   });
+
+  it('keeps explicit item providerId when provided', async () => {
+    const provider = createLibraryManifestObjectProvider({
+      displayName: 'Object Library',
+      id: 'object-lib-provider',
+      manifest: {
+        id: 'provider-library',
+        name: 'Provider Library',
+        schemaVersion: 1,
+        source: {
+          displayName: 'Provider Source',
+          kind: 'json-file',
+          ref: '/manifests/object-provider-id.json',
+        },
+        version: '1.0.0',
+        items: [
+          {
+            id: 'tile-a',
+            kind: 'tile',
+            title: 'Tile A',
+            providerId: 'explicit-provider-id',
+          },
+        ],
+      },
+    });
+
+    const items = await provider.listItems();
+    expect(items[0]).toMatchObject({
+      id: 'tile-a',
+      providerId: 'explicit-provider-id',
+    });
+  });
+
+  it('propagates remote manifest read errors from custom reader', async () => {
+    const provider = createLibraryManifestUrlProvider({
+      displayName: 'Remote Library',
+      id: 'remote-lib-error',
+      manifestUrl: 'https://cdn.example/error.json',
+      readText: async () => {
+        throw new Error('network unavailable');
+      },
+    });
+
+    await expect(provider.listItems()).rejects.toThrow('network unavailable');
+  });
+
+  it('uses fetch for URL source by default and surfaces non-ok responses', async () => {
+    const originalFetch = globalThis.fetch;
+
+    globalThis.fetch = async () => ({
+      ok: false,
+      status: 500,
+      text: async () => 'Server Error',
+    } as unknown as Response);
+
+    const provider = createLibraryManifestUrlProvider({
+      displayName: 'Remote Library',
+      id: 'remote-lib-fetch-fail',
+      manifestUrl: 'https://cdn.example/fail.json',
+    });
+
+    try {
+      await expect(provider.listItems()).rejects.toThrow(
+        'Failed to load library manifest from https://cdn.example/fail.json: 500',
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('throws a readable error when fetch is unavailable', async () => {
+    const originalFetch = globalThis.fetch;
+
+    // @ts-expect-error test doubles can clear native global for failure-path verification
+    globalThis.fetch = undefined;
+
+    const provider = createLibraryManifestUrlProvider({
+      displayName: 'Remote Library',
+      id: 'remote-lib-no-fetch',
+      manifestUrl: 'https://cdn.example/no-fetch.json',
+    });
+
+    try {
+      await expect(provider.listItems()).rejects.toThrow(
+        'fetch is not available in this environment',
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
 });
