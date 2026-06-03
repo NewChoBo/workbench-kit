@@ -6,6 +6,7 @@ import {
   type WorkspaceFile,
   type WorkspaceFileRepository,
 } from '@newchobo-ui/contracts';
+import { normalizeServiceWorkspacePath } from './path';
 
 export interface WorkspaceSaveServiceOptions {
   repository: WorkspaceFileRepository;
@@ -144,7 +145,7 @@ export class WorkspaceSaveService {
   }
 
   private sanitizePath(path: string) {
-    return path.trim().replace(/\\+/g, '/').replace(/\/+/g, '/');
+    return normalizeServiceWorkspacePath(path);
   }
 
   private normalizeError(error: unknown) {
