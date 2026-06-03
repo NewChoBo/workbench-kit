@@ -262,6 +262,34 @@ packages/
 - Patch listeners and `onPatch` callbacks are exception-safe.
 - Service failure modes are verified by unit tests and do not degrade integration flow integrity.
 
+## Next Cycle: Plugin Lifecycle Baseline
+
+**목표:** 설치/활성화/비활성화/업데이트의 핵심 계약을 먼저 확정하고, 이후 서비스/스토리로 확대.
+
+### Todo (우선순위)
+
+- [x] 1순위: `@newchobo-ui/contracts` plugin lifecycle 타입 골격 추가
+  - 대상: `PluginDescriptor`, `PluginSource`, `InstalledPlugin`, `PluginLifecycleResult`,
+    `PluginLifecycleService` 인터페이스
+  - 근거: `docs/workbench/plugin-lifecycle.md`의 M1 범위 정렬
+- [x] 1순위: plugin 계약 유닛 테스트 추가
+  - 대상: 성공/실패 판별 헬퍼, 상태 판별 규칙
+  - 근거: contracts 패키지 변경은 타입 실패를 조기에 잡아야 함
+- [ ] 2순위: plugin install command/menu/menu-입력 충돌 정책 문서 확정
+  - 대상: `pluginId` 중복, command 충돌 정책, trust/enable/default 정책
+  - 근거: 서비스 구현 전에 정책 고정
+- [ ] 2순위: `migration-todo.md`에 단계별 acceptance criteria 반영
+  - 대상: plugin 기여 범위, 기본/확장 scope, 테스트 후보
+- [ ] 3순위: services에서 `PluginLifecycleService` 초기 구현(옵션)
+  - 대상: 설치/삭제/활성화/업데이트 파이프라인, 요청 메타데이터 규약 준수
+  - 근거: 저장/채팅/패치와 동일한 결과형태 계약 일관성 확보
+
+### 검증 계획 (이 사이클)
+
+- `pnpm --filter @newchobo-ui/contracts test` 통과
+- `pnpm --filter @newchobo-ui/contracts typecheck` 통과
+- 문서 상태 반영: `subpackage-architecture.md`, `migration-todo.md`, `docs/workbench/plugin-lifecycle.md`
+
 ## Validation Plan
 
 ### Test Strategy

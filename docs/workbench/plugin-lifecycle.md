@@ -10,6 +10,9 @@ minimal (`command`, `view`, `settings`) and preserving the existing command regi
   `@newchobo-ui/core` and workbench host-level command binding.
 - The next step is to formalize plugin identity, installation state, and controlled updates
   without breaking the current public-neutral architecture.
+- M1 baseline contracts were added in `@newchobo-ui/contracts` (`PluginDescriptor`, `PluginSource`,
+  `PluginLifecycleState`, `InstalledPlugin`, `PluginLifecycleResult`) and covered by
+  `packages/contracts` tests.
 
 ## Goals and Non-Goals
 

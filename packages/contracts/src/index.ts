@@ -47,6 +47,32 @@ export type {
   WorkspaceFileSource,
   SaveSuccess,
 } from './save';
+export type {
+  InstalledPlugin,
+  PluginCommandContribution,
+  PluginCommandDefinition,
+  PluginContributions,
+  PluginDescriptor,
+  PluginEnablementState,
+  PluginLifecycleFailureCode,
+  PluginLifecycleFailure,
+  PluginLifecycleResult,
+  PluginLifecycleService,
+  PluginLifecycleState,
+  PluginLifecycleSuccess,
+  PluginSource,
+  PluginTrustState,
+  PluginMenuCommandEntry,
+  PluginMenuEntry,
+  PluginMenuSeparatorEntry,
+  PluginPredicate,
+  PluginValue,
+} from './plugin';
+export {
+  isPluginEnabled,
+  isPluginLifecycleFailure,
+  isPluginLifecycleSuccess,
+} from './plugin';
 export type { ServiceFailure, ServiceFailureCode, ServiceListener, ServiceResultEnvelope } from './result';
 export { normalizeServiceFailureMessage } from './result';
 export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from './save';
