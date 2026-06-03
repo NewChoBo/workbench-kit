@@ -575,7 +575,7 @@ independently.
 ## 다음 액션 우선순위
 
 - 1순위(P1): `storybook-play` baseline 플로우 지정 완료 + 실행 게이트 전환 지점 확정
-- 2순위(P2): plugin 설치 범위 확대/StatusBar 메타 필요성 정리
+- 2순위(P2): plugin lifecycle 1차 설계 문서화 + 기본/확장 범위 acceptance criteria 정리
 - 3순위(P3): package-manager 정책 문서와 실행 경로 정합성 점검
 
 ## Ambiguity Review (2026-06-03)
