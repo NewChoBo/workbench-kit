@@ -39,21 +39,39 @@ export class WorkspacePatchService {
     }
 
     if (isWorkspacePatchDeleteFile(patch)) {
-      const target = await this.repository.getFile(path);
-      if (!target) {
+      try {
+        const target = await this.repository.getFile(path);
+        if (!target) {
+          return {
+            code: 'not-found',
+            message: `No file exists at '${path}'.`,
+            patch: normalizedPatch,
+            type: 'patch:failed',
+          };
+        }
+      } catch (error) {
         return {
-          code: 'not-found',
-          message: `No file exists at '${path}'.`,
+          code: 'unknown',
+          message: this.normalizeError(error),
           patch: normalizedPatch,
           type: 'patch:failed',
         };
       }
 
-      await this.repository.deleteFile(path);
-      return {
-        patch: normalizedPatch,
-        type: 'patch:applied',
-      };
+      try {
+        await this.repository.deleteFile(path);
+        return {
+          patch: normalizedPatch,
+          type: 'patch:applied',
+        };
+      } catch (error) {
+        return {
+          code: 'unknown',
+          message: this.normalizeError(error),
+          patch: normalizedPatch,
+          type: 'patch:failed',
+        };
+      }
     }
 
     const writePatch = patch as WorkspacePatchWriteFile;
@@ -64,15 +82,28 @@ export class WorkspacePatchService {
       source: normalizePatchSource(writePatch.source),
       updatedAt: writePatch.updatedAt ?? this.now(),
     };
-    await this.repository.writeFile(file);
-    return {
-      patch: normalizedPatch,
-      type: 'patch:applied',
-    };
+    try {
+      await this.repository.writeFile(file);
+      return {
+        patch: normalizedPatch,
+        type: 'patch:applied',
+      };
+    } catch (error) {
+      return {
+        code: 'unknown',
+        message: this.normalizeError(error),
+        patch: normalizedPatch,
+        type: 'patch:failed',
+      };
+    }
   }
 
   private normalizePath(path: string) {
     return normalizeServiceWorkspacePath(path);
+  }
+
+  private normalizeError(error: unknown) {
+    return error instanceof Error ? error.message : 'Unknown repository error';
   }
 }
 
