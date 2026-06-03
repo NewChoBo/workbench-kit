@@ -42,6 +42,31 @@ class InMemoryWorkspaceFileRepository implements WorkspaceFileRepository {
   }
 }
 
+class FailingSaveWorkspaceFileRepository implements WorkspaceFileRepository {
+  async deleteFile(_path: string) {
+    return undefined;
+  }
+
+  async getFile(_path: string) {
+    return null;
+  }
+
+  async listFiles() {
+    return [];
+  }
+
+  async writeFile(_input: {
+    content: string;
+    expectedUpdatedAt?: string;
+    mimeType?: string;
+    path: string;
+    source?: WorkspaceFile['source'];
+    updatedAt?: string;
+  }): Promise<WorkspaceFile> {
+    throw new Error('save failed');
+  }
+}
+
 describe('WorkspaceSaveService', () => {
   it('creates a file when saveDraft is called first time', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
@@ -113,7 +138,11 @@ describe('WorkspaceSaveService', () => {
 
   it('returns unchanged for same content and matching baseline', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
-    const service = new WorkspaceSaveService({ repository });
+    const service = new WorkspaceSaveService({
+      repository,
+      now: () => '2026-06-03T00:00:00.001Z',
+      requestId: () => 'save-metadata-1',
+    });
     const existing = await repository.writeFile({
       content: 'same',
       path: 'src/index.ts',
@@ -130,6 +159,8 @@ describe('WorkspaceSaveService', () => {
       kind: 'save:success',
       outcome: 'unchanged',
       file: { content: 'same', path: 'src/index.ts' },
+      requestId: 'save-metadata-1',
+      requestedAt: '2026-06-03T00:00:00.001Z',
     });
   });
 
@@ -157,7 +188,11 @@ describe('WorkspaceSaveService', () => {
 
   it('returns invalid-path for blank path', async () => {
     const repository = new InMemoryWorkspaceFileRepository();
-    const service = new WorkspaceSaveService({ repository });
+    const service = new WorkspaceSaveService({
+      repository,
+      now: () => '2026-06-03T00:00:00.000Z',
+      requestId: () => 'save-metadata-blank',
+    });
 
     const result = await service.saveDraft({ content: 'x', path: '   ' });
 
@@ -165,6 +200,77 @@ describe('WorkspaceSaveService', () => {
       kind: 'save:failure',
       code: 'invalid-path',
       path: '   ',
+      requestId: 'save-metadata-blank',
+      requestedAt: '2026-06-03T00:00:00.000Z',
     });
+  });
+
+  it('returns unknown failure when repository write fails', async () => {
+    const repository = new FailingSaveWorkspaceFileRepository();
+    const service = new WorkspaceSaveService({ repository });
+
+    const result = await service.saveDraft({
+      content: 'x',
+      path: 'src/index.ts',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'save:failure',
+      code: 'unknown',
+      message: 'save failed',
+      path: 'src/index.ts',
+    });
+  });
+
+  it('commit delegates through saveDraft and returns failure for repository errors', async () => {
+    const repository = new FailingSaveWorkspaceFileRepository();
+    let requestCounter = 0;
+    const service = new WorkspaceSaveService({
+      repository,
+      requestId: () => `save-commit-failed-${++requestCounter}`,
+      now: () => '2026-06-03T00:00:00.000Z',
+    });
+
+    const result = await service.commit({
+      content: 'x',
+      path: 'src/index.ts',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'save:failure',
+      code: 'unknown',
+      message: 'save failed',
+      path: 'src/index.ts',
+      requestId: 'save-commit-failed-1',
+      requestedAt: '2026-06-03T00:00:00.000Z',
+    });
+    expect(requestCounter).toBe(1);
+  });
+
+  it('commit keeps request metadata from outer entrypoint and does not regenerate it internally', async () => {
+    const repository = new InMemoryWorkspaceFileRepository();
+    let requestCounter = 0;
+    const service = new WorkspaceSaveService({
+      repository,
+      requestId: () => `save-commit-${++requestCounter}`,
+      now: () => '2026-06-03T00:00:00.001Z',
+    });
+
+    const result = await service.commit({
+      content: 'committed',
+      path: 'src/index.ts',
+    });
+
+    expect(result).toMatchObject({
+      kind: 'save:success',
+      outcome: 'created',
+      file: {
+        content: 'committed',
+        path: 'src/index.ts',
+      },
+      requestId: 'save-commit-1',
+      requestedAt: '2026-06-03T00:00:00.001Z',
+    });
+    expect(requestCounter).toBe(1);
   });
 });

@@ -96,7 +96,6 @@ export class WorkbenchChatService {
         this.onPatch?.(event.patch);
       } catch {
         this.status = 'error';
-        return;
       }
     }
 
