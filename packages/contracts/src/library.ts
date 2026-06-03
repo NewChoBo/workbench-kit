@@ -102,10 +102,48 @@ export interface LibraryQueryOptions {
   query?: LibraryQuery;
 }
 
-export function matchesLibraryItem(
+export const DEFAULT_LIBRARY_ITEM_FALLBACK_SOURCE_ID = 'unknown';
+
+export interface LibraryItemIdentifierOptions {
+  providerId: string;
+}
+
+export function normalizeLibraryItemProviderSource(
   item: LibraryItemDescriptor,
-  query: LibraryQuery = {},
-): boolean {
+  options: LibraryItemIdentifierOptions,
+): LibraryItemDescriptor {
+  return {
+    ...item,
+    providerId: item.providerId ?? options.providerId,
+    source: {
+      ...item.source,
+      sourceId: item.source.sourceId ?? options.providerId,
+    },
+  };
+}
+
+export function resolveLibraryItemProviderId(
+  item: LibraryItemDescriptor,
+  fallback = DEFAULT_LIBRARY_ITEM_FALLBACK_SOURCE_ID,
+): string {
+  return item.providerId ?? item.source.sourceId ?? fallback;
+}
+
+export function resolveLibraryItemSourceId(
+  item: LibraryItemDescriptor,
+  fallback = DEFAULT_LIBRARY_ITEM_FALLBACK_SOURCE_ID,
+): string {
+  return item.source.sourceId ?? item.providerId ?? fallback;
+}
+
+export function createLibraryItemIdentity(
+  item: LibraryItemDescriptor,
+  fallback = DEFAULT_LIBRARY_ITEM_FALLBACK_SOURCE_ID,
+): string {
+  return `${resolveLibraryItemProviderId(item, fallback)}:${item.id}`;
+}
+
+export function matchesLibraryItem(item: LibraryItemDescriptor, query: LibraryQuery = {}): boolean {
   if (query.providerIds && query.providerIds.length > 0) {
     const providerId = item.providerId ?? item.source?.sourceId;
     if (!providerId || !query.providerIds.includes(providerId)) {
@@ -138,8 +176,9 @@ export function matchesLibraryItem(
     return true;
   }
 
-  const providerText = item.providerId ?? '';
-  const targetText = `${item.id} ${item.title} ${providerText} ${item.description ?? ''}`.toLowerCase();
+  const providerText = resolveLibraryItemProviderId(item, '');
+  const targetText =
+    `${item.id} ${item.title} ${providerText} ${item.description ?? ''}`.toLowerCase();
   return targetText.includes(rawQuery);
 }
 
@@ -150,18 +189,11 @@ export function normalizeLibraryManifestVersion(value: unknown): number {
   return value;
 }
 
-export function parseLibraryManifest(
-  raw: unknown,
-  source = 'library.json',
-): LibraryManifest {
+export function parseLibraryManifest(raw: unknown, source = 'library.json'): LibraryManifest {
   const root = asRecord(raw, source);
 
   const manifestVersion = normalizeLibraryManifestVersion(root['schemaVersion']);
-  const manifestSource = parseLibrarySource(
-    root['source'],
-    `${source}.source`,
-    false,
-  );
+  const manifestSource = parseLibrarySource(root['source'], `${source}.source`, false);
   const items = parseLibraryItems(root['items'], manifestSource, `${source}.items`);
 
   return {
@@ -181,7 +213,10 @@ export function parseLibraryManifestText(text: string, source = 'library.json'):
   return parseLibraryManifest(parseJsonText(text, source), source);
 }
 
-export function createLibraryDragPayload(itemIds: readonly string[], sourceIds: readonly string[] = []): string {
+export function createLibraryDragPayload(
+  itemIds: readonly string[],
+  sourceIds: readonly string[] = [],
+): string {
   const payload: LibraryDragPayload = {
     itemIds,
     sourceIds,
@@ -211,7 +246,9 @@ function parseLibraryItems(
   if (!Array.isArray(raw)) {
     throw new Error(`${sourcePath} must be an array`);
   }
-  return raw.map((entry, index) => parseLibraryItem(entry, defaultSource, `${sourcePath}[${index}]`));
+  return raw.map((entry, index) =>
+    parseLibraryItem(entry, defaultSource, `${sourcePath}[${index}]`),
+  );
 }
 
 function parseLibraryItem(
@@ -242,11 +279,7 @@ function parseLibraryItem(
   };
 }
 
-function parseLibrarySource(
-  raw: unknown,
-  sourcePath: string,
-  allowMissing = false,
-): LibrarySource {
+function parseLibrarySource(raw: unknown, sourcePath: string, allowMissing = false): LibrarySource {
   if (raw === undefined) {
     if (!allowMissing) {
       throw new Error(`${sourcePath} is required`);
@@ -293,7 +326,9 @@ function parseJsonText(text: string, source = 'library manifest'): unknown {
     return JSON.parse(text) as unknown;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`${source}: invalid JSON (${message})`);
+    const parsedError = new Error(`${source}: invalid JSON (${message})`);
+    (parsedError as { cause?: unknown }).cause = error;
+    throw parsedError;
   }
 }
 
@@ -319,10 +354,7 @@ function asOptionalString(value: unknown): string | undefined {
   return value;
 }
 
-function asOptionalStringArray(
-  value: unknown,
-  sourcePath: string,
-): readonly string[] | undefined {
+function asOptionalStringArray(value: unknown, sourcePath: string): readonly string[] | undefined {
   if (value === undefined) {
     return undefined;
   }
@@ -357,7 +389,5 @@ function asOptionalRecord(value: unknown): Record<string, unknown> | undefined {
 }
 
 function isLibrarySourceKind(value: unknown): value is LibrarySourceKind {
-  return (
-    value === 'embedded-json' || value === 'json-file' || value === 'json-url'
-  );
+  return value === 'embedded-json' || value === 'json-file' || value === 'json-url';
 }

@@ -254,6 +254,7 @@ describe('library adapters', () => {
     globalThis.fetch = async () => ({
       ok: false,
       status: 500,
+      statusText: 'Internal Server Error',
       text: async () => 'Server Error',
     } as unknown as Response);
 
@@ -291,5 +292,41 @@ describe('library adapters', () => {
     } finally {
       globalThis.fetch = originalFetch;
     }
+  });
+
+  it('propagates HTTP statusText in URL failures', async () => {
+    const originalFetch = globalThis.fetch;
+
+    globalThis.fetch = async () =>
+      ({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+      } as unknown as Response);
+
+    const provider = createLibraryManifestUrlProvider({
+      displayName: 'Remote Library',
+      id: 'remote-lib-fetch-status',
+      manifestUrl: 'https://cdn.example/not-found.json',
+    });
+
+    try {
+      await expect(provider.listItems()).rejects.toThrow(
+        'Failed to load library manifest from https://cdn.example/not-found.json: 404 Not Found',
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('surfaces invalid JSON from remote manifest text', async () => {
+    const provider = createLibraryManifestUrlProvider({
+      displayName: 'Remote Library',
+      id: 'remote-lib-remote-invalid-json',
+      manifestUrl: 'https://cdn.example/invalid.json',
+      readText: async () => '{',
+    });
+
+    await expect(provider.listItems()).rejects.toThrow('invalid JSON');
   });
 });

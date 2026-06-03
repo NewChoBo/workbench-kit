@@ -68,21 +68,17 @@ export type {
   PluginPredicate,
   PluginValue,
 } from './plugin';
-export {
-  isPluginEnabled,
-  isPluginLifecycleFailure,
-  isPluginLifecycleSuccess,
-} from './plugin';
+export { isPluginEnabled, isPluginLifecycleFailure, isPluginLifecycleSuccess } from './plugin';
 export type {
+  LibraryItemDescriptor,
   LibraryDragPayload,
   LibraryCatalogSnapshot,
-  LibraryItemDescriptor,
   LibraryItemKind,
+  LibraryQuery,
   LibraryManifest,
   LibraryManifestErrorCode,
   LibraryProvider,
   LibraryProviderSummary,
-  LibraryQuery,
   LibraryQueryOptions,
   LibraryServiceResult,
   LibrarySource,
@@ -100,6 +96,18 @@ export {
   parseLibraryManifest,
   parseLibraryManifestText,
 } from './library';
-export type { ServiceFailure, ServiceFailureCode, ServiceListener, ServiceResultEnvelope } from './result';
+export {
+  createLibraryItemIdentity,
+  DEFAULT_LIBRARY_ITEM_FALLBACK_SOURCE_ID,
+  normalizeLibraryItemProviderSource,
+  resolveLibraryItemProviderId,
+  resolveLibraryItemSourceId,
+} from './library';
+export type {
+  ServiceFailure,
+  ServiceFailureCode,
+  ServiceListener,
+  ServiceResultEnvelope,
+} from './result';
 export { normalizeServiceFailureMessage } from './result';
 export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from './save';

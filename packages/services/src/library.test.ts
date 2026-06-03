@@ -41,7 +41,13 @@ const flakyProvider: LibraryProvider = {
   },
 };
 
-function createItem(id: string, title: string, kind: LibraryItemDescriptor['kind'], providerId: string, installed = false): LibraryItemDescriptor {
+function createItem(
+  id: string,
+  title: string,
+  kind: LibraryItemDescriptor['kind'],
+  providerId: string,
+  installed = false,
+): LibraryItemDescriptor {
   return {
     id,
     installed,
@@ -138,5 +144,109 @@ describe('LibraryCatalogService', () => {
       } satisfies LibraryQuery,
     });
     expect(onlyInstalled.items.map((item) => item.id)).toEqual(['b']);
+  });
+
+  it('sorts provider fallback deterministically for missing provider/source ids', async () => {
+    const service = new LibraryCatalogService({
+      providers: [
+        {
+          id: 'provider-unknown',
+          displayName: 'Fallback Source',
+          async listItems() {
+            return [
+              {
+                id: 'a',
+                kind: 'app',
+                source: {
+                  kind: 'json-file',
+                  ref: '/items/a.json',
+                },
+                title: 'Fallback A',
+              },
+            ];
+          },
+        },
+        {
+          id: 'provider-b',
+          displayName: 'Provider B',
+          async listItems() {
+            return [
+              {
+                id: 'b',
+                kind: 'app',
+                source: {
+                  kind: 'json-file',
+                  ref: '/items/b.json',
+                  sourceId: 'provider-b',
+                },
+                title: 'Beta',
+              },
+            ];
+          },
+        },
+      ],
+    });
+
+    const result = await service.listCatalog({
+      query: {
+        sortBy: 'provider',
+      },
+    });
+
+    expect(result.items).toHaveLength(2);
+    expect(result.items[0]).toMatchObject({ id: 'b', source: { sourceId: 'provider-b' } });
+    expect(result.items[0].title).toBe('Beta');
+    expect(result.items[1]).toMatchObject({ id: 'a' });
+    expect(result.items[1].title).toBe('Fallback A');
+  });
+
+  it('deduplicates items using provider identity helpers', async () => {
+    const service = new LibraryCatalogService({
+      providers: [
+        {
+          id: 'dup-provider',
+          displayName: 'Dup Source',
+          async listItems() {
+            return [
+              {
+                id: 'same',
+                kind: 'app',
+                providerId: 'shared-provider',
+                source: {
+                  kind: 'json-file',
+                  ref: '/first.json',
+                },
+                title: 'First',
+              },
+              {
+                id: 'same',
+                kind: 'app',
+                source: {
+                  kind: 'json-file',
+                  ref: '/second.json',
+                  sourceId: 'shared-provider',
+                },
+                title: 'Second',
+              },
+              {
+                id: 'same',
+                kind: 'app',
+                source: {
+                  kind: 'json-file',
+                  ref: '/third.json',
+                  sourceId: 'different-provider',
+                },
+                title: 'Third',
+              },
+            ];
+          },
+        },
+      ],
+    });
+
+    const result = await service.listCatalog();
+    expect(result.items).toHaveLength(2);
+    expect(result.items[0].title).toBe('First');
+    expect(result.items[1].title).toBe('Third');
   });
 });

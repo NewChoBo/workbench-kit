@@ -1,9 +1,9 @@
-import type {
-  LibraryItemDescriptor,
-  LibraryManifest,
-  LibraryProvider,
+import type { LibraryManifest, LibraryProvider } from '@newchobo-ui/contracts';
+import {
+  normalizeLibraryItemProviderSource,
+  parseLibraryManifest,
+  parseLibraryManifestText,
 } from '@newchobo-ui/contracts';
-import { parseLibraryManifest, parseLibraryManifestText } from '@newchobo-ui/contracts';
 
 type ManifestTextLoader = () => Promise<string> | string;
 
@@ -42,7 +42,11 @@ export function createLibraryManifestProvider({
     id,
     async listItems() {
       const manifest = parseLibraryManifestSourceText(id, await loadManifestText());
-      return manifest.items.map((item) => normalizeLibraryItemProviderSource(item, id));
+      return manifest.items.map((item) =>
+        normalizeLibraryItemProviderSource(item, {
+          providerId: id,
+        }),
+      );
     },
   };
 }
@@ -69,7 +73,11 @@ export function createLibraryManifestObjectProvider({
     id,
     async listItems() {
       const parsedManifest = parseLibraryManifestSourceData(id, manifest);
-      return parsedManifest.items.map((item) => normalizeLibraryItemProviderSource(item, id));
+      return parsedManifest.items.map((item) =>
+        normalizeLibraryItemProviderSource(item, {
+          providerId: id,
+        }),
+      );
     },
   };
 }
@@ -122,22 +130,6 @@ function normalizeManifestSourceId(manifest: LibraryManifest, providerId: string
   };
 }
 
-function normalizeLibraryItemProviderSource(
-  item: LibraryItemDescriptor,
-  providerId: string,
-): LibraryItemDescriptor {
-  const source = {
-    ...item.source,
-    sourceId: item.source.sourceId ?? providerId,
-  };
-
-  return {
-    ...item,
-    providerId: item.providerId ?? providerId,
-    source,
-  };
-}
-
 async function defaultReadText(url: string): Promise<string> {
   if (typeof globalThis.fetch !== 'function') {
     throw new Error('fetch is not available in this environment');
@@ -145,7 +137,8 @@ async function defaultReadText(url: string): Promise<string> {
 
   const response = await globalThis.fetch(url);
   if (!response.ok) {
-    throw new Error(`Failed to load library manifest from ${url}: ${response.status}`);
+    const statusText = response.statusText ? ` ${response.statusText}` : '';
+    throw new Error(`Failed to load library manifest from ${url}: ${response.status}${statusText}`);
   }
 
   return response.text();
