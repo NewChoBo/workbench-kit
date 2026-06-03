@@ -70,6 +70,71 @@ describe('library adapters', () => {
     });
   });
 
+  it('keeps item-level sourceId when present on object input', async () => {
+    const provider = createLibraryManifestObjectProvider({
+      displayName: 'Object Library',
+      id: 'object-lib-2',
+      manifest: {
+        id: 'object-library',
+        name: 'Object Library',
+        schemaVersion: 1,
+        source: {
+          displayName: 'Provider Source',
+          kind: 'json-file',
+          ref: '/manifests/object-provider.json',
+        },
+        version: '1.0.0',
+        items: [
+          {
+            id: 'tile-a',
+            kind: 'tile',
+            title: 'Tile A',
+            source: {
+              displayName: 'Item Source',
+              kind: 'json-url',
+              ref: '/manifests/item.json',
+              sourceId: 'item-source',
+            },
+          },
+        ],
+      },
+    });
+
+    const items = await provider.listItems();
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      source: {
+        displayName: 'Item Source',
+        kind: 'json-url',
+        ref: '/manifests/item.json',
+        sourceId: 'item-source',
+      },
+      providerId: 'object-lib-2',
+    });
+  });
+
+  it('propagates object manifest parse errors', async () => {
+    const provider = createLibraryManifestObjectProvider({
+      displayName: 'Invalid Object Library',
+      id: 'invalid-object-lib',
+      manifest: {
+        id: 'invalid-object-library',
+        name: 'Invalid Object Library',
+        schemaVersion: 1,
+        source: {
+          kind: 'invalid-kind',
+          ref: '/manifests/invalid.json',
+        },
+        version: '1.0.0',
+        items: [],
+      },
+      });
+
+    await expect(provider.listItems()).rejects.toThrow(
+      'source.kind must be one of embedded-json, json-file, or json-url',
+    );
+  });
+
   it('throws for invalid static manifest text', async () => {
     const provider = createStaticLibraryManifestProvider({
       displayName: 'Invalid',
