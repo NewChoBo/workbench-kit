@@ -42,13 +42,15 @@ so existing `react` workbench can keep UI behavior while separating domain logic
 7. **Stage 6: Service Result Metadata**
    - Propagate request metadata (`requestId`, `requestedAt`) across save/patch service results.
    - Exit condition: every save/patch result includes observability metadata when created by services.
+   - Additional closeout condition: composed entrypoints (for example, `commit` → `saveDraft`) must preserve
+     caller-issued metadata without regenerating request identity.
 
 ### Stage Dependencies and Delivery Order
 
 - Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6
 - No later stage proceeds until previous stage exit criteria and validation gates are completed.
 
-## Branch Execution Status (Current Branch: `feature/codex/stage4-subpackage-hardening`)
+## Branch Execution Status (Current Branch: `feature/codex/next-target`)
 
 - [x] Stage 0: Design alignment and scope lock.
 - [x] Stage 1: Contract foundation.
@@ -56,7 +58,7 @@ so existing `react` workbench can keep UI behavior while separating domain logic
 - [x] Stage 3: Story refactoring through adapters.
 - [x] Stage 4: Stability hardening.
 - [x] Stage 5: Failure-hygiene hardening.
-- [ ] Stage 6: Service result metadata propagation.
+- [x] Stage 6: Service result metadata propagation.
 
 ## Guiding Decision
 
@@ -333,8 +335,12 @@ packages/
 - Updated service result types to consistently expose optional metadata (`requestId`, `requestedAt`).
 - Implemented service-side metadata injection with deterministic-friendly request id factory support.
 - Added integration test coverage to verify metadata presence in patch/save flow paths.
+- Hardened composite save entrypoint behavior: `WorkspaceSaveService.commit()` reuses the same request
+  metadata as the delegated save flow to avoid request id fragmentation.
 - Evidence:
   - `fdcb5c7`: standardize contract failure model and flow tests.
+  - `40340fc`: add request metadata to save/patch results.
+  - `packages/services/src/save.test.ts`: commit path now asserts metadata preservation and single request-id emission.
   - `pnpm exec vitest run packages/contracts/src packages/services/src` passes.
   - `pnpm --filter @newchobo-ui/contracts typecheck` passes.
 
