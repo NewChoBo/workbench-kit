@@ -114,8 +114,8 @@ function toLengthValue(value: number | string) {
   return typeof value === 'number' ? `${value}px` : value;
 }
 
-function treeIndentOffset(depth: number) {
-  return `${8 + depth * 14}px`;
+function treeIndentOffset(depth: number, indentSize: number) {
+  return `${8 + depth * indentSize}px`;
 }
 
 export interface WorkbenchTreeProps extends ComponentPropsWithRef<'div'> {
@@ -153,6 +153,7 @@ export interface WorkbenchTreeItemProps extends ComponentPropsWithRef<'div'> {
   control?: ReactNode;
   depth?: number;
   icon?: ReactNode;
+  indentSize?: number;
   interaction?: WorkbenchTreeInteraction;
   label: ReactNode;
   meta?: ReactNode;
@@ -168,6 +169,7 @@ export const WorkbenchTreeItem = forwardRef<HTMLDivElement, WorkbenchTreeItemPro
       control,
       depth = 0,
       icon,
+      indentSize = 14,
       interaction = 'default',
       label,
       meta,
@@ -181,7 +183,7 @@ export const WorkbenchTreeItem = forwardRef<HTMLDivElement, WorkbenchTreeItemPro
   ) {
     const itemStyle = {
       '--ui-workbench-tree-depth': depth,
-      '--ui-workbench-tree-indent-offset': treeIndentOffset(depth),
+      '--ui-workbench-tree-indent-offset': treeIndentOffset(depth, indentSize),
       ...style,
     } as CSSProperties;
 
@@ -300,16 +302,17 @@ export interface WorkbenchTreeDropZoneProps extends ComponentPropsWithRef<'div'>
   depth?: number;
   empty?: boolean;
   highlighted?: boolean;
+  indentSize?: number;
 }
 
 export const WorkbenchTreeDropZone = forwardRef<HTMLDivElement, WorkbenchTreeDropZoneProps>(
   function WorkbenchTreeDropZone(
-    { className, depth = 0, empty = false, highlighted = false, style, ...props },
+    { className, depth = 0, empty = false, highlighted = false, indentSize = 14, style, ...props },
     ref,
   ) {
     const zoneStyle = {
       '--ui-workbench-tree-depth': depth,
-      '--ui-workbench-tree-indent-offset': treeIndentOffset(depth),
+      '--ui-workbench-tree-indent-offset': treeIndentOffset(depth, indentSize),
       ...style,
     } as CSSProperties;
 
@@ -326,10 +329,30 @@ export const WorkbenchTreeDropZone = forwardRef<HTMLDivElement, WorkbenchTreeDro
   },
 );
 
-export type WorkbenchTreeDragOverlayProps = ComponentPropsWithRef<'div'>;
+export interface WorkbenchTreeDragOverlayProps extends ComponentPropsWithRef<'div'> {
+  rowHeight?: number | string;
+}
 
-export function WorkbenchTreeDragOverlay({ className, ...props }: WorkbenchTreeDragOverlayProps) {
-  return <div className={cx('ui-workbench-tree-drag-overlay', className)} {...props} />;
+export function WorkbenchTreeDragOverlay({
+  className,
+  rowHeight,
+  style,
+  ...props
+}: WorkbenchTreeDragOverlayProps) {
+  const overlayStyle = {
+    ...(rowHeight !== undefined
+      ? { '--ui-workbench-tree-row-height': toLengthValue(rowHeight) }
+      : null),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-tree-drag-overlay', className)}
+      style={overlayStyle}
+      {...props}
+    />
+  );
 }
 
 export type WorkbenchDividerProps = ComponentPropsWithRef<'div'>;
