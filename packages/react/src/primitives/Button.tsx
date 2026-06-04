@@ -5,6 +5,7 @@ type ButtonVariant = 'default' | 'primary' | 'danger';
 
 export interface ButtonProps extends ComponentPropsWithRef<'button'> {
   block?: boolean | undefined;
+  compact?: boolean | undefined;
   icon?: string | undefined;
   secondary?: boolean | undefined;
   variant?: ButtonVariant;
@@ -14,6 +15,7 @@ export function Button({
   block = false,
   children,
   className,
+  compact = false,
   icon,
   secondary: _secondary,
   type = 'button',
@@ -24,7 +26,12 @@ export function Button({
 
   return (
     <button
-      className={cx('ui-button', block && 'ui-button--block', className)}
+      className={cx(
+        'ui-button',
+        block && 'ui-button--block',
+        compact && 'ui-button--compact',
+        className,
+      )}
       data-variant={variant}
       type={type}
       {...props}

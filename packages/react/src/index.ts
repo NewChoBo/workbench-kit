@@ -110,8 +110,36 @@ export type {
   WorkbenchStatusDescriptor,
   WorkbenchStatusVariant,
 } from './workbench/status';
-export { Panel, PanelBody, PanelHeader } from './layout/Panel';
-export type { PanelBodyProps, PanelHeaderProps, PanelProps } from './layout/Panel';
+export {
+  FilterBar,
+  FilterBarRow,
+  HelpText,
+  Panel,
+  PanelBody,
+  PanelFooter,
+  PanelHeader,
+  PreviewPane,
+  PreviewPaneContent,
+  PreviewPaneDetails,
+  PreviewPaneText,
+  PreviewPaneTitle,
+  PreviewPaneViewport,
+} from './layout/Panel';
+export type {
+  FilterBarRowProps,
+  FilterBarProps,
+  HelpTextProps,
+  PanelBodyProps,
+  PanelFooterProps,
+  PanelHeaderProps,
+  PanelProps,
+  PreviewPaneContentProps,
+  PreviewPaneDetailsProps,
+  PreviewPaneProps,
+  PreviewPaneTextProps,
+  PreviewPaneTitleProps,
+  PreviewPaneViewportProps,
+} from './layout/Panel';
 export {
   SideBarHeaderControl,
   SideBarList,

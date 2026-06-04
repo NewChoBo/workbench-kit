@@ -4,22 +4,22 @@ import { cx } from '../utils/cx';
 export type ContextMenuItem =
   | {
       type: 'separator';
-      id?: string;
+      id?: string | undefined;
     }
   | {
       type?: 'item';
-      id?: string;
+      id?: string | undefined;
       label: ReactNode;
-      icon?: string;
-      shortcut?: ReactNode;
-      disabled?: boolean;
-      danger?: boolean;
+      icon?: string | undefined;
+      shortcut?: ReactNode | undefined;
+      disabled?: boolean | undefined;
+      danger?: boolean | undefined;
       onSelect: () => void;
     };
 
 export interface ContextMenuProps {
-  ariaLabel?: string;
-  className?: string;
+  ariaLabel?: string | undefined;
+  className?: string | undefined;
   items: ContextMenuItem[];
   x: number;
   y: number;
