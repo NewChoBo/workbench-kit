@@ -74,7 +74,7 @@ primitive rather than hard-code the downstream concept.
 | WB-02 | done    | P1       | Sidebar   | Action list primitive                 | WB-01                       | `@workbench-kit/react` | Render command/action rows with icon, status, shortcut, danger marker, and disabled reason.                                   |
 | WB-03 | done    | P1       | Command   | Command model + palette/suggest shell | WB-02                       | `@workbench-kit/react` | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states.         |
 | WB-04 | pending | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react` | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.    |
-| WB-05 | pending | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.    |
+| WB-05 | done    | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.    |
 | WB-06 | pending | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots. |
 | WB-07 | pending | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring an application-specific editor.                               |
 | WB-08 | pending | P2       | Editor    | Preview renderer registry             | WB-07                       | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, artifact kind, or fallback priority.                                   |
@@ -95,20 +95,20 @@ primitive rather than hard-code the downstream concept.
 
 ## Recommended Next Slice
 
-Start with WB-05. It should consolidate command lifecycle states into reusable
-labels, variants, and helper functions that can be shared by command lists,
-timeline events, status bars, and future confirmation flows without owning a
-runtime.
+Continue with WB-04. It should add a generic timeline renderer that can place
+messages and operation events in one ordered stream while keeping event payloads
+pluggable and application-owned.
 
-| Step | Task                          | Expected Change                                                                                    |
-| ---- | ----------------------------- | -------------------------------------------------------------------------------------------------- |
-| 1    | Inspect existing status usage | Review sidebar action status, command descriptor status, status bar items, and chat runtime state. |
-| 2    | Define status model           | Add stable lifecycle labels, visual variants, and helper functions for shared command state.       |
-| 3    | Align command surfaces        | Reuse the status model in command list and palette/suggest rendering.                              |
-| 4    | Add Storybook coverage        | Show idle, running, completed, failed, waiting, cancelled, disabled, and unavailable states.       |
-| 5    | Add helper tests              | Cover label, variant, and command-state mapping helpers.                                           |
-| 6    | Export public API             | Export status helpers and types from the smallest relevant React entrypoint.                       |
-| 7    | Validate                      | Run focused typecheck, Storybook smoke, and full validation when public exports change.            |
+| Step | Task                         | Expected Change                                                                                  |
+| ---- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| 1    | Inspect existing chat views  | Review chat message rendering, status usage, and current Storybook timeline examples.            |
+| 2    | Define timeline event model  | Add a small generic event shape for message, operation call/result, file write, progress, error. |
+| 3    | Build renderer primitives    | Add event list/item/card primitives with compact and expanded display variants.                  |
+| 4    | Support custom payload views | Provide render hooks or slots for metadata and application-specific payload presentation.        |
+| 5    | Add Storybook coverage       | Show ordered message and operation events, running, success, failure, and progress states.       |
+| 6    | Add focused tests            | Cover event filtering/label helpers and ordered timeline rendering behavior.                     |
+| 7    | Export public API            | Export timeline primitives and types from the appropriate React entrypoint.                      |
+| 8    | Validate                     | Run focused typecheck, Storybook smoke, and full validation when public exports change.          |
 
 ## Suggested API Shape
 
@@ -157,7 +157,7 @@ interface WorkbenchTimelineEvent {
   kind: 'message' | 'operation-call' | 'operation-result' | 'file-write' | 'progress' | 'error';
   title?: string;
   description?: string;
-  status?: WorkbenchCommandStatus;
+  status?: WorkbenchStatus;
   timestamp?: string;
   metadata?: Record<string, unknown>;
 }
@@ -226,18 +226,20 @@ this repository:
 
 ```text
 Please work in the current Workbench Kit repository on the active feature
-branch. Implement the next slice from docs/workbench/todo.md: WB-05 Command
-status model.
+branch. Implement the next slice from docs/workbench/todo.md: WB-04 Operation
+event renderer.
 
 Keep the work generic and public-boundary safe:
 - Do not add application names, product workflow names, private paths, server
   addresses, credentials, or domain-specific artifact schemas.
-- Use existing command descriptor, sidebar action status, status bar, and
-  @workbench-kit/react primitive patterns.
-- Add Storybook coverage for idle, running, completed, failed, waiting,
-  cancelled, disabled, and unavailable states.
-- Export the new primitives and types from the appropriate React entrypoint.
-- Keep status mapping runtime-agnostic; do not introduce runtime/API calls.
+- Use existing chat, command descriptor, status model, and @workbench-kit/react
+  primitive patterns.
+- Add Storybook coverage for ordered message and operation events, including
+  operation call, operation result, file write, progress, and error items.
+- Export the new timeline primitives and types from the appropriate React
+  entrypoint.
+- Keep event ordering and payload creation application-owned; do not introduce
+  runtime/API calls.
 
 Before finishing, run:
 - pnpm --filter @workbench-kit/react typecheck

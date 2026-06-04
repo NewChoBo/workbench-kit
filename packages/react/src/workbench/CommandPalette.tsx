@@ -11,16 +11,14 @@ import {
 import type { CommandMenuItem, ResolvedCommandMenuCommandItem } from '@workbench-kit/core';
 import { EmptyState } from '../primitives/EmptyState';
 import { cx } from '../utils/cx';
+import {
+  getWorkbenchStatusLabel,
+  isWorkbenchStatusBusy,
+  isWorkbenchStatusDisabled,
+  type WorkbenchStatus,
+} from './status';
 
-export type WorkbenchCommandStatus =
-  | 'idle'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'waiting'
-  | 'cancelled'
-  | 'disabled'
-  | 'unavailable';
+export type WorkbenchCommandStatus = WorkbenchStatus;
 
 export interface WorkbenchCommandExecution {
   kind: 'local' | 'remote' | 'composite' | (string & {});
@@ -72,17 +70,6 @@ export type WorkbenchCommandDescriptorOverrides = Partial<
   Omit<WorkbenchCommandDescriptor, 'danger' | 'disabled' | 'icon' | 'id' | 'label' | 'shortcut'>
 >;
 
-const commandStatusLabels: Record<WorkbenchCommandStatus, string> = {
-  cancelled: 'Cancelled',
-  completed: 'Completed',
-  disabled: 'Disabled',
-  failed: 'Failed',
-  idle: 'Idle',
-  running: 'Running',
-  unavailable: 'Unavailable',
-  waiting: 'Waiting',
-};
-
 const commandExecutionLabels: Record<string, string> = {
   composite: 'Composite',
   local: 'Local',
@@ -102,11 +89,11 @@ function commandSearchText(command: WorkbenchCommandDescriptor) {
 }
 
 export function getWorkbenchCommandStatusLabel(status: WorkbenchCommandStatus) {
-  return commandStatusLabels[status];
+  return getWorkbenchStatusLabel(status);
 }
 
 export function isWorkbenchCommandRunnable(command: WorkbenchCommandDescriptor) {
-  return !(command.disabled || command.status === 'disabled' || command.status === 'unavailable');
+  return !(command.disabled || (command.status && isWorkbenchStatusDisabled(command.status)));
 }
 
 export function filterWorkbenchCommands({
@@ -268,6 +255,7 @@ export function WorkbenchCommandList({
           <button
             key={command.id}
             id={itemId}
+            aria-busy={command.status && isWorkbenchStatusBusy(command.status) ? true : undefined}
             aria-describedby={
               [descriptionId, disabledReasonId].filter(Boolean).join(' ') || undefined
             }
