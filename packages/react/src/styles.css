@@ -3210,6 +3210,14 @@
   background: var(--vscode-statusBarItem-errorBackground, var(--color-danger));
 }
 
+.ui-status-bar__section {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .ui-status-bar__label {
   min-width: 0;
   overflow: hidden;
@@ -3220,6 +3228,7 @@
 .ui-status-bar__section--end {
   flex: 0 0 auto;
   margin-left: auto;
+  overflow: visible;
   white-space: nowrap;
 }
 

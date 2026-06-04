@@ -403,8 +403,14 @@ export { IconButton } from './primitives/IconButton';
 export type { IconButtonProps } from './primitives/IconButton';
 export { List, ListEmptyState, ListItem } from './primitives/List';
 export type { ListEmptyStateProps, ListItemProps, ListProps } from './primitives/List';
-export { StatusBar } from './primitives/StatusBar';
-export type { StatusBarProps, StatusBarSeverity } from './primitives/StatusBar';
+export { StatusBar, StatusBarLabel, StatusBarSection } from './primitives/StatusBar';
+export type {
+  StatusBarLabelProps,
+  StatusBarProps,
+  StatusBarSectionAlign,
+  StatusBarSectionProps,
+  StatusBarSeverity,
+} from './primitives/StatusBar';
 export {
   ActivityBar,
   Collapsible,
