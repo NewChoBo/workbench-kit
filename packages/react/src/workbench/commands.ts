@@ -43,7 +43,7 @@ export type WorkbenchCommandSurface =
   | typeof WORKBENCH_COMMAND_SURFACE_WORKSPACE;
 
 export interface WorkbenchShellCommandActivity<TActivityId extends string = string> {
-  icon?: string;
+  icon?: string | undefined;
   id: TActivityId;
   label: string;
 }
@@ -66,7 +66,7 @@ export type WorkbenchCommandOverrides<TContext = void> = Partial<
 >;
 
 interface WorkbenchCommandPresetOptions<TContext = void> {
-  commandOverrides?: WorkbenchCommandOverrides<TContext>;
+  commandOverrides?: WorkbenchCommandOverrides<TContext> | undefined;
 }
 
 function applyWorkbenchCommandOverrides<TContext>(
@@ -91,13 +91,15 @@ function applyWorkbenchCommandOverrides<TContext>(
 
 export interface WorkbenchShellCommandPresetOptions<TActivityId extends string = string> {
   activities: WorkbenchShellCommandActivity<TActivityId>[];
-  includeSettings?: boolean;
-  includeSidebarToggle?: boolean;
-  menuSeparatorId?: string;
-  settingsIcon?: string;
-  settingsLabel?: string;
-  sidebarIcon?: string;
-  commandOverrides?: WorkbenchCommandOverrides<WorkbenchShellCommandContext<TActivityId>>;
+  includeSettings?: boolean | undefined;
+  includeSidebarToggle?: boolean | undefined;
+  menuSeparatorId?: string | undefined;
+  settingsIcon?: string | undefined;
+  settingsLabel?: string | undefined;
+  sidebarIcon?: string | undefined;
+  commandOverrides?:
+    | WorkbenchCommandOverrides<WorkbenchShellCommandContext<TActivityId>>
+    | undefined;
 }
 
 export interface WorkbenchEditorCommandContext {
@@ -114,7 +116,7 @@ export interface WorkbenchEditorCommandContext {
   copyPath: () => void;
   deletePath: () => void;
   discardFile: () => void;
-  filePath?: string;
+  filePath?: string | undefined;
   hasMultipleOpenFiles: boolean;
   hasOpenFiles: boolean;
   hasUnsavedChanges: boolean;
@@ -231,7 +233,7 @@ export function createWorkbenchShellMenuEntries<TActivityId extends string>({
 }
 
 export interface WorkbenchEditorCommandPresetOptions {
-  commandOverrides?: WorkbenchCommandOverrides<WorkbenchEditorCommandContext>;
+  commandOverrides?: WorkbenchCommandOverrides<WorkbenchEditorCommandContext> | undefined;
 }
 
 export function createWorkbenchEditorCommands({
