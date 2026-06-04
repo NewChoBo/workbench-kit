@@ -365,6 +365,36 @@ export function WorkbenchCanvasItemFrame({
   );
 }
 
+export type WorkbenchCanvasPaneSurfaceProps = ComponentPropsWithRef<'div'>;
+
+export const WorkbenchCanvasPaneSurface = forwardRef<
+  HTMLDivElement,
+  WorkbenchCanvasPaneSurfaceProps
+>(function WorkbenchCanvasPaneSurface({ className, ...props }, ref) {
+  return <div ref={ref} className={cx('ui-workbench-canvas-pane-surface', className)} {...props} />;
+});
+
+export interface WorkbenchCanvasFrameSurfaceProps extends ComponentPropsWithRef<'div'> {
+  selected?: boolean | undefined;
+  transient?: boolean | undefined;
+}
+
+export function WorkbenchCanvasFrameSurface({
+  className,
+  selected = false,
+  transient = false,
+  ...props
+}: WorkbenchCanvasFrameSurfaceProps) {
+  return (
+    <div
+      className={cx('ui-workbench-canvas-frame-surface', className)}
+      data-selected={selected ? 'true' : 'false'}
+      data-transient={transient ? 'true' : 'false'}
+      {...props}
+    />
+  );
+}
+
 export interface WorkbenchCanvasViewportProps extends ComponentPropsWithRef<'div'> {
   grid?: boolean | undefined;
   gridSize?: number | string | undefined;
@@ -424,6 +454,89 @@ export function WorkbenchCanvasSelectionMarquee({
     <div
       className={cx('ui-workbench-canvas-selection-marquee', className)}
       style={marqueeStyle}
+      {...props}
+    />
+  );
+}
+
+export type WorkbenchCanvasGuideBlockTone = 'gap' | 'padding';
+
+export interface WorkbenchCanvasGuideBlockProps extends ComponentPropsWithRef<'div'> {
+  height: number | string;
+  tone?: WorkbenchCanvasGuideBlockTone | undefined;
+  width: number | string;
+  x: number | string;
+  y: number | string;
+  zIndex?: number | string | undefined;
+}
+
+export function WorkbenchCanvasGuideBlock({
+  className,
+  height,
+  style,
+  tone = 'gap',
+  width,
+  x,
+  y,
+  zIndex,
+  ...props
+}: WorkbenchCanvasGuideBlockProps) {
+  const blockStyle = {
+    '--ui-workbench-canvas-guide-block-x': toLengthValue(x),
+    '--ui-workbench-canvas-guide-block-y': toLengthValue(y),
+    '--ui-workbench-canvas-guide-block-width': toLengthValue(width),
+    '--ui-workbench-canvas-guide-block-height': toLengthValue(height),
+    ...(zIndex !== undefined
+      ? { '--ui-workbench-canvas-guide-block-z-index': String(zIndex) }
+      : {}),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-canvas-guide-block', className)}
+      data-tone={tone}
+      style={blockStyle}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchCanvasPlaceholderProps extends ComponentPropsWithRef<'div'> {
+  height?: number | string | undefined;
+  width?: number | string | undefined;
+  x?: number | string | undefined;
+  y?: number | string | undefined;
+}
+
+export function WorkbenchCanvasPlaceholder({
+  className,
+  height,
+  style,
+  width,
+  x,
+  y,
+  ...props
+}: WorkbenchCanvasPlaceholderProps) {
+  const positioned =
+    x !== undefined || y !== undefined || width !== undefined || height !== undefined;
+  const placeholderStyle = {
+    ...(x !== undefined ? { '--ui-workbench-canvas-placeholder-x': toLengthValue(x) } : {}),
+    ...(y !== undefined ? { '--ui-workbench-canvas-placeholder-y': toLengthValue(y) } : {}),
+    ...(width !== undefined
+      ? { '--ui-workbench-canvas-placeholder-width': toLengthValue(width) }
+      : {}),
+    ...(height !== undefined
+      ? { '--ui-workbench-canvas-placeholder-height': toLengthValue(height) }
+      : {}),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-canvas-placeholder', className)}
+      data-positioned={positioned ? 'true' : 'false'}
+      style={placeholderStyle}
       {...props}
     />
   );
