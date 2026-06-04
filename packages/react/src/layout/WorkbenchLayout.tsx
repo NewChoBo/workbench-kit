@@ -114,6 +114,196 @@ function toLengthValue(value: number | string) {
   return typeof value === 'number' ? `${value}px` : value;
 }
 
+export type WorkbenchEditorFrameProps = ComponentPropsWithRef<'div'>;
+
+export function WorkbenchEditorFrame({ className, ...props }: WorkbenchEditorFrameProps) {
+  return <div className={cx('ui-workbench-editor-frame', className)} {...props} />;
+}
+
+export type WorkbenchEditorBodyProps = ComponentPropsWithRef<'div'>;
+
+export function WorkbenchEditorBody({ className, ...props }: WorkbenchEditorBodyProps) {
+  return <div className={cx('ui-workbench-editor-body', className)} {...props} />;
+}
+
+export type WorkbenchEditorViewportProps = ComponentPropsWithRef<'div'>;
+
+export function WorkbenchEditorViewport({ className, ...props }: WorkbenchEditorViewportProps) {
+  return <div className={cx('ui-workbench-editor-viewport', className)} {...props} />;
+}
+
+export interface WorkbenchEditorBottomPanelProps extends ComponentPropsWithRef<'section'> {
+  height?: number | string;
+}
+
+export function WorkbenchEditorBottomPanel({
+  className,
+  height = 120,
+  style,
+  ...props
+}: WorkbenchEditorBottomPanelProps) {
+  const panelStyle = {
+    '--ui-workbench-editor-bottom-panel-height': toLengthValue(height),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <section
+      className={cx('ui-workbench-editor-bottom-panel', className)}
+      style={panelStyle}
+      {...props}
+    />
+  );
+}
+
+export type WorkbenchEditorBottomPanelHeaderProps = ComponentPropsWithRef<'div'>;
+
+export function WorkbenchEditorBottomPanelHeader({
+  className,
+  ...props
+}: WorkbenchEditorBottomPanelHeaderProps) {
+  return <div className={cx('ui-workbench-editor-bottom-panel__header', className)} {...props} />;
+}
+
+export type WorkbenchEditorBottomPanelTitleProps = ComponentPropsWithRef<'span'>;
+
+export function WorkbenchEditorBottomPanelTitle({
+  className,
+  ...props
+}: WorkbenchEditorBottomPanelTitleProps) {
+  return <span className={cx('ui-workbench-editor-bottom-panel__title', className)} {...props} />;
+}
+
+export type WorkbenchEditorBottomPanelBodyProps = ComponentPropsWithRef<'div'>;
+
+export function WorkbenchEditorBottomPanelBody({
+  className,
+  ...props
+}: WorkbenchEditorBottomPanelBodyProps) {
+  return <div className={cx('ui-workbench-editor-bottom-panel__body', className)} {...props} />;
+}
+
+export type WorkbenchProblemSeverity = 'error' | 'info' | 'warning';
+
+export type WorkbenchProblemListProps = ComponentPropsWithRef<'div'>;
+
+export function WorkbenchProblemList({ className, ...props }: WorkbenchProblemListProps) {
+  return <div className={cx('ui-workbench-problem-list', className)} {...props} />;
+}
+
+export interface WorkbenchProblemItemProps extends Omit<
+  ComponentPropsWithRef<'button'>,
+  'children'
+> {
+  location?: ReactNode;
+  message: ReactNode;
+  severity?: WorkbenchProblemSeverity;
+}
+
+export function WorkbenchProblemItem({
+  className,
+  location,
+  message,
+  severity = 'error',
+  type = 'button',
+  ...props
+}: WorkbenchProblemItemProps) {
+  return (
+    <button
+      className={cx('ui-workbench-problem-item', className)}
+      data-severity={severity}
+      type={type}
+      {...props}
+    >
+      {location ? <span className="ui-workbench-problem-item__location">{location}</span> : null}
+      <span className="ui-workbench-problem-item__message">{message}</span>
+    </button>
+  );
+}
+
+export type WorkbenchFloatingMenuAlign = 'end' | 'start';
+export type WorkbenchFloatingMenuPlacement = 'bottom' | 'top';
+
+export interface WorkbenchFloatingMenuProps extends ComponentPropsWithRef<'div'> {
+  align?: WorkbenchFloatingMenuAlign;
+  inset?: number | string;
+  offset?: number | string;
+  placement?: WorkbenchFloatingMenuPlacement;
+  width?: number | string;
+}
+
+export function WorkbenchFloatingMenu({
+  align = 'end',
+  className,
+  inset = 8,
+  offset = 28,
+  placement = 'top',
+  role = 'menu',
+  style,
+  width = 180,
+  ...props
+}: WorkbenchFloatingMenuProps) {
+  const menuStyle = {
+    '--ui-workbench-floating-menu-inset': toLengthValue(inset),
+    '--ui-workbench-floating-menu-offset': toLengthValue(offset),
+    '--ui-workbench-floating-menu-width': toLengthValue(width),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-floating-menu', className)}
+      data-align={align}
+      data-placement={placement}
+      role={role}
+      style={menuStyle}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchFloatingMenuItemProps extends Omit<
+  ComponentPropsWithRef<'button'>,
+  'children'
+> {
+  icon?: ReactNode | string;
+  label: ReactNode;
+  meta?: ReactNode;
+  selected?: boolean;
+}
+
+export function WorkbenchFloatingMenuItem({
+  className,
+  icon,
+  label,
+  meta,
+  role = 'menuitem',
+  selected = false,
+  type = 'button',
+  ...props
+}: WorkbenchFloatingMenuItemProps) {
+  const resolvedIcon =
+    typeof icon === 'string' ? (
+      <i className={cx('codicon', icon.startsWith('codicon-') ? icon : `codicon-${icon}`)} />
+    ) : (
+      icon
+    );
+
+  return (
+    <button
+      className={cx('ui-workbench-floating-menu__item', className)}
+      data-selected={selected ? 'true' : 'false'}
+      role={role}
+      type={type}
+      {...props}
+    >
+      <span className="ui-workbench-floating-menu__icon">{resolvedIcon}</span>
+      <span className="ui-workbench-floating-menu__label">{label}</span>
+      {meta ? <span className="ui-workbench-floating-menu__meta">{meta}</span> : null}
+    </button>
+  );
+}
+
 function treeIndentOffset(depth: number, indentSize: number) {
   return `${8 + depth * indentSize}px`;
 }
