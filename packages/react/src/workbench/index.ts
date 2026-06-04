@@ -1,6 +1,28 @@
 export { ActivityBar } from './ActivityBar';
 export type { ActivityBarItem, ActivityBarProps } from './ActivityBar';
 export {
+  WorkbenchArtifactPreview,
+  WorkbenchArtifactShell,
+  formatWorkbenchArtifactContent,
+  getWorkbenchArtifactExtension,
+  getWorkbenchArtifactTitle,
+  getWorkbenchPreviewRenderer,
+  getWorkbenchPreviewRendererMatch,
+  selectWorkbenchPreviewRenderer,
+} from './ArtifactShell';
+export type {
+  WorkbenchArtifactDescriptor,
+  WorkbenchArtifactMode,
+  WorkbenchArtifactPreviewProps,
+  WorkbenchArtifactShellProps,
+  WorkbenchArtifactShellRenderCode,
+  WorkbenchArtifactShellRenderPreview,
+  WorkbenchPreviewRenderer,
+  WorkbenchPreviewRendererContext,
+  WorkbenchPreviewRendererMatch,
+  WorkbenchPreviewRendererMatchReason,
+} from './ArtifactShell';
+export {
   WorkbenchCommandList,
   WorkbenchCommandPalette,
   WorkbenchCommandSuggest,
