@@ -3702,6 +3702,235 @@
   text-transform: uppercase;
 }
 
+.ui-workbench-editor-frame {
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--vscode-foreground, var(--color-text));
+  background: var(--vscode-editor-background, var(--color-bg));
+  font-family: var(--vscode-font-family, var(--font-family, system-ui, sans-serif));
+}
+
+.ui-workbench-editor-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-workbench-editor-viewport {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-workbench-editor-bottom-panel {
+  box-sizing: border-box;
+  z-index: 10;
+  display: flex;
+  flex: 0 0 var(--ui-workbench-editor-bottom-panel-height, 120px);
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--vscode-panel-background, var(--color-surface));
+  border-top: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
+.ui-workbench-editor-bottom-panel__header {
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  min-height: 26px;
+  padding: 0 6px 0 10px;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  background: var(--vscode-sideBar-background, var(--color-surface));
+  border-bottom: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
+.ui-workbench-editor-bottom-panel__title {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ui-workbench-editor-bottom-panel__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-workbench-problem-list {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 4px 0;
+}
+
+.ui-workbench-problem-item {
+  box-sizing: border-box;
+  display: grid;
+  width: 100%;
+  min-height: 24px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 12px;
+  color: var(--vscode-editorError-foreground, var(--color-danger));
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--vscode-panel-border, var(--color-border));
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-workbench-problem-item[data-severity='warning'] {
+  color: var(--vscode-editorWarning-foreground, var(--color-warning));
+}
+
+.ui-workbench-problem-item[data-severity='info'] {
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+}
+
+.ui-workbench-problem-item:hover,
+.ui-workbench-problem-item:focus-visible {
+  background: var(--vscode-list-hoverBackground, var(--color-surface-hover));
+  outline: none;
+}
+
+.ui-workbench-problem-item:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -1px;
+}
+
+.ui-workbench-problem-item__location {
+  flex: 0 0 auto;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ui-workbench-problem-item__message {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: inherit;
+}
+
+.ui-workbench-floating-menu {
+  position: absolute;
+  z-index: var(--ui-floating-menu-z-index, 120);
+  display: grid;
+  min-width: var(--ui-workbench-floating-menu-width, 180px);
+  max-width: min(320px, calc(100% - 16px));
+  gap: 2px;
+  padding: 4px;
+  color: var(--vscode-menu-foreground, var(--color-text));
+  background: var(--vscode-menu-background, var(--color-surface));
+  border: 1px solid var(--vscode-menu-border, var(--color-border));
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.ui-workbench-floating-menu[data-placement='top'] {
+  bottom: var(--ui-workbench-floating-menu-offset, 28px);
+}
+
+.ui-workbench-floating-menu[data-placement='bottom'] {
+  top: var(--ui-workbench-floating-menu-offset, 28px);
+}
+
+.ui-workbench-floating-menu[data-align='start'] {
+  left: var(--ui-workbench-floating-menu-inset, 8px);
+}
+
+.ui-workbench-floating-menu[data-align='end'] {
+  right: var(--ui-workbench-floating-menu-inset, 8px);
+}
+
+.ui-workbench-floating-menu__item {
+  box-sizing: border-box;
+  display: grid;
+  min-height: 26px;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  color: var(--vscode-menu-foreground, var(--color-text-muted));
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-workbench-floating-menu__item:hover,
+.ui-workbench-floating-menu__item:focus-visible {
+  color: var(--vscode-menu-selectionForeground, var(--color-text));
+  background: var(--vscode-menu-selectionBackground, var(--color-surface-hover));
+  outline: none;
+}
+
+.ui-workbench-floating-menu__item:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -1px;
+}
+
+.ui-workbench-floating-menu__item[data-selected='true'] {
+  color: var(--vscode-list-activeSelectionForeground, var(--color-text));
+  background: var(--vscode-list-activeSelectionBackground, var(--color-surface-hover));
+  font-weight: 600;
+}
+
+.ui-workbench-floating-menu__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.ui-workbench-floating-menu__icon .codicon {
+  font-size: 14px;
+}
+
+.ui-workbench-floating-menu__label,
+.ui-workbench-floating-menu__meta {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-workbench-floating-menu__meta {
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: 11px;
+  font-weight: 400;
+}
+
 .ui-workbench-tree {
   --ui-workbench-tree-row-height: 22px;
   --ui-workbench-tree-indent-size: 14px;

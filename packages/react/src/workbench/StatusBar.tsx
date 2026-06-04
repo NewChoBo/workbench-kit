@@ -84,7 +84,7 @@ export function StatusBar({
 }
 
 export interface StatusBarSectionProps extends ComponentPropsWithRef<'div'> {
-  align?: StatusBarSectionAlign;
+  align?: StatusBarSectionAlign | undefined;
 }
 
 export function StatusBarSection({ align = 'start', className, ...props }: StatusBarSectionProps) {
@@ -101,9 +101,9 @@ export function StatusBarSection({ align = 'start', className, ...props }: Statu
 }
 
 export interface StatusBarItemProps extends ComponentPropsWithRef<'button'> {
-  active?: boolean;
-  icon?: ReactNode;
-  status?: WorkbenchStatus;
+  active?: boolean | undefined;
+  icon?: ReactNode | undefined;
+  status?: WorkbenchStatus | undefined;
 }
 
 export function StatusBarItem({
