@@ -23,6 +23,18 @@ export type {
   SideBarRowProps,
   SideBarScrollSpacerProps,
 } from './layout/SideBarViewFrame';
+export {
+  WorkbenchActionList,
+  WorkbenchActionListItem,
+  WorkbenchSidebarSection,
+} from './layout/WorkbenchSidebarActions';
+export type {
+  WorkbenchActionItem,
+  WorkbenchActionListItemProps,
+  WorkbenchActionListProps,
+  WorkbenchActionStatus,
+  WorkbenchSidebarSectionProps,
+} from './layout/WorkbenchSidebarActions';
 export { Badge } from './primitives/Badge';
 export type { BadgeProps } from './primitives/Badge';
 export { Button } from './primitives/Button';
