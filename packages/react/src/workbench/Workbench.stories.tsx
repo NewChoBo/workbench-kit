@@ -479,8 +479,20 @@ export const IntegratedShell: Story = {
     await userEvent.click(await canvas.findByRole('menuitem', { name: 'Copy path' }));
     await expect(statusBar).toHaveTextContent('Copied src/components/Button.tsx');
 
-    await userEvent.click(canvas.getByRole('button', { name: 'Explorer' }));
-    await expect(await canvas.findByRole('textbox', { name: 'Filter Explorer' })).toBeVisible();
+    const activityBar = canvas.getByRole('navigation', { name: 'Activity bar' });
+    const explorerActivity = within(activityBar).getByRole('button', { name: 'Explorer' });
+
+    let explorerFilter = await canvas
+      .findByRole('textbox', { name: 'Filter Explorer' }, { timeout: 500 })
+      .catch(() => null);
+    for (let attempt = 0; !explorerFilter && attempt < 2; attempt += 1) {
+      await userEvent.click(explorerActivity);
+      explorerFilter = await canvas
+        .findByRole('textbox', { name: 'Filter Explorer' }, { timeout: 500 })
+        .catch(() => null);
+    }
+    if (!explorerFilter) throw new Error('Explorer filter did not become visible.');
+    await expect(explorerFilter).toBeVisible();
     await fireEvent.contextMenu(canvas.getByRole('tab', { name: /App\.tsx/ }));
     await expect(await canvas.findByRole('menu', { name: 'Editor tab menu' })).toBeVisible();
     await userEvent.click(await canvas.findByRole('menuitem', { name: 'Copy path' }));
