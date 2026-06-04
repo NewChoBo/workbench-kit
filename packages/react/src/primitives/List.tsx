@@ -1,4 +1,6 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
+import { IconButton } from './IconButton';
+import type { IconButtonProps } from './IconButton';
 import { cx } from '../utils/cx';
 
 export interface ListProps extends ComponentPropsWithRef<'div'> {
@@ -64,6 +66,34 @@ export function ListItem({
       {meta ? <span className="ui-list-item__meta">{meta}</span> : null}
       {actions ? <span className="ui-list-item__actions">{actions}</span> : null}
     </div>
+  );
+}
+
+export type ListItemActionButtonProps = IconButtonProps;
+
+function handleNestedListActionEvent<TEvent extends { stopPropagation(): void }>(
+  event: TEvent,
+  handler: ((event: TEvent) => void) | undefined,
+) {
+  event.stopPropagation();
+  handler?.(event);
+}
+
+export function ListItemActionButton({
+  compact = true,
+  onClick,
+  onDoubleClick,
+  onPointerDown,
+  ...props
+}: ListItemActionButtonProps) {
+  return (
+    <IconButton
+      compact={compact}
+      onClick={(event) => handleNestedListActionEvent(event, onClick)}
+      onDoubleClick={(event) => handleNestedListActionEvent(event, onDoubleClick)}
+      onPointerDown={(event) => handleNestedListActionEvent(event, onPointerDown)}
+      {...props}
+    />
   );
 }
 
