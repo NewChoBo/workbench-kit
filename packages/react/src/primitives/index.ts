@@ -16,8 +16,14 @@ export { List, ListEmptyState, ListItem } from './List';
 export type { ListEmptyStateProps, ListItemProps, ListProps } from './List';
 export { Select } from './Select';
 export type { SelectProps } from './Select';
-export { StatusBar } from './StatusBar';
-export type { StatusBarProps, StatusBarSeverity } from './StatusBar';
+export { StatusBar, StatusBarLabel, StatusBarSection } from './StatusBar';
+export type {
+  StatusBarLabelProps,
+  StatusBarProps,
+  StatusBarSectionAlign,
+  StatusBarSectionProps,
+  StatusBarSeverity,
+} from './StatusBar';
 export { TextInput } from './TextInput';
 export type { TextInputProps } from './TextInput';
 export { TextArea } from './TextArea';
