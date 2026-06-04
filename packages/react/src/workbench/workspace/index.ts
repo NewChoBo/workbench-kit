@@ -24,6 +24,36 @@ export { WorkspaceFileIcon, codiconForFileKind, fileIconKindForPath } from './Wo
 export type { WorkspaceFileIconKind, WorkspaceFileIconProps } from './WorkspaceFileIcon';
 export { WorkspaceHighlightedText } from './WorkspaceHighlightedText';
 export type { WorkspaceHighlightedTextProps } from './WorkspaceHighlightedText';
+export {
+  WorkbenchMultiProviderExplorer,
+  collectWorkbenchExplorerEntryRefs,
+  countWorkbenchExplorerEntries,
+  flattenWorkbenchExplorerProviders,
+  getWorkbenchExplorerEntryContext,
+  getWorkbenchExplorerEntryKey,
+  getWorkbenchExplorerProviderEntryCount,
+  isWorkbenchExplorerActionDisabled,
+  isWorkbenchExplorerEntryDisabled,
+  isWorkbenchExplorerEntrySelectable,
+  isWorkbenchExplorerProviderDisabled,
+  normalizeWorkbenchExplorerEntryKeys,
+} from './MultiProviderExplorer';
+export type {
+  WorkbenchExplorerActionDescriptor,
+  WorkbenchExplorerEntryContext,
+  WorkbenchExplorerEntryContextInput,
+  WorkbenchExplorerEntryDescriptor,
+  WorkbenchExplorerEntryKind,
+  WorkbenchExplorerEntryRef,
+  WorkbenchExplorerEntrySelectContext,
+  WorkbenchExplorerEntryToggleContext,
+  WorkbenchExplorerFlattenedEntry,
+  WorkbenchExplorerProviderActionContext,
+  WorkbenchExplorerProviderCollapseContext,
+  WorkbenchExplorerProviderDescriptor,
+  WorkbenchExplorerProviderKind,
+  WorkbenchMultiProviderExplorerProps,
+} from './MultiProviderExplorer';
 export { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 export type { WorkspaceSearchPanelProps } from './WorkspaceSearchPanel';
 export { WorkspaceSearchResults } from './WorkspaceSearchResults';
