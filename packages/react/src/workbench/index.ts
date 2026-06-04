@@ -50,6 +50,26 @@ export type {
   WorkbenchCommandSuggestProps,
 } from './CommandPalette';
 export {
+  WorkbenchConfirmationFlow,
+  getWorkbenchConfirmationButtonVariant,
+  getWorkbenchConfirmationConfirmLabel,
+  getWorkbenchConfirmationSideEffect,
+  getWorkbenchConfirmationStatus,
+  getWorkbenchConfirmationVariant,
+  isWorkbenchConfirmationActionDisabled,
+} from './ConfirmationFlow';
+export type {
+  WorkbenchConfirmationAction,
+  WorkbenchConfirmationCancelContext,
+  WorkbenchConfirmationCloseContext,
+  WorkbenchConfirmationConfirmContext,
+  WorkbenchConfirmationContext,
+  WorkbenchConfirmationFlowProps,
+  WorkbenchConfirmationReason,
+  WorkbenchConfirmationSideEffect,
+  WorkbenchConfirmationVariant,
+} from './ConfirmationFlow';
+export {
   WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID,

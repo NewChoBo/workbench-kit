@@ -78,7 +78,7 @@ primitive rather than hard-code the downstream concept.
 | WB-06 | done    | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots. |
 | WB-07 | done    | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring an application-specific editor.                               |
 | WB-08 | done    | P2       | Editor    | Preview renderer registry             | WB-07                       | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, artifact kind, or fallback priority.                                   |
-| WB-09 | pending | P3       | Modal     | Confirmation flow                     | Existing dialog primitives  | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                                                   |
+| WB-09 | done    | P3       | Modal     | Confirmation flow                     | Existing dialog primitives  | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                                                   |
 | WB-10 | pending | P3       | Settings  | Schema form renderer                  | Existing field primitives   | `@workbench-kit/react` | Render simple settings forms from metadata without binding to an application settings store.                                  |
 
 ## Suggested Implementation Order
@@ -95,20 +95,21 @@ primitive rather than hard-code the downstream concept.
 
 ## Recommended Next Slice
 
-Continue with WB-09. It should add a reusable confirmation flow for default and
-danger actions, async pending state, cancel/close behavior, and accessible
-dialog naming without binding the package to a runtime or store.
+Continue with WB-10. It should add a simple schema form renderer for settings
+metadata with text, select, checkbox, and number fields, validation messages,
+disabled/read-only states, submit/cancel callbacks, and no binding to an
+application settings store.
 
-| Step | Task                     | Expected Change                                                                                 |
-| ---- | ------------------------ | ----------------------------------------------------------------------------------------------- |
-| 1    | Inspect dialog surfaces  | Review existing modal and confirm dialog primitives, naming, focus, and pending state patterns. |
-| 2    | Define flow model        | Add generic confirmation action and result metadata without runtime-specific operation names.   |
-| 3    | Build confirmation shell | Support default and danger variants, async pending state, cancel, close, and disabled states.   |
-| 4    | Preserve callback data   | Ensure confirm/cancel callbacks include action id, side-effect metadata, and context.           |
-| 5    | Add Storybook coverage   | Show default confirm, danger confirm, async pending, cancel/close, and disabled confirm.        |
-| 6    | Add focused tests        | Cover helper state, disabled/pending rendering, and accessible labels.                          |
-| 7    | Export public API        | Export confirmation flow primitives and types from the appropriate React entrypoint.            |
-| 8    | Validate                 | Run focused typecheck, Storybook smoke, and full validation when public exports change.         |
+| Step | Task                   | Expected Change                                                                                  |
+| ---- | ---------------------- | ------------------------------------------------------------------------------------------------ |
+| 1    | Inspect field inputs   | Review existing Field, TextInput, Select, Checkbox, Button, and settings modal patterns.         |
+| 2    | Define schema model    | Add generic field descriptors for text, select, checkbox, and number fields with metadata.       |
+| 3    | Build form renderer    | Render simple forms with controlled values, validation messages, disabled, and read-only states. |
+| 4    | Preserve callbacks     | Ensure submit/cancel/change callbacks include field ids, values, and action context.             |
+| 5    | Add Storybook coverage | Show editable settings, read-only form, validation messages, disabled submit, and mixed fields.  |
+| 6    | Add focused tests      | Cover value normalization, field rendering helpers, validation state, and submit button state.   |
+| 7    | Export public API      | Export schema form primitives and types from the appropriate React entrypoint.                   |
+| 8    | Validate               | Run focused typecheck, Storybook smoke, full validation, and final todo completion review.       |
 
 ## Suggested API Shape
 
@@ -222,6 +223,29 @@ interface WorkbenchExplorerProviderDescriptor {
   actions?: readonly WorkbenchExplorerActionDescriptor[];
   metadata?: Record<string, unknown>;
 }
+
+type WorkbenchConfirmationSideEffect =
+  | 'none'
+  | 'workspace-write'
+  | 'external-write'
+  | (string & {});
+
+interface WorkbenchConfirmationAction {
+  id: string;
+  title: React.ReactNode;
+  message: React.ReactNode;
+  detail?: React.ReactNode;
+  confirmLabel?: React.ReactNode;
+  cancelLabel?: React.ReactNode;
+  pendingLabel?: React.ReactNode;
+  variant?: 'default' | 'danger';
+  danger?: boolean;
+  sideEffect?: WorkbenchConfirmationSideEffect;
+  status?: WorkbenchStatus;
+  disabled?: boolean;
+  disabledReason?: React.ReactNode;
+  metadata?: Record<string, unknown>;
+}
 ```
 
 Prefer render props or slots for application-specific visuals. Avoid accepting
@@ -287,20 +311,20 @@ this repository:
 
 ```text
 Please work in the current Workbench Kit repository on the active feature
-branch. Implement the next slice from docs/workbench/todo.md: WB-09
-Confirmation flow.
+branch. Implement the next slice from docs/workbench/todo.md: WB-10
+Schema form renderer.
 
 Keep the work generic and public-boundary safe:
 - Do not add application names, product workflow names, private paths, server
   addresses, credentials, or domain-specific artifact schemas.
-- Use existing modal, confirm dialog, command metadata, status model, and
+- Use existing Field, TextInput, Select, Checkbox, Button, settings modal, and
   @workbench-kit/react primitive patterns.
-- Add Storybook coverage for default confirm, danger confirm, async pending,
-  cancel/close behavior, and disabled confirm.
-- Export the new confirmation flow primitives and types from the
+- Add Storybook coverage for editable settings, read-only form, validation
+  messages, disabled submit, and mixed text/select/checkbox/number fields.
+- Export the new schema form renderer primitives and types from the
   appropriate React entrypoint.
-- Keep side-effect execution application-owned; do not introduce runtime/API
-  calls.
+- Keep settings persistence application-owned; do not introduce runtime/API
+  calls or bind to a specific settings store.
 
 Before finishing, run:
 - pnpm --filter @workbench-kit/react typecheck
