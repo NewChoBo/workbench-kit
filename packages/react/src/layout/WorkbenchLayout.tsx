@@ -490,11 +490,15 @@ export interface WorkbenchCanvasResizeHandleProps extends Omit<
   'children'
 > {
   label?: string | undefined;
+  position?: WorkbenchCanvasResizeHandlePosition | undefined;
 }
+
+export type WorkbenchCanvasResizeHandlePosition = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 
 export function WorkbenchCanvasResizeHandle({
   className,
   label = 'Resize',
+  position = 'se',
   type = 'button',
   ...props
 }: WorkbenchCanvasResizeHandleProps) {
@@ -502,8 +506,83 @@ export function WorkbenchCanvasResizeHandle({
     <button
       aria-label={label}
       className={cx('ui-workbench-canvas-resize-handle', className)}
+      data-position={position}
       title={label}
       type={type}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchCanvasResizeFrameProps extends ComponentPropsWithRef<'div'> {
+  height: number | string;
+  width: number | string;
+  x: number | string;
+  y: number | string;
+  zIndex?: number | string;
+}
+
+export const WorkbenchCanvasResizeFrame = forwardRef<
+  HTMLDivElement,
+  WorkbenchCanvasResizeFrameProps
+>(function WorkbenchCanvasResizeFrame(
+  { className, height, style, width, x, y, zIndex, ...props },
+  ref,
+) {
+  const frameStyle = {
+    '--ui-workbench-canvas-resize-frame-x': toLengthValue(x),
+    '--ui-workbench-canvas-resize-frame-y': toLengthValue(y),
+    '--ui-workbench-canvas-resize-frame-width': toLengthValue(width),
+    '--ui-workbench-canvas-resize-frame-height': toLengthValue(height),
+    ...(zIndex !== undefined
+      ? { '--ui-workbench-canvas-resize-frame-z-index': String(zIndex) }
+      : {}),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      ref={ref}
+      className={cx('ui-workbench-canvas-resize-frame', className)}
+      style={frameStyle}
+      {...props}
+    />
+  );
+});
+
+export interface WorkbenchCanvasResizePreviewProps extends ComponentPropsWithRef<'div'> {
+  height: number | string;
+  width: number | string;
+  x: number | string;
+  y: number | string;
+  zIndex?: number | string;
+}
+
+export function WorkbenchCanvasResizePreview({
+  className,
+  height,
+  style,
+  width,
+  x,
+  y,
+  zIndex,
+  ...props
+}: WorkbenchCanvasResizePreviewProps) {
+  const previewStyle = {
+    '--ui-workbench-canvas-resize-preview-x': toLengthValue(x),
+    '--ui-workbench-canvas-resize-preview-y': toLengthValue(y),
+    '--ui-workbench-canvas-resize-preview-width': toLengthValue(width),
+    '--ui-workbench-canvas-resize-preview-height': toLengthValue(height),
+    ...(zIndex !== undefined
+      ? { '--ui-workbench-canvas-resize-preview-z-index': String(zIndex) }
+      : {}),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-canvas-resize-preview', className)}
+      style={previewStyle}
       {...props}
     />
   );

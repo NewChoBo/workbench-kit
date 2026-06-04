@@ -15,7 +15,13 @@ import {
   WorkbenchActionListItem,
   WorkbenchSidebarSection,
 } from './WorkbenchSidebarActions';
-import { WorkbenchCanvasFrameHandle, WorkbenchDragPreview } from './WorkbenchLayout';
+import {
+  WorkbenchCanvasFrameHandle,
+  WorkbenchCanvasResizeFrame,
+  WorkbenchCanvasResizeHandle,
+  WorkbenchCanvasResizePreview,
+  WorkbenchDragPreview,
+} from './WorkbenchLayout';
 
 const meta = {
   title: 'React/Layout',
@@ -185,6 +191,25 @@ export const CanvasFrameHandle: Story = {
         }}
       >
         <WorkbenchCanvasFrameHandle>Launcher frame</WorkbenchCanvasFrameHandle>
+      </div>
+    </div>
+  ),
+};
+
+export const CanvasResizeHandles: Story = {
+  render: () => (
+    <div style={{ width: 360, height: 220, padding: 24, background: 'var(--color-bg)' }}>
+      <div style={{ position: 'relative', width: 280, height: 160 }}>
+        <WorkbenchCanvasResizeFrame x={32} y={24} width={180} height={96}>
+          {(['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'] as const).map((position) => (
+            <WorkbenchCanvasResizeHandle
+              key={position}
+              label={`Resize ${position}`}
+              position={position}
+            />
+          ))}
+        </WorkbenchCanvasResizeFrame>
+        <WorkbenchCanvasResizePreview x={56} y={48} width={188} height={112} zIndex={1} />
       </div>
     </div>
   ),
