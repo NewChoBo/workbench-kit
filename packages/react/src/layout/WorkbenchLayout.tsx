@@ -1014,6 +1014,38 @@ export function WorkbenchTreeDragOverlay({
   );
 }
 
+export interface WorkbenchDragPreviewProps extends ComponentPropsWithRef<'div'> {
+  maxWidth?: number | string;
+  offset?: number | string;
+  x: number | string;
+  y: number | string;
+}
+
+export function WorkbenchDragPreview({
+  children,
+  className,
+  maxWidth = 160,
+  offset = 8,
+  style,
+  x,
+  y,
+  ...props
+}: WorkbenchDragPreviewProps) {
+  const previewStyle = {
+    '--ui-workbench-drag-preview-x': toLengthValue(x),
+    '--ui-workbench-drag-preview-y': toLengthValue(y),
+    '--ui-workbench-drag-preview-offset': toLengthValue(offset),
+    '--ui-workbench-drag-preview-max-width': toLengthValue(maxWidth),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div className={cx('ui-workbench-drag-preview', className)} style={previewStyle} {...props}>
+      <span className="ui-workbench-drag-preview__label">{children}</span>
+    </div>
+  );
+}
+
 export type WorkbenchDividerProps = ComponentPropsWithRef<'div'>;
 
 export function WorkbenchDivider({ className, ...props }: WorkbenchDividerProps) {

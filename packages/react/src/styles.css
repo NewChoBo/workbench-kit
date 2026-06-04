@@ -4617,6 +4617,32 @@
   opacity: 0.95;
 }
 
+.ui-workbench-drag-preview {
+  box-sizing: border-box;
+  position: fixed;
+  top: calc(var(--ui-workbench-drag-preview-y) + var(--ui-workbench-drag-preview-offset, 8px));
+  left: calc(var(--ui-workbench-drag-preview-x) + var(--ui-workbench-drag-preview-offset, 8px));
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  max-width: var(--ui-workbench-drag-preview-max-width, 160px);
+  height: 28px;
+  padding: 0 8px;
+  pointer-events: none;
+  color: var(--vscode-list-activeSelectionForeground, #fff);
+  background: var(--vscode-list-activeSelectionBackground, var(--color-accent));
+  border: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+  font: var(--font-size-sm) var(--vscode-font-family, var(--font-family, system-ui, sans-serif));
+}
+
+.ui-workbench-drag-preview__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ui-workbench-divider {
   height: 1px;
   margin: 6px 0;
