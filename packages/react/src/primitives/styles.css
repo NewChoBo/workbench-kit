@@ -772,6 +772,19 @@
   width: 100%;
 }
 
+.ui-input[type='range'] {
+  padding: 0;
+  background: transparent;
+  border-color: transparent;
+  accent-color: var(--vscode-focusBorder, var(--color-focus-border));
+}
+
+.ui-input[type='range']:focus {
+  border-color: transparent;
+  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: 2px;
+}
+
 .ui-workbench-field:focus,
 .ui-workbench-select:focus,
 .ui-input:focus,

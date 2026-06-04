@@ -1775,8 +1775,9 @@ export function WorkbenchPropertyRow({ className, ...props }: WorkbenchPropertyR
 export interface WorkbenchPropertyTextRowProps extends Omit<WorkbenchPropertyRowProps, 'children'> {
   controlWidth?: ControlWidth;
   disabled?: boolean | undefined;
-  onValueChange: (value: string) => void;
+  onValueChange?: (value: string) => void;
   placeholder?: string | undefined;
+  readOnly?: boolean | undefined;
   value: string;
 }
 
@@ -1785,6 +1786,7 @@ export function WorkbenchPropertyTextRow({
   disabled,
   onValueChange,
   placeholder,
+  readOnly,
   value,
   ...props
 }: WorkbenchPropertyTextRowProps) {
@@ -1794,6 +1796,7 @@ export function WorkbenchPropertyTextRow({
         controlWidth={controlWidth}
         disabled={disabled}
         placeholder={placeholder}
+        readOnly={readOnly}
         value={value}
         onValueChange={onValueChange}
       />
@@ -1834,6 +1837,50 @@ export function WorkbenchPropertyNumberRow({
         step={step}
         value={value}
         onValueChange={onValueChange}
+      />
+    </WorkbenchPropertyRow>
+  );
+}
+
+export interface WorkbenchPropertyRangeRowProps extends Omit<
+  WorkbenchPropertyRowProps,
+  'children'
+> {
+  controlWidth?: ControlWidth;
+  disabled?: boolean | undefined;
+  max?: number | undefined;
+  min?: number | undefined;
+  onValueChange: (value: number) => void;
+  step?: number | string | undefined;
+  value?: number | undefined;
+}
+
+export function WorkbenchPropertyRangeRow({
+  controlWidth = 'full',
+  disabled,
+  max,
+  min,
+  onValueChange,
+  step,
+  value,
+  ...props
+}: WorkbenchPropertyRangeRowProps) {
+  return (
+    <WorkbenchPropertyRow {...props}>
+      <TextInput
+        controlWidth={controlWidth}
+        disabled={disabled}
+        max={max}
+        min={min}
+        step={step}
+        type="range"
+        value={value}
+        onValueChange={(next) => {
+          const parsed = Number.parseFloat(next);
+          if (!Number.isNaN(parsed)) {
+            onValueChange(parsed);
+          }
+        }}
       />
     </WorkbenchPropertyRow>
   );

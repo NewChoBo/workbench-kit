@@ -6,7 +6,7 @@ export type ControlWidth = 'default' | 'wide' | 'full';
 export interface TextInputProps extends ComponentPropsWithRef<'input'> {
   controlWidth?: ControlWidth;
   monospace?: boolean;
-  onValueChange?: (value: string, event: ChangeEvent<HTMLInputElement>) => void;
+  onValueChange?: ((value: string, event: ChangeEvent<HTMLInputElement>) => void) | undefined;
 }
 
 export function TextInput({
