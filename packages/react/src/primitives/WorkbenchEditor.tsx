@@ -277,6 +277,7 @@ export function ResizablePanels({
         !isHorizontal && 'ui-resizable-panels--vertical',
         className,
       )}
+      data-sized-panel={sizedPanel}
       style={
         {
           '--ui-resizable-panels-size': `${panelSize}px`,
