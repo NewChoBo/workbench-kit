@@ -2,6 +2,28 @@ export { Modal } from './modal/Modal';
 export type { ModalProps } from './modal/Modal';
 export { commandMenuItemsToContextMenuItems } from './workbench/commands';
 export {
+  WorkbenchArtifactPreview,
+  WorkbenchArtifactShell,
+  formatWorkbenchArtifactContent,
+  getWorkbenchArtifactExtension,
+  getWorkbenchArtifactTitle,
+  getWorkbenchPreviewRenderer,
+  getWorkbenchPreviewRendererMatch,
+  selectWorkbenchPreviewRenderer,
+} from './workbench/ArtifactShell';
+export type {
+  WorkbenchArtifactDescriptor,
+  WorkbenchArtifactMode,
+  WorkbenchArtifactPreviewProps,
+  WorkbenchArtifactShellProps,
+  WorkbenchArtifactShellRenderCode,
+  WorkbenchArtifactShellRenderPreview,
+  WorkbenchPreviewRenderer,
+  WorkbenchPreviewRendererContext,
+  WorkbenchPreviewRendererMatch,
+  WorkbenchPreviewRendererMatchReason,
+} from './workbench/ArtifactShell';
+export {
   WorkbenchCommandList,
   WorkbenchCommandPalette,
   WorkbenchCommandSuggest,

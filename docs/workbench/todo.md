@@ -76,8 +76,8 @@ primitive rather than hard-code the downstream concept.
 | WB-04 | done    | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react` | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.    |
 | WB-05 | done    | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.    |
 | WB-06 | pending | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots. |
-| WB-07 | pending | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring an application-specific editor.                               |
-| WB-08 | pending | P2       | Editor    | Preview renderer registry             | WB-07                       | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, artifact kind, or fallback priority.                                   |
+| WB-07 | done    | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring an application-specific editor.                               |
+| WB-08 | done    | P2       | Editor    | Preview renderer registry             | WB-07                       | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, artifact kind, or fallback priority.                                   |
 | WB-09 | pending | P3       | Modal     | Confirmation flow                     | Existing dialog primitives  | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                                                   |
 | WB-10 | pending | P3       | Settings  | Schema form renderer                  | Existing field primitives   | `@workbench-kit/react` | Render simple settings forms from metadata without binding to an application settings store.                                  |
 
@@ -95,21 +95,20 @@ primitive rather than hard-code the downstream concept.
 
 ## Recommended Next Slice
 
-Continue with WB-07 and WB-08. They should add a generic code/preview/split
-shell plus a preview renderer registry so artifact preview behavior can be
-configured without requiring a specific editor or downstream artifact schema.
+Continue with WB-06. It should add a generic multi-provider explorer that can
+render separate provider roots while preserving root identity, selection,
+disabled states, and provider-level actions.
 
-| Step | Task                    | Expected Change                                                                             |
-| ---- | ----------------------- | ------------------------------------------------------------------------------------------- |
-| 1    | Inspect editor surfaces | Review existing workspace editor panel, editor host, selected file state, and preview gaps. |
-| 2    | Define shell model      | Add generic code, preview, and split modes with controlled selected artifact identity.      |
-| 3    | Build mode shell        | Add reusable layout and controls while leaving editor and preview rendering pluggable.      |
-| 4    | Define preview registry | Select renderers by extension, MIME type, artifact kind, or fallback priority.              |
-| 5    | Add unsupported state   | Render a clear generic fallback when no preview renderer matches.                           |
-| 6    | Add Storybook coverage  | Show code only, preview only, split, renderer priority, and unsupported preview states.     |
-| 7    | Add focused tests       | Cover registry matching, fallback behavior, and mode selection helpers.                     |
-| 8    | Export public API       | Export shell, registry helpers, and types from the appropriate React entrypoint.            |
-| 9    | Validate                | Run focused typecheck, Storybook smoke, and full validation when public exports change.     |
+| Step | Task                      | Expected Change                                                                                      |
+| ---- | ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 1    | Inspect explorer surfaces | Review existing workspace explorer tree/list patterns, selection behavior, and root action patterns. |
+| 2    | Define provider model     | Add provider root and entry descriptors with generic type, status, metadata, and action slots.       |
+| 3    | Build provider list shell | Render multiple provider roots with empty, disabled, selected, and active entry states.              |
+| 4    | Preserve root identity    | Ensure callbacks include provider id, entry id/path, and selection context.                          |
+| 5    | Add Storybook coverage    | Show files, generated artifacts, state/config roots, and an empty provider.                          |
+| 6    | Add focused tests         | Cover provider flattening, selection metadata, and disabled/empty rendering helpers.                 |
+| 7    | Export public API         | Export explorer primitives and types from the appropriate React entrypoint.                          |
+| 8    | Validate                  | Run focused typecheck, Storybook smoke, and full validation when public exports change.              |
 
 ## Suggested API Shape
 
@@ -164,6 +163,30 @@ interface WorkbenchTimelineEvent {
   timestamp?: React.ReactNode;
   metadata?: Record<string, unknown>;
   payload?: unknown;
+}
+
+interface WorkbenchArtifactDescriptor {
+  id: string;
+  path?: string;
+  name?: string;
+  title?: React.ReactNode;
+  content?: unknown;
+  extension?: string;
+  mimeType?: string;
+  artifactKind?: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface WorkbenchPreviewRenderer {
+  id: string;
+  label?: string;
+  extensions?: readonly string[];
+  mimeTypes?: readonly string[];
+  artifactKinds?: readonly string[];
+  fallback?: boolean;
+  priority?: number;
+  canRender?: (artifact: WorkbenchArtifactDescriptor) => boolean;
+  render: (artifact: WorkbenchArtifactDescriptor) => React.ReactNode;
 }
 ```
 
@@ -230,20 +253,20 @@ this repository:
 
 ```text
 Please work in the current Workbench Kit repository on the active feature
-branch. Implement the next slice from docs/workbench/todo.md: WB-07/WB-08
-Code/preview/split shell and preview renderer registry.
+branch. Implement the next slice from docs/workbench/todo.md: WB-06
+Multi-provider explorer.
 
 Keep the work generic and public-boundary safe:
 - Do not add application names, product workflow names, private paths, server
   addresses, credentials, or domain-specific artifact schemas.
-- Use existing workspace editor, status model, and @workbench-kit/react primitive
-  patterns.
-- Add Storybook coverage for code only, preview only, split, renderer priority,
-  and unsupported preview states.
-- Export the new editor shell, preview registry helpers, and types from the
+- Use existing workspace explorer, sidebar action list, status model, and
+  @workbench-kit/react primitive patterns.
+- Add Storybook coverage for multiple provider roots, root actions, empty
+  provider state, disabled entries, and selected entries.
+- Export the new multi-provider explorer primitives and types from the
   appropriate React entrypoint.
-- Keep editor implementation, preview renderer implementation, and artifact
-  payload creation application-owned; do not introduce runtime/API calls.
+- Keep provider data creation and provider-specific behavior application-owned;
+  do not introduce runtime/API calls.
 
 Before finishing, run:
 - pnpm --filter @workbench-kit/react typecheck
