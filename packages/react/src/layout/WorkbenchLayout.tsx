@@ -1,8 +1,11 @@
+import { forwardRef } from 'react';
 import type { ComponentPropsWithRef, CSSProperties, ReactNode } from 'react';
 import { Button } from '../primitives/Button';
 import type { ButtonProps } from '../primitives/Button';
 import { Field } from '../primitives/Field';
 import type { FieldProps } from '../primitives/Field';
+import { IconButton } from '../primitives/IconButton';
+import type { IconButtonProps } from '../primitives/IconButton';
 import { TextInput } from '../primitives/TextInput';
 import { cx } from '../utils/cx';
 
@@ -105,6 +108,228 @@ export type WorkbenchSectionTitleProps = ComponentPropsWithRef<'div'>;
 
 export function WorkbenchSectionTitle({ className, ...props }: WorkbenchSectionTitleProps) {
   return <div className={cx('ui-workbench-section-title', className)} {...props} />;
+}
+
+function toLengthValue(value: number | string) {
+  return typeof value === 'number' ? `${value}px` : value;
+}
+
+function treeIndentOffset(depth: number) {
+  return `${8 + depth * 14}px`;
+}
+
+export interface WorkbenchTreeProps extends ComponentPropsWithRef<'div'> {
+  indentSize?: number | string;
+  rowHeight?: number | string;
+}
+
+export function WorkbenchTree({
+  className,
+  indentSize,
+  role = 'tree',
+  rowHeight,
+  style,
+  ...props
+}: WorkbenchTreeProps) {
+  const treeStyle = {
+    ...(indentSize !== undefined
+      ? { '--ui-workbench-tree-indent-size': toLengthValue(indentSize) }
+      : null),
+    ...(rowHeight !== undefined
+      ? { '--ui-workbench-tree-row-height': toLengthValue(rowHeight) }
+      : null),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div className={cx('ui-workbench-tree', className)} role={role} style={treeStyle} {...props} />
+  );
+}
+
+export type WorkbenchTreeInteraction = 'default' | 'draggable' | 'dragging';
+
+export interface WorkbenchTreeItemProps extends ComponentPropsWithRef<'div'> {
+  actions?: ReactNode;
+  control?: ReactNode;
+  depth?: number;
+  icon?: ReactNode;
+  interaction?: WorkbenchTreeInteraction;
+  label: ReactNode;
+  meta?: ReactNode;
+  selected?: boolean;
+}
+
+export const WorkbenchTreeItem = forwardRef<HTMLDivElement, WorkbenchTreeItemProps>(
+  function WorkbenchTreeItem(
+    {
+      actions,
+      children,
+      className,
+      control,
+      depth = 0,
+      icon,
+      interaction = 'default',
+      label,
+      meta,
+      role = 'treeitem',
+      selected = false,
+      style,
+      tabIndex = 0,
+      ...props
+    },
+    ref,
+  ) {
+    const itemStyle = {
+      '--ui-workbench-tree-depth': depth,
+      '--ui-workbench-tree-indent-offset': treeIndentOffset(depth),
+      ...style,
+    } as CSSProperties;
+
+    return (
+      <div
+        ref={ref}
+        aria-selected={selected}
+        className={cx('ui-workbench-tree-item', className)}
+        data-interaction={interaction}
+        data-selected={selected ? 'true' : 'false'}
+        role={role}
+        style={itemStyle}
+        tabIndex={tabIndex}
+        {...props}
+      >
+        <span className="ui-workbench-tree-item__control">{control}</span>
+        <span className="ui-workbench-tree-item__icon" aria-hidden="true">
+          {icon}
+        </span>
+        <span className="ui-workbench-tree-item__label">{label}</span>
+        {meta ? <span className="ui-workbench-tree-item__meta">{meta}</span> : null}
+        {actions ? <span className="ui-workbench-tree-item__actions">{actions}</span> : null}
+        {children}
+      </div>
+    );
+  },
+);
+
+export interface WorkbenchTreeExpanderProps extends Omit<
+  ComponentPropsWithRef<'button'>,
+  'children'
+> {
+  expanded?: boolean;
+  label?: string;
+  visible?: boolean;
+}
+
+export function WorkbenchTreeExpander({
+  className,
+  disabled,
+  expanded = false,
+  label,
+  tabIndex,
+  type = 'button',
+  visible = true,
+  ...props
+}: WorkbenchTreeExpanderProps) {
+  return (
+    <button
+      aria-expanded={visible ? expanded : undefined}
+      aria-hidden={visible ? undefined : true}
+      aria-label={visible ? label : undefined}
+      className={cx('ui-workbench-tree-expander', className)}
+      data-visible={visible ? 'true' : 'false'}
+      disabled={!visible || disabled}
+      tabIndex={visible ? tabIndex : -1}
+      type={type}
+      {...props}
+    >
+      <i
+        aria-hidden="true"
+        className={cx('codicon', expanded ? 'codicon-chevron-down' : 'codicon-chevron-right')}
+      />
+    </button>
+  );
+}
+
+export interface WorkbenchTreeActionButtonProps extends IconButtonProps {
+  active?: boolean;
+  tone?: 'default' | 'muted' | 'warning';
+  visible?: boolean;
+}
+
+export function WorkbenchTreeActionButton({
+  active = false,
+  className,
+  compact = true,
+  tabIndex,
+  tone = 'default',
+  visible = false,
+  ...props
+}: WorkbenchTreeActionButtonProps) {
+  return (
+    <IconButton
+      className={cx('ui-workbench-tree-action', className)}
+      compact={compact}
+      data-active={active ? 'true' : 'false'}
+      data-tone={tone}
+      data-visible={visible ? 'true' : 'false'}
+      tabIndex={visible ? tabIndex : -1}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchTreeDropLineProps extends ComponentPropsWithRef<'div'> {
+  position: 'above' | 'below';
+}
+
+export function WorkbenchTreeDropLine({
+  className,
+  position,
+  ...props
+}: WorkbenchTreeDropLineProps) {
+  return (
+    <div
+      aria-hidden="true"
+      className={cx('ui-workbench-tree-drop-line', className)}
+      data-position={position}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchTreeDropZoneProps extends ComponentPropsWithRef<'div'> {
+  depth?: number;
+  empty?: boolean;
+  highlighted?: boolean;
+}
+
+export const WorkbenchTreeDropZone = forwardRef<HTMLDivElement, WorkbenchTreeDropZoneProps>(
+  function WorkbenchTreeDropZone(
+    { className, depth = 0, empty = false, highlighted = false, style, ...props },
+    ref,
+  ) {
+    const zoneStyle = {
+      '--ui-workbench-tree-depth': depth,
+      '--ui-workbench-tree-indent-offset': treeIndentOffset(depth),
+      ...style,
+    } as CSSProperties;
+
+    return (
+      <div
+        ref={ref}
+        className={cx('ui-workbench-tree-drop-zone', className)}
+        data-empty={empty ? 'true' : 'false'}
+        data-highlighted={highlighted ? 'true' : 'false'}
+        style={zoneStyle}
+        {...props}
+      />
+    );
+  },
+);
+
+export type WorkbenchTreeDragOverlayProps = ComponentPropsWithRef<'div'>;
+
+export function WorkbenchTreeDragOverlay({ className, ...props }: WorkbenchTreeDragOverlayProps) {
+  return <div className={cx('ui-workbench-tree-drag-overlay', className)} {...props} />;
 }
 
 export type WorkbenchDividerProps = ComponentPropsWithRef<'div'>;
