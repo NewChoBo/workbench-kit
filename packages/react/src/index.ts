@@ -28,6 +28,27 @@ export type {
   WorkbenchCommandStatus,
   WorkbenchCommandSuggestProps,
 } from './workbench/CommandPalette';
+export {
+  WorkbenchTimeline,
+  WorkbenchTimelineItem,
+  formatWorkbenchTimelineMetadataValue,
+  getWorkbenchTimelineEventIconClass,
+  getWorkbenchTimelineEventLabel,
+  getWorkbenchTimelineEventStatus,
+  getWorkbenchTimelineMetadataEntries,
+} from './workbench/Timeline';
+export type {
+  WorkbenchTimelineEvent,
+  WorkbenchTimelineEventKind,
+  WorkbenchTimelineItemProps,
+  WorkbenchTimelineMessageSource,
+  WorkbenchTimelineMetadataEntry,
+  WorkbenchTimelineProps,
+  WorkbenchTimelineRenderContext,
+  WorkbenchTimelineRenderMetadata,
+  WorkbenchTimelineRenderPayload,
+  WorkbenchTimelineVariant,
+} from './workbench/Timeline';
 export { ConfirmDialog } from './modal/ConfirmDialog';
 export type { ConfirmDialogProps } from './modal/ConfirmDialog';
 export { ContextMenu } from './overlay/ContextMenu';
