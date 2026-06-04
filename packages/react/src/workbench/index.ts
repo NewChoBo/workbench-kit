@@ -107,6 +107,27 @@ export type {
   StatusBarSectionModel,
   StatusBarSectionProps,
 } from './StatusBar';
+export {
+  WorkbenchTimeline,
+  WorkbenchTimelineItem,
+  formatWorkbenchTimelineMetadataValue,
+  getWorkbenchTimelineEventIconClass,
+  getWorkbenchTimelineEventLabel,
+  getWorkbenchTimelineEventStatus,
+  getWorkbenchTimelineMetadataEntries,
+} from './Timeline';
+export type {
+  WorkbenchTimelineEvent,
+  WorkbenchTimelineEventKind,
+  WorkbenchTimelineItemProps,
+  WorkbenchTimelineMessageSource,
+  WorkbenchTimelineMetadataEntry,
+  WorkbenchTimelineProps,
+  WorkbenchTimelineRenderContext,
+  WorkbenchTimelineRenderMetadata,
+  WorkbenchTimelineRenderPayload,
+  WorkbenchTimelineVariant,
+} from './Timeline';
 export { WorkbenchSettingsModal } from './settings';
 export type {
   WorkbenchSettingsCategory,

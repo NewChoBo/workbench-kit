@@ -73,7 +73,7 @@ primitive rather than hard-code the downstream concept.
 | WB-01 | done    | P1       | Sidebar   | Section primitive                     | Existing sidebar frame      | `@workbench-kit/react` | Collapsible section with label, count/badge slot, and secondary action slot.                                                  |
 | WB-02 | done    | P1       | Sidebar   | Action list primitive                 | WB-01                       | `@workbench-kit/react` | Render command/action rows with icon, status, shortcut, danger marker, and disabled reason.                                   |
 | WB-03 | done    | P1       | Command   | Command model + palette/suggest shell | WB-02                       | `@workbench-kit/react` | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states.         |
-| WB-04 | pending | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react` | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.    |
+| WB-04 | done    | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react` | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.    |
 | WB-05 | done    | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.    |
 | WB-06 | pending | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots. |
 | WB-07 | pending | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring an application-specific editor.                               |
@@ -95,20 +95,21 @@ primitive rather than hard-code the downstream concept.
 
 ## Recommended Next Slice
 
-Continue with WB-04. It should add a generic timeline renderer that can place
-messages and operation events in one ordered stream while keeping event payloads
-pluggable and application-owned.
+Continue with WB-07 and WB-08. They should add a generic code/preview/split
+shell plus a preview renderer registry so artifact preview behavior can be
+configured without requiring a specific editor or downstream artifact schema.
 
-| Step | Task                         | Expected Change                                                                                  |
-| ---- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
-| 1    | Inspect existing chat views  | Review chat message rendering, status usage, and current Storybook timeline examples.            |
-| 2    | Define timeline event model  | Add a small generic event shape for message, operation call/result, file write, progress, error. |
-| 3    | Build renderer primitives    | Add event list/item/card primitives with compact and expanded display variants.                  |
-| 4    | Support custom payload views | Provide render hooks or slots for metadata and application-specific payload presentation.        |
-| 5    | Add Storybook coverage       | Show ordered message and operation events, running, success, failure, and progress states.       |
-| 6    | Add focused tests            | Cover event filtering/label helpers and ordered timeline rendering behavior.                     |
-| 7    | Export public API            | Export timeline primitives and types from the appropriate React entrypoint.                      |
-| 8    | Validate                     | Run focused typecheck, Storybook smoke, and full validation when public exports change.          |
+| Step | Task                    | Expected Change                                                                             |
+| ---- | ----------------------- | ------------------------------------------------------------------------------------------- |
+| 1    | Inspect editor surfaces | Review existing workspace editor panel, editor host, selected file state, and preview gaps. |
+| 2    | Define shell model      | Add generic code, preview, and split modes with controlled selected artifact identity.      |
+| 3    | Build mode shell        | Add reusable layout and controls while leaving editor and preview rendering pluggable.      |
+| 4    | Define preview registry | Select renderers by extension, MIME type, artifact kind, or fallback priority.              |
+| 5    | Add unsupported state   | Render a clear generic fallback when no preview renderer matches.                           |
+| 6    | Add Storybook coverage  | Show code only, preview only, split, renderer priority, and unsupported preview states.     |
+| 7    | Add focused tests       | Cover registry matching, fallback behavior, and mode selection helpers.                     |
+| 8    | Export public API       | Export shell, registry helpers, and types from the appropriate React entrypoint.            |
+| 9    | Validate                | Run focused typecheck, Storybook smoke, and full validation when public exports change.     |
 
 ## Suggested API Shape
 
@@ -155,11 +156,14 @@ treat it as generic metadata and never call a runtime directly.
 interface WorkbenchTimelineEvent {
   id: string;
   kind: 'message' | 'operation-call' | 'operation-result' | 'file-write' | 'progress' | 'error';
-  title?: string;
-  description?: string;
+  source?: 'assistant' | 'system' | 'user' | (string & {});
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  content?: React.ReactNode;
   status?: WorkbenchStatus;
-  timestamp?: string;
+  timestamp?: React.ReactNode;
   metadata?: Record<string, unknown>;
+  payload?: unknown;
 }
 ```
 
@@ -226,20 +230,20 @@ this repository:
 
 ```text
 Please work in the current Workbench Kit repository on the active feature
-branch. Implement the next slice from docs/workbench/todo.md: WB-04 Operation
-event renderer.
+branch. Implement the next slice from docs/workbench/todo.md: WB-07/WB-08
+Code/preview/split shell and preview renderer registry.
 
 Keep the work generic and public-boundary safe:
 - Do not add application names, product workflow names, private paths, server
   addresses, credentials, or domain-specific artifact schemas.
-- Use existing chat, command descriptor, status model, and @workbench-kit/react
-  primitive patterns.
-- Add Storybook coverage for ordered message and operation events, including
-  operation call, operation result, file write, progress, and error items.
-- Export the new timeline primitives and types from the appropriate React
-  entrypoint.
-- Keep event ordering and payload creation application-owned; do not introduce
-  runtime/API calls.
+- Use existing workspace editor, status model, and @workbench-kit/react primitive
+  patterns.
+- Add Storybook coverage for code only, preview only, split, renderer priority,
+  and unsupported preview states.
+- Export the new editor shell, preview registry helpers, and types from the
+  appropriate React entrypoint.
+- Keep editor implementation, preview renderer implementation, and artifact
+  payload creation application-owned; do not introduce runtime/API calls.
 
 Before finishing, run:
 - pnpm --filter @workbench-kit/react typecheck
