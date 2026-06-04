@@ -168,6 +168,8 @@ export type {
   WorkbenchActionStatus,
   WorkbenchSidebarSectionProps,
 } from './layout/WorkbenchSidebarActions';
+export { AbsoluteBox } from './primitives/AbsoluteBox';
+export type { AbsoluteBoxProps, WorkbenchRect } from './primitives/AbsoluteBox';
 export { Badge } from './primitives/Badge';
 export type { BadgeProps } from './primitives/Badge';
 export { Button } from './primitives/Button';
@@ -218,5 +220,7 @@ export { Select } from './primitives/Select';
 export type { SelectProps } from './primitives/Select';
 export { TextInput } from './primitives/TextInput';
 export type { TextInputProps } from './primitives/TextInput';
+export { TextArea } from './primitives/TextArea';
+export type { TextAreaProps } from './primitives/TextArea';
 export { Toolbar } from './primitives/Toolbar';
 export type { ToolbarProps } from './primitives/Toolbar';

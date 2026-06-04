@@ -3863,6 +3863,7 @@
 
 .ui-input,
 .ui-select,
+.ui-textarea,
 .ui-workbench-field,
 .ui-workbench-select {
   box-sizing: border-box;
@@ -3882,13 +3883,22 @@
   padding: 0 8px;
 }
 
+.ui-textarea {
+  min-height: 80px;
+  padding: 8px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
 .ui-input[data-width='wide'],
-.ui-select[data-width='wide'] {
+.ui-select[data-width='wide'],
+.ui-textarea[data-width='wide'] {
   width: 420px;
 }
 
 .ui-input[data-width='full'],
-.ui-select[data-width='full'] {
+.ui-select[data-width='full'],
+.ui-textarea[data-width='full'] {
   width: 100%;
 }
 
@@ -3898,6 +3908,7 @@
 
 .ui-input:focus,
 .ui-select:focus,
+.ui-textarea:focus,
 .ui-workbench-field:focus,
 .ui-workbench-select:focus {
   border-color: var(--color-accent);

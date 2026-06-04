@@ -1,3 +1,5 @@
+export { AbsoluteBox } from './AbsoluteBox';
+export type { AbsoluteBoxProps, WorkbenchRect } from './AbsoluteBox';
 export { Badge } from './Badge';
 export type { BadgeProps } from './Badge';
 export { Button } from './Button';
@@ -18,6 +20,8 @@ export { StatusBar } from './StatusBar';
 export type { StatusBarProps, StatusBarSeverity } from './StatusBar';
 export { TextInput } from './TextInput';
 export type { TextInputProps } from './TextInput';
+export { TextArea } from './TextArea';
+export type { TextAreaProps } from './TextArea';
 export { Toolbar } from './Toolbar';
 export type { ToolbarProps } from './Toolbar';
 export { ActivityBar, Collapsible, SideBar, TabbedPanels, WorkbenchShell } from './WorkbenchChrome';
