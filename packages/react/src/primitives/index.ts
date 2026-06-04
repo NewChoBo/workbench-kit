@@ -12,8 +12,13 @@ export { Field } from './Field';
 export type { FieldProps } from './Field';
 export { IconButton } from './IconButton';
 export type { IconButtonProps } from './IconButton';
-export { List, ListEmptyState, ListItem } from './List';
-export type { ListEmptyStateProps, ListItemProps, ListProps } from './List';
+export { List, ListEmptyState, ListItem, ListItemActionButton } from './List';
+export type {
+  ListEmptyStateProps,
+  ListItemActionButtonProps,
+  ListItemProps,
+  ListProps,
+} from './List';
 export { NumberInput } from './NumberInput';
 export type { NumberInputProps } from './NumberInput';
 export { Select } from './Select';

@@ -416,8 +416,13 @@ export { Field } from './primitives/Field';
 export type { FieldProps } from './primitives/Field';
 export { IconButton } from './primitives/IconButton';
 export type { IconButtonProps } from './primitives/IconButton';
-export { List, ListEmptyState, ListItem } from './primitives/List';
-export type { ListEmptyStateProps, ListItemProps, ListProps } from './primitives/List';
+export { List, ListEmptyState, ListItem, ListItemActionButton } from './primitives/List';
+export type {
+  ListEmptyStateProps,
+  ListItemActionButtonProps,
+  ListItemProps,
+  ListProps,
+} from './primitives/List';
 export { NumberInput } from './primitives/NumberInput';
 export type { NumberInputProps } from './primitives/NumberInput';
 export { StatusBar, StatusBarLabel, StatusBarSection } from './primitives/StatusBar';
