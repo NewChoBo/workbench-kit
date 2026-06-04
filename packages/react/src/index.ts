@@ -168,6 +168,44 @@ export type {
   WorkbenchActionStatus,
   WorkbenchSidebarSectionProps,
 } from './layout/WorkbenchSidebarActions';
+export {
+  WorkbenchBanner,
+  WorkbenchBannerIcon,
+  WorkbenchBannerMessage,
+  WorkbenchCenter,
+  WorkbenchColorInput,
+  WorkbenchColorRow,
+  WorkbenchColumn,
+  WorkbenchDivider,
+  WorkbenchFill,
+  WorkbenchPane,
+  WorkbenchPanelScroll,
+  WorkbenchPanelSurface,
+  WorkbenchParseError,
+  WorkbenchPreviewCanvas,
+  WorkbenchPropertyRow,
+  WorkbenchRoot,
+  WorkbenchSectionTitle,
+} from './layout/WorkbenchLayout';
+export type {
+  WorkbenchBannerIconProps,
+  WorkbenchBannerMessageProps,
+  WorkbenchBannerProps,
+  WorkbenchCenterProps,
+  WorkbenchColorInputProps,
+  WorkbenchColorRowProps,
+  WorkbenchColumnProps,
+  WorkbenchDividerProps,
+  WorkbenchFillProps,
+  WorkbenchPaneProps,
+  WorkbenchPanelScrollProps,
+  WorkbenchPanelSurfaceProps,
+  WorkbenchParseErrorProps,
+  WorkbenchPreviewCanvasProps,
+  WorkbenchPropertyRowProps,
+  WorkbenchRootProps,
+  WorkbenchSectionTitleProps,
+} from './layout/WorkbenchLayout';
 export { AbsoluteBox } from './primitives/AbsoluteBox';
 export type { AbsoluteBoxProps, WorkbenchRect } from './primitives/AbsoluteBox';
 export { Badge } from './primitives/Badge';
