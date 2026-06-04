@@ -3974,6 +3974,40 @@
   transition: none;
 }
 
+.ui-workbench-canvas-viewport {
+  position: relative;
+  width: var(--ui-workbench-canvas-viewport-width, auto);
+  height: var(--ui-workbench-canvas-viewport-height, auto);
+  overflow: hidden;
+  background-color: var(--vscode-editor-background, var(--color-bg));
+  user-select: none;
+}
+
+.ui-workbench-canvas-viewport[data-grid='true'] {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--ui-workbench-canvas-grid-dot, rgba(255, 255, 255, 0.08)) 1px,
+    transparent 0
+  );
+  background-size: var(--ui-workbench-canvas-viewport-grid-size, 20px)
+    var(--ui-workbench-canvas-viewport-grid-size, 20px);
+}
+
+.ui-workbench-canvas-selection-marquee {
+  position: absolute;
+  left: var(--ui-workbench-canvas-selection-marquee-x, 0);
+  top: var(--ui-workbench-canvas-selection-marquee-y, 0);
+  width: var(--ui-workbench-canvas-selection-marquee-width, auto);
+  height: var(--ui-workbench-canvas-selection-marquee-height, auto);
+  background: color-mix(
+    in srgb,
+    var(--vscode-focusBorder, var(--color-focus-border)) 12%,
+    transparent
+  );
+  border: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  pointer-events: none;
+}
+
 .ui-workbench-canvas-frame-handle {
   box-sizing: border-box;
   position: absolute;
