@@ -75,7 +75,7 @@ primitive rather than hard-code the downstream concept.
 | WB-03 | done    | P1       | Command   | Command model + palette/suggest shell | WB-02                       | `@workbench-kit/react` | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states.         |
 | WB-04 | done    | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react` | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.    |
 | WB-05 | done    | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.    |
-| WB-06 | pending | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots. |
+| WB-06 | done    | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots. |
 | WB-07 | done    | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring an application-specific editor.                               |
 | WB-08 | done    | P2       | Editor    | Preview renderer registry             | WB-07                       | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, artifact kind, or fallback priority.                                   |
 | WB-09 | pending | P3       | Modal     | Confirmation flow                     | Existing dialog primitives  | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                                                   |
@@ -95,20 +95,20 @@ primitive rather than hard-code the downstream concept.
 
 ## Recommended Next Slice
 
-Continue with WB-06. It should add a generic multi-provider explorer that can
-render separate provider roots while preserving root identity, selection,
-disabled states, and provider-level actions.
+Continue with WB-09. It should add a reusable confirmation flow for default and
+danger actions, async pending state, cancel/close behavior, and accessible
+dialog naming without binding the package to a runtime or store.
 
-| Step | Task                      | Expected Change                                                                                      |
-| ---- | ------------------------- | ---------------------------------------------------------------------------------------------------- |
-| 1    | Inspect explorer surfaces | Review existing workspace explorer tree/list patterns, selection behavior, and root action patterns. |
-| 2    | Define provider model     | Add provider root and entry descriptors with generic type, status, metadata, and action slots.       |
-| 3    | Build provider list shell | Render multiple provider roots with empty, disabled, selected, and active entry states.              |
-| 4    | Preserve root identity    | Ensure callbacks include provider id, entry id/path, and selection context.                          |
-| 5    | Add Storybook coverage    | Show files, generated artifacts, state/config roots, and an empty provider.                          |
-| 6    | Add focused tests         | Cover provider flattening, selection metadata, and disabled/empty rendering helpers.                 |
-| 7    | Export public API         | Export explorer primitives and types from the appropriate React entrypoint.                          |
-| 8    | Validate                  | Run focused typecheck, Storybook smoke, and full validation when public exports change.              |
+| Step | Task                     | Expected Change                                                                                 |
+| ---- | ------------------------ | ----------------------------------------------------------------------------------------------- |
+| 1    | Inspect dialog surfaces  | Review existing modal and confirm dialog primitives, naming, focus, and pending state patterns. |
+| 2    | Define flow model        | Add generic confirmation action and result metadata without runtime-specific operation names.   |
+| 3    | Build confirmation shell | Support default and danger variants, async pending state, cancel, close, and disabled states.   |
+| 4    | Preserve callback data   | Ensure confirm/cancel callbacks include action id, side-effect metadata, and context.           |
+| 5    | Add Storybook coverage   | Show default confirm, danger confirm, async pending, cancel/close, and disabled confirm.        |
+| 6    | Add focused tests        | Cover helper state, disabled/pending rendering, and accessible labels.                          |
+| 7    | Export public API        | Export confirmation flow primitives and types from the appropriate React entrypoint.            |
+| 8    | Validate                 | Run focused typecheck, Storybook smoke, and full validation when public exports change.         |
 
 ## Suggested API Shape
 
@@ -188,6 +188,40 @@ interface WorkbenchPreviewRenderer {
   canRender?: (artifact: WorkbenchArtifactDescriptor) => boolean;
   render: (artifact: WorkbenchArtifactDescriptor) => React.ReactNode;
 }
+
+interface WorkbenchExplorerEntryRef {
+  providerId: string;
+  entryId: string;
+}
+
+interface WorkbenchExplorerEntryDescriptor {
+  id: string;
+  label: React.ReactNode;
+  kind?: string;
+  path?: string;
+  icon?: string;
+  description?: React.ReactNode;
+  status?: WorkbenchStatus;
+  disabled?: boolean;
+  disabledReason?: React.ReactNode;
+  selectable?: boolean;
+  children?: readonly WorkbenchExplorerEntryDescriptor[];
+  metadata?: Record<string, unknown>;
+}
+
+interface WorkbenchExplorerProviderDescriptor {
+  id: string;
+  label: React.ReactNode;
+  kind?: string;
+  icon?: string;
+  description?: React.ReactNode;
+  status?: WorkbenchStatus;
+  disabled?: boolean;
+  disabledReason?: React.ReactNode;
+  entries?: readonly WorkbenchExplorerEntryDescriptor[];
+  actions?: readonly WorkbenchExplorerActionDescriptor[];
+  metadata?: Record<string, unknown>;
+}
 ```
 
 Prefer render props or slots for application-specific visuals. Avoid accepting
@@ -253,20 +287,20 @@ this repository:
 
 ```text
 Please work in the current Workbench Kit repository on the active feature
-branch. Implement the next slice from docs/workbench/todo.md: WB-06
-Multi-provider explorer.
+branch. Implement the next slice from docs/workbench/todo.md: WB-09
+Confirmation flow.
 
 Keep the work generic and public-boundary safe:
 - Do not add application names, product workflow names, private paths, server
   addresses, credentials, or domain-specific artifact schemas.
-- Use existing workspace explorer, sidebar action list, status model, and
+- Use existing modal, confirm dialog, command metadata, status model, and
   @workbench-kit/react primitive patterns.
-- Add Storybook coverage for multiple provider roots, root actions, empty
-  provider state, disabled entries, and selected entries.
-- Export the new multi-provider explorer primitives and types from the
+- Add Storybook coverage for default confirm, danger confirm, async pending,
+  cancel/close behavior, and disabled confirm.
+- Export the new confirmation flow primitives and types from the
   appropriate React entrypoint.
-- Keep provider data creation and provider-specific behavior application-owned;
-  do not introduce runtime/API calls.
+- Keep side-effect execution application-owned; do not introduce runtime/API
+  calls.
 
 Before finishing, run:
 - pnpm --filter @workbench-kit/react typecheck
