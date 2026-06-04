@@ -172,9 +172,33 @@ export type {
 } from './Timeline';
 export { WorkbenchSettingsModal } from './settings';
 export type {
+  WorkbenchSchemaFormCancelContext,
+  WorkbenchSchemaFormCheckboxField,
+  WorkbenchSchemaFormErrors,
+  WorkbenchSchemaFormField,
+  WorkbenchSchemaFormFieldBase,
+  WorkbenchSchemaFormFieldChangeContext,
+  WorkbenchSchemaFormFieldType,
+  WorkbenchSchemaFormFieldValue,
+  WorkbenchSchemaFormNumberField,
+  WorkbenchSchemaFormOption,
+  WorkbenchSchemaFormProps,
+  WorkbenchSchemaFormSelectField,
+  WorkbenchSchemaFormSubmitContext,
+  WorkbenchSchemaFormTextField,
+  WorkbenchSchemaFormValues,
   WorkbenchSettingsCategory,
   WorkbenchSettingsModalProps,
   WorkbenchSettingsScope,
+} from './settings';
+export {
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
 } from './settings';
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';

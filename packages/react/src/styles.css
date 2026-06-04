@@ -476,6 +476,43 @@
   gap: 6px;
 }
 
+.ui-workbench-schema-form {
+  max-width: 720px;
+}
+
+.ui-workbench-schema-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ui-workbench-schema-form__field .ui-field {
+  margin-bottom: 14px;
+}
+
+.ui-workbench-schema-form__field[data-field-type='checkbox'] .ui-field {
+  margin-bottom: 10px;
+}
+
+.ui-workbench-schema-form__error {
+  margin: -8px 0 14px;
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+
+.ui-workbench-schema-form__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.ui-workbench-schema-form[data-readonly='true'] .ui-workbench-schema-form__actions {
+  opacity: 0.82;
+}
+
 @media (max-width: 760px) {
   .workbench-settings-modal {
     --ui-modal-max-width: calc(100vw - 24px);

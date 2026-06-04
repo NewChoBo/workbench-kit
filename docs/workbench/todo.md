@@ -68,18 +68,18 @@ primitive rather than hard-code the downstream concept.
 
 ## Independent Work Queue
 
-| ID    | Status  | Priority | Area      | Item                                  | Depends On                  | Package Target         | Notes                                                                                                                         |
-| ----- | ------- | -------- | --------- | ------------------------------------- | --------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| WB-01 | done    | P1       | Sidebar   | Section primitive                     | Existing sidebar frame      | `@workbench-kit/react` | Collapsible section with label, count/badge slot, and secondary action slot.                                                  |
-| WB-02 | done    | P1       | Sidebar   | Action list primitive                 | WB-01                       | `@workbench-kit/react` | Render command/action rows with icon, status, shortcut, danger marker, and disabled reason.                                   |
-| WB-03 | done    | P1       | Command   | Command model + palette/suggest shell | WB-02                       | `@workbench-kit/react` | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states.         |
-| WB-04 | done    | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react` | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.    |
-| WB-05 | done    | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.    |
-| WB-06 | done    | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots. |
-| WB-07 | done    | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring an application-specific editor.                               |
-| WB-08 | done    | P2       | Editor    | Preview renderer registry             | WB-07                       | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, artifact kind, or fallback priority.                                   |
-| WB-09 | done    | P3       | Modal     | Confirmation flow                     | Existing dialog primitives  | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                                                   |
-| WB-10 | pending | P3       | Settings  | Schema form renderer                  | Existing field primitives   | `@workbench-kit/react` | Render simple settings forms from metadata without binding to an application settings store.                                  |
+| ID    | Status | Priority | Area      | Item                                  | Depends On                  | Package Target         | Notes                                                                                                                         |
+| ----- | ------ | -------- | --------- | ------------------------------------- | --------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| WB-01 | done   | P1       | Sidebar   | Section primitive                     | Existing sidebar frame      | `@workbench-kit/react` | Collapsible section with label, count/badge slot, and secondary action slot.                                                  |
+| WB-02 | done   | P1       | Sidebar   | Action list primitive                 | WB-01                       | `@workbench-kit/react` | Render command/action rows with icon, status, shortcut, danger marker, and disabled reason.                                   |
+| WB-03 | done   | P1       | Command   | Command model + palette/suggest shell | WB-02                       | `@workbench-kit/react` | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states.         |
+| WB-04 | done   | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react` | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.    |
+| WB-05 | done   | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.    |
+| WB-06 | done   | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots. |
+| WB-07 | done   | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring an application-specific editor.                               |
+| WB-08 | done   | P2       | Editor    | Preview renderer registry             | WB-07                       | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, artifact kind, or fallback priority.                                   |
+| WB-09 | done   | P3       | Modal     | Confirmation flow                     | Existing dialog primitives  | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                                                   |
+| WB-10 | done   | P3       | Settings  | Schema form renderer                  | Existing field primitives   | `@workbench-kit/react` | Render simple settings forms from metadata without binding to an application settings store.                                  |
 
 ## Suggested Implementation Order
 
@@ -95,21 +95,15 @@ primitive rather than hard-code the downstream concept.
 
 ## Recommended Next Slice
 
-Continue with WB-10. It should add a simple schema form renderer for settings
-metadata with text, select, checkbox, and number fields, validation messages,
-disabled/read-only states, submit/cancel callbacks, and no binding to an
-application settings store.
+All listed Workbench Kit slices are complete. Future work should start from a
+new TODO item or a follow-up integration plan, while preserving the generic
+public API boundary documented here.
 
-| Step | Task                   | Expected Change                                                                                  |
-| ---- | ---------------------- | ------------------------------------------------------------------------------------------------ |
-| 1    | Inspect field inputs   | Review existing Field, TextInput, Select, Checkbox, Button, and settings modal patterns.         |
-| 2    | Define schema model    | Add generic field descriptors for text, select, checkbox, and number fields with metadata.       |
-| 3    | Build form renderer    | Render simple forms with controlled values, validation messages, disabled, and read-only states. |
-| 4    | Preserve callbacks     | Ensure submit/cancel/change callbacks include field ids, values, and action context.             |
-| 5    | Add Storybook coverage | Show editable settings, read-only form, validation messages, disabled submit, and mixed fields.  |
-| 6    | Add focused tests      | Cover value normalization, field rendering helpers, validation state, and submit button state.   |
-| 7    | Export public API      | Export schema form primitives and types from the appropriate React entrypoint.                   |
-| 8    | Validate               | Run focused typecheck, Storybook smoke, full validation, and final todo completion review.       |
+| Step | Task               | Expected Change                                                                                 |
+| ---- | ------------------ | ----------------------------------------------------------------------------------------------- |
+| 1    | Final validation   | Run full repository validation and required Storybook play tests after the last implementation. |
+| 2    | Final status check | Confirm all queue items are marked done and no domain-specific terms were introduced.           |
+| 3    | Consumer follow-up | Apply primitives in downstream applications outside this repository using application adapters. |
 
 ## Suggested API Shape
 
@@ -246,6 +240,42 @@ interface WorkbenchConfirmationAction {
   disabledReason?: React.ReactNode;
   metadata?: Record<string, unknown>;
 }
+
+type WorkbenchSchemaFormFieldType = 'text' | 'select' | 'checkbox' | 'number';
+type WorkbenchSchemaFormFieldValue = string | number | boolean;
+type WorkbenchSchemaFormValues = Record<string, WorkbenchSchemaFormFieldValue>;
+
+interface WorkbenchSchemaFormOption {
+  label: React.ReactNode;
+  value: string;
+  disabled?: boolean;
+}
+
+interface WorkbenchSchemaFormFieldBase {
+  id: string;
+  label: React.ReactNode;
+  description?: React.ReactNode;
+  defaultValue?: WorkbenchSchemaFormFieldValue;
+  required?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
+  validationMessage?: React.ReactNode;
+  metadata?: Record<string, unknown>;
+}
+
+type WorkbenchSchemaFormField =
+  | (WorkbenchSchemaFormFieldBase & { type: 'text'; placeholder?: string })
+  | (WorkbenchSchemaFormFieldBase & {
+      type: 'select';
+      options: readonly WorkbenchSchemaFormOption[];
+    })
+  | (WorkbenchSchemaFormFieldBase & { type: 'checkbox' })
+  | (WorkbenchSchemaFormFieldBase & {
+      type: 'number';
+      min?: number;
+      max?: number;
+      step?: number;
+    });
 ```
 
 Prefer render props or slots for application-specific visuals. Avoid accepting
@@ -303,6 +333,7 @@ application remains outside this repository.
 | Artifact preview   | An application can switch between code and preview for JSON, Markdown, SQL, and custom artifacts.  |
 | Explorer providers | An application can show files, virtual workspace entries, and generated artifacts in one explorer. |
 | Confirmation       | An application can gate external side-effect actions behind a reusable confirmation UI.            |
+| Settings forms     | An application can render metadata-driven settings forms without binding to a settings store.      |
 
 ## Request Prompt For Codex
 
@@ -311,26 +342,23 @@ this repository:
 
 ```text
 Please work in the current Workbench Kit repository on the active feature
-branch. Implement the next slice from docs/workbench/todo.md: WB-10
-Schema form renderer.
+branch. All items currently listed in docs/workbench/todo.md are complete.
+Start by adding a new generic TODO item or by validating an explicitly requested
+follow-up.
 
 Keep the work generic and public-boundary safe:
 - Do not add application names, product workflow names, private paths, server
   addresses, credentials, or domain-specific artifact schemas.
-- Use existing Field, TextInput, Select, Checkbox, Button, settings modal, and
-  @workbench-kit/react primitive patterns.
-- Add Storybook coverage for editable settings, read-only form, validation
-  messages, disabled submit, and mixed text/select/checkbox/number fields.
-- Export the new schema form renderer primitives and types from the
-  appropriate React entrypoint.
-- Keep settings persistence application-owned; do not introduce runtime/API
-  calls or bind to a specific settings store.
+- Use existing @workbench-kit/react primitive patterns.
+- Keep application behavior, runtime calls, persistence, and product-specific
+  state outside this package.
 
 Before finishing, run:
 - pnpm --filter @workbench-kit/react typecheck
 - pnpm format:check
 
-If public exports or shared types change broadly, run pnpm validate.
+If public exports or shared types change broadly, run pnpm validate and
+pnpm test:storybook-play:required.
 Commit with an English Conventional Commit message and include validation in
 the commit body.
 ```
