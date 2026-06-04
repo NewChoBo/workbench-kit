@@ -1,5 +1,10 @@
-import { forwardRef } from 'react';
-import type { ComponentPropsWithRef, CSSProperties, ReactNode } from 'react';
+import { forwardRef, useRef } from 'react';
+import type {
+  ComponentPropsWithRef,
+  CSSProperties,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from 'react';
 import { Button } from '../primitives/Button';
 import type { ButtonProps } from '../primitives/Button';
 import { Field } from '../primitives/Field';
@@ -346,6 +351,119 @@ export function WorkbenchCanvasItemFrame({
       style={frameStyle}
       {...props}
     />
+  );
+}
+
+interface WorkbenchCanvasFrameHandleDrag {
+  pointerId: number;
+  startX: number;
+  startY: number;
+}
+
+export interface WorkbenchCanvasFrameHandleProps extends Omit<
+  ComponentPropsWithRef<'div'>,
+  | 'children'
+  | 'onDragEnd'
+  | 'onDragStart'
+  | 'onPointerCancel'
+  | 'onPointerDown'
+  | 'onPointerMove'
+  | 'onPointerUp'
+> {
+  children?: ReactNode;
+  label?: ReactNode;
+  onDragCancel?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onDragEnd?: (dx: number, dy: number, event: ReactPointerEvent<HTMLDivElement>) => void;
+  onDragMove?: (dx: number, dy: number, event: ReactPointerEvent<HTMLDivElement>) => void;
+  onDragStart?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerCancel?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerMove?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerUp?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  stopPropagation?: boolean;
+}
+
+export function WorkbenchCanvasFrameHandle({
+  children,
+  className,
+  label,
+  onDragCancel,
+  onDragEnd,
+  onDragMove,
+  onDragStart,
+  onPointerCancel,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  stopPropagation = true,
+  ...props
+}: WorkbenchCanvasFrameHandleProps) {
+  const handleRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<WorkbenchCanvasFrameHandleDrag | null>(null);
+  const content = children ?? label;
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    onPointerDown?.(event);
+    if (event.defaultPrevented || event.button !== 0) return;
+
+    const element = handleRef.current;
+    if (!element) return;
+
+    if (stopPropagation) event.stopPropagation();
+    element.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+    };
+    onDragStart?.(event);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    onPointerMove?.(event);
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    onDragMove?.(event.clientX - drag.startX, event.clientY - drag.startY, event);
+  };
+
+  const handlePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    onPointerUp?.(event);
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    handleRef.current?.releasePointerCapture(event.pointerId);
+    dragRef.current = null;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (dx !== 0 || dy !== 0) {
+      onDragEnd?.(dx, dy, event);
+    } else {
+      onDragCancel?.(event);
+    }
+  };
+
+  const handlePointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
+    onPointerCancel?.(event);
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    handleRef.current?.releasePointerCapture(event.pointerId);
+    dragRef.current = null;
+    onDragCancel?.(event);
+  };
+
+  return (
+    <div
+      ref={handleRef}
+      className={cx('ui-workbench-canvas-frame-handle', className)}
+      onPointerCancel={handlePointerCancel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      {...props}
+    >
+      <span className="ui-workbench-canvas-frame-handle__label">{content}</span>
+    </div>
   );
 }
 
