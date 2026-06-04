@@ -23,5 +23,30 @@ export function PanelHeader({ actions, children, className, ...props }: PanelHea
 export type PanelBodyProps = ComponentPropsWithRef<'div'>;
 
 export function PanelBody({ className, ...props }: PanelBodyProps) {
-  return <div className={cx('panel-body', className)} {...props} />;
+  return <div className={cx('panel-body', 'ui-panel-body', className)} {...props} />;
+}
+
+export type PanelFooterProps = ComponentPropsWithRef<'div'>;
+
+export function PanelFooter({ className, ...props }: PanelFooterProps) {
+  return <div className={cx('ui-panel-footer', className)} {...props} />;
+}
+
+export type FilterBarProps = ComponentPropsWithRef<'div'>;
+
+export function FilterBar({ className, ...props }: FilterBarProps) {
+  return <div className={cx('ui-filter-bar', className)} {...props} />;
+}
+
+export interface HelpTextProps extends ComponentPropsWithRef<'div'> {
+  tone?: 'error' | 'normal';
+}
+
+export function HelpText({ className, tone = 'normal', ...props }: HelpTextProps) {
+  return (
+    <div
+      className={cx('ui-help-text', tone === 'error' && 'ui-help-text--error', className)}
+      {...props}
+    />
+  );
 }
