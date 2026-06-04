@@ -25,6 +25,7 @@ import {
   WorkbenchCanvasGuideBlock,
   WorkbenchCanvasGuideLayer,
   WorkbenchCanvasGuideLine,
+  WorkbenchCanvasItemFrame,
   WorkbenchCanvasPaneSurface,
   WorkbenchCanvasPlaceholder,
   WorkbenchCanvasResizeFrame,
@@ -257,6 +258,26 @@ export const CanvasDragChrome: Story = {
           <WorkbenchCanvasDragPreviewFrame x={132} y={56} width={88} height={56} rotation={4}>
             <div style={{ width: '100%', height: '100%', background: 'var(--color-surface)' }} />
           </WorkbenchCanvasDragPreviewFrame>
+          <WorkbenchCanvasItemFrame
+            x={196}
+            y={92}
+            width={88}
+            height={52}
+            cursor="pointer"
+            interactive
+            opacity={0.92}
+            overflow="hidden"
+            rotation={-3}
+            selected
+          >
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                background: 'var(--color-surface-hover)',
+              }}
+            />
+          </WorkbenchCanvasItemFrame>
           <WorkbenchCanvasGuideLayer>
             <WorkbenchCanvasGuideLine
               axis="x"

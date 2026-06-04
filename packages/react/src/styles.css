@@ -3956,25 +3956,31 @@
   position: absolute;
   left: var(--ui-workbench-canvas-item-x, 0);
   top: var(--ui-workbench-canvas-item-y, 0);
-  z-index: 0;
+  z-index: var(--ui-workbench-canvas-item-z-index, 0);
   width: var(--ui-workbench-canvas-item-width, auto);
   height: var(--ui-workbench-canvas-item-height, auto);
+  overflow: var(--ui-workbench-canvas-item-overflow, visible);
+  opacity: var(--ui-workbench-canvas-item-opacity, 1);
+  transform: var(--ui-workbench-canvas-item-transform, none);
+  transform-origin: center center;
+  touch-action: var(--ui-workbench-canvas-item-touch-action, auto);
   outline: none;
   transition: all 0.15s ease;
+  cursor: var(--ui-workbench-canvas-item-cursor, auto);
 }
 
 .ui-workbench-canvas-item-frame[data-interactive='true'] {
-  cursor: grab;
+  cursor: var(--ui-workbench-canvas-item-cursor, grab);
 }
 
 .ui-workbench-canvas-item-frame[data-selected='true'] {
-  z-index: 100;
+  z-index: var(--ui-workbench-canvas-item-z-index, 100);
   outline: 2px solid var(--vscode-focusBorder, var(--color-focus-border));
   outline-offset: -2px;
 }
 
 .ui-workbench-canvas-item-frame[data-hovered='true'][data-selected='false'] {
-  z-index: 90;
+  z-index: var(--ui-workbench-canvas-item-z-index, 90);
   outline: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
   outline-offset: -1px;
 }
