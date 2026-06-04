@@ -4,15 +4,15 @@ import {
   createCommandRegistry,
   executeCommand,
   resolveCommandMenuItems,
-} from '@newchobo-ui/core';
-import { isSaveSuccess, type SaveResult } from '@newchobo-ui/contracts';
+} from '@workbench-kit/core';
+import { isSaveSuccess, type SaveResult } from '@workbench-kit/contracts';
 import {
   discardWorkspaceFileDraft,
   resolveWorkspaceFileDraft,
   saveWorkspaceFileDraft,
   updateWorkspaceFileDraft,
   type WorkspaceFileDraftMap,
-} from '@newchobo-ui/workspace';
+} from '@workbench-kit/workspace';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { EmptyState } from '../../primitives/EmptyState';

@@ -42,12 +42,26 @@ describe('createMessageBridge', () => {
     const bridge = createMessageBridge({ transport });
 
     bridge.sendCommandResult('cmd.open', true, 'request-1');
-    bridge.sendChatEvent({ type: 'message', message: { id: 'm1', source: 'assistant', content: 'hi' } }, 'request-2');
-    bridge.sendPatchResult({ type: 'patch:applied', patch: { path: 'file.ts', type: 'write-file', content: 'ok' } });
-    bridge.sendSaveResult({ kind: 'save:success', outcome: 'created', file: { path: 'file.ts', content: 'ok' } });
+    bridge.sendChatEvent(
+      { type: 'message', message: { id: 'm1', source: 'assistant', content: 'hi' } },
+      'request-2',
+    );
+    bridge.sendPatchResult({
+      type: 'patch:applied',
+      patch: { path: 'file.ts', type: 'write-file', content: 'ok' },
+    });
+    bridge.sendSaveResult({
+      kind: 'save:success',
+      outcome: 'created',
+      file: { path: 'file.ts', content: 'ok' },
+    });
 
     expect(posted).toMatchObject([
-      { type: 'workbench/command-result', payload: { commandId: 'cmd.open', executed: true }, requestId: 'request-1' },
+      {
+        type: 'workbench/command-result',
+        payload: { commandId: 'cmd.open', executed: true },
+        requestId: 'request-1',
+      },
       { type: 'workbench/chat/event', requestId: 'request-2' },
       { type: 'workbench/patch/result' },
       { type: 'workbench/save/result' },
@@ -64,13 +78,14 @@ describe('createMessageBridge', () => {
     const received: HostMessageEnvelope[] = [];
 
     const unsubscribe = bridge.subscribe((message) => received.push(message));
-    transport.postMessage({ type: 'workbench/save/result', payload: { kind: 'save:failure', code: 'unknown', path: 'x' } });
+    transport.postMessage({
+      type: 'workbench/save/result',
+      payload: { kind: 'save:failure', code: 'unknown', path: 'x' },
+    });
     emit({ type: 'workbench/command-result', payload: { commandId: 'x', executed: false } });
     emit({ type: 'workbench/command', payload: { commandId: 'x' } });
 
-    expect(received.map((message) => message.type)).toEqual([
-      'workbench/command',
-    ]);
+    expect(received.map((message) => message.type)).toEqual(['workbench/command']);
 
     unsubscribe();
     emit({ type: 'workbench/command', payload: { commandId: 'x' } });
@@ -85,7 +100,10 @@ describe('createWindowMessageTransport', () => {
     const unsubscribe = transport.subscribe(() => {
       throw new Error('should not be called');
     });
-    transport.postMessage({ type: 'workbench/command-result', payload: { commandId: 'x', executed: true } });
+    transport.postMessage({
+      type: 'workbench/command-result',
+      payload: { commandId: 'x', executed: true },
+    });
 
     expect(() => unsubscribe()).not.toThrow();
   });

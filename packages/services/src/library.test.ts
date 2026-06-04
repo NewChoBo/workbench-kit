@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { LibraryItemDescriptor, LibraryProvider, LibraryQuery } from '@newchobo-ui/contracts';
+import type {
+  LibraryItemDescriptor,
+  LibraryProvider,
+  LibraryQuery,
+} from '@workbench-kit/contracts';
 import { LibraryCatalogService } from './library';
 
 const goodProvider: LibraryProvider = {

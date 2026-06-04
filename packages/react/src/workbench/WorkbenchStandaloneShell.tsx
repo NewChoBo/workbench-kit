@@ -68,12 +68,8 @@ export interface WorkbenchStandaloneShellProps<
   renderPrimarySidebar: (
     context: WorkbenchStandaloneShellContext<TActivityId, TTheme>,
   ) => ReactNode;
-  renderOverlays?: (
-    context: WorkbenchStandaloneShellContext<TActivityId, TTheme>,
-  ) => ReactNode;
-  renderSecondaryArea: (
-    context: WorkbenchStandaloneShellContext<TActivityId, TTheme>,
-  ) => ReactNode;
+  renderOverlays?: (context: WorkbenchStandaloneShellContext<TActivityId, TTheme>) => ReactNode;
+  renderSecondaryArea: (context: WorkbenchStandaloneShellContext<TActivityId, TTheme>) => ReactNode;
   rootClassName?: string;
   rootStyle?: CSSProperties;
   settingsItemIcon?: ReactNode;
@@ -92,7 +88,8 @@ function toWorkbenchActivityItems<TActivityId extends string>(
   return activities.map((activity) => ({
     id: activity.id,
     label: activity.label,
-    icon: activity.iconNode ?? (activity.icon ? <i className={`codicon ${activity.icon}`} /> : null),
+    icon:
+      activity.iconNode ?? (activity.icon ? <i className={`codicon ${activity.icon}`} /> : null),
   }));
 }
 
@@ -255,7 +252,10 @@ export function WorkbenchStandaloneShell<
         onItemActivate: (item) => {
           if (item.id === settingsItemId) {
             shell.openSettings();
-            emitEvent({ type: 'status-message', message: `Settings ${isSettingsOpen ? 'opened' : 'closed'}` });
+            emitEvent({
+              type: 'status-message',
+              message: `Settings ${isSettingsOpen ? 'opened' : 'closed'}`,
+            });
             return;
           }
 

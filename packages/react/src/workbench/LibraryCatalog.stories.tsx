@@ -10,12 +10,12 @@ import {
   type LibraryItemKind,
   type LibraryQuery,
   type LibrarySortMode,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 import {
   createStaticLibraryManifestProvider,
   createLibraryManifestUrlProvider,
-} from '@newchobo-ui/adapters';
-import { LibraryCatalogService } from '@newchobo-ui/services';
+} from '@workbench-kit/adapters';
+import { LibraryCatalogService } from '@workbench-kit/services';
 import { Badge } from '../primitives/Badge';
 import { Button } from '../primitives/Button';
 import { EmptyState } from '../primitives/EmptyState';

@@ -1,9 +1,9 @@
-import type { LibraryManifest, LibraryProvider } from '@newchobo-ui/contracts';
+import type { LibraryManifest, LibraryProvider } from '@workbench-kit/contracts';
 import {
   normalizeLibraryItemProviderSource,
   parseLibraryManifest,
   parseLibraryManifestText,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 
 type ManifestTextLoader = () => Promise<string> | string;
 

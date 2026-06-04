@@ -104,90 +104,91 @@ documentation, not private app behavior.
 
 ## Current Cycle Priorities (Standalone First)
 
-- 목표: `@newchobo-ui/react` + `@newchobo-ui/services` + `@newchobo-ui/vscode-host`를 사용한 standalone 런치 안정성 고정.
+- 목표: `@workbench-kit/react` + `@workbench-kit/services` + `@workbench-kit/vscode-host`를 사용한 standalone 런치 안정성 고정.
 - 핵심 결론: 현재 UI 동작은 story 조립(`IntegratedWorkbenchShell`)로 구현되어 있으며,
   shell 레이아웃 진입점(`WorkbenchShell`)은 이미 추출되어 있다.
 - 이번 사이클 운영 규칙(Cycle Guardrail):
-  - `@newchobo-ui/vscode-extension` 소스/설정 수정은 하지 않는다.
+  - `@workbench-kit/vscode-extension` 소스/설정 수정은 하지 않는다.
   - Standalone 런치 정합성이 확보될 때까지 extension 래퍼는 `Track C`로 이월한다.
 - 이번 사이클 액션:
-   1. 쉘 어셈블리(`WorkbenchShell`)는 추출 완료 상태이므로, 앱 진입점 계약(상태/서비스/커맨드 바인딩)을 정렬한다.
-   2. host runtime/브릿지 에러 격리와 구독 정리 동작을 스토리/통합 시나리오로 회귀 검증.
-   3. `pnpm test:storybook-play:required` + `vscode-host`/`services`/`react` typecheck 통합 게이트 고정.
+  1.  쉘 어셈블리(`WorkbenchShell`)는 추출 완료 상태이므로, 앱 진입점 계약(상태/서비스/커맨드 바인딩)을 정렬한다.
+  2.  host runtime/브릿지 에러 격리와 구독 정리 동작을 스토리/통합 시나리오로 회귀 검증.
+  3.  `pnpm test:storybook-play:required` + `vscode-host`/`services`/`react` typecheck 통합 게이트 고정.
+
 4. `vscode-extension` bootstrap은 별도 마일스톤(`Track A`)으로 분리하고 문서와 브랜치 플래닝 반영.
 5. `vscode-extension` 패키지는 소스 수정 대상에서 제외하고, 현 단계에서는 스탠드얼론 조합 경로만 운영한다.
 
 ### Current Cycle Deep-Dive Conclusion
 
-- `@newchobo-ui/react` 쪽에서 이미 UI 표면(Explorer/Search/Editor/Chat/Settings/Status)은
+- `@workbench-kit/react` 쪽에서 이미 UI 표면(Explorer/Search/Editor/Chat/Settings/Status)은
   Storybook 통합으로 구현되어 있고, playflow도 확인됨.
 - 공백은 기능 부재가 아니라 **조립 계약(export boundary)**이다:
-  - `@newchobo-ui/react`에서 story형 shell은 가능하나, 앱 진입점으로 쓰기 위해서는 저장/삭제/커맨드 컨텍스트/서비스 주입 계약이 별도 정리되어야 한다.
+  - `@workbench-kit/react`에서 story형 shell은 가능하나, 앱 진입점으로 쓰기 위해서는 저장/삭제/커맨드 컨텍스트/서비스 주입 계약이 별도 정리되어야 한다.
   - 현재 통합 로직은 `Workbench.stories.tsx`의 `IntegratedWorkbenchShell`에 집중되어 있다.
 - 따라서 이번 우선순위는 다음으로 고정:
-  1) Track A shell entrypoint 추출 + 인터페이스 계약 고정  
-  2) Track B host/runtime의 에러 격리/구독 정리/중복 dispose 검증  
-  3) Track C는 `standalone` 스테이블 이후로 이월
+  1. Track A shell entrypoint 추출 + 인터페이스 계약 고정
+  2. Track B host/runtime의 에러 격리/구독 정리/중복 dispose 검증
+  3. Track C는 `standalone` 스테이블 이후로 이월
 
 ## Target Package Map
 
 The package should evolve beyond a single React package.
 
-| Package                    | Role                                                                                 | Initial source of truth                                    |
-| -------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| `@newchobo-ui/tokens`      | CSS variables, base theme, visual tokens                                             | Existing tokens package                                    |
-| `@newchobo-ui/core`        | Framework-neutral command registry, context keys, event/disposable helpers           | Architecture reference patterns and VS Code conventions    |
-| `@newchobo-ui/contracts`   | Cross-package contracts and result/error models for save/chat/patch/domain services | Contracts package ownership                                  |
-| `@newchobo-ui/workspace`   | Framework-neutral workspace paths, tree, search, selection, mutations, draft helpers | Existing React workspace helpers plus functional behaviors |
-| `@newchobo-ui/runtime`     | Framework-neutral chat/runtime events, mock runtime, workspace patch adapters        | Product-neutral runtime event shape                        |
-| `@newchobo-ui/react`       | React primitives and workbench components bound to the neutral packages              | Existing React package and VS Code interaction conventions |
-| `@newchobo-ui/services`    | Save/chat/patch orchestration services                                                | Existing service implementations and tests                  |
-| `@newchobo-ui/adapters`    | Story/test adapters for repository and runtime transport                              | Storybook integration needs and adapter tests                |
-| `@newchobo-ui/vscode-host` | Host bridge/runtime binding and plugin service adapters                                | vscode-host source and runtime tests                        |
-| `@newchobo-ui/vscode-extension` | Extension bootstrap wrapper for host package consumers                               | Existing extension bootstrap source                          |
-| Story/test fixture modules | Public mock files, mock messages, scenario adapters                                  | Storybook only unless consumers need them                  |
+| Package                           | Role                                                                                 | Initial source of truth                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `@workbench-kit/tokens`           | CSS variables, base theme, visual tokens                                             | Existing tokens package                                    |
+| `@workbench-kit/core`             | Framework-neutral command registry, context keys, event/disposable helpers           | Architecture reference patterns and VS Code conventions    |
+| `@workbench-kit/contracts`        | Cross-package contracts and result/error models for save/chat/patch/domain services  | Contracts package ownership                                |
+| `@workbench-kit/workspace`        | Framework-neutral workspace paths, tree, search, selection, mutations, draft helpers | Existing React workspace helpers plus functional behaviors |
+| `@workbench-kit/runtime`          | Framework-neutral chat/runtime events, mock runtime, workspace patch adapters        | Product-neutral runtime event shape                        |
+| `@workbench-kit/react`            | React primitives and workbench components bound to the neutral packages              | Existing React package and VS Code interaction conventions |
+| `@workbench-kit/services`         | Save/chat/patch orchestration services                                               | Existing service implementations and tests                 |
+| `@workbench-kit/adapters`         | Story/test adapters for repository and runtime transport                             | Storybook integration needs and adapter tests              |
+| `@workbench-kit/vscode-host`      | Host bridge/runtime binding and plugin service adapters                              | vscode-host source and runtime tests                       |
+| `@workbench-kit/vscode-extension` | Extension bootstrap wrapper for host package consumers                               | Existing extension bootstrap source                        |
+| Story/test fixture modules        | Public mock files, mock messages, scenario adapters                                  | Storybook only unless consumers need them                  |
 
 ## Package Skeleton Goals (v0.1, To-Do)
 
-| Package                     | Skeleton Goal (요약)                                                                                                                                      | To-Do (핵심만)                                                                                                                                                                                                 |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@newchobo-ui/tokens`       | 최소한의 디자인 토큰 인터페이스를 export해 테마/모양 일관성을 보장                                                                                         | - 라이트/다크 토큰 기본셋 정합성 점검<br>- 토큰 export와 네임스페이스 문서화<br>- 필요 시 컴포넌트 바인딩 가이드 추가                                                             |
-| `@newchobo-ui/core`         | 커맨드 등록/실행/메뉴 투영을 프레임워크 독립적으로 제공                                                                                                     | - command 충돌/우선순위 정책 문서화<br>- menu `surfaces` 메타 확장 정책 결정<br>- 메뉴/명령 노출 정렬 규칙 테스트 추가                                                         |
-| `@newchobo-ui/contracts`    | 저장/채팅/패치/플러그인 관련 공용 타입을 도메인에 독립된 결과 모델로 표준화                                                                | - 요청 메타(`requestId`/타임스탬프) 기본 계약 고정<br>- plugin lifecycle 계약 최소 필드 확정<br>- 공통 실패 모델(`SaveError` 계열) 사용처 정합성 점검                                      |
-| `@newchobo-ui/workspace`    | 경로/트리/검색/선택/드래프트 유틸을 UI에서 독립적으로 재사용 가능한 API로 제공                                                            | - public export 범위 축소(도메인 vs fixture 분리)<br>- path 정규화/이동 계획(move-plan) 테스트 보강<br>- save/draft 경계에서 부수효과 최소화 규칙 정리                                                      |
-| `@newchobo-ui/runtime`      | 채팅/상태/패치 이벤트의 중립형 런타임 contract와 mock runtime 제공                                                                             | - 이벤트 타입 스키마 문서화<br>- mock runtime 시나리오별 예측 가능한 순서 보장 테스트<br>- 런타임 이벤트 메타 전파 규칙 정리                                                 |
-| `@newchobo-ui/react`        | Storybook 기준 UI 컴포넌트/훅/워크벤치 조립 블록을 앱 조립 가능한 API로 제공                                                                        | - Workbench shell 진입점 타입 계약 고정<br>- Integrated story를 fixture 역할로 축소<br>- baseline 5개 시나리오 회귀 토글 자동 유지                                                                             |
-| `@newchobo-ui/services`     | 저장/채팅/패치 흐름을 contracts 기반으로 오케스트레이션하고 실패 경계를 명확화                                                                       | - callback 실패 격리/리스너 격리 경로 하드닝<br>- metadata 보존 및 상태 전이 테스트 확대<br>- save/patch 동시 처리 경합 케이스 문서화                              |
-| `@newchobo-ui/adapters`     | story/runtime 계층에 종속적인 adapter를 통해 도메인 계약과 실제 구현을 분리                                                                  | - 계약 위임 경계 문서 정리<br>- `create*` factory 실패 케이스 테스트 추가(원격 manifest fetch 실패/reader 누락 포함)<br>- 패키지 export surface 최소화 및 안정화                                                         |
-| `@newchobo-ui/vscode-host`  | host/runtime bridge와 plugin service adapter의 초기 bootstrap 경로를 안정적으로 제공                                                                   | - 구독/해제/재구독 idempotent 처리 점검<br>- 브리지 에러/교착 상태 회복 경로 테스트 보강<br>- plugin 기여 포인트를 wrapper 단계로 분리                                         |
-| `@newchobo-ui/vscode-extension` | standalone 경로 고정 이후 extension wrapper 진입점으로 사용될 기본 조립 API를 준비                                                           | - 현재 사이클에서 코드 변경 보류(이월)<br>- 다음 마일스톤에서 bootstrap API 사용 가이드 초안 작성<br>- 기존 runtime/service 계약과의 1:1 대응표 작성                                    |
-| Story/test fixture modules  | 샘플/검증 시나리오에 필요한 최소 fixture만 유지                                                                                                         | - public export에서 제외 대상 정리<br>- story 전용 목 데이터와 어댑터 분리 규칙 강화                                                                                         |
+| Package                           | Skeleton Goal (요약)                                                                 | To-Do (핵심만)                                                                                                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@workbench-kit/tokens`           | 최소한의 디자인 토큰 인터페이스를 export해 테마/모양 일관성을 보장                   | - 라이트/다크 토큰 기본셋 정합성 점검<br>- 토큰 export와 네임스페이스 문서화<br>- 필요 시 컴포넌트 바인딩 가이드 추가                                            |
+| `@workbench-kit/core`             | 커맨드 등록/실행/메뉴 투영을 프레임워크 독립적으로 제공                              | - command 충돌/우선순위 정책 문서화<br>- menu `surfaces` 메타 확장 정책 결정<br>- 메뉴/명령 노출 정렬 규칙 테스트 추가                                           |
+| `@workbench-kit/contracts`        | 저장/채팅/패치/플러그인 관련 공용 타입을 도메인에 독립된 결과 모델로 표준화          | - 요청 메타(`requestId`/타임스탬프) 기본 계약 고정<br>- plugin lifecycle 계약 최소 필드 확정<br>- 공통 실패 모델(`SaveError` 계열) 사용처 정합성 점검            |
+| `@workbench-kit/workspace`        | 경로/트리/검색/선택/드래프트 유틸을 UI에서 독립적으로 재사용 가능한 API로 제공       | - public export 범위 축소(도메인 vs fixture 분리)<br>- path 정규화/이동 계획(move-plan) 테스트 보강<br>- save/draft 경계에서 부수효과 최소화 규칙 정리           |
+| `@workbench-kit/runtime`          | 채팅/상태/패치 이벤트의 중립형 런타임 contract와 mock runtime 제공                   | - 이벤트 타입 스키마 문서화<br>- mock runtime 시나리오별 예측 가능한 순서 보장 테스트<br>- 런타임 이벤트 메타 전파 규칙 정리                                     |
+| `@workbench-kit/react`            | Storybook 기준 UI 컴포넌트/훅/워크벤치 조립 블록을 앱 조립 가능한 API로 제공         | - Workbench shell 진입점 타입 계약 고정<br>- Integrated story를 fixture 역할로 축소<br>- baseline 5개 시나리오 회귀 토글 자동 유지                               |
+| `@workbench-kit/services`         | 저장/채팅/패치 흐름을 contracts 기반으로 오케스트레이션하고 실패 경계를 명확화       | - callback 실패 격리/리스너 격리 경로 하드닝<br>- metadata 보존 및 상태 전이 테스트 확대<br>- save/patch 동시 처리 경합 케이스 문서화                            |
+| `@workbench-kit/adapters`         | story/runtime 계층에 종속적인 adapter를 통해 도메인 계약과 실제 구현을 분리          | - 계약 위임 경계 문서 정리<br>- `create*` factory 실패 케이스 테스트 추가(원격 manifest fetch 실패/reader 누락 포함)<br>- 패키지 export surface 최소화 및 안정화 |
+| `@workbench-kit/vscode-host`      | host/runtime bridge와 plugin service adapter의 초기 bootstrap 경로를 안정적으로 제공 | - 구독/해제/재구독 idempotent 처리 점검<br>- 브리지 에러/교착 상태 회복 경로 테스트 보강<br>- plugin 기여 포인트를 wrapper 단계로 분리                           |
+| `@workbench-kit/vscode-extension` | standalone 경로 고정 이후 extension wrapper 진입점으로 사용될 기본 조립 API를 준비   | - 현재 사이클에서 코드 변경 보류(이월)<br>- 다음 마일스톤에서 bootstrap API 사용 가이드 초안 작성<br>- 기존 runtime/service 계약과의 1:1 대응표 작성             |
+| Story/test fixture modules        | 샘플/검증 시나리오에 필요한 최소 fixture만 유지                                      | - public export에서 제외 대상 정리<br>- story 전용 목 데이터와 어댑터 분리 규칙 강화                                                                             |
 
 ## Current Implementation Progress
 
-- `@newchobo-ui/core` owns framework-neutral command registry, execution,
+- `@workbench-kit/core` owns framework-neutral command registry, execution,
   separator, visibility/enabled-state, and menu projection helpers.
-- `@newchobo-ui/workspace` owns framework-neutral path, tree, search, selection,
+- `@workbench-kit/workspace` owns framework-neutral path, tree, search, selection,
   type, editor draft, and virtual workspace model helpers.
-- `@newchobo-ui/runtime` owns framework-neutral runtime chat message,
+- `@workbench-kit/runtime` owns framework-neutral runtime chat message,
   status, workspace patch event types, and a public mock runtime helper for
   send/cancel/stream fixtures.
-- `@newchobo-ui/react` consumes `@newchobo-ui/workspace` and keeps existing
+- `@workbench-kit/react` consumes `@workbench-kit/workspace` and keeps existing
   workspace exports available through the React binding package.
-- `@newchobo-ui/react` consumes `@newchobo-ui/core` through a small adapter that
+- `@workbench-kit/react` consumes `@workbench-kit/core` through a small adapter that
   converts resolved command menu items into `ContextMenuItem` values.
-- `@newchobo-ui/react` exposes shell command presets for activity switching,
+- `@workbench-kit/react` exposes shell command presets for activity switching,
   primary sidebar toggling, and settings opening.
-- `@newchobo-ui/react` exposes editor command presets for save, discard, copy
+- `@workbench-kit/react` exposes editor command presets for save, discard, copy
   path, close, close others, close all, and delete.
-- `@newchobo-ui/react` exposes workspace command presets for new file, new
+- `@workbench-kit/react` exposes workspace command presets for new file, new
   folder, open/reveal, copy path, rename, and delete menus.
-- `@newchobo-ui/react` exposes search result command presets for open, copy
+- `@workbench-kit/react` exposes search result command presets for open, copy
   path, and delete menus.
-- `@newchobo-ui/react` exposes a reusable `useWorkbenchShellState` hook and
+- `@workbench-kit/react` exposes a reusable `useWorkbenchShellState` hook and
   reducer for active activity, primary sidebar visibility and size, theme, and
   settings modal state.
-- `@newchobo-ui/react` exposes a reusable StatusBar section/item model while
+- `@workbench-kit/react` exposes a reusable StatusBar section/item model while
   keeping children-based custom status bar content supported.
 - `WorkspaceExplorer` accepts controlled file selection props and emits
   selection changes for single, toggle, range, and toggle-range interactions.
@@ -196,7 +197,7 @@ The package should evolve beyond a single React package.
 - Explorer rows emit selection-aware `F2` rename and `Delete` delete requests so
   host applications can keep confirmation and inline edit state controlled.
 - Explorer rows support configurable drag payloads and emit move requests for
-  folder and workspace-root drops; `@newchobo-ui/workspace` exposes a move-plan
+  folder and workspace-root drops; `@workbench-kit/workspace` exposes a move-plan
   helper that validates multi-file moves before reducer actions are dispatched.
 - Explorer renders controlled inline create and rename rows; the integrated
   story validates simple names and path availability before dispatching create
@@ -229,8 +230,8 @@ The package should evolve beyond a single React package.
 - `WorkspaceEditorPanel` consumes shared editor command presets rather than
   owning local command definitions.
 - `WorkspaceEditorPanel` consumes framework-neutral editor draft helpers from
-  `@newchobo-ui/workspace` for dirty-state, save, and discard behavior.
-- The integrated Workbench story wires `@newchobo-ui/runtime` to Chat,
+  `@workbench-kit/workspace` for dirty-state, save, and discard behavior.
+- The integrated Workbench story wires `@workbench-kit/runtime` to Chat,
   runtime status, streaming response chunks, and mock workspace write patches.
 - The integrated Workbench story has Storybook play coverage for a runtime
   Chat submit that writes a mock workspace file.
@@ -243,12 +244,12 @@ The package should evolve beyond a single React package.
 - Root package scripts execute tools through `pnpm`, so `npm run <script>`
   delegates script execution to the pnpm-managed toolchain while the pnpm
   lockfile remains the source of truth.
-- `@newchobo-ui/core` exposes reusable command menu entry and command
+- `@workbench-kit/core` exposes reusable command menu entry and command
   contribution helpers so built-in presets and future plugin adapters can share
   one command/menu extension shape.
-- `@newchobo-ui/react` command presets consume the shared menu entry helpers
+- `@workbench-kit/react` command presets consume the shared menu entry helpers
   instead of repeating raw command-entry object literals.
-- `@newchobo-ui/core` command menu entries support optional `surfaces` metadata so
+- `@workbench-kit/core` command menu entries support optional `surfaces` metadata so
   one shared command registry can serve different workbench surfaces (for example,
   Explorer, Search, Editor, Settings) with menu filtering done at projection time.
 - The next migration step is to expand Storybook play coverage around remaining
@@ -397,7 +398,7 @@ still not a complete real-use workflow.
 
 ### Chat
 
-- `@newchobo-ui/runtime` provides streaming message fixture support.
+- `@workbench-kit/runtime` provides streaming message fixture support.
 - Integrated story send/cancel flow runs through a mock runtime adapter.
 - Runtime status maps to composer disabled/running state in the integrated
   story.
@@ -444,15 +445,15 @@ Move these out of `Workbench.stories.tsx`:
   - create/rename validation,
   - drag/drop move validation.
 - Command model:
-  - `@newchobo-ui/core` now owns the command registry, separator helper, menu
+  - `@workbench-kit/core` now owns the command registry, separator helper, menu
     projection, and command executor.
-  - `@newchobo-ui/core` now owns command menu entry and command contribution
+  - `@workbench-kit/core` now owns command menu entry and command contribution
     helpers for built-in and future installed-plugin command sources.
-  - `@newchobo-ui/react` now owns shell command presets for activity switching,
+  - `@workbench-kit/react` now owns shell command presets for activity switching,
     primary sidebar toggling, and settings opening.
-  - `@newchobo-ui/react` now owns editor command presets for save, discard,
+  - `@workbench-kit/react` now owns editor command presets for save, discard,
     copy path, close, close others, close all, and delete.
-  - `@newchobo-ui/react` now owns workspace and search result command presets
+  - `@workbench-kit/react` now owns workspace and search result command presets
     for common Explorer, Search, and integrated workbench menus.
 - Search helpers:
   - query state,
@@ -465,7 +466,7 @@ Move these out of `Workbench.stories.tsx`:
   - settings modal open, category, scope, and search state,
   - reusable status bar sections and items.
 - Mock runtime helpers:
-  - `@newchobo-ui/runtime` now owns message send, cancel, streaming response
+  - `@workbench-kit/runtime` now owns message send, cancel, streaming response
     sequence, and mock write-file events.
   - `ChatPanel` stories now own focused streaming, cancellation, write patch,
     and delete patch response plans.
@@ -489,10 +490,10 @@ Recommended setup:
 
 1. Add a small `createMockWorkbenchRuntime()` helper under a test or story
    fixture module.
-   - Done in `@newchobo-ui/runtime`.
+   - Done in `@workbench-kit/runtime`.
 2. Expose generic methods such as `sendMessage`, `cancel`, `subscribe`, and
    `emitWorkspacePatch`.
-   - Done in `@newchobo-ui/runtime`.
+   - Done in `@workbench-kit/runtime`.
 3. Use Storybook stories to wire the mock runtime to Chat, Search, Explorer,
    and Workspace Editor.
    - Partially done for integrated Chat status, streaming, and workspace write
@@ -523,10 +524,10 @@ independently.
 | `workspace/useVirtualWorkspace` or reducer | Headless workspace state and file/folder operations                 | Reducer tests and integrated story                    |
 | `workbench/WorkbenchShell`                 | Activity bar, sidebar split, editor area, status bar slots          | Shell layout and sidebar toggle                       |
 | `workbench/StatusBar`                      | Generic status sections and status item projection                  | Model-based status footer                             |
-| `@newchobo-ui/core/commands`               | Framework-neutral command registry, execution, and menu projection  | Unit tests and integrated command menu wiring         |
+| `@workbench-kit/core/commands`             | Framework-neutral command registry, execution, and menu projection  | Unit tests and integrated command menu wiring         |
 | `workbench/commands`                       | React adapter plus shell, editor, workspace, and search presets     | Command menu story and preset tests                   |
 | `chat/ChatPanel`                           | Message list and composer                                           | Empty, streaming, running, disabled, cancel           |
-| `@newchobo-ui/runtime/mockRuntime`         | Public mock send/cancel/stream events and workspace patches         | Chat integration story                                |
+| `@workbench-kit/runtime/mockRuntime`       | Public mock send/cancel/stream events and workspace patches         | Chat integration story                                |
 | `settings/WorkbenchSettingsModal`          | Generic settings layout and category rendering                      | Scope tabs, search, footer actions                    |
 
 ## Recommended Todo Order
@@ -584,11 +585,11 @@ independently.
 ## Additional Decisions Needed
 
 - Which additional workspace helpers should be exported from
-  `@newchobo-ui/workspace` versus kept as React story-local examples?
+  `@workbench-kit/workspace` versus kept as React story-local examples?
 - Should persistence be excluded, optional, or provided through a storage
   adapter?
 - Which folder operations should stay as controlled UI callbacks, and which
-  should be demonstrated through the `@newchobo-ui/workspace` reducer?
+  should be demonstrated through the `@workbench-kit/workspace` reducer?
 - Should StatusBar items support host-provided ordering/grouping metadata beyond
   the current section and item arrays?
 - Should Storybook interaction tests be mandatory in `pnpm validate`, or only
@@ -606,20 +607,20 @@ independently.
 
 ## Open Ambiguity Register (Actionable)
 
-| 항목                             | 현재 근거                                                                                              | 미확정 포인트                                                 | 다음 확인/결정 액션                                                                                                 |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `openSettings` surface 정책      | `WORKBENCH_OPEN_SETTINGS_COMMAND_ID`가 현재 `activityBar` surface에만 등록됨                           | 추가 surface 확장 여부                                        | Settings surface 확장 필요 시 별도 milestone 결정안으로 이동                                                        |
-| 통합 지점의 surface 누락 방지    | 핵심 호출부는 surface 지정됨(활성 파일/컴포넌트 목록 참조)                                             | 신규 통합 코드의 누락 가능성                                  | 통합 리뷰 체크리스트에 `resolveCommandMenuItems(..., surface)` 필수 규칙 추가 및 스토리북 리뷰 포인트 문서화        |
-| plugin lifecycle state 전이 테스트 | `@newchobo-ui/vscode-host` `InMemoryPluginLifecycleService` 단위 테스트 추가 완료                              | transport/권한 통합 정책은 별도 마일스톤                            | `workbench` 편입 시 runtime 바인딩/권한 정책을 별도 단계로 정리                                                                                             |
-| plugin `commandId` 충돌 처리     | `createCommandRegistry`는 Map 기반이라 마지막 등록값 우선(`packages/core/src/commands.test.ts`로 고정) | 소스-확장 충돌 정책의 공개화 부재                             | 최소 우선순위 정책을 `last-write-wins`로 문서화하고, 단계적으로 hard-error 정책 도입 여부를 검토                    |
-| Storybook Play 필수 범위         | baseline 태그 기반 게이트로 정비되어 있음                                                              | baseline 후보 5개를 태그화 후 `validate:full`에서 필수로 실행 | `storybook-play`를 baseline 5개 플로우(`storybook-play-baseline`) 중심으로 `test:storybook-play:required` 실행 전환 |
-| surface 메타 구조                | 현재 `surfaces?: string[]` 사용 중                                                                     | 우선순위/그룹 메타가 필요한지 미정                            | 다중 surface가 충분한지 증빙하고, 필요시 타입 확장 제안 작성                                                        |
-| plugin 설치 범위(기본/확장)      | 시작 단계 제안: command/view/settings 기반                                                             | trust/enable/recommend/update 확장 여부 미정                  | 단계별 출시 플랜(기본→확장) 작성 및 acceptance criteria 분리                                                        |
-| Storybook 테스트 미들웨어 의존성 | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                             | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                          |
-| package-manager 보호 정책        | `preinstall` 가드 존재                                                                                 | `npm` 실행 가드 외 정책 문서/실행 절차 정합성 미정            | 정책 문서에서 강제 조건과 예외 처리 범위를 1곳에 모아 정리                                                          |
-| workspace API 범위               | `@newchobo-ui/workspace` export 목록 존재                                                              | story-only fixture/state 어댑터와 분리선 미정                 | export 경계 원칙 1개(도메인 공통/구성 편의/fixture) 정의                                                            |
-| 폴더 작업 소유권                 | reducer와 호스트 콜백 분리 설계가 진행됨                                                               | side-effect(입출력, 확인 다이얼로그) 책임선 미완성            | API 시그니처/문서에 host-callback 규칙을 확정하고 테스트 케이스로 반영                                              |
-| StatusBar 정렬/그룹 메타         | 기본 section/item 모델만 사용 중                                                                       | host merge에서 ordering/grouping 필요성 미정                  | 최소 1개의 deterministic ordering 규칙을 문서와 테스트로 명시                                                       |
+| 항목                               | 현재 근거                                                                                              | 미확정 포인트                                                 | 다음 확인/결정 액션                                                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `openSettings` surface 정책        | `WORKBENCH_OPEN_SETTINGS_COMMAND_ID`가 현재 `activityBar` surface에만 등록됨                           | 추가 surface 확장 여부                                        | Settings surface 확장 필요 시 별도 milestone 결정안으로 이동                                                        |
+| 통합 지점의 surface 누락 방지      | 핵심 호출부는 surface 지정됨(활성 파일/컴포넌트 목록 참조)                                             | 신규 통합 코드의 누락 가능성                                  | 통합 리뷰 체크리스트에 `resolveCommandMenuItems(..., surface)` 필수 규칙 추가 및 스토리북 리뷰 포인트 문서화        |
+| plugin lifecycle state 전이 테스트 | `@workbench-kit/vscode-host` `InMemoryPluginLifecycleService` 단위 테스트 추가 완료                    | transport/권한 통합 정책은 별도 마일스톤                      | `workbench` 편입 시 runtime 바인딩/권한 정책을 별도 단계로 정리                                                     |
+| plugin `commandId` 충돌 처리       | `createCommandRegistry`는 Map 기반이라 마지막 등록값 우선(`packages/core/src/commands.test.ts`로 고정) | 소스-확장 충돌 정책의 공개화 부재                             | 최소 우선순위 정책을 `last-write-wins`로 문서화하고, 단계적으로 hard-error 정책 도입 여부를 검토                    |
+| Storybook Play 필수 범위           | baseline 태그 기반 게이트로 정비되어 있음                                                              | baseline 후보 5개를 태그화 후 `validate:full`에서 필수로 실행 | `storybook-play`를 baseline 5개 플로우(`storybook-play-baseline`) 중심으로 `test:storybook-play:required` 실행 전환 |
+| surface 메타 구조                  | 현재 `surfaces?: string[]` 사용 중                                                                     | 우선순위/그룹 메타가 필요한지 미정                            | 다중 surface가 충분한지 증빙하고, 필요시 타입 확장 제안 작성                                                        |
+| plugin 설치 범위(기본/확장)        | 시작 단계 제안: command/view/settings 기반                                                             | trust/enable/recommend/update 확장 여부 미정                  | 단계별 출시 플랜(기본→확장) 작성 및 acceptance criteria 분리                                                        |
+| Storybook 테스트 미들웨어 의존성   | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                             | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                          |
+| package-manager 보호 정책          | `preinstall` 가드 존재                                                                                 | `npm` 실행 가드 외 정책 문서/실행 절차 정합성 미정            | 정책 문서에서 강제 조건과 예외 처리 범위를 1곳에 모아 정리                                                          |
+| workspace API 범위                 | `@workbench-kit/workspace` export 목록 존재                                                            | story-only fixture/state 어댑터와 분리선 미정                 | export 경계 원칙 1개(도메인 공통/구성 편의/fixture) 정의                                                            |
+| 폴더 작업 소유권                   | reducer와 호스트 콜백 분리 설계가 진행됨                                                               | side-effect(입출력, 확인 다이얼로그) 책임선 미완성            | API 시그니처/문서에 host-callback 규칙을 확정하고 테스트 케이스로 반영                                              |
+| StatusBar 정렬/그룹 메타           | 기본 section/item 모델만 사용 중                                                                       | host merge에서 ordering/grouping 필요성 미정                  | 최소 1개의 deterministic ordering 규칙을 문서와 테스트로 명시                                                       |
 
 ## 다음 액션 우선순위
 
@@ -663,7 +664,7 @@ independently.
 | surface 메타 구조           | 미결정 | 정렬/그룹 메타가 필요한지 미정                           | `string[] surfaces`로 `command/menu` 동작은 충족되며, 다중 surface 병합 시 ordering/grouping 메타 요구 여부를 사용성 테스트로 검증                                                                              |
 | plugin 기여 범위(기본/확장) | 미결정 | trust/enable/recommend/update 범위 미정                  | 1차 기여는 `command/view/settings`로 고정, 2차 확장은 리스크/스토리/변경 범위 기준으로 별도 정량문턱치 설정                                                                                                     |
 | package-manager 운영 정책   | 진행중 | 예외 시나리오(문서/CI 가드) 문서화 필요                  | `npm` accidental 실행 가드는 preinstall에서 제어 중이나 대응 문서(문제 대응/예외 절차)를 루트 문서로 통합                                                                                                       |
-| workspace API boundary      | 미결정 | fixture/state adapter 경계 미정                          | `@newchobo-ui/workspace`는 도메인 공통/필수 유틸 우선, story-only fixture는 테스트/스토리 전용으로 분리 기준 문서화                                                                                             |
+| workspace API boundary      | 미결정 | fixture/state adapter 경계 미정                          | `@workbench-kit/workspace`는 도메인 공통/필수 유틸 우선, story-only fixture는 테스트/스토리 전용으로 분리 기준 문서화                                                                                           |
 | folder 작업 소유권          | 미결정 | side-effect(입출력/확인/알림) 책임 선점 미정             | reducer는 상태변경·검증, 호스트 콜백은 I/O/확인/알림/권한 분기 규칙을 문서·테스트로 명시                                                                                                                        |
 | StatusBar merge 정렬        | 미결정 | deterministic ordering 메타 미정                         | host 병합 시 정렬 규칙(삽입 순/우선순위) 1개를 결정해 테스트로 회귀 검증                                                                                                                                        |
 
@@ -690,7 +691,7 @@ workbench platform:
    - Decide label/icon override and command grouping/ordering metadata.
    - Decide plugin command contribution merge strategy.
 3. **Workspace API shape**
-   - Decide which helpers are exported from `@newchobo-ui/workspace`.
+   - Decide which helpers are exported from `@workbench-kit/workspace`.
    - Decide folder/file operations that stay as reducer actions versus host callbacks.
 4. **Runtime and integration model**
    - Decide storage/persistence model and plugin installation scope.
@@ -710,7 +711,7 @@ workbench platform:
   `settings`-surface contributions only when a dedicated settings command
   surface is introduced.
 - **workspace helper exports**: export neutral domain helpers in
-  `@newchobo-ui/workspace` (path/tree/search/selection/mutations); keep fixture
+  `@workbench-kit/workspace` (path/tree/search/selection/mutations); keep fixture
   builders and state adapters in Storybook/tests.
 - **persistence**: provide optional storage adapter; no built-in persistence side effect.
 - **drag payload metadata**: keep path-list MIME as the base contract, allow optional

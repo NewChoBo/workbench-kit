@@ -8,7 +8,7 @@ import {
   type LibraryQuery,
   type LibraryQueryOptions,
   matchesLibraryItem,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 
 export interface LibraryCatalogServiceOptions {
   cacheTtlMs?: number;

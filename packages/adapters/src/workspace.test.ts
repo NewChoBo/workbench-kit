@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CreateWorkspaceFileInput } from '@newchobo-ui/workspace';
+import type { CreateWorkspaceFileInput } from '@workbench-kit/workspace';
 import { InMemoryWorkspaceFileRepository, createWorkspaceFileRepository } from './workspace';
 
 describe('InMemoryWorkspaceFileRepository', () => {

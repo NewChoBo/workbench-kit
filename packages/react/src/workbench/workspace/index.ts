@@ -51,7 +51,7 @@ export {
   type UpdateWorkspaceFileDraftInput,
   type WorkspaceFileDraft,
   type WorkspaceFileDraftMap,
-} from '@newchobo-ui/workspace';
+} from '@workbench-kit/workspace';
 export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
 export {
   getWorkspaceSelectionActionPaths,
@@ -63,7 +63,7 @@ export {
   type WorkspaceSelectionActionPathsInput,
   type WorkspaceSelectionMode,
   type WorkspaceSelectionState,
-} from '@newchobo-ui/workspace';
+} from '@workbench-kit/workspace';
 export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
 export {
   getAvailableWorkspaceEntryName,

@@ -11,7 +11,7 @@ import {
   type WorkspaceSelectionState,
   type WorkspaceFile,
   type WorkspaceTreeNode,
-} from '@newchobo-ui/workspace';
+} from '@workbench-kit/workspace';
 import { SideBarViewFrame } from '../../layout/SideBarViewFrame';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { IconButton } from '../../primitives/IconButton';
