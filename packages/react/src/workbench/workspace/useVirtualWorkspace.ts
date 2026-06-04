@@ -19,7 +19,7 @@ import {
   type WorkspaceSearchResult,
   type WorkspaceTreeNode,
   type WriteWorkspaceFileInput,
-} from '@newchobo-ui/workspace';
+} from '@workbench-kit/workspace';
 
 export interface VirtualWorkspaceApi extends VirtualWorkspaceState {
   closeAll: () => void;

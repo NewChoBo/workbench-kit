@@ -5,10 +5,10 @@ import {
   createMockWorkbenchRuntime,
   type MockRuntimeResponsePlan,
   type RuntimeStatus,
-} from '@newchobo-ui/runtime';
-import { createChatTransportFromRuntime } from '@newchobo-ui/adapters';
-import { WorkbenchChatService } from '@newchobo-ui/services';
-import type { ChatStreamEvent, WorkspacePatchEvent } from '@newchobo-ui/contracts';
+} from '@workbench-kit/runtime';
+import { createChatTransportFromRuntime } from '@workbench-kit/adapters';
+import { WorkbenchChatService } from '@workbench-kit/services';
+import type { ChatStreamEvent, WorkspacePatchEvent } from '@workbench-kit/contracts';
 import { ChatPanel } from './ChatPanel';
 import type { ChatMessage } from './types';
 
@@ -103,7 +103,14 @@ function ChatRuntimeHarness({ response, title = 'Runtime Chat' }: ChatRuntimeHar
   }, [chatService, runtime]);
 
   return (
-    <div style={{ display: 'grid', gridTemplateRows: '1fr auto', height: 520, width: 360 }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateRows: '1fr auto',
+        height: 'min(calc(100% - 120px), 620px)',
+        width: 'min(100%, 420px)',
+      }}
+    >
       <ChatPanel
         assistantLabel="Assistant"
         emptyLabel="Start a runtime conversation."

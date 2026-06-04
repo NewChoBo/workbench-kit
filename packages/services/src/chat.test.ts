@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { WorkbenchChatService } from './chat';
-import type { ChatStreamEvent, ChatTransport, ChatTransportListener } from '@newchobo-ui/contracts';
+import type {
+  ChatStreamEvent,
+  ChatTransport,
+  ChatTransportListener,
+} from '@workbench-kit/contracts';
 
 class MockChatTransport implements ChatTransport {
   private listeners = new Set<ChatTransportListener>();

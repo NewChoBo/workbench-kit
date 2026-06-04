@@ -7,6 +7,7 @@
 어느 정도 정렬되는지 점검한다.
 
 목표:
+
 - 문서 구조의 누락 항목 식별
 - 타 repo 목표 구조 대비 기능/배치 차이 정리
 - `ui-package`를 타 repo가 채택할 때 필요한 추가 기능을 선별
@@ -104,10 +105,10 @@ apps/
 
 ### 목표 구조 비교 요약
 
-- 타 repo 3곳 모두 공통:  
-  1) UI package는 공유 가능한 shell/작업 surface 중심,  
-  2) contracts는 host boundary/transport/패치/상태를 명확히 분리,  
-  3) host adapter 계층을 별도 문서에서 관리.
+- 타 repo 3곳 모두 공통:
+  1. UI package는 공유 가능한 shell/작업 surface 중심,
+  2. contracts는 host boundary/transport/패치/상태를 명확히 분리,
+  3. host adapter 계층을 별도 문서에서 관리.
 - newchobo 대비 타 repo는 더 강하게 `공개 API governance`와 `host adapter 가드`를 선행.
 
 ## 3) 추가 검토: `ui-package` 채택 시 필요한 기능/기능 강화 항목
@@ -149,9 +150,9 @@ apps/
 ### P0 (이번 사이클 마감 목표)
 
 - [ ] `migration-todo.md`와 `subpackage-architecture.md`를 기준 문서로 고정하고,
-  `repo-target-structure-review.md`에 추적 링크 3개 추가.
+      `repo-target-structure-review.md`에 추적 링크 3개 추가.
 - [ ] `WorkbenchShell`/앱 조립 계약에서 host callback 경계(`onSave`, `onDelete`, `onChatSubmit`, `onPatch`)를
-  타입으로 1회 정리하고 문서 근거 남기기.
+      타입으로 1회 정리하고 문서 근거 남기기.
 - [ ] plugin 라이프사이클 최소 상태(`installing/installed/disabled/failed`)를 문서의 목표 형태로 확정.
 - [ ] `adapter`/`service` 경계를 기준으로 `vscode-host` 예외 격리 케이스 2개 이상 테스트 보강.
 
@@ -171,9 +172,9 @@ apps/
 
 ## 5) 검증 체크리스트
 
-- `pnpm --filter @newchobo-ui/react typecheck`
-- `pnpm --filter @newchobo-ui/services typecheck`
-- `pnpm --filter @newchobo-ui/vscode-host test`
+- `pnpm --filter @workbench-kit/react typecheck`
+- `pnpm --filter @workbench-kit/services typecheck`
+- `pnpm --filter @workbench-kit/vscode-host test`
 - `pnpm test:storybook-play:required`
 - 문서 변경 후 `subpackage-architecture.md`, `migration-todo.md`, `workbench-entrypoint-strategy.md`,
   `repo-target-structure-review.md`의 목표 문구/체크리스트 동기화 완료

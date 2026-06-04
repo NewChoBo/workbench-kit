@@ -1,5 +1,11 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { cx } from '../utils/cx';
+import {
+  getWorkbenchStatusLabel,
+  isWorkbenchStatusBusy,
+  isWorkbenchStatusDisabled,
+  type WorkbenchStatus,
+} from './status';
 
 export type StatusBarSectionAlign = 'end' | 'start';
 
@@ -11,6 +17,7 @@ export interface StatusBarItemModel {
   icon?: ReactNode;
   id: string;
   label: ReactNode;
+  status?: WorkbenchStatus;
   title?: string;
 }
 
@@ -51,6 +58,7 @@ export function StatusBar({
                 aria-label={item.ariaLabel}
                 disabled={item.disabled}
                 icon={item.icon}
+                status={item.status}
                 title={item.title}
                 onClick={() => onItemActivate?.(item)}
               >
@@ -95,16 +103,23 @@ export function StatusBarSection({ align = 'start', className, ...props }: Statu
 export interface StatusBarItemProps extends ComponentPropsWithRef<'button'> {
   active?: boolean;
   icon?: ReactNode;
+  status?: WorkbenchStatus;
 }
 
 export function StatusBarItem({
   active,
   children,
   className,
+  disabled,
   icon,
+  status,
+  title,
   type = 'button',
   ...props
 }: StatusBarItemProps) {
+  const statusLabel = status ? getWorkbenchStatusLabel(status) : undefined;
+  const resolvedDisabled = disabled || Boolean(status && isWorkbenchStatusDisabled(status));
+
   return (
     <button
       type={type}
@@ -114,10 +129,23 @@ export function StatusBarItem({
         className,
       )}
       data-active={active ? 'true' : undefined}
+      data-status={status}
+      aria-busy={status && isWorkbenchStatusBusy(status) ? true : undefined}
+      disabled={resolvedDisabled}
+      title={title ?? statusLabel}
       {...props}
     >
       {icon ? <span className="ui-workbench-status-bar__icon">{icon}</span> : null}
       <span className="ui-workbench-status-bar__label">{children}</span>
+      {status ? (
+        <span
+          aria-label={statusLabel}
+          className="ui-workbench-status-bar__status"
+          title={statusLabel}
+        >
+          <span aria-hidden="true" className="ui-workbench-status-bar__status-dot" />
+        </span>
+      ) : null}
     </button>
   );
 }

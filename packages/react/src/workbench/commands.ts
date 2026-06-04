@@ -6,7 +6,7 @@ import {
   type CommandValue,
   type CommandMenuEntry,
   type CommandMenuItem,
-} from '@newchobo-ui/core';
+} from '@workbench-kit/core';
 
 import type { ContextMenuItem } from '../overlay/ContextMenu';
 

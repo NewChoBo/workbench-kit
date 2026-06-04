@@ -7,7 +7,7 @@ import {
   type WorkspacePatchSource,
   type WorkspacePatchWriteFile,
   normalizeServiceFailureMessage,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 import { normalizeServiceWorkspacePath } from './path';
 
 let patchRequestCounter = 0;

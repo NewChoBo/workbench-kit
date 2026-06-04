@@ -13,18 +13,18 @@
 
 ## 현재 증거(최근 확인)
 
-- `pnpm typecheck`  
-- `pnpm --filter @newchobo-ui/services typecheck`  
-- `pnpm --filter @newchobo-ui/vscode-host test`  
-- `pnpm exec vitest run packages/services/src` (28 tests)  
-- `pnpm test:storybook-play:required` (baseline 5개 pass)  
+- `pnpm typecheck`
+- `pnpm --filter @workbench-kit/services typecheck`
+- `pnpm --filter @workbench-kit/vscode-host test`
+- `pnpm exec vitest run packages/services/src` (28 tests)
+- `pnpm test:storybook-play:required` (baseline 5개 pass)
 - `pnpm test` (all repos 21 passed)
 
 ## 다중 트랙 로드맵
 
 ### Track A — Standalone Entry API (최우선, 이번 사이클)
 
-목표: `@newchobo-ui/react`를 소비 앱에서 바로 조립 가능한 API로 정리.
+목표: `@workbench-kit/react`를 소비 앱에서 바로 조립 가능한 API로 정리.
 
 산출:
 
@@ -36,7 +36,7 @@
 
 - 엔트리 타입이 문서화되고 컴파일 통과
 - story가 엔트리 경유로 동일 동작
-- 변경 후 `pnpm --filter @newchobo-ui/react typecheck` + `pnpm test:storybook-play:required` 통과
+- 변경 후 `pnpm --filter @workbench-kit/react typecheck` + `pnpm test:storybook-play:required` 통과
 
 ### Track B — Standalone 런치 하드닝 (동시 진행 가능)
 
@@ -50,7 +50,7 @@
 
 완료 조건:
 
-- `pnpm typecheck` + `pnpm --filter @newchobo-ui/vscode-host test` 통과
+- `pnpm typecheck` + `pnpm --filter @workbench-kit/vscode-host test` 통과
 - 주요 예외 케이스가 단위 테스트로 커버
 
 ### Track C — vscode-extension wrapper (차기)
@@ -103,7 +103,6 @@
 
 ## 즉시 다음 액션
 
-1) 위 문서 기준으로 **Track A 최소 인터페이스**를 타입 수준으로 먼저 정리  
-2) 동일 인터페이스 기반으로 다음 PR에서 `Workbench.stories.tsx` 분리 리팩터 진행  
-3) 매 분기말 게이트: `pnpm test:storybook-play:required` + `pnpm typecheck`
-
+1. 위 문서 기준으로 **Track A 최소 인터페이스**를 타입 수준으로 먼저 정리
+2. 동일 인터페이스 기반으로 다음 PR에서 `Workbench.stories.tsx` 분리 리팩터 진행
+3. 매 분기말 게이트: `pnpm test:storybook-play:required` + `pnpm typecheck`

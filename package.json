@@ -1,9 +1,9 @@
 {
-  "name": "newchobo-ui-package",
-  "version": "0.0.0",
+  "name": "workbench-kit",
+  "version": "0.0.1-prototype.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@11.5.1",
   "scripts": {
     "preinstall": "node -e \"const execPath = process.env.npm_execpath || ''; if (!/pnpm/.test(execPath)) { console.error('This repository requires pnpm. Please run `pnpm install`.'); process.exit(1); }\"",
     "format": "pnpm exec prettier . --write",
@@ -15,10 +15,13 @@
     "test": "pnpm exec vitest run",
     "build:storybook": "pnpm exec storybook build",
     "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
-    "typecheck": "pnpm --filter @newchobo-ui/core typecheck && pnpm --filter @newchobo-ui/contracts typecheck && pnpm --filter @newchobo-ui/services typecheck && pnpm --filter @newchobo-ui/workspace typecheck && pnpm --filter @newchobo-ui/runtime typecheck && pnpm --filter @newchobo-ui/adapters typecheck && pnpm --filter @newchobo-ui/react typecheck && pnpm --filter @newchobo-ui/vscode-host typecheck",
-    "typecheck:all": "pnpm typecheck && pnpm --filter @newchobo-ui/vscode-extension typecheck",
+    "typecheck": "pnpm --filter @workbench-kit/core typecheck && pnpm --filter @workbench-kit/contracts typecheck && pnpm --filter @workbench-kit/services typecheck && pnpm --filter @workbench-kit/workspace typecheck && pnpm --filter @workbench-kit/runtime typecheck && pnpm --filter @workbench-kit/adapters typecheck && pnpm --filter @workbench-kit/react typecheck && pnpm --filter @workbench-kit/vscode-host typecheck",
+    "typecheck:all": "pnpm typecheck && pnpm --filter @workbench-kit/vscode-extension typecheck",
     "validate": "pnpm typecheck && pnpm lint && pnpm test && pnpm format:check && pnpm build:storybook",
-    "validate:full": "pnpm validate && pnpm test:storybook-play:required"
+    "validate:full": "pnpm validate && pnpm test:storybook-play:required",
+    "release:check": "node scripts/check-release-version.mjs",
+    "publish:packages": "node scripts/publish-packages.mjs",
+    "publish:packages:dry-run": "node scripts/publish-packages.mjs --dry-run"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -42,5 +45,9 @@
     "typescript-eslint": "^8.60.1",
     "vite": "^6.0.0",
     "vitest": "^4.1.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/newchobo-ui-package.git"
   }
 }

@@ -7,4 +7,4 @@ export type {
   WorkspaceSearchMatchKind,
   WorkspaceSearchResult,
   WorkspaceTreeNode,
-} from '@newchobo-ui/workspace';
+} from '@workbench-kit/workspace';

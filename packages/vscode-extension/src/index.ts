@@ -1,10 +1,10 @@
-import type { MessageBridge, WorkbenchHostRuntime } from '@newchobo-ui/vscode-host';
+import type { MessageBridge, WorkbenchHostRuntime } from '@workbench-kit/vscode-host';
 import {
   createHostRuntime,
   createWindowMessageTransport,
   type HostTransport,
-} from '@newchobo-ui/vscode-host';
-import type { CommandRegistry } from '@newchobo-ui/core';
+} from '@workbench-kit/vscode-host';
+import type { CommandRegistry } from '@workbench-kit/core';
 import type {
   ChatStreamEvent,
   ChatTransport,
@@ -12,7 +12,7 @@ import type {
   WorkspaceFileRepository,
   WorkspacePatchApplyResult,
   WorkspacePatchEvent,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 import {
   WorkbenchChatService,
   WorkspacePatchService,
@@ -20,7 +20,7 @@ import {
   type WorkbenchChatServiceOptions,
   type WorkspacePatchServiceOptions,
   type WorkspaceSaveServiceOptions,
-} from '@newchobo-ui/services';
+} from '@workbench-kit/services';
 
 export interface WorkbenchExtensionRuntimeOptions<TContext = void> {
   transport?: HostTransport;
@@ -68,9 +68,7 @@ function asNoopTransport(): ChatTransport {
   };
 }
 
-async function callOptionalAsync(
-  call: (() => void | Promise<void>) | undefined,
-) {
+async function callOptionalAsync(call: (() => void | Promise<void>) | undefined) {
   if (!call) return;
   try {
     await call();

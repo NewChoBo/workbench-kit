@@ -10,6 +10,11 @@ import {
   SideBarListItem,
   SideBarViewFrame,
 } from './SideBarViewFrame';
+import {
+  WorkbenchActionList,
+  WorkbenchActionListItem,
+  WorkbenchSidebarSection,
+} from './WorkbenchSidebarActions';
 
 const meta = {
   title: 'React/Layout',
@@ -68,6 +73,85 @@ export const SideBarFrame: Story = {
             <span>Secondary text remains contained.</span>
           </SideBarListItem>
         </SideBarList>
+      </SideBarViewFrame>
+    </div>
+  ),
+};
+
+export const SidebarActionPrimitives: Story = {
+  render: () => (
+    <div style={{ width: 320, height: 560, background: 'var(--color-bg)' }}>
+      <SideBarViewFrame
+        title="Commands"
+        actions={<IconButton icon="codicon-refresh" label="Refresh commands" />}
+      >
+        <WorkbenchSidebarSection
+          title="Pinned"
+          count={6}
+          actions={<IconButton icon="codicon-add" label="Add pinned action" />}
+        >
+          <WorkbenchActionList aria-label="Pinned actions">
+            <WorkbenchActionListItem
+              active
+              icon={<i className="codicon codicon-play" />}
+              label="Run active command"
+              shortcut="Ctrl Enter"
+              status="idle"
+            />
+            <WorkbenchActionListItem
+              icon={<i className="codicon codicon-sync" />}
+              label="Sync workspace"
+              description="Uses caller-provided execution"
+              status="running"
+            />
+            <WorkbenchActionListItem
+              selected
+              icon={<i className="codicon codicon-check" />}
+              label="Apply generated changes"
+              status="completed"
+            />
+            <WorkbenchActionListItem
+              icon={<i className="codicon codicon-warning" />}
+              label="Review failure"
+              status="failed"
+            />
+            <WorkbenchActionListItem
+              disabled
+              disabledReason="No runnable target is selected."
+              icon={<i className="codicon codicon-debug-start" />}
+              label="Debug target"
+              status="disabled"
+            />
+            <WorkbenchActionListItem
+              danger
+              icon={<i className="codicon codicon-trash" />}
+              label="Delete generated output"
+              shortcut="Del"
+              status="waiting"
+            />
+          </WorkbenchActionList>
+        </WorkbenchSidebarSection>
+        <WorkbenchSidebarSection defaultCollapsed title="Collapsed" count={3}>
+          <WorkbenchActionList aria-label="Collapsed actions">
+            <WorkbenchActionListItem
+              icon={<i className="codicon codicon-terminal" />}
+              label="Open task terminal"
+            />
+          </WorkbenchActionList>
+        </WorkbenchSidebarSection>
+        <WorkbenchSidebarSection title="Unavailable" badge={<Badge variant="muted">offline</Badge>}>
+          <WorkbenchActionList aria-label="Unavailable actions">
+            <WorkbenchActionListItem
+              unavailable
+              disabledReason="This action becomes available after a provider connects."
+              icon={<i className="codicon codicon-plug" />}
+              label="Connect provider"
+            />
+          </WorkbenchActionList>
+        </WorkbenchSidebarSection>
+        <WorkbenchSidebarSection title="Empty" count={0}>
+          <WorkbenchActionList empty aria-label="Empty actions" emptyLabel="No actions available" />
+        </WorkbenchSidebarSection>
       </SideBarViewFrame>
     </div>
   ),

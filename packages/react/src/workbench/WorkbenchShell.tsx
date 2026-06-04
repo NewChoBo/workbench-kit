@@ -54,16 +54,16 @@ export function WorkbenchShell({
   );
 
   return (
-    <div
-      className={rootClassName}
-      data-theme={theme}
-      style={rootStyle}
-    >
+    <div className={rootClassName} data-theme={theme} style={rootStyle}>
       <div className="ide-body">
         <ActivityBar {...activityBar} />
         {body}
       </div>
-      <StatusBar compact={compactStatus} sections={statusSections} onItemActivate={onStatusItemActivate} />
+      <StatusBar
+        compact={compactStatus}
+        sections={statusSections}
+        onItemActivate={onStatusItemActivate}
+      />
       {overlays}
     </div>
   );

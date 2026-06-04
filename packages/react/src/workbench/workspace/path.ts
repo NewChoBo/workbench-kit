@@ -7,4 +7,4 @@ export {
   parentPathOf,
   parentPathsOf,
   workspacePathSegments,
-} from '@newchobo-ui/workspace';
+} from '@workbench-kit/workspace';

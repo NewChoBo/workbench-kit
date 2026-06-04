@@ -4,3 +4,4 @@ storybook-static/
 *.tsbuildinfo
 .turbo/
 .pnpm-store/
+.npm-pack/

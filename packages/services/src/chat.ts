@@ -5,7 +5,7 @@ import type {
   ChatTransport,
   ChatTransportListener,
   WorkspacePatchEvent,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 
 export interface WorkbenchChatServiceOptions {
   onPatch?: (patch: WorkspacePatchEvent) => void;

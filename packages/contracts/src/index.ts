@@ -68,11 +68,46 @@ export type {
   PluginPredicate,
   PluginValue,
 } from './plugin';
+export { isPluginEnabled, isPluginLifecycleFailure, isPluginLifecycleSuccess } from './plugin';
+export type {
+  LibraryItemDescriptor,
+  LibraryDragPayload,
+  LibraryCatalogSnapshot,
+  LibraryItemKind,
+  LibraryQuery,
+  LibraryManifest,
+  LibraryManifestErrorCode,
+  LibraryProvider,
+  LibraryProviderSummary,
+  LibraryQueryOptions,
+  LibraryServiceResult,
+  LibrarySource,
+  LibrarySourceKind,
+  LibrarySortMode,
+  ServiceLibraryFailure,
+  ServiceLibrarySuccess,
+} from './library';
 export {
-  isPluginEnabled,
-  isPluginLifecycleFailure,
-  isPluginLifecycleSuccess,
-} from './plugin';
-export type { ServiceFailure, ServiceFailureCode, ServiceListener, ServiceResultEnvelope } from './result';
+  LIBRARY_DRAG_DATA_TYPE,
+  LIBRARY_DRAG_IDS_DATA_TYPE,
+  createLibraryDragPayload,
+  matchesLibraryItem,
+  parseLibraryDragPayload,
+  parseLibraryManifest,
+  parseLibraryManifestText,
+} from './library';
+export {
+  createLibraryItemIdentity,
+  DEFAULT_LIBRARY_ITEM_FALLBACK_SOURCE_ID,
+  normalizeLibraryItemProviderSource,
+  resolveLibraryItemProviderId,
+  resolveLibraryItemSourceId,
+} from './library';
+export type {
+  ServiceFailure,
+  ServiceFailureCode,
+  ServiceListener,
+  ServiceResultEnvelope,
+} from './result';
 export { normalizeServiceFailureMessage } from './result';
 export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from './save';

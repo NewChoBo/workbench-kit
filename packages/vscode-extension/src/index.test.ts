@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { CommandRegistry } from '@newchobo-ui/core';
-import { createCommandRegistry } from '@newchobo-ui/core';
-import type { ChatStreamEvent, ChatTransport, ChatTransportListener } from '@newchobo-ui/contracts';
-import type { HostMessageEnvelope, HostTransport } from '@newchobo-ui/vscode-host';
-import { InMemoryWorkspaceFileRepository } from '@newchobo-ui/adapters';
+import type { CommandRegistry } from '@workbench-kit/core';
+import { createCommandRegistry } from '@workbench-kit/core';
+import type {
+  ChatStreamEvent,
+  ChatTransport,
+  ChatTransportListener,
+} from '@workbench-kit/contracts';
+import type { HostMessageEnvelope, HostTransport } from '@workbench-kit/vscode-host';
+import { InMemoryWorkspaceFileRepository } from '@workbench-kit/adapters';
 import { createWorkbenchExtensionRuntime } from '.';
 
 interface TransportTestHarness {

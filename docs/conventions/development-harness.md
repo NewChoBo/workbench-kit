@@ -11,14 +11,14 @@ lockfile updates.
 
 ## Validation Lanes
 
-| Changed surface                      | Minimum validation                           | Extended validation            |
-| ------------------------------------ | -------------------------------------------- | ------------------------------ |
-| Workspace, package exports, lockfile | `pnpm validate`                              | Public-boundary search         |
-| `packages/tokens` CSS variables      | `pnpm validate`                              | Storybook visual check         |
-| `packages/react` primitives          | `pnpm --filter @newchobo-ui/react typecheck` | `pnpm validate`, browser smoke |
-| Storybook config or stories          | `pnpm build:storybook`                       | Browser smoke                  |
-| Lint/format config                   | `pnpm lint && pnpm format:check`             | `pnpm validate`                |
-| README and conventions               | Manual docs review                           | Public-boundary search         |
+| Changed surface                      | Minimum validation                             | Extended validation            |
+| ------------------------------------ | ---------------------------------------------- | ------------------------------ |
+| Workspace, package exports, lockfile | `pnpm validate`                                | Public-boundary search         |
+| `packages/tokens` CSS variables      | `pnpm validate`                                | Storybook visual check         |
+| `packages/react` primitives          | `pnpm --filter @workbench-kit/react typecheck` | `pnpm validate`, browser smoke |
+| Storybook config or stories          | `pnpm build:storybook`                         | Browser smoke                  |
+| Lint/format config                   | `pnpm lint && pnpm format:check`               | `pnpm validate`                |
+| README and conventions               | Manual docs review                             | Public-boundary search         |
 
 ## UI Smoke
 
