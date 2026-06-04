@@ -152,6 +152,40 @@ export { Field } from './primitives/Field';
 export type { FieldProps } from './primitives/Field';
 export { IconButton } from './primitives/IconButton';
 export type { IconButtonProps } from './primitives/IconButton';
+export { List, ListEmptyState, ListItem } from './primitives/List';
+export type { ListEmptyStateProps, ListItemProps, ListProps } from './primitives/List';
+export { StatusBar } from './primitives/StatusBar';
+export type { StatusBarProps, StatusBarSeverity } from './primitives/StatusBar';
+export {
+  ActivityBar,
+  Collapsible,
+  SideBar,
+  TabbedPanels,
+  WorkbenchShell,
+} from './primitives/WorkbenchChrome';
+export type {
+  ActivityBarProps,
+  ActivityItem,
+  CollapsibleProps,
+  SideBarProps,
+  TabbedPanelItem,
+  TabbedPanelsProps,
+  WorkbenchShellProps,
+} from './primitives/WorkbenchChrome';
+export {
+  ButtonGroup,
+  EditorTabs,
+  ResizablePanels,
+  SegmentedControl,
+} from './primitives/WorkbenchEditor';
+export type {
+  ButtonGroupProps,
+  EditorTab,
+  EditorTabsProps,
+  ResizablePanelsProps,
+  SegmentedControlOption,
+  SegmentedControlProps,
+} from './primitives/WorkbenchEditor';
 export { Select } from './primitives/Select';
 export type { SelectProps } from './primitives/Select';
 export { TextInput } from './primitives/TextInput';
