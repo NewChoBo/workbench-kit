@@ -85,6 +85,17 @@ export type {
   WorkbenchShellInitialState,
   WorkbenchShellState,
 } from './shellState';
+export {
+  getWorkbenchStatusDescriptor,
+  getWorkbenchStatusLabel,
+  getWorkbenchStatusVariant,
+  isWorkbenchStatus,
+  isWorkbenchStatusBusy,
+  isWorkbenchStatusDisabled,
+  isWorkbenchStatusUnavailable,
+  workbenchStatusFromLifecycleStatus,
+} from './status';
+export type { WorkbenchStatus, WorkbenchStatusDescriptor, WorkbenchStatusVariant } from './status';
 export { SplitView } from './SplitView';
 export type { SplitViewProps } from './SplitView';
 export { StatusBar, StatusBarItem, StatusBarSection } from './StatusBar';

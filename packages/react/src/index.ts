@@ -32,6 +32,21 @@ export { ConfirmDialog } from './modal/ConfirmDialog';
 export type { ConfirmDialogProps } from './modal/ConfirmDialog';
 export { ContextMenu } from './overlay/ContextMenu';
 export type { ContextMenuItem, ContextMenuProps } from './overlay/ContextMenu';
+export {
+  getWorkbenchStatusDescriptor,
+  getWorkbenchStatusLabel,
+  getWorkbenchStatusVariant,
+  isWorkbenchStatus,
+  isWorkbenchStatusBusy,
+  isWorkbenchStatusDisabled,
+  isWorkbenchStatusUnavailable,
+  workbenchStatusFromLifecycleStatus,
+} from './workbench/status';
+export type {
+  WorkbenchStatus,
+  WorkbenchStatusDescriptor,
+  WorkbenchStatusVariant,
+} from './workbench/status';
 export { Panel, PanelBody, PanelHeader } from './layout/Panel';
 export type { PanelBodyProps, PanelHeaderProps, PanelProps } from './layout/Panel';
 export {

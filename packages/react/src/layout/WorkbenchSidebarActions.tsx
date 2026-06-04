@@ -3,19 +3,19 @@ import { forwardRef, useId, useState } from 'react';
 import { Badge } from '../primitives/Badge';
 import { cx } from '../utils/cx';
 import {
+  getWorkbenchStatusLabel,
+  isWorkbenchStatusBusy,
+  isWorkbenchStatusDisabled,
+  type WorkbenchStatus,
+} from '../workbench/status';
+import {
   SideBarList,
   SideBarListItem,
   type SideBarListItemProps,
   type SideBarListProps,
 } from './SideBarViewFrame';
 
-export type WorkbenchActionStatus =
-  | 'idle'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'waiting'
-  | 'disabled';
+export type WorkbenchActionStatus = WorkbenchStatus;
 
 export interface WorkbenchActionItem {
   danger?: boolean;
@@ -186,15 +186,6 @@ export interface WorkbenchActionListItemProps extends Omit<
   unavailable?: boolean;
 }
 
-const statusLabels: Record<WorkbenchActionStatus, string> = {
-  completed: 'Completed',
-  disabled: 'Disabled',
-  failed: 'Failed',
-  idle: 'Idle',
-  running: 'Running',
-  waiting: 'Waiting',
-};
-
 export const WorkbenchActionListItem = forwardRef<HTMLButtonElement, WorkbenchActionListItemProps>(
   function WorkbenchActionListItem(
     {
@@ -215,10 +206,10 @@ export const WorkbenchActionListItem = forwardRef<HTMLButtonElement, WorkbenchAc
     ref,
   ) {
     const generatedId = useId();
-    const isUnavailable = unavailable || status === 'disabled';
-    const resolvedDisabled = disabled || isUnavailable;
+    const resolvedStatus = unavailable ? 'unavailable' : status;
+    const resolvedDisabled = disabled || isWorkbenchStatusDisabled(resolvedStatus);
     const reasonId = disabledReason ? `${generatedId}-disabled-reason` : undefined;
-    const resolvedStatusLabel = statusLabel ?? (unavailable ? 'Unavailable' : statusLabels[status]);
+    const resolvedStatusLabel = statusLabel ?? getWorkbenchStatusLabel(resolvedStatus);
     const titleText =
       title ??
       (typeof disabledReason === 'string'
@@ -230,7 +221,7 @@ export const WorkbenchActionListItem = forwardRef<HTMLButtonElement, WorkbenchAc
     return (
       <SideBarListItem
         ref={ref}
-        aria-busy={status === 'running' ? true : undefined}
+        aria-busy={isWorkbenchStatusBusy(resolvedStatus) ? true : undefined}
         aria-describedby={reasonId}
         aria-disabled={resolvedDisabled ? true : undefined}
         className={cx(
@@ -240,9 +231,9 @@ export const WorkbenchActionListItem = forwardRef<HTMLButtonElement, WorkbenchAc
           className,
         )}
         data-danger={danger ? 'true' : undefined}
-        data-status={status}
+        data-status={resolvedStatus}
         data-unavailable={unavailable ? 'true' : undefined}
-        disabled={resolvedDisabled}
+        disabled={resolvedDisabled || isWorkbenchStatusDisabled(resolvedStatus)}
         title={titleText}
         {...props}
       >

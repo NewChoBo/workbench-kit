@@ -739,6 +739,45 @@
   white-space: nowrap;
 }
 
+.ui-workbench-status-bar__status {
+  width: 12px;
+  min-width: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-workbench-status-bar__status-dot {
+  width: 6px;
+  height: 6px;
+  display: inline-block;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-text-subtle) 45%, transparent);
+}
+
+.ui-workbench-status-bar__item[data-status='running'] .ui-workbench-status-bar__status-dot {
+  background: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.ui-workbench-status-bar__item[data-status='completed'] .ui-workbench-status-bar__status-dot {
+  background: #5fbf72;
+}
+
+.ui-workbench-status-bar__item[data-status='failed'] .ui-workbench-status-bar__status-dot {
+  background: var(--color-danger);
+}
+
+.ui-workbench-status-bar__item[data-status='waiting'] .ui-workbench-status-bar__status-dot {
+  background: #d6aa37;
+}
+
+.ui-workbench-status-bar__item[data-status='cancelled'] .ui-workbench-status-bar__status-dot,
+.ui-workbench-status-bar__item[data-status='disabled'] .ui-workbench-status-bar__status-dot,
+.ui-workbench-status-bar__item[data-status='unavailable'] .ui-workbench-status-bar__status-dot {
+  background: color-mix(in srgb, var(--color-text-subtle) 36%, transparent);
+}
+
 .ui-panel-header__title {
   min-width: 0;
   overflow: hidden;
@@ -1122,7 +1161,10 @@
   background: #d6aa37;
 }
 
+.ui-workbench-action-list-item[data-status='cancelled'] .ui-workbench-action-list-item__status-dot,
 .ui-workbench-action-list-item[data-status='disabled'] .ui-workbench-action-list-item__status-dot,
+.ui-workbench-action-list-item[data-status='unavailable']
+  .ui-workbench-action-list-item__status-dot,
 .ui-workbench-action-list-item[data-unavailable='true'] .ui-workbench-action-list-item__status-dot {
   background: color-mix(in srgb, var(--color-text-subtle) 36%, transparent);
 }
