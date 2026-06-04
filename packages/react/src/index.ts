@@ -51,6 +51,26 @@ export type {
   WorkbenchCommandSuggestProps,
 } from './workbench/CommandPalette';
 export {
+  WorkbenchConfirmationFlow,
+  getWorkbenchConfirmationButtonVariant,
+  getWorkbenchConfirmationConfirmLabel,
+  getWorkbenchConfirmationSideEffect,
+  getWorkbenchConfirmationStatus,
+  getWorkbenchConfirmationVariant,
+  isWorkbenchConfirmationActionDisabled,
+} from './workbench/ConfirmationFlow';
+export type {
+  WorkbenchConfirmationAction,
+  WorkbenchConfirmationCancelContext,
+  WorkbenchConfirmationCloseContext,
+  WorkbenchConfirmationConfirmContext,
+  WorkbenchConfirmationContext,
+  WorkbenchConfirmationFlowProps,
+  WorkbenchConfirmationReason,
+  WorkbenchConfirmationSideEffect,
+  WorkbenchConfirmationVariant,
+} from './workbench/ConfirmationFlow';
+export {
   WorkbenchTimeline,
   WorkbenchTimelineItem,
   formatWorkbenchTimelineMetadataValue,

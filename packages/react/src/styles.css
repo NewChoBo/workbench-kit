@@ -242,6 +242,78 @@
   font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
 }
 
+.ui-workbench-confirmation-flow {
+  --ui-modal-width: 440px;
+}
+
+.ui-workbench-confirmation-flow__body {
+  padding: 20px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.ui-workbench-confirmation-flow__message {
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.ui-workbench-confirmation-flow__detail,
+.ui-workbench-confirmation-flow__disabled-reason {
+  display: block;
+  padding: 8px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  text-overflow: ellipsis;
+}
+
+.ui-workbench-confirmation-flow__detail {
+  color: var(--color-text);
+  background: var(--color-surface);
+  white-space: nowrap;
+}
+
+.ui-workbench-confirmation-flow__disabled-reason {
+  margin-top: 10px;
+  color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  white-space: normal;
+}
+
+.ui-workbench-confirmation-flow__side-effect {
+  max-width: 150px;
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  overflow: hidden;
+  color: var(--color-text-subtle);
+  background: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-workbench-confirmation-flow__confirm[data-status='running'] {
+  cursor: wait;
+}
+
+.ui-workbench-confirmation-story {
+  min-height: 420px;
+  padding: 24px;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+.ui-workbench-confirmation-story__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 .workbench-delete-targets {
   display: flex;
   max-height: 160px;
