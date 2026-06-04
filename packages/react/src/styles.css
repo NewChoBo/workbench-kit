@@ -3974,6 +3974,44 @@
   transition: none;
 }
 
+.ui-workbench-canvas-frame-handle {
+  box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  display: flex;
+  width: 100%;
+  height: 18px;
+  align-items: center;
+  padding: 0 8px;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  background: color-mix(
+    in srgb,
+    var(--vscode-titleBar-activeBackground, var(--panel-bg, var(--color-bg))) 72%,
+    transparent
+  );
+  border-bottom: 1px solid var(--vscode-panel-border, var(--color-border));
+  cursor: grab;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 18px;
+  touch-action: none;
+  user-select: none;
+}
+
+.ui-workbench-canvas-frame-handle:active {
+  cursor: grabbing;
+}
+
+.ui-workbench-canvas-frame-handle__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ui-workbench-canvas-item-badge {
   position: absolute;
   top: 2px;

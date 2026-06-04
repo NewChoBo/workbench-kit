@@ -15,7 +15,7 @@ import {
   WorkbenchActionListItem,
   WorkbenchSidebarSection,
 } from './WorkbenchSidebarActions';
-import { WorkbenchDragPreview } from './WorkbenchLayout';
+import { WorkbenchCanvasFrameHandle, WorkbenchDragPreview } from './WorkbenchLayout';
 
 const meta = {
   title: 'React/Layout',
@@ -167,6 +167,25 @@ export const DragPreview: Story = {
       <WorkbenchDragPreview x={96} y={88}>
         Tile template
       </WorkbenchDragPreview>
+    </div>
+  ),
+};
+
+export const CanvasFrameHandle: Story = {
+  render: () => (
+    <div style={{ width: 360, height: 180, padding: 24, background: 'var(--color-bg)' }}>
+      <div
+        style={{
+          position: 'relative',
+          width: 240,
+          height: 120,
+          background: 'var(--vscode-editor-background, var(--color-bg))',
+          border: '1px solid var(--vscode-panel-border, var(--color-border))',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+        }}
+      >
+        <WorkbenchCanvasFrameHandle>Launcher frame</WorkbenchCanvasFrameHandle>
+      </div>
     </div>
   ),
 };
