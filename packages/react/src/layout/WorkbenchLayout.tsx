@@ -1542,11 +1542,22 @@ export interface WorkbenchTreeExpanderProps extends Omit<
   visible?: boolean;
 }
 
+function handleNestedTreeControlEvent<TEvent extends { stopPropagation(): void }>(
+  event: TEvent,
+  handler: ((event: TEvent) => void) | undefined,
+) {
+  event.stopPropagation();
+  handler?.(event);
+}
+
 export function WorkbenchTreeExpander({
   className,
   disabled,
   expanded = false,
   label,
+  onClick,
+  onDoubleClick,
+  onPointerDown,
   tabIndex,
   type = 'button',
   visible = true,
@@ -1560,6 +1571,9 @@ export function WorkbenchTreeExpander({
       className={cx('ui-workbench-tree-expander', className)}
       data-visible={visible ? 'true' : 'false'}
       disabled={!visible || disabled}
+      onClick={(event) => handleNestedTreeControlEvent(event, onClick)}
+      onDoubleClick={(event) => handleNestedTreeControlEvent(event, onDoubleClick)}
+      onPointerDown={(event) => handleNestedTreeControlEvent(event, onPointerDown)}
       tabIndex={visible ? tabIndex : -1}
       type={type}
       {...props}
@@ -1582,6 +1596,9 @@ export function WorkbenchTreeActionButton({
   active = false,
   className,
   compact = true,
+  onClick,
+  onDoubleClick,
+  onPointerDown,
   tabIndex,
   tone = 'default',
   visible = false,
@@ -1594,6 +1611,9 @@ export function WorkbenchTreeActionButton({
       data-active={active ? 'true' : 'false'}
       data-tone={tone}
       data-visible={visible ? 'true' : 'false'}
+      onClick={(event) => handleNestedTreeControlEvent(event, onClick)}
+      onDoubleClick={(event) => handleNestedTreeControlEvent(event, onDoubleClick)}
+      onPointerDown={(event) => handleNestedTreeControlEvent(event, onPointerDown)}
       tabIndex={visible ? tabIndex : -1}
       {...props}
     />
