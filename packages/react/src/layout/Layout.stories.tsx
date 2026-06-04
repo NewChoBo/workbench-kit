@@ -246,7 +246,11 @@ export const CanvasDragChrome: Story = {
         <WorkbenchCanvasViewport width={320} height={180}>
           <WorkbenchCanvasFrameSurface
             selected
-            style={{ left: 16, top: 16, width: 280, height: 140 }}
+            left={16}
+            top={16}
+            width={280}
+            height={140}
+            opacity={0.96}
           >
             <WorkbenchCanvasGuideBlock tone="padding" x={0} y={0} width={280} height={16} />
             <WorkbenchCanvasGuideBlock x={128} y={24} width={12} height={92} />

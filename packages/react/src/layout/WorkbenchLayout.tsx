@@ -338,58 +338,64 @@ export interface WorkbenchCanvasItemFrameProps extends ComponentPropsWithRef<'di
   zIndex?: number | string | undefined;
 }
 
-export function WorkbenchCanvasItemFrame({
-  className,
-  cursor,
-  height,
-  hovered = false,
-  interactive = false,
-  opacity,
-  overflow,
-  rotation,
-  selected = false,
-  style,
-  touchAction,
-  transform,
-  transient = false,
-  width,
-  x,
-  y,
-  zIndex,
-  ...props
-}: WorkbenchCanvasItemFrameProps) {
-  const frameStyle = {
-    '--ui-workbench-canvas-item-x': toLengthValue(x),
-    '--ui-workbench-canvas-item-y': toLengthValue(y),
-    '--ui-workbench-canvas-item-width': toLengthValue(width),
-    '--ui-workbench-canvas-item-height': toLengthValue(height),
-    ...(cursor !== undefined ? { '--ui-workbench-canvas-item-cursor': cursor } : {}),
-    ...(opacity !== undefined ? { '--ui-workbench-canvas-item-opacity': String(opacity) } : {}),
-    ...(overflow !== undefined ? { '--ui-workbench-canvas-item-overflow': overflow } : {}),
-    ...(touchAction !== undefined
-      ? { '--ui-workbench-canvas-item-touch-action': touchAction }
-      : {}),
-    ...(transform !== undefined
-      ? { '--ui-workbench-canvas-item-transform': transform }
-      : rotation !== undefined
-        ? { '--ui-workbench-canvas-item-transform': `rotate(${toAngleValue(rotation)})` }
+export const WorkbenchCanvasItemFrame = forwardRef<HTMLDivElement, WorkbenchCanvasItemFrameProps>(
+  function WorkbenchCanvasItemFrame(
+    {
+      className,
+      cursor,
+      height,
+      hovered = false,
+      interactive = false,
+      opacity,
+      overflow,
+      rotation,
+      selected = false,
+      style,
+      touchAction,
+      transform,
+      transient = false,
+      width,
+      x,
+      y,
+      zIndex,
+      ...props
+    },
+    ref,
+  ) {
+    const frameStyle = {
+      '--ui-workbench-canvas-item-x': toLengthValue(x),
+      '--ui-workbench-canvas-item-y': toLengthValue(y),
+      '--ui-workbench-canvas-item-width': toLengthValue(width),
+      '--ui-workbench-canvas-item-height': toLengthValue(height),
+      ...(cursor !== undefined ? { '--ui-workbench-canvas-item-cursor': cursor } : {}),
+      ...(opacity !== undefined ? { '--ui-workbench-canvas-item-opacity': String(opacity) } : {}),
+      ...(overflow !== undefined ? { '--ui-workbench-canvas-item-overflow': overflow } : {}),
+      ...(touchAction !== undefined
+        ? { '--ui-workbench-canvas-item-touch-action': touchAction }
         : {}),
-    ...(zIndex !== undefined ? { '--ui-workbench-canvas-item-z-index': String(zIndex) } : {}),
-    ...style,
-  } as CSSProperties;
+      ...(transform !== undefined
+        ? { '--ui-workbench-canvas-item-transform': transform }
+        : rotation !== undefined
+          ? { '--ui-workbench-canvas-item-transform': `rotate(${toAngleValue(rotation)})` }
+          : {}),
+      ...(zIndex !== undefined ? { '--ui-workbench-canvas-item-z-index': String(zIndex) } : {}),
+      ...style,
+    } as CSSProperties;
 
-  return (
-    <div
-      className={cx('ui-workbench-canvas-item-frame', className)}
-      data-hovered={hovered ? 'true' : 'false'}
-      data-interactive={interactive ? 'true' : 'false'}
-      data-selected={selected ? 'true' : 'false'}
-      data-transient={transient ? 'true' : 'false'}
-      style={frameStyle}
-      {...props}
-    />
-  );
-}
+    return (
+      <div
+        ref={ref}
+        className={cx('ui-workbench-canvas-item-frame', className)}
+        data-hovered={hovered ? 'true' : 'false'}
+        data-interactive={interactive ? 'true' : 'false'}
+        data-selected={selected ? 'true' : 'false'}
+        data-transient={transient ? 'true' : 'false'}
+        style={frameStyle}
+        {...props}
+      />
+    );
+  },
+);
 
 export type WorkbenchCanvasPaneSurfaceProps = ComponentPropsWithRef<'div'>;
 
@@ -401,21 +407,55 @@ export const WorkbenchCanvasPaneSurface = forwardRef<
 });
 
 export interface WorkbenchCanvasFrameSurfaceProps extends ComponentPropsWithRef<'div'> {
+  bottom?: number | string | undefined;
+  height?: number | string | undefined;
+  left?: number | string | undefined;
+  opacity?: number | string | undefined;
+  right?: number | string | undefined;
   selected?: boolean | undefined;
+  top?: number | string | undefined;
+  transform?: string | undefined;
   transient?: boolean | undefined;
+  width?: number | string | undefined;
 }
 
 export function WorkbenchCanvasFrameSurface({
+  bottom,
   className,
+  height,
+  left,
+  opacity,
+  right,
   selected = false,
+  style,
+  top,
+  transform,
   transient = false,
+  width,
   ...props
 }: WorkbenchCanvasFrameSurfaceProps) {
+  const surfaceStyle = {
+    ...(bottom !== undefined
+      ? { '--ui-workbench-canvas-frame-bottom': toLengthValue(bottom) }
+      : {}),
+    ...(height !== undefined
+      ? { '--ui-workbench-canvas-frame-height': toLengthValue(height) }
+      : {}),
+    ...(left !== undefined ? { '--ui-workbench-canvas-frame-left': toLengthValue(left) } : {}),
+    ...(opacity !== undefined ? { '--ui-workbench-canvas-frame-opacity': String(opacity) } : {}),
+    ...(right !== undefined ? { '--ui-workbench-canvas-frame-right': toLengthValue(right) } : {}),
+    ...(top !== undefined ? { '--ui-workbench-canvas-frame-top': toLengthValue(top) } : {}),
+    ...(transform !== undefined ? { '--ui-workbench-canvas-frame-transform': transform } : {}),
+    ...(width !== undefined ? { '--ui-workbench-canvas-frame-width': toLengthValue(width) } : {}),
+    ...style,
+  } as CSSProperties;
+
   return (
     <div
       className={cx('ui-workbench-canvas-frame-surface', className)}
       data-selected={selected ? 'true' : 'false'}
       data-transient={transient ? 'true' : 'false'}
+      style={surfaceStyle}
       {...props}
     />
   );

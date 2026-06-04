@@ -4002,6 +4002,14 @@
 .ui-workbench-canvas-frame-surface {
   position: absolute;
   box-sizing: border-box;
+  left: var(--ui-workbench-canvas-frame-left, auto);
+  top: var(--ui-workbench-canvas-frame-top, auto);
+  right: var(--ui-workbench-canvas-frame-right, auto);
+  bottom: var(--ui-workbench-canvas-frame-bottom, auto);
+  width: var(--ui-workbench-canvas-frame-width, auto);
+  height: var(--ui-workbench-canvas-frame-height, auto);
+  opacity: var(--ui-workbench-canvas-frame-opacity, 1);
+  transform: var(--ui-workbench-canvas-frame-transform, none);
   background: color-mix(in srgb, var(--vscode-editor-background, var(--color-bg)) 42%, transparent);
   border: 1px solid var(--vscode-panel-border, var(--color-border));
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
