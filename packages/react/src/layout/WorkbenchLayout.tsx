@@ -354,6 +354,70 @@ export function WorkbenchCanvasItemFrame({
   );
 }
 
+export interface WorkbenchCanvasViewportProps extends ComponentPropsWithRef<'div'> {
+  grid?: boolean | undefined;
+  gridSize?: number | string | undefined;
+  height: number | string;
+  width: number | string;
+}
+
+export const WorkbenchCanvasViewport = forwardRef<HTMLDivElement, WorkbenchCanvasViewportProps>(
+  function WorkbenchCanvasViewport(
+    { className, grid = true, gridSize = 20, height, style, width, ...props },
+    ref,
+  ) {
+    const viewportStyle = {
+      '--ui-workbench-canvas-viewport-width': toLengthValue(width),
+      '--ui-workbench-canvas-viewport-height': toLengthValue(height),
+      '--ui-workbench-canvas-viewport-grid-size': toLengthValue(gridSize),
+      ...style,
+    } as CSSProperties;
+
+    return (
+      <div
+        ref={ref}
+        className={cx('ui-workbench-canvas-viewport', className)}
+        data-grid={grid ? 'true' : 'false'}
+        style={viewportStyle}
+        {...props}
+      />
+    );
+  },
+);
+
+export interface WorkbenchCanvasSelectionMarqueeProps extends ComponentPropsWithRef<'div'> {
+  height: number | string;
+  width: number | string;
+  x: number | string;
+  y: number | string;
+}
+
+export function WorkbenchCanvasSelectionMarquee({
+  className,
+  height,
+  style,
+  width,
+  x,
+  y,
+  ...props
+}: WorkbenchCanvasSelectionMarqueeProps) {
+  const marqueeStyle = {
+    '--ui-workbench-canvas-selection-marquee-x': toLengthValue(x),
+    '--ui-workbench-canvas-selection-marquee-y': toLengthValue(y),
+    '--ui-workbench-canvas-selection-marquee-width': toLengthValue(width),
+    '--ui-workbench-canvas-selection-marquee-height': toLengthValue(height),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-canvas-selection-marquee', className)}
+      style={marqueeStyle}
+      {...props}
+    />
+  );
+}
+
 interface WorkbenchCanvasFrameHandleDrag {
   pointerId: number;
   startX: number;

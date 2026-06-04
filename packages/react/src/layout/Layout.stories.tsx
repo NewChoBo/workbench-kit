@@ -20,6 +20,8 @@ import {
   WorkbenchCanvasResizeFrame,
   WorkbenchCanvasResizeHandle,
   WorkbenchCanvasResizePreview,
+  WorkbenchCanvasSelectionMarquee,
+  WorkbenchCanvasViewport,
   WorkbenchDragPreview,
 } from './WorkbenchLayout';
 
@@ -211,6 +213,16 @@ export const CanvasResizeHandles: Story = {
         </WorkbenchCanvasResizeFrame>
         <WorkbenchCanvasResizePreview x={56} y={48} width={188} height={112} zIndex={1} />
       </div>
+    </div>
+  ),
+};
+
+export const CanvasViewportSelection: Story = {
+  render: () => (
+    <div style={{ width: 360, height: 220, padding: 24, background: 'var(--color-bg)' }}>
+      <WorkbenchCanvasViewport width={280} height={160}>
+        <WorkbenchCanvasSelectionMarquee x={48} y={36} width={132} height={72} />
+      </WorkbenchCanvasViewport>
     </div>
   ),
 };
