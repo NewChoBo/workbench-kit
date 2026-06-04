@@ -3689,6 +3689,54 @@
   overflow-y: auto;
 }
 
+.ui-workbench-section-title {
+  padding: 10px 12px 4px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.ui-workbench-divider {
+  height: 1px;
+  margin: 6px 0;
+  background: var(--vscode-panel-border, var(--color-border));
+}
+
+.ui-workbench-property-row.ui-field {
+  margin: 0;
+  padding: 3px 12px;
+}
+
+.ui-workbench-property-row .ui-field__label {
+  margin-bottom: 2px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.ui-workbench-property-row.ui-field--inline {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.ui-workbench-color-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ui-workbench-color-input.ui-input {
+  width: 28px;
+  height: 22px;
+  flex: 0 0 28px;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
 .ui-workbench-parse-error {
   flex-shrink: 0;
   padding: 6px 14px;
