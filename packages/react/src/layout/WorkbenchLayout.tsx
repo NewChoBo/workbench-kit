@@ -1958,6 +1958,61 @@ export function WorkbenchPropertySelectRow<TValue extends string = string>({
   );
 }
 
+export interface WorkbenchPropertySelectActionRowProps<TValue extends string = string> extends Omit<
+  WorkbenchPropertyRowProps,
+  'children'
+> {
+  actionDisabled?: boolean | undefined;
+  actionLabel: ReactNode;
+  actionTitle?: string | undefined;
+  controlWidth?: ControlWidth;
+  disabled?: boolean | undefined;
+  onAction: () => void;
+  onValueChange: (value: TValue) => void;
+  options: readonly WorkbenchPropertySelectOption<TValue>[];
+  value?: TValue | undefined;
+}
+
+export function WorkbenchPropertySelectActionRow<TValue extends string = string>({
+  actionDisabled,
+  actionLabel,
+  actionTitle,
+  controlWidth = 'full',
+  disabled,
+  onAction,
+  onValueChange,
+  options,
+  value,
+  ...props
+}: WorkbenchPropertySelectActionRowProps<TValue>) {
+  return (
+    <WorkbenchPropertyRow {...props}>
+      <WorkbenchPropertyInline>
+        <Select
+          controlWidth={controlWidth}
+          disabled={disabled}
+          value={value ?? options[0]?.value ?? ''}
+          onValueChange={(next) => onValueChange(next as TValue)}
+        >
+          {options.map((option) => (
+            <option key={option.value} disabled={option.disabled} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+        <WorkbenchPropertyToggleButton
+          disabled={actionDisabled}
+          title={actionTitle}
+          type="button"
+          onClick={onAction}
+        >
+          {actionLabel}
+        </WorkbenchPropertyToggleButton>
+      </WorkbenchPropertyInline>
+    </WorkbenchPropertyRow>
+  );
+}
+
 export interface WorkbenchPropertyCheckboxRowProps extends Omit<
   WorkbenchPropertyRowProps,
   'children'
