@@ -3242,12 +3242,22 @@
 }
 
 .ui-collapsible {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
   border-bottom: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
+.ui-collapsible--fill {
+  flex: 1 1 var(--ui-collapsible-basis, 0);
+}
+
+.ui-collapsible--section,
+.ui-collapsible--closed {
+  flex: 0 0 auto;
 }
 
 .ui-collapsible__trigger {
@@ -3544,6 +3554,7 @@
   width: 100vw;
   height: 100vh;
   min-width: 0;
+  overflow: hidden;
   color: var(--vscode-foreground, var(--color-text));
   background: var(--vscode-editor-background, var(--color-bg));
   font-family: var(--vscode-font-family, var(--font-sans));
