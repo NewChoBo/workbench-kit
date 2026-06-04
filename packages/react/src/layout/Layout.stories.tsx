@@ -33,6 +33,7 @@ import {
   WorkbenchCanvasSelectionMarquee,
   WorkbenchCanvasViewport,
   WorkbenchDragPreview,
+  WorkbenchTemplateGlyph,
 } from './WorkbenchLayout';
 
 const meta = {
@@ -273,6 +274,34 @@ export const CanvasDragChrome: Story = {
           <div style={{ width: '100%', height: '100%', background: 'var(--color-surface)' }} />
         </WorkbenchCanvasDragGhostContent>
       </WorkbenchCanvasDragGhost>
+    </div>
+  ),
+};
+
+export const TemplateGlyphs: Story = {
+  render: () => (
+    <div
+      style={{
+        display: 'flex',
+        gap: 10,
+        width: 360,
+        padding: 24,
+        background: 'var(--color-bg)',
+      }}
+    >
+      {(['color', 'text', 'badge', 'image', 'list', 'grid', 'flex', 'frame'] as const).map(
+        (icon, index) => (
+          <WorkbenchTemplateGlyph
+            key={icon}
+            accent={
+              ['#4f46e5', '#1f2937', '#0f766e', '#0ea5e9', '#64748b', '#2563eb', '#16a34a'][
+                index
+              ] ?? '#a855f7'
+            }
+            icon={icon}
+          />
+        ),
+      )}
     </div>
   ),
 };
