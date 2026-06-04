@@ -3721,6 +3721,170 @@
   gap: 8px;
 }
 
+.ui-workbench-property-panel {
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+  color: var(--vscode-sideBar-foreground, var(--color-text));
+  background: var(--vscode-sideBar-background, var(--color-surface));
+  font-family: var(--font-family, system-ui, sans-serif);
+  font-size: var(--font-size-sm);
+}
+
+.ui-workbench-property-panel--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.ui-workbench-property-section {
+  min-width: 0;
+  margin: 0 0 20px;
+}
+
+.ui-workbench-property-section__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-bottom: 8px;
+}
+
+.ui-workbench-property-section__header .ui-workbench-section-title {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+
+.ui-workbench-property-section__actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.ui-workbench-property-section__body,
+.ui-workbench-property-stack {
+  display: grid;
+  min-width: 0;
+}
+
+.ui-workbench-property-section__body,
+.ui-workbench-property-stack[data-gap='md'] {
+  gap: 10px;
+}
+
+.ui-workbench-property-stack[data-gap='xs'] {
+  gap: 4px;
+}
+
+.ui-workbench-property-stack[data-gap='sm'] {
+  gap: 8px;
+}
+
+.ui-workbench-property-stack[data-gap='lg'] {
+  gap: 12px;
+}
+
+.ui-workbench-property-grid {
+  display: grid;
+  min-width: 0;
+}
+
+.ui-workbench-property-grid[data-columns='2'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ui-workbench-property-grid[data-columns='3'] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ui-workbench-property-grid[data-gap='xs'] {
+  gap: 4px;
+}
+
+.ui-workbench-property-grid[data-gap='sm'] {
+  gap: 8px;
+}
+
+.ui-workbench-property-grid[data-gap='md'] {
+  gap: 10px;
+}
+
+.ui-workbench-property-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ui-workbench-property-inline[data-justify='between'] {
+  justify-content: space-between;
+}
+
+.ui-workbench-property-hint {
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: 10px;
+}
+
+.ui-workbench-property-card {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 8px;
+  background: var(--vscode-editor-background, var(--color-bg));
+  border: 1px solid var(--vscode-input-border, var(--color-border));
+  border-radius: 4px;
+}
+
+.ui-workbench-property-key-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 3px 8px;
+  background: var(--vscode-editor-background, var(--color-bg));
+  border: 1px solid var(--vscode-input-border, var(--color-border));
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.ui-workbench-property-key-value__name {
+  flex: 0 0 80px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-workbench-property-key-value__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--vscode-foreground, var(--color-text));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-workbench-property-toggle.ui-button {
+  height: 24px;
+  min-height: 0;
+  padding: 0 8px;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  background: var(--vscode-input-background, var(--color-surface));
+  border-color: var(--vscode-input-border, var(--color-border));
+  font-size: 10px;
+}
+
+.ui-workbench-property-toggle.ui-button[data-active='true'] {
+  color: var(--vscode-button-foreground, var(--color-bg));
+  background: var(--vscode-button-background, var(--color-accent));
+}
+
 .ui-workbench-color-row {
   display: flex;
   align-items: center;

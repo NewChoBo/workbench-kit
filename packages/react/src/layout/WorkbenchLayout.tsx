@@ -1,5 +1,6 @@
 import type { ComponentPropsWithRef, CSSProperties, ReactNode } from 'react';
 import { Button } from '../primitives/Button';
+import type { ButtonProps } from '../primitives/Button';
 import { Field } from '../primitives/Field';
 import type { FieldProps } from '../primitives/Field';
 import { TextInput } from '../primitives/TextInput';
@@ -118,6 +119,159 @@ export function WorkbenchPropertyRow({ className, ...props }: WorkbenchPropertyR
   return <Field className={cx('ui-workbench-property-row', className)} {...props} />;
 }
 
+export interface WorkbenchPropertyPanelProps extends ComponentPropsWithRef<'div'> {
+  empty?: boolean;
+}
+
+export function WorkbenchPropertyPanel({
+  className,
+  empty = false,
+  ...props
+}: WorkbenchPropertyPanelProps) {
+  return (
+    <div
+      className={cx(
+        'ui-workbench-property-panel',
+        empty && 'ui-workbench-property-panel--empty',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchPropertySectionProps extends Omit<
+  ComponentPropsWithRef<'section'>,
+  'title'
+> {
+  actions?: ReactNode;
+  bodyClassName?: string;
+  title?: ReactNode;
+}
+
+export function WorkbenchPropertySection({
+  actions,
+  bodyClassName,
+  children,
+  className,
+  title,
+  ...props
+}: WorkbenchPropertySectionProps) {
+  return (
+    <section className={cx('ui-workbench-property-section', className)} {...props}>
+      {title || actions ? (
+        <div className="ui-workbench-property-section__header">
+          {title ? <WorkbenchSectionTitle>{title}</WorkbenchSectionTitle> : null}
+          {actions ? <div className="ui-workbench-property-section__actions">{actions}</div> : null}
+        </div>
+      ) : null}
+      <div className={cx('ui-workbench-property-section__body', bodyClassName)}>{children}</div>
+    </section>
+  );
+}
+
+export interface WorkbenchPropertyStackProps extends ComponentPropsWithRef<'div'> {
+  gap?: 'xs' | 'sm' | 'md' | 'lg';
+}
+
+export function WorkbenchPropertyStack({
+  className,
+  gap = 'md',
+  ...props
+}: WorkbenchPropertyStackProps) {
+  return <div className={cx('ui-workbench-property-stack', className)} data-gap={gap} {...props} />;
+}
+
+export interface WorkbenchPropertyGridProps extends ComponentPropsWithRef<'div'> {
+  columns?: 2 | 3;
+  gap?: 'xs' | 'sm' | 'md';
+}
+
+export function WorkbenchPropertyGrid({
+  className,
+  columns = 2,
+  gap = 'sm',
+  ...props
+}: WorkbenchPropertyGridProps) {
+  return (
+    <div
+      className={cx('ui-workbench-property-grid', className)}
+      data-columns={columns}
+      data-gap={gap}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchPropertyInlineProps extends ComponentPropsWithRef<'div'> {
+  justify?: 'start' | 'between';
+}
+
+export function WorkbenchPropertyInline({
+  className,
+  justify = 'start',
+  ...props
+}: WorkbenchPropertyInlineProps) {
+  return (
+    <div
+      className={cx('ui-workbench-property-inline', className)}
+      data-justify={justify}
+      {...props}
+    />
+  );
+}
+
+export type WorkbenchPropertyHintProps = ComponentPropsWithRef<'span'>;
+
+export function WorkbenchPropertyHint({ className, ...props }: WorkbenchPropertyHintProps) {
+  return <span className={cx('ui-workbench-property-hint', className)} {...props} />;
+}
+
+export type WorkbenchPropertyCardProps = ComponentPropsWithRef<'div'>;
+
+export function WorkbenchPropertyCard({ className, ...props }: WorkbenchPropertyCardProps) {
+  return <div className={cx('ui-workbench-property-card', className)} {...props} />;
+}
+
+export interface WorkbenchPropertyKeyValueProps extends ComponentPropsWithRef<'div'> {
+  name: ReactNode;
+  value: ReactNode;
+}
+
+export function WorkbenchPropertyKeyValue({
+  className,
+  name,
+  value,
+  ...props
+}: WorkbenchPropertyKeyValueProps) {
+  return (
+    <div className={cx('ui-workbench-property-key-value', className)} {...props}>
+      <span className="ui-workbench-property-key-value__name">{name}</span>
+      <span className="ui-workbench-property-key-value__value">{value}</span>
+    </div>
+  );
+}
+
+export interface WorkbenchPropertyToggleButtonProps extends ButtonProps {
+  active?: boolean;
+}
+
+export function WorkbenchPropertyToggleButton({
+  active = false,
+  className,
+  compact = true,
+  ...props
+}: WorkbenchPropertyToggleButtonProps) {
+  return (
+    <Button
+      className={cx('ui-workbench-property-toggle', className)}
+      compact={compact}
+      data-active={active ? 'true' : 'false'}
+      {...props}
+    />
+  );
+}
+
 export type WorkbenchColorRowProps = ComponentPropsWithRef<'div'>;
 
 export function WorkbenchColorRow({ className, ...props }: WorkbenchColorRowProps) {
@@ -128,12 +282,14 @@ export interface WorkbenchColorInputProps extends Omit<
   ComponentPropsWithRef<'div'>,
   'children' | 'onChange'
 > {
+  disabled?: boolean | undefined;
   fallbackValue?: string;
   onValueChange: (value: string) => void;
   value?: string | undefined;
 }
 
 export function WorkbenchColorInput({
+  disabled = false,
   fallbackValue = '#000000',
   onValueChange,
   value,
@@ -145,12 +301,14 @@ export function WorkbenchColorInput({
     <WorkbenchColorRow {...props}>
       <TextInput
         className="ui-workbench-color-input"
+        disabled={disabled}
         type="color"
         value={currentValue}
         onChange={(event) => onValueChange(event.target.value)}
       />
       <TextInput
         controlWidth="full"
+        disabled={disabled}
         type="text"
         value={currentValue}
         onChange={(event) => onValueChange(event.target.value)}
