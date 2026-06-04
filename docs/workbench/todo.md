@@ -51,28 +51,28 @@ should remain outside this repository.
 
 ## Independent Work Queue
 
-| ID    | Priority | Area      | Item                      | Depends On                       | Package Target         | Notes                                                                                              |
-| ----- | -------- | --------- | ------------------------- | -------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
-| WB-01 | P1       | Sidebar   | Section primitive         | Existing sidebar frame           | `@workbench-kit/react` | Collapsible section with label, count/badge slot, and secondary action slot.                       |
-| WB-02 | P1       | Sidebar   | Action list primitive     | WB-01                            | `@workbench-kit/react` | Render command/action rows with icon, status, shortcut, danger marker, and disabled reason.        |
-| WB-03 | P1       | Command   | Command palette shell     | WB-02                            | `@workbench-kit/react` | Searchable command surface with keyboard navigation and empty/unavailable states.                  |
-| WB-04 | P2       | Chat      | Tool event renderer       | Consumer event shape draft       | `@workbench-kit/react` | Generic cards for tool call, tool result, file write, error, and progress events.                  |
-| WB-05 | P2       | Status    | Command status model      | Consumer command lifecycle draft | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, and waiting states. |
-| WB-06 | P2       | Workspace | Multi-provider explorer   | Existing tree/list patterns      | `@workbench-kit/react` | Display real files, virtual files, state, config, and session artifacts from separate providers.   |
-| WB-07 | P2       | Editor    | Code/preview/split shell  | Existing editor host             | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring a consumer-specific editor.        |
-| WB-08 | P2       | Editor    | Preview renderer registry | WB-07                            | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, or artifact kind.                           |
-| WB-09 | P3       | Modal     | Confirmation flow         | Existing dialog primitives       | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                        |
-| WB-10 | P3       | Settings  | Schema form renderer      | Existing field primitives        | `@workbench-kit/react` | Render simple settings forms from metadata without binding to a consumer settings store.           |
+| ID    | Priority | Area      | Item                          | Depends On                       | Package Target         | Notes                                                                                                                 |
+| ----- | -------- | --------- | ----------------------------- | -------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| WB-01 | P1       | Sidebar   | Section primitive             | Existing sidebar frame           | `@workbench-kit/react` | Collapsible section with label, count/badge slot, and secondary action slot.                                          |
+| WB-02 | P1       | Sidebar   | Action list primitive         | WB-01                            | `@workbench-kit/react` | Render command/action rows with icon, status, shortcut, danger marker, and disabled reason.                           |
+| WB-03 | P1       | Command   | Command palette/suggest shell | WB-02                            | `@workbench-kit/react` | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states. |
+| WB-04 | P2       | Chat      | Tool event renderer           | Consumer event shape draft       | `@workbench-kit/react` | Generic cards for tool call, tool result, file write, error, and progress events.                                     |
+| WB-05 | P2       | Status    | Command status model          | Consumer command lifecycle draft | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, and waiting states.                    |
+| WB-06 | P2       | Workspace | Multi-provider explorer       | Existing tree/list patterns      | `@workbench-kit/react` | Display real files, virtual files, state, config, and session artifacts from separate providers.                      |
+| WB-07 | P2       | Editor    | Code/preview/split shell      | Existing editor host             | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring a consumer-specific editor.                           |
+| WB-08 | P2       | Editor    | Preview renderer registry     | WB-07                            | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, or artifact kind.                                              |
+| WB-09 | P3       | Modal     | Confirmation flow             | Existing dialog primitives       | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                                           |
+| WB-10 | P3       | Settings  | Schema form renderer          | Existing field primitives        | `@workbench-kit/react` | Render simple settings forms from metadata without binding to a consumer settings store.                              |
 
 ## Suggested Implementation Order
 
-| Order | Items               | Reason                                                                                                |
-| ----- | ------------------- | ----------------------------------------------------------------------------------------------------- |
-| 1     | WB-01, WB-02        | Sidebar action surfaces are needed before command-heavy consumer panels can be polished.              |
-| 2     | WB-04, WB-05        | Command execution needs visible event and status feedback.                                            |
-| 3     | WB-07, WB-08        | Artifact preview should be reusable before adding specialized preview renderers.                      |
-| 4     | WB-06               | Multi-provider explorer benefits from early consumer feedback after artifact conventions settle.      |
-| 5     | WB-03, WB-09, WB-10 | Palette, confirmation, and schema form work can follow once command and settings contracts stabilize. |
+| Order | Items               | Reason                                                                                                               |
+| ----- | ------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1     | WB-01, WB-02        | Sidebar action surfaces are needed before command-heavy consumer panels can be polished.                             |
+| 2     | WB-04, WB-05        | Command execution needs visible event and status feedback.                                                           |
+| 3     | WB-07, WB-08        | Artifact preview should be reusable before adding specialized preview renderers.                                     |
+| 4     | WB-06               | Multi-provider explorer benefits from early consumer feedback after artifact conventions settle.                     |
+| 5     | WB-03, WB-09, WB-10 | Palette, slash suggest, confirmation, and schema form work can follow once command and settings contracts stabilize. |
 
 ## Recommended First Slice
 
@@ -124,28 +124,29 @@ props.
 
 ## Acceptance Criteria
 
-| Item  | Acceptance Criteria                                                                                                                                                      |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| WB-01 | Section can collapse/expand, exposes accessible heading semantics, preserves sidebar spacing, and supports optional badge/count and secondary action content.            |
-| WB-02 | Action row supports active, disabled, running, danger, selected, and unavailable states without layout shift; disabled rows expose a reason to assistive/user surfaces.  |
-| WB-03 | Palette can filter commands, support keyboard navigation, render empty states, and call an `onRunCommand`-style callback without owning command execution.               |
-| WB-04 | Event renderer can display generic tool call, result, file write, progress, and error events with compact and expanded variants.                                         |
-| WB-05 | Status model maps command lifecycle states to stable labels and visual variants without assuming a consumer runtime.                                                     |
-| WB-06 | Explorer can combine multiple provider roots while preserving root identity, selection, disabled states, and per-provider actions.                                       |
-| WB-07 | Code/preview/split shell can switch modes, preserve selected file identity, and leave actual code editor/preview renderer implementation pluggable.                      |
-| WB-08 | Registry can select renderers by extension, MIME type, artifact kind, or fallback priority, and can render a clear unsupported state.                                    |
-| WB-09 | Confirmation flow supports default and danger variants, async confirm state, cancel/close behavior, and accessible dialog naming.                                        |
-| WB-10 | Schema form renderer supports simple text/select/checkbox/number fields, validation messages, disabled/read-only states, and submit/cancel callbacks without store lock. |
+| Item  | Acceptance Criteria                                                                                                                                                                                           |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| WB-01 | Section can collapse/expand, exposes accessible heading semantics, preserves sidebar spacing, and supports optional badge/count and secondary action content.                                                 |
+| WB-02 | Action row supports active, disabled, running, danger, selected, and unavailable states without layout shift; disabled rows expose a reason to assistive/user surfaces.                                       |
+| WB-03 | Palette and composer slash suggest can filter commands, support keyboard navigation, render empty states, preserve focus handoff, and call an `onRunCommand`-style callback without owning command execution. |
+| WB-04 | Event renderer can display generic tool call, result, file write, progress, and error events with compact and expanded variants.                                                                              |
+| WB-05 | Status model maps command lifecycle states to stable labels and visual variants without assuming a consumer runtime.                                                                                          |
+| WB-06 | Explorer can combine multiple provider roots while preserving root identity, selection, disabled states, and per-provider actions.                                                                            |
+| WB-07 | Code/preview/split shell can switch modes, preserve selected file identity, and leave actual code editor/preview renderer implementation pluggable.                                                           |
+| WB-08 | Registry can select renderers by extension, MIME type, artifact kind, or fallback priority, and can render a clear unsupported state.                                                                         |
+| WB-09 | Confirmation flow supports default and danger variants, async confirm state, cancel/close behavior, and accessible dialog naming.                                                                             |
+| WB-10 | Schema form renderer supports simple text/select/checkbox/number fields, validation messages, disabled/read-only states, and submit/cancel callbacks without store lock.                                      |
 
 ## Storybook Requirements
 
-| Surface                  | Required Stories                                                                 |
-| ------------------------ | -------------------------------------------------------------------------------- |
-| Sidebar section/list     | Dense sidebar, multiple sections, collapsed groups, disabled action, danger item |
-| Command event/status     | Running command, successful result, failure, waiting for confirmation            |
-| Code/preview/split shell | Code only, preview only, split, unsupported preview                              |
-| Multi-provider explorer  | Files, generated artifacts, state/config roots, empty provider                   |
-| Confirmation/schema form | Default confirm, danger confirm, async pending, read-only form                   |
+| Surface                  | Required Stories                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------- |
+| Sidebar section/list     | Dense sidebar, multiple sections, collapsed groups, disabled action, danger item          |
+| Command palette/suggest  | Global palette, composer slash suggest, filtered results, empty state, keyboard selection |
+| Command event/status     | Running command, successful result, failure, waiting for confirmation                     |
+| Code/preview/split shell | Code only, preview only, split, unsupported preview                                       |
+| Multi-provider explorer  | Files, generated artifacts, state/config roots, empty provider                            |
+| Confirmation/schema form | Default confirm, danger confirm, async pending, read-only form                            |
 
 ## Implementation Notes
 
