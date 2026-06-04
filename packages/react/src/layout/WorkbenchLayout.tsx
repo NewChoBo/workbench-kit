@@ -304,6 +304,93 @@ export function WorkbenchFloatingMenuItem({
   );
 }
 
+export interface WorkbenchCanvasItemFrameProps extends ComponentPropsWithRef<'div'> {
+  height: number | string;
+  hovered?: boolean | undefined;
+  interactive?: boolean | undefined;
+  selected?: boolean | undefined;
+  transient?: boolean | undefined;
+  width: number | string;
+  x: number | string;
+  y: number | string;
+}
+
+export function WorkbenchCanvasItemFrame({
+  className,
+  height,
+  hovered = false,
+  interactive = false,
+  selected = false,
+  style,
+  transient = false,
+  width,
+  x,
+  y,
+  ...props
+}: WorkbenchCanvasItemFrameProps) {
+  const frameStyle = {
+    '--ui-workbench-canvas-item-x': toLengthValue(x),
+    '--ui-workbench-canvas-item-y': toLengthValue(y),
+    '--ui-workbench-canvas-item-width': toLengthValue(width),
+    '--ui-workbench-canvas-item-height': toLengthValue(height),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-canvas-item-frame', className)}
+      data-hovered={hovered ? 'true' : 'false'}
+      data-interactive={interactive ? 'true' : 'false'}
+      data-selected={selected ? 'true' : 'false'}
+      data-transient={transient ? 'true' : 'false'}
+      style={frameStyle}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchCanvasItemBadgeProps extends ComponentPropsWithRef<'span'> {
+  selected?: boolean | undefined;
+}
+
+export function WorkbenchCanvasItemBadge({
+  className,
+  selected = false,
+  ...props
+}: WorkbenchCanvasItemBadgeProps) {
+  return (
+    <span
+      className={cx('ui-workbench-canvas-item-badge', className)}
+      data-selected={selected ? 'true' : 'false'}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchCanvasResizeHandleProps extends Omit<
+  ComponentPropsWithRef<'button'>,
+  'children'
+> {
+  label?: string | undefined;
+}
+
+export function WorkbenchCanvasResizeHandle({
+  className,
+  label = 'Resize',
+  type = 'button',
+  ...props
+}: WorkbenchCanvasResizeHandleProps) {
+  return (
+    <button
+      aria-label={label}
+      className={cx('ui-workbench-canvas-resize-handle', className)}
+      title={label}
+      type={type}
+      {...props}
+    />
+  );
+}
+
 function treeIndentOffset(depth: number, indentSize: number) {
   return `${8 + depth * indentSize}px`;
 }
