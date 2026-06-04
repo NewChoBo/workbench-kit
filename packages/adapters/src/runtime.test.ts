@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createMockWorkbenchRuntime } from '@newchobo-ui/runtime';
-import type { ChatStreamEvent } from '@newchobo-ui/contracts';
+import { createMockWorkbenchRuntime } from '@workbench-kit/runtime';
+import type { ChatStreamEvent } from '@workbench-kit/contracts';
 import { createChatTransportFromRuntime, emitRuntimeWorkspacePatch } from './runtime';
 
 describe('runtime adapter', () => {

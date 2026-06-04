@@ -1,8 +1,12 @@
 import { useMemo, useState, type MouseEvent } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, within } from 'storybook/test';
-import { createCommandRegistry, executeCommand, resolveCommandMenuItems } from '@newchobo-ui/core';
-import { searchWorkspaceFiles, type WorkspaceFile } from '@newchobo-ui/workspace';
+import {
+  createCommandRegistry,
+  executeCommand,
+  resolveCommandMenuItems,
+} from '@workbench-kit/core';
+import { searchWorkspaceFiles, type WorkspaceFile } from '@workbench-kit/workspace';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import {
   commandMenuItemsToContextMenuItems,
@@ -101,7 +105,10 @@ function SearchHarness({ initialQuery = '' }: SearchHarnessProps) {
   };
 
   return (
-    <div className="workspace-search-panel-story" style={{ height: 460, width: 340 }}>
+    <div
+      className="workspace-search-panel-story"
+      style={{ height: 'min(calc(100% - 120px), 560px)', width: 'min(100%, 380px)' }}
+    >
       <WorkspaceSearchPanel
         activePath={activePath}
         query={query}

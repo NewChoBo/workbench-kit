@@ -1,6 +1,75 @@
 export { ActivityBar } from './ActivityBar';
 export type { ActivityBarItem, ActivityBarProps } from './ActivityBar';
 export {
+  WorkbenchArtifactPreview,
+  WorkbenchArtifactShell,
+  formatWorkbenchArtifactContent,
+  getWorkbenchArtifactExtension,
+  getWorkbenchArtifactTitle,
+  getWorkbenchPreviewRenderer,
+  getWorkbenchPreviewRendererMatch,
+  selectWorkbenchPreviewRenderer,
+} from './ArtifactShell';
+export type {
+  WorkbenchArtifactDescriptor,
+  WorkbenchArtifactMode,
+  WorkbenchArtifactPreviewProps,
+  WorkbenchArtifactShellProps,
+  WorkbenchArtifactShellRenderCode,
+  WorkbenchArtifactShellRenderPreview,
+  WorkbenchPreviewRenderer,
+  WorkbenchPreviewRendererContext,
+  WorkbenchPreviewRendererMatch,
+  WorkbenchPreviewRendererMatchReason,
+} from './ArtifactShell';
+export {
+  WorkbenchCommandList,
+  WorkbenchCommandPalette,
+  WorkbenchCommandSuggest,
+  commandMenuItemsToWorkbenchCommandDescriptors,
+  commandMenuItemToWorkbenchCommandDescriptor,
+  filterWorkbenchCommands,
+  getNextWorkbenchCommandIndex,
+  getWorkbenchCommandStatusLabel,
+  isWorkbenchCommandRunnable,
+} from './CommandPalette';
+export type {
+  WorkbenchCommandDescriptor,
+  WorkbenchCommandDescriptorOverrides,
+  WorkbenchCommandExecution,
+  WorkbenchCommandFeedback,
+  WorkbenchCommandFilterInput,
+  WorkbenchCommandListProps,
+  WorkbenchCommandNavigationInput,
+  WorkbenchCommandOutput,
+  WorkbenchCommandPaletteProps,
+  WorkbenchCommandRunContext,
+  WorkbenchCommandRunSource,
+  WorkbenchCommandSideEffect,
+  WorkbenchCommandStatus,
+  WorkbenchCommandSuggestProps,
+} from './CommandPalette';
+export {
+  WorkbenchConfirmationFlow,
+  getWorkbenchConfirmationButtonVariant,
+  getWorkbenchConfirmationConfirmLabel,
+  getWorkbenchConfirmationSideEffect,
+  getWorkbenchConfirmationStatus,
+  getWorkbenchConfirmationVariant,
+  isWorkbenchConfirmationActionDisabled,
+} from './ConfirmationFlow';
+export type {
+  WorkbenchConfirmationAction,
+  WorkbenchConfirmationCancelContext,
+  WorkbenchConfirmationCloseContext,
+  WorkbenchConfirmationConfirmContext,
+  WorkbenchConfirmationContext,
+  WorkbenchConfirmationFlowProps,
+  WorkbenchConfirmationReason,
+  WorkbenchConfirmationSideEffect,
+  WorkbenchConfirmationVariant,
+} from './ConfirmationFlow';
+export {
   WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID,
@@ -58,6 +127,17 @@ export type {
   WorkbenchShellInitialState,
   WorkbenchShellState,
 } from './shellState';
+export {
+  getWorkbenchStatusDescriptor,
+  getWorkbenchStatusLabel,
+  getWorkbenchStatusVariant,
+  isWorkbenchStatus,
+  isWorkbenchStatusBusy,
+  isWorkbenchStatusDisabled,
+  isWorkbenchStatusUnavailable,
+  workbenchStatusFromLifecycleStatus,
+} from './status';
+export type { WorkbenchStatus, WorkbenchStatusDescriptor, WorkbenchStatusVariant } from './status';
 export { SplitView } from './SplitView';
 export type { SplitViewProps } from './SplitView';
 export { StatusBar, StatusBarItem, StatusBarSection } from './StatusBar';
@@ -69,14 +149,64 @@ export type {
   StatusBarSectionModel,
   StatusBarSectionProps,
 } from './StatusBar';
+export {
+  WorkbenchTimeline,
+  WorkbenchTimelineItem,
+  formatWorkbenchTimelineMetadataValue,
+  getWorkbenchTimelineEventIconClass,
+  getWorkbenchTimelineEventLabel,
+  getWorkbenchTimelineEventStatus,
+  getWorkbenchTimelineMetadataEntries,
+} from './Timeline';
+export type {
+  WorkbenchTimelineEvent,
+  WorkbenchTimelineEventKind,
+  WorkbenchTimelineItemProps,
+  WorkbenchTimelineMessageSource,
+  WorkbenchTimelineMetadataEntry,
+  WorkbenchTimelineProps,
+  WorkbenchTimelineRenderContext,
+  WorkbenchTimelineRenderMetadata,
+  WorkbenchTimelineRenderPayload,
+  WorkbenchTimelineVariant,
+} from './Timeline';
 export { WorkbenchSettingsModal } from './settings';
 export type {
+  WorkbenchSchemaFormCancelContext,
+  WorkbenchSchemaFormCheckboxField,
+  WorkbenchSchemaFormErrors,
+  WorkbenchSchemaFormField,
+  WorkbenchSchemaFormFieldBase,
+  WorkbenchSchemaFormFieldChangeContext,
+  WorkbenchSchemaFormFieldType,
+  WorkbenchSchemaFormFieldValue,
+  WorkbenchSchemaFormNumberField,
+  WorkbenchSchemaFormOption,
+  WorkbenchSchemaFormProps,
+  WorkbenchSchemaFormSelectField,
+  WorkbenchSchemaFormSubmitContext,
+  WorkbenchSchemaFormTextField,
+  WorkbenchSchemaFormValues,
   WorkbenchSettingsCategory,
   WorkbenchSettingsModalProps,
   WorkbenchSettingsScope,
 } from './settings';
+export {
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+} from './settings';
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';
+export { WorkbenchStandaloneShell } from './WorkbenchStandaloneShell';
+export type {
+  WorkbenchStandaloneShellContext,
+  WorkbenchStandaloneShellProps,
+} from './WorkbenchStandaloneShell';
 export type {
   WorkbenchActivityChangeEvent,
   WorkbenchActivityDescriptor,

@@ -15,6 +15,7 @@
 ## 2) 현재 증거 기반 상태
 
 ### 코드 증거
+
 - `WorkbenchShell` 공개 export
   - `packages/react/src/workbench/WorkbenchShell.tsx`
   - `packages/react/src/workbench/index.ts`
@@ -22,20 +23,23 @@
   - `packages/react/src/workbench/Workbench.stories.tsx`의 `IntegratedWorkbenchShell`
 
 ### 타입/테스트 증거
+
 - `WorkbenchShell` 컴포넌트 단위 테스트: `packages/react/src/workbench/WorkbenchShell.test.tsx`
 - baseline Playwright 회귀: `pnpm test:storybook-play:required`
 - host/runtime 기본 타입/테스트:
-  - `pnpm --filter @newchobo-ui/vscode-host typecheck, test`
-  - `pnpm --filter @newchobo-ui/services typecheck`
+  - `pnpm --filter @workbench-kit/vscode-host typecheck, test`
+  - `pnpm --filter @workbench-kit/services typecheck`
 - extension runtime API는 문서 동기화만 수행(코드/타입/테스트는 다음 cycle에서 실행)
 
 ### 문서 상태
+
 - 현재 마일스톤/우선순위는 `standalone launch` 우선 + extension bootstrap 이월이 반영된 상태로 통일 중.
 - 이번 사이클에서 vscode-extension 브랜치 변경은 보류. 실행은 `react` + `services` + `vscode-host` 경로만 검증한다.
 
 ## 3) 다갈래 전략(필수 분기)
 
 ## Lane A: ui-package 런치-레디 정리 (최우선)
+
 - 목적: story 조립 의존도를 낮추고 앱이 직접 조립 가능한 API로 정리
 - 범위:
   - `WorkbenchShell`에 대한 런치 계약(상태/서비스/커맨드) 안정화
@@ -44,10 +48,11 @@
   - 앱 bootstrap 계약 타입 + 최소 어댑터
   - 통합 story에서 동일 동작 재사용
 - 게이트:
-  - `pnpm --filter @newchobo-ui/react typecheck`
+  - `pnpm --filter @workbench-kit/react typecheck`
   - `pnpm test:storybook-play:required`
 
 ## Lane B: standalone 런타임 하드닝 (동일 우선순위로 병행 가능)
+
 - 목적: `vscode-host` + services 경계 신뢰성 강화
 - 범위:
   - 구독/구독 해제/재구독 idempotency
@@ -56,39 +61,44 @@
 - 산출:
   - 핵심 path 예외 테스트
 - 게이트:
-  - `pnpm --filter @newchobo-ui/vscode-host test`
-  - `pnpm --filter @newchobo-ui/services typecheck`
+  - `pnpm --filter @workbench-kit/vscode-host test`
+  - `pnpm --filter @workbench-kit/services typecheck`
   - baseline 시나리오 회귀
 
 ## Lane C: `vscode-extension` 래퍼 패키지 (차기)
+
 - 현재는 구현 API는 있으나 앱용 정식 launch wrapper는 보류
 - `feature/codex/vscode-extension-wrapper`(또는 유사명) 브랜치에서 진행
 - 산출:
   - extension 가이드 + 사용 예시
   - 기존 runtime/service 계약 사용 예시 정렬
 - 게이트:
-  - `pnpm --filter @newchobo-ui/vscode-extension test`
-  - `pnpm --filter @newchobo-ui/vscode-extension typecheck`
+  - `pnpm --filter @workbench-kit/vscode-extension test`
+  - `pnpm --filter @workbench-kit/vscode-extension typecheck`
 
 ## 4) 단기 실행 계획(현재 사이클)
 
 ### Step A-1: 앱 계약 설계(3개)
+
 1. `WorkbenchShell` 사용을 위한 props contract 확정
 2. side-effect boundary 정책 확정:
    - 저장/삭제/패치/컨펌/토스트는 앱/호스트 콜백으로 위임
 3. 문서/타입으로 결정사항 고정
 
 ### Step A-2: story 통합 분리
+
 1. `IntegratedWorkbenchShell`을 “조립자”로 남기고
 2. 라이브 상태 및 서비스 생성은 fixture/adapter에서 주입
 3. 기존 baseline 동작 라벨별 재현성 검증
 
 ### Step B-1: host 런타임 안정성 보강
+
 1. 메시지 브릿지 실패 격리 테스트 추가
 2. 중복 dispose/중복 구독 제거
 
 ### Step C-준비
-1. `@newchobo-ui/vscode-extension` 문서와 API 기준 정렬용 note 정비
+
+1. `@workbench-kit/vscode-extension` 문서와 API 기준 정렬용 note 정비
 2. 차기 브랜치에서 wrapper entry 문서화를 위한 체크리스트 작성
 
 ## 5) 위험/의사결정

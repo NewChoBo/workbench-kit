@@ -3,4 +3,4 @@ export {
   createContentPreview,
   highlightText,
   searchWorkspaceFiles,
-} from '@newchobo-ui/workspace';
+} from '@workbench-kit/workspace';

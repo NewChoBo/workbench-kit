@@ -1,9 +1,9 @@
-import type { CommandRegistry } from '@newchobo-ui/core';
+import type { CommandRegistry } from '@workbench-kit/core';
 import type {
   SaveResult,
   WorkspacePatchApplyResult,
   WorkspacePatchEvent,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 import type { ReactNode } from 'react';
 import type { StatusBarSectionModel } from './StatusBar';
 import type { WorkbenchShellCommandContext } from './commands';
@@ -69,6 +69,10 @@ export interface WorkbenchStandaloneEntryState<TActivityId extends string = stri
   primarySidebarMinPercent?: number;
   primarySidebarMaxPercent?: number;
   theme: WorkbenchTheme;
+  isSettingsOpen?: boolean;
+  settingsCategoryId?: string;
+  settingsScopeId?: string;
+  settingsSearchValue?: string;
   selectedFilePath?: string;
   openFilePaths?: readonly string[];
 }
@@ -88,4 +92,3 @@ export type WorkbenchStandaloneBootstrapEvent<TActivityId extends string = strin
   | { type: 'activity-change'; payload: WorkbenchActivityChangeEvent<TActivityId> }
   | { type: 'status-message'; message: string }
   | { type: 'error'; error: Error };
-

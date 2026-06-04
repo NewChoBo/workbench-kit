@@ -1,1 +1,1 @@
-export { buildWorkspaceTree, flattenWorkspaceTree } from '@newchobo-ui/workspace';
+export { buildWorkspaceTree, flattenWorkspaceTree } from '@workbench-kit/workspace';

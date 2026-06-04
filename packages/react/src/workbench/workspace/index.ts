@@ -24,6 +24,36 @@ export { WorkspaceFileIcon, codiconForFileKind, fileIconKindForPath } from './Wo
 export type { WorkspaceFileIconKind, WorkspaceFileIconProps } from './WorkspaceFileIcon';
 export { WorkspaceHighlightedText } from './WorkspaceHighlightedText';
 export type { WorkspaceHighlightedTextProps } from './WorkspaceHighlightedText';
+export {
+  WorkbenchMultiProviderExplorer,
+  collectWorkbenchExplorerEntryRefs,
+  countWorkbenchExplorerEntries,
+  flattenWorkbenchExplorerProviders,
+  getWorkbenchExplorerEntryContext,
+  getWorkbenchExplorerEntryKey,
+  getWorkbenchExplorerProviderEntryCount,
+  isWorkbenchExplorerActionDisabled,
+  isWorkbenchExplorerEntryDisabled,
+  isWorkbenchExplorerEntrySelectable,
+  isWorkbenchExplorerProviderDisabled,
+  normalizeWorkbenchExplorerEntryKeys,
+} from './MultiProviderExplorer';
+export type {
+  WorkbenchExplorerActionDescriptor,
+  WorkbenchExplorerEntryContext,
+  WorkbenchExplorerEntryContextInput,
+  WorkbenchExplorerEntryDescriptor,
+  WorkbenchExplorerEntryKind,
+  WorkbenchExplorerEntryRef,
+  WorkbenchExplorerEntrySelectContext,
+  WorkbenchExplorerEntryToggleContext,
+  WorkbenchExplorerFlattenedEntry,
+  WorkbenchExplorerProviderActionContext,
+  WorkbenchExplorerProviderCollapseContext,
+  WorkbenchExplorerProviderDescriptor,
+  WorkbenchExplorerProviderKind,
+  WorkbenchMultiProviderExplorerProps,
+} from './MultiProviderExplorer';
 export { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 export type { WorkspaceSearchPanelProps } from './WorkspaceSearchPanel';
 export { WorkspaceSearchResults } from './WorkspaceSearchResults';
@@ -51,7 +81,7 @@ export {
   type UpdateWorkspaceFileDraftInput,
   type WorkspaceFileDraft,
   type WorkspaceFileDraftMap,
-} from '@newchobo-ui/workspace';
+} from '@workbench-kit/workspace';
 export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
 export {
   getWorkspaceSelectionActionPaths,
@@ -63,7 +93,7 @@ export {
   type WorkspaceSelectionActionPathsInput,
   type WorkspaceSelectionMode,
   type WorkspaceSelectionState,
-} from '@newchobo-ui/workspace';
+} from '@workbench-kit/workspace';
 export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
 export {
   getAvailableWorkspaceEntryName,

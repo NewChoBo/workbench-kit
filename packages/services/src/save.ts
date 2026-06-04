@@ -6,7 +6,7 @@ import {
   normalizeServiceFailureMessage,
   type WorkspaceFile,
   type WorkspaceFileRepository,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 import { normalizeServiceWorkspacePath } from './path';
 
 let saveRequestCounter = 0;
@@ -52,7 +52,10 @@ export class WorkspaceSaveService {
       };
     }
 
-    return this.saveDraftWithMetadata({ content, path: sanitizedPath, source, mimeType }, requestMetadata);
+    return this.saveDraftWithMetadata(
+      { content, path: sanitizedPath, source, mimeType },
+      requestMetadata,
+    );
   }
 
   async discard({ path }: { path: string }): Promise<SaveResult> {
@@ -109,13 +112,7 @@ export class WorkspaceSaveService {
   }
 
   private async saveDraftWithMetadata(
-    {
-      content,
-      mimeType,
-      path,
-      previousUpdatedAt,
-      source,
-    }: SaveDraftInput,
+    { content, mimeType, path, previousUpdatedAt, source }: SaveDraftInput,
     requestMetadata: { requestId: string; requestedAt: string },
   ): Promise<SaveResult> {
     const sanitizedPath = this.sanitizePath(path);
@@ -170,7 +167,12 @@ export class WorkspaceSaveService {
         file,
       };
     } catch (error) {
-      return this.failure('unknown', sanitizedPath, normalizeServiceFailureMessage(error), requestMetadata);
+      return this.failure(
+        'unknown',
+        sanitizedPath,
+        normalizeServiceFailureMessage(error),
+        requestMetadata,
+      );
     }
   }
 

@@ -1,5 +1,5 @@
-import type { CommandRegistry } from '@newchobo-ui/core';
-import { canExecuteCommand, executeCommand } from '@newchobo-ui/core';
+import type { CommandRegistry } from '@workbench-kit/core';
+import { canExecuteCommand, executeCommand } from '@workbench-kit/core';
 import type { HostCommandMessage, HostCommandResultMessage } from './bridge';
 
 export interface HostCommandResolverOptions<TContext> {

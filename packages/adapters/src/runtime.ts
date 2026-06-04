@@ -1,5 +1,5 @@
-import type { ChatStreamEvent, ChatTransport } from '@newchobo-ui/contracts';
-import type { WorkbenchRuntimeEvent, MockWorkbenchRuntime } from '@newchobo-ui/runtime';
+import type { ChatStreamEvent, ChatTransport } from '@workbench-kit/contracts';
+import type { WorkbenchRuntimeEvent, MockWorkbenchRuntime } from '@workbench-kit/runtime';
 
 export interface RuntimeChatTransportOptions {
   runtime: MockWorkbenchRuntime;

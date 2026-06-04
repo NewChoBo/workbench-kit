@@ -1,10 +1,10 @@
-import type { CommandRegistry } from '@newchobo-ui/core';
-import type { SaveResult, WorkspacePatchApplyResult } from '@newchobo-ui/contracts';
+import type { CommandRegistry } from '@workbench-kit/core';
+import type { SaveResult, WorkspacePatchApplyResult } from '@workbench-kit/contracts';
 import {
   type WorkbenchChatService,
   type WorkspacePatchService,
   type WorkspaceSaveService,
-} from '@newchobo-ui/services';
+} from '@workbench-kit/services';
 import {
   type HostMessageEnvelope,
   type HostRuntimeMessageType,

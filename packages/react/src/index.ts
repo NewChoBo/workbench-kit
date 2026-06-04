@@ -1,10 +1,115 @@
 export { Modal } from './modal/Modal';
 export type { ModalProps } from './modal/Modal';
 export { commandMenuItemsToContextMenuItems } from './workbench/commands';
+export {
+  WorkbenchArtifactPreview,
+  WorkbenchArtifactShell,
+  formatWorkbenchArtifactContent,
+  getWorkbenchArtifactExtension,
+  getWorkbenchArtifactTitle,
+  getWorkbenchPreviewRenderer,
+  getWorkbenchPreviewRendererMatch,
+  selectWorkbenchPreviewRenderer,
+} from './workbench/ArtifactShell';
+export type {
+  WorkbenchArtifactDescriptor,
+  WorkbenchArtifactMode,
+  WorkbenchArtifactPreviewProps,
+  WorkbenchArtifactShellProps,
+  WorkbenchArtifactShellRenderCode,
+  WorkbenchArtifactShellRenderPreview,
+  WorkbenchPreviewRenderer,
+  WorkbenchPreviewRendererContext,
+  WorkbenchPreviewRendererMatch,
+  WorkbenchPreviewRendererMatchReason,
+} from './workbench/ArtifactShell';
+export {
+  WorkbenchCommandList,
+  WorkbenchCommandPalette,
+  WorkbenchCommandSuggest,
+  commandMenuItemsToWorkbenchCommandDescriptors,
+  commandMenuItemToWorkbenchCommandDescriptor,
+  filterWorkbenchCommands,
+  getNextWorkbenchCommandIndex,
+  getWorkbenchCommandStatusLabel,
+  isWorkbenchCommandRunnable,
+} from './workbench/CommandPalette';
+export type {
+  WorkbenchCommandDescriptor,
+  WorkbenchCommandDescriptorOverrides,
+  WorkbenchCommandExecution,
+  WorkbenchCommandFeedback,
+  WorkbenchCommandFilterInput,
+  WorkbenchCommandListProps,
+  WorkbenchCommandNavigationInput,
+  WorkbenchCommandOutput,
+  WorkbenchCommandPaletteProps,
+  WorkbenchCommandRunContext,
+  WorkbenchCommandRunSource,
+  WorkbenchCommandSideEffect,
+  WorkbenchCommandStatus,
+  WorkbenchCommandSuggestProps,
+} from './workbench/CommandPalette';
+export {
+  WorkbenchConfirmationFlow,
+  getWorkbenchConfirmationButtonVariant,
+  getWorkbenchConfirmationConfirmLabel,
+  getWorkbenchConfirmationSideEffect,
+  getWorkbenchConfirmationStatus,
+  getWorkbenchConfirmationVariant,
+  isWorkbenchConfirmationActionDisabled,
+} from './workbench/ConfirmationFlow';
+export type {
+  WorkbenchConfirmationAction,
+  WorkbenchConfirmationCancelContext,
+  WorkbenchConfirmationCloseContext,
+  WorkbenchConfirmationConfirmContext,
+  WorkbenchConfirmationContext,
+  WorkbenchConfirmationFlowProps,
+  WorkbenchConfirmationReason,
+  WorkbenchConfirmationSideEffect,
+  WorkbenchConfirmationVariant,
+} from './workbench/ConfirmationFlow';
+export {
+  WorkbenchTimeline,
+  WorkbenchTimelineItem,
+  formatWorkbenchTimelineMetadataValue,
+  getWorkbenchTimelineEventIconClass,
+  getWorkbenchTimelineEventLabel,
+  getWorkbenchTimelineEventStatus,
+  getWorkbenchTimelineMetadataEntries,
+} from './workbench/Timeline';
+export type {
+  WorkbenchTimelineEvent,
+  WorkbenchTimelineEventKind,
+  WorkbenchTimelineItemProps,
+  WorkbenchTimelineMessageSource,
+  WorkbenchTimelineMetadataEntry,
+  WorkbenchTimelineProps,
+  WorkbenchTimelineRenderContext,
+  WorkbenchTimelineRenderMetadata,
+  WorkbenchTimelineRenderPayload,
+  WorkbenchTimelineVariant,
+} from './workbench/Timeline';
 export { ConfirmDialog } from './modal/ConfirmDialog';
 export type { ConfirmDialogProps } from './modal/ConfirmDialog';
 export { ContextMenu } from './overlay/ContextMenu';
 export type { ContextMenuItem, ContextMenuProps } from './overlay/ContextMenu';
+export {
+  getWorkbenchStatusDescriptor,
+  getWorkbenchStatusLabel,
+  getWorkbenchStatusVariant,
+  isWorkbenchStatus,
+  isWorkbenchStatusBusy,
+  isWorkbenchStatusDisabled,
+  isWorkbenchStatusUnavailable,
+  workbenchStatusFromLifecycleStatus,
+} from './workbench/status';
+export type {
+  WorkbenchStatus,
+  WorkbenchStatusDescriptor,
+  WorkbenchStatusVariant,
+} from './workbench/status';
 export { Panel, PanelBody, PanelHeader } from './layout/Panel';
 export type { PanelBodyProps, PanelHeaderProps, PanelProps } from './layout/Panel';
 export {
@@ -23,6 +128,18 @@ export type {
   SideBarRowProps,
   SideBarScrollSpacerProps,
 } from './layout/SideBarViewFrame';
+export {
+  WorkbenchActionList,
+  WorkbenchActionListItem,
+  WorkbenchSidebarSection,
+} from './layout/WorkbenchSidebarActions';
+export type {
+  WorkbenchActionItem,
+  WorkbenchActionListItemProps,
+  WorkbenchActionListProps,
+  WorkbenchActionStatus,
+  WorkbenchSidebarSectionProps,
+} from './layout/WorkbenchSidebarActions';
 export { Badge } from './primitives/Badge';
 export type { BadgeProps } from './primitives/Badge';
 export { Button } from './primitives/Button';

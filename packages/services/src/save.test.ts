@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { WorkspaceSaveService } from './save';
-import type { WorkspaceFile, WorkspaceFileRepository } from '@newchobo-ui/contracts';
+import type { WorkspaceFile, WorkspaceFileRepository } from '@workbench-kit/contracts';
 
 class InMemoryWorkspaceFileRepository implements WorkspaceFileRepository {
   private files = new Map<string, WorkspaceFile>();

@@ -5,9 +5,11 @@
 ## 1) 핵심 질문 정답
 
 ### Q1) 지금 화면에서 Workbench UI가 구현됐나?
+
 네. **구현되어 있다.**
 
 근거:
+
 - `packages/react/src/workbench/Workbench.stories.tsx`의 `IntegratedWorkbenchShell`가 Explorer/Search/Editor/Chat/Settings/Status를 한 화면에서 조립해 렌더.
 - Storybook baseline 플레이 플로우 태깅이 존재:
   - `WorkspaceExplorer/CreateAndRenameFlow`
@@ -20,73 +22,81 @@
 - services + host lane는 독립 패키지로 존재.
 
 ### Q2) 즉시 목표는?
+
 현재는 `standalone application launch` 안정화가 1순위이고, `vscode-extension`은 2차.  
 즉, “지금은 UI를 앱처럼 조립 가능한 계약”을 정리하고, extension 래퍼는 다음 마일스톤에서 정식 고도화.
 
 ## 2) 현재 상태 진단(구성단위별)
 
-| 영역 | 상태 | 근거 | 남은 공백 |
-|---|---|---|---|
-| UI 표면 | 구현 완료 | ActivityBar/Search/Editor/Chat/Explorer/Settings/Status 통합 확인 | 엔트리포인트/조립 계층 정리 필요 |
-| 상태 바인딩 | 부분 완료 | `useWorkbenchShellState` + shell state export 존재 | 앱 소비자 측에서 즉시 주입 가능한 “조립 계약”은 미완성 |
-| 채팅/저장/패치 서비스 | 구현 | `@newchobo-ui/services` 패키지 내 서비스 존재 | story-level orchestration 잔존 |
-| host 런타임 | 구현 | `@newchobo-ui/vscode-host` runtime/bridge/typecheck/test 동작 | 구독·dispose·실패격리 강화 필요 |
-| extension wrapper | API 수준 존재 | `packages/vscode-extension/src/index.ts`에서 `createWorkbenchExtensionRuntime` 제공 | 제품 진입점으로 쓰기엔 계약 정합성/문서/가이드 보완 필요 |
+| 영역                  | 상태          | 근거                                                                                | 남은 공백                                                |
+| --------------------- | ------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| UI 표면               | 구현 완료     | ActivityBar/Search/Editor/Chat/Explorer/Settings/Status 통합 확인                   | 엔트리포인트/조립 계층 정리 필요                         |
+| 상태 바인딩           | 부분 완료     | `useWorkbenchShellState` + shell state export 존재                                  | 앱 소비자 측에서 즉시 주입 가능한 “조립 계약”은 미완성   |
+| 채팅/저장/패치 서비스 | 구현          | `@workbench-kit/services` 패키지 내 서비스 존재                                     | story-level orchestration 잔존                           |
+| host 런타임           | 구현          | `@workbench-kit/vscode-host` runtime/bridge/typecheck/test 동작                     | 구독·dispose·실패격리 강화 필요                          |
+| extension wrapper     | API 수준 존재 | `packages/vscode-extension/src/index.ts`에서 `createWorkbenchExtensionRuntime` 제공 | 제품 진입점으로 쓰기엔 계약 정합성/문서/가이드 보완 필요 |
 
 ## 3) 다갈래 개발 모델 (권장)
 
 ### Track A — ui-package의 Standalone Entry 정규화 (최우선)
-- 목표: `@newchobo-ui/react`로부터 외부 앱이 Workbench를 직접 조립.
+
+- 목표: `@workbench-kit/react`로부터 외부 앱이 Workbench를 직접 조립.
 - 핵심 산출:
   - 엔트리포인트/팩토리 타입 계약 정리
   - side-effect 분리: 저장/삭제/확인/알림/퍼시스턴스는 callback/adapter 위임
   - `Workbench.stories.tsx`는 fixture/play 역할로 축소
 - 성공 기준:
-  - `@newchobo-ui/react` typecheck 통과
+  - `@workbench-kit/react` typecheck 통과
   - baseline 5개 플레이 flow 재현
 
 ### Track B — Standalone 런치 하드닝 (동시 병행 가능)
+
 - 목표: `vscode-host` + `services` + 조립 경로 신뢰성 강화
 - 핵심 산출:
   - dispose/idempotent 구독 정리
   - chat/chat cancel/patch/save 실패 격리
   - callback 전달 순서·오염 방지 테스트 강화
 - 성공 기준:
-  - `pnpm --filter @newchobo-ui/vscode-host test`
-  - `pnpm --filter @newchobo-ui/services typecheck`
+  - `pnpm --filter @workbench-kit/vscode-host test`
+  - `pnpm --filter @workbench-kit/services typecheck`
   - baseline 플레이 실패율 0
 
 ### Track C — vscode-extension wrapper 정식화 (차기)
+
 - 목표: extension 패키지를 Track A/B의 공개 계약 위에 얹는 정식 진입점으로 전환
 - 핵심 산출:
- - `createWorkbenchExtensionRuntime` 소비 가이드
- - wrapper 조립 예시 1건
- - command/repository/transport/service 조합의 문서 정합성
+- `createWorkbenchExtensionRuntime` 소비 가이드
+- wrapper 조립 예시 1건
+- command/repository/transport/service 조합의 문서 정합성
 - 성공 기준:
-  - `pnpm --filter @newchobo-ui/vscode-extension typecheck`
-  - `pnpm --filter @newchobo-ui/vscode-extension test`
+  - `pnpm --filter @workbench-kit/vscode-extension typecheck`
+  - `pnpm --filter @workbench-kit/vscode-extension test`
 
 ## 4) 단계 목표(이번 사이클)
 
 ### 단계 1 — 기준 고정 (오늘/1일)
+
 - UI baseline 5개 시나리오를 변경 불가 기준으로 고정
 - 스토리에서 수행되는 조립/오케스트레이션과 패키지 경계 분리 규칙 문서화
 
 ### 단계 2 — Track A 실행 (1~2일)
+
 - `WorkbenchShell` 진입점 최소 props contract 확정
 - `IntegratedWorkbenchShell`을 진입점 호출형으로 전환
-- `@newchobo-ui/react/index.ts` export 정리
+- `@workbench-kit/react/index.ts` export 정리
 
 ### 단계 3 — Track B 병행 (2~3일)
+
 - host runtime 실패/구독/정리 케이스 강화 테스트 추가
 - chat/cancel 중 patch 수신, 반복 dispose, listener throw isolation 보강
 
 ### 단계 4 — 통합 게이트
+
 - `pnpm test:storybook-play:required`
-- `pnpm --filter @newchobo-ui/react typecheck`
-- `pnpm --filter @newchobo-ui/vscode-host typecheck`
-- `pnpm --filter @newchobo-ui/services typecheck`
-- `pnpm --filter @newchobo-ui/vscode-host test`
+- `pnpm --filter @workbench-kit/react typecheck`
+- `pnpm --filter @workbench-kit/vscode-host typecheck`
+- `pnpm --filter @workbench-kit/services typecheck`
+- `pnpm --filter @workbench-kit/vscode-host test`
 
 ## 5) 왜 이 순서가 맞는가
 
@@ -114,7 +124,7 @@
 
 `Workbench.stories.tsx`의 `IntegratedWorkbenchShell` 안에서 현재 수행되는 오케스트레이션은 다음 5개 범주로 분해할 수 있습니다.
 
-- 데이터/상태 소유(현재 스토리 내부): `useVirtualWorkspace`, `useWorkbenchShellState`, 로컬 state(메뉴/모달/입력/상태바 라벨)  
+- 데이터/상태 소유(현재 스토리 내부): `useVirtualWorkspace`, `useWorkbenchShellState`, 로컬 state(메뉴/모달/입력/상태바 라벨)
 - 워크스페이스 변경(현재 스토리 내부):
   - 생성/삭제/이름변경/이동: `createWorkspaceFile`, `deleteWorkspaceFile`, `renameWorkspaceFile`, `moveWorkspaceFile`
   - 오픈/닫기: `openFile`, `closePath`, `closeOtherFiles`, `closeAllFiles`

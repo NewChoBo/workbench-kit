@@ -2,17 +2,17 @@
 
 > Current work priority update (2026-06-03): this document is preserved as the extension packaging plan.
 > Immediate milestone priority is standalone application launch and runtime stabilization using existing
-> `@newchobo-ui/react` + `@newchobo-ui/services` + `@newchobo-ui/vscode-host` path.
+> `@workbench-kit/react` + `@workbench-kit/services` + `@workbench-kit/vscode-host` path.
 
 ## 요약 결론
 
 - Workbench UI는 이미 구현되어 있다.
   - `packages/react/src/workbench/*`에 컴포넌트·훅·타입이 존재하고,
   - `packages/react/src/workbench/Workbench.stories.tsx`에서 통합 shell/탐색기/검색/채팅/에디터/설정 흐름이 동작한다.
-  - 현재 즉시 과제는 `@newchobo-ui/vscode-extension`를 완성하는 것이 아니라, Storybook 기반으로 검증된 UI를 standalone application 런치/기동 경로로 안정화하는 것이다.
+  - 현재 즉시 과제는 `@workbench-kit/vscode-extension`를 완성하는 것이 아니라, Storybook 기반으로 검증된 UI를 standalone application 런치/기동 경로로 안정화하는 것이다.
 
 > **실행 결정(2026-06-03):**  
-> `@newchobo-ui/vscode-extension` 관련 작업은 현재 주차에서는 보류하고, Standalone 런치 경로 안정화만을 이번 목표로 수행한다.  
+> `@workbench-kit/vscode-extension` 관련 작업은 현재 주차에서는 보류하고, Standalone 런치 경로 안정화만을 이번 목표로 수행한다.
 > extension 브랜치는 별도 2차 마일스톤에서 `Track A`(vscode-extension bootstrap API)로 재개한다.
 
 근거:
@@ -35,19 +35,19 @@
   - `packages/services/src/{chat,patch,save}.ts`
   - `packages/vscode-extension/src/index.test.ts`
 - **실행 게이트 검증 상태(최근):**
-  - `pnpm --filter @newchobo-ui/vscode-extension test` 통과
-  - `pnpm --filter @newchobo-ui/vscode-extension typecheck` 통과
+  - `pnpm --filter @workbench-kit/vscode-extension test` 통과
+  - `pnpm --filter @workbench-kit/vscode-extension typecheck` 통과
 
 ## 심층 분석 정리: 왜 분할 개발이 맞는가
 
 현재 구조의 분할 개발 적합성은 아래 표로 정리된다.
 
-| 항목 | 현재 근거 | 남은 문제 | 분할 시 영향 |
-| --- | --- | --- | --- |
-| UI 계층 | `@newchobo-ui/react`에서 컴포넌트, 훅, 커맨드 프리셋이 정리됨. 통합 동작은 story 내 구성으로 검증됨. | Story 전용 조립 코드(상태와 서비스 결합)가 남아 있음. | `@newchobo-ui/react`는 순수 UI 라이브러리로 유지, standalone 런치에서는 현재 조립 코드를 점진적으로 안정화. |
-| 런타임 조립 | `@newchobo-ui/vscode-host` + `@newchobo-ui/services`로 메시지 라우팅/오케스트레이션이 가능. | 조립 API 호출자(앱)가 일관된 production 진입점으로 정리되지 않음. | standalone 우선은 `Workbench` baseline 런치 경로를 선행 안정화하고, `@newchobo-ui/vscode-extension`은 다음 마일스톤에서 추가 단일 진입점으로 처리. |
-| 테스트 정합성 | storybook 인터랙션 + 패키지 단위 테스트에서 핵심 흐름이 커버됨. | "story wiring"이 조립 동작의 일부를 대체. | baseline 동작은 유지하면서 최소 1개 시나리오를 host 조립경로로 확장. |
-| 확장성(예: plugin) | 계약/호스트 서비스는 존재. | bootstrap 옵션에서 lifecycle 바인딩이 아직 미완. | feature lane로 분리해 plugin 도입 리스크 격리. |
+| 항목               | 현재 근거                                                                                              | 남은 문제                                                         | 분할 시 영향                                                                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI 계층            | `@workbench-kit/react`에서 컴포넌트, 훅, 커맨드 프리셋이 정리됨. 통합 동작은 story 내 구성으로 검증됨. | Story 전용 조립 코드(상태와 서비스 결합)가 남아 있음.             | `@workbench-kit/react`는 순수 UI 라이브러리로 유지, standalone 런치에서는 현재 조립 코드를 점진적으로 안정화.                                        |
+| 런타임 조립        | `@workbench-kit/vscode-host` + `@workbench-kit/services`로 메시지 라우팅/오케스트레이션이 가능.        | 조립 API 호출자(앱)가 일관된 production 진입점으로 정리되지 않음. | standalone 우선은 `Workbench` baseline 런치 경로를 선행 안정화하고, `@workbench-kit/vscode-extension`은 다음 마일스톤에서 추가 단일 진입점으로 처리. |
+| 테스트 정합성      | storybook 인터랙션 + 패키지 단위 테스트에서 핵심 흐름이 커버됨.                                        | "story wiring"이 조립 동작의 일부를 대체.                         | baseline 동작은 유지하면서 최소 1개 시나리오를 host 조립경로로 확장.                                                                                 |
+| 확장성(예: plugin) | 계약/호스트 서비스는 존재.                                                                             | bootstrap 옵션에서 lifecycle 바인딩이 아직 미완.                  | feature lane로 분리해 plugin 도입 리스크 격리.                                                                                                       |
 
 ## 의사결정 기준(예상 우선순위)
 
@@ -66,31 +66,31 @@
 
 현재 경계는 아래처럼 잘 맞는다.
 
-- `@newchobo-ui/react`
+- `@workbench-kit/react`
   - UI 렌더링 전용(컴포넌트 + 훅 + 타입)
-- `@newchobo-ui/services`
+- `@workbench-kit/services`
   - save/chat/patch 오케스트레이션
-- `@newchobo-ui/contracts`
+- `@workbench-kit/contracts`
   - 타입/결과/이벤트 계약
-- `@newchobo-ui/adapters`
+- `@workbench-kit/adapters`
   - `Mock`/in-memory 어댑터
-- `@newchobo-ui/vscode-host`
+- `@workbench-kit/vscode-host`
   - 메시지 브릿지 + host 런타임 라우팅
-- 추가 예정(확장 단계): `@newchobo-ui/vscode-extension`
-  - 현재는 `@newchobo-ui/react` + `@newchobo-ui/services` + `@newchobo-ui/vscode-host` 런치 경로 안정화가 선행되어야 함.
+- 추가 예정(확장 단계): `@workbench-kit/vscode-extension`
+  - 현재는 `@workbench-kit/react` + `@workbench-kit/services` + `@workbench-kit/vscode-host` 런치 경로 안정화가 선행되어야 함.
   - 이후 패키지 확장 단계에서 위 경계를 조립해 앱 진입점 API를 제공.
 
 ## 목표-근거-검증 매핑(실행 체크리스트)
 
 목표를 바로 실행 가능한 티켓으로 옮기기 위한 최소 증빙입니다.
 
-| 목표 | 현재 상태 | 근거(코드/테스트) | 다음 액션 |
-| --- | --- | --- | --- |
-| Workbench UI가 이미 구현됨을 확인 | 완료 | `packages/react/src/workbench/Workbench.stories.tsx` (IntegratedShell, chat, explorer, search, editor, settings 상태바 동작) | 유지: Story 기준 회귀 라인 보호 |
-| `vscode-extension` bootstrap 조립 API | 보류 | `packages/vscode-extension/src/index.ts`, `packages/vscode-extension/src/index.test.ts`, 타입체크/테스트 통과 | 다음 마일스톤에서 재개 |
-| story의 standalone 런치 동등성 확보 | 진행 중 | `pnpm test:storybook-play:required`에서 baseline 태그 지정 및 결과 추적 | Track B: 1개 핵심 플로우 baseline 안정화 |
-| plugin 설치/라이프사이클 통합 | 설계 단계 | `packages/contracts/src/plugin.ts`, `docs/workbench/plugin-lifecycle.md`, host plugin service | Track C: 정책/옵션 스키마 문서 + 최소 API 스케치 |
-| staging 기반 마일스톤 정리 | 미완료(문서 기준 진행) | `docs/conventions/git-workflow.md` | 브랜치 분리 후 `staging` 통합 + 마일스톤 커밋 |
+| 목표                                  | 현재 상태              | 근거(코드/테스트)                                                                                                            | 다음 액션                                        |
+| ------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Workbench UI가 이미 구현됨을 확인     | 완료                   | `packages/react/src/workbench/Workbench.stories.tsx` (IntegratedShell, chat, explorer, search, editor, settings 상태바 동작) | 유지: Story 기준 회귀 라인 보호                  |
+| `vscode-extension` bootstrap 조립 API | 보류                   | `packages/vscode-extension/src/index.ts`, `packages/vscode-extension/src/index.test.ts`, 타입체크/테스트 통과                | 다음 마일스톤에서 재개                           |
+| story의 standalone 런치 동등성 확보   | 진행 중                | `pnpm test:storybook-play:required`에서 baseline 태그 지정 및 결과 추적                                                      | Track B: 1개 핵심 플로우 baseline 안정화         |
+| plugin 설치/라이프사이클 통합         | 설계 단계              | `packages/contracts/src/plugin.ts`, `docs/workbench/plugin-lifecycle.md`, host plugin service                                | Track C: 정책/옵션 스키마 문서 + 최소 API 스케치 |
+| staging 기반 마일스톤 정리            | 미완료(문서 기준 진행) | `docs/conventions/git-workflow.md`                                                                                           | 브랜치 분리 후 `staging` 통합 + 마일스톤 커밋    |
 
 ## 이번 사이클 실행 플랜(우선순위)
 
@@ -103,8 +103,8 @@
 3. `packages/workspace`/`packages/services` 경계에서 예외/해제(`dispose`) 동작이 story 동작을 깨지지 않게 유지되는지 테스트 추가
 4. 검증 게이트
    - `pnpm test:storybook-play:required`
-   - `pnpm --filter @newchobo-ui/react typecheck`
-   - `pnpm --filter @newchobo-ui/vscode-host typecheck`
+   - `pnpm --filter @workbench-kit/react typecheck`
+   - `pnpm --filter @workbench-kit/vscode-host typecheck`
 
 ### 2회차: Track A (extension bootstrap)로 일부 전환
 
@@ -114,11 +114,11 @@
   - 별도 작업 브랜치(`feature/codex/vscode-extension-bootstrap-deferred`)에서 작업 범위 재확정
 
 1. `packages/vscode-extension/src/index.ts`로 최소 조합 API 정합성 재확인
-2. `packages/react/src/workbench/Workbench.stories.tsx`에서 통합 플로우 1개를 `@newchobo-ui/vscode-extension` 경로로 전환(옵션)
+2. `packages/react/src/workbench/Workbench.stories.tsx`에서 통합 플로우 1개를 `@workbench-kit/vscode-extension` 경로로 전환(옵션)
 3. `migration-todo.md`에 extension 전환 조건/제약을 기록
-3. 검증
-   - `pnpm --filter @newchobo-ui/vscode-extension test`
-   - `pnpm --filter @newchobo-ui/vscode-extension typecheck`
+4. 검증
+   - `pnpm --filter @workbench-kit/vscode-extension test`
+   - `pnpm --filter @workbench-kit/vscode-extension typecheck`
 
 ### 3회차: Track C 설계 정리
 
@@ -131,7 +131,7 @@
 
 ## 공통 목표 (Goal)
 
-1. Workbench UI를 다시 구현하지 않고, `@newchobo-ui/vscode-extension`에서 바로 조합 가능한 실행 단위로 노출.
+1. Workbench UI를 다시 구현하지 않고, `@workbench-kit/vscode-extension`에서 바로 조합 가능한 실행 단위로 노출.
 2. 현재 story 기반 사용법을 패키지 조립 API 사용법으로 점진 전환.
 3. 추후 `tilepaper` 등 외부 앱이 동일 API로 전환 가능하도록 안정적인 런타임 인터페이스 제공.
 
@@ -149,51 +149,59 @@
   - plugin lifecycle 충돌 정책
 
 출구 조건:
+
 - 대상 트랙별 작업 범위 승인
 - `staging` 병합 정책(merge/no-ff 판단) 정합성 결정
 
 ### Stage 1: 패키지 스캐폴드
 
 구성 파일:
+
 - `packages/vscode-extension/package.json`
 - `packages/vscode-extension/tsconfig.json`
 - `packages/vscode-extension/src/index.ts`
 
 공개 API 초안:
+
 - `createWorkbenchExtensionRuntime(...)`
 - `createWorkbenchServices(...)`
 - `WorkbenchExtensionConfig`
 - `WorkbenchExtensionRuntime`
 
 출구 조건:
-- `pnpm --filter @newchobo-ui/vscode-extension typecheck` 성공
+
+- `pnpm --filter @workbench-kit/vscode-extension typecheck` 성공
 - 최소 단위 타입 단언 테스트(예시:
   `WorkspaceChatServiceOptions`/`WorkspaceSaveServiceOptions` 전달 타입이 조립 API와 일치)
 
 ### Stage 2: 런타임 조립 API 구현
 
 핵심 조립 로직:
+
 - `transport` 생성(기본값: `createWindowMessageTransport`)
 - `WorkbenchChatService` / `WorkspacePatchService` / `WorkspaceSaveService` 인스턴스화
 - `WorkbenchHostRuntime` 생성 및 공개
 - 커맨드 레지스트리 주입 규칙 정리(기본 context factory)
 
 의무 테스트:
+
 - chat send → runtime 이벤트 발생 라우팅
 - patch apply 메시지 라우팅
 - save commit 메시지 라우팅
 
 출구 조건:
+
 - 위 테스트 3개 통과
 - dispose에서 리스너/메시지 라우팅 안정적으로 정리
 
 ### Stage 3: Storybook 통합 경로 전환
 
-- 기존 `Workbench.stories.tsx` 조립 코드를 `@newchobo-ui/vscode-extension` API로 교체
+- 기존 `Workbench.stories.tsx` 조립 코드를 `@workbench-kit/vscode-extension` API로 교체
 - 동작 동일성 검증:
   - baseline play flow(Explorer/Search/Editor/Chat) 1:1 재현
 
 출구 조건:
+
 - 기존 동작을 깨지 않는 통합 동작
 - `pnpm test:storybook-play:required` 통과(필수 태그는 기존 문서 기준 유지/갱신)
 
@@ -205,6 +213,7 @@
 - 추후 `plugin-lifecycle` 패스와 연결
 
 출구 조건:
+
 - 초기 샘플로 install/enable 플로우 조립 API를 통과시키는 테스트
 
 ## API 권장 시그니처(1차)
@@ -238,14 +247,16 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
 ## 검증 게이트
 
 현재 목표 기준 최소 게이트:
+
 - `pnpm lint`
 - `pnpm typecheck`
 - `pnpm test`
 - `pnpm test:storybook-play:required`
 
 트랙별 추가 게이트:
-- Stage1: `pnpm --filter @newchobo-ui/vscode-extension typecheck`
-- Stage2/3: `pnpm --filter @newchobo-ui/vscode-extension test`, `pnpm --filter @newchobo-ui/react typecheck`
+
+- Stage1: `pnpm --filter @workbench-kit/vscode-extension typecheck`
+- Stage2/3: `pnpm --filter @workbench-kit/vscode-extension test`, `pnpm --filter @workbench-kit/react typecheck`
 
 ## 리스크/완화
 
@@ -258,10 +269,10 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
 
 ## 다음 실행 목표(한 번에)
 
-1) `feature/codex/standalone-app-bootstrap` 브랜치에서 `Workbench` standalone 런치 baseline(작동 shell) 정합성 강화  
-2) 서비스/host 경로에서 예외 처리와 dispose 정리를 회귀 테스트로 고정  
-3) Storybook baseline 동작(Explorer/Search/Editor/Chat) 기동 게이트 안정화  
-4) `@newchobo-ui/vscode-extension` 패키지는 `feature/codex/vscode-extension-bootstrap-deferred`로 이후 마일스톤에서 재개
+1. `feature/codex/standalone-app-bootstrap` 브랜치에서 `Workbench` standalone 런치 baseline(작동 shell) 정합성 강화
+2. 서비스/host 경로에서 예외 처리와 dispose 정리를 회귀 테스트로 고정
+3. Storybook baseline 동작(Explorer/Search/Editor/Chat) 기동 게이트 안정화
+4. `@workbench-kit/vscode-extension` 패키지는 `feature/codex/vscode-extension-bootstrap-deferred`로 이후 마일스톤에서 재개
 
 ## 우선순위 전환 결정(2026-06-03 기준 권장)
 
@@ -271,7 +282,7 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
   - 런타임/호스트/서비스 테스트도 존재해 기본 이벤트-패치-저장 흐름을 검증할 수 있습니다.
 - 다음은 현재 우선순위:
   - **Track B (필수):** standalone baseline 런치 정합성 강화(기동/상태전이/에러격리)
-  - **Track A (차기):** `@newchobo-ui/vscode-extension` API 안정화 및 공개 타입 정합성 고정
+  - **Track A (차기):** `@workbench-kit/vscode-extension` API 안정화 및 공개 타입 정합성 고정
   - **Track C (준비):** plugin lifecycle 옵션 노출 초안 작성(실서비스 이전)
 
 ### Track A 다음 마일스톤 목표(권장)
@@ -279,12 +290,12 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
 1. `WorkbenchExtensionRuntimeOptions`에 최소한의 안정적 필수값을 문서화하고, 커스텀 서비스 팩토리(`createChatService`, `createPatchService`, `createSaveService`)는 `host override` 관점으로 고정.
 2. `WorkbenchExtensionRuntime` 반환값에 `dispose`, `messageBridge`, `runtime`, `services` 구조 유지.
 3. 입력 정규화 규칙(경로/컨텍스트)과 예외 분리 동작을 문서화.
-4. 게이트: `pnpm --filter @newchobo-ui/vscode-extension typecheck`, `pnpm --filter @newchobo-ui/vscode-extension test`.
+4. 게이트: `pnpm --filter @workbench-kit/vscode-extension typecheck`, `pnpm --filter @workbench-kit/vscode-extension test`.
 
 ### Track B(현재) 다음 마일스톤 목표(권장)
 
 1. `Workbench.stories.tsx`의 `IntegratedShell`(또는 동일 핵심 시나리오) 1개를 standalone 런치 경로로 검증하고, 조립 단계를 최소 변경으로 고정.
-2. 기존 동작과 최소 1:1 검증:  
+2. 기존 동작과 최소 1:1 검증:
    - 상태 전이 라벨/상태 바 업데이트
    - Explorer 생성/삭제/저장/컨텍스트 동작
    - Chat send → patch apply → 파일 반영
@@ -304,9 +315,9 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
   - `feature/codex/plugin-lifecycle-foundation`
 - 목표가 단일 주제면 `--ff-only` 또는 logical commit.
 - Track A/B 결과를 동시에 `staging`에 모을 때는:
-  1) 각 feature 브랜치 merge into `staging`
-  2) 통합 검증
-  3) `staging` → `main`은 `--no-ff`(마일스톤 기록용)로 진행
+  1. 각 feature 브랜치 merge into `staging`
+  2. 통합 검증
+  3. `staging` → `main`은 `--no-ff`(마일스톤 기록용)로 진행
 
 ## 깊은 분석 기반 멀티트랙 계획 (권장)
 
@@ -330,8 +341,8 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
   - `packages/vscode-extension/src/index.ts` 안정 API
   - 최소 통합 테스트(라우팅 3종)
 - 출구 조건:
-  - `pnpm --filter @newchobo-ui/vscode-extension test` 통과
-  - `pnpm --filter @newchobo-ui/vscode-extension typecheck` 통과
+  - `pnpm --filter @workbench-kit/vscode-extension test` 통과
+  - `pnpm --filter @workbench-kit/vscode-extension typecheck` 통과
   - runtime dispose 시 이벤트/리스너 정리 보증
 
 ### 트랙 B — Story/host 연동 경로 이전
@@ -353,7 +364,7 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
   - 충돌정책(`install` 중복, command id 충돌, menu merge) 정책 문서화
 - 산출물:
   - `docs/workbench/plugin-lifecycle.md` 및 `migration-todo.md`에 정책 반영
-  - `@newchobo-ui/vscode-host` plugin service와 bootstrap 간 결합 포인트 초안
+  - `@workbench-kit/vscode-host` plugin service와 bootstrap 간 결합 포인트 초안
 - 출구 조건:
   - 최소 실행 시나리오(install→enable→command 노출) 설계 승인
   - 계약 변경 없는 한 기존 테스트 회귀 영향 0
@@ -361,21 +372,24 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
 ## 단계별 우선순위 (권장)
 
 ### 1단계 (현재)
+
 트랙 B baseline 1개 시나리오(standalone 안정화) + 회귀 방어 기준 고정.
 
 ### 2단계
+
 트랙 B 확장(나머지 핵심 시나리오) + 트랙 A 기본 설계 확정.
 
 ### 3단계
-외부 앱(예: 기존 tilepaper 계열)에서 `@newchobo-ui/vscode-extension`으로 점진 전환 가능한 마이그레이션 가이드 작성.
+
+외부 앱(예: 기존 tilepaper 계열)에서 `@workbench-kit/vscode-extension`으로 점진 전환 가능한 마이그레이션 가이드 작성.
 
 ## 리스크와 의사결정 기준
 
-- 리스크 1: story에서 bootstrap 도입으로 동작이 너무 급격히 바뀌는 것  
+- 리스크 1: story에서 bootstrap 도입으로 동작이 너무 급격히 바뀌는 것
   - 대응: 한번에 전체 변경하지 말고 baseline 1개 시나리오부터 전환.
-- 리스크 2: plugin 정책이 너무 빨리 고착화되어 변경 불가 상태가 되는 것  
+- 리스크 2: plugin 정책이 너무 빨리 고착화되어 변경 불가 상태가 되는 것
   - 대응: `plugin lifecycle`은 설정 구조만 먼저 고정하고 정책값은 feature flag 또는 옵션으로 열어 둠.
-- 리스크 3: 브랜치가 난립하여 설계 일관성 손실  
+- 리스크 3: 브랜치가 난립하여 설계 일관성 손실
   - 대응: `staging` 브랜치에서 2개 이상의 트랙 결과를 merge commit 기준으로 통합 검증 후 `main`으로 이관.
 
 ## 분기/병합 권장 방식

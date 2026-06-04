@@ -17,7 +17,7 @@ import {
   updateWorkspaceSelection,
   type WorkspaceSelectionMode,
   type WorkspaceSelectionState,
-} from '@newchobo-ui/workspace';
+} from '@workbench-kit/workspace';
 import { SideBarList, SideBarListItem } from '../../layout/SideBarViewFrame';
 import { flattenWorkspaceTree } from './tree';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';

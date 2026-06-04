@@ -1,7 +1,7 @@
 {
-  "name": "@newchobo-ui/vscode-extension",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@workbench-kit/vscode-extension",
+  "version": "0.0.1-prototype.0",
+  "private": false,
   "type": "module",
   "scripts": {
     "test": "vitest run src",
@@ -11,16 +11,31 @@
     ".": "./src/index.ts"
   },
   "files": [
-    "src"
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
   ],
   "dependencies": {
-    "@newchobo-ui/adapters": "workspace:*",
-    "@newchobo-ui/contracts": "workspace:*",
-    "@newchobo-ui/core": "workspace:*",
-    "@newchobo-ui/services": "workspace:*",
-    "@newchobo-ui/vscode-host": "workspace:*"
+    "@workbench-kit/adapters": "workspace:*",
+    "@workbench-kit/contracts": "workspace:*",
+    "@workbench-kit/core": "workspace:*",
+    "@workbench-kit/services": "workspace:*",
+    "@workbench-kit/vscode-host": "workspace:*"
   },
   "peerDependencies": {
-    "@newchobo-ui/services": "0.0.0"
+    "@workbench-kit/services": "0.0.1-prototype.0"
+  },
+  "description": "Prototype VS Code extension bootstrap helpers for Workbench Kit.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/newchobo-ui-package.git",
+    "directory": "packages/vscode-extension"
   }
 }

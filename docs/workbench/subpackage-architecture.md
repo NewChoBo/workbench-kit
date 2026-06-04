@@ -52,15 +52,25 @@ so existing `react` workbench can keep UI behavior while separating domain logic
   caller-issued metadata without regenerating request identity.
 
 8. **Stage 7: Adapter Package Extraction**
-   - Extract story-only adaptation logic into `@newchobo-ui/adapters` package.
+   - Extract story-only adaptation logic into `@workbench-kit/adapters` package.
    - Provide shared runtime transport + in-memory repository adapters.
    - Replace inline story helpers with package adapter usage.
    - Add adapter unit tests and include package in repository typecheck pipeline.
    - Exit condition: story runtime path flows through adapter APIs with unchanged behavior.
 
+9. **Stage 9: Library Domain Foundation (Non-UI)**
+   - Move appstore-style library manifest parsing and drag payload contracts into
+     `@workbench-kit/contracts`.
+   - Aggregate library provider items through a dedicated service in `@workbench-kit/services`.
+   - Add filtering/sorting/query support and provider cache with graceful error surfacing.
+   - Exit condition:
+     - manifest parser + drag payload helpers are validated by contract tests.
+     - library catalog service supports provider aggregation, query filtering, and cache reuse.
+     - failure provider entries are surfaced via provider summary state while preserving existing items.
+
 ### Stage Dependencies and Delivery Order
 
-- Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6 → Stage 7
+- Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5 → Stage 6 → Stage 7 → Stage 9
 - No later stage proceeds until previous stage exit criteria and validation gates are completed.
 
 ## Branch Execution Status
@@ -73,6 +83,7 @@ so existing `react` workbench can keep UI behavior while separating domain logic
 - [x] Stage 5: Failure-hygiene hardening.
 - [x] Stage 6: Service result metadata propagation.
 - [x] Stage 7: Adapter package extraction.
+- [x] Stage 9: Library domain foundation.
 
 Current milestone is **standalone application launch hardening** (app shell + host runtime + services).
 VS Code extension packaging is intentionally deferred to the next milestone, and extension
@@ -80,19 +91,20 @@ bootstrap work should be treated as the next-track reference only.
 
 ### Open gap from Stage targets
 
-- `WorkbenchShell` shell layout has been extracted and exported from `@newchobo-ui/react`, so the app-wide frame is now reusable.
+- `WorkbenchShell` shell layout has been extracted and exported from `@workbench-kit/react`, so the app-wide frame is now reusable.
 - Remaining gap is **composition-to-runtime binding**: side effects (저장, 삭제 확인, 스트리밍/패치 적용, 플러그인 주입, 영속성) are still wired inside `Workbench.stories.tsx` fixtures.
-- `@newchobo-ui/vscode-extension` package exists for host-style bootstrapping, but all extension-specific packaging and API commitments are deferred while we complete standalone app launch hardening.
+- `@workbench-kit/vscode-extension` package exists for host-style bootstrapping, but all extension-specific packaging and API commitments are deferred while we complete standalone app launch hardening.
 - Plugin lifecycle is contract-defined and service-implemented in host service, but install/enable/update flow remains in design/planning state and is not in the current milestone.
 
 ### Track alignment (2026-06-03)
 
 - Immediate priority is Track A/B (standalone app path), while Track C (extension bootstrap) is deferred.
-  - Track A: `@newchobo-ui/react` shell entrypoint and story-level composition split.
-  - Track B: `@newchobo-ui/vscode-host` + `@newchobo-ui/services` runtime path hardening.
-  - Track C: `@newchobo-ui/vscode-extension` bootstrap formalization (next milestone).
+  - Track A: `@workbench-kit/react` shell entrypoint and story-level composition split.
+  - Track B: `@workbench-kit/vscode-host` + `@workbench-kit/services` runtime path hardening.
+  - Track C: `@workbench-kit/vscode-extension` bootstrap formalization (next milestone).
 
 This means the remaining immediate gap is composition boundary hardening, not raw feature absence:
+
 - the behaviors and UX are already in Storybook integration, but not yet fully exposed as reusable, app-bootstrap-ready assembly contracts.
 
 ## Guiding Decision
@@ -127,7 +139,7 @@ packages/
 
 ## New Package Responsibilities
 
-### `@newchobo-ui/contracts`
+### `@workbench-kit/contracts`
 
 - Pure types + contracts only; no UI or framework dependency.
 - Define:
@@ -144,7 +156,7 @@ packages/
   - `AbstractChatTransport`
   - `AbstractPatchApplier`
 
-### `@newchobo-ui/services`
+### `@workbench-kit/services`
 
 - Uses contracts to assemble domain-safe orchestration.
 - Define at least:
@@ -162,7 +174,7 @@ packages/
     - validate + normalize + apply patch to workspace state/actions
 - Keep side effects injected through contracts for testability.
 
-### `@newchobo-ui/adapters` (optional, later)
+### `@workbench-kit/adapters` (optional, later)
 
 - Concrete implementations:
   - `InMemoryWorkspaceFileRepository` for story/test use
@@ -219,7 +231,7 @@ packages/
 - This milestone prioritizes **standalone application runtime hardening**.
 - vscode-extension bootstrap work is intentionally deferred to the next milestone.
 - Targeted work should be limited to runtime stability, lifecycle cleanup, and baseline
-  scenario parity in `@newchobo-ui/react` + `@newchobo-ui/services` + `@newchobo-ui/vscode-host`.
+  scenario parity in `@workbench-kit/react` + `@workbench-kit/services` + `@workbench-kit/vscode-host`.
 
 ## Migration Phases
 
@@ -234,7 +246,7 @@ packages/
 
 **Phase 1 Exit Criteria**
 
-- `@newchobo-ui/contracts` 패키지 빌드/타입체크 통과
+- `@workbench-kit/contracts` 패키지 빌드/타입체크 통과
 - 최소 1개 이상의 계약 검증 테스트 추가
 
 ### Phase 2: Service Bootstrap
@@ -299,7 +311,7 @@ packages/
 
 ### Todo (우선순위)
 
-- [x] 1순위: `@newchobo-ui/contracts` plugin lifecycle 타입 골격 추가
+- [x] 1순위: `@workbench-kit/contracts` plugin lifecycle 타입 골격 추가
   - 대상: `PluginDescriptor`, `PluginSource`, `InstalledPlugin`, `PluginLifecycleResult`,
     `PluginLifecycleService` 인터페이스
   - 근거: `docs/workbench/plugin-lifecycle.md`의 M1 범위 정렬
@@ -311,14 +323,16 @@ packages/
   - 근거: 서비스 구현 전에 정책 고정
 - [ ] 2순위: `migration-todo.md`에 단계별 acceptance criteria 반영
   - 대상: plugin 기여 범위, 기본/확장 scope, 테스트 후보
-- [ ] 3순위: services에서 `PluginLifecycleService` 초기 구현(옵션)
+- [x] 3순위: `@workbench-kit/vscode-host`에서 `InMemoryPluginLifecycleService` 상태 전이 테스트 완성
   - 대상: 설치/삭제/활성화/업데이트 파이프라인, 요청 메타데이터 규약 준수
   - 근거: 저장/채팅/패치와 동일한 결과형태 계약 일관성 확보
 
 ### 검증 계획 (이 사이클)
 
-- `pnpm --filter @newchobo-ui/contracts test` 통과
-- `pnpm --filter @newchobo-ui/contracts typecheck` 통과
+- `pnpm --filter @workbench-kit/contracts test` 통과
+- `pnpm --filter @workbench-kit/contracts typecheck` 통과
+- `pnpm --filter @workbench-kit/vscode-host test` 통과
+- `pnpm --filter @workbench-kit/vscode-host typecheck` 통과
 - 문서 상태 반영: `subpackage-architecture.md`, `migration-todo.md`, `docs/workbench/plugin-lifecycle.md`
 
 ## Validation Plan
@@ -363,9 +377,9 @@ packages/
 
 - Current branch includes stage 0~7 foundations and runtime stability improvements.
 - Current next-cycle focus (standalone-first):
-  - stabilize standalone runtime entrypoints (`@newchobo-ui/react`, `@newchobo-ui/services`, `@newchobo-ui/vscode-host`),
+  - stabilize standalone runtime entrypoints (`@workbench-kit/react`, `@workbench-kit/services`, `@workbench-kit/vscode-host`),
   - validate app launch via story-driven baseline flows,
-  - keep `@newchobo-ui/vscode-extension` bootstrap work as a deferred follow-up.
+  - keep `@workbench-kit/vscode-extension` bootstrap work as a deferred follow-up.
 - Next branch objective candidates:
   - standalone app launch stability and baseline UX parity,
   - plugin install/enable/disable design confirmation,
@@ -379,7 +393,7 @@ packages/
   - disposed services ignore transport callbacks and subscriptions,
   - transport send after dispose is a no-op,
   - transport errors set chat snapshot status to `error`.
-- Added shared path normalization in `@newchobo-ui/services`:
+- Added shared path normalization in `@workbench-kit/services`:
   - common `normalizeServiceWorkspacePath` helper,
   - `WorkspaceSaveService` and `WorkspacePatchService` now share normalization logic,
   - patch results return normalized `patch.path` for host actions.
@@ -401,11 +415,11 @@ packages/
   - `6a1bf6b`: harden workspace save and chat services foundation.
   - `d6ff767`: lifecycle/error isolation hardening in chat service.
   - `pnpm exec vitest run packages/services/src` passes.
-  - `pnpm --filter @newchobo-ui/services typecheck` passes.
+  - `pnpm --filter @workbench-kit/services typecheck` passes.
 
 ### Stage 6 Result-Metadata Progress (2026-06-03)
 
-- Added shared result-envelope foundation for request metadata in `@newchobo-ui/contracts`.
+- Added shared result-envelope foundation for request metadata in `@workbench-kit/contracts`.
 - Updated service result types to consistently expose optional metadata (`requestId`, `requestedAt`).
 - Implemented service-side metadata injection with deterministic-friendly request id factory support.
 - Added integration test coverage to verify metadata presence in patch/save flow paths.
@@ -416,7 +430,7 @@ packages/
   - `40340fc`: add request metadata to save/patch results.
   - `packages/services/src/save.test.ts`: commit path now asserts metadata preservation and single request-id emission.
   - `pnpm exec vitest run packages/contracts/src packages/services/src` passes.
-  - `pnpm --filter @newchobo-ui/contracts typecheck` passes.
+  - `pnpm --filter @workbench-kit/contracts typecheck` passes.
 
 ### Stage 7 Adapter Package Progress (2026-06-03)
 
@@ -431,19 +445,19 @@ packages/
   - `packages/adapters/src/workspace.test.ts`
   - `packages/adapters/src/runtime.test.ts`
 - Wiring updates:
-  - `@newchobo-ui/react` depends on `@newchobo-ui/adapters`.
+  - `@workbench-kit/react` depends on `@workbench-kit/adapters`.
   - root `typecheck` includes adapters package.
 - Acceptance targets:
-  - `pnpm --filter @newchobo-ui/adapters typecheck` passes.
-  - `pnpm --filter @newchobo-ui/adapters test` passes.
-  - `pnpm --filter @newchobo-ui/react typecheck` continues passing with adapter-based story wiring.
+  - `pnpm --filter @workbench-kit/adapters typecheck` passes.
+  - `pnpm --filter @workbench-kit/adapters test` passes.
+  - `pnpm --filter @workbench-kit/react typecheck` continues passing with adapter-based story wiring.
   - Verified 2026-06-03: adapter typecheck and adapter tests pass; react typecheck remains green.
 
 ### Stage 8 Extension Bootstrap Plan (Deferred, 2026-06-03)
 
 - Created `docs/workbench/vscode-extension-bootstrap-roadmap.md` for multi-track extension bootstrap extraction.
 - Planned direction for extension packaging phase: keep UI layer unchanged and introduce a dedicated package-level orchestration layer:
-  `@newchobo-ui/vscode-extension`.
+  `@workbench-kit/vscode-extension`.
 - For the current milestone, extension orchestration is postponed in favor of standalone launch hardening.
 - Planned composition entrypoints (deferred):
   - command + transport + service + host-runtime 통합 팩토리 제공
@@ -452,8 +466,8 @@ packages/
 - Exit plan:
   - `pnpm typecheck`는 `core/contracts/services/workspace/runtime/adapters/react/vscode-host` 중심의 standalone lane만 검증
   - `pnpm test:storybook-play:required` (baseline 태그 포함)
-  - `pnpm --filter @newchobo-ui/vscode-extension typecheck` (deferred)
-  - `pnpm --filter @newchobo-ui/vscode-extension test` (deferred)
+  - `pnpm --filter @workbench-kit/vscode-extension typecheck` (deferred)
+  - `pnpm --filter @workbench-kit/vscode-extension test` (deferred)
   - `pnpm typecheck:all` (확장 단계에서 전체 lane 검증용, 차기 사이클)
 
 ## Acceptance Criteria (Current Cycle Baseline)
@@ -462,7 +476,7 @@ packages/
   - Save/patch/chat 이벤트는 각각 대응하는 서비스 계약으로 라우팅된다.
   - 런타임 패치 경로는 최소한 `WorkspacePatchService.applyPatch` 검증을 거친다.
 - **다음 사이클 필수 목표(미완료):**
-  - A save action can be executed entirely through `@newchobo-ui/services` with explicit `SaveResult` and routed through bootstrap assembly.
+  - A save action can be executed entirely through `@workbench-kit/services` with explicit `SaveResult` and routed through bootstrap assembly.
   - Story-level integration no longer owns patch application logic directly (bootstrap/host service owns apply orchestration).
   - Existing UI behavior remains unchanged when using `Workbench.stories.tsx` baseline scenarios.
 
@@ -477,12 +491,12 @@ that do not produce tests or usage value.
 
 ## Decision Log
 
-| Date       | Decision                                        | Rationale                                                               | Status   |
-| ---------- | ----------------------------------------------- | ----------------------------------------------------------------------- | -------- |
-| 2026-06-03 | Use in-repo subpackages first                   | Faster validation with lower operational overhead                       | Approved |
-| 2026-06-03 | Start with contracts + services                 | Align domain separation before external publishing                      | Approved |
-| 2026-06-03 | Add optional adapters package in phase 3        | Keeps story/test dependencies isolated                                  | Approved |
-| 2026-06-03 | Continue Stage 5 hardening inside services      | Keep callback failures from crashing event fan-out                      | Approved |
-| 2026-06-03 | Start Stage 6 service-result metadata hardening | Standardize request-id/request-time propagation for save/patch services | Approved |
-| 2026-06-03 | Start Stage 7 adapter extraction                | Move story/runtime adaptation to reusable package boundaries            | Approved |
-| 2026-06-03 | Defer vscode-extension bootstrap | extension packaging is second-phase; standalone application launch is current focus | Approved |
+| Date       | Decision                                        | Rationale                                                                           | Status   |
+| ---------- | ----------------------------------------------- | ----------------------------------------------------------------------------------- | -------- |
+| 2026-06-03 | Use in-repo subpackages first                   | Faster validation with lower operational overhead                                   | Approved |
+| 2026-06-03 | Start with contracts + services                 | Align domain separation before external publishing                                  | Approved |
+| 2026-06-03 | Add optional adapters package in phase 3        | Keeps story/test dependencies isolated                                              | Approved |
+| 2026-06-03 | Continue Stage 5 hardening inside services      | Keep callback failures from crashing event fan-out                                  | Approved |
+| 2026-06-03 | Start Stage 6 service-result metadata hardening | Standardize request-id/request-time propagation for save/patch services             | Approved |
+| 2026-06-03 | Start Stage 7 adapter extraction                | Move story/runtime adaptation to reusable package boundaries                        | Approved |
+| 2026-06-03 | Defer vscode-extension bootstrap                | extension packaging is second-phase; standalone application launch is current focus | Approved |
