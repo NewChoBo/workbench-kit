@@ -1,6 +1,33 @@
 export { ActivityBar } from './ActivityBar';
 export type { ActivityBarItem, ActivityBarProps } from './ActivityBar';
 export {
+  WorkbenchCommandList,
+  WorkbenchCommandPalette,
+  WorkbenchCommandSuggest,
+  commandMenuItemsToWorkbenchCommandDescriptors,
+  commandMenuItemToWorkbenchCommandDescriptor,
+  filterWorkbenchCommands,
+  getNextWorkbenchCommandIndex,
+  getWorkbenchCommandStatusLabel,
+  isWorkbenchCommandRunnable,
+} from './CommandPalette';
+export type {
+  WorkbenchCommandDescriptor,
+  WorkbenchCommandDescriptorOverrides,
+  WorkbenchCommandExecution,
+  WorkbenchCommandFeedback,
+  WorkbenchCommandFilterInput,
+  WorkbenchCommandListProps,
+  WorkbenchCommandNavigationInput,
+  WorkbenchCommandOutput,
+  WorkbenchCommandPaletteProps,
+  WorkbenchCommandRunContext,
+  WorkbenchCommandRunSource,
+  WorkbenchCommandSideEffect,
+  WorkbenchCommandStatus,
+  WorkbenchCommandSuggestProps,
+} from './CommandPalette';
+export {
   WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID,

@@ -49,13 +49,30 @@ outside this repository.
 | Hard-coded artifact types    | Preview and explorer APIs should accept generic metadata.               |
 | Local filesystem paths       | No private machine paths, linked package paths, or local env details.   |
 
+## Generic API Boundary Notes
+
+These notes clarify how downstream application needs should be translated into
+Workbench Kit work. If a consumer needs a product-specific workflow, artifact,
+or command, the package should expose an extensible primitive rather than
+hard-code the consumer concept.
+
+| Topic              | Boundary                                                                                                                                       |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Command execution  | Use generic execution metadata and callbacks. Do not require app-specific execution kinds, runtime objects, tool names, or backend endpoints.  |
+| Command suggest    | Provide palette and composer-anchored suggest surfaces with configurable labels, empty states, active item control, and callback-based select. |
+| Command lifecycle  | Keep a shared status model generic. Consumers should map their local, remote, agent, or composite operation state into the public status type. |
+| Timeline events    | Render generic operation events. Consumers own event creation, ordering, payload shape, and sensitive metadata filtering.                      |
+| Artifact preview   | Select preview renderers through extension, MIME type, artifact kind, or metadata. Do not include product artifact schemas in the package.     |
+| Explorer providers | Preserve provider/root identity and generic actions. Consumers decide whether a root represents files, virtual entries, state, config, etc.    |
+| Accessibility      | Palette, suggest, dialogs, and lists should preserve focus behavior, keyboard navigation, and screen-reader state without consumer rewrites.   |
+
 ## Independent Work Queue
 
 | ID    | Status  | Priority | Area      | Item                                  | Depends On                  | Package Target         | Notes                                                                                                                         |
 | ----- | ------- | -------- | --------- | ------------------------------------- | --------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | WB-01 | done    | P1       | Sidebar   | Section primitive                     | Existing sidebar frame      | `@workbench-kit/react` | Collapsible section with label, count/badge slot, and secondary action slot.                                                  |
 | WB-02 | done    | P1       | Sidebar   | Action list primitive                 | WB-01                       | `@workbench-kit/react` | Render command/action rows with icon, status, shortcut, danger marker, and disabled reason.                                   |
-| WB-03 | pending | P1       | Command   | Command model + palette/suggest shell | WB-02                       | `@workbench-kit/react` | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states.         |
+| WB-03 | done    | P1       | Command   | Command model + palette/suggest shell | WB-02                       | `@workbench-kit/react` | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states.         |
 | WB-04 | pending | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react` | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.    |
 | WB-05 | pending | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.    |
 | WB-06 | pending | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots. |
@@ -78,21 +95,20 @@ outside this repository.
 
 ## Recommended Next Slice
 
-Start with WB-03. It extends the existing command registry and menu item
-patterns into reusable command descriptors and searchable React shells without
-owning execution. The shell should dispatch `onRunCommand(command, context)` and
-leave local handlers, remote operations, agent actions, and composite flows to
-the integrating application.
+Start with WB-05. It should consolidate command lifecycle states into reusable
+labels, variants, and helper functions that can be shared by command lists,
+timeline events, status bars, and future confirmation flows without owning a
+runtime.
 
-| Step | Task                             | Expected Change                                                                                      |
-| ---- | -------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| 1    | Inspect existing command API     | Review command registry, resolved menu items, context menu conversion, and composer focus behavior.  |
-| 2    | Define command descriptor shape  | Add generic execution, status, side effect, feedback, output, disabled, danger, and metadata fields. |
-| 3    | Define search/navigation helpers | Add pure helpers for filtering commands and moving active selection without UI ownership.            |
-| 4    | Add palette/suggest shells       | Render global palette and anchored slash suggest surfaces with callback-only execution.              |
-| 5    | Add Storybook coverage           | Show global palette, composer suggest, filtered results, empty state, unavailable, and keyboard use. |
-| 6    | Export public API                | Export components, helpers, and types from the smallest relevant React entrypoint.                   |
-| 7    | Validate                         | Run focused typecheck, Storybook smoke, and full validation when public exports change.              |
+| Step | Task                          | Expected Change                                                                                    |
+| ---- | ----------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1    | Inspect existing status usage | Review sidebar action status, command descriptor status, status bar items, and chat runtime state. |
+| 2    | Define status model           | Add stable lifecycle labels, visual variants, and helper functions for shared command state.       |
+| 3    | Align command surfaces        | Reuse the status model in command list and palette/suggest rendering.                              |
+| 4    | Add Storybook coverage        | Show idle, running, completed, failed, waiting, cancelled, disabled, and unavailable states.       |
+| 5    | Add helper tests              | Cover label, variant, and command-state mapping helpers.                                           |
+| 6    | Export public API             | Export status helpers and types from the smallest relevant React entrypoint.                       |
+| 7    | Validate                      | Run focused typecheck, Storybook smoke, and full validation when public exports change.            |
 
 ## Suggested API Shape
 
@@ -103,8 +119,8 @@ small and generic.
 type WorkbenchCommandExecution =
   | { kind: 'local' }
   | { kind: 'remote' }
-  | { kind: 'agent' }
-  | { kind: 'composite' };
+  | { kind: 'composite' }
+  | { kind: string; label?: string };
 
 type WorkbenchCommandFeedback = 'none' | 'status' | 'timeline';
 type WorkbenchCommandOutput = 'none' | 'message' | 'event' | 'artifact';
@@ -130,6 +146,11 @@ interface WorkbenchCommandDescriptor {
 }
 ```
 
+The public command model should avoid making a downstream concept part of the
+required union. For example, a consumer can represent an agent-backed command as
+`{ kind: 'agent', label: 'Agent' }`, but Workbench Kit should treat it as generic
+metadata and never call an agent runtime directly.
+
 ```ts
 interface WorkbenchTimelineEvent {
   id: string;
@@ -153,8 +174,8 @@ architecture terms in primitive props.
 | WB-01 | Section can collapse/expand, exposes accessible heading semantics, preserves sidebar spacing, and supports optional badge/count and secondary action content.                                                 |
 | WB-02 | Action row supports active, disabled, running, danger, selected, and unavailable states without layout shift; disabled rows expose a reason to assistive/user surfaces.                                       |
 | WB-03 | Palette and composer slash suggest can filter commands, support keyboard navigation, render empty states, preserve focus handoff, and call an `onRunCommand`-style callback without owning command execution. |
-| WB-04 | Event renderer can display generic messages, operation calls, operation results, file writes, progress, and errors in one ordered timeline with compact and expanded variants.                                |
-| WB-05 | Status model maps command lifecycle states to stable labels and visual variants without assuming an application runtime.                                                                                      |
+| WB-04 | Event renderer can display generic messages, operation calls, operation results, file writes, progress, and errors in one ordered timeline with compact and expanded variants. Consumers provide payloads.    |
+| WB-05 | Status model maps command lifecycle states to stable labels and visual variants without assuming an application runtime. It should align sidebar action, command, timeline, and status-bar usage.             |
 | WB-06 | Explorer can combine multiple provider roots while preserving root identity, selection, disabled states, and per-provider actions.                                                                            |
 | WB-07 | Code/preview/split shell can switch modes, preserve selected file identity, and leave actual code editor/preview renderer implementation pluggable.                                                           |
 | WB-08 | Registry can select renderers by extension, MIME type, artifact kind, or fallback priority, and can render a clear unsupported state.                                                                         |
@@ -205,18 +226,18 @@ this repository:
 
 ```text
 Please work in the current Workbench Kit repository on the active feature
-branch. Implement the next slice from docs/workbench/todo.md: WB-03 Command
-model + palette/suggest shell.
+branch. Implement the next slice from docs/workbench/todo.md: WB-05 Command
+status model.
 
 Keep the work generic and public-boundary safe:
 - Do not add application names, product workflow names, private paths, server
   addresses, credentials, or domain-specific artifact schemas.
-- Use existing command registry/menu patterns and @workbench-kit/react
-  primitives, tokens, and workbench styles.
-- Add Storybook coverage for global palette, composer slash suggest, filtered
-  results, empty, unavailable, and keyboard selection states.
+- Use existing command descriptor, sidebar action status, status bar, and
+  @workbench-kit/react primitive patterns.
+- Add Storybook coverage for idle, running, completed, failed, waiting,
+  cancelled, disabled, and unavailable states.
 - Export the new primitives and types from the appropriate React entrypoint.
-- Keep command execution callback-based; do not introduce runtime/API calls.
+- Keep status mapping runtime-agnostic; do not introduce runtime/API calls.
 
 Before finishing, run:
 - pnpm --filter @workbench-kit/react typecheck

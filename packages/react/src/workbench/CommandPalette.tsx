@@ -1,0 +1,586 @@
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentPropsWithRef,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
+import type { CommandMenuItem, ResolvedCommandMenuCommandItem } from '@workbench-kit/core';
+import { EmptyState } from '../primitives/EmptyState';
+import { cx } from '../utils/cx';
+
+export type WorkbenchCommandStatus =
+  | 'idle'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'waiting'
+  | 'cancelled'
+  | 'disabled'
+  | 'unavailable';
+
+export type WorkbenchCommandExecution =
+  | { kind: 'local' }
+  | { kind: 'remote' }
+  | { kind: 'agent' }
+  | { kind: 'composite' };
+
+export type WorkbenchCommandFeedback = 'none' | 'status' | 'timeline';
+export type WorkbenchCommandOutput = 'none' | 'message' | 'event' | 'artifact';
+export type WorkbenchCommandSideEffect = 'none' | 'workspace-write' | 'external-write';
+export type WorkbenchCommandRunSource = 'palette' | 'suggest' | 'list';
+
+export interface WorkbenchCommandDescriptor {
+  category?: string;
+  danger?: boolean;
+  description?: string;
+  disabled?: boolean;
+  disabledReason?: string;
+  execution?: WorkbenchCommandExecution;
+  feedback?: WorkbenchCommandFeedback;
+  icon?: string;
+  id: string;
+  label: string;
+  metadata?: Record<string, unknown>;
+  output?: WorkbenchCommandOutput;
+  shortcut?: string;
+  sideEffect?: WorkbenchCommandSideEffect;
+  status?: WorkbenchCommandStatus;
+}
+
+export interface WorkbenchCommandRunContext {
+  index: number;
+  query: string;
+  source: WorkbenchCommandRunSource;
+}
+
+export interface WorkbenchCommandFilterInput {
+  commands: readonly WorkbenchCommandDescriptor[];
+  limit?: number;
+  query?: string;
+}
+
+export interface WorkbenchCommandNavigationInput {
+  commands: readonly WorkbenchCommandDescriptor[];
+  currentIndex: number;
+  direction: 'next' | 'previous';
+}
+
+export type WorkbenchCommandDescriptorOverrides = Partial<
+  Omit<WorkbenchCommandDescriptor, 'danger' | 'disabled' | 'icon' | 'id' | 'label' | 'shortcut'>
+>;
+
+const commandStatusLabels: Record<WorkbenchCommandStatus, string> = {
+  cancelled: 'Cancelled',
+  completed: 'Completed',
+  disabled: 'Disabled',
+  failed: 'Failed',
+  idle: 'Idle',
+  running: 'Running',
+  unavailable: 'Unavailable',
+  waiting: 'Waiting',
+};
+
+const commandExecutionLabels: Record<WorkbenchCommandExecution['kind'], string> = {
+  agent: 'Agent',
+  composite: 'Composite',
+  local: 'Local',
+  remote: 'Remote',
+};
+
+function normalizedSearchText(value: string) {
+  return value.trim().toLocaleLowerCase();
+}
+
+function commandSearchText(command: WorkbenchCommandDescriptor) {
+  return normalizedSearchText(
+    [command.id, command.label, command.description, command.category, command.shortcut]
+      .filter(Boolean)
+      .join(' '),
+  );
+}
+
+export function getWorkbenchCommandStatusLabel(status: WorkbenchCommandStatus) {
+  return commandStatusLabels[status];
+}
+
+export function isWorkbenchCommandRunnable(command: WorkbenchCommandDescriptor) {
+  return !(command.disabled || command.status === 'disabled' || command.status === 'unavailable');
+}
+
+export function filterWorkbenchCommands({
+  commands,
+  limit,
+  query = '',
+}: WorkbenchCommandFilterInput) {
+  const tokens = normalizedSearchText(query).split(/\s+/).filter(Boolean);
+  const filtered = tokens.length
+    ? commands.filter((command) => {
+        const searchText = commandSearchText(command);
+        return tokens.every((token) => searchText.includes(token));
+      })
+    : [...commands];
+
+  return typeof limit === 'number' ? filtered.slice(0, limit) : filtered;
+}
+
+export function getNextWorkbenchCommandIndex({
+  commands,
+  currentIndex,
+  direction,
+}: WorkbenchCommandNavigationInput) {
+  if (commands.length === 0) return -1;
+
+  const step = direction === 'next' ? 1 : -1;
+  const startIndex =
+    currentIndex >= 0 && currentIndex < commands.length
+      ? currentIndex
+      : direction === 'next'
+        ? -1
+        : 0;
+
+  for (let offset = 1; offset <= commands.length; offset += 1) {
+    const nextIndex = (startIndex + step * offset + commands.length) % commands.length;
+    if (isWorkbenchCommandRunnable(commands[nextIndex])) return nextIndex;
+  }
+
+  return -1;
+}
+
+export function commandMenuItemToWorkbenchCommandDescriptor(
+  item: ResolvedCommandMenuCommandItem,
+  overrides: WorkbenchCommandDescriptorOverrides = {},
+): WorkbenchCommandDescriptor {
+  const metadata = {
+    menuItemId: item.id,
+    ...overrides.metadata,
+  };
+
+  return {
+    ...overrides,
+    danger: item.danger,
+    disabled: item.disabled,
+    icon: item.icon,
+    id: item.commandId,
+    label: item.label,
+    metadata,
+    shortcut: item.shortcut,
+  };
+}
+
+export function commandMenuItemsToWorkbenchCommandDescriptors(
+  items: readonly CommandMenuItem[],
+  overridesByCommandId: Record<string, WorkbenchCommandDescriptorOverrides> = {},
+) {
+  return items.flatMap((item) =>
+    item.type === 'command'
+      ? [commandMenuItemToWorkbenchCommandDescriptor(item, overridesByCommandId[item.commandId])]
+      : [],
+  );
+}
+
+function commandIcon(command: WorkbenchCommandDescriptor) {
+  if (!command.icon) return null;
+  return <i aria-hidden="true" className={`codicon ${command.icon}`} />;
+}
+
+function commandStatus(command: WorkbenchCommandDescriptor) {
+  const status = command.status ?? (command.disabled ? 'disabled' : 'idle');
+
+  return (
+    <span
+      aria-label={getWorkbenchCommandStatusLabel(status)}
+      className="ui-workbench-command-item__status"
+      title={getWorkbenchCommandStatusLabel(status)}
+    >
+      <span aria-hidden="true" className="ui-workbench-command-item__status-dot" />
+    </span>
+  );
+}
+
+function commandExecution(command: WorkbenchCommandDescriptor) {
+  if (!command.execution) return null;
+
+  return (
+    <span className="ui-workbench-command-item__chip">
+      {commandExecutionLabels[command.execution.kind]}
+    </span>
+  );
+}
+
+export interface WorkbenchCommandListProps extends Omit<
+  ComponentPropsWithRef<'div'>,
+  'children' | 'onSelect'
+> {
+  activeCommandId?: string;
+  commands: readonly WorkbenchCommandDescriptor[];
+  emptyLabel?: ReactNode;
+  onActiveCommandChange?: (commandId: string) => void;
+  onRunCommand?: (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => void;
+  query?: string;
+  source?: WorkbenchCommandRunSource;
+}
+
+export function WorkbenchCommandList({
+  activeCommandId,
+  className,
+  commands,
+  emptyLabel = 'No commands available',
+  id,
+  onActiveCommandChange,
+  onRunCommand,
+  query = '',
+  source = 'list',
+  ...props
+}: WorkbenchCommandListProps) {
+  const generatedId = useId();
+  const listId = id ?? generatedId;
+
+  if (commands.length === 0) {
+    return (
+      <div id={id} className={cx('ui-workbench-command-list', className)} {...props}>
+        <EmptyState compact icon="codicon-search">
+          {emptyLabel}
+        </EmptyState>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      id={id}
+      aria-label={props['aria-label'] ?? 'Commands'}
+      className={cx('ui-workbench-command-list', className)}
+      role="listbox"
+      {...props}
+    >
+      {commands.map((command, index) => {
+        const active = command.id === activeCommandId;
+        const disabled = !isWorkbenchCommandRunnable(command);
+        const itemId = `${listId}-${command.id}`;
+        const descriptionId = command.description ? `${itemId}-description` : undefined;
+        const disabledReasonId = command.disabledReason ? `${itemId}-disabled` : undefined;
+
+        return (
+          <button
+            key={command.id}
+            id={itemId}
+            aria-describedby={
+              [descriptionId, disabledReasonId].filter(Boolean).join(' ') || undefined
+            }
+            aria-selected={active}
+            className="ui-workbench-command-item"
+            data-active={active ? 'true' : undefined}
+            data-danger={command.danger ? 'true' : undefined}
+            data-status={command.status ?? (command.disabled ? 'disabled' : 'idle')}
+            disabled={disabled}
+            role="option"
+            type="button"
+            onClick={() => onRunCommand?.(command, { index, query, source })}
+            onMouseEnter={() => onActiveCommandChange?.(command.id)}
+          >
+            <span className="ui-workbench-command-item__icon">{commandIcon(command)}</span>
+            <span className="ui-workbench-command-item__content">
+              <span className="ui-workbench-command-item__label">{command.label}</span>
+              {command.description ? (
+                <span id={descriptionId} className="ui-workbench-command-item__description">
+                  {command.description}
+                </span>
+              ) : null}
+              {command.disabledReason ? (
+                <span id={disabledReasonId} className="ui-visually-hidden">
+                  {command.disabledReason}
+                </span>
+              ) : null}
+            </span>
+            <span className="ui-workbench-command-item__meta">
+              {command.category ? (
+                <span className="ui-workbench-command-item__category">{command.category}</span>
+              ) : null}
+              {commandExecution(command)}
+              {command.shortcut ? (
+                <kbd className="ui-workbench-command-item__shortcut">{command.shortcut}</kbd>
+              ) : null}
+              {commandStatus(command)}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function useControllableCommandQuery({
+  defaultQuery = '',
+  query,
+  onQueryChange,
+}: {
+  defaultQuery?: string;
+  query?: string;
+  onQueryChange?: (query: string) => void;
+}) {
+  const [uncontrolledQuery, setUncontrolledQuery] = useState(defaultQuery);
+  const resolvedQuery = query ?? uncontrolledQuery;
+
+  const setQuery = (nextQuery: string) => {
+    if (query === undefined) {
+      setUncontrolledQuery(nextQuery);
+    }
+    onQueryChange?.(nextQuery);
+  };
+
+  return [resolvedQuery, setQuery] as const;
+}
+
+export interface WorkbenchCommandPaletteProps extends Omit<
+  ComponentPropsWithRef<'div'>,
+  'children' | 'onSelect' | 'title'
+> {
+  activeCommandId?: string;
+  closeLabel?: string;
+  commands: readonly WorkbenchCommandDescriptor[];
+  defaultQuery?: string;
+  emptyLabel?: ReactNode;
+  onActiveCommandChange?: (commandId: string) => void;
+  onClose: () => void;
+  onQueryChange?: (query: string) => void;
+  onRunCommand?: (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => void;
+  open?: boolean;
+  placeholder?: string;
+  query?: string;
+  restoreFocusOnClose?: boolean;
+  title?: ReactNode;
+}
+
+export function WorkbenchCommandPalette({
+  activeCommandId,
+  className,
+  closeLabel = 'Close command palette',
+  commands,
+  defaultQuery,
+  emptyLabel = 'No commands match your search',
+  onActiveCommandChange,
+  onClose,
+  onQueryChange,
+  onRunCommand,
+  open = true,
+  placeholder = 'Search commands',
+  query,
+  restoreFocusOnClose = true,
+  title = 'Command Palette',
+  ...props
+}: WorkbenchCommandPaletteProps) {
+  const titleId = useId();
+  const listId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const [uncontrolledActiveCommandId, setUncontrolledActiveCommandId] = useState<string>();
+  const [resolvedQuery, setResolvedQuery] = useControllableCommandQuery({
+    defaultQuery,
+    onQueryChange,
+    query,
+  });
+  const filteredCommands = useMemo(
+    () => filterWorkbenchCommands({ commands, query: resolvedQuery }),
+    [commands, resolvedQuery],
+  );
+  const resolvedActiveCommandId = activeCommandId ?? uncontrolledActiveCommandId;
+  const activeIndex = filteredCommands.findIndex(
+    (command) => command.id === resolvedActiveCommandId,
+  );
+  const activeCommand =
+    activeIndex >= 0
+      ? filteredCommands[activeIndex]
+      : filteredCommands.find((command) => isWorkbenchCommandRunnable(command));
+
+  const updateActiveCommand = (commandId: string | undefined) => {
+    if (!commandId) return;
+    if (activeCommandId === undefined) {
+      setUncontrolledActiveCommandId(commandId);
+    }
+    onActiveCommandChange?.(commandId);
+  };
+
+  const restoreFocus = () => {
+    if (!restoreFocusOnClose) return;
+    previousFocusRef.current?.focus();
+  };
+
+  const closePalette = () => {
+    restoreFocus();
+    onClose();
+  };
+
+  const runCommand = (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => {
+    if (!isWorkbenchCommandRunnable(command)) return;
+    onRunCommand?.(command, context);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    const frame = window.requestAnimationFrame(() => inputRef.current?.focus());
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      restoreFocus();
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (filteredCommands.length === 0) return;
+    if (activeCommand && isWorkbenchCommandRunnable(activeCommand)) return;
+
+    const nextIndex = getNextWorkbenchCommandIndex({
+      commands: filteredCommands,
+      currentIndex: -1,
+      direction: 'next',
+    });
+    updateActiveCommand(filteredCommands[nextIndex]?.id);
+  }, [activeCommand, filteredCommands, open]);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closePalette();
+      return;
+    }
+
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Enter') return;
+
+    if (event.key === 'Enter') {
+      if (!activeCommand) return;
+      event.preventDefault();
+      runCommand(activeCommand, {
+        index: filteredCommands.findIndex((command) => command.id === activeCommand.id),
+        query: resolvedQuery,
+        source: 'palette',
+      });
+      return;
+    }
+
+    const nextIndex = getNextWorkbenchCommandIndex({
+      commands: filteredCommands,
+      currentIndex: activeIndex,
+      direction: event.key === 'ArrowDown' ? 'next' : 'previous',
+    });
+
+    if (nextIndex >= 0) {
+      event.preventDefault();
+      updateActiveCommand(filteredCommands[nextIndex].id);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="ui-workbench-command-palette-overlay" onClick={closePalette}>
+      <div
+        aria-labelledby={titleId}
+        aria-modal="true"
+        className={cx('ui-workbench-command-palette', className)}
+        role="dialog"
+        {...props}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="ui-workbench-command-palette__header">
+          <span id={titleId} className="ui-workbench-command-palette__title">
+            {title}
+          </span>
+          <button
+            aria-label={closeLabel}
+            className="ui-workbench-command-palette__close"
+            type="button"
+            onClick={closePalette}
+          >
+            <i aria-hidden="true" className="codicon codicon-close" />
+          </button>
+        </div>
+        <div className="ui-workbench-command-palette__search">
+          <i aria-hidden="true" className="codicon codicon-search" />
+          <input
+            ref={inputRef}
+            aria-controls={listId}
+            aria-label={placeholder}
+            className="ui-workbench-command-palette__input"
+            placeholder={placeholder}
+            type="search"
+            value={resolvedQuery}
+            onChange={(event) => setResolvedQuery(event.currentTarget.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
+        <WorkbenchCommandList
+          id={listId}
+          activeCommandId={activeCommand?.id}
+          aria-label="Command palette results"
+          commands={filteredCommands}
+          emptyLabel={emptyLabel}
+          query={resolvedQuery}
+          source="palette"
+          onActiveCommandChange={updateActiveCommand}
+          onRunCommand={runCommand}
+        />
+      </div>
+    </div>
+  );
+}
+
+export interface WorkbenchCommandSuggestProps extends Omit<
+  ComponentPropsWithRef<'div'>,
+  'children' | 'onSelect'
+> {
+  activeCommandId?: string;
+  commands: readonly WorkbenchCommandDescriptor[];
+  emptyLabel?: ReactNode;
+  onActiveCommandChange?: (commandId: string) => void;
+  onRunCommand?: (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => void;
+  query?: string;
+  visible?: boolean;
+}
+
+export function WorkbenchCommandSuggest({
+  activeCommandId,
+  className,
+  commands,
+  emptyLabel = 'No suggested commands',
+  onActiveCommandChange,
+  onRunCommand,
+  query = '',
+  visible = true,
+  ...props
+}: WorkbenchCommandSuggestProps) {
+  const filteredCommands = useMemo(
+    () => filterWorkbenchCommands({ commands, limit: 8, query }),
+    [commands, query],
+  );
+  const fallbackActiveCommand = filteredCommands.find((command) =>
+    isWorkbenchCommandRunnable(command),
+  );
+
+  if (!visible) return null;
+
+  return (
+    <div className={cx('ui-workbench-command-suggest', className)} {...props}>
+      <div className="ui-workbench-command-suggest__header">
+        <span>Commands</span>
+        {query ? <span className="ui-workbench-command-suggest__query">/{query}</span> : null}
+      </div>
+      <WorkbenchCommandList
+        activeCommandId={activeCommandId ?? fallbackActiveCommand?.id}
+        aria-label="Suggested commands"
+        commands={filteredCommands}
+        emptyLabel={emptyLabel}
+        query={query}
+        source="suggest"
+        onActiveCommandChange={onActiveCommandChange}
+        onRunCommand={onRunCommand}
+      />
+    </div>
+  );
+}

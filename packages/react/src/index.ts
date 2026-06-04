@@ -1,6 +1,33 @@
 export { Modal } from './modal/Modal';
 export type { ModalProps } from './modal/Modal';
 export { commandMenuItemsToContextMenuItems } from './workbench/commands';
+export {
+  WorkbenchCommandList,
+  WorkbenchCommandPalette,
+  WorkbenchCommandSuggest,
+  commandMenuItemsToWorkbenchCommandDescriptors,
+  commandMenuItemToWorkbenchCommandDescriptor,
+  filterWorkbenchCommands,
+  getNextWorkbenchCommandIndex,
+  getWorkbenchCommandStatusLabel,
+  isWorkbenchCommandRunnable,
+} from './workbench/CommandPalette';
+export type {
+  WorkbenchCommandDescriptor,
+  WorkbenchCommandDescriptorOverrides,
+  WorkbenchCommandExecution,
+  WorkbenchCommandFeedback,
+  WorkbenchCommandFilterInput,
+  WorkbenchCommandListProps,
+  WorkbenchCommandNavigationInput,
+  WorkbenchCommandOutput,
+  WorkbenchCommandPaletteProps,
+  WorkbenchCommandRunContext,
+  WorkbenchCommandRunSource,
+  WorkbenchCommandSideEffect,
+  WorkbenchCommandStatus,
+  WorkbenchCommandSuggestProps,
+} from './workbench/CommandPalette';
 export { ConfirmDialog } from './modal/ConfirmDialog';
 export type { ConfirmDialogProps } from './modal/ConfirmDialog';
 export { ContextMenu } from './overlay/ContextMenu';
