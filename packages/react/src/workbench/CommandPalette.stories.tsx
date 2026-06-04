@@ -57,8 +57,8 @@ const commandFixtures: WorkbenchCommandDescriptor[] = [
   },
   {
     category: 'Operation',
-    description: 'Request an agent action that can create a new artifact.',
-    execution: { kind: 'agent' },
+    description: 'Request a delegated operation that can create a new artifact.',
+    execution: { kind: 'delegated', label: 'Delegated' },
     feedback: 'timeline',
     icon: 'codicon-sparkle',
     id: 'operation.createArtifact',
