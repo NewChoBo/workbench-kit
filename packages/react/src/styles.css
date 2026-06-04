@@ -3931,6 +3931,77 @@
   font-weight: 400;
 }
 
+.ui-workbench-canvas-item-frame {
+  box-sizing: border-box;
+  position: absolute;
+  left: var(--ui-workbench-canvas-item-x, 0);
+  top: var(--ui-workbench-canvas-item-y, 0);
+  z-index: 0;
+  width: var(--ui-workbench-canvas-item-width, auto);
+  height: var(--ui-workbench-canvas-item-height, auto);
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.ui-workbench-canvas-item-frame[data-interactive='true'] {
+  cursor: grab;
+}
+
+.ui-workbench-canvas-item-frame[data-selected='true'] {
+  z-index: 100;
+  outline: 2px solid var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -2px;
+}
+
+.ui-workbench-canvas-item-frame[data-hovered='true'][data-selected='false'] {
+  z-index: 90;
+  outline: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -1px;
+}
+
+.ui-workbench-canvas-item-frame[data-transient='true'] {
+  transition: none;
+}
+
+.ui-workbench-canvas-item-badge {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  z-index: 110;
+  padding: 2px 4px;
+  color: var(--vscode-badge-foreground, #fff);
+  background: var(--vscode-badge-background, var(--color-accent));
+  border-radius: 3px;
+  font-family: var(--vscode-font-family, var(--font-family, system-ui, sans-serif));
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.ui-workbench-canvas-item-badge[data-selected='false'] {
+  background: color-mix(in srgb, var(--vscode-badge-background, var(--color-accent)) 58%, #000);
+}
+
+.ui-workbench-canvas-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 120;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  background: var(--vscode-focusBorder, var(--color-focus-border));
+  border: 0;
+  border-top-left-radius: 3px;
+  cursor: se-resize;
+}
+
+.ui-workbench-canvas-resize-handle:focus-visible {
+  outline: 1px solid var(--vscode-editor-background, var(--color-bg));
+  outline-offset: -2px;
+}
+
 .ui-workbench-tree {
   --ui-workbench-tree-row-height: 22px;
   --ui-workbench-tree-indent-size: 14px;
