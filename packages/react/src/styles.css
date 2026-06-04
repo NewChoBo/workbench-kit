@@ -4945,6 +4945,103 @@
   white-space: nowrap;
 }
 
+.ui-workbench-template-glyph {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  color: var(--ui-workbench-template-glyph-accent, var(--color-accent));
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 64%, transparent);
+  border-radius: 4px;
+}
+
+.ui-workbench-template-glyph[data-icon='grid'] {
+  background-image:
+    linear-gradient(currentColor 1px, transparent 1px),
+    linear-gradient(90deg, currentColor 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+.ui-workbench-template-glyph__text {
+  position: absolute;
+  top: 0;
+  left: 5px;
+  color: currentColor;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.ui-workbench-template-glyph__list-line {
+  position: absolute;
+  right: 4px;
+  left: 4px;
+  height: 1px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.ui-workbench-template-glyph__list-line:nth-child(1) {
+  top: 4px;
+}
+
+.ui-workbench-template-glyph__list-line:nth-child(2) {
+  top: 8px;
+}
+
+.ui-workbench-template-glyph__list-line:nth-child(3) {
+  top: 12px;
+}
+
+.ui-workbench-template-glyph__flex-bar {
+  position: absolute;
+  width: 3px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.ui-workbench-template-glyph__flex-bar:nth-child(1) {
+  top: 6px;
+  left: 3px;
+  height: 7px;
+}
+
+.ui-workbench-template-glyph__flex-bar:nth-child(2) {
+  top: 4px;
+  left: 8px;
+  height: 10px;
+}
+
+.ui-workbench-template-glyph__flex-bar:nth-child(3) {
+  top: 6px;
+  left: 13px;
+  height: 7px;
+}
+
+.ui-workbench-template-glyph__image-mark {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  width: 0;
+  height: 0;
+  border-right: 5px solid transparent;
+  border-bottom: 6px solid currentColor;
+  border-left: 5px solid transparent;
+}
+
+.ui-workbench-template-glyph__badge-mark {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
+  background: currentColor;
+  border-radius: 999px;
+}
+
 .ui-workbench-divider {
   height: 1px;
   margin: 6px 0;

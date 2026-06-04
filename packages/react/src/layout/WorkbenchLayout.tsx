@@ -1638,6 +1638,58 @@ export function WorkbenchDragPreview({
   );
 }
 
+export type WorkbenchTemplateGlyphIcon =
+  | 'badge'
+  | 'color'
+  | 'flex'
+  | 'frame'
+  | 'grid'
+  | 'image'
+  | 'list'
+  | 'text';
+
+export interface WorkbenchTemplateGlyphProps extends ComponentPropsWithRef<'span'> {
+  accent: string;
+  icon: WorkbenchTemplateGlyphIcon;
+}
+
+export function WorkbenchTemplateGlyph({
+  accent,
+  className,
+  icon,
+  style,
+  ...props
+}: WorkbenchTemplateGlyphProps) {
+  const glyphStyle = {
+    '--ui-workbench-template-glyph-accent': accent,
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <span
+      aria-hidden="true"
+      className={cx('ui-workbench-template-glyph', className)}
+      data-icon={icon}
+      style={glyphStyle}
+      {...props}
+    >
+      {icon === 'text' ? <span className="ui-workbench-template-glyph__text">T</span> : null}
+      {icon === 'list'
+        ? [0, 1, 2].map((index) => (
+            <span key={index} className="ui-workbench-template-glyph__list-line" />
+          ))
+        : null}
+      {icon === 'flex'
+        ? [0, 1, 2].map((index) => (
+            <span key={index} className="ui-workbench-template-glyph__flex-bar" />
+          ))
+        : null}
+      {icon === 'image' ? <span className="ui-workbench-template-glyph__image-mark" /> : null}
+      {icon === 'badge' ? <span className="ui-workbench-template-glyph__badge-mark" /> : null}
+    </span>
+  );
+}
+
 export type WorkbenchDividerProps = ComponentPropsWithRef<'div'>;
 
 export function WorkbenchDivider({ className, ...props }: WorkbenchDividerProps) {
