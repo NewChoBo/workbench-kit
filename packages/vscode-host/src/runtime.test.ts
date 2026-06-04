@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { CommandRegistry } from '@newchobo-ui/core';
-import { createCommandRegistry } from '@newchobo-ui/core';
+import type { CommandRegistry } from '@workbench-kit/core';
+import { createCommandRegistry } from '@workbench-kit/core';
 import type { HostMessageEnvelope, HostTransport } from './bridge';
 import { createHostRuntime } from './runtime';
 
@@ -41,8 +41,7 @@ function createCommandRuntimeContext<TContext>(
   return createHostRuntime({
     commandRegistry,
     transport: options.transport,
-    contextFactory:
-      options.contextFactory ?? (() => ({} as unknown as TContext)),
+    contextFactory: options.contextFactory ?? (() => ({}) as unknown as TContext),
   });
 }
 
@@ -64,9 +63,7 @@ describe('createHostRuntime', () => {
     });
 
     await Promise.resolve();
-    expect(run.mock.calls[0]).toEqual([
-      { user: 'test' },
-    ]);
+    expect(run.mock.calls[0]).toEqual([{ user: 'test' }]);
     expect(
       harness.posted.map((message) => ({ type: message.type, payload: message.payload })),
     ).toEqual([
@@ -120,7 +117,11 @@ describe('createHostRuntime', () => {
     });
 
     await Promise.resolve();
-    expect(applyPatch).toHaveBeenCalledWith({ path: 'src/index.ts', type: 'write-file', content: 'ok' });
+    expect(applyPatch).toHaveBeenCalledWith({
+      path: 'src/index.ts',
+      type: 'write-file',
+      content: 'ok',
+    });
     expect(harness.posted[0]).toMatchObject({ type: 'workbench/patch/result' });
 
     runtime.dispose();

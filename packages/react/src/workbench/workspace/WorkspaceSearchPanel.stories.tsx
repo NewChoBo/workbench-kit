@@ -1,8 +1,12 @@
 import { useMemo, useState, type MouseEvent } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, within } from 'storybook/test';
-import { createCommandRegistry, executeCommand, resolveCommandMenuItems } from '@newchobo-ui/core';
-import { searchWorkspaceFiles, type WorkspaceFile } from '@newchobo-ui/workspace';
+import {
+  createCommandRegistry,
+  executeCommand,
+  resolveCommandMenuItems,
+} from '@workbench-kit/core';
+import { searchWorkspaceFiles, type WorkspaceFile } from '@workbench-kit/workspace';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import {
   commandMenuItemsToContextMenuItems,

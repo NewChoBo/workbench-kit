@@ -1,14 +1,28 @@
-# Universal UI Library
+# Workbench Kit
 
-A public UI package for building workbench-style desktop interfaces quickly.
+Prototype packages for building workbench-style desktop interfaces quickly.
 
 The package starts with small React workbench primitives, then expands toward
 framework-neutral tokens and framework-specific component bindings.
 
+## Prototype Status
+
+Workbench Kit is currently published as `0.0.1-prototype.x` with the `prototype`
+dist tag. Public APIs, package boundaries, and export paths are expected to
+change while the first consuming apps harden the model.
+
 ## Packages
 
-- `@newchobo-ui/tokens`: framework-neutral CSS variables and base theme values
-- `@newchobo-ui/react`: React primitives and lightweight workbench components
+- `@workbench-kit/tokens`: framework-neutral CSS variables and base theme values
+- `@workbench-kit/core`: framework-neutral command and context primitives
+- `@workbench-kit/contracts`: shared chat, save, patch, library, and plugin contracts
+- `@workbench-kit/workspace`: framework-neutral workspace state and path utilities
+- `@workbench-kit/runtime`: runtime event and mock runtime utilities
+- `@workbench-kit/services`: orchestration services for workbench flows
+- `@workbench-kit/adapters`: adapters for repositories and runtime transports
+- `@workbench-kit/react`: React primitives and lightweight workbench components
+- `@workbench-kit/vscode-host`: VS Code-style host bridge utilities
+- `@workbench-kit/vscode-extension`: prototype VS Code extension bootstrap helpers
 
 ## Public Boundary
 
@@ -46,6 +60,24 @@ pnpm test:storybook-play
 pnpm build:storybook
 pnpm validate:full
 ```
+
+## Publishing
+
+Packages are published from GitHub Actions through npm trusted publishing. The
+release workflow is `.github/workflows/publish.yml` and publishes with the
+`prototype` dist tag by default.
+
+Trusted publisher settings must be configured on npm for each public package:
+
+- Provider: GitHub Actions
+- GitHub organization/user: `NewChoBo`
+- Repository: `newchobo-ui-package`
+- Workflow filename: `publish.yml`
+- Allowed action: `npm publish`
+
+The workflow runs on published GitHub releases and pushed tags matching
+`v*` or `workbench-kit-v*`. The tag must match the root package version, such
+as `v0.0.1-prototype.0` or `workbench-kit-v0.0.1-prototype.0`.
 
 ## Conventions
 

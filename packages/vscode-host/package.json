@@ -1,7 +1,7 @@
 {
-  "name": "@newchobo-ui/vscode-host",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@workbench-kit/vscode-host",
+  "version": "0.0.1-prototype.0",
+  "private": false,
   "type": "module",
   "scripts": {
     "test": "vitest run src",
@@ -15,11 +15,26 @@
     "./runtime": "./src/runtime.ts"
   },
   "files": [
-    "src"
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
   ],
   "dependencies": {
-    "@newchobo-ui/contracts": "workspace:*",
-    "@newchobo-ui/core": "workspace:*",
-    "@newchobo-ui/services": "workspace:*"
+    "@workbench-kit/contracts": "workspace:*",
+    "@workbench-kit/core": "workspace:*",
+    "@workbench-kit/services": "workspace:*"
+  },
+  "description": "Workbench Kit host bridge and runtime bindings for VS Code-style hosts.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/newchobo-ui-package.git",
+    "directory": "packages/vscode-host"
   }
 }

@@ -1,4 +1,4 @@
-import type { ChatStreamEvent } from '@newchobo-ui/contracts';
+import type { ChatStreamEvent } from '@workbench-kit/contracts';
 
 export type HostRuntimeMessageType =
   | 'workbench/command'

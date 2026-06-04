@@ -5,10 +5,10 @@ import {
   createMockWorkbenchRuntime,
   type MockRuntimeResponsePlan,
   type RuntimeStatus,
-} from '@newchobo-ui/runtime';
-import { createChatTransportFromRuntime } from '@newchobo-ui/adapters';
-import { WorkbenchChatService } from '@newchobo-ui/services';
-import type { ChatStreamEvent, WorkspacePatchEvent } from '@newchobo-ui/contracts';
+} from '@workbench-kit/runtime';
+import { createChatTransportFromRuntime } from '@workbench-kit/adapters';
+import { WorkbenchChatService } from '@workbench-kit/services';
+import type { ChatStreamEvent, WorkspacePatchEvent } from '@workbench-kit/contracts';
 import { ChatPanel } from './ChatPanel';
 import type { ChatMessage } from './types';
 

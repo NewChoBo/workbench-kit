@@ -19,7 +19,7 @@ export const ConfirmationDialog: Story = {
       <ConfirmDialog
         title="Confirm Action"
         message="This dialog is rendered by the shared React package."
-        detail={<code>@newchobo-ui/react</code>}
+        detail={<code>@workbench-kit/react</code>}
         confirmLabel="Looks good"
         onCancel={() => undefined}
         onConfirm={() => undefined}

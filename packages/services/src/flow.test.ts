@@ -7,7 +7,7 @@ import {
   type WorkspaceFileRepository,
   type WorkspacePatchApplyResult,
   isSaveSuccess,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 import { WorkbenchChatService, WorkspacePatchService, WorkspaceSaveService } from './index';
 
 class InMemoryWorkspaceFileRepository implements WorkspaceFileRepository {

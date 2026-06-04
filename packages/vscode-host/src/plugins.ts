@@ -5,7 +5,7 @@ import type {
   PluginLifecycleResult,
   PluginLifecycleService,
   PluginSource,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 
 export interface InMemoryPluginLifecycleServiceOptions {
   now?: () => string;

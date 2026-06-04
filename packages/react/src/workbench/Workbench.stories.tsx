@@ -6,28 +6,28 @@ import {
   executeCommand,
   resolveCommandMenuItems,
   type CommandMenuEntry,
-} from '@newchobo-ui/core';
+} from '@workbench-kit/core';
 import {
   createChatTransportFromRuntime,
   createWorkspaceFileRepository,
-} from '@newchobo-ui/adapters';
+} from '@workbench-kit/adapters';
 import {
   createMockWorkbenchRuntime,
   type RuntimeChatMessage,
   type RuntimeStatus,
-} from '@newchobo-ui/runtime';
+} from '@workbench-kit/runtime';
 import {
   isSaveFailure,
   type ChatStreamEvent,
   isSaveSuccess,
   type SaveFailure,
   type WorkspacePatchEvent,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 import {
   WorkbenchChatService,
   WorkspacePatchService,
   WorkspaceSaveService,
-} from '@newchobo-ui/services';
+} from '@workbench-kit/services';
 import { SideBarHeaderControl, SideBarViewFrame } from '../layout/SideBarViewFrame';
 import { ConfirmDialog } from '../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../overlay/ContextMenu';
@@ -233,7 +233,7 @@ export function Panel({ children, title, ...props }: PanelProps) {
     mimeType: 'application/typescript',
     updatedAt: '2026-06-02T09:30:00.000Z',
     source: 'assistant',
-    content: `import { ActivityBar, StatusBar } from '@newchobo-ui/react/workbench';
+    content: `import { ActivityBar, StatusBar } from '@workbench-kit/react/workbench';
 
 export function WorkbenchShell({ title }: { title: string }) {
   return (

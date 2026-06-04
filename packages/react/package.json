@@ -1,7 +1,7 @@
 {
-  "name": "@newchobo-ui/react",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@workbench-kit/react",
+  "version": "0.0.1-prototype.0",
+  "private": false,
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -15,16 +15,20 @@
     "./styles.css": "./src/styles.css"
   },
   "files": [
-    "src"
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
   ],
   "dependencies": {
-    "@newchobo-ui/core": "workspace:*",
-    "@newchobo-ui/adapters": "workspace:*",
-    "@newchobo-ui/contracts": "workspace:*",
-    "@newchobo-ui/runtime": "workspace:*",
-    "@newchobo-ui/services": "workspace:*",
-    "@newchobo-ui/tokens": "workspace:*",
-    "@newchobo-ui/workspace": "workspace:*",
+    "@workbench-kit/core": "workspace:*",
+    "@workbench-kit/adapters": "workspace:*",
+    "@workbench-kit/contracts": "workspace:*",
+    "@workbench-kit/runtime": "workspace:*",
+    "@workbench-kit/services": "workspace:*",
+    "@workbench-kit/tokens": "workspace:*",
+    "@workbench-kit/workspace": "workspace:*",
     "@vscode/codicons": "^0.0.45"
   },
   "peerDependencies": {
@@ -43,5 +47,16 @@
     "react-markdown": {
       "optional": true
     }
+  },
+  "description": "React primitives and workbench components for Workbench Kit.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/newchobo-ui-package.git",
+    "directory": "packages/react"
   }
 }

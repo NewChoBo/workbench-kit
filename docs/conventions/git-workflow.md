@@ -267,5 +267,5 @@ omitted accidentally.
 
 Browser smoke confirmed opening the dialog, clicking confirm, and closing it.
 
-Validation: pnpm --filter @newchobo-ui/react typecheck passed.
+Validation: pnpm --filter @workbench-kit/react typecheck passed.
 ```

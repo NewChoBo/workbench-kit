@@ -4,16 +4,13 @@ import type {
   PluginDescriptor,
   PluginLifecycleResult,
   PluginSource,
-} from '@newchobo-ui/contracts';
+} from '@workbench-kit/contracts';
 import {
   isPluginLifecycleFailure,
   isPluginLifecycleSuccess,
   type PluginLifecycleFailure,
-} from '@newchobo-ui/contracts';
-import {
-  InMemoryPluginLifecycleService,
-  createInMemoryPluginLifecycleService,
-} from './plugins';
+} from '@workbench-kit/contracts';
+import { InMemoryPluginLifecycleService, createInMemoryPluginLifecycleService } from './plugins';
 
 function createDescriptor(pluginId: string, version = '1.0.0'): PluginDescriptor {
   return {
@@ -45,7 +42,8 @@ describe('InMemoryPluginLifecycleService', () => {
   });
 
   it('installs a valid descriptor into installed state', async () => {
-    const now = vi.fn()
+    const now = vi
+      .fn()
       .mockReturnValueOnce('2026-06-01T00:00:00.000Z')
       .mockReturnValueOnce('2026-06-01T00:00:01.000Z');
     const service = new InMemoryPluginLifecycleService({ now });
@@ -114,13 +112,10 @@ describe('InMemoryPluginLifecycleService', () => {
       message: `Plugin 'acme.plugin-b' is already installed.`,
     });
 
-    const forced = await service.install(
-      createSource('https://example.com/plugin-b-v2.json'),
-      {
-        descriptor: createDescriptor('acme.plugin-b', '2.0.0'),
-        force: true,
-      },
-    );
+    const forced = await service.install(createSource('https://example.com/plugin-b-v2.json'), {
+      descriptor: createDescriptor('acme.plugin-b', '2.0.0'),
+      force: true,
+    });
     expect(isPluginLifecycleSuccess(forced)).toBe(true);
     if (isPluginLifecycleSuccess(forced)) {
       expect(forced.plugin).toMatchObject({
@@ -214,7 +209,8 @@ describe('InMemoryPluginLifecycleService', () => {
   });
 
   it('updates existing plugin and replaces source when provided', async () => {
-    const now = vi.fn()
+    const now = vi
+      .fn()
       .mockReturnValueOnce('2026-06-01T00:00:04.000Z')
       .mockReturnValueOnce('2026-06-01T00:00:05.000Z');
     const service = new InMemoryPluginLifecycleService({
@@ -232,7 +228,10 @@ describe('InMemoryPluginLifecycleService', () => {
       ],
     });
 
-    const updated = await service.update('acme.plugin-e', createSource('https://example.com/plugin-e-v2.json'));
+    const updated = await service.update(
+      'acme.plugin-e',
+      createSource('https://example.com/plugin-e-v2.json'),
+    );
     expect(isPluginLifecycleSuccess(updated)).toBe(true);
     if (isPluginLifecycleSuccess(updated)) {
       expect(updated.plugin).toMatchObject({
@@ -249,13 +248,14 @@ describe('InMemoryPluginLifecycleService', () => {
 
   it('returns not-found for missing plugin update()', async () => {
     const service = new InMemoryPluginLifecycleService();
-    const result = await service.update('acme.missing', createSource('https://example.com/should-not-run'));
+    const result = await service.update(
+      'acme.missing',
+      createSource('https://example.com/should-not-run'),
+    );
     expect(toFailure(result).code).toBe('not-found');
   });
 
   it('exposes factory helper for testability', () => {
-    expect(
-      createInMemoryPluginLifecycleService(),
-    ).toBeInstanceOf(InMemoryPluginLifecycleService);
+    expect(createInMemoryPluginLifecycleService()).toBeInstanceOf(InMemoryPluginLifecycleService);
   });
 });

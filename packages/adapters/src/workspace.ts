@@ -1,10 +1,10 @@
-import { normalizeWorkspacePath } from '@newchobo-ui/workspace';
+import { normalizeWorkspacePath } from '@workbench-kit/workspace';
 import type {
   CreateWorkspaceFileInput,
   WriteWorkspaceFileInput,
   WorkspaceFile,
-} from '@newchobo-ui/workspace';
-import type { SaveInput, WorkspaceFileRepository } from '@newchobo-ui/contracts';
+} from '@workbench-kit/workspace';
+import type { SaveInput, WorkspaceFileRepository } from '@workbench-kit/contracts';
 
 export interface WorkspaceFileRepositoryCallbacks {
   createFile: (file: CreateWorkspaceFileInput) => void;

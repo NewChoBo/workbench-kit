@@ -128,7 +128,7 @@ describe('library adapters', () => {
         version: '1.0.0',
         items: [],
       },
-      });
+    });
 
     await expect(provider.listItems()).rejects.toThrow(
       'source.kind must be one of embedded-json, json-file, or json-url',
@@ -251,12 +251,13 @@ describe('library adapters', () => {
   it('uses fetch for URL source by default and surfaces non-ok responses', async () => {
     const originalFetch = globalThis.fetch;
 
-    globalThis.fetch = async () => ({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      text: async () => 'Server Error',
-    } as unknown as Response);
+    globalThis.fetch = async () =>
+      ({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        text: async () => 'Server Error',
+      }) as unknown as Response;
 
     const provider = createLibraryManifestUrlProvider({
       displayName: 'Remote Library',
@@ -302,7 +303,7 @@ describe('library adapters', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-      } as unknown as Response);
+      }) as unknown as Response;
 
     const provider = createLibraryManifestUrlProvider({
       displayName: 'Remote Library',
