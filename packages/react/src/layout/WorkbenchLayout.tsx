@@ -119,6 +119,17 @@ function toLengthValue(value: number | string) {
   return typeof value === 'number' ? `${value}px` : value;
 }
 
+function toAngleValue(value: number | string) {
+  return typeof value === 'number' ? `${value}deg` : value;
+}
+
+function toLineLengthValue(start: number | string, end: number | string) {
+  if (typeof start === 'number' && typeof end === 'number') {
+    return `${Math.max(1, end - start)}px`;
+  }
+  return `max(1px, calc(${toLengthValue(end)} - ${toLengthValue(start)}))`;
+}
+
 export type WorkbenchEditorFrameProps = ComponentPropsWithRef<'div'>;
 
 export function WorkbenchEditorFrame({ className, ...props }: WorkbenchEditorFrameProps) {
@@ -413,6 +424,213 @@ export function WorkbenchCanvasSelectionMarquee({
     <div
       className={cx('ui-workbench-canvas-selection-marquee', className)}
       style={marqueeStyle}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchCanvasDropIndicatorProps extends ComponentPropsWithRef<'div'> {
+  height: number | string;
+  width: number | string;
+  x: number | string;
+  y: number | string;
+  zIndex?: number | string | undefined;
+}
+
+export function WorkbenchCanvasDropIndicator({
+  className,
+  height,
+  style,
+  width,
+  x,
+  y,
+  zIndex,
+  ...props
+}: WorkbenchCanvasDropIndicatorProps) {
+  const indicatorStyle = {
+    '--ui-workbench-canvas-drop-indicator-x': toLengthValue(x),
+    '--ui-workbench-canvas-drop-indicator-y': toLengthValue(y),
+    '--ui-workbench-canvas-drop-indicator-width': toLengthValue(width),
+    '--ui-workbench-canvas-drop-indicator-height': toLengthValue(height),
+    ...(zIndex !== undefined
+      ? { '--ui-workbench-canvas-drop-indicator-z-index': String(zIndex) }
+      : {}),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-canvas-drop-indicator', className)}
+      style={indicatorStyle}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchCanvasDragPreviewFrameProps extends ComponentPropsWithRef<'div'> {
+  height: number | string;
+  opacity?: number | string | undefined;
+  rotation?: number | string | undefined;
+  width: number | string;
+  x: number | string;
+  y: number | string;
+  zIndex?: number | string | undefined;
+}
+
+export function WorkbenchCanvasDragPreviewFrame({
+  className,
+  height,
+  opacity,
+  rotation,
+  style,
+  width,
+  x,
+  y,
+  zIndex,
+  ...props
+}: WorkbenchCanvasDragPreviewFrameProps) {
+  const frameStyle = {
+    '--ui-workbench-canvas-drag-preview-frame-x': toLengthValue(x),
+    '--ui-workbench-canvas-drag-preview-frame-y': toLengthValue(y),
+    '--ui-workbench-canvas-drag-preview-frame-width': toLengthValue(width),
+    '--ui-workbench-canvas-drag-preview-frame-height': toLengthValue(height),
+    ...(opacity !== undefined
+      ? { '--ui-workbench-canvas-drag-preview-frame-opacity': String(opacity) }
+      : {}),
+    ...(rotation !== undefined
+      ? {
+          '--ui-workbench-canvas-drag-preview-frame-transform': `rotate(${toAngleValue(rotation)})`,
+        }
+      : {}),
+    ...(zIndex !== undefined
+      ? { '--ui-workbench-canvas-drag-preview-frame-z-index': String(zIndex) }
+      : {}),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-canvas-drag-preview-frame', className)}
+      style={frameStyle}
+      {...props}
+    />
+  );
+}
+
+export type WorkbenchCanvasGuideLineAxis = 'x' | 'y';
+export type WorkbenchCanvasGuideLineSource = 'grid' | 'object';
+
+export type WorkbenchCanvasGuideLayerProps = ComponentPropsWithRef<'div'>;
+
+export function WorkbenchCanvasGuideLayer({ className, ...props }: WorkbenchCanvasGuideLayerProps) {
+  return <div className={cx('ui-workbench-canvas-guide-layer', className)} {...props} />;
+}
+
+export interface WorkbenchCanvasGuideLineProps extends ComponentPropsWithRef<'div'> {
+  axis: WorkbenchCanvasGuideLineAxis;
+  end: number | string;
+  position: number | string;
+  source?: WorkbenchCanvasGuideLineSource | undefined;
+  start: number | string;
+}
+
+export function WorkbenchCanvasGuideLine({
+  axis,
+  className,
+  end,
+  position,
+  source = 'grid',
+  start,
+  style,
+  ...props
+}: WorkbenchCanvasGuideLineProps) {
+  const lineStyle = {
+    '--ui-workbench-canvas-guide-line-position': toLengthValue(position),
+    '--ui-workbench-canvas-guide-line-start': toLengthValue(start),
+    '--ui-workbench-canvas-guide-line-length': toLineLengthValue(start, end),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-canvas-guide-line', className)}
+      data-axis={axis}
+      data-source={source}
+      style={lineStyle}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchCanvasDragGhostProps extends ComponentPropsWithRef<'div'> {
+  height: number | string;
+  opacity?: number | string | undefined;
+  scale?: number | string | undefined;
+  width: number | string;
+  x: number | string;
+  y: number | string;
+  zIndex?: number | string | undefined;
+}
+
+export function WorkbenchCanvasDragGhost({
+  className,
+  height,
+  opacity,
+  scale = 1.06,
+  style,
+  width,
+  x,
+  y,
+  zIndex,
+  ...props
+}: WorkbenchCanvasDragGhostProps) {
+  const ghostStyle = {
+    '--ui-workbench-canvas-drag-ghost-x': toLengthValue(x),
+    '--ui-workbench-canvas-drag-ghost-y': toLengthValue(y),
+    '--ui-workbench-canvas-drag-ghost-width': toLengthValue(width),
+    '--ui-workbench-canvas-drag-ghost-height': toLengthValue(height),
+    '--ui-workbench-canvas-drag-ghost-scale': String(scale),
+    ...(opacity !== undefined
+      ? { '--ui-workbench-canvas-drag-ghost-opacity': String(opacity) }
+      : {}),
+    ...(zIndex !== undefined ? { '--ui-workbench-canvas-drag-ghost-z-index': String(zIndex) } : {}),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-canvas-drag-ghost', className)}
+      style={ghostStyle}
+      {...props}
+    />
+  );
+}
+
+export interface WorkbenchCanvasDragGhostContentProps extends ComponentPropsWithRef<'div'> {
+  height: number | string;
+  scale?: number | string | undefined;
+  width: number | string;
+}
+
+export function WorkbenchCanvasDragGhostContent({
+  className,
+  height,
+  scale = 1,
+  style,
+  width,
+  ...props
+}: WorkbenchCanvasDragGhostContentProps) {
+  const contentStyle = {
+    '--ui-workbench-canvas-drag-ghost-content-width': toLengthValue(width),
+    '--ui-workbench-canvas-drag-ghost-content-height': toLengthValue(height),
+    '--ui-workbench-canvas-drag-ghost-content-scale': String(scale),
+    ...style,
+  } as CSSProperties;
+
+  return (
+    <div
+      className={cx('ui-workbench-canvas-drag-ghost__content', className)}
+      style={contentStyle}
       {...props}
     />
   );

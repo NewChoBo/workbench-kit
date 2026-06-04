@@ -4008,6 +4008,91 @@
   pointer-events: none;
 }
 
+.ui-workbench-canvas-drop-indicator {
+  box-sizing: border-box;
+  position: absolute;
+  left: var(--ui-workbench-canvas-drop-indicator-x, 0);
+  top: var(--ui-workbench-canvas-drop-indicator-y, 0);
+  z-index: var(--ui-workbench-canvas-drop-indicator-z-index, 1);
+  width: var(--ui-workbench-canvas-drop-indicator-width, auto);
+  height: var(--ui-workbench-canvas-drop-indicator-height, auto);
+  background: color-mix(
+    in srgb,
+    var(--vscode-focusBorder, var(--color-focus-border)) 8%,
+    transparent
+  );
+  border: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  pointer-events: none;
+}
+
+.ui-workbench-canvas-drag-preview-frame {
+  box-sizing: border-box;
+  position: absolute;
+  left: var(--ui-workbench-canvas-drag-preview-frame-x, 0);
+  top: var(--ui-workbench-canvas-drag-preview-frame-y, 0);
+  z-index: var(--ui-workbench-canvas-drag-preview-frame-z-index, 1000);
+  width: var(--ui-workbench-canvas-drag-preview-frame-width, auto);
+  height: var(--ui-workbench-canvas-drag-preview-frame-height, auto);
+  overflow: hidden;
+  border: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  opacity: var(--ui-workbench-canvas-drag-preview-frame-opacity, 0.82);
+  pointer-events: none;
+  transform: var(--ui-workbench-canvas-drag-preview-frame-transform, none);
+  transform-origin: center center;
+}
+
+.ui-workbench-canvas-guide-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+.ui-workbench-canvas-guide-line {
+  position: absolute;
+  background: var(--vscode-focusBorder, var(--color-focus-border));
+}
+
+.ui-workbench-canvas-guide-line[data-source='object'] {
+  background: var(--ui-workbench-canvas-guide-object, #ef4444);
+}
+
+.ui-workbench-canvas-guide-line[data-axis='x'] {
+  left: var(--ui-workbench-canvas-guide-line-position, 0);
+  top: var(--ui-workbench-canvas-guide-line-start, 0);
+  width: 1px;
+  height: var(--ui-workbench-canvas-guide-line-length, 1px);
+}
+
+.ui-workbench-canvas-guide-line[data-axis='y'] {
+  left: var(--ui-workbench-canvas-guide-line-start, 0);
+  top: var(--ui-workbench-canvas-guide-line-position, 0);
+  width: var(--ui-workbench-canvas-guide-line-length, 1px);
+  height: 1px;
+}
+
+.ui-workbench-canvas-drag-ghost {
+  position: fixed;
+  left: var(--ui-workbench-canvas-drag-ghost-x, 0);
+  top: var(--ui-workbench-canvas-drag-ghost-y, 0);
+  z-index: var(--ui-workbench-canvas-drag-ghost-z-index, 2000);
+  width: var(--ui-workbench-canvas-drag-ghost-width, auto);
+  height: var(--ui-workbench-canvas-drag-ghost-height, auto);
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  opacity: var(--ui-workbench-canvas-drag-ghost-opacity, 0.82);
+  pointer-events: none;
+  transform: scale(var(--ui-workbench-canvas-drag-ghost-scale, 1.06));
+  transform-origin: center center;
+}
+
+.ui-workbench-canvas-drag-ghost__content {
+  width: var(--ui-workbench-canvas-drag-ghost-content-width, auto);
+  height: var(--ui-workbench-canvas-drag-ghost-content-height, auto);
+  transform: scale(var(--ui-workbench-canvas-drag-ghost-content-scale, 1));
+  transform-origin: 0 0;
+}
+
 .ui-workbench-canvas-frame-handle {
   box-sizing: border-box;
   position: absolute;

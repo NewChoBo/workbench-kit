@@ -16,7 +16,13 @@ import {
   WorkbenchSidebarSection,
 } from './WorkbenchSidebarActions';
 import {
+  WorkbenchCanvasDragGhost,
+  WorkbenchCanvasDragGhostContent,
+  WorkbenchCanvasDragPreviewFrame,
+  WorkbenchCanvasDropIndicator,
   WorkbenchCanvasFrameHandle,
+  WorkbenchCanvasGuideLayer,
+  WorkbenchCanvasGuideLine,
   WorkbenchCanvasResizeFrame,
   WorkbenchCanvasResizeHandle,
   WorkbenchCanvasResizePreview,
@@ -223,6 +229,28 @@ export const CanvasViewportSelection: Story = {
       <WorkbenchCanvasViewport width={280} height={160}>
         <WorkbenchCanvasSelectionMarquee x={48} y={36} width={132} height={72} />
       </WorkbenchCanvasViewport>
+    </div>
+  ),
+};
+
+export const CanvasDragChrome: Story = {
+  render: () => (
+    <div style={{ width: 420, height: 260, padding: 24, background: 'var(--color-bg)' }}>
+      <WorkbenchCanvasViewport width={320} height={180}>
+        <WorkbenchCanvasDropIndicator x={24} y={24} width={72} height={48} />
+        <WorkbenchCanvasDragPreviewFrame x={132} y={56} width={88} height={56} rotation={4}>
+          <div style={{ width: '100%', height: '100%', background: 'var(--color-surface)' }} />
+        </WorkbenchCanvasDragPreviewFrame>
+        <WorkbenchCanvasGuideLayer>
+          <WorkbenchCanvasGuideLine axis="x" source="object" position={116} start={20} end={148} />
+          <WorkbenchCanvasGuideLine axis="y" position={20} start={32} end={284} />
+        </WorkbenchCanvasGuideLayer>
+      </WorkbenchCanvasViewport>
+      <WorkbenchCanvasDragGhost x={284} y={156} width={72} height={48}>
+        <WorkbenchCanvasDragGhostContent width={72} height={48}>
+          <div style={{ width: '100%', height: '100%', background: 'var(--color-surface)' }} />
+        </WorkbenchCanvasDragGhostContent>
+      </WorkbenchCanvasDragGhost>
     </div>
   ),
 };
