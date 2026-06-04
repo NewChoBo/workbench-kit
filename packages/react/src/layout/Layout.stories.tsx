@@ -21,8 +21,12 @@ import {
   WorkbenchCanvasDragPreviewFrame,
   WorkbenchCanvasDropIndicator,
   WorkbenchCanvasFrameHandle,
+  WorkbenchCanvasFrameSurface,
+  WorkbenchCanvasGuideBlock,
   WorkbenchCanvasGuideLayer,
   WorkbenchCanvasGuideLine,
+  WorkbenchCanvasPaneSurface,
+  WorkbenchCanvasPlaceholder,
   WorkbenchCanvasResizeFrame,
   WorkbenchCanvasResizeHandle,
   WorkbenchCanvasResizePreview,
@@ -236,16 +240,34 @@ export const CanvasViewportSelection: Story = {
 export const CanvasDragChrome: Story = {
   render: () => (
     <div style={{ width: 420, height: 260, padding: 24, background: 'var(--color-bg)' }}>
-      <WorkbenchCanvasViewport width={320} height={180}>
-        <WorkbenchCanvasDropIndicator x={24} y={24} width={72} height={48} />
-        <WorkbenchCanvasDragPreviewFrame x={132} y={56} width={88} height={56} rotation={4}>
-          <div style={{ width: '100%', height: '100%', background: 'var(--color-surface)' }} />
-        </WorkbenchCanvasDragPreviewFrame>
-        <WorkbenchCanvasGuideLayer>
-          <WorkbenchCanvasGuideLine axis="x" source="object" position={116} start={20} end={148} />
-          <WorkbenchCanvasGuideLine axis="y" position={20} start={32} end={284} />
-        </WorkbenchCanvasGuideLayer>
-      </WorkbenchCanvasViewport>
+      <WorkbenchCanvasPaneSurface style={{ width: 320, height: 180 }}>
+        <WorkbenchCanvasViewport width={320} height={180}>
+          <WorkbenchCanvasFrameSurface
+            selected
+            style={{ left: 16, top: 16, width: 280, height: 140 }}
+          >
+            <WorkbenchCanvasGuideBlock tone="padding" x={0} y={0} width={280} height={16} />
+            <WorkbenchCanvasGuideBlock x={128} y={24} width={12} height={92} />
+            <WorkbenchCanvasPlaceholder x={24} y={88} width={72} height={40}>
+              Missing tile
+            </WorkbenchCanvasPlaceholder>
+          </WorkbenchCanvasFrameSurface>
+          <WorkbenchCanvasDropIndicator x={24} y={24} width={72} height={48} />
+          <WorkbenchCanvasDragPreviewFrame x={132} y={56} width={88} height={56} rotation={4}>
+            <div style={{ width: '100%', height: '100%', background: 'var(--color-surface)' }} />
+          </WorkbenchCanvasDragPreviewFrame>
+          <WorkbenchCanvasGuideLayer>
+            <WorkbenchCanvasGuideLine
+              axis="x"
+              source="object"
+              position={116}
+              start={20}
+              end={148}
+            />
+            <WorkbenchCanvasGuideLine axis="y" position={20} start={32} end={284} />
+          </WorkbenchCanvasGuideLayer>
+        </WorkbenchCanvasViewport>
+      </WorkbenchCanvasPaneSurface>
       <WorkbenchCanvasDragGhost x={284} y={156} width={72} height={48}>
         <WorkbenchCanvasDragGhostContent width={72} height={48}>
           <div style={{ width: '100%', height: '100%', background: 'var(--color-surface)' }} />
