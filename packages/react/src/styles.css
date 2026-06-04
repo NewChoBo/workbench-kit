@@ -1,6 +1,27 @@
 @import '@workbench-kit/tokens/styles.css';
 @import '@vscode/codicons/dist/codicon.css';
 
+.ui-workbench-host-document,
+.ui-workbench-host,
+.ui-workbench-host-root {
+  width: 100%;
+  height: 100%;
+}
+
+.ui-workbench-host {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  color: var(--vscode-foreground, var(--color-text));
+  background: var(--vscode-editor-background, var(--color-bg));
+  font-family: var(--vscode-font-family, var(--font-family, system-ui, sans-serif));
+  font-size: var(--vscode-font-size, var(--font-size-base));
+}
+
+.ui-workbench-host-root {
+  overflow: hidden;
+}
+
 .ide-root {
   height: 100%;
   display: flex;
