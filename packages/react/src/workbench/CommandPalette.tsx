@@ -22,11 +22,10 @@ export type WorkbenchCommandStatus =
   | 'disabled'
   | 'unavailable';
 
-export type WorkbenchCommandExecution =
-  | { kind: 'local' }
-  | { kind: 'remote' }
-  | { kind: 'agent' }
-  | { kind: 'composite' };
+export interface WorkbenchCommandExecution {
+  kind: 'local' | 'remote' | 'composite' | (string & {});
+  label?: string;
+}
 
 export type WorkbenchCommandFeedback = 'none' | 'status' | 'timeline';
 export type WorkbenchCommandOutput = 'none' | 'message' | 'event' | 'artifact';
@@ -84,8 +83,7 @@ const commandStatusLabels: Record<WorkbenchCommandStatus, string> = {
   waiting: 'Waiting',
 };
 
-const commandExecutionLabels: Record<WorkbenchCommandExecution['kind'], string> = {
-  agent: 'Agent',
+const commandExecutionLabels: Record<string, string> = {
   composite: 'Composite',
   local: 'Local',
   remote: 'Remote',
@@ -206,7 +204,9 @@ function commandExecution(command: WorkbenchCommandDescriptor) {
 
   return (
     <span className="ui-workbench-command-item__chip">
-      {commandExecutionLabels[command.execution.kind]}
+      {command.execution.label ??
+        commandExecutionLabels[command.execution.kind] ??
+        command.execution.kind}
     </span>
   );
 }

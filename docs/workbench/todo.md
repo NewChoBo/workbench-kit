@@ -52,19 +52,19 @@ outside this repository.
 ## Generic API Boundary Notes
 
 These notes clarify how downstream application needs should be translated into
-Workbench Kit work. If a consumer needs a product-specific workflow, artifact,
-or command, the package should expose an extensible primitive rather than
-hard-code the consumer concept.
+Workbench Kit work. If a downstream application needs a product-specific
+workflow, artifact, or command, the package should expose an extensible
+primitive rather than hard-code the downstream concept.
 
-| Topic              | Boundary                                                                                                                                       |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Command execution  | Use generic execution metadata and callbacks. Do not require app-specific execution kinds, runtime objects, tool names, or backend endpoints.  |
-| Command suggest    | Provide palette and composer-anchored suggest surfaces with configurable labels, empty states, active item control, and callback-based select. |
-| Command lifecycle  | Keep a shared status model generic. Consumers should map their local, remote, agent, or composite operation state into the public status type. |
-| Timeline events    | Render generic operation events. Consumers own event creation, ordering, payload shape, and sensitive metadata filtering.                      |
-| Artifact preview   | Select preview renderers through extension, MIME type, artifact kind, or metadata. Do not include product artifact schemas in the package.     |
-| Explorer providers | Preserve provider/root identity and generic actions. Consumers decide whether a root represents files, virtual entries, state, config, etc.    |
-| Accessibility      | Palette, suggest, dialogs, and lists should preserve focus behavior, keyboard navigation, and screen-reader state without consumer rewrites.   |
+| Topic              | Boundary                                                                                                                                          |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Command execution  | Use generic execution metadata and callbacks. Do not require app-specific execution kinds, runtime objects, tool names, or runtime/API endpoints. |
+| Command suggest    | Provide palette and composer-anchored suggest surfaces with configurable labels, empty states, active item control, and callback-based select.    |
+| Command lifecycle  | Keep a shared status model generic. Downstream applications should map operation state into the public status type.                               |
+| Timeline events    | Render generic operation events. Downstream applications own event creation, ordering, payload shape, and sensitive metadata filtering.           |
+| Artifact preview   | Select preview renderers through extension, MIME type, artifact kind, or metadata. Do not include product artifact schemas in the package.        |
+| Explorer providers | Preserve provider/root identity and generic actions. Downstream applications decide what each root represents.                                    |
+| Accessibility      | Palette, suggest, dialogs, and lists should preserve focus behavior, keyboard navigation, and screen-reader state without downstream rewrites.    |
 
 ## Independent Work Queue
 
@@ -147,9 +147,9 @@ interface WorkbenchCommandDescriptor {
 ```
 
 The public command model should avoid making a downstream concept part of the
-required union. For example, a consumer can represent an agent-backed command as
-`{ kind: 'agent', label: 'Agent' }`, but Workbench Kit should treat it as generic
-metadata and never call an agent runtime directly.
+required union. For example, a downstream application can represent a delegated
+command as `{ kind: 'delegated', label: 'Delegated' }`, but Workbench Kit should
+treat it as generic metadata and never call a runtime directly.
 
 ```ts
 interface WorkbenchTimelineEvent {
@@ -174,7 +174,7 @@ architecture terms in primitive props.
 | WB-01 | Section can collapse/expand, exposes accessible heading semantics, preserves sidebar spacing, and supports optional badge/count and secondary action content.                                                 |
 | WB-02 | Action row supports active, disabled, running, danger, selected, and unavailable states without layout shift; disabled rows expose a reason to assistive/user surfaces.                                       |
 | WB-03 | Palette and composer slash suggest can filter commands, support keyboard navigation, render empty states, preserve focus handoff, and call an `onRunCommand`-style callback without owning command execution. |
-| WB-04 | Event renderer can display generic messages, operation calls, operation results, file writes, progress, and errors in one ordered timeline with compact and expanded variants. Consumers provide payloads.    |
+| WB-04 | Event renderer can display generic messages, operation calls, operation results, file writes, progress, and errors in one ordered timeline with compact and expanded variants. Payloads stay pluggable.       |
 | WB-05 | Status model maps command lifecycle states to stable labels and visual variants without assuming an application runtime. It should align sidebar action, command, timeline, and status-bar usage.             |
 | WB-06 | Explorer can combine multiple provider roots while preserving root identity, selection, disabled states, and per-provider actions.                                                                            |
 | WB-07 | Code/preview/split shell can switch modes, preserve selected file identity, and leave actual code editor/preview renderer implementation pluggable.                                                           |
