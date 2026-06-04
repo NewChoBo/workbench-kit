@@ -195,6 +195,13 @@ export {
   WorkbenchPropertyToggleButton,
   WorkbenchRoot,
   WorkbenchSectionTitle,
+  WorkbenchTree,
+  WorkbenchTreeActionButton,
+  WorkbenchTreeDragOverlay,
+  WorkbenchTreeDropLine,
+  WorkbenchTreeDropZone,
+  WorkbenchTreeExpander,
+  WorkbenchTreeItem,
 } from './layout/WorkbenchLayout';
 export type {
   WorkbenchBannerIconProps,
@@ -223,6 +230,14 @@ export type {
   WorkbenchPropertyToggleButtonProps,
   WorkbenchRootProps,
   WorkbenchSectionTitleProps,
+  WorkbenchTreeActionButtonProps,
+  WorkbenchTreeDragOverlayProps,
+  WorkbenchTreeDropLineProps,
+  WorkbenchTreeDropZoneProps,
+  WorkbenchTreeExpanderProps,
+  WorkbenchTreeInteraction,
+  WorkbenchTreeItemProps,
+  WorkbenchTreeProps,
 } from './layout/WorkbenchLayout';
 export { AbsoluteBox } from './primitives/AbsoluteBox';
 export type { AbsoluteBoxProps, WorkbenchRect } from './primitives/AbsoluteBox';
