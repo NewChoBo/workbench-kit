@@ -7,6 +7,8 @@ const dryRun = process.argv.includes('--dry-run') || process.env.DRY_RUN === 'tr
 const distTag = process.env.NPM_DIST_TAG || 'prototype';
 const registry = process.env.NPM_CONFIG_REGISTRY || 'https://registry.npmjs.org/';
 const packDir = path.join(root, '.npm-pack');
+const trustedPublisherAvailable =
+  process.env.GITHUB_ACTIONS === 'true' && Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN);
 
 const publishOrder = [
   '@workbench-kit/contracts',
@@ -35,6 +37,9 @@ for (const packageName of publishOrder) {
 
   const tarball = packPackage(pkg.name);
   const args = ['publish', tarball, '--access', 'public', '--tag', distTag, '--registry', registry];
+  if (!trustedPublisherAvailable) {
+    args.push('--provenance=false');
+  }
   if (dryRun) {
     args.push('--dry-run');
   }
