@@ -300,7 +300,9 @@ export interface CollapsibleProps extends Omit<
   ComponentPropsWithRef<'section'>,
   'onToggle' | 'title'
 > {
+  basis?: string | undefined;
   defaultOpen?: boolean;
+  layout?: 'auto' | 'fill' | 'section';
   onToggle?: (open: boolean) => void;
   open?: boolean;
   title: ReactNode;
@@ -308,10 +310,13 @@ export interface CollapsibleProps extends Omit<
 
 export function Collapsible({
   children,
+  basis,
   className,
   defaultOpen = false,
+  layout = 'section',
   onToggle,
   open,
+  style,
   title,
   ...props
 }: CollapsibleProps) {
@@ -325,7 +330,17 @@ export function Collapsible({
   }
 
   return (
-    <section className={cx('ui-collapsible', className)} {...props}>
+    <section
+      className={cx(
+        'ui-collapsible',
+        layout === 'fill' && 'ui-collapsible--fill',
+        layout === 'section' && 'ui-collapsible--section',
+        !expanded && 'ui-collapsible--closed',
+        className,
+      )}
+      style={{ '--ui-collapsible-basis': basis, ...style } as CSSProperties}
+      {...props}
+    >
       <button
         aria-expanded={expanded}
         className="ui-collapsible__trigger"

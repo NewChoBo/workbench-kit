@@ -17,6 +17,8 @@ export function IconButton({
   variant = 'default',
   ...props
 }: IconButtonProps) {
+  const iconClassName = icon.startsWith('codicon-') ? icon : `codicon-${icon}`;
+
   return (
     <button
       aria-label={label}
@@ -26,7 +28,7 @@ export function IconButton({
       type={type}
       {...props}
     >
-      <i className={`codicon ${icon}`} />
+      <i className={`codicon ${iconClassName}`} />
     </button>
   );
 }

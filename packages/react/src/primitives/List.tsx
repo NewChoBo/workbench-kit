@@ -19,7 +19,7 @@ export function List({ ariaLabel, className, role = 'listbox', ...props }: ListP
 export interface ListItemProps extends Omit<ComponentPropsWithRef<'div'>, 'children'> {
   actions?: ReactNode;
   description?: ReactNode;
-  icon?: ReactNode;
+  icon?: ReactNode | string;
   label: ReactNode;
   leading?: ReactNode;
   meta?: ReactNode;
@@ -40,6 +40,12 @@ export function ListItem({
   ...props
 }: ListItemProps) {
   const hasDescription = description !== undefined && description !== null && description !== '';
+  const resolvedIcon =
+    typeof icon === 'string' ? (
+      <i className={`codicon ${icon.startsWith('codicon-') ? icon : `codicon-${icon}`}`} />
+    ) : (
+      icon
+    );
 
   return (
     <div
@@ -49,7 +55,8 @@ export function ListItem({
       tabIndex={tabIndex}
       {...props}
     >
-      {leading ?? (icon ? <span className="ui-list-item__icon">{icon}</span> : null)}
+      {leading ??
+        (resolvedIcon ? <span className="ui-list-item__icon">{resolvedIcon}</span> : null)}
       <span className="ui-list-item__content">
         <span className="ui-list-item__label">{label}</span>
         {hasDescription ? <span className="ui-list-item__description">{description}</span> : null}
