@@ -15,6 +15,7 @@ import {
   WorkbenchActionListItem,
   WorkbenchSidebarSection,
 } from './WorkbenchSidebarActions';
+import { WorkbenchDragPreview } from './WorkbenchLayout';
 
 const meta = {
   title: 'React/Layout',
@@ -153,6 +154,19 @@ export const SidebarActionPrimitives: Story = {
           <WorkbenchActionList empty aria-label="Empty actions" emptyLabel="No actions available" />
         </WorkbenchSidebarSection>
       </SideBarViewFrame>
+    </div>
+  ),
+};
+
+export const DragPreview: Story = {
+  render: () => (
+    <div style={{ width: 360, height: 160, padding: 24, background: 'var(--color-bg)' }}>
+      <p style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>
+        Fixed drag previews follow pointer coordinates while chrome stays in workbench-kit.
+      </p>
+      <WorkbenchDragPreview x={96} y={88}>
+        Tile template
+      </WorkbenchDragPreview>
     </div>
   ),
 };
