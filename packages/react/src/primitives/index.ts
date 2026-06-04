@@ -14,6 +14,8 @@ export { IconButton } from './IconButton';
 export type { IconButtonProps } from './IconButton';
 export { List, ListEmptyState, ListItem } from './List';
 export type { ListEmptyStateProps, ListItemProps, ListProps } from './List';
+export { NumberInput } from './NumberInput';
+export type { NumberInputProps } from './NumberInput';
 export { Select } from './Select';
 export type { SelectProps } from './Select';
 export { StatusBar, StatusBarLabel, StatusBarSection } from './StatusBar';
@@ -25,7 +27,7 @@ export type {
   StatusBarSeverity,
 } from './StatusBar';
 export { TextInput } from './TextInput';
-export type { TextInputProps } from './TextInput';
+export type { ControlWidth, TextInputProps } from './TextInput';
 export { TextArea } from './TextArea';
 export type { TextAreaProps } from './TextArea';
 export { Toolbar } from './Toolbar';

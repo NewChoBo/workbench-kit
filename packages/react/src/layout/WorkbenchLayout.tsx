@@ -7,11 +7,15 @@ import type {
 } from 'react';
 import { Button } from '../primitives/Button';
 import type { ButtonProps } from '../primitives/Button';
+import { Checkbox } from '../primitives/Checkbox';
 import { Field } from '../primitives/Field';
 import type { FieldProps } from '../primitives/Field';
 import { IconButton } from '../primitives/IconButton';
 import type { IconButtonProps } from '../primitives/IconButton';
+import { NumberInput } from '../primitives/NumberInput';
+import { Select } from '../primitives/Select';
 import { TextInput } from '../primitives/TextInput';
+import type { ControlWidth } from '../primitives/TextInput';
 import { cx } from '../utils/cx';
 
 export type WorkbenchRootProps = ComponentPropsWithRef<'div'>;
@@ -1766,6 +1770,174 @@ export type WorkbenchPropertyRowProps = FieldProps;
 
 export function WorkbenchPropertyRow({ className, ...props }: WorkbenchPropertyRowProps) {
   return <Field className={cx('ui-workbench-property-row', className)} {...props} />;
+}
+
+export interface WorkbenchPropertyTextRowProps extends Omit<WorkbenchPropertyRowProps, 'children'> {
+  controlWidth?: ControlWidth;
+  disabled?: boolean | undefined;
+  onValueChange: (value: string) => void;
+  placeholder?: string | undefined;
+  value: string;
+}
+
+export function WorkbenchPropertyTextRow({
+  controlWidth = 'full',
+  disabled,
+  onValueChange,
+  placeholder,
+  value,
+  ...props
+}: WorkbenchPropertyTextRowProps) {
+  return (
+    <WorkbenchPropertyRow {...props}>
+      <TextInput
+        controlWidth={controlWidth}
+        disabled={disabled}
+        placeholder={placeholder}
+        value={value}
+        onValueChange={onValueChange}
+      />
+    </WorkbenchPropertyRow>
+  );
+}
+
+export interface WorkbenchPropertyNumberRowProps extends Omit<
+  WorkbenchPropertyRowProps,
+  'children'
+> {
+  controlWidth?: ControlWidth;
+  disabled?: boolean | undefined;
+  max?: number | undefined;
+  min?: number | undefined;
+  onValueChange: (value: number) => void;
+  step?: number | string | undefined;
+  value?: number | undefined;
+}
+
+export function WorkbenchPropertyNumberRow({
+  controlWidth = 'full',
+  disabled,
+  max,
+  min,
+  onValueChange,
+  step,
+  value,
+  ...props
+}: WorkbenchPropertyNumberRowProps) {
+  return (
+    <WorkbenchPropertyRow {...props}>
+      <NumberInput
+        controlWidth={controlWidth}
+        disabled={disabled}
+        max={max}
+        min={min}
+        step={step}
+        value={value}
+        onValueChange={onValueChange}
+      />
+    </WorkbenchPropertyRow>
+  );
+}
+
+export interface WorkbenchPropertyColorRowProps extends Omit<
+  WorkbenchPropertyRowProps,
+  'children'
+> {
+  disabled?: boolean | undefined;
+  fallbackValue?: string;
+  onValueChange: (value: string) => void;
+  value?: string | undefined;
+}
+
+export function WorkbenchPropertyColorRow({
+  disabled,
+  fallbackValue,
+  onValueChange,
+  value,
+  ...props
+}: WorkbenchPropertyColorRowProps) {
+  return (
+    <WorkbenchPropertyRow {...props}>
+      <WorkbenchColorInput
+        disabled={disabled}
+        fallbackValue={fallbackValue ?? '#000000'}
+        value={value}
+        onValueChange={onValueChange}
+      />
+    </WorkbenchPropertyRow>
+  );
+}
+
+export interface WorkbenchPropertySelectOption<TValue extends string = string> {
+  disabled?: boolean | undefined;
+  label: ReactNode;
+  value: TValue;
+}
+
+export interface WorkbenchPropertySelectRowProps<TValue extends string = string> extends Omit<
+  WorkbenchPropertyRowProps,
+  'children'
+> {
+  controlWidth?: ControlWidth;
+  disabled?: boolean | undefined;
+  onValueChange: (value: TValue) => void;
+  options: readonly WorkbenchPropertySelectOption<TValue>[];
+  value?: TValue | undefined;
+}
+
+export function WorkbenchPropertySelectRow<TValue extends string = string>({
+  controlWidth = 'full',
+  disabled,
+  onValueChange,
+  options,
+  value,
+  ...props
+}: WorkbenchPropertySelectRowProps<TValue>) {
+  return (
+    <WorkbenchPropertyRow {...props}>
+      <Select
+        controlWidth={controlWidth}
+        disabled={disabled}
+        value={value ?? options[0]?.value ?? ''}
+        onValueChange={(next) => onValueChange(next as TValue)}
+      >
+        {options.map((option) => (
+          <option key={option.value} disabled={option.disabled} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </Select>
+    </WorkbenchPropertyRow>
+  );
+}
+
+export interface WorkbenchPropertyCheckboxRowProps extends Omit<
+  WorkbenchPropertyRowProps,
+  'children'
+> {
+  checked?: boolean | undefined;
+  checkboxLabel?: ReactNode;
+  disabled?: boolean | undefined;
+  onCheckedChange: (checked: boolean) => void;
+}
+
+export function WorkbenchPropertyCheckboxRow({
+  checked,
+  checkboxLabel,
+  disabled,
+  onCheckedChange,
+  ...props
+}: WorkbenchPropertyCheckboxRowProps) {
+  return (
+    <WorkbenchPropertyRow {...props}>
+      <Checkbox
+        checked={Boolean(checked)}
+        disabled={disabled}
+        label={checkboxLabel}
+        onCheckedChange={onCheckedChange}
+      />
+    </WorkbenchPropertyRow>
+  );
 }
 
 export interface WorkbenchPropertyPanelProps extends ComponentPropsWithRef<'div'> {
