@@ -321,27 +321,41 @@ export function WorkbenchFloatingMenuItem({
 }
 
 export interface WorkbenchCanvasItemFrameProps extends ComponentPropsWithRef<'div'> {
+  cursor?: CSSProperties['cursor'] | undefined;
   height: number | string;
   hovered?: boolean | undefined;
   interactive?: boolean | undefined;
+  opacity?: number | string | undefined;
+  overflow?: CSSProperties['overflow'] | undefined;
+  rotation?: number | string | undefined;
   selected?: boolean | undefined;
+  touchAction?: CSSProperties['touchAction'] | undefined;
+  transform?: string | undefined;
   transient?: boolean | undefined;
   width: number | string;
   x: number | string;
   y: number | string;
+  zIndex?: number | string | undefined;
 }
 
 export function WorkbenchCanvasItemFrame({
   className,
+  cursor,
   height,
   hovered = false,
   interactive = false,
+  opacity,
+  overflow,
+  rotation,
   selected = false,
   style,
+  touchAction,
+  transform,
   transient = false,
   width,
   x,
   y,
+  zIndex,
   ...props
 }: WorkbenchCanvasItemFrameProps) {
   const frameStyle = {
@@ -349,6 +363,18 @@ export function WorkbenchCanvasItemFrame({
     '--ui-workbench-canvas-item-y': toLengthValue(y),
     '--ui-workbench-canvas-item-width': toLengthValue(width),
     '--ui-workbench-canvas-item-height': toLengthValue(height),
+    ...(cursor !== undefined ? { '--ui-workbench-canvas-item-cursor': cursor } : {}),
+    ...(opacity !== undefined ? { '--ui-workbench-canvas-item-opacity': String(opacity) } : {}),
+    ...(overflow !== undefined ? { '--ui-workbench-canvas-item-overflow': overflow } : {}),
+    ...(touchAction !== undefined
+      ? { '--ui-workbench-canvas-item-touch-action': touchAction }
+      : {}),
+    ...(transform !== undefined
+      ? { '--ui-workbench-canvas-item-transform': transform }
+      : rotation !== undefined
+        ? { '--ui-workbench-canvas-item-transform': `rotate(${toAngleValue(rotation)})` }
+        : {}),
+    ...(zIndex !== undefined ? { '--ui-workbench-canvas-item-z-index': String(zIndex) } : {}),
     ...style,
   } as CSSProperties;
 
