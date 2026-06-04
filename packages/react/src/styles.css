@@ -3892,6 +3892,7 @@
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  gap: 6px;
   height: var(--ui-workbench-tree-row-height, 22px);
   padding: 0 8px;
   color: var(--vscode-sideBar-foreground, var(--color-text));
