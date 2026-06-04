@@ -5,6 +5,7 @@ import { Checkbox } from './Checkbox';
 import { EmptyState } from './EmptyState';
 import { Field } from './Field';
 import { IconButton } from './IconButton';
+import { NumberInput } from './NumberInput';
 import { Select } from './Select';
 import { StatusBar, StatusBarLabel, StatusBarSection } from './StatusBar';
 import { TextInput } from './TextInput';
@@ -46,6 +47,9 @@ export const Controls: Story = {
       </Toolbar>
       <Field label="Text field" description="Full-width input inside a field wrapper.">
         <TextInput controlWidth="full" placeholder="Enter a label" />
+      </Field>
+      <Field label="Number field" description="Numeric input with parsed value callbacks.">
+        <NumberInput controlWidth="full" defaultValue={3} min={0} />
       </Field>
       <Field label="Mode" description="Native select styled by the shared package.">
         <Select controlWidth="full" defaultValue="compact">

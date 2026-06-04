@@ -245,14 +245,19 @@ export {
   WorkbenchProblemItem,
   WorkbenchProblemList,
   WorkbenchPropertyCard,
+  WorkbenchPropertyCheckboxRow,
+  WorkbenchPropertyColorRow,
   WorkbenchPropertyGrid,
   WorkbenchPropertyHint,
   WorkbenchPropertyInline,
   WorkbenchPropertyKeyValue,
+  WorkbenchPropertyNumberRow,
   WorkbenchPropertyPanel,
   WorkbenchPropertyRow,
   WorkbenchPropertySection,
+  WorkbenchPropertySelectRow,
   WorkbenchPropertyStack,
+  WorkbenchPropertyTextRow,
   WorkbenchPropertyToggleButton,
   WorkbenchRenderSurface,
   WorkbenchRoot,
@@ -351,14 +356,20 @@ export type {
   WorkbenchProblemListProps,
   WorkbenchProblemSeverity,
   WorkbenchPropertyCardProps,
+  WorkbenchPropertyCheckboxRowProps,
+  WorkbenchPropertyColorRowProps,
   WorkbenchPropertyGridProps,
   WorkbenchPropertyHintProps,
   WorkbenchPropertyInlineProps,
   WorkbenchPropertyKeyValueProps,
+  WorkbenchPropertyNumberRowProps,
   WorkbenchPropertyPanelProps,
   WorkbenchPropertyRowProps,
   WorkbenchPropertySectionProps,
+  WorkbenchPropertySelectOption,
+  WorkbenchPropertySelectRowProps,
   WorkbenchPropertyStackProps,
+  WorkbenchPropertyTextRowProps,
   WorkbenchPropertyToggleButtonProps,
   WorkbenchRenderSurfaceProps,
   WorkbenchRootProps,
@@ -403,6 +414,8 @@ export { IconButton } from './primitives/IconButton';
 export type { IconButtonProps } from './primitives/IconButton';
 export { List, ListEmptyState, ListItem } from './primitives/List';
 export type { ListEmptyStateProps, ListItemProps, ListProps } from './primitives/List';
+export { NumberInput } from './primitives/NumberInput';
+export type { NumberInputProps } from './primitives/NumberInput';
 export { StatusBar, StatusBarLabel, StatusBarSection } from './primitives/StatusBar';
 export type {
   StatusBarLabelProps,
@@ -444,7 +457,7 @@ export type {
 export { Select } from './primitives/Select';
 export type { SelectProps } from './primitives/Select';
 export { TextInput } from './primitives/TextInput';
-export type { TextInputProps } from './primitives/TextInput';
+export type { ControlWidth, TextInputProps } from './primitives/TextInput';
 export { TextArea } from './primitives/TextArea';
 export type { TextAreaProps } from './primitives/TextArea';
 export { Toolbar } from './primitives/Toolbar';
