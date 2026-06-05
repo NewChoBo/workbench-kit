@@ -624,6 +624,268 @@
   opacity: 0.82;
 }
 
+.workbench-auth-gate {
+  min-width: 0;
+  min-height: 100%;
+}
+
+.workbench-auth-gate__loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  font-size: var(--font-size-sm);
+}
+
+.workbench-login-view {
+  box-sizing: border-box;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(300px, 0.86fr) minmax(420px, 1.14fr);
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-family: var(--vscode-font-family, var(--font-family, system-ui, sans-serif));
+  overflow: hidden;
+}
+
+.workbench-login-view__brand-pane {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(32px, 5vw, 72px);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+}
+
+.workbench-login-view__mark {
+  width: min(100%, 360px);
+  max-width: 100%;
+}
+
+.workbench-login-brand-mark {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.workbench-login-brand-mark__ring {
+  position: absolute;
+  box-sizing: border-box;
+  display: block;
+  border: clamp(3px, 0.35vw, 5px) solid currentColor;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.workbench-login-brand-mark__ring--primary {
+  left: 2%;
+  bottom: 2%;
+  width: 72%;
+  aspect-ratio: 1;
+}
+
+.workbench-login-brand-mark__ring--secondary {
+  right: 10%;
+  top: 35%;
+  width: 38%;
+  aspect-ratio: 1;
+}
+
+.workbench-login-brand-mark__ring--tertiary {
+  right: 27%;
+  top: 12%;
+  width: 21%;
+  aspect-ratio: 1;
+}
+
+.workbench-login-brand-mark__ring--small {
+  right: 45%;
+  top: 2%;
+  width: 13%;
+  aspect-ratio: 1;
+}
+
+.workbench-login-view__footer-brand {
+  position: absolute;
+  left: clamp(32px, 5vw, 72px);
+  bottom: clamp(28px, 5vh, 56px);
+  max-width: calc(100% - clamp(64px, 10vw, 144px));
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workbench-login-view__form {
+  box-sizing: border-box;
+  width: min(100%, 440px);
+  min-width: 0;
+  display: grid;
+  justify-self: center;
+  align-content: center;
+  gap: 22px;
+  padding: clamp(32px, 5vw, 72px);
+}
+
+.workbench-login-view__heading {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.workbench-login-view__title {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: currentColor;
+  font-size: clamp(2rem, 3vw, 2.75rem);
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.08;
+}
+
+.workbench-login-view__status {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-base);
+  line-height: 1.45;
+}
+
+.workbench-login-view__fields {
+  display: grid;
+  gap: 14px;
+}
+
+.workbench-login-view__field {
+  display: grid;
+  gap: 7px;
+}
+
+.workbench-login-view__label {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.workbench-login-view__field .ui-input {
+  height: 40px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-size: var(--font-size-base);
+}
+
+.workbench-login-view__field .ui-input:focus {
+  border-color: var(--color-accent);
+}
+
+.workbench-login-view__field .ui-input:disabled {
+  opacity: 0.62;
+  cursor: default;
+}
+
+.workbench-login-view__error {
+  padding: 9px 11px;
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 28%, transparent);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.workbench-login-view__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workbench-login-view__actions .ui-button {
+  min-width: 112px;
+  height: 36px;
+}
+
+.workbench-login-view__actions .ui-button:disabled {
+  opacity: 0.58;
+  cursor: default;
+}
+
+.workbench-login-view__secondary-actions {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  text-align: center;
+}
+
+.workbench-auth-story-brand {
+  display: grid;
+  gap: 18px;
+}
+
+.workbench-auth-story-brand__icon {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: var(--color-accent);
+  border-radius: var(--radius-sm);
+}
+
+.workbench-auth-story-brand__icon .codicon {
+  font-size: 24px;
+}
+
+.workbench-auth-story-brand__copy {
+  display: grid;
+  gap: 6px;
+}
+
+.workbench-auth-story-brand__copy strong {
+  color: var(--color-text);
+  font-size: clamp(1.85rem, 4vw, 3.25rem);
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+
+.workbench-auth-story-brand__copy span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-base);
+}
+
+.workbench-auth-story-link {
+  padding: 0;
+  border: 0;
+  color: var(--color-accent);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.workbench-auth-story-link:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+}
+
 @media (max-width: 760px) {
   .workbench-settings-modal {
     --ui-modal-max-width: calc(100vw - 24px);
@@ -650,6 +912,67 @@
 
   .workbench-settings-content {
     padding-inline: 16px;
+  }
+}
+
+@media (max-width: 900px) {
+  .workbench-login-view {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: auto;
+  }
+
+  .workbench-login-view__brand-pane {
+    min-height: auto;
+    padding: 36px 32px 22px;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .workbench-login-view__mark {
+    width: min(62vw, 320px);
+  }
+
+  .workbench-login-view__footer-brand {
+    position: static;
+    justify-self: start;
+    align-self: end;
+    max-width: 100%;
+    font-size: 1rem;
+  }
+
+  .workbench-login-view__brand-pane {
+    display: grid;
+    place-items: center;
+    gap: 20px;
+  }
+
+  .workbench-login-view__form {
+    width: 100%;
+    align-content: start;
+    padding: 32px;
+  }
+
+  .workbench-login-view__title {
+    font-size: 2.15rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .workbench-login-view__field {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .workbench-login-view__actions {
+    justify-content: stretch;
+  }
+
+  .workbench-login-view__actions .ui-button {
+    width: 100%;
+  }
+
+  .workbench-login-view__actions {
+    align-items: stretch;
   }
 }
 
