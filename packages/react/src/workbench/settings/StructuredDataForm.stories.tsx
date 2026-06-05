@@ -34,6 +34,19 @@ const sections: WorkbenchStructuredDataFormSection[] = [
         type: 'text',
       },
       {
+        addLabel: 'Add tag',
+        defaultValue: ['workspace', 'runtime'],
+        description: 'Generic labels rendered as editable rows.',
+        emptyLabel: 'No tags',
+        id: 'tags',
+        itemLabel: 'Tag',
+        itemPlaceholder: 'Tag value',
+        label: 'Tags',
+        maxItems: 5,
+        path: ['profile', 'tags'],
+        type: 'text-array',
+      },
+      {
         defaultValue: 'comfortable',
         description: 'Controls spacing for repeated workbench rows.',
         id: 'density',
@@ -116,7 +129,10 @@ function StructuredDataFormHarness({
       normalizeWorkbenchStructuredDataFormData(sections, {
         permissions: { confirmSideEffects: true },
         preferences: { density: 'comfortable', maxRecentItems: 12 },
-        profile: { name: useInvalidValues ? '' : 'Workbench Kit' },
+        profile: {
+          name: useInvalidValues ? '' : 'Workbench Kit',
+          tags: ['workspace', 'runtime'],
+        },
       }),
     [useInvalidValues],
   );
@@ -175,6 +191,14 @@ export const SectionedData: Story = {
 
     await userEvent.type(profileName, 'Workbench Runtime');
     await userEvent.selectOptions(canvas.getByRole('combobox', { name: 'Density' }), 'compact');
+    await expect(eventLog).toHaveTextContent('Changed structured data');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Add tag' }));
+    const newTag = canvas.getByRole('textbox', { name: 'Tag 3' });
+    await userEvent.type(newTag, '  pinned  ');
+    await expect(newTag).toHaveValue('  pinned  ');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Remove Tag 2' }));
     await expect(eventLog).toHaveTextContent('Changed structured data');
 
     await userEvent.click(canvas.getByRole('button', { name: 'Save' }));
