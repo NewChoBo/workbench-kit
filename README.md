@@ -86,6 +86,7 @@ as `v0.0.1-prototype.0` or `workbench-kit-v0.0.1-prototype.0`.
 - [Lint & Format](./docs/conventions/lint-format.md)
 - [Language Policy](./docs/conventions/language-policy.md)
 - [Package Manager Policy](./docs/conventions/package-manager.md)
+- [Public API Governance](./docs/conventions/public-api-governance.md)
 - [Storybook Direction](./docs/conventions/storybook.md)
 
 ## Workbench Planning
