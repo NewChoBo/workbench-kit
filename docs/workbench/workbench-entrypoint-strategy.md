@@ -96,7 +96,10 @@
 - [x] 앱 조립 계약의 최소 형태가 타입/문서로 고정됨
   - 근거: `packages/react/src/workbench/standalone.ts`의
     `WorkbenchHostCallbackBoundary`
-- [ ] story는 조립 로직의 fixture 역할로 수렴
+- [x] story는 조립 로직의 fixture 역할로 수렴
+  - 근거: `packages/react/src/workbench/Workbench.stories.tsx`의
+    `IntegratedWorkbenchShell`은 story fixture/state/mock runtime을 보유하고,
+    `WorkbenchStandaloneShell`에 bootstrap과 render slot을 위임
 - [x] `vscode-extension`는 다음 사이클로 이월 상태가 문서에 남음
   - 근거: Track C를 차기 milestone으로 분리
 
@@ -110,6 +113,6 @@
 
 ## 즉시 다음 액션
 
-1. 동일 인터페이스 기반으로 다음 PR에서 `Workbench.stories.tsx` 분리 리팩터 진행
-2. UI baseline 유지를 `pnpm test:storybook-play:required`로 재확인
-3. 매 분기말 게이트: `pnpm test:storybook-play:required` + `pnpm typecheck`
+1. UI baseline 유지를 `pnpm test:storybook-play:required`로 재확인
+2. 매 분기말 게이트: `pnpm test:storybook-play:required` + `pnpm typecheck`
+3. `vscode-extension` wrapper는 Track C 조건 충족 후 별도 마일스톤에서 재개
