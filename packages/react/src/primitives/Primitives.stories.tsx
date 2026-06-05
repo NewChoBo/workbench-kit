@@ -5,7 +5,9 @@ import { Checkbox } from './Checkbox';
 import { EmptyState } from './EmptyState';
 import { Field } from './Field';
 import { IconButton } from './IconButton';
+import { NumberInput } from './NumberInput';
 import { Select } from './Select';
+import { StatusBar, StatusBarLabel, StatusBarSection } from './StatusBar';
 import { TextInput } from './TextInput';
 import { Toolbar } from './Toolbar';
 
@@ -46,6 +48,9 @@ export const Controls: Story = {
       <Field label="Text field" description="Full-width input inside a field wrapper.">
         <TextInput controlWidth="full" placeholder="Enter a label" />
       </Field>
+      <Field label="Number field" description="Numeric input with parsed value callbacks.">
+        <NumberInput controlWidth="full" defaultValue={3} min={0} />
+      </Field>
       <Field label="Mode" description="Native select styled by the shared package.">
         <Select controlWidth="full" defaultValue="compact">
           <option value="compact">Compact</option>
@@ -63,6 +68,24 @@ export const EmptySurface: Story = {
   render: () => (
     <div style={{ width: 360, height: 220, padding: 24, background: 'var(--color-bg)' }}>
       <EmptyState icon="codicon-beaker">Reusable empty surfaces stay centered.</EmptyState>
+    </div>
+  ),
+};
+
+export const StatusFooter: Story = {
+  parameters: {
+    layout: 'fullscreen',
+  },
+  render: () => (
+    <div
+      style={{ display: 'grid', alignContent: 'end', height: 120, background: 'var(--color-bg)' }}
+    >
+      <StatusBar>
+        <StatusBarLabel>2 frames - Selected: Main frame</StatusBarLabel>
+        <StatusBarSection align="end" title="ws://127.0.0.1:4123">
+          Connected
+        </StatusBarSection>
+      </StatusBar>
     </div>
   ),
 };

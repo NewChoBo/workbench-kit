@@ -3,15 +3,15 @@ import { cx } from '../utils/cx';
 
 export interface ModalProps {
   title: ReactNode;
-  titleSuffix?: ReactNode;
+  titleSuffix?: ReactNode | undefined;
   children: ReactNode;
-  footer?: ReactNode;
-  className?: string;
-  bodyClassName?: string;
-  closeLabel?: string;
-  labelledBy?: string;
+  footer?: ReactNode | undefined;
+  className?: string | undefined;
+  bodyClassName?: string | undefined;
+  closeLabel?: string | undefined;
+  labelledBy?: string | undefined;
   onClose: () => void;
-  onSubmit?: FormEventHandler<HTMLFormElement>;
+  onSubmit?: FormEventHandler<HTMLFormElement> | undefined;
 }
 
 function ModalContent({

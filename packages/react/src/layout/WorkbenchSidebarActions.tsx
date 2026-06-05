@@ -1,6 +1,7 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { forwardRef, useId, useState } from 'react';
 import { Badge } from '../primitives/Badge';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import {
   getWorkbenchStatusLabel,
@@ -100,9 +101,8 @@ export function WorkbenchSidebarSection({
           >
             <i
               aria-hidden="true"
-              className={cx(
-                'codicon',
-                resolvedCollapsed ? 'codicon-chevron-right' : 'codicon-chevron-down',
+              className={cxCodicon(
+                resolvedCollapsed ? 'chevron-right' : 'chevron-down',
                 'ui-workbench-sidebar-section__chevron',
               )}
             />
@@ -181,6 +181,7 @@ export interface WorkbenchActionListItemProps extends Omit<
   icon?: ReactNode;
   label: ReactNode;
   shortcut?: ReactNode;
+  showStatus?: boolean;
   status?: WorkbenchActionStatus;
   statusLabel?: string;
   unavailable?: boolean;
@@ -197,6 +198,7 @@ export const WorkbenchActionListItem = forwardRef<HTMLButtonElement, WorkbenchAc
       icon,
       label,
       shortcut,
+      showStatus = true,
       status = 'idle',
       statusLabel,
       title,
@@ -231,6 +233,7 @@ export const WorkbenchActionListItem = forwardRef<HTMLButtonElement, WorkbenchAc
           className,
         )}
         data-danger={danger ? 'true' : undefined}
+        data-show-status={showStatus ? 'true' : 'false'}
         data-status={resolvedStatus}
         data-unavailable={unavailable ? 'true' : undefined}
         disabled={resolvedDisabled || isWorkbenchStatusDisabled(resolvedStatus)}
@@ -256,13 +259,15 @@ export const WorkbenchActionListItem = forwardRef<HTMLButtonElement, WorkbenchAc
             <kbd className="ui-workbench-action-list-item__shortcut">{shortcut}</kbd>
           ) : null}
         </span>
-        <span
-          aria-label={resolvedStatusLabel}
-          className="ui-workbench-action-list-item__status"
-          title={resolvedStatusLabel}
-        >
-          <span aria-hidden="true" className="ui-workbench-action-list-item__status-dot" />
-        </span>
+        {showStatus ? (
+          <span
+            aria-label={resolvedStatusLabel}
+            className="ui-workbench-action-list-item__status"
+            title={resolvedStatusLabel}
+          >
+            <span aria-hidden="true" className="ui-workbench-action-list-item__status-dot" />
+          </span>
+        ) : null}
       </SideBarListItem>
     );
   },

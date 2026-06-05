@@ -8,6 +8,8 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./primitives": "./src/primitives/index.ts",
+    "./primitives.css": "./src/primitives/styles.css",
     "./workbench/chat": "./src/workbench/chat/index.ts",
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",

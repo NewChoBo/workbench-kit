@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { CommandMenuItem, ResolvedCommandMenuCommandItem } from '@workbench-kit/core';
 import { EmptyState } from '../primitives/EmptyState';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import {
   getWorkbenchStatusLabel,
@@ -22,7 +23,7 @@ export type WorkbenchCommandStatus = WorkbenchStatus;
 
 export interface WorkbenchCommandExecution {
   kind: 'local' | 'remote' | 'composite' | (string & {});
-  label?: string;
+  label?: string | undefined;
 }
 
 export type WorkbenchCommandFeedback = 'none' | 'status' | 'timeline';
@@ -31,21 +32,21 @@ export type WorkbenchCommandSideEffect = 'none' | 'workspace-write' | 'external-
 export type WorkbenchCommandRunSource = 'palette' | 'suggest' | 'list';
 
 export interface WorkbenchCommandDescriptor {
-  category?: string;
-  danger?: boolean;
-  description?: string;
-  disabled?: boolean;
-  disabledReason?: string;
-  execution?: WorkbenchCommandExecution;
-  feedback?: WorkbenchCommandFeedback;
-  icon?: string;
+  category?: string | undefined;
+  danger?: boolean | undefined;
+  description?: string | undefined;
+  disabled?: boolean | undefined;
+  disabledReason?: string | undefined;
+  execution?: WorkbenchCommandExecution | undefined;
+  feedback?: WorkbenchCommandFeedback | undefined;
+  icon?: string | undefined;
   id: string;
   label: string;
-  metadata?: Record<string, unknown>;
-  output?: WorkbenchCommandOutput;
-  shortcut?: string;
-  sideEffect?: WorkbenchCommandSideEffect;
-  status?: WorkbenchCommandStatus;
+  metadata?: Record<string, unknown> | undefined;
+  output?: WorkbenchCommandOutput | undefined;
+  shortcut?: string | undefined;
+  sideEffect?: WorkbenchCommandSideEffect | undefined;
+  status?: WorkbenchCommandStatus | undefined;
 }
 
 export interface WorkbenchCommandRunContext {
@@ -56,8 +57,8 @@ export interface WorkbenchCommandRunContext {
 
 export interface WorkbenchCommandFilterInput {
   commands: readonly WorkbenchCommandDescriptor[];
-  limit?: number;
-  query?: string;
+  limit?: number | undefined;
+  query?: string | undefined;
 }
 
 export interface WorkbenchCommandNavigationInput {
@@ -129,7 +130,8 @@ export function getNextWorkbenchCommandIndex({
 
   for (let offset = 1; offset <= commands.length; offset += 1) {
     const nextIndex = (startIndex + step * offset + commands.length) % commands.length;
-    if (isWorkbenchCommandRunnable(commands[nextIndex])) return nextIndex;
+    const command = commands[nextIndex];
+    if (command && isWorkbenchCommandRunnable(command)) return nextIndex;
   }
 
   return -1;
@@ -169,7 +171,7 @@ export function commandMenuItemsToWorkbenchCommandDescriptors(
 
 function commandIcon(command: WorkbenchCommandDescriptor) {
   if (!command.icon) return null;
-  return <i aria-hidden="true" className={`codicon ${command.icon}`} />;
+  return <i aria-hidden="true" className={cxCodicon(command.icon)} />;
 }
 
 function commandStatus(command: WorkbenchCommandDescriptor) {
@@ -202,13 +204,15 @@ export interface WorkbenchCommandListProps extends Omit<
   ComponentPropsWithRef<'div'>,
   'children' | 'onSelect'
 > {
-  activeCommandId?: string;
+  activeCommandId?: string | undefined;
   commands: readonly WorkbenchCommandDescriptor[];
-  emptyLabel?: ReactNode;
-  onActiveCommandChange?: (commandId: string) => void;
-  onRunCommand?: (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => void;
-  query?: string;
-  source?: WorkbenchCommandRunSource;
+  emptyLabel?: ReactNode | undefined;
+  onActiveCommandChange?: ((commandId: string) => void) | undefined;
+  onRunCommand?:
+    | ((command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => void)
+    | undefined;
+  query?: string | undefined;
+  source?: WorkbenchCommandRunSource | undefined;
 }
 
 export function WorkbenchCommandList({
@@ -306,9 +310,9 @@ function useControllableCommandQuery({
   query,
   onQueryChange,
 }: {
-  defaultQuery?: string;
-  query?: string;
-  onQueryChange?: (query: string) => void;
+  defaultQuery?: string | undefined;
+  query?: string | undefined;
+  onQueryChange?: ((query: string) => void) | undefined;
 }) {
   const [uncontrolledQuery, setUncontrolledQuery] = useState(defaultQuery);
   const resolvedQuery = query ?? uncontrolledQuery;
@@ -327,20 +331,22 @@ export interface WorkbenchCommandPaletteProps extends Omit<
   ComponentPropsWithRef<'div'>,
   'children' | 'onSelect' | 'title'
 > {
-  activeCommandId?: string;
-  closeLabel?: string;
+  activeCommandId?: string | undefined;
+  closeLabel?: string | undefined;
   commands: readonly WorkbenchCommandDescriptor[];
-  defaultQuery?: string;
-  emptyLabel?: ReactNode;
-  onActiveCommandChange?: (commandId: string) => void;
+  defaultQuery?: string | undefined;
+  emptyLabel?: ReactNode | undefined;
+  onActiveCommandChange?: ((commandId: string) => void) | undefined;
   onClose: () => void;
-  onQueryChange?: (query: string) => void;
-  onRunCommand?: (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => void;
-  open?: boolean;
-  placeholder?: string;
-  query?: string;
-  restoreFocusOnClose?: boolean;
-  title?: ReactNode;
+  onQueryChange?: ((query: string) => void) | undefined;
+  onRunCommand?:
+    | ((command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => void)
+    | undefined;
+  open?: boolean | undefined;
+  placeholder?: string | undefined;
+  query?: string | undefined;
+  restoreFocusOnClose?: boolean | undefined;
+  title?: ReactNode | undefined;
 }
 
 export function WorkbenchCommandPalette({
@@ -460,7 +466,7 @@ export function WorkbenchCommandPalette({
 
     if (nextIndex >= 0) {
       event.preventDefault();
-      updateActiveCommand(filteredCommands[nextIndex].id);
+      updateActiveCommand(filteredCommands[nextIndex]?.id);
     }
   };
 
@@ -523,13 +529,15 @@ export interface WorkbenchCommandSuggestProps extends Omit<
   ComponentPropsWithRef<'div'>,
   'children' | 'onSelect'
 > {
-  activeCommandId?: string;
+  activeCommandId?: string | undefined;
   commands: readonly WorkbenchCommandDescriptor[];
-  emptyLabel?: ReactNode;
-  onActiveCommandChange?: (commandId: string) => void;
-  onRunCommand?: (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => void;
-  query?: string;
-  visible?: boolean;
+  emptyLabel?: ReactNode | undefined;
+  onActiveCommandChange?: ((commandId: string) => void) | undefined;
+  onRunCommand?:
+    | ((command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => void)
+    | undefined;
+  query?: string | undefined;
+  visible?: boolean | undefined;
 }
 
 export function WorkbenchCommandSuggest({

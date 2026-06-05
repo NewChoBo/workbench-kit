@@ -1,3 +1,4 @@
+import { cxCodicon } from '../../utils/codicon';
 import { extensionOfPath, fileNameOfPath } from './path';
 
 export type WorkspaceFileIconKind =
@@ -144,6 +145,10 @@ export function WorkspaceFileIcon({ directory, expanded, mimeType, path }: Works
   const icon = directory && expanded ? 'codicon-folder-opened' : codiconForFileKind(kind);
 
   return (
-    <i aria-hidden="true" className={`codicon ${icon} workspace-file-icon`} data-file-kind={kind} />
+    <i
+      aria-hidden="true"
+      className={cxCodicon(icon, 'workspace-file-icon')}
+      data-file-kind={kind}
+    />
   );
 }

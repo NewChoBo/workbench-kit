@@ -1,25 +1,26 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 
 export type ContextMenuItem =
   | {
       type: 'separator';
-      id?: string;
+      id?: string | undefined;
     }
   | {
       type?: 'item';
-      id?: string;
+      id?: string | undefined;
       label: ReactNode;
-      icon?: string;
-      shortcut?: ReactNode;
-      disabled?: boolean;
-      danger?: boolean;
+      icon?: string | undefined;
+      shortcut?: ReactNode | undefined;
+      disabled?: boolean | undefined;
+      danger?: boolean | undefined;
       onSelect: () => void;
     };
 
 export interface ContextMenuProps {
-  ariaLabel?: string;
-  className?: string;
+  ariaLabel?: string | undefined;
+  className?: string | undefined;
   items: ContextMenuItem[];
   x: number;
   y: number;
@@ -131,7 +132,7 @@ export function ContextMenu({
             }}
           >
             <span className="ui-context-menu__icon">
-              {item.icon ? <i className={`codicon ${item.icon}`} /> : null}
+              {item.icon ? <i className={cxCodicon(item.icon)} /> : null}
             </span>
             <span className="ui-context-menu__label">{item.label}</span>
             {item.shortcut ? (

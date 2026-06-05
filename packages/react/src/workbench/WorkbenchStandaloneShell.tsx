@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
+import { cxCodicon } from '../utils/codicon';
 import type { StatusBarItemModel, StatusBarSectionModel } from './StatusBar';
 import type { WorkbenchShellProps } from './WorkbenchShell';
 import { WorkbenchShell } from './WorkbenchShell';
@@ -88,8 +89,7 @@ function toWorkbenchActivityItems<TActivityId extends string>(
   return activities.map((activity) => ({
     id: activity.id,
     label: activity.label,
-    icon:
-      activity.iconNode ?? (activity.icon ? <i className={`codicon ${activity.icon}`} /> : null),
+    icon: activity.iconNode ?? (activity.icon ? <i className={cxCodicon(activity.icon)} /> : null),
   }));
 }
 

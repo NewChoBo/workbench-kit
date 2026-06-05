@@ -34,8 +34,8 @@ export interface WorkbenchPreviewRendererMatch {
 
 export interface WorkbenchPreviewRendererContext {
   artifact: WorkbenchArtifactDescriptor;
-  match?: WorkbenchPreviewRendererMatch;
-  renderer?: WorkbenchPreviewRenderer;
+  match?: WorkbenchPreviewRendererMatch | undefined;
+  renderer?: WorkbenchPreviewRenderer | undefined;
 }
 
 export interface WorkbenchPreviewRenderer {
@@ -179,9 +179,9 @@ function defaultCodePane(artifact: WorkbenchArtifactDescriptor) {
 
 export interface WorkbenchArtifactPreviewProps extends ComponentPropsWithRef<'div'> {
   artifact: WorkbenchArtifactDescriptor;
-  renderPreview?: WorkbenchArtifactShellRenderPreview;
-  renderers?: readonly WorkbenchPreviewRenderer[];
-  unsupportedLabel?: ReactNode;
+  renderPreview?: WorkbenchArtifactShellRenderPreview | undefined;
+  renderers?: readonly WorkbenchPreviewRenderer[] | undefined;
+  unsupportedLabel?: ReactNode | undefined;
 }
 
 export function WorkbenchArtifactPreview({
@@ -220,18 +220,18 @@ export interface WorkbenchArtifactShellProps extends Omit<
   ComponentPropsWithRef<'div'>,
   'children'
 > {
-  artifact?: WorkbenchArtifactDescriptor;
-  codeLabel?: string;
-  defaultMode?: WorkbenchArtifactMode;
-  emptyLabel?: ReactNode;
-  mode?: WorkbenchArtifactMode;
-  onModeChange?: (mode: WorkbenchArtifactMode) => void;
-  previewLabel?: string;
-  previewRenderers?: readonly WorkbenchPreviewRenderer[];
-  renderCode?: WorkbenchArtifactShellRenderCode;
-  renderPreview?: WorkbenchArtifactShellRenderPreview;
-  splitLabel?: string;
-  unsupportedPreviewLabel?: ReactNode;
+  artifact?: WorkbenchArtifactDescriptor | undefined;
+  codeLabel?: string | undefined;
+  defaultMode?: WorkbenchArtifactMode | undefined;
+  emptyLabel?: ReactNode | undefined;
+  mode?: WorkbenchArtifactMode | undefined;
+  onModeChange?: ((mode: WorkbenchArtifactMode) => void) | undefined;
+  previewLabel?: string | undefined;
+  previewRenderers?: readonly WorkbenchPreviewRenderer[] | undefined;
+  renderCode?: WorkbenchArtifactShellRenderCode | undefined;
+  renderPreview?: WorkbenchArtifactShellRenderPreview | undefined;
+  splitLabel?: string | undefined;
+  unsupportedPreviewLabel?: ReactNode | undefined;
 }
 
 export function WorkbenchArtifactShell({
