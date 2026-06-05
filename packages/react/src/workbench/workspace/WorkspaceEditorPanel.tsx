@@ -1,4 +1,4 @@
-import { useMemo, useState, type MouseEvent } from 'react';
+import { useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import {
   canExecuteCommand,
   createCommandRegistry,
@@ -38,6 +38,19 @@ const editorCommandRegistry = createCommandRegistry(createWorkbenchEditorCommand
 const editorTabListMenuEntries = createWorkbenchEditorTabListMenuEntries();
 const editorTabMenuEntries = createWorkbenchEditorTabMenuEntries();
 
+export interface WorkspaceEditorPanelRenderEditorContext {
+  content: string;
+  file: WorkspaceFile;
+  isDirty: boolean;
+  onChange: (content: string) => void;
+  onSave: (content: string) => void;
+  theme?: WorkspaceEditorTheme | undefined;
+}
+
+export type WorkspaceEditorPanelRenderEditor = (
+  context: WorkspaceEditorPanelRenderEditorContext,
+) => ReactNode;
+
 export interface WorkspaceEditorPanelProps {
   emptyLabel?: string;
   files: WorkspaceFile[];
@@ -53,6 +66,7 @@ export interface WorkspaceEditorPanelProps {
   ) => SaveResult | Promise<SaveResult | undefined> | undefined;
   onSelectedPathChange: (path: string) => void;
   openPaths: string[];
+  renderEditor?: WorkspaceEditorPanelRenderEditor | undefined;
   selectedPath?: string;
   theme?: WorkspaceEditorTheme;
 }
@@ -68,6 +82,7 @@ export function WorkspaceEditorPanel({
   onSaveFile,
   onSelectedPathChange,
   openPaths,
+  renderEditor,
   selectedPath,
   theme,
 }: WorkspaceEditorPanelProps) {
@@ -305,16 +320,27 @@ export function WorkspaceEditorPanel({
             </div>
 
             {selectedFile ? (
-              <WorkspaceEditor
-                key={selectedFile.path}
-                file={selectedFile}
-                readOnly={false}
-                showHeader={false}
-                theme={theme}
-                value={selectedContent}
-                onChange={(content) => updateDraft(selectedFile.path, content)}
-                onSave={(content) => saveFile(selectedFile.path, content)}
-              />
+              renderEditor ? (
+                renderEditor({
+                  content: selectedContent,
+                  file: selectedFile,
+                  isDirty: selectedContent !== selectedFile.content,
+                  onChange: (content) => updateDraft(selectedFile.path, content),
+                  onSave: (content) => saveFile(selectedFile.path, content),
+                  theme,
+                })
+              ) : (
+                <WorkspaceEditor
+                  key={selectedFile.path}
+                  file={selectedFile}
+                  readOnly={false}
+                  showHeader={false}
+                  theme={theme}
+                  value={selectedContent}
+                  onChange={(content) => updateDraft(selectedFile.path, content)}
+                  onSave={(content) => saveFile(selectedFile.path, content)}
+                />
+              )
             ) : (
               <EmptyState icon="codicon-open-preview">{emptyLabel}</EmptyState>
             )}
