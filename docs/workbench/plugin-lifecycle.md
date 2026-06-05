@@ -108,6 +108,21 @@ through the existing workbench command registry.
 | Contribution scope       | Initial plugin contribution scope is command, menu, view, and settings metadata only.                       | `PluginContributions` contract and this document's baseline/non-goals  |
 | Runtime transport        | Plugin install/update transport remains injected by host adapters.                                          | `PluginLifecycleService` contract has no storage or network dependency |
 
+## Install, Enable, Update, And Rollback Flow Policy
+
+| Flow       | Host-owned steps                                                                                          | Contract result                                                              | Rollback or recovery rule                                                        |
+| ---------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Install    | Resolve `PluginSource`, parse manifest, validate descriptor, then call `install(source, { descriptor })`. | `plugin:success` with `state: 'installed'` or `plugin:failure`.              | Duplicate IDs fail unless `force: true`; failed installs remain host-renderable. |
+| Disable    | Call `enable(pluginId, false)` before hiding contributions from command/menu/view/settings surfaces.      | `plugin:success` with `state: 'disabled'` and `enabled: 'disabled'`.         | Disabled plugins can be re-enabled if they are not in `failed` state.            |
+| Enable     | Call `enable(pluginId, true)` after trust and host policy checks pass.                                    | `plugin:success` with `state: 'installed'` and `enabled: 'enabled'`.         | Failed plugins cannot be enabled until the host resolves or reinstalls them.     |
+| Update     | Resolve replacement source/manifest, keep the current record available, then call `update(pluginId)`.     | `plugin:success` with refreshed source/version metadata or `plugin:failure`. | Failed updates should keep the last successful version active.                   |
+| Uninstall  | Disable or remove contributed surfaces, then call `uninstall(pluginId)`.                                  | `plugin:success` with `state: 'uninstalled'` or `not-found` failure.         | Missing plugins return `not-found`; hosts should make uninstall idempotent.      |
+| Hard reset | Host clears local plugin state and reinstalls from a validated source.                                    | Fresh `install` result.                                                      | Use only for corrupted host state or explicit user reset.                        |
+
+Host adapters own persistence, transport, trust, confirmation dialogs, and
+rollback storage. Workbench Kit contracts only describe the result envelope and
+state transitions.
+
 ## Stage 6 Milestones
 
 ### M1: Contract Foundation (no runtime transport)
