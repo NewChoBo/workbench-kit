@@ -1,5 +1,6 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { EmptyState } from '../primitives/EmptyState';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import { getWorkbenchStatusLabel, isWorkbenchStatusBusy, type WorkbenchStatus } from './status';
 
@@ -212,7 +213,7 @@ export function WorkbenchTimelineItem({
     >
       <div className="ui-workbench-timeline-event__rail" aria-hidden="true">
         <span className="ui-workbench-timeline-event__icon">
-          <i className={cx('codicon', getWorkbenchTimelineEventIconClass(event))} />
+          <i className={cxCodicon(getWorkbenchTimelineEventIconClass(event))} />
         </span>
       </div>
       <div className="ui-workbench-timeline-event__card">

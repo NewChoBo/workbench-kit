@@ -1,6 +1,7 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { forwardRef, useId, useState } from 'react';
 import { Badge } from '../primitives/Badge';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import {
   getWorkbenchStatusLabel,
@@ -100,9 +101,8 @@ export function WorkbenchSidebarSection({
           >
             <i
               aria-hidden="true"
-              className={cx(
-                'codicon',
-                resolvedCollapsed ? 'codicon-chevron-right' : 'codicon-chevron-down',
+              className={cxCodicon(
+                resolvedCollapsed ? 'chevron-right' : 'chevron-down',
                 'ui-workbench-sidebar-section__chevron',
               )}
             />

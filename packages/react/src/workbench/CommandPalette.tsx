@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { CommandMenuItem, ResolvedCommandMenuCommandItem } from '@workbench-kit/core';
 import { EmptyState } from '../primitives/EmptyState';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import {
   getWorkbenchStatusLabel,
@@ -170,7 +171,7 @@ export function commandMenuItemsToWorkbenchCommandDescriptors(
 
 function commandIcon(command: WorkbenchCommandDescriptor) {
   if (!command.icon) return null;
-  return <i aria-hidden="true" className={`codicon ${command.icon}`} />;
+  return <i aria-hidden="true" className={cxCodicon(command.icon)} />;
 }
 
 function commandStatus(command: WorkbenchCommandDescriptor) {

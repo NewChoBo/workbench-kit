@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef } from 'react';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 
 type IconButtonVariant = 'default' | 'danger';
@@ -19,8 +20,6 @@ export function IconButton({
   variant = 'default',
   ...props
 }: IconButtonProps) {
-  const iconClassName = icon.startsWith('codicon-') ? icon : `codicon-${icon}`;
-
   return (
     <button
       aria-label={label}
@@ -30,7 +29,7 @@ export function IconButton({
       type={type}
       {...props}
     >
-      <i className={`codicon ${iconClassName}`} />
+      <i className={cxCodicon(icon)} />
     </button>
   );
 }

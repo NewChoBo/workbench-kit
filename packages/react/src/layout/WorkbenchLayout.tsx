@@ -16,6 +16,7 @@ import { NumberInput } from '../primitives/NumberInput';
 import { Select } from '../primitives/Select';
 import { TextInput } from '../primitives/TextInput';
 import type { ControlWidth } from '../primitives/TextInput';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 
 export type WorkbenchRootProps = ComponentPropsWithRef<'div'>;
@@ -100,7 +101,7 @@ export interface WorkbenchBannerIconProps extends ComponentPropsWithRef<'span'> 
 export function WorkbenchBannerIcon({ className, icon, ...props }: WorkbenchBannerIconProps) {
   return (
     <span
-      className={cx('codicon', `codicon-${icon}`, 'ui-workbench-banner__icon', className)}
+      className={cxCodicon(icon, 'ui-workbench-banner__icon', className)}
       aria-hidden
       {...props}
     />
@@ -302,12 +303,7 @@ export function WorkbenchFloatingMenuItem({
   type = 'button',
   ...props
 }: WorkbenchFloatingMenuItemProps) {
-  const resolvedIcon =
-    typeof icon === 'string' ? (
-      <i className={cx('codicon', icon.startsWith('codicon-') ? icon : `codicon-${icon}`)} />
-    ) : (
-      icon
-    );
+  const resolvedIcon = typeof icon === 'string' ? <i className={cxCodicon(icon)} /> : icon;
 
   return (
     <button
@@ -1186,7 +1182,7 @@ export function WorkbenchFullscreenButton({
   type = 'button',
   ...props
 }: WorkbenchFullscreenButtonProps) {
-  const iconClassName = icon ? (icon.startsWith('codicon-') ? icon : `codicon-${icon}`) : null;
+  const iconClassName = cxCodicon(icon);
 
   return (
     <button
@@ -1195,7 +1191,7 @@ export function WorkbenchFullscreenButton({
       type={type}
       {...props}
     >
-      {iconClassName ? <span className={cx('codicon', iconClassName)} aria-hidden /> : null}
+      {iconClassName ? <span className={iconClassName} aria-hidden /> : null}
       <span>{children}</span>
     </button>
   );
@@ -1315,8 +1311,6 @@ export function WorkbenchFullscreenNavButton({
   type = 'button',
   ...props
 }: WorkbenchFullscreenNavButtonProps) {
-  const iconClassName = icon.startsWith('codicon-') ? icon : `codicon-${icon}`;
-
   return (
     <button
       aria-label={label}
@@ -1325,7 +1319,7 @@ export function WorkbenchFullscreenNavButton({
       type={type}
       {...props}
     >
-      <span className={cx('codicon', iconClassName)} aria-hidden />
+      <span className={cxCodicon(icon)} aria-hidden />
     </button>
   );
 }
@@ -1392,17 +1386,10 @@ export function WorkbenchFullscreenOptionPlaceholder({
   icon = 'device-desktop',
   ...props
 }: WorkbenchFullscreenOptionPlaceholderProps) {
-  const iconClassName = icon.startsWith('codicon-') ? icon : `codicon-${icon}`;
-
   return (
     <span
       aria-hidden="true"
-      className={cx(
-        'codicon',
-        iconClassName,
-        'ui-workbench-fullscreen-option__placeholder',
-        className,
-      )}
+      className={cxCodicon(icon, 'ui-workbench-fullscreen-option__placeholder', className)}
       {...props}
     />
   );
@@ -1578,10 +1565,7 @@ export function WorkbenchTreeExpander({
       type={type}
       {...props}
     >
-      <i
-        aria-hidden="true"
-        className={cx('codicon', expanded ? 'codicon-chevron-down' : 'codicon-chevron-right')}
-      />
+      <i aria-hidden="true" className={cxCodicon(expanded ? 'chevron-down' : 'chevron-right')} />
     </button>
   );
 }

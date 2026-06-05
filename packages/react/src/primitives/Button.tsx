@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef } from 'react';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 
 type ButtonVariant = 'default' | 'primary' | 'danger';
@@ -22,7 +23,7 @@ export function Button({
   variant = 'default',
   ...props
 }: ButtonProps) {
-  const iconClassName = icon ? (icon.startsWith('codicon-') ? icon : `codicon-${icon}`) : null;
+  const iconClassName = cxCodicon(icon);
 
   return (
     <button
@@ -36,7 +37,7 @@ export function Button({
       type={type}
       {...props}
     >
-      {iconClassName ? <i className={`codicon ${iconClassName}`} aria-hidden /> : null}
+      {iconClassName ? <i className={iconClassName} aria-hidden /> : null}
       {children}
     </button>
   );

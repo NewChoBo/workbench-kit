@@ -1,6 +1,7 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { IconButton } from './IconButton';
 import type { IconButtonProps } from './IconButton';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 
 export interface ListProps extends ComponentPropsWithRef<'div'> {
@@ -42,12 +43,7 @@ export function ListItem({
   ...props
 }: ListItemProps) {
   const hasDescription = description !== undefined && description !== null && description !== '';
-  const resolvedIcon =
-    typeof icon === 'string' ? (
-      <i className={`codicon ${icon.startsWith('codicon-') ? icon : `codicon-${icon}`}`} />
-    ) : (
-      icon
-    );
+  const resolvedIcon = typeof icon === 'string' ? <i className={cxCodicon(icon)} /> : icon;
 
   return (
     <div
