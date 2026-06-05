@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 
 export type ContextMenuItem =
@@ -131,7 +132,7 @@ export function ContextMenu({
             }}
           >
             <span className="ui-context-menu__icon">
-              {item.icon ? <i className={`codicon ${item.icon}`} /> : null}
+              {item.icon ? <i className={cxCodicon(item.icon)} /> : null}
             </span>
             <span className="ui-context-menu__label">{item.label}</span>
             {item.shortcut ? (

@@ -19,6 +19,7 @@ import {
   type WorkspaceSelectionState,
 } from '@workbench-kit/workspace';
 import { SideBarList, SideBarListItem } from '../../layout/SideBarViewFrame';
+import { cxCodicon } from '../../utils/codicon';
 import { flattenWorkspaceTree } from './tree';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceTreeNode } from './types';
@@ -481,7 +482,10 @@ export function WorkspaceExplorer({
                 {isFolder ? (
                   <i
                     aria-hidden="true"
-                    className={`codicon codicon-chevron-${expanded ? 'down' : 'right'} workbench-tree-chevron`}
+                    className={cxCodicon(
+                      expanded ? 'chevron-down' : 'chevron-right',
+                      'workbench-tree-chevron',
+                    )}
                   />
                 ) : (
                   <span className="workbench-tree-spacer" />

@@ -6,6 +6,7 @@ import type {
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from 'react';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 
 export interface ActivityItem {
@@ -38,7 +39,7 @@ export function ActivityBar({ className, items, onSelect, ...props }: ActivityBa
           title={item.label}
           type="button"
         >
-          <i aria-hidden className={`codicon codicon-${item.icon}`} />
+          <i aria-hidden className={cxCodicon(item.icon)} />
           {item.badge ? <span className="ui-activity-bar__badge">{item.badge}</span> : null}
         </button>
       ))}
@@ -349,7 +350,7 @@ export function Collapsible({
       >
         <i
           aria-hidden
-          className={`codicon codicon-chevron-${expanded ? 'down' : 'right'} ui-collapsible__icon`}
+          className={cxCodicon(`chevron-${expanded ? 'down' : 'right'}`, 'ui-collapsible__icon')}
         />
         <span className="ui-collapsible__title">{title}</span>
       </button>

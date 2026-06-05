@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import {
   getWorkbenchStatusLabel,
@@ -109,8 +110,7 @@ export interface StatusBarItemProps extends ComponentPropsWithRef<'button'> {
 function resolveStatusBarIcon(icon: ReactNode | string | undefined) {
   if (typeof icon !== 'string') return icon;
 
-  const iconClassName = icon.startsWith('codicon-') ? icon : `codicon-${icon}`;
-  return <i className={cx('codicon', iconClassName)} aria-hidden="true" />;
+  return <i className={cxCodicon(icon)} aria-hidden="true" />;
 }
 
 export function StatusBarItem({
