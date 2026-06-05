@@ -256,6 +256,35 @@ export function getNextWorkbenchCommandIndex({
   return -1;
 }
 
+export type SlashCommandParseResult =
+  | { type: 'none' }
+  | { type: 'run'; commandId: string }
+  | { type: 'unknown'; token: string };
+
+export function isSlashCommandInput(value: string): boolean {
+  return value.trimStart().startsWith('/');
+}
+
+export function getSlashCommandQuery(value: string): string {
+  const trimmed = value.trimStart();
+  if (!trimmed.startsWith('/')) return '';
+  return trimmed.slice(1);
+}
+
+export function parseSlashCommand(
+  input: string,
+  isValidCommandId: (id: string) => boolean,
+): SlashCommandParseResult {
+  const trimmed = input.trim();
+  if (!trimmed.startsWith('/')) return { type: 'none' };
+
+  const [rawToken] = trimmed.slice(1).split(/\s+/, 1);
+  if (!rawToken) return { type: 'unknown', token: '' };
+
+  if (isValidCommandId(rawToken)) return { type: 'run', commandId: rawToken };
+  return { type: 'unknown', token: rawToken };
+}
+
 export function commandMenuItemToWorkbenchCommandDescriptor(
   item: ResolvedCommandMenuCommandItem,
   overrides: WorkbenchCommandDescriptorOverrides = {},
@@ -441,6 +470,7 @@ export interface WorkbenchCommandGroupShellProps extends Omit<
     | undefined;
   query?: string | undefined;
   showGroupCounts?: boolean | undefined;
+  showGroupNav?: boolean | undefined;
 }
 
 export function WorkbenchCommandGroupShell({
@@ -455,6 +485,7 @@ export function WorkbenchCommandGroupShell({
   onRunCommand,
   query = '',
   showGroupCounts = true,
+  showGroupNav = true,
   ...props
 }: WorkbenchCommandGroupShellProps) {
   const generatedId = useId().replace(/:/g, '');
@@ -469,7 +500,11 @@ export function WorkbenchCommandGroupShell({
 
   if (groups.length === 0) {
     return (
-      <div className={cx('ui-workbench-command-group-shell', className)} {...props}>
+      <div
+        className={cx('ui-workbench-command-group-shell', className)}
+        data-show-group-nav={showGroupNav ? 'true' : 'false'}
+        {...props}
+      >
         <EmptyState compact icon="codicon-symbol-keyword">
           {emptyLabel}
         </EmptyState>
@@ -478,19 +513,25 @@ export function WorkbenchCommandGroupShell({
   }
 
   return (
-    <div className={cx('ui-workbench-command-group-shell', className)} {...props}>
-      <nav aria-label={groupNavLabel} className="ui-workbench-command-group-shell__nav">
-        {groups.map((group) => (
-          <a
-            key={group.id}
-            className="ui-workbench-command-group-shell__nav-link"
-            href={`#${generatedId}-${group.id}`}
-          >
-            <span>{group.label}</span>
-            {showGroupCounts ? <em>{group.commands.length}</em> : null}
-          </a>
-        ))}
-      </nav>
+    <div
+      className={cx('ui-workbench-command-group-shell', className)}
+      data-show-group-nav={showGroupNav ? 'true' : 'false'}
+      {...props}
+    >
+      {showGroupNav ? (
+        <nav aria-label={groupNavLabel} className="ui-workbench-command-group-shell__nav">
+          {groups.map((group) => (
+            <a
+              key={group.id}
+              className="ui-workbench-command-group-shell__nav-link"
+              href={`#${generatedId}-${group.id}`}
+            >
+              <span>{group.label}</span>
+              {showGroupCounts ? <em>{group.commands.length}</em> : null}
+            </a>
+          ))}
+        </nav>
+      ) : null}
       <div className="ui-workbench-command-group-shell__content">
         {groups.map((group) => {
           const titleId = `${generatedId}-${group.id}-title`;
