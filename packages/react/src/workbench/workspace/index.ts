@@ -1,7 +1,11 @@
 export { WorkspaceEditor, languageForFile, monacoThemeForWorkspaceTheme } from './WorkspaceEditor';
 export type { WorkspaceEditorProps, WorkspaceEditorTheme } from './WorkspaceEditor';
 export { WorkspaceEditorPanel } from './WorkspaceEditorPanel';
-export type { WorkspaceEditorPanelProps } from './WorkspaceEditorPanel';
+export type {
+  WorkspaceEditorPanelProps,
+  WorkspaceEditorPanelRenderEditor,
+  WorkspaceEditorPanelRenderEditorContext,
+} from './WorkspaceEditorPanel';
 export {
   WORKSPACE_EXPLORER_DRAG_DATA_TYPE,
   WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE,
