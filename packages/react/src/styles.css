@@ -2291,6 +2291,20 @@
   background: var(--color-surface-elevated);
 }
 
+.ui-workbench-command-group-shell[data-show-group-nav='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ui-workbench-command-group-shell[data-show-group-nav='false'] .ui-workbench-command-item {
+  grid-template-columns: 24px minmax(0, 1fr);
+}
+
+.ui-workbench-command-group-shell[data-show-group-nav='false']
+  .ui-workbench-command-item__meta {
+  grid-column: 2;
+  justify-content: flex-start;
+}
+
 .ui-workbench-command-group-shell__nav {
   min-width: 0;
   max-height: min(640px, calc(100vh - 160px));

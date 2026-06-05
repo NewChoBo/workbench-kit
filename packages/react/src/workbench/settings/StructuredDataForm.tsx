@@ -12,11 +12,12 @@ import { EmptyState } from '../../primitives/EmptyState';
 import { Field } from '../../primitives/Field';
 import { IconButton } from '../../primitives/IconButton';
 import { Select } from '../../primitives/Select';
+import { TextArea } from '../../primitives/TextArea';
 import { TextInput } from '../../primitives/TextInput';
 import { cx } from '../../utils/cx';
 import { WorkbenchSectionedPanel } from './SectionedPanel';
 
-export type WorkbenchStructuredDataPath = readonly string[];
+export type WorkbenchStructuredDataPath = readonly (number | string)[];
 
 export type WorkbenchStructuredDataFieldType =
   | 'checkbox'
@@ -30,6 +31,89 @@ export type WorkbenchStructuredDataFieldValue = boolean | number | string | read
 export type WorkbenchStructuredDataRecord = Record<string, unknown>;
 
 export type WorkbenchStructuredDataFormErrors = Record<string, ReactNode>;
+
+export type WorkbenchStructuredDataSchemaFieldControl =
+  | 'checkbox'
+  | 'date'
+  | 'number'
+  | 'select'
+  | 'text'
+  | 'textarea';
+
+export interface WorkbenchStructuredDataSchemaFieldDefinition {
+  default?: unknown;
+  description?: string | undefined;
+  enum?: readonly (boolean | number | string)[] | undefined;
+  format?: string | undefined;
+  items?: {
+    type?: string | undefined;
+  };
+  markdownDescription?: string | undefined;
+  title?: string | undefined;
+  type?: string | undefined;
+  ui?: {
+    control?: WorkbenchStructuredDataSchemaFieldControl | string | undefined;
+    placeholder?: string | undefined;
+    rows?: number | undefined;
+  };
+}
+
+export interface WorkbenchStructuredDataSchemaSectionSummary {
+  columns?: readonly string[] | undefined;
+  dataPath?: string | undefined;
+  fieldCount?: number | undefined;
+  fields?: readonly string[] | undefined;
+  id?: string | undefined;
+  sectionKey?: string | undefined;
+  title?: string | undefined;
+  type?: string | undefined;
+}
+
+export interface WorkbenchStructuredDataSchemaTableDefinition {
+  items?: Record<string, WorkbenchStructuredDataSchemaFieldDefinition> | undefined;
+  title?: string | undefined;
+}
+
+export interface WorkbenchStructuredDataSchemaDocument {
+  activePattern?: string | undefined;
+  pattern?: string | undefined;
+  patterns?: readonly {
+    pattern: string;
+    sections?: readonly WorkbenchStructuredDataSchemaSectionSummary[] | undefined;
+  }[];
+  sampleDraft?: unknown;
+  sampleDrafts?: Record<string, unknown> | undefined;
+  schema?: {
+    properties?: Record<string, WorkbenchStructuredDataSchemaFieldDefinition> | undefined;
+    sections?: readonly WorkbenchStructuredDataSchemaSectionSummary[] | undefined;
+    tables?: Record<string, WorkbenchStructuredDataSchemaTableDefinition> | undefined;
+  };
+  ui?: {
+    patterns?: Record<
+      string,
+      { label?: string | undefined; sections?: readonly WorkbenchStructuredDataSchemaSectionSummary[] | undefined }
+    >;
+  };
+}
+
+export type WorkbenchStructuredDataSchemaSectionAliases = Record<
+  string,
+  readonly WorkbenchStructuredDataPath[]
+>;
+
+export interface WorkbenchStructuredDataSchemaTableColumnInput {
+  maxColumns?: number | undefined;
+  preferredColumns?: readonly string[] | undefined;
+  rows: readonly WorkbenchStructuredDataRecord[];
+  schemaColumns?: readonly string[] | undefined;
+  sectionColumns?: readonly string[] | undefined;
+}
+
+export interface WorkbenchStructuredDataSchemaTableRowKeyInput {
+  row: WorkbenchStructuredDataRecord;
+  rowIndex: number;
+  value: unknown;
+}
 
 export interface WorkbenchStructuredDataFormOption {
   disabled?: boolean;
@@ -89,6 +173,36 @@ export interface WorkbenchStructuredDataFormTextArrayField extends WorkbenchStru
   minItems?: number;
   removeLabel?: string;
   type: 'text-array';
+}
+
+export interface WorkbenchStructuredDataTextArrayInputProps
+  extends Omit<ComponentPropsWithRef<'div'>, 'children' | 'onChange'> {
+  addLabel?: ReactNode | undefined;
+  ariaDescribedBy?: string | undefined;
+  ariaLabel: string;
+  disabled?: boolean | undefined;
+  emptyLabel?: ReactNode | undefined;
+  maxItems?: number | undefined;
+  minItems?: number | undefined;
+  placeholder?: string | undefined;
+  readOnly?: boolean | undefined;
+  removeLabel?: string | undefined;
+  value?: unknown;
+  onValueChange?: ((value: string[]) => void) | undefined;
+}
+
+export interface WorkbenchStructuredDataSchemaFieldInputProps {
+  addTextArrayLabel?: ReactNode | undefined;
+  checkboxClassName?: string | undefined;
+  className?: string | undefined;
+  definition?: WorkbenchStructuredDataSchemaFieldDefinition | undefined;
+  fieldPath: string;
+  readOnly?: boolean | undefined;
+  removeTextArrayLabel?: string | undefined;
+  textareaClassName?: string | undefined;
+  textArrayClassName?: string | undefined;
+  value: unknown;
+  onValueChange?: ((value: unknown) => void) | undefined;
 }
 
 export type WorkbenchStructuredDataFormField =
@@ -184,12 +298,16 @@ export interface WorkbenchStructuredDataFormProps extends Omit<
 const EMPTY_RECORD: WorkbenchStructuredDataRecord = {};
 
 export function getWorkbenchStructuredDataValue(
-  data: WorkbenchStructuredDataRecord,
+  data: unknown,
   path: WorkbenchStructuredDataPath,
 ) {
   return path.reduce<unknown>((currentValue, segment) => {
+    if (Array.isArray(currentValue)) {
+      const index = getWorkbenchStructuredDataArrayIndex(segment);
+      return index === null ? undefined : currentValue[index];
+    }
     if (!isWorkbenchStructuredDataRecord(currentValue)) return undefined;
-    return currentValue[segment];
+    return currentValue[String(segment)];
   }, data);
 }
 
@@ -200,18 +318,21 @@ export function setWorkbenchStructuredDataValue(
 ): WorkbenchStructuredDataRecord {
   if (path.length === 0) return data;
 
-  const [segment, ...rest] = path;
-  const nextData = { ...data };
+  const nextValue = setWorkbenchStructuredDataPathValue(data, path, value);
+  return isWorkbenchStructuredDataRecord(nextValue) ? nextValue : {};
+}
 
-  if (rest.length === 0) {
-    nextData[segment] = value;
-    return nextData;
-  }
-
-  const currentChild = nextData[segment];
-  const childRecord = isWorkbenchStructuredDataRecord(currentChild) ? currentChild : {};
-  nextData[segment] = setWorkbenchStructuredDataValue(childRecord, rest, value);
-  return nextData;
+export function setWorkbenchStructuredDataPathOrRootValue({
+  data,
+  path,
+  value,
+}: {
+  data: unknown;
+  path: WorkbenchStructuredDataPath;
+  value: unknown;
+}) {
+  if (path.length === 0) return value;
+  return setWorkbenchStructuredDataValue(asWorkbenchStructuredDataRecord(data) ?? {}, path, value);
 }
 
 export function getWorkbenchStructuredDataFormFieldDefaultValue(
@@ -247,6 +368,467 @@ export function coerceWorkbenchStructuredDataFormFieldValue(
   }
 
   return value === null || value === undefined ? '' : String(value);
+}
+
+export function getWorkbenchStructuredDataSchemaFieldControl(
+  definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
+): WorkbenchStructuredDataSchemaFieldControl {
+  if (definition?.ui?.control) {
+    return definition.ui.control as WorkbenchStructuredDataSchemaFieldControl;
+  }
+  if (definition?.enum?.length) return 'select';
+  if (definition?.type === 'array') return 'textarea';
+  if (definition?.type === 'boolean') return 'checkbox';
+  if (definition?.type === 'number' || definition?.type === 'integer') return 'number';
+  if (definition?.format === 'date') return 'date';
+  return 'text';
+}
+
+export function getWorkbenchStructuredDataSchemaFieldDefaultValue(
+  definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
+) {
+  if (definition?.default !== undefined) return definition.default;
+  if (definition?.type === 'array') return [];
+  if (definition?.type === 'boolean') return false;
+  if (definition?.type === 'number' || definition?.type === 'integer') return 0;
+  return '';
+}
+
+export function stringifyWorkbenchStructuredDataSchemaFieldValue(
+  value: unknown,
+  definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
+) {
+  if (Array.isArray(value)) return value.join('\n');
+  if (value === null || value === undefined) return '';
+  if (definition?.type === 'object') return JSON.stringify(value, null, 2);
+  return String(value);
+}
+
+export function booleanWorkbenchStructuredDataSchemaFieldValue(value: unknown) {
+  return value === true || value === 'true' || value === 'Y';
+}
+
+export function coerceWorkbenchStructuredDataSchemaFieldValue(
+  rawValue: string,
+  definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
+): unknown {
+  if (definition?.type === 'array') {
+    return rawValue.split('\n');
+  }
+
+  if (definition?.type === 'number' || definition?.type === 'integer') {
+    if (rawValue.trim() === '') return null;
+    const numericValue = Number(rawValue);
+    return Number.isFinite(numericValue) ? numericValue : rawValue;
+  }
+
+  if (definition?.enum?.length) {
+    return definition.enum.find((option) => String(option) === rawValue) ?? rawValue;
+  }
+
+  return rawValue;
+}
+
+export function formatWorkbenchStructuredDataSchemaValue(value: unknown) {
+  if (value === null || value === undefined || value === '') return '-';
+  if (Array.isArray(value)) return value.join('\n');
+  if (typeof value === 'boolean') return value ? 'Y' : 'N';
+  if (typeof value === 'object') return JSON.stringify(value, null, 2);
+  return String(value);
+}
+
+export function asWorkbenchStructuredDataRecord(
+  value: unknown,
+): WorkbenchStructuredDataRecord | null {
+  return isWorkbenchStructuredDataRecord(value) ? value : null;
+}
+
+export function getWorkbenchStructuredDataSchemaSectionId(
+  section: WorkbenchStructuredDataSchemaSectionSummary,
+) {
+  return section.id ?? section.sectionKey;
+}
+
+export function getWorkbenchStructuredDataSchemaSectionPath(
+  section: WorkbenchStructuredDataSchemaSectionSummary,
+) {
+  return section.dataPath?.trim() || section.sectionKey || section.id || '';
+}
+
+export function formatWorkbenchStructuredDataSchemaLabel(value: string) {
+  return value.replace(/_/g, ' ');
+}
+
+export function getWorkbenchStructuredDataSchemaFieldDataPath(
+  section: WorkbenchStructuredDataSchemaSectionSummary,
+  fieldPath: string,
+) {
+  if (fieldPath.includes('.')) return fieldPath;
+  const sectionPath = getWorkbenchStructuredDataSchemaSectionPath(section);
+  return sectionPath ? `${sectionPath}.${fieldPath}` : fieldPath;
+}
+
+export function getWorkbenchStructuredDataSchemaFieldDefinition({
+  fieldPath,
+  properties,
+  section,
+}: {
+  fieldPath: string;
+  properties?: Record<string, WorkbenchStructuredDataSchemaFieldDefinition> | undefined;
+  section: WorkbenchStructuredDataSchemaSectionSummary;
+}) {
+  const sectionPath = getWorkbenchStructuredDataSchemaSectionPath(section);
+  return (
+    properties?.[fieldPath] ??
+    (sectionPath ? properties?.[`${sectionPath}.${fieldPath}`] : undefined)
+  );
+}
+
+export function getWorkbenchStructuredDataSchemaDocumentSections(
+  schema: WorkbenchStructuredDataSchemaDocument | null | undefined,
+  pattern: string,
+) {
+  const activePatternSchema = schema?.patterns?.find((candidate) => candidate.pattern === pattern);
+  return (
+    schema?.ui?.patterns?.[pattern]?.sections ??
+    schema?.schema?.sections ??
+    activePatternSchema?.sections ??
+    []
+  );
+}
+
+export function getWorkbenchStructuredDataSchemaDocumentTableDefinition(
+  schema: WorkbenchStructuredDataSchemaDocument | null | undefined,
+  section: WorkbenchStructuredDataSchemaSectionSummary,
+) {
+  const tablePath = getWorkbenchStructuredDataSchemaSectionPath(section);
+  return tablePath ? schema?.schema?.tables?.[tablePath] : undefined;
+}
+
+export function getWorkbenchStructuredDataSchemaDocumentFieldDefinition(
+  schema: WorkbenchStructuredDataSchemaDocument | null | undefined,
+  section: WorkbenchStructuredDataSchemaSectionSummary,
+  fieldPath: string,
+) {
+  return getWorkbenchStructuredDataSchemaFieldDefinition({
+    fieldPath,
+    properties: schema?.schema?.properties,
+    section,
+  });
+}
+
+export function getWorkbenchStructuredDataSchemaFieldDescription(
+  definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
+) {
+  return definition?.description ?? definition?.markdownDescription;
+}
+
+export function getWorkbenchStructuredDataSchemaDocumentFieldLabel(
+  schema: WorkbenchStructuredDataSchemaDocument | null | undefined,
+  section: WorkbenchStructuredDataSchemaSectionSummary,
+  fieldPath: string,
+) {
+  return (
+    getWorkbenchStructuredDataSchemaDocumentFieldDefinition(schema, section, fieldPath)?.title ??
+    formatWorkbenchStructuredDataSchemaLabel(fieldPath.split('.').pop() ?? fieldPath)
+  );
+}
+
+export function getWorkbenchStructuredDataSchemaDocumentColumnDefinition(
+  schema: WorkbenchStructuredDataSchemaDocument | null | undefined,
+  section: WorkbenchStructuredDataSchemaSectionSummary,
+  column: string,
+) {
+  return (
+    getWorkbenchStructuredDataSchemaDocumentTableDefinition(schema, section)?.items?.[column] ??
+    getWorkbenchStructuredDataSchemaDocumentFieldDefinition(schema, section, column)
+  );
+}
+
+export function getWorkbenchStructuredDataSchemaDocumentColumnLabel(
+  schema: WorkbenchStructuredDataSchemaDocument | null | undefined,
+  section: WorkbenchStructuredDataSchemaSectionSummary,
+  column: string,
+) {
+  return (
+    getWorkbenchStructuredDataSchemaDocumentColumnDefinition(schema, section, column)?.title ??
+    formatWorkbenchStructuredDataSchemaLabel(column)
+  );
+}
+
+export function getWorkbenchStructuredDataSchemaDocumentSectionValue({
+  aliases = {},
+  data,
+  section,
+}: {
+  aliases?: WorkbenchStructuredDataSchemaSectionAliases | undefined;
+  data: unknown;
+  section: WorkbenchStructuredDataSchemaSectionSummary;
+}) {
+  const sectionKey = getWorkbenchStructuredDataSchemaSectionPath(section);
+  const record = asWorkbenchStructuredDataRecord(data);
+  if (!sectionKey || !record) return sectionKey ? null : data;
+  if (sectionKey in record) return record[sectionKey];
+
+  const directValue = getWorkbenchStructuredDataValue(data, sectionKey.split('.'));
+  if (directValue !== null && directValue !== undefined) return directValue;
+
+  for (const path of aliases[sectionKey] ?? []) {
+    if (!path.length) return data;
+    const value = getWorkbenchStructuredDataValue(data, path);
+    if (value !== null && value !== undefined) return value;
+  }
+
+  return null;
+}
+
+export function getWorkbenchStructuredDataSchemaTableRows(
+  value: unknown,
+): WorkbenchStructuredDataRecord[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => asWorkbenchStructuredDataRecord(item) ?? { value: item });
+  }
+
+  const record = asWorkbenchStructuredDataRecord(value);
+  if (!record) return [];
+
+  const objectEntries = Object.entries(record).filter(([, entry]) =>
+    asWorkbenchStructuredDataRecord(entry),
+  );
+  if (!objectEntries.length) return [];
+
+  return objectEntries.map(([key, entry]) => ({
+    id: key,
+    ...(asWorkbenchStructuredDataRecord(entry) ?? {}),
+  }));
+}
+
+export function getWorkbenchStructuredDataSchemaTablePath(
+  section: WorkbenchStructuredDataSchemaSectionSummary,
+) {
+  const tablePath = getWorkbenchStructuredDataSchemaSectionPath(section);
+  return tablePath ? tablePath.split('.') : [];
+}
+
+export function getWorkbenchStructuredDataSchemaTableRowKey({
+  row,
+  rowIndex,
+  value,
+}: WorkbenchStructuredDataSchemaTableRowKeyInput) {
+  return Array.isArray(value) ? String(rowIndex) : String(row.id ?? rowIndex);
+}
+
+export function getWorkbenchStructuredDataSchemaTableCellPath({
+  column,
+  rowKey,
+  section,
+}: {
+  column: string;
+  rowKey: string;
+  section: WorkbenchStructuredDataSchemaSectionSummary;
+}) {
+  return [...getWorkbenchStructuredDataSchemaTablePath(section), rowKey, column];
+}
+
+export function removeWorkbenchStructuredDataSchemaTableRow({
+  rowIndex,
+  rowKey,
+  value,
+}: {
+  rowIndex: number;
+  rowKey: string;
+  value: unknown;
+}) {
+  if (Array.isArray(value)) return value.filter((_, index) => index !== rowIndex);
+
+  const nextRecord = { ...(asWorkbenchStructuredDataRecord(value) ?? {}) };
+  delete nextRecord[rowKey];
+  return nextRecord;
+}
+
+export function appendWorkbenchStructuredDataSchemaTableRow({
+  row,
+  rowKey,
+  value,
+}: {
+  row: WorkbenchStructuredDataRecord;
+  rowKey: string;
+  value: unknown;
+}) {
+  if (Array.isArray(value)) return [...value, row];
+
+  return {
+    ...(asWorkbenchStructuredDataRecord(value) ?? {}),
+    [rowKey]: { ...row, id: rowKey },
+  };
+}
+
+export function getWorkbenchStructuredDataSchemaTableColumns({
+  maxColumns = 6,
+  preferredColumns = [],
+  rows,
+  schemaColumns = [],
+  sectionColumns = [],
+}: WorkbenchStructuredDataSchemaTableColumnInput) {
+  if (sectionColumns.length) return [...sectionColumns];
+  if (schemaColumns.length) return [...schemaColumns];
+
+  const keys = Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
+  const preferred = preferredColumns.filter((column) => keys.includes(column));
+  const remaining = keys.filter((column) => !preferred.includes(column));
+  return [...preferred, ...remaining].slice(0, maxColumns);
+}
+
+export function getWorkbenchStructuredDataSchemaDocumentTableColumns({
+  maxColumns,
+  preferredColumns,
+  rows,
+  schema,
+  section,
+}: {
+  maxColumns?: number | undefined;
+  preferredColumns?: readonly string[] | undefined;
+  rows: readonly WorkbenchStructuredDataRecord[];
+  schema: WorkbenchStructuredDataSchemaDocument | null | undefined;
+  section: WorkbenchStructuredDataSchemaSectionSummary;
+}) {
+  const schemaColumns = Object.keys(
+    getWorkbenchStructuredDataSchemaDocumentTableDefinition(schema, section)?.items ?? {},
+  );
+
+  return getWorkbenchStructuredDataSchemaTableColumns({
+    maxColumns,
+    preferredColumns,
+    rows,
+    schemaColumns,
+    sectionColumns: section.columns,
+  });
+}
+
+export function createWorkbenchStructuredDataSchemaEmptyRow({
+  columns,
+  getDefinition,
+}: {
+  columns: readonly string[];
+  getDefinition: (
+    column: string,
+  ) => WorkbenchStructuredDataSchemaFieldDefinition | undefined;
+}) {
+  return columns.reduce<WorkbenchStructuredDataRecord>((row, column) => {
+    row[column] = getWorkbenchStructuredDataSchemaFieldDefaultValue(getDefinition(column));
+    return row;
+  }, {});
+}
+
+export function createWorkbenchStructuredDataSchemaDocumentEmptyRow({
+  columns,
+  schema,
+  section,
+}: {
+  columns: readonly string[];
+  schema: WorkbenchStructuredDataSchemaDocument | null | undefined;
+  section: WorkbenchStructuredDataSchemaSectionSummary;
+}) {
+  return createWorkbenchStructuredDataSchemaEmptyRow({
+    columns,
+    getDefinition: (column) =>
+      getWorkbenchStructuredDataSchemaDocumentColumnDefinition(schema, section, column),
+  });
+}
+
+export function createWorkbenchStructuredDataSchemaDocumentSampleData(
+  schema: WorkbenchStructuredDataSchemaDocument | null | undefined,
+  pattern: string,
+) {
+  const sections = getWorkbenchStructuredDataSchemaDocumentSections(schema, pattern);
+  return sections.reduce<WorkbenchStructuredDataRecord>((sample, section) => {
+    const path = getWorkbenchStructuredDataSchemaSectionPath(section);
+    if (!path) return sample;
+
+    if (section.type === 'table') {
+      const schemaTable = getWorkbenchStructuredDataSchemaDocumentTableDefinition(schema, section);
+      const columns = section.columns?.length ? section.columns : Object.keys(schemaTable?.items ?? {});
+
+      return setWorkbenchStructuredDataValue(sample, path.split('.'), [
+        createWorkbenchStructuredDataSchemaDocumentEmptyRow({
+          columns,
+          schema,
+          section,
+        }),
+      ]);
+    }
+
+    return (section.fields ?? []).reduce<WorkbenchStructuredDataRecord>((nextSample, fieldPath) => {
+      const definition = getWorkbenchStructuredDataSchemaDocumentFieldDefinition(
+        schema,
+        section,
+        fieldPath,
+      );
+      return setWorkbenchStructuredDataValue(
+        nextSample,
+        getWorkbenchStructuredDataSchemaFieldDataPath(section, fieldPath).split('.'),
+        getWorkbenchStructuredDataSchemaFieldDefaultValue(definition),
+      );
+    }, sample);
+  }, {});
+}
+
+export function createWorkbenchStructuredDataSchemaFallbackSection({
+  data,
+  sectionKey = 'data',
+  title,
+}: {
+  data: unknown;
+  sectionKey?: string | undefined;
+  title: string;
+}): WorkbenchStructuredDataSchemaSectionSummary {
+  const record = asWorkbenchStructuredDataRecord(data);
+  return {
+    fieldCount: record ? Object.keys(record).length : undefined,
+    sectionKey,
+    title,
+    type: Array.isArray(data) ? 'table' : 'form',
+  };
+}
+
+export function slugWorkbenchStructuredDataSchemaAnchor(value: string | undefined) {
+  return (
+    value
+      ?.toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'section'
+  );
+}
+
+export function getWorkbenchStructuredDataSchemaSectionAnchorId({
+  index,
+  panelId,
+  section,
+}: {
+  index: number;
+  panelId: string;
+  section: WorkbenchStructuredDataSchemaSectionSummary;
+}) {
+  return `${panelId}-section-${index}-${slugWorkbenchStructuredDataSchemaAnchor(
+    getWorkbenchStructuredDataSchemaSectionId(section) ?? section.title,
+  )}`;
+}
+
+export function getWorkbenchStructuredDataSchemaDocumentPanelData({
+  data,
+  pattern,
+  schema,
+}: {
+  data: unknown;
+  pattern: string;
+  schema: WorkbenchStructuredDataSchemaDocument | null | undefined;
+}) {
+  return (
+    data ??
+    schema?.sampleDrafts?.[pattern] ??
+    schema?.sampleDraft ??
+    createWorkbenchStructuredDataSchemaDocumentSampleData(schema, pattern)
+  );
 }
 
 export function getWorkbenchStructuredDataFormFields(
@@ -626,16 +1208,29 @@ function renderStructuredDataField({
   }
 
   if (field.type === 'text-array') {
+    const itemLabel = field.itemLabel ?? getStructuredDataLabelText(field.label, 'Item');
+
     return (
-      <StructuredDataTextArrayField
-        disabled={disabled}
-        errorId={errorId}
-        field={field}
-        id={id}
-        readOnly={readOnly}
-        value={value}
-        onChange={onChange}
-      />
+      <Field
+        className="ui-workbench-structured-data-form__array-field"
+        description={field.description}
+        label={field.label}
+      >
+        <WorkbenchStructuredDataTextArrayInput
+          addLabel={field.addLabel}
+          ariaDescribedBy={errorId}
+          ariaLabel={itemLabel}
+          disabled={disabled}
+          emptyLabel={field.emptyLabel}
+          maxItems={field.maxItems}
+          minItems={field.minItems}
+          placeholder={field.itemPlaceholder}
+          readOnly={readOnly}
+          removeLabel={field.removeLabel}
+          value={value}
+          onValueChange={onChange}
+        />
+      </Field>
     );
   }
 
@@ -661,85 +1256,195 @@ function renderStructuredDataField({
   );
 }
 
-function StructuredDataTextArrayField({
-  disabled,
-  errorId,
-  field,
-  id,
-  onChange,
-  readOnly,
+function structuredDataTextArrayItems(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.map((item) => (item === null || item === undefined ? '' : String(item)));
+  }
+  if (value === '' || value === null || value === undefined) return [];
+  return [String(value)];
+}
+
+export function WorkbenchStructuredDataSchemaFieldInput({
+  addTextArrayLabel,
+  checkboxClassName,
+  className,
+  definition,
+  fieldPath,
+  onValueChange,
+  readOnly = false,
+  removeTextArrayLabel,
+  textareaClassName,
+  textArrayClassName,
   value,
-}: {
-  disabled: boolean;
-  errorId?: string;
-  field: WorkbenchStructuredDataFormTextArrayField;
-  id: string;
-  onChange: (value: WorkbenchStructuredDataFieldValue) => void;
-  readOnly: boolean;
-  value: WorkbenchStructuredDataFieldValue;
-}) {
-  const items = Array.isArray(value) ? value : [];
+}: WorkbenchStructuredDataSchemaFieldInputProps) {
+  const control = getWorkbenchStructuredDataSchemaFieldControl(definition);
+  const label = definition?.title ?? formatWorkbenchStructuredDataSchemaLabel(fieldPath);
+  const stringValue = stringifyWorkbenchStructuredDataSchemaFieldValue(value, definition);
+
+  if (definition?.type === 'array' && definition.items?.type === 'string') {
+    return (
+      <WorkbenchStructuredDataTextArrayInput
+        addLabel={addTextArrayLabel}
+        ariaLabel={label}
+        className={cx(className, textArrayClassName)}
+        placeholder={definition.ui?.placeholder}
+        readOnly={readOnly}
+        removeLabel={removeTextArrayLabel}
+        value={value}
+        onValueChange={onValueChange}
+      />
+    );
+  }
+
+  if (control === 'select') {
+    return (
+      <Select
+        aria-label={label}
+        className={className}
+        controlWidth="full"
+        disabled={readOnly}
+        value={stringValue}
+        onChange={(event) =>
+          onValueChange?.(
+            coerceWorkbenchStructuredDataSchemaFieldValue(event.currentTarget.value, definition),
+          )
+        }
+      >
+        {(definition?.enum ?? []).map((option) => (
+          <option key={String(option)} value={String(option)}>
+            {String(option)}
+          </option>
+        ))}
+      </Select>
+    );
+  }
+
+  if (control === 'textarea') {
+    return (
+      <TextArea
+        aria-label={label}
+        className={cx(className, textareaClassName)}
+        controlWidth="full"
+        monospace={definition?.type === 'array' || definition?.type === 'object'}
+        placeholder={definition?.ui?.placeholder}
+        readOnly={readOnly}
+        resize="vertical"
+        rows={definition?.ui?.rows ?? (definition?.type === 'array' ? 3 : 4)}
+        value={stringValue}
+        onChange={(event) => {
+          if (!readOnly) {
+            onValueChange?.(
+              coerceWorkbenchStructuredDataSchemaFieldValue(event.currentTarget.value, definition),
+            );
+          }
+        }}
+      />
+    );
+  }
+
+  if (control === 'checkbox') {
+    return (
+      <Checkbox
+        checked={booleanWorkbenchStructuredDataSchemaFieldValue(value)}
+        className={checkboxClassName}
+        disabled={readOnly}
+        label={booleanWorkbenchStructuredDataSchemaFieldValue(value) ? 'Enabled' : 'Disabled'}
+        onChange={(event) => onValueChange?.(event.currentTarget.checked)}
+      />
+    );
+  }
+
+  return (
+    <TextInput
+      aria-label={label}
+      className={className}
+      controlWidth="full"
+      placeholder={definition?.ui?.placeholder}
+      readOnly={readOnly}
+      type={control === 'date' || control === 'number' ? control : 'text'}
+      value={stringValue}
+      onChange={(event) => {
+        if (!readOnly) {
+          onValueChange?.(
+            coerceWorkbenchStructuredDataSchemaFieldValue(event.currentTarget.value, definition),
+          );
+        }
+      }}
+    />
+  );
+}
+
+export function WorkbenchStructuredDataTextArrayInput({
+  addLabel = 'Add item',
+  ariaDescribedBy,
+  ariaLabel,
+  className,
+  disabled = false,
+  emptyLabel,
+  maxItems,
+  minItems,
+  placeholder,
+  readOnly = false,
+  removeLabel = 'Remove',
+  value,
+  onValueChange,
+  ...props
+}: WorkbenchStructuredDataTextArrayInputProps) {
+  const generatedId = useId();
+  const items = structuredDataTextArrayItems(value);
   const canEdit = !disabled && !readOnly;
-  const itemLabel = field.itemLabel ?? getStructuredDataLabelText(field.label, 'Item');
-  const addDisabled = !canEdit || (field.maxItems !== undefined && items.length >= field.maxItems);
-  const removeDisabled =
-    !canEdit || (field.minItems !== undefined && items.length <= field.minItems);
+  const addDisabled = !canEdit || (maxItems !== undefined && items.length >= maxItems);
+  const removeDisabled = !canEdit || (minItems !== undefined && items.length <= minItems);
 
   const updateItem = (index: number, nextValue: string) => {
-    onChange(items.map((item, itemIndex) => (itemIndex === index ? nextValue : item)));
+    onValueChange?.(items.map((item, itemIndex) => (itemIndex === index ? nextValue : item)));
   };
 
   const removeItem = (index: number) => {
-    onChange(items.filter((_, itemIndex) => itemIndex !== index));
+    onValueChange?.(items.filter((_, itemIndex) => itemIndex !== index));
   };
 
   return (
-    <Field
-      className="ui-workbench-structured-data-form__array-field"
-      description={field.description}
-      label={field.label}
-    >
-      <div className="ui-workbench-structured-data-form__array">
-        {items.length === 0 && field.emptyLabel ? (
-          <div className="ui-workbench-structured-data-form__array-empty">{field.emptyLabel}</div>
-        ) : null}
-        {items.map((item, index) => {
-          const itemNumber = index + 1;
-          const itemInputId = `${id}-${itemNumber}`;
+    <div className={cx('ui-workbench-structured-data-form__array', className)} {...props}>
+      {items.length === 0 && emptyLabel ? (
+        <div className="ui-workbench-structured-data-form__array-empty">{emptyLabel}</div>
+      ) : null}
+      {items.map((item, index) => {
+        const itemNumber = index + 1;
+        const itemInputId = `${generatedId}-${itemNumber}`;
 
-          return (
-            <div className="ui-workbench-structured-data-form__array-row" key={itemInputId}>
-              <TextInput
-                id={itemInputId}
-                aria-describedby={errorId}
-                aria-label={`${itemLabel} ${itemNumber}`}
-                controlWidth="full"
-                disabled={disabled}
-                placeholder={field.itemPlaceholder}
-                readOnly={readOnly}
-                value={item}
-                onChange={(event) => updateItem(index, event.currentTarget.value)}
-              />
-              <IconButton
-                compact
-                disabled={removeDisabled}
-                icon="codicon-trash"
-                label={`${field.removeLabel ?? 'Remove'} ${itemLabel} ${itemNumber}`}
-                onClick={() => removeItem(index)}
-              />
-            </div>
-          );
-        })}
-        <Button
-          compact
-          disabled={addDisabled}
-          icon="codicon-add"
-          onClick={() => onChange([...items, ''])}
-        >
-          {field.addLabel ?? 'Add item'}
-        </Button>
-      </div>
-    </Field>
+        return (
+          <div className="ui-workbench-structured-data-form__array-row" key={itemInputId}>
+            <TextInput
+              id={itemInputId}
+              aria-describedby={ariaDescribedBy}
+              aria-label={`${ariaLabel} ${itemNumber}`}
+              controlWidth="full"
+              disabled={disabled}
+              placeholder={placeholder}
+              readOnly={readOnly}
+              value={item}
+              onChange={(event) => updateItem(index, event.currentTarget.value)}
+            />
+            <IconButton
+              compact
+              disabled={removeDisabled}
+              icon="codicon-trash"
+              label={`${removeLabel} ${ariaLabel} ${itemNumber}`}
+              onClick={() => removeItem(index)}
+            />
+          </div>
+        );
+      })}
+      <Button
+        compact
+        disabled={addDisabled}
+        icon="codicon-add"
+        onClick={() => onValueChange?.([...items, ''])}
+      >
+        {addLabel}
+      </Button>
+    </div>
   );
 }
 
@@ -752,6 +1457,50 @@ function formatStructuredDataCell(value: unknown) {
 
 function isWorkbenchStructuredDataRecord(value: unknown): value is WorkbenchStructuredDataRecord {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function getWorkbenchStructuredDataArrayIndex(segment: number | string) {
+  const index = typeof segment === 'number' ? segment : Number(segment);
+  return Number.isInteger(index) && index >= 0 ? index : null;
+}
+
+function createWorkbenchStructuredDataContainer(segment: number | string | undefined) {
+  return segment !== undefined && getWorkbenchStructuredDataArrayIndex(segment) !== null ? [] : {};
+}
+
+function cloneWorkbenchStructuredDataContainer(
+  value: unknown,
+  nextSegment: number | string | undefined,
+): Record<string, unknown> | unknown[] {
+  if (Array.isArray(value)) return [...value];
+  if (isWorkbenchStructuredDataRecord(value)) return { ...value };
+  return createWorkbenchStructuredDataContainer(nextSegment);
+}
+
+function setWorkbenchStructuredDataPathValue(
+  data: unknown,
+  path: WorkbenchStructuredDataPath,
+  value: unknown,
+): unknown {
+  if (path.length === 0) return value;
+
+  const [segment, ...rest] = path;
+  const root = cloneWorkbenchStructuredDataContainer(data, segment);
+  const key = Array.isArray(root) ? getWorkbenchStructuredDataArrayIndex(segment) : String(segment);
+  if (key === null) return root;
+
+  if (rest.length === 0) {
+    root[key as keyof typeof root] = value as never;
+    return root;
+  }
+
+  const currentChild = root[key as keyof typeof root];
+  root[key as keyof typeof root] = setWorkbenchStructuredDataPathValue(
+    currentChild,
+    rest,
+    value,
+  ) as never;
+  return root;
 }
 
 function isWorkbenchStructuredDataFormEmptyValue(value: WorkbenchStructuredDataFieldValue) {

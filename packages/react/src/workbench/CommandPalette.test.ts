@@ -235,4 +235,19 @@ describe('workbench command helpers', () => {
     expect(markup).toContain('Validate selection');
     expect(markup).toContain('data-status="waiting"');
   });
+
+  it('renders grouped command shell without group navigation', () => {
+    const markup = renderToStaticMarkup(
+      createElement(WorkbenchCommandGroupShell, {
+        commands,
+        groupBy: 'category',
+        showGroupNav: false,
+      }),
+    );
+
+    expect(markup).toContain('data-show-group-nav="false"');
+    expect(markup).not.toContain('<nav');
+    expect(markup).toContain('Open preview');
+    expect(markup).toContain('Validate selection');
+  });
 });
