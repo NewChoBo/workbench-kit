@@ -70,6 +70,26 @@ export type {
   WorkbenchConfirmationVariant,
 } from './ConfirmationFlow';
 export {
+  WorkbenchAuthGate,
+  WorkbenchLoginBrandMark,
+  WorkbenchLoginView,
+  WorkbenchPasswordResetView,
+  WorkbenchSignUpView,
+} from './auth';
+export type {
+  WorkbenchAuthGateProps,
+  WorkbenchAuthStatus,
+  WorkbenchLoginCredentials,
+  WorkbenchLoginSubmitContext,
+  WorkbenchLoginViewProps,
+  WorkbenchPasswordResetCredentials,
+  WorkbenchPasswordResetSubmitContext,
+  WorkbenchPasswordResetViewProps,
+  WorkbenchSignUpCredentials,
+  WorkbenchSignUpSubmitContext,
+  WorkbenchSignUpViewProps,
+} from './auth';
+export {
   WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID,

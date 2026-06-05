@@ -71,6 +71,26 @@ export type {
   WorkbenchConfirmationVariant,
 } from './workbench/ConfirmationFlow';
 export {
+  WorkbenchAuthGate,
+  WorkbenchLoginBrandMark,
+  WorkbenchLoginView,
+  WorkbenchPasswordResetView,
+  WorkbenchSignUpView,
+} from './workbench/auth';
+export type {
+  WorkbenchAuthGateProps,
+  WorkbenchAuthStatus,
+  WorkbenchLoginCredentials,
+  WorkbenchLoginSubmitContext,
+  WorkbenchLoginViewProps,
+  WorkbenchPasswordResetCredentials,
+  WorkbenchPasswordResetSubmitContext,
+  WorkbenchPasswordResetViewProps,
+  WorkbenchSignUpCredentials,
+  WorkbenchSignUpSubmitContext,
+  WorkbenchSignUpViewProps,
+} from './workbench/auth';
+export {
   WorkbenchTimeline,
   WorkbenchTimelineItem,
   formatWorkbenchTimelineMetadataValue,
