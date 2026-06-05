@@ -1,6 +1,7 @@
 import { useMemo, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
+import { createCommandRegistry } from '@workbench-kit/core';
 import { Button } from '../primitives/Button';
 import { SegmentedControl } from '../primitives/WorkbenchEditor';
 import { ChatComposer } from './chat/ChatComposer';
@@ -14,6 +15,12 @@ import {
   type WorkbenchCommandDescriptor,
   type WorkbenchCommandGroupBy,
 } from './CommandPalette';
+import { WorkbenchShortcutCommandBridge } from './ShortcutCommandBridge';
+import {
+  WORKBENCH_EDITOR_SAVE_COMMAND_ID,
+  createWorkbenchEditorCommands,
+  type WorkbenchEditorCommandContext,
+} from './commands';
 
 const meta = {
   title: 'React/Workbench/CommandPalette',
@@ -250,6 +257,90 @@ function GroupedCommandShellHarness() {
   );
 }
 
+function ShortcutCommandBridgeHarness() {
+  const [target, setTarget] = useState<HTMLDivElement | null>(null);
+  const [dirty, setDirty] = useState(true);
+  const [status, setStatus] = useState('No shortcut run');
+  const registry = useMemo(
+    () =>
+      createCommandRegistry(
+        createWorkbenchEditorCommands({
+          commandOverrides: {
+            [WORKBENCH_EDITOR_SAVE_COMMAND_ID]: {
+              shortcut: 'Ctrl/Cmd+S',
+            },
+          },
+        }),
+      ),
+    [],
+  );
+  const context = useMemo<WorkbenchEditorCommandContext>(
+    () => ({
+      canCloseAll: false,
+      canCloseOthers: false,
+      canClosePath: false,
+      canCopyPath: true,
+      canDeletePath: false,
+      canDiscardFile: dirty,
+      canSaveFile: true,
+      closeAll: () => undefined,
+      closeOthers: () => undefined,
+      closePath: () => undefined,
+      copyPath: () => undefined,
+      deletePath: () => undefined,
+      discardFile: () => {
+        setDirty(false);
+        setStatus('Discarded active file');
+      },
+      filePath: 'src/workbench.ts',
+      hasMultipleOpenFiles: false,
+      hasOpenFiles: true,
+      hasUnsavedChanges: dirty,
+      saveFile: () => {
+        setDirty(false);
+        setStatus('Saved active file');
+      },
+    }),
+    [dirty],
+  );
+
+  return (
+    <CommandStoryFrame>
+      <WorkbenchShortcutCommandBridge
+        context={context}
+        registry={registry}
+        target={target}
+        onShortcutCommand={(result) => {
+          if (!result.handled) return;
+          setStatus(`Saved active file via ${result.shortcut}`);
+        }}
+      />
+      <div
+        ref={setTarget}
+        aria-label="Active shortcut surface"
+        style={{
+          border: '1px solid var(--color-border)',
+          borderRadius: 8,
+          display: 'grid',
+          gap: 12,
+          padding: 16,
+          width: 'min(100%, 420px)',
+        }}
+        tabIndex={0}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <strong>src/workbench.ts</strong>
+          <span aria-label="File dirty state">{dirty ? 'Unsaved' : 'Saved'}</span>
+        </div>
+        <Button onClick={() => setDirty(true)}>Mark dirty</Button>
+      </div>
+      <div aria-label="Shortcut event log" role="status">
+        {status}
+      </div>
+    </CommandStoryFrame>
+  );
+}
+
 export const GlobalPalette: Story = {
   render: () => <PaletteHarness />,
   play: async ({ canvasElement }) => {
@@ -296,6 +387,22 @@ export const GroupedCommandShell: Story = {
     await expect(canvas.getByLabelText('Grouped command event log')).toHaveTextContent(
       'Ran Open preview from artifact',
     );
+  },
+};
+
+export const ShortcutCommandBridge: Story = {
+  render: () => <ShortcutCommandBridgeHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const surface = canvas.getByLabelText('Active shortcut surface');
+
+    await expect(canvas.getByLabelText('File dirty state')).toHaveTextContent('Unsaved');
+    await userEvent.click(surface);
+    await userEvent.keyboard('{Control>}s{/Control}');
+    await expect(canvas.getByLabelText('Shortcut event log')).toHaveTextContent(
+      'Saved active file via Ctrl/Cmd+S',
+    );
+    await expect(canvas.getByLabelText('File dirty state')).toHaveTextContent('Saved');
   },
 };
 

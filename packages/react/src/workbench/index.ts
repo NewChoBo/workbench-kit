@@ -38,6 +38,14 @@ export {
   groupWorkbenchCommands,
   isWorkbenchCommandRunnable,
 } from './CommandPalette';
+export {
+  WorkbenchShortcutCommandBridge,
+  getWorkbenchShortcutCommandBindings,
+  getWorkbenchShortcutFromEvent,
+  matchesWorkbenchShortcut,
+  runWorkbenchShortcutCommand,
+  useWorkbenchShortcutCommands,
+} from './ShortcutCommandBridge';
 export type {
   WorkbenchCommandDescriptor,
   WorkbenchCommandDescriptorOverrides,
@@ -58,6 +66,18 @@ export type {
   WorkbenchCommandStatus,
   WorkbenchCommandSuggestProps,
 } from './CommandPalette';
+export type {
+  UseWorkbenchShortcutCommandsOptions,
+  WorkbenchShortcutCommandBinding,
+  WorkbenchShortcutCommandBindingInput,
+  WorkbenchShortcutCommandBridgeProps,
+  WorkbenchShortcutCommandMissReason,
+  WorkbenchShortcutCommandRunInput,
+  WorkbenchShortcutCommandRunResult,
+  WorkbenchShortcutEventLike,
+  WorkbenchShortcutMatchInput,
+  WorkbenchShortcutPlatform,
+} from './ShortcutCommandBridge';
 export {
   WorkbenchConfirmationFlow,
   getWorkbenchConfirmationButtonVariant,
