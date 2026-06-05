@@ -110,6 +110,20 @@ function normalizeFolders(folders: string[]) {
   );
 }
 
+function materializeFolders(files: WorkspaceFile[], folders: string[]) {
+  const folderPaths = folders.flatMap((folder) => [
+    ...parentPathsOf(folder),
+    normalizeWorkspacePath(folder),
+  ]);
+  const fileParentPaths = files.flatMap((file) => parentPathsOf(file.path));
+  return normalizeFolders([...folderPaths, ...fileParentPaths]);
+}
+
+function preserveParentFolder(folders: string[], path: string) {
+  const parentPath = parentPathOf(path);
+  return parentPath ? materializeFolders([], [...folders, parentPath]) : folders;
+}
+
 function fileMap(files: WorkspaceFile[]) {
   return new Map(files.map((file) => [file.path, file]));
 }
@@ -305,7 +319,7 @@ export function initializeVirtualWorkspaceState({
   selectedPath,
 }: VirtualWorkspaceInitialState): VirtualWorkspaceState {
   const normalizedFiles = normalizeFiles(files);
-  const normalizedFolders = normalizeFolders(folders);
+  const normalizedFolders = materializeFolders(normalizedFiles, folders);
   const filesByPath = fileMap(normalizedFiles);
   const normalizedOpenPaths = pruneOpenPaths(openPaths, normalizedFiles);
   const normalizedSelectedPath = selectedPath ? normalizeWorkspacePath(selectedPath) : undefined;
@@ -432,11 +446,13 @@ export function virtualWorkspaceReducer(
         updatedAt: action.file.updatedAt ?? nowIso(),
       },
     ];
+    const folders = materializeFolders(files, state.folders);
 
     return {
       ...state,
       expandedPaths: expandParents(state.expandedPaths, path),
       files,
+      folders,
       openPaths: openPath(state.openPaths, path),
       selectedPath: path,
     };
@@ -446,7 +462,7 @@ export function virtualWorkspaceReducer(
     const path = normalizeWorkspacePath(action.path);
     if (!path || hasPathConflict(state.files, state.folders, path)) return state;
 
-    const folders = normalizeFolders([...state.folders, path]);
+    const folders = materializeFolders(state.files, [...state.folders, path]);
     const expandedPaths = expandParents(state.expandedPaths, path);
     expandedPaths.add(path);
 
@@ -462,13 +478,15 @@ export function virtualWorkspaceReducer(
     if (!fileMap(state.files).has(path)) return state;
 
     const files = state.files.filter((file) => file.path !== path);
+    const folders = preserveParentFolder(state.folders, path);
     const openPaths = state.openPaths.filter((openFilePath) => openFilePath !== path);
     const deletedPaths = new Set([path]);
 
     return {
       ...state,
-      expandedPaths: pruneExpandedPaths(state.expandedPaths, files, state.folders),
+      expandedPaths: pruneExpandedPaths(state.expandedPaths, files, folders),
       files,
+      folders,
       openPaths,
       selectedPath: selectedAfterRemoving({
         deletedPaths,
@@ -580,7 +598,7 @@ export function virtualWorkspaceReducer(
           }
         : file,
     );
-    const folders = normalizeFolders([
+    const folders = materializeFolders(files, [
       ...foldersOutsideSource,
       ...state.folders.filter((folder) => isUnderPath(folder, path)).map(renamePath),
       destinationPath,
@@ -634,6 +652,7 @@ export function virtualWorkspaceReducer(
         updatedAt: nowIso(),
       },
     ];
+    const folders = preserveParentFolder(state.folders, sourcePath);
     const openPaths = state.openPaths.map((openFilePath) =>
       openFilePath === sourcePath ? destinationPath : openFilePath,
     );
@@ -642,6 +661,7 @@ export function virtualWorkspaceReducer(
       ...state,
       expandedPaths: expandParents(state.expandedPaths, destinationPath),
       files,
+      folders,
       openPaths,
       selectedPath: state.selectedPath === sourcePath ? destinationPath : state.selectedPath,
     };

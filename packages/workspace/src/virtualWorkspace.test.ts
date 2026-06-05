@@ -33,7 +33,7 @@ describe('virtual workspace model', () => {
     });
 
     expect(state.files).toEqual([{ content: 'duplicate wins', path: 'src/App.tsx' }]);
-    expect(state.folders).toEqual(['src/components']);
+    expect(state.folders).toEqual(['src', 'src/components']);
     expect([...state.expandedPaths]).toEqual(['src']);
     expect(state.openPaths).toEqual(['src/App.tsx']);
     expect(state.selectedPath).toBe('src/App.tsx');
@@ -103,7 +103,7 @@ describe('virtual workspace model', () => {
     );
 
     expect(state.files[0]?.path).toBe('src/ui/Button.tsx');
-    expect(state.folders).toEqual(['src/ui']);
+    expect(state.folders).toEqual(['src', 'src/ui']);
     expect(state.openPaths).toEqual(['src/ui/Button.tsx']);
     expect(state.selectedPath).toBe('src/ui/Button.tsx');
     expect([...state.expandedPaths].sort()).toEqual(['src', 'src/ui']);
@@ -123,6 +123,42 @@ describe('virtual workspace model', () => {
     expect(state.files[0]?.path).toBe('docs/notes.md');
     expect(state.openPaths).toEqual(['docs/notes.md']);
     expect(state.selectedPath).toBe('docs/notes.md');
+  });
+
+  it('preserves source folders when moving the last file out', () => {
+    const state = reduceWorkspace(
+      {
+        expandedPaths: ['src', 'src/components'],
+        files: [{ content: 'button', path: 'src/components/Button.tsx' }],
+        openPaths: ['src/components/Button.tsx'],
+        selectedPath: 'src/components/Button.tsx',
+      },
+      [{ sourcePath: 'src/components/Button.tsx', targetFolderPath: '', type: 'move-file' }],
+    );
+
+    expect(state.files[0]?.path).toBe('Button.tsx');
+    expect(state.folders).toEqual(['src', 'src/components']);
+    expect(state.openPaths).toEqual(['Button.tsx']);
+    expect(state.selectedPath).toBe('Button.tsx');
+    expect([...state.expandedPaths].sort()).toEqual(['src', 'src/components']);
+  });
+
+  it('preserves parent folders when deleting the last file', () => {
+    const state = reduceWorkspace(
+      {
+        expandedPaths: ['src'],
+        files: [{ content: 'app', path: 'src/App.tsx' }],
+        openPaths: ['src/App.tsx'],
+        selectedPath: 'src/App.tsx',
+      },
+      [{ path: 'src/App.tsx', type: 'delete-file' }],
+    );
+
+    expect(state.files).toEqual([]);
+    expect(state.folders).toEqual(['src']);
+    expect([...state.expandedPaths]).toEqual(['src']);
+    expect(state.openPaths).toEqual([]);
+    expect(state.selectedPath).toBeUndefined();
   });
 
   it('plans multi-file moves and blocks same-parent or conflicting destinations', () => {
