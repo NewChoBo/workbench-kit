@@ -73,21 +73,21 @@ primitive rather than hard-code the downstream concept.
 
 ## Independent Work Queue
 
-| ID    | Status  | Priority | Area      | Item                                  | Depends On                  | Package Target         | Notes                                                                                                                             |
-| ----- | ------- | -------- | --------- | ------------------------------------- | --------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| WB-01 | done    | P1       | Sidebar   | Section primitive                     | Existing sidebar frame      | `@workbench-kit/react` | Collapsible section with label, count/badge slot, and secondary action slot.                                                      |
-| WB-02 | done    | P1       | Sidebar   | Action list primitive                 | WB-01                       | `@workbench-kit/react` | Render command/action rows with icon, status, shortcut, danger marker, and disabled reason.                                       |
-| WB-03 | done    | P1       | Command   | Command model + palette/suggest shell | WB-02                       | `@workbench-kit/react` | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states.             |
-| WB-04 | done    | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react` | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.        |
-| WB-05 | done    | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.        |
-| WB-06 | done    | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots.     |
-| WB-07 | done    | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring an application-specific editor.                                   |
-| WB-08 | done    | P2       | Editor    | Preview renderer registry             | WB-07                       | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, artifact kind, or fallback priority.                                       |
-| WB-09 | done    | P3       | Modal     | Confirmation flow                     | Existing dialog primitives  | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                                                       |
-| WB-10 | done    | P3       | Settings  | Schema form renderer                  | Existing field primitives   | `@workbench-kit/react` | Render simple settings forms from metadata without binding to an application settings store.                                      |
-| WB-11 | done    | P2       | Settings  | Sectioned panel layout                | Existing settings patterns  | `@workbench-kit/react` | Generic VS Code-style section nav + independently scrolling content panel with scrollspy state.                                   |
-| WB-12 | done    | P2       | Settings  | Structured data form renderer         | WB-10, WB-11                | `@workbench-kit/react` | Render nested data/forms/tables from generic schema metadata while keeping data paths, persistence, and runtime effects external. |
-| WB-13 | pending | P2       | Command   | Command grouping/tag shell            | WB-03, WB-05                | `@workbench-kit/react` | Optional grouped command list/sidebar shell using descriptor category, keywords, status, danger, and execution metadata.          |
+| ID    | Status | Priority | Area      | Item                                  | Depends On                  | Package Target         | Notes                                                                                                                             |
+| ----- | ------ | -------- | --------- | ------------------------------------- | --------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| WB-01 | done   | P1       | Sidebar   | Section primitive                     | Existing sidebar frame      | `@workbench-kit/react` | Collapsible section with label, count/badge slot, and secondary action slot.                                                      |
+| WB-02 | done   | P1       | Sidebar   | Action list primitive                 | WB-01                       | `@workbench-kit/react` | Render command/action rows with icon, status, shortcut, danger marker, and disabled reason.                                       |
+| WB-03 | done   | P1       | Command   | Command model + palette/suggest shell | WB-02                       | `@workbench-kit/react` | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states.             |
+| WB-04 | done   | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react` | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.        |
+| WB-05 | done   | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.        |
+| WB-06 | done   | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots.     |
+| WB-07 | done   | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring an application-specific editor.                                   |
+| WB-08 | done   | P2       | Editor    | Preview renderer registry             | WB-07                       | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, artifact kind, or fallback priority.                                       |
+| WB-09 | done   | P3       | Modal     | Confirmation flow                     | Existing dialog primitives  | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                                                       |
+| WB-10 | done   | P3       | Settings  | Schema form renderer                  | Existing field primitives   | `@workbench-kit/react` | Render simple settings forms from metadata without binding to an application settings store.                                      |
+| WB-11 | done   | P2       | Settings  | Sectioned panel layout                | Existing settings patterns  | `@workbench-kit/react` | Generic VS Code-style section nav + independently scrolling content panel with scrollspy state.                                   |
+| WB-12 | done   | P2       | Settings  | Structured data form renderer         | WB-10, WB-11                | `@workbench-kit/react` | Render nested data/forms/tables from generic schema metadata while keeping data paths, persistence, and runtime effects external. |
+| WB-13 | done   | P2       | Command   | Command grouping/tag shell            | WB-03, WB-05                | `@workbench-kit/react` | Optional grouped command list/sidebar shell using descriptor category, keywords, status, danger, and execution metadata.          |
 
 ## Suggested Implementation Order
 
@@ -106,9 +106,10 @@ primitive rather than hard-code the downstream concept.
 ## Recommended Next Slice
 
 The first downstream extraction pass is complete for command metadata,
-sectioned settings layout, and structured data forms. Future work should
-continue with command grouping primitives, while preserving the generic public
-API boundary documented here.
+sectioned settings layout, structured data forms, and command grouping
+primitives. Future work should define a new generic follow-up before
+implementation, while preserving the generic public API boundary documented
+here.
 
 | Step | Task                    | Expected Change                                                                                                        |
 | ---- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
@@ -392,8 +393,9 @@ this repository:
 
 ```text
 Please work in the current Workbench Kit repository on the active feature
-branch. WB-01 through WB-12 in docs/workbench/todo.md are complete. Continue
-with WB-13 unless a more specific generic follow-up is requested.
+branch. WB-01 through WB-13 in docs/workbench/todo.md are complete. Define the
+next generic follow-up before implementation unless a more specific request is
+provided.
 
 Keep the work generic and public-boundary safe:
 - Do not add application names, product workflow names, private paths, server

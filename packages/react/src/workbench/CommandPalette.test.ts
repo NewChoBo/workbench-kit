@@ -1,8 +1,13 @@
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {
+  WorkbenchCommandGroupShell,
   commandMenuItemsToWorkbenchCommandDescriptors,
   filterWorkbenchCommands,
   getNextWorkbenchCommandIndex,
+  getWorkbenchCommandExecutionLabel,
+  groupWorkbenchCommands,
   isWorkbenchCommandRunnable,
   type WorkbenchCommandDescriptor,
 } from './CommandPalette';
@@ -128,5 +133,83 @@ describe('workbench command helpers', () => {
         shortcut: 'Enter',
       },
     ]);
+  });
+
+  it('groups commands by category, status, execution, and keywords', () => {
+    expect(
+      groupWorkbenchCommands({
+        commands,
+        groupBy: 'category',
+      }).map((group) => ({
+        commands: group.commands.map((command) => command.id),
+        id: group.id,
+        label: group.label,
+      })),
+    ).toEqual([
+      { commands: ['artifact.openPreview'], id: 'category-view', label: 'View' },
+      { commands: ['workspace.writeArtifact'], id: 'category-workspace', label: 'Workspace' },
+      { commands: ['operation.validateSelection'], id: 'category-command', label: 'Command' },
+    ]);
+
+    expect(
+      groupWorkbenchCommands({
+        commands,
+        groupBy: 'status',
+      }).map((group) => ({
+        commands: group.commands.map((command) => command.id),
+        label: group.label,
+      })),
+    ).toEqual([
+      { commands: ['artifact.openPreview'], label: 'Other' },
+      { commands: ['workspace.writeArtifact'], label: 'Disabled' },
+      { commands: ['operation.validateSelection'], label: 'Waiting' },
+    ]);
+
+    expect(
+      groupWorkbenchCommands({
+        commands,
+        groupBy: 'execution',
+      }).map((group) => ({
+        commands: group.commands.map((command) => command.id),
+        label: group.label,
+      })),
+    ).toEqual([
+      { commands: ['artifact.openPreview', 'workspace.writeArtifact'], label: 'Other' },
+      { commands: ['operation.validateSelection'], label: 'Remote' },
+    ]);
+
+    expect(
+      groupWorkbenchCommands({
+        commands,
+        groupBy: 'keyword',
+      }).map((group) => ({
+        commands: group.commands.map((command) => command.id),
+        label: group.label,
+      })),
+    ).toEqual([
+      { commands: ['artifact.openPreview', 'workspace.writeArtifact'], label: 'Other' },
+      { commands: ['operation.validateSelection'], label: 'sql' },
+      { commands: ['operation.validateSelection'], label: 'quality-gate' },
+    ]);
+  });
+
+  it('prefers custom execution labels', () => {
+    expect(getWorkbenchCommandExecutionLabel({ kind: 'remote' })).toBe('Remote');
+    expect(getWorkbenchCommandExecutionLabel({ kind: 'delegated', label: 'Delegated' })).toBe(
+      'Delegated',
+    );
+  });
+
+  it('renders grouped command shell without owning execution', () => {
+    const markup = renderToStaticMarkup(
+      createElement(WorkbenchCommandGroupShell, { commands, groupBy: 'category' }),
+    );
+
+    expect(markup).toContain('ui-workbench-command-group-shell');
+    expect(markup).toContain('Command groups');
+    expect(markup).toContain('View');
+    expect(markup).toContain('Workspace');
+    expect(markup).toContain('Validate selection');
+    expect(markup).toContain('data-status="waiting"');
   });
 });

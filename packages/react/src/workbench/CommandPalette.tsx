@@ -29,7 +29,16 @@ export interface WorkbenchCommandExecution {
 export type WorkbenchCommandFeedback = 'none' | 'status' | 'timeline';
 export type WorkbenchCommandOutput = 'none' | 'message' | 'event' | 'artifact';
 export type WorkbenchCommandSideEffect = 'none' | 'workspace-write' | 'external-write';
-export type WorkbenchCommandRunSource = 'palette' | 'suggest' | 'list';
+export type WorkbenchCommandRunSource = 'grouped-list' | 'list' | 'palette' | 'suggest';
+export type WorkbenchCommandGroupBy =
+  | 'category'
+  | 'danger'
+  | 'execution'
+  | 'feedback'
+  | 'keyword'
+  | 'output'
+  | 'sideEffect'
+  | 'status';
 
 export interface WorkbenchCommandDescriptor {
   category?: string | undefined;
@@ -51,6 +60,8 @@ export interface WorkbenchCommandDescriptor {
 }
 
 export interface WorkbenchCommandRunContext {
+  groupId?: string | undefined;
+  groupLabel?: string | undefined;
   index: number;
   query: string;
   source: WorkbenchCommandRunSource;
@@ -68,6 +79,18 @@ export interface WorkbenchCommandNavigationInput {
   direction: 'next' | 'previous';
 }
 
+export interface WorkbenchCommandGroup {
+  commands: readonly WorkbenchCommandDescriptor[];
+  id: string;
+  label: string;
+}
+
+export interface WorkbenchCommandGroupingInput {
+  commands: readonly WorkbenchCommandDescriptor[];
+  fallbackGroupLabel?: string | undefined;
+  groupBy?: WorkbenchCommandGroupBy | undefined;
+}
+
 export type WorkbenchCommandDescriptorOverrides = Partial<
   Omit<WorkbenchCommandDescriptor, 'danger' | 'disabled' | 'icon' | 'id' | 'label' | 'shortcut'>
 >;
@@ -77,6 +100,25 @@ const commandExecutionLabels: Record<string, string> = {
   composite: 'Composite',
   local: 'Local',
   remote: 'Remote',
+};
+
+const commandFeedbackLabels: Record<WorkbenchCommandFeedback, string> = {
+  none: 'No feedback',
+  status: 'Status',
+  timeline: 'Timeline',
+};
+
+const commandOutputLabels: Record<WorkbenchCommandOutput, string> = {
+  artifact: 'Artifact',
+  event: 'Event',
+  message: 'Message',
+  none: 'No output',
+};
+
+const commandSideEffectLabels: Record<WorkbenchCommandSideEffect, string> = {
+  'external-write': 'External write',
+  none: 'No side effect',
+  'workspace-write': 'Workspace write',
 };
 
 function normalizedSearchText(value: string) {
@@ -102,8 +144,76 @@ export function getWorkbenchCommandStatusLabel(status: WorkbenchCommandStatus) {
   return getWorkbenchStatusLabel(status);
 }
 
+export function getWorkbenchCommandExecutionLabel(execution: WorkbenchCommandExecution) {
+  return execution.label ?? commandExecutionLabels[execution.kind] ?? execution.kind;
+}
+
 export function isWorkbenchCommandRunnable(command: WorkbenchCommandDescriptor) {
   return !(command.disabled || (command.status && isWorkbenchStatusDisabled(command.status)));
+}
+
+function normalizeWorkbenchCommandGroupId(label: string) {
+  const normalized = normalizedSearchText(label)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return normalized || 'group';
+}
+
+function getWorkbenchCommandGroupLabels({
+  command,
+  fallbackGroupLabel,
+  groupBy = 'category',
+}: {
+  command: WorkbenchCommandDescriptor;
+  fallbackGroupLabel: string;
+  groupBy?: WorkbenchCommandGroupBy | undefined;
+}) {
+  if (groupBy === 'keyword') {
+    return command.keywords?.length ? [...command.keywords] : [fallbackGroupLabel];
+  }
+
+  if (groupBy === 'category') return [command.category ?? fallbackGroupLabel];
+  if (groupBy === 'danger') return [command.danger ? 'Danger' : 'Default'];
+  if (groupBy === 'execution') {
+    return [
+      command.execution ? getWorkbenchCommandExecutionLabel(command.execution) : fallbackGroupLabel,
+    ];
+  }
+  if (groupBy === 'feedback')
+    return [command.feedback ? commandFeedbackLabels[command.feedback] : fallbackGroupLabel];
+  if (groupBy === 'output')
+    return [command.output ? commandOutputLabels[command.output] : fallbackGroupLabel];
+  if (groupBy === 'sideEffect') {
+    return [command.sideEffect ? commandSideEffectLabels[command.sideEffect] : fallbackGroupLabel];
+  }
+
+  const status = command.status ?? (command.disabled ? 'disabled' : undefined);
+  return [status ? getWorkbenchCommandStatusLabel(status) : fallbackGroupLabel];
+}
+
+export function groupWorkbenchCommands({
+  commands,
+  fallbackGroupLabel = 'Other',
+  groupBy = 'category',
+}: WorkbenchCommandGroupingInput): WorkbenchCommandGroup[] {
+  const groups = new Map<string, { commands: WorkbenchCommandDescriptor[]; label: string }>();
+
+  commands.forEach((command) => {
+    getWorkbenchCommandGroupLabels({ command, fallbackGroupLabel, groupBy }).forEach((label) => {
+      const id = normalizeWorkbenchCommandGroupId(`${groupBy}-${label}`);
+      const group = groups.get(id) ?? { commands: [], label };
+
+      group.commands.push(command);
+      groups.set(id, group);
+    });
+  });
+
+  return Array.from(groups, ([id, group]) => ({
+    commands: group.commands,
+    id,
+    label: group.label,
+  }));
 }
 
 export function filterWorkbenchCommands({
@@ -202,9 +312,7 @@ function commandExecution(command: WorkbenchCommandDescriptor) {
 
   return (
     <span className="ui-workbench-command-item__chip">
-      {command.execution.label ??
-        commandExecutionLabels[command.execution.kind] ??
-        command.execution.kind}
+      {getWorkbenchCommandExecutionLabel(command.execution)}
     </span>
   );
 }
@@ -310,6 +418,111 @@ export function WorkbenchCommandList({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+export interface WorkbenchCommandGroupShellProps extends Omit<
+  ComponentPropsWithRef<'div'>,
+  'children' | 'onSelect'
+> {
+  activeCommandId?: string | undefined;
+  commands: readonly WorkbenchCommandDescriptor[];
+  emptyLabel?: ReactNode | undefined;
+  fallbackGroupLabel?: string | undefined;
+  groupBy?: WorkbenchCommandGroupBy | undefined;
+  groupNavLabel?: string | undefined;
+  onActiveCommandChange?: ((commandId: string) => void) | undefined;
+  onRunCommand?:
+    | ((command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => void)
+    | undefined;
+  query?: string | undefined;
+  showGroupCounts?: boolean | undefined;
+}
+
+export function WorkbenchCommandGroupShell({
+  activeCommandId,
+  className,
+  commands,
+  emptyLabel = 'No commands available',
+  fallbackGroupLabel = 'Other',
+  groupBy = 'category',
+  groupNavLabel = 'Command groups',
+  onActiveCommandChange,
+  onRunCommand,
+  query = '',
+  showGroupCounts = true,
+  ...props
+}: WorkbenchCommandGroupShellProps) {
+  const generatedId = useId().replace(/:/g, '');
+  const filteredCommands = useMemo(
+    () => filterWorkbenchCommands({ commands, query }),
+    [commands, query],
+  );
+  const groups = useMemo(
+    () => groupWorkbenchCommands({ commands: filteredCommands, fallbackGroupLabel, groupBy }),
+    [fallbackGroupLabel, filteredCommands, groupBy],
+  );
+
+  if (groups.length === 0) {
+    return (
+      <div className={cx('ui-workbench-command-group-shell', className)} {...props}>
+        <EmptyState compact icon="codicon-symbol-keyword">
+          {emptyLabel}
+        </EmptyState>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cx('ui-workbench-command-group-shell', className)} {...props}>
+      <nav aria-label={groupNavLabel} className="ui-workbench-command-group-shell__nav">
+        {groups.map((group) => (
+          <a
+            key={group.id}
+            className="ui-workbench-command-group-shell__nav-link"
+            href={`#${generatedId}-${group.id}`}
+          >
+            <span>{group.label}</span>
+            {showGroupCounts ? <em>{group.commands.length}</em> : null}
+          </a>
+        ))}
+      </nav>
+      <div className="ui-workbench-command-group-shell__content">
+        {groups.map((group) => {
+          const titleId = `${generatedId}-${group.id}-title`;
+
+          return (
+            <section
+              key={group.id}
+              id={`${generatedId}-${group.id}`}
+              className="ui-workbench-command-group-shell__section"
+              aria-labelledby={titleId}
+            >
+              <div className="ui-workbench-command-group-shell__section-header">
+                <h2 id={titleId}>{group.label}</h2>
+                {showGroupCounts ? <span>{group.commands.length}</span> : null}
+              </div>
+              <WorkbenchCommandList
+                activeCommandId={activeCommandId}
+                aria-label={`${group.label} commands`}
+                commands={group.commands}
+                emptyLabel={emptyLabel}
+                query={query}
+                source="grouped-list"
+                onActiveCommandChange={onActiveCommandChange}
+                onRunCommand={(command, context) =>
+                  onRunCommand?.(command, {
+                    ...context,
+                    groupId: group.id,
+                    groupLabel: group.label,
+                  })
+                }
+              />
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

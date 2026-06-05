@@ -25,6 +25,7 @@ export type {
   WorkbenchPreviewRendererMatchReason,
 } from './ArtifactShell';
 export {
+  WorkbenchCommandGroupShell,
   WorkbenchCommandList,
   WorkbenchCommandPalette,
   WorkbenchCommandSuggest,
@@ -32,7 +33,9 @@ export {
   commandMenuItemToWorkbenchCommandDescriptor,
   filterWorkbenchCommands,
   getNextWorkbenchCommandIndex,
+  getWorkbenchCommandExecutionLabel,
   getWorkbenchCommandStatusLabel,
+  groupWorkbenchCommands,
   isWorkbenchCommandRunnable,
 } from './CommandPalette';
 export type {
@@ -41,6 +44,10 @@ export type {
   WorkbenchCommandExecution,
   WorkbenchCommandFeedback,
   WorkbenchCommandFilterInput,
+  WorkbenchCommandGroup,
+  WorkbenchCommandGroupBy,
+  WorkbenchCommandGroupShellProps,
+  WorkbenchCommandGroupingInput,
   WorkbenchCommandListProps,
   WorkbenchCommandNavigationInput,
   WorkbenchCommandOutput,
