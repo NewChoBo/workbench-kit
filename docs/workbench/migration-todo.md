@@ -624,7 +624,7 @@ independently.
 | plugin 설치 범위(기본/확장)        | 시작 단계 제안: command/view/settings 기반                                                             | trust/enable/recommend/update 확장 여부 미정                  | 단계별 출시 플랜(기본→확장) 작성 및 acceptance criteria 분리                                                        |
 | Storybook 테스트 미들웨어 의존성   | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                             | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                          |
 | package-manager 보호 정책          | `preinstall` 가드 존재                                                                                 | 정책 문서/실행 절차 정합성 반영                               | `docs/conventions/package-manager.md`에 강제 조건과 예외 처리 범위를 정리                                           |
-| workspace API 범위                 | `@workbench-kit/workspace` export 목록 존재                                                            | story-only fixture/state 어댑터와 분리선 미정                 | export 경계 원칙 1개(도메인 공통/구성 편의/fixture) 정의                                                            |
+| workspace API 범위                 | `@workbench-kit/workspace` export 목록과 public API governance 문서 존재                               | story-only fixture/state 어댑터는 public API에서 제외         | `docs/conventions/public-api-governance.md`와 `subpackage-architecture.md`에 export 경계 원칙 반영 완료             |
 | 폴더 작업 소유권                   | reducer와 호스트 콜백 분리 설계가 진행됨                                                               | side-effect(입출력, 확인 다이얼로그) 책임선 미완성            | API 시그니처/문서에 host-callback 규칙을 확정하고 테스트 케이스로 반영                                              |
 | StatusBar 정렬/그룹 메타           | 기본 section/item 모델만 사용 중                                                                       | host merge에서 ordering/grouping 필요성 미정                  | 최소 1개의 deterministic ordering 규칙을 문서와 테스트로 명시                                                       |
 
@@ -684,7 +684,7 @@ independently.
 | surface 메타 구조           | 미결정     | 정렬/그룹 메타가 필요한지 미정                           | `string[] surfaces`로 `command/menu` 동작은 충족되며, 다중 surface 병합 시 ordering/grouping 메타 요구 여부를 사용성 테스트로 검증                                                                              |
 | plugin 기여 범위(기본/확장) | 1차 반영됨 | trust/recommend/update 확장 범위 미정                    | 1차 기여는 `command/view/settings`로 고정, 2차 확장은 리스크/스토리/변경 범위 기준으로 별도 정량문턱치 설정                                                                                                     |
 | package-manager 운영 정책   | 반영됨     | 예외 시나리오 문서화 완료                                | `docs/conventions/package-manager.md`가 pnpm 설치/스크립트/예외 처리 정책과 `preinstall` 가드 근거를 문서화                                                                                                     |
-| workspace API boundary      | 미결정     | fixture/state adapter 경계 미정                          | `@workbench-kit/workspace`는 도메인 공통/필수 유틸 우선, story-only fixture는 테스트/스토리 전용으로 분리 기준 문서화                                                                                           |
+| workspace API boundary      | 반영됨     | fixture/state adapter는 public API 제외                  | `@workbench-kit/workspace`는 경로/트리/검색/선택/드래프트/가상 workspace helper를 export하고, story-only fixture는 테스트/스토리 전용으로 분리                                                                  |
 | folder 작업 소유권          | 미결정     | side-effect(입출력/확인/알림) 책임 선점 미정             | reducer는 상태변경·검증, 호스트 콜백은 I/O/확인/알림/권한 분기 규칙을 문서·테스트로 명시                                                                                                                        |
 | StatusBar merge 정렬        | 미결정     | deterministic ordering 메타 미정                         | host 병합 시 정렬 규칙(삽입 순/우선순위) 1개를 결정해 테스트로 회귀 검증                                                                                                                                        |
 
@@ -702,6 +702,11 @@ independently.
   host-like integration paths via `docs/conventions/storybook.md`.
 - Package-manager policy is documented in `docs/conventions/package-manager.md`
   and aligned with the existing `preinstall` guard and `.npmrc` note.
+- Workspace API boundary is documented through
+  `docs/conventions/public-api-governance.md` and the package role map in
+  `docs/workbench/subpackage-architecture.md`; `@workbench-kit/workspace` exports
+  neutral path/tree/search/selection/draft/virtual workspace helpers while
+  story-only fixture wiring stays outside public entrypoints.
 
 ## Recommended Decision Order
 
@@ -735,9 +740,10 @@ workbench platform:
   `activityBar` surface only for the initial package baseline; add
   `settings`-surface contributions only when a dedicated settings command
   surface is introduced.
-- **workspace helper exports**: export neutral domain helpers in
-  `@workbench-kit/workspace` (path/tree/search/selection/mutations); keep fixture
-  builders and state adapters in Storybook/tests.
+- **workspace helper exports**: reflected by `@workbench-kit/workspace` exports
+  and public API governance; neutral path/tree/search/selection/draft/virtual
+  workspace helpers are public, while fixture builders and story-only state
+  adapters remain in Storybook/tests.
 - **persistence**: provide optional storage adapter; no built-in persistence side effect.
 - **drag payload metadata**: keep path-list MIME as the base contract, allow optional
   `metadata` extension fields.
