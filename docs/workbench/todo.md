@@ -86,7 +86,7 @@ primitive rather than hard-code the downstream concept.
 | WB-09 | done    | P3       | Modal     | Confirmation flow                     | Existing dialog primitives  | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                                                       |
 | WB-10 | done    | P3       | Settings  | Schema form renderer                  | Existing field primitives   | `@workbench-kit/react` | Render simple settings forms from metadata without binding to an application settings store.                                      |
 | WB-11 | done    | P2       | Settings  | Sectioned panel layout                | Existing settings patterns  | `@workbench-kit/react` | Generic VS Code-style section nav + independently scrolling content panel with scrollspy state.                                   |
-| WB-12 | pending | P2       | Settings  | Structured data form renderer         | WB-10, WB-11                | `@workbench-kit/react` | Render nested data/forms/tables from generic schema metadata while keeping data paths, persistence, and runtime effects external. |
+| WB-12 | done    | P2       | Settings  | Structured data form renderer         | WB-10, WB-11                | `@workbench-kit/react` | Render nested data/forms/tables from generic schema metadata while keeping data paths, persistence, and runtime effects external. |
 | WB-13 | pending | P2       | Command   | Command grouping/tag shell            | WB-03, WB-05                | `@workbench-kit/react` | Optional grouped command list/sidebar shell using descriptor category, keywords, status, danger, and execution metadata.          |
 
 ## Suggested Implementation Order
@@ -105,10 +105,10 @@ primitive rather than hard-code the downstream concept.
 
 ## Recommended Next Slice
 
-The first downstream extraction pass is complete for command metadata and
-sectioned settings layout. Future work should continue with structured form and
-command grouping primitives, while preserving the generic public API boundary
-documented here.
+The first downstream extraction pass is complete for command metadata,
+sectioned settings layout, and structured data forms. Future work should
+continue with command grouping primitives, while preserving the generic public
+API boundary documented here.
 
 | Step | Task                    | Expected Change                                                                                                        |
 | ---- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
@@ -320,10 +320,10 @@ type WorkbenchSchemaFormField =
     });
 ```
 
-Future structured data form work should extend the form family with a separate
-API rather than overloading the simple settings form. Expected capabilities:
-nested data paths, section summaries, table rows, read-only mode, sample data,
-and update callbacks that return the next data object.
+Structured data form work extends the form family with a separate API rather
+than overloading the simple settings form. Current capabilities include nested
+data paths, section summaries, table rows, read-only mode, sample data, and
+update callbacks that return the next data object.
 
 Prefer render props or slots for application-specific visuals. Avoid accepting
 business-specific command names, artifact paths, runtime objects, or application
@@ -392,8 +392,8 @@ this repository:
 
 ```text
 Please work in the current Workbench Kit repository on the active feature
-branch. WB-01 through WB-11 in docs/workbench/todo.md are complete. Continue
-with WB-12 or WB-13 unless a more specific generic follow-up is requested.
+branch. WB-01 through WB-12 in docs/workbench/todo.md are complete. Continue
+with WB-13 unless a more specific generic follow-up is requested.
 
 Keep the work generic and public-boundary safe:
 - Do not add application names, product workflow names, private paths, server
