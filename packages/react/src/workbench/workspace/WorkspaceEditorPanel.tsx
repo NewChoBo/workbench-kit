@@ -235,7 +235,16 @@ export function WorkspaceEditorPanel({
     <Panel className="workspace-panel">
       <PanelBody className="workspace-panel__body">
         {openFiles.length > 0 ? (
-          <div className="workspace-editor">
+          <div
+            className="workspace-editor"
+            onKeyDown={(event) => {
+              if (!selectedFile) return;
+              if (event.key.toLowerCase() !== 's' || (!event.ctrlKey && !event.metaKey)) return;
+
+              event.preventDefault();
+              saveFile(selectedFile.path, selectedContent);
+            }}
+          >
             <div className="workspace-editor__tabbar">
               <div
                 aria-label="Open workspace files"
