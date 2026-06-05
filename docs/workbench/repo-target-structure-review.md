@@ -180,7 +180,8 @@ apps/
 
 ### P2 (중기)
 
-- [ ] plugin manifest/manifest schema 가이드 작성.
+- [x] plugin manifest/manifest schema 가이드 작성.
+  - 근거: [`plugin-manifest-guide.md`](./plugin-manifest-guide.md)
 - [ ] plugin install/enable/update/rollback 흐름을 `custom_launcher` 유사한 policy로 분해.
 - [ ] 문서 기반 acceptance 기준에 따라 `standalone launch`와 `extension wrapper` 단계 경계 분리 완료.
 
