@@ -127,12 +127,15 @@ apps/
    - 공개 export 변경 시 migration checklist 의무화
 
 3. **plugin/기능 확장 구조의 2단계 설계**
-   - 현재는 계약형 모델은 존재하나 install/enable/update/신뢰 정책이 미정.
-   - 타 repo의 경험을 반영해 최소 상태기반 lifecycle + manifest-style contribution merge를 우선.
+   - 계약형 모델과 baseline install/enable/update/trust 정책은
+     `plugin-lifecycle.md`와 `plugin-manifest-guide.md`에 반영됨.
+   - hard-error overlay, strict plugin identity, recommendation/update 확장
+     정책은 다음 milestone에서 분리.
 
 4. **저장/런타임 경계 정렬**
    - workspace save/patch/chat 스트림은 host와 앱이 모두 소비 가능한 contract로 고정.
-   - 현재는 스토리 기반 조립 지점이 존재해 앱 bootstrap와 분리한 state owner가 필요.
+   - `WorkbenchStandaloneShell`과 host callback 경계가 앱 bootstrap state owner의
+     최소 기준 역할을 담당.
 
 5. **검증 라인 강화**
    - unit+storybook play는 유지하되 host contract/e2e smoke lane를 별도 추적.
