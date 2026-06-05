@@ -623,16 +623,16 @@ independently.
 | surface 메타 구조                  | 현재 `surfaces?: string[]` 사용 중                                                                     | 우선순위/그룹 메타가 필요한지 미정                            | 다중 surface가 충분한지 증빙하고, 필요시 타입 확장 제안 작성                                                        |
 | plugin 설치 범위(기본/확장)        | 시작 단계 제안: command/view/settings 기반                                                             | trust/enable/recommend/update 확장 여부 미정                  | 단계별 출시 플랜(기본→확장) 작성 및 acceptance criteria 분리                                                        |
 | Storybook 테스트 미들웨어 의존성   | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                             | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                          |
-| package-manager 보호 정책          | `preinstall` 가드 존재                                                                                 | `npm` 실행 가드 외 정책 문서/실행 절차 정합성 미정            | 정책 문서에서 강제 조건과 예외 처리 범위를 1곳에 모아 정리                                                          |
+| package-manager 보호 정책          | `preinstall` 가드 존재                                                                                 | 정책 문서/실행 절차 정합성 반영                               | `docs/conventions/package-manager.md`에 강제 조건과 예외 처리 범위를 정리                                           |
 | workspace API 범위                 | `@workbench-kit/workspace` export 목록 존재                                                            | story-only fixture/state 어댑터와 분리선 미정                 | export 경계 원칙 1개(도메인 공통/구성 편의/fixture) 정의                                                            |
 | 폴더 작업 소유권                   | reducer와 호스트 콜백 분리 설계가 진행됨                                                               | side-effect(입출력, 확인 다이얼로그) 책임선 미완성            | API 시그니처/문서에 host-callback 규칙을 확정하고 테스트 케이스로 반영                                              |
 | StatusBar 정렬/그룹 메타           | 기본 section/item 모델만 사용 중                                                                       | host merge에서 ordering/grouping 필요성 미정                  | 최소 1개의 deterministic ordering 규칙을 문서와 테스트로 명시                                                       |
 
 ## 다음 액션 우선순위
 
-- 1순위(P1): package-manager 정책 문서와 실행 경로 정합성 점검
-- 2순위(P2): workspace API boundary에서 fixture/state adapter 분리 기준 문서화
-- 3순위(P3): StatusBar host merge ordering 규칙 결정 및 테스트 후보 정리
+- 1순위(P1): workspace API boundary에서 fixture/state adapter 분리 기준 문서화
+- 2순위(P2): StatusBar host merge ordering 규칙 결정 및 테스트 후보 정리
+- 3순위(P3): dirty-state guard save/discard/confirm routing policy 확정
 
 ## Plugin Lifecycle Baseline Acceptance Criteria
 
@@ -682,7 +682,7 @@ independently.
 | plugin command 충돌 정책    | 반영됨     | 하드 오버레이 정책 미결정                                | 기본은 `last-write-wins`; hard-error overlay 정책의 전환 조건을 다음 마일스톤에서 확정                                                                                                                          |
 | surface 메타 구조           | 미결정     | 정렬/그룹 메타가 필요한지 미정                           | `string[] surfaces`로 `command/menu` 동작은 충족되며, 다중 surface 병합 시 ordering/grouping 메타 요구 여부를 사용성 테스트로 검증                                                                              |
 | plugin 기여 범위(기본/확장) | 1차 반영됨 | trust/recommend/update 확장 범위 미정                    | 1차 기여는 `command/view/settings`로 고정, 2차 확장은 리스크/스토리/변경 범위 기준으로 별도 정량문턱치 설정                                                                                                     |
-| package-manager 운영 정책   | 진행중     | 예외 시나리오(문서/CI 가드) 문서화 필요                  | `npm` accidental 실행 가드는 preinstall에서 제어 중이나 대응 문서(문제 대응/예외 절차)를 루트 문서로 통합                                                                                                       |
+| package-manager 운영 정책   | 반영됨     | 예외 시나리오 문서화 완료                                | `docs/conventions/package-manager.md`가 pnpm 설치/스크립트/예외 처리 정책과 `preinstall` 가드 근거를 문서화                                                                                                     |
 | workspace API boundary      | 미결정     | fixture/state adapter 경계 미정                          | `@workbench-kit/workspace`는 도메인 공통/필수 유틸 우선, story-only fixture는 테스트/스토리 전용으로 분리 기준 문서화                                                                                           |
 | folder 작업 소유권          | 미결정     | side-effect(입출력/확인/알림) 책임 선점 미정             | reducer는 상태변경·검증, 호스트 콜백은 I/O/확인/알림/권한 분기 규칙을 문서·테스트로 명시                                                                                                                        |
 | StatusBar merge 정렬        | 미결정     | deterministic ordering 메타 미정                         | host 병합 시 정렬 규칙(삽입 순/우선순위) 1개를 결정해 테스트로 회귀 검증                                                                                                                                        |
@@ -697,6 +697,8 @@ independently.
 - Explorer root context menus in the integrated Workbench story now use
   `WORKBENCH_COMMAND_SURFACE_WORKSPACE` with workspace-only create menu entries,
   so mixed-menu surface behavior is explicitly constrained in Storybook.
+- Package-manager policy is documented in `docs/conventions/package-manager.md`
+  and aligned with the existing `preinstall` guard and `.npmrc` note.
 
 ## Recommended Decision Order
 
@@ -717,8 +719,9 @@ workbench platform:
 
 ## Proposed Answers (subject to approval)
 
-- **pkg manager hard-block (`npm install`)**: enforce pnpm through a local guard
-  script to avoid accidental lockfile drift.
+- **pkg manager hard-block (`npm install`)**: reflected in
+  `docs/conventions/package-manager.md`; pnpm is enforced through the local
+  `preinstall` guard to avoid accidental lockfile drift.
 - **storybook play in `pnpm validate`**: run baseline-tagged interaction tests in
   `validate:full` using `test:storybook-play:required`; extend scope after flake
   profile review.
