@@ -35,17 +35,19 @@ export {
   getNextWorkbenchCommandIndex,
   getWorkbenchCommandExecutionLabel,
   getWorkbenchCommandStatusLabel,
-  getSlashCommandQuery,
   groupWorkbenchCommands,
   isWorkbenchCommandRunnable,
+} from './CommandPalette';
+export {
+  getSlashCommandQuery,
   isSlashCommandInput,
   parseSlashCommand,
-} from './CommandPalette';
-export { useSlashCommandSuggest } from './useSlashCommandSuggest';
+} from './chat/slashCommand';
+export { useSlashCommandSuggest } from './chat/useSlashCommandSuggest';
 export type {
   UseSlashCommandSuggestOptions,
   UseSlashCommandSuggestResult,
-} from './useSlashCommandSuggest';
+} from './chat/useSlashCommandSuggest';
 export {
   WORKBENCH_ACTIVE_EDITOR_SAVE_SHORTCUT_ATTRIBUTE,
   hasWorkbenchModalDialogOpen,
@@ -66,8 +68,8 @@ export {
   runWorkbenchShortcutCommand,
   useWorkbenchShortcutCommands,
 } from './ShortcutCommandBridge';
+export type { SlashCommandParseResult } from './chat/slashCommand';
 export type {
-  SlashCommandParseResult,
   WorkbenchCommandDescriptor,
   WorkbenchCommandDescriptorOverrides,
   WorkbenchCommandExecution,
