@@ -154,7 +154,7 @@ export function isWorkbenchCommandRunnable(command: WorkbenchCommandDescriptor) 
 
 function normalizeWorkbenchCommandGroupId(label: string) {
   const normalized = normalizedSearchText(label)
-    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/^-+|-+$/g, '');
 
   return normalized || 'group';
@@ -389,6 +389,9 @@ export function WorkbenchCommandList({
             role="option"
             type="button"
             onClick={() => onRunCommand?.(command, { index, query, source })}
+            onMouseDown={(event) => {
+              if (source === 'suggest') event.preventDefault();
+            }}
             onMouseEnter={() => onActiveCommandChange?.(command.id)}
           >
             <span className="ui-workbench-command-item__icon">{commandIcon(command)}</span>

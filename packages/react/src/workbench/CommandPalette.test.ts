@@ -193,6 +193,29 @@ describe('workbench command helpers', () => {
     ]);
   });
 
+  it('keeps non-latin command category groups distinct', () => {
+    const localizedCommands: WorkbenchCommandDescriptor[] = [
+      { category: '조회', id: 'reference.search', label: 'Search reference' },
+      { category: '생성/수정', id: 'artifact.generate', label: 'Generate artifact' },
+      { category: '검증/실행', id: 'validation.run', label: 'Run validation' },
+    ];
+
+    expect(
+      groupWorkbenchCommands({
+        commands: localizedCommands,
+        groupBy: 'category',
+      }).map((group) => ({
+        commands: group.commands.map((command) => command.id),
+        id: group.id,
+        label: group.label,
+      })),
+    ).toEqual([
+      { commands: ['reference.search'], id: 'category-조회', label: '조회' },
+      { commands: ['artifact.generate'], id: 'category-생성-수정', label: '생성/수정' },
+      { commands: ['validation.run'], id: 'category-검증-실행', label: '검증/실행' },
+    ]);
+  });
+
   it('prefers custom execution labels', () => {
     expect(getWorkbenchCommandExecutionLabel({ kind: 'remote' })).toBe('Remote');
     expect(getWorkbenchCommandExecutionLabel({ kind: 'delegated', label: 'Delegated' })).toBe(
