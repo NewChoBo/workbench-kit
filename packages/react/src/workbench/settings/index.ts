@@ -1,3 +1,7 @@
+export { WorkbenchNavigationPanel } from './NavigationPanel';
+export type { WorkbenchNavigationPanelProps } from './NavigationPanel';
+export { WorkbenchSectionedPanel } from './SectionedPanel';
+export type { WorkbenchSectionedPanelItem, WorkbenchSectionedPanelProps } from './SectionedPanel';
 export {
   WorkbenchSchemaForm,
   coerceWorkbenchSchemaFormFieldValue,
