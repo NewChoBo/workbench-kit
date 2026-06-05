@@ -796,6 +796,27 @@
   margin-bottom: 10px;
 }
 
+.ui-workbench-structured-data-form__array-field.ui-field {
+  margin-bottom: 14px;
+}
+
+.ui-workbench-structured-data-form__array {
+  display: grid;
+  gap: 8px;
+}
+
+.ui-workbench-structured-data-form__array-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-workbench-structured-data-form__array-empty {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
 .ui-workbench-structured-data-form__error {
   margin: -8px 0 14px;
   color: var(--color-danger);

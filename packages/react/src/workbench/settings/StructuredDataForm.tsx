@@ -10,6 +10,7 @@ import { Button } from '../../primitives/Button';
 import { Checkbox } from '../../primitives/Checkbox';
 import { EmptyState } from '../../primitives/EmptyState';
 import { Field } from '../../primitives/Field';
+import { IconButton } from '../../primitives/IconButton';
 import { Select } from '../../primitives/Select';
 import { TextInput } from '../../primitives/TextInput';
 import { cx } from '../../utils/cx';
@@ -17,9 +18,14 @@ import { WorkbenchSectionedPanel } from './SectionedPanel';
 
 export type WorkbenchStructuredDataPath = readonly string[];
 
-export type WorkbenchStructuredDataFieldType = 'checkbox' | 'number' | 'select' | 'text';
+export type WorkbenchStructuredDataFieldType =
+  | 'checkbox'
+  | 'number'
+  | 'select'
+  | 'text'
+  | 'text-array';
 
-export type WorkbenchStructuredDataFieldValue = boolean | number | string;
+export type WorkbenchStructuredDataFieldValue = boolean | number | string | readonly string[];
 
 export type WorkbenchStructuredDataRecord = Record<string, unknown>;
 
@@ -74,10 +80,22 @@ export interface WorkbenchStructuredDataFormCheckboxField extends WorkbenchStruc
   type: 'checkbox';
 }
 
+export interface WorkbenchStructuredDataFormTextArrayField extends WorkbenchStructuredDataFormFieldBase {
+  addLabel?: ReactNode;
+  emptyLabel?: ReactNode;
+  itemLabel?: string;
+  itemPlaceholder?: string;
+  maxItems?: number;
+  minItems?: number;
+  removeLabel?: string;
+  type: 'text-array';
+}
+
 export type WorkbenchStructuredDataFormField =
   | WorkbenchStructuredDataFormCheckboxField
   | WorkbenchStructuredDataFormNumberField
   | WorkbenchStructuredDataFormSelectField
+  | WorkbenchStructuredDataFormTextArrayField
   | WorkbenchStructuredDataFormTextField;
 
 export interface WorkbenchStructuredDataTableColumn {
@@ -204,6 +222,7 @@ export function getWorkbenchStructuredDataFormFieldDefaultValue(
   }
 
   if (field.type === 'checkbox') return false;
+  if (field.type === 'text-array') return [];
   return '';
 }
 
@@ -212,6 +231,15 @@ export function coerceWorkbenchStructuredDataFormFieldValue(
   value: unknown,
 ): WorkbenchStructuredDataFieldValue {
   if (field.type === 'checkbox') return Boolean(value);
+  if (field.type === 'text-array') {
+    if (Array.isArray(value)) {
+      return value.map((item) => (item === null || item === undefined ? '' : String(item)));
+    }
+
+    if (value === '' || value === null || value === undefined) return [];
+    return [String(value)];
+  }
+
   if (field.type === 'number') {
     if (value === '' || value === null || value === undefined) return '';
     const numericValue = Number(value);
@@ -597,6 +625,20 @@ function renderStructuredDataField({
     );
   }
 
+  if (field.type === 'text-array') {
+    return (
+      <StructuredDataTextArrayField
+        disabled={disabled}
+        errorId={errorId}
+        field={field}
+        id={id}
+        readOnly={readOnly}
+        value={value}
+        onChange={onChange}
+      />
+    );
+  }
+
   return (
     <Field description={field.description} htmlFor={id} label={field.label}>
       <TextInput
@@ -619,9 +661,92 @@ function renderStructuredDataField({
   );
 }
 
+function StructuredDataTextArrayField({
+  disabled,
+  errorId,
+  field,
+  id,
+  onChange,
+  readOnly,
+  value,
+}: {
+  disabled: boolean;
+  errorId?: string;
+  field: WorkbenchStructuredDataFormTextArrayField;
+  id: string;
+  onChange: (value: WorkbenchStructuredDataFieldValue) => void;
+  readOnly: boolean;
+  value: WorkbenchStructuredDataFieldValue;
+}) {
+  const items = Array.isArray(value) ? value : [];
+  const canEdit = !disabled && !readOnly;
+  const itemLabel = field.itemLabel ?? getStructuredDataLabelText(field.label, 'Item');
+  const addDisabled = !canEdit || (field.maxItems !== undefined && items.length >= field.maxItems);
+  const removeDisabled =
+    !canEdit || (field.minItems !== undefined && items.length <= field.minItems);
+
+  const updateItem = (index: number, nextValue: string) => {
+    onChange(items.map((item, itemIndex) => (itemIndex === index ? nextValue : item)));
+  };
+
+  const removeItem = (index: number) => {
+    onChange(items.filter((_, itemIndex) => itemIndex !== index));
+  };
+
+  return (
+    <Field
+      className="ui-workbench-structured-data-form__array-field"
+      description={field.description}
+      label={field.label}
+    >
+      <div className="ui-workbench-structured-data-form__array">
+        {items.length === 0 && field.emptyLabel ? (
+          <div className="ui-workbench-structured-data-form__array-empty">{field.emptyLabel}</div>
+        ) : null}
+        {items.map((item, index) => {
+          const itemNumber = index + 1;
+          const itemInputId = `${id}-${itemNumber}`;
+
+          return (
+            <div className="ui-workbench-structured-data-form__array-row" key={itemInputId}>
+              <TextInput
+                id={itemInputId}
+                aria-describedby={errorId}
+                aria-label={`${itemLabel} ${itemNumber}`}
+                controlWidth="full"
+                disabled={disabled}
+                placeholder={field.itemPlaceholder}
+                readOnly={readOnly}
+                value={item}
+                onChange={(event) => updateItem(index, event.currentTarget.value)}
+              />
+              <IconButton
+                compact
+                disabled={removeDisabled}
+                icon="codicon-trash"
+                label={`${field.removeLabel ?? 'Remove'} ${itemLabel} ${itemNumber}`}
+                onClick={() => removeItem(index)}
+              />
+            </div>
+          );
+        })}
+        <Button
+          compact
+          disabled={addDisabled}
+          icon="codicon-add"
+          onClick={() => onChange([...items, ''])}
+        >
+          {field.addLabel ?? 'Add item'}
+        </Button>
+      </div>
+    </Field>
+  );
+}
+
 function formatStructuredDataCell(value: unknown) {
   if (value === undefined || value === null || value === '') return '-';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (Array.isArray(value)) return value.length === 0 ? '-' : value.join(', ');
   return String(value);
 }
 
@@ -630,9 +755,15 @@ function isWorkbenchStructuredDataRecord(value: unknown): value is WorkbenchStru
 }
 
 function isWorkbenchStructuredDataFormEmptyValue(value: WorkbenchStructuredDataFieldValue) {
+  if (Array.isArray(value)) return value.length === 0;
   return value === '' || value === false;
 }
 
 function isRenderableWorkbenchStructuredDataFormError(error: ReactNode) {
   return error !== undefined && error !== null && error !== false && error !== '';
+}
+
+function getStructuredDataLabelText(label: ReactNode, fallback: string) {
+  if (typeof label === 'string' || typeof label === 'number') return String(label);
+  return fallback;
 }

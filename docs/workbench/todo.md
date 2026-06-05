@@ -90,6 +90,7 @@ primitive rather than hard-code the downstream concept.
 | WB-13 | done    | P2       | Command   | Command grouping/tag shell            | WB-03, WB-05                | `@workbench-kit/react` | Optional grouped command list/sidebar shell using descriptor category, keywords, status, danger, and execution metadata.          |
 | WB-14 | done    | P2       | Command   | Shortcut command bridge               | WB-03, WB-07                | `@workbench-kit/react` | Provides generic shortcut matching, command dispatch helpers, a hook, and a bridge component without owning persistence.          |
 | WB-15 | pending | P2       | State     | Dirty guard primitive                 | WB-09, WB-11                | `@workbench-kit/react` | Provide reusable dirty-state navigation guard hooks/components with callback-based save, discard, and confirm flows.              |
+| WB-16 | done    | P2       | Settings  | Text array field primitive            | WB-12                       | `@workbench-kit/react` | Renders editable string-array fields as item rows with add/remove controls while preserving whitespace during editing.            |
 
 ## Suggested Implementation Order
 
@@ -105,14 +106,16 @@ primitive rather than hard-code the downstream concept.
 | 8     | WB-12        | Sectioned/nested forms should build on the simple form field primitives and sectioned layout. |
 | 9     | WB-13        | Grouped command shells can follow after command descriptor metadata is stable.                |
 | 10    | WB-14, WB-15 | Keyboard shortcuts and dirty guards should become generic once editor/form contexts converge. |
+| 11    | WB-16        | Structured forms should support string-array rows without treating them as newline textareas. |
 
 ## Recommended Next Slice
 
 The first downstream extraction pass is complete for command metadata,
 sectioned settings layout, structured data forms, and command grouping
-primitives. Shortcut dispatch is now covered by WB-14. The next generic
-follow-up is WB-15, but dirty-state navigation guard behavior should stay
-pending until save/discard/confirm routing policy is explicit.
+primitives. Shortcut dispatch is covered by WB-14, and structured text-array
+rows are covered by WB-16. The next generic follow-up is WB-15, but dirty-state
+navigation guard behavior should stay pending until save/discard/confirm
+routing policy is explicit.
 
 | Step | Task                    | Expected Change                                                                                                        |
 | ---- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
@@ -121,7 +124,8 @@ pending until save/discard/confirm routing policy is explicit.
 | 3    | Command grouping shell  | Add a grouped command list/sidebar primitive that consumes `WorkbenchCommandDescriptor` without owning execution.      |
 | 4    | Shortcut bridge         | Define active command context registration for shortcuts such as save, with persistence handled by the consumer.       |
 | 5    | Dirty guard primitive   | Extract reusable unsaved-change guard behavior with save/discard/confirm callbacks and Storybook coverage.             |
-| 6    | Consumer follow-up      | Apply new primitives in downstream applications through application adapters and keep runtime effects outside the kit. |
+| 6    | Text array field        | Completed by WB-16 with generic string-array rows, item-level editing, and no edit-time trimming/filtering.            |
+| 7    | Consumer follow-up      | Apply new primitives in downstream applications through application adapters and keep runtime effects outside the kit. |
 
 ## Suggested API Shape
 
@@ -353,6 +357,7 @@ architecture terms in primitive props.
 | WB-12 | Structured data form can render nested form/table sections from generic schema metadata and emit data changes without owning persistence or runtime effects.                                                  |
 | WB-13 | Grouped command shell can render categories/tags/status/execution metadata and dispatch selected descriptors without executing commands internally.                                                           |
 | WB-14 | Shortcut bridge can match common keyboard shortcut metadata, dispatch enabled command registry entries against the active context, and leave all side effects in command handlers.                            |
+| WB-16 | Structured data form can render string-array fields as editable rows, emit item add/remove/update changes, and preserve whitespace while the user edits values.                                               |
 
 ## Storybook Requirements
 
@@ -400,8 +405,9 @@ this repository:
 ```text
 Please work in the current Workbench Kit repository on the active feature
 branch. WB-01 through WB-14 in docs/workbench/todo.md are complete. WB-15 is
-pending, but defer implementation until dirty-guard save/discard/confirm
-routing policy is explicit unless a more specific request is provided.
+pending, WB-16 is complete, and dirty-guard implementation should be deferred
+until save/discard/confirm routing policy is explicit unless a more specific
+request is provided.
 
 Keep the work generic and public-boundary safe:
 - Do not add application names, product workflow names, private paths, server

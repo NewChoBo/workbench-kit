@@ -23,6 +23,15 @@ const sections: WorkbenchStructuredDataFormSection[] = [
         type: 'text',
       },
       {
+        addLabel: 'Add tag',
+        defaultValue: ['workspace', '  runtime  '],
+        id: 'tags',
+        itemLabel: 'Tag',
+        label: 'Tags',
+        path: ['profile', 'tags'],
+        type: 'text-array',
+      },
+      {
         defaultValue: 'comfortable',
         id: 'density',
         label: 'Density',
@@ -78,9 +87,10 @@ const sections: WorkbenchStructuredDataFormSection[] = [
 ];
 
 const maxItemsField = sections[0].fields?.find((field) => field.id === 'maxItems');
+const tagsField = sections[0].fields?.find((field) => field.id === 'tags');
 
-if (!maxItemsField) {
-  throw new Error('Expected maxItems test field.');
+if (!maxItemsField || !tagsField) {
+  throw new Error('Expected structured data test fields.');
 }
 
 describe('WorkbenchStructuredDataForm helpers', () => {
@@ -96,10 +106,13 @@ describe('WorkbenchStructuredDataForm helpers', () => {
     ).toEqual({
       permissions: { confirmSideEffects: true },
       preferences: { density: 'comfortable', maxItems: 8 },
-      profile: { name: 'Workbench Kit' },
+      profile: { name: 'Workbench Kit', tags: ['workspace', '  runtime  '] },
     });
     expect(coerceWorkbenchStructuredDataFormFieldValue(maxItemsField, '8')).toBe(8);
     expect(coerceWorkbenchStructuredDataFormFieldValue(maxItemsField, 'bad')).toBe('');
+    expect(
+      coerceWorkbenchStructuredDataFormFieldValue(tagsField, ['  keep whitespace  ', '', 4]),
+    ).toEqual(['  keep whitespace  ', '', '4']);
   });
 
   it('computes required and custom field errors', () => {
@@ -124,7 +137,7 @@ describe('WorkbenchStructuredDataForm rendering', () => {
         data={{
           permissions: { confirmSideEffects: false },
           preferences: { density: 'compact', maxItems: 16 },
-          profile: { name: 'Workbench Runtime' },
+          profile: { name: 'Workbench Runtime', tags: ['alpha', ' beta '] },
         }}
       />,
     );
@@ -133,6 +146,9 @@ describe('WorkbenchStructuredDataForm rendering', () => {
     expect(markup).toContain('href="#profile"');
     expect(markup).toContain('Profile name');
     expect(markup).toContain('value="Workbench Runtime"');
+    expect(markup).toContain('aria-label="Tag 1"');
+    expect(markup).toContain('value=" beta "');
+    expect(markup).toContain('Add tag');
     expect(markup).toContain('Resources');
     expect(markup).toContain('Open files');
     expect(markup).toContain('data-align="end"');

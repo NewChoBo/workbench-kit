@@ -261,6 +261,7 @@ export type {
   WorkbenchStructuredDataFormSection,
   WorkbenchStructuredDataFormSelectField,
   WorkbenchStructuredDataFormSubmitContext,
+  WorkbenchStructuredDataFormTextArrayField,
   WorkbenchStructuredDataFormTextField,
   WorkbenchStructuredDataPath,
   WorkbenchStructuredDataRecord,
