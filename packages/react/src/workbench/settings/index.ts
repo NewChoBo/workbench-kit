@@ -3,6 +3,41 @@ export type { WorkbenchNavigationPanelProps } from './NavigationPanel';
 export { WorkbenchSectionedPanel } from './SectionedPanel';
 export type { WorkbenchSectionedPanelItem, WorkbenchSectionedPanelProps } from './SectionedPanel';
 export {
+  WorkbenchStructuredDataForm,
+  coerceWorkbenchStructuredDataFormFieldValue,
+  getWorkbenchStructuredDataFormErrors,
+  getWorkbenchStructuredDataFormFieldDefaultValue,
+  getWorkbenchStructuredDataFormFieldError,
+  getWorkbenchStructuredDataFormFields,
+  getWorkbenchStructuredDataValue,
+  isWorkbenchStructuredDataFormSubmittable,
+  normalizeWorkbenchStructuredDataFormData,
+  setWorkbenchStructuredDataValue,
+} from './StructuredDataForm';
+export type {
+  WorkbenchStructuredDataFieldType,
+  WorkbenchStructuredDataFieldValue,
+  WorkbenchStructuredDataFormCancelContext,
+  WorkbenchStructuredDataFormCheckboxField,
+  WorkbenchStructuredDataFormErrors,
+  WorkbenchStructuredDataFormField,
+  WorkbenchStructuredDataFormFieldBase,
+  WorkbenchStructuredDataFormFieldChangeContext,
+  WorkbenchStructuredDataFormNumberField,
+  WorkbenchStructuredDataFormOption,
+  WorkbenchStructuredDataFormProps,
+  WorkbenchStructuredDataFormSection,
+  WorkbenchStructuredDataFormSelectField,
+  WorkbenchStructuredDataFormSubmitContext,
+  WorkbenchStructuredDataFormTextField,
+  WorkbenchStructuredDataPath,
+  WorkbenchStructuredDataRecord,
+  WorkbenchStructuredDataTable,
+  WorkbenchStructuredDataTableCellContext,
+  WorkbenchStructuredDataTableColumn,
+  WorkbenchStructuredDataTableRow,
+} from './StructuredDataForm';
+export {
   WorkbenchSchemaForm,
   coerceWorkbenchSchemaFormFieldValue,
   getWorkbenchSchemaFormErrors,
