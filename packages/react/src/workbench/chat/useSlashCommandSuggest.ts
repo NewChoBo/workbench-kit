@@ -3,10 +3,9 @@ import type { KeyboardEvent } from 'react';
 import {
   filterWorkbenchCommands,
   getNextWorkbenchCommandIndex,
-  getSlashCommandQuery,
-  isSlashCommandInput,
   type WorkbenchCommandDescriptor,
-} from './CommandPalette';
+} from '../CommandPalette';
+import { getSlashCommandQuery, isSlashCommandInput } from './slashCommand';
 
 export interface UseSlashCommandSuggestOptions {
   commands: readonly WorkbenchCommandDescriptor[];
