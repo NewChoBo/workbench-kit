@@ -170,8 +170,9 @@ apps/
 
 - [x] `docs/conventions`에 “공개 API 거버넌스” 섹션 추가: entrypoint 규칙 + deep import 금지 + browser-safe 규칙.
   - 근거: [`public-api-governance.md`](../conventions/public-api-governance.md)
-- [ ] packages별 역할을 명시한 표를 `subpackage-architecture.md`에 정식 반영:
+- [x] packages별 역할을 명시한 표를 `subpackage-architecture.md`에 정식 반영:
   - core/workspace/runtime/contracts/services/react/tokens/vscode-host/vscode-extension/adapters
+  - 근거: [`subpackage-architecture.md`](./subpackage-architecture.md)의 `Package Role Map`
 - [ ] `contract test` 기초를 추가: 저장/채팅/패치 흐름에 대한 최소 스펙 시나리오.
 - [ ] host adapter 샘플 문서(standalone, vscode-host, future app host) 작성.
 

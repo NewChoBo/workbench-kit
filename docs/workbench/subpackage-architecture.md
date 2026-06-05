@@ -137,6 +137,21 @@ packages/
   adapters/    (new, optional) // mock/local adapters used by stories and tests
 ```
 
+## Package Role Map
+
+| Package                           | Role                                                                               | Runtime boundary                                           |
+| --------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `@workbench-kit/tokens`           | Framework-neutral CSS variables, base theme values, and visual token defaults      | Browser-safe styling assets; no runtime side effects       |
+| `@workbench-kit/core`             | Framework-neutral command registry, context keys, disposables, and menu projection | Browser-safe TypeScript utilities                          |
+| `@workbench-kit/contracts`        | Cross-package contracts and result/error models for save, chat, patch, and plugins | Framework-neutral data contracts; no UI or host dependency |
+| `@workbench-kit/workspace`        | Workspace paths, tree state, search, selection, mutation plans, and draft helpers  | Pure workspace state helpers; no persistence ownership     |
+| `@workbench-kit/runtime`          | Runtime chat events, mock runtime utilities, and workspace patch event contracts   | Runtime event model; no UI ownership                       |
+| `@workbench-kit/services`         | Save, chat, patch, library, and plugin orchestration over explicit contracts       | Owns orchestration; side effects enter through adapters    |
+| `@workbench-kit/adapters`         | Story/test adapters for repositories, runtime transport, and library providers     | Isolates fixture wiring from public domain contracts       |
+| `@workbench-kit/react`            | React primitives, workbench components, hooks, and shell assembly surfaces         | Browser/React only; no direct Node or host API calls       |
+| `@workbench-kit/vscode-host`      | VS Code-style host bridge, runtime binding, commands, and plugin service adapters  | Host-specific bridge over neutral contracts and services   |
+| `@workbench-kit/vscode-extension` | Prototype extension bootstrap helpers for future wrapper packaging                 | Deferred extension wrapper layer                           |
+
 ## New Package Responsibilities
 
 ### `@workbench-kit/contracts`
