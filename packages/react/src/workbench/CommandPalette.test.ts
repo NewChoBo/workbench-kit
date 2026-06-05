@@ -30,13 +30,14 @@ const commands: WorkbenchCommandDescriptor[] = [
     category: 'Command',
     execution: { kind: 'remote' },
     id: 'operation.validateSelection',
+    keywords: ['sql', 'quality-gate'],
     label: 'Validate selection',
     status: 'waiting',
   },
 ];
 
 describe('workbench command helpers', () => {
-  it('filters commands by label, description, category, id, and shortcut', () => {
+  it('filters commands by label, description, category, id, shortcut, and keywords', () => {
     expect(
       filterWorkbenchCommands({ commands, query: 'preview' }).map((command) => command.id),
     ).toEqual(['artifact.openPreview']);
@@ -46,6 +47,9 @@ describe('workbench command helpers', () => {
     expect(
       filterWorkbenchCommands({ commands, query: 'ctrl' }).map((command) => command.id),
     ).toEqual(['artifact.openPreview']);
+    expect(
+      filterWorkbenchCommands({ commands, query: 'quality-gate' }).map((command) => command.id),
+    ).toEqual(['operation.validateSelection']);
     expect(filterWorkbenchCommands({ commands, query: 'missing' })).toEqual([]);
   });
 

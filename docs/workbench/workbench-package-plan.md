@@ -21,13 +21,13 @@
 
 ### 1.2 현재 패키지 구간별 성숙도
 
-| 구간                     | 상태           | 근거                                                                                                                                   |
-| ------------------------ | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| UI 컴포넌트/상태/명령    | 구현됨         | `ActivityBar`, `WorkspaceExplorer`, `WorkspaceEditorPanel`, `WorkspaceSearchPanel`, `ChatPanel`, `WorkbenchSettingsModal`, `StatusBar` |
-| 통합 진입점(패키지 공개) | 부분완료       | shell 레이아웃 export는 완료, 앱 조립 계약은 다음 단계에서 정리 필요                                                                   |
-| 서비스 계층              | 구현됨         | `WorkbenchChatService`, `WorkspaceSaveService`, `WorkspacePatchService`                                                                |
-| 호스트 런타임            | 구현됨         | `vscode-host` bridge/runtime 정상 동작                                                                                                 |
-| extension wrapper        | 구현 가능 단계 | `packages/vscode-extension` 패키지 존재, typecheck/test 실행 가능                                                                      |
+| 구간                     | 상태           | 근거                                                                                                                                                                                          |
+| ------------------------ | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI 컴포넌트/상태/명령    | 구현됨         | `ActivityBar`, `WorkspaceExplorer`, `WorkspaceEditorPanel`, `WorkspaceSearchPanel`, `ChatPanel`, `WorkbenchSettingsModal`, `WorkbenchNavigationPanel`, `WorkbenchSectionedPanel`, `StatusBar` |
+| 통합 진입점(패키지 공개) | 부분완료       | shell 레이아웃 export는 완료, 앱 조립 계약은 다음 단계에서 정리 필요                                                                                                                          |
+| 서비스 계층              | 구현됨         | `WorkbenchChatService`, `WorkspaceSaveService`, `WorkspacePatchService`                                                                                                                       |
+| 호스트 런타임            | 구현됨         | `vscode-host` bridge/runtime 정상 동작                                                                                                                                                        |
+| extension wrapper        | 구현 가능 단계 | `packages/vscode-extension` 패키지 존재, typecheck/test 실행 가능                                                                                                                             |
 
 ### 1.3 결론
 
@@ -91,8 +91,9 @@ pnpm --filter @workbench-kit/vscode-extension test
 ### 단계 1 (이번 사이클): App Entrypoint 추출 고정
 
 1. `packages/react`에서 조립 책임을 분리하는 최소 public contract 확정(활동/상태/서비스/커맨드 바인딩)
-2. story는 fixture로 축소
-3. 게이트:
+2. downstream에서 추출된 command descriptor metadata와 sectioned layout을 기준 API로 유지
+3. story는 fixture로 축소
+4. 게이트:
    - `pnpm --filter @workbench-kit/react typecheck`
    - `pnpm test:storybook-play:required`
 

@@ -192,8 +192,15 @@ export type {
   WorkbenchTimelineRenderPayload,
   WorkbenchTimelineVariant,
 } from './Timeline';
-export { WorkbenchSettingsModal } from './settings';
+export {
+  WorkbenchNavigationPanel,
+  WorkbenchSectionedPanel,
+  WorkbenchSettingsModal,
+} from './settings';
 export type {
+  WorkbenchNavigationPanelProps,
+  WorkbenchSectionedPanelItem,
+  WorkbenchSectionedPanelProps,
   WorkbenchSchemaFormCancelContext,
   WorkbenchSchemaFormCheckboxField,
   WorkbenchSchemaFormErrors,

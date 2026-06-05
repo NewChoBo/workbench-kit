@@ -177,6 +177,12 @@ The package should evolve beyond a single React package.
   workspace exports available through the React binding package.
 - `@workbench-kit/react` consumes `@workbench-kit/core` through a small adapter that
   converts resolved command menu items into `ContextMenuItem` values.
+- `@workbench-kit/react` command descriptors include generic keyword metadata
+  and an `agent` execution kind for delegated command surfaces; command
+  filtering uses keywords without owning command execution.
+- `@workbench-kit/react` exposes `WorkbenchNavigationPanel` for fixed-nav plus
+  independently scrolling content layouts, and `WorkbenchSectionedPanel` builds
+  on it for settings-like section navigation with active-section tracking.
 - `@workbench-kit/react` exposes shell command presets for activity switching,
   primary sidebar toggling, and settings opening.
 - `@workbench-kit/react` exposes editor command presets for save, discard, copy

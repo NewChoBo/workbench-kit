@@ -22,7 +22,7 @@ import {
 export type WorkbenchCommandStatus = WorkbenchStatus;
 
 export interface WorkbenchCommandExecution {
-  kind: 'local' | 'remote' | 'composite' | (string & {});
+  kind: 'agent' | 'local' | 'remote' | 'composite' | (string & {});
   label?: string | undefined;
 }
 
@@ -41,6 +41,7 @@ export interface WorkbenchCommandDescriptor {
   feedback?: WorkbenchCommandFeedback | undefined;
   icon?: string | undefined;
   id: string;
+  keywords?: readonly string[] | undefined;
   label: string;
   metadata?: Record<string, unknown> | undefined;
   output?: WorkbenchCommandOutput | undefined;
@@ -72,6 +73,7 @@ export type WorkbenchCommandDescriptorOverrides = Partial<
 >;
 
 const commandExecutionLabels: Record<string, string> = {
+  agent: 'Agent',
   composite: 'Composite',
   local: 'Local',
   remote: 'Remote',
@@ -83,7 +85,14 @@ function normalizedSearchText(value: string) {
 
 function commandSearchText(command: WorkbenchCommandDescriptor) {
   return normalizedSearchText(
-    [command.id, command.label, command.description, command.category, command.shortcut]
+    [
+      command.id,
+      command.label,
+      command.description,
+      command.category,
+      command.shortcut,
+      ...(command.keywords ?? []),
+    ]
       .filter(Boolean)
       .join(' '),
   );

@@ -3,6 +3,7 @@ import { Modal } from '../../modal/Modal';
 import type { ModalProps } from '../../modal/Modal';
 import { TextInput } from '../../primitives/TextInput';
 import { cx } from '../../utils/cx';
+import { WorkbenchNavigationPanel } from './NavigationPanel';
 import { WorkbenchSettingsNav } from './WorkbenchSettingsNav';
 import type { WorkbenchSettingsCategory, WorkbenchSettingsScope } from './types';
 
@@ -170,19 +171,25 @@ export function WorkbenchSettingsModal({
         </div>
       ) : null}
 
-      <div className="workbench-settings-layout">
-        <WorkbenchSettingsNav
-          activeCategoryId={selectedCategoryId}
-          categories={categories}
-          onSelectCategory={handleSelectCategory}
-        />
-
-        <main className="workbench-settings-content">
-          {selectedCategory
+      <WorkbenchNavigationPanel
+        className="workbench-settings-layout"
+        content={
+          selectedCategory
             ? (renderCategory?.(selectedCategory) ?? selectedCategory.content ?? emptyContent)
-            : emptyContent}
-        </main>
-      </div>
+            : emptyContent
+        }
+        contentClassName="workbench-settings-content"
+        nav={
+          <WorkbenchSettingsNav
+            activeCategoryId={selectedCategoryId}
+            categories={categories}
+            renderContainer={false}
+            onSelectCategory={handleSelectCategory}
+          />
+        }
+        navClassName="workbench-settings-sidebar"
+        navProps={{ 'aria-label': 'Settings categories' }}
+      />
     </Modal>
   );
 }
