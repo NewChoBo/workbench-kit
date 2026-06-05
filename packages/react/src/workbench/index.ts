@@ -278,6 +278,7 @@ export type {
   WorkbenchActivityChangeEvent,
   WorkbenchActivityDescriptor,
   WorkbenchChatController,
+  WorkbenchHostCallbackBoundary,
   WorkbenchPatchController,
   WorkbenchSaveController,
   WorkbenchShellContract,

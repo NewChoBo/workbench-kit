@@ -59,13 +59,23 @@ export interface MessageBridge {
 
 export function createMessageBridge({ transport, filter }: MessageBridgeOptions): MessageBridge {
   const listeners = new Set<(message: HostMessageEnvelope) => void>();
+  let disposed = false;
   const unsubscribe = transport.subscribe((message) => {
+    if (disposed) return;
     if (filter && !filter(message)) return;
-    listeners.forEach((listener) => listener(message));
+    listeners.forEach((listener) => {
+      try {
+        listener(message);
+      } catch {
+        // Host listeners are isolated so one adapter cannot break bridge delivery.
+      }
+    });
   });
 
   return {
     dispose() {
+      if (disposed) return;
+      disposed = true;
       listeners.clear();
       unsubscribe();
     },
@@ -99,6 +109,8 @@ export function createMessageBridge({ transport, filter }: MessageBridgeOptions)
       });
     },
     subscribe(listener) {
+      if (disposed) return () => undefined;
+
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
@@ -148,6 +160,7 @@ export function createWindowMessageTransport(
     ? (resolvedParent as MessagePostTarget)
     : undefined;
   const listeners = new Set<(message: HostMessageEnvelope) => void>();
+  let isListening = false;
 
   if (!eventTarget) {
     return {
@@ -164,7 +177,19 @@ export function createWindowMessageTransport(
     listeners.forEach((listener) => listener(message));
   };
 
-  eventTarget.addEventListener('message', eventListener);
+  const ensureListening = () => {
+    if (isListening) return;
+    eventTarget.addEventListener('message', eventListener);
+    isListening = true;
+  };
+
+  const removeListening = () => {
+    if (!isListening) return;
+    eventTarget.removeEventListener('message', eventListener);
+    isListening = false;
+  };
+
+  ensureListening();
 
   return {
     postMessage: (message) => {
@@ -172,11 +197,12 @@ export function createWindowMessageTransport(
       postTarget.postMessage(message, '*');
     },
     subscribe: (listener) => {
+      ensureListening();
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
         if (!listeners.size) {
-          eventTarget.removeEventListener('message', eventListener);
+          removeListening();
         }
       };
     },

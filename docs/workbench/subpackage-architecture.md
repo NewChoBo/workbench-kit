@@ -318,11 +318,13 @@ packages/
 - [x] 1순위: plugin 계약 유닛 테스트 추가
   - 대상: 성공/실패 판별 헬퍼, 상태 판별 규칙
   - 근거: contracts 패키지 변경은 타입 실패를 조기에 잡아야 함
-- [ ] 2순위: plugin install command/menu/menu-입력 충돌 정책 문서 확정
+- [x] 2순위: plugin install command/menu/menu-입력 충돌 정책 문서 확정
   - 대상: `pluginId` 중복, command 충돌 정책, trust/enable/default 정책
-  - 근거: 서비스 구현 전에 정책 고정
-- [ ] 2순위: `migration-todo.md`에 단계별 acceptance criteria 반영
+  - 근거: `docs/workbench/plugin-lifecycle.md`의 baseline policy와
+    `packages/vscode-host/src/plugins.test.ts`의 duplicate/enable/default-state 테스트
+- [x] 2순위: `migration-todo.md`에 단계별 acceptance criteria 반영
   - 대상: plugin 기여 범위, 기본/확장 scope, 테스트 후보
+  - 근거: `migration-todo.md`의 Plugin Lifecycle Baseline Acceptance Criteria
 - [x] 3순위: `@workbench-kit/vscode-host`에서 `InMemoryPluginLifecycleService` 상태 전이 테스트 완성
   - 대상: 설치/삭제/활성화/업데이트 파이프라인, 요청 메타데이터 규약 준수
   - 근거: 저장/채팅/패치와 동일한 결과형태 계약 일관성 확보

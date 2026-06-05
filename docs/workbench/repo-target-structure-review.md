@@ -149,12 +149,22 @@ apps/
 
 ### P0 (이번 사이클 마감 목표)
 
-- [ ] `migration-todo.md`와 `subpackage-architecture.md`를 기준 문서로 고정하고,
+- [x] `migration-todo.md`와 `subpackage-architecture.md`를 기준 문서로 고정하고,
       `repo-target-structure-review.md`에 추적 링크 3개 추가.
-- [ ] `WorkbenchShell`/앱 조립 계약에서 host callback 경계(`onSave`, `onDelete`, `onChatSubmit`, `onPatch`)를
+  - 기준 링크:
+    [`migration-todo.md`](./migration-todo.md),
+    [`subpackage-architecture.md`](./subpackage-architecture.md),
+    [`workbench-entrypoint-strategy.md`](./workbench-entrypoint-strategy.md)
+- [x] `WorkbenchShell`/앱 조립 계약에서 host callback 경계(`onSave`, `onDelete`, `onChatSubmit`, `onPatch`)를
       타입으로 1회 정리하고 문서 근거 남기기.
-- [ ] plugin 라이프사이클 최소 상태(`installing/installed/disabled/failed`)를 문서의 목표 형태로 확정.
-- [ ] `adapter`/`service` 경계를 기준으로 `vscode-host` 예외 격리 케이스 2개 이상 테스트 보강.
+  - 근거: `packages/react/src/workbench/standalone.ts`의
+    `WorkbenchHostCallbackBoundary`
+- [x] plugin 라이프사이클 최소 상태(`installing/installed/disabled/failed`)를 문서의 목표 형태로 확정.
+  - 근거: `docs/workbench/plugin-lifecycle.md`와
+    `packages/contracts/src/plugin.ts`의 `PluginLifecycleState`
+- [x] `adapter`/`service` 경계를 기준으로 `vscode-host` 예외 격리 케이스 2개 이상 테스트 보강.
+  - 근거: `packages/vscode-host/src/bridge.test.ts`와
+    `packages/vscode-host/src/runtime.test.ts`
 
 ### P1 (다음 사이클)
 
