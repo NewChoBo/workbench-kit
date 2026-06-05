@@ -13,6 +13,9 @@ minimal (`command`, `view`, `settings`) and preserving the existing command regi
 - M1 baseline contracts were added in `@workbench-kit/contracts` (`PluginDescriptor`, `PluginSource`,
   `PluginLifecycleState`, `InstalledPlugin`, `PluginLifecycleResult`) and covered by
   `packages/contracts` tests.
+- M2 baseline host service exists as `InMemoryPluginLifecycleService` in
+  `@workbench-kit/vscode-host`, with tests for install, duplicate install, enable/disable,
+  uninstall, update, and missing-plugin failures.
 
 ## Goals and Non-Goals
 
@@ -92,6 +95,18 @@ PluginContributions
 
 `commandContributions` should be consumed as a single surface-filtered source and merged
 through the existing workbench command registry.
+
+## Baseline Policy (2026-06-05)
+
+| Topic                    | Baseline Decision                                                                                           | Evidence                                                               |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Duplicate `pluginId`     | `install` returns `invalid-state` unless `force: true`; replacement/update is host-controlled.              | `packages/vscode-host/src/plugins.test.ts` duplicate install coverage  |
+| Default trust            | Installed plugins start as `trust: 'unknown'`; trust escalation remains host policy, not component state.   | `packages/vscode-host/src/plugins.ts` install path                     |
+| Default enablement       | Successful install starts as `enabled: 'enabled'` and `state: 'installed'`.                                 | `InMemoryPluginLifecycleService.install()` tests                       |
+| Failed plugin enablement | A plugin in `failed` state cannot be re-enabled through `enable(pluginId, true)`.                           | `packages/vscode-host/src/plugins.test.ts` failed-state coverage       |
+| Command ID conflicts     | The current command registry resolves duplicate IDs with source-order overlay, effectively last-write-wins. | `packages/core/src/commands.test.ts` command collision coverage        |
+| Contribution scope       | Initial plugin contribution scope is command, menu, view, and settings metadata only.                       | `PluginContributions` contract and this document's baseline/non-goals  |
+| Runtime transport        | Plugin install/update transport remains injected by host adapters.                                          | `PluginLifecycleService` contract has no storage or network dependency |
 
 ## Stage 6 Milestones
 

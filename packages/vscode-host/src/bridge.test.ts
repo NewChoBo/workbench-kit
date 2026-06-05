@@ -92,6 +92,20 @@ describe('createMessageBridge', () => {
     expect(received).toHaveLength(1);
     expect(posted).toHaveLength(1);
   });
+
+  it('isolates subscriber failures and keeps notifying other subscribers', () => {
+    const { transport, emit } = createMockTransport();
+    const bridge = createMessageBridge({ transport });
+    const received: HostMessageEnvelope[] = [];
+
+    bridge.subscribe(() => {
+      throw new Error('listener failed');
+    });
+    bridge.subscribe((message) => received.push(message));
+
+    expect(() => emit({ type: 'workbench/command', payload: { commandId: 'x' } })).not.toThrow();
+    expect(received).toEqual([{ type: 'workbench/command', payload: { commandId: 'x' } }]);
+  });
 });
 
 describe('createWindowMessageTransport', () => {
@@ -106,5 +120,35 @@ describe('createWindowMessageTransport', () => {
     });
 
     expect(() => unsubscribe()).not.toThrow();
+  });
+
+  it('supports unsubscribe and resubscribe without losing message delivery', () => {
+    const listeners = new Set<(event: Event) => void>();
+    const eventTarget = {
+      addEventListener: vi.fn((_type: 'message', listener: (event: Event) => void) => {
+        listeners.add(listener);
+      }),
+      removeEventListener: vi.fn((_type: 'message', listener: (event: Event) => void) => {
+        listeners.delete(listener);
+      }),
+    };
+    const transport = createWindowMessageTransport({ eventTarget });
+    const received: HostMessageEnvelope[] = [];
+
+    const unsubscribe = transport.subscribe((message) => received.push(message));
+    unsubscribe();
+    const resubscribe = transport.subscribe((message) => received.push(message));
+    listeners.forEach((listener) =>
+      listener(
+        new MessageEvent('message', {
+          data: { type: 'workbench/command', payload: { commandId: 'x' } },
+        }),
+      ),
+    );
+
+    expect(received).toEqual([{ type: 'workbench/command', payload: { commandId: 'x' } }]);
+    expect(eventTarget.removeEventListener).toHaveBeenCalledTimes(1);
+
+    resubscribe();
   });
 });

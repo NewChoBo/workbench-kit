@@ -630,9 +630,22 @@ independently.
 
 ## 다음 액션 우선순위
 
-- 1순위(P1): `storybook-play` baseline 플로우 지정 완료 + 실행 게이트 전환 지점 확정
-- 2순위(P2): plugin lifecycle 1차 설계 문서화 + 기본/확장 범위 acceptance criteria 정리
-- 3순위(P3): package-manager 정책 문서와 실행 경로 정합성 점검
+- 1순위(P1): package-manager 정책 문서와 실행 경로 정합성 점검
+- 2순위(P2): workspace API boundary에서 fixture/state adapter 분리 기준 문서화
+- 3순위(P3): StatusBar host merge ordering 규칙 결정 및 테스트 후보 정리
+
+## Plugin Lifecycle Baseline Acceptance Criteria
+
+| Scope               | Baseline Acceptance                                                                                                     | Status |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------ |
+| Contract state      | `PluginLifecycleState`, `PluginTrustState`, and `PluginEnablementState` are explicit public contract unions.            | done   |
+| Host service        | `PluginLifecycleService` exposes install, uninstall, enable, and update without storage or transport ownership.         | done   |
+| Duplicate install   | Duplicate `pluginId` install returns `invalid-state` unless `force: true`; force replacement remains host-controlled.   | done   |
+| Default install     | Successful install resolves to `state: 'installed'`, `enabled: 'enabled'`, and `trust: 'unknown'` unless preserved.     | done   |
+| Failed enable       | Failed plugins cannot be re-enabled through `enable(pluginId, true)` without a separate recovery/update step.           | done   |
+| Command conflict    | Duplicate command IDs follow the current command registry policy: source-order overlay / last-write-wins by default.    | done   |
+| Contribution scope  | Initial plugin contributions are limited to command, menu, view, and settings metadata; runtime mutation stays outside. | done   |
+| Future hard failure | Hard-error overlay for command conflicts is deferred to a later milestone with explicit migration criteria.             | open   |
 
 ## Ambiguity Review (2026-06-03)
 
@@ -661,18 +674,18 @@ independently.
 
 ## 확인 필요사항
 
-| 항목                        | 상태   | 모호 포인트                                              | 다음 확인/결정 액션                                                                                                                                                                                             |
-| --------------------------- | ------ | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Storybook play 필수 게이트  | 반영됨 | baseline 실행 채널 확정 (run baseline tags + `required`) | `test:storybook-play:required`가 `validate:full`에서 실행되도록 전환됨                                                                                                                                          |
-| Play 플로우 최소 기준       | 반영됨 | 필수 baseline 5개 흐름 확정                              | `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`, `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`, `ChatPanel/CancelRuntimeFlow` |
-| `openSettings` surface 정책 | 반영됨 | settings surface 확장 타이밍 미확정                      | settings 전용 surface는 전용 메뉴 체인 필요 시 별도 milestone에서 도입                                                                                                                                          |
-| plugin command 충돌 정책    | 반영됨 | 하드 오버레이 정책 미결정                                | 기본은 `last-write-wins`; hard-error overlay 정책의 전환 조건을 다음 마일스톤에서 확정                                                                                                                          |
-| surface 메타 구조           | 미결정 | 정렬/그룹 메타가 필요한지 미정                           | `string[] surfaces`로 `command/menu` 동작은 충족되며, 다중 surface 병합 시 ordering/grouping 메타 요구 여부를 사용성 테스트로 검증                                                                              |
-| plugin 기여 범위(기본/확장) | 미결정 | trust/enable/recommend/update 범위 미정                  | 1차 기여는 `command/view/settings`로 고정, 2차 확장은 리스크/스토리/변경 범위 기준으로 별도 정량문턱치 설정                                                                                                     |
-| package-manager 운영 정책   | 진행중 | 예외 시나리오(문서/CI 가드) 문서화 필요                  | `npm` accidental 실행 가드는 preinstall에서 제어 중이나 대응 문서(문제 대응/예외 절차)를 루트 문서로 통합                                                                                                       |
-| workspace API boundary      | 미결정 | fixture/state adapter 경계 미정                          | `@workbench-kit/workspace`는 도메인 공통/필수 유틸 우선, story-only fixture는 테스트/스토리 전용으로 분리 기준 문서화                                                                                           |
-| folder 작업 소유권          | 미결정 | side-effect(입출력/확인/알림) 책임 선점 미정             | reducer는 상태변경·검증, 호스트 콜백은 I/O/확인/알림/권한 분기 규칙을 문서·테스트로 명시                                                                                                                        |
-| StatusBar merge 정렬        | 미결정 | deterministic ordering 메타 미정                         | host 병합 시 정렬 규칙(삽입 순/우선순위) 1개를 결정해 테스트로 회귀 검증                                                                                                                                        |
+| 항목                        | 상태       | 모호 포인트                                              | 다음 확인/결정 액션                                                                                                                                                                                             |
+| --------------------------- | ---------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storybook play 필수 게이트  | 반영됨     | baseline 실행 채널 확정 (run baseline tags + `required`) | `test:storybook-play:required`가 `validate:full`에서 실행되도록 전환됨                                                                                                                                          |
+| Play 플로우 최소 기준       | 반영됨     | 필수 baseline 5개 흐름 확정                              | `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`, `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`, `ChatPanel/CancelRuntimeFlow` |
+| `openSettings` surface 정책 | 반영됨     | settings surface 확장 타이밍 미확정                      | settings 전용 surface는 전용 메뉴 체인 필요 시 별도 milestone에서 도입                                                                                                                                          |
+| plugin command 충돌 정책    | 반영됨     | 하드 오버레이 정책 미결정                                | 기본은 `last-write-wins`; hard-error overlay 정책의 전환 조건을 다음 마일스톤에서 확정                                                                                                                          |
+| surface 메타 구조           | 미결정     | 정렬/그룹 메타가 필요한지 미정                           | `string[] surfaces`로 `command/menu` 동작은 충족되며, 다중 surface 병합 시 ordering/grouping 메타 요구 여부를 사용성 테스트로 검증                                                                              |
+| plugin 기여 범위(기본/확장) | 1차 반영됨 | trust/recommend/update 확장 범위 미정                    | 1차 기여는 `command/view/settings`로 고정, 2차 확장은 리스크/스토리/변경 범위 기준으로 별도 정량문턱치 설정                                                                                                     |
+| package-manager 운영 정책   | 진행중     | 예외 시나리오(문서/CI 가드) 문서화 필요                  | `npm` accidental 실행 가드는 preinstall에서 제어 중이나 대응 문서(문제 대응/예외 절차)를 루트 문서로 통합                                                                                                       |
+| workspace API boundary      | 미결정     | fixture/state adapter 경계 미정                          | `@workbench-kit/workspace`는 도메인 공통/필수 유틸 우선, story-only fixture는 테스트/스토리 전용으로 분리 기준 문서화                                                                                           |
+| folder 작업 소유권          | 미결정     | side-effect(입출력/확인/알림) 책임 선점 미정             | reducer는 상태변경·검증, 호스트 콜백은 I/O/확인/알림/권한 분기 규칙을 문서·테스트로 명시                                                                                                                        |
+| StatusBar merge 정렬        | 미결정     | deterministic ordering 메타 미정                         | host 병합 시 정렬 규칙(삽입 순/우선순위) 1개를 결정해 테스트로 회귀 검증                                                                                                                                        |
 
 ## Milestone Decisions Completed
 
@@ -749,9 +762,9 @@ workbench platform:
 | Settings surface 바인딩 정책 (`openSettings`) | 반영됨            | P1       | `workbench.openSettings`는 현재 `activityBar` surface에만 노출되며, `packages/react/src/workbench/commands.test.ts`의 신규 테스트로 고정 |
 | 통합 지점에서 Surface 누락 허용 여부          | 반영됨(코드 레벨) | P1       | `resolveCommandMenuItems` 호출부에 surface 전달 규칙 문서 + 통합 컴포넌트에서 surface 미지정 호출 부재 확인                              |
 | 플러그인 명령 충돌 정책                       | 기본정책 확정     | P1       | 동일 `commandId` 충돌 시 동작은 `last-write-wins`. 근거: `packages/core/src/commands.test.ts`의 충돌 테스트(5번째 테스트)                |
-| `storybook-play` CI 필수화 범위               | 진행중            | P1       | `storybook-play-baseline` 태그 대상 5개 플로우를 지정하고 `validate:full`을 통해 필수 실행으로 전환                                      |
+| `storybook-play` CI 필수화 범위               | 반영됨            | P1       | `storybook-play-baseline` 태그 대상 5개 플로우를 지정하고 `validate:full`을 통해 필수 실행으로 전환                                      |
 | 다중 surface 메타 확장 필요성                 | 미결정            | P2       | `surface` 배열이 현재 요구에 충분하지 않을 경우 메타데이터(예: surface group/우선순위) 제안 후 타입/테스트 추가                          |
-| 플러그인 기여 범위(기본/확장)                 | 미결정            | P3       | command/view/settings부터 시작할지, publisher trust/enable/추천/업데이트까지 확장할지 단계 정의                                          |
+| 플러그인 기여 범위(기본/확장)                 | 1차 반영됨        | P3       | command/view/settings는 baseline으로 고정; publisher trust/추천/업데이트 확장은 별도 단계에서 정의                                       |
 
 ## Current Verification Baseline (2026-06-03)
 
