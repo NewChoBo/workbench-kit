@@ -2,14 +2,17 @@ import { useMemo, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import { Button } from '../primitives/Button';
+import { SegmentedControl } from '../primitives/WorkbenchEditor';
 import { ChatComposer } from './chat/ChatComposer';
 import {
+  WorkbenchCommandGroupShell,
   WorkbenchCommandPalette,
   WorkbenchCommandSuggest,
   filterWorkbenchCommands,
   getNextWorkbenchCommandIndex,
   isWorkbenchCommandRunnable,
   type WorkbenchCommandDescriptor,
+  type WorkbenchCommandGroupBy,
 } from './CommandPalette';
 
 const meta = {
@@ -31,6 +34,7 @@ const commandFixtures: WorkbenchCommandDescriptor[] = [
     feedback: 'status',
     icon: 'codicon-open-preview',
     id: 'artifact.openPreview',
+    keywords: ['artifact'],
     label: 'Open preview',
     output: 'artifact',
     shortcut: 'Ctrl+Enter',
@@ -41,6 +45,7 @@ const commandFixtures: WorkbenchCommandDescriptor[] = [
     execution: { kind: 'local' },
     icon: 'codicon-json',
     id: 'artifact.editJson',
+    keywords: ['artifact'],
     label: 'Edit JSON',
     shortcut: 'Ctrl+J',
   },
@@ -51,6 +56,7 @@ const commandFixtures: WorkbenchCommandDescriptor[] = [
     feedback: 'timeline',
     icon: 'codicon-checklist',
     id: 'operation.validateSelection',
+    keywords: ['validation', 'quality-gate'],
     label: 'Validate selection',
     output: 'event',
     status: 'waiting',
@@ -62,6 +68,7 @@ const commandFixtures: WorkbenchCommandDescriptor[] = [
     feedback: 'timeline',
     icon: 'codicon-sparkle',
     id: 'operation.createArtifact',
+    keywords: ['draft', 'delegated'],
     label: 'Create artifact draft',
     output: 'artifact',
     status: 'running',
@@ -76,6 +83,7 @@ const commandFixtures: WorkbenchCommandDescriptor[] = [
     feedback: 'timeline',
     icon: 'codicon-file-code',
     id: 'workspace.writeArtifact',
+    keywords: ['workspace', 'side-effect'],
     label: 'Write artifact',
     sideEffect: 'workspace-write',
     status: 'unavailable',
@@ -202,6 +210,46 @@ function SlashSuggestHarness() {
   );
 }
 
+const groupModeOptions: { label: string; value: WorkbenchCommandGroupBy }[] = [
+  { label: 'Category', value: 'category' },
+  { label: 'Status', value: 'status' },
+  { label: 'Execution', value: 'execution' },
+  { label: 'Tag', value: 'keyword' },
+];
+
+function GroupedCommandShellHarness() {
+  const [groupBy, setGroupBy] = useState<WorkbenchCommandGroupBy>('category');
+  const [activeCommandId, setActiveCommandId] = useState<string>();
+  const [status, setStatus] = useState('No command run');
+
+  return (
+    <CommandStoryFrame>
+      <div style={{ display: 'grid', gap: 12, width: 'min(100%, 840px)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <SegmentedControl
+            ariaLabel="Command grouping"
+            options={groupModeOptions}
+            value={groupBy}
+            onChange={setGroupBy}
+          />
+          <div aria-label="Grouped command event log" role="status">
+            {status}
+          </div>
+        </div>
+        <WorkbenchCommandGroupShell
+          activeCommandId={activeCommandId}
+          commands={commandFixtures}
+          groupBy={groupBy}
+          onActiveCommandChange={setActiveCommandId}
+          onRunCommand={(command, context) => {
+            setStatus(`Ran ${command.label} from ${context.groupLabel}`);
+          }}
+        />
+      </div>
+    </CommandStoryFrame>
+  );
+}
+
 export const GlobalPalette: Story = {
   render: () => <PaletteHarness />,
   play: async ({ canvasElement }) => {
@@ -229,6 +277,24 @@ export const ComposerSlashSuggest: Story = {
     await userEvent.keyboard('{Enter}');
     await expect(canvas.getByLabelText('Suggest event log')).toHaveTextContent(
       'Selected Open preview',
+    );
+  },
+};
+
+export const GroupedCommandShell: Story = {
+  render: () => <GroupedCommandShellHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole('link', { name: 'View 2' })).toBeVisible();
+    await userEvent.click(canvas.getByRole('button', { name: 'Status' }));
+    await expect(canvas.getByRole('link', { name: 'Running 1' })).toBeVisible();
+    await userEvent.click(canvas.getByRole('button', { name: 'Tag' }));
+    await expect(canvas.getByRole('link', { name: 'artifact 2' })).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('option', { name: /Open preview/ }));
+    await expect(canvas.getByLabelText('Grouped command event log')).toHaveTextContent(
+      'Ran Open preview from artifact',
     );
   },
 };
