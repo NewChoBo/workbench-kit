@@ -85,6 +85,7 @@ as `v0.0.1-prototype.0` or `workbench-kit-v0.0.1-prototype.0`.
 - [Development Harness](./docs/conventions/development-harness.md)
 - [Lint & Format](./docs/conventions/lint-format.md)
 - [Language Policy](./docs/conventions/language-policy.md)
+- [Package Manager Policy](./docs/conventions/package-manager.md)
 - [Storybook Direction](./docs/conventions/storybook.md)
 
 ## Workbench Planning
