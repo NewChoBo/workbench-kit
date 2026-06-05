@@ -613,26 +613,25 @@ independently.
 
 ## Open Ambiguity Register (Actionable)
 
-| 항목                               | 현재 근거                                                                                              | 미확정 포인트                                                 | 다음 확인/결정 액션                                                                                                 |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `openSettings` surface 정책        | `WORKBENCH_OPEN_SETTINGS_COMMAND_ID`가 현재 `activityBar` surface에만 등록됨                           | 추가 surface 확장 여부                                        | Settings surface 확장 필요 시 별도 milestone 결정안으로 이동                                                        |
-| 통합 지점의 surface 누락 방지      | 핵심 호출부는 surface 지정됨(활성 파일/컴포넌트 목록 참조)                                             | 신규 통합 코드의 누락 가능성                                  | `docs/conventions/storybook.md`의 Command Menu Surface Review로 스토리북 리뷰 포인트 문서화 완료                    |
-| plugin lifecycle state 전이 테스트 | `@workbench-kit/vscode-host` `InMemoryPluginLifecycleService` 단위 테스트 추가 완료                    | transport/권한 통합 정책은 별도 마일스톤                      | `workbench` 편입 시 runtime 바인딩/권한 정책을 별도 단계로 정리                                                     |
-| plugin `commandId` 충돌 처리       | `createCommandRegistry`는 Map 기반이라 마지막 등록값 우선(`packages/core/src/commands.test.ts`로 고정) | 소스-확장 충돌 정책의 공개화 부재                             | 최소 우선순위 정책을 `last-write-wins`로 문서화하고, 단계적으로 hard-error 정책 도입 여부를 검토                    |
-| Storybook Play 필수 범위           | baseline 태그 기반 게이트로 정비되어 있음                                                              | baseline 후보 5개를 태그화 후 `validate:full`에서 필수로 실행 | `storybook-play`를 baseline 5개 플로우(`storybook-play-baseline`) 중심으로 `test:storybook-play:required` 실행 전환 |
-| surface 메타 구조                  | 현재 `surfaces?: string[]` 사용 중                                                                     | 우선순위/그룹 메타가 필요한지 미정                            | 다중 surface가 충분한지 증빙하고, 필요시 타입 확장 제안 작성                                                        |
-| plugin 설치 범위(기본/확장)        | 시작 단계 제안: command/view/settings 기반                                                             | trust/enable/recommend/update 확장 여부 미정                  | 단계별 출시 플랜(기본→확장) 작성 및 acceptance criteria 분리                                                        |
-| Storybook 테스트 미들웨어 의존성   | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                             | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                          |
-| package-manager 보호 정책          | `preinstall` 가드 존재                                                                                 | 정책 문서/실행 절차 정합성 반영                               | `docs/conventions/package-manager.md`에 강제 조건과 예외 처리 범위를 정리                                           |
-| workspace API 범위                 | `@workbench-kit/workspace` export 목록과 public API governance 문서 존재                               | story-only fixture/state 어댑터는 public API에서 제외         | `docs/conventions/public-api-governance.md`와 `subpackage-architecture.md`에 export 경계 원칙 반영 완료             |
-| 폴더 작업 소유권                   | reducer와 호스트 콜백 분리 설계가 진행됨                                                               | side-effect(입출력, 확인 다이얼로그) 책임선 미완성            | API 시그니처/문서에 host-callback 규칙을 확정하고 테스트 케이스로 반영                                              |
-| StatusBar 정렬/그룹 메타           | 기본 section/item 모델만 사용 중                                                                       | host merge에서 ordering/grouping 필요성 미정                  | 최소 1개의 deterministic ordering 규칙을 문서와 테스트로 명시                                                       |
+| 항목                               | 현재 근거                                                                                              | 미확정 포인트                                                 | 다음 확인/결정 액션                                                                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `openSettings` surface 정책        | `WORKBENCH_OPEN_SETTINGS_COMMAND_ID`가 현재 `activityBar` surface에만 등록됨                           | 추가 surface 확장 여부                                        | Settings surface 확장 필요 시 별도 milestone 결정안으로 이동                                                                     |
+| 통합 지점의 surface 누락 방지      | 핵심 호출부는 surface 지정됨(활성 파일/컴포넌트 목록 참조)                                             | 신규 통합 코드의 누락 가능성                                  | `docs/conventions/storybook.md`의 Command Menu Surface Review로 스토리북 리뷰 포인트 문서화 완료                                 |
+| plugin lifecycle state 전이 테스트 | `@workbench-kit/vscode-host` `InMemoryPluginLifecycleService` 단위 테스트 추가 완료                    | transport/권한 통합 정책은 별도 마일스톤                      | `workbench` 편입 시 runtime 바인딩/권한 정책을 별도 단계로 정리                                                                  |
+| plugin `commandId` 충돌 처리       | `createCommandRegistry`는 Map 기반이라 마지막 등록값 우선(`packages/core/src/commands.test.ts`로 고정) | 소스-확장 충돌 정책의 공개화 부재                             | 최소 우선순위 정책을 `last-write-wins`로 문서화하고, 단계적으로 hard-error 정책 도입 여부를 검토                                 |
+| Storybook Play 필수 범위           | baseline 태그 기반 게이트로 정비되어 있음                                                              | baseline 후보 5개를 태그화 후 `validate:full`에서 필수로 실행 | `storybook-play`를 baseline 5개 플로우(`storybook-play-baseline`) 중심으로 `test:storybook-play:required` 실행 전환              |
+| surface 메타 구조                  | 현재 `surfaces?: string[]` 사용 중                                                                     | 우선순위/그룹 메타가 필요한지 미정                            | 다중 surface가 충분한지 증빙하고, 필요시 타입 확장 제안 작성                                                                     |
+| plugin 설치 범위(기본/확장)        | 시작 단계 제안: command/view/settings 기반                                                             | trust/enable/recommend/update 확장 여부 미정                  | 단계별 출시 플랜(기본→확장) 작성 및 acceptance criteria 분리                                                                     |
+| Storybook 테스트 미들웨어 의존성   | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                             | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                                       |
+| package-manager 보호 정책          | `preinstall` 가드 존재                                                                                 | 정책 문서/실행 절차 정합성 반영                               | `docs/conventions/package-manager.md`에 강제 조건과 예외 처리 범위를 정리                                                        |
+| workspace API 범위                 | `@workbench-kit/workspace` export 목록과 public API governance 문서 존재                               | story-only fixture/state 어댑터는 public API에서 제외         | `docs/conventions/public-api-governance.md`와 `subpackage-architecture.md`에 export 경계 원칙 반영 완료                          |
+| 폴더 작업 소유권                   | reducer와 호스트 콜백 분리 설계가 문서화됨                                                             | host별 권한/알림 UX는 adapter 책임                            | `workbench-entrypoint-strategy.md`, `standalone-extension-boundary.md`, `host-adapter-samples.md`에 host-callback 규칙 반영 완료 |
+| StatusBar 정렬/그룹 메타           | 기본 section/item 모델만 사용 중                                                                       | host merge에서 ordering/grouping 필요성 미정                  | 최소 1개의 deterministic ordering 규칙을 문서와 테스트로 명시                                                                    |
 
 ## 다음 액션 우선순위
 
 - 완료: workspace API boundary에서 fixture/state adapter 분리 기준 문서화
 - 보류(정책 결정 필요): StatusBar host merge ordering 규칙 결정 및 테스트 후보 정리
-- 보류(정책 결정 필요): folder operation side-effect ownership 확정
 - 보류(정책 결정 필요): dirty-state guard save/discard/confirm routing policy 확정
 
 ## Plugin Lifecycle Baseline Acceptance Criteria
@@ -686,7 +685,7 @@ independently.
 | plugin 기여 범위(기본/확장) | 1차 반영됨 | trust/recommend/update 확장 범위 미정                    | 1차 기여는 `command/view/settings`로 고정, 2차 확장은 리스크/스토리/변경 범위 기준으로 별도 정량문턱치 설정                                                                                                     |
 | package-manager 운영 정책   | 반영됨     | 예외 시나리오 문서화 완료                                | `docs/conventions/package-manager.md`가 pnpm 설치/스크립트/예외 처리 정책과 `preinstall` 가드 근거를 문서화                                                                                                     |
 | workspace API boundary      | 반영됨     | fixture/state adapter는 public API 제외                  | `@workbench-kit/workspace`는 경로/트리/검색/선택/드래프트/가상 workspace helper를 export하고, story-only fixture는 테스트/스토리 전용으로 분리                                                                  |
-| folder 작업 소유권          | 미결정     | side-effect(입출력/확인/알림) 책임 선점 미정             | reducer는 상태변경·검증, 호스트 콜백은 I/O/확인/알림/권한 분기 규칙을 문서·테스트로 명시                                                                                                                        |
+| folder 작업 소유권          | 반영됨     | host별 권한/알림 UX는 adapter 책임                       | reducer는 상태변경·검증, host callback/adapter는 I/O/확인/알림/권한 분기 담당                                                                                                                                   |
 | StatusBar merge 정렬        | 미결정     | deterministic ordering 메타 미정                         | host 병합 시 정렬 규칙(삽입 순/우선순위) 1개를 결정해 테스트로 회귀 검증                                                                                                                                        |
 
 ## Milestone Decisions Completed
@@ -708,6 +707,9 @@ independently.
   `docs/workbench/subpackage-architecture.md`; `@workbench-kit/workspace` exports
   neutral path/tree/search/selection/draft/virtual workspace helpers while
   story-only fixture wiring stays outside public entrypoints.
+- Folder operation ownership follows the same host-callback boundary: workspace
+  reducers and helpers own path/state validation, while hosts or adapters own
+  confirmation, storage I/O, permission checks, notifications, and telemetry.
 
 ## Recommended Decision Order
 
@@ -721,8 +723,9 @@ workbench platform:
    - Decide label/icon override and command grouping/ordering metadata.
    - Decide plugin command contribution merge strategy.
 3. **Workspace API shape**
-   - Decide which helpers are exported from `@workbench-kit/workspace`.
-   - Decide folder/file operations that stay as reducer actions versus host callbacks.
+   - Keep neutral helpers exported from `@workbench-kit/workspace`.
+   - Keep folder/file side effects behind host callbacks or adapters; add
+     adapter-specific tests when a new side-effect path is introduced.
 4. **Runtime and integration model**
    - Decide storage/persistence model and plugin installation scope.
 
@@ -750,8 +753,10 @@ workbench platform:
   `metadata` extension fields.
 - **label/icon override**: add lightweight override support in command preset
   constructors.
-- **folder operation ownership**: reducer updates shared state and conflict checks;
-  host callbacks handle confirmation, I/O side effects, and domain prompts.
+- **folder operation ownership**: reflected by the standalone entrypoint and host
+  adapter docs; reducer updates shared state and conflict checks, while host
+  callbacks handle confirmation, I/O side effects, permissions, and domain
+  prompts.
 - **StatusBar ordering/grouping**: keep section/item arrays, add optional ordering
   metadata for host merges and deterministic rendering.
 - **plugin install lifecycle**: start with command/view/settings contributions first;
