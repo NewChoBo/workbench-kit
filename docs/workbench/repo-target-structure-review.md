@@ -173,7 +173,8 @@ apps/
 - [x] packages별 역할을 명시한 표를 `subpackage-architecture.md`에 정식 반영:
   - core/workspace/runtime/contracts/services/react/tokens/vscode-host/vscode-extension/adapters
   - 근거: [`subpackage-architecture.md`](./subpackage-architecture.md)의 `Package Role Map`
-- [ ] `contract test` 기초를 추가: 저장/채팅/패치 흐름에 대한 최소 스펙 시나리오.
+- [x] `contract test` 기초를 추가: 저장/채팅/패치 흐름에 대한 최소 스펙 시나리오.
+  - 근거: `packages/services/src/flow.test.ts`
 - [x] host adapter 샘플 문서(standalone, vscode-host, future app host) 작성.
   - 근거: [`host-adapter-samples.md`](./host-adapter-samples.md)
 
