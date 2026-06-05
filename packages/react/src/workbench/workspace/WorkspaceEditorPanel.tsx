@@ -39,6 +39,7 @@ export interface WorkspaceEditorPanelRenderEditorContext {
   file: WorkspaceFile;
   isDirty: boolean;
   onChange: (content: string) => void;
+  onDiscard: () => void;
   onSave: (content: string) => void;
   theme?: WorkspaceEditorTheme | undefined;
 }
@@ -313,6 +314,7 @@ export function WorkspaceEditorPanel({
                   file: selectedFile,
                   isDirty: selectedIsDirty,
                   onChange: (content) => updateDraft(selectedFile.path, content),
+                  onDiscard: () => discardFile(selectedFile),
                   onSave: (content) => saveFile(selectedFile.path, content),
                   theme,
                 })
