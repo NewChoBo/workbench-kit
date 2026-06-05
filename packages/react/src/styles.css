@@ -1631,7 +1631,7 @@
   --ui-side-bar-footer-height: 0px;
   --ui-side-bar-inline-padding: 8px;
   --ui-side-bar-row-block-padding: 6px;
-  --ui-side-bar-tree-indent-step: 14px;
+  --ui-side-bar-tree-indent-step: 8px;
 }
 
 .ui-side-bar-view__header-addon {
