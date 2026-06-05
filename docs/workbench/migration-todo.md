@@ -616,7 +616,7 @@ independently.
 | 항목                               | 현재 근거                                                                                              | 미확정 포인트                                                 | 다음 확인/결정 액션                                                                                                 |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `openSettings` surface 정책        | `WORKBENCH_OPEN_SETTINGS_COMMAND_ID`가 현재 `activityBar` surface에만 등록됨                           | 추가 surface 확장 여부                                        | Settings surface 확장 필요 시 별도 milestone 결정안으로 이동                                                        |
-| 통합 지점의 surface 누락 방지      | 핵심 호출부는 surface 지정됨(활성 파일/컴포넌트 목록 참조)                                             | 신규 통합 코드의 누락 가능성                                  | 통합 리뷰 체크리스트에 `resolveCommandMenuItems(..., surface)` 필수 규칙 추가 및 스토리북 리뷰 포인트 문서화        |
+| 통합 지점의 surface 누락 방지      | 핵심 호출부는 surface 지정됨(활성 파일/컴포넌트 목록 참조)                                             | 신규 통합 코드의 누락 가능성                                  | `docs/conventions/storybook.md`의 Command Menu Surface Review로 스토리북 리뷰 포인트 문서화 완료                    |
 | plugin lifecycle state 전이 테스트 | `@workbench-kit/vscode-host` `InMemoryPluginLifecycleService` 단위 테스트 추가 완료                    | transport/권한 통합 정책은 별도 마일스톤                      | `workbench` 편입 시 runtime 바인딩/권한 정책을 별도 단계로 정리                                                     |
 | plugin `commandId` 충돌 처리       | `createCommandRegistry`는 Map 기반이라 마지막 등록값 우선(`packages/core/src/commands.test.ts`로 고정) | 소스-확장 충돌 정책의 공개화 부재                             | 최소 우선순위 정책을 `last-write-wins`로 문서화하고, 단계적으로 hard-error 정책 도입 여부를 검토                    |
 | Storybook Play 필수 범위           | baseline 태그 기반 게이트로 정비되어 있음                                                              | baseline 후보 5개를 태그화 후 `validate:full`에서 필수로 실행 | `storybook-play`를 baseline 5개 플로우(`storybook-play-baseline`) 중심으로 `test:storybook-play:required` 실행 전환 |
@@ -655,8 +655,9 @@ independently.
   별도 결정합니다.
 - `resolveCommandMenuItems(..., surface)` surface 전달 규칙은 핵심 통합 포인트에서
   이미 적용되어 있습니다(`packages/react/src/workbench/Workbench.stories.tsx`,
-  `WorkspaceEditorPanel.tsx`, `WorkspaceSearchPanel.stories.tsx`). 다만 새 통합 지점 추가 시
-  누락 방지 체크리스트가 별도 운영 규칙으로 필요합니다.
+  `WorkspaceEditorPanel.tsx`, `WorkspaceSearchPanel.stories.tsx`). 새 통합 지점 추가 시의
+  누락 방지 체크리스트는 `docs/conventions/storybook.md`의 Command Menu Surface Review로
+  문서화했습니다.
 - 플러그인 기여와 기존 command registry 충돌 정책은 기본값은 정해졌습니다. 현재 구현은
   `createCommandRegistry`의 Map 동작으로 `commandId` 충돌 시 "마지막 등록값 우선"입니다. 다만
   hard-error overlay 정책이 필요할지 여부는 다음 단계에서 정책 결정이 필요합니다.
@@ -697,6 +698,8 @@ independently.
 - Explorer root context menus in the integrated Workbench story now use
   `WORKBENCH_COMMAND_SURFACE_WORKSPACE` with workspace-only create menu entries,
   so mixed-menu surface behavior is explicitly constrained in Storybook.
+- Storybook command-backed menu reviews now require explicit surface scoping for
+  host-like integration paths via `docs/conventions/storybook.md`.
 - Package-manager policy is documented in `docs/conventions/package-manager.md`
   and aligned with the existing `preinstall` guard and `.npmrc` note.
 
