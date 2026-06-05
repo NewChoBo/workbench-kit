@@ -1,6 +1,7 @@
 export { ActivityBar } from './ActivityBar';
 export type { ActivityBarItem, ActivityBarProps } from './ActivityBar';
 export {
+  WorkbenchArtifactModeControls,
   WorkbenchArtifactPreview,
   WorkbenchArtifactShell,
   formatWorkbenchArtifactContent,
@@ -13,6 +14,7 @@ export {
 export type {
   WorkbenchArtifactDescriptor,
   WorkbenchArtifactMode,
+  WorkbenchArtifactModeControlsProps,
   WorkbenchArtifactPreviewProps,
   WorkbenchArtifactShellProps,
   WorkbenchArtifactShellRenderCode,

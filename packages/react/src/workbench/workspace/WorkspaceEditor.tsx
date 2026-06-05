@@ -170,7 +170,7 @@ export function WorkspaceEditor({
             <Toolbar>
               <Badge variant="muted">{language}</Badge>
               {file.source ? <Badge variant="muted">{file.source}</Badge> : null}
-              <IconButton icon="codicon-split" label="Split editor" />
+              <IconButton icon="codicon-split-horizontal" label="Split editor" />
             </Toolbar>
           }
         >

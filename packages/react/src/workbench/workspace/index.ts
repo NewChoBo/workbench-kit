@@ -5,6 +5,8 @@ export type {
   WorkspaceEditorPanelProps,
   WorkspaceEditorPanelRenderEditor,
   WorkspaceEditorPanelRenderEditorContext,
+  WorkspaceEditorPanelRenderTabActions,
+  WorkspaceEditorPanelRenderTabActionsContext,
 } from './WorkspaceEditorPanel';
 export {
   WORKSPACE_EXPLORER_DRAG_DATA_TYPE,

@@ -144,7 +144,8 @@ export const DeleteOpenTabRecoveryFlow: Story = {
       'true',
     );
 
-    await userEvent.click(canvas.getByRole('button', { name: 'Delete' }));
+    await fireEvent.contextMenu(canvas.getByRole('tab', { name: 'App.tsx' }));
+    await userEvent.click(await canvas.findByRole('menuitem', { name: 'Delete' }));
     const activeDeleteDialog = await canvas.findByRole('dialog', { name: 'Delete File' });
     await expect(activeDeleteDialog).toBeVisible();
     await expect(within(activeDeleteDialog).getByText('src/App.tsx')).toBeVisible();
