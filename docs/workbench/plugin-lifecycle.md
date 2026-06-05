@@ -182,6 +182,10 @@ state transitions.
 ## Open Decisions to Confirm
 
 - `pluginId` identity format (publisher-qualified vs reverse DNS style).
-- Minimum trust model for initial baseline (`unknown` default vs `trusted` default).
 - Whether `update` should require semantic version checks in service layer or host layer.
 - Whether recommendations are metadata-only initially or become an actionable lifecycle signal.
+
+## Decisions Reflected
+
+- Minimum trust model for the initial baseline is `unknown` by default. Trust
+  escalation remains host policy, not component state.
