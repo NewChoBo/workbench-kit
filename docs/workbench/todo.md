@@ -29,6 +29,9 @@ stays generic and Storybook-driven. Application-specific workflows, artifact
 schemas, tool names, service endpoints, and private configuration should remain
 outside this repository.
 
+For downstream extraction policy, see
+[`downstream-extraction-strategy.md`](./downstream-extraction-strategy.md).
+
 ## Repository Context
 
 | Area        | Current Baseline                                                                              |

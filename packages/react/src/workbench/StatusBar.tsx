@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import {
   getWorkbenchStatusLabel,
@@ -14,7 +15,7 @@ export interface StatusBarItemModel {
   ariaLabel?: string;
   disabled?: boolean;
   hidden?: boolean;
-  icon?: ReactNode;
+  icon?: ReactNode | string;
   id: string;
   label: ReactNode;
   status?: WorkbenchStatus;
@@ -84,7 +85,7 @@ export function StatusBar({
 }
 
 export interface StatusBarSectionProps extends ComponentPropsWithRef<'div'> {
-  align?: StatusBarSectionAlign;
+  align?: StatusBarSectionAlign | undefined;
 }
 
 export function StatusBarSection({ align = 'start', className, ...props }: StatusBarSectionProps) {
@@ -101,9 +102,15 @@ export function StatusBarSection({ align = 'start', className, ...props }: Statu
 }
 
 export interface StatusBarItemProps extends ComponentPropsWithRef<'button'> {
-  active?: boolean;
-  icon?: ReactNode;
-  status?: WorkbenchStatus;
+  active?: boolean | undefined;
+  icon?: ReactNode | string | undefined;
+  status?: WorkbenchStatus | undefined;
+}
+
+function resolveStatusBarIcon(icon: ReactNode | string | undefined) {
+  if (typeof icon !== 'string') return icon;
+
+  return <i className={cxCodicon(icon)} aria-hidden="true" />;
 }
 
 export function StatusBarItem({
@@ -119,6 +126,7 @@ export function StatusBarItem({
 }: StatusBarItemProps) {
   const statusLabel = status ? getWorkbenchStatusLabel(status) : undefined;
   const resolvedDisabled = disabled || Boolean(status && isWorkbenchStatusDisabled(status));
+  const resolvedIcon = resolveStatusBarIcon(icon);
 
   return (
     <button
@@ -135,7 +143,7 @@ export function StatusBarItem({
       title={title ?? statusLabel}
       {...props}
     >
-      {icon ? <span className="ui-workbench-status-bar__icon">{icon}</span> : null}
+      {resolvedIcon ? <span className="ui-workbench-status-bar__icon">{resolvedIcon}</span> : null}
       <span className="ui-workbench-status-bar__label">{children}</span>
       {status ? (
         <span

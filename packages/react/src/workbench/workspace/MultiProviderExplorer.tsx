@@ -9,6 +9,7 @@ import { WorkbenchSidebarSection } from '../../layout/WorkbenchSidebarActions';
 import { SideBarList, SideBarListItem } from '../../layout/SideBarViewFrame';
 import { EmptyState } from '../../primitives/EmptyState';
 import { IconButton } from '../../primitives/IconButton';
+import { cxCodicon } from '../../utils/codicon';
 import { cx } from '../../utils/cx';
 import {
   getWorkbenchStatusLabel,
@@ -477,7 +478,10 @@ export function WorkbenchMultiProviderExplorer({
                 {provider.icon ? (
                   <i
                     aria-hidden="true"
-                    className={`codicon ${provider.icon} ui-workbench-multi-provider-explorer__provider-icon`}
+                    className={cxCodicon(
+                      provider.icon,
+                      'ui-workbench-multi-provider-explorer__provider-icon',
+                    )}
                   />
                 ) : null}
                 <span>{provider.label}</span>
@@ -559,9 +563,8 @@ export function WorkbenchMultiProviderExplorer({
                         {hasChildren ? (
                           <i
                             aria-hidden="true"
-                            className={cx(
-                              'codicon',
-                              context.expanded ? 'codicon-chevron-down' : 'codicon-chevron-right',
+                            className={cxCodicon(
+                              context.expanded ? 'chevron-down' : 'chevron-right',
                               'ui-workbench-multi-provider-explorer__entry-chevron',
                             )}
                           />
@@ -571,7 +574,10 @@ export function WorkbenchMultiProviderExplorer({
                         {entry.icon ? (
                           <i
                             aria-hidden="true"
-                            className={`codicon ${entry.icon} ui-workbench-multi-provider-explorer__entry-icon`}
+                            className={cxCodicon(
+                              entry.icon,
+                              'ui-workbench-multi-provider-explorer__entry-icon',
+                            )}
                           />
                         ) : null}
                       </span>

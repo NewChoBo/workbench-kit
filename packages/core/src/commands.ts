@@ -16,7 +16,7 @@ export interface CommandDefinition<TContext = void> {
 export type CommandRegistry<TContext = void> = ReadonlyMap<string, CommandDefinition<TContext>>;
 
 export interface CommandMenuSeparatorEntry {
-  id?: string;
+  id?: string | undefined;
   type: 'separator';
 }
 
@@ -24,11 +24,11 @@ export interface CommandMenuCommandEntry<TContext = void> {
   commandId: string;
   danger?: CommandValue<TContext, boolean | undefined>;
   icon?: CommandValue<TContext, string | undefined>;
-  id?: string;
+  id?: string | undefined;
   isEnabled?: CommandPredicate<TContext>;
   isVisible?: CommandPredicate<TContext>;
-  surfaces?: readonly string[];
-  label?: CommandValue<TContext, string>;
+  surfaces?: readonly string[] | undefined;
+  label?: CommandValue<TContext, string> | undefined;
   shortcut?: CommandValue<TContext, string | undefined>;
   type?: 'command';
 }
@@ -52,18 +52,18 @@ export interface SourcedCommandContribution<TContext = void> extends CommandCont
 }
 
 export interface ResolvedCommandMenuSeparatorItem {
-  id?: string;
+  id?: string | undefined;
   type: 'separator';
 }
 
 export interface ResolvedCommandMenuCommandItem {
   commandId: string;
-  danger?: boolean;
-  disabled?: boolean;
-  icon?: string;
+  danger?: boolean | undefined;
+  disabled?: boolean | undefined;
+  icon?: string | undefined;
   id: string;
   label: string;
-  shortcut?: string;
+  shortcut?: string | undefined;
   type: 'command';
 }
 
