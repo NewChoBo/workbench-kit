@@ -2,6 +2,7 @@ export { Modal } from './modal/Modal';
 export type { ModalProps } from './modal/Modal';
 export { commandMenuItemsToContextMenuItems } from './workbench/commands';
 export {
+  WorkbenchArtifactModeControls,
   WorkbenchArtifactPreview,
   WorkbenchArtifactShell,
   formatWorkbenchArtifactContent,
@@ -14,6 +15,7 @@ export {
 export type {
   WorkbenchArtifactDescriptor,
   WorkbenchArtifactMode,
+  WorkbenchArtifactModeControlsProps,
   WorkbenchArtifactPreviewProps,
   WorkbenchArtifactShellProps,
   WorkbenchArtifactShellRenderCode,

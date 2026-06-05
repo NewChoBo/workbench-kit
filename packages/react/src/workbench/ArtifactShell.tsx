@@ -60,6 +60,14 @@ export type WorkbenchArtifactShellRenderPreview = (
   context: WorkbenchPreviewRendererContext,
 ) => ReactNode;
 
+export interface WorkbenchArtifactModeControlsProps extends ComponentPropsWithRef<'div'> {
+  codeLabel?: string | undefined;
+  mode: WorkbenchArtifactMode;
+  onModeChange: (mode: WorkbenchArtifactMode) => void;
+  previewLabel?: string | undefined;
+  splitLabel?: string | undefined;
+}
+
 function normalizeToken(value: string | undefined) {
   return value?.trim().toLocaleLowerCase() ?? '';
 }
@@ -177,6 +185,51 @@ function defaultCodePane(artifact: WorkbenchArtifactDescriptor) {
   );
 }
 
+export function WorkbenchArtifactModeControls({
+  className,
+  codeLabel = 'Code',
+  mode,
+  onModeChange,
+  previewLabel = 'Preview',
+  splitLabel = 'Split',
+  ...props
+}: WorkbenchArtifactModeControlsProps) {
+  return (
+    <div className={cx('ui-workbench-artifact-shell__modes', className)} {...props}>
+      <IconButton
+        aria-pressed={mode === 'code'}
+        className={cx(
+          'ui-workbench-artifact-shell__mode',
+          mode === 'code' && 'ui-workbench-artifact-shell__mode--active',
+        )}
+        icon="codicon-code"
+        label={codeLabel}
+        onClick={() => onModeChange('code')}
+      />
+      <IconButton
+        aria-pressed={mode === 'preview'}
+        className={cx(
+          'ui-workbench-artifact-shell__mode',
+          mode === 'preview' && 'ui-workbench-artifact-shell__mode--active',
+        )}
+        icon="codicon-open-preview"
+        label={previewLabel}
+        onClick={() => onModeChange('preview')}
+      />
+      <IconButton
+        aria-pressed={mode === 'split'}
+        className={cx(
+          'ui-workbench-artifact-shell__mode',
+          mode === 'split' && 'ui-workbench-artifact-shell__mode--active',
+        )}
+        icon="codicon-split-horizontal"
+        label={splitLabel}
+        onClick={() => onModeChange('split')}
+      />
+    </div>
+  );
+}
+
 export interface WorkbenchArtifactPreviewProps extends ComponentPropsWithRef<'div'> {
   artifact: WorkbenchArtifactDescriptor;
   renderPreview?: WorkbenchArtifactShellRenderPreview | undefined;
@@ -230,6 +283,7 @@ export interface WorkbenchArtifactShellProps extends Omit<
   previewRenderers?: readonly WorkbenchPreviewRenderer[] | undefined;
   renderCode?: WorkbenchArtifactShellRenderCode | undefined;
   renderPreview?: WorkbenchArtifactShellRenderPreview | undefined;
+  showHeader?: boolean | undefined;
   splitLabel?: string | undefined;
   unsupportedPreviewLabel?: ReactNode | undefined;
 }
@@ -246,6 +300,7 @@ export function WorkbenchArtifactShell({
   previewRenderers,
   renderCode,
   renderPreview,
+  showHeader = true,
   splitLabel = 'Split',
   unsupportedPreviewLabel,
   ...props
@@ -284,52 +339,30 @@ export function WorkbenchArtifactShell({
   return (
     <div
       className={cx('ui-workbench-artifact-shell', className)}
+      data-header={showHeader ? 'visible' : 'hidden'}
       data-mode={resolvedMode}
       {...props}
     >
-      <div className="ui-workbench-artifact-shell__header">
-        <div className="ui-workbench-artifact-shell__title-group">
-          <span className="ui-workbench-artifact-shell__title">{title}</span>
-          {artifact.path ? (
-            <span className="ui-workbench-artifact-shell__path">{artifact.path}</span>
-          ) : null}
-        </div>
-        <div className="ui-workbench-artifact-shell__meta">
-          {meta ? <span className="ui-workbench-artifact-shell__chip">{meta}</span> : null}
-          <div className="ui-workbench-artifact-shell__modes">
-            <IconButton
-              aria-pressed={resolvedMode === 'code'}
-              className={cx(
-                'ui-workbench-artifact-shell__mode',
-                resolvedMode === 'code' && 'ui-workbench-artifact-shell__mode--active',
-              )}
-              icon="codicon-code"
-              label={codeLabel}
-              onClick={() => setMode('code')}
-            />
-            <IconButton
-              aria-pressed={resolvedMode === 'preview'}
-              className={cx(
-                'ui-workbench-artifact-shell__mode',
-                resolvedMode === 'preview' && 'ui-workbench-artifact-shell__mode--active',
-              )}
-              icon="codicon-open-preview"
-              label={previewLabel}
-              onClick={() => setMode('preview')}
-            />
-            <IconButton
-              aria-pressed={resolvedMode === 'split'}
-              className={cx(
-                'ui-workbench-artifact-shell__mode',
-                resolvedMode === 'split' && 'ui-workbench-artifact-shell__mode--active',
-              )}
-              icon="codicon-split"
-              label={splitLabel}
-              onClick={() => setMode('split')}
+      {showHeader ? (
+        <div className="ui-workbench-artifact-shell__header">
+          <div className="ui-workbench-artifact-shell__title-group">
+            <span className="ui-workbench-artifact-shell__title">{title}</span>
+            {artifact.path ? (
+              <span className="ui-workbench-artifact-shell__path">{artifact.path}</span>
+            ) : null}
+          </div>
+          <div className="ui-workbench-artifact-shell__meta">
+            {meta ? <span className="ui-workbench-artifact-shell__chip">{meta}</span> : null}
+            <WorkbenchArtifactModeControls
+              codeLabel={codeLabel}
+              mode={resolvedMode}
+              previewLabel={previewLabel}
+              splitLabel={splitLabel}
+              onModeChange={setMode}
             />
           </div>
         </div>
-      </div>
+      ) : null}
       <div className="ui-workbench-artifact-shell__body">
         {resolvedMode === 'code' ? (
           <section className="ui-workbench-artifact-shell__pane" aria-label={codeLabel}>

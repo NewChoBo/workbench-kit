@@ -1,6 +1,5 @@
 import { useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import {
-  canExecuteCommand,
   createCommandRegistry,
   executeCommand,
   resolveCommandMenuItems,
@@ -17,11 +16,8 @@ import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { EmptyState } from '../../primitives/EmptyState';
 import { IconButton } from '../../primitives/IconButton';
-import { Toolbar } from '../../primitives/Toolbar';
 import { Panel, PanelBody } from '../../layout/Panel';
 import {
-  WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
-  WORKBENCH_EDITOR_SAVE_COMMAND_ID,
   WORKBENCH_COMMAND_SURFACE_EDITOR,
   commandMenuItemsToContextMenuItems,
   createWorkbenchEditorCommands,
@@ -51,6 +47,20 @@ export type WorkspaceEditorPanelRenderEditor = (
   context: WorkspaceEditorPanelRenderEditorContext,
 ) => ReactNode;
 
+export interface WorkspaceEditorPanelRenderTabActionsContext {
+  content: string;
+  file: WorkspaceFile;
+  isDirty: boolean;
+  onDelete: () => void;
+  onDiscard: () => void;
+  onSave: () => void;
+  theme?: WorkspaceEditorTheme | undefined;
+}
+
+export type WorkspaceEditorPanelRenderTabActions = (
+  context: WorkspaceEditorPanelRenderTabActionsContext,
+) => ReactNode;
+
 export interface WorkspaceEditorPanelProps {
   emptyLabel?: string;
   files: WorkspaceFile[];
@@ -67,6 +77,7 @@ export interface WorkspaceEditorPanelProps {
   onSelectedPathChange: (path: string) => void;
   openPaths: string[];
   renderEditor?: WorkspaceEditorPanelRenderEditor | undefined;
+  renderTabActions?: WorkspaceEditorPanelRenderTabActions | undefined;
   selectedPath?: string;
   theme?: WorkspaceEditorTheme;
 }
@@ -83,6 +94,7 @@ export function WorkspaceEditorPanel({
   onSelectedPathChange,
   openPaths,
   renderEditor,
+  renderTabActions,
   selectedPath,
   theme,
 }: WorkspaceEditorPanelProps) {
@@ -217,7 +229,7 @@ export function WorkspaceEditorPanel({
     }
     setDeletePath(null);
   };
-  const selectedCommandContext = createEditorCommandContext(selectedFile);
+  const selectedIsDirty = Boolean(selectedFile && selectedContent !== selectedFile.content);
 
   return (
     <Panel className="workspace-panel">
@@ -270,52 +282,18 @@ export function WorkspaceEditorPanel({
                 })}
               </div>
 
-              {selectedFile ? (
-                <Toolbar className="workspace-editor__actions">
-                  <IconButton
-                    disabled={
-                      !canExecuteCommand(
-                        editorCommandRegistry,
-                        WORKBENCH_EDITOR_SAVE_COMMAND_ID,
-                        selectedCommandContext,
-                      )
-                    }
-                    icon="codicon-save"
-                    label="Save"
-                    onClick={() =>
-                      executeCommand(
-                        editorCommandRegistry,
-                        WORKBENCH_EDITOR_SAVE_COMMAND_ID,
-                        selectedCommandContext,
-                      )
-                    }
-                  />
-                  <IconButton
-                    disabled={
-                      !canExecuteCommand(
-                        editorCommandRegistry,
-                        WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
-                        selectedCommandContext,
-                      )
-                    }
-                    icon="codicon-discard"
-                    label="Discard changes"
-                    onClick={() =>
-                      executeCommand(
-                        editorCommandRegistry,
-                        WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
-                        selectedCommandContext,
-                      )
-                    }
-                  />
-                  <IconButton
-                    disabled={!onDeletePath}
-                    icon="codicon-trash"
-                    label="Delete"
-                    variant="danger"
-                    onClick={() => setDeletePath(selectedFile.path)}
-                  />
-                </Toolbar>
+              {selectedFile && renderTabActions ? (
+                <div className="workspace-editor__tab-actions">
+                  {renderTabActions({
+                    content: selectedContent,
+                    file: selectedFile,
+                    isDirty: selectedIsDirty,
+                    onDelete: () => setDeletePath(selectedFile.path),
+                    onDiscard: () => discardFile(selectedFile),
+                    onSave: () => saveFile(selectedFile.path, selectedContent),
+                    theme,
+                  })}
+                </div>
               ) : null}
             </div>
 
@@ -324,7 +302,7 @@ export function WorkspaceEditorPanel({
                 renderEditor({
                   content: selectedContent,
                   file: selectedFile,
-                  isDirty: selectedContent !== selectedFile.content,
+                  isDirty: selectedIsDirty,
                   onChange: (content) => updateDraft(selectedFile.path, content),
                   onSave: (content) => saveFile(selectedFile.path, content),
                   theme,
