@@ -630,9 +630,10 @@ independently.
 
 ## 다음 액션 우선순위
 
-- 1순위(P1): workspace API boundary에서 fixture/state adapter 분리 기준 문서화
-- 2순위(P2): StatusBar host merge ordering 규칙 결정 및 테스트 후보 정리
-- 3순위(P3): dirty-state guard save/discard/confirm routing policy 확정
+- 완료: workspace API boundary에서 fixture/state adapter 분리 기준 문서화
+- 보류(정책 결정 필요): StatusBar host merge ordering 규칙 결정 및 테스트 후보 정리
+- 보류(정책 결정 필요): folder operation side-effect ownership 확정
+- 보류(정책 결정 필요): dirty-state guard save/discard/confirm routing policy 확정
 
 ## Plugin Lifecycle Baseline Acceptance Criteria
 
