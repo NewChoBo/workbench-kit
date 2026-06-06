@@ -127,12 +127,15 @@ apps/
    - 공개 export 변경 시 migration checklist 의무화
 
 3. **plugin/기능 확장 구조의 2단계 설계**
-   - 현재는 계약형 모델은 존재하나 install/enable/update/신뢰 정책이 미정.
-   - 타 repo의 경험을 반영해 최소 상태기반 lifecycle + manifest-style contribution merge를 우선.
+   - 계약형 모델과 baseline install/enable/update/trust 정책은
+     `plugin-lifecycle.md`와 `plugin-manifest-guide.md`에 반영됨.
+   - hard-error overlay, strict plugin identity, recommendation/update 확장
+     정책은 다음 milestone에서 분리.
 
 4. **저장/런타임 경계 정렬**
    - workspace save/patch/chat 스트림은 host와 앱이 모두 소비 가능한 contract로 고정.
-   - 현재는 스토리 기반 조립 지점이 존재해 앱 bootstrap와 분리한 state owner가 필요.
+   - `WorkbenchStandaloneShell`과 host callback 경계가 앱 bootstrap state owner의
+     최소 기준 역할을 담당.
 
 5. **검증 라인 강화**
    - unit+storybook play는 유지하되 host contract/e2e smoke lane를 별도 추적.
@@ -149,26 +152,43 @@ apps/
 
 ### P0 (이번 사이클 마감 목표)
 
-- [ ] `migration-todo.md`와 `subpackage-architecture.md`를 기준 문서로 고정하고,
+- [x] `migration-todo.md`와 `subpackage-architecture.md`를 기준 문서로 고정하고,
       `repo-target-structure-review.md`에 추적 링크 3개 추가.
-- [ ] `WorkbenchShell`/앱 조립 계약에서 host callback 경계(`onSave`, `onDelete`, `onChatSubmit`, `onPatch`)를
+  - 기준 링크:
+    [`migration-todo.md`](./migration-todo.md),
+    [`subpackage-architecture.md`](./subpackage-architecture.md),
+    [`workbench-entrypoint-strategy.md`](./workbench-entrypoint-strategy.md)
+- [x] `WorkbenchShell`/앱 조립 계약에서 host callback 경계(`onSave`, `onDelete`, `onChatSubmit`, `onPatch`)를
       타입으로 1회 정리하고 문서 근거 남기기.
-- [ ] plugin 라이프사이클 최소 상태(`installing/installed/disabled/failed`)를 문서의 목표 형태로 확정.
-- [ ] `adapter`/`service` 경계를 기준으로 `vscode-host` 예외 격리 케이스 2개 이상 테스트 보강.
+  - 근거: `packages/react/src/workbench/standalone.ts`의
+    `WorkbenchHostCallbackBoundary`
+- [x] plugin 라이프사이클 최소 상태(`installing/installed/disabled/failed`)를 문서의 목표 형태로 확정.
+  - 근거: `docs/workbench/plugin-lifecycle.md`와
+    `packages/contracts/src/plugin.ts`의 `PluginLifecycleState`
+- [x] `adapter`/`service` 경계를 기준으로 `vscode-host` 예외 격리 케이스 2개 이상 테스트 보강.
+  - 근거: `packages/vscode-host/src/bridge.test.ts`와
+    `packages/vscode-host/src/runtime.test.ts`
 
 ### P1 (다음 사이클)
 
-- [ ] `docs/conventions`에 “공개 API 거버넌스” 섹션 추가: entrypoint 규칙 + deep import 금지 + browser-safe 규칙.
-- [ ] packages별 역할을 명시한 표를 `subpackage-architecture.md`에 정식 반영:
+- [x] `docs/conventions`에 “공개 API 거버넌스” 섹션 추가: entrypoint 규칙 + deep import 금지 + browser-safe 규칙.
+  - 근거: [`public-api-governance.md`](../conventions/public-api-governance.md)
+- [x] packages별 역할을 명시한 표를 `subpackage-architecture.md`에 정식 반영:
   - core/workspace/runtime/contracts/services/react/tokens/vscode-host/vscode-extension/adapters
-- [ ] `contract test` 기초를 추가: 저장/채팅/패치 흐름에 대한 최소 스펙 시나리오.
-- [ ] host adapter 샘플 문서(standalone, vscode-host, future app host) 작성.
+  - 근거: [`subpackage-architecture.md`](./subpackage-architecture.md)의 `Package Role Map`
+- [x] `contract test` 기초를 추가: 저장/채팅/패치 흐름에 대한 최소 스펙 시나리오.
+  - 근거: `packages/services/src/flow.test.ts`
+- [x] host adapter 샘플 문서(standalone, vscode-host, future app host) 작성.
+  - 근거: [`host-adapter-samples.md`](./host-adapter-samples.md)
 
 ### P2 (중기)
 
-- [ ] plugin manifest/manifest schema 가이드 작성.
-- [ ] plugin install/enable/update/rollback 흐름을 `custom_launcher` 유사한 policy로 분해.
-- [ ] 문서 기반 acceptance 기준에 따라 `standalone launch`와 `extension wrapper` 단계 경계 분리 완료.
+- [x] plugin manifest/manifest schema 가이드 작성.
+  - 근거: [`plugin-manifest-guide.md`](./plugin-manifest-guide.md)
+- [x] plugin install/enable/update/rollback 흐름을 `custom_launcher` 유사한 policy로 분해.
+  - 근거: [`plugin-lifecycle.md`](./plugin-lifecycle.md)의 `Install, Enable, Update, And Rollback Flow Policy`
+- [x] 문서 기반 acceptance 기준에 따라 `standalone launch`와 `extension wrapper` 단계 경계 분리 완료.
+  - 근거: [`standalone-extension-boundary.md`](./standalone-extension-boundary.md)
 
 ## 5) 검증 체크리스트
 

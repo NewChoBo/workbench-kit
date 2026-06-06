@@ -1,6 +1,5 @@
-import { useMemo, useState, type MouseEvent } from 'react';
+import { useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import {
-  canExecuteCommand,
   createCommandRegistry,
   executeCommand,
   resolveCommandMenuItems,
@@ -17,11 +16,8 @@ import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { EmptyState } from '../../primitives/EmptyState';
 import { IconButton } from '../../primitives/IconButton';
-import { Toolbar } from '../../primitives/Toolbar';
 import { Panel, PanelBody } from '../../layout/Panel';
 import {
-  WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
-  WORKBENCH_EDITOR_SAVE_COMMAND_ID,
   WORKBENCH_COMMAND_SURFACE_EDITOR,
   commandMenuItemsToContextMenuItems,
   createWorkbenchEditorCommands,
@@ -38,6 +34,34 @@ const editorCommandRegistry = createCommandRegistry(createWorkbenchEditorCommand
 const editorTabListMenuEntries = createWorkbenchEditorTabListMenuEntries();
 const editorTabMenuEntries = createWorkbenchEditorTabMenuEntries();
 
+export interface WorkspaceEditorPanelRenderEditorContext {
+  content: string;
+  file: WorkspaceFile;
+  isDirty: boolean;
+  onChange: (content: string) => void;
+  onDiscard: () => void;
+  onSave: (content: string) => void;
+  theme?: WorkspaceEditorTheme | undefined;
+}
+
+export type WorkspaceEditorPanelRenderEditor = (
+  context: WorkspaceEditorPanelRenderEditorContext,
+) => ReactNode;
+
+export interface WorkspaceEditorPanelRenderTabActionsContext {
+  content: string;
+  file: WorkspaceFile;
+  isDirty: boolean;
+  onDelete: () => void;
+  onDiscard: () => void;
+  onSave: () => void;
+  theme?: WorkspaceEditorTheme | undefined;
+}
+
+export type WorkspaceEditorPanelRenderTabActions = (
+  context: WorkspaceEditorPanelRenderTabActionsContext,
+) => ReactNode;
+
 export interface WorkspaceEditorPanelProps {
   emptyLabel?: string;
   files: WorkspaceFile[];
@@ -53,6 +77,8 @@ export interface WorkspaceEditorPanelProps {
   ) => SaveResult | Promise<SaveResult | undefined> | undefined;
   onSelectedPathChange: (path: string) => void;
   openPaths: string[];
+  renderEditor?: WorkspaceEditorPanelRenderEditor | undefined;
+  renderTabActions?: WorkspaceEditorPanelRenderTabActions | undefined;
   selectedPath?: string;
   theme?: WorkspaceEditorTheme;
 }
@@ -68,6 +94,8 @@ export function WorkspaceEditorPanel({
   onSaveFile,
   onSelectedPathChange,
   openPaths,
+  renderEditor,
+  renderTabActions,
   selectedPath,
   theme,
 }: WorkspaceEditorPanelProps) {
@@ -202,13 +230,22 @@ export function WorkspaceEditorPanel({
     }
     setDeletePath(null);
   };
-  const selectedCommandContext = createEditorCommandContext(selectedFile);
+  const selectedIsDirty = Boolean(selectedFile && selectedContent !== selectedFile.content);
 
   return (
     <Panel className="workspace-panel">
       <PanelBody className="workspace-panel__body">
         {openFiles.length > 0 ? (
-          <div className="workspace-editor">
+          <div
+            className="workspace-editor"
+            onKeyDown={(event) => {
+              if (!selectedFile) return;
+              if (event.key.toLowerCase() !== 's' || (!event.ctrlKey && !event.metaKey)) return;
+
+              event.preventDefault();
+              saveFile(selectedFile.path, selectedContent);
+            }}
+          >
             <div className="workspace-editor__tabbar">
               <div
                 aria-label="Open workspace files"
@@ -255,66 +292,44 @@ export function WorkspaceEditorPanel({
                 })}
               </div>
 
-              {selectedFile ? (
-                <Toolbar className="workspace-editor__actions">
-                  <IconButton
-                    disabled={
-                      !canExecuteCommand(
-                        editorCommandRegistry,
-                        WORKBENCH_EDITOR_SAVE_COMMAND_ID,
-                        selectedCommandContext,
-                      )
-                    }
-                    icon="codicon-save"
-                    label="Save"
-                    onClick={() =>
-                      executeCommand(
-                        editorCommandRegistry,
-                        WORKBENCH_EDITOR_SAVE_COMMAND_ID,
-                        selectedCommandContext,
-                      )
-                    }
-                  />
-                  <IconButton
-                    disabled={
-                      !canExecuteCommand(
-                        editorCommandRegistry,
-                        WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
-                        selectedCommandContext,
-                      )
-                    }
-                    icon="codicon-discard"
-                    label="Discard changes"
-                    onClick={() =>
-                      executeCommand(
-                        editorCommandRegistry,
-                        WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
-                        selectedCommandContext,
-                      )
-                    }
-                  />
-                  <IconButton
-                    disabled={!onDeletePath}
-                    icon="codicon-trash"
-                    label="Delete"
-                    variant="danger"
-                    onClick={() => setDeletePath(selectedFile.path)}
-                  />
-                </Toolbar>
+              {selectedFile && renderTabActions ? (
+                <div className="workspace-editor__tab-actions">
+                  {renderTabActions({
+                    content: selectedContent,
+                    file: selectedFile,
+                    isDirty: selectedIsDirty,
+                    onDelete: () => setDeletePath(selectedFile.path),
+                    onDiscard: () => discardFile(selectedFile),
+                    onSave: () => saveFile(selectedFile.path, selectedContent),
+                    theme,
+                  })}
+                </div>
               ) : null}
             </div>
 
             {selectedFile ? (
-              <WorkspaceEditor
-                key={selectedFile.path}
-                file={selectedFile}
-                readOnly={false}
-                showHeader={false}
-                theme={theme}
-                value={selectedContent}
-                onChange={(content) => updateDraft(selectedFile.path, content)}
-                onSave={(content) => saveFile(selectedFile.path, content)}
-              />
+              renderEditor ? (
+                renderEditor({
+                  content: selectedContent,
+                  file: selectedFile,
+                  isDirty: selectedIsDirty,
+                  onChange: (content) => updateDraft(selectedFile.path, content),
+                  onDiscard: () => discardFile(selectedFile),
+                  onSave: (content) => saveFile(selectedFile.path, content),
+                  theme,
+                })
+              ) : (
+                <WorkspaceEditor
+                  key={selectedFile.path}
+                  file={selectedFile}
+                  readOnly={false}
+                  showHeader={false}
+                  theme={theme}
+                  value={selectedContent}
+                  onChange={(content) => updateDraft(selectedFile.path, content)}
+                  onSave={(content) => saveFile(selectedFile.path, content)}
+                />
+              )
             ) : (
               <EmptyState icon="codicon-open-preview">{emptyLabel}</EmptyState>
             )}

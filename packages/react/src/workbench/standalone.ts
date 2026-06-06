@@ -30,6 +30,13 @@ export interface WorkbenchWorkspaceController {
   rename?: (path: string, nextName: string) => void | Promise<void>;
 }
 
+export interface WorkbenchHostCallbackBoundary {
+  onSave?: (path: string, content: string, previousUpdatedAt?: string) => Promise<SaveResult>;
+  onDelete?: (paths: readonly string[]) => void | Promise<void>;
+  onChatSubmit?: (message: string, context?: Record<string, unknown>) => void | Promise<void>;
+  onPatch?: (patch: WorkspacePatchEvent) => Promise<WorkspacePatchApplyResult> | void;
+}
+
 export interface WorkbenchChatController {
   onChatSubmit: (message: string, context?: Record<string, unknown>) => void | Promise<void>;
   onCancelChat: () => void;

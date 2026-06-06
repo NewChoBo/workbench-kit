@@ -1,5 +1,10 @@
 import type { CommandRegistry } from '@workbench-kit/core';
-import type { SaveResult, WorkspacePatchApplyResult } from '@workbench-kit/contracts';
+import type {
+  SaveResult,
+  WorkspacePatchApplyResult,
+  WorkspacePatchEvent,
+} from '@workbench-kit/contracts';
+import { normalizeServiceFailureMessage } from '@workbench-kit/contracts';
 import {
   type WorkbenchChatService,
   type WorkspacePatchService,
@@ -64,6 +69,8 @@ export interface WorkbenchHostRuntime {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
+const nowIso = () => new Date().toISOString();
+
 export function createHostRuntime<TContext>(
   options: WorkbenchHostRuntimeOptions<TContext>,
 ): WorkbenchHostRuntime {
@@ -74,6 +81,7 @@ export function createHostRuntime<TContext>(
   const subscriptions = new Set<() => void>();
   const chatUnsubscribe = createChatEventBridge({ chatService, messageBridge });
   subscriptions.add(chatUnsubscribe);
+  let disposed = false;
 
   const handleChatSend = async (payload: unknown) => {
     if (!chatService) return;
@@ -81,7 +89,11 @@ export function createHostRuntime<TContext>(
     const { content, context } = normalizeChatPayload(payload);
     if (!content) return;
 
-    await chatService.sendMessage(content, context);
+    try {
+      await chatService.sendMessage(content, context);
+    } catch {
+      // Chat send failures are owned by the injected service snapshot.
+    }
   };
 
   const handlePatchApply = async (payload: unknown, requestId?: string) => {
@@ -90,8 +102,19 @@ export function createHostRuntime<TContext>(
     const patchPayload = normalizePatchPayload(payload);
     if (!patchPayload) return;
 
-    const result = await patchService.applyPatch(patchPayload);
-    messageBridge.sendPatchResult(result as WorkspacePatchApplyResult, requestId);
+    try {
+      const result = await patchService.applyPatch(patchPayload);
+      messageBridge.sendPatchResult(result as WorkspacePatchApplyResult, requestId);
+    } catch (error) {
+      messageBridge.sendPatchResult(
+        createPatchFailureResult({
+          error,
+          patch: patchPayload,
+          requestId,
+        }),
+        requestId,
+      );
+    }
   };
 
   const handleSaveCommit = async (payload: unknown, requestId?: string) => {
@@ -100,8 +123,19 @@ export function createHostRuntime<TContext>(
     const commitPayload = normalizeSavePayload(payload);
     if (!commitPayload) return;
 
-    const result = await saveService.commit(commitPayload);
-    messageBridge.sendSaveResult(result as SaveResult, requestId);
+    try {
+      const result = await saveService.commit(commitPayload);
+      messageBridge.sendSaveResult(result as SaveResult, requestId);
+    } catch (error) {
+      messageBridge.sendSaveResult(
+        createSaveFailureResult({
+          error,
+          path: commitPayload.path,
+          requestId,
+        }),
+        requestId,
+      );
+    }
   };
 
   const mergeContext = (commandContext?: RuntimeCommandPayload): TContext => {
@@ -121,22 +155,27 @@ export function createHostRuntime<TContext>(
   };
 
   const handleCommand = (message: HostCommandMessage) => {
+    const commandId = message.payload?.commandId ?? '';
     if (!commandRegistry || !contextFactory) {
-      messageBridge.sendCommandResult(message.payload?.commandId ?? '', false, message.requestId);
+      messageBridge.sendCommandResult(commandId, false, message.requestId);
       return;
     }
 
-    resolveHostCommandFromBridgeMessage({
-      commandRegistry,
-      getContext: () => mergeContext(message.payload),
-      message,
-      resultListener: (result) =>
-        messageBridge.sendCommandResult(
-          result.payload?.commandId ?? '',
-          result.payload?.executed ?? false,
-          result.requestId,
-        ),
-    });
+    try {
+      resolveHostCommandFromBridgeMessage({
+        commandRegistry,
+        getContext: () => mergeContext(message.payload),
+        message,
+        resultListener: (result) =>
+          messageBridge.sendCommandResult(
+            result.payload?.commandId ?? '',
+            result.payload?.executed ?? false,
+            result.requestId,
+          ),
+      });
+    } catch {
+      messageBridge.sendCommandResult(commandId, false, message.requestId);
+    }
   };
 
   const messageSubscription = messageBridge.subscribe((message) => {
@@ -181,14 +220,55 @@ export function createHostRuntime<TContext>(
 
   return {
     dispose: () => {
+      if (disposed) return;
+      disposed = true;
       subscriptions.forEach((unsubscribe) => unsubscribe());
       subscriptions.clear();
+      messageBridge.dispose();
       chatService?.dispose();
     },
     getChatService: () => chatService,
     getMessageBridge: () => messageBridge,
     getPatchService: () => patchService,
     getSaveService: () => saveService,
+  };
+}
+
+function createPatchFailureResult({
+  error,
+  patch,
+  requestId,
+}: {
+  error: unknown;
+  patch: WorkspacePatchEvent;
+  requestId?: string;
+}): WorkspacePatchApplyResult {
+  return {
+    code: 'unknown',
+    message: normalizeServiceFailureMessage(error, 'Unknown patch error'),
+    patch,
+    requestId,
+    requestedAt: nowIso(),
+    type: 'patch:failed',
+  };
+}
+
+function createSaveFailureResult({
+  error,
+  path,
+  requestId,
+}: {
+  error: unknown;
+  path: string;
+  requestId?: string;
+}): SaveResult {
+  return {
+    code: 'unknown',
+    kind: 'save:failure',
+    message: normalizeServiceFailureMessage(error, 'Unknown save error'),
+    path,
+    requestId,
+    requestedAt: nowIso(),
   };
 }
 

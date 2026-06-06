@@ -13,6 +13,9 @@ minimal (`command`, `view`, `settings`) and preserving the existing command regi
 - M1 baseline contracts were added in `@workbench-kit/contracts` (`PluginDescriptor`, `PluginSource`,
   `PluginLifecycleState`, `InstalledPlugin`, `PluginLifecycleResult`) and covered by
   `packages/contracts` tests.
+- M2 baseline host service exists as `InMemoryPluginLifecycleService` in
+  `@workbench-kit/vscode-host`, with tests for install, duplicate install, enable/disable,
+  uninstall, update, and missing-plugin failures.
 
 ## Goals and Non-Goals
 
@@ -93,6 +96,33 @@ PluginContributions
 `commandContributions` should be consumed as a single surface-filtered source and merged
 through the existing workbench command registry.
 
+## Baseline Policy (2026-06-05)
+
+| Topic                    | Baseline Decision                                                                                           | Evidence                                                               |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Duplicate `pluginId`     | `install` returns `invalid-state` unless `force: true`; replacement/update is host-controlled.              | `packages/vscode-host/src/plugins.test.ts` duplicate install coverage  |
+| Default trust            | Installed plugins start as `trust: 'unknown'`; trust escalation remains host policy, not component state.   | `packages/vscode-host/src/plugins.ts` install path                     |
+| Default enablement       | Successful install starts as `enabled: 'enabled'` and `state: 'installed'`.                                 | `InMemoryPluginLifecycleService.install()` tests                       |
+| Failed plugin enablement | A plugin in `failed` state cannot be re-enabled through `enable(pluginId, true)`.                           | `packages/vscode-host/src/plugins.test.ts` failed-state coverage       |
+| Command ID conflicts     | The current command registry resolves duplicate IDs with source-order overlay, effectively last-write-wins. | `packages/core/src/commands.test.ts` command collision coverage        |
+| Contribution scope       | Initial plugin contribution scope is command, menu, view, and settings metadata only.                       | `PluginContributions` contract and this document's baseline/non-goals  |
+| Runtime transport        | Plugin install/update transport remains injected by host adapters.                                          | `PluginLifecycleService` contract has no storage or network dependency |
+
+## Install, Enable, Update, And Rollback Flow Policy
+
+| Flow       | Host-owned steps                                                                                          | Contract result                                                              | Rollback or recovery rule                                                        |
+| ---------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Install    | Resolve `PluginSource`, parse manifest, validate descriptor, then call `install(source, { descriptor })`. | `plugin:success` with `state: 'installed'` or `plugin:failure`.              | Duplicate IDs fail unless `force: true`; failed installs remain host-renderable. |
+| Disable    | Call `enable(pluginId, false)` before hiding contributions from command/menu/view/settings surfaces.      | `plugin:success` with `state: 'disabled'` and `enabled: 'disabled'`.         | Disabled plugins can be re-enabled if they are not in `failed` state.            |
+| Enable     | Call `enable(pluginId, true)` after trust and host policy checks pass.                                    | `plugin:success` with `state: 'installed'` and `enabled: 'enabled'`.         | Failed plugins cannot be enabled until the host resolves or reinstalls them.     |
+| Update     | Resolve replacement source/manifest, keep the current record available, then call `update(pluginId)`.     | `plugin:success` with refreshed source/version metadata or `plugin:failure`. | Failed updates should keep the last successful version active.                   |
+| Uninstall  | Disable or remove contributed surfaces, then call `uninstall(pluginId)`.                                  | `plugin:success` with `state: 'uninstalled'` or `not-found` failure.         | Missing plugins return `not-found`; hosts should make uninstall idempotent.      |
+| Hard reset | Host clears local plugin state and reinstalls from a validated source.                                    | Fresh `install` result.                                                      | Use only for corrupted host state or explicit user reset.                        |
+
+Host adapters own persistence, transport, trust, confirmation dialogs, and
+rollback storage. Workbench Kit contracts only describe the result envelope and
+state transitions.
+
 ## Stage 6 Milestones
 
 ### M1: Contract Foundation (no runtime transport)
@@ -152,6 +182,10 @@ through the existing workbench command registry.
 ## Open Decisions to Confirm
 
 - `pluginId` identity format (publisher-qualified vs reverse DNS style).
-- Minimum trust model for initial baseline (`unknown` default vs `trusted` default).
 - Whether `update` should require semantic version checks in service layer or host layer.
 - Whether recommendations are metadata-only initially or become an actionable lifecycle signal.
+
+## Decisions Reflected
+
+- Minimum trust model for the initial baseline is `unknown` by default. Trust
+  escalation remains host policy, not component state.

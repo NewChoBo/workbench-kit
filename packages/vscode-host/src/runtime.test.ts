@@ -45,6 +45,12 @@ function createCommandRuntimeContext<TContext>(
   });
 }
 
+function flushHostTasks() {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
 describe('createHostRuntime', () => {
   afterEach(() => {
     vi.clearAllMocks();
@@ -150,6 +156,115 @@ describe('createHostRuntime', () => {
     expect(harness.posted[0]).toMatchObject({ type: 'workbench/save/result' });
 
     runtime.dispose();
+  });
+
+  it('isolates patch service failures and continues handling later commands', async () => {
+    const applyPatch = vi.fn(async () => {
+      throw new Error('Patch service failed');
+    });
+    const run = vi.fn();
+    const registry = createCommandRegistry([{ id: 'workbench.afterPatch', label: 'After', run }]);
+    const patchService = { applyPatch };
+    const harness = createTransportHarness();
+
+    const runtime = createHostRuntime({
+      commandRegistry: registry,
+      contextFactory: () => ({}),
+      patchService,
+      transport: harness.transport,
+    });
+    harness.emit({
+      type: 'workbench/patch/apply',
+      requestId: 'p-failed',
+      payload: { path: 'src/index.ts', type: 'write-file', content: 'ok' },
+    });
+
+    await flushHostTasks();
+    expect(harness.posted[0]).toMatchObject({
+      type: 'workbench/patch/result',
+      requestId: 'p-failed',
+      payload: {
+        code: 'unknown',
+        message: 'Patch service failed',
+        patch: { path: 'src/index.ts', type: 'write-file', content: 'ok' },
+        requestId: 'p-failed',
+        type: 'patch:failed',
+      },
+    });
+
+    harness.emit({
+      type: 'workbench/command',
+      requestId: 'c-after',
+      payload: { commandId: 'workbench.afterPatch' },
+    });
+
+    await flushHostTasks();
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(harness.posted[1]).toMatchObject({
+      type: 'workbench/command-result',
+      requestId: 'c-after',
+      payload: { commandId: 'workbench.afterPatch', executed: true },
+    });
+
+    runtime.dispose();
+  });
+
+  it('isolates save and command failures as failed host results', async () => {
+    const commit = vi.fn(async () => {
+      throw new Error('Save service failed');
+    });
+    const registry = createCommandRegistry([
+      {
+        id: 'workbench.throwingCommand',
+        label: 'Throw',
+        run: () => {
+          throw new Error('Command failed');
+        },
+      },
+    ]);
+    const saveService = { commit };
+    const harness = createTransportHarness();
+
+    const runtime = createHostRuntime({
+      commandRegistry: registry,
+      contextFactory: () => ({}),
+      saveService,
+      transport: harness.transport,
+    });
+    harness.emit({
+      type: 'workbench/save/commit',
+      requestId: 's-failed',
+      payload: { path: 'src/index.ts', content: 'ok' },
+    });
+
+    await flushHostTasks();
+    expect(harness.posted[0]).toMatchObject({
+      type: 'workbench/save/result',
+      requestId: 's-failed',
+      payload: {
+        code: 'unknown',
+        kind: 'save:failure',
+        message: 'Save service failed',
+        path: 'src/index.ts',
+        requestId: 's-failed',
+      },
+    });
+
+    harness.emit({
+      type: 'workbench/command',
+      requestId: 'c-failed',
+      payload: { commandId: 'workbench.throwingCommand' },
+    });
+
+    await flushHostTasks();
+    expect(harness.posted[1]).toMatchObject({
+      type: 'workbench/command-result',
+      requestId: 'c-failed',
+      payload: { commandId: 'workbench.throwingCommand', executed: false },
+    });
+
+    runtime.dispose();
+    expect(() => runtime.dispose()).not.toThrow();
   });
 
   it('forwards chat cancel command', async () => {

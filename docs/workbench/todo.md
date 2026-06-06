@@ -34,13 +34,13 @@ For downstream extraction policy, see
 
 ## Repository Context
 
-| Area        | Current Baseline                                                                              |
-| ----------- | --------------------------------------------------------------------------------------------- |
-| Package     | `workbench-kit`                                                                               |
-| React entry | `@workbench-kit/react`                                                                        |
-| Existing UI | `SideBarViewFrame`, `SideBarList`, `SideBarListItem`, `Badge`, `Button`, `ConfirmDialog`      |
-| Workbench   | `WorkbenchShell`, workbench chat, settings, workspace explorer, editor, search, command model |
-| Validation  | `pnpm validate` covers typecheck, lint, tests, format check, and Storybook build              |
+| Area        | Current Baseline                                                                                                |
+| ----------- | --------------------------------------------------------------------------------------------------------------- |
+| Package     | `workbench-kit`                                                                                                 |
+| React entry | `@workbench-kit/react`                                                                                          |
+| Existing UI | `SideBarViewFrame`, `SideBarList`, `SideBarListItem`, `Badge`, `Button`, `ConfirmDialog`                        |
+| Workbench   | `WorkbenchShell`, workbench chat, settings, sectioned panels, workspace explorer, editor, search, command model |
+| Validation  | `pnpm validate` covers typecheck, lint, tests, format check, and Storybook build                                |
 
 ## Non-Goals
 
@@ -63,6 +63,8 @@ primitive rather than hard-code the downstream concept.
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Command execution  | Use generic execution metadata and callbacks. Do not require app-specific execution kinds, runtime objects, tool names, or runtime/API endpoints. |
 | Command suggest    | Provide palette and composer-anchored suggest surfaces with configurable labels, empty states, active item control, and callback-based select.    |
+| Navigation layout  | Provide a reusable fixed-nav + independently scrolling content layout that settings and sectioned panels can share.                               |
+| Section navigation | Provide a settings-like section navigation layout with independent nav/body scrolling and scrollspy state. Downstreams provide section content.   |
 | Command lifecycle  | Keep a shared status model generic. Downstream applications should map operation state into the public status type.                               |
 | Timeline events    | Render generic operation events. Downstream applications own event creation, ordering, payload shape, and sensitive metadata filtering.           |
 | Artifact preview   | Select preview renderers through extension, MIME type, artifact kind, or metadata. Do not include product artifact schemas in the package.        |
@@ -71,42 +73,90 @@ primitive rather than hard-code the downstream concept.
 
 ## Independent Work Queue
 
-| ID    | Status | Priority | Area      | Item                                  | Depends On                  | Package Target         | Notes                                                                                                                         |
-| ----- | ------ | -------- | --------- | ------------------------------------- | --------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| WB-01 | done   | P1       | Sidebar   | Section primitive                     | Existing sidebar frame      | `@workbench-kit/react` | Collapsible section with label, count/badge slot, and secondary action slot.                                                  |
-| WB-02 | done   | P1       | Sidebar   | Action list primitive                 | WB-01                       | `@workbench-kit/react` | Render command/action rows with icon, status, shortcut, danger marker, and disabled reason.                                   |
-| WB-03 | done   | P1       | Command   | Command model + palette/suggest shell | WB-02                       | `@workbench-kit/react` | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states.         |
-| WB-04 | done   | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react` | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.    |
-| WB-05 | done   | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react` | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.    |
-| WB-06 | done   | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react` | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots. |
-| WB-07 | done   | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react` | Toggle between code, preview, and split modes without requiring an application-specific editor.                               |
-| WB-08 | done   | P2       | Editor    | Preview renderer registry             | WB-07                       | `@workbench-kit/react` | Select preview renderers by file extension, MIME type, artifact kind, or fallback priority.                                   |
-| WB-09 | done   | P3       | Modal     | Confirmation flow                     | Existing dialog primitives  | `@workbench-kit/react` | Reusable confirmation flow for destructive or external side-effect actions.                                                   |
-| WB-10 | done   | P3       | Settings  | Schema form renderer                  | Existing field primitives   | `@workbench-kit/react` | Render simple settings forms from metadata without binding to an application settings store.                                  |
+| ID    | Status   | Priority | Area      | Item                                  | Depends On                  | Package Target                                     | Notes                                                                                                                             |
+| ----- | -------- | -------- | --------- | ------------------------------------- | --------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| WB-01 | done     | P1       | Sidebar   | Section primitive                     | Existing sidebar frame      | `@workbench-kit/react`                             | Collapsible section with label, count/badge slot, and secondary action slot.                                                      |
+| WB-02 | done     | P1       | Sidebar   | Action list primitive                 | WB-01                       | `@workbench-kit/react`                             | Render command/action rows with icon, status, shortcut, danger marker, and disabled reason.                                       |
+| WB-03 | done     | P1       | Command   | Command model + palette/suggest shell | WB-02                       | `@workbench-kit/react`                             | Searchable command surface and composer-anchored slash suggest with keyboard navigation and empty/unavailable states.             |
+| WB-04 | done     | P2       | Timeline  | Operation event renderer              | Generic event shape         | `@workbench-kit/react`                             | Generic cards for operation call, operation result, file write, error, and progress events in an ordered message timeline.        |
+| WB-05 | done     | P2       | Status    | Command status model                  | Generic lifecycle states    | `@workbench-kit/react`                             | Shared status labels and visual variants for idle, running, completed, failed, waiting, cancelled, and unavailable states.        |
+| WB-06 | done     | P2       | Workspace | Multi-provider explorer               | Existing tree/list patterns | `@workbench-kit/react`                             | Display files, virtual entries, state, config, and session artifacts from separate providers while preserving provider roots.     |
+| WB-07 | done     | P2       | Editor    | Code/preview/split shell              | Existing editor host        | `@workbench-kit/react`                             | Toggle between code, preview, and split modes without requiring an application-specific editor.                                   |
+| WB-08 | done     | P2       | Editor    | Preview renderer registry             | WB-07                       | `@workbench-kit/react`                             | Select preview renderers by file extension, MIME type, artifact kind, or fallback priority.                                       |
+| WB-09 | done     | P3       | Modal     | Confirmation flow                     | Existing dialog primitives  | `@workbench-kit/react`                             | Reusable confirmation flow for destructive or external side-effect actions.                                                       |
+| WB-10 | done     | P3       | Settings  | Schema form renderer                  | Existing field primitives   | `@workbench-kit/react`                             | Render simple settings forms from metadata without binding to an application settings store.                                      |
+| WB-11 | done     | P2       | Settings  | Sectioned panel layout                | Existing settings patterns  | `@workbench-kit/react`                             | Generic VS Code-style section nav + independently scrolling content panel with scrollspy state.                                   |
+| WB-12 | done     | P2       | Settings  | Structured data form renderer         | WB-10, WB-11                | `@workbench-kit/react`                             | Render nested data/forms/tables from generic schema metadata while keeping data paths, persistence, and runtime effects external. |
+| WB-13 | done     | P2       | Command   | Command grouping/tag shell            | WB-03, WB-05                | `@workbench-kit/react`                             | Optional grouped command list/sidebar shell using descriptor category, keywords, status, danger, and execution metadata.          |
+| WB-14 | done     | P2       | Command   | Shortcut command bridge               | WB-03, WB-07                | `@workbench-kit/react`                             | Provides generic shortcut matching, command dispatch helpers, a hook, and a bridge component without owning persistence.          |
+| WB-15 | deferred | P2       | State     | Dirty guard primitive                 | WB-09, WB-11                | `@workbench-kit/react`                             | Deferred until save/discard/confirm routing policy is explicit.                                                                   |
+| WB-16 | done     | P2       | Settings  | Text array field primitive            | WB-12                       | `@workbench-kit/react`                             | Renders editable string-array fields as item rows with add/remove controls while preserving whitespace during editing.            |
+| WB-17 | pending  | P1       | Settings  | Structured schema adapter             | WB-12, WB-16                | `@workbench-kit/react`                             | Convert JSON-schema-like field/section/table metadata into structured form sections without embedding consumer artifact schemas.  |
+| WB-18 | pending  | P1       | Settings  | Editable structured table field       | WB-12                       | `@workbench-kit/react`                             | Add generic row add/delete/edit table support with column metadata, default row values, read-only mode, and update callbacks.     |
+| WB-19 | pending  | P2       | Settings  | Section header action slot            | WB-11                       | `@workbench-kit/react`                             | Allow sectioned panels or structured data sections to expose toolbar/header actions without custom consumer wrappers.             |
+| WB-20 | pending  | P1       | Editor    | Resource draft controller             | WB-07, WB-12, WB-15         | `@workbench-kit/workspace`, `@workbench-kit/react` | Provide generic draft/save/discard state for nested resources edited inside a preview, not only the active editor file.           |
+| WB-21 | pending  | P2       | Workspace | Structured data path helpers          | WB-12                       | `@workbench-kit/workspace`                         | Extend generic nested path read/write helpers to support array indices and immutable updates for structured editors.              |
+| WB-22 | pending  | P2       | Editor    | Structured artifact editor shell      | WB-07, WB-12, WB-20         | `@workbench-kit/react`                             | Compose source/preview/split artifact editing with structured form preview actions, save/discard controls, and header policy.     |
 
 ## Suggested Implementation Order
 
-| Order | Items        | Reason                                                                                        |
-| ----- | ------------ | --------------------------------------------------------------------------------------------- |
-| 1     | WB-03        | Command-heavy workbenches need a shared command contract before palette and suggest surfaces. |
-| 2     | WB-05        | Command execution needs stable lifecycle labels and visual variants.                          |
-| 3     | WB-04        | Message and operation events should render in one ordered timeline.                           |
-| 4     | WB-07, WB-08 | Artifact preview should be reusable before adding specialized preview renderers.              |
-| 5     | WB-06        | Multi-provider explorer benefits from preview and artifact conventions settling first.        |
-| 6     | WB-09        | Confirmation flow can reuse command metadata and status feedback.                             |
-| 7     | WB-10        | Schema forms can follow once settings and confirmation surfaces are stable.                   |
+| Order | Items        | Reason                                                                                         |
+| ----- | ------------ | ---------------------------------------------------------------------------------------------- |
+| 1     | WB-03        | Command-heavy workbenches need a shared command contract before palette and suggest surfaces.  |
+| 2     | WB-05        | Command execution needs stable lifecycle labels and visual variants.                           |
+| 3     | WB-04        | Message and operation events should render in one ordered timeline.                            |
+| 4     | WB-07, WB-08 | Artifact preview should be reusable before adding specialized preview renderers.               |
+| 5     | WB-06        | Multi-provider explorer benefits from preview and artifact conventions settling first.         |
+| 6     | WB-09        | Confirmation flow can reuse command metadata and status feedback.                              |
+| 7     | WB-10        | Schema forms can follow once settings and confirmation surfaces are stable.                    |
+| 8     | WB-12        | Sectioned/nested forms should build on the simple form field primitives and sectioned layout.  |
+| 9     | WB-13        | Grouped command shells can follow after command descriptor metadata is stable.                 |
+| 10    | WB-14, WB-15 | Keyboard shortcuts and dirty guards should become generic once editor/form contexts converge.  |
+| 11    | WB-16        | Structured forms should support string-array rows without treating them as newline textareas.  |
+| 12    | WB-17, WB-21 | Schema adapters need generic nested path helpers before consumers can delete local form logic. |
+| 13    | WB-18, WB-19 | Editable tables and section actions remove the remaining custom structured-form wrappers.      |
+| 14    | WB-20, WB-22 | Preview-based resource editing should use generic draft/save/discard instead of local caches.  |
 
 ## Recommended Next Slice
 
-All listed Workbench Kit slices are complete. Future work should start from a
-new TODO item or a follow-up integration plan, while preserving the generic
-public API boundary documented here.
+The first downstream extraction pass is complete for command metadata,
+sectioned settings layout, structured data forms, and command grouping
+primitives. Shortcut dispatch is covered by WB-14, and structured text-array
+rows are covered by WB-16. WB-15 is deferred until save/discard/confirm routing
+policy is explicit.
 
-| Step | Task               | Expected Change                                                                                 |
-| ---- | ------------------ | ----------------------------------------------------------------------------------------------- |
-| 1    | Final validation   | Run full repository validation and required Storybook play tests after the last implementation. |
-| 2    | Final status check | Confirm all queue items are marked done and no domain-specific terms were introduced.           |
-| 3    | Consumer follow-up | Apply primitives in downstream applications outside this repository using application adapters. |
+The next downstream extraction pass should focus on removing consumer-owned
+structured form infrastructure that is already generic in behavior. Keep
+consumer-specific schema aliases, workflow stages, artifact resolution rules,
+and business labels outside Workbench Kit.
+
+| Step | Task                    | Expected Change                                                                                                        |
+| ---- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 1    | Structured form design  | Define a generic section/table/nested-field schema contract that does not include downstream artifact names.           |
+| 2    | Structured form extract | Move reusable nested data helpers and table/form rendering into `@workbench-kit/react`, with callbacks for updates.    |
+| 3    | Command grouping shell  | Add a grouped command list/sidebar primitive that consumes `WorkbenchCommandDescriptor` without owning execution.      |
+| 4    | Shortcut bridge         | Define active command context registration for shortcuts such as save, with persistence handled by the consumer.       |
+| 5    | Dirty guard primitive   | Extract reusable unsaved-change guard behavior with save/discard/confirm callbacks and Storybook coverage.             |
+| 6    | Text array field        | Completed by WB-16 with generic string-array rows, item-level editing, and no edit-time trimming/filtering.            |
+| 7    | Schema adapter          | Add a generic adapter from JSON-schema-like section/field/table metadata into `WorkbenchStructuredDataForm` sections.  |
+| 8    | Editable tables         | Add generic editable structured tables so consumers do not own row add/delete/update grid logic.                       |
+| 9    | Section action slots    | Add header/action slots to sectioned or structured form sections for save, discard, search, or command-backed actions. |
+| 10   | Resource draft editing  | Add draft helpers for nested resources edited inside preview panels, with persistence delegated to consumers.          |
+| 11   | Consumer follow-up      | Apply new primitives in downstream applications through application adapters and keep runtime effects outside the kit. |
+
+## Current Extraction Todo (2026-06-05)
+
+The latest downstream review identified the following generic work that should
+move into Workbench Kit before further consumer simplification:
+
+| Area                   | Workbench Kit Todo                                                                                                                                   | Keep In Consumer                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Structured schema      | Provide a schema-to-structured-form adapter for fields, sections, tables, defaults, enum/select, descriptions, readonly state, and validation hooks. | Domain-specific section aliases, default pattern names, workflow stage names, and artifact paths. |
+| Editable table fields  | Provide editable structured table rows with add/delete/update, column metadata, default row creation, and immutable data updates.                    | Business-specific column ordering and row semantics.                                              |
+| Section actions        | Add generic action slots to section headers so restore/save/search buttons do not require wrapper components.                                        | Button labels and command handlers tied to a specific application workflow.                       |
+| Resource draft state   | Provide generic draft/save/discard control for nested resources edited from an artifact preview.                                                     | Actual persistence, file lookup, resource resolution, and side-effect policy.                     |
+| Structured path helper | Move array-aware nested read/write helpers into `@workbench-kit/workspace`.                                                                          | Domain-specific fallback aliases from one data shape to another.                                  |
+| Artifact editor shell  | Compose source/preview/split with structured preview actions and dirty-state affordances.                                                            | Specialized preview renderers for query, test, deploy, or other business stages.                  |
 
 ## Suggested API Shape
 
@@ -117,6 +167,7 @@ small and generic.
 type WorkbenchCommandExecution =
   | { kind: 'local' }
   | { kind: 'remote' }
+  | { kind: 'agent' }
   | { kind: 'composite' }
   | { kind: string; label?: string };
 
@@ -130,6 +181,7 @@ interface WorkbenchCommandDescriptor {
   description?: string;
   category?: string;
   icon?: string;
+  keywords?: readonly string[];
   shortcut?: string;
 
   execution?: WorkbenchCommandExecution;
@@ -145,9 +197,37 @@ interface WorkbenchCommandDescriptor {
 ```
 
 The public command model should avoid making a downstream concept part of the
-required union. For example, a downstream application can represent a delegated
-command as `{ kind: 'delegated', label: 'Delegated' }`, but Workbench Kit should
-treat it as generic metadata and never call a runtime directly.
+required runtime contract. For example, a downstream application can represent
+a delegated command as `{ kind: 'agent' }` or `{ kind: 'delegated', label:
+'Delegated' }`, but Workbench Kit should treat it as generic metadata and never
+call a runtime directly.
+
+```ts
+interface WorkbenchNavigationPanelProps {
+  nav?: React.ReactNode;
+  navClassName?: string;
+  navProps?: Omit<React.ComponentPropsWithRef<'nav'>, 'children' | 'className'>;
+  content: React.ReactNode;
+  contentClassName?: string;
+  contentProps?: Omit<React.ComponentPropsWithRef<'div'>, 'children' | 'className'>;
+}
+
+interface WorkbenchSectionedPanelItem {
+  anchorId: string;
+  title: React.ReactNode;
+  count?: number;
+  render: () => React.ReactNode;
+}
+
+interface WorkbenchSectionedPanelProps {
+  ariaLabel: string;
+  items: readonly WorkbenchSectionedPanelItem[];
+  activeAnchorId?: string;
+  defaultActiveAnchorId?: string;
+  readOnly?: boolean;
+  onActiveAnchorChange?: (anchorId: string | undefined) => void;
+}
+```
 
 ```ts
 interface WorkbenchTimelineEvent {
@@ -281,6 +361,11 @@ type WorkbenchSchemaFormField =
     });
 ```
 
+Structured data form work extends the form family with a separate API rather
+than overloading the simple settings form. Current capabilities include nested
+data paths, section summaries, table rows, read-only mode, sample data, and
+update callbacks that return the next data object.
+
 Prefer render props or slots for application-specific visuals. Avoid accepting
 business-specific command names, artifact paths, runtime objects, or application
 architecture terms in primitive props.
@@ -299,17 +384,22 @@ architecture terms in primitive props.
 | WB-08 | Registry can select renderers by extension, MIME type, artifact kind, or fallback priority, and can render a clear unsupported state.                                                                         |
 | WB-09 | Confirmation flow supports default and danger variants, async confirm state, cancel/close behavior, and accessible dialog naming.                                                                             |
 | WB-10 | Schema form renderer supports simple text/select/checkbox/number fields, validation messages, disabled/read-only states, and submit/cancel callbacks without store lock.                                      |
+| WB-11 | Sectioned panel renders a navigation column only when needed, keeps nav/body scrolling independent, tracks the active section while scrolling, and exposes controlled active state.                           |
+| WB-12 | Structured data form can render nested form/table sections from generic schema metadata and emit data changes without owning persistence or runtime effects.                                                  |
+| WB-13 | Grouped command shell can render categories/tags/status/execution metadata and dispatch selected descriptors without executing commands internally.                                                           |
+| WB-14 | Shortcut bridge can match common keyboard shortcut metadata, dispatch enabled command registry entries against the active context, and leave all side effects in command handlers.                            |
+| WB-16 | Structured data form can render string-array fields as editable rows, emit item add/remove/update changes, and preserve whitespace while the user edits values.                                               |
 
 ## Storybook Requirements
 
-| Surface                  | Required Stories                                                                          |
-| ------------------------ | ----------------------------------------------------------------------------------------- |
-| Sidebar section/list     | Dense sidebar, multiple sections, collapsed groups, disabled action, danger item          |
-| Command palette/suggest  | Global palette, composer slash suggest, filtered results, empty state, keyboard selection |
-| Command event/status     | Running command, successful result, failure, waiting for confirmation, ordered timeline   |
-| Code/preview/split shell | Code only, preview only, split, unsupported preview                                       |
-| Multi-provider explorer  | Files, generated artifacts, state/config roots, empty provider                            |
-| Confirmation/schema form | Default confirm, danger confirm, async pending, read-only form                            |
+| Surface                  | Required Stories                                                                        |
+| ------------------------ | --------------------------------------------------------------------------------------- |
+| Sidebar section/list     | Dense sidebar, multiple sections, collapsed groups, disabled action, danger item        |
+| Command palette/suggest  | Global palette, composer slash suggest, grouped shell, shortcut bridge, empty state     |
+| Command event/status     | Running command, successful result, failure, waiting for confirmation, ordered timeline |
+| Code/preview/split shell | Code only, preview only, split, unsupported preview                                     |
+| Multi-provider explorer  | Files, generated artifacts, state/config roots, empty provider                          |
+| Confirmation/schema form | Default confirm, danger confirm, async pending, read-only form, sectioned panel         |
 
 ## Implementation Notes
 
@@ -329,14 +419,14 @@ support. The repository should validate primitives through Storybook, type
 checks, tests, formatting, and builds. Applying the primitives to a specific
 application remains outside this repository.
 
-| Check              | Expected Result                                                                                    |
-| ------------------ | -------------------------------------------------------------------------------------------------- |
-| Sidebar actions    | An application can render workflow and command actions without custom row layout code.             |
-| Command feedback   | An application can show command execution state and operation events with shared primitives.       |
-| Artifact preview   | An application can switch between code and preview for JSON, Markdown, SQL, and custom artifacts.  |
-| Explorer providers | An application can show files, virtual workspace entries, and generated artifacts in one explorer. |
-| Confirmation       | An application can gate external side-effect actions behind a reusable confirmation UI.            |
-| Settings forms     | An application can render metadata-driven settings forms without binding to a settings store.      |
+| Check              | Expected Result                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Sidebar actions    | An application can render workflow and command actions without custom row layout code.                        |
+| Command feedback   | An application can show command execution state, tags, keywords, and operation events with shared primitives. |
+| Artifact preview   | An application can switch between code and preview for JSON, Markdown, SQL, and custom artifacts.             |
+| Explorer providers | An application can show files, virtual workspace entries, and generated artifacts in one explorer.            |
+| Confirmation       | An application can gate external side-effect actions behind a reusable confirmation UI.                       |
+| Settings forms     | An application can render metadata-driven settings and sectioned forms without binding to a settings store.   |
 
 ## Request Prompt For Codex
 
@@ -345,9 +435,10 @@ this repository:
 
 ```text
 Please work in the current Workbench Kit repository on the active feature
-branch. All items currently listed in docs/workbench/todo.md are complete.
-Start by adding a new generic TODO item or by validating an explicitly requested
-follow-up.
+branch. WB-01 through WB-14 in docs/workbench/todo.md are complete. WB-15 is
+deferred, WB-16 is complete, and dirty-guard implementation should stay blocked
+on explicit save/discard/confirm routing policy unless a more specific request is
+provided.
 
 Keep the work generic and public-boundary safe:
 - Do not add application names, product workflow names, private paths, server
@@ -358,6 +449,7 @@ Keep the work generic and public-boundary safe:
 
 Before finishing, run:
 - pnpm --filter @workbench-kit/react typecheck
+- pnpm exec vitest run packages/react/src/workbench/ShortcutCommandBridge.test.ts packages/react/src/workbench/CommandPalette.test.ts packages/react/src/workbench/settings/SectionedPanel.test.tsx
 - pnpm format:check
 
 If public exports or shared types change broadly, run pnpm validate and
