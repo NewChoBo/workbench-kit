@@ -805,9 +805,12 @@ workbench platform:
 ## Downstream Migration Bridge (Pending)
 
 - [ ] `library-launch-migration-runbook.md` execution checklist is adopted by each downstream repo (`custom_launcher`, `tile_paper`) PR.
-- [ ] `custom_launcher` 실행 경로가 `@workbench-kit/contracts` launchpad 규약(launchType/workingDirectory/target trim)을 직접 호출하도록 정리.
-- [ ] `tile_paper`의 provider 라이브러리 액션 파생 로직과 JSON widget 이벤트 타입이 `WidgetRenderer*` 계약으로 정렬.
-- [ ] 동등성 테스트(샘플 1개당 launchType/file/folder/url, arguments, subtitle, canLaunch) 기준으로 두 앱에서 회귀 게이트 통과.
+- [ ] `custom_launcher` launch paths call `@workbench-kit/contracts` launchpad rules directly
+      (`launchType`, `workingDirectory`, target trim).
+- [ ] `tile_paper` provider-library action derivation and JSON widget event types align with
+      `WidgetRenderer*` contracts.
+- [ ] Both apps pass regression gates with per-sample equivalence checks for
+      `launchType`/`file`/`folder`/`url`, `arguments`, `subtitle`, and `canLaunch`.
 
 ## Next Clarification Questions (for next milestone)
 
