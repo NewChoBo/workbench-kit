@@ -1,4 +1,11 @@
-export { WorkspaceEditor, languageForFile, monacoThemeForWorkspaceTheme } from './WorkspaceEditor';
+export {
+  WorkspaceEditor,
+  MONACO_DARK_THEME_ID,
+  MONACO_LIGHT_THEME_ID,
+  defineMonacoWorkbenchTheme,
+  languageForFile,
+  monacoThemeForWorkspaceTheme,
+} from './WorkspaceEditor';
 export type { WorkspaceEditorProps, WorkspaceEditorTheme } from './WorkspaceEditor';
 export { WorkspaceEditorPanel } from './WorkspaceEditorPanel';
 export type {

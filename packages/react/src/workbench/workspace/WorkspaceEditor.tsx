@@ -12,11 +12,11 @@ loader.config({ monaco });
 
 export type WorkspaceEditorTheme = 'dark' | 'light';
 
-const MONACO_DARK_THEME_ID = 'newchobo-workbench-dark';
-const MONACO_LIGHT_THEME_ID = 'newchobo-workbench-light';
+export const MONACO_DARK_THEME_ID = 'newchobo-workbench-dark';
+export const MONACO_LIGHT_THEME_ID = 'newchobo-workbench-light';
 let monacoThemeDefined = false;
 
-function defineMonacoWorkbenchTheme(monacoInstance: typeof monaco) {
+export function defineMonacoWorkbenchTheme(monacoInstance: typeof monaco) {
   if (monacoThemeDefined) return;
 
   monacoInstance.editor.defineTheme(MONACO_DARK_THEME_ID, {
@@ -98,12 +98,31 @@ export function monacoThemeForWorkspaceTheme(theme: WorkspaceEditorTheme) {
 }
 
 export function languageForFile(path: string, mimeType?: string) {
-  const extension = extensionOfPath(path);
-  if (mimeType === 'application/json') return 'json';
-  if (mimeType === 'text/css') return 'css';
-  if (mimeType === 'text/html') return 'html';
-  if (mimeType === 'text/markdown') return 'markdown';
+  switch (mimeType) {
+    case 'application/javascript':
+    case 'text/javascript':
+      return 'javascript';
+    case 'application/json':
+      return 'json';
+    case 'application/typescript':
+    case 'text/typescript':
+      return 'typescript';
+    case 'application/xml':
+    case 'text/xml':
+      return 'xml';
+    case 'text/css':
+      return 'css';
+    case 'text/html':
+      return 'html';
+    case 'text/markdown':
+      return 'markdown';
+    case 'text/x-sql':
+      return 'sql';
+    case 'text/yaml':
+      return 'yaml';
+  }
 
+  const extension = extensionOfPath(path);
   switch (extension) {
     case 'css':
       return 'css';
@@ -119,6 +138,8 @@ export function languageForFile(path: string, mimeType?: string) {
     case 'md':
     case 'mdx':
       return 'markdown';
+    case 'sql':
+      return 'sql';
     case 'ts':
     case 'tsx':
       return 'typescript';
