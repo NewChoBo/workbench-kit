@@ -14,9 +14,5 @@ export type {
   UseSlashCommandSuggestOptions,
   UseSlashCommandSuggestResult,
 } from './useSlashCommandSuggest';
-export {
-  getSlashCommandQuery,
-  isSlashCommandInput,
-  parseSlashCommand,
-} from './slashCommand';
+export { getSlashCommandQuery, isSlashCommandInput, parseSlashCommand } from './slashCommand';
 export type { SlashCommandParseResult } from './slashCommand';

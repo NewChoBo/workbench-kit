@@ -13,6 +13,7 @@ import type {
   WorkbenchStandaloneBootstrapEvent,
   WorkbenchTheme,
 } from './standalone';
+import { WorkspaceDraftsProvider } from './workspace/WorkspaceDraftsContext';
 
 const DEFAULT_THEME: WorkbenchTheme = 'dark';
 const DEFAULT_ACTIVITY_ID = 'explorer';
@@ -234,58 +235,60 @@ export function WorkbenchStandaloneShell<
   const overlays = renderOverlays?.(context);
 
   return (
-    <WorkbenchShell
-      activityBar={{
-        ...activityBar,
-        items: activityBarItems,
-        secondaryItems: hasSettingsSection
-          ? [
-              {
-                id: settingsItemId,
-                icon: settingsItemIcon ?? <i className="codicon codicon-settings-gear" />,
-                label: settingsItemLabel,
-                active: isSettingsOpen,
-              },
-            ]
-          : [],
-        onContextMenu: (event) => onActivityBarContextMenu?.(event, context),
-        onItemActivate: (item) => {
-          if (item.id === settingsItemId) {
-            shell.openSettings();
-            emitEvent({
-              type: 'status-message',
-              message: `Settings ${isSettingsOpen ? 'opened' : 'closed'}`,
-            });
-            return;
-          }
+    <WorkspaceDraftsProvider>
+      <WorkbenchShell
+        activityBar={{
+          ...activityBar,
+          items: activityBarItems,
+          secondaryItems: hasSettingsSection
+            ? [
+                {
+                  id: settingsItemId,
+                  icon: settingsItemIcon ?? <i className="codicon codicon-settings-gear" />,
+                  label: settingsItemLabel,
+                  active: isSettingsOpen,
+                },
+              ]
+            : [],
+          onContextMenu: (event) => onActivityBarContextMenu?.(event, context),
+          onItemActivate: (item) => {
+            if (item.id === settingsItemId) {
+              shell.openSettings();
+              emitEvent({
+                type: 'status-message',
+                message: `Settings ${isSettingsOpen ? 'opened' : 'closed'}`,
+              });
+              return;
+            }
 
-          if (activityIds.has(item.id as TActivityId)) {
-            activateActivity(item.id as TActivityId);
+            if (activityIds.has(item.id as TActivityId)) {
+              activateActivity(item.id as TActivityId);
+              onActivityBarItemActivate?.(item.id, context);
+              return;
+            }
+
             onActivityBarItemActivate?.(item.id, context);
-            return;
-          }
-
-          onActivityBarItemActivate?.(item.id, context);
-        },
-      }}
-      compactStatus={compactStatus}
-      onStatusItemActivate={(item) => onStatusItemActivate?.(item, context)}
-      primarySidebar={{
-        className: primarySidebarClassName,
-        isVisible: isPrimarySidebarVisible,
-        maxPrimarySizePercent: maxPrimarySidebarSizePercent,
-        minPrimarySizePercent: minPrimarySidebarSizePercent,
-        onSizePercentChange: shell.setPrimarySidebarSizePercent,
-        primarySizePercent: primarySidebarSizePercent,
-        node: primarySidebarNode,
-        style: primarySidebarStyle,
-      }}
-      rootClassName={rootClassName}
-      rootStyle={rootStyle}
-      secondaryArea={secondaryArea}
-      statusSections={statusSections}
-      theme={theme}
-      overlays={overlays}
-    />
+          },
+        }}
+        compactStatus={compactStatus}
+        onStatusItemActivate={(item) => onStatusItemActivate?.(item, context)}
+        primarySidebar={{
+          className: primarySidebarClassName,
+          isVisible: isPrimarySidebarVisible,
+          maxPrimarySizePercent: maxPrimarySidebarSizePercent,
+          minPrimarySizePercent: minPrimarySidebarSizePercent,
+          onSizePercentChange: shell.setPrimarySidebarSizePercent,
+          primarySizePercent: primarySidebarSizePercent,
+          node: primarySidebarNode,
+          style: primarySidebarStyle,
+        }}
+        rootClassName={rootClassName}
+        rootStyle={rootStyle}
+        secondaryArea={secondaryArea}
+        statusSections={statusSections}
+        theme={theme}
+        overlays={overlays}
+      />
+    </WorkspaceDraftsProvider>
   );
 }

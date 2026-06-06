@@ -1,6 +1,22 @@
 import type { ComponentPropsWithRef, FormEvent, ReactNode } from 'react';
+import {
+  asWorkbenchStructuredDataRecord,
+  getWorkbenchStructuredDataValue,
+  isWorkbenchStructuredDataRecord,
+  setWorkbenchStructuredDataPathOrRootValue,
+  setWorkbenchStructuredDataValue,
+  type WorkbenchStructuredDataPath,
+  type WorkbenchStructuredDataRecord,
+} from '@workbench-kit/workspace';
 
-export type WorkbenchStructuredDataPath = readonly (number | string)[];
+export type { WorkbenchStructuredDataPath, WorkbenchStructuredDataRecord };
+export {
+  asWorkbenchStructuredDataRecord,
+  getWorkbenchStructuredDataValue,
+  isWorkbenchStructuredDataRecord,
+  setWorkbenchStructuredDataPathOrRootValue,
+  setWorkbenchStructuredDataValue,
+};
 
 export type WorkbenchStructuredDataFieldType =
   | 'checkbox'
@@ -10,8 +26,6 @@ export type WorkbenchStructuredDataFieldType =
   | 'text-array';
 
 export type WorkbenchStructuredDataFieldValue = boolean | number | string | readonly string[];
-
-export type WorkbenchStructuredDataRecord = Record<string, unknown>;
 
 export type WorkbenchStructuredDataFormErrors = Record<string, ReactNode>;
 
@@ -74,7 +88,10 @@ export interface WorkbenchStructuredDataSchemaDocument {
   ui?: {
     patterns?: Record<
       string,
-      { label?: string | undefined; sections?: readonly WorkbenchStructuredDataSchemaSectionSummary[] | undefined }
+      {
+        label?: string | undefined;
+        sections?: readonly WorkbenchStructuredDataSchemaSectionSummary[] | undefined;
+      }
     >;
   };
 }
@@ -158,8 +175,10 @@ export interface WorkbenchStructuredDataFormTextArrayField extends WorkbenchStru
   type: 'text-array';
 }
 
-export interface WorkbenchStructuredDataTextArrayInputProps
-  extends Omit<ComponentPropsWithRef<'div'>, 'children' | 'onChange'> {
+export interface WorkbenchStructuredDataTextArrayInputProps extends Omit<
+  ComponentPropsWithRef<'div'>,
+  'children' | 'onChange'
+> {
   addLabel?: ReactNode | undefined;
   ariaDescribedBy?: string | undefined;
   ariaLabel: string;
@@ -280,44 +299,6 @@ export interface WorkbenchStructuredDataFormProps extends Omit<
 
 const EMPTY_RECORD: WorkbenchStructuredDataRecord = {};
 
-export function getWorkbenchStructuredDataValue(
-  data: unknown,
-  path: WorkbenchStructuredDataPath,
-) {
-  return path.reduce<unknown>((currentValue, segment) => {
-    if (Array.isArray(currentValue)) {
-      const index = getWorkbenchStructuredDataArrayIndex(segment);
-      return index === null ? undefined : currentValue[index];
-    }
-    if (!isWorkbenchStructuredDataRecord(currentValue)) return undefined;
-    return currentValue[String(segment)];
-  }, data);
-}
-
-export function setWorkbenchStructuredDataValue(
-  data: WorkbenchStructuredDataRecord,
-  path: WorkbenchStructuredDataPath,
-  value: unknown,
-): WorkbenchStructuredDataRecord {
-  if (path.length === 0) return data;
-
-  const nextValue = setWorkbenchStructuredDataPathValue(data, path, value);
-  return isWorkbenchStructuredDataRecord(nextValue) ? nextValue : {};
-}
-
-export function setWorkbenchStructuredDataPathOrRootValue({
-  data,
-  path,
-  value,
-}: {
-  data: unknown;
-  path: WorkbenchStructuredDataPath;
-  value: unknown;
-}) {
-  if (path.length === 0) return value;
-  return setWorkbenchStructuredDataValue(asWorkbenchStructuredDataRecord(data) ?? {}, path, value);
-}
-
 export function getWorkbenchStructuredDataFormFieldDefaultValue(
   field: WorkbenchStructuredDataFormField,
 ): WorkbenchStructuredDataFieldValue {
@@ -418,12 +399,6 @@ export function formatWorkbenchStructuredDataSchemaValue(value: unknown) {
   if (typeof value === 'boolean') return value ? 'Y' : 'N';
   if (typeof value === 'object') return JSON.stringify(value, null, 2);
   return String(value);
-}
-
-export function asWorkbenchStructuredDataRecord(
-  value: unknown,
-): WorkbenchStructuredDataRecord | null {
-  return isWorkbenchStructuredDataRecord(value) ? value : null;
 }
 
 export function getWorkbenchStructuredDataSchemaSectionId(
@@ -693,9 +668,7 @@ export function createWorkbenchStructuredDataSchemaEmptyRow({
   getDefinition,
 }: {
   columns: readonly string[];
-  getDefinition: (
-    column: string,
-  ) => WorkbenchStructuredDataSchemaFieldDefinition | undefined;
+  getDefinition: (column: string) => WorkbenchStructuredDataSchemaFieldDefinition | undefined;
 }) {
   return columns.reduce<WorkbenchStructuredDataRecord>((row, column) => {
     row[column] = getWorkbenchStructuredDataSchemaFieldDefaultValue(getDefinition(column));
@@ -730,7 +703,9 @@ export function createWorkbenchStructuredDataSchemaDocumentSampleData(
 
     if (section.type === 'table') {
       const schemaTable = getWorkbenchStructuredDataSchemaDocumentTableDefinition(schema, section);
-      const columns = section.columns?.length ? section.columns : Object.keys(schemaTable?.items ?? {});
+      const columns = section.columns?.length
+        ? section.columns
+        : Object.keys(schemaTable?.items ?? {});
 
       return setWorkbenchStructuredDataValue(sample, path.split('.'), [
         createWorkbenchStructuredDataSchemaDocumentEmptyRow({
@@ -894,54 +869,6 @@ export function isWorkbenchStructuredDataFormSubmittable({
   readOnly?: boolean;
 }) {
   return !disabled && !readOnly && Object.keys(errors).length === 0;
-}
-
-function isWorkbenchStructuredDataRecord(value: unknown): value is WorkbenchStructuredDataRecord {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function getWorkbenchStructuredDataArrayIndex(segment: number | string) {
-  const index = typeof segment === 'number' ? segment : Number(segment);
-  return Number.isInteger(index) && index >= 0 ? index : null;
-}
-
-function createWorkbenchStructuredDataContainer(segment: number | string | undefined) {
-  return segment !== undefined && getWorkbenchStructuredDataArrayIndex(segment) !== null ? [] : {};
-}
-
-function cloneWorkbenchStructuredDataContainer(
-  value: unknown,
-  nextSegment: number | string | undefined,
-): Record<string, unknown> | unknown[] {
-  if (Array.isArray(value)) return [...value];
-  if (isWorkbenchStructuredDataRecord(value)) return { ...value };
-  return createWorkbenchStructuredDataContainer(nextSegment);
-}
-
-function setWorkbenchStructuredDataPathValue(
-  data: unknown,
-  path: WorkbenchStructuredDataPath,
-  value: unknown,
-): unknown {
-  if (path.length === 0) return value;
-
-  const [segment, ...rest] = path;
-  const root = cloneWorkbenchStructuredDataContainer(data, segment);
-  const key = Array.isArray(root) ? getWorkbenchStructuredDataArrayIndex(segment) : String(segment);
-  if (key === null) return root;
-
-  if (rest.length === 0) {
-    root[key as keyof typeof root] = value as never;
-    return root;
-  }
-
-  const currentChild = root[key as keyof typeof root];
-  root[key as keyof typeof root] = setWorkbenchStructuredDataPathValue(
-    currentChild,
-    rest,
-    value,
-  ) as never;
-  return root;
 }
 
 function isWorkbenchStructuredDataFormEmptyValue(value: WorkbenchStructuredDataFieldValue) {

@@ -1,8 +1,4 @@
-import type {
-  ComponentPropsWithRef,
-  CSSProperties,
-  ReactNode,
-} from 'react';
+import type { ComponentPropsWithRef, CSSProperties, ReactNode } from 'react';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import { toLengthValue } from './layoutHelpers';
@@ -100,12 +96,6 @@ export type WorkbenchBannerMessageProps = ComponentPropsWithRef<'span'>;
 
 export function WorkbenchBannerMessage({ className, ...props }: WorkbenchBannerMessageProps) {
   return <span className={cx('ui-workbench-banner__message', className)} {...props} />;
-}
-
-export type WorkbenchSectionTitleProps = ComponentPropsWithRef<'div'>;
-
-export function WorkbenchSectionTitle({ className, ...props }: WorkbenchSectionTitleProps) {
-  return <div className={cx('ui-workbench-section-title', className)} {...props} />;
 }
 
 export type WorkbenchEditorFrameProps = ComponentPropsWithRef<'div'>;

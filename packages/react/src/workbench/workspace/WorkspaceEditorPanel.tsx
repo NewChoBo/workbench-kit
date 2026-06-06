@@ -5,13 +5,7 @@ import {
   resolveCommandMenuItems,
 } from '@workbench-kit/core';
 import { isSaveSuccess, type SaveResult } from '@workbench-kit/contracts';
-import {
-  discardWorkspaceFileDraft,
-  resolveWorkspaceFileDraft,
-  saveWorkspaceFileDraft,
-  updateWorkspaceFileDraft,
-  type WorkspaceFileDraftMap,
-} from '@workbench-kit/workspace';
+import { useWorkspaceDrafts } from './WorkspaceDraftsContext';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { EmptyState } from '../../primitives/EmptyState';
@@ -105,42 +99,29 @@ export function WorkspaceEditorPanel({
     .filter((file): file is WorkspaceFile => Boolean(file));
   const selectedFile = selectedPath ? filesByPath.get(selectedPath) : openFiles[0];
   const [deletePath, setDeletePath] = useState<string | null>(null);
-  const [draftsByPath, setDraftsByPath] = useState<WorkspaceFileDraftMap>({});
+  const {
+    getDraft,
+    isDirty,
+    updateDraft: updateDraftContext,
+    saveDraft: saveDraftContext,
+    discardDraft: discardDraftContext,
+  } = useWorkspaceDrafts();
   const [tabContextMenu, setTabContextMenu] = useState<{
     path: string | null;
     x: number;
     y: number;
   } | null>(null);
-  const selectedDraft = selectedFile
-    ? resolveWorkspaceFileDraft({
-        draft: draftsByPath[selectedFile.path],
-        file: selectedFile,
-      })
-    : null;
-  const selectedContent = selectedDraft?.content ?? '';
+  const selectedContent = selectedFile ? getDraft(selectedFile.path, selectedFile.content) : '';
 
   const updateDraft = (path: string, content: string) => {
-    setDraftsByPath((currentDrafts) =>
-      updateWorkspaceFileDraft({
-        content,
-        drafts: currentDrafts,
-        fileContent: filesByPath.get(path)?.content ?? '',
-        path,
-      }),
-    );
+    updateDraftContext(path, content, filesByPath.get(path)?.content ?? '');
   };
 
   const saveFile = (path: string, content: string) => {
     Promise.resolve(onSaveFile?.(path, content, filesByPath.get(path)?.updatedAt))
       .then((result) => {
         if (!result || isSaveSuccess(result)) {
-          setDraftsByPath((currentDrafts) =>
-            saveWorkspaceFileDraft({
-              content,
-              drafts: currentDrafts,
-              path,
-            }),
-          );
+          saveDraftContext(path, content);
         }
       })
       .catch(() => {
@@ -149,12 +130,7 @@ export function WorkspaceEditorPanel({
   };
 
   const discardFile = (file: WorkspaceFile) => {
-    setDraftsByPath((currentDrafts) =>
-      discardWorkspaceFileDraft({
-        drafts: currentDrafts,
-        file,
-      }),
-    );
+    discardDraftContext(file.path, file.content);
   };
 
   const handleTabContextMenu = (event: MouseEvent<HTMLElement>, path: string | null) => {
@@ -167,13 +143,7 @@ export function WorkspaceEditorPanel({
     file: WorkspaceFile | undefined,
   ): WorkbenchEditorCommandContext => {
     const filePath = file?.path;
-    const draft = file
-      ? resolveWorkspaceFileDraft({
-          draft: draftsByPath[file.path],
-          file,
-        })
-      : undefined;
-    const content = draft?.content ?? '';
+    const content = file ? getDraft(file.path, file.content) : '';
 
     return {
       canCloseAll: Boolean(onCloseAll),
@@ -202,7 +172,7 @@ export function WorkspaceEditorPanel({
       filePath,
       hasMultipleOpenFiles: openFiles.length > 1,
       hasOpenFiles: openFiles.length > 0,
-      hasUnsavedChanges: Boolean(file && content !== file.content),
+      hasUnsavedChanges: Boolean(file && isDirty(file.path, file.content)),
       saveFile: () => {
         if (filePath) saveFile(filePath, content);
       },
@@ -230,7 +200,7 @@ export function WorkspaceEditorPanel({
     }
     setDeletePath(null);
   };
-  const selectedIsDirty = Boolean(selectedFile && selectedContent !== selectedFile.content);
+  const selectedIsDirty = Boolean(selectedFile && isDirty(selectedFile.path, selectedFile.content));
 
   return (
     <Panel className="workspace-panel">
@@ -255,11 +225,7 @@ export function WorkspaceEditorPanel({
               >
                 {openFiles.map((file) => {
                   const isActive = file.path === selectedFile?.path;
-                  const draft = resolveWorkspaceFileDraft({
-                    draft: draftsByPath[file.path],
-                    file,
-                  });
-                  const isDirty = draft.content !== file.content;
+                  const isDirtyValue = isDirty(file.path, file.content);
 
                   return (
                     <div
@@ -277,7 +243,7 @@ export function WorkspaceEditorPanel({
                       >
                         <WorkspaceFileIcon mimeType={file.mimeType} path={file.path} />
                         <span className="workspace-editor__path">{fileNameOfPath(file.path)}</span>
-                        {isDirty ? (
+                        {isDirtyValue ? (
                           <span className="workspace-editor__dirty" aria-label="Unsaved changes" />
                         ) : null}
                       </button>

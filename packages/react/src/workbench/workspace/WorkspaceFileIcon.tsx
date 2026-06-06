@@ -141,7 +141,13 @@ export interface WorkspaceFileIconProps {
   path: string;
 }
 
-export function WorkspaceFileIcon({ className, directory, expanded, mimeType, path }: WorkspaceFileIconProps) {
+export function WorkspaceFileIcon({
+  className,
+  directory,
+  expanded,
+  mimeType,
+  path,
+}: WorkspaceFileIconProps) {
   const kind = directory ? 'folder' : fileIconKindForPath(path, mimeType);
   const icon = directory && expanded ? 'codicon-folder-opened' : codiconForFileKind(kind);
 

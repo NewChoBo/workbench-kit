@@ -2299,8 +2299,7 @@
   grid-template-columns: 24px minmax(0, 1fr);
 }
 
-.ui-workbench-command-group-shell[data-show-group-nav='false']
-  .ui-workbench-command-item__meta {
+.ui-workbench-command-group-shell[data-show-group-nav='false'] .ui-workbench-command-item__meta {
   grid-column: 2;
   justify-content: flex-start;
 }

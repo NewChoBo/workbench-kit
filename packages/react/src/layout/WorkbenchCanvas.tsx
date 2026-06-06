@@ -453,9 +453,7 @@ export function WorkbenchCanvasDragGhost({
     '--ui-workbench-canvas-drag-ghost-y': toLengthValue(y),
     '--ui-workbench-canvas-drag-ghost-width': toLengthValue(width),
     '--ui-workbench-canvas-drag-ghost-height': toLengthValue(height),
-    ...(zIndex !== undefined
-      ? { '--ui-workbench-canvas-drag-ghost-z-index': String(zIndex) }
-      : {}),
+    ...(zIndex !== undefined ? { '--ui-workbench-canvas-drag-ghost-z-index': String(zIndex) } : {}),
     ...style,
   } as CSSProperties;
 

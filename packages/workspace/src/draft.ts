@@ -91,15 +91,33 @@ export function saveWorkspaceFileDraft({
   };
 }
 
-export function discardWorkspaceFileDraft({
+export interface DiscardWorkspaceDraftInput {
+  drafts: WorkspaceFileDraftMap;
+  path: string;
+  fileContent: string;
+}
+
+export function discardWorkspaceDraft({
   drafts,
-  file,
-}: DiscardWorkspaceFileDraftInput): WorkspaceFileDraftMap {
-  const normalizedPath = normalizeWorkspacePath(file.path);
+  path,
+  fileContent,
+}: DiscardWorkspaceDraftInput): WorkspaceFileDraftMap {
+  const normalizedPath = normalizeWorkspacePath(path);
   if (!normalizedPath) return drafts;
 
   return {
     ...drafts,
-    [normalizedPath]: createWorkspaceFileDraft(file.content),
+    [normalizedPath]: createWorkspaceFileDraft(fileContent),
   };
+}
+
+export function discardWorkspaceFileDraft({
+  drafts,
+  file,
+}: DiscardWorkspaceFileDraftInput): WorkspaceFileDraftMap {
+  return discardWorkspaceDraft({
+    drafts,
+    path: file.path,
+    fileContent: file.content,
+  });
 }

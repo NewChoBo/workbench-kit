@@ -1,12 +1,6 @@
 export * from './structuredDataSchema';
 
-import {
-  useId,
-  useMemo,
-  useState,
-  type FormEvent,
-  type ReactNode,
-} from 'react';
+import { useId, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Button } from '../../primitives/Button';
 import { Checkbox } from '../../primitives/Checkbox';
 import { EmptyState } from '../../primitives/EmptyState';

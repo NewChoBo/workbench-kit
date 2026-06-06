@@ -140,3 +140,12 @@ export type {
   WorkspaceSearchResult,
   WorkspaceTreeNode,
 } from './types';
+export {
+  WorkspaceDraftsContext,
+  WorkspaceDraftsProvider,
+  useWorkspaceDrafts,
+} from './WorkspaceDraftsContext';
+export type {
+  WorkspaceDraftsContextValue,
+  WorkspaceDraftsProviderProps,
+} from './WorkspaceDraftsContext';

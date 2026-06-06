@@ -520,3 +520,14 @@ export { TextArea } from './primitives/TextArea';
 export type { TextAreaProps } from './primitives/TextArea';
 export { Toolbar } from './primitives/Toolbar';
 export type { ToolbarProps } from './primitives/Toolbar';
+export {
+  WorkspaceDraftsContext,
+  WorkspaceDraftsProvider,
+  useWorkspaceDrafts,
+} from './workbench/workspace/WorkspaceDraftsContext';
+export type {
+  WorkspaceDraftsContextValue,
+  WorkspaceDraftsProviderProps,
+} from './workbench/workspace/WorkspaceDraftsContext';
+export { StructuredArtifactEditor } from './workbench/StructuredArtifactEditor';
+export type { StructuredArtifactEditorProps } from './workbench/StructuredArtifactEditor';

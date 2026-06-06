@@ -35,15 +35,12 @@ export function useSlashCommandSuggest({
   const commandQuery = getSlashCommandQuery(value);
 
   const suggestedCommands = useMemo(
-    () =>
-      isOpen ? filterWorkbenchCommands({ commands, limit, query: commandQuery }) : [],
+    () => (isOpen ? filterWorkbenchCommands({ commands, limit, query: commandQuery }) : []),
     [commands, commandQuery, isOpen, limit],
   );
 
   const resolvedActiveIndex =
-    suggestedCommands.length > 0
-      ? Math.min(activeCommandIndex, suggestedCommands.length - 1)
-      : -1;
+    suggestedCommands.length > 0 ? Math.min(activeCommandIndex, suggestedCommands.length - 1) : -1;
   const activeCommand =
     resolvedActiveIndex >= 0 ? suggestedCommands[resolvedActiveIndex] : undefined;
 
