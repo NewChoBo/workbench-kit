@@ -10,11 +10,13 @@ export {
 } from './path';
 export {
   createWorkspaceFileDraft,
+  discardWorkspaceDraft,
   discardWorkspaceFileDraft,
   isWorkspaceFileDraftDirty,
   resolveWorkspaceFileDraft,
   saveWorkspaceFileDraft,
   updateWorkspaceFileDraft,
+  type DiscardWorkspaceDraftInput,
   type DiscardWorkspaceFileDraftInput,
   type ResolveWorkspaceFileDraftInput,
   type SaveWorkspaceFileDraftInput,
@@ -62,3 +64,16 @@ export type {
   WorkspaceSearchResult,
   WorkspaceTreeNode,
 } from './types';
+export {
+  asWorkbenchStructuredDataRecord,
+  cloneWorkbenchStructuredDataContainer,
+  createWorkbenchStructuredDataContainer,
+  getWorkbenchStructuredDataArrayIndex,
+  getWorkbenchStructuredDataValue,
+  isWorkbenchStructuredDataRecord,
+  setWorkbenchStructuredDataPathOrRootValue,
+  setWorkbenchStructuredDataPathValue,
+  setWorkbenchStructuredDataValue,
+  type WorkbenchStructuredDataPath,
+  type WorkbenchStructuredDataRecord,
+} from './structuredPath';

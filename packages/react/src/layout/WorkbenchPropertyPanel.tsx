@@ -9,7 +9,6 @@ import { Select } from '../primitives/Select';
 import { TextInput } from '../primitives/TextInput';
 import type { ControlWidth } from '../primitives/TextInput';
 import { cx } from '../utils/cx';
-import { WorkbenchSectionTitle } from './WorkbenchLayoutBase';
 
 export type WorkbenchPropertyRowProps = FieldProps;
 
@@ -306,6 +305,12 @@ export function WorkbenchPropertyPanel({
       {...props}
     />
   );
+}
+
+export type WorkbenchSectionTitleProps = ComponentPropsWithRef<'div'>;
+
+export function WorkbenchSectionTitle({ className, ...props }: WorkbenchSectionTitleProps) {
+  return <div className={cx('ui-workbench-section-title', className)} {...props} />;
 }
 
 export interface WorkbenchPropertySectionProps extends Omit<

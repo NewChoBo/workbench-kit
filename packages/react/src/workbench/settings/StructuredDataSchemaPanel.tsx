@@ -33,6 +33,7 @@ import {
   type WorkbenchStructuredDataSchemaDocument,
   type WorkbenchStructuredDataSchemaSectionAliases,
   type WorkbenchStructuredDataSchemaSectionSummary,
+  type WorkbenchStructuredDataPath,
 } from './StructuredDataForm';
 
 export interface WorkbenchStructuredDataSchemaPanelClassNames {
@@ -483,7 +484,36 @@ export function WorkbenchStructuredDataSchemaPanel({
       onDataChange?.(value);
       return;
     }
-    onDataChange?.(setWorkbenchStructuredDataPathOrRootValue({ data: panelData, path, value }));
+
+    let resolvedPath: WorkbenchStructuredDataPath = path;
+    const [sectionKey, ...rest] = path;
+    const aliases = sectionValueAliases?.[sectionKey];
+    if (aliases && aliases.length > 0) {
+      let foundAlias = false;
+      for (const aliasPath of aliases) {
+        if (aliasPath.length === 0) continue;
+        const val = getWorkbenchStructuredDataValue(panelData, aliasPath);
+        if (val !== null && val !== undefined) {
+          resolvedPath = [...aliasPath, ...rest];
+          foundAlias = true;
+          break;
+        }
+      }
+      if (!foundAlias) {
+        const firstAlias = aliases[0];
+        if (firstAlias !== undefined) {
+          resolvedPath = [...firstAlias, ...rest];
+        }
+      }
+    }
+
+    onDataChange?.(
+      setWorkbenchStructuredDataPathOrRootValue({
+        data: panelData,
+        path: resolvedPath,
+        value,
+      }),
+    );
   };
 
   return (

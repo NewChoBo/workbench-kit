@@ -1,9 +1,5 @@
 import { forwardRef } from 'react';
-import type {
-  ComponentPropsWithRef,
-  CSSProperties,
-  ReactNode,
-} from 'react';
+import type { ComponentPropsWithRef, CSSProperties, ReactNode } from 'react';
 import { IconButton } from '../primitives/IconButton';
 import type { IconButtonProps } from '../primitives/IconButton';
 import { cxCodicon } from '../utils/codicon';

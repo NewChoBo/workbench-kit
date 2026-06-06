@@ -16,7 +16,7 @@ const config: StorybookConfig = {
     config.resolve.dedupe = Array.from(
       new Set([...(config.resolve.dedupe ?? []), 'react', 'react-dom']),
     );
-    
+
     // Allow serving files from the workspace root or parent directories to avoid 403 Forbidden on symlinked resources
     config.server ??= {};
     config.server.fs ??= {};
@@ -24,12 +24,11 @@ const config: StorybookConfig = {
       new Set([
         ...(config.server.fs.allow ?? []),
         path.resolve(process.cwd(), '..').replace(/\\/g, '/'),
-      ])
+      ]),
     );
-    
+
     return config;
   },
 };
 
 export default config;
-

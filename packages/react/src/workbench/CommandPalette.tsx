@@ -256,7 +256,6 @@ export function getNextWorkbenchCommandIndex({
   return -1;
 }
 
-
 export function commandMenuItemToWorkbenchCommandDescriptor(
   item: ResolvedCommandMenuCommandItem,
   overrides: WorkbenchCommandDescriptorOverrides = {},

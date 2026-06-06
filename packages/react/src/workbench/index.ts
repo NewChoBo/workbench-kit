@@ -38,11 +38,7 @@ export {
   groupWorkbenchCommands,
   isWorkbenchCommandRunnable,
 } from './CommandPalette';
-export {
-  getSlashCommandQuery,
-  isSlashCommandInput,
-  parseSlashCommand,
-} from './chat/slashCommand';
+export { getSlashCommandQuery, isSlashCommandInput, parseSlashCommand } from './chat/slashCommand';
 export { useSlashCommandSuggest } from './chat/useSlashCommandSuggest';
 export type {
   UseSlashCommandSuggestOptions,
@@ -55,10 +51,7 @@ export {
   useWorkbenchNativeContextMenuGuard,
   useWorkbenchNativeSaveGuard,
 } from './keyboard';
-export {
-  resolveWorkbenchTheme,
-  useResolvedWorkbenchTheme,
-} from './theme';
+export { resolveWorkbenchTheme, useResolvedWorkbenchTheme } from './theme';
 export type { ResolvedWorkbenchTheme } from './theme';
 export {
   WorkbenchShortcutCommandBridge,
@@ -385,3 +378,5 @@ export type {
   WorkbenchTheme,
   WorkbenchWorkspaceController,
 } from './standalone';
+export { StructuredArtifactEditor } from './StructuredArtifactEditor';
+export type { StructuredArtifactEditorProps } from './StructuredArtifactEditor';

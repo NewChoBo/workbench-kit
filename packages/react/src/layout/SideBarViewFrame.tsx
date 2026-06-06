@@ -1,4 +1,10 @@
-import type { ComponentPropsWithRef, CSSProperties, HTMLAttributes, PointerEvent, ReactNode } from 'react';
+import type {
+  ComponentPropsWithRef,
+  CSSProperties,
+  HTMLAttributes,
+  PointerEvent,
+  ReactNode,
+} from 'react';
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cx } from '../utils/cx';
 import { Panel, PanelBody, PanelHeader, type PanelBodyProps, type PanelProps } from './Panel';
