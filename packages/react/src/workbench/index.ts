@@ -1,6 +1,7 @@
 export { ActivityBar } from './ActivityBar';
 export type { ActivityBarItem, ActivityBarProps } from './ActivityBar';
 export {
+  WorkbenchArtifactModeControls,
   WorkbenchArtifactPreview,
   WorkbenchArtifactShell,
   formatWorkbenchArtifactContent,
@@ -13,6 +14,7 @@ export {
 export type {
   WorkbenchArtifactDescriptor,
   WorkbenchArtifactMode,
+  WorkbenchArtifactModeControlsProps,
   WorkbenchArtifactPreviewProps,
   WorkbenchArtifactShellProps,
   WorkbenchArtifactShellRenderCode,
@@ -23,6 +25,7 @@ export type {
   WorkbenchPreviewRendererMatchReason,
 } from './ArtifactShell';
 export {
+  WorkbenchCommandGroupShell,
   WorkbenchCommandList,
   WorkbenchCommandPalette,
   WorkbenchCommandSuggest,
@@ -30,15 +33,52 @@ export {
   commandMenuItemToWorkbenchCommandDescriptor,
   filterWorkbenchCommands,
   getNextWorkbenchCommandIndex,
+  getWorkbenchCommandExecutionLabel,
   getWorkbenchCommandStatusLabel,
+  groupWorkbenchCommands,
   isWorkbenchCommandRunnable,
 } from './CommandPalette';
+export {
+  getSlashCommandQuery,
+  isSlashCommandInput,
+  parseSlashCommand,
+} from './chat/slashCommand';
+export { useSlashCommandSuggest } from './chat/useSlashCommandSuggest';
+export type {
+  UseSlashCommandSuggestOptions,
+  UseSlashCommandSuggestResult,
+} from './chat/useSlashCommandSuggest';
+export {
+  WORKBENCH_ACTIVE_EDITOR_SAVE_SHORTCUT_ATTRIBUTE,
+  hasWorkbenchModalDialogOpen,
+  isWorkbenchSaveShortcutEvent,
+  useWorkbenchNativeContextMenuGuard,
+  useWorkbenchNativeSaveGuard,
+} from './keyboard';
+export {
+  resolveWorkbenchTheme,
+  useResolvedWorkbenchTheme,
+} from './theme';
+export type { ResolvedWorkbenchTheme } from './theme';
+export {
+  WorkbenchShortcutCommandBridge,
+  getWorkbenchShortcutCommandBindings,
+  getWorkbenchShortcutFromEvent,
+  matchesWorkbenchShortcut,
+  runWorkbenchShortcutCommand,
+  useWorkbenchShortcutCommands,
+} from './ShortcutCommandBridge';
+export type { SlashCommandParseResult } from './chat/slashCommand';
 export type {
   WorkbenchCommandDescriptor,
   WorkbenchCommandDescriptorOverrides,
   WorkbenchCommandExecution,
   WorkbenchCommandFeedback,
   WorkbenchCommandFilterInput,
+  WorkbenchCommandGroup,
+  WorkbenchCommandGroupBy,
+  WorkbenchCommandGroupShellProps,
+  WorkbenchCommandGroupingInput,
   WorkbenchCommandListProps,
   WorkbenchCommandNavigationInput,
   WorkbenchCommandOutput,
@@ -49,6 +89,18 @@ export type {
   WorkbenchCommandStatus,
   WorkbenchCommandSuggestProps,
 } from './CommandPalette';
+export type {
+  UseWorkbenchShortcutCommandsOptions,
+  WorkbenchShortcutCommandBinding,
+  WorkbenchShortcutCommandBindingInput,
+  WorkbenchShortcutCommandBridgeProps,
+  WorkbenchShortcutCommandMissReason,
+  WorkbenchShortcutCommandRunInput,
+  WorkbenchShortcutCommandRunResult,
+  WorkbenchShortcutEventLike,
+  WorkbenchShortcutMatchInput,
+  WorkbenchShortcutPlatform,
+} from './ShortcutCommandBridge';
 export {
   WorkbenchConfirmationFlow,
   getWorkbenchConfirmationButtonVariant,
@@ -69,6 +121,26 @@ export type {
   WorkbenchConfirmationSideEffect,
   WorkbenchConfirmationVariant,
 } from './ConfirmationFlow';
+export {
+  WorkbenchAuthGate,
+  WorkbenchLoginBrandMark,
+  WorkbenchLoginView,
+  WorkbenchPasswordResetView,
+  WorkbenchSignUpView,
+} from './auth';
+export type {
+  WorkbenchAuthGateProps,
+  WorkbenchAuthStatus,
+  WorkbenchLoginCredentials,
+  WorkbenchLoginSubmitContext,
+  WorkbenchLoginViewProps,
+  WorkbenchPasswordResetCredentials,
+  WorkbenchPasswordResetSubmitContext,
+  WorkbenchPasswordResetViewProps,
+  WorkbenchSignUpCredentials,
+  WorkbenchSignUpSubmitContext,
+  WorkbenchSignUpViewProps,
+} from './auth';
 export {
   WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
@@ -170,8 +242,19 @@ export type {
   WorkbenchTimelineRenderPayload,
   WorkbenchTimelineVariant,
 } from './Timeline';
-export { WorkbenchSettingsModal } from './settings';
+export {
+  WorkbenchNavigationPanel,
+  WorkbenchSectionedPanel,
+  WorkbenchSettingsModal,
+  WorkbenchStructuredDataForm,
+  WorkbenchStructuredDataSchemaFieldInput,
+  WorkbenchStructuredDataSchemaPanel,
+  WorkbenchStructuredDataTextArrayInput,
+} from './settings';
 export type {
+  WorkbenchNavigationPanelProps,
+  WorkbenchSectionedPanelItem,
+  WorkbenchSectionedPanelProps,
   WorkbenchSchemaFormCancelContext,
   WorkbenchSchemaFormCheckboxField,
   WorkbenchSchemaFormErrors,
@@ -190,15 +273,95 @@ export type {
   WorkbenchSettingsCategory,
   WorkbenchSettingsModalProps,
   WorkbenchSettingsScope,
+  WorkbenchStructuredDataFieldType,
+  WorkbenchStructuredDataFieldValue,
+  WorkbenchStructuredDataFormCancelContext,
+  WorkbenchStructuredDataFormCheckboxField,
+  WorkbenchStructuredDataFormErrors,
+  WorkbenchStructuredDataFormField,
+  WorkbenchStructuredDataFormFieldBase,
+  WorkbenchStructuredDataFormFieldChangeContext,
+  WorkbenchStructuredDataFormNumberField,
+  WorkbenchStructuredDataFormOption,
+  WorkbenchStructuredDataFormProps,
+  WorkbenchStructuredDataFormSection,
+  WorkbenchStructuredDataFormSelectField,
+  WorkbenchStructuredDataFormSubmitContext,
+  WorkbenchStructuredDataFormTextArrayField,
+  WorkbenchStructuredDataFormTextField,
+  WorkbenchStructuredDataTextArrayInputProps,
+  WorkbenchStructuredDataPath,
+  WorkbenchStructuredDataRecord,
+  WorkbenchStructuredDataSchemaDocument,
+  WorkbenchStructuredDataSchemaFieldControl,
+  WorkbenchStructuredDataSchemaFieldDefinition,
+  WorkbenchStructuredDataSchemaFieldInputProps,
+  WorkbenchStructuredDataSchemaPanelClassNames,
+  WorkbenchStructuredDataSchemaPanelLabels,
+  WorkbenchStructuredDataSchemaPanelProps,
+  WorkbenchStructuredDataSchemaSectionAliases,
+  WorkbenchStructuredDataSchemaSectionSummary,
+  WorkbenchStructuredDataSchemaTableColumnInput,
+  WorkbenchStructuredDataSchemaTableDefinition,
+  WorkbenchStructuredDataSchemaTableRowKeyInput,
+  WorkbenchStructuredDataTable,
+  WorkbenchStructuredDataTableCellContext,
+  WorkbenchStructuredDataTableColumn,
+  WorkbenchStructuredDataTableRow,
 } from './settings';
 export {
   WorkbenchSchemaForm,
+  appendWorkbenchStructuredDataSchemaTableRow,
+  asWorkbenchStructuredDataRecord,
+  booleanWorkbenchStructuredDataSchemaFieldValue,
+  coerceWorkbenchStructuredDataFormFieldValue,
+  coerceWorkbenchStructuredDataSchemaFieldValue,
   coerceWorkbenchSchemaFormFieldValue,
+  createWorkbenchStructuredDataSchemaDocumentEmptyRow,
+  createWorkbenchStructuredDataSchemaEmptyRow,
+  createWorkbenchStructuredDataSchemaDocumentSampleData,
+  createWorkbenchStructuredDataSchemaFallbackSection,
+  formatWorkbenchStructuredDataSchemaValue,
+  formatWorkbenchStructuredDataSchemaLabel,
+  getWorkbenchStructuredDataFormErrors,
+  getWorkbenchStructuredDataFormFieldDefaultValue,
+  getWorkbenchStructuredDataFormFieldError,
+  getWorkbenchStructuredDataFormFields,
+  getWorkbenchStructuredDataSchemaDocumentColumnDefinition,
+  getWorkbenchStructuredDataSchemaDocumentColumnLabel,
+  getWorkbenchStructuredDataSchemaDocumentFieldDefinition,
+  getWorkbenchStructuredDataSchemaDocumentFieldLabel,
+  getWorkbenchStructuredDataSchemaDocumentPanelData,
+  getWorkbenchStructuredDataSchemaDocumentSectionValue,
+  getWorkbenchStructuredDataSchemaDocumentSections,
+  getWorkbenchStructuredDataSchemaDocumentTableColumns,
+  getWorkbenchStructuredDataSchemaDocumentTableDefinition,
+  getWorkbenchStructuredDataSchemaFieldDataPath,
+  getWorkbenchStructuredDataSchemaFieldControl,
+  getWorkbenchStructuredDataSchemaFieldDefaultValue,
+  getWorkbenchStructuredDataSchemaFieldDescription,
+  getWorkbenchStructuredDataSchemaFieldDefinition,
+  getWorkbenchStructuredDataSchemaSectionAnchorId,
+  getWorkbenchStructuredDataSchemaSectionId,
+  getWorkbenchStructuredDataSchemaSectionPath,
+  getWorkbenchStructuredDataSchemaTableCellPath,
+  getWorkbenchStructuredDataSchemaTableColumns,
+  getWorkbenchStructuredDataSchemaTablePath,
+  getWorkbenchStructuredDataSchemaTableRowKey,
+  getWorkbenchStructuredDataSchemaTableRows,
+  getWorkbenchStructuredDataValue,
   getWorkbenchSchemaFormErrors,
   getWorkbenchSchemaFormFieldDefaultValue,
   getWorkbenchSchemaFormFieldError,
+  isWorkbenchStructuredDataFormSubmittable,
   isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchStructuredDataFormData,
   normalizeWorkbenchSchemaFormValues,
+  removeWorkbenchStructuredDataSchemaTableRow,
+  setWorkbenchStructuredDataPathOrRootValue,
+  setWorkbenchStructuredDataValue,
+  slugWorkbenchStructuredDataSchemaAnchor,
+  stringifyWorkbenchStructuredDataSchemaFieldValue,
 } from './settings';
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';
@@ -211,6 +374,7 @@ export type {
   WorkbenchActivityChangeEvent,
   WorkbenchActivityDescriptor,
   WorkbenchChatController,
+  WorkbenchHostCallbackBoundary,
   WorkbenchPatchController,
   WorkbenchSaveController,
   WorkbenchShellContract,

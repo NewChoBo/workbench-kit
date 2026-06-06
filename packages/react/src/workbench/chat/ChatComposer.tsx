@@ -1,4 +1,6 @@
 import {
+  forwardRef,
+  useImperativeHandle,
   useLayoutEffect,
   useRef,
   type KeyboardEvent,
@@ -13,9 +15,12 @@ export interface ChatComposerProps extends Omit<
 > {
   cancelLabel?: string;
   commandLabel?: string;
+  commandSuggestPopover?: ReactNode;
   contextLabel?: string;
   isRunning?: boolean;
   onCancel?: () => void;
+  onCommandClick?: () => void;
+  onContextClick?: () => void;
   onSubmit: (message: string) => void;
   onValueChange: (value: string) => void;
   showTools?: boolean;
@@ -24,14 +29,17 @@ export interface ChatComposerProps extends Omit<
   value: string;
 }
 
-export function ChatComposer({
+export const ChatComposer = forwardRef<HTMLTextAreaElement, ChatComposerProps>(function ChatComposer({
   cancelLabel = 'Stop response',
   className,
   commandLabel = 'Open commands',
+  commandSuggestPopover,
   contextLabel = 'Add context',
   disabled,
   isRunning = false,
   onCancel,
+  onCommandClick,
+  onContextClick,
   onSubmit,
   onValueChange,
   placeholder = 'Type a message...',
@@ -40,8 +48,9 @@ export function ChatComposer({
   toolbarStart,
   value,
   ...props
-}: ChatComposerProps) {
+}: ChatComposerProps, ref) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useImperativeHandle(ref, () => textareaRef.current!);
 
   const resizeTextarea = () => {
     const element = textareaRef.current;
@@ -80,6 +89,7 @@ export function ChatComposer({
 
   return (
     <div className="composer">
+      {commandSuggestPopover}
       <div className="composer__box">
         <textarea
           ref={textareaRef}
@@ -103,6 +113,7 @@ export function ChatComposer({
                   className="composer__tool-btn"
                   title={contextLabel}
                   type="button"
+                  onClick={onContextClick}
                 >
                   <i className="codicon codicon-add" />
                 </button>
@@ -111,6 +122,7 @@ export function ChatComposer({
                   className="composer__tool-btn"
                   title={commandLabel}
                   type="button"
+                  onClick={onCommandClick}
                 >
                   <i className="codicon codicon-terminal" />
                 </button>
@@ -145,4 +157,4 @@ export function ChatComposer({
       </div>
     </div>
   );
-}
+});

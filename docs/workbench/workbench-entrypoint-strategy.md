@@ -4,9 +4,11 @@
 
 예. **현재 화면 기준 Workbench UI는 구현되어 있다.**
 
-- 통합 화면 조립: [Workbench.stories.tsx](/e:/work/vscode/personal/newchobo-ui-package/packages/react/src/workbench/Workbench.stories.tsx) (`IntegratedWorkbenchShell`)
-- 엔트리 layout: [WorkbenchShell.tsx](/e:/work/vscode/personal/newchobo-ui-package/packages/react/src/workbench/WorkbenchShell.tsx) + [index.ts](/e:/work/vscode/personal/newchobo-ui-package/packages/react/src/workbench/index.ts)
-- 런타임/호스트/서비스: [vscode-host](/e:/work/vscode/personal/newchobo-ui-package/packages/vscode-host/src), [services](/e:/work/vscode/personal/newchobo-ui-package/packages/services/src), [vscode-extension](/e:/work/vscode/personal/newchobo-ui-package/packages/vscode-extension/src)
+- 통합 화면 조립: `packages/react/src/workbench/Workbench.stories.tsx` (`IntegratedWorkbenchShell`)
+- 엔트리 layout: `packages/react/src/workbench/WorkbenchShell.tsx` +
+  `packages/react/src/workbench/index.ts`
+- 런타임/호스트/서비스: `packages/vscode-host/src`, `packages/services/src`,
+  `packages/vscode-extension/src`
 
 남은 핵심은 **UI의 추가 구현이 아니라, 앱 조립 계약의 분리**다.  
 이번 사이클은 `standalone application launch`를 최우선으로 처리하고, `vscode-extension` 정식 wrapper/패키징은 다음 마일스톤으로 이월한다.
@@ -68,7 +70,7 @@
 
 1. entrypoint 계약 최소 타입 선정:
    - `workspace`/`theme`/`activity`/`shell state`/`status section`
-   - 필수 service callback(`onSave`, `onDelete`, `onChatSubmit`, `onPatchResult`, `onCommandResult`)
+   - 필수 host callback(`onSave`, `onDelete`, `onChatSubmit`, `onPatch`)
 2. story 전용 side-effect 축소 규칙 고정
    - confirm/알림/모달/영속성은 story/호스트 callback 위임
 3. 문서 기반 게이트 재점검
@@ -88,10 +90,18 @@
 
 ## 종료 기준(객관)
 
-- [ ] UI/기능 동작은 유지됨 (baseline 플레이 5개 + 핵심 컴포넌트 테스트)
-- [ ] 앱 조립 계약의 최소 형태가 타입/문서로 고정됨
-- [ ] story는 조립 로직의 fixture 역할로 수렴
-- [ ] `vscode-extension`는 다음 사이클로 이월 상태가 문서에 남음
+- [x] UI/기능 동작은 유지됨 (baseline 플레이 5개 + 핵심 컴포넌트 테스트)
+  - 근거: `pnpm test:storybook-play:required`, `@workbench-kit/react` typecheck,
+    `@workbench-kit/vscode-host` test
+- [x] 앱 조립 계약의 최소 형태가 타입/문서로 고정됨
+  - 근거: `packages/react/src/workbench/standalone.ts`의
+    `WorkbenchHostCallbackBoundary`
+- [x] story는 조립 로직의 fixture 역할로 수렴
+  - 근거: `packages/react/src/workbench/Workbench.stories.tsx`의
+    `IntegratedWorkbenchShell`은 story fixture/state/mock runtime을 보유하고,
+    `WorkbenchStandaloneShell`에 bootstrap과 render slot을 위임
+- [x] `vscode-extension`는 다음 사이클로 이월 상태가 문서에 남음
+  - 근거: Track C를 차기 milestone으로 분리
 
 ## 브랜치 제안
 
@@ -103,6 +113,6 @@
 
 ## 즉시 다음 액션
 
-1. 위 문서 기준으로 **Track A 최소 인터페이스**를 타입 수준으로 먼저 정리
-2. 동일 인터페이스 기반으로 다음 PR에서 `Workbench.stories.tsx` 분리 리팩터 진행
-3. 매 분기말 게이트: `pnpm test:storybook-play:required` + `pnpm typecheck`
+1. UI baseline 유지를 `pnpm test:storybook-play:required`로 재확인
+2. 매 분기말 게이트: `pnpm test:storybook-play:required` + `pnpm typecheck`
+3. `vscode-extension` wrapper는 Track C 조건 충족 후 별도 마일스톤에서 재개

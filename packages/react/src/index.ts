@@ -2,6 +2,7 @@ export { Modal } from './modal/Modal';
 export type { ModalProps } from './modal/Modal';
 export { commandMenuItemsToContextMenuItems } from './workbench/commands';
 export {
+  WorkbenchArtifactModeControls,
   WorkbenchArtifactPreview,
   WorkbenchArtifactShell,
   formatWorkbenchArtifactContent,
@@ -14,6 +15,7 @@ export {
 export type {
   WorkbenchArtifactDescriptor,
   WorkbenchArtifactMode,
+  WorkbenchArtifactModeControlsProps,
   WorkbenchArtifactPreviewProps,
   WorkbenchArtifactShellProps,
   WorkbenchArtifactShellRenderCode,
@@ -24,6 +26,7 @@ export type {
   WorkbenchPreviewRendererMatchReason,
 } from './workbench/ArtifactShell';
 export {
+  WorkbenchCommandGroupShell,
   WorkbenchCommandList,
   WorkbenchCommandPalette,
   WorkbenchCommandSuggest,
@@ -31,15 +34,29 @@ export {
   commandMenuItemToWorkbenchCommandDescriptor,
   filterWorkbenchCommands,
   getNextWorkbenchCommandIndex,
+  getWorkbenchCommandExecutionLabel,
   getWorkbenchCommandStatusLabel,
+  groupWorkbenchCommands,
   isWorkbenchCommandRunnable,
 } from './workbench/CommandPalette';
+export {
+  WorkbenchShortcutCommandBridge,
+  getWorkbenchShortcutCommandBindings,
+  getWorkbenchShortcutFromEvent,
+  matchesWorkbenchShortcut,
+  runWorkbenchShortcutCommand,
+  useWorkbenchShortcutCommands,
+} from './workbench/ShortcutCommandBridge';
 export type {
   WorkbenchCommandDescriptor,
   WorkbenchCommandDescriptorOverrides,
   WorkbenchCommandExecution,
   WorkbenchCommandFeedback,
   WorkbenchCommandFilterInput,
+  WorkbenchCommandGroup,
+  WorkbenchCommandGroupBy,
+  WorkbenchCommandGroupShellProps,
+  WorkbenchCommandGroupingInput,
   WorkbenchCommandListProps,
   WorkbenchCommandNavigationInput,
   WorkbenchCommandOutput,
@@ -50,6 +67,18 @@ export type {
   WorkbenchCommandStatus,
   WorkbenchCommandSuggestProps,
 } from './workbench/CommandPalette';
+export type {
+  UseWorkbenchShortcutCommandsOptions,
+  WorkbenchShortcutCommandBinding,
+  WorkbenchShortcutCommandBindingInput,
+  WorkbenchShortcutCommandBridgeProps,
+  WorkbenchShortcutCommandMissReason,
+  WorkbenchShortcutCommandRunInput,
+  WorkbenchShortcutCommandRunResult,
+  WorkbenchShortcutEventLike,
+  WorkbenchShortcutMatchInput,
+  WorkbenchShortcutPlatform,
+} from './workbench/ShortcutCommandBridge';
 export {
   WorkbenchConfirmationFlow,
   getWorkbenchConfirmationButtonVariant,
@@ -70,6 +99,26 @@ export type {
   WorkbenchConfirmationSideEffect,
   WorkbenchConfirmationVariant,
 } from './workbench/ConfirmationFlow';
+export {
+  WorkbenchAuthGate,
+  WorkbenchLoginBrandMark,
+  WorkbenchLoginView,
+  WorkbenchPasswordResetView,
+  WorkbenchSignUpView,
+} from './workbench/auth';
+export type {
+  WorkbenchAuthGateProps,
+  WorkbenchAuthStatus,
+  WorkbenchLoginCredentials,
+  WorkbenchLoginSubmitContext,
+  WorkbenchLoginViewProps,
+  WorkbenchPasswordResetCredentials,
+  WorkbenchPasswordResetSubmitContext,
+  WorkbenchPasswordResetViewProps,
+  WorkbenchSignUpCredentials,
+  WorkbenchSignUpSubmitContext,
+  WorkbenchSignUpViewProps,
+} from './workbench/auth';
 export {
   WorkbenchTimeline,
   WorkbenchTimelineItem,

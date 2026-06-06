@@ -87,5 +87,23 @@ the reusable behavior in package modules.
 - Do not encode private runtime details, storage keys, server addresses, or
   project-specific command names in stories.
 
+## Command Menu Surface Review
+
+Workbench integration stories and host-like component stories should keep command
+menu projection scoped to the surface that opened the menu.
+
+- Pass an explicit `WORKBENCH_COMMAND_SURFACE_*` value to
+  `resolveCommandMenuItems` when a story or component renders command-backed
+  context menus from shared command entries.
+- Treat surface-less `resolveCommandMenuItems` calls as unit-test coverage for
+  registry fallback behavior or as intentionally global menus; do not use them
+  in host-like Workbench integration paths.
+- When adding a new command surface, export a stable surface constant, assign it
+  to the relevant menu entries, and cover at least one story or test that proves
+  unrelated surface entries do not appear.
+- In Storybook review, check Activity Bar, Explorer root/item, Search result,
+  Editor tab, Settings, and Status Bar menu paths separately because they can
+  share command descriptors while requiring different visible actions.
+
 See [Workbench Migration Todo](../workbench/migration-todo.md) for the current
 workbench migration and Storybook validation plan.

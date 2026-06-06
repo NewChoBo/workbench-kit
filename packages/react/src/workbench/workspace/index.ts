@@ -1,7 +1,21 @@
-export { WorkspaceEditor, languageForFile, monacoThemeForWorkspaceTheme } from './WorkspaceEditor';
+export { mimeTypeForPath } from './mimeType';
+export {
+  WorkspaceEditor,
+  MONACO_DARK_THEME_ID,
+  MONACO_LIGHT_THEME_ID,
+  defineMonacoWorkbenchTheme,
+  languageForFile,
+  monacoThemeForWorkspaceTheme,
+} from './WorkspaceEditor';
 export type { WorkspaceEditorProps, WorkspaceEditorTheme } from './WorkspaceEditor';
 export { WorkspaceEditorPanel } from './WorkspaceEditorPanel';
-export type { WorkspaceEditorPanelProps } from './WorkspaceEditorPanel';
+export type {
+  WorkspaceEditorPanelProps,
+  WorkspaceEditorPanelRenderEditor,
+  WorkspaceEditorPanelRenderEditorContext,
+  WorkspaceEditorPanelRenderTabActions,
+  WorkspaceEditorPanelRenderTabActionsContext,
+} from './WorkspaceEditorPanel';
 export {
   WORKSPACE_EXPLORER_DRAG_DATA_TYPE,
   WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE,
