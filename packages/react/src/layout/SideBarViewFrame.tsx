@@ -1,4 +1,4 @@
-import type { ComponentPropsWithRef, CSSProperties, PointerEvent, ReactNode } from 'react';
+import type { ComponentPropsWithRef, CSSProperties, HTMLAttributes, PointerEvent, ReactNode } from 'react';
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cx } from '../utils/cx';
 import { Panel, PanelBody, PanelHeader, type PanelBodyProps, type PanelProps } from './Panel';
@@ -260,16 +260,19 @@ export function SideBarList({ className, dropTarget, fill, ...props }: SideBarLi
 
 export interface SideBarListItemProps extends ComponentPropsWithRef<'button'> {
   active?: boolean;
+  after?: ReactNode;
   depth?: number;
   dropTarget?: boolean;
   selected?: boolean;
   variant?: 'default' | 'stacked';
+  wrapperProps?: HTMLAttributes<HTMLLIElement>;
 }
 
 export const SideBarListItem = forwardRef<HTMLButtonElement, SideBarListItemProps>(
   function SideBarListItem(
     {
       active,
+      after,
       'aria-current': ariaCurrent,
       className,
       depth = 0,
@@ -278,14 +281,16 @@ export const SideBarListItem = forwardRef<HTMLButtonElement, SideBarListItemProp
       style,
       type = 'button',
       variant = 'default',
+      wrapperProps,
       ...props
     },
     ref,
   ) {
     const depthStyle = { '--depth': depth, ...style } as CSSProperties;
+    const { className: wrapperClassName, ...restWrapperProps } = wrapperProps ?? {};
 
     return (
-      <li className="ui-side-bar-list-entry">
+      <li className={cx('ui-side-bar-list-entry', wrapperClassName)} {...restWrapperProps}>
         <button
           ref={ref}
           type={type}
@@ -302,6 +307,7 @@ export const SideBarListItem = forwardRef<HTMLButtonElement, SideBarListItemProp
           style={depthStyle}
           {...props}
         />
+        {after}
       </li>
     );
   },
