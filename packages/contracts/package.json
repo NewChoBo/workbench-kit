@@ -16,7 +16,7 @@
     "!src/**/*.stories.ts",
     "!src/**/*.stories.tsx"
   ],
-  "description": "Shared Workbench Kit contracts for chat, save, patch, library, and plugin flows.",
+  "description": "Shared Workbench Kit contracts for chat, save, patch, library, launchpad mapping, widget renderer, and plugin flows.",
   "publishConfig": {
     "access": "public",
     "tag": "prototype",

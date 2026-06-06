@@ -11,6 +11,23 @@ import {
 } from './library-launchpad-mapping';
 
 describe('library-launchpad-mapping', () => {
+  it('normalizes launch targets by trimming whitespace and nulling empty values', () => {
+    expect(normalizeLaunchTarget('   ')).toBeNull();
+    expect(normalizeLaunchTarget('  C:\\Program Files\\app.exe  ')).toBe(
+      'C:\\Program Files\\app.exe',
+    );
+    expect(normalizeLaunchTarget(undefined)).toBeNull();
+    expect(normalizeLaunchTarget(null)).toBeNull();
+  });
+
+  it('infers launch target types from mixed URL and path inputs', () => {
+    expect(inferLaunchTypeFromTarget('https://example.com')).toBe('url');
+    expect(inferLaunchTypeFromTarget('C:\\Games\\Game.exe')).toBe('app');
+    expect(inferLaunchTypeFromTarget('/tmp/game.txt')).toBe('file');
+    expect(inferLaunchTypeFromTarget('/tmp/folder')).toBe('folder');
+    expect(inferLaunchTypeFromTarget('com.app://run')).toBe('url');
+  });
+
   it('infers launch type and working directory from target', () => {
     const exeTarget = resolveLaunchpadLibraryItemMapping({
       title: 'Apex',
@@ -108,6 +125,77 @@ describe('library-launchpad-mapping', () => {
     expect(resolved.execution.workingDirectory).toBe('C:/Games');
   });
 
+  it('builds deterministic launch mappings with default values and stable subtitle', () => {
+    const mapped = resolveLaunchpadLibraryItemMapping({
+      accountLabel: 'me',
+      category: 'Game',
+      favorite: false,
+      kind: 'steam-game',
+      platform: 'Windows',
+      providerId: 'steam',
+      providerLabel: 'Steam',
+      source: 'steam',
+      itemId: 'steam:440',
+      title: 'Team Fortress 2',
+      launchTarget: 'C:\\Games\\tf2.exe',
+      tags: ['action', 'fps'],
+    });
+
+    expect(mapped.canLaunch).toBe(true);
+    expect(mapped.execution).toEqual({
+      arguments: [],
+      launchType: 'app',
+      target: 'C:\\Games\\tf2.exe',
+      workingDirectory: 'C:/Games',
+    });
+    expect(mapped.reference).toMatchObject({
+      accountLabel: 'me',
+      category: 'Game',
+      favorite: false,
+      itemId: 'steam:440',
+      kind: 'steam-game',
+      platform: 'Windows',
+      providerId: 'steam',
+      providerLabel: 'Steam',
+      source: 'steam',
+      sourcePath: null,
+      tags: ['action', 'fps'],
+      updatedAt: expect.any(String),
+    });
+    expect(mapped.subtitle).toBe('Steam · steam-game · Windows');
+  });
+
+  it('applies null-aware defaults for minimal library item payloads', () => {
+    const mapped = resolveLaunchpadLibraryItemMapping({
+      id: 'steam:100',
+      title: 'No launch target',
+      providerId: undefined,
+      providerLabel: undefined,
+      source: undefined,
+    });
+
+    expect(mapped.canLaunch).toBe(false);
+    expect(mapped.execution).toEqual({
+      arguments: [],
+      launchType: null,
+      target: null,
+      workingDirectory: null,
+    });
+    expect(mapped.reference).toMatchObject({
+      itemId: 'steam:100',
+      kind: '',
+      providerId: 'unknown',
+      providerLabel: '',
+      source: null,
+      sourcePath: null,
+      metadataSummary: '',
+      thumbnailUrl: null,
+      tags: [],
+    });
+    expect(mapped.reference.connectionId).toBeNull();
+    expect(mapped.subtitle).toBeNull();
+  });
+
   it('creates launch-tile binding payload for widget consumption', () => {
     const item = {
       itemId: 'binding-1',
@@ -140,5 +228,103 @@ describe('library-launchpad-mapping', () => {
   it('maps URL launchers to URL launch type directly', () => {
     const inferred = inferLaunchTypeFromTarget('custom://run/123');
     expect(inferred).toBe('url');
+  });
+
+  it('creates launchpad tile bindings with correct artwork materialization strategy', () => {
+    expect(
+      createLaunchpadLibraryItemTileBinding(
+        {
+          itemId: 'steam:10',
+          providerId: 'steam',
+          iconAssetId: 'asset://icon',
+          thumbnailUrl: 'https://cdn/hero.png',
+          launchTarget: 'https://app',
+        },
+        { syncMode: 'snapshot' },
+      ),
+    ).toEqual({
+      version: 1,
+      projection: 'launch-tile',
+      source: {
+        kind: 'library-item',
+        itemId: 'steam:10',
+        providerId: 'steam',
+        connectionId: null,
+        syncMode: 'snapshot',
+        snapshotUpdatedAt: null,
+      },
+      artwork: {
+        materialization: 'managed-asset',
+        preferredAssetId: 'asset://icon',
+        remoteUrl: 'https://cdn/hero.png',
+      },
+    });
+
+    expect(
+      createLaunchpadLibraryItemTileBinding({
+        itemId: 'steam:20',
+        providerId: 'steam',
+        iconAssetId: null,
+        thumbnailUrl: 'https://cdn/image.png',
+        launchTarget: 'https://app',
+      }),
+    ).toEqual({
+      version: 1,
+      projection: 'launch-tile',
+      source: {
+        kind: 'library-item',
+        itemId: 'steam:20',
+        providerId: 'steam',
+        connectionId: null,
+        syncMode: 'live',
+        snapshotUpdatedAt: null,
+      },
+      artwork: {
+        materialization: 'external-reference',
+        preferredAssetId: null,
+        remoteUrl: 'https://cdn/image.png',
+      },
+    });
+
+    expect(
+      createLaunchpadLibraryItemTileBinding({
+        itemId: 'steam:30',
+        providerId: 'steam',
+        launchTarget: 'https://app',
+      }),
+    ).toEqual({
+      version: 1,
+      projection: 'launch-tile',
+      source: {
+        kind: 'library-item',
+        itemId: 'steam:30',
+        providerId: 'steam',
+        connectionId: null,
+        syncMode: 'live',
+        snapshotUpdatedAt: null,
+      },
+      artwork: {
+        materialization: 'none',
+        preferredAssetId: null,
+        remoteUrl: null,
+      },
+    });
+  });
+
+  it('checks launchability by presence of a usable target', () => {
+    expect(
+      canMapLibraryItemToLaunchpadTile({
+        itemId: 'steam:1000',
+        providerId: 'steam',
+        launchTarget: 'com.app://run/1000',
+      }),
+    ).toBe(true);
+
+    expect(
+      canMapLibraryItemToLaunchpadTile({
+        itemId: 'steam:1001',
+        providerId: 'steam',
+      }),
+    ).toBe(false);
   });
 });

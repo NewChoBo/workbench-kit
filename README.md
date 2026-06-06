@@ -15,7 +15,7 @@ change while the first consuming apps harden the model.
 
 - `@workbench-kit/tokens`: framework-neutral CSS variables and base theme values
 - `@workbench-kit/core`: framework-neutral command and context primitives
-- `@workbench-kit/contracts`: shared chat, save, patch, library, and plugin contracts
+- `@workbench-kit/contracts`: shared chat, save, patch, library, launchpad mapping, widget renderer, and plugin contracts
 - `@workbench-kit/workspace`: framework-neutral workspace state and path utilities
 - `@workbench-kit/runtime`: runtime event and mock runtime utilities
 - `@workbench-kit/services`: orchestration services for workbench flows
