@@ -4,18 +4,27 @@
   "private": false,
   "type": "module",
   "scripts": {
+    "build": "tsup",
+    "prepare": "pnpm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "files": [
+    "dist",
     "src",
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",
     "!src/**/*.stories.ts",
     "!src/**/*.stories.tsx"
   ],
+  "devDependencies": {
+    "tsup": "^8.5.0"
+  },
   "description": "Shared Workbench Kit contracts for chat, save, patch, library, launchpad mapping, widget renderer, and plugin flows.",
   "publishConfig": {
     "access": "public",
