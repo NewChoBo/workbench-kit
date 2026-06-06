@@ -263,6 +263,7 @@ export interface SideBarListItemProps extends ComponentPropsWithRef<'button'> {
   after?: ReactNode;
   depth?: number;
   dropTarget?: boolean;
+  noLi?: boolean;
   selected?: boolean;
   variant?: 'default' | 'stacked';
   wrapperProps?: HTMLAttributes<HTMLLIElement>;
@@ -277,6 +278,7 @@ export const SideBarListItem = forwardRef<HTMLButtonElement, SideBarListItemProp
       className,
       depth = 0,
       dropTarget,
+      noLi,
       selected,
       style,
       type = 'button',
@@ -289,24 +291,40 @@ export const SideBarListItem = forwardRef<HTMLButtonElement, SideBarListItemProp
     const depthStyle = { '--depth': depth, ...style } as CSSProperties;
     const { className: wrapperClassName, ...restWrapperProps } = wrapperProps ?? {};
 
+    const button = (
+      <button
+        ref={ref}
+        type={type}
+        aria-current={ariaCurrent ?? (active ? 'true' : undefined)}
+        className={cx(
+          'ui-side-bar-list-item',
+          variant === 'stacked' && 'ui-side-bar-list-item--stacked',
+          active && 'ui-side-bar-list-item--active',
+          selected && 'ui-side-bar-list-item--selected',
+          dropTarget && 'ui-side-bar-list-item--drop-target',
+          className,
+        )}
+        data-selected={selected ? 'true' : undefined}
+        style={depthStyle}
+        {...props}
+      />
+    );
+
+    if (noLi) {
+      if (after) {
+        return (
+          <>
+            {button}
+            {after}
+          </>
+        );
+      }
+      return button;
+    }
+
     return (
       <li className={cx('ui-side-bar-list-entry', wrapperClassName)} {...restWrapperProps}>
-        <button
-          ref={ref}
-          type={type}
-          aria-current={ariaCurrent ?? (active ? 'true' : undefined)}
-          className={cx(
-            'ui-side-bar-list-item',
-            variant === 'stacked' && 'ui-side-bar-list-item--stacked',
-            active && 'ui-side-bar-list-item--active',
-            selected && 'ui-side-bar-list-item--selected',
-            dropTarget && 'ui-side-bar-list-item--drop-target',
-            className,
-          )}
-          data-selected={selected ? 'true' : undefined}
-          style={depthStyle}
-          {...props}
-        />
+        {button}
         {after}
       </li>
     );
