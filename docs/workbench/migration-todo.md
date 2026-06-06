@@ -802,6 +802,13 @@ workbench platform:
   workspace-only menu entries in Storybook integration.
 - `packages/core/src/commands.test.ts` now verifies 충돌시 마지막 `commandId` 등록값이 실제 실행 커맨드를 결정함을 확인합니다.
 
+## Downstream Migration Bridge (Pending)
+
+- [ ] `library-launch-migration-runbook.md` execution checklist is adopted by each downstream repo (`custom_launcher`, `tile_paper`) PR.
+- [ ] `custom_launcher` 실행 경로가 `@workbench-kit/contracts` launchpad 규약(launchType/workingDirectory/target trim)을 직접 호출하도록 정리.
+- [ ] `tile_paper`의 provider 라이브러리 액션 파생 로직과 JSON widget 이벤트 타입이 `WidgetRenderer*` 계약으로 정렬.
+- [ ] 동등성 테스트(샘플 1개당 launchType/file/folder/url, arguments, subtitle, canLaunch) 기준으로 두 앱에서 회귀 게이트 통과.
+
 ## Next Clarification Questions (for next milestone)
 
 - Which Storybook `play` flows should be promoted to mandatory next after baseline?

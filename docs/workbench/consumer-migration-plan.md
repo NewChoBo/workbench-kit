@@ -28,6 +28,10 @@ Keep in consumers:
 - Backend, agent, or runtime execution implementations.
 - Actual command handlers that read, write, deploy, search, or call services.
 
+Additional migration guide for launch-related shared contracts:
+
+- [library-launch-migration-runbook.md](./library-launch-migration-runbook.md)
+
 ## Reconciled Status Summary
 
 | Candidate                    | Status    | Current Evidence                                                                                        | Remaining Boundary                                                                                    |
@@ -84,6 +88,33 @@ consumer callbacks such as `onRunCommand(command, context)`.
 
 Evidence: `WorkbenchCommandDescriptor`, command presets, command palette/suggest/group
 shells, shortcut bridge, and command tests.
+
+### 10. Library Launchpad Mapping And Widget Renderer Contracts
+
+Status: active
+
+Goal:
+
+- 공통 실행 규약(launch target 정규화, launchType 추론, workingDirectory 산출, 바인딩 payload)을
+  `@workbench-kit/contracts`로 고정해 UI/앱별 런처 로직 분기를 제거한다.
+- JSON 기반 widget 렌더러 이벤트/shape 타입을 `WidgetRenderer*` 계약으로 고정해
+  앱별 렌더러 래핑 차이를 줄인다.
+
+Required migrations for each downstream:
+
+1. 런치 실행 경로에서 로컬 `launchTarget` 유틸(공백 trim/타입 추론/workingDirectory 계산)을 제거하고
+   `normalizeLaunchTarget`, `inferLaunchTypeFromTarget`, `resolveLaunchpadLibraryItemMapping`으로 교체한다.
+2. 타일/아이템 액션 라벨·아이콘·payload 구성에서 앱 전용 파생 규칙 대신
+   `createLaunchpadLibraryItemTileBinding` + 정규화된 참조 payload를 사용한다.
+3. JSON widget tree 렌더러의 이벤트 핸들러 타입을 `WidgetRendererComponent`/`WidgetRendererProps`
+   계약으로 정렬한다.
+
+Acceptance checks:
+
+- 같은 입력 집합에 대해 launchType(url/app/file/folder), workingDirectory, `canLaunch`, subtitle,
+  arguments 배열이 각 consumer에서 동일한 결과를 만들어야 한다.
+- 빈/공백 타깃은 `canLaunch=false`, `execution.target=null`, `launchType=null`로 수렴해야 한다.
+- `WidgetRendererProps`는 UI 렌더러 바인딩에서 공통 이벤트 타입(`press`, `change`)을 유지해야 한다.
 
 ### 2. Active Editor Save Primitive
 

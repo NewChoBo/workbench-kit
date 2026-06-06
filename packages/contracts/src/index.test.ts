@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canMapLibraryItemToLaunchpadTile,
+  type LaunchpadLibraryItemSummary,
+  normalizeLaunchTarget,
+  resolveLaunchpadLibraryItemMapping,
+  type WidgetRendererComponent,
+  type WidgetRendererEventKind,
+  type WidgetRendererProps,
+  type WidgetRendererShape,
   isPatchSuccess,
   isSaveFailure,
   isSaveSuccess,
@@ -79,5 +87,43 @@ describe('contract helpers', () => {
 
     expect(invalid).toBe('invalid-path');
     expect(stale).toBe('stale-update');
+  });
+
+  it('exports widget renderer contracts from public index', () => {
+    const eventKind: WidgetRendererEventKind = 'press';
+    const shape: WidgetRendererShape = { type: 'label' };
+    const props: WidgetRendererProps<WidgetRendererShape> = {
+      widget: shape,
+      rect: {
+        height: 100,
+        width: 200,
+        x: 0,
+        y: 0,
+      },
+    };
+    const widgetRenderer: WidgetRendererComponent<WidgetRendererShape> = (widgetProps) => {
+      expect(widgetProps.widget.type).toBe('label');
+      return null as unknown;
+    };
+
+    expect(eventKind).toBe('press');
+    expect(props.rect.width).toBe(200);
+    expect(widgetRenderer(props)).toBe(null);
+  });
+
+  it('exports launchpad mapping contracts from public index', () => {
+    const item = {
+      itemId: 'item-1',
+      launchTarget: ' C:/Games/Launcher.exe ',
+    } satisfies LaunchpadLibraryItemSummary;
+
+    const normalized = normalizeLaunchTarget(item.launchTarget);
+    expect(normalized).toBe('C:/Games/Launcher.exe');
+
+    const mapping = resolveLaunchpadLibraryItemMapping(item);
+    expect(mapping.canLaunch).toBe(true);
+    expect(mapping.execution.target).toBe('C:/Games/Launcher.exe');
+    expect(mapping.execution.launchType).toBe('app');
+    expect(canMapLibraryItemToLaunchpadTile(item)).toBe(true);
   });
 });

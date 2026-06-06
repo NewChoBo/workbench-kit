@@ -104,6 +104,23 @@ export {
   resolveLibraryItemSourceId,
 } from './library';
 export type {
+  LaunchTarget,
+  LaunchpadDataBindingSyncMode,
+  LaunchpadLibraryExecution,
+  LaunchpadLibraryItemBinding,
+  LaunchpadLibraryItemMapping,
+  LaunchpadLibraryItemSummary,
+  LaunchpadLibraryReferencePayload,
+} from './library-launchpad-mapping';
+export {
+  canMapLibraryItemToLaunchpadTile,
+  createLaunchpadLibraryItemTileBinding,
+  deriveLaunchWorkingDirectory,
+  inferLaunchTypeFromTarget,
+  normalizeLaunchTarget,
+  resolveLaunchpadLibraryItemMapping,
+} from './library-launchpad-mapping';
+export type {
   ServiceFailure,
   ServiceFailureCode,
   ServiceListener,
@@ -111,3 +128,11 @@ export type {
 } from './result';
 export { normalizeServiceFailureMessage } from './result';
 export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from './save';
+export type {
+  WidgetRendererComponent,
+  WidgetRendererEvent,
+  WidgetRendererEventKind,
+  WidgetRendererProps,
+  WidgetRendererRect,
+  WidgetRendererShape,
+} from './widget-renderer-contract';
