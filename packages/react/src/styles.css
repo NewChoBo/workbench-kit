@@ -3177,55 +3177,87 @@
 
 .workspace-file-icon {
   flex-shrink: 0;
-  color: var(--color-text-muted);
+  color: var(--file-icon-default, var(--color-text-muted));
 }
 
-.workspace-file-icon[data-file-kind='folder'] {
-  color: #d6aa37;
+.workspace-file-icon[data-file-kind='archive'] {
+  color: var(--file-icon-archive, #55b9ad);
 }
 
-.workspace-file-icon[data-file-kind='typescript'] {
-  color: #4aa8ff;
-}
-
-.workspace-file-icon[data-file-kind='javascript'] {
-  color: #e7c349;
+.workspace-file-icon[data-file-kind='config'] {
+  color: var(--file-icon-config, #9fb0c3);
 }
 
 .workspace-file-icon[data-file-kind='css'] {
-  color: #b07cff;
+  color: var(--file-icon-css, #b07cff);
 }
 
-.workspace-file-icon[data-file-kind='html'],
-.workspace-file-icon[data-file-kind='xml'] {
-  color: #ef7d57;
+.workspace-file-icon[data-file-kind='env'] {
+  color: var(--file-icon-env, #d88955);
 }
 
-.workspace-file-icon[data-file-kind='json'],
-.workspace-file-icon[data-file-kind='package'],
-.workspace-file-icon[data-file-kind='yaml'] {
-  color: #7fc972;
+.workspace-file-icon[data-file-kind='folder'] {
+  color: var(--file-icon-folder, #d6aa37);
 }
 
-.workspace-file-icon[data-file-kind='markdown'],
-.workspace-file-icon[data-file-kind='text'] {
-  color: #9fb0c3;
+.workspace-file-icon[data-file-kind='git'] {
+  color: var(--file-icon-git, #d88955);
+}
+
+.workspace-file-icon[data-file-kind='html'] {
+  color: var(--file-icon-html, #ef7d57);
 }
 
 .workspace-file-icon[data-file-kind='image'] {
-  color: #d678c8;
+  color: var(--file-icon-image, #d678c8);
 }
 
-.workspace-file-icon[data-file-kind='env'],
-.workspace-file-icon[data-file-kind='git'],
+.workspace-file-icon[data-file-kind='javascript'] {
+  color: var(--file-icon-javascript, #e7c349);
+}
+
+.workspace-file-icon[data-file-kind='json'] {
+  color: var(--file-icon-json, #7fc972);
+}
+
 .workspace-file-icon[data-file-kind='lock'] {
-  color: #d88955;
+  color: var(--file-icon-lock, #d88955);
 }
 
-.workspace-file-icon[data-file-kind='archive'],
-.workspace-file-icon[data-file-kind='pdf'],
+.workspace-file-icon[data-file-kind='markdown'] {
+  color: var(--file-icon-markdown, #9fb0c3);
+}
+
+.workspace-file-icon[data-file-kind='package'] {
+  color: var(--file-icon-package, #7fc972);
+}
+
+.workspace-file-icon[data-file-kind='pdf'] {
+  color: var(--file-icon-pdf, #55b9ad);
+}
+
 .workspace-file-icon[data-file-kind='sql'] {
-  color: #55b9ad;
+  color: var(--file-icon-sql, #55b9ad);
+}
+
+.workspace-file-icon[data-file-kind='text'] {
+  color: var(--file-icon-text, #9fb0c3);
+}
+
+.workspace-file-icon[data-file-kind='typescript'] {
+  color: var(--file-icon-typescript, #4aa8ff);
+}
+
+.workspace-file-icon[data-file-kind='vue'] {
+  color: var(--file-icon-vue, #7fc972);
+}
+
+.workspace-file-icon[data-file-kind='xml'] {
+  color: var(--file-icon-xml, #ef7d57);
+}
+
+.workspace-file-icon[data-file-kind='yaml'] {
+  color: var(--file-icon-yaml, #7fc972);
 }
 
 .workbench-search-control {
