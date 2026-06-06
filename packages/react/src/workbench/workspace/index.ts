@@ -1,3 +1,4 @@
+export { mimeTypeForPath } from './mimeType';
 export {
   WorkspaceEditor,
   MONACO_DARK_THEME_ID,
