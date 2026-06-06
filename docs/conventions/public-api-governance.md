@@ -22,6 +22,8 @@ import { CommandRegistry } from '@workbench-kit/core';
 import { WorkbenchShell } from '@workbench-kit/react/workbench';
 import { WorkbenchStructuredDataForm } from '@workbench-kit/react/workbench/settings';
 import { createWorkbenchHostBridge } from '@workbench-kit/vscode-host/bridge';
+import { createLaunchpadLibraryItemTileBinding } from '@workbench-kit/contracts';
+import type { WidgetRendererComponent } from '@workbench-kit/contracts';
 ```
 
 ## Deep Import Policy
@@ -73,6 +75,7 @@ Before committing a public API change:
 4. Confirm the symbol name and props/types avoid product-specific language.
 5. Run the minimum validation lane for the changed package.
 6. Note public API changes and validation in the commit body.
+7. Add or update at least one contract test that proves external consumers can import the symbol from the package root.
 
 ## Validation
 
