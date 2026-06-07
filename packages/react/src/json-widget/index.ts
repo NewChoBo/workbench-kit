@@ -1,5 +1,7 @@
 export { JsonWidgetPreview } from './JsonWidgetPreview.js';
 export type { JsonWidgetPreviewProps } from './JsonWidgetPreview.js';
+export { JsonWidgetPreviewCanvas } from './JsonWidgetPreviewCanvas.js';
+export type { JsonWidgetPreviewCanvasProps } from './JsonWidgetPreviewCanvas.js';
 export { JsonWidgetEditor } from './JsonWidgetEditor.js';
 export type { JsonWidgetEditorProps } from './JsonWidgetEditor.js';
 export { WidgetInspectorPanel } from './WidgetEditorPanels.js';

@@ -18,8 +18,8 @@ describe('playground insert helpers', () => {
 
     const parsed = parseWidgetJson<GenericWidget>(next!);
     expect(parsed.parseError).toBeNull();
-    expect(getWidgetChildren(parsed.value!)).toHaveLength(2);
-    expect(getWidgetChildren(parsed.value!)[1]).toMatchObject({
+    expect(getWidgetChildren(parsed.value!)).toHaveLength(1);
+    expect(getWidgetChildren(parsed.value!)[0]).toMatchObject({
       type: 'text',
       text: 'New text',
     });

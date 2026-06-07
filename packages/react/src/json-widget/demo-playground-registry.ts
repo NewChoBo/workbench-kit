@@ -1,58 +1,48 @@
+import { createElement } from 'react';
 import { createWidgetRegistry, type GenericWidget } from '@workbench-kit/json-widget';
+
+import {
+  DEFAULT_PLAYGROUND_PREVIEW_RECT,
+  PlaygroundWidgetRenderer,
+} from './playground-renderer/PlaygroundWidgetRenderer.js';
 
 export type PlaygroundWidget = GenericWidget;
 
-function describeWidget(widget: GenericWidget, depth = 0): string {
-  const indent = '  '.repeat(depth);
-  const props: string[] = [];
-
-  if (widget.type === 'text' && typeof widget.text === 'string') {
-    props.push(`text="${widget.text}"`);
-  }
-  if (widget.type === 'box') {
-    if (widget.padding !== undefined) props.push(`padding=${widget.padding}`);
-    if (widget.background !== undefined) props.push(`bg=${widget.background}`);
-  }
-  if (widget.type === 'grid') {
-    if (widget.columns !== undefined) props.push(`cols=${widget.columns}`);
-    if (widget.rows !== undefined) props.push(`rows=${widget.rows}`);
-    if (widget.gap !== undefined) props.push(`gap=${widget.gap}`);
-  }
-  if (widget.type === 'stack' || widget.type === 'row' || widget.type === 'column') {
-    if (widget.gap !== undefined) props.push(`gap=${widget.gap}`);
-  }
-
-  const placement =
-    widget.col !== undefined && widget.row !== undefined
-      ? ` @(${widget.col},${widget.row})`
-      : '';
-
-  let line = `${indent}[${widget.type}${placement}]`;
-  if (props.length > 0) line += ` ${props.join(' ')}`;
-
-  const childLines: string[] = [];
-  if (widget.child && typeof widget.child === 'object' && 'type' in widget.child) {
-    childLines.push(describeWidget(widget.child as GenericWidget, depth + 1));
-  }
-  if (Array.isArray(widget.children)) {
-    for (const child of widget.children) {
-      if (child && typeof child === 'object' && 'type' in child) {
-        childLines.push(describeWidget(child as GenericWidget, depth + 1));
-      }
-    }
-  }
-
-  return childLines.length > 0 ? [line, ...childLines].join('\n') : line;
-}
-
-function buildDescribe(widget: GenericWidget): string {
-  return describeWidget(widget);
+function buildVisualPreview(widget: PlaygroundWidget) {
+  return createElement(PlaygroundWidgetRenderer, {
+    rect: DEFAULT_PLAYGROUND_PREVIEW_RECT,
+    widget,
+  });
 }
 
 const textInspector = [
   {
     title: 'Text',
-    fields: [{ kind: 'text' as const, prop: 'text', label: 'Text' }],
+    fields: [
+      { kind: 'text' as const, prop: 'text', label: 'Content' },
+      { kind: 'number' as const, prop: 'fontSize', label: 'Font size', min: 6, max: 120 },
+      { kind: 'color' as const, prop: 'color', label: 'Color' },
+      {
+        kind: 'select' as const,
+        prop: 'fontWeight',
+        label: 'Font weight',
+        options: [
+          { label: 'Normal', value: 'normal' },
+          { label: 'Bold', value: 'bold' },
+        ],
+      },
+      {
+        kind: 'select' as const,
+        prop: 'textAlign',
+        label: 'Text align',
+        options: [
+          { label: 'Left', value: 'left' },
+          { label: 'Center', value: 'center' },
+          { label: 'Right', value: 'right' },
+        ],
+      },
+      { kind: 'color' as const, prop: 'background', label: 'Background' },
+    ],
   },
 ];
 
@@ -60,8 +50,9 @@ const boxInspector = [
   {
     title: 'Box',
     fields: [
-      { kind: 'number' as const, prop: 'padding', label: 'Padding' },
-      { kind: 'text' as const, prop: 'background', label: 'Background' },
+      { kind: 'color' as const, prop: 'background', label: 'Background' },
+      { kind: 'number' as const, prop: 'borderRadius', label: 'Border radius', min: 0 },
+      { kind: 'number' as const, prop: 'padding', label: 'Padding', min: 0 },
     ],
   },
 ];
@@ -70,9 +61,11 @@ const gridInspector = [
   {
     title: 'Grid',
     fields: [
-      { kind: 'number' as const, prop: 'columns', label: 'Columns' },
-      { kind: 'number' as const, prop: 'rows', label: 'Rows' },
-      { kind: 'number' as const, prop: 'gap', label: 'Gap' },
+      { kind: 'number' as const, prop: 'columns', label: 'Columns', min: 1, max: 24 },
+      { kind: 'number' as const, prop: 'rows', label: 'Rows', min: 1, max: 24 },
+      { kind: 'number' as const, prop: 'gap', label: 'Gap', min: 0 },
+      { kind: 'number' as const, prop: 'padding', label: 'Padding', min: 0 },
+      { kind: 'color' as const, prop: 'background', label: 'Background' },
     ],
   },
 ];
@@ -80,58 +73,62 @@ const gridInspector = [
 const stackInspector = [
   {
     title: 'Stack',
-    fields: [{ kind: 'number' as const, prop: 'gap', label: 'Gap' }],
+    fields: [{ kind: 'color' as const, prop: 'background', label: 'Background' }],
   },
 ];
 
 const linearInspector = [
   {
     title: 'Layout',
-    fields: [{ kind: 'number' as const, prop: 'gap', label: 'Gap' }],
+    fields: [
+      { kind: 'number' as const, prop: 'gap', label: 'Gap', min: 0 },
+      { kind: 'number' as const, prop: 'padding', label: 'Padding', min: 0 },
+      { kind: 'color' as const, prop: 'background', label: 'Background' },
+    ],
   },
 ];
 
 const definitions = [
   {
     type: 'text',
-    build: buildDescribe,
+    build: buildVisualPreview,
     displayName: 'Text',
     inspector: textInspector,
   },
   {
     type: 'box',
-    build: buildDescribe,
+    build: buildVisualPreview,
     displayName: 'Box',
     inspector: boxInspector,
   },
   {
     type: 'grid',
-    build: buildDescribe,
+    build: buildVisualPreview,
     displayName: 'Grid',
     inspector: gridInspector,
   },
   {
     type: 'stack',
-    build: buildDescribe,
+    build: buildVisualPreview,
     displayName: 'Stack',
     inspector: stackInspector,
   },
   {
     type: 'row',
-    build: buildDescribe,
+    build: buildVisualPreview,
     displayName: 'Row',
     inspector: linearInspector,
   },
   {
     type: 'column',
-    build: buildDescribe,
+    build: buildVisualPreview,
     displayName: 'Column',
     inspector: linearInspector,
   },
 ];
 
 export const playgroundWidgetRegistry = createWidgetRegistry<
-  (widget: PlaygroundWidget) => string,
+  (widget: PlaygroundWidget) => ReturnType<typeof buildVisualPreview>,
   PlaygroundWidget
 >(definitions);
 
@@ -228,15 +225,108 @@ export const EMPTY_PLAYGROUND_DOCUMENT = JSON.stringify(
     rows: 2,
     gap: 8,
     padding: 12,
+    background: '#0f172a',
+    children: [],
+  },
+  null,
+  2,
+);
+
+export const WELCOME_PLAYGROUND_DOCUMENT = JSON.stringify(
+  {
+    type: 'grid',
+    columns: 2,
+    rows: 2,
+    gap: 8,
+    padding: 12,
+    background: '#0f172a',
     children: [
       {
         type: 'text',
         text: 'Welcome',
         col: 0,
         row: 0,
+        color: '#e2e8f0',
+        fontSize: 16,
       },
     ],
   },
   null,
   2,
 );
+
+export interface PlaygroundStarterTemplate {
+  id: string;
+  label: string;
+  description: string;
+  document: string;
+}
+
+export const PLAYGROUND_STARTER_TEMPLATES: readonly PlaygroundStarterTemplate[] = [
+  {
+    id: 'empty-grid',
+    label: 'Empty grid',
+    description: 'Start with an empty 2×2 grid canvas.',
+    document: EMPTY_PLAYGROUND_DOCUMENT,
+  },
+  {
+    id: 'welcome',
+    label: 'Welcome text',
+    description: 'Single welcome label in a starter grid.',
+    document: WELCOME_PLAYGROUND_DOCUMENT,
+  },
+  {
+    id: 'dashboard',
+    label: 'Dashboard layout',
+    description: 'Grid with text, box, and row children.',
+    document: JSON.stringify(
+      {
+        type: 'grid',
+        columns: 3,
+        rows: 2,
+        gap: 8,
+        padding: 12,
+        background: '#101218',
+        children: [
+          {
+            type: 'text',
+            text: 'Widget playground',
+            col: 0,
+            row: 0,
+            colSpan: 2,
+            color: '#ffffff',
+            fontSize: 18,
+            fontWeight: 'bold',
+          },
+          {
+            type: 'box',
+            col: 2,
+            row: 0,
+            background: '#0f766e',
+            borderRadius: 8,
+            padding: 8,
+            child: {
+              type: 'text',
+              text: 'Live preview',
+              color: '#ecfeff',
+              textAlign: 'center',
+            },
+          },
+          {
+            type: 'row',
+            col: 0,
+            row: 1,
+            colSpan: 3,
+            gap: 8,
+            children: [
+              { type: 'text', text: 'Left', flex: 1, background: '#1e293b' },
+              { type: 'text', text: 'Right', flex: 1, background: '#334155' },
+            ],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  },
+];

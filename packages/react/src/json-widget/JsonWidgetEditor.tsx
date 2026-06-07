@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { WidgetRegistryContract } from '@workbench-kit/contracts';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { OnMount } from '@monaco-editor/react';
+import type { WidgetJsonSchema, WidgetRegistryContract } from '@workbench-kit/contracts';
 import { ROOT_WIDGET_PATH, type WidgetPath } from '@workbench-kit/json-widget';
 
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
@@ -15,6 +16,7 @@ import { SplitView } from '../workbench/SplitView';
 import { WorkspaceEditor, type WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor';
 import { type WorkspaceFile } from '../workbench/workspace/types';
 import { JsonWidgetPreview } from './JsonWidgetPreview.js';
+import { JsonWidgetPreviewCanvas } from './JsonWidgetPreviewCanvas.js';
 import { useJsonWidgetEditorSync } from './useJsonWidgetEditorSync.js';
 import { WidgetInspectorPanel } from './WidgetEditorPanels.js';
 import { WidgetTreePanel } from './tree-panel/WidgetTreePanel.js';
@@ -37,6 +39,8 @@ export interface JsonWidgetEditorProps {
   title?: ReactNode | undefined;
   value: string;
   widgetRegistry?: WidgetRegistryContract<unknown> | undefined;
+  jsonSchema?: WidgetJsonSchema | undefined;
+  interactivePreview?: boolean | undefined;
 }
 
 export function JsonWidgetEditor({
@@ -57,6 +61,8 @@ export function JsonWidgetEditor({
   title = 'Widget editor',
   value,
   widgetRegistry,
+  jsonSchema,
+  interactivePreview = false,
 }: JsonWidgetEditorProps) {
   const [uncontrolledMode, setUncontrolledMode] = useState<WorkbenchArtifactMode>(defaultMode);
   const resolvedMode = mode ?? uncontrolledMode;
@@ -89,6 +95,26 @@ export function JsonWidgetEditor({
     [path, value],
   );
 
+  const handleEditorMount = useCallback<OnMount>(
+    (editor, monaco) => {
+      sync.handleEditorMount(editor, monaco);
+
+      if (!jsonSchema) return;
+
+      monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+        validate: true,
+        schemas: [
+          {
+            uri: 'https://workbench-kit.dev/schemas/playground-widget.schema.json',
+            fileMatch: [path],
+            schema: jsonSchema,
+          },
+        ],
+      });
+    },
+    [jsonSchema, path, sync],
+  );
+
   const codePane = (
     <WorkspaceEditor
       file={editorFile}
@@ -97,7 +123,7 @@ export function JsonWidgetEditor({
       theme={theme}
       value={value}
       onChange={onChange}
-      onEditorMount={sync.handleEditorMount}
+      onEditorMount={handleEditorMount}
     />
   );
 
@@ -106,6 +132,12 @@ export function JsonWidgetEditor({
       <EmptyState compact icon="codicon-error">
         Fix JSON errors to preview the widget.
       </EmptyState>
+    ) : interactivePreview ? (
+      <JsonWidgetPreviewCanvas
+        json={value}
+        selectedPathKeys={sync.selection.pathKeys}
+        onSelectPath={sync.selectPath}
+      />
     ) : (
       <JsonWidgetPreview json={value} registry={widgetRegistry} />
     );
