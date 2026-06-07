@@ -4283,6 +4283,10 @@
   cursor: row-resize;
 }
 
+.ui-resizable-panels--vertical .ui-resizable-panels__separator::after {
+  inset: -8px 0;
+}
+
 .ui-activity-bar {
   display: flex;
   flex-direction: column;
