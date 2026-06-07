@@ -21,6 +21,7 @@ import { Button } from '../primitives/Button';
 import { EmptyState } from '../primitives/EmptyState';
 import { Select } from '../primitives/Select';
 import { TextInput } from '../primitives/TextInput';
+import { FilterBar, FilterBarActiveChips, FilterChip } from '../layout/Panel';
 import {
   SideBarHeaderControl,
   SideBarList,
@@ -286,6 +287,37 @@ function LibraryCatalogStory() {
       ? null
       : (items.find((item) => createLibraryItemIdentity(item) === selectedKey) ?? null);
 
+  const activeFilterChips = useMemo(() => {
+    const chips: Array<{ id: string; label: string }> = [];
+    if (installedOnly) chips.push({ id: 'installed', label: 'Installed only' });
+    if (kindFilter !== 'all') {
+      chips.push({ id: 'kind', label: `Kind: ${itemKindLabel[kindFilter]}` });
+    }
+    if (providerFilter !== allProviderOption) {
+      const providerTitle =
+        providers.find((provider) => provider.sourceId === providerFilter)?.title ?? providerFilter;
+      chips.push({ id: 'provider', label: `Provider: ${providerTitle}` });
+    }
+    if (searchText.trim()) {
+      chips.push({ id: 'search', label: `Search: ${searchText.trim()}` });
+    }
+    return chips;
+  }, [installedOnly, kindFilter, providerFilter, providers, searchText]);
+
+  const clearAllFilters = () => {
+    setInstalledOnly(false);
+    setKindFilter('all');
+    setProviderFilter(allProviderOption);
+    setSearchText('');
+  };
+
+  const dismissFilter = (filterId: string) => {
+    if (filterId === 'installed') setInstalledOnly(false);
+    if (filterId === 'kind') setKindFilter('all');
+    if (filterId === 'provider') setProviderFilter(allProviderOption);
+    if (filterId === 'search') setSearchText('');
+  };
+
   const statusSections = useMemo<StatusBarSectionModel[]>(
     () => [
       {
@@ -457,41 +489,58 @@ function LibraryCatalogStory() {
         primarySizePercent: 38,
       }}
       secondaryArea={
-        <section style={{ padding: 20, minHeight: 0 }}>
-          {selectedItem ? (
-            <article style={{ display: 'grid', gap: 12 }}>
-              <h2 style={{ margin: 0 }}>{selectedItem.title}</h2>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Badge>{itemKindLabel[selectedItem.kind] ?? selectedItem.kind}</Badge>
-                {selectedItem.installed ? <Badge variant="accent">Installed</Badge> : null}
-              </div>
-              <p style={{ margin: 0, color: 'var(--color-text-subtle)' }}>
-                {selectedItem.description ?? 'No description provided'}
-              </p>
-              <dl style={{ margin: 0, display: 'grid', gap: 6 }}>
-                <div>
-                  <dt style={{ fontWeight: 600 }}>Provider</dt>
-                  <dd style={{ fontWeight: 600, margin: 0 }}>
-                    {resolveLibraryItemProviderId(selectedItem)}
-                  </dd>
+        <section style={{ display: 'grid', gridTemplateRows: 'auto minmax(0, 1fr)', minHeight: 0 }}>
+          {activeFilterChips.length > 0 ? (
+            <FilterBar aria-label="Active library filters">
+              <FilterBarActiveChips onClearAll={clearAllFilters}>
+                {activeFilterChips.map((chip) => (
+                  <FilterChip
+                    key={chip.id}
+                    aria-label={`Remove ${chip.label} filter`}
+                    count={items.length}
+                    label={chip.label}
+                    onDismiss={() => dismissFilter(chip.id)}
+                  />
+                ))}
+              </FilterBarActiveChips>
+            </FilterBar>
+          ) : null}
+          <section style={{ padding: 20, minHeight: 0, overflow: 'auto' }}>
+            {selectedItem ? (
+              <article style={{ display: 'grid', gap: 12 }}>
+                <h2 style={{ margin: 0 }}>{selectedItem.title}</h2>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <Badge>{itemKindLabel[selectedItem.kind] ?? selectedItem.kind}</Badge>
+                  {selectedItem.installed ? <Badge variant="accent">Installed</Badge> : null}
                 </div>
-                <div>
-                  <dt style={{ fontWeight: 600 }}>Source</dt>
-                  <dd style={{ margin: 0 }}>{selectedItem.source.ref}</dd>
-                </div>
-                <div>
-                  <dt style={{ fontWeight: 600 }}>Tags</dt>
-                  <dd style={{ margin: 0 }}>
-                    {selectedItem.tags?.length ? selectedItem.tags.join(', ') : 'No tags'}
-                  </dd>
-                </div>
-              </dl>
-            </article>
-          ) : (
-            <EmptyState icon="codicon-search" title="No item selected">
-              선택한 항목이 없거나 검색 조건이 없습니다.
-            </EmptyState>
-          )}
+                <p style={{ margin: 0, color: 'var(--color-text-subtle)' }}>
+                  {selectedItem.description ?? 'No description provided'}
+                </p>
+                <dl style={{ margin: 0, display: 'grid', gap: 6 }}>
+                  <div>
+                    <dt style={{ fontWeight: 600 }}>Provider</dt>
+                    <dd style={{ fontWeight: 600, margin: 0 }}>
+                      {resolveLibraryItemProviderId(selectedItem)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt style={{ fontWeight: 600 }}>Source</dt>
+                    <dd style={{ margin: 0 }}>{selectedItem.source.ref}</dd>
+                  </div>
+                  <div>
+                    <dt style={{ fontWeight: 600 }}>Tags</dt>
+                    <dd style={{ margin: 0 }}>
+                      {selectedItem.tags?.length ? selectedItem.tags.join(', ') : 'No tags'}
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            ) : (
+              <EmptyState icon="codicon-search" title="No item selected">
+                선택한 항목이 없거나 검색 조건이 없습니다.
+              </EmptyState>
+            )}
+          </section>
         </section>
       }
       statusSections={statusSections}
