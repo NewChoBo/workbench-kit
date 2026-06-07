@@ -122,6 +122,9 @@ importers:
       '@workbench-kit/core':
         specifier: workspace:*
         version: link:../core
+      '@workbench-kit/json-widget':
+        specifier: workspace:*
+        version: link:../json-widget
       '@workbench-kit/runtime':
         specifier: workspace:*
         version: link:../runtime
