@@ -92,7 +92,7 @@ function StandaloneShellPreview() {
           Secondary area slot — editor, chat, or settings content is rendered here.
         </EmptyState>
       )}
-    </WorkbenchStandaloneShell>
+      />
   );
 }
 
