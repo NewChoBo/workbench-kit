@@ -20,13 +20,13 @@ import {
 } from './integratedShellActivities';
 
 export interface IntegratedShellCommandContext
-  extends WorkbenchShellCommandContext<IntegratedShellActivityId>,
+  extends
+    WorkbenchShellCommandContext<IntegratedShellActivityId>,
     WorkbenchWorkspaceCommandContext {}
 
-const integratedShellWorkbenchCommands =
-  createWorkbenchShellCommands<IntegratedShellActivityId>({
-    activities: integratedShellCommandActivities,
-  });
+const integratedShellWorkbenchCommands = createWorkbenchShellCommands<IntegratedShellActivityId>({
+  activities: integratedShellCommandActivities,
+});
 
 const integratedShellCommandContributions: CommandContributionInput<IntegratedShellCommandContext>[] =
   [
@@ -46,10 +46,9 @@ export const integratedShellCommandPolicy =
     ? 'hard-fail'
     : ('last-write-wins' as const);
 
-export const integratedShellShellCommandRegistry =
-  createCommandRegistryFromContributions<WorkbenchShellCommandContext<IntegratedShellActivityId>>([
-    { commands: integratedShellWorkbenchCommands },
-  ]);
+export const integratedShellShellCommandRegistry = createCommandRegistryFromContributions<
+  WorkbenchShellCommandContext<IntegratedShellActivityId>
+>([{ commands: integratedShellWorkbenchCommands }]);
 
 export const integratedShellMenuEntries: CommandMenuEntry<IntegratedShellCommandContext>[] =
   createWorkbenchShellMenuEntries({ activities: integratedShellCommandActivities });

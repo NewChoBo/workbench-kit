@@ -26,8 +26,8 @@ export const Overview: Story = {
       <div style={{ maxWidth: 720 }}>
         <h1 style={{ margin: '0 0 8px', fontSize: 28 }}>Newchobo UI</h1>
         <p style={{ margin: '0 0 28px', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
-          Reusable workbench primitives for compact desktop-style React interfaces. Standalone
-          host contract: <code>docs/workbench/standalone-host.md</code>.
+          Reusable workbench primitives for compact desktop-style React interfaces. Standalone host
+          contract: <code>docs/workbench/standalone-host.md</code>.
         </p>
         <h2 style={{ margin: '0 0 12px', fontSize: 18 }}>Playground map</h2>
         <ul
@@ -55,14 +55,12 @@ export const Overview: Story = {
         </ul>
         <ul style={{ display: 'grid', gap: 10, margin: 0, padding: 0, listStyle: 'none' }}>
           <li>
-            <strong>Verification</strong>: start at{' '}
-            <code>React/Workbench/Verification</code> for viewport matrix, shell states, and
-            error/warning gallery
+            <strong>Verification</strong>: start at <code>React/Workbench/Verification</code> for
+            viewport matrix, shell states, and error/warning gallery
           </li>
           <li>
-            <strong>Integrated shell</strong>:{' '}
-            <code>React/Workbench/Shell → Integrated Shell</code> for full end-to-end flow; use
-            toolbar viewports prefixed with <strong>Verify ·</strong>
+            <strong>Integrated shell</strong>: <code>React/Workbench/Shell → Integrated Shell</code>{' '}
+            for full end-to-end flow; use toolbar viewports prefixed with <strong>Verify ·</strong>
           </li>
           <li>
             <strong>Workspace</strong>: explorer, editor, and search under{' '}

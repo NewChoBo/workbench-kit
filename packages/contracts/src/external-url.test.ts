@@ -5,7 +5,9 @@ import { normalizeExternalUrlTarget } from './external-url';
 describe('normalizeExternalUrlTarget', () => {
   it('rejects disallowed protocols per policy', () => {
     expect(normalizeExternalUrlTarget('steam://store/valve', 'web-navigation')).toBeNull();
-    expect(normalizeExternalUrlTarget('steam://store/valve', 'system-launch')).toBe('steam://store/valve');
+    expect(normalizeExternalUrlTarget('steam://store/valve', 'system-launch')).toBe(
+      'steam://store/valve',
+    );
   });
 
   it('normalizes invalid targets to null', () => {

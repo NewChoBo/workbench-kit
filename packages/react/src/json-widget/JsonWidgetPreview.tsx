@@ -49,10 +49,7 @@ export function JsonWidgetPreview({
   }
 
   return (
-    <WorkbenchRenderSurface
-      className={className}
-      data-testid="json-widget-preview-output"
-    >
+    <WorkbenchRenderSurface className={className} data-testid="json-widget-preview-output">
       {renderOutput ?? emptyLabel}
     </WorkbenchRenderSurface>
   );

@@ -68,7 +68,9 @@ function connectionStatusSections(
   return [
     {
       id: 'main',
-      items: [{ id: 'detail', icon: <span className="workbench-status-dot" />, label: detailLabel }],
+      items: [
+        { id: 'detail', icon: <span className="workbench-status-dot" />, label: detailLabel },
+      ],
     },
     {
       align: 'end',
@@ -681,7 +683,9 @@ export const ErrorWarningSurfaces: Story = {
           <EmptyState icon="codicon-error">Could not load workspace catalog.</EmptyState>
         </div>
         <div style={{ border: '1px solid var(--color-border)', height: 140 }}>
-          <ListEmptyState tone="error">Search returned no matches for the current query.</ListEmptyState>
+          <ListEmptyState tone="error">
+            Search returned no matches for the current query.
+          </ListEmptyState>
         </div>
       </section>
 

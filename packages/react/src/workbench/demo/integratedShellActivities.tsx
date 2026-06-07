@@ -24,16 +24,14 @@ const integratedShellActivityIcons: Record<IntegratedShellActivityId, ReactNode>
 export const integratedShellActivityOrder = adapterActivityOrder;
 export { integratedShellCommandActivities, isIntegratedShellActivityId };
 
-export const integratedShellActivities: Record<
-  IntegratedShellActivityId,
-  IntegratedShellActivity
-> = Object.fromEntries(
-  adapterActivityOrder.map((id) => [
-    id,
-    {
+export const integratedShellActivities: Record<IntegratedShellActivityId, IntegratedShellActivity> =
+  Object.fromEntries(
+    adapterActivityOrder.map((id) => [
       id,
-      label: integratedShellActivityLabels[id],
-      icon: integratedShellActivityIcons[id],
-    },
-  ]),
-) as Record<IntegratedShellActivityId, IntegratedShellActivity>;
+      {
+        id,
+        label: integratedShellActivityLabels[id],
+        icon: integratedShellActivityIcons[id],
+      },
+    ]),
+  ) as Record<IntegratedShellActivityId, IntegratedShellActivity>;

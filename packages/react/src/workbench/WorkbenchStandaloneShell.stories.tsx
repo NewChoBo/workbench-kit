@@ -32,7 +32,9 @@ const demoActivities = [
 const demoStatusSections: StatusBarSectionModel[] = [
   {
     id: 'main',
-    items: [{ id: 'status', icon: <span className="workbench-status-dot" />, label: 'Standalone shell' }],
+    items: [
+      { id: 'status', icon: <span className="workbench-status-dot" />, label: 'Standalone shell' },
+    ],
   },
 ];
 

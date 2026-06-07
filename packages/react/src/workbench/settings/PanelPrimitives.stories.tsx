@@ -95,9 +95,7 @@ const schemaDocument: WorkbenchStructuredDataSchemaDocument = {
     properties: {
       'profile.name': { title: 'Name', type: 'string' },
     },
-    sections: [
-      { fields: ['name'], sectionKey: 'profile', title: 'Profile', type: 'form' },
-    ],
+    sections: [{ fields: ['name'], sectionKey: 'profile', title: 'Profile', type: 'form' }],
   },
 };
 

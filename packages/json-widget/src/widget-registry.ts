@@ -55,9 +55,8 @@ export class WidgetRegistry<
   }
 }
 
-export function createWidgetRegistry<
-  TBuild = unknown,
-  W extends WidgetTypeShape = WidgetTypeShape,
->(entries: readonly WidgetDefinition<W, TBuild>[] = []): WidgetRegistry<TBuild, W> {
+export function createWidgetRegistry<TBuild = unknown, W extends WidgetTypeShape = WidgetTypeShape>(
+  entries: readonly WidgetDefinition<W, TBuild>[] = [],
+): WidgetRegistry<TBuild, W> {
   return new WidgetRegistry(entries);
 }

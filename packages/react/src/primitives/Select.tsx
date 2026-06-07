@@ -31,11 +31,13 @@ function isOptionElement(child: ReactNode): child is ReactElement<ComponentProps
 }
 
 function parseOptions(children: ReactNode): ParsedOption[] {
-  return Children.toArray(children).filter(isOptionElement).map((child) => ({
-    value: String(child.props.value ?? ''),
-    label: child.props.children ?? child.props.value ?? '',
-    disabled: child.props.disabled,
-  }));
+  return Children.toArray(children)
+    .filter(isOptionElement)
+    .map((child) => ({
+      value: String(child.props.value ?? ''),
+      label: child.props.children ?? child.props.value ?? '',
+      disabled: child.props.disabled,
+    }));
 }
 
 function getEnabledOptionIndex(options: ParsedOption[], startIndex: number, direction: 1 | -1) {
@@ -70,8 +72,8 @@ export function Select({
   const containerRef = useRef<HTMLDivElement>(null);
   const nativeSelectRef = useRef<HTMLSelectElement>(null);
   const [open, setOpen] = useState(false);
-  const [uncontrolledValue, setUncontrolledValue] = useState(
-    () => String(defaultValue ?? options.find((option) => !option.disabled)?.value ?? ''),
+  const [uncontrolledValue, setUncontrolledValue] = useState(() =>
+    String(defaultValue ?? options.find((option) => !option.disabled)?.value ?? ''),
   );
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
