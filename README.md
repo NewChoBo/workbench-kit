@@ -14,15 +14,22 @@ change while the first consuming apps harden the model.
 ## Packages
 
 - `@workbench-kit/tokens`: framework-neutral CSS variables and base theme values
-- `@workbench-kit/core`: framework-neutral command and context primitives
+- `@workbench-kit/core`: framework-neutral command, context-key, and when-clause primitives
 - `@workbench-kit/contracts`: shared chat, save, patch, library, launchpad mapping, widget renderer, and plugin contracts
+- `@workbench-kit/json-widget`: JSON-driven widget parsing and registry helpers
 - `@workbench-kit/workspace`: framework-neutral workspace state and path utilities
 - `@workbench-kit/runtime`: runtime event and mock runtime utilities
 - `@workbench-kit/services`: orchestration services for workbench flows
-- `@workbench-kit/adapters`: adapters for repositories and runtime transports
+- `@workbench-kit/adapters`: adapters for repositories, runtime transports, demo fixtures, and optional persistence
 - `@workbench-kit/react`: React primitives and lightweight workbench components
 - `@workbench-kit/vscode-host`: VS Code-style host bridge utilities
 - `@workbench-kit/vscode-extension`: prototype VS Code extension bootstrap helpers
+
+## Headless packages
+
+Framework-neutral packages (`core`, `workspace`, `services`, `runtime`, `adapters`) are usable without React.
+See the **Headless/Core Commands** Storybook story for command registry and when-clause visibility, and package
+README files under `packages/*/README.md` where present.
 
 ## Public Boundary
 
@@ -57,6 +64,7 @@ pnpm format:check
 pnpm validate
 pnpm storybook
 pnpm test:storybook-play
+pnpm test:storybook-play:required
 pnpm build:storybook
 pnpm validate:full
 ```

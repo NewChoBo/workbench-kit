@@ -50,6 +50,7 @@ Use these root scripts:
   "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
   "build:storybook": "pnpm exec storybook build",
   "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",
+  "test:storybook-play:required": "pnpm exec node ./scripts/test-storybook-play.mjs --required",
   "validate:full": "pnpm validate && pnpm test:storybook-play:required"
 }
 ```
@@ -57,17 +58,27 @@ Use these root scripts:
 `pnpm validate` includes `build:storybook` so Storybook drift is caught with the
 rest of the package gate.
 
-`validate:full` adds baseline Storybook interaction playback validation via the
-required baseline-mode runner. It currently executes stories tagged with
-`storybook-play-baseline`; add `--all-stories` to include non-baseline stories
-in follow-up runs.
+`validate:full` adds required Storybook interaction playback via
+`test:storybook-play:required`. The default `test:storybook-play` runner executes
+stories tagged with `storybook-play-baseline`; pass `--required` to run only
+`storybook-play-required` stories.
 
 ## Interaction Tests
 
-Interaction tests are not part of the baseline yet. Add them first to components
-where accessibility or state regressions are most likely.
+Interaction tests use two tags:
 
-- `ConfirmDialog`: open state, accessible name, confirm/cancel
+- `storybook-play-baseline`: broader coverage executed by `pnpm test:storybook-play`
+- `storybook-play-required`: CI gate executed by `pnpm test:storybook-play:required`
+  and `pnpm validate:full`
+
+Promote a baseline story to required only after it is stable across repeated runs.
+The integrated shell story and workspace/chat/editor flows are required today; see
+`scripts/test-storybook-play.mjs` for tag filtering.
+
+Add interaction tests first to components where accessibility or state regressions
+are most likely:
+
+- `ConfirmDialog`: open state, accessible name, confirm/cancel, disabled/pending
 - `Checkbox`: checked state
 - `Select`: value changes
 - `ContextMenu`: open state, menu item selection, close behavior
@@ -78,10 +89,11 @@ Workbench stories should validate realistic product-like UI flows while keeping
 the reusable behavior in package modules.
 
 - Stories provide public fixture data and scenario-specific initial state.
+- Shared demo fixtures for the integrated shell live in `@workbench-kit/adapters/workbench-demo`.
 - Components, hooks, reducers, and command helpers own reusable behavior.
 - Integrated stories should compose Explorer, Search, Chat, Editor, Settings,
   ActivityBar, SplitView, and StatusBar through the same public APIs that a host
-  app would use.
+  app would use, preferably via `WorkbenchStandaloneShell` and host callbacks.
 - Mock runtime adapters may be used for send/cancel/streaming and workspace
   update scenarios when a real service is not required.
 - Do not encode private runtime details, storage keys, server addresses, or
@@ -95,6 +107,7 @@ menu projection scoped to the surface that opened the menu.
 - Pass an explicit `WORKBENCH_COMMAND_SURFACE_*` value to
   `resolveCommandMenuItems` when a story or component renders command-backed
   context menus from shared command entries.
+- Pass `contextKeys` when menu entries or commands use string `when` clauses.
 - Treat surface-less `resolveCommandMenuItems` calls as unit-test coverage for
   registry fallback behavior or as intentionally global menus; do not use them
   in host-like Workbench integration paths.
