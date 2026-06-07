@@ -878,6 +878,11 @@ Next gate:
 - [x] Run [library-launch-boundary-gate.md](./library-launch-boundary-gate.md) before Phase 2 close.
   - PR 리뷰 체크리스트는 [library-launch-boundary-review-checklist.md](./library-launch-boundary-review-checklist.md) 사용.
 
+## Deferred capabilities (docs only)
+
+Future backlog for i18n, custom themes, and shell layout customization:
+[future-capabilities.md](./future-capabilities.md).
+
 ## Next Clarification Questions (for next milestone)
 
 - Next mandatory baseline expansion candidates:

@@ -90,6 +90,8 @@ the reusable behavior in package modules.
 
 - Stories provide public fixture data and scenario-specific initial state.
 - Shared demo fixtures for the integrated shell live in `@workbench-kit/adapters/workbench-demo`.
+- Integrated shell orchestration lives in `packages/react/src/workbench/demo/IntegratedShellDemo.tsx`
+  and is composed through `WorkbenchStandaloneShell` (same host pattern as dev-agent).
 - Components, hooks, reducers, and command helpers own reusable behavior.
 - Integrated stories should compose Explorer, Search, Chat, Editor, Settings,
   ActivityBar, SplitView, and StatusBar through the same public APIs that a host
