@@ -186,7 +186,7 @@ export const RendererWithHistory: Story = {
                 content:
                   selectedNode?.id === 'subtitle-text'
                     ? 'Drag-and-drop JSON canvas'
-                    : 'Figma-like interactions',
+                    : 'Canvas-style interactions',
               })
             }
           >
@@ -328,7 +328,7 @@ const featureTestDocument: WorkbenchDocument = {
           parentId: 'frame-root',
           layout: { x: 14, y: 12, width: 300, height: 46 },
           style: { color: '#1e293b', fontSize: 28, fontFamily: 'Arial' },
-          content: 'Figma-like feature test',
+            content: 'Canvas feature test',
         },
         {
           id: 'ft-subtitle',
@@ -449,7 +449,7 @@ export const FeatureTestScreen: Story = {
 
     return (
       <div style={{ padding: 16, background: '#0f172a', minHeight: '100vh', color: '#e2e8f0' }}>
-        <h3 style={{ margin: 0 }}>Figma MVP 기능 테스트</h3>
+        <h3 style={{ margin: 0 }}>Canvas MVP 기능 테스트</h3>
         <p style={{ marginTop: 8 }}>
           테스트 항목: 노드 생성 / 선택 / 스타일 변경 / 이동(드래그) / Undo / Redo
         </p>
@@ -517,11 +517,11 @@ export const FeatureTestScreen: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'label node 생성' }));
     await expect(canvas.getByTestId('feature-status')).toHaveTextContent('create text');
 
-    await userEvent.click(canvas.getByText('Figma-like feature test'));
+    await userEvent.click(canvas.getByText('Canvas feature test'));
     await expect(canvas.getByTestId('feature-status')).toHaveTextContent('selected ft-title');
 
     await userEvent.click(canvas.getByRole('button', { name: '선택 노드 스타일 변경' }));
-    await expect(canvas.getByText('Figma-like feature test')).toBeVisible();
+    await expect(canvas.getByText('Canvas feature test')).toBeVisible();
 
     const resizeHandle = canvas.getByLabelText('Resize ft-rect');
     const status = canvas.getByTestId('feature-status');
