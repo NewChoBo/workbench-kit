@@ -2,7 +2,7 @@ import type { WidgetJsonSchema, WidgetTypeDefinition } from '@workbench-kit/cont
 
 type JsonSchemaObject = Record<string, unknown>;
 
-const PLAYGROUND_WIDGET_TYPES = ['text', 'box', 'grid', 'stack', 'row', 'column'] as const;
+const PLAYGROUND_WIDGET_TYPES = ['text', 'box', 'grid', 'stack', 'row', 'column', 'button', 'list-view', 'tile'] as const;
 
 function placementProperties(): JsonSchemaObject {
   return {
@@ -31,6 +31,9 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
         { $ref: '#/definitions/StackWidget' },
         { $ref: '#/definitions/RowWidget' },
         { $ref: '#/definitions/ColumnWidget' },
+        { $ref: '#/definitions/ButtonWidget' },
+        { $ref: '#/definitions/ListViewWidget' },
+        { $ref: '#/definitions/TileWidget' },
       ],
     },
     TextWidget: {
@@ -119,6 +122,63 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
         children: {
           type: 'array',
           items: { $ref: '#/definitions/Widget' },
+        },
+        ...placementProperties(),
+      },
+      additionalProperties: true,
+    },
+    ButtonWidget: {
+      type: 'object',
+      required: ['type', 'label'],
+      properties: {
+        type: { const: 'button' },
+        label: { type: 'string' },
+        variant: { enum: ['primary', 'secondary', 'ghost', 'danger'] },
+        disabled: { type: 'boolean' },
+        background: { type: 'string' },
+        color: { type: 'string' },
+        borderRadius: { type: 'number' },
+        ...placementProperties(),
+      },
+      additionalProperties: true,
+    },
+    ListViewWidget: {
+      type: 'object',
+      required: ['type'],
+      properties: {
+        type: { const: 'list-view' },
+        direction: { enum: ['vertical', 'horizontal'] },
+        itemExtent: { type: 'number', minimum: 1 },
+        gap: { type: 'number', minimum: 0 },
+        padding: { type: 'number', minimum: 0 },
+        background: { type: 'string' },
+        children: {
+          type: 'array',
+          items: { $ref: '#/definitions/Widget' },
+        },
+        ...placementProperties(),
+      },
+      additionalProperties: true,
+    },
+    TileWidget: {
+      type: 'object',
+      required: ['type'],
+      properties: {
+        type: { const: 'tile' },
+        label: { type: 'string' },
+        layers: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { enum: ['color', 'text', 'image', 'badge'] },
+              color: { type: 'string' },
+              text: { type: 'string' },
+              fontSize: { type: 'number' },
+            },
+            additionalProperties: true,
+          },
         },
         ...placementProperties(),
       },

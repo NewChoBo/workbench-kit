@@ -6,6 +6,7 @@ import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
 import { EmptyState } from '../primitives/EmptyState';
 import { Button } from '../primitives/Button';
 import { Toolbar } from '../primitives/Toolbar';
+import { JsonCodeEditorPane, JsonConfigValidationBanner } from '../json-widget/JsonCodeEditorPane.js';
 import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
 import {
   WorkbenchArtifactModeControls,
@@ -14,8 +15,9 @@ import {
 import { SplitView } from '../workbench/SplitView';
 import { WorkbenchStructuredDataSchemaPanel } from '../workbench/settings/StructuredDataSchemaPanel';
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
-import { WorkspaceEditor, type WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor';
+import { type WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor';
 import { type WorkspaceFile } from '../workbench/workspace/types';
+import { createJsonConfigEditorState } from './json-config-editor-state.js';
 
 export type JsonConfigPreviewKind = 'auto' | 'none' | 'schema' | 'widget';
 
@@ -27,6 +29,7 @@ export interface JsonConfigWorkbenchProps {
   headerActions?: ReactNode | undefined;
   mode?: WorkbenchArtifactMode | undefined;
   onChange: (value: string) => void;
+  onApply?: (() => void) | undefined;
   onDiscard?: (() => void) | undefined;
   onModeChange?: ((mode: WorkbenchArtifactMode) => void) | undefined;
   onSave?: (() => void) | undefined;
@@ -76,6 +79,7 @@ export function JsonConfigWorkbench({
   headerActions,
   mode,
   onChange,
+  onApply,
   onDiscard,
   onModeChange,
   onSave,
@@ -102,6 +106,14 @@ export function JsonConfigWorkbench({
   };
 
   const dirty = baselineValue !== undefined && value !== baselineValue;
+  const editorState = useMemo(
+    () =>
+      createJsonConfigEditorState({
+        baselineValue: baselineValue ?? value,
+        currentValue: value,
+      }),
+    [baselineValue, value],
+  );
   const resolvedPreviewKind = resolveJsonConfigPreviewKind(previewKind, schema, value);
 
   const structuredData = useMemo(() => {
@@ -130,13 +142,14 @@ export function JsonConfigWorkbench({
   };
 
   const codePane = (
-    <WorkspaceEditor
+    <JsonCodeEditorPane
       file={editorFile}
       readOnly={readOnly}
-      showHeader={false}
+      showProblemsPanel
       theme={theme}
       value={value}
       onChange={onChange}
+      onSave={onSave}
     />
   );
 
@@ -179,6 +192,11 @@ export function JsonConfigWorkbench({
       <PanelHeader
         actions={
           <Toolbar>
+            {editorState.canApply && onApply ? (
+              <Button variant="primary" onClick={onApply}>
+                Apply
+              </Button>
+            ) : null}
             {dirty && !readOnly ? (
               <>
                 {onDiscard ? <Button onClick={onDiscard}>Discard</Button> : null}
@@ -204,6 +222,11 @@ export function JsonConfigWorkbench({
         </span>
       </PanelHeader>
       <PanelBody className="ui-json-config-workbench__body">
+        <JsonConfigValidationBanner
+          canApply={editorState.canApply}
+          firstError={editorState.firstError}
+          validationOk={editorState.validationOk}
+        />
         {resolvedMode === 'code' ? (
           <section className="ui-json-config-workbench__pane" aria-label="Code">
             {codePane}

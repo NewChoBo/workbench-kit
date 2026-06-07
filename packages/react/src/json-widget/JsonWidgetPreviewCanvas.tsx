@@ -4,10 +4,12 @@ import { parseWidgetJson } from '@workbench-kit/json-widget';
 
 import { WorkbenchPreviewCanvas } from '../layout/WorkbenchCanvas.js';
 import { WorkbenchParseError } from '../layout/WorkbenchLayout.js';
+import { PreviewZoomToolbar } from './PreviewZoomToolbar.js';
 import {
   DEFAULT_PLAYGROUND_PREVIEW_RECT,
   PlaygroundWidgetRenderer,
 } from './playground-renderer/PlaygroundWidgetRenderer.js';
+import { usePreviewViewport } from './usePreviewViewport.js';
 
 export interface JsonWidgetPreviewCanvasProps {
   json: string;
@@ -16,6 +18,8 @@ export interface JsonWidgetPreviewCanvasProps {
   className?: string | undefined;
   canvasWidth?: number | undefined;
   canvasHeight?: number | undefined;
+  enableZoom?: boolean | undefined;
+  frameTitle?: string | undefined;
 }
 
 export function JsonWidgetPreviewCanvas({
@@ -25,8 +29,11 @@ export function JsonWidgetPreviewCanvas({
   className,
   canvasWidth = DEFAULT_PLAYGROUND_PREVIEW_RECT.width,
   canvasHeight = DEFAULT_PLAYGROUND_PREVIEW_RECT.height,
+  enableZoom = true,
+  frameTitle = 'Widget preview',
 }: JsonWidgetPreviewCanvasProps) {
   const parsed = useMemo(() => parseWidgetJson<GenericWidget>(json), [json]);
+  const viewport = usePreviewViewport({ canvasHeight, canvasWidth });
 
   if (parsed.parseError !== null) {
     return (
@@ -43,25 +50,52 @@ export function JsonWidgetPreviewCanvas({
   const rect = { x: 0, y: 0, width: canvasWidth, height: canvasHeight };
 
   return (
-    <WorkbenchPreviewCanvas
-      className={className}
-      data-testid="json-widget-preview-canvas"
-      frameHeight={canvasHeight}
-      frameTitle="Widget preview"
-      frameWidth={canvasWidth}
-      showWindowFrame
-    >
-      <div
-        data-testid="json-widget-preview-output"
-        style={{ position: 'relative', width: canvasWidth, height: canvasHeight }}
-      >
-        <PlaygroundWidgetRenderer
-          rect={rect}
-          selectedPathKeys={selectedPathKeys}
-          widget={parsed.value}
-          onSelectPath={onSelectPath}
+    <div className="ui-json-widget-preview-canvas-shell" data-testid="json-widget-preview-canvas-shell">
+      {enableZoom ? (
+        <PreviewZoomToolbar
+          canZoomIn={viewport.canZoomIn}
+          canZoomOut={viewport.canZoomOut}
+          issueCount={0}
+          scaleLabel={viewport.scaleLabel}
+          title={frameTitle}
+          onZoomIn={viewport.zoomIn}
+          onZoomOut={viewport.zoomOut}
+          onZoomToFit={viewport.zoomToFit}
         />
+      ) : null}
+
+      <div
+        ref={enableZoom ? viewport.setCanvasElement : undefined}
+        className="ui-json-widget-preview-canvas-viewport-host"
+        style={{ flex: 1, minHeight: 0, position: 'relative' }}
+      >
+        <WorkbenchPreviewCanvas
+          className={className}
+          data-testid="json-widget-preview-canvas"
+          frameHeight={canvasHeight}
+          frameTitle={frameTitle}
+          frameWidth={canvasWidth}
+          help={enableZoom ? 'Ctrl + Scroll to zoom | Drag empty area to pan' : undefined}
+          isPanning={viewport.isPanning}
+          onResetView={enableZoom ? viewport.resetView : undefined}
+          resetLabel={enableZoom ? `Reset (${viewport.scaleLabel})` : undefined}
+          resetTitle="Reset zoom and center viewport"
+          showWindowFrame
+          stageStyle={enableZoom ? viewport.stageStyle : undefined}
+        >
+          <div
+            data-testid="json-widget-preview-output"
+            style={{ position: 'relative', width: canvasWidth, height: canvasHeight }}
+          >
+            <PlaygroundWidgetRenderer
+              rect={rect}
+              selectedPathKeys={selectedPathKeys}
+              widget={parsed.value}
+              onSelectPath={onSelectPath}
+            />
+          </div>
+        </WorkbenchPreviewCanvas>
       </div>
-    </WorkbenchPreviewCanvas>
+    </div>
   );
 }

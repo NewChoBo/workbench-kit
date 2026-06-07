@@ -285,6 +285,181 @@ function renderStack(
   );
 }
 
+function renderButton(
+  widget: GenericWidget,
+  rect: Rect,
+  fillParent: boolean | undefined,
+  path: WidgetPath,
+  selectedPathKeys: ReadonlySet<string> | undefined,
+  onSelect: ((path: WidgetPath) => void) | undefined,
+) {
+  const variant =
+    widget.variant === 'secondary' ||
+    widget.variant === 'ghost' ||
+    widget.variant === 'danger'
+      ? widget.variant
+      : 'primary';
+  const variantStyles: Record<string, { background: string; color: string }> = {
+    primary: { background: '#2563eb', color: '#eff6ff' },
+    secondary: { background: '#334155', color: '#e2e8f0' },
+    ghost: { background: 'transparent', color: '#cbd5e1' },
+    danger: { background: '#dc2626', color: '#fef2f2' },
+  };
+  const palette = variantStyles[variant] ?? variantStyles.primary;
+  const disabled = widget.disabled === true;
+
+  return (
+    <SelectableSurface
+      onSelect={onSelect}
+      path={path}
+      selectedPathKeys={selectedPathKeys}
+      style={{
+        ...positionStyle(rect, fillParent),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor:
+          typeof widget.background === 'string' ? widget.background : palette.background,
+        color: typeof widget.color === 'string' ? widget.color : palette.color,
+        borderRadius: typeof widget.borderRadius === 'number' ? widget.borderRadius : 8,
+        fontSize: 13,
+        fontWeight: 600,
+        opacity: disabled ? 0.55 : 1,
+        userSelect: 'none',
+      }}
+    >
+      {typeof widget.label === 'string' ? widget.label : 'Button'}
+    </SelectableSurface>
+  );
+}
+
+function renderListView(
+  widget: GenericWidget,
+  rect: Rect,
+  fillParent: boolean | undefined,
+  path: WidgetPath,
+  selectedPathKeys: ReadonlySet<string> | undefined,
+  onSelect: ((path: WidgetPath) => void) | undefined,
+) {
+  const isHorizontal = widget.direction === 'horizontal';
+  const itemExtent = typeof widget.itemExtent === 'number' ? widget.itemExtent : 80;
+  const gap = typeof widget.gap === 'number' ? widget.gap : 0;
+  const padding = typeof widget.padding === 'number' ? widget.padding : 0;
+  const children = Array.isArray(widget.children)
+    ? widget.children.filter(
+        (child): child is GenericWidget =>
+          child !== null && typeof child === 'object' && 'type' in child,
+      )
+    : [];
+
+  return (
+    <SelectableSurface
+      onSelect={onSelect}
+      path={path}
+      selectedPathKeys={selectedPathKeys}
+      style={{
+        ...positionStyle(rect, fillParent),
+        display: 'flex',
+        flexDirection: isHorizontal ? 'row' : 'column',
+        gap,
+        padding,
+        backgroundColor: typeof widget.background === 'string' ? widget.background : '#0f172a',
+        overflow: 'hidden',
+      }}
+    >
+      {children.map((child, index) => (
+        <div
+          key={index}
+          style={{
+            flex: '0 0 auto',
+            ...(isHorizontal
+              ? { width: itemExtent, height: '100%' }
+              : { height: itemExtent, width: '100%' }),
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <PlaygroundWidgetRenderer
+            fillParent
+            path={[...path, { kind: 'children', index }]}
+            rect={{ x: 0, y: 0, width: itemExtent, height: itemExtent }}
+            selectedPathKeys={selectedPathKeys}
+            widget={child}
+            onSelectPath={onSelect}
+          />
+        </div>
+      ))}
+    </SelectableSurface>
+  );
+}
+
+function resolveTileBackground(widget: GenericWidget): string {
+  if (!Array.isArray(widget.layers)) return '#1e293b';
+  for (const layer of widget.layers) {
+    if (
+      layer &&
+      typeof layer === 'object' &&
+      'type' in layer &&
+      layer.type === 'color' &&
+      typeof layer.color === 'string'
+    ) {
+      return layer.color;
+    }
+  }
+  return '#1e293b';
+}
+
+function resolveTileOverlayText(widget: GenericWidget): string | null {
+  if (typeof widget.label === 'string' && widget.label.trim().length > 0) {
+    return widget.label;
+  }
+  if (!Array.isArray(widget.layers)) return null;
+  for (const layer of widget.layers) {
+    if (
+      layer &&
+      typeof layer === 'object' &&
+      'type' in layer &&
+      layer.type === 'text' &&
+      typeof layer.text === 'string'
+    ) {
+      return layer.text;
+    }
+  }
+  return null;
+}
+
+function renderTile(
+  widget: GenericWidget,
+  rect: Rect,
+  fillParent: boolean | undefined,
+  path: WidgetPath,
+  selectedPathKeys: ReadonlySet<string> | undefined,
+  onSelect: ((path: WidgetPath) => void) | undefined,
+) {
+  const overlayText = resolveTileOverlayText(widget);
+
+  return (
+    <SelectableSurface
+      onSelect={onSelect}
+      path={path}
+      selectedPathKeys={selectedPathKeys}
+      style={{
+        ...positionStyle(rect, fillParent),
+        display: 'grid',
+        placeItems: 'center',
+        backgroundColor: resolveTileBackground(widget),
+        borderRadius: 12,
+        color: '#f8fafc',
+        fontSize: 14,
+        fontWeight: 600,
+        userSelect: 'none',
+      }}
+    >
+      {overlayText ?? 'Tile'}
+    </SelectableSurface>
+  );
+}
+
 function renderLinear(
   widget: GenericWidget,
   rect: Rect,
@@ -379,6 +554,12 @@ export function PlaygroundWidgetRenderer({
     case 'row':
     case 'column':
       return renderLinear(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
+    case 'button':
+      return renderButton(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
+    case 'list-view':
+      return renderListView(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
+    case 'tile':
+      return renderTile(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
     default:
       return (
         <SelectableSurface

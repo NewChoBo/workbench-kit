@@ -88,6 +88,61 @@ const linearInspector = [
   },
 ];
 
+const buttonInspector = [
+  {
+    title: 'Button',
+    fields: [
+      { kind: 'text' as const, prop: 'label', label: 'Label' },
+      {
+        kind: 'select' as const,
+        prop: 'variant',
+        label: 'Variant',
+        options: [
+          { label: 'Primary', value: 'primary' },
+          { label: 'Secondary', value: 'secondary' },
+          { label: 'Ghost', value: 'ghost' },
+          { label: 'Danger', value: 'danger' },
+        ],
+      },
+      { kind: 'boolean' as const, prop: 'disabled', label: 'Disabled' },
+      { kind: 'color' as const, prop: 'background', label: 'Background' },
+      { kind: 'color' as const, prop: 'color', label: 'Text color' },
+      { kind: 'number' as const, prop: 'borderRadius', label: 'Border radius', min: 0 },
+    ],
+  },
+];
+
+const listViewInspector = [
+  {
+    title: 'List View',
+    fields: [
+      {
+        kind: 'select' as const,
+        prop: 'direction',
+        label: 'Direction',
+        options: [
+          { label: 'Vertical', value: 'vertical' },
+          { label: 'Horizontal', value: 'horizontal' },
+        ],
+      },
+      { kind: 'number' as const, prop: 'itemExtent', label: 'Item extent', min: 1 },
+      { kind: 'number' as const, prop: 'gap', label: 'Gap', min: 0 },
+      { kind: 'number' as const, prop: 'padding', label: 'Padding', min: 0 },
+      { kind: 'color' as const, prop: 'background', label: 'Background' },
+    ],
+  },
+];
+
+const tileInspector = [
+  {
+    title: 'Tile',
+    fields: [
+      { kind: 'text' as const, prop: 'label', label: 'Label' },
+      { kind: 'color' as const, prop: 'background', label: 'Background (via layers)' },
+    ],
+  },
+];
+
 const definitions = [
   {
     type: 'text',
@@ -125,6 +180,24 @@ const definitions = [
     displayName: 'Column',
     inspector: linearInspector,
   },
+  {
+    type: 'button',
+    build: buildVisualPreview,
+    displayName: 'Button',
+    inspector: buttonInspector,
+  },
+  {
+    type: 'list-view',
+    build: buildVisualPreview,
+    displayName: 'List View',
+    inspector: listViewInspector,
+  },
+  {
+    type: 'tile',
+    build: buildVisualPreview,
+    displayName: 'Tile',
+    inspector: tileInspector,
+  },
 ];
 
 export const playgroundWidgetRegistry = createWidgetRegistry<
@@ -132,7 +205,16 @@ export const playgroundWidgetRegistry = createWidgetRegistry<
   PlaygroundWidget
 >(definitions);
 
-export type PlaygroundWidgetTemplateId = 'text' | 'box' | 'grid' | 'stack' | 'row' | 'column';
+export type PlaygroundWidgetTemplateId =
+  | 'text'
+  | 'box'
+  | 'grid'
+  | 'stack'
+  | 'row'
+  | 'column'
+  | 'button'
+  | 'list-view'
+  | 'tile';
 
 export interface PlaygroundWidgetTemplate {
   id: PlaygroundWidgetTemplateId;
@@ -214,6 +296,45 @@ export const PLAYGROUND_WIDGET_TEMPLATES: readonly PlaygroundWidgetTemplate[] = 
         { type: 'text', text: 'Top', flex: 1 },
         { type: 'text', text: 'Bottom', flex: 1 },
       ],
+    }),
+  },
+  {
+    id: 'button',
+    label: 'Button',
+    create: ({ siblingCount }) => ({
+      type: 'button',
+      label: 'Launch',
+      variant: 'primary',
+      col: siblingCount % 2,
+      row: Math.floor(siblingCount / 2),
+    }),
+  },
+  {
+    id: 'list-view',
+    label: 'List View',
+    create: ({ siblingCount }) => ({
+      type: 'list-view',
+      direction: 'vertical',
+      itemExtent: 72,
+      gap: 6,
+      padding: 8,
+      col: siblingCount % 2,
+      row: Math.floor(siblingCount / 2),
+      children: [
+        { type: 'text', text: 'Item 1', background: '#1e293b' },
+        { type: 'text', text: 'Item 2', background: '#334155' },
+      ],
+    }),
+  },
+  {
+    id: 'tile',
+    label: 'Tile',
+    create: ({ siblingCount }) => ({
+      type: 'tile',
+      label: 'App',
+      col: siblingCount % 2,
+      row: Math.floor(siblingCount / 2),
+      layers: [{ type: 'color', color: '#0f766e' }],
     }),
   },
 ];

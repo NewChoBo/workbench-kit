@@ -81,8 +81,10 @@ Sync rules:
 - [x] P3.1 playground authoring UX — sibling insert, delete selected, duplicate selected, starter templates
 - [x] P3.1 Monaco playground schema — `createPlaygroundWidgetJsonSchema` wired via `JsonWidgetEditor.jsonSchema`
 - [x] P3.1 preview click-to-select — `interactivePreview` bridges canvas selection to tree/inspector
+- [x] P3.2 strengths inheritance — zoom/pan canvas, preview toolbar, Monaco problems/Ctrl+S/view shortcuts, config Apply banner ([strengths-inheritance.md](./strengths-inheritance.md))
+- [x] P3.2 playground widget types — simplified `button`, `list-view`, `tile` in playground registry/schema/renderer
 - [ ] P4 consumer swap runbook
-- [ ] P4 tile_paper domain types (`tile`, `list-view`, full `WidgetPropertySections`) and `WidgetPreviewCanvas` zoom/pan chrome
+- [ ] P4 tile_paper domain types (full `WidgetPropertySections`, `EditorWidgetWrapper` selection chrome)
 - [ ] P4 full `createWidgetJsonSchema` parity (all builtin widget types from tile_paper)
 
 ## Verification
