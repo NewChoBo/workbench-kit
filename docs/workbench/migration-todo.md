@@ -20,7 +20,13 @@ internal command names into this package.
 model documented in [reference-implementation-strategy.md](./reference-implementation-strategy.md)
 (custom_launcher leads product shell/runtime/library; tile_paper leads
 `@workbench-kit/react` and JSON widget editor). Command registry gap analysis
-(Step 1) lives in that document.
+(Step 1) lives in that document. Long-term product target:
+[Unified Vision](./reference-implementation-strategy.md#unified-vision) (TilePaper Workbench,
+custom_launcher as canonical Electron app, 5-phase roadmap).
+
+**Unified product vision:** The integrated end-state **TilePaper Workbench**
+(canonical custom_launcher + tile_paper domain libraries on workbench-kit) is
+documented in [reference-implementation-strategy.md § Unified Vision](./reference-implementation-strategy.md#unified-vision).
 
 ## Goals
 
