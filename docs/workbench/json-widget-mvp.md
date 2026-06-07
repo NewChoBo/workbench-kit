@@ -37,6 +37,19 @@ Build verification:
 pnpm build:storybook
 ```
 
+Storybook play tests (baseline-tagged stories, including JsonWidget/Playground):
+
+```bash
+pnpm test:storybook-play
+```
+
+Required play gate (subset tagged `storybook-play-required`; json-widget stories are baseline-only):
+
+```bash
+pnpm test:storybook-play:required
+pnpm validate:full
+```
+
 ## Tests
 
 ```bash
@@ -56,4 +69,4 @@ pnpm --filter @tilepaper/json-widget-tree test
 - Move built-in widget definitions and layout calculators into shared packages where product-neutral
 - React renderer bridge in `@workbench-kit/react` or a dedicated binding package
 - json-widget-editor chrome extraction to workbench-kit
-- End-to-end Storybook play tests for json-widget stories
+- Promote json-widget play stories to `storybook-play-required` if CI gate expansion is approved

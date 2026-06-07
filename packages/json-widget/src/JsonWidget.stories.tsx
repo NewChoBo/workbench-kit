@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { expect, userEvent, within } from 'storybook/test';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
 
@@ -220,9 +221,21 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+const EXPECTED_MOCK_OUTPUT = mockBuildCard(SAMPLE_WIDGET);
+
 export const ParseAndRender: Story = {
   args: {
     initialJson: formatWidgetJson(SAMPLE_WIDGET),
+  },
+  tags: ['storybook-play-baseline'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole('textbox', { name: 'Widget JSON' })).toHaveValue(
+      formatWidgetJson(SAMPLE_WIDGET),
+    );
+    await expect(canvas.queryByRole('alert')).not.toBeInTheDocument();
+    await expect(canvas.getByText(EXPECTED_MOCK_OUTPUT)).toBeVisible();
   },
 };
 
@@ -230,5 +243,15 @@ export const InvalidJsonHandling: Story = {
   args: {
     initialJson: '{',
     showInvalidSamples: true,
+  },
+  tags: ['storybook-play-baseline'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole('alert')).toBeVisible();
+    await expect(canvas.getByText('Fix JSON errors to render.')).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Empty input' }));
+    await expect(canvas.getByRole('alert')).toHaveTextContent('JSON is empty.');
   },
 };
