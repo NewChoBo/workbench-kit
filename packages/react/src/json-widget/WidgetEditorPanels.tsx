@@ -1,21 +1,9 @@
-import { useMemo } from 'react';
 import type {
   WidgetInspectorField,
   WidgetInspectorSection,
   WidgetRegistryContract,
 } from '@workbench-kit/contracts';
-import type {
-  GenericWidget,
-  WidgetNode,
-  WidgetPath,
-  WidgetSelectionState,
-} from '@workbench-kit/json-widget';
-import {
-  collectWidgetNodes,
-  getWidgetDisplayLabel,
-  isWidgetPathSelected,
-  widgetPathKey,
-} from '@workbench-kit/json-widget';
+import type { GenericWidget, WidgetPath } from '@workbench-kit/json-widget';
 
 import { Badge } from '../primitives/Badge';
 import {
@@ -30,69 +18,6 @@ import {
   WorkbenchPropertyTextRow,
   WorkbenchSectionTitle,
 } from '../layout/WorkbenchPropertyPanel';
-import { WorkbenchTree, WorkbenchTreeExpander, WorkbenchTreeItem } from '../layout/WorkbenchTree';
-import { cxCodicon } from '../utils/codicon';
-
-export interface WidgetTreePanelProps {
-  root: GenericWidget;
-  selection: WidgetSelectionState;
-  onSelect: (path: WidgetPath) => void;
-}
-
-export function WidgetTreePanel({ root, selection, onSelect }: WidgetTreePanelProps) {
-  const nodes = useMemo(() => collectWidgetNodes(root), [root]);
-  const expandedKeys = useMemo(() => {
-    const keys = new Set<string>();
-    for (const node of nodes) {
-      const hasChildren = nodes.some(
-        (candidate: WidgetNode) =>
-          candidate.path.length > node.path.length &&
-          widgetPathKey(candidate.path).startsWith(`${widgetPathKey(node.path)}.`),
-      );
-      if (hasChildren) {
-        keys.add(widgetPathKey(node.path));
-      }
-    }
-    return keys;
-  }, [nodes]);
-
-  return (
-    <WorkbenchTree aria-label="Widget tree" className="ui-json-widget-tree-panel">
-      {nodes.map((node: WidgetNode) => {
-        const pathKey = widgetPathKey(node.path);
-        const depth = node.path.length;
-        const expandable = expandedKeys.has(pathKey);
-        const selected = isWidgetPathSelected(selection, node.path);
-
-        return (
-          <WorkbenchTreeItem
-            key={pathKey}
-            depth={depth}
-            selected={selected}
-            label={getWidgetDisplayLabel(node.widget)}
-            icon={<span className={cxCodicon('codicon-json')} aria-hidden />}
-            control={
-              expandable ? (
-                <WorkbenchTreeExpander
-                  aria-label="Expand node"
-                  expanded
-                  onClick={() => onSelect(node.path)}
-                />
-              ) : undefined
-            }
-            onClick={() => onSelect(node.path)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                onSelect(node.path);
-              }
-            }}
-          />
-        );
-      })}
-    </WorkbenchTree>
-  );
-}
 
 export interface WidgetInspectorPanelProps {
   widget: GenericWidget | null;

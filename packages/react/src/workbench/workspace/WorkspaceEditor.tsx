@@ -157,6 +157,7 @@ export interface WorkspaceEditorProps {
   compact?: boolean;
   file: WorkspaceFile;
   onChange?: (content: string) => void;
+  onEditorMount?: OnMount;
   onSave?: (content: string) => void;
   readOnly?: boolean;
   showHeader?: boolean;
@@ -168,6 +169,7 @@ export function WorkspaceEditor({
   compact,
   file,
   onChange,
+  onEditorMount,
   onSave,
   readOnly = !onChange,
   showHeader = true,
@@ -176,6 +178,8 @@ export function WorkspaceEditor({
 }: WorkspaceEditorProps) {
   const language = languageForFile(file.path, file.mimeType);
   const handleMount: OnMount = (editor, monacoInstance) => {
+    onEditorMount?.(editor, monacoInstance);
+
     if (!onSave) return;
 
     editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyS, () => {

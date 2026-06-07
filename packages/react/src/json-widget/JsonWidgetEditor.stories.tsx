@@ -81,7 +81,7 @@ export const SplitEditor: Story = {
 
 export const EditorInteraction: Story = {
   render: () => <EditorHarness initialValue={widgetDocument} defaultMode="split" />,
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 

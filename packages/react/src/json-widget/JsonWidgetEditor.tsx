@@ -16,7 +16,8 @@ import { WorkspaceEditor, type WorkspaceEditorTheme } from '../workbench/workspa
 import { type WorkspaceFile } from '../workbench/workspace/types';
 import { JsonWidgetPreview } from './JsonWidgetPreview.js';
 import { useJsonWidgetEditorSync } from './useJsonWidgetEditorSync.js';
-import { WidgetInspectorPanel, WidgetTreePanel } from './WidgetEditorPanels.js';
+import { WidgetInspectorPanel } from './WidgetEditorPanels.js';
+import { WidgetTreePanel } from './tree-panel/WidgetTreePanel.js';
 
 export interface JsonWidgetEditorProps {
   baselineValue?: string | undefined;
@@ -90,6 +91,7 @@ export function JsonWidgetEditor({
       theme={theme}
       value={value}
       onChange={onChange}
+      onEditorMount={sync.handleEditorMount}
     />
   );
 
@@ -188,7 +190,12 @@ export function JsonWidgetEditor({
           <section className="ui-json-widget-editor__pane" aria-label="Widget tree">
             <WidgetTreePanel
               root={sync.root}
+              readOnly={readOnly}
               selection={sync.selection}
+              onPatch={(patch) => {
+                const nextDocument = sync.applyPatch(patch);
+                if (nextDocument) onChange(nextDocument);
+              }}
               onSelect={(nextPath) => {
                 sync.selectPath(nextPath);
               }}
