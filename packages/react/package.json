@@ -15,6 +15,7 @@
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
+    "./json-config": "./src/json-config/index.ts",
     "./json-widget": "./src/json-widget/index.ts",
     "./styles.css": "./src/styles.css"
   },
