@@ -10,7 +10,7 @@ import {
 
 const meta = {
   component: WorkbenchArtifactShell,
-  title: 'React/Workbench/ArtifactShell',
+  title: 'React/Workbench/Shell/ArtifactShell',
   parameters: {
     layout: 'fullscreen',
   },

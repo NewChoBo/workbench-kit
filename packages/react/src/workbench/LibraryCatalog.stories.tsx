@@ -31,7 +31,7 @@ import type { StatusBarSectionModel } from './StatusBar';
 import { WorkbenchShell } from './WorkbenchShell';
 
 const meta = {
-  title: 'React/Workbench/LibraryCatalog',
+  title: 'React/Workbench/Catalog/LibraryCatalog',
   parameters: {
     layout: 'fullscreen',
   },

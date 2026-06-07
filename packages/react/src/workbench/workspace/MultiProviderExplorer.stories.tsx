@@ -9,7 +9,7 @@ import {
 } from './MultiProviderExplorer';
 
 const meta = {
-  title: 'React/Workbench/MultiProviderExplorer',
+  title: 'React/Workbench/Workspace/MultiProviderExplorer',
   parameters: {
     layout: 'fullscreen',
   },

@@ -32,7 +32,7 @@ import type {
 import { useVirtualWorkspace } from './useVirtualWorkspace';
 
 const meta = {
-  title: 'React/Workbench/WorkspaceExplorer',
+  title: 'React/Workbench/Workspace/WorkspaceExplorer',
   parameters: {
     layout: 'fullscreen',
   },

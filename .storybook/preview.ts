@@ -59,6 +59,39 @@ const preview: Preview = {
     },
   ],
   parameters: {
+    options: {
+      storySort: {
+        order: [
+          'Introduction',
+          ['JsonConfig', ['Workbench']],
+          ['JsonWidget', ['Playground', 'Preview']],
+          [
+            'React',
+            [
+              'Primitives',
+              'Layout',
+              'Overlays',
+              [
+                'Workbench',
+                [
+                  'Shell',
+                  'Workspace',
+                  'Settings',
+                  'Chat',
+                  'Commands',
+                  'Catalog',
+                  'Flows',
+                  'Auth',
+                  'Verification',
+                ],
+              ],
+            ],
+          ],
+        ],
+        method: 'alphabetical',
+        locales: 'en-US',
+      },
+    },
     layout: 'fullscreen',
     backgrounds: {
       default: 'workbench',

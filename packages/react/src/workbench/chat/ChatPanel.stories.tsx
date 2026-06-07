@@ -22,7 +22,7 @@ import { ChatPanel } from './ChatPanel';
 import type { ChatMessage } from './types';
 
 const meta = {
-  title: 'React/Workbench/ChatPanel',
+  title: 'React/Workbench/Chat/ChatPanel',
   parameters: {
     layout: 'fullscreen',
   },

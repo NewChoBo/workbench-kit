@@ -5,7 +5,7 @@ import { Button } from '../primitives/Button';
 import { WorkbenchConfirmationFlow, type WorkbenchConfirmationAction } from './ConfirmationFlow';
 
 const meta = {
-  title: 'React/Workbench/ConfirmationFlow',
+  title: 'React/Workbench/Flows/ConfirmationFlow',
   parameters: {
     layout: 'fullscreen',
   },

@@ -94,7 +94,7 @@ import {
 } from './workspace';
 
 const meta = {
-  title: 'React/Workbench',
+  title: 'React/Workbench/Shell',
   parameters: {
     layout: 'fullscreen',
   },

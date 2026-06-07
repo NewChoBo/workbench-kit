@@ -12,7 +12,7 @@ import {
 } from './WorkbenchLoginView';
 
 const meta = {
-  title: 'React/Workbench/Auth',
+  title: 'React/Workbench/Auth/WorkbenchAuth',
   component: WorkbenchLoginView,
   parameters: { layout: 'fullscreen' },
 } satisfies Meta<typeof WorkbenchLoginView>;
