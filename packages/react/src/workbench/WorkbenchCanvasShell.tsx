@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, type ReactElement, useEffect, useMemo, useState } from 'react';
 import { createCommandRegistryFromContributions } from '@workbench-kit/core';
 import { integratedShellWorkspaceFiles } from '@workbench-kit/adapters';
 import { Button } from '../primitives/Button';
@@ -6,7 +6,7 @@ import { TextInput } from '../primitives/TextInput';
 import { SideBarViewFrame } from '../layout/SideBarViewFrame';
 import { createWorkbenchShellCommands } from './commands';
 import { WorkbenchStandaloneShell } from './WorkbenchStandaloneShell';
-import type { WorkbenchStandaloneBootstrap } from './standalone';
+import type { WorkbenchActivityDescriptor, WorkbenchStandaloneBootstrap } from './standalone';
 import {
   WorkbenchDocumentRenderer,
   createPatchFromWorkbenchDocumentAction,
@@ -151,16 +151,13 @@ export function WorkbenchCanvasShell({
   compactStatus = true,
   onDocumentChange,
 }: WorkbenchCanvasShellProps) {
-  const activities = useMemo(
-    () => [
-      {
+  const activities = useMemo<Array<WorkbenchActivityDescriptor<StudioShellActivityId>>>(() => [
+    {
       id: DEFAULT_CANVAS_ACTIVITY_ID,
-        label: 'Design',
-        icon: 'codicon-layout',
-      },
-    ],
-    [],
-  );
+      label: 'Design',
+      icon: 'codicon-layout',
+    },
+  ], []);
 
   const commandRegistry = useMemo(
     () =>
@@ -195,8 +192,10 @@ export function WorkbenchCanvasShell({
   const [activeTab, setActiveTab] = useState<StudioShellTab>('preview');
 
   const activePageId = documentJson.pages?.[0]?.id ?? 'page-shell-canvas';
-  const activePage = documentJson.pages.find((page) => page.id === activePageId) ?? documentJson.pages[0];
-  const selectedNode = activePage?.nodes.find((node) => node.id === selectedNodeId);
+  const activePage = documentJson.pages.find(
+    (page: WorkbenchDocument['pages'][number]) => page.id === activePageId,
+  ) ?? documentJson.pages[0];
+  const selectedNode = activePage?.nodes.find((node: WorkbenchDocumentNode) => node.id === selectedNodeId);
 
   const nodeLookup = useMemo(() => {
     const map = new Map<string, WorkbenchDocumentNode>();
@@ -207,13 +206,15 @@ export function WorkbenchCanvasShell({
   }, [activePage?.nodes]);
 
   const rootNodeIds = useMemo(() => {
-    const childIdSet = new Set(
-      activePage?.nodes.flatMap((node) => {
+      const childIdSet = new Set(
+      activePage?.nodes.flatMap((node: WorkbenchDocumentNode) => {
         const nodeChildren = 'children' in node ? (node as { children?: readonly string[] }).children : undefined;
         return nodeChildren ?? [];
       }) ?? [],
     );
-    return activePage?.nodes.filter((node) => !node.parentId && !childIdSet.has(node.id)).map((node) => node.id) ?? [];
+    return activePage?.nodes
+      .filter((node: WorkbenchDocumentNode) => !node.parentId && !childIdSet.has(node.id))
+      .map((node: WorkbenchDocumentNode) => node.id) ?? [];
   }, [activePage?.nodes]);
 
   useEffect(() => {
@@ -287,7 +288,7 @@ export function WorkbenchCanvasShell({
     nodeId: string,
     layout: WorkbenchDocument['pages'][number]['nodes'][number]['layout'],
   ) => {
-    const targetNode = history.state.present.pages[0]?.nodes.find((node) => node.id === nodeId);
+    const targetNode = history.state.present.pages[0]?.nodes.find((node: WorkbenchDocumentNode) => node.id === nodeId);
     const nextLayout = {
       ...(targetNode?.layout ?? {}),
       ...layout,
@@ -535,7 +536,7 @@ export function WorkbenchCanvasShell({
     setActiveTab('layer');
   };
 
-  const renderNodeRow = (nodeId: string, depth: number): Array<JSX.Element | null> => {
+  const renderNodeRow = (nodeId: string, depth: number): Array<ReactElement | null> => {
     const node = nodeLookup.get(nodeId);
     if (!node) {
       return [];
@@ -582,7 +583,7 @@ export function WorkbenchCanvasShell({
 
     return [
       row,
-      ...children.flatMap((childId) => renderNodeRow(childId, depth + 1)),
+      ...children.flatMap((childId: string) => renderNodeRow(childId, depth + 1)),
     ];
   };
 
@@ -609,6 +610,7 @@ export function WorkbenchCanvasShell({
         onChatSubmit: async () => undefined,
         onCancelChat: async () => undefined,
       },
+      save: {},
       patch: {
         onPatchApply: async (patch) => ({
           patch,
@@ -679,7 +681,7 @@ export function WorkbenchCanvasShell({
             <div style={sectionBlockStyle}>
               <div style={{ fontSize: 12, opacity: 0.9, fontWeight: 600 }}>Layers</div>
               <div style={{ display: 'grid' }}>
-                {rootNodeIds.flatMap((nodeId) => renderNodeRow(nodeId, 0))}
+                {rootNodeIds.flatMap((nodeId: string) => renderNodeRow(nodeId, 0))}
               </div>
             </div>
             <div style={sectionBlockStyle}>
