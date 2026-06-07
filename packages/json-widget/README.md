@@ -10,6 +10,16 @@ Framework-neutral primitives for JSON-based widget layout composition.
 
 React renderers, editors, and domain-specific widget shapes stay in product repos for now.
 
+## Storybook
+
+From the monorepo root:
+
+```bash
+pnpm storybook
+```
+
+Open **JsonWidget/Playground** for parse/format, custom registry binding, and invalid JSON handling demos. See `docs/workbench/json-widget-mvp.md` for validation commands.
+
 ## Reference implementation
 
 See `@tilepaper/json-widget-tree` in the TilePaper monorepo for a full widget type system, layout math, and built-in widget definitions wired to this boundary.

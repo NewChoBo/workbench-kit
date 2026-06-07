@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsup",
     "prepare": "pnpm run build",
+    "test": "pnpm exec vitest run --config ../../vitest.config.ts src",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
