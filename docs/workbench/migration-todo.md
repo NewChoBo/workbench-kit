@@ -895,6 +895,17 @@ Next gate:
   - Enforced via `pnpm check:launch-boundary` (`scripts/check-launch-boundary.mjs`).
 - [x] Run [library-launch-boundary-gate.md](./library-launch-boundary-gate.md) before Phase 2 close.
   - PR 리뷰 체크리스트는 [library-launch-boundary-review-checklist.md](./library-launch-boundary-review-checklist.md) 사용.
+  - Downstream pre-merge steps: [unified-work-plan.md §2.2.1](./unified-work-plan.md#221-downstream-pre-merge-checklist).
+
+## Context-key / when-clause port (P1-T02)
+
+Design spike (no API break):
+
+- [x] Evaluator ported: `@workbench-kit/core` `context-keys.ts`, `when-clause.ts`
+- [x] String `when` on `CommandDefinition` and menu entries; `contextKeys` in `resolveCommandMenuItems`
+- [x] Design doc: [context-key-port-design.md](./context-key-port-design.md)
+- [ ] `resolveCommand` helper + launcher adapter (P1-T05 / P4-T03)
+- [ ] Parity test: one launcher command + one kit menu flow
 
 ## Deferred capabilities (docs only)
 

@@ -162,7 +162,7 @@ See [library-launch-boundary-gate.md](./library-launch-boundary-gate.md) and
 | Launchpad execution gateway                     | custom_launcher   | `@workbench-kit/services` / `@workbench-kit/runtime` (target)         | —                                     | Desktop bridge stays downstream                                            |
 | Plugin lifecycle / contributions                | Both              | `@workbench-kit/vscode-host`, `@workbench-kit/core`                   | custom_launcher plugin-host           | Kit owns generic contribution merge; launcher owns catalog DTOs            |
 | Command registry (framework-neutral)            | Converge          | `@workbench-kit/core`                                                 | custom_launcher `#workbench-core`     | See [Command registry gap analysis](#command-registry-gap-analysis-step-1) |
-| Context keys / when clauses                     | custom_launcher   | `@workbench-kit/core` (target)                                        | VS Code conventions                   | Not yet in kit core                                                        |
+| Context keys / when clauses                     | custom_launcher   | `@workbench-kit/core` (evaluator ported)                              | VS Code conventions                   | Registry `resolveCommand` gap — see [context-key-port-design.md](./context-key-port-design.md) |
 | Schema-driven settings (product)                | custom_launcher   | `@workbench-kit/react` settings primitives                            | tile_paper `ProjectConfigEditor`      | Kit provides layout/forms; launcher provides product schema wiring         |
 | VS Code extension bootstrap                     | kit               | `@workbench-kit/vscode-extension`                                     | custom_launcher extension apps        | Extension wrapper stays in kit; product webviews stay in launcher          |
 | Electron / desktop chrome                       | custom_launcher   | `@workbench-kit/adapters` (future)                                    | tile_paper electron app               | No built-in Electron in kit                                                |
@@ -259,7 +259,7 @@ no breaking API changes.
 | Contributions      | Plugin contributions via `#shared/plugins` (external to core registry)         | `CommandContribution`, `mergeCommandContributions`, `createCommandRegistryFromContributions` |
 | Conflict policy    | Map last registration wins (implicit in array input)                           | Explicit `last-write-wins` / `hard-fail` + `findCommandDefinitionConflicts`                  |
 | Dynamic label      | `label(keys, context)`                                                         | `CommandValue<TContext, string>` — context-only function                                     |
-| VS Code `when`     | `evaluateWorkbenchContextKeyWhenClause` on string clauses                      | Not implemented in kit core                                                                  |
+| VS Code `when`     | `evaluateWorkbenchContextKeyWhenClause` on string clauses                      | `evaluateWorkbenchContextKeyWhenClause` on string `when`; requires `contextKeys` in menu/execute calls |
 | Execution          | `ResolvedCommand.execute()` returns `Promise<void>`                            | `executeCommand` sync void handler; returns `boolean`                                        |
 
 ### Semantic overlaps
@@ -274,16 +274,15 @@ Both implementations:
 
 ### Gaps kit does not cover yet
 
-1. **Context key snapshots and string `when` clauses** — custom_launcher evaluates VS
-   Code-style expressions against a key snapshot (`#workbench-core/context-keys`,
-   `#workbench-core/when-clause`). Kit uses simple context predicates only.
-2. **Split context / keys model** — launcher separates workbench context from derived
-   key objects; kit uses a single context type for all predicates.
-3. **`resolveVisible` / `resolveMany`** — launcher exposes registry-level resolution for
-   command palette and bulk UI; kit resolves through menu entries or ad hoc `registry.get`.
-4. **Plugin catalog menu projection** — launcher projects installed plugin rows into
-   workbench menu items with plugin metadata; kit projects flat `CommandMenuEntry` lists
-   with optional `surfaces`.
+1. **`resolveCommand` / `resolveVisible` / `resolveMany`** — launcher exposes registry-level
+   resolution for command palette and bulk UI; kit resolves through menu entries or ad hoc
+   `registry.get`. Planned: `resolveCommand` helper (see [context-key-port-design.md](./context-key-port-design.md)).
+2. **Split context / keys model** — launcher separates workbench context from derived key
+   objects via `getKeys(context)`; kit uses a single context type plus optional `contextKeys`
+   for string `when`. Adapter maps `getKeys(context)` → `contextKeys` at boundaries.
+3. **Plugin catalog menu projection** — launcher projects installed plugin rows into workbench
+   menu items with plugin metadata; kit projects flat `CommandMenuEntry` lists with optional
+   `surfaces`.
 
 ### Gaps launcher does not cover yet
 
@@ -308,9 +307,9 @@ Recommended bridge directions:
 
 **Medium term (kit core evolution):** Extend `@workbench-kit/core` in this order:
 
-1. Port **context-key snapshot + when-clause evaluator** from custom_launcher (framework-neutral, no `#shared` types)
-2. Add optional **`when?: string`** on `CommandDefinition` alongside `isVisible`
-3. Add **`resolveCommand(registry, commandId, context)`** returning `{ visible, enabled, label, execute }` aligned with launcher's `ResolvedCommand` shape
+1. ~~Port **context-key snapshot + when-clause evaluator** from custom_launcher~~ **Done** — `packages/core/src/context-keys.ts`, `when-clause.ts`
+2. ~~Add optional **`when?: string`** on `CommandDefinition`~~ **Done** — menu/execute accept `contextKeys`
+3. Add **`resolveCommand(registry, commandId, context, contextKeys?)`** returning `{ visible, enabled, label, execute }` aligned with launcher's `ResolvedCommand` shape — [context-key-port-design.md § Phase B](./context-key-port-design.md#phase-b--kit-resolvecommand-helper-future-40-lines)
 4. Keep **menu projection, contributions, and conflict policy** as the kit differentiator
 
 **Do not** replace kit's `ReadonlyMap` registry with launcher's closure-only registry in
@@ -319,9 +318,9 @@ one step; **do** make launcher's resolve helpers delegable to kit once context k
 ### Step 1 exit criteria
 
 - [x] Gap analysis documented (this section)
-- [ ] Context-key module extraction scoped in [migration-todo.md](./migration-todo.md)
-- [ ] Parity test plan: one launcher command + one kit command menu flow equate visibility/enabled semantics
-- [ ] No public API break in `@workbench-kit/core` until adapter contract is reviewed
+- [x] Context-key module extraction scoped — [context-key-port-design.md](./context-key-port-design.md) (P1-T02)
+- [ ] Parity test plan: one launcher command + one kit command menu flow equate visibility/enabled semantics (P1-T05)
+- [x] No public API break in `@workbench-kit/core` — evaluator + `when` shipped; `resolveCommand` deferred
 
 ## Risks (Hybrid Track)
 
