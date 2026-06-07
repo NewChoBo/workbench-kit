@@ -264,7 +264,7 @@ describe('commands', () => {
   });
 
   it('filters menu items by string when clauses and context keys', () => {
-    const registry = createCommandRegistry([
+    const registry = createCommandRegistry<TestContext>([
       {
         id: 'rename',
         label: 'Rename',
@@ -277,7 +277,7 @@ describe('commands', () => {
         run: ({ log, target }) => log.push(`open:${target}`),
       },
     ]);
-    const entries = commandMenuEntries('rename', 'open');
+    const entries = commandMenuEntries<TestContext>('rename', 'open');
     const context: TestContext = { enabled: true, hidden: false, log: [], target: 'file.ts' };
 
     expect(

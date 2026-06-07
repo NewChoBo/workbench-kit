@@ -65,11 +65,13 @@ export const SplitViewStandalone: Story = {
           onPrimarySizePercentChange={setPrimarySizePercent}
           primary={
             <SideBarViewFrame title="Primary">
-              <EmptyState title="Sidebar" description="Resize with the sash or keyboard." />
+              <EmptyState icon="codicon-layout-sidebar-left">
+                Sidebar — resize with the sash or keyboard.
+              </EmptyState>
             </SideBarViewFrame>
           }
           secondary={
-            <EmptyState title="Secondary" description="Editor or canvas content lives here." />
+            <EmptyState icon="codicon-edit">Editor or canvas content lives here.</EmptyState>
           }
         />
       </div>
