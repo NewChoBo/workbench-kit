@@ -1,4 +1,15 @@
 export {
+  createWorkbenchContextKeySnapshot,
+  evaluateWorkbenchContextKeyWhenClause,
+  isWorkbenchContextKeyValue,
+  type WorkbenchContextKeySnapshot,
+  type WorkbenchContextKeyValue,
+} from './context-keys';
+export {
+  evaluateWorkbenchWhenClause,
+  WorkbenchWhenClauseSyntaxError,
+} from './when-clause';
+export {
   canExecuteCommand,
   assertNoCommandDefinitionConflicts,
   commandMenuEntries,
@@ -26,6 +37,7 @@ export {
   type CommandMenuSeparatorEntry,
   type CommandPredicate,
   type CommandRegistry,
+  type CommandWhenClause,
   type CommandValue,
   type ResolvedCommandMenuCommandItem,
   type ResolvedCommandMenuSeparatorItem,
