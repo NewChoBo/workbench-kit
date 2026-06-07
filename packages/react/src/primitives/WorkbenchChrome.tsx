@@ -74,7 +74,7 @@ function formatShellWidth(value: number | string | undefined, fallback: number) 
   return typeof value === 'number' ? `${value}px` : (value ?? `${fallback}px`);
 }
 
-const SHELL_SEPARATOR_WIDTH = 4;
+const SHELL_SEPARATOR_WIDTH = 1;
 const SHELL_MIN_SIDE_WIDTH = 160;
 const SHELL_MIN_CENTER_WIDTH = 220;
 const SHELL_NARROW_CENTER_WIDTH = 180;
