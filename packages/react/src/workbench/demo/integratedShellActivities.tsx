@@ -1,6 +1,13 @@
+import {
+  integratedShellActivityLabels,
+  integratedShellActivityOrder as adapterActivityOrder,
+  integratedShellCommandActivities,
+  isIntegratedShellActivityId,
+  type IntegratedShellActivityId,
+} from '@workbench-kit/adapters/workbench-demo-config';
 import type { ReactNode } from 'react';
 
-export type IntegratedShellActivityId = 'explorer' | 'search' | 'chat';
+export type { IntegratedShellActivityId };
 
 export interface IntegratedShellActivity {
   icon: ReactNode;
@@ -8,44 +15,25 @@ export interface IntegratedShellActivity {
   label: string;
 }
 
-export const integratedShellActivityOrder: IntegratedShellActivityId[] = [
-  'explorer',
-  'search',
-  'chat',
-];
+const integratedShellActivityIcons: Record<IntegratedShellActivityId, ReactNode> = {
+  explorer: <i className="codicon codicon-files" />,
+  search: <i className="codicon codicon-search" />,
+  chat: <i className="codicon codicon-comment-discussion" />,
+};
+
+export const integratedShellActivityOrder = adapterActivityOrder;
+export { integratedShellCommandActivities, isIntegratedShellActivityId };
 
 export const integratedShellActivities: Record<
   IntegratedShellActivityId,
   IntegratedShellActivity
-> = {
-  explorer: {
-    id: 'explorer',
-    label: 'Explorer',
-    icon: <i className="codicon codicon-files" />,
-  },
-  search: {
-    id: 'search',
-    label: 'Search',
-    icon: <i className="codicon codicon-search" />,
-  },
-  chat: {
-    id: 'chat',
-    label: 'Chat',
-    icon: <i className="codicon codicon-comment-discussion" />,
-  },
-};
-
-export const integratedShellCommandActivities = integratedShellActivityOrder.map((id) => ({
-  id,
-  label: integratedShellActivities[id].label,
-  icon:
-    id === 'explorer'
-      ? 'codicon-files'
-      : id === 'search'
-        ? 'codicon-search'
-        : 'codicon-comment-discussion',
-}));
-
-export function isIntegratedShellActivityId(id: string): id is IntegratedShellActivityId {
-  return id === 'explorer' || id === 'search' || id === 'chat';
-}
+> = Object.fromEntries(
+  adapterActivityOrder.map((id) => [
+    id,
+    {
+      id,
+      label: integratedShellActivityLabels[id],
+      icon: integratedShellActivityIcons[id],
+    },
+  ]),
+) as Record<IntegratedShellActivityId, IntegratedShellActivity>;

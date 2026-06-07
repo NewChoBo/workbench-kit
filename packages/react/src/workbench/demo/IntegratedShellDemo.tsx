@@ -6,13 +6,10 @@ import {
   useState,
   type MouseEvent,
 } from 'react';
-import {
-  executeCommand,
-  resolveCommandMenuItems,
-  type CommandMenuEntry,
-} from '@workbench-kit/core';
+import { executeCommand, type CommandMenuEntry } from '@workbench-kit/core';
 import {
   createChatTransportFromRuntime,
+  createIntegratedShellBootstrapInitialState,
   createIntegratedShellChatRuntimeResponse,
   createWorkspaceFileRepository,
   integratedShellDefaultSelectionByActivity,
@@ -44,13 +41,13 @@ import { TextInput } from '../../primitives/TextInput';
 import { ChatPanel, type ChatMessage } from '../chat';
 import {
   commandMenuItemsToContextMenuItems,
+  resolveWorkbenchCommandMenuItems,
   WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
   WORKBENCH_COMMAND_SURFACE_WORKSPACE,
 } from '../commands';
 import { WorkbenchSettingsModal } from '../settings';
 import { WorkbenchStandaloneShell } from '../WorkbenchStandaloneShell';
 import type { WorkbenchStandaloneShellContext } from '../WorkbenchStandaloneShell';
-import type { StatusBarSectionModel } from '../StatusBar';
 import {
   WorkspaceEditorPanel,
   type WorkspaceEditorTheme,
@@ -89,7 +86,9 @@ import {
   integratedShellWorkspaceTargetMenuEntries,
   type IntegratedShellCommandContext,
 } from './integratedShellCommands';
+import { createIntegratedShellContextKeys } from './integratedShellContextKeys';
 import { renderIntegratedShellSettingsCategory } from './integratedShellSettings';
+import { getIntegratedStatusSections } from './integratedShellStatus';
 
 export interface IntegratedShellDemoProps {
   compactRows?: boolean;
@@ -119,59 +118,6 @@ function runtimeMessagesToChatMessages(
     label: message.label,
     source: message.source,
   }));
-}
-
-function runtimeStatusLabel(status: RuntimeStatus) {
-  if (status === 'running') return 'Runtime running';
-  if (status === 'cancelled') return 'Runtime stopped';
-  if (status === 'error') return 'Runtime error';
-  return 'Runtime idle';
-}
-
-function getIntegratedStatusSections({
-  colorTheme,
-  isPrimarySideBarVisible,
-  lastCommandLabel,
-  runtimeStatus,
-}: {
-  colorTheme: WorkspaceEditorTheme;
-  isPrimarySideBarVisible: boolean;
-  lastCommandLabel: string;
-  runtimeStatus: RuntimeStatus;
-}): StatusBarSectionModel[] {
-  return [
-    {
-      id: 'main',
-      items: [
-        {
-          id: 'last-command',
-          icon: <span className="workbench-status-dot" />,
-          label: lastCommandLabel,
-        },
-      ],
-    },
-    {
-      align: 'end',
-      id: 'actions',
-      items: [
-        {
-          id: 'runtime-status',
-          icon: <i className="codicon codicon-debug-start" />,
-          label: runtimeStatusLabel(runtimeStatus),
-        },
-        {
-          id: 'theme',
-          icon: <i className="codicon codicon-color-mode" />,
-          label: colorTheme === 'dark' ? 'Dark' : 'Light',
-        },
-        {
-          id: 'primary-sidebar',
-          icon: <i className="codicon codicon-layout-sidebar-left" />,
-          label: isPrimarySideBarVisible ? 'Hide sidebar' : 'Show sidebar',
-        },
-      ],
-    },
-  ];
 }
 
 export function IntegratedShellDemo({
@@ -680,11 +626,16 @@ export function IntegratedShellDemo({
     surface?: string,
   ): ContextMenuItem[] =>
     commandMenuItemsToContextMenuItems(
-      resolveCommandMenuItems({
+      resolveWorkbenchCommandMenuItems({
         context,
+        contextKeys: createIntegratedShellContextKeys({
+          activeActivityId: shellContext.activityId,
+          isPrimarySidebarVisible: shellContext.isPrimarySidebarVisible,
+          selectionCount: context.targetPaths.length,
+        }),
         entries,
-        surface,
         registry: integratedShellCommandRegistry,
+        surface,
       }),
       (commandId) => executeCommand(integratedShellCommandRegistry, commandId, context),
     );
@@ -790,14 +741,10 @@ export function IntegratedShellDemo({
       save: {},
       status: {},
       initialState: {
-        activeActivityId: initialActivityId,
-        isPrimarySidebarVisible: true,
-        primarySidebarSizePercent: 24,
-        primarySidebarMinPercent: 16,
-        primarySidebarMaxPercent: 40,
-        settingsCategoryId: 'appearance',
-        settingsScopeId: 'user',
-        theme: initialTheme,
+        ...createIntegratedShellBootstrapInitialState({
+          activeActivityId: initialActivityId,
+          theme: initialTheme,
+        }),
         selectedFilePath: selectedPath,
         openFilePaths: openPaths,
       },
