@@ -28,6 +28,10 @@ custom_launcher as canonical Electron app, 5-phase roadmap).
 (canonical custom_launcher + tile_paper domain libraries on workbench-kit) is
 documented in [reference-implementation-strategy.md § Unified Vision](./reference-implementation-strategy.md#unified-vision).
 
+**Execution plan:** Engineer-facing phased tasks, regression gates, validation
+matrix, and sprint order live in
+[unified-work-plan.md](./unified-work-plan.md).
+
 ## Goals
 
 - Keep public APIs generic enough for workbench-style products.
