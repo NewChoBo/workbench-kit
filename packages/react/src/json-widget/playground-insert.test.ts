@@ -8,12 +8,19 @@ import {
   type GenericWidget,
 } from '@workbench-kit/json-widget';
 
-import { EMPTY_PLAYGROUND_DOCUMENT, PLAYGROUND_WIDGET_TEMPLATES } from './demo-playground-registry.js';
+import {
+  EMPTY_PLAYGROUND_DOCUMENT,
+  PLAYGROUND_WIDGET_TEMPLATES,
+} from './demo-playground-registry.js';
 import { insertPlaygroundWidget, resolveInsertTarget } from './playground-insert.js';
 
 describe('playground insert helpers', () => {
   it('inserts a text widget at the root grid by default', () => {
-    const next = insertPlaygroundWidget(EMPTY_PLAYGROUND_DOCUMENT, PLAYGROUND_WIDGET_TEMPLATES[0]!, null);
+    const next = insertPlaygroundWidget(
+      EMPTY_PLAYGROUND_DOCUMENT,
+      PLAYGROUND_WIDGET_TEMPLATES[0]!,
+      null,
+    );
     expect(next).not.toBeNull();
 
     const parsed = parseWidgetJson<GenericWidget>(next!);
@@ -48,11 +55,9 @@ describe('playground insert helpers', () => {
       index: 1,
     });
 
-    const next = insertPlaygroundWidget(
-      document,
-      PLAYGROUND_WIDGET_TEMPLATES[0]!,
-      [{ kind: 'children', index: 0 }],
-    );
+    const next = insertPlaygroundWidget(document, PLAYGROUND_WIDGET_TEMPLATES[0]!, [
+      { kind: 'children', index: 0 },
+    ]);
     const stack = getWidgetChildren(parseWidgetJson<GenericWidget>(next!).value!)[0];
     expect(getWidgetChildren(stack!)).toHaveLength(2);
   });

@@ -39,6 +39,8 @@ describe('playground widget ops', () => {
   });
 
   it('returns null when duplicating the root widget', () => {
-    expect(duplicatePlaygroundWidget(formatWidgetJson({ type: 'grid', columns: 1 }), [])).toBeNull();
+    expect(
+      duplicatePlaygroundWidget(formatWidgetJson({ type: 'grid', columns: 1 }), []),
+    ).toBeNull();
   });
 });

@@ -133,6 +133,20 @@ const listViewInspector = [
   },
 ];
 
+const inputInspector = [
+  {
+    title: 'Input',
+    fields: [
+      { kind: 'text' as const, prop: 'label', label: 'Label' },
+      { kind: 'text' as const, prop: 'placeholder', label: 'Placeholder' },
+      { kind: 'text' as const, prop: 'value', label: 'Value' },
+      { kind: 'color' as const, prop: 'background', label: 'Background' },
+      { kind: 'color' as const, prop: 'color', label: 'Text color' },
+      { kind: 'number' as const, prop: 'borderRadius', label: 'Border radius', min: 0 },
+    ],
+  },
+];
+
 const tileInspector = [
   {
     title: 'Tile',
@@ -193,6 +207,12 @@ const definitions = [
     inspector: listViewInspector,
   },
   {
+    type: 'input',
+    build: buildVisualPreview,
+    displayName: 'Input',
+    inspector: inputInspector,
+  },
+  {
     type: 'tile',
     build: buildVisualPreview,
     displayName: 'Tile',
@@ -213,6 +233,7 @@ export type PlaygroundWidgetTemplateId =
   | 'row'
   | 'column'
   | 'button'
+  | 'input'
   | 'list-view'
   | 'tile';
 
@@ -296,6 +317,17 @@ export const PLAYGROUND_WIDGET_TEMPLATES: readonly PlaygroundWidgetTemplate[] = 
         { type: 'text', text: 'Top', flex: 1 },
         { type: 'text', text: 'Bottom', flex: 1 },
       ],
+    }),
+  },
+  {
+    id: 'input',
+    label: 'Input',
+    create: ({ siblingCount }) => ({
+      type: 'input',
+      label: 'Name',
+      placeholder: 'Enter a value',
+      col: siblingCount % 2,
+      row: Math.floor(siblingCount / 2),
     }),
   },
   {
