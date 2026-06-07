@@ -8,7 +8,9 @@ export interface PreviewZoomToolbarProps {
   issueCount?: number | undefined;
   issueMessage?: string | null | undefined;
   scaleLabel: string;
+  showGrid?: boolean | undefined;
   title?: string | undefined;
+  onToggleGrid?: (() => void) | undefined;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onZoomToFit: () => void;
@@ -20,7 +22,9 @@ export function PreviewZoomToolbar({
   issueCount = 0,
   issueMessage = null,
   scaleLabel,
+  showGrid = false,
   title = 'Preview',
+  onToggleGrid,
   onZoomIn,
   onZoomOut,
   onZoomToFit,
@@ -36,6 +40,16 @@ export function PreviewZoomToolbar({
           </span>
         ) : null}
         <span className="ui-preview-zoom-toolbar__spacer" />
+        {onToggleGrid ? (
+          <IconButton
+            aria-pressed={showGrid}
+            compact
+            data-testid="preview-toggle-grid"
+            icon="codicon-grid"
+            label={showGrid ? 'Hide snap grid' : 'Show snap grid'}
+            onClick={onToggleGrid}
+          />
+        ) : null}
         <IconButton
           compact
           data-testid="preview-zoom-out"
