@@ -262,4 +262,40 @@ describe('commands', () => {
       }).map((item) => item.type === 'command' && item.commandId),
     ).toEqual(['open', 'hidden']);
   });
+
+  it('filters menu items by string when clauses and context keys', () => {
+    const registry = createCommandRegistry([
+      {
+        id: 'rename',
+        label: 'Rename',
+        run: ({ log }) => log.push('rename'),
+        when: 'workspace.hasSelection',
+      },
+      {
+        id: 'open',
+        label: 'Open',
+        run: ({ log, target }) => log.push(`open:${target}`),
+      },
+    ]);
+    const entries = commandMenuEntries('rename', 'open');
+    const context: TestContext = { enabled: true, hidden: false, log: [], target: 'file.ts' };
+
+    expect(
+      resolveCommandMenuItems({
+        context,
+        contextKeys: { 'workspace.hasSelection': false },
+        entries,
+        registry,
+      }).map((item) => item.type === 'command' && item.commandId),
+    ).toEqual(['open']);
+
+    expect(
+      resolveCommandMenuItems({
+        context,
+        contextKeys: { 'workspace.hasSelection': true },
+        entries,
+        registry,
+      }).map((item) => item.type === 'command' && item.commandId),
+    ).toEqual(['rename', 'open']);
+  });
 });

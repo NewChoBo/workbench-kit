@@ -1,6 +1,9 @@
+import { evaluateWorkbenchContextKeyWhenClause } from './context-keys';
+
 export type CommandValue<TContext, TValue> = TValue | ((context: TContext) => TValue);
 export type CommandPredicate<TContext> = (context: TContext) => boolean;
 export type CommandHandler<TContext> = (context: TContext) => void;
+export type CommandWhenClause<TContext> = string | CommandPredicate<TContext>;
 
 export interface CommandDefinition<TContext = void> {
   danger?: CommandValue<TContext, boolean | undefined>;
@@ -11,6 +14,7 @@ export interface CommandDefinition<TContext = void> {
   label: CommandValue<TContext, string>;
   run?: CommandHandler<TContext>;
   shortcut?: CommandValue<TContext, string | undefined>;
+  when?: CommandWhenClause<TContext>;
 }
 
 export type CommandRegistry<TContext = void> = ReadonlyMap<string, CommandDefinition<TContext>>;
@@ -37,6 +41,7 @@ export interface CommandMenuCommandEntry<TContext = void> {
   label?: CommandValue<TContext, string> | undefined;
   shortcut?: CommandValue<TContext, string | undefined>;
   type?: 'command';
+  when?: CommandWhenClause<TContext>;
 }
 
 export type CommandMenuEntry<TContext = void> =
@@ -83,6 +88,7 @@ export type CommandMenuItem = ResolvedCommandMenuCommandItem | ResolvedCommandMe
 
 export interface CommandMenuItemsInput<TContext = void> {
   context: TContext;
+  contextKeys?: object;
   entries: CommandMenuEntry<TContext>[];
   registry: CommandRegistry<TContext>;
   surface?: string;
@@ -104,12 +110,31 @@ function resolveValue<TContext, TValue>(
   return (value as (context: TContext) => TValue)(context);
 }
 
+function resolveWhenClause<TContext>(
+  when: CommandWhenClause<TContext> | undefined,
+  context: TContext,
+  contextKeys: object | undefined,
+): boolean {
+  if (when === undefined) return true;
+  if (typeof when === 'string') {
+    if (!contextKeys) return false;
+    return evaluateWorkbenchContextKeyWhenClause(when, contextKeys);
+  }
+  return when(context);
+}
+
 function isVisible<TContext>(
   command: CommandDefinition<TContext>,
   entry: CommandMenuCommandEntry<TContext> | undefined,
   context: TContext,
+  contextKeys: object | undefined,
 ) {
-  return command.isVisible?.(context) !== false && entry?.isVisible?.(context) !== false;
+  return (
+    resolveWhenClause(command.when, context, contextKeys) &&
+    resolveWhenClause(entry?.when, context, contextKeys) &&
+    command.isVisible?.(context) !== false &&
+    entry?.isVisible?.(context) !== false
+  );
 }
 
 function isEnabled<TContext>(
@@ -227,11 +252,12 @@ export function canExecuteCommand<TContext>(
   registry: CommandRegistry<TContext>,
   commandId: string,
   context: TContext,
+  contextKeys?: object,
 ) {
   const command = registry.get(commandId);
   return Boolean(
     command?.run &&
-    isVisible(command, undefined, context) &&
+    isVisible(command, undefined, context, contextKeys) &&
     isEnabled(command, undefined, context),
   );
 }
@@ -240,9 +266,10 @@ export function executeCommand<TContext>(
   registry: CommandRegistry<TContext>,
   commandId: string,
   context: TContext,
+  contextKeys?: object,
 ) {
   const command = registry.get(commandId);
-  if (!command || !canExecuteCommand(registry, commandId, context)) return false;
+  if (!command || !canExecuteCommand(registry, commandId, context, contextKeys)) return false;
 
   command.run?.(context);
   return true;
@@ -272,6 +299,7 @@ export function compactCommandMenuItems(items: CommandMenuItem[]) {
 
 export function resolveCommandMenuItems<TContext>({
   context,
+  contextKeys,
   entries,
   registry,
   surface,
@@ -281,7 +309,7 @@ export function resolveCommandMenuItems<TContext>({
     if (!matchesSurface(entry, surface)) return [];
 
     const command = registry.get(entry.commandId);
-    if (!command || !isVisible(command, entry, context)) return [];
+    if (!command || !isVisible(command, entry, context, contextKeys)) return [];
 
     return [
       {
