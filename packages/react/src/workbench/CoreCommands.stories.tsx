@@ -42,13 +42,13 @@ export const WhenClauseVisibility: Story = {
     const libraryItems = resolveCommandMenuItems({
       context: { focusedView: 'contentHub.library', log: [] },
       contextKeys: { focusedView: 'contentHub.library' },
-      entries: commandMenuEntries('open-library', 'open-search'),
+      entries: commandMenuEntries<DemoContext>('open-library', 'open-search'),
       registry,
     });
     const searchItems = resolveCommandMenuItems({
       context: { focusedView: 'workspace.search', log: [] },
       contextKeys: { focusedView: 'workspace.search' },
-      entries: commandMenuEntries('open-library', 'open-search'),
+      entries: commandMenuEntries<DemoContext>('open-library', 'open-search'),
       registry,
     });
 

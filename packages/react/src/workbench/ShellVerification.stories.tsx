@@ -20,21 +20,21 @@ import { ActivityBar } from './ActivityBar';
 import { SplitView } from './SplitView';
 import { StatusBar, type StatusBarSectionModel } from './StatusBar';
 
+interface ShellVerificationStoryArgs {
+  shellState: ShellStateId;
+}
+
 const meta = {
   title: 'React/Workbench/Verification',
   parameters: {
     layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
-} satisfies Meta;
+} satisfies Meta<ShellVerificationStoryArgs>;
 
 export default meta;
 
-type Story = StoryObj<typeof meta>;
-
-interface ShellVerificationStoryArgs {
-  shellState: ShellStateId;
-}
+type Story = StoryObj<ShellVerificationStoryArgs>;
 
 type ShellStateId =
   | 'normal'
@@ -486,7 +486,7 @@ export const InteractiveShellState: Story = {
     },
   },
   render: (args) => {
-    const { shellState } = args as ShellVerificationStoryArgs;
+    const { shellState } = args;
     const state = getShellStateConfig(shellState);
     return (
       <VerificationChromeShell
@@ -499,7 +499,7 @@ export const InteractiveShellState: Story = {
   },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const { shellState } = args as ShellVerificationStoryArgs;
+    const { shellState } = args;
     const state = getShellStateConfig(shellState);
     const primaryStatusLabel = state.statusSections[0]?.items[0]?.label;
 

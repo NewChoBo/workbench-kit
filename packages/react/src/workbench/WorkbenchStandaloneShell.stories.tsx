@@ -51,14 +51,23 @@ function StandaloneShellPreview() {
       initialFiles: integratedShellWorkspaceFiles,
       workspace: {
         openFile: async () => undefined,
-        saveFile: async () => ({ ok: true, path: '', updatedAt: '' }),
+        saveFile: async () => ({
+          file: { content: '', path: 'demo.ts' },
+          kind: 'save:success' as const,
+          outcome: 'unchanged' as const,
+        }),
         deleteFiles: async () => undefined,
       },
       chat: {
         onChatSubmit: async () => undefined,
         onCancelChat: () => undefined,
       },
-      patch: { onPatchApply: async () => ({ ok: true, appliedPaths: [] }) },
+      patch: {
+        onPatchApply: async (patch) => ({
+          patch,
+          type: 'patch:applied' as const,
+        }),
+      },
       save: {},
       status: {},
     }),
@@ -70,17 +79,15 @@ function StandaloneShellPreview() {
       bootstrap={bootstrap}
       renderPrimarySidebar={() => (
         <SideBarViewFrame title="Explorer">
-          <EmptyState
-            title="Primary sidebar slot"
-            description="Host apps supply explorer, search, or other activity views through renderPrimarySidebar."
-          />
+          <EmptyState icon="codicon-layout-sidebar-left">
+            Primary sidebar slot — host apps supply explorer, search, or other activity views.
+          </EmptyState>
         </SideBarViewFrame>
       )}
       renderSecondaryArea={() => (
-        <EmptyState
-          title="Secondary area slot"
-          description="Editor, chat, or settings content is rendered through renderSecondaryArea."
-        />
+        <EmptyState icon="codicon-edit">
+          Secondary area slot — editor, chat, or settings content is rendered here.
+        </EmptyState>
       )}
     />
   );

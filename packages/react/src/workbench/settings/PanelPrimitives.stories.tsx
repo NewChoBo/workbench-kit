@@ -8,6 +8,7 @@ import {
   WorkbenchNavigationPanel,
   WorkbenchSectionedPanel,
   WorkbenchStructuredDataSchemaPanel,
+  type WorkbenchStructuredDataSchemaDocument,
 } from './index';
 import { WorkbenchSettingsSection } from './WorkbenchSettingsSection';
 
@@ -89,22 +90,16 @@ export const SectionedPanel: Story = {
   },
 };
 
-const schemaDocument = {
-  sections: [
-    {
-      id: 'profile',
-      title: 'Profile',
-      fields: [
-        {
-          id: 'name',
-          label: 'Name',
-          path: ['profile', 'name'],
-          type: 'text',
-        },
-      ],
+const schemaDocument: WorkbenchStructuredDataSchemaDocument = {
+  schema: {
+    properties: {
+      'profile.name': { title: 'Name', type: 'string' },
     },
-  ],
-} as const;
+    sections: [
+      { fields: ['name'], sectionKey: 'profile', title: 'Profile', type: 'form' },
+    ],
+  },
+};
 
 export const StructuredDataSchemaPanel: Story = {
   render: () => {
@@ -117,7 +112,7 @@ export const StructuredDataSchemaPanel: Story = {
           data={data}
           headerActions={<Badge>Preview</Badge>}
           schema={schemaDocument}
-          onDataChange={setData}
+          onDataChange={(nextData) => setData(nextData as typeof data)}
         />
       </div>
     );
