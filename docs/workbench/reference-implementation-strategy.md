@@ -136,6 +136,11 @@ Do not repoint tile_paper's `json-widget-editor` / `json-widget-tree` reference 
 custom_launcher's launchpad-ui. custom_launcher's launchpad preview bridge **consumes**
 `@workbench-kit/json-widget`; it does not replace the tree reference implementation.
 
+**Port-then-replace:** Neutral primitives from both references are ported into
+workbench-kit first; consumer swap (tile_paper web-editor switch, custom_launcher UI
+merge) is deferred until the kit milestone closes. Phases and kit port checklist:
+[future-capabilities.md § JSON Widget](./future-capabilities.md#json-widget-port-then-replace-strategy).
+
 ### 5. Duplicate Electron apps
 
 `custom_launcher` (tilepaper-electron) and `tile_paper/apps/electron` remain separate

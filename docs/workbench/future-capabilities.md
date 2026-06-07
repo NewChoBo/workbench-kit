@@ -3,6 +3,86 @@
 Deferred capabilities tracked as actionable backlog items. No implementation in the
 current milestone — reference only.
 
+**Operating focus:** Complete workbench-kit first. `tile_paper` and `custom_launcher`
+remain **reference-only** until the kit milestone closes. JSON widget authoring
+features follow the **port-then-replace** strategy below — no consumer swap until
+Phase 4.
+
+## JSON Widget: port-then-replace strategy
+
+**Policy:** JSON-based widget authoring features in `tile_paper` and `custom_launcher`
+are **ported to workbench-kit first**, then **replaced / swap-applied** in consumers
+after the kit milestone. Until Phase 4, downstream repos are reference implementations
+only — study behavior and parity tests, do not drive kit API design from product-only
+shortcuts.
+
+### Phases
+
+| Phase | Name | Scope | Consumer action |
+| ----- | ---- | ----- | --------------- |
+| 1 | **Reference** | tile_paper owns tree/editor UX; custom_launcher owns launchpad preview bridge | Keep local stacks; feed parity tests and extraction notes |
+| 2 | **Port to kit** | Extract product-neutral primitives into `@workbench-kit/json-widget`, `@workbench-kit/react/json-widget`, `@workbench-kit/react/json-config` | No consumer migration; reference-only |
+| 3 | **Complete kit** | Kit milestone: Storybook baselines, public APIs, play gates, docs | Consumers still on local stacks; validate kit readiness |
+| 4 | **Swap in consumers** | Point tile_paper / custom_launcher at kit packages; delete duplicated chrome | Product-specific adapters only |
+
+```text
+tile_paper / custom_launcher (reference)
+        │
+        ▼  Phase 2: port neutral primitives
+   workbench-kit (json-widget, react/json-config)
+        │
+        ▼  Phase 3: kit milestone complete
+   Storybook + public API stable
+        │
+        ▼  Phase 4: swap / replace
+   consumers adopt kit; local duplicates removed
+```
+
+### What ports (Phase 2 → kit)
+
+Source references — **do not copy wholesale**; extract contracts and reusable chrome only.
+
+| Source (reference) | Kit target | Patterns to port |
+| ------------------ | ---------- | ---------------- |
+| tile_paper `json-widget-tree` | `@workbench-kit/json-widget` (+ layout helpers where product-neutral) | `parseWidgetJson`, registry contract, tree layout math, typed widget shapes |
+| tile_paper `json-widget-editor` | `@workbench-kit/react/json-widget` (editor chrome) | Monaco ↔ tree ↔ properties ↔ preview sync, selection model, dirty baseline |
+| tile_paper + custom_launcher config screens | `@workbench-kit/react/json-config` (`JsonConfigWorkbench`) | Code / preview / split modes, schema vs widget auto-preview, save/discard toolbar |
+| custom_launcher `JsonWidgetPreview` / launchpad bridge | `@workbench-kit/react/json-widget` | Preview validation bridge, registry mock render (already partially in kit) |
+
+See also: [json-widget-mvp.md](./json-widget-mvp.md), [json-config-workbench.md](./json-config-workbench.md).
+
+### Deferred until swap (Phase 4 only)
+
+Do **not** start these while Phases 1–3 are open:
+
+- **tile_paper web-editor switch** — repointing the full web-editor shell to kit-only
+  primitives before `JsonConfigWorkbench` and json-widget editor chrome are kit-complete.
+- **custom_launcher `#workbench-ui` merge** — replacing launcher-local UI with
+  `@workbench-kit/react` wholesale (see [reference-implementation-strategy.md](./reference-implementation-strategy.md) non-merge policy).
+- **Consumer deletion of `json-widget-tree` / `json-widget-editor` packages** — only after
+  kit parity tests and Storybook baselines cover the swapped surface.
+
+### Kit port checklist (P1–P3)
+
+- [ ] **P1** Document port boundaries: which tree/layout helpers stay tile_paper-local vs
+      `@workbench-kit/json-widget` (align with [json-widget-mvp.md](./json-widget-mvp.md) Phase 3+).
+- [ ] **P1** json-widget-editor sync contract: single source of truth for document string,
+      parsed tree, selected node, and preview errors (Monaco + tree + properties).
+- [ ] **P1** Extend `JsonConfigWorkbench` widget mode to cover json-widget-editor baseline
+      flows (split layout, registry preview, dirty save/discard) without product routes.
+- [ ] **P2** Port reusable editor chrome from tile_paper `json-widget-editor` into
+      `@workbench-kit/react/json-widget` (properties panel, tree panel, preview slot).
+- [ ] **P2** Port neutral layout calculators from `json-widget-tree` where not
+      tile_paper-specific; keep domain widget types in reference until swap.
+- [ ] **P2** Storybook stories: **JsonWidget/Editor** (full editor chrome) + play baseline
+      for parse error, selection sync, and preview update.
+- [ ] **P2** Evaluate merging JsonWidget Playground editing UX into `JsonConfigWorkbench`
+      widget mode vs keeping separate low-level demo (see Playground section below).
+- [ ] **P3** Swap readiness gate: parity test suite (`workbench-kit-parity` / tile_paper
+      equivalence) green against kit packages before Phase 4 PRs.
+- [ ] **P3** Consumer swap runbook: tile_paper web-editor + json-widget-editor import
+      migration; custom_launcher preview bridge points at kit editor chrome.
+
 ## i18n (P1)
 
 - [ ] **P1** Adopt `react-i18next` in host apps (dev-agent, Storybook hosts) with a shared

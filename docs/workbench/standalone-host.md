@@ -84,3 +84,5 @@ Integrated shell demo builds context keys via `createIntegratedShellContextKeys`
 - Persistence and storage keys
 - Plugin lifecycle transport
 - i18n string resolution (deferred — see [future-capabilities.md](./future-capabilities.md))
+- JSON widget editor chrome (deferred — port-then-replace; see
+  [future-capabilities.md § JSON Widget](./future-capabilities.md#json-widget-port-then-replace-strategy))
