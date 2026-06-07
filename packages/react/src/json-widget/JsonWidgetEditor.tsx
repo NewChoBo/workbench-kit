@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { OnMount } from '@monaco-editor/react';
 import type { WidgetJsonSchema, WidgetRegistryContract } from '@workbench-kit/contracts';
 import { ROOT_WIDGET_PATH, type WidgetPath } from '@workbench-kit/json-widget';
@@ -13,8 +13,9 @@ import {
   type WorkbenchArtifactMode,
 } from '../workbench/ArtifactShell';
 import { SplitView } from '../workbench/SplitView';
-import { WorkspaceEditor, type WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor';
+import { type WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor';
 import { type WorkspaceFile } from '../workbench/workspace/types';
+import { JsonCodeEditorPane } from './JsonCodeEditorPane.js';
 import { JsonWidgetPreview } from './JsonWidgetPreview.js';
 import { JsonWidgetPreviewCanvas } from './JsonWidgetPreviewCanvas.js';
 import { useJsonWidgetEditorSync } from './useJsonWidgetEditorSync.js';
@@ -34,6 +35,7 @@ export interface JsonWidgetEditorProps {
   path?: string | undefined;
   readOnly?: boolean | undefined;
   showInspectorPanel?: boolean | undefined;
+  showProblemsPanel?: boolean | undefined;
   showTreePanel?: boolean | undefined;
   theme?: WorkspaceEditorTheme | undefined;
   title?: ReactNode | undefined;
@@ -56,6 +58,7 @@ export function JsonWidgetEditor({
   path = 'widget.json',
   readOnly = false,
   showInspectorPanel = true,
+  showProblemsPanel = true,
   showTreePanel = true,
   theme = 'dark',
   title = 'Widget editor',
@@ -95,9 +98,25 @@ export function JsonWidgetEditor({
     [path, value],
   );
 
+  const toggleViewModeRef = useRef<(() => void) | undefined>(undefined);
+
+  useLayoutEffect(() => {
+    toggleViewModeRef.current = () => {
+      setMode(resolvedMode === 'split' ? 'code' : 'split');
+    };
+  });
+
   const handleEditorMount = useCallback<OnMount>(
     (editor, monaco) => {
       sync.handleEditorMount(editor, monaco);
+
+      editor.addCommand(
+        monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, monaco.KeyCode.KeyV),
+        () => toggleViewModeRef.current?.(),
+      );
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyV, () =>
+        toggleViewModeRef.current?.(),
+      );
 
       if (!jsonSchema) return;
 
@@ -116,14 +135,15 @@ export function JsonWidgetEditor({
   );
 
   const codePane = (
-    <WorkspaceEditor
+    <JsonCodeEditorPane
       file={editorFile}
       readOnly={readOnly}
-      showHeader={false}
+      showProblemsPanel={showProblemsPanel}
       theme={theme}
       value={value}
       onChange={onChange}
       onEditorMount={handleEditorMount}
+      onSave={onSave}
     />
   );
 

@@ -27,7 +27,7 @@ describe('createPlaygroundWidgetJsonSchema', () => {
     ]);
 
     const definitions = schema.definitions as Record<string, { oneOf?: unknown[] }>;
-    expect(definitions.Widget.oneOf?.length).toBeGreaterThan(6);
+    expect(definitions.Widget.oneOf?.length).toBeGreaterThan(9);
     expect(definitions.CustomWidget_custom_clock).toBeDefined();
   });
 });
