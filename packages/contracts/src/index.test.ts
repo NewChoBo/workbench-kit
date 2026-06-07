@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   canMapLibraryItemToLaunchpadTile,
   createLaunchpadLibraryItemTileBinding,
+  createResourceIdentity,
   type LaunchpadLibraryItemSummary,
   type LaunchpadLibraryItemBinding,
   normalizeLaunchTarget,
   normalizeExternalUrlTarget,
+  normalizeResourceUri,
   resolveLaunchpadLibraryItemMapping,
   type WidgetRendererComponent,
   type WidgetRendererEvent,
@@ -173,6 +175,16 @@ describe('contract helpers', () => {
       'https://example.com/',
     );
     expect(normalizeExternalUrlTarget('steam://store/valve', 'web-navigation')).toBeNull();
+  });
+
+  it('exports resource uri normalization from public index', () => {
+    expect(normalizeResourceUri(' tilepaper-source:/launchpads/main.json ')).toBe(
+      'tilepaper-source:/launchpads/main.json',
+    );
+    expect(createResourceIdentity('tilepaper-source:/launchpads/main.json')).toEqual({
+      key: 'tilepaper-source:/launchpads/main.json',
+      uri: 'tilepaper-source:/launchpads/main.json',
+    });
   });
 
   it('exports launchpad mapping contracts from public index', () => {
