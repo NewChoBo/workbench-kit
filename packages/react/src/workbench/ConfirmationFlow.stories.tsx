@@ -123,7 +123,7 @@ export const FlowStates: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Close confirmation' }));
     await expect(eventLog).toHaveTextContent('Closed disabled-action');
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const DefaultConfirm: Story = {

@@ -189,7 +189,7 @@ export const EditableSettings: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Save' }));
     await expect(eventLog).toHaveTextContent('Submitted Workbench');
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const ReadOnlyForm: Story = {

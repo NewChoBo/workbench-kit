@@ -238,7 +238,7 @@ export const MultipleProviders: Story = {
     await expect(eventLog).toHaveTextContent('Collapsed files:src');
     await expect(canvas.queryByRole('treeitem', { name: /App.tsx/ })).toBeNull();
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const EmptyExplorer: Story = {
