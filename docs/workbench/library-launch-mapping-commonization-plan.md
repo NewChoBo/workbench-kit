@@ -17,7 +17,7 @@
   calculation to `#workbench-kit/library-launchpad-mapping`, removing `shared/launch-target`
   dependence.
 - `tile_paper` provider-library action label/icon/launch payload conversion is aligned through
-  `@tilepaper/workbench-kit`.
+  `@workbench-kit/contracts`.
 
 ## Rollout Order
 

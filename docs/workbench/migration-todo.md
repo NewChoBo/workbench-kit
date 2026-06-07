@@ -861,6 +861,10 @@ Next gate:
       downstream runtimes; remaining legacy references are compatibility shim usages only.
   - Legacy implementation notes were removed from runtime call paths in `custom_launcher`
     and `tile_paper`.
+- [x] `@tilepaper/workbench-kit` compatibility shims removed from `custom_launcher` and
+      `tile_paper`; consumers import `@workbench-kit/contracts` directly.
+  - `packages/workbench-kit` deleted in both downstream repos; `@tilepaper/contracts` and
+    `packages/workbench-core` retain thin re-exports where app-local entrypoints are still needed.
 - [x] Runtime boundary gate is enforced: only `shared/launch-target` shim/test paths
       are allowed to reference old helpers; all runtime paths in `custom_launcher`/`tile_paper`
       must use `@workbench-kit/contracts` policy exports.
