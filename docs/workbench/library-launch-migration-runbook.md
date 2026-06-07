@@ -31,6 +31,8 @@
   - trim with case preservation
   - blank-target non-launchability
   - binding payload shape
+  - `normalizeWidgetRendererEvent` and legacy `on-press`/`on-change` compatibility (`type` and `kind` legacy fields) in
+    `packages/contracts/src/index.test.ts`
 
 ## Checklist: custom_launcher
 
@@ -64,6 +66,8 @@ const canLaunch = mapping.canLaunch;
    - Before: local `launch-target` utilities or consumer-specific parsing
    - After: compute through `inferLaunchTypeFromTarget`, `deriveLaunchWorkingDirectory`,
      `normalizeLaunchTarget`, and `resolveLaunchpadLibraryItemMapping`
+   - In downstream runtime paths that execute pre-bound snapshot tiles, preserve this boundary by normalizing
+     the snapshot execution target via `normalizeLaunchTarget` before dispatch.
 2. Verify live and snapshot binding mapping consistency
    - `resolveLaunchpadLibraryItemMapping().execution` must produce the same target,
      `launchType`, and `workingDirectory` for execution requests
@@ -106,6 +110,14 @@ For each test sample, compare:
 
 - Remove direct `shared` launch-resolution helpers from `custom_launcher` and `tile_paper`
 - Change policy only in `@workbench-kit/contracts`; consumers update equivalence tests
+- Add a boundary verification pass before Phase 2 closure:
+  - `pnpm check:launch-boundary` must pass. Runtime 경로에서
+    `#shared/launch-target`, `#shared/launchpads/launchpad-library-mapping`,
+    legacy 헬퍼(`detectLaunchType`, `normalizeLaunchInput`, `isValidLaunchTarget`)
+    가 직접 호출되지 않아야 한다.
+- Treat `shared/launch-target` as shim-only and keep new behavior migration out of compatibility tests.
+- Apply the boundary check list from [library-launch-boundary-gate.md](./library-launch-boundary-gate.md)
+- PR/리뷰 단계에서는 [library-launch-boundary-review-checklist.md](./library-launch-boundary-review-checklist.md)을 첨부한다.
 
 ## Patch Templates (Downstream)
 
@@ -189,26 +201,40 @@ it('maps launch request through contracts', () => {
 +};
 ```
 
-3. Unify JSON widget renderer event types
+3. Unify JSON widget event contract
 
 ```diff
 @@
 -type WidgetRendererEvent = { kind: 'on-change' | 'on-press'; payload?: string };
-+import type { WidgetRendererEvent, WidgetRendererEventKind } from '@workbench-kit/contracts';
++import { normalizeWidgetRendererEvent } from '@workbench-kit/contracts';
++
++const normalized = normalizeWidgetRendererEvent(rawEvent);
++if (normalized === null) {
++  return;
++}
++
++if (normalized.type === 'press') {
++  launchWidget(normalized.widgetId);
++} else if (normalized.type === 'change') {
++  updateWidgetValue(normalized.widgetId, normalized.value ?? '');
++}
 ```
 
 ## Quick Acceptance Script
 
 ```powershell
 pnpm --filter @workbench-kit/contracts typecheck
+pnpm --filter @workbench-kit/contracts test -- packages/contracts/src/index.test.ts
 git -C <consumer-repo> diff --stat
 pnpm --filter <consumer-package> test -- <target-launch-tests>
 ```
 
 ## Closeout Checklist
 
-- [ ] Delegated contract helpers are not replaced by direct `shared/*` launch logic
-- [ ] `launchTarget` trim/normalization happens only inside the contract layer
-- [ ] At least one equivalence test covers `launchType`, `workingDirectory`, `arguments`,
-      `subtitle`, and `canLaunch`
-- [ ] Only `WidgetRendererEventKind` values `press` / `change` remain in renderer bindings
+- [x] Delegated contract helpers are not replaced by direct `shared/*` launch logic
+- [x] `launchTarget` trim/normalization happens only inside the contract layer
+- [x] At least one equivalence test covers `launchType`, `workingDirectory`, `arguments`,
+      `subtitle`, `canLaunch`, and `WidgetRendererEventKind` (`press`/`change`)
+- [x] Only `WidgetRendererEventKind` values `press` / `change` remain in renderer bindings
+- [x] Phase 2 boundary enforcement is added (`shared` shim-only usage and runtime usage scan gate)
+  - `pnpm check:launch-boundary` runs `scripts/check-launch-boundary.mjs` and is included in `pnpm validate` plus publish/CI lanes.

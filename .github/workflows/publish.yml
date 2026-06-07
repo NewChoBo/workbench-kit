@@ -52,15 +52,8 @@ jobs:
 
       - name: Verify release tag
         run: node scripts/check-release-version.mjs
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Test
-        run: pnpm test
+      - name: Validate
+        run: pnpm validate
 
       - name: Publish
         run: node scripts/publish-packages.mjs

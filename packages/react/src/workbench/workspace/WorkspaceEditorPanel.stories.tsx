@@ -231,7 +231,7 @@ export const OpenTabCoordinationFlow: Story = {
     await expect(canvas.getByText('Open a file from Explorer or Search.')).toBeVisible();
     await expect(canvas.getByLabelText('Editor event log')).toHaveTextContent('Closed all files');
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const DeleteOpenTabRecoveryFlow: Story = {
@@ -277,5 +277,5 @@ export const DeleteOpenTabRecoveryFlow: Story = {
     );
     await expect(canvas.getByLabelText('Editor event log')).toHaveTextContent('Deleted README.md');
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };

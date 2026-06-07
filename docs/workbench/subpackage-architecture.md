@@ -363,7 +363,7 @@ packages/
   - react 컴포넌트/스토리: 기존 동작 대비 동일 결과 및 accessibility 동작 유지
   - story adapter에서 런타임 patch가 reducer로 직접 연결되는 대신 patch service 거쳐 적용되는지 검증
 - Storybook Play (행위 검증)
-  - baseline 플로우 5건 이상을 필수 태그로 유지(`test:storybook-play:required`)
+- 필수 baseline 플로우 9건을 `storybook-play-required` 태그로 유지(`test:storybook-play:required`)
 
 ### Acceptance Gates
 

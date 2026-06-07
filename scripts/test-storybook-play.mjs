@@ -7,7 +7,8 @@ const runnerName = '@storybook/test-runner';
 const runnerPath = path.join(process.cwd(), 'node_modules', runnerName, 'package.json');
 const required = process.argv.includes('--required');
 const runAll = process.argv.includes('--all-stories');
-const requiredTag = 'storybook-play-baseline';
+const baselineTag = 'storybook-play-baseline';
+const requiredTag = 'storybook-play-required';
 const storybookPort = process.env.STORYBOOK_PLAY_PORT || '6010';
 const storybookUrl = process.env.TARGET_URL || `http://127.0.0.1:${storybookPort}/`;
 const pnpmCommand = 'pnpm';
@@ -125,7 +126,8 @@ const runArgs = [
 ];
 
 if (baselineMode) {
-  runArgs.push(`--includeTags=${requiredTag}`);
+  const includeTag = required ? requiredTag : baselineTag;
+  runArgs.push(`--includeTags=${includeTag}`);
 }
 
 const port = getPortFromUrl(storybookUrl);

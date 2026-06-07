@@ -23,7 +23,10 @@ import { WorkbenchShell } from '@workbench-kit/react/workbench';
 import { WorkbenchStructuredDataForm } from '@workbench-kit/react/workbench/settings';
 import { createWorkbenchHostBridge } from '@workbench-kit/vscode-host/bridge';
 import { createLaunchpadLibraryItemTileBinding } from '@workbench-kit/contracts';
-import type { WidgetRendererComponent } from '@workbench-kit/contracts';
+import {
+  normalizeWidgetRendererEvent,
+  type WidgetRendererComponent,
+} from '@workbench-kit/contracts';
 ```
 
 ## Deep Import Policy

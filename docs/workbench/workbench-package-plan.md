@@ -13,7 +13,7 @@
 
 - `packages/react/src/workbench/Workbench.stories.tsx`
   - `IntegratedWorkbenchShell`에서 Explorer / Search / Editor / Chat / Settings / Status를 한 화면에서 조립
-  - Baseline 대상 story는 `storybook-play-baseline` 태깅 및 실행 결과가 존재
+- Baseline 후보는 `storybook-play-baseline` 태깅하고, CI 필수는 `storybook-play-required`로 분리 고정
 - 현재는 스토리 조립이 기본 동작 베이스이지만, 앱 전용 엔트리포인트의 상태/서비스 바인딩 추출이 다음 단계입니다.
   - `packages/react/src/workbench/WorkbenchShell.tsx`는 shell 레이아웃으로 추출되었고 `index.ts`에서 export됩니다.
   - 다만 저장/삭제/패치 커밋/커맨드 컨텍스트 바인딩은 아직 story 조합 경로에 강하게 묶여 있습니다.
@@ -76,7 +76,7 @@
     - `packages/react/src/workbench/WorkbenchShell.tsx`
     - `packages/react/src/workbench/WorkbenchShell.test.tsx`
   - 근거 실행:
-    - `pnpm test:storybook-play:required` (baseline 5개 pass)
+- `pnpm test:storybook-play:required` (`storybook-play-required` 9개 pass)
 - **지금 당장 extension 래퍼를 만들면 되는가?**
   - `packages/vscode-extension` API는 존재하고 타입/테스트도 통과(`typecheck`, `test` 모두 pass)이지만,
   - 현재 목표가 `standalone launch` 안정화라면 `Track C`는 문서/계획으로 넘기고 실제 코드 확장은 다음 사이클 권장.
@@ -245,10 +245,12 @@ export interface WorkbenchShellProps<TActivityId extends string = 'explorer' | '
 
 ## 11) 다음 단계 즉시 액션(현재 승인 필요 없음)
 
-1. **지금 당장 실행할 PR 1개**: `WorkbenchShell` 조립 경계 설계안을 `docs/workbench/workbench-package-plan.md`의 5개 baseline 시나리오 기준으로 확정
-   - 산출물: `WorkbenchShell` 계약 표 (activity/context/서비스/사이드이펙트 callback)
+1. **지금 당장 실행할 PR 1개**: `WorkbenchShell` 조립 경계 설계안을 `docs/workbench/workbench-package-plan.md`의 9개 baseline 시나리오 기준으로 확정
+
+- 산출물: `WorkbenchShell` 계약 표 (activity/context/서비스/사이드이펙트 callback)
+
 2. **PR 2(분리)**: `Workbench.stories.tsx`에서 `IntegratedWorkbenchShell` 역할을 fixture/compose-only로 축소하고
-   기존 baseline 5개 플로우 1:1 맵핑만 남김
+   기존 baseline 필수 9개 + baseline 후보 18개(현재) 분리 유지
 3. **PR 3(하드닝)**: `@workbench-kit/vscode-host`에서 `dispose` 중복/구독/오류 격리 회귀 테스트 보강
 4. 각 PR은 게이트:
    - `pnpm --filter @workbench-kit/react typecheck`
@@ -275,7 +277,7 @@ export interface WorkbenchShellProps<TActivityId extends string = 'explorer' | '
 
 ### 공통 검증 게이트
 
-- `pnpm test:storybook-play:required` green (baseline 태그 5개 시나리오)
+- `pnpm test:storybook-play:required` green (`storybook-play-required` 9개)
 - 현 브랜치에서 문서 갱신 상태(`migration-todo`, `subpackage-architecture`, `workbench-entrypoint-strategy`)와 일치 확인
 - vscode-extension 소스 변경 없음 유지, `next milestone`로 이월 상태 문서 반영
 

@@ -12,7 +12,9 @@
   - 현재 즉시 과제는 `@workbench-kit/vscode-extension`를 완성하는 것이 아니라, Storybook 기반으로 검증된 UI를 standalone application 런치/기동 경로로 안정화하는 것이다.
 
 > **실행 결정(2026-06-03):**  
-> `@workbench-kit/vscode-extension` 관련 작업은 현재 주차에서는 보류하고, Standalone 런치 경로 안정화만을 이번 목표로 수행한다.
+> `@workbench-kit/vscode-extension`는 현재 주차에서 대규모 래퍼 확장보다는 standalone 런치 경로 안정화를 우선한다.
+> 다만 이번 사이클에서 `commandContribution` 충돌 정책 사전 판별 경로만 제한 적용한다.
+> (`preflightCommandContributionConflict` + `resolveCommandContributionConflictPolicy` 또는 `preflight` 결과 기반 정책 유도)
 > extension 브랜치는 별도 2차 마일스톤에서 `Track A`(vscode-extension bootstrap API)로 재개한다.
 
 근거:
@@ -84,13 +86,13 @@
 
 목표를 바로 실행 가능한 티켓으로 옮기기 위한 최소 증빙입니다.
 
-| 목표                                  | 현재 상태              | 근거(코드/테스트)                                                                                                            | 다음 액션                                        |
-| ------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Workbench UI가 이미 구현됨을 확인     | 완료                   | `packages/react/src/workbench/Workbench.stories.tsx` (IntegratedShell, chat, explorer, search, editor, settings 상태바 동작) | 유지: Story 기준 회귀 라인 보호                  |
-| `vscode-extension` bootstrap 조립 API | 보류                   | `packages/vscode-extension/src/index.ts`, `packages/vscode-extension/src/index.test.ts`, 타입체크/테스트 통과                | 다음 마일스톤에서 재개                           |
-| story의 standalone 런치 동등성 확보   | 진행 중                | `pnpm test:storybook-play:required`에서 baseline 태그 지정 및 결과 추적                                                      | Track B: 1개 핵심 플로우 baseline 안정화         |
-| plugin 설치/라이프사이클 통합         | 설계 단계              | `packages/contracts/src/plugin.ts`, `docs/workbench/plugin-lifecycle.md`, host plugin service                                | Track C: 정책/옵션 스키마 문서 + 최소 API 스케치 |
-| staging 기반 마일스톤 정리            | 미완료(문서 기준 진행) | `docs/conventions/git-workflow.md`                                                                                           | 브랜치 분리 후 `staging` 통합 + 마일스톤 커밋    |
+| 목표                                  | 현재 상태 | 근거(코드/테스트)                                                                                                                                              | 다음 액션                                                                                                                                                   |
+| ------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workbench UI가 이미 구현됨을 확인     | 완료      | `packages/react/src/workbench/Workbench.stories.tsx` (IntegratedShell, chat, explorer, search, editor, settings 상태바 동작)                                   | 유지: Story 기준 회귀 라인 보호                                                                                                                             |
+| `vscode-extension` bootstrap 조립 API | 진행중    | `packages/vscode-extension/src/index.ts`, `packages/vscode-extension/src/index.test.ts`, `preflightCommandContributionConflict` + `commandConflictPolicy` 유도 | 현재 사이클에서 제한 반영 후 다음 마일스톤에서 전면 전환                                                                                                    |
+| story의 standalone 런치 동등성 확보   | 진행 중   | `pnpm test:storybook-play:required`에서 baseline 태그 지정 및 결과 추적                                                                                        | Track B: 1개 핵심 플로우 baseline 안정화                                                                                                                    |
+| plugin 설치/라이프사이클 통합         | 설계 단계 | `packages/contracts/src/plugin.ts`, `docs/workbench/plugin-lifecycle.md`, host plugin service                                                                  | Track C: 정책/옵션 스키마 문서 + 최소 API 스케치                                                                                                            |
+| staging 기반 마일스톤 정리            | 진행중    | `docs/conventions/git-workflow.md`                                                                                                                             | `chore/workbenchkit-commonization-start` 단위 결과물 정리 후 `feature/codex/standalone-app-bootstrap` 브랜치로 재정렬, 이후 `staging`에 merge commit 모으기 |
 
 ## 이번 사이클 실행 플랜(우선순위)
 
@@ -108,7 +110,8 @@
 
 ### 2회차: Track A (extension bootstrap)로 일부 전환
 
-- **이 트랙은 현재 사이클의 실행 범위 밖**이다. `vscode-extension` 작업은 별도 마일스톤으로 이동시켜 아래 조건 충족 시 재개한다.
+- **이 트랙은 현재 사이클의 실행 범위 밖**이지만, `commandConflictPolicy` 정합성은 예외 반영한다.
+  `vscode-extension` 작업은 별도 마일스톤으로 이동시켜 아래 조건 충족 시 전면 재개한다.
   - Standalone baseline 회귀 게이트가 모두 통과됨
   - host runtime/서비스 경계에서 운영 로그 및 에러 격리 정책이 안정화됨
   - 별도 작업 브랜치(`feature/codex/vscode-extension-bootstrap-deferred`)에서 작업 범위 재확정
@@ -265,7 +268,7 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
 - 리스크: `HostTransport`가 브라우저 전용 제약 강함
   - 완화: transport 팩토리를 주입 가능하게 설계해 테스트 더블 사용
 - 리스크: plugin lifecycle 정책 선결정 오류
-  - 완화: 1차는 `last-write-wins`로 고정, hard-fail 정책은 별도 milestone
+  - 완화: 1차는 `last-write-wins`로 고정, hard-fail 정책은 기본 충돌 가드(`assertNoCommandDefinitionConflicts`) 통과 조건으로 다음 milestone에서 적용
 
 ## 다음 실행 목표(한 번에)
 
@@ -304,6 +307,9 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
 ### Track C 준비 작업(병행, 블로킹 아님)
 
 1. plugin install/enable/disable 정책을 `last-write-wins`(기본) / hard-fail 정책 후보로 정리.
+
+- hard-fail 진입 전제: `assertNoCommandDefinitionConflicts(mergeCommandContributions(...).commands)`가 빈 충돌 목록이어야 함.
+
 2. `packages/contracts`의 `Plugin*` 타입을 bootstrap 옵션 스키마로 소비할 수 있게 매핑 문서 작성.
 3. `docs/workbench/plugin-lifecycle.md`와 `migration-todo.md`에 1단계 acceptance criteria 추가.
 

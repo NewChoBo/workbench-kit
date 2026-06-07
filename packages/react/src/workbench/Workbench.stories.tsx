@@ -1,10 +1,19 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 import {
-  createCommandRegistry,
+  createCommandRegistryFromContributions,
   executeCommand,
   resolveCommandMenuItems,
+  type CommandContributionInput,
   type CommandMenuEntry,
 } from '@workbench-kit/core';
 import {
@@ -21,13 +30,14 @@ import {
   type ChatStreamEvent,
   isSaveSuccess,
   type SaveFailure,
+  type WorkspacePatchApplyResult,
   type WorkspacePatchEvent,
 } from '@workbench-kit/contracts';
+import { WorkspacePatchService, WorkspaceSaveService } from '@workbench-kit/services';
 import {
-  WorkbenchChatService,
-  WorkspacePatchService,
-  WorkspaceSaveService,
-} from '@workbench-kit/services';
+  createWorkbenchExtensionRuntimeFromContributions,
+  preflightCommandContributionConflict,
+} from '@workbench-kit/vscode-extension';
 import { SideBarHeaderControl, SideBarViewFrame } from '../layout/SideBarViewFrame';
 import { ConfirmDialog } from '../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../overlay/ContextMenu';
@@ -151,15 +161,22 @@ const storyShellCommandActivities = storyActivityOrder.map((id) => ({
 const storyWorkbenchShellCommands = createWorkbenchShellCommands<StoryActivityId>({
   activities: storyShellCommandActivities,
 });
+const storyWorkbenchCommandContributions: CommandContributionInput<StoryCommandContext>[] = [
+  { commands: storyWorkbenchShellCommands },
+  { commands: createWorkbenchWorkspaceCommands<StoryCommandContext>() },
+];
 
-const workbenchShellCommandRegistry = createCommandRegistry<
+const storyCommandPreflight = preflightCommandContributionConflict<StoryCommandContext>(
+  storyWorkbenchCommandContributions,
+);
+
+const storyCommandRegistry = storyCommandPreflight.commandRegistry;
+const storyCommandPolicy =
+  storyCommandPreflight.commandConflicts.length === 0 ? 'hard-fail' : 'last-write-wins';
+
+const workbenchShellCommandRegistry = createCommandRegistryFromContributions<
   WorkbenchShellCommandContext<StoryActivityId>
->(storyWorkbenchShellCommands);
-
-const storyCommandRegistry = createCommandRegistry<StoryCommandContext>([
-  ...storyWorkbenchShellCommands,
-  ...createWorkbenchWorkspaceCommands<StoryCommandContext>(),
-]);
+>([{ commands: storyWorkbenchShellCommands }]);
 
 const workbenchMenuEntries: CommandMenuEntry<StoryCommandContext>[] =
   createWorkbenchShellMenuEntries({ activities: storyShellCommandActivities });
@@ -677,7 +694,9 @@ function IntegratedWorkbenchShell() {
   const [explorerInlineEdit, setExplorerInlineEdit] = useState<
     WorkspaceExplorerInlineEditState | undefined
   >();
-  const [lastCommandLabel, setLastCommandLabel] = useState('Idle');
+  const [lastCommandLabel, setLastCommandLabel] = useState(
+    `Command contribution policy: ${storyCommandPolicy}`,
+  );
   const [pendingDelete, setPendingDelete] = useState<StoryPendingDelete | null>(null);
   const shell = useWorkbenchShellState<StoryActivityId, StoryTheme>({
     activeActivityId: 'explorer',
@@ -742,47 +761,47 @@ function IntegratedWorkbenchShell() {
       }),
     [createWorkspaceFile, deleteWorkspaceFile, files, saveWorkspaceFile],
   );
-  const workspaceSaveService = useMemo(
-    () => new WorkspaceSaveService({ repository: workspaceRepository }),
-    [workspaceRepository],
-  );
-  const workspacePatchService = useMemo(
-    () => new WorkspacePatchService({ repository: workspaceRepository }),
-    [workspaceRepository],
-  );
   const chatRuntimeTransport = useMemo(
     () => createChatTransportFromRuntime({ runtime: chatRuntime }),
     [chatRuntime],
   );
-  const chatService = useMemo(
-    () =>
-      new WorkbenchChatService({
-        onPatch: (patch: WorkspacePatchEvent) => {
-          void workspacePatchService.applyPatch(patch).then((result) => {
-            if (result.type === 'patch:failed') {
-              setLastCommandLabel(
-                `Runtime patch failed: ${result.message ?? `Error ${result.code}`}`,
-              );
-              return;
-            }
+  const applyWorkspacePatchResult = useCallback(
+    (_patch: WorkspacePatchEvent, result: WorkspacePatchApplyResult) => {
+      if (result.type === 'patch:failed') {
+        setLastCommandLabel(`Runtime patch failed: ${result.message ?? `Error ${result.code}`}`);
+        return;
+      }
 
-            if (result.patch.type === 'delete-file') {
-              setLastCommandLabel(`Runtime deleted ${result.patch.path}`);
-              return;
-            }
+      if (result.patch.type === 'delete-file') {
+        setLastCommandLabel(`Runtime deleted ${result.patch.path}`);
+        return;
+      }
 
-            // Workspace updates come from repository callbacks that may be
-            // processed in a later React update cycle than the patch callback.
-            setTimeout(() => {
-              openFileRef.current(result.patch.path);
-            }, 0);
-            setLastCommandLabel(`Runtime wrote ${result.patch.path}`);
-          });
-        },
-        transport: chatRuntimeTransport,
-      }),
-    [chatRuntimeTransport, workspacePatchService],
+      // Workspace updates come from repository callbacks that may be
+      // processed in a later React update cycle than the patch callback.
+      setTimeout(() => {
+        openFileRef.current(result.patch.path);
+      }, 0);
+      setLastCommandLabel(`Runtime wrote ${result.patch.path}`);
+    },
+    [openFileRef],
   );
+  const extensionRuntime = useMemo(
+    () =>
+      createWorkbenchExtensionRuntimeFromContributions<StoryCommandContext>({
+        chatTransport: chatRuntimeTransport,
+        commandConflictPolicy: storyCommandPolicy,
+        commandContributions: storyWorkbenchCommandContributions,
+        createPatchService: () => new WorkspacePatchService({ repository: workspaceRepository }),
+        createSaveService: () => new WorkspaceSaveService({ repository: workspaceRepository }),
+        onChatPatch: applyWorkspacePatchResult,
+        repository: workspaceRepository,
+      }),
+    [chatRuntimeTransport, workspaceRepository, applyWorkspacePatchResult, storyCommandPolicy],
+  );
+  const { patchService: extensionPatchService, saveService: extensionSaveService } =
+    extensionRuntime.services;
+  const chatService = extensionRuntime.services.chatService;
   const updateRuntimeMessage = (message: ChatMessage) => {
     setRuntimeMessages((currentMessages) => {
       const index = currentMessages.findIndex((entry) => entry.id === message.id);
@@ -809,9 +828,9 @@ function IntegratedWorkbenchShell() {
 
     return () => {
       unsubscribe();
-      chatService.dispose();
+      extensionRuntime.dispose();
     };
-  }, [chatService, updateRuntimeMessage]);
+  }, [chatService, extensionRuntime, updateRuntimeMessage]);
   useEffect(
     () => () => {
       chatRuntime.dispose();
@@ -887,7 +906,7 @@ function IntegratedWorkbenchShell() {
 
   const saveFile = (path: string, content: string, previousUpdatedAt?: string) => {
     return Promise.resolve(
-      workspaceSaveService.saveDraft({
+      extensionSaveService.saveDraft({
         content,
         mimeType: files.find((file) => file.path === path)?.mimeType,
         path,
@@ -1298,7 +1317,7 @@ function IntegratedWorkbenchShell() {
       },
     },
     patch: {
-      onPatchApply: (patch: WorkspacePatchEvent) => workspacePatchService.applyPatch(patch),
+      onPatchApply: (patch: WorkspacePatchEvent) => extensionPatchService.applyPatch(patch),
     },
     save: {},
     status: {},
