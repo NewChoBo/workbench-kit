@@ -35,8 +35,21 @@ export const Overview: Story = {
             error/warning gallery
           </li>
           <li>
-            <strong>Integrated shell</strong>: <code>React/Workbench → Integrated Shell</code> for
-            full end-to-end flow; use toolbar viewports prefixed with <strong>Verify ·</strong>
+            <strong>Integrated shell</strong>:{' '}
+            <code>React/Workbench/Shell → Integrated Shell</code> for full end-to-end flow; use
+            toolbar viewports prefixed with <strong>Verify ·</strong>
+          </li>
+          <li>
+            <strong>Workspace</strong>: explorer, editor, and search under{' '}
+            <code>React/Workbench/Workspace</code>
+          </li>
+          <li>
+            <strong>Settings &amp; forms</strong>: schema and modal flows under{' '}
+            <code>React/Workbench/Settings</code>
+          </li>
+          <li>
+            <strong>JSON tooling</strong>: <code>JsonConfig/Workbench</code> and{' '}
+            <code>JsonWidget</code> playgrounds
           </li>
           <li>
             <strong>Primitives</strong>: buttons, badges, fields, inputs, and empty states

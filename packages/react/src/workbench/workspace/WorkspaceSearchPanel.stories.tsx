@@ -19,7 +19,7 @@ import { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 import type { WorkspaceSearchResult } from './types';
 
 const meta = {
-  title: 'React/Workbench/WorkspaceSearchPanel',
+  title: 'React/Workbench/Workspace/WorkspaceSearchPanel',
   parameters: {
     layout: 'fullscreen',
   },

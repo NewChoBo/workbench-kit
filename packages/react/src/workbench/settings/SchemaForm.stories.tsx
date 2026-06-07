@@ -15,7 +15,7 @@ import {
 import type { WorkbenchSettingsCategory } from './types';
 
 const meta = {
-  title: 'React/Workbench/SchemaForm',
+  title: 'React/Workbench/Settings/SchemaForm',
   parameters: {
     layout: 'fullscreen',
   },

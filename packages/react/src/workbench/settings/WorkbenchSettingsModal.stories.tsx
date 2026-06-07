@@ -35,7 +35,7 @@ const categories: WorkbenchSettingsCategory[] = [
 ];
 
 const meta = {
-  title: 'React/Workbench/WorkbenchSettingsModal',
+  title: 'React/Workbench/Settings/WorkbenchSettingsModal',
   component: WorkbenchSettingsModal,
   parameters: { layout: 'fullscreen' },
   args: {

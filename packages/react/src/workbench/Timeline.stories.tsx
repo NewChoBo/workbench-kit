@@ -4,7 +4,7 @@ import { WorkbenchTimeline, type WorkbenchTimelineEvent } from './Timeline';
 
 const meta = {
   component: WorkbenchTimeline,
-  title: 'React/Workbench/Timeline',
+  title: 'React/Workbench/Flows/Timeline',
   parameters: {
     layout: 'fullscreen',
   },

@@ -7,7 +7,7 @@ import { WorkspaceEditorPanel } from './WorkspaceEditorPanel';
 import { useVirtualWorkspace } from './useVirtualWorkspace';
 
 const meta = {
-  title: 'React/Workbench/WorkspaceEditorPanel',
+  title: 'React/Workbench/Workspace/WorkspaceEditorPanel',
   parameters: {
     layout: 'fullscreen',
   },

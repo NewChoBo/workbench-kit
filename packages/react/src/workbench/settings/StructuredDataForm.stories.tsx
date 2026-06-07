@@ -10,7 +10,7 @@ import {
 } from './StructuredDataForm';
 
 const meta = {
-  title: 'React/Workbench/StructuredDataForm',
+  title: 'React/Workbench/Settings/StructuredDataForm',
   parameters: {
     layout: 'fullscreen',
   },

@@ -10,7 +10,7 @@ import { type WorkspaceFile } from './workspace/types';
 import { type WorkbenchStructuredDataSchemaDocument } from './settings/StructuredDataForm';
 
 const meta = {
-  title: 'React/Workbench/StructuredArtifactEditor',
+  title: 'React/Workbench/Catalog/StructuredArtifactEditor',
   decorators: [
     (Story) => (
       <WorkspaceDraftsProvider>
