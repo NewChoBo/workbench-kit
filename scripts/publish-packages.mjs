@@ -12,6 +12,7 @@ const trustedPublisherAvailable =
 
 const publishOrder = [
   '@workbench-kit/contracts',
+  '@workbench-kit/json-widget',
   '@workbench-kit/core',
   '@workbench-kit/runtime',
   '@workbench-kit/tokens',
