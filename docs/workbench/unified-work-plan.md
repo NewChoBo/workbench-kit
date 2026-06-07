@@ -21,6 +21,11 @@ Related docs:
 
 ## 1. Goals & Non-Goals
 
+**Product goal:** TilePaper Workbench is an easier, more versatile, and more portable
+alternative to desktop icon/dock customization tools like **Decent Icons** — file-based,
+shareable layouts and JSON widget authoring instead of a single-purpose icon dock. See
+[reference-implementation-strategy.md § Product Goal & Positioning](./reference-implementation-strategy.md#product-goal--positioning).
+
 ### Goals
 
 | Goal | Success signal |
@@ -40,7 +45,8 @@ Related docs:
 | Move SQLite, IPC, main-process execution into kit | Kit stays host-neutral; interfaces and contracts only |
 | Replace `tile_paper` as json-widget-tree reference before kit parity | tile_paper owns tree math until Phase 4 swap |
 | pnpm/npm unification before Phase 5 | Short term: npm canonical app + publish/link tile_paper packages |
-| Launchpad DSL → json-widget bulk migration | Separate ADR; short-term coexistence |
+| Launchpad layout JSON → json-widget bulk migration | Separate ADR; short-term coexistence |
+| Node-graph (node-connection) authoring for tiles/workflows | Exploratory only; not scheduled — see [future-capabilities.md § Node-graph authoring](./future-capabilities.md#node-graph-authoring-for-tiles-and-workflows-exploration) |
 
 ---
 
@@ -200,7 +206,7 @@ Phases align with [reference-implementation-strategy § 5-phase roadmap](./refer
 | P3-T04 | tile_paper Phase 4 P3: Launchpad `JsonEditorPanel` → kit `JsonCodeEditorPane` (code-only mode) | tile_paper, kit | M | web-editor smoke; storybook pilot | Keep local JsonEditorPanel |
 | P3-T05 | tile_paper Phase 4 P4: full `JsonWidgetEditor` swap behind feature flag | tile_paper, kit | H | Parity tests + `pnpm test:storybook` | Flag off → local editor |
 | P3-T06 | Library action E2E: `test:validate:library` after any provider/library merge | custom_launcher | H | library.actions + library.browse E2E | Revert merge commit |
-| P3-T07 | **Decision gate:** library authority (SQLite-only vs file-first vs hybrid) — blocks provider consolidation | all | H | ADR signed | Defer merge |
+| P3-T07 | Apply **file-first library authority** (`.tilepaper`/JSON canonical; SQLite optional cache) to provider consolidation; remove any SQLite-as-authority assumptions. **Prereq:** custom_launcher ADR to move from `SQLite canonical` to file-canonical + rebuildable cache | all | H | File contract tests; cache rebuildable from files; no behavior regression | Revert to read-only file contract |
 
 ### Phase 4 — Runtime Unification
 
@@ -307,10 +313,10 @@ pnpm -C newchobo-ui-package check:launch-boundary
 
 | Decision | Options | Recommendation | Blocks | Status |
 | -------- | ------- | -------------- | ------ | ------ |
-| **Library authority** | SQLite-only / `.tilepaper` file-first / file + cache | File contract + optional SQLite cache | Phase 3 provider/library merge | **BLOCKER** — pending ADR |
+| **Library authority** | SQLite-only / `.tilepaper` file-first / file + cache | **`.tilepaper` / JSON file-first canonical; SQLite optional non-authoritative cache only** | Phase 3 provider/library merge | **Decided — file-first** (SQLite-as-authority rejected for portability). Follow-up: custom_launcher ADR to move off `SQLite canonical` to file-canonical + cache |
 | **npm vs pnpm** | npm (custom_launcher) / pnpm (tile_paper + kit) / unified | Short term: npm canonical + publish/link; unification Phase 5 | CI, husky, workspace layout | Deferred to Phase 5 |
 | **`#workbench-ui` retirement timeline** | Freeze → adapter swap → delete | Freeze now; delete Phase 5 after adapter coverage | Phase 2 UI convergence | **Freeze active** — [workbench-ui-freeze-policy.md](../../../custom_launcher/docs/workbench-ui-freeze-policy.md) |
-| **Launchpad DSL vs json-widget long-term** | Coexist / json-widget primary / DSL-only | Short-term coexist; separate ADR for convergence | Authoring UX | Not blocking near-term |
+| **Launchpad JSON format vs json-widget long-term** | Coexist / json-widget primary / single layout format | Short-term coexist; separate ADR for convergence | Authoring UX | Not blocking near-term |
 | **Canonical Electron app** | custom_launcher / tile_paper electron / greenfield | **custom_launcher** (evolve) | Phase 3+ | **Decided** |
 | **Context-key port API shape** | Extend `CommandDefinition.when` vs separate evaluator module | Evaluator + `when` in kit; add `resolveCommand` next | Phase 1–2 command convergence | Evaluator done; registry gap in [context-key-port-design.md](./context-key-port-design.md) |
 | **launchpad-source-widget-bridge location** | Stay in custom_launcher / move to `@workbench-kit/json-widget` | Evaluate after Phase 2 pilot stability | Phase 2 close | Open |
@@ -334,7 +340,7 @@ Maximum **12 tasks** for the next sprint cycle. Complete in order; do not skip v
 | 3 | P1-T05 | Command registry parity test plan (first test) | kit + custom_launcher |
 | 4 | P2-T03 | ContentHub single-route `@workbench-kit/react` pilot (flagged) | custom_launcher |
 | 4 | P3-T01 | Link `@tilepaper/json-widget-tree` read-only in custom_launcher | both |
-| 4 | — | **Decision review:** library authority ADR (unblocks P3-T07) | all |
+| 4 | — | **Follow-up ADR:** custom_launcher `SQLite canonical` → file-canonical + rebuildable cache (file-first authority already decided; unblocks P3-T07) | custom_launcher |
 
 ### Exit criteria for this sprint window
 

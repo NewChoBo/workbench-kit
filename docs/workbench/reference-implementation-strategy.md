@@ -12,6 +12,41 @@ Related docs:
 - [downstream-extraction-strategy.md](./downstream-extraction-strategy.md) — extraction rules for generic APIs
 - [custom_launcher workbench-kit commonization roadmap](https://github.com/whwjd/custom_launcher/blob/main/docs/workbench-kit-commonization-roadmap.md) — launch/contracts push track (local path: `custom_launcher/docs/workbench-kit-commonization-roadmap.md`)
 
+## Product Goal & Positioning
+
+TilePaper Workbench targets the same user need as desktop icon/dock customization tools
+like **Decent Icons** (a Windows desktop dock that turns any screenshot, wallpaper, or
+box art into custom game/app icons, organized into categories and layouts and shareable
+via Steam Workshop): a visually rich, personal desktop launch surface. TilePaper's
+differentiation is to be **easier to use and more versatile**:
+
+- **Easier:** file-based, human-editable layouts; JSON widget authoring with live preview
+  instead of hand-crafting each icon image.
+- **More versatile:** not limited to game/app icons — launchpads, JSON widgets, provider
+  libraries, and schema-driven settings compose into general-purpose desktop boards and
+  workflows.
+- **Portable:** layouts live in shareable, diff-friendly files (`.tilepaper` / JSON), not
+  locked into a single proprietary store or binary database.
+
+This positioning frames the commonization tracks below: the end-state is a customizable,
+portable, easy-to-author desktop launcher platform — not a single-purpose icon dock.
+
+### Terminology
+
+- **Widget/launchpad JSON format** — the JSON schema used to describe launchpad layouts
+  and JSON widgets. Some earlier notes call this the "Launchpad DSL"; both terms refer to
+  the same human-editable JSON layout format. This doc prefers the plain "JSON format"
+  wording.
+
+### Future exploration (not scheduled)
+
+- **Node-graph authoring for tiles/workflows** — explore a node-connection canvas (a
+  visual graph of connected nodes, conceptually like node editors such as ComfyUI) as an
+  *authoring metaphor* for composing tiles and multi-step workflows. This is **not** an
+  image-generation pipeline and **not** scheduled work — only the node-graph interaction
+  model is of interest. Tracked in
+  [future-capabilities.md § Node-graph authoring](./future-capabilities.md#node-graph-authoring-for-tiles-and-workflows-exploration).
+
 ## Unified Vision
 
 The **Option C hybrid** track below is the operating model today. The **TilePaper Workbench**
@@ -41,7 +76,7 @@ a greenfield app or promote `tile_paper/apps/electron` as the primary product.
 | Rationale         | Detail                                                                       |
 | ----------------- | ---------------------------------------------------------------------------- |
 | Mature shell      | ContentHub, view registry, plugin placement, E2E depth                       |
-| Runtime authority | Main process, IPC, desktop bridge, SQLite library cache                      |
+| Runtime authority | Main process, IPC, desktop bridge, SQLite as rebuildable library cache       |
 | Lower risk        | tile_paper adoption plans explicitly exclude wholesale ContentHub transplant |
 
 Evolution path: keep custom_launcher main process and ContentHub; gradually swap renderer/
@@ -55,7 +90,7 @@ HTTP/WS surfaces as an authoring/file API without splitting runtime authority.
 
 | Package area                             | Role in unified product                  | Stays outside kit                          |
 | ---------------------------------------- | ---------------------------------------- | ------------------------------------------ |
-| `@tilepaper/model`, engine, renderer     | Launchpad DSL, domain DTOs               | Product routes, `.tilepaper/` layout       |
+| `@tilepaper/model`, engine, renderer     | Launchpad layout JSON format, domain DTOs | Product routes, `.tilepaper/` layout      |
 | `json-widget-tree`, `json-widget-editor` | Authoring reference → kit swap (Phase 4) | TilePaper-specific widget types until swap |
 | `provider-sdk`, launcher-core            | Headless provider/catalog API            | Provider SQLite/IPC implementations        |
 | `apps/web-editor`, `apps/electron`       | Reference-only until sunset (Phase 5)    | —                                          |
@@ -82,8 +117,8 @@ Phases 1–2 align with the current kit milestone and [json-widget port-then-rep
 | **Canonical Electron app**       | custom_launcher / tile_paper electron / greenfield        | **custom_launcher** (evolve)                                                                                            | Phase 3+ domain merge, E2E ownership |
 | **npm vs pnpm**                  | npm (custom_launcher) / pnpm (tile_paper + kit) / unified | Short term: npm canonical app + publish/link tile_paper packages; **pnpm unification = Phase 5**                        | CI, husky, workspace layout          |
 | **`#workbench-ui` retirement**   | Freeze now → adapter swap → delete                        | Freeze new features now; retire after Phase 2–3 kit adapter coverage; remove in Phase 5                                 | UI stack convergence timeline        |
-| **Launchpad DSL vs json-widget** | Long-term coexist / json-widget primary / DSL-only        | Short term **coexist**; json-widget as launchpad source editor via kit bridge; **long-term convergence = separate ADR** | Authoring UX, migration cost         |
-| **Library authority** (optional) | SQLite-only / `.tilepaper` file-first / file + cache      | **Decision pending** — file contract + optional SQLite cache fits both references                                       | Phase 3 library merge                |
+| **Launchpad JSON format vs json-widget** | Long-term coexist / json-widget primary / single layout format | Short term **coexist**; json-widget as launchpad source editor via kit bridge; **long-term convergence = separate ADR** | Authoring UX, migration cost  |
+| **Library authority**            | SQLite-only / `.tilepaper` file-first / file + cache      | **Decided — file-first.** `.tilepaper` / JSON files are the canonical, portable authority; SQLite is at most an optional non-authoritative cache rebuildable from files (SQLite-as-authority rejected for portability) | Phase 3 library merge |
 
 See also [strengths-inheritance.md](./strengths-inheritance.md) and
 [tile_paper workbench-kit-phase4-pilot](https://github.com/whwjd/tile_paper/blob/main/docs/developer/planning/workbench-kit-phase4-pilot.md).
@@ -332,6 +367,7 @@ one step; **do** make launcher's resolve helpers delegable to kit once context k
 | json-widget reference vacuum                                    | tile_paper remains official tree/editor reference; launcher bridge consumes kit      |
 | Package manager split (npm vs pnpm)                             | Parity tests and `check:launch-boundary` in each repo; contracts published from kit  |
 | Two Electron products                                           | Document canonical roles; kit stays Electron-free                                    |
+| Library-authority mismatch (custom_launcher SQLite-canonical vs file-first goal) | custom_launcher currently fixes `SQLite canonical`; reconcile by treating SQLite as a rebuildable cache over canonical `.tilepaper`/JSON files. Needs a custom_launcher-side ADR before Phase 3 provider/library merge |
 
 ## Links and Next Actions
 
