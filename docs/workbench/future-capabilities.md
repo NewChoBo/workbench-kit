@@ -148,6 +148,25 @@ Storybook-first playground strategy. No standalone public playground app in the 
 - [json-widget-mvp.md](./json-widget-mvp.md)
 - [storybook.md](../conventions/storybook.md)
 
+## Node-graph authoring for tiles and workflows (exploration)
+
+**Status:** Exploratory idea only — not scheduled, no milestone, no kit API commitment.
+
+Explore a **node-connection canvas** (a visual graph of connected nodes) as an *authoring
+metaphor* for composing **tiles** and **multi-step workflows**. The interest is the
+node-graph interaction model for building layouts/workflows — conceptually similar to
+node editors such as ComfyUI, but reframed: this is **not** an image-generation pipeline
+and **not** an immediate adoption of any specific tool.
+
+Open questions to revisit if/when this is picked up:
+
+- What maps to a node (tile, action, data source, layout region)?
+- How does a node graph serialize into the widget/launchpad JSON format?
+- Does it author tiles (spatial layout) or workflows (execution order), or both?
+- Relationship to the existing JSON widget tree and launchpad canvas editors.
+
+Until a concrete need and design exist, this stays a backlog note only.
+
 ## Related docs
 
 - [migration-todo.md](./migration-todo.md) — active migration tracker
