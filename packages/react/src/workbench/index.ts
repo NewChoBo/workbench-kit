@@ -380,3 +380,45 @@ export type {
 } from './standalone';
 export { StructuredArtifactEditor } from './StructuredArtifactEditor';
 export type { StructuredArtifactEditorProps } from './StructuredArtifactEditor';
+export type {
+  JsonWorkbenchDocument,
+  WorkbenchDocument,
+  WorkbenchDocumentAdapter,
+  WorkbenchDocumentMeta,
+  WorkbenchDocumentNode,
+  WorkbenchDocumentNodeBase,
+  WorkbenchDocumentContainerNode,
+  WorkbenchDocumentLeafNode,
+  WorkbenchDocumentPatch,
+  WorkbenchDocumentPatchOp,
+  WorkbenchDocumentRenderContext,
+  WorkbenchNodeConstraints,
+  WorkbenchNodeLayout,
+  WorkbenchNodeType,
+  WorkbenchPage,
+  WorkbenchVisualStyle,
+} from './schema';
+export type {
+  WorkbenchDocumentPatchError,
+  WorkbenchDocumentPatchResult,
+  WorkbenchDocumentPatchHistory,
+  WorkbenchDocumentPatchHistoryState,
+  WorkbenchDocumentAction,
+  WorkbenchDocumentActionResult,
+  WorkbenchDocumentActionType,
+} from './schema';
+export {
+  applyWorkbenchDocumentPatch,
+  createPatchFromWorkbenchDocumentAction,
+  assertWorkbenchDocument,
+  deserializeWorkbenchDocumentPatch,
+  isWorkbenchDocumentSupported,
+  initializeWorkbenchDocumentPatchHistory,
+} from './schema';
+export { buildWorkspaceDocumentLookup, documentNodesToWorkspaceFiles, workspaceFilesToDocument } from './schema';
+export type {
+  WorkspaceToWorkbenchDocumentOptions,
+  WorkbenchToWorkspaceConversionOptions,
+} from './schema';
+export type { WorkbenchDocumentRendererProps } from './schema';
+export { WorkbenchDocumentRenderer } from './schema';

@@ -168,6 +168,94 @@ Explorer/Search/Editor/Chat/Settings/Status까지 화면을 한 번에 구성하
 - create-workbench bootstrap helper를 기준 API로 고정한 1건의 통합 예시
 - `Track A` 진입 조건 문서(StandAlone 완료 조건 + 회귀 기준)
 
+## 8) JSON-first 실행안 (Figma 느낌)
+
+최종 목표는 `story에서 동작`을 `json 문서 + 렌더러 + 패치`로 일반화하는 것이다.  
+즉, 화면은 JSON 트리를 렌더링하고, 편집 동작은 JSON 패치(JSON Patch 또는 custom diff)로 기록한다.
+
+### 8.1 Core 문서 스키마(v0)
+
+- `WorkbenchDocument`
+  - `version: string`
+  - `schemaVersion: 1`
+  - `pages: WorkbenchPage[]`
+- `WorkbenchPage`
+  - `id`, `name`, `width`, `height`, `background`
+  - `nodes: Node[]`
+- `Node`(공통)
+  - `id`, `type`, `name`, `locked`, `visible`
+  - `style`, `layout`, `constraints`, `children`, `metadata`
+- 권장 노드 타입
+  - `frame`, `group`, `text`, `rectangle`, `circle`, `image`, `vector`, `component`, `instance`
+
+### 8.2 adapter + render pipeline
+
+1. `workspace model -> json node` 어댑터 구현
+   - 기존 파일/탭/채팅 상태를 `WorkbenchDocument`로 매핑
+2. `json node -> react renderer` 구현
+   - node 타입별 렌더러 레지스트리 등록(예: `type=>renderer`)
+3. `selection/highlight` 렌더 단계와 분리
+   - 인터렉션 레이어는 별도 오버레이로 구현
+
+### 8.3 편집 루프 통합
+
+- 현재 편집 액션을 공통 command로 정규화
+  - `create`, `delete`, `move`, `resize`, `rename`, `style-change`, `patch-apply`
+- 각 action은 `WorkbenchPatchEvent`로 변환
+  - 예: `op: add | remove | replace`
+- undo/redo는 patch 큐를 역순/정방향 재생으로 처리
+
+### 8.4 즉시 실행 단계(이번 사이클)
+
+#### Phase 1 (D0~D1): 문서 스키마 고정
+- `packages/react/src/workbench/schema/*.ts`에 타입 추가
+- `@workbench-kit/react/workbench`에 `WorkbenchDocument` 타입 export
+- 문서 호환성 규칙(`schemaVersion`) 정의
+
+#### Phase 2 (D2~D3): 렌더러 뼈대
+- `WorkbenchShell` 내부에 `documentRenderer` 분리
+- `frame/group/text/rectangle/circle` 5개 타입 최소 렌더 구현
+- 기존 Storybook baseline 렌더 경로에 영향 없이 백워드 경로 제공
+
+산출 위치(이 사이클):
+
+- `newchobo-ui-package/packages/react/src/workbench/schema/workbenchDocumentRenderer.tsx`
+- `newchobo-ui-package/packages/react/src/workbench/schema/index.ts`
+
+#### Phase 3 (D4~D5): 편집 액션 파이프라인
+- 공통 액션 객체를 만들어 기존 핸들러와 연결
+- chat patch/event 흐름은 `onRuntimePatch`로 전달하고 결과를 patch replay로 반영
+- `onSave`는 전체 문서 저장 또는 patch-only 저장 모드 지원
+
+산출 위치(이 사이클):
+
+- `newchobo-ui-package/packages/react/src/workbench/schema/workbenchDocumentPatch.ts`
+- `newchobo-ui-package/packages/react/src/workbench/schema/index.ts`
+- `newchobo-ui-package/packages/react/src/workbench/index.ts`
+
+Phase 3에서 우선 구현한 최소 패치 기능:
+
+- `applyWorkbenchDocumentPatch`로 JSON patch 적용
+- `initializeWorkbenchDocumentPatchHistory`로 undo/redo 히스토리 캡슐
+- `deserializeWorkbenchDocumentPatch` + schema version 보호로 마이그레이션/복원 경로
+
+추가 진행(현재 사이클):
+
+- `WorkbenchDocumentAction`/`createPatchFromWorkbenchDocumentAction`로 action-to-patch 변환 경로 추가
+- Storybook 데모(`WorkbenchDocumentRenderer.stories.tsx`)에서 렌더-선택-액션-Undo/Redo 루프 적용
+
+#### Phase 4 (D6~): 단계적 확장
+- style inspector 스키마 기반 자동 렌더
+- `component/instance` 관계 해소 규칙 도입
+- `diff viewer`와 `history panel` 추가(패치 로그 기반)
+
+### 8.5 게이트
+
+- Storybook baseline 9개 시나리오가 `WorkbenchShell` JSON 모드로 동일 재현
+- `WorkbenchDocument` 직렬화/복원 round-trip 안정화(동일 JSON deep equal 보장)
+- 렌더러 타입 추가 시 registry 기반 확장성 검증(컴포넌트 분기 테스트)
+- `schemaVersion` 미스매치 시 graceful fallback + migration 경로 문서화
+
 ## 7) Track A 최소 API 제안(실행 전 합의안)
 
 이 목표가 "스토리 유사 동작을 그대로 유지하면서도 패키지 소비자에게 즉시 제공"되려면,
