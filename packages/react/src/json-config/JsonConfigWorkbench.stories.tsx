@@ -1,0 +1,179 @@
+import { useState } from 'react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
+
+import type { WidgetTypeShape } from '@workbench-kit/contracts';
+import { createWidgetRegistry, formatWidgetJson } from '@workbench-kit/json-widget';
+
+import {
+  JsonConfigWorkbench,
+  type JsonConfigWorkbenchProps,
+} from './JsonConfigWorkbench.js';
+import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
+
+const meta = {
+  title: 'JsonConfig/Workbench',
+  component: JsonConfigWorkbench,
+  parameters: {
+    layout: 'fullscreen',
+  },
+} satisfies Meta;
+
+export default meta;
+
+type Story = StoryObj;
+
+const settingsSchema: WorkbenchStructuredDataSchemaDocument = {
+  activePattern: 'AppSettings',
+  schema: {
+    properties: {
+      'general.appName': { title: 'App name', type: 'string' },
+      'general.autoSave': { title: 'Auto save', type: 'boolean' },
+      'appearance.theme': {
+        title: 'Theme',
+        type: 'string',
+        enum: ['system', 'light', 'dark'],
+      },
+    },
+    sections: [
+      {
+        fields: ['appName', 'autoSave'],
+        sectionKey: 'general',
+        title: 'General',
+        type: 'form',
+      },
+      {
+        fields: ['theme'],
+        sectionKey: 'appearance',
+        title: 'Appearance',
+        type: 'form',
+      },
+    ],
+  },
+};
+
+const settingsJson = JSON.stringify(
+  {
+    general: {
+      appName: 'Content Hub',
+      autoSave: true,
+    },
+    appearance: {
+      theme: 'dark',
+    },
+  },
+  null,
+  2,
+);
+
+interface DemoWidget extends WidgetTypeShape {
+  type: 'demo:card';
+  title: string;
+  body?: string;
+}
+
+const widgetJson = formatWidgetJson({
+  type: 'demo:card',
+  title: 'Launch tile',
+  body: 'Preview from JsonConfigWorkbench widget mode.',
+});
+
+const demoRegistry = createWidgetRegistry<(widget: DemoWidget) => string, DemoWidget>([
+  {
+    type: 'demo:card',
+    build: (widget) => {
+      const body = widget.body?.trim();
+      return body ? `${widget.title} — ${body}` : widget.title;
+    },
+    displayName: 'Demo Card',
+  },
+]);
+
+function ConfigHarness({
+  initialValue,
+  ...props
+}: Partial<JsonConfigWorkbenchProps> & { initialValue: string }) {
+  const [value, setValue] = useState(initialValue);
+  const [baseline, setBaseline] = useState(initialValue);
+
+  return (
+    <div style={{ padding: 24, height: 640, background: 'var(--color-bg)' }}>
+      <JsonConfigWorkbench
+        baselineValue={baseline}
+        path="settings.json"
+        title="App settings"
+        value={value}
+        onChange={setValue}
+        onDiscard={() => setValue(baseline)}
+        onSave={() => setBaseline(value)}
+        {...props}
+      />
+    </div>
+  );
+}
+
+export const SchemaSettings: Story = {
+  render: () => (
+    <ConfigHarness
+      initialValue={settingsJson}
+      defaultMode="split"
+      previewKind="schema"
+      schema={settingsSchema}
+    />
+  ),
+};
+
+export const WidgetPreview: Story = {
+  render: () => (
+    <ConfigHarness
+      initialValue={widgetJson}
+      defaultMode="split"
+      path="widget.json"
+      previewKind="widget"
+      title="Widget config"
+      widgetRegistry={demoRegistry}
+    />
+  ),
+};
+
+export const AutoPreview: Story = {
+  render: () => (
+    <ConfigHarness
+      initialValue={widgetJson}
+      defaultMode="preview"
+      path="widget.json"
+      previewKind="auto"
+      title="Auto-detected widget"
+      widgetRegistry={demoRegistry}
+    />
+  ),
+};
+
+export const Interaction: Story = {
+  render: () => (
+    <ConfigHarness
+      initialValue={settingsJson}
+      defaultMode="split"
+      previewKind="schema"
+      schema={settingsSchema}
+    />
+  ),
+  tags: ['storybook-play-baseline'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    const appNameInput = canvas.getByRole('textbox', { name: 'App name' });
+    await expect(appNameInput).toHaveValue('Content Hub');
+
+    await userEvent.clear(appNameInput);
+    await userEvent.type(appNameInput, 'Updated Hub');
+    await expect(appNameInput).toHaveValue('Updated Hub');
+
+    await expect(canvas.getByTitle('Unsaved changes')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Save' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Discard' })).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Discard' }));
+    await expect(appNameInput).toHaveValue('Content Hub');
+  },
+};
