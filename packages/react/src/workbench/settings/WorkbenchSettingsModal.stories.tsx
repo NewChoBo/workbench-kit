@@ -268,7 +268,8 @@ export const DirtyStateFlow: Story = {
     await expect(canvas.getByRole('button', { name: 'Save' })).toBeDisabled();
     await expect(canvas.getByRole('button', { name: 'Reset' })).toBeDisabled();
 
-    await userEvent.selectOptions(canvas.getByLabelText('Color theme'), 'light');
+    await userEvent.click(canvas.getByRole('combobox', { name: 'Color theme' }));
+    await userEvent.click(canvas.getByRole('option', { name: 'Light Modern' }));
     await expect(canvas.getByText('Unsaved')).toBeVisible();
     await expect(canvas.getByLabelText('Settings event log')).toHaveTextContent('Unsaved settings');
     await expect(canvas.getByRole('button', { name: 'Save' })).toBeEnabled();
