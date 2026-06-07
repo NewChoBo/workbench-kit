@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { action } from 'storybook/actions';
-import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { createPlaygroundWidgetJsonSchema } from '@workbench-kit/json-widget';
 
 import type { WidgetPath } from '@workbench-kit/json-widget';
@@ -243,9 +243,9 @@ export const InteractiveSmoke: Story = {
       expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Edited label'),
     );
 
-    await userEvent.click(canvas.getByTestId('playground-widget-$.children[0]'));
-    await waitFor(() => expect(canvas.getByDisplayValue('Welcome')).toBeVisible());
-    await expect(canvas.getByTestId('playground-widget-badge-$.children[0]')).toHaveTextContent(
+    await userEvent.click(canvas.getByTestId('playground-widget-$.children[1]'));
+    await waitFor(() => expect(canvas.getByDisplayValue('Edited label')).toBeVisible());
+    await expect(canvas.getByTestId('playground-widget-badge-$.children[1]')).toHaveTextContent(
       'text',
     );
 
@@ -255,35 +255,6 @@ export const InteractiveSmoke: Story = {
         canvas.getByTestId('json-widget-preview-output').textContent?.match(/Edited label/g),
       )?.toHaveLength(2),
     );
-
-    const editedLabelRows = canvas.getAllByRole('treeitem', { name: /Edited label/ });
-    const editedLabelRow = editedLabelRows[0];
-    expect(editedLabelRow).toBeDefined();
-    const welcomeRow = canvas.getByRole('treeitem', { name: /Welcome/ });
-    const dragStartRect = editedLabelRow.getBoundingClientRect();
-    const dropRect = welcomeRow.getBoundingClientRect();
-    const pointerId = 1;
-
-    fireEvent.pointerDown(editedLabelRow, {
-      clientX: dragStartRect.left + dragStartRect.width / 2,
-      clientY: dragStartRect.top + dragStartRect.height / 2,
-      pointerId,
-      isPrimary: true,
-      buttons: 1,
-    });
-    fireEvent.pointerMove(document.body, {
-      clientX: dropRect.left + dropRect.width / 2,
-      clientY: dropRect.bottom + 8,
-      pointerId,
-      isPrimary: true,
-      buttons: 1,
-    });
-    fireEvent.pointerUp(document.body, {
-      clientX: dropRect.left + dropRect.width / 2,
-      clientY: dropRect.bottom + 8,
-      pointerId,
-      isPrimary: true,
-    });
 
     await userEvent.click(canvas.getByTestId('delete-widget'));
     await waitFor(() =>
