@@ -206,7 +206,7 @@ Phases align with [reference-implementation-strategy § 5-phase roadmap](./refer
 | P3-T04 | tile_paper Phase 4 P3: Launchpad `JsonEditorPanel` → kit `JsonCodeEditorPane` (code-only mode) | tile_paper, kit | M | web-editor smoke; storybook pilot | Keep local JsonEditorPanel |
 | P3-T05 | tile_paper Phase 4 P4: full `JsonWidgetEditor` swap behind feature flag | tile_paper, kit | H | Parity tests + `pnpm test:storybook` | Flag off → local editor |
 | P3-T06 | Library action E2E: `test:validate:library` after any provider/library merge | custom_launcher | H | library.actions + library.browse E2E | Revert merge commit |
-| P3-T07 | Apply **file-first library authority** (`.tilepaper`/JSON canonical; SQLite optional cache) to provider consolidation; remove any SQLite-as-authority assumptions. **Prereq:** custom_launcher ADR to move from `SQLite canonical` to file-canonical + rebuildable cache | all | H | File contract tests; cache rebuildable from files; no behavior regression | Revert to read-only file contract |
+| P3-T07 | Apply **file-first library authority** (`.tilepaper`/JSON canonical; **SQLite dropped, not retained as cache** — optional cache, if ever needed, is regenerable JSON, never SQLite) to provider consolidation; remove any SQLite-as-authority assumptions. **Prereq:** custom_launcher ADR [0001-drop-sqlite-file-first-library](../../../custom_launcher/docs/adr/0001-drop-sqlite-file-first-library.md) | all | H | File contract tests; in-memory index from files; no behavior regression | Revert to read-only file contract |
 
 ### Phase 4 — Runtime Unification
 
@@ -313,7 +313,7 @@ pnpm -C newchobo-ui-package check:launch-boundary
 
 | Decision | Options | Recommendation | Blocks | Status |
 | -------- | ------- | -------------- | ------ | ------ |
-| **Library authority** | SQLite-only / `.tilepaper` file-first / file + cache | **`.tilepaper` / JSON file-first canonical; SQLite optional non-authoritative cache only** | Phase 3 provider/library merge | **Decided — file-first** (SQLite-as-authority rejected for portability). Follow-up: custom_launcher ADR to move off `SQLite canonical` to file-canonical + cache |
+| **Library authority** | SQLite-only / `.tilepaper` file-first / file + cache | **`.tilepaper` / JSON file-first canonical; SQLite dropped (not retained as cache); any optional cache is regenerable JSON, never SQLite** | Phase 3 provider/library merge | **Decided — file-first, SQLite dropped** (SQLite-as-authority and SQLite-as-cache both rejected for portability). ADR: custom_launcher [0001-drop-sqlite-file-first-library](../../../custom_launcher/docs/adr/0001-drop-sqlite-file-first-library.md) |
 | **npm vs pnpm** | npm (custom_launcher) / pnpm (tile_paper + kit) / unified | Short term: npm canonical + publish/link; unification Phase 5 | CI, husky, workspace layout | Deferred to Phase 5 |
 | **`#workbench-ui` retirement timeline** | Freeze → adapter swap → delete | Freeze now; delete Phase 5 after adapter coverage | Phase 2 UI convergence | **Freeze active** — [workbench-ui-freeze-policy.md](../../../custom_launcher/docs/workbench-ui-freeze-policy.md) |
 | **Launchpad JSON format vs json-widget long-term** | Coexist / json-widget primary / single layout format | Short-term coexist; separate ADR for convergence | Authoring UX | Not blocking near-term |
@@ -340,7 +340,7 @@ Maximum **12 tasks** for the next sprint cycle. Complete in order; do not skip v
 | 3 | P1-T05 | Command registry parity test plan (first test) | kit + custom_launcher |
 | 4 | P2-T03 | ContentHub single-route `@workbench-kit/react` pilot (flagged) | custom_launcher |
 | 4 | P3-T01 | Link `@tilepaper/json-widget-tree` read-only in custom_launcher | both |
-| 4 | — | **Follow-up ADR:** custom_launcher `SQLite canonical` → file-canonical + rebuildable cache (file-first authority already decided; unblocks P3-T07) | custom_launcher |
+| 4 | — | **Follow-up ADR (authored):** custom_launcher `SQLite canonical` → file-canonical, **SQLite dropped (not cache)** + in-memory index — [ADR 0001](../../../custom_launcher/docs/adr/0001-drop-sqlite-file-first-library.md); unblocks P3-T07 | custom_launcher |
 
 ### Exit criteria for this sprint window
 
