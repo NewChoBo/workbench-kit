@@ -121,6 +121,8 @@ export {
   normalizeLaunchTarget,
   resolveLaunchpadLibraryItemMapping,
 } from './library-launchpad-mapping';
+export type { ExternalUrlPolicy } from './external-url';
+export { EXTERNAL_URL_PROTOCOLS, normalizeExternalUrlTarget } from './external-url';
 export type {
   ServiceFailure,
   ServiceFailureCode,

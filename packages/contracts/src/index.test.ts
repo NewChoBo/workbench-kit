@@ -5,6 +5,7 @@ import {
   type LaunchpadLibraryItemSummary,
   type LaunchpadLibraryItemBinding,
   normalizeLaunchTarget,
+  normalizeExternalUrlTarget,
   resolveLaunchpadLibraryItemMapping,
   type WidgetRendererComponent,
   type WidgetRendererEvent,
@@ -165,6 +166,13 @@ describe('contract helpers', () => {
       value: 'preferred-value',
     });
     expect(normalizeWidgetRendererEvent({ type: 'unknown', widgetId: 'widget-f' })).toBe(null);
+  });
+
+  it('exports external url normalization from public index', () => {
+    expect(normalizeExternalUrlTarget('https://example.com', 'web-navigation')).toBe(
+      'https://example.com/',
+    );
+    expect(normalizeExternalUrlTarget('steam://store/valve', 'web-navigation')).toBeNull();
   });
 
   it('exports launchpad mapping contracts from public index', () => {
