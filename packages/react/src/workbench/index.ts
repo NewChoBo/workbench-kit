@@ -359,10 +359,12 @@ export {
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';
 export { WorkbenchStandaloneShell } from './WorkbenchStandaloneShell';
+export { WorkbenchFigmaShell } from './WorkbenchFigmaShell';
 export type {
   WorkbenchStandaloneShellContext,
   WorkbenchStandaloneShellProps,
 } from './WorkbenchStandaloneShell';
+export type { WorkbenchFigmaShellProps } from './WorkbenchFigmaShell';
 export type {
   WorkbenchActivityChangeEvent,
   WorkbenchActivityDescriptor,
