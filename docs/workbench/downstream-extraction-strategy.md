@@ -1,10 +1,13 @@
 # Downstream Extraction Strategy
 
-Last updated: 2026-06-05
+Last updated: 2026-06-07
 
 Workbench Kit owns reusable workbench UI and host-neutral UX primitives.
 Downstream applications should keep product workflow, runtime calls,
 persistence, and domain models outside this repository.
+
+For dual-track reference ownership (custom_launcher vs tile_paper), see
+[reference-implementation-strategy.md](./reference-implementation-strategy.md).
 
 ## Current Downstream Signals
 

@@ -6,6 +6,12 @@ scenarios. The reference implementation is treated only as a migration aid; do
 not copy product-specific runtime details, storage keys, private sample data, or
 internal command names into this package.
 
+**Reference strategy:** Downstream references follow the **Option C hybrid**
+model documented in [reference-implementation-strategy.md](./reference-implementation-strategy.md)
+(custom_launcher leads product shell/runtime/library; tile_paper leads
+`@workbench-kit/react` and JSON widget editor). Command registry gap analysis
+(Step 1) lives in that document.
+
 ## Goals
 
 - Keep public APIs generic enough for workbench-style products.
