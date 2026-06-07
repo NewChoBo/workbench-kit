@@ -69,13 +69,13 @@ Do **not** start these while Phases 1–3 are open:
 - [x] **P1** json-widget-editor sync contract: single source of truth for document string,
       parsed tree, selected node, and preview errors — see
       [json-widget-port-then-replace.md § Editor sync contract](./json-widget-port-then-replace.md#editor-sync-contract-p1).
-- [ ] **P1** Extend `JsonConfigWorkbench` widget mode to cover json-widget-editor baseline
+- [x] **P1** Extend `JsonConfigWorkbench` widget mode to cover json-widget-editor baseline
       flows (split layout, registry preview, dirty save/discard) without product routes.
-- [ ] **P2** Port reusable editor chrome from tile_paper `json-widget-editor` into
-      `@workbench-kit/react/json-widget` (properties panel, tree panel, preview slot).
+- [x] **P2** Port reusable editor chrome from tile_paper `json-widget-editor` into
+      `@workbench-kit/react/json-widget` (tree panel, registry inspector, preview slot).
 - [ ] **P2** Port neutral layout calculators from `json-widget-tree` where not
       tile_paper-specific; keep domain widget types in reference until swap.
-- [ ] **P2** Storybook stories: **JsonWidget/Editor** (full editor chrome) + play baseline
+- [x] **P2** Storybook stories: **JsonWidget/Editor** (full editor chrome) + play baseline
       for parse error, selection sync, and preview update.
 - [ ] **P2** Evaluate merging JsonWidget Playground editing UX into `JsonConfigWorkbench`
       widget mode vs keeping separate low-level demo (see Playground section below).
