@@ -240,7 +240,7 @@ export function JsonConfigValidationBanner({
       data-tone={tone}
       role="status"
     >
-      <i className={icon} aria-hidden />
+      <i className={`codicon ${icon}`} aria-hidden />
       <span>{message}</span>
     </div>
   );
