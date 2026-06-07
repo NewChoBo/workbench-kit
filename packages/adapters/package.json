@@ -11,7 +11,9 @@
     ".": "./src/index.ts",
     "./library": "./src/library.ts",
     "./runtime": "./src/runtime.ts",
-    "./workspace": "./src/workspace.ts"
+    "./workspace": "./src/workspace.ts",
+    "./workbench-demo": "./src/workbench-demo.ts",
+    "./persistence": "./src/persistence.ts"
   },
   "files": [
     "src",
