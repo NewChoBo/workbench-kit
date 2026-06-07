@@ -15,6 +15,12 @@ export interface CommandDefinition<TContext = void> {
 
 export type CommandRegistry<TContext = void> = ReadonlyMap<string, CommandDefinition<TContext>>;
 
+export interface CommandDefinitionConflict<TContext = void> {
+  commandId: string;
+  definitions: readonly CommandDefinition<TContext>[];
+  indices: readonly number[];
+}
+
 export interface CommandMenuSeparatorEntry {
   id?: string | undefined;
   type: 'separator';
@@ -45,6 +51,12 @@ export interface CommandContribution<TContext = void> {
 export interface CommandContributionInput<TContext = void> {
   commands?: Iterable<CommandDefinition<TContext>>;
   menuEntries?: Iterable<CommandMenuEntry<TContext>>;
+}
+
+export type CommandConflictPolicy = 'last-write-wins' | 'hard-fail';
+
+export interface CreateCommandRegistryOptions {
+  conflictPolicy?: CommandConflictPolicy;
 }
 
 export interface SourcedCommandContribution<TContext = void> extends CommandContribution<TContext> {
@@ -121,6 +133,58 @@ export function createCommandRegistry<TContext>(
   commands: Iterable<CommandDefinition<TContext>>,
 ): CommandRegistry<TContext> {
   return new Map([...commands].map((command) => [command.id, command]));
+}
+
+export function createCommandRegistryFromContributions<TContext = void>(
+  contributions: CommandContributionInput<TContext>[],
+  options: CreateCommandRegistryOptions = {},
+): CommandRegistry<TContext> {
+  const { conflictPolicy = 'last-write-wins' } = options;
+  const merged = mergeCommandContributions<TContext>(...contributions);
+
+  if (conflictPolicy === 'hard-fail') {
+    assertNoCommandDefinitionConflicts(merged.commands);
+  }
+
+  return createCommandRegistry(merged.commands);
+}
+
+export function assertNoCommandDefinitionConflicts<TContext>(
+  commands: Iterable<CommandDefinition<TContext>>,
+): void {
+  const conflicts = findCommandDefinitionConflicts(commands);
+  if (!conflicts.length) return;
+
+  const conflictSummary = conflicts
+    .map(({ commandId, indices }) => `${commandId} -> duplicate indices: [${indices.join(', ')}]`)
+    .join('; ');
+
+  throw new Error(`Duplicate command IDs are not allowed: ${conflictSummary}`);
+}
+
+export function findCommandDefinitionConflicts<TContext>(
+  commands: Iterable<CommandDefinition<TContext>>,
+): CommandDefinitionConflict<TContext>[] {
+  const encountered = new Map<
+    string,
+    { definitions: CommandDefinition<TContext>[]; indices: number[] }
+  >();
+  let index = 0;
+  for (const command of commands) {
+    const conflict = encountered.get(command.id) ?? { definitions: [], indices: [] };
+    conflict.definitions.push(command);
+    conflict.indices.push(index);
+    encountered.set(command.id, conflict);
+    index += 1;
+  }
+
+  return [...encountered.entries()]
+    .filter(([, conflict]) => conflict.definitions.length > 1)
+    .map(([commandId, conflict]) => ({
+      commandId,
+      definitions: [...conflict.definitions],
+      indices: [...conflict.indices],
+    }));
 }
 
 export function commandMenuEntry<TContext = void>(

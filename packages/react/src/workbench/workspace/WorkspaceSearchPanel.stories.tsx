@@ -138,6 +138,23 @@ export const ComponentSurface: Story = {
   render: () => <SearchHarness initialQuery="search" />,
 };
 
+export const EmptySearchStateFlow: Story = {
+  render: () => <SearchHarness initialQuery="no-match-token" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText('No results')).toBeVisible();
+    await expect(canvas.getByRole('textbox', { name: 'Search workspace' })).toHaveValue(
+      'no-match-token',
+    );
+
+    await userEvent.click(await canvas.findByRole('button', { name: 'Clear search' }));
+    await expect(canvas.getByText('Type to search files')).toBeVisible();
+    await expect(canvas.getByRole('textbox', { name: 'Search workspace' })).toHaveValue('');
+  },
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
+};
+
 export const KeyboardFlow: Story = {
   render: () => <SearchHarness />,
   play: async ({ canvasElement }) => {
@@ -162,6 +179,7 @@ export const KeyboardFlow: Story = {
     await expect(searchInput).toHaveValue('');
     await expect(canvas.getByText('Type to search files')).toBeVisible();
   },
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const ResultMenuFlow: Story = {
@@ -183,5 +201,5 @@ export const ResultMenuFlow: Story = {
     await expect(canvas.queryByRole('button', { name: /READ.*ME\.md/i })).toBeNull();
     await expect(canvas.getByText('No results')).toBeVisible();
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };

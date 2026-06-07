@@ -91,7 +91,7 @@ shells, shortcut bridge, and command tests.
 
 ### 10. Library Launchpad Mapping And Widget Renderer Contracts
 
-Status: active
+Status: active (Phase 2 gate pending)
 
 Goal:
 
@@ -110,6 +110,10 @@ Required migrations for each downstream:
    `createLaunchpadLibraryItemTileBinding` plus normalized reference payloads.
 3. Align JSON widget-tree renderer handler types with `WidgetRendererComponent` and
    `WidgetRendererProps`.
+   Raw widget events should be normalized through `normalizeWidgetRendererEvent` before
+   any domain-specific action handling.
+   Legacy fields (`type: 'on-press'|'on-change'`, and the legacy `kind` shape) must be
+   normalized to `WidgetRendererEventKind` (`press`/`change`).
 
 Acceptance checks:
 
@@ -118,6 +122,10 @@ Acceptance checks:
 - Blank or whitespace-only targets must converge to `canLaunch=false`, `execution.target=null`, and
   `launchType=null`.
 - `WidgetRendererProps` must keep shared renderer event kinds `press` and `change`.
+
+Boundary check:
+
+- Before migration close, run [library-launch-boundary-gate.md](./library-launch-boundary-gate.md).
 
 ### 2. Active Editor Save Primitive
 

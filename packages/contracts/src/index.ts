@@ -106,6 +106,7 @@ export {
 export type {
   LaunchTarget,
   LaunchpadDataBindingSyncMode,
+  LaunchpadLibraryArtworkBinding,
   LaunchpadLibraryExecution,
   LaunchpadLibraryItemBinding,
   LaunchpadLibraryItemMapping,
@@ -131,8 +132,14 @@ export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from '.
 export type {
   WidgetRendererComponent,
   WidgetRendererEvent,
+  WidgetRendererEventLike,
   WidgetRendererEventKind,
   WidgetRendererProps,
   WidgetRendererRect,
   WidgetRendererShape,
+} from './widget-renderer-contract';
+export {
+  isWidgetRendererEvent,
+  isWidgetRendererEventKind,
+  normalizeWidgetRendererEvent,
 } from './widget-renderer-contract';

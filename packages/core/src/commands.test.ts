@@ -4,6 +4,9 @@ import {
   commandMenuEntry,
   commandMenuSeparator,
   createCommandRegistry,
+  createCommandRegistryFromContributions,
+  assertNoCommandDefinitionConflicts,
+  findCommandDefinitionConflicts,
   defineCommandContribution,
   executeCommand,
   mergeCommandContributions,
@@ -67,6 +70,74 @@ describe('commands', () => {
 
     expect(executeCommand(registry, 'dup-open', context)).toBe(true);
     expect(context.log).toEqual(['second']);
+  });
+
+  it('detects duplicate command definition conflicts and includes source order indices', () => {
+    const collisions = findCommandDefinitionConflicts([
+      { id: 'open', label: 'primary' },
+      { id: 'rename', label: 'rename v1' },
+      { id: 'open', label: 'override', shortcut: 'Enter' },
+      { id: 'search', label: 'search' },
+      { id: 'open', label: 'final override' },
+    ]);
+
+    expect(collisions).toEqual([
+      {
+        commandId: 'open',
+        definitions: [
+          { id: 'open', label: 'primary' },
+          { id: 'open', label: 'override', shortcut: 'Enter' },
+          { id: 'open', label: 'final override' },
+        ],
+        indices: [0, 2, 4],
+      },
+    ]);
+  });
+
+  it('throws a meaningful error when hard-fail mode detects duplicate command IDs', () => {
+    const duplicateCommands: CommandDefinition<TestContext>[] = [
+      { id: 'save', label: 'first save' },
+      { id: 'rename', label: 'rename' },
+      { id: 'save', label: 'overwrite save' },
+    ];
+
+    expect(() => assertNoCommandDefinitionConflicts(duplicateCommands)).toThrow(
+      'Duplicate command IDs are not allowed: save -> duplicate indices: [0, 2]',
+    );
+  });
+
+  it('creates command registry from contributions in permissive mode by default', () => {
+    const contributionA = defineCommandContribution<TestContext>({
+      commands: [{ id: 'shared', label: 'first' }],
+      menuEntries: [{ commandId: 'shared' }],
+    });
+    const contributionB = defineCommandContribution<TestContext>({
+      commands: [{ id: 'shared', label: 'second' }],
+      menuEntries: [{ commandId: 'shared' }],
+    });
+    const registry = createCommandRegistryFromContributions<TestContext>([
+      contributionA,
+      contributionB,
+    ]);
+
+    expect(registry.get('shared')).toMatchObject({ label: 'second' });
+  });
+
+  it('hard-fails when command registry contributions contain duplicate IDs', () => {
+    const contributionA = defineCommandContribution<TestContext>({
+      commands: [{ id: 'shared', label: 'first' }],
+      menuEntries: [{ commandId: 'shared' }],
+    });
+    const contributionB = defineCommandContribution<TestContext>({
+      commands: [{ id: 'shared', label: 'second' }],
+      menuEntries: [{ commandId: 'shared' }],
+    });
+
+    expect(() =>
+      createCommandRegistryFromContributions<TestContext>([contributionA, contributionB], {
+        conflictPolicy: 'hard-fail',
+      }),
+    ).toThrow('Duplicate command IDs are not allowed: shared -> duplicate indices: [0, 1]');
   });
 
   it('projects command definitions into compact menu items', () => {

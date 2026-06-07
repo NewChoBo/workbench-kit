@@ -62,9 +62,36 @@
 
 ## Next Steps
 
-1. Reconfirm `custom_launcher` launch-target/execution contract regression with a small snapshot
-   sample set for future branch gates
-2. Revisit `tile_paper` `json-widget-tree-react` boundaries and split data contracts if needed
+### Phase 1 Status (2026-06-06)
+
+- ✅ Done: `custom_launcher` and `tile_paper` runtime/adapter paths are aligned to
+  `@workbench-kit/contracts` for launch mapping and JSON widget event kinds.
+- ✅ Done: `custom_launcher` and `tile_paper` parity checks cover `launchType`,
+  `target`, `workingDirectory`, `arguments`, `subtitle`, and `canLaunch` equivalence.
+
+### Phase 2 Plan (Data/Policy Package Hardening)
+
+This phase is the next work item before promoting additional downstream migrations:
+
+1. Add/verify a repository-level boundary rule that prohibits direct launch-policy logic
+   in consumer runtime paths (`#shared/launch-target`, local infer/trim helpers),
+   allowing only compatibility shims and adapter layers.
+2. Revisit `json-widget-tree-react` contract boundary and split parsing/normalization
+   helpers into a non-UI package (`@workbench-kit/contracts` or `@workbench-kit/adapters`)
+   if runtime behavior starts to diverge across consumers.
+3. Define a one-page "data package vs UI package" policy for consumer onboarding:
+   - `@workbench-kit/contracts`: all type + policy decisions
+   - app-specific packages (`custom_launcher`, `tile_paper`): rendering, orchestration, host I/O
+4. Add a minimal reusable smoke checklist in each downstream repo:
+   - map a fixed sample set through shared APIs
+   - verify launch payloads and widget event kinds without legacy aliases
+
+Acceptance to close Phase 2:
+
+- No new launch policy logic is introduced in consumer runtime paths.
+- Remaining launch-policy usage in consumers is adapter-only or shim-only.
+- New/updated consumers can implement equivalent behavior with only
+  `@workbench-kit/contracts` (plus local UI modules).
 
 ## Data Package Separation (UI vs Policy)
 
@@ -100,6 +127,8 @@ Proposed follow-up:
 - `resolveLaunchpadLibraryItemMapping`, `createLaunchpadLibraryItemTileBinding`, and
   `normalizeLaunchTarget` must resolve to a single import path in consumers.
 - `WidgetRenderer*` types should remain minimal event/shape contracts, not renderer policy.
+- `WidgetRenderer` event ingress should accept raw payloads, then normalize through
+  `normalizeWidgetRendererEvent` before domain handling.
 
 ### Consumer patterns
 

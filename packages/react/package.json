@@ -30,6 +30,7 @@
     "@workbench-kit/contracts": "workspace:*",
     "@workbench-kit/runtime": "workspace:*",
     "@workbench-kit/services": "workspace:*",
+    "@workbench-kit/vscode-extension": "workspace:*",
     "@workbench-kit/tokens": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
     "@vscode/codicons": "^0.0.45"

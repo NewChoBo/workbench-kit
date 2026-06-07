@@ -108,7 +108,7 @@ documentation, not private app behavior.
 - 핵심 결론: 현재 UI 동작은 story 조립(`IntegratedWorkbenchShell`)로 구현되어 있으며,
   shell 레이아웃 진입점(`WorkbenchShell`)은 이미 추출되어 있다.
 - 이번 사이클 운영 규칙(Cycle Guardrail):
-  - `@workbench-kit/vscode-extension` 소스/설정 수정은 하지 않는다.
+  - `@workbench-kit/vscode-extension`는 대규모 재작업 대신 `commandContribution` 충돌 정책 자동 결정 경로처럼 `standalone` 경로에 영향이 적은 영역만 제한적으로 반영한다.
   - Standalone 런치 정합성이 확보될 때까지 extension 래퍼는 `Track C`로 이월한다.
 - 이번 사이클 액션:
   1.  쉘 어셈블리(`WorkbenchShell`)는 추출 완료 상태이므로, 앱 진입점 계약(상태/서비스/커맨드 바인딩)을 정렬한다.
@@ -116,7 +116,7 @@ documentation, not private app behavior.
   3.  `pnpm test:storybook-play:required` + `vscode-host`/`services`/`react` typecheck 통합 게이트 고정.
 
 4. `vscode-extension` bootstrap은 별도 마일스톤(`Track A`)으로 분리하고 문서와 브랜치 플래닝 반영.
-5. `vscode-extension` 패키지는 소스 수정 대상에서 제외하고, 현 단계에서는 스탠드얼론 조합 경로만 운영한다.
+5. `vscode-extension` 패키지는 대규모 변경은 이월하고, 이 브랜치에서는 `commandConflictPolicy` 자동 판별/노출 경로만 제한 적용한다.
 
 ### Current Cycle Deep-Dive Conclusion
 
@@ -150,19 +150,19 @@ The package should evolve beyond a single React package.
 
 ## Package Skeleton Goals (v0.1, To-Do)
 
-| Package                           | Skeleton Goal (요약)                                                                 | To-Do (핵심만)                                                                                                                                                   |
-| --------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@workbench-kit/tokens`           | 최소한의 디자인 토큰 인터페이스를 export해 테마/모양 일관성을 보장                   | - 라이트/다크 토큰 기본셋 정합성 점검<br>- 토큰 export와 네임스페이스 문서화<br>- 필요 시 컴포넌트 바인딩 가이드 추가                                            |
-| `@workbench-kit/core`             | 커맨드 등록/실행/메뉴 투영을 프레임워크 독립적으로 제공                              | - command 충돌/우선순위 정책 문서화<br>- menu `surfaces` 메타 확장 정책 결정<br>- 메뉴/명령 노출 정렬 규칙 테스트 추가                                           |
-| `@workbench-kit/contracts`        | 저장/채팅/패치/플러그인 관련 공용 타입을 도메인에 독립된 결과 모델로 표준화          | - 요청 메타(`requestId`/타임스탬프) 기본 계약 고정<br>- plugin lifecycle 계약 최소 필드 확정<br>- 공통 실패 모델(`SaveError` 계열) 사용처 정합성 점검            |
-| `@workbench-kit/workspace`        | 경로/트리/검색/선택/드래프트 유틸을 UI에서 독립적으로 재사용 가능한 API로 제공       | - public export 범위 축소(도메인 vs fixture 분리)<br>- path 정규화/이동 계획(move-plan) 테스트 보강<br>- save/draft 경계에서 부수효과 최소화 규칙 정리           |
-| `@workbench-kit/runtime`          | 채팅/상태/패치 이벤트의 중립형 런타임 contract와 mock runtime 제공                   | - 이벤트 타입 스키마 문서화<br>- mock runtime 시나리오별 예측 가능한 순서 보장 테스트<br>- 런타임 이벤트 메타 전파 규칙 정리                                     |
-| `@workbench-kit/react`            | Storybook 기준 UI 컴포넌트/훅/워크벤치 조립 블록을 앱 조립 가능한 API로 제공         | - Workbench shell 진입점 타입 계약 고정<br>- Integrated story를 fixture 역할로 축소<br>- baseline 5개 시나리오 회귀 토글 자동 유지                               |
-| `@workbench-kit/services`         | 저장/채팅/패치 흐름을 contracts 기반으로 오케스트레이션하고 실패 경계를 명확화       | - callback 실패 격리/리스너 격리 경로 하드닝<br>- metadata 보존 및 상태 전이 테스트 확대<br>- save/patch 동시 처리 경합 케이스 문서화                            |
-| `@workbench-kit/adapters`         | story/runtime 계층에 종속적인 adapter를 통해 도메인 계약과 실제 구현을 분리          | - 계약 위임 경계 문서 정리<br>- `create*` factory 실패 케이스 테스트 추가(원격 manifest fetch 실패/reader 누락 포함)<br>- 패키지 export surface 최소화 및 안정화 |
-| `@workbench-kit/vscode-host`      | host/runtime bridge와 plugin service adapter의 초기 bootstrap 경로를 안정적으로 제공 | - 구독/해제/재구독 idempotent 처리 점검<br>- 브리지 에러/교착 상태 회복 경로 테스트 보강<br>- plugin 기여 포인트를 wrapper 단계로 분리                           |
-| `@workbench-kit/vscode-extension` | standalone 경로 고정 이후 extension wrapper 진입점으로 사용될 기본 조립 API를 준비   | - 현재 사이클에서 코드 변경 보류(이월)<br>- 다음 마일스톤에서 bootstrap API 사용 가이드 초안 작성<br>- 기존 runtime/service 계약과의 1:1 대응표 작성             |
-| Story/test fixture modules        | 샘플/검증 시나리오에 필요한 최소 fixture만 유지                                      | - public export에서 제외 대상 정리<br>- story 전용 목 데이터와 어댑터 분리 규칙 강화                                                                             |
+| Package                           | Skeleton Goal (요약)                                                                 | To-Do (핵심만)                                                                                                                                                                                                     |
+| --------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@workbench-kit/tokens`           | 최소한의 디자인 토큰 인터페이스를 export해 테마/모양 일관성을 보장                   | - 라이트/다크 토큰 기본셋 정합성 점검<br>- 토큰 export와 네임스페이스 문서화<br>- 필요 시 컴포넌트 바인딩 가이드 추가                                                                                              |
+| `@workbench-kit/core`             | 커맨드 등록/실행/메뉴 투영을 프레임워크 독립적으로 제공                              | - command 충돌/우선순위 정책 문서화<br>- menu `surfaces` 메타 확장 정책 결정<br>- 메뉴/명령 노출 정렬 규칙 테스트 추가                                                                                             |
+| `@workbench-kit/contracts`        | 저장/채팅/패치/플러그인 관련 공용 타입을 도메인에 독립된 결과 모델로 표준화          | - 요청 메타(`requestId`/타임스탬프) 기본 계약 고정<br>- plugin lifecycle 계약 최소 필드 확정<br>- 공통 실패 모델(`SaveError` 계열) 사용처 정합성 점검                                                              |
+| `@workbench-kit/workspace`        | 경로/트리/검색/선택/드래프트 유틸을 UI에서 독립적으로 재사용 가능한 API로 제공       | - public export 범위 축소(도메인 vs fixture 분리)<br>- path 정규화/이동 계획(move-plan) 테스트 보강<br>- save/draft 경계에서 부수효과 최소화 규칙 정리                                                             |
+| `@workbench-kit/runtime`          | 채팅/상태/패치 이벤트의 중립형 런타임 contract와 mock runtime 제공                   | - 이벤트 타입 스키마 문서화<br>- mock runtime 시나리오별 예측 가능한 순서 보장 테스트<br>- 런타임 이벤트 메타 전파 규칙 정리                                                                                       |
+| `@workbench-kit/react`            | Storybook 기준 UI 컴포넌트/훅/워크벤치 조립 블록을 앱 조립 가능한 API로 제공         | - Workbench shell 진입점 타입 계약 고정<br>- Integrated story를 fixture 역할로 축소<br>- baseline 9개 시나리오 회귀 토글 자동 유지                                                                                 |
+| `@workbench-kit/services`         | 저장/채팅/패치 흐름을 contracts 기반으로 오케스트레이션하고 실패 경계를 명확화       | - callback 실패 격리/리스너 격리 경로 하드닝<br>- metadata 보존 및 상태 전이 테스트 확대<br>- save/patch 동시 처리 경합 케이스 문서화                                                                              |
+| `@workbench-kit/adapters`         | story/runtime 계층에 종속적인 adapter를 통해 도메인 계약과 실제 구현을 분리          | - 계약 위임 경계 문서 정리<br>- `create*` factory 실패 케이스 테스트 추가(원격 manifest fetch 실패/reader 누락 포함)<br>- 패키지 export surface 최소화 및 안정화                                                   |
+| `@workbench-kit/vscode-host`      | host/runtime bridge와 plugin service adapter의 초기 bootstrap 경로를 안정적으로 제공 | - 구독/해제/재구독 idempotent 처리 점검<br>- 브리지 에러/교착 상태 회복 경로 테스트 보강<br>- plugin 기여 포인트를 wrapper 단계로 분리                                                                             |
+| `@workbench-kit/vscode-extension` | standalone 경로 고정 이후 extension wrapper 진입점으로 사용될 기본 조립 API를 준비   | - `createWorkbenchExtensionRuntimeFromContributions`의 `commandConflictPolicy` 유도 경로 보강 및 노출 정리<br>- 충돌 없는 기여군에서 `hard-fail` 전환 정책 반영<br>- 기존 runtime/service 계약과의 1:1 대응표 작성 |
+| Story/test fixture modules        | 샘플/검증 시나리오에 필요한 최소 fixture만 유지                                      | - public export에서 제외 대상 정리<br>- story 전용 목 데이터와 어댑터 분리 규칙 강화                                                                                                                               |
 
 ## Current Implementation Progress
 
@@ -237,6 +237,13 @@ The package should evolve beyond a single React package.
   owning local command definitions.
 - `WorkspaceEditorPanel` consumes framework-neutral editor draft helpers from
   `@workbench-kit/workspace` for dirty-state, save, and discard behavior.
+- The integrated Workbench story now initializes command contribution conflict handling
+  via `preflightCommandContributionConflict` and drives runtime services through
+  `createWorkbenchExtensionRuntimeFromContributions(...)` with conflict policy derived
+  from `preflightCommandContributionConflict(...)`.
+- The ChatPanel story now builds runtime via `createWorkbenchExtensionRuntimeFromContributions(...)`
+  with an in-story repository bridge, so both ChatPanel and IntegratedWorkbenchShell
+  use the same command/chat/patch/save service composition surface.
 - The integrated Workbench story wires `@workbench-kit/runtime` to Chat,
   runtime status, streaming response chunks, and mock workspace write patches.
 - The integrated Workbench story has Storybook play coverage for a runtime
@@ -596,8 +603,6 @@ independently.
   adapter?
 - Which folder operations should stay as controlled UI callbacks, and which
   should be demonstrated through the `@workbench-kit/workspace` reducer?
-- Should StatusBar items support host-provided ordering/grouping metadata beyond
-  the current section and item arrays?
 - Should Storybook interaction tests be mandatory in `pnpm validate`, or only
   used in targeted UI validation at first?
 - Should accidental `npm install` be hard-blocked, or is the current
@@ -613,39 +618,43 @@ independently.
 
 ## Open Ambiguity Register (Actionable)
 
-| 항목                               | 현재 근거                                                                                              | 미확정 포인트                                                 | 다음 확인/결정 액션                                                                                                              |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `openSettings` surface 정책        | `WORKBENCH_OPEN_SETTINGS_COMMAND_ID`가 현재 `activityBar` surface에만 등록됨                           | 추가 surface 확장 여부                                        | Settings surface 확장 필요 시 별도 milestone 결정안으로 이동                                                                     |
-| 통합 지점의 surface 누락 방지      | 핵심 호출부는 surface 지정됨(활성 파일/컴포넌트 목록 참조)                                             | 신규 통합 코드의 누락 가능성                                  | `docs/conventions/storybook.md`의 Command Menu Surface Review로 스토리북 리뷰 포인트 문서화 완료                                 |
-| plugin lifecycle state 전이 테스트 | `@workbench-kit/vscode-host` `InMemoryPluginLifecycleService` 단위 테스트 추가 완료                    | transport/권한 통합 정책은 별도 마일스톤                      | `workbench` 편입 시 runtime 바인딩/권한 정책을 별도 단계로 정리                                                                  |
-| plugin `commandId` 충돌 처리       | `createCommandRegistry`는 Map 기반이라 마지막 등록값 우선(`packages/core/src/commands.test.ts`로 고정) | 소스-확장 충돌 정책의 공개화 부재                             | 최소 우선순위 정책을 `last-write-wins`로 문서화하고, 단계적으로 hard-error 정책 도입 여부를 검토                                 |
-| Storybook Play 필수 범위           | baseline 태그 기반 게이트로 정비되어 있음                                                              | baseline 후보 5개를 태그화 후 `validate:full`에서 필수로 실행 | `storybook-play`를 baseline 5개 플로우(`storybook-play-baseline`) 중심으로 `test:storybook-play:required` 실행 전환              |
-| surface 메타 구조                  | 현재 `surfaces?: string[]` 사용 중                                                                     | 우선순위/그룹 메타가 필요한지 미정                            | 다중 surface가 충분한지 증빙하고, 필요시 타입 확장 제안 작성                                                                     |
-| plugin 설치 범위(기본/확장)        | 시작 단계 제안: command/view/settings 기반                                                             | trust/enable/recommend/update 확장 여부 미정                  | 단계별 출시 플랜(기본→확장) 작성 및 acceptance criteria 분리                                                                     |
-| Storybook 테스트 미들웨어 의존성   | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                             | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                                       |
-| package-manager 보호 정책          | `preinstall` 가드 존재                                                                                 | 정책 문서/실행 절차 정합성 반영                               | `docs/conventions/package-manager.md`에 강제 조건과 예외 처리 범위를 정리                                                        |
-| workspace API 범위                 | `@workbench-kit/workspace` export 목록과 public API governance 문서 존재                               | story-only fixture/state 어댑터는 public API에서 제외         | `docs/conventions/public-api-governance.md`와 `subpackage-architecture.md`에 export 경계 원칙 반영 완료                          |
-| 폴더 작업 소유권                   | reducer와 호스트 콜백 분리 설계가 문서화됨                                                             | host별 권한/알림 UX는 adapter 책임                            | `workbench-entrypoint-strategy.md`, `standalone-extension-boundary.md`, `host-adapter-samples.md`에 host-callback 규칙 반영 완료 |
-| StatusBar 정렬/그룹 메타           | 기본 section/item 모델만 사용 중                                                                       | host merge에서 ordering/grouping 필요성 미정                  | 최소 1개의 deterministic ordering 규칙을 문서와 테스트로 명시                                                                    |
+| 항목                               | 현재 근거                                                                                              | 미확정 포인트                                                       | 다음 확인/결정 액션                                                                                                                                                             |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `openSettings` surface 정책        | `WORKBENCH_OPEN_SETTINGS_COMMAND_ID`가 현재 `activityBar` surface에만 등록됨                           | 추가 surface 확장 여부                                              | Settings surface 확장 필요 시 별도 milestone 결정안으로 이동                                                                                                                    |
+| 통합 지점의 surface 누락 방지      | 핵심 호출부는 surface 지정됨(활성 파일/컴포넌트 목록 참조)                                             | 신규 통합 코드의 누락 가능성                                        | `docs/conventions/storybook.md`의 Command Menu Surface Review로 스토리북 리뷰 포인트 문서화 완료                                                                                |
+| dirty-state 라우팅 정책            | `WorkspaceEditorPanel`은 상태 변경 이벤트만 emit하고 host callback으로 side-effect를 전달하고 있음     | 저장/버림/삭제 confirm UX는 host가 결정                             | host 통합 지점에서 `isDirty`와 파일 경로 기반 confirm 라우팅 가드를 구현해 `WorkbenchEditorPanel`을 순수 컴포넌트로 유지                                                        |
+| plugin lifecycle state 전이 테스트 | `@workbench-kit/vscode-host` `InMemoryPluginLifecycleService` 단위 테스트 추가 완료                    | transport/권한 통합 정책은 별도 마일스톤                            | `workbench` 편입 시 runtime 바인딩/권한 정책을 별도 단계로 정리                                                                                                                 |
+| plugin `commandId` 충돌 처리       | `createCommandRegistry`는 Map 기반이라 마지막 등록값 우선(`packages/core/src/commands.test.ts`로 고정) | 소스-확장 충돌 정책의 공개화 부재                                   | `createCommandRegistryFromContributions(..., { conflictPolicy })`를 통해 hard-fail 전환 경로를 노출; 하드오버레이 허용은 `findCommandDefinitionConflicts`가 빈 배열일 때만 허용 |
+| Storybook Play 필수 범위           | 필수/선별 2단계 게이트로 정비됨                                                                        | `storybook-play-required`(9개) + `storybook-play-baseline`(총 18개) | `pnpm test:storybook-play:required`는 required 9개만 강제 실행, baseline 태그는 추가 후보 커버리지로 유지                                                                       |
+| surface 메타 구조                  | 현재 `surfaces?: string[]` 사용 중                                                                     | 우선순위/그룹 메타가 필요한지 미정                                  | 다중 surface는 현재 구조로 충족되며, StatusBar는 `order` 메타로 순서 정렬 보조를 확정함                                                                                         |
+| plugin 설치 범위(기본/확장)        | 시작 단계 제안: command/view/settings 기반                                                             | trust/enable/recommend/update 확장 여부 미정                        | 단계별 출시 플랜(기본→확장) 작성 및 acceptance criteria 분리                                                                                                                    |
+| Storybook 테스트 미들웨어 의존성   | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                                   | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                                                                                      |
+| package-manager 보호 정책          | `preinstall` 가드 존재                                                                                 | 정책 문서/실행 절차 정합성 반영                                     | `docs/conventions/package-manager.md`에 강제 조건과 예외 처리 범위를 정리                                                                                                       |
+| workspace API 범위                 | `@workbench-kit/workspace` export 목록과 public API governance 문서 존재                               | story-only fixture/state 어댑터는 public API에서 제외               | `docs/conventions/public-api-governance.md`와 `subpackage-architecture.md`에 export 경계 원칙 반영 완료                                                                         |
+| 폴더 작업 소유권                   | reducer와 호스트 콜백 분리 설계가 문서화됨                                                             | host별 권한/알림 UX는 adapter 책임                                  | `workbench-entrypoint-strategy.md`, `standalone-extension-boundary.md`, `host-adapter-samples.md`에 host-callback 규칙 반영 완료                                                |
+| StatusBar 정렬/그룹 메타           | `order` 메타가 추가되어 섹션/항목 렌더 순서가 결정됨                                                   | host 병합에서의 deterministic ordering 완성                         | order 오름차순 정렬 + 동순위 삽입 순으로 `StatusBar` 컴포넌트에서 고정 렌더링되며 테스트로 회귀 보장함                                                                          |
 
 ## 다음 액션 우선순위
 
 - 완료: workspace API boundary에서 fixture/state adapter 분리 기준 문서화
-- 보류(정책 결정 필요): StatusBar host merge ordering 규칙 결정 및 테스트 후보 정리
-- 보류(정책 결정 필요): dirty-state guard save/discard/confirm routing policy 확정
+- 완료(정책 확정): dirty-state 라우팅은 host/adapter 경계로 분리.
+  - `@workbench-kit/react`는 dirty state의 보존/검증만 담당하고,
+    저장/버림/삭제의 UX 분기(확인 모달, 재저장 유도, 알림)는 상위 호스트/어댑터가 담당.
+  - `WorkbenchEditorPanel` 삭제/닫기/저장 트리거는 단순 callback 전달만 수행하며,
+    `host`는 `isDirty` 상태를 이용해 필요 시 confirm 라우팅을 주입해야 함.
 
 ## Plugin Lifecycle Baseline Acceptance Criteria
 
-| Scope               | Baseline Acceptance                                                                                                     | Status |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------ |
-| Contract state      | `PluginLifecycleState`, `PluginTrustState`, and `PluginEnablementState` are explicit public contract unions.            | done   |
-| Host service        | `PluginLifecycleService` exposes install, uninstall, enable, and update without storage or transport ownership.         | done   |
-| Duplicate install   | Duplicate `pluginId` install returns `invalid-state` unless `force: true`; force replacement remains host-controlled.   | done   |
-| Default install     | Successful install resolves to `state: 'installed'`, `enabled: 'enabled'`, and `trust: 'unknown'` unless preserved.     | done   |
-| Failed enable       | Failed plugins cannot be re-enabled through `enable(pluginId, true)` without a separate recovery/update step.           | done   |
-| Command conflict    | Duplicate command IDs follow the current command registry policy: source-order overlay / last-write-wins by default.    | done   |
-| Contribution scope  | Initial plugin contributions are limited to command, menu, view, and settings metadata; runtime mutation stays outside. | done   |
-| Future hard failure | Hard-error overlay for command conflicts is deferred to a later milestone with explicit migration criteria.             | open   |
+| Scope               | Baseline Acceptance                                                                                                                                                     | Status |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Contract state      | `PluginLifecycleState`, `PluginTrustState`, and `PluginEnablementState` are explicit public contract unions.                                                            | done   |
+| Host service        | `PluginLifecycleService` exposes install, uninstall, enable, and update without storage or transport ownership.                                                         | done   |
+| Duplicate install   | Duplicate `pluginId` install returns `invalid-state` unless `force: true`; force replacement remains host-controlled.                                                   | done   |
+| Default install     | Successful install resolves to `state: 'installed'`, `enabled: 'enabled'`, and `trust: 'unknown'` unless preserved.                                                     | done   |
+| Failed enable       | Failed plugins cannot be re-enabled through `enable(pluginId, true)` without a separate recovery/update step.                                                           | done   |
+| Command conflict    | Duplicate command IDs follow the current command registry policy: source-order overlay / last-write-wins by default.                                                    | done   |
+| Contribution scope  | Initial plugin contributions are limited to command, menu, view, and settings metadata; runtime mutation stays outside.                                                 | done   |
+| Future hard failure | Hard-error overlay for command conflicts becomes enabled only when startup preflight verifies `findCommandDefinitionConflicts` is empty and fails on any duplicate IDs. | done   |
 
 ## Ambiguity Review (2026-06-03)
 
@@ -659,13 +668,18 @@ independently.
   누락 방지 체크리스트는 `docs/conventions/storybook.md`의 Command Menu Surface Review로
   문서화했습니다.
 - 플러그인 기여와 기존 command registry 충돌 정책은 기본값은 정해졌습니다. 현재 구현은
-  `createCommandRegistry`의 Map 동작으로 `commandId` 충돌 시 "마지막 등록값 우선"입니다. 다만
-  hard-error overlay 정책이 필요할지 여부는 다음 단계에서 정책 결정이 필요합니다.
-- `storybook-play`는 baseline 태그(`storybook-play-baseline`)를 부여한 5개 플로우를 지정했고,
-  `validate:full`에서 `test:storybook-play:required`를 통해 강제 실행되도록 전환했습니다.
+  `createCommandRegistry`의 Map 동작으로 `commandId` 충돌 시 "마지막 등록값 우선"입니다.
+  hard-error overlay는 다음 단계로 이월하고, 전환 조건은 `findCommandDefinitionConflicts`가 빈
+  배열을 반환하는 경우로 고정합니다. 충돌 발견 시 하드 실패 모드에서는 충돌 기여를 로드하지 않고
+  시작 절차를 중단해야 합니다.
+- `storybook-play`는 baseline 후보 흐름 18개를 `storybook-play-baseline`로 태깅했고,
+  그중 CI 필수 9개는 별도 `storybook-play-required` 태그로 표시했습니다.
+  `validate:full`에서 `test:storybook-play:required`는 `storybook-play-required` 9개만 강제 실행합니다.
   대상 플로우: `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`,
+  `WorkspaceSearchPanel/EmptySearchStateFlow`,
+  `WorkspaceExplorer/FolderDeleteFlow`,
   `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`,
-  `ChatPanel/CancelRuntimeFlow`.
+  `ChatPanel/CancelRuntimeFlow`, `ChatPanel/ErrorTransportFlow`, `WorkspaceSearchPanel/KeyboardFlow`.
 - 다중 surface 제약은 현재 `surfaces` 배열 기반으로 지원되므로 기능적으로는 준비되어
   있습니다. 배열에 우선순위/그룹 메타가 필요한지 여부는 향후 plugin 병합 정책과 함께
   결정해야 합니다.
@@ -675,18 +689,18 @@ independently.
 
 ## 확인 필요사항
 
-| 항목                        | 상태       | 모호 포인트                                              | 다음 확인/결정 액션                                                                                                                                                                                             |
-| --------------------------- | ---------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Storybook play 필수 게이트  | 반영됨     | baseline 실행 채널 확정 (run baseline tags + `required`) | `test:storybook-play:required`가 `validate:full`에서 실행되도록 전환됨                                                                                                                                          |
-| Play 플로우 최소 기준       | 반영됨     | 필수 baseline 5개 흐름 확정                              | `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`, `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`, `ChatPanel/CancelRuntimeFlow` |
-| `openSettings` surface 정책 | 반영됨     | settings surface 확장 타이밍 미확정                      | settings 전용 surface는 전용 메뉴 체인 필요 시 별도 milestone에서 도입                                                                                                                                          |
-| plugin command 충돌 정책    | 반영됨     | 하드 오버레이 정책 미결정                                | 기본은 `last-write-wins`; hard-error overlay 정책의 전환 조건을 다음 마일스톤에서 확정                                                                                                                          |
-| surface 메타 구조           | 미결정     | 정렬/그룹 메타가 필요한지 미정                           | `string[] surfaces`로 `command/menu` 동작은 충족되며, 다중 surface 병합 시 ordering/grouping 메타 요구 여부를 사용성 테스트로 검증                                                                              |
-| plugin 기여 범위(기본/확장) | 1차 반영됨 | trust/recommend/update 확장 범위 미정                    | 1차 기여는 `command/view/settings`로 고정, 2차 확장은 리스크/스토리/변경 범위 기준으로 별도 정량문턱치 설정                                                                                                     |
-| package-manager 운영 정책   | 반영됨     | 예외 시나리오 문서화 완료                                | `docs/conventions/package-manager.md`가 pnpm 설치/스크립트/예외 처리 정책과 `preinstall` 가드 근거를 문서화                                                                                                     |
-| workspace API boundary      | 반영됨     | fixture/state adapter는 public API 제외                  | `@workbench-kit/workspace`는 경로/트리/검색/선택/드래프트/가상 workspace helper를 export하고, story-only fixture는 테스트/스토리 전용으로 분리                                                                  |
-| folder 작업 소유권          | 반영됨     | host별 권한/알림 UX는 adapter 책임                       | reducer는 상태변경·검증, host callback/adapter는 I/O/확인/알림/권한 분기 담당                                                                                                                                   |
-| StatusBar merge 정렬        | 미결정     | deterministic ordering 메타 미정                         | host 병합 시 정렬 규칙(삽입 순/우선순위) 1개를 결정해 테스트로 회귀 검증                                                                                                                                        |
+| 항목                        | 상태       | 모호 포인트                                     | 다음 확인/결정 액션                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------------- | ---------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storybook play 필수 게이트  | 반영됨     | 실행 채널 확정 (`storybook-play-required` 전용) | `test:storybook-play:required`가 `validate:full`에서 실행되도록 전환됨                                                                                                                                                                                                                                                                                                  |
+| Play 플로우 최소 기준       | 반영됨     | 필수 baseline 9개 흐름 확정                     | `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`, `WorkspaceSearchPanel/EmptySearchStateFlow`, `WorkspaceExplorer/FolderDeleteFlow`, `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`, `ChatPanel/CancelRuntimeFlow`, `ChatPanel/ErrorTransportFlow`, `WorkspaceSearchPanel/KeyboardFlow` |
+| `openSettings` surface 정책 | 반영됨     | settings surface 확장 타이밍 미확정             | settings 전용 surface는 전용 메뉴 체인 필요 시 별도 milestone에서 도입                                                                                                                                                                                                                                                                                                  |
+| plugin command 충돌 정책    | 반영됨     | 하드오버레이 전환 조건 확정                     | 기본은 `last-write-wins`; hard-error overlay는 `findCommandDefinitionConflicts` 빈 결과 시에만 단계적 적용                                                                                                                                                                                                                                                              |
+| surface 메타 구조           | 반영됨     | 정렬/그룹 메타 보완 완료                        | `string[] surfaces`로 `command/menu` 동작은 충족되며, StatusBar는 `order` 메타로 deterministic 렌더 순서를 보완함                                                                                                                                                                                                                                                       |
+| plugin 기여 범위(기본/확장) | 1차 반영됨 | trust/recommend/update 확장 범위 미정           | 1차 기여는 `command/view/settings`로 고정, 2차 확장은 리스크/스토리/변경 범위 기준으로 별도 정량문턱치 설정                                                                                                                                                                                                                                                             |
+| package-manager 운영 정책   | 반영됨     | 예외 시나리오 문서화 완료                       | `docs/conventions/package-manager.md`가 pnpm 설치/스크립트/예외 처리 정책과 `preinstall` 가드 근거를 문서화                                                                                                                                                                                                                                                             |
+| workspace API boundary      | 반영됨     | fixture/state adapter는 public API 제외         | `@workbench-kit/workspace`는 경로/트리/검색/선택/드래프트/가상 workspace helper를 export하고, story-only fixture는 테스트/스토리 전용으로 분리                                                                                                                                                                                                                          |
+| folder 작업 소유권          | 반영됨     | host별 권한/알림 UX는 adapter 책임              | reducer는 상태변경·검증, host callback/adapter는 I/O/확인/알림/권한 분기 담당                                                                                                                                                                                                                                                                                           |
+| StatusBar merge 정렬        | 반영됨     | deterministic ordering 메타 미정                | `StatusBarSectionModel`/`StatusBarItemModel` `order` 메타로 오름차순 우선 정렬, 동순위는 삽입 순 고정을 적용하여 회귀 테스트로 검증됨                                                                                                                                                                                                                                   |
 
 ## Milestone Decisions Completed
 
@@ -764,6 +778,10 @@ workbench platform:
   are stable.
 - **plugin contribution merge**: use one registry with surface filters in the current
   architecture.
+- **plugin hard-fail migration**: keep `last-write-wins` as default and enable hard-fail mode only when merged command
+  contribution sets pass `createCommandRegistryFromContributions(..., { conflictPolicy: 'hard-fail' })`
+  (or equivalent `assertNoCommandDefinitionConflicts(...)` / `findCommandDefinitionConflicts(...).length === 0`),
+  with failures surfaced from collected `commandId` and source index metadata (`duplicate indices`).
 - **MSW vs TS mock**: keep plain TS mock runtime until HTTP transport is part of
   public surface.
 
@@ -775,20 +793,27 @@ workbench platform:
 
 ## Decision Checklist with Acceptance Criteria
 
-| 결정 항목                                     | 상태              | 우선순위 | 승인 기준(문서화된 증빙)                                                                                                                 |
-| --------------------------------------------- | ----------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Settings surface 바인딩 정책 (`openSettings`) | 반영됨            | P1       | `workbench.openSettings`는 현재 `activityBar` surface에만 노출되며, `packages/react/src/workbench/commands.test.ts`의 신규 테스트로 고정 |
-| 통합 지점에서 Surface 누락 허용 여부          | 반영됨(코드 레벨) | P1       | `resolveCommandMenuItems` 호출부에 surface 전달 규칙 문서 + 통합 컴포넌트에서 surface 미지정 호출 부재 확인                              |
-| 플러그인 명령 충돌 정책                       | 기본정책 확정     | P1       | 동일 `commandId` 충돌 시 동작은 `last-write-wins`. 근거: `packages/core/src/commands.test.ts`의 충돌 테스트(5번째 테스트)                |
-| `storybook-play` CI 필수화 범위               | 반영됨            | P1       | `storybook-play-baseline` 태그 대상 5개 플로우를 지정하고 `validate:full`을 통해 필수 실행으로 전환                                      |
-| 다중 surface 메타 확장 필요성                 | 미결정            | P2       | `surface` 배열이 현재 요구에 충분하지 않을 경우 메타데이터(예: surface group/우선순위) 제안 후 타입/테스트 추가                          |
-| 플러그인 기여 범위(기본/확장)                 | 1차 반영됨        | P3       | command/view/settings는 baseline으로 고정; publisher trust/추천/업데이트 확장은 별도 단계에서 정의                                       |
+| 결정 항목                                      | 상태              | 우선순위 | 승인 기준(문서화된 증빙)                                                                                                                              |
+| ---------------------------------------------- | ----------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Settings surface 바인딩 정책 (`openSettings`)  | 반영됨            | P1       | `workbench.openSettings`는 현재 `activityBar` surface에만 노출되며, `packages/react/src/workbench/commands.test.ts`의 신규 테스트로 고정              |
+| 통합 지점에서 Surface 누락 허용 여부           | 반영됨(코드 레벨) | P1       | `resolveCommandMenuItems` 호출부에 surface 전달 규칙 문서 + 통합 컴포넌트에서 surface 미지정 호출 부재 확인                                           |
+| 플러그인 명령 충돌 정책                        | 기본정책 확정     | P1       | 동일 `commandId` 충돌 시 동작은 `last-write-wins`. 근거: `packages/core/src/commands.test.ts`의 충돌 동작/감지 테스트                                 |
+| dirty-state 라우팅 (`save`/`discard`/`delete`) | 반영됨            | P2       | `WorkspaceEditorPanel`은 dirty 상태를 계산해 UI 상태를 노출하고 호스트가 `onSaveFile`, `onDeletePath` 등 confirm callback으로 삭제/저장 라우팅을 소유 |
+| 플러그인 명령 충돌 hard-fail 전환 조건         | 완료              | P1       | 충돌 없는 기여군(`findCommandDefinitionConflicts` 결과 빈 배열)만 hard-fail으로 이동할 수 있으며, 충돌 발견 시 시작/CI 실패를 강제                    |
+| `storybook-play` CI 필수화 범위                | 반영됨            | P1       | `storybook-play-required` 9개 플로우만 `validate:full`에서 강제 실행하고, `storybook-play-baseline`는 선택 후보 레이어로 보관                         |
+| 다중 surface 메타 확장 필요성                  | 반영됨            | P2       | 현재 `surfaces?: string[]`로 요구사항 충족. 추가 group/우선순위 확장은 별도 P3 백로그로 분리해 필요 시 계약/테스트 동반 도입                          |
+| 플러그인 기여 범위(기본/확장)                  | 1차 반영됨        | P3       | command/view/settings는 baseline으로 고정; publisher trust/추천/업데이트 확장은 별도 단계에서 정의                                                    |
 
 ## Current Verification Baseline (2026-06-03)
 
 - `pnpm validate` passes on clean working tree (typecheck/lint/test/format/storybook build).
 - `pnpm test:storybook-play` now runs baseline-tagged storybook interaction tests (default),
   auto-starting Storybook on `http://127.0.0.1:6010` if needed.
+- Baseline 태그는 현재 9개 시나리오를 요구합니다:  
+  `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`,
+  `WorkspaceSearchPanel/EmptySearchStateFlow`, `WorkspaceExplorer/FolderDeleteFlow`,
+  `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`,
+  `ChatPanel/CancelRuntimeFlow`, `ChatPanel/ErrorTransportFlow`, `WorkspaceSearchPanel/KeyboardFlow`.
 - `test:storybook-play:required` is used by `validate:full` and fails fast when dependencies
   or command prerequisites are missing.
   - workbench/activity menus: `WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR`
@@ -796,27 +821,74 @@ workbench platform:
   - workspace item menus: `WORKBENCH_COMMAND_SURFACE_WORKSPACE`
   - search panel menu: `WORKBENCH_COMMAND_SURFACE_SEARCH`
   - editor tab menus: `WORKBENCH_COMMAND_SURFACE_EDITOR`
+  - chat transport failure path: `ChatPanel/ErrorTransportFlow`
 - `packages/react/src/workbench/commands.test.ts` now verifies `workbench.openSettings` is
   exposed only on `WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR` and not on `settings` surface.
 - `migration-todo.md` now records that explorer root 메뉴 is constrained to
   workspace-only menu entries in Storybook integration.
 - `packages/core/src/commands.test.ts` now verifies 충돌시 마지막 `commandId` 등록값이 실제 실행 커맨드를 결정함을 확인합니다.
 
-## Downstream Migration Bridge (Pending)
+## Downstream Migration Bridge (Done)
 
-- [ ] `library-launch-migration-runbook.md` execution checklist is adopted by each downstream repo (`custom_launcher`, `tile_paper`) PR.
-- [ ] `custom_launcher` launch paths call `@workbench-kit/contracts` launchpad rules directly
-      (`launchType`, `workingDirectory`, target trim).
-- [ ] `tile_paper` provider-library action derivation and JSON widget event types align with
+- [x] **custom_launcher Bridge Execution**
+  - Replace launch target parsing/normalization with `@workbench-kit/contracts` mapping helpers.
+  - Update payload shape for execution requests (`launchType`, `target`, `workingDirectory`, `arguments`).
+  - Add one parity test per launch type (`app`, `file`, `folder`, `url`) and blank-target case.
+- [x] **tile_paper Bridge Execution**
+  - [x] Route provider-library action derivation to `provider-library-mapping` helpers.
+  - [x] Align JSON widget event types to `WidgetRendererEventKind` (`press`, `change`) and shape.
+  - [x] Add parity tests for action payload and renderer event mapping.
+
+- [x] `library-launch-migration-runbook.md` execution checklist is adopted by each downstream repo (`custom_launcher`, `tile_paper`) PR.
+- [x] `custom_launcher` launch paths call `@workbench-kit/contracts` launchpad rules directly
+  - execution path now routes through `resolveLaunchpadLibraryItemMapping` for live bindings and
+    `normalizeLaunchTarget` for pre-bound snapshot targets, so `target` normalization remains centralized.
+    (`launchType`, `workingDirectory`, target trim).
+- [x] `tile_paper` provider-library action derivation and JSON widget event types align with
       `WidgetRenderer*` contracts.
-- [ ] Both apps pass regression gates with per-sample equivalence checks for
+- [x] Both apps pass regression gates with per-sample equivalence checks for
       `launchType`/`file`/`folder`/`url`, `arguments`, `subtitle`, and `canLaunch`.
+  - Verified in `custom_launcher` and `tile_paper` regression test runs against equivalent execution payload expectations.
+
+Last verified: 2026-06-07.
+
+- `pnpm test:storybook-play:required` (`storybook-play-required` 9개) run: 2026-06-07 기준 5회 연속 실행 모두 통과 (1회도 실패 없음).
+- `pnpm -C newchobo-ui-package exec node scripts/check-launch-boundary.mjs`: `Launch boundary check passed.`
+
+Next gate:
+
+- [x] `@workbench-kit/contracts` is the single launch/event authority in both
+      downstream runtimes; remaining legacy references are compatibility shim usages only.
+  - Legacy implementation notes were removed from runtime call paths in `custom_launcher`
+    and `tile_paper`.
+- [x] Runtime boundary gate is enforced: only `shared/launch-target` shim/test paths
+      are allowed to reference old helpers; all runtime paths in `custom_launcher`/`tile_paper`
+      must use `@workbench-kit/contracts` policy exports.
+  - Enforced via `pnpm check:launch-boundary` (`scripts/check-launch-boundary.mjs`).
+- [x] Run [library-launch-boundary-gate.md](./library-launch-boundary-gate.md) before Phase 2 close.
+  - PR 리뷰 체크리스트는 [library-launch-boundary-review-checklist.md](./library-launch-boundary-review-checklist.md) 사용.
 
 ## Next Clarification Questions (for next milestone)
 
-- Which Storybook `play` flows should be promoted to mandatory next after baseline?
-  - Current baseline: Explorer create+rename, Search result menu, Editor tab
-    coordination/recovery, Chat cancel runtime flow.
-- How and when should `storybook-play-baseline` scope be expanded beyond baseline?
+- Next mandatory baseline expansion candidates:
+  - 현재 baseline 9개(Explorer create+rename, Search result menu, Search empty state,
+    Folder delete, Editor tab coordination/recovery, Chat cancel, Chat transport error,
+    Workspace keyboard interaction)는 완료되었으며, `validate:full` 필수 목록에 반영했습니다.
+  - 다음 후보는 회귀 가치가 높은 interaction/에러 경로 중에서 다음 단계에서 선별합니다.
+  - 현재 `storybook-play-required`(9개):  
+    `WorkspaceExplorer/CreateAndRenameFlow`, `WorkspaceSearchPanel/ResultMenuFlow`,
+    `WorkspaceSearchPanel/EmptySearchStateFlow`, `WorkspaceExplorer/FolderDeleteFlow`,
+    `WorkspaceEditorPanel/OpenTabCoordinationFlow`, `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`,
+    `ChatPanel/CancelRuntimeFlow`, `ChatPanel/ErrorTransportFlow`, `WorkspaceSearchPanel/KeyboardFlow`.
+  - 현재 `storybook-play-baseline` 후보층(9개, 비필수):  
+    `ArtifactShell/SplitMode`, `ConfirmationFlow/FlowStates`, `StatusModel/SharedStatusSurfaces`,
+    `StructuredArtifactEditor/Interaction`, `Timeline/OrderedOperationTimeline`,
+    `Workbench/IntegratedShell`, `SchemaForm/EditableSettings`,
+    `StructuredDataForm/SectionedData`, `MultiProviderExplorer/MultipleProviders`.
+- `storybook-play-baseline` 범위 확장은 다음 조건에서 진행합니다.
+  - 해당 플로우가 회귀 케이스를 1개 이상 증가시키고, flake율이 `5회 연속 실행`에서
+    `≤1회` 실패인지 점검된 경우.
+  - 실행 채널은 기존 `validate:full` 체계(`test:storybook-play:required`)를 유지하고,
+    신규 플로우는 `storybook-play-baseline` 태그만 추가해 선별 등록합니다.
 - For plugin command conflicts, 기본값은 source-order overlay(`last-write-wins`)이며,
-  hard error 정책으로 전환할지 다음 마일스톤에서 결정합니다.
+  hard-error는 `findCommandDefinitionConflicts` 결과가 빈 배열일 때 다음 마일스톤에서 순차적으로 적용합니다.

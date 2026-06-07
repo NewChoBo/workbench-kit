@@ -19,7 +19,7 @@
 - `pnpm --filter @workbench-kit/services typecheck`
 - `pnpm --filter @workbench-kit/vscode-host test`
 - `pnpm exec vitest run packages/services/src` (28 tests)
-- `pnpm test:storybook-play:required` (baseline 5개 pass)
+- `pnpm test:storybook-play:required` (`storybook-play-required` 9개 pass)
 - `pnpm test` (all repos 21 passed)
 
 ## 다중 트랙 로드맵
@@ -86,11 +86,12 @@
 
 1. host runtime/bridge 테스트 보강
 2. dispose/리스너/예외 격리 포인트 추가
-3. baseline 5개 인터랙션 다시 실행
+3. baseline 9개 인터랙션 다시 실행
 
 ## 종료 기준(객관)
 
-- [x] UI/기능 동작은 유지됨 (baseline 플레이 5개 + 핵심 컴포넌트 테스트)
+- [x] UI/기능 동작은 유지됨 (baseline 플레이 9개 + 핵심 컴포넌트 테스트)
+  - transport 실패 경로까지 포함한 `ChatPanel/ErrorTransportFlow`가 기본 회귀 경로에 포함됨.
   - 근거: `pnpm test:storybook-play:required`, `@workbench-kit/react` typecheck,
     `@workbench-kit/vscode-host` test
 - [x] 앱 조립 계약의 최소 형태가 타입/문서로 고정됨

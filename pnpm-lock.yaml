@@ -121,6 +121,9 @@ importers:
       '@workbench-kit/tokens':
         specifier: workspace:*
         version: link:../tokens
+      '@workbench-kit/vscode-extension':
+        specifier: workspace:*
+        version: link:../vscode-extension
       '@workbench-kit/workspace':
         specifier: workspace:*
         version: link:../workspace

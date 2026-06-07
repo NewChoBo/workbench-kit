@@ -1,13 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
   canMapLibraryItemToLaunchpadTile,
+  createLaunchpadLibraryItemTileBinding,
   type LaunchpadLibraryItemSummary,
+  type LaunchpadLibraryItemBinding,
   normalizeLaunchTarget,
   resolveLaunchpadLibraryItemMapping,
   type WidgetRendererComponent,
+  type WidgetRendererEvent,
   type WidgetRendererEventKind,
   type WidgetRendererProps,
   type WidgetRendererShape,
+  isWidgetRendererEvent,
+  isWidgetRendererEventKind,
+  normalizeWidgetRendererEvent,
   isPatchSuccess,
   isSaveFailure,
   isSaveSuccess,
@@ -111,6 +117,56 @@ describe('contract helpers', () => {
     expect(widgetRenderer(props)).toBe(null);
   });
 
+  it('normalizes widget renderer events across legacy and standard shapes', () => {
+    expect(isWidgetRendererEventKind('press')).toBe(true);
+    expect(isWidgetRendererEventKind('on-press')).toBe(false);
+
+    const canonical: WidgetRendererEvent = {
+      type: 'change',
+      widgetId: 'widget-a',
+      value: 'v',
+    };
+    expect(isWidgetRendererEvent(canonical)).toBe(true);
+    expect(normalizeWidgetRendererEvent(canonical)).toMatchObject(canonical);
+
+    expect(
+      normalizeWidgetRendererEvent({
+        payload: 'p',
+        type: 'on-change',
+        widgetId: 'widget-b',
+      }),
+    ).toMatchObject({
+      type: 'change',
+      widgetId: 'widget-b',
+      value: 'p',
+    });
+    expect(
+      normalizeWidgetRendererEvent({
+        kind: 'on-press',
+        widgetId: 'widget-d',
+      }),
+    ).toMatchObject({
+      type: 'press',
+      widgetId: 'widget-d',
+    });
+    expect(
+      normalizeWidgetRendererEvent({ type: 'on-press', widgetId: 'widget-c', payload: 1 }),
+    ).toBe(null);
+    expect(
+      normalizeWidgetRendererEvent({
+        payload: 'legacy-only',
+        type: 'on-change',
+        value: 'preferred-value',
+        widgetId: 'widget-e',
+      }),
+    ).toMatchObject({
+      type: 'change',
+      widgetId: 'widget-e',
+      value: 'preferred-value',
+    });
+    expect(normalizeWidgetRendererEvent({ type: 'unknown', widgetId: 'widget-f' })).toBe(null);
+  });
+
   it('exports launchpad mapping contracts from public index', () => {
     const item = {
       itemId: 'item-1',
@@ -125,5 +181,34 @@ describe('contract helpers', () => {
     expect(mapping.execution.target).toBe('C:/Games/Launcher.exe');
     expect(mapping.execution.launchType).toBe('app');
     expect(canMapLibraryItemToLaunchpadTile(item)).toBe(true);
+  });
+
+  it('exports launchpad tile binding factory from public index', () => {
+    const item = {
+      itemId: 'tile-1',
+      providerId: 'steam',
+      iconAssetId: 'icon-1',
+      thumbnailUrl: 'https://cdn.example/icon.png',
+      launchTarget: 'https://example.com/launcher',
+    };
+    const binding: LaunchpadLibraryItemBinding = createLaunchpadLibraryItemTileBinding(item);
+
+    expect(binding).toEqual({
+      version: 1,
+      projection: 'launch-tile',
+      source: {
+        kind: 'library-item',
+        connectionId: null,
+        itemId: 'tile-1',
+        providerId: 'steam',
+        snapshotUpdatedAt: null,
+        syncMode: 'live',
+      },
+      artwork: {
+        materialization: 'managed-asset',
+        preferredAssetId: 'icon-1',
+        remoteUrl: 'https://cdn.example/icon.png',
+      },
+    });
   });
 });

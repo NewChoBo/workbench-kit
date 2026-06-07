@@ -115,14 +115,18 @@ Explorer/Search/Editor/Chat/Settings/Status까지 화면을 한 번에 구성하
 
 #### Step 1 산출물 기반 승인 기준
 
-- baseline 강제 목록(확인 대상 5개):
+- baseline 강제 목록(확인 대상 9개):
   - `WorkspaceExplorer/CreateAndRenameFlow`
   - `WorkspaceSearchPanel/ResultMenuFlow`
+  - `WorkspaceSearchPanel/EmptySearchStateFlow`
   - `WorkspaceEditorPanel/OpenTabCoordinationFlow`
   - `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`
+  - `WorkspaceExplorer/FolderDeleteFlow`
   - `ChatPanel/CancelRuntimeFlow`
-- 위 5개는 `tags: storybook-play-baseline`와 연결된 현재 story와 1:1 추적.
-- Step 1 종료 시점에 이 5개 시나리오의 실행 경로가 `WorkbenchShell` 추출 시에도 그대로 재현 가능한지 설계 문서로 명시.
+  - `ChatPanel/ErrorTransportFlow`
+  - `WorkspaceSearchPanel/KeyboardFlow`
+  - 위 9개는 `tags: storybook-play-required`로 구분되며, storybook baseline 후보는 별도 태그로 누적 관리.
+- Step 1 종료 시점에 이 9개 시나리오의 실행 경로가 `WorkbenchShell` 추출 시에도 그대로 재현 가능한지 설계 문서로 명시.
 
 ### Step 2 — 워크벤치 엔트리 포인트 뼈대 구현
 
@@ -241,7 +245,7 @@ export interface WorkbenchShellProps<
 
 ## 6.5) 단계별 완료 기준(성공 판정)
 
-- 1주차 목표 달성 조건: Step 1 완료 + Step 2 1차 엔트리포인트 정의 + baseline 5개 story-tag 플로우 회귀 준비
+- 1주차 목표 달성 조건: Step 1 완료 + Step 2 1차 엔트리포인트 정의 + baseline 9개 story-tag 플로우 회귀 준비
 - Step 2 완료 조건: `WorkbenchShell`(또는 동등 타입) 공개 export + story가 엔트리포인트를 호출
 - Step 3 완료 조건: `dispose`, 구독 예외 격리 테스트 추가 + `pnpm test:storybook-play:required` green
 - Step 4 진입 조건: Step 1~3의 성공 판정이 모두 통과하고 `migration-todo`에 extension 차기 조건 명시
