@@ -1,5 +1,9 @@
 # Workbench Migration Todo
 
+> **Focus (2026-06-07):** Complete workbench-kit first; `tile_paper` and
+> `custom_launcher` are reference-only until the kit milestone closes. No
+> downstream changes unless a tiny kit API fix blocks kit work.
+
 This document tracks the remaining work needed to turn the current workbench
 stories into reusable public UI components and realistic Storybook validation
 scenarios. The reference implementation is treated only as a migration aid; do
