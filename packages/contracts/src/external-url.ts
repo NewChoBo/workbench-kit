@@ -35,7 +35,10 @@ export function normalizeExternalUrlTarget(
     return null;
   }
 
-  if ((protocol === 'http:' || protocol === 'https:') && parsedTarget.hostname.trim().length === 0) {
+  if (
+    (protocol === 'http:' || protocol === 'https:') &&
+    parsedTarget.hostname.trim().length === 0
+  ) {
     return null;
   }
 

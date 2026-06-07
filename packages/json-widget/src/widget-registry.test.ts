@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  WidgetRegistry,
-  createWidgetRegistry,
-  type WidgetDefinition,
-} from './widget-registry.js';
+import { WidgetRegistry, createWidgetRegistry, type WidgetDefinition } from './widget-registry.js';
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
 
 interface ClockWidget extends WidgetTypeShape {

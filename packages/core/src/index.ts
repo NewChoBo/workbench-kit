@@ -5,10 +5,7 @@ export {
   type WorkbenchContextKeySnapshot,
   type WorkbenchContextKeyValue,
 } from './context-keys';
-export {
-  evaluateWorkbenchWhenClause,
-  WorkbenchWhenClauseSyntaxError,
-} from './when-clause';
+export { evaluateWorkbenchWhenClause, WorkbenchWhenClauseSyntaxError } from './when-clause';
 export {
   canExecuteCommand,
   assertNoCommandDefinitionConflicts,

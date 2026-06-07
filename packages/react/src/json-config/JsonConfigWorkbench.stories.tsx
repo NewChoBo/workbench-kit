@@ -5,10 +5,7 @@ import { expect, userEvent, within } from 'storybook/test';
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
 import { createWidgetRegistry, formatWidgetJson } from '@workbench-kit/json-widget';
 
-import {
-  JsonConfigWorkbench,
-  type JsonConfigWorkbenchProps,
-} from './JsonConfigWorkbench.js';
+import { JsonConfigWorkbench, type JsonConfigWorkbenchProps } from './JsonConfigWorkbench.js';
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
 
 const meta = {

@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  evaluateWorkbenchWhenClause,
-  WorkbenchWhenClauseSyntaxError,
-} from './when-clause';
+import { evaluateWorkbenchWhenClause, WorkbenchWhenClauseSyntaxError } from './when-clause';
 
 describe('workbench when clause', () => {
   it('treats empty clauses as visible', () => {
@@ -56,9 +53,9 @@ describe('workbench when clause', () => {
     expect(evaluateWorkbenchWhenClause('library.focusedEntry.kind != tool', contextKeys)).toBe(
       false,
     );
-    expect(
-      evaluateWorkbenchWhenClause("resourceFilename == 'My New File.md'", contextKeys),
-    ).toBe(true);
+    expect(evaluateWorkbenchWhenClause("resourceFilename == 'My New File.md'", contextKeys)).toBe(
+      true,
+    );
   });
 
   it('evaluates typed comparisons', () => {
@@ -73,8 +70,9 @@ describe('workbench when clause', () => {
     );
     expect(evaluateWorkbenchWhenClause('asset.selectedCount === 2', contextKeys)).toBe(true);
     expect(evaluateWorkbenchWhenClause('provider.activeAccount == null', contextKeys)).toBe(true);
-    expect(evaluateWorkbenchWhenClause('asset.selectedCount == 2', { 'asset.selectedCount': '2' }))
-      .toBe(false);
+    expect(
+      evaluateWorkbenchWhenClause('asset.selectedCount == 2', { 'asset.selectedCount': '2' }),
+    ).toBe(false);
   });
 
   it('throws on invalid syntax', () => {

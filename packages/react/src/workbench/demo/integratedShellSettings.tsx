@@ -152,7 +152,9 @@ export function renderIntegratedShellSettingsCategory({
           id="integrated-settings-theme"
           controlWidth="full"
           value={colorTheme}
-          onChange={(event) => onColorThemeChange(event.currentTarget.value as WorkspaceEditorTheme)}
+          onChange={(event) =>
+            onColorThemeChange(event.currentTarget.value as WorkspaceEditorTheme)
+          }
         >
           <option value="dark">Dark Modern</option>
           <option value="light">Light Modern</option>

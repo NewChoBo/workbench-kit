@@ -101,7 +101,9 @@ export const WorkbenchBanners: Story = {
       </WorkbenchBanner>
       <WorkbenchBanner role="status">
         <WorkbenchBannerIcon icon="codicon-info" />
-        <WorkbenchBannerMessage>Indexing workspace — search may be incomplete.</WorkbenchBannerMessage>
+        <WorkbenchBannerMessage>
+          Indexing workspace — search may be incomplete.
+        </WorkbenchBannerMessage>
       </WorkbenchBanner>
     </div>
   ),
