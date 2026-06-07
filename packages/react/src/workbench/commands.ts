@@ -358,12 +358,14 @@ export function createWorkbenchWorkspaceCommands<
             ? 'Open selected files'
             : 'Open file',
       run: ({ openWorkspaceTarget }) => openWorkspaceTarget(),
+      when: 'workspace.hasSelection',
     },
     {
       id: WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID,
       icon: 'codicon-copy',
       label: ({ targetPaths }) => (targetPaths.length > 1 ? 'Copy paths' : 'Copy path'),
       run: ({ copyWorkspaceTarget }) => copyWorkspaceTarget(),
+      when: 'workspace.hasSelection',
     },
     {
       id: WORKBENCH_WORKSPACE_RENAME_COMMAND_ID,
@@ -372,6 +374,7 @@ export function createWorkbenchWorkspaceCommands<
       label: 'Rename',
       run: ({ renameWorkspaceTarget }) => renameWorkspaceTarget(),
       shortcut: 'F2',
+      when: 'workspace.hasSelection && !workspace.multiSelection',
     },
     {
       id: WORKBENCH_WORKSPACE_DELETE_COMMAND_ID,
@@ -387,6 +390,7 @@ export function createWorkbenchWorkspaceCommands<
             : 'Delete',
       run: ({ deleteWorkspaceTarget }) => deleteWorkspaceTarget(),
       shortcut: 'Del',
+      when: 'workspace.hasSelection',
     },
   ];
 
