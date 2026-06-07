@@ -11,6 +11,11 @@ import {
   SideBarViewFrame,
 } from './SideBarViewFrame';
 import {
+  WorkbenchBanner,
+  WorkbenchBannerIcon,
+  WorkbenchBannerMessage,
+} from './WorkbenchLayoutBase';
+import {
   WorkbenchActionList,
   WorkbenchActionListItem,
   WorkbenchSidebarSection,
@@ -66,6 +71,38 @@ export const PanelFrame: Story = {
           Panels provide a quiet frame for repeated workbench surfaces.
         </PanelBody>
       </Panel>
+    </div>
+  ),
+};
+
+export const WorkbenchBanners: Story = {
+  render: () => (
+    <div
+      style={{
+        background: 'var(--color-bg)',
+        display: 'grid',
+        gap: 12,
+        maxWidth: 720,
+        padding: 24,
+        width: '100%',
+      }}
+    >
+      <WorkbenchBanner role="alert">
+        <WorkbenchBannerIcon icon="codicon-error" />
+        <WorkbenchBannerMessage>
+          Runtime transport unavailable. Check the server and try again.
+        </WorkbenchBannerMessage>
+      </WorkbenchBanner>
+      <WorkbenchBanner tone="warning" role="status">
+        <WorkbenchBannerIcon icon="codicon-warning" />
+        <WorkbenchBannerMessage>
+          External file changed on disk. Review before saving.
+        </WorkbenchBannerMessage>
+      </WorkbenchBanner>
+      <WorkbenchBanner role="status">
+        <WorkbenchBannerIcon icon="codicon-info" />
+        <WorkbenchBannerMessage>Indexing workspace — search may be incomplete.</WorkbenchBannerMessage>
+      </WorkbenchBanner>
     </div>
   ),
 };

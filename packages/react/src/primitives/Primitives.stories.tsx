@@ -1,14 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { HelpText } from '../layout/Panel';
+import { EmptyState } from './EmptyState';
+import { Field } from './Field';
+import { ListEmptyState } from './List';
+import { StatusBar, StatusBarLabel, StatusBarSection } from './StatusBar';
+import { TextInput } from './TextInput';
 import { Badge } from './Badge';
 import { Button } from './Button';
 import { Checkbox } from './Checkbox';
-import { EmptyState } from './EmptyState';
-import { Field } from './Field';
 import { IconButton } from './IconButton';
 import { NumberInput } from './NumberInput';
 import { Select } from './Select';
-import { StatusBar, StatusBarLabel, StatusBarSection } from './StatusBar';
-import { TextInput } from './TextInput';
 import { Toolbar } from './Toolbar';
 
 const meta = {
@@ -72,6 +74,35 @@ export const EmptySurface: Story = {
   ),
 };
 
+export const FeedbackSurfaces: Story = {
+  parameters: {
+    layout: 'fullscreen',
+  },
+  render: () => (
+    <section
+      style={{
+        background: 'var(--color-bg)',
+        display: 'grid',
+        gap: 20,
+        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+        minHeight: '100vh',
+        padding: 24,
+      }}
+    >
+      <div style={{ border: '1px solid var(--color-border)', height: 200 }}>
+        <EmptyState icon="codicon-error">Workspace provider failed to respond.</EmptyState>
+      </div>
+      <div style={{ border: '1px solid var(--color-border)', height: 160 }}>
+        <ListEmptyState tone="error">No commands match the current filter.</ListEmptyState>
+      </div>
+      <Field label="App name" description="Required field with inline validation.">
+        <TextInput controlWidth="full" aria-invalid defaultValue="" placeholder="Enter app name" />
+        <HelpText tone="error">App name is required.</HelpText>
+      </Field>
+    </section>
+  ),
+};
+
 export const StatusFooter: Story = {
   parameters: {
     layout: 'fullscreen',
@@ -85,6 +116,25 @@ export const StatusFooter: Story = {
         <StatusBarSection align="end" title="ws://127.0.0.1:4123">
           Connected
         </StatusBarSection>
+      </StatusBar>
+    </div>
+  ),
+};
+
+export const StatusSeverity: Story = {
+  parameters: {
+    layout: 'fullscreen',
+  },
+  render: () => (
+    <div style={{ background: 'var(--color-bg)', display: 'grid', gap: 12, padding: 24 }}>
+      <StatusBar severity="normal">
+        <StatusBarLabel>Normal severity — Connected</StatusBarLabel>
+      </StatusBar>
+      <StatusBar severity="warning">
+        <StatusBarLabel>Warning severity — Reconnecting</StatusBarLabel>
+      </StatusBar>
+      <StatusBar severity="error">
+        <StatusBarLabel>Error severity — Connection failed</StatusBarLabel>
       </StatusBar>
     </div>
   ),

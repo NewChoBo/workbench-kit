@@ -477,7 +477,18 @@ export const SettingsDialog: Story = {
 };
 
 export const IntegratedShell: Story = {
+  name: 'Integrated Shell (full flow)',
   tags: ['storybook-play-baseline'],
+  parameters: {
+    fullHeightShell: '100vh',
+    storybookGrid: { enabled: false },
+    docs: {
+      description: {
+        story:
+          'End-to-end integrated shell with explorer, search, chat, settings, and runtime mock. Use **Verify ·** viewport presets to test responsive behavior. For side-by-side state checks see **Workbench / Verification**.',
+      },
+    },
+  },
   render: () => <IntegratedWorkbenchShell />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -1355,7 +1366,7 @@ function IntegratedWorkbenchShell() {
       onStatusItemActivate={activateStatusItem}
       primarySidebarClassName="ui-workbench-story-shell-split"
       rootClassName="ide-root"
-      rootStyle={{ height: 'min(calc(100% - 72px), 760px)', minHeight: 0 }}
+      rootStyle={{ height: '100%', minHeight: 0 }}
       renderPrimarySidebar={() => (
         <aside
           aria-label="Primary sidebar"
