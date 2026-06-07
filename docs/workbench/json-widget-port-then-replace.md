@@ -28,13 +28,15 @@ See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-
 
 - `parseWidgetJson` and registry contract
 - Neutral widget shape validation and error models
-- Layout helpers that do not depend on tile_paper domain types
+- Headless editor sync (`editor-sync`, `path`, `selection`, `widget-tree`, `widget-patch`)
+- Layout helpers that do not depend on tile_paper domain types (deferred: grid/stack calculators)
 
 ### Ports to `@workbench-kit/react/json-widget`
 
 - `JsonWidgetPreview` validation bridge (partially done)
-- Editor chrome: tree panel, properties panel, preview slot (Phase 2)
-- Monaco ↔ tree ↔ properties ↔ preview sync (Phase 2)
+- Editor chrome: `JsonWidgetEditor`, `WidgetTreePanel`, `WidgetInspectorPanel`, `useJsonWidgetEditorSync`
+- Monaco ↔ tree ↔ inspector ↔ preview sync via headless `editor-sync` module
+- DnD tree reorder and tile-specific property sections remain in reference until swap
 
 ### Ports to `@workbench-kit/react/json-config`
 
@@ -56,7 +58,7 @@ Single source of truth while editing:
 
 Sync rules:
 
-1. External `value` change resets parse, selection, and dirty state.
+1. External document identity change (`resetKey` / file path) resets selection; in-document edits keep selection stable.
 2. Tree selection changes update properties panel only; document string updates on explicit edit commits.
 3. Parse failure surfaces in tree and preview; preview does not render stale widgets.
 4. Save commits current string to host; discard restores `baselineValue`.
@@ -65,9 +67,9 @@ Sync rules:
 
 - [x] P1 port boundary map (this document)
 - [x] P1 editor sync contract (above)
-- [ ] P1 `JsonConfigWorkbench` widget mode parity with json-widget-editor baseline flows
-- [ ] P2 full editor chrome port from tile_paper `json-widget-editor`
-- [ ] P2 `JsonWidget/Editor` Storybook story + play baseline
+- [x] P1 `JsonConfigWorkbench` widget mode parity with json-widget-editor baseline flows
+- [x] P2 full editor chrome port from tile_paper `json-widget-editor` (tree, inspector, preview slot; DnD deferred)
+- [x] P2 `JsonWidget/Editor` Storybook story + play baseline
 - [ ] P3 parity gate + consumer swap runbook
 
 ## Verification
