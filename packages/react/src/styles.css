@@ -1,5 +1,6 @@
 @import '@workbench-kit/tokens/styles.css';
 @import '@vscode/codicons/dist/codicon.css';
+@import './scrollbars.css';
 
 .ui-workbench-host-document,
 .ui-workbench-host,
@@ -113,38 +114,6 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-color: var(--color-border) transparent;
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-}
-
-.workbench-primary-side-bar .panel-body {
-  scrollbar-gutter: auto;
-  scrollbar-width: none;
-}
-
-.panel-body::-webkit-scrollbar {
-  width: 10px;
-}
-
-.panel-body::-webkit-scrollbar-button {
-  display: none;
-}
-
-.panel-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.panel-body::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border: 2px solid transparent;
-  border-radius: 5px;
-  background-clip: content-box;
-}
-
-.workbench-primary-side-bar .panel-body::-webkit-scrollbar {
-  width: 0;
-  height: 0;
 }
 
 .panel-footer {
@@ -550,9 +519,6 @@
   min-width: 0;
   padding: 0 24px 32px;
   overflow-y: auto;
-  scrollbar-color: var(--color-border) transparent;
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
 }
 
 .workbench-settings-section {
@@ -1702,13 +1668,13 @@
   width: 6px;
   min-height: 24px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-text-muted) 36%, transparent);
+  background: var(--scrollbar-thumb);
   cursor: default;
 }
 
 .ui-side-bar-overlay-scrollbar__thumb:hover,
 .ui-side-bar-overlay-scrollbar--dragging .ui-side-bar-overlay-scrollbar__thumb {
-  background: color-mix(in srgb, var(--color-text-muted) 56%, transparent);
+  background: var(--scrollbar-thumb-hover);
 }
 
 .ui-side-bar-list {
@@ -2530,8 +2496,6 @@
   font-family: ui-monospace, 'Cascadia Code', Menlo, monospace;
   font-size: 12px;
   line-height: 1.6;
-  scrollbar-color: var(--color-border) transparent;
-  scrollbar-width: thin;
   white-space: pre;
 }
 
@@ -3452,8 +3416,6 @@
   background: var(--panel-bg, var(--color-bg));
   font-size: 0.8rem;
   line-height: 1.6;
-  scrollbar-color: var(--color-border) transparent;
-  scrollbar-width: thin;
   white-space: pre;
 }
 
@@ -3536,8 +3498,6 @@
   line-height: 1.5;
   outline: none;
   resize: none;
-  scrollbar-color: var(--color-border) transparent;
-  scrollbar-width: thin;
 }
 
 .composer__textarea::placeholder {
@@ -3634,11 +3594,6 @@
   display: flex;
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-width: none;
-}
-
-.workspace-editor__tabs::-webkit-scrollbar {
-  display: none;
 }
 
 .workspace-editor__tab {
@@ -3902,8 +3857,6 @@
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-color: var(--color-border) transparent;
-  scrollbar-width: thin;
 }
 
 .ui-list-item {
@@ -4222,7 +4175,6 @@
   display: flex;
   min-width: 0;
   overflow: auto;
-  scrollbar-width: none;
 }
 
 .ui-editor-tabs__tab {
@@ -5399,8 +5351,6 @@
   overflow-y: hidden;
   padding: 12px 4px;
   scroll-snap-type: x proximity;
-  scrollbar-color: rgba(148, 163, 184, 0.36) transparent;
-  scrollbar-width: thin;
 }
 
 .ui-workbench-fullscreen-nav-button {
