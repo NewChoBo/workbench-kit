@@ -67,6 +67,7 @@ function WidgetSurface({
       rect={rect}
       selectedPathKeys={selectedPathKeys}
       style={style}
+      widget={widget}
       widgetType={widget.type}
       onSelect={onSelect}
     >
@@ -122,6 +123,10 @@ function renderBox(
   onSelect: ((path: WidgetPath) => void) | undefined,
 ) {
   const padding = typeof widget.padding === 'number' ? widget.padding : 0;
+  const border =
+    widget.border && typeof widget.border === 'object'
+      ? (widget.border as { color?: string; width?: number })
+      : undefined;
   const childRect: Rect = {
     x: padding,
     y: padding,
@@ -141,6 +146,10 @@ function renderBox(
         ...positionStyle(rect, fillParent),
         backgroundColor: typeof widget.background === 'string' ? widget.background : '#1e293b',
         borderRadius: typeof widget.borderRadius === 'number' ? widget.borderRadius : 8,
+        border:
+          border && typeof border.width === 'number' && border.width > 0
+            ? `${border.width}px solid ${border.color ?? '#64748b'}`
+            : undefined,
         overflow: 'hidden',
       }}
     >
@@ -540,6 +549,147 @@ function renderLinear(
   );
 }
 
+function renderDivider(
+  widget: GenericWidget,
+  rect: Rect,
+  fillParent: boolean | undefined,
+  path: WidgetPath,
+  selectedPathKeys: ReadonlySet<string> | undefined,
+  onSelect: ((path: WidgetPath) => void) | undefined,
+) {
+  const isHorizontal = widget.direction !== 'vertical';
+  const thickness = typeof widget.thickness === 'number' ? widget.thickness : 1;
+  const color = typeof widget.color === 'string' ? widget.color : '#334155';
+
+  return (
+    <WidgetSurface
+      fillParent={fillParent}
+      path={path}
+      rect={rect}
+      selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
+      style={{
+        ...positionStyle(rect, fillParent),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: color,
+          width: isHorizontal ? '100%' : thickness,
+          height: isHorizontal ? thickness : '100%',
+        }}
+      />
+    </WidgetSurface>
+  );
+}
+
+function renderImage(
+  widget: GenericWidget,
+  rect: Rect,
+  fillParent: boolean | undefined,
+  path: WidgetPath,
+  selectedPathKeys: ReadonlySet<string> | undefined,
+  onSelect: ((path: WidgetPath) => void) | undefined,
+) {
+  const src = typeof widget.src === 'string' ? widget.src : '';
+  const fit = widget.fit === 'contain' || widget.fit === 'fill' ? widget.fit : ('cover' as const);
+
+  return (
+    <WidgetSurface
+      fillParent={fillParent}
+      path={path}
+      rect={rect}
+      selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
+      style={{
+        ...positionStyle(rect, fillParent),
+        backgroundColor: typeof widget.background === 'string' ? widget.background : '#0f172a',
+        borderRadius: typeof widget.borderRadius === 'number' ? widget.borderRadius : 8,
+        overflow: 'hidden',
+      }}
+    >
+      {src ? (
+        <img
+          alt={typeof widget.alt === 'string' ? widget.alt : 'Image'}
+          src={src}
+          style={{ display: 'block', width: '100%', height: '100%', objectFit: fit }}
+        />
+      ) : (
+        <span style={{ color: '#64748b', fontSize: 12 }}>No image source</span>
+      )}
+    </WidgetSurface>
+  );
+}
+
+function renderDocument(
+  widget: GenericWidget,
+  rect: Rect,
+  fillParent: boolean | undefined,
+  path: WidgetPath,
+  selectedPathKeys: ReadonlySet<string> | undefined,
+  onSelect: ((path: WidgetPath) => void) | undefined,
+) {
+  const padding = typeof widget.padding === 'number' ? widget.padding : 12;
+  const title = typeof widget.title === 'string' ? widget.title : 'Document';
+  const childRect: Rect = {
+    x: padding,
+    y: padding + 28,
+    width: Math.max(0, rect.width - padding * 2),
+    height: Math.max(0, rect.height - padding * 2 - 28),
+  };
+
+  return (
+    <WidgetSurface
+      fillParent={fillParent}
+      path={path}
+      rect={rect}
+      selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
+      style={{
+        ...positionStyle(rect, fillParent),
+        backgroundColor: typeof widget.background === 'string' ? widget.background : '#111827',
+        borderRadius: 10,
+        overflow: 'hidden',
+        border: '1px solid #334155',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          left: padding,
+          top: padding,
+          right: padding,
+          height: 24,
+          display: 'flex',
+          alignItems: 'center',
+          color: '#e2e8f0',
+          fontSize: 12,
+          fontWeight: 600,
+          borderBottom: '1px solid #334155',
+        }}
+      >
+        {title}
+      </div>
+      {widget.child && typeof widget.child === 'object' && 'type' in widget.child ? (
+        <PlaygroundWidgetRenderer
+          fillParent={Boolean(fillParent)}
+          path={[...path, { kind: 'child' }]}
+          rect={childRect}
+          selectedPathKeys={selectedPathKeys}
+          widget={widget.child as GenericWidget}
+          onSelectPath={onSelect}
+        />
+      ) : null}
+    </WidgetSurface>
+  );
+}
+
 function renderInput(
   widget: GenericWidget,
   rect: Rect,
@@ -620,6 +770,12 @@ export function PlaygroundWidgetRenderer({
       return renderTile(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
     case 'input':
       return renderInput(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
+    case 'divider':
+      return renderDivider(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
+    case 'image':
+      return renderImage(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
+    case 'document':
+      return renderDocument(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
     default:
       return (
         <WidgetSurface

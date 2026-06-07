@@ -42,7 +42,7 @@ portable, easy-to-author desktop launcher platform — not a single-purpose icon
 
 - **Node-graph authoring for tiles/workflows** — explore a node-connection canvas (a
   visual graph of connected nodes, conceptually like node editors such as ComfyUI) as an
-  *authoring metaphor* for composing tiles and multi-step workflows. This is **not** an
+  _authoring metaphor_ for composing tiles and multi-step workflows. This is **not** an
   image-generation pipeline and **not** scheduled work — only the node-graph interaction
   model is of interest. Tracked in
   [future-capabilities.md § Node-graph authoring](./future-capabilities.md#node-graph-authoring-for-tiles-and-workflows-exploration).
@@ -88,12 +88,12 @@ HTTP/WS surfaces as an authoring/file API without splitting runtime authority.
 `tile_paper` **apps** are reference and pilot surfaces until kit Phase 4 swap closes. Long term,
 **packages** are absorbed into the canonical app workspace as domain libraries:
 
-| Package area                             | Role in unified product                  | Stays outside kit                          |
-| ---------------------------------------- | ---------------------------------------- | ------------------------------------------ |
-| `@tilepaper/model`, engine, renderer     | Launchpad layout JSON format, domain DTOs | Product routes, `.tilepaper/` layout      |
-| `json-widget-tree`, `json-widget-editor` | Authoring reference → kit swap (Phase 4) | TilePaper-specific widget types until swap |
-| `provider-sdk`, launcher-core            | Headless provider/catalog API            | Provider SQLite/IPC implementations        |
-| `apps/web-editor`, `apps/electron`       | Reference-only until sunset (Phase 5)    | —                                          |
+| Package area                             | Role in unified product                   | Stays outside kit                          |
+| ---------------------------------------- | ----------------------------------------- | ------------------------------------------ |
+| `@tilepaper/model`, engine, renderer     | Launchpad layout JSON format, domain DTOs | Product routes, `.tilepaper/` layout       |
+| `json-widget-tree`, `json-widget-editor` | Authoring reference → kit swap (Phase 4)  | TilePaper-specific widget types until swap |
+| `provider-sdk`, launcher-core            | Headless provider/catalog API             | Provider SQLite/IPC implementations        |
+| `apps/web-editor`, `apps/electron`       | Reference-only until sunset (Phase 5)     | —                                          |
 
 Kit exposes contracts and generic chrome; tile_paper packages supply TilePaper domain logic
 linked or published into the custom_launcher workspace.
@@ -112,13 +112,13 @@ Phases 1–2 align with the current kit milestone and [json-widget port-then-rep
 
 ### Key user decisions needed
 
-| Decision                         | Options                                                   | Current recommendation                                                                                                  | Blocks                               |
-| -------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| **Canonical Electron app**       | custom_launcher / tile_paper electron / greenfield        | **custom_launcher** (evolve)                                                                                            | Phase 3+ domain merge, E2E ownership |
-| **npm vs pnpm**                  | npm (custom_launcher) / pnpm (tile_paper + kit) / unified | Short term: npm canonical app + publish/link tile_paper packages; **pnpm unification = Phase 5**                        | CI, husky, workspace layout          |
-| **`#workbench-ui` retirement**   | Freeze now → adapter swap → delete                        | Freeze new features now; retire after Phase 2–3 kit adapter coverage; remove in Phase 5                                 | UI stack convergence timeline        |
-| **Launchpad JSON format vs json-widget** | Long-term coexist / json-widget primary / single layout format | Short term **coexist**; json-widget as launchpad source editor via kit bridge; **long-term convergence = separate ADR** | Authoring UX, migration cost  |
-| **Library authority**            | SQLite-only / `.tilepaper` file-first / file + cache      | **Decided — file-first.** `.tilepaper` / JSON files are the canonical, portable authority; SQLite is at most an optional non-authoritative cache rebuildable from files (SQLite-as-authority rejected for portability) | Phase 3 library merge |
+| Decision                                 | Options                                                        | Current recommendation                                                                                                                                                                                                 | Blocks                               |
+| ---------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| **Canonical Electron app**               | custom_launcher / tile_paper electron / greenfield             | **custom_launcher** (evolve)                                                                                                                                                                                           | Phase 3+ domain merge, E2E ownership |
+| **npm vs pnpm**                          | npm (custom_launcher) / pnpm (tile_paper + kit) / unified      | Short term: npm canonical app + publish/link tile_paper packages; **pnpm unification = Phase 5**                                                                                                                       | CI, husky, workspace layout          |
+| **`#workbench-ui` retirement**           | Freeze now → adapter swap → delete                             | Freeze new features now; retire after Phase 2–3 kit adapter coverage; remove in Phase 5                                                                                                                                | UI stack convergence timeline        |
+| **Launchpad JSON format vs json-widget** | Long-term coexist / json-widget primary / single layout format | Short term **coexist**; json-widget as launchpad source editor via kit bridge; **long-term convergence = separate ADR**                                                                                                | Authoring UX, migration cost         |
+| **Library authority**                    | SQLite-only / `.tilepaper` file-first / file + cache           | **Decided — file-first.** `.tilepaper` / JSON files are the canonical, portable authority; SQLite is at most an optional non-authoritative cache rebuildable from files (SQLite-as-authority rejected for portability) | Phase 3 library merge                |
 
 See also [strengths-inheritance.md](./strengths-inheritance.md) and
 [tile_paper workbench-kit-phase4-pilot](https://github.com/whwjd/tile_paper/blob/main/docs/developer/planning/workbench-kit-phase4-pilot.md).
@@ -184,23 +184,23 @@ See [library-launch-boundary-gate.md](./library-launch-boundary-gate.md) and
 
 ## Domain Ownership Table
 
-| Domain                                          | Primary reference | Kit package(s)                                                        | Secondary reference                   | Notes                                                                      |
-| ----------------------------------------------- | ----------------- | --------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------- |
-| Launch / library mapping                        | Both (parity)     | `@workbench-kit/contracts`                                            | —                                     | Single authority; no local reimplementation in runtime paths               |
-| JSON widget parse / registry                    | tile_paper        | `@workbench-kit/json-widget`                                          | custom_launcher (launchpad bridge)    | tile_paper owns tree math; launcher owns preview validation bridge         |
-| JSON / config editor UI                         | tile_paper        | `@workbench-kit/react` (`json-config`, json-widget bridge)            | custom_launcher (`JsonWidgetPreview`) | Editor UX reference stays tile_paper                                       |
-| Launchpad canvas editor                         | tile_paper        | `@workbench-kit/react` canvas primitives                              | custom_launcher launchpad-ui          | Spatial editing reference is tile_paper                                    |
-| Workbench shell chrome (generic)                | tile_paper        | `@workbench-kit/react/workbench`                                      | custom_launcher content-hub shell     | Generic shell API from kit; product shell patterns from launcher           |
-| Product shell (content hub, tabs, plugin views) | custom_launcher   | Future extraction to `@workbench-kit/react` or `@workbench-kit/shell` | —                                     | Not a tile_paper strength today                                            |
-| Library browse / action runtime                 | custom_launcher   | `@workbench-kit/services` (target)                                    | tile_paper `launcher-core`            | Extract orchestration, not SQLite/IPC                                      |
-| Provider library / remote catalog               | custom_launcher   | `@workbench-kit/services`, `@workbench-kit/contracts`                 | tile_paper headless server            | Adapter-friendly contracts only in kit                                     |
-| Launchpad execution gateway                     | custom_launcher   | `@workbench-kit/services` / `@workbench-kit/runtime` (target)         | —                                     | Desktop bridge stays downstream                                            |
-| Plugin lifecycle / contributions                | Both              | `@workbench-kit/vscode-host`, `@workbench-kit/core`                   | custom_launcher plugin-host           | Kit owns generic contribution merge; launcher owns catalog DTOs            |
-| Command registry (framework-neutral)            | Converge          | `@workbench-kit/core`                                                 | custom_launcher `#workbench-core`     | See [Command registry gap analysis](#command-registry-gap-analysis-step-1) |
+| Domain                                          | Primary reference | Kit package(s)                                                        | Secondary reference                   | Notes                                                                                          |
+| ----------------------------------------------- | ----------------- | --------------------------------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Launch / library mapping                        | Both (parity)     | `@workbench-kit/contracts`                                            | —                                     | Single authority; no local reimplementation in runtime paths                                   |
+| JSON widget parse / registry                    | tile_paper        | `@workbench-kit/json-widget`                                          | custom_launcher (launchpad bridge)    | tile_paper owns tree math; launcher owns preview validation bridge                             |
+| JSON / config editor UI                         | tile_paper        | `@workbench-kit/react` (`json-config`, json-widget bridge)            | custom_launcher (`JsonWidgetPreview`) | Editor UX reference stays tile_paper                                                           |
+| Launchpad canvas editor                         | tile_paper        | `@workbench-kit/react` canvas primitives                              | custom_launcher launchpad-ui          | Spatial editing reference is tile_paper                                                        |
+| Workbench shell chrome (generic)                | tile_paper        | `@workbench-kit/react/workbench`                                      | custom_launcher content-hub shell     | Generic shell API from kit; product shell patterns from launcher                               |
+| Product shell (content hub, tabs, plugin views) | custom_launcher   | Future extraction to `@workbench-kit/react` or `@workbench-kit/shell` | —                                     | Not a tile_paper strength today                                                                |
+| Library browse / action runtime                 | custom_launcher   | `@workbench-kit/services` (target)                                    | tile_paper `launcher-core`            | Extract orchestration, not SQLite/IPC                                                          |
+| Provider library / remote catalog               | custom_launcher   | `@workbench-kit/services`, `@workbench-kit/contracts`                 | tile_paper headless server            | Adapter-friendly contracts only in kit                                                         |
+| Launchpad execution gateway                     | custom_launcher   | `@workbench-kit/services` / `@workbench-kit/runtime` (target)         | —                                     | Desktop bridge stays downstream                                                                |
+| Plugin lifecycle / contributions                | Both              | `@workbench-kit/vscode-host`, `@workbench-kit/core`                   | custom_launcher plugin-host           | Kit owns generic contribution merge; launcher owns catalog DTOs                                |
+| Command registry (framework-neutral)            | Converge          | `@workbench-kit/core`                                                 | custom_launcher `#workbench-core`     | See [Command registry gap analysis](#command-registry-gap-analysis-step-1)                     |
 | Context keys / when clauses                     | custom_launcher   | `@workbench-kit/core` (evaluator ported)                              | VS Code conventions                   | Registry `resolveCommand` gap — see [context-key-port-design.md](./context-key-port-design.md) |
-| Schema-driven settings (product)                | custom_launcher   | `@workbench-kit/react` settings primitives                            | tile_paper `ProjectConfigEditor`      | Kit provides layout/forms; launcher provides product schema wiring         |
-| VS Code extension bootstrap                     | kit               | `@workbench-kit/vscode-extension`                                     | custom_launcher extension apps        | Extension wrapper stays in kit; product webviews stay in launcher          |
-| Electron / desktop chrome                       | custom_launcher   | `@workbench-kit/adapters` (future)                                    | tile_paper electron app               | No built-in Electron in kit                                                |
+| Schema-driven settings (product)                | custom_launcher   | `@workbench-kit/react` settings primitives                            | tile_paper `ProjectConfigEditor`      | Kit provides layout/forms; launcher provides product schema wiring                             |
+| VS Code extension bootstrap                     | kit               | `@workbench-kit/vscode-extension`                                     | custom_launcher extension apps        | Extension wrapper stays in kit; product webviews stay in launcher                              |
+| Electron / desktop chrome                       | custom_launcher   | `@workbench-kit/adapters` (future)                                    | tile_paper electron app               | No built-in Electron in kit                                                                    |
 
 ## What NOT to Merge
 
@@ -282,20 +282,20 @@ no breaking API changes.
 
 ### API comparison
 
-| Concern            | custom_launcher `createCommandRegistry`                                        | `@workbench-kit/core`                                                                        |
-| ------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| Registry shape     | Object with `resolve`, `resolveMany`, `resolveVisible`, `getKeys`              | `ReadonlyMap<string, CommandDefinition>`                                                     |
-| Command definition | `id`, `label` (static or fn), `run`, optional `when`, optional `isEnabled`     | `id`, `label`, optional `run`, `isVisible`, `isEnabled`, `icon`, `shortcut`, `danger`        |
-| Context model      | Split: `TContext` + `TKeys` via `getKeys(context)`                             | Single `TContext`; predicates receive context only                                           |
-| Visibility         | `when` clause: string (context-key expression) or `(keys, context) => boolean` | `isVisible?(context)` on command and menu entry                                              |
-| Enabled state      | `isEnabled?(keys, context)`; disabled execute is no-op                         | `isEnabled?(context)`; `canExecuteCommand` / `executeCommand`                                |
-| Resolution output  | `ResolvedCommand`: `id`, `label`, `visible`, `enabled`, `execute()`            | Menu path: `ResolvedCommandMenuCommandItem`; no first-class `resolve(commandId)`             |
-| Menu projection    | Separate: `plugin-command-menu-item-projection.ts` (plugin catalog DTOs)       | Built-in: `resolveCommandMenuItems`, `surfaces`, separators, `compactCommandMenuItems`       |
-| Contributions      | Plugin contributions via `#shared/plugins` (external to core registry)         | `CommandContribution`, `mergeCommandContributions`, `createCommandRegistryFromContributions` |
-| Conflict policy    | Map last registration wins (implicit in array input)                           | Explicit `last-write-wins` / `hard-fail` + `findCommandDefinitionConflicts`                  |
-| Dynamic label      | `label(keys, context)`                                                         | `CommandValue<TContext, string>` — context-only function                                     |
+| Concern            | custom_launcher `createCommandRegistry`                                        | `@workbench-kit/core`                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Registry shape     | Object with `resolve`, `resolveMany`, `resolveVisible`, `getKeys`              | `ReadonlyMap<string, CommandDefinition>`                                                               |
+| Command definition | `id`, `label` (static or fn), `run`, optional `when`, optional `isEnabled`     | `id`, `label`, optional `run`, `isVisible`, `isEnabled`, `icon`, `shortcut`, `danger`                  |
+| Context model      | Split: `TContext` + `TKeys` via `getKeys(context)`                             | Single `TContext`; predicates receive context only                                                     |
+| Visibility         | `when` clause: string (context-key expression) or `(keys, context) => boolean` | `isVisible?(context)` on command and menu entry                                                        |
+| Enabled state      | `isEnabled?(keys, context)`; disabled execute is no-op                         | `isEnabled?(context)`; `canExecuteCommand` / `executeCommand`                                          |
+| Resolution output  | `ResolvedCommand`: `id`, `label`, `visible`, `enabled`, `execute()`            | Menu path: `ResolvedCommandMenuCommandItem`; no first-class `resolve(commandId)`                       |
+| Menu projection    | Separate: `plugin-command-menu-item-projection.ts` (plugin catalog DTOs)       | Built-in: `resolveCommandMenuItems`, `surfaces`, separators, `compactCommandMenuItems`                 |
+| Contributions      | Plugin contributions via `#shared/plugins` (external to core registry)         | `CommandContribution`, `mergeCommandContributions`, `createCommandRegistryFromContributions`           |
+| Conflict policy    | Map last registration wins (implicit in array input)                           | Explicit `last-write-wins` / `hard-fail` + `findCommandDefinitionConflicts`                            |
+| Dynamic label      | `label(keys, context)`                                                         | `CommandValue<TContext, string>` — context-only function                                               |
 | VS Code `when`     | `evaluateWorkbenchContextKeyWhenClause` on string clauses                      | `evaluateWorkbenchContextKeyWhenClause` on string `when`; requires `contextKeys` in menu/execute calls |
-| Execution          | `ResolvedCommand.execute()` returns `Promise<void>`                            | `executeCommand` sync void handler; returns `boolean`                                        |
+| Execution          | `ResolvedCommand.execute()` returns `Promise<void>`                            | `executeCommand` sync void handler; returns `boolean`                                                  |
 
 ### Semantic overlaps
 
@@ -359,14 +359,14 @@ one step; **do** make launcher's resolve helpers delegable to kit once context k
 
 ## Risks (Hybrid Track)
 
-| Risk                                                            | Mitigation                                                                           |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Duplicate UI stacks (`#workbench-ui` vs `@workbench-kit/react`) | Explicit non-merge policy; primitive-level convergence only                          |
-| Command API mismatch                                            | Dual registry during transition; adapter at boundaries; context-key port to kit core |
-| Electron / IPC coupling in extractions                          | Extract interfaces and contracts only; keep main-process code in custom_launcher     |
-| json-widget reference vacuum                                    | tile_paper remains official tree/editor reference; launcher bridge consumes kit      |
-| Package manager split (npm vs pnpm)                             | Parity tests and `check:launch-boundary` in each repo; contracts published from kit  |
-| Two Electron products                                           | Document canonical roles; kit stays Electron-free                                    |
+| Risk                                                                             | Mitigation                                                                                                                                                                                                             |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Duplicate UI stacks (`#workbench-ui` vs `@workbench-kit/react`)                  | Explicit non-merge policy; primitive-level convergence only                                                                                                                                                            |
+| Command API mismatch                                                             | Dual registry during transition; adapter at boundaries; context-key port to kit core                                                                                                                                   |
+| Electron / IPC coupling in extractions                                           | Extract interfaces and contracts only; keep main-process code in custom_launcher                                                                                                                                       |
+| json-widget reference vacuum                                                     | tile_paper remains official tree/editor reference; launcher bridge consumes kit                                                                                                                                        |
+| Package manager split (npm vs pnpm)                                              | Parity tests and `check:launch-boundary` in each repo; contracts published from kit                                                                                                                                    |
+| Two Electron products                                                            | Document canonical roles; kit stays Electron-free                                                                                                                                                                      |
 | Library-authority mismatch (custom_launcher SQLite-canonical vs file-first goal) | custom_launcher currently fixes `SQLite canonical`; reconcile by treating SQLite as a rebuildable cache over canonical `.tilepaper`/JSON files. Needs a custom_launcher-side ADR before Phase 3 provider/library merge |
 
 ## Links and Next Actions

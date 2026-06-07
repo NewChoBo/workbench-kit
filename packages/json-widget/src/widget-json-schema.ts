@@ -13,6 +13,9 @@ const PLAYGROUND_WIDGET_TYPES = [
   'input',
   'list-view',
   'tile',
+  'divider',
+  'image',
+  'document',
 ] as const;
 
 function placementProperties(): JsonSchemaObject {
@@ -46,6 +49,9 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
         { $ref: '#/definitions/InputWidget' },
         { $ref: '#/definitions/ListViewWidget' },
         { $ref: '#/definitions/TileWidget' },
+        { $ref: '#/definitions/DividerWidget' },
+        { $ref: '#/definitions/ImageWidget' },
+        { $ref: '#/definitions/DocumentWidget' },
       ],
     },
     TextWidget: {
@@ -207,6 +213,45 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
             additionalProperties: true,
           },
         },
+        ...placementProperties(),
+      },
+      additionalProperties: true,
+    },
+    DividerWidget: {
+      type: 'object',
+      required: ['type'],
+      properties: {
+        type: { const: 'divider' },
+        direction: { enum: ['horizontal', 'vertical'] },
+        color: { type: 'string' },
+        thickness: { type: 'number', minimum: 1, maximum: 20 },
+        ...placementProperties(),
+      },
+      additionalProperties: true,
+    },
+    ImageWidget: {
+      type: 'object',
+      required: ['type', 'src'],
+      properties: {
+        type: { const: 'image' },
+        src: { type: 'string' },
+        alt: { type: 'string' },
+        fit: { enum: ['cover', 'contain', 'fill'] },
+        borderRadius: { type: 'number', minimum: 0 },
+        background: { type: 'string' },
+        ...placementProperties(),
+      },
+      additionalProperties: true,
+    },
+    DocumentWidget: {
+      type: 'object',
+      required: ['type', 'child'],
+      properties: {
+        type: { const: 'document' },
+        title: { type: 'string' },
+        background: { type: 'string' },
+        padding: { type: 'number', minimum: 0 },
+        child: { $ref: '#/definitions/Widget' },
         ...placementProperties(),
       },
       additionalProperties: true,

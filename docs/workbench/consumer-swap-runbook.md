@@ -46,14 +46,14 @@ are adopted, or switch affected packages to `tsconfig.workbench-linked.json`
 
 ## Swap order (lowest risk first)
 
-| Priority | Surface                         | Kit API                                      | Repo              | Risk |
-| -------- | ------------------------------- | -------------------------------------------- | ----------------- | ---- |
-| 1        | Preview zoom toolbar            | `PreviewZoomToolbar`                         | custom_launcher   | Low  |
-| 2        | Library active filter chips     | `FilterChip`, `FilterBarActiveChips`         | custom_launcher   | Low  |
-| 3        | Project / settings JSON editor  | `JsonConfigWorkbench`                        | tile_paper ✅     | Low  |
-| 4        | Launchpad source Monaco pane    | `JsonCodeEditorPane` or `JsonConfigWorkbench`| both              | Med  |
-| 5        | Full JSON widget editor         | `JsonWidgetEditor` + product registry        | custom_launcher   | High |
-| 6        | `#workbench-ui` shell wholesale | `@workbench-kit/react` layout primitives     | custom_launcher   | High |
+| Priority | Surface                         | Kit API                                       | Repo            | Risk |
+| -------- | ------------------------------- | --------------------------------------------- | --------------- | ---- |
+| 1        | Preview zoom toolbar            | `PreviewZoomToolbar`                          | custom_launcher | Low  |
+| 2        | Library active filter chips     | `FilterChip`, `FilterBarActiveChips`          | custom_launcher | Low  |
+| 3        | Project / settings JSON editor  | `JsonConfigWorkbench`                         | tile_paper ✅   | Low  |
+| 4        | Launchpad source Monaco pane    | `JsonCodeEditorPane` or `JsonConfigWorkbench` | both            | Med  |
+| 5        | Full JSON widget editor         | `JsonWidgetEditor` + product registry         | custom_launcher | High |
+| 6        | `#workbench-ui` shell wholesale | `@workbench-kit/react` layout primitives      | custom_launcher | High |
 
 Do **one** verifiable swap per session until parity tests pass.
 
@@ -109,12 +109,12 @@ pnpm validate:full
 
 Current kit usage (pre-swap baseline):
 
-| Package                    | Kit dependency today                          |
-| -------------------------- | --------------------------------------------- |
+| Package                    | Kit dependency today                              |
+| -------------------------- | ------------------------------------------------- |
 | Root                       | `@workbench-kit/contracts`, `core`, `json-widget` |
-| `#workbench-ui`            | contracts only (local chrome — freeze active) |
-| `#launchpad-source`        | `json-widget`, `contracts`                    |
-| Renderer launchpad preview | `#launchpad-ui` + `#workbench-ui`             |
+| `#workbench-ui`            | contracts only (local chrome — freeze active)     |
+| `#launchpad-source`        | `json-widget`, `contracts`                        |
+| Renderer launchpad preview | `#launchpad-ui` + `#workbench-ui`                 |
 
 Target sequence:
 
@@ -129,13 +129,13 @@ Target sequence:
 
 Scope: validate kit paths; **do not** rewrite `apps/web-editor/src/App.tsx`.
 
-| Step | Task                                      | Status |
-| ---- | ----------------------------------------- | ------ |
-| P1   | `ProjectConfigEditor` → `JsonConfigWorkbench` | ✅  |
-| P2   | Storybook `JsonWidgetEditor` pilot        | ✅     |
+| Step | Task                                                    | Status |
+| ---- | ------------------------------------------------------- | ------ |
+| P1   | `ProjectConfigEditor` → `JsonConfigWorkbench`           | ✅     |
+| P2   | Storybook `JsonWidgetEditor` pilot                      | ✅     |
 | P3   | Document `JsonEditorPanel` → `JsonCodeEditorPane` spike | 🟡 doc |
-| P4   | Full editor + domain registry               | ⏸️     |
-| P5   | Sunset `@tilepaper/json-widget-editor`      | ⏸️     |
+| P4   | Full editor + domain registry                           | ⏸️     |
+| P5   | Sunset `@tilepaper/json-widget-editor`                  | ⏸️     |
 
 See [workbench-kit-phase4-pilot.md](../../../../tile_paper/docs/developer/planning/workbench-kit-phase4-pilot.md).
 

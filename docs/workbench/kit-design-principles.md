@@ -20,10 +20,10 @@ domain meaning live one layer up.
 
 ## 2. Domain-neutral core, domain-specific consumers
 
-| Layer | Examples | Allowed vocabulary |
-| --- | --- | --- |
-| Kit (`@workbench-kit/*`) | `contracts`, `core`, `json-widget`, `react`, `services`, `runtime`, `workspace`, `tokens`, `adapters`, `vscode-host` | widget, registry, command, when-clause, resource, item, provider, catalog, patch, save, manifest |
-| Consumer (`tile_paper`, `custom_launcher`) | app code wiring the kit | launchpad, tile, library item, Steam, game, playtime, artwork |
+| Layer                                      | Examples                                                                                                             | Allowed vocabulary                                                                               |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Kit (`@workbench-kit/*`)                   | `contracts`, `core`, `json-widget`, `react`, `services`, `runtime`, `workspace`, `tokens`, `adapters`, `vscode-host` | widget, registry, command, when-clause, resource, item, provider, catalog, patch, save, manifest |
+| Consumer (`tile_paper`, `custom_launcher`) | app code wiring the kit                                                                                              | launchpad, tile, library item, Steam, game, playtime, artwork                                    |
 
 Domain terms (launchpad, tile, Steam, game, playtime) are **forbidden in kit type names, enums, and logic**.
 They are **expected** in consumer code that configures the kit.
@@ -37,7 +37,7 @@ The kit prefers open extension over closed enumeration. Use these patterns, in r
    `has/get/definition/definitions/types` over an open `type: string`. Consumers register their own widget types.
 2. **Dependency injection** — pass collaborators in, do not hard-code them.
    The reference pattern is `LibraryCatalogService` (`services/library.ts`): `providers` are injected and can be
-   `registerProvider`/`unregisterProvider`'d at runtime. The kit knows nothing about *which* providers exist.
+   `registerProvider`/`unregisterProvider`'d at runtime. The kit knows nothing about _which_ providers exist.
 3. **Generic type parameters** — thread the domain payload through as `<T>` instead of inlining a concrete shape.
    `WidgetTypeDefinition<W extends WidgetTypeShape, TBuild = unknown>` is the model: the build/output type is the
    consumer's, the kit only requires `{ type: string }`.
@@ -53,7 +53,7 @@ The kit prefers open extension over closed enumeration. Use these patterns, in r
 ## 4. Naming rules
 
 - **Kit:** generic nouns only — `Widget`, `Registry`, `Command`, `Resource`, `Item`, `Provider`, `Catalog`,
-  `Patch`, `Save`, `Manifest`, `Workbench` (UI-shell concept, acceptable as it names the *editor frame*, not a domain).
+  `Patch`, `Save`, `Manifest`, `Workbench` (UI-shell concept, acceptable as it names the _editor frame_, not a domain).
 - **Consumer:** domain nouns — `Launchpad`, `Tile`, `LibraryItem` (game-sense), `Steam`, `Game`, `Playtime`.
 - A kit symbol containing `Launchpad`, `Steam`, `TilePaper`, `Game`, `Playtime`, or `Artwork` is a **leak** and must be
   flagged.
@@ -69,7 +69,7 @@ The kit prefers open extension over closed enumeration. Use these patterns, in r
     `LibraryItemKind = string` with documented well-known values.
 - **Thread domain payloads through generics** (`metadata?: Record<string, unknown>` or `<T>`), do not inline
   domain-specific fields into kit contracts.
-- **Keep transforms reversible and policy-free.** A kit function should map structure → structure; *which* structure is
+- **Keep transforms reversible and policy-free.** A kit function should map structure → structure; _which_ structure is
   meaningful is the consumer's call. `provider-library-mapping.ts`'s `steam://` synthesis is policy and belongs in a
   consumer.
 - **Resource URIs use a neutral scheme contract** (`resource-uri.ts`: any RFC-3986-ish scheme). A fixed
@@ -77,7 +77,7 @@ The kit prefers open extension over closed enumeration. Use these patterns, in r
 
 ## 6. Guidance: when a feature is domain-flavored
 
-When you need behavior that *feels* domain-specific, split it:
+When you need behavior that _feels_ domain-specific, split it:
 
 1. **Mechanism in the kit** — a generic registry/contract/transform with `string` keys and `<T>`/`Record` payloads.
 2. **Configuration in the consumer** — the concrete keys, enum members, icon/label maps, URL synthesis.
@@ -94,17 +94,20 @@ This keeps `providerActionToLaunchAction` / `ProviderSteamAction` out of `@workb
 ## 7. Examples from the current code
 
 **Good (keep as the model):**
+
 - `contracts/widget-registry-contract.ts` — open `type: string`, generic `<TBuild>`, optional inspector/schema.
 - `core/commands.ts`, `core/context-keys.ts`, `core/when-clause.ts` — VS Code-style neutral primitives.
 - `contracts/resource-uri.ts`, `contracts/external-url.ts` — scheme-generic.
 - `services/library.ts` `LibraryCatalogService` — provider injection + registry, no hard-coded sources.
 
 **Borderline (generalize when touched):**
+
 - `contracts/library.ts` — catalog/provider/manifest pattern is reasonably generic, but `LibraryItemKind` bakes in
   `'game'`/`'tile'`.
 - `react` `WorkbenchFullscreenLauncherRoot` — "Launcher" naming leak; the component itself is a generic fullscreen shell.
 
 **Leak (should move to consumer or be reshaped):**
+
 - `contracts/library-launchpad-mapping.ts` — `Launchpad*`, `launch-tile`, game fields (`playtimeMinutes`,
   `releaseYear`, `isOwned`, `playCount`, `installState`).
 - `contracts/provider-library-mapping.ts` — `ProviderSteamAction`, `steam://` synthesis, Steam modes.

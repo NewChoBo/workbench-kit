@@ -53,6 +53,8 @@ const boxInspector = [
       { kind: 'color' as const, prop: 'background', label: 'Background' },
       { kind: 'number' as const, prop: 'borderRadius', label: 'Border radius', min: 0 },
       { kind: 'number' as const, prop: 'padding', label: 'Padding', min: 0 },
+      { kind: 'color' as const, prop: 'borderColor', label: 'Border color' },
+      { kind: 'number' as const, prop: 'borderWidth', label: 'Border width', min: 0 },
     ],
   },
 ];
@@ -73,7 +75,10 @@ const gridInspector = [
 const stackInspector = [
   {
     title: 'Stack',
-    fields: [{ kind: 'color' as const, prop: 'background', label: 'Background' }],
+    fields: [
+      { kind: 'color' as const, prop: 'background', label: 'Background' },
+      { kind: 'number' as const, prop: 'padding', label: 'Padding', min: 0 },
+    ],
   },
 ];
 
@@ -157,6 +162,57 @@ const tileInspector = [
   },
 ];
 
+const dividerInspector = [
+  {
+    title: 'Divider',
+    fields: [
+      {
+        kind: 'select' as const,
+        prop: 'direction',
+        label: 'Direction',
+        options: [
+          { label: 'Horizontal', value: 'horizontal' },
+          { label: 'Vertical', value: 'vertical' },
+        ],
+      },
+      { kind: 'color' as const, prop: 'color', label: 'Color' },
+      { kind: 'number' as const, prop: 'thickness', label: 'Thickness', min: 1, max: 20 },
+    ],
+  },
+];
+
+const imageInspector = [
+  {
+    title: 'Image',
+    fields: [
+      { kind: 'text' as const, prop: 'src', label: 'Source URL', placeholder: 'https://...' },
+      {
+        kind: 'select' as const,
+        prop: 'fit',
+        label: 'Fit',
+        options: [
+          { label: 'Cover', value: 'cover' },
+          { label: 'Contain', value: 'contain' },
+          { label: 'Fill', value: 'fill' },
+        ],
+      },
+      { kind: 'number' as const, prop: 'borderRadius', label: 'Border radius', min: 0 },
+      { kind: 'color' as const, prop: 'background', label: 'Background' },
+    ],
+  },
+];
+
+const documentInspector = [
+  {
+    title: 'Document',
+    fields: [
+      { kind: 'text' as const, prop: 'title', label: 'Title' },
+      { kind: 'color' as const, prop: 'background', label: 'Background' },
+      { kind: 'number' as const, prop: 'padding', label: 'Padding', min: 0 },
+    ],
+  },
+];
+
 const definitions = [
   {
     type: 'text',
@@ -218,6 +274,24 @@ const definitions = [
     displayName: 'Tile',
     inspector: tileInspector,
   },
+  {
+    type: 'divider',
+    build: buildVisualPreview,
+    displayName: 'Divider',
+    inspector: dividerInspector,
+  },
+  {
+    type: 'image',
+    build: buildVisualPreview,
+    displayName: 'Image',
+    inspector: imageInspector,
+  },
+  {
+    type: 'document',
+    build: buildVisualPreview,
+    displayName: 'Document',
+    inspector: documentInspector,
+  },
 ];
 
 export const playgroundWidgetRegistry = createWidgetRegistry<
@@ -235,7 +309,10 @@ export type PlaygroundWidgetTemplateId =
   | 'button'
   | 'input'
   | 'list-view'
-  | 'tile';
+  | 'tile'
+  | 'divider'
+  | 'image'
+  | 'document';
 
 export interface PlaygroundWidgetTemplate {
   id: PlaygroundWidgetTemplateId;
@@ -369,6 +446,47 @@ export const PLAYGROUND_WIDGET_TEMPLATES: readonly PlaygroundWidgetTemplate[] = 
       layers: [{ type: 'color', color: '#0f766e' }],
     }),
   },
+  {
+    id: 'divider',
+    label: 'Divider',
+    create: ({ siblingCount }) => ({
+      type: 'divider',
+      direction: 'horizontal',
+      color: '#475569',
+      thickness: 2,
+      col: siblingCount % 2,
+      row: Math.floor(siblingCount / 2),
+    }),
+  },
+  {
+    id: 'image',
+    label: 'Image',
+    create: ({ siblingCount }) => ({
+      type: 'image',
+      src: 'https://placecats.com/240/160',
+      fit: 'cover',
+      borderRadius: 8,
+      col: siblingCount % 2,
+      row: Math.floor(siblingCount / 2),
+    }),
+  },
+  {
+    id: 'document',
+    label: 'Document',
+    create: () => ({
+      type: 'document',
+      title: 'Page',
+      padding: 12,
+      background: '#111827',
+      child: {
+        type: 'grid',
+        columns: 2,
+        rows: 2,
+        gap: 8,
+        children: [],
+      },
+    }),
+  },
 ];
 
 export const EMPTY_PLAYGROUND_DOCUMENT = JSON.stringify(
@@ -477,6 +595,91 @@ export const PLAYGROUND_STARTER_TEMPLATES: readonly PlaygroundStarterTemplate[] 
             ],
           },
         ],
+      },
+      null,
+      2,
+    ),
+  },
+  {
+    id: 'media-card',
+    label: 'Media card',
+    description: 'Image with caption text in a stack.',
+    document: JSON.stringify(
+      {
+        type: 'stack',
+        background: '#0f172a',
+        children: [
+          {
+            type: 'image',
+            src: 'https://placecats.com/420/180',
+            fit: 'cover',
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 80,
+          },
+          {
+            type: 'text',
+            text: 'Featured image',
+            color: '#f8fafc',
+            fontSize: 16,
+            fontWeight: 'bold',
+            left: 12,
+            bottom: 16,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  },
+  {
+    id: 'form-column',
+    label: 'Form column',
+    description: 'Input, divider, and primary button in a column.',
+    document: JSON.stringify(
+      {
+        type: 'column',
+        gap: 8,
+        padding: 12,
+        background: '#0f172a',
+        children: [
+          { type: 'input', label: 'Email', placeholder: 'you@example.com' },
+          { type: 'divider', direction: 'horizontal', color: '#334155', thickness: 1 },
+          { type: 'button', label: 'Submit', variant: 'primary' },
+        ],
+      },
+      null,
+      2,
+    ),
+  },
+  {
+    id: 'document-shell',
+    label: 'Document shell',
+    description: 'Document wrapper with nested grid canvas.',
+    document: JSON.stringify(
+      {
+        type: 'document',
+        title: 'Launchpad page',
+        padding: 12,
+        background: '#111827',
+        child: {
+          type: 'grid',
+          columns: 2,
+          rows: 2,
+          gap: 8,
+          padding: 8,
+          background: '#0f172a',
+          children: [
+            {
+              type: 'text',
+              text: 'Document child',
+              col: 0,
+              row: 0,
+              color: '#e2e8f0',
+            },
+          ],
+        },
       },
       null,
       2,

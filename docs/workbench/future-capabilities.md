@@ -152,8 +152,8 @@ Storybook-first playground strategy. No standalone public playground app in the 
 
 **Status:** Exploratory idea only — not scheduled, no milestone, no kit API commitment.
 
-Explore a **node-connection canvas** (a visual graph of connected nodes) as an *authoring
-metaphor* for composing **tiles** and **multi-step workflows**. The interest is the
+Explore a **node-connection canvas** (a visual graph of connected nodes) as an _authoring
+metaphor_ for composing **tiles** and **multi-step workflows**. The interest is the
 node-graph interaction model for building layouts/workflows — conceptually similar to
 node editors such as ComfyUI, but reframed: this is **not** an image-generation pipeline
 and **not** an immediate adoption of any specific tool.

@@ -29,21 +29,21 @@ Related:
 
 ## Checklist (kit-side)
 
-| Area                      | Criterion                                                               | Status |
-| ------------------------- | ----------------------------------------------------------------------- | ------ |
-| JSON widget headless      | parse, registry, editor-sync, patches, layout helpers                   | ✅     |
-| JSON widget React chrome  | `JsonWidgetEditor`, tree DnD, inspector, Monaco sync                    | ✅     |
-| Playground preview        | `PlaygroundWidgetRenderer`, zoom/pan canvas, click-to-select            | ✅     |
-| Selection chrome          | `PlaygroundEditorWidgetWrapper` (simplified `EditorWidgetWrapper`)      | ✅     |
-| Playground widget types   | text, box, grid, stack, row, column, button, **input**, list-view, tile | ✅     |
-| Deferred widget types     | image, document, tile-ref, divider (Phase 4 / product)                  | ⏸️     |
-| JsonConfig workbench      | schema/widget preview, validation banner, Apply pattern                 | ✅     |
-| Standalone shell          | `WorkbenchShell`, `IntegratedShellDemo`, demo fixtures                  | ✅     |
-| Strengths inheritance     | zoom toolbar, Ctrl+S, problems panel, config Apply                      | ✅     |
-| Storybook play (required) | 14 flows including `JsonWidget/Playground → InteractiveSmoke`           | ✅     |
-| Verification              | `pnpm validate:full` passes                                             | ✅     |
-| Phase 3 docs              | port-then-replace Phase 3 marked DONE in policy doc                     | ✅     |
-| Phase 4 consumer swap     | Runbook live; keeper swaps in progress ([runbook](./consumer-swap-runbook.md)) | 🟡     |
+| Area                      | Criterion                                                                                         | Status |
+| ------------------------- | ------------------------------------------------------------------------------------------------- | ------ |
+| JSON widget headless      | parse, registry, editor-sync, patches, layout helpers                                             | ✅     |
+| JSON widget React chrome  | `JsonWidgetEditor`, tree DnD, inspector, Monaco sync                                              | ✅     |
+| Playground preview        | `PlaygroundWidgetRenderer`, zoom/pan canvas, click-to-select                                      | ✅     |
+| Selection chrome          | `PlaygroundEditorWidgetWrapper` (simplified `EditorWidgetWrapper`)                                | ✅     |
+| Playground widget types   | text, box, grid, stack, row, column, button, input, list-view, tile, **divider, image, document** | ✅     |
+| Deferred widget types     | tile-ref, spacer, dataSource, domain custom types (Phase 4 / product)                             | ⏸️     |
+| JsonConfig workbench      | schema/widget preview, validation banner, Apply pattern                                           | ✅     |
+| Standalone shell          | `WorkbenchShell`, `IntegratedShellDemo`, demo fixtures                                            | ✅     |
+| Strengths inheritance     | zoom toolbar, Ctrl+S, problems panel, config Apply                                                | ✅     |
+| Storybook play (required) | 14 flows including `JsonWidget/Playground → InteractiveSmoke`                                     | ✅     |
+| Verification              | `pnpm validate:full` passes                                                                       | ✅     |
+| Phase 3 docs              | port-then-replace Phase 3 marked DONE in policy doc                                               | ✅     |
+| Phase 4 consumer swap     | Runbook live; keeper swaps in progress ([runbook](./consumer-swap-runbook.md))                    | 🟡     |
 
 ## Verification command
 

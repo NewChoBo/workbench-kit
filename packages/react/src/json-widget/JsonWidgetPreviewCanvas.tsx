@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { GenericWidget, WidgetPath } from '@workbench-kit/json-widget';
+import type { GenericWidget, WidgetPath, WidgetPatch } from '@workbench-kit/json-widget';
 import { parseWidgetJson } from '@workbench-kit/json-widget';
 
 import { WorkbenchPreviewCanvas } from '../layout/WorkbenchCanvas.js';
@@ -9,12 +9,15 @@ import {
   DEFAULT_PLAYGROUND_PREVIEW_RECT,
   PlaygroundWidgetRenderer,
 } from './playground-renderer/PlaygroundWidgetRenderer.js';
+import { PlaygroundPreviewProvider } from './playground-renderer/PlaygroundPreviewContext.js';
 import { usePreviewViewport } from './usePreviewViewport.js';
 
 export interface JsonWidgetPreviewCanvasProps {
   json: string;
   selectedPathKeys?: ReadonlySet<string> | undefined;
   onSelectPath?: ((path: WidgetPath) => void) | undefined;
+  onPatch?: ((patch: WidgetPatch) => void) | undefined;
+  parseError?: string | null | undefined;
   className?: string | undefined;
   canvasWidth?: number | undefined;
   canvasHeight?: number | undefined;
@@ -28,6 +31,8 @@ export function JsonWidgetPreviewCanvas({
   json,
   selectedPathKeys,
   onSelectPath,
+  onPatch,
+  parseError = null,
   className,
   canvasWidth = DEFAULT_PLAYGROUND_PREVIEW_RECT.width,
   canvasHeight = DEFAULT_PLAYGROUND_PREVIEW_RECT.height,
@@ -40,6 +45,7 @@ export function JsonWidgetPreviewCanvas({
   const viewport = usePreviewViewport({ canvasHeight, canvasWidth });
   const [uncontrolledShowGrid, setUncontrolledShowGrid] = useState(false);
   const showGrid = showGridProp ?? uncontrolledShowGrid;
+  const issueCount = parseError ? 1 : 0;
 
   if (parsed.parseError !== null) {
     return (
@@ -66,7 +72,7 @@ export function JsonWidgetPreviewCanvas({
         <PreviewZoomToolbar
           canZoomIn={viewport.canZoomIn}
           canZoomOut={viewport.canZoomOut}
-          issueCount={0}
+          issueCount={issueCount}
           scaleLabel={viewport.scaleLabel}
           showGrid={showGrid}
           title={frameTitle}
@@ -112,12 +118,20 @@ export function JsonWidgetPreviewCanvas({
             data-testid="json-widget-preview-output"
             style={{ position: 'relative', width: canvasWidth, height: canvasHeight }}
           >
-            <PlaygroundWidgetRenderer
-              rect={rect}
-              selectedPathKeys={selectedPathKeys}
-              widget={parsed.value}
-              onSelectPath={onSelectPath}
-            />
+            <PlaygroundPreviewProvider
+              value={{
+                root: parsed.value,
+                onPatch,
+                viewportScale: viewport.effectiveZoom,
+              }}
+            >
+              <PlaygroundWidgetRenderer
+                rect={rect}
+                selectedPathKeys={selectedPathKeys}
+                widget={parsed.value}
+                onSelectPath={onSelectPath}
+              />
+            </PlaygroundPreviewProvider>
           </div>
         </WorkbenchPreviewCanvas>
       </div>

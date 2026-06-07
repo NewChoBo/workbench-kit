@@ -16,15 +16,15 @@ Related:
 
 ## 1. Current State Summary
 
-| Layer | custom_launcher | `@workbench-kit/core` | Status |
-| ----- | --------------- | --------------------- | ------ |
-| When-clause parser | `packages/workbench-core/src/when-clause.ts` | `packages/core/src/when-clause.ts` | **Ported** (identical semantics) |
-| Context key snapshot | `packages/workbench-core/src/context-keys.ts` | `packages/core/src/context-keys.ts` | **Ported** |
-| String `when` on commands | `CommandDefinition.when?: string \| fn` | `CommandDefinition.when?: string \| fn` | **Kit supports string + predicate** |
-| Menu `when` + `contextKeys` | N/A (registry resolves first) | `resolveCommandMenuItems({ contextKeys })` | **Kit menu path wired** |
-| Registry shape | Closure registry with `resolve` / `resolveMany` / `resolveVisible` | `ReadonlyMap` + menu projection | **Gap — see §3** |
-| Split context / keys | `getKeys(context) → TKeys`; predicates receive `(keys, context)` | Single `TContext`; optional `contextKeys` object for string `when` | **Gap — adapter required** |
-| Plugin menu projection | `plugin-command-menu-item-projection.ts` | `CommandContribution` + `surfaces` | Parallel; no merge yet |
+| Layer                       | custom_launcher                                                    | `@workbench-kit/core`                                              | Status                              |
+| --------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ | ----------------------------------- |
+| When-clause parser          | `packages/workbench-core/src/when-clause.ts`                       | `packages/core/src/when-clause.ts`                                 | **Ported** (identical semantics)    |
+| Context key snapshot        | `packages/workbench-core/src/context-keys.ts`                      | `packages/core/src/context-keys.ts`                                | **Ported**                          |
+| String `when` on commands   | `CommandDefinition.when?: string \| fn`                            | `CommandDefinition.when?: string \| fn`                            | **Kit supports string + predicate** |
+| Menu `when` + `contextKeys` | N/A (registry resolves first)                                      | `resolveCommandMenuItems({ contextKeys })`                         | **Kit menu path wired**             |
+| Registry shape              | Closure registry with `resolve` / `resolveMany` / `resolveVisible` | `ReadonlyMap` + menu projection                                    | **Gap — see §3**                    |
+| Split context / keys        | `getKeys(context) → TKeys`; predicates receive `(keys, context)`   | Single `TContext`; optional `contextKeys` object for string `when` | **Gap — adapter required**          |
+| Plugin menu projection      | `plugin-command-menu-item-projection.ts`                           | `CommandContribution` + `surfaces`                                 | Parallel; no merge yet              |
 
 **Conclusion:** The evaluator module is already in kit. Remaining work is registry API
 convergence and launcher adapter wiring — not re-porting the parser.
@@ -75,12 +75,12 @@ interface CommandDefinition<TContext> {
 
 Key semantic differences:
 
-| Concern | Launcher | Kit |
-| ------- | -------- | --- |
-| Visibility | `when` only (no separate `isVisible`) | `when` **or** `isVisible`; menu entries can override |
-| String `when` input | Always `keys` from `getKeys(context)` | Requires explicit `contextKeys` in menu/execute calls |
-| Enabled gating | `visible && isEnabled`; disabled execute is no-op | `canExecuteCommand` / `executeCommand`; menu uses `disabled` flag |
-| Output | `ResolvedCommand { visible, enabled, label, execute }` | Menu items or boolean execute result |
+| Concern             | Launcher                                               | Kit                                                               |
+| ------------------- | ------------------------------------------------------ | ----------------------------------------------------------------- |
+| Visibility          | `when` only (no separate `isVisible`)                  | `when` **or** `isVisible`; menu entries can override              |
+| String `when` input | Always `keys` from `getKeys(context)`                  | Requires explicit `contextKeys` in menu/execute calls             |
+| Enabled gating      | `visible && isEnabled`; disabled execute is no-op      | `canExecuteCommand` / `executeCommand`; menu uses `disabled` flag |
+| Output              | `ResolvedCommand { visible, enabled, label, execute }` | Menu items or boolean execute result                              |
 
 ### 2.3 Resolution APIs
 
@@ -160,13 +160,13 @@ dual maintenance. Requires identical test vectors in both repos first.
 
 ### Fixture: library context menu item
 
-| Step | Launcher | Kit |
-| ---- | -------- | --- |
-| Context keys | `{ 'library.hasSelection': true, 'library.canLaunch': true }` | Same object passed as `contextKeys` |
-| Command | `when: 'library.hasSelection && library.canLaunch'` | Same `when` on `CommandDefinition` |
-| Assert visible | `resolve(id, ctx).visible === true` | `resolveCommandMenuItems` includes command id |
-| Assert hidden | Set `library.hasSelection: false` | Menu item filtered out |
-| Assert disabled | `isEnabled: (_, keys) => keys['library.canLaunch']` | `disabled: true` on menu item |
+| Step            | Launcher                                                      | Kit                                           |
+| --------------- | ------------------------------------------------------------- | --------------------------------------------- |
+| Context keys    | `{ 'library.hasSelection': true, 'library.canLaunch': true }` | Same object passed as `contextKeys`           |
+| Command         | `when: 'library.hasSelection && library.canLaunch'`           | Same `when` on `CommandDefinition`            |
+| Assert visible  | `resolve(id, ctx).visible === true`                           | `resolveCommandMenuItems` includes command id |
+| Assert hidden   | Set `library.hasSelection: false`                             | Menu item filtered out                        |
+| Assert disabled | `isEnabled: (_, keys) => keys['library.canLaunch']`           | `disabled: true` on menu item                 |
 
 ### Fixture: predicate `when` (no string)
 
