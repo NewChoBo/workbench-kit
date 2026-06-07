@@ -18,6 +18,10 @@ import { WorkspaceDraftsProvider } from './workspace/WorkspaceDraftsContext';
 const DEFAULT_THEME: WorkbenchTheme = 'dark';
 const DEFAULT_ACTIVITY_ID = 'explorer';
 
+/**
+ * Stable host context passed to `WorkbenchStandaloneShell` render and event callbacks.
+ * See `docs/workbench/standalone-host.md` for the public contract.
+ */
 export interface WorkbenchStandaloneShellContext<
   TActivityId extends string = string,
   TTheme extends WorkbenchTheme = WorkbenchTheme,
@@ -41,6 +45,10 @@ export interface WorkbenchStandaloneShellContext<
   setSettingsSearchValue: (settingsSearchValue: string) => void;
 }
 
+/**
+ * Props for the standalone workbench chrome host. Supply `bootstrap` plus render
+ * callbacks; the shell manages activity, theme, sidebar, and settings visibility.
+ */
 export interface WorkbenchStandaloneShellProps<
   TActivityId extends string = string,
   TTheme extends WorkbenchTheme = WorkbenchTheme,

@@ -2,10 +2,12 @@ import {
   commandMenuEntries,
   commandMenuEntry,
   commandMenuSeparator,
+  resolveCommandMenuItems,
   type CommandDefinition,
-  type CommandValue,
   type CommandMenuEntry,
   type CommandMenuItem,
+  type CommandRegistry,
+  type CommandValue,
 } from '@workbench-kit/core';
 
 import type { ContextMenuItem } from '../overlay/ContextMenu';
@@ -470,6 +472,28 @@ export function createWorkbenchSearchResultMenuEntries<
       surfaces: [WORKBENCH_COMMAND_SURFACE_SEARCH],
     }),
   ];
+}
+
+export function resolveWorkbenchCommandMenuItems<TContext>({
+  registry,
+  entries,
+  context,
+  surface,
+  contextKeys,
+}: {
+  registry: CommandRegistry<TContext>;
+  entries: CommandMenuEntry<TContext>[];
+  context: TContext;
+  surface?: string;
+  contextKeys?: object;
+}): CommandMenuItem[] {
+  return resolveCommandMenuItems({
+    context,
+    contextKeys,
+    entries,
+    registry,
+    surface,
+  });
 }
 
 export function commandMenuItemsToContextMenuItems(
