@@ -70,3 +70,8 @@ export {
   createJsonWidgetEditorSyncSnapshot,
   shouldResetSelectionOnDocumentChange,
 } from './editor-sync.js';
+
+export {
+  createPlaygroundWidgetJsonSchema,
+  PLAYGROUND_WIDGET_JSON_SCHEMA,
+} from './widget-json-schema.js';

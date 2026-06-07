@@ -1,14 +1,52 @@
-import { useMemo } from 'react';
+import { isValidElement, useMemo, type ReactNode } from 'react';
 import type { WidgetRegistryContract, WidgetTypeShape } from '@workbench-kit/contracts';
-import { parseWidgetJson } from '@workbench-kit/json-widget';
+import { parseWidgetJson, type GenericWidget } from '@workbench-kit/json-widget';
 
 import { WorkbenchParseError, WorkbenchRenderSurface } from '../layout/WorkbenchLayout';
+import {
+  DEFAULT_PLAYGROUND_PREVIEW_RECT,
+  PlaygroundWidgetRenderer,
+} from './playground-renderer/PlaygroundWidgetRenderer.js';
 
 export interface JsonWidgetPreviewProps {
   json: string;
   registry?: WidgetRegistryContract<unknown> | undefined;
   emptyLabel?: string | undefined;
   className?: string | undefined;
+  visualPreview?: boolean | undefined;
+}
+
+function resolveRegistryOutput(
+  registry: WidgetRegistryContract<unknown> | undefined,
+  widget: WidgetTypeShape,
+  emptyLabel: string,
+  visualPreview: boolean,
+): ReactNode {
+  if (visualPreview) {
+    return (
+      <PlaygroundWidgetRenderer
+        rect={DEFAULT_PLAYGROUND_PREVIEW_RECT}
+        widget={widget as GenericWidget}
+      />
+    );
+  }
+
+  if (registry === undefined) {
+    return `Parsed widget type "${widget.type}".`;
+  }
+
+  const build = registry.get(widget.type);
+  if (build === undefined) {
+    return `Unknown widget type "${widget.type}". Register it in WidgetRegistry to render.`;
+  }
+
+  if (typeof build === 'function') {
+    const output = (build as (widget: WidgetTypeShape) => unknown)(widget);
+    if (isValidElement(output)) return output;
+    return String(output);
+  }
+
+  return emptyLabel;
 }
 
 export function JsonWidgetPreview({
@@ -16,6 +54,7 @@ export function JsonWidgetPreview({
   registry,
   emptyLabel = 'No render output.',
   className,
+  visualPreview = false,
 }: JsonWidgetPreviewProps) {
   const parsed = useMemo(() => parseWidgetJson(json), [json]);
 
@@ -24,21 +63,8 @@ export function JsonWidgetPreview({
       return null;
     }
 
-    if (registry === undefined) {
-      return `Parsed widget type "${parsed.value.type}".`;
-    }
-
-    const build = registry.get(parsed.value.type);
-    if (build === undefined) {
-      return `Unknown widget type "${parsed.value.type}". Register it in WidgetRegistry to render.`;
-    }
-
-    if (typeof build === 'function') {
-      return String((build as (widget: WidgetTypeShape) => unknown)(parsed.value));
-    }
-
-    return emptyLabel;
-  }, [emptyLabel, parsed, registry]);
+    return resolveRegistryOutput(registry, parsed.value, emptyLabel, visualPreview);
+  }, [emptyLabel, parsed, registry, visualPreview]);
 
   if (parsed.parseError !== null) {
     return (

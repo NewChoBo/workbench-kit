@@ -76,7 +76,14 @@ Sync rules:
 - [x] P3 `EditorInteraction` promoted to `storybook-play-required`
 - [x] P3 parity gate tests (layout + patch + registry patterns)
 - [x] P3 `JsonWidget/Playground → Interactive` — full editor sandbox (add widget, DnD tree, Monaco, inspector, structural preview)
+- [x] P3.1 playground visual preview — `PlaygroundWidgetRenderer` + `JsonWidgetPreviewCanvas` (grid/stack/text/box/row/column)
+- [x] P3.1 playground inspector parity — builtin property sections for demo types (text/grid/stack/row/column/box)
+- [x] P3.1 playground authoring UX — sibling insert, delete selected, duplicate selected, starter templates
+- [x] P3.1 Monaco playground schema — `createPlaygroundWidgetJsonSchema` wired via `JsonWidgetEditor.jsonSchema`
+- [x] P3.1 preview click-to-select — `interactivePreview` bridges canvas selection to tree/inspector
 - [ ] P4 consumer swap runbook
+- [ ] P4 tile_paper domain types (`tile`, `list-view`, full `WidgetPropertySections`) and `WidgetPreviewCanvas` zoom/pan chrome
+- [ ] P4 full `createWidgetJsonSchema` parity (all builtin widget types from tile_paper)
 
 ## Verification
 
