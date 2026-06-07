@@ -26,7 +26,8 @@ export const Overview: Story = {
       <div style={{ maxWidth: 720 }}>
         <h1 style={{ margin: '0 0 8px', fontSize: 28 }}>Newchobo UI</h1>
         <p style={{ margin: '0 0 28px', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
-          Reusable workbench primitives for compact desktop-style React interfaces.
+          Reusable workbench primitives for compact desktop-style React interfaces. Standalone
+          host contract: <code>docs/workbench/standalone-host.md</code>.
         </p>
         <h2 style={{ margin: '0 0 12px', fontSize: 18 }}>Playground map</h2>
         <ul
