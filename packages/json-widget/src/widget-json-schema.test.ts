@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { createPlaygroundWidgetJsonSchema, PLAYGROUND_WIDGET_JSON_SCHEMA } from './widget-json-schema.js';
+import {
+  createPlaygroundWidgetJsonSchema,
+  PLAYGROUND_WIDGET_JSON_SCHEMA,
+} from './widget-json-schema.js';
 
 describe('createPlaygroundWidgetJsonSchema', () => {
   it('includes built-in playground widget definitions', () => {
@@ -27,7 +30,7 @@ describe('createPlaygroundWidgetJsonSchema', () => {
     ]);
 
     const definitions = schema.definitions as Record<string, { oneOf?: unknown[] }>;
-    expect(definitions.Widget.oneOf?.length).toBeGreaterThan(9);
+    expect(definitions.Widget.oneOf?.length).toBeGreaterThan(10);
     expect(definitions.CustomWidget_custom_clock).toBeDefined();
   });
 });

@@ -2,7 +2,18 @@ import type { WidgetJsonSchema, WidgetTypeDefinition } from '@workbench-kit/cont
 
 type JsonSchemaObject = Record<string, unknown>;
 
-const PLAYGROUND_WIDGET_TYPES = ['text', 'box', 'grid', 'stack', 'row', 'column', 'button', 'list-view', 'tile'] as const;
+const PLAYGROUND_WIDGET_TYPES = [
+  'text',
+  'box',
+  'grid',
+  'stack',
+  'row',
+  'column',
+  'button',
+  'input',
+  'list-view',
+  'tile',
+] as const;
 
 function placementProperties(): JsonSchemaObject {
   return {
@@ -32,6 +43,7 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
         { $ref: '#/definitions/RowWidget' },
         { $ref: '#/definitions/ColumnWidget' },
         { $ref: '#/definitions/ButtonWidget' },
+        { $ref: '#/definitions/InputWidget' },
         { $ref: '#/definitions/ListViewWidget' },
         { $ref: '#/definitions/TileWidget' },
       ],
@@ -142,6 +154,21 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
       },
       additionalProperties: true,
     },
+    InputWidget: {
+      type: 'object',
+      required: ['type'],
+      properties: {
+        type: { const: 'input' },
+        label: { type: 'string' },
+        placeholder: { type: 'string' },
+        value: { type: 'string' },
+        background: { type: 'string' },
+        color: { type: 'string' },
+        borderRadius: { type: 'number' },
+        ...placementProperties(),
+      },
+      additionalProperties: true,
+    },
     ListViewWidget: {
       type: 'object',
       required: ['type'],
@@ -222,7 +249,10 @@ export function createPlaygroundWidgetJsonSchema(
     ]),
   );
 
-  const baseDefinitions = BASE_PLAYGROUND_WIDGET_SCHEMA.definitions as Record<string, JsonSchemaObject>;
+  const baseDefinitions = BASE_PLAYGROUND_WIDGET_SCHEMA.definitions as Record<
+    string,
+    JsonSchemaObject
+  >;
   const widgetDefinition = baseDefinitions.Widget ?? {};
   const widgetOneOf = Array.isArray(widgetDefinition.oneOf) ? [...widgetDefinition.oneOf] : [];
 
