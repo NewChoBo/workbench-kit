@@ -3,6 +3,11 @@
 > **Focus (2026-06-07):** Complete workbench-kit first; `tile_paper` and
 > `custom_launcher` are reference-only until the kit milestone closes. No
 > downstream changes unless a tiny kit API fix blocks kit work.
+>
+> **JSON widget authoring** follows the **port-then-replace** policy: port
+> `json-widget-tree`, `json-widget-editor`, and `JsonConfigWorkbench` patterns
+> into kit first (Phases 1–3), then swap consumers after the kit milestone (Phase 4).
+> See [future-capabilities.md § JSON Widget](./future-capabilities.md#json-widget-port-then-replace-strategy).
 
 This document tracks the remaining work needed to turn the current workbench
 stories into reusable public UI components and realistic Storybook validation
