@@ -37,8 +37,29 @@ export {
   getWidgetChildAtSegment,
   getWidgetChildren,
   getWidgetDisplayLabel,
+  insertWidgetChildAtPath,
+  removeWidgetAtPath,
+  reorderWidgetChildAtPath,
   replaceWidgetAtPath,
+  reparentWidgetAtPath,
+  setBoxChildAtPath,
+  updateWidgetAtPath,
 } from './widget-tree.js';
+
+export type { ArrayChildWidget } from './widget-child-ops.js';
+export { collectAllContainerKeys, isContainerWidget } from './widget-child-ops.js';
+
+export type {
+  GridChildPlacement,
+  GridLayoutSpec,
+  LinearChildPlacement,
+  LinearLayoutSpec,
+  Rect,
+  StackChildPlacement,
+} from './layout/types.js';
+export { computeGridChildRect } from './layout/grid.js';
+export { computeLinearChildRects } from './layout/linear.js';
+export { computeStackChildRect } from './layout/stack.js';
 
 export type { WidgetPatch } from './widget-patch.js';
 export { applyWidgetPatch } from './widget-patch.js';

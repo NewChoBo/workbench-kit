@@ -12,26 +12,32 @@ import { applyWidgetPatch } from './widget-patch.js';
 import {
   collectWidgetNodes,
   getWidgetAtPath,
-  getWidgetDisplayLabel,
+  updateWidgetAtPath,
   type GenericWidget,
 } from './widget-tree.js';
 
 const rootWidget: GenericWidget = {
-  type: 'demo:layout',
+  type: 'grid',
   columns: 2,
   children: [
     {
-      type: 'demo:stack',
+      type: 'stack',
+      col: 0,
+      row: 0,
       children: [
         {
-          type: 'demo:box',
-          child: { type: 'demo:text', text: 'nested' },
+          type: 'box',
+          left: 8,
+          top: 12,
+          child: { type: 'text', text: 'nested' },
         },
       ],
     },
     {
-      type: 'demo:card',
-      title: 'Tile',
+      type: 'tile',
+      col: 1,
+      row: 0,
+      layers: [{ type: 'text', text: 'Tile' }],
     },
   ],
 };
@@ -42,10 +48,7 @@ describe('generic widget tree', () => {
     const textPath = appendBoxChildPath(boxPath);
 
     expect(widgetPathKey(textPath)).toBe('$.children[0].children[0].child');
-    expect(getWidgetAtPath(rootWidget, textPath)).toEqual({
-      type: 'demo:text',
-      text: 'nested',
-    });
+    expect(getWidgetAtPath(rootWidget, textPath)).toEqual({ type: 'text', text: 'nested' });
   });
 
   it('round-trips path keys', () => {
@@ -61,31 +64,150 @@ describe('generic widget tree', () => {
   it('collects editable nodes with parent relationships', () => {
     const nodes = collectWidgetNodes(rootWidget);
 
-    expect(nodes.length).toBeGreaterThan(3);
-    expect(nodes[0]?.path).toEqual([]);
-    expect(nodes.some((node) => node.widget.type === 'demo:text')).toBe(true);
+    expect(nodes.map((node) => `${node.widget.type}:${widgetPathKey(node.path)}`)).toEqual([
+      'grid:$',
+      'stack:$.children[0]',
+      'box:$.children[0].children[0]',
+      'text:$.children[0].children[0].child',
+      'tile:$.children[1]',
+    ]);
   });
 
-  it('applies replace-widget patches', () => {
-    const textPath = appendBoxChildPath(
-      appendChildrenPath(appendChildrenPath(ROOT_WIDGET_PATH, 0), 0),
-    );
+  it('preserves parent placement fields when a widget is replaced', () => {
+    const tilePath = appendChildrenPath(ROOT_WIDGET_PATH, 1);
     const result = applyWidgetPatch(rootWidget, {
       type: 'replace-widget',
-      path: textPath,
-      widget: { type: 'demo:text', text: 'updated' },
+      path: tilePath,
+      widget: { type: 'text', text: 'replacement' },
     });
 
     expect(result.changed).toBe(true);
-    expect(getWidgetAtPath(result.root, textPath)).toEqual({
-      type: 'demo:text',
-      text: 'updated',
+    const child = (result.root.children as GenericWidget[] | undefined)?.[1];
+    expect(child).toMatchObject({
+      type: 'text',
+      text: 'replacement',
+      col: 1,
+      row: 0,
     });
-    expect(formatWidgetJson(result.root)).toContain('"updated"');
   });
 
-  it('builds display labels from type and optional id', () => {
-    expect(getWidgetDisplayLabel({ type: 'demo:card', title: 'x' })).toBe('demo:card');
-    expect(getWidgetDisplayLabel({ type: 'demo:card', id: 'hero' })).toBe('demo:card (hero)');
+  it('updates a nested widget without mutating invalid paths', () => {
+    const textPath = appendBoxChildPath(
+      appendChildrenPath(appendChildrenPath(ROOT_WIDGET_PATH, 0), 0),
+    );
+    const updated = updateWidgetAtPath(rootWidget, textPath, (widget) =>
+      widget.type === 'text' ? { ...widget, text: 'changed' } : widget,
+    );
+    const invalid = updateWidgetAtPath(
+      rootWidget,
+      appendChildrenPath(ROOT_WIDGET_PATH, 9),
+      (widget) => ({ ...widget }),
+    );
+
+    expect(getWidgetAtPath(updated.root, textPath)).toEqual({ type: 'text', text: 'changed' });
+    expect(invalid).toEqual({ root: rootWidget, changed: false });
+  });
+
+  it('inserts layout children only when their required placement is available', () => {
+    const inserted = applyWidgetPatch(rootWidget, {
+      type: 'insert-child',
+      parentPath: ROOT_WIDGET_PATH,
+      index: 1,
+      child: { type: 'text', text: 'grid sibling', col: 0, row: 1 },
+    });
+    const rejected = applyWidgetPatch(rootWidget, {
+      type: 'insert-child',
+      parentPath: ROOT_WIDGET_PATH,
+      index: 1,
+      child: { type: 'text', text: 'missing grid placement' },
+    });
+
+    expect((inserted.root.children as GenericWidget[])[1]?.type).toBe('text');
+    expect(rejected).toEqual({ root: rootWidget, changed: false });
+  });
+
+  it('reorders stack children without dropping their edge placement', () => {
+    const stackRoot: GenericWidget = {
+      type: 'stack',
+      children: [
+        { type: 'text', text: 'back', left: 0, top: 0 },
+        { type: 'text', text: 'front', left: 20, top: 30 },
+      ],
+    };
+
+    const result = applyWidgetPatch(stackRoot, {
+      type: 'reorder-child',
+      parentPath: ROOT_WIDGET_PATH,
+      fromIndex: 1,
+      toIndex: 0,
+    });
+
+    expect(result.root.children).toEqual([
+      { type: 'text', text: 'front', left: 20, top: 30 },
+      { type: 'text', text: 'back', left: 0, top: 0 },
+    ]);
+  });
+
+  it('sets and removes box children through patch operations', () => {
+    const boxPath = appendChildrenPath(appendChildrenPath(ROOT_WIDGET_PATH, 0), 0);
+    const replaced = applyWidgetPatch(rootWidget, {
+      type: 'set-box-child',
+      boxPath,
+      child: { type: 'image', src: 'icon.png' },
+    });
+    const removed = applyWidgetPatch(replaced.root, {
+      type: 'remove-widget',
+      path: appendBoxChildPath(boxPath),
+    });
+
+    expect(getWidgetAtPath(replaced.root, appendBoxChildPath(boxPath))).toEqual({
+      type: 'image',
+      src: 'icon.png',
+    });
+    expect(getWidgetAtPath(removed.root, appendBoxChildPath(boxPath))).toBeNull();
+  });
+
+  it('removes array children by their widget path', () => {
+    const result = applyWidgetPatch(rootWidget, {
+      type: 'remove-widget',
+      path: appendChildrenPath(ROOT_WIDGET_PATH, 1),
+    });
+
+    expect(result.root.children).toHaveLength(1);
+    expect(getWidgetAtPath(result.root, appendChildrenPath(ROOT_WIDGET_PATH, 1))).toBeNull();
+  });
+
+  it('reparents widget across different containers', () => {
+    const tilePath = appendChildrenPath(ROOT_WIDGET_PATH, 1);
+    const stackPath = appendChildrenPath(ROOT_WIDGET_PATH, 0);
+
+    const result = applyWidgetPatch(rootWidget, {
+      type: 'reparent-widget',
+      fromPath: tilePath,
+      toParentPath: stackPath,
+      insertIndex: 0,
+    });
+
+    expect(result.changed).toBe(true);
+    const newStack = getWidgetAtPath(result.root, stackPath);
+    expect(newStack?.children).toHaveLength(2);
+    expect((newStack?.children as GenericWidget[])[0]?.type).toBe('tile');
+    expect(result.root.children).toHaveLength(1);
+  });
+
+  it('applies replace-widget patches for demo types', () => {
+    const demoRoot: GenericWidget = {
+      type: 'demo:layout',
+      columns: 2,
+      children: [{ type: 'demo:card', title: 'Tile' }],
+    };
+    const result = applyWidgetPatch(demoRoot, {
+      type: 'replace-widget',
+      path: appendChildrenPath(ROOT_WIDGET_PATH, 0),
+      widget: { type: 'demo:card', title: 'Updated' },
+    });
+
+    expect(result.changed).toBe(true);
+    expect(formatWidgetJson(result.root)).toContain('Updated');
   });
 });
