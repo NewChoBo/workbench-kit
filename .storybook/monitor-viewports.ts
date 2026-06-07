@@ -1,4 +1,44 @@
 const monitorViewports = {
+  'verify-mobile-320': {
+    name: 'Verify · Mobile 320×568',
+    styles: {
+      width: '320px',
+      height: '568px',
+    },
+    type: 'mobile',
+  },
+  'verify-tablet-768': {
+    name: 'Verify · Tablet 768×1024',
+    styles: {
+      width: '768px',
+      height: '1024px',
+    },
+    type: 'tablet',
+  },
+  'verify-desktop-1024': {
+    name: 'Verify · Desktop 1024×768',
+    styles: {
+      width: '1024px',
+      height: '768px',
+    },
+    type: 'desktop',
+  },
+  'verify-desktop-1440': {
+    name: 'Verify · Desktop 1440×900',
+    styles: {
+      width: '1440px',
+      height: '900px',
+    },
+    type: 'desktop',
+  },
+  'verify-ultrawide-2560': {
+    name: 'Verify · Ultrawide 2560×1080',
+    styles: {
+      width: '2560px',
+      height: '1080px',
+    },
+    type: 'desktop',
+  },
   'monitor-1366x768': {
     name: 'Monitor 1366x768 (16:9)',
     styles: {

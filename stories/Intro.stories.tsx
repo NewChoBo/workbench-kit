@@ -30,10 +30,19 @@ export const Overview: Story = {
         </p>
         <ul style={{ display: 'grid', gap: 10, margin: 0, padding: 0, listStyle: 'none' }}>
           <li>
+            <strong>Verification</strong>: start at{' '}
+            <code>React/Workbench/Verification</code> for viewport matrix, shell states, and
+            error/warning gallery
+          </li>
+          <li>
+            <strong>Integrated shell</strong>: <code>React/Workbench → Integrated Shell</code> for
+            full end-to-end flow; use toolbar viewports prefixed with <strong>Verify ·</strong>
+          </li>
+          <li>
             <strong>Primitives</strong>: buttons, badges, fields, inputs, and empty states
           </li>
           <li>
-            <strong>Layout</strong>: panels, sidebar frames, and workbench composition
+            <strong>Layout</strong>: panels, sidebar frames, banners, and workbench composition
           </li>
           <li>
             <strong>Overlays</strong>: modal dialogs and context menus
