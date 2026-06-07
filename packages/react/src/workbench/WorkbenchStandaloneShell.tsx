@@ -24,6 +24,10 @@ export interface WorkbenchStandaloneShellContext<
 > {
   activityId: TActivityId;
   commandContext: WorkbenchShellCommandContext<TActivityId>;
+  isPrimarySidebarVisible: boolean;
+  isSettingsOpen: boolean;
+  primarySidebarSizePercent: number;
+  theme: TTheme;
   showActivity: (activityId: TActivityId) => void;
   activateActivity: (activityId: TActivityId) => void;
   setTheme: (theme: TTheme) => void;
@@ -187,6 +191,10 @@ export function WorkbenchStandaloneShell<
       showActivity: shell.showActivity,
       togglePrimarySidebar: shell.togglePrimarySidebar,
     },
+    isPrimarySidebarVisible,
+    isSettingsOpen,
+    primarySidebarSizePercent,
+    theme,
     showActivity,
     activateActivity,
     setTheme: shell.setTheme,
@@ -202,7 +210,14 @@ export function WorkbenchStandaloneShell<
 
   const context = useMemo(
     () => createContext({ activityId: activeActivityId, shell }),
-    [shell, activeActivityId, isPrimarySidebarVisible],
+    [
+      shell,
+      activeActivityId,
+      isPrimarySidebarVisible,
+      isSettingsOpen,
+      primarySidebarSizePercent,
+      theme,
+    ],
   );
 
   const statusSections = useMemo(
