@@ -16,6 +16,7 @@ import {
   initializeWorkbenchDocumentPatchHistory,
   type WorkbenchDocument,
   type WorkbenchDocumentAction,
+  type WorkbenchDocumentPatchHistoryState,
   type WorkbenchDocumentPatchResult,
 } from './index';
 import type { WorkbenchStandaloneBootstrap } from './standalone';
@@ -32,6 +33,10 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<typeof meta>;
+type WorkbenchPatchApplyResult = {
+  state: WorkbenchDocumentPatchHistoryState;
+  result: WorkbenchDocumentPatchResult;
+};
 
 type DemoActivityId = 'explorer' | 'search';
 
@@ -132,7 +137,7 @@ function FigmaShellWorkbenchPreview() {
       return;
     }
 
-    let patchResult: WorkbenchDocumentPatchResult;
+    let patchResult: WorkbenchPatchApplyResult;
     try {
       const nextPatch = createPatchFromWorkbenchDocumentAction(action, documentJson);
       patchResult = history.applyPatch(nextPatch.patch);

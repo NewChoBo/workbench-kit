@@ -5,12 +5,13 @@ import { Button } from '../primitives/Button';
 import {
   WorkbenchDocumentRenderer,
   type WorkbenchDocument,
-  type WorkbenchDocumentPatchResult,
   createPatchFromWorkbenchDocumentAction,
   documentNodesToWorkspaceFiles,
   workspaceFilesToDocument,
   initializeWorkbenchDocumentPatchHistory,
   isWorkbenchDocumentSupported,
+  type WorkbenchDocumentPatchResult,
+  type WorkbenchDocumentPatchHistoryState,
 } from './index';
 import type { WorkbenchDocumentAction } from './index';
 import type { WorkspaceFile } from './workspace';
@@ -25,6 +26,11 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<typeof meta>;
+
+type WorkbenchPatchApplyResult = {
+  state: WorkbenchDocumentPatchHistoryState;
+  result: WorkbenchDocumentPatchResult;
+};
 
 const initialDocument: WorkbenchDocument = {
   version: '1.0.0',
@@ -82,7 +88,7 @@ export const RendererWithHistory: Story = {
         return;
       }
 
-      let patchResult: WorkbenchDocumentPatchResult;
+      let patchResult: WorkbenchPatchApplyResult;
       try {
         const nextPatch = createPatchFromWorkbenchDocumentAction(action, documentJson);
         patchResult = history.applyPatch(nextPatch.patch);
@@ -364,7 +370,7 @@ export const FeatureTestScreen: Story = {
         return;
       }
 
-      let patchResult: WorkbenchDocumentPatchResult;
+      let patchResult: WorkbenchPatchApplyResult;
       try {
         const nextPatch = createPatchFromWorkbenchDocumentAction(action, documentJson);
         patchResult = history.applyPatch(nextPatch.patch);
@@ -507,7 +513,7 @@ export const FeatureTestScreen: Story = {
   tags: ['storybook-play-required'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const docWindow = canvasElement.ownerDocument.defaultView;
+    const docWindow = canvasElement.ownerDocument.defaultView ?? window;
     await userEvent.click(canvas.getByRole('button', { name: 'label node 생성' }));
     await expect(canvas.getByTestId('feature-status')).toHaveTextContent('create text');
 
