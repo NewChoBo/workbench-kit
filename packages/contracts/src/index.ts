@@ -35,6 +35,58 @@ export {
 } from './patch';
 
 export type {
+  WorkbenchDocument,
+  WorkbenchDocumentAction,
+  WorkbenchDocumentActionBase,
+  WorkbenchDocumentActionResult,
+  WorkbenchDocumentActionType,
+  WorkbenchDocumentAdapter,
+  WorkbenchDocumentContainerNode,
+  WorkbenchDocumentCreateAction,
+  WorkbenchDocumentDeleteAction,
+  WorkbenchDocumentLeafNode,
+  WorkbenchDocumentMeta,
+  WorkbenchDocumentMoveAction,
+  WorkbenchDocumentNode,
+  WorkbenchDocumentNodeBase,
+  WorkbenchDocumentPatch,
+  WorkbenchDocumentPatchAction,
+  WorkbenchDocumentPatchOp,
+  WorkbenchDocumentRenderContext,
+  WorkbenchDocumentReplaceAction,
+  WorkbenchDocumentReplaceContentAction,
+  WorkbenchDocumentReplaceLayoutAction,
+  WorkbenchDocumentReplaceStyleAction,
+  WorkbenchDocumentRenameAction,
+  WorkbenchNodeConstraints,
+  WorkbenchNodeLayout,
+  WorkbenchNodeType,
+  WorkbenchPage,
+  WorkbenchVisualStyle,
+  WorkspaceToWorkbenchDocumentOptions,
+  WorkbenchToWorkspaceConversionOptions,
+} from './workbench-document';
+export {
+  buildWorkspaceDocumentLookup,
+  documentNodesToWorkspaceFiles,
+  workspaceFilesToDocument,
+} from './workbench-document-adapter';
+export { createPatchFromWorkbenchDocumentAction } from './workbench-document-actions';
+export {
+  applyWorkbenchDocumentPatch,
+  assertWorkbenchDocument,
+  deserializeWorkbenchDocumentPatch,
+  initializeWorkbenchDocumentPatchHistory,
+  isWorkbenchDocumentSupported,
+} from './workbench-document-patch';
+export type {
+  WorkbenchDocumentPatchError,
+  WorkbenchDocumentPatchHistory,
+  WorkbenchDocumentPatchHistoryState,
+  WorkbenchDocumentPatchResult,
+} from './workbench-document-patch';
+
+export type {
   SaveConflictCode,
   SaveDraftInput,
   SaveFailure,

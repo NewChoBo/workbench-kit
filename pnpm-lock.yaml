@@ -153,7 +153,11 @@ importers:
         specifier: ^10.1.0
         version: 10.1.0(@types/react@19.2.16)(react@19.2.7)
 
-  packages/runtime: {}
+  packages/runtime:
+    dependencies:
+      '@workbench-kit/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
   packages/services:
     dependencies:

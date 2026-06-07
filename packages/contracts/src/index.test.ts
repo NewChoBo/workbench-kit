@@ -22,6 +22,12 @@ import {
   isSaveSuccess,
   isWorkspacePatchDeleteFile,
   isWorkspacePatchWriteFile,
+  applyWorkbenchDocumentPatch,
+  buildWorkspaceDocumentLookup,
+  createPatchFromWorkbenchDocumentAction,
+  deserializeWorkbenchDocumentPatch,
+  documentNodesToWorkspaceFiles,
+  workspaceFilesToDocument,
   normalizeServiceFailureMessage,
   type ServiceFailureCode,
 } from './index';
@@ -230,5 +236,60 @@ describe('contract helpers', () => {
         remoteUrl: 'https://cdn.example/icon.png',
       },
     });
+  });
+
+  it('exposes workbench-document patch pipeline from public index', () => {
+    const doc = workspaceFilesToDocument(
+      [
+        { content: 'hello', path: 'notes/readme.md' },
+        { content: 'const x = 1;', path: 'src/main.ts' },
+      ],
+      {
+        pageId: 'page-main',
+        pageName: 'Main',
+        version: '1.0.0',
+      },
+    );
+
+    const next = applyWorkbenchDocumentPatch(doc, {
+      id: 'patch-1',
+      schemaVersion: 1,
+      timestamp: '2026-06-07T00:00:00.000Z',
+      ops: [
+        {
+          op: 'replace',
+          path: '/pages/0/nodes/0/content',
+          value: 'updated',
+        },
+      ],
+    });
+
+    expect(next.document.pages).toHaveLength(1);
+    expect(next.document.pages[0].nodes[0]).toMatchObject({
+      content: 'updated',
+    });
+    expect(buildWorkspaceDocumentLookup(next.document).size).toBeGreaterThan(0);
+  });
+
+  it('supports document action -> patch roundtrip from public index', () => {
+    const doc = workspaceFilesToDocument([{ content: 'A', path: 'a.txt' }, { content: 'B', path: 'b.txt' }], {
+      pageId: 'page-main',
+      pageName: 'Main',
+      version: '1.0.0',
+    });
+    const patchResult = createPatchFromWorkbenchDocumentAction(
+      {
+        action: 'replace-content',
+        nodeId: 'node:a.txt',
+        pageId: 'page-main',
+        content: 'AA',
+      },
+      doc,
+    );
+    const next = applyWorkbenchDocumentPatch(doc, patchResult.patch);
+
+    expect(next.document.pages[0].nodes[0]).toMatchObject({ id: 'node:a.txt', content: 'AA' });
+    expect(deserializeWorkbenchDocumentPatch(patchResult.patch)).toEqual(patchResult.patch);
+    expect(documentNodesToWorkspaceFiles(next.document).length).toBe(2);
   });
 });
