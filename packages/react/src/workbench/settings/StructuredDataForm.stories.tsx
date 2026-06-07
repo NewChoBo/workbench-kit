@@ -190,7 +190,8 @@ export const SectionedData: Story = {
     await expect(canvas.getByRole('button', { name: 'Save' })).toBeDisabled();
 
     await userEvent.type(profileName, 'Workbench Runtime');
-    await userEvent.selectOptions(canvas.getByRole('combobox', { name: 'Density' }), 'compact');
+    await userEvent.click(canvas.getByRole('combobox', { name: 'Density' }));
+    await userEvent.click(canvas.getByRole('option', { name: 'Compact' }));
     await expect(eventLog).toHaveTextContent('Changed structured data');
 
     await userEvent.click(canvas.getByRole('button', { name: 'Add tag' }));
