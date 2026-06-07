@@ -75,6 +75,7 @@ Sync rules:
 - [x] P3 neutral layout calculators (grid/stack/linear) in `@workbench-kit/json-widget`
 - [x] P3 `EditorInteraction` promoted to `storybook-play-required`
 - [x] P3 parity gate tests (layout + patch + registry patterns)
+- [x] P3 `JsonWidget/Playground → Interactive` — full editor sandbox (add widget, DnD tree, Monaco, inspector, structural preview)
 - [ ] P4 consumer swap runbook
 
 ## Verification

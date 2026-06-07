@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
-import { ROOT_WIDGET_PATH } from '@workbench-kit/json-widget';
+import { ROOT_WIDGET_PATH, type WidgetPath } from '@workbench-kit/json-widget';
 
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
 import { WorkbenchParseError } from '../layout/WorkbenchLayout';
@@ -28,6 +28,7 @@ export interface JsonWidgetEditorProps {
   onDiscard?: (() => void) | undefined;
   onModeChange?: ((mode: WorkbenchArtifactMode) => void) | undefined;
   onSave?: (() => void) | undefined;
+  onSelectionChange?: ((path: WidgetPath | null) => void) | undefined;
   path?: string | undefined;
   readOnly?: boolean | undefined;
   showInspectorPanel?: boolean | undefined;
@@ -47,6 +48,7 @@ export function JsonWidgetEditor({
   onDiscard,
   onModeChange,
   onSave,
+  onSelectionChange,
   path = 'widget.json',
   readOnly = false,
   showInspectorPanel = true,
@@ -73,6 +75,10 @@ export function JsonWidgetEditor({
       sync.selectPath(ROOT_WIDGET_PATH);
     }
   }, [sync.root, sync.selection.pathKeys.size, sync.selectPath]);
+
+  useEffect(() => {
+    onSelectionChange?.(sync.selectedPath);
+  }, [onSelectionChange, sync.selectedPath]);
 
   const editorFile = useMemo<WorkspaceFile>(
     () => ({
