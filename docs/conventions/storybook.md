@@ -94,7 +94,8 @@ for the playground backlog.
 - Stories provide public fixture data and scenario-specific initial state.
 - Shared demo fixtures for the integrated shell live in `@workbench-kit/adapters/workbench-demo`.
 - Integrated shell orchestration lives in `packages/react/src/workbench/demo/IntegratedShellDemo.tsx`
-  and is composed through `WorkbenchStandaloneShell` (same host pattern as dev-agent).
+  with workspace flows in `integratedShellWorkspaceOrchestration.ts`, composed through
+  `WorkbenchStandaloneShell` (same host pattern as dev-agent).
 - Components, hooks, reducers, and command helpers own reusable behavior.
 - Integrated stories should compose Explorer, Search, Chat, Editor, Settings,
   ActivityBar, SplitView, and StatusBar through the same public APIs that a host
@@ -112,7 +113,8 @@ menu projection scoped to the surface that opened the menu.
 - Pass an explicit `WORKBENCH_COMMAND_SURFACE_*` value to
   `resolveCommandMenuItems` when a story or component renders command-backed
   context menus from shared command entries.
-- Pass `contextKeys` when menu entries or commands use string `when` clauses.
+- Pass `contextKeys` when menu entries or commands use string `when` clauses (for example
+  `workspace.hasSelection`, `workspace.multiSelection` on workspace command presets).
 - Treat surface-less `resolveCommandMenuItems` calls as unit-test coverage for
   registry fallback behavior or as intentionally global menus; do not use them
   in host-like Workbench integration paths.

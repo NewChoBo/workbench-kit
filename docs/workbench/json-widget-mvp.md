@@ -4,11 +4,11 @@ Status: **MVP complete** for framework-neutral parse/registry primitives.
 
 ## Scope
 
-| Track | MVP deliverable | Status |
-| --- | --- | --- |
-| `@workbench-kit/json-widget` | dist build, unit tests, Storybook playground | Done |
-| `@tilepaper/json-widget-tree` | delegates parse/registry to workbench-kit; keeps TilePaper widget types + layout locally | Done |
-| `@workbench-kit/contracts` | provider action → launchpad mapping integration test | Done |
+| Track                         | MVP deliverable                                                                          | Status |
+| ----------------------------- | ---------------------------------------------------------------------------------------- | ------ |
+| `@workbench-kit/json-widget`  | dist build, unit tests, Storybook playground                                             | Done   |
+| `@tilepaper/json-widget-tree` | delegates parse/registry to workbench-kit; keeps TilePaper widget types + layout locally | Done   |
+| `@workbench-kit/contracts`    | provider action → launchpad mapping integration test                                     | Done   |
 
 ## Package surface
 
