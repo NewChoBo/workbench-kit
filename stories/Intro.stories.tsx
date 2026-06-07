@@ -28,6 +28,30 @@ export const Overview: Story = {
         <p style={{ margin: '0 0 28px', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
           Reusable workbench primitives for compact desktop-style React interfaces.
         </p>
+        <h2 style={{ margin: '0 0 12px', fontSize: 18 }}>Playground map</h2>
+        <ul
+          style={{
+            display: 'grid',
+            gap: 8,
+            margin: '0 0 28px',
+            padding: 0,
+            listStyle: 'none',
+          }}
+        >
+          <li>
+            <code>JsonConfig/Workbench</code> — Monaco config editor with schema or widget preview
+          </li>
+          <li>
+            <code>JsonWidget/Playground</code> — parse, format, and mock registry render lab
+          </li>
+          <li>
+            <code>React/Workbench/Shell → Integrated Shell</code> — full end-to-end shell flow
+          </li>
+          <li>
+            <code>React/Workbench/Verification</code> — interactive chrome states and viewport
+            matrix
+          </li>
+        </ul>
         <ul style={{ display: 'grid', gap: 10, margin: 0, padding: 0, listStyle: 'none' }}>
           <li>
             <strong>Verification</strong>: start at{' '}

@@ -40,6 +40,32 @@ Low priority — defer until standalone shell and host bootstrap are stable in p
 - [ ] **P3** Layout persistence adapter (sidebar width, panel height, activity visibility) via
       host storage, not kit-internal localStorage.
 
+## Playground & sandbox (P1–P3)
+
+Storybook-first playground strategy. No standalone public playground app in the current milestone.
+
+| Surface | Today | Target |
+|---------|-------|--------|
+| JSON config | `JsonConfig/Workbench` (Monaco + schema/widget preview) | Host adoption + baseline play |
+| Widget parse/registry | `JsonWidget/Playground` (textarea demo) | Align with Monaco or document as parse-only demo |
+| Shell full flow | `Integrated Shell` via `IntegratedShellDemo` | Keep as reference host; do not duplicate in new playground export |
+| Chrome states | `Verification` interactive stories | Shared sandbox controls (theme, locale) |
+| Theme / i18n | Scattered story args | Dedicated sandbox story (depends on i18n P1, theme T1) |
+
+- [x] **P1** Intro playground map: link JsonConfig, JsonWidget Playground, Integrated Shell, Verification interactive stories.
+- [x] **P1** Document playground roles in `docs/conventions/storybook.md` (JsonConfig = production config pattern; JsonWidget Playground = parse/registry lab).
+- [ ] **P2** Optional shared Storybook decorator: theme + locale toggles for Integrated Shell and JsonConfig stories (blocked by i18n P1, theme T1).
+- [ ] **P2** Evaluate merging JsonWidget Playground editing UX into `JsonConfigWorkbench` widget mode vs keeping separate low-level demo.
+- [ ] **P2** Export pattern: compose `@workbench-kit/react/json-config` + `@workbench-kit/react/workbench/demo` — defer monolithic `WorkbenchPlayground` until host demand is clear.
+- [ ] **P3** Sample app / standalone launch reproducing ≥3 Storybook baselines outside Storybook (multilane Step 3).
+- [ ] **P3** Optional in-app `/playground` route in dev-agent or tile_paper only if Storybook is insufficient for backend-integrated experiments.
+
+### Related
+
+- [json-config-workbench.md](./json-config-workbench.md)
+- [json-widget-mvp.md](./json-widget-mvp.md)
+- [storybook.md](../conventions/storybook.md)
+
 ## Related docs
 
 - [migration-todo.md](./migration-todo.md) — active migration tracker
