@@ -7,11 +7,11 @@ chrome layout, activity routing, settings modal visibility, and theme state.
 
 ## Responsibilities
 
-| Layer | Owns | Does not own |
-|-------|------|--------------|
+| Layer                      | Owns                                                                                                                                      | Does not own                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | `WorkbenchStandaloneShell` | Activity bar, primary sidebar slot, secondary editor area, status bar, settings modal open/close, theme and sidebar visibility/size state | Workspace file I/O, chat transport, patch/save services, confirm dialogs |
-| Host render callbacks | Primary sidebar content (explorer/search/chat), editor panel, overlays (context menus, delete confirms) | Shell chrome resize rails beyond provided min/max props |
-| `bootstrap` contract | Activity descriptors, command registry reference, optional initial status sections | Command execution side-effects |
+| Host render callbacks      | Primary sidebar content (explorer/search/chat), editor panel, overlays (context menus, delete confirms)                                   | Shell chrome resize rails beyond provided min/max props                  |
+| `bootstrap` contract       | Activity descriptors, command registry reference, optional initial status sections                                                        | Command execution side-effects                                           |
 
 ## Bootstrap shape
 
@@ -50,12 +50,12 @@ Hosts must not mutate shell state outside these methods.
 
 ## Required render props
 
-| Prop | Purpose |
-|------|---------|
-| `renderPrimarySidebar` | Left activity view (explorer, search, chat, etc.) |
-| `renderSecondaryArea` | Main editor or artifact surface |
-| `renderOverlays` | Optional modals, context menus, confirm dialogs |
-| `getStatusSections` | Optional dynamic status model; falls back to `contract.statusSections` |
+| Prop                   | Purpose                                                                |
+| ---------------------- | ---------------------------------------------------------------------- |
+| `renderPrimarySidebar` | Left activity view (explorer, search, chat, etc.)                      |
+| `renderSecondaryArea`  | Main editor or artifact surface                                        |
+| `renderOverlays`       | Optional modals, context menus, confirm dialogs                        |
+| `getStatusSections`    | Optional dynamic status model; falls back to `contract.statusSections` |
 
 ## Event hooks
 

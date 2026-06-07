@@ -6,12 +6,12 @@ Status: **MVP** — kit primitive for JSON-based settings and configuration scre
 
 `JsonConfigWorkbench` composes existing workbench-kit pieces into a reusable **JSON config editor** pattern:
 
-| Region | Component | Role |
-| --- | --- | --- |
-| Shell | `Panel` + `WorkbenchArtifactModeControls` | Code / preview / split layout |
-| Left (code) | `WorkspaceEditor` | Monaco JSON editing |
-| Right (preview) | `WorkbenchStructuredDataSchemaPanel` or `JsonWidgetPreview` | Schema-driven form or widget live preview |
-| Toolbar | Save / Discard (optional) | Controlled dirty state via `baselineValue` |
+| Region          | Component                                                   | Role                                       |
+| --------------- | ----------------------------------------------------------- | ------------------------------------------ |
+| Shell           | `Panel` + `WorkbenchArtifactModeControls`                   | Code / preview / split layout              |
+| Left (code)     | `WorkspaceEditor`                                           | Monaco JSON editing                        |
+| Right (preview) | `WorkbenchStructuredDataSchemaPanel` or `JsonWidgetPreview` | Schema-driven form or widget live preview  |
+| Toolbar         | Save / Discard (optional)                                   | Controlled dirty state via `baselineValue` |
 
 Consumers (tile_paper, custom_launcher) can adopt this without migrating full `json-widget-editor` chrome yet.
 
@@ -69,13 +69,13 @@ pnpm typecheck
 
 ## Related work
 
-| Area | Status |
-| --- | --- |
-| `@workbench-kit/json-widget` parse/registry | Done |
-| `@workbench-kit/react/json-widget` `JsonWidgetPreview` | Done |
-| `StructuredArtifactEditor` (workspace file + drafts) | Done — use when editing workspace files with `WorkspaceDraftsProvider` |
-| `JsonConfigWorkbench` (controlled JSON config) | **This MVP** |
-| tile_paper `json-widget-editor` migration | Deferred — keep local until consumers adopt kit primitive |
+| Area                                                   | Status                                                                 |
+| ------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `@workbench-kit/json-widget` parse/registry            | Done                                                                   |
+| `@workbench-kit/react/json-widget` `JsonWidgetPreview` | Done                                                                   |
+| `StructuredArtifactEditor` (workspace file + drafts)   | Done — use when editing workspace files with `WorkspaceDraftsProvider` |
+| `JsonConfigWorkbench` (controlled JSON config)         | **This MVP**                                                           |
+| tile_paper `json-widget-editor` migration              | Deferred — keep local until consumers adopt kit primitive              |
 
 ## Consumer adoption sketch
 
@@ -94,7 +94,7 @@ const [baseline, setBaseline] = useState(initialJson);
   previewKind="auto"
   widgetRegistry={myRegistry}
   schema={launchpadSettingsSchema}
-/>
+/>;
 ```
 
 For workspace-integrated editors that already use `WorkspaceDraftsProvider`, prefer `StructuredArtifactEditor` directly.

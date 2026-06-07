@@ -14,10 +14,10 @@ Related docs:
 
 ## Decision Summary
 
-| Track | Lead reference | Workbench Kit focus |
-| ----- | -------------- | ------------------- |
-| **Product shell / runtime / library** | custom_launcher | `@workbench-kit/services`, `@workbench-kit/runtime`, `@workbench-kit/vscode-host`, future shell extraction |
-| **React workbench UI / JSON widget editor** | tile_paper | `@workbench-kit/react`, `@workbench-kit/json-widget`, `@workbench-kit/contracts` editor-facing types |
+| Track                                       | Lead reference  | Workbench Kit focus                                                                                        |
+| ------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Product shell / runtime / library**       | custom_launcher | `@workbench-kit/services`, `@workbench-kit/runtime`, `@workbench-kit/vscode-host`, future shell extraction |
+| **React workbench UI / JSON widget editor** | tile_paper      | `@workbench-kit/react`, `@workbench-kit/json-widget`, `@workbench-kit/contracts` editor-facing types       |
 
 **Do not** replace tile_paper as the primary reference for kit React and JSON widget
 editor evolution. **Do** treat custom_launcher as the primary reference for end-to-end
@@ -73,23 +73,23 @@ See [library-launch-boundary-gate.md](./library-launch-boundary-gate.md) and
 
 ## Domain Ownership Table
 
-| Domain | Primary reference | Kit package(s) | Secondary reference | Notes |
-| ------ | ----------------- | -------------- | ------------------- | ----- |
-| Launch / library mapping | Both (parity) | `@workbench-kit/contracts` | — | Single authority; no local reimplementation in runtime paths |
-| JSON widget parse / registry | tile_paper | `@workbench-kit/json-widget` | custom_launcher (launchpad bridge) | tile_paper owns tree math; launcher owns preview validation bridge |
-| JSON / config editor UI | tile_paper | `@workbench-kit/react` (`json-config`, json-widget bridge) | custom_launcher (`JsonWidgetPreview`) | Editor UX reference stays tile_paper |
-| Launchpad canvas editor | tile_paper | `@workbench-kit/react` canvas primitives | custom_launcher launchpad-ui | Spatial editing reference is tile_paper |
-| Workbench shell chrome (generic) | tile_paper | `@workbench-kit/react/workbench` | custom_launcher content-hub shell | Generic shell API from kit; product shell patterns from launcher |
-| Product shell (content hub, tabs, plugin views) | custom_launcher | Future extraction to `@workbench-kit/react` or `@workbench-kit/shell` | — | Not a tile_paper strength today |
-| Library browse / action runtime | custom_launcher | `@workbench-kit/services` (target) | tile_paper `launcher-core` | Extract orchestration, not SQLite/IPC |
-| Provider library / remote catalog | custom_launcher | `@workbench-kit/services`, `@workbench-kit/contracts` | tile_paper headless server | Adapter-friendly contracts only in kit |
-| Launchpad execution gateway | custom_launcher | `@workbench-kit/services` / `@workbench-kit/runtime` (target) | — | Desktop bridge stays downstream |
-| Plugin lifecycle / contributions | Both | `@workbench-kit/vscode-host`, `@workbench-kit/core` | custom_launcher plugin-host | Kit owns generic contribution merge; launcher owns catalog DTOs |
-| Command registry (framework-neutral) | Converge | `@workbench-kit/core` | custom_launcher `#workbench-core` | See [Command registry gap analysis](#command-registry-gap-analysis-step-1) |
-| Context keys / when clauses | custom_launcher | `@workbench-kit/core` (target) | VS Code conventions | Not yet in kit core |
-| Schema-driven settings (product) | custom_launcher | `@workbench-kit/react` settings primitives | tile_paper `ProjectConfigEditor` | Kit provides layout/forms; launcher provides product schema wiring |
-| VS Code extension bootstrap | kit | `@workbench-kit/vscode-extension` | custom_launcher extension apps | Extension wrapper stays in kit; product webviews stay in launcher |
-| Electron / desktop chrome | custom_launcher | `@workbench-kit/adapters` (future) | tile_paper electron app | No built-in Electron in kit |
+| Domain                                          | Primary reference | Kit package(s)                                                        | Secondary reference                   | Notes                                                                      |
+| ----------------------------------------------- | ----------------- | --------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------- |
+| Launch / library mapping                        | Both (parity)     | `@workbench-kit/contracts`                                            | —                                     | Single authority; no local reimplementation in runtime paths               |
+| JSON widget parse / registry                    | tile_paper        | `@workbench-kit/json-widget`                                          | custom_launcher (launchpad bridge)    | tile_paper owns tree math; launcher owns preview validation bridge         |
+| JSON / config editor UI                         | tile_paper        | `@workbench-kit/react` (`json-config`, json-widget bridge)            | custom_launcher (`JsonWidgetPreview`) | Editor UX reference stays tile_paper                                       |
+| Launchpad canvas editor                         | tile_paper        | `@workbench-kit/react` canvas primitives                              | custom_launcher launchpad-ui          | Spatial editing reference is tile_paper                                    |
+| Workbench shell chrome (generic)                | tile_paper        | `@workbench-kit/react/workbench`                                      | custom_launcher content-hub shell     | Generic shell API from kit; product shell patterns from launcher           |
+| Product shell (content hub, tabs, plugin views) | custom_launcher   | Future extraction to `@workbench-kit/react` or `@workbench-kit/shell` | —                                     | Not a tile_paper strength today                                            |
+| Library browse / action runtime                 | custom_launcher   | `@workbench-kit/services` (target)                                    | tile_paper `launcher-core`            | Extract orchestration, not SQLite/IPC                                      |
+| Provider library / remote catalog               | custom_launcher   | `@workbench-kit/services`, `@workbench-kit/contracts`                 | tile_paper headless server            | Adapter-friendly contracts only in kit                                     |
+| Launchpad execution gateway                     | custom_launcher   | `@workbench-kit/services` / `@workbench-kit/runtime` (target)         | —                                     | Desktop bridge stays downstream                                            |
+| Plugin lifecycle / contributions                | Both              | `@workbench-kit/vscode-host`, `@workbench-kit/core`                   | custom_launcher plugin-host           | Kit owns generic contribution merge; launcher owns catalog DTOs            |
+| Command registry (framework-neutral)            | Converge          | `@workbench-kit/core`                                                 | custom_launcher `#workbench-core`     | See [Command registry gap analysis](#command-registry-gap-analysis-step-1) |
+| Context keys / when clauses                     | custom_launcher   | `@workbench-kit/core` (target)                                        | VS Code conventions                   | Not yet in kit core                                                        |
+| Schema-driven settings (product)                | custom_launcher   | `@workbench-kit/react` settings primitives                            | tile_paper `ProjectConfigEditor`      | Kit provides layout/forms; launcher provides product schema wiring         |
+| VS Code extension bootstrap                     | kit               | `@workbench-kit/vscode-extension`                                     | custom_launcher extension apps        | Extension wrapper stays in kit; product webviews stay in launcher          |
+| Electron / desktop chrome                       | custom_launcher   | `@workbench-kit/adapters` (future)                                    | tile_paper electron app               | No built-in Electron in kit                                                |
 
 ## What NOT to Merge
 
@@ -98,12 +98,12 @@ product stacks.
 
 ### 1. `#workbench-ui` vs `@workbench-kit/react` (no wholesale merge)
 
-| Aspect | custom_launcher `#workbench-ui` | `@workbench-kit/react` |
-| ------ | -------------------------------- | ---------------------- |
-| Consumers | custom_launcher renderer, VS Code extension webviews | tile_paper web-editor, json-widget-editor, vscode-authoring |
-| Styling | Tailwind, desktop chrome, product-specific layout | Codicons, generic workbench tokens, Storybook-first |
-| Shell entry | `TilepaperContentHub`, authoring workbench composites | `WorkbenchShell`, workspace panels, `JsonConfigWorkbench` |
-| Test lock-in | `authoring-surface-adoption.test.ts` enforces local stack | `storybook-play-required` + unit tests |
+| Aspect       | custom_launcher `#workbench-ui`                           | `@workbench-kit/react`                                      |
+| ------------ | --------------------------------------------------------- | ----------------------------------------------------------- |
+| Consumers    | custom_launcher renderer, VS Code extension webviews      | tile_paper web-editor, json-widget-editor, vscode-authoring |
+| Styling      | Tailwind, desktop chrome, product-specific layout         | Codicons, generic workbench tokens, Storybook-first         |
+| Shell entry  | `TilepaperContentHub`, authoring workbench composites     | `WorkbenchShell`, workspace panels, `JsonConfigWorkbench`   |
+| Test lock-in | `authoring-surface-adoption.test.ts` enforces local stack | `storybook-play-required` + unit tests                      |
 
 **Policy:** Extract **generic primitives and contracts** from custom_launcher into kit.
 Do **not** copy `#workbench-ui` components into `@workbench-kit/react` as a parallel
@@ -164,27 +164,27 @@ no breaking API changes.
 
 ### Source locations
 
-| Implementation | Path | Role |
-| -------------- | ---- | ---- |
-| custom_launcher | `packages/workbench-core/src/commands/create-command-registry.ts` | Context-key-aware resolve API |
-| Workbench Kit | `packages/core/src/commands.ts` | Map registry + menu projection + contributions |
+| Implementation  | Path                                                              | Role                                           |
+| --------------- | ----------------------------------------------------------------- | ---------------------------------------------- |
+| custom_launcher | `packages/workbench-core/src/commands/create-command-registry.ts` | Context-key-aware resolve API                  |
+| Workbench Kit   | `packages/core/src/commands.ts`                                   | Map registry + menu projection + contributions |
 
 ### API comparison
 
-| Concern | custom_launcher `createCommandRegistry` | `@workbench-kit/core` |
-| ------- | --------------------------------------- | --------------------- |
-| Registry shape | Object with `resolve`, `resolveMany`, `resolveVisible`, `getKeys` | `ReadonlyMap<string, CommandDefinition>` |
-| Command definition | `id`, `label` (static or fn), `run`, optional `when`, optional `isEnabled` | `id`, `label`, optional `run`, `isVisible`, `isEnabled`, `icon`, `shortcut`, `danger` |
-| Context model | Split: `TContext` + `TKeys` via `getKeys(context)` | Single `TContext`; predicates receive context only |
-| Visibility | `when` clause: string (context-key expression) or `(keys, context) => boolean` | `isVisible?(context)` on command and menu entry |
-| Enabled state | `isEnabled?(keys, context)`; disabled execute is no-op | `isEnabled?(context)`; `canExecuteCommand` / `executeCommand` |
-| Resolution output | `ResolvedCommand`: `id`, `label`, `visible`, `enabled`, `execute()` | Menu path: `ResolvedCommandMenuCommandItem`; no first-class `resolve(commandId)` |
-| Menu projection | Separate: `plugin-command-menu-item-projection.ts` (plugin catalog DTOs) | Built-in: `resolveCommandMenuItems`, `surfaces`, separators, `compactCommandMenuItems` |
-| Contributions | Plugin contributions via `#shared/plugins` (external to core registry) | `CommandContribution`, `mergeCommandContributions`, `createCommandRegistryFromContributions` |
-| Conflict policy | Map last registration wins (implicit in array input) | Explicit `last-write-wins` / `hard-fail` + `findCommandDefinitionConflicts` |
-| Dynamic label | `label(keys, context)` | `CommandValue<TContext, string>` — context-only function |
-| VS Code `when` | `evaluateWorkbenchContextKeyWhenClause` on string clauses | Not implemented in kit core |
-| Execution | `ResolvedCommand.execute()` returns `Promise<void>` | `executeCommand` sync void handler; returns `boolean` |
+| Concern            | custom_launcher `createCommandRegistry`                                        | `@workbench-kit/core`                                                                        |
+| ------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Registry shape     | Object with `resolve`, `resolveMany`, `resolveVisible`, `getKeys`              | `ReadonlyMap<string, CommandDefinition>`                                                     |
+| Command definition | `id`, `label` (static or fn), `run`, optional `when`, optional `isEnabled`     | `id`, `label`, optional `run`, `isVisible`, `isEnabled`, `icon`, `shortcut`, `danger`        |
+| Context model      | Split: `TContext` + `TKeys` via `getKeys(context)`                             | Single `TContext`; predicates receive context only                                           |
+| Visibility         | `when` clause: string (context-key expression) or `(keys, context) => boolean` | `isVisible?(context)` on command and menu entry                                              |
+| Enabled state      | `isEnabled?(keys, context)`; disabled execute is no-op                         | `isEnabled?(context)`; `canExecuteCommand` / `executeCommand`                                |
+| Resolution output  | `ResolvedCommand`: `id`, `label`, `visible`, `enabled`, `execute()`            | Menu path: `ResolvedCommandMenuCommandItem`; no first-class `resolve(commandId)`             |
+| Menu projection    | Separate: `plugin-command-menu-item-projection.ts` (plugin catalog DTOs)       | Built-in: `resolveCommandMenuItems`, `surfaces`, separators, `compactCommandMenuItems`       |
+| Contributions      | Plugin contributions via `#shared/plugins` (external to core registry)         | `CommandContribution`, `mergeCommandContributions`, `createCommandRegistryFromContributions` |
+| Conflict policy    | Map last registration wins (implicit in array input)                           | Explicit `last-write-wins` / `hard-fail` + `findCommandDefinitionConflicts`                  |
+| Dynamic label      | `label(keys, context)`                                                         | `CommandValue<TContext, string>` — context-only function                                     |
+| VS Code `when`     | `evaluateWorkbenchContextKeyWhenClause` on string clauses                      | Not implemented in kit core                                                                  |
+| Execution          | `ResolvedCommand.execute()` returns `Promise<void>`                            | `executeCommand` sync void handler; returns `boolean`                                        |
 
 ### Semantic overlaps
 
@@ -224,11 +224,11 @@ implementation to mimic the other's full API.
 
 Recommended bridge directions:
 
-| Direction | Adapter responsibility |
-| --------- | ---------------------- |
-| launcher → kit menu UI | Map `ResolvedCommand` or plugin menu items to `CommandMenuItem` / React `ContextMenuItem` (kit react adapter already does this for kit-native menus) |
+| Direction                             | Adapter responsibility                                                                                                                                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| launcher → kit menu UI                | Map `ResolvedCommand` or plugin menu items to `CommandMenuItem` / React `ContextMenuItem` (kit react adapter already does this for kit-native menus)                                                                            |
 | kit contributions → launcher registry | Wrap `CommandDefinition<TContext>` as launcher `CommandDefinition` with `getKeys` deriving keys from context; map `isVisible` to `when: undefined` or a fixed predicate; defer string `when` to a future kit context-key module |
-| launcher `when` → kit | When kit gains context-key evaluation, accept string `when` on `CommandMenuCommandEntry` or a `CommandDefinition.when?: string` field; until then, evaluate in launcher adapter before calling `resolveCommandMenuItems` |
+| launcher `when` → kit                 | When kit gains context-key evaluation, accept string `when` on `CommandMenuCommandEntry` or a `CommandDefinition.when?: string` field; until then, evaluate in launcher adapter before calling `resolveCommandMenuItems`        |
 
 **Medium term (kit core evolution):** Extend `@workbench-kit/core` in this order:
 
@@ -249,14 +249,14 @@ one step; **do** make launcher's resolve helpers delegable to kit once context k
 
 ## Risks (Hybrid Track)
 
-| Risk | Mitigation |
-| ---- | ---------- |
-| Duplicate UI stacks (`#workbench-ui` vs `@workbench-kit/react`) | Explicit non-merge policy; primitive-level convergence only |
-| Command API mismatch | Dual registry during transition; adapter at boundaries; context-key port to kit core |
-| Electron / IPC coupling in extractions | Extract interfaces and contracts only; keep main-process code in custom_launcher |
-| json-widget reference vacuum | tile_paper remains official tree/editor reference; launcher bridge consumes kit |
-| Package manager split (npm vs pnpm) | Parity tests and `check:launch-boundary` in each repo; contracts published from kit |
-| Two Electron products | Document canonical roles; kit stays Electron-free |
+| Risk                                                            | Mitigation                                                                           |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Duplicate UI stacks (`#workbench-ui` vs `@workbench-kit/react`) | Explicit non-merge policy; primitive-level convergence only                          |
+| Command API mismatch                                            | Dual registry during transition; adapter at boundaries; context-key port to kit core |
+| Electron / IPC coupling in extractions                          | Extract interfaces and contracts only; keep main-process code in custom_launcher     |
+| json-widget reference vacuum                                    | tile_paper remains official tree/editor reference; launcher bridge consumes kit      |
+| Package manager split (npm vs pnpm)                             | Parity tests and `check:launch-boundary` in each repo; contracts published from kit  |
+| Two Electron products                                           | Document canonical roles; kit stays Electron-free                                    |
 
 ## Links and Next Actions
 

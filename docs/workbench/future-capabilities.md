@@ -18,12 +18,12 @@ shortcuts.
 
 ### Phases
 
-| Phase | Name | Scope | Consumer action |
-| ----- | ---- | ----- | --------------- |
-| 1 | **Reference** | tile_paper owns tree/editor UX; custom_launcher owns launchpad preview bridge | Keep local stacks; feed parity tests and extraction notes |
-| 2 | **Port to kit** | Extract product-neutral primitives into `@workbench-kit/json-widget`, `@workbench-kit/react/json-widget`, `@workbench-kit/react/json-config` | No consumer migration; reference-only |
-| 3 | **Complete kit** | Kit milestone: Storybook baselines, public APIs, play gates, docs | Consumers still on local stacks; validate kit readiness |
-| 4 | **Swap in consumers** | Point tile_paper / custom_launcher at kit packages; delete duplicated chrome | Product-specific adapters only |
+| Phase | Name                  | Scope                                                                                                                                        | Consumer action                                           |
+| ----- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 1     | **Reference**         | tile_paper owns tree/editor UX; custom_launcher owns launchpad preview bridge                                                                | Keep local stacks; feed parity tests and extraction notes |
+| 2     | **Port to kit**       | Extract product-neutral primitives into `@workbench-kit/json-widget`, `@workbench-kit/react/json-widget`, `@workbench-kit/react/json-config` | No consumer migration; reference-only                     |
+| 3     | **Complete kit**      | Kit milestone: Storybook baselines, public APIs, play gates, docs                                                                            | Consumers still on local stacks; validate kit readiness   |
+| 4     | **Swap in consumers** | Point tile_paper / custom_launcher at kit packages; delete duplicated chrome                                                                 | Product-specific adapters only                            |
 
 ```text
 tile_paper / custom_launcher (reference)
@@ -42,12 +42,12 @@ tile_paper / custom_launcher (reference)
 
 Source references — **do not copy wholesale**; extract contracts and reusable chrome only.
 
-| Source (reference) | Kit target | Patterns to port |
-| ------------------ | ---------- | ---------------- |
-| tile_paper `json-widget-tree` | `@workbench-kit/json-widget` (+ layout helpers where product-neutral) | `parseWidgetJson`, registry contract, tree layout math, typed widget shapes |
-| tile_paper `json-widget-editor` | `@workbench-kit/react/json-widget` (editor chrome) | Monaco ↔ tree ↔ properties ↔ preview sync, selection model, dirty baseline |
-| tile_paper + custom_launcher config screens | `@workbench-kit/react/json-config` (`JsonConfigWorkbench`) | Code / preview / split modes, schema vs widget auto-preview, save/discard toolbar |
-| custom_launcher `JsonWidgetPreview` / launchpad bridge | `@workbench-kit/react/json-widget` | Preview validation bridge, registry mock render (already partially in kit) |
+| Source (reference)                                     | Kit target                                                            | Patterns to port                                                                  |
+| ------------------------------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| tile_paper `json-widget-tree`                          | `@workbench-kit/json-widget` (+ layout helpers where product-neutral) | `parseWidgetJson`, registry contract, tree layout math, typed widget shapes       |
+| tile_paper `json-widget-editor`                        | `@workbench-kit/react/json-widget` (editor chrome)                    | Monaco ↔ tree ↔ properties ↔ preview sync, selection model, dirty baseline        |
+| tile_paper + custom_launcher config screens            | `@workbench-kit/react/json-config` (`JsonConfigWorkbench`)            | Code / preview / split modes, schema vs widget auto-preview, save/discard toolbar |
+| custom_launcher `JsonWidgetPreview` / launchpad bridge | `@workbench-kit/react/json-widget`                                    | Preview validation bridge, registry mock render (already partially in kit)        |
 
 See also: [json-widget-mvp.md](./json-widget-mvp.md), [json-config-workbench.md](./json-config-workbench.md).
 
@@ -64,10 +64,11 @@ Do **not** start these while Phases 1–3 are open:
 
 ### Kit port checklist (P1–P3)
 
-- [ ] **P1** Document port boundaries: which tree/layout helpers stay tile_paper-local vs
-      `@workbench-kit/json-widget` (align with [json-widget-mvp.md](./json-widget-mvp.md) Phase 3+).
-- [ ] **P1** json-widget-editor sync contract: single source of truth for document string,
-      parsed tree, selected node, and preview errors (Monaco + tree + properties).
+- [x] **P1** Document port boundaries: which tree/layout helpers stay tile_paper-local vs
+      `@workbench-kit/json-widget` — see [json-widget-port-then-replace.md](./json-widget-port-then-replace.md).
+- [x] **P1** json-widget-editor sync contract: single source of truth for document string,
+      parsed tree, selected node, and preview errors — see
+      [json-widget-port-then-replace.md § Editor sync contract](./json-widget-port-then-replace.md#editor-sync-contract-p1).
 - [ ] **P1** Extend `JsonConfigWorkbench` widget mode to cover json-widget-editor baseline
       flows (split layout, registry preview, dirty save/discard) without product routes.
 - [ ] **P2** Port reusable editor chrome from tile_paper `json-widget-editor` into
@@ -99,13 +100,13 @@ Do **not** start these while Phases 1–3 are open:
 
 Phased rollout from prior theme analysis (T0–T4):
 
-| Phase | Priority | Scope |
-|-------|----------|-------|
-| T0 | P2 | Document built-in `dark` / `light` token mapping and `data-theme` contract |
-| T1 | P2 | `registerWorkbenchTheme(id, tokens)` API on kit bootstrap |
-| T2 | P2 | JSON theme import (VS Code theme schema subset) → CSS variables |
-| T3 | P3 | Monaco editor theme sync from active workbench theme |
-| T4 | P3 | Settings UI: theme picker wired to registry + persistence adapter |
+| Phase | Priority | Scope                                                                      |
+| ----- | -------- | -------------------------------------------------------------------------- |
+| T0    | P2       | Document built-in `dark` / `light` token mapping and `data-theme` contract |
+| T1    | P2       | `registerWorkbenchTheme(id, tokens)` API on kit bootstrap                  |
+| T2    | P2       | JSON theme import (VS Code theme schema subset) → CSS variables            |
+| T3    | P3       | Monaco editor theme sync from active workbench theme                       |
+| T4    | P3       | Settings UI: theme picker wired to registry + persistence adapter          |
 
 - [ ] **P2** T0–T1: theme registry + host registration sample in Storybook integrated shell.
 - [ ] **P2** T2: JSON import path with validation and fallback to built-in themes.
@@ -124,13 +125,13 @@ Low priority — defer until standalone shell and host bootstrap are stable in p
 
 Storybook-first playground strategy. No standalone public playground app in the current milestone.
 
-| Surface | Today | Target |
-|---------|-------|--------|
-| JSON config | `JsonConfig/Workbench` (Monaco + schema/widget preview) | Host adoption + baseline play |
-| Widget parse/registry | `JsonWidget/Playground` (textarea demo) | Align with Monaco or document as parse-only demo |
-| Shell full flow | `Integrated Shell` via `IntegratedShellDemo` | Keep as reference host; do not duplicate in new playground export |
-| Chrome states | `Verification` interactive stories | Shared sandbox controls (theme, locale) |
-| Theme / i18n | Scattered story args | Dedicated sandbox story (depends on i18n P1, theme T1) |
+| Surface               | Today                                                   | Target                                                            |
+| --------------------- | ------------------------------------------------------- | ----------------------------------------------------------------- |
+| JSON config           | `JsonConfig/Workbench` (Monaco + schema/widget preview) | Host adoption + baseline play                                     |
+| Widget parse/registry | `JsonWidget/Playground` (textarea demo)                 | Align with Monaco or document as parse-only demo                  |
+| Shell full flow       | `Integrated Shell` via `IntegratedShellDemo`            | Keep as reference host; do not duplicate in new playground export |
+| Chrome states         | `Verification` interactive stories                      | Shared sandbox controls (theme, locale)                           |
+| Theme / i18n          | Scattered story args                                    | Dedicated sandbox story (depends on i18n P1, theme T1)            |
 
 - [x] **P1** Intro playground map: link JsonConfig, JsonWidget Playground, Integrated Shell, Verification interactive stories.
 - [x] **P1** Document playground roles in `docs/conventions/storybook.md` (JsonConfig = production config pattern; JsonWidget Playground = parse/registry lab).
