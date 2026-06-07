@@ -244,7 +244,7 @@ export const Interactive: Story = {
     docs: {
       description: {
         story:
-          'Full editor surface with tree DnD, Monaco schema validation, Figma-inspired preview (selection chrome, hover outline, Space+drag pan, optional 8px grid), inspector property sections, and toolbar actions for add/duplicate/delete.',
+          'Full editor surface with tree DnD, Monaco schema validation, canvas-style preview (selection chrome, hover outline, Space+drag pan, optional 8px grid), inspector property sections, and toolbar actions for add/duplicate/delete.',
       },
     },
   },
