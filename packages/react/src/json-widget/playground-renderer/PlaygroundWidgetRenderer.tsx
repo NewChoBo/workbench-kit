@@ -7,10 +7,10 @@ import {
   type Rect,
   type WidgetPath,
   ROOT_WIDGET_PATH,
-  widgetPathKey,
 } from '@workbench-kit/json-widget';
 
 import { AbsoluteBox } from '../../primitives/AbsoluteBox.js';
+import { PlaygroundEditorWidgetWrapper } from './PlaygroundEditorWidgetWrapper.js';
 
 export const DEFAULT_PLAYGROUND_PREVIEW_RECT: Rect = {
   x: 0,
@@ -39,59 +39,39 @@ function positionStyle(rect: Rect, fillParent?: boolean): CSSProperties {
   };
 }
 
-function selectionOutline(selected: boolean, interactive: boolean): CSSProperties {
-  return selected
-    ? { outline: '2px solid #6366f1', outlineOffset: -2, cursor: 'pointer' }
-    : { cursor: interactive ? 'pointer' : 'default' };
-}
-
-function SelectableSurface({
-  children,
-  path,
-  selectedPathKeys,
-  onSelect,
-  style,
-}: {
+interface WidgetSurfaceProps {
   children: ReactNode;
+  fillParent?: boolean | undefined;
   onSelect?: ((path: WidgetPath) => void) | undefined;
   path: WidgetPath;
+  rect: Rect;
   selectedPathKeys?: ReadonlySet<string> | undefined;
   style?: CSSProperties;
-}) {
-  const selected = selectedPathKeys?.has(widgetPathKey(path)) ?? false;
+  widget: GenericWidget;
+}
 
+function WidgetSurface({
+  children,
+  fillParent,
+  onSelect,
+  path,
+  rect,
+  selectedPathKeys,
+  style,
+  widget,
+}: WidgetSurfaceProps) {
   return (
-    <div
-      data-playground-path={widgetPathKey(path)}
-      data-testid={`playground-widget-${widgetPathKey(path)}`}
-      role={onSelect ? 'button' : undefined}
-      tabIndex={onSelect ? -1 : undefined}
-      style={{
-        boxSizing: 'border-box',
-        ...(onSelect ? selectionOutline(selected, true) : null),
-        ...style,
-      }}
-      onClick={
-        onSelect
-          ? (event) => {
-              event.stopPropagation();
-              onSelect(path);
-            }
-          : undefined
-      }
-      onKeyDown={
-        onSelect
-          ? (event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                onSelect(path);
-              }
-            }
-          : undefined
-      }
+    <PlaygroundEditorWidgetWrapper
+      fillParent={fillParent}
+      path={path}
+      rect={rect}
+      selectedPathKeys={selectedPathKeys}
+      style={style}
+      widgetType={widget.type}
+      onSelect={onSelect}
     >
       {children}
-    </div>
+    </PlaygroundEditorWidgetWrapper>
   );
 }
 
@@ -107,10 +87,13 @@ function renderText(
   const textAlign = typeof widget.textAlign === 'string' ? widget.textAlign : 'left';
 
   return (
-    <SelectableSurface
-      onSelect={onSelect}
+    <WidgetSurface
+      fillParent={fillParent}
       path={path}
+      rect={rect}
       selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
       style={{
         ...positionStyle(rect, fillParent),
         display: 'flex',
@@ -126,7 +109,7 @@ function renderText(
       }}
     >
       {typeof widget.text === 'string' ? widget.text : ''}
-    </SelectableSurface>
+    </WidgetSurface>
   );
 }
 
@@ -147,10 +130,13 @@ function renderBox(
   };
 
   return (
-    <SelectableSurface
-      onSelect={onSelect}
+    <WidgetSurface
+      fillParent={fillParent}
       path={path}
+      rect={rect}
       selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
       style={{
         ...positionStyle(rect, fillParent),
         backgroundColor: typeof widget.background === 'string' ? widget.background : '#1e293b',
@@ -168,7 +154,7 @@ function renderBox(
           onSelectPath={onSelect}
         />
       ) : null}
-    </SelectableSurface>
+    </WidgetSurface>
   );
 }
 
@@ -194,10 +180,13 @@ function renderGrid(
   const layout = { columns, rows, gap, padding };
 
   return (
-    <SelectableSurface
-      onSelect={onSelect}
+    <WidgetSurface
+      fillParent={fillParent}
       path={path}
+      rect={rect}
       selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
       style={fillParent ? { position: 'absolute', inset: 0 } : positionStyle(rect, fillParent)}
     >
       <AbsoluteBox
@@ -208,12 +197,16 @@ function renderGrid(
         {children.map((child, index) => {
           const col = typeof child.col === 'number' ? child.col : 0;
           const row = typeof child.row === 'number' ? child.row : 0;
-          const childRect = computeGridChildRect(layout, { col, row }, {
-            x: 0,
-            y: 0,
-            width: rect.width,
-            height: rect.height,
-          });
+          const childRect = computeGridChildRect(
+            layout,
+            { col, row },
+            {
+              x: 0,
+              y: 0,
+              width: rect.width,
+              height: rect.height,
+            },
+          );
 
           return (
             <PlaygroundWidgetRenderer
@@ -227,7 +220,7 @@ function renderGrid(
           );
         })}
       </AbsoluteBox>
-    </SelectableSurface>
+    </WidgetSurface>
   );
 }
 
@@ -247,10 +240,13 @@ function renderStack(
     : [];
 
   return (
-    <SelectableSurface
-      onSelect={onSelect}
+    <WidgetSurface
+      fillParent={fillParent}
       path={path}
+      rect={rect}
       selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
       style={fillParent ? { position: 'absolute', inset: 0 } : positionStyle(rect, fillParent)}
     >
       <AbsoluteBox
@@ -281,7 +277,7 @@ function renderStack(
           );
         })}
       </AbsoluteBox>
-    </SelectableSurface>
+    </WidgetSurface>
   );
 }
 
@@ -294,9 +290,7 @@ function renderButton(
   onSelect: ((path: WidgetPath) => void) | undefined,
 ) {
   const variant =
-    widget.variant === 'secondary' ||
-    widget.variant === 'ghost' ||
-    widget.variant === 'danger'
+    widget.variant === 'secondary' || widget.variant === 'ghost' || widget.variant === 'danger'
       ? widget.variant
       : 'primary';
   const variantStyles: Record<string, { background: string; color: string }> = {
@@ -309,10 +303,13 @@ function renderButton(
   const disabled = widget.disabled === true;
 
   return (
-    <SelectableSurface
-      onSelect={onSelect}
+    <WidgetSurface
+      fillParent={fillParent}
       path={path}
+      rect={rect}
       selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
       style={{
         ...positionStyle(rect, fillParent),
         display: 'flex',
@@ -329,7 +326,7 @@ function renderButton(
       }}
     >
       {typeof widget.label === 'string' ? widget.label : 'Button'}
-    </SelectableSurface>
+    </WidgetSurface>
   );
 }
 
@@ -353,10 +350,13 @@ function renderListView(
     : [];
 
   return (
-    <SelectableSurface
-      onSelect={onSelect}
+    <WidgetSurface
+      fillParent={fillParent}
       path={path}
+      rect={rect}
       selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
       style={{
         ...positionStyle(rect, fillParent),
         display: 'flex',
@@ -389,7 +389,7 @@ function renderListView(
           />
         </div>
       ))}
-    </SelectableSurface>
+    </WidgetSurface>
   );
 }
 
@@ -439,10 +439,13 @@ function renderTile(
   const overlayText = resolveTileOverlayText(widget);
 
   return (
-    <SelectableSurface
-      onSelect={onSelect}
+    <WidgetSurface
+      fillParent={fillParent}
       path={path}
+      rect={rect}
       selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
       style={{
         ...positionStyle(rect, fillParent),
         display: 'grid',
@@ -456,7 +459,7 @@ function renderTile(
       }}
     >
       {overlayText ?? 'Tile'}
-    </SelectableSurface>
+    </WidgetSurface>
   );
 }
 
@@ -494,10 +497,13 @@ function renderLinear(
   );
 
   return (
-    <SelectableSurface
-      onSelect={onSelect}
+    <WidgetSurface
+      fillParent={fillParent}
       path={path}
+      rect={rect}
       selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
       style={{
         ...positionStyle(rect, fillParent),
         display: 'flex',
@@ -530,7 +536,59 @@ function renderLinear(
           />
         </div>
       ))}
-    </SelectableSurface>
+    </WidgetSurface>
+  );
+}
+
+function renderInput(
+  widget: GenericWidget,
+  rect: Rect,
+  fillParent: boolean | undefined,
+  path: WidgetPath,
+  selectedPathKeys: ReadonlySet<string> | undefined,
+  onSelect: ((path: WidgetPath) => void) | undefined,
+) {
+  const label = typeof widget.label === 'string' ? widget.label : '';
+  const placeholder = typeof widget.placeholder === 'string' ? widget.placeholder : 'Enter text';
+  const value = typeof widget.value === 'string' ? widget.value : '';
+
+  return (
+    <WidgetSurface
+      fillParent={fillParent}
+      path={path}
+      rect={rect}
+      selectedPathKeys={selectedPathKeys}
+      widget={widget}
+      onSelect={onSelect}
+      style={{
+        ...positionStyle(rect, fillParent),
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        gap: 4,
+        padding: '6px 8px',
+        backgroundColor: typeof widget.background === 'string' ? widget.background : '#1e293b',
+        borderRadius: typeof widget.borderRadius === 'number' ? widget.borderRadius : 8,
+        userSelect: 'none',
+      }}
+    >
+      {label ? (
+        <span style={{ fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>{label}</span>
+      ) : null}
+      <span
+        style={{
+          display: 'block',
+          padding: '6px 8px',
+          borderRadius: 6,
+          background: '#0f172a',
+          color: typeof widget.color === 'string' ? widget.color : '#e2e8f0',
+          fontSize: 13,
+          border: '1px solid #334155',
+        }}
+      >
+        {value || placeholder}
+      </span>
+    </WidgetSurface>
   );
 }
 
@@ -560,12 +618,17 @@ export function PlaygroundWidgetRenderer({
       return renderListView(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
     case 'tile':
       return renderTile(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
+    case 'input':
+      return renderInput(widget, rect, fillParent, path, selectedPathKeys, handleSelect);
     default:
       return (
-        <SelectableSurface
-          onSelect={handleSelect}
+        <WidgetSurface
+          fillParent={fillParent}
           path={path}
+          rect={rect}
           selectedPathKeys={selectedPathKeys}
+          widget={widget}
+          onSelect={handleSelect}
           style={{
             ...positionStyle(rect, fillParent),
             display: 'grid',
@@ -576,7 +639,7 @@ export function PlaygroundWidgetRenderer({
           }}
         >
           {widget.type}
-        </SelectableSurface>
+        </WidgetSurface>
       );
   }
 }

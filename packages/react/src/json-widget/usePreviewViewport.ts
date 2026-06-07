@@ -9,6 +9,7 @@ export interface PreviewViewportState {
   effectiveZoom: number;
   fitScale: number;
   isPanning: boolean;
+  isSpacePressed: boolean;
   pan: { x: number; y: number };
   resetView: () => void;
   scaleLabel: string;
@@ -33,8 +34,10 @@ export function usePreviewViewport({
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
+  const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [canvasEl, setCanvasElement] = useState<HTMLDivElement | null>(null);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const spacePressedRef = useRef(false);
 
   const frameHeight = canvasHeight + titleBarHeight;
   const fitScale =
@@ -116,9 +119,11 @@ export function usePreviewViewport({
 
     const middlePanHandler = (event: PointerEvent) => {
       const target = event.target;
+      const spacePan = spacePressedRef.current;
       const isMiddleButton = event.button === 1;
       const isPreviewSurfaceDrag =
         event.button === 0 &&
+        !spacePan &&
         target instanceof HTMLElement &&
         !target.closest(
           [
@@ -131,17 +136,52 @@ export function usePreviewViewport({
           ].join(','),
         );
 
-      if (!isMiddleButton && !isPreviewSurfaceDrag) return;
+      if (!spacePan && !isMiddleButton && !isPreviewSurfaceDrag) return;
+      if (spacePan && event.button !== 0) return;
       event.preventDefault();
       startPanRef.current?.(event.clientX, event.clientY, event.pointerId);
     };
 
     canvasEl.addEventListener('pointerdown', middlePanHandler, { capture: true });
 
+    const isEditableTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      return Boolean(
+        target.closest(
+          'input, textarea, select, [contenteditable="true"], .monaco-editor, [role="textbox"]',
+        ),
+      );
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== 'Space' || event.repeat || isEditableTarget(event.target)) return;
+      event.preventDefault();
+      spacePressedRef.current = true;
+      setIsSpacePressed(true);
+    };
+
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (event.code !== 'Space') return;
+      spacePressedRef.current = false;
+      setIsSpacePressed(false);
+    };
+
+    const onWindowBlur = () => {
+      spacePressedRef.current = false;
+      setIsSpacePressed(false);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onWindowBlur);
+
     return () => {
       resizeObserver.disconnect();
       canvasEl.removeEventListener('wheel', wheelHandler);
       canvasEl.removeEventListener('pointerdown', middlePanHandler, { capture: true });
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onWindowBlur);
     };
   }, [canvasEl]);
 
@@ -160,6 +200,7 @@ export function usePreviewViewport({
     effectiveZoom,
     fitScale,
     isPanning,
+    isSpacePressed,
     pan,
     resetView,
     scaleLabel: `${Math.round(effectiveZoom * 100)}%`,

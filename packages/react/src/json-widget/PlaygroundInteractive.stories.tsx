@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { action } from 'storybook/actions';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 import { createPlaygroundWidgetJsonSchema } from '@workbench-kit/json-widget';
 
 import type { WidgetPath } from '@workbench-kit/json-widget';
@@ -20,7 +20,9 @@ import {
 import { deletePlaygroundWidget, duplicatePlaygroundWidget } from './playground-ops.js';
 import { insertPlaygroundWidget } from './playground-insert.js';
 
-const playgroundJsonSchema = createPlaygroundWidgetJsonSchema(playgroundWidgetRegistry.definitions());
+const playgroundJsonSchema = createPlaygroundWidgetJsonSchema(
+  playgroundWidgetRegistry.definitions(),
+);
 
 const meta = {
   title: 'JsonWidget/Playground',
@@ -208,7 +210,7 @@ export const Interactive: Story = {
     docs: {
       description: {
         story:
-          'Full editor surface with tree DnD, Monaco schema validation, visual preview canvas with click-to-select, inspector property sections, and toolbar actions for add/duplicate/delete.',
+          'Full editor surface with tree DnD, Monaco schema validation, Figma-inspired preview (selection chrome, hover outline, Space+drag pan, optional 8px grid), inspector property sections, and toolbar actions for add/duplicate/delete.',
       },
     },
   },
@@ -216,7 +218,7 @@ export const Interactive: Story = {
 
 export const InteractiveSmoke: Story = {
   render: () => <InteractivePlaygroundHarness />,
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
@@ -241,6 +243,12 @@ export const InteractiveSmoke: Story = {
       expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Edited label'),
     );
 
+    await userEvent.click(canvas.getByTestId('playground-widget-$.children[0]'));
+    await waitFor(() => expect(canvas.getByDisplayValue('Welcome')).toBeVisible());
+    await expect(canvas.getByTestId('playground-widget-badge-$.children[0]')).toHaveTextContent(
+      'text',
+    );
+
     await userEvent.click(canvas.getByTestId('duplicate-widget'));
     await waitFor(() =>
       expect(
@@ -248,11 +256,43 @@ export const InteractiveSmoke: Story = {
       )?.toHaveLength(2),
     );
 
+    const editedLabelRows = canvas.getAllByRole('treeitem', { name: /Edited label/ });
+    const editedLabelRow = editedLabelRows[0];
+    expect(editedLabelRow).toBeDefined();
+    const welcomeRow = canvas.getByRole('treeitem', { name: /Welcome/ });
+    const dragStartRect = editedLabelRow.getBoundingClientRect();
+    const dropRect = welcomeRow.getBoundingClientRect();
+    const pointerId = 1;
+
+    fireEvent.pointerDown(editedLabelRow, {
+      clientX: dragStartRect.left + dragStartRect.width / 2,
+      clientY: dragStartRect.top + dragStartRect.height / 2,
+      pointerId,
+      isPrimary: true,
+      buttons: 1,
+    });
+    fireEvent.pointerMove(document.body, {
+      clientX: dropRect.left + dropRect.width / 2,
+      clientY: dropRect.bottom + 8,
+      pointerId,
+      isPrimary: true,
+      buttons: 1,
+    });
+    fireEvent.pointerUp(document.body, {
+      clientX: dropRect.left + dropRect.width / 2,
+      clientY: dropRect.bottom + 8,
+      pointerId,
+      isPrimary: true,
+    });
+
     await userEvent.click(canvas.getByTestId('delete-widget'));
     await waitFor(() =>
       expect(
         canvas.getByTestId('json-widget-preview-output').textContent?.match(/Edited label/g),
       )?.toHaveLength(1),
     );
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(canvas.queryByTitle('Unsaved changes')).not.toBeInTheDocument());
   },
 };
