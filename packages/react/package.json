@@ -15,6 +15,7 @@
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
+    "./json-widget": "./src/json-widget/index.ts",
     "./styles.css": "./src/styles.css"
   },
   "files": [
@@ -28,6 +29,7 @@
     "@workbench-kit/core": "workspace:*",
     "@workbench-kit/adapters": "workspace:*",
     "@workbench-kit/contracts": "workspace:*",
+    "@workbench-kit/json-widget": "workspace:*",
     "@workbench-kit/runtime": "workspace:*",
     "@workbench-kit/services": "workspace:*",
     "@workbench-kit/vscode-extension": "workspace:*",
