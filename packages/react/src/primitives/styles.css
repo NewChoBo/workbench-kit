@@ -1,4 +1,5 @@
 @import '@workbench-kit/tokens/styles.css';
+@import '../scrollbars.css';
 @import '@vscode/codicons/dist/codicon.css';
 
 .ide-panel {
@@ -167,8 +168,6 @@
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-color: var(--color-border) transparent;
-  scrollbar-width: thin;
 }
 
 .ui-list-item {
@@ -485,7 +484,6 @@
   display: flex;
   min-width: 0;
   overflow: auto;
-  scrollbar-width: none;
 }
 
 .ui-editor-tabs__tab {
