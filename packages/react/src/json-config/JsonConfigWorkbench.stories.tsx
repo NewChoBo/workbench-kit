@@ -133,6 +133,44 @@ export const WidgetPreview: Story = {
   ),
 };
 
+export const WidgetInteraction: Story = {
+  render: () => (
+    <ConfigHarness
+      initialValue={widgetJson}
+      defaultMode="split"
+      path="widget.json"
+      previewKind="widget"
+      title="Widget config"
+      widgetRegistry={demoRegistry}
+    />
+  ),
+  tags: ['storybook-play-baseline'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(
+      canvas.getByText('Launch tile — Preview from JsonConfigWorkbench widget mode.'),
+    ).toBeVisible();
+
+    await expect(canvas.getByRole('button', { name: 'Split' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Preview' }));
+    await expect(canvas.getByRole('button', { name: 'Preview' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Code' }));
+    await expect(canvas.getByRole('button', { name: 'Code' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  },
+};
+
 export const AutoPreview: Story = {
   render: () => (
     <ConfigHarness
