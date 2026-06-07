@@ -2,6 +2,39 @@ export { JsonWidgetPreview } from './JsonWidgetPreview.js';
 export type { JsonWidgetPreviewProps } from './JsonWidgetPreview.js';
 export { JsonWidgetPreviewCanvas } from './JsonWidgetPreviewCanvas.js';
 export type { JsonWidgetPreviewCanvasProps } from './JsonWidgetPreviewCanvas.js';
+export { JsonWidgetCanvas } from './JsonWidgetCanvas.js';
+export type { JsonWidgetCanvasProps } from './JsonWidgetCanvas.js';
+export {
+  BUILTIN_WIDGET_RENDERER_MAP,
+  BUILTIN_WIDGET_TYPES,
+  BoxRenderer,
+  DividerRenderer,
+  GridRenderer,
+  ImageRenderer,
+  LinearRenderer,
+  SpacerRenderer,
+  StackRenderer,
+  TextRenderer,
+  WidgetRenderer,
+  WidgetRendererProvider,
+  createWidgetRendererRegistry,
+  getBuiltinWidgetRenderer,
+  isBuiltinWidgetType,
+  useWidgetAssetResolver,
+  useWidgetRendererRegistry,
+} from './renderer/index.js';
+export type {
+  BuiltinWidgetType,
+  WidgetAssetResolver,
+  WidgetRendererComponent,
+  WidgetRendererDefinition,
+  WidgetRendererEvent,
+  WidgetRendererProps,
+  WidgetRendererProviderProps,
+  WidgetRendererRect,
+  WidgetRendererRegistry,
+  WidgetRendererShape,
+} from './renderer/index.js';
 export { JsonCodeEditorPane, JsonConfigValidationBanner } from './JsonCodeEditorPane.js';
 export type {
   JsonCodeEditorPaneProps,
