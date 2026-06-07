@@ -14,6 +14,8 @@ Related docs:
 - [tile_paper workbench-kit extraction plan](../../../tile_paper/docs/developer/planning/workbench-kit-extraction-plan.md)
 - [tile_paper Phase 4 pilot](../../../tile_paper/docs/developer/planning/workbench-kit-phase4-pilot.md)
 - [library-launch-boundary-gate.md](./library-launch-boundary-gate.md)
+- [library-launch-boundary-review-checklist.md](./library-launch-boundary-review-checklist.md)
+- [context-key-port-design.md](./context-key-port-design.md)
 
 ---
 
@@ -63,6 +65,28 @@ pnpm check:launch-boundary
 
 Scans `../custom_launcher` and `../tile_paper` for forbidden legacy launch-policy imports and helper calls. Must pass before and after any launch/contracts change.
 
+**CI / validate wiring (P1-T04):**
+
+| Lane | Command | Includes boundary gate |
+| ---- | ------- | ---------------------- |
+| Local PR gate | `pnpm validate` | yes (`check:launch-boundary` last step) |
+| Full kit gate | `pnpm validate:full` | yes (via `validate`) |
+| GitHub CI | `.github/workflows/ci.yml` → `pnpm validate:full` | yes |
+| Publish | `.github/workflows/publish.yml` → `pnpm validate` | yes |
+
+### 2.2.1 Downstream pre-merge checklist
+
+Before merging any PR in `custom_launcher` or `tile_paper` that touches launch mapping,
+provider-library actions, or widget renderer events:
+
+1. Run `pnpm -C newchobo-ui-package check:launch-boundary` from the monorepo root (or kit checkout).
+2. Complete [library-launch-boundary-review-checklist.md](./library-launch-boundary-review-checklist.md) and attach pass log to the PR.
+3. Run repo-local gates from [§5 Per-Repo Validation Matrix](#5-per-repo-validation-matrix).
+4. If `@workbench-kit/contracts` changed: kit PR merges first, then downstream adapter same day.
+
+Downstream repos do not duplicate the scan script; they consume the kit gate as the single
+authority (`scripts/check-launch-boundary.mjs`).
+
 ### 2.3 Storybook play (required set)
 
 Kit CI gate:
@@ -107,8 +131,10 @@ Commit themes through 2026-06-07:
 - **JSON widget Phase 3:** editor sync, patches, layout helpers, `JsonWidgetEditor` chrome, InteractiveSmoke stabilized
 - **Strengths inheritance:** neutral patterns from both references (zoom toolbar, Ctrl+S, problems panel, config Apply)
 - **Unified vision documented:** `fb43640` — TilePaper Workbench, canonical `custom_launcher`, 5-phase roadmap in [reference-implementation-strategy.md](./reference-implementation-strategy.md)
-- **Launch boundary script:** `scripts/check-launch-boundary.mjs` scans both downstream repos
-- **Command registry gap analysis (Step 1):** documented; context-key port scoped but not merged
+- **Launch boundary script:** `scripts/check-launch-boundary.mjs` scans both downstream repos; wired into `pnpm validate`, CI (`validate:full`), and publish (`validate`)
+- **Pre-merge checklist:** [§2.2.1](./unified-work-plan.md#221-downstream-pre-merge-checklist) + [library-launch-boundary-review-checklist.md](./library-launch-boundary-review-checklist.md)
+- **Context-key / when-clause:** evaluator ported to `@workbench-kit/core`; registry API convergence scoped in [context-key-port-design.md](./context-key-port-design.md) (P1-T02)
+- **Command registry gap analysis (Step 1):** documented; `resolveCommand` parity deferred to P1-T05 / P4-T03
 
 ### custom_launcher
 
@@ -144,9 +170,9 @@ Phases align with [reference-implementation-strategy § 5-phase roadmap](./refer
 | ID | Description | Repos | Risk | Validation checklist | Rollback |
 | -- | ----------- | ----- | ---- | -------------------- | -------- |
 | P1-T01 | Document Phase 4 consumer swap runbook checklist (keeper = custom_launcher, tile_paper = pilot) | kit | L | Doc review; links resolve | Revert doc |
-| P1-T02 | Scope context-key + when-clause port from `#workbench-core` → `@workbench-kit/core` (design doc + test plan only) | kit, custom_launcher | M | No public API break; gap analysis updated | N/A (docs-only spike) |
+| P1-T02 | Scope context-key + when-clause port from `#workbench-core` → `@workbench-kit/core` (design doc + test plan only) | kit, custom_launcher | M | [context-key-port-design.md](./context-key-port-design.md); no public API break | N/A (docs-only spike) |
 | P1-T03 | Add kit-side contracts parity CI job listing required equivalence test paths | kit | L | `pnpm validate:full` green | Revert workflow |
-| P1-T04 | Verify `check:launch-boundary` in kit `validate` and document downstream pre-merge step | kit | L | Script passes on clean tree | Revert script hook |
+| P1-T04 | Verify `check:launch-boundary` in kit `validate` and document downstream pre-merge step | kit | L | [§2.2.1](./unified-work-plan.md#221-downstream-pre-merge-checklist); script passes on clean tree | Revert script hook |
 | P1-T05 | Add command registry parity test plan (1 launcher + 1 kit menu flow) | kit, custom_launcher | M | Test plan in migration-todo; no API change yet | Revert test stubs |
 
 ### Phase 2 — UI Stack Convergence
@@ -155,7 +181,7 @@ Phases align with [reference-implementation-strategy § 5-phase roadmap](./refer
 
 | ID | Description | Repos | Risk | Validation checklist | Rollback |
 | -- | ----------- | ----- | ---- | -------------------- | -------- |
-| P2-T01 | **Freeze policy:** announce `#workbench-ui` feature freeze; new authoring UI goes through kit adapter or thin wrapper | custom_launcher | L | `authoring-surface-adoption.test.ts` still passes | Lift freeze doc |
+| P2-T01 | **Freeze policy:** announce `#workbench-ui` feature freeze; new authoring UI goes through kit adapter or thin wrapper | custom_launcher | L | [workbench-ui-freeze-policy.md](../../../custom_launcher/docs/workbench-ui-freeze-policy.md); `authoring-surface-adoption.test.ts` still passes | Lift freeze doc |
 | P2-T02 | Pilot `JsonWidgetPreview` in launchpad authoring surface (already wired); expand Storybook pilot coverage | custom_launcher, kit | M | `test:validate:launchpad`, launchpad-source bridge unit tests | Revert to stub preview |
 | P2-T03 | ContentHub webview pilot: one authoring route uses `@workbench-kit/react` shell primitive behind adapter | custom_launcher | H | `test:validate:mock-content-hub`, `test:e2e:content-hub` | Feature flag off → `#workbench-ui` |
 | P2-T04 | JsonConfigWorkbench pilot in custom_launcher settings/schema surface (mirror tile_paper P1) | custom_launcher, kit | M | Unit tests for schema binding; settings E2E subset | Keep local schema form |
@@ -283,10 +309,10 @@ pnpm -C newchobo-ui-package check:launch-boundary
 | -------- | ------- | -------------- | ------ | ------ |
 | **Library authority** | SQLite-only / `.tilepaper` file-first / file + cache | File contract + optional SQLite cache | Phase 3 provider/library merge | **BLOCKER** — pending ADR |
 | **npm vs pnpm** | npm (custom_launcher) / pnpm (tile_paper + kit) / unified | Short term: npm canonical + publish/link; unification Phase 5 | CI, husky, workspace layout | Deferred to Phase 5 |
-| **`#workbench-ui` retirement timeline** | Freeze → adapter swap → delete | Freeze now; delete Phase 5 after adapter coverage | Phase 2 UI convergence | Freeze in progress |
+| **`#workbench-ui` retirement timeline** | Freeze → adapter swap → delete | Freeze now; delete Phase 5 after adapter coverage | Phase 2 UI convergence | **Freeze active** — [workbench-ui-freeze-policy.md](../../../custom_launcher/docs/workbench-ui-freeze-policy.md) |
 | **Launchpad DSL vs json-widget long-term** | Coexist / json-widget primary / DSL-only | Short-term coexist; separate ADR for convergence | Authoring UX | Not blocking near-term |
 | **Canonical Electron app** | custom_launcher / tile_paper electron / greenfield | **custom_launcher** (evolve) | Phase 3+ | **Decided** |
-| **Context-key port API shape** | Extend `CommandDefinition.when` vs separate evaluator module | Port evaluator first; optional `when` string field | Phase 1–2 command convergence | Scoped, not implemented |
+| **Context-key port API shape** | Extend `CommandDefinition.when` vs separate evaluator module | Evaluator + `when` in kit; add `resolveCommand` next | Phase 1–2 command convergence | Evaluator done; registry gap in [context-key-port-design.md](./context-key-port-design.md) |
 | **launchpad-source-widget-bridge location** | Stay in custom_launcher / move to `@workbench-kit/json-widget` | Evaluate after Phase 2 pilot stability | Phase 2 close | Open |
 
 ---
@@ -313,11 +339,12 @@ Maximum **12 tasks** for the next sprint cycle. Complete in order; do not skip v
 ### Exit criteria for this sprint window
 
 - [ ] `pnpm validate:full` green (kit)
-- [ ] `pnpm check:launch-boundary` green (kit script)
+- [x] `pnpm check:launch-boundary` in kit `validate` + CI + pre-merge checklist documented (P1-T04)
 - [ ] `npm run test:validate:fast` green (custom_launcher) on all sprint PRs
 - [ ] `pnpm validate` green (tile_paper) on all sprint PRs
 - [ ] No regression in library launch, launchpad execution, or json-widget parity tests
-- [ ] `#workbench-ui` freeze documented and acknowledged in custom_launcher PR template or roadmap
+- [x] `#workbench-ui` freeze documented — [workbench-ui-freeze-policy.md](../../../custom_launcher/docs/workbench-ui-freeze-policy.md) (P2-T01)
+- [x] Context-key port design spike — [context-key-port-design.md](./context-key-port-design.md) (P1-T02)
 
 ---
 
