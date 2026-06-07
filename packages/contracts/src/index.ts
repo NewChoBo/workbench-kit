@@ -123,6 +123,13 @@ export {
 } from './library-launchpad-mapping';
 export type { ExternalUrlPolicy } from './external-url';
 export { EXTERNAL_URL_PROTOCOLS, normalizeExternalUrlTarget } from './external-url';
+export type { ResourceIdentity, ResourceIdentityKey, ResourceUri } from './resource-uri';
+export {
+  createResourceIdentity,
+  createResourceIdentityKey,
+  isSameResourceUri,
+  normalizeResourceUri,
+} from './resource-uri';
 export type {
   ServiceFailure,
   ServiceFailureCode,
