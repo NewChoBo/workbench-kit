@@ -287,6 +287,24 @@ const nodeRendererRegistry: Record<
         onPointerDown={onPointerDown}
       >
         {src ? <img src={src} alt={node.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+        {!src ? (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#94a3b8',
+              fontSize: 12,
+              background: '#1f2937',
+              border: '1px dashed #334155',
+              boxSizing: 'border-box',
+            }}
+          >
+            no image src
+          </div>
+        ) : null}
         {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
       </div>
     );

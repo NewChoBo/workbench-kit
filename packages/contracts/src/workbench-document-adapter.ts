@@ -158,7 +158,8 @@ export function documentNodesToWorkspaceFiles(
         node.type === 'text' ||
         node.type === 'rectangle' ||
         node.type === 'circle' ||
-        node.type === 'vector';
+        node.type === 'vector' ||
+        node.type === 'image';
 
       if (!isLeafNode && !includeNonTextNodes) {
         continue;

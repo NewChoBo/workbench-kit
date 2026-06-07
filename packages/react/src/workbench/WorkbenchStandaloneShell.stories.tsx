@@ -9,7 +9,7 @@ import { createWorkbenchShellCommands } from './commands';
 import { WorkbenchStandaloneShell } from './WorkbenchStandaloneShell';
 import type { WorkbenchStandaloneBootstrap } from './standalone';
 import { StatusBar, type StatusBarSectionModel } from './StatusBar';
-import { WorkbenchFigmaShell } from './WorkbenchFigmaShell';
+import { WorkbenchCanvasShell } from './WorkbenchCanvasShell';
 
 const meta = {
   title: 'React/Workbench/Shell/Standalone',
@@ -114,7 +114,7 @@ export const StatusFooterOnly: Story = {
   ),
 };
 
-export const FigmaWorkbenchShell: Story = {
-  render: () => <WorkbenchFigmaShell />,
-  name: 'Workbench Studio(Figma MCP)',
+export const CanvasWorkbenchShell: Story = {
+  render: () => <WorkbenchCanvasShell />,
+  name: 'Workbench Studio(Canvas Shell)',
 };

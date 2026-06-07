@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { WorkbenchFigmaShell } from './WorkbenchFigmaShell';
+import { WorkbenchCanvasShell } from './WorkbenchCanvasShell';
 
 const meta = {
-  title: 'React/Workbench/Shell/FigmaShell',
+  title: 'React/Workbench/Shell/CanvasShell',
   parameters: {
     layout: 'fullscreen',
     fullHeightShell: '100vh',
@@ -14,6 +14,6 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
-  render: () => <WorkbenchFigmaShell />,
+  render: () => <WorkbenchCanvasShell />,
 };
 
