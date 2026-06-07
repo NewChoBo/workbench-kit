@@ -12,6 +12,82 @@ Related docs:
 - [downstream-extraction-strategy.md](./downstream-extraction-strategy.md) — extraction rules for generic APIs
 - [custom_launcher workbench-kit commonization roadmap](https://github.com/whwjd/custom_launcher/blob/main/docs/workbench-kit-commonization-roadmap.md) — launch/contracts push track (local path: `custom_launcher/docs/workbench-kit-commonization-roadmap.md`)
 
+## Unified Vision
+
+The **Option C hybrid** track below is the operating model today. The **TilePaper Workbench**
+is the integrated product end-state: inherit strengths from both downstream references on top
+of `@workbench-kit/*`, without greenfield replacement of the mature desktop shell.
+
+### TilePaper Workbench definition
+
+**TilePaper Workbench** is a single TilePaper desktop platform where:
+
+- **Workbench Kit** (`newchobo-ui-package`) owns generic contracts, UI primitives, JSON widget
+  authoring, and host-neutral orchestration interfaces.
+- **custom_launcher** (`tilepaper-electron`) owns the canonical product shell, main-process
+  runtime, library browse/actions, provider plugins, launchpad execution, and schema-driven
+  settings.
+- **tile_paper** contributes domain packages (model, json-widget-tree, provider-sdk,
+  launcher-core) and kit integration patterns consumed by the canonical app.
+
+One-line: workbench-kit common UI/contracts + custom_launcher product shell/runtime/library +
+tile_paper JSON widget authoring and headless API patterns.
+
+### Canonical Electron app (evolve, not replace)
+
+**custom_launcher is the canonical Electron app.** Evolve it in place; do not replace it with
+a greenfield app or promote `tile_paper/apps/electron` as the primary product.
+
+| Rationale         | Detail                                                                       |
+| ----------------- | ---------------------------------------------------------------------------- |
+| Mature shell      | ContentHub, view registry, plugin placement, E2E depth                       |
+| Runtime authority | Main process, IPC, desktop bridge, SQLite library cache                      |
+| Lower risk        | tile_paper adoption plans explicitly exclude wholesale ContentHub transplant |
+
+Evolution path: keep custom_launcher main process and ContentHub; gradually swap renderer/
+extension webviews to `@workbench-kit/react` and tile_paper adapters; absorb launcher-core
+HTTP/WS surfaces as an authoring/file API without splitting runtime authority.
+
+### tile_paper packages as domain libraries
+
+`tile_paper` **apps** are reference and pilot surfaces until kit Phase 4 swap closes. Long term,
+**packages** are absorbed into the canonical app workspace as domain libraries:
+
+| Package area                             | Role in unified product                  | Stays outside kit                          |
+| ---------------------------------------- | ---------------------------------------- | ------------------------------------------ |
+| `@tilepaper/model`, engine, renderer     | Launchpad DSL, domain DTOs               | Product routes, `.tilepaper/` layout       |
+| `json-widget-tree`, `json-widget-editor` | Authoring reference → kit swap (Phase 4) | TilePaper-specific widget types until swap |
+| `provider-sdk`, launcher-core            | Headless provider/catalog API            | Provider SQLite/IPC implementations        |
+| `apps/web-editor`, `apps/electron`       | Reference-only until sunset (Phase 5)    | —                                          |
+
+Kit exposes contracts and generic chrome; tile_paper packages supply TilePaper domain logic
+linked or published into the custom_launcher workspace.
+
+### 5-phase roadmap summary
+
+| Phase | Name                    | Deliverable                                                                                                                                | Primary repo                          | Validation                                                                         |
+| ----- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- | ---------------------------------------------------------------------------------- |
+| 1     | Foundation lock         | Kit Phase 4 swap runbook; context-key port to `@workbench-kit/core`; contracts parity CI                                                   | newchobo-ui-package + both references | `check:launch-boundary`, `test:storybook-play:required`, mapping equivalence tests |
+| 2     | UI stack convergence    | ContentHub/authoring webviews pilot `@workbench-kit/react`, `JsonWidgetEditor`, `JsonConfigWorkbench`; freeze new `#workbench-ui` features | custom_launcher                       | Launchpad E2E, Storybook pilots, authoring-surface regression                      |
+| 3     | Domain package merge    | custom_launcher consumes `@tilepaper/*` packages; consolidate duplicate provider implementations                                           | tile_paper packages → custom_launcher | Provider contract tests, json-widget parity, library action E2E                    |
+| 4     | Runtime unification     | Integrate launcher-core subprocess + HTTP Platform into custom_launcher desktop runtime; serve web-editor bundle from ContentHub routes    | custom_launcher + launcher-core       | content-hub E2E, electron smoke scenarios                                          |
+| 5     | Sunset & single product | Deprecate tile_paper duplicate apps, redundant vscode extension apps, and `#workbench-ui`; unify package-manager policy                    | custom_launcher (canonical)           | Unified `test:validate:e2e`, pack smoke                                            |
+
+Phases 1–2 align with the current kit milestone and [json-widget port-then-replace](./json-widget-port-then-replace.md) Phase 4 consumer swap policy.
+
+### Key user decisions needed
+
+| Decision                         | Options                                                   | Current recommendation                                                                                                  | Blocks                               |
+| -------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| **Canonical Electron app**       | custom_launcher / tile_paper electron / greenfield        | **custom_launcher** (evolve)                                                                                            | Phase 3+ domain merge, E2E ownership |
+| **npm vs pnpm**                  | npm (custom_launcher) / pnpm (tile_paper + kit) / unified | Short term: npm canonical app + publish/link tile_paper packages; **pnpm unification = Phase 5**                        | CI, husky, workspace layout          |
+| **`#workbench-ui` retirement**   | Freeze now → adapter swap → delete                        | Freeze new features now; retire after Phase 2–3 kit adapter coverage; remove in Phase 5                                 | UI stack convergence timeline        |
+| **Launchpad DSL vs json-widget** | Long-term coexist / json-widget primary / DSL-only        | Short term **coexist**; json-widget as launchpad source editor via kit bridge; **long-term convergence = separate ADR** | Authoring UX, migration cost         |
+| **Library authority** (optional) | SQLite-only / `.tilepaper` file-first / file + cache      | **Decision pending** — file contract + optional SQLite cache fits both references                                       | Phase 3 library merge                |
+
+See also [strengths-inheritance.md](./strengths-inheritance.md) and
+[tile_paper workbench-kit-phase4-pilot](https://github.com/whwjd/tile_paper/blob/main/docs/developer/planning/workbench-kit-phase4-pilot.md).
+
 ## Decision Summary
 
 | Track                                       | Lead reference  | Workbench Kit focus                                                                                        |
