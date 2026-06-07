@@ -125,13 +125,13 @@ Low priority — defer until standalone shell and host bootstrap are stable in p
 
 Storybook-first playground strategy. No standalone public playground app in the current milestone.
 
-| Surface               | Today                                                   | Target                                                            |
-| --------------------- | ------------------------------------------------------- | ----------------------------------------------------------------- |
-| JSON config           | `JsonConfig/Workbench` (Monaco + schema/widget preview) | Host adoption + baseline play                                     |
+| Surface               | Today                                                                    | Target                                                                            |
+| --------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| JSON config           | `JsonConfig/Workbench` (Monaco + schema/widget preview)                  | Host adoption + baseline play                                                     |
 | Widget parse/registry | `JsonWidget/Playground` (textarea demo + **Interactive** editor sandbox) | Interactive story uses `JsonWidgetEditor`; textarea stories remain parse-only lab |
-| Shell full flow       | `Integrated Shell` via `IntegratedShellDemo`            | Keep as reference host; do not duplicate in new playground export |
-| Chrome states         | `Verification` interactive stories                      | Shared sandbox controls (theme, locale)                           |
-| Theme / i18n          | Scattered story args                                    | Dedicated sandbox story (depends on i18n P1, theme T1)            |
+| Shell full flow       | `Integrated Shell` via `IntegratedShellDemo`                             | Keep as reference host; do not duplicate in new playground export                 |
+| Chrome states         | `Verification` interactive stories                                       | Shared sandbox controls (theme, locale)                                           |
+| Theme / i18n          | Scattered story args                                                     | Dedicated sandbox story (depends on i18n P1, theme T1)                            |
 
 - [x] **P1** Intro playground map: link JsonConfig, JsonWidget Playground, Integrated Shell, Verification interactive stories.
 - [x] **P1** Document playground roles in `docs/conventions/storybook.md` (JsonConfig = production config pattern; JsonWidget Playground = parse/registry lab).

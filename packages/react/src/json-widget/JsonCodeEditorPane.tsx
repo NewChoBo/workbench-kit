@@ -21,10 +21,7 @@ import {
   StatusBarItem as WorkbenchStatusBarItem,
   StatusBarSection as WorkbenchStatusBarSection,
 } from '../workbench/StatusBar';
-import {
-  WorkspaceEditor,
-  type WorkspaceEditorTheme,
-} from '../workbench/workspace/WorkspaceEditor';
+import { WorkspaceEditor, type WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor';
 import type { WorkspaceFile } from '../workbench/workspace/types';
 
 interface JsonEditorProblem {
@@ -144,7 +141,12 @@ export function JsonCodeEditorPane({
         <WorkbenchEditorBottomPanel aria-label="Problems" height={120}>
           <WorkbenchEditorBottomPanelHeader>
             <WorkbenchEditorBottomPanelTitle>Problems</WorkbenchEditorBottomPanelTitle>
-            <IconButton compact icon="codicon-close" label="Close problems" onClick={() => setShowProblems(false)} />
+            <IconButton
+              compact
+              icon="codicon-close"
+              label="Close problems"
+              onClick={() => setShowProblems(false)}
+            />
           </WorkbenchEditorBottomPanelHeader>
           <WorkbenchEditorBottomPanelBody>
             <WorkbenchProblemList aria-label="JSON problems" role="list">
