@@ -95,6 +95,16 @@ importers:
 
   packages/core: {}
 
+  packages/json-widget:
+    dependencies:
+      '@workbench-kit/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(@swc/core@1.15.40)(postcss@8.5.15)(typescript@5.9.3)
+
   packages/react:
     dependencies:
       '@monaco-editor/react':
