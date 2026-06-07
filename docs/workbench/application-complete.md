@@ -4,12 +4,14 @@ Last updated: 2026-06-07
 
 This document defines when **workbench-kit application** (Phases 1–3 of the
 port-then-replace policy) is considered **complete** in `newchobo-ui-package`.
-Consumer swap (Phase 4) is explicitly **out of scope** until the user picks a
-keeper product repo (`tile_paper` vs `custom_launcher`).
+Consumer swap (Phase 4) started **2026-06-07** with keeper **custom_launcher +
+workbench-kit**; tile_paper remains a low-scope pilot. See
+[consumer-swap-runbook.md](./consumer-swap-runbook.md).
 
 Related:
 
 - [json-widget-port-then-replace.md](./json-widget-port-then-replace.md)
+- [consumer-swap-runbook.md](./consumer-swap-runbook.md)
 - [strengths-inheritance.md](./strengths-inheritance.md)
 - [migration-todo.md](./migration-todo.md)
 
@@ -41,7 +43,7 @@ Related:
 | Storybook play (required) | 14 flows including `JsonWidget/Playground → InteractiveSmoke`           | ✅     |
 | Verification              | `pnpm validate:full` passes                                             | ✅     |
 | Phase 3 docs              | port-then-replace Phase 3 marked DONE in policy doc                     | ✅     |
-| Phase 4 consumer swap     | Explicitly OUT until keeper repo decision                               | ⏸️     |
+| Phase 4 consumer swap     | Runbook live; keeper swaps in progress ([runbook](./consumer-swap-runbook.md)) | 🟡     |
 
 ## Verification command
 
@@ -55,14 +57,14 @@ Equivalent steps:
 pnpm typecheck && pnpm lint && pnpm test && pnpm format:check && pnpm build:storybook && pnpm check:launch-boundary && pnpm test:storybook-play:required
 ```
 
-## Phase 4 (consumer swap) — not part of “application complete”
+## Phase 4 (consumer swap) — separate milestone
 
-When the user picks a keeper repo:
+Keeper: **custom_launcher**. Pilot: **tile_paper** (minimal, then sunset).
 
+- Follow [consumer-swap-runbook.md](./consumer-swap-runbook.md) for ordered swaps.
 - Point the keeper at `@workbench-kit/react/json-widget` and delete duplicated
-  local editor chrome.
-- Run consumer swap runbook from [json-widget-port-then-replace.md](./json-widget-port-then-replace.md).
-- Sunset the deprecated product repo or reduce it to adapter-only shims.
+  local editor chrome incrementally.
+- Sunset tile_paper or reduce it to adapter-only shims after pilot P3–P4.
 
 ## dev-agent note
 
