@@ -6,7 +6,10 @@ import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
 import { EmptyState } from '../primitives/EmptyState';
 import { Button } from '../primitives/Button';
 import { Toolbar } from '../primitives/Toolbar';
-import { JsonCodeEditorPane, JsonConfigValidationBanner } from '../json-widget/JsonCodeEditorPane.js';
+import {
+  JsonCodeEditorPane,
+  JsonConfigValidationBanner,
+} from '../json-widget/JsonCodeEditorPane.js';
 import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
 import {
   WorkbenchArtifactModeControls,

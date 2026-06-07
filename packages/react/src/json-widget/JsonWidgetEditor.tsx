@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { OnMount } from '@monaco-editor/react';
 import type { WidgetJsonSchema, WidgetRegistryContract } from '@workbench-kit/contracts';
 import { ROOT_WIDGET_PATH, type WidgetPath } from '@workbench-kit/json-widget';
