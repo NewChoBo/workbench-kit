@@ -18,10 +18,12 @@ import {
   WorkbenchPropertyTextRow,
   WorkbenchSectionTitle,
 } from '../layout/WorkbenchPropertyPanel';
+import { PlaygroundPlacementSections } from './PlaygroundPlacementSections.js';
 
 export interface WidgetInspectorPanelProps {
   widget: GenericWidget | null;
   path: WidgetPath | null;
+  parentWidget?: GenericWidget | null | undefined;
   widgetRegistry?: WidgetRegistryContract<unknown> | undefined;
   readOnly?: boolean | undefined;
   onPatch?: ((next: GenericWidget) => void) | undefined;
@@ -30,14 +32,36 @@ export interface WidgetInspectorPanelProps {
 export function WidgetInspectorPanel({
   widget,
   path,
+  parentWidget = null,
   widgetRegistry,
   readOnly = false,
   onPatch,
 }: WidgetInspectorPanelProps) {
   const inspector = widget ? widgetRegistry?.definition(widget.type)?.inspector : undefined;
 
+  const updateWidget = (next: GenericWidget) => {
+    if (!widget || !path || !onPatch || readOnly) return;
+    onPatch(next);
+  };
+
   const updateProp = (prop: string, value: unknown) => {
     if (!widget || !path || !onPatch || readOnly) return;
+
+    if (widget.type === 'box' && (prop === 'borderColor' || prop === 'borderWidth')) {
+      const border =
+        widget.border && typeof widget.border === 'object'
+          ? { ...(widget.border as Record<string, unknown>) }
+          : {};
+      if (prop === 'borderColor' && typeof value === 'string') {
+        border.color = value;
+      }
+      if (prop === 'borderWidth' && typeof value === 'number') {
+        border.width = value;
+      }
+      onPatch({ ...widget, border });
+      return;
+    }
+
     onPatch({ ...widget, [prop]: value });
   };
 
@@ -71,6 +95,13 @@ export function WidgetInspectorPanel({
               No inspector metadata registered for this widget type.
             </WorkbenchPropertyHint>
           )}
+
+          <PlaygroundPlacementSections
+            parentWidget={parentWidget}
+            readOnly={readOnly}
+            widget={widget}
+            onUpdate={updateWidget}
+          />
         </WorkbenchPropertyStack>
       )}
     </WorkbenchPropertyPanel>
@@ -96,7 +127,8 @@ function InspectorSection({
           field={field}
           readOnly={readOnly}
           value={values[field.prop]}
-          onValueChange={(next) => onValueChange(field.prop, next)}
+          values={values}
+          onValueChange={(prop, next) => onValueChange(prop, next)}
         />
       ))}
     </WorkbenchPropertySection>
@@ -108,12 +140,42 @@ function InspectorField({
   onValueChange,
   readOnly,
   value,
+  values,
 }: {
   field: WidgetInspectorField;
-  onValueChange: (value: unknown) => void;
+  onValueChange: (prop: string, value: unknown) => void;
   readOnly: boolean;
   value: unknown;
+  values: GenericWidget;
 }) {
+  if (field.prop === 'borderColor') {
+    const border = values.border as { color?: string; width?: number } | undefined;
+    const borderColor = typeof border?.color === 'string' ? border.color : '';
+    return (
+      <WorkbenchPropertyColorRow
+        label={field.label}
+        value={borderColor}
+        onValueChange={(next) => onValueChange(field.prop, next)}
+      />
+    );
+  }
+
+  if (field.prop === 'borderWidth' && field.kind === 'number') {
+    const border = values.border as { color?: string; width?: number } | undefined;
+    const borderWidth = typeof border?.width === 'number' ? border.width : undefined;
+    return (
+      <WorkbenchPropertyNumberRow
+        label={field.label}
+        disabled={readOnly}
+        min={field.min}
+        max={field.max}
+        step={field.step}
+        value={borderWidth}
+        onValueChange={(next) => onValueChange(field.prop, next)}
+      />
+    );
+  }
+
   if (field.kind === 'text' || field.kind === 'color') {
     const Row = field.kind === 'color' ? WorkbenchPropertyColorRow : WorkbenchPropertyTextRow;
     return (
@@ -124,7 +186,7 @@ function InspectorField({
         {...(field.kind === 'text' && field.placeholder
           ? { placeholder: field.placeholder }
           : null)}
-        onValueChange={onValueChange}
+        onValueChange={(next) => onValueChange(field.prop, next)}
       />
     );
   }
@@ -138,7 +200,7 @@ function InspectorField({
         min={field.min}
         step={field.step}
         value={typeof value === 'number' ? value : undefined}
-        onValueChange={onValueChange}
+        onValueChange={(next) => onValueChange(field.prop, next)}
       />
     );
   }
@@ -150,7 +212,7 @@ function InspectorField({
         disabled={readOnly}
         options={field.options}
         value={typeof value === 'string' ? value : undefined}
-        onValueChange={onValueChange}
+        onValueChange={(next) => onValueChange(field.prop, next)}
       />
     );
   }
@@ -160,7 +222,7 @@ function InspectorField({
       label={field.label}
       disabled={readOnly}
       checked={typeof value === 'boolean' ? value : false}
-      onCheckedChange={onValueChange}
+      onCheckedChange={(next) => onValueChange(field.prop, next)}
     />
   );
 }

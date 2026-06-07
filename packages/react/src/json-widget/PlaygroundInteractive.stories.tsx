@@ -46,6 +46,8 @@ type Story = StoryObj;
 function PlaygroundToolbar({
   canDelete,
   canDuplicate,
+  exportFilename,
+  jsonValue,
   onAdd,
   onDelete,
   onDuplicate,
@@ -53,11 +55,33 @@ function PlaygroundToolbar({
 }: {
   canDelete: boolean;
   canDuplicate: boolean;
+  exportFilename: string;
+  jsonValue: string;
   onAdd: (template: PlaygroundWidgetTemplate) => void;
   onDelete: () => void;
   onDuplicate: () => void;
   onLoadTemplate: (template: PlaygroundStarterTemplate) => void;
 }) {
+  const handleCopyJson = async () => {
+    try {
+      await navigator.clipboard.writeText(jsonValue);
+      action('export-copy')({ bytes: jsonValue.length });
+    } catch (error) {
+      action('export-copy-failed')(error);
+    }
+  };
+
+  const handleDownloadJson = () => {
+    const blob = new Blob([jsonValue], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = exportFilename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    action('export-download')({ filename: exportFilename });
+  };
+
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
       <ButtonGroup ariaLabel="Starter templates">
@@ -102,6 +126,14 @@ function PlaygroundToolbar({
           onClick={onDelete}
         >
           Delete
+        </Button>
+      </ButtonGroup>
+      <ButtonGroup ariaLabel="Export JSON">
+        <Button compact data-testid="export-json-copy" onClick={() => void handleCopyJson()}>
+          Copy JSON
+        </Button>
+        <Button compact data-testid="export-json-download" onClick={handleDownloadJson}>
+          Download
         </Button>
       </ButtonGroup>
     </div>
@@ -175,6 +207,8 @@ function InteractivePlaygroundHarness({
           <PlaygroundToolbar
             canDelete={canDelete}
             canDuplicate={canDuplicate}
+            exportFilename="playground.json"
+            jsonValue={value}
             onAdd={handleAddWidget}
             onDelete={handleDeleteWidget}
             onDuplicate={handleDuplicateWidget}

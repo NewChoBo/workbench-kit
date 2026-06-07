@@ -83,14 +83,21 @@ Sync rules:
 - [x] P3.1 preview click-to-select — `interactivePreview` bridges canvas selection to tree/inspector
 - [x] P3.2 strengths inheritance — zoom/pan canvas, preview toolbar, Monaco problems/Ctrl+S/view shortcuts, config Apply banner ([strengths-inheritance.md](./strengths-inheritance.md))
 - [x] P3.2 playground widget types — simplified `button`, `list-view`, `tile`, **`input`** in playground registry/schema/renderer
+- [x] P3.4 playground widget types — **`divider`**, **`image`**, **`document`** shell in playground registry/schema/renderer
+- [x] P3.4 inspector placement sections — grid/stack/linear child placement + box border in inspector
+- [x] P3.4 canvas drag-to-move — grid col/row + stack left/top drag; grid resize handle on selection
+- [x] P3.4 problems panel — parse errors merged into Monaco problems list with auto-open
+- [x] P3.4 GUI mode label — preview mode control labeled **GUI** (tile_paper parity)
+- [x] P3.4 playground export — Copy JSON + Download toolbar actions
+- [x] P3.4 starter templates — media card, form column, document shell
 - [x] P3.3 simplified preview selection chrome — `PlaygroundEditorWidgetWrapper` (`WorkbenchCanvasItemFrame` + badge)
 - [x] P3.3 full playground E2E play — `JsonWidget/Playground → InteractiveSmoke` (add, inspector, preview select, DnD, save)
 - [x] P3.3 required play promotion — `InteractiveSmoke` (`JsonConfig/WidgetInteraction` stays baseline; save requires dirty Monaco edit)
 - [x] **Phase 3 kit milestone complete** — see [application-complete.md](./application-complete.md)
 - [x] P4 consumer swap runbook — [consumer-swap-runbook.md](./consumer-swap-runbook.md)
 - [ ] P4 custom_launcher preview toolbar → `PreviewZoomToolbar` (in progress)
-- [ ] P4 tile_paper domain types (full `WidgetPropertySections`, drag/resize `EditorWidgetWrapper`)
-- [ ] P4 full `createWidgetJsonSchema` parity (image, document, tile-ref, divider, …)
+- [ ] P4 tile_paper domain types (full `WidgetPropertySections`, drag/resize `EditorWidgetWrapper` with registry wrapper pattern)
+- [ ] P4 full `createWidgetJsonSchema` parity (tile-ref, spacer, dataSource, multi-schema project configs)
 
 ## Verification
 

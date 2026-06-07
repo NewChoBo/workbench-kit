@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { OnMount } from '@monaco-editor/react';
 import type * as Monaco from 'monaco-editor';
 
@@ -40,6 +40,7 @@ function toWorkbenchProblemSeverity(severity: number): WorkbenchProblemSeverity 
 }
 
 export interface JsonCodeEditorPaneProps {
+  documentParseError?: string | null | undefined;
   file: WorkspaceFile;
   onChange: (value: string) => void;
   onEditorMount?: OnMount | undefined;
@@ -51,6 +52,7 @@ export interface JsonCodeEditorPaneProps {
 }
 
 export function JsonCodeEditorPane({
+  documentParseError = null,
   file,
   onChange,
   onEditorMount,
@@ -62,8 +64,31 @@ export function JsonCodeEditorPane({
 }: JsonCodeEditorPaneProps) {
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const markerListenerRef = useRef<Monaco.IDisposable | null>(null);
-  const [problems, setProblems] = useState<JsonEditorProblem[]>([]);
+  const [monacoProblems, setMonacoProblems] = useState<JsonEditorProblem[]>([]);
   const [showProblems, setShowProblems] = useState(false);
+
+  const problems = useMemo(() => {
+    if (!documentParseError) return monacoProblems;
+    return [
+      {
+        endColumn: 1,
+        endLineNumber: 1,
+        message: documentParseError,
+        severity: 8,
+        startColumn: 1,
+        startLineNumber: 1,
+      },
+      ...monacoProblems,
+    ];
+  }, [documentParseError, monacoProblems]);
+
+  const previousProblemCountRef = useRef(0);
+  useEffect(() => {
+    if (problems.length > previousProblemCountRef.current) {
+      setShowProblems(true);
+    }
+    previousProblemCountRef.current = problems.length;
+  }, [problems.length]);
 
   useEffect(
     () => () => {
@@ -93,7 +118,7 @@ export function JsonCodeEditorPane({
 
     const updateProblems = () => {
       const markers = monaco.editor.getModelMarkers({ resource: model.uri });
-      setProblems(
+      setMonacoProblems(
         markers.map((marker: Monaco.editor.IMarker) => ({
           message: marker.message,
           severity: marker.severity,

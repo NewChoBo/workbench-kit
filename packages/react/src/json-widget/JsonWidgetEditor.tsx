@@ -9,7 +9,7 @@ import {
 } from 'react';
 import type { OnMount } from '@monaco-editor/react';
 import type { WidgetJsonSchema, WidgetRegistryContract } from '@workbench-kit/contracts';
-import { ROOT_WIDGET_PATH, type WidgetPath } from '@workbench-kit/json-widget';
+import { getWidgetAtPath, ROOT_WIDGET_PATH, type WidgetPath } from '@workbench-kit/json-widget';
 
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
 import { WorkbenchParseError } from '../layout/WorkbenchLayout';
@@ -45,6 +45,7 @@ export interface JsonWidgetEditorProps {
   showInspectorPanel?: boolean | undefined;
   showProblemsPanel?: boolean | undefined;
   showTreePanel?: boolean | undefined;
+  previewModeLabel?: string | undefined;
   theme?: WorkspaceEditorTheme | undefined;
   title?: ReactNode | undefined;
   value: string;
@@ -68,6 +69,7 @@ export function JsonWidgetEditor({
   showInspectorPanel = true,
   showProblemsPanel = true,
   showTreePanel = true,
+  previewModeLabel = 'GUI',
   theme = 'dark',
   title = 'Widget editor',
   value,
@@ -104,6 +106,19 @@ export function JsonWidgetEditor({
       path,
     }),
     [path, value],
+  );
+
+  const parentWidget = useMemo(() => {
+    if (!sync.root || !sync.selectedPath || sync.selectedPath.length === 0) return null;
+    return getWidgetAtPath(sync.root, sync.selectedPath.slice(0, -1));
+  }, [sync.root, sync.selectedPath]);
+
+  const handlePreviewPatch = useCallback(
+    (patch: Parameters<typeof sync.applyPatch>[0]) => {
+      const nextDocument = sync.applyPatch(patch);
+      if (nextDocument) onChange(nextDocument);
+    },
+    [onChange, sync],
   );
 
   const toggleViewModeRef = useRef<(() => void) | undefined>(undefined);
@@ -144,6 +159,7 @@ export function JsonWidgetEditor({
 
   const codePane = (
     <JsonCodeEditorPane
+      documentParseError={sync.parseError}
       file={editorFile}
       readOnly={readOnly}
       showProblemsPanel={showProblemsPanel}
@@ -163,7 +179,9 @@ export function JsonWidgetEditor({
     ) : interactivePreview ? (
       <JsonWidgetPreviewCanvas
         json={value}
+        parseError={sync.parseError}
         selectedPathKeys={sync.selection.pathKeys}
+        onPatch={readOnly ? undefined : handlePreviewPatch}
         onSelectPath={sync.selectPath}
       />
     ) : (
@@ -226,6 +244,7 @@ export function JsonWidgetEditor({
           secondary={
             <section className="ui-json-widget-editor__pane" aria-label="Inspector">
               <WidgetInspectorPanel
+                parentWidget={parentWidget}
                 path={sync.selectedPath}
                 readOnly={readOnly}
                 widget={sync.selectedWidget}
@@ -289,7 +308,11 @@ export function JsonWidgetEditor({
               </>
             ) : null}
             {headerActions}
-            <WorkbenchArtifactModeControls mode={resolvedMode} onModeChange={setMode} />
+            <WorkbenchArtifactModeControls
+              mode={resolvedMode}
+              previewLabel={previewModeLabel}
+              onModeChange={setMode}
+            />
           </Toolbar>
         }
       >
