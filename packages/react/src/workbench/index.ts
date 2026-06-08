@@ -417,7 +417,11 @@ export {
   isWorkbenchDocumentSupported,
   initializeWorkbenchDocumentPatchHistory,
 } from './schema';
-export { buildWorkspaceDocumentLookup, documentNodesToWorkspaceFiles, workspaceFilesToDocument } from './schema';
+export {
+  buildWorkspaceDocumentLookup,
+  documentNodesToWorkspaceFiles,
+  workspaceFilesToDocument,
+} from './schema';
 export type {
   WorkspaceToWorkbenchDocumentOptions,
   WorkbenchToWorkspaceConversionOptions,

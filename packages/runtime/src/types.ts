@@ -1,4 +1,9 @@
-import type { ChatMessage, ChatMessageSource, WorkspacePatchEvent, WorkspacePatchSource } from '@workbench-kit/contracts';
+import type {
+  ChatMessage,
+  ChatMessageSource,
+  WorkspacePatchEvent,
+  WorkspacePatchSource,
+} from '@workbench-kit/contracts';
 
 export type RuntimeChatMessageSource = ChatMessageSource;
 export type RuntimeStatus = 'cancelled' | 'error' | 'idle' | 'running';

@@ -214,7 +214,9 @@ describe('WorkbenchStructuredDataForm helpers', () => {
     expect(getWorkbenchStructuredDataSchemaSectionId(section)).toBe('requestFields');
     expect(getWorkbenchStructuredDataSchemaSectionPath(section)).toBe('request.fields');
     expect(getWorkbenchStructuredDataSchemaSectionPath({ id: 'root', dataPath: '' })).toBe('');
-    expect(getWorkbenchStructuredDataSchemaFieldDataPath({ id: 'root', dataPath: '' }, 'title')).toBe('title');
+    expect(
+      getWorkbenchStructuredDataSchemaFieldDataPath({ id: 'root', dataPath: '' }, 'title'),
+    ).toBe('title');
     expect(getWorkbenchStructuredDataSchemaFieldDataPath(section, 'name')).toBe(
       'request.fields.name',
     );

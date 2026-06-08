@@ -23,9 +23,10 @@ export interface WorkbenchDocumentPatchHistoryState {
 
 export interface WorkbenchDocumentPatchHistory {
   state: WorkbenchDocumentPatchHistoryState;
-  applyPatch: (
-    patch: WorkbenchDocumentPatch,
-  ) => { state: WorkbenchDocumentPatchHistoryState; result: WorkbenchDocumentPatchResult };
+  applyPatch: (patch: WorkbenchDocumentPatch) => {
+    state: WorkbenchDocumentPatchHistoryState;
+    result: WorkbenchDocumentPatchResult;
+  };
   undo: () => WorkbenchDocumentPatchHistoryState | null;
   redo: () => WorkbenchDocumentPatchHistoryState | null;
   canUndo: boolean;
@@ -52,9 +53,7 @@ function parsePointer(path: string): string[] {
       .split('/')
       .map((segment) => segment.replace(/~1/g, '/').replace(/~0/g, '~'));
   }
-  return path
-    .split('/')
-    .map((segment) => segment.replace(/~1/g, '/').replace(/~0/g, '~'));
+  return path.split('/').map((segment) => segment.replace(/~1/g, '/').replace(/~0/g, '~'));
 }
 
 function cloneDeep<T>(value: T): T {
@@ -83,7 +82,11 @@ function resolveContainer(document: unknown, segments: string[]): unknown {
   return current;
 }
 
-function setValueAtPath(document: WorkbenchDocument, segments: string[], value: unknown): WorkbenchDocument {
+function setValueAtPath(
+  document: WorkbenchDocument,
+  segments: string[],
+  value: unknown,
+): WorkbenchDocument {
   if (segments.length === 0) {
     return value as WorkbenchDocument;
   }
@@ -122,7 +125,7 @@ function setValueAtPath(document: WorkbenchDocument, segments: string[], value: 
     if (!Number.isFinite(index) || index < 0) {
       throw new Error(`invalid array index: ${key}`);
     }
-    current[index] = value;
+    current.splice(index, 0, value);
     return cloned;
   }
   if (current && typeof current === 'object') {
@@ -173,7 +176,11 @@ function removeValueAtPath(document: WorkbenchDocument, segments: string[]): Wor
   throw new Error(`invalid parent container: /${segments.join('/')}`);
 }
 
-function replaceValueAtPath(document: WorkbenchDocument, segments: string[], value: unknown): WorkbenchDocument {
+function replaceValueAtPath(
+  document: WorkbenchDocument,
+  segments: string[],
+  value: unknown,
+): WorkbenchDocument {
   if (segments.length === 0) {
     return value as WorkbenchDocument;
   }
@@ -214,7 +221,10 @@ function replaceValueAtPath(document: WorkbenchDocument, segments: string[], val
   throw new Error(`invalid parent container: /${segments.join('/')}`);
 }
 
-function applySingleOp(document: WorkbenchDocument, op: WorkbenchDocumentPatchOp): WorkbenchDocument {
+function applySingleOp(
+  document: WorkbenchDocument,
+  op: WorkbenchDocumentPatchOp,
+): WorkbenchDocument {
   const segments = parsePointer(op.path);
   switch (op.op) {
     case 'add':
@@ -266,10 +276,12 @@ export function applyWorkbenchDocumentPatch(
   for (const op of patch.ops) {
     try {
       current = applySingleOp(current, op);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : String(caught);
       warnings.push({ code: 'invalid-path', path: op.path, message });
-      throw new Error(`Failed to apply patch(${patch.id}) at ${op.path}: ${message}`);
+      const error = new Error(`Failed to apply patch(${patch.id}) at ${op.path}: ${message}`);
+      (error as Error & { cause: unknown }).cause = caught;
+      throw error;
     }
   }
   return { document: current, warnings };
