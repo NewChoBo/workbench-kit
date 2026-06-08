@@ -43,21 +43,26 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
 
-      - name: Ensure npm supports trusted publishing
-        run: npm install -g npm@11
-
       - name: Enable pnpm
         run: |
           corepack enable
           corepack prepare pnpm@11.5.1 --activate
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build workspace packages
+        run: |
+          pnpm --filter @workbench-kit/contracts build
+          pnpm --filter @workbench-kit/json-widget build
 
       - name: Verify release tag
         run: node scripts/check-release-version.mjs
       - name: Validate
         run: pnpm validate
+
+      - name: Ensure npm supports trusted publishing
+        run: npm install -g npm@11
 
       - name: Publish
         run: node scripts/publish-packages.mjs
