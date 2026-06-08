@@ -9,12 +9,18 @@ import {
 } from 'react';
 import type { OnMount } from '@monaco-editor/react';
 import type { WidgetJsonSchema, WidgetRegistryContract } from '@workbench-kit/contracts';
-import { getWidgetAtPath, ROOT_WIDGET_PATH, type WidgetPath } from '@workbench-kit/json-widget';
+import {
+  getWidgetAtPath,
+  ROOT_WIDGET_PATH,
+  type WidgetPath,
+  type WidgetSelectionState,
+} from '@workbench-kit/json-widget';
 
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
 import { WorkbenchParseError } from '../layout/WorkbenchLayout';
 import { EmptyState } from '../primitives/EmptyState';
 import { Button } from '../primitives/Button';
+import { ButtonGroup } from '../primitives/WorkbenchEditor';
 import { Toolbar } from '../primitives/Toolbar';
 import {
   WorkbenchArtifactModeControls,
@@ -23,26 +29,64 @@ import {
 import { SplitView } from '../workbench/SplitView';
 import { type WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor';
 import { type WorkspaceFile } from '../workbench/workspace/types';
+import type { AuthoringDropPayload } from '../authoring/authoring-drop.js';
+import type { InspectorAssetOption } from '../authoring/InspectorAssetPickerRow.js';
+import type { PlaygroundWidgetTemplate } from './playground/demo-registry.js';
 import { JsonCodeEditorPane } from './JsonCodeEditorPane.js';
 import { JsonWidgetPreview } from './JsonWidgetPreview.js';
 import { JsonWidgetPreviewCanvas } from './JsonWidgetPreviewCanvas.js';
-import { useJsonWidgetEditorSync } from './useJsonWidgetEditorSync.js';
+import {
+  handleAuthoringShortcutKeyDown,
+  type AuthoringShortcutHandlers,
+} from '../authoring/authoring-shortcuts.js';
+import {
+  useJsonWidgetEditorSync,
+  type JsonWidgetHistoryActions,
+} from './useJsonWidgetEditorSync.js';
+import type { InspectorPanelMode } from '../authoring/inspector-mode.js';
 import { WidgetInspectorPanel } from './WidgetEditorPanels.js';
 import { WidgetTreePanel } from './tree-panel/WidgetTreePanel.js';
+import { AuthoringSidebarLayout } from '../authoring/AuthoringSidebarLayout.js';
+import {
+  DEFAULT_AUTHORING_SIDEBAR_PLACEMENT,
+  resolveAuthoringSidebarPlacement,
+  type AuthoringPanelDefinition,
+  type AuthoringSidebarPlacement,
+} from '../authoring/authoring-sidebar.js';
+import type { WidgetEditorSidePanelTab } from '../authoring/WidgetEditorSidePanel.js';
 
 export interface JsonWidgetEditorProps {
   baselineValue?: string | undefined;
+  canvasHeight?: number | undefined;
+  canvasWidth?: number | undefined;
   defaultMode?: WorkbenchArtifactMode | undefined;
-  headerActions?: ReactNode | undefined;
+  emptyStateQuickTemplates?: readonly PlaygroundWidgetTemplate[] | undefined;
+  headerActions?: ReactNode | ((history: JsonWidgetHistoryActions) => ReactNode) | undefined;
+  historyResetKey?: string | number | undefined;
+  imageSrcAssets?: readonly InspectorAssetOption[] | undefined;
+  onDeleteSelected?: (() => void) | undefined;
   mode?: WorkbenchArtifactMode | undefined;
+  onAuthoringDrop?: (payload: AuthoringDropPayload, position: { x: number; y: number }) => void;
   onChange: (value: string) => void;
+  resolveAssetSrc?: ((src: string) => string) | undefined;
   onDiscard?: (() => void) | undefined;
+  onEmptyInsertTemplate?: ((template: PlaygroundWidgetTemplate) => void) | undefined;
   onModeChange?: ((mode: WorkbenchArtifactMode) => void) | undefined;
   onSave?: (() => void) | undefined;
-  onSelectionChange?: ((path: WidgetPath | null) => void) | undefined;
+  inspectorMode?: InspectorPanelMode | undefined;
+  onSelectionChange?:
+    | ((path: WidgetPath | null, selection: WidgetSelectionState) => void)
+    | undefined;
   path?: string | undefined;
+  previewToolbarExtras?: ReactNode | undefined;
+  leftPanelTabs?: readonly WidgetEditorSidePanelTab[] | undefined;
   readOnly?: boolean | undefined;
+  /** Consumer-provided right sidebar (e.g. authoring chat). Kit stays domain-neutral. */
+  renderRightSidebar?: (() => ReactNode) | undefined;
+  onSidebarPlacementChange?: ((placement: AuthoringSidebarPlacement) => void) | undefined;
   showInspectorPanel?: boolean | undefined;
+  showSidebarMoveControls?: boolean | undefined;
+  sidebarPlacement?: AuthoringSidebarPlacement | undefined;
   showProblemsPanel?: boolean | undefined;
   showTreePanel?: boolean | undefined;
   previewModeLabel?: string | undefined;
@@ -56,17 +100,33 @@ export interface JsonWidgetEditorProps {
 
 export function JsonWidgetEditor({
   baselineValue,
+  canvasHeight,
+  canvasWidth,
   defaultMode = 'split',
+  emptyStateQuickTemplates,
   headerActions,
+  historyResetKey,
+  imageSrcAssets,
+  inspectorMode = 'advanced',
   mode,
+  onAuthoringDrop,
   onChange,
+  onDeleteSelected,
   onDiscard,
+  onEmptyInsertTemplate,
   onModeChange,
   onSave,
   onSelectionChange,
+  resolveAssetSrc,
   path = 'widget.json',
+  previewToolbarExtras,
+  leftPanelTabs,
   readOnly = false,
+  renderRightSidebar,
+  onSidebarPlacementChange,
   showInspectorPanel = true,
+  showSidebarMoveControls = false,
+  sidebarPlacement,
   showProblemsPanel = true,
   showTreePanel = true,
   previewModeLabel = 'GUI',
@@ -87,7 +147,36 @@ export function JsonWidgetEditor({
     onModeChange?.(nextMode);
   };
 
-  const sync = useJsonWidgetEditorSync({ baselineValue, resetKey: path, value });
+  const historyReset = historyResetKey ?? path;
+  const sync = useJsonWidgetEditorSync({ baselineValue, resetKey: String(historyReset), value });
+
+  const historyActions = useMemo<JsonWidgetHistoryActions>(
+    () => ({
+      canRedo: sync.canRedo,
+      canUndo: sync.canUndo,
+      redo: sync.redo,
+      undo: sync.undo,
+    }),
+    [sync.canRedo, sync.canUndo, sync.redo, sync.undo],
+  );
+
+  const handleDocumentChange = useCallback(
+    (next: string) => {
+      const committed = sync.commitDocument(next);
+      onChange(committed);
+    },
+    [onChange, sync],
+  );
+
+  const handleUndo = useCallback(() => {
+    const next = sync.undo();
+    if (next !== null) onChange(next);
+  }, [onChange, sync]);
+
+  const handleRedo = useCallback(() => {
+    const next = sync.redo();
+    if (next !== null) onChange(next);
+  }, [onChange, sync]);
 
   useEffect(() => {
     if (sync.root && sync.selection.pathKeys.size === 0) {
@@ -96,8 +185,8 @@ export function JsonWidgetEditor({
   }, [sync.root, sync.selection.pathKeys.size, sync.selectPath]);
 
   useEffect(() => {
-    onSelectionChange?.(sync.selectedPath);
-  }, [onSelectionChange, sync.selectedPath]);
+    onSelectionChange?.(sync.selectedPath, sync.selection);
+  }, [onSelectionChange, sync.selectedPath, sync.selection]);
 
   const editorFile = useMemo<WorkspaceFile>(
     () => ({
@@ -120,6 +209,30 @@ export function JsonWidgetEditor({
     },
     [onChange, sync],
   );
+
+  useEffect(() => {
+    if (readOnly) return;
+
+    const shortcutHandlers: AuthoringShortcutHandlers = {
+      onDelete: onDeleteSelected,
+      onRedo: handleRedo,
+      onUndo: handleUndo,
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      handleAuthoringShortcutKeyDown(event, shortcutHandlers, {
+        canDelete: Boolean(onDeleteSelected),
+        canRedo: sync.canRedo,
+        canUndo: sync.canUndo,
+      });
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [handleRedo, handleUndo, onDeleteSelected, readOnly, sync.canRedo, sync.canUndo]);
+
+  const resolvedHeaderActions =
+    typeof headerActions === 'function' ? headerActions(historyActions) : headerActions;
 
   const toggleViewModeRef = useRef<(() => void) | undefined>(undefined);
 
@@ -165,7 +278,7 @@ export function JsonWidgetEditor({
       showProblemsPanel={showProblemsPanel}
       theme={theme}
       value={value}
-      onChange={onChange}
+      onChange={handleDocumentChange}
       onEditorMount={handleEditorMount}
       onSave={onSave}
     />
@@ -178,11 +291,19 @@ export function JsonWidgetEditor({
       </EmptyState>
     ) : interactivePreview ? (
       <JsonWidgetPreviewCanvas
+        canvasHeight={canvasHeight}
+        canvasWidth={canvasWidth}
+        emptyStateQuickTemplates={emptyStateQuickTemplates}
         json={value}
         parseError={sync.parseError}
+        previewToolbarExtras={previewToolbarExtras}
+        readOnly={readOnly}
         selectedPathKeys={sync.selection.pathKeys}
+        onAuthoringDrop={readOnly ? undefined : onAuthoringDrop}
+        onEmptyInsertTemplate={readOnly ? undefined : onEmptyInsertTemplate}
         onPatch={readOnly ? undefined : handlePreviewPatch}
         onSelectPath={sync.selectPath}
+        resolveAssetSrc={resolveAssetSrc}
       />
     ) : (
       <JsonWidgetPreview json={value} registry={widgetRegistry} />
@@ -234,60 +355,78 @@ export function JsonWidgetEditor({
   );
 
   const layout = (() => {
-    const withInspector =
+    const inspectorPanel =
       showInspectorPanel && sync.root ? (
-        <SplitView
-          className="ui-json-widget-editor__inspector-split"
-          defaultPrimarySizePercent={68}
-          minPrimarySizePercent={45}
-          primary={centerPane}
-          secondary={
-            <section className="ui-json-widget-editor__pane" aria-label="Inspector">
-              <WidgetInspectorPanel
-                parentWidget={parentWidget}
-                path={sync.selectedPath}
-                readOnly={readOnly}
-                widget={sync.selectedWidget}
-                widgetRegistry={widgetRegistry}
-                onPatch={(next) => {
-                  const nextDocument = sync.replaceSelectedWidget(next);
-                  if (nextDocument) onChange(nextDocument);
-                }}
-              />
-            </section>
-          }
+        <WidgetInspectorPanel
+          imageSrcAssets={imageSrcAssets}
+          inspectorMode={inspectorMode}
+          parentWidget={parentWidget}
+          path={sync.selectedPath}
+          readOnly={readOnly}
+          selectedCount={sync.selection.pathKeys.size}
+          widget={sync.selectedWidget}
+          widgetRegistry={widgetRegistry}
+          onPatch={(next) => {
+            const nextDocument = sync.replaceSelectedWidget(next);
+            if (nextDocument) onChange(nextDocument);
+          }}
         />
-      ) : (
-        centerPane
-      );
+      ) : null;
 
-    if (!showTreePanel || !sync.root) {
-      return withInspector;
+    const panels: Record<string, AuthoringPanelDefinition> = {};
+
+    for (const tab of leftPanelTabs ?? []) {
+      panels[tab.id] = { id: tab.id, label: tab.label, content: tab.content };
     }
 
+    if (inspectorPanel) {
+      panels.properties = { id: 'properties', label: 'Properties', content: inspectorPanel };
+    }
+
+    if (showTreePanel && sync.root) {
+      panels.tree = {
+        id: 'tree',
+        label: 'Layers',
+        content: (
+          <WidgetTreePanel
+            root={sync.root}
+            readOnly={readOnly}
+            selection={sync.selection}
+            onPatch={(patch) => {
+              const nextDocument = sync.applyPatch(patch);
+              if (nextDocument) onChange(nextDocument);
+            }}
+            onSelect={(nextPath, options) => {
+              sync.selectPath(nextPath, options);
+            }}
+          />
+        ),
+      };
+    }
+
+    const rightSidebarContent = renderRightSidebar?.() ?? null;
+    if (rightSidebarContent) {
+      panels.chat = { id: 'chat', label: 'Chat', content: rightSidebarContent };
+    }
+
+    const availablePanelIds = Object.keys(panels);
+    if (availablePanelIds.length === 0) {
+      return centerPane;
+    }
+
+    const resolvedPlacement = resolveAuthoringSidebarPlacement(
+      sidebarPlacement,
+      availablePanelIds,
+      DEFAULT_AUTHORING_SIDEBAR_PLACEMENT,
+    );
+
     return (
-      <SplitView
-        className="ui-json-widget-editor__tree-split"
-        defaultPrimarySizePercent={22}
-        minPrimarySizePercent={15}
-        maxPrimarySizePercent={35}
-        primary={
-          <section className="ui-json-widget-editor__pane" aria-label="Widget tree">
-            <WidgetTreePanel
-              root={sync.root}
-              readOnly={readOnly}
-              selection={sync.selection}
-              onPatch={(patch) => {
-                const nextDocument = sync.applyPatch(patch);
-                if (nextDocument) onChange(nextDocument);
-              }}
-              onSelect={(nextPath) => {
-                sync.selectPath(nextPath);
-              }}
-            />
-          </section>
-        }
-        secondary={withInspector}
+      <AuthoringSidebarLayout
+        center={centerPane}
+        panels={panels}
+        placement={resolvedPlacement}
+        showMoveControls={showSidebarMoveControls}
+        onPlacementChange={onSidebarPlacementChange}
       />
     );
   })();
@@ -295,19 +434,47 @@ export function JsonWidgetEditor({
   return (
     <Panel className="ui-json-widget-editor" data-theme={theme} data-mode={resolvedMode}>
       <PanelHeader
+        className="ui-json-widget-editor__header"
         actions={
-          <Toolbar>
-            {sync.dirty && !readOnly ? (
-              <>
-                {onDiscard ? <Button onClick={onDiscard}>Discard</Button> : null}
-                {onSave ? (
-                  <Button variant="primary" onClick={onSave}>
-                    Save
-                  </Button>
-                ) : null}
-              </>
+          <Toolbar className="ui-json-widget-editor__toolbar">
+            <div className="ui-json-widget-editor__toolbar-group">
+              <ButtonGroup ariaLabel="History">
+                <Button
+                  compact
+                  data-testid="undo-widget"
+                  disabled={!sync.canUndo || readOnly}
+                  title="Undo (Ctrl+Z)"
+                  onClick={handleUndo}
+                >
+                  Undo
+                </Button>
+                <Button
+                  compact
+                  data-testid="redo-widget"
+                  disabled={!sync.canRedo || readOnly}
+                  title="Redo (Ctrl+Y)"
+                  onClick={handleRedo}
+                >
+                  Redo
+                </Button>
+              </ButtonGroup>
+              {sync.dirty && !readOnly ? (
+                <>
+                  {onDiscard ? <Button onClick={onDiscard}>Discard</Button> : null}
+                  {onSave ? (
+                    <Button variant="primary" onClick={onSave}>
+                      Save
+                    </Button>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
+            {resolvedHeaderActions ? (
+              <div className="ui-json-widget-editor__toolbar-group ui-json-widget-editor__toolbar-group--authoring">
+                {resolvedHeaderActions}
+              </div>
             ) : null}
-            {headerActions}
+            <span className="ui-json-widget-editor__toolbar-spacer" aria-hidden />
             <WorkbenchArtifactModeControls
               mode={resolvedMode}
               previewLabel={previewModeLabel}

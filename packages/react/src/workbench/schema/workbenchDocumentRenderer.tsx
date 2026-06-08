@@ -1,4 +1,9 @@
-import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import type {
+  CSSProperties,
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { WorkbenchDocumentNode } from './workbenchDocument';
 import type { WorkbenchDocumentRenderContext } from './workbenchDocument';
@@ -170,7 +175,7 @@ type NodeRendererProps = {
   node: WorkbenchDocumentNode;
   style: CSSProperties;
   children: ReactNode[];
-  onClick?: () => void;
+  onClick?: (event: ReactMouseEvent<HTMLElement>) => void;
   onPointerDown?: (event: ReactPointerEvent<HTMLElement>) => void;
   onResizeHandlePointerDown?: (event: ReactPointerEvent<HTMLElement>) => void;
   resizeHandleLabel?: string;
@@ -450,7 +455,13 @@ function renderNode(
   const selectedNodeIds = context?.selectedNodeIds ?? [];
   const isSelected = selectedNodeIds.includes(node.id);
 
-  const onClick = onNodeClick && !node.locked ? () => onNodeClick(node.id) : undefined;
+  const onClick =
+    onNodeClick && !node.locked
+      ? (event: ReactMouseEvent<HTMLElement>) => {
+          event.stopPropagation();
+          onNodeClick(node.id);
+        }
+      : undefined;
   const onMovePointerDown =
     onNodePointerDown && !node.locked
       ? (event: ReactPointerEvent<HTMLElement>) => onNodePointerDown(node, event, 'move')

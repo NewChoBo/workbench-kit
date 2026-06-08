@@ -171,6 +171,7 @@ export const EditableSettings: Story = {
   render: () => <SchemaFormHarness />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const portal = within(canvasElement.ownerDocument.body);
     const eventLog = canvas.getByLabelText('Schema form event log');
 
     const displayName = canvas.getByRole('textbox', { name: 'Display name' });
@@ -180,7 +181,7 @@ export const EditableSettings: Story = {
 
     await userEvent.type(displayName, 'Workbench');
     await userEvent.click(canvas.getByRole('combobox', { name: 'Density' }));
-    await userEvent.click(canvas.getByRole('option', { name: 'Compact' }));
+    await userEvent.click(portal.getByRole('option', { name: 'Compact' }));
     await userEvent.clear(canvas.getByRole('spinbutton', { name: 'Maximum recent items' }));
     await userEvent.type(canvas.getByRole('spinbutton', { name: 'Maximum recent items' }), '8');
     await userEvent.click(canvas.getByRole('checkbox', { name: 'Confirm before side effects' }));

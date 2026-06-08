@@ -472,7 +472,7 @@ packages/
 
 ### Stage 8 Extension Bootstrap Plan (Deferred, 2026-06-03)
 
-- Created `docs/workbench/vscode-extension-bootstrap-roadmap.md` for multi-track extension bootstrap extraction.
+- Extension bootstrap guidance lives in `docs/workbench/plugin-lifecycle.md`.
 - Planned direction for extension packaging phase: keep UI layer unchanged and introduce a dedicated package-level orchestration layer:
   `@workbench-kit/vscode-extension`.
 - For the current milestone, extension orchestration is postponed in favor of standalone launch hardening.

@@ -1,4 +1,10 @@
-import { Children, isValidElement, type ComponentPropsWithRef, type ReactElement, type ReactNode } from 'react';
+import {
+  Children,
+  isValidElement,
+  type ComponentPropsWithRef,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import type { ParsedOption } from './types';
 
 function isOptionElement(child: ReactNode): child is ReactElement<ComponentPropsWithRef<'option'>> {
@@ -15,7 +21,11 @@ export function parseOptions(children: ReactNode): ParsedOption[] {
     }));
 }
 
-export function getEnabledOptionIndex(options: ParsedOption[], startIndex: number, direction: 1 | -1) {
+export function getEnabledOptionIndex(
+  options: ParsedOption[],
+  startIndex: number,
+  direction: 1 | -1,
+) {
   if (options.length === 0) return -1;
 
   let index = startIndex;

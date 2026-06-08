@@ -9,8 +9,7 @@ plan only.
 Related:
 
 - [reference-implementation-strategy.md § Command registry gap analysis](./reference-implementation-strategy.md#command-registry-gap-analysis-step-1)
-- [unified-work-plan.md § P1-T02](./unified-work-plan.md)
-- [migration-todo.md](./migration-todo.md)
+- [migration-todo.md § Context-key / when-clause port](./migration-todo.md#context-key--when-clause-port-p1-t02)
 
 ---
 

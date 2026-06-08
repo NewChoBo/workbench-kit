@@ -9,7 +9,6 @@ of choosing a single downstream app as the canonical source for every domain.
 Related docs:
 
 - [migration-todo.md](./migration-todo.md) — package migration backlog and verification gates
-- [downstream-extraction-strategy.md](./downstream-extraction-strategy.md) — extraction rules for generic APIs
 - [custom_launcher workbench-kit commonization roadmap](https://github.com/whwjd/custom_launcher/blob/main/docs/workbench-kit-commonization-roadmap.md) — launch/contracts push track (local path: `custom_launcher/docs/workbench-kit-commonization-roadmap.md`)
 
 ## Product Goal & Positioning

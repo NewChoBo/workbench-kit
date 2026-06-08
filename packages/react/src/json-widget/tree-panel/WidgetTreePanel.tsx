@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type {
   GenericWidget,
   WidgetPatch,
   WidgetPath,
+  WidgetPathSelectOptions,
   WidgetSelectionState,
 } from '@workbench-kit/json-widget';
 import { collectAllContainerKeys, ROOT_WIDGET_PATH } from '@workbench-kit/json-widget';
@@ -13,12 +14,13 @@ import { WorkbenchTree } from '../../layout/WorkbenchTree';
 import { WidgetDragOverlay } from './WidgetDragOverlay.js';
 import { WidgetTreeNode } from './WidgetTreeNode.js';
 import type { DragNodeData, DropLine, DropZoneData } from './types.js';
+import { buildVisibleTreePathKeys } from './tree-filter.js';
 import { INDENT_SIZE, ROW_HEIGHT } from './types.js';
 
 export interface WidgetTreePanelProps {
   root: GenericWidget;
   selection: WidgetSelectionState;
-  onSelect: (path: WidgetPath) => void;
+  onSelect: (path: WidgetPath, options?: WidgetPathSelectOptions) => void;
   onPatch?: (patch: WidgetPatch) => void;
   readOnly?: boolean;
 }
@@ -53,9 +55,24 @@ export function WidgetTreePanel({
     }
   }, [root]);
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [dropLine, setDropLine] = useState<DropLine | null>(null);
   const [highlightedContainerPath, setHighlightedContainerPath] = useState<string | null>(null);
   const [overlayData, setOverlayData] = useState<DragNodeData | null>(null);
+
+  const visiblePathKeys = useMemo(
+    () => buildVisibleTreePathKeys(root, searchQuery),
+    [root, searchQuery],
+  );
+
+  useEffect(() => {
+    if (!visiblePathKeys || visiblePathKeys.size === 0) return;
+    setExpanded((current) => {
+      const next = new Set(current);
+      visiblePathKeys.forEach((key) => next.add(key));
+      return next;
+    });
+  }, [visiblePathKeys]);
 
   const resetDragState = () => {
     setDropLine(null);
@@ -131,37 +148,65 @@ export function WidgetTreePanel({
   };
 
   const tree = (
-    <WorkbenchTree
-      aria-label="Widget tree"
-      className="ui-json-widget-tree-panel"
-      indentSize={INDENT_SIZE}
-      rowHeight={ROW_HEIGHT}
-    >
-      <WidgetTreeNode
-        widget={root}
-        path={ROOT_WIDGET_PATH}
-        indexInParent={-1}
-        depth={0}
-        selection={selection}
-        expanded={expanded}
-        dropLine={dropLine}
-        highlightedContainerPath={highlightedContainerPath}
-        onSelect={onSelect}
-        onPatch={readOnly ? undefined : onPatch}
-        onToggleExpanded={(pathKey) =>
-          setExpanded((current) => {
-            const next = new Set(current);
-            if (next.has(pathKey)) next.delete(pathKey);
-            else next.add(pathKey);
-            return next;
-          })
-        }
-      />
-    </WorkbenchTree>
+    <div className="ui-json-widget-tree-panel">
+      <div className="ui-json-widget-tree-panel__search">
+        <input
+          aria-label="Filter widget tree"
+          className="ui-json-widget-tree-panel__search-input"
+          data-testid="widget-tree-search"
+          placeholder="Search widgets…"
+          type="search"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+        />
+      </div>
+      <WorkbenchTree
+        aria-label="Widget tree"
+        className="ui-json-widget-tree-panel__tree"
+        indentSize={INDENT_SIZE}
+        rowHeight={ROW_HEIGHT}
+      >
+        <WidgetTreeNode
+          widget={root}
+          path={ROOT_WIDGET_PATH}
+          indexInParent={-1}
+          depth={0}
+          selection={selection}
+          expanded={expanded}
+          dropLine={dropLine}
+          highlightedContainerPath={highlightedContainerPath}
+          visiblePathKeys={visiblePathKeys}
+          onSelect={onSelect}
+          onPatch={readOnly ? undefined : onPatch}
+          onToggleExpanded={(pathKey) =>
+            setExpanded((current) => {
+              const next = new Set(current);
+              if (next.has(pathKey)) next.delete(pathKey);
+              else next.add(pathKey);
+              return next;
+            })
+          }
+        />
+      </WorkbenchTree>
+      {visiblePathKeys && visiblePathKeys.size === 0 ? (
+        <p className="ui-json-widget-tree-panel__empty" data-testid="widget-tree-no-results">
+          No widgets match &ldquo;{searchQuery.trim()}&rdquo;
+        </p>
+      ) : null}
+    </div>
+  );
+
+  const panel = (
+    <div className="ui-json-widget-tree-panel-shell">
+      <div className="ui-json-widget-tree-panel-shell__header">
+        <span className="ui-json-widget-tree-panel-shell__title">Layers</span>
+      </div>
+      <div className="ui-json-widget-tree-panel-shell__body">{tree}</div>
+    </div>
   );
 
   if (readOnly) {
-    return tree;
+    return panel;
   }
 
   return (
@@ -172,7 +217,7 @@ export function WidgetTreePanel({
       onDragOver={handleDragOver}
       onDragStart={handleDragStart}
     >
-      {tree}
+      {panel}
       <DragOverlay>
         <WidgetDragOverlay data={overlayData} />
       </DragOverlay>

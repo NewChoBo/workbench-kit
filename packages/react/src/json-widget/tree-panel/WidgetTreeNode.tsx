@@ -4,6 +4,7 @@ import type {
   GenericWidget,
   WidgetPatch,
   WidgetPath,
+  WidgetPathSelectOptions,
   WidgetSelectionState,
 } from '@workbench-kit/json-widget';
 import {
@@ -22,6 +23,7 @@ import {
   WorkbenchTreeItem,
 } from '../../layout/WorkbenchTree';
 import { cxCodicon } from '../../utils/codicon';
+import { widgetTypeIcon } from '../../authoring/widget-type-icons.js';
 import { getWidgetChildren, isContainerWidget, widgetDisplayName } from './tree-model.js';
 import type { DragNodeData, DropLine, DropZoneData } from './types.js';
 import { INDENT_SIZE } from './types.js';
@@ -69,7 +71,8 @@ interface WidgetNodeProps {
   expanded: Set<string>;
   dropLine: DropLine | null;
   highlightedContainerPath: string | null;
-  onSelect: (path: WidgetPath) => void;
+  visiblePathKeys?: Set<string> | null | undefined;
+  onSelect: (path: WidgetPath, options?: WidgetPathSelectOptions) => void;
   onPatch?: ((patch: WidgetPatch) => void) | undefined;
   onToggleExpanded: (pathKey: string) => void;
 }
@@ -83,11 +86,15 @@ export function WidgetTreeNode({
   expanded,
   dropLine,
   highlightedContainerPath,
+  visiblePathKeys = null,
   onSelect,
   onPatch,
   onToggleExpanded,
 }: WidgetNodeProps) {
   const pathKey = widgetPathKey(path);
+  if (visiblePathKeys && !visiblePathKeys.has(pathKey)) {
+    return null;
+  }
   const selected = isWidgetPathSelected(selection, path);
   const isContainer = isContainerWidget(widget);
   const containerExpanded = isContainer ? expanded.has(pathKey) : false;
@@ -95,6 +102,8 @@ export function WidgetTreeNode({
 
   const children = getWidgetChildren(widget);
   const displayName = widgetDisplayName(widget);
+  const isHidden = widget.hidden === true;
+  const isLocked = widget.locked === true;
 
   const {
     attributes,
@@ -149,17 +158,35 @@ export function WidgetTreeNode({
           />
         }
         depth={depth}
-        icon={<span className={cxCodicon('codicon-json')} aria-hidden />}
+        icon={
+          <span className={cxCodicon(isRoot ? 'file' : widgetTypeIcon(widget.type))} aria-hidden />
+        }
         indentSize={INDENT_SIZE}
         interaction={isRoot ? 'default' : isDragging ? 'dragging' : 'draggable'}
         label={displayName}
-        meta={<Badge>{widget.type}</Badge>}
+        meta={
+          <>
+            {isHidden ? (
+              <span className="ui-json-widget-tree-node__flag" title="Hidden">
+                <span className={cxCodicon('codicon-eye-closed')} aria-hidden />
+              </span>
+            ) : null}
+            {isLocked ? (
+              <span className="ui-json-widget-tree-node__flag" title="Locked">
+                <span className={cxCodicon('codicon-lock')} aria-hidden />
+              </span>
+            ) : null}
+            <Badge>{widget.type}</Badge>
+          </>
+        }
         selected={selected}
-        onClick={() => onSelect(path)}
+        onClick={(event) =>
+          onSelect(path, { additive: event.shiftKey || event.metaKey || event.ctrlKey })
+        }
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
-            onSelect(path);
+            onSelect(path, { additive: event.shiftKey || event.metaKey || event.ctrlKey });
           }
         }}
         {...listeners}
@@ -188,6 +215,7 @@ export function WidgetTreeNode({
                 expanded={expanded}
                 dropLine={dropLine}
                 highlightedContainerPath={highlightedContainerPath}
+                visiblePathKeys={visiblePathKeys}
                 onSelect={onSelect}
                 onPatch={onPatch}
                 onToggleExpanded={onToggleExpanded}

@@ -170,5 +170,5 @@ Until a concrete need and design exist, this stays a backlog note only.
 ## Related docs
 
 - [migration-todo.md](./migration-todo.md) — active migration tracker
-- [workbench-execution-roadmap.md](./workbench-execution-roadmap.md) — milestone gates
+- [reference-implementation-strategy.md](./reference-implementation-strategy.md) — milestone gates
 - [storybook.md](../conventions/storybook.md) — integrated shell story conventions

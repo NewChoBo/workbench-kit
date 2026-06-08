@@ -28,9 +28,8 @@ custom_launcher as canonical Electron app, 5-phase roadmap).
 (canonical custom_launcher + tile_paper domain libraries on workbench-kit) is
 documented in [reference-implementation-strategy.md § Unified Vision](./reference-implementation-strategy.md#unified-vision).
 
-**Execution plan:** Engineer-facing phased tasks, regression gates, validation
-matrix, and sprint order live in
-[unified-work-plan.md](./unified-work-plan.md).
+**Execution plan:** Engineer-facing phased tasks, regression gates, and validation
+matrix are tracked in this document and [reference-implementation-strategy.md](./reference-implementation-strategy.md).
 
 ## Goals
 
@@ -657,7 +656,7 @@ independently.
 | Storybook 테스트 미들웨어 의존성   | `@storybook/test-runner` 미설치 시 스킵                                                                | CI 강제화 시점과 실행 신뢰도 미정                           | `validate:full` 내 위치 여부와 flake 측정 기준을 먼저 정의                                                                                                                      |
 | package-manager 보호 정책          | `preinstall` 가드 존재                                                                                 | 정책 문서/실행 절차 정합성 반영                             | `docs/conventions/package-manager.md`에 강제 조건과 예외 처리 범위를 정리                                                                                                       |
 | workspace API 범위                 | `@workbench-kit/workspace` export 목록과 public API governance 문서 존재                               | story-only fixture/state 어댑터는 public API에서 제외       | `docs/conventions/public-api-governance.md`와 `subpackage-architecture.md`에 export 경계 원칙 반영 완료                                                                         |
-| 폴더 작업 소유권                   | reducer와 호스트 콜백 분리 설계가 문서화됨                                                             | host별 권한/알림 UX는 adapter 책임                          | `workbench-entrypoint-strategy.md`, `standalone-extension-boundary.md`, `host-adapter-samples.md`에 host-callback 규칙 반영 완료                                                |
+| 폴더 작업 소유권                   | reducer와 호스트 콜백 분리 설계가 문서화됨                                                             | host별 권한/알림 UX는 adapter 책임                          | `standalone-host.md`, `plugin-lifecycle.md`, `subpackage-architecture.md`에 host-callback 규칙 반영 완료                                                                        |
 | StatusBar 정렬/그룹 메타           | `order` 메타가 추가되어 섹션/항목 렌더 순서가 결정됨                                                   | host 병합에서의 deterministic ordering 완성                 | order 오름차순 정렬 + 동순위 삽입 순으로 `StatusBar` 컴포넌트에서 고정 렌더링되며 테스트로 회귀 보장함                                                                          |
 
 ## 다음 액션 우선순위
@@ -895,7 +894,7 @@ Next gate:
   - Enforced via `pnpm check:launch-boundary` (`scripts/check-launch-boundary.mjs`).
 - [x] Run [library-launch-boundary-gate.md](./library-launch-boundary-gate.md) before Phase 2 close.
   - PR 리뷰 체크리스트는 [library-launch-boundary-review-checklist.md](./library-launch-boundary-review-checklist.md) 사용.
-  - Downstream pre-merge steps: [unified-work-plan.md §2.2.1](./unified-work-plan.md#221-downstream-pre-merge-checklist).
+  - Downstream pre-merge steps: [library-launch-migration-runbook.md](./library-launch-migration-runbook.md).
 
 ## Context-key / when-clause port (P1-T02)
 

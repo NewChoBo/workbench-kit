@@ -18,6 +18,8 @@
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
     "./json-config": "./src/json-config/index.ts",
     "./json-widget": "./src/json-widget/index.ts",
+    "./json-widget/playground": "./src/json-widget/playground/index.ts",
+    "./authoring": "./src/authoring/index.ts",
     "./styles.css": "./src/styles.css"
   },
   "files": [

@@ -87,8 +87,15 @@ The workflow runs on published GitHub releases and pushed tags matching
 `v*` or `workbench-kit-v*`. The tag must match the root package version, such
 as `v0.0.1-prototype.0` or `workbench-kit-v0.0.1-prototype.0`.
 
+## Git Hooks
+
+After `pnpm install`, Husky installs local hooks automatically. Pre-commit runs
+lint-staged and typecheck on staged packages; pre-push runs typecheck, lint,
+test, and format check. See [Git Hooks](./docs/conventions/git-hooks.md).
+
 ## Conventions
 
+- [Git Hooks](./docs/conventions/git-hooks.md)
 - [Git Workflow](./docs/conventions/git-workflow.md)
 - [Development Harness](./docs/conventions/development-harness.md)
 - [Lint & Format](./docs/conventions/lint-format.md)

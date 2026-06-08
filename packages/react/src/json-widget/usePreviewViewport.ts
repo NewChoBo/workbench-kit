@@ -23,12 +23,14 @@ export interface PreviewViewportState {
 export interface UsePreviewViewportOptions {
   canvasHeight: number;
   canvasWidth: number;
+  panToolActive?: boolean | undefined;
   titleBarHeight?: number;
 }
 
 export function usePreviewViewport({
   canvasHeight,
   canvasWidth,
+  panToolActive = false,
   titleBarHeight = 32,
 }: UsePreviewViewportOptions): PreviewViewportState {
   const [zoom, setZoom] = useState(1);
@@ -38,6 +40,11 @@ export function usePreviewViewport({
   const [canvasEl, setCanvasElement] = useState<HTMLDivElement | null>(null);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const spacePressedRef = useRef(false);
+  const panToolActiveRef = useRef(panToolActive);
+
+  useEffect(() => {
+    panToolActiveRef.current = panToolActive;
+  }, [panToolActive]);
 
   const frameHeight = canvasHeight + titleBarHeight;
   const fitScale =
@@ -120,10 +127,12 @@ export function usePreviewViewport({
     const middlePanHandler = (event: PointerEvent) => {
       const target = event.target;
       const spacePan = spacePressedRef.current;
+      const handPan = panToolActiveRef.current;
       const isMiddleButton = event.button === 1;
       const isPreviewSurfaceDrag =
         event.button === 0 &&
         !spacePan &&
+        !handPan &&
         target instanceof HTMLElement &&
         !target.closest(
           [
@@ -136,8 +145,8 @@ export function usePreviewViewport({
           ].join(','),
         );
 
-      if (!spacePan && !isMiddleButton && !isPreviewSurfaceDrag) return;
-      if (spacePan && event.button !== 0) return;
+      if (!spacePan && !handPan && !isMiddleButton && !isPreviewSurfaceDrag) return;
+      if ((spacePan || handPan) && event.button !== 0) return;
       event.preventDefault();
       startPanRef.current?.(event.clientX, event.clientY, event.pointerId);
     };

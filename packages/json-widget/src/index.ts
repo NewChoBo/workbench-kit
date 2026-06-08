@@ -1,3 +1,7 @@
+// Slim kit v2 — public engine surface for studio-engine and other consumers.
+// Grouping: parse → tree → selection → patch/history → layout → registry/schema.
+// See docs/workbench/KIT_SURFACE.md for import guidance.
+
 export type {
   WidgetInspectorField,
   WidgetInspectorSection,
@@ -23,11 +27,14 @@ export {
 } from './path.js';
 
 export type { WidgetSelectionState } from './selection.js';
+export type { WidgetPathSelectOptions } from './selection.js';
 export {
   emptyWidgetSelection,
   firstSelectedWidgetPath,
   isWidgetPathSelected,
   selectWidgetPath,
+  selectWidgetPathWithOptions,
+  selectedWidgetPaths,
 } from './selection.js';
 
 export type { GenericWidget, WidgetNode, WidgetTreeEditResult } from './widget-tree.js';
@@ -64,6 +71,9 @@ export { computeStackChildRect } from './layout/stack.js';
 export type { WidgetPatch } from './widget-patch.js';
 export { applyWidgetPatch } from './widget-patch.js';
 
+export type { WidgetPatchHistory, WidgetPatchHistoryState } from './widget-patch-history.js';
+export { initializeWidgetPatchHistory } from './widget-patch-history.js';
+
 export type { JsonWidgetEditorSyncInput, JsonWidgetEditorSyncSnapshot } from './editor-sync.js';
 export {
   applyWidgetPatchToDocument,
@@ -71,6 +81,7 @@ export {
   shouldResetSelectionOnDocumentChange,
 } from './editor-sync.js';
 
+/** @deprecated Prefer consumer-owned JSON schema. Kept for kit JsonWidgetEditor and Storybook. */
 export {
   createPlaygroundWidgetJsonSchema,
   PLAYGROUND_WIDGET_JSON_SCHEMA,

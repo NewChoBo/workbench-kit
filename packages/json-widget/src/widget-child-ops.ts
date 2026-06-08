@@ -168,6 +168,12 @@ export function insertArrayChild(
         children: insertAtIndex(getWidgetChildren(parent), targetIndex, child),
       };
     }
+    case 'box': {
+      if (!isGenericWidget(parent.child) && index === 0) {
+        return { ...parent, child };
+      }
+      return null;
+    }
     default:
       return null;
   }

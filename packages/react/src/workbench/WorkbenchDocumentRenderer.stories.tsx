@@ -561,6 +561,13 @@ export const FeatureTestScreen: Story = {
     await userEvent.click(canvas.getByRole('button', { name: '선택 노드 스타일 변경' }));
     await expect(canvas.getByText('Canvas feature test')).toBeVisible();
 
+    const rectangleNode = canvasElement.querySelector('[data-node-id="ft-rect"]');
+    if (!(rectangleNode instanceof HTMLElement)) {
+      throw new Error('Expected ft-rect node to be rendered.');
+    }
+    await userEvent.click(rectangleNode);
+    await expect(canvas.getByTestId('feature-status')).toHaveTextContent('selected ft-rect');
+
     const resizeHandle = canvas.getByLabelText('Resize ft-rect');
     const status = canvas.getByTestId('feature-status');
     await expect(resizeHandle).toBeVisible();

@@ -6,7 +6,10 @@
   "packageManager": "pnpm@11.5.1",
   "scripts": {
     "preinstall": "node -e \"const execPath = process.env.npm_execpath || ''; if (!/pnpm/.test(execPath)) { console.error('This repository requires pnpm. Please run `pnpm install`.'); process.exit(1); }\"",
+    "prepare": "husky",
     "postinstall": "node scripts/postinstall-workspace-build.mjs",
+    "precommit": "pnpm exec lint-staged && node scripts/typecheck-staged-packages.mjs",
+    "prepush": "pnpm typecheck && pnpm lint && pnpm test && pnpm format:check",
     "build:workspace": "node scripts/build-workspace-packages.mjs",
     "format": "pnpm exec prettier . --write",
     "format:check": "pnpm exec prettier . --check",
@@ -17,8 +20,11 @@
     "test": "pnpm exec vitest run",
     "build:storybook": "pnpm exec storybook build",
     "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
+    "dev:widget-authoring": "pnpm --filter @workbench-kit/widget-authoring dev",
+    "build:widget-authoring": "pnpm --filter @workbench-kit/widget-authoring build",
     "check:launch-boundary": "node ./scripts/check-launch-boundary.mjs",
-    "typecheck": "pnpm --filter @workbench-kit/core typecheck && pnpm --filter @workbench-kit/contracts typecheck && pnpm --filter @workbench-kit/json-widget typecheck && pnpm --filter @workbench-kit/services typecheck && pnpm --filter @workbench-kit/workspace typecheck && pnpm --filter @workbench-kit/runtime typecheck && pnpm --filter @workbench-kit/adapters typecheck && pnpm --filter @workbench-kit/react typecheck && pnpm --filter @workbench-kit/vscode-host typecheck",
+    "typecheck:root": "pnpm exec tsc -p tsconfig.json --noEmit",
+    "typecheck": "pnpm --filter @workbench-kit/core typecheck && pnpm --filter @workbench-kit/contracts typecheck && pnpm --filter @workbench-kit/json-widget typecheck && pnpm --filter @workbench-kit/services typecheck && pnpm --filter @workbench-kit/workspace typecheck && pnpm --filter @workbench-kit/runtime typecheck && pnpm --filter @workbench-kit/adapters typecheck && pnpm --filter @workbench-kit/react typecheck && pnpm --filter @workbench-kit/vscode-host typecheck && pnpm --filter @workbench-kit/widget-authoring typecheck",
     "typecheck:all": "pnpm typecheck && pnpm --filter @workbench-kit/vscode-extension typecheck",
     "validate": "pnpm typecheck && pnpm lint && pnpm test && pnpm format:check && pnpm build:storybook && pnpm check:launch-boundary",
     "validate:full": "pnpm validate && pnpm test:storybook-play:required",
@@ -40,7 +46,10 @@
     "eslint": "^10.4.1",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "monaco-editor": "^0.55.1",
+    "playwright": "^1.60.0",
     "prettier": "^3.8.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -50,6 +59,15 @@
     "typescript-eslint": "^8.60.1",
     "vite": "^6.0.0",
     "vitest": "^4.1.8"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,json,md}": [
+      "prettier --write"
+    ]
   },
   "repository": {
     "type": "git",

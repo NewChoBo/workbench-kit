@@ -55,6 +55,7 @@ export function SegmentedControl<TValue extends string = string>({
               'ui-segmented-control__item',
               selected && 'ui-segmented-control__item--selected',
             )}
+            data-testid={`segmented-${option.value}`}
             onClick={() => onChange(option.value)}
             type="button"
           >

@@ -6,6 +6,7 @@ import type { ArrayChildWidget } from './widget-child-ops.js';
 import {
   getChildren,
   insertArrayChild,
+  isContainerWidget,
   removeArrayChild,
   replaceArrayChild,
   reorderArrayChild,
@@ -254,6 +255,21 @@ export function reparentWidgetAtPath(
     }
     return seg;
   });
+
+  const toParent = getWidgetAtPath(removeResult.root, adjustedToParentPath);
+  if (!toParent) return { root: removeResult.root, changed: false };
+
+  if (toParent.type === 'box' && !isGenericWidget(toParent.child)) {
+    return setBoxChildAtPath(removeResult.root, adjustedToParentPath, child);
+  }
+
+  if (toParent.type === 'document' && isGenericWidget(toParent.child)) {
+    const inner = toParent.child;
+    if (isContainerWidget(inner) && inner.type !== 'box') {
+      const innerPath = [...adjustedToParentPath, { kind: 'child' as const }];
+      return insertWidgetChildAtPath(removeResult.root, innerPath, insertIndex, child);
+    }
+  }
 
   return insertWidgetChildAtPath(removeResult.root, adjustedToParentPath, insertIndex, child);
 }

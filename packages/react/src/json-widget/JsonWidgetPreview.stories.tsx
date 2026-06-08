@@ -75,4 +75,13 @@ export const UnregisteredType: Story = {
     json: formatWidgetJson({ type: 'demo:missing', title: 'Missing' }),
     registry: demoRegistry,
   },
+  tags: ['storybook-play-baseline'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent(
+      'Unknown widget type "demo:missing". Register it in WidgetRegistry to render.',
+    );
+    await expect(canvas.queryByTestId('json-widget-preview-error')).not.toBeInTheDocument();
+  },
 };

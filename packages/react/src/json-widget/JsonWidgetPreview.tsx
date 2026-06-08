@@ -6,7 +6,7 @@ import { WorkbenchParseError, WorkbenchRenderSurface } from '../layout/Workbench
 import {
   DEFAULT_PLAYGROUND_PREVIEW_RECT,
   PlaygroundWidgetRenderer,
-} from './playground-renderer/PlaygroundWidgetRenderer.js';
+} from './playground/renderer/PlaygroundWidgetRenderer.js';
 
 export interface JsonWidgetPreviewProps {
   json: string;

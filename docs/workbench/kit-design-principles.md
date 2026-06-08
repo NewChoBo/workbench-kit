@@ -2,8 +2,8 @@
 
 > Scope: every `@workbench-kit/*` package in `packages/*`.
 > Companion docs (read-only references): [reference-implementation-strategy.md](./reference-implementation-strategy.md),
-> [unified-work-plan.md](./unified-work-plan.md),
-> [library-launch-mapping-commonization-plan.md](./library-launch-mapping-commonization-plan.md).
+> [migration-todo.md](./migration-todo.md),
+> [reference-implementation-strategy.md](./reference-implementation-strategy.md).
 
 ## 1. Core principle
 

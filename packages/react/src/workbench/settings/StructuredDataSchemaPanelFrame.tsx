@@ -13,8 +13,7 @@ export interface WorkbenchStructuredDataSchemaPanelFrameHeaderContent {
   title?: ReactNode | undefined;
 }
 
-export interface WorkbenchStructuredDataSchemaPanelFrameProps
-  extends WorkbenchStructuredDataSchemaPanelEmbedProps {
+export interface WorkbenchStructuredDataSchemaPanelFrameProps extends WorkbenchStructuredDataSchemaPanelEmbedProps {
   frameClassName?: string | undefined;
   frameProps?: Omit<ComponentPropsWithRef<'div'>, 'children' | 'className'> | undefined;
   header?: ReactNode | undefined;
@@ -27,7 +26,9 @@ function renderFrameHeaderContent(content: WorkbenchStructuredDataSchemaPanelFra
     <>
       <div className="ui-workbench-structured-data-schema-panel-frame__title-group">
         {content.icon ? (
-          <span className="ui-workbench-structured-data-schema-panel-frame__icon">{content.icon}</span>
+          <span className="ui-workbench-structured-data-schema-panel-frame__icon">
+            {content.icon}
+          </span>
         ) : null}
         <div>
           {content.eyebrow ? (

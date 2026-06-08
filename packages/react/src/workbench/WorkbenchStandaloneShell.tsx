@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { cxCodicon } from '../utils/codicon';
+import { cx } from '../utils/cx';
 import type { StatusBarItemModel, StatusBarSectionModel } from './StatusBar';
 import type { WorkbenchShellProps } from './WorkbenchShell';
 import { WorkbenchShell } from './WorkbenchShell';
@@ -305,8 +306,8 @@ export function WorkbenchStandaloneShell<
           node: primarySidebarNode,
           style: primarySidebarStyle,
         }}
-        rootClassName={rootClassName}
-        rootStyle={rootStyle}
+        rootClassName={cx('ide-root', rootClassName)}
+        rootStyle={{ height: '100%', minHeight: 0, ...rootStyle }}
         secondaryArea={secondaryArea}
         statusSections={statusSections}
         theme={theme}

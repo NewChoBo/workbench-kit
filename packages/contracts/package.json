@@ -24,7 +24,8 @@
     "!src/**/*.stories.tsx"
   ],
   "devDependencies": {
-    "tsup": "^8.5.0"
+    "tsup": "^8.5.0",
+    "typescript": "5.9.3"
   },
   "description": "Shared Workbench Kit contracts for chat, save, patch, library, launchpad mapping, widget renderer, and plugin flows.",
   "publishConfig": {

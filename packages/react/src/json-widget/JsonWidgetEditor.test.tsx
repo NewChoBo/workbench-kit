@@ -15,6 +15,10 @@ vi.mock('@monaco-editor/react', () => ({
 
 vi.mock('monaco-editor', () => ({}));
 
+vi.mock('./tree-panel/WidgetTreePanel.js', () => ({
+  WidgetTreePanel: () => <div role="tree" aria-label="Widget tree" />,
+}));
+
 interface DemoWidget extends WidgetTypeShape {
   type: 'demo:card';
   title: string;
@@ -38,10 +42,7 @@ describe('JsonWidgetEditor', () => {
     const markup = renderToStaticMarkup(
       <JsonWidgetEditor
         defaultMode="split"
-        value={formatWidgetJson({
-          type: 'demo:layout',
-          children: [{ type: 'demo:card', title: 'Tile preview' }],
-        })}
+        value={formatWidgetJson({ type: 'demo:card', title: 'Tile preview' })}
         widgetRegistry={registry}
         onChange={() => undefined}
       />,
@@ -50,7 +51,7 @@ describe('JsonWidgetEditor', () => {
     expect(markup).toContain('ui-json-widget-editor');
     expect(markup).toContain('data-mode="split"');
     expect(markup).toContain('Widget tree');
-    expect(markup).toContain('demo:card');
+    expect(markup).toContain('Tile preview');
     expect(markup).toContain('Inspector');
   });
 

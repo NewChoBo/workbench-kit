@@ -28,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NPM_DIST_TAG: ${{ inputs.npm_tag || 'prototype' }}
+      # Optional token fallback; scripts clear invalid tokens and use OIDC trusted publishing.
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,16 +38,16 @@ jobs:
         if: github.ref_type == 'tag'
         run: node scripts/sync-version-from-tag.mjs
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.1
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          package-manager-cache: false
-
-      - name: Enable pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@11.5.1 --activate
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts

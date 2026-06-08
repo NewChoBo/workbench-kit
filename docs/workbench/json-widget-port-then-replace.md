@@ -93,8 +93,8 @@ Sync rules:
 - [x] P3.3 simplified preview selection chrome — `PlaygroundEditorWidgetWrapper` (`WorkbenchCanvasItemFrame` + badge)
 - [x] P3.3 full playground E2E play — `JsonWidget/Playground → InteractiveSmoke` (add, inspector, preview select, DnD, save)
 - [x] P3.3 required play promotion — `InteractiveSmoke` (`JsonConfig/WidgetInteraction` stays baseline; save requires dirty Monaco edit)
-- [x] **Phase 3 kit milestone complete** — see [application-complete.md](./application-complete.md)
-- [x] P4 consumer swap runbook — [consumer-swap-runbook.md](./consumer-swap-runbook.md)
+- [x] **Phase 3 kit milestone complete** — see [json-widget-mvp.md](./json-widget-mvp.md)
+- [x] P4 consumer swap — tracked in [migration-todo.md](./migration-todo.md) § Downstream Migration Bridge
 - [ ] P4 custom_launcher preview toolbar → `PreviewZoomToolbar` (in progress)
 - [ ] P4 tile_paper domain types (full `WidgetPropertySections`, drag/resize `EditorWidgetWrapper` with registry wrapper pattern)
 - [ ] P4 full `createWidgetJsonSchema` parity (tile-ref, spacer, dataSource, multi-schema project configs)

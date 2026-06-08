@@ -29,6 +29,8 @@ pnpm format
 
 `pnpm validate` runs typecheck, lint, format check, and sample build together.
 
+Local git hooks run a faster pre-commit lane; see [Git Hooks](./git-hooks.md).
+
 ## Rules
 
 - Formatting differences are resolved by Prettier.

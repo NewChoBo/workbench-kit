@@ -52,6 +52,11 @@ export { WidgetTreePanel } from './tree-panel/WidgetTreePanel.js';
 export type { WidgetTreePanelProps } from './tree-panel/WidgetTreePanel.js';
 export { useJsonWidgetEditorSync, formatWidgetDocument } from './useJsonWidgetEditorSync.js';
 export type {
+  JsonWidgetHistoryActions,
   UseJsonWidgetEditorSyncOptions,
   UseJsonWidgetEditorSyncResult,
 } from './useJsonWidgetEditorSync.js';
+
+// Authoring UI and playground demo were removed from this barrel (slim kit v2).
+// Import from @workbench-kit/react/authoring or @workbench-kit/react/json-widget/playground.
+// See docs/workbench/KIT_SURFACE.md.
