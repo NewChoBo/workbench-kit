@@ -4,10 +4,13 @@
   "private": false,
   "type": "module",
   "scripts": {
+    "test": "vitest run src",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./context-keys": "./src/context-keys.ts",
+    "./when-clause": "./src/when-clause.ts"
   },
   "files": [
     "src",

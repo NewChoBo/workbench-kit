@@ -28,6 +28,52 @@ export const ConfirmationDialog: Story = {
   ),
 };
 
+export const ConfirmationDialogDisabled: Story = {
+  render: () => (
+    <div style={{ minHeight: 360, background: 'var(--color-bg)' }}>
+      <ConfirmDialog
+        title="Unavailable Action"
+        message="The confirm action stays disabled until the host clears the blocking state."
+        confirmDisabled
+        confirmLabel="Apply"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />
+    </div>
+  ),
+};
+
+export const ConfirmationDialogPending: Story = {
+  render: () => (
+    <div style={{ minHeight: 360, background: 'var(--color-bg)' }}>
+      <ConfirmDialog
+        title="Saving Changes"
+        message="The host can keep the dialog open while an async side effect runs."
+        confirmPending
+        confirmLabel="Save"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />
+    </div>
+  ),
+};
+
+export const ConfirmationDialogDanger: Story = {
+  render: () => (
+    <div style={{ minHeight: 360, background: 'var(--color-bg)' }}>
+      <ConfirmDialog
+        title="Delete Artifact"
+        message="Delete this generated artifact?"
+        detail={<code>artifacts/summary.md</code>}
+        confirmLabel="Delete"
+        variant="danger"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />
+    </div>
+  ),
+};
+
 export const Menu: Story = {
   render: () => (
     <div style={{ minHeight: 320, background: 'var(--color-bg)' }}>

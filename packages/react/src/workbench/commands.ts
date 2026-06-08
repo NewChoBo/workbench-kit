@@ -2,10 +2,12 @@ import {
   commandMenuEntries,
   commandMenuEntry,
   commandMenuSeparator,
+  resolveCommandMenuItems,
   type CommandDefinition,
-  type CommandValue,
   type CommandMenuEntry,
   type CommandMenuItem,
+  type CommandRegistry,
+  type CommandValue,
 } from '@workbench-kit/core';
 
 import type { ContextMenuItem } from '../overlay/ContextMenu';
@@ -356,12 +358,14 @@ export function createWorkbenchWorkspaceCommands<
             ? 'Open selected files'
             : 'Open file',
       run: ({ openWorkspaceTarget }) => openWorkspaceTarget(),
+      when: 'workspace.hasSelection',
     },
     {
       id: WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID,
       icon: 'codicon-copy',
       label: ({ targetPaths }) => (targetPaths.length > 1 ? 'Copy paths' : 'Copy path'),
       run: ({ copyWorkspaceTarget }) => copyWorkspaceTarget(),
+      when: 'workspace.hasSelection',
     },
     {
       id: WORKBENCH_WORKSPACE_RENAME_COMMAND_ID,
@@ -370,6 +374,7 @@ export function createWorkbenchWorkspaceCommands<
       label: 'Rename',
       run: ({ renameWorkspaceTarget }) => renameWorkspaceTarget(),
       shortcut: 'F2',
+      when: 'workspace.hasSelection && !workspace.multiSelection',
     },
     {
       id: WORKBENCH_WORKSPACE_DELETE_COMMAND_ID,
@@ -385,6 +390,7 @@ export function createWorkbenchWorkspaceCommands<
             : 'Delete',
       run: ({ deleteWorkspaceTarget }) => deleteWorkspaceTarget(),
       shortcut: 'Del',
+      when: 'workspace.hasSelection',
     },
   ];
 
@@ -470,6 +476,28 @@ export function createWorkbenchSearchResultMenuEntries<
       surfaces: [WORKBENCH_COMMAND_SURFACE_SEARCH],
     }),
   ];
+}
+
+export function resolveWorkbenchCommandMenuItems<TContext>({
+  registry,
+  entries,
+  context,
+  surface,
+  contextKeys,
+}: {
+  registry: CommandRegistry<TContext>;
+  entries: CommandMenuEntry<TContext>[];
+  context: TContext;
+  surface?: string;
+  contextKeys?: object;
+}): CommandMenuItem[] {
+  return resolveCommandMenuItems({
+    context,
+    contextKeys,
+    entries,
+    registry,
+    surface,
+  });
 }
 
 export function commandMenuItemsToContextMenuItems(

@@ -28,6 +28,10 @@ Keep in consumers:
 - Backend, agent, or runtime execution implementations.
 - Actual command handlers that read, write, deploy, search, or call services.
 
+Additional migration guide for launch-related shared contracts:
+
+- [library-launch-migration-runbook.md](./library-launch-migration-runbook.md)
+
 ## Reconciled Status Summary
 
 | Candidate                    | Status    | Current Evidence                                                                                        | Remaining Boundary                                                                                    |
@@ -84,6 +88,44 @@ consumer callbacks such as `onRunCommand(command, context)`.
 
 Evidence: `WorkbenchCommandDescriptor`, command presets, command palette/suggest/group
 shells, shortcut bridge, and command tests.
+
+### 10. Library Launchpad Mapping And Widget Renderer Contracts
+
+Status: active (Phase 2 gate pending)
+
+Goal:
+
+- Fix shared execution rules (launch-target normalization, `launchType` inference,
+  `workingDirectory` derivation, binding payload) in `@workbench-kit/contracts` so per-app launcher
+  logic does not diverge.
+- Fix JSON widget renderer event/shape types through `WidgetRenderer*` contracts so renderer
+  wrappers stay aligned across apps.
+
+Required migrations for each downstream:
+
+1. Remove local `launchTarget` utilities (trim, type inference, working-directory calculation) from
+   launch execution paths and replace them with `normalizeLaunchTarget`,
+   `inferLaunchTypeFromTarget`, and `resolveLaunchpadLibraryItemMapping`.
+2. Replace app-specific tile/item action label, icon, and payload derivation with
+   `createLaunchpadLibraryItemTileBinding` plus normalized reference payloads.
+3. Align JSON widget-tree renderer handler types with `WidgetRendererComponent` and
+   `WidgetRendererProps`.
+   Raw widget events should be normalized through `normalizeWidgetRendererEvent` before
+   any domain-specific action handling.
+   Legacy fields (`type: 'on-press'|'on-change'`, and the legacy `kind` shape) must be
+   normalized to `WidgetRendererEventKind` (`press`/`change`).
+
+Acceptance checks:
+
+- For the same input set, each consumer must produce identical `launchType` (`url` / `app` / `file` /
+  `folder`), `workingDirectory`, `canLaunch`, `subtitle`, and `arguments`.
+- Blank or whitespace-only targets must converge to `canLaunch=false`, `execution.target=null`, and
+  `launchType=null`.
+- `WidgetRendererProps` must keep shared renderer event kinds `press` and `change`.
+
+Boundary check:
+
+- Before migration close, run [library-launch-boundary-gate.md](./library-launch-boundary-gate.md).
 
 ### 2. Active Editor Save Primitive
 

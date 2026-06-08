@@ -758,8 +758,10 @@ export interface WorkbenchPreviewCanvasProps extends Omit<
   onResetView?: () => void;
   resetLabel?: ReactNode;
   resetTitle?: string;
+  showViewportGrid?: boolean;
   showWindowFrame?: boolean;
   stageStyle?: CSSProperties;
+  viewportGridSize?: number;
   viewportProps?: ComponentPropsWithRef<'div'>;
 }
 
@@ -774,12 +776,18 @@ export function WorkbenchPreviewCanvas({
   onResetView,
   resetLabel = 'Reset',
   resetTitle = 'Reset View',
+  showViewportGrid = false,
   showWindowFrame = true,
   stageStyle,
+  viewportGridSize = 8,
   viewportProps,
   ...props
 }: WorkbenchPreviewCanvasProps) {
-  const { className: viewportClassName, ...restViewportProps } = viewportProps ?? {};
+  const {
+    className: viewportClassName,
+    style: viewportStyle,
+    ...restViewportProps
+  } = viewportProps ?? {};
 
   return (
     <div className={cx('ui-workbench-preview-canvas', className)} {...props}>
@@ -819,6 +827,15 @@ export function WorkbenchPreviewCanvas({
           ) : null}
           <div
             className={cx('ui-workbench-preview-canvas__viewport', viewportClassName)}
+            data-grid={showViewportGrid ? 'true' : 'false'}
+            style={
+              showViewportGrid
+                ? ({
+                    '--ui-workbench-preview-viewport-grid-size': `${viewportGridSize}px`,
+                    ...viewportStyle,
+                  } as CSSProperties)
+                : viewportStyle
+            }
             {...restViewportProps}
           >
             {children}

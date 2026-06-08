@@ -161,7 +161,9 @@ export type {
 } from './workbench/status';
 export {
   FilterBar,
+  FilterBarActiveChips,
   FilterBarRow,
+  FilterChip,
   HelpText,
   Panel,
   PanelBody,
@@ -175,8 +177,10 @@ export {
   PreviewPaneViewport,
 } from './layout/Panel';
 export type {
+  FilterBarActiveChipsProps,
   FilterBarRowProps,
   FilterBarProps,
+  FilterChipProps,
   HelpTextProps,
   PanelBodyProps,
   PanelFooterProps,

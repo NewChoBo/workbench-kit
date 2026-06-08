@@ -410,7 +410,12 @@ export function getWorkbenchStructuredDataSchemaSectionId(
 export function getWorkbenchStructuredDataSchemaSectionPath(
   section: WorkbenchStructuredDataSchemaSectionSummary,
 ) {
-  return section.dataPath?.trim() || section.sectionKey || section.id || '';
+  const dataPath = section.dataPath;
+  if (dataPath !== undefined) {
+    return dataPath.trim();
+  }
+
+  return section.sectionKey || section.id || '';
 }
 
 export function formatWorkbenchStructuredDataSchemaLabel(value: string) {

@@ -14,6 +14,7 @@ export interface StatusBarItemModel {
   active?: boolean;
   ariaLabel?: string;
   disabled?: boolean;
+  order?: number;
   hidden?: boolean;
   icon?: ReactNode | string;
   id: string;
@@ -23,6 +24,7 @@ export interface StatusBarItemModel {
 }
 
 export interface StatusBarSectionModel {
+  order?: number;
   align?: StatusBarSectionAlign;
   hidden?: boolean;
   id: string;
@@ -46,11 +48,11 @@ export function StatusBar({
 }: StatusBarProps) {
   const content =
     children ??
-    sections
+    sortByOrderPriority(sections ?? [])
       ?.filter((section) => !section.hidden)
       .map((section) => (
         <StatusBarSection key={section.id} align={section.align}>
-          {section.items
+          {sortByOrderPriority(section.items)
             .filter((item) => !item.hidden)
             .map((item) => (
               <StatusBarItem
@@ -82,6 +84,23 @@ export function StatusBar({
       {content}
     </footer>
   );
+}
+
+function sortByOrderPriority<T extends { order?: number }>(values: readonly T[]): T[] {
+  return [...values]
+    .map((value, sourceIndex) => ({ value, sourceIndex }))
+    .sort((left, right) => {
+      const leftOrder = left.value.order;
+      const rightOrder = right.value.order;
+
+      if (leftOrder !== rightOrder) {
+        if (leftOrder === undefined) return 1;
+        if (rightOrder === undefined) return -1;
+        return leftOrder - rightOrder;
+      }
+      return left.sourceIndex - right.sourceIndex;
+    })
+    .map(({ value }) => value);
 }
 
 export interface StatusBarSectionProps extends ComponentPropsWithRef<'div'> {

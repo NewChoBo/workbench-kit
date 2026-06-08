@@ -68,4 +68,46 @@ describe('WorkbenchShell', () => {
     expect(markup).not.toContain('hidden sidebar');
     expect(markup).toContain('ui-workbench-status-bar');
   });
+
+  it('renders status sections and items in deterministic order using order metadata', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchShell
+        activityBar={{ items: [{ id: 'explorer', icon: 'E', label: 'Explorer' }] }}
+        primarySidebar={{
+          isVisible: false,
+          node: <aside>hidden sidebar</aside>,
+        }}
+        secondaryArea={<main>content</main>}
+        statusSections={[
+          {
+            id: 'right',
+            align: 'end',
+            order: 2,
+            items: [
+              { id: 'right-ordered-late', label: 'right-late', order: 1 },
+              { id: 'right-ordered-early', label: 'right-early', order: 0 },
+            ],
+          },
+          {
+            id: 'left',
+            align: 'start',
+            order: 1,
+            items: [
+              { id: 'left-late', label: 'left-late', order: 1 },
+              { id: 'left-early', label: 'left-early', order: 0 },
+            ],
+          },
+          {
+            id: 'fallback',
+            items: [{ id: 'fallback', label: 'fallback-default-order' }],
+          },
+        ]}
+      />,
+    );
+
+    expect(markup.indexOf('left-early')).toBeLessThan(markup.indexOf('left-late'));
+    expect(markup.indexOf('left-early')).toBeLessThan(markup.indexOf('right-early'));
+    expect(markup.indexOf('right-early')).toBeLessThan(markup.indexOf('right-late'));
+    expect(markup.indexOf('fallback-default-order')).toBeGreaterThan(markup.indexOf('right-late'));
+  });
 });

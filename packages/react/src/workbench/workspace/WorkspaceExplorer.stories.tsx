@@ -32,7 +32,7 @@ import type {
 import { useVirtualWorkspace } from './useVirtualWorkspace';
 
 const meta = {
-  title: 'React/Workbench/WorkspaceExplorer',
+  title: 'React/Workbench/Workspace/WorkspaceExplorer',
   parameters: {
     layout: 'fullscreen',
   },
@@ -478,7 +478,7 @@ export const CreateAndRenameFlow: Story = {
       'Renamed src/App.tsx to src/Main.tsx',
     );
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const InlineEditBoundaryFlow: Story = {
@@ -702,6 +702,7 @@ export const FolderDeleteFlow: Story = {
       'Deleted folder docs',
     );
   },
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const DropTargetHighlightFlow: Story = {

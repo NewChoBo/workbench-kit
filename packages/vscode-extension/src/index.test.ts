@@ -8,7 +8,13 @@ import type {
 } from '@workbench-kit/contracts';
 import type { HostMessageEnvelope, HostTransport } from '@workbench-kit/vscode-host';
 import { InMemoryWorkspaceFileRepository } from '@workbench-kit/adapters';
-import { createWorkbenchExtensionRuntime } from '.';
+import {
+  createWorkbenchExtensionRuntime,
+  createWorkbenchExtensionRuntimeFromContributions,
+  createWorkbenchExtensionRuntimeFromContributionsAuto,
+  resolveCommandContributionConflictPolicy,
+  preflightCommandContributionConflict,
+} from '.';
 
 interface TransportTestHarness {
   emit: (message: HostMessageEnvelope) => void;
@@ -245,5 +251,216 @@ describe('createWorkbenchExtensionRuntime', () => {
     });
 
     runtime.dispose();
+  });
+
+  it('isolates chat patch callback failures while preserving patch application', async () => {
+    const chatTransport = new MockChatTransport();
+    const onChatPatch = vi.fn(() => {
+      throw new Error('chat patch callback failed');
+    });
+    const onPatchResult = vi.fn();
+    const harness = createTransportHarness();
+    const repository = new InMemoryWorkspaceFileRepository([
+      { content: 'body', path: 'docs/readme.md' },
+    ]);
+
+    const runtime = createWorkbenchExtensionRuntime({
+      ...createCommandRuntimeOptions(createCommandRegistry([])),
+      transport: harness.transport,
+      repository,
+      chatTransport,
+      onChatPatch,
+      onPatchResult,
+    });
+
+    await runtime.services.chatService.sendMessage('  hello  ');
+    chatTransport.emit({
+      patch: { path: 'docs/readme.md', content: 'updated', type: 'write-file' },
+      type: 'workspace-patch',
+    });
+
+    await waitForAsync();
+
+    expect(onChatPatch).toHaveBeenCalledWith(
+      { path: 'docs/readme.md', content: 'updated', type: 'write-file' },
+      expect.objectContaining({ type: 'patch:applied' }),
+    );
+    expect(onPatchResult).toHaveBeenCalledWith(
+      { path: 'docs/readme.md', content: 'updated', type: 'write-file' },
+      expect.objectContaining({ type: 'patch:applied' }),
+      'chat',
+    );
+
+    const written = await repository.getFile('docs/readme.md');
+    expect(written).toMatchObject({
+      content: 'updated',
+    });
+
+    runtime.dispose();
+  });
+
+  it('isolates chat patch result callback failures without breaking runtime message flow', async () => {
+    const chatTransport = new MockChatTransport();
+    const onChatPatch = vi.fn();
+    const onPatchResult = vi.fn(() => {
+      throw new Error('patch result callback failed');
+    });
+    const harness = createTransportHarness();
+    const repository = new InMemoryWorkspaceFileRepository([
+      { content: 'body', path: 'docs/readme.md' },
+    ]);
+
+    const runtime = createWorkbenchExtensionRuntime({
+      ...createCommandRuntimeOptions(createCommandRegistry([])),
+      transport: harness.transport,
+      repository,
+      chatTransport,
+      onChatPatch,
+      onPatchResult,
+    });
+
+    await runtime.services.chatService.sendMessage('  hello  ');
+    chatTransport.emit({
+      patch: { path: 'docs/readme.md', content: 'updated', type: 'write-file' },
+      type: 'workspace-patch',
+    });
+
+    await waitForAsync();
+
+    expect(onChatPatch).toHaveBeenCalledTimes(1);
+    expect(onPatchResult).toHaveBeenCalledTimes(1);
+    expect(onPatchResult).toHaveBeenCalledWith(
+      { path: 'docs/readme.md', content: 'updated', type: 'write-file' },
+      expect.objectContaining({ type: 'patch:applied' }),
+      'chat',
+    );
+
+    const written = await repository.getFile('docs/readme.md');
+    expect(written).toMatchObject({
+      content: 'updated',
+    });
+
+    runtime.dispose();
+  });
+
+  it('supports hard-fail conflict policy when creating runtime from command contributions', () => {
+    const repository = new InMemoryWorkspaceFileRepository([]);
+    const onCommandConflict = vi.fn();
+
+    expect(() =>
+      createWorkbenchExtensionRuntimeFromContributions({
+        repository,
+        commandContributions: [
+          {
+            commands: [
+              { id: 'ping', label: 'First' },
+              { id: 'ping', label: 'Duplicate' },
+            ],
+          },
+        ],
+        commandConflictPolicy: 'hard-fail',
+        onCommandConflict,
+      }),
+    ).toThrow('Duplicate command IDs are not allowed: ping -> duplicate indices: [0, 1]');
+    expect(onCommandConflict).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports command conflicts without hard-fail when policy is last-write-wins', () => {
+    const repository = new InMemoryWorkspaceFileRepository([]);
+    const onCommandConflict = vi.fn();
+    const runtime = createWorkbenchExtensionRuntimeFromContributions({
+      repository,
+      commandContributions: [
+        {
+          commands: [
+            { id: 'ping', label: 'First' },
+            { id: 'ping', label: 'Duplicate' },
+          ],
+        },
+      ],
+      onCommandConflict,
+    });
+
+    expect(onCommandConflict).toHaveBeenCalledTimes(1);
+    runtime.dispose();
+  });
+
+  it('preflights command contribution conflicts and still builds last-write-wins registry', () => {
+    const result = preflightCommandContributionConflict([
+      {
+        commands: [
+          { id: 'ping', label: 'First' },
+          { id: 'ping', label: 'Duplicate' },
+          { id: 'other', label: 'Other' },
+        ],
+      },
+    ]);
+
+    expect(result.commandConflicts).toHaveLength(1);
+    expect(result.commandConflicts[0]).toMatchObject({ commandId: 'ping' });
+    expect(result.commandRegistry.get('ping')?.label).toBe('Duplicate');
+    expect(result.commandRegistry.get('other')?.label).toBe('Other');
+  });
+
+  it('resolves hard-fail startup policy only when contribution preflight is conflict-free', () => {
+    const cleanPolicy = resolveCommandContributionConflictPolicy([
+      {
+        commands: [
+          { id: 'ping', label: 'First' },
+          { id: 'other', label: 'Other' },
+        ],
+      },
+    ]);
+    expect(cleanPolicy.shouldUseHardFail).toBe(true);
+    expect(cleanPolicy.conflictPolicy).toBe('hard-fail');
+
+    const conflictPolicy = resolveCommandContributionConflictPolicy([
+      {
+        commands: [
+          { id: 'ping', label: 'First' },
+          { id: 'ping', label: 'Duplicate' },
+        ],
+      },
+    ]);
+    expect(conflictPolicy.shouldUseHardFail).toBe(false);
+    expect(conflictPolicy.conflictPolicy).toBe('last-write-wins');
+  });
+
+  it('auto mode resolves to hard-fail only when no conflicts are detected', () => {
+    const repository = new InMemoryWorkspaceFileRepository([]);
+
+    const cleanRuntime = createWorkbenchExtensionRuntimeFromContributionsAuto({
+      repository,
+      commandContributions: [
+        {
+          commands: [
+            { id: 'ping', label: 'First' },
+            { id: 'other', label: 'Other' },
+          ],
+        },
+      ],
+      commandConflictPolicy: 'auto',
+    });
+    expect(cleanRuntime).toBeDefined();
+    cleanRuntime.dispose();
+
+    const onCommandConflict = vi.fn();
+
+    const conflictRuntime = createWorkbenchExtensionRuntimeFromContributionsAuto({
+      onCommandConflict,
+      repository,
+      commandContributions: [
+        {
+          commands: [
+            { id: 'ping', label: 'First' },
+            { id: 'ping', label: 'Duplicate' },
+          ],
+        },
+      ],
+      commandConflictPolicy: 'auto',
+    });
+
+    expect(onCommandConflict).toHaveBeenCalledTimes(1);
+    conflictRuntime.dispose();
   });
 });
