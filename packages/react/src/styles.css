@@ -802,7 +802,7 @@
 .ui-workbench-sectioned-panel {
   --ui-workbench-navigation-panel-nav-min-width: 200px;
   --ui-workbench-navigation-panel-nav-width: 240px;
-  --ui-workbench-sectioned-panel-body-padding-inline: 50px;
+  --ui-workbench-sectioned-panel-content-padding-left: 50px;
 }
 
 .ui-workbench-sectioned-panel-host {
@@ -891,7 +891,6 @@
 }
 
 .ui-workbench-sectioned-panel .ui-workbench-sectioned-panel__body {
-  padding-inline: var(--ui-workbench-sectioned-panel-body-padding-inline);
   overflow: hidden;
 }
 
@@ -900,6 +899,7 @@
   height: 100%;
   overflow: auto;
   overscroll-behavior: contain;
+  padding-left: var(--ui-workbench-sectioned-panel-content-padding-left);
 }
 
 .ui-workbench-sectioned-panel__nav-footer {
@@ -1398,8 +1398,8 @@
     padding: 8px 0;
   }
 
-  .ui-workbench-sectioned-panel .ui-workbench-sectioned-panel__body {
-    padding-inline: 16px;
+  .ui-workbench-sectioned-panel__scroll {
+    padding-left: 16px;
   }
 
   .ui-workbench-structured-data-form__section {
