@@ -70,6 +70,7 @@ export interface WorkbenchStructuredDataSchemaPanelProps {
   ariaLabel: string;
   classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
   data: unknown;
+  fill?: boolean | undefined;
   headerActions?: ReactNode | undefined;
   labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
   preferredTableColumns?: readonly string[] | undefined;
@@ -449,6 +450,7 @@ export function WorkbenchStructuredDataSchemaPanel({
   ariaLabel,
   classNames,
   data,
+  fill = false,
   headerActions,
   labels,
   preferredTableColumns,
@@ -519,7 +521,10 @@ export function WorkbenchStructuredDataSchemaPanel({
   return (
     <WorkbenchSectionedPanel
       ariaLabel={ariaLabel}
-      className={resolvedClassNames.root}
+      className={cx(
+        resolvedClassNames.root,
+        fill && 'ui-workbench-structured-data-schema-panel--fill',
+      )}
       items={sectionItems.map(({ anchorId, count, section, title }, index) => ({
         anchorId,
         count,
