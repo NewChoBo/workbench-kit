@@ -1,71 +1,110 @@
 import { describe, expect, it } from 'vitest';
 import {
-  resolveWorkbenchSectionedPanelActiveAnchorId,
+  createWorkbenchSectionedPanelIntersectionRootMargin,
+  isWorkbenchSectionedPanelAtScrollBottom,
+  isWorkbenchSectionedPanelAtScrollTop,
+  isWorkbenchSectionedPanelScrollable,
+  resolveWorkbenchSectionedPanelActiveAnchorFromIntersection,
+  resolveWorkbenchSectionedPanelActiveAnchorFromScroll,
   resolveWorkbenchSectionedPanelScrollTop,
 } from './sectionedPanelScrollSpy';
 
 describe('sectionedPanelScrollSpy', () => {
-  const sections = [
-    { anchorId: 'general', top: 0 },
-    { anchorId: 'request', top: 320 },
-    { anchorId: 'response', top: 720 },
-  ];
+  const anchorOrder = ['general', 'request', 'response'];
 
-  it('activates the last section when scrolled to the bottom', () => {
+  it('detects when the content panel can scroll', () => {
+    expect(isWorkbenchSectionedPanelScrollable({ clientHeight: 400, scrollHeight: 900 })).toBe(
+      true,
+    );
+    expect(isWorkbenchSectionedPanelScrollable({ clientHeight: 600, scrollHeight: 400 })).toBe(
+      false,
+    );
+  });
+
+  it('detects when the scroll position is at the top or bottom', () => {
+    expect(isWorkbenchSectionedPanelAtScrollTop({ scrollTop: 0 })).toBe(true);
+    expect(isWorkbenchSectionedPanelAtScrollTop({ scrollTop: 2 })).toBe(true);
+    expect(isWorkbenchSectionedPanelAtScrollTop({ scrollTop: 3 })).toBe(false);
+
     expect(
-      resolveWorkbenchSectionedPanelActiveAnchorId({
+      isWorkbenchSectionedPanelAtScrollBottom({
+        clientHeight: 200,
         scrollHeight: 900,
         scrollTop: 700,
-        sectionPositions: sections,
-        viewportHeight: 200,
       }),
-    ).toBe('response');
+    ).toBe(true);
   });
 
-  it('activates the last section when content is shorter than the viewport', () => {
+  it('activates the last intersecting section in document order', () => {
     expect(
-      resolveWorkbenchSectionedPanelActiveAnchorId({
-        scrollHeight: 400,
-        scrollTop: 0,
-        sectionPositions: sections,
-        viewportHeight: 600,
-      }),
-    ).toBe('response');
-  });
-
-  it('activates the section whose top crossed the scroll offset', () => {
-    expect(
-      resolveWorkbenchSectionedPanelActiveAnchorId({
-        scrollHeight: 1200,
-        scrollTop: 300,
-        sectionPositions: sections,
-        viewportHeight: 400,
+      resolveWorkbenchSectionedPanelActiveAnchorFromIntersection({
+        anchorOrder,
+        entries: [
+          { intersectionRatio: 1, isIntersecting: true, target: { id: 'general' } },
+          { intersectionRatio: 0.4, isIntersecting: true, target: { id: 'request' } },
+        ],
+        fallbackAnchorId: 'general',
       }),
     ).toBe('request');
   });
 
-  it('keeps intermediate sections active while scrolling through the middle', () => {
+  it('falls back when no section intersects the active band', () => {
     expect(
-      resolveWorkbenchSectionedPanelActiveAnchorId({
+      resolveWorkbenchSectionedPanelActiveAnchorFromIntersection({
+        anchorOrder,
+        entries: [{ intersectionRatio: 0, isIntersecting: false, target: { id: 'general' } }],
+        fallbackAnchorId: 'general',
+      }),
+    ).toBe('general');
+  });
+
+  it('scrolls a section to the configured offset', () => {
+    expect(resolveWorkbenchSectionedPanelScrollTop({ sectionTop: 320 })).toBe(296);
+    expect(resolveWorkbenchSectionedPanelScrollTop({ offset: 24, sectionTop: 10 })).toBe(0);
+  });
+
+  it('builds the intersection observer root margin', () => {
+    expect(createWorkbenchSectionedPanelIntersectionRootMargin()).toBe('-24px 0px -55% 0px');
+  });
+
+  it('resolves the active section from scroll position', () => {
+    const sections = [
+      { anchorId: 'general', top: 48 },
+      { anchorId: 'request', top: 320 },
+      { anchorId: 'response', top: 720 },
+    ];
+
+    expect(
+      resolveWorkbenchSectionedPanelActiveAnchorFromScroll({
+        anchorOrder,
+        clientHeight: 400,
+        fallbackAnchorId: 'general',
         scrollHeight: 1200,
-        scrollTop: 100,
+        scrollTop: 0,
         sectionPositions: sections,
-        viewportHeight: 400,
       }),
     ).toBe('general');
 
     expect(
-      resolveWorkbenchSectionedPanelActiveAnchorId({
+      resolveWorkbenchSectionedPanelActiveAnchorFromScroll({
+        anchorOrder,
+        clientHeight: 400,
+        fallbackAnchorId: 'general',
         scrollHeight: 1200,
-        scrollTop: 500,
+        scrollTop: 330,
         sectionPositions: sections,
-        viewportHeight: 400,
       }),
     ).toBe('request');
-  });
 
-  it('scrolls a section to the configured offset', () => {
-    expect(resolveWorkbenchSectionedPanelScrollTop({ sectionTop: 320 })).toBe(302);
-    expect(resolveWorkbenchSectionedPanelScrollTop({ offset: 18, sectionTop: 10 })).toBe(0);
+    expect(
+      resolveWorkbenchSectionedPanelActiveAnchorFromScroll({
+        anchorOrder,
+        clientHeight: 400,
+        fallbackAnchorId: 'general',
+        scrollHeight: 1200,
+        scrollTop: 800,
+        sectionPositions: sections,
+      }),
+    ).toBe('response');
   });
 });
