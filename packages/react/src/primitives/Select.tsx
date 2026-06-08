@@ -9,6 +9,7 @@ import {
   useState,
   type ChangeEvent,
   type ComponentPropsWithRef,
+  type CSSProperties,
   type KeyboardEvent,
   type ReactElement,
   type ReactNode,
@@ -29,6 +30,21 @@ interface ParsedOption {
   disabled?: boolean;
 }
 
+type ListboxPlacement = 'bottom' | 'top';
+
+interface OverlayPosition {
+  left: number;
+  maxHeight: number;
+  placement: ListboxPlacement;
+  triggerBottom: number;
+  triggerTop: number;
+  width: number;
+}
+
+const LISTBOX_MAX_HEIGHT = 240;
+const LISTBOX_OPTION_HEIGHT = 28;
+const VIEWPORT_PADDING = 8;
+
 function isOptionElement(child: ReactNode): child is ReactElement<ComponentPropsWithRef<'option'>> {
   return isValidElement(child) && child.type === 'option';
 }
@@ -39,7 +55,7 @@ function parseOptions(children: ReactNode): ParsedOption[] {
     .map((child) => ({
       value: String(child.props.value ?? ''),
       label: child.props.children ?? child.props.value ?? '',
-      disabled: child.props.disabled,
+      disabled: Boolean(child.props.disabled),
     }));
 }
 
@@ -55,48 +71,57 @@ function getEnabledOptionIndex(options: ParsedOption[], startIndex: number, dire
   return -1;
 }
 
-type ListboxPlacement = 'bottom' | 'top';
+function isTriggerVisible(trigger: HTMLElement) {
+  const rect = trigger.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return false;
+  if (rect.bottom <= 0 || rect.top >= window.innerHeight) return false;
+  if (rect.right <= 0 || rect.left >= window.innerWidth) return false;
 
-interface ListboxPosition {
-  bottom?: number;
-  left: number;
-  maxHeight: number;
-  placement: ListboxPlacement;
-  top?: number;
-  width: number;
+  if (typeof trigger.checkVisibility === 'function') {
+    return trigger.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+  }
+
+  return true;
 }
 
-const LISTBOX_MAX_HEIGHT = 240;
-const LISTBOX_VIEWPORT_PADDING = 8;
-
-function measureListboxPosition(container: HTMLElement): ListboxPosition | null {
-  const trigger = container.querySelector<HTMLElement>('.ui-select__trigger');
-  if (!trigger) return null;
-
+function measureOverlayPosition(trigger: HTMLElement, optionCount: number): OverlayPosition | null {
   const rect = trigger.getBoundingClientRect();
-  const spaceBelow = window.innerHeight - rect.bottom - LISTBOX_VIEWPORT_PADDING;
-  const spaceAbove = rect.top - LISTBOX_VIEWPORT_PADDING;
-  const placement: ListboxPlacement =
-    spaceBelow >= 120 || spaceBelow >= spaceAbove ? 'bottom' : 'top';
-  const availableSpace = placement === 'bottom' ? spaceBelow : spaceAbove;
-  const maxHeight = Math.max(80, Math.min(LISTBOX_MAX_HEIGHT, availableSpace));
+  if (rect.width <= 0 || rect.height <= 0) return null;
 
-  if (placement === 'bottom') {
-    return {
-      left: rect.left,
-      width: rect.width,
-      top: rect.bottom - 1,
-      maxHeight,
-      placement,
-    };
+  const idealHeight = Math.min(LISTBOX_MAX_HEIGHT, optionCount * LISTBOX_OPTION_HEIGHT + 8);
+  const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - VIEWPORT_PADDING);
+  const spaceAbove = Math.max(0, rect.top - VIEWPORT_PADDING);
+  const placement: ListboxPlacement =
+    spaceBelow >= idealHeight || spaceBelow >= spaceAbove ? 'bottom' : 'top';
+  const available = placement === 'bottom' ? spaceBelow : spaceAbove;
+  const minHeight = LISTBOX_OPTION_HEIGHT + 8;
+  const maxHeight = Math.min(LISTBOX_MAX_HEIGHT, idealHeight, Math.max(minHeight, available));
+
+  return {
+    placement,
+    left: rect.left,
+    width: rect.width,
+    maxHeight,
+    triggerTop: rect.top,
+    triggerBottom: rect.bottom,
+  };
+}
+
+function overlayListboxStyle(position: OverlayPosition): CSSProperties {
+  const base: CSSProperties = {
+    left: position.left,
+    width: position.width,
+    maxHeight: position.maxHeight,
+  };
+
+  if (position.placement === 'bottom') {
+    return { ...base, top: position.triggerBottom };
   }
 
   return {
-    left: rect.left,
-    width: rect.width,
-    bottom: window.innerHeight - rect.top + 1,
-    maxHeight,
-    placement,
+    ...base,
+    top: position.triggerTop,
+    transform: 'translateY(-100%)',
   };
 }
 
@@ -118,10 +143,11 @@ export function Select({
   const options = parseOptions(children);
   const listboxId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
   const nativeSelectRef = useRef<HTMLSelectElement>(null);
   const [open, setOpen] = useState(false);
-  const [listboxPosition, setListboxPosition] = useState<ListboxPosition | null>(null);
+  const [overlayPosition, setOverlayPosition] = useState<OverlayPosition | null>(null);
   const [uncontrolledValue, setUncontrolledValue] = useState(() =>
     String(defaultValue ?? options.find((option) => !option.disabled)?.value ?? ''),
   );
@@ -142,8 +168,7 @@ export function Select({
       setUncontrolledValue(nextValue);
     }
 
-    const event = new Event('change', { bubbles: true });
-    nativeSelect.dispatchEvent(event);
+    nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
   };
 
   const handleNativeChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -154,10 +179,10 @@ export function Select({
     onValueChange?.(event.currentTarget.value, event);
   };
 
-  const closeListbox = () => {
+  const closeListbox = useCallback(() => {
     setOpen(false);
     setHighlightedIndex(-1);
-  };
+  }, []);
 
   const openListbox = (preferredIndex = selectedIndex >= 0 ? selectedIndex : 0) => {
     if (disabled) return;
@@ -171,26 +196,57 @@ export function Select({
     closeListbox();
   };
 
-  const updateListboxPosition = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    setListboxPosition(measureListboxPosition(container));
-  }, []);
+  const updateOverlayPosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
 
-  useLayoutEffect(() => {
-    if (!open) {
-      setListboxPosition(null);
+    if (!isTriggerVisible(trigger)) {
+      closeListbox();
       return;
     }
 
-    updateListboxPosition();
-    window.addEventListener('resize', updateListboxPosition);
-    window.addEventListener('scroll', updateListboxPosition, true);
+    const position = measureOverlayPosition(trigger, options.length);
+    if (!position) {
+      closeListbox();
+      return;
+    }
+
+    setOverlayPosition(position);
+  }, [closeListbox, options.length]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setOverlayPosition(null);
+      return;
+    }
+
+    updateOverlayPosition();
+    window.addEventListener('resize', updateOverlayPosition);
+    window.addEventListener('scroll', updateOverlayPosition, true);
     return () => {
-      window.removeEventListener('resize', updateListboxPosition);
-      window.removeEventListener('scroll', updateListboxPosition, true);
+      window.removeEventListener('resize', updateOverlayPosition);
+      window.removeEventListener('scroll', updateOverlayPosition, true);
     };
-  }, [open, updateListboxPosition]);
+  }, [open, updateOverlayPosition]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) {
+          closeListbox();
+        }
+      },
+      { threshold: 0 },
+    );
+
+    observer.observe(trigger);
+    return () => observer.disconnect();
+  }, [closeListbox, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -203,9 +259,7 @@ export function Select({
     };
 
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closeListbox();
-      }
+      if (event.key === 'Escape') closeListbox();
     };
 
     window.addEventListener('pointerdown', handlePointerDown, true);
@@ -214,7 +268,7 @@ export function Select({
       window.removeEventListener('pointerdown', handlePointerDown, true);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open]);
+  }, [closeListbox, open]);
 
   const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (disabled) return;
@@ -257,25 +311,14 @@ export function Select({
   };
 
   const listbox =
-    open && listboxPosition ? (
+    open && overlayPosition ? (
       <ul
         ref={listboxRef}
-        className={cx(
-          'ui-select__listbox',
-          'ui-select__listbox--floating',
-          listboxPosition.placement === 'top' && 'ui-select__listbox--placement-top',
-        )}
+        className="ui-select__listbox ui-select__listbox--overlay"
+        data-placement={overlayPosition.placement}
         id={listboxId}
         role="listbox"
-        style={{
-          position: 'fixed',
-          left: listboxPosition.left,
-          width: listboxPosition.width,
-          maxHeight: listboxPosition.maxHeight,
-          ...(listboxPosition.placement === 'bottom'
-            ? { top: listboxPosition.top }
-            : { bottom: listboxPosition.bottom }),
-        }}
+        style={overlayListboxStyle(overlayPosition)}
       >
         {options.map((option, index) => {
           const isSelected = option.value === currentValue;
@@ -307,11 +350,11 @@ export function Select({
     <div
       ref={containerRef}
       className={cx('ui-select', className)}
-      data-listbox-floating="true"
       data-open={open ? 'true' : 'false'}
       data-width={controlWidth}
     >
       <button
+        ref={triggerRef}
         aria-controls={listboxId}
         aria-describedby={ariaDescribedBy}
         aria-expanded={open}
