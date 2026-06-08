@@ -6,6 +6,8 @@
   "packageManager": "pnpm@11.5.1",
   "scripts": {
     "preinstall": "node -e \"const execPath = process.env.npm_execpath || ''; if (!/pnpm/.test(execPath)) { console.error('This repository requires pnpm. Please run `pnpm install`.'); process.exit(1); }\"",
+    "postinstall": "node scripts/postinstall-workspace-build.mjs",
+    "build:workspace": "node scripts/build-workspace-packages.mjs",
     "format": "pnpm exec prettier . --write",
     "format:check": "pnpm exec prettier . --check",
     "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",

@@ -52,9 +52,7 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build workspace packages
-        run: |
-          pnpm --filter @workbench-kit/contracts build
-          pnpm --filter @workbench-kit/json-widget build
+        run: node scripts/build-workspace-packages.mjs
 
       - name: Verify release tag
         run: node scripts/check-release-version.mjs
