@@ -23,7 +23,7 @@ import {
 } from './commands';
 
 const meta = {
-  title: 'React/Workbench/CommandPalette',
+  title: 'React/Workbench/Commands/CommandPalette',
   parameters: {
     layout: 'fullscreen',
   },

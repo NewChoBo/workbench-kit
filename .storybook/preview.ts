@@ -30,7 +30,8 @@ const preview: Preview = {
   decorators: [
     (Story, context) => {
       const grid = context.parameters.storybookGrid ?? {};
-      const isGridEnabled = grid.enabled !== false;
+      const fullHeightShell = context.parameters.fullHeightShell as string | undefined;
+      const isGridEnabled = grid.enabled !== false && !fullHeightShell;
       const gridSize = grid.size ?? 16;
       const gridColor = grid.color ?? 'rgba(255,255,255,0.12)';
       const gridBackground = isGridEnabled
@@ -38,13 +39,15 @@ const preview: Preview = {
          linear-gradient(90deg, ${gridColor} 1px, transparent 0) 0 0 / ${gridSize}px ${gridSize}px`
         : 'none';
 
+      const shellHeight = fullHeightShell ?? '100%';
+
       return createElement(
         'div',
         {
           style: {
             width: '100%',
-            height: '100%',
-            minHeight: '100%',
+            height: shellHeight,
+            minHeight: fullHeightShell ?? '100%',
             minWidth: '100%',
             overflow: 'hidden',
             backgroundImage: gridBackground,
@@ -56,6 +59,39 @@ const preview: Preview = {
     },
   ],
   parameters: {
+    options: {
+      storySort: {
+        order: [
+          'Introduction',
+          ['JsonConfig', ['Workbench']],
+          ['JsonWidget', ['Playground', 'Preview']],
+          [
+            'React',
+            [
+              'Primitives',
+              'Layout',
+              'Overlays',
+              [
+                'Workbench',
+                [
+                  'Shell',
+                  'Workspace',
+                  'Settings',
+                  'Chat',
+                  'Commands',
+                  'Catalog',
+                  'Flows',
+                  'Auth',
+                  'Verification',
+                ],
+              ],
+            ],
+          ],
+        ],
+        method: 'alphabetical',
+        locales: 'en-US',
+      },
+    },
     layout: 'fullscreen',
     backgrounds: {
       default: 'workbench',

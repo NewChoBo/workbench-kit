@@ -397,6 +397,16 @@ describe('workbench editor command presets', () => {
   });
 });
 
+const workspaceSelectionContextKeys = {
+  'workspace.hasSelection': true,
+  'workspace.multiSelection': false,
+};
+
+const workspaceMultiSelectionContextKeys = {
+  'workspace.hasSelection': true,
+  'workspace.multiSelection': true,
+};
+
 describe('workbench workspace command presets', () => {
   it('creates create, target, and folder menu entries', () => {
     const registry = createCommandRegistry(createWorkbenchWorkspaceCommands());
@@ -406,6 +416,7 @@ describe('workbench workspace command presets', () => {
         multiFileAction: true,
         targetPaths: ['README.md', 'src/App.tsx'],
       }),
+      contextKeys: workspaceMultiSelectionContextKeys,
       entries: createWorkbenchWorkspaceTargetMenuEntries(),
       registry,
     });
@@ -415,6 +426,7 @@ describe('workbench workspace command presets', () => {
         targetPaths: ['docs'],
         workspaceTargetKind: 'folder',
       }),
+      contextKeys: workspaceSelectionContextKeys,
       entries: createWorkbenchWorkspaceFolderMenuEntries(),
       registry,
     });
@@ -428,16 +440,8 @@ describe('workbench workspace command presets', () => {
       'Open selected files',
       'Copy paths',
       false,
-      'Rename',
       'Delete 2 files',
     ]);
-    expect(
-      fileItems.find((item) => item.type === 'command' && item.label === 'Rename'),
-    ).toMatchObject({
-      disabled: true,
-      icon: 'codicon-edit',
-      shortcut: 'F2',
-    });
     expect(
       fileItems.find((item) => item.type === 'command' && item.label === 'Delete 2 files'),
     ).toMatchObject({
@@ -487,9 +491,39 @@ describe('workbench workspace command presets', () => {
       'workspace.copyPath',
       'workspace.rename',
       'workspace.delete',
-    ].forEach((commandId) => executeCommand(registry, commandId, context));
+    ].forEach((commandId) =>
+      executeCommand(registry, commandId, context, workspaceSelectionContextKeys),
+    );
 
     expect(calls).toEqual(['newFile', 'newFolder', 'open', 'copy', 'rename', 'delete']);
+  });
+
+  it('hides selection-target commands when workspace.hasSelection is false', () => {
+    const registry = createCommandRegistry(createWorkbenchWorkspaceCommands());
+    const items = resolveCommandMenuItems({
+      context: createWorkspaceContext(),
+      contextKeys: { 'workspace.hasSelection': false, 'workspace.multiSelection': false },
+      entries: createWorkbenchWorkspaceTargetMenuEntries(),
+      registry,
+    });
+
+    expect(items.map((item) => item.type === 'command' && item.label)).toEqual([]);
+  });
+
+  it('hides rename when workspace.multiSelection is true', () => {
+    const registry = createCommandRegistry(createWorkbenchWorkspaceCommands());
+    const items = resolveCommandMenuItems({
+      context: createWorkspaceContext({
+        fileActionPaths: ['README.md', 'src/App.tsx'],
+        multiFileAction: true,
+        targetPaths: ['README.md', 'src/App.tsx'],
+      }),
+      contextKeys: workspaceMultiSelectionContextKeys,
+      entries: createWorkbenchWorkspaceTargetMenuEntries(),
+      registry,
+    });
+
+    expect(items.map((item) => item.type === 'command' && item.label)).not.toContain('Rename');
   });
 });
 

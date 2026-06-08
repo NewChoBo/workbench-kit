@@ -5,7 +5,7 @@ import { Button } from '../primitives/Button';
 import { WorkbenchConfirmationFlow, type WorkbenchConfirmationAction } from './ConfirmationFlow';
 
 const meta = {
-  title: 'React/Workbench/ConfirmationFlow',
+  title: 'React/Workbench/Flows/ConfirmationFlow',
   parameters: {
     layout: 'fullscreen',
   },
@@ -123,7 +123,7 @@ export const FlowStates: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Close confirmation' }));
     await expect(eventLog).toHaveTextContent('Closed disabled-action');
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const DefaultConfirm: Story = {

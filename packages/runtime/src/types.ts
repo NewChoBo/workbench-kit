@@ -1,28 +1,10 @@
-export type RuntimeChatMessageSource = 'assistant' | 'user';
+import type { ChatMessage, ChatMessageSource, WorkspacePatchEvent, WorkspacePatchSource } from '@workbench-kit/contracts';
+
+export type RuntimeChatMessageSource = ChatMessageSource;
 export type RuntimeStatus = 'cancelled' | 'error' | 'idle' | 'running';
-export type RuntimeWorkspacePatchSource = 'assistant' | 'user';
-
-export interface RuntimeChatMessage {
-  content: string;
-  createdAt?: string;
-  id: string;
-  label?: string;
-  source: RuntimeChatMessageSource;
-}
-
-export type RuntimeWorkspacePatch =
-  | {
-      content: string;
-      mimeType?: string;
-      path: string;
-      source?: RuntimeWorkspacePatchSource;
-      type: 'write-file';
-      updatedAt?: string;
-    }
-  | {
-      path: string;
-      type: 'delete-file';
-    };
+export type RuntimeWorkspacePatchSource = WorkspacePatchSource;
+export type RuntimeWorkspacePatch = WorkspacePatchEvent;
+export type RuntimeChatMessage = ChatMessage;
 
 export type WorkbenchRuntimeEvent =
   | {

@@ -18,12 +18,20 @@ import { WorkspaceDraftsProvider } from './workspace/WorkspaceDraftsContext';
 const DEFAULT_THEME: WorkbenchTheme = 'dark';
 const DEFAULT_ACTIVITY_ID = 'explorer';
 
+/**
+ * Stable host context passed to `WorkbenchStandaloneShell` render and event callbacks.
+ * See `docs/workbench/standalone-host.md` for the public contract.
+ */
 export interface WorkbenchStandaloneShellContext<
   TActivityId extends string = string,
   TTheme extends WorkbenchTheme = WorkbenchTheme,
 > {
   activityId: TActivityId;
   commandContext: WorkbenchShellCommandContext<TActivityId>;
+  isPrimarySidebarVisible: boolean;
+  isSettingsOpen: boolean;
+  primarySidebarSizePercent: number;
+  theme: TTheme;
   showActivity: (activityId: TActivityId) => void;
   activateActivity: (activityId: TActivityId) => void;
   setTheme: (theme: TTheme) => void;
@@ -37,6 +45,10 @@ export interface WorkbenchStandaloneShellContext<
   setSettingsSearchValue: (settingsSearchValue: string) => void;
 }
 
+/**
+ * Props for the standalone workbench chrome host. Supply `bootstrap` plus render
+ * callbacks; the shell manages activity, theme, sidebar, and settings visibility.
+ */
 export interface WorkbenchStandaloneShellProps<
   TActivityId extends string = string,
   TTheme extends WorkbenchTheme = WorkbenchTheme,
@@ -187,6 +199,10 @@ export function WorkbenchStandaloneShell<
       showActivity: shell.showActivity,
       togglePrimarySidebar: shell.togglePrimarySidebar,
     },
+    isPrimarySidebarVisible,
+    isSettingsOpen,
+    primarySidebarSizePercent,
+    theme,
     showActivity,
     activateActivity,
     setTheme: shell.setTheme,
@@ -202,7 +218,14 @@ export function WorkbenchStandaloneShell<
 
   const context = useMemo(
     () => createContext({ activityId: activeActivityId, shell }),
-    [shell, activeActivityId, isPrimarySidebarVisible],
+    [
+      shell,
+      activeActivityId,
+      isPrimarySidebarVisible,
+      isSettingsOpen,
+      primarySidebarSizePercent,
+      theme,
+    ],
   );
 
   const statusSections = useMemo(

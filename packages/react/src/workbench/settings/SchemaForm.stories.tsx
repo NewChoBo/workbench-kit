@@ -15,7 +15,7 @@ import {
 import type { WorkbenchSettingsCategory } from './types';
 
 const meta = {
-  title: 'React/Workbench/SchemaForm',
+  title: 'React/Workbench/Settings/SchemaForm',
   parameters: {
     layout: 'fullscreen',
   },
@@ -179,7 +179,8 @@ export const EditableSettings: Story = {
     await expect(canvas.getByRole('button', { name: 'Save' })).toBeDisabled();
 
     await userEvent.type(displayName, 'Workbench');
-    await userEvent.selectOptions(canvas.getByRole('combobox', { name: 'Density' }), 'compact');
+    await userEvent.click(canvas.getByRole('combobox', { name: 'Density' }));
+    await userEvent.click(canvas.getByRole('option', { name: 'Compact' }));
     await userEvent.clear(canvas.getByRole('spinbutton', { name: 'Maximum recent items' }));
     await userEvent.type(canvas.getByRole('spinbutton', { name: 'Maximum recent items' }), '8');
     await userEvent.click(canvas.getByRole('checkbox', { name: 'Confirm before side effects' }));
@@ -188,7 +189,7 @@ export const EditableSettings: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Save' }));
     await expect(eventLog).toHaveTextContent('Submitted Workbench');
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const ReadOnlyForm: Story = {

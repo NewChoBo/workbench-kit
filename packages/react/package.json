@@ -14,7 +14,10 @@
     "./workbench/chat": "./src/workbench/chat/index.ts",
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",
+    "./workbench/demo": "./src/workbench/demo/index.ts",
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
+    "./json-config": "./src/json-config/index.ts",
+    "./json-widget": "./src/json-widget/index.ts",
     "./styles.css": "./src/styles.css"
   },
   "files": [
@@ -25,11 +28,14 @@
     "!src/**/*.stories.tsx"
   ],
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
     "@workbench-kit/core": "workspace:*",
     "@workbench-kit/adapters": "workspace:*",
     "@workbench-kit/contracts": "workspace:*",
+    "@workbench-kit/json-widget": "workspace:*",
     "@workbench-kit/runtime": "workspace:*",
     "@workbench-kit/services": "workspace:*",
+    "@workbench-kit/vscode-extension": "workspace:*",
     "@workbench-kit/tokens": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
     "@vscode/codicons": "^0.0.45"

@@ -14,10 +14,13 @@
 - Storybook baseline 플레이 플로우 태깅이 존재:
   - `WorkspaceExplorer/CreateAndRenameFlow`
   - `WorkspaceSearchPanel/ResultMenuFlow`
+  - `WorkspaceSearchPanel/EmptySearchStateFlow`
   - `WorkspaceEditorPanel/OpenTabCoordinationFlow`
   - `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`
+  - `WorkspaceExplorer/FolderDeleteFlow`
   - `ChatPanel/CancelRuntimeFlow`
-- `pnpm test:storybook-play:required` 실행에서 5개 required suite 중 핵심 flow 통과 이력 존재.
+  - `ChatPanel/ErrorTransportFlow`
+- `pnpm test:storybook-play:required` 실행에서 baseline 9개 required suite 중 핵심 flow 통과 이력 존재.
 - 현재 shell 레이아웃은 `packages/react/src/workbench/WorkbenchShell.tsx`에서 추출/공개됨.
 - services + host lane는 독립 패키지로 존재.
 
@@ -47,7 +50,7 @@
   - `Workbench.stories.tsx`는 fixture/play 역할로 축소
 - 성공 기준:
   - `@workbench-kit/react` typecheck 통과
-  - baseline 5개 플레이 flow 재현
+- baseline 9개 플레이 flow 재현
 
 ### Track B — Standalone 런치 하드닝 (동시 병행 가능)
 
@@ -76,7 +79,7 @@
 
 ### 단계 1 — 기준 고정 (오늘/1일)
 
-- UI baseline 5개 시나리오를 변경 불가 기준으로 고정
+- UI baseline 9개 시나리오를 변경 불가 기준으로 고정
 - 스토리에서 수행되는 조립/오케스트레이션과 패키지 경계 분리 규칙 문서화
 
 ### 단계 2 — Track A 실행 (1~2일)
@@ -115,14 +118,15 @@
 ## 7) 브랜치/운영 원칙 (권장)
 
 - `feature/codex/standalone-app-launch-hardening` 또는 파생:
-  - Track A/B 병행 PR
+- `ChatPanel/ErrorTransportFlow`를 포함해 baseline 9개 플로우를 재현하는 것이 이번 사이클의 핵심이다.
+- Track A/B 병행 PR
 - `feature/codex/vscode-extension-wrapper`:
   - Track C는 다음 사이클로 이월
 - `vscode-extension` 코드 변경은 현재 사이클에서 지양, 문서와 상태만 동기화
 
 ## 8) 현재 통합 로직 소유권 정리(근거 기반 분해)
 
-`Workbench.stories.tsx`의 `IntegratedWorkbenchShell` 안에서 현재 수행되는 오케스트레이션은 다음 5개 범주로 분해할 수 있습니다.
+`Workbench.stories.tsx`의 `IntegratedWorkbenchShell` 안에서 현재 수행되는 오케스트레이션은 다음 5개 범주(상태/워크스페이스 변경/저장/채팅·패치/코멘트·오버레이) + 실패격리 1개로 분해할 수 있습니다.
 
 - 데이터/상태 소유(현재 스토리 내부): `useVirtualWorkspace`, `useWorkbenchShellState`, 로컬 state(메뉴/모달/입력/상태바 라벨)
 - 워크스페이스 변경(현재 스토리 내부):
@@ -135,6 +139,7 @@
 - 채팅/패치 경로(현재 스토리 내부):
   - `WorkbenchChatService` 생성/구독
   - `workspacePatchService.applyPatch` + 패치 완료 후 open/select 로직
+  - `sendMessage` 실패/예외 경로를 통한 `ErrorTransportFlow` 회귀 검증
 - 코멘트/오버레이(현재 스토리 내부):
   - ContextMenu/ConfirmDialog/SettingsModal 표시 및 종료
 
@@ -156,5 +161,5 @@
 - Track A에서 정리한 `WorkbenchShell` bootstrap 계약이 고정된 뒤에 wrapper가 그 계약을 소비하도록 설계
 - 아래 3개를 한 번에 충족할 경우에만 Track C 시작:
   1. 엔트리point에서 사이드이펙트 분리 규칙(확인/알림/영속성/오케스트레이션)이 타입/문서로 고정
-  2. baseline 5개 시나리오가 refactor 후에도 변경 없이 실행
+  2. baseline 9개 시나리오가 refactor 후에도 변경 없이 실행
   3. host runtime 테스트에서 dispose/구독/예외 격리 회귀가 붙음

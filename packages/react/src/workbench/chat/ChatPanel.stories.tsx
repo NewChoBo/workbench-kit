@@ -2,18 +2,27 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
+  createChatTransportFromRuntime,
+  createWorkspaceFileRepository,
+} from '@workbench-kit/adapters';
+import {
   createMockWorkbenchRuntime,
+  type MockWorkbenchRuntime,
   type MockRuntimeResponsePlan,
   type RuntimeStatus,
 } from '@workbench-kit/runtime';
-import { createChatTransportFromRuntime } from '@workbench-kit/adapters';
-import { WorkbenchChatService } from '@workbench-kit/services';
-import type { ChatStreamEvent, WorkspacePatchEvent } from '@workbench-kit/contracts';
+import type {
+  ChatTransport,
+  ChatStreamEvent,
+  WorkspacePatchApplyResult,
+  WorkspacePatchEvent,
+} from '@workbench-kit/contracts';
+import { createWorkbenchExtensionRuntimeFromContributions } from '@workbench-kit/vscode-extension';
 import { ChatPanel } from './ChatPanel';
 import type { ChatMessage } from './types';
 
 const meta = {
-  title: 'React/Workbench/ChatPanel',
+  title: 'React/Workbench/Chat/ChatPanel',
   parameters: {
     layout: 'fullscreen',
   },
@@ -26,6 +35,7 @@ type Story = StoryObj<typeof meta>;
 interface ChatRuntimeHarnessProps {
   response: MockRuntimeResponsePlan;
   title?: string;
+  chatTransportFactory?: (runtime: MockWorkbenchRuntime) => ChatTransport;
 }
 
 function runtimeStatusLabel(status: RuntimeStatus) {
@@ -49,7 +59,11 @@ function updateMessages(currentMessages: ChatMessage[], message: ChatMessage): C
   return nextMessages;
 }
 
-function ChatRuntimeHarness({ response, title = 'Runtime Chat' }: ChatRuntimeHarnessProps) {
+function ChatRuntimeHarness({
+  response,
+  title = 'Runtime Chat',
+  chatTransportFactory,
+}: ChatRuntimeHarnessProps) {
   const runtime = useMemo(
     () =>
       createMockWorkbenchRuntime({
@@ -70,19 +84,45 @@ function ChatRuntimeHarness({ response, title = 'Runtime Chat' }: ChatRuntimeHar
   const [status, setStatus] = useState<RuntimeStatus>(() => runtime.getStatus());
   const [workspacePatchLog, setWorkspacePatchLog] = useState<string[]>([]);
   const chatRuntimeTransport = useMemo(
-    () => createChatTransportFromRuntime({ runtime }),
-    [runtime],
-  );
-  const chatService = useMemo(
     () =>
-      new WorkbenchChatService({
-        onPatch: (patch) => {
-          setWorkspacePatchLog((currentLog) => [...currentLog, workspacePatchLabel(patch)]);
-        },
-        transport: chatRuntimeTransport,
-      }),
-    [chatRuntimeTransport],
+      chatTransportFactory
+        ? chatTransportFactory(runtime)
+        : createChatTransportFromRuntime({
+            runtime,
+          }),
+    [runtime, chatTransportFactory],
   );
+  const repository = useMemo(
+    () =>
+      createWorkspaceFileRepository({
+        files: [],
+        createFile: () => undefined,
+        deleteFile: () => undefined,
+        saveFile: () => undefined,
+      }),
+    [],
+  );
+  const extensionRuntime = useMemo(
+    () =>
+      createWorkbenchExtensionRuntimeFromContributions({
+        commandContributions: [],
+        chatTransport: chatRuntimeTransport,
+        repository,
+        onChatPatch: (_patch: WorkspacePatchEvent, result: WorkspacePatchApplyResult) => {
+          if (result.type === 'patch:failed') {
+            setWorkspacePatchLog((currentLog) => [
+              ...currentLog,
+              `Patch failed: ${result.message}`,
+            ]);
+            return;
+          }
+
+          setWorkspacePatchLog((currentLog) => [...currentLog, workspacePatchLabel(result.patch)]);
+        },
+      }),
+    [chatRuntimeTransport, repository],
+  );
+  const chatService = extensionRuntime.services.chatService;
 
   useEffect(() => {
     const unsubscribe = chatService.subscribe((event: ChatStreamEvent) => {
@@ -97,10 +137,10 @@ function ChatRuntimeHarness({ response, title = 'Runtime Chat' }: ChatRuntimeHar
 
     return () => {
       unsubscribe();
-      chatService.dispose();
+      extensionRuntime.dispose();
       runtime.dispose();
     };
-  }, [chatService, runtime]);
+  }, [chatService, runtime, extensionRuntime]);
 
   return (
     <div
@@ -121,9 +161,15 @@ function ChatRuntimeHarness({ response, title = 'Runtime Chat' }: ChatRuntimeHar
         title={title}
         value={draft}
         onCancel={() => chatService.cancel()}
-        onSubmit={(message) => {
+        onSubmit={async (message) => {
           setDraft('');
-          chatService.sendMessage(message);
+          try {
+            await chatService.sendMessage(message);
+          } catch {
+            // transport/service failures are expected in baseline failure-path scenarios
+          } finally {
+            setStatus(chatService.getSnapshot().status);
+          }
         }}
         onValueChange={setDraft}
       />
@@ -208,7 +254,7 @@ export const CancelRuntimeFlow: Story = {
     await expect(canvas.queryByText(/Second chunk should not render/)).toBeNull();
     await expect(canvas.getByRole('button', { name: 'Send message' })).toBeDisabled();
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const WorkspacePatchRuntimeFlow: Story = {
@@ -241,4 +287,38 @@ export const WorkspacePatchRuntimeFlow: Story = {
     );
     await expect(canvas.getByLabelText('Runtime event log')).toHaveTextContent('Runtime idle');
   },
+};
+
+export const ErrorTransportFlow: Story = {
+  render: () => (
+    <ChatRuntimeHarness
+      response={{
+        chunks: ['Runtime should not start'],
+        intervalMs: 80,
+      }}
+      title="Error Transport Chat"
+      chatTransportFactory={(runtime) => {
+        const baseTransport = createChatTransportFromRuntime({ runtime });
+
+        return {
+          ...baseTransport,
+          sendMessage: async () => {
+            throw new Error('Runtime transport unavailable');
+          },
+        };
+      }}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const composer = canvas.getByPlaceholderText('Ask the mock runtime');
+
+    await userEvent.type(composer, 'Trigger transport failure');
+    await userEvent.click(canvas.getByRole('button', { name: 'Send message' }));
+
+    await waitFor(() =>
+      expect(canvas.getByLabelText('Runtime event log')).toHaveTextContent('Runtime error'),
+    );
+  },
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };

@@ -6,6 +6,7 @@
   --color-primary-side-bar-bg-75: rgba(17, 23, 32, 0.75);
   --color-surface: #161b22;
   --color-surface-hover: #21262d;
+  --color-surface-elevated: #21262d;
   --color-border: #30363d;
   --color-text: #f0f6fc;
   --color-text-muted: #a9b4c0;
@@ -44,6 +45,7 @@
   --color-primary-side-bar-bg-75: rgba(246, 248, 250, 0.75);
   --color-surface: #f6f8fa;
   --color-surface-hover: #eaeef2;
+  --color-surface-elevated: #ffffff;
   --color-border: #d0d7de;
   --color-text: #1f2328;
   --color-text-muted: #57606a;
@@ -81,4 +83,22 @@
   --font-size-sm: 0.8125rem;
   --font-size-base: 0.875rem;
   --workbench-header-height: 35px;
+  --shadow-md: 0 8px 24px rgb(0 0 0 / 20%);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 24%);
+}
+
+:root,
+[data-theme='dark'] {
+  --scrollbar-size: 10px;
+  --scrollbar-thumb-inset: 2px;
+  --scrollbar-thumb: #30363d66;
+  --scrollbar-thumb-hover: #484f5888;
+  --scrollbar-thumb-active: #7d8590aa;
+  --scrollbar-track: transparent;
+}
+
+[data-theme='light'] {
+  --scrollbar-thumb: #d0d7de66;
+  --scrollbar-thumb-hover: #9198a188;
+  --scrollbar-thumb-active: #656d76aa;
 }

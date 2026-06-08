@@ -44,6 +44,66 @@ export function FilterBarRow({ className, ...props }: FilterBarRowProps) {
   return <div className={cx('ui-filter-bar__row', className)} {...props} />;
 }
 
+export interface FilterChipProps extends Omit<ComponentPropsWithRef<'button'>, 'children'> {
+  count?: number | undefined;
+  label: ReactNode;
+  onDismiss?: (() => void) | undefined;
+}
+
+export function FilterChip({
+  className,
+  count,
+  label,
+  onDismiss,
+  type = 'button',
+  ...props
+}: FilterChipProps) {
+  return (
+    <button className={cx('ui-filter-chip', className)} type={type} {...props}>
+      <span className="ui-filter-chip__label">{label}</span>
+      {count !== undefined ? <span className="ui-filter-chip__count">{count}</span> : null}
+      {onDismiss ? (
+        <span
+          aria-hidden={true}
+          className="ui-filter-chip__dismiss"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDismiss();
+          }}
+        >
+          <i className="codicon codicon-close" />
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+export interface FilterBarActiveChipsProps extends ComponentPropsWithRef<'div'> {
+  clearAllLabel?: string | undefined;
+  onClearAll?: (() => void) | undefined;
+}
+
+export function FilterBarActiveChips({
+  children,
+  className,
+  clearAllLabel = 'Clear all',
+  onClearAll,
+  ...props
+}: FilterBarActiveChipsProps) {
+  return (
+    <FilterBarRow className={cx('ui-filter-bar__active-chips', className)} {...props}>
+      <div className="ui-filter-bar__chip-list" role="list">
+        {children}
+      </div>
+      {onClearAll ? (
+        <button className="ui-filter-bar__clear-all" type="button" onClick={onClearAll}>
+          {clearAllLabel}
+        </button>
+      ) : null}
+    </FilterBarRow>
+  );
+}
+
 export interface HelpTextProps extends ComponentPropsWithRef<'div'> {
   tone?: 'error' | 'normal';
 }

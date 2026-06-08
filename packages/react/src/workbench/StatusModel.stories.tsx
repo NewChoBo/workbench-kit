@@ -6,7 +6,7 @@ import { StatusBar, type StatusBarSectionModel } from './StatusBar';
 import { getWorkbenchStatusLabel, type WorkbenchStatus } from './status';
 
 const meta = {
-  title: 'React/Workbench/StatusModel',
+  title: 'React/Workbench/Flows/StatusModel',
   parameters: {
     layout: 'fullscreen',
   },

@@ -56,9 +56,20 @@ export type {
   SegmentedControlOption,
   SegmentedControlProps,
 } from './WorkbenchEditor';
-export { FilterBar, HelpText, Panel, PanelBody, PanelFooter, PanelHeader } from '../layout/Panel';
+export {
+  FilterBar,
+  FilterBarActiveChips,
+  FilterChip,
+  HelpText,
+  Panel,
+  PanelBody,
+  PanelFooter,
+  PanelHeader,
+} from '../layout/Panel';
 export type {
+  FilterBarActiveChipsProps,
   FilterBarProps,
+  FilterChipProps,
   HelpTextProps,
   PanelBodyProps,
   PanelFooterProps,

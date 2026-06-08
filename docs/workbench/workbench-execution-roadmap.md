@@ -6,13 +6,25 @@
 
 - `packages/react/src/workbench/Workbench.stories.tsx`의 `IntegratedWorkbenchShell`에서
   Explorer/Search/Editor/Chat/Settings/Status를 한 화면으로 조립해 렌더.
-- 스토리북 baseline play 테스트도 동작 중이며, 핵심 흐름이 검증됨.
+- 스토리북 baseline play 테스트도 동작 중이며, 필수 9개는 `storybook-play-required`로 고정 게이트되고 추가 coverage는 `storybook-play-baseline`로 보관됩니다.
 - `WorkbenchShell`(레이아웃 컴포넌트)는 `packages/react/src/workbench/WorkbenchShell.tsx`로
   별도 추출되어 `packages/react/src/workbench/index.ts`에서 export됨.
 
 즉, “UI 기능 자체”는 거의 구현되었고, 남은 과제는 **앱 조립 경계(런타임 바인딩) 정리**입니다.
 
 ## 2) 현재 증거 기반 상태
+
+현재 필수 baseline 플로우(9개):
+
+- `WorkspaceExplorer/CreateAndRenameFlow`
+- `WorkspaceSearchPanel/ResultMenuFlow`
+- `WorkspaceSearchPanel/EmptySearchStateFlow`
+- `WorkspaceExplorer/FolderDeleteFlow`
+- `WorkspaceEditorPanel/OpenTabCoordinationFlow`
+- `WorkspaceEditorPanel/DeleteOpenTabRecoveryFlow`
+- `ChatPanel/CancelRuntimeFlow`
+- `ChatPanel/ErrorTransportFlow`
+- `WorkspaceSearchPanel/KeyboardFlow`
 
 ### 코드 증거
 
@@ -25,7 +37,7 @@
 ### 타입/테스트 증거
 
 - `WorkbenchShell` 컴포넌트 단위 테스트: `packages/react/src/workbench/WorkbenchShell.test.tsx`
-- baseline Playwright 회귀: `pnpm test:storybook-play:required`
+- baseline Playwright 회귀: `pnpm test:storybook-play:required` (`storybook-play-required` 9개 대상)
 - host/runtime 기본 타입/테스트:
   - `pnpm --filter @workbench-kit/vscode-host typecheck, test`
   - `pnpm --filter @workbench-kit/services typecheck`
@@ -63,7 +75,7 @@
 - 게이트:
   - `pnpm --filter @workbench-kit/vscode-host test`
   - `pnpm --filter @workbench-kit/services typecheck`
-  - baseline 시나리오 회귀
+- baseline 시나리오 회귀 (9개)
 
 ## Lane C: `vscode-extension` 래퍼 패키지 (차기)
 
@@ -111,6 +123,6 @@
 ## 6) 즉시 승인 기준(현재 사이클 종료 기준)
 
 - `WorkbenchShell`은 배포 가능한 shell 레이아웃 구성요소로 공개 유지
-- baseline story play 흐름(탐색기/검색/에디터/채팅/셋팅) 동작 유지
+- baseline story play 흐름(탐색기/검색/에디터/채팅/셋팅) 9개 동작 유지
 - extension 관련 코어 변경은 보류, API와 문서 이월 계획은 명시
 - lane별 게이트를 만족하는 상태에서 다음 브랜치로 단계 이동

@@ -4,7 +4,17 @@ import {
   createWindowMessageTransport,
   type HostTransport,
 } from '@workbench-kit/vscode-host';
-import type { CommandRegistry } from '@workbench-kit/core';
+import {
+  type CommandDefinition,
+  type CommandConflictPolicy,
+  type CommandDefinitionConflict,
+  type CommandContributionInput,
+  createCommandRegistry,
+  assertNoCommandDefinitionConflicts,
+  findCommandDefinitionConflicts,
+  type CommandRegistry,
+  mergeCommandContributions,
+} from '@workbench-kit/core';
 import type {
   ChatStreamEvent,
   ChatTransport,
@@ -44,6 +54,35 @@ export interface WorkbenchExtensionRuntimeOptions<TContext = void> {
   createChatService?: (options: WorkbenchChatServiceOptions) => WorkbenchChatService;
   createPatchService?: (options: WorkspacePatchServiceOptions) => WorkspacePatchService;
   createSaveService?: (options: WorkspaceSaveServiceOptions) => WorkspaceSaveService;
+}
+
+export interface WorkbenchExtensionRuntimeFromContributionsOptions<TContext = void> extends Omit<
+  WorkbenchExtensionRuntimeOptions<TContext>,
+  'commandRegistry'
+> {
+  commandContributions?: CommandContributionInput<TContext>[];
+  commandConflictPolicy?: CommandConflictPolicy;
+  onCommandConflict?: (conflicts: readonly CommandDefinitionConflict<TContext>[]) => void;
+}
+
+export interface WorkbenchExtensionRuntimeFromContributionsAutoOptions<
+  TContext = void,
+> extends Omit<
+  WorkbenchExtensionRuntimeFromContributionsOptions<TContext>,
+  'commandConflictPolicy'
+> {
+  commandConflictPolicy?: 'auto';
+}
+
+export interface CommandContributionConflictPolicy {
+  shouldUseHardFail: boolean;
+  conflictPolicy: CommandConflictPolicy;
+}
+
+export interface CommandContributionPreflightResult<TContext = void> {
+  commands: readonly CommandDefinition<TContext>[];
+  commandRegistry: CommandRegistry<TContext>;
+  commandConflicts: readonly CommandDefinitionConflict<TContext>[];
 }
 
 export interface WorkbenchExtensionRuntime {
@@ -137,18 +176,15 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
   )({
     transport: options.chatTransport ?? asNoopTransport(),
     onPatch: (patch) => {
-      return patchService.applyPatch(patch).then((result) => {
-        const callbackResult = Promise.resolve(
+      return patchService.applyPatch(patch).then((result) =>
+        callOptionalAsync(() =>
           options.onChatPatch ? options.onChatPatch(patch, result) : undefined,
-        );
-
-        return callbackResult.then(() => {
+        ).then(() => {
           if (options.onPatchResult) {
             return callOptionalAsync(() => options.onPatchResult?.(patch, result, 'chat'));
           }
-          return Promise.resolve();
-        });
-      });
+        }),
+      );
     },
   });
 
@@ -174,5 +210,65 @@ export function createWorkbenchExtensionRuntime<TContext = void>(
       patchService,
       saveService,
     },
+  };
+}
+
+export function createWorkbenchExtensionRuntimeFromContributions<TContext = void>(
+  options: WorkbenchExtensionRuntimeFromContributionsOptions<TContext>,
+): WorkbenchExtensionRuntime {
+  const {
+    commandContributions = [],
+    commandConflictPolicy = 'last-write-wins',
+    ...runtimeOptions
+  } = options;
+  const preflight = preflightCommandContributionConflict<TContext>(commandContributions);
+  const conflicts = preflight.commandConflicts;
+
+  if (conflicts.length > 0) {
+    runtimeOptions.onCommandConflict?.(conflicts);
+    if (commandConflictPolicy === 'hard-fail') {
+      assertNoCommandDefinitionConflicts(preflight.commands);
+    }
+  }
+
+  return createWorkbenchExtensionRuntime<TContext>({
+    ...runtimeOptions,
+    commandRegistry: preflight.commandRegistry,
+  });
+}
+
+export function createWorkbenchExtensionRuntimeFromContributionsAuto<TContext = void>(
+  options: WorkbenchExtensionRuntimeFromContributionsAutoOptions<TContext>,
+): WorkbenchExtensionRuntime {
+  const { commandContributions = [], ...runtimeOptions } = options;
+  const { conflictPolicy } = resolveCommandContributionConflictPolicy(commandContributions);
+
+  return createWorkbenchExtensionRuntimeFromContributions<TContext>({
+    ...runtimeOptions,
+    commandContributions,
+    commandConflictPolicy: conflictPolicy,
+  });
+}
+
+export function preflightCommandContributionConflict<TContext = void>(
+  commandContributions: CommandContributionInput<TContext>[],
+): CommandContributionPreflightResult<TContext> {
+  const mergedContributions = mergeCommandContributions<TContext>(...commandContributions);
+  const commandConflicts = findCommandDefinitionConflicts<TContext>(mergedContributions.commands);
+  const commandRegistry = createCommandRegistry<TContext>(mergedContributions.commands);
+
+  return { commandRegistry, commandConflicts, commands: mergedContributions.commands };
+}
+
+export function resolveCommandContributionConflictPolicy<TContext = void>(
+  commandContributions: CommandContributionInput<TContext>[],
+): CommandContributionConflictPolicy {
+  const commandConflicts =
+    preflightCommandContributionConflict<TContext>(commandContributions).commandConflicts;
+  const shouldUseHardFail = commandConflicts.length === 0;
+
+  return {
+    shouldUseHardFail,
+    conflictPolicy: shouldUseHardFail ? 'hard-fail' : 'last-write-wins',
   };
 }
