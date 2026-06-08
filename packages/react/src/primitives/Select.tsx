@@ -1,8 +1,10 @@
 import {
   Children,
   isValidElement,
+  useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -11,6 +13,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import type { ControlWidth } from './TextInput';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
@@ -52,6 +55,51 @@ function getEnabledOptionIndex(options: ParsedOption[], startIndex: number, dire
   return -1;
 }
 
+type ListboxPlacement = 'bottom' | 'top';
+
+interface ListboxPosition {
+  bottom?: number;
+  left: number;
+  maxHeight: number;
+  placement: ListboxPlacement;
+  top?: number;
+  width: number;
+}
+
+const LISTBOX_MAX_HEIGHT = 240;
+const LISTBOX_VIEWPORT_PADDING = 8;
+
+function measureListboxPosition(container: HTMLElement): ListboxPosition | null {
+  const trigger = container.querySelector<HTMLElement>('.ui-select__trigger');
+  if (!trigger) return null;
+
+  const rect = trigger.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom - LISTBOX_VIEWPORT_PADDING;
+  const spaceAbove = rect.top - LISTBOX_VIEWPORT_PADDING;
+  const placement: ListboxPlacement =
+    spaceBelow >= 120 || spaceBelow >= spaceAbove ? 'bottom' : 'top';
+  const availableSpace = placement === 'bottom' ? spaceBelow : spaceAbove;
+  const maxHeight = Math.max(80, Math.min(LISTBOX_MAX_HEIGHT, availableSpace));
+
+  if (placement === 'bottom') {
+    return {
+      left: rect.left,
+      width: rect.width,
+      top: rect.bottom - 1,
+      maxHeight,
+      placement,
+    };
+  }
+
+  return {
+    left: rect.left,
+    width: rect.width,
+    bottom: window.innerHeight - rect.top + 1,
+    maxHeight,
+    placement,
+  };
+}
+
 export function Select({
   className,
   controlWidth = 'default',
@@ -70,8 +118,10 @@ export function Select({
   const options = parseOptions(children);
   const listboxId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
+  const listboxRef = useRef<HTMLUListElement>(null);
   const nativeSelectRef = useRef<HTMLSelectElement>(null);
   const [open, setOpen] = useState(false);
+  const [listboxPosition, setListboxPosition] = useState<ListboxPosition | null>(null);
   const [uncontrolledValue, setUncontrolledValue] = useState(() =>
     String(defaultValue ?? options.find((option) => !option.disabled)?.value ?? ''),
   );
@@ -121,11 +171,34 @@ export function Select({
     closeListbox();
   };
 
+  const updateListboxPosition = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    setListboxPosition(measureListboxPosition(container));
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setListboxPosition(null);
+      return;
+    }
+
+    updateListboxPosition();
+    window.addEventListener('resize', updateListboxPosition);
+    window.addEventListener('scroll', updateListboxPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateListboxPosition);
+      window.removeEventListener('scroll', updateListboxPosition, true);
+    };
+  }, [open, updateListboxPosition]);
+
   useEffect(() => {
     if (!open) return;
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (containerRef.current?.contains(event.target as Node)) return;
+      const target = event.target as Node;
+      if (containerRef.current?.contains(target)) return;
+      if (listboxRef.current?.contains(target)) return;
       closeListbox();
     };
 
@@ -183,10 +256,58 @@ export function Select({
     setHighlightedIndex(getEnabledOptionIndex(options, baseIndex, direction));
   };
 
+  const listbox =
+    open && listboxPosition ? (
+      <ul
+        ref={listboxRef}
+        className={cx(
+          'ui-select__listbox',
+          'ui-select__listbox--floating',
+          listboxPosition.placement === 'top' && 'ui-select__listbox--placement-top',
+        )}
+        id={listboxId}
+        role="listbox"
+        style={{
+          position: 'fixed',
+          left: listboxPosition.left,
+          width: listboxPosition.width,
+          maxHeight: listboxPosition.maxHeight,
+          ...(listboxPosition.placement === 'bottom'
+            ? { top: listboxPosition.top }
+            : { bottom: listboxPosition.bottom }),
+        }}
+      >
+        {options.map((option, index) => {
+          const isSelected = option.value === currentValue;
+          const isHighlighted = index === highlightedIndex;
+
+          return (
+            <li
+              key={option.value}
+              aria-disabled={option.disabled ? 'true' : undefined}
+              aria-selected={isSelected}
+              className={cx(
+                'ui-select__option',
+                isSelected && 'ui-select__option--selected',
+                isHighlighted && 'ui-select__option--highlighted',
+              )}
+              role="option"
+              onMouseEnter={() => !option.disabled && setHighlightedIndex(index)}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => selectOption(option)}
+            >
+              {option.label}
+            </li>
+          );
+        })}
+      </ul>
+    ) : null;
+
   return (
     <div
       ref={containerRef}
       className={cx('ui-select', className)}
+      data-listbox-floating="true"
       data-open={open ? 'true' : 'false'}
       data-width={controlWidth}
     >
@@ -211,33 +332,7 @@ export function Select({
         </span>
       </button>
 
-      {open ? (
-        <ul className="ui-select__listbox" id={listboxId} role="listbox">
-          {options.map((option, index) => {
-            const isSelected = option.value === currentValue;
-            const isHighlighted = index === highlightedIndex;
-
-            return (
-              <li
-                key={option.value}
-                aria-disabled={option.disabled ? 'true' : undefined}
-                aria-selected={isSelected}
-                className={cx(
-                  'ui-select__option',
-                  isSelected && 'ui-select__option--selected',
-                  isHighlighted && 'ui-select__option--highlighted',
-                )}
-                role="option"
-                onMouseEnter={() => !option.disabled && setHighlightedIndex(index)}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => selectOption(option)}
-              >
-                {option.label}
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
+      {listbox ? createPortal(listbox, document.body) : null}
 
       <select
         ref={nativeSelectRef}
