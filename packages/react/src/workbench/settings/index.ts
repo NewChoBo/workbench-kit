@@ -8,6 +8,13 @@ export type {
   WorkbenchStructuredDataSchemaPanelLabels,
   WorkbenchStructuredDataSchemaPanelProps,
 } from './StructuredDataSchemaPanel';
+export { WorkbenchStructuredDataSchemaPanelEmbed } from './StructuredDataSchemaPanelEmbed';
+export type { WorkbenchStructuredDataSchemaPanelEmbedProps } from './StructuredDataSchemaPanelEmbed';
+export { WorkbenchStructuredDataSchemaPanelFrame } from './StructuredDataSchemaPanelFrame';
+export type {
+  WorkbenchStructuredDataSchemaPanelFrameHeaderContent,
+  WorkbenchStructuredDataSchemaPanelFrameProps,
+} from './StructuredDataSchemaPanelFrame';
 export {
   WorkbenchStructuredDataForm,
   WorkbenchStructuredDataSchemaFieldInput,

@@ -4,6 +4,106 @@
   gap: 0;
 }
 
+.ui-workbench-structured-data-schema-panel-embed {
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  align-content: stretch;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.ui-workbench-structured-data-schema-panel-frame {
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  background: var(--color-bg);
+}
+
+.ui-workbench-structured-data-schema-panel-frame__header {
+  min-width: 0;
+  min-height: 50px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.ui-workbench-structured-data-schema-panel-frame__eyebrow {
+  display: block;
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.ui-workbench-structured-data-schema-panel-frame__title-group {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ui-workbench-structured-data-schema-panel-frame__icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-subtle);
+  background: var(--color-bg);
+}
+
+.ui-workbench-structured-data-schema-panel-frame__title-group div {
+  min-width: 0;
+}
+
+.ui-workbench-structured-data-schema-panel-frame__title-group h2 {
+  margin: 1px 0 0;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-workbench-structured-data-schema-panel-frame__title-group p {
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--color-text-subtle);
+  font-size: 11px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-workbench-structured-data-schema-panel-frame__meta {
+  min-width: max-content;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+}
+
 .ui-workbench-sectioned-panel.ui-workbench-structured-data-schema-panel--fill {
   min-height: 0;
   height: 100%;
