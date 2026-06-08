@@ -1,6 +1,20 @@
-import { Fragment, useRef, useState, type ComponentPropsWithRef, type ReactNode } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentPropsWithRef,
+  type ReactNode,
+} from 'react';
 import { cx } from '../../utils/cx';
 import { WorkbenchNavigationPanel } from './NavigationPanel';
+import {
+  resolveWorkbenchSectionedPanelActiveAnchorId,
+  resolveWorkbenchSectionedPanelScrollTop,
+} from './sectionedPanelScrollSpy';
+
+const SCROLL_SPY_OFFSET = 24;
+const PROGRAMMATIC_SCROLL_SETTLE_MS = 400;
 
 export interface WorkbenchSectionedPanelItem {
   anchorId: string;
@@ -25,9 +39,39 @@ export interface WorkbenchSectionedPanelProps extends Omit<
 }
 
 function findPanelSection(content: HTMLElement, anchorId: string) {
-  return Array.from(content.querySelectorAll<HTMLElement>('[id]')).find(
-    (element) => element.id === anchorId,
+  return (
+    Array.from(content.children).find(
+      (child): child is HTMLElement =>
+        child instanceof HTMLElement && child.id === anchorId,
+    ) ?? null
   );
+}
+
+function readSectionTop(content: HTMLElement, section: HTMLElement) {
+  if (section.parentElement === content) {
+    return section.offsetTop;
+  }
+
+  const containerRect = content.getBoundingClientRect();
+  const sectionRect = section.getBoundingClientRect();
+  return sectionRect.top - containerRect.top + content.scrollTop;
+}
+
+function readSectionPositions(
+  content: HTMLElement,
+  items: readonly WorkbenchSectionedPanelItem[],
+) {
+  return items.flatMap((item) => {
+    const section = findPanelSection(content, item.anchorId);
+    if (!section) return [];
+
+    return [
+      {
+        anchorId: item.anchorId,
+        top: readSectionTop(content, section),
+      },
+    ];
+  });
 }
 
 export function WorkbenchSectionedPanel({
@@ -44,6 +88,10 @@ export function WorkbenchSectionedPanel({
   ...props
 }: WorkbenchSectionedPanelProps) {
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const isProgrammaticScrollRef = useRef(false);
+  const scrollRafRef = useRef<number | null>(null);
+  const programmaticScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
   const [uncontrolledActiveAnchorId, setUncontrolledActiveAnchorId] = useState<string | undefined>(
     defaultActiveAnchorId ?? items[0]?.anchorId,
   );
@@ -64,24 +112,128 @@ export function WorkbenchSectionedPanel({
 
   const updateActiveSection = () => {
     const content = contentRef.current;
-    if (!content) return;
+    if (!content || items.length === 0 || isProgrammaticScrollRef.current) return;
 
-    const contentTop = content.getBoundingClientRect().top;
-    const anchorOffset = contentTop + 18;
-    let nextActive = items[0]?.anchorId;
-
-    for (const item of items) {
-      const section = findPanelSection(content, item.anchorId);
-      if (!section) continue;
-      if (section.getBoundingClientRect().top <= anchorOffset) {
-        nextActive = item.anchorId;
-      } else {
-        break;
-      }
-    }
+    const nextActive = resolveWorkbenchSectionedPanelActiveAnchorId({
+      fallbackAnchorId: items[0]?.anchorId,
+      offset: SCROLL_SPY_OFFSET,
+      scrollHeight: content.scrollHeight,
+      scrollTop: content.scrollTop,
+      sectionPositions: readSectionPositions(content, items),
+      viewportHeight: content.clientHeight,
+    });
 
     setActiveAnchorId(nextActive);
   };
+
+  const scheduleActiveSectionUpdate = () => {
+    if (isProgrammaticScrollRef.current) return;
+
+    if (scrollRafRef.current !== null) {
+      cancelAnimationFrame(scrollRafRef.current);
+    }
+
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      updateActiveSection();
+    });
+  };
+
+  const setupIntersectionObserver = () => {
+    const content = contentRef.current;
+    if (!content || typeof IntersectionObserver === 'undefined') return;
+
+    intersectionObserverRef.current?.disconnect();
+
+    const observer = new IntersectionObserver(
+      () => {
+        scheduleActiveSectionUpdate();
+      },
+      {
+        root: content,
+        rootMargin: `-${SCROLL_SPY_OFFSET}px 0px -55% 0px`,
+        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
+      },
+    );
+
+    for (const item of items) {
+      const section = findPanelSection(content, item.anchorId);
+      if (section) {
+        observer.observe(section);
+      }
+    }
+
+    intersectionObserverRef.current = observer;
+  };
+
+  const scrollToSection = (anchorId: string) => {
+    const content = contentRef.current;
+    if (!content) {
+      setActiveAnchorId(anchorId);
+      return;
+    }
+
+    const section = findPanelSection(content, anchorId);
+    if (!section) {
+      setActiveAnchorId(anchorId);
+      return;
+    }
+
+    const targetTop = resolveWorkbenchSectionedPanelScrollTop({
+      offset: SCROLL_SPY_OFFSET,
+      sectionTop: readSectionTop(content, section),
+    });
+
+    isProgrammaticScrollRef.current = true;
+    setActiveAnchorId(anchorId);
+    content.scrollTo({ top: targetTop });
+
+    if (programmaticScrollTimerRef.current) {
+      clearTimeout(programmaticScrollTimerRef.current);
+    }
+
+    programmaticScrollTimerRef.current = setTimeout(() => {
+      isProgrammaticScrollRef.current = false;
+      updateActiveSection();
+    }, PROGRAMMATIC_SCROLL_SETTLE_MS);
+  };
+
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return undefined;
+
+    scheduleActiveSectionUpdate();
+    setupIntersectionObserver();
+
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => {
+            scheduleActiveSectionUpdate();
+          });
+    resizeObserver?.observe(content);
+
+    return () => {
+      resizeObserver?.disconnect();
+      intersectionObserverRef.current?.disconnect();
+      intersectionObserverRef.current = null;
+    };
+  }, [items]);
+
+  useEffect(
+    () => () => {
+      if (scrollRafRef.current !== null) {
+        cancelAnimationFrame(scrollRafRef.current);
+      }
+
+      if (programmaticScrollTimerRef.current) {
+        clearTimeout(programmaticScrollTimerRef.current);
+      }
+
+      intersectionObserverRef.current?.disconnect();
+    },
+    [],
+  );
 
   return (
     <WorkbenchNavigationPanel
@@ -92,7 +244,7 @@ export function WorkbenchSectionedPanel({
       contentClassName={cx('ui-workbench-sectioned-panel__content', contentClassName)}
       contentProps={{
         ref: contentRef,
-        onScroll: updateActiveSection,
+        onScroll: scheduleActiveSectionUpdate,
       }}
       data-readonly={readOnly ? 'true' : undefined}
       nav={
@@ -109,10 +261,7 @@ export function WorkbenchSectionedPanel({
                   href={`#${item.anchorId}`}
                   onClick={(event) => {
                     event.preventDefault();
-                    setActiveAnchorId(item.anchorId);
-                    const content = contentRef.current;
-                    const section = content ? findPanelSection(content, item.anchorId) : null;
-                    section?.scrollIntoView({ block: 'start' });
+                    scrollToSection(item.anchorId);
                   }}
                 >
                   <span>{item.title}</span>
