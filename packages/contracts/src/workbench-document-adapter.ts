@@ -63,7 +63,8 @@ function ensureFrameNode(
   pageNodes.push(node);
 
   const parentPath = parts.slice(0, -1);
-  const parentId = parentPath.length > 0 ? ensureFrameNode(registry, pageNodes, parentPath) : undefined;
+  const parentId =
+    parentPath.length > 0 ? ensureFrameNode(registry, pageNodes, parentPath) : undefined;
   if (parentId) {
     const parent = registry.get(parentId);
     if (parent) {
@@ -116,7 +117,10 @@ export function workspaceFilesToDocument(
     const parts = folderParts(file.path);
     const folderPartsOnly = parts.slice(0, -1);
     const leafNode = createTextNode(file, file.path);
-    const parentId = folderPartsOnly.length > 0 ? ensureFrameNode(frameRegistry, pageNodes, folderPartsOnly) : undefined;
+    const parentId =
+      folderPartsOnly.length > 0
+        ? ensureFrameNode(frameRegistry, pageNodes, folderPartsOnly)
+        : undefined;
     if (parentId) {
       leafNode.parentId = parentId;
       const parent = frameRegistry.get(parentId);
@@ -165,17 +169,29 @@ export function documentNodesToWorkspaceFiles(
         continue;
       }
 
-      if (node.type === 'frame' || node.type === 'group' || node.type === 'component' || node.type === 'instance') {
+      if (
+        node.type === 'frame' ||
+        node.type === 'group' ||
+        node.type === 'component' ||
+        node.type === 'instance'
+      ) {
         continue;
       }
 
       const textNode = node as WorkbenchDocumentLeafNode;
-      const workspacePath = typeof textNode.metadata?.workspacePath === 'string' ? textNode.metadata.workspacePath : textNode.id;
+      const workspacePath =
+        typeof textNode.metadata?.workspacePath === 'string'
+          ? textNode.metadata.workspacePath
+          : textNode.id;
       files.push({
         content: typeof textNode.content === 'string' ? textNode.content : '',
         path: workspacePath,
-        updatedAt: typeof textNode.metadata?.updatedAt === 'string' ? textNode.metadata.updatedAt : undefined,
-        mimeType: typeof textNode.metadata?.mimeType === 'string' ? textNode.metadata.mimeType : undefined,
+        updatedAt:
+          typeof textNode.metadata?.updatedAt === 'string'
+            ? textNode.metadata.updatedAt
+            : undefined,
+        mimeType:
+          typeof textNode.metadata?.mimeType === 'string' ? textNode.metadata.mimeType : undefined,
         source:
           typeof textNode.metadata?.source === 'string'
             ? (textNode.metadata?.source as WorkspaceFile['source'])

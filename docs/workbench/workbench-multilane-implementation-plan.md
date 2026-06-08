@@ -208,11 +208,13 @@ Explorer/Search/Editor/Chat/Settings/Status까지 화면을 한 번에 구성하
 ### 8.4 즉시 실행 단계(이번 사이클)
 
 #### Phase 1 (D0~D1): 문서 스키마 고정
+
 - `packages/react/src/workbench/schema/*.ts`에 타입 추가
 - `@workbench-kit/react/workbench`에 `WorkbenchDocument` 타입 export
 - 문서 호환성 규칙(`schemaVersion`) 정의
 
 #### Phase 2 (D2~D3): 렌더러 뼈대
+
 - `WorkbenchShell` 내부에 `documentRenderer` 분리
 - `frame/group/text/rectangle/circle` 5개 타입 최소 렌더 구현
 - 기존 Storybook baseline 렌더 경로에 영향 없이 백워드 경로 제공
@@ -223,6 +225,7 @@ Explorer/Search/Editor/Chat/Settings/Status까지 화면을 한 번에 구성하
 - `newchobo-ui-package/packages/react/src/workbench/schema/index.ts`
 
 #### Phase 3 (D4~D5): 편집 액션 파이프라인
+
 - 공통 액션 객체를 만들어 기존 핸들러와 연결
 - chat patch/event 흐름은 `onRuntimePatch`로 전달하고 결과를 patch replay로 반영
 - `onSave`는 전체 문서 저장 또는 patch-only 저장 모드 지원
@@ -245,6 +248,7 @@ Phase 3에서 우선 구현한 최소 패치 기능:
 - Storybook 데모(`WorkbenchDocumentRenderer.stories.tsx`)에서 렌더-선택-액션-Undo/Redo 루프 적용
 
 #### Phase 4 (D6~): 단계적 확장
+
 - style inspector 스키마 기반 자동 렌더
 - `component/instance` 관계 해소 규칙 도입
 - `diff viewer`와 `history panel` 추가(패치 로그 기반)

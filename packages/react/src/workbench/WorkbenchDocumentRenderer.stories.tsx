@@ -48,7 +48,12 @@ const initialDocument: WorkbenchDocument = {
           type: 'frame',
           name: 'Hero',
           layout: { x: 40, y: 24, width: 420, height: 160 },
-          style: { backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#94a3b8', borderRadius: 8 },
+          style: {
+            backgroundColor: '#ffffff',
+            borderWidth: 1,
+            borderColor: '#94a3b8',
+            borderRadius: 8,
+          },
           children: ['title-text', 'subtitle-text'],
         },
         {
@@ -124,7 +129,10 @@ export const RendererWithHistory: Story = {
       setStatusText('redo');
     };
 
-    const applyMove = (nodeId: string, layout: Partial<WorkbenchDocument['pages'][number]['nodes'][number]['layout']>) => {
+    const applyMove = (
+      nodeId: string,
+      layout: Partial<WorkbenchDocument['pages'][number]['nodes'][number]['layout']>,
+    ) => {
       const targetNode = history.state.present.pages[0]?.nodes.find((node) => node.id === nodeId);
       const nextLayout = {
         ...(targetNode?.layout ?? {}),
@@ -154,8 +162,8 @@ export const RendererWithHistory: Story = {
           type: 'rectangle',
           name: `Rect ${Date.now()}`,
           layout: {
-            x: 60 + (Math.random() * 120),
-            y: 220 + (Math.random() * 120),
+            x: 60 + Math.random() * 120,
+            y: 220 + Math.random() * 120,
             width: 140,
             height: 90,
           },
@@ -170,13 +178,23 @@ export const RendererWithHistory: Story = {
       setStatusText('create rectangle');
     };
 
-    const selectedNode = history.state.present.pages[0]?.nodes.find((node) => node.id === selectedId);
+    const selectedNode = history.state.present.pages[0]?.nodes.find(
+      (node) => node.id === selectedId,
+    );
     const canUndo = history.canUndo;
     const canRedo = history.canRedo;
 
     return (
       <div style={{ padding: 16, background: '#0f172a', minHeight: '100vh', color: '#e2e8f0' }}>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            marginBottom: 12,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
           <Button
             onClick={() =>
               applyAction({
@@ -229,9 +247,8 @@ export const RendererWithHistory: Story = {
           <Button onClick={createRectangle}>create rectangle</Button>
         </div>
         <p style={{ margin: 0 }}>
-          revision:{' '}
-          <strong>{revision}</strong> | selected: <strong>{selectedId ?? 'none'}</strong> | status:{' '}
-          <strong>{statusText}</strong>
+          revision: <strong>{revision}</strong> | selected: <strong>{selectedId ?? 'none'}</strong>{' '}
+          | status: <strong>{statusText}</strong>
         </p>
         <div style={{ marginTop: 12, background: '#fff', padding: 8 }}>
           <WorkbenchDocumentRenderer
@@ -266,14 +283,16 @@ const sampleWorkspaceFiles: WorkspaceFile[] = [
 
 export const AdapterRoundTrip: Story = {
   render: () => {
-    const adaptedDocument = workspaceFilesToDocument(sampleWorkspaceFiles, { pageName: 'Adapter Roundtrip' });
+    const adaptedDocument = workspaceFilesToDocument(sampleWorkspaceFiles, {
+      pageName: 'Adapter Roundtrip',
+    });
     const restoredFiles = documentNodesToWorkspaceFiles(adaptedDocument);
 
     return (
       <div style={{ padding: 16, background: '#0f172a', minHeight: '100vh', color: '#e2e8f0' }}>
         <p style={{ marginTop: 0 }}>
-          generated nodes: <strong>{adaptedDocument.pages[0]?.nodes.length ?? 0}</strong> | restored files:{' '}
-          <strong>{restoredFiles.length}</strong>
+          generated nodes: <strong>{adaptedDocument.pages[0]?.nodes.length ?? 0}</strong> | restored
+          files: <strong>{restoredFiles.length}</strong>
         </p>
         <div style={{ marginBottom: 12 }}>
           <WorkbenchDocumentRenderer
@@ -292,7 +311,11 @@ export const AdapterRoundTrip: Story = {
           }}
         >
           {`roundtrip files:\n${JSON.stringify(
-            restoredFiles.map((file) => ({ path: file.path, mimeType: file.mimeType, contentPreview: file.content.slice(0, 20) })),
+            restoredFiles.map((file) => ({
+              path: file.path,
+              mimeType: file.mimeType,
+              contentPreview: file.content.slice(0, 20),
+            })),
             null,
             2,
           )}`}
@@ -318,7 +341,12 @@ const featureTestDocument: WorkbenchDocument = {
           type: 'frame',
           name: 'Root Frame',
           layout: { x: 24, y: 24, width: 520, height: 220 },
-          style: { backgroundColor: '#e2e8f0', borderWidth: 1, borderColor: '#94a3b8', borderRadius: 10 },
+          style: {
+            backgroundColor: '#e2e8f0',
+            borderWidth: 1,
+            borderColor: '#94a3b8',
+            borderRadius: 10,
+          },
           children: ['ft-title', 'ft-subtitle'],
         },
         {
@@ -328,7 +356,7 @@ const featureTestDocument: WorkbenchDocument = {
           parentId: 'frame-root',
           layout: { x: 14, y: 12, width: 300, height: 46 },
           style: { color: '#1e293b', fontSize: 28, fontFamily: 'Arial' },
-            content: 'Canvas feature test',
+          content: 'Canvas feature test',
         },
         {
           id: 'ft-subtitle',
@@ -384,7 +412,10 @@ export const FeatureTestScreen: Story = {
       setStatusText(`patch applied (${patchResult.result.document.version || 'ok'})`);
     };
 
-    const applyMove = (nodeId: string, layout: Partial<WorkbenchDocument['pages'][number]['nodes'][number]['layout']>) => {
+    const applyMove = (
+      nodeId: string,
+      layout: Partial<WorkbenchDocument['pages'][number]['nodes'][number]['layout']>,
+    ) => {
       const targetNode = history.state.present.pages[0]?.nodes.find((node) => node.id === nodeId);
       const nextLayout = {
         ...(targetNode?.layout ?? {}),
@@ -468,37 +499,44 @@ export const FeatureTestScreen: Story = {
           >
             선택 노드 텍스트 변경
           </Button>
-          <Button onClick={() => {
-            const nextState = history.undo();
-            if (!nextState) {
-              setStatusText('nothing to undo');
-              return;
-            }
-            setDocumentJson(nextState.present);
-            setRevision((value) => value + 1);
-            setStatusText('undo');
-          }} disabled={!history.canUndo}>
+          <Button
+            onClick={() => {
+              const nextState = history.undo();
+              if (!nextState) {
+                setStatusText('nothing to undo');
+                return;
+              }
+              setDocumentJson(nextState.present);
+              setRevision((value) => value + 1);
+              setStatusText('undo');
+            }}
+            disabled={!history.canUndo}
+          >
             Undo
           </Button>
-          <Button onClick={() => {
-            const nextState = history.redo();
-            if (!nextState) {
-              setStatusText('nothing to redo');
-              return;
-            }
-            setDocumentJson(nextState.present);
-            setRevision((value) => value + 1);
-            setStatusText('redo');
-          }} disabled={!history.canRedo}>
+          <Button
+            onClick={() => {
+              const nextState = history.redo();
+              if (!nextState) {
+                setStatusText('nothing to redo');
+                return;
+              }
+              setDocumentJson(nextState.present);
+              setRevision((value) => value + 1);
+              setStatusText('redo');
+            }}
+            disabled={!history.canRedo}
+          >
             Redo
           </Button>
         </div>
         <p style={{ margin: 0 }} data-testid="feature-status">
-          revision: <strong>{revision}</strong> | selected: <strong>{selectedId ?? 'none'}</strong> | status:{' '}
-          <strong>{statusText}</strong>
+          revision: <strong>{revision}</strong> | selected: <strong>{selectedId ?? 'none'}</strong>{' '}
+          | status: <strong>{statusText}</strong>
         </p>
         <p style={{ color: '#93c5fd' }}>
-          힌트: 텍스트/도형을 직접 클릭해 선택하고, 드래그하면 이동됩니다. (컨테이너 이동은 아직 미지원)
+          힌트: 텍스트/도형을 직접 클릭해 선택하고, 드래그하면 이동됩니다. (컨테이너 이동은 아직
+          미지원)
         </p>
         <WorkbenchDocumentRenderer
           page={history.state.present.pages[0]}

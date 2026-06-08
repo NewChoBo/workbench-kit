@@ -272,11 +272,17 @@ describe('contract helpers', () => {
   });
 
   it('supports document action -> patch roundtrip from public index', () => {
-    const doc = workspaceFilesToDocument([{ content: 'A', path: 'a.txt' }, { content: 'B', path: 'b.txt' }], {
-      pageId: 'page-main',
-      pageName: 'Main',
-      version: '1.0.0',
-    });
+    const doc = workspaceFilesToDocument(
+      [
+        { content: 'A', path: 'a.txt' },
+        { content: 'B', path: 'b.txt' },
+      ],
+      {
+        pageId: 'page-main',
+        pageName: 'Main',
+        version: '1.0.0',
+      },
+    );
     const patchResult = createPatchFromWorkbenchDocumentAction(
       {
         action: 'replace-content',

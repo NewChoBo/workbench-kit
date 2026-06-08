@@ -18,10 +18,7 @@ export function createPatchFromWorkbenchDocumentAction(
     return { page: document.pages[pageIndex], index: pageIndex };
   };
 
-  const findNode = (
-    pageId: string,
-    nodeId: string,
-  ): { index: number; path: string } | null => {
+  const findNode = (pageId: string, nodeId: string): { index: number; path: string } | null => {
     const entry = findPage(pageId);
     if (!entry) return null;
     const nodeIndex = entry.page.nodes.findIndex((node) => node.id === nodeId);
@@ -46,7 +43,8 @@ export function createPatchFromWorkbenchDocumentAction(
           ? found.page.nodes.length
           : (() => {
               const index = found.page.nodes.findIndex((node) => node.id === action.insertAfterId);
-              if (index < 0) throw new Error(`Insert after node not found: ${action.insertAfterId}`);
+              if (index < 0)
+                throw new Error(`Insert after node not found: ${action.insertAfterId}`);
               return index + 1;
             })();
 
@@ -96,8 +94,11 @@ export function createPatchFromWorkbenchDocumentAction(
         action.insertAfterId === undefined
           ? pageEntry.page.nodes.length
           : (() => {
-              const index = pageEntry.page.nodes.findIndex((node) => node.id === action.insertAfterId);
-              if (index < 0) throw new Error(`Insert after node not found: ${action.insertAfterId}`);
+              const index = pageEntry.page.nodes.findIndex(
+                (node) => node.id === action.insertAfterId,
+              );
+              if (index < 0)
+                throw new Error(`Insert after node not found: ${action.insertAfterId}`);
               const offset = source.index <= index ? -1 : 0;
               return index + 1 + offset;
             })();

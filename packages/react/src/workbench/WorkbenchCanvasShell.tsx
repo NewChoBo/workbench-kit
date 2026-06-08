@@ -33,8 +33,8 @@ type WorkbenchPatchApplyResult = {
 };
 
 const placeholderImageSrc = `data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#334155"/></linearGradient></defs><rect width="320" height="180" fill="url(%23g)"/><text x="50%" y="52%" fill="white" font-size="24" text-anchor="middle" font-family="Arial">Image Layer</text></svg>'
-)}`
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#334155"/></linearGradient></defs><rect width="320" height="180" fill="url(%23g)"/><text x="50%" y="52%" fill="white" font-size="24" text-anchor="middle" font-family="Arial">Image Layer</text></svg>',
+)}`;
 
 const defaultDocument: WorkbenchDocument = {
   version: '1.0.0',
@@ -151,13 +151,16 @@ export function WorkbenchCanvasShell({
   compactStatus = true,
   onDocumentChange,
 }: WorkbenchCanvasShellProps) {
-  const activities = useMemo<Array<WorkbenchActivityDescriptor<StudioShellActivityId>>>(() => [
-    {
-      id: DEFAULT_CANVAS_ACTIVITY_ID,
-      label: 'Design',
-      icon: 'codicon-layout',
-    },
-  ], []);
+  const activities = useMemo<Array<WorkbenchActivityDescriptor<StudioShellActivityId>>>(
+    () => [
+      {
+        id: DEFAULT_CANVAS_ACTIVITY_ID,
+        label: 'Design',
+        icon: 'codicon-layout',
+      },
+    ],
+    [],
+  );
 
   const commandRegistry = useMemo(
     () =>
@@ -192,10 +195,13 @@ export function WorkbenchCanvasShell({
   const [activeTab, setActiveTab] = useState<StudioShellTab>('preview');
 
   const activePageId = documentJson.pages?.[0]?.id ?? 'page-shell-canvas';
-  const activePage = documentJson.pages.find(
-    (page: WorkbenchDocument['pages'][number]) => page.id === activePageId,
-  ) ?? documentJson.pages[0];
-  const selectedNode = activePage?.nodes.find((node: WorkbenchDocumentNode) => node.id === selectedNodeId);
+  const activePage =
+    documentJson.pages.find(
+      (page: WorkbenchDocument['pages'][number]) => page.id === activePageId,
+    ) ?? documentJson.pages[0];
+  const selectedNode = activePage?.nodes.find(
+    (node: WorkbenchDocumentNode) => node.id === selectedNodeId,
+  );
 
   const nodeLookup = useMemo(() => {
     const map = new Map<string, WorkbenchDocumentNode>();
@@ -206,15 +212,18 @@ export function WorkbenchCanvasShell({
   }, [activePage?.nodes]);
 
   const rootNodeIds = useMemo(() => {
-      const childIdSet = new Set(
+    const childIdSet = new Set(
       activePage?.nodes.flatMap((node: WorkbenchDocumentNode) => {
-        const nodeChildren = 'children' in node ? (node as { children?: readonly string[] }).children : undefined;
+        const nodeChildren =
+          'children' in node ? (node as { children?: readonly string[] }).children : undefined;
         return nodeChildren ?? [];
       }) ?? [],
     );
-    return activePage?.nodes
-      .filter((node: WorkbenchDocumentNode) => !node.parentId && !childIdSet.has(node.id))
-      .map((node: WorkbenchDocumentNode) => node.id) ?? [];
+    return (
+      activePage?.nodes
+        .filter((node: WorkbenchDocumentNode) => !node.parentId && !childIdSet.has(node.id))
+        .map((node: WorkbenchDocumentNode) => node.id) ?? []
+    );
   }, [activePage?.nodes]);
 
   useEffect(() => {
@@ -223,17 +232,19 @@ export function WorkbenchCanvasShell({
 
   useEffect(() => {
     setNameInput(selectedNode?.name ?? '');
-    setContentInput(selectedNode?.type === 'text' ? String((selectedNode as { content?: string }).content ?? '') : '');
-    setSrcInput(selectedNode?.type === 'image' ? String((selectedNode as { src?: string }).src ?? '') : '');
+    setContentInput(
+      selectedNode?.type === 'text'
+        ? String((selectedNode as { content?: string }).content ?? '')
+        : '',
+    );
+    setSrcInput(
+      selectedNode?.type === 'image' ? String((selectedNode as { src?: string }).src ?? '') : '',
+    );
     setBgColorInput(String(selectedNode?.style?.backgroundColor ?? ''));
     setBorderColorInput(String(selectedNode?.style?.borderColor ?? ''));
     setTextColorInput(String(selectedNode?.style?.color ?? ''));
-    setLayoutXInput(
-      selectedNode?.layout?.x === undefined ? '' : String(selectedNode.layout.x),
-    );
-    setLayoutYInput(
-      selectedNode?.layout?.y === undefined ? '' : String(selectedNode.layout.y),
-    );
+    setLayoutXInput(selectedNode?.layout?.x === undefined ? '' : String(selectedNode.layout.x));
+    setLayoutYInput(selectedNode?.layout?.y === undefined ? '' : String(selectedNode.layout.y));
     setLayoutWInput(
       selectedNode?.layout?.width === undefined ? '' : String(selectedNode.layout.width),
     );
@@ -288,7 +299,9 @@ export function WorkbenchCanvasShell({
     nodeId: string,
     layout: WorkbenchDocument['pages'][number]['nodes'][number]['layout'],
   ) => {
-    const targetNode = history.state.present.pages[0]?.nodes.find((node: WorkbenchDocumentNode) => node.id === nodeId);
+    const targetNode = history.state.present.pages[0]?.nodes.find(
+      (node: WorkbenchDocumentNode) => node.id === nodeId,
+    );
     const nextLayout = {
       ...(targetNode?.layout ?? {}),
       ...layout,
@@ -542,7 +555,8 @@ export function WorkbenchCanvasShell({
       return [];
     }
 
-    const children = 'children' in node ? ((node as { children?: readonly string[] }).children ?? []) : [];
+    const children =
+      'children' in node ? ((node as { children?: readonly string[] }).children ?? []) : [];
     const isSelected = node.id === selectedNodeId;
     const prefix = `${'\u00a0'.repeat(Math.max(depth - 1, 0) * 2)}${depth > 0 ? '↳ ' : ''}`;
 
@@ -581,10 +595,7 @@ export function WorkbenchCanvasShell({
       </button>
     );
 
-    return [
-      row,
-      ...children.flatMap((childId: string) => renderNodeRow(childId, depth + 1)),
-    ];
+    return [row, ...children.flatMap((childId: string) => renderNodeRow(childId, depth + 1))];
   };
 
   const bootstrap = useMemo<WorkbenchStandaloneBootstrap<StudioShellActivityId>>(
@@ -642,7 +653,7 @@ export function WorkbenchCanvasShell({
   };
 
   return (
-      <WorkbenchStandaloneShell<StudioShellActivityId>
+    <WorkbenchStandaloneShell<StudioShellActivityId>
       bootstrap={bootstrap}
       compactStatus={compactStatus}
       maxPrimarySidebarSizePercent={44}
@@ -653,7 +664,10 @@ export function WorkbenchCanvasShell({
           items: [
             { id: 'status', icon: <span className="workbench-status-dot" />, label: statusText },
             { id: 'document', label: `nodes: ${activePage?.nodes.length ?? 0}` },
-            { id: 'selected', label: selectedNode ? `selected: ${selectedNode.name}` : 'selected: none' },
+            {
+              id: 'selected',
+              label: selectedNode ? `selected: ${selectedNode.name}` : 'selected: none',
+            },
           ],
         },
         {
@@ -704,7 +718,12 @@ export function WorkbenchCanvasShell({
                 <Button onClick={redo} compact disabled={!history.canRedo}>
                   Redo
                 </Button>
-                <Button onClick={deleteSelected} compact disabled={!selectedNodeId} variant="danger">
+                <Button
+                  onClick={deleteSelected}
+                  compact
+                  disabled={!selectedNodeId}
+                  variant="danger"
+                >
                   Delete selected
                 </Button>
               </div>
@@ -767,7 +786,8 @@ export function WorkbenchCanvasShell({
                       border: '1px solid rgba(148, 163, 184, 0.3)',
                       borderRadius: 8,
                       padding: 10,
-                      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                      fontFamily:
+                        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
                       fontSize: 12,
                       lineHeight: 1.35,
                     }}
@@ -809,15 +829,38 @@ export function WorkbenchCanvasShell({
               </div>
               <div style={sectionBlockStyle}>
                 <div style={{ fontWeight: 600 }}>Layout</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '72px 1fr', gap: 6, alignItems: 'center' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '72px 1fr',
+                    gap: 6,
+                    alignItems: 'center',
+                  }}
+                >
                   <label>X</label>
-                  <TextInput controlWidth="full" value={layoutXInput} onChange={(event) => setLayoutXInput(event.currentTarget.value)} />
+                  <TextInput
+                    controlWidth="full"
+                    value={layoutXInput}
+                    onChange={(event) => setLayoutXInput(event.currentTarget.value)}
+                  />
                   <label>Y</label>
-                  <TextInput controlWidth="full" value={layoutYInput} onChange={(event) => setLayoutYInput(event.currentTarget.value)} />
+                  <TextInput
+                    controlWidth="full"
+                    value={layoutYInput}
+                    onChange={(event) => setLayoutYInput(event.currentTarget.value)}
+                  />
                   <label>W</label>
-                  <TextInput controlWidth="full" value={layoutWInput} onChange={(event) => setLayoutWInput(event.currentTarget.value)} />
+                  <TextInput
+                    controlWidth="full"
+                    value={layoutWInput}
+                    onChange={(event) => setLayoutWInput(event.currentTarget.value)}
+                  />
                   <label>H</label>
-                  <TextInput controlWidth="full" value={layoutHInput} onChange={(event) => setLayoutHInput(event.currentTarget.value)} />
+                  <TextInput
+                    controlWidth="full"
+                    value={layoutHInput}
+                    onChange={(event) => setLayoutHInput(event.currentTarget.value)}
+                  />
                 </div>
                 <Button onClick={saveLayout} compact>
                   Apply layout
@@ -883,16 +926,16 @@ export function WorkbenchCanvasShell({
               <div style={sectionBlockStyle}>
                 <div style={{ fontWeight: 600 }}>Canvas state</div>
                 <div style={{ fontSize: 12, opacity: 0.8 }}>
-                  Tab: {activeTab} / History: {history.state.past.length + history.state.future.length} entries
+                  Tab: {activeTab} / History:{' '}
+                  {history.state.past.length + history.state.future.length} entries
                 </div>
               </div>
-           </aside>
-         </div>
-       </div>
+            </aside>
+          </div>
+        </div>
       )}
       rootClassName={rootClassName}
       rootStyle={rootStyle}
     />
   );
 }
-

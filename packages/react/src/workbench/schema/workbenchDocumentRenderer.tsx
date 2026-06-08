@@ -101,7 +101,9 @@ function buildNodeStyle(
     minWidth: layout.width ?? undefined,
     minHeight: layout.height ?? undefined,
     display: 'block',
-    transform: `${node.layout?.rotate ? ` rotate(${node.layout.rotate}deg)` : ''}${scaleTransform(scale)}`.trim() || undefined,
+    transform:
+      `${node.layout?.rotate ? ` rotate(${node.layout.rotate}deg)` : ''}${scaleTransform(scale)}`.trim() ||
+      undefined,
     outline: selected ? '2px solid #4f46e5' : hovered ? '2px dashed #94a3b8' : undefined,
     boxSizing: 'border-box',
     cursor: node.locked ? 'default' : 'pointer',
@@ -110,14 +112,25 @@ function buildNodeStyle(
 }
 
 function isContainerNode(node: WorkbenchDocumentNode): boolean {
-  return node.type === 'frame' || node.type === 'group' || node.type === 'component' || node.type === 'instance';
+  return (
+    node.type === 'frame' ||
+    node.type === 'group' ||
+    node.type === 'component' ||
+    node.type === 'instance'
+  );
 }
 
 function canResizeNode(node: WorkbenchDocumentNode): boolean {
-  return !node.locked && Boolean(node.layout?.width !== undefined && node.layout?.height !== undefined);
+  return (
+    !node.locked && Boolean(node.layout?.width !== undefined && node.layout?.height !== undefined)
+  );
 }
 
-function clamp(value: number | undefined, min = DEFAULT_NODE_MIN_SIZE, max?: number): number | undefined {
+function clamp(
+  value: number | undefined,
+  min = DEFAULT_NODE_MIN_SIZE,
+  max?: number,
+): number | undefined {
   if (value === undefined || !Number.isFinite(value)) {
     return undefined;
   }
@@ -190,11 +203,16 @@ function renderResizeHandle(
   );
 }
 
-const nodeRendererRegistry: Record<
-  string,
-  (params: NodeRendererProps) => ReactNode
-> = {
-  frame: ({ node, style, children, onClick, onPointerDown, onResizeHandlePointerDown, resizeHandleLabel }) => (
+const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactNode> = {
+  frame: ({
+    node,
+    style,
+    children,
+    onClick,
+    onPointerDown,
+    onResizeHandlePointerDown,
+    resizeHandleLabel,
+  }) => (
     <div
       key={node.id}
       data-node-id={node.id}
@@ -206,7 +224,15 @@ const nodeRendererRegistry: Record<
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
     </div>
   ),
-  group: ({ node, style, children, onClick, onPointerDown, onResizeHandlePointerDown, resizeHandleLabel }) => (
+  group: ({
+    node,
+    style,
+    children,
+    onClick,
+    onPointerDown,
+    onResizeHandlePointerDown,
+    resizeHandleLabel,
+  }) => (
     <div
       key={node.id}
       data-node-id={node.id}
@@ -218,7 +244,15 @@ const nodeRendererRegistry: Record<
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
     </div>
   ),
-  component: ({ node, style, children, onClick, onPointerDown, onResizeHandlePointerDown, resizeHandleLabel }) => (
+  component: ({
+    node,
+    style,
+    children,
+    onClick,
+    onPointerDown,
+    onResizeHandlePointerDown,
+    resizeHandleLabel,
+  }) => (
     <div
       key={node.id}
       data-node-id={node.id}
@@ -230,7 +264,15 @@ const nodeRendererRegistry: Record<
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
     </div>
   ),
-  instance: ({ node, style, children, onClick, onPointerDown, onResizeHandlePointerDown, resizeHandleLabel }) => (
+  instance: ({
+    node,
+    style,
+    children,
+    onClick,
+    onPointerDown,
+    onResizeHandlePointerDown,
+    resizeHandleLabel,
+  }) => (
     <div
       key={node.id}
       data-node-id={node.id}
@@ -242,7 +284,14 @@ const nodeRendererRegistry: Record<
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
     </div>
   ),
-  rectangle: ({ node, style, onClick, onPointerDown, onResizeHandlePointerDown, resizeHandleLabel }) => (
+  rectangle: ({
+    node,
+    style,
+    onClick,
+    onPointerDown,
+    onResizeHandlePointerDown,
+    resizeHandleLabel,
+  }) => (
     <div
       key={node.id}
       data-node-id={node.id}
@@ -253,7 +302,14 @@ const nodeRendererRegistry: Record<
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
     </div>
   ),
-  circle: ({ node, style, onClick, onPointerDown, onResizeHandlePointerDown, resizeHandleLabel }) => (
+  circle: ({
+    node,
+    style,
+    onClick,
+    onPointerDown,
+    onResizeHandlePointerDown,
+    resizeHandleLabel,
+  }) => (
     <div
       key={node.id}
       data-node-id={node.id}
@@ -276,7 +332,14 @@ const nodeRendererRegistry: Record<
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
     </div>
   ),
-  image: ({ node, style, onClick, onPointerDown, onResizeHandlePointerDown, resizeHandleLabel }) => {
+  image: ({
+    node,
+    style,
+    onClick,
+    onPointerDown,
+    onResizeHandlePointerDown,
+    resizeHandleLabel,
+  }) => {
     const src = (node as { src?: string }).src ?? '';
     return (
       <div
@@ -286,7 +349,13 @@ const nodeRendererRegistry: Record<
         onClick={onClick}
         onPointerDown={onPointerDown}
       >
-        {src ? <img src={src} alt={node.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
+        {src ? (
+          <img
+            src={src}
+            alt={node.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : null}
         {!src ? (
           <div
             style={{
@@ -309,7 +378,14 @@ const nodeRendererRegistry: Record<
       </div>
     );
   },
-  vector: ({ node, style, onClick, onPointerDown, onResizeHandlePointerDown, resizeHandleLabel }) => (
+  vector: ({
+    node,
+    style,
+    onClick,
+    onPointerDown,
+    onResizeHandlePointerDown,
+    resizeHandleLabel,
+  }) => (
     <div
       key={node.id}
       data-node-id={node.id}
@@ -321,7 +397,14 @@ const nodeRendererRegistry: Record<
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
     </div>
   ),
-  unknown: ({ node, style, onClick, onPointerDown, onResizeHandlePointerDown, resizeHandleLabel }) => (
+  unknown: ({
+    node,
+    style,
+    onClick,
+    onPointerDown,
+    onResizeHandlePointerDown,
+    resizeHandleLabel,
+  }) => (
     <div
       key={node.id}
       data-node-id={node.id}
@@ -358,7 +441,9 @@ function renderNode(
       if (!child) {
         continue;
       }
-      children.push(renderNode(child, lookup, context, onNodeClick, onNodePointerDown, resolveLayout));
+      children.push(
+        renderNode(child, lookup, context, onNodeClick, onNodePointerDown, resolveLayout),
+      );
     }
   }
 
@@ -366,12 +451,15 @@ function renderNode(
   const isSelected = selectedNodeIds.includes(node.id);
 
   const onClick = onNodeClick && !node.locked ? () => onNodeClick(node.id) : undefined;
-  const onMovePointerDown = onNodePointerDown && !node.locked
-    ? (event: ReactPointerEvent<HTMLElement>) => onNodePointerDown(node, event, 'move')
-    : undefined;
-  const onResizePointerDown = onNodePointerDown && canResizeNode(nodeWithLayout) && !node.locked
-    ? (event: ReactPointerEvent<HTMLElement>) => onNodePointerDown(nodeWithLayout, event, 'resize')
-    : undefined;
+  const onMovePointerDown =
+    onNodePointerDown && !node.locked
+      ? (event: ReactPointerEvent<HTMLElement>) => onNodePointerDown(node, event, 'move')
+      : undefined;
+  const onResizePointerDown =
+    onNodePointerDown && canResizeNode(nodeWithLayout) && !node.locked
+      ? (event: ReactPointerEvent<HTMLElement>) =>
+          onNodePointerDown(nodeWithLayout, event, 'resize')
+      : undefined;
   const style = buildNodeStyle(nodeWithLayout, context);
 
   return childRenderer({
@@ -410,15 +498,22 @@ export function WorkbenchDocumentRenderer({
       y: dragState.startLayoutY + (pointerY - dragState.startPointerY) / scale,
     });
 
-    const computeNextResize = (pointerX: number, pointerY: number): WorkbenchNodeLayout => applyConstraints(
-      {
-        x: dragState.startLayoutX,
-        y: dragState.startLayoutY,
-        width: dragState.startWidth === undefined ? undefined : dragState.startWidth + (pointerX - dragState.startPointerX) / scale,
-        height: dragState.startHeight === undefined ? undefined : dragState.startHeight + (pointerY - dragState.startPointerY) / scale,
-      },
-      dragState.constraints,
-    );
+    const computeNextResize = (pointerX: number, pointerY: number): WorkbenchNodeLayout =>
+      applyConstraints(
+        {
+          x: dragState.startLayoutX,
+          y: dragState.startLayoutY,
+          width:
+            dragState.startWidth === undefined
+              ? undefined
+              : dragState.startWidth + (pointerX - dragState.startPointerX) / scale,
+          height:
+            dragState.startHeight === undefined
+              ? undefined
+              : dragState.startHeight + (pointerY - dragState.startPointerY) / scale,
+        },
+        dragState.constraints,
+      );
 
     const applyPreview = (nextLayout: WorkbenchNodeLayout) => {
       const next = { [dragState.nodeId]: nextLayout };
@@ -431,9 +526,10 @@ export function WorkbenchDocumentRenderer({
         return;
       }
       event.preventDefault();
-      const nextLayout = dragState.interaction === 'resize'
-        ? computeNextResize(event.clientX, event.clientY)
-        : computeNextMove(event.clientX, event.clientY);
+      const nextLayout =
+        dragState.interaction === 'resize'
+          ? computeNextResize(event.clientX, event.clientY)
+          : computeNextMove(event.clientX, event.clientY);
       applyPreview(nextLayout);
     };
 
@@ -481,7 +577,10 @@ export function WorkbenchDocumentRenderer({
     }
     if (
       interaction === 'resize' &&
-      (layout.x === undefined || layout.y === undefined || layout.width === undefined || layout.height === undefined)
+      (layout.x === undefined ||
+        layout.y === undefined ||
+        layout.width === undefined ||
+        layout.height === undefined)
     ) {
       return;
     }
@@ -515,11 +614,14 @@ export function WorkbenchDocumentRenderer({
   const rootNodeIds = useMemo(() => {
     const childIdSet = new Set(
       page.nodes.flatMap((node) => {
-        const nodeChildren = 'children' in node ? (node as { children?: readonly string[] }).children : undefined;
+        const nodeChildren =
+          'children' in node ? (node as { children?: readonly string[] }).children : undefined;
         return nodeChildren ?? [];
       }),
     );
-    return page.nodes.filter((node) => !node.parentId && !childIdSet.has(node.id)).map((node) => node.id);
+    return page.nodes
+      .filter((node) => !node.parentId && !childIdSet.has(node.id))
+      .map((node) => node.id);
   }, [page.nodes]);
 
   const normalizedSelectedIds = useMemo(() => {

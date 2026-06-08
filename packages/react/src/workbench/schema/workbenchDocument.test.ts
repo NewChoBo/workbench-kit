@@ -9,8 +9,19 @@ import {
 describe('WorkbenchDocument adapter', () => {
   it('roundtrips files through document adapter', () => {
     const files = [
-      { path: 'notes/readme.md', content: 'hello', updatedAt: '2026-01-01T00:00:00.000Z', source: 'user', mimeType: 'text/markdown' },
-      { path: 'src/main.ts', content: 'console.log(1);', source: 'assistant', mimeType: 'text/typescript' },
+      {
+        path: 'notes/readme.md',
+        content: 'hello',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        source: 'user',
+        mimeType: 'text/markdown',
+      },
+      {
+        path: 'src/main.ts',
+        content: 'console.log(1);',
+        source: 'assistant',
+        mimeType: 'text/typescript',
+      },
     ] as const;
 
     const document = workspaceFilesToDocument(files, {
@@ -35,7 +46,11 @@ describe('WorkbenchDocument adapter', () => {
   });
 
   it('moves node via action-to-patch conversion', () => {
-    const document = workspaceFilesToDocument([{ path: 'a.txt', content: 'a' }, { path: 'b.txt', content: 'b' }, { path: 'c.txt', content: 'c' }]);
+    const document = workspaceFilesToDocument([
+      { path: 'a.txt', content: 'a' },
+      { path: 'b.txt', content: 'b' },
+      { path: 'c.txt', content: 'c' },
+    ]);
     const patchResult = createPatchFromWorkbenchDocumentAction(
       {
         action: 'move',
@@ -47,7 +62,9 @@ describe('WorkbenchDocument adapter', () => {
     );
 
     const next = applyWorkbenchDocumentPatch(document, patchResult.patch).document;
-    const ordered = next.pages[0].nodes.filter((node) => node.type === 'text').map((node) => node.id);
+    const ordered = next.pages[0].nodes
+      .filter((node) => node.type === 'text')
+      .map((node) => node.id);
     expect(ordered).toEqual(['node:a.txt', 'node:c.txt', 'node:b.txt']);
   });
 });
