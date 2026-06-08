@@ -32,6 +32,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Sync package version from tag
+        if: github.ref_type == 'tag'
+        run: node scripts/sync-version-from-tag.mjs
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
