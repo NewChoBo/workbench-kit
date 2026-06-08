@@ -5,6 +5,7 @@
 @import './primitives/select/select.app.css';
 @import './workbench/settings/structured-data-schema-panel.css';
 @import './workbench/settings/structured-data-table-view.css';
+@import './workbench/settings/panel-region.css';
 
 .ui-workbench-host-document,
 .ui-workbench-host,

@@ -236,6 +236,7 @@ export type {
   WorkbenchTimelineVariant,
 } from './Timeline';
 export {
+  WorkbenchPanelRegion,
   WorkbenchNavigationPanel,
   WorkbenchSectionedPanel,
   WorkbenchSettingsModal,
@@ -250,6 +251,7 @@ export {
   formatWorkbenchStructuredDataTableCell,
 } from './settings';
 export type {
+  WorkbenchPanelRegionProps,
   WorkbenchNavigationPanelProps,
   WorkbenchSectionedPanelItem,
   WorkbenchSectionedPanelProps,

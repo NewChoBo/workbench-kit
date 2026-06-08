@@ -67,3 +67,19 @@
 .ui-workbench-structured-data-table-view__table [data-align='end'] {
   text-align: right;
 }
+
+.ui-workbench-structured-data-table-view__stacked-cell {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.ui-workbench-structured-data-table-view__stacked-cell code {
+  color: var(--color-text);
+  font-family: var(--font-mono, Consolas, 'Courier New', monospace);
+}
+
+.ui-workbench-structured-data-table-view__stacked-cell strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
