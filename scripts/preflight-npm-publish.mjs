@@ -1,39 +1,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { NPM_PUBLISH_ORDER, NPM_REGISTRY } from './npm-publish-config.mjs';
+import {
+  NPM_PUBLISH_ORDER,
+  NPM_REGISTRY,
+  clearNpmRegistryAuth,
+  isTrustedPublisherAvailable,
+} from './npm-publish-config.mjs';
 
 const root = process.cwd();
 const distTag = process.env.NPM_DIST_TAG || 'prototype';
 const packDir = path.join(root, '.npm-pack-preflight');
-const trustedPublisherAvailable =
-  process.env.GITHUB_ACTIONS === 'true' && Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN);
-const hasAuthToken = Boolean(process.env.NODE_AUTH_TOKEN);
+const trustedPublisherAvailable = isTrustedPublisherAvailable();
 
 console.log('[preflight-npm] Checking npm registry connectivity...');
 run('npm', ['ping', '--registry', NPM_REGISTRY]);
 
-if (!hasAuthToken && !trustedPublisherAvailable) {
-  throw new Error(
-    [
-      'No npm auth path is available for publish preflight.',
-      'Configure either:',
-      '- GitHub Actions trusted publishing (permissions.id-token: write + npm trusted publisher), or',
-      '- Repository secret NPM_TOKEN for classic/granular token auth.',
-    ].join('\n'),
-  );
-}
-
-let actor = 'unknown';
-if (hasAuthToken) {
-  try {
-    actor = run('npm', ['whoami', '--registry', NPM_REGISTRY], { encoding: 'utf8' }).trim();
-    console.log(`[preflight-npm] Authenticated as ${actor} via NODE_AUTH_TOKEN.`);
-  } catch {
-    throw new Error(
-      'npm whoami failed with NODE_AUTH_TOKEN. Check NPM_TOKEN secret value, expiry, and automation/2FA settings.',
-    );
-  }
+const { mode: authMode, actor: resolvedActor } = resolveAuthMode();
+let actor = resolvedActor;
+if (authMode === 'token') {
+  console.log(`[preflight-npm] Authenticated as ${actor} via NODE_AUTH_TOKEN.`);
 
   try {
     const packages = run(
@@ -53,9 +39,7 @@ if (hasAuthToken) {
   }
 } else {
   actor = 'github-actions-trusted-publisher';
-  console.log(
-    '[preflight-npm] NODE_AUTH_TOKEN is not set; using GitHub Actions trusted publishing (OIDC).',
-  );
+  console.log('[preflight-npm] Using GitHub Actions trusted publishing (OIDC).');
   console.log('[preflight-npm] Skipping npm whoami because OIDC auth is resolved at publish time.');
 }
 
@@ -78,7 +62,7 @@ const args = [
   NPM_REGISTRY,
   '--dry-run',
 ];
-if (!trustedPublisherAvailable) {
+if (authMode !== 'trusted-publisher') {
   args.push('--provenance=false');
 }
 
@@ -86,18 +70,59 @@ console.log(`[preflight-npm] Dry-run publish probe for ${probeSpec}...`);
 try {
   run('npm', args, { stdio: 'inherit' });
 } catch {
-  throw publishPermissionError(actor, probeJson.name, { hasAuthToken, trustedPublisherAvailable });
+  throw publishPermissionError(actor, probeJson.name, authMode);
 }
 
 console.log('[preflight-npm] Publish auth preflight passed.');
 
-function publishPermissionError(actor, packageName, auth) {
+function resolveAuthMode() {
+  const hasAuthToken = Boolean(process.env.NODE_AUTH_TOKEN?.trim());
+
+  if (hasAuthToken) {
+    try {
+      const npmActor = run('npm', ['whoami', '--registry', NPM_REGISTRY], { encoding: 'utf8' }).trim();
+      return { mode: 'token', actor: npmActor };
+    } catch (error) {
+      if (trustedPublisherAvailable) {
+        console.warn(
+          '[preflight-npm] NODE_AUTH_TOKEN is set but invalid; falling back to trusted publishing (OIDC).',
+        );
+        console.warn(
+          '[preflight-npm] Remove or update the NPM_TOKEN secret if you no longer need token auth.',
+        );
+        clearNpmRegistryAuth();
+        return { mode: 'trusted-publisher', actor: 'github-actions-trusted-publisher' };
+      }
+
+      throw new Error(
+        'npm whoami failed with NODE_AUTH_TOKEN. Check NPM_TOKEN secret value, expiry, and automation/2FA settings.',
+        { cause: error },
+      );
+    }
+  }
+
+  if (trustedPublisherAvailable) {
+    clearNpmRegistryAuth();
+    return { mode: 'trusted-publisher', actor: 'github-actions-trusted-publisher' };
+  }
+
+  throw new Error(
+    [
+      'No npm auth path is available for publish preflight.',
+      'Configure either:',
+      '- GitHub Actions trusted publishing (permissions.id-token: write + npm trusted publisher), or',
+      '- Repository secret NPM_TOKEN for classic/granular token auth.',
+    ].join('\n'),
+  );
+}
+
+function publishPermissionError(actor, packageName, authMode) {
   const hints = [
     `npm publish preflight failed for ${packageName}.`,
-    `Auth mode: ${auth.trustedPublisherAvailable ? 'trusted-publisher' : 'token'} (${actor})`,
+    `Auth mode: ${authMode} (${actor})`,
   ];
 
-  if (auth.trustedPublisherAvailable && !auth.hasAuthToken) {
+  if (authMode === 'trusted-publisher') {
     hints.push(
       '- Trusted publisher may be missing or mismatched for NewChoBo/newchobo-ui-package / publish.yml.',
       '- Confirm npm org workbench-kit grants publish access to the trusted publisher owner account.',

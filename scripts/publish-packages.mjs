@@ -1,15 +1,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { NPM_PUBLISH_ORDER, NPM_REGISTRY } from './npm-publish-config.mjs';
+import {
+  NPM_PUBLISH_ORDER,
+  NPM_REGISTRY,
+  clearNpmRegistryAuth,
+  isTrustedPublisherAvailable,
+} from './npm-publish-config.mjs';
 
 const root = process.cwd();
 const dryRun = process.argv.includes('--dry-run') || process.env.DRY_RUN === 'true';
 const distTag = process.env.NPM_DIST_TAG || 'prototype';
 const registry = NPM_REGISTRY;
 const packDir = path.join(root, '.npm-pack');
-const trustedPublisherAvailable =
-  process.env.GITHUB_ACTIONS === 'true' && Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN);
+const trustedPublisherAvailable = isTrustedPublisherAvailable();
+const useTrustedPublisher = resolvePublishAuthMode(trustedPublisherAvailable);
 
 const publishOrder = NPM_PUBLISH_ORDER;
 
@@ -27,7 +32,7 @@ for (const packageName of publishOrder) {
 
   const tarball = packPackage(pkg.name);
   const args = ['publish', tarball, '--access', 'public', '--tag', distTag, '--registry', registry];
-  if (!trustedPublisherAvailable) {
+  if (!useTrustedPublisher) {
     args.push('--provenance=false');
   }
   if (dryRun) {
@@ -36,6 +41,33 @@ for (const packageName of publishOrder) {
 
   console.log(`${dryRun ? 'dry-run publish' : 'publish'} ${spec} with tag ${distTag}`);
   run('npm', args, { stdio: 'inherit' });
+}
+
+function resolvePublishAuthMode(trustedPublisherAvailable) {
+  const hasAuthToken = Boolean(process.env.NODE_AUTH_TOKEN?.trim());
+  if (!hasAuthToken) {
+    if (trustedPublisherAvailable) {
+      clearNpmRegistryAuth();
+      return true;
+    }
+    throw new Error('NODE_AUTH_TOKEN is required when trusted publishing is unavailable.');
+  }
+
+  try {
+    run('npm', ['whoami', '--registry', registry], { stdio: 'ignore' });
+    return false;
+  } catch {
+    if (trustedPublisherAvailable) {
+      console.warn(
+        '[publish] NODE_AUTH_TOKEN is invalid; publishing with trusted publishing (OIDC).',
+      );
+      clearNpmRegistryAuth();
+      return true;
+    }
+    throw new Error(
+      'npm whoami failed with NODE_AUTH_TOKEN. Check NPM_TOKEN secret value, expiry, and automation/2FA settings.',
+    );
+  }
 }
 
 function packageDirFor(packageName) {
