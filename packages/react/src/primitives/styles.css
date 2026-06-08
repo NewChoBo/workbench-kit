@@ -836,7 +836,7 @@
   cursor: default;
 }
 
-.ui-select[data-open='true'] .ui-select__trigger {
+.ui-select[data-open='true']:not([data-listbox-floating='true']) .ui-select__trigger {
   border-bottom-color: transparent;
 }
 
@@ -880,6 +880,21 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   max-height: 240px;
   overflow-y: auto;
+}
+
+.ui-select__listbox--floating {
+  z-index: 10000;
+  border-radius: var(--radius-sm, 0);
+  box-sizing: border-box;
+}
+
+.ui-select__listbox--floating:not(.ui-select__listbox--placement-top) {
+  border-top: 0;
+}
+
+.ui-select__listbox--floating.ui-select__listbox--placement-top {
+  border-bottom: 0;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.28);
 }
 
 .ui-select__option {

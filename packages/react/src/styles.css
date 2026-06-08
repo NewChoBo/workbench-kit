@@ -6530,7 +6530,7 @@
   cursor: default;
 }
 
-.ui-select[data-open='true'] .ui-select__trigger {
+.ui-select[data-open='true']:not([data-listbox-floating='true']) .ui-select__trigger {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   border-bottom-color: transparent;
@@ -6578,6 +6578,28 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   max-height: 240px;
   overflow-y: auto;
+}
+
+.ui-select__listbox--floating {
+  z-index: 10000;
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+  isolation: isolate;
+}
+
+.ui-select__listbox--floating:not(.ui-select__listbox--placement-top) {
+  border-top: 0;
+  border-bottom-left-radius: var(--radius-sm);
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+.ui-select__listbox--floating.ui-select__listbox--placement-top {
+  border-bottom: 0;
+  border-top-left-radius: var(--radius-sm);
+  border-top-right-radius: var(--radius-sm);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.28);
 }
 
 .ui-select__option {
