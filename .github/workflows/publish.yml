@@ -56,11 +56,15 @@ jobs:
 
       - name: Verify release tag
         run: node scripts/check-release-version.mjs
-      - name: Validate
-        run: pnpm validate
 
       - name: Ensure npm supports trusted publishing
         run: npm install -g npm@11
+
+      - name: Preflight npm publish auth
+        run: node scripts/preflight-npm-publish.mjs
+
+      - name: Validate
+        run: pnpm validate
 
       - name: Publish
         run: node scripts/publish-packages.mjs
