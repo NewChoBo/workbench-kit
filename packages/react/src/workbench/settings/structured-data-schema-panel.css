@@ -110,7 +110,7 @@
 }
 
 .ui-workbench-sectioned-panel.ui-workbench-structured-data-schema-panel--fill
-  .ui-workbench-sectioned-panel__nav {
+  .ui-workbench-sectioned-panel__nav-links {
   padding-top: 12px;
 }
 
@@ -126,13 +126,13 @@
   scroll-margin-top: 12px;
 }
 
-.ui-workbench-sectioned-panel__content
+.ui-workbench-sectioned-panel__scroll
   .ui-workbench-structured-data-schema-panel__section
   + .ui-workbench-structured-data-schema-panel__section {
   border-top: 1px solid var(--color-border);
 }
 
-.ui-workbench-sectioned-panel__content
+.ui-workbench-sectioned-panel__scroll
   .ui-workbench-structured-data-schema-panel__section:last-child {
   padding-bottom: 16px;
 }

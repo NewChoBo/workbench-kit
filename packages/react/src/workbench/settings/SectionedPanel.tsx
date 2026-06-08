@@ -6,14 +6,17 @@ import {
   type ComponentPropsWithRef,
   type ReactNode,
 } from 'react';
+import { IconButton } from '../../primitives/IconButton';
 import { cx } from '../../utils/cx';
 import { WorkbenchNavigationPanel } from './NavigationPanel';
 import {
-  resolveWorkbenchSectionedPanelActiveAnchorId,
+  WORKBENCH_SECTIONED_PANEL_SCROLL_SPY_OFFSET,
+  createWorkbenchSectionedPanelIntersectionRootMargin,
+  isWorkbenchSectionedPanelScrollable,
+  resolveWorkbenchSectionedPanelActiveAnchorFromScroll,
   resolveWorkbenchSectionedPanelScrollTop,
 } from './sectionedPanelScrollSpy';
 
-const SCROLL_SPY_OFFSET = 24;
 const PROGRAMMATIC_SCROLL_SETTLE_MS = 400;
 
 export interface WorkbenchSectionedPanelItem {
@@ -35,7 +38,12 @@ export interface WorkbenchSectionedPanelProps extends Omit<
   navClassName?: string | undefined;
   navLinkClassName?: string | undefined;
   onActiveAnchorChange?: ((anchorId: string | undefined) => void) | undefined;
+  onSectionNavCollapsedChange?: ((collapsed: boolean) => void) | undefined;
   readOnly?: boolean | undefined;
+  scrollSpy?: boolean | 'auto' | undefined;
+  sectionNavCollapsed?: boolean | undefined;
+  sectionNavCollapsible?: boolean | undefined;
+  defaultSectionNavCollapsed?: boolean | undefined;
 }
 
 function findPanelSection(content: HTMLElement, anchorId: string) {
@@ -57,23 +65,6 @@ function readSectionTop(content: HTMLElement, section: HTMLElement) {
   return sectionRect.top - containerRect.top + content.scrollTop;
 }
 
-function readSectionPositions(
-  content: HTMLElement,
-  items: readonly WorkbenchSectionedPanelItem[],
-) {
-  return items.flatMap((item) => {
-    const section = findPanelSection(content, item.anchorId);
-    if (!section) return [];
-
-    return [
-      {
-        anchorId: item.anchorId,
-        top: readSectionTop(content, section),
-      },
-    ];
-  });
-}
-
 export function WorkbenchSectionedPanel({
   activeAnchorId,
   ariaLabel,
@@ -84,25 +75,56 @@ export function WorkbenchSectionedPanel({
   navClassName,
   navLinkClassName,
   onActiveAnchorChange,
+  onSectionNavCollapsedChange,
   readOnly = false,
+  scrollSpy = 'auto',
+  sectionNavCollapsed,
+  sectionNavCollapsible,
+  defaultSectionNavCollapsed = false,
   ...props
 }: WorkbenchSectionedPanelProps) {
   const contentRef = useRef<HTMLDivElement | null>(null);
   const isProgrammaticScrollRef = useRef(false);
-  const scrollRafRef = useRef<number | null>(null);
   const programmaticScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
+  const scrollSpyRafRef = useRef<number | null>(null);
+  const trackedActiveAnchorIdRef = useRef<string | undefined>(undefined);
+  const scrollSpyEnabledRef = useRef(false);
+  const [scrollSpyEnabled, setScrollSpyEnabled] = useState(false);
   const [uncontrolledActiveAnchorId, setUncontrolledActiveAnchorId] = useState<string | undefined>(
     defaultActiveAnchorId ?? items[0]?.anchorId,
   );
   const showSectionNav = items.length > 1;
+  const canCollapseSectionNav = showSectionNav && (sectionNavCollapsible ?? true);
+  const [uncontrolledSectionNavCollapsed, setUncontrolledSectionNavCollapsed] = useState(
+    defaultSectionNavCollapsed,
+  );
+  const sectionNavIsCollapsed =
+    canCollapseSectionNav && (sectionNavCollapsed ?? uncontrolledSectionNavCollapsed);
+  const anchorOrder = items.map((item) => item.anchorId);
   const preferredActiveAnchorId = activeAnchorId ?? uncontrolledActiveAnchorId;
   const resolvedActiveAnchorId =
     preferredActiveAnchorId && items.some((item) => item.anchorId === preferredActiveAnchorId)
       ? preferredActiveAnchorId
       : items[0]?.anchorId;
 
-  const setActiveAnchorId = (anchorId: string | undefined) => {
+  trackedActiveAnchorIdRef.current = resolvedActiveAnchorId;
+
+  const setSectionNavCollapsed = (collapsed: boolean) => {
+    if (sectionNavCollapsed === undefined) {
+      setUncontrolledSectionNavCollapsed(collapsed);
+    }
+
+    onSectionNavCollapsedChange?.(collapsed);
+  };
+
+  const commitActiveAnchorId = (anchorId: string | undefined) => {
+    if (!anchorId || anchorId === trackedActiveAnchorIdRef.current) {
+      return;
+    }
+
+    trackedActiveAnchorIdRef.current = anchorId;
+
     if (activeAnchorId === undefined) {
       setUncontrolledActiveAnchorId(anchorId);
     }
@@ -110,51 +132,114 @@ export function WorkbenchSectionedPanel({
     onActiveAnchorChange?.(anchorId);
   };
 
-  const updateActiveSection = () => {
-    const content = contentRef.current;
-    if (!content || items.length === 0 || isProgrammaticScrollRef.current) return;
+  const setActiveAnchorId = (anchorId: string | undefined) => {
+    if (!anchorId) return;
 
-    const nextActive = resolveWorkbenchSectionedPanelActiveAnchorId({
-      fallbackAnchorId: items[0]?.anchorId,
-      offset: SCROLL_SPY_OFFSET,
-      scrollHeight: content.scrollHeight,
-      scrollTop: content.scrollTop,
-      sectionPositions: readSectionPositions(content, items),
-      viewportHeight: content.clientHeight,
-    });
+    trackedActiveAnchorIdRef.current = anchorId;
 
-    setActiveAnchorId(nextActive);
-  };
-
-  const scheduleActiveSectionUpdate = () => {
-    if (isProgrammaticScrollRef.current) return;
-
-    if (scrollRafRef.current !== null) {
-      cancelAnimationFrame(scrollRafRef.current);
+    if (activeAnchorId === undefined) {
+      setUncontrolledActiveAnchorId(anchorId);
     }
 
-    scrollRafRef.current = requestAnimationFrame(() => {
-      scrollRafRef.current = null;
-      updateActiveSection();
+    onActiveAnchorChange?.(anchorId);
+  };
+
+  const resolveScrollSpyEnabled = (content: HTMLElement) => {
+    if (scrollSpy === false) return false;
+    if (scrollSpy === true) return true;
+    return isWorkbenchSectionedPanelScrollable({
+      clientHeight: content.clientHeight,
+      scrollHeight: content.scrollHeight,
     });
+  };
+
+  const updateScrollSpyEnabled = () => {
+    const content = contentRef.current;
+    if (!content) return false;
+
+    const nextEnabled = resolveScrollSpyEnabled(content);
+    scrollSpyEnabledRef.current = nextEnabled;
+    setScrollSpyEnabled(nextEnabled);
+    return nextEnabled;
+  };
+
+  const readSectionPositions = (content: HTMLElement) =>
+    items
+      .map((item) => {
+        const section = findPanelSection(content, item.anchorId);
+        if (!section) return null;
+
+        return {
+          anchorId: item.anchorId,
+          top: readSectionTop(content, section),
+        };
+      })
+      .filter((section): section is { anchorId: string; top: number } => section !== null);
+
+  const applyScrollSpyActiveAnchor = () => {
+    scrollSpyRafRef.current = null;
+
+    const content = contentRef.current;
+    if (
+      !content ||
+      items.length === 0 ||
+      !scrollSpyEnabledRef.current ||
+      isProgrammaticScrollRef.current
+    ) {
+      return;
+    }
+
+    const nextActive = resolveWorkbenchSectionedPanelActiveAnchorFromScroll({
+      anchorOrder,
+      clientHeight: content.clientHeight,
+      fallbackAnchorId: items[0]?.anchorId,
+      scrollHeight: content.scrollHeight,
+      scrollTop: content.scrollTop,
+      sectionPositions: readSectionPositions(content),
+    });
+
+    commitActiveAnchorId(nextActive);
+  };
+
+  const scheduleScrollSpyUpdate = () => {
+    if (scrollSpyRafRef.current !== null) return;
+
+    scrollSpyRafRef.current = requestAnimationFrame(applyScrollSpyActiveAnchor);
+  };
+
+  const handleIntersection = () => {
+    if (
+      items.length === 0 ||
+      !scrollSpyEnabledRef.current ||
+      isProgrammaticScrollRef.current
+    ) {
+      return;
+    }
+
+    scheduleScrollSpyUpdate();
+  };
+
+  const disconnectIntersectionObserver = () => {
+    intersectionObserverRef.current?.disconnect();
+    intersectionObserverRef.current = null;
   };
 
   const setupIntersectionObserver = () => {
     const content = contentRef.current;
-    if (!content || typeof IntersectionObserver === 'undefined') return;
+    if (!content || typeof IntersectionObserver === 'undefined' || !scrollSpyEnabledRef.current) {
+      disconnectIntersectionObserver();
+      return;
+    }
 
-    intersectionObserverRef.current?.disconnect();
+    disconnectIntersectionObserver();
 
-    const observer = new IntersectionObserver(
-      () => {
-        scheduleActiveSectionUpdate();
-      },
-      {
-        root: content,
-        rootMargin: `-${SCROLL_SPY_OFFSET}px 0px -55% 0px`,
-        threshold: [0, 0.1, 0.25, 0.5, 0.75, 1],
-      },
-    );
+    const observer = new IntersectionObserver(handleIntersection, {
+      root: content,
+      rootMargin: createWorkbenchSectionedPanelIntersectionRootMargin(
+        WORKBENCH_SECTIONED_PANEL_SCROLL_SPY_OFFSET,
+      ),
+      threshold: [0],
+    });
 
     for (const item of items) {
       const section = findPanelSection(content, item.anchorId);
@@ -164,6 +249,17 @@ export function WorkbenchSectionedPanel({
     }
 
     intersectionObserverRef.current = observer;
+  };
+
+  const refreshScrollSpy = () => {
+    const enabled = updateScrollSpyEnabled();
+    if (enabled) {
+      setupIntersectionObserver();
+      scheduleScrollSpyUpdate();
+      return;
+    }
+
+    disconnectIntersectionObserver();
   };
 
   const scrollToSection = (anchorId: string) => {
@@ -179,13 +275,17 @@ export function WorkbenchSectionedPanel({
       return;
     }
 
+    setActiveAnchorId(anchorId);
+
+    if (!scrollSpyEnabledRef.current) {
+      return;
+    }
+
     const targetTop = resolveWorkbenchSectionedPanelScrollTop({
-      offset: SCROLL_SPY_OFFSET,
       sectionTop: readSectionTop(content, section),
     });
 
     isProgrammaticScrollRef.current = true;
-    setActiveAnchorId(anchorId);
     content.scrollTo({ top: targetTop });
 
     if (programmaticScrollTimerRef.current) {
@@ -194,7 +294,7 @@ export function WorkbenchSectionedPanel({
 
     programmaticScrollTimerRef.current = setTimeout(() => {
       isProgrammaticScrollRef.current = false;
-      updateActiveSection();
+      scheduleScrollSpyUpdate();
     }, PROGRAMMATIC_SCROLL_SETTLE_MS);
   };
 
@@ -202,78 +302,119 @@ export function WorkbenchSectionedPanel({
     const content = contentRef.current;
     if (!content) return undefined;
 
-    scheduleActiveSectionUpdate();
-    setupIntersectionObserver();
+    refreshScrollSpy();
 
     const resizeObserver =
       typeof ResizeObserver === 'undefined'
         ? null
         : new ResizeObserver(() => {
-            scheduleActiveSectionUpdate();
+            refreshScrollSpy();
           });
     resizeObserver?.observe(content);
 
     return () => {
       resizeObserver?.disconnect();
-      intersectionObserverRef.current?.disconnect();
-      intersectionObserverRef.current = null;
+      disconnectIntersectionObserver();
+
+      if (scrollSpyRafRef.current !== null) {
+        cancelAnimationFrame(scrollSpyRafRef.current);
+        scrollSpyRafRef.current = null;
+      }
     };
-  }, [items]);
+  }, [items, scrollSpy]);
 
   useEffect(
     () => () => {
-      if (scrollRafRef.current !== null) {
-        cancelAnimationFrame(scrollRafRef.current);
-      }
-
       if (programmaticScrollTimerRef.current) {
         clearTimeout(programmaticScrollTimerRef.current);
       }
 
-      intersectionObserverRef.current?.disconnect();
+      if (scrollSpyRafRef.current !== null) {
+        cancelAnimationFrame(scrollSpyRafRef.current);
+        scrollSpyRafRef.current = null;
+      }
+
+      disconnectIntersectionObserver();
     },
     [],
   );
 
-  return (
-    <WorkbenchNavigationPanel
-      className={cx('ui-workbench-sectioned-panel', className)}
-      content={items.map((item) => (
-        <Fragment key={item.anchorId}>{item.render()}</Fragment>
-      ))}
-      contentClassName={cx('ui-workbench-sectioned-panel__content', contentClassName)}
-      contentProps={{
-        ref: contentRef,
-        onScroll: scheduleActiveSectionUpdate,
-      }}
-      data-readonly={readOnly ? 'true' : undefined}
-      nav={
-        showSectionNav
-          ? items.map((item) => {
-              const active = resolvedActiveAnchorId === item.anchorId;
+  const sectionNavLinks = items.map((item) => {
+    const active = resolvedActiveAnchorId === item.anchorId;
 
-              return (
-                <a
-                  key={item.anchorId}
-                  aria-current={active ? 'true' : undefined}
-                  className={cx('ui-workbench-sectioned-panel__nav-link', navLinkClassName)}
-                  data-active={active ? 'true' : undefined}
-                  href={`#${item.anchorId}`}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    scrollToSection(item.anchorId);
-                  }}
-                >
-                  <span>{item.title}</span>
-                  {item.count !== undefined ? <em>{item.count}</em> : null}
-                </a>
-              );
-            })
-          : null
-      }
-      navClassName={cx('ui-workbench-sectioned-panel__nav', navClassName)}
-      navProps={{ 'aria-label': ariaLabel }}
-      {...props}
-    />
+    return (
+      <a
+        key={item.anchorId}
+        aria-current={active ? 'location' : undefined}
+        className={cx('ui-workbench-sectioned-panel__nav-link', navLinkClassName)}
+        data-active={active ? 'true' : undefined}
+        href={`#${item.anchorId}`}
+        onClick={(event) => {
+          event.preventDefault();
+          scrollToSection(item.anchorId);
+        }}
+      >
+        <span>{item.title}</span>
+        {item.count !== undefined ? <em>{item.count}</em> : null}
+      </a>
+    );
+  });
+
+  return (
+    <div className="ui-workbench-sectioned-panel-host">
+      <WorkbenchNavigationPanel
+        className={cx('ui-workbench-sectioned-panel', className)}
+        content={
+          <div
+            ref={contentRef}
+            className="ui-workbench-sectioned-panel__scroll"
+            onScroll={scheduleScrollSpyUpdate}
+          >
+            {items.map((item) => (
+              <Fragment key={item.anchorId}>{item.render()}</Fragment>
+            ))}
+          </div>
+        }
+        contentClassName={cx('ui-workbench-sectioned-panel__body', contentClassName)}
+        data-nav-collapsed={sectionNavIsCollapsed ? 'true' : undefined}
+        data-readonly={readOnly ? 'true' : undefined}
+        data-scroll-spy={scrollSpyEnabled ? 'true' : 'false'}
+        nav={
+          showSectionNav && !sectionNavIsCollapsed ? (
+            <div className="ui-workbench-sectioned-panel__nav-shell">
+              <div className="ui-workbench-sectioned-panel__nav-links">{sectionNavLinks}</div>
+              {canCollapseSectionNav ? (
+                <div className="ui-workbench-sectioned-panel__nav-footer">
+                  <IconButton
+                    compact
+                    className="ui-workbench-sectioned-panel__nav-toggle"
+                    icon="codicon-chevron-left"
+                    label="Hide section navigation"
+                    onClick={() => setSectionNavCollapsed(true)}
+                  />
+                </div>
+              ) : null}
+            </div>
+          ) : null
+        }
+        navClassName={cx('ui-workbench-sectioned-panel__nav', navClassName)}
+        navProps={{ 'aria-label': ariaLabel }}
+        {...props}
+      />
+
+      {sectionNavIsCollapsed && canCollapseSectionNav ? (
+        <div className="ui-workbench-sectioned-panel__nav-reveal-zone">
+          <div className="ui-workbench-sectioned-panel__nav-open-overlay">
+            <IconButton
+              compact
+              className="ui-workbench-sectioned-panel__nav-toggle ui-workbench-sectioned-panel__nav-toggle--overlay"
+              icon="codicon-chevron-right"
+              label="Show section navigation"
+              onClick={() => setSectionNavCollapsed(false)}
+            />
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
