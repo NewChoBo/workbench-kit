@@ -11,6 +11,12 @@ export type {
 export { WorkbenchStructuredDataSchemaPanelEmbed } from './StructuredDataSchemaPanelEmbed';
 export type { WorkbenchStructuredDataSchemaPanelEmbedProps } from './StructuredDataSchemaPanelEmbed';
 export { WorkbenchStructuredDataSchemaPanelFrame } from './StructuredDataSchemaPanelFrame';
+export {
+  WorkbenchStructuredDataTableView,
+  buildWorkbenchStructuredDataTableFromRecords,
+  formatWorkbenchStructuredDataTableCell,
+} from './StructuredDataTableView';
+export type { WorkbenchStructuredDataTableViewProps } from './StructuredDataTableView';
 export type {
   WorkbenchStructuredDataSchemaPanelFrameHeaderContent,
   WorkbenchStructuredDataSchemaPanelFrameProps,

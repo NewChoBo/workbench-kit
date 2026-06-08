@@ -244,7 +244,10 @@ export {
   WorkbenchStructuredDataSchemaPanel,
   WorkbenchStructuredDataSchemaPanelEmbed,
   WorkbenchStructuredDataSchemaPanelFrame,
+  WorkbenchStructuredDataTableView,
   WorkbenchStructuredDataTextArrayInput,
+  buildWorkbenchStructuredDataTableFromRecords,
+  formatWorkbenchStructuredDataTableCell,
 } from './settings';
 export type {
   WorkbenchNavigationPanelProps,
@@ -297,6 +300,7 @@ export type {
   WorkbenchStructuredDataSchemaPanelEmbedProps,
   WorkbenchStructuredDataSchemaPanelFrameHeaderContent,
   WorkbenchStructuredDataSchemaPanelFrameProps,
+  WorkbenchStructuredDataTableViewProps,
   WorkbenchStructuredDataSchemaSectionAliases,
   WorkbenchStructuredDataSchemaSectionSummary,
   WorkbenchStructuredDataSchemaTableColumnInput,

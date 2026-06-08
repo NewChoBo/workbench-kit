@@ -4,6 +4,7 @@ import { useId, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Button } from '../../primitives/Button';
 import { Checkbox } from '../../primitives/Checkbox';
 import { EmptyState } from '../../primitives/EmptyState';
+import { WorkbenchStructuredDataTableView } from './StructuredDataTableView';
 import { Field } from '../../primitives/Field';
 import { IconButton } from '../../primitives/IconButton';
 import { Select } from '../../primitives/Select';
@@ -229,53 +230,12 @@ function StructuredDataSection({
         </div>
       ) : null}
       {section.tables?.map((table) => (
-        <StructuredDataTable key={table.id} table={table} />
+        <WorkbenchStructuredDataTableView
+          key={table.id}
+          className="ui-workbench-structured-data-form__table-section"
+          table={table}
+        />
       ))}
-    </section>
-  );
-}
-
-function StructuredDataTable({ table }: { table: WorkbenchStructuredDataTable }) {
-  return (
-    <section className="ui-workbench-structured-data-form__table-section">
-      {table.label ? <h3>{table.label}</h3> : null}
-      {table.description ? <p>{table.description}</p> : null}
-      {table.rows.length === 0 ? (
-        <EmptyState compact icon="codicon-table">
-          {table.emptyLabel ?? 'No rows'}
-        </EmptyState>
-      ) : (
-        <div className="ui-workbench-structured-data-form__table-scroll">
-          <table className="ui-workbench-structured-data-form__table">
-            <thead>
-              <tr>
-                {table.columns.map((column) => (
-                  <th key={column.id} data-align={column.align}>
-                    {column.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {table.rows.map((row) => (
-                <tr key={row.id}>
-                  {table.columns.map((column) => {
-                    const value = column.path
-                      ? getWorkbenchStructuredDataValue(row.data, column.path)
-                      : undefined;
-
-                    return (
-                      <td key={column.id} data-align={column.align}>
-                        {column.render?.({ column, row, value }) ?? formatStructuredDataCell(value)}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </section>
   );
 }
@@ -572,13 +532,6 @@ export function WorkbenchStructuredDataTextArrayInput({
       </Button>
     </div>
   );
-}
-
-function formatStructuredDataCell(value: unknown) {
-  if (value === undefined || value === null || value === '') return '-';
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-  if (Array.isArray(value)) return value.length === 0 ? '-' : value.join(', ');
-  return String(value);
 }
 
 function getStructuredDataLabelText(label: ReactNode, fallback: string) {

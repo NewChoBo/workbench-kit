@@ -11,7 +11,8 @@
 .ui-workbench-fullscreen-carousel__viewport,
 .workbench-delete-targets,
 .ui-workbench-structured-data-form__table-scroll,
-.ui-workbench-structured-data-schema-panel__table-scroll {
+.ui-workbench-structured-data-schema-panel__table-scroll,
+.ui-workbench-structured-data-table-view__scroll {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   scrollbar-width: thin;
 }
@@ -34,7 +35,8 @@
 .ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar,
 .workbench-delete-targets::-webkit-scrollbar,
 .ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar {
+.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar,
+.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar {
   width: var(--scrollbar-size);
   height: var(--scrollbar-size);
 }
@@ -52,7 +54,8 @@
 .ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar-button,
 .workbench-delete-targets::-webkit-scrollbar-button,
 .ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar-button,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-button {
+.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-button,
+.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar-button {
   display: none;
 }
 
@@ -69,7 +72,8 @@
 .ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar-track,
 .workbench-delete-targets::-webkit-scrollbar-track,
 .ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar-track,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-track {
+.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-track,
+.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar-track {
   background: var(--scrollbar-track);
 }
 
@@ -86,7 +90,8 @@
 .ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar-thumb,
 .workbench-delete-targets::-webkit-scrollbar-thumb,
 .ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar-thumb,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-thumb {
+.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-thumb,
+.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border: var(--scrollbar-thumb-inset) solid transparent;
   border-radius: calc(var(--scrollbar-size) / 2);
@@ -106,7 +111,8 @@
 .ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar-thumb:hover,
 .workbench-delete-targets::-webkit-scrollbar-thumb:hover,
 .ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar-thumb:hover,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-thumb:hover {
+.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-thumb:hover,
+.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
   background-clip: content-box;
 }
@@ -124,7 +130,8 @@
 .ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar-thumb:active,
 .workbench-delete-targets::-webkit-scrollbar-thumb:active,
 .ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar-thumb:active,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-thumb:active {
+.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-thumb:active,
+.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar-thumb:active {
   background: var(--scrollbar-thumb-active);
   background-clip: content-box;
 }
