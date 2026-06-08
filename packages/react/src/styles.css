@@ -4,6 +4,7 @@
 @import './primitives/select/select.css';
 @import './primitives/select/select.app.css';
 @import './workbench/settings/structured-data-schema-panel.css';
+@import './workbench/settings/structured-data-table-view.css';
 
 .ui-workbench-host-document,
 .ui-workbench-host,
@@ -927,8 +928,7 @@
   border-top: 1px solid var(--color-border);
 }
 
-.ui-workbench-structured-data-form__section h2,
-.ui-workbench-structured-data-form__table-section h3 {
+.ui-workbench-structured-data-form__section h2 {
   margin: 0;
   color: var(--color-text);
   font-weight: 600;
@@ -940,13 +940,7 @@
   line-height: 1.25;
 }
 
-.ui-workbench-structured-data-form__table-section h3 {
-  font-size: 1rem;
-  line-height: 1.3;
-}
-
-.ui-workbench-structured-data-form__section > p,
-.ui-workbench-structured-data-form__table-section > p {
+.ui-workbench-structured-data-form__section > p {
   max-width: 680px;
   margin: 8px 0 18px;
   color: var(--color-text-muted);
@@ -999,45 +993,6 @@
 
 .ui-workbench-structured-data-form__table-section {
   margin-top: 24px;
-}
-
-.ui-workbench-structured-data-form__table-scroll {
-  min-width: 0;
-  margin-top: 12px;
-  overflow: auto;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-surface);
-}
-
-.ui-workbench-structured-data-form__table {
-  width: 100%;
-  min-width: 520px;
-  border-collapse: collapse;
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
-}
-
-.ui-workbench-structured-data-form__table th,
-.ui-workbench-structured-data-form__table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--color-border);
-  text-align: left;
-  vertical-align: top;
-}
-
-.ui-workbench-structured-data-form__table th {
-  color: var(--color-text-muted);
-  background: var(--color-bg);
-  font-weight: 600;
-}
-
-.ui-workbench-structured-data-form__table tr:last-child td {
-  border-bottom: 0;
-}
-
-.ui-workbench-structured-data-form__table [data-align='end'] {
-  text-align: right;
 }
 
 .ui-workbench-structured-data-form__actions {
