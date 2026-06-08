@@ -1816,6 +1816,7 @@
 
 .ui-side-bar-view__scroll-region {
   position: relative;
+  z-index: 0;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -1836,7 +1837,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 5;
+  z-index: 10;
   background: transparent;
   pointer-events: none;
 }
@@ -2992,7 +2993,7 @@
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface-elevated);
+  background: var(--color-surface-elevated, var(--color-surface));
   box-shadow: var(--shadow-md);
 }
 
@@ -3671,6 +3672,14 @@
   padding: var(--chat-side-bar-vertical-padding) var(--ui-side-bar-inline-padding);
   background: transparent;
   pointer-events: none;
+  position: relative;
+  z-index: 1;
+}
+
+.composer .ui-workbench-command-suggest {
+  position: relative;
+  z-index: 2;
+  isolation: isolate;
 }
 
 .composer__box {
