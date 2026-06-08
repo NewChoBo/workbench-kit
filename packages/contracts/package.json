@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "build": "tsup",
-    "prepare": "pnpm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
