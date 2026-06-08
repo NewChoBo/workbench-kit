@@ -1,28 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { NPM_PUBLISH_ORDER, NPM_REGISTRY } from './npm-publish-config.mjs';
 
 const root = process.cwd();
 const dryRun = process.argv.includes('--dry-run') || process.env.DRY_RUN === 'true';
 const distTag = process.env.NPM_DIST_TAG || 'prototype';
-const registry = process.env.NPM_CONFIG_REGISTRY || 'https://registry.npmjs.org/';
+const registry = NPM_REGISTRY;
 const packDir = path.join(root, '.npm-pack');
 const trustedPublisherAvailable =
   process.env.GITHUB_ACTIONS === 'true' && Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN);
 
-const publishOrder = [
-  '@workbench-kit/contracts',
-  '@workbench-kit/json-widget',
-  '@workbench-kit/core',
-  '@workbench-kit/runtime',
-  '@workbench-kit/tokens',
-  '@workbench-kit/workspace',
-  '@workbench-kit/adapters',
-  '@workbench-kit/services',
-  '@workbench-kit/react',
-  '@workbench-kit/vscode-host',
-  '@workbench-kit/vscode-extension',
-];
+const publishOrder = NPM_PUBLISH_ORDER;
 
 resetDirectory(packDir);
 
