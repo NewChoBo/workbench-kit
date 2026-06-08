@@ -1,3 +1,5 @@
+export { WorkbenchPanelRegion } from './WorkbenchPanelRegion';
+export type { WorkbenchPanelRegionProps } from './WorkbenchPanelRegion';
 export { WorkbenchNavigationPanel } from './NavigationPanel';
 export type { WorkbenchNavigationPanelProps } from './NavigationPanel';
 export { WorkbenchSectionedPanel } from './SectionedPanel';
