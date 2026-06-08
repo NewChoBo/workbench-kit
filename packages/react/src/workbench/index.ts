@@ -242,6 +242,8 @@ export {
   WorkbenchStructuredDataForm,
   WorkbenchStructuredDataSchemaFieldInput,
   WorkbenchStructuredDataSchemaPanel,
+  WorkbenchStructuredDataSchemaPanelEmbed,
+  WorkbenchStructuredDataSchemaPanelFrame,
   WorkbenchStructuredDataTextArrayInput,
 } from './settings';
 export type {
@@ -292,6 +294,9 @@ export type {
   WorkbenchStructuredDataSchemaPanelClassNames,
   WorkbenchStructuredDataSchemaPanelLabels,
   WorkbenchStructuredDataSchemaPanelProps,
+  WorkbenchStructuredDataSchemaPanelEmbedProps,
+  WorkbenchStructuredDataSchemaPanelFrameHeaderContent,
+  WorkbenchStructuredDataSchemaPanelFrameProps,
   WorkbenchStructuredDataSchemaSectionAliases,
   WorkbenchStructuredDataSchemaSectionSummary,
   WorkbenchStructuredDataSchemaTableColumnInput,

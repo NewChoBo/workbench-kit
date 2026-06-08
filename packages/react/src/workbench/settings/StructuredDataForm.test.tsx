@@ -47,6 +47,8 @@ import {
   type WorkbenchStructuredDataFormSection,
 } from './StructuredDataForm';
 import { WorkbenchStructuredDataSchemaPanel } from './StructuredDataSchemaPanel';
+import { WorkbenchStructuredDataSchemaPanelEmbed } from './StructuredDataSchemaPanelEmbed';
+import { WorkbenchStructuredDataSchemaPanelFrame } from './StructuredDataSchemaPanelFrame';
 
 const sections: WorkbenchStructuredDataFormSection[] = [
   {
@@ -582,5 +584,86 @@ describe('WorkbenchStructuredDataForm rendering', () => {
     expect(markup).toContain('aria-label="Title"');
     expect(markup).toContain('Agreement');
     expect(markup).toContain('Delete row');
+  });
+
+  it('renders schema panel embed wrapper with fill', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchStructuredDataSchemaPanelEmbed
+        ariaLabel="Schema sections"
+        data={{ basic: { title: 'Agreement' } }}
+        schema={{
+          schema: {
+            properties: { 'basic.title': { title: 'Title' } },
+            sections: [{ fields: ['title'], sectionKey: 'basic', title: 'Basic', type: 'form' }],
+          },
+        }}
+      />,
+    );
+
+    expect(markup).toContain('ui-workbench-structured-data-schema-panel-embed');
+    expect(markup).toContain('ui-workbench-structured-data-schema-panel--fill');
+  });
+
+  it('renders fill embed class when fill is enabled', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchStructuredDataSchemaPanel
+        ariaLabel="Schema sections"
+        data={{ basic: { title: 'Agreement' } }}
+        fill
+        schema={{
+          schema: {
+            properties: { 'basic.title': { title: 'Title' } },
+            sections: [{ fields: ['title'], sectionKey: 'basic', title: 'Basic', type: 'form' }],
+          },
+        }}
+      />,
+    );
+
+    expect(markup).toContain('ui-workbench-structured-data-schema-panel--fill');
+    expect(markup).toContain('ui-workbench-structured-data-schema-panel');
+  });
+
+  it('omits fill embed class by default', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchStructuredDataSchemaPanel
+        ariaLabel="Schema sections"
+        data={{ basic: { title: 'Agreement' } }}
+        schema={{
+          schema: {
+            properties: { 'basic.title': { title: 'Title' } },
+            sections: [{ fields: ['title'], sectionKey: 'basic', title: 'Basic', type: 'form' }],
+          },
+        }}
+      />,
+    );
+
+    expect(markup).toContain('ui-workbench-structured-data-schema-panel');
+    expect(markup).not.toContain('ui-workbench-structured-data-schema-panel--fill');
+  });
+
+  it('renders schema panel frame with structured header content', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchStructuredDataSchemaPanelFrame
+        ariaLabel="Schema sections"
+        data={{ basic: { title: 'Agreement' } }}
+        headerContent={{
+          eyebrow: 'Schema Preview',
+          title: 'Project Alpha',
+          subtitle: 'config/schema.json',
+        }}
+        schema={{
+          schema: {
+            properties: { 'basic.title': { title: 'Title' } },
+            sections: [{ fields: ['title'], sectionKey: 'basic', title: 'Basic', type: 'form' }],
+          },
+        }}
+      />,
+    );
+
+    expect(markup).toContain('ui-workbench-structured-data-schema-panel-frame');
+    expect(markup).toContain('ui-workbench-structured-data-schema-panel-frame__header');
+    expect(markup).toContain('Schema Preview');
+    expect(markup).toContain('Project Alpha');
+    expect(markup).toContain('ui-workbench-structured-data-schema-panel-embed');
   });
 });

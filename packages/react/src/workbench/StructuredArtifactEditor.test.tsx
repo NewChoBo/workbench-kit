@@ -55,6 +55,8 @@ describe('StructuredArtifactEditor', () => {
     expect(markup).toContain('Basic Settings');
     expect(markup).toContain('Title');
     expect(markup).toContain('value="Project Alpha"');
+    expect(markup).toContain('ui-workbench-structured-data-schema-panel-embed');
+    expect(markup).toContain('ui-workbench-structured-data-schema-panel--fill');
   });
 
   it('renders code mode without displaying preview panel', () => {

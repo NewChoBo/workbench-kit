@@ -1,7 +1,7 @@
 import { useState, useMemo, type ReactNode } from 'react';
 import { useWorkspaceDrafts } from './workspace/WorkspaceDraftsContext';
 import { WorkspaceEditor, type WorkspaceEditorTheme } from './workspace/WorkspaceEditor';
-import { WorkbenchStructuredDataSchemaPanel } from './settings/StructuredDataSchemaPanel';
+import { WorkbenchStructuredDataSchemaPanelEmbed } from './settings/StructuredDataSchemaPanelEmbed';
 import { type WorkbenchStructuredDataSchemaDocument } from './settings/StructuredDataForm';
 import { type WorkbenchArtifactMode, WorkbenchArtifactModeControls } from './ArtifactShell';
 import { Button } from '../primitives/Button';
@@ -128,19 +128,17 @@ export function StructuredArtifactEditor({
   );
 
   const previewPane = (
-    <div className="ui-structured-artifact-editor__preview">
-      <WorkbenchStructuredDataSchemaPanel
-        activePattern={activePattern}
-        ariaLabel="Schema sections"
-        data={structuredData}
-        preferredTableColumns={preferredTableColumns}
-        readOnly={readOnly}
-        schema={schema}
-        sectionValueAliases={sectionValueAliases}
-        titleFallback={titleFallback ?? fileNameOfPath(file.path)}
-        onDataChange={handleDataChange}
-      />
-    </div>
+    <WorkbenchStructuredDataSchemaPanelEmbed
+      activePattern={activePattern}
+      ariaLabel="Schema sections"
+      data={structuredData}
+      preferredTableColumns={preferredTableColumns}
+      readOnly={readOnly}
+      schema={schema}
+      sectionValueAliases={sectionValueAliases}
+      titleFallback={titleFallback ?? fileNameOfPath(file.path)}
+      onDataChange={handleDataChange}
+    />
   );
 
   return (
