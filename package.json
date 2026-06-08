@@ -21,6 +21,7 @@
     "validate": "pnpm typecheck && pnpm lint && pnpm test && pnpm format:check && pnpm build:storybook && pnpm check:launch-boundary",
     "validate:full": "pnpm validate && pnpm test:storybook-play:required",
     "release:check": "node scripts/check-release-version.mjs",
+    "sync:version-from-tag": "node scripts/sync-version-from-tag.mjs",
     "publish:packages": "node scripts/publish-packages.mjs",
     "publish:packages:dry-run": "node scripts/publish-packages.mjs --dry-run"
   },
