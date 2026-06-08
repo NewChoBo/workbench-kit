@@ -8,34 +8,55 @@ const distTag = process.env.NPM_DIST_TAG || 'prototype';
 const packDir = path.join(root, '.npm-pack-preflight');
 const trustedPublisherAvailable =
   process.env.GITHUB_ACTIONS === 'true' && Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN);
+const hasAuthToken = Boolean(process.env.NODE_AUTH_TOKEN);
 
 console.log('[preflight-npm] Checking npm registry connectivity...');
 run('npm', ['ping', '--registry', NPM_REGISTRY]);
 
-if (!process.env.NODE_AUTH_TOKEN && process.env.GITHUB_ACTIONS === 'true') {
+if (!hasAuthToken && !trustedPublisherAvailable) {
   throw new Error(
-    'NODE_AUTH_TOKEN is missing. Configure an npm token secret for trusted publishing or classic token auth.',
+    [
+      'No npm auth path is available for publish preflight.',
+      'Configure either:',
+      '- GitHub Actions trusted publishing (permissions.id-token: write + npm trusted publisher), or',
+      '- Repository secret NPM_TOKEN for classic/granular token auth.',
+    ].join('\n'),
   );
 }
 
-const whoami = run('npm', ['whoami', '--registry', NPM_REGISTRY], { encoding: 'utf8' }).trim();
-console.log(`[preflight-npm] Authenticated as ${whoami}`);
+let actor = 'unknown';
+if (hasAuthToken) {
+  try {
+    actor = run('npm', ['whoami', '--registry', NPM_REGISTRY], { encoding: 'utf8' }).trim();
+    console.log(`[preflight-npm] Authenticated as ${actor} via NODE_AUTH_TOKEN.`);
+  } catch {
+    throw new Error(
+      'npm whoami failed with NODE_AUTH_TOKEN. Check NPM_TOKEN secret value, expiry, and automation/2FA settings.',
+    );
+  }
 
-try {
-  const packages = run(
-    'npm',
-    ['access', 'list', 'packages', '@workbench-kit', '--registry', NPM_REGISTRY],
-    { encoding: 'utf8' },
-  ).trim();
+  try {
+    const packages = run(
+      'npm',
+      ['access', 'list', 'packages', '@workbench-kit', '--registry', NPM_REGISTRY],
+      { encoding: 'utf8' },
+    ).trim();
+    console.log(
+      packages
+        ? `[preflight-npm] Scope packages visible to ${actor}:\n${packages}`
+        : `[preflight-npm] No published @workbench-kit packages yet for ${actor}.`,
+    );
+  } catch {
+    console.warn(
+      '[preflight-npm] Could not list @workbench-kit packages. Verify org membership before first publish.',
+    );
+  }
+} else {
+  actor = 'github-actions-trusted-publisher';
   console.log(
-    packages
-      ? `[preflight-npm] Scope packages visible to ${whoami}:\n${packages}`
-      : `[preflight-npm] No published @workbench-kit packages yet for ${whoami}.`,
+    '[preflight-npm] NODE_AUTH_TOKEN is not set; using GitHub Actions trusted publishing (OIDC).',
   );
-} catch {
-  console.warn(
-    '[preflight-npm] Could not list @workbench-kit packages. Verify org membership before first publish.',
-  );
+  console.log('[preflight-npm] Skipping npm whoami because OIDC auth is resolved at publish time.');
 }
 
 resetDirectory(packDir);
@@ -46,7 +67,17 @@ const probeJson = readJson(path.join(probeDir, 'package.json'));
 const probeSpec = `${probeJson.name}@${probeJson.version}`;
 const tarball = packPackage(probePackage);
 
-const args = ['publish', tarball, '--access', 'public', '--tag', distTag, '--registry', NPM_REGISTRY, '--dry-run'];
+const args = [
+  'publish',
+  tarball,
+  '--access',
+  'public',
+  '--tag',
+  distTag,
+  '--registry',
+  NPM_REGISTRY,
+  '--dry-run',
+];
 if (!trustedPublisherAvailable) {
   args.push('--provenance=false');
 }
@@ -55,23 +86,37 @@ console.log(`[preflight-npm] Dry-run publish probe for ${probeSpec}...`);
 try {
   run('npm', args, { stdio: 'inherit' });
 } catch {
-  throw publishPermissionError(whoami, probeJson.name);
+  throw publishPermissionError(actor, probeJson.name, { hasAuthToken, trustedPublisherAvailable });
 }
 
 console.log('[preflight-npm] Publish auth preflight passed.');
 
-function publishPermissionError(actor, packageName) {
-  return new Error(
-    [
-      `npm publish preflight failed for ${packageName}.`,
-      `Authenticated user: ${actor}`,
-      'Common causes for npm E404 on scoped first publish:',
-      '- The @workbench-kit npm organization does not exist or this user is not a member.',
-      '- NODE_AUTH_TOKEN / trusted publisher lacks publish permission for @workbench-kit.',
-      '- Trusted publishing is configured for a different repository or package name.',
-      'Verify on npmjs.com: org membership, package access, and trusted publisher settings.',
-    ].join('\n'),
+function publishPermissionError(actor, packageName, auth) {
+  const hints = [
+    `npm publish preflight failed for ${packageName}.`,
+    `Auth mode: ${auth.trustedPublisherAvailable ? 'trusted-publisher' : 'token'} (${actor})`,
+  ];
+
+  if (auth.trustedPublisherAvailable && !auth.hasAuthToken) {
+    hints.push(
+      '- Trusted publisher may be missing or mismatched for NewChoBo/newchobo-ui-package / publish.yml.',
+      '- Confirm npm org workbench-kit grants publish access to the trusted publisher owner account.',
+    );
+  } else {
+    hints.push(
+      '- NODE_AUTH_TOKEN may lack publish permission for @workbench-kit.',
+      '- Use an Automation token when npm 2FA is enabled.',
+    );
+  }
+
+  hints.push(
+    'Common causes for npm E404/E401 on scoped publish:',
+    '- The @workbench-kit npm organization exists but this auth path is not a member.',
+    '- Trusted publishing is configured for a different repository, workflow, or environment.',
+    'Verify on npmjs.com: org membership, trusted publisher settings, and package access.',
   );
+
+  return new Error(hints.join('\n'));
 }
 
 function packageDirFor(packageName) {
