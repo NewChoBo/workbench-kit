@@ -2,56 +2,17 @@ import type { WidgetJsonSchema, WidgetTypeDefinition } from '@workbench-kit/cont
 
 type JsonSchemaObject = Record<string, unknown>;
 
-const PLAYGROUND_WIDGET_TYPES = [
-  'text',
-  'box',
-  'grid',
-  'stack',
-  'row',
-  'column',
-  'button',
-  'input',
-  'list-view',
-  'tile',
-  'divider',
-  'image',
-  'document',
-] as const;
-
-function placementProperties(): JsonSchemaObject {
-  return {
-    col: { type: 'number' },
-    row: { type: 'number' },
-    colSpan: { type: 'number' },
-    rowSpan: { type: 'number' },
-    flex: { type: 'number' },
-    left: { type: 'number' },
-    top: { type: 'number' },
-    right: { type: 'number' },
-    bottom: { type: 'number' },
-  };
-}
-
-const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
+const CORE_WIDGET_SCHEMA: JsonSchemaObject = {
   $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'PlaygroundWidgetSchema',
+  title: 'WidgetDocumentSchema',
   $ref: '#/definitions/Widget',
   definitions: {
     Widget: {
       oneOf: [
         { $ref: '#/definitions/TextWidget' },
-        { $ref: '#/definitions/BoxWidget' },
-        { $ref: '#/definitions/GridWidget' },
-        { $ref: '#/definitions/StackWidget' },
         { $ref: '#/definitions/RowWidget' },
         { $ref: '#/definitions/ColumnWidget' },
-        { $ref: '#/definitions/ButtonWidget' },
-        { $ref: '#/definitions/InputWidget' },
-        { $ref: '#/definitions/ListViewWidget' },
-        { $ref: '#/definitions/TileWidget' },
-        { $ref: '#/definitions/DividerWidget' },
-        { $ref: '#/definitions/ImageWidget' },
-        { $ref: '#/definitions/DocumentWidget' },
+        { $ref: '#/definitions/GridWidget' },
       ],
     },
     TextWidget: {
@@ -59,57 +20,11 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
       required: ['type', 'text'],
       properties: {
         type: { const: 'text' },
+        id: { type: 'string' },
         text: { type: 'string' },
         color: { type: 'string' },
         background: { type: 'string' },
         fontSize: { type: 'number' },
-        fontWeight: { enum: ['normal', 'bold'] },
-        textAlign: { enum: ['left', 'center', 'right'] },
-        ...placementProperties(),
-      },
-      additionalProperties: true,
-    },
-    BoxWidget: {
-      type: 'object',
-      required: ['type'],
-      properties: {
-        type: { const: 'box' },
-        background: { type: 'string' },
-        borderRadius: { type: 'number' },
-        padding: { type: 'number' },
-        child: { $ref: '#/definitions/Widget' },
-        ...placementProperties(),
-      },
-      additionalProperties: true,
-    },
-    GridWidget: {
-      type: 'object',
-      required: ['type', 'columns'],
-      properties: {
-        type: { const: 'grid' },
-        columns: { type: 'number', minimum: 1 },
-        rows: { type: 'number', minimum: 1 },
-        gap: { type: 'number', minimum: 0 },
-        padding: { type: 'number', minimum: 0 },
-        background: { type: 'string' },
-        children: {
-          type: 'array',
-          items: { $ref: '#/definitions/Widget' },
-        },
-      },
-      additionalProperties: true,
-    },
-    StackWidget: {
-      type: 'object',
-      required: ['type'],
-      properties: {
-        type: { const: 'stack' },
-        background: { type: 'string' },
-        children: {
-          type: 'array',
-          items: { $ref: '#/definitions/Widget' },
-        },
-        ...placementProperties(),
       },
       additionalProperties: true,
     },
@@ -118,6 +33,7 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
       required: ['type'],
       properties: {
         type: { const: 'row' },
+        id: { type: 'string' },
         gap: { type: 'number', minimum: 0 },
         padding: { type: 'number', minimum: 0 },
         background: { type: 'string' },
@@ -125,7 +41,6 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
           type: 'array',
           items: { $ref: '#/definitions/Widget' },
         },
-        ...placementProperties(),
       },
       additionalProperties: true,
     },
@@ -134,6 +49,7 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
       required: ['type'],
       properties: {
         type: { const: 'column' },
+        id: { type: 'string' },
         gap: { type: 'number', minimum: 0 },
         padding: { type: 'number', minimum: 0 },
         background: { type: 'string' },
@@ -141,47 +57,16 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
           type: 'array',
           items: { $ref: '#/definitions/Widget' },
         },
-        ...placementProperties(),
       },
       additionalProperties: true,
     },
-    ButtonWidget: {
-      type: 'object',
-      required: ['type', 'label'],
-      properties: {
-        type: { const: 'button' },
-        label: { type: 'string' },
-        variant: { enum: ['primary', 'secondary', 'ghost', 'danger'] },
-        disabled: { type: 'boolean' },
-        background: { type: 'string' },
-        color: { type: 'string' },
-        borderRadius: { type: 'number' },
-        ...placementProperties(),
-      },
-      additionalProperties: true,
-    },
-    InputWidget: {
+    GridWidget: {
       type: 'object',
       required: ['type'],
       properties: {
-        type: { const: 'input' },
-        label: { type: 'string' },
-        placeholder: { type: 'string' },
-        value: { type: 'string' },
-        background: { type: 'string' },
-        color: { type: 'string' },
-        borderRadius: { type: 'number' },
-        ...placementProperties(),
-      },
-      additionalProperties: true,
-    },
-    ListViewWidget: {
-      type: 'object',
-      required: ['type'],
-      properties: {
-        type: { const: 'list-view' },
-        direction: { enum: ['vertical', 'horizontal'] },
-        itemExtent: { type: 'number', minimum: 1 },
+        type: { const: 'grid' },
+        id: { type: 'string' },
+        columns: { type: 'number', minimum: 1 },
         gap: { type: 'number', minimum: 0 },
         padding: { type: 'number', minimum: 0 },
         background: { type: 'string' },
@@ -189,70 +74,6 @@ const BASE_PLAYGROUND_WIDGET_SCHEMA: JsonSchemaObject = {
           type: 'array',
           items: { $ref: '#/definitions/Widget' },
         },
-        ...placementProperties(),
-      },
-      additionalProperties: true,
-    },
-    TileWidget: {
-      type: 'object',
-      required: ['type'],
-      properties: {
-        type: { const: 'tile' },
-        label: { type: 'string' },
-        layers: {
-          type: 'array',
-          items: {
-            type: 'object',
-            required: ['type'],
-            properties: {
-              type: { enum: ['color', 'text', 'image', 'badge'] },
-              color: { type: 'string' },
-              text: { type: 'string' },
-              fontSize: { type: 'number' },
-            },
-            additionalProperties: true,
-          },
-        },
-        ...placementProperties(),
-      },
-      additionalProperties: true,
-    },
-    DividerWidget: {
-      type: 'object',
-      required: ['type'],
-      properties: {
-        type: { const: 'divider' },
-        direction: { enum: ['horizontal', 'vertical'] },
-        color: { type: 'string' },
-        thickness: { type: 'number', minimum: 1, maximum: 20 },
-        ...placementProperties(),
-      },
-      additionalProperties: true,
-    },
-    ImageWidget: {
-      type: 'object',
-      required: ['type', 'src'],
-      properties: {
-        type: { const: 'image' },
-        src: { type: 'string' },
-        alt: { type: 'string' },
-        fit: { enum: ['cover', 'contain', 'fill'] },
-        borderRadius: { type: 'number', minimum: 0 },
-        background: { type: 'string' },
-        ...placementProperties(),
-      },
-      additionalProperties: true,
-    },
-    DocumentWidget: {
-      type: 'object',
-      required: ['type', 'child'],
-      properties: {
-        type: { const: 'document' },
-        title: { type: 'string' },
-        background: { type: 'string' },
-        padding: { type: 'number', minimum: 0 },
-        child: { $ref: '#/definitions/Widget' },
-        ...placementProperties(),
       },
       additionalProperties: true,
     },
@@ -282,11 +103,10 @@ function withTypeDiscriminator(type: string, schema: JsonSchemaObject): JsonSche
   };
 }
 
-export function createPlaygroundWidgetJsonSchema(
+export function createWidgetJsonSchema(
   customDefinitions: readonly WidgetTypeDefinition[] = [],
 ): WidgetJsonSchema {
   const customWithSchema = customDefinitions.filter((definition) => definition.schema);
-  const customTypeNames = customWithSchema.map((definition) => definition.type);
   const customSchemaDefinitions = Object.fromEntries(
     customWithSchema.map((definition) => [
       customDefinitionName(definition.type),
@@ -294,15 +114,12 @@ export function createPlaygroundWidgetJsonSchema(
     ]),
   );
 
-  const baseDefinitions = BASE_PLAYGROUND_WIDGET_SCHEMA.definitions as Record<
-    string,
-    JsonSchemaObject
-  >;
+  const baseDefinitions = CORE_WIDGET_SCHEMA.definitions as Record<string, JsonSchemaObject>;
   const widgetDefinition = baseDefinitions.Widget ?? {};
   const widgetOneOf = Array.isArray(widgetDefinition.oneOf) ? [...widgetDefinition.oneOf] : [];
 
   return {
-    ...BASE_PLAYGROUND_WIDGET_SCHEMA,
+    ...CORE_WIDGET_SCHEMA,
     definitions: {
       ...baseDefinitions,
       Widget: {
@@ -316,8 +133,7 @@ export function createPlaygroundWidgetJsonSchema(
       },
       ...customSchemaDefinitions,
     },
-    $comment: `Playground types: ${[...PLAYGROUND_WIDGET_TYPES, ...customTypeNames].join(', ')}`,
   };
 }
 
-export const PLAYGROUND_WIDGET_JSON_SCHEMA = createPlaygroundWidgetJsonSchema();
+export const DEMO_WIDGET_JSON_SCHEMA = createWidgetJsonSchema();

@@ -67,6 +67,8 @@ import { createIntegratedShellContextKeys } from './integratedShellContextKeys';
 import { renderIntegratedShellSettingsCategory } from './integratedShellSettings';
 import { getIntegratedStatusSections } from './integratedShellStatus';
 import { useIntegratedShellWorkspaceOrchestration } from './integratedShellWorkspaceOrchestration';
+import { createWidgetStudioWorkspaceEditorRenderer } from '../../widget-studio/create-widget-studio-workspace-editor.js';
+import { WIDGET_TREE_DEMO_REGISTRY } from '../../widget-tree/demo-registry.js';
 
 export interface IntegratedShellDemoProps {
   compactRows?: boolean;
@@ -125,7 +127,12 @@ export function IntegratedShellDemo({
     expandedPaths: ['src', 'src/components'],
     files: integratedShellWorkspaceFiles,
     folders: [...integratedShellWorkspaceFolders],
-    openPaths: ['src/App.tsx', 'src/components/Button.tsx', 'src/workbench/Shell.tsx'],
+    openPaths: [
+      'src/App.tsx',
+      'src/components/Button.tsx',
+      'src/workbench/Shell.tsx',
+      'src/widgets/home.widget.json',
+    ],
     searchQuery: initialSearchQuery,
     selectedPath: integratedShellDefaultSelectionByActivity.explorer,
   });
@@ -458,6 +465,14 @@ export function IntegratedShellDemo({
       WORKBENCH_COMMAND_SURFACE_WORKSPACE,
     );
   };
+
+  const widgetStudioEditorRenderer = useMemo(
+    () =>
+      createWidgetStudioWorkspaceEditorRenderer({
+        registry: WIDGET_TREE_DEMO_REGISTRY,
+      }),
+    [],
+  );
 
   const bootstrap = useMemo(
     () => ({
@@ -794,6 +809,9 @@ export function IntegratedShellDemo({
           <WorkspaceEditorPanel
             files={files}
             openPaths={openPaths}
+            renderEditor={(context) =>
+              widgetStudioEditorRenderer({ ...context, workspaceFiles: files })
+            }
             selectedPath={selectedPath}
             theme={shellContext.theme}
             onCloseAll={closeAll}

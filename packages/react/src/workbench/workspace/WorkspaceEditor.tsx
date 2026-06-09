@@ -103,6 +103,7 @@ export function languageForFile(path: string, mimeType?: string) {
     case 'text/javascript':
       return 'javascript';
     case 'application/json':
+    case 'application/vnd.workbench-kit.widget+json':
       return 'json';
     case 'application/typescript':
     case 'text/typescript':

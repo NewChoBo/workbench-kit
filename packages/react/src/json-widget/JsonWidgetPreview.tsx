@@ -1,36 +1,21 @@
 import { isValidElement, useMemo, type ReactNode } from 'react';
 import type { WidgetRegistryContract, WidgetTypeShape } from '@workbench-kit/contracts';
-import { parseWidgetJson, type GenericWidget } from '@workbench-kit/json-widget';
+import { parseWidgetJson } from '@workbench-kit/json-widget';
 
 import { WorkbenchParseError, WorkbenchRenderSurface } from '../layout/WorkbenchLayout';
-import {
-  DEFAULT_PLAYGROUND_PREVIEW_RECT,
-  PlaygroundWidgetRenderer,
-} from './playground-renderer/PlaygroundWidgetRenderer.js';
 
 export interface JsonWidgetPreviewProps {
   json: string;
   registry?: WidgetRegistryContract<unknown> | undefined;
   emptyLabel?: string | undefined;
   className?: string | undefined;
-  visualPreview?: boolean | undefined;
 }
 
 function resolveRegistryOutput(
   registry: WidgetRegistryContract<unknown> | undefined,
   widget: WidgetTypeShape,
   emptyLabel: string,
-  visualPreview: boolean,
 ): ReactNode {
-  if (visualPreview) {
-    return (
-      <PlaygroundWidgetRenderer
-        rect={DEFAULT_PLAYGROUND_PREVIEW_RECT}
-        widget={widget as GenericWidget}
-      />
-    );
-  }
-
   if (registry === undefined) {
     return `Parsed widget type "${widget.type}".`;
   }
@@ -54,7 +39,6 @@ export function JsonWidgetPreview({
   registry,
   emptyLabel = 'No render output.',
   className,
-  visualPreview = false,
 }: JsonWidgetPreviewProps) {
   const parsed = useMemo(() => parseWidgetJson(json), [json]);
 
@@ -63,8 +47,8 @@ export function JsonWidgetPreview({
       return null;
     }
 
-    return resolveRegistryOutput(registry, parsed.value, emptyLabel, visualPreview);
-  }, [emptyLabel, parsed, registry, visualPreview]);
+    return resolveRegistryOutput(registry, parsed.value, emptyLabel);
+  }, [emptyLabel, parsed, registry]);
 
   if (parsed.parseError !== null) {
     return (

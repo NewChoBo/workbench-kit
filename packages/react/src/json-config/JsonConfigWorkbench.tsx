@@ -11,11 +11,6 @@ import {
   JsonConfigValidationBanner,
 } from '../json-widget/JsonCodeEditorPane.js';
 import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
-import { JsonWidgetCanvas } from '../json-widget/JsonWidgetCanvas.js';
-import type {
-  WidgetAssetResolver,
-  WidgetRendererRegistry,
-} from '../json-widget/renderer/context.js';
 import {
   WorkbenchArtifactModeControls,
   type WorkbenchArtifactMode,
@@ -52,16 +47,6 @@ export interface JsonConfigWorkbenchProps {
   titleFallback?: string | undefined;
   value: string;
   widgetRegistry?: WidgetRegistryContract<unknown> | undefined;
-  /**
-   * When true, the widget preview pane renders the document to real DOM with
-   * `JsonWidgetCanvas` (builtin layout/leaf renderers + optional custom
-   * renderers) instead of the summary `JsonWidgetPreview`.
-   */
-  useWidgetCanvas?: boolean | undefined;
-  /** Custom renderers for the real-rendering canvas (builtins always available). */
-  widgetRendererRegistry?: WidgetRendererRegistry | undefined;
-  /** Asset reference resolver injected into the real-rendering canvas. */
-  resolveAssetSrc?: WidgetAssetResolver | undefined;
 }
 
 const defaultDeserialize = (content: string) => {
@@ -112,9 +97,6 @@ export function JsonConfigWorkbench({
   titleFallback,
   value,
   widgetRegistry,
-  useWidgetCanvas = false,
-  widgetRendererRegistry,
-  resolveAssetSrc,
 }: JsonConfigWorkbenchProps) {
   const [uncontrolledMode, setUncontrolledMode] = useState<WorkbenchArtifactMode>(defaultMode);
   const resolvedMode = mode ?? uncontrolledMode;
@@ -196,15 +178,7 @@ export function JsonConfigWorkbench({
     if (resolvedPreviewKind === 'widget') {
       return (
         <div className="ui-json-config-workbench__preview">
-          {useWidgetCanvas ? (
-            <JsonWidgetCanvas
-              json={value}
-              registry={widgetRendererRegistry}
-              resolveAssetSrc={resolveAssetSrc}
-            />
-          ) : (
-            <JsonWidgetPreview json={value} registry={widgetRegistry} />
-          )}
+          <JsonWidgetPreview json={value} registry={widgetRegistry} />
         </div>
       );
     }

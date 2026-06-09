@@ -249,6 +249,11 @@ export type {
   WidgetTypeShape,
 } from './widget-registry-contract';
 export type {
+  WidgetAssetCatalogContract,
+  WidgetPlacementAsset,
+  WidgetPlacementAssetCategory,
+} from './widget-placement-asset-contract';
+export type {
   MappedLaunchAction,
   ProviderCommandAction,
   ProviderExecAction,

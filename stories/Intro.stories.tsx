@@ -43,8 +43,9 @@ export const Overview: Story = {
             <code>JsonConfig/Workbench</code> — Monaco config editor with schema or widget preview
           </li>
           <li>
-            <code>JsonWidget/Playground</code> — parse/format lab and <code>Interactive</code>{' '}
-            sandbox (add, DnD, Monaco, preview)
+            <code>JsonWidget/WidgetTree</code> — widget layout editor;{' '}
+            <code>JsonWidget/WidgetAsset</code> — placement asset editor;{' '}
+            <code>*.widget.json</code> / <code>*.asset.json</code> open in Integrated Shell
           </li>
           <li>
             <code>React/Workbench/Shell → Integrated Shell</code> — full end-to-end shell flow

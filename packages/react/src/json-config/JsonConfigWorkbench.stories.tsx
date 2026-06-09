@@ -3,15 +3,9 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
-import {
-  createWidgetRegistry,
-  formatWidgetJson,
-  type GenericWidget,
-} from '@workbench-kit/json-widget';
+import { createWidgetRegistry, formatWidgetJson } from '@workbench-kit/json-widget';
 
 import { JsonConfigWorkbench, type JsonConfigWorkbenchProps } from './JsonConfigWorkbench.js';
-import { createWidgetRendererRegistry } from '../json-widget/renderer/createWidgetRendererRegistry.js';
-import type { WidgetRendererProps } from '../json-widget/renderer/contract.js';
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
 
 const meta = {
@@ -174,69 +168,6 @@ export const WidgetInteraction: Story = {
       'aria-pressed',
       'true',
     );
-  },
-};
-
-const layoutWidgetJson = formatWidgetJson({
-  type: 'grid',
-  columns: 2,
-  gap: 12,
-  padding: 12,
-  background: '#0f172a',
-  children: [
-    { type: 'tile', col: 0, row: 0, label: 'Library' } as GenericWidget,
-    { type: 'box', col: 1, row: 0, background: '#1d4ed8', borderRadius: 8 },
-    { type: 'text', col: 0, row: 1, text: 'Edit JSON to update render', color: '#e2e8f0' },
-    { type: 'box', col: 1, row: 1, background: '#7c3aed', borderRadius: 8 },
-  ],
-});
-
-function TileRenderer({ widget, rect, fillParent }: WidgetRendererProps) {
-  const label = typeof widget.label === 'string' ? widget.label : 'Tile';
-  return (
-    <div
-      data-widget-type="tile"
-      style={{
-        position: 'absolute',
-        ...(fillParent
-          ? { inset: 0 }
-          : { left: rect.x, top: rect.y, width: rect.width, height: rect.height }),
-        display: 'grid',
-        placeItems: 'center',
-        background: '#0ea5e9',
-        color: '#f8fafc',
-        borderRadius: 12,
-        fontWeight: 700,
-        boxSizing: 'border-box',
-      }}
-    >
-      {label}
-    </div>
-  );
-}
-
-const widgetRendererRegistry = createWidgetRendererRegistry([
-  { type: 'tile', build: TileRenderer, displayName: 'Tile' },
-]);
-
-export const WidgetCanvasPreview: Story = {
-  render: () => (
-    <ConfigHarness
-      initialValue={layoutWidgetJson}
-      defaultMode="split"
-      path="layout.json"
-      previewKind="widget"
-      title="Layout config (real render)"
-      useWidgetCanvas
-      widgetRendererRegistry={widgetRendererRegistry}
-    />
-  ),
-  tags: ['storybook-play-baseline'],
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvas.getByTestId('json-widget-canvas')).toBeVisible();
-    await expect(canvasElement.querySelector('[data-widget-type="tile"]')).not.toBeNull();
-    await expect(canvas.getByText('Library')).toBeVisible();
   },
 };
 
