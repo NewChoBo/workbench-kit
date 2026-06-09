@@ -1,15 +1,19 @@
 import type { RuntimeChatMessage } from '@workbench-kit/runtime';
 import type { WorkspaceFile } from '@workbench-kit/workspace';
 
+import { widgetStudioAssetFiles } from './widget-studio-assets.js';
+
 export const integratedShellWorkspaceFolders = [
   'src',
   'src/components',
   'src/workbench',
+  'src/widgets',
+  'src/widgets/assets',
   'docs',
   'public',
 ] as const;
 
-export const integratedShellWorkspaceFiles: WorkspaceFile[] = [
+const integratedShellCoreWorkspaceFiles: WorkspaceFile[] = [
   {
     path: 'src/App.tsx',
     mimeType: 'application/typescript',
@@ -58,6 +62,22 @@ export function Panel({ children, title, ...props }: PanelProps) {
       <div>{children}</div>
     </section>
   );
+}
+`,
+  },
+  {
+    path: 'src/widgets/home.widget.json',
+    mimeType: 'application/vnd.workbench-kit.widget+json',
+    updatedAt: '2026-06-02T09:28:00.000Z',
+    source: 'user',
+    content: `{
+  "type": "column",
+  "children": [
+    {
+      "type": "text",
+      "text": "Welcome"
+    }
+  ]
 }
 `,
   },
@@ -145,6 +165,13 @@ Import shared styles once, then compose the workbench primitives in your app she
 `,
   },
 ];
+
+export const integratedShellWorkspaceFiles: WorkspaceFile[] = [
+  ...integratedShellCoreWorkspaceFiles,
+  ...widgetStudioAssetFiles,
+];
+
+export { widgetStudioAssetFiles };
 
 export const integratedShellInitialRuntimeMessages: RuntimeChatMessage[] = [
   {

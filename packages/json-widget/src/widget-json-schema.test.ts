@@ -1,36 +1,32 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createPlaygroundWidgetJsonSchema,
-  PLAYGROUND_WIDGET_JSON_SCHEMA,
-} from './widget-json-schema.js';
+import { createWidgetJsonSchema, DEMO_WIDGET_JSON_SCHEMA } from './widget-json-schema.js';
 
-describe('createPlaygroundWidgetJsonSchema', () => {
-  it('includes built-in playground widget definitions', () => {
-    const schema = PLAYGROUND_WIDGET_JSON_SCHEMA;
-    const definitions = schema.definitions as Record<string, unknown>;
-    expect(definitions).toBeDefined();
-    expect(definitions.TextWidget).toBeDefined();
-    expect(definitions.GridWidget).toBeDefined();
+describe('createWidgetJsonSchema', () => {
+  it('includes core widget definitions', () => {
+    const schema = createWidgetJsonSchema() as {
+      definitions?: { Widget?: { oneOf?: unknown[] } };
+    };
+
+    expect(schema.definitions?.Widget?.oneOf?.length).toBeGreaterThanOrEqual(4);
+    expect(DEMO_WIDGET_JSON_SCHEMA).toBeDefined();
   });
 
-  it('merges custom widget schemas into oneOf', () => {
-    const schema = createPlaygroundWidgetJsonSchema([
+  it('merges custom registry schema definitions', () => {
+    const schema = createWidgetJsonSchema([
       {
-        type: 'custom:clock',
-        build: () => null,
+        type: 'demo:card',
+        build: 'card',
         schema: {
           type: 'object',
+          required: ['title'],
           properties: {
-            timezone: { type: 'string' },
+            title: { type: 'string' },
           },
-          required: ['timezone'],
         },
       },
-    ]);
+    ]) as { definitions?: Record<string, unknown> };
 
-    const definitions = schema.definitions as Record<string, { oneOf?: unknown[] }>;
-    expect(definitions.Widget.oneOf?.length).toBeGreaterThan(10);
-    expect(definitions.CustomWidget_custom_clock).toBeDefined();
+    expect(schema.definitions?.CustomWidget_demo_card).toBeDefined();
   });
 });

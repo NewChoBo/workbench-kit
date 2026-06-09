@@ -4,6 +4,7 @@
   "private": false,
   "type": "module",
   "scripts": {
+    "test": "pnpm exec vitest run --config ../../vitest.config.ts src/widget-tree",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
@@ -18,6 +19,9 @@
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
     "./json-config": "./src/json-config/index.ts",
     "./json-widget": "./src/json-widget/index.ts",
+    "./widget-tree": "./src/widget-tree/index.ts",
+    "./widget-asset": "./src/widget-asset/index.ts",
+    "./widget-studio": "./src/widget-studio/index.ts",
     "./styles.css": "./src/styles.css"
   },
   "files": [

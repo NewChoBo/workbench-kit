@@ -64,7 +64,7 @@ const preview: Preview = {
         order: [
           'Introduction',
           ['JsonConfig', ['Workbench']],
-          ['JsonWidget', ['Playground', 'Preview']],
+          ['JsonWidget', ['WidgetTree', ['Lab', 'Workbench'], 'Preview']],
           [
             'React',
             [

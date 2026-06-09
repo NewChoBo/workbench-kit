@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import type { WidgetJsonSchema } from '@workbench-kit/contracts';
 import type { OnMount } from '@monaco-editor/react';
 import type * as Monaco from 'monaco-editor';
 
@@ -42,6 +43,7 @@ function toWorkbenchProblemSeverity(severity: number): WorkbenchProblemSeverity 
 export interface JsonCodeEditorPaneProps {
   documentParseError?: string | null | undefined;
   file: WorkspaceFile;
+  jsonSchema?: WidgetJsonSchema | null | undefined;
   onChange: (value: string) => void;
   onEditorMount?: OnMount | undefined;
   onSave?: (() => void) | undefined;
@@ -54,6 +56,7 @@ export interface JsonCodeEditorPaneProps {
 export function JsonCodeEditorPane({
   documentParseError = null,
   file,
+  jsonSchema = null,
   onChange,
   onEditorMount,
   onSave,
@@ -98,8 +101,25 @@ export function JsonCodeEditorPane({
     [],
   );
 
+  const configureJsonSchema = (monaco: typeof Monaco, path: string) => {
+    if (!jsonSchema) return;
+
+    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+      validate: true,
+      enableSchemaRequest: false,
+      schemas: [
+        {
+          uri: 'https://workbench-kit.dev/schemas/widget-document.schema.json',
+          fileMatch: [path],
+          schema: jsonSchema,
+        },
+      ],
+    });
+  };
+
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+    configureJsonSchema(monaco, file.path);
     onEditorMount?.(editor, monaco);
 
     if (onSave) {

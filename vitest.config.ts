@@ -4,4 +4,8 @@ export default defineConfig({
   resolve: {
     dedupe: ['react', 'react-dom'],
   },
+  test: {
+    environment: 'node',
+    environmentMatchGlobs: [],
+  },
 });
