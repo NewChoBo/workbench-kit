@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
-import { createWidgetRegistry, formatWidgetJson } from '@workbench-kit/json-widget';
+import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/json-widget';
 
 import { JsonWidgetPreview } from './JsonWidgetPreview.js';
 
@@ -22,7 +22,10 @@ describe('JsonWidgetPreview', () => {
 
     const markup = renderToStaticMarkup(
       <JsonWidgetPreview
-        json={formatWidgetJson({ type: 'demo:card', title: 'Preview title' })}
+        json={formatJsonWidgetData({
+          type: 'demo:card',
+          args: { title: 'Preview title' },
+        })}
         registry={registry}
       />,
     );

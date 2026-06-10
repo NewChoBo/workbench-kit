@@ -72,12 +72,16 @@ export function Panel({ children, title, ...props }: PanelProps) {
     source: 'user',
     content: `{
   "type": "column",
-  "children": [
-    {
-      "type": "text",
-      "text": "Welcome"
-    }
-  ]
+  "args": {
+    "children": [
+      {
+        "type": "text",
+        "args": {
+          "text": "Welcome"
+        }
+      }
+    ]
+  }
 }
 `,
   },

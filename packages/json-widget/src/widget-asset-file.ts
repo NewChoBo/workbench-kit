@@ -3,7 +3,13 @@ import type {
   WidgetPlacementAsset,
 } from '@workbench-kit/contracts';
 
+import {
+  genericWidgetToJdwNode,
+  jdwNodeToGenericWidget,
+  type JsonWidgetNode,
+} from './jdw-node.js';
 import { createWidgetAssetCatalog } from './widget-placement-asset.js';
+import type { GenericWidget } from './widget-tree.js';
 
 export const WIDGET_ASSET_FILE_SUFFIX = '.asset.json';
 
@@ -52,6 +58,41 @@ function readOptionalString(record: Record<string, unknown>, key: string): strin
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
 }
 
+function readContentNode(
+  record: Record<string, unknown>,
+  errors: string[],
+): JsonWidgetNode | null {
+  const content = record.content ?? record.defaultWidget;
+  if (!isObjectRecord(content)) {
+    errors.push('"content" must be a JDW widget object.');
+    return null;
+  }
+
+  if (!isObjectRecord(content.args) && !('args' in content)) {
+    errors.push('"content" must use JDW v7 envelope (type + args).');
+    return null;
+  }
+
+  if (!isObjectRecord(content.args)) {
+    errors.push('"content.args" must be an object.');
+    return null;
+  }
+
+  const type = content.type;
+  if (typeof type !== 'string' || type.trim().length === 0) {
+    errors.push('"content.type" must be a non-empty string.');
+    return null;
+  }
+
+  return {
+    type: type.trim(),
+    args: content.args,
+    ...(typeof content.id === 'string' && content.id.trim().length > 0
+      ? { id: content.id.trim() }
+      : {}),
+  };
+}
+
 export function isWidgetAssetFilePath(path: string): boolean {
   return path.endsWith(WIDGET_ASSET_FILE_SUFFIX);
 }
@@ -82,33 +123,32 @@ export function parseWidgetAssetJson(source: string): ParsedWidgetAssetJson {
     }
 
     const errors: string[] = [];
-    const id = readOptionalString(parsed, 'id');
+    const name =
+      readOptionalString(parsed, 'name') ??
+      readOptionalString(parsed, 'id') ??
+      null;
     const label = readRequiredString(parsed, 'label', errors);
     const category = readRequiredString(parsed, 'category', errors);
-    const widgetType = readRequiredString(parsed, 'widgetType', errors);
-    const defaultWidget = parsed.defaultWidget;
+    const content = readContentNode(parsed, errors);
 
-    if (!isObjectRecord(defaultWidget)) {
-      errors.push('"defaultWidget" must be an object.');
-    } else if (typeof defaultWidget.type !== 'string' || defaultWidget.type.trim().length === 0) {
-      errors.push('"defaultWidget.type" must be a non-empty string.');
-    } else if (widgetType && defaultWidget.type !== widgetType) {
-      errors.push('"defaultWidget.type" must match "widgetType".');
+    if (!name) {
+      errors.push('"name" must be a non-empty string.');
     }
 
-    if (errors.length > 0 || !label || !category || !widgetType || !isObjectRecord(defaultWidget)) {
+    if (errors.length > 0 || !label || !category || !content || !name) {
       return {
         value: null,
         parseError: errors.join(' '),
       };
     }
 
+    const defaultWidget = jdwNodeToGenericWidget(content);
     const asset: WidgetPlacementAsset = {
-      id: id ?? label.toLowerCase().replace(/\s+/g, '-'),
+      id: name,
       label,
       category,
-      widgetType,
-      defaultWidget: defaultWidget as unknown as WidgetPlacementAsset['defaultWidget'],
+      widgetType: content.type,
+      defaultWidget,
       ...(readOptionalString(parsed, 'description')
         ? { description: readOptionalString(parsed, 'description') }
         : {}),
@@ -129,13 +169,13 @@ export function parseWidgetAssetJson(source: string): ParsedWidgetAssetJson {
 
 export function formatWidgetAssetJson(asset: WidgetPlacementAsset): string {
   const payload = {
-    id: asset.id,
+    name: asset.id,
+    version: '1.0.0',
     label: asset.label,
     ...(asset.description ? { description: asset.description } : {}),
     category: asset.category,
     ...(asset.icon ? { icon: asset.icon } : {}),
-    widgetType: asset.widgetType,
-    defaultWidget: asset.defaultWidget,
+    content: genericWidgetToJdwNode(asset.defaultWidget as GenericWidget),
   };
 
   return `${JSON.stringify(payload, null, 2)}\n`;

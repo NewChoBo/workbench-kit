@@ -1,4 +1,9 @@
-import { formatWidgetJson, parseWidgetJson } from './parse-widget-json.js';
+import {
+  formatJsonWidgetData,
+  genericWidgetToJdwNode,
+  jdwNodeToGenericWidget,
+  parseJsonWidgetData,
+} from './jdw-node.js';
 import type { GenericWidget } from './widget-tree.js';
 
 export interface WidgetDocument {
@@ -8,12 +13,19 @@ export interface WidgetDocument {
 }
 
 export function createWidgetDocument(source: string): WidgetDocument {
-  const parsed = parseWidgetJson<GenericWidget>(source);
+  const parsed = parseJsonWidgetData(source);
   return {
     source,
     parseError: parsed.parseError,
-    root: parsed.value,
+    root: parsed.value ? jdwNodeToGenericWidget(parsed.value) : null,
   };
 }
 
-export const EMPTY_WIDGET_DOCUMENT = formatWidgetJson({ type: 'column', children: [] });
+export function formatWidgetDocumentJson(root: GenericWidget): string {
+  return formatJsonWidgetData(genericWidgetToJdwNode(root));
+}
+
+export const EMPTY_WIDGET_DOCUMENT = formatJsonWidgetData({
+  type: 'column',
+  args: { children: [] },
+});

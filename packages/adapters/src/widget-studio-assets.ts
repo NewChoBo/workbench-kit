@@ -9,16 +9,18 @@ export const widgetStudioAssetFiles: WorkspaceFile[] = [
     updatedAt: '2026-06-02T09:24:00.000Z',
     source: 'user',
     content: `{
-  "id": "content.heading",
+  "name": "content.heading",
+  "version": "1.0.0",
   "label": "Heading",
   "description": "Large title text",
   "category": "content",
   "icon": "codicon-symbol-text",
-  "widgetType": "text",
-  "defaultWidget": {
+  "content": {
     "type": "text",
-    "text": "Heading",
-    "fontSize": 24
+    "args": {
+      "text": "Heading",
+      "fontSize": 24
+    }
   }
 }
 `,
@@ -29,15 +31,17 @@ export const widgetStudioAssetFiles: WorkspaceFile[] = [
     updatedAt: '2026-06-02T09:24:10.000Z',
     source: 'user',
     content: `{
-  "id": "content.body",
+  "name": "content.body",
+  "version": "1.0.0",
   "label": "Body",
   "description": "Default paragraph text",
   "category": "content",
   "icon": "codicon-whole-word",
-  "widgetType": "text",
-  "defaultWidget": {
+  "content": {
     "type": "text",
-    "text": "Body text"
+    "args": {
+      "text": "Body text"
+    }
   }
 }
 `,
@@ -48,17 +52,19 @@ export const widgetStudioAssetFiles: WorkspaceFile[] = [
     updatedAt: '2026-06-02T09:24:20.000Z',
     source: 'user',
     content: `{
-  "id": "layout.row",
+  "name": "layout.row",
+  "version": "1.0.0",
   "label": "Row",
   "description": "Horizontal flex container",
   "category": "layout",
   "icon": "codicon-arrow-right",
-  "widgetType": "row",
-  "defaultWidget": {
+  "content": {
     "type": "row",
-    "gap": 8,
-    "padding": 0,
-    "children": []
+    "args": {
+      "gap": 8,
+      "padding": 0,
+      "children": []
+    }
   }
 }
 `,
@@ -69,18 +75,20 @@ export const widgetStudioAssetFiles: WorkspaceFile[] = [
     updatedAt: '2026-06-02T09:24:30.000Z',
     source: 'user',
     content: `{
-  "id": "layout.grid-2",
+  "name": "layout.grid-2",
+  "version": "1.0.0",
   "label": "2-col Grid",
   "description": "Two column grid",
   "category": "layout",
   "icon": "codicon-layout",
-  "widgetType": "grid",
-  "defaultWidget": {
+  "content": {
     "type": "grid",
-    "columns": 2,
-    "gap": 8,
-    "padding": 0,
-    "children": []
+    "args": {
+      "columns": 2,
+      "gap": 8,
+      "padding": 0,
+      "children": []
+    }
   }
 }
 `,

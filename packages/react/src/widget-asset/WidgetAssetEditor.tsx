@@ -3,7 +3,8 @@ import type { WidgetPlacementAsset, WidgetRegistryContract } from '@workbench-ki
 import {
   createWidgetAssetDocument,
   formatWidgetAssetJson,
-  formatWidgetJson,
+  formatWidgetDocumentJson,
+  type GenericWidget,
 } from '@workbench-kit/json-widget';
 
 import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
@@ -76,7 +77,7 @@ export function WidgetAssetEditor({
     );
   }
 
-  const previewJson = formatWidgetJson(document.asset.defaultWidget);
+  const previewJson = formatWidgetDocumentJson(document.asset.defaultWidget as GenericWidget);
 
   return (
     <div className="widget-asset-editor widget-asset-editor--design" data-testid="widget-asset-editor">
@@ -93,7 +94,7 @@ export function WidgetAssetEditor({
           <WidgetInspectorPanel
             path={[]}
             readOnly={readOnly}
-            widget={document.asset.defaultWidget}
+            widget={document.asset.defaultWidget as GenericWidget}
             widgetRegistry={registry}
             onPatch={(nextWidget) =>
               commitAsset({
