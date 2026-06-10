@@ -1,0 +1,15 @@
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it } from 'vitest';
+
+import { JdwSampleScreenExplorer } from './JdwSampleScreenExplorer.js';
+
+describe('JdwSampleScreenExplorer', () => {
+  it('renders explorer chrome with the default sample JSON', () => {
+    const markup = renderToStaticMarkup(<JdwSampleScreenExplorer />);
+
+    expect(markup).toContain('data-testid="jdw-sample-explorer"');
+    expect(markup).toContain('Analytics');
+    expect(markup).toContain('data-testid="jdw-sample-explorer-json"');
+    expect(markup).toContain('data-testid="json-widget-preview-output"');
+  });
+});

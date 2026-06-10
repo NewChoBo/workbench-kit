@@ -555,8 +555,19 @@ export const FeatureTestScreen: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'label node 생성' }));
     await expect(canvas.getByTestId('feature-status')).toHaveTextContent('create text');
 
-    await userEvent.click(canvas.getByText('Canvas feature test'));
+    const titleNode = canvasElement.querySelector('[data-node-id="ft-title"]');
+    if (!(titleNode instanceof HTMLElement)) {
+      throw new Error('Expected ft-title node to render.');
+    }
+    await userEvent.click(titleNode);
     await expect(canvas.getByTestId('feature-status')).toHaveTextContent('selected ft-title');
+
+    const rectNode = canvasElement.querySelector('[data-node-id="ft-rect"]');
+    if (!(rectNode instanceof HTMLElement)) {
+      throw new Error('Expected ft-rect node to render.');
+    }
+    await userEvent.click(rectNode);
+    await expect(canvas.getByTestId('feature-status')).toHaveTextContent('selected ft-rect');
 
     await userEvent.click(canvas.getByRole('button', { name: '선택 노드 스타일 변경' }));
     await expect(canvas.getByText('Canvas feature test')).toBeVisible();

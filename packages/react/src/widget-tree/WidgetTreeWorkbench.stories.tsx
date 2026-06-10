@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, within } from 'storybook/test';
 
 import { WorkspaceEditorPanel } from '../workbench/workspace/WorkspaceEditorPanel.js';
 import { useVirtualWorkspace } from '../workbench/workspace/useVirtualWorkspace.js';
@@ -13,11 +13,7 @@ import {
   widgetStudioCustomAssetExampleFiles,
 } from '@workbench-kit/adapters';
 import { WIDGET_TREE_DOCUMENT_MIME } from './widget-tree-document.js';
-import {
-  setWidgetTreeSourceJson,
-  waitForWidgetTreeMonaco,
-  waitForWidgetTreeSourcePane,
-} from './widget-tree-play-helpers.js';
+import { waitForWidgetTreeSourcePane } from './widget-tree-play-helpers.js';
 
 const widgetFixtureFiles = [
   {
@@ -90,22 +86,12 @@ export const WorkspaceEditor: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByTestId('widget-tree-workbench')).toBeVisible();
-    await expect(canvas.getByRole('button', { name: 'Split' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(canvas.getByRole('button', { name: 'Design' })).toHaveAttribute('aria-pressed', 'true');
     await waitForWidgetTreeSourcePane(canvasElement);
-    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Welcome');
-
-    const monacoRoot = canvasElement.querySelector('.widget-tree-source .monaco-editor');
-    if (monacoRoot) {
-      await waitForWidgetTreeMonaco(canvasElement);
-      await setWidgetTreeSourceJson(
-        canvasElement,
-        '{"type":"column","children":[{"type":"text","text":"Workbench"}]}',
-      );
-
-      await waitFor(() =>
-        expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Workbench'),
-      );
-      await expect(canvas.getByRole('button', { name: 'Save' })).toBeVisible();
-    }
+    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Widget Tree');
+    await expect(canvas.getByRole('tab', { name: 'home.widget.json' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
   },
 };

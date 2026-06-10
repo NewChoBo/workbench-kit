@@ -147,6 +147,27 @@ export {
 } from './widget-normalize.js';
 
 export type {
+  JdwScreenSpec,
+  ScreenLayoutFrame,
+  ScreenNode,
+  ScreenTextStyle,
+} from './screen-spec/types.js';
+export {
+  screenColumn,
+  screenExpanded,
+  screenGrid,
+  screenPanel,
+  screenRow,
+  screenStack,
+  screenText,
+} from './screen-spec/builders.js';
+export {
+  compileScreenNode,
+  compileScreenSpecToJdwNode,
+  compileScreenSpecToJson,
+} from './screen-spec/compile.js';
+
+export type {
   CreateWidgetAssetDocumentOptions,
   WidgetAssetDocument,
   WorkspaceAssetFileRef,
