@@ -66,6 +66,8 @@ pnpm --filter @tilepaper/json-widget-tree test
 
 ## Phase 3+ (not in MVP)
 
+- **Foundation plan (active):** [widget-layout-schema-plan.md](./widget-layout-schema-plan.md) — JDW v7 wire format,
+  React `json-dynamic-widget` renderer, asset `content` (plugin_components shape), layout engine before editor expansion.
 - Move built-in widget definitions and layout calculators into shared packages where product-neutral
 - React renderer bridge in `@workbench-kit/react/json-widget` (`JsonWidgetPreview`) — **Done (Phase 3)**
 - json-widget-editor chrome extraction to workbench-kit

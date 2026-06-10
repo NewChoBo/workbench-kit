@@ -1,8 +1,8 @@
-import { isValidElement, useMemo, type ReactNode } from 'react';
-import type { WidgetRegistryContract, WidgetTypeShape } from '@workbench-kit/contracts';
-import { parseWidgetJson } from '@workbench-kit/json-widget';
+import type { WidgetRegistryContract } from '@workbench-kit/contracts';
+import { parseJsonWidgetData } from '@workbench-kit/json-widget';
 
 import { WorkbenchParseError, WorkbenchRenderSurface } from '../layout/WorkbenchLayout';
+import { useRenderJsonWidget } from '../json-dynamic-widget/renderJsonWidget.js';
 
 export interface JsonWidgetPreviewProps {
   json: string;
@@ -11,44 +11,14 @@ export interface JsonWidgetPreviewProps {
   className?: string | undefined;
 }
 
-function resolveRegistryOutput(
-  registry: WidgetRegistryContract<unknown> | undefined,
-  widget: WidgetTypeShape,
-  emptyLabel: string,
-): ReactNode {
-  if (registry === undefined) {
-    return `Parsed widget type "${widget.type}".`;
-  }
-
-  const build = registry.get(widget.type);
-  if (build === undefined) {
-    return `Unknown widget type "${widget.type}". Register it in WidgetRegistry to render.`;
-  }
-
-  if (typeof build === 'function') {
-    const output = (build as (widget: WidgetTypeShape) => unknown)(widget);
-    if (isValidElement(output)) return output;
-    return String(output);
-  }
-
-  return emptyLabel;
-}
-
 export function JsonWidgetPreview({
   json,
   registry,
   emptyLabel = 'No render output.',
   className,
 }: JsonWidgetPreviewProps) {
-  const parsed = useMemo(() => parseWidgetJson(json), [json]);
-
-  const renderOutput = useMemo(() => {
-    if (parsed.parseError !== null || parsed.value === null) {
-      return null;
-    }
-
-    return resolveRegistryOutput(registry, parsed.value, emptyLabel);
-  }, [emptyLabel, parsed, registry]);
+  const parsed = parseJsonWidgetData(json);
+  const renderOutput = useRenderJsonWidget(json, { registry, emptyLabel });
 
   if (parsed.parseError !== null) {
     return (

@@ -11,14 +11,14 @@ const assets = createWidgetAssetCatalog([
     label: 'Body',
     category: 'content',
     widgetType: 'text',
-    defaultWidget: { type: 'text', text: 'Body' },
+    defaultWidget: { type: 'text', text: 'Body' } as never,
   },
   {
     id: 'layout.grid-2',
     label: 'Grid',
     category: 'layout',
     widgetType: 'grid',
-    defaultWidget: { type: 'grid', columns: 2, children: [] },
+    defaultWidget: { type: 'grid', columns: 2, children: [] } as never,
   },
 ]);
 

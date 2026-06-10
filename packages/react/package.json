@@ -19,6 +19,7 @@
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
     "./json-config": "./src/json-config/index.ts",
     "./json-widget": "./src/json-widget/index.ts",
+    "./json-dynamic-widget": "./src/json-dynamic-widget/index.ts",
     "./widget-tree": "./src/widget-tree/index.ts",
     "./widget-asset": "./src/widget-asset/index.ts",
     "./widget-studio": "./src/widget-studio/index.ts",

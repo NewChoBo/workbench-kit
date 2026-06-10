@@ -1,7 +1,7 @@
 import type { WidgetRegistryContract, WidgetTypeShape } from '@workbench-kit/contracts';
 import {
   createWidgetRegistry,
-  formatWidgetJson,
+  formatWidgetDocumentJson,
   type GenericWidget,
 } from '@workbench-kit/json-widget';
 
@@ -105,7 +105,7 @@ export const WIDGET_TREE_DEMO_REGISTRY: WidgetRegistryContract<unknown> = create
   },
 ]);
 
-export const WIDGET_TREE_WELCOME_DOCUMENT = formatWidgetJson({
+export const WIDGET_TREE_WELCOME_DOCUMENT = formatWidgetDocumentJson({
   type: 'column',
   gap: 12,
   padding: 16,

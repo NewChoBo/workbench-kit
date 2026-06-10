@@ -5,7 +5,8 @@ Operational guide for JSON widget authoring migration. Consumers (`tile_paper`,
 No consumer swap until Phase 4.
 
 See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-widget-port-then-replace-strategy),
-[json-widget-mvp.md](./json-widget-mvp.md), [json-config-workbench.md](./json-config-workbench.md).
+[json-widget-mvp.md](./json-widget-mvp.md), [json-config-workbench.md](./json-config-workbench.md),
+[widget-layout-schema-plan.md](./widget-layout-schema-plan.md) (schema, layout engine, asset model — editor deferred).
 
 ## Phase summary
 

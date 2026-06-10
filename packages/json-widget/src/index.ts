@@ -130,9 +130,22 @@ export { applyWidgetPatch } from './widget-patch.js';
 
 
 
+export type { JsonWidgetNode, ParsedJsonWidgetData } from './jdw-node.js';
+
+export {
+  formatJsonWidgetData,
+  genericWidgetToJdwNode,
+  jdwNodeToGenericWidget,
+  parseJsonWidgetData,
+} from './jdw-node.js';
+
 export type { WidgetDocument } from './document.js';
 
-export { createWidgetDocument, EMPTY_WIDGET_DOCUMENT } from './document.js';
+export {
+  createWidgetDocument,
+  EMPTY_WIDGET_DOCUMENT,
+  formatWidgetDocumentJson,
+} from './document.js';
 
 export { createWidgetJsonSchema, DEMO_WIDGET_JSON_SCHEMA } from './widget-json-schema.js';
 export { applyWidgetDocumentPatch } from './apply-widget-document-patch.js';

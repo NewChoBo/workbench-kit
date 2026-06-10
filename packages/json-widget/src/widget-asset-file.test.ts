@@ -8,6 +8,7 @@ import {
 } from './widget-asset-file.js';
 
 const headingAsset = {
+  id: 'content.heading',
   label: 'Heading',
   category: 'content',
   widgetType: 'text',
@@ -19,9 +20,8 @@ const headingAsset = {
 };
 
 describe('widget asset file', () => {
-  it('parses and formats a widget asset document', () => {
+  it('parses and formats a JDW content asset document', () => {
     const source = formatWidgetAssetJson({
-      id: 'content.heading',
       ...headingAsset,
       description: 'Large title text',
       icon: 'codicon-symbol-text',
@@ -33,14 +33,28 @@ describe('widget asset file', () => {
       id: 'content.heading',
       label: 'Heading',
       widgetType: 'text',
+      defaultWidget: {
+        type: 'text',
+        text: 'Heading',
+        fontSize: 24,
+      },
     });
+    expect(source).toContain('"content"');
+    expect(source).toContain('"args"');
+    expect(source).not.toContain('"defaultWidget"');
   });
 
   it('infers asset ids from file paths when loading workspace files', () => {
     const catalog = createWidgetAssetCatalogFromWorkspaceFiles([
       {
         path: 'src/widgets/assets/heading.asset.json',
-        content: formatWidgetAssetJson(headingAsset),
+        content: formatWidgetAssetJson({
+          id: 'heading',
+          label: 'Heading',
+          category: 'content',
+          widgetType: 'text',
+          defaultWidget: { type: 'text', text: 'Heading' } as never,
+        }),
       },
     ]);
 
@@ -51,18 +65,17 @@ describe('widget asset file', () => {
     expect(catalog.assetsByCategory().content).toHaveLength(1);
   });
 
-  it('reports mismatched default widget types', () => {
+  it('reports invalid JDW content envelopes', () => {
     const parsed = parseWidgetAssetJson(
       JSON.stringify({
-        id: 'broken',
+        name: 'broken',
         label: 'Broken',
         category: 'content',
-        widgetType: 'text',
-        defaultWidget: { type: 'row', children: [] },
+        content: { type: 'text', text: 'Missing args envelope' },
       }),
     );
 
-    expect(parsed.parseError).toContain('defaultWidget.type');
+    expect(parsed.parseError).toContain('JDW v7 envelope');
   });
 
   it('infers ids from asset file names', () => {
