@@ -7,7 +7,6 @@ import {
   type WidgetStudioAssetPackageDefinition,
 } from './widget-studio-asset-package.js';
 
-export const WIDGET_STUDIO_ASSET_MIME = 'application/vnd.workbench-kit.widget-asset+json';
 export { WIDGET_STUDIO_ASSETS_DIR, WIDGET_STUDIO_CUSTOM_ASSETS_DIR };
 
 export type WidgetStudioWorkspaceAssetFile = WorkspaceFile;
@@ -322,8 +321,6 @@ const customAssetPackages: WidgetStudioAssetPackageDefinition[] = [
 export const widgetStudioBuiltinAssetFiles = flattenWidgetStudioAssetPackages(builtinAssetPackages);
 export const widgetStudioCustomAssetExampleFiles =
   flattenWidgetStudioAssetPackages(customAssetPackages);
-
-/** @deprecated Use {@link widgetStudioBuiltinAssetFiles}. */
 
 export const widgetStudioAssetPackageSlugs = [
   ...builtinAssetPackages.map((pkg) => pkg.slug),

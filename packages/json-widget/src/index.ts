@@ -118,6 +118,7 @@ export {
   discoverWidgetAssetPackages,
   formatWidgetAssetContent,
   formatWidgetAssetManifest,
+  type WidgetAssetManifestFields,
   inferWidgetAssetPackagePath,
   inferWidgetAssetSlugFromPackagePath,
   isWidgetAssetContentPath,

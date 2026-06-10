@@ -13,12 +13,6 @@ const initialValue = formatWidgetAssetManifest({
   category: 'content',
   kind: 'leaf',
   icon: 'codicon-symbol-text',
-  widgetType: 'text',
-  defaultWidget: {
-    type: 'text',
-    text: 'Heading',
-    fontSize: 24,
-  } as never,
 });
 
 function WidgetAssetHarness() {

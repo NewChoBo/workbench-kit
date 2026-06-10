@@ -51,13 +51,17 @@ export function WidgetAssetEditor({
     [path, value, workspaceFiles],
   );
 
-  const commitAssetMetadata = (nextAsset: WidgetPlacementAsset) => {
-    onChange(formatWidgetAssetManifest(nextAsset));
-  };
-
-  const commitAssetContent = (nextWidget: GenericWidget) => {
-    onChange(formatWidgetAssetContent(nextWidget));
-  };
+  const sourceEditor = (
+    <WidgetAssetSourceEditor
+      parseError={document.parseError}
+      path={path}
+      readOnly={readOnly}
+      theme={theme}
+      value={value}
+      onChange={onChange}
+      onSave={onSave}
+    />
+  );
 
   if (viewMode === 'code') {
     return (
@@ -65,15 +69,7 @@ export function WidgetAssetEditor({
         className="widget-asset-editor widget-asset-editor--code"
         data-testid="widget-asset-editor"
       >
-        <WidgetAssetSourceEditor
-          parseError={document.parseError}
-          path={path}
-          readOnly={readOnly}
-          theme={theme}
-          value={value}
-          onChange={onChange}
-          onSave={onSave}
-        />
+        {sourceEditor}
       </div>
     );
   }
@@ -91,22 +87,22 @@ export function WidgetAssetEditor({
         <WorkbenchPropertyPanel>
           <WorkbenchPropertyHint>{hint}</WorkbenchPropertyHint>
         </WorkbenchPropertyPanel>
-        <WidgetAssetSourceEditor
-          parseError={document.parseError}
-          path={path}
-          readOnly={readOnly}
-          theme={theme}
-          value={value}
-          onChange={onChange}
-          onSave={onSave}
-        />
+        {sourceEditor}
       </div>
     );
   }
 
-  const previewJson = formatWidgetDocumentJson(document.asset.defaultWidget as GenericWidget);
-  const editingManifest = path ? isWidgetAssetManifestPath(path) : true;
-  const editingContent = path ? isWidgetAssetContentPath(path) : false;
+  const asset = document.asset;
+  const editingManifest = Boolean(path && isWidgetAssetManifestPath(path));
+  const editingContent = Boolean(path && isWidgetAssetContentPath(path));
+  const previewJson =
+    editingContent && path
+      ? value
+      : formatWidgetDocumentJson(asset.defaultWidget as GenericWidget);
+
+  const commitAssetMetadata = (nextAsset: WidgetPlacementAsset) => {
+    onChange(formatWidgetAssetManifest(nextAsset));
+  };
 
   return (
     <div
@@ -117,9 +113,8 @@ export function WidgetAssetEditor({
         {editingManifest ? (
           <section className="widget-asset-editor__meta">
             <WidgetAssetMetadataForm
-              asset={document.asset}
+              asset={asset}
               readOnly={readOnly}
-              registry={registry}
               onChange={commitAssetMetadata}
             />
           </section>
@@ -129,9 +124,9 @@ export function WidgetAssetEditor({
             <WidgetInspectorPanel
               path={[]}
               readOnly={readOnly}
-              widget={document.asset.defaultWidget as GenericWidget}
+              widget={asset.defaultWidget as GenericWidget}
               widgetRegistry={registry}
-              onPatch={commitAssetContent}
+              onPatch={(nextWidget) => onChange(formatWidgetAssetContent(nextWidget))}
             />
           </section>
         ) : null}

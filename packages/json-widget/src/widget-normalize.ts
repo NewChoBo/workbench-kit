@@ -110,7 +110,7 @@ export function resolvePlacementPolicy(
   }
 
   if (kind === 'container') {
-    return 'strip-external-placement';
+    return 'preserve-internal-layout';
   }
 
   return 'rematerialize-grid-slot';
@@ -122,18 +122,12 @@ export function normalizeWidgetForPlacementPolicy(
   policy: WidgetPlacementPolicy,
 ): GenericWidget {
   switch (policy) {
-    case 'as-root':
-      return parent.type === 'grid' && !hasGridPlacement(widget)
-        ? assignGridSlot(parent, { ...widget })
-        : { ...widget };
-    case 'strip-external-placement':
+    case 'preserve-internal-layout':
       return normalizeWidgetForParent(widget, parent, { preserveInternalLayout: true });
     case 'rematerialize-grid-slot': {
       const stripped = stripExternalPlacement({ ...widget }, parent.type);
       return parent.type === 'grid' ? assignGridSlot(parent, stripped) : stripped;
     }
-    case 'preserve-internal-layout':
-      return normalizeWidgetForParent(widget, parent, { preserveInternalLayout: true });
     default:
       return widget;
   }

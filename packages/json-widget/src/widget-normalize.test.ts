@@ -71,7 +71,7 @@ describe('widget normalize', () => {
 
   it('derives placement policy defaults from asset kind', () => {
     expect(resolvePlacementPolicy(undefined, 'template')).toBe('preserve-internal-layout');
-    expect(resolvePlacementPolicy(undefined, 'container')).toBe('strip-external-placement');
+    expect(resolvePlacementPolicy(undefined, 'container')).toBe('preserve-internal-layout');
     expect(resolvePlacementPolicy(undefined, 'leaf')).toBe('rematerialize-grid-slot');
   });
 });

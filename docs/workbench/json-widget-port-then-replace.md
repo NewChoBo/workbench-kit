@@ -27,7 +27,7 @@ See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-
 
 ### Ports to `@workbench-kit/json-widget`
 
-- `parseWidgetJson` and registry contract
+- `parseJsonWidgetData` and registry contract
 - Neutral widget shape validation and error models
 - Headless editor sync (`editor-sync`, `path`, `selection`, `widget-tree`, `widget-patch`, `widget-child-ops`)
 - Layout helpers that do not depend on tile_paper domain types (`layout/grid`, `layout/stack`, `layout/linear`)

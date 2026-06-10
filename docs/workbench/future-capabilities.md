@@ -44,7 +44,7 @@ Source references — **do not copy wholesale**; extract contracts and reusable 
 
 | Source (reference)                                     | Kit target                                                            | Patterns to port                                                                  |
 | ------------------------------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| tile_paper `json-widget-tree`                          | `@workbench-kit/json-widget` (+ layout helpers where product-neutral) | `parseWidgetJson`, registry contract, tree layout math, typed widget shapes       |
+| tile_paper `json-widget-tree`                          | `@workbench-kit/json-widget` (+ layout helpers where product-neutral) | `parseJsonWidgetData`, registry contract, tree layout math, typed widget shapes   |
 | tile_paper `json-widget-editor`                        | `@workbench-kit/react/json-widget` (editor chrome)                    | Monaco ↔ tree ↔ properties ↔ preview sync, selection model, dirty baseline        |
 | tile_paper + custom_launcher config screens            | `@workbench-kit/react/json-config` (`JsonConfigWorkbench`)            | Code / preview / split modes, schema vs widget auto-preview, save/discard toolbar |
 | custom_launcher `JsonWidgetPreview` / launchpad bridge | `@workbench-kit/react/json-widget`                                    | Preview validation bridge, registry mock render (already partially in kit)        |

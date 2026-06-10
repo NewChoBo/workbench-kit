@@ -14,8 +14,6 @@ describe('validateWidgetAssetPackage', () => {
         label: 'Heading',
         category: 'content',
         kind: 'leaf',
-        widgetType: 'text',
-        defaultWidget: { type: 'text', text: 'Heading', fontSize: 24 } as never,
       }),
       contentSource: formatWidgetAssetContent({
         type: 'text',
@@ -57,8 +55,6 @@ describe('validateWidgetAssetPackage', () => {
         label: 'Bad Leaf',
         category: 'content',
         kind: 'leaf',
-        widgetType: 'row',
-        defaultWidget: { type: 'row', children: [] } as never,
       }),
       contentSource: formatWidgetAssetContent({ type: 'row', children: [] }),
     });

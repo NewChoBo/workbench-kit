@@ -17,17 +17,9 @@ export {
 } from './widget-tree-mode.js';
 export { WidgetSourceEditor } from './WidgetSourceEditor.js';
 export type { WidgetSourceEditorProps } from './WidgetSourceEditor.js';
-export { createWidgetTreeWorkspaceEditorRenderer } from './create-widget-tree-workspace-editor.js';
-export type { CreateWidgetTreeWorkspaceEditorOptions } from './create-widget-tree-workspace-editor.js';
 export { WidgetTreeModeControls } from './WidgetTreeModeControls.js';
 export type { WidgetTreeModeControlsProps } from './WidgetTreeModeControls.js';
-export {
-  isWidgetTreeDocument,
-  WIDGET_TREE_DOCUMENT_MIME,
-} from './widget-tree-document.js';
+export { isWidgetTreeDocument, WIDGET_TREE_DOCUMENT_MIME } from './widget-tree-document.js';
 export type { WidgetTreeDocumentRef } from './widget-tree-document.js';
-export {
-  WIDGET_TREE_DEMO_REGISTRY,
-  WIDGET_TREE_WELCOME_DOCUMENT,
-} from './demo-registry.js';
+export { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';
 export { WIDGET_TREE_DEMO_ASSET_CATALOG } from './demo-widget-assets.js';

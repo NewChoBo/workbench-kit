@@ -20,12 +20,7 @@ const manifest = formatWidgetAssetManifest({
   id: 'content.heading',
   label: 'Heading',
   category: 'content',
-  widgetType: 'text',
-  defaultWidget: {
-    type: 'text',
-    text: 'Heading',
-    fontSize: 24,
-  } as never,
+  kind: 'leaf',
 });
 const content = formatWidgetAssetContent({
   type: 'text',

@@ -6,13 +6,13 @@ Status: **MVP complete** for framework-neutral parse/registry primitives.
 
 | Track                         | MVP deliverable                                                                          | Status |
 | ----------------------------- | ---------------------------------------------------------------------------------------- | ------ |
-| `@workbench-kit/json-widget`  | dist build, unit tests, Storybook playground                                             | Done   |
+| `@workbench-kit/json-widget`  | dist build, unit tests, JDW validation + Storybook fixtures                             | Done   |
 | `@tilepaper/json-widget-tree` | delegates parse/registry to workbench-kit; keeps TilePaper widget types + layout locally | Done   |
 | `@workbench-kit/contracts`    | provider action → launchpad mapping integration test                                     | Done   |
 
 ## Package surface
 
-- `parseWidgetJson` / `formatWidgetJson` — safe JSON parsing with structured errors
+- `parseJsonWidgetData` / `formatJsonWidgetData` — JDW v7 parse/format with structured errors
 - `WidgetRegistry` / `createWidgetRegistry` — type-indexed registry implementing `WidgetRegistryContract`
 - Contract type re-exports from `@workbench-kit/contracts`
 
@@ -26,10 +26,7 @@ From `newchobo-ui-package`:
 pnpm storybook
 ```
 
-Stories live under **JsonWidget/Playground**:
-
-- **ParseAndRender** — edit JSON, format output, mock registry build handler
-- **InvalidJsonHandling** — syntax, empty, and non-object root errors
+Stories live under **JsonDynamicWidget/Fixtures**, **JsonWidget/Preview**, and **JsonWidget/WidgetTree/Lab**.
 
 Build verification:
 
