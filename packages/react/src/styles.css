@@ -7139,6 +7139,14 @@
   height: 100%;
 }
 
+.jdw-sample-explorer__panel {
+  min-height: 0;
+}
+
+.jdw-sample-explorer__body {
+  min-height: 0;
+}
+
 .jdw-sample-explorer__description {
   margin: 0;
   font-size: var(--font-size-sm);
