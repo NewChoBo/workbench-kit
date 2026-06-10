@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatWidgetJson } from './parse-widget-json.js';
+import { formatWidgetDocumentJson } from './document.js';
 import {
   appendBoxChildPath,
   appendChildrenPath,
@@ -108,14 +108,14 @@ describe('generic widget tree', () => {
     expect(invalid).toEqual({ root: rootWidget, changed: false });
   });
 
-  it('inserts layout children only when their required placement is available', () => {
+  it('assigns grid placement when inserting children without col/row', () => {
     const inserted = applyWidgetPatch(rootWidget, {
       type: 'insert-child',
       parentPath: ROOT_WIDGET_PATH,
       index: 1,
       child: { type: 'text', text: 'grid sibling', col: 0, row: 1 },
     });
-    const rejected = applyWidgetPatch(rootWidget, {
+    const autoPlaced = applyWidgetPatch(rootWidget, {
       type: 'insert-child',
       parentPath: ROOT_WIDGET_PATH,
       index: 1,
@@ -123,7 +123,13 @@ describe('generic widget tree', () => {
     });
 
     expect((inserted.root.children as GenericWidget[])[1]?.type).toBe('text');
-    expect(rejected).toEqual({ root: rootWidget, changed: false });
+    expect(autoPlaced.changed).toBe(true);
+    expect((autoPlaced.root.children as GenericWidget[])[1]).toMatchObject({
+      type: 'text',
+      text: 'missing grid placement',
+      col: 0,
+      row: 1,
+    });
   });
 
   it('reorders stack children without dropping their edge placement', () => {
@@ -208,6 +214,6 @@ describe('generic widget tree', () => {
     });
 
     expect(result.changed).toBe(true);
-    expect(formatWidgetJson(result.root)).toContain('Updated');
+    expect(formatWidgetDocumentJson(result.root)).toContain('Updated');
   });
 });

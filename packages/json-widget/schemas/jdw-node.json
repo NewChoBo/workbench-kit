@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://workbench-kit.dev/schemas/jdw-node.json",
+  "title": "JsonWidgetNode",
+  "description": "JDW v7 widget envelope (type + args).",
+  "type": "object",
+  "required": ["type", "args"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "listen": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "args": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

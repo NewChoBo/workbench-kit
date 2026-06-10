@@ -32,7 +32,6 @@ import {
   type WorkbenchStructuredDataFormSection,
   type WorkbenchStructuredDataRecord,
   type WorkbenchStructuredDataSchemaFieldInputProps,
-  type WorkbenchStructuredDataTable,
   type WorkbenchStructuredDataTextArrayInputProps,
 } from './structuredDataSchema';
 

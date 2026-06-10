@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
-import { createWidgetRegistry, formatWidgetJson } from '@workbench-kit/json-widget';
+import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/json-widget';
 
 import { JsonWidgetPreview } from './JsonWidgetPreview.js';
 
@@ -33,7 +33,13 @@ const meta = {
   title: 'JsonWidget/Preview',
   component: JsonWidgetPreview,
   args: {
-    json: formatWidgetJson(SAMPLE_WIDGET),
+    json: formatJsonWidgetData({
+      type: SAMPLE_WIDGET.type,
+      args: {
+        title: SAMPLE_WIDGET.title,
+        body: SAMPLE_WIDGET.body,
+      },
+    }),
     registry: demoRegistry,
   },
 } satisfies Meta<typeof JsonWidgetPreview>;
@@ -72,7 +78,10 @@ export const ParseError: Story = {
 
 export const UnregisteredType: Story = {
   args: {
-    json: formatWidgetJson({ type: 'demo:missing', title: 'Missing' }),
+    json: formatJsonWidgetData({
+      type: 'demo:missing',
+      args: { title: 'Missing' },
+    }),
     registry: demoRegistry,
   },
 };

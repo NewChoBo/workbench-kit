@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
-import { createWidgetRegistry, formatWidgetJson } from '@workbench-kit/json-widget';
+import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/json-widget';
 
 import { JsonConfigWorkbench, resolveJsonConfigPreviewKind } from './JsonConfigWorkbench.js';
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
@@ -45,8 +45,11 @@ describe('resolveJsonConfigPreviewKind', () => {
     expect(resolveJsonConfigPreviewKind('auto', settingsSchema, settingsJson)).toBe('schema');
   });
 
-  it('detects widget preview in auto mode when JSON has a type field', () => {
-    const json = formatWidgetJson({ type: 'demo:card', title: 'Tile' });
+  it('detects widget preview in auto mode when JSON is valid JDW', () => {
+    const json = formatJsonWidgetData({
+      type: 'demo:card',
+      args: { title: 'Tile' },
+    });
     expect(resolveJsonConfigPreviewKind('auto', null, json)).toBe('widget');
   });
 
@@ -85,7 +88,10 @@ describe('JsonConfigWorkbench', () => {
       <JsonConfigWorkbench
         defaultMode="preview"
         previewKind="widget"
-        value={formatWidgetJson({ type: 'demo:card', title: 'Tile preview' })}
+        value={formatJsonWidgetData({
+          type: 'demo:card',
+          args: { title: 'Tile preview' },
+        })}
         widgetRegistry={registry}
         onChange={() => undefined}
       />,

@@ -3,22 +3,22 @@ import { describe, expect, it } from 'vitest';
 import { computeGridChildRect } from './layout/grid.js';
 import { computeLinearChildRects } from './layout/linear.js';
 import { computeStackChildRect } from './layout/stack.js';
-import { formatWidgetJson, parseWidgetJson } from './parse-widget-json.js';
+import { formatJsonWidgetData, parseJsonWidgetData } from './jdw-node.js';
 import { createWidgetRegistry } from './widget-registry.js';
-import type { GenericWidget } from './widget-tree.js';
 
 describe('workbench-kit json-widget tile_paper parity patterns', () => {
-  it('matches canonical parse and format behavior for representative widgets', () => {
-    const samples = ['{"type":"text","text":"Hello"}', '   ', 'null', '[]', '{'] as const;
+  it('matches canonical JDW parse and format behavior for representative widgets', () => {
+    const samples = ['{"type":"text","args":{"text":"Hello"}}', '   ', 'null', '[]', '{'] as const;
 
     for (const sample of samples) {
-      const first = parseWidgetJson<GenericWidget>(sample);
-      const second = parseWidgetJson<GenericWidget>(sample);
+      const first = parseJsonWidgetData(sample);
+      const second = parseJsonWidgetData(sample);
       expect(first).toEqual(second);
     }
 
-    const widget: GenericWidget = { type: 'text', text: 'Hello', id: 'title' };
-    expect(formatWidgetJson(widget)).toContain('"Hello"');
+    expect(formatJsonWidgetData({ type: 'text', args: { text: 'Hello' }, id: 'title' })).toContain(
+      '"Hello"',
+    );
   });
 
   it('creates independent registry instances with stable semantics', () => {

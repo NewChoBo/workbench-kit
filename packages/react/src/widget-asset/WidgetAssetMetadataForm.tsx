@@ -26,11 +26,10 @@ export function WidgetAssetMetadataForm({
   readOnly = false,
   registry,
 }: WidgetAssetMetadataFormProps) {
-  const widgetTypeOptions =
-    registry?.types().map((type) => ({
-      label: registry.definition(type)?.displayName ?? type,
-      value: type,
-    })) ?? [{ label: asset.widgetType, value: asset.widgetType }];
+  const widgetTypeOptions = registry?.types().map((type) => ({
+    label: registry.definition(type)?.displayName ?? type,
+    value: type,
+  })) ?? [{ label: asset.widgetType, value: asset.widgetType }];
 
   const patch = (patchValue: Partial<WidgetPlacementAsset>) => {
     onChange({ ...asset, ...patchValue });

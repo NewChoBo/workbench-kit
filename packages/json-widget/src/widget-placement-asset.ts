@@ -1,23 +1,10 @@
-import type {
-  WidgetAssetCatalogContract,
-  WidgetPlacementAsset,
-} from '@workbench-kit/contracts';
+import type { WidgetAssetCatalogContract, WidgetPlacementAsset } from '@workbench-kit/contracts';
 
-import { getWidgetChildren, type GenericWidget } from './widget-tree.js';
+import { normalizeWidgetForPlacementPolicy, resolvePlacementPolicy } from './widget-normalize.js';
+import type { GenericWidget } from './widget-tree.js';
 
 function cloneWidget(widget: WidgetPlacementAsset['defaultWidget']): GenericWidget {
   return JSON.parse(JSON.stringify(widget)) as GenericWidget;
-}
-
-function withGridPlacement(parent: GenericWidget, child: GenericWidget): GenericWidget {
-  const columns = typeof parent.columns === 'number' && parent.columns > 0 ? parent.columns : 2;
-  const nextIndex = getWidgetChildren(parent).length;
-
-  return {
-    ...child,
-    col: nextIndex % columns,
-    row: Math.floor(nextIndex / columns),
-  };
 }
 
 export function materializeWidgetPlacementAsset(
@@ -25,12 +12,50 @@ export function materializeWidgetPlacementAsset(
   parent?: GenericWidget | null,
 ): GenericWidget {
   const widget = cloneWidget(asset.defaultWidget);
-
-  if (parent?.type === 'grid') {
-    return withGridPlacement(parent, widget);
+  if (!parent) {
+    return widget;
   }
 
-  return widget;
+  const policy = resolvePlacementPolicy(asset.placementPolicy, asset.kind);
+  return normalizeWidgetForPlacementPolicy(widget, parent, policy);
+}
+
+const ASSET_KIND_ORDER: Record<string, number> = {
+  leaf: 0,
+  container: 1,
+  template: 2,
+};
+
+function compareAssetsForCatalog(a: WidgetPlacementAsset, b: WidgetPlacementAsset): number {
+  const categoryOrder = a.category.localeCompare(b.category);
+  if (categoryOrder !== 0) {
+    return categoryOrder;
+  }
+
+  const kindOrder =
+    (ASSET_KIND_ORDER[a.kind ?? 'leaf'] ?? 0) - (ASSET_KIND_ORDER[b.kind ?? 'leaf'] ?? 0);
+  if (kindOrder !== 0) {
+    return kindOrder;
+  }
+
+  return a.label.localeCompare(b.label);
+}
+
+/**
+ * Merges catalogs left-to-right; later catalogs override earlier entries with the same `id`.
+ */
+export function mergeWidgetAssetCatalogs(
+  ...catalogs: readonly WidgetAssetCatalogContract[]
+): WidgetAssetCatalogContract {
+  const byId = new Map<string, WidgetPlacementAsset>();
+
+  for (const catalog of catalogs) {
+    for (const asset of catalog.assets()) {
+      byId.set(asset.id, asset);
+    }
+  }
+
+  return createWidgetAssetCatalog([...byId.values()].sort(compareAssetsForCatalog));
 }
 
 export function createWidgetAssetCatalog(

@@ -30,7 +30,4 @@ export {
   WIDGET_TREE_DEMO_REGISTRY,
   WIDGET_TREE_WELCOME_DOCUMENT,
 } from './demo-registry.js';
-export {
-  WIDGET_TREE_DEMO_ASSET_CATALOG,
-  WIDGET_TREE_DEMO_PLACEMENT_ASSETS,
-} from './demo-widget-assets.js';
+export { WIDGET_TREE_DEMO_ASSET_CATALOG } from './demo-widget-assets.js';

@@ -14,7 +14,9 @@ export function WidgetAssetModeControls({
   onModeChange,
 }: WidgetAssetModeControlsProps) {
   return (
-    <div className={cx('ui-workbench-artifact-shell__modes', 'widget-asset-mode-controls', className)}>
+    <div
+      className={cx('ui-workbench-artifact-shell__modes', 'widget-asset-mode-controls', className)}
+    >
       <IconButton
         aria-pressed={mode === 'design'}
         className={cx(

@@ -44,8 +44,9 @@ export const Overview: Story = {
           </li>
           <li>
             <code>JsonWidget/WidgetTree</code> — widget layout editor;{' '}
-            <code>JsonWidget/WidgetAsset</code> — placement asset editor;{' '}
-            <code>*.widget.json</code> / <code>*.asset.json</code> open in Integrated Shell
+            <code>JsonWidget/WidgetAsset</code> — placement asset editor; <code>*.widget.json</code>{' '}
+            and asset packages (<code>manifest.json</code> + <code>content.json</code>) open in
+            Integrated Shell
           </li>
           <li>
             <code>React/Workbench/Shell → Integrated Shell</code> — full end-to-end shell flow

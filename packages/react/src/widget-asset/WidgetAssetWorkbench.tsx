@@ -6,12 +6,10 @@ import { Button } from '../primitives/Button';
 import { Toolbar } from '../primitives/Toolbar';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import { fileNameOfPath } from '../workbench/workspace/path';
+import type { WorkspaceFile } from '../workbench/workspace/types.js';
 import { WidgetAssetEditor } from './WidgetAssetEditor.js';
 import { WidgetAssetModeControls } from './WidgetAssetModeControls.js';
-import {
-  DEFAULT_WIDGET_ASSET_VIEW_MODE,
-  type WidgetAssetViewMode,
-} from './widget-asset-mode.js';
+import { DEFAULT_WIDGET_ASSET_VIEW_MODE, type WidgetAssetViewMode } from './widget-asset-mode.js';
 
 export interface WidgetAssetWorkbenchProps {
   readonly path?: string | undefined;
@@ -27,6 +25,7 @@ export interface WidgetAssetWorkbenchProps {
   readonly defaultViewMode?: WidgetAssetViewMode | undefined;
   readonly viewMode?: WidgetAssetViewMode | undefined;
   readonly onViewModeChange?: ((mode: WidgetAssetViewMode) => void) | undefined;
+  readonly workspaceFiles?: readonly WorkspaceFile[] | undefined;
 }
 
 export function WidgetAssetWorkbench({
@@ -43,6 +42,7 @@ export function WidgetAssetWorkbench({
   defaultViewMode = DEFAULT_WIDGET_ASSET_VIEW_MODE,
   viewMode,
   onViewModeChange,
+  workspaceFiles,
 }: WidgetAssetWorkbenchProps) {
   const [uncontrolledViewMode, setUncontrolledViewMode] =
     useState<WidgetAssetViewMode>(defaultViewMode);
@@ -102,6 +102,7 @@ export function WidgetAssetWorkbench({
           theme={theme}
           value={value}
           viewMode={resolvedViewMode}
+          workspaceFiles={workspaceFiles}
           onChange={onChange}
           onSave={onSave}
         />

@@ -54,7 +54,7 @@ export const WhenClauseVisibility: Story = {
 
     return (
       <div style={{ display: 'grid', gap: 16, minWidth: 320 }}>
-        <section>
+        <section data-testid="library-context">
           <h3 style={{ margin: '0 0 8px' }}>Library context</h3>
           <ul>
             {libraryItems.map((item) =>
@@ -62,7 +62,7 @@ export const WhenClauseVisibility: Story = {
             )}
           </ul>
         </section>
-        <section>
+        <section data-testid="search-context">
           <h3 style={{ margin: '0 0 8px' }}>Search context</h3>
           <ul>
             {searchItems.map((item) =>
@@ -75,8 +75,13 @@ export const WhenClauseVisibility: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByRole('heading', { name: 'Library context' })).toBeVisible();
-    await expect(canvas.getByText('Open library')).toBeVisible();
-    await expect(canvas.queryByText('Open search')).not.toBeInTheDocument();
+    const libraryContext = within(canvas.getByTestId('library-context'));
+    const searchContext = within(canvas.getByTestId('search-context'));
+
+    await expect(libraryContext.getByText('Open library')).toBeVisible();
+    await expect(libraryContext.queryByText('Open search')).not.toBeInTheDocument();
+
+    await expect(searchContext.getByText('Open search')).toBeVisible();
+    await expect(searchContext.queryByText('Open library')).not.toBeInTheDocument();
   },
 };

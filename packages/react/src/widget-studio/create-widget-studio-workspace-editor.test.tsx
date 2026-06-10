@@ -1,8 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import { formatWidgetAssetJson } from '@workbench-kit/json-widget';
-
 import { createWidgetStudioWorkspaceEditorRenderer } from './create-widget-studio-workspace-editor.js';
 import { WIDGET_TREE_DEMO_REGISTRY } from '../widget-tree/demo-registry.js';
 import { WIDGET_TREE_WELCOME_DOCUMENT } from '../widget-tree/demo-registry.js';
@@ -42,21 +40,20 @@ describe('createWidgetStudioWorkspaceEditorRenderer', () => {
   });
 
   it('routes asset documents to the widget asset workbench', () => {
-    const assetSource = formatWidgetAssetJson({
-      id: 'content.body',
+    const manifestSource = JSON.stringify({
+      name: 'content.body',
       label: 'Body',
       category: 'content',
-      widgetType: 'text',
-      defaultWidget: { type: 'text', text: 'Body' },
+      kind: 'leaf',
     });
 
     const markup = renderToStaticMarkup(
       renderer({
-        content: assetSource,
+        content: manifestSource,
         file: {
-          path: 'src/widgets/assets/body.asset.json',
-          mimeType: 'application/vnd.workbench-kit.widget-asset+json',
-          content: assetSource,
+          path: 'src/widgets/assets/body/manifest.json',
+          mimeType: 'application/vnd.workbench-kit.widget-asset-manifest+json',
+          content: manifestSource,
         },
         isDirty: false,
         onChange: () => undefined,
@@ -64,9 +61,14 @@ describe('createWidgetStudioWorkspaceEditorRenderer', () => {
         onSave: () => undefined,
         workspaceFiles: [
           {
-            path: 'src/widgets/assets/body.asset.json',
-            mimeType: 'application/vnd.workbench-kit.widget-asset+json',
-            content: assetSource,
+            path: 'src/widgets/assets/body/manifest.json',
+            mimeType: 'application/vnd.workbench-kit.widget-asset-manifest+json',
+            content: manifestSource,
+          },
+          {
+            path: 'src/widgets/assets/body/content.json',
+            mimeType: 'application/vnd.workbench-kit.widget-asset-content+json',
+            content: JSON.stringify({ type: 'text', args: { text: 'Body' } }),
           },
         ],
       }),

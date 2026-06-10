@@ -1,7 +1,10 @@
 import type { RuntimeChatMessage } from '@workbench-kit/runtime';
 import type { WorkspaceFile } from '@workbench-kit/workspace';
 
-import { widgetStudioAssetFiles } from './widget-studio-assets.js';
+import {
+  widgetStudioBuiltinAssetFiles,
+  widgetStudioCustomAssetExampleFiles,
+} from './widget-studio-assets.js';
 
 export const integratedShellWorkspaceFolders = [
   'src',
@@ -9,6 +12,18 @@ export const integratedShellWorkspaceFolders = [
   'src/workbench',
   'src/widgets',
   'src/widgets/assets',
+  'src/widgets/assets/heading',
+  'src/widgets/assets/body',
+  'src/widgets/assets/label',
+  'src/widgets/assets/caption',
+  'src/widgets/assets/row',
+  'src/widgets/assets/column',
+  'src/widgets/assets/grid-2',
+  'src/widgets/assets/grid-3',
+  'src/widgets/assets/media-card',
+  'src/widgets/assets/section-stack',
+  'src/widgets/assets/custom',
+  'src/widgets/assets/custom/feature-badge',
   'docs',
   'public',
 ] as const;
@@ -172,10 +187,14 @@ Import shared styles once, then compose the workbench primitives in your app she
 
 export const integratedShellWorkspaceFiles: WorkspaceFile[] = [
   ...integratedShellCoreWorkspaceFiles,
-  ...widgetStudioAssetFiles,
+  ...widgetStudioBuiltinAssetFiles,
+  ...widgetStudioCustomAssetExampleFiles,
 ];
 
-export { widgetStudioAssetFiles };
+export {
+  widgetStudioBuiltinAssetFiles,
+  widgetStudioCustomAssetExampleFiles,
+} from './widget-studio-assets.js';
 
 export const integratedShellInitialRuntimeMessages: RuntimeChatMessage[] = [
   {

@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
-import { parseWidgetJson } from '@workbench-kit/json-widget';
+import { parseJsonWidgetData } from '@workbench-kit/json-widget';
 
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
 import { EmptyState } from '../primitives/EmptyState';
@@ -66,8 +66,8 @@ export function resolveJsonConfigPreviewKind(
   if (previewKind === 'widget') return 'widget';
   if (schema) return 'schema';
 
-  const parsed = parseWidgetJson(json);
-  if (parsed.value !== null && typeof parsed.value.type === 'string') {
+  const parsed = parseJsonWidgetData(json);
+  if (parsed.value !== null) {
     return 'widget';
   }
 

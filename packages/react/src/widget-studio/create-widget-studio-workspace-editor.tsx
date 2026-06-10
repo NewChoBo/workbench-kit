@@ -38,6 +38,7 @@ export function createWidgetStudioWorkspaceEditorRenderer(
           registry={registry}
           theme={context.theme}
           value={context.content}
+          workspaceFiles={workspaceFiles}
           onChange={context.onChange}
           onDiscard={context.onDiscard}
           onSave={() => context.onSave(context.content)}
