@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { createWidgetDocument, getWidgetChildren } from '@workbench-kit/json-widget';
+import { createWidgetDocument, getWidgetChildren } from '@workbench-kit/jdw';
 
 import { WidgetInspectorPanel } from './WidgetInspectorPanel.js';
 import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';

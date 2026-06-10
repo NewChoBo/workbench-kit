@@ -1,5 +1,5 @@
 import { createElement, type CSSProperties, type ReactNode } from 'react';
-import type { GenericWidget } from '@workbench-kit/json-widget';
+import type { GenericWidget } from '@workbench-kit/jdw';
 
 function readNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;

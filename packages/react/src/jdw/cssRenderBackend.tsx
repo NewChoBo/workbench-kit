@@ -8,10 +8,10 @@ import {
   type JsonWidgetNode,
   type LayoutConstraints,
   type LayoutNodeResult,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';
 
 import { renderBuiltinWidgetLeaf } from './builtins/renderBuiltinWidgetLeaf.js';
-import { BUILTIN_JSON_WIDGET_REGISTRY } from './createBuiltinJsonWidgetRegistry.js';
+import { BUILTIN_JDW_REGISTRY } from './createBuiltinJdwRegistry.js';
 export interface CssRenderBackendOptions {
   readonly registry?: WidgetRegistryContract<unknown> | undefined;
   readonly emptyLabel?: string | undefined;
@@ -69,7 +69,7 @@ function layoutNodeStyle(
 }
 
 function renderLeafContent(widget: GenericWidget, options: CssRenderBackendOptions): ReactNode {
-  const { registry = BUILTIN_JSON_WIDGET_REGISTRY, emptyLabel = 'No render output.' } = options;
+  const { registry = BUILTIN_JDW_REGISTRY, emptyLabel = 'No render output.' } = options;
 
   if (registry.has(widget.type)) {
     return renderFromRegistry(registry, widget, emptyLabel);
@@ -124,7 +124,7 @@ export function renderCssLayoutTree(
   );
 }
 
-export function renderJsonWidgetWithLayout(
+export function renderJdwWithLayout(
   node: JsonWidgetNode,
   options: CssRenderBackendOptions = {},
 ): ReactNode {

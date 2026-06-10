@@ -58,7 +58,7 @@ These gates apply to **every** task in this plan. A PR that skips them is not me
 
 - **Launch mapping:** Per-sample equivalence for `launchType`, `target`, `workingDirectory`, `arguments`, `canLaunch` across `custom_launcher` and `tile_paper` adapters.
 - **Provider-library actions:** `provider-library-mapping` output must match local adapter output (`toEqual` / `toMatchObject`).
-- **JSON widget:** `workbench-kit-parity.test.ts` in `@tilepaper/json-widget-tree` must stay green against `@workbench-kit/json-widget`.
+- **JSON widget:** `workbench-kit-parity.test.ts` in `@tilepaper/json-widget-tree` must stay green against `@workbench-kit/jdw`.
 - **Command registry (future):** One launcher command + one kit menu flow equate visibility/enabled semantics before API convergence.
 
 ### 2.2 `check:launch-boundary`
@@ -153,7 +153,7 @@ Commit themes through 2026-06-07:
 
 - **Contracts alignment:** provider-library mapping, widget registry contract, library-json contracts on `@workbench-kit/contracts`
 - **Shim removal:** same as custom_launcher; direct contracts imports
-- **json-widget-tree parity:** `workbench-kit-parity.test.ts`; parse/registry re-export from `@workbench-kit/json-widget`
+- **json-widget-tree parity:** `workbench-kit-parity.test.ts`; parse/registry re-export from `@workbench-kit/jdw`
 - **Phase 4 pilot started:** `JsonConfigWorkbench` via `ProjectConfigEditor`; web-editor project.json persist; Phase 4 pilot doc
 
 ### Downstream Migration Bridge (closed)
@@ -319,7 +319,7 @@ pnpm -C newchobo-ui-package check:launch-boundary
 | **Launchpad JSON format vs json-widget long-term** | Coexist / json-widget primary / single layout format           | Short-term coexist; separate ADR for convergence                                                                                           | Authoring UX                   | Not blocking near-term                                                                                                                                                                                                                                 |
 | **Canonical Electron app**                         | custom_launcher / tile_paper electron / greenfield             | **custom_launcher** (evolve)                                                                                                               | Phase 3+                       | **Decided**                                                                                                                                                                                                                                            |
 | **Context-key port API shape**                     | Extend `CommandDefinition.when` vs separate evaluator module   | Evaluator + `when` in kit; add `resolveCommand` next                                                                                       | Phase 1–2 command convergence  | Evaluator done; registry gap in [context-key-port-design.md](./context-key-port-design.md)                                                                                                                                                             |
-| **launchpad-source-widget-bridge location**        | Stay in custom_launcher / move to `@workbench-kit/json-widget` | Evaluate after Phase 2 pilot stability                                                                                                     | Phase 2 close                  | Open                                                                                                                                                                                                                                                   |
+| **launchpad-source-widget-bridge location**        | Stay in custom_launcher / move to `@workbench-kit/jdw` | Evaluate after Phase 2 pilot stability                                                                                                     | Phase 2 close                  | Open                                                                                                                                                                                                                                                   |
 
 ---
 

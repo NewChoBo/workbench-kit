@@ -3,13 +3,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
-import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/json-widget';
+import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/jdw';
 
 import { JsonConfigWorkbench, type JsonConfigWorkbenchProps } from './JsonConfigWorkbench.js';
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
 
 const meta = {
-  title: 'JsonConfig/Workbench',
+  title: 'JDW/Config/Workbench',
   component: JsonConfigWorkbench,
   parameters: {
     layout: 'fullscreen',
@@ -150,8 +150,8 @@ export const WidgetInteraction: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Launch tile');
-    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent(
+    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent('Launch tile');
+    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent(
       'Preview from JsonConfigWorkbench widget mode.',
     );
 

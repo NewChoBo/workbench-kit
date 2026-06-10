@@ -1,5 +1,5 @@
 {
-  "name": "@workbench-kit/json-widget",
+  "name": "@workbench-kit/jdw",
   "version": "0.0.1-prototype.0",
   "private": false,
   "type": "module",
@@ -31,7 +31,7 @@
   "devDependencies": {
     "tsup": "^8.5.0"
   },
-  "description": "Framework-neutral JSON widget parsing and registry primitives for layout composition.",
+  "description": "Framework-neutral JDW engine: parse, layout, screen-spec compile, and widget document ops.",
   "publishConfig": {
     "access": "public",
     "tag": "prototype",

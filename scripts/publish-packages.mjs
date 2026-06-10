@@ -70,9 +70,14 @@ function resolvePublishAuthMode(trustedPublisherAvailable) {
   }
 }
 
+const PACKAGE_DIRECTORY_BY_NAME = {
+  jdw: 'json-widget',
+};
+
 function packageDirFor(packageName) {
   const shortName = packageName.replace('@workbench-kit/', '');
-  return path.join(root, 'packages', shortName);
+  const dirName = PACKAGE_DIRECTORY_BY_NAME[shortName] ?? shortName;
+  return path.join(root, 'packages', dirName);
 }
 
 function packPackage(packageName) {

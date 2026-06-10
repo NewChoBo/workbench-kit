@@ -1,4 +1,4 @@
-# @workbench-kit/json-widget
+# @workbench-kit/jdw
 
 Framework-neutral primitives for JSON-based widget layout composition.
 
@@ -19,7 +19,7 @@ From the monorepo root:
 pnpm storybook
 ```
 
-Open **JsonDynamicWidget/Fixtures** and **JsonWidget/Preview** in `@workbench-kit/react` for JDW render and parse-error demos. See `docs/workbench/json-widget-mvp.md` for validation commands.
+Open **JDW/Fixtures** and **JDW/Preview** under `@workbench-kit/react/jdw` for render and parse-error demos. See `docs/workbench/json-widget-mvp.md` for validation commands.
 
 ## Reference implementation
 
@@ -33,7 +33,7 @@ import {
   parseJsonWidgetData,
   type WidgetDefinition,
   type WidgetTypeShape,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';
 
 interface TextWidget extends WidgetTypeShape {
   type: 'text';

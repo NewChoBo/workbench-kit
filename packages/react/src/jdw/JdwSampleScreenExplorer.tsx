@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { compileScreenSpecText } from '@workbench-kit/json-widget';
+import { compileScreenSpecText } from '@workbench-kit/jdw';
 
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel.js';
 import { WorkbenchParseError } from '../layout/WorkbenchPropertyPanel.js';
@@ -9,7 +9,7 @@ import { Select } from '../primitives/Select.js';
 import { SegmentedControl } from '../primitives/WorkbenchEditor.js';
 import { ScreenSpecEditor, useScreenSpecPipeline } from '@workbench-kit/jdw-editor';
 import { SplitView } from '../workbench/SplitView.js';
-import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
+import { JdwPreview } from '../jdw/JdwPreview.js';
 import {
   formatJdwSampleScreenSpec,
   JDW_SAMPLE_SCREENS,
@@ -161,7 +161,7 @@ export function JdwSampleScreenExplorer({
               >
                 <header className="jdw-sample-explorer__pane-header">Preview</header>
                 <div className="jdw-sample-explorer__pane-body">
-                  <JsonWidgetPreview
+                  <JdwPreview
                     json={pipeline.json}
                     layoutConstraints={pipeline.layoutConstraints}
                   />

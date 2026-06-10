@@ -1,18 +1,25 @@
+export { JdwPreview, type JdwPreviewProps } from './JdwPreview.js';
 export {
-  renderJsonWidget,
-  renderJsonWidgetNode,
-  useRenderJsonWidget,
-  type RenderJsonWidgetOptions,
-} from './renderJsonWidget.js';
+  JsonCodeEditorPane,
+  JsonConfigValidationBanner,
+  type JsonCodeEditorPaneProps,
+  type JsonConfigValidationBannerProps,
+} from './JsonCodeEditorPane.js';
+export {
+  renderJdw,
+  renderJdwNode,
+  useRenderJdw,
+  type RenderJdwOptions,
+} from './renderJdw.js';
 export {
   renderCssLayoutTree,
-  renderJsonWidgetWithLayout,
+  renderJdwWithLayout,
   type CssRenderBackendOptions,
 } from './cssRenderBackend.js';
 export {
-  BUILTIN_JSON_WIDGET_REGISTRY,
-  createBuiltinJsonWidgetRegistry,
-} from './createBuiltinJsonWidgetRegistry.js';
+  BUILTIN_JDW_REGISTRY,
+  createBuiltinJdwRegistry,
+} from './createBuiltinJdwRegistry.js';
 export { renderBuiltinWidgetNode } from './builtins/renderBuiltinWidgetNode.js';
 export { JdwSampleScreenExplorer } from './JdwSampleScreenExplorer.js';
 export type { JdwSampleScreenExplorerProps } from './JdwSampleScreenExplorer.js';
@@ -39,4 +46,4 @@ export {
   parseScreenSpecJson,
   type CompiledScreenSpecText,
   type ParsedScreenSpec,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';

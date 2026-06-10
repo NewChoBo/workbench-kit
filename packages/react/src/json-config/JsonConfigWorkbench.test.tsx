@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
-import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/json-widget';
+import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/jdw';
 
 import { JsonConfigWorkbench, resolveJsonConfigPreviewKind } from './JsonConfigWorkbench.js';
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
@@ -98,7 +98,7 @@ describe('JsonConfigWorkbench', () => {
     );
 
     expect(markup).toContain('Tile preview');
-    expect(markup).toContain('data-testid="json-widget-preview-output"');
+    expect(markup).toContain('data-testid="jdw-preview-output"');
   });
 
   it('shows dirty indicator when value differs from baseline', () => {

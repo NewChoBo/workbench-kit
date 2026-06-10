@@ -68,7 +68,7 @@ function WidgetTreeWorkspaceHarness() {
 }
 
 const meta = {
-  title: 'JsonWidget/WidgetTree/Workbench',
+  title: 'JDW/WidgetTree/Workbench',
   parameters: {
     fullHeightShell: '720px',
     layout: 'fullscreen',
@@ -88,7 +88,7 @@ export const WorkspaceEditor: Story = {
     await expect(canvas.getByTestId('widget-tree-workbench')).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Design' })).toHaveAttribute('aria-pressed', 'true');
     await waitForWidgetTreeSourcePane(canvasElement);
-    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Widget Tree');
+    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent('Widget Tree');
     await expect(canvas.getByRole('tab', { name: 'home.widget.json' })).toHaveAttribute(
       'aria-selected',
       'true',

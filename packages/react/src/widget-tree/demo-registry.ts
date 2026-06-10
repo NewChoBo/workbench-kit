@@ -1,8 +1,8 @@
-import { formatWidgetDocumentJson } from '@workbench-kit/json-widget';
+import { formatWidgetDocumentJson } from '@workbench-kit/jdw';
 
-import { BUILTIN_JSON_WIDGET_REGISTRY } from '../json-dynamic-widget/createBuiltinJsonWidgetRegistry.js';
+import { BUILTIN_JDW_REGISTRY } from '../jdw/createBuiltinJdwRegistry.js';
 
-export const WIDGET_TREE_DEMO_REGISTRY = BUILTIN_JSON_WIDGET_REGISTRY;
+export const WIDGET_TREE_DEMO_REGISTRY = BUILTIN_JDW_REGISTRY;
 
 export const WIDGET_TREE_WELCOME_DOCUMENT = formatWidgetDocumentJson({
   type: 'column',

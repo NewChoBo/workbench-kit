@@ -2,7 +2,7 @@ import {
   isWidgetAssetContentPath,
   isWidgetAssetPackageFilePath,
   isWidgetAssetSchemaPath,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';
 
 export const WIDGET_ASSET_MANIFEST_MIME =
   'application/vnd.workbench-kit.widget-asset-manifest+json';

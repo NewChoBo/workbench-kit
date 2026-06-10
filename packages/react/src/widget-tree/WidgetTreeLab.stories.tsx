@@ -25,7 +25,7 @@ function WidgetTreeLabHarness({
 }
 
 const meta = {
-  title: 'JsonWidget/WidgetTree/Lab',
+  title: 'JDW/WidgetTree/Lab',
   parameters: {
     fullHeightShell: '720px',
     layout: 'fullscreen',
@@ -63,7 +63,7 @@ export const InteractionSmoke: Story = {
       'true',
     );
     await expect(canvas.getByTestId('widget-tree-side-panel')).toBeVisible();
-    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Widget Tree');
+    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent('Widget Tree');
 
     await clickOutlineNode('$');
 
@@ -83,7 +83,7 @@ export const InteractionSmoke: Story = {
     await userEvent.type(contentInput, 'Hello');
 
     await waitFor(() =>
-      expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Hello'),
+      expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent('Hello'),
     );
     await userEvent.click(canvas.getByRole('button', { name: 'Outline' }));
     await expect(canvas.getByTestId('widget-tree-node-$.children[0]')).toHaveTextContent(/Hello/);

@@ -9,7 +9,7 @@ import {
   screenStack,
   screenText,
   type JdwScreenSpec,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';
 
 export type JdwSampleScreenDefinition = JdwScreenSpec;
 

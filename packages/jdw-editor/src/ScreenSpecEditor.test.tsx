@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { screenText } from '@workbench-kit/json-widget';
+import { screenText } from '@workbench-kit/jdw';
 
 import { ScreenSpecEditor } from './ScreenSpecEditor.js';
 

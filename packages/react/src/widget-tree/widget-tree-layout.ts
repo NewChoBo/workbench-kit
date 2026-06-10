@@ -1,4 +1,4 @@
-import { isContainerWidget, type GenericWidget } from '@workbench-kit/json-widget';
+import { isContainerWidget, type GenericWidget } from '@workbench-kit/jdw';
 
 export function canAddChildren(widget: GenericWidget | null): widget is GenericWidget {
   return widget !== null && isContainerWidget(widget) && widget.type !== 'box';

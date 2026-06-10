@@ -3,7 +3,7 @@ import {
   compileScreenSpecToJson,
   type JdwScreenSpec,
   type LayoutConstraints,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';
 
 export interface ScreenSpecPipelineState {
   readonly spec: JdwScreenSpec;

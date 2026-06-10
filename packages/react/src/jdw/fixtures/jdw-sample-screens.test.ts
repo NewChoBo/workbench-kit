@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseJsonWidgetData, validateJsonWidgetData } from '@workbench-kit/json-widget';
+import { parseJsonWidgetData, validateJsonWidgetData } from '@workbench-kit/jdw';
 
 import { formatJdwSampleScreenJson, JDW_SAMPLE_SCREENS } from './jdw-sample-screens.js';
 

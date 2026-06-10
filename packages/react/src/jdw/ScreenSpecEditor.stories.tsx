@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { screenColumn, screenText, type JdwScreenSpec } from '@workbench-kit/json-widget';
+import { screenColumn, screenText, type JdwScreenSpec } from '@workbench-kit/jdw';
 
-import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
+import { JdwPreview } from '../jdw/JdwPreview.js';
 import { ScreenSpecEditor, useScreenSpecPipeline } from '@workbench-kit/jdw-editor';
-import { JDW_SAMPLE_SCREENS } from '../json-dynamic-widget/fixtures/jdw-sample-screens.js';
+import { JDW_SAMPLE_SCREENS } from './fixtures/jdw-sample-screens.js';
 
 function ScreenSpecEditorHarness({ sampleId = 'user-profile' }: { readonly sampleId?: string }) {
   const sample = JDW_SAMPLE_SCREENS.find((entry) => entry.id === sampleId) ?? JDW_SAMPLE_SCREENS[0]!;
@@ -13,7 +13,7 @@ function ScreenSpecEditorHarness({ sampleId = 'user-profile' }: { readonly sampl
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, minHeight: 520, padding: 16 }}>
       <ScreenSpecEditor value={pipeline.spec} onChange={pipeline.setSpec} />
-      <JsonWidgetPreview json={pipeline.json} layoutConstraints={pipeline.layoutConstraints} />
+      <JdwPreview json={pipeline.json} layoutConstraints={pipeline.layoutConstraints} />
     </div>
   );
 }
@@ -41,13 +41,13 @@ function PlaygroundHarness() {
           pipeline.setSpec(nextSpec);
         }}
       />
-      <JsonWidgetPreview json={pipeline.json} layoutConstraints={pipeline.layoutConstraints} />
+      <JdwPreview json={pipeline.json} layoutConstraints={pipeline.layoutConstraints} />
     </div>
   );
 }
 
 const meta = {
-  title: 'JsonDynamicWidget/ScreenSpecEditor',
+  title: 'JDW/ScreenSpecEditor',
   parameters: {
     layout: 'fullscreen',
     backgrounds: { default: 'dark' },

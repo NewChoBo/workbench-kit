@@ -4,7 +4,7 @@ import {
   jdwNodeToGenericWidget,
   layoutWidget,
   parseJsonWidgetData,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';
 
 import {
   JDW_FIXTURE_GRID_CELLS,
@@ -62,7 +62,7 @@ function LayoutFixturePreview({ json }: LayoutFixturePreviewProps) {
 }
 
 const meta = {
-  title: 'JsonDynamicWidget/Layout',
+  title: 'JDW/Layout',
   component: LayoutFixturePreview,
   parameters: {
     layout: 'padded',

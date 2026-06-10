@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
-import { parseJsonWidgetData } from '@workbench-kit/json-widget';
+import { parseJsonWidgetData } from '@workbench-kit/jdw';
 
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
 import { EmptyState } from '../primitives/EmptyState';
@@ -9,8 +9,8 @@ import { Toolbar } from '../primitives/Toolbar';
 import {
   JsonCodeEditorPane,
   JsonConfigValidationBanner,
-} from '../json-widget/JsonCodeEditorPane.js';
-import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
+} from '../jdw/JsonCodeEditorPane.js';
+import { JdwPreview } from '../jdw/JdwPreview.js';
 import {
   WorkbenchArtifactModeControls,
   type WorkbenchArtifactMode,
@@ -178,7 +178,7 @@ export function JsonConfigWorkbench({
     if (resolvedPreviewKind === 'widget') {
       return (
         <div className="ui-json-config-workbench__preview">
-          <JsonWidgetPreview json={value} registry={widgetRegistry} />
+          <JdwPreview json={value} registry={widgetRegistry} />
         </div>
       );
     }

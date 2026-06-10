@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { formatWidgetAssetManifest } from '@workbench-kit/json-widget';
+import { formatWidgetAssetManifest } from '@workbench-kit/jdw';
 
 import { WidgetAssetWorkbench } from './WidgetAssetWorkbench.js';
 import { WIDGET_TREE_DEMO_REGISTRY } from '../widget-tree/demo-registry.js';
@@ -29,7 +29,7 @@ function WidgetAssetHarness() {
 }
 
 const meta = {
-  title: 'JsonWidget/WidgetAsset/Editor',
+  title: 'JDW/WidgetAsset/Editor',
   parameters: {
     fullHeightShell: '720px',
     layout: 'fullscreen',

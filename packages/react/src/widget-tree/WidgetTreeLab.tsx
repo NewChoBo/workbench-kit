@@ -14,10 +14,10 @@ import {
   type GenericWidget,
   type WidgetPath,
   type WidgetSelectionState,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';
 
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
-import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
+import { JdwPreview } from '../jdw/JdwPreview.js';
 import { WidgetAssetPalette } from './WidgetAssetPalette.js';
 import { WidgetInspectorPanel } from './WidgetInspectorPanel.js';
 import { WidgetSourceEditor } from './WidgetSourceEditor.js';
@@ -189,7 +189,7 @@ export function WidgetTreeLab({
     <section aria-label="Widget preview" className="widget-tree-lab__preview">
       <header className="widget-tree-lab__preview-header">Preview</header>
       <div className="widget-tree-lab__preview-body">
-        <JsonWidgetPreview json={value} registry={registry} />
+        <JdwPreview json={value} registry={registry} />
       </div>
     </section>
   );

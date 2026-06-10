@@ -1,5 +1,5 @@
 import { createElement, type CSSProperties, type ReactNode } from 'react';
-import { getWidgetChildren, type GenericWidget } from '@workbench-kit/json-widget';
+import { getWidgetChildren, type GenericWidget } from '@workbench-kit/jdw';
 
 import { renderBuiltinWidgetLeaf } from './renderBuiltinWidgetLeaf.js';
 
