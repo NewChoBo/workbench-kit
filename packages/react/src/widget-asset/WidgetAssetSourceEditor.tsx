@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { JsonCodeEditorPane } from '../json-widget/JsonCodeEditorPane.js';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import type { WorkspaceFile } from '../workbench/workspace/types.js';
-import { WIDGET_ASSET_DOCUMENT_MIME } from './widget-asset-document.js';
+import { resolveWidgetAssetMimeType } from './widget-asset-document.js';
 
 export interface WidgetAssetSourceEditorProps {
   readonly path?: string | undefined;
@@ -16,7 +16,7 @@ export interface WidgetAssetSourceEditorProps {
 }
 
 export function WidgetAssetSourceEditor({
-  path = 'asset.asset.json',
+  path = 'assets/new-asset/manifest.json',
   value,
   onChange,
   onSave,
@@ -27,7 +27,7 @@ export function WidgetAssetSourceEditor({
   const file = useMemo<WorkspaceFile>(
     () => ({
       content: value,
-      mimeType: WIDGET_ASSET_DOCUMENT_MIME,
+      mimeType: resolveWidgetAssetMimeType(path),
       path,
     }),
     [path, value],

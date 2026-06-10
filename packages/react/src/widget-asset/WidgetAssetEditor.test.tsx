@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import { formatWidgetAssetJson } from '@workbench-kit/json-widget';
+import { formatWidgetAssetContent, formatWidgetAssetManifest } from '@workbench-kit/json-widget';
 
 import { WidgetAssetEditor } from './WidgetAssetEditor.js';
 import { WIDGET_TREE_DEMO_REGISTRY } from '../widget-tree/demo-registry.js';
@@ -15,7 +15,8 @@ vi.mock('@monaco-editor/react', () => ({
 
 vi.mock('monaco-editor', () => ({}));
 
-const sampleAsset = formatWidgetAssetJson({
+const packagePath = 'src/widgets/assets/heading';
+const manifest = formatWidgetAssetManifest({
   id: 'content.heading',
   label: 'Heading',
   category: 'content',
@@ -24,15 +25,25 @@ const sampleAsset = formatWidgetAssetJson({
     type: 'text',
     text: 'Heading',
     fontSize: 24,
-  },
+  } as never,
+});
+const content = formatWidgetAssetContent({
+  type: 'text',
+  text: 'Heading',
+  fontSize: 24,
 });
 
 describe('WidgetAssetEditor', () => {
   it('renders dedicated asset design surfaces', () => {
     const markup = renderToStaticMarkup(
       <WidgetAssetEditor
+        path={`${packagePath}/manifest.json`}
         registry={WIDGET_TREE_DEMO_REGISTRY}
-        value={sampleAsset}
+        value={manifest}
+        workspaceFiles={[
+          { path: `${packagePath}/manifest.json`, content: manifest },
+          { path: `${packagePath}/content.json`, content },
+        ]}
         onChange={() => undefined}
       />,
     );

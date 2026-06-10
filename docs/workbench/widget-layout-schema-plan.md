@@ -161,14 +161,33 @@ Widget Document Schema (v1)            Widget Asset Schema (v1)
 3. Registry-aware validation (optional) — unknown `type` flagged when a registry is supplied.
 4. Semantic validation — e.g. `grid` children require `col` + `row` in `args`.
 
-### 4.2 Widget asset (`*.asset.json`)
+### 4.2 Widget asset (package directory — preferred)
 
 **Purpose:** reusable fragment for palette insertion; aligned with JDW **plugin_components** plus workbench catalog fields.
 
+**Preferred layout** — one directory per asset:
+
+```text
+src/widgets/assets/<slug>/
+  manifest.json   # catalog metadata (name, label, category, kind, icon, …)
+  content.json    # JDW v7 subtree root node (asset data)
+  schema.json     # optional per-asset inputs JSON Schema
+```
+
+| File | Required | Role |
+| ---- | -------- | ---- |
+| `manifest.json` | yes | Catalog metadata (`widget-asset-manifest.v1`) |
+| `content.json` | yes | JDW v7 widget subtree |
+| `schema.json` | no | Per-asset inputs/parameters schema (Phase 3 substitution) |
+
+**Legacy single-file** `*.asset.json` (metadata + inline `content`) remains supported for migration.
+
+#### manifest.json fields
+
 | Field | Required | Role |
 | ----- | -------- | ---- |
-| `$schema` | recommended | Pin `widget-asset.v1` |
-| `name` | yes | Stable id (maps to catalog `id`; prefer `name` for JDW alignment) |
+| `$schema` | recommended | Pin `widget-asset-manifest.v1` |
+| `name` | yes | Stable id (maps to catalog `id`) |
 | `version` | recommended | Semver string (`1.0.0`) |
 | `label` | yes | Palette display name |
 | `category` | yes | Palette grouping |
@@ -176,8 +195,6 @@ Widget Document Schema (v1)            Widget Asset Schema (v1)
 | `icon` | no | Codicon name |
 | `kind` | no | `leaf` \| `container` \| `template` |
 | `placementPolicy` | no | Insert behavior (see §6) |
-| `inputs` | no | Component parameters (plugin_components; Phase 3+) |
-| `content` | yes | JDW v7 subtree root node |
 
 **Migration from current branch shape:**
 
@@ -347,13 +364,13 @@ Formalize what `parseWidgetAssetJson` partially enforces in procedural code toda
 
 **Exit criteria:**
 
-- [ ] Vendored or referenced schemas for `row`, `column`, `text`, `expanded` under `packages/json-widget/schemas/`
-- [ ] Kit extension schema `grid.json`
-- [ ] `widget-asset.v1.json` with `content` + catalog metadata
-- [ ] `validateJsonWidgetData` + asset two-pass tests
-- [ ] `@workbench-kit/react/json-dynamic-widget`: `JsonWidgetRegistry`, `renderJsonWidget`, builtins (`row`, `column`, `text`, `expanded`)
-- [ ] `JsonWidgetPreview` uses `renderJsonWidget`
-- [ ] Storybook: **JsonDynamicWidget/Fixtures** with JDW JSON files only
+- [x] Vendored or referenced schemas for `row`, `column`, `text`, `expanded` under `packages/json-widget/schemas/`
+- [x] Kit extension schema `grid.json`
+- [x] `widget-asset.v1.json` with `content` + catalog metadata
+- [x] `validateJsonWidgetData` + asset two-pass tests
+- [x] `@workbench-kit/react/json-dynamic-widget`: `JsonWidgetRegistry`, `renderJsonWidget`, builtins (`row`, `column`, `text`, `expanded`)
+- [x] `JsonWidgetPreview` uses `renderJsonWidget`
+- [x] Storybook: **JsonDynamicWidget/Fixtures** with JDW JSON files only
 
 **Editor UX may lag** until Phase 4; fixtures and preview must work first.
 
@@ -361,22 +378,22 @@ Formalize what `parseWidgetAssetJson` partially enforces in procedural code toda
 
 **Exit criteria:**
 
-- [ ] `normalizeWidgetSubtree(widget, parentHint?)` — default flex, grid slot fill, strip invalid placement
-- [ ] `materializeWidgetAsset(asset, parent, policy?)` — deep clone + policy table (§6)
-- [ ] Patch layer calls normalize on `insert-child` / `reparent-widget`
-- [ ] Fixture: template asset (nested column → row) inserts into document unchanged internally
-- [ ] Fixture: leaf insert into grid receives `col`/`row`
-- [ ] Adapter fixtures: add `media-card.asset.json` template (`content` with nested JDW nodes)
+- [x] `normalizeWidgetSubtree(widget, parentHint?)` — strip invalid placement; optional internal preserve
+- [x] `materializeWidgetPlacementAsset(asset, parent)` — deep clone + `placementPolicy` / kind defaults (§6)
+- [x] Patch layer calls normalize on `insert-child` / `reparent-widget`
+- [x] Fixture: template asset (nested column → row) inserts into document unchanged internally
+- [x] Fixture: leaf insert into grid receives `col`/`row`
+- [x] Adapter fixtures: add `media-card` template package (`content` with nested JDW nodes)
 
 ### Phase 3 — Layout engine and render pipeline
 
 **Exit criteria:**
 
-- [ ] `layoutWidget` implements row/column (L1–L2)
-- [ ] Grid/stack integrated (L3–L4) with rect snapshot tests
+- [x] `layoutWidget` implements row/column (L1–L2)
+- [x] Grid/stack integrated (L3–L4) with rect snapshot tests
 - [ ] `CssRenderBackend` replaces ad-hoc `demo-render.tsx` layout CSS
 - [ ] `JsonWidgetPreview` uses pipeline (parse → validate → layout → render)
-- [ ] Storybook story: **WidgetLayout/Fixtures** — JSON files only, no editor, baseline play optional
+- [x] Storybook story: **JsonDynamicWidget/Layout** — layout rect fixtures
 
 ### Phase 4 — Editor integration (deferred)
 

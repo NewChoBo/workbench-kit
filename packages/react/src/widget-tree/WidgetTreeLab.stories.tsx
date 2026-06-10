@@ -7,7 +7,11 @@ import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-
 import { WIDGET_TREE_DEMO_ASSET_CATALOG } from './demo-widget-assets.js';
 import { waitForWidgetTreeSourcePane } from './widget-tree-play-helpers.js';
 
-function WidgetTreeLabHarness({ initialValue = WIDGET_TREE_WELCOME_DOCUMENT }: { initialValue?: string }) {
+function WidgetTreeLabHarness({
+  initialValue = WIDGET_TREE_WELCOME_DOCUMENT,
+}: {
+  initialValue?: string;
+}) {
   const [value, setValue] = useState(initialValue);
 
   return (
@@ -47,24 +51,32 @@ export const InteractionSmoke: Story = {
   tags: ['storybook-play-baseline', 'storybook-play-required'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const clickOutlineNode = async (pathKey: string) => {
+      const node = canvas.getByTestId(`widget-tree-node-${pathKey}`);
+      await userEvent.click(within(node).getByRole('button'));
+    };
 
     await expect(canvas.getByTestId('widget-tree-workbench')).toBeVisible();
     await waitForWidgetTreeSourcePane(canvasElement);
-    await expect(canvas.getByRole('button', { name: 'Design' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(canvas.getByRole('button', { name: 'Design' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await expect(canvas.getByTestId('widget-tree-side-panel')).toBeVisible();
     await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Widget Tree');
 
+    await clickOutlineNode('$');
+
     await userEvent.click(canvas.getByRole('button', { name: 'Assets' }));
     await expect(canvas.getByTestId('widget-tree-asset-palette')).toBeVisible();
-
-    await userEvent.click(canvas.getByTestId('widget-tree-node-$'));
     await userEvent.click(canvas.getByTestId('widget-asset-content.body'));
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Outline' }));
+    await clickOutlineNode('$.children[0]');
 
     await userEvent.click(canvas.getByRole('button', { name: 'Props' }));
     await expect(canvas.getByTestId('widget-tree-inspector-panel')).toBeVisible();
-
-    await userEvent.click(canvas.getByTestId('widget-tree-node-$.children[0]'));
-    await expect(canvas.getByDisplayValue('Widget Tree')).toBeVisible();
+    await waitFor(() => expect(canvas.getByDisplayValue('Widget Tree')).toBeVisible());
 
     const contentInput = canvas.getByDisplayValue('Widget Tree');
     await userEvent.clear(contentInput);
@@ -73,6 +85,7 @@ export const InteractionSmoke: Story = {
     await waitFor(() =>
       expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Hello'),
     );
+    await userEvent.click(canvas.getByRole('button', { name: 'Outline' }));
     await expect(canvas.getByTestId('widget-tree-node-$.children[0]')).toHaveTextContent(/Hello/);
   },
 };

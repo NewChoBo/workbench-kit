@@ -53,7 +53,10 @@ function readJsonWidgetNode(value: unknown, errors: string[], path: string): Jso
   }
 
   const listen = value.listen;
-  if (listen !== undefined && (!Array.isArray(listen) || listen.some((item) => typeof item !== 'string'))) {
+  if (
+    listen !== undefined &&
+    (!Array.isArray(listen) || listen.some((item) => typeof item !== 'string'))
+  ) {
     errors.push(`${path}.listen must be an array of strings.`);
     return null;
   }
@@ -126,7 +129,9 @@ export function jdwNodeToGenericWidget(node: JsonWidgetNode): GenericWidget {
   for (const [key, value] of Object.entries(node.args)) {
     if (key === CONTAINER_CHILDREN_ARG && Array.isArray(value)) {
       widget.children = value
-        .map((child) => (isChildNodeValue(child) ? jdwNodeToGenericWidget(readChildNode(child)) : null))
+        .map((child) =>
+          isChildNodeValue(child) ? jdwNodeToGenericWidget(readChildNode(child)) : null,
+        )
         .filter((child): child is GenericWidget => child !== null);
       continue;
     }
@@ -172,7 +177,13 @@ export function genericWidgetToJdwNode(widget: GenericWidget): JsonWidgetNode {
   if (typeof widget.flex === 'number') {
     const childRecord: GenericWidget = { type: widget.type };
     for (const [key, value] of Object.entries(widget)) {
-      if (key === 'type' || key === 'flex' || key === 'children' || key === 'child' || value === undefined) {
+      if (
+        key === 'type' ||
+        key === 'flex' ||
+        key === 'children' ||
+        key === 'child' ||
+        value === undefined
+      ) {
         continue;
       }
       childRecord[key] = value;
@@ -209,11 +220,7 @@ function isChildNodeValue(value: unknown): boolean {
   return isObjectRecord(value) || isJdwLikeNode(value);
 }
 
-function validateNestedJsonWidgetNodes(
-  node: JsonWidgetNode,
-  errors: string[],
-  path: string,
-): void {
+function validateNestedJsonWidgetNodes(node: JsonWidgetNode, errors: string[], path: string): void {
   for (const [key, value] of Object.entries(node.args)) {
     if (key === CONTAINER_CHILDREN_ARG && Array.isArray(value)) {
       value.forEach((child, index) => {
@@ -239,15 +246,13 @@ function readChildNode(value: unknown): JsonWidgetNode {
     return value;
   }
 
-  if (
-    isObjectRecord(value) &&
-    typeof value.type === 'string' &&
-    isObjectRecord(value.args)
-  ) {
+  if (isObjectRecord(value) && typeof value.type === 'string' && isObjectRecord(value.args)) {
     return {
       type: value.type,
       args: value.args,
-      ...(typeof value.id === 'string' && value.id.trim().length > 0 ? { id: value.id.trim() } : {}),
+      ...(typeof value.id === 'string' && value.id.trim().length > 0
+        ? { id: value.id.trim() }
+        : {}),
     };
   }
 

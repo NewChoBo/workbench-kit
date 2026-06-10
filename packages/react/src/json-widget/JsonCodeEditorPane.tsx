@@ -104,7 +104,14 @@ export function JsonCodeEditorPane({
   const configureJsonSchema = (monaco: typeof Monaco, path: string) => {
     if (!jsonSchema) return;
 
-    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+    const jsonDefaults = (
+      monaco.languages.json as unknown as {
+        jsonDefaults?: { setDiagnosticsOptions: (options: unknown) => void };
+      }
+    ).jsonDefaults;
+    if (!jsonDefaults) return;
+
+    jsonDefaults.setDiagnosticsOptions({
       validate: true,
       enableSchemaRequest: false,
       schemas: [

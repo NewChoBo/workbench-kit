@@ -1,5 +1,16 @@
 import { expect, userEvent, waitFor } from 'storybook/test';
 
+interface MonacoEditorHandle {
+  getDomNode: () => HTMLElement | null;
+  getValue: () => string;
+}
+
+interface MonacoGlobal {
+  editor: {
+    getEditors: () => MonacoEditorHandle[];
+  };
+}
+
 export async function waitForWidgetTreeSourcePane(canvasElement: HTMLElement): Promise<void> {
   await waitFor(
     () => {
@@ -50,7 +61,7 @@ export async function setWidgetTreeSourceJson(
 
   await waitFor(
     () => {
-      const monacoGlobal = (window as Window & { monaco?: import('monaco-editor') }).monaco;
+      const monacoGlobal = (window as Window & { monaco?: MonacoGlobal }).monaco;
       const editor = monacoGlobal?.editor.getEditors().find((candidate) => {
         const domNode = candidate.getDomNode();
         return domNode ? editorRoot.contains(domNode) : false;

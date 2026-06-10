@@ -8,7 +8,10 @@ import {
   WIDGET_TREE_DEMO_REGISTRY,
   WIDGET_TREE_WELCOME_DOCUMENT,
 } from './demo-registry.js';
-import { widgetStudioAssetFiles } from '@workbench-kit/adapters';
+import {
+  widgetStudioBuiltinAssetFiles,
+  widgetStudioCustomAssetExampleFiles,
+} from '@workbench-kit/adapters';
 import { WIDGET_TREE_DOCUMENT_MIME } from './widget-tree-document.js';
 import {
   setWidgetTreeSourceJson,
@@ -22,7 +25,8 @@ const widgetFixtureFiles = [
     mimeType: WIDGET_TREE_DOCUMENT_MIME,
     path: 'src/widgets/home.widget.json',
   },
-  ...widgetStudioAssetFiles,
+  ...widgetStudioBuiltinAssetFiles,
+  ...widgetStudioCustomAssetExampleFiles,
   {
     content: 'export function App() { return null; }',
     mimeType: 'application/typescript',
@@ -33,7 +37,14 @@ const widgetFixtureFiles = [
 function WidgetTreeWorkspaceHarness() {
   const workspace = useVirtualWorkspace({
     files: widgetFixtureFiles,
-    folders: ['src', 'src/widgets'],
+    folders: [
+      'src',
+      'src/widgets',
+      'src/widgets/assets',
+      'src/widgets/assets/heading',
+      'src/widgets/assets/custom',
+      'src/widgets/assets/custom/feature-badge',
+    ],
     openPaths: ['src/widgets/home.widget.json', 'src/App.tsx'],
     selectedPath: 'src/widgets/home.widget.json',
   });

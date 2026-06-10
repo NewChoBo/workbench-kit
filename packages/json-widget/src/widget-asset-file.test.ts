@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createWidgetAssetCatalogFromWorkspaceFiles,
-  formatWidgetAssetJson,
-  inferWidgetAssetIdFromPath,
-  parseWidgetAssetJson,
+  createWidgetAssetDocument,
 } from './widget-asset-file.js';
+import {
+  formatWidgetAssetContent,
+  formatWidgetAssetManifest,
+  inferWidgetAssetSlugFromPackagePath,
+} from './widget-asset-package.js';
 
 const headingAsset = {
   id: 'content.heading',
@@ -19,17 +22,26 @@ const headingAsset = {
   },
 };
 
-describe('widget asset file', () => {
-  it('parses and formats a JDW content asset document', () => {
-    const source = formatWidgetAssetJson({
-      ...headingAsset,
-      description: 'Large title text',
-      icon: 'codicon-symbol-text',
-    });
+const headingPackagePath = 'src/widgets/assets/heading';
 
-    const parsed = parseWidgetAssetJson(source);
-    expect(parsed.parseError).toBeNull();
-    expect(parsed.value).toMatchObject({
+describe('widget asset package workspace', () => {
+  it('loads asset packages from workspace files', () => {
+    const catalog = createWidgetAssetCatalogFromWorkspaceFiles([
+      {
+        path: `${headingPackagePath}/manifest.json`,
+        content: formatWidgetAssetManifest({
+          ...headingAsset,
+          description: 'Large title text',
+          icon: 'codicon-symbol-text',
+        }),
+      },
+      {
+        path: `${headingPackagePath}/content.json`,
+        content: formatWidgetAssetContent(headingAsset.defaultWidget as never),
+      },
+    ]);
+
+    expect(catalog.asset('content.heading')).toMatchObject({
       id: 'content.heading',
       label: 'Heading',
       widgetType: 'text',
@@ -39,46 +51,25 @@ describe('widget asset file', () => {
         fontSize: 24,
       },
     });
-    expect(source).toContain('"content"');
-    expect(source).toContain('"args"');
-    expect(source).not.toContain('"defaultWidget"');
-  });
-
-  it('infers asset ids from file paths when loading workspace files', () => {
-    const catalog = createWidgetAssetCatalogFromWorkspaceFiles([
-      {
-        path: 'src/widgets/assets/heading.asset.json',
-        content: formatWidgetAssetJson({
-          id: 'heading',
-          label: 'Heading',
-          category: 'content',
-          widgetType: 'text',
-          defaultWidget: { type: 'text', text: 'Heading' } as never,
-        }),
-      },
-    ]);
-
-    expect(catalog.asset('heading')).toMatchObject({
-      id: 'heading',
-      label: 'Heading',
-    });
     expect(catalog.assetsByCategory().content).toHaveLength(1);
   });
 
-  it('reports invalid JDW content envelopes', () => {
-    const parsed = parseWidgetAssetJson(
-      JSON.stringify({
-        name: 'broken',
-        label: 'Broken',
-        category: 'content',
-        content: { type: 'text', text: 'Missing args envelope' },
-      }),
-    );
+  it('resolves edited manifest with sibling content for design surfaces', () => {
+    const manifest = formatWidgetAssetManifest(headingAsset);
+    const content = formatWidgetAssetContent(headingAsset.defaultWidget as never);
+    const document = createWidgetAssetDocument(manifest, {
+      path: `${headingPackagePath}/manifest.json`,
+      workspaceFiles: [
+        { path: `${headingPackagePath}/manifest.json`, content: manifest },
+        { path: `${headingPackagePath}/content.json`, content },
+      ],
+    });
 
-    expect(parsed.parseError).toContain('JDW v7 envelope');
+    expect(document.parseError).toBeNull();
+    expect(document.asset?.label).toBe('Heading');
   });
 
-  it('infers ids from asset file names', () => {
-    expect(inferWidgetAssetIdFromPath('src/widgets/assets/body.asset.json')).toBe('body');
+  it('infers ids from package folder names', () => {
+    expect(inferWidgetAssetSlugFromPackagePath('src/widgets/assets/body')).toBe('body');
   });
 });

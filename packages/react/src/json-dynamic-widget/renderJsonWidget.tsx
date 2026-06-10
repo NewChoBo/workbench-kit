@@ -6,7 +6,8 @@ import {
   type JsonWidgetNode,
 } from '@workbench-kit/json-widget';
 
-import { renderDemoWidgetNode } from '../widget-tree/demo-render.js';
+import { renderBuiltinWidgetNode } from './builtins/renderBuiltinWidgetNode.js';
+import { BUILTIN_JSON_WIDGET_REGISTRY } from './createBuiltinJsonWidgetRegistry.js';
 
 export interface RenderJsonWidgetOptions {
   readonly registry?: WidgetRegistryContract<unknown> | undefined;
@@ -36,13 +37,13 @@ export function renderJsonWidgetNode(
   options: RenderJsonWidgetOptions = {},
 ): ReactNode {
   const root = jdwNodeToGenericWidget(node);
-  const { registry, emptyLabel = 'No render output.' } = options;
+  const { registry = BUILTIN_JSON_WIDGET_REGISTRY, emptyLabel = 'No render output.' } = options;
 
-  if (registry?.has(root.type)) {
+  if (registry.has(root.type)) {
     return renderFromRegistry(registry, root, emptyLabel);
   }
 
-  return renderDemoWidgetNode(root) ?? emptyLabel;
+  return renderBuiltinWidgetNode(root) ?? emptyLabel;
 }
 
 export function renderJsonWidget(

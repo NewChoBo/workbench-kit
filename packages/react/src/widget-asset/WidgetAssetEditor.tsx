@@ -2,9 +2,13 @@ import { useMemo } from 'react';
 import type { WidgetPlacementAsset, WidgetRegistryContract } from '@workbench-kit/contracts';
 import {
   createWidgetAssetDocument,
-  formatWidgetAssetJson,
+  formatWidgetAssetContent,
+  formatWidgetAssetManifest,
   formatWidgetDocumentJson,
+  isWidgetAssetContentPath,
+  isWidgetAssetManifestPath,
   type GenericWidget,
+  type WorkspaceAssetFileRef,
 } from '@workbench-kit/json-widget';
 
 import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
@@ -24,6 +28,7 @@ export interface WidgetAssetEditorProps {
   readonly readOnly?: boolean | undefined;
   readonly theme?: WorkspaceEditorTheme | undefined;
   readonly viewMode?: WidgetAssetViewMode | undefined;
+  readonly workspaceFiles?: readonly WorkspaceAssetFileRef[] | undefined;
 }
 
 export function WidgetAssetEditor({
@@ -35,16 +40,31 @@ export function WidgetAssetEditor({
   readOnly = false,
   theme = 'dark',
   viewMode = 'design',
+  workspaceFiles,
 }: WidgetAssetEditorProps) {
-  const document = useMemo(() => createWidgetAssetDocument(value), [value]);
+  const document = useMemo(
+    () =>
+      createWidgetAssetDocument(value, {
+        ...(path ? { path } : {}),
+        ...(workspaceFiles ? { workspaceFiles } : {}),
+      }),
+    [path, value, workspaceFiles],
+  );
 
-  const commitAsset = (nextAsset: WidgetPlacementAsset) => {
-    onChange(formatWidgetAssetJson(nextAsset));
+  const commitAssetMetadata = (nextAsset: WidgetPlacementAsset) => {
+    onChange(formatWidgetAssetManifest(nextAsset));
+  };
+
+  const commitAssetContent = (nextWidget: GenericWidget) => {
+    onChange(formatWidgetAssetContent(nextWidget));
   };
 
   if (viewMode === 'code') {
     return (
-      <div className="widget-asset-editor widget-asset-editor--code" data-testid="widget-asset-editor">
+      <div
+        className="widget-asset-editor widget-asset-editor--code"
+        data-testid="widget-asset-editor"
+      >
         <WidgetAssetSourceEditor
           parseError={document.parseError}
           path={path}
@@ -59,10 +79,17 @@ export function WidgetAssetEditor({
   }
 
   if (document.parseError !== null || document.asset === null) {
+    const hint =
+      document.parseError ??
+      'Open manifest.json with a sibling content.json in the workspace to use design mode.';
+
     return (
-      <div className="widget-asset-editor widget-asset-editor--error" data-testid="widget-asset-editor">
+      <div
+        className="widget-asset-editor widget-asset-editor--error"
+        data-testid="widget-asset-editor"
+      >
         <WorkbenchPropertyPanel>
-          <WorkbenchPropertyHint>{document.parseError ?? 'Invalid asset document.'}</WorkbenchPropertyHint>
+          <WorkbenchPropertyHint>{hint}</WorkbenchPropertyHint>
         </WorkbenchPropertyPanel>
         <WidgetAssetSourceEditor
           parseError={document.parseError}
@@ -78,33 +105,36 @@ export function WidgetAssetEditor({
   }
 
   const previewJson = formatWidgetDocumentJson(document.asset.defaultWidget as GenericWidget);
+  const editingManifest = path ? isWidgetAssetManifestPath(path) : true;
+  const editingContent = path ? isWidgetAssetContentPath(path) : false;
 
   return (
-    <div className="widget-asset-editor widget-asset-editor--design" data-testid="widget-asset-editor">
+    <div
+      className="widget-asset-editor widget-asset-editor--design"
+      data-testid="widget-asset-editor"
+    >
       <div className="widget-asset-editor__design">
-        <section className="widget-asset-editor__meta">
-          <WidgetAssetMetadataForm
-            asset={document.asset}
-            readOnly={readOnly}
-            registry={registry}
-            onChange={commitAsset}
-          />
-        </section>
-        <section className="widget-asset-editor__template">
-          <WidgetInspectorPanel
-            path={[]}
-            readOnly={readOnly}
-            widget={document.asset.defaultWidget as GenericWidget}
-            widgetRegistry={registry}
-            onPatch={(nextWidget) =>
-              commitAsset({
-                ...document.asset!,
-                defaultWidget: nextWidget,
-                widgetType: nextWidget.type,
-              })
-            }
-          />
-        </section>
+        {editingManifest ? (
+          <section className="widget-asset-editor__meta">
+            <WidgetAssetMetadataForm
+              asset={document.asset}
+              readOnly={readOnly}
+              registry={registry}
+              onChange={commitAssetMetadata}
+            />
+          </section>
+        ) : null}
+        {editingContent ? (
+          <section className="widget-asset-editor__template">
+            <WidgetInspectorPanel
+              path={[]}
+              readOnly={readOnly}
+              widget={document.asset.defaultWidget as GenericWidget}
+              widgetRegistry={registry}
+              onPatch={commitAssetContent}
+            />
+          </section>
+        ) : null}
         <section aria-label="Asset preview" className="widget-asset-editor__preview">
           <header className="widget-asset-editor__preview-header">Placement preview</header>
           <div className="widget-asset-editor__preview-body">

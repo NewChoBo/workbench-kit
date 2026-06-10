@@ -9,6 +9,7 @@ import { canAddChildren } from './widget-tree-layout.js';
 const CATEGORY_LABELS: Record<string, string> = {
   content: 'Content',
   layout: 'Layout',
+  template: 'Templates',
 };
 
 export interface WidgetAssetPaletteProps {

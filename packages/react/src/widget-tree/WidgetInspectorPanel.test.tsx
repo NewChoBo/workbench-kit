@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { createWidgetDocument } from '@workbench-kit/json-widget';
+import { createWidgetDocument, getWidgetChildren } from '@workbench-kit/json-widget';
 
 import { WidgetInspectorPanel } from './WidgetInspectorPanel.js';
 import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';
@@ -9,7 +9,7 @@ import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-
 describe('WidgetInspectorPanel', () => {
   it('renders inspector fields for a selected widget', () => {
     const document = createWidgetDocument(WIDGET_TREE_WELCOME_DOCUMENT);
-    const widget = document.root?.children?.[0] as { type: string; text: string } | undefined;
+    const widget = document.root ? getWidgetChildren(document.root)[0] : undefined;
 
     const markup = renderToStaticMarkup(
       <WidgetInspectorPanel

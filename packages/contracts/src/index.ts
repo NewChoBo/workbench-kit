@@ -252,6 +252,8 @@ export type {
   WidgetAssetCatalogContract,
   WidgetPlacementAsset,
   WidgetPlacementAssetCategory,
+  WidgetPlacementAssetKind,
+  WidgetPlacementPolicy,
 } from './widget-placement-asset-contract';
 export type {
   MappedLaunchAction,

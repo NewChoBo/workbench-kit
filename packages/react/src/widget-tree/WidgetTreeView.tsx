@@ -9,7 +9,7 @@ import {
   type WidgetSelectionState,
 } from '@workbench-kit/json-widget';
 
-import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
+import { Panel, PanelBody } from '../layout/Panel';
 import { EmptyState } from '../primitives/EmptyState';
 import { cx } from '../utils/cx';
 import { formatWidgetPlacementMeta } from './widget-tree-layout.js';

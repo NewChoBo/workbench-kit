@@ -1,53 +1,48 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createWidgetAssetCatalog,
-  materializeWidgetPlacementAsset,
-} from './widget-placement-asset.js';
+import { createWidgetAssetCatalog, mergeWidgetAssetCatalogs } from './widget-placement-asset.js';
 
-const assets = createWidgetAssetCatalog([
-  {
-    id: 'content.body',
-    label: 'Body',
-    category: 'content',
-    widgetType: 'text',
-    defaultWidget: { type: 'text', text: 'Body' } as never,
-  },
-  {
-    id: 'layout.grid-2',
-    label: 'Grid',
-    category: 'layout',
-    widgetType: 'grid',
-    defaultWidget: { type: 'grid', columns: 2, children: [] } as never,
-  },
-]);
+const leafAsset = {
+  id: 'content.body',
+  label: 'Body',
+  category: 'content',
+  widgetType: 'text',
+  defaultWidget: { type: 'text', text: 'Body' },
+} as const;
 
-describe('widget placement assets', () => {
-  it('groups assets by category', () => {
-    expect(assets.assetsByCategory()).toEqual({
-      content: [
-        expect.objectContaining({ id: 'content.body' }),
-      ],
-      layout: [
-        expect.objectContaining({ id: 'layout.grid-2' }),
-      ],
-    });
-  });
+const customAsset = {
+  id: 'custom.feature-badge',
+  label: 'Feature Badge',
+  category: 'content',
+  widgetType: 'row',
+  defaultWidget: { type: 'row', children: [] },
+} as const;
 
-  it('materializes grid placement for children', () => {
-    const parent = {
-      type: 'grid',
-      columns: 2,
-      children: [{ type: 'text', text: 'A', col: 0, row: 0 }],
-    };
+describe('mergeWidgetAssetCatalogs', () => {
+  it('merges catalogs and lets later entries override the same id', () => {
+    const builtin = createWidgetAssetCatalog([
+      leafAsset,
+      {
+        id: 'layout.row',
+        label: 'Row',
+        category: 'layout',
+        widgetType: 'row',
+        defaultWidget: { type: 'row', children: [] } as never,
+      },
+    ]);
+    const workspace = createWidgetAssetCatalog([
+      customAsset,
+      {
+        ...leafAsset,
+        label: 'Workspace Body',
+      },
+    ]);
 
-    expect(
-      materializeWidgetPlacementAsset(assets.asset('content.body')!, parent as never),
-    ).toEqual({
-      type: 'text',
-      text: 'Body',
-      col: 1,
-      row: 0,
-    });
+    const merged = mergeWidgetAssetCatalogs(builtin, workspace);
+
+    expect(merged.assets()).toHaveLength(3);
+    expect(merged.asset('custom.feature-badge')).toMatchObject(customAsset);
+    expect(merged.asset('content.body')?.label).toBe('Workspace Body');
+    expect(merged.asset('layout.row')?.label).toBe('Row');
   });
 });

@@ -17,8 +17,10 @@ describe('WidgetAssetPalette', () => {
     expect(markup).toContain('data-testid="widget-tree-asset-palette"');
     expect(markup).toContain('data-testid="widget-asset-content.heading"');
     expect(markup).toContain('data-testid="widget-asset-layout.grid-2"');
+    expect(markup).toContain('data-testid="widget-asset-template.section-stack"');
     expect(markup).toContain('Content');
     expect(markup).toContain('Layout');
+    expect(markup).toContain('Templates');
   });
 
   it('disables placement when no container is selected', () => {

@@ -100,7 +100,7 @@ function textStyle(widget: GenericWidget): CSSProperties {
   };
 }
 
-export function renderDemoWidgetNode(widget: GenericWidget): ReactNode {
+export function renderBuiltinWidgetNode(widget: GenericWidget): ReactNode {
   if (widget.type === 'text') {
     return createElement(
       'span',
@@ -128,11 +128,11 @@ export function renderDemoWidgetNode(widget: GenericWidget): ReactNode {
             'data-widget-child': true,
             style: childPlacementStyle(child, widget.type),
           },
-          renderDemoWidgetNode(child),
+          renderBuiltinWidgetNode(child),
         ),
       ),
     );
   }
 
-  return widget.type;
+  return null;
 }

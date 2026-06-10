@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
-import { createWidgetRegistry, formatWidgetJson } from '@workbench-kit/json-widget';
+import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/json-widget';
 
 import { JsonConfigWorkbench, type JsonConfigWorkbenchProps } from './JsonConfigWorkbench.js';
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
@@ -69,10 +69,12 @@ interface DemoWidget extends WidgetTypeShape {
   body?: string;
 }
 
-const widgetJson = formatWidgetJson({
+const widgetJson = formatJsonWidgetData({
   type: 'demo:card',
-  title: 'Launch tile',
-  body: 'Preview from JsonConfigWorkbench widget mode.',
+  args: {
+    title: 'Launch tile',
+    body: 'Preview from JsonConfigWorkbench widget mode.',
+  },
 });
 
 const demoRegistry = createWidgetRegistry<(widget: DemoWidget) => string, DemoWidget>([
@@ -148,9 +150,10 @@ export const WidgetInteraction: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(
-      canvas.getByText('Launch tile — Preview from JsonConfigWorkbench widget mode.'),
-    ).toBeVisible();
+    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Launch tile');
+    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent(
+      'Preview from JsonConfigWorkbench widget mode.',
+    );
 
     await expect(canvas.getByRole('button', { name: 'Split' })).toHaveAttribute(
       'aria-pressed',
