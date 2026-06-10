@@ -1,5 +1,5 @@
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
-import { parseJsonWidgetData } from '@workbench-kit/json-widget';
+import { parseJsonWidgetData, type LayoutConstraints } from '@workbench-kit/json-widget';
 
 import { WorkbenchParseError, WorkbenchRenderSurface } from '../layout/WorkbenchLayout';
 import { useRenderJsonWidget } from '../json-dynamic-widget/renderJsonWidget.js';
@@ -9,6 +9,7 @@ export interface JsonWidgetPreviewProps {
   registry?: WidgetRegistryContract<unknown> | undefined;
   emptyLabel?: string | undefined;
   className?: string | undefined;
+  layoutConstraints?: LayoutConstraints | undefined;
 }
 
 export function JsonWidgetPreview({
@@ -16,9 +17,10 @@ export function JsonWidgetPreview({
   registry,
   emptyLabel = 'No render output.',
   className,
+  layoutConstraints,
 }: JsonWidgetPreviewProps) {
   const parsed = parseJsonWidgetData(json);
-  const renderOutput = useRenderJsonWidget(json, { registry, emptyLabel });
+  const renderOutput = useRenderJsonWidget(json, { registry, emptyLabel, layoutConstraints });
 
   if (parsed.parseError !== null) {
     return (

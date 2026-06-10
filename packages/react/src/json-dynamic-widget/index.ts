@@ -5,6 +5,11 @@ export {
   type RenderJsonWidgetOptions,
 } from './renderJsonWidget.js';
 export {
+  renderCssLayoutTree,
+  renderJsonWidgetWithLayout,
+  type CssRenderBackendOptions,
+} from './cssRenderBackend.js';
+export {
   BUILTIN_JSON_WIDGET_REGISTRY,
   createBuiltinJsonWidgetRegistry,
 } from './createBuiltinJsonWidgetRegistry.js';

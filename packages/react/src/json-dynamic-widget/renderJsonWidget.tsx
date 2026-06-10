@@ -1,49 +1,15 @@
 import { useMemo, type ReactNode } from 'react';
-import type { WidgetRegistryContract } from '@workbench-kit/contracts';
-import {
-  jdwNodeToGenericWidget,
-  parseJsonWidgetData,
-  type JsonWidgetNode,
-} from '@workbench-kit/json-widget';
+import { parseJsonWidgetData, validateJsonWidgetData, type JsonWidgetNode } from '@workbench-kit/json-widget';
 
-import { renderBuiltinWidgetNode } from './builtins/renderBuiltinWidgetNode.js';
-import { BUILTIN_JSON_WIDGET_REGISTRY } from './createBuiltinJsonWidgetRegistry.js';
+import { renderJsonWidgetWithLayout, type CssRenderBackendOptions } from './cssRenderBackend.js';
 
-export interface RenderJsonWidgetOptions {
-  readonly registry?: WidgetRegistryContract<unknown> | undefined;
-  readonly emptyLabel?: string | undefined;
-}
-
-function renderFromRegistry(
-  registry: WidgetRegistryContract<unknown>,
-  root: ReturnType<typeof jdwNodeToGenericWidget>,
-  emptyLabel: string,
-): ReactNode {
-  const build = registry.get(root.type);
-  if (typeof build !== 'function') {
-    return emptyLabel;
-  }
-
-  const output = (build as (widget: typeof root) => unknown)(root);
-  if (output === null || output === undefined) {
-    return emptyLabel;
-  }
-
-  return output as ReactNode;
-}
+export type RenderJsonWidgetOptions = CssRenderBackendOptions;
 
 export function renderJsonWidgetNode(
   node: JsonWidgetNode,
   options: RenderJsonWidgetOptions = {},
 ): ReactNode {
-  const root = jdwNodeToGenericWidget(node);
-  const { registry = BUILTIN_JSON_WIDGET_REGISTRY, emptyLabel = 'No render output.' } = options;
-
-  if (registry.has(root.type)) {
-    return renderFromRegistry(registry, root, emptyLabel);
-  }
-
-  return renderBuiltinWidgetNode(root) ?? emptyLabel;
+  return renderJsonWidgetWithLayout(node, options);
 }
 
 export function renderJsonWidget(
@@ -55,16 +21,17 @@ export function renderJsonWidget(
     return null;
   }
 
-  return renderJsonWidgetNode(parsed.value, options);
+  validateJsonWidgetData(source);
+  return renderJsonWidgetWithLayout(parsed.value, options);
 }
 
 export function useRenderJsonWidget(
   source: string,
   options: RenderJsonWidgetOptions = {},
 ): ReactNode {
-  const { registry, emptyLabel } = options;
+  const { registry, emptyLabel, layoutConstraints } = options;
   return useMemo(
-    () => renderJsonWidget(source, { registry, emptyLabel }),
-    [emptyLabel, registry, source],
+    () => renderJsonWidget(source, { registry, emptyLabel, layoutConstraints }),
+    [emptyLabel, layoutConstraints, registry, source],
   );
 }
