@@ -6,11 +6,7 @@ export type WidgetPlacementAssetCategory = 'content' | 'layout' | 'template' | (
 export type WidgetPlacementAssetKind = 'leaf' | 'container' | 'template';
 
 /** Insert-time behavior when materializing an asset into a parent container. */
-export type WidgetPlacementPolicy =
-  | 'as-root'
-  | 'strip-external-placement'
-  | 'rematerialize-grid-slot'
-  | 'preserve-internal-layout';
+export type WidgetPlacementPolicy = 'rematerialize-grid-slot' | 'preserve-internal-layout';
 
 /**
  * Pre-defined widget template that can be placed into a container from the editor palette.

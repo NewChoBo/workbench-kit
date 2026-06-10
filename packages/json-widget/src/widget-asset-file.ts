@@ -130,9 +130,5 @@ export const EMPTY_WIDGET_ASSET_DOCUMENT = formatWidgetAssetManifest({
   id: 'new-asset',
   label: 'New Asset',
   category: 'content',
-  widgetType: 'text',
-  defaultWidget: {
-    type: 'text',
-    text: 'Text',
-  } as WidgetPlacementAsset['defaultWidget'],
+  kind: 'leaf',
 });

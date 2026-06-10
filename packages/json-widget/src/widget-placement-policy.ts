@@ -1,8 +1,6 @@
 import type { WidgetPlacementPolicy } from '@workbench-kit/contracts';
 
 const PLACEMENT_POLICIES = new Set<WidgetPlacementPolicy>([
-  'as-root',
-  'strip-external-placement',
   'rematerialize-grid-slot',
   'preserve-internal-layout',
 ]);

@@ -1,5 +1,4 @@
-import type { WidgetPlacementAsset } from '@workbench-kit/contracts';
-import type { WidgetRegistryContract } from '@workbench-kit/contracts';
+import type { WidgetPlacementAsset, WidgetPlacementAssetKind } from '@workbench-kit/contracts';
 
 import {
   WorkbenchPropertySelectRow,
@@ -11,12 +10,18 @@ import {
 const CATEGORY_OPTIONS = [
   { label: 'Content', value: 'content' },
   { label: 'Layout', value: 'layout' },
+  { label: 'Template', value: 'template' },
+];
+
+const KIND_OPTIONS: { label: string; value: WidgetPlacementAssetKind }[] = [
+  { label: 'Leaf', value: 'leaf' },
+  { label: 'Container', value: 'container' },
+  { label: 'Template', value: 'template' },
 ];
 
 export interface WidgetAssetMetadataFormProps {
   readonly asset: WidgetPlacementAsset;
   readonly readOnly?: boolean | undefined;
-  readonly registry?: WidgetRegistryContract<unknown> | undefined;
   readonly onChange: (next: WidgetPlacementAsset) => void;
 }
 
@@ -24,13 +29,7 @@ export function WidgetAssetMetadataForm({
   asset,
   onChange,
   readOnly = false,
-  registry,
 }: WidgetAssetMetadataFormProps) {
-  const widgetTypeOptions = registry?.types().map((type) => ({
-    label: registry.definition(type)?.displayName ?? type,
-    value: type,
-  })) ?? [{ label: asset.widgetType, value: asset.widgetType }];
-
   const patch = (patchValue: Partial<WidgetPlacementAsset>) => {
     onChange({ ...asset, ...patchValue });
   };
@@ -63,27 +62,19 @@ export function WidgetAssetMetadataForm({
           value={asset.category}
           onValueChange={(next) => patch({ category: next })}
         />
+        <WorkbenchPropertySelectRow
+          label="Kind"
+          disabled={readOnly}
+          options={KIND_OPTIONS}
+          value={asset.kind ?? 'leaf'}
+          onValueChange={(next) => patch({ kind: next })}
+        />
         <WorkbenchPropertyTextRow
           label="Icon"
           placeholder="codicon-symbol-text"
           readOnly={readOnly}
           value={asset.icon ?? ''}
           onValueChange={(next) => patch({ icon: next.length > 0 ? next : undefined })}
-        />
-        <WorkbenchPropertySelectRow
-          label="Widget type"
-          disabled={readOnly}
-          options={widgetTypeOptions}
-          value={asset.widgetType}
-          onValueChange={(next) =>
-            patch({
-              widgetType: next,
-              defaultWidget: {
-                ...asset.defaultWidget,
-                type: next,
-              },
-            })
-          }
         />
       </WorkbenchPropertySection>
     </WorkbenchPropertyStack>

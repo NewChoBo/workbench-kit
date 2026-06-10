@@ -1,7 +1,7 @@
 # Widget Layout, Schema, and Render Foundation Plan
 
 > **Status:** Planning (2026-06-10, revised)  
-> **Branch context:** `feature/widget-with-schema` — widget studio shell, `*.widget.json`, `*.asset.json`  
+> **Branch context:** `feature/widget-with-schema` — widget studio shell, `*.widget.json`, asset packages (`manifest.json` + `content.json`)  
 > **Priority:** Schema + JSON model + layout/render engine **before** editor UX expansion.  
 > **Wire format decision (locked):** [json_dynamic_widget](https://pub.dev/documentation/json_dynamic_widget/latest/) **v7 envelope** is the **only** on-disk widget node format. No flat `type`+props dual-read. Early-stage codebase migrates in place.
 
@@ -23,7 +23,7 @@ External references (wire format + patterns, not runtime import):
 Establish a **JSON-first foundation** aligned with **JDW wire format**, implemented as **json_dynamic_widget for React** (TypeScript registry + recursive render; **no Dart/Flutter runtime in the kit**):
 
 1. **Widget documents** (`*.widget.json`) — root `JsonWidgetNode` tree in JDW v7 envelope.
-2. **Widget assets** (`*.asset.json`) — catalog metadata + JDW subtree (`content`, plugin_components-shaped).
+2. **Widget assets** (directory packages) — `manifest.json` catalog metadata + `content.json` JDW subtree.
 3. **Layout engine** — headless measure/layout for registered layout types (`row`, `column`, `expanded`, kit `grid`, …).
 4. **Render pipeline** — `parse → validate → renderJsonWidget` (React); layout rects optional for canvas mode.
 
@@ -133,16 +133,14 @@ A `*.widget.json` file is either a single root node object as above, or `{ "root
 ## 4. Two file types, two schemas
 
 ```text
-*.widget.json                          *.asset.json
-─────────────────                      ─────────────────
-MIME: application/vnd.                 MIME: application/vnd.
-  workbench-kit.widget+json              workbench-kit.widget-asset+json
+*.widget.json                          assets/<slug>/
+─────────────────                      manifest.json + content.json [+ schema.json]
+MIME: application/vnd.                 MIME: manifest / content / schema types
+  workbench-kit.widget+json
 
-Widget Document Schema (v1)            Widget Asset Schema (v1)
-  └─ recursive Widget tree               ├─ catalog metadata (id, label, …)
-                                         ├─ placementPolicy (optional)
-                                         └─ defaultWidget → must validate
-                                              against Widget Document subtree rules
+Widget Document Schema (v1)            Widget Asset Manifest (v1) + content.json
+  └─ recursive JDW v7 tree               ├─ catalog metadata (name, label, …)
+                                         └─ content.json → JDW subtree (validated)
 ```
 
 ### 4.1 Widget document (`*.widget.json`)
@@ -180,8 +178,6 @@ src/widgets/assets/<slug>/
 | `content.json` | yes | JDW v7 widget subtree |
 | `schema.json` | no | Per-asset inputs/parameters schema (Phase 3 substitution) |
 
-**Legacy single-file** `*.asset.json` (metadata + inline `content`) remains supported for migration.
-
 #### manifest.json fields
 
 | Field | Required | Role |
@@ -200,7 +196,7 @@ src/widgets/assets/<slug>/
 
 | Old field | New field |
 | --------- | --------- |
-| `id` | `name` (or keep `id` as alias in parser v1, emit `name`) |
+| `id` | `name` |
 | `defaultWidget` (flat) | `content` (JDW envelope) |
 | `widgetType` | **removed** — derive from `content.type` |
 
@@ -215,8 +211,9 @@ src/widgets/assets/<slug>/
 ### 4.3 Schema relationship
 
 ```text
-widget-asset.v1.json
-  properties.content  ──$ref──►  JDW JsonWidgetNode (recursive)
+widget-asset-manifest.v1.json  ──►  catalog metadata only
+
+content.json  ──►  JDW JsonWidgetNode (recursive, validated via validateWidgetAssetPackage)
 
 flutter_json_schemas/*.json  ──►  per-type args for builtins
 packages/json-widget/schemas/grid.json  ──►  kit extension
@@ -256,10 +253,8 @@ asset.content (JDW node)
 
 | Policy | Behavior |
 | ------ | -------- |
-| `as-root` (default) | Insert cloned subtree root as one node |
-| `strip-external-placement` | Remove placement fields that belong to the **target parent** only at the root node before insert |
-| `rematerialize-grid-slot` | If target parent is `grid`, assign `col`/`row` to root when root is a leaf or lacks grid placement |
-| `preserve-internal-layout` | Never rewrite placement inside the cloned subtree (default for `template`) |
+| `rematerialize-grid-slot` | Default for `leaf` — strip parent-incompatible placement and assign grid slot when parent is `grid` |
+| `preserve-internal-layout` | Default for `container` / `template` — adjust root for parent only; keep subtree placement |
 
 ### 6.2 Current gap
 
@@ -308,7 +303,7 @@ function layoutWidget(
 
 ### 7.3 Principle
 
-**One layout result tree** feeds all render backends. Avoid duplicating layout math in CSS renderers (current `demo-render.tsx` duplicates flex/grid styling).
+**One layout result tree** feeds all render backends. Avoid duplicating layout math in CSS renderers.
 
 ## 8. Render pipeline (React JDW)
 
@@ -324,7 +319,7 @@ source string
 | --------- | ----- | ----- |
 | `renderJsonWidget` | `@workbench-kit/react/json-dynamic-widget` | JDW `data.build()` equivalent |
 | `JsonWidgetPreview` | `@workbench-kit/react/json-widget` | Thin wrapper over `renderJsonWidget` |
-| `demo-render.tsx` | remove / replace | Superseded by builtin registry builders |
+| Builtin registry builders | `@workbench-kit/react/json-dynamic-widget` | Replaces ad-hoc demo render helpers |
 | Asset preview | `@workbench-kit/react/widget-asset` | Render `content` via `renderJsonWidget` |
 
 ## 9. JSON Schema deliverables
@@ -332,9 +327,8 @@ source string
 | Artifact | Path (proposed) | Consumer |
 | -------- | --------------- | -------- |
 | `widget-document.v1.json` | `packages/json-widget/schemas/` | Monaco (document), `validateWidgetDocument` |
-| `widget-asset.v1.json` | `packages/json-widget/schemas/` | Monaco (asset editor), `validateWidgetAsset` |
+| `widget-asset-manifest.v1.json` | `packages/json-widget/schemas/` | Monaco (manifest editor), package validation |
 | `createWidgetJsonSchema(registry)` | existing module | Merges registry custom types into document schema |
-| `createWidgetAssetJsonSchema()` | new module | Asset metadata + `$ref` to Widget |
 
 ### 9.1 Document schema additions (vs today)
 
@@ -347,7 +341,7 @@ Current `widget-json-schema.ts` defines container types but **not**:
 
 ### 9.2 Asset schema (new)
 
-Formalize what `parseWidgetAssetJson` partially enforces in procedural code today. Replace ad-hoc string checks with schema-first validation + structured error paths.
+`validateWidgetAssetPackage` validates manifest + content; extend with schema-first error paths as needed.
 
 ## 10. Implementation phases
 
@@ -355,10 +349,10 @@ Formalize what `parseWidgetAssetJson` partially enforces in procedural code toda
 
 **Exit criteria:**
 
-- [ ] Replace flat fixtures: `home.widget.json`, `widget-studio-assets.ts`, `demo-widget-assets.ts`, welcome document
-- [ ] `parseJsonWidgetData` replaces flat-only `parseWidgetJson` for widget trees (keep `parseWidgetJson` as deprecated alias or remove)
-- [ ] Patch / tree / `widget-child-ops` operate on normalized `JsonWidgetNode` (`args.children`, `args.child`)
-- [ ] Remove `widgetType` from asset parse; use `name` + `content`
+- [x] Replace flat fixtures: `widget-studio-assets.ts`, welcome document, builtin packages
+- [x] `parseJsonWidgetData` is the only widget tree parser (flat `parseWidgetJson` removed)
+- [x] Patch / tree / `widget-child-ops` operate on JDW nodes via `genericWidgetToJdwNode` / `jdwNodeToGenericWidget`
+- [x] Asset packages use `name` + `content.json`; `widgetType` derived at load time
 
 ### Phase 1 — Schemas, validation, React registry (headless + minimal render)
 
@@ -366,7 +360,7 @@ Formalize what `parseWidgetAssetJson` partially enforces in procedural code toda
 
 - [x] Vendored or referenced schemas for `row`, `column`, `text`, `expanded` under `packages/json-widget/schemas/`
 - [x] Kit extension schema `grid.json`
-- [x] `widget-asset.v1.json` with `content` + catalog metadata
+- [x] `widget-asset-manifest.v1.json` + package `content.json`
 - [x] `validateJsonWidgetData` + asset two-pass tests
 - [x] `@workbench-kit/react/json-dynamic-widget`: `JsonWidgetRegistry`, `renderJsonWidget`, builtins (`row`, `column`, `text`, `expanded`)
 - [x] `JsonWidgetPreview` uses `renderJsonWidget`
@@ -391,7 +385,7 @@ Formalize what `parseWidgetAssetJson` partially enforces in procedural code toda
 
 - [x] `layoutWidget` implements row/column (L1–L2)
 - [x] Grid/stack integrated (L3–L4) with rect snapshot tests
-- [ ] `CssRenderBackend` replaces ad-hoc `demo-render.tsx` layout CSS
+- [ ] `CssRenderBackend` applies `layoutWidget` rects in preview
 - [ ] `JsonWidgetPreview` uses pipeline (parse → validate → layout → render)
 - [x] Storybook story: **JsonDynamicWidget/Layout** — layout rect fixtures
 
@@ -420,13 +414,13 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 
 | Area | Exists | Gap |
 | ---- | ------ | --- |
-| `*.widget.json` / `*.asset.json` routing | `createWidgetStudioWorkspaceEditorRenderer` | — |
-| Asset parse | `parseWidgetAssetJson` | No JSON Schema; no subtree validation |
-| Document parse | `createWidgetDocument` | No semantic placement validation |
-| Patch / tree ops | `applyWidgetPatch`, `widget-child-ops` | No normalize on insert |
-| Layout calculators | `grid.ts`, `linear.ts`, `stack.ts` | Not unified; not used by preview |
-| Preview | `demo-render.tsx`, `JsonWidgetPreview` | Bypass layout engine |
-| Nested asset trees | Possible in JSON | No template fixtures; no policy |
+| `*.widget.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer` | — |
+| Asset parse | `parseWidgetAssetPackage`, `validateWidgetAssetPackage` | `schema.json` substitution deferred |
+| Document parse | `createWidgetDocument` / `parseJsonWidgetData` | Semantic placement validation partial |
+| Patch / tree ops | `applyWidgetPatch` + `normalizeWidgetForParent` | DnD reparent polish deferred |
+| Layout | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts` | Preview pipeline integration pending |
+| Preview | `renderJsonWidget`, `JsonWidgetPreview` | Layout engine not wired into preview yet |
+| Template assets | Builtin + custom packages | Editor insert uses `materializeWidgetPlacementAsset` |
 
 ## 13. Resolved and open decisions
 

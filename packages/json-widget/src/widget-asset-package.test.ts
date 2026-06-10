@@ -16,8 +16,6 @@ const headingPackage = {
     label: 'Heading',
     category: 'content',
     kind: 'leaf',
-    widgetType: 'text',
-    defaultWidget: { type: 'text', text: 'Heading' } as never,
   }),
   contentSource: JSON.stringify({
     type: 'text',

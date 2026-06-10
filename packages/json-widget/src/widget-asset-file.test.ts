@@ -10,16 +10,19 @@ import {
   inferWidgetAssetSlugFromPackagePath,
 } from './widget-asset-package.js';
 
-const headingAsset = {
+const headingManifest = {
   id: 'content.heading',
   label: 'Heading',
   category: 'content',
-  widgetType: 'text',
-  defaultWidget: {
-    type: 'text',
-    text: 'Heading',
-    fontSize: 24,
-  },
+  kind: 'leaf' as const,
+  description: 'Large title text',
+  icon: 'codicon-symbol-text',
+};
+
+const headingContent = {
+  type: 'text',
+  text: 'Heading',
+  fontSize: 24,
 };
 
 const headingPackagePath = 'src/widgets/assets/heading';
@@ -29,15 +32,11 @@ describe('widget asset package workspace', () => {
     const catalog = createWidgetAssetCatalogFromWorkspaceFiles([
       {
         path: `${headingPackagePath}/manifest.json`,
-        content: formatWidgetAssetManifest({
-          ...headingAsset,
-          description: 'Large title text',
-          icon: 'codicon-symbol-text',
-        }),
+        content: formatWidgetAssetManifest(headingManifest),
       },
       {
         path: `${headingPackagePath}/content.json`,
-        content: formatWidgetAssetContent(headingAsset.defaultWidget as never),
+        content: formatWidgetAssetContent(headingContent),
       },
     ]);
 
@@ -55,8 +54,8 @@ describe('widget asset package workspace', () => {
   });
 
   it('resolves edited manifest with sibling content for design surfaces', () => {
-    const manifest = formatWidgetAssetManifest(headingAsset);
-    const content = formatWidgetAssetContent(headingAsset.defaultWidget as never);
+    const manifest = formatWidgetAssetManifest(headingManifest);
+    const content = formatWidgetAssetContent(headingContent);
     const document = createWidgetAssetDocument(manifest, {
       path: `${headingPackagePath}/manifest.json`,
       workspaceFiles: [

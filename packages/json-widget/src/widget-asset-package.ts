@@ -264,17 +264,27 @@ export function parseWidgetAssetPackage(
   };
 }
 
-export function formatWidgetAssetManifest(asset: WidgetPlacementAsset): string {
+export interface WidgetAssetManifestFields {
+  readonly id: string;
+  readonly label: string;
+  readonly category: string;
+  readonly description?: string | undefined;
+  readonly kind?: WidgetPlacementAssetKind | undefined;
+  readonly placementPolicy?: WidgetPlacementAsset['placementPolicy'];
+  readonly icon?: string | undefined;
+}
+
+export function formatWidgetAssetManifest(fields: WidgetAssetManifestFields): string {
   const payload = {
     $schema: 'https://workbench-kit.dev/schemas/widget-asset-manifest.v1.json',
-    name: asset.id,
+    name: fields.id,
     version: '1.0.0',
-    label: asset.label,
-    ...(asset.description ? { description: asset.description } : {}),
-    category: asset.category,
-    ...(asset.kind ? { kind: asset.kind } : {}),
-    ...(asset.placementPolicy ? { placementPolicy: asset.placementPolicy } : {}),
-    ...(asset.icon ? { icon: asset.icon } : {}),
+    label: fields.label,
+    ...(fields.description ? { description: fields.description } : {}),
+    category: fields.category,
+    ...(fields.kind ? { kind: fields.kind } : {}),
+    ...(fields.placementPolicy ? { placementPolicy: fields.placementPolicy } : {}),
+    ...(fields.icon ? { icon: fields.icon } : {}),
   };
 
   return `${JSON.stringify(payload, null, 2)}\n`;

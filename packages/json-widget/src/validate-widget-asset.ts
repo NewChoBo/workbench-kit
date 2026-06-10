@@ -1,5 +1,4 @@
-import { genericWidgetToJdwNode } from './jdw-node.js';
-import type { GenericWidget } from './widget-tree.js';
+import { parseJsonWidgetData } from './jdw-node.js';
 import { parseWidgetAssetPackage, type WidgetAssetPackageFiles } from './widget-asset-package.js';
 import {
   validateJsonWidgetNode,
@@ -28,17 +27,25 @@ export function validateWidgetAssetPackage(
 
   const issues: ValidationIssue[] = [];
   const asset = parsed.value;
-  const contentNode = genericWidgetToJdwNode(asset.defaultWidget as GenericWidget);
-  validateJsonWidgetNode(contentNode, 'content', issues, {
-    strictKnownTypes: true,
-    ...options,
-  });
+  const contentParsed = parseJsonWidgetData(packageFiles.contentSource);
+  if (contentParsed.parseError !== null || contentParsed.value === null) {
+    issues.push({
+      path: 'content',
+      message: contentParsed.parseError ?? 'Invalid content.json.',
+    });
+  } else {
+    validateJsonWidgetNode(contentParsed.value, 'content', issues, {
+      strictKnownTypes: true,
+      ...options,
+    });
+  }
 
   if (
     asset.kind === 'container' &&
-    contentNode.type !== 'row' &&
-    contentNode.type !== 'column' &&
-    contentNode.type !== 'grid'
+    contentParsed.value !== null &&
+    contentParsed.value.type !== 'row' &&
+    contentParsed.value.type !== 'column' &&
+    contentParsed.value.type !== 'grid'
   ) {
     issues.push({
       path: 'kind',
@@ -46,7 +53,11 @@ export function validateWidgetAssetPackage(
     });
   }
 
-  if (asset.kind === 'leaf' && contentNode.type !== 'text') {
+  if (
+    asset.kind === 'leaf' &&
+    contentParsed.value !== null &&
+    contentParsed.value.type !== 'text'
+  ) {
     issues.push({
       path: 'kind',
       message: 'Leaf assets should use a leaf widget type (text) in content.',
