@@ -28,8 +28,7 @@ describe('applyWidgetPatch materialization integration', () => {
         label: 'Body',
         category: 'content',
         kind: 'leaf',
-        widgetType: 'text',
-        defaultWidget: { type: 'text', text: 'B' } as never,
+        content: { type: 'text', text: 'B' } as never,
       },
       getWidgetAtPath(root, gridParentPath)!,
     );
@@ -58,8 +57,7 @@ describe('applyWidgetPatch materialization integration', () => {
         label: 'Section Stack',
         category: 'template',
         kind: 'template',
-        widgetType: 'column',
-        defaultWidget: {
+        content: {
           type: 'column',
           gap: 4,
           children: [

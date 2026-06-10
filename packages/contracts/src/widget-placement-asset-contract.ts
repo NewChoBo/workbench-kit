@@ -23,8 +23,8 @@ export interface WidgetPlacementAsset<W extends WidgetTypeShape = WidgetTypeShap
   readonly packagePath?: string;
   /** Per-asset inputs JSON Schema (`schema.json` in package directory). */
   readonly inputsSchema?: Record<string, unknown>;
-  readonly widgetType: W['type'];
-  readonly defaultWidget: W;
+  /** Parsed JDW subtree from `content.json`. */
+  readonly content: W;
 }
 
 export interface WidgetAssetCatalogContract {

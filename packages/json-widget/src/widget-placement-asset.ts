@@ -3,7 +3,7 @@ import type { WidgetAssetCatalogContract, WidgetPlacementAsset } from '@workbenc
 import { normalizeWidgetForPlacementPolicy, resolvePlacementPolicy } from './widget-normalize.js';
 import type { GenericWidget } from './widget-tree.js';
 
-function cloneWidget(widget: WidgetPlacementAsset['defaultWidget']): GenericWidget {
+function cloneWidget(widget: WidgetPlacementAsset['content']): GenericWidget {
   return JSON.parse(JSON.stringify(widget)) as GenericWidget;
 }
 
@@ -11,7 +11,7 @@ export function materializeWidgetPlacementAsset(
   asset: WidgetPlacementAsset,
   parent?: GenericWidget | null,
 ): GenericWidget {
-  const widget = cloneWidget(asset.defaultWidget);
+  const widget = cloneWidget(asset.content);
   if (!parent) {
     return widget;
   }

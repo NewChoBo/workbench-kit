@@ -58,7 +58,7 @@ describe('widget asset package', () => {
       id: 'content.heading',
       label: 'Heading',
       packagePath: 'src/widgets/assets/heading',
-      widgetType: 'text',
+      content: { type: 'text', text: 'Heading', fontSize: 24 },
     });
     expect(parsed.value?.inputsSchema).toMatchObject({
       properties: {

@@ -224,7 +224,7 @@ export function parseWidgetAssetPackage(
   const name = readOptionalString(manifestRecord, 'name') ?? null;
   const label = readRequiredString(manifestRecord, 'label', errors);
   const category = readRequiredString(manifestRecord, 'category', errors);
-  const content = readContentNode(packageFiles.contentSource, errors);
+  const contentNode = readContentNode(packageFiles.contentSource, errors);
 
   if (!name) {
     errors.push('"name" must be a non-empty string.');
@@ -234,7 +234,7 @@ export function parseWidgetAssetPackage(
     ? readInputsSchema(packageFiles.schemaSource, errors)
     : undefined;
 
-  if (errors.length > 0 || !label || !category || !content || !name) {
+  if (errors.length > 0 || !label || !category || !contentNode || !name) {
     return { value: null, parseError: errors.join(' ') };
   }
 
@@ -244,8 +244,7 @@ export function parseWidgetAssetPackage(
     id: name,
     label,
     category,
-    widgetType: content.type,
-    defaultWidget: jdwNodeToGenericWidget(content) as WidgetPlacementAsset['defaultWidget'],
+    content: jdwNodeToGenericWidget(contentNode) as WidgetPlacementAsset['content'],
     packagePath: packageFiles.packagePath,
     ...(kind ? { kind } : {}),
     ...(placementPolicy ? { placementPolicy } : {}),

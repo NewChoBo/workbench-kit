@@ -352,7 +352,7 @@ Current `widget-json-schema.ts` defines container types but **not**:
 - [x] Replace flat fixtures: `widget-studio-assets.ts`, welcome document, builtin packages
 - [x] `parseJsonWidgetData` is the only widget tree parser (flat `parseWidgetJson` removed)
 - [x] Patch / tree / `widget-child-ops` operate on JDW nodes via `genericWidgetToJdwNode` / `jdwNodeToGenericWidget`
-- [x] Asset packages use `name` + `content.json`; `widgetType` derived at load time
+- [x] Asset packages use `name` + `content.json`; runtime `content` field on `WidgetPlacementAsset`
 
 ### Phase 1 — Schemas, validation, React registry (headless + minimal render)
 

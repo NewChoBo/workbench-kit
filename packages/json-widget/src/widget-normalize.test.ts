@@ -90,8 +90,7 @@ describe('materializeWidgetPlacementAsset', () => {
         label: 'Body',
         category: 'content',
         kind: 'leaf',
-        widgetType: 'text',
-        defaultWidget: { type: 'text', text: 'Body' } as never,
+        content: { type: 'text', text: 'Body' } as never,
       },
       parent,
     );

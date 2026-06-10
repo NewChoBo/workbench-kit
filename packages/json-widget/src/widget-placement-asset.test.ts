@@ -6,16 +6,14 @@ const leafAsset = {
   id: 'content.body',
   label: 'Body',
   category: 'content',
-  widgetType: 'text',
-  defaultWidget: { type: 'text', text: 'Body' },
+  content: { type: 'text', text: 'Body' },
 } as const;
 
 const customAsset = {
   id: 'custom.feature-badge',
   label: 'Feature Badge',
   category: 'content',
-  widgetType: 'row',
-  defaultWidget: { type: 'row', children: [] },
+  content: { type: 'row', children: [] },
 } as const;
 
 describe('mergeWidgetAssetCatalogs', () => {
@@ -26,8 +24,7 @@ describe('mergeWidgetAssetCatalogs', () => {
         id: 'layout.row',
         label: 'Row',
         category: 'layout',
-        widgetType: 'row',
-        defaultWidget: { type: 'row', children: [] } as never,
+        content: { type: 'row', children: [] } as never,
       },
     ]);
     const workspace = createWidgetAssetCatalog([
