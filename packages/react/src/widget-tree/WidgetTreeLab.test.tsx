@@ -29,7 +29,7 @@ describe('WidgetTreeLab', () => {
     expect(markup).toContain('data-testid="widget-tree-source"');
     expect(markup).toContain('data-testid="monaco-editor"');
     expect(markup).toContain('role="tree"');
-    expect(markup).toContain('data-testid="json-widget-preview-output"');
+    expect(markup).toContain('data-testid="jdw-preview-output"');
     expect(markup).toContain('data-testid="widget-tree-side-panel"');
     expect(markup).toContain('Assets');
     expect(markup).toContain('Widget Tree');

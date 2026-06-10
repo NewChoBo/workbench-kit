@@ -16,7 +16,8 @@ change while the first consuming apps harden the model.
 - `@workbench-kit/tokens`: framework-neutral CSS variables and base theme values
 - `@workbench-kit/core`: framework-neutral command, context-key, and when-clause primitives
 - `@workbench-kit/contracts`: shared chat, save, patch, library, launchpad mapping, widget renderer, and plugin contracts
-- `@workbench-kit/json-widget`: JSON-driven widget parsing and registry helpers
+- `@workbench-kit/jdw`: JDW engine — parse, layout, screen-spec compile, widget documents
+- `@workbench-kit/jdw-editor`: Screen spec editor UI and pipeline hooks
 - `@workbench-kit/workspace`: framework-neutral workspace state and path utilities
 - `@workbench-kit/runtime`: runtime event and mock runtime utilities
 - `@workbench-kit/services`: orchestration services for workbench flows

@@ -2,9 +2,9 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
-import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/json-widget';
+import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/jdw';
 
-import { JsonWidgetPreview } from './JsonWidgetPreview.js';
+import { JdwPreview } from './JdwPreview.js';
 
 interface DemoWidget extends WidgetTypeShape {
   type: 'demo:card';
@@ -15,7 +15,7 @@ interface DemoWidget extends WidgetTypeShape {
 const SAMPLE_WIDGET: DemoWidget = {
   type: 'demo:card',
   title: 'Workbench preview',
-  body: 'Rendered through JsonWidgetPreview and a mock registry build handler.',
+  body: 'Rendered through JdwPreview and a mock registry build handler.',
 };
 
 const demoRegistry = createWidgetRegistry<(widget: DemoWidget) => string, DemoWidget>([
@@ -30,8 +30,8 @@ const demoRegistry = createWidgetRegistry<(widget: DemoWidget) => string, DemoWi
 ]);
 
 const meta = {
-  title: 'JsonWidget/Preview',
-  component: JsonWidgetPreview,
+  title: 'JDW/Preview',
+  component: JdwPreview,
   args: {
     json: formatJsonWidgetData({
       type: SAMPLE_WIDGET.type,
@@ -42,7 +42,7 @@ const meta = {
     }),
     registry: demoRegistry,
   },
-} satisfies Meta<typeof JsonWidgetPreview>;
+} satisfies Meta<typeof JdwPreview>;
 
 export default meta;
 
@@ -55,10 +55,10 @@ export const RegisteredWidget: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent(
+    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent(
       EXPECTED_OUTPUT,
     );
-    await expect(canvas.queryByTestId('json-widget-preview-error')).not.toBeInTheDocument();
+    await expect(canvas.queryByTestId('jdw-preview-error')).not.toBeInTheDocument();
   },
 };
 
@@ -71,8 +71,8 @@ export const ParseError: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(canvas.getByTestId('json-widget-preview-error')).toBeVisible();
-    await expect(canvas.queryByTestId('json-widget-preview-output')).not.toBeInTheDocument();
+    await expect(canvas.getByTestId('jdw-preview-error')).toBeVisible();
+    await expect(canvas.queryByTestId('jdw-preview-output')).not.toBeInTheDocument();
   },
 };
 

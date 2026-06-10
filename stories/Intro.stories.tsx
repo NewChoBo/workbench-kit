@@ -40,11 +40,11 @@ export const Overview: Story = {
           }}
         >
           <li>
-            <code>JsonConfig/Workbench</code> — Monaco config editor with schema or widget preview
+            <code>JDW/Config/Workbench</code> — Monaco config editor with schema or widget preview
           </li>
           <li>
-            <code>JsonWidget/WidgetTree</code> — widget layout editor;{' '}
-            <code>JsonWidget/WidgetAsset</code> — placement asset editor; <code>*.widget.json</code>{' '}
+            <code>JDW/WidgetTree</code> — widget layout editor;{' '}
+            <code>JDW/WidgetAsset</code> — placement asset editor; <code>*.widget.json</code>{' '}
             and asset packages (<code>manifest.json</code> + <code>content.json</code>) open in
             Integrated Shell
           </li>
@@ -74,8 +74,8 @@ export const Overview: Story = {
             <code>React/Workbench/Settings</code>
           </li>
           <li>
-            <strong>JSON tooling</strong>: <code>JsonConfig/Workbench</code> and{' '}
-            <code>JsonWidget</code> playgrounds
+            <strong>JSON tooling</strong>: <code>JDW/Config/Workbench</code> and{' '}
+            <code>JDW</code> playgrounds
           </li>
           <li>
             <strong>Primitives</strong>: buttons, badges, fields, inputs, and empty states

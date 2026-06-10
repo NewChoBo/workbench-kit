@@ -7,7 +7,7 @@ import {
   type JdwScreenSpec,
   type ScreenNode,
   type ScreenNodePath,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';
 
 import {
   Panel,

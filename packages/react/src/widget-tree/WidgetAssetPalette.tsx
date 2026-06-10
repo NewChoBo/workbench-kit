@@ -1,5 +1,5 @@
 import type { WidgetPlacementAsset } from '@workbench-kit/contracts';
-import type { GenericWidget } from '@workbench-kit/json-widget';
+import type { GenericWidget } from '@workbench-kit/jdw';
 
 import { WorkbenchPropertyHint } from '../layout/WorkbenchPropertyPanel';
 import { cxCodicon } from '../utils/codicon';

@@ -6,7 +6,7 @@ Status: **MVP complete** for framework-neutral parse/registry primitives.
 
 | Track                         | MVP deliverable                                                                          | Status |
 | ----------------------------- | ---------------------------------------------------------------------------------------- | ------ |
-| `@workbench-kit/json-widget`  | dist build, unit tests, JDW validation + Storybook fixtures                             | Done   |
+| `@workbench-kit/jdw`  | dist build, unit tests, JDW validation + Storybook fixtures                             | Done   |
 | `@tilepaper/json-widget-tree` | delegates parse/registry to workbench-kit; keeps TilePaper widget types + layout locally | Done   |
 | `@workbench-kit/contracts`    | provider action → launchpad mapping integration test                                     | Done   |
 
@@ -26,7 +26,7 @@ From `newchobo-ui-package`:
 pnpm storybook
 ```
 
-Stories live under **JsonDynamicWidget/Fixtures**, **JsonWidget/Preview**, and **JsonWidget/WidgetTree/Lab**.
+Stories live under **JDW/Fixtures**, **JDW/Preview**, and **JDW/WidgetTree/Lab**.
 
 Build verification:
 
@@ -50,7 +50,7 @@ pnpm validate:full
 ## Tests
 
 ```bash
-pnpm --filter @workbench-kit/json-widget test
+pnpm --filter @workbench-kit/jdw test
 pnpm test
 pnpm check:launch-boundary
 ```
@@ -64,19 +64,19 @@ pnpm --filter @tilepaper/json-widget-tree test
 ## Phase 3+ (not in MVP)
 
 - **Foundation plan (active):** [widget-layout-schema-plan.md](./widget-layout-schema-plan.md) — JDW v7 wire format,
-  React `json-dynamic-widget` renderer, asset `content` (plugin_components shape), layout engine before editor expansion.
+  React `@workbench-kit/react/jdw` renderer, asset `content` (plugin_components shape), layout engine before editor expansion.
 - Move built-in widget definitions and layout calculators into shared packages where product-neutral
-- React renderer bridge in `@workbench-kit/react/json-widget` (`JsonWidgetPreview`) — **Done (Phase 3)**
+- React renderer bridge in `@workbench-kit/react/jdw` (`JdwPreview`) — **Done (Phase 3)**
 - json-widget-editor chrome extraction to workbench-kit
 - Promote json-widget play stories to `storybook-play-required` if CI gate expansion is approved
 
 ## Phase 3 (2026-06-07)
 
-### `@workbench-kit/react/json-widget`
+### `@workbench-kit/react/jdw`
 
-- `JsonWidgetPreview` — parse widget JSON via `@workbench-kit/json-widget`, optional registry mock render
-- Storybook: **JsonWidget/Preview** (`RegisteredWidget`, `ParseError`) with baseline play tests
-- Unit tests: `packages/react/src/json-widget/JsonWidgetPreview.test.tsx`
+- `JdwPreview` — parse widget JSON via `@workbench-kit/jdw`, optional registry mock render
+- Storybook: **JDW/Preview** (`RegisteredWidget`, `ParseError`) with baseline play tests
+- Unit tests: `packages/react/src/jdw/JdwPreview.test.tsx`
 
 ### `custom_launcher` launchpad bridge
 

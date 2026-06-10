@@ -2,7 +2,7 @@ import type { WidgetAssetCatalogContract } from '@workbench-kit/contracts';
 import {
   createWidgetAssetCatalogFromWorkspaceFiles,
   mergeWidgetAssetCatalogs,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';
 
 import type { WorkspaceFile } from '../workbench/workspace/types.js';
 import { createBuiltinWidgetAssetCatalog } from './builtin-widget-asset-catalog.js';

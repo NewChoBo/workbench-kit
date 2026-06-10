@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 
-import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
+import { JdwPreview } from '../jdw/JdwPreview.js';
 import { JdwSampleScreenExplorer } from './JdwSampleScreenExplorer.js';
 import {
   formatJdwSampleScreenJson,
@@ -33,7 +33,7 @@ function JdwSampleScreenFrame({ sample }: JdwSampleScreenFrameProps) {
           background: '#0d0f12',
         }}
       >
-        <JsonWidgetPreview
+        <JdwPreview
           json={formatJdwSampleScreenJson(sample)}
           layoutConstraints={sampleLayoutConstraints(sample)}
         />
@@ -64,7 +64,7 @@ function JdwSampleGallery({ samples }: JdwSampleGalleryProps) {
 }
 
 const meta = {
-  title: 'JsonDynamicWidget/SampleScreens',
+  title: 'JDW/SampleScreens',
   component: JdwSampleScreenExplorer,
   parameters: {
     layout: 'fullscreen',
@@ -82,7 +82,7 @@ export const Explorer: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('jdw-sample-explorer')).toBeVisible();
     const sampleSelect = canvas.getByTestId('jdw-sample-screen-select');
-    const preview = canvas.getByTestId('json-widget-preview-output');
+    const preview = canvas.getByTestId('jdw-preview-output');
 
     await expect(canvas.getByTestId('screen-spec-editor')).toBeVisible();
     await expect(preview).toHaveTextContent('12,480');

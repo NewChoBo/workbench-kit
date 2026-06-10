@@ -229,7 +229,7 @@ Asset files are validated in **two passes**:
 | Package | Responsibility |
 | ------- | -------------- |
 | `@workbench-kit/contracts` | `JsonWidgetNode` shape; component/asset catalog contracts; `placementPolicy`; MIME constants |
-| `@workbench-kit/json-widget` | `parseJsonWidgetData`; validate; patch ops on **normalized internal tree**; layout engine; component parse (`content`) |
+| `@workbench-kit/jdw` | `parseJsonWidgetData`; validate; patch ops on **normalized internal tree**; layout engine; component parse (`content`) |
 | `@workbench-kit/react/json-dynamic-widget` | `JsonWidgetRegistry`; `renderJsonWidget`; builtin React builders; `createDefaultRegistry()` |
 | `@workbench-kit/react/json-widget` | Thin `JsonWidgetPreview` → `renderJsonWidget` |
 | `@workbench-kit/react/widget-tree` | Editors (Phase 4); patch UI targets JDW nodes |
@@ -364,7 +364,7 @@ Current `widget-json-schema.ts` defines container types but **not**:
 - [x] `validateJsonWidgetData` + asset two-pass tests
 - [x] `@workbench-kit/react/json-dynamic-widget`: `JsonWidgetRegistry`, `renderJsonWidget`, builtins (`row`, `column`, `text`, `expanded`)
 - [x] `JsonWidgetPreview` uses `renderJsonWidget`
-- [x] Storybook: **JsonDynamicWidget/Fixtures** with JDW JSON files only
+- [x] Storybook: **JDW/Fixtures** with JDW JSON files only
 
 **Editor UX may lag** until Phase 4; fixtures and preview must work first.
 
@@ -387,7 +387,7 @@ Current `widget-json-schema.ts` defines container types but **not**:
 - [x] Grid/stack integrated (L3–L4) with rect snapshot tests
 - [ ] `CssRenderBackend` applies `layoutWidget` rects in preview
 - [ ] `JsonWidgetPreview` uses pipeline (parse → validate → layout → render)
-- [x] Storybook story: **JsonDynamicWidget/Layout** — layout rect fixtures
+- [x] Storybook story: **JDW/Layout** — layout rect fixtures
 
 ### Phase 4 — Editor integration (deferred)
 

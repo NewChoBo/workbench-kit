@@ -1,5 +1,5 @@
 import type { WidgetRegistryContract, WidgetTypeShape } from '@workbench-kit/contracts';
-import { createWidgetRegistry, type GenericWidget } from '@workbench-kit/json-widget';
+import { createWidgetRegistry, type GenericWidget } from '@workbench-kit/jdw';
 
 import { renderBuiltinWidgetNode } from './builtins/renderBuiltinWidgetNode.js';
 
@@ -19,7 +19,7 @@ function build(widget: WidgetTypeShape) {
 }
 
 /** workbench-jdw-react-v1 builtin widget registry (text, row, column, grid). */
-export function createBuiltinJsonWidgetRegistry(): WidgetRegistryContract<unknown> {
+export function createBuiltinJdwRegistry(): WidgetRegistryContract<unknown> {
   return createWidgetRegistry([
     {
       type: 'text',
@@ -108,4 +108,4 @@ export function createBuiltinJsonWidgetRegistry(): WidgetRegistryContract<unknow
   ]);
 }
 
-export const BUILTIN_JSON_WIDGET_REGISTRY = createBuiltinJsonWidgetRegistry();
+export const BUILTIN_JDW_REGISTRY = createBuiltinJdwRegistry();

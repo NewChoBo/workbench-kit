@@ -13,7 +13,7 @@ See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-
 | Phase       | Kit action                                                                                                                           | Consumer action                                  |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
 | 1 Reference | Study tile_paper tree/editor + launcher preview bridge                                                                               | Keep local stacks                                |
-| 2 Port      | Extract neutral primitives into `@workbench-kit/json-widget`, `@workbench-kit/react/json-widget`, `@workbench-kit/react/json-config` | Reference-only                                   |
+| 2 Port      | Extract neutral primitives into `@workbench-kit/jdw`, `@workbench-kit/react/json-widget`, `@workbench-kit/react/json-config` | Reference-only                                   |
 | 3 Complete  | Storybook baselines, public APIs, play gates, docs                                                                                   | Validate kit readiness                           |
 | 4 Swap      | —                                                                                                                                    | Point consumers at kit; delete duplicated chrome |
 
@@ -25,7 +25,7 @@ See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-
 - Product routes, storage keys, and authoring persistence
 - custom_launcher launchpad shell merge (`#workbench-ui` wholesale replacement)
 
-### Ports to `@workbench-kit/json-widget`
+### Ports to `@workbench-kit/jdw`
 
 - `parseJsonWidgetData` and registry contract
 - Neutral widget shape validation and error models
@@ -52,7 +52,7 @@ Single source of truth while editing:
 | State              | Owner                                            | Notes                                          |
 | ------------------ | ------------------------------------------------ | ---------------------------------------------- |
 | Document string    | Host or `JsonConfigWorkbench` controlled `value` | Monaco and tree derive from this               |
-| Parsed tree        | `@workbench-kit/json-widget` parse result        | Parse errors block preview update              |
+| Parsed tree        | `@workbench-kit/jdw` parse result        | Parse errors block preview update              |
 | Selected node path | React editor chrome state                        | Drives properties panel                        |
 | Preview render     | `JsonWidgetPreview` + registry                   | Read-only; reflects parse + selection          |
 | Dirty baseline     | Host `baselineValue` prop                        | Toolbar save/discard compares against baseline |
@@ -73,7 +73,7 @@ Sync rules:
 - [x] P2 `JsonWidget/Editor` Storybook story + play baseline
 - [x] P3 Monaco cursor ↔ tree path sync (`findPathForLineAndColumn` wired in React layer)
 - [x] P3 DnD tree reorder + full `WidgetPatch` types (`reorder-child`, `reparent-widget`, etc.)
-- [x] P3 neutral layout calculators (grid/stack/linear) in `@workbench-kit/json-widget`
+- [x] P3 neutral layout calculators (grid/stack/linear) in `@workbench-kit/jdw`
 - [x] P3 `EditorInteraction` promoted to `storybook-play-required`
 - [x] P3 parity gate tests (layout + patch + registry patterns)
 - [x] P3 `JsonWidget/Playground → Interactive` — full editor sandbox (add widget, DnD tree, Monaco, inspector, structural preview)
@@ -93,7 +93,7 @@ Sync rules:
 - [x] P3.4 starter templates — media card, form column, document shell
 - [x] P3.3 simplified preview selection chrome — `PlaygroundEditorWidgetWrapper` (`WorkbenchCanvasItemFrame` + badge)
 - [x] P3.3 full playground E2E play — `JsonWidget/Playground → InteractiveSmoke` (add, inspector, preview select, DnD, save)
-- [x] P3.3 required play promotion — `InteractiveSmoke` (`JsonConfig/WidgetInteraction` stays baseline; save requires dirty Monaco edit)
+- [x] P3.3 required play promotion — `InteractiveSmoke` (`JDW/Config/WidgetInteraction` stays baseline; save requires dirty Monaco edit)
 - [x] **Phase 3 kit milestone complete** — see [application-complete.md](./application-complete.md)
 - [x] P4 consumer swap runbook — [consumer-swap-runbook.md](./consumer-swap-runbook.md)
 - [ ] P4 custom_launcher preview toolbar → `PreviewZoomToolbar` (in progress)
@@ -103,7 +103,7 @@ Sync rules:
 ## Verification
 
 ```bash
-pnpm --filter @workbench-kit/json-widget test
+pnpm --filter @workbench-kit/jdw test
 pnpm --filter @workbench-kit/react test
 pnpm build:storybook
 pnpm test:storybook-play

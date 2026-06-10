@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { JsonCodeEditorPane } from '../json-widget/JsonCodeEditorPane.js';
+import { JsonCodeEditorPane } from '../jdw/JsonCodeEditorPane.js';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import type { WorkspaceFile } from '../workbench/workspace/types.js';
 import { resolveWidgetAssetMimeType } from './widget-asset-document.js';

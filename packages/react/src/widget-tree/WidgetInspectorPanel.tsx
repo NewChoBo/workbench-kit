@@ -3,7 +3,7 @@ import type {
   WidgetInspectorSection,
   WidgetRegistryContract,
 } from '@workbench-kit/contracts';
-import type { GenericWidget, WidgetPath } from '@workbench-kit/json-widget';
+import type { GenericWidget, WidgetPath } from '@workbench-kit/jdw';
 
 import { Badge } from '../primitives/Badge';
 import { Button } from '../primitives/Button';

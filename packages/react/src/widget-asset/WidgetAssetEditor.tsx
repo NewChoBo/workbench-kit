@@ -9,9 +9,9 @@ import {
   isWidgetAssetManifestPath,
   type GenericWidget,
   type WorkspaceAssetFileRef,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';
 
-import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
+import { JdwPreview } from '../jdw/JdwPreview.js';
 import { WidgetAssetSourceEditor } from './WidgetAssetSourceEditor.js';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import { WorkbenchPropertyHint, WorkbenchPropertyPanel } from '../layout/WorkbenchPropertyPanel';
@@ -133,7 +133,7 @@ export function WidgetAssetEditor({
         <section aria-label="Asset preview" className="widget-asset-editor__preview">
           <header className="widget-asset-editor__preview-header">Placement preview</header>
           <div className="widget-asset-editor__preview-body">
-            <JsonWidgetPreview json={previewJson} registry={registry} />
+            <JdwPreview json={previewJson} registry={registry} />
           </div>
         </section>
       </div>

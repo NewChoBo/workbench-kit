@@ -1,4 +1,4 @@
-import type { ScreenNode, ScreenTextStyle } from '@workbench-kit/json-widget';
+import type { ScreenNode, ScreenTextStyle } from '@workbench-kit/jdw';
 
 import {
   TextInput,

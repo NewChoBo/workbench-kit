@@ -100,7 +100,7 @@ importers:
 
   packages/jdw-editor:
     dependencies:
-      '@workbench-kit/json-widget':
+      '@workbench-kit/jdw':
         specifier: workspace:*
         version: link:../json-widget
       '@workbench-kit/react':
@@ -140,12 +140,12 @@ importers:
       '@workbench-kit/core':
         specifier: workspace:*
         version: link:../core
+      '@workbench-kit/jdw':
+        specifier: workspace:*
+        version: link:../json-widget
       '@workbench-kit/jdw-editor':
         specifier: workspace:*
         version: link:../jdw-editor
-      '@workbench-kit/json-widget':
-        specifier: workspace:*
-        version: link:../json-widget
       '@workbench-kit/runtime':
         specifier: workspace:*
         version: link:../runtime

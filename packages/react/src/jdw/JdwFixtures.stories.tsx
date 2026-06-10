@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 
-import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
+import { JdwPreview } from '../jdw/JdwPreview.js';
 import {
   JDW_FIXTURE_COLUMN_TEXT,
   JDW_FIXTURE_GRID_CELLS,
@@ -9,12 +9,12 @@ import {
 } from './fixtures/jdw-fixtures.js';
 
 const meta = {
-  title: 'JsonDynamicWidget/Fixtures',
-  component: JsonWidgetPreview,
+  title: 'JDW/Fixtures',
+  component: JdwPreview,
   parameters: {
     layout: 'padded',
   },
-} satisfies Meta<typeof JsonWidgetPreview>;
+} satisfies Meta<typeof JdwPreview>;
 
 export default meta;
 
@@ -27,7 +27,7 @@ export const ColumnText: Story = {
   tags: ['storybook-play-baseline'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Hello JDW');
+    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent('Hello JDW');
   },
 };
 
@@ -37,8 +37,8 @@ export const RowFlex: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Left');
-    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('flex 2');
+    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent('Left');
+    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent('flex 2');
   },
 };
 
@@ -48,6 +48,6 @@ export const GridCells: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByTestId('json-widget-preview-output')).toHaveTextContent('Wide');
+    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent('Wide');
   },
 };

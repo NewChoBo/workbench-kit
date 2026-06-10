@@ -1,6 +1,6 @@
 import { widgetStudioBuiltinAssetFiles } from '@workbench-kit/adapters';
 import type { WidgetAssetCatalogContract } from '@workbench-kit/contracts';
-import { createWidgetAssetCatalogFromWorkspaceFiles } from '@workbench-kit/json-widget';
+import { createWidgetAssetCatalogFromWorkspaceFiles } from '@workbench-kit/jdw';
 /** Built-in palette assets shipped with the workbench demo and widget studio. */
 export function createBuiltinWidgetAssetCatalog(): WidgetAssetCatalogContract {
   return createWidgetAssetCatalogFromWorkspaceFiles(

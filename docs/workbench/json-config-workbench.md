@@ -47,7 +47,7 @@ From `newchobo-ui-package`:
 pnpm storybook
 ```
 
-Stories under **JsonConfig/Workbench**:
+Stories under **JDW/Config/Workbench**:
 
 - **SchemaSettings** — app settings schema + split editor
 - **WidgetPreview** — widget JSON with registry render
@@ -71,7 +71,7 @@ pnpm typecheck
 
 | Area                                                   | Status                                                                 |
 | ------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `@workbench-kit/json-widget` parse/registry            | Done                                                                   |
+| `@workbench-kit/jdw` parse/registry            | Done                                                                   |
 | `@workbench-kit/react/json-widget` `JsonWidgetPreview` | Done                                                                   |
 | `StructuredArtifactEditor` (workspace file + drafts)   | Done — use when editing workspace files with `WorkspaceDraftsProvider` |
 | `JsonConfigWorkbench` (controlled JSON config)         | **This MVP**                                                           |

@@ -11,6 +11,6 @@ describe('JdwSampleScreenExplorer', () => {
     expect(markup).toContain('Analytics');
     expect(markup).toContain('data-testid="screen-spec-editor"');
     expect(markup).toContain('data-testid="jdw-sample-source-editor"');
-    expect(markup).toContain('data-testid="json-widget-preview-output"');
+    expect(markup).toContain('data-testid="jdw-preview-output"');
   });
 });

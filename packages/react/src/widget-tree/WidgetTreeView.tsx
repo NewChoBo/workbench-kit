@@ -7,7 +7,7 @@ import {
   type GenericWidget,
   type WidgetPath,
   type WidgetSelectionState,
-} from '@workbench-kit/json-widget';
+} from '@workbench-kit/jdw';
 
 import { Panel, PanelBody } from '../layout/Panel';
 import { EmptyState } from '../primitives/EmptyState';
