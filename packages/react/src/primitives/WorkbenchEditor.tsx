@@ -27,6 +27,7 @@ export function ButtonGroup({ ariaLabel, className, role = 'group', ...props }: 
 
 export interface SegmentedControlOption<TValue extends string = string> {
   label: ReactNode;
+  testId?: string | undefined;
   value: TValue;
 }
 
@@ -55,6 +56,7 @@ export function SegmentedControl<TValue extends string = string>({
               'ui-segmented-control__item',
               selected && 'ui-segmented-control__item--selected',
             )}
+            data-testid={option.testId}
             onClick={() => onChange(option.value)}
             type="button"
           >
