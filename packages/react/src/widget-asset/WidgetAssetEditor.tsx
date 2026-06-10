@@ -98,7 +98,7 @@ export function WidgetAssetEditor({
   const previewJson =
     editingContent && path
       ? value
-      : formatWidgetDocumentJson(asset.defaultWidget as GenericWidget);
+      : formatWidgetDocumentJson(asset.content as GenericWidget);
 
   const commitAssetMetadata = (nextAsset: WidgetPlacementAsset) => {
     onChange(formatWidgetAssetManifest(nextAsset));
@@ -124,7 +124,7 @@ export function WidgetAssetEditor({
             <WidgetInspectorPanel
               path={[]}
               readOnly={readOnly}
-              widget={asset.defaultWidget as GenericWidget}
+              widget={asset.content as GenericWidget}
               widgetRegistry={registry}
               onPatch={(nextWidget) => onChange(formatWidgetAssetContent(nextWidget))}
             />

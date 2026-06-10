@@ -43,8 +43,7 @@ describe('widget asset package workspace', () => {
     expect(catalog.asset('content.heading')).toMatchObject({
       id: 'content.heading',
       label: 'Heading',
-      widgetType: 'text',
-      defaultWidget: {
+      content: {
         type: 'text',
         text: 'Heading',
         fontSize: 24,
