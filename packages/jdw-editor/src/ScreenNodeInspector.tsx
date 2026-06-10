@@ -1,14 +1,14 @@
 import type { ScreenNode, ScreenTextStyle } from '@workbench-kit/json-widget';
 
 import {
+  TextInput,
   WorkbenchPropertyHint,
   WorkbenchPropertyNumberRow,
   WorkbenchPropertyPanel,
   WorkbenchPropertyRow,
   WorkbenchPropertyStack,
   WorkbenchPropertyTextRow,
-} from '../layout/WorkbenchPropertyPanel.js';
-import { TextInput } from '../primitives/TextInput.js';
+} from '@workbench-kit/react/primitives';
 
 export interface ScreenNodeInspectorProps {
   readonly node: ScreenNode;

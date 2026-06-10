@@ -9,18 +9,22 @@ import {
   type ScreenNodePath,
 } from '@workbench-kit/json-widget';
 
-import { Panel, PanelBody } from '../layout/Panel.js';
 import {
+  Panel,
+  PanelBody,
+  ResizablePanels,
+  TextInput,
   WorkbenchPropertyNumberRow,
   WorkbenchPropertyRow,
   WorkbenchPropertySection,
   WorkbenchPropertyStack,
   WorkbenchPropertyTextRow,
-} from '../layout/WorkbenchPropertyPanel.js';
-import { TextInput } from '../primitives/TextInput.js';
-import { ResizablePanels } from '../primitives/WorkbenchEditor.js';
-import { cx } from '../utils/cx.js';
+} from '@workbench-kit/react/primitives';
 import { ScreenNodeInspector } from './ScreenNodeInspector.js';
+
+function cx(...parts: Array<string | false | undefined | null | undefined>) {
+  return parts.filter(Boolean).join(' ');
+}
 
 function pathKey(path: ScreenNodePath): string {
   return path.length === 0 ? 'root' : path.join('.');

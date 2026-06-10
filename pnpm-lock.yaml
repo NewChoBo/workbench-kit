@@ -98,6 +98,18 @@ importers:
 
   packages/core: {}
 
+  packages/jdw-editor:
+    dependencies:
+      '@workbench-kit/json-widget':
+        specifier: workspace:*
+        version: link:../json-widget
+      '@workbench-kit/react':
+        specifier: workspace:*
+        version: link:../react
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+
   packages/json-widget:
     dependencies:
       '@workbench-kit/contracts':
@@ -128,6 +140,9 @@ importers:
       '@workbench-kit/core':
         specifier: workspace:*
         version: link:../core
+      '@workbench-kit/jdw-editor':
+        specifier: workspace:*
+        version: link:../jdw-editor
       '@workbench-kit/json-widget':
         specifier: workspace:*
         version: link:../json-widget

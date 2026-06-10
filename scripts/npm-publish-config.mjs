@@ -25,6 +25,7 @@ export function clearNpmRegistryAuth() {
 export const NPM_PUBLISH_ORDER = [
   '@workbench-kit/contracts',
   '@workbench-kit/json-widget',
+  '@workbench-kit/jdw-editor',
   '@workbench-kit/core',
   '@workbench-kit/runtime',
   '@workbench-kit/tokens',

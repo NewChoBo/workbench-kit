@@ -36,20 +36,20 @@ Interim re-exports (backward compat until Phase 4 consumer swap):
 
 ## Phased delivery
 
-### Phase 1 — Workbench UI on ScreenSpecEditor ✅ (this milestone)
+### Phase 1 — Workbench UI on ScreenSpecEditor ✅
 
 - `ScreenSpecEditor` → `ResizablePanels`, `WorkbenchPropertySection`, widget-tree outline classes
 - `ScreenNodeInspector` → `WorkbenchPropertyPanel` / property rows
 - `jdw-screen-spec-editor` layout CSS in `styles.css`
 - Verify: unit tests + Storybook `ScreenSpecEditor` + `SampleScreens/Explorer` play
 
-### Phase 2 — Explorer artifact shell alignment
+### Phase 2 — Explorer artifact shell alignment ✅
 
 - `JdwSampleScreenExplorer` → `SegmentedControl` source modes, `Select` sample picker, `WorkbenchParseError`
 - Reduce inline styles; shared `jdw-sample-explorer` CSS
 - Verify: Explorer play + static markup test
 
-### Phase 3 — `@workbench-kit/jdw-editor` package
+### Phase 3 — `@workbench-kit/jdw-editor` package ✅
 
 - New package; move `screen-spec/` from `react`
 - `react` re-export shim; update Storybook stories path
