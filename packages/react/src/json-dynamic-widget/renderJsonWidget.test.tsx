@@ -7,7 +7,7 @@ import { renderJsonWidget } from './renderJsonWidget.js';
 describe('renderJsonWidget', () => {
   it('renders builtin column and text nodes from JDW JSON', () => {
     const markup = renderToStaticMarkup(<>{renderJsonWidget(JDW_FIXTURE_COLUMN_TEXT)}</>);
-    expect(markup).toContain('data-widget-type="column"');
+    expect(markup).toContain('data-css-render-root="true"');
     expect(markup).toContain('Hello JDW');
   });
 

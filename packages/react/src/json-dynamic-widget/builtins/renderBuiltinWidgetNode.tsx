@@ -1,6 +1,8 @@
 import { createElement, type CSSProperties, type ReactNode } from 'react';
 import { getWidgetChildren, type GenericWidget } from '@workbench-kit/json-widget';
 
+import { renderBuiltinWidgetLeaf } from './renderBuiltinWidgetLeaf.js';
+
 const LAYOUT_TYPES = new Set(['row', 'column', 'grid']);
 
 function readNumber(value: unknown): number | undefined {
@@ -92,24 +94,10 @@ function childPlacementStyle(child: GenericWidget, parentType: string): CSSPrope
   return {};
 }
 
-function textStyle(widget: GenericWidget): CSSProperties {
-  return {
-    color: typeof widget.color === 'string' ? widget.color : undefined,
-    background: typeof widget.background === 'string' ? widget.background : undefined,
-    fontSize: readNumber(widget.fontSize),
-  };
-}
-
 export function renderBuiltinWidgetNode(widget: GenericWidget): ReactNode {
-  if (widget.type === 'text') {
-    return createElement(
-      'span',
-      {
-        'data-widget-type': 'text',
-        style: textStyle(widget),
-      },
-      String(widget.text ?? ''),
-    );
+  const leaf = renderBuiltinWidgetLeaf(widget);
+  if (leaf !== null) {
+    return leaf;
   }
 
   if (LAYOUT_TYPES.has(widget.type)) {
