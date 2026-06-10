@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, within } from 'storybook/test';
 import { Badge } from '../../primitives/Badge';
 import {
   WorkbenchStructuredDataForm,
@@ -191,7 +191,7 @@ export const SectionedData: Story = {
 
     await userEvent.type(profileName, 'Workbench Runtime');
     await userEvent.click(canvas.getByRole('combobox', { name: 'Density' }));
-    await userEvent.click(canvas.getByRole('option', { name: 'Compact' }));
+    await userEvent.click(screen.getByRole('option', { name: 'Compact' }));
     await expect(eventLog).toHaveTextContent('Changed structured data');
 
     await userEvent.click(canvas.getByRole('button', { name: 'Add tag' }));

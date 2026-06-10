@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, within } from 'storybook/test';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
 import { WorkbenchSettingsModal } from './WorkbenchSettingsModal';
@@ -180,7 +180,7 @@ export const EditableSettings: Story = {
 
     await userEvent.type(displayName, 'Workbench');
     await userEvent.click(canvas.getByRole('combobox', { name: 'Density' }));
-    await userEvent.click(canvas.getByRole('option', { name: 'Compact' }));
+    await userEvent.click(screen.getByRole('option', { name: 'Compact' }));
     await userEvent.clear(canvas.getByRole('spinbutton', { name: 'Maximum recent items' }));
     await userEvent.type(canvas.getByRole('spinbutton', { name: 'Maximum recent items' }), '8');
     await userEvent.click(canvas.getByRole('checkbox', { name: 'Confirm before side effects' }));

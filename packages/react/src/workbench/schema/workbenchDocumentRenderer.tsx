@@ -1,4 +1,9 @@
-import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import type {
+  CSSProperties,
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { WorkbenchDocumentNode } from './workbenchDocument';
 import type { WorkbenchDocumentRenderContext } from './workbenchDocument';
@@ -6,6 +11,17 @@ import type { WorkbenchPage, WorkbenchNodeLayout, WorkbenchVisualStyle } from '.
 
 const DEFAULT_NODE_MIN_SIZE = 12;
 const RESIZE_HANDLE_SIZE = 10;
+
+function wrapNodeClick(handler: (() => void) | undefined) {
+  if (!handler) {
+    return undefined;
+  }
+
+  return (event: ReactMouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    handler();
+  };
+}
 
 export interface WorkbenchDocumentRendererProps {
   page: WorkbenchPage;
@@ -296,7 +312,7 @@ const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactN
       key={node.id}
       data-node-id={node.id}
       style={style}
-      onClick={onClick}
+      onClick={wrapNodeClick(onClick)}
       onPointerDown={onPointerDown}
     >
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
@@ -314,7 +330,7 @@ const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactN
       key={node.id}
       data-node-id={node.id}
       style={{ ...style, borderRadius: '50%' }}
-      onClick={onClick}
+      onClick={wrapNodeClick(onClick)}
       onPointerDown={onPointerDown}
     >
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
@@ -325,7 +341,7 @@ const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactN
       key={node.id}
       data-node-id={node.id}
       style={style}
-      onClick={onClick}
+      onClick={wrapNodeClick(onClick)}
       onPointerDown={onPointerDown}
     >
       {(node as { content?: string }).content ?? ''}
@@ -346,7 +362,7 @@ const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactN
         key={node.id}
         data-node-id={node.id}
         style={style}
-        onClick={onClick}
+        onClick={wrapNodeClick(onClick)}
         onPointerDown={onPointerDown}
       >
         {src ? (
@@ -390,7 +406,7 @@ const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactN
       key={node.id}
       data-node-id={node.id}
       style={style}
-      onClick={onClick}
+      onClick={wrapNodeClick(onClick)}
       onPointerDown={onPointerDown}
     >
       {(node as { content?: string }).content ?? ''}
@@ -409,7 +425,7 @@ const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactN
       key={node.id}
       data-node-id={node.id}
       style={style}
-      onClick={onClick}
+      onClick={wrapNodeClick(onClick)}
       onPointerDown={onPointerDown}
     >
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
