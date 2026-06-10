@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react';
 import { compileScreenSpecText } from '@workbench-kit/json-widget';
 
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel.js';
-import { Button } from '../primitives/Button.js';
+import { WorkbenchParseError } from '../layout/WorkbenchPropertyPanel.js';
 import { Field } from '../primitives/Field.js';
+import { Select } from '../primitives/Select.js';
+import { SegmentedControl } from '../primitives/WorkbenchEditor.js';
 import { ScreenSpecEditor } from '../screen-spec/ScreenSpecEditor.js';
 import { useScreenSpecPipeline } from '../screen-spec/useScreenSpecPipeline.js';
 import { SplitView } from '../workbench/SplitView.js';
@@ -30,6 +32,11 @@ function resolveSample(
   return samples.find((entry) => entry.id === sampleId) ?? samples[0]!;
 }
 
+const SOURCE_VIEW_OPTIONS = [
+  { label: 'Screen editor', testId: 'jdw-sample-source-editor', value: 'editor' as const },
+  { label: 'JDW JSON', testId: 'jdw-sample-source-jdw', value: 'jdw' as const },
+];
+
 export function JdwSampleScreenExplorer({
   samples = JDW_SAMPLE_SCREENS,
   initialSampleId,
@@ -53,72 +60,43 @@ export function JdwSampleScreenExplorer({
 
   const compileError = pipeline.compileError ?? editorError;
 
-  const showJdwSource = () => {
-    const compiled = compileScreenSpecText(formatJdwSampleScreenSpec(pipeline.spec));
-    if (compiled.json) {
-      pipeline.setJson(compiled.json);
+  const handleSourceViewChange = (nextView: JdwSampleSourceView) => {
+    if (nextView === 'jdw') {
+      const compiled = compileScreenSpecText(formatJdwSampleScreenSpec(pipeline.spec));
+      if (compiled.json) {
+        pipeline.setJson(compiled.json);
+      }
     }
-    setSourceView('jdw');
+    setSourceView(nextView);
   };
 
   return (
-    <div
-      className="jdw-sample-explorer"
-      data-testid="jdw-sample-explorer"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        minHeight: 640,
-        height: '100%',
-      }}
-    >
-      <Panel style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+    <div className="jdw-sample-explorer" data-testid="jdw-sample-explorer">
+      <Panel className="jdw-sample-explorer__panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
         <PanelHeader
           actions={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ display: 'flex', gap: 6 }} role="tablist" aria-label="Source view">
-                <Button
-                  aria-pressed={sourceView === 'editor'}
-                  data-testid="jdw-sample-source-editor"
-                  role="tab"
-                  variant={sourceView === 'editor' ? 'primary' : 'default'}
-                  onClick={() => setSourceView('editor')}
-                >
-                  Screen editor
-                </Button>
-                <Button
-                  aria-pressed={sourceView === 'jdw'}
-                  data-testid="jdw-sample-source-jdw"
-                  role="tab"
-                  variant={sourceView === 'jdw' ? 'primary' : 'default'}
-                  onClick={showJdwSource}
-                >
-                  JDW JSON
-                </Button>
-              </div>
+            <div className="jdw-sample-explorer__header-actions">
+              <SegmentedControl
+                ariaLabel="Source view"
+                options={SOURCE_VIEW_OPTIONS}
+                value={sourceView}
+                onChange={handleSourceViewChange}
+              />
               <Field label="Sample screen" htmlFor="jdw-sample-screen-select" inline>
-                <select
+                <Select
                   id="jdw-sample-screen-select"
                   aria-label="Sample screen"
                   data-testid="jdw-sample-screen-select"
+                  controlWidth="wide"
                   value={activeSample.id}
-                  onChange={(event) => setSampleId(event.target.value)}
-                  style={{
-                    minWidth: 220,
-                    padding: '6px 10px',
-                    borderRadius: 6,
-                    border: '1px solid #3c4043',
-                    background: '#1e2127',
-                    color: '#e8eaed',
-                  }}
+                  onValueChange={setSampleId}
                 >
                   {samples.map((sample) => (
                     <option key={sample.id} value={sample.id}>
                       {sample.title}
                     </option>
                   ))}
-                </select>
+                </Select>
               </Field>
             </div>
           }
@@ -126,6 +104,7 @@ export function JdwSampleScreenExplorer({
           JDW Sample Explorer
         </PanelHeader>
         <PanelBody
+          className="jdw-sample-explorer__body"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -135,33 +114,11 @@ export function JdwSampleScreenExplorer({
             paddingTop: 0,
           }}
         >
-          <p
-            style={{
-              margin: 0,
-              fontSize: 13,
-              lineHeight: 1.5,
-              color: '#9aa0a6',
-            }}
-          >
-            {activeSample.description}
-          </p>
+          <p className="jdw-sample-explorer__description">{activeSample.description}</p>
           {compileError ? (
-            <div
-              role="alert"
-              data-testid="jdw-sample-explorer-error"
-              style={{
-                margin: 0,
-                padding: '8px 12px',
-                borderRadius: 8,
-                border: '1px solid #8b3a3a',
-                background: '#2a1515',
-                color: '#f28b82',
-                fontSize: 12,
-                lineHeight: 1.5,
-              }}
-            >
+            <WorkbenchParseError role="alert" data-testid="jdw-sample-explorer-error">
               {compileError}
-            </div>
+            </WorkbenchParseError>
           ) : null}
           <SplitView
             className="jdw-sample-explorer__split"
@@ -171,30 +128,13 @@ export function JdwSampleScreenExplorer({
             primary={
               <section
                 aria-label={sourceView === 'editor' ? 'Screen spec editor' : 'JDW JSON source'}
+                className="jdw-sample-explorer__pane"
                 data-testid="jdw-sample-explorer-source-pane"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  minHeight: 0,
-                  height: '100%',
-                  border: '1px solid #3c4043',
-                  borderRadius: 8,
-                  overflow: 'hidden',
-                  background: '#0d0f12',
-                }}
               >
-                <header
-                  style={{
-                    padding: '8px 12px',
-                    borderBottom: '1px solid #2b2f36',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: '#c4c7c5',
-                  }}
-                >
+                <header className="jdw-sample-explorer__pane-header">
                   {sourceView === 'editor' ? 'Screen editor' : 'JDW JSON'}
                 </header>
-                <div style={{ flex: 1, minHeight: 420, overflow: 'auto', padding: 12 }}>
+                <div className="jdw-sample-explorer__pane-body">
                   {sourceView === 'editor' ? (
                     <ScreenSpecEditor
                       value={pipeline.spec}
@@ -204,24 +144,11 @@ export function JdwSampleScreenExplorer({
                   ) : (
                     <textarea
                       aria-label="JDW JSON source"
+                      className="jdw-sample-explorer__json-source"
                       data-testid="jdw-sample-explorer-json"
                       value={pipeline.json}
                       onChange={(event) => pipeline.setJson(event.target.value)}
                       spellCheck={false}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        minHeight: 380,
-                        resize: 'none',
-                        border: 0,
-                        outline: 'none',
-                        background: 'transparent',
-                        color: '#e8eaed',
-                        fontFamily: 'Consolas, "Courier New", monospace',
-                        fontSize: 12,
-                        lineHeight: 1.5,
-                        tabSize: 2,
-                      }}
                     />
                   )}
                 </div>
@@ -230,37 +157,11 @@ export function JdwSampleScreenExplorer({
             secondary={
               <section
                 aria-label="Rendered preview"
+                className="jdw-sample-explorer__pane"
                 data-testid="jdw-sample-explorer-preview-pane"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  minHeight: 0,
-                  height: '100%',
-                  border: '1px solid #3c4043',
-                  borderRadius: 8,
-                  overflow: 'hidden',
-                  background: '#0d0f12',
-                }}
               >
-                <header
-                  style={{
-                    padding: '8px 12px',
-                    borderBottom: '1px solid #2b2f36',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: '#c4c7c5',
-                  }}
-                >
-                  Preview
-                </header>
-                <div
-                  style={{
-                    flex: 1,
-                    minHeight: 420,
-                    overflow: 'auto',
-                    padding: 12,
-                  }}
-                >
+                <header className="jdw-sample-explorer__pane-header">Preview</header>
+                <div className="jdw-sample-explorer__pane-body">
                   <JsonWidgetPreview
                     json={pipeline.json}
                     layoutConstraints={pipeline.layoutConstraints}
