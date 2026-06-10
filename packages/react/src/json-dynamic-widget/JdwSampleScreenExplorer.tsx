@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react';
 
-import { compileScreenSpecText, type JdwScreenSpec } from '@workbench-kit/json-widget';
+import { compileScreenSpecText } from '@workbench-kit/json-widget';
 
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel.js';
 import { Button } from '../primitives/Button.js';
 import { Field } from '../primitives/Field.js';
+import { ScreenSpecEditor } from '../screen-spec/ScreenSpecEditor.js';
+import { useScreenSpecPipeline } from '../screen-spec/useScreenSpecPipeline.js';
 import { SplitView } from '../workbench/SplitView.js';
 import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
 import {
-  formatJdwSampleScreenJson,
   formatJdwSampleScreenSpec,
   JDW_SAMPLE_SCREENS,
-  sampleLayoutConstraints,
   type JdwSampleScreenDefinition,
 } from './fixtures/jdw-sample-screens.js';
 
-export type JdwSampleSourceView = 'spec' | 'jdw';
+export type JdwSampleSourceView = 'editor' | 'jdw';
 
 export interface JdwSampleScreenExplorerProps {
   readonly samples?: readonly JdwSampleScreenDefinition[] | undefined;
@@ -33,55 +33,33 @@ function resolveSample(
 export function JdwSampleScreenExplorer({
   samples = JDW_SAMPLE_SCREENS,
   initialSampleId,
-  initialSourceView = 'spec',
+  initialSourceView = 'editor',
 }: JdwSampleScreenExplorerProps) {
   const [sampleId, setSampleId] = useState(initialSampleId ?? samples[0]?.id ?? '');
   const [sourceView, setSourceView] = useState<JdwSampleSourceView>(initialSourceView);
-  const [activeSample, setActiveSample] = useState<JdwSampleScreenDefinition>(() =>
-    resolveSample(samples, sampleId),
-  );
-  const [specText, setSpecText] = useState(() => formatJdwSampleScreenSpec(activeSample));
-  const [json, setJson] = useState(() => formatJdwSampleScreenJson(activeSample));
-  const [previewSpec, setPreviewSpec] = useState<JdwScreenSpec>(activeSample);
-  const [compileError, setCompileError] = useState<string | null>(null);
+  const activeSample = resolveSample(samples, sampleId);
+  const pipeline = useScreenSpecPipeline(activeSample);
+  const { resetSpec } = pipeline;
+  const [editorError, setEditorError] = useState<string | null>(null);
 
   useEffect(() => {
-    const nextSample = resolveSample(samples, sampleId);
-    setActiveSample(nextSample);
-    setSpecText(formatJdwSampleScreenSpec(nextSample));
-    setJson(formatJdwSampleScreenJson(nextSample));
-    setPreviewSpec(nextSample);
-    setCompileError(null);
-  }, [sampleId, samples]);
-
-  const applyCompiledSpec = (source: string) => {
-    const compiled = compileScreenSpecText(source);
-    if (compiled.error !== null || compiled.json === null || compiled.spec === null) {
-      setCompileError(compiled.error ?? 'Invalid screen spec.');
-      return false;
-    }
-
-    setCompileError(null);
-    setPreviewSpec(compiled.spec);
-    setJson(compiled.json);
-    return true;
-  };
-
-  const handleSpecChange = (nextSpecText: string) => {
-    setSpecText(nextSpecText);
-    applyCompiledSpec(nextSpecText);
-  };
-
-  const showJdwSource = () => {
-    applyCompiledSpec(specText);
-    setSourceView('jdw');
-  };
+    resetSpec(resolveSample(samples, sampleId));
+    setEditorError(null);
+  }, [resetSpec, sampleId, samples]);
 
   if (samples.length === 0) {
     return <div data-testid="jdw-sample-explorer-empty">No sample screens configured.</div>;
   }
 
-  const leftPaneValue = sourceView === 'spec' ? specText : json;
+  const compileError = pipeline.compileError ?? editorError;
+
+  const showJdwSource = () => {
+    const compiled = compileScreenSpecText(formatJdwSampleScreenSpec(pipeline.spec));
+    if (compiled.json) {
+      pipeline.setJson(compiled.json);
+    }
+    setSourceView('jdw');
+  };
 
   return (
     <div
@@ -101,13 +79,13 @@ export function JdwSampleScreenExplorer({
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ display: 'flex', gap: 6 }} role="tablist" aria-label="Source view">
                 <Button
-                  aria-pressed={sourceView === 'spec'}
-                  data-testid="jdw-sample-source-spec"
+                  aria-pressed={sourceView === 'editor'}
+                  data-testid="jdw-sample-source-editor"
                   role="tab"
-                  variant={sourceView === 'spec' ? 'primary' : 'default'}
-                  onClick={() => setSourceView('spec')}
+                  variant={sourceView === 'editor' ? 'primary' : 'default'}
+                  onClick={() => setSourceView('editor')}
                 >
-                  Screen spec
+                  Screen editor
                 </Button>
                 <Button
                   aria-pressed={sourceView === 'jdw'}
@@ -192,8 +170,8 @@ export function JdwSampleScreenExplorer({
             maxPrimarySizePercent={72}
             primary={
               <section
-                aria-label={sourceView === 'spec' ? 'Screen spec source' : 'JDW JSON source'}
-                data-testid="jdw-sample-explorer-json-pane"
+                aria-label={sourceView === 'editor' ? 'Screen spec editor' : 'JDW JSON source'}
+                data-testid="jdw-sample-explorer-source-pane"
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -214,37 +192,39 @@ export function JdwSampleScreenExplorer({
                     color: '#c4c7c5',
                   }}
                 >
-                  {sourceView === 'spec' ? 'Screen spec' : 'JDW JSON'}
+                  {sourceView === 'editor' ? 'Screen editor' : 'JDW JSON'}
                 </header>
-                <textarea
-                  aria-label={sourceView === 'spec' ? 'Screen spec source' : 'JDW JSON source'}
-                  data-testid="jdw-sample-explorer-json"
-                  value={leftPaneValue}
-                  onChange={(event) => {
-                    if (sourceView === 'spec') {
-                      handleSpecChange(event.target.value);
-                      return;
-                    }
-                    setJson(event.target.value);
-                    setCompileError(null);
-                  }}
-                  spellCheck={false}
-                  style={{
-                    flex: 1,
-                    width: '100%',
-                    minHeight: 420,
-                    resize: 'none',
-                    border: 0,
-                    outline: 'none',
-                    padding: 12,
-                    background: 'transparent',
-                    color: '#e8eaed',
-                    fontFamily: 'Consolas, "Courier New", monospace',
-                    fontSize: 12,
-                    lineHeight: 1.5,
-                    tabSize: 2,
-                  }}
-                />
+                <div style={{ flex: 1, minHeight: 420, overflow: 'auto', padding: 12 }}>
+                  {sourceView === 'editor' ? (
+                    <ScreenSpecEditor
+                      value={pipeline.spec}
+                      onChange={pipeline.setSpec}
+                      onCompileError={setEditorError}
+                    />
+                  ) : (
+                    <textarea
+                      aria-label="JDW JSON source"
+                      data-testid="jdw-sample-explorer-json"
+                      value={pipeline.json}
+                      onChange={(event) => pipeline.setJson(event.target.value)}
+                      spellCheck={false}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        minHeight: 380,
+                        resize: 'none',
+                        border: 0,
+                        outline: 'none',
+                        background: 'transparent',
+                        color: '#e8eaed',
+                        fontFamily: 'Consolas, "Courier New", monospace',
+                        fontSize: 12,
+                        lineHeight: 1.5,
+                        tabSize: 2,
+                      }}
+                    />
+                  )}
+                </div>
               </section>
             }
             secondary={
@@ -282,8 +262,8 @@ export function JdwSampleScreenExplorer({
                   }}
                 >
                   <JsonWidgetPreview
-                    json={json}
-                    layoutConstraints={sampleLayoutConstraints(previewSpec)}
+                    json={pipeline.json}
+                    layoutConstraints={pipeline.layoutConstraints}
                   />
                 </div>
               </section>

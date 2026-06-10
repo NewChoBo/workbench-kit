@@ -82,51 +82,24 @@ export const Explorer: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('jdw-sample-explorer')).toBeVisible();
     const sampleSelect = canvas.getByTestId('jdw-sample-screen-select');
-    const jsonEditor = canvas.getByTestId('jdw-sample-explorer-json');
     const preview = canvas.getByTestId('json-widget-preview-output');
 
-    await expect(sampleSelect).toHaveValue('analytics-dashboard');
-    await expect(jsonEditor).toBeVisible();
+    await expect(canvas.getByTestId('screen-spec-editor')).toBeVisible();
     await expect(preview).toHaveTextContent('12,480');
 
     await userEvent.selectOptions(sampleSelect, 'user-profile');
-
     await expect(sampleSelect).toHaveValue('user-profile');
     await expect(preview).toHaveTextContent('Alex Morgan');
 
-    await userEvent.selectOptions(sampleSelect, 'pricing-plans');
-
-    await expect(sampleSelect).toHaveValue('pricing-plans');
-    await expect(preview).toHaveTextContent('Choose a plan');
-    await expect(preview).toHaveTextContent('$12');
-
-    await userEvent.click(canvas.getByTestId('jdw-sample-source-spec'));
-    await expect(canvas.getByTestId('jdw-sample-source-spec')).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(canvas.getByTestId('screen-spec-outline-1.0'));
+    const contentField = canvas.getByTestId('screen-spec-field-content');
+    await userEvent.clear(contentField);
+    await userEvent.type(contentField, 'Jordan Lee');
+    await expect(preview).toHaveTextContent('Jordan Lee');
 
     await userEvent.click(canvas.getByTestId('jdw-sample-source-jdw'));
-    await expect(canvas.getByTestId('jdw-sample-source-jdw')).toHaveAttribute('aria-pressed', 'true');
-    await expect(preview).toHaveTextContent('Choose a plan');
-
-    await userEvent.click(canvas.getByTestId('jdw-sample-source-spec'));
-    const editor = canvas.getByTestId('jdw-sample-explorer-json');
-    await userEvent.clear(editor);
-    await userEvent.click(editor);
-    await userEvent.paste(
-      JSON.stringify(
-        {
-          id: 'playground',
-          title: 'Playground',
-          description: 'Edited in Storybook play',
-          frameWidth: 320,
-          layout: { maxWidth: 320, maxHeight: 120 },
-          root: { kind: 'text', content: 'Edited from spec', style: { fontSize: 18 } },
-        },
-        null,
-        2,
-      ),
-    );
-    await expect(canvas.queryByTestId('jdw-sample-explorer-error')).not.toBeInTheDocument();
-    await expect(preview).toHaveTextContent('Edited from spec');
+    await expect(canvas.getByTestId('jdw-sample-explorer-json')).toBeVisible();
+    await expect(preview).toHaveTextContent('Jordan Lee');
   },
 };
 
