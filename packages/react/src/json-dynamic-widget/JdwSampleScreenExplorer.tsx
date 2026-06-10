@@ -7,8 +7,7 @@ import { WorkbenchParseError } from '../layout/WorkbenchPropertyPanel.js';
 import { Field } from '../primitives/Field.js';
 import { Select } from '../primitives/Select.js';
 import { SegmentedControl } from '../primitives/WorkbenchEditor.js';
-import { ScreenSpecEditor } from '../screen-spec/ScreenSpecEditor.js';
-import { useScreenSpecPipeline } from '../screen-spec/useScreenSpecPipeline.js';
+import { ScreenSpecEditor, useScreenSpecPipeline } from '@workbench-kit/jdw-editor';
 import { SplitView } from '../workbench/SplitView.js';
 import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
 import {

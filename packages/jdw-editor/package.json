@@ -1,0 +1,38 @@
+{
+  "name": "@workbench-kit/jdw-editor",
+  "version": "0.0.1-prototype.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "test": "pnpm exec vitest run --config ../../vitest.config.ts src",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
+  ],
+  "dependencies": {
+    "@workbench-kit/json-widget": "workspace:*",
+    "@workbench-kit/react": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "description": "React editor UI for JDW screen specs and live compile preview pipelines.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/newchobo-ui-package.git",
+    "directory": "packages/jdw-editor"
+  }
+}

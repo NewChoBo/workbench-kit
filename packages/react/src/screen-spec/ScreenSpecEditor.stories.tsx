@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { screenColumn, screenText, type JdwScreenSpec } from '@workbench-kit/json-widget';
 
 import { JsonWidgetPreview } from '../json-widget/JsonWidgetPreview.js';
-import { useScreenSpecPipeline } from './useScreenSpecPipeline.js';
-import { ScreenSpecEditor } from './ScreenSpecEditor.js';
+import { ScreenSpecEditor, useScreenSpecPipeline } from '@workbench-kit/jdw-editor';
 import { JDW_SAMPLE_SCREENS } from '../json-dynamic-widget/fixtures/jdw-sample-screens.js';
 
 function ScreenSpecEditorHarness({ sampleId = 'user-profile' }: { readonly sampleId?: string }) {

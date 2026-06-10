@@ -33,7 +33,7 @@ export {
   type ScreenSpecEditorProps,
   type ScreenSpecPipelineState,
   type UseScreenSpecPipelineResult,
-} from '../screen-spec/index.js';
+} from '@workbench-kit/jdw-editor';
 export {
   compileScreenSpecText,
   parseScreenSpecJson,

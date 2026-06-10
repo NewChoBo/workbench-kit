@@ -76,3 +76,22 @@ export type {
   PanelHeaderProps,
   PanelProps,
 } from '../layout/Panel';
+export {
+  WorkbenchParseError,
+  WorkbenchPropertyHint,
+  WorkbenchPropertyNumberRow,
+  WorkbenchPropertyPanel,
+  WorkbenchPropertyRow,
+  WorkbenchPropertySection,
+  WorkbenchPropertyStack,
+  WorkbenchPropertyTextRow,
+} from '../layout/WorkbenchPropertyPanel';
+export type {
+  WorkbenchParseErrorProps,
+  WorkbenchPropertyNumberRowProps,
+  WorkbenchPropertyPanelProps,
+  WorkbenchPropertyRowProps,
+  WorkbenchPropertySectionProps,
+  WorkbenchPropertyStackProps,
+  WorkbenchPropertyTextRowProps,
+} from '../layout/WorkbenchPropertyPanel';
