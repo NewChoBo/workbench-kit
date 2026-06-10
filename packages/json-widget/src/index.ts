@@ -166,6 +166,12 @@ export {
   compileScreenSpecToJdwNode,
   compileScreenSpecToJson,
 } from './screen-spec/compile.js';
+export {
+  compileScreenSpecText,
+  parseScreenSpecJson,
+  type CompiledScreenSpecText,
+  type ParsedScreenSpec,
+} from './screen-spec/parse.js';
 
 export type {
   CreateWidgetAssetDocumentOptions,

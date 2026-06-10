@@ -106,6 +106,27 @@ export const Explorer: Story = {
     await userEvent.click(canvas.getByTestId('jdw-sample-source-jdw'));
     await expect(canvas.getByTestId('jdw-sample-source-jdw')).toHaveAttribute('aria-pressed', 'true');
     await expect(preview).toHaveTextContent('Choose a plan');
+
+    await userEvent.click(canvas.getByTestId('jdw-sample-source-spec'));
+    const editor = canvas.getByTestId('jdw-sample-explorer-json');
+    await userEvent.clear(editor);
+    await userEvent.click(editor);
+    await userEvent.paste(
+      JSON.stringify(
+        {
+          id: 'playground',
+          title: 'Playground',
+          description: 'Edited in Storybook play',
+          frameWidth: 320,
+          layout: { maxWidth: 320, maxHeight: 120 },
+          root: { kind: 'text', content: 'Edited from spec', style: { fontSize: 18 } },
+        },
+        null,
+        2,
+      ),
+    );
+    await expect(canvas.queryByTestId('jdw-sample-explorer-error')).not.toBeInTheDocument();
+    await expect(preview).toHaveTextContent('Edited from spec');
   },
 };
 
