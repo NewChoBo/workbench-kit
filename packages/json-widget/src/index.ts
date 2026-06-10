@@ -172,6 +172,14 @@ export {
   type CompiledScreenSpecText,
   type ParsedScreenSpec,
 } from './screen-spec/parse.js';
+export {
+  getScreenNodeAt,
+  listScreenSpecOutline,
+  updateScreenNodeAt,
+  updateScreenSpecMetadata,
+  type ScreenNodePath,
+  type ScreenSpecOutlineEntry,
+} from './screen-spec/tree.js';
 
 export type {
   CreateWidgetAssetDocumentOptions,

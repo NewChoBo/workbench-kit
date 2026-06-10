@@ -26,6 +26,15 @@ export {
 } from './fixtures/jdw-sample-screens.js';
 export type { JdwSampleSourceView } from './JdwSampleScreenExplorer.js';
 export {
+  ScreenNodeInspector,
+  ScreenSpecEditor,
+  useScreenSpecPipeline,
+  type ScreenNodeInspectorProps,
+  type ScreenSpecEditorProps,
+  type ScreenSpecPipelineState,
+  type UseScreenSpecPipelineResult,
+} from '../screen-spec/index.js';
+export {
   compileScreenSpecText,
   parseScreenSpecJson,
   type CompiledScreenSpecText,
