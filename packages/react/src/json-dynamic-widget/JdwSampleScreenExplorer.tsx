@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+
+import { compileScreenSpecText, type JdwScreenSpec } from '@workbench-kit/json-widget';
 
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel.js';
 import { Button } from '../primitives/Button.js';
@@ -35,19 +37,51 @@ export function JdwSampleScreenExplorer({
 }: JdwSampleScreenExplorerProps) {
   const [sampleId, setSampleId] = useState(initialSampleId ?? samples[0]?.id ?? '');
   const [sourceView, setSourceView] = useState<JdwSampleSourceView>(initialSourceView);
-  const activeSample = useMemo(() => resolveSample(samples, sampleId), [sampleId, samples]);
+  const [activeSample, setActiveSample] = useState<JdwSampleScreenDefinition>(() =>
+    resolveSample(samples, sampleId),
+  );
+  const [specText, setSpecText] = useState(() => formatJdwSampleScreenSpec(activeSample));
   const [json, setJson] = useState(() => formatJdwSampleScreenJson(activeSample));
-  const specSource = useMemo(() => formatJdwSampleScreenSpec(activeSample), [activeSample]);
-  const leftPaneValue = sourceView === 'spec' ? specSource : json;
-  const leftPaneReadOnly = sourceView === 'spec';
+  const [previewSpec, setPreviewSpec] = useState<JdwScreenSpec>(activeSample);
+  const [compileError, setCompileError] = useState<string | null>(null);
 
   useEffect(() => {
-    setJson(formatJdwSampleScreenJson(activeSample));
-  }, [activeSample]);
+    const nextSample = resolveSample(samples, sampleId);
+    setActiveSample(nextSample);
+    setSpecText(formatJdwSampleScreenSpec(nextSample));
+    setJson(formatJdwSampleScreenJson(nextSample));
+    setPreviewSpec(nextSample);
+    setCompileError(null);
+  }, [sampleId, samples]);
+
+  const applyCompiledSpec = (source: string) => {
+    const compiled = compileScreenSpecText(source);
+    if (compiled.error !== null || compiled.json === null || compiled.spec === null) {
+      setCompileError(compiled.error ?? 'Invalid screen spec.');
+      return false;
+    }
+
+    setCompileError(null);
+    setPreviewSpec(compiled.spec);
+    setJson(compiled.json);
+    return true;
+  };
+
+  const handleSpecChange = (nextSpecText: string) => {
+    setSpecText(nextSpecText);
+    applyCompiledSpec(nextSpecText);
+  };
+
+  const showJdwSource = () => {
+    applyCompiledSpec(specText);
+    setSourceView('jdw');
+  };
 
   if (samples.length === 0) {
     return <div data-testid="jdw-sample-explorer-empty">No sample screens configured.</div>;
   }
+
+  const leftPaneValue = sourceView === 'spec' ? specText : json;
 
   return (
     <div
@@ -80,7 +114,7 @@ export function JdwSampleScreenExplorer({
                   data-testid="jdw-sample-source-jdw"
                   role="tab"
                   variant={sourceView === 'jdw' ? 'primary' : 'default'}
-                  onClick={() => setSourceView('jdw')}
+                  onClick={showJdwSource}
                 >
                   JDW JSON
                 </Button>
@@ -133,6 +167,24 @@ export function JdwSampleScreenExplorer({
           >
             {activeSample.description}
           </p>
+          {compileError ? (
+            <div
+              role="alert"
+              data-testid="jdw-sample-explorer-error"
+              style={{
+                margin: 0,
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid #8b3a3a',
+                background: '#2a1515',
+                color: '#f28b82',
+                fontSize: 12,
+                lineHeight: 1.5,
+              }}
+            >
+              {compileError}
+            </div>
+          ) : null}
           <SplitView
             className="jdw-sample-explorer__split"
             defaultPrimarySizePercent={46}
@@ -167,12 +219,14 @@ export function JdwSampleScreenExplorer({
                 <textarea
                   aria-label={sourceView === 'spec' ? 'Screen spec source' : 'JDW JSON source'}
                   data-testid="jdw-sample-explorer-json"
-                  readOnly={leftPaneReadOnly}
                   value={leftPaneValue}
                   onChange={(event) => {
-                    if (!leftPaneReadOnly) {
-                      setJson(event.target.value);
+                    if (sourceView === 'spec') {
+                      handleSpecChange(event.target.value);
+                      return;
                     }
+                    setJson(event.target.value);
+                    setCompileError(null);
                   }}
                   spellCheck={false}
                   style={{
@@ -229,7 +283,7 @@ export function JdwSampleScreenExplorer({
                 >
                   <JsonWidgetPreview
                     json={json}
-                    layoutConstraints={sampleLayoutConstraints(activeSample)}
+                    layoutConstraints={sampleLayoutConstraints(previewSpec)}
                   />
                 </div>
               </section>

@@ -25,3 +25,9 @@ export {
   type JdwSampleScreenDefinition,
 } from './fixtures/jdw-sample-screens.js';
 export type { JdwSampleSourceView } from './JdwSampleScreenExplorer.js';
+export {
+  compileScreenSpecText,
+  parseScreenSpecJson,
+  type CompiledScreenSpecText,
+  type ParsedScreenSpec,
+} from '@workbench-kit/json-widget';
