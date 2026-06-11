@@ -14,7 +14,8 @@ change while the first consuming apps harden the model.
 ## Packages
 
 - `@workbench-kit/tokens`: framework-neutral CSS variables and base theme values
-- `@workbench-kit/core`: framework-neutral command, context-key, and when-clause primitives
+- `@workbench-kit/platform`: framework-neutral command, context-key, keybinding, and service primitives
+- `@workbench-kit/core`: deprecated compatibility shim that re-exports `@workbench-kit/platform`
 - `@workbench-kit/contracts`: shared chat, save, patch, library, launchpad mapping, widget renderer, and plugin contracts
 - `@workbench-kit/jdw`: JDW engine — parse, layout, screen-spec compile, widget documents
 - `@workbench-kit/jdw-editor`: Screen spec editor UI and pipeline hooks
@@ -28,7 +29,7 @@ change while the first consuming apps harden the model.
 
 ## Headless packages
 
-Framework-neutral packages (`core`, `workspace`, `services`, `runtime`, `adapters`) are usable without React.
+Framework-neutral packages (`platform`, `core`, `workspace`, `services`, `runtime`, `adapters`) are usable without React.
 See the **Headless/Core Commands** Storybook story for command registry and when-clause visibility, and package
 README files under `packages/*/README.md` where present.
 

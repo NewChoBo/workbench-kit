@@ -33,6 +33,8 @@ This document defines how Workbench Kit moves from the **current published stack
 
 **Goal:** Single command/context/keybinding implementation.
 
+**Status:** Done. `@workbench-kit/platform` owns command, menu, context-key, when-clause, and keybinding APIs. `@workbench-kit/core` is a compatibility shim that re-exports `platform`.
+
 | Step | Action                                                                                                                          |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------- |
 | 1    | Move `core/src/commands.ts`, `when-clause.ts`, `context-keys.ts` into `platform` (or make `platform` re-export them internally) |
