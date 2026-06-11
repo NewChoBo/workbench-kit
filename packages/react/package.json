@@ -46,9 +46,6 @@
     "@workbench-kit/workspace": "workspace:*",
     "@vscode/codicons": "^0.0.45"
   },
-  "devDependencies": {
-    "@workbench-kit/vscode-extension": "workspace:*"
-  },
   "peerDependencies": {
     "@monaco-editor/react": "^4.7.0",
     "monaco-editor": "^0.55.1",
