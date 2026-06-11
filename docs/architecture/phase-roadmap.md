@@ -11,7 +11,7 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 | 2     | `workbench-core` registries + extension load  | M2                  | Done   |
 | 3     | `workbench-react` shell provider              | M3                  | Done   |
 | 4     | Built-in extension extraction                 | M4                  | Done   |
-| 5     | Publish + shim cleanup                        | M5                  | Done   |
+| 5     | Publish + legacy cleanup                      | M5                  | Done   |
 
 ## Phase 0 — Structure
 
@@ -95,7 +95,7 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 **Deliverables**
 
 - New public-ready packages in publish pipeline (`base`, `platform`, `workbench-extension-sdk`, `workbench-config`)
-- `core` shim deprecation notice
+- Legacy compatibility package removal
 - Dependency graph check wired into `pnpm validate`
 - README and architecture index updated
 

@@ -8,7 +8,6 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const packageRules = toRuleMap({
   '@workbench-kit/base': [],
   '@workbench-kit/platform': ['@workbench-kit/base'],
-  '@workbench-kit/core': ['@workbench-kit/platform'],
   '@workbench-kit/tokens': [],
   '@workbench-kit/workbench-extension-sdk': ['@workbench-kit/base', '@workbench-kit/platform'],
   '@workbench-kit/workbench-config': ['@workbench-kit/base', '@workbench-kit/platform'],
@@ -51,20 +50,7 @@ const packageRules = toRuleMap({
     '@workbench-kit/runtime',
     '@workbench-kit/services',
     '@workbench-kit/tokens',
-    '@workbench-kit/vscode-extension',
     '@workbench-kit/workspace',
-  ],
-  '@workbench-kit/vscode-host': [
-    '@workbench-kit/contracts',
-    '@workbench-kit/platform',
-    '@workbench-kit/services',
-  ],
-  '@workbench-kit/vscode-extension': [
-    '@workbench-kit/adapters',
-    '@workbench-kit/contracts',
-    '@workbench-kit/platform',
-    '@workbench-kit/services',
-    '@workbench-kit/vscode-host',
   ],
 });
 

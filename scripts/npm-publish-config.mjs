@@ -29,7 +29,6 @@ export const NPM_PUBLISH_ORDER = [
   '@workbench-kit/workbench-extension-sdk',
   '@workbench-kit/workbench-config',
   '@workbench-kit/jdw',
-  '@workbench-kit/core',
   '@workbench-kit/runtime',
   '@workbench-kit/tokens',
   '@workbench-kit/workspace',

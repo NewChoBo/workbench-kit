@@ -1,6 +1,6 @@
 # Migration Strategy
 
-This document defines how Workbench Kit moves from the **current published stack** to the **target shell architecture**. In-repo consumers may use **bulk replacement**; npm consumers get a short **shim window** on `@workbench-kit/core` and stable `react` primitive exports.
+This document defines how Workbench Kit moves from the **current published stack** to the **target shell architecture**. In-repo consumers may use **bulk replacement**; prototype npm consumers should migrate directly to `@workbench-kit/platform` and stable `react` primitive exports.
 
 ## Principles
 
@@ -14,7 +14,7 @@ This document defines how Workbench Kit moves from the **current published stack
 
 | Concern                | Today                                         | Target                                       |
 | ---------------------- | --------------------------------------------- | -------------------------------------------- |
-| Commands / when        | `@workbench-kit/core`                         | `@workbench-kit/platform`                    |
+| Commands / when        | `@workbench-kit/platform`                     | `@workbench-kit/platform`                    |
 | Workbench host         | `react/src/workbench/*` demos + manual wiring | `workbench-core` + `workbench-react`         |
 | Settings / explorer UI | Inside `react` exports                        | `extensions/builtin.*`                       |
 | Extension manifest     | `workbench.extension.json` (skeleton)         | Loaded by `workbench-core` ExtensionRegistry |
@@ -33,14 +33,14 @@ This document defines how Workbench Kit moves from the **current published stack
 
 **Goal:** Single command/context/keybinding implementation.
 
-**Status:** Done. `@workbench-kit/platform` owns command, menu, context-key, when-clause, and keybinding APIs. `@workbench-kit/core` is a compatibility shim that re-exports `platform`.
+**Status:** Done. `@workbench-kit/platform` owns command, menu, context-key, when-clause, and keybinding APIs. The legacy `@workbench-kit/core` compatibility shim has been removed.
 
 | Step | Action                                                                                                                          |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------- |
 | 1    | Move `core/src/commands.ts`, `when-clause.ts`, `context-keys.ts` into `platform` (or make `platform` re-export them internally) |
 | 2    | Align `platform` Phase 1 APIs with merged code; delete duplicate minimal `evaluate-when` if redundant                           |
-| 3    | `@workbench-kit/core` becomes **shim**: re-exports `@workbench-kit/platform` with `@deprecated` JSDoc                           |
-| 4    | Update `react`, `vscode-host`, `vscode-extension` to import from `platform` (bulk replace imports)                              |
+| 3    | Remove `@workbench-kit/core` after bulk replacement                                                                             |
+| 4    | Remove legacy VS Code bridge packages once demo runtime wiring uses `platform` / `services` directly                            |
 | 5    | Root `typecheck` + tests green                                                                                                  |
 
 **Exit:** `core` has no unique implementation; npm shim still publishes.
@@ -92,28 +92,15 @@ This document defines how Workbench Kit moves from the **current published stack
 
 ### M5 — Publish alignment
 
-**Status:** Done for public-ready packages and in-repo hardening. `base`, `platform`, `workbench-extension-sdk`, and `workbench-config` are aligned for the publish pipeline. `workbench-core`, `workbench-react`, and the legacy `vscode-host` / `vscode-extension` bridge remain private preview because the current shell and bridge modules are repo-local artifacts, not yet package-safe public artifacts.
+**Status:** Done for public-ready packages and in-repo hardening. `base`, `platform`, `workbench-extension-sdk`, and `workbench-config` are aligned for the publish pipeline. `workbench-core` and `workbench-react` remain private preview because the current shell modules are repo-local artifacts, not yet package-safe public artifacts.
 
 | Step | Action                                                                                                         |
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Add public-ready `base`, `platform`, `workbench-extension-sdk`, `workbench-config` to `NPM_PUBLISH_ORDER`      |
-| 2    | Keep `core` shim in publish order with deprecation notices until at least one prototype tag cycle              |
+| 2    | Remove `core` shim from the workspace and publish order because compatibility is not required                  |
 | 3    | Update README package list and private-preview shell package notes                                             |
 | 4    | Add `check:dependency-graph` and wire it into `pnpm validate` as the dependency-cruiser equivalent for this M5 |
-| 5    | Keep VS Code bridge packages private and outside the default publish order until the adapter path is revived   |
-
-## Shim Policy (`@workbench-kit/core`)
-
-During M1–M5:
-
-```ts
-// packages/core/src/index.ts (target shim shape)
-/** @deprecated Import from `@workbench-kit/platform` instead. */
-export * from '@workbench-kit/platform';
-```
-
-- Shim remains in `NPM_PUBLISH_ORDER` until download metrics / docs show migration.
-- Breaking changes go to `platform` semver, not `core`.
+| 5    | Remove VS Code bridge packages; future VS Code work starts from `workbench-vscode-adapter` if needed           |
 
 ## What Not to Bulk-Replace
 

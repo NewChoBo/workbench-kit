@@ -20,7 +20,6 @@ import {
   type WorkspacePatchEvent,
 } from '@workbench-kit/contracts';
 import { WorkspacePatchService, WorkspaceSaveService } from '@workbench-kit/services';
-import { createWorkbenchExtensionRuntimeFromContributions } from '@workbench-kit/vscode-extension';
 import { SideBarHeaderControl, SideBarViewFrame } from '../../layout/SideBarViewFrame';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
@@ -67,6 +66,7 @@ import { createIntegratedShellContextKeys } from './integratedShellContextKeys';
 import { renderIntegratedShellSettingsCategory } from './integratedShellSettings';
 import { getIntegratedStatusSections } from './integratedShellStatus';
 import { useIntegratedShellWorkspaceOrchestration } from './integratedShellWorkspaceOrchestration';
+import { createDemoRuntimeServices } from './demoRuntimeServices';
 import { createWidgetStudioWorkspaceEditorRenderer } from '../../widget-studio/create-widget-studio-workspace-editor.js';
 import { WIDGET_TREE_DEMO_REGISTRY } from '../../widget-tree/demo-registry.js';
 
@@ -225,7 +225,7 @@ export function IntegratedShellDemo({
 
   const extensionRuntime = useMemo(
     () =>
-      createWorkbenchExtensionRuntimeFromContributions<IntegratedShellCommandContext>({
+      createDemoRuntimeServices<IntegratedShellCommandContext>({
         chatTransport: chatRuntimeTransport,
         commandConflictPolicy: integratedShellCommandPolicy,
         commandContributions: integratedShellCommandContributions,
