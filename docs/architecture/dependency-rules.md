@@ -23,7 +23,7 @@ Dependency direction enforces a VS Code–like layering: UI-independent core at 
 | `runtime`                    | `contracts`                                                                                                                              |
 | `workspace`                  | _(minimal / none)_                                                                                                                       |
 | `jdw` (`json-widget`)        | `contracts` (if needed)                                                                                                                  |
-| `jdw-editor`                 | `jdw`, `react` (peer)                                                                                                                    |
+| `jdw-editor`                 | `jdw`, `react` (peer); owns ScreenSpec editor UI and JDW sample explorer                                                                 |
 | `vscode-host`                | `platform`, `contracts`, `services` (private legacy bridge; low priority)                                                                |
 | `vscode-extension`           | `platform`, `contracts`, `services`, `adapters`, `vscode-host` (private legacy bridge)                                                   |
 | `core` (legacy shim)         | `platform` (target after M1)                                                                                                             |
@@ -74,9 +74,9 @@ node ./scripts/check-workbench-dependency-graph.mjs
 
 The script checks package dependencies and TypeScript import/export edges for
 `packages/*` and `extensions/*`, and rejects public packages that runtime- or
-peer-depend on private workspace packages. It is wired into `pnpm validate`.
-Future work may replace or augment it with `dependency-cruiser` or ESLint
-restricted-path rules.
+peer-depend on private workspace packages. It also rejects runtime workspace
+dependency cycles. It is wired into `pnpm validate`. Future work may replace or
+augment it with `dependency-cruiser` or ESLint restricted-path rules.
 
 `@workbench-kit/react` may keep a dev-only edge to the private VS Code bridge
 for Storybook demo sources, but that edge must not appear in published
