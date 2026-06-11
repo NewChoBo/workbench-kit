@@ -8,7 +8,7 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 | ----- | --------------------------------------------- | ------------------- | ------- |
 | 0     | Docs, schemas, skeletons, `.workbench` sample | M0                  | Done    |
 | 1     | `base` + `platform` primitives                | M1                  | Done    |
-| 2     | `workbench-core` registries + extension load  | M2                  | Planned |
+| 2     | `workbench-core` registries + extension load  | M2                  | Done    |
 | 3     | `workbench-react` shell provider              | M3                  | Planned |
 | 4     | Built-in extension extraction                 | M4                  | Planned |
 | 5     | Publish + shim cleanup                        | M5                  | Planned |
@@ -57,9 +57,9 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 
 **Exit criteria**
 
-- [ ] `samples.hello-world` command runs via host
-- [ ] Built-in extensions listed in `.workbench/extensions.json` load
-- [ ] Contribution merge conflict policy documented and tested
+- [x] `samples.hello-world` command runs via host
+- [x] Built-in extensions listed in `.workbench/extensions.json` load
+- [x] Contribution merge conflict policy documented and tested
 
 ## Phase 3 — Workbench React
 

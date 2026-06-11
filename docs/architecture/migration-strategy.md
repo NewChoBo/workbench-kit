@@ -49,6 +49,8 @@ This document defines how Workbench Kit moves from the **current published stack
 
 **Goal:** Extension manifest → registry wiring.
 
+**Status:** Done. `workbench-core` provides `ExtensionRegistry`, menu/view/activity/config registries, `LayoutService`, bundled built-in/sample manifests, configured extension resolution, and command execution that activates `onCommand:` extensions before invoking registered handlers.
+
 | Step | Action                                                                                          |
 | ---- | ----------------------------------------------------------------------------------------------- |
 | 1    | Implement `ExtensionRegistry`, contribution merge into `CommandRegistry` / `KeybindingRegistry` |
