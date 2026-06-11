@@ -1,5 +1,6 @@
 export const WORKBENCH_KIT_WORKBENCH_CORE_VERSION = '0.0.0' as const;
 
+export type { ViewHost, ViewProvider } from '@workbench-kit/workbench-extension-sdk';
 export {
   BUILTIN_WORKBENCH_EXTENSIONS,
   SAMPLE_WORKBENCH_EXTENSIONS,

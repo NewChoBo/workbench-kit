@@ -11,7 +11,23 @@
   },
   "activationEvents": ["onStartup"],
   "contributes": {
-    "commands": [],
+    "commands": [
+      {
+        "command": "workbench-kit.builtin.workspace.showInfo",
+        "title": "Show Workspace Info",
+        "category": "Workspace"
+      }
+    ],
+    "configuration": {
+      "properties": {
+        "workbench.workspace.name": {
+          "type": "string",
+          "default": "Workbench",
+          "scope": "workspace",
+          "description": "Display name for the active workspace."
+        }
+      }
+    },
     "views": {}
   }
 }

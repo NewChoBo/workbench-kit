@@ -1,6 +1,11 @@
-/** Phase 0 placeholder — accounts extension activation arrives in a later phase. */
+import type { ExtensionContext } from '@workbench-kit/workbench-extension-sdk';
+
 export const EXTENSION_ID = 'workbench-kit.builtin.accounts' as const;
 
-export function activate(): { dispose(): void } {
-  return { dispose() {} };
+export const MANAGE_ACCOUNTS_COMMAND_ID = 'workbench-kit.builtin.accounts.manage' as const;
+
+export function activate(context: ExtensionContext): void {
+  context.commands.registerCommand(MANAGE_ACCOUNTS_COMMAND_ID, () => ({
+    accountCapabilityAvailable: context.getCapability('workbench.accounts') !== undefined,
+  }));
 }

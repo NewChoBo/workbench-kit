@@ -19,6 +19,17 @@ describe('bundled workbench extensions', () => {
     expect(SAMPLE_WORKBENCH_EXTENSIONS.map(({ manifest }) => manifest.id)).toEqual([
       'workbench-kit.samples.hello-world',
     ]);
+
+    expect(
+      BUILTIN_WORKBENCH_EXTENSIONS.every(
+        (extension) => typeof extension.module?.activate === 'function',
+      ),
+    ).toBe(true);
+    expect(
+      SAMPLE_WORKBENCH_EXTENSIONS.every(
+        (extension) => typeof extension.module?.activate === 'function',
+      ),
+    ).toBe(true);
   });
 
   it('registers bundled manifest contributions through ExtensionRegistry', () => {
@@ -36,6 +47,11 @@ describe('bundled workbench extensions', () => {
     expect(registry.views.getView('workbench-kit.builtin.explorer.tree')).toMatchObject({
       containerId: 'explorer',
       name: 'Explorer',
+    });
+    expect(
+      registry.activities.getActivity('workbench-kit.builtin.explorer.activity'),
+    ).toMatchObject({
+      viewContainerId: 'explorer',
     });
   });
 });
