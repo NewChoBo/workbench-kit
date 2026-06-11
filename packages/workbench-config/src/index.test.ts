@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseWorkbenchExtensionsConfig, WorkbenchConfigValidationError } from './index.js';
+import {
+  parseWorkbenchExtensionsConfig,
+  parseWorkbenchExtensionsConfigJson,
+  WorkbenchConfigValidationError,
+} from './index.js';
 
 describe('parseWorkbenchExtensionsConfig', () => {
   it('parses enabled and recommended extension IDs', () => {
@@ -26,5 +30,16 @@ describe('parseWorkbenchExtensionsConfig', () => {
     expect(() => parseWorkbenchExtensionsConfig({ enabled: [42] })).toThrow(
       WorkbenchConfigValidationError,
     );
+  });
+
+  it('parses extensions config from JSON text', () => {
+    expect(
+      parseWorkbenchExtensionsConfigJson(`{
+        "enabled": ["workbench-kit.builtin.settings"]
+      }`),
+    ).toEqual({
+      enabled: ['workbench-kit.builtin.settings'],
+      recommendations: [],
+    });
   });
 });

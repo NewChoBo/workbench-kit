@@ -1,6 +1,10 @@
 export const WORKBENCH_KIT_WORKBENCH_CORE_VERSION = '0.0.0' as const;
 
 export {
+  BUILTIN_WORKBENCH_EXTENSIONS,
+  SAMPLE_WORKBENCH_EXTENSIONS,
+} from './generated/bundled-extensions.js';
+export {
   ExtensionRegistry,
   type ActivatedExtension,
   type ExtensionRegistryOptions,
