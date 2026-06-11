@@ -11,7 +11,7 @@ prototype package files.
 | ------------------- | ------------------------------------------------------------------------------------------- |
 | Export map first    | Add or change public imports through a package `exports` entry and the matching `index.ts`. |
 | Focused entrypoints | Prefer small subpath entrypoints for stable surfaces, such as `./workbench/settings`.       |
-| Root compatibility  | Keep the root entrypoint useful, but avoid turning it into the only supported import path.  |
+| Root entrypoint     | Keep the root entrypoint useful, but avoid turning it into the only supported import path.  |
 | CSS entrypoints     | Expose shared CSS through explicit CSS subpaths, such as `./styles.css`.                    |
 | Prototype changes   | Public API changes are allowed during prototype releases, but must be documented.           |
 

@@ -2,16 +2,15 @@
 
 Single reference for **all** workspace packages: what they do today, where they land after migration, and the replacement action.
 
-Migration mode: **bulk replacement allowed** for in-repo work; published packages use re-export shims until the next prototype tag.
+Migration mode: **bulk replacement allowed** for in-repo work; prototype consumers migrate directly to the target package surfaces.
 
 ## Legend
 
-| Action     | Meaning                                                                      |
-| ---------- | ---------------------------------------------------------------------------- |
-| **Keep**   | Package stays with the same name; role may narrow                            |
-| **Absorb** | Implementation moves into another package; source becomes shim or is removed |
-| **Split**  | Responsibilities move out to new packages                                    |
-| **Shim**   | Temporary re-export package for npm compatibility                            |
+| Action     | Meaning                                                              |
+| ---------- | -------------------------------------------------------------------- |
+| **Keep**   | Package stays with the same name; role may narrow                    |
+| **Absorb** | Implementation moves into another package; source package is removed |
+| **Split**  | Responsibilities move out to new packages                            |
 
 ## Shell Stack (target architecture)
 
@@ -40,7 +39,7 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 | `./primitives`, `./styles.css`                                      | Stay in `react`                                                                                                  |
 | `./workbench` (ActivityBar, SplitView, StatusBar chrome)            | Stay in `react` (presentational)                                                                                 |
 | `./workbench/shell` (WorkbenchShell layout only)                    | Stay in `react`; `workbench-react` composes it without loading the broader `./workbench` surface                 |
-| `./workbench` (CommandPalette wiring, command registries)           | Move to `workbench-react` + `workbench-core`; existing exports remain compatibility surface during migration     |
+| `./workbench` (CommandPalette wiring, command registries)           | Move to `workbench-react` + `workbench-core`; remaining exports are presentational or demo-only during migration |
 | `./workbench/demo`                                                  | Private Storybook/workspace-only helpers; excluded from npm export and package files                             |
 | `./workbench/settings`, `./workbench/auth`, `./workbench/workspace` | Move to `extensions/builtin.*` + thin `workbench-react` hosts                                                    |
 | `./jdw`, `./widget-tree`, `./widget-asset`, `./widget-studio`       | Stay in `react` for rendering, fixtures, and domain UI; editor-specific ScreenSpec surfaces live in `jdw-editor` |

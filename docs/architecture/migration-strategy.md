@@ -1,6 +1,6 @@
 # Migration Strategy
 
-This document defines how Workbench Kit moves from the **current published stack** to the **target shell architecture**. In-repo consumers may use **bulk replacement**; prototype npm consumers should migrate directly to `@workbench-kit/platform` and stable `react` primitive exports.
+This document defines how Workbench Kit moves from the **current published stack** to the **target shell architecture**. In-repo consumers use **bulk replacement**; prototype npm consumers should migrate directly to `@workbench-kit/platform` and stable `react` primitive exports.
 
 ## Principles
 
@@ -8,7 +8,7 @@ This document defines how Workbench Kit moves from the **current published stack
 2. **One canonical shell** — `@workbench-kit/workbench-react` owns workbench assembly; `@workbench-kit/react` keeps primitives and presentational chrome.
 3. **Domain packages stay** — `contracts`, `services`, `adapters`, `jdw`, etc. are not folded into the shell.
 4. **Extensions are the integration surface** — built-in features ship as `extensions/builtin.*`, not as hidden `react` internals.
-5. **Bulk replace in-repo first** — monorepo stories and demos switch in one pass per milestone; shims protect external npm users.
+5. **No compatibility shims** — monorepo stories, demos, and prototype consumers migrate directly to the target package surfaces.
 
 ## Current vs Target (summary)
 
@@ -27,7 +27,7 @@ This document defines how Workbench Kit moves from the **current published stack
 - Architecture docs, schemas, package skeletons, `.workbench` sample
 - [Package Map](./package-map.md) and this document approved
 
-**Exit:** No new features in `core` or `react/workbench` orchestration without migration ticket.
+**Exit:** No new features in removed legacy package paths or `react/workbench` orchestration without migration ticket.
 
 ### M1 — Platform consolidation
 
@@ -43,7 +43,7 @@ This document defines how Workbench Kit moves from the **current published stack
 | 4    | Remove legacy VS Code bridge packages once demo runtime wiring uses `platform` / `services` directly                            |
 | 5    | Root `typecheck` + tests green                                                                                                  |
 
-**Exit:** `core` has no unique implementation; npm shim still publishes.
+**Exit:** `core` has no unique implementation and no package, import, or publish reference remains.
 
 ### M2 — Workbench core host
 
@@ -79,7 +79,7 @@ This document defines how Workbench Kit moves from the **current published stack
 
 **Goal:** First-party features as extensions.
 
-**Status:** Done for the functional minimum. Built-in extension manifests now contribute commands, menus, activities, view containers, configuration, and view metadata. The generated bundle attaches each extension module so selected extensions can activate and register command handlers or view providers through the SDK. Rich `react/workbench` UI remains as compatibility/demo surface until a later UI extraction pass.
+**Status:** Done for the functional minimum. Built-in extension manifests now contribute commands, menus, activities, view containers, configuration, and view metadata. The generated bundle attaches each extension module so selected extensions can activate and register command handlers or view providers through the SDK. Rich `react/workbench` UI remains as presentational/demo surface until a later UI extraction pass.
 
 | Step | Action                                                                                                       |
 | ---- | ------------------------------------------------------------------------------------------------------------ |
@@ -97,19 +97,19 @@ This document defines how Workbench Kit moves from the **current published stack
 | Step | Action                                                                                                         |
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Add public-ready `base`, `platform`, `workbench-extension-sdk`, `workbench-config` to `NPM_PUBLISH_ORDER`      |
-| 2    | Remove `core` shim from the workspace and publish order because compatibility is not required                  |
+| 2    | Remove the legacy `core` package from the workspace and publish order                                          |
 | 3    | Update README package list and private-preview shell package notes                                             |
 | 4    | Add `check:dependency-graph` and wire it into `pnpm validate` as the dependency-cruiser equivalent for this M5 |
 | 5    | Remove VS Code bridge packages; future VS Code work starts from `workbench-vscode-adapter` if needed           |
 
 ## What Not to Bulk-Replace
 
-| Area                                  | Reason                                 |
-| ------------------------------------- | -------------------------------------- |
-| `contracts` / `services` / `adapters` | Already correct domain boundary        |
-| `jdw` / widget-studio                 | Product domain libraries, not shell    |
-| `tokens` / `primitives`               | Stable public UI API                   |
-| Consumer apps outside repo            | Use shim window; coordinate separately |
+| Area                                  | Reason                                      |
+| ------------------------------------- | ------------------------------------------- |
+| `contracts` / `services` / `adapters` | Already correct domain boundary             |
+| `jdw` / widget-studio                 | Product domain libraries, not shell         |
+| `tokens` / `primitives`               | Stable public UI API                        |
+| Consumer apps outside repo            | Migrate directly to target package surfaces |
 
 ## Risk Register
 
