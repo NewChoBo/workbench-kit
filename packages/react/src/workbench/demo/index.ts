@@ -1,3 +1,5 @@
+// Private workspace-only Storybook demo barrel. This path is intentionally not
+// exported by @workbench-kit/react.
 export { IntegratedShellDemo } from './IntegratedShellDemo';
 export type { IntegratedShellDemoProps } from './IntegratedShellDemo';
 export {

@@ -114,7 +114,5 @@ Before a host installs a manifest:
 - `packages/contracts/src/plugin.ts` defines the current plugin descriptor,
   source, contribution, lifecycle, trust, and enablement contracts.
 - `packages/contracts/src/plugin.test.ts` covers baseline contract helpers.
-- `packages/vscode-host/src/plugins.ts` implements the in-memory lifecycle
-  service used by host-side tests.
 - [`plugin-lifecycle.md`](./plugin-lifecycle.md) documents install state,
-  duplicate plugin, trust, enablement, and conflict baseline policies.
+  trust, enablement, and conflict baseline policies.

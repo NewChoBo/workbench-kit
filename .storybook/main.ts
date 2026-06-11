@@ -7,7 +7,6 @@ const config: StorybookConfig = {
     '../packages/react/src/**/*.stories.@(ts|tsx)',
     '../packages/jdw-editor/src/**/*.stories.@(ts|tsx)',
     '../packages/workbench-react/src/**/*.stories.@(ts|tsx)',
-    '../packages/json-widget/src/**/*.stories.@(ts|tsx)',
   ],
   addons: ['@storybook/addon-docs'],
   framework: {
