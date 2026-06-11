@@ -17,7 +17,7 @@ import type {
   WorkspacePatchApplyResult,
   WorkspacePatchEvent,
 } from '@workbench-kit/contracts';
-import { createWorkbenchExtensionRuntimeFromContributions } from '@workbench-kit/vscode-extension';
+import { createDemoRuntimeServices } from '../demo/demoRuntimeServices';
 import { ChatPanel } from './ChatPanel';
 import type { ChatMessage } from './types';
 
@@ -104,7 +104,7 @@ function ChatRuntimeHarness({
   );
   const extensionRuntime = useMemo(
     () =>
-      createWorkbenchExtensionRuntimeFromContributions({
+      createDemoRuntimeServices({
         commandContributions: [],
         chatTransport: chatRuntimeTransport,
         repository,

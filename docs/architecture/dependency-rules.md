@@ -24,9 +24,6 @@ Dependency direction enforces a VS Code–like layering: UI-independent core at 
 | `workspace`                  | _(minimal / none)_                                                                                                                       |
 | `jdw` (`json-widget`)        | `contracts` (if needed)                                                                                                                  |
 | `jdw-editor`                 | `jdw`, `react` (peer); owns ScreenSpec editor UI and JDW sample explorer                                                                 |
-| `vscode-host`                | `platform`, `contracts`, `services` (private legacy bridge; low priority)                                                                |
-| `vscode-extension`           | `platform`, `contracts`, `services`, `adapters`, `vscode-host` (private legacy bridge)                                                   |
-| `core` (legacy shim)         | `platform` (target after M1)                                                                                                             |
 
 ### Extension Boundary
 
@@ -82,9 +79,12 @@ augment it with `dependency-cruiser` or ESLint restricted-path rules.
 for Storybook demo sources, but that edge must not appear in published
 dependencies or npm export paths.
 
-## Target State: No `core` in Graph
+## Target State: No Legacy Compatibility Packages
 
-After migration milestone M1, new code must not depend on `@workbench-kit/core`. The package remains a publish shim re-exporting `platform` until removed from npm.
+New code must not depend on `@workbench-kit/core`, `@workbench-kit/vscode-host`,
+or `@workbench-kit/vscode-extension`. The command/context APIs live in
+`@workbench-kit/platform`; Storybook demo service wiring uses local helpers over
+`@workbench-kit/services`.
 
 ## Related Documents
 

@@ -19,7 +19,6 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 | ----------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
 | `@workbench-kit/base`                     | Phase 5: public-ready foundation package                                             | Foundation utilities                                                                 | **Keep**                                                                    |
 | `@workbench-kit/platform`                 | Phase 5: public-ready canonical platform package                                     | Canonical platform services (commands, context, keybindings, config/auth interfaces) | **Keep** — **absorbed `core`**                                              |
-| `@workbench-kit/core`                     | Deprecated compatibility shim re-exporting `platform`                                | _(deprecated)_                                                                       | **Shim** re-exports                                                         |
 | `@workbench-kit/workbench-core`           | Phase 4: registries, extension activation, layout, bundled modules (private preview) | Extension registry, menu/view/layout registries, host orchestration                  | **Keep**                                                                    |
 | `@workbench-kit/workbench-react`          | Phase 3: provider and registry-backed shell wiring (private preview)                 | WorkbenchProvider, shell wiring, palette/account entry                               | **Keep** — **absorbs `react/workbench` orchestration**                      |
 | `@workbench-kit/workbench-extension-sdk`  | Phase 5: public-ready manifest plus command/view provider context APIs               | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
@@ -59,13 +58,6 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 | `@workbench-kit/jdw`        | JDW engine (`json-widget`) | JSON widget document engine           | **Keep**                                                    |
 | `@workbench-kit/jdw-editor` | Screen spec editor         | Editor UI and sample explorer for JDW | **Keep** — depends on `react`; `react` must not depend back |
 
-## VS Code Bridge
-
-| Package                           | Current state                         | Target role                 | Action                                                          |
-| --------------------------------- | ------------------------------------- | --------------------------- | --------------------------------------------------------------- |
-| `@workbench-kit/vscode-host`      | Private preview host bridge utilities | Legacy VS Code host helpers | **Defer**; keep workspace-only unless the adapter path needs it |
-| `@workbench-kit/vscode-extension` | Private preview extension bootstrap   | Legacy extension bootstrap  | **Defer**; keep workspace-only unless the adapter path needs it |
-
 ## Extensions (repository)
 
 | Location               | Target role                                                  | Action                                                               |
@@ -75,13 +67,12 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 
 ## Naming Clarification
 
-| Name              | Meaning                                                      |
-| ----------------- | ------------------------------------------------------------ |
-| `core`            | **Legacy** command/context package — do not add new features |
-| `workbench-core`  | **Target** workbench engine (registries + extension host)    |
-| `platform`        | **Target** low-level platform services                       |
-| `react`           | **Target** UI primitives and domain React modules            |
-| `workbench-react` | **Target** full workbench assembly                           |
+| Name              | Meaning                                                   |
+| ----------------- | --------------------------------------------------------- |
+| `workbench-core`  | **Target** workbench engine (registries + extension host) |
+| `platform`        | **Target** low-level platform services                    |
+| `react`           | **Target** UI primitives and domain React modules         |
+| `workbench-react` | **Target** full workbench assembly                        |
 
 ## Dependency Target Graph
 
@@ -95,7 +86,7 @@ workbench-react ──► react ──► tokens
 domain (contracts, services, adapters, jdw, …) ──► consumed by react / extensions / adapters
 ```
 
-`core` is removed from the target graph after absorption into `platform`.
+The legacy `core`, `vscode-host`, and `vscode-extension` packages are removed from the target graph.
 
 ## Related Documents
 
