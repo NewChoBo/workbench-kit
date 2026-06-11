@@ -31,7 +31,6 @@ change while the first consuming apps harden the model.
 
 - `@workbench-kit/workbench-core`: framework-neutral extension registry, layout, and host orchestration
 - `@workbench-kit/workbench-react`: React provider and shell assembly over `workbench-core`
-- `@workbench-kit/workbench-vscode-adapter`: future opt-in VS Code manifest adapter
 - `@workbench-kit/monaco`: future optional Monaco integration
 
 ## Headless packages
