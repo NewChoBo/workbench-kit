@@ -37,6 +37,4 @@ export const NPM_PUBLISH_ORDER = [
   '@workbench-kit/adapters',
   '@workbench-kit/services',
   '@workbench-kit/react',
-  '@workbench-kit/vscode-host',
-  '@workbench-kit/vscode-extension',
 ];
