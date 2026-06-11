@@ -23,7 +23,7 @@
   ],
   "dependencies": {
     "@workbench-kit/contracts": "workspace:*",
-    "@workbench-kit/core": "workspace:*",
+    "@workbench-kit/platform": "workspace:*",
     "@workbench-kit/services": "workspace:*"
   },
   "description": "Workbench Kit host bridge and runtime bindings for VS Code-style hosts.",

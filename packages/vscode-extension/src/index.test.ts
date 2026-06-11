@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { CommandRegistry } from '@workbench-kit/core';
-import { createCommandRegistry } from '@workbench-kit/core';
+import type { CommandRegistry } from '@workbench-kit/platform';
+import { createCommandRegistry } from '@workbench-kit/platform';
 import type {
   ChatStreamEvent,
   ChatTransport,

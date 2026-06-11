@@ -2,7 +2,7 @@ import {
   createCommandRegistryFromContributions,
   type CommandContributionInput,
   type CommandMenuEntry,
-} from '@workbench-kit/core';
+} from '@workbench-kit/platform';
 import { preflightCommandContributionConflict } from '@workbench-kit/vscode-extension';
 import {
   createWorkbenchShellCommands,

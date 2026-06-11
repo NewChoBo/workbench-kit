@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
-import { createCommandRegistryFromContributions } from '@workbench-kit/core';
+import { createCommandRegistryFromContributions } from '@workbench-kit/platform';
 import { integratedShellWorkspaceFiles } from '@workbench-kit/adapters';
 import { SideBarViewFrame } from '../layout/SideBarViewFrame';
 import { EmptyState } from '../primitives/EmptyState';

@@ -4,7 +4,7 @@ import {
   executeCommand,
   type CommandRegistry,
   type CommandValue,
-} from '@workbench-kit/core';
+} from '@workbench-kit/platform';
 
 export type WorkbenchShortcutPlatform = 'linux' | 'mac' | 'unknown' | 'windows';
 

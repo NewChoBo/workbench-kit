@@ -14,7 +14,7 @@ import {
   findCommandDefinitionConflicts,
   type CommandRegistry,
   mergeCommandContributions,
-} from '@workbench-kit/core';
+} from '@workbench-kit/platform';
 import type {
   ChatStreamEvent,
   ChatTransport,

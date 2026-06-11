@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import { executeCommand, type CommandMenuEntry } from '@workbench-kit/core';
+import { executeCommand, type CommandMenuEntry } from '@workbench-kit/platform';
 import {
   createChatTransportFromRuntime,
   createIntegratedShellBootstrapInitialState,

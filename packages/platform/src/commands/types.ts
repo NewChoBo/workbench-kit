@@ -1,12 +1,23 @@
-export type CommandHandler = (...args: unknown[]) => unknown | Promise<unknown>;
+export type CommandValue<TContext, TValue> = TValue | ((context: TContext) => TValue);
+export type CommandPredicate<TContext> = (context: TContext) => boolean;
+export type CommandHandler<TContext> = (context: TContext) => void;
+export type CommandServiceHandler = (...args: unknown[]) => unknown | Promise<unknown>;
+export type CommandWhenClause<TContext> = string | CommandPredicate<TContext>;
 
-export interface CommandDefinition {
+export interface CommandDefinition<TContext = void> {
   category?: string;
+  danger?: CommandValue<TContext, boolean | undefined>;
   enablement?: string;
-  handler?: CommandHandler;
-  icon?: string;
+  handler?: CommandServiceHandler;
+  icon?: CommandValue<TContext, string | undefined>;
   id: string;
-  title: string;
+  isEnabled?: CommandPredicate<TContext>;
+  isVisible?: CommandPredicate<TContext>;
+  label?: CommandValue<TContext, string>;
+  run?: CommandHandler<TContext>;
+  shortcut?: CommandValue<TContext, string | undefined>;
+  title?: string;
+  when?: CommandWhenClause<TContext>;
 }
 
 export class CommandNotFoundError extends Error {

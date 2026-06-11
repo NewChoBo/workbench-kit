@@ -12,6 +12,9 @@
     "./context-keys": "./src/context-keys.ts",
     "./when-clause": "./src/when-clause.ts"
   },
+  "dependencies": {
+    "@workbench-kit/platform": "workspace:*"
+  },
   "files": [
     "src",
     "!src/**/*.test.ts",

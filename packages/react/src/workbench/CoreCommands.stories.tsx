@@ -4,7 +4,7 @@ import {
   commandMenuEntries,
   createCommandRegistry,
   resolveCommandMenuItems,
-} from '@workbench-kit/core';
+} from '@workbench-kit/platform';
 
 const meta = {
   title: 'Headless/Core Commands',
