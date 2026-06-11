@@ -32,6 +32,18 @@ export function parseWorkbenchExtensionsConfig(input: unknown): WorkbenchExtensi
   };
 }
 
+export function parseWorkbenchExtensionsConfigJson(jsonText: string): WorkbenchExtensionsConfig {
+  try {
+    return parseWorkbenchExtensionsConfig(JSON.parse(jsonText) as unknown);
+  } catch (error) {
+    if (error instanceof WorkbenchConfigValidationError) {
+      throw error;
+    }
+
+    throw new WorkbenchConfigValidationError('Expected extensions config to be valid JSON.');
+  }
+}
+
 function assertRecord(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new WorkbenchConfigValidationError(`Expected ${label} to be an object.`);
