@@ -16,7 +16,6 @@
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",
     "./workbench/shell": "./src/workbench/shell.ts",
-    "./workbench/demo": "./src/workbench/demo/index.ts",
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
     "./jdw": "./src/jdw/index.ts",
     "./jdw/config": "./src/json-config/index.ts",
@@ -27,6 +26,7 @@
   },
   "files": [
     "src",
+    "!src/workbench/demo",
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",
     "!src/**/*.stories.ts",
@@ -41,10 +41,12 @@
     "@workbench-kit/jdw": "workspace:*",
     "@workbench-kit/runtime": "workspace:*",
     "@workbench-kit/services": "workspace:*",
-    "@workbench-kit/vscode-extension": "workspace:*",
     "@workbench-kit/tokens": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
     "@vscode/codicons": "^0.0.45"
+  },
+  "devDependencies": {
+    "@workbench-kit/vscode-extension": "workspace:*"
   },
   "peerDependencies": {
     "@monaco-editor/react": "^4.7.0",

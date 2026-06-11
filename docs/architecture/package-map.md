@@ -29,21 +29,22 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 
 ## UI Stack
 
-| Package                 | Current state                                       | Target role                                                                                  | Action                                                                                        |
-| ----------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `@workbench-kit/tokens` | Published CSS variables                             | Design tokens                                                                                | **Keep**                                                                                      |
-| `@workbench-kit/react`  | Published; primitives + large `./workbench` surface | React primitives, chrome pieces (ActivityBar, SplitView), domain UI modules (jdw, widget-\*) | **Keep** — **Split**: shell orchestration → `workbench-react`; keep presentational components |
+| Package                 | Current state                                       | Target role                                                                                  | Action                                                                                                           |
+| ----------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `@workbench-kit/tokens` | Published CSS variables                             | Design tokens                                                                                | **Keep**                                                                                                         |
+| `@workbench-kit/react`  | Published; primitives + large `./workbench` surface | React primitives, chrome pieces (ActivityBar, SplitView), domain UI modules (jdw, widget-\*) | **Keep** — **Split**: shell orchestration → `workbench-react`; Storybook demo helpers are private workspace-only |
 
 ### `@workbench-kit/react` export migration
 
-| Export path                                                                    | Target after migration                                                                                            |
-| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `./primitives`, `./styles.css`                                                 | Stay in `react`                                                                                                   |
-| `./workbench` (ActivityBar, SplitView, StatusBar chrome)                       | Stay in `react` (presentational)                                                                                  |
-| `./workbench/shell` (WorkbenchShell layout only)                               | Stay in `react`; `workbench-react` composes it without loading the broader `./workbench` surface                  |
-| `./workbench` (CommandPalette wiring, IntegratedShellDemo, command registries) | Move to `workbench-react` + `workbench-core`; existing exports remain compatibility/demo surface during migration |
-| `./workbench/settings`, `./workbench/auth`, `./workbench/workspace`            | Move to `extensions/builtin.*` + thin `workbench-react` hosts                                                     |
-| `./jdw`, `./widget-tree`, `./widget-asset`, `./widget-studio`                  | Stay in `react` (or future split to dedicated UI packages); **not** built-in extensions unless explicitly decided |
+| Export path                                                         | Target after migration                                                                                            |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `./primitives`, `./styles.css`                                      | Stay in `react`                                                                                                   |
+| `./workbench` (ActivityBar, SplitView, StatusBar chrome)            | Stay in `react` (presentational)                                                                                  |
+| `./workbench/shell` (WorkbenchShell layout only)                    | Stay in `react`; `workbench-react` composes it without loading the broader `./workbench` surface                  |
+| `./workbench` (CommandPalette wiring, command registries)           | Move to `workbench-react` + `workbench-core`; existing exports remain compatibility surface during migration      |
+| `./workbench/demo`                                                  | Private Storybook/workspace-only helpers; excluded from npm export and package files                              |
+| `./workbench/settings`, `./workbench/auth`, `./workbench/workspace` | Move to `extensions/builtin.*` + thin `workbench-react` hosts                                                     |
+| `./jdw`, `./widget-tree`, `./widget-asset`, `./widget-studio`       | Stay in `react` (or future split to dedicated UI packages); **not** built-in extensions unless explicitly decided |
 
 ## Domain Stack (unchanged boundary)
 
@@ -59,10 +60,10 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 
 ## VS Code Bridge
 
-| Package                           | Current state         | Target role                 | Action                                                     |
-| --------------------------------- | --------------------- | --------------------------- | ---------------------------------------------------------- |
-| `@workbench-kit/vscode-host`      | Host bridge utilities | Legacy VS Code host helpers | **Keep** short term; align with `workbench-vscode-adapter` |
-| `@workbench-kit/vscode-extension` | Extension bootstrap   | Legacy extension bootstrap  | **Keep** short term; generated output moves to adapter     |
+| Package                           | Current state                         | Target role                 | Action                                                          |
+| --------------------------------- | ------------------------------------- | --------------------------- | --------------------------------------------------------------- |
+| `@workbench-kit/vscode-host`      | Private preview host bridge utilities | Legacy VS Code host helpers | **Defer**; keep workspace-only unless the adapter path needs it |
+| `@workbench-kit/vscode-extension` | Private preview extension bootstrap   | Legacy extension bootstrap  | **Defer**; keep workspace-only unless the adapter path needs it |
 
 ## Extensions (repository)
 

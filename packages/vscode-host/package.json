@@ -1,7 +1,7 @@
 {
   "name": "@workbench-kit/vscode-host",
   "version": "0.0.1-prototype.0",
-  "private": false,
+  "private": true,
   "type": "module",
   "scripts": {
     "test": "vitest run src",
@@ -26,12 +26,7 @@
     "@workbench-kit/platform": "workspace:*",
     "@workbench-kit/services": "workspace:*"
   },
-  "description": "Workbench Kit host bridge and runtime bindings for VS Code-style hosts.",
-  "publishConfig": {
-    "access": "public",
-    "tag": "prototype",
-    "provenance": true
-  },
+  "description": "Private preview host bridge and runtime bindings for VS Code-style hosts.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NewChoBo/workbench-kit.git",
