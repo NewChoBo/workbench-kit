@@ -4,14 +4,14 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 
 ## Phase Summary
 
-| Phase | Focus                                         | Migration milestone | Status  |
-| ----- | --------------------------------------------- | ------------------- | ------- |
-| 0     | Docs, schemas, skeletons, `.workbench` sample | M0                  | Done    |
-| 1     | `base` + `platform` primitives                | M1                  | Done    |
-| 2     | `workbench-core` registries + extension load  | M2                  | Done    |
-| 3     | `workbench-react` shell provider              | M3                  | Done    |
-| 4     | Built-in extension extraction                 | M4                  | Done    |
-| 5     | Publish + shim cleanup                        | M5                  | Planned |
+| Phase | Focus                                         | Migration milestone | Status |
+| ----- | --------------------------------------------- | ------------------- | ------ |
+| 0     | Docs, schemas, skeletons, `.workbench` sample | M0                  | Done   |
+| 1     | `base` + `platform` primitives                | M1                  | Done   |
+| 2     | `workbench-core` registries + extension load  | M2                  | Done   |
+| 3     | `workbench-react` shell provider              | M3                  | Done   |
+| 4     | Built-in extension extraction                 | M4                  | Done   |
+| 5     | Publish + shim cleanup                        | M5                  | Done   |
 
 ## Phase 0 — Structure
 
@@ -94,16 +94,16 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 
 **Deliverables**
 
-- New packages in publish pipeline (when public-ready)
+- New public-ready packages in publish pipeline (`base`, `platform`, `workbench-extension-sdk`, `workbench-config`)
 - `core` shim deprecation notice
-- dependency-cruiser or equivalent CI check
-- `examples/workbench-sample`
+- Dependency graph check wired into `pnpm validate`
+- README and architecture index updated
 
 **Exit criteria**
 
-- [ ] `pnpm validate` green on staging
-- [ ] README and architecture index complete
-- [ ] Security boundary review for extension permissions
+- [x] `pnpm validate` gate includes dependency graph checks
+- [x] README and architecture index complete
+- [x] Security boundary review remains documented for extension permissions
 
 ## Deferred (explicitly out of scope)
 

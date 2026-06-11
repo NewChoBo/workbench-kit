@@ -11,6 +11,7 @@ Workbench Kit architecture documents for the VS Code–like workbench shell, ext
 | [Phase Roadmap](./phase-roadmap.md)           | Phased delivery and exit criteria                                      |
 | [Project Structure](./project-structure.md)   | Repository layout                                                      |
 | [Dependency Rules](./dependency-rules.md)     | Allowed and forbidden package edges                                    |
+| [Security Boundary](./security-boundary.md)   | Public package and extension trust boundary                            |
 
 ## Workbench Layers
 
@@ -29,4 +30,4 @@ Workbench Kit architecture documents for the VS Code–like workbench shell, ext
 
 ## Migration Note
 
-Bulk replacement is acceptable for in-repo consumers. Public npm packages keep stable export paths during a short shim window; see [Migration Strategy](./migration-strategy.md).
+M0–M5 are complete for the in-repo migration baseline. Bulk replacement is acceptable for in-repo consumers. Public npm packages keep stable export paths during the `@workbench-kit/core` shim window; see [Migration Strategy](./migration-strategy.md).

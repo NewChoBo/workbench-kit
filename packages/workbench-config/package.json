@@ -1,7 +1,7 @@
 {
   "name": "@workbench-kit/workbench-config",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.1-prototype.0",
+  "private": false,
   "type": "module",
   "scripts": {
     "test": "vitest run src",
@@ -14,7 +14,19 @@
     "@workbench-kit/base": "workspace:*",
     "@workbench-kit/platform": "workspace:*"
   },
-  "description": "Workbench workspace configuration loading and validation. Phase 0 skeleton.",
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
+  ],
+  "description": "Workbench workspace configuration parsing and validation for .workbench files.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NewChoBo/workbench-kit.git",

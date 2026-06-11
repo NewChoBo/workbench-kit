@@ -1,7 +1,7 @@
 {
   "name": "@workbench-kit/workbench-extension-sdk",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.1-prototype.0",
+  "private": false,
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -13,7 +13,19 @@
     "@workbench-kit/base": "workspace:*",
     "@workbench-kit/platform": "workspace:*"
   },
-  "description": "Stable extension contribution types for Workbench Kit workbench. Phase 0 skeleton.",
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
+  ],
+  "description": "Stable manifest, contribution, command, and view provider APIs for Workbench Kit extensions.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NewChoBo/workbench-kit.git",
