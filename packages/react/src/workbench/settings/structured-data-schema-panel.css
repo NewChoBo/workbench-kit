@@ -306,7 +306,9 @@
   border-right: 0;
 }
 
-.ui-workbench-structured-data-schema-panel__table-row > span :is(.ui-input, .ui-select, .ui-textarea) {
+.ui-workbench-structured-data-schema-panel__table-row
+  > span
+  :is(.ui-input, .ui-select, .ui-textarea) {
   min-height: 26px;
   font-size: 12px;
 }

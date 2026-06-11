@@ -96,9 +96,7 @@ export function WidgetAssetEditor({
   const editingManifest = Boolean(path && isWidgetAssetManifestPath(path));
   const editingContent = Boolean(path && isWidgetAssetContentPath(path));
   const previewJson =
-    editingContent && path
-      ? value
-      : formatWidgetDocumentJson(asset.content as GenericWidget);
+    editingContent && path ? value : formatWidgetDocumentJson(asset.content as GenericWidget);
 
   const commitAssetMetadata = (nextAsset: WidgetPlacementAsset) => {
     onChange(formatWidgetAssetManifest(nextAsset));

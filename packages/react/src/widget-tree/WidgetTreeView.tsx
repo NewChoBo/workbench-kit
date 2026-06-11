@@ -31,12 +31,7 @@ function parentTypeForNode(
   return nodes.find((node) => widgetPathKey(node.path) === parentKey)?.widget.type;
 }
 
-export function WidgetTreeView({
-  root,
-  parseError,
-  selection,
-  onSelectPath,
-}: WidgetTreeViewProps) {
+export function WidgetTreeView({ root, parseError, selection, onSelectPath }: WidgetTreeViewProps) {
   const nodes = useMemo(() => (root ? collectWidgetNodes(root) : []), [root]);
 
   return (
@@ -55,9 +50,7 @@ export function WidgetTreeView({
             {nodes.map((node) => {
               const pathKey = widgetPathKey(node.path);
               const depth = node.path.length;
-              const isSelected = selection
-                ? isWidgetPathSelected(selection, node.path)
-                : false;
+              const isSelected = selection ? isWidgetPathSelected(selection, node.path) : false;
               const parentType = parentTypeForNode(nodes, node.path);
               const placementMeta = formatWidgetPlacementMeta(node.widget, parentType);
               const textPreview =

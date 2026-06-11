@@ -1,10 +1,7 @@
 import { Emitter, type Disposable } from '@workbench-kit/base';
 
 import { evaluateWhenClause } from './evaluate-when.js';
-import {
-  type ContextKeyChangeEvent,
-  type ContextKeyValue,
-} from './context-key-value.js';
+import { type ContextKeyChangeEvent, type ContextKeyValue } from './context-key-value.js';
 
 export class ContextKeyService implements Disposable {
   private readonly onDidChangeContextEmitter = new Emitter<ContextKeyChangeEvent>();

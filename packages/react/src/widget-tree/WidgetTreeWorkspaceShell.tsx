@@ -47,10 +47,7 @@ export function WidgetTreeWorkspaceShell({
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [sidebarSizePercent, setSidebarSizePercent] = useState(24);
 
-  const workspaceFiles = useMemo(
-    () => withJdwWelcomeDocument(integratedShellWorkspaceFiles),
-    [],
-  );
+  const workspaceFiles = useMemo(() => withJdwWelcomeDocument(integratedShellWorkspaceFiles), []);
 
   const workspace = useVirtualWorkspace({
     expandedPaths: ['src', 'src/widgets', 'src/widgets/assets'],

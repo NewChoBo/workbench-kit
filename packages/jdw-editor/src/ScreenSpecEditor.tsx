@@ -123,7 +123,10 @@ export function ScreenSpecEditor({
   );
 
   const outlinePanel = (
-    <Panel className="widget-tree-outline jdw-screen-spec-editor__outline" data-testid="screen-spec-outline">
+    <Panel
+      className="widget-tree-outline jdw-screen-spec-editor__outline"
+      data-testid="screen-spec-outline"
+    >
       <PanelBody className="widget-tree-outline__body">
         <ul aria-label="Screen node outline" className="widget-tree-outline__list" role="tree">
           {outline.map((entry) => {
@@ -160,10 +163,7 @@ export function ScreenSpecEditor({
   );
 
   return (
-    <div
-      className={cx('jdw-screen-spec-editor', className)}
-      data-testid="screen-spec-editor"
-    >
+    <div className={cx('jdw-screen-spec-editor', className)} data-testid="screen-spec-editor">
       <ResizablePanels
         className="jdw-screen-spec-editor__layout"
         defaultFirstSize={280}

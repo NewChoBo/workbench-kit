@@ -18,7 +18,9 @@ function JdwSampleScreenFrame({ sample }: JdwSampleScreenFrameProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: sample.frameWidth }}>
       <div>
-        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#e8eaed' }}>{sample.title}</h3>
+        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#e8eaed' }}>
+          {sample.title}
+        </h3>
         <p style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.5, color: '#9aa0a6' }}>
           {sample.description}
         </p>

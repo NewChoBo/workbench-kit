@@ -8,11 +8,17 @@ export interface WidgetTreeModeControlsProps {
   readonly onModeChange: (mode: WidgetTreeViewMode) => void;
 }
 
-export function WidgetTreeModeControls({ className, mode, onModeChange }: WidgetTreeModeControlsProps) {
+export function WidgetTreeModeControls({
+  className,
+  mode,
+  onModeChange,
+}: WidgetTreeModeControlsProps) {
   const resolvedMode = resolveWidgetTreeLabMode(mode);
 
   return (
-    <div className={cx('ui-workbench-artifact-shell__modes', 'widget-tree-mode-controls', className)}>
+    <div
+      className={cx('ui-workbench-artifact-shell__modes', 'widget-tree-mode-controls', className)}
+    >
       <IconButton
         aria-pressed={resolvedMode === 'design'}
         className={cx(
