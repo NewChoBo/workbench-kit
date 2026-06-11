@@ -78,16 +78,20 @@ const extensionAllowedDependencies = new Set([
 ]);
 
 const violations = [];
+const workspacePackages = readPackageWorkspaces();
+const workspacePackageByName = new Map(
+  workspacePackages.map((workspacePackage) => [workspacePackage.name, workspacePackage]),
+);
 
-for (const workspacePackage of readPackageWorkspaces()) {
+for (const workspacePackage of workspacePackages) {
   const allowedDependencies = packageRules.get(workspacePackage.name) ?? new Set();
 
-  checkPackageDependencies(workspacePackage, allowedDependencies);
+  checkPackageDependencies(workspacePackage, allowedDependencies, workspacePackageByName);
   scanSourceImports(workspacePackage, allowedDependencies);
 }
 
 for (const extensionPackage of readExtensionWorkspaces()) {
-  checkPackageDependencies(extensionPackage, extensionAllowedDependencies);
+  checkPackageDependencies(extensionPackage, extensionAllowedDependencies, workspacePackageByName);
   scanSourceImports(extensionPackage, extensionAllowedDependencies);
 }
 
@@ -130,7 +134,7 @@ function readWorkspacePackage(directory) {
   };
 }
 
-function checkPackageDependencies(workspacePackage, allowedDependencies) {
+function checkPackageDependencies(workspacePackage, allowedDependencies, workspacePackageByName) {
   const dependencies = [
     ...Object.keys(workspacePackage.packageJson.dependencies ?? {}),
     ...Object.keys(workspacePackage.packageJson.peerDependencies ?? {}),
@@ -138,12 +142,28 @@ function checkPackageDependencies(workspacePackage, allowedDependencies) {
   ].filter((dependency) => dependency.startsWith('@workbench-kit/'));
 
   for (const dependency of dependencies) {
+    if (dependency === workspacePackage.name) {
+      continue;
+    }
+
     validateDependency({
       allowedDependencies,
       dependency,
       location: relativePath(path.join(workspacePackage.directory, 'package.json')),
       sourceName: workspacePackage.name,
     });
+
+    const dependencyPackage = workspacePackageByName.get(dependency);
+    if (
+      workspacePackage.packageJson.private !== true &&
+      dependencyPackage?.packageJson.private === true
+    ) {
+      violations.push({
+        location: relativePath(path.join(workspacePackage.directory, 'package.json')),
+        message: `${workspacePackage.name} is public but depends on private package ${dependency}. Move the edge to devDependencies or keep both packages private.`,
+        rule: 'private-workbench-dependency',
+      });
+    }
   }
 }
 

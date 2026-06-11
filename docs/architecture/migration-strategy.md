@@ -92,7 +92,7 @@ This document defines how Workbench Kit moves from the **current published stack
 
 ### M5 — Publish alignment
 
-**Status:** Done for public-ready packages and in-repo hardening. `base`, `platform`, `workbench-extension-sdk`, and `workbench-config` are aligned for the publish pipeline. `workbench-core` and `workbench-react` remain private preview because the current bundled extension modules are repo-local artifacts, not yet package-safe public artifacts.
+**Status:** Done for public-ready packages and in-repo hardening. `base`, `platform`, `workbench-extension-sdk`, and `workbench-config` are aligned for the publish pipeline. `workbench-core`, `workbench-react`, and the legacy `vscode-host` / `vscode-extension` bridge remain private preview because the current shell and bridge modules are repo-local artifacts, not yet package-safe public artifacts.
 
 | Step | Action                                                                                                         |
 | ---- | -------------------------------------------------------------------------------------------------------------- |
@@ -100,6 +100,7 @@ This document defines how Workbench Kit moves from the **current published stack
 | 2    | Keep `core` shim in publish order with deprecation notices until at least one prototype tag cycle              |
 | 3    | Update README package list and private-preview shell package notes                                             |
 | 4    | Add `check:dependency-graph` and wire it into `pnpm validate` as the dependency-cruiser equivalent for this M5 |
+| 5    | Keep VS Code bridge packages private and outside the default publish order until the adapter path is revived   |
 
 ## Shim Policy (`@workbench-kit/core`)
 

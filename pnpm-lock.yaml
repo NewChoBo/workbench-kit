@@ -205,9 +205,6 @@ importers:
       '@workbench-kit/tokens':
         specifier: workspace:*
         version: link:../tokens
-      '@workbench-kit/vscode-extension':
-        specifier: workspace:*
-        version: link:../vscode-extension
       '@workbench-kit/workspace':
         specifier: workspace:*
         version: link:../workspace
@@ -220,6 +217,10 @@ importers:
       react-markdown:
         specifier: ^10.1.0
         version: 10.1.0(@types/react@19.2.16)(react@19.2.7)
+    devDependencies:
+      '@workbench-kit/vscode-extension':
+        specifier: workspace:*
+        version: link:../vscode-extension
 
   packages/runtime:
     dependencies:
