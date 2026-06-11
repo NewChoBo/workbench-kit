@@ -36,27 +36,28 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 
 ### `@workbench-kit/react` export migration
 
-| Export path                                                         | Target after migration                                                                                            |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `./primitives`, `./styles.css`                                      | Stay in `react`                                                                                                   |
-| `./workbench` (ActivityBar, SplitView, StatusBar chrome)            | Stay in `react` (presentational)                                                                                  |
-| `./workbench/shell` (WorkbenchShell layout only)                    | Stay in `react`; `workbench-react` composes it without loading the broader `./workbench` surface                  |
-| `./workbench` (CommandPalette wiring, command registries)           | Move to `workbench-react` + `workbench-core`; existing exports remain compatibility surface during migration      |
-| `./workbench/demo`                                                  | Private Storybook/workspace-only helpers; excluded from npm export and package files                              |
-| `./workbench/settings`, `./workbench/auth`, `./workbench/workspace` | Move to `extensions/builtin.*` + thin `workbench-react` hosts                                                     |
-| `./jdw`, `./widget-tree`, `./widget-asset`, `./widget-studio`       | Stay in `react` (or future split to dedicated UI packages); **not** built-in extensions unless explicitly decided |
+| Export path                                                         | Target after migration                                                                                           |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `./primitives`, `./styles.css`                                      | Stay in `react`                                                                                                  |
+| `./workbench` (ActivityBar, SplitView, StatusBar chrome)            | Stay in `react` (presentational)                                                                                 |
+| `./workbench/shell` (WorkbenchShell layout only)                    | Stay in `react`; `workbench-react` composes it without loading the broader `./workbench` surface                 |
+| `./workbench` (CommandPalette wiring, command registries)           | Move to `workbench-react` + `workbench-core`; existing exports remain compatibility surface during migration     |
+| `./workbench/demo`                                                  | Private Storybook/workspace-only helpers; excluded from npm export and package files                             |
+| `./workbench/settings`, `./workbench/auth`, `./workbench/workspace` | Move to `extensions/builtin.*` + thin `workbench-react` hosts                                                    |
+| `./jdw`, `./widget-tree`, `./widget-asset`, `./widget-studio`       | Stay in `react` for rendering, fixtures, and domain UI; editor-specific ScreenSpec surfaces live in `jdw-editor` |
+| `./jdw/preview`, `./jdw/samples`                                    | Narrow public JDW subpaths for editor packages that must avoid the broad `./jdw` barrel                          |
 
 ## Domain Stack (unchanged boundary)
 
-| Package                     | Current state              | Target role                         | Action                                                   |
-| --------------------------- | -------------------------- | ----------------------------------- | -------------------------------------------------------- |
-| `@workbench-kit/contracts`  | Published shared types     | Chat, save, patch, widget contracts | **Keep**                                                 |
-| `@workbench-kit/services`   | Orchestration services     | Domain service layer                | **Keep**                                                 |
-| `@workbench-kit/adapters`   | Host/repo/runtime adapters | Adapter implementations             | **Keep**                                                 |
-| `@workbench-kit/runtime`    | Mock runtime               | Runtime utilities                   | **Keep**                                                 |
-| `@workbench-kit/workspace`  | Path/tree utilities        | Workspace path model                | **Keep** — may share types with `workbench-config` later |
-| `@workbench-kit/jdw`        | JDW engine (`json-widget`) | JSON widget document engine         | **Keep**                                                 |
-| `@workbench-kit/jdw-editor` | Screen spec editor         | Editor UI for JDW                   | **Keep**                                                 |
+| Package                     | Current state              | Target role                           | Action                                                      |
+| --------------------------- | -------------------------- | ------------------------------------- | ----------------------------------------------------------- |
+| `@workbench-kit/contracts`  | Published shared types     | Chat, save, patch, widget contracts   | **Keep**                                                    |
+| `@workbench-kit/services`   | Orchestration services     | Domain service layer                  | **Keep**                                                    |
+| `@workbench-kit/adapters`   | Host/repo/runtime adapters | Adapter implementations               | **Keep**                                                    |
+| `@workbench-kit/runtime`    | Mock runtime               | Runtime utilities                     | **Keep**                                                    |
+| `@workbench-kit/workspace`  | Path/tree utilities        | Workspace path model                  | **Keep** — may share types with `workbench-config` later    |
+| `@workbench-kit/jdw`        | JDW engine (`json-widget`) | JSON widget document engine           | **Keep**                                                    |
+| `@workbench-kit/jdw-editor` | Screen spec editor         | Editor UI and sample explorer for JDW | **Keep** — depends on `react`; `react` must not depend back |
 
 ## VS Code Bridge
 

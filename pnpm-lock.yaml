@@ -190,9 +190,6 @@ importers:
       '@workbench-kit/jdw':
         specifier: workspace:*
         version: link:../json-widget
-      '@workbench-kit/jdw-editor':
-        specifier: workspace:*
-        version: link:../jdw-editor
       '@workbench-kit/platform':
         specifier: workspace:*
         version: link:../platform

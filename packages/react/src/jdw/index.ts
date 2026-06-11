@@ -13,8 +13,6 @@ export {
 } from './cssRenderBackend.js';
 export { BUILTIN_JDW_REGISTRY, createBuiltinJdwRegistry } from './createBuiltinJdwRegistry.js';
 export { renderBuiltinWidgetNode } from './builtins/renderBuiltinWidgetNode.js';
-export { JdwSampleScreenExplorer } from './JdwSampleScreenExplorer.js';
-export type { JdwSampleScreenExplorerProps } from './JdwSampleScreenExplorer.js';
 export {
   formatJdwSampleScreenJson,
   formatJdwSampleScreenSpec,
@@ -23,16 +21,6 @@ export {
   sampleLayoutConstraints,
   type JdwSampleScreenDefinition,
 } from './fixtures/jdw-sample-screens.js';
-export type { JdwSampleSourceView } from './JdwSampleScreenExplorer.js';
-export {
-  ScreenNodeInspector,
-  ScreenSpecEditor,
-  useScreenSpecPipeline,
-  type ScreenNodeInspectorProps,
-  type ScreenSpecEditorProps,
-  type ScreenSpecPipelineState,
-  type UseScreenSpecPipelineResult,
-} from '@workbench-kit/jdw-editor';
 export {
   compileScreenSpecText,
   parseScreenSpecJson,

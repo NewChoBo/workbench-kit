@@ -1,14 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 
-import { JdwPreview } from '../jdw/JdwPreview.js';
-import { JdwSampleScreenExplorer } from './JdwSampleScreenExplorer.js';
+import { JdwPreview } from '@workbench-kit/react/jdw/preview';
 import {
   formatJdwSampleScreenJson,
   JDW_SAMPLE_SCREENS,
   sampleLayoutConstraints,
   type JdwSampleScreenDefinition,
-} from './fixtures/jdw-sample-screens.js';
+} from '@workbench-kit/react/jdw/samples';
+
+import { JdwSampleScreenExplorer } from './JdwSampleScreenExplorer.js';
 
 interface JdwSampleScreenFrameProps {
   readonly sample: JdwSampleScreenDefinition;
