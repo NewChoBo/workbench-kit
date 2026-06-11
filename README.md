@@ -27,14 +27,14 @@ change while the first consuming apps harden the model.
 - `@workbench-kit/services`: orchestration services for workbench flows
 - `@workbench-kit/adapters`: adapters for repositories, runtime transports, demo fixtures, and optional persistence
 - `@workbench-kit/react`: React primitives and lightweight workbench components
-- `@workbench-kit/vscode-host`: VS Code-style host bridge utilities
-- `@workbench-kit/vscode-extension`: prototype VS Code extension bootstrap helpers
 
 ## Private preview packages
 
 - `@workbench-kit/workbench-core`: framework-neutral extension registry, layout, and host orchestration
 - `@workbench-kit/workbench-react`: React provider and shell assembly over `workbench-core`
 - `@workbench-kit/workbench-vscode-adapter`: future opt-in VS Code manifest adapter
+- `@workbench-kit/vscode-host`: legacy VS Code-style host bridge utilities
+- `@workbench-kit/vscode-extension`: legacy VS Code extension bootstrap helpers
 - `@workbench-kit/monaco`: future optional Monaco integration
 
 ## Headless packages
@@ -102,10 +102,11 @@ The workflow runs on published GitHub releases and pushed tags matching
 `v*` or `workbench-kit-v*`. The tag must match the root package version, such
 as `v0.0.1-prototype.0` or `workbench-kit-v0.0.1-prototype.0`.
 
-The current publish pipeline includes the public-ready foundation and config
+The current publish pipeline excludes private-preview shell and VS Code bridge
 packages. The full `workbench-core` / `workbench-react` shell stack remains
 private preview until bundled extension modules are packaged as public-safe
-artifacts.
+artifacts. The legacy `vscode-host` / `vscode-extension` bridge is kept for
+workspace compatibility only.
 
 ## Conventions
 
