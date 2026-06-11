@@ -9,5 +9,5 @@
   "dependencies": {
     "@workbench-kit/workbench-extension-sdk": "workspace:*"
   },
-  "description": "Sample hello-world extension skeleton. Phase 0 placeholder."
+  "description": "Sample extension that demonstrates command activation through the Workbench Kit extension SDK."
 }

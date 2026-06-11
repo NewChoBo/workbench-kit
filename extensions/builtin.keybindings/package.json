@@ -9,5 +9,5 @@
   "dependencies": {
     "@workbench-kit/workbench-extension-sdk": "workspace:*"
   },
-  "description": "Built-in keybindings extension skeleton. Phase 0 placeholder."
+  "description": "Built-in keybindings extension reserved for workspace keybinding contributions."
 }

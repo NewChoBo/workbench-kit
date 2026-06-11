@@ -9,5 +9,5 @@
   "dependencies": {
     "@workbench-kit/workbench-extension-sdk": "workspace:*"
   },
-  "description": "Built-in explorer extension skeleton. Phase 0 placeholder."
+  "description": "Built-in explorer extension that contributes the explorer activity, view, refresh command, and menu action."
 }
