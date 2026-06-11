@@ -9,14 +9,61 @@
     "workbench": "^0.0.0",
     "extensionApi": "^0.0.0"
   },
-  "activationEvents": ["onCommand:workbench-kit.builtin.settings.open"],
+  "activationEvents": [
+    "onView:workbench-kit.builtin.settings.view",
+    "onCommand:workbench-kit.builtin.settings.open"
+  ],
   "contributes": {
     "commands": [
       {
         "command": "workbench-kit.builtin.settings.open",
-        "title": "Open Settings"
+        "title": "Open Settings",
+        "category": "Settings"
       }
     ],
-    "configuration": {}
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "workbench-kit.builtin.settings.open",
+          "group": "preferences",
+          "order": 1
+        }
+      ]
+    },
+    "viewContainers": {
+      "activitybar": [
+        {
+          "id": "settings",
+          "title": "Settings",
+          "icon": "gear"
+        }
+      ]
+    },
+    "activities": [
+      {
+        "id": "workbench-kit.builtin.settings.activity",
+        "viewContainerId": "settings",
+        "icon": "gear",
+        "title": "Settings"
+      }
+    ],
+    "views": {
+      "settings": [
+        {
+          "id": "workbench-kit.builtin.settings.view",
+          "name": "Settings"
+        }
+      ]
+    },
+    "configuration": {
+      "properties": {
+        "workbench.settings.openOnStartup": {
+          "type": "boolean",
+          "default": false,
+          "scope": "workspace",
+          "description": "Open the settings view when the workbench starts."
+        }
+      }
+    }
   }
 }

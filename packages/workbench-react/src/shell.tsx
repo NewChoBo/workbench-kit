@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react';
+import { isValidElement, useCallback, useEffect, useMemo, useReducer, type ReactNode } from 'react';
 import {
   WorkbenchShell as ReactWorkbenchShell,
   type ActivityBarItem,
   type StatusBarItemModel,
   type StatusBarSectionModel,
 } from '@workbench-kit/react/workbench/shell';
+import type { ViewProvider } from '@workbench-kit/workbench-core';
 
 import { useWorkbench } from './provider.js';
 
@@ -28,10 +29,32 @@ export function WorkbenchShell({
   theme,
 }: WorkbenchShellProps) {
   const { extensionRegistry, layoutService, missingExtensionIds } = useWorkbench();
+  const forceRender = useForceRender();
   const layout = layoutService.getState();
   const activityItems = createActivityItems(extensionRegistry);
   const resolvedStatusSections =
     statusSections ?? createDefaultStatusSections(extensionRegistry, missingExtensionIds);
+  const activeViewContainerId = layout.sideBar.activeViewContainer;
+
+  useEffect(() => {
+    const layoutDisposable = layoutService.onDidChangeLayout(forceRender);
+    const viewProviderDisposable = extensionRegistry.views.onDidRegisterViewProvider(forceRender);
+
+    return () => {
+      layoutDisposable.dispose();
+      viewProviderDisposable.dispose();
+    };
+  }, [extensionRegistry, forceRender, layoutService]);
+
+  useEffect(() => {
+    if (!activeViewContainerId) {
+      return;
+    }
+
+    for (const view of extensionRegistry.views.getViews(activeViewContainerId)) {
+      void extensionRegistry.activateView(view.id).then(forceRender);
+    }
+  }, [activeViewContainerId, extensionRegistry, forceRender]);
 
   return (
     <ReactWorkbenchShell
@@ -46,7 +69,8 @@ export function WorkbenchShell({
       onStatusItemActivate={onStatusItemActivate}
       primarySidebar={{
         isVisible: layout.sideBar.visible,
-        node: primarySidebar ?? renderDefaultPrimarySidebar(extensionRegistry),
+        node:
+          primarySidebar ?? renderDefaultPrimarySidebar(extensionRegistry, activeViewContainerId),
       }}
       rootClassName={rootClassName}
       secondaryArea={editorArea}
@@ -54,6 +78,14 @@ export function WorkbenchShell({
       theme={theme}
     />
   );
+}
+
+function useForceRender() {
+  const [, forceRender] = useReducer((count: number) => count + 1, 0);
+
+  return useCallback(() => {
+    forceRender();
+  }, []);
 }
 
 function createActivityItems(
@@ -109,8 +141,11 @@ function createDefaultStatusSections(
 
 function renderDefaultPrimarySidebar(
   extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
+  activeViewContainerId: string | undefined,
 ) {
-  const views = extensionRegistry.views.getViews();
+  const views = activeViewContainerId
+    ? extensionRegistry.views.getViews(activeViewContainerId)
+    : extensionRegistry.views.getViews();
   if (views.length === 0) {
     return <aside aria-label="Primary sidebar" />;
   }
@@ -119,11 +154,59 @@ function renderDefaultPrimarySidebar(
     <aside aria-label="Primary sidebar">
       {views.map((view) => (
         <section key={view.id} data-view-id={view.id}>
-          {view.name}
+          <WorkbenchViewHost
+            fallback={view.name}
+            provider={extensionRegistry.views.getViewProvider(view.id)}
+          />
         </section>
       ))}
     </aside>
   );
+}
+
+function WorkbenchViewHost({
+  fallback,
+  provider,
+}: {
+  fallback: ReactNode;
+  provider: ViewProvider | undefined;
+}) {
+  const host = useMemo(() => provider?.resolveViewHost(), [provider]);
+
+  useEffect(
+    () => () => {
+      host?.dispose();
+    },
+    [host],
+  );
+
+  if (!host) {
+    return <>{fallback}</>;
+  }
+
+  return <>{toReactNode(host.render(), fallback)}</>;
+}
+
+function toReactNode(value: unknown, fallback: ReactNode): ReactNode {
+  if (
+    value === undefined ||
+    value === null ||
+    typeof value === 'boolean' ||
+    typeof value === 'symbol' ||
+    typeof value === 'function'
+  ) {
+    return fallback;
+  }
+
+  if (typeof value === 'string' || typeof value === 'number' || isValidElement(value)) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value as ReactNode;
+  }
+
+  return fallback;
 }
 
 function resolveIcon(icon: ReactNode | string | undefined): ReactNode {
