@@ -37,10 +37,11 @@ Required manifest concepts:
 3. `ExtensionRegistry` validates manifests and dependency graph.
 4. On activation events, extension `activate` runs and registers disposables with `ExtensionContext`.
 5. Contributions merge into platform registries (`CommandRegistry`, `ViewRegistry`, etc.).
+6. Runtime handlers and view providers registered from `activate()` are scoped to the extension lifecycle and disposed on deactivate.
 
 Extensions register contributions **through the SDK**, not by mutating internal registry singletons.
 
-## Contribution Points (planned)
+## Contribution Points
 
 | Point           | Purpose                                               |
 | --------------- | ----------------------------------------------------- |
@@ -54,7 +55,7 @@ Extensions register contributions **through the SDK**, not by mutating internal 
 
 ## Built-in Extensions
 
-Repository-local extensions under `extensions/builtin.*` provide first-party features (accounts UI shell, workspace, explorer, settings, keybindings). They follow the same manifest and SDK rules as sample extensions.
+Repository-local extensions under `extensions/builtin.*` provide first-party features (accounts UI shell, workspace, explorer, settings, keybindings). They follow the same manifest and SDK rules as sample extensions. The generated bundle includes both manifest data and the entry module, so `.workbench/extensions.json` controls which built-ins are registered and activatable.
 
 ## Sample Extensions
 

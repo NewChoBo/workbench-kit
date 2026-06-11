@@ -20,7 +20,7 @@
   "dependencies": {
     "@workbench-kit/adapters": "workspace:*",
     "@workbench-kit/contracts": "workspace:*",
-    "@workbench-kit/core": "workspace:*",
+    "@workbench-kit/platform": "workspace:*",
     "@workbench-kit/services": "workspace:*",
     "@workbench-kit/vscode-host": "workspace:*"
   },

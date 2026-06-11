@@ -33,6 +33,8 @@ This document defines how Workbench Kit moves from the **current published stack
 
 **Goal:** Single command/context/keybinding implementation.
 
+**Status:** Done. `@workbench-kit/platform` owns command, menu, context-key, when-clause, and keybinding APIs. `@workbench-kit/core` is a compatibility shim that re-exports `platform`.
+
 | Step | Action                                                                                                                          |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------- |
 | 1    | Move `core/src/commands.ts`, `when-clause.ts`, `context-keys.ts` into `platform` (or make `platform` re-export them internally) |
@@ -47,6 +49,8 @@ This document defines how Workbench Kit moves from the **current published stack
 
 **Goal:** Extension manifest → registry wiring.
 
+**Status:** Done. `workbench-core` provides `ExtensionRegistry`, menu/view/activity/config registries, `LayoutService`, bundled built-in/sample manifests, configured extension resolution, and command execution that activates `onCommand:` extensions before invoking registered handlers.
+
 | Step | Action                                                                                          |
 | ---- | ----------------------------------------------------------------------------------------------- |
 | 1    | Implement `ExtensionRegistry`, contribution merge into `CommandRegistry` / `KeybindingRegistry` |
@@ -60,12 +64,14 @@ This document defines how Workbench Kit moves from the **current published stack
 
 **Goal:** Replace ad hoc shell wiring with `WorkbenchProvider`.
 
-| Step | Action                                                                                           |
-| ---- | ------------------------------------------------------------------------------------------------ |
-| 1    | `workbench-react` composes existing `react` `WorkbenchShell`, `ActivityBar`, `CommandPalette` UI |
-| 2    | Move `IntegratedShellDemo` registry wiring to `WorkbenchProvider`                                |
-| 3    | Stories use `workbench-react` entry; delete duplicate registry setup                             |
-| 4    | `react` export map: deprecate orchestration exports; document replacements                       |
+**Status:** Done. `workbench-react` now owns `WorkbenchProvider`, registry-backed `WorkbenchShell` composition, extension config resolution, startup activation, layout service access, and the primary Storybook shell path.
+
+| Step | Action                                                                                                          |
+| ---- | --------------------------------------------------------------------------------------------------------------- |
+| 1    | `workbench-react` composes existing `react` `WorkbenchShell` shell-only export                                  |
+| 2    | Move extension registry, layout, configured extension resolution, and startup activation to `WorkbenchProvider` |
+| 3    | Stories use `workbench-react` entry; duplicate registry setup is not needed for the primary shell path          |
+| 4    | `react` export map keeps presentational shell exports; orchestration replacements are documented                |
 
 **Exit:** Primary Storybook shell path uses `workbench-react` only.
 
@@ -73,22 +79,27 @@ This document defines how Workbench Kit moves from the **current published stack
 
 **Goal:** First-party features as extensions.
 
-| Step | Action                                                                                   |
-| ---- | ---------------------------------------------------------------------------------------- |
-| 1    | `builtin.settings` ← `react/workbench/settings` contribution surface                     |
-| 2    | `builtin.explorer` ← workspace tree UI                                                   |
-| 3    | `builtin.accounts` ← auth entry (UI only; secrets per [Account Auth](./account-auth.md)) |
-| 4    | Remove duplicated registration from `react`                                              |
+**Status:** Done for the functional minimum. Built-in extension manifests now contribute commands, menus, activities, view containers, configuration, and view metadata. The generated bundle attaches each extension module so selected extensions can activate and register command handlers or view providers through the SDK. Rich `react/workbench` UI remains as compatibility/demo surface until a later UI extraction pass.
+
+| Step | Action                                                                                                       |
+| ---- | ------------------------------------------------------------------------------------------------------------ |
+| 1    | `builtin.settings` contributes settings command/config/view provider shell                                   |
+| 2    | `builtin.explorer` contributes explorer activity/view and refresh command                                    |
+| 3    | `builtin.accounts` contributes account command/menu/config; secrets stay outside `.workbench`                |
+| 4    | `workbench-react` renders SDK view providers for active view containers; `react` remains presentational/demo |
 
 **Exit:** Enabled extensions list in `.workbench/extensions.json` matches loaded built-ins.
 
 ### M5 — Publish alignment
 
-| Step | Action                                                                                             |
-| ---- | -------------------------------------------------------------------------------------------------- |
-| 1    | Add `base`, `platform`, `workbench-*` to `NPM_PUBLISH_ORDER` when ready                            |
-| 2    | Remove `core` shim after one prototype tag cycle OR keep shim indefinitely with deprecation notice |
-| 3    | Update README package list                                                                         |
+**Status:** Done for public-ready packages and in-repo hardening. `base`, `platform`, `workbench-extension-sdk`, and `workbench-config` are aligned for the publish pipeline. `workbench-core` and `workbench-react` remain private preview because the current bundled extension modules are repo-local artifacts, not yet package-safe public artifacts.
+
+| Step | Action                                                                                                         |
+| ---- | -------------------------------------------------------------------------------------------------------------- |
+| 1    | Add public-ready `base`, `platform`, `workbench-extension-sdk`, `workbench-config` to `NPM_PUBLISH_ORDER`      |
+| 2    | Keep `core` shim in publish order with deprecation notices until at least one prototype tag cycle              |
+| 3    | Update README package list and private-preview shell package notes                                             |
+| 4    | Add `check:dependency-graph` and wire it into `pnpm validate` as the dependency-cruiser equivalent for this M5 |
 
 ## Shim Policy (`@workbench-kit/core`)
 
@@ -133,7 +144,7 @@ pnpm lint
 pnpm test
 ```
 
-Add `check:dependency-graph` when dependency-cruiser rules land.
+`pnpm check:dependency-graph` is wired into `pnpm validate`.
 
 ## Related Documents
 

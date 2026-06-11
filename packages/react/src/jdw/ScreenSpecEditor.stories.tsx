@@ -7,11 +7,20 @@ import { ScreenSpecEditor, useScreenSpecPipeline } from '@workbench-kit/jdw-edit
 import { JDW_SAMPLE_SCREENS } from './fixtures/jdw-sample-screens.js';
 
 function ScreenSpecEditorHarness({ sampleId = 'user-profile' }: { readonly sampleId?: string }) {
-  const sample = JDW_SAMPLE_SCREENS.find((entry) => entry.id === sampleId) ?? JDW_SAMPLE_SCREENS[0]!;
+  const sample =
+    JDW_SAMPLE_SCREENS.find((entry) => entry.id === sampleId) ?? JDW_SAMPLE_SCREENS[0]!;
   const pipeline = useScreenSpecPipeline(sample);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, minHeight: 520, padding: 16 }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 16,
+        minHeight: 520,
+        padding: 16,
+      }}
+    >
       <ScreenSpecEditor value={pipeline.spec} onChange={pipeline.setSpec} />
       <JdwPreview json={pipeline.json} layoutConstraints={pipeline.layoutConstraints} />
     </div>
@@ -33,7 +42,15 @@ function PlaygroundHarness() {
   const pipeline = useScreenSpecPipeline(spec);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, minHeight: 520, padding: 16 }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 16,
+        minHeight: 520,
+        padding: 16,
+      }}
+    >
       <ScreenSpecEditor
         value={pipeline.spec}
         onChange={(nextSpec) => {

@@ -49,8 +49,7 @@ export interface WorkbenchSectionedPanelProps extends Omit<
 function findPanelSection(content: HTMLElement, anchorId: string) {
   return (
     Array.from(content.children).find(
-      (child): child is HTMLElement =>
-        child instanceof HTMLElement && child.id === anchorId,
+      (child): child is HTMLElement => child instanceof HTMLElement && child.id === anchorId,
     ) ?? null
   );
 }
@@ -208,11 +207,7 @@ export function WorkbenchSectionedPanel({
   };
 
   const handleIntersection = () => {
-    if (
-      items.length === 0 ||
-      !scrollSpyEnabledRef.current ||
-      isProgrammaticScrollRef.current
-    ) {
+    if (items.length === 0 || !scrollSpyEnabledRef.current || isProgrammaticScrollRef.current) {
       return;
     }
 

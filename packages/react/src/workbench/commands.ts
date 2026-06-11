@@ -8,7 +8,7 @@ import {
   type CommandMenuItem,
   type CommandRegistry,
   type CommandValue,
-} from '@workbench-kit/core';
+} from '@workbench-kit/platform';
 
 import type { ContextMenuItem } from '../overlay/ContextMenu';
 

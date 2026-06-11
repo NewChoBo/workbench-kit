@@ -1,5 +1,5 @@
 import { type CSSProperties, type ReactElement, useEffect, useMemo, useState } from 'react';
-import { createCommandRegistryFromContributions } from '@workbench-kit/core';
+import { createCommandRegistryFromContributions } from '@workbench-kit/platform';
 import { integratedShellWorkspaceFiles } from '@workbench-kit/adapters';
 import { Button } from '../primitives/Button';
 import { TextInput } from '../primitives/TextInput';

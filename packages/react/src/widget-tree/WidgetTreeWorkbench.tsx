@@ -8,10 +8,7 @@ import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEdito
 import { fileNameOfPath } from '../workbench/workspace/path';
 import { WidgetTreeLab } from './WidgetTreeLab.js';
 import { WidgetTreeModeControls } from './WidgetTreeModeControls.js';
-import {
-  DEFAULT_WIDGET_TREE_VIEW_MODE,
-  type WidgetTreeViewMode,
-} from './widget-tree-mode.js';
+import { DEFAULT_WIDGET_TREE_VIEW_MODE, type WidgetTreeViewMode } from './widget-tree-mode.js';
 
 export interface WidgetTreeWorkbenchProps {
   readonly path?: string | undefined;

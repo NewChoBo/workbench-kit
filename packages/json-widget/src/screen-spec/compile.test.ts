@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import { parseJsonWidgetData } from '../jdw-node.js';
 import { validateJsonWidgetData } from '../validate-json-widget-data.js';
-import { screenColumn, screenExpanded, screenGrid, screenPanel, screenRow, screenText } from './builders.js';
+import {
+  screenColumn,
+  screenExpanded,
+  screenGrid,
+  screenPanel,
+  screenRow,
+  screenText,
+} from './builders.js';
 import { compileScreenSpecToJson } from './compile.js';
 import type { JdwScreenSpec } from './types.js';
 
@@ -19,9 +26,12 @@ describe('compileScreenSpecToJson', () => {
       root: screenColumn(
         [
           screenText('Title', { fontSize: 18, color: '#e8eaed' }),
-          screenRow([screenExpanded(screenPanel('Left')), screenExpanded(screenPanel('Right'), 2)], {
-            gap: 8,
-          }),
+          screenRow(
+            [screenExpanded(screenPanel('Left')), screenExpanded(screenPanel('Right'), 2)],
+            {
+              gap: 8,
+            },
+          ),
         ],
         { gap: 12, padding: 16, background: '#13151a' },
       ),

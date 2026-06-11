@@ -23,7 +23,11 @@ export function clearNpmRegistryAuth() {
 }
 
 export const NPM_PUBLISH_ORDER = [
+  '@workbench-kit/base',
   '@workbench-kit/contracts',
+  '@workbench-kit/platform',
+  '@workbench-kit/workbench-extension-sdk',
+  '@workbench-kit/workbench-config',
   '@workbench-kit/jdw',
   '@workbench-kit/jdw-editor',
   '@workbench-kit/core',

@@ -75,7 +75,9 @@ export function WorkbenchStructuredDataTableView({
       )}
       {...props}
     >
-      {table.label ? <h3 className="ui-workbench-structured-data-table-view__label">{table.label}</h3> : null}
+      {table.label ? (
+        <h3 className="ui-workbench-structured-data-table-view__label">{table.label}</h3>
+      ) : null}
       {table.description ? (
         <p className="ui-workbench-structured-data-table-view__description">{table.description}</p>
       ) : null}

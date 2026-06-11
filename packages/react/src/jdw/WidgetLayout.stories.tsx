@@ -1,15 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
-import {
-  jdwNodeToGenericWidget,
-  layoutWidget,
-  parseJsonWidgetData,
-} from '@workbench-kit/jdw';
+import { jdwNodeToGenericWidget, layoutWidget, parseJsonWidgetData } from '@workbench-kit/jdw';
 
-import {
-  JDW_FIXTURE_GRID_CELLS,
-  JDW_FIXTURE_ROW_FLEX,
-} from './fixtures/jdw-fixtures.js';
+import { JDW_FIXTURE_GRID_CELLS, JDW_FIXTURE_ROW_FLEX } from './fixtures/jdw-fixtures.js';
 
 interface LayoutFixturePreviewProps {
   readonly json: string;
@@ -29,7 +22,10 @@ function LayoutFixturePreview({ json }: LayoutFixturePreviewProps) {
   });
 
   return (
-    <div data-testid="widget-layout-fixture" style={{ position: 'relative', width: 320, height: 240 }}>
+    <div
+      data-testid="widget-layout-fixture"
+      style={{ position: 'relative', width: 320, height: 240 }}
+    >
       <div
         style={{
           position: 'absolute',

@@ -10,10 +10,7 @@ const spec: JdwScreenSpec = {
   description: 'Demo screen',
   frameWidth: 320,
   layout: { maxWidth: 320, maxHeight: 200 },
-  root: screenColumn(
-    [screenText('Hello'), screenText('World', { color: '#fff' })],
-    { gap: 8 },
-  ),
+  root: screenColumn([screenText('Hello'), screenText('World', { color: '#fff' })], { gap: 8 }),
 };
 
 describe('screen-spec tree', () => {

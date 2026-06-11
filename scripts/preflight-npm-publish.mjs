@@ -80,7 +80,9 @@ function resolveAuthMode() {
 
   if (hasAuthToken) {
     try {
-      const npmActor = run('npm', ['whoami', '--registry', NPM_REGISTRY], { encoding: 'utf8' }).trim();
+      const npmActor = run('npm', ['whoami', '--registry', NPM_REGISTRY], {
+        encoding: 'utf8',
+      }).trim();
       return { mode: 'token', actor: npmActor };
     } catch (error) {
       if (trustedPublisherAvailable) {

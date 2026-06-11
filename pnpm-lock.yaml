@@ -134,7 +134,11 @@ importers:
         specifier: ^8.5.0
         version: 8.5.1(@swc/core@1.15.40)(postcss@8.5.15)(typescript@5.9.3)
 
-  packages/core: {}
+  packages/core:
+    dependencies:
+      '@workbench-kit/platform':
+        specifier: workspace:*
+        version: link:../platform
 
   packages/jdw-editor:
     dependencies:
@@ -183,15 +187,15 @@ importers:
       '@workbench-kit/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@workbench-kit/core':
-        specifier: workspace:*
-        version: link:../core
       '@workbench-kit/jdw':
         specifier: workspace:*
         version: link:../json-widget
       '@workbench-kit/jdw-editor':
         specifier: workspace:*
         version: link:../jdw-editor
+      '@workbench-kit/platform':
+        specifier: workspace:*
+        version: link:../platform
       '@workbench-kit/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -239,9 +243,9 @@ importers:
       '@workbench-kit/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@workbench-kit/core':
+      '@workbench-kit/platform':
         specifier: workspace:*
-        version: link:../core
+        version: link:../platform
       '@workbench-kit/services':
         specifier: workspace:*
         version: link:../services
@@ -254,9 +258,9 @@ importers:
       '@workbench-kit/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@workbench-kit/core':
+      '@workbench-kit/platform':
         specifier: workspace:*
-        version: link:../core
+        version: link:../platform
       '@workbench-kit/services':
         specifier: workspace:*
         version: link:../services
@@ -299,9 +303,24 @@ importers:
       '@workbench-kit/platform':
         specifier: workspace:*
         version: link:../platform
+      '@workbench-kit/react':
+        specifier: workspace:*
+        version: link:../react
+      '@workbench-kit/tokens':
+        specifier: workspace:*
+        version: link:../tokens
+      '@workbench-kit/workbench-config':
+        specifier: workspace:*
+        version: link:../workbench-config
       '@workbench-kit/workbench-core':
         specifier: workspace:*
         version: link:../workbench-core
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
 
   packages/workbench-vscode-adapter:
     dependencies:

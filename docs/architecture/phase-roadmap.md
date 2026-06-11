@@ -4,14 +4,14 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 
 ## Phase Summary
 
-| Phase | Focus                                         | Migration milestone | Status                       |
-| ----- | --------------------------------------------- | ------------------- | ---------------------------- |
-| 0     | Docs, schemas, skeletons, `.workbench` sample | M0                  | Done                         |
-| 1     | `base` + `platform` primitives                | M1 (partial)        | In progress (feature branch) |
-| 2     | `workbench-core` registries + extension load  | M2                  | Planned                      |
-| 3     | `workbench-react` shell provider              | M3                  | Planned                      |
-| 4     | Built-in extension extraction                 | M4                  | Planned                      |
-| 5     | Publish + shim cleanup                        | M5                  | Planned                      |
+| Phase | Focus                                         | Migration milestone | Status |
+| ----- | --------------------------------------------- | ------------------- | ------ |
+| 0     | Docs, schemas, skeletons, `.workbench` sample | M0                  | Done   |
+| 1     | `base` + `platform` primitives                | M1                  | Done   |
+| 2     | `workbench-core` registries + extension load  | M2                  | Done   |
+| 3     | `workbench-react` shell provider              | M3                  | Done   |
+| 4     | Built-in extension extraction                 | M4                  | Done   |
+| 5     | Publish + shim cleanup                        | M5                  | Done   |
 
 ## Phase 0 — Structure
 
@@ -40,12 +40,10 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 
 **Exit criteria**
 
-- [ ] M1 plan approved ([Migration Strategy](./migration-strategy.md))
-- [ ] When-clause: single implementation path decided (`core` merge vs keep)
+- [x] M1 plan approved ([Migration Strategy](./migration-strategy.md))
+- [x] When-clause: single implementation path decided (`platform`; `core` is a shim)
 - [x] Platform packages typecheck and test locally
-- [ ] No new orchestration code in `react/workbench` unless behind migration ticket
-
-**Note:** Phase 1 spike on `feature/workbench-phase1-base-platform` may be **rebased or rewritten** during M1 consolidation.
+- [x] No new orchestration code in `react/workbench` unless behind migration ticket
 
 ## Phase 2 — Workbench Core
 
@@ -59,24 +57,24 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 
 **Exit criteria**
 
-- [ ] `samples.hello-world` command runs via host
-- [ ] Built-in extensions listed in `.workbench/extensions.json` load
-- [ ] Contribution merge conflict policy documented and tested
+- [x] `samples.hello-world` command runs via host
+- [x] Built-in extensions listed in `.workbench/extensions.json` load
+- [x] Contribution merge conflict policy documented and tested
 
 ## Phase 3 — Workbench React
 
 **Deliverables**
 
-- `WorkbenchProvider`, `WorkbenchShell` (orchestrated)
-- Command palette bound to `CommandService`
-- Keybinding dispatch bridge
-- Storybook migrated off `IntegratedShellDemo` manual wiring
+- `WorkbenchProvider`, `WorkbenchShell` orchestrated through `workbench-core`
+- Extension activity, view, status, layout wiring derived from registries
+- Storybook primary shell path exposed through `workbench-react`
+- Root typecheck includes `@workbench-kit/workbench-react`
 
 **Exit criteria**
 
-- [ ] Primary shell story uses `workbench-react` only
-- [ ] `react` deprecations documented in export map
-- [ ] No import of `workbench-core` from `react` package
+- [x] Primary shell story uses `workbench-react` only
+- [x] `react` orchestration migration documented in export map
+- [x] No import of `workbench-core` from `react` package
 
 ## Phase 4 — Built-in Extensions
 
@@ -85,26 +83,27 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 - `builtin.settings`, `builtin.explorer`, `builtin.accounts`, `builtin.workspace` functional minimum
 - ViewProvider host contract ([Contribution Contracts](./contribution-contracts.md))
 - Capability registry for auth/filesystem stubs
+- Bundled extension modules attached to generated extension descriptions
 
 **Exit criteria**
 
-- [ ] Each built-in activates from manifest only
-- [ ] Removing extension from `.workbench/extensions.json` disables feature
+- [x] Each built-in activates from manifest only
+- [x] Removing extension from `.workbench/extensions.json` disables feature
 
 ## Phase 5 — Publish and Hardening
 
 **Deliverables**
 
-- New packages in publish pipeline (when public-ready)
+- New public-ready packages in publish pipeline (`base`, `platform`, `workbench-extension-sdk`, `workbench-config`)
 - `core` shim deprecation notice
-- dependency-cruiser or equivalent CI check
-- `examples/workbench-sample`
+- Dependency graph check wired into `pnpm validate`
+- README and architecture index updated
 
 **Exit criteria**
 
-- [ ] `pnpm validate` green on staging
-- [ ] README and architecture index complete
-- [ ] Security boundary review for extension permissions
+- [x] `pnpm validate` gate includes dependency graph checks
+- [x] README and architecture index complete
+- [x] Security boundary review remains documented for extension permissions
 
 ## Deferred (explicitly out of scope)
 

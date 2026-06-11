@@ -4,7 +4,10 @@ export function canAddChildren(widget: GenericWidget | null): widget is GenericW
   return widget !== null && isContainerWidget(widget) && widget.type !== 'box';
 }
 
-export function formatWidgetPlacementMeta(widget: GenericWidget, parentType?: string): string | null {
+export function formatWidgetPlacementMeta(
+  widget: GenericWidget,
+  parentType?: string,
+): string | null {
   if (parentType === 'grid') {
     const col = typeof widget.col === 'number' ? widget.col : null;
     const row = typeof widget.row === 'number' ? widget.row : null;

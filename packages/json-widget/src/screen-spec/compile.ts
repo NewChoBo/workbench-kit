@@ -16,9 +16,7 @@ function textArgs(
 ): Record<string, unknown> {
   const style = node.style ?? {};
   const background =
-    node.kind === 'panel'
-      ? (node.background ?? style.background)
-      : style.background;
+    node.kind === 'panel' ? (node.background ?? style.background) : style.background;
 
   return {
     text: node.kind === 'panel' ? node.content : node.content,
@@ -44,7 +42,11 @@ function placementArgs(node: ScreenNode): Record<string, unknown> {
 }
 
 function containerArgs(
-  node: ScreenRowNode | ScreenGridNode | ScreenStackNode | { gap?: number; padding?: number; background?: string },
+  node:
+    | ScreenRowNode
+    | ScreenGridNode
+    | ScreenStackNode
+    | { gap?: number; padding?: number; background?: string },
   children: readonly JsonWidgetNode[],
 ): Record<string, unknown> {
   return {
@@ -78,7 +80,10 @@ export function compileScreenNode(node: ScreenNode): JsonWidgetNode {
       return {
         type: node.kind,
         args: {
-          ...containerArgs(node, node.children.map((child) => compileScreenNode(child))),
+          ...containerArgs(
+            node,
+            node.children.map((child) => compileScreenNode(child)),
+          ),
           ...placementArgs(node),
         },
       };
@@ -87,13 +92,19 @@ export function compileScreenNode(node: ScreenNode): JsonWidgetNode {
         type: 'grid',
         args: {
           columns: node.columns,
-          ...containerArgs(node, node.children.map((child) => compileScreenNode(child))),
+          ...containerArgs(
+            node,
+            node.children.map((child) => compileScreenNode(child)),
+          ),
         },
       };
     case 'stack':
       return {
         type: 'stack',
-        args: containerArgs(node, node.children.map((child) => compileScreenNode(child))),
+        args: containerArgs(
+          node,
+          node.children.map((child) => compileScreenNode(child)),
+        ),
       };
     default: {
       const exhaustive: never = node;

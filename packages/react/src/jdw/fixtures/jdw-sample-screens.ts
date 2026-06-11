@@ -71,9 +71,15 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
             { gap: 4, col: 3, row: 0 },
           ),
         ]),
-        screenRow([screenExpanded(screenPanel('Traffic trend', '#1e2127')), screenExpanded(screenPanel('Top channels', '#1e2127'))], {
-          gap: 12,
-        }),
+        screenRow(
+          [
+            screenExpanded(screenPanel('Traffic trend', '#1e2127')),
+            screenExpanded(screenPanel('Top channels', '#1e2127')),
+          ],
+          {
+            gap: 12,
+          },
+        ),
       ],
       { gap: 16, padding: 20, background: '#13151a' },
     ),
@@ -108,10 +114,34 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
     root: screenColumn(
       [
         screenText('Preferences', { fontSize: 18, color: '#e8eaed' }),
-        screenRow([screenExpanded(screenText('Theme', { fontSize: 13, ...muted })), screenText('Dark', { fontSize: 13, color: '#e8eaed' })], { gap: 8 }),
-        screenRow([screenExpanded(screenText('Language', { fontSize: 13, ...muted })), screenText('English', { fontSize: 13, color: '#e8eaed' })], { gap: 8 }),
-        screenRow([screenExpanded(screenText('Notifications', { fontSize: 13, ...muted })), screenText('Enabled', { fontSize: 13, color: '#34a853' })], { gap: 8 }),
-        screenRow([screenExpanded(screenText('Auto-save', { fontSize: 13, ...muted })), screenText('Every 30s', { fontSize: 13, color: '#e8eaed' })], { gap: 8 }),
+        screenRow(
+          [
+            screenExpanded(screenText('Theme', { fontSize: 13, ...muted })),
+            screenText('Dark', { fontSize: 13, color: '#e8eaed' }),
+          ],
+          { gap: 8 },
+        ),
+        screenRow(
+          [
+            screenExpanded(screenText('Language', { fontSize: 13, ...muted })),
+            screenText('English', { fontSize: 13, color: '#e8eaed' }),
+          ],
+          { gap: 8 },
+        ),
+        screenRow(
+          [
+            screenExpanded(screenText('Notifications', { fontSize: 13, ...muted })),
+            screenText('Enabled', { fontSize: 13, color: '#34a853' }),
+          ],
+          { gap: 8 },
+        ),
+        screenRow(
+          [
+            screenExpanded(screenText('Auto-save', { fontSize: 13, ...muted })),
+            screenText('Every 30s', { fontSize: 13, color: '#e8eaed' }),
+          ],
+          { gap: 8 },
+        ),
       ],
       { gap: 12, padding: 20, background: '#13151a' },
     ),
@@ -165,21 +195,42 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
       [
         screenText('Recent uploads', { fontSize: 18, color: '#e8eaed' }),
         screenGrid(3, [
-          screenColumn([screenPanel(' ', '#2b2f36'), screenText('Mountain trail', { fontSize: 13, color: '#e8eaed' }), screenText('Edited 2h ago', { fontSize: 11, ...muted })], {
-            gap: 8,
-            col: 0,
-            row: 0,
-          }),
-          screenColumn([screenPanel(' ', '#2b2f36'), screenText('City skyline', { fontSize: 13, color: '#e8eaed' }), screenText('Edited yesterday', { fontSize: 11, ...muted })], {
-            gap: 8,
-            col: 1,
-            row: 0,
-          }),
-          screenColumn([screenPanel(' ', '#2b2f36'), screenText('Studio portrait', { fontSize: 13, color: '#e8eaed' }), screenText('Edited 3d ago', { fontSize: 11, ...muted })], {
-            gap: 8,
-            col: 2,
-            row: 0,
-          }),
+          screenColumn(
+            [
+              screenPanel(' ', '#2b2f36'),
+              screenText('Mountain trail', { fontSize: 13, color: '#e8eaed' }),
+              screenText('Edited 2h ago', { fontSize: 11, ...muted }),
+            ],
+            {
+              gap: 8,
+              col: 0,
+              row: 0,
+            },
+          ),
+          screenColumn(
+            [
+              screenPanel(' ', '#2b2f36'),
+              screenText('City skyline', { fontSize: 13, color: '#e8eaed' }),
+              screenText('Edited yesterday', { fontSize: 11, ...muted }),
+            ],
+            {
+              gap: 8,
+              col: 1,
+              row: 0,
+            },
+          ),
+          screenColumn(
+            [
+              screenPanel(' ', '#2b2f36'),
+              screenText('Studio portrait', { fontSize: 13, color: '#e8eaed' }),
+              screenText('Edited 3d ago', { fontSize: 11, ...muted }),
+            ],
+            {
+              gap: 8,
+              col: 2,
+              row: 0,
+            },
+          ),
         ]),
       ],
       { gap: 16, padding: 20, background: '#13151a' },
@@ -202,7 +253,10 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
                   screenColumn(
                     [
                       screenText('Design review', { fontSize: 13, color: '#e8eaed' }),
-                      screenText('Updated mockups are ready for sign-off.', { fontSize: 11, ...muted }),
+                      screenText('Updated mockups are ready for sign-off.', {
+                        fontSize: 11,
+                        ...muted,
+                      }),
                     ],
                     { gap: 2 },
                   ),
@@ -217,7 +271,10 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
                   screenColumn(
                     [
                       screenText('Deploy notice', { fontSize: 13, color: '#e8eaed' }),
-                      screenText('Production release completed successfully.', { fontSize: 11, ...muted }),
+                      screenText('Production release completed successfully.', {
+                        fontSize: 11,
+                        ...muted,
+                      }),
                     ],
                     { gap: 2 },
                   ),
@@ -232,7 +289,10 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
                   screenColumn(
                     [
                       screenText('Weekly summary', { fontSize: 13, color: '#e8eaed' }),
-                      screenText('Your workspace activity report is available.', { fontSize: 11, ...muted }),
+                      screenText('Your workspace activity report is available.', {
+                        fontSize: 11,
+                        ...muted,
+                      }),
                     ],
                     { gap: 2 },
                   ),
@@ -275,11 +335,16 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
     root: screenColumn(
       [
         screenText('Build widget screens from JSON', { fontSize: 26, color: '#e8eaed' }),
-        screenText('Compose layouts with row, column, grid, and stack primitives. Preview instantly in Storybook.', {
-          fontSize: 13,
-          ...muted,
+        screenText(
+          'Compose layouts with row, column, grid, and stack primitives. Preview instantly in Storybook.',
+          {
+            fontSize: 13,
+            ...muted,
+          },
+        ),
+        screenRow([screenPanel('Get started', '#2b5d9f'), screenPanel('View samples', '#2b2f36')], {
+          gap: 12,
         }),
-        screenRow([screenPanel('Get started', '#2b5d9f'), screenPanel('View samples', '#2b2f36')], { gap: 12 }),
       ],
       { gap: 16, padding: 32, background: '#13151a' },
     ),
@@ -293,7 +358,11 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
     root: screenStack(
       [
         screenColumn(
-          [screenPanel(' ', '#2b2f36'), screenText('Product launch', { fontSize: 15, color: '#e8eaed' }), screenText('Ship the first JDW sample gallery.', { fontSize: 11, ...muted })],
+          [
+            screenPanel(' ', '#2b2f36'),
+            screenText('Product launch', { fontSize: 15, color: '#e8eaed' }),
+            screenText('Ship the first JDW sample gallery.', { fontSize: 11, ...muted }),
+          ],
           { gap: 8, padding: 16, background: '#1e2127' },
         ),
         {
@@ -319,34 +388,62 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
       [
         screenText('Platform features', { fontSize: 18, color: '#e8eaed' }),
         screenGrid(2, [
-          screenColumn([screenPanel('⚡', '#2b2f36'), screenText('Fast preview', { fontSize: 13, color: '#e8eaed' }), screenText('Layout rects drive CSS rendering.', { fontSize: 11, ...muted })], {
-            gap: 6,
-            col: 0,
-            row: 0,
-            padding: 12,
-            background: '#1e2127',
-          }),
-          screenColumn([screenPanel('📐', '#2b2f36'), screenText('Headless layout', { fontSize: 13, color: '#e8eaed' }), screenText('Shared math for row, grid, and stack.', { fontSize: 11, ...muted })], {
-            gap: 6,
-            col: 1,
-            row: 0,
-            padding: 12,
-            background: '#1e2127',
-          }),
-          screenColumn([screenPanel('🧩', '#2b2f36'), screenText('Composable assets', { fontSize: 13, color: '#e8eaed' }), screenText('Package manifest + content.json.', { fontSize: 11, ...muted })], {
-            gap: 6,
-            col: 0,
-            row: 1,
-            padding: 12,
-            background: '#1e2127',
-          }),
-          screenColumn([screenPanel('✓', '#2b2f36'), screenText('Schema validation', { fontSize: 13, color: '#e8eaed' }), screenText('JDW profile checks before render.', { fontSize: 11, ...muted })], {
-            gap: 6,
-            col: 1,
-            row: 1,
-            padding: 12,
-            background: '#1e2127',
-          }),
+          screenColumn(
+            [
+              screenPanel('⚡', '#2b2f36'),
+              screenText('Fast preview', { fontSize: 13, color: '#e8eaed' }),
+              screenText('Layout rects drive CSS rendering.', { fontSize: 11, ...muted }),
+            ],
+            {
+              gap: 6,
+              col: 0,
+              row: 0,
+              padding: 12,
+              background: '#1e2127',
+            },
+          ),
+          screenColumn(
+            [
+              screenPanel('📐', '#2b2f36'),
+              screenText('Headless layout', { fontSize: 13, color: '#e8eaed' }),
+              screenText('Shared math for row, grid, and stack.', { fontSize: 11, ...muted }),
+            ],
+            {
+              gap: 6,
+              col: 1,
+              row: 0,
+              padding: 12,
+              background: '#1e2127',
+            },
+          ),
+          screenColumn(
+            [
+              screenPanel('🧩', '#2b2f36'),
+              screenText('Composable assets', { fontSize: 13, color: '#e8eaed' }),
+              screenText('Package manifest + content.json.', { fontSize: 11, ...muted }),
+            ],
+            {
+              gap: 6,
+              col: 0,
+              row: 1,
+              padding: 12,
+              background: '#1e2127',
+            },
+          ),
+          screenColumn(
+            [
+              screenPanel('✓', '#2b2f36'),
+              screenText('Schema validation', { fontSize: 13, color: '#e8eaed' }),
+              screenText('JDW profile checks before render.', { fontSize: 11, ...muted }),
+            ],
+            {
+              gap: 6,
+              col: 1,
+              row: 1,
+              padding: 12,
+              background: '#1e2127',
+            },
+          ),
         ]),
       ],
       { gap: 16, padding: 20, background: '#13151a' },
@@ -363,9 +460,35 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
         screenText('System status', { fontSize: 18, color: '#e8eaed' }),
         screenColumn(
           [
-            screenRow([screenExpanded(screenText('API gateway', { fontSize: 13, color: '#e8eaed' })), screenText('Operational', { fontSize: 11, color: '#34a853', background: '#1a2e1f' })], { gap: 8 }),
-            screenRow([screenExpanded(screenText('Widget renderer', { fontSize: 13, color: '#e8eaed' })), screenText('Operational', { fontSize: 11, color: '#34a853', background: '#1a2e1f' })], { gap: 8 }),
-            screenRow([screenExpanded(screenText('Asset sync', { fontSize: 13, color: '#e8eaed' })), screenText('Degraded', { fontSize: 11, color: '#fbbc04', background: '#2e2818' })], { gap: 8 }),
+            screenRow(
+              [
+                screenExpanded(screenText('API gateway', { fontSize: 13, color: '#e8eaed' })),
+                screenText('Operational', {
+                  fontSize: 11,
+                  color: '#34a853',
+                  background: '#1a2e1f',
+                }),
+              ],
+              { gap: 8 },
+            ),
+            screenRow(
+              [
+                screenExpanded(screenText('Widget renderer', { fontSize: 13, color: '#e8eaed' })),
+                screenText('Operational', {
+                  fontSize: 11,
+                  color: '#34a853',
+                  background: '#1a2e1f',
+                }),
+              ],
+              { gap: 8 },
+            ),
+            screenRow(
+              [
+                screenExpanded(screenText('Asset sync', { fontSize: 13, color: '#e8eaed' })),
+                screenText('Degraded', { fontSize: 11, color: '#fbbc04', background: '#2e2818' }),
+              ],
+              { gap: 8 },
+            ),
           ],
           { gap: 8 },
         ),
@@ -375,7 +498,9 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
   }),
 ];
 
-export function sampleLayoutConstraints(screenDefinition: JdwSampleScreenDefinition): LayoutConstraints {
+export function sampleLayoutConstraints(
+  screenDefinition: JdwSampleScreenDefinition,
+): LayoutConstraints {
   return {
     minWidth: 0,
     maxWidth: screenDefinition.layout.maxWidth,
