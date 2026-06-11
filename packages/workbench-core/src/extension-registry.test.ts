@@ -102,6 +102,61 @@ describe('ExtensionRegistry', () => {
     ).resolves.toBe('hello from workbench-kit.samples.hello-world');
   });
 
+  it('registers view providers during view activation', async () => {
+    const registry = new ExtensionRegistry();
+    registry.registerExtension({
+      manifest: {
+        schemaVersion: 1,
+        id: 'workbench-kit.builtin.explorer',
+        name: 'builtin-explorer',
+        displayName: 'Explorer',
+        version: '0.0.0',
+        publisher: 'workbench-kit',
+        engines: {
+          workbench: '^0.0.0',
+          extensionApi: '^0.0.0',
+        },
+        activationEvents: ['onView:workbench-kit.builtin.explorer.tree'],
+        contributes: {
+          views: {
+            explorer: [
+              {
+                id: 'workbench-kit.builtin.explorer.tree',
+                name: 'Explorer',
+              } as never,
+            ],
+          },
+        },
+      },
+      module: {
+        activate: (context) => {
+          context.views.registerViewProvider({
+            viewId: 'workbench-kit.builtin.explorer.tree',
+            resolveViewHost: () => ({
+              dispose() {},
+              render: () => 'Explorer Tree',
+            }),
+          });
+        },
+      },
+    });
+
+    expect(registry.views.getViewProvider('workbench-kit.builtin.explorer.tree')).toBeUndefined();
+
+    await registry.activateView('workbench-kit.builtin.explorer.tree');
+
+    expect(
+      registry.views
+        .getViewProvider('workbench-kit.builtin.explorer.tree')
+        ?.resolveViewHost()
+        .render(),
+    ).toBe('Explorer Tree');
+
+    await registry.deactivateExtension('workbench-kit.builtin.explorer');
+
+    expect(registry.views.getViewProvider('workbench-kit.builtin.explorer.tree')).toBeUndefined();
+  });
+
   it('normalizes views, view containers, menus, activities, and configuration', () => {
     const registry = new ExtensionRegistry();
     registry.registerExtension({

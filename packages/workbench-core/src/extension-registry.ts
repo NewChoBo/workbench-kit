@@ -297,6 +297,10 @@ export class ExtensionRegistry implements Disposable {
       extensionPath: description.extensionPath ?? '',
       getCapability: <T>(capabilityId: string) => this.capabilities.get(capabilityId) as T,
       subscriptions,
+      views: {
+        registerViewProvider: (provider) =>
+          subscriptions.add(this.views.registerViewProvider(provider)),
+      },
     };
   }
 

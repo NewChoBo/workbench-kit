@@ -32,6 +32,7 @@ export type {
   ExtensionCommandRegistry,
   ExtensionContext,
   ExtensionContributes,
+  ExtensionViewRegistry,
   KeybindingContribution,
   MenuContribution,
   ViewContainerContribution,

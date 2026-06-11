@@ -5,6 +5,7 @@ import type {
   MenuContribution,
   ViewContainerContribution,
   ViewContribution,
+  ViewProvider,
 } from '@workbench-kit/workbench-extension-sdk';
 
 export interface WorkbenchViewContribution extends ViewContribution {
@@ -67,13 +68,16 @@ export class MenuRegistry implements Disposable {
 
 export class ViewRegistry implements Disposable {
   private readonly containersById = new Map<string, WorkbenchViewContainerContribution>();
+  private readonly providersByViewId = new Map<string, ViewProvider>();
   private readonly viewsById = new Map<string, WorkbenchViewContribution>();
   private readonly onDidRegisterViewEmitter = new Emitter<WorkbenchViewContribution>();
   private readonly onDidRegisterViewContainerEmitter =
     new Emitter<WorkbenchViewContainerContribution>();
+  private readonly onDidRegisterViewProviderEmitter = new Emitter<ViewProvider>();
 
   readonly onDidRegisterView = this.onDidRegisterViewEmitter.event;
   readonly onDidRegisterViewContainer = this.onDidRegisterViewContainerEmitter.event;
+  readonly onDidRegisterViewProvider = this.onDidRegisterViewProviderEmitter.event;
 
   getView(viewId: string): WorkbenchViewContribution | undefined {
     return this.viewsById.get(viewId);
@@ -81,6 +85,14 @@ export class ViewRegistry implements Disposable {
 
   getViewContainer(containerId: string): WorkbenchViewContainerContribution | undefined {
     return this.containersById.get(containerId);
+  }
+
+  getViewProvider(viewId: string): ViewProvider | undefined {
+    return this.providersByViewId.get(viewId);
+  }
+
+  getViewProviders(): readonly ViewProvider[] {
+    return [...this.providersByViewId.values()];
   }
 
   getViewContainers(location?: string): readonly WorkbenchViewContainerContribution[] {
@@ -117,6 +129,22 @@ export class ViewRegistry implements Disposable {
     });
   }
 
+  registerViewProvider(provider: ViewProvider): Disposable {
+    if (this.providersByViewId.has(provider.viewId)) {
+      throw new Error(`View provider for "${provider.viewId}" is already registered.`);
+    }
+
+    this.providersByViewId.set(provider.viewId, provider);
+    this.onDidRegisterViewProviderEmitter.fire(provider);
+
+    return toDisposable(() => {
+      const current = this.providersByViewId.get(provider.viewId);
+      if (current === provider) {
+        this.providersByViewId.delete(provider.viewId);
+      }
+    });
+  }
+
   registerViewContainer(container: WorkbenchViewContainerContribution): Disposable {
     if (this.containersById.has(container.id)) {
       throw new Error(`View container "${container.id}" is already registered.`);
@@ -135,9 +163,11 @@ export class ViewRegistry implements Disposable {
 
   dispose(): void {
     this.containersById.clear();
+    this.providersByViewId.clear();
     this.viewsById.clear();
     this.onDidRegisterViewEmitter.dispose();
     this.onDidRegisterViewContainerEmitter.dispose();
+    this.onDidRegisterViewProviderEmitter.dispose();
   }
 }
 

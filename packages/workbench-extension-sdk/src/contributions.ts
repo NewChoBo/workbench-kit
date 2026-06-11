@@ -85,11 +85,16 @@ export interface ExtensionContext {
   readonly extensionId: string;
   readonly extensionPath: string;
   readonly subscriptions: { add(disposable: Disposable): void };
+  readonly views: ExtensionViewRegistry;
   getCapability<T>(capabilityId: string): T | undefined;
 }
 
 export interface ExtensionCommandRegistry {
   registerCommand(commandId: string, handler: CommandServiceHandler): Disposable;
+}
+
+export interface ExtensionViewRegistry {
+  registerViewProvider(provider: ViewProvider): Disposable;
 }
 
 export type ActivateFunction = (context: ExtensionContext) => void | Promise<void> | Disposable;
