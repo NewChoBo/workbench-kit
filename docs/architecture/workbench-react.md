@@ -2,7 +2,7 @@
 
 `@workbench-kit/workbench-react` provides the React workbench shell that composes existing primitives from `@workbench-kit/react` with services from `workbench-core` and `platform`.
 
-Phase 0 documents the intended component model; implementations are added in later phases.
+Phase 3 provides the initial implementation: `WorkbenchProvider` owns registry and layout service creation, resolves `.workbench` extension configuration against bundled manifests, activates startup extensions, and exposes the services through React context. `WorkbenchShell` composes the shell-only layout export from `@workbench-kit/react` and derives activities, views, and default status entries from `workbench-core` registries.
 
 ## Relationship to `@workbench-kit/react`
 
@@ -19,14 +19,15 @@ Phase 0 documents the intended component model; implementations are added in lat
 
 React context provider that:
 
-- Bootstraps `workbench-core` services (registries, layout, extension registry)
-- Supplies platform services to the tree
-- Accepts initial `.workbench` configuration and extension manifest list
-- Manages workbench lifecycle (initialize, dispose on unmount)
+- Bootstraps `workbench-core` services (`ExtensionRegistry`, `LayoutService`)
+- Accepts initial `.workbench` extension configuration and optional extension manifest list
+- Resolves enabled and missing extensions from bundled manifests by default
+- Activates startup extensions and disposes registries on unmount
+- Exposes command activation/execution helpers through `useWorkbench`
 
 ### WorkbenchShell
 
-Top-level layout composing the major workbench regions. Typical structure:
+Top-level layout composing the major workbench regions through `@workbench-kit/react/workbench/shell`. Typical structure:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -50,11 +51,11 @@ Top-level layout composing the major workbench regions. Typical structure:
 
 ### ActivityBar integration
 
-Uses `ActivityBar` (or successor) from `react` to show activity icons from contributed view containers. Clicking an activity toggles `PrimarySideBar` and activates the corresponding view container via `ViewRegistry`.
+Uses shell chrome from `react` to show activity icons from contributed activities or view containers. Clicking an activity toggles `PrimarySideBar` and activates the corresponding view container through `LayoutService`.
 
 ### PrimarySideBar
 
-Hosts sidebar views registered for the active activity (e.g. Explorer, Search). Renders view contributions through a host callback or built-in view component map.
+Hosts sidebar views registered for the active activity (e.g. Explorer, Search). Phase 3 renders registry-backed labels as the default host; M4 moves built-in view UI into extension-owned components.
 
 ### EditorArea
 
@@ -70,7 +71,7 @@ Left/right status entries from contributions and platform services (branch name,
 
 ### CommandPalette
 
-Modal command search UI bound to `CommandRegistry` and `KeybindingRegistry` hints. Filters by context keys and command enablement.
+Modal command search UI bound to `CommandRegistry` and `KeybindingRegistry` hints. Filters by context keys and command enablement. Full palette ownership moves to `workbench-react` after the provider path is the default shell entry.
 
 ### Account menu entry
 
@@ -88,9 +89,9 @@ Status bar or activity area entry opening account/session UI. Uses `AccountServi
 
 Shell chrome uses `tokens` CSS variables. `react` primitive styles remain importable separately (`@workbench-kit/react/primitives.css` or equivalent).
 
-## Testing Strategy (future)
+## Testing Strategy
 
-- Storybook stories for shell regions with mock registries
+- Storybook story for the primary provider shell path
 - Integration tests with in-memory extension manifests
 - No dependency from `react` package tests on `workbench-react`
 
