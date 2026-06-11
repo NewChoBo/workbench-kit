@@ -38,9 +38,9 @@ Capabilities enable loose coupling (e.g. `filesystem-provider`, `auth-provider`)
 
 ### Engines
 
-| Field                  | Purpose                                                    |
-| ---------------------- | ---------------------------------------------------------- |
-| `engines.workbench`    | Semver range of supported workbench host version           |
+| Field                  | Purpose                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| `engines.workbench`    | Semver range of supported workbench host version             |
 | `engines.extensionApi` | Semver range of `@workbench-kit/workbench-extension-sdk` API |
 
 Mismatch fails manifest validation with a clear error.

@@ -1,6 +1,6 @@
 # Project Structure
 
-This document describes the intended repository layout for the Workbench Kit workbench evolution. Phase 0 establishes directories, schemas, and package skeletons only; runtime behavior is implemented in later phases.
+This document describes the intended repository layout for the Workbench Kit workbench evolution. See [Package Map](./package-map.md) for every package (including domain libraries) and [Migration Strategy](./migration-strategy.md) for bulk replacement milestones.
 
 ## Overview
 
@@ -18,7 +18,17 @@ workbench-kit/
 │   ├── workbench-extension-sdk/   # Stable extension contribution types and helpers
 │   ├── workbench-config/          # `.workbench` config loading and validation
 │   ├── workbench-vscode-adapter/  # Future VS Code export / mapping layer
-│   └── monaco/                    # Optional Monaco editor integration placeholder
+│   ├── monaco/                    # Optional Monaco editor integration placeholder
+│   ├── contracts/                 # Domain contracts (chat, save, patch, widget)
+│   ├── services/                  # Domain orchestration services
+│   ├── adapters/                  # Host/repo/runtime adapters
+│   ├── runtime/                   # Runtime utilities
+│   ├── workspace/                 # Workspace path/tree utilities
+│   ├── json-widget/               # @workbench-kit/jdw engine
+│   ├── jdw-editor/                # Screen spec editor
+│   ├── core/                      # Legacy — absorbed by platform (shim)
+│   ├── vscode-host/               # VS Code host bridge (legacy alignment)
+│   └── vscode-extension/          # VS Code extension bootstrap (legacy)
 ├── extensions/
 │   ├── builtin.accounts/
 │   ├── builtin.workspace/
@@ -91,13 +101,32 @@ Sample extensions under `extensions/samples.*` demonstrate minimal contribution 
 
 `examples/workbench-sample` (planned) will demonstrate assembling `workbench-react` with built-in extensions and a `.workbench` directory. Not implemented in Phase 0.
 
-## Coexistence with Existing Packages
+## Domain Packages (unchanged by shell migration)
 
-Phase 0 skeletons (`@workbench-kit/base`, `@workbench-kit/workbench-core`, and related packages) coexist with established packages such as `@workbench-kit/core`, `@workbench-kit/react`, and `@workbench-kit/tokens`. The names are similar but roles differ: `core` holds today’s command/context primitives; `workbench-core` will own the full registry shell. Public exports and existing examples must keep working until later phases wire or merge layers.
+| Package               | Role                                                          |
+| --------------------- | ------------------------------------------------------------- |
+| `contracts`           | Shared types for chat, save, patch, library, widget contracts |
+| `services`            | Save/chat/patch orchestration                                 |
+| `adapters`            | Repository, runtime transport, demo fixtures                  |
+| `runtime`             | Mock runtime and events                                       |
+| `workspace`           | Framework-neutral workspace paths and tree                    |
+| `json-widget` (`jdw`) | JDW parse, layout, screen-spec, widget documents              |
+| `jdw-editor`          | Screen spec editor UI                                         |
+
+These stay **outside** the extension host; React modules (`jdw`, `widget-tree`, etc.) consume them from `@workbench-kit/react` exports until a future optional split.
+
+## Migration Stance
+
+Bulk replacement is allowed for in-repo shell wiring. `@workbench-kit/core` merges into `@workbench-kit/platform`; `react/workbench` orchestration moves to `workbench-react` and built-in extensions. Details: [Migration Strategy](./migration-strategy.md).
 
 ## Related Documents
 
+- [Architecture Index](./README.md)
+- [Package Map](./package-map.md)
+- [Phase Roadmap](./phase-roadmap.md)
 - [Dependency Rules](./dependency-rules.md)
+- [Contribution Contracts](./contribution-contracts.md)
+- [Capability Model](./capability-model.md)
 - [Workbench Core](./workbench-core.md)
 - [Workbench React](./workbench-react.md)
 - [Extension System](./extension-system.md)

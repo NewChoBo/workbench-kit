@@ -17,6 +17,16 @@ Dependency direction enforces a VS Code–like layering: UI-independent core at 
 | `workbench-vscode-adapter`   | `workbench-extension-sdk`, `workbench-core`, `platform`, `base`                   |
 | `monaco`                     | `base`, `platform` (optional); may peer `react` for editor UI                     |
 | Built-in / sample extensions | `workbench-extension-sdk`; optional `workbench-vscode-adapter` for export tooling |
+| `contracts`                  | _(nothing in-repo required; keep acyclic)_                                        |
+| `services`                   | `contracts`                                                                       |
+| `adapters`                   | `contracts`, `services`, `runtime`, `workspace`, optionally `jdw`                 |
+| `runtime`                    | `contracts`                                                                       |
+| `workspace`                  | _(minimal / none)_                                                                |
+| `jdw` (`json-widget`)        | `contracts` (if needed)                                                           |
+| `jdw-editor`                 | `jdw`, `react` (peer)                                                             |
+| `vscode-host`                | `core` or `platform` (target: `platform` only)                                    |
+| `vscode-extension`           | `core` or `platform` (target: `platform` only)                                    |
+| `core` (legacy shim)         | `platform` (target after M1)                                                      |
 
 ### Extension Boundary
 
@@ -62,8 +72,14 @@ Phase 0 documents rules only. Later phases should add:
 - ESLint `import/no-restricted-paths` rules per package
 - CI job that fails on forbidden edges
 
+## Target State: No `core` in Graph
+
+After migration milestone M1, new code must not depend on `@workbench-kit/core`. The package remains a publish shim re-exporting `platform` until removed from npm.
+
 ## Related Documents
 
+- [Package Map](./package-map.md)
+- [Migration Strategy](./migration-strategy.md)
 - [Project Structure](./project-structure.md)
 - [Extension System](./extension-system.md)
 - [Security Boundary](./security-boundary.md)

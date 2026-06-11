@@ -1,4 +1,5 @@
-/** Phase 0 placeholder — extension SDK types arrive in a later phase. */
+import type { ExtensionContributes } from './contributions.js';
+
 export const WORKBENCH_KIT_EXTENSION_SDK_VERSION = '0.0.0' as const;
 
 export type ExtensionManifestSchemaVersion = 1;
@@ -15,5 +16,25 @@ export type WorkbenchExtensionManifest = {
     extensionApi: string;
   };
   activationEvents: string[];
-  contributes?: Record<string, unknown>;
+  contributes?: ExtensionContributes;
+  extensionDependencies?: string[];
+  permissions?: string[];
 };
+
+export type {
+  ActivateFunction,
+  ActivityContribution,
+  CommandContribution,
+  ConfigurationContribution,
+  ConfigurationPropertyContribution,
+  ConfigurationPropertyScope,
+  DeactivateFunction,
+  ExtensionContext,
+  ExtensionContributes,
+  KeybindingContribution,
+  MenuContribution,
+  ViewContainerContribution,
+  ViewContribution,
+  ViewHost,
+  ViewProvider,
+} from './contributions.js';
