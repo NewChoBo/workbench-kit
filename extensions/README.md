@@ -35,6 +35,7 @@ activation handlers.
 
 ```powershell
 node scripts/bundle-workbench-extensions.mjs
+pnpm check:extension-manifests
 node scripts/check-workbench-dependency-graph.mjs
 pnpm validate:full
 ```

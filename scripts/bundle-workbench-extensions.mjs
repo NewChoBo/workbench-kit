@@ -2,6 +2,12 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  formatManifestViolations,
+  readWorkbenchExtensionManifestEntries,
+  validateWorkbenchExtensionManifests,
+} from './workbench-extension-manifest-utils.mjs';
+
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const extensionsRoot = path.join(repoRoot, 'extensions');
 const outputPath = path.join(
@@ -23,6 +29,15 @@ const extensionGroups = [
     prefix: 'samples.',
   },
 ];
+
+const manifestEntries = await readWorkbenchExtensionManifestEntries(repoRoot);
+const manifestViolations = validateWorkbenchExtensionManifests(manifestEntries, repoRoot);
+
+if (manifestViolations.length > 0) {
+  console.error('Workbench extension manifest check failed.');
+  console.error(formatManifestViolations(manifestViolations));
+  process.exit(1);
+}
 
 const directoryEntries = await readdir(extensionsRoot, { withFileTypes: true });
 const extensionDirectories = directoryEntries
