@@ -137,3 +137,20 @@ export function createWidgetJsonSchema(
 }
 
 export const DEMO_WIDGET_JSON_SCHEMA = createWidgetJsonSchema();
+
+/** Monaco/JSON schema for JDW v7 document roots (`type` + `args` envelope). */
+export function createJdwDocumentJsonSchema(): WidgetJsonSchema {
+  return {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    title: 'JdwDocumentSchema',
+    type: 'object',
+    required: ['type', 'args'],
+    properties: {
+      type: { type: 'string', minLength: 1 },
+      id: { type: 'string' },
+      listen: { type: 'array', items: { type: 'string' } },
+      args: { type: 'object' },
+    },
+    additionalProperties: false,
+  };
+}

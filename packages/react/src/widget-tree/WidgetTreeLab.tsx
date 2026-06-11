@@ -3,19 +3,22 @@ import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import type { WidgetAssetCatalogContract, WidgetPlacementAsset } from '@workbench-kit/contracts';
 import {
   applyWidgetDocumentPatch,
+  createJdwDocumentJsonSchema,
   createWidgetDocument,
-  createWidgetJsonSchema,
   firstSelectedWidgetPath,
   getWidgetAtPath,
   getWidgetChildren,
   materializeWidgetPlacementAsset,
+  normalizeWidgetForParent,
   ROOT_WIDGET_PATH,
   selectWidgetPath,
+  validateJsonWidgetData,
   type GenericWidget,
   type WidgetPath,
   type WidgetSelectionState,
 } from '@workbench-kit/jdw';
 
+import { ResizablePanels } from '../primitives/WorkbenchEditor.js';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import { JdwPreview } from '../jdw/JdwPreview.js';
 import { WidgetAssetPalette } from './WidgetAssetPalette.js';
@@ -55,10 +58,33 @@ export function WidgetTreeLab({
 }: WidgetTreeLabProps) {
   const resolvedMode = resolveWidgetTreeLabMode(viewMode);
   const document = useMemo(() => createWidgetDocument(value), [value]);
-  const jsonSchema = useMemo(
-    () => (registry ? createWidgetJsonSchema(registry.definitions()) : null),
+  const jsonSchema = useMemo(() => createJdwDocumentJsonSchema(), []);
+  const registeredTypes = useMemo(
+    () => registry?.definitions().map((definition) => definition.type),
     [registry],
   );
+  const validation = useMemo(() => {
+    if (document.parseError !== null) {
+      return null;
+    }
+
+    return validateJsonWidgetData(value, {
+      registeredTypes,
+      strictKnownTypes: Boolean(registry),
+    });
+  }, [document.parseError, registry, registeredTypes, value]);
+  const sourceValidationError = useMemo(() => {
+    if (document.parseError !== null) {
+      return document.parseError;
+    }
+
+    if (!validation || validation.valid || validation.issues.length === 0) {
+      return null;
+    }
+
+    const [firstIssue] = validation.issues;
+    return firstIssue ? `${firstIssue.path}: ${firstIssue.message}` : null;
+  }, [document.parseError, validation]);
 
   const [selection, setSelection] = useState<WidgetSelectionState>({ pathKeys: new Set() });
 
@@ -102,10 +128,14 @@ export function WidgetTreeLab({
 
   const handleInspectorPatch = (nextWidget: GenericWidget) => {
     if (!selectedPath) return;
+    const widget =
+      parentWidget !== null
+        ? normalizeWidgetForParent(nextWidget, parentWidget)
+        : nextWidget;
     applyPatch({
       type: 'replace-widget',
       path: selectedPath,
-      widget: nextWidget,
+      widget,
     });
   };
 
@@ -137,9 +167,10 @@ export function WidgetTreeLab({
   const sourcePane = (
     <WidgetSourceEditor
       jsonSchema={jsonSchema}
-      parseError={document.parseError}
+      parseError={sourceValidationError}
       path={path}
       readOnly={readOnly}
+      showProblemsPanel
       theme={theme}
       value={value}
       onChange={onChange}
@@ -212,11 +243,32 @@ export function WidgetTreeLab({
       data-mode="design"
       data-testid="widget-tree-lab"
     >
-      <div className="widget-tree-lab__design" data-testid="widget-tree-workspace">
-        <div className="widget-tree-lab__design-source">{sourcePane}</div>
-        <div className="widget-tree-lab__design-preview">{previewPane}</div>
-        <div className="widget-tree-lab__design-side">{sidePanel}</div>
-      </div>
+      <ResizablePanels
+        className="widget-tree-lab__design"
+        data-testid="widget-tree-workspace"
+        defaultFirstSize={560}
+        minFirstSize={360}
+        minSecondSize={280}
+        style={{ height: '100%', minHeight: 0 }}
+        first={
+          <ResizablePanels
+            className="widget-tree-lab__design-data"
+            data-testid="widget-tree-lab-data-pane"
+            defaultFirstSize={320}
+            direction="vertical"
+            minFirstSize={160}
+            minSecondSize={180}
+            style={{ height: '100%', minHeight: 0 }}
+            first={<div className="widget-tree-lab__design-source">{sourcePane}</div>}
+            second={<div className="widget-tree-lab__design-tools">{sidePanel}</div>}
+          />
+        }
+        second={
+          <div className="widget-tree-lab__design-render" data-testid="widget-tree-lab-render-pane">
+            {previewPane}
+          </div>
+        }
+      />
     </div>
   );
 }

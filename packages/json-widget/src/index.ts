@@ -95,7 +95,11 @@ export {
   formatWidgetDocumentJson,
 } from './document.js';
 
-export { createWidgetJsonSchema, DEMO_WIDGET_JSON_SCHEMA } from './widget-json-schema.js';
+export {
+  createJdwDocumentJsonSchema,
+  createWidgetJsonSchema,
+  DEMO_WIDGET_JSON_SCHEMA,
+} from './widget-json-schema.js';
 export {
   WORKBENCH_JDW_PROFILE,
   WORKBENCH_JDW_BUILTIN_TYPES,

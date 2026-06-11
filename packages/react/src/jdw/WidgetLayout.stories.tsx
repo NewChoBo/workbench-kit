@@ -75,6 +75,7 @@ type Story = StoryObj<typeof meta>;
 
 export const RowFlexRects: Story = {
   args: { json: JDW_FIXTURE_ROW_FLEX },
+  tags: ['storybook-play-baseline'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('widget-layout-fixture')).toBeVisible();
@@ -84,6 +85,7 @@ export const RowFlexRects: Story = {
 
 export const GridCellRects: Story = {
   args: { json: JDW_FIXTURE_GRID_CELLS },
+  tags: ['storybook-play-baseline'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('widget-layout-fixture')).toBeVisible();

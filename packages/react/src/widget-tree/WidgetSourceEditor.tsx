@@ -14,6 +14,7 @@ export interface WidgetSourceEditorProps {
   readonly parseError?: string | null | undefined;
   readonly jsonSchema?: WidgetJsonSchema | null | undefined;
   readonly readOnly?: boolean | undefined;
+  readonly showProblemsPanel?: boolean | undefined;
   readonly theme?: WorkspaceEditorTheme | undefined;
 }
 
@@ -25,6 +26,7 @@ export function WidgetSourceEditor({
   parseError = null,
   jsonSchema = null,
   readOnly = false,
+  showProblemsPanel = false,
   theme = 'dark',
 }: WidgetSourceEditorProps) {
   const file = useMemo<WorkspaceFile>(
@@ -43,7 +45,7 @@ export function WidgetSourceEditor({
         file={file}
         jsonSchema={jsonSchema}
         readOnly={readOnly}
-        showProblemsPanel={false}
+        showProblemsPanel={showProblemsPanel}
         theme={theme}
         value={value}
         onChange={onChange}
