@@ -29,7 +29,6 @@ export const NPM_PUBLISH_ORDER = [
   '@workbench-kit/workbench-extension-sdk',
   '@workbench-kit/workbench-config',
   '@workbench-kit/jdw',
-  '@workbench-kit/jdw-editor',
   '@workbench-kit/core',
   '@workbench-kit/runtime',
   '@workbench-kit/tokens',
@@ -37,4 +36,5 @@ export const NPM_PUBLISH_ORDER = [
   '@workbench-kit/adapters',
   '@workbench-kit/services',
   '@workbench-kit/react',
+  '@workbench-kit/jdw-editor',
 ];

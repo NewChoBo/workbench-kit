@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react';
 
 import { compileScreenSpecText } from '@workbench-kit/jdw';
-
-import { Panel, PanelBody, PanelHeader } from '../layout/Panel.js';
-import { WorkbenchParseError } from '../layout/WorkbenchPropertyPanel.js';
-import { Field } from '../primitives/Field.js';
-import { Select } from '../primitives/Select.js';
-import { SegmentedControl } from '../primitives/WorkbenchEditor.js';
-import { ScreenSpecEditor, useScreenSpecPipeline } from '@workbench-kit/jdw-editor';
-import { SplitView } from '../workbench/SplitView.js';
-import { JdwPreview } from '../jdw/JdwPreview.js';
+import { JdwPreview } from '@workbench-kit/react/jdw/preview';
 import {
-  formatJdwSampleScreenSpec,
   JDW_SAMPLE_SCREENS,
+  formatJdwSampleScreenSpec,
   type JdwSampleScreenDefinition,
-} from './fixtures/jdw-sample-screens.js';
+} from '@workbench-kit/react/jdw/samples';
+import {
+  Field,
+  Panel,
+  PanelBody,
+  PanelHeader,
+  Select,
+  SegmentedControl,
+  WorkbenchParseError,
+} from '@workbench-kit/react/primitives';
+import { SplitView } from '@workbench-kit/react/workbench/shell';
+
+import { ScreenSpecEditor } from './ScreenSpecEditor.js';
+import { useScreenSpecPipeline } from './useScreenSpecPipeline.js';
 
 export type JdwSampleSourceView = 'editor' | 'jdw';
 
