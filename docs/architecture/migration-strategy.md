@@ -100,7 +100,7 @@ This document defines how Workbench Kit moves from the **current published stack
 | 2    | Remove the legacy `core` package from the workspace and publish order                                          |
 | 3    | Update README package list and private-preview shell package notes                                             |
 | 4    | Add `check:dependency-graph` and wire it into `pnpm validate` as the dependency-cruiser equivalent for this M5 |
-| 5    | Remove VS Code bridge packages; future VS Code work starts from `workbench-vscode-adapter` if needed           |
+| 5    | Remove VS Code bridge and adapter packages; future VS Code work is outside the current package graph           |
 
 ## What Not to Bulk-Replace
 

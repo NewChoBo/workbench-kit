@@ -280,21 +280,6 @@ importers:
         specifier: ^19.0.0
         version: 19.2.7(react@19.2.7)
 
-  packages/workbench-vscode-adapter:
-    dependencies:
-      '@workbench-kit/base':
-        specifier: workspace:*
-        version: link:../base
-      '@workbench-kit/platform':
-        specifier: workspace:*
-        version: link:../platform
-      '@workbench-kit/workbench-core':
-        specifier: workspace:*
-        version: link:../workbench-core
-      '@workbench-kit/workbench-extension-sdk':
-        specifier: workspace:*
-        version: link:../workbench-extension-sdk
-
   packages/workspace: {}
 
 packages:

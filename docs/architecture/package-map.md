@@ -14,16 +14,15 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 
 ## Shell Stack (target architecture)
 
-| Package                                   | Current state                                                                        | Target role                                                                          | Action                                                                      |
-| ----------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `@workbench-kit/base`                     | Phase 5: public-ready foundation package                                             | Foundation utilities                                                                 | **Keep**                                                                    |
-| `@workbench-kit/platform`                 | Phase 5: public-ready canonical platform package                                     | Canonical platform services (commands, context, keybindings, config/auth interfaces) | **Keep** — **absorbed `core`**                                              |
-| `@workbench-kit/workbench-core`           | Phase 4: registries, extension activation, layout, bundled modules (private preview) | Extension registry, menu/view/layout registries, host orchestration                  | **Keep**                                                                    |
-| `@workbench-kit/workbench-react`          | Phase 3: provider and registry-backed shell wiring (private preview)                 | WorkbenchProvider, shell wiring, palette/account entry                               | **Keep** — **absorbs `react/workbench` orchestration**                      |
-| `@workbench-kit/workbench-extension-sdk`  | Phase 5: public-ready manifest plus command/view provider context APIs               | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
-| `@workbench-kit/workbench-config`         | Phase 5: public-ready `.workbench/extensions.json` parsing                           | `.workbench` load/merge/validate                                                     | **Keep**                                                                    |
-| `@workbench-kit/workbench-vscode-adapter` | Skeleton                                                                             | Opt-in VS Code manifest mapping                                                      | **Keep**                                                                    |
-| `@workbench-kit/monaco`                   | Skeleton                                                                             | Editor integration                                                                   | **Keep** (optional)                                                         |
+| Package                                  | Current state                                                                        | Target role                                                                          | Action                                                                      |
+| ---------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `@workbench-kit/base`                    | Phase 5: public-ready foundation package                                             | Foundation utilities                                                                 | **Keep**                                                                    |
+| `@workbench-kit/platform`                | Phase 5: public-ready canonical platform package                                     | Canonical platform services (commands, context, keybindings, config/auth interfaces) | **Keep** — **absorbed `core`**                                              |
+| `@workbench-kit/workbench-core`          | Phase 4: registries, extension activation, layout, bundled modules (private preview) | Extension registry, menu/view/layout registries, host orchestration                  | **Keep**                                                                    |
+| `@workbench-kit/workbench-react`         | Phase 3: provider and registry-backed shell wiring (private preview)                 | WorkbenchProvider, shell wiring, palette/account entry                               | **Keep** — **absorbs `react/workbench` orchestration**                      |
+| `@workbench-kit/workbench-extension-sdk` | Phase 5: public-ready manifest plus command/view provider context APIs               | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
+| `@workbench-kit/workbench-config`        | Phase 5: public-ready `.workbench/extensions.json` parsing                           | `.workbench` load/merge/validate                                                     | **Keep**                                                                    |
+| `@workbench-kit/monaco`                  | Skeleton                                                                             | Editor integration                                                                   | **Keep** (optional)                                                         |
 
 ## UI Stack
 
@@ -85,7 +84,8 @@ workbench-react ──► react ──► tokens
 domain (contracts, services, adapters, jdw, …) ──► consumed by react / extensions / adapters
 ```
 
-The legacy `core`, `vscode-host`, and `vscode-extension` packages are removed from the target graph.
+The legacy `core`, `vscode-host`, `vscode-extension`, and `workbench-vscode-adapter`
+packages are removed from the target graph.
 
 ## Related Documents
 
