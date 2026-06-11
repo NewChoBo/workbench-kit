@@ -67,6 +67,24 @@ describe('ExtensionRegistry', () => {
     expect(registry.isActive('workbench-kit.samples.hello-world')).toBe(true);
   });
 
+  it('executes command handlers registered during activation', async () => {
+    const registry = new ExtensionRegistry();
+    registry.registerExtension({
+      ...helloWorldExtension,
+      module: {
+        activate: (context) => {
+          context.commands.registerCommand('workbench-kit.samples.hello-world.sayHello', () => {
+            return `hello from ${context.extensionId}`;
+          });
+        },
+      },
+    });
+
+    await expect(
+      registry.executeCommand('workbench-kit.samples.hello-world.sayHello'),
+    ).resolves.toBe('hello from workbench-kit.samples.hello-world');
+  });
+
   it('normalizes views, view containers, menus, activities, and configuration', () => {
     const registry = new ExtensionRegistry();
     registry.registerExtension({

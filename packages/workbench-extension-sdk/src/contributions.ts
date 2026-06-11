@@ -1,4 +1,5 @@
 import type { Disposable } from '@workbench-kit/base';
+import type { CommandServiceHandler } from '@workbench-kit/platform';
 
 /** Stable contribution types for workbench.extension.json and activate() registration. */
 
@@ -80,10 +81,15 @@ export interface ViewProvider {
 }
 
 export interface ExtensionContext {
+  readonly commands: ExtensionCommandRegistry;
   readonly extensionId: string;
   readonly extensionPath: string;
   readonly subscriptions: { add(disposable: Disposable): void };
   getCapability<T>(capabilityId: string): T | undefined;
+}
+
+export interface ExtensionCommandRegistry {
+  registerCommand(commandId: string, handler: CommandServiceHandler): Disposable;
 }
 
 export type ActivateFunction = (context: ExtensionContext) => void | Promise<void> | Disposable;

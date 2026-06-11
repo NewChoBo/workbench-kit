@@ -1,8 +1,11 @@
 import { DisposableStore, isDisposable, toDisposable, type Disposable } from '@workbench-kit/base';
 import {
   CommandRegistry,
+  CommandNoHandlerError,
+  CommandNotFoundError,
   KeybindingRegistry,
   type CommandDefinition,
+  type CommandServiceHandler,
   type KeybindingDefinition,
 } from '@workbench-kit/platform';
 import type {
@@ -165,6 +168,21 @@ export class ExtensionRegistry implements Disposable {
     return this.activateByEvent(`onView:${viewId}`);
   }
 
+  async executeCommand(commandId: string, ...args: unknown[]): Promise<unknown> {
+    await this.activateCommand(commandId);
+
+    const command = this.commands.getCommand(commandId);
+    if (!command) {
+      throw new CommandNotFoundError(commandId);
+    }
+
+    if (!command.handler) {
+      throw new CommandNoHandlerError(commandId);
+    }
+
+    return await command.handler(...args);
+  }
+
   async activateExtension(extensionId: string): Promise<ActivatedExtension> {
     const active = this.activeExtensions.get(extensionId);
     if (active) {
@@ -271,11 +289,35 @@ export class ExtensionRegistry implements Disposable {
     subscriptions: DisposableStore,
   ): ExtensionContext {
     return {
+      commands: {
+        registerCommand: (commandId, handler) =>
+          subscriptions.add(this.registerCommandHandler(commandId, handler)),
+      },
       extensionId: description.manifest.id,
       extensionPath: description.extensionPath ?? '',
       getCapability: <T>(capabilityId: string) => this.capabilities.get(capabilityId) as T,
       subscriptions,
     };
+  }
+
+  private registerCommandHandler(commandId: string, handler: CommandServiceHandler): Disposable {
+    const command = this.commands.getCommand(commandId);
+    if (!command) {
+      return this.commands.registerCommand({
+        handler,
+        id: commandId,
+        title: commandId,
+      });
+    }
+
+    const previousHandler = command.handler;
+    command.handler = handler;
+
+    return toDisposable(() => {
+      if (command.handler === handler) {
+        command.handler = previousHandler;
+      }
+    });
   }
 
   private registerContributions(

@@ -29,6 +29,7 @@ export type {
   ConfigurationPropertyContribution,
   ConfigurationPropertyScope,
   DeactivateFunction,
+  ExtensionCommandRegistry,
   ExtensionContext,
   ExtensionContributes,
   KeybindingContribution,
