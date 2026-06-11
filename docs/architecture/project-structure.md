@@ -25,10 +25,7 @@ workbench-kit/
 │   ├── runtime/                   # Runtime utilities
 │   ├── workspace/                 # Workspace path/tree utilities
 │   ├── json-widget/               # @workbench-kit/jdw engine
-│   ├── jdw-editor/                # Screen spec editor
-│   ├── core/                      # Legacy — absorbed by platform (shim)
-│   ├── vscode-host/               # VS Code host bridge (legacy alignment)
-│   └── vscode-extension/          # VS Code extension bootstrap (legacy)
+│   └── jdw-editor/                # Screen spec editor
 ├── extensions/
 │   ├── builtin.accounts/
 │   ├── builtin.workspace/
@@ -117,7 +114,7 @@ These stay **outside** the extension host; React modules (`jdw`, `widget-tree`, 
 
 ## Migration Stance
 
-Bulk replacement is allowed for in-repo shell wiring. `@workbench-kit/core` merges into `@workbench-kit/platform`; `react/workbench` orchestration moves to `workbench-react` and built-in extensions. Details: [Migration Strategy](./migration-strategy.md).
+Bulk replacement is allowed for in-repo shell wiring. `@workbench-kit/platform` owns the former core command/context surface; `react/workbench` orchestration moves to `workbench-react` and built-in extensions. Details: [Migration Strategy](./migration-strategy.md).
 
 ## Related Documents
 

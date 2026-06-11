@@ -18,10 +18,9 @@ prototype package files.
 Supported public imports are shaped like:
 
 ```ts
-import { CommandRegistry } from '@workbench-kit/core';
+import { CommandRegistry } from '@workbench-kit/platform';
 import { WorkbenchShell } from '@workbench-kit/react/workbench';
 import { WorkbenchStructuredDataForm } from '@workbench-kit/react/workbench/settings';
-import { createWorkbenchHostBridge } from '@workbench-kit/vscode-host/bridge';
 import { createLaunchpadLibraryItemTileBinding } from '@workbench-kit/contracts';
 import {
   normalizeWidgetRendererEvent,
@@ -51,22 +50,19 @@ surface first, then rewire the story to consume that surface.
 
 Packages should keep runtime assumptions explicit:
 
-| Surface                           | Runtime policy                                                                |
-| --------------------------------- | ----------------------------------------------------------------------------- |
-| `@workbench-kit/tokens`           | Browser-safe CSS and token metadata.                                          |
-| `@workbench-kit/core`             | Framework-neutral and browser-safe command/context primitives.                |
-| `@workbench-kit/contracts`        | Framework-neutral data contracts without browser or Node side effects.        |
-| `@workbench-kit/workspace`        | Framework-neutral workspace data helpers without host I/O ownership.          |
-| `@workbench-kit/runtime`          | Runtime event contracts and mock runtime utilities without UI ownership.      |
-| `@workbench-kit/react`            | Browser/React UI entrypoints; no direct Node, filesystem, or host API calls.  |
-| `@workbench-kit/services`         | Service orchestration over explicit adapters and contracts.                   |
-| `@workbench-kit/adapters`         | Adapter helpers that isolate story/test transport wiring from core contracts. |
-| `@workbench-kit/vscode-host`      | Host bridge/runtime bindings for VS Code-style hosts.                         |
-| `@workbench-kit/vscode-extension` | Extension bootstrap helpers; standalone work remains the current priority.    |
+| Surface                    | Runtime policy                                                                |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| `@workbench-kit/tokens`    | Browser-safe CSS and token metadata.                                          |
+| `@workbench-kit/platform`  | Framework-neutral and browser-safe command/context primitives.                |
+| `@workbench-kit/contracts` | Framework-neutral data contracts without browser or Node side effects.        |
+| `@workbench-kit/workspace` | Framework-neutral workspace data helpers without host I/O ownership.          |
+| `@workbench-kit/runtime`   | Runtime event contracts and mock runtime utilities without UI ownership.      |
+| `@workbench-kit/react`     | Browser/React UI entrypoints; no direct Node, filesystem, or host API calls.  |
+| `@workbench-kit/services`  | Service orchestration over explicit adapters and contracts.                   |
+| `@workbench-kit/adapters`  | Adapter helpers that isolate story/test transport wiring from core contracts. |
 
 Browser-safe packages must not import Node-only modules, extension globals, or
-host APIs. Host-specific packages may depend on neutral contracts and services,
-but host behavior should stay behind explicit adapter or bridge entrypoints.
+host APIs. Host behavior should stay behind explicit adapter entrypoints.
 
 ## Public API Change Checklist
 

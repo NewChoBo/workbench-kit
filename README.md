@@ -16,7 +16,6 @@ change while the first consuming apps harden the model.
 - `@workbench-kit/base`: foundation utilities for disposables, events, and lifecycle
 - `@workbench-kit/tokens`: framework-neutral CSS variables and base theme values
 - `@workbench-kit/platform`: framework-neutral command, context-key, keybinding, and service primitives
-- `@workbench-kit/core`: deprecated compatibility shim that re-exports `@workbench-kit/platform`
 - `@workbench-kit/workbench-extension-sdk`: extension manifest, command, and view provider APIs
 - `@workbench-kit/workbench-config`: `.workbench` configuration parsing and validation
 - `@workbench-kit/contracts`: shared chat, save, patch, library, launchpad mapping, widget renderer, and plugin contracts
@@ -33,15 +32,13 @@ change while the first consuming apps harden the model.
 - `@workbench-kit/workbench-core`: framework-neutral extension registry, layout, and host orchestration
 - `@workbench-kit/workbench-react`: React provider and shell assembly over `workbench-core`
 - `@workbench-kit/workbench-vscode-adapter`: future opt-in VS Code manifest adapter
-- `@workbench-kit/vscode-host`: legacy VS Code-style host bridge utilities
-- `@workbench-kit/vscode-extension`: legacy VS Code extension bootstrap helpers
 - `@workbench-kit/monaco`: future optional Monaco integration
 
 ## Headless packages
 
-Framework-neutral packages (`base`, `platform`, `core`, `workbench-extension-sdk`,
+Framework-neutral packages (`base`, `platform`, `workbench-extension-sdk`,
 `workbench-config`, `workspace`, `services`, `runtime`, `adapters`) are usable
-without React. See the **Headless/Core Commands** Storybook story for command
+without React. See the **Headless/Platform Commands** Storybook story for command
 registry and when-clause visibility, and package README files under
 `packages/*/README.md` where present.
 
@@ -102,11 +99,9 @@ The workflow runs on published GitHub releases and pushed tags matching
 `v*` or `workbench-kit-v*`. The tag must match the root package version, such
 as `v0.0.1-prototype.0` or `workbench-kit-v0.0.1-prototype.0`.
 
-The current publish pipeline excludes private-preview shell and VS Code bridge
-packages. The full `workbench-core` / `workbench-react` shell stack remains
-private preview until bundled extension modules are packaged as public-safe
-artifacts. The legacy `vscode-host` / `vscode-extension` bridge is kept for
-workspace compatibility only.
+The current publish pipeline excludes private-preview shell packages. The full
+`workbench-core` / `workbench-react` shell stack remains private preview until
+bundled extension modules are packaged as public-safe artifacts.
 
 ## Conventions
 

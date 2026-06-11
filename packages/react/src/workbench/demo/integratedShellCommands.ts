@@ -1,9 +1,11 @@
 import {
   createCommandRegistryFromContributions,
+  findCommandDefinitionConflicts,
+  mergeCommandContributions,
   type CommandContributionInput,
+  type CommandConflictPolicy,
   type CommandMenuEntry,
 } from '@workbench-kit/platform';
-import { preflightCommandContributionConflict } from '@workbench-kit/vscode-extension';
 import {
   createWorkbenchShellCommands,
   createWorkbenchShellMenuEntries,
@@ -34,17 +36,21 @@ const integratedShellCommandContributions: CommandContributionInput<IntegratedSh
     { commands: createWorkbenchWorkspaceCommands<IntegratedShellCommandContext>() },
   ];
 
-const integratedShellCommandPreflight =
-  preflightCommandContributionConflict<IntegratedShellCommandContext>(
+const integratedShellMergedCommands = mergeCommandContributions<IntegratedShellCommandContext>(
+  ...integratedShellCommandContributions,
+).commands;
+
+const integratedShellCommandConflicts =
+  findCommandDefinitionConflicts<IntegratedShellCommandContext>(integratedShellMergedCommands);
+
+export const integratedShellCommandPolicy: CommandConflictPolicy =
+  integratedShellCommandConflicts.length === 0 ? 'hard-fail' : 'last-write-wins';
+
+export const integratedShellCommandRegistry =
+  createCommandRegistryFromContributions<IntegratedShellCommandContext>(
     integratedShellCommandContributions,
+    { conflictPolicy: integratedShellCommandPolicy },
   );
-
-export const integratedShellCommandRegistry = integratedShellCommandPreflight.commandRegistry;
-
-export const integratedShellCommandPolicy =
-  integratedShellCommandPreflight.commandConflicts.length === 0
-    ? 'hard-fail'
-    : ('last-write-wins' as const);
 
 export const integratedShellShellCommandRegistry = createCommandRegistryFromContributions<
   WorkbenchShellCommandContext<IntegratedShellActivityId>

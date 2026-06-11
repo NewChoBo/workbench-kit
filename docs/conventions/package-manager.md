@@ -30,7 +30,7 @@ For scoped work, use package filters:
 
 ```powershell
 pnpm --filter @workbench-kit/react typecheck
-pnpm --filter @workbench-kit/vscode-host test
+pnpm --filter @workbench-kit/platform test
 ```
 
 ## Exception Handling

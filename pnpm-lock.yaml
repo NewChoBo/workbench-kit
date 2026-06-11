@@ -134,12 +134,6 @@ importers:
         specifier: ^8.5.0
         version: 8.5.1(@swc/core@1.15.40)(postcss@8.5.15)(typescript@5.9.3)
 
-  packages/core:
-    dependencies:
-      '@workbench-kit/platform':
-        specifier: workspace:*
-        version: link:../platform
-
   packages/jdw-editor:
     dependencies:
       '@workbench-kit/jdw':
@@ -214,10 +208,6 @@ importers:
       react-markdown:
         specifier: ^10.1.0
         version: 10.1.0(@types/react@19.2.16)(react@19.2.7)
-    devDependencies:
-      '@workbench-kit/vscode-extension':
-        specifier: workspace:*
-        version: link:../vscode-extension
 
   packages/runtime:
     dependencies:
@@ -232,36 +222,6 @@ importers:
         version: link:../contracts
 
   packages/tokens: {}
-
-  packages/vscode-extension:
-    dependencies:
-      '@workbench-kit/adapters':
-        specifier: workspace:*
-        version: link:../adapters
-      '@workbench-kit/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@workbench-kit/platform':
-        specifier: workspace:*
-        version: link:../platform
-      '@workbench-kit/services':
-        specifier: workspace:*
-        version: link:../services
-      '@workbench-kit/vscode-host':
-        specifier: workspace:*
-        version: link:../vscode-host
-
-  packages/vscode-host:
-    dependencies:
-      '@workbench-kit/contracts':
-        specifier: workspace:*
-        version: link:../contracts
-      '@workbench-kit/platform':
-        specifier: workspace:*
-        version: link:../platform
-      '@workbench-kit/services':
-        specifier: workspace:*
-        version: link:../services
 
   packages/workbench-config:
     dependencies:
