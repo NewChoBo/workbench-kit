@@ -4,26 +4,26 @@ Dependency direction enforces a VS Code–like layering: UI-independent core at 
 
 ## Allowed Dependencies
 
-| Package                      | May depend on                                                                                                                            |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `base`                       | _(nothing in-repo)_                                                                                                                      |
-| `platform`                   | `base`                                                                                                                                   |
-| `tokens`                     | _(no React; optional dev-only tooling)_                                                                                                  |
-| `react`                      | `tokens`, `platform`, domain packages used by presentational surfaces; workspace-only demos may dev-depend on the private VS Code bridge |
-| `workbench-extension-sdk`    | `base`, `platform` (types and minimal utilities only)                                                                                    |
-| `workbench-config`           | `base`, `platform`, schemas (as data)                                                                                                    |
-| `workbench-core`             | `base`, `platform`, `workbench-extension-sdk`, `workbench-config`                                                                        |
-| `workbench-react`            | `react`, `workbench-core`, `workbench-config`, `platform`, `tokens`                                                                      |
-| `workbench-vscode-adapter`   | `workbench-extension-sdk`, `workbench-core`, `platform`, `base`                                                                          |
-| `monaco`                     | `base`, `platform` (optional); may peer `react` for editor UI                                                                            |
-| Built-in / sample extensions | `workbench-extension-sdk`; optional `workbench-vscode-adapter` for export tooling                                                        |
-| `contracts`                  | _(nothing in-repo required; keep acyclic)_                                                                                               |
-| `services`                   | `contracts`                                                                                                                              |
-| `adapters`                   | `contracts`, `runtime`, `workspace`, optionally `jdw`                                                                                    |
-| `runtime`                    | `contracts`                                                                                                                              |
-| `workspace`                  | _(minimal / none)_                                                                                                                       |
-| `jdw` (`json-widget`)        | `contracts` (if needed)                                                                                                                  |
-| `jdw-editor`                 | `jdw`, `react` (peer); owns ScreenSpec editor UI and JDW sample explorer                                                                 |
+| Package                      | May depend on                                                                                                               |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `base`                       | _(nothing in-repo)_                                                                                                         |
+| `platform`                   | `base`                                                                                                                      |
+| `tokens`                     | _(no React; optional dev-only tooling)_                                                                                     |
+| `react`                      | `tokens`, `platform`, domain packages used by presentational surfaces; workspace-only demos use local helpers over services |
+| `workbench-extension-sdk`    | `base`, `platform` (types and minimal utilities only)                                                                       |
+| `workbench-config`           | `base`, `platform`, schemas (as data)                                                                                       |
+| `workbench-core`             | `base`, `platform`, `workbench-extension-sdk`, `workbench-config`                                                           |
+| `workbench-react`            | `react`, `workbench-core`, `workbench-config`, `platform`, `tokens`                                                         |
+| `workbench-vscode-adapter`   | `workbench-extension-sdk`, `workbench-core`, `platform`, `base`                                                             |
+| `monaco`                     | `base`, `platform` (optional); may peer `react` for editor UI                                                               |
+| Built-in / sample extensions | `workbench-extension-sdk`; optional `workbench-vscode-adapter` for export tooling                                           |
+| `contracts`                  | _(nothing in-repo required; keep acyclic)_                                                                                  |
+| `services`                   | `contracts`                                                                                                                 |
+| `adapters`                   | `contracts`, `runtime`, `workspace`, optionally `jdw`                                                                       |
+| `runtime`                    | `contracts`                                                                                                                 |
+| `workspace`                  | _(minimal / none)_                                                                                                          |
+| `jdw` (`json-widget`)        | `contracts` (if needed)                                                                                                     |
+| `jdw-editor`                 | `jdw`, `react` (peer); owns ScreenSpec editor UI and JDW sample explorer                                                    |
 
 ### Extension Boundary
 
@@ -75,9 +75,9 @@ peer-depend on private workspace packages. It also rejects runtime workspace
 dependency cycles. It is wired into `pnpm validate`. Future work may replace or
 augment it with `dependency-cruiser` or ESLint restricted-path rules.
 
-`@workbench-kit/react` may keep a dev-only edge to the private VS Code bridge
-for Storybook demo sources, but that edge must not appear in published
-dependencies or npm export paths.
+`@workbench-kit/react` must not keep a runtime or dev dependency on removed VS
+Code bridge packages. Storybook demo sources should use local helpers over
+`@workbench-kit/services` and public platform contracts.
 
 ## Target State: No Legacy Compatibility Packages
 

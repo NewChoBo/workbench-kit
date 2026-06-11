@@ -41,7 +41,7 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 **Exit criteria**
 
 - [x] M1 plan approved ([Migration Strategy](./migration-strategy.md))
-- [x] When-clause: single implementation path decided (`platform`; `core` is a shim)
+- [x] When-clause: single implementation path decided (`platform`; legacy `core` removed)
 - [x] Platform packages typecheck and test locally
 - [x] No new orchestration code in `react/workbench` unless behind migration ticket
 
