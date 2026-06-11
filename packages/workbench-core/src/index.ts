@@ -12,6 +12,13 @@ export {
   type WorkbenchExtensionModule,
 } from './extension-registry.js';
 export {
+  createWorkbenchLayoutState,
+  LayoutService,
+  type WorkbenchLayoutChangeEvent,
+  type WorkbenchLayoutState,
+  type WorkbenchLayoutStateInput,
+} from './layout-service.js';
+export {
   ActivityRegistry,
   ConfigurationRegistry,
   MenuRegistry,
