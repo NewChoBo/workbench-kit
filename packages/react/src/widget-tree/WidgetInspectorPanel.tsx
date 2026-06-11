@@ -75,21 +75,21 @@ export function WidgetInspectorPanel({
             />
           ) : null}
 
-          {inspector && inspector.length > 0
-            ? inspector.map((section) => (
-                <InspectorSection
-                  key={section.title}
-                  readOnly={readOnly}
-                  section={section}
-                  values={widget}
-                  onValueChange={updateProp}
-                />
-              ))
-            : !showPlacement ? (
-                <WorkbenchPropertyHint>
-                  No property fields registered for this widget type.
-                </WorkbenchPropertyHint>
-              ) : null}
+          {inspector && inspector.length > 0 ? (
+            inspector.map((section) => (
+              <InspectorSection
+                key={section.title}
+                readOnly={readOnly}
+                section={section}
+                values={widget}
+                onValueChange={updateProp}
+              />
+            ))
+          ) : !showPlacement ? (
+            <WorkbenchPropertyHint>
+              No property fields registered for this widget type.
+            </WorkbenchPropertyHint>
+          ) : null}
 
           {path && path.length > 0 && onRemove ? (
             <div className="widget-tree-inspector__danger">

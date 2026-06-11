@@ -12,15 +12,7 @@ export interface CompiledScreenSpecText {
   readonly error: string | null;
 }
 
-const SCREEN_NODE_KINDS = new Set([
-  'text',
-  'panel',
-  'expanded',
-  'row',
-  'column',
-  'grid',
-  'stack',
-]);
+const SCREEN_NODE_KINDS = new Set(['text', 'panel', 'expanded', 'row', 'column', 'grid', 'stack']);
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);

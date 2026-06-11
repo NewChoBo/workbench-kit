@@ -18,7 +18,10 @@ export function isTriggerVisible(trigger: HTMLElement) {
   return true;
 }
 
-export function measureOverlayPosition(trigger: HTMLElement, optionCount: number): OverlayPosition | null {
+export function measureOverlayPosition(
+  trigger: HTMLElement,
+  optionCount: number,
+): OverlayPosition | null {
   const rect = trigger.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return null;
 

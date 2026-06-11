@@ -64,9 +64,12 @@ export function useScreenSpecPipeline(initialSpec: JdwScreenSpec): UseScreenSpec
     }
   }, []);
 
-  const resetSpec = useCallback((nextSpec: JdwScreenSpec) => {
-    setSpec(nextSpec);
-  }, [setSpec]);
+  const resetSpec = useCallback(
+    (nextSpec: JdwScreenSpec) => {
+      setSpec(nextSpec);
+    },
+    [setSpec],
+  );
 
   const setJson = useCallback((nextJson: string) => {
     setJsonState(nextJson);

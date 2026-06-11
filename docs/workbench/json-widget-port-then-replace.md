@@ -10,12 +10,12 @@ See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-
 
 ## Phase summary
 
-| Phase       | Kit action                                                                                                                           | Consumer action                                  |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
-| 1 Reference | Study tile_paper tree/editor + launcher preview bridge                                                                               | Keep local stacks                                |
+| Phase       | Kit action                                                                                                                   | Consumer action                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| 1 Reference | Study tile_paper tree/editor + launcher preview bridge                                                                       | Keep local stacks                                |
 | 2 Port      | Extract neutral primitives into `@workbench-kit/jdw`, `@workbench-kit/react/json-widget`, `@workbench-kit/react/json-config` | Reference-only                                   |
-| 3 Complete  | Storybook baselines, public APIs, play gates, docs                                                                                   | Validate kit readiness                           |
-| 4 Swap      | —                                                                                                                                    | Point consumers at kit; delete duplicated chrome |
+| 3 Complete  | Storybook baselines, public APIs, play gates, docs                                                                           | Validate kit readiness                           |
+| 4 Swap      | —                                                                                                                            | Point consumers at kit; delete duplicated chrome |
 
 ## Port boundaries (P1)
 
@@ -52,7 +52,7 @@ Single source of truth while editing:
 | State              | Owner                                            | Notes                                          |
 | ------------------ | ------------------------------------------------ | ---------------------------------------------- |
 | Document string    | Host or `JsonConfigWorkbench` controlled `value` | Monaco and tree derive from this               |
-| Parsed tree        | `@workbench-kit/jdw` parse result        | Parse errors block preview update              |
+| Parsed tree        | `@workbench-kit/jdw` parse result                | Parse errors block preview update              |
 | Selected node path | React editor chrome state                        | Drives properties panel                        |
 | Preview render     | `JsonWidgetPreview` + registry                   | Read-only; reflects parse + selection          |
 | Dirty baseline     | Host `baselineValue` prop                        | Toolbar save/discard compares against baseline |

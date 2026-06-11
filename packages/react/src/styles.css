@@ -928,8 +928,10 @@
   transition: opacity 0.15s ease;
 }
 
-.ui-workbench-sectioned-panel__nav-reveal-zone:hover .ui-workbench-sectioned-panel__nav-open-overlay,
-.ui-workbench-sectioned-panel__nav-reveal-zone:focus-within .ui-workbench-sectioned-panel__nav-open-overlay {
+.ui-workbench-sectioned-panel__nav-reveal-zone:hover
+  .ui-workbench-sectioned-panel__nav-open-overlay,
+.ui-workbench-sectioned-panel__nav-reveal-zone:focus-within
+  .ui-workbench-sectioned-panel__nav-open-overlay {
   opacity: 1;
 }
 
