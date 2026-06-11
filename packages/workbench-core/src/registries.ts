@@ -1,0 +1,208 @@
+import { Emitter, toDisposable, type Disposable } from '@workbench-kit/base';
+import type {
+  ActivityContribution,
+  ConfigurationContribution,
+  MenuContribution,
+  ViewContainerContribution,
+  ViewContribution,
+} from '@workbench-kit/workbench-extension-sdk';
+
+export interface WorkbenchViewContribution extends ViewContribution {
+  containerId: string;
+}
+
+export interface WorkbenchViewContainerContribution extends ViewContainerContribution {
+  location: string;
+}
+
+export interface WorkbenchActivityContribution extends ActivityContribution {
+  extensionId?: string;
+}
+
+export interface WorkbenchConfigurationContribution {
+  extensionId: string;
+  configuration: ConfigurationContribution;
+}
+
+export class MenuRegistry implements Disposable {
+  private readonly itemsByMenu = new Map<string, MenuContribution[]>();
+  private readonly onDidRegisterMenuItemEmitter = new Emitter<MenuContribution>();
+
+  readonly onDidRegisterMenuItem = this.onDidRegisterMenuItemEmitter.event;
+
+  getMenuItems(menu?: string): readonly MenuContribution[] {
+    if (menu !== undefined) {
+      return [...(this.itemsByMenu.get(menu) ?? [])];
+    }
+
+    return [...this.itemsByMenu.values()].flat();
+  }
+
+  registerMenuItem(item: MenuContribution): Disposable {
+    const items = this.itemsByMenu.get(item.menu) ?? [];
+    items.push(item);
+    this.itemsByMenu.set(item.menu, items);
+    this.onDidRegisterMenuItemEmitter.fire(item);
+
+    return toDisposable(() => {
+      const currentItems = this.itemsByMenu.get(item.menu);
+      if (!currentItems) return;
+
+      const index = currentItems.indexOf(item);
+      if (index >= 0) {
+        currentItems.splice(index, 1);
+      }
+
+      if (currentItems.length === 0) {
+        this.itemsByMenu.delete(item.menu);
+      }
+    });
+  }
+
+  dispose(): void {
+    this.itemsByMenu.clear();
+    this.onDidRegisterMenuItemEmitter.dispose();
+  }
+}
+
+export class ViewRegistry implements Disposable {
+  private readonly containersById = new Map<string, WorkbenchViewContainerContribution>();
+  private readonly viewsById = new Map<string, WorkbenchViewContribution>();
+  private readonly onDidRegisterViewEmitter = new Emitter<WorkbenchViewContribution>();
+  private readonly onDidRegisterViewContainerEmitter =
+    new Emitter<WorkbenchViewContainerContribution>();
+
+  readonly onDidRegisterView = this.onDidRegisterViewEmitter.event;
+  readonly onDidRegisterViewContainer = this.onDidRegisterViewContainerEmitter.event;
+
+  getView(viewId: string): WorkbenchViewContribution | undefined {
+    return this.viewsById.get(viewId);
+  }
+
+  getViewContainer(containerId: string): WorkbenchViewContainerContribution | undefined {
+    return this.containersById.get(containerId);
+  }
+
+  getViewContainers(location?: string): readonly WorkbenchViewContainerContribution[] {
+    const containers = [...this.containersById.values()];
+    if (location === undefined) {
+      return containers;
+    }
+
+    return containers.filter((container) => container.location === location);
+  }
+
+  getViews(containerId?: string): readonly WorkbenchViewContribution[] {
+    const views = [...this.viewsById.values()];
+    if (containerId === undefined) {
+      return views;
+    }
+
+    return views.filter((view) => view.containerId === containerId);
+  }
+
+  registerView(view: WorkbenchViewContribution): Disposable {
+    if (this.viewsById.has(view.id)) {
+      throw new Error(`View "${view.id}" is already registered.`);
+    }
+
+    this.viewsById.set(view.id, view);
+    this.onDidRegisterViewEmitter.fire(view);
+
+    return toDisposable(() => {
+      const current = this.viewsById.get(view.id);
+      if (current === view) {
+        this.viewsById.delete(view.id);
+      }
+    });
+  }
+
+  registerViewContainer(container: WorkbenchViewContainerContribution): Disposable {
+    if (this.containersById.has(container.id)) {
+      throw new Error(`View container "${container.id}" is already registered.`);
+    }
+
+    this.containersById.set(container.id, container);
+    this.onDidRegisterViewContainerEmitter.fire(container);
+
+    return toDisposable(() => {
+      const current = this.containersById.get(container.id);
+      if (current === container) {
+        this.containersById.delete(container.id);
+      }
+    });
+  }
+
+  dispose(): void {
+    this.containersById.clear();
+    this.viewsById.clear();
+    this.onDidRegisterViewEmitter.dispose();
+    this.onDidRegisterViewContainerEmitter.dispose();
+  }
+}
+
+export class ActivityRegistry implements Disposable {
+  private readonly activitiesById = new Map<string, WorkbenchActivityContribution>();
+  private readonly onDidRegisterActivityEmitter = new Emitter<WorkbenchActivityContribution>();
+
+  readonly onDidRegisterActivity = this.onDidRegisterActivityEmitter.event;
+
+  getActivities(): readonly WorkbenchActivityContribution[] {
+    return [...this.activitiesById.values()];
+  }
+
+  getActivity(activityId: string): WorkbenchActivityContribution | undefined {
+    return this.activitiesById.get(activityId);
+  }
+
+  registerActivity(activity: WorkbenchActivityContribution): Disposable {
+    if (this.activitiesById.has(activity.id)) {
+      throw new Error(`Activity "${activity.id}" is already registered.`);
+    }
+
+    this.activitiesById.set(activity.id, activity);
+    this.onDidRegisterActivityEmitter.fire(activity);
+
+    return toDisposable(() => {
+      const current = this.activitiesById.get(activity.id);
+      if (current === activity) {
+        this.activitiesById.delete(activity.id);
+      }
+    });
+  }
+
+  dispose(): void {
+    this.activitiesById.clear();
+    this.onDidRegisterActivityEmitter.dispose();
+  }
+}
+
+export class ConfigurationRegistry implements Disposable {
+  private readonly configurationsByExtension = new Map<string, ConfigurationContribution>();
+
+  getConfiguration(extensionId: string): ConfigurationContribution | undefined {
+    return this.configurationsByExtension.get(extensionId);
+  }
+
+  getConfigurations(): readonly WorkbenchConfigurationContribution[] {
+    return [...this.configurationsByExtension.entries()].map(([extensionId, configuration]) => ({
+      extensionId,
+      configuration,
+    }));
+  }
+
+  registerConfiguration(extensionId: string, configuration: ConfigurationContribution): Disposable {
+    this.configurationsByExtension.set(extensionId, configuration);
+
+    return toDisposable(() => {
+      const current = this.configurationsByExtension.get(extensionId);
+      if (current === configuration) {
+        this.configurationsByExtension.delete(extensionId);
+      }
+    });
+  }
+
+  dispose(): void {
+    this.configurationsByExtension.clear();
+  }
+}
