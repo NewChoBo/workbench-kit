@@ -33,13 +33,18 @@ Required manifest concepts:
 ## Registration Flow
 
 1. Host reads `.workbench/extensions.json` and lockfile.
-2. Built-in and bundled extensions are resolved at build time.
-3. `ExtensionRegistry` validates manifests and dependency graph.
+2. Built-in and bundled extensions are resolved and manifest-checked at build
+   time.
+3. `ExtensionRegistry` validates the hard dependency graph.
 4. On activation events, extension `activate` runs and registers disposables with `ExtensionContext`.
 5. Contributions merge into platform registries (`CommandRegistry`, `ViewRegistry`, etc.).
 6. Runtime handlers and view providers registered from `activate()` are scoped to the extension lifecycle and disposed on deactivate.
 
 Extensions register contributions **through the SDK**, not by mutating internal registry singletons.
+
+`pnpm check:extension-manifests` validates repository-local extension manifests
+before `pnpm validate` completes, and `scripts/bundle-workbench-extensions.mjs`
+refuses to generate a bundle from invalid manifests.
 
 ## Contribution Points
 

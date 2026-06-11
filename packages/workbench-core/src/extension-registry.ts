@@ -136,10 +136,17 @@ export class ExtensionRegistry implements Disposable {
 
   registerExtensions(descriptions: Iterable<WorkbenchExtensionDescription>): DisposableStore {
     const store = new DisposableStore();
-    for (const description of descriptions) {
-      store.add(this.registerExtension(description));
+
+    try {
+      for (const description of descriptions) {
+        store.add(this.registerExtension(description));
+      }
+      this.assertDependencyGraph();
+    } catch (error) {
+      store.dispose();
+      throw error;
     }
-    this.assertDependencyGraph();
+
     return store;
   }
 

@@ -4,22 +4,25 @@
   "title": "Workbench Extension Manifest",
   "type": "object",
   "properties": {
-    "schemaVersion": { "type": "integer" },
-    "id": { "type": "string" },
-    "name": { "type": "string" },
-    "displayName": { "type": "string" },
-    "version": { "type": "string" },
-    "publisher": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "displayName": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "publisher": { "type": "string", "minLength": 1 },
     "engines": {
       "type": "object",
       "properties": {
-        "workbench": { "type": "string" },
-        "extensionApi": { "type": "string" }
-      }
+        "workbench": { "type": "string", "minLength": 1 },
+        "extensionApi": { "type": "string", "minLength": 1 }
+      },
+      "required": ["workbench", "extensionApi"],
+      "additionalProperties": true
     },
     "activationEvents": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
     },
     "contributes": {
       "type": "object",
@@ -27,13 +30,50 @@
     },
     "extensionDependencies": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "extensionOptionalDependencies": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "extensionPack": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "requires": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "provides": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": true
     },
     "permissions": {
       "type": "array",
-      "items": { "type": "string" }
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
     }
   },
-  "required": ["schemaVersion", "id", "version", "publisher", "engines", "activationEvents"],
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "displayName",
+    "version",
+    "publisher",
+    "engines",
+    "activationEvents"
+  ],
   "additionalProperties": true
 }

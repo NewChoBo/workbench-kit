@@ -295,4 +295,77 @@ describe('ExtensionRegistry', () => {
 
     expect(activated).toEqual(['dependency', 'dependent']);
   });
+
+  it('hard-fails missing extension dependencies and rolls back registration', () => {
+    const registry = new ExtensionRegistry();
+
+    expect(() =>
+      registry.registerExtensions([
+        {
+          manifest: {
+            schemaVersion: 1,
+            id: 'dependent',
+            name: 'dependent',
+            displayName: 'Dependent',
+            version: '0.0.0',
+            publisher: 'workbench-kit',
+            engines: {
+              workbench: '^0.0.0',
+              extensionApi: '^0.0.0',
+            },
+            activationEvents: ['onStartup'],
+            extensionDependencies: ['missing'],
+          },
+          module: {
+            activate: () => undefined,
+          },
+        },
+      ]),
+    ).toThrow('Extension "dependent" depends on missing extension "missing".');
+
+    expect(registry.getExtensions()).toEqual([]);
+  });
+
+  it('hard-fails extension dependency cycles and rolls back registration', () => {
+    const registry = new ExtensionRegistry();
+
+    expect(() =>
+      registry.registerExtensions([
+        {
+          manifest: {
+            schemaVersion: 1,
+            id: 'first',
+            name: 'first',
+            displayName: 'First',
+            version: '0.0.0',
+            publisher: 'workbench-kit',
+            engines: {
+              workbench: '^0.0.0',
+              extensionApi: '^0.0.0',
+            },
+            activationEvents: ['onStartup'],
+            extensionDependencies: ['second'],
+          },
+        },
+        {
+          manifest: {
+            schemaVersion: 1,
+            id: 'second',
+            name: 'second',
+            displayName: 'Second',
+            version: '0.0.0',
+            publisher: 'workbench-kit',
+            engines: {
+              workbench: '^0.0.0',
+              extensionApi: '^0.0.0',
+            },
+            activationEvents: ['onStartup'],
+            extensionDependencies: ['first'],
+          },
+        },
+      ]),
+    ).toThrow('Extension dependency cycle detected: first -> second -> first');
+
+    expect(registry.getExtensions()).toEqual([]);
+  });
 });
