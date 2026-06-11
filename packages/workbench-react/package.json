@@ -1,6 +1,6 @@
 {
   "name": "@workbench-kit/workbench-react",
-  "version": "0.0.0",
+  "version": "0.0.1-prototype.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -21,7 +21,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
-  "description": "React workbench shell for Workbench Kit. Phase 0 skeleton.",
+  "description": "React workbench provider and shell assembly for Workbench Kit.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NewChoBo/workbench-kit.git",

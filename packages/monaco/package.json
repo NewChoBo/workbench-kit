@@ -1,6 +1,6 @@
 {
   "name": "@workbench-kit/monaco",
-  "version": "0.0.0",
+  "version": "0.0.1-prototype.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "description": "Optional Monaco editor integration placeholder. Phase 0 skeleton.",
+  "description": "Optional Monaco editor integration placeholder for Workbench Kit.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NewChoBo/workbench-kit.git",
