@@ -50,6 +50,10 @@ Files ignored by `.workbench/.gitignore`:
 
 Personal layout deltas and last-opened files belong in `state.json` or host user data directory, not in committed config.
 
+## Implemented M2 Loading
+
+`@workbench-kit/workbench-config` parses `.workbench/extensions.json` data from objects or JSON text and returns normalized `enabled` and `recommendations` extension ID lists. `workbench-core` resolves those IDs against bundled manifests.
+
 ## Loading Order (planned)
 
 1. Default built-in settings

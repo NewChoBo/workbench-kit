@@ -1,7 +1,7 @@
 {
   "name": "@workbench-kit/platform",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.1-prototype.0",
+  "private": false,
   "type": "module",
   "scripts": {
     "test": "vitest run src",
@@ -13,7 +13,19 @@
   "dependencies": {
     "@workbench-kit/base": "workspace:*"
   },
-  "description": "Platform service interfaces for Workbench Kit workbench. Phase 0 skeleton.",
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
+  ],
+  "description": "Framework-neutral command, menu, context-key, and keybinding services for Workbench Kit.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NewChoBo/workbench-kit.git",

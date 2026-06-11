@@ -6,7 +6,7 @@ Status: **MVP complete** for framework-neutral parse/registry primitives.
 
 | Track                         | MVP deliverable                                                                          | Status |
 | ----------------------------- | ---------------------------------------------------------------------------------------- | ------ |
-| `@workbench-kit/jdw`  | dist build, unit tests, JDW validation + Storybook fixtures                             | Done   |
+| `@workbench-kit/jdw`          | dist build, unit tests, JDW validation + Storybook fixtures                              | Done   |
 | `@tilepaper/json-widget-tree` | delegates parse/registry to workbench-kit; keeps TilePaper widget types + layout locally | Done   |
 | `@workbench-kit/contracts`    | provider action → launchpad mapping integration test                                     | Done   |
 

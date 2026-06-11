@@ -28,10 +28,7 @@ export interface ScreenSpecOutlineEntry {
 
 function isContainerNode(node: ScreenNode): node is ScreenContainerNode {
   return (
-    node.kind === 'row' ||
-    node.kind === 'column' ||
-    node.kind === 'grid' ||
-    node.kind === 'stack'
+    node.kind === 'row' || node.kind === 'column' || node.kind === 'grid' || node.kind === 'stack'
   );
 }
 

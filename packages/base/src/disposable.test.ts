@@ -22,9 +22,11 @@ describe('DisposableStore', () => {
     store.dispose();
 
     let disposed = false;
-    store.add(toDisposable(() => {
-      disposed = true;
-    }));
+    store.add(
+      toDisposable(() => {
+        disposed = true;
+      }),
+    );
 
     expect(disposed).toBe(true);
   });

@@ -5,7 +5,7 @@ import {
   createCommandRegistry,
   executeCommand,
   resolveCommandMenuItems,
-} from '@workbench-kit/core';
+} from '@workbench-kit/platform';
 import { searchWorkspaceFiles, type WorkspaceFile } from '@workbench-kit/workspace';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import {

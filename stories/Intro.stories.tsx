@@ -43,10 +43,9 @@ export const Overview: Story = {
             <code>JDW/Config/Workbench</code> — Monaco config editor with schema or widget preview
           </li>
           <li>
-            <code>JDW/WidgetTree</code> — widget layout editor;{' '}
-            <code>JDW/WidgetAsset</code> — placement asset editor; <code>*.widget.json</code>{' '}
-            and asset packages (<code>manifest.json</code> + <code>content.json</code>) open in
-            Integrated Shell
+            <code>JDW/WidgetTree</code> — widget layout editor; <code>JDW/WidgetAsset</code> —
+            placement asset editor; <code>*.widget.json</code> and asset packages (
+            <code>manifest.json</code> + <code>content.json</code>) open in Integrated Shell
           </li>
           <li>
             <code>React/Workbench/Shell → Integrated Shell</code> — full end-to-end shell flow
@@ -74,8 +73,8 @@ export const Overview: Story = {
             <code>React/Workbench/Settings</code>
           </li>
           <li>
-            <strong>JSON tooling</strong>: <code>JDW/Config/Workbench</code> and{' '}
-            <code>JDW</code> playgrounds
+            <strong>JSON tooling</strong>: <code>JDW/Config/Workbench</code> and <code>JDW</code>{' '}
+            playgrounds
           </li>
           <li>
             <strong>Primitives</strong>: buttons, badges, fields, inputs, and empty states

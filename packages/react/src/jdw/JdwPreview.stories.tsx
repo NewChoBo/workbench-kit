@@ -55,9 +55,7 @@ export const RegisteredWidget: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent(
-      EXPECTED_OUTPUT,
-    );
+    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent(EXPECTED_OUTPUT);
     await expect(canvas.queryByTestId('jdw-preview-error')).not.toBeInTheDocument();
   },
 };

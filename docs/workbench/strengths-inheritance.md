@@ -8,7 +8,7 @@ Consumers remain reference-only until Phase 4 swap ([json-widget-port-then-repla
 | Strength                                                             | Kit mapping                                                       | Status                                                   |
 | -------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
 | Monaco ↔ tree cursor sync                                            | `useJsonWidgetEditorSync` + `findPathForLineAndColumn`            | Adopted (prior)                                          |
-| DnD tree reorder + patch types                                       | `WidgetTreePanel` + `@workbench-kit/jdw` patch            | Adopted (prior)                                          |
+| DnD tree reorder + patch types                                       | `WidgetTreePanel` + `@workbench-kit/jdw` patch                    | Adopted (prior)                                          |
 | `WorkbenchPreviewCanvas` zoom/pan (ctrl+scroll, drag pan, fit scale) | `usePreviewViewport` + `JsonWidgetPreviewCanvas`                  | **Adopted**                                              |
 | Monaco Ctrl+S save                                                   | `JsonCodeEditorPane` → `JsonWidgetEditor` / `JsonConfigWorkbench` | **Adopted**                                              |
 | View toggle shortcuts (Ctrl+K V, Ctrl+Shift+V)                       | `JsonWidgetEditor.handleEditorMount`                              | **Adopted**                                              |

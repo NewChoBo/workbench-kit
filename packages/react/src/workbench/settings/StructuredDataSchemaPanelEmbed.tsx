@@ -6,8 +6,7 @@ import {
 } from './StructuredDataSchemaPanel';
 
 export interface WorkbenchStructuredDataSchemaPanelEmbedProps
-  extends WorkbenchStructuredDataSchemaPanelProps,
-    Omit<ComponentPropsWithRef<'div'>, 'children'> {}
+  extends WorkbenchStructuredDataSchemaPanelProps, Omit<ComponentPropsWithRef<'div'>, 'children'> {}
 
 export function WorkbenchStructuredDataSchemaPanelEmbed({
   className,

@@ -15,6 +15,7 @@
     "./workbench/chat": "./src/workbench/chat/index.ts",
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",
+    "./workbench/shell": "./src/workbench/shell.ts",
     "./workbench/demo": "./src/workbench/demo/index.ts",
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
     "./jdw": "./src/jdw/index.ts",
@@ -33,7 +34,7 @@
   ],
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
-    "@workbench-kit/core": "workspace:*",
+    "@workbench-kit/platform": "workspace:*",
     "@workbench-kit/adapters": "workspace:*",
     "@workbench-kit/contracts": "workspace:*",
     "@workbench-kit/jdw-editor": "workspace:*",

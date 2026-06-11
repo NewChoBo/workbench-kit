@@ -1,9 +1,10 @@
 {
   "name": "@workbench-kit/workbench-core",
-  "version": "0.0.0",
+  "version": "0.0.1-prototype.0",
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "vitest run src",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
@@ -15,7 +16,7 @@
     "@workbench-kit/workbench-config": "workspace:*",
     "@workbench-kit/workbench-extension-sdk": "workspace:*"
   },
-  "description": "Framework-neutral workbench registries and extension orchestration. Phase 0 skeleton.",
+  "description": "Framework-neutral workbench registries, extension activation, layout, and contribution orchestration.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NewChoBo/workbench-kit.git",

@@ -129,9 +129,7 @@ export function WidgetTreeLab({
   const handleInspectorPatch = (nextWidget: GenericWidget) => {
     if (!selectedPath) return;
     const widget =
-      parentWidget !== null
-        ? normalizeWidgetForParent(nextWidget, parentWidget)
-        : nextWidget;
+      parentWidget !== null ? normalizeWidgetForParent(nextWidget, parentWidget) : nextWidget;
     applyPatch({
       type: 'replace-widget',
       path: selectedPath,

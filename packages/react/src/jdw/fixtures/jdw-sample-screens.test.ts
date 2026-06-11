@@ -12,9 +12,10 @@ describe('jdw-sample-screens', () => {
       expect(parsed.value, sample.id).not.toBeNull();
 
       const validated = validateJsonWidgetData(json);
-      expect(validated.valid, `${sample.id}: ${validated.issues.map((issue) => issue.message).join(', ')}`).toBe(
-        true,
-      );
+      expect(
+        validated.valid,
+        `${sample.id}: ${validated.issues.map((issue) => issue.message).join(', ')}`,
+      ).toBe(true);
     }
   });
 });

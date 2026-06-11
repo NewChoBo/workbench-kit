@@ -13,8 +13,12 @@ change while the first consuming apps harden the model.
 
 ## Packages
 
+- `@workbench-kit/base`: foundation utilities for disposables, events, and lifecycle
 - `@workbench-kit/tokens`: framework-neutral CSS variables and base theme values
-- `@workbench-kit/core`: framework-neutral command, context-key, and when-clause primitives
+- `@workbench-kit/platform`: framework-neutral command, context-key, keybinding, and service primitives
+- `@workbench-kit/core`: deprecated compatibility shim that re-exports `@workbench-kit/platform`
+- `@workbench-kit/workbench-extension-sdk`: extension manifest, command, and view provider APIs
+- `@workbench-kit/workbench-config`: `.workbench` configuration parsing and validation
 - `@workbench-kit/contracts`: shared chat, save, patch, library, launchpad mapping, widget renderer, and plugin contracts
 - `@workbench-kit/jdw`: JDW engine — parse, layout, screen-spec compile, widget documents
 - `@workbench-kit/jdw-editor`: Screen spec editor UI and pipeline hooks
@@ -26,11 +30,20 @@ change while the first consuming apps harden the model.
 - `@workbench-kit/vscode-host`: VS Code-style host bridge utilities
 - `@workbench-kit/vscode-extension`: prototype VS Code extension bootstrap helpers
 
+## Private preview packages
+
+- `@workbench-kit/workbench-core`: framework-neutral extension registry, layout, and host orchestration
+- `@workbench-kit/workbench-react`: React provider and shell assembly over `workbench-core`
+- `@workbench-kit/workbench-vscode-adapter`: future opt-in VS Code manifest adapter
+- `@workbench-kit/monaco`: future optional Monaco integration
+
 ## Headless packages
 
-Framework-neutral packages (`core`, `workspace`, `services`, `runtime`, `adapters`) are usable without React.
-See the **Headless/Core Commands** Storybook story for command registry and when-clause visibility, and package
-README files under `packages/*/README.md` where present.
+Framework-neutral packages (`base`, `platform`, `core`, `workbench-extension-sdk`,
+`workbench-config`, `workspace`, `services`, `runtime`, `adapters`) are usable
+without React. See the **Headless/Core Commands** Storybook story for command
+registry and when-clause visibility, and package README files under
+`packages/*/README.md` where present.
 
 ## Public Boundary
 
@@ -67,6 +80,7 @@ pnpm storybook
 pnpm test:storybook-play
 pnpm test:storybook-play:required
 pnpm build:storybook
+node ./scripts/check-workbench-dependency-graph.mjs
 pnpm validate:full
 ```
 
@@ -87,6 +101,11 @@ Trusted publisher settings must be configured on npm for each public package:
 The workflow runs on published GitHub releases and pushed tags matching
 `v*` or `workbench-kit-v*`. The tag must match the root package version, such
 as `v0.0.1-prototype.0` or `workbench-kit-v0.0.1-prototype.0`.
+
+The current publish pipeline includes the public-ready foundation and config
+packages. The full `workbench-core` / `workbench-react` shell stack remains
+private preview until bundled extension modules are packaged as public-safe
+artifacts.
 
 ## Conventions
 

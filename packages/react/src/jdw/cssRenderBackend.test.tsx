@@ -11,7 +11,11 @@ describe('cssRenderBackend', () => {
     expect(parsed.value).not.toBeNull();
 
     const markup = renderToStaticMarkup(
-      <>{renderJdwWithLayout(parsed.value!, { layoutConstraints: { minWidth: 0, maxWidth: 300, minHeight: 0, maxHeight: 120 } })}</>,
+      <>
+        {renderJdwWithLayout(parsed.value!, {
+          layoutConstraints: { minWidth: 0, maxWidth: 300, minHeight: 0, maxHeight: 120 },
+        })}
+      </>,
     );
 
     expect(markup).toContain('data-css-render-root="true"');

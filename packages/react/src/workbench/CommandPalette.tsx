@@ -8,7 +8,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
-import type { CommandMenuItem, ResolvedCommandMenuCommandItem } from '@workbench-kit/core';
+import type { CommandMenuItem, ResolvedCommandMenuCommandItem } from '@workbench-kit/platform';
 import { EmptyState } from '../primitives/EmptyState';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';

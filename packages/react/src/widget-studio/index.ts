@@ -1,6 +1,4 @@
-export {
-  createWidgetStudioWorkspaceEditorRenderer,
-} from './create-widget-studio-workspace-editor.js';
+export { createWidgetStudioWorkspaceEditorRenderer } from './create-widget-studio-workspace-editor.js';
 export type {
   CreateWidgetStudioWorkspaceEditorOptions,
   WidgetStudioRenderContext,

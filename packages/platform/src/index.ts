@@ -3,6 +3,34 @@ export const WORKBENCH_KIT_PLATFORM_VERSION = '0.0.0' as const;
 export type ServiceIdentifier<T> = symbol & { __serviceBrand: T };
 
 export { CommandRegistry } from './commands/command-registry.js';
+export {
+  assertNoCommandDefinitionConflicts,
+  canExecuteCommand,
+  commandMenuEntries,
+  commandMenuEntry,
+  commandMenuSeparator,
+  compactCommandMenuItems,
+  createCommandRegistry,
+  createCommandRegistryFromContributions,
+  defineCommandContribution,
+  executeCommand,
+  findCommandDefinitionConflicts,
+  mergeCommandContributions,
+  resolveCommandMenuItems,
+  type CommandConflictPolicy,
+  type CommandContribution,
+  type CommandContributionInput,
+  type CommandDefinitionConflict,
+  type CommandMenuCommandEntry,
+  type CommandMenuEntry,
+  type CommandMenuItem,
+  type CommandMenuItemsInput,
+  type CommandMenuSeparatorEntry,
+  type CreateCommandRegistryOptions,
+  type ResolvedCommandMenuCommandItem,
+  type ResolvedCommandMenuSeparatorItem,
+  type SourcedCommandContribution,
+} from './commands/command-contributions.js';
 export { CommandService, type CommandServiceOptions } from './commands/command-service.js';
 export {
   CommandNoHandlerError,
@@ -10,10 +38,25 @@ export {
   CommandNotFoundError,
   type CommandDefinition,
   type CommandHandler,
+  type CommandPredicate,
+  type CommandServiceHandler,
+  type CommandValue,
+  type CommandWhenClause,
 } from './commands/types.js';
 
 export { ContextKeyService } from './context/context-key-service.js';
+export {
+  createWorkbenchContextKeySnapshot,
+  evaluateWorkbenchContextKeyWhenClause,
+  isWorkbenchContextKeyValue,
+  type WorkbenchContextKeySnapshot,
+  type WorkbenchContextKeyValue,
+} from './context/context-keys.js';
 export { evaluateWhenClause } from './context/evaluate-when.js';
+export {
+  evaluateWorkbenchWhenClause,
+  WorkbenchWhenClauseSyntaxError,
+} from './context/when-clause.js';
 export {
   isContextKeyTruthy,
   type ContextKeyChangeEvent,

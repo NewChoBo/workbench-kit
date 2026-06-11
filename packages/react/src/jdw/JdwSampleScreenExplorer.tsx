@@ -71,7 +71,10 @@ export function JdwSampleScreenExplorer({
 
   return (
     <div className="jdw-sample-explorer" data-testid="jdw-sample-explorer">
-      <Panel className="jdw-sample-explorer__panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+      <Panel
+        className="jdw-sample-explorer__panel"
+        style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}
+      >
         <PanelHeader
           actions={
             <div className="jdw-sample-explorer__header-actions">
@@ -161,10 +164,7 @@ export function JdwSampleScreenExplorer({
               >
                 <header className="jdw-sample-explorer__pane-header">Preview</header>
                 <div className="jdw-sample-explorer__pane-body">
-                  <JdwPreview
-                    json={pipeline.json}
-                    layoutConstraints={pipeline.layoutConstraints}
-                  />
+                  <JdwPreview json={pipeline.json} layoutConstraints={pipeline.layoutConstraints} />
                 </div>
               </section>
             }

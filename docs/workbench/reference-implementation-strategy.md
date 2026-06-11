@@ -128,7 +128,7 @@ See also [strengths-inheritance.md](./strengths-inheritance.md) and
 | Track                                       | Lead reference  | Workbench Kit focus                                                                                        |
 | ------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------- |
 | **Product shell / runtime / library**       | custom_launcher | `@workbench-kit/services`, `@workbench-kit/runtime`, `@workbench-kit/vscode-host`, future shell extraction |
-| **React workbench UI / JSON widget editor** | tile_paper      | `@workbench-kit/react`, `@workbench-kit/jdw`, `@workbench-kit/contracts` editor-facing types       |
+| **React workbench UI / JSON widget editor** | tile_paper      | `@workbench-kit/react`, `@workbench-kit/jdw`, `@workbench-kit/contracts` editor-facing types               |
 
 **Do not** replace tile_paper as the primary reference for kit React and JSON widget
 editor evolution. **Do** treat custom_launcher as the primary reference for end-to-end
@@ -187,7 +187,7 @@ See [library-launch-boundary-gate.md](./library-launch-boundary-gate.md) and
 | Domain                                          | Primary reference | Kit package(s)                                                        | Secondary reference                   | Notes                                                                                          |
 | ----------------------------------------------- | ----------------- | --------------------------------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | Launch / library mapping                        | Both (parity)     | `@workbench-kit/contracts`                                            | —                                     | Single authority; no local reimplementation in runtime paths                                   |
-| JSON widget parse / registry                    | tile_paper        | `@workbench-kit/jdw`                                          | custom_launcher (launchpad bridge)    | tile_paper owns tree math; launcher owns preview validation bridge                             |
+| JSON widget parse / registry                    | tile_paper        | `@workbench-kit/jdw`                                                  | custom_launcher (launchpad bridge)    | tile_paper owns tree math; launcher owns preview validation bridge                             |
 | JSON / config editor UI                         | tile_paper        | `@workbench-kit/react` (`json-config`, json-widget bridge)            | custom_launcher (`JsonWidgetPreview`) | Editor UX reference stays tile_paper                                                           |
 | Launchpad canvas editor                         | tile_paper        | `@workbench-kit/react` canvas primitives                              | custom_launcher launchpad-ui          | Spatial editing reference is tile_paper                                                        |
 | Workbench shell chrome (generic)                | tile_paper        | `@workbench-kit/react/workbench`                                      | custom_launcher content-hub shell     | Generic shell API from kit; product shell patterns from launcher                               |

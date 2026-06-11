@@ -1,5 +1,9 @@
 import { useMemo, type ReactNode } from 'react';
-import { parseJsonWidgetData, validateJsonWidgetData, type JsonWidgetNode } from '@workbench-kit/jdw';
+import {
+  parseJsonWidgetData,
+  validateJsonWidgetData,
+  type JsonWidgetNode,
+} from '@workbench-kit/jdw';
 
 import { renderJdwWithLayout, type CssRenderBackendOptions } from './cssRenderBackend.js';
 

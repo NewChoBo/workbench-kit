@@ -11,8 +11,32 @@
   },
   "activationEvents": ["onStartup"],
   "contributes": {
-    "commands": [],
-    "menus": {}
+    "commands": [
+      {
+        "command": "workbench-kit.builtin.accounts.manage",
+        "title": "Manage Accounts",
+        "category": "Accounts"
+      }
+    ],
+    "menus": {
+      "status/account": [
+        {
+          "command": "workbench-kit.builtin.accounts.manage",
+          "group": "account",
+          "order": 1
+        }
+      ]
+    },
+    "configuration": {
+      "properties": {
+        "workbench.accounts.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Enable the workbench account entry point."
+        }
+      }
+    }
   },
   "permissions": ["account.read"]
 }

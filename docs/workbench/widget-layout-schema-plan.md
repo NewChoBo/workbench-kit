@@ -31,12 +31,12 @@ Establish a **JSON-first foundation** aligned with **JDW wire format**, implemen
 
 ### 1.1 What “follow JDW” means here
 
-| Follow | Do not import |
-| ------ | ------------- |
-| v7 JSON envelope (`type`, optional `id` / `listen`, `args`) | Dart `json_dynamic_widget` package |
-| Registry + per-type builders + recursive `child` / `children` in `args` | Material / Cupertino built-in catalog wholesale |
-| `row`, `column`, `expanded`, `flexible`, `text`, `stack`, … naming | Flutter renderer parity for unregistered types |
-| [plugin_components](https://pub.dev/documentation/json_dynamic_widget_plugin_components/latest/) asset file shape | Flutter `AssetDependencyLoader` runtime |
+| Follow                                                                                                            | Do not import                                   |
+| ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| v7 JSON envelope (`type`, optional `id` / `listen`, `args`)                                                       | Dart `json_dynamic_widget` package              |
+| Registry + per-type builders + recursive `child` / `children` in `args`                                           | Material / Cupertino built-in catalog wholesale |
+| `row`, `column`, `expanded`, `flexible`, `text`, `stack`, … naming                                                | Flutter renderer parity for unregistered types  |
+| [plugin_components](https://pub.dev/documentation/json_dynamic_widget_plugin_components/latest/) asset file shape | Flutter `AssetDependencyLoader` runtime         |
 
 **Profile name:** `workbench-jdw-react-v1` — JDW wire + neutral kit builtins + **kit extension** types (e.g. `grid` with `col`/`row` cells).
 
@@ -112,15 +112,15 @@ A `*.widget.json` file is either a single root node object as above, or `{ "root
 
 ### 3.2 Layout mental model (JDW types)
 
-| Concept | JDW `type` | Key `args` |
-| ------- | ---------- | ---------- |
-| Column | `column` | `children`, `mainAxisAlignment`, `crossAxisAlignment`, `gap`, `padding` |
-| Row | `row` | same |
-| Expanded | `expanded` | `flex`, `child` |
-| Flexible | `flexible` | `flex`, `fit`, `child` |
-| Stack | `stack` | `children` with positioned children |
-| Text (leaf) | `text` | `text`, styles |
-| **Kit extension** Grid | `grid` | `columns`, `gap`, `children` with `col`/`row`/`colSpan`/`rowSpan` in child `args` |
+| Concept                | JDW `type` | Key `args`                                                                        |
+| ---------------------- | ---------- | --------------------------------------------------------------------------------- |
+| Column                 | `column`   | `children`, `mainAxisAlignment`, `crossAxisAlignment`, `gap`, `padding`           |
+| Row                    | `row`      | same                                                                              |
+| Expanded               | `expanded` | `flex`, `child`                                                                   |
+| Flexible               | `flexible` | `flex`, `fit`, `child`                                                            |
+| Stack                  | `stack`    | `children` with positioned children                                               |
+| Text (leaf)            | `text`     | `text`, styles                                                                    |
+| **Kit extension** Grid | `grid`     | `columns`, `gap`, `children` with `col`/`row`/`colSpan`/`rowSpan` in child `args` |
 
 **Nested row/column is the default.** Depth is unbounded. `grid` is a **registered kit extension**, not a stock Flutter JDW type — document this in the profile.
 
@@ -147,10 +147,10 @@ Widget Document Schema (v1)            Widget Asset Manifest (v1) + content.json
 
 **Purpose:** authoritative screen/page layout consumed by runtime and editors.
 
-| Field | Role |
-| ----- | ---- |
-| `$schema` | Optional profile pin (`workbench-jdw-react-v1`) |
-| Body | Single JDW v7 root node (typically `type: "column"`) |
+| Field     | Role                                                 |
+| --------- | ---------------------------------------------------- |
+| `$schema` | Optional profile pin (`workbench-jdw-react-v1`)      |
+| Body      | Single JDW v7 root node (typically `type: "column"`) |
 
 **Validation layers:**
 
@@ -172,41 +172,41 @@ src/widgets/assets/<slug>/
   schema.json     # optional per-asset inputs JSON Schema
 ```
 
-| File | Required | Role |
-| ---- | -------- | ---- |
-| `manifest.json` | yes | Catalog metadata (`widget-asset-manifest.v1`) |
-| `content.json` | yes | JDW v7 widget subtree |
-| `schema.json` | no | Per-asset inputs/parameters schema (Phase 3 substitution) |
+| File            | Required | Role                                                      |
+| --------------- | -------- | --------------------------------------------------------- |
+| `manifest.json` | yes      | Catalog metadata (`widget-asset-manifest.v1`)             |
+| `content.json`  | yes      | JDW v7 widget subtree                                     |
+| `schema.json`   | no       | Per-asset inputs/parameters schema (Phase 3 substitution) |
 
 #### manifest.json fields
 
-| Field | Required | Role |
-| ----- | -------- | ---- |
-| `$schema` | recommended | Pin `widget-asset-manifest.v1` |
-| `name` | yes | Stable id (maps to catalog `id`) |
-| `version` | recommended | Semver string (`1.0.0`) |
-| `label` | yes | Palette display name |
-| `category` | yes | Palette grouping |
-| `description` | no | Palette subtitle |
-| `icon` | no | Codicon name |
-| `kind` | no | `leaf` \| `container` \| `template` |
-| `placementPolicy` | no | Insert behavior (see §6) |
+| Field             | Required    | Role                                |
+| ----------------- | ----------- | ----------------------------------- |
+| `$schema`         | recommended | Pin `widget-asset-manifest.v1`      |
+| `name`            | yes         | Stable id (maps to catalog `id`)    |
+| `version`         | recommended | Semver string (`1.0.0`)             |
+| `label`           | yes         | Palette display name                |
+| `category`        | yes         | Palette grouping                    |
+| `description`     | no          | Palette subtitle                    |
+| `icon`            | no          | Codicon name                        |
+| `kind`            | no          | `leaf` \| `container` \| `template` |
+| `placementPolicy` | no          | Insert behavior (see §6)            |
 
 **Migration from current branch shape:**
 
-| Old field | New field |
-| --------- | --------- |
-| `id` | `name` |
-| `defaultWidget` (flat) | `content` (JDW envelope) |
-| `widgetType` | **removed** — derive from `content.type` |
+| Old field              | New field                                |
+| ---------------------- | ---------------------------------------- |
+| `id`                   | `name`                                   |
+| `defaultWidget` (flat) | `content` (JDW envelope)                 |
+| `widgetType`           | **removed** — derive from `content.type` |
 
 **Asset kinds:**
 
-| `kind` | `content` example | Use |
-| ------ | ----------------- | --- |
-| `leaf` | `{ "type": "text", "args": { "text": "Heading" } }` | Single control |
-| `container` | `{ "type": "row", "args": { "children": [] } }` | Empty shell |
-| `template` | nested `column` → `row` | Pre-built section |
+| `kind`      | `content` example                                   | Use               |
+| ----------- | --------------------------------------------------- | ----------------- |
+| `leaf`      | `{ "type": "text", "args": { "text": "Heading" } }` | Single control    |
+| `container` | `{ "type": "row", "args": { "children": [] } }`     | Empty shell       |
+| `template`  | nested `column` → `row`                             | Pre-built section |
 
 ### 4.3 Schema relationship
 
@@ -226,14 +226,14 @@ Asset files are validated in **two passes**:
 
 ## 5. Package boundaries
 
-| Package | Responsibility |
-| ------- | -------------- |
-| `@workbench-kit/contracts` | `JsonWidgetNode` shape; component/asset catalog contracts; `placementPolicy`; MIME constants |
-| `@workbench-kit/jdw` | `parseJsonWidgetData`; validate; patch ops on **normalized internal tree**; layout engine; component parse (`content`) |
-| `@workbench-kit/react/json-dynamic-widget` | `JsonWidgetRegistry`; `renderJsonWidget`; builtin React builders; `createDefaultRegistry()` |
-| `@workbench-kit/react/json-widget` | Thin `JsonWidgetPreview` → `renderJsonWidget` |
-| `@workbench-kit/react/widget-tree` | Editors (Phase 4); patch UI targets JDW nodes |
-| `@workbench-kit/adapters` | Demo fixtures rewritten to JDW v7 + plugin_components assets |
+| Package                                    | Responsibility                                                                                                         |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `@workbench-kit/contracts`                 | `JsonWidgetNode` shape; component/asset catalog contracts; `placementPolicy`; MIME constants                           |
+| `@workbench-kit/jdw`                       | `parseJsonWidgetData`; validate; patch ops on **normalized internal tree**; layout engine; component parse (`content`) |
+| `@workbench-kit/react/json-dynamic-widget` | `JsonWidgetRegistry`; `renderJsonWidget`; builtin React builders; `createDefaultRegistry()`                            |
+| `@workbench-kit/react/json-widget`         | Thin `JsonWidgetPreview` → `renderJsonWidget`                                                                          |
+| `@workbench-kit/react/widget-tree`         | Editors (Phase 4); patch UI targets JDW nodes                                                                          |
+| `@workbench-kit/adapters`                  | Demo fixtures rewritten to JDW v7 + plugin_components assets                                                           |
 
 Kit stays domain-neutral per [kit-design-principles.md](./kit-design-principles.md). No launchpad/tile/Steam vocabulary in schema or layout code.
 
@@ -251,10 +251,10 @@ asset.content (JDW node)
 
 ### 6.1 `placementPolicy` values (v1)
 
-| Policy | Behavior |
-| ------ | -------- |
-| `rematerialize-grid-slot` | Default for `leaf` — strip parent-incompatible placement and assign grid slot when parent is `grid` |
-| `preserve-internal-layout` | Default for `container` / `template` — adjust root for parent only; keep subtree placement |
+| Policy                     | Behavior                                                                                            |
+| -------------------------- | --------------------------------------------------------------------------------------------------- |
+| `rematerialize-grid-slot`  | Default for `leaf` — strip parent-incompatible placement and assign grid slot when parent is `grid` |
+| `preserve-internal-layout` | Default for `container` / `template` — adjust root for parent only; keep subtree placement          |
 
 ### 6.2 Current gap
 
@@ -293,13 +293,13 @@ function layoutWidget(
 
 ### 7.2 Implementation phases inside layout
 
-| Step | Scope | Existing code |
-| ---- | ----- | --------------- |
-| L1 | `row` / `column` flex + gap + padding + child `flex` | Extend `layout/linear.ts` |
-| L2 | `mainAxisAlignment` / `crossAxisAlignment` on parent | New |
-| L3 | `grid` cell rects | `layout/grid.ts` — integrate under `layoutWidget` |
-| L4 | `stack` absolute rects | `layout/stack.ts` — integrate under `layoutWidget` |
-| L5 | Leaf intrinsic sizing hooks via registry | New optional `measure` capability on definitions |
+| Step | Scope                                                | Existing code                                      |
+| ---- | ---------------------------------------------------- | -------------------------------------------------- |
+| L1   | `row` / `column` flex + gap + padding + child `flex` | Extend `layout/linear.ts`                          |
+| L2   | `mainAxisAlignment` / `crossAxisAlignment` on parent | New                                                |
+| L3   | `grid` cell rects                                    | `layout/grid.ts` — integrate under `layoutWidget`  |
+| L4   | `stack` absolute rects                               | `layout/stack.ts` — integrate under `layoutWidget` |
+| L5   | Leaf intrinsic sizing hooks via registry             | New optional `measure` capability on definitions   |
 
 ### 7.3 Principle
 
@@ -315,20 +315,20 @@ source string
        └─ optional: layoutWidget + CanvasRenderBackend for design surface
 ```
 
-| Component | Owner | Notes |
-| --------- | ----- | ----- |
-| `renderJsonWidget` | `@workbench-kit/react/json-dynamic-widget` | JDW `data.build()` equivalent |
-| `JsonWidgetPreview` | `@workbench-kit/react/json-widget` | Thin wrapper over `renderJsonWidget` |
-| Builtin registry builders | `@workbench-kit/react/json-dynamic-widget` | Replaces ad-hoc demo render helpers |
-| Asset preview | `@workbench-kit/react/widget-asset` | Render `content` via `renderJsonWidget` |
+| Component                 | Owner                                      | Notes                                   |
+| ------------------------- | ------------------------------------------ | --------------------------------------- |
+| `renderJsonWidget`        | `@workbench-kit/react/json-dynamic-widget` | JDW `data.build()` equivalent           |
+| `JsonWidgetPreview`       | `@workbench-kit/react/json-widget`         | Thin wrapper over `renderJsonWidget`    |
+| Builtin registry builders | `@workbench-kit/react/json-dynamic-widget` | Replaces ad-hoc demo render helpers     |
+| Asset preview             | `@workbench-kit/react/widget-asset`        | Render `content` via `renderJsonWidget` |
 
 ## 9. JSON Schema deliverables
 
-| Artifact | Path (proposed) | Consumer |
-| -------- | --------------- | -------- |
-| `widget-document.v1.json` | `packages/json-widget/schemas/` | Monaco (document), `validateWidgetDocument` |
-| `widget-asset-manifest.v1.json` | `packages/json-widget/schemas/` | Monaco (manifest editor), package validation |
-| `createWidgetJsonSchema(registry)` | existing module | Merges registry custom types into document schema |
+| Artifact                           | Path (proposed)                 | Consumer                                          |
+| ---------------------------------- | ------------------------------- | ------------------------------------------------- |
+| `widget-document.v1.json`          | `packages/json-widget/schemas/` | Monaco (document), `validateWidgetDocument`       |
+| `widget-asset-manifest.v1.json`    | `packages/json-widget/schemas/` | Monaco (manifest editor), package validation      |
+| `createWidgetJsonSchema(registry)` | existing module                 | Merges registry custom types into document schema |
 
 ### 9.1 Document schema additions (vs today)
 
@@ -400,49 +400,49 @@ Current `widget-json-schema.ts` defines container types but **not**:
 
 ## 11. Testing strategy
 
-| Layer | Command / location |
-| ----- | ------------------ |
-| Schema + validate | `packages/json-widget/src/validate-*.test.ts` |
-| Materialize + normalize | `packages/json-widget/src/widget-materialize.test.ts` |
-| Layout rects | `packages/json-widget/src/layout/*.test.ts` |
-| Render smoke | Storybook **WidgetLayout/Fixtures** |
-| Regression gate | Extend `pnpm test:widget-tree` → `pnpm test:json-widget` naming TBD |
+| Layer                   | Command / location                                                  |
+| ----------------------- | ------------------------------------------------------------------- |
+| Schema + validate       | `packages/json-widget/src/validate-*.test.ts`                       |
+| Materialize + normalize | `packages/json-widget/src/widget-materialize.test.ts`               |
+| Layout rects            | `packages/json-widget/src/layout/*.test.ts`                         |
+| Render smoke            | Storybook **WidgetLayout/Fixtures**                                 |
+| Regression gate         | Extend `pnpm test:widget-tree` → `pnpm test:json-widget` naming TBD |
 
 Keep tests **framework-neutral** in `json-widget`; React tests only for render backend wiring.
 
 ## 12. Current codebase snapshot
 
-| Area | Exists | Gap |
-| ---- | ------ | --- |
-| `*.widget.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer` | — |
-| Asset parse | `parseWidgetAssetPackage`, `validateWidgetAssetPackage` | `schema.json` substitution deferred |
-| Document parse | `createWidgetDocument` / `parseJsonWidgetData` | Semantic placement validation partial |
-| Patch / tree ops | `applyWidgetPatch` + `normalizeWidgetForParent` | DnD reparent polish deferred |
-| Layout | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts` | Preview pipeline integration pending |
-| Preview | `renderJsonWidget`, `JsonWidgetPreview` | Layout engine not wired into preview yet |
-| Template assets | Builtin + custom packages | Editor insert uses `materializeWidgetPlacementAsset` |
+| Area                                    | Exists                                                  | Gap                                                  |
+| --------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------- |
+| `*.widget.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer`             | —                                                    |
+| Asset parse                             | `parseWidgetAssetPackage`, `validateWidgetAssetPackage` | `schema.json` substitution deferred                  |
+| Document parse                          | `createWidgetDocument` / `parseJsonWidgetData`          | Semantic placement validation partial                |
+| Patch / tree ops                        | `applyWidgetPatch` + `normalizeWidgetForParent`         | DnD reparent polish deferred                         |
+| Layout                                  | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts`     | Preview pipeline integration pending                 |
+| Preview                                 | `renderJsonWidget`, `JsonWidgetPreview`                 | Layout engine not wired into preview yet             |
+| Template assets                         | Builtin + custom packages                               | Editor insert uses `materializeWidgetPlacementAsset` |
 
 ## 13. Resolved and open decisions
 
 ### Resolved
 
-| # | Decision |
-| - | -------- |
-| R1 | **Official wire format = JDW v7** (`type` + `args`). No flat canonical format; no dual-read. |
-| R2 | **Runtime = React JDW** (registry + `renderJsonWidget`), not Dart package import. |
-| R3 | **Asset shape = plugin_components** — `name`, `version`, `content`; drop `defaultWidget` / `widgetType`. |
-| R4 | **`grid` is a kit extension type** on top of JDW profile, documented in schemas. |
+| #   | Decision                                                                                                 |
+| --- | -------------------------------------------------------------------------------------------------------- |
+| R1  | **Official wire format = JDW v7** (`type` + `args`). No flat canonical format; no dual-read.             |
+| R2  | **Runtime = React JDW** (registry + `renderJsonWidget`), not Dart package import.                        |
+| R3  | **Asset shape = plugin_components** — `name`, `version`, `content`; drop `defaultWidget` / `widgetType`. |
+| R4  | **`grid` is a kit extension type** on top of JDW profile, documented in schemas.                         |
 
 ### Open
 
-| # | Question | Proposal |
-| - | -------- | -------- |
-| D1 | Grid child `col`/`row` required at rest? | Normalize on insert/save; validator warns |
-| D2 | `$schema` URL host | `https://workbench-kit.dev/schemas/...` placeholder |
-| D3 | `list-view` / `box` in v1 builtins | Registry-only unless needed for parity tests |
-| D4 | Grid columns change reflow | Phase 2 `reflowGridChildren` |
-| D5 | Document wrapper `{ "root": node }` vs raw node | **Raw root node** for v1 |
-| D6 | `${var}` / `listen` timeline | Phase 4 after static render stable |
+| #   | Question                                        | Proposal                                            |
+| --- | ----------------------------------------------- | --------------------------------------------------- |
+| D1  | Grid child `col`/`row` required at rest?        | Normalize on insert/save; validator warns           |
+| D2  | `$schema` URL host                              | `https://workbench-kit.dev/schemas/...` placeholder |
+| D3  | `list-view` / `box` in v1 builtins              | Registry-only unless needed for parity tests        |
+| D4  | Grid columns change reflow                      | Phase 2 `reflowGridChildren`                        |
+| D5  | Document wrapper `{ "root": node }` vs raw node | **Raw root node** for v1                            |
+| D6  | `${var}` / `listen` timeline                    | Phase 4 after static render stable                  |
 
 ## 14. Suggested first PR slice
 
@@ -453,7 +453,7 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 
 ## 15. Changelog
 
-| Date | Change |
-| ---- | ------ |
-| 2026-06-10 | Initial plan — dual schema, layout engine first, asset template model |
+| Date       | Change                                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------------------ |
+| 2026-06-10 | Initial plan — dual schema, layout engine first, asset template model                                        |
 | 2026-06-10 | **Locked JDW v7 wire format**; React json-dynamic-widget target; plugin_components assets; Phase 0 migration |

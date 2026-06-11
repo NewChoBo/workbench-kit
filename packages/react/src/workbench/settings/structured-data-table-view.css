@@ -29,7 +29,8 @@
   background: var(--color-surface);
 }
 
-.ui-workbench-structured-data-table-view--with-header .ui-workbench-structured-data-table-view__scroll {
+.ui-workbench-structured-data-table-view--with-header
+  .ui-workbench-structured-data-table-view__scroll {
   margin-top: 12px;
 }
 

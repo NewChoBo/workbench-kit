@@ -1,4 +1,4 @@
-import { createCommandRegistry, type CommandDefinition } from '@workbench-kit/core';
+import { createCommandRegistry, type CommandDefinition } from '@workbench-kit/platform';
 import { describe, expect, it, vi } from 'vitest';
 import {
   getWorkbenchShortcutCommandBindings,

@@ -15,17 +15,17 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 
 ## Shell Stack (target architecture)
 
-| Package                                   | Current state                                                   | Target role                                                                          | Action                                                                      |
-| ----------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `@workbench-kit/base`                     | Phase 1: Disposable, Emitter                                    | Foundation utilities                                                                 | **Keep**                                                                    |
-| `@workbench-kit/platform`                 | Phase 1: CommandRegistry, ContextKeyService, KeybindingRegistry | Canonical platform services (commands, context, keybindings, config/auth interfaces) | **Keep** — **absorbs `core`**                                               |
-| `@workbench-kit/core`                     | Published; commands, when-clause, menu resolution               | _(deprecated)_                                                                       | **Absorb → `platform`**, then **Shim** re-exports                           |
-| `@workbench-kit/workbench-core`           | Skeleton                                                        | Extension registry, menu/view/layout registries, host orchestration                  | **Keep**                                                                    |
-| `@workbench-kit/workbench-react`          | Skeleton                                                        | WorkbenchProvider, shell wiring, palette/account entry                               | **Keep** — **absorbs `react/workbench` orchestration**                      |
-| `@workbench-kit/workbench-extension-sdk`  | Manifest types only                                             | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
-| `@workbench-kit/workbench-config`         | Skeleton                                                        | `.workbench` load/merge/validate                                                     | **Keep**                                                                    |
-| `@workbench-kit/workbench-vscode-adapter` | Skeleton                                                        | Opt-in VS Code manifest mapping                                                      | **Keep**                                                                    |
-| `@workbench-kit/monaco`                   | Skeleton                                                        | Editor integration                                                                   | **Keep** (optional)                                                         |
+| Package                                   | Current state                                                                        | Target role                                                                          | Action                                                                      |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `@workbench-kit/base`                     | Phase 5: public-ready foundation package                                             | Foundation utilities                                                                 | **Keep**                                                                    |
+| `@workbench-kit/platform`                 | Phase 5: public-ready canonical platform package                                     | Canonical platform services (commands, context, keybindings, config/auth interfaces) | **Keep** — **absorbed `core`**                                              |
+| `@workbench-kit/core`                     | Deprecated compatibility shim re-exporting `platform`                                | _(deprecated)_                                                                       | **Shim** re-exports                                                         |
+| `@workbench-kit/workbench-core`           | Phase 4: registries, extension activation, layout, bundled modules (private preview) | Extension registry, menu/view/layout registries, host orchestration                  | **Keep**                                                                    |
+| `@workbench-kit/workbench-react`          | Phase 3: provider and registry-backed shell wiring (private preview)                 | WorkbenchProvider, shell wiring, palette/account entry                               | **Keep** — **absorbs `react/workbench` orchestration**                      |
+| `@workbench-kit/workbench-extension-sdk`  | Phase 5: public-ready manifest plus command/view provider context APIs               | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
+| `@workbench-kit/workbench-config`         | Phase 5: public-ready `.workbench/extensions.json` parsing                           | `.workbench` load/merge/validate                                                     | **Keep**                                                                    |
+| `@workbench-kit/workbench-vscode-adapter` | Skeleton                                                                             | Opt-in VS Code manifest mapping                                                      | **Keep**                                                                    |
+| `@workbench-kit/monaco`                   | Skeleton                                                                             | Editor integration                                                                   | **Keep** (optional)                                                         |
 
 ## UI Stack
 
@@ -40,8 +40,8 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
 | `./primitives`, `./styles.css`                                                 | Stay in `react`                                                                                                   |
 | `./workbench` (ActivityBar, SplitView, StatusBar chrome)                       | Stay in `react` (presentational)                                                                                  |
-| `./workbench` (WorkbenchShell layout only)                                     | Stay in `react`; `workbench-react` composes it                                                                    |
-| `./workbench` (CommandPalette wiring, IntegratedShellDemo, command registries) | Move to `workbench-react` + `workbench-core`                                                                      |
+| `./workbench/shell` (WorkbenchShell layout only)                               | Stay in `react`; `workbench-react` composes it without loading the broader `./workbench` surface                  |
+| `./workbench` (CommandPalette wiring, IntegratedShellDemo, command registries) | Move to `workbench-react` + `workbench-core`; existing exports remain compatibility/demo surface during migration |
 | `./workbench/settings`, `./workbench/auth`, `./workbench/workspace`            | Move to `extensions/builtin.*` + thin `workbench-react` hosts                                                     |
 | `./jdw`, `./widget-tree`, `./widget-asset`, `./widget-studio`                  | Stay in `react` (or future split to dedicated UI packages); **not** built-in extensions unless explicitly decided |
 
@@ -66,10 +66,10 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 
 ## Extensions (repository)
 
-| Location               | Target role          | Action                                                           |
-| ---------------------- | -------------------- | ---------------------------------------------------------------- |
-| `extensions/builtin.*` | First-party features | **Keep** — absorb logic from `react/workbench` where appropriate |
-| `extensions/samples.*` | Samples              | **Keep**                                                         |
+| Location               | Target role                                                  | Action                                                               |
+| ---------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `extensions/builtin.*` | First-party feature minimums with manifest/module activation | **Keep** — absorb richer UI from `react/workbench` where appropriate |
+| `extensions/samples.*` | Samples                                                      | **Keep**                                                             |
 
 ## Naming Clarification
 

@@ -36,8 +36,7 @@ export function WidgetAssetPalette({
         </WorkbenchPropertyHint>
       ) : (
         <WorkbenchPropertyHint>
-          Click an asset to add it to{' '}
-          <strong>{selectedContainer?.type ?? 'container'}</strong>.
+          Click an asset to add it to <strong>{selectedContainer?.type ?? 'container'}</strong>.
         </WorkbenchPropertyHint>
       )}
 

@@ -9,8 +9,45 @@
     "workbench": "^0.0.0",
     "extensionApi": "^0.0.0"
   },
-  "activationEvents": ["onView:workbench-kit.builtin.explorer.tree"],
+  "activationEvents": [
+    "onView:workbench-kit.builtin.explorer.tree",
+    "onCommand:workbench-kit.builtin.explorer.refresh"
+  ],
   "contributes": {
+    "commands": [
+      {
+        "command": "workbench-kit.builtin.explorer.refresh",
+        "title": "Refresh Explorer",
+        "category": "Explorer"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "workbench-kit.builtin.explorer.refresh",
+          "group": "navigation",
+          "order": 1,
+          "when": "view == workbench-kit.builtin.explorer.tree"
+        }
+      ]
+    },
+    "viewContainers": {
+      "activitybar": [
+        {
+          "id": "explorer",
+          "title": "Explorer",
+          "icon": "files"
+        }
+      ]
+    },
+    "activities": [
+      {
+        "id": "workbench-kit.builtin.explorer.activity",
+        "viewContainerId": "explorer",
+        "icon": "files",
+        "title": "Explorer"
+      }
+    ],
     "views": {
       "explorer": [
         {
