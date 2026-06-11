@@ -47,7 +47,6 @@ const packageRules = toRuleMap({
     '@workbench-kit/adapters',
     '@workbench-kit/contracts',
     '@workbench-kit/jdw',
-    '@workbench-kit/jdw-editor',
     '@workbench-kit/platform',
     '@workbench-kit/runtime',
     '@workbench-kit/services',
@@ -95,6 +94,8 @@ for (const extensionPackage of readExtensionWorkspaces()) {
   scanSourceImports(extensionPackage, extensionAllowedDependencies);
 }
 
+checkRuntimeDependencyCycles(workspacePackages, workspacePackageByName);
+
 if (violations.length > 0) {
   console.error('Workbench dependency graph check failed.');
   for (const violation of violations) {
@@ -135,11 +136,7 @@ function readWorkspacePackage(directory) {
 }
 
 function checkPackageDependencies(workspacePackage, allowedDependencies, workspacePackageByName) {
-  const dependencies = [
-    ...Object.keys(workspacePackage.packageJson.dependencies ?? {}),
-    ...Object.keys(workspacePackage.packageJson.peerDependencies ?? {}),
-    ...Object.keys(workspacePackage.packageJson.optionalDependencies ?? {}),
-  ].filter((dependency) => dependency.startsWith('@workbench-kit/'));
+  const dependencies = packageRuntimeDependencies(workspacePackage.packageJson);
 
   for (const dependency of dependencies) {
     if (dependency === workspacePackage.name) {
@@ -165,6 +162,66 @@ function checkPackageDependencies(workspacePackage, allowedDependencies, workspa
       });
     }
   }
+}
+
+function checkRuntimeDependencyCycles(workspacePackages, workspacePackageByName) {
+  const workspaceNames = new Set(
+    workspacePackages.map((workspacePackage) => workspacePackage.name),
+  );
+  const edges = new Map(
+    workspacePackages.map((workspacePackage) => [
+      workspacePackage.name,
+      packageRuntimeDependencies(workspacePackage.packageJson).filter((dependency) =>
+        workspaceNames.has(dependency),
+      ),
+    ]),
+  );
+  const visiting = new Set();
+  const visited = new Set();
+  const stack = [];
+
+  for (const workspacePackage of workspacePackages) {
+    visit(workspacePackage.name);
+  }
+
+  function visit(packageName) {
+    if (visiting.has(packageName)) {
+      const cycleStart = stack.indexOf(packageName);
+      const cycle = [...stack.slice(cycleStart), packageName];
+      const workspacePackage = workspacePackageByName.get(packageName);
+      violations.push({
+        location: workspacePackage
+          ? relativePath(path.join(workspacePackage.directory, 'package.json'))
+          : packageName,
+        message: `Runtime workspace dependency cycle detected: ${cycle.join(' -> ')}.`,
+        rule: 'cyclic-workbench-dependency',
+      });
+      return;
+    }
+
+    if (visited.has(packageName)) {
+      return;
+    }
+
+    visiting.add(packageName);
+    stack.push(packageName);
+
+    for (const dependency of edges.get(packageName) ?? []) {
+      visit(dependency);
+    }
+
+    stack.pop();
+    visiting.delete(packageName);
+    visited.add(packageName);
+  }
+}
+
+function packageRuntimeDependencies(packageJson) {
+  return [
+    ...Object.keys(packageJson.dependencies ?? {}),
+    ...Object.keys(packageJson.peerDependencies ?? {}),
+    ...Object.keys(packageJson.optionalDependencies ?? {}),
+  ].filter((dependency) => dependency.startsWith('@workbench-kit/'));
 }
 
 function scanSourceImports(workspacePackage, allowedDependencies) {

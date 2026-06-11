@@ -5,6 +5,7 @@ const config: StorybookConfig = {
   stories: [
     '../stories/**/*.stories.@(ts|tsx)',
     '../packages/react/src/**/*.stories.@(ts|tsx)',
+    '../packages/jdw-editor/src/**/*.stories.@(ts|tsx)',
     '../packages/workbench-react/src/**/*.stories.@(ts|tsx)',
     '../packages/json-widget/src/**/*.stories.@(ts|tsx)',
   ],

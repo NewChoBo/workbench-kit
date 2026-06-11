@@ -2,9 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { screenColumn, screenText, type JdwScreenSpec } from '@workbench-kit/jdw';
 
-import { JdwPreview } from '../jdw/JdwPreview.js';
-import { ScreenSpecEditor, useScreenSpecPipeline } from '@workbench-kit/jdw-editor';
-import { JDW_SAMPLE_SCREENS } from './fixtures/jdw-sample-screens.js';
+import { JdwPreview } from '@workbench-kit/react/jdw/preview';
+import { JDW_SAMPLE_SCREENS } from '@workbench-kit/react/jdw/samples';
+
+import { ScreenSpecEditor } from './ScreenSpecEditor.js';
+import { useScreenSpecPipeline } from './useScreenSpecPipeline.js';
 
 function ScreenSpecEditorHarness({ sampleId = 'user-profile' }: { readonly sampleId?: string }) {
   const sample =

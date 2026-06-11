@@ -1,3 +1,8 @@
+export { JdwSampleScreenExplorer } from './JdwSampleScreenExplorer.js';
+export type {
+  JdwSampleScreenExplorerProps,
+  JdwSampleSourceView,
+} from './JdwSampleScreenExplorer.js';
 export { ScreenNodeInspector } from './ScreenNodeInspector.js';
 export type { ScreenNodeInspectorProps } from './ScreenNodeInspector.js';
 export { ScreenSpecEditor } from './ScreenSpecEditor.js';
