@@ -1,4 +1,3 @@
-/** Phase 0 placeholder — .workbench config loading arrives in a later phase. */
 export const WORKBENCH_KIT_WORKBENCH_CONFIG_VERSION = '0.0.0' as const;
 
 export const WORKBENCH_CONFIG_DIR = '.workbench' as const;
@@ -11,3 +10,48 @@ export type WorkbenchConfigFileName =
   | 'extensions.lock.json'
   | 'layout.default.json'
   | 'tasks.json';
+
+export interface WorkbenchExtensionsConfig {
+  enabled: readonly string[];
+  recommendations: readonly string[];
+}
+
+export class WorkbenchConfigValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'WorkbenchConfigValidationError';
+  }
+}
+
+export function parseWorkbenchExtensionsConfig(input: unknown): WorkbenchExtensionsConfig {
+  const record = assertRecord(input, 'extensions config');
+
+  return {
+    enabled: readOptionalStringArray(record, 'enabled'),
+    recommendations: readOptionalStringArray(record, 'recommendations'),
+  };
+}
+
+function assertRecord(value: unknown, label: string): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new WorkbenchConfigValidationError(`Expected ${label} to be an object.`);
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function readOptionalStringArray(
+  record: Record<string, unknown>,
+  key: keyof WorkbenchExtensionsConfig,
+): readonly string[] {
+  const value = record[key];
+  if (value === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
+    throw new WorkbenchConfigValidationError(`Expected "${key}" to be an array of strings.`);
+  }
+
+  return [...value];
+}
