@@ -14,9 +14,8 @@ Dependency direction enforces a VS Code–like layering: UI-independent core at 
 | `workbench-config`           | `base`, `platform`, schemas (as data)                                                                                       |
 | `workbench-core`             | `base`, `platform`, `workbench-extension-sdk`, `workbench-config`                                                           |
 | `workbench-react`            | `react`, `workbench-core`, `workbench-config`, `platform`, `tokens`                                                         |
-| `workbench-vscode-adapter`   | `workbench-extension-sdk`, `workbench-core`, `platform`, `base`                                                             |
 | `monaco`                     | `base`, `platform` (optional); may peer `react` for editor UI                                                               |
-| Built-in / sample extensions | `workbench-extension-sdk`; optional `workbench-vscode-adapter` for export tooling                                           |
+| Built-in / sample extensions | `workbench-extension-sdk`                                                                                                   |
 | `contracts`                  | _(nothing in-repo required; keep acyclic)_                                                                                  |
 | `services`                   | `contracts`                                                                                                                 |
 | `adapters`                   | `contracts`, `runtime`, `workspace`, optionally `jdw`                                                                       |
@@ -82,9 +81,9 @@ Code bridge packages. Storybook demo sources should use local helpers over
 ## Target State: No Legacy Compatibility Packages
 
 New code must not depend on `@workbench-kit/core`, `@workbench-kit/vscode-host`,
-or `@workbench-kit/vscode-extension`. The command/context APIs live in
-`@workbench-kit/platform`; Storybook demo service wiring uses local helpers over
-`@workbench-kit/services`.
+`@workbench-kit/vscode-extension`, or `@workbench-kit/workbench-vscode-adapter`.
+The command/context APIs live in `@workbench-kit/platform`; Storybook demo
+service wiring uses local helpers over `@workbench-kit/services`.
 
 ## Related Documents
 

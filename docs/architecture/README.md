@@ -15,18 +15,17 @@ Workbench Kit architecture documents for the VS Code–like workbench shell, ext
 
 ## Workbench Layers
 
-| Document                                              | Purpose                                       |
-| ----------------------------------------------------- | --------------------------------------------- |
-| [Workbench Core](./workbench-core.md)                 | Registries, layout, extension orchestration   |
-| [Workbench React](./workbench-react.md)               | React shell and provider model                |
-| [Extension System](./extension-system.md)             | Custom extension model (not full VS Code API) |
-| [Contribution Contracts](./contribution-contracts.md) | Manifest and SDK contribution types           |
-| [Capability Model](./capability-model.md)             | Provider/capability registry                  |
-| [Extension Dependencies](./extension-dependencies.md) | Extension graph and lockfile                  |
-| [Workbench Config](./workbench-config.md)             | `.workbench` workspace files                  |
-| [Account Auth](./account-auth.md)                     | Account, auth, secret storage                 |
-| [VS Code Compatibility](./vscode-compatibility.md)    | Opt-in adapter strategy                       |
-| [Security Boundary](./security-boundary.md)           | Public boundary and extension trust           |
+| Document                                              | Purpose                                     |
+| ----------------------------------------------------- | ------------------------------------------- |
+| [Workbench Core](./workbench-core.md)                 | Registries, layout, extension orchestration |
+| [Workbench React](./workbench-react.md)               | React shell and provider model              |
+| [Extension System](./extension-system.md)             | Custom extension model                      |
+| [Contribution Contracts](./contribution-contracts.md) | Manifest and SDK contribution types         |
+| [Capability Model](./capability-model.md)             | Provider/capability registry                |
+| [Extension Dependencies](./extension-dependencies.md) | Extension graph and lockfile                |
+| [Workbench Config](./workbench-config.md)             | `.workbench` workspace files                |
+| [Account Auth](./account-auth.md)                     | Account, auth, secret storage               |
+| [Security Boundary](./security-boundary.md)           | Public boundary and extension trust         |
 
 ## Migration Note
 

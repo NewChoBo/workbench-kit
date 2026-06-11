@@ -1,6 +1,6 @@
 # Extension System
 
-Workbench Kit uses a **custom extension system** modeled after VS Code ergonomics but **not** implementing full VS Code extension runtime compatibility.
+Workbench Kit uses a **custom extension system** for repository-local and bundled workbench extensions.
 
 ## Scope
 
@@ -13,7 +13,7 @@ Workbench Kit uses a **custom extension system** modeled after VS Code ergonomic
 
 ### Explicitly out of scope (Phase 0 and near term)
 
-- Full VS Code extension API compatibility
+- VS Code extension API compatibility
 - Marketplace / Open VSX extension execution
 - External JavaScript extension runtime loading from arbitrary npm packages at runtime
 - Node extension host, terminal, debug, task, and notebook hosts
@@ -72,5 +72,4 @@ External packages may be supported later as **pre-built, integrity-checked artif
 ## Related Documents
 
 - [Extension Dependencies](./extension-dependencies.md)
-- [VS Code Compatibility](./vscode-compatibility.md)
 - [Workbench Core](./workbench-core.md)

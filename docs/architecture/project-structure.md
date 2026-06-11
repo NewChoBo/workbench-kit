@@ -17,7 +17,6 @@ workbench-kit/
 │   ├── workbench-react/           # React workbench shell (ActivityBar, panels, palette)
 │   ├── workbench-extension-sdk/   # Stable extension contribution types and helpers
 │   ├── workbench-config/          # `.workbench` config loading and validation
-│   ├── workbench-vscode-adapter/  # Future VS Code export / mapping layer
 │   ├── monaco/                    # Optional Monaco editor integration placeholder
 │   ├── contracts/                 # Domain contracts (chat, save, patch, widget)
 │   ├── services/                  # Domain orchestration services
@@ -75,10 +74,6 @@ Stable, UI-independent extension contribution types and manifest helpers. Depend
 ### `packages/workbench-config`
 
 Load, merge, and validate `.workbench` workspace files using schemas under `schemas/workbench/`.
-
-### `packages/workbench-vscode-adapter`
-
-Future opt-in adapter that maps custom extension contributions and settings into VS Code–oriented manifests and activation. May use React for tooling UI; core mapping logic stays separate from `workbench-react`.
 
 ### `packages/monaco`
 
