@@ -79,12 +79,14 @@ This document defines how Workbench Kit moves from the **current published stack
 
 **Goal:** First-party features as extensions.
 
-| Step | Action                                                                                   |
-| ---- | ---------------------------------------------------------------------------------------- |
-| 1    | `builtin.settings` ← `react/workbench/settings` contribution surface                     |
-| 2    | `builtin.explorer` ← workspace tree UI                                                   |
-| 3    | `builtin.accounts` ← auth entry (UI only; secrets per [Account Auth](./account-auth.md)) |
-| 4    | Remove duplicated registration from `react`                                              |
+**Status:** Done for the functional minimum. Built-in extension manifests now contribute commands, menus, activities, view containers, configuration, and view metadata. The generated bundle attaches each extension module so selected extensions can activate and register command handlers or view providers through the SDK. Rich `react/workbench` UI remains as compatibility/demo surface until a later UI extraction pass.
+
+| Step | Action                                                                                                       |
+| ---- | ------------------------------------------------------------------------------------------------------------ |
+| 1    | `builtin.settings` contributes settings command/config/view provider shell                                   |
+| 2    | `builtin.explorer` contributes explorer activity/view and refresh command                                    |
+| 3    | `builtin.accounts` contributes account command/menu/config; secrets stay outside `.workbench`                |
+| 4    | `workbench-react` renders SDK view providers for active view containers; `react` remains presentational/demo |
 
 **Exit:** Enabled extensions list in `.workbench/extensions.json` matches loaded built-ins.
 

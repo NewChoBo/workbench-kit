@@ -55,7 +55,7 @@ Uses shell chrome from `react` to show activity icons from contributed activitie
 
 ### PrimarySideBar
 
-Hosts sidebar views registered for the active activity (e.g. Explorer, Search). Phase 3 renders registry-backed labels as the default host; M4 moves built-in view UI into extension-owned components.
+Hosts sidebar views registered for the active activity (e.g. Explorer, Search). M4 activates views for the active container and renders SDK view providers when extensions register them; registry-backed labels remain the fallback.
 
 ### EditorArea
 
@@ -83,7 +83,7 @@ Status bar or activity area entry opening account/session UI. Uses `AccountServi
 2. `ExtensionRegistry` merges contributions into registries.
 3. `WorkbenchShell` subscribes to layout and context key changes.
 4. User actions dispatch commands through `CommandRegistry`.
-5. View hosts render extension-provided React trees via stable SDK contracts.
+5. View hosts render extension-provided values via stable SDK contracts, mapping valid React nodes and simple text values into the shell.
 
 ## Styling
 
