@@ -19,7 +19,17 @@ interface ExtensionContext {
   readonly extensionId: string;
   readonly extensionPath: string;
   readonly subscriptions: DisposableStore;
+  readonly views: ExtensionViewRegistry;
+  readonly commands: ExtensionCommandRegistry;
   getCapability<T>(id: string): T | undefined;
+}
+
+interface ExtensionCommandRegistry {
+  registerCommand(commandId: string, handler: CommandServiceHandler): Disposable;
+}
+
+interface ExtensionViewRegistry {
+  registerViewProvider(provider: ViewProvider): Disposable;
 }
 
 type ActivateFunction = (context: ExtensionContext) => void | Promise<void> | Disposable;
@@ -96,7 +106,7 @@ interface ViewHost {
 }
 ```
 
-`workbench-react` maps `ViewProvider` to React trees. Extension SDK stays UI-framework neutral (`unknown` / callback registration).
+Runtime view providers are registered in `activate()` via `context.views.registerViewProvider(...)`. `workbench-react` maps `ViewProvider` results to React nodes when possible; the SDK stays UI-framework neutral (`unknown` / callback registration).
 
 ## Menu Contributions
 
@@ -161,7 +171,8 @@ Recommended command ID prefix: `<publisher>.<extension>.<name>`.
 @workbench-kit/workbench-extension-sdk
   manifest types
   contribution types
-  registerCommand / registerView / … (Phase 2+)
+  ExtensionContext.commands.registerCommand
+  ExtensionContext.views.registerViewProvider
 ```
 
 ## Related Documents

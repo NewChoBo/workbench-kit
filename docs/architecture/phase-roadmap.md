@@ -10,7 +10,7 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 | 1     | `base` + `platform` primitives                | M1                  | Done    |
 | 2     | `workbench-core` registries + extension load  | M2                  | Done    |
 | 3     | `workbench-react` shell provider              | M3                  | Done    |
-| 4     | Built-in extension extraction                 | M4                  | Planned |
+| 4     | Built-in extension extraction                 | M4                  | Done    |
 | 5     | Publish + shim cleanup                        | M5                  | Planned |
 
 ## Phase 0 — Structure
@@ -83,11 +83,12 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 - `builtin.settings`, `builtin.explorer`, `builtin.accounts`, `builtin.workspace` functional minimum
 - ViewProvider host contract ([Contribution Contracts](./contribution-contracts.md))
 - Capability registry for auth/filesystem stubs
+- Bundled extension modules attached to generated extension descriptions
 
 **Exit criteria**
 
-- [ ] Each built-in activates from manifest only
-- [ ] Removing extension from `.workbench/extensions.json` disables feature
+- [x] Each built-in activates from manifest only
+- [x] Removing extension from `.workbench/extensions.json` disables feature
 
 ## Phase 5 — Publish and Hardening
 

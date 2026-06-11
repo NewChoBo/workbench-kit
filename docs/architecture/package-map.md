@@ -20,9 +20,9 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 | `@workbench-kit/base`                     | Phase 1: Disposable, Emitter                                            | Foundation utilities                                                                 | **Keep**                                                                    |
 | `@workbench-kit/platform`                 | Phase 1: canonical command, menu, when-clause, context, keybinding APIs | Canonical platform services (commands, context, keybindings, config/auth interfaces) | **Keep** — **absorbed `core`**                                              |
 | `@workbench-kit/core`                     | Deprecated compatibility shim re-exporting `platform`                   | _(deprecated)_                                                                       | **Shim** re-exports                                                         |
-| `@workbench-kit/workbench-core`           | Phase 2: registries, extension activation, layout, bundled manifests    | Extension registry, menu/view/layout registries, host orchestration                  | **Keep**                                                                    |
+| `@workbench-kit/workbench-core`           | Phase 4: registries, extension activation, layout, bundled modules      | Extension registry, menu/view/layout registries, host orchestration                  | **Keep**                                                                    |
 | `@workbench-kit/workbench-react`          | Phase 3: provider and registry-backed shell wiring                      | WorkbenchProvider, shell wiring, palette/account entry                               | **Keep** — **absorbs `react/workbench` orchestration**                      |
-| `@workbench-kit/workbench-extension-sdk`  | Manifest types only                                                     | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
+| `@workbench-kit/workbench-extension-sdk`  | Phase 4: manifest types plus command/view provider context APIs         | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
 | `@workbench-kit/workbench-config`         | Phase 2: `.workbench/extensions.json` parsing                           | `.workbench` load/merge/validate                                                     | **Keep**                                                                    |
 | `@workbench-kit/workbench-vscode-adapter` | Skeleton                                                                | Opt-in VS Code manifest mapping                                                      | **Keep**                                                                    |
 | `@workbench-kit/monaco`                   | Skeleton                                                                | Editor integration                                                                   | **Keep** (optional)                                                         |
@@ -66,10 +66,10 @@ Migration mode: **bulk replacement allowed** for in-repo work; published package
 
 ## Extensions (repository)
 
-| Location               | Target role          | Action                                                           |
-| ---------------------- | -------------------- | ---------------------------------------------------------------- |
-| `extensions/builtin.*` | First-party features | **Keep** — absorb logic from `react/workbench` where appropriate |
-| `extensions/samples.*` | Samples              | **Keep**                                                         |
+| Location               | Target role                                                  | Action                                                               |
+| ---------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `extensions/builtin.*` | First-party feature minimums with manifest/module activation | **Keep** — absorb richer UI from `react/workbench` where appropriate |
+| `extensions/samples.*` | Samples                                                      | **Keep**                                                             |
 
 ## Naming Clarification
 
