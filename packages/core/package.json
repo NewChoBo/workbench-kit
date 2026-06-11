@@ -19,7 +19,7 @@
     "!src/**/*.stories.ts",
     "!src/**/*.stories.tsx"
   ],
-  "description": "Framework-neutral Workbench Kit command and context primitives.",
+  "description": "Legacy shim — command and context primitives. Target: merge into @workbench-kit/platform (see docs/architecture/migration-strategy.md).",
   "publishConfig": {
     "access": "public",
     "tag": "prototype",

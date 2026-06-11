@@ -1,8 +1,10 @@
-/** Phase 0 placeholder — foundation layer exports arrive in a later phase. */
 export const WORKBENCH_KIT_BASE_VERSION = '0.0.0' as const;
 
-export type Disposable = {
-  dispose(): void;
-};
-
-export type Event<T> = (listener: (e: T) => void) => Disposable;
+export {
+  DisposableStore,
+  dispose,
+  isDisposable,
+  toDisposable,
+  type Disposable,
+} from './disposable.js';
+export { Emitter, type Event } from './event.js';

@@ -1,0 +1,91 @@
+import type { Disposable } from '@workbench-kit/base';
+
+/** Stable contribution types for workbench.extension.json and activate() registration. */
+
+export interface CommandContribution {
+  category?: string;
+  command: string;
+  enablement?: string;
+  icon?: string;
+  title: string;
+}
+
+export interface KeybindingContribution {
+  args?: readonly unknown[];
+  command: string;
+  key: string;
+  when?: string;
+}
+
+export interface ViewContainerContribution {
+  icon?: string;
+  id: string;
+  title: string;
+}
+
+export interface ViewContribution {
+  containerId: string;
+  id: string;
+  name: string;
+  when?: string;
+}
+
+export interface MenuContribution {
+  command: string;
+  group?: string;
+  menu: string;
+  order?: number;
+  when?: string;
+}
+
+export interface ActivityContribution {
+  icon: string;
+  id: string;
+  title: string;
+  viewContainerId: string;
+  when?: string;
+}
+
+export type ConfigurationPropertyScope = 'application' | 'workspace' | 'window';
+
+export interface ConfigurationPropertyContribution {
+  default?: unknown;
+  description?: string;
+  scope?: ConfigurationPropertyScope;
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+}
+
+export interface ConfigurationContribution {
+  properties: Record<string, ConfigurationPropertyContribution>;
+}
+
+export interface ExtensionContributes {
+  activities?: ActivityContribution[];
+  commands?: CommandContribution[];
+  configuration?: ConfigurationContribution;
+  keybindings?: KeybindingContribution[];
+  menus?: MenuContribution[];
+  views?: Record<string, ViewContribution[]>;
+  viewContainers?: Record<string, ViewContainerContribution[]>;
+}
+
+export interface ViewHost {
+  dispose(): void;
+  render(): unknown;
+}
+
+export interface ViewProvider {
+  readonly viewId: string;
+  resolveViewHost(): ViewHost;
+}
+
+export interface ExtensionContext {
+  readonly extensionId: string;
+  readonly extensionPath: string;
+  readonly subscriptions: { add(disposable: Disposable): void };
+  getCapability<T>(capabilityId: string): T | undefined;
+}
+
+export type ActivateFunction = (context: ExtensionContext) => void | Promise<void> | Disposable;
+
+export type DeactivateFunction = () => void | Promise<void>;
