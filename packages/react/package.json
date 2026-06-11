@@ -15,6 +15,7 @@
     "./workbench/chat": "./src/workbench/chat/index.ts",
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",
+    "./workbench/shell": "./src/workbench/shell.ts",
     "./workbench/demo": "./src/workbench/demo/index.ts",
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
     "./jdw": "./src/jdw/index.ts",

@@ -4,14 +4,22 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "vitest run src",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@workbench-kit/react": "workspace:*",
     "@workbench-kit/platform": "workspace:*",
+    "@workbench-kit/tokens": "workspace:*",
+    "@workbench-kit/workbench-config": "workspace:*",
     "@workbench-kit/workbench-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "description": "React workbench shell for Workbench Kit. Phase 0 skeleton.",
   "repository": {
