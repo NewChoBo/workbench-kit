@@ -80,7 +80,7 @@ Trusted publisher settings must be configured on npm for each public package:
 
 - Provider: GitHub Actions
 - GitHub organization/user: `NewChoBo`
-- Repository: `newchobo-ui-package`
+- Repository: `workbench-kit`
 - Workflow filename: `publish.yml`
 - Allowed action: `npm publish`
 

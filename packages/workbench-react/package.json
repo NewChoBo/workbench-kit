@@ -1,0 +1,22 @@
+{
+  "name": "@workbench-kit/workbench-react",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workbench-kit/platform": "workspace:*",
+    "@workbench-kit/workbench-core": "workspace:*"
+  },
+  "description": "React workbench shell for Workbench Kit. Phase 0 skeleton.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/workbench-react"
+  }
+}

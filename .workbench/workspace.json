@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "name": "Workbench Kit",
+  "folders": [
+    {
+      "path": ".",
+      "name": "Repository Root"
+    }
+  ]
+}

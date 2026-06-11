@@ -1,0 +1,24 @@
+{
+  "name": "@workbench-kit/workbench-vscode-adapter",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workbench-kit/base": "workspace:*",
+    "@workbench-kit/platform": "workspace:*",
+    "@workbench-kit/workbench-core": "workspace:*",
+    "@workbench-kit/workbench-extension-sdk": "workspace:*"
+  },
+  "description": "Future VS Code manifest mapping adapter. Phase 0 skeleton.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/workbench-vscode-adapter"
+  }
+}

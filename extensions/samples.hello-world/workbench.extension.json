@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.samples.hello-world",
+  "name": "samples-hello-world",
+  "displayName": "Hello World Sample",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onCommand:workbench-kit.samples.hello-world.sayHello"],
+  "contributes": {
+    "commands": [
+      {
+        "command": "workbench-kit.samples.hello-world.sayHello",
+        "title": "Hello World: Say Hello"
+      }
+    ]
+  }
+}

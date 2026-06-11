@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "workbench-kit.builtin.explorer",
+    "workbench-kit.builtin.settings",
+    "workbench-kit.builtin.workspace"
+  ],
+  "enabled": [
+    "workbench-kit.builtin.accounts",
+    "workbench-kit.builtin.explorer",
+    "workbench-kit.builtin.keybindings",
+    "workbench-kit.builtin.settings",
+    "workbench-kit.builtin.workspace"
+  ]
+}

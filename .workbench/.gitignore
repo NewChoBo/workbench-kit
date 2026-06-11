@@ -1,0 +1,9 @@
+local.json
+state.json
+*.local.json
+secrets.json
+secrets.*
+accounts.json
+sessions/
+cache/
+logs/
