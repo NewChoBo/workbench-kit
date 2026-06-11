@@ -1,4 +1,4 @@
-import type { CommandRegistry } from '@workbench-kit/core';
+import type { CommandRegistry } from '@workbench-kit/platform';
 import type {
   SaveResult,
   WorkspacePatchApplyResult,

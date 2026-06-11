@@ -5,7 +5,7 @@ import {
   CommandNotEnabledError,
   CommandNotFoundError,
   type CommandDefinition,
-  type CommandHandler,
+  type CommandServiceHandler,
 } from './types.js';
 
 export interface CommandServiceOptions {
@@ -64,7 +64,10 @@ export class CommandService {
     return this.contextKeys.evaluateWhen(command.enablement);
   }
 
-  private async invokeHandler(handler: CommandHandler, args: readonly unknown[]): Promise<unknown> {
+  private async invokeHandler(
+    handler: CommandServiceHandler,
+    args: readonly unknown[],
+  ): Promise<unknown> {
     return await handler(...args);
   }
 }

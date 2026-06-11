@@ -3,7 +3,7 @@ import {
   createCommandRegistry,
   executeCommand,
   resolveCommandMenuItems,
-} from '@workbench-kit/core';
+} from '@workbench-kit/platform';
 import { isSaveSuccess, type SaveResult } from '@workbench-kit/contracts';
 import { useWorkspaceDrafts } from './WorkspaceDraftsContext';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';

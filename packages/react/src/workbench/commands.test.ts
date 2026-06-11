@@ -2,7 +2,7 @@ import {
   createCommandRegistry,
   executeCommand,
   resolveCommandMenuItems,
-} from '@workbench-kit/core';
+} from '@workbench-kit/platform';
 import { describe, expect, it } from 'vitest';
 import {
   WORKBENCH_OPEN_SETTINGS_COMMAND_ID,

@@ -1,7 +1,7 @@
 import { useMemo, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import { createCommandRegistry } from '@workbench-kit/core';
+import { createCommandRegistry } from '@workbench-kit/platform';
 import { Button } from '../primitives/Button';
 import { SegmentedControl } from '../primitives/WorkbenchEditor';
 import { ChatComposer } from './chat/ChatComposer';
