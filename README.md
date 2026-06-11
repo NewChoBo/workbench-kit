@@ -112,6 +112,6 @@ bundled extension modules are packaged as public-safe artifacts.
 - [Public API Governance](./docs/conventions/public-api-governance.md)
 - [Storybook Direction](./docs/conventions/storybook.md)
 
-## Workbench Planning
+## Workbench Notes
 
-- [Workbench Migration Todo](./docs/workbench/migration-todo.md)
+- [Workbench Notes](./docs/workbench/README.md)
