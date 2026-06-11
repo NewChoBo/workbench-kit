@@ -1,0 +1,18 @@
+{
+  "name": "@workbench-kit/base",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "description": "Foundation utilities for Workbench Kit (disposable, events, lifecycle). Phase 0 skeleton.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/base"
+  }
+}

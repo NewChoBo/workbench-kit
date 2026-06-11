@@ -1,0 +1,12 @@
+{
+  "activityBar": {
+    "visible": true
+  },
+  "sideBar": {
+    "visible": true,
+    "activeViewContainer": "explorer"
+  },
+  "panel": {
+    "visible": false
+  }
+}

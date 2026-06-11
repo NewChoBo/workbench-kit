@@ -1,0 +1,96 @@
+# Workbench Core
+
+`@workbench-kit/workbench-core` is the framework-neutral workbench engine. It orchestrates registries, layout state, and extension lifecycle without React or DOM dependencies.
+
+Phase 0 defines types and package boundaries only; implementations arrive in later phases.
+
+## Design Principles
+
+- **Registry-oriented**: Features register contributions; the host resolves and executes them.
+- **Disposable lifecycle**: Long-lived services and registrations clean up explicitly.
+- **Activation-driven**: Extensions activate on events, not at import time.
+- **UI-agnostic**: View contributions describe _what_ to show; `workbench-react` decides _how_ to render.
+
+## Core Services and Registries
+
+### CommandRegistry
+
+Registers command definitions (`id`, `title`, `category`, `icon`, `enablement` when-clause) and handlers. Supports:
+
+- Contribution merge from extensions and built-ins
+- Conflict detection for duplicate command IDs
+- Execution with context snapshot and cancellation tokens (future)
+- Menu command resolution via contributed menu bindings
+
+### KeybindingRegistry
+
+Binds keystrokes to command IDs with optional `when` clauses and chord sequences. Responsibilities:
+
+- Normalize platform-specific modifiers
+- Resolve conflicts by specificity and source order
+- Emit dispatch events to execute bound commands
+
+### ContextKeyService
+
+Maintains a scoped key–value context model (booleans, strings, numbers) used by `when` clauses for commands, menus, and views. Supports:
+
+- Hierarchical scopes (global, workbench, editor, view)
+- Change events for reactive UI enablement
+- Snapshot for command/menu resolution
+
+### MenuRegistry
+
+Accepts menu contributions (location, group, order, command/submenu entries, separators). Resolves visible items given current context keys and command enablement.
+
+Standard menu locations include command palette categories, activity bar context, editor title, view title, and account menu (see [Account Auth](./account-auth.md)).
+
+### ViewRegistry
+
+Registers view containers and views (id, name, icon, when-clause, preferred location). Tracks:
+
+- View container placement (activity bar, panel, auxiliary bar)
+- Default and restored view visibility
+- View descriptor metadata for React hosts to mount components
+
+### LayoutService
+
+Manages workbench layout state: sidebar visibility, panel size, editor groups, active viewlet, and zen mode flags. Persists shareable defaults via `.workbench/layout.default.json`; personal layout deltas go to local ignored state files.
+
+### ExtensionRegistry
+
+Loads extension manifests, validates engines and dependencies, orders activation, and exposes contribution points to other registries. Integrates with `workbench-config` for `.workbench/extensions.json` and lockfile data.
+
+## Activation Events
+
+Extensions declare `activationEvents` in `workbench.extension.json`. Examples:
+
+- `onStartup`
+- `onCommand:myExtension.doThing`
+- `onView:myExtension.explorer`
+- `onWorkbenchReady`
+
+The registry activates extensions lazily when a matching event fires, then runs their `activate` contribution hook (future). Topological order respects `extensionDependencies`.
+
+## Disposable Lifecycle
+
+All registries and services implement or return `Disposable` (from `base`):
+
+- `register*` methods return a `Disposable` that unregisters the contribution
+- `ExtensionContext.subscriptions` collects disposables for automatic cleanup on deactivate
+- Shutting down the workbench disposes services in reverse dependency order
+
+## Package Boundaries
+
+| Concern                  | Package                   |
+| ------------------------ | ------------------------- |
+| `Disposable`, `Event`    | `base`                    |
+| Service interfaces       | `platform`                |
+| Contribution types       | `workbench-extension-sdk` |
+| Registry implementations | `workbench-core`          |
+| React mounting           | `workbench-react`         |
+
+## Related Documents
+
+- [Workbench React](./workbench-react.md)
+- [Extension System](./extension-system.md)
+- [Dependency Rules](./dependency-rules.md)

@@ -1,0 +1,24 @@
+{
+  "name": "@workbench-kit/workbench-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workbench-kit/base": "workspace:*",
+    "@workbench-kit/platform": "workspace:*",
+    "@workbench-kit/workbench-config": "workspace:*",
+    "@workbench-kit/workbench-extension-sdk": "workspace:*"
+  },
+  "description": "Framework-neutral workbench registries and extension orchestration. Phase 0 skeleton.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/workbench-core"
+  }
+}

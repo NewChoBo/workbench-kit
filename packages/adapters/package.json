@@ -36,7 +36,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NewChoBo/newchobo-ui-package.git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
     "directory": "packages/adapters"
   }
 }

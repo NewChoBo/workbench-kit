@@ -1,0 +1,20 @@
+{
+  "lockfileVersion": 1,
+  "extensions": {
+    "workbench-kit.builtin.accounts": {
+      "version": "0.0.0"
+    },
+    "workbench-kit.builtin.explorer": {
+      "version": "0.0.0"
+    },
+    "workbench-kit.builtin.keybindings": {
+      "version": "0.0.0"
+    },
+    "workbench-kit.builtin.settings": {
+      "version": "0.0.0"
+    },
+    "workbench-kit.builtin.workspace": {
+      "version": "0.0.0"
+    }
+  }
+}

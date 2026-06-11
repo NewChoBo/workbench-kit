@@ -1,5 +1,7 @@
 packages:
   - 'packages/*'
+  - 'extensions/*'
+  - 'examples/*'
 
 allowBuilds:
   '@swc/core': true

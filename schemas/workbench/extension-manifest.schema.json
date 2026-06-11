@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/NewChoBo/workbench-kit/schemas/workbench/extension-manifest.schema.json",
+  "title": "Workbench Extension Manifest",
+  "type": "object",
+  "properties": {
+    "schemaVersion": { "type": "integer" },
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "displayName": { "type": "string" },
+    "version": { "type": "string" },
+    "publisher": { "type": "string" },
+    "engines": {
+      "type": "object",
+      "properties": {
+        "workbench": { "type": "string" },
+        "extensionApi": { "type": "string" }
+      }
+    },
+    "activationEvents": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "contributes": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "extensionDependencies": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "permissions": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["schemaVersion", "id", "version", "publisher", "engines", "activationEvents"],
+  "additionalProperties": true
+}

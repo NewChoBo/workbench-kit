@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.builtin.settings",
+  "name": "builtin-settings",
+  "displayName": "Settings",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onCommand:workbench-kit.builtin.settings.open"],
+  "contributes": {
+    "commands": [
+      {
+        "command": "workbench-kit.builtin.settings.open",
+        "title": "Open Settings"
+      }
+    ],
+    "configuration": {}
+  }
+}

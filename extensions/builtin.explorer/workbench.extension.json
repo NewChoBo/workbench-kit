@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.builtin.explorer",
+  "name": "builtin-explorer",
+  "displayName": "Explorer",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onView:workbench-kit.builtin.explorer.tree"],
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "workbench-kit.builtin.explorer.tree",
+          "name": "Explorer"
+        }
+      ]
+    }
+  }
+}

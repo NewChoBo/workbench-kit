@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.builtin.accounts",
+  "name": "builtin-accounts",
+  "displayName": "Accounts",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onStartup"],
+  "contributes": {
+    "commands": [],
+    "menus": {}
+  },
+  "permissions": ["account.read"]
+}

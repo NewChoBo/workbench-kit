@@ -1,0 +1,13 @@
+{
+  "name": "@workbench-kit/extension-builtin-accounts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workbench-kit/workbench-extension-sdk": "workspace:*"
+  },
+  "description": "Built-in accounts extension skeleton. Phase 0 placeholder."
+}
