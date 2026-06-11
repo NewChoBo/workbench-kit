@@ -303,9 +303,24 @@ importers:
       '@workbench-kit/platform':
         specifier: workspace:*
         version: link:../platform
+      '@workbench-kit/react':
+        specifier: workspace:*
+        version: link:../react
+      '@workbench-kit/tokens':
+        specifier: workspace:*
+        version: link:../tokens
+      '@workbench-kit/workbench-config':
+        specifier: workspace:*
+        version: link:../workbench-config
       '@workbench-kit/workbench-core':
         specifier: workspace:*
         version: link:../workbench-core
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
 
   packages/workbench-vscode-adapter:
     dependencies:
