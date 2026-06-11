@@ -12,6 +12,10 @@ export {
   type WorkbenchExtensionModule,
 } from './extension-registry.js';
 export {
+  resolveWorkbenchExtensions,
+  type WorkbenchExtensionResolution,
+} from './extension-resolution.js';
+export {
   createWorkbenchLayoutState,
   LayoutService,
   type WorkbenchLayoutChangeEvent,

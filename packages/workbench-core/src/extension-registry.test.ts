@@ -46,6 +46,23 @@ describe('ExtensionRegistry', () => {
     });
   });
 
+  it('hard-fails duplicate contributed command IDs', () => {
+    const registry = new ExtensionRegistry();
+    registry.registerExtension(helloWorldExtension);
+
+    expect(() => registry.registerExtension(helloWorldExtension)).toThrow(
+      'Extension "workbench-kit.samples.hello-world" is already registered.',
+    );
+    expect(() =>
+      registry.registerExtension({
+        manifest: {
+          ...helloWorldExtension.manifest,
+          id: 'workbench-kit.samples.duplicate',
+        },
+      }),
+    ).toThrow('Command "workbench-kit.samples.hello-world.sayHello" is already registered.');
+  });
+
   it('activates extensions by command activation event', async () => {
     const registry = new ExtensionRegistry();
     const activated: string[] = [];
