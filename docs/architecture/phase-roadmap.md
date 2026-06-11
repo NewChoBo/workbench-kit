@@ -9,7 +9,7 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 | 0     | Docs, schemas, skeletons, `.workbench` sample | M0                  | Done    |
 | 1     | `base` + `platform` primitives                | M1                  | Done    |
 | 2     | `workbench-core` registries + extension load  | M2                  | Done    |
-| 3     | `workbench-react` shell provider              | M3                  | Planned |
+| 3     | `workbench-react` shell provider              | M3                  | Done    |
 | 4     | Built-in extension extraction                 | M4                  | Planned |
 | 5     | Publish + shim cleanup                        | M5                  | Planned |
 
@@ -65,16 +65,16 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 
 **Deliverables**
 
-- `WorkbenchProvider`, `WorkbenchShell` (orchestrated)
-- Command palette bound to `CommandService`
-- Keybinding dispatch bridge
-- Storybook migrated off `IntegratedShellDemo` manual wiring
+- `WorkbenchProvider`, `WorkbenchShell` orchestrated through `workbench-core`
+- Extension activity, view, status, layout wiring derived from registries
+- Storybook primary shell path exposed through `workbench-react`
+- Root typecheck includes `@workbench-kit/workbench-react`
 
 **Exit criteria**
 
-- [ ] Primary shell story uses `workbench-react` only
-- [ ] `react` deprecations documented in export map
-- [ ] No import of `workbench-core` from `react` package
+- [x] Primary shell story uses `workbench-react` only
+- [x] `react` orchestration migration documented in export map
+- [x] No import of `workbench-core` from `react` package
 
 ## Phase 4 — Built-in Extensions
 

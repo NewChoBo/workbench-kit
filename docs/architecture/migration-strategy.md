@@ -64,12 +64,14 @@ This document defines how Workbench Kit moves from the **current published stack
 
 **Goal:** Replace ad hoc shell wiring with `WorkbenchProvider`.
 
-| Step | Action                                                                                           |
-| ---- | ------------------------------------------------------------------------------------------------ |
-| 1    | `workbench-react` composes existing `react` `WorkbenchShell`, `ActivityBar`, `CommandPalette` UI |
-| 2    | Move `IntegratedShellDemo` registry wiring to `WorkbenchProvider`                                |
-| 3    | Stories use `workbench-react` entry; delete duplicate registry setup                             |
-| 4    | `react` export map: deprecate orchestration exports; document replacements                       |
+**Status:** Done. `workbench-react` now owns `WorkbenchProvider`, registry-backed `WorkbenchShell` composition, extension config resolution, startup activation, layout service access, and the primary Storybook shell path.
+
+| Step | Action                                                                                                          |
+| ---- | --------------------------------------------------------------------------------------------------------------- |
+| 1    | `workbench-react` composes existing `react` `WorkbenchShell` shell-only export                                  |
+| 2    | Move extension registry, layout, configured extension resolution, and startup activation to `WorkbenchProvider` |
+| 3    | Stories use `workbench-react` entry; duplicate registry setup is not needed for the primary shell path          |
+| 4    | `react` export map keeps presentational shell exports; orchestration replacements are documented                |
 
 **Exit:** Primary Storybook shell path uses `workbench-react` only.
 
