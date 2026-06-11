@@ -4,14 +4,14 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 
 ## Phase Summary
 
-| Phase | Focus                                         | Migration milestone | Status                       |
-| ----- | --------------------------------------------- | ------------------- | ---------------------------- |
-| 0     | Docs, schemas, skeletons, `.workbench` sample | M0                  | Done                         |
-| 1     | `base` + `platform` primitives                | M1 (partial)        | In progress (feature branch) |
-| 2     | `workbench-core` registries + extension load  | M2                  | Planned                      |
-| 3     | `workbench-react` shell provider              | M3                  | Planned                      |
-| 4     | Built-in extension extraction                 | M4                  | Planned                      |
-| 5     | Publish + shim cleanup                        | M5                  | Planned                      |
+| Phase | Focus                                         | Migration milestone | Status  |
+| ----- | --------------------------------------------- | ------------------- | ------- |
+| 0     | Docs, schemas, skeletons, `.workbench` sample | M0                  | Done    |
+| 1     | `base` + `platform` primitives                | M1                  | Done    |
+| 2     | `workbench-core` registries + extension load  | M2                  | Planned |
+| 3     | `workbench-react` shell provider              | M3                  | Planned |
+| 4     | Built-in extension extraction                 | M4                  | Planned |
+| 5     | Publish + shim cleanup                        | M5                  | Planned |
 
 ## Phase 0 — Structure
 
@@ -40,12 +40,10 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 
 **Exit criteria**
 
-- [ ] M1 plan approved ([Migration Strategy](./migration-strategy.md))
-- [ ] When-clause: single implementation path decided (`core` merge vs keep)
+- [x] M1 plan approved ([Migration Strategy](./migration-strategy.md))
+- [x] When-clause: single implementation path decided (`platform`; `core` is a shim)
 - [x] Platform packages typecheck and test locally
-- [ ] No new orchestration code in `react/workbench` unless behind migration ticket
-
-**Note:** Phase 1 spike on `feature/workbench-phase1-base-platform` may be **rebased or rewritten** during M1 consolidation.
+- [x] No new orchestration code in `react/workbench` unless behind migration ticket
 
 ## Phase 2 — Workbench Core
 
