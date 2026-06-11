@@ -57,6 +57,8 @@ export const InteractionSmoke: Story = {
     };
 
     await expect(canvas.getByTestId('widget-tree-workbench')).toBeVisible();
+    await expect(canvas.getByTestId('widget-tree-lab-data-pane')).toBeVisible();
+    await expect(canvas.getByTestId('widget-tree-lab-render-pane')).toBeVisible();
     await waitForWidgetTreeSourcePane(canvasElement);
     await expect(canvas.getByRole('button', { name: 'Design' })).toHaveAttribute(
       'aria-pressed',

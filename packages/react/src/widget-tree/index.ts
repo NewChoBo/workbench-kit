@@ -2,6 +2,8 @@ export { WidgetTreeLab } from './WidgetTreeLab.js';
 export type { WidgetTreeLabProps } from './WidgetTreeLab.js';
 export { WidgetTreeWorkbench } from './WidgetTreeWorkbench.js';
 export type { WidgetTreeWorkbenchProps } from './WidgetTreeWorkbench.js';
+export { WidgetTreeWorkspaceShell } from './WidgetTreeWorkspaceShell.js';
+export type { WidgetTreeWorkspaceShellProps } from './WidgetTreeWorkspaceShell.js';
 export { WidgetTreeView } from './WidgetTreeView.js';
 export type { WidgetTreeViewProps } from './WidgetTreeView.js';
 export { WidgetInspectorPanel } from './WidgetInspectorPanel.js';
