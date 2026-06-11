@@ -95,7 +95,9 @@ Sync rules:
 - [x] P3.3 full playground E2E play — `JsonWidget/Playground → InteractiveSmoke` (add, inspector, preview select, DnD, save)
 - [x] P3.3 required play promotion — `InteractiveSmoke` (`JDW/Config/WidgetInteraction` stays baseline; save requires dirty Monaco edit)
 - [x] **Phase 3 kit milestone complete** — see [application-complete.md](./application-complete.md)
-- [x] P4 consumer swap runbook — [consumer-swap-runbook.md](./consumer-swap-runbook.md)
+- [x] P4 consumer swap guidance captured as historical notes; future consumer
+      swap work should start from the current [Workbench Notes](./README.md)
+      index.
 - [ ] P4 custom_launcher preview toolbar → `PreviewZoomToolbar` (in progress)
 - [ ] P4 tile_paper domain types (full `WidgetPropertySections`, drag/resize `EditorWidgetWrapper` with registry wrapper pattern)
 - [ ] P4 full `createWidgetJsonSchema` parity (tile-ref, spacer, dataSource, multi-schema project configs)

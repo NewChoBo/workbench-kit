@@ -96,6 +96,8 @@ for the playground backlog.
 - Integrated shell orchestration lives in `packages/react/src/workbench/demo/IntegratedShellDemo.tsx`
   with workspace flows in `integratedShellWorkspaceOrchestration.ts`, composed through
   `WorkbenchStandaloneShell` (same host pattern as dev-agent).
+- `packages/react/src/workbench/demo` is workspace-only Storybook support code,
+  is excluded from package files, and must not be imported as a public API.
 - Components, hooks, reducers, and command helpers own reusable behavior.
 - Integrated stories should compose Explorer, Search, Chat, Editor, Settings,
   ActivityBar, SplitView, and StatusBar through the same public APIs that a host
@@ -125,5 +127,5 @@ menu projection scoped to the surface that opened the menu.
   Editor tab, Settings, and Status Bar menu paths separately because they can
   share command descriptors while requiring different visible actions.
 
-See [Workbench Migration Todo](../workbench/migration-todo.md) for the current
-workbench migration and Storybook validation plan.
+See [Workbench Notes](../workbench/README.md) for current workbench planning
+notes.

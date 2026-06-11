@@ -1,4 +1,4 @@
-/** Phase 0 placeholder — keybindings extension activation arrives in a later phase. */
+/** Reserved built-in extension for workspace keybinding contribution ownership. */
 export const EXTENSION_ID = 'workbench-kit.builtin.keybindings' as const;
 
 export function activate(): { dispose(): void } {

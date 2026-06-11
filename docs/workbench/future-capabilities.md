@@ -58,7 +58,7 @@ Do **not** start these while Phases 1–3 are open:
 - **tile_paper web-editor switch** — repointing the full web-editor shell to kit-only
   primitives before `JsonConfigWorkbench` and json-widget editor chrome are kit-complete.
 - **custom_launcher `#workbench-ui` merge** — replacing launcher-local UI with
-  `@workbench-kit/react` wholesale (see [reference-implementation-strategy.md](./reference-implementation-strategy.md) non-merge policy).
+  `@workbench-kit/react` wholesale before package boundaries are stable.
 - **Consumer deletion of `json-widget-tree` / `json-widget-editor` packages** — only after
   kit parity tests and Storybook baselines cover the swapped surface.
 
@@ -169,6 +169,6 @@ Until a concrete need and design exist, this stays a backlog note only.
 
 ## Related docs
 
-- [migration-todo.md](./migration-todo.md) — active migration tracker
-- [workbench-execution-roadmap.md](./workbench-execution-roadmap.md) — milestone gates
+- [README.md](./README.md) — current workbench notes index
+- [../architecture/migration-strategy.md](../architecture/migration-strategy.md) — canonical migration baseline
 - [storybook.md](../conventions/storybook.md) — integrated shell story conventions

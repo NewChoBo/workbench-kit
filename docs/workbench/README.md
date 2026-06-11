@@ -1,0 +1,35 @@
+# Workbench Notes
+
+This folder contains non-canonical workbench planning notes that are still useful
+for product-neutral backlog, Storybook direction, plugin concepts, and JSON
+widget extraction. Canonical package structure and migration status live under
+[`docs/architecture`](../architecture/README.md).
+
+Historical execution plans that depended on removed packages such as
+`@workbench-kit/core`, `@workbench-kit/vscode-host`, or
+`@workbench-kit/vscode-extension` have been removed from this folder. New work
+should link to the current architecture documents instead of reviving those
+legacy paths.
+
+## Current Notes
+
+| Document                                                        | Purpose                                                                                  |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [Future Capabilities](./future-capabilities.md)                 | Deferred backlog for JSON widget, i18n, theme, layout, playground, and node-graph ideas. |
+| [JSON Widget MVP](./json-widget-mvp.md)                         | Current JSON widget package and Storybook validation status.                             |
+| [JSON Widget Port Strategy](./json-widget-port-then-replace.md) | Product-neutral extraction boundaries for JSON widget work.                              |
+| [JSON Config Workbench](./json-config-workbench.md)             | JSON config workbench surface and adoption notes.                                        |
+| [Widget Layout Schema Plan](./widget-layout-schema-plan.md)     | Widget document/layout schema planning that still applies to JDW work.                   |
+| [Plugin Manifest Guide](./plugin-manifest-guide.md)             | Prototype plugin descriptor and contribution metadata shape.                             |
+| [Plugin Lifecycle](./plugin-lifecycle.md)                       | Plugin lifecycle policy aligned with current contracts and platform APIs.                |
+| [Standalone Host](./standalone-host.md)                         | Standalone host assembly notes that do not rely on removed VS Code packages.             |
+| [Strengths Inheritance](./strengths-inheritance.md)             | Reference UI patterns and adoption notes.                                                |
+| [Todo](./todo.md)                                               | Small deferred workbench item list.                                                      |
+
+## Rules
+
+- Keep new documents product-neutral and package-current.
+- Use `@workbench-kit/platform`, `workbench-core`, `workbench-react`, and the
+  extension SDK as the current workbench boundaries.
+- Do not add plans that depend on removed legacy packages or VS Code wrapper
+  lanes.

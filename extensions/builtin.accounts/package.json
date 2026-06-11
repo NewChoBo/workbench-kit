@@ -9,5 +9,5 @@
   "dependencies": {
     "@workbench-kit/workbench-extension-sdk": "workspace:*"
   },
-  "description": "Built-in accounts extension skeleton. Phase 0 placeholder."
+  "description": "Built-in accounts extension that contributes the account status command, menu entry, and configuration."
 }
