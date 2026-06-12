@@ -92,7 +92,7 @@ This document defines how Workbench Kit moves from the **current published stack
 
 ### M5 — Publish alignment
 
-**Status:** Done for public-ready packages and in-repo hardening. `base`, `platform`, `workbench-extension-sdk`, and `workbench-config` are aligned for the publish pipeline. `workbench-core` and `workbench-react` remain private preview because the current shell modules are repo-local artifacts, not yet package-safe public artifacts.
+**Status:** Done for public-ready packages and in-repo hardening. `base`, `platform`, `workbench-extension-sdk`, and `workbench-config` are aligned for the publish pipeline. `workbench-core` and `workbench-react` remain private preview because the current shell modules are repo-local artifacts, not yet package-safe public artifacts. `pnpm check:public-exports` guards publish-order membership, private-preview exclusions, package export targets, package file exclusions, and publish metadata.
 
 | Step | Action                                                                                                         |
 | ---- | -------------------------------------------------------------------------------------------------------------- |
@@ -101,6 +101,7 @@ This document defines how Workbench Kit moves from the **current published stack
 | 3    | Update README package list and private-preview shell package notes                                             |
 | 4    | Add `check:dependency-graph` and wire it into `pnpm validate` as the dependency-cruiser equivalent for this M5 |
 | 5    | Remove VS Code bridge and adapter packages; future VS Code work is outside the current package graph           |
+| 6    | Add `check:public-exports` and wire it into `pnpm validate` for package export/publish metadata hardening      |
 
 ## What Not to Bulk-Replace
 
@@ -132,7 +133,8 @@ pnpm lint
 pnpm test
 ```
 
-`pnpm check:dependency-graph` is wired into `pnpm validate`.
+`pnpm check:dependency-graph` and `pnpm check:public-exports` are wired into
+`pnpm validate`.
 
 ## Related Documents
 

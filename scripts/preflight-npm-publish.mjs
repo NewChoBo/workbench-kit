@@ -6,6 +6,7 @@ import {
   NPM_REGISTRY,
   clearNpmRegistryAuth,
   isTrustedPublisherAvailable,
+  packageDirectoryNameForPackageName,
 } from './npm-publish-config.mjs';
 
 const root = process.cwd();
@@ -147,8 +148,7 @@ function publishPermissionError(actor, packageName, authMode) {
 }
 
 function packageDirFor(packageName) {
-  const shortName = packageName.replace('@workbench-kit/', '');
-  return path.join(root, 'packages', shortName);
+  return path.join(root, 'packages', packageDirectoryNameForPackageName(packageName));
 }
 
 function packPackage(packageName) {
