@@ -16,9 +16,17 @@ export type WorkbenchExtensionManifest = {
     extensionApi: string;
   };
   activationEvents: string[];
+  capabilities?: ExtensionCapabilities;
   contributes?: ExtensionContributes;
   extensionDependencies?: string[];
+  extensionOptionalDependencies?: string[];
+  extensionPack?: string[];
   permissions?: string[];
+};
+
+export type ExtensionCapabilities = {
+  requires?: string[];
+  provides?: string[];
 };
 
 export type {

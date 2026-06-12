@@ -58,7 +58,7 @@ Manages workbench layout state: sidebar visibility, panel size, editor groups, a
 
 ### ExtensionRegistry
 
-Loads extension manifests, validates engines and dependencies, orders activation, and exposes contribution points to other registries. Integrates with `workbench-config` for `.workbench/extensions.json` and lockfile data.
+Loads extension manifests, validates manifest shape and hard dependencies, orders activation, and exposes contribution points to other registries. Integrates with `workbench-config` for `.workbench/extensions.json` and lockfile data.
 
 M2 behavior:
 

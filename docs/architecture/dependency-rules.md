@@ -74,6 +74,18 @@ peer-depend on private workspace packages. It also rejects runtime workspace
 dependency cycles. It is wired into `pnpm validate`. Future work may replace or
 augment it with `dependency-cruiser` or ESLint restricted-path rules.
 
+Extension manifests have a separate validation gate:
+
+```powershell
+pnpm check:extension-manifests
+```
+
+The manifest gate rejects duplicate extension IDs, malformed identity/engine
+fields, unknown hard dependencies, hard dependency cycles, invalid local
+extension package metadata, and extension packs that reference unknown local
+extensions. It is wired into `pnpm validate`, and the extension bundle script
+runs the same check before writing generated bundle data.
+
 `@workbench-kit/react` must not keep a runtime or dev dependency on removed VS
 Code bridge packages. Storybook demo sources should use local helpers over
 `@workbench-kit/services` and public platform contracts.

@@ -45,20 +45,52 @@ Capabilities enable loose coupling (e.g. `filesystem-provider`, `auth-provider`)
 
 Mismatch fails manifest validation with a clear error.
 
-## Resolution Algorithm (planned)
+## Current Enforcement
 
-1. **Collect** all enabled extension manifests from built-ins, workspace config, and lockfile.
-2. **Validate semver** for `engines.*` and dependency version ranges.
-3. **Build directed graph** from `extensionDependencies`, `extensionPack`, and `capabilities.requires` → `provides` edges.
+Repository-local built-in and sample extensions are checked before the bundle is
+generated and during the root validation gate.
+
+```powershell
+pnpm check:extension-manifests
+node scripts/bundle-workbench-extensions.mjs
+```
+
+The manifest check currently enforces:
+
+- Required manifest identity fields: `schemaVersion`, `id`, `name`,
+  `displayName`, `version`, `publisher`, `engines`, and `activationEvents`.
+- Publisher-qualified extension IDs (`publisher.*`) and duplicate ID rejection.
+- Required `engines.workbench` and `engines.extensionApi` range strings.
+- Unique string arrays for activation events, dependency fields, permissions,
+  and capability declarations.
+- Known local extension references for hard dependencies and extension packs.
+- Missing hard dependency and hard dependency cycle failures.
+- Repository-local extension packages remain private ESM packages that depend on
+  `@workbench-kit/workbench-extension-sdk`.
+
+`ExtensionRegistry.registerExtensions()` repeats the hard dependency graph check
+at runtime and activation recursively activates hard dependencies first.
+
+## Resolution Algorithm
+
+1. **Collect** all enabled extension manifests from built-ins, workspace config,
+   and lockfile.
+2. **Validate shape** for identity fields, engines, dependency arrays,
+   permissions, capabilities, and package metadata.
+3. **Build directed graph** from `extensionDependencies`.
 4. **Detect cycles**; fail with cycle path in error message.
-5. **Topological sort** for activation order; optional deps skipped if absent.
-6. **Apply lockfile** (`extensions.lock.json`) to pin exact versions and content hashes.
+5. **Activate hard dependencies first** when a dependent extension activates.
+6. **Future:** validate npm semver ranges, resolve optional dependencies,
+   connect `capabilities.requires` to `capabilities.provides`, and apply
+   `extensions.lock.json` to pin exact versions and content hashes.
 
 ## Semver Validation
 
 - Use semver ranges compatible with the npm semver subset.
 - Pre-release extension versions (`1.0.0-beta.1`) require explicit range allowance.
 - Workspace built-ins may use `0.0.0` with `workspace:` protocol internally.
+- The current manifest checker requires non-empty engine range strings. Full npm
+  semver solving is reserved for the external extension/install phase.
 
 ## Lockfile Purpose
 
