@@ -24,6 +24,7 @@ legacy paths.
 | [Plugin Lifecycle](./plugin-lifecycle.md)                       | Plugin lifecycle policy aligned with current contracts and platform APIs.                |
 | [Standalone Host](./standalone-host.md)                         | Standalone host assembly notes that do not rely on removed VS Code packages.             |
 | [Strengths Inheritance](./strengths-inheritance.md)             | Reference UI patterns and adoption notes.                                                |
+| [Theia Strengths Workplan](./theia-strengths-workplan.md)       | Theia-inspired lifecycle, registry, workspace, and preference backlog.                   |
 | [Todo](./todo.md)                                               | Small deferred workbench item list.                                                      |
 
 ## Rules

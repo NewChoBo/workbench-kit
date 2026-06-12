@@ -1,11 +1,20 @@
-import { isValidElement, useCallback, useEffect, useMemo, useReducer, type ReactNode } from 'react';
+import {
+  isValidElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  type FocusEvent,
+  type ReactNode,
+} from 'react';
 import {
   WorkbenchShell as ReactWorkbenchShell,
   type ActivityBarItem,
   type StatusBarItemModel,
   type StatusBarSectionModel,
 } from '@workbench-kit/react/workbench/shell';
-import type { ViewProvider } from '@workbench-kit/workbench-core';
+import type { ViewHost, ViewProvider } from '@workbench-kit/workbench-core';
 
 import { useWorkbench } from './provider.js';
 
@@ -171,20 +180,67 @@ function WorkbenchViewHost({
   fallback: ReactNode;
   provider: ViewProvider | undefined;
 }) {
+  const hostFrameRef = useRef<HTMLDivElement>(null);
   const host = useMemo(() => provider?.resolveViewHost(), [provider]);
 
-  useEffect(
-    () => () => {
-      host?.dispose();
-    },
-    [host],
-  );
+  useEffect(() => {
+    if (!host) {
+      return undefined;
+    }
+
+    host.onDidShow?.();
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' && host.onDidResize
+        ? new ResizeObserver((entries) => {
+            const entry = entries[0];
+            if (!entry) return;
+
+            host.onDidResize?.({
+              height: entry.contentRect.height,
+              width: entry.contentRect.width,
+            });
+          })
+        : undefined;
+
+    if (resizeObserver && hostFrameRef.current) {
+      resizeObserver.observe(hostFrameRef.current);
+    }
+
+    return () => {
+      resizeObserver?.disconnect();
+      host.onDidHide?.();
+      host.dispose();
+    };
+  }, [host]);
 
   if (!host) {
     return <>{fallback}</>;
   }
 
-  return <>{toReactNode(host.render(), fallback)}</>;
+  return (
+    <div
+      ref={hostFrameRef}
+      aria-label={host.title}
+      data-view-host-id={host.id ?? provider?.viewId}
+      onBlur={(event) => notifyViewHostBlur(host, event)}
+      onFocus={(event) => notifyViewHostFocus(host, event)}
+    >
+      {toReactNode(host.render(), fallback)}
+    </div>
+  );
+}
+
+function notifyViewHostFocus(host: ViewHost, event: FocusEvent<HTMLDivElement>): void {
+  if (!event.currentTarget.contains(event.relatedTarget)) {
+    host.onDidFocus?.();
+  }
+}
+
+function notifyViewHostBlur(host: ViewHost, event: FocusEvent<HTMLDivElement>): void {
+  if (!event.currentTarget.contains(event.relatedTarget)) {
+    host.onDidBlur?.();
+  }
 }
 
 function toReactNode(value: unknown, fallback: ReactNode): ReactNode {
@@ -218,5 +274,17 @@ function resolveIcon(icon: ReactNode | string | undefined): ReactNode {
     return icon;
   }
 
-  return <span aria-hidden="true">{icon.slice(0, 1).toUpperCase()}</span>;
+  const className = getCodiconClassName(icon);
+  if (className) {
+    return <i aria-hidden="true" className={`codicon ${className}`} />;
+  }
+
+  return <span aria-hidden="true">W</span>;
+}
+
+function getCodiconClassName(icon: string): string | undefined {
+  const token = icon.trim();
+  if (!token) return undefined;
+
+  return token.startsWith('codicon-') ? token : `codicon-${token}`;
 }
