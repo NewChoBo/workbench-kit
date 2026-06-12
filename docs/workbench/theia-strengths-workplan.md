@@ -44,7 +44,7 @@ preference scopes.
 | Workspace         | `VirtualWorkspaceState`, reducer actions, search, tree, selection, draft helpers exist                                                               | No resource URI model, resource snapshot, repository adapter, or transaction journal yet. |
 | Built-in explorer | Registers a placeholder view provider                                                                                                                | Not yet backed by virtual workspace state or command-driven resource operations.          |
 | Sample host       | Planned in docs; previous branch has a working Vite host commit                                                                                      | The `staging` baseline needs the sample host restored or reimplemented.                   |
-| Validation        | Manifest, dependency graph, and public export checks pass                                                                                            | Current `check-launch-boundary` scans sibling repos and can time out on Windows.          |
+| Validation        | Manifest, dependency graph, public export, and workbench-kit scoped launch boundary checks pass                                                      | Full `pnpm validate` still depends on the local package manager state.                    |
 
 ## Work Queue
 
@@ -66,6 +66,9 @@ preference scopes.
   slice. The SDK now exposes optional host metadata and lifecycle hooks,
   `workbench-react` notifies show, hide, focus, blur, and resize events, and
   manifest activity icons render through VS Code codicon classes.
+- 2026-06-12: Removed stale sibling-repo launch boundary scanning from
+  `check-launch-boundary`; the check now validates only the current
+  workbench-kit tree.
 
 ## Suggested Order
 
