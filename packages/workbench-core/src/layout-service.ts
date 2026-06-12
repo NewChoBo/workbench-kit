@@ -24,7 +24,7 @@ export interface WorkbenchLayoutChangeEvent {
   readonly state: WorkbenchLayoutState;
 }
 
-const DEFAULT_LAYOUT_STATE: WorkbenchLayoutState = {
+export const DEFAULT_WORKBENCH_LAYOUT_STATE: WorkbenchLayoutState = {
   activityBar: {
     visible: true,
   },
@@ -111,7 +111,7 @@ export class LayoutService implements Disposable {
 
 export function createWorkbenchLayoutState(
   input: WorkbenchLayoutStateInput = {},
-  base: WorkbenchLayoutState = DEFAULT_LAYOUT_STATE,
+  base: WorkbenchLayoutState = DEFAULT_WORKBENCH_LAYOUT_STATE,
 ): WorkbenchLayoutState {
   return {
     activityBar: {
@@ -139,7 +139,7 @@ function readBoolean(value: unknown, fallback: boolean): boolean {
 }
 
 function readOptionalString(value: unknown, fallback: string | undefined): string | undefined {
-  return typeof value === 'string' ? value : fallback;
+  return typeof value === 'string' && value.trim().length > 0 ? value : fallback;
 }
 
 function isSameLayoutState(left: WorkbenchLayoutState, right: WorkbenchLayoutState): boolean {

@@ -54,7 +54,11 @@ Registers view containers and views (id, name, icon, when-clause, preferred loca
 
 ### LayoutService
 
-Manages workbench layout state: sidebar visibility, panel size, editor groups, active viewlet, and zen mode flags. Persists shareable defaults via `.workbench/layout.default.json`; personal layout deltas go to local ignored state files.
+Manages framework-neutral workbench layout state: activity bar visibility,
+sidebar visibility, active sidebar view container, and panel visibility. It
+accepts the parsed `.workbench/layout.default.json` contract from
+`workbench-config`; personal layout deltas and last-opened UI state remain local
+ignored state.
 
 ### ExtensionRegistry
 
