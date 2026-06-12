@@ -75,7 +75,9 @@ Modal command search UI bound to `CommandRegistry` and `KeybindingRegistry` hint
 
 ### Account menu entry
 
-Status bar or activity area entry opening account/session UI. Uses `AccountService` from `platform`; does not read tokens from `.workbench` (see [Account Auth](./account-auth.md)).
+Status bar or activity area entry opening account/session UI. Uses the auth and
+account service contracts from `platform`; does not read tokens from
+`.workbench` (see [Account Auth](./account-auth.md)).
 
 ## Data Flow
 

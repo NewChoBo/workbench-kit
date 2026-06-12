@@ -80,6 +80,9 @@ importers:
 
   extensions/builtin.accounts:
     dependencies:
+      '@workbench-kit/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
       '@workbench-kit/workbench-extension-sdk':
         specifier: workspace:*
         version: link:../../packages/workbench-extension-sdk
