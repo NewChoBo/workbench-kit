@@ -70,8 +70,22 @@ export interface ExtensionContributes {
   viewContainers?: Record<string, ViewContainerContribution[]>;
 }
 
+export interface ViewHostSize {
+  height: number;
+  width: number;
+}
+
 export interface ViewHost {
+  readonly closable?: boolean;
+  readonly icon?: string;
+  readonly id?: string;
+  readonly title?: string;
   dispose(): void;
+  onDidBlur?(): void;
+  onDidFocus?(): void;
+  onDidHide?(): void;
+  onDidResize?(size: ViewHostSize): void;
+  onDidShow?(): void;
   render(): unknown;
 }
 

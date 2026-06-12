@@ -46,5 +46,6 @@ export type {
   ViewContainerContribution,
   ViewContribution,
   ViewHost,
+  ViewHostSize,
   ViewProvider,
 } from './contributions.js';
