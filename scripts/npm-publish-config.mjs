@@ -2,6 +2,15 @@ import fs from 'node:fs';
 
 export const NPM_REGISTRY = process.env.NPM_CONFIG_REGISTRY || 'https://registry.npmjs.org/';
 
+export const PACKAGE_DIRECTORY_BY_NAME = {
+  jdw: 'json-widget',
+};
+
+export function packageDirectoryNameForPackageName(packageName) {
+  const shortName = packageName.replace('@workbench-kit/', '');
+  return PACKAGE_DIRECTORY_BY_NAME[shortName] ?? shortName;
+}
+
 export function isTrustedPublisherAvailable() {
   return (
     process.env.GITHUB_ACTIONS === 'true' && Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN)

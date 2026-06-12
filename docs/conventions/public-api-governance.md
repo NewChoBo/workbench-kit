@@ -73,14 +73,16 @@ Before committing a public API change:
 3. Keep private helpers, fixtures, stories, and tests out of public entrypoints.
 4. Confirm the symbol name and props/types avoid product-specific language.
 5. Run the minimum validation lane for the changed package.
-6. Note public API changes and validation in the commit body.
-7. Add or update at least one contract test that proves external consumers can import the symbol from the package root.
+6. Run `pnpm check:public-exports` when package `exports`, `files`, or publish metadata changes.
+7. Note public API changes and validation in the commit body.
+8. Add or update at least one contract test that proves external consumers can import the symbol from the package root.
 
 ## Validation
 
 For public API changes, run:
 
 ```powershell
+pnpm check:public-exports
 pnpm validate
 ```
 
