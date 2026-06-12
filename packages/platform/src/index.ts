@@ -2,6 +2,19 @@ export const WORKBENCH_KIT_PLATFORM_VERSION = '0.0.0' as const;
 
 export type ServiceIdentifier<T> = symbol & { __serviceBrand: T };
 
+export {
+  WORKBENCH_AUTH_CAPABILITY_ID,
+  WORKBENCH_SECRETS_CAPABILITY_ID,
+  type WorkbenchAccount,
+  type WorkbenchAccountChangeEvent,
+  type WorkbenchAccountService,
+  type WorkbenchAuthenticationService,
+  type WorkbenchAuthProvider,
+  type WorkbenchAuthSession,
+  type WorkbenchAuthSignInOptions,
+  type WorkbenchSecretStorageNamespace,
+  type WorkbenchSecretStorageService,
+} from './auth/types.js';
 export { CommandRegistry } from './commands/command-registry.js';
 export {
   assertNoCommandDefinitionConflicts,

@@ -24,6 +24,9 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
         extensionApi: '^0.0.0',
       },
       activationEvents: ['onStartup'],
+      capabilities: {
+        requires: ['workbench.auth'],
+      },
       contributes: {
         commands: [
           {

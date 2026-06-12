@@ -20,7 +20,7 @@
     "!src/**/*.stories.ts",
     "!src/**/*.stories.tsx"
   ],
-  "description": "Framework-neutral command, menu, context-key, and keybinding services for Workbench Kit.",
+  "description": "Framework-neutral command, menu, context-key, keybinding, and auth service contracts for Workbench Kit.",
   "publishConfig": {
     "access": "public",
     "tag": "prototype",
