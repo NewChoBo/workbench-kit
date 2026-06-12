@@ -97,11 +97,13 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 - New public-ready packages in publish pipeline (`base`, `platform`, `workbench-extension-sdk`, `workbench-config`)
 - Legacy compatibility package removal
 - Dependency graph check wired into `pnpm validate`
+- Public export and publish metadata check wired into `pnpm validate`
 - README and architecture index updated
 
 **Exit criteria**
 
 - [x] `pnpm validate` gate includes dependency graph checks
+- [x] `pnpm validate` gate includes public export checks
 - [x] README and architecture index complete
 - [x] Security boundary review remains documented for extension permissions
 

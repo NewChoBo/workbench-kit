@@ -77,6 +77,7 @@ pnpm test:storybook-play
 pnpm test:storybook-play:required
 pnpm build:storybook
 node ./scripts/check-workbench-dependency-graph.mjs
+pnpm check:public-exports
 pnpm validate:full
 ```
 

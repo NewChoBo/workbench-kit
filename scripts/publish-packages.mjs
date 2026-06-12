@@ -6,6 +6,7 @@ import {
   NPM_REGISTRY,
   clearNpmRegistryAuth,
   isTrustedPublisherAvailable,
+  packageDirectoryNameForPackageName,
 } from './npm-publish-config.mjs';
 
 const root = process.cwd();
@@ -70,14 +71,8 @@ function resolvePublishAuthMode(trustedPublisherAvailable) {
   }
 }
 
-const PACKAGE_DIRECTORY_BY_NAME = {
-  jdw: 'json-widget',
-};
-
 function packageDirFor(packageName) {
-  const shortName = packageName.replace('@workbench-kit/', '');
-  const dirName = PACKAGE_DIRECTORY_BY_NAME[shortName] ?? shortName;
-  return path.join(root, 'packages', dirName);
+  return path.join(root, 'packages', packageDirectoryNameForPackageName(packageName));
 }
 
 function packPackage(packageName) {
