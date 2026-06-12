@@ -16,6 +16,37 @@ export interface WorkbenchExtensionsConfig {
   recommendations: readonly string[];
 }
 
+export interface WorkbenchLayoutConfig {
+  readonly activityBar: {
+    readonly visible: boolean;
+  };
+  readonly panel: {
+    readonly visible: boolean;
+  };
+  readonly sideBar: {
+    readonly activeViewContainer?: string;
+    readonly visible: boolean;
+  };
+}
+
+export type WorkbenchLayoutConfigInput = Partial<{
+  activityBar: Partial<WorkbenchLayoutConfig['activityBar']>;
+  panel: Partial<WorkbenchLayoutConfig['panel']>;
+  sideBar: Partial<WorkbenchLayoutConfig['sideBar']>;
+}>;
+
+export const DEFAULT_WORKBENCH_LAYOUT_CONFIG: WorkbenchLayoutConfig = {
+  activityBar: {
+    visible: true,
+  },
+  panel: {
+    visible: false,
+  },
+  sideBar: {
+    visible: true,
+  },
+};
+
 export class WorkbenchConfigValidationError extends Error {
   constructor(message: string) {
     super(message);
@@ -44,9 +75,68 @@ export function parseWorkbenchExtensionsConfigJson(jsonText: string): WorkbenchE
   }
 }
 
+export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfig {
+  const record = assertRecord(input, 'layout config');
+  assertKnownKeys(record, ['activityBar', 'panel', 'sideBar'], 'layout config');
+
+  const activityBar = readOptionalRecord(record, 'activityBar');
+  const panel = readOptionalRecord(record, 'panel');
+  const sideBar = readOptionalRecord(record, 'sideBar');
+
+  assertKnownKeys(activityBar, ['visible'], 'layout config activityBar');
+  assertKnownKeys(panel, ['visible'], 'layout config panel');
+  assertKnownKeys(sideBar, ['activeViewContainer', 'visible'], 'layout config sideBar');
+
+  return {
+    activityBar: {
+      visible: readOptionalBoolean(
+        activityBar,
+        'visible',
+        DEFAULT_WORKBENCH_LAYOUT_CONFIG.activityBar.visible,
+      ),
+    },
+    panel: {
+      visible: readOptionalBoolean(panel, 'visible', DEFAULT_WORKBENCH_LAYOUT_CONFIG.panel.visible),
+    },
+    sideBar: {
+      ...readOptionalLayoutId(sideBar, 'activeViewContainer'),
+      visible: readOptionalBoolean(
+        sideBar,
+        'visible',
+        DEFAULT_WORKBENCH_LAYOUT_CONFIG.sideBar.visible,
+      ),
+    },
+  };
+}
+
+export function parseWorkbenchLayoutConfigJson(jsonText: string): WorkbenchLayoutConfig {
+  try {
+    return parseWorkbenchLayoutConfig(JSON.parse(jsonText) as unknown);
+  } catch (error) {
+    if (error instanceof WorkbenchConfigValidationError) {
+      throw error;
+    }
+
+    throw new WorkbenchConfigValidationError('Expected layout config to be valid JSON.');
+  }
+}
+
 function assertRecord(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new WorkbenchConfigValidationError(`Expected ${label} to be an object.`);
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function readOptionalRecord(record: Record<string, unknown>, key: string): Record<string, unknown> {
+  const value = record[key];
+  if (value === undefined) {
+    return {};
+  }
+
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new WorkbenchConfigValidationError(`Expected "${key}" to be an object.`);
   }
 
   return value as Record<string, unknown>;
@@ -66,4 +156,47 @@ function readOptionalStringArray(
   }
 
   return [...value];
+}
+
+function readOptionalBoolean(
+  record: Record<string, unknown>,
+  key: string,
+  fallback: boolean,
+): boolean {
+  const value = record[key];
+  if (value === undefined) {
+    return fallback;
+  }
+
+  if (typeof value !== 'boolean') {
+    throw new WorkbenchConfigValidationError(`Expected "${key}" to be a boolean.`);
+  }
+
+  return value;
+}
+
+function readOptionalLayoutId(
+  record: Record<string, unknown>,
+  key: string,
+): { readonly activeViewContainer?: string } {
+  const value = record[key];
+  if (value === undefined) {
+    return {};
+  }
+
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new WorkbenchConfigValidationError(`Expected "${key}" to be a non-empty string.`);
+  }
+
+  return {
+    activeViewContainer: value,
+  };
+}
+
+function assertKnownKeys(record: Record<string, unknown>, keys: readonly string[], label: string) {
+  const knownKeys = new Set(keys);
+  const unknownKeys = Object.keys(record).filter((key) => !knownKeys.has(key));
+  if (unknownKeys.length > 0) {
+    throw new WorkbenchConfigValidationError(`Unexpected ${label} field "${unknownKeys[0]}".`);
+  }
 }
