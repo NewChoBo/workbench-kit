@@ -8,21 +8,28 @@
       "type": "object",
       "properties": {
         "visible": { "type": "boolean" }
-      }
+      },
+      "required": ["visible"],
+      "additionalProperties": false
     },
     "sideBar": {
       "type": "object",
       "properties": {
         "visible": { "type": "boolean" },
-        "activeViewContainer": { "type": "string" }
-      }
+        "activeViewContainer": { "type": "string", "minLength": 1 }
+      },
+      "required": ["visible"],
+      "additionalProperties": false
     },
     "panel": {
       "type": "object",
       "properties": {
         "visible": { "type": "boolean" }
-      }
+      },
+      "required": ["visible"],
+      "additionalProperties": false
     }
   },
-  "additionalProperties": true
+  "required": ["activityBar", "sideBar", "panel"],
+  "additionalProperties": false
 }

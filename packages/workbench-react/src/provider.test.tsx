@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { parseWorkbenchLayoutConfig } from '@workbench-kit/workbench-config';
 
 import { WorkbenchProvider, WorkbenchShell, useWorkbench } from './index.js';
 
@@ -32,12 +33,12 @@ describe('WorkbenchProvider', () => {
           enabled: ['workbench-kit.builtin.explorer'],
           recommendations: [],
         }}
-        initialLayout={{
+        initialLayout={parseWorkbenchLayoutConfig({
           sideBar: {
             activeViewContainer: 'explorer',
             visible: true,
           },
-        }}
+        })}
       >
         <WorkbenchShell editorArea={<main>Editor Area</main>} />
       </WorkbenchProvider>,

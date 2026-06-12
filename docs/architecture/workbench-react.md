@@ -21,6 +21,7 @@ React context provider that:
 
 - Bootstraps `workbench-core` services (`ExtensionRegistry`, `LayoutService`)
 - Accepts initial `.workbench` extension configuration and optional extension manifest list
+- Accepts parsed `.workbench/layout.default.json` data as `initialLayout`
 - Resolves enabled and missing extensions from bundled manifests by default
 - Activates startup extensions and disposes registries on unmount
 - Exposes command activation/execution helpers through `useWorkbench`

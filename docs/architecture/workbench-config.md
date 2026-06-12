@@ -4,16 +4,16 @@ The `.workbench` directory at a workspace root holds **team-shareable** workbenc
 
 ## Directory Layout
 
-| File                   | Purpose                                                    |
-| ---------------------- | ---------------------------------------------------------- |
-| `workspace.json`       | Workspace metadata, folders, and workbench profile name    |
-| `settings.json`        | Editor and workbench settings (JSON)                       |
-| `keybindings.json`     | Workspace keybinding overrides                             |
-| `extensions.json`      | Enabled/recommended extension IDs and sources              |
-| `extensions.lock.json` | Pinned extension resolution and integrity metadata         |
-| `layout.default.json`  | Default shareable layout (view visibility, panel defaults) |
-| `tasks.json`           | Task definitions placeholder (future task runner)          |
-| `.gitignore`           | Ignores local-only and secret-adjacent files               |
+| File                   | Purpose                                                 |
+| ---------------------- | ------------------------------------------------------- |
+| `workspace.json`       | Workspace metadata, folders, and workbench profile name |
+| `settings.json`        | Editor and workbench settings (JSON)                    |
+| `keybindings.json`     | Workspace keybinding overrides                          |
+| `extensions.json`      | Enabled/recommended extension IDs and sources           |
+| `extensions.lock.json` | Pinned extension resolution and integrity metadata      |
+| `layout.default.json`  | Default shareable layout (activity bar, sidebar, panel) |
+| `tasks.json`           | Task definitions placeholder (future task runner)       |
+| `.gitignore`           | Ignores local-only and secret-adjacent files            |
 
 Schemas live under `schemas/workbench/` with matching filenames.
 
@@ -50,9 +50,21 @@ Files ignored by `.workbench/.gitignore`:
 
 Personal layout deltas and last-opened files belong in `state.json` or host user data directory, not in committed config.
 
-## Implemented M2 Loading
+## Implemented Loading
 
 `@workbench-kit/workbench-config` parses `.workbench/extensions.json` data from objects or JSON text and returns normalized `enabled` and `recommendations` extension ID lists. `workbench-core` resolves those IDs against bundled manifests.
+
+`@workbench-kit/workbench-config` also parses `.workbench/layout.default.json`
+with `parseWorkbenchLayoutConfig` / `parseWorkbenchLayoutConfigJson`. The public
+layout contract currently covers:
+
+- `activityBar.visible`
+- `sideBar.visible`
+- `sideBar.activeViewContainer`
+- `panel.visible`
+
+Unknown layout fields are rejected so committed defaults do not accidentally
+store host-local state.
 
 ## Loading Order (planned)
 
