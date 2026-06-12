@@ -1,6 +1,10 @@
 # Account and Authentication
 
-Account and authentication are platform concerns exposed as services in `@workbench-kit/platform` and consumed by `workbench-react` for UI entry points. Implementations are phased; Phase 0 defines interfaces and policies only.
+Account and authentication are platform concerns exposed as service contracts in
+`@workbench-kit/platform` and consumed by `workbench-react` for UI entry points.
+The current public boundary defines stable capability IDs and framework-neutral
+interfaces; concrete providers are supplied by the host or later built-in
+extension work.
 
 ## Services
 
@@ -18,6 +22,20 @@ Orchestrates sign-in, sign-out, and session refresh flows via registered `AuthPr
 
 Encrypted or OS-backed secret storage for tokens and API keys. Keys are namespaced by extension id and purpose. Extensions access secrets only with declared `permissions`.
 
+## Capability IDs
+
+`@workbench-kit/platform` exports capability IDs so extensions and hosts do not
+share raw string literals:
+
+| Constant                          | Value               | Provider contract               |
+| --------------------------------- | ------------------- | ------------------------------- |
+| `WORKBENCH_AUTH_CAPABILITY_ID`    | `workbench.auth`    | `WorkbenchAuthProvider`         |
+| `WORKBENCH_SECRETS_CAPABILITY_ID` | `workbench.secrets` | `WorkbenchSecretStorageService` |
+
+`extensions/builtin.accounts` declares `capabilities.requires:
+["workbench.auth"]` and contributes the account command/menu/config entry point.
+It does not own token storage.
+
 ## AuthProvider
 
 Pluggable provider contract:
@@ -28,7 +46,9 @@ Pluggable provider contract:
 - `getSessions()` — list active sessions (metadata only)
 - `getAccessToken(session, scopes?)` — internal; not written to `.workbench`
 
-Built-in `extensions/builtin.accounts` will contribute UI and provider registration in a later phase.
+Built-in `extensions/builtin.accounts` contributes the account UI/command entry
+point. Provider registration remains host-owned until the capability registry is
+promoted from a host option to a first-class workbench-core registry.
 
 ## AuthSession
 

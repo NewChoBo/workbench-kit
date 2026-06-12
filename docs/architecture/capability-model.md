@@ -15,18 +15,21 @@ Manifest fields are defined in [Extension Dependencies](./extension-dependencies
 
 ## Standard Capability IDs (initial set)
 
-| ID                        | Provider interface (planned) | Default provider           |
-| ------------------------- | ---------------------------- | -------------------------- |
-| `workbench.commands`      | _(built into platform)_      | Host                       |
-| `workbench.contextKeys`   | _(built into platform)_      | Host                       |
-| `workbench.filesystem`    | `FileSystemProvider`         | Host / `builtin.workspace` |
-| `workbench.secrets`       | `SecretStorageService`       | Host                       |
-| `workbench.auth`          | `AuthProvider`               | `builtin.accounts`         |
-| `workbench.editor`        | `EditorResolver`             | Host + optional `monaco`   |
-| `workbench.configuration` | `ConfigurationService`       | Host + `workbench-config`  |
-| `workbench.views`         | `ViewHost`                   | `workbench-react`          |
+| ID                        | Provider interface                                       | Default provider           |
+| ------------------------- | -------------------------------------------------------- | -------------------------- |
+| `workbench.commands`      | _(built into platform)_                                  | Host                       |
+| `workbench.contextKeys`   | _(built into platform)_                                  | Host                       |
+| `workbench.filesystem`    | `FileSystemProvider` (planned)                           | Host / `builtin.workspace` |
+| `workbench.secrets`       | `WorkbenchSecretStorageService`                          | Host                       |
+| `workbench.auth`          | `WorkbenchAuthProvider`                                  | Host / `builtin.accounts`  |
+| `workbench.editor`        | `EditorResolver` (planned)                               | Host + optional `monaco`   |
+| `workbench.configuration` | `ConfigurationService` (planned)                         | Host + `workbench-config`  |
+| `workbench.views`         | `ViewHost` from `@workbench-kit/workbench-extension-sdk` | `workbench-react`          |
 
 New capability IDs require an architecture doc update and SDK type export.
+
+Auth and secret capability constants are exported from `@workbench-kit/platform`
+as `WORKBENCH_AUTH_CAPABILITY_ID` and `WORKBENCH_SECRETS_CAPABILITY_ID`.
 
 ## CapabilityRegistry (planned in `workbench-core`)
 
