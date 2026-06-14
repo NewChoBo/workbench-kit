@@ -34,7 +34,7 @@ Build verification:
 pnpm build:storybook
 ```
 
-Storybook play tests (baseline-tagged stories, including JsonWidget/Playground):
+Storybook play tests (baseline-tagged stories, including `JDW/WidgetTree/Lab`):
 
 ```bash
 pnpm test:storybook-play
