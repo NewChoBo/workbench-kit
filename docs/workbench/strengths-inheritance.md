@@ -3,22 +3,46 @@
 Operational record of what was adopted from reference repos into neutral kit primitives.
 Consumers remain reference-only until Phase 4 swap ([json-widget-port-then-replace.md](./json-widget-port-then-replace.md)).
 
+> **Doc status (2026-06-14):** Several rows below describe a removed playground
+> lane (`JsonWidget/Playground`, `PreviewZoomToolbar`, `usePreviewViewport`).
+> Current editor chrome is `@workbench-kit/react/widget-tree` (`WidgetTreeLab`,
+> Storybook `JDW/WidgetTree/Lab`). See [next-slice-plan.md](./next-slice-plan.md)
+> for the code-truth table.
+
+## Current kit mapping (authoritative)
+
+| Reference strength                           | Kit surface today                                             | Status                                                  |
+| -------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| json-widget-editor tree / inspector / Monaco | `WidgetTreeLab`, `WidgetSourceEditor`, `WidgetInspectorPanel` | **Adopted**                                             |
+| Config code / preview / split                | `JsonConfigWorkbench`                                         | **Adopted**                                             |
+| JDW parse + preview render                   | `JdwPreview`, `@workbench-kit/jdw`                            | **Adopted**                                             |
+| Monaco problems / Ctrl+S                     | `JsonCodeEditorPane`                                          | **Adopted**                                             |
+| Preview zoom / pan / grid toolbar            | —                                                             | **Deferred** (removed unused WIP; schema plan non-goal) |
+| Full playground canvas authoring             | —                                                             | **Deferred** (see widget-layout-schema-plan §2)         |
+
 ## tile_paper (json-widget track)
 
-| Strength                                                             | Kit mapping                                                       | Status                                                   |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------- |
-| Monaco ↔ tree cursor sync                                            | `useJsonWidgetEditorSync` + `findPathForLineAndColumn`            | Adopted (prior)                                          |
-| DnD tree reorder + patch types                                       | `WidgetTreePanel` + `@workbench-kit/jdw` patch                    | Adopted (prior)                                          |
-| `WorkbenchPreviewCanvas` zoom/pan (ctrl+scroll, drag pan, fit scale) | `usePreviewViewport` + `JsonWidgetPreviewCanvas`                  | **Adopted**                                              |
-| Monaco Ctrl+S save                                                   | `JsonCodeEditorPane` → `JsonWidgetEditor` / `JsonConfigWorkbench` | **Adopted**                                              |
-| View toggle shortcuts (Ctrl+K V, Ctrl+Shift+V)                       | `JsonWidgetEditor.handleEditorMount`                              | **Adopted**                                              |
-| Problems panel + status bar (Monaco markers)                         | `JsonCodeEditorPane`                                              | **Adopted**                                              |
-| Parse error banner                                                   | `WorkbenchParseError` on editor + preview                         | Adopted (prior)                                          |
-| Playground inspector sections                                        | `demo-playground-registry` inspector metadata                     | Adopted (prior) + **extended** (button, list-view, tile) |
-| Full `WidgetPropertySections` (all builtins)                         | Registry-driven `WidgetInspectorPanel`                            | Partial — playground types only                          |
-| `createWidgetJsonSchema` (project/launchpad/tile schemas)            | `createPlaygroundWidgetJsonSchema`                                | Partial — playground subset                              |
-| Domain widget renderers (`EditorWidgetWrapper`, tile layers)         | `PlaygroundEditorWidgetWrapper` + simplified previews             | **Adopted (simplified)**                                 |
-| `ProjectConfigEditor` / launchpad schemas                            | —                                                                 | **Deferred** (product-specific)                          |
+| Strength                                                     | Kit mapping                                                         | Status                                          |
+| ------------------------------------------------------------ | ------------------------------------------------------------------- | ----------------------------------------------- |
+| Tree + inspector + Monaco sync                               | `WidgetTreeLab` + `WidgetSourceEditor` + `WidgetInspectorPanel`     | **Adopted**                                     |
+| DnD tree reorder + patch types                               | `WidgetTreeView` + `@workbench-kit/jdw` patch                       | **Adopted**                                     |
+| Canvas zoom/pan + preview toolbar                            | —                                                                   | **Deferred** (not in tree; see next-slice-plan) |
+| Monaco Ctrl+S save                                           | `JsonCodeEditorPane` → `JsonConfigWorkbench` / `WidgetSourceEditor` | **Adopted**                                     |
+| View toggle shortcuts (Ctrl+K V, Ctrl+Shift+V)               | `WidgetSourceEditor` (when Monaco mounted)                          | Partial                                         |
+| Problems panel + status bar (Monaco markers)                 | `JsonCodeEditorPane`                                                | **Adopted**                                     |
+| Parse error banner                                           | `WorkbenchParseError` on editor + preview                           | Adopted (prior)                                 |
+| Inspector sections for demo types                            | `WidgetInspectorPanel` + `WIDGET_TREE_DEMO_REGISTRY`                | Partial — demo registry types only              |
+| Full `WidgetPropertySections` (all builtins)                 | Registry-driven `WidgetInspectorPanel`                              | Partial — demo types only                       |
+| `createWidgetJsonSchema` (project/launchpad/tile schemas)    | `createJdwDocumentJsonSchema`                                       | Partial — document schema subset                |
+| Domain widget renderers (`EditorWidgetWrapper`, tile layers) | `JdwPreview` + CSS layout backend                                   | Partial — structural preview only               |
+| `ProjectConfigEditor` / launchpad schemas                    | —                                                                   | **Deferred** (product-specific)                 |
+
+### Historical rows (removed playground lane — do not implement from this table)
+
+The following mappings applied to a removed `JsonWidget/Playground` surface and are
+kept for audit only: `useJsonWidgetEditorSync`, `JsonWidgetEditor`,
+`PlaygroundEditorWidgetWrapper`, `JsonWidgetPreviewCanvas`, `usePreviewViewport`,
+`PreviewZoomToolbar`, `demo-playground-registry`, `createPlaygroundWidgetJsonSchema`.
 
 ### tile_paper NOT inherited
 
@@ -32,8 +56,8 @@ Consumers remain reference-only until Phase 4 swap ([json-widget-port-then-repla
 
 | Strength                                             | Kit mapping                                                                       | Status                                         |
 | ---------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Preview zoom toolbar (+/−/fit, scale label)          | `PreviewZoomToolbar` on `JsonWidgetPreviewCanvas`                                 | **Adopted**                                    |
-| Preview validation issue surfacing in toolbar        | `PreviewZoomToolbar.issueMessage` (hook ready; playground uses parse banner)      | Partial                                        |
+| Preview zoom toolbar (+/−/fit, scale label)          | —                                                                                 | **Deferred** (Phase 4 or post WB-23)           |
+| Preview validation issue surfacing in toolbar        | Parse banner on `JdwPreview` / `WidgetTreeLab`                                    | Partial                                        |
 | Source editor dirty + validation + Apply gating      | `createJsonConfigEditorState` + `JsonConfigValidationBanner` + optional `onApply` | **Adopted**                                    |
 | Import/export source transfer commands               | —                                                                                 | **Deferred** (host/file API)                   |
 | Sectioned inspector (`LaunchpadTileEditor` sections) | `WorkbenchPropertySection` via registry inspector metadata                        | Adopted (pattern); launchpad sections deferred |
@@ -54,33 +78,31 @@ Consumers remain reference-only until Phase 4 swap ([json-widget-port-then-repla
 
 Neutral design-tool UX borrowed from tile_paper `figma-patterns.md` and simplified `EditorWidgetWrapper` — polish only, not a Figma clone.
 
-| Pattern                                 | Kit mapping                                                                  | Status                                             |
-| --------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------- |
-| Canvas pan/zoom + fit                   | `usePreviewViewport` + `PreviewZoomToolbar`                                  | **Adopted** (prior)                                |
-| Space + drag pan (hand tool)            | `usePreviewViewport` space key + pointer capture                             | **Adopted**                                        |
-| 8px snap grid overlay (visual)          | `PreviewZoomToolbar` grid toggle → `WorkbenchPreviewCanvas` viewport grid    | **Adopted**                                        |
-| Selection bounding box + corner handles | `PlaygroundEditorWidgetWrapper` + `WorkbenchCanvasResizeHandle` (decorative) | **Adopted**                                        |
-| Hover outline on widgets                | `WorkbenchCanvasItemFrame` hover state                                       | **Adopted** (polished)                             |
-| Figma-blue selection chrome             | `--ui-workbench-canvas-selection-color` (#0d99ff) in canvas CSS              | **Adopted**                                        |
-| Layers ↔ canvas selection sync          | `WidgetTreePanel` + `useJsonWidgetEditorSync`                                | Adopted (prior)                                    |
-| Contextual inspector                    | `WidgetInspectorPanel` registry sections                                     | Adopted (prior)                                    |
-| Widget drag + snap on move              | —                                                                            | **Deferred** (no position authoring in playground) |
-| Resize handles (functional)             | —                                                                            | **Deferred** (grid/stack placement is JSON-only)   |
-| Multi-select marquee / alignment guides | —                                                                            | **Deferred**                                       |
-| Rulers / persistent guides              | —                                                                            | **Deferred**                                       |
-| V select / H hand keyboard tools        | Space pan only; no tool mode switch                                          | Partial                                            |
+| Pattern                                 | Kit mapping                                                                 | Status                                             |
+| --------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------- |
+| Canvas pan/zoom + fit                   | —                                                                           | **Deferred**                                       |
+| Space + drag pan (hand tool)            | —                                                                           | **Deferred**                                       |
+| 8px snap grid overlay (visual)          | `WorkbenchPreviewCanvas` viewport grid (layout primitive only)              | Partial — no editor wiring                         |
+| Selection bounding box + corner handles | `WorkbenchCanvasItemFrame` + `WorkbenchCanvasResizeHandle` (layout stories) | Partial — primitives only                          |
+| Hover outline on widgets                | `WorkbenchCanvasItemFrame` hover state                                      | **Adopted** (polished)                             |
+| Figma-blue selection chrome             | `--ui-workbench-canvas-selection-color` (#0d99ff) in canvas CSS             | **Adopted**                                        |
+| Layers ↔ canvas selection sync          | `WidgetTreeView` selection state in `WidgetTreeLab`                         | Partial — tree ↔ inspector only                    |
+| Contextual inspector                    | `WidgetInspectorPanel` registry sections                                    | Adopted (prior)                                    |
+| Widget drag + snap on move              | —                                                                           | **Deferred** (no position authoring in playground) |
+| Resize handles (functional)             | —                                                                           | **Deferred** (grid/stack placement is JSON-only)   |
+| Multi-select marquee / alignment guides | —                                                                           | **Deferred**                                       |
+| Rulers / persistent guides              | —                                                                           | **Deferred**                                       |
+| V select / H hand keyboard tools        | Space pan only; no tool mode switch                                         | Partial                                            |
 
-**Story to exercise:** `JsonWidget/Playground` → `Interactive` — click widgets for selection chrome, toggle grid in preview toolbar, hold Space and drag to pan.
+**Story to exercise:** `JDW/WidgetTree/Lab` → `InteractionSmoke` — outline
+selection, inspector edit, Monaco source pane, live `JdwPreview`.
 
-## Implementation notes (this milestone)
+## Implementation notes (current tree)
 
-- **Zoom/pan**: `packages/react/src/json-widget/usePreviewViewport.ts` ports tile_paper canvas interaction; `PreviewZoomToolbar` ports launcher toolbar UX without launchpad labels.
-- **Editor chrome**: `JsonCodeEditorPane` unifies problems footer, Ctrl+S, and dirty status for widget + config workbenches.
-- **Config Apply pattern**: `JsonConfigWorkbench` shows validation banner and optional Apply when JSON parses and text differs from baseline (neutral substitute for launchpad source apply).
-- **Widget types**: Playground adds simplified `button`, `list-view`, `tile`, **`input`** (schema + renderer + inspector + insert templates).
-- **Selection chrome**: `PlaygroundEditorWidgetWrapper` ports simplified tile_paper `EditorWidgetWrapper` frame/badge; Figma-style blue outline + decorative corner handles (no drag/resize patches).
-- **Figma canvas UX**: Space+drag pan, optional 8px grid toggle, help hint updates on `JsonWidgetPreviewCanvas`.
-- **Flutter track filters**: `FilterChip` / `FilterBarActiveChips` in `layout/Panel.tsx`; library/catalog and hub gallery stories demonstrate neutral extracts without Flutter runtime.
+- **Editor chrome**: `WidgetTreeLab` composes source, outline/properties, and `JdwPreview`.
+- **Config Apply pattern**: `JsonConfigWorkbench` shows validation banner and optional Apply when JSON parses and text differs from baseline.
+- **Canvas primitives**: `WorkbenchPreviewCanvas`, `WorkbenchCanvasItemFrame`, and resize handles exist in `layout/WorkbenchCanvas.tsx` for stories; widget-tree lab does not wire zoom/pan yet.
+- **Flutter track filters**: `FilterChip` / `FilterBarActiveChips` in `layout/Panel.tsx`; library/catalog stories demonstrate neutral extracts.
 
 ## Remaining deferred (Phase 4+)
 
@@ -110,9 +132,9 @@ Electron/custom_launcher is the current implementation baseline for several Flut
 | ------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Navigation          | `toolbar + tabbed settings + preview + footer`; SharedSettingsLayout split      | VS Code shell: Activity Bar + Primary Side Bar + Editor tabs + Status Bar | `WorkbenchShell`, `WorkbenchSettingsModal`, explorer stories                         |
 | Library browse      | Sidebar quick/schema filters; active filter chip bar; 88px rows; metadata chips | `LibraryQueryInput` facets, filter count badge, detail pane               | `LibraryCatalog` story + **FilterBar/FilterChip**                                    |
-| Launchpad spatial   | Preview zoom/fit/grid/size chip; wallpaper context; tree↔canvas↔inspector sync  | `LaunchpadPreviewWindowFrame`, explorer outline, draft StatusBar          | `PreviewZoomToolbar`, canvas chrome stories (prior)                                  |
+| Launchpad spatial   | Preview zoom/fit/grid/size chip; wallpaper context; tree↔canvas↔inspector sync  | `LaunchpadPreviewWindowFrame`, explorer outline, draft StatusBar          | Deferred — zoom/pan not in kit tree yet                                              |
 | Settings            | SettingSection + SettingControl; theme preset cards; debounced auto-sync        | `SchemaSettingsForm`, Appearance cards, immediate preview                 | `WorkbenchSectionedPanel`, `WorkbenchSettingsModal`, **SourceManagerSettings** story |
-| Preview/zoom        | Tile preview zoom/fit/grid/size chip                                            | Shared preview toolbar + canvas viewport                                  | **Adopted** (`usePreviewViewport`, `PreviewZoomToolbar`)                             |
+| Preview/zoom        | Tile preview zoom/fit/grid/size chip                                            | Shared preview toolbar + canvas viewport                                  | **Deferred**                                                                         |
 | Empty/loading/error | Fixed slot skeleton; inline auth failure (not giant banner)                     | EmptyState, skeleton cards, inline provider notices                       | `EmptyState`, `ListEmptyState`, template skeleton story                              |
 | Shortcuts/menus     | Tile search workflow; layer reorder                                             | Ctrl+S save, context menus in product shell                               | `ShortcutCommandBridge`, `ContextMenu` primitives; product shortcuts deferred        |
 
@@ -124,7 +146,7 @@ Electron/custom_launcher is the current implementation baseline for several Flut
 | Source manager left-nav + right sectioned detail           | `SourceManagerSettings.stories` (`WorkbenchNavigationPanel` + `WorkbenchSectionedPanel`) | **Adopted (pattern)** |
 | Content hub template card gallery                          | `TemplateGallery.stories` (208px cards, category chip, skeleton/empty)                   | **Adopted (pattern)** |
 | Sectioned provider settings (Installation/Account/Library) | `WorkbenchSettingsSection` + inline auth notice via `HelpText`                           | **Adopted (pattern)** |
-| Preview zoom/fit toolbar                                   | `PreviewZoomToolbar`                                                                     | Adopted (prior)       |
+| Preview zoom/fit toolbar                                   | —                                                                                        | **Deferred**          |
 | Draft/explicit-save editor discipline                      | `JsonConfigWorkbench` Apply gating                                                       | Adopted (prior)       |
 
 ### Deferred

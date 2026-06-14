@@ -62,6 +62,11 @@ preference scopes.
 
 ## Progress
 
+- 2026-06-14: Added [next-slice-plan.md](./next-slice-plan.md) with WB-23 sample
+  host implementation plan, WB-26 CapabilityRegistry sketch, and code/doc truth
+  for JSON widget editor surfaces (`widget-tree` replaces stale `json-widget`
+  export paths). Preview zoom WIP removed from tree; zoom/pan stays deferred per
+  [widget-layout-schema-plan.md](./widget-layout-schema-plan.md).
 - 2026-06-12: WB-24 implemented the first Theia-inspired ViewHost lifecycle
   slice. The SDK now exposes optional host metadata and lifecycle hooks,
   `workbench-react` notifies show, hide, focus, blur, and resize events, and
@@ -69,6 +74,18 @@ preference scopes.
 - 2026-06-12: Removed stale sibling-repo launch boundary scanning from
   `check-launch-boundary`; the check now validates only the current
   workbench-kit tree.
+
+## WB-23 implementation plan
+
+Detailed steps, acceptance criteria, and trade-offs live in
+[next-slice-plan.md § Slice 1](./next-slice-plan.md#slice-1--wb-23-workbench-sample-host-p0).
+Summary:
+
+1. Scaffold `examples/workbench-sample` (Vite + React 19, private package).
+2. Wire `WorkbenchProvider` / `WorkbenchShell` with bundled built-in extensions.
+3. Load repo `.workbench/` workspace config.
+4. Add `pnpm --filter workbench-sample dev` and a short example README.
+5. Validate with `pnpm validate` after integration.
 
 ## Suggested Order
 

@@ -13,19 +13,20 @@ legacy paths.
 
 ## Current Notes
 
-| Document                                                        | Purpose                                                                                  |
-| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| [Future Capabilities](./future-capabilities.md)                 | Deferred backlog for JSON widget, i18n, theme, layout, playground, and node-graph ideas. |
-| [JSON Widget MVP](./json-widget-mvp.md)                         | Current JSON widget package and Storybook validation status.                             |
-| [JSON Widget Port Strategy](./json-widget-port-then-replace.md) | Product-neutral extraction boundaries for JSON widget work.                              |
-| [JSON Config Workbench](./json-config-workbench.md)             | JSON config workbench surface and adoption notes.                                        |
-| [Widget Layout Schema Plan](./widget-layout-schema-plan.md)     | Widget document/layout schema planning that still applies to JDW work.                   |
-| [Plugin Manifest Guide](./plugin-manifest-guide.md)             | Prototype plugin descriptor and contribution metadata shape.                             |
-| [Plugin Lifecycle](./plugin-lifecycle.md)                       | Plugin lifecycle policy aligned with current contracts and platform APIs.                |
-| [Standalone Host](./standalone-host.md)                         | Standalone host assembly notes that do not rely on removed VS Code packages.             |
-| [Strengths Inheritance](./strengths-inheritance.md)             | Reference UI patterns and adoption notes.                                                |
-| [Theia Strengths Workplan](./theia-strengths-workplan.md)       | Theia-inspired lifecycle, registry, workspace, and preference backlog.                   |
-| [Todo](./todo.md)                                               | Small deferred workbench item list.                                                      |
+| Document                                                        | Purpose                                                                                     |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [**Next Slice Plan**](./next-slice-plan.md)                     | **Active plan:** code truth, WB-23 → WB-26 → WB-25 slices, trade-offs, acceptance criteria. |
+| [Future Capabilities](./future-capabilities.md)                 | Deferred backlog for JSON widget, i18n, theme, layout, playground, and node-graph ideas.    |
+| [JSON Widget MVP](./json-widget-mvp.md)                         | Current JSON widget package and Storybook validation status.                                |
+| [JSON Widget Port Strategy](./json-widget-port-then-replace.md) | Product-neutral extraction boundaries for JSON widget work.                                 |
+| [JSON Config Workbench](./json-config-workbench.md)             | JSON config workbench surface and adoption notes.                                           |
+| [Widget Layout Schema Plan](./widget-layout-schema-plan.md)     | Widget document/layout schema planning that still applies to JDW work.                      |
+| [Plugin Manifest Guide](./plugin-manifest-guide.md)             | Prototype plugin descriptor and contribution metadata shape.                                |
+| [Plugin Lifecycle](./plugin-lifecycle.md)                       | Plugin lifecycle policy aligned with current contracts and platform APIs.                   |
+| [Standalone Host](./standalone-host.md)                         | Standalone host assembly notes that do not rely on removed VS Code packages.                |
+| [Strengths Inheritance](./strengths-inheritance.md)             | Reference UI patterns and adoption notes.                                                   |
+| [Theia Strengths Workplan](./theia-strengths-workplan.md)       | Theia-inspired lifecycle, registry, workspace, and preference backlog.                      |
+| [Todo](./todo.md)                                               | Small deferred workbench item list.                                                         |
 
 ## Rules
 
