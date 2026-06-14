@@ -69,13 +69,13 @@ pnpm typecheck
 
 ## Related work
 
-| Area                                                   | Status                                                                 |
-| ------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `@workbench-kit/jdw` parse/registry                    | Done                                                                   |
-| `@workbench-kit/react/json-widget` `JsonWidgetPreview` | Done                                                                   |
-| `StructuredArtifactEditor` (workspace file + drafts)   | Done — use when editing workspace files with `WorkspaceDraftsProvider` |
-| `JsonConfigWorkbench` (controlled JSON config)         | **This MVP**                                                           |
-| tile_paper `json-widget-editor` migration              | Deferred — keep local until consumers adopt kit primitive              |
+| Area                                                 | Status                                                                 |
+| ---------------------------------------------------- | ---------------------------------------------------------------------- |
+| `@workbench-kit/jdw` parse/registry                  | Done                                                                   |
+| `@workbench-kit/react/jdw` `JdwPreview`              | Done                                                                   |
+| `StructuredArtifactEditor` (workspace file + drafts) | Done — use when editing workspace files with `WorkspaceDraftsProvider` |
+| `JsonConfigWorkbench` (controlled JSON config)       | **This MVP**                                                           |
+| tile_paper `json-widget-editor` migration            | Deferred — keep local until consumers adopt kit primitive              |
 
 ## Consumer adoption sketch
 

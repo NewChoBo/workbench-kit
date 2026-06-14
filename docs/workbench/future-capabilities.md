@@ -135,7 +135,7 @@ Storybook-first playground strategy. No standalone public playground app in the 
 
 - [x] **P1** Intro playground map: link JsonConfig, JsonWidget Playground, Integrated Shell, Verification interactive stories.
 - [x] **P1** Document playground roles in `docs/conventions/storybook.md` (JsonConfig = production config pattern; JsonWidget Playground = parse/registry lab).
-- [x] **P3** `JsonWidget/Playground → Interactive` — Monaco + tree DnD + inspector + structural preview with demo registry.
+- [x] **P3** `JDW/WidgetTree/Lab` — Monaco + tree + inspector + `JdwPreview` (`InteractionSmoke` play-required).
 - [ ] **P2** Optional shared Storybook decorator: theme + locale toggles for Integrated Shell and JsonConfig stories (blocked by i18n P1, theme T1).
 - [ ] **P2** Evaluate merging JsonWidget Playground editing UX into `JsonConfigWorkbench` widget mode vs keeping separate low-level demo.
 - [ ] **P2** Export pattern: compose `@workbench-kit/react/json-config` + `@workbench-kit/react/workbench/demo` — defer monolithic `WorkbenchPlayground` until host demand is clear.

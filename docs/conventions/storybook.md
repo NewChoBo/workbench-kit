@@ -87,8 +87,8 @@ are most likely:
 
 Workbench stories should validate realistic product-like UI flows while keeping
 the reusable behavior in package modules. Use `JDW/Config/Workbench` for the
-production config-editor pattern and `JsonWidget/Playground` as a low-level
-parse/registry lab; see [future-capabilities.md](../workbench/future-capabilities.md)
+production config-editor pattern and `JDW/WidgetTree/Lab` as the widget editor
+lab; see [future-capabilities.md](../workbench/future-capabilities.md)
 for the playground backlog.
 
 - Stories provide public fixture data and scenario-specific initial state.
