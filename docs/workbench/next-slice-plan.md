@@ -4,6 +4,39 @@
 **Branch:** `feature/theia-strengths-workbench`  
 **Mode:** Plan-first — implementation follows slice acceptance criteria below.
 
+**Mode:** Plan-first — implementation follows slice acceptance criteria below.
+
+## Pre-plan checklist (before Slice 1)
+
+Selected pre-slice work (2026-06-14):
+
+| ID  | Item                    | Status   | Notes                                                                |
+| --- | ----------------------- | -------- | -------------------------------------------------------------------- |
+| B   | Validation baseline     | **Done** | `pnpm validate:full` passed (typecheck, lint, test, storybook, play) |
+| C   | Remaining doc alignment | **Done** | `json-config-workbench`, `storybook.md`, `widget-layout-schema-plan` |
+| D   | Lane priority           | **Done** | **Lane A primary** — see decision below                              |
+
+Not selected for this pass (defer until needed):
+
+| ID  | Item               | When to revisit                                     |
+| --- | ------------------ | --------------------------------------------------- |
+| A   | Remote push        | Before PR or when sharing branch                    |
+| E   | WB-15 dirty policy | Before WB-20 / WB-22 resource draft work            |
+| F   | WB-23 scope pick   | Defaults to **Minimal Vite host** unless overridden |
+
+### Lane priority decision
+
+**Primary: Lane A (Theia-inspired workbench core)** — `WB-23 → WB-26 → WB-25 → WB-27`.
+
+| Lane | Scope                                      | Priority  | Rationale                                                                                          |
+| ---- | ------------------------------------------ | --------- | -------------------------------------------------------------------------------------------------- |
+| A    | Sample host, CapabilityRegistry, factories | **P0–P1** | Runnable kit + extension architecture before more UI                                               |
+| B    | JDW schema / layout engine expansion       | Parallel  | Headless-only (`@workbench-kit/jdw` tests); no editor chrome expansion until Lane A Slice 1–2 land |
+| C    | Consumer swap, zoom/pan, i18n, themes      | Deferred  | Explicit non-goals until host + registry contracts exist                                           |
+
+Lane B does **not** block Lane A. Lane B editor or preview UX work **does** block on
+Lane A unless explicitly re-prioritized.
+
 Canonical work queues remain in [todo.md](./todo.md) and
 [theia-strengths-workplan.md](./theia-strengths-workplan.md). This document
 narrows the next three slices, records code/doc truth, and lists trade-offs.

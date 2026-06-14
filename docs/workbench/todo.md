@@ -135,12 +135,13 @@ primitive rather than hard-code the downstream concept.
 
 **Active plan:** [next-slice-plan.md](./next-slice-plan.md) (2026-06-14).
 
-| Order | Slice       | Item                                                          | Mode                 |
-| ----- | ----------- | ------------------------------------------------------------- | -------------------- |
-| 1     | Doc hygiene | Align JSON widget / preview zoom doc truth with `widget-tree` | Planning (this pass) |
-| 2     | WB-23       | `examples/workbench-sample` frontend-only host                | Implementation       |
-| 3     | WB-26       | Disposable `CapabilityRegistry` in `workbench-core`           | Implementation       |
-| 4     | WB-25       | View/editor host factory registry                             | After WB-26          |
+| Order | Slice       | Item                                                          | Mode                    |
+| ----- | ----------- | ------------------------------------------------------------- | ----------------------- |
+| 0     | Pre-plan    | `validate:full` + doc alignment + Lane A decision             | **Done** (2026-06-14)   |
+| 1     | Doc hygiene | Align JSON widget / preview zoom doc truth with `widget-tree` | Done (prior pass)       |
+| 2     | WB-23       | `examples/workbench-sample` frontend-only host                | **Next implementation** |
+| 3     | WB-26       | Disposable `CapabilityRegistry` in `workbench-core`           | Implementation          |
+| 4     | WB-25       | View/editor host factory registry                             | After WB-26             |
 
 The first downstream extraction pass is complete for command metadata,
 sectioned settings layout, structured data forms, and command grouping

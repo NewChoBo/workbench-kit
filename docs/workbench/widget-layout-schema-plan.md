@@ -224,15 +224,23 @@ Asset files are validated in **two passes**:
 1. Against `widget-asset.v1` (metadata + `content` present).
 2. `content` subtree against registered type schemas (same as document nodes).
 
+> **Doc alignment (2026-06-14):** Package names in §5–§8 below mix **proposed**
+> targets with current tree names. For what exists today, see
+> [next-slice-plan.md § Code truth](./next-slice-plan.md#code-truth-snapshot).
+> Current preview: `@workbench-kit/react/jdw` (`JdwPreview`). Current editor:
+> `@workbench-kit/react/widget-tree` (`WidgetTreeLab`). There is no
+> `@workbench-kit/react/json-widget` export.
+
 ## 5. Package boundaries
 
 | Package                                    | Responsibility                                                                                                         |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | `@workbench-kit/contracts`                 | `JsonWidgetNode` shape; component/asset catalog contracts; `placementPolicy`; MIME constants                           |
 | `@workbench-kit/jdw`                       | `parseJsonWidgetData`; validate; patch ops on **normalized internal tree**; layout engine; component parse (`content`) |
-| `@workbench-kit/react/json-dynamic-widget` | `JsonWidgetRegistry`; `renderJsonWidget`; builtin React builders; `createDefaultRegistry()`                            |
-| `@workbench-kit/react/json-widget`         | Thin `JsonWidgetPreview` → `renderJsonWidget`                                                                          |
-| `@workbench-kit/react/widget-tree`         | Editors (Phase 4); patch UI targets JDW nodes                                                                          |
+| `@workbench-kit/react/jdw`                 | **Current** — `JdwPreview`, CSS layout render backend                                                                  |
+| `@workbench-kit/react/widget-tree`         | **Current** — `WidgetTreeLab`, inspector, source editor; patch UI targets JDW nodes                                    |
+| `@workbench-kit/react/json-dynamic-widget` | **Proposed** — `JsonWidgetRegistry`; `renderJsonWidget`; builtin React builders; `createDefaultRegistry()`             |
+| `@workbench-kit/react/json-widget`         | **Removed** — was a thin preview export; use `jdw` or `widget-tree`                                                    |
 | `@workbench-kit/adapters`                  | Demo fixtures rewritten to JDW v7 + plugin_components assets                                                           |
 
 Kit stays domain-neutral per [kit-design-principles.md](./kit-design-principles.md). No launchpad/tile/Steam vocabulary in schema or layout code.
@@ -317,8 +325,9 @@ source string
 
 | Component                 | Owner                                      | Notes                                   |
 | ------------------------- | ------------------------------------------ | --------------------------------------- |
-| `renderJsonWidget`        | `@workbench-kit/react/json-dynamic-widget` | JDW `data.build()` equivalent           |
-| `JsonWidgetPreview`       | `@workbench-kit/react/json-widget`         | Thin wrapper over `renderJsonWidget`    |
+| `JdwPreview`              | `@workbench-kit/react/jdw` (**current**)   | Parse + optional registry render        |
+| `renderJsonWidget`        | `@workbench-kit/react/json-dynamic-widget` | **Proposed** — JDW `data.build()` equiv |
+| `JsonWidgetPreview`       | —                                          | **Removed** — use `JdwPreview`          |
 | Builtin registry builders | `@workbench-kit/react/json-dynamic-widget` | Replaces ad-hoc demo render helpers     |
 | Asset preview             | `@workbench-kit/react/widget-asset`        | Render `content` via `renderJsonWidget` |
 
