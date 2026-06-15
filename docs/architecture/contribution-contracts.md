@@ -19,9 +19,20 @@ interface ExtensionContext {
   readonly extensionId: string;
   readonly extensionPath: string;
   readonly subscriptions: DisposableStore;
+  readonly capabilities: ExtensionCapabilityRegistry;
   readonly views: ExtensionViewRegistry;
   readonly commands: ExtensionCommandRegistry;
   getCapability<T>(id: string): T | undefined;
+}
+
+interface ExtensionCapabilityRegistry {
+  registerProvider<T>(provider: ExtensionCapabilityProvider<T>): Disposable;
+}
+
+interface ExtensionCapabilityProvider<T = unknown> {
+  readonly id: string;
+  get(): T;
+  dispose?: () => void;
 }
 
 interface ExtensionCommandRegistry {

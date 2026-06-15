@@ -37,6 +37,8 @@ export type {
   ConfigurationPropertyContribution,
   ConfigurationPropertyScope,
   DeactivateFunction,
+  ExtensionCapabilityProvider,
+  ExtensionCapabilityRegistry,
   ExtensionCommandRegistry,
   ExtensionContext,
   ExtensionContributes,

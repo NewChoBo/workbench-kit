@@ -60,6 +60,14 @@ accepts the parsed `.workbench/layout.default.json` contract from
 `workbench-config`; personal layout deltas and last-opened UI state remain local
 ignored state.
 
+### CapabilityRegistry
+
+Registers runtime capability providers by stable ID (for example `workbench.auth`).
+Hosts seed providers through `ExtensionRegistry` options or
+`ExtensionRegistry.capabilityRegistry`. Extensions may call
+`context.capabilities.registerProvider` during `activate`; registrations dispose
+when the extension deactivates.
+
 ### ExtensionRegistry
 
 Loads extension manifests, validates manifest shape and hard dependencies, orders activation, and exposes contribution points to other registries. Integrates with `workbench-config` for `.workbench/extensions.json` and lockfile data.

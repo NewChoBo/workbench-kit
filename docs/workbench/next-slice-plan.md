@@ -143,7 +143,9 @@ pnpm validate
 | Port Integrated Shell demo wholesale | Richer demo                                 | Blurs demo vs product host; heavier maintenance |
 | Storybook-only (status quo)          | Already works                               | Does not satisfy WB-23 acceptance               |
 
-## Slice 2 — WB-26 Disposable CapabilityRegistry (P1)
+## Slice 2 — WB-26 Disposable CapabilityRegistry (P1) — **Done**
+
+**Status:** Implemented 2026-06-14 (`CapabilityRegistry`, `ExtensionRegistry.capabilityRegistry`, `context.capabilities.registerProvider`).
 
 **Goal:** Replace static capability maps in `workbench-core` with register/dispose
 providers extensions can use without direct cross-package imports.
@@ -199,7 +201,7 @@ interface CapabilityRegistry {
 | Registry wrapper over static map first | Low risk, incremental | Two lookup paths temporarily           |
 | Big-bang replace static map            | Single path           | Higher breakage risk across extensions |
 
-## Slice 3 — WB-25 Host factory registry (P1)
+## Slice 3 — WB-25 Host factory registry (P1) — **Next**
 
 **Goal:** Separate view/editor descriptor registration from host instantiation
 (Theia WidgetFactory pattern, not WidgetManager clone).
