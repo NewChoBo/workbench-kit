@@ -1,5 +1,16 @@
 export const WORKBENCH_KIT_WORKBENCH_CORE_VERSION = '0.0.0' as const;
 
+export type {
+  EditorHost,
+  EditorHostCreateContext,
+  EditorHostFactory,
+  ViewHostCreateContext,
+  ViewHostFactory,
+} from '@workbench-kit/workbench-extension-sdk';
+export {
+  DEFAULT_EDITOR_HOST_FACTORY_ID,
+  DEFAULT_VIEW_HOST_FACTORY_ID,
+} from '@workbench-kit/workbench-extension-sdk';
 export type { ViewHost, ViewHostSize, ViewProvider } from '@workbench-kit/workbench-extension-sdk';
 export {
   BUILTIN_WORKBENCH_EXTENSIONS,
@@ -11,6 +22,13 @@ export {
   toCapabilityMap,
   type CapabilityProvider,
 } from './capability-registry.js';
+export {
+  createDefaultViewHostFactory,
+  createEditorHostFactoryRegistry,
+  createViewHostFactoryRegistry,
+  EditorHostFactoryRegistry,
+  ViewHostFactoryRegistry,
+} from './host-factory-registry.js';
 export {
   ExtensionRegistry,
   type ActivatedExtension,

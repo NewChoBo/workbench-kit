@@ -29,6 +29,7 @@ export type ExtensionCapabilities = {
   provides?: string[];
 };
 
+export { DEFAULT_EDITOR_HOST_FACTORY_ID, DEFAULT_VIEW_HOST_FACTORY_ID } from './contributions.js';
 export type {
   ActivateFunction,
   ActivityContribution,
@@ -37,9 +38,14 @@ export type {
   ConfigurationPropertyContribution,
   ConfigurationPropertyScope,
   DeactivateFunction,
+  EditorHost,
+  EditorHostCreateContext,
+  EditorHostFactory,
   ExtensionCapabilityProvider,
   ExtensionCapabilityRegistry,
   ExtensionCommandRegistry,
+  ExtensionEditorHostFactoryRegistry,
+  ExtensionViewHostFactoryRegistry,
   ExtensionContext,
   ExtensionContributes,
   ExtensionViewRegistry,
@@ -48,6 +54,8 @@ export type {
   ViewContainerContribution,
   ViewContribution,
   ViewHost,
+  ViewHostCreateContext,
+  ViewHostFactory,
   ViewHostSize,
   ViewProvider,
 } from './contributions.js';

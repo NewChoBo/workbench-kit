@@ -94,6 +94,47 @@ export interface ViewProvider {
   resolveViewHost(): ViewHost;
 }
 
+export interface ViewHostCreateContext {
+  readonly provider: ViewProvider;
+  readonly viewId: string;
+}
+
+export interface ViewHostFactory {
+  readonly id: string;
+  readonly priority?: number | undefined;
+  canCreate?(context: ViewHostCreateContext): boolean;
+  create(context: ViewHostCreateContext): ViewHost;
+}
+
+export const DEFAULT_VIEW_HOST_FACTORY_ID = 'workbench-kit.view-host.provider' as const;
+
+export interface EditorHost {
+  dispose(): void;
+  render(): unknown;
+}
+
+export interface EditorHostCreateContext {
+  readonly editorId: string;
+  readonly resource?: unknown | undefined;
+}
+
+export interface EditorHostFactory {
+  readonly id: string;
+  readonly priority?: number | undefined;
+  canCreate?(context: EditorHostCreateContext): boolean;
+  create(context: EditorHostCreateContext): EditorHost;
+}
+
+export const DEFAULT_EDITOR_HOST_FACTORY_ID = 'workbench-kit.editor-host.default' as const;
+
+export interface ExtensionViewHostFactoryRegistry {
+  registerFactory(factory: ViewHostFactory): Disposable;
+}
+
+export interface ExtensionEditorHostFactoryRegistry {
+  registerFactory(factory: EditorHostFactory): Disposable;
+}
+
 export interface ExtensionCapabilityProvider<T = unknown> {
   readonly id: string;
   dispose?: () => void;
@@ -107,9 +148,11 @@ export interface ExtensionCapabilityRegistry {
 export interface ExtensionContext {
   readonly capabilities: ExtensionCapabilityRegistry;
   readonly commands: ExtensionCommandRegistry;
+  readonly editorHostFactories: ExtensionEditorHostFactoryRegistry;
   readonly extensionId: string;
   readonly extensionPath: string;
   readonly subscriptions: { add(disposable: Disposable): void };
+  readonly viewHostFactories: ExtensionViewHostFactoryRegistry;
   readonly views: ExtensionViewRegistry;
   getCapability<T>(capabilityId: string): T | undefined;
 }

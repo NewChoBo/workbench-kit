@@ -437,4 +437,52 @@ describe('ExtensionRegistry', () => {
     expect(disposed).toBe(true);
     expect(registry.capabilityRegistry.has('workbench.workspace')).toBe(false);
   });
+
+  it('disposes extension-provided view host factories on deactivate', async () => {
+    const registry = new ExtensionRegistry();
+
+    registry.registerExtension({
+      manifest: {
+        schemaVersion: 1,
+        id: 'workbench-kit.view-host-factory',
+        name: 'view-host-factory',
+        displayName: 'View Host Factory',
+        version: '0.0.0',
+        publisher: 'workbench-kit',
+        engines: {
+          workbench: '^0.0.0',
+          extensionApi: '^0.0.0',
+        },
+        activationEvents: ['onStartup'],
+      },
+      module: {
+        activate: (context) => {
+          context.viewHostFactories.registerFactory({
+            id: 'workbench-kit.test.view-host-factory',
+            priority: 100,
+            canCreate: ({ viewId }) => viewId === 'workbench-kit.test.view',
+            create: () => ({
+              dispose() {},
+              render: () => 'factory-host',
+            }),
+          });
+        },
+      },
+    });
+
+    await registry.activateStartup();
+    expect(
+      registry.viewHostFactories
+        .getFactories()
+        .some((factory) => factory.id === 'workbench-kit.test.view-host-factory'),
+    ).toBe(true);
+
+    await registry.deactivateExtension('workbench-kit.view-host-factory');
+
+    expect(
+      registry.viewHostFactories
+        .getFactories()
+        .some((factory) => factory.id === 'workbench-kit.test.view-host-factory'),
+    ).toBe(false);
+  });
 });

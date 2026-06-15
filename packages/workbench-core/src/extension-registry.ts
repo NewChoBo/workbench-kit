@@ -33,6 +33,12 @@ import {
   toCapabilityMap,
   type CapabilityProvider,
 } from './capability-registry.js';
+import {
+  createEditorHostFactoryRegistry,
+  createViewHostFactoryRegistry,
+  type EditorHostFactoryRegistry,
+  type ViewHostFactoryRegistry,
+} from './host-factory-registry.js';
 
 export interface WorkbenchExtensionModule {
   activate?: ActivateFunction;
@@ -51,8 +57,10 @@ export interface ExtensionRegistryOptions {
   capabilityRegistry?: CapabilityRegistry;
   commands?: CommandRegistry;
   configurations?: ConfigurationRegistry;
+  editorHostFactories?: EditorHostFactoryRegistry;
   keybindings?: KeybindingRegistry;
   menus?: MenuRegistry;
+  viewHostFactories?: ViewHostFactoryRegistry;
   views?: ViewRegistry;
 }
 
@@ -77,8 +85,10 @@ export class ExtensionRegistry implements Disposable {
   readonly capabilityRegistry: CapabilityRegistry;
   readonly commands: CommandRegistry;
   readonly configurations: ConfigurationRegistry;
+  readonly editorHostFactories: EditorHostFactoryRegistry;
   readonly keybindings: KeybindingRegistry;
   readonly menus: MenuRegistry;
+  readonly viewHostFactories: ViewHostFactoryRegistry;
   readonly views: ViewRegistry;
 
   private readonly activeExtensions = new Map<string, ActiveExtension>();
@@ -99,6 +109,9 @@ export class ExtensionRegistry implements Disposable {
     } else {
       this.capabilityRegistry = createCapabilityRegistry(options.capabilities);
     }
+
+    this.viewHostFactories = options.viewHostFactories ?? createViewHostFactoryRegistry();
+    this.editorHostFactories = options.editorHostFactories ?? createEditorHostFactoryRegistry();
   }
 
   getActiveExtensions(): readonly ActivatedExtension[] {
@@ -270,6 +283,8 @@ export class ExtensionRegistry implements Disposable {
     this.keybindings.dispose();
     this.menus.dispose();
     this.views.dispose();
+    this.viewHostFactories.dispose();
+    this.editorHostFactories.dispose();
     this.capabilityRegistry.dispose();
   }
 
@@ -319,10 +334,16 @@ export class ExtensionRegistry implements Disposable {
         registerCommand: (commandId, handler) =>
           subscriptions.add(this.registerCommandHandler(commandId, handler)),
       },
+      editorHostFactories: {
+        registerFactory: (factory) => subscriptions.add(this.editorHostFactories.register(factory)),
+      },
       extensionId: description.manifest.id,
       extensionPath: description.extensionPath ?? '',
       getCapability: <T>(capabilityId: string) => this.capabilityRegistry.get<T>(capabilityId),
       subscriptions,
+      viewHostFactories: {
+        registerFactory: (factory) => subscriptions.add(this.viewHostFactories.register(factory)),
+      },
       views: {
         registerViewProvider: (provider) =>
           subscriptions.add(this.views.registerViewProvider(provider)),
