@@ -31,12 +31,18 @@ describe('builtin accounts extension', () => {
           return { dispose() {} };
         },
       },
+      editorHostFactories: {
+        registerFactory: () => ({ dispose() {} }),
+      },
       extensionId: 'workbench-kit.builtin.accounts',
       extensionPath: 'extensions/builtin.accounts',
       getCapability: <T>(capabilityId: string) =>
         (capabilityId === WORKBENCH_AUTH_CAPABILITY_ID ? authProvider : undefined) as T | undefined,
       subscriptions: {
         add() {},
+      },
+      viewHostFactories: {
+        registerFactory: () => ({ dispose() {} }),
       },
       views: {
         registerViewProvider: () => ({ dispose() {} }),

@@ -38,7 +38,7 @@ preference scopes.
 
 | Area              | Status                                                                                                                                               | Gap                                                                                       |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| SDK view host     | `ViewHost` exposes `render()`, `dispose()`, optional metadata, and optional show/hide/focus/blur/resize hooks                                        | Host factories and editor-specific lifecycle are not implemented yet.                     |
+| SDK view host     | `ViewHost` exposes lifecycle hooks; hosts resolve through `ViewHostFactoryRegistry`                                                                  | Editor-specific lifecycle and editor host consumption in React are not implemented yet.   |
 | Core registries   | `ExtensionRegistry`, `ViewRegistry`, `MenuRegistry`, `ActivityRegistry`, `ConfigurationRegistry`, and `CapabilityRegistry` exist                     | Host factories and editor-specific lifecycle are not implemented yet.                     |
 | React host        | `WorkbenchShell` activates active views, renders provider output, notifies view host lifecycle hooks, and renders manifest icons as VS Code codicons | Host creation is still direct; factory registration is not implemented yet.               |
 | Workspace         | `VirtualWorkspaceState`, reducer actions, search, tree, selection, draft helpers exist                                                               | No resource URI model, resource snapshot, repository adapter, or transaction journal yet. |
@@ -62,6 +62,9 @@ preference scopes.
 
 ## Progress
 
+- 2026-06-14: WB-25 added `ViewHostFactoryRegistry` and `EditorHostFactoryRegistry`.
+  `workbench-react` now creates view hosts through factories with a default
+  provider-backed implementation for existing `resolveViewHost` providers.
 - 2026-06-14: WB-26 added `CapabilityRegistry` to `workbench-core` with host seeding,
   `ExtensionRegistry.capabilityRegistry`, and extension `context.capabilities.registerProvider`
   lifecycle cleanup on deactivate.

@@ -20,9 +20,19 @@ interface ExtensionContext {
   readonly extensionPath: string;
   readonly subscriptions: DisposableStore;
   readonly capabilities: ExtensionCapabilityRegistry;
+  readonly viewHostFactories: ExtensionViewHostFactoryRegistry;
+  readonly editorHostFactories: ExtensionEditorHostFactoryRegistry;
   readonly views: ExtensionViewRegistry;
   readonly commands: ExtensionCommandRegistry;
   getCapability<T>(id: string): T | undefined;
+}
+
+interface ExtensionViewHostFactoryRegistry {
+  registerFactory(factory: ViewHostFactory): Disposable;
+}
+
+interface ExtensionEditorHostFactoryRegistry {
+  registerFactory(factory: EditorHostFactory): Disposable;
 }
 
 interface ExtensionCapabilityRegistry {

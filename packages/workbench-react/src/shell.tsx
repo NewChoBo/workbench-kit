@@ -14,7 +14,11 @@ import {
   type StatusBarItemModel,
   type StatusBarSectionModel,
 } from '@workbench-kit/react/workbench/shell';
-import type { ViewHost, ViewProvider } from '@workbench-kit/workbench-core';
+import type {
+  ViewHost,
+  ViewHostFactoryRegistry,
+  ViewProvider,
+} from '@workbench-kit/workbench-core';
 
 import { useWorkbench } from './provider.js';
 
@@ -166,6 +170,8 @@ function renderDefaultPrimarySidebar(
           <WorkbenchViewHost
             fallback={view.name}
             provider={extensionRegistry.views.getViewProvider(view.id)}
+            viewHostFactories={extensionRegistry.viewHostFactories}
+            viewId={view.id}
           />
         </section>
       ))}
@@ -176,12 +182,22 @@ function renderDefaultPrimarySidebar(
 function WorkbenchViewHost({
   fallback,
   provider,
+  viewHostFactories,
+  viewId,
 }: {
   fallback: ReactNode;
   provider: ViewProvider | undefined;
+  viewHostFactories: ViewHostFactoryRegistry;
+  viewId: string;
 }) {
   const hostFrameRef = useRef<HTMLDivElement>(null);
-  const host = useMemo(() => provider?.resolveViewHost(), [provider]);
+  const host = useMemo(() => {
+    if (!provider) {
+      return undefined;
+    }
+
+    return viewHostFactories.createViewHost({ viewId, provider });
+  }, [provider, viewHostFactories, viewId]);
 
   useEffect(() => {
     if (!host) {

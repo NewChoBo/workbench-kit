@@ -201,24 +201,22 @@ interface CapabilityRegistry {
 | Registry wrapper over static map first | Low risk, incremental | Two lookup paths temporarily           |
 | Big-bang replace static map            | Single path           | Higher breakage risk across extensions |
 
-## Slice 3 — WB-25 Host factory registry (P1) — **Next**
+## Slice 3 — WB-25 Host factory registry (P1) — **Done**
+
+**Status:** Implemented 2026-06-14 (`ViewHostFactoryRegistry`, `EditorHostFactoryRegistry`, `workbench-react` factory resolution).
 
 **Goal:** Separate view/editor descriptor registration from host instantiation
 (Theia WidgetFactory pattern, not WidgetManager clone).
 
 ### Preconditions
 
-- WB-26 stable capability lookup (or explicit no-op capability bridge).
+- WB-26 stable capability lookup (done).
 - WB-24 lifecycle hooks (done).
 
-### Outline only (implement after Slice 2)
+## Slice 4 — WB-27 Resource URI / mutation / transaction (P1) — **Next**
 
-1. `ViewHostFactory` / `EditorHostFactory` descriptors in `workbench-extension-sdk`.
-2. Factory registry in `workbench-core`.
-3. `workbench-react` shell resolves hosts through factories instead of direct construction.
-4. Backwards-compatible default factory for existing `resolveViewHost` providers.
-
-Defer detailed steps until WB-26 merges.
+**Goal:** Add resource URI, snapshot, mutation, and transaction contracts on top of
+the existing virtual workspace reducer without breaking current exports.
 
 ## Deferred backlog (no slice assignment yet)
 
