@@ -22,6 +22,9 @@ describe('builtin accounts extension', () => {
     } satisfies WorkbenchAuthProvider;
 
     activate({
+      capabilities: {
+        registerProvider: () => ({ dispose() {} }),
+      },
       commands: {
         registerCommand: (commandId, handler) => {
           handlers.set(commandId, handler);

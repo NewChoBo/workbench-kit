@@ -31,19 +31,22 @@ New capability IDs require an architecture doc update and SDK type export.
 Auth and secret capability constants are exported from `@workbench-kit/platform`
 as `WORKBENCH_AUTH_CAPABILITY_ID` and `WORKBENCH_SECRETS_CAPABILITY_ID`.
 
-## CapabilityRegistry (planned in `workbench-core`)
+## CapabilityRegistry (`workbench-core`)
 
 ```text
-registerCapability(id, provider) → Disposable
-getCapability<T>(id): T | undefined
-hasCapability(id): boolean
+register(provider) → Disposable
+registerValue(id, value) → Disposable
+get<T>(id): T | undefined
+has(id): boolean
 ```
 
 Resolution order:
 
-1. Host-built-in providers
-2. Activated extensions with matching `capabilities.provides`
-3. Optional extension dependencies that export shared providers
+1. Host-seeded providers (`ExtensionRegistry` `capabilities` option or shared `CapabilityRegistry`)
+2. Providers registered during extension `activate()` via `context.capabilities.registerProvider`
+3. Extension `capabilities.provides` is manifest metadata only today; runtime registration still uses `registerProvider`
+
+`ExtensionRegistry.capabilityRegistry` is public so hosts can register built-in providers before extension activation.
 
 ## Permission Link
 

@@ -6,6 +6,12 @@ export {
   SAMPLE_WORKBENCH_EXTENSIONS,
 } from './generated/bundled-extensions.js';
 export {
+  CapabilityRegistry,
+  createCapabilityRegistry,
+  toCapabilityMap,
+  type CapabilityProvider,
+} from './capability-registry.js';
+export {
   ExtensionRegistry,
   type ActivatedExtension,
   type ExtensionRegistryOptions,

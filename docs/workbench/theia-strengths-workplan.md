@@ -39,7 +39,7 @@ preference scopes.
 | Area              | Status                                                                                                                                               | Gap                                                                                       |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | SDK view host     | `ViewHost` exposes `render()`, `dispose()`, optional metadata, and optional show/hide/focus/blur/resize hooks                                        | Host factories and editor-specific lifecycle are not implemented yet.                     |
-| Core registries   | `ExtensionRegistry`, `ViewRegistry`, `MenuRegistry`, `ActivityRegistry`, and `ConfigurationRegistry` exist                                           | Capabilities are read from a static map and are not disposable provider registrations.    |
+| Core registries   | `ExtensionRegistry`, `ViewRegistry`, `MenuRegistry`, `ActivityRegistry`, `ConfigurationRegistry`, and `CapabilityRegistry` exist                     | Host factories and editor-specific lifecycle are not implemented yet.                     |
 | React host        | `WorkbenchShell` activates active views, renders provider output, notifies view host lifecycle hooks, and renders manifest icons as VS Code codicons | Host creation is still direct; factory registration is not implemented yet.               |
 | Workspace         | `VirtualWorkspaceState`, reducer actions, search, tree, selection, draft helpers exist                                                               | No resource URI model, resource snapshot, repository adapter, or transaction journal yet. |
 | Built-in explorer | Registers a placeholder view provider                                                                                                                | Not yet backed by virtual workspace state or command-driven resource operations.          |
@@ -62,6 +62,9 @@ preference scopes.
 
 ## Progress
 
+- 2026-06-14: WB-26 added `CapabilityRegistry` to `workbench-core` with host seeding,
+  `ExtensionRegistry.capabilityRegistry`, and extension `context.capabilities.registerProvider`
+  lifecycle cleanup on deactivate.
 - 2026-06-14: WB-23 added `examples/workbench-sample` — minimal Vite host using
   `WorkbenchProvider` / `WorkbenchShell`, bundled built-in extensions, and
   `.workbench` extensions/layout config (`pnpm workbench-sample`).

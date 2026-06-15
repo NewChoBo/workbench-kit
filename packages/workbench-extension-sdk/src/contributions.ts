@@ -94,7 +94,18 @@ export interface ViewProvider {
   resolveViewHost(): ViewHost;
 }
 
+export interface ExtensionCapabilityProvider<T = unknown> {
+  readonly id: string;
+  dispose?: () => void;
+  get(): T;
+}
+
+export interface ExtensionCapabilityRegistry {
+  registerProvider<T>(provider: ExtensionCapabilityProvider<T>): Disposable;
+}
+
 export interface ExtensionContext {
+  readonly capabilities: ExtensionCapabilityRegistry;
   readonly commands: ExtensionCommandRegistry;
   readonly extensionId: string;
   readonly extensionPath: string;

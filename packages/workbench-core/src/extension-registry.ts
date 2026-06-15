@@ -27,6 +27,12 @@ import {
   type WorkbenchViewContainerContribution,
   type WorkbenchViewContribution,
 } from './registries.js';
+import {
+  CapabilityRegistry,
+  createCapabilityRegistry,
+  toCapabilityMap,
+  type CapabilityProvider,
+} from './capability-registry.js';
 
 export interface WorkbenchExtensionModule {
   activate?: ActivateFunction;
@@ -42,6 +48,7 @@ export interface WorkbenchExtensionDescription {
 export interface ExtensionRegistryOptions {
   activities?: ActivityRegistry;
   capabilities?: ReadonlyMap<string, unknown> | Record<string, unknown>;
+  capabilityRegistry?: CapabilityRegistry;
   commands?: CommandRegistry;
   configurations?: ConfigurationRegistry;
   keybindings?: KeybindingRegistry;
@@ -67,6 +74,7 @@ interface ActiveExtension {
 
 export class ExtensionRegistry implements Disposable {
   readonly activities: ActivityRegistry;
+  readonly capabilityRegistry: CapabilityRegistry;
   readonly commands: CommandRegistry;
   readonly configurations: ConfigurationRegistry;
   readonly keybindings: KeybindingRegistry;
@@ -74,7 +82,6 @@ export class ExtensionRegistry implements Disposable {
   readonly views: ViewRegistry;
 
   private readonly activeExtensions = new Map<string, ActiveExtension>();
-  private readonly capabilities: ReadonlyMap<string, unknown>;
   private readonly extensions = new Map<string, RegisteredExtension>();
 
   constructor(options: ExtensionRegistryOptions = {}) {
@@ -84,7 +91,14 @@ export class ExtensionRegistry implements Disposable {
     this.keybindings = options.keybindings ?? new KeybindingRegistry();
     this.menus = options.menus ?? new MenuRegistry();
     this.views = options.views ?? new ViewRegistry();
-    this.capabilities = toCapabilityMap(options.capabilities);
+    if (options.capabilityRegistry) {
+      this.capabilityRegistry = options.capabilityRegistry;
+      if (options.capabilities !== undefined) {
+        this.capabilityRegistry.registerStatic(toCapabilityMap(options.capabilities));
+      }
+    } else {
+      this.capabilityRegistry = createCapabilityRegistry(options.capabilities);
+    }
   }
 
   getActiveExtensions(): readonly ActivatedExtension[] {
@@ -256,6 +270,7 @@ export class ExtensionRegistry implements Disposable {
     this.keybindings.dispose();
     this.menus.dispose();
     this.views.dispose();
+    this.capabilityRegistry.dispose();
   }
 
   private assertDependencyGraph(): void {
@@ -296,13 +311,17 @@ export class ExtensionRegistry implements Disposable {
     subscriptions: DisposableStore,
   ): ExtensionContext {
     return {
+      capabilities: {
+        registerProvider: <T>(provider: CapabilityProvider<T>) =>
+          subscriptions.add(this.capabilityRegistry.register(provider)),
+      },
       commands: {
         registerCommand: (commandId, handler) =>
           subscriptions.add(this.registerCommandHandler(commandId, handler)),
       },
       extensionId: description.manifest.id,
       extensionPath: description.extensionPath ?? '',
-      getCapability: <T>(capabilityId: string) => this.capabilities.get(capabilityId) as T,
+      getCapability: <T>(capabilityId: string) => this.capabilityRegistry.get<T>(capabilityId),
       subscriptions,
       views: {
         registerViewProvider: (provider) =>
@@ -378,16 +397,6 @@ export class ExtensionRegistry implements Disposable {
       );
     }
   }
-}
-
-function toCapabilityMap(
-  capabilities: ReadonlyMap<string, unknown> | Record<string, unknown> | undefined,
-): ReadonlyMap<string, unknown> {
-  if (capabilities instanceof Map) {
-    return capabilities;
-  }
-
-  return new Map(Object.entries(capabilities ?? {}));
 }
 
 function toCommandDefinition(command: {

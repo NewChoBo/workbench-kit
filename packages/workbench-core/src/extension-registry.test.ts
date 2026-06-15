@@ -368,4 +368,73 @@ describe('ExtensionRegistry', () => {
 
     expect(registry.getExtensions()).toEqual([]);
   });
+
+  it('resolves host-seeded capabilities through getCapability', async () => {
+    const registry = new ExtensionRegistry({
+      capabilities: {
+        'workbench.auth': { id: 'host-auth' },
+      },
+    });
+    registry.registerExtension({
+      ...helloWorldExtension,
+      manifest: {
+        ...helloWorldExtension.manifest,
+        activationEvents: ['onStartup'],
+      },
+      module: {
+        activate: (context) => {
+          expect(context.getCapability<{ id: string }>('workbench.auth')).toEqual({
+            id: 'host-auth',
+          });
+        },
+      },
+    });
+
+    await registry.activateStartup();
+  });
+
+  it('disposes extension-provided capabilities on deactivate', async () => {
+    const registry = new ExtensionRegistry();
+    let disposed = false;
+
+    registry.registerExtension({
+      manifest: {
+        schemaVersion: 1,
+        id: 'workbench-kit.capability-provider',
+        name: 'capability-provider',
+        displayName: 'Capability Provider',
+        version: '0.0.0',
+        publisher: 'workbench-kit',
+        engines: {
+          workbench: '^0.0.0',
+          extensionApi: '^0.0.0',
+        },
+        activationEvents: ['onStartup'],
+        capabilities: {
+          provides: ['workbench.workspace'],
+        },
+      },
+      module: {
+        activate: (context) => {
+          context.capabilities.registerProvider({
+            id: 'workbench.workspace',
+            get: () => ({ ready: true }),
+            dispose: () => {
+              disposed = true;
+            },
+          });
+        },
+      },
+    });
+
+    await registry.activateStartup();
+    expect(registry.capabilityRegistry.get<{ ready: boolean }>('workbench.workspace')).toEqual({
+      ready: true,
+    });
+
+    await registry.deactivateExtension('workbench-kit.capability-provider');
+
+    expect(disposed).toBe(true);
+    expect(registry.capabilityRegistry.has('workbench.workspace')).toBe(false);
+  });
 });
