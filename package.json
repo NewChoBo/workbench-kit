@@ -20,6 +20,8 @@
     "build:storybook": "pnpm exec storybook build",
     "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
     "storybook:widget-tree": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=jdw-widgettree-lab--live&viewMode=story",
+    "workbench-sample": "pnpm --filter workbench-sample dev",
+    "workbench-sample:build": "pnpm --filter workbench-sample build",
     "check:extension-manifests": "node ./scripts/check-workbench-extension-manifests.mjs",
     "check:public-exports": "node ./scripts/check-public-package-exports.mjs",
     "check:dependency-graph": "node ./scripts/check-workbench-dependency-graph.mjs",

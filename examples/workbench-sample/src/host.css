@@ -1,0 +1,64 @@
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.workbench-sample-editor {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+  padding: 24px;
+}
+
+.workbench-sample-editor__card {
+  max-width: 36rem;
+  padding: 20px 24px;
+  border: 1px solid var(--vscode-panel-border, var(--color-border));
+  border-radius: var(--radius-md, 8px);
+  background: var(--vscode-editor-background, var(--color-bg-elevated));
+}
+
+.workbench-sample-editor__card h1 {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.workbench-sample-editor__card p {
+  margin: 0 0 12px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.workbench-sample-editor__meta {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.workbench-sample-editor__meta div {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 8px;
+}
+
+.workbench-sample-editor__meta dt {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.workbench-sample-editor__meta dd {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.workbench-sample-editor__hint {
+  margin-bottom: 0 !important;
+  font-size: var(--font-size-sm, 0.875rem);
+}

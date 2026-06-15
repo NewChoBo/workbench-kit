@@ -43,7 +43,7 @@ preference scopes.
 | React host        | `WorkbenchShell` activates active views, renders provider output, notifies view host lifecycle hooks, and renders manifest icons as VS Code codicons | Host creation is still direct; factory registration is not implemented yet.               |
 | Workspace         | `VirtualWorkspaceState`, reducer actions, search, tree, selection, draft helpers exist                                                               | No resource URI model, resource snapshot, repository adapter, or transaction journal yet. |
 | Built-in explorer | Registers a placeholder view provider                                                                                                                | Not yet backed by virtual workspace state or command-driven resource operations.          |
-| Sample host       | Planned in docs; previous branch has a working Vite host commit                                                                                      | The `staging` baseline needs the sample host restored or reimplemented.                   |
+| Sample host       | `examples/workbench-sample` — `pnpm workbench-sample` (WB-23 done)                                                                                   | Deeper workspace/editor integration still via Storybook integrated shell.                 |
 | Validation        | Manifest, dependency graph, public export, and workbench-kit scoped launch boundary checks pass                                                      | Full `pnpm validate` still depends on the local package manager state.                    |
 
 ## Work Queue
@@ -62,6 +62,9 @@ preference scopes.
 
 ## Progress
 
+- 2026-06-14: WB-23 added `examples/workbench-sample` — minimal Vite host using
+  `WorkbenchProvider` / `WorkbenchShell`, bundled built-in extensions, and
+  `.workbench` extensions/layout config (`pnpm workbench-sample`).
 - 2026-06-14: Added [next-slice-plan.md](./next-slice-plan.md) with WB-23 sample
   host implementation plan, WB-26 CapabilityRegistry sketch, and code/doc truth
   for JSON widget editor surfaces (`widget-tree` replaces stale `json-widget`
