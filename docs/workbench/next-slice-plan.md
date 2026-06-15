@@ -52,7 +52,7 @@ narrows the next three slices, records code/doc truth, and lists trade-offs.
 | Screen spec editor   | `@workbench-kit/jdw-editor`                   | `ScreenSpecEditor` (separate from widget-tree lab)                                   |
 | Workbench shell      | `@workbench-kit/workbench-react`              | `WorkbenchProvider`, `WorkbenchShell`                                                |
 | Storybook editor lab | `JDW/WidgetTree/Lab`                          | `InteractionSmoke` is `storybook-play-required`                                      |
-| Sample host          | `examples/workbench-sample`                   | **Missing** — WB-23                                                                  |
+| Sample host          | `examples/workbench-sample`                   | **Done** — WB-23 minimal Vite host (`pnpm workbench-sample`)                         |
 
 ### Removed or not in tree (do not plan against these names)
 
@@ -81,7 +81,9 @@ Lane C (deferred): Phase 4 consumer swap, i18n, themes, preview zoom/pan
 
 **Rule:** Lane A slice N+1 does not start until slice N acceptance criteria pass.
 
-## Slice 1 — WB-23 Workbench sample host (P0)
+## Slice 1 — WB-23 Workbench sample host (P0) — **Done**
+
+**Status:** Implemented 2026-06-14 (`examples/workbench-sample`, `pnpm workbench-sample`).
 
 **Goal:** Runnable frontend-only host outside Storybook that loads bundled extensions
 and a shareable `.workbench` workspace.

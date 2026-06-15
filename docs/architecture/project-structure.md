@@ -35,7 +35,7 @@ workbench-kit/
 ├── schemas/
 │   └── workbench/                 # JSON Schema for workspace and extension manifests
 ├── examples/
-│   └── workbench-sample/          # Future sample app consuming workbench-react
+│   └── workbench-sample/          # WB-23 minimal Vite host (`pnpm workbench-sample`)
 ├── .workbench/                    # Sample workspace-shareable configuration (no secrets)
 └── docs/
     └── architecture/              # Architecture and boundary documents
