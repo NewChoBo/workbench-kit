@@ -202,6 +202,17 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | **Effort**           | **S**                                                                                                                                                                                                                                         |
 | **Timing**           | **Hybrid** — light chrome now; real explorer tree waits for WB-29                                                                                                                                                                             |
 
+### S8.6 — Editor Preview + Split (sample host)
+
+| Field                | Detail                                                                                                                                                                                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Goal**             | Extend `EditorArea` with **Source \| Form \| Preview** toolbar and optional **Split** layout — VS Code MD preview + devagent Form/JSON tab mental model in the sample host.                                                                                                          |
+| **Packages / files** | `packages/workbench-react/src/editor-area.tsx` (view toolbar + split chrome), `@workbench-kit/react` `SplitView`, `JdwPreview` (widget JSON auto-detect), `JsonConfigWorkbench` patterns for code/preview/split                                                                      |
+| **Acceptance**       | `.json` (or parseable widget JSON) shows **Source \| Form \| Preview** above editor body; Preview renders `JdwPreview` when document is JDW widget JSON; Split reuses `SplitView` side-by-side (source \| preview); Form remains S8.5 shallow demo until WB-22/WB-29 dedicated hosts |
+| **Validate**         | `pnpm --filter @workbench-kit/workbench-react test` · `pnpm validate` · manual `pnpm workbench-sample`                                                                                                                                                                               |
+| **Effort**           | **S**                                                                                                                                                                                                                                                                                |
+| **Timing**           | **Before WB-29**; parallel with S8.5 explorer hybrid polish — does not block command-backed explorer CRUD                                                                                                                                                                            |
+
 ### S9 — WB-29: Command-backed built-in explorer
 
 | Field                | Detail                                                                                                                                                |
@@ -254,6 +265,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | D-S1     | D0 inventory + D1 dead-path cleanup        | S–M    | Parallel to S7–S8; no Lane A block      |
 | D-S2     | D2 dual render unify (with B1)             | M      | After Track B B1                        |
 | **S8.5** | Sample explorer chrome + editor view modes | S      | Parallel to S9 prep; sample-only polish |
+| **S8.6** | Editor Preview + Split in `EditorArea`     | S      | Before WB-29; parallel to S8.5 hybrid   |
 
 ---
 
@@ -328,6 +340,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | 2026-06-16 | **D2 render: Strategy A (target)**                 | `layoutWidget` + `cssRenderBackend` single path; registry leaf-only — **target decision pending formal D2**; Strategy B not long-term                                                                                   |
 | 2026-06-16 | **WorkbenchDocument deprecation direction**        | Ultimate goal: JDW render + event layer; remove `WorkbenchDocument` absolute demo parallel model over time after Lane A DoD / B2 mapping                                                                                |
 | 2026-06-16 | **S8.5 editor view modes in EditorArea chrome**    | Source/Form toggle lives in `EditorArea` above editor body (not tab strip); builtin text host stays textarea-only; rich form surfaces remain `JsonConfigWorkbench` / widget-tree inspector until dedicated editor hosts |
+| 2026-06-16 | **S8.6 editor Preview + Split alignment**          | VS Code MD preview + devagent Form/JSON tabs via kit `JsonConfigWorkbench` / `SplitView` / `JdwPreview` patterns in sample `EditorArea`; before WB-29; dedicated JDW hosts remain WB-22/WB-29                           |
 
 ---
 
@@ -418,11 +431,12 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ## Progress log
 
-| Date       | Note                                                                                                   |
-| ---------- | ------------------------------------------------------------------------------------------------------ |
-| 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7                       |
-| 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                                                    |
-| 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow                                 |
-| 2026-06-16 | Subtree / jdw-react split excluded; Track D scoped to in-repo cleanup                                  |
-| 2026-06-16 | WB-28 S3: editor save via workspace transactions, sample host Ctrl+S                                   |
-| 2026-06-16 | S8.5: EditorArea Source/Form toolbar for JSON; sample `config.json`; explorer chrome deferred to WB-29 |
+| Date       | Note                                                                                                                 |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7                                     |
+| 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                                                                  |
+| 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow                                               |
+| 2026-06-16 | Subtree / jdw-react split excluded; Track D scoped to in-repo cleanup                                                |
+| 2026-06-16 | WB-28 S3: editor save via workspace transactions, sample host Ctrl+S                                                 |
+| 2026-06-16 | S8.5: EditorArea Source/Form toolbar for JSON; sample `config.json`; explorer chrome deferred to WB-29               |
+| 2026-06-16 | S8.6 planned: EditorArea Source/Form/Preview + Split; align VS Code MD preview + devagent Form/JSON via kit patterns |
