@@ -390,52 +390,62 @@ function EditorViewModeToolbar({
       className="workbench-editor-area__view-toolbar"
       role="toolbar"
     >
-      <button
-        aria-pressed={mode === 'code'}
-        className="workbench-editor-area__view-button"
-        data-active={mode === 'code' ? 'true' : undefined}
-        onClick={() => {
-          onModeChange('code');
-        }}
-        type="button"
-      >
-        <i
-          aria-hidden
-          className={`codicon ${codeLabel === 'Code (JSON)' ? 'codicon-json' : 'codicon-code'}`}
-        />
-        <span>{codeLabel}</span>
-      </button>
+      <EditorViewModeButton
+        active={mode === 'code'}
+        icon={codeLabel === 'Code (JSON)' ? 'codicon-json' : 'codicon-code'}
+        label={codeLabel}
+        mode="code"
+        onModeChange={onModeChange}
+      />
       {formEligible ? (
-        <button
-          aria-pressed={mode === 'form'}
-          className="workbench-editor-area__view-button"
-          data-active={mode === 'form' ? 'true' : undefined}
-          onClick={() => {
-            onModeChange('form');
-          }}
-          type="button"
-        >
-          <i aria-hidden className="codicon codicon-symbol-field" />
-          <span>Form</span>
-        </button>
+        <EditorViewModeButton
+          active={mode === 'form'}
+          icon="codicon-symbol-field"
+          label="Form"
+          mode="form"
+          onModeChange={onModeChange}
+        />
       ) : null}
       {previewEligible ? (
-        <>
-          <button
-            aria-pressed={mode === 'preview'}
-            className="workbench-editor-area__view-button"
-            data-active={mode === 'preview' ? 'true' : undefined}
-            onClick={() => {
-              onModeChange('preview');
-            }}
-            type="button"
-          >
-            <i aria-hidden className="codicon codicon-preview" />
-            <span>Preview</span>
-          </button>
-        </>
+        <EditorViewModeButton
+          active={mode === 'preview'}
+          icon="codicon-preview"
+          label="Preview"
+          mode="preview"
+          onModeChange={onModeChange}
+        />
       ) : null}
     </div>
+  );
+}
+
+function EditorViewModeButton({
+  active,
+  icon,
+  label,
+  mode,
+  onModeChange,
+}: {
+  active: boolean;
+  icon: string;
+  label: string;
+  mode: EditorViewMode;
+  onModeChange: (mode: EditorViewMode) => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      aria-pressed={active}
+      className="workbench-editor-area__view-button"
+      data-active={active ? 'true' : undefined}
+      onClick={() => {
+        onModeChange(mode);
+      }}
+      title={label}
+      type="button"
+    >
+      <i aria-hidden className={`codicon ${icon}`} />
+    </button>
   );
 }
 

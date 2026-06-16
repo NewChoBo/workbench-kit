@@ -197,15 +197,29 @@ describe('EditorArea', () => {
     await flushReactEffects();
     await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
-    expect(container.querySelector('.ui-editor-tabs__addons [role="toolbar"]')).not.toBeNull();
+    const toolbar = container.querySelector('.ui-editor-tabs__addons [role="toolbar"]');
+    expect(toolbar).not.toBeNull();
+    expect(
+      Array.from(toolbar?.querySelectorAll('button') ?? []).map((button) =>
+        button.textContent?.trim(),
+      ),
+    ).toEqual(['', '']);
     expect(
       container.querySelector('.workbench-editor-area__text-editor > [role="toolbar"]'),
     ).toBeNull();
+    expect(
+      container.querySelector(
+        '.ui-editor-tabs__addons button[aria-label="Code (JSON)"][title="Code (JSON)"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"][title="Form"]'),
+    ).not.toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons .codicon-json')).not.toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons .codicon-symbol-field')).not.toBeNull();
-    expect(container.textContent).toContain('Code (JSON)');
-    expect(container.textContent).toContain('Form');
-    expect(container.textContent).not.toContain('Preview');
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
+    ).toBeNull();
 
     await act(async () => {
       root.unmount();
@@ -271,14 +285,30 @@ describe('EditorArea', () => {
     await flushReactEffects();
     await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
-    expect(container.textContent).toContain('Code (JSON)');
-    expect(container.textContent).toContain('Form');
-    expect(container.textContent).toContain('Preview');
     expect(container.textContent).not.toContain('Split');
-    expect(container.querySelector('.ui-editor-tabs__addons [role="toolbar"]')).not.toBeNull();
+    const toolbar = container.querySelector('.ui-editor-tabs__addons [role="toolbar"]');
+    expect(toolbar).not.toBeNull();
+    expect(
+      Array.from(toolbar?.querySelectorAll('button') ?? []).map((button) =>
+        button.textContent?.trim(),
+      ),
+    ).toEqual(['', '', '']);
     expect(
       container.querySelector('.workbench-editor-area__text-editor > [role="toolbar"]'),
     ).toBeNull();
+    expect(
+      container.querySelector(
+        '.ui-editor-tabs__addons button[aria-label="Code (JSON)"][title="Code (JSON)"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"][title="Form"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector(
+        '.ui-editor-tabs__addons button[aria-label="Preview"][title="Preview"]',
+      ),
+    ).not.toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons .codicon-json')).not.toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons .codicon-symbol-field')).not.toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons .codicon-preview')).not.toBeNull();
@@ -357,13 +387,17 @@ describe('EditorArea', () => {
     await flushReactEffects();
     await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
-    expect(container.textContent).toContain('Code');
     expect(container.textContent).not.toContain('Code (JSON)');
-    expect(container.textContent).toContain('Preview');
-    expect(container.textContent).not.toContain('Form');
     expect(container.textContent).toContain('Preview for diagrams/sample.flow');
     expect(container.querySelector('[data-testid="custom-flow-preview"]')).not.toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons [role="toolbar"]')).not.toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Code"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
+    ).not.toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"]')).toBeNull();
 
     await act(async () => {
       root.unmount();
@@ -434,9 +468,9 @@ describe('EditorArea', () => {
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
     expect(container.textContent).toContain('Preview title');
 
-    const previewButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent === 'Preview',
-    );
+    const previewButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Preview"]',
+    ) as HTMLButtonElement | null;
     expect(previewButton).toBeDefined();
 
     await act(async () => {
@@ -448,9 +482,9 @@ describe('EditorArea', () => {
     expect(container.querySelector('.workspace-editor__monaco')).toBeNull();
     expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
 
-    const codeButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent === 'Code (JSON)',
-    );
+    const codeButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Code (JSON)"]',
+    ) as HTMLButtonElement | null;
     expect(codeButton).toBeDefined();
 
     await act(async () => {
@@ -461,9 +495,9 @@ describe('EditorArea', () => {
     expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
 
-    const formButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent === 'Form',
-    );
+    const formButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Form"]',
+    ) as HTMLButtonElement | null;
     expect(formButton).toBeDefined();
 
     await act(async () => {
