@@ -18,6 +18,10 @@ import {
 import { EditorTabs, type EditorTab } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import {
+  codiconForFileKind,
+  fileIconKindForPath,
+} from '@workbench-kit/react/workbench/workspace/file-icon';
+import {
   EDITOR_SAVE_COMMAND_ID,
   type EditorHost,
   type EditorTabState,
@@ -412,13 +416,18 @@ function toEditorTabModel(tab: EditorTabState): EditorTab {
   return {
     closable: true,
     dirty: tab.dirty,
-    icon: tab.icon,
+    icon: tab.icon ?? iconForEditorTab(tab),
     id: tab.id,
     label: tab.title ?? getResourceLabel(tab.resourceUri),
     pinned: tab.pinned,
     preview: tab.preview,
     title: tab.resourceUri,
   };
+}
+
+function iconForEditorTab(tab: EditorTabState): string {
+  const path = pathForResource(tab.resourceUri);
+  return codiconForFileKind(fileIconKindForPath(path, mimeTypeForResource(tab.resourceUri)));
 }
 
 function getResourceLabel(resourceUri: string): string {
