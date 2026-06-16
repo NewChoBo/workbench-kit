@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { parseWorkbenchLayoutConfig } from '@workbench-kit/workbench-config';
 import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
+import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
 
 import { WorkbenchProvider, WorkbenchShell, useEditorService, useWorkbench } from './index.js';
 
@@ -19,6 +20,26 @@ function CommandProbe() {
   const workbench = useWorkbench();
 
   return <span>{workbench.extensionRegistry.getExtensions().length}</span>;
+}
+
+function WorkspaceCreateCommandProbe({ onResult }: { onResult: (result: unknown) => void }) {
+  const { executeCommand } = useWorkbench();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void executeCommand('workspace.newFile', { path: 'notes.md' }).then((result) => {
+      if (!cancelled) {
+        onResult(result);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [executeCommand, onResult]);
+
+  return null;
 }
 
 describe('WorkbenchProvider', () => {
@@ -59,6 +80,123 @@ describe('WorkbenchProvider', () => {
     expect(markup).toContain('codicon codicon-files');
     expect(markup).toContain('Editor Area');
     expect(markup).toContain('extensions: 1');
+  });
+
+  it('renders the built-in explorer from the virtual workspace and opens files', async () => {
+    const workspaceHostPort = createWorkbenchWorkspaceHostPort({
+      initialState: {
+        expandedPaths: ['src'],
+        files: [
+          {
+            content: 'export const sample = true;',
+            path: 'src/App.tsx',
+          },
+          {
+            content: '{}',
+            path: 'config.json',
+          },
+        ],
+        folders: ['src'],
+      },
+    });
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor', 'workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+          initialLayout={parseWorkbenchLayoutConfig({
+            sideBar: {
+              activeViewContainer: 'explorer',
+              visible: true,
+            },
+          })}
+          workspaceHostPort={workspaceHostPort}
+        >
+          <WorkbenchShell />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    expect(container.textContent).toContain('src');
+    expect(container.textContent).toContain('App.tsx');
+    expect(container.textContent).toContain('config.json');
+
+    const appButton = findButtonByText(container, 'App.tsx');
+    expect(appButton).toBeDefined();
+
+    await act(async () => {
+      appButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    expect(container.querySelector('[role="tab"]')?.textContent).toContain('App.tsx');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('routes workspace create commands through resource transactions', async () => {
+    const workspaceHostPort = createWorkbenchWorkspaceHostPort();
+    const commandResults: unknown[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+          workspaceHostPort={workspaceHostPort}
+        >
+          <WorkspaceCreateCommandProbe
+            onResult={(result) => {
+              commandResults.push(result);
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    expect(workspaceHostPort.service.getFile('notes.md')).toMatchObject({
+      content: '',
+      path: 'notes.md',
+    });
+    expect(workspaceHostPort.service.getTransactionJournal()).toHaveLength(1);
+    expect(workspaceHostPort.service.getTransactionJournal()[0]?.mutations).toEqual([
+      {
+        file: {
+          content: '',
+          path: 'notes.md',
+          source: 'user',
+        },
+        path: 'notes.md',
+        type: 'create-file',
+      },
+    ]);
+    expect(commandResults[0]).toMatchObject({
+      path: 'notes.md',
+      transactionId: expect.any(String),
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
   });
 
   it('notifies view host lifecycle hooks while preserving provider rendering', async () => {
@@ -176,6 +314,18 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 });
+
+async function flushReactEffects(): Promise<void> {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
+
+function findButtonByText(container: HTMLElement, text: string): HTMLButtonElement | undefined {
+  return Array.from(container.querySelectorAll('button')).find(
+    (button) => button.textContent === text,
+  );
+}
 
 function createLifecycleProbeExtension(events: string[]): WorkbenchExtensionDescription {
   return {

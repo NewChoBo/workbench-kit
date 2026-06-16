@@ -147,6 +147,17 @@ export interface WorkbenchEditorSavePort {
   resolveResource?(resourceUri: string): unknown;
 }
 
+export const WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID = 'workbench.editorService' as const;
+
+export interface WorkbenchEditorServiceCapability {
+  openEditor(input: {
+    pinned?: boolean | undefined;
+    preview?: boolean | undefined;
+    resourceUri: string;
+    title?: string | undefined;
+  }): unknown;
+}
+
 export interface ExtensionViewHostFactoryRegistry {
   registerFactory(factory: ViewHostFactory): Disposable;
 }

@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@workbench-kit/workspace": "workspace:*",
     "@workbench-kit/workbench-extension-sdk": "workspace:*"
   },
   "description": "Built-in explorer extension that contributes the explorer activity, view, refresh command, and menu action."

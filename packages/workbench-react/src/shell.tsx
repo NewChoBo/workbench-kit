@@ -21,6 +21,7 @@ import type {
 } from '@workbench-kit/workbench-core';
 
 import { EditorArea } from './editor-area.js';
+import { BuiltinExplorerView, isBuiltinExplorerViewRenderData } from './explorer-view.js';
 import { useWorkbench } from './provider.js';
 
 export interface WorkbenchShellProps {
@@ -244,7 +245,7 @@ function WorkbenchViewHost({
       onBlur={(event) => notifyViewHostBlur(host, event)}
       onFocus={(event) => notifyViewHostFocus(host, event)}
     >
-      {toReactNode(host.render(), fallback)}
+      {toViewHostReactNode(host.render(), fallback)}
     </div>
   );
 }
@@ -281,6 +282,14 @@ function toReactNode(value: unknown, fallback: ReactNode): ReactNode {
   }
 
   return fallback;
+}
+
+function toViewHostReactNode(value: unknown, fallback: ReactNode): ReactNode {
+  if (isBuiltinExplorerViewRenderData(value)) {
+    return <BuiltinExplorerView />;
+  }
+
+  return toReactNode(value, fallback);
 }
 
 function resolveIcon(icon: ReactNode | string | undefined): ReactNode {

@@ -6,6 +6,7 @@ import {
   LayoutService,
   registerEditorSaveCommand,
   resolveWorkbenchExtensions,
+  WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
   type EditorService,
   type WorkbenchEditorSavePort,
   type WorkbenchExtensionDescription,
@@ -78,7 +79,11 @@ export function WorkbenchProvider({
       } satisfies WorkbenchExtensionsConfig);
     const resolution = resolveWorkbenchExtensions(config, availableExtensions);
     const extensionDisposables = extensionRegistry.registerExtensions(resolution.enabledExtensions);
-    const hostDisposables =
+    const editorServiceCapabilityDisposable = extensionRegistry.capabilityRegistry.register({
+      id: WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
+      get: () => editorService,
+    });
+    const workspaceHostCapabilityDisposable =
       workspaceHostPort?.capabilityId && workspaceHostPort.service !== undefined
         ? extensionRegistry.capabilityRegistry.register({
             id: workspaceHostPort.capabilityId,
@@ -101,9 +106,10 @@ export function WorkbenchProvider({
       },
       dispose: () => {
         saveCommandDisposable?.dispose();
-        hostDisposables?.dispose();
+        editorServiceCapabilityDisposable.dispose();
+        workspaceHostCapabilityDisposable?.dispose();
         extensionDisposables.dispose();
-        if (!hostDisposables) {
+        if (!workspaceHostCapabilityDisposable) {
           workspaceHostPort?.dispose?.();
         }
         editorService.dispose();
