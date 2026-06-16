@@ -74,9 +74,8 @@ export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
   const handleEditorTabDragStart = useCallback(
     (payload: EditorTabDragPayload, event: ReactDragEvent<HTMLElement>) => {
       draggedEditorTabRef.current = payload;
-      event.dataTransfer.effectAllowed = 'copyMove';
+      event.dataTransfer.effectAllowed = 'move';
       event.dataTransfer.setData(EDITOR_TAB_DRAG_DATA_TYPE, JSON.stringify(payload));
-      event.dataTransfer.setData('text/plain', payload.tabId);
     },
     [],
   );
@@ -271,13 +270,20 @@ function EditorGroupPane({
   const handleTabDragOver = useCallback(
     (targetTabId: string, event: ReactDragEvent<HTMLElement>) => {
       const draggedTab = getDraggedEditorTab(event);
-      if (!draggedTab || draggedTab.tabId === targetTabId) {
+      if (!draggedTab) {
         setTabDropTarget(null);
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
+      if (draggedTab.tabId === targetTabId) {
+        event.dataTransfer.dropEffect = 'none';
+        setDropSide(null);
+        setTabDropTarget(null);
+        return;
+      }
+
       event.dataTransfer.dropEffect = 'move';
       setDropSide(null);
       setTabDropTarget({
@@ -291,7 +297,16 @@ function EditorGroupPane({
   const handleTabDrop = useCallback(
     (targetTabId: string, event: ReactDragEvent<HTMLElement>) => {
       const draggedTab = getDraggedEditorTab(event);
-      if (!draggedTab || draggedTab.tabId === targetTabId) {
+      if (!draggedTab) {
+        setTabDropTarget(null);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      if (draggedTab.tabId === targetTabId) {
+        onEditorTabDragEnd();
+        setDropSide(null);
         setTabDropTarget(null);
         return;
       }
@@ -302,8 +317,6 @@ function EditorGroupPane({
         return;
       }
 
-      event.preventDefault();
-      event.stopPropagation();
       const position =
         tabDropTarget?.tabId === targetTabId
           ? tabDropTarget.position

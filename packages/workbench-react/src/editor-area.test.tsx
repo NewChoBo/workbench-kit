@@ -376,6 +376,99 @@ describe('EditorArea', () => {
     container.remove();
   });
 
+  it('consumes self tab drops without exposing editor text payloads', async () => {
+    function OpenEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/src/app.ts') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/src/app.ts',
+            title: 'app.ts',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <OpenEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, '[role="tab"]');
+
+    const tab = findTabByLabel(container, 'app.ts');
+    const dataTransfer = createTestDataTransfer();
+    setElementRect(tab, { height: 34, left: 0, top: 0, width: 180 });
+
+    await act(async () => {
+      dispatchTestDragEvent(tab, 'dragstart', dataTransfer, { clientX: 80 });
+    });
+
+    expect(dataTransfer.effectAllowed).toBe('move');
+    expect(dataTransfer.getData('text/plain')).toBe('');
+
+    const dragOverEvents: Array<DragEvent | null> = [];
+    await act(async () => {
+      dragOverEvents.push(dispatchTestDragEvent(tab, 'dragover', dataTransfer, { clientX: 80 }));
+    });
+
+    expect(dragOverEvents[0]?.defaultPrevented).toBe(true);
+    expect(dataTransfer.dropEffect).toBe('none');
+    expect(tab?.getAttribute('data-drop-position')).toBeNull();
+    expect(container.querySelector('.workbench-editor-area__drop-overlay')).toBeNull();
+
+    const dropEvents: Array<DragEvent | null> = [];
+    await act(async () => {
+      dropEvents.push(dispatchTestDragEvent(tab, 'drop', dataTransfer, { clientX: 80 }));
+    });
+
+    await flushReactEffects();
+
+    expect(dropEvents[0]?.defaultPrevented).toBe(true);
+    expect(getTabLabels(container)).toEqual(['app.ts']);
+    expect(container.querySelector('.ui-editor-tabs__dirty')).toBeNull();
+    expect(container.querySelector('[data-testid="monaco-editor"]')).not.toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('opens an editor tab context menu and toggles pinned state', async () => {
     function OpenEditorProbe() {
       const editorService = useEditorService();
@@ -1026,14 +1119,15 @@ function dispatchTestDragEvent(
   type: string,
   dataTransfer: DataTransfer,
   options: { clientX?: number; clientY?: number } = {},
-): void {
-  if (!target) return;
+): DragEvent | null {
+  if (!target) return null;
 
   const event = new Event(type, { bubbles: true, cancelable: true }) as DragEvent;
   Object.defineProperty(event, 'clientX', { value: options.clientX ?? 120 });
   Object.defineProperty(event, 'clientY', { value: options.clientY ?? 60 });
   Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
   target.dispatchEvent(event);
+  return event;
 }
 
 function dispatchTestMouseEvent(target: Element | null, type: string): void {
