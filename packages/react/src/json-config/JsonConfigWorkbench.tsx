@@ -5,13 +5,10 @@ import { parseJsonWidgetData } from '@workbench-kit/jdw';
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
 import { EmptyState } from '../primitives/EmptyState';
 import { Button } from '../primitives/Button';
+import { IconButton } from '../primitives/IconButton';
 import { Toolbar } from '../primitives/Toolbar';
 import { JsonCodeEditorPane, JsonConfigValidationBanner } from '../jdw/JsonCodeEditorPane.js';
 import { JdwPreview } from '../jdw/JdwPreview.js';
-import {
-  WorkbenchArtifactModeControls,
-  type WorkbenchArtifactMode,
-} from '../workbench/ArtifactShell';
 import { SplitView } from '../workbench/SplitView';
 import { WorkbenchStructuredDataSchemaPanel } from '../workbench/settings/StructuredDataSchemaPanel';
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
@@ -20,18 +17,20 @@ import { type WorkspaceFile } from '../workbench/workspace/types';
 import { createJsonConfigEditorState } from './json-config-editor-state.js';
 
 export type JsonConfigPreviewKind = 'auto' | 'none' | 'schema' | 'widget';
+export type JsonConfigWorkbenchMode = 'code' | 'form' | 'preview';
+type JsonConfigWorkbenchModeInput = JsonConfigWorkbenchMode | 'split';
 
 export interface JsonConfigWorkbenchProps {
   activePattern?: string | undefined;
   baselineValue?: string | undefined;
-  defaultMode?: WorkbenchArtifactMode | undefined;
+  defaultMode?: JsonConfigWorkbenchModeInput | undefined;
   emptyPreviewLabel?: ReactNode | undefined;
   headerActions?: ReactNode | undefined;
-  mode?: WorkbenchArtifactMode | undefined;
+  mode?: JsonConfigWorkbenchModeInput | undefined;
   onChange: (value: string) => void;
   onApply?: (() => void) | undefined;
   onDiscard?: (() => void) | undefined;
-  onModeChange?: ((mode: WorkbenchArtifactMode) => void) | undefined;
+  onModeChange?: ((mode: JsonConfigWorkbenchMode) => void) | undefined;
   onSave?: (() => void) | undefined;
   path?: string | undefined;
   preferredTableColumns?: readonly string[] | undefined;
@@ -55,13 +54,12 @@ const defaultSerialize = (data: unknown) => JSON.stringify(data, null, 2);
 
 export function resolveJsonConfigPreviewKind(
   previewKind: JsonConfigPreviewKind,
-  schema: WorkbenchStructuredDataSchemaDocument | null | undefined,
+  _schema: WorkbenchStructuredDataSchemaDocument | null | undefined,
   json: string,
-): 'none' | 'schema' | 'widget' {
+): 'none' | 'widget' {
   if (previewKind === 'none') return 'none';
-  if (previewKind === 'schema') return schema ? 'schema' : 'none';
+  if (previewKind === 'schema') return 'none';
   if (previewKind === 'widget') return 'widget';
-  if (schema) return 'schema';
 
   const parsed = parseJsonWidgetData(json);
   if (parsed.value !== null) {
@@ -74,7 +72,7 @@ export function resolveJsonConfigPreviewKind(
 export function JsonConfigWorkbench({
   activePattern,
   baselineValue,
-  defaultMode = 'split',
+  defaultMode = 'form',
   emptyPreviewLabel = 'No preview available for this document.',
   headerActions,
   mode,
@@ -95,10 +93,12 @@ export function JsonConfigWorkbench({
   value,
   widgetRegistry,
 }: JsonConfigWorkbenchProps) {
-  const [uncontrolledMode, setUncontrolledMode] = useState<WorkbenchArtifactMode>(defaultMode);
-  const resolvedMode = mode ?? uncontrolledMode;
+  const formAvailable = schema !== null && schema !== undefined;
+  const [uncontrolledMode, setUncontrolledMode] =
+    useState<JsonConfigWorkbenchModeInput>(defaultMode);
+  const resolvedMode = normalizeJsonConfigWorkbenchMode(mode ?? uncontrolledMode, formAvailable);
 
-  const setMode = (nextMode: WorkbenchArtifactMode) => {
+  const setMode = (nextMode: JsonConfigWorkbenchMode) => {
     if (mode === undefined) {
       setUncontrolledMode(nextMode);
     }
@@ -153,25 +153,28 @@ export function JsonConfigWorkbench({
     />
   );
 
-  const previewPane = (() => {
-    if (resolvedPreviewKind === 'schema' && schema) {
-      return (
-        <div className="ui-json-config-workbench__preview">
-          <WorkbenchStructuredDataSchemaPanel
-            activePattern={activePattern}
-            ariaLabel="Configuration sections"
-            data={structuredData}
-            preferredTableColumns={preferredTableColumns}
-            readOnly={readOnly}
-            schema={schema}
-            sectionValueAliases={sectionValueAliases}
-            titleFallback={titleFallback ?? path}
-            onDataChange={handleDataChange}
-          />
-        </div>
-      );
-    }
+  const formPane = formAvailable ? (
+    <div className="ui-json-config-workbench__form">
+      <WorkbenchStructuredDataSchemaPanel
+        activePattern={activePattern}
+        ariaLabel="Configuration form"
+        data={structuredData}
+        fill
+        preferredTableColumns={preferredTableColumns}
+        readOnly={readOnly}
+        schema={schema}
+        sectionValueAliases={sectionValueAliases}
+        titleFallback={titleFallback ?? path}
+        onDataChange={handleDataChange}
+      />
+    </div>
+  ) : (
+    <EmptyState compact icon="codicon-settings">
+      No form is available for this document.
+    </EmptyState>
+  );
 
+  const previewPane = (() => {
     if (resolvedPreviewKind === 'widget') {
       return (
         <div className="ui-json-config-workbench__preview">
@@ -208,7 +211,11 @@ export function JsonConfigWorkbench({
               </>
             ) : null}
             {headerActions}
-            <WorkbenchArtifactModeControls mode={resolvedMode} onModeChange={setMode} />
+            <JsonConfigModeControls
+              formAvailable={formAvailable}
+              mode={resolvedMode}
+              onModeChange={setMode}
+            />
           </Toolbar>
         }
       >
@@ -222,29 +229,28 @@ export function JsonConfigWorkbench({
         </span>
       </PanelHeader>
       <PanelBody className="ui-json-config-workbench__body">
-        <JsonConfigValidationBanner
-          canApply={editorState.canApply}
-          firstError={editorState.firstError}
-          validationOk={editorState.validationOk}
-        />
-        {resolvedMode === 'code' ? (
-          <section className="ui-json-config-workbench__pane" aria-label="Code">
-            {codePane}
-          </section>
+        {!editorState.validationOk || editorState.canApply ? (
+          <JsonConfigValidationBanner
+            canApply={editorState.canApply}
+            firstError={editorState.firstError}
+            validationOk={editorState.validationOk}
+          />
         ) : null}
         {resolvedMode === 'preview' ? (
           <section className="ui-json-config-workbench__pane" aria-label="Preview">
             {previewPane}
           </section>
-        ) : null}
-        {resolvedMode === 'split' ? (
+        ) : (
           <SplitView
             className="ui-json-config-workbench__split"
             defaultPrimarySizePercent={50}
             minPrimarySizePercent={20}
             primary={
-              <section className="ui-json-config-workbench__pane" aria-label="Code">
-                {codePane}
+              <section
+                className="ui-json-config-workbench__pane"
+                aria-label={resolvedMode === 'form' ? 'Form' : 'Code JSON'}
+              >
+                {resolvedMode === 'form' ? formPane : codePane}
               </section>
             }
             secondary={
@@ -253,8 +259,58 @@ export function JsonConfigWorkbench({
               </section>
             }
           />
-        ) : null}
+        )}
       </PanelBody>
     </Panel>
+  );
+}
+
+function normalizeJsonConfigWorkbenchMode(
+  mode: JsonConfigWorkbenchModeInput,
+  formAvailable: boolean,
+): JsonConfigWorkbenchMode {
+  const normalized = mode === 'split' ? 'code' : mode;
+  if (normalized === 'form' && !formAvailable) {
+    return 'code';
+  }
+
+  return normalized;
+}
+
+function JsonConfigModeControls({
+  formAvailable,
+  mode,
+  onModeChange,
+}: {
+  formAvailable: boolean;
+  mode: JsonConfigWorkbenchMode;
+  onModeChange: (mode: JsonConfigWorkbenchMode) => void;
+}) {
+  return (
+    <div className="ui-json-config-workbench__modes">
+      <IconButton
+        aria-pressed={mode === 'code'}
+        className="ui-json-config-workbench__mode"
+        icon="codicon-code"
+        label="Code (JSON)"
+        onClick={() => onModeChange('code')}
+      />
+      {formAvailable ? (
+        <IconButton
+          aria-pressed={mode === 'form'}
+          className="ui-json-config-workbench__mode"
+          icon="codicon-settings"
+          label="Form"
+          onClick={() => onModeChange('form')}
+        />
+      ) : null}
+      <IconButton
+        aria-pressed={mode === 'preview'}
+        className="ui-json-config-workbench__mode"
+        icon="codicon-open-preview"
+        label="Preview"
+        onClick={() => onModeChange('preview')}
+      />
+    </div>
   );
 }

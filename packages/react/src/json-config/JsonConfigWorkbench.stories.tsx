@@ -116,7 +116,7 @@ export const SchemaSettings: Story = {
   render: () => (
     <ConfigHarness
       initialValue={settingsJson}
-      defaultMode="split"
+      defaultMode="code"
       previewKind="schema"
       schema={settingsSchema}
     />
@@ -127,7 +127,7 @@ export const WidgetPreview: Story = {
   render: () => (
     <ConfigHarness
       initialValue={widgetJson}
-      defaultMode="split"
+      defaultMode="code"
       path="widget.json"
       previewKind="widget"
       title="Widget config"
@@ -140,7 +140,7 @@ export const WidgetInteraction: Story = {
   render: () => (
     <ConfigHarness
       initialValue={widgetJson}
-      defaultMode="split"
+      defaultMode="code"
       path="widget.json"
       previewKind="widget"
       title="Widget config"
@@ -156,7 +156,7 @@ export const WidgetInteraction: Story = {
       'Preview from JsonConfigWorkbench widget mode.',
     );
 
-    await expect(canvas.getByRole('button', { name: 'Split' })).toHaveAttribute(
+    await expect(canvas.getByRole('button', { name: 'Code (JSON)' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -167,8 +167,8 @@ export const WidgetInteraction: Story = {
       'true',
     );
 
-    await userEvent.click(canvas.getByRole('button', { name: 'Code' }));
-    await expect(canvas.getByRole('button', { name: 'Code' })).toHaveAttribute(
+    await userEvent.click(canvas.getByRole('button', { name: 'Code (JSON)' }));
+    await expect(canvas.getByRole('button', { name: 'Code (JSON)' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -192,7 +192,7 @@ export const Interaction: Story = {
   render: () => (
     <ConfigHarness
       initialValue={settingsJson}
-      defaultMode="split"
+      defaultMode="form"
       previewKind="schema"
       schema={settingsSchema}
     />
