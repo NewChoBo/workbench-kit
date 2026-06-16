@@ -2,9 +2,9 @@ import {
   parseWorkbenchExtensionsConfig,
   parseWorkbenchLayoutConfig,
 } from '@workbench-kit/workbench-config';
-import jdwNodeSchemaJson from '@workbench-kit/jdw/schemas/jdw-node.json';
-import widgetDocumentSchemaJson from '@workbench-kit/jdw/schemas/widget-document.v1.json';
-import { JDW_DOCUMENT_MIME } from '@workbench-kit/react/jdw/document';
+import jdwNodeSchemaJson from '@workbench-kit/jdw/schemas/jdw-node.jdw.schema.json';
+import widgetDocumentSchemaJson from '@workbench-kit/jdw/schemas/widget-document.v1.jdw.schema.json';
+import { JDW_DOCUMENT_MIME, JDW_SCHEMA_DOCUMENT_MIME } from '@workbench-kit/react/jdw/document';
 import type { VirtualWorkspaceInitialState } from '@workbench-kit/workspace';
 
 import extensionsJson from '../../../.workbench/extensions.json';
@@ -19,8 +19,8 @@ export interface SampleWorkspaceInfo {
 export const SAMPLE_APP_PATH = 'src/App.tsx';
 export const SAMPLE_README_PATH = 'README.md';
 export const SAMPLE_JDW_DOCUMENT_PATH = 'jdw/workbench-sample.jdw.json';
-export const SAMPLE_JDW_NODE_SCHEMA_PATH = 'schemas/jdw-node.json';
-export const SAMPLE_JDW_SCHEMA_PATH = 'schemas/widget-document.v1.json';
+export const SAMPLE_JDW_NODE_SCHEMA_PATH = 'schemas/jdw-node.jdw.schema.json';
+export const SAMPLE_JDW_SCHEMA_PATH = 'schemas/widget-document.v1.jdw.schema.json';
 
 export const extensionsConfig = parseWorkbenchExtensionsConfig(extensionsJson);
 
@@ -60,23 +60,23 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
         'Frontend-only host demonstrating editor tabs, workspace save, and JDW preview.',
         '',
         '- `jdw/workbench-sample.jdw.json` is the editable JDW document.',
-        '- `schemas/widget-document.v1.json` is imported from `@workbench-kit/jdw`.',
+        '- `schemas/widget-document.v1.jdw.schema.json` is imported from `@workbench-kit/jdw`.',
       ].join('\n'),
       path: SAMPLE_README_PATH,
     },
     {
       content: formatSampleJson(widgetDocumentSchemaJson),
-      mimeType: 'application/schema+json',
+      mimeType: JDW_SCHEMA_DOCUMENT_MIME,
       path: SAMPLE_JDW_SCHEMA_PATH,
     },
     {
       content: formatSampleJson(jdwNodeSchemaJson),
-      mimeType: 'application/schema+json',
+      mimeType: JDW_SCHEMA_DOCUMENT_MIME,
       path: SAMPLE_JDW_NODE_SCHEMA_PATH,
     },
     {
       content: formatSampleJson({
-        $schema: '../schemas/widget-document.v1.json',
+        $schema: '../schemas/widget-document.v1.jdw.schema.json',
         type: 'column',
         args: {
           gap: 10,

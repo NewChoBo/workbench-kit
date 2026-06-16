@@ -1,5 +1,10 @@
 import type { ReactNode } from 'react';
-import { JDW_DOCUMENT_MIME, isJdwDocumentPath } from '@workbench-kit/react/jdw/document';
+import {
+  JDW_DOCUMENT_MIME,
+  JDW_SCHEMA_DOCUMENT_MIME,
+  isJdwDocumentPath,
+  isJdwSchemaDocument,
+} from '@workbench-kit/react/jdw/document';
 import { parseJsonWidgetData } from '@workbench-kit/react/jdw/parse';
 import { JdwPreview } from '@workbench-kit/react/jdw/preview';
 
@@ -51,7 +56,9 @@ const JDW_PREVIEW_PROVIDER: EditorDocumentViewProvider = {
   kind: 'preview',
   label: 'Preview',
   priority: 10,
-  matches: (document) => isJdwDocument(document) || isJdwWidgetJson(document.content),
+  matches: (document) =>
+    !isJdwSchemaDocument(document) &&
+    (isJdwDocument(document) || isJdwWidgetJson(document.content)),
   render: ({ document }) => (
     <JdwPreview className="workbench-editor-area__jdw-preview" json={document.content} />
   ),
@@ -277,6 +284,7 @@ function isJsonLikeDocument(document: EditorDocumentContext): boolean {
     path.endsWith('.json') ||
     mimeType === 'application/json' ||
     mimeType === 'application/schema+json' ||
+    mimeType === JDW_SCHEMA_DOCUMENT_MIME ||
     Boolean(mimeType?.endsWith('+json'))
   );
 }

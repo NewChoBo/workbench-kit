@@ -32,7 +32,7 @@ export function createWidgetStudioAssetPackageFiles(
       updatedAt: definition.updatedAt,
       source: 'user',
       content: json({
-        $schema: 'https://workbench-kit.dev/schemas/widget-asset-manifest.v1.json',
+        $schema: 'https://workbench-kit.dev/schemas/widget-asset-manifest.v1.jdw.schema.json',
         ...definition.manifest,
       }),
     },

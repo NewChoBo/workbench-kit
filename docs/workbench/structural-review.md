@@ -140,7 +140,7 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-  JSON["JDW v7 JSON / *.widget.json"]
+  JSON["JDW v7 JSON / *.jdw.json"]
   PARSE["parseJsonWidgetData"]
   VALID["validateJsonWidgetData"]
   CONVERT["jdwNodeToGenericWidget"]

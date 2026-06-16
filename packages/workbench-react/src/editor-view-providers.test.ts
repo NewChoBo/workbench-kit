@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { JDW_DOCUMENT_MIME } from '@workbench-kit/react/jdw/document';
+import { JDW_DOCUMENT_MIME, JDW_SCHEMA_DOCUMENT_MIME } from '@workbench-kit/react/jdw/document';
 
 import {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
@@ -26,8 +26,20 @@ describe('resolveEditorDocumentViews', () => {
     const resolved = resolveEditorDocumentViews(
       createDocument({
         content: '{',
-        mimeType: 'application/schema+json',
-        path: 'schemas/widget-document.v1.json',
+        mimeType: JDW_SCHEMA_DOCUMENT_MIME,
+        path: 'schemas/widget-document.v1.jdw.schema.json',
+      }),
+    );
+
+    expect(resolved.formProvider?.id).toBe(JSON_FORM_PROVIDER_ID);
+    expect(resolved.previewProvider).toBeUndefined();
+  });
+
+  it('does not infer JDW preview for schema extension documents', () => {
+    const resolved = resolveEditorDocumentViews(
+      createDocument({
+        content: '{"type":"text","args":{"text":"schema-like but not a widget"}}',
+        path: 'schemas/example.jdw.schema.json',
       }),
     );
 
