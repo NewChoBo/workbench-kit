@@ -143,7 +143,7 @@ describe('EditorArea', () => {
     container.remove();
   });
 
-  it('splits the active editor into adjacent editor groups', async () => {
+  it('splits an editor tab into an adjacent group by dragging onto the editor body', async () => {
     function OpenEditorProbe() {
       const editorService = useEditorService();
 
@@ -195,23 +195,114 @@ describe('EditorArea', () => {
     });
 
     await flushReactEffects();
-    await waitForSelector(container, 'button[aria-label="Split editor right"]');
+    await waitForSelector(container, '[role="tab"]');
 
-    const splitButton = container.querySelector(
-      'button[aria-label="Split editor right"]',
-    ) as HTMLButtonElement | null;
+    const tab = container.querySelector('[role="tab"]') as HTMLElement | null;
+    const groupBody = container.querySelector(
+      '.workbench-editor-area__group-body',
+    ) as HTMLElement | null;
+    const dataTransfer = createTestDataTransfer();
 
     await act(async () => {
-      splitButton?.click();
+      dispatchTestDragEvent(tab, 'dragstart', dataTransfer);
+      dispatchTestDragEvent(groupBody, 'dragover', dataTransfer);
+      dispatchTestDragEvent(groupBody, 'drop', dataTransfer);
     });
 
     await flushReactEffects();
 
+    expect(container.querySelector('button[aria-label="Split editor right"]')).toBeNull();
     expect(container.querySelector('.workbench-editor-area__group-split')).not.toBeNull();
     expect(container.querySelectorAll('.workbench-editor-area__group-pane')).toHaveLength(2);
     expect(container.querySelectorAll('[role="tablist"]')).toHaveLength(2);
     expect(container.querySelectorAll('[data-testid="monaco-editor"]')).toHaveLength(2);
     expect(container.querySelectorAll('[role="tab"] .codicon-symbol-class')).toHaveLength(2);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('opens an editor tab context menu and toggles pinned state', async () => {
+    function OpenEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/src/app.ts') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/src/app.ts',
+            title: 'app.ts',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <OpenEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, '[role="tab"]');
+
+    const tab = container.querySelector('[role="tab"]') as HTMLElement | null;
+
+    await act(async () => {
+      dispatchTestMouseEvent(tab, 'contextmenu');
+    });
+
+    await flushReactEffects();
+
+    expect(container.querySelector('[role="menu"]')).not.toBeNull();
+    expect(container.textContent).toContain('Unpin');
+    expect(container.textContent).toContain('Split Right');
+    expect(container.textContent).toContain('Close');
+
+    const unpinItem = Array.from(container.querySelectorAll('[role="menuitem"]')).find((item) =>
+      item.textContent?.includes('Unpin'),
+    ) as HTMLButtonElement | undefined;
+
+    await act(async () => {
+      unpinItem?.click();
+    });
+
+    await flushReactEffects();
+
+    expect(container.querySelector('[aria-label="Unpin tab"]')).toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__status-icon--preview')).not.toBeNull();
 
     await act(async () => {
       root.unmount();
@@ -613,4 +704,56 @@ async function waitForSelector(container: HTMLElement, selector: string): Promis
 
     await flushReactEffects();
   }
+}
+
+function createTestDataTransfer(): DataTransfer {
+  if (typeof DataTransfer !== 'undefined') return new DataTransfer();
+
+  const data = new Map<string, string>();
+  return {
+    clearData: (format?: string) => {
+      if (format) {
+        data.delete(format);
+      } else {
+        data.clear();
+      }
+    },
+    dropEffect: 'none',
+    effectAllowed: 'all',
+    files: [] as unknown as FileList,
+    getData: (format: string) => data.get(format) ?? '',
+    items: [] as unknown as DataTransferItemList,
+    setData: (format: string, value: string) => {
+      data.set(format, value);
+    },
+    setDragImage: () => undefined,
+    types: [],
+  };
+}
+
+function dispatchTestDragEvent(
+  target: Element | null,
+  type: string,
+  dataTransfer: DataTransfer,
+): void {
+  if (!target) return;
+
+  const event = new Event(type, { bubbles: true, cancelable: true }) as DragEvent;
+  Object.defineProperty(event, 'clientX', { value: 120 });
+  Object.defineProperty(event, 'clientY', { value: 60 });
+  Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
+  target.dispatchEvent(event);
+}
+
+function dispatchTestMouseEvent(target: Element | null, type: string): void {
+  if (!target) return;
+
+  target.dispatchEvent(
+    new MouseEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      clientX: 24,
+      clientY: 36,
+    }),
+  );
 }

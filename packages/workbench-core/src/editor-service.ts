@@ -38,6 +38,8 @@ export interface OpenEditorOptions {
 }
 
 export interface SplitEditorOptions {
+  readonly afterGroupId?: string | undefined;
+  readonly beforeGroupId?: string | undefined;
   readonly groupId?: string | undefined;
   readonly tabId?: string | undefined;
 }
@@ -130,6 +132,7 @@ export class EditorService implements Disposable {
     const sourceHost = this.editorHosts.get(sourceLocation.tab.id);
     const targetGroupId = options.groupId ?? this.createEditorGroupId();
     const targetGroup = this.state.groups.find((group) => group.id === targetGroupId);
+    const anchorGroupId = options.beforeGroupId ?? options.afterGroupId ?? sourceLocation.group.id;
     const nextTab: EditorTabState = {
       ...sourceLocation.tab,
       id: createEditorTabId(++this.tabSequence),
@@ -143,7 +146,9 @@ export class EditorService implements Disposable {
     };
     const nextGroups = targetGroup
       ? replaceGroup(this.state.groups, nextTargetGroup)
-      : insertGroupAfter(this.state.groups, sourceLocation.group.id, nextTargetGroup);
+      : options.beforeGroupId
+        ? insertGroupBefore(this.state.groups, anchorGroupId, nextTargetGroup)
+        : insertGroupAfter(this.state.groups, anchorGroupId, nextTargetGroup);
 
     this.setState({
       activeGroupId: targetGroupId,
@@ -220,6 +225,54 @@ export class EditorService implements Disposable {
       pinned: true,
       preview: false,
     }));
+  }
+
+  unpinEditor(tabId: string): void {
+    const location = this.findTabLocation(tabId);
+    if (!location) {
+      return;
+    }
+
+    const nextGroup: EditorGroupState = {
+      ...location.group,
+      tabs: location.group.tabs.map((tab) => {
+        if (tab.id === tabId) {
+          return {
+            ...tab,
+            pinned: false,
+            preview: true,
+          };
+        }
+
+        if (tab.preview && !tab.pinned) {
+          return {
+            ...tab,
+            pinned: true,
+            preview: false,
+          };
+        }
+
+        return tab;
+      }),
+    };
+
+    this.setState({
+      groups: replaceGroup(this.state.groups, nextGroup),
+    });
+  }
+
+  togglePinnedEditor(tabId: string): void {
+    const location = this.findTabLocation(tabId);
+    if (!location) {
+      return;
+    }
+
+    if (location.tab.pinned) {
+      this.unpinEditor(tabId);
+      return;
+    }
+
+    this.pinEditor(tabId);
   }
 
   promotePreviewOnEdit(tabId: string): void {
@@ -444,6 +497,21 @@ function insertGroupAfter(
 
   const copy = [...groups];
   copy.splice(anchorIndex + 1, 0, nextGroup);
+  return copy;
+}
+
+function insertGroupBefore(
+  groups: readonly EditorGroupState[],
+  anchorGroupId: string,
+  nextGroup: EditorGroupState,
+): EditorGroupState[] {
+  const anchorIndex = groups.findIndex((group) => group.id === anchorGroupId);
+  if (anchorIndex < 0) {
+    return [nextGroup, ...groups];
+  }
+
+  const copy = [...groups];
+  copy.splice(anchorIndex, 0, nextGroup);
   return copy;
 }
 

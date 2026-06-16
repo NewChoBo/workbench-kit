@@ -9,6 +9,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./overlay": "./src/overlay/ContextMenu.tsx",
     "./primitives": "./src/primitives/index.ts",
     "./primitives.css": "./src/primitives/styles.css",
     "./workbench/auth": "./src/workbench/auth/index.ts",

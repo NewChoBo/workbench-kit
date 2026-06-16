@@ -30,6 +30,7 @@
 }
 
 .workbench-editor-area__group-pane {
+  position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -44,10 +45,38 @@
 }
 
 .workbench-editor-area__group-body {
+  position: relative;
   display: flex;
   flex: 1;
   min-width: 0;
   min-height: 0;
+}
+
+.workbench-editor-area__drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.workbench-editor-area__group-body[data-drop-side='left'] .workbench-editor-area__drop-overlay {
+  right: 50%;
+  background: var(
+    --vscode-editorGroup-dropBackground,
+    color-mix(in srgb, var(--vscode-focusBorder, var(--color-focus-border)) 18%, transparent)
+  );
+  outline: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -2px;
+}
+
+.workbench-editor-area__group-body[data-drop-side='right'] .workbench-editor-area__drop-overlay {
+  left: 50%;
+  background: var(
+    --vscode-editorGroup-dropBackground,
+    color-mix(in srgb, var(--vscode-focusBorder, var(--color-focus-border)) 18%, transparent)
+  );
+  outline: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -2px;
 }
 
 .workbench-editor-area__group-actions {
@@ -93,8 +122,7 @@
   height: 100%;
 }
 
-.workbench-editor-area__view-button,
-.workbench-editor-area__group-action {
+.workbench-editor-area__view-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -111,14 +139,12 @@
   line-height: 1.4;
 }
 
-.workbench-editor-area__view-button .codicon,
-.workbench-editor-area__group-action .codicon {
+.workbench-editor-area__view-button .codicon {
   flex: 0 0 auto;
   font-size: 15px;
 }
 
-.workbench-editor-area__view-button:hover,
-.workbench-editor-area__group-action:hover {
+.workbench-editor-area__view-button:hover {
   background: var(--vscode-toolbar-hoverBackground, var(--color-bg-hover));
   color: var(--vscode-foreground, var(--color-text));
 }
