@@ -275,6 +275,34 @@ Form view in the sample is intentionally shallow (top-level key/value fields). W
 
 ---
 
+## 7.2 Editor view model — VS Code / devagent alignment
+
+**Target UX:** Per-editor toolbar **Source | Form | Preview** with optional **Split** (VS Code “Open Preview to the Side”).
+
+**Architecture:**
+
+- `EditorContribution` declares supported `viewModes` and default.
+- `EditorHost` owns buffer SSoT; `EditorArea` owns per-tab view mode + split layout.
+- Pane renderers are pluggable (Monaco, `WorkbenchStructuredDataSchemaPanel`, `JdwPreview`).
+
+**Mapping:**
+
+| Extension / MIME  | Source          | Form                    | Preview                    |
+| ----------------- | --------------- | ----------------------- | -------------------------- |
+| `*.json` + schema | Monaco          | Schema form             | — or widget preview if JDW |
+| widget / JDW JSON | Monaco          | Widget tree + inspector | `JdwPreview`               |
+| `*.md` (future)   | Monaco          | —                       | Markdown render            |
+| plain text        | textarea/Monaco | —                       | —                          |
+
+**vs S8.5:** Shallow top-level JSON form in `EditorArea` is a sample only. Rich surfaces stay in `JsonConfigWorkbench` / `WidgetTreeLab` until dedicated hosts (WB-29+).
+
+**Reuse:** `SplitView`, `WorkbenchArtifactModeControls`, `JsonConfigWorkbench`, `JdwPreview`.  
+**Do not duplicate:** `WorkbenchDocument` canvas authoring.
+
+**Slice:** S8.6 (Preview + split in sample host) before WB-29 explorer; full JDW host in WB-22/WB-29.
+
+---
+
 ## 8. Storybook Validation Stories to Add / Update
 
 | Story ID                               | Base             | Action                                      | Phase    |
