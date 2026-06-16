@@ -65,7 +65,6 @@ export const SharedStatusSurfaces: Story = {
         background: 'var(--color-surface)',
         display: 'grid',
         gap: 18,
-        minHeight: '100vh',
         padding: 24,
       }}
     >
