@@ -5,9 +5,16 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
   type FocusEvent,
   type ReactNode,
 } from 'react';
+import { Badge, Button, Field } from '@workbench-kit/react/primitives';
+import {
+  WorkbenchSettingsModal,
+  WorkbenchSettingsSection,
+  type WorkbenchSettingsCategory,
+} from '@workbench-kit/react/workbench/settings';
 import {
   WorkbenchShell as ReactWorkbenchShell,
   type ActivityBarItem,
@@ -34,6 +41,9 @@ export interface WorkbenchShellProps {
   theme?: string;
 }
 
+const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
+const SETTINGS_ACTIVITY_ITEM_ID = 'workbench-kit.shell.settings';
+
 export function WorkbenchShell({
   compactStatus = true,
   editorArea,
@@ -44,13 +54,20 @@ export function WorkbenchShell({
   theme,
 }: WorkbenchShellProps) {
   const resolvedEditorArea = editorArea ?? <EditorArea />;
-  const { extensionRegistry, layoutService, missingExtensionIds } = useWorkbench();
+  const { executeCommand, extensionRegistry, layoutService, missingExtensionIds } = useWorkbench();
   const forceRender = useForceRender();
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSearchValue, setSettingsSearchValue] = useState('');
   const layout = layoutService.getState();
   const resolvedStatusSections =
     statusSections ?? createDefaultStatusSections(extensionRegistry, missingExtensionIds);
   const activeViewContainerId = layout.sideBar.activeViewContainer;
   const activityItems = createActivityItems(extensionRegistry, activeViewContainerId);
+  const settingsCategories = useMemo(
+    () => createSettingsCategories(extensionRegistry),
+    [extensionRegistry],
+  );
+  const settingsContributionCount = extensionRegistry.configurations.getConfigurations().length;
 
   useEffect(() => {
     const layoutDisposable = layoutService.onDidChangeLayout(forceRender);
@@ -72,11 +89,31 @@ export function WorkbenchShell({
     }
   }, [activeViewContainerId, extensionRegistry, forceRender]);
 
+  const openSettings = () => {
+    setSettingsOpen(true);
+    if (extensionRegistry.commands.hasCommand(OPEN_SETTINGS_COMMAND_ID)) {
+      void executeCommand(OPEN_SETTINGS_COMMAND_ID).catch(() => undefined);
+    }
+  };
+
   return (
     <ReactWorkbenchShell
       activityBar={{
         items: activityItems,
+        secondaryItems: [
+          {
+            active: isSettingsOpen,
+            icon: <i aria-hidden="true" className="codicon codicon-settings-gear" />,
+            id: SETTINGS_ACTIVITY_ITEM_ID,
+            label: 'Settings',
+          },
+        ],
         onItemActivate: (item) => {
+          if (item.id === SETTINGS_ACTIVITY_ITEM_ID) {
+            openSettings();
+            return;
+          }
+
           layoutService.setActiveViewContainer(item.id);
           layoutService.setSideBarVisible(true);
         },
@@ -92,6 +129,30 @@ export function WorkbenchShell({
       secondaryArea={resolvedEditorArea}
       statusSections={resolvedStatusSections}
       theme={theme}
+      overlays={
+        isSettingsOpen ? (
+          <WorkbenchSettingsModal
+            categories={settingsCategories}
+            defaultActiveCategoryId={settingsCategories[0]?.id}
+            footer={<Button onClick={() => setSettingsOpen(false)}>Close</Button>}
+            scopes={[
+              { id: 'user', label: 'User' },
+              { id: 'workspace', label: 'Workspace' },
+            ]}
+            searchValue={settingsSearchValue}
+            title="Settings"
+            titleSuffix={
+              <Badge variant="muted">
+                {settingsContributionCount === 1
+                  ? '1 contribution'
+                  : `${settingsContributionCount} contributions`}
+              </Badge>
+            }
+            onClose={() => setSettingsOpen(false)}
+            onSearchValueChange={setSettingsSearchValue}
+          />
+        ) : null
+      }
     />
   );
 }
@@ -156,6 +217,95 @@ function createDefaultStatusSections(
       ],
     },
   ];
+}
+
+function createSettingsCategories(
+  extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
+): WorkbenchSettingsCategory[] {
+  const configurations = extensionRegistry.configurations.getConfigurations();
+
+  if (configurations.length === 0) {
+    return [
+      {
+        content: (
+          <WorkbenchSettingsSection
+            id="workbench-settings-empty"
+            title="Workbench"
+            description="No extension settings are currently registered."
+          >
+            <p className="workbench-settings-empty">Enable extensions to contribute settings.</p>
+          </WorkbenchSettingsSection>
+        ),
+        id: 'workbench',
+        label: 'Workbench',
+      },
+    ];
+  }
+
+  return configurations.map(({ extensionId, configuration }) => {
+    const extension = extensionRegistry.getExtension(extensionId);
+    const displayName = extension?.manifest.displayName ?? titleFromExtensionId(extensionId);
+    const properties = Object.entries(configuration.properties ?? {});
+
+    return {
+      content: (
+        <WorkbenchSettingsSection
+          id={`workbench-settings-${slugId(extensionId)}`}
+          title={displayName}
+          description={`${properties.length} ${
+            properties.length === 1 ? 'setting is' : 'settings are'
+          } contributed by ${extensionId}.`}
+        >
+          {properties.length ? (
+            <div className="workbench-settings-contribution-list">
+              {properties.map(([key, value]) => (
+                <SettingContributionField key={key} propertyKey={key} propertyValue={value} />
+              ))}
+            </div>
+          ) : (
+            <p className="workbench-settings-empty">
+              This extension registered a configuration section without properties.
+            </p>
+          )}
+        </WorkbenchSettingsSection>
+      ),
+      id: extensionId,
+      label: displayName,
+      title: extensionId,
+    };
+  });
+}
+
+function SettingContributionField({
+  propertyKey,
+  propertyValue,
+}: {
+  propertyKey: string;
+  propertyValue: unknown;
+}) {
+  const property = isRecord(propertyValue) ? propertyValue : {};
+  const description = typeof property.description === 'string' ? property.description : undefined;
+  const scope = typeof property.scope === 'string' ? property.scope : undefined;
+  const type = formatSettingType(property.type);
+  const hasDefault = Object.prototype.hasOwnProperty.call(property, 'default');
+
+  return (
+    <Field
+      className="workbench-settings-contribution-field"
+      label={<code>{propertyKey}</code>}
+      description={description}
+    >
+      <div className="workbench-settings-contribution-meta">
+        {type ? <Badge variant="muted">{type}</Badge> : null}
+        {scope ? <Badge variant="muted">{scope}</Badge> : null}
+      </div>
+      {hasDefault ? (
+        <code className="workbench-settings-contribution-default">
+          default: {formatSettingDefault(property.default)}
+        </code>
+      ) : null}
+    </Field>
+  );
 }
 
 function renderDefaultPrimarySidebar(
@@ -293,6 +443,52 @@ function toViewHostReactNode(value: unknown, fallback: ReactNode): ReactNode {
   }
 
   return toReactNode(value, fallback);
+}
+
+function formatSettingType(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (Array.isArray(value) && value.every((entry) => typeof entry === 'string')) {
+    return value.join(' | ');
+  }
+
+  return undefined;
+}
+
+function formatSettingDefault(value: unknown): string {
+  if (value === undefined) {
+    return 'undefined';
+  }
+
+  if (typeof value === 'string') {
+    return JSON.stringify(value);
+  }
+
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function titleFromExtensionId(extensionId: string): string {
+  const parts = extensionId.split('.').filter(Boolean);
+  const lastPart = parts[parts.length - 1];
+
+  return (
+    lastPart?.replace(/[-_]/g, ' ').replace(/\b\w/g, (letter: string) => letter.toUpperCase()) ??
+    extensionId
+  );
+}
+
+function slugId(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function resolveIcon(icon: ReactNode | string | undefined): ReactNode {

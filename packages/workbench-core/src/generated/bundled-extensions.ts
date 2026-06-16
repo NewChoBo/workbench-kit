@@ -249,10 +249,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
         workbench: '^0.0.0',
         extensionApi: '^0.0.0',
       },
-      activationEvents: [
-        'onView:workbench-kit.builtin.settings.view',
-        'onCommand:workbench-kit.builtin.settings.open',
-      ],
+      activationEvents: ['onCommand:workbench-kit.builtin.settings.open'],
       contributes: {
         commands: [
           {
@@ -267,31 +264,6 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
               command: 'workbench-kit.builtin.settings.open',
               group: 'preferences',
               order: 1,
-            },
-          ],
-        },
-        viewContainers: {
-          activitybar: [
-            {
-              id: 'settings',
-              title: 'Settings',
-              icon: 'gear',
-            },
-          ],
-        },
-        activities: [
-          {
-            id: 'workbench-kit.builtin.settings.activity',
-            viewContainerId: 'settings',
-            icon: 'gear',
-            title: 'Settings',
-          },
-        ],
-        views: {
-          settings: [
-            {
-              id: 'workbench-kit.builtin.settings.view',
-              name: 'Settings',
             },
           ],
         },

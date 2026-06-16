@@ -57,5 +57,9 @@ describe('bundled workbench extensions', () => {
     ).toMatchObject({
       viewContainerId: 'explorer',
     });
+    expect(
+      registry.activities.getActivity('workbench-kit.builtin.settings.activity'),
+    ).toBeUndefined();
+    expect(registry.views.getView('workbench-kit.builtin.settings.view')).toBeUndefined();
   });
 });
