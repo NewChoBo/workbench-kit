@@ -7,13 +7,18 @@ import {
   useWorkbench,
 } from '@workbench-kit/workbench-react';
 
-import { extensionsConfig, initialLayout, initialWorkspace, workspaceInfo } from './bootstrap.js';
+import {
+  extensionsConfig,
+  initialLayout,
+  initialWorkspace,
+  SAMPLE_APP_PATH,
+  SAMPLE_JDW_DOCUMENT_PATH,
+  SAMPLE_JDW_SCHEMA_PATH,
+  SAMPLE_README_PATH,
+  workspaceInfo,
+} from './bootstrap.js';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
-
-const SAMPLE_APP_PATH = 'src/App.tsx';
-const SAMPLE_README_PATH = 'README.md';
-const SAMPLE_CONFIG_PATH = 'config.json';
 let sampleWorkspaceInitialized = false;
 
 export function App() {
@@ -121,11 +126,20 @@ function SampleEditorEmptyState() {
         <button
           className="workbench-sample-editor__action"
           onClick={() => {
-            void executeCommand('workspace.open', { path: SAMPLE_CONFIG_PATH });
+            void executeCommand('workspace.open', { path: SAMPLE_JDW_DOCUMENT_PATH });
           }}
           type="button"
         >
-          Open config.json
+          Open workbench-sample.jdw.json
+        </button>
+        <button
+          className="workbench-sample-editor__action"
+          onClick={() => {
+            void executeCommand('workspace.open', { path: SAMPLE_JDW_SCHEMA_PATH });
+          }}
+          type="button"
+        >
+          Open JDW schema
         </button>
       </div>
       <p className="workbench-sample-editor__hint">

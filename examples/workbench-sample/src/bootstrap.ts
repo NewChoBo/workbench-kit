@@ -2,6 +2,9 @@ import {
   parseWorkbenchExtensionsConfig,
   parseWorkbenchLayoutConfig,
 } from '@workbench-kit/workbench-config';
+import jdwNodeSchemaJson from '@workbench-kit/jdw/schemas/jdw-node.json';
+import widgetDocumentSchemaJson from '@workbench-kit/jdw/schemas/widget-document.v1.json';
+import { JDW_DOCUMENT_MIME } from '@workbench-kit/react/jdw/document';
 import type { VirtualWorkspaceInitialState } from '@workbench-kit/workspace';
 
 import extensionsJson from '../../../.workbench/extensions.json';
@@ -12,6 +15,12 @@ export interface SampleWorkspaceInfo {
   readonly name: string;
   readonly folderCount: number;
 }
+
+export const SAMPLE_APP_PATH = 'src/App.tsx';
+export const SAMPLE_README_PATH = 'README.md';
+export const SAMPLE_JDW_DOCUMENT_PATH = 'jdw/workbench-sample.jdw.json';
+export const SAMPLE_JDW_NODE_SCHEMA_PATH = 'schemas/jdw-node.json';
+export const SAMPLE_JDW_SCHEMA_PATH = 'schemas/widget-document.v1.json';
 
 export const extensionsConfig = parseWorkbenchExtensionsConfig(extensionsJson);
 
@@ -32,7 +41,7 @@ export const workspaceInfo: SampleWorkspaceInfo = {
 };
 
 export const initialWorkspace: VirtualWorkspaceInitialState = {
-  expandedPaths: ['src'],
+  expandedPaths: ['src', 'schemas', 'jdw'],
   files: [
     {
       content: [
@@ -42,52 +51,67 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
         '  return <WorkbenchShell />;',
         '}',
       ].join('\n'),
-      path: 'src/App.tsx',
+      path: SAMPLE_APP_PATH,
     },
     {
       content: [
         '# Workbench Kit Sample',
         '',
-        'Frontend-only host demonstrating editor tabs and workspace save.',
+        'Frontend-only host demonstrating editor tabs, workspace save, and JDW preview.',
+        '',
+        '- `jdw/workbench-sample.jdw.json` is the editable JDW document.',
+        '- `schemas/widget-document.v1.json` is imported from `@workbench-kit/jdw`.',
       ].join('\n'),
-      path: 'README.md',
+      path: SAMPLE_README_PATH,
     },
     {
-      content: JSON.stringify(
-        {
-          type: 'column',
-          args: {
-            gap: 10,
-            padding: 20,
-            background: '#13151a',
-            children: [
-              {
-                type: 'text',
-                args: {
-                  text: 'Workbench Sample',
-                  fontSize: 18,
-                  color: '#e8eaed',
-                },
+      content: formatSampleJson(widgetDocumentSchemaJson),
+      mimeType: 'application/schema+json',
+      path: SAMPLE_JDW_SCHEMA_PATH,
+    },
+    {
+      content: formatSampleJson(jdwNodeSchemaJson),
+      mimeType: 'application/schema+json',
+      path: SAMPLE_JDW_NODE_SCHEMA_PATH,
+    },
+    {
+      content: formatSampleJson({
+        $schema: '../schemas/widget-document.v1.json',
+        type: 'column',
+        args: {
+          gap: 10,
+          padding: 20,
+          background: '#13151a',
+          children: [
+            {
+              type: 'text',
+              args: {
+                text: 'Workbench Sample',
+                fontSize: 18,
+                color: '#e8eaed',
               },
-              {
-                type: 'text',
-                args: {
-                  text: 'This config.json file renders through the JDW preview.',
-                  fontSize: 12,
-                  color: '#9aa0a6',
-                },
+            },
+            {
+              type: 'text',
+              args: {
+                text: 'This .jdw.json document renders through the JDW preview.',
+                fontSize: 12,
+                color: '#9aa0a6',
               },
-            ],
-          },
+            },
+          ],
         },
-        null,
-        2,
-      ),
-      path: 'config.json',
+      }),
+      mimeType: JDW_DOCUMENT_MIME,
+      path: SAMPLE_JDW_DOCUMENT_PATH,
     },
   ],
-  folders: ['src'],
+  folders: ['src', 'schemas', 'jdw'],
 };
+
+function formatSampleJson(value: unknown): string {
+  return `${JSON.stringify(value, null, 2)}\n`;
+}
 
 function readWorkspaceName(value: unknown): string {
   if (typeof value !== 'object' || value === null) {

@@ -7,13 +7,19 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 vi.mock('@monaco-editor/react', () => ({
   default: ({
+    language,
     onChange,
+    path,
     value,
   }: {
+    language?: string | undefined;
     onChange?: ((value?: string) => void) | undefined;
+    path?: string | undefined;
     value?: string | undefined;
   }) => (
     <textarea
+      data-language={language}
+      data-path={path}
       data-testid="monaco-editor"
       value={value ?? ''}
       onChange={(event) => onChange?.(event.currentTarget.value)}
@@ -201,7 +207,7 @@ describe('EditorArea', () => {
         void (async () => {
           while (
             !cancelled &&
-            editorService.resolveEditorId('workspace://file/widget.json') === undefined
+            editorService.resolveEditorId('workspace://file/widget.jdw.json') === undefined
           ) {
             await new Promise((resolve) => setTimeout(resolve, 0));
           }
@@ -212,8 +218,8 @@ describe('EditorArea', () => {
 
           editorService.openEditor({
             pinned: true,
-            resourceUri: 'workspace://file/widget.json',
-            title: 'widget.json',
+            resourceUri: 'workspace://file/widget.jdw.json',
+            title: 'widget.jdw.json',
           });
         })();
 
@@ -238,7 +244,7 @@ describe('EditorArea', () => {
           }}
           workspaceHostPort={{
             applySave: () => ({ transactionId: 'test-save' }),
-            resolveResource: () => ({ content: WIDGET_JSON, path: 'widget.json' }),
+            resolveResource: () => ({ content: WIDGET_JSON, path: 'widget.jdw.json' }),
           }}
         >
           <OpenJsonEditorProbe />
@@ -252,6 +258,9 @@ describe('EditorArea', () => {
     expect(container.textContent).toContain('Form');
     expect(container.textContent).toContain('Preview');
     expect(container.textContent).not.toContain('Split');
+    expect(
+      container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
+    ).toBe('json');
 
     await act(async () => {
       root.unmount();
@@ -269,7 +278,7 @@ describe('EditorArea', () => {
         void (async () => {
           while (
             !cancelled &&
-            editorService.resolveEditorId('workspace://file/widget.json') === undefined
+            editorService.resolveEditorId('workspace://file/widget.jdw.json') === undefined
           ) {
             await new Promise((resolve) => setTimeout(resolve, 0));
           }
@@ -280,8 +289,8 @@ describe('EditorArea', () => {
 
           editorService.openEditor({
             pinned: true,
-            resourceUri: 'workspace://file/widget.json',
-            title: 'widget.json',
+            resourceUri: 'workspace://file/widget.jdw.json',
+            title: 'widget.jdw.json',
           });
         })();
 
@@ -306,7 +315,7 @@ describe('EditorArea', () => {
           }}
           workspaceHostPort={{
             applySave: () => ({ transactionId: 'test-save' }),
-            resolveResource: () => ({ content: WIDGET_JSON, path: 'widget.json' }),
+            resolveResource: () => ({ content: WIDGET_JSON, path: 'widget.jdw.json' }),
           }}
         >
           <OpenJsonEditorProbe />

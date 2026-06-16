@@ -21,6 +21,7 @@
     "./workbench/workspace/editor": "./src/workbench/workspace/WorkspaceEditor.tsx",
     "./workbench/workspace/explorer": "./src/workbench/workspace/WorkspaceExplorer.tsx",
     "./jdw": "./src/jdw/index.ts",
+    "./jdw/document": "./src/jdw/document.ts",
     "./jdw/parse": "./src/jdw/parse.ts",
     "./jdw/preview": "./src/jdw/JdwPreview.tsx",
     "./jdw/samples": "./src/jdw/fixtures/jdw-sample-screens.ts",

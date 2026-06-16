@@ -13,9 +13,10 @@ vi.mock('monaco-editor', () => ({}));
 import { WidgetTreeWorkbench } from './WidgetTreeWorkbench.js';
 import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';
 import { isWidgetTreeDocument } from './widget-tree-document.js';
+import { JDW_DOCUMENT_MIME } from '../jdw/document.js';
 
 describe('isWidgetTreeDocument', () => {
-  it('matches widget mime type and .widget.json paths', () => {
+  it('matches widget mime type plus .widget.json and .jdw.json paths', () => {
     expect(
       isWidgetTreeDocument({
         path: 'src/widgets/home.widget.json',
@@ -23,6 +24,8 @@ describe('isWidgetTreeDocument', () => {
       }),
     ).toBe(true);
     expect(isWidgetTreeDocument({ path: 'layout.widget.json' })).toBe(true);
+    expect(isWidgetTreeDocument({ path: 'jdw/home.jdw.json' })).toBe(true);
+    expect(isWidgetTreeDocument({ path: 'jdw/home.json', mimeType: JDW_DOCUMENT_MIME })).toBe(true);
     expect(isWidgetTreeDocument({ path: 'package.json' })).toBe(false);
   });
 });

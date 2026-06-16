@@ -1,4 +1,5 @@
 import { extensionOfPath } from './path';
+import { JDW_DOCUMENT_FILE_EXTENSION, JDW_DOCUMENT_MIME } from '../../jdw/document';
 
 const EXTENSION_MIME: Record<string, string> = {
   css: 'text/css',
@@ -25,5 +26,9 @@ const EXTENSION_MIME: Record<string, string> = {
 };
 
 export function mimeTypeForPath(path: string): string {
+  if (path.toLowerCase().endsWith(JDW_DOCUMENT_FILE_EXTENSION)) {
+    return JDW_DOCUMENT_MIME;
+  }
+
   return EXTENSION_MIME[extensionOfPath(path)] ?? 'text/plain';
 }

@@ -31,7 +31,8 @@ export function activate(context: ExtensionContext): void {
       }
 
       const initialContent = readWorkspaceFileContent(resource);
-      return new TextEditorHost({ initialContent, resourceUri, tabId });
+      const mimeType = readWorkspaceFileMimeType(resource);
+      return new TextEditorHost({ initialContent, mimeType, resourceUri, tabId });
     },
   });
 }
@@ -43,4 +44,13 @@ function readWorkspaceFileContent(resource: unknown): string | undefined {
 
   const content = (resource as { content?: unknown }).content;
   return typeof content === 'string' ? content : undefined;
+}
+
+function readWorkspaceFileMimeType(resource: unknown): string | undefined {
+  if (typeof resource !== 'object' || resource === null) {
+    return undefined;
+  }
+
+  const mimeType = (resource as { mimeType?: unknown }).mimeType;
+  return typeof mimeType === 'string' ? mimeType : undefined;
 }

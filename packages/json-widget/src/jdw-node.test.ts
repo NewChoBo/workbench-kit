@@ -11,6 +11,7 @@ describe('jdw-node', () => {
   it('parses JDW v7 envelope nodes', () => {
     const parsed = parseJsonWidgetData(
       JSON.stringify({
+        $schema: '../schemas/widget-document.v1.json',
         type: 'column',
         args: {
           gap: 12,

@@ -7,6 +7,7 @@ import { Toolbar } from '../../primitives/Toolbar';
 import { extensionOfPath } from './path';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceFile } from './types';
+import { JDW_DOCUMENT_MIME } from '../../jdw/document';
 
 loader.config({ monaco });
 
@@ -103,6 +104,7 @@ export function languageForFile(path: string, mimeType?: string) {
     case 'text/javascript':
       return 'javascript';
     case 'application/json':
+    case JDW_DOCUMENT_MIME:
     case 'application/vnd.workbench-kit.widget+json':
       return 'json';
     case 'application/typescript':
