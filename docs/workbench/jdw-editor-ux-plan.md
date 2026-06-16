@@ -9,7 +9,7 @@
 - **핵심 UX 갭:** 프리뷰 클릭 선택·캔버스 동기화 없음, `JsonConfigWorkbench` 대비 validation banner·baseline/dirty 패턴 미적용, 아웃라인 DnD 재정렬 UI 없음(헤드리스 patch만 존재), 줌/팬·캔버스 제스처는 의도적 보류.
 - **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). Lane B B2(매핑) / B3(캔버스 배선) 전에는 트리·인스pector·Monaco 동기화를 먼저 다듬는다.
 - **단계:** UX-1(에디터 discipline) → UX-2(아웃라인) → UX-3(인스pector·에셋) → UX-4(프리뷰 hit-test 선택) → UX-5(캔버스, B3 의존).
-- **첫 세션 권장:** **B-UX1 / UX-1** — validation banner + baseline dirty parity (`WidgetTreeWorkbench` ↔ `JsonConfigWorkbench`).
+- **첫 세션 권장:** **B-UX1 / UX-1** — validation banner + baseline dirty parity (`WidgetTreeWorkbench` ↔ `JsonConfigWorkbench`). **시작 시점:** Lane A WB-28 S3 → WB-29 마일스톤 이후(B-UX 전체 연기).
 
 ---
 
@@ -245,7 +245,7 @@ Edit → dirty + validation banner
 | B3 Canvas in lab          | UX-5                          | Wire `WorkbenchPreviewCanvas` into `WidgetTreeLab` |
 | B4 Drag reparent / reflow | UX-5 polish                   | Grid reflow, optional zoom overlap with Lane C     |
 
-**Sequencing rule:** UX-1–UX-3 proceed in parallel with B1/B2 headless work. UX-4 starts after B2 tests. UX-5 waits for B3 and WB-28 S2 editor chrome for real host tabs.
+**Sequencing rule:** Track B-UX **deferred until Lane A WB-28 S3 → WB-29**; then UX-1–UX-3 may proceed in parallel with B1/B2 headless work. UX-4 starts after B2 tests. UX-5 waits for B3 and WB-28 S2+ editor chrome for real host tabs.
 
 ---
 

@@ -10,8 +10,8 @@
 
 - **레이어 구조는 대체로 명확함:** `base → platform → contracts → jdw → workbench-core → workbench-react → react` 순으로 의존하며, `scripts/check-workbench-dependency-graph.mjs`가 금지 엣지를 CI에서 검증함.
 - **가장 큰 구조적 리스크는 JDW 이중 렌더:** `cssRenderBackend`(headless rect → absolute CSS)와 `renderBuiltinWidgetNode`(flex/grid 재귀)가 동일 트리에서 혼재할 수 있음. Track D D2 / Lane B B1에서 통합 필요.
-- **이중 문서 모델:** 위젯 영속화는 JDW v7 단일 SSoT. `WorkbenchDocument`(절대 좌표 캔버스)는 `WorkbenchCanvasShell` 데모 전용이며 위젯 파일과 혼용 금지.
-- **Lane A 갭 (WB-28):** `EditorService`·`useEditor*`는 구현됐으나 `WorkbenchShell`은 여전히 `editorArea` placeholder를 호출자가 주입해야 함. 샘플 호스트는 정적 카드만 표시.
+- **이중 문서 모델:** 위젯 영속화는 JDW v7 단일 SSoT. `WorkbenchDocument`(절대 좌표 캔버스)는 `WorkbenchCanvasShell` 데모 전용이며 위젯 파일과 혼용 금지; **장기 목표는 JDW render + event layer로 통합 후 demo 경로 제거**(Lane A DoD / B2 mapping 이후).
+- **Lane A 갭 (WB-28):** S2(`cb968d2`)에서 `EditorArea`·`builtin.editor`·샘플 open-file 완료; S3 트랜잭션 저장 경로만 남음.
 - **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합 → P2 `./jdw/config` export 정정 → P3 `renderJdw` validation 무시 → Lane A DoD 후 legacy shim 제거.
 - **패키지 분리 제외:** React JDW는 `packages/react/src/jdw`에 유지. headless는 `@workbench-kit/jdw` (`packages/json-widget/`).
 

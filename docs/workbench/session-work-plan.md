@@ -12,12 +12,12 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 
 ## 요약
 
-- **현재 위치:** Lane A 약 60% 완료. WB-23~WB-27 머지 완료. WB-28 **S1(에디터 서비스 기반)** 커밋 `5d31491`까지 완료. 작업 트리 클린.
-- **다음 2주 1순위:** WB-28 S2(React 탭 UI) → S3(트랜잭션 저장) — 에디터가 샘플 호스트에서 실제로 열리고 dirty/preview/pin이 동작해야 함.
+- **현재 위치:** Lane A 약 65% 완료. WB-23~WB-27 머지 완료. WB-28 **S2(React 탭 UI)** 커밋 `cb968d2`까지 완료. 작업 트리 클린.
+- **다음 2주 1순위:** WB-28 S3(트랜잭션 저장) → WB-29 — Lane A 마일스톤 우선; B-UX는 Lane A 마일스톤 이후로 연기.
 - **다음 2주 2순위:** WB-29(커맨드 기반 익스플로러) — 트리 CRUD가 `WorkspaceResourceTransaction` 경로로만 동작.
 - **다음 2주 3순위:** WB-30(프리퍼런스 스코프) + WB-31(데브툴 인스펙터) — Lane A 마감 전 필수.
 - **병렬 트랙 B:** Lane B(JDW/widget-tree) B1~B2는 **헤드리스 우선**으로 병렬 가능. 캔버스/에디터 크롬 확장(B3~B4)은 Lane A WB-28 S2 이후.
-- **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). **B-UX1(UX-1)** 은 WB-28 S2와 병렬; 프리뷰 hit-test(B-UX4)는 B2 이후, 캔버스(B-UX5)는 B3·S2 이후.
+- **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). **B-UX 전체는 Lane A 마일스톤(WB-28 S3 → WB-29) 이후** 시작; 프리뷰 hit-test(B-UX4)는 B2 이후, 캔버스(B-UX5)는 B3 이후.
 - **보류 트랙 C:** WB-15 dirty guard, WB-20/22 리소스 드래프트, consumer swap, i18n/테마, preview zoom/pan — Lane A DoD 이후.
 - **정리 트랙 D (in-repo only):** D0–D1(인벤토리·dead WIP)은 S7–S8과 병렬. D2(이중 렌더 통합)는 Track B B1 이후. D3(legacy shim 제거)는 Lane A DoD 이후. 우선순위: P1 이중 렌더 → P2 `./jdw/config` alias → P3 validation 무시. **패키지 분리·git subtree는 범위 밖.**
 - **React JDW 위치:** `packages/react/src/jdw` 유지. headless는 `@workbench-kit/jdw`. 별도 `jdw-react` 패키지·git subtree **계획 제외(out of scope)**.
@@ -36,9 +36,9 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 | **Date**            | 2026-06-16                                                                                   |
 | **Branch**          | `feature/theia-strengths-workbench`                                                          |
 | **Working tree**    | Clean (no uncommitted changes at plan time)                                                  |
-| **Last commits**    | `f1ab57e` JDW/Figma authoring docs · `5d31491` WB-28 S1 · `813cbca` WB-27 · `97640c2` WB-25  |
+| **Last commits**    | `cb968d2` WB-28 S2 · `a3efc59` session plan docs · `5d31491` WB-28 S1 · `813cbca` WB-27      |
 | **Lane A progress** | ~65% (5/9 slices + WB-28 S1–S2)                                                              |
-| **Validate note**   | `pnpm validate:full` last known green on 2026-06-14 (pre-plan). Re-run after WB-28 S2 lands. |
+| **Validate note**   | `pnpm validate:full` last known green on 2026-06-14 (pre-plan). Re-run after WB-28 S3 lands. |
 
 ---
 
@@ -80,13 +80,13 @@ From [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). Improves `WidgetTreeLab` 
 
 | Session   | UX phase | Scope                                                                  | Effort | Timing vs Lane A / Lane B                          |
 | --------- | -------- | ---------------------------------------------------------------------- | ------ | -------------------------------------------------- |
-| **B-UX1** | UX-1     | Validation banner + baseline dirty/Save gating parity with JsonConfig  | S–M    | **Parallel to S7 (WB-28 S2)** — no Lane A block    |
-| **B-UX2** | UX-2     | Outline DnD reorder + keyboard navigation + Monaco reveal (basic)      | M      | Parallel to S7–S8; after B-UX1 recommended         |
+| **B-UX1** | UX-1     | Validation banner + baseline dirty/Save gating parity with JsonConfig  | S–M    | **Deferred** — after Lane A WB-28 S3 → WB-29       |
+| **B-UX2** | UX-2     | Outline DnD reorder + keyboard navigation + Monaco reveal (basic)      | M      | After B-UX1; parallel to S8–S9 when unblocked      |
 | **B-UX3** | UX-3     | Stack placement inspector, side-panel layout, asset insert auto-select | M      | Parallel to **B-S1 (B1)** schema parity            |
 | **B-UX4** | UX-4     | Preview hit-test selection ↔ outline sync                              | M      | **After B-S2 (B2)** mapping spec + headless tests  |
 | **B-UX5** | UX-5     | Canvas wire-in to lab (gesture commit)                                 | L      | **After WB-28 S2 + B3** — shares React layout work |
 
-**First session recommendation:** **B-UX1** — highest ROI, no mapping-layer dependency, closes gap vs `JsonConfigWorkbench`.
+**First session recommendation (when unblocked):** **B-UX1** — highest ROI, no mapping-layer dependency, closes gap vs `JsonConfigWorkbench`. **Blocked until Lane A WB-28 S3 → WB-29 milestones.**
 
 ### Track C — Deferred (explicitly parked)
 
@@ -163,7 +163,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 - Preview: unify on Strategy A (`renderJdwWithLayout`); registry handles leaf custom tags only.
 - Editing: keep `WidgetTreeLab`; `JsonConfigWorkbench` for non-widget JSON.
-- `WorkbenchDocument`: do not persist widget files; adapter required before removal (Lane C).
+- `WorkbenchDocument`: ultimate target is JDW render + event layer; deprecate absolute demo path after Lane A DoD / B2 mapping — do not persist widget files.
 
 ---
 
@@ -237,7 +237,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | ------- | ----------------------------------- | ------ | ----------------------------------- |
 | B-S1    | B1 schema parity + preview          | M      | Any time parallel to S7–S8          |
 | B-S2    | B2 mapping layer spec + tests       | M      | Parallel to S7–S9; no canvas UI yet |
-| B-UX1   | UX-1 validation banner + dirty      | S–M    | Parallel to S7; see Track B-UX      |
+| B-UX1   | UX-1 validation banner + dirty      | S–M    | Deferred until Lane A S3→WB-29      |
 | B-UX2   | UX-2 outline DnD + keyboard         | M      | After B-UX1 recommended             |
 | B-UX3   | UX-3 inspector + asset UX           | M      | Parallel to B-S1                    |
 | D-S1    | D0 inventory + D1 dead-path cleanup | S–M    | Parallel to S7–S8; no Lane A block  |
@@ -294,7 +294,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | **Generic vs workspace ResourceUri**    | Editor/explorer binding confusion                           | `WorkspaceResourceUri` for virtual workspace only                  |
 | **WB-29 needs WB-28 resource identity** | Explorer reveal/open blocked                                | Complete S2 before S9; S3 recommended before S9                    |
 | **Transaction persistence**             | No undo stack or disk adapter                               | In-memory virtual workspace for Lane A                             |
-| **Lane B canvas UX**                    | Touches shared React layout                                 | B1–B2 headless only until WB-28 S2 lands                           |
+| **Lane B canvas UX**                    | Touches shared React layout                                 | B1–B2 headless only; B3 after WB-28 S3 / Lane A priority           |
 
 ---
 
@@ -312,6 +312,9 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | 2026-06-16 | **WB-15 deferred**                                 | Save/discard/confirm routing policy not defined                                                                                                                                                            |
 | 2026-06-16 | **Editor-local dirty** for WB-28                   | Unblocks S2/S3 without WB-15 policy                                                                                                                                                                        |
 | 2026-06-16 | **No subtree / no jdw-react split**                | Git subtree and separate `@workbench-kit/jdw-react` package **excluded** from active plan; React JDW remains `packages/react/src/jdw`; headless stays `@workbench-kit/jdw`; Track D = in-repo cleanup only |
+| 2026-06-16 | **Lane A priority over B-UX**                      | WB-28 S3 → WB-29 before Track B-UX sessions; B-UX deferred until Lane A milestones                                                                                                                         |
+| 2026-06-16 | **D2 render: Strategy A (target)**                 | `layoutWidget` + `cssRenderBackend` single path; registry leaf-only — **target decision pending formal D2**; Strategy B not long-term                                                                      |
+| 2026-06-16 | **WorkbenchDocument deprecation direction**        | Ultimate goal: JDW render + event layer; remove `WorkbenchDocument` absolute demo parallel model over time after Lane A DoD / B2 mapping                                                                   |
 
 ---
 
@@ -402,9 +405,10 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ## Progress log
 
-| Date       | Note                                                                             |
-| ---------- | -------------------------------------------------------------------------------- |
-| 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7 |
-| 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                              |
-| 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow           |
-| 2026-06-16 | Subtree / jdw-react split excluded; Track D scoped to in-repo cleanup            |
+| Date       | Note                                                                              |
+| ---------- | --------------------------------------------------------------------------------- |
+| 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7  |
+| 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                               |
+| 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow            |
+| 2026-06-16 | Subtree / jdw-react split excluded; Track D scoped to in-repo cleanup             |
+| 2026-06-16 | Lane A priority, Strategy A render target, WorkbenchDocument deprecation recorded |
