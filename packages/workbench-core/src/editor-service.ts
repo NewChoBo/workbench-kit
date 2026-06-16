@@ -37,6 +37,11 @@ export interface OpenEditorOptions {
   readonly title?: string | undefined;
 }
 
+export interface SplitEditorOptions {
+  readonly groupId?: string | undefined;
+  readonly tabId?: string | undefined;
+}
+
 export interface EditorChangeEvent {
   readonly previousState: EditorState;
   readonly state: EditorState;
@@ -57,6 +62,7 @@ export class EditorService implements Disposable {
   private readonly editorHosts = new Map<string, EditorHost>();
   private readonly onDidChangeEditorsEmitter = new Emitter<EditorChangeEvent>();
   private state: EditorState;
+  private groupSequence = 0;
   private tabSequence = 0;
 
   readonly onDidChangeEditors = this.onDidChangeEditorsEmitter.event;
@@ -114,6 +120,42 @@ export class EditorService implements Disposable {
     return nextTab;
   }
 
+  splitEditor(options: SplitEditorOptions = {}): EditorTabState | undefined {
+    const sourceTabId = options.tabId ?? this.getActiveTab()?.id;
+    const sourceLocation = sourceTabId ? this.findTabLocation(sourceTabId) : undefined;
+    if (!sourceLocation) {
+      return undefined;
+    }
+
+    const sourceHost = this.editorHosts.get(sourceLocation.tab.id);
+    const targetGroupId = options.groupId ?? this.createEditorGroupId();
+    const targetGroup = this.state.groups.find((group) => group.id === targetGroupId);
+    const nextTab: EditorTabState = {
+      ...sourceLocation.tab,
+      id: createEditorTabId(++this.tabSequence),
+      pinned: true,
+      preview: false,
+    };
+    const nextTargetGroup: EditorGroupState = {
+      activeTabId: nextTab.id,
+      id: targetGroupId,
+      tabs: targetGroup ? [...targetGroup.tabs, nextTab] : [nextTab],
+    };
+    const nextGroups = targetGroup
+      ? replaceGroup(this.state.groups, nextTargetGroup)
+      : insertGroupAfter(this.state.groups, sourceLocation.group.id, nextTargetGroup);
+
+    this.setState({
+      activeGroupId: targetGroupId,
+      groups: nextGroups,
+    });
+
+    const targetHost = this.createEditorHost(nextTab.id);
+    copyEditorHostState(sourceHost, targetHost, nextTab.dirty);
+
+    return nextTab;
+  }
+
   closeEditor(tabId: string): void {
     const location = this.findTabLocation(tabId);
     if (!location) {
@@ -142,9 +184,7 @@ export class EditorService implements Disposable {
     this.setState({
       activeGroupId:
         this.state.activeGroupId === location.group.id && nextTabs.length === 0
-          ? location.group.id === DEFAULT_EDITOR_GROUP_ID
-            ? DEFAULT_EDITOR_GROUP_ID
-            : nextGroups[nextGroups.length - 1]?.id
+          ? (nextGroups[nextGroups.length - 1]?.id ?? DEFAULT_EDITOR_GROUP_ID)
           : this.state.activeGroupId,
       groups: nextGroups,
     });
@@ -283,6 +323,15 @@ export class EditorService implements Disposable {
     };
   }
 
+  private createEditorGroupId(): string {
+    let nextGroupId: string;
+    do {
+      nextGroupId = `workbench.editor.group.${++this.groupSequence}`;
+    } while (this.state.groups.some((group) => group.id === nextGroupId));
+
+    return nextGroupId;
+  }
+
   private findTabLocation(tabId: string):
     | {
         group: EditorGroupState;
@@ -383,6 +432,21 @@ function replaceGroup(
   return copy;
 }
 
+function insertGroupAfter(
+  groups: readonly EditorGroupState[],
+  anchorGroupId: string,
+  nextGroup: EditorGroupState,
+): EditorGroupState[] {
+  const anchorIndex = groups.findIndex((group) => group.id === anchorGroupId);
+  if (anchorIndex < 0) {
+    return [...groups, nextGroup];
+  }
+
+  const copy = [...groups];
+  copy.splice(anchorIndex + 1, 0, nextGroup);
+  return copy;
+}
+
 function replacePreviewTabIfNeeded(
   tabs: readonly EditorTabState[],
   nextTab: EditorTabState,
@@ -400,6 +464,29 @@ function replacePreviewTabIfNeeded(
   const copy = [...tabs];
   copy[previewTabIndex] = nextTab;
   return copy;
+}
+
+interface StatefulEditorHost extends EditorHost {
+  getContent?(): string;
+  setContent?(content: string): void;
+  setDirty?(dirty: boolean): void;
+}
+
+function copyEditorHostState(
+  sourceHost: EditorHost | undefined,
+  targetHost: EditorHost | undefined,
+  dirty: boolean,
+): void {
+  if (!targetHost) {
+    return;
+  }
+
+  const sourceContent = (sourceHost as StatefulEditorHost | undefined)?.getContent?.();
+  if (typeof sourceContent === 'string') {
+    (targetHost as StatefulEditorHost).setContent?.(sourceContent);
+  }
+
+  (targetHost as StatefulEditorHost).setDirty?.(dirty);
 }
 
 function isSameEditorState(left: EditorState, right: EditorState): boolean {
