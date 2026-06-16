@@ -275,7 +275,7 @@ export interface WidgetAssetManifestFields {
 
 export function formatWidgetAssetManifest(fields: WidgetAssetManifestFields): string {
   const payload = {
-    $schema: 'https://workbench-kit.dev/schemas/widget-asset-manifest.v1.json',
+    $schema: 'https://workbench-kit.dev/schemas/widget-asset-manifest.v1.jdw.schema.json',
     name: fields.id,
     version: '1.0.0',
     label: fields.label,

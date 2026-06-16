@@ -25,7 +25,7 @@ The workbench-kit JDW stack already implements a **self-owned, CSS-based render 
 ```mermaid
 flowchart TB
   subgraph Input
-    JSON["*.widget.json / JDW v7 string"]
+    JSON["*.jdw.json / JDW v7 string"]
     SS["Screen spec DSL (optional)"]
   end
 

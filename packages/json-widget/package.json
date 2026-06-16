@@ -13,7 +13,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./schemas/jdw-node.jdw.schema.json": "./schemas/jdw-node.jdw.schema.json",
     "./schemas/jdw-node.json": "./schemas/jdw-node.json",
+    "./schemas/widget-asset-manifest.v1.jdw.schema.json": "./schemas/widget-asset-manifest.v1.jdw.schema.json",
+    "./schemas/widget-document.v1.jdw.schema.json": "./schemas/widget-document.v1.jdw.schema.json",
     "./schemas/widget-document.v1.json": "./schemas/widget-document.v1.json"
   },
   "main": "./dist/index.js",

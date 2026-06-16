@@ -9,7 +9,12 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { JDW_DOCUMENT_FILE_EXTENSION, JDW_DOCUMENT_MIME } from '@workbench-kit/react/jdw/document';
+import {
+  JDW_DOCUMENT_FILE_EXTENSION,
+  JDW_DOCUMENT_MIME,
+  JDW_SCHEMA_DOCUMENT_FILE_EXTENSION,
+  JDW_SCHEMA_DOCUMENT_MIME,
+} from '@workbench-kit/react/jdw/document';
 import { EditorTabs, type EditorTab } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import {
@@ -385,6 +390,7 @@ function pathForResource(resourceUri: string): string {
 function mimeTypeForResource(resourceUri: string): string | undefined {
   const path = pathForResource(resourceUri).toLowerCase();
 
+  if (path.endsWith(JDW_SCHEMA_DOCUMENT_FILE_EXTENSION)) return JDW_SCHEMA_DOCUMENT_MIME;
   if (path.endsWith(JDW_DOCUMENT_FILE_EXTENSION)) return JDW_DOCUMENT_MIME;
   if (path.endsWith('.json')) return 'application/json';
   if (path.endsWith('.ts') || path.endsWith('.tsx')) return 'text/typescript';

@@ -16,7 +16,7 @@
       "required": ["child"],
       "properties": {
         "flex": { "type": "number", "minimum": 0 },
-        "child": { "$ref": "../jdw-node.json" }
+        "child": { "$ref": "../jdw-node.jdw.schema.json" }
       },
       "additionalProperties": true
     }

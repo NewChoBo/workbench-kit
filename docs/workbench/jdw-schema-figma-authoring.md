@@ -21,7 +21,7 @@
 ```mermaid
 flowchart TB
   subgraph persistence ["JDW document (save / load / render)"]
-    WD["*.widget.json — JDW v7 root node"]
+    WD["*.jdw.json — JDW v7 root node"]
     PARSE["parseJsonWidgetData → GenericWidget"]
     LAYOUT["layoutWidget → LayoutNodeResult rects"]
     RENDER["renderJdwWithLayout / registry builders"]

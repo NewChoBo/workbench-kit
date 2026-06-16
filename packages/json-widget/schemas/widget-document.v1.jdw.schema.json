@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://workbench-kit.dev/schemas/widget-document.v1.jdw.schema.json",
+  "title": "WidgetDocumentV1",
+  "description": "workbench-jdw-react-v1 widget document root node.",
+  "$ref": "./jdw-node.jdw.schema.json"
+}
