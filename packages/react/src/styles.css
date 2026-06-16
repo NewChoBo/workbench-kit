@@ -3508,6 +3508,14 @@
   color: var(--file-icon-image, #d678c8);
 }
 
+.workspace-file-icon[data-file-kind='jdw'] {
+  color: var(--file-icon-jdw, var(--color-accent));
+}
+
+.workspace-file-icon[data-file-kind='jdw-schema'] {
+  color: var(--file-icon-jdw-schema, #d2a8ff);
+}
+
 .workspace-file-icon[data-file-kind='javascript'] {
   color: var(--file-icon-javascript, #e7c349);
 }
@@ -3530,6 +3538,10 @@
 
 .workspace-file-icon[data-file-kind='pdf'] {
   color: var(--file-icon-pdf, #55b9ad);
+}
+
+.workspace-file-icon[data-file-kind='schema'] {
+  color: var(--file-icon-schema, #d2a8ff);
 }
 
 .workspace-file-icon[data-file-kind='sql'] {
