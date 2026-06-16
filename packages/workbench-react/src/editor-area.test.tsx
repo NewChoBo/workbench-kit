@@ -187,8 +187,12 @@ describe('EditorArea', () => {
     });
 
     await flushReactEffects();
+    await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
-    expect(container.querySelector('[role="toolbar"]')).not.toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons [role="toolbar"]')).not.toBeNull();
+    expect(
+      container.querySelector('.workbench-editor-area__text-editor > [role="toolbar"]'),
+    ).toBeNull();
     expect(container.textContent).toContain('Code (JSON)');
     expect(container.textContent).toContain('Form');
     expect(container.textContent).not.toContain('Preview');
@@ -255,11 +259,16 @@ describe('EditorArea', () => {
     });
 
     await flushReactEffects();
+    await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
     expect(container.textContent).toContain('Code (JSON)');
     expect(container.textContent).toContain('Form');
     expect(container.textContent).toContain('Preview');
     expect(container.textContent).not.toContain('Split');
+    expect(container.querySelector('.ui-editor-tabs__addons [role="toolbar"]')).not.toBeNull();
+    expect(
+      container.querySelector('.workbench-editor-area__text-editor > [role="toolbar"]'),
+    ).toBeNull();
     expect(
       container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
     ).toBe('json');
@@ -333,6 +342,7 @@ describe('EditorArea', () => {
     });
 
     await flushReactEffects();
+    await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
     expect(container.textContent).toContain('Code');
     expect(container.textContent).not.toContain('Code (JSON)');
@@ -340,6 +350,7 @@ describe('EditorArea', () => {
     expect(container.textContent).not.toContain('Form');
     expect(container.textContent).toContain('Preview for diagrams/sample.flow');
     expect(container.querySelector('[data-testid="custom-flow-preview"]')).not.toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons [role="toolbar"]')).not.toBeNull();
 
     await act(async () => {
       root.unmount();
@@ -403,6 +414,7 @@ describe('EditorArea', () => {
     });
 
     await flushReactEffects();
+    await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
     expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
