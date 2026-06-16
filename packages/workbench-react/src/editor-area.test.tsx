@@ -1,9 +1,28 @@
 /** @vitest-environment jsdom */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { act, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
+
+vi.mock('@monaco-editor/react', () => ({
+  default: ({
+    onChange,
+    value,
+  }: {
+    onChange?: ((value?: string) => void) | undefined;
+    value?: string | undefined;
+  }) => (
+    <textarea
+      data-testid="monaco-editor"
+      value={value ?? ''}
+      onChange={(event) => onChange?.(event.currentTarget.value)}
+    />
+  ),
+  loader: { config: () => undefined },
+}));
+
+vi.mock('monaco-editor', () => ({}));
 
 import { EditorArea } from './editor-area.js';
 import { WorkbenchProvider } from './provider.js';
@@ -94,13 +113,13 @@ describe('EditorArea', () => {
       );
     });
 
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await flushReactEffects();
+    await waitForSelector(container, '.workspace-editor__monaco');
 
     expect(container.textContent).toContain('app.ts');
     expect(container.querySelector('[role="tablist"]')).not.toBeNull();
-    expect(container.querySelector('.workbench-editor-area__textarea')).not.toBeNull();
+    expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
+    expect(container.querySelector('[data-testid="monaco-editor"]')).not.toBeNull();
 
     await act(async () => {
       root.unmount();
@@ -159,9 +178,7 @@ describe('EditorArea', () => {
       );
     });
 
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await flushReactEffects();
 
     expect(container.querySelector('[role="toolbar"]')).not.toBeNull();
     expect(container.textContent).toContain('Code (JSON)');
@@ -229,9 +246,7 @@ describe('EditorArea', () => {
       );
     });
 
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await flushReactEffects();
 
     expect(container.textContent).toContain('Code (JSON)');
     expect(container.textContent).toContain('Form');
@@ -299,12 +314,10 @@ describe('EditorArea', () => {
       );
     });
 
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
+    await flushReactEffects();
 
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
-    expect(container.querySelector('.workbench-editor-area__textarea')).not.toBeNull();
+    expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
     expect(container.textContent).toContain('Preview title');
 
@@ -319,7 +332,7 @@ describe('EditorArea', () => {
 
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
     expect(container.textContent).toContain('Preview title');
-    expect(container.querySelector('.workbench-editor-area__textarea')).toBeNull();
+    expect(container.querySelector('.workspace-editor__monaco')).toBeNull();
     expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
 
     const codeButton = Array.from(container.querySelectorAll('button')).find(
@@ -332,7 +345,7 @@ describe('EditorArea', () => {
     });
 
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
-    expect(container.querySelector('.workbench-editor-area__textarea')).not.toBeNull();
+    expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
 
     const formButton = Array.from(container.querySelectorAll('button')).find(
@@ -344,14 +357,15 @@ describe('EditorArea', () => {
       formButton?.click();
     });
 
-    const readonlyArgs = container.querySelector(
-      'textarea[aria-label="args"]',
-    ) as HTMLTextAreaElement | null;
+    const argsGroup = container.querySelector('fieldset[aria-label="args"]');
+    const argsText = container.querySelector(
+      'input[aria-label="args.text"]',
+    ) as HTMLInputElement | null;
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
-    expect(readonlyArgs).not.toBeNull();
-    expect(readonlyArgs?.readOnly).toBe(true);
-    expect(readonlyArgs?.value).toContain('Preview title');
+    expect(argsGroup).not.toBeNull();
+    expect(argsText).not.toBeNull();
+    expect(argsText?.value).toBe('Preview title');
 
     await act(async () => {
       root.unmount();
@@ -359,3 +373,21 @@ describe('EditorArea', () => {
     container.remove();
   });
 });
+
+async function flushReactEffects(): Promise<void> {
+  await act(async () => {
+    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await Promise.resolve();
+  });
+}
+
+async function waitForSelector(container: HTMLElement, selector: string): Promise<void> {
+  for (let index = 0; index < 10; index += 1) {
+    if (container.querySelector(selector)) {
+      return;
+    }
+
+    await flushReactEffects();
+  }
+}

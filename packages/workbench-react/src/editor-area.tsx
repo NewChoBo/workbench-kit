@@ -1,5 +1,7 @@
 import {
   isValidElement,
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -11,7 +13,11 @@ import { parseJsonWidgetData } from '@workbench-kit/react/jdw/parse';
 import { JdwPreview } from '@workbench-kit/react/jdw/preview';
 import { EditorTabs, type EditorTab } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
-import type { EditorHost, EditorTabState } from '@workbench-kit/workbench-core';
+import {
+  EDITOR_SAVE_COMMAND_ID,
+  type EditorHost,
+  type EditorTabState,
+} from '@workbench-kit/workbench-core';
 
 import './editor-area.css';
 
@@ -21,6 +27,12 @@ import {
   useEditorService,
   useEditorState,
 } from './use-editor.js';
+import { useWorkbench } from './provider.js';
+
+const WorkspaceEditor = lazy(async () => {
+  const module = await import('@workbench-kit/react/workbench/workspace/editor');
+  return { default: module.WorkspaceEditor };
+});
 
 export interface EditorAreaProps {
   emptyState?: ReactNode | undefined;
@@ -132,6 +144,7 @@ interface TextEditorRenderPayload {
 }
 
 type EditorViewMode = 'code' | 'form' | 'preview';
+type JsonPath = readonly (string | number)[];
 
 function TextEditorSurface({
   host,
@@ -145,8 +158,17 @@ function TextEditorSurface({
   tabId: string;
 }) {
   const editorService = useEditorService();
+  const { executeCommand, workspaceHostPort } = useWorkbench();
   const [content, setContent] = useState(initialContent);
   const [viewMode, setViewMode] = useState<EditorViewMode>('code');
+  const editorFile = useMemo(
+    () => ({
+      content,
+      mimeType: mimeTypeForResource(resourceUri),
+      path: pathForResource(resourceUri),
+    }),
+    [content, resourceUri],
+  );
   const formEligible = useMemo(
     () => isJsonFormEligible(resourceUri, content),
     [content, resourceUri],
@@ -182,28 +204,53 @@ function TextEditorSurface({
   );
 
   const handleFormFieldChange = useCallback(
-    (key: string, nextValue: string) => {
+    (path: JsonPath, nextValue: string) => {
       const parsed = parseJsonObject(content);
       if (!parsed) {
         return;
       }
 
-      const nextRecord = { ...parsed, [key]: coerceFormFieldValue(parsed[key], nextValue) };
+      const previousValue = getJsonPathValue(parsed, path);
+      const nextRecord = updateJsonPathValue(
+        parsed,
+        path,
+        coerceFormFieldValue(previousValue, nextValue),
+      );
       handleChange(JSON.stringify(nextRecord, null, 2));
     },
     [content, handleChange],
   );
 
+  const handleSave = useCallback(
+    (nextContent: string) => {
+      if (nextContent !== content) {
+        handleChange(nextContent);
+      }
+
+      void executeCommand(EDITOR_SAVE_COMMAND_ID);
+    },
+    [content, executeCommand, handleChange],
+  );
+
   const sourcePane = (
-    <textarea
-      aria-label={host.title ?? 'Text editor'}
-      className="workbench-editor-area__textarea"
-      onChange={(event) => {
-        handleChange(event.currentTarget.value);
-      }}
-      spellCheck={false}
-      value={content}
-    />
+    <div className="workbench-editor-area__source-pane">
+      <Suspense
+        fallback={
+          <div className="workbench-editor-area__editor-loading" role="status">
+            Loading editor...
+          </div>
+        }
+      >
+        <WorkspaceEditor
+          file={editorFile}
+          showFileBar={false}
+          showHeader={false}
+          value={content}
+          onChange={handleChange}
+          onSave={workspaceHostPort ? handleSave : undefined}
+        />
+      </Suspense>
+    </div>
   );
 
   const previewPane = (
@@ -315,7 +362,7 @@ function JsonObjectFormView({
   onFieldChange,
 }: {
   content: string;
-  onFieldChange: (key: string, value: string) => void;
+  onFieldChange: (path: JsonPath, value: string) => void;
 }) {
   const parsed = parseJsonObject(content);
 
@@ -347,29 +394,139 @@ function JsonObjectFormView({
       }}
     >
       {entries.map(([key, value]) => (
-        <label className="workbench-editor-area__form-field" key={key}>
-          <span className="workbench-editor-area__form-label">{key}</span>
-          {isEditableFormValue(value) ? (
-            <input
-              aria-label={key}
-              className="workbench-editor-area__form-input"
-              onChange={(event) => {
-                onFieldChange(key, event.currentTarget.value);
-              }}
-              type={typeof value === 'number' ? 'number' : 'text'}
-              value={formatFormFieldValue(value)}
-            />
-          ) : (
-            <textarea
-              aria-label={key}
-              className="workbench-editor-area__form-input workbench-editor-area__form-textarea"
-              readOnly
-              value={formatFormFieldValue(value)}
-            />
-          )}
-        </label>
+        <JsonValueFormField
+          key={key}
+          label={key}
+          path={[key]}
+          value={value}
+          onFieldChange={onFieldChange}
+        />
       ))}
     </form>
+  );
+}
+
+function JsonValueFormField({
+  label,
+  path,
+  value,
+  onFieldChange,
+}: {
+  label: string;
+  path: JsonPath;
+  value: unknown;
+  onFieldChange: (path: JsonPath, value: string) => void;
+}) {
+  if (Array.isArray(value)) {
+    return (
+      <JsonFormGroup label={label} meta={`array (${value.length})`} path={path}>
+        {value.length === 0 ? (
+          <div className="workbench-editor-area__form-empty">Empty array</div>
+        ) : (
+          value.map((item, index) => (
+            <JsonValueFormField
+              key={index}
+              label={`[${index}]`}
+              path={[...path, index]}
+              value={item}
+              onFieldChange={onFieldChange}
+            />
+          ))
+        )}
+      </JsonFormGroup>
+    );
+  }
+
+  if (isJsonRecord(value)) {
+    const entries = Object.entries(value);
+
+    return (
+      <JsonFormGroup label={label} meta={`object (${entries.length})`} path={path}>
+        {entries.length === 0 ? (
+          <div className="workbench-editor-area__form-empty">Empty object</div>
+        ) : (
+          entries.map(([key, childValue]) => (
+            <JsonValueFormField
+              key={key}
+              label={key}
+              path={[...path, key]}
+              value={childValue}
+              onFieldChange={onFieldChange}
+            />
+          ))
+        )}
+      </JsonFormGroup>
+    );
+  }
+
+  const fieldLabel = getJsonPathLabel(path);
+
+  if (typeof value === 'boolean') {
+    return (
+      <label className="workbench-editor-area__form-field">
+        <span className="workbench-editor-area__form-label">{label}</span>
+        <select
+          aria-label={fieldLabel}
+          className="workbench-editor-area__form-input"
+          value={String(value)}
+          onChange={(event) => {
+            onFieldChange(path, event.currentTarget.value);
+          }}
+        >
+          <option value="true">true</option>
+          <option value="false">false</option>
+        </select>
+      </label>
+    );
+  }
+
+  if (typeof value === 'string' || typeof value === 'number') {
+    return (
+      <label className="workbench-editor-area__form-field">
+        <span className="workbench-editor-area__form-label">{label}</span>
+        <input
+          aria-label={fieldLabel}
+          className="workbench-editor-area__form-input"
+          onChange={(event) => {
+            onFieldChange(path, event.currentTarget.value);
+          }}
+          step={typeof value === 'number' ? 'any' : undefined}
+          type={typeof value === 'number' ? 'number' : 'text'}
+          value={formatFormFieldValue(value)}
+        />
+      </label>
+    );
+  }
+
+  return (
+    <div className="workbench-editor-area__form-field">
+      <span className="workbench-editor-area__form-label">{label}</span>
+      <output aria-label={fieldLabel} className="workbench-editor-area__form-readonly">
+        {formatFormFieldValue(value)}
+      </output>
+    </div>
+  );
+}
+
+function JsonFormGroup({
+  children,
+  label,
+  meta,
+  path,
+}: {
+  children: ReactNode;
+  label: string;
+  meta: string;
+  path: JsonPath;
+}) {
+  return (
+    <fieldset aria-label={getJsonPathLabel(path)} className="workbench-editor-area__form-group">
+      <legend className="workbench-editor-area__form-group-header">
+        <span className="workbench-editor-area__form-label">{label}</span>
+        <span className="workbench-editor-area__form-badge">{meta}</span>
+      </legend>
+      <div className="workbench-editor-area__form-group-body">{children}</div>
+    </fieldset>
   );
 }
 
@@ -399,6 +556,10 @@ function parseJsonObject(content: string): Record<string, unknown> | null {
   }
 }
 
+function isJsonRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 function isJdwWidgetJson(content: string): boolean {
   const parsed = parseJsonWidgetData(content);
   return parsed.value !== null;
@@ -413,11 +574,7 @@ function formatFormFieldValue(value: unknown): string {
     return String(value);
   }
 
-  return JSON.stringify(value);
-}
-
-function isEditableFormValue(value: unknown): value is string | number | boolean {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+  return JSON.stringify(value) ?? String(value);
 }
 
 function coerceFormFieldValue(previousValue: unknown, nextValue: string): unknown {
@@ -437,6 +594,79 @@ function coerceFormFieldValue(previousValue: unknown, nextValue: string): unknow
   }
 
   return nextValue;
+}
+
+function getJsonPathValue(value: unknown, path: JsonPath): unknown {
+  let cursor = value;
+
+  for (const segment of path) {
+    if (Array.isArray(cursor) && typeof segment === 'number') {
+      cursor = cursor[segment];
+      continue;
+    }
+
+    if (isJsonRecord(cursor) && typeof segment === 'string') {
+      cursor = cursor[segment];
+      continue;
+    }
+
+    return undefined;
+  }
+
+  return cursor;
+}
+
+function updateJsonPathValue(value: unknown, path: JsonPath, nextValue: unknown): unknown {
+  if (path.length === 0) {
+    return nextValue;
+  }
+
+  const [head, ...tail] = path;
+
+  if (Array.isArray(value) && typeof head === 'number') {
+    const nextArray = [...value];
+    nextArray[head] = updateJsonPathValue(nextArray[head], tail, nextValue);
+    return nextArray;
+  }
+
+  if (isJsonRecord(value) && typeof head === 'string') {
+    return {
+      ...value,
+      [head]: updateJsonPathValue(value[head], tail, nextValue),
+    };
+  }
+
+  return value;
+}
+
+function getJsonPathLabel(path: JsonPath): string {
+  return path.reduce<string>((label, segment) => {
+    if (typeof segment === 'number') {
+      return `${label}[${segment}]`;
+    }
+
+    return label ? `${label}.${segment}` : segment;
+  }, '');
+}
+
+function pathForResource(resourceUri: string): string {
+  return resourceUri.startsWith('workspace://file/')
+    ? resourceUri.slice('workspace://file/'.length)
+    : resourceUri;
+}
+
+function mimeTypeForResource(resourceUri: string): string | undefined {
+  const path = pathForResource(resourceUri).toLowerCase();
+
+  if (path.endsWith('.json')) return 'application/json';
+  if (path.endsWith('.ts') || path.endsWith('.tsx')) return 'text/typescript';
+  if (path.endsWith('.js') || path.endsWith('.jsx')) return 'text/javascript';
+  if (path.endsWith('.css')) return 'text/css';
+  if (path.endsWith('.html')) return 'text/html';
+  if (path.endsWith('.md') || path.endsWith('.mdx')) return 'text/markdown';
+  if (path.endsWith('.yml') || path.endsWith('.yaml')) return 'text/yaml';
+
+  return undefined;
 }
 
 function toEditorTabModel(tab: EditorTabState): EditorTab {

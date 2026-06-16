@@ -161,6 +161,7 @@ export interface WorkspaceEditorProps {
   onEditorMount?: OnMount;
   onSave?: (content: string) => void;
   readOnly?: boolean;
+  showFileBar?: boolean;
   showHeader?: boolean;
   theme?: WorkspaceEditorTheme;
   value?: string;
@@ -173,6 +174,7 @@ export function WorkspaceEditor({
   onEditorMount,
   onSave,
   readOnly = !onChange,
+  showFileBar = true,
   showHeader = true,
   theme = 'dark',
   value = file.content,
@@ -205,13 +207,13 @@ export function WorkspaceEditor({
             {file.path}
           </span>
         </PanelHeader>
-      ) : (
+      ) : showFileBar ? (
         <div className="workspace-editor__file-bar" title={file.path}>
           <WorkspaceFileIcon mimeType={file.mimeType} path={file.path} />
           <span className="workspace-editor__file-path">{file.path}</span>
           <span className="workspace-editor__file-meta">{file.mimeType ?? language}</span>
         </div>
-      )}
+      ) : null}
       <PanelBody className="workbench-monaco-panel__body">
         <div className="workspace-editor__monaco">
           <Editor
