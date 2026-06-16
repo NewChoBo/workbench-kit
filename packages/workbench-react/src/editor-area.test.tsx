@@ -15,6 +15,17 @@ const testGlobal = globalThis as typeof globalThis & {
 
 testGlobal.IS_REACT_ACT_ENVIRONMENT = true;
 
+const WIDGET_JSON = JSON.stringify(
+  {
+    type: 'text',
+    args: {
+      text: 'Preview title',
+    },
+  },
+  null,
+  2,
+);
+
 describe('EditorArea', () => {
   it('renders empty state when no editors are open', () => {
     const markup = renderToStaticMarkup(
@@ -155,6 +166,168 @@ describe('EditorArea', () => {
     expect(container.querySelector('[role="toolbar"]')).not.toBeNull();
     expect(container.textContent).toContain('Source');
     expect(container.textContent).toContain('Form');
+    expect(container.textContent).not.toContain('Preview');
+    expect(container.textContent).not.toContain('Split');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('renders preview controls for JDW JSON workspace files', async () => {
+    function OpenJsonEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/widget.json') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/widget.json',
+            title: 'widget.json',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+          workspaceHostPort={{
+            applySave: () => ({ transactionId: 'test-save' }),
+            resolveResource: () => ({ content: WIDGET_JSON, path: 'widget.json' }),
+          }}
+        >
+          <OpenJsonEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(container.textContent).toContain('Source');
+    expect(container.textContent).toContain('Form');
+    expect(container.textContent).toContain('Preview');
+    expect(container.textContent).toContain('Split');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('renders JDW preview and split panes from the shared source content', async () => {
+    function OpenJsonEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/widget.json') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/widget.json',
+            title: 'widget.json',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+          workspaceHostPort={{
+            applySave: () => ({ transactionId: 'test-save' }),
+            resolveResource: () => ({ content: WIDGET_JSON, path: 'widget.json' }),
+          }}
+        >
+          <OpenJsonEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    const previewButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Preview',
+    );
+    expect(previewButton).toBeDefined();
+
+    await act(async () => {
+      previewButton?.click();
+    });
+
+    expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
+    expect(container.textContent).toContain('Preview title');
+
+    const splitButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Split',
+    );
+    expect(splitButton).toBeDefined();
+
+    await act(async () => {
+      splitButton?.click();
+    });
+
+    expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
+    expect(container.querySelector('.workbench-editor-area__textarea')).not.toBeNull();
+    expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
 
     await act(async () => {
       root.unmount();

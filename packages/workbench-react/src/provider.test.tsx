@@ -1,13 +1,13 @@
 /** @vitest-environment jsdom */
 
 import { describe, expect, it } from 'vitest';
-import { act } from 'react';
+import { act, StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { parseWorkbenchLayoutConfig } from '@workbench-kit/workbench-config';
 import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
 
-import { WorkbenchProvider, WorkbenchShell, useWorkbench } from './index.js';
+import { WorkbenchProvider, WorkbenchShell, useEditorService, useWorkbench } from './index.js';
 
 const testGlobal = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -111,6 +111,69 @@ describe('WorkbenchProvider', () => {
     container.remove();
 
     expect(events).toEqual(expect.arrayContaining(['hide', 'dispose']));
+  });
+
+  it('keeps startup editor resolvers available after StrictMode effect replay', async () => {
+    const errors: unknown[] = [];
+    const resolvedEditorIds: (string | undefined)[] = [];
+
+    function EditorResolverProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          if (cancelled) {
+            return;
+          }
+
+          try {
+            resolvedEditorIds.push(editorService.resolveEditorId('workspace://file/config.json'));
+          } catch (error) {
+            errors.push(error);
+          }
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return null;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            extensionsConfig={{
+              enabled: ['workbench-kit.builtin.editor'],
+              recommendations: [],
+            }}
+          >
+            <EditorResolverProbe />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(errors).toEqual([]);
+    expect(resolvedEditorIds).toContain('workbench-kit.builtin.editor.text');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
   });
 });
 

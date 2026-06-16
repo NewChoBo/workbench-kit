@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import {
   BUILTIN_WORKBENCH_EXTENSIONS,
   createEditorService,
@@ -37,6 +37,21 @@ export interface WorkbenchContextValue {
   workspaceHostPort?: WorkbenchWorkspaceHostPort | undefined;
 }
 
+interface WorkbenchProviderServices {
+  activateStartup(): void;
+  dispose(): void;
+  editorService: EditorService;
+  extensionRegistry: ExtensionRegistry;
+  layoutService: LayoutService;
+  missingExtensionIds: readonly string[];
+  workspaceHostPort?: WorkbenchWorkspaceHostPort | undefined;
+}
+
+interface DeferredProviderDispose {
+  readonly services: WorkbenchProviderServices;
+  readonly timeout: ReturnType<typeof setTimeout>;
+}
+
 const WorkbenchContext = createContext<WorkbenchContextValue | undefined>(undefined);
 
 export function WorkbenchProvider({
@@ -46,7 +61,8 @@ export function WorkbenchProvider({
   initialLayout,
   workspaceHostPort,
 }: WorkbenchProviderProps) {
-  const services = useMemo(() => {
+  const deferredDisposeRef = useRef<DeferredProviderDispose | undefined>(undefined);
+  const services = useMemo<WorkbenchProviderServices>(() => {
     const extensionRegistry = new ExtensionRegistry();
     const layoutService = new LayoutService(initialLayout);
     const editorService = createEditorService({
@@ -76,8 +92,13 @@ export function WorkbenchProvider({
           editorService,
         })
       : undefined;
+    let startupActivation: Promise<readonly { readonly extensionId: string }[]> | undefined;
 
     return {
+      activateStartup: () => {
+        startupActivation ??= extensionRegistry.activateStartup();
+        void startupActivation;
+      },
       dispose: () => {
         saveCommandDisposable?.dispose();
         hostDisposables?.dispose();
@@ -98,10 +119,23 @@ export function WorkbenchProvider({
   }, [availableExtensions, extensionsConfig, initialLayout, workspaceHostPort]);
 
   useEffect(() => {
-    void services.extensionRegistry.activateStartup();
+    const deferredDispose = deferredDisposeRef.current;
+    if (deferredDispose?.services === services) {
+      clearTimeout(deferredDispose.timeout);
+      deferredDisposeRef.current = undefined;
+    }
+
+    services.activateStartup();
 
     return () => {
-      services.dispose();
+      const timeout = setTimeout(() => {
+        if (deferredDisposeRef.current?.services === services) {
+          deferredDisposeRef.current = undefined;
+        }
+        services.dispose();
+      }, 0);
+
+      deferredDisposeRef.current = { services, timeout };
     };
   }, [services]);
 
