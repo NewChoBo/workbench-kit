@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { ActivityBar, type ActivityBarProps, type ActivityBarItem } from './ActivityBar';
 import { SplitView } from './SplitView';
 import { StatusBar, type StatusBarItemModel, type StatusBarSectionModel } from './StatusBar';
+import { DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT } from './shellState';
 
 export interface WorkbenchShellProps {
   activityBar: Omit<ActivityBarProps, 'items'> & {
@@ -46,7 +47,7 @@ export function WorkbenchShell({
       maxPrimarySizePercent={primarySidebar?.maxPrimarySizePercent}
       onPrimarySizePercentChange={primarySidebar?.onSizePercentChange}
       primary={primarySidebar.node}
-      primarySizePercent={primarySidebar.primarySizePercent}
+      primarySizePercent={primarySidebar.primarySizePercent ?? DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT}
       secondary={secondaryArea}
     />
   ) : (

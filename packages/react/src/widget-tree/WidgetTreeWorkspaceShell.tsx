@@ -45,7 +45,7 @@ export function WidgetTreeWorkspaceShell({
   initialTheme = 'dark',
 }: WidgetTreeWorkspaceShellProps = {}) {
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const [sidebarSizePercent, setSidebarSizePercent] = useState(24);
+  const [sidebarSizePercent, setSidebarSizePercent] = useState(20);
 
   const workspaceFiles = useMemo(() => withJdwWelcomeDocument(integratedShellWorkspaceFiles), []);
 
