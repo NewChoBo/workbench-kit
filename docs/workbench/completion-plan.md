@@ -274,8 +274,15 @@ pnpm validate:full
 | `EditorHostFactoryRegistry`                         | `workbench-core`                         | **Keep** until WB-28 wires React shell; trim only if WB-28 redesigns API |
 | `packages/react/src/workbench/demo/`                | Integrated Shell Storybook               | Keep as rich demo; sample host stays minimal                             |
 | Monaco skeleton in widget-tree / json-config        | `@workbench-kit/react`                   | Keep; not Lane A scope                                                   |
+| React JDW render layer                              | `packages/react/src/jdw/`                | **Keep in-repo** — no separate `jdw-react` package or git subtree split  |
 | Static capability map seed                          | `ExtensionRegistry` options              | Keep dual path until all extensions migrate to `registerProvider`        |
 | Generic `ResourceUri` in `@workbench-kit/contracts` | `packages/contracts/src/resource-uri.ts` | Keep; workspace scheme is separate (`workspace://file/...`)              |
+
+### Open — Track D (cleanup & compatibility removal)
+
+| Item                                                                                                      | Priority | Doc / timing                                                                                                   |
+| --------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| Track D: dual JDW render unify, `./jdw/config` alias, validation gating, legacy shim removal — see phases | P1–P8    | [session-work-plan.md](./session-work-plan.md) Track D; D0–D1 parallel S7–S8; D2 after B1; D3 after Lane A DoD |
 
 ### Doc hygiene still stale
 
@@ -367,3 +374,4 @@ WB-27 commit → WB-28 → WB-29 → WB-30 → WB-31 → Lane A DoD checklist
 | ---------- | ------------------------------------------------------------------------------------------------ |
 | 2026-06-16 | WB-27 committed (`813cbca`); WB-28 S1 foundation (EditorService, resolver registry, React hooks) |
 | 2026-06-16 | Initial completion plan authored; WB-27 noted as uncommitted                                     |
+| 2026-06-16 | Track D cross-ref added to §5 Cleanup & Debt Register                                            |

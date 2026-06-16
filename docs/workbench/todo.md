@@ -135,6 +135,8 @@ primitive rather than hard-code the downstream concept.
 
 **Master completion roadmap:** [completion-plan.md](./completion-plan.md) (Lane A phases, sessions, DoD).
 
+**Session work plan:** [session-work-plan.md](./session-work-plan.md) (S7–S12 immediate sessions, tracks, Korean 요약).
+
 **Active slice detail:** [next-slice-plan.md](./next-slice-plan.md) (2026-06-14).
 
 | Order | Slice       | Item                                                          | Mode                  |
