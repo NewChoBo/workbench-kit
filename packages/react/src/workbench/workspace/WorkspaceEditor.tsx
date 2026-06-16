@@ -8,6 +8,10 @@ import { extensionOfPath } from './path';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceFile } from './types';
 import { JDW_DOCUMENT_MIME } from '../../jdw/document';
+import {
+  configureWorkspaceEditorJsonDiagnostics,
+  monacoModelPathForWorkspaceFile,
+} from './workspaceJsonDiagnostics';
 
 loader.config({ monaco });
 
@@ -183,6 +187,7 @@ export function WorkspaceEditor({
 }: WorkspaceEditorProps) {
   const language = languageForFile(file.path, file.mimeType);
   const handleMount: OnMount = (editor, monacoInstance) => {
+    configureWorkspaceEditorJsonDiagnostics(monacoInstance, file);
     onEditorMount?.(editor, monacoInstance);
 
     if (!onSave) return;
@@ -243,7 +248,7 @@ export function WorkspaceEditor({
               tabSize: 2,
               wordWrap: 'on',
             }}
-            path={file.path}
+            path={monacoModelPathForWorkspaceFile(file.path)}
             theme={monacoThemeForWorkspaceTheme(theme)}
             value={value}
             onChange={(nextValue) => onChange?.(nextValue ?? '')}
