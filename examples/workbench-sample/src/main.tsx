@@ -11,8 +11,6 @@ import '@workbench-kit/react/styles.css';
 import { App } from './App.js';
 import './host.css';
 
-document.documentElement.dataset.theme = 'dark';
-
 const monacoEnvironmentGlobal = globalThis as typeof globalThis & {
   MonacoEnvironment?: {
     getWorker?: (_moduleId: string, label: string) => Worker;

@@ -12,6 +12,7 @@ import layoutJson from '../../../.workbench/layout.default.json';
 import workspaceJson from '../../../.workbench/workspace.json';
 
 export interface SampleWorkspaceInfo {
+  readonly fileCount: number;
   readonly name: string;
   readonly folderCount: number;
 }
@@ -34,11 +35,6 @@ export const initialLayout = (() => {
     },
   };
 })();
-
-export const workspaceInfo: SampleWorkspaceInfo = {
-  name: readWorkspaceName(workspaceJson),
-  folderCount: readWorkspaceFolderCount(workspaceJson),
-};
 
 export const initialWorkspace: VirtualWorkspaceInitialState = {
   expandedPaths: ['src', 'schemas', 'jdw'],
@@ -107,6 +103,12 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
     },
   ],
   folders: ['src', 'schemas', 'jdw'],
+};
+
+export const workspaceInfo: SampleWorkspaceInfo = {
+  fileCount: initialWorkspace.files?.length ?? 0,
+  folderCount: readWorkspaceFolderCount(workspaceJson),
+  name: readWorkspaceName(workspaceJson),
 };
 
 function formatSampleJson(value: unknown): string {

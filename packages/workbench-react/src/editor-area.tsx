@@ -26,6 +26,7 @@ import {
   type EditorTabDropPosition,
 } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
+import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/workspace/editor';
 import {
   codiconForFileKind,
   fileIconKindForPath,
@@ -75,10 +76,11 @@ type EditorTabDropSide = 'center' | 'left' | 'right';
 
 export interface EditorAreaProps {
   emptyState?: ReactNode | undefined;
+  theme?: WorkspaceEditorTheme | undefined;
   viewProviders?: readonly EditorDocumentViewProvider[] | undefined;
 }
 
-export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
+export function EditorArea({ emptyState, theme, viewProviders }: EditorAreaProps) {
   const editorState = useEditorState();
   const editorGroups = editorState.groups.filter((group) => group.tabs.length > 0);
   const draggedEditorTabRef = useRef<EditorTabDragPayload | null>(null);
@@ -125,6 +127,7 @@ export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
           groups={editorGroups}
           onEditorTabDragEnd={handleEditorTabDragEnd}
           onEditorTabDragStart={handleEditorTabDragStart}
+          theme={theme}
           viewProviders={viewProviders}
         />
       </div>
@@ -138,6 +141,7 @@ function EditorGroupSplit({
   groups,
   onEditorTabDragEnd,
   onEditorTabDragStart,
+  theme,
   viewProviders,
 }: {
   activeGroupId: string | undefined;
@@ -145,6 +149,7 @@ function EditorGroupSplit({
   groups: readonly EditorGroupState[];
   onEditorTabDragEnd: () => void;
   onEditorTabDragStart: (payload: EditorTabDragPayload, event: ReactDragEvent<HTMLElement>) => void;
+  theme: WorkspaceEditorTheme | undefined;
   viewProviders: readonly EditorDocumentViewProvider[] | undefined;
 }) {
   const [primaryGroup, ...secondaryGroups] = groups;
@@ -160,6 +165,7 @@ function EditorGroupSplit({
         group={primaryGroup}
         onEditorTabDragEnd={onEditorTabDragEnd}
         onEditorTabDragStart={onEditorTabDragStart}
+        theme={theme}
         viewProviders={viewProviders}
       />
     );
@@ -177,6 +183,7 @@ function EditorGroupSplit({
           group={primaryGroup}
           onEditorTabDragEnd={onEditorTabDragEnd}
           onEditorTabDragStart={onEditorTabDragStart}
+          theme={theme}
           viewProviders={viewProviders}
         />
       }
@@ -187,6 +194,7 @@ function EditorGroupSplit({
           groups={secondaryGroups}
           onEditorTabDragEnd={onEditorTabDragEnd}
           onEditorTabDragStart={onEditorTabDragStart}
+          theme={theme}
           viewProviders={viewProviders}
         />
       }
@@ -200,6 +208,7 @@ function EditorGroupPane({
   group,
   onEditorTabDragEnd,
   onEditorTabDragStart,
+  theme,
   viewProviders,
 }: {
   active: boolean;
@@ -207,6 +216,7 @@ function EditorGroupPane({
   group: EditorGroupState;
   onEditorTabDragEnd: () => void;
   onEditorTabDragStart: (payload: EditorTabDragPayload, event: ReactDragEvent<HTMLElement>) => void;
+  theme: WorkspaceEditorTheme | undefined;
   viewProviders: readonly EditorDocumentViewProvider[] | undefined;
 }) {
   const editorService = useEditorService();
@@ -600,6 +610,7 @@ function EditorGroupPane({
           activeTab={activeTab}
           modeToolbarHost={modeToolbarHost}
           onModeToolbarVisibleChange={handleModeToolbarVisibleChange}
+          theme={theme}
           viewProviders={viewProviders}
         />
       </div>
@@ -624,11 +635,13 @@ function EditorHostSurface({
   activeTab,
   modeToolbarHost,
   onModeToolbarVisibleChange,
+  theme,
   viewProviders,
 }: {
   activeTab: EditorTabState | undefined;
   modeToolbarHost: HTMLDivElement | null;
   onModeToolbarVisibleChange: (visible: boolean) => void;
+  theme: WorkspaceEditorTheme | undefined;
   viewProviders: readonly EditorDocumentViewProvider[] | undefined;
 }) {
   const editorService = useEditorService();
@@ -665,6 +678,7 @@ function EditorHostSurface({
         onModeToolbarVisibleChange={onModeToolbarVisibleChange}
         resourceUri={rendered.resourceUri}
         tabId={activeTab.id}
+        theme={theme}
         viewProviders={viewProviders}
       />
     );
@@ -706,6 +720,7 @@ function TextEditorSurface({
   onModeToolbarVisibleChange,
   resourceUri,
   tabId,
+  theme,
   viewProviders,
 }: {
   host: TextEditorHostLike;
@@ -715,6 +730,7 @@ function TextEditorSurface({
   onModeToolbarVisibleChange: (visible: boolean) => void;
   resourceUri: string;
   tabId: string;
+  theme: WorkspaceEditorTheme | undefined;
   viewProviders: readonly EditorDocumentViewProvider[] | undefined;
 }) {
   const editorService = useEditorService();
@@ -803,6 +819,7 @@ function TextEditorSurface({
           file={editorDocument}
           showFileBar={false}
           showHeader={false}
+          theme={theme}
           value={content}
           onChange={handleChange}
           onSave={workspaceHostPort ? handleSave : undefined}

@@ -23,7 +23,8 @@ pnpm workbench-sample
 ```
 
 Opens `http://127.0.0.1:5173` with activity bar, explorer sidebar, status bar, and a
-placeholder editor area.
+sample review surface that can open the current editor, JDW, schema, and settings-related
+workbench slices.
 
 ## Validate
 
@@ -39,12 +40,15 @@ pnpm validate
 | -------------------------------- | ----------------------------------------------- |
 | `.workbench/extensions.json`     | `WorkbenchProvider` `extensionsConfig`          |
 | `.workbench/layout.default.json` | Initial sidebar visibility and active container |
-| `.workbench/workspace.json`      | Display-only workspace metadata in editor area  |
+| `.workbench/workspace.json`      | Workspace metadata shown in the sample overview |
 
 ## Scope
 
-This sample intentionally stays small. For integrated workspace/chat/editor flows,
-use Storybook `Integrated Shell` (`@workbench-kit/react/workbench/demo`).
+This sample stays focused on the standalone workbench host. It surfaces editor tabs,
+workspace initialization, JDW code/form/preview behavior, schema documents, settings
+contributions, and light/dark theme switching in one screen. For integrated
+workspace/chat/editor flows, use Storybook `Integrated Shell`
+(`@workbench-kit/react/workbench/demo`).
 
 See [next-slice-plan.md](../../docs/workbench/next-slice-plan.md) for follow-up slices
 (WB-26 CapabilityRegistry, WB-25 host factories).

@@ -10,16 +10,19 @@ vi.mock('@monaco-editor/react', () => ({
     language,
     onChange,
     path,
+    theme,
     value,
   }: {
     language?: string | undefined;
     onChange?: ((value?: string) => void) | undefined;
     path?: string | undefined;
+    theme?: string | undefined;
     value?: string | undefined;
   }) => (
     <textarea
       data-language={language}
       data-path={path}
+      data-theme={theme}
       data-testid="monaco-editor"
       value={value ?? ''}
       onChange={(event) => onChange?.(event.currentTarget.value)}
@@ -114,7 +117,7 @@ describe('EditorArea', () => {
         };
       }, [editorService]);
 
-      return <EditorArea />;
+      return <EditorArea theme="light" />;
     }
 
     const container = document.createElement('div');
@@ -150,6 +153,9 @@ describe('EditorArea', () => {
     ).not.toBeNull();
     expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
     expect(container.querySelector('[data-testid="monaco-editor"]')).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-theme'),
+    ).toBe('newchobo-workbench-light');
 
     await act(async () => {
       root.unmount();
