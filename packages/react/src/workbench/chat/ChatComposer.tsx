@@ -98,7 +98,7 @@ export const ChatComposer = forwardRef<HTMLTextAreaElement, ChatComposerProps>(
           <textarea
             ref={textareaRef}
             {...props}
-            className={cx('composer__textarea', className)}
+            className={cx('composer__textarea', 'ui-workbench-scrollbar', className)}
             disabled={disabled}
             placeholder={placeholder}
             rows={1}

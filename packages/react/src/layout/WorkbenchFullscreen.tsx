@@ -229,7 +229,16 @@ export function WorkbenchFullscreenCarouselViewport({
   className,
   ...props
 }: WorkbenchFullscreenCarouselViewportProps) {
-  return <div className={cx('ui-workbench-fullscreen-carousel__viewport', className)} {...props} />;
+  return (
+    <div
+      className={cx(
+        'ui-workbench-fullscreen-carousel__viewport',
+        'ui-workbench-scrollbar',
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export interface WorkbenchFullscreenNavButtonProps extends Omit<

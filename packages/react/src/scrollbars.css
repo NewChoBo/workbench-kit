@@ -21,156 +21,49 @@
   scrollbar-gutter: stable;
 }
 
-.ui-workbench-scrollbar,
-.panel-body,
-.workbench-settings-content,
-.workbench-settings-sidebar,
-.ui-workbench-artifact-shell__code,
-.md-content pre code,
-.composer__textarea,
-.ui-list,
-.ui-workbench-panel-scroll,
-.ui-workbench-panel-surface,
-.ui-workbench-fullscreen-carousel__viewport,
-.workbench-delete-targets,
-.ui-workbench-structured-data-form__table-scroll,
-.ui-workbench-structured-data-schema-panel__table-scroll,
-.ui-workbench-structured-data-table-view__scroll {
+.ui-workbench-scrollbar {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   scrollbar-width: thin;
 }
 
-.panel-body,
-.workbench-settings-content {
-  scrollbar-gutter: stable;
-}
-
-.ui-workbench-scrollbar::-webkit-scrollbar,
-.panel-body::-webkit-scrollbar,
-.workbench-settings-content::-webkit-scrollbar,
-.workbench-settings-sidebar::-webkit-scrollbar,
-.ui-workbench-artifact-shell__code::-webkit-scrollbar,
-.md-content pre code::-webkit-scrollbar,
-.composer__textarea::-webkit-scrollbar,
-.ui-list::-webkit-scrollbar,
-.ui-workbench-panel-scroll::-webkit-scrollbar,
-.ui-workbench-panel-surface::-webkit-scrollbar,
-.ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar,
-.workbench-delete-targets::-webkit-scrollbar,
-.ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar,
-.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar {
+.ui-workbench-scrollbar::-webkit-scrollbar {
   width: var(--scrollbar-size);
   height: var(--scrollbar-size);
 }
 
-.ui-workbench-scrollbar::-webkit-scrollbar-button,
-.panel-body::-webkit-scrollbar-button,
-.workbench-settings-content::-webkit-scrollbar-button,
-.workbench-settings-sidebar::-webkit-scrollbar-button,
-.ui-workbench-artifact-shell__code::-webkit-scrollbar-button,
-.md-content pre code::-webkit-scrollbar-button,
-.composer__textarea::-webkit-scrollbar-button,
-.ui-list::-webkit-scrollbar-button,
-.ui-workbench-panel-scroll::-webkit-scrollbar-button,
-.ui-workbench-panel-surface::-webkit-scrollbar-button,
-.ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar-button,
-.workbench-delete-targets::-webkit-scrollbar-button,
-.ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar-button,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-button,
-.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar-button {
+.ui-workbench-scrollbar::-webkit-scrollbar-button {
   display: none;
 }
 
-.ui-workbench-scrollbar::-webkit-scrollbar-track,
-.panel-body::-webkit-scrollbar-track,
-.workbench-settings-content::-webkit-scrollbar-track,
-.workbench-settings-sidebar::-webkit-scrollbar-track,
-.ui-workbench-artifact-shell__code::-webkit-scrollbar-track,
-.md-content pre code::-webkit-scrollbar-track,
-.composer__textarea::-webkit-scrollbar-track,
-.ui-list::-webkit-scrollbar-track,
-.ui-workbench-panel-scroll::-webkit-scrollbar-track,
-.ui-workbench-panel-surface::-webkit-scrollbar-track,
-.ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar-track,
-.workbench-delete-targets::-webkit-scrollbar-track,
-.ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar-track,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-track,
-.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar-track {
+.ui-workbench-scrollbar::-webkit-scrollbar-track {
   background: var(--scrollbar-track);
 }
 
-.ui-workbench-scrollbar::-webkit-scrollbar-thumb,
-.panel-body::-webkit-scrollbar-thumb,
-.workbench-settings-content::-webkit-scrollbar-thumb,
-.workbench-settings-sidebar::-webkit-scrollbar-thumb,
-.ui-workbench-artifact-shell__code::-webkit-scrollbar-thumb,
-.md-content pre code::-webkit-scrollbar-thumb,
-.composer__textarea::-webkit-scrollbar-thumb,
-.ui-list::-webkit-scrollbar-thumb,
-.ui-workbench-panel-scroll::-webkit-scrollbar-thumb,
-.ui-workbench-panel-surface::-webkit-scrollbar-thumb,
-.ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar-thumb,
-.workbench-delete-targets::-webkit-scrollbar-thumb,
-.ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar-thumb,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-thumb,
-.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar-thumb {
+.ui-workbench-scrollbar::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border: var(--scrollbar-thumb-inset) solid transparent;
   border-radius: calc(var(--scrollbar-size) / 2);
   background-clip: content-box;
 }
 
-.ui-workbench-scrollbar::-webkit-scrollbar-thumb:hover,
-.panel-body::-webkit-scrollbar-thumb:hover,
-.workbench-settings-content::-webkit-scrollbar-thumb:hover,
-.workbench-settings-sidebar::-webkit-scrollbar-thumb:hover,
-.ui-workbench-artifact-shell__code::-webkit-scrollbar-thumb:hover,
-.md-content pre code::-webkit-scrollbar-thumb:hover,
-.composer__textarea::-webkit-scrollbar-thumb:hover,
-.ui-list::-webkit-scrollbar-thumb:hover,
-.ui-workbench-panel-scroll::-webkit-scrollbar-thumb:hover,
-.ui-workbench-panel-surface::-webkit-scrollbar-thumb:hover,
-.ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar-thumb:hover,
-.workbench-delete-targets::-webkit-scrollbar-thumb:hover,
-.ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar-thumb:hover,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-thumb:hover,
-.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar-thumb:hover {
+.ui-workbench-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
   background-clip: content-box;
 }
 
-.ui-workbench-scrollbar::-webkit-scrollbar-thumb:active,
-.panel-body::-webkit-scrollbar-thumb:active,
-.workbench-settings-content::-webkit-scrollbar-thumb:active,
-.workbench-settings-sidebar::-webkit-scrollbar-thumb:active,
-.ui-workbench-artifact-shell__code::-webkit-scrollbar-thumb:active,
-.md-content pre code::-webkit-scrollbar-thumb:active,
-.composer__textarea::-webkit-scrollbar-thumb:active,
-.ui-list::-webkit-scrollbar-thumb:active,
-.ui-workbench-panel-scroll::-webkit-scrollbar-thumb:active,
-.ui-workbench-panel-surface::-webkit-scrollbar-thumb:active,
-.ui-workbench-fullscreen-carousel__viewport::-webkit-scrollbar-thumb:active,
-.workbench-delete-targets::-webkit-scrollbar-thumb:active,
-.ui-workbench-structured-data-form__table-scroll::-webkit-scrollbar-thumb:active,
-.ui-workbench-structured-data-schema-panel__table-scroll::-webkit-scrollbar-thumb:active,
-.ui-workbench-structured-data-table-view__scroll::-webkit-scrollbar-thumb:active {
+.ui-workbench-scrollbar::-webkit-scrollbar-thumb:active {
   background: var(--scrollbar-thumb-active);
   background-clip: content-box;
 }
 
 .ui-workbench-scrollbar--hidden,
-.workbench-primary-side-bar .panel-body,
-.workspace-editor__tabs,
-.ui-editor-tabs__scroller {
+.workbench-primary-side-bar .panel-body {
   scrollbar-gutter: auto;
   scrollbar-width: none;
 }
 
 .ui-workbench-scrollbar--hidden::-webkit-scrollbar,
-.workbench-primary-side-bar .panel-body::-webkit-scrollbar,
-.workspace-editor__tabs::-webkit-scrollbar,
-.ui-editor-tabs__scroller::-webkit-scrollbar {
+.workbench-primary-side-bar .panel-body::-webkit-scrollbar {
   width: 0;
   height: 0;
 }

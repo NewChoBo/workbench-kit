@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
+import { ScrollArea } from '../primitives/ScrollArea';
 import { cx } from '../utils/cx';
 
 export type PanelProps = ComponentPropsWithRef<'div'>;
@@ -23,7 +24,13 @@ export function PanelHeader({ actions, children, className, ...props }: PanelHea
 export type PanelBodyProps = ComponentPropsWithRef<'div'>;
 
 export function PanelBody({ className, ...props }: PanelBodyProps) {
-  return <div className={cx('panel-body', 'ui-panel-body', className)} {...props} />;
+  return (
+    <ScrollArea
+      className={cx('panel-body', 'ui-panel-body', className)}
+      orientation="both"
+      {...props}
+    />
+  );
 }
 
 export type PanelFooterProps = ComponentPropsWithRef<'div'>;

@@ -178,7 +178,7 @@ export function WorkbenchSettingsModal({
             ? (renderCategory?.(selectedCategory) ?? selectedCategory.content ?? emptyContent)
             : emptyContent
         }
-        contentClassName="workbench-settings-content"
+        contentClassName="workbench-settings-content ui-workbench-scrollbar ui-scroll-area--stable-gutter"
         nav={
           <WorkbenchSettingsNav
             activeCategoryId={selectedCategoryId}
@@ -187,7 +187,7 @@ export function WorkbenchSettingsModal({
             onSelectCategory={handleSelectCategory}
           />
         }
-        navClassName="workbench-settings-sidebar"
+        navClassName="workbench-settings-sidebar ui-workbench-scrollbar"
         navProps={{ 'aria-label': 'Settings categories' }}
       />
     </Modal>

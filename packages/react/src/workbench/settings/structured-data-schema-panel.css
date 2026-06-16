@@ -255,7 +255,6 @@
 
 .ui-workbench-structured-data-schema-panel__table-scroll {
   min-width: 0;
-  overflow: auto;
   border: 1px solid var(--color-border);
   border-radius: 4px;
 }

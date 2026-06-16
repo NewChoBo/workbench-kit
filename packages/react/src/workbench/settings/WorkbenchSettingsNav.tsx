@@ -47,7 +47,7 @@ export function WorkbenchSettingsNav({
 
   return (
     <aside
-      className={cx('workbench-settings-sidebar', className)}
+      className={cx('workbench-settings-sidebar', 'ui-workbench-scrollbar', className)}
       aria-label={ariaLabel}
       {...props}
     >
