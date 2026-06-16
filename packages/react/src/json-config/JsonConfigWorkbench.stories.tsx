@@ -12,6 +12,7 @@ const meta = {
   title: 'JDW/Config/Workbench',
   component: JsonConfigWorkbench,
   parameters: {
+    fullHeightShell: '640px',
     layout: 'fullscreen',
   },
 } satisfies Meta;
@@ -96,7 +97,7 @@ function ConfigHarness({
   const [baseline, setBaseline] = useState(initialValue);
 
   return (
-    <div style={{ padding: 24, height: 640, background: 'var(--color-bg)' }}>
+    <div style={{ background: 'var(--color-bg)', height: '100%' }}>
       <JsonConfigWorkbench
         baselineValue={baseline}
         path="settings.json"
