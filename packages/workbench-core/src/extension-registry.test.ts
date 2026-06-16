@@ -157,6 +157,65 @@ describe('ExtensionRegistry', () => {
     expect(registry.views.getViewProvider('workbench-kit.builtin.explorer.tree')).toBeUndefined();
   });
 
+  it('shares concurrent extension activation for the same activation event', async () => {
+    const registry = new ExtensionRegistry();
+    let activateCalls = 0;
+    let resolveActivation: () => void = () => undefined;
+    const activationGate = new Promise<void>((resolve) => {
+      resolveActivation = resolve;
+    });
+
+    registry.registerExtension({
+      manifest: {
+        schemaVersion: 1,
+        id: 'workbench-kit.builtin.explorer',
+        name: 'builtin-explorer',
+        displayName: 'Explorer',
+        version: '0.0.0',
+        publisher: 'workbench-kit',
+        engines: {
+          workbench: '^0.0.0',
+          extensionApi: '^0.0.0',
+        },
+        activationEvents: ['onView:workbench-kit.builtin.explorer.tree'],
+        contributes: {
+          views: {
+            explorer: [
+              {
+                id: 'workbench-kit.builtin.explorer.tree',
+                name: 'Explorer',
+              } as never,
+            ],
+          },
+        },
+      },
+      module: {
+        activate: async (context) => {
+          activateCalls += 1;
+          await activationGate;
+          context.views.registerViewProvider({
+            viewId: 'workbench-kit.builtin.explorer.tree',
+            resolveViewHost: () => ({
+              dispose() {},
+              render: () => 'Explorer Tree',
+            }),
+          });
+        },
+      },
+    });
+
+    const firstActivation = registry.activateView('workbench-kit.builtin.explorer.tree');
+    const secondActivation = registry.activateView('workbench-kit.builtin.explorer.tree');
+
+    await Promise.resolve();
+    expect(activateCalls).toBe(1);
+
+    resolveActivation();
+    await expect(Promise.all([firstActivation, secondActivation])).resolves.toHaveLength(2);
+    expect(activateCalls).toBe(1);
+    expect(registry.views.getViewProvider('workbench-kit.builtin.explorer.tree')).toBeDefined();
+  });
+
   it('normalizes views, view containers, menus, activities, and configuration', () => {
     const registry = new ExtensionRegistry();
     registry.registerExtension({

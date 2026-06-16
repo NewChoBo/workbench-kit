@@ -108,7 +108,7 @@ describe('EditorArea', () => {
     container.remove();
   });
 
-  it('renders source/form toolbar for JSON workspace files', async () => {
+  it('renders code/form toolbar for JSON workspace files', async () => {
     function OpenJsonEditorProbe() {
       const editorService = useEditorService();
 
@@ -164,10 +164,9 @@ describe('EditorArea', () => {
     });
 
     expect(container.querySelector('[role="toolbar"]')).not.toBeNull();
-    expect(container.textContent).toContain('Source');
+    expect(container.textContent).toContain('Code (JSON)');
     expect(container.textContent).toContain('Form');
     expect(container.textContent).not.toContain('Preview');
-    expect(container.textContent).not.toContain('Split');
 
     await act(async () => {
       root.unmount();
@@ -234,10 +233,10 @@ describe('EditorArea', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    expect(container.textContent).toContain('Source');
+    expect(container.textContent).toContain('Code (JSON)');
     expect(container.textContent).toContain('Form');
     expect(container.textContent).toContain('Preview');
-    expect(container.textContent).toContain('Split');
+    expect(container.textContent).not.toContain('Split');
 
     await act(async () => {
       root.unmount();
@@ -245,7 +244,7 @@ describe('EditorArea', () => {
     container.remove();
   });
 
-  it('renders JDW preview and split panes from the shared source content', async () => {
+  it('renders JDW preview beside code and form panes from the shared source content', async () => {
     function OpenJsonEditorProbe() {
       const editorService = useEditorService();
 
@@ -304,6 +303,11 @@ describe('EditorArea', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
+    expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
+    expect(container.querySelector('.workbench-editor-area__textarea')).not.toBeNull();
+    expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
+    expect(container.textContent).toContain('Preview title');
+
     const previewButton = Array.from(container.querySelectorAll('button')).find(
       (button) => button.textContent === 'Preview',
     );
@@ -315,19 +319,39 @@ describe('EditorArea', () => {
 
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
     expect(container.textContent).toContain('Preview title');
+    expect(container.querySelector('.workbench-editor-area__textarea')).toBeNull();
+    expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
 
-    const splitButton = Array.from(container.querySelectorAll('button')).find(
-      (button) => button.textContent === 'Split',
+    const codeButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Code (JSON)',
     );
-    expect(splitButton).toBeDefined();
+    expect(codeButton).toBeDefined();
 
     await act(async () => {
-      splitButton?.click();
+      codeButton?.click();
     });
 
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
     expect(container.querySelector('.workbench-editor-area__textarea')).not.toBeNull();
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
+
+    const formButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Form',
+    );
+    expect(formButton).toBeDefined();
+
+    await act(async () => {
+      formButton?.click();
+    });
+
+    const readonlyArgs = container.querySelector(
+      'textarea[aria-label="args"]',
+    ) as HTMLTextAreaElement | null;
+    expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
+    expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
+    expect(readonlyArgs).not.toBeNull();
+    expect(readonlyArgs?.readOnly).toBe(true);
+    expect(readonlyArgs?.value).toContain('Preview title');
 
     await act(async () => {
       root.unmount();

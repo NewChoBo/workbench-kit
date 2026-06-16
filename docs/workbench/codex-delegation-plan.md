@@ -104,54 +104,54 @@ Each package is a **self-contained delegation unit**. Complete one package per C
 
 #### Goal
 
-Extend `EditorArea` with **Source | Form | Preview** view modes and optional **Split** layout (source beside preview) for JSON-capable files in the sample host — aligned with VS Code Markdown preview and `JsonConfigWorkbench` patterns.
+Extend `EditorArea` with **Code(JSON) | Form | Preview** view modes for JSON-capable files in the sample host. Code/Form modes reuse `SplitView` when a JDW preview is available; Preview focuses the read-only output.
 
 #### Files to touch
 
-| File                                                       | Action                                                |
-| ---------------------------------------------------------- | ----------------------------------------------------- |
-| `packages/workbench-react/src/editor-area.tsx`             | Extend `EditorViewMode`, toolbar, preview/split panes |
-| `packages/workbench-react/src/editor-area.css`             | Split layout, preview pane styles                     |
-| `packages/workbench-react/src/editor-area.test.tsx`        | Preview toolbar, JDW detection, split mode tests      |
-| `examples/workbench-sample/src/bootstrap` or `config.json` | Optional: widget JSON sample file for manual demo     |
+| File                                                       | Action                                                           |
+| ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| `packages/workbench-react/src/editor-area.tsx`             | Extend `EditorViewMode`, toolbar, preview-backed code/form panes |
+| `packages/workbench-react/src/editor-area.css`             | Side-by-side preview pane styles                                 |
+| `packages/workbench-react/src/editor-area.test.tsx`        | Preview toolbar, JDW detection, code/form preview layout tests   |
+| `examples/workbench-sample/src/bootstrap` or `config.json` | Optional: widget JSON sample file for manual demo                |
 
 #### Patterns to reuse (do not reinvent)
 
-| Pattern         | Path                                                                                                                                  |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| JDW auto-detect | `resolveJsonConfigPreviewKind` in `packages/react/src/json-config/JsonConfigWorkbench.tsx` — uses `parseJsonWidgetData`               |
-| Preview render  | `JdwPreview` from `@workbench-kit/react/jdw/preview`                                                                                  |
-| Split layout    | `SplitView` from `@workbench-kit/react/workbench/split-view`                                                                          |
-| Mode controls   | `WorkbenchArtifactModeControls` in `packages/react/src/workbench/ArtifactShell.tsx` (reference only; keep EditorArea toolbar simpler) |
-| View model doc  | [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md) §7.2                                                                                 |
+| Pattern         | Path                                                                                                                    |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| JDW auto-detect | `resolveJsonConfigPreviewKind` in `packages/react/src/json-config/JsonConfigWorkbench.tsx` — uses `parseJsonWidgetData` |
+| Preview render  | `JdwPreview` from `@workbench-kit/react/jdw/preview`                                                                    |
+| Split layout    | `SplitView` from `@workbench-kit/react/workbench/split-view`                                                            |
+| Mode controls   | `JsonConfigWorkbench` Code(JSON) / Form / Preview controls (reference only; keep EditorArea toolbar simpler)            |
+| View model doc  | [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md) §7.2                                                                   |
 
 #### Step-by-step checklist
 
-1. Extend `EditorViewMode` type: `'source' | 'form' | 'preview' | 'split'`.
+1. Extend `EditorViewMode` type: `'code' | 'form' | 'preview'`.
 2. Add `isJdwWidgetJson(content: string): boolean` helper using `parseJsonWidgetData` from `@workbench-kit/jdw` (or mirror `resolveJsonConfigPreviewKind` logic).
 3. Update `EditorViewModeToolbar`:
    - Show **Preview** button when `formEligible` (JSON) **and** `isJdwWidgetJson(content)`.
-   - Show **Split** button when Preview is available (or always for JSON — match `JsonConfigWorkbench` split semantics).
+   - Do not expose a separate **Split** mode; Code/Form render beside preview when preview is available.
 4. Render panes in `TextEditorSurface`:
-   - **source:** existing textarea (unchanged).
-   - **form:** existing `JsonObjectFormView` (unchanged shallow demo).
+   - **code:** existing textarea; if preview is available, wrap it as the primary pane of `SplitView`.
+   - **form:** existing `JsonObjectFormView`; if preview is available, wrap it as the primary pane of `SplitView`.
    - **preview:** `<JdwPreview json={content} />` inside preview container.
-   - **split:** `<SplitView primary={textarea} secondary={<JdwPreview ... />} />`.
 5. Ensure edits in source/form update preview live (shared `content` state).
-6. Reset view mode to `'source'` on `resourceUri` / `initialContent` change (existing effect).
-7. Add unit tests: Preview button visible for widget JSON; Preview hidden for non-JDW JSON; split renders two panes.
+6. Reset view mode to `'code'` on `resourceUri` / `initialContent` change.
+7. Add unit tests: Preview button visible for widget JSON; Preview hidden for non-JDW JSON; Code/Form render preview side-by-side when available.
 8. Run validate commands below.
 
 #### Acceptance criteria (testable)
 
-- [ ] Opening `workspace://file/config.json` (or widget JSON) shows **Source | Form | Preview** (and **Split** when JDW detected) in toolbar above editor body.
-- [ ] **Preview** renders `JdwPreview` for parseable JDW widget JSON.
-- [ ] **Split** shows source (textarea) and preview side-by-side via `SplitView`.
-- [ ] **Form** remains S8.5 shallow top-level key/value demo (no `WidgetTreeLab` embed).
-- [ ] Non-JDW `.json` shows Source | Form only (no Preview/Split).
-- [ ] `pnpm --filter @workbench-kit/workbench-react test` passes.
-- [ ] `pnpm validate` passes.
-- [ ] Manual: `pnpm workbench-sample` — open config.json, toggle Preview and Split.
+- [x] Opening `workspace://file/config.json` shows **Code(JSON) | Form** in toolbar above editor body.
+- [x] Opening JDW JSON shows **Code(JSON) | Form | Preview** in toolbar above editor body.
+- [x] **Preview** renders `JdwPreview` for parseable JDW widget JSON.
+- [x] **Code/Form** show editor/form and preview side-by-side via `SplitView` when preview is available.
+- [x] **Form** remains S8.5 shallow top-level key/value demo (no `WidgetTreeLab` embed).
+- [x] Non-JDW `.json` shows Code(JSON) | Form only (no Preview).
+- [x] `pnpm --filter @workbench-kit/workbench-react test` passes.
+- [x] `pnpm validate` passes.
+- [x] Manual/Playwright: `pnpm workbench-sample` — open config.json, toggle Code(JSON), Form, and Preview.
 
 #### Validate command
 
@@ -164,10 +164,10 @@ pnpm workbench-sample
 #### Suggested commit message
 
 ```text
-feat(workbench): add editor preview and split modes in EditorArea (S8.6)
+feat(workbench): align editor JSON view modes in EditorArea
 
-Extend sample host JSON editor with Source|Form|Preview|Split toolbar.
-Reuse JdwPreview and SplitView from @workbench-kit/react.
+Extend sample host JSON editor with Code(JSON)|Form|Preview toolbar.
+Reuse JdwPreview and SplitView from @workbench-kit/react for side-by-side preview.
 
 Validation: pnpm --filter @workbench-kit/workbench-react test && pnpm validate
 ```

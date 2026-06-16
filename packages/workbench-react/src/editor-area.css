@@ -133,6 +133,11 @@
   font-size: var(--font-size-sm, 0.875rem);
 }
 
+.workbench-editor-area__form-textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
 .workbench-editor-area__form-placeholder p {
   margin: 0 0 8px;
   color: var(--color-text-muted);

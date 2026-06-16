@@ -101,6 +101,7 @@ export class ExtensionRegistry implements Disposable {
   readonly views: ViewRegistry;
 
   private readonly activeExtensions = new Map<string, ActiveExtension>();
+  private readonly activatingExtensions = new Map<string, Promise<ActivatedExtension>>();
   private readonly extensions = new Map<string, RegisteredExtension>();
 
   constructor(options: ExtensionRegistryOptions = {}) {
@@ -237,6 +238,22 @@ export class ExtensionRegistry implements Disposable {
       };
     }
 
+    const pending = this.activatingExtensions.get(extensionId);
+    if (pending) {
+      return pending;
+    }
+
+    const activation = this.doActivateExtension(extensionId);
+    this.activatingExtensions.set(extensionId, activation);
+
+    try {
+      return await activation;
+    } finally {
+      this.activatingExtensions.delete(extensionId);
+    }
+  }
+
+  private async doActivateExtension(extensionId: string): Promise<ActivatedExtension> {
     const extension = this.extensions.get(extensionId);
     if (!extension) {
       throw new Error(`Extension "${extensionId}" is not registered.`);
@@ -247,22 +264,27 @@ export class ExtensionRegistry implements Disposable {
     }
 
     const subscriptions = new DisposableStore();
-    const context = this.createExtensionContext(extension.description, subscriptions);
-    const activationResult = await extension.description.module?.activate?.(context);
-    if (isDisposable(activationResult)) {
-      subscriptions.add(activationResult);
+    try {
+      const context = this.createExtensionContext(extension.description, subscriptions);
+      const activationResult = await extension.description.module?.activate?.(context);
+      if (isDisposable(activationResult)) {
+        subscriptions.add(activationResult);
+      }
+
+      this.activeExtensions.set(extensionId, {
+        deactivate: extension.description.module?.deactivate,
+        extensionId,
+        subscriptions,
+      });
+
+      return {
+        extensionId,
+        subscriptions,
+      };
+    } catch (error) {
+      subscriptions.dispose();
+      throw error;
     }
-
-    this.activeExtensions.set(extensionId, {
-      deactivate: extension.description.module?.deactivate,
-      extensionId,
-      subscriptions,
-    });
-
-    return {
-      extensionId,
-      subscriptions,
-    };
   }
 
   async deactivateExtension(extensionId: string): Promise<void> {
