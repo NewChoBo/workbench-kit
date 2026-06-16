@@ -182,13 +182,24 @@
   min-height: 0;
 }
 
+.workbench-editor-area__source-pane .workbench-monaco-panel {
+  --panel-bg: var(--vscode-editor-background, var(--color-bg));
+  background: var(--vscode-editor-background, var(--color-bg));
+}
+
 .workbench-editor-area__source-pane .workbench-monaco-panel,
 .workbench-editor-area__source-pane .workbench-monaco-panel__body,
 .workbench-editor-area__source-pane .workspace-editor__monaco {
+  box-sizing: border-box;
   flex: 1;
   min-width: 0;
   min-height: 0;
   height: 100%;
+}
+
+.workbench-editor-area__source-pane .workbench-monaco-panel__body {
+  padding: 0;
+  border: 0;
 }
 
 .workbench-editor-area__editor-loading {
