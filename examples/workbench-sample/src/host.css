@@ -14,6 +14,27 @@ body,
   padding: 24px;
 }
 
+.workbench-sample-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.workbench-sample-editor__action {
+  padding: 6px 12px;
+  border: 1px solid var(--vscode-button-border, var(--color-border));
+  border-radius: var(--radius-sm, 4px);
+  background: var(--vscode-button-secondaryBackground, var(--color-bg-elevated));
+  color: var(--vscode-button-secondaryForeground, var(--color-text));
+  cursor: pointer;
+  font: inherit;
+}
+
+.workbench-sample-editor__action:hover {
+  background: var(--vscode-button-secondaryHoverBackground, var(--color-bg-hover));
+}
+
 .workbench-sample-editor__card {
   max-width: 36rem;
   padding: 20px 24px;

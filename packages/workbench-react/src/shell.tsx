@@ -20,11 +20,12 @@ import type {
   ViewProvider,
 } from '@workbench-kit/workbench-core';
 
+import { EditorArea } from './editor-area.js';
 import { useWorkbench } from './provider.js';
 
 export interface WorkbenchShellProps {
   compactStatus?: boolean;
-  editorArea: ReactNode;
+  editorArea?: ReactNode;
   onStatusItemActivate?: (item: StatusBarItemModel) => void;
   primarySidebar?: ReactNode;
   rootClassName?: string;
@@ -41,6 +42,7 @@ export function WorkbenchShell({
   statusSections,
   theme,
 }: WorkbenchShellProps) {
+  const resolvedEditorArea = editorArea ?? <EditorArea />;
   const { extensionRegistry, layoutService, missingExtensionIds } = useWorkbench();
   const forceRender = useForceRender();
   const layout = layoutService.getState();
@@ -86,7 +88,7 @@ export function WorkbenchShell({
           primarySidebar ?? renderDefaultPrimarySidebar(extensionRegistry, activeViewContainerId),
       }}
       rootClassName={rootClassName}
-      secondaryArea={editorArea}
+      secondaryArea={resolvedEditorArea}
       statusSections={resolvedStatusSections}
       theme={theme}
     />

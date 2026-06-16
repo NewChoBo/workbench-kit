@@ -37,7 +37,7 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 | **Branch**          | `feature/theia-strengths-workbench`                                                          |
 | **Working tree**    | Clean (no uncommitted changes at plan time)                                                  |
 | **Last commits**    | `f1ab57e` JDW/Figma authoring docs · `5d31491` WB-28 S1 · `813cbca` WB-27 · `97640c2` WB-25  |
-| **Lane A progress** | ~60% (5/9 slices + WB-28 S1 partial)                                                         |
+| **Lane A progress** | ~65% (5/9 slices + WB-28 S1–S2)                                                              |
 | **Validate note**   | `pnpm validate:full` last known green on 2026-06-14 (pre-plan). Re-run after WB-28 S2 lands. |
 
 ---
@@ -57,7 +57,7 @@ WB-28 S2/S3 → WB-29 → WB-30 → WB-31 → Lane A DoD
 | WB-25     | **Done**    | Consume `EditorHostFactoryRegistry` in S2/S3    |
 | WB-26     | **Done**    | —                                               |
 | WB-27     | **Done**    | Consumed by WB-28 S3 save path                  |
-| WB-28     | **S1 done** | S2 tab chrome → S3 transaction save             |
+| WB-28     | **S2 done** | S3 transaction save                             |
 | WB-29     | Pending     | After WB-28 resource identity stable            |
 | WB-30     | Pending     | After WB-28 (editor settings consumer optional) |
 | WB-31     | Pending     | After WB-28/29 event streams                    |
@@ -260,17 +260,17 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | `WorkbenchProvider` wires service | Done   | `packages/workbench-react/src/provider.tsx`                                             |
 | Core remains React-free           | Done   | No React imports in `workbench-core`                                                    |
 
-### S2 — Remaining (tab UI + shell wiring)
+### S2 — Done (2026-06-16)
 
-| Deliverable                                  | Status  | Notes                                                       |
-| -------------------------------------------- | ------- | ----------------------------------------------------------- |
-| Editor tab strip UI component                | Missing | Reuse or extend `@workbench-kit/react` workbench shell tabs |
-| Dirty / preview / pinned visual affordances  | Missing | State exists in `EditorTabState`; no chrome yet             |
-| `WorkbenchShell` consumes `EditorService`    | Missing | `editorArea` still caller-supplied placeholder              |
-| `EditorHostFactoryRegistry.createEditorHost` | Partial | `useEditorHost` exists; not in default shell flow           |
-| Built-in editor contribution (text file)     | Missing | At least one resolver + host for `workspace://file/...`     |
-| Sample host open-file flow                   | Missing | `examples/workbench-sample` shows static card, not tabs     |
-| Storybook coverage for editor tabs           | Missing | Integrated Shell or new story                               |
+| Deliverable                                  | Status | Notes                                                                  |
+| -------------------------------------------- | ------ | ---------------------------------------------------------------------- |
+| Editor tab strip UI component                | Done   | `EditorArea` + `@workbench-kit/react` `EditorTabs`                     |
+| Dirty / preview / pinned visual affordances  | Done   | Tab chrome via `EditorTabState` + `EditorTabs`                         |
+| `WorkbenchShell` consumes `EditorService`    | Done   | Default `EditorArea`; optional `editorArea` override                   |
+| `EditorHostFactoryRegistry.createEditorHost` | Done   | `useEditorHost` + `EditorHostSurface` in default shell flow            |
+| Built-in editor contribution (text file)     | Done   | `extensions/builtin.editor` resolver + host for `workspace://file/...` |
+| Sample host open-file flow                   | Done   | `examples/workbench-sample` Open App.tsx / Preview README buttons      |
+| Storybook coverage for editor tabs           | Done   | `WorkbenchProvider.stories` uses default `EditorArea`                  |
 
 ### S3 — Remaining (save + transaction integration)
 
@@ -330,9 +330,9 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 - [x] S1 — SDK editor types
 - [x] S1 — `EditorService` + resolver registry (headless)
 - [x] S1 — React `useEditor*` hooks
-- [ ] S2 — Tab strip UI + dirty/preview/pin chrome
-- [ ] S2 — Shell wires `EditorHostFactoryRegistry`
-- [ ] S2 — Sample host opens a file in tabs
+- [x] S2 — Tab strip UI + dirty/preview/pin chrome
+- [x] S2 — Shell wires `EditorHostFactoryRegistry`
+- [x] S2 — Sample host opens a file in tabs
 - [ ] S3 — Save via `WorkspaceResourceTransaction`
 - [ ] S3 — Dirty clears after successful save
 
@@ -406,4 +406,5 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | ---------- | -------------------------------------------------------------------------------- |
 | 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7 |
 | 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                              |
+| 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow           |
 | 2026-06-16 | Subtree / jdw-react split excluded; Track D scoped to in-repo cleanup            |

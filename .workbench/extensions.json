@@ -6,6 +6,7 @@
   ],
   "enabled": [
     "workbench-kit.builtin.accounts",
+    "workbench-kit.builtin.editor",
     "workbench-kit.builtin.explorer",
     "workbench-kit.builtin.keybindings",
     "workbench-kit.builtin.settings",

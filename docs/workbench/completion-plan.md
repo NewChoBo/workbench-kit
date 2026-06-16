@@ -33,11 +33,11 @@ i18n, preview zoom/pan), or deferred kit items WB-15 / WB-20 / WB-22.
 
 ### Completion estimate
 
-| Scope                                        | Estimate                                              | Caveats                                                                               |
-| -------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| **Lane A (WB-23 → WB-31)**                   | **~60%** (5 of 9 slices landed; WB-28 S1 in progress) | WB-27 committed (`813cbca`); editor tab UI and transaction save paths remain          |
-| **Workbench Kit foundation (WB-01 → WB-22)** | **~90%**                                              | WB-15 deferred; WB-20 / WB-22 blocked on dirty policy                                 |
-| **End-to-end "product-ready workbench"**     | **~40%**                                              | Sample host is minimal; Integrated Shell in Storybook still carries richer demo flows |
+| Scope                                        | Estimate                                                             | Caveats                                                                               |
+| -------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Lane A (WB-23 → WB-31)**                   | **~60%** (5 of 9 slices landed; WB-28 S2 done; S3 save path remains) | WB-27 committed (`813cbca`); editor transaction save path remains                     |
+| **Workbench Kit foundation (WB-01 → WB-22)** | **~90%**                                                             | WB-15 deferred; WB-20 / WB-22 blocked on dirty policy                                 |
+| **End-to-end "product-ready workbench"**     | **~40%**                                                             | Sample host is minimal; Integrated Shell in Storybook still carries richer demo flows |
 
 Treat percentages as planning signals, not release metrics. The remaining Lane A
 work is **integration-heavy** (editor + explorer on commands + preference scopes),
@@ -83,7 +83,7 @@ Canonical direction docs: [theia-strengths-workplan.md](./theia-strengths-workpl
 | **WB-26** | Disposable `CapabilityRegistry`                  | **Done**             | `packages/workbench-core/src/capability-registry.ts`, `extension-registry.ts` (`capabilityRegistry`, extension `registerProvider`)                                    | `packages/workbench-core/src/capability-registry.test.ts`           |
 | **WB-25** | View/editor host factory registry                | **Done**             | `packages/workbench-core/src/host-factory-registry.ts`, `workbench-react` factory resolution; `EditorHostFactoryRegistry` **scaffold only**                           | `host-factory-registry.test.ts`                                     |
 | **WB-27** | Resource URI / snapshot / mutation / transaction | **Done**             | `packages/workspace/src/resource-uri.ts`, `resource-snapshot.ts`, `resource-mutation.ts`, `resource-transaction.ts`, `resource-transaction.test.ts`; commit `813cbca` | `pnpm --filter @workbench-kit/workspace typecheck`; workspace tests |
-| **WB-28** | Editor contribution and service model            | **In progress (S1)** | `EditorService`, `EditorResolverRegistry`, SDK editor types, React `useEditor*` hooks                                                                                 | `workbench-core` + `workbench-react` tests                          |
+| **WB-28** | Editor contribution and service model            | **In progress (S2)** | `EditorService`, `EditorArea` tab chrome, `builtin.editor` text resolver/host, sample open-file flow                                                                  | `workbench-core` + `workbench-react` tests; `pnpm validate`         |
 
 > **Commit note:** WB-27 landed in commit `813cbca`. Continue WB-28 S2 (React tab chrome) and S3 (save via transactions) on this branch.
 

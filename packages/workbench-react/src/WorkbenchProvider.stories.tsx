@@ -28,7 +28,7 @@ export const ProviderShell: Story = {
   render: () => (
     <WorkbenchProvider
       extensionsConfig={{
-        enabled: ['workbench-kit.builtin.explorer', 'workbench-kit.builtin.settings'],
+        enabled: ['workbench-kit.builtin.explorer', 'workbench-kit.builtin.editor'],
         recommendations: [],
       }}
       initialLayout={{
@@ -38,25 +38,7 @@ export const ProviderShell: Story = {
         },
       }}
     >
-      <WorkbenchShell
-        editorArea={
-          <main
-            style={{
-              display: 'grid',
-              height: '100%',
-              minHeight: 0,
-              placeItems: 'center',
-            }}
-          >
-            <section>
-              <h1 style={{ fontSize: 18, margin: 0 }}>Workbench React Shell</h1>
-              <p style={{ margin: '8px 0 0' }}>Editor area hosted by workbench-react.</p>
-            </section>
-          </main>
-        }
-        rootClassName="ide-root"
-        theme="dark"
-      />
+      <WorkbenchShell rootClassName="ide-root" theme="dark" />
     </WorkbenchProvider>
   ),
 };
