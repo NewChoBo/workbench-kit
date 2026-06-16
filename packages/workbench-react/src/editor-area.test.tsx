@@ -143,6 +143,82 @@ describe('EditorArea', () => {
     container.remove();
   });
 
+  it('splits the active editor into adjacent editor groups', async () => {
+    function OpenEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/src/app.ts') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/src/app.ts',
+            title: 'app.ts',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <OpenEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, 'button[aria-label="Split editor right"]');
+
+    const splitButton = container.querySelector(
+      'button[aria-label="Split editor right"]',
+    ) as HTMLButtonElement | null;
+
+    await act(async () => {
+      splitButton?.click();
+    });
+
+    await flushReactEffects();
+
+    expect(container.querySelector('.workbench-editor-area__group-split')).not.toBeNull();
+    expect(container.querySelectorAll('.workbench-editor-area__group-pane')).toHaveLength(2);
+    expect(container.querySelectorAll('[role="tablist"]')).toHaveLength(2);
+    expect(container.querySelectorAll('[data-testid="monaco-editor"]')).toHaveLength(2);
+    expect(container.querySelectorAll('[role="tab"] .codicon-symbol-class')).toHaveLength(2);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('renders code/form toolbar for JSON workspace files', async () => {
     function OpenJsonEditorProbe() {
       const editorService = useEditorService();

@@ -45,6 +45,7 @@ export {
   type EditorState,
   type EditorTabState,
   type OpenEditorOptions,
+  type SplitEditorOptions,
 } from './editor-service.js';
 export {
   EDITOR_SAVE_COMMAND_ID,

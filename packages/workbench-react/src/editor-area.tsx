@@ -24,18 +24,14 @@ import {
 } from '@workbench-kit/react/workbench/workspace/file-icon';
 import {
   EDITOR_SAVE_COMMAND_ID,
+  type EditorGroupState,
   type EditorHost,
   type EditorTabState,
 } from '@workbench-kit/workbench-core';
 
 import './editor-area.css';
 
-import {
-  useActiveEditorTab,
-  useEditorHost,
-  useEditorService,
-  useEditorState,
-} from './use-editor.js';
+import { useEditorHost, useEditorService, useEditorState } from './use-editor.js';
 import { useWorkbench } from './provider.js';
 import {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
@@ -54,26 +50,10 @@ export interface EditorAreaProps {
 }
 
 export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
-  const editorService = useEditorService();
   const editorState = useEditorState();
-  const activeTab = useActiveEditorTab();
-  const activeGroup =
-    editorState.groups.find((group) => group.id === editorState.activeGroupId) ??
-    editorState.groups[0];
-  const tabs = activeGroup?.tabs ?? [];
-  const activeTabId = activeGroup?.activeTabId ?? tabs[0]?.id ?? '';
-  const [modeToolbarHost, setModeToolbarHost] = useState<HTMLDivElement | null>(null);
-  const [modeToolbarVisible, setModeToolbarVisible] = useState(false);
+  const editorGroups = editorState.groups.filter((group) => group.tabs.length > 0);
 
-  const editorTabs = useMemo(() => tabs.map((tab) => toEditorTabModel(tab)), [tabs]);
-  const handleModeToolbarHost = useCallback((node: HTMLDivElement | null) => {
-    setModeToolbarHost(node);
-  }, []);
-  const handleModeToolbarVisibleChange = useCallback((visible: boolean) => {
-    setModeToolbarVisible(visible);
-  }, []);
-
-  if (tabs.length === 0) {
+  if (editorGroups.length === 0) {
     return (
       <main aria-label="Editor area" className="workbench-editor-area workbench-editor-area--empty">
         {emptyState ?? (
@@ -87,9 +67,109 @@ export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
 
   return (
     <main aria-label="Editor area" className="workbench-editor-area">
+      <div className="workbench-editor-area__content">
+        <EditorGroupSplit
+          activeGroupId={editorState.activeGroupId}
+          groups={editorGroups}
+          viewProviders={viewProviders}
+        />
+      </div>
+    </main>
+  );
+}
+
+function EditorGroupSplit({
+  activeGroupId,
+  groups,
+  viewProviders,
+}: {
+  activeGroupId: string | undefined;
+  groups: readonly EditorGroupState[];
+  viewProviders: readonly EditorDocumentViewProvider[] | undefined;
+}) {
+  const [primaryGroup, ...secondaryGroups] = groups;
+  if (!primaryGroup) {
+    return null;
+  }
+
+  if (secondaryGroups.length === 0) {
+    return (
+      <EditorGroupPane
+        active={primaryGroup.id === activeGroupId}
+        group={primaryGroup}
+        viewProviders={viewProviders}
+      />
+    );
+  }
+
+  return (
+    <SplitView
+      className="workbench-editor-area__group-split"
+      defaultPrimarySizePercent={100 / groups.length}
+      minPrimarySizePercent={20}
+      primary={
+        <EditorGroupPane
+          active={primaryGroup.id === activeGroupId}
+          group={primaryGroup}
+          viewProviders={viewProviders}
+        />
+      }
+      secondary={
+        <EditorGroupSplit
+          activeGroupId={activeGroupId}
+          groups={secondaryGroups}
+          viewProviders={viewProviders}
+        />
+      }
+    />
+  );
+}
+
+function EditorGroupPane({
+  active,
+  group,
+  viewProviders,
+}: {
+  active: boolean;
+  group: EditorGroupState;
+  viewProviders: readonly EditorDocumentViewProvider[] | undefined;
+}) {
+  const editorService = useEditorService();
+  const tabs = group.tabs;
+  const activeTabId = group.activeTabId ?? tabs[0]?.id ?? '';
+  const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
+  const [modeToolbarHost, setModeToolbarHost] = useState<HTMLDivElement | null>(null);
+  const [modeToolbarVisible, setModeToolbarVisible] = useState(false);
+  const editorTabs = useMemo(() => tabs.map((tab) => toEditorTabModel(tab)), [tabs]);
+
+  const handleModeToolbarHost = useCallback((node: HTMLDivElement | null) => {
+    setModeToolbarHost(node);
+  }, []);
+  const handleModeToolbarVisibleChange = useCallback((visible: boolean) => {
+    setModeToolbarVisible(visible);
+  }, []);
+  const handleSplitEditor = useCallback(() => {
+    if (!activeTab) {
+      return;
+    }
+
+    editorService.splitEditor({ tabId: activeTab.id });
+  }, [activeTab, editorService]);
+
+  return (
+    <section
+      aria-label={active ? 'Active editor group' : 'Editor group'}
+      className={[
+        'workbench-editor-area__group-pane',
+        active ? 'workbench-editor-area__group-pane--active' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      data-editor-group-id={group.id}
+    >
       <EditorTabs
         activeId={activeTabId}
-        aria-label="Editor tabs"
+        aria-label={active ? 'Active editor group tabs' : 'Editor group tabs'}
         onClose={(tabId) => {
           editorService.closeEditor(tabId);
         }}
@@ -97,16 +177,29 @@ export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
           editorService.setActiveEditor(tabId);
         }}
         addons={
-          modeToolbarVisible ? (
-            <div
-              ref={handleModeToolbarHost}
-              className="workbench-editor-area__mode-toolbar-outlet"
-            />
+          activeTab ? (
+            <div className="workbench-editor-area__group-actions">
+              {modeToolbarVisible ? (
+                <div
+                  ref={handleModeToolbarHost}
+                  className="workbench-editor-area__mode-toolbar-outlet"
+                />
+              ) : null}
+              <button
+                aria-label="Split editor right"
+                className="workbench-editor-area__group-action"
+                onClick={handleSplitEditor}
+                title="Split editor right"
+                type="button"
+              >
+                <i aria-hidden className="codicon codicon-split-horizontal" />
+              </button>
+            </div>
           ) : undefined
         }
         tabs={editorTabs}
       />
-      <div className="workbench-editor-area__content">
+      <div className="workbench-editor-area__group-body">
         <EditorHostSurface
           activeTab={activeTab}
           modeToolbarHost={modeToolbarHost}
@@ -114,7 +207,7 @@ export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
           viewProviders={viewProviders}
         />
       </div>
-    </main>
+    </section>
   );
 }
 

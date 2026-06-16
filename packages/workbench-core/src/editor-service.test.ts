@@ -132,4 +132,71 @@ describe('EditorService', () => {
       },
     ]);
   });
+
+  it('splits the active editor into a new group', () => {
+    const editorHostFactories = createEditorHostFactoryRegistry();
+    editorHostFactories.register({
+      id: 'stateful-text-editor-host',
+      create: ({ resourceUri }) => {
+        let content = `content for ${resourceUri}`;
+        let dirty = false;
+
+        return {
+          dispose() {},
+          getContent: () => content,
+          render: () => content,
+          setContent: (nextContent: string) => {
+            content = nextContent;
+          },
+          setDirty: (nextDirty: boolean) => {
+            dirty = nextDirty;
+          },
+          get dirty() {
+            return dirty;
+          },
+        };
+      },
+    });
+
+    const editorResolvers = createEditorResolverRegistry();
+    editorResolvers.register({
+      id: 'workspace-file',
+      resolve: () => 'workbench.editor.text',
+    });
+
+    const service = createEditorService({
+      editorHostFactories,
+      editorResolvers,
+    });
+
+    const opened = service.openEditor({
+      preview: true,
+      resourceUri: 'workspace://file/src/app.ts',
+      title: 'app.ts',
+    });
+    const sourceHost = service.createEditorHost(opened.id) as
+      | {
+          setContent(nextContent: string): void;
+          setDirty(nextDirty: boolean): void;
+        }
+      | undefined;
+    sourceHost?.setContent('unsaved split content');
+    sourceHost?.setDirty(true);
+    service.setDirty(opened.id, true);
+
+    const split = service.splitEditor();
+    const state = service.getState();
+
+    expect(split).toBeDefined();
+    expect(split?.id).not.toBe(opened.id);
+    expect(split?.resourceUri).toBe(opened.resourceUri);
+    expect(split?.preview).toBe(false);
+    expect(split?.pinned).toBe(true);
+    expect(split?.dirty).toBe(true);
+    expect(state.groups).toHaveLength(2);
+    expect(state.groups[0]?.tabs.map((tab) => tab.id)).toEqual([opened.id]);
+    expect(state.groups[1]?.tabs.map((tab) => tab.id)).toEqual([split?.id]);
+    expect(state.activeGroupId).toBe(state.groups[1]?.id);
+    expect(service.createEditorHost(split?.id ?? '')?.render()).toBe('unsaved split content');
+  });
 });
