@@ -131,6 +131,51 @@ describe('WorkbenchProvider', () => {
     expect(markup).toContain('extensions: 1');
   });
 
+  it('opens contributed settings in a modal overlay', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.settings'],
+            recommendations: [],
+          }}
+        >
+          <WorkbenchShell editorArea={<main>Editor Area</main>} />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    expect(
+      container.querySelector('[data-view-id="workbench-kit.builtin.settings.view"]'),
+    ).toBeNull();
+
+    const settingsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Settings"]',
+    );
+    expect(settingsButton).toBeDefined();
+
+    await act(async () => {
+      settingsButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('Settings');
+    expect(dialog?.textContent).toContain('workbench.settings.openOnStartup');
+    expect(dialog?.textContent).toContain('default: false');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('renders the built-in explorer from the virtual workspace and opens files', async () => {
     const workspaceHostPort = createWorkbenchWorkspaceHostPort();
     const initialState = {
