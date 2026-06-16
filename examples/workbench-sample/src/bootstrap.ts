@@ -51,6 +51,18 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
       ].join('\n'),
       path: 'README.md',
     },
+    {
+      content: JSON.stringify(
+        {
+          appName: 'workbench-sample',
+          theme: 'dark',
+          telemetry: false,
+        },
+        null,
+        2,
+      ),
+      path: 'config.json',
+    },
   ],
   folders: ['src'],
 };

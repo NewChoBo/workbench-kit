@@ -261,6 +261,20 @@ Edit → dirty + validation banner
 
 ---
 
+## 7.1 Workbench host editor view modes (Lane A)
+
+Lane A sample host (`workbench-react` `EditorArea`) adds a **Source / Form** toolbar **left above the editor body** (below tab strip) for JSON-capable text files (`.json` or parseable top-level object).
+
+| Layer                                               | Responsibility                                                                                                                          |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **EditorArea chrome**                               | Toolbar placement, per-tab local view mode state, generic JSON object form (demo)                                                       |
+| **Editor host** (`builtin.editor` `TextEditorHost`) | Buffer SSoT (`getContent` / `setContent`); no view-mode API yet                                                                         |
+| **Rich form surfaces**                              | `JsonConfigWorkbench` (schema form), `WidgetTreeLab` inspector — remain separate until dedicated JDW/widget editor hosts land in WB-29+ |
+
+Form view in the sample is intentionally shallow (top-level key/value fields). Widget/JDW authoring keeps `WidgetTreeLab` Design/Code modes per [session-work-plan.md](./session-work-plan.md) Track B-UX.
+
+---
+
 ## 8. Storybook Validation Stories to Add / Update
 
 | Story ID                               | Base             | Action                                      | Phase    |

@@ -96,4 +96,69 @@ describe('EditorArea', () => {
     });
     container.remove();
   });
+
+  it('renders source/form toolbar for JSON workspace files', async () => {
+    function OpenJsonEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/config.json') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/config.json',
+            title: 'config.json',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <OpenJsonEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(container.querySelector('[role="toolbar"]')).not.toBeNull();
+    expect(container.textContent).toContain('Source');
+    expect(container.textContent).toContain('Form');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
 });

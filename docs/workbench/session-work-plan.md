@@ -191,6 +191,17 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | **Validate**         | `pnpm --filter @workbench-kit/workspace test` · `pnpm --filter @workbench-kit/workbench-core typecheck` · `pnpm validate` · manual save flow in sample host                |
 | **Effort**           | **M**                                                                                                                                                                      |
 
+### S8.5 — Sample polish (optional, parallel to S9 prep)
+
+| Field                | Detail                                                                                                                                                                                                                                        |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Goal**             | IDE-like sample chrome without blocking WB-29: explorer sidebar visual polish in `workbench-sample`; editor **Source / Form** view toggle above text editor body for JSON files.                                                              |
+| **Packages / files** | `examples/workbench-sample/` (`host.css`, bootstrap `config.json`), `packages/workbench-react/src/editor-area.tsx` (view toolbar in `EditorArea` chrome, not tab strip)                                                                       |
+| **Acceptance**       | Explorer: improved sidebar spacing/icons only — **no** command-backed CRUD (WB-29). Editor: `.json` (or parseable object JSON) shows left-aligned **Source** / **Form** toolbar above editor content; Form edits round-trip to source string. |
+| **Validate**         | `pnpm --filter @workbench-kit/workbench-react test` · `pnpm validate` · manual `pnpm workbench-sample`                                                                                                                                        |
+| **Effort**           | **S**                                                                                                                                                                                                                                         |
+| **Timing**           | **Hybrid** — light chrome now; real explorer tree waits for WB-29                                                                                                                                                                             |
+
 ### S9 — WB-29: Command-backed built-in explorer
 
 | Field                | Detail                                                                                                                                                |
@@ -233,15 +244,16 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ### Optional parallel sessions (Track B, non-blocking)
 
-| Session | Goal                                | Effort | When                                |
-| ------- | ----------------------------------- | ------ | ----------------------------------- |
-| B-S1    | B1 schema parity + preview          | M      | Any time parallel to S7–S8          |
-| B-S2    | B2 mapping layer spec + tests       | M      | Parallel to S7–S9; no canvas UI yet |
-| B-UX1   | UX-1 validation banner + dirty      | S–M    | Deferred until Lane A S3→WB-29      |
-| B-UX2   | UX-2 outline DnD + keyboard         | M      | After B-UX1 recommended             |
-| B-UX3   | UX-3 inspector + asset UX           | M      | Parallel to B-S1                    |
-| D-S1    | D0 inventory + D1 dead-path cleanup | S–M    | Parallel to S7–S8; no Lane A block  |
-| D-S2    | D2 dual render unify (with B1)      | M      | After Track B B1                    |
+| Session  | Goal                                       | Effort | When                                    |
+| -------- | ------------------------------------------ | ------ | --------------------------------------- |
+| B-S1     | B1 schema parity + preview                 | M      | Any time parallel to S7–S8              |
+| B-S2     | B2 mapping layer spec + tests              | M      | Parallel to S7–S9; no canvas UI yet     |
+| B-UX1    | UX-1 validation banner + dirty             | S–M    | Deferred until Lane A S3→WB-29          |
+| B-UX2    | UX-2 outline DnD + keyboard                | M      | After B-UX1 recommended                 |
+| B-UX3    | UX-3 inspector + asset UX                  | M      | Parallel to B-S1                        |
+| D-S1     | D0 inventory + D1 dead-path cleanup        | S–M    | Parallel to S7–S8; no Lane A block      |
+| D-S2     | D2 dual render unify (with B1)             | M      | After Track B B1                        |
+| **S8.5** | Sample explorer chrome + editor view modes | S      | Parallel to S9 prep; sample-only polish |
 
 ---
 
@@ -300,21 +312,22 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ## 6. Decision Log
 
-| Date       | Decision                                           | Rationale                                                                                                                                                                                                  |
-| ---------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-06-14 | **Lane A primary** over Lane B/C                   | Runnable host + registry contracts before more schema/editor chrome                                                                                                                                        |
-| 2026-06-14 | **Theia + VS Code dual reference**                 | Theia: composition/registries; VS Code: shell UX and codicons                                                                                                                                              |
-| 2026-06-14 | **No Theia fork / no public Inversify DI**         | Registry + contribution + adapter model                                                                                                                                                                    |
-| 2026-06-14 | **Frontend-only sample host** (`workbench-sample`) | Fast validation; Integrated Shell remains rich Storybook demo                                                                                                                                              |
-| 2026-06-16 | **JDW v7 canonical** for widget persistence        | Single on-disk contract; no second widget format                                                                                                                                                           |
-| 2026-06-16 | **Figma authoring split**                          | Canvas/selection ephemeral; commits via JDW patch + normalize                                                                                                                                              |
-| 2026-06-16 | **Preview zoom/pan removed**                       | Explicit non-goal; deferred to Lane C                                                                                                                                                                      |
-| 2026-06-16 | **WB-15 deferred**                                 | Save/discard/confirm routing policy not defined                                                                                                                                                            |
-| 2026-06-16 | **Editor-local dirty** for WB-28                   | Unblocks S2/S3 without WB-15 policy                                                                                                                                                                        |
-| 2026-06-16 | **No subtree / no jdw-react split**                | Git subtree and separate `@workbench-kit/jdw-react` package **excluded** from active plan; React JDW remains `packages/react/src/jdw`; headless stays `@workbench-kit/jdw`; Track D = in-repo cleanup only |
-| 2026-06-16 | **Lane A priority over B-UX**                      | WB-28 S3 → WB-29 before Track B-UX sessions; B-UX deferred until Lane A milestones                                                                                                                         |
-| 2026-06-16 | **D2 render: Strategy A (target)**                 | `layoutWidget` + `cssRenderBackend` single path; registry leaf-only — **target decision pending formal D2**; Strategy B not long-term                                                                      |
-| 2026-06-16 | **WorkbenchDocument deprecation direction**        | Ultimate goal: JDW render + event layer; remove `WorkbenchDocument` absolute demo parallel model over time after Lane A DoD / B2 mapping                                                                   |
+| Date       | Decision                                           | Rationale                                                                                                                                                                                                               |
+| ---------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-14 | **Lane A primary** over Lane B/C                   | Runnable host + registry contracts before more schema/editor chrome                                                                                                                                                     |
+| 2026-06-14 | **Theia + VS Code dual reference**                 | Theia: composition/registries; VS Code: shell UX and codicons                                                                                                                                                           |
+| 2026-06-14 | **No Theia fork / no public Inversify DI**         | Registry + contribution + adapter model                                                                                                                                                                                 |
+| 2026-06-14 | **Frontend-only sample host** (`workbench-sample`) | Fast validation; Integrated Shell remains rich Storybook demo                                                                                                                                                           |
+| 2026-06-16 | **JDW v7 canonical** for widget persistence        | Single on-disk contract; no second widget format                                                                                                                                                                        |
+| 2026-06-16 | **Figma authoring split**                          | Canvas/selection ephemeral; commits via JDW patch + normalize                                                                                                                                                           |
+| 2026-06-16 | **Preview zoom/pan removed**                       | Explicit non-goal; deferred to Lane C                                                                                                                                                                                   |
+| 2026-06-16 | **WB-15 deferred**                                 | Save/discard/confirm routing policy not defined                                                                                                                                                                         |
+| 2026-06-16 | **Editor-local dirty** for WB-28                   | Unblocks S2/S3 without WB-15 policy                                                                                                                                                                                     |
+| 2026-06-16 | **No subtree / no jdw-react split**                | Git subtree and separate `@workbench-kit/jdw-react` package **excluded** from active plan; React JDW remains `packages/react/src/jdw`; headless stays `@workbench-kit/jdw`; Track D = in-repo cleanup only              |
+| 2026-06-16 | **Lane A priority over B-UX**                      | WB-28 S3 → WB-29 before Track B-UX sessions; B-UX deferred until Lane A milestones                                                                                                                                      |
+| 2026-06-16 | **D2 render: Strategy A (target)**                 | `layoutWidget` + `cssRenderBackend` single path; registry leaf-only — **target decision pending formal D2**; Strategy B not long-term                                                                                   |
+| 2026-06-16 | **WorkbenchDocument deprecation direction**        | Ultimate goal: JDW render + event layer; remove `WorkbenchDocument` absolute demo parallel model over time after Lane A DoD / B2 mapping                                                                                |
+| 2026-06-16 | **S8.5 editor view modes in EditorArea chrome**    | Source/Form toggle lives in `EditorArea` above editor body (not tab strip); builtin text host stays textarea-only; rich form surfaces remain `JsonConfigWorkbench` / widget-tree inspector until dedicated editor hosts |
 
 ---
 
@@ -405,10 +418,11 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ## Progress log
 
-| Date       | Note                                                                             |
-| ---------- | -------------------------------------------------------------------------------- |
-| 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7 |
-| 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                              |
-| 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow           |
-| 2026-06-16 | Subtree / jdw-react split excluded; Track D scoped to in-repo cleanup            |
-| 2026-06-16 | WB-28 S3: editor save via workspace transactions, sample host Ctrl+S             |
+| Date       | Note                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------ |
+| 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7                       |
+| 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                                                    |
+| 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow                                 |
+| 2026-06-16 | Subtree / jdw-react split excluded; Track D scoped to in-repo cleanup                                  |
+| 2026-06-16 | WB-28 S3: editor save via workspace transactions, sample host Ctrl+S                                   |
+| 2026-06-16 | S8.5: EditorArea Source/Form toolbar for JSON; sample `config.json`; explorer chrome deferred to WB-29 |
