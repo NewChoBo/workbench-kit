@@ -131,7 +131,7 @@ interface TextEditorRenderPayload {
   resourceUri: string;
 }
 
-type EditorViewMode = 'source' | 'form' | 'preview' | 'split';
+type EditorViewMode = 'code' | 'form' | 'preview';
 
 function TextEditorSurface({
   host,
@@ -146,7 +146,7 @@ function TextEditorSurface({
 }) {
   const editorService = useEditorService();
   const [content, setContent] = useState(initialContent);
-  const [viewMode, setViewMode] = useState<EditorViewMode>('source');
+  const [viewMode, setViewMode] = useState<EditorViewMode>('code');
   const formEligible = useMemo(
     () => isJsonFormEligible(resourceUri, content),
     [content, resourceUri],
@@ -158,16 +158,16 @@ function TextEditorSurface({
 
   useEffect(() => {
     setContent(initialContent);
-    setViewMode('source');
+    setViewMode('code');
   }, [initialContent, resourceUri]);
 
   useEffect(() => {
     if (viewMode === 'form' && !formEligible) {
-      setViewMode('source');
+      setViewMode('code');
     }
 
-    if ((viewMode === 'preview' || viewMode === 'split') && !previewEligible) {
-      setViewMode('source');
+    if (viewMode === 'preview' && !previewEligible) {
+      setViewMode('code');
     }
   }, [formEligible, previewEligible, viewMode]);
 
@@ -211,6 +211,30 @@ function TextEditorSurface({
       <JdwPreview className="workbench-editor-area__jdw-preview" json={content} />
     </section>
   );
+  const formPane = <JsonObjectFormView content={content} onFieldChange={handleFormFieldChange} />;
+  const splitWithPreview = (label: string, pane: ReactNode) => (
+    <SplitView
+      className="workbench-editor-area__split"
+      defaultPrimarySizePercent={50}
+      minPrimarySizePercent={25}
+      primary={
+        <section aria-label={label} className="workbench-editor-area__split-pane">
+          {pane}
+        </section>
+      }
+      secondary={previewPane}
+    />
+  );
+  const editorBody =
+    viewMode === 'preview' && previewEligible
+      ? previewPane
+      : viewMode === 'form' && formEligible
+        ? previewEligible
+          ? splitWithPreview('Form', formPane)
+          : formPane
+        : previewEligible
+          ? splitWithPreview('Code JSON', sourcePane)
+          : sourcePane;
 
   return (
     <section
@@ -225,27 +249,7 @@ function TextEditorSurface({
           onModeChange={setViewMode}
         />
       ) : null}
-      <div className="workbench-editor-area__text-editor-body">
-        {viewMode === 'form' && formEligible ? (
-          <JsonObjectFormView content={content} onFieldChange={handleFormFieldChange} />
-        ) : viewMode === 'preview' && previewEligible ? (
-          previewPane
-        ) : viewMode === 'split' && previewEligible ? (
-          <SplitView
-            className="workbench-editor-area__split"
-            defaultPrimarySizePercent={50}
-            minPrimarySizePercent={25}
-            primary={
-              <section aria-label="Source" className="workbench-editor-area__split-pane">
-                {sourcePane}
-              </section>
-            }
-            secondary={previewPane}
-          />
-        ) : (
-          sourcePane
-        )}
-      </div>
+      <div className="workbench-editor-area__text-editor-body">{editorBody}</div>
     </section>
   );
 }
@@ -266,15 +270,15 @@ function EditorViewModeToolbar({
       role="toolbar"
     >
       <button
-        aria-pressed={mode === 'source'}
+        aria-pressed={mode === 'code'}
         className="workbench-editor-area__view-button"
-        data-active={mode === 'source' ? 'true' : undefined}
+        data-active={mode === 'code' ? 'true' : undefined}
         onClick={() => {
-          onModeChange('source');
+          onModeChange('code');
         }}
         type="button"
       >
-        Source
+        Code (JSON)
       </button>
       <button
         aria-pressed={mode === 'form'}
@@ -299,17 +303,6 @@ function EditorViewModeToolbar({
             type="button"
           >
             Preview
-          </button>
-          <button
-            aria-pressed={mode === 'split'}
-            className="workbench-editor-area__view-button"
-            data-active={mode === 'split' ? 'true' : undefined}
-            onClick={() => {
-              onModeChange('split');
-            }}
-            type="button"
-          >
-            Split
           </button>
         </>
       ) : null}
@@ -356,14 +349,24 @@ function JsonObjectFormView({
       {entries.map(([key, value]) => (
         <label className="workbench-editor-area__form-field" key={key}>
           <span className="workbench-editor-area__form-label">{key}</span>
-          <input
-            className="workbench-editor-area__form-input"
-            onChange={(event) => {
-              onFieldChange(key, event.currentTarget.value);
-            }}
-            type={typeof value === 'number' ? 'number' : 'text'}
-            value={formatFormFieldValue(value)}
-          />
+          {isEditableFormValue(value) ? (
+            <input
+              aria-label={key}
+              className="workbench-editor-area__form-input"
+              onChange={(event) => {
+                onFieldChange(key, event.currentTarget.value);
+              }}
+              type={typeof value === 'number' ? 'number' : 'text'}
+              value={formatFormFieldValue(value)}
+            />
+          ) : (
+            <textarea
+              aria-label={key}
+              className="workbench-editor-area__form-input workbench-editor-area__form-textarea"
+              readOnly
+              value={formatFormFieldValue(value)}
+            />
+          )}
         </label>
       ))}
     </form>
@@ -411,6 +414,10 @@ function formatFormFieldValue(value: unknown): string {
   }
 
   return JSON.stringify(value);
+}
+
+function isEditableFormValue(value: unknown): value is string | number | boolean {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
 }
 
 function coerceFormFieldValue(previousValue: unknown, nextValue: string): unknown {

@@ -263,7 +263,7 @@ Edit → dirty + validation banner
 
 ## 7.1 Workbench host editor view modes (Lane A)
 
-Lane A sample host (`workbench-react` `EditorArea`) adds a **Source / Form** toolbar **left above the editor body** (below tab strip) for JSON-capable text files (`.json` or parseable top-level object).
+Lane A sample host (`workbench-react` `EditorArea`) adds a **Code(JSON) / Form / Preview** toolbar **left above the editor body** (below tab strip) for JSON-capable text files (`.json` or parseable top-level object). Code/Form stay editable and render a side-by-side preview when the current JSON is a JDW widget document; Preview focuses the read-only output.
 
 | Layer                                               | Responsibility                                                                                                                          |
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -277,17 +277,17 @@ Form view in the sample is intentionally shallow (top-level key/value fields). W
 
 ## 7.2 Editor view model — VS Code / devagent alignment
 
-**Target UX:** Per-editor toolbar **Source | Form | Preview** with optional **Split** (VS Code “Open Preview to the Side”).
+**Target UX:** Per-editor toolbar **Code(JSON) | Form | Preview**. Code/Form use VS Code-style side-by-side preview when preview output is available; Preview is the focused read-only output.
 
 **Architecture:**
 
 - `EditorContribution` declares supported `viewModes` and default.
-- `EditorHost` owns buffer SSoT; `EditorArea` owns per-tab view mode + split layout.
+- `EditorHost` owns buffer SSoT; `EditorArea` owns per-tab view mode + preview-backed split layout.
 - Pane renderers are pluggable (Monaco, `WorkbenchStructuredDataSchemaPanel`, `JdwPreview`).
 
 **Mapping:**
 
-| Extension / MIME  | Source          | Form                    | Preview                    |
+| Extension / MIME  | Code(JSON)      | Form                    | Preview                    |
 | ----------------- | --------------- | ----------------------- | -------------------------- |
 | `*.json` + schema | Monaco          | Schema form             | — or widget preview if JDW |
 | widget / JDW JSON | Monaco          | Widget tree + inspector | `JdwPreview`               |
@@ -296,10 +296,11 @@ Form view in the sample is intentionally shallow (top-level key/value fields). W
 
 **vs S8.5:** Shallow top-level JSON form in `EditorArea` is a sample only. Rich surfaces stay in `JsonConfigWorkbench` / `WidgetTreeLab` until dedicated hosts (WB-29+).
 
-**Reuse:** `SplitView`, `WorkbenchArtifactModeControls`, `JsonConfigWorkbench`, `JdwPreview`.  
+**Reuse:** `SplitView`, `JsonConfigWorkbench`, `JdwPreview`.
+
 **Do not duplicate:** `WorkbenchDocument` canvas authoring.
 
-**Slice:** S8.6 (Preview + split in sample host) before WB-29 explorer; full JDW host in WB-22/WB-29.
+**Slice:** S8.6 completed before WB-29 explorer; full JDW host remains in WB-22/WB-29.
 
 ---
 
