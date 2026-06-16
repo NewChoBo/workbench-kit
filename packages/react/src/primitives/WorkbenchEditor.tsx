@@ -118,17 +118,38 @@ export function EditorTabs({
               tabIndex={active ? 0 : -1}
               title={tab.title}
             >
-              {tab.icon ? <i aria-hidden className={cxCodicon(tab.icon)} /> : null}
+              {tab.icon ? (
+                <i aria-hidden className={cxCodicon(tab.icon, 'ui-editor-tabs__file-icon')} />
+              ) : null}
               <span className="ui-editor-tabs__label">{tab.label}</span>
-              {tab.preview ? <i aria-hidden className={cxCodicon('eye')} /> : null}
+              {tab.preview ? (
+                <i
+                  aria-hidden
+                  className={cxCodicon(
+                    'preview',
+                    'ui-editor-tabs__status-icon',
+                    'ui-editor-tabs__status-icon--preview',
+                  )}
+                />
+              ) : null}
               {tab.dirty ? (
                 <span aria-label="Unsaved changes" className="ui-editor-tabs__dirty">
                   &bull;
                 </span>
               ) : null}
-              {tab.pinned ? <i aria-hidden className={cxCodicon('pinned')} /> : null}
+              {tab.pinned ? (
+                <i
+                  aria-hidden
+                  className={cxCodicon(
+                    'pinned',
+                    'ui-editor-tabs__status-icon',
+                    'ui-editor-tabs__status-icon--pinned',
+                  )}
+                />
+              ) : null}
               {(tab.closable ?? true) && onClose ? (
                 <IconButton
+                  compact
                   className="ui-editor-tabs__close"
                   icon="codicon-close"
                   label="Close tab"
@@ -144,6 +165,7 @@ export function EditorTabs({
       </div>
       {onNewTab ? (
         <IconButton
+          compact
           className="ui-editor-tabs__new"
           icon="codicon-add"
           label="New tab"
