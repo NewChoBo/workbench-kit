@@ -4,6 +4,8 @@ export type {
   EditorHost,
   EditorHostCreateContext,
   EditorHostFactory,
+  EditorResolveContext,
+  EditorResolver,
   ViewHostCreateContext,
   ViewHostFactory,
 } from '@workbench-kit/workbench-extension-sdk';
@@ -22,6 +24,21 @@ export {
   toCapabilityMap,
   type CapabilityProvider,
 } from './capability-registry.js';
+export {
+  createEditorResolverRegistry,
+  EditorResolverRegistry,
+} from './editor-resolver-registry.js';
+export {
+  createEditorService,
+  DEFAULT_EDITOR_GROUP_ID,
+  EditorService,
+  type EditorChangeEvent,
+  type EditorGroupState,
+  type EditorServiceOptions,
+  type EditorState,
+  type EditorTabState,
+  type OpenEditorOptions,
+} from './editor-service.js';
 export {
   createDefaultViewHostFactory,
   createEditorHostFactoryRegistry,
@@ -51,10 +68,12 @@ export {
 export {
   ActivityRegistry,
   ConfigurationRegistry,
+  EditorRegistry,
   MenuRegistry,
   ViewRegistry,
   type WorkbenchActivityContribution,
   type WorkbenchConfigurationContribution,
+  type WorkbenchEditorContribution,
   type WorkbenchViewContainerContribution,
   type WorkbenchViewContribution,
 } from './registries.js';

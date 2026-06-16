@@ -22,6 +22,7 @@ import type {
 import {
   ActivityRegistry,
   ConfigurationRegistry,
+  EditorRegistry,
   MenuRegistry,
   ViewRegistry,
   type WorkbenchViewContainerContribution,
@@ -39,6 +40,10 @@ import {
   type EditorHostFactoryRegistry,
   type ViewHostFactoryRegistry,
 } from './host-factory-registry.js';
+import {
+  createEditorResolverRegistry,
+  type EditorResolverRegistry,
+} from './editor-resolver-registry.js';
 
 export interface WorkbenchExtensionModule {
   activate?: ActivateFunction;
@@ -58,6 +63,8 @@ export interface ExtensionRegistryOptions {
   commands?: CommandRegistry;
   configurations?: ConfigurationRegistry;
   editorHostFactories?: EditorHostFactoryRegistry;
+  editorResolvers?: EditorResolverRegistry;
+  editors?: EditorRegistry;
   keybindings?: KeybindingRegistry;
   menus?: MenuRegistry;
   viewHostFactories?: ViewHostFactoryRegistry;
@@ -86,6 +93,8 @@ export class ExtensionRegistry implements Disposable {
   readonly commands: CommandRegistry;
   readonly configurations: ConfigurationRegistry;
   readonly editorHostFactories: EditorHostFactoryRegistry;
+  readonly editorResolvers: EditorResolverRegistry;
+  readonly editors: EditorRegistry;
   readonly keybindings: KeybindingRegistry;
   readonly menus: MenuRegistry;
   readonly viewHostFactories: ViewHostFactoryRegistry;
@@ -112,6 +121,8 @@ export class ExtensionRegistry implements Disposable {
 
     this.viewHostFactories = options.viewHostFactories ?? createViewHostFactoryRegistry();
     this.editorHostFactories = options.editorHostFactories ?? createEditorHostFactoryRegistry();
+    this.editorResolvers = options.editorResolvers ?? createEditorResolverRegistry();
+    this.editors = options.editors ?? new EditorRegistry();
   }
 
   getActiveExtensions(): readonly ActivatedExtension[] {
@@ -283,8 +294,10 @@ export class ExtensionRegistry implements Disposable {
     this.keybindings.dispose();
     this.menus.dispose();
     this.views.dispose();
+    this.editors.dispose();
     this.viewHostFactories.dispose();
     this.editorHostFactories.dispose();
+    this.editorResolvers.dispose();
     this.capabilityRegistry.dispose();
   }
 
@@ -336,6 +349,9 @@ export class ExtensionRegistry implements Disposable {
       },
       editorHostFactories: {
         registerFactory: (factory) => subscriptions.add(this.editorHostFactories.register(factory)),
+      },
+      editorResolvers: {
+        registerResolver: (resolver) => subscriptions.add(this.editorResolvers.register(resolver)),
       },
       extensionId: description.manifest.id,
       extensionPath: description.extensionPath ?? '',
@@ -404,6 +420,15 @@ export class ExtensionRegistry implements Disposable {
       disposables.add(
         this.activities.registerActivity({
           ...activity,
+          extensionId: description.manifest.id,
+        }),
+      );
+    }
+
+    for (const editor of contributes.editors ?? []) {
+      disposables.add(
+        this.editors.registerEditor({
+          ...editor,
           extensionId: description.manifest.id,
         }),
       );

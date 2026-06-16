@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import {
   BUILTIN_WORKBENCH_EXTENSIONS,
+  createEditorService,
   ExtensionRegistry,
   LayoutService,
   resolveWorkbenchExtensions,
+  type EditorService,
   type WorkbenchExtensionDescription,
   type WorkbenchLayoutStateInput,
 } from '@workbench-kit/workbench-core';
@@ -18,6 +20,7 @@ export interface WorkbenchProviderProps {
 
 export interface WorkbenchContextValue {
   activateCommand(commandId: string): Promise<readonly { readonly extensionId: string }[]>;
+  editorService: EditorService;
   executeCommand(commandId: string, ...args: unknown[]): Promise<unknown>;
   extensionRegistry: ExtensionRegistry;
   layoutService: LayoutService;
@@ -35,6 +38,10 @@ export function WorkbenchProvider({
   const services = useMemo(() => {
     const extensionRegistry = new ExtensionRegistry();
     const layoutService = new LayoutService(initialLayout);
+    const editorService = createEditorService({
+      editorHostFactories: extensionRegistry.editorHostFactories,
+      editorResolvers: extensionRegistry.editorResolvers,
+    });
     const config =
       extensionsConfig ??
       ({
@@ -47,9 +54,11 @@ export function WorkbenchProvider({
     return {
       dispose: () => {
         extensionDisposables.dispose();
+        editorService.dispose();
         extensionRegistry.dispose();
         layoutService.dispose();
       },
+      editorService,
       extensionRegistry,
       layoutService,
       missingExtensionIds: resolution.missingExtensionIds,
@@ -67,6 +76,7 @@ export function WorkbenchProvider({
   const value = useMemo<WorkbenchContextValue>(
     () => ({
       activateCommand: (commandId) => services.extensionRegistry.activateCommand(commandId),
+      editorService: services.editorService,
       executeCommand: (commandId, ...args) =>
         services.extensionRegistry.executeCommand(commandId, ...args),
       extensionRegistry: services.extensionRegistry,
