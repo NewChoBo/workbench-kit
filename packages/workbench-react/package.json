@@ -15,7 +15,8 @@
     "@workbench-kit/platform": "workspace:*",
     "@workbench-kit/tokens": "workspace:*",
     "@workbench-kit/workbench-config": "workspace:*",
-    "@workbench-kit/workbench-core": "workspace:*"
+    "@workbench-kit/workbench-core": "workspace:*",
+    "@workbench-kit/workspace": "workspace:*"
   },
   "peerDependencies": {
     "react": "^19.0.0",

@@ -29,7 +29,11 @@ export type ExtensionCapabilities = {
   provides?: string[];
 };
 
-export { DEFAULT_EDITOR_HOST_FACTORY_ID, DEFAULT_VIEW_HOST_FACTORY_ID } from './contributions.js';
+export {
+  DEFAULT_EDITOR_HOST_FACTORY_ID,
+  DEFAULT_VIEW_HOST_FACTORY_ID,
+  WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
+} from './contributions.js';
 export type {
   ActivateFunction,
   ActivityContribution,
@@ -63,4 +67,5 @@ export type {
   ViewHostSize,
   ViewProvider,
   WorkbenchEditorSavePort,
+  WorkbenchEditorServiceCapability,
 } from './contributions.js';

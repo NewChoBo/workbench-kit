@@ -135,6 +135,9 @@ importers:
       '@workbench-kit/workbench-extension-sdk':
         specifier: workspace:*
         version: link:../../packages/workbench-extension-sdk
+      '@workbench-kit/workspace':
+        specifier: workspace:*
+        version: link:../../packages/workspace
 
   extensions/builtin.keybindings:
     dependencies:
@@ -319,6 +322,9 @@ importers:
       '@workbench-kit/workbench-core':
         specifier: workspace:*
         version: link:../workbench-core
+      '@workbench-kit/workspace':
+        specifier: workspace:*
+        version: link:../workspace
       react:
         specifier: ^19.0.0
         version: 19.2.7

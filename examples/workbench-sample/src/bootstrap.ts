@@ -32,6 +32,7 @@ export const workspaceInfo: SampleWorkspaceInfo = {
 };
 
 export const initialWorkspace: VirtualWorkspaceInitialState = {
+  expandedPaths: ['src'],
   files: [
     {
       content: [
