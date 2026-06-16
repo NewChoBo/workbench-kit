@@ -125,6 +125,7 @@ describe('EditorArea', () => {
 
     expect(container.textContent).toContain('app.ts');
     expect(container.querySelector('[role="tablist"]')).not.toBeNull();
+    expect(container.querySelector('[role="tab"] .codicon-symbol-class')).not.toBeNull();
     expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
     expect(container.querySelector('[data-testid="monaco-editor"]')).not.toBeNull();
 
@@ -262,6 +263,7 @@ describe('EditorArea', () => {
     expect(
       container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
     ).toBe('json');
+    expect(container.querySelector('[role="tab"] .codicon-layout')).not.toBeNull();
 
     await act(async () => {
       root.unmount();
