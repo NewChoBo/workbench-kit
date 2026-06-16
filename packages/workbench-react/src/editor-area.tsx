@@ -128,6 +128,8 @@ interface TextEditorRenderPayload {
   resourceUri: string;
 }
 
+type EditorViewMode = 'source' | 'form';
+
 function TextEditorSurface({
   host,
   initialContent,
@@ -141,9 +143,15 @@ function TextEditorSurface({
 }) {
   const editorService = useEditorService();
   const [content, setContent] = useState(initialContent);
+  const [viewMode, setViewMode] = useState<EditorViewMode>('source');
+  const formEligible = useMemo(
+    () => isJsonFormEligible(resourceUri, content),
+    [content, resourceUri],
+  );
 
   useEffect(() => {
     setContent(initialContent);
+    setViewMode('source');
   }, [initialContent, resourceUri]);
 
   const handleChange = useCallback(
@@ -156,23 +164,192 @@ function TextEditorSurface({
     [editorService, host, tabId],
   );
 
+  const handleFormFieldChange = useCallback(
+    (key: string, nextValue: string) => {
+      const parsed = parseJsonObject(content);
+      if (!parsed) {
+        return;
+      }
+
+      const nextRecord = { ...parsed, [key]: coerceFormFieldValue(parsed[key], nextValue) };
+      handleChange(JSON.stringify(nextRecord, null, 2));
+    },
+    [content, handleChange],
+  );
+
   return (
     <section
       aria-label={host.title ?? resourceUri}
       className="workbench-editor-area__text-editor"
       data-resource-uri={resourceUri}
     >
-      <textarea
-        aria-label={host.title ?? 'Text editor'}
-        className="workbench-editor-area__textarea"
-        onChange={(event) => {
-          handleChange(event.currentTarget.value);
-        }}
-        spellCheck={false}
-        value={content}
-      />
+      {formEligible ? <EditorViewModeToolbar mode={viewMode} onModeChange={setViewMode} /> : null}
+      <div className="workbench-editor-area__text-editor-body">
+        {viewMode === 'form' && formEligible ? (
+          <JsonObjectFormView content={content} onFieldChange={handleFormFieldChange} />
+        ) : (
+          <textarea
+            aria-label={host.title ?? 'Text editor'}
+            className="workbench-editor-area__textarea"
+            onChange={(event) => {
+              handleChange(event.currentTarget.value);
+            }}
+            spellCheck={false}
+            value={content}
+          />
+        )}
+      </div>
     </section>
   );
+}
+
+function EditorViewModeToolbar({
+  mode,
+  onModeChange,
+}: {
+  mode: EditorViewMode;
+  onModeChange: (mode: EditorViewMode) => void;
+}) {
+  return (
+    <div
+      aria-label="Editor view mode"
+      className="workbench-editor-area__view-toolbar"
+      role="toolbar"
+    >
+      <button
+        aria-pressed={mode === 'source'}
+        className="workbench-editor-area__view-button"
+        data-active={mode === 'source' ? 'true' : undefined}
+        onClick={() => {
+          onModeChange('source');
+        }}
+        type="button"
+      >
+        Source
+      </button>
+      <button
+        aria-pressed={mode === 'form'}
+        className="workbench-editor-area__view-button"
+        data-active={mode === 'form' ? 'true' : undefined}
+        onClick={() => {
+          onModeChange('form');
+        }}
+        type="button"
+      >
+        Form
+      </button>
+    </div>
+  );
+}
+
+function JsonObjectFormView({
+  content,
+  onFieldChange,
+}: {
+  content: string;
+  onFieldChange: (key: string, value: string) => void;
+}) {
+  const parsed = parseJsonObject(content);
+
+  if (!parsed) {
+    return (
+      <div className="workbench-editor-area__form-placeholder">
+        <p>Form view is unavailable while the document is not valid JSON.</p>
+        <p>Switch to Source to fix parse errors.</p>
+      </div>
+    );
+  }
+
+  const entries = Object.entries(parsed);
+
+  if (entries.length === 0) {
+    return (
+      <div className="workbench-editor-area__form-placeholder">
+        <p>Form view</p>
+        <p>This JSON object has no top-level fields yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      className="workbench-editor-area__form"
+      onSubmit={(event) => {
+        event.preventDefault();
+      }}
+    >
+      {entries.map(([key, value]) => (
+        <label className="workbench-editor-area__form-field" key={key}>
+          <span className="workbench-editor-area__form-label">{key}</span>
+          <input
+            className="workbench-editor-area__form-input"
+            onChange={(event) => {
+              onFieldChange(key, event.currentTarget.value);
+            }}
+            type={typeof value === 'number' ? 'number' : 'text'}
+            value={formatFormFieldValue(value)}
+          />
+        </label>
+      ))}
+    </form>
+  );
+}
+
+function isJsonFormEligible(resourceUri: string, content: string): boolean {
+  if (resourceUri.toLowerCase().endsWith('.json')) {
+    return true;
+  }
+
+  return parseJsonObject(content) !== null;
+}
+
+function parseJsonObject(content: string): Record<string, unknown> | null {
+  const trimmed = content.trim();
+  if (!trimmed) {
+    return {};
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      return null;
+    }
+
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function formatFormFieldValue(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  return JSON.stringify(value);
+}
+
+function coerceFormFieldValue(previousValue: unknown, nextValue: string): unknown {
+  if (typeof previousValue === 'number') {
+    const parsedNumber = Number(nextValue);
+    return Number.isNaN(parsedNumber) ? previousValue : parsedNumber;
+  }
+
+  if (typeof previousValue === 'boolean') {
+    if (nextValue === 'true') {
+      return true;
+    }
+
+    if (nextValue === 'false') {
+      return false;
+    }
+  }
+
+  return nextValue;
 }
 
 function toEditorTabModel(tab: EditorTabState): EditorTab {

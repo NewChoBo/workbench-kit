@@ -14,6 +14,7 @@ const workspaceHostPort = createWorkbenchWorkspaceHostPort({ initialState: initi
 
 const SAMPLE_APP_RESOURCE_URI = 'workspace://file/src/App.tsx';
 const SAMPLE_README_RESOURCE_URI = 'workspace://file/README.md';
+const SAMPLE_CONFIG_RESOURCE_URI = 'workspace://file/config.json';
 
 export function App() {
   return (
@@ -106,6 +107,19 @@ function SampleEditorEmptyState() {
           type="button"
         >
           Preview README.md
+        </button>
+        <button
+          className="workbench-sample-editor__action"
+          onClick={() => {
+            editorService.openEditor({
+              pinned: true,
+              resourceUri: SAMPLE_CONFIG_RESOURCE_URI,
+              title: 'config.json',
+            });
+          }}
+          type="button"
+        >
+          Open config.json
         </button>
       </div>
       <p className="workbench-sample-editor__hint">
