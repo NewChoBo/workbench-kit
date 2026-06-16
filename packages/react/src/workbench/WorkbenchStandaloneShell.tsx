@@ -5,7 +5,7 @@ import type { StatusBarItemModel, StatusBarSectionModel } from './StatusBar';
 import type { WorkbenchShellProps } from './WorkbenchShell';
 import { WorkbenchShell } from './WorkbenchShell';
 import type { WorkbenchShellCommandContext } from './commands';
-import { useWorkbenchShellState } from './shellState';
+import { DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT, useWorkbenchShellState } from './shellState';
 import type {
   WorkbenchActivityChangeEvent,
   WorkbenchActivityDescriptor,
@@ -146,7 +146,8 @@ export function WorkbenchStandaloneShell<
       (DEFAULT_ACTIVITY_ID as TActivityId),
     isPrimarySidebarVisible: initialState?.isPrimarySidebarVisible ?? true,
     isSettingsOpen: initialState?.isSettingsOpen ?? false,
-    primarySidebarSizePercent: initialState?.primarySidebarSizePercent ?? 24,
+    primarySidebarSizePercent:
+      initialState?.primarySidebarSizePercent ?? DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT,
     settingsCategoryId: initialState?.settingsCategoryId ?? '',
     settingsScopeId: initialState?.settingsScopeId ?? '',
     settingsSearchValue: initialState?.settingsSearchValue ?? '',

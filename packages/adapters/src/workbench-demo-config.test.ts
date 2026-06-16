@@ -21,6 +21,7 @@ describe('workbench demo config', () => {
       theme: 'light',
     });
     expect(state.activeActivityId).toBe('search');
+    expect(state.primarySidebarSizePercent).toBe(20);
     expect(state.theme).toBe('light');
     expect(state.settingsCategoryId).toBe('appearance');
   });

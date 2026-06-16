@@ -19,6 +19,7 @@ describe('WidgetTreeWorkspaceShell', () => {
     expect(markup).toContain('data-testid="jdw-workspace-shell"');
     expect(markup).toContain('aria-label="Activity bar"');
     expect(markup).toContain('aria-label="Explorer sidebar"');
+    expect(markup).toContain('--ui-workbench-split-primary-size:20%');
     expect(markup).toContain('class="workbench-editor-area jdw-workspace-shell__editor"');
     expect(markup).toContain('data-testid="widget-tree-lab-data-pane"');
     expect(markup).toContain('data-testid="widget-tree-lab-render-pane"');

@@ -69,6 +69,22 @@ describe('WorkbenchShell', () => {
     expect(markup).toContain('ui-workbench-status-bar');
   });
 
+  it('uses the shell sidebar default instead of the generic split default', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchShell
+        activityBar={{ items: [{ id: 'explorer', icon: 'E', label: 'Explorer' }] }}
+        primarySidebar={{
+          isVisible: true,
+          node: <aside>primary area</aside>,
+        }}
+        secondaryArea={<main>secondary area</main>}
+        statusSections={[]}
+      />,
+    );
+
+    expect(markup).toContain('--ui-workbench-split-primary-size:20%');
+  });
+
   it('renders status sections and items in deterministic order using order metadata', () => {
     const markup = renderToStaticMarkup(
       <WorkbenchShell
