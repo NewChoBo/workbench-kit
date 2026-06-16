@@ -126,6 +126,14 @@ describe('EditorArea', () => {
     expect(container.textContent).toContain('app.ts');
     expect(container.querySelector('[role="tablist"]')).not.toBeNull();
     expect(container.querySelector('[role="tab"] .codicon-symbol-class')).not.toBeNull();
+    expect(
+      container.querySelector('[role="tab"] .ui-editor-tabs__file-icon.codicon-symbol-class'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector(
+        '[aria-label="Close tab"].ui-editor-tabs__close.ui-icon-button--compact',
+      ),
+    ).not.toBeNull();
     expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
     expect(container.querySelector('[data-testid="monaco-editor"]')).not.toBeNull();
 
@@ -193,6 +201,8 @@ describe('EditorArea', () => {
     expect(
       container.querySelector('.workbench-editor-area__text-editor > [role="toolbar"]'),
     ).toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons .codicon-json')).not.toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons .codicon-symbol-field')).not.toBeNull();
     expect(container.textContent).toContain('Code (JSON)');
     expect(container.textContent).toContain('Form');
     expect(container.textContent).not.toContain('Preview');
@@ -269,6 +279,9 @@ describe('EditorArea', () => {
     expect(
       container.querySelector('.workbench-editor-area__text-editor > [role="toolbar"]'),
     ).toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons .codicon-json')).not.toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons .codicon-symbol-field')).not.toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons .codicon-preview')).not.toBeNull();
     expect(
       container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
     ).toBe('json');

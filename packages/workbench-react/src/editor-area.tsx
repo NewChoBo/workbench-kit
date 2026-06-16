@@ -399,7 +399,11 @@ function EditorViewModeToolbar({
         }}
         type="button"
       >
-        {codeLabel}
+        <i
+          aria-hidden
+          className={`codicon ${codeLabel === 'Code (JSON)' ? 'codicon-json' : 'codicon-code'}`}
+        />
+        <span>{codeLabel}</span>
       </button>
       {formEligible ? (
         <button
@@ -411,7 +415,8 @@ function EditorViewModeToolbar({
           }}
           type="button"
         >
-          Form
+          <i aria-hidden className="codicon codicon-symbol-field" />
+          <span>Form</span>
         </button>
       ) : null}
       {previewEligible ? (
@@ -425,7 +430,8 @@ function EditorViewModeToolbar({
             }}
             type="button"
           >
-            Preview
+            <i aria-hidden className="codicon codicon-preview" />
+            <span>Preview</span>
           </button>
         </>
       ) : null}
