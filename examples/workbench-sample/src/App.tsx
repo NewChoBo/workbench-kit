@@ -1,4 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Badge, Button, ScrollArea } from '@workbench-kit/react/primitives';
+import type { StatusBarSectionModel } from '@workbench-kit/react/workbench/shell';
+import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/workspace/editor';
 import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
 import {
   EditorArea,
@@ -13,6 +16,7 @@ import {
   initialWorkspace,
   SAMPLE_APP_PATH,
   SAMPLE_JDW_DOCUMENT_PATH,
+  SAMPLE_JDW_NODE_SCHEMA_PATH,
   SAMPLE_JDW_SCHEMA_PATH,
   SAMPLE_README_PATH,
   workspaceInfo,
@@ -21,7 +25,64 @@ import {
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 let sampleWorkspaceInitialized = false;
 
+type SampleTheme = WorkspaceEditorTheme;
+
+interface SampleOpenTarget {
+  readonly detail: string;
+  readonly icon: string;
+  readonly label: string;
+  readonly path: string;
+  readonly tags: readonly string[];
+}
+
+const SAMPLE_OPEN_TARGETS: readonly SampleOpenTarget[] = [
+  {
+    detail: 'Monaco editor, TypeScript icon, tab actions',
+    icon: 'codicon-symbol-class',
+    label: 'App.tsx',
+    path: SAMPLE_APP_PATH,
+    tags: ['code', 'tabs'],
+  },
+  {
+    detail: 'Markdown source and preview-ready document',
+    icon: 'codicon-markdown',
+    label: 'README.md',
+    path: SAMPLE_README_PATH,
+    tags: ['docs'],
+  },
+  {
+    detail: 'Code, form, preview split from one JSON source',
+    icon: 'codicon-layout',
+    label: 'workbench-sample.jdw.json',
+    path: SAMPLE_JDW_DOCUMENT_PATH,
+    tags: ['jdw', 'preview'],
+  },
+  {
+    detail: 'Schema file opens as JSON code/form without JDW preview',
+    icon: 'codicon-json',
+    label: 'widget-document schema',
+    path: SAMPLE_JDW_SCHEMA_PATH,
+    tags: ['schema'],
+  },
+  {
+    detail: 'Reusable JDW node schema imported from the package',
+    icon: 'codicon-symbol-structure',
+    label: 'jdw-node schema',
+    path: SAMPLE_JDW_NODE_SCHEMA_PATH,
+    tags: ['schema'],
+  },
+];
+
+const SAMPLE_REVIEW_PATHS = SAMPLE_OPEN_TARGETS.map((target) => target.path);
+
 export function App() {
+  const [theme, setTheme] = useState<SampleTheme>('dark');
+  const statusSections = useMemo(() => createSampleStatusSections(theme), [theme]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
   return (
     <WorkbenchProvider
       extensionsConfig={extensionsConfig}
@@ -31,13 +92,18 @@ export function App() {
       <WorkspaceInitCommand />
       <WorkbenchShell
         editorArea={
-          <>
+          <SampleEditorFrame theme={theme} onThemeChange={setTheme}>
             <EditorSaveShortcut />
-            <EditorArea emptyState={<SampleEditorEmptyState />} />
-          </>
+          </SampleEditorFrame>
         }
+        onStatusItemActivate={(item) => {
+          if (item.id === 'sample.theme') {
+            setTheme((current) => nextSampleTheme(current));
+          }
+        }}
         rootClassName="ide-root"
-        theme="dark"
+        statusSections={statusSections}
+        theme={theme}
       />
     </WorkbenchProvider>
   );
@@ -80,71 +146,242 @@ function EditorSaveShortcut() {
   return null;
 }
 
-function SampleEditorEmptyState() {
+function SampleEditorFrame({
+  children,
+  theme,
+  onThemeChange,
+}: {
+  children: ReactNode;
+  theme: SampleTheme;
+  onThemeChange: (theme: SampleTheme) => void;
+}) {
+  return (
+    <section className="workbench-sample-editor-frame" aria-label="Sample editor workspace">
+      <SampleWorkbenchToolbar theme={theme} onThemeChange={onThemeChange} />
+      {children}
+      <EditorArea
+        emptyState={<SampleEditorOverview theme={theme} onThemeChange={onThemeChange} />}
+        theme={theme}
+      />
+    </section>
+  );
+}
+
+function SampleWorkbenchToolbar({
+  theme,
+  onThemeChange,
+}: {
+  theme: SampleTheme;
+  onThemeChange: (theme: SampleTheme) => void;
+}) {
   const { executeCommand } = useWorkbench();
 
   return (
-    <section className="workbench-sample-editor__card">
-      <h1>Workbench Kit Sample Host</h1>
-      <p>
-        Frontend-only shell using <code>@workbench-kit/workbench-react</code> and bundled built-in
-        extensions.
-      </p>
-      <dl className="workbench-sample-editor__meta">
-        <div>
-          <dt>Workspace</dt>
-          <dd>{workspaceInfo.name}</dd>
-        </div>
-        <div>
-          <dt>Folders</dt>
-          <dd>{workspaceInfo.folderCount}</dd>
-        </div>
-        <div>
-          <dt>Extensions</dt>
-          <dd>{extensionsConfig.enabled.length} enabled</dd>
-        </div>
-      </dl>
-      <div className="workbench-sample-editor__actions">
-        <button
-          className="workbench-sample-editor__action"
-          onClick={() => {
-            void executeCommand('workspace.open', { path: SAMPLE_APP_PATH });
-          }}
-          type="button"
-        >
-          Open App.tsx
-        </button>
-        <button
-          className="workbench-sample-editor__action"
-          onClick={() => {
-            void executeCommand('workspace.open', { path: SAMPLE_README_PATH });
-          }}
-          type="button"
-        >
-          Preview README.md
-        </button>
-        <button
-          className="workbench-sample-editor__action"
-          onClick={() => {
-            void executeCommand('workspace.open', { path: SAMPLE_JDW_DOCUMENT_PATH });
-          }}
-          type="button"
-        >
-          Open workbench-sample.jdw.json
-        </button>
-        <button
-          className="workbench-sample-editor__action"
-          onClick={() => {
-            void executeCommand('workspace.open', { path: SAMPLE_JDW_SCHEMA_PATH });
-          }}
-          type="button"
-        >
-          Open JDW schema
-        </button>
+    <header className="workbench-sample-toolbar">
+      <div className="workbench-sample-toolbar__title">
+        <i aria-hidden className="codicon codicon-layout" />
+        <span>Workbench Sample</span>
+        <Badge variant="muted">{workspaceInfo.fileCount} files</Badge>
       </div>
-      <p className="workbench-sample-editor__hint">
-        Select <strong>Explorer</strong> in the activity bar to open the built-in explorer view.
-      </p>
-    </section>
+      <div className="workbench-sample-toolbar__actions">
+        <div className="workbench-sample-theme-switch" role="group" aria-label="Workbench theme">
+          <button
+            aria-label="Use dark theme"
+            className="workbench-sample-theme-switch__button"
+            data-active={theme === 'dark' ? 'true' : undefined}
+            title="Dark theme"
+            type="button"
+            onClick={() => onThemeChange('dark')}
+          >
+            <i aria-hidden className="codicon codicon-color-mode" />
+          </button>
+          <button
+            aria-label="Use light theme"
+            className="workbench-sample-theme-switch__button"
+            data-active={theme === 'light' ? 'true' : undefined}
+            title="Light theme"
+            type="button"
+            onClick={() => onThemeChange('light')}
+          >
+            <i aria-hidden className="codicon codicon-lightbulb" />
+          </button>
+        </div>
+        <Button
+          compact
+          icon="codicon-files"
+          onClick={() => {
+            void executeCommand('workspace.open', { paths: SAMPLE_REVIEW_PATHS });
+          }}
+        >
+          Open review set
+        </Button>
+      </div>
+    </header>
   );
+}
+
+function SampleEditorOverview({
+  theme,
+  onThemeChange,
+}: {
+  theme: SampleTheme;
+  onThemeChange: (theme: SampleTheme) => void;
+}) {
+  const { executeCommand, extensionRegistry, layoutService } = useWorkbench();
+  const settingsContributionCount = extensionRegistry.configurations.getConfigurations().length;
+
+  return (
+    <ScrollArea
+      aria-label="Sample review targets"
+      as="section"
+      className="workbench-sample-overview"
+      orientation="vertical"
+    >
+      <div className="workbench-sample-overview__summary">
+        <div className="workbench-sample-overview__heading">
+          <span className="workbench-sample-overview__eyebrow">Workbench Kit</span>
+          <h1>Sample Host Review</h1>
+        </div>
+        <dl className="workbench-sample-overview__metrics">
+          <SampleMetric label="Workspace" value={workspaceInfo.name} />
+          <SampleMetric label="Folders" value={workspaceInfo.folderCount} />
+          <SampleMetric label="Files" value={workspaceInfo.fileCount} />
+          <SampleMetric label="Extensions" value={extensionsConfig.enabled.length} />
+          <SampleMetric label="Settings" value={settingsContributionCount} />
+          <SampleMetric label="Theme" value={theme} />
+        </dl>
+      </div>
+
+      <div className="workbench-sample-overview__actions">
+        <Button
+          icon="codicon-files"
+          variant="primary"
+          onClick={() => {
+            void executeCommand('workspace.open', { paths: SAMPLE_REVIEW_PATHS });
+          }}
+        >
+          Open review set
+        </Button>
+        <Button
+          icon="codicon-folder-opened"
+          onClick={() => {
+            layoutService.setActiveViewContainer('explorer');
+            layoutService.setSideBarVisible(true);
+          }}
+        >
+          Show explorer
+        </Button>
+        <div className="workbench-sample-overview__theme" role="group" aria-label="Theme">
+          <button
+            className="workbench-sample-overview__theme-button"
+            data-active={theme === 'dark' ? 'true' : undefined}
+            title="Dark theme"
+            type="button"
+            onClick={() => onThemeChange('dark')}
+          >
+            <i aria-hidden className="codicon codicon-color-mode" />
+            <span>Dark</span>
+          </button>
+          <button
+            className="workbench-sample-overview__theme-button"
+            data-active={theme === 'light' ? 'true' : undefined}
+            title="Light theme"
+            type="button"
+            onClick={() => onThemeChange('light')}
+          >
+            <i aria-hidden className="codicon codicon-lightbulb" />
+            <span>Light</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="workbench-sample-overview__grid" aria-label="Sample review targets">
+        {SAMPLE_OPEN_TARGETS.map((target) => (
+          <button
+            key={target.path}
+            className="workbench-sample-target"
+            type="button"
+            onClick={() => {
+              void executeCommand('workspace.open', { path: target.path });
+            }}
+          >
+            <span className="workbench-sample-target__icon">
+              <i aria-hidden className={`codicon ${target.icon}`} />
+            </span>
+            <span className="workbench-sample-target__body">
+              <span className="workbench-sample-target__label">{target.label}</span>
+              <span className="workbench-sample-target__detail">{target.detail}</span>
+              <span className="workbench-sample-target__tags">
+                {target.tags.map((tag) => (
+                  <span key={tag} className="workbench-sample-target__tag">
+                    {tag}
+                  </span>
+                ))}
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </ScrollArea>
+  );
+}
+
+function SampleMetric({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
+
+function createSampleStatusSections(theme: SampleTheme): StatusBarSectionModel[] {
+  return [
+    {
+      id: 'sample-primary',
+      items: [
+        {
+          icon: 'root-folder',
+          id: 'sample.workspace',
+          label: workspaceInfo.name,
+          title: 'Sample workspace',
+        },
+        {
+          active: true,
+          icon: 'color-mode',
+          id: 'sample.theme',
+          label: `theme: ${theme}`,
+          title: 'Toggle sample theme',
+        },
+      ],
+    },
+    {
+      align: 'end',
+      id: 'sample-meta',
+      items: [
+        {
+          icon: 'files',
+          id: 'sample.files',
+          label: `${workspaceInfo.fileCount} files`,
+          title: 'Virtual workspace files',
+        },
+        {
+          icon: 'folder',
+          id: 'sample.folders',
+          label: `${workspaceInfo.folderCount} folders`,
+          title: 'Virtual workspace folders',
+        },
+        {
+          icon: 'extensions',
+          id: 'sample.extensions',
+          label: `${extensionsConfig.enabled.length} extensions`,
+          title: 'Enabled built-in extensions',
+        },
+      ],
+    },
+  ];
+}
+
+function nextSampleTheme(theme: SampleTheme): SampleTheme {
+  return theme === 'dark' ? 'light' : 'dark';
 }
