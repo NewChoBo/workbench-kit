@@ -54,7 +54,7 @@
   pointer-events: none;
 }
 
-.workbench-editor-area__group-body[data-drop-side='left'] .workbench-editor-area__drop-overlay {
+.workbench-editor-area__group-pane[data-drop-side='left'] .workbench-editor-area__drop-overlay {
   right: 50%;
   background: var(
     --vscode-editorGroup-dropBackground,
@@ -64,7 +64,7 @@
   outline-offset: -2px;
 }
 
-.workbench-editor-area__group-body[data-drop-side='right'] .workbench-editor-area__drop-overlay {
+.workbench-editor-area__group-pane[data-drop-side='right'] .workbench-editor-area__drop-overlay {
   left: 50%;
   background: var(
     --vscode-editorGroup-dropBackground,

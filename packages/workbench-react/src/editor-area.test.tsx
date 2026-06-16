@@ -156,7 +156,7 @@ describe('EditorArea', () => {
     container.remove();
   });
 
-  it('splits an editor tab into an adjacent group by dragging onto the editor body', async () => {
+  it('splits an editor tab into an adjacent group by dragging onto the editor group', async () => {
     function OpenEditorProbe() {
       const editorService = useEditorService();
 
@@ -211,15 +211,29 @@ describe('EditorArea', () => {
     await waitForSelector(container, '[role="tab"]');
 
     const tab = container.querySelector('[role="tab"]') as HTMLElement | null;
-    const groupBody = container.querySelector(
-      '.workbench-editor-area__group-body',
+    const groupPane = container.querySelector(
+      '.workbench-editor-area__group-pane',
     ) as HTMLElement | null;
     const dataTransfer = createTestDataTransfer();
 
     await act(async () => {
       dispatchTestDragEvent(tab, 'dragstart', dataTransfer);
-      dispatchTestDragEvent(groupBody, 'dragover', dataTransfer);
-      dispatchTestDragEvent(groupBody, 'drop', dataTransfer);
+      dispatchTestDragEvent(groupPane, 'dragover', dataTransfer);
+    });
+
+    expect(
+      container.querySelector(
+        '.workbench-editor-area__group-pane > .workbench-editor-area__drop-overlay',
+      ),
+    ).not.toBeNull();
+    expect(
+      container.querySelector(
+        '.workbench-editor-area__group-body > .workbench-editor-area__drop-overlay',
+      ),
+    ).toBeNull();
+
+    await act(async () => {
+      dispatchTestDragEvent(groupPane, 'drop', dataTransfer);
     });
 
     await flushReactEffects();
