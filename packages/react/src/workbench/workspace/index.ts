@@ -111,6 +111,7 @@ export {
 export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
 export {
   getAvailableWorkspaceEntryName,
+  getWorkspaceEntryMovePlan,
   getWorkspaceFileMovePlan,
   initializeVirtualWorkspaceState,
   isWorkspaceEntryPathAvailable,
@@ -124,6 +125,10 @@ export type {
   VirtualWorkspaceInitialState,
   VirtualWorkspaceState,
   WorkspaceEntryNameSuggestionInput,
+  WorkspaceEntryMove,
+  WorkspaceEntryMoveKind,
+  WorkspaceEntryMovePlan,
+  WorkspaceEntryMovePlanInput,
   WorkspaceEntryPathAvailabilityInput,
   WorkspaceFileMove,
   WorkspaceFileMovePlan,

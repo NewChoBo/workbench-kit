@@ -90,6 +90,38 @@ function WorkspaceInitCommandProbe({
   return null;
 }
 
+function WorkspaceMoveFolderCommandProbe({ onResult }: { onResult: (result: unknown) => void }) {
+  const { executeCommand } = useWorkbench();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      await executeCommand('workspace.init', {
+        expandedPaths: ['src', 'src/components'],
+        files: [{ content: 'button', path: 'src/components/Button.tsx' }],
+        folders: ['docs', 'src/components'],
+        openPaths: ['src/components/Button.tsx'],
+        selectedPath: 'src/components/Button.tsx',
+      });
+      const result = await executeCommand('workbench-kit.builtin.explorer.move', {
+        sourcePaths: ['src/components'],
+        targetFolderPath: 'docs',
+      });
+
+      if (!cancelled) {
+        onResult(result);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [executeCommand, onResult]);
+
+  return null;
+}
+
 describe('WorkbenchProvider', () => {
   it('provides configured core registries to React children', () => {
     const markup = renderToStaticMarkup(
@@ -303,6 +335,60 @@ describe('WorkbenchProvider', () => {
     ]);
     expect(commandResults[0]).toMatchObject({
       path: 'notes.md',
+      transactionId: expect.any(String),
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('routes workspace folder move commands through resource transactions', async () => {
+    const workspaceHostPort = createWorkbenchWorkspaceHostPort();
+    const commandResults: unknown[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+          workspaceHostPort={workspaceHostPort}
+        >
+          <WorkspaceMoveFolderCommandProbe
+            onResult={(result) => {
+              commandResults.push(result);
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    expect(workspaceHostPort.service.getFile('docs/components/Button.tsx')).toMatchObject({
+      content: 'button',
+      path: 'docs/components/Button.tsx',
+    });
+    expect(workspaceHostPort.service.getState().folders).toEqual([
+      'docs',
+      'docs/components',
+      'src',
+    ]);
+    expect(workspaceHostPort.service.getTransactionJournal()[1]?.mutations).toEqual([
+      {
+        sourcePath: 'src/components',
+        targetFolderPath: 'docs',
+        type: 'move-folder',
+      },
+    ]);
+    expect(commandResults[0]).toMatchObject({
+      paths: ['docs/components'],
       transactionId: expect.any(String),
     });
 

@@ -2,6 +2,7 @@ import { useMemo, useReducer } from 'react';
 import {
   buildWorkspaceTree,
   getAvailableWorkspaceEntryName,
+  getWorkspaceEntryMovePlan,
   getWorkspaceFileMovePlan,
   initializeVirtualWorkspaceState,
   isWorkspaceEntryPathAvailable,
@@ -12,6 +13,10 @@ import {
   type VirtualWorkspaceInitialState,
   type VirtualWorkspaceState,
   type WorkspaceEntryNameSuggestionInput,
+  type WorkspaceEntryMove,
+  type WorkspaceEntryMoveKind,
+  type WorkspaceEntryMovePlan,
+  type WorkspaceEntryMovePlanInput,
   type WorkspaceEntryPathAvailabilityInput,
   type WorkspaceFileMove,
   type WorkspaceFileMovePlan,
@@ -30,6 +35,7 @@ export interface VirtualWorkspaceApi extends VirtualWorkspaceState {
   deleteFile: (path: string) => void;
   deleteFolder: (path: string) => void;
   moveFile: (sourcePath: string, targetFolderPath: string) => void;
+  moveFolder: (sourcePath: string, targetFolderPath: string) => void;
   openFile: (path: string) => void;
   renameFile: (path: string, name: string, mimeType?: string) => void;
   renameFolder: (path: string, name: string) => void;
@@ -68,6 +74,8 @@ export function useVirtualWorkspace(
     deleteFolder: (path) => dispatch({ path, type: 'delete-folder' }),
     moveFile: (sourcePath, targetFolderPath) =>
       dispatch({ sourcePath, targetFolderPath, type: 'move-file' }),
+    moveFolder: (sourcePath, targetFolderPath) =>
+      dispatch({ sourcePath, targetFolderPath, type: 'move-folder' }),
     openFile: (path) => dispatch({ path, type: 'open-file' }),
     renameFile: (path, name, mimeType) => dispatch({ mimeType, name, path, type: 'rename-file' }),
     renameFolder: (path, name) => dispatch({ name, path, type: 'rename-folder' }),
@@ -81,6 +89,7 @@ export function useVirtualWorkspace(
 
 export {
   getAvailableWorkspaceEntryName,
+  getWorkspaceEntryMovePlan,
   getWorkspaceFileMovePlan,
   initializeVirtualWorkspaceState,
   isWorkspaceEntryPathAvailable,
@@ -90,6 +99,10 @@ export {
   type VirtualWorkspaceInitialState,
   type VirtualWorkspaceState,
   type WorkspaceEntryNameSuggestionInput,
+  type WorkspaceEntryMove,
+  type WorkspaceEntryMoveKind,
+  type WorkspaceEntryMovePlan,
+  type WorkspaceEntryMovePlanInput,
   type WorkspaceEntryPathAvailabilityInput,
   type WorkspaceFileMove,
   type WorkspaceFileMovePlan,

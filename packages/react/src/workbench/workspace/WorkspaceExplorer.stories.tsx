@@ -3,11 +3,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 import {
   getAvailableWorkspaceEntryName,
-  getWorkspaceFileMovePlan,
+  getWorkspaceEntryMovePlan,
   isSimpleWorkspaceName,
   isWorkspaceEntryPathAvailable,
   joinWorkspacePath,
   parentPathOf,
+  type WorkspaceEntryMove,
   type WorkspaceSelectionState,
   type WorkspaceFile,
   type WorkspaceTreeNode,
@@ -288,7 +289,7 @@ function ExplorerHarness({
   };
 
   const handleMove = ({ sourcePaths, targetFolderPath }: WorkspaceExplorerMoveRequestMeta) => {
-    const plan = getWorkspaceFileMovePlan({
+    const plan = getWorkspaceEntryMovePlan({
       files: workspace.files,
       folders: workspace.folders,
       sourcePaths,
@@ -304,16 +305,20 @@ function ExplorerHarness({
       return;
     }
 
-    plan.moves.forEach(({ sourcePath }) => workspace.moveFile(sourcePath, targetFolderPath));
-    setSelection({
-      anchorPath: plan.moves[0]?.destinationPath,
-      paths: plan.moves.map((move) => move.destinationPath),
+    plan.moves.forEach(({ kind, sourcePath }) => {
+      if (kind === 'folder') {
+        workspace.moveFolder(sourcePath, targetFolderPath);
+        return;
+      }
+
+      workspace.moveFile(sourcePath, targetFolderPath);
     });
-    setStatus(
-      plan.moves.length === 1
-        ? `Moved ${plan.moves[0]?.sourcePath} to ${plan.moves[0]?.destinationPath}`
-        : `Moved ${plan.moves.length} files to ${targetFolderPath || 'root'}`,
-    );
+    const fileMoves = plan.moves.filter((move) => move.kind === 'file');
+    setSelection({
+      anchorPath: fileMoves[0]?.destinationPath,
+      paths: fileMoves.map((move) => move.destinationPath),
+    });
+    setStatus(formatMoveStatus(plan.moves, targetFolderPath));
   };
 
   const openItemContextMenu = (
@@ -655,6 +660,42 @@ export const DeleteAndDragDropFlow: Story = {
   },
 };
 
+export const FolderDragDropFlow: Story = {
+  render: () => <ExplorerHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const docsFolder = canvas.getByRole('button', { name: 'docs' });
+    const componentsFolder = getWorkspaceItem(canvasElement, 'src/components');
+
+    const dataTransfer = createStoryDataTransfer();
+    await fireEvent.dragStart(componentsFolder, { dataTransfer });
+    await fireEvent.dragOver(docsFolder, { dataTransfer });
+    await fireEvent.drop(docsFolder, { dataTransfer });
+
+    await expect(canvas.getByLabelText('Explorer event log')).toHaveTextContent(
+      'Moved folder src/components to docs/components',
+    );
+    await expect(getWorkspaceItem(canvasElement, 'docs/components')).toBeVisible();
+    await expect(getWorkspaceItem(canvasElement, 'docs/components/Button.tsx')).toBeVisible();
+    expect(canvasElement.querySelector('[data-workspace-path="src/components"]')).toBeNull();
+
+    const blockedDataTransfer = createStoryDataTransfer();
+    await fireEvent.dragStart(canvas.getByRole('button', { name: 'docs' }), {
+      dataTransfer: blockedDataTransfer,
+    });
+    await fireEvent.dragOver(canvas.getByRole('button', { name: 'components' }), {
+      dataTransfer: blockedDataTransfer,
+    });
+    await fireEvent.drop(canvas.getByRole('button', { name: 'components' }), {
+      dataTransfer: blockedDataTransfer,
+    });
+
+    await expect(canvas.getByLabelText('Explorer event log')).toHaveTextContent(
+      'Moved folder src/components to docs/components',
+    );
+  },
+};
+
 export const MultiFileDeleteFlow: Story = {
   render: () => <ExplorerHarness />,
   play: async ({ canvasElement }) => {
@@ -840,6 +881,29 @@ function renameDescendantPath(path: string, sourcePath: string, destinationPath:
   return path === sourcePath
     ? destinationPath
     : `${destinationPath}/${path.slice(sourcePath.length + 1)}`;
+}
+
+function formatMoveStatus(moves: WorkspaceEntryMove[], targetFolderPath: string) {
+  if (moves.length === 1) {
+    const move = moves[0];
+    if (move?.kind === 'folder') {
+      return `Moved folder ${move.sourcePath} to ${move.destinationPath}`;
+    }
+
+    return `Moved ${move?.sourcePath} to ${move?.destinationPath}`;
+  }
+
+  const allFiles = moves.every((move) => move.kind === 'file');
+  if (allFiles) {
+    return `Moved ${moves.length} files to ${targetFolderPath || 'root'}`;
+  }
+
+  const allFolders = moves.every((move) => move.kind === 'folder');
+  if (allFolders) {
+    return `Moved ${moves.length} folders to ${targetFolderPath || 'root'}`;
+  }
+
+  return `Moved ${moves.length} entries to ${targetFolderPath || 'root'}`;
 }
 
 function createStoryDataTransfer(): DataTransfer {

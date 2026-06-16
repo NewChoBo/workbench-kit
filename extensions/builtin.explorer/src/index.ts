@@ -9,7 +9,7 @@ import {
   fileNameOfPath,
   formatWorkspaceResourceUri,
   getAvailableWorkspaceEntryName,
-  getWorkspaceFileMovePlan,
+  getWorkspaceEntryMovePlan,
   isSimpleWorkspaceName,
   isWorkspaceEntryPathAvailable,
   joinWorkspacePath,
@@ -317,21 +317,29 @@ function moveWorkspaceTargets(
 
   const state = service.getState();
   const targetFolderPath = normalizeWorkspacePath(readString(input, 'targetFolderPath') ?? '');
-  const plan = getWorkspaceFileMovePlan({
+  const plan = getWorkspaceEntryMovePlan({
     files: state.files,
     folders: state.folders,
     sourcePaths: readStringArray(input, 'sourcePaths'),
     targetFolderPath,
   });
-  const mutations = plan.moves.map<WorkspaceResourceMutation>((move) => ({
-    sourcePath: move.sourcePath,
-    targetFolderPath: plan.targetFolderPath,
-    type: 'move-file',
-  }));
+  const mutations = plan.moves.map<WorkspaceResourceMutation>((move) =>
+    move.kind === 'folder'
+      ? {
+          sourcePath: move.sourcePath,
+          targetFolderPath: plan.targetFolderPath,
+          type: 'move-folder',
+        }
+      : {
+          sourcePath: move.sourcePath,
+          targetFolderPath: plan.targetFolderPath,
+          type: 'move-file',
+        },
+  );
 
   if (mutations.length === 0) return undefined;
 
-  return applyMutations(service, 'Move workspace files', mutations, {
+  return applyMutations(service, 'Move workspace entries', mutations, {
     paths: plan.moves.map((move) => move.destinationPath),
   });
 }
@@ -348,6 +356,7 @@ function applyMutations(
   const mutationPaths = mutations.flatMap((mutation) => {
     if ('path' in mutation) return [mutation.path];
     if (mutation.type === 'move-file') return [mutation.sourcePath];
+    if (mutation.type === 'move-folder') return [mutation.sourcePath];
     return [];
   });
 
