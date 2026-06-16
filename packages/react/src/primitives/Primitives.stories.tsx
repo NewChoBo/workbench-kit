@@ -10,6 +10,7 @@ import { Button } from './Button';
 import { Checkbox } from './Checkbox';
 import { IconButton } from './IconButton';
 import { NumberInput } from './NumberInput';
+import { ScrollArea } from './ScrollArea';
 import { Select } from './Select';
 import { Toolbar } from './Toolbar';
 
@@ -100,6 +101,30 @@ export const FeedbackSurfaces: Story = {
         <HelpText tone="error">App name is required.</HelpText>
       </Field>
     </section>
+  ),
+};
+
+export const ScrollSurface: Story = {
+  render: () => (
+    <ScrollArea
+      aria-label="Scrollable primitive sample"
+      orientation="vertical"
+      style={{
+        width: 360,
+        height: 180,
+        padding: 16,
+        border: '1px solid var(--color-border)',
+        background: 'var(--color-bg)',
+        color: 'var(--color-text)',
+        lineHeight: 1.6,
+      }}
+    >
+      {Array.from({ length: 18 }, (_, index) => (
+        <p key={index} style={{ margin: '0 0 10px' }}>
+          Shared scrollbar row {index + 1}
+        </p>
+      ))}
+    </ScrollArea>
   ),
 };
 

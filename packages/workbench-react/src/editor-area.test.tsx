@@ -780,6 +780,11 @@ describe('EditorArea', () => {
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
     expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
+    expect(
+      container.querySelector(
+        '.workbench-editor-area__preview-pane.ui-scroll-area.ui-workbench-scrollbar',
+      ),
+    ).not.toBeNull();
     expect(container.textContent).toContain('Preview title');
 
     const previewButton = container.querySelector(
@@ -824,6 +829,9 @@ describe('EditorArea', () => {
     ) as HTMLInputElement | null;
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
+    expect(
+      container.querySelector('.workbench-editor-area__form.ui-scroll-area.ui-workbench-scrollbar'),
+    ).not.toBeNull();
     expect(argsGroup).not.toBeNull();
     expect(argsText).not.toBeNull();
     expect(argsText?.value).toBe('Preview title');

@@ -518,6 +518,13 @@ export type {
 } from './primitives/WorkbenchEditor';
 export { Select } from './primitives/Select';
 export type { SelectProps } from './primitives/Select';
+export { ScrollArea } from './primitives/ScrollArea';
+export type {
+  ScrollAreaGutter,
+  ScrollAreaOrientation,
+  ScrollAreaProps,
+  ScrollAreaScrollbarVisibility,
+} from './primitives/ScrollArea';
 export { TextInput } from './primitives/TextInput';
 export type { ControlWidth, TextInputProps } from './primitives/TextInput';
 export { TextArea } from './primitives/TextArea';

@@ -221,7 +221,6 @@
   min-width: 0;
   min-height: 0;
   padding: 16px;
-  overflow: auto;
   background: var(--vscode-editor-background, var(--color-bg));
 }
 
@@ -236,7 +235,6 @@
   min-height: 0;
   width: 100%;
   padding: 16px;
-  overflow: auto;
 }
 
 .workbench-editor-area__form {

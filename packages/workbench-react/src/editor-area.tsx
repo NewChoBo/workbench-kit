@@ -19,7 +19,7 @@ import {
   JDW_SCHEMA_DOCUMENT_FILE_EXTENSION,
   JDW_SCHEMA_DOCUMENT_MIME,
 } from '@workbench-kit/react/jdw/document';
-import { EditorTabs, type EditorTab } from '@workbench-kit/react/primitives';
+import { EditorTabs, ScrollArea, type EditorTab } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import {
   codiconForFileKind,
@@ -562,9 +562,14 @@ function TextEditorSurface({
   );
 
   const previewPane = previewProvider ? (
-    <section aria-label="Preview" className="workbench-editor-area__preview-pane">
+    <ScrollArea
+      aria-label="Preview"
+      as="section"
+      className="workbench-editor-area__preview-pane"
+      orientation="vertical"
+    >
       {previewProvider.render({ document: editorDocument, onContentChange: handleChange })}
-    </section>
+    </ScrollArea>
   ) : null;
   const formPane = formProvider
     ? formProvider.render({ document: editorDocument, onContentChange: handleChange })
