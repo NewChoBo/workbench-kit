@@ -12,8 +12,8 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 
 ## 요약
 
-- **현재 위치:** Lane A 약 65% 완료. WB-23~WB-27 머지 완료. WB-28 **S2(React 탭 UI)** 커밋 `cb968d2`까지 완료. 작업 트리 클린.
-- **다음 2주 1순위:** WB-28 S3(트랜잭션 저장) → WB-29 — Lane A 마일스톤 우선; B-UX는 Lane A 마일스톤 이후로 연기.
+- **현재 위치:** Lane A 약 70% 완료. WB-23~WB-27 머지 완료. WB-28 **S3(트랜잭션 저장)** 완료. 다음: WB-29.
+- **다음 2주 1순위:** WB-29 — Lane A 마일스톤 우선; B-UX는 Lane A 마일스톤 이후로 연기.
 - **다음 2주 2순위:** WB-29(커맨드 기반 익스플로러) — 트리 CRUD가 `WorkspaceResourceTransaction` 경로로만 동작.
 - **다음 2주 3순위:** WB-30(프리퍼런스 스코프) + WB-31(데브툴 인스펙터) — Lane A 마감 전 필수.
 - **병렬 트랙 B:** Lane B(JDW/widget-tree) B1~B2는 **헤드리스 우선**으로 병렬 가능. 캔버스/에디터 크롬 확장(B3~B4)은 Lane A WB-28 S2 이후.
@@ -37,7 +37,7 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 | **Branch**          | `feature/theia-strengths-workbench`                                                          |
 | **Working tree**    | Clean (no uncommitted changes at plan time)                                                  |
 | **Last commits**    | `cb968d2` WB-28 S2 · `a3efc59` session plan docs · `5d31491` WB-28 S1 · `813cbca` WB-27      |
-| **Lane A progress** | ~65% (5/9 slices + WB-28 S1–S2)                                                              |
+| **Lane A progress** | ~70% (5/9 slices + WB-28 S1–S3)                                                              |
 | **Validate note**   | `pnpm validate:full` last known green on 2026-06-14 (pre-plan). Re-run after WB-28 S3 lands. |
 
 ---
@@ -57,7 +57,7 @@ WB-28 S2/S3 → WB-29 → WB-30 → WB-31 → Lane A DoD
 | WB-25     | **Done**    | Consume `EditorHostFactoryRegistry` in S2/S3    |
 | WB-26     | **Done**    | —                                               |
 | WB-27     | **Done**    | Consumed by WB-28 S3 save path                  |
-| WB-28     | **S2 done** | S3 transaction save                             |
+| WB-28     | **S3 done** | WB-29 command-backed explorer                   |
 | WB-29     | Pending     | After WB-28 resource identity stable            |
 | WB-30     | Pending     | After WB-28 (editor settings consumer optional) |
 | WB-31     | Pending     | After WB-28/29 event streams                    |
@@ -272,14 +272,14 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | Sample host open-file flow                   | Done   | `examples/workbench-sample` Open App.tsx / Preview README buttons      |
 | Storybook coverage for editor tabs           | Done   | `WorkbenchProvider.stories` uses default `EditorArea`                  |
 
-### S3 — Remaining (save + transaction integration)
+### S3 — Done (2026-06-16)
 
-| Deliverable                                        | Status  | Notes                                                        |
-| -------------------------------------------------- | ------- | ------------------------------------------------------------ |
-| Save command → `applyWorkspaceResourceTransaction` | Missing | WB-27 APIs exist; not wired from editor                      |
-| Dirty sync with last applied snapshot              | Missing | `EditorService.setDirty` exists; no snapshot comparison path |
-| Text file create/update mutation                   | Missing | Initial mutation types from `resource-mutation.ts`           |
-| Explorer open → editor tab (resource identity)     | Missing | Depends on S2 shell + optional WB-29 precursor               |
+| Deliverable                                        | Status  | Notes                                                     |
+| -------------------------------------------------- | ------- | --------------------------------------------------------- |
+| Save command → `applyWorkspaceResourceTransaction` | Done    | `editor.save` via `WorkspaceService` + `saveActiveEditor` |
+| Dirty sync with last applied snapshot              | Done    | Tab + host dirty cleared; snapshot version increments     |
+| Text file create/update mutation                   | Done    | `buildEditorSaveMutation` chooses create vs save          |
+| Explorer open → editor tab (resource identity)     | Missing | Depends on WB-29 precursor                                |
 
 ---
 
@@ -336,8 +336,8 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 - [x] S2 — Tab strip UI + dirty/preview/pin chrome
 - [x] S2 — Shell wires `EditorHostFactoryRegistry`
 - [x] S2 — Sample host opens a file in tabs
-- [ ] S3 — Save via `WorkspaceResourceTransaction`
-- [ ] S3 — Dirty clears after successful save
+- [x] S3 — Save via `WorkspaceResourceTransaction`
+- [x] S3 — Dirty clears after successful save
 
 ### WB-29 → WB-31
 
@@ -405,10 +405,10 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ## Progress log
 
-| Date       | Note                                                                              |
-| ---------- | --------------------------------------------------------------------------------- |
-| 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7  |
-| 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                               |
-| 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow            |
-| 2026-06-16 | Subtree / jdw-react split excluded; Track D scoped to in-repo cleanup             |
-| 2026-06-16 | Lane A priority, Strategy A render target, WorkbenchDocument deprecation recorded |
+| Date       | Note                                                                             |
+| ---------- | -------------------------------------------------------------------------------- |
+| 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7 |
+| 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                              |
+| 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow           |
+| 2026-06-16 | Subtree / jdw-react split excluded; Track D scoped to in-repo cleanup            |
+| 2026-06-16 | WB-28 S3: editor save via workspace transactions, sample host Ctrl+S             |

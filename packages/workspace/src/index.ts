@@ -103,3 +103,14 @@ export {
   type WorkbenchStructuredDataPath,
   type WorkbenchStructuredDataRecord,
 } from './structuredPath';
+export {
+  WORKBENCH_WORKSPACE_CAPABILITY_ID,
+  WorkspaceResourceService,
+  buildEditorSaveMutation,
+  createEditorSaveTransaction,
+  createWorkbenchWorkspaceHostPort,
+  type WorkbenchEditorSavePort,
+  type WorkbenchWorkspaceHostPort,
+  type WorkspaceChangeEvent,
+  type WorkspaceResourceServiceOptions,
+} from './workbench-workspace-host';

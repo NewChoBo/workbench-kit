@@ -1,25 +1,59 @@
+import { useEffect } from 'react';
+import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
 import {
   EditorArea,
   WorkbenchProvider,
   WorkbenchShell,
   useEditorService,
+  useWorkbench,
 } from '@workbench-kit/workbench-react';
 
-import { extensionsConfig, initialLayout, workspaceInfo } from './bootstrap.js';
+import { extensionsConfig, initialLayout, initialWorkspace, workspaceInfo } from './bootstrap.js';
+
+const workspaceHostPort = createWorkbenchWorkspaceHostPort({ initialState: initialWorkspace });
 
 const SAMPLE_APP_RESOURCE_URI = 'workspace://file/src/App.tsx';
 const SAMPLE_README_RESOURCE_URI = 'workspace://file/README.md';
 
 export function App() {
   return (
-    <WorkbenchProvider extensionsConfig={extensionsConfig} initialLayout={initialLayout}>
+    <WorkbenchProvider
+      extensionsConfig={extensionsConfig}
+      initialLayout={initialLayout}
+      workspaceHostPort={workspaceHostPort}
+    >
       <WorkbenchShell
-        editorArea={<EditorArea emptyState={<SampleEditorEmptyState />} />}
+        editorArea={
+          <>
+            <EditorSaveShortcut />
+            <EditorArea emptyState={<SampleEditorEmptyState />} />
+          </>
+        }
         rootClassName="ide-root"
         theme="dark"
       />
     </WorkbenchProvider>
   );
+}
+
+function EditorSaveShortcut() {
+  const { executeCommand } = useWorkbench();
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        void executeCommand('editor.save');
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [executeCommand]);
+
+  return null;
 }
 
 function SampleEditorEmptyState() {

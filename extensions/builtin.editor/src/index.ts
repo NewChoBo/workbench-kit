@@ -25,12 +25,22 @@ export function activate(context: ExtensionContext): void {
     id: TEXT_EDITOR_HOST_FACTORY_ID,
     priority: 10,
     canCreate: ({ editorId }) => editorId === TEXT_EDITOR_ID,
-    create: ({ resourceUri, tabId }) => {
+    create: ({ resource, resourceUri, tabId }) => {
       if (!resourceUri) {
         throw new Error('Text editor host requires a resource URI.');
       }
 
-      return new TextEditorHost({ resourceUri, tabId });
+      const initialContent = readWorkspaceFileContent(resource);
+      return new TextEditorHost({ initialContent, resourceUri, tabId });
     },
   });
+}
+
+function readWorkspaceFileContent(resource: unknown): string | undefined {
+  if (typeof resource !== 'object' || resource === null) {
+    return undefined;
+  }
+
+  const content = (resource as { content?: unknown }).content;
+  return typeof content === 'string' ? content : undefined;
 }

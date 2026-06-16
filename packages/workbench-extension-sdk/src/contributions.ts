@@ -142,6 +142,11 @@ export interface EditorHostFactory {
 
 export const DEFAULT_EDITOR_HOST_FACTORY_ID = 'workbench-kit.editor-host.default' as const;
 
+export interface WorkbenchEditorSavePort {
+  applySave(resourceUri: string, content: string): { readonly transactionId: string } | undefined;
+  resolveResource?(resourceUri: string): unknown;
+}
+
 export interface ExtensionViewHostFactoryRegistry {
   registerFactory(factory: ViewHostFactory): Disposable;
 }

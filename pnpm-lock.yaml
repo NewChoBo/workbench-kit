@@ -89,6 +89,9 @@ importers:
       '@workbench-kit/workbench-react':
         specifier: workspace:*
         version: link:../../packages/workbench-react
+      '@workbench-kit/workspace':
+        specifier: workspace:*
+        version: link:../../packages/workspace
       react:
         specifier: ^19.0.0
         version: 19.2.7
