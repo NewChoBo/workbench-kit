@@ -22,6 +22,8 @@ legacy paths.
 | [JSON Widget Port Strategy](./json-widget-port-then-replace.md) | Product-neutral extraction boundaries for JSON widget work.                                 |
 | [JSON Config Workbench](./json-config-workbench.md)             | JSON config workbench surface and adoption notes.                                           |
 | [Widget Layout Schema Plan](./widget-layout-schema-plan.md)     | Widget document/layout schema planning that still applies to JDW work.                      |
+| [JDW Architecture Analysis](./jdw-architecture-analysis.md)     | CSS-based render pipeline, Flutter JDW comparison, custom tag recommendations.              |
+| [JDW Schema + Figma Authoring](./jdw-schema-figma-authoring.md) | Persistence (JDW) vs Figma-like authoring UX split, mapping layer, gaps.                    |
 | [Plugin Manifest Guide](./plugin-manifest-guide.md)             | Prototype plugin descriptor and contribution metadata shape.                                |
 | [Plugin Lifecycle](./plugin-lifecycle.md)                       | Plugin lifecycle policy aligned with current contracts and platform APIs.                   |
 | [Standalone Host](./standalone-host.md)                         | Standalone host assembly notes that do not rely on removed VS Code packages.                |
