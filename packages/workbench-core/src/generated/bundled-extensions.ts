@@ -107,6 +107,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
         'onCommand:workbench-kit.builtin.explorer.move',
         'onCommand:workspace.newFile',
         'onCommand:workspace.newFolder',
+        'onCommand:workspace.init',
         'onCommand:workspace.open',
         'onCommand:workspace.copyPath',
         'onCommand:workspace.rename',
@@ -145,6 +146,11 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
             title: 'New Folder',
             category: 'Workspace',
             icon: 'new-folder',
+          },
+          {
+            command: 'workspace.init',
+            title: 'Initialize Workspace',
+            category: 'Workspace',
           },
           {
             command: 'workspace.open',

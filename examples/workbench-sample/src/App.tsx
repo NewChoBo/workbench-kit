@@ -4,17 +4,17 @@ import {
   EditorArea,
   WorkbenchProvider,
   WorkbenchShell,
-  useEditorService,
   useWorkbench,
 } from '@workbench-kit/workbench-react';
 
 import { extensionsConfig, initialLayout, initialWorkspace, workspaceInfo } from './bootstrap.js';
 
-const workspaceHostPort = createWorkbenchWorkspaceHostPort({ initialState: initialWorkspace });
+const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 
-const SAMPLE_APP_RESOURCE_URI = 'workspace://file/src/App.tsx';
-const SAMPLE_README_RESOURCE_URI = 'workspace://file/README.md';
-const SAMPLE_CONFIG_RESOURCE_URI = 'workspace://file/config.json';
+const SAMPLE_APP_PATH = 'src/App.tsx';
+const SAMPLE_README_PATH = 'README.md';
+const SAMPLE_CONFIG_PATH = 'config.json';
+let sampleWorkspaceInitialized = false;
 
 export function App() {
   return (
@@ -23,6 +23,7 @@ export function App() {
       initialLayout={initialLayout}
       workspaceHostPort={workspaceHostPort}
     >
+      <WorkspaceInitCommand />
       <WorkbenchShell
         editorArea={
           <>
@@ -35,6 +36,23 @@ export function App() {
       />
     </WorkbenchProvider>
   );
+}
+
+function WorkspaceInitCommand() {
+  const { executeCommand } = useWorkbench();
+
+  useEffect(() => {
+    if (sampleWorkspaceInitialized) {
+      return;
+    }
+
+    sampleWorkspaceInitialized = true;
+    void executeCommand('workspace.init', initialWorkspace).catch(() => {
+      sampleWorkspaceInitialized = false;
+    });
+  }, [executeCommand]);
+
+  return null;
 }
 
 function EditorSaveShortcut() {
@@ -58,7 +76,7 @@ function EditorSaveShortcut() {
 }
 
 function SampleEditorEmptyState() {
-  const editorService = useEditorService();
+  const { executeCommand } = useWorkbench();
 
   return (
     <section className="workbench-sample-editor__card">
@@ -85,11 +103,7 @@ function SampleEditorEmptyState() {
         <button
           className="workbench-sample-editor__action"
           onClick={() => {
-            editorService.openEditor({
-              pinned: true,
-              resourceUri: SAMPLE_APP_RESOURCE_URI,
-              title: 'App.tsx',
-            });
+            void executeCommand('workspace.open', { path: SAMPLE_APP_PATH });
           }}
           type="button"
         >
@@ -98,11 +112,7 @@ function SampleEditorEmptyState() {
         <button
           className="workbench-sample-editor__action"
           onClick={() => {
-            editorService.openEditor({
-              preview: true,
-              resourceUri: SAMPLE_README_RESOURCE_URI,
-              title: 'README.md',
-            });
+            void executeCommand('workspace.open', { path: SAMPLE_README_PATH });
           }}
           type="button"
         >
@@ -111,11 +121,7 @@ function SampleEditorEmptyState() {
         <button
           className="workbench-sample-editor__action"
           onClick={() => {
-            editorService.openEditor({
-              pinned: true,
-              resourceUri: SAMPLE_CONFIG_RESOURCE_URI,
-              title: 'config.json',
-            });
+            void executeCommand('workspace.open', { path: SAMPLE_CONFIG_PATH });
           }}
           type="button"
         >

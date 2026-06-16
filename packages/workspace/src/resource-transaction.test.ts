@@ -80,6 +80,22 @@ describe('workspace resource transaction', () => {
     expect(
       virtualWorkspaceActionToResourceMutation({ type: 'open-file', path: 'src/App.tsx' }),
     ).toBe(null);
+
+    expect(
+      workspaceResourceMutationToAction({
+        type: 'initialize-workspace',
+        state: {
+          files: [{ content: 'app', path: 'src/App.tsx' }],
+          folders: ['src'],
+        },
+      }),
+    ).toEqual({
+      type: 'initialize-workspace',
+      state: {
+        files: [{ content: 'app', path: 'src/App.tsx' }],
+        folders: ['src'],
+      },
+    });
   });
 
   it('applies transactions through the virtual workspace reducer', () => {
@@ -110,5 +126,34 @@ describe('workspace resource transaction', () => {
     expect(transactionState.folders).toEqual(actionState.folders);
     expect(transactionState.openPaths).toEqual(actionState.openPaths);
     expect(transactionState.selectedPath).toBe(actionState.selectedPath);
+  });
+
+  it('applies initialize workspace transactions without opening seeded files', () => {
+    const initialState = initializeVirtualWorkspaceState({
+      files: [{ content: 'stale', path: 'stale.txt' }],
+      openPaths: ['stale.txt'],
+      selectedPath: 'stale.txt',
+    });
+    const transaction = createWorkspaceResourceTransaction({
+      label: 'Initialize workspace',
+      mutations: [
+        {
+          type: 'initialize-workspace',
+          state: {
+            expandedPaths: ['src'],
+            files: [{ content: 'app', path: 'src/App.tsx' }],
+            folders: ['src'],
+          },
+        },
+      ],
+    });
+
+    const transactionState = applyWorkspaceResourceTransaction(initialState, transaction);
+
+    expect(transactionState.files).toEqual([{ content: 'app', path: 'src/App.tsx' }]);
+    expect(transactionState.folders).toEqual(['src']);
+    expect([...transactionState.expandedPaths]).toEqual(['src']);
+    expect(transactionState.openPaths).toEqual([]);
+    expect(transactionState.selectedPath).toBeUndefined();
   });
 });

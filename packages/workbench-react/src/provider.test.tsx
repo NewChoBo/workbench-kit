@@ -6,7 +6,10 @@ import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { parseWorkbenchLayoutConfig } from '@workbench-kit/workbench-config';
 import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
-import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
+import {
+  createWorkbenchWorkspaceHostPort,
+  type VirtualWorkspaceInitialState,
+} from '@workbench-kit/workspace';
 
 vi.mock('@monaco-editor/react', () => ({
   default: ({
@@ -61,6 +64,32 @@ function WorkspaceCreateCommandProbe({ onResult }: { onResult: (result: unknown)
   return null;
 }
 
+function WorkspaceInitCommandProbe({
+  initialState,
+  onResult,
+}: {
+  initialState: VirtualWorkspaceInitialState;
+  onResult: (result: unknown) => void;
+}) {
+  const { executeCommand } = useWorkbench();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void executeCommand('workspace.init', initialState).then((result) => {
+      if (!cancelled) {
+        onResult(result);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [executeCommand, initialState, onResult]);
+
+  return null;
+}
+
 describe('WorkbenchProvider', () => {
   it('provides configured core registries to React children', () => {
     const markup = renderToStaticMarkup(
@@ -102,22 +131,22 @@ describe('WorkbenchProvider', () => {
   });
 
   it('renders the built-in explorer from the virtual workspace and opens files', async () => {
-    const workspaceHostPort = createWorkbenchWorkspaceHostPort({
-      initialState: {
-        expandedPaths: ['src'],
-        files: [
-          {
-            content: 'export const sample = true;',
-            path: 'src/App.tsx',
-          },
-          {
-            content: '{}',
-            path: 'config.json',
-          },
-        ],
-        folders: ['src'],
-      },
-    });
+    const workspaceHostPort = createWorkbenchWorkspaceHostPort();
+    const initialState = {
+      expandedPaths: ['src'],
+      files: [
+        {
+          content: 'export const sample = true;',
+          path: 'src/App.tsx',
+        },
+        {
+          content: '{}',
+          path: 'config.json',
+        },
+      ],
+      folders: ['src'],
+    } satisfies VirtualWorkspaceInitialState;
+    const commandResults: unknown[] = [];
     const container = document.createElement('div');
     document.body.append(container);
     const root = createRoot(container);
@@ -137,6 +166,12 @@ describe('WorkbenchProvider', () => {
           })}
           workspaceHostPort={workspaceHostPort}
         >
+          <WorkspaceInitCommandProbe
+            initialState={initialState}
+            onResult={(result) => {
+              commandResults.push(result);
+            }}
+          />
           <WorkbenchShell />
         </WorkbenchProvider>,
       );
@@ -147,6 +182,19 @@ describe('WorkbenchProvider', () => {
     expect(container.textContent).toContain('src');
     expect(container.textContent).toContain('App.tsx');
     expect(container.textContent).toContain('config.json');
+    expect(workspaceHostPort.service.getTransactionJournal()[0]).toMatchObject({
+      label: 'Initialize workspace',
+      mutations: [
+        {
+          state: initialState,
+          type: 'initialize-workspace',
+        },
+      ],
+    });
+    expect(commandResults[0]).toMatchObject({
+      paths: ['src', 'src/App.tsx', 'config.json'],
+      transactionId: expect.any(String),
+    });
 
     const appButton = findButtonByText(container, 'App.tsx');
     expect(appButton).toBeDefined();

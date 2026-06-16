@@ -1,10 +1,12 @@
 import type {
   CreateWorkspaceFileInput,
   VirtualWorkspaceAction,
+  VirtualWorkspaceInitialState,
   WriteWorkspaceFileInput,
 } from './virtualWorkspace.js';
 
 export type WorkspaceResourceMutation =
+  | { type: 'initialize-workspace'; state: VirtualWorkspaceInitialState }
   | { type: 'create-file'; path: string; file: CreateWorkspaceFileInput }
   | { type: 'save-file'; path: string; file: WriteWorkspaceFileInput }
   | { type: 'delete-file'; path: string }
@@ -18,6 +20,8 @@ export function workspaceResourceMutationToAction(
   mutation: WorkspaceResourceMutation,
 ): VirtualWorkspaceAction {
   switch (mutation.type) {
+    case 'initialize-workspace':
+      return { type: 'initialize-workspace', state: mutation.state };
     case 'create-file':
       return { type: 'create-file', file: mutation.file };
     case 'save-file':
@@ -50,6 +54,8 @@ export function virtualWorkspaceActionToResourceMutation(
   action: VirtualWorkspaceAction,
 ): WorkspaceResourceMutation | null {
   switch (action.type) {
+    case 'initialize-workspace':
+      return { type: 'initialize-workspace', state: action.state };
     case 'create-file':
       return { type: 'create-file', path: action.file.path, file: action.file };
     case 'save-file':
