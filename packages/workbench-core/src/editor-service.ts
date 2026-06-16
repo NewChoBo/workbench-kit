@@ -49,6 +49,7 @@ export interface MoveEditorOptions {
   readonly beforeGroupId?: string | undefined;
   readonly groupId?: string | undefined;
   readonly tabId?: string | undefined;
+  readonly targetIndex?: number | undefined;
 }
 
 export interface EditorChangeEvent {
@@ -175,16 +176,40 @@ export class EditorService implements Disposable {
       return undefined;
     }
 
+    const sourceTabIndex = sourceLocation.group.tabs.findIndex(
+      (tab) => tab.id === sourceLocation.tab.id,
+    );
     const targetGroupId = options.groupId ?? this.createEditorGroupId();
     const targetGroup = this.state.groups.find((group) => group.id === targetGroupId);
-    if (targetGroup?.id === sourceLocation.group.id) {
-      this.setActiveEditor(sourceLocation.tab.id);
-      return sourceLocation.tab;
-    }
 
     const nextSourceTabs = sourceLocation.group.tabs.filter(
       (tab) => tab.id !== sourceLocation.tab.id,
     );
+    if (targetGroup?.id === sourceLocation.group.id) {
+      if (options.targetIndex === undefined) {
+        return sourceLocation.tab;
+      }
+
+      const nextTargetIndex = normalizeEditorTabInsertIndex({
+        index: options.targetIndex,
+        sourceIndex: sourceTabIndex,
+        tabCount: sourceLocation.group.tabs.length,
+      });
+      const nextGroup: EditorGroupState = {
+        activeTabId: sourceLocation.tab.id,
+        id: sourceLocation.group.id,
+        tabs: insertEditorTabAt(nextSourceTabs, nextTargetIndex, sourceLocation.tab),
+      };
+
+      this.setState({
+        activeGroupId: sourceLocation.group.id,
+        groups: replaceGroup(this.state.groups, nextGroup),
+      });
+      return sourceLocation.tab;
+    }
+
+    const targetTabs = targetGroup?.tabs ?? [];
+    const targetIndex = clampEditorTabInsertIndex(options.targetIndex, targetTabs.length);
     const nextSourceGroup: EditorGroupState = {
       activeTabId:
         sourceLocation.group.activeTabId === sourceLocation.tab.id
@@ -196,7 +221,7 @@ export class EditorService implements Disposable {
     const nextTargetGroup: EditorGroupState = {
       activeTabId: sourceLocation.tab.id,
       id: targetGroupId,
-      tabs: targetGroup ? [...targetGroup.tabs, sourceLocation.tab] : [sourceLocation.tab],
+      tabs: insertEditorTabAt(targetTabs, targetIndex, sourceLocation.tab),
     };
 
     let nextGroups = this.state.groups
@@ -622,6 +647,37 @@ function insertGroupRelativeToAnchor({
   const copy = [...groups];
   copy.splice(insertionIndex, 0, nextGroup);
   return copy;
+}
+
+function clampEditorTabInsertIndex(index: number | undefined, tabCount: number): number {
+  if (index === undefined || !Number.isFinite(index)) {
+    return tabCount;
+  }
+
+  return Math.min(Math.max(Math.trunc(index), 0), tabCount);
+}
+
+function normalizeEditorTabInsertIndex({
+  index,
+  sourceIndex,
+  tabCount,
+}: {
+  index: number | undefined;
+  sourceIndex: number;
+  tabCount: number;
+}): number {
+  const clampedIndex = clampEditorTabInsertIndex(index, tabCount);
+  return clampedIndex > sourceIndex ? clampedIndex - 1 : clampedIndex;
+}
+
+function insertEditorTabAt(
+  tabs: readonly EditorTabState[],
+  index: number,
+  tab: EditorTabState,
+): EditorTabState[] {
+  const nextTabs = [...tabs];
+  nextTabs.splice(clampEditorTabInsertIndex(index, nextTabs.length), 0, tab);
+  return nextTabs;
 }
 
 function replacePreviewTabIfNeeded(

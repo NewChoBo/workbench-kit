@@ -58,6 +58,7 @@ export { ButtonGroup, EditorTabs, ResizablePanels, SegmentedControl } from './Wo
 export type {
   ButtonGroupProps,
   EditorTab,
+  EditorTabDropPosition,
   EditorTabsProps,
   ResizablePanelsProps,
   SegmentedControlOption,

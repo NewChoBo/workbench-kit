@@ -511,6 +511,7 @@ export {
 export type {
   ButtonGroupProps,
   EditorTab,
+  EditorTabDropPosition,
   EditorTabsProps,
   ResizablePanelsProps,
   SegmentedControlOption,

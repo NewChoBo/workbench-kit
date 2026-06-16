@@ -19,7 +19,12 @@ import {
   JDW_SCHEMA_DOCUMENT_FILE_EXTENSION,
   JDW_SCHEMA_DOCUMENT_MIME,
 } from '@workbench-kit/react/jdw/document';
-import { EditorTabs, ScrollArea, type EditorTab } from '@workbench-kit/react/primitives';
+import {
+  EditorTabs,
+  ScrollArea,
+  type EditorTab,
+  type EditorTabDropPosition,
+} from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import {
   codiconForFileKind,
@@ -200,12 +205,22 @@ function EditorGroupPane({
   const [modeToolbarHost, setModeToolbarHost] = useState<HTMLDivElement | null>(null);
   const [modeToolbarVisible, setModeToolbarVisible] = useState(false);
   const [dropSide, setDropSide] = useState<EditorTabDropSide | null>(null);
+  const [tabDropTarget, setTabDropTarget] = useState<{
+    position: EditorTabDropPosition;
+    tabId: string;
+  } | null>(null);
   const [tabContextMenu, setTabContextMenu] = useState<{
     tabId: string;
     x: number;
     y: number;
   } | null>(null);
-  const editorTabs = useMemo(() => tabs.map((tab) => toEditorTabModel(tab)), [tabs]);
+  const editorTabs = useMemo(
+    () =>
+      tabs.map((tab) =>
+        toEditorTabModel(tab, tabDropTarget?.tabId === tab.id ? tabDropTarget.position : undefined),
+      ),
+    [tabDropTarget, tabs],
+  );
 
   const handleModeToolbarHost = useCallback((node: HTMLDivElement | null) => {
     setModeToolbarHost(node);
@@ -234,6 +249,7 @@ function EditorGroupPane({
     (_tabId: string, _event: ReactDragEvent<HTMLElement>) => {
       onEditorTabDragEnd();
       setDropSide(null);
+      setTabDropTarget(null);
     },
     [onEditorTabDragEnd],
   );
@@ -252,6 +268,71 @@ function EditorGroupPane({
     [editorService],
   );
 
+  const handleTabDragOver = useCallback(
+    (targetTabId: string, event: ReactDragEvent<HTMLElement>) => {
+      const draggedTab = getDraggedEditorTab(event);
+      if (!draggedTab || draggedTab.tabId === targetTabId) {
+        setTabDropTarget(null);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.dataTransfer.dropEffect = 'move';
+      setDropSide(null);
+      setTabDropTarget({
+        position: getEditorTabDropPosition(event.currentTarget, event.clientX),
+        tabId: targetTabId,
+      });
+    },
+    [getDraggedEditorTab],
+  );
+
+  const handleTabDrop = useCallback(
+    (targetTabId: string, event: ReactDragEvent<HTMLElement>) => {
+      const draggedTab = getDraggedEditorTab(event);
+      if (!draggedTab || draggedTab.tabId === targetTabId) {
+        setTabDropTarget(null);
+        return;
+      }
+
+      const targetTabIndex = tabs.findIndex((tab) => tab.id === targetTabId);
+      if (targetTabIndex < 0) {
+        setTabDropTarget(null);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      const position =
+        tabDropTarget?.tabId === targetTabId
+          ? tabDropTarget.position
+          : getEditorTabDropPosition(event.currentTarget, event.clientX);
+
+      editorService.moveEditor({
+        groupId: group.id,
+        tabId: draggedTab.tabId,
+        targetIndex: position === 'after' ? targetTabIndex + 1 : targetTabIndex,
+      });
+      onEditorTabDragEnd();
+      setDropSide(null);
+      setTabDropTarget(null);
+    },
+    [editorService, getDraggedEditorTab, group.id, onEditorTabDragEnd, tabDropTarget, tabs],
+  );
+
+  const handleTabDragLeave = useCallback(
+    (targetTabId: string, event: ReactDragEvent<HTMLElement>) => {
+      const nextTarget = event.relatedTarget;
+      if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+        return;
+      }
+
+      setTabDropTarget((current) => (current?.tabId === targetTabId ? null : current));
+    },
+    [],
+  );
+
   const handleGroupDragOver = useCallback(
     (event: ReactDragEvent<HTMLElement>) => {
       if (!getDraggedEditorTab(event)) {
@@ -260,6 +341,7 @@ function EditorGroupPane({
 
       event.preventDefault();
       event.dataTransfer.dropEffect = 'move';
+      setTabDropTarget(null);
       setDropSide(getEditorTabDropSide(event.currentTarget, event.clientX));
     },
     [getDraggedEditorTab],
@@ -285,6 +367,7 @@ function EditorGroupPane({
       });
       onEditorTabDragEnd();
       setDropSide(null);
+      setTabDropTarget(null);
     },
     [dropSide, editorService, getDraggedEditorTab, group.id, onEditorTabDragEnd],
   );
@@ -296,6 +379,7 @@ function EditorGroupPane({
     }
 
     setDropSide(null);
+    setTabDropTarget(null);
   }, []);
 
   const contextTab = tabContextMenu
@@ -332,7 +416,10 @@ function EditorGroupPane({
         onTabContextMenu={handleTabContextMenu}
         onTabDoubleClick={handleTabDoubleClick}
         onTabDragEnd={handleTabDragEnd}
+        onTabDragLeave={handleTabDragLeave}
+        onTabDragOver={handleTabDragOver}
         onTabDragStart={handleTabDragStart}
+        onTabDrop={handleTabDrop}
         addons={
           activeTab && modeToolbarVisible ? (
             <div className="workbench-editor-area__group-actions">
@@ -733,10 +820,14 @@ function isJsonSourceDocument(document: { mimeType?: string | undefined; path: s
   return document.path.toLowerCase().endsWith('.json') || Boolean(mimeType?.includes('json'));
 }
 
-function toEditorTabModel(tab: EditorTabState): EditorTab {
+function toEditorTabModel(
+  tab: EditorTabState,
+  dropPosition?: EditorTabDropPosition | undefined,
+): EditorTab {
   return {
     closable: true,
     dirty: tab.dirty,
+    dropPosition,
     icon: tab.icon ?? iconForEditorTab(tab),
     id: tab.id,
     label: tab.title ?? getResourceLabel(tab.resourceUri),
@@ -821,6 +912,15 @@ function getEditorTabDropSide(target: HTMLElement, clientX: number): EditorTabDr
   }
 
   return 'center';
+}
+
+function getEditorTabDropPosition(target: HTMLElement, clientX: number): EditorTabDropPosition {
+  const rect = target.getBoundingClientRect();
+  if (rect.width <= 0) {
+    return 'after';
+  }
+
+  return clientX < rect.left + rect.width / 2 ? 'before' : 'after';
 }
 
 function iconForEditorTab(tab: EditorTabState): string {

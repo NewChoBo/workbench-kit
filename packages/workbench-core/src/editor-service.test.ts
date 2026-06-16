@@ -298,4 +298,70 @@ describe('EditorService', () => {
     ]);
     expect(service.createEditorHost(first.id)).toBe(firstHost);
   });
+
+  it('reorders editor tabs within the same group', () => {
+    const editorHostFactories = createEditorHostFactoryRegistry();
+    const editorResolvers = createEditorResolverRegistry();
+    editorResolvers.register({
+      id: 'workspace-file',
+      resolve: () => 'workbench.editor.text',
+    });
+
+    const service = createEditorService({
+      editorHostFactories,
+      editorResolvers,
+    });
+
+    const first = service.openEditor({
+      pinned: true,
+      resourceUri: 'workspace://file/a.ts',
+      title: 'a.ts',
+    });
+    const second = service.openEditor({
+      pinned: true,
+      resourceUri: 'workspace://file/b.ts',
+      title: 'b.ts',
+    });
+    const third = service.openEditor({
+      pinned: true,
+      resourceUri: 'workspace://file/c.ts',
+      title: 'c.ts',
+    });
+
+    service.moveEditor({
+      groupId: DEFAULT_EDITOR_GROUP_ID,
+      tabId: third.id,
+      targetIndex: 0,
+    });
+
+    expect(service.getState().groups[0]?.tabs.map((tab) => tab.id)).toEqual([
+      third.id,
+      first.id,
+      second.id,
+    ]);
+    expect(service.getState().groups[0]?.activeTabId).toBe(third.id);
+
+    service.moveEditor({
+      groupId: DEFAULT_EDITOR_GROUP_ID,
+      tabId: third.id,
+      targetIndex: 3,
+    });
+
+    expect(service.getState().groups[0]?.tabs.map((tab) => tab.id)).toEqual([
+      first.id,
+      second.id,
+      third.id,
+    ]);
+
+    service.moveEditor({
+      groupId: DEFAULT_EDITOR_GROUP_ID,
+      tabId: first.id,
+    });
+
+    expect(service.getState().groups[0]?.tabs.map((tab) => tab.id)).toEqual([
+      first.id,
+      second.id,
+      third.id,
+    ]);
+  });
 });
