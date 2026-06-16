@@ -30,6 +30,7 @@ vi.mock('@monaco-editor/react', () => ({
 
 vi.mock('monaco-editor', () => ({}));
 
+import { WORKSPACE_EXPLORER_DRAG_DATA_TYPE } from '@workbench-kit/react/workbench/workspace/explorer';
 import { EditorArea } from './editor-area.js';
 import type { EditorDocumentViewProvider } from './editor-view-providers.js';
 import { WorkbenchProvider } from './provider.js';
@@ -349,6 +350,27 @@ describe('EditorArea', () => {
 
     expect(getTabLabels(container)).toEqual(['app.ts', 'README.md', 'config.json']);
 
+    const noopSourceTab = findTabByLabel(container, 'app.ts');
+    const noopTargetTab = findTabByLabel(container, 'README.md');
+    const noopDataTransfer = createTestDataTransfer();
+    setElementRect(noopTargetTab, { height: 34, left: 180, top: 0, width: 180 });
+
+    await act(async () => {
+      dispatchTestDragEvent(noopSourceTab, 'dragstart', noopDataTransfer, { clientX: 80 });
+      dispatchTestDragEvent(noopTargetTab, 'dragover', noopDataTransfer, { clientX: 188 });
+    });
+
+    expect(findTabByLabel(container, 'README.md')?.getAttribute('data-drop-position')).toBeNull();
+    expect(noopDataTransfer.dropEffect).toBe('none');
+
+    await act(async () => {
+      dispatchTestDragEvent(noopTargetTab, 'drop', noopDataTransfer, { clientX: 188 });
+    });
+
+    await flushReactEffects();
+
+    expect(getTabLabels(container)).toEqual(['app.ts', 'README.md', 'config.json']);
+
     const sourceTab = findTabByLabel(container, 'config.json');
     const targetTab = findTabByLabel(container, 'app.ts');
     const dataTransfer = createTestDataTransfer();
@@ -369,6 +391,33 @@ describe('EditorArea', () => {
     await flushReactEffects();
 
     expect(getTabLabels(container)).toEqual(['config.json', 'app.ts', 'README.md']);
+
+    const tabScroller = container.querySelector('.ui-editor-tabs__scroller');
+    const appendDataTransfer = createTestDataTransfer();
+    setElementRect(tabScroller, { height: 34, left: 0, top: 0, width: 720 });
+
+    await act(async () => {
+      dispatchTestDragEvent(
+        findTabByLabel(container, 'config.json'),
+        'dragstart',
+        appendDataTransfer,
+        { clientX: 80 },
+      );
+      dispatchTestDragEvent(tabScroller, 'dragover', appendDataTransfer, { clientX: 680 });
+    });
+
+    expect(findTabByLabel(container, 'README.md')?.getAttribute('data-drop-position')).toBe(
+      'after',
+    );
+    expect(appendDataTransfer.dropEffect).toBe('move');
+
+    await act(async () => {
+      dispatchTestDragEvent(tabScroller, 'drop', appendDataTransfer, { clientX: 680 });
+    });
+
+    await flushReactEffects();
+
+    expect(getTabLabels(container)).toEqual(['app.ts', 'README.md', 'config.json']);
 
     await act(async () => {
       root.unmount();
@@ -462,6 +511,129 @@ describe('EditorArea', () => {
     expect(getTabLabels(container)).toEqual(['app.ts']);
     expect(container.querySelector('.ui-editor-tabs__dirty')).toBeNull();
     expect(container.querySelector('[data-testid="monaco-editor"]')).not.toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('keeps internal drag payloads from reaching the Monaco host', async () => {
+    function OpenEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/src/app.ts') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/src/app.ts',
+            title: 'app.ts',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <OpenEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, '.workspace-editor__monaco');
+
+    const tab = findTabByLabel(container, 'app.ts');
+    const groupBody = container.querySelector('.workbench-editor-area__group-body');
+    const monacoHost = container.querySelector('.workspace-editor__monaco');
+    const receivedEvents: string[] = [];
+    monacoHost?.addEventListener('dragover', () => receivedEvents.push('dragover'));
+    monacoHost?.addEventListener('drop', () => receivedEvents.push('drop'));
+    setElementRect(groupBody, { height: 420, left: 0, top: 34, width: 360 });
+
+    const tabDataTransfer = createTestDataTransfer();
+
+    await act(async () => {
+      dispatchTestDragEvent(tab, 'dragstart', tabDataTransfer, { clientX: 80 });
+    });
+
+    const tabDragOverEvents: Array<DragEvent | null> = [];
+    const tabDropEvents: Array<DragEvent | null> = [];
+    await act(async () => {
+      tabDragOverEvents.push(
+        dispatchTestDragEvent(monacoHost, 'dragover', tabDataTransfer, { clientX: 180 }),
+      );
+      tabDropEvents.push(
+        dispatchTestDragEvent(monacoHost, 'drop', tabDataTransfer, { clientX: 180 }),
+      );
+    });
+
+    expect(tabDragOverEvents[0]?.defaultPrevented).toBe(true);
+    expect(tabDropEvents[0]?.defaultPrevented).toBe(true);
+    expect(receivedEvents).toEqual([]);
+    expect(getTabLabels(container)).toEqual(['app.ts']);
+    expect(container.querySelector('.ui-editor-tabs__dirty')).toBeNull();
+
+    const workspaceDataTransfer = createTestDataTransfer();
+    workspaceDataTransfer.setData(
+      WORKSPACE_EXPLORER_DRAG_DATA_TYPE,
+      JSON.stringify(['src/app.ts']),
+    );
+    workspaceDataTransfer.setData('text/plain', 'src/app.ts');
+
+    const workspaceDragOverEvents: Array<DragEvent | null> = [];
+    const workspaceDropEvents: Array<DragEvent | null> = [];
+    await act(async () => {
+      workspaceDragOverEvents.push(
+        dispatchTestDragEvent(monacoHost, 'dragover', workspaceDataTransfer, { clientX: 180 }),
+      );
+      workspaceDropEvents.push(
+        dispatchTestDragEvent(monacoHost, 'drop', workspaceDataTransfer, { clientX: 180 }),
+      );
+    });
+
+    expect(workspaceDragOverEvents[0]?.defaultPrevented).toBe(true);
+    expect(workspaceDropEvents[0]?.defaultPrevented).toBe(true);
+    expect(workspaceDataTransfer.dropEffect).toBe('none');
+    expect(receivedEvents).toEqual([]);
+
+    const externalDataTransfer = createTestDataTransfer();
+    externalDataTransfer.setData('text/plain', 'external text');
+
+    await act(async () => {
+      dispatchTestDragEvent(monacoHost, 'dragover', externalDataTransfer, { clientX: 180 });
+    });
+
+    expect(receivedEvents).toEqual(['dragover']);
 
     await act(async () => {
       root.unmount();
@@ -1110,7 +1282,9 @@ function createTestDataTransfer(): DataTransfer {
       data.set(format, value);
     },
     setDragImage: () => undefined,
-    types: [],
+    get types() {
+      return Array.from(data.keys());
+    },
   };
 }
 
