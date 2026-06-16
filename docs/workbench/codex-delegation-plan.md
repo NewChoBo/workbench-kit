@@ -77,18 +77,31 @@ f1ab57e docs(workbench): add JDW architecture and Figma authoring analysis
 
 ## 3. Architecture Constraints (MUST)
 
-| #   | Constraint                                                  | Rationale                                                                   |
-| --- | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
-| 1   | **`workbench-core` stays React-free**                       | No React imports in `packages/workbench-core/`                              |
-| 2   | **`@workbench-kit/react` does not import `workbench-core`** | Dependency graph enforced by `scripts/check-workbench-dependency-graph.mjs` |
-| 3   | **JDW v7 canonical for widget persistence**                 | Widget files use JDW only; no `WorkbenchDocument` persistence               |
-| 4   | **No git subtree / no `@workbench-kit/jdw-react` split**    | React JDW stays `packages/react/src/jdw/`                                   |
-| 5   | **Strategy A render target**                                | `layoutWidget` + `cssRenderBackend`; registry = leaf custom tags only (D2)  |
-| 6   | **English UI strings**                                      | Sample host and Storybook labels in English; i18n deferred (Lane C)         |
-| 7   | **`WorkspaceResourceUri` for virtual workspace**            | `workspace://file/...` for explorer/editor binding                          |
-| 8   | **Editor-local dirty until WB-15**                          | No global dirty guard dialog                                                |
-| 9   | **Extensions deps**                                         | `base`, `platform`, `react`, `workbench-extension-sdk` only                 |
-| 10  | **Product-neutral APIs**                                    | No application names, private paths, or domain schemas in public kit        |
+| #   | Constraint                                                  | Rationale                                                                                                |
+| --- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| 1   | **`workbench-core` stays React-free**                       | No React imports in `packages/workbench-core/`                                                           |
+| 2   | **`@workbench-kit/react` does not import `workbench-core`** | Dependency graph enforced by `scripts/check-workbench-dependency-graph.mjs`                              |
+| 3   | **JDW v7 canonical for widget persistence**                 | Widget files use JDW only; no `WorkbenchDocument` persistence                                            |
+| 4   | **No git subtree / no `@workbench-kit/jdw-react` split**    | React JDW stays `packages/react/src/jdw/`                                                                |
+| 5   | **Strategy A render target**                                | `layoutWidget` + `cssRenderBackend`; registry = leaf custom tags only (D2)                               |
+| 6   | **English UI strings**                                      | Sample host and Storybook labels in English; i18n deferred (Lane C)                                      |
+| 7   | **`WorkspaceResourceUri` for virtual workspace**            | `workspace://file/...` for explorer/editor binding                                                       |
+| 8   | **Editor-local dirty until WB-15**                          | No global dirty guard dialog                                                                             |
+| 9   | **Extensions deps**                                         | `base`, `platform`, `react`, `workbench-extension-sdk` only                                              |
+| 10  | **Product-neutral APIs**                                    | No application names, private paths, or domain schemas in public kit                                     |
+| 11  | **Existing logic first**                                    | Inventory same-domain services, commands, registries, and primitives before adding new local state paths |
+
+### Existing-Logic Guardrail
+
+Before implementing a UX change, first identify the owner of the behavior:
+headless service, command handler, registry, resource transaction, or React
+primitive. Reuse that owner when it exists; if the owner is missing a capability,
+extend it there before wiring component-level UI.
+
+For editor, explorer, split, DnD, and settings flows, React components should
+not create parallel state transitions that bypass the canonical service or
+command path. Add tests that cover both directions of the interaction, for
+example split out and move back in, so copy-vs-move regressions are caught.
 
 ---
 

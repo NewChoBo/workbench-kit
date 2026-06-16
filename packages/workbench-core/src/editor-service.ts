@@ -44,6 +44,13 @@ export interface SplitEditorOptions {
   readonly tabId?: string | undefined;
 }
 
+export interface MoveEditorOptions {
+  readonly afterGroupId?: string | undefined;
+  readonly beforeGroupId?: string | undefined;
+  readonly groupId?: string | undefined;
+  readonly tabId?: string | undefined;
+}
+
 export interface EditorChangeEvent {
   readonly previousState: EditorState;
   readonly state: EditorState;
@@ -159,6 +166,74 @@ export class EditorService implements Disposable {
     copyEditorHostState(sourceHost, targetHost, nextTab.dirty);
 
     return nextTab;
+  }
+
+  moveEditor(options: MoveEditorOptions = {}): EditorTabState | undefined {
+    const sourceTabId = options.tabId ?? this.getActiveTab()?.id;
+    const sourceLocation = sourceTabId ? this.findTabLocation(sourceTabId) : undefined;
+    if (!sourceLocation) {
+      return undefined;
+    }
+
+    const targetGroupId = options.groupId ?? this.createEditorGroupId();
+    const targetGroup = this.state.groups.find((group) => group.id === targetGroupId);
+    if (targetGroup?.id === sourceLocation.group.id) {
+      this.setActiveEditor(sourceLocation.tab.id);
+      return sourceLocation.tab;
+    }
+
+    const nextSourceTabs = sourceLocation.group.tabs.filter(
+      (tab) => tab.id !== sourceLocation.tab.id,
+    );
+    const nextSourceGroup: EditorGroupState = {
+      activeTabId:
+        sourceLocation.group.activeTabId === sourceLocation.tab.id
+          ? nextSourceTabs[nextSourceTabs.length - 1]?.id
+          : sourceLocation.group.activeTabId,
+      id: sourceLocation.group.id,
+      tabs: nextSourceTabs,
+    };
+    const nextTargetGroup: EditorGroupState = {
+      activeTabId: sourceLocation.tab.id,
+      id: targetGroupId,
+      tabs: targetGroup ? [...targetGroup.tabs, sourceLocation.tab] : [sourceLocation.tab],
+    };
+
+    let nextGroups = this.state.groups
+      .map((group) => {
+        if (group.id === sourceLocation.group.id) {
+          return nextSourceGroup;
+        }
+
+        if (targetGroup && group.id === targetGroup.id) {
+          return nextTargetGroup;
+        }
+
+        return group;
+      })
+      .filter(
+        (group) =>
+          group.id !== sourceLocation.group.id ||
+          group.tabs.length > 0 ||
+          group.id === DEFAULT_EDITOR_GROUP_ID,
+      );
+
+    if (!targetGroup) {
+      nextGroups = insertGroupRelativeToAnchor({
+        anchorGroupId: options.beforeGroupId ?? options.afterGroupId ?? sourceLocation.group.id,
+        before: Boolean(options.beforeGroupId),
+        groups: nextGroups,
+        nextGroup: nextTargetGroup,
+        originalGroups: this.state.groups,
+      });
+    }
+
+    this.setState({
+      activeGroupId: targetGroupId,
+      groups: nextGroups,
+    });
+
+    return sourceLocation.tab;
   }
 
   closeEditor(tabId: string): void {
@@ -512,6 +587,40 @@ function insertGroupBefore(
 
   const copy = [...groups];
   copy.splice(anchorIndex, 0, nextGroup);
+  return copy;
+}
+
+function insertGroupRelativeToAnchor({
+  anchorGroupId,
+  before,
+  groups,
+  nextGroup,
+  originalGroups,
+}: {
+  anchorGroupId: string;
+  before: boolean;
+  groups: readonly EditorGroupState[];
+  nextGroup: EditorGroupState;
+  originalGroups: readonly EditorGroupState[];
+}): EditorGroupState[] {
+  const anchorIndex = groups.findIndex((group) => group.id === anchorGroupId);
+  if (anchorIndex >= 0) {
+    return before
+      ? insertGroupBefore(groups, anchorGroupId, nextGroup)
+      : insertGroupAfter(groups, anchorGroupId, nextGroup);
+  }
+
+  const originalAnchorIndex = originalGroups.findIndex((group) => group.id === anchorGroupId);
+  if (originalAnchorIndex < 0) {
+    return before ? [nextGroup, ...groups] : [...groups, nextGroup];
+  }
+
+  const retainedGroupIds = new Set(groups.map((group) => group.id));
+  const insertionIndex = originalGroups
+    .slice(0, originalAnchorIndex)
+    .filter((group) => retainedGroupIds.has(group.id)).length;
+  const copy = [...groups];
+  copy.splice(insertionIndex, 0, nextGroup);
   return copy;
 }
 

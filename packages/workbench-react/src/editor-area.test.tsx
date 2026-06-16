@@ -156,7 +156,7 @@ describe('EditorArea', () => {
     container.remove();
   });
 
-  it('splits an editor tab into an adjacent group by dragging onto the editor group', async () => {
+  it('moves editor tabs through DnD split and back into existing groups', async () => {
     function OpenEditorProbe() {
       const editorService = useEditorService();
 
@@ -179,6 +179,11 @@ describe('EditorArea', () => {
             pinned: true,
             resourceUri: 'workspace://file/src/app.ts',
             title: 'app.ts',
+          });
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/README.md',
+            title: 'README.md',
           });
         })();
 
@@ -210,15 +215,16 @@ describe('EditorArea', () => {
     await flushReactEffects();
     await waitForSelector(container, '[role="tab"]');
 
-    const tab = container.querySelector('[role="tab"]') as HTMLElement | null;
+    const tab = findTabByLabel(container, 'app.ts');
     const groupPane = container.querySelector(
       '.workbench-editor-area__group-pane',
     ) as HTMLElement | null;
     const dataTransfer = createTestDataTransfer();
+    setElementRect(groupPane, { height: 480, left: 0, top: 0, width: 360 });
 
     await act(async () => {
-      dispatchTestDragEvent(tab, 'dragstart', dataTransfer);
-      dispatchTestDragEvent(groupPane, 'dragover', dataTransfer);
+      dispatchTestDragEvent(tab, 'dragstart', dataTransfer, { clientX: 48 });
+      dispatchTestDragEvent(groupPane, 'dragover', dataTransfer, { clientX: 340 });
     });
 
     expect(
@@ -233,17 +239,43 @@ describe('EditorArea', () => {
     ).toBeNull();
 
     await act(async () => {
-      dispatchTestDragEvent(groupPane, 'drop', dataTransfer);
+      dispatchTestDragEvent(groupPane, 'drop', dataTransfer, { clientX: 340 });
     });
 
     await flushReactEffects();
 
-    expect(container.querySelector('button[aria-label="Split editor right"]')).toBeNull();
     expect(container.querySelector('.workbench-editor-area__group-split')).not.toBeNull();
     expect(container.querySelectorAll('.workbench-editor-area__group-pane')).toHaveLength(2);
     expect(container.querySelectorAll('[role="tablist"]')).toHaveLength(2);
     expect(container.querySelectorAll('[data-testid="monaco-editor"]')).toHaveLength(2);
-    expect(container.querySelectorAll('[role="tab"] .codicon-symbol-class')).toHaveLength(2);
+    expect(findTabsByLabel(container, 'app.ts')).toHaveLength(1);
+    expect(findTabsByLabel(container, 'README.md')).toHaveLength(1);
+
+    const splitPanes = Array.from(
+      container.querySelectorAll('.workbench-editor-area__group-pane'),
+    ) as HTMLElement[];
+    expect(getTabLabels(splitPanes[0])).toEqual(['README.md']);
+    expect(getTabLabels(splitPanes[1])).toEqual(['app.ts']);
+
+    const movedTab = findTabByLabel(splitPanes[1], 'app.ts');
+    const mergeTargetPane = splitPanes[0] ?? null;
+    const mergeDataTransfer = createTestDataTransfer();
+    setElementRect(mergeTargetPane, { height: 480, left: 0, top: 0, width: 360 });
+
+    await act(async () => {
+      dispatchTestDragEvent(movedTab, 'dragstart', mergeDataTransfer, { clientX: 340 });
+      dispatchTestDragEvent(mergeTargetPane, 'dragover', mergeDataTransfer, { clientX: 180 });
+      dispatchTestDragEvent(mergeTargetPane, 'drop', mergeDataTransfer, { clientX: 180 });
+    });
+
+    await flushReactEffects();
+
+    expect(container.querySelectorAll('.workbench-editor-area__group-pane')).toHaveLength(1);
+    expect(container.querySelectorAll('[role="tablist"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-testid="monaco-editor"]')).toHaveLength(1);
+    expect(findTabsByLabel(container, 'app.ts')).toHaveLength(1);
+    expect(findTabsByLabel(container, 'README.md')).toHaveLength(1);
+    expect(getTabLabels(container)).toEqual(['README.md', 'app.ts']);
 
     await act(async () => {
       root.unmount();
@@ -821,6 +853,48 @@ async function waitForSelector(container: HTMLElement, selector: string): Promis
   }
 }
 
+function findTabByLabel(container: ParentNode | null, label: string): HTMLElement | null {
+  return findTabsByLabel(container, label)[0] ?? null;
+}
+
+function findTabsByLabel(container: ParentNode | null, label: string): HTMLElement[] {
+  if (!container) return [];
+
+  return Array.from(container.querySelectorAll('[role="tab"]')).filter(
+    (tab): tab is HTMLElement => tab instanceof HTMLElement && tab.textContent?.trim() === label,
+  );
+}
+
+function getTabLabels(container: ParentNode | null): string[] {
+  if (!container) return [];
+
+  return Array.from(container.querySelectorAll('[role="tab"]')).map(
+    (tab) => tab.textContent?.trim() ?? '',
+  );
+}
+
+function setElementRect(
+  element: Element | null,
+  rect: { height: number; left: number; top: number; width: number },
+): void {
+  if (!element) return;
+
+  Object.defineProperty(element, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      bottom: rect.top + rect.height,
+      height: rect.height,
+      left: rect.left,
+      right: rect.left + rect.width,
+      toJSON: () => undefined,
+      top: rect.top,
+      width: rect.width,
+      x: rect.left,
+      y: rect.top,
+    }),
+  });
+}
+
 function createTestDataTransfer(): DataTransfer {
   if (typeof DataTransfer !== 'undefined') return new DataTransfer();
 
@@ -850,12 +924,13 @@ function dispatchTestDragEvent(
   target: Element | null,
   type: string,
   dataTransfer: DataTransfer,
+  options: { clientX?: number; clientY?: number } = {},
 ): void {
   if (!target) return;
 
   const event = new Event(type, { bubbles: true, cancelable: true }) as DragEvent;
-  Object.defineProperty(event, 'clientX', { value: 120 });
-  Object.defineProperty(event, 'clientY', { value: 60 });
+  Object.defineProperty(event, 'clientX', { value: options.clientX ?? 120 });
+  Object.defineProperty(event, 'clientY', { value: options.clientY ?? 60 });
   Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
   target.dispatchEvent(event);
 }
