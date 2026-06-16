@@ -17,6 +17,8 @@
 }
 
 .workbench-editor-area__content {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -57,6 +59,9 @@
 }
 
 .workbench-editor-area__host {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
   height: 100%;
   min-height: 0;
   padding: 16px;
@@ -64,7 +69,9 @@
 
 .workbench-editor-area__text-editor {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-width: 0;
   height: 100%;
   min-height: 0;
 }
