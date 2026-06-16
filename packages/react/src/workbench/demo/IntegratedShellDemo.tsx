@@ -664,7 +664,7 @@ export function IntegratedShellDemo({
         <ConfirmDialog
           confirmLabel="Delete"
           detail={
-            <div className="workbench-delete-targets">
+            <div className="workbench-delete-targets ui-workbench-scrollbar">
               {pendingDelete.paths.map((path) => (
                 <code key={path}>{path}</code>
               ))}

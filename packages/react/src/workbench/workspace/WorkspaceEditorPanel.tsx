@@ -219,7 +219,7 @@ export function WorkspaceEditorPanel({
             <div className="workspace-editor__tabbar">
               <div
                 aria-label="Open workspace files"
-                className="workspace-editor__tabs"
+                className="workspace-editor__tabs ui-workbench-scrollbar--hidden"
                 role="tablist"
                 onContextMenu={(event) => handleTabContextMenu(event, null)}
               >

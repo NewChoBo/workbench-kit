@@ -118,7 +118,6 @@
 .panel-body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
 }
 
 .panel-footer {
@@ -4926,7 +4925,6 @@
   height: 100%;
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
   background: var(--vscode-sideBar-background, var(--color-surface));
 }
 
@@ -4988,7 +4986,6 @@
   flex: 1;
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
 }
 
 .ui-workbench-section-title {

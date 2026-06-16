@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef, CSSProperties, ReactNode } from 'react';
+import { ScrollArea } from '../primitives/ScrollArea';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import { toLengthValue } from './layoutHelpers';
@@ -43,13 +44,15 @@ export function WorkbenchPanelSurface({
   ...props
 }: WorkbenchPanelSurfaceProps) {
   return (
-    <div
+    <ScrollArea
       className={cx(
         'ui-workbench-panel-surface',
         border === 'left' && 'ui-workbench-panel-surface--border-left',
         border === 'right' && 'ui-workbench-panel-surface--border-right',
         className,
       )}
+      gutter="auto"
+      orientation="vertical"
       {...props}
     />
   );
@@ -58,7 +61,14 @@ export function WorkbenchPanelSurface({
 export type WorkbenchPanelScrollProps = ComponentPropsWithRef<'div'>;
 
 export function WorkbenchPanelScroll({ className, ...props }: WorkbenchPanelScrollProps) {
-  return <div className={cx('ui-workbench-panel-scroll', className)} {...props} />;
+  return (
+    <ScrollArea
+      className={cx('ui-workbench-panel-scroll', className)}
+      gutter="auto"
+      orientation="vertical"
+      {...props}
+    />
+  );
 }
 
 export interface WorkbenchBannerProps extends ComponentPropsWithRef<'div'> {

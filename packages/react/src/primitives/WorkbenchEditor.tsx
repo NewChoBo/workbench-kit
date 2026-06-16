@@ -114,7 +114,7 @@ export function EditorTabs({
 }: EditorTabsProps) {
   return (
     <div className={cx('ui-editor-tabs', className)} role="tablist" {...props}>
-      <div className="ui-editor-tabs__scroller">
+      <div className="ui-editor-tabs__scroller ui-workbench-scrollbar--hidden">
         {tabs.map((tab) => {
           const active = tab.id === activeId;
           return (
