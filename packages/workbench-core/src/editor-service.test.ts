@@ -100,6 +100,16 @@ describe('EditorService', () => {
     const tab = service.getState().groups[0]?.tabs[0];
     expect(tab?.preview).toBe(false);
     expect(tab?.pinned).toBe(true);
+
+    service.togglePinnedEditor(secondPreview.id);
+    const unpinned = service.getState().groups[0]?.tabs[0];
+    expect(unpinned?.preview).toBe(true);
+    expect(unpinned?.pinned).toBe(false);
+
+    service.togglePinnedEditor(secondPreview.id);
+    const pinnedAgain = service.getState().groups[0]?.tabs[0];
+    expect(pinnedAgain?.preview).toBe(false);
+    expect(pinnedAgain?.pinned).toBe(true);
   });
 
   it('tracks dirty state and closes tabs', () => {
@@ -198,5 +208,19 @@ describe('EditorService', () => {
     expect(state.groups[1]?.tabs.map((tab) => tab.id)).toEqual([split?.id]);
     expect(state.activeGroupId).toBe(state.groups[1]?.id);
     expect(service.createEditorHost(split?.id ?? '')?.render()).toBe('unsaved split content');
+
+    const inserted = service.splitEditor({
+      beforeGroupId: state.groups[1]?.id,
+      tabId: opened.id,
+    });
+    const nextState = service.getState();
+
+    expect(inserted).toBeDefined();
+    expect(nextState.groups).toHaveLength(3);
+    expect(nextState.groups.map((group) => group.tabs[0]?.id)).toEqual([
+      opened.id,
+      inserted?.id,
+      split?.id,
+    ]);
   });
 });

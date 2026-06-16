@@ -2,7 +2,9 @@ import { useRef, useState } from 'react';
 import type {
   CSSProperties,
   ComponentPropsWithRef,
+  DragEvent as ReactDragEvent,
   KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from 'react';
@@ -82,9 +84,15 @@ export interface EditorTab {
 export interface EditorTabsProps extends Omit<ComponentPropsWithRef<'div'>, 'onSelect'> {
   activeId: string;
   addons?: ReactNode | undefined;
+  draggableTabs?: boolean | undefined;
   onClose?: ((id: string) => void) | undefined;
   onNewTab?: (() => void) | undefined;
+  onPinToggle?: ((id: string) => void) | undefined;
   onSelect: (id: string) => void;
+  onTabContextMenu?: ((id: string, event: ReactMouseEvent<HTMLElement>) => void) | undefined;
+  onTabDoubleClick?: ((id: string, event: ReactMouseEvent<HTMLElement>) => void) | undefined;
+  onTabDragEnd?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
+  onTabDragStart?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
   tabs: readonly EditorTab[];
 }
 
@@ -92,9 +100,15 @@ export function EditorTabs({
   activeId,
   addons,
   className,
+  draggableTabs,
   onClose,
   onNewTab,
+  onPinToggle,
   onSelect,
+  onTabContextMenu,
+  onTabDoubleClick,
+  onTabDragEnd,
+  onTabDragStart,
   tabs,
   ...props
 }: EditorTabsProps) {
@@ -108,7 +122,20 @@ export function EditorTabs({
               key={tab.id}
               aria-selected={active}
               className={cx('ui-editor-tabs__tab', active && 'ui-editor-tabs__tab--active')}
+              draggable={draggableTabs}
               onClick={() => onSelect(tab.id)}
+              onContextMenu={(event) => {
+                onTabContextMenu?.(tab.id, event);
+              }}
+              onDoubleClick={(event) => {
+                onTabDoubleClick?.(tab.id, event);
+              }}
+              onDragEnd={(event) => {
+                onTabDragEnd?.(tab.id, event);
+              }}
+              onDragStart={(event) => {
+                onTabDragStart?.(tab.id, event);
+              }}
               onKeyDown={(event) => {
                 if (event.key !== 'Enter' && event.key !== ' ') return;
                 event.preventDefault();
@@ -138,14 +165,36 @@ export function EditorTabs({
                 </span>
               ) : null}
               {tab.pinned ? (
-                <i
-                  aria-hidden
-                  className={cxCodicon(
-                    'pinned',
-                    'ui-editor-tabs__status-icon',
-                    'ui-editor-tabs__status-icon--pinned',
-                  )}
-                />
+                onPinToggle ? (
+                  <button
+                    aria-label="Unpin tab"
+                    className="ui-editor-tabs__status-button"
+                    title="Unpin tab"
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onPinToggle(tab.id);
+                    }}
+                  >
+                    <i
+                      aria-hidden
+                      className={cxCodicon(
+                        'pinned',
+                        'ui-editor-tabs__status-icon',
+                        'ui-editor-tabs__status-icon--pinned',
+                      )}
+                    />
+                  </button>
+                ) : (
+                  <i
+                    aria-hidden
+                    className={cxCodicon(
+                      'pinned',
+                      'ui-editor-tabs__status-icon',
+                      'ui-editor-tabs__status-icon--pinned',
+                    )}
+                  />
+                )
               ) : null}
               {(tab.closable ?? true) && onClose ? (
                 <IconButton

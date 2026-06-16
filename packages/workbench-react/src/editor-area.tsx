@@ -7,9 +7,12 @@ import {
   useMemo,
   useRef,
   useState,
+  type DragEvent as ReactDragEvent,
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { ContextMenu, type ContextMenuItem } from '@workbench-kit/react/overlay';
 import {
   JDW_DOCUMENT_FILE_EXTENSION,
   JDW_DOCUMENT_MIME,
@@ -44,6 +47,15 @@ const WorkspaceEditor = lazy(async () => {
   return { default: module.WorkspaceEditor };
 });
 
+const EDITOR_TAB_DRAG_DATA_TYPE = 'application/x-workbench-kit-editor-tab';
+
+interface EditorTabDragPayload {
+  groupId: string;
+  tabId: string;
+}
+
+type EditorTabDropSide = 'left' | 'right';
+
 export interface EditorAreaProps {
   emptyState?: ReactNode | undefined;
   viewProviders?: readonly EditorDocumentViewProvider[] | undefined;
@@ -52,6 +64,29 @@ export interface EditorAreaProps {
 export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
   const editorState = useEditorState();
   const editorGroups = editorState.groups.filter((group) => group.tabs.length > 0);
+  const draggedEditorTabRef = useRef<EditorTabDragPayload | null>(null);
+
+  const handleEditorTabDragStart = useCallback(
+    (payload: EditorTabDragPayload, event: ReactDragEvent<HTMLElement>) => {
+      draggedEditorTabRef.current = payload;
+      event.dataTransfer.effectAllowed = 'copyMove';
+      event.dataTransfer.setData(EDITOR_TAB_DRAG_DATA_TYPE, JSON.stringify(payload));
+      event.dataTransfer.setData('text/plain', payload.tabId);
+    },
+    [],
+  );
+
+  const handleEditorTabDragEnd = useCallback(() => {
+    draggedEditorTabRef.current = null;
+  }, []);
+
+  const getDraggedEditorTab = useCallback((event?: ReactDragEvent<HTMLElement>) => {
+    if (draggedEditorTabRef.current) {
+      return draggedEditorTabRef.current;
+    }
+
+    return event ? readEditorTabDragPayload(event) : null;
+  }, []);
 
   if (editorGroups.length === 0) {
     return (
@@ -70,7 +105,10 @@ export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
       <div className="workbench-editor-area__content">
         <EditorGroupSplit
           activeGroupId={editorState.activeGroupId}
+          getDraggedEditorTab={getDraggedEditorTab}
           groups={editorGroups}
+          onEditorTabDragEnd={handleEditorTabDragEnd}
+          onEditorTabDragStart={handleEditorTabDragStart}
           viewProviders={viewProviders}
         />
       </div>
@@ -80,11 +118,17 @@ export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
 
 function EditorGroupSplit({
   activeGroupId,
+  getDraggedEditorTab,
   groups,
+  onEditorTabDragEnd,
+  onEditorTabDragStart,
   viewProviders,
 }: {
   activeGroupId: string | undefined;
+  getDraggedEditorTab: (event?: ReactDragEvent<HTMLElement>) => EditorTabDragPayload | null;
   groups: readonly EditorGroupState[];
+  onEditorTabDragEnd: () => void;
+  onEditorTabDragStart: (payload: EditorTabDragPayload, event: ReactDragEvent<HTMLElement>) => void;
   viewProviders: readonly EditorDocumentViewProvider[] | undefined;
 }) {
   const [primaryGroup, ...secondaryGroups] = groups;
@@ -96,7 +140,10 @@ function EditorGroupSplit({
     return (
       <EditorGroupPane
         active={primaryGroup.id === activeGroupId}
+        getDraggedEditorTab={getDraggedEditorTab}
         group={primaryGroup}
+        onEditorTabDragEnd={onEditorTabDragEnd}
+        onEditorTabDragStart={onEditorTabDragStart}
         viewProviders={viewProviders}
       />
     );
@@ -110,14 +157,20 @@ function EditorGroupSplit({
       primary={
         <EditorGroupPane
           active={primaryGroup.id === activeGroupId}
+          getDraggedEditorTab={getDraggedEditorTab}
           group={primaryGroup}
+          onEditorTabDragEnd={onEditorTabDragEnd}
+          onEditorTabDragStart={onEditorTabDragStart}
           viewProviders={viewProviders}
         />
       }
       secondary={
         <EditorGroupSplit
           activeGroupId={activeGroupId}
+          getDraggedEditorTab={getDraggedEditorTab}
           groups={secondaryGroups}
+          onEditorTabDragEnd={onEditorTabDragEnd}
+          onEditorTabDragStart={onEditorTabDragStart}
           viewProviders={viewProviders}
         />
       }
@@ -127,11 +180,17 @@ function EditorGroupSplit({
 
 function EditorGroupPane({
   active,
+  getDraggedEditorTab,
   group,
+  onEditorTabDragEnd,
+  onEditorTabDragStart,
   viewProviders,
 }: {
   active: boolean;
+  getDraggedEditorTab: (event?: ReactDragEvent<HTMLElement>) => EditorTabDragPayload | null;
   group: EditorGroupState;
+  onEditorTabDragEnd: () => void;
+  onEditorTabDragStart: (payload: EditorTabDragPayload, event: ReactDragEvent<HTMLElement>) => void;
   viewProviders: readonly EditorDocumentViewProvider[] | undefined;
 }) {
   const editorService = useEditorService();
@@ -140,6 +199,12 @@ function EditorGroupPane({
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
   const [modeToolbarHost, setModeToolbarHost] = useState<HTMLDivElement | null>(null);
   const [modeToolbarVisible, setModeToolbarVisible] = useState(false);
+  const [dropSide, setDropSide] = useState<EditorTabDropSide | null>(null);
+  const [tabContextMenu, setTabContextMenu] = useState<{
+    tabId: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const editorTabs = useMemo(() => tabs.map((tab) => toEditorTabModel(tab)), [tabs]);
 
   const handleModeToolbarHost = useCallback((node: HTMLDivElement | null) => {
@@ -148,13 +213,90 @@ function EditorGroupPane({
   const handleModeToolbarVisibleChange = useCallback((visible: boolean) => {
     setModeToolbarVisible(visible);
   }, []);
-  const handleSplitEditor = useCallback(() => {
-    if (!activeTab) {
+  const handleTabContextMenu = useCallback(
+    (tabId: string, event: ReactMouseEvent<HTMLElement>) => {
+      event.preventDefault();
+      editorService.setActiveEditor(tabId);
+      setTabContextMenu({ tabId, x: event.clientX, y: event.clientY });
+    },
+    [editorService],
+  );
+
+  const handleTabDragStart = useCallback(
+    (tabId: string, event: ReactDragEvent<HTMLElement>) => {
+      onEditorTabDragStart({ groupId: group.id, tabId }, event);
+      editorService.setActiveEditor(tabId);
+    },
+    [editorService, group.id, onEditorTabDragStart],
+  );
+
+  const handleTabDragEnd = useCallback(
+    (_tabId: string, _event: ReactDragEvent<HTMLElement>) => {
+      onEditorTabDragEnd();
+      setDropSide(null);
+    },
+    [onEditorTabDragEnd],
+  );
+
+  const handleTabDoubleClick = useCallback(
+    (tabId: string) => {
+      editorService.pinEditor(tabId);
+    },
+    [editorService],
+  );
+
+  const handleTabPinToggle = useCallback(
+    (tabId: string) => {
+      editorService.togglePinnedEditor(tabId);
+    },
+    [editorService],
+  );
+
+  const handleGroupDragOver = useCallback(
+    (event: ReactDragEvent<HTMLElement>) => {
+      if (!getDraggedEditorTab(event)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+      setDropSide(getEditorTabDropSide(event.currentTarget, event.clientX));
+    },
+    [getDraggedEditorTab],
+  );
+
+  const handleGroupDrop = useCallback(
+    (event: ReactDragEvent<HTMLElement>) => {
+      const draggedTab = getDraggedEditorTab(event);
+      if (!draggedTab) {
+        setDropSide(null);
+        return;
+      }
+
+      const targetDropSide = dropSide ?? getEditorTabDropSide(event.currentTarget, event.clientX);
+      event.preventDefault();
+      editorService.splitEditor({
+        tabId: draggedTab.tabId,
+        ...(targetDropSide === 'left' ? { beforeGroupId: group.id } : { afterGroupId: group.id }),
+      });
+      onEditorTabDragEnd();
+      setDropSide(null);
+    },
+    [dropSide, editorService, getDraggedEditorTab, group.id, onEditorTabDragEnd],
+  );
+
+  const handleGroupDragLeave = useCallback((event: ReactDragEvent<HTMLElement>) => {
+    const nextTarget = event.relatedTarget;
+    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
       return;
     }
 
-    editorService.splitEditor({ tabId: activeTab.id });
-  }, [activeTab, editorService]);
+    setDropSide(null);
+  }, []);
+
+  const contextTab = tabContextMenu
+    ? tabs.find((tab) => tab.id === tabContextMenu.tabId)
+    : undefined;
 
   return (
     <section
@@ -169,37 +311,39 @@ function EditorGroupPane({
     >
       <EditorTabs
         activeId={activeTabId}
+        draggableTabs
         aria-label={active ? 'Active editor group tabs' : 'Editor group tabs'}
         onClose={(tabId) => {
           editorService.closeEditor(tabId);
         }}
+        onPinToggle={handleTabPinToggle}
         onSelect={(tabId) => {
           editorService.setActiveEditor(tabId);
         }}
+        onTabContextMenu={handleTabContextMenu}
+        onTabDoubleClick={handleTabDoubleClick}
+        onTabDragEnd={handleTabDragEnd}
+        onTabDragStart={handleTabDragStart}
         addons={
-          activeTab ? (
+          activeTab && modeToolbarVisible ? (
             <div className="workbench-editor-area__group-actions">
-              {modeToolbarVisible ? (
-                <div
-                  ref={handleModeToolbarHost}
-                  className="workbench-editor-area__mode-toolbar-outlet"
-                />
-              ) : null}
-              <button
-                aria-label="Split editor right"
-                className="workbench-editor-area__group-action"
-                onClick={handleSplitEditor}
-                title="Split editor right"
-                type="button"
-              >
-                <i aria-hidden className="codicon codicon-split-horizontal" />
-              </button>
+              <div
+                ref={handleModeToolbarHost}
+                className="workbench-editor-area__mode-toolbar-outlet"
+              />
             </div>
           ) : undefined
         }
         tabs={editorTabs}
       />
-      <div className="workbench-editor-area__group-body">
+      <div
+        className="workbench-editor-area__group-body"
+        data-drop-side={dropSide ?? undefined}
+        onDragLeave={handleGroupDragLeave}
+        onDragOver={handleGroupDragOver}
+        onDrop={handleGroupDrop}
+      >
+        {dropSide ? <div aria-hidden className="workbench-editor-area__drop-overlay" /> : null}
         <EditorHostSurface
           activeTab={activeTab}
           modeToolbarHost={modeToolbarHost}
@@ -207,6 +351,19 @@ function EditorGroupPane({
           viewProviders={viewProviders}
         />
       </div>
+      {tabContextMenu && contextTab ? (
+        <ContextMenu
+          ariaLabel="Editor tab menu"
+          items={createEditorTabContextItems({
+            editorService,
+            groupId: group.id,
+            tab: contextTab,
+          })}
+          x={tabContextMenu.x}
+          y={tabContextMenu.y}
+          onClose={() => setTabContextMenu(null)}
+        />
+      ) : null}
     </section>
   );
 }
@@ -580,6 +737,74 @@ function toEditorTabModel(tab: EditorTabState): EditorTab {
     preview: tab.preview,
     title: tab.resourceUri,
   };
+}
+
+function createEditorTabContextItems({
+  editorService,
+  groupId,
+  tab,
+}: {
+  editorService: ReturnType<typeof useEditorService>;
+  groupId: string;
+  tab: EditorTabState;
+}): ContextMenuItem[] {
+  return [
+    {
+      id: 'workbench.editor.togglePinned',
+      icon: 'pinned',
+      label: tab.pinned ? 'Unpin' : 'Pin',
+      onSelect: () => {
+        editorService.togglePinnedEditor(tab.id);
+      },
+    },
+    {
+      id: 'workbench.editor.splitRight',
+      icon: 'split-horizontal',
+      label: 'Split Right',
+      onSelect: () => {
+        editorService.splitEditor({ afterGroupId: groupId, tabId: tab.id });
+      },
+    },
+    { id: 'workbench.editor.separator.close', type: 'separator' },
+    {
+      id: 'workbench.editor.close',
+      icon: 'close',
+      label: 'Close',
+      onSelect: () => {
+        editorService.closeEditor(tab.id);
+      },
+    },
+  ];
+}
+
+function readEditorTabDragPayload(event: ReactDragEvent<HTMLElement>): EditorTabDragPayload | null {
+  try {
+    const rawPayload = event.dataTransfer.getData(EDITOR_TAB_DRAG_DATA_TYPE);
+    if (!rawPayload) {
+      return null;
+    }
+
+    const payload = JSON.parse(rawPayload) as Partial<EditorTabDragPayload>;
+    if (typeof payload.groupId !== 'string' || typeof payload.tabId !== 'string') {
+      return null;
+    }
+
+    return {
+      groupId: payload.groupId,
+      tabId: payload.tabId,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getEditorTabDropSide(target: HTMLElement, clientX: number): EditorTabDropSide {
+  const rect = target.getBoundingClientRect();
+  if (rect.width <= 0) {
+    return 'right';
+  }
+
+  return clientX < rect.left + rect.width / 2 ? 'left' : 'right';
 }
 
 function iconForEditorTab(tab: EditorTabState): string {
