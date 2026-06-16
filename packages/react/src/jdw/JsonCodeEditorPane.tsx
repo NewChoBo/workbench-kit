@@ -256,7 +256,7 @@ export function JsonConfigValidationBanner({
     ? (firstError ?? 'Invalid JSON')
     : canApply
       ? 'Valid — unsaved changes'
-      : 'No changes';
+      : 'JSON valid';
 
   return (
     <div

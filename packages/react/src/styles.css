@@ -2751,6 +2751,73 @@
   font: inherit;
 }
 
+.ui-json-config-workbench {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.ui-json-config-workbench__body.panel-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-json-config-workbench__split.ui-workbench-split-view {
+  flex: 1;
+  height: 100%;
+}
+
+.ui-json-config-workbench__pane {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ui-json-config-workbench__form,
+.ui-json-config-workbench__preview {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.ui-json-config-workbench__preview {
+  overflow: auto;
+}
+
+.ui-json-config-workbench__pane > .ui-json-code-editor-pane,
+.ui-json-config-workbench__pane .ui-json-code-editor-pane__viewport,
+.ui-json-config-workbench__pane .workbench-monaco-panel,
+.ui-json-config-workbench__pane .workbench-monaco-panel__body,
+.ui-json-config-workbench__pane .workspace-editor__monaco {
+  min-height: 0;
+  height: 100%;
+}
+
+.ui-json-config-workbench__modes {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ui-json-config-workbench__mode.ui-icon-button {
+  width: 28px;
+  height: 28px;
+}
+
+.ui-json-config-workbench__mode[aria-pressed='true'] {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+}
+
 .ui-workbench-artifact-story-preview {
   min-height: 100%;
   display: grid;
