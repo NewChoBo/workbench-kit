@@ -4623,6 +4623,24 @@
   background: var(--ui-editor-tabs-active-border);
 }
 
+.ui-editor-tabs__tab[data-drop-position]::after {
+  position: absolute;
+  inset-block: 4px;
+  z-index: 1;
+  width: 2px;
+  content: '';
+  background: var(--vscode-focusBorder, var(--color-focus-border));
+  border-radius: 1px;
+}
+
+.ui-editor-tabs__tab[data-drop-position='before']::after {
+  left: 0;
+}
+
+.ui-editor-tabs__tab[data-drop-position='after']::after {
+  right: 0;
+}
+
 .ui-editor-tabs__label {
   min-width: 0;
   overflow: hidden;

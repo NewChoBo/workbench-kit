@@ -73,6 +73,7 @@ export function SegmentedControl<TValue extends string = string>({
 export interface EditorTab {
   closable?: boolean | undefined;
   dirty?: boolean | undefined;
+  dropPosition?: EditorTabDropPosition | undefined;
   icon?: string | undefined;
   id: string;
   label: ReactNode;
@@ -80,6 +81,8 @@ export interface EditorTab {
   preview?: boolean | undefined;
   title?: string | undefined;
 }
+
+export type EditorTabDropPosition = 'after' | 'before';
 
 export interface EditorTabsProps extends Omit<ComponentPropsWithRef<'div'>, 'onSelect'> {
   activeId: string;
@@ -92,7 +95,10 @@ export interface EditorTabsProps extends Omit<ComponentPropsWithRef<'div'>, 'onS
   onTabContextMenu?: ((id: string, event: ReactMouseEvent<HTMLElement>) => void) | undefined;
   onTabDoubleClick?: ((id: string, event: ReactMouseEvent<HTMLElement>) => void) | undefined;
   onTabDragEnd?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
+  onTabDragLeave?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
+  onTabDragOver?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
   onTabDragStart?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
+  onTabDrop?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
   tabs: readonly EditorTab[];
 }
 
@@ -108,7 +114,10 @@ export function EditorTabs({
   onTabContextMenu,
   onTabDoubleClick,
   onTabDragEnd,
+  onTabDragLeave,
+  onTabDragOver,
   onTabDragStart,
+  onTabDrop,
   tabs,
   ...props
 }: EditorTabsProps) {
@@ -122,6 +131,7 @@ export function EditorTabs({
               key={tab.id}
               aria-selected={active}
               className={cx('ui-editor-tabs__tab', active && 'ui-editor-tabs__tab--active')}
+              data-drop-position={tab.dropPosition}
               draggable={draggableTabs}
               onClick={() => onSelect(tab.id)}
               onContextMenu={(event) => {
@@ -133,8 +143,17 @@ export function EditorTabs({
               onDragEnd={(event) => {
                 onTabDragEnd?.(tab.id, event);
               }}
+              onDragLeave={(event) => {
+                onTabDragLeave?.(tab.id, event);
+              }}
+              onDragOver={(event) => {
+                onTabDragOver?.(tab.id, event);
+              }}
               onDragStart={(event) => {
                 onTabDragStart?.(tab.id, event);
+              }}
+              onDrop={(event) => {
+                onTabDrop?.(tab.id, event);
               }}
               onKeyDown={(event) => {
                 if (event.key !== 'Enter' && event.key !== ' ') return;

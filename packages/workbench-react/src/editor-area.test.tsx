@@ -283,6 +283,99 @@ describe('EditorArea', () => {
     container.remove();
   });
 
+  it('reorders editor tabs by dragging one tab over another tab', async () => {
+    function OpenEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/src/app.ts') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/src/app.ts',
+            title: 'app.ts',
+          });
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/README.md',
+            title: 'README.md',
+          });
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/config.json',
+            title: 'config.json',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <OpenEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, '[role="tab"]');
+
+    expect(getTabLabels(container)).toEqual(['app.ts', 'README.md', 'config.json']);
+
+    const sourceTab = findTabByLabel(container, 'config.json');
+    const targetTab = findTabByLabel(container, 'app.ts');
+    const dataTransfer = createTestDataTransfer();
+    setElementRect(targetTab, { height: 34, left: 0, top: 0, width: 180 });
+
+    await act(async () => {
+      dispatchTestDragEvent(sourceTab, 'dragstart', dataTransfer, { clientX: 280 });
+      dispatchTestDragEvent(targetTab, 'dragover', dataTransfer, { clientX: 12 });
+    });
+
+    expect(findTabByLabel(container, 'app.ts')?.getAttribute('data-drop-position')).toBe('before');
+    expect(container.querySelector('.workbench-editor-area__drop-overlay')).toBeNull();
+
+    await act(async () => {
+      dispatchTestDragEvent(targetTab, 'drop', dataTransfer, { clientX: 12 });
+    });
+
+    await flushReactEffects();
+
+    expect(getTabLabels(container)).toEqual(['config.json', 'app.ts', 'README.md']);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('opens an editor tab context menu and toggles pinned state', async () => {
     function OpenEditorProbe() {
       const editorService = useEditorService();
