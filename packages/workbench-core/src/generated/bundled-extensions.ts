@@ -1,5 +1,6 @@
 import type { WorkbenchExtensionDescription } from '../extension-registry.js';
 import * as builtinAccountsModule from '../../../../extensions/builtin.accounts/src/index.ts';
+import * as builtinEditorModule from '../../../../extensions/builtin.editor/src/index.ts';
 import * as builtinExplorerModule from '../../../../extensions/builtin.explorer/src/index.ts';
 import * as builtinKeybindingsModule from '../../../../extensions/builtin.keybindings/src/index.ts';
 import * as builtinSettingsModule from '../../../../extensions/builtin.settings/src/index.ts';
@@ -58,6 +59,32 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
       permissions: ['account.read'],
     },
     module: builtinAccountsModule,
+  },
+  {
+    extensionPath: 'extensions/builtin.editor',
+    manifest: {
+      schemaVersion: 1,
+      id: 'workbench-kit.builtin.editor',
+      name: 'builtin-editor',
+      displayName: 'Text Editor',
+      version: '0.0.0',
+      publisher: 'workbench-kit',
+      engines: {
+        workbench: '^0.0.0',
+        extensionApi: '^0.0.0',
+      },
+      activationEvents: ['onStartup'],
+      contributes: {
+        editors: [
+          {
+            id: 'workbench-kit.builtin.editor.text',
+            label: 'Text Editor',
+            icon: 'file',
+          },
+        ],
+      },
+    },
+    module: builtinEditorModule,
   },
   {
     extensionPath: 'extensions/builtin.explorer',
