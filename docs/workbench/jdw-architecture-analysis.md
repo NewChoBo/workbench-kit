@@ -273,6 +273,11 @@ Aligns with existing `WidgetRegistryContract` in
 
 ## 9. Suggested Evolution Path (Lane B)
 
+> **Decision (2026-06-16):** Git subtree extraction and a separate `@workbench-kit/jdw-react`
+> package are **out of scope** for the current plan. React JDW remains under
+> `packages/react/src/jdw`; headless stays `@workbench-kit/jdw`. Evolution below is
+> **in-repo only** (render unification, layout parity, validation wiring).
+
 From `completion-plan.md` Lane B:
 
 1. **Unify render mode** — pick primary: layout-backend preview OR recursive `renderJsonWidget`; document secondary as opt-in.
