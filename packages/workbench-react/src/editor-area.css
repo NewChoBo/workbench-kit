@@ -63,7 +63,7 @@
   border: 1px solid transparent;
   border-radius: var(--radius-sm, 4px);
   background: transparent;
-  color: var(--vscode-foreground, var(--color-text-muted));
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
   cursor: pointer;
   font: inherit;
   font-size: var(--font-size-xs, 0.75rem);
@@ -81,10 +81,11 @@
 }
 
 .workbench-editor-area__view-button[data-active='true'] {
-  border-color: var(--vscode-focusBorder, var(--vscode-button-border, var(--color-border)));
-  background: var(--vscode-button-secondaryBackground, var(--color-bg));
-  color: var(--vscode-button-secondaryForeground, var(--color-text));
-  box-shadow: inset 0 -1px 0 var(--vscode-focusBorder, var(--color-focus-border));
+  background: var(
+    --vscode-toolbar-activeBackground,
+    var(--vscode-toolbar-hoverBackground, transparent)
+  );
+  color: var(--vscode-foreground, var(--color-text));
 }
 
 .workbench-editor-area__text-editor-body {

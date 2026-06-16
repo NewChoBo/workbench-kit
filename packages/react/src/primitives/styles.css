@@ -610,20 +610,11 @@
 
 .ui-editor-tabs__addons {
   display: flex;
-  flex: 0 0 auto;
   align-items: center;
   gap: 6px;
   min-width: 0;
-  min-height: 34px;
   margin-left: auto;
   padding: 0 8px;
-  border-left: 1px solid
-    color-mix(in srgb, var(--vscode-editorGroupHeader-border, var(--color-border)) 72%, transparent);
-  background: color-mix(
-    in srgb,
-    var(--vscode-editorGroupHeader-tabsBackground, var(--color-bg)) 92%,
-    var(--vscode-editor-background, var(--color-bg))
-  );
 }
 
 .ui-resizable-panels {
