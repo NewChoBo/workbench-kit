@@ -9,9 +9,9 @@
 ## 요약
 
 - **미션:** Lane A 마감을 Codex에 위임. 브랜치 `feature/theia-strengths-workbench` 유지. 각 패키지 완료 시 `pnpm validate` 통과 후 Conventional Commit (영문).
-- **현재 기준선:** WB-23~WB-28(S1–S3), S8.5 완료. Lane A **~75%**. 최근 커밋: `ec5b6e8`, `54602b9`, `9191bb9`, `0c2c068`, `111aa0c`.
-- **Codex 작업 패키지 5개:** P0 **S8.6**(Preview+Split) → P0 **WB-29**(command explorer) → P1 **WB-30**(preference scopes) → P2 **Track D D2**(dual render) → **B-UX**(연기, 포인터만).
-- **첫 권장 작업:** **Package 1 — S8.6** (`editor-area.tsx`에 Source|Form|Preview + Split).
+- **현재 기준선:** WB-23~WB-28(S1–S3, S8.5~S8.6) 완료. Lane A **~80%**. 최근 커밋: `ec5b6e8`, `54602b9`, `9191bb9`, `0c2c068`, `111aa0c`.
+- **Codex 작업 패키지 5개:** P0 **S8.6**(완료) → P0 **WB-29**(command explorer) → P1 **WB-30**(preference scopes) → P2 **Track D D2**(dual render) → **B-UX**(연기, 포인터만).
+- **첫 권장 작업:** **Package 2 — WB-29** (`WorkspaceExplorer`를 command-backed virtual workspace tree로 연결).
 - **필수 제약:** `workbench-core` React-free, `react`가 `workbench-core` 미import, JDW canonical, subtree 분리 금지, Strategy A 렌더, UI 영문.
 
 ---
@@ -58,12 +58,12 @@ f1ab57e docs(workbench): add JDW architecture and Figma authoring analysis
 | WB-27       | Done   | Resource URI, snapshot, mutation, transaction (`packages/workspace/`) |
 | WB-28 S1–S3 | Done   | `EditorService`, `EditorArea` tabs, save via transactions             |
 | S8.5        | Done   | Source/Form toolbar in `editor-area.tsx` (`0c2c068`)                  |
+| S8.6        | Done   | JDW Preview/Split modes in `EditorArea`; StrictMode-safe sample open  |
 
-### Remaining (Lane A ~25%)
+### Remaining (Lane A ~20%)
 
 | Item    | Priority | Blocker                      |
 | ------- | -------- | ---------------------------- |
-| S8.6    | P0       | None — next                  |
 | WB-29   | P0       | After S8.6                   |
 | WB-30   | P1       | After WB-29                  |
 | WB-31   | P2       | After WB-28/29 event streams |
@@ -71,7 +71,7 @@ f1ab57e docs(workbench): add JDW architecture and Figma authoring analysis
 
 ### Validate status
 
-`pnpm validate` green on 2026-06-16 (typecheck, lint, 436 tests, Storybook build, boundary checks).
+`pnpm validate` green on 2026-06-16 (typecheck, lint, 439 tests, Storybook build, boundary checks).
 
 ---
 
@@ -100,6 +100,8 @@ Each package is a **self-contained delegation unit**. Complete one package per C
 
 ### Package 1: S8.6 — Editor Preview + Split (P0)
 
+**Status:** Done (2026-06-16). Next session should start with Package 2 / WB-29.
+
 #### Goal
 
 Extend `EditorArea` with **Source | Form | Preview** view modes and optional **Split** layout (source beside preview) for JSON-capable files in the sample host — aligned with VS Code Markdown preview and `JsonConfigWorkbench` patterns.
@@ -119,7 +121,7 @@ Extend `EditorArea` with **Source | Form | Preview** view modes and optional **S
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | JDW auto-detect | `resolveJsonConfigPreviewKind` in `packages/react/src/json-config/JsonConfigWorkbench.tsx` — uses `parseJsonWidgetData`               |
 | Preview render  | `JdwPreview` from `@workbench-kit/react/jdw/preview`                                                                                  |
-| Split layout    | `SplitView` from `@workbench-kit/react/workbench`                                                                                     |
+| Split layout    | `SplitView` from `@workbench-kit/react/workbench/split-view`                                                                          |
 | Mode controls   | `WorkbenchArtifactModeControls` in `packages/react/src/workbench/ArtifactShell.tsx` (reference only; keep EditorArea toolbar simpler) |
 | View model doc  | [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md) §7.2                                                                                 |
 
@@ -478,7 +480,7 @@ pnpm workbench-sample
 ## 8. Suggested Codex Session Order
 
 ```text
-Package 1 (S8.6) → Package 2 (WB-29) → Package 3 (WB-30) → WB-31 → Lane A DoD
+Package 2 (WB-29) → Package 3 (WB-30) → WB-31 → Lane A DoD
 ```
 
 ### Parallel options
@@ -533,6 +535,7 @@ Package 1 (S8.6) → Package 2 (WB-29) → Package 3 (WB-30) → WB-31 → Lane 
 
 ## Progress log
 
-| Date       | Note                                             |
-| ---------- | ------------------------------------------------ |
-| 2026-06-16 | Initial Codex delegation plan for Lane A handoff |
+| Date       | Note                                                                                     |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| 2026-06-16 | Initial Codex delegation plan for Lane A handoff                                         |
+| 2026-06-16 | Completed S8.6 EditorArea JDW Preview/Split and StrictMode-safe sample open verification |

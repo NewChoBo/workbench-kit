@@ -54,9 +54,30 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
     {
       content: JSON.stringify(
         {
-          appName: 'workbench-sample',
-          theme: 'dark',
-          telemetry: false,
+          type: 'column',
+          args: {
+            gap: 10,
+            padding: 20,
+            background: '#13151a',
+            children: [
+              {
+                type: 'text',
+                args: {
+                  text: 'Workbench Sample',
+                  fontSize: 18,
+                  color: '#e8eaed',
+                },
+              },
+              {
+                type: 'text',
+                args: {
+                  text: 'This config.json file renders through the JDW preview.',
+                  fontSize: 12,
+                  color: '#9aa0a6',
+                },
+              },
+            ],
+          },
         },
         null,
         2,

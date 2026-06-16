@@ -7,7 +7,10 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { parseJsonWidgetData } from '@workbench-kit/react/jdw/parse';
+import { JdwPreview } from '@workbench-kit/react/jdw/preview';
 import { EditorTabs, type EditorTab } from '@workbench-kit/react/primitives';
+import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import type { EditorHost, EditorTabState } from '@workbench-kit/workbench-core';
 
 import './editor-area.css';
@@ -128,7 +131,7 @@ interface TextEditorRenderPayload {
   resourceUri: string;
 }
 
-type EditorViewMode = 'source' | 'form';
+type EditorViewMode = 'source' | 'form' | 'preview' | 'split';
 
 function TextEditorSurface({
   host,
@@ -148,11 +151,25 @@ function TextEditorSurface({
     () => isJsonFormEligible(resourceUri, content),
     [content, resourceUri],
   );
+  const previewEligible = useMemo(
+    () => formEligible && isJdwWidgetJson(content),
+    [content, formEligible],
+  );
 
   useEffect(() => {
     setContent(initialContent);
     setViewMode('source');
   }, [initialContent, resourceUri]);
+
+  useEffect(() => {
+    if (viewMode === 'form' && !formEligible) {
+      setViewMode('source');
+    }
+
+    if ((viewMode === 'preview' || viewMode === 'split') && !previewEligible) {
+      setViewMode('source');
+    }
+  }, [formEligible, previewEligible, viewMode]);
 
   const handleChange = useCallback(
     (nextContent: string) => {
@@ -177,26 +194,56 @@ function TextEditorSurface({
     [content, handleChange],
   );
 
+  const sourcePane = (
+    <textarea
+      aria-label={host.title ?? 'Text editor'}
+      className="workbench-editor-area__textarea"
+      onChange={(event) => {
+        handleChange(event.currentTarget.value);
+      }}
+      spellCheck={false}
+      value={content}
+    />
+  );
+
+  const previewPane = (
+    <section aria-label="Preview" className="workbench-editor-area__preview-pane">
+      <JdwPreview className="workbench-editor-area__jdw-preview" json={content} />
+    </section>
+  );
+
   return (
     <section
       aria-label={host.title ?? resourceUri}
       className="workbench-editor-area__text-editor"
       data-resource-uri={resourceUri}
     >
-      {formEligible ? <EditorViewModeToolbar mode={viewMode} onModeChange={setViewMode} /> : null}
+      {formEligible ? (
+        <EditorViewModeToolbar
+          mode={viewMode}
+          previewEligible={previewEligible}
+          onModeChange={setViewMode}
+        />
+      ) : null}
       <div className="workbench-editor-area__text-editor-body">
         {viewMode === 'form' && formEligible ? (
           <JsonObjectFormView content={content} onFieldChange={handleFormFieldChange} />
-        ) : (
-          <textarea
-            aria-label={host.title ?? 'Text editor'}
-            className="workbench-editor-area__textarea"
-            onChange={(event) => {
-              handleChange(event.currentTarget.value);
-            }}
-            spellCheck={false}
-            value={content}
+        ) : viewMode === 'preview' && previewEligible ? (
+          previewPane
+        ) : viewMode === 'split' && previewEligible ? (
+          <SplitView
+            className="workbench-editor-area__split"
+            defaultPrimarySizePercent={50}
+            minPrimarySizePercent={25}
+            primary={
+              <section aria-label="Source" className="workbench-editor-area__split-pane">
+                {sourcePane}
+              </section>
+            }
+            secondary={previewPane}
           />
+        ) : (
+          sourcePane
         )}
       </div>
     </section>
@@ -205,9 +252,11 @@ function TextEditorSurface({
 
 function EditorViewModeToolbar({
   mode,
+  previewEligible,
   onModeChange,
 }: {
   mode: EditorViewMode;
+  previewEligible: boolean;
   onModeChange: (mode: EditorViewMode) => void;
 }) {
   return (
@@ -238,6 +287,32 @@ function EditorViewModeToolbar({
       >
         Form
       </button>
+      {previewEligible ? (
+        <>
+          <button
+            aria-pressed={mode === 'preview'}
+            className="workbench-editor-area__view-button"
+            data-active={mode === 'preview' ? 'true' : undefined}
+            onClick={() => {
+              onModeChange('preview');
+            }}
+            type="button"
+          >
+            Preview
+          </button>
+          <button
+            aria-pressed={mode === 'split'}
+            className="workbench-editor-area__view-button"
+            data-active={mode === 'split' ? 'true' : undefined}
+            onClick={() => {
+              onModeChange('split');
+            }}
+            type="button"
+          >
+            Split
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }
@@ -319,6 +394,11 @@ function parseJsonObject(content: string): Record<string, unknown> | null {
   } catch {
     return null;
   }
+}
+
+function isJdwWidgetJson(content: string): boolean {
+  const parsed = parseJsonWidgetData(content);
+  return parsed.value !== null;
 }
 
 function formatFormFieldValue(value: unknown): string {
