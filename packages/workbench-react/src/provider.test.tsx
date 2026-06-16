@@ -126,6 +126,7 @@ describe('WorkbenchProvider', () => {
 
     expect(markup).toContain('Explorer');
     expect(markup).toContain('codicon codicon-files');
+    expect(markup).toContain('aria-pressed="true"');
     expect(markup).toContain('Editor Area');
     expect(markup).toContain('extensions: 1');
   });

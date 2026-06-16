@@ -47,10 +47,10 @@ export function WorkbenchShell({
   const { extensionRegistry, layoutService, missingExtensionIds } = useWorkbench();
   const forceRender = useForceRender();
   const layout = layoutService.getState();
-  const activityItems = createActivityItems(extensionRegistry);
   const resolvedStatusSections =
     statusSections ?? createDefaultStatusSections(extensionRegistry, missingExtensionIds);
   const activeViewContainerId = layout.sideBar.activeViewContainer;
+  const activityItems = createActivityItems(extensionRegistry, activeViewContainerId);
 
   useEffect(() => {
     const layoutDisposable = layoutService.onDidChangeLayout(forceRender);
@@ -106,10 +106,12 @@ function useForceRender() {
 
 function createActivityItems(
   extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
+  activeViewContainerId: string | undefined,
 ) {
   const activities = extensionRegistry.activities.getActivities();
   if (activities.length > 0) {
     return activities.map<ActivityBarItem>((activity) => ({
+      active: activity.viewContainerId === activeViewContainerId,
       icon: resolveIcon(activity.icon),
       id: activity.viewContainerId,
       label: activity.title,
@@ -125,6 +127,7 @@ function createActivityItems(
     const firstView = extensionRegistry.views.getViews(containerId)[0];
 
     return {
+      active: containerId === activeViewContainerId,
       icon: resolveIcon(container?.icon ?? firstView?.name ?? containerId),
       id: containerId,
       label: container?.title ?? firstView?.name ?? containerId,
