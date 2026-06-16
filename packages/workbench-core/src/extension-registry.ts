@@ -28,10 +28,10 @@ import {
   type WorkbenchViewContribution,
 } from './registries.js';
 import {
-  CapabilityRegistry,
   createCapabilityRegistry,
   toCapabilityMap,
   type CapabilityProvider,
+  type CapabilityRegistry,
 } from './capability-registry.js';
 import {
   createEditorHostFactoryRegistry,

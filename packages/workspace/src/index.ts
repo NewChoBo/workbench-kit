@@ -36,6 +36,32 @@ export {
   type WorkspaceSelectionMode,
   type WorkspaceSelectionState,
 } from './selection';
+export {
+  virtualWorkspaceActionToResourceMutation,
+  workspaceResourceMutationToAction,
+  type WorkspaceResourceMutation,
+} from './resource-mutation';
+export {
+  createWorkspaceResourceSnapshot,
+  snapshotMatchesWorkspaceState,
+  type WorkspaceResourceSnapshot,
+} from './resource-snapshot';
+export {
+  applyWorkspaceResourceMutation,
+  applyWorkspaceResourceTransaction,
+  createWorkspaceResourceTransaction,
+  type WorkspaceResourceTransaction,
+} from './resource-transaction';
+export {
+  WORKSPACE_RESOURCE_SCHEME,
+  formatWorkspaceResourceUri,
+  parseWorkspaceResourceUri,
+  workspacePathFromResourceUri,
+  workspaceResourceUriForFile,
+  workspaceResourceUriForFolder,
+  type WorkspaceResourceKind,
+  type WorkspaceResourceUri,
+} from './resource-uri';
 export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
 export {
   getAvailableWorkspaceEntryName,
