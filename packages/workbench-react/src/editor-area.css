@@ -74,6 +74,15 @@
   outline-offset: -2px;
 }
 
+.workbench-editor-area__group-pane[data-drop-side='center'] .workbench-editor-area__drop-overlay {
+  background: var(
+    --vscode-editorGroup-dropBackground,
+    color-mix(in srgb, var(--vscode-focusBorder, var(--color-focus-border)) 12%, transparent)
+  );
+  outline: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -2px;
+}
+
 .workbench-editor-area__group-actions {
   display: flex;
   align-items: center;

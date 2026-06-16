@@ -438,14 +438,15 @@ architecture terms in primitive props.
 
 ## Implementation Notes
 
-| Topic         | Guidance                                                                                          |
-| ------------- | ------------------------------------------------------------------------------------------------- |
-| Styling       | Reuse existing tokens and workbench surface styles before adding new variables.                   |
-| Accessibility | Prefer native buttons for actions, preserve focus rings, and add labels for icon-only controls.   |
-| Layout        | Fixed-height rows should not resize when status, icon, badge, or shortcut content appears.        |
-| State         | Keep controlled/uncontrolled state boundaries explicit for collapsed sections and active actions. |
-| Exports       | Add named exports and type exports from the smallest relevant public entrypoint.                  |
-| Tests         | Add unit tests for non-trivial state helpers; use Storybook for visual permutations.              |
+| Topic         | Guidance                                                                                                          |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Styling       | Reuse existing tokens and workbench surface styles before adding new variables.                                   |
+| Accessibility | Prefer native buttons for actions, preserve focus rings, and add labels for icon-only controls.                   |
+| Layout        | Fixed-height rows should not resize when status, icon, badge, or shortcut content appears.                        |
+| State         | Keep controlled/uncontrolled state boundaries explicit for collapsed sections and active actions.                 |
+| Existing flow | Inventory and reuse the owning service, command, registry, or primitive before adding local UI state transitions. |
+| Exports       | Add named exports and type exports from the smallest relevant public entrypoint.                                  |
+| Tests         | Add unit tests for non-trivial state helpers; use Storybook for visual permutations.                              |
 
 ## Integration Checks
 

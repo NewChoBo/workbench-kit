@@ -223,4 +223,79 @@ describe('EditorService', () => {
       split?.id,
     ]);
   });
+
+  it('moves editor tabs between groups without duplicating hosts', () => {
+    const editorHostFactories = createEditorHostFactoryRegistry();
+    editorHostFactories.register({
+      id: 'stateful-text-editor-host',
+      create: ({ resourceUri }) => {
+        let content = `content for ${resourceUri}`;
+
+        return {
+          dispose() {},
+          getContent: () => content,
+          render: () => content,
+          setContent: (nextContent: string) => {
+            content = nextContent;
+          },
+        };
+      },
+    });
+
+    const editorResolvers = createEditorResolverRegistry();
+    editorResolvers.register({
+      id: 'workspace-file',
+      resolve: () => 'workbench.editor.text',
+    });
+
+    const service = createEditorService({
+      editorHostFactories,
+      editorResolvers,
+    });
+
+    const first = service.openEditor({
+      pinned: true,
+      resourceUri: 'workspace://file/src/app.ts',
+      title: 'app.ts',
+    });
+    const second = service.openEditor({
+      pinned: true,
+      resourceUri: 'workspace://file/README.md',
+      title: 'README.md',
+    });
+    const firstHost = service.createEditorHost(first.id) as
+      | { render(): unknown; setContent(nextContent: string): void }
+      | undefined;
+    firstHost?.setContent('moved content');
+
+    const moved = service.moveEditor({
+      afterGroupId: DEFAULT_EDITOR_GROUP_ID,
+      tabId: first.id,
+    });
+    const splitState = service.getState();
+    const targetGroup = splitState.groups[1];
+
+    expect(moved?.id).toBe(first.id);
+    expect(splitState.groups).toHaveLength(2);
+    expect(splitState.groups[0]?.tabs.map((tab) => tab.id)).toEqual([second.id]);
+    expect(targetGroup?.tabs.map((tab) => tab.id)).toEqual([first.id]);
+    expect(splitState.activeGroupId).toBe(targetGroup?.id);
+    expect(service.createEditorHost(first.id)).toBe(firstHost);
+    expect(service.createEditorHost(first.id)?.render()).toBe('moved content');
+
+    service.moveEditor({
+      groupId: DEFAULT_EDITOR_GROUP_ID,
+      tabId: first.id,
+    });
+    const mergedState = service.getState();
+
+    expect(mergedState.groups).toEqual([
+      {
+        activeTabId: first.id,
+        id: DEFAULT_EDITOR_GROUP_ID,
+        tabs: [second, first],
+      },
+    ]);
+    expect(service.createEditorHost(first.id)).toBe(firstHost);
+  });
 });

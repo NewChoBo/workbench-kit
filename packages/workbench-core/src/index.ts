@@ -44,6 +44,7 @@ export {
   type EditorServiceOptions,
   type EditorState,
   type EditorTabState,
+  type MoveEditorOptions,
   type OpenEditorOptions,
   type SplitEditorOptions,
 } from './editor-service.js';

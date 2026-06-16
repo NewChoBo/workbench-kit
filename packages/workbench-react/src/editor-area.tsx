@@ -54,7 +54,7 @@ interface EditorTabDragPayload {
   tabId: string;
 }
 
-type EditorTabDropSide = 'left' | 'right';
+type EditorTabDropSide = 'center' | 'left' | 'right';
 
 export interface EditorAreaProps {
   emptyState?: ReactNode | undefined;
@@ -259,7 +259,7 @@ function EditorGroupPane({
       }
 
       event.preventDefault();
-      event.dataTransfer.dropEffect = 'copy';
+      event.dataTransfer.dropEffect = 'move';
       setDropSide(getEditorTabDropSide(event.currentTarget, event.clientX));
     },
     [getDraggedEditorTab],
@@ -275,9 +275,13 @@ function EditorGroupPane({
 
       const targetDropSide = dropSide ?? getEditorTabDropSide(event.currentTarget, event.clientX);
       event.preventDefault();
-      editorService.splitEditor({
+      editorService.moveEditor({
         tabId: draggedTab.tabId,
-        ...(targetDropSide === 'left' ? { beforeGroupId: group.id } : { afterGroupId: group.id }),
+        ...(targetDropSide === 'center'
+          ? { groupId: group.id }
+          : targetDropSide === 'left'
+            ? { beforeGroupId: group.id }
+            : { afterGroupId: group.id }),
       });
       onEditorTabDragEnd();
       setDropSide(null);
@@ -802,7 +806,16 @@ function getEditorTabDropSide(target: HTMLElement, clientX: number): EditorTabDr
     return 'right';
   }
 
-  return clientX < rect.left + rect.width / 2 ? 'left' : 'right';
+  const edgeWidth = Math.min(Math.max(rect.width * 0.22, 96), rect.width / 3);
+  if (clientX < rect.left + edgeWidth) {
+    return 'left';
+  }
+
+  if (clientX > rect.right - edgeWidth) {
+    return 'right';
+  }
+
+  return 'center';
 }
 
 function iconForEditorTab(tab: EditorTabState): string {
