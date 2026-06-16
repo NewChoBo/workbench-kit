@@ -134,19 +134,6 @@ export const WidgetPreview: Story = {
       widgetRegistry={demoRegistry}
     />
   ),
-};
-
-export const WidgetInteraction: Story = {
-  render: () => (
-    <ConfigHarness
-      initialValue={widgetJson}
-      defaultMode="code"
-      path="widget.json"
-      previewKind="widget"
-      title="Widget config"
-      widgetRegistry={demoRegistry}
-    />
-  ),
   tags: ['storybook-play-baseline'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -188,7 +175,7 @@ export const AutoPreview: Story = {
   ),
 };
 
-export const Interaction: Story = {
+export const SchemaFormEditing: Story = {
   render: () => (
     <ConfigHarness
       initialValue={settingsJson}
