@@ -16,8 +16,10 @@ import {
   normalizeWorkspacePath,
   parentPathOf,
   type VirtualWorkspaceState,
+  type VirtualWorkspaceInitialState,
   type WorkspaceResourceMutation,
   type WorkspaceResourceService,
+  type WorkspaceFile,
 } from '@workbench-kit/workspace';
 
 export const EXTENSION_ID = 'workbench-kit.builtin.explorer' as const;
@@ -31,6 +33,7 @@ export const MOVE_COMMAND_ID = 'workbench-kit.builtin.explorer.move' as const;
 
 const WORKSPACE_NEW_FILE_COMMAND_ID = 'workspace.newFile' as const;
 const WORKSPACE_NEW_FOLDER_COMMAND_ID = 'workspace.newFolder' as const;
+const WORKSPACE_INIT_COMMAND_ID = 'workspace.init' as const;
 const WORKSPACE_OPEN_COMMAND_ID = 'workspace.open' as const;
 const WORKSPACE_COPY_PATH_COMMAND_ID = 'workspace.copyPath' as const;
 const WORKSPACE_RENAME_COMMAND_ID = 'workspace.rename' as const;
@@ -72,6 +75,10 @@ export function activate(context: ExtensionContext): void {
 
   context.commands.registerCommand(WORKSPACE_NEW_FOLDER_COMMAND_ID, (input) =>
     createWorkspaceFolder(context, input),
+  );
+
+  context.commands.registerCommand(WORKSPACE_INIT_COMMAND_ID, (input) =>
+    initializeWorkspace(context, input),
   );
 
   context.commands.registerCommand(WORKSPACE_OPEN_COMMAND_ID, (input) =>
@@ -170,6 +177,27 @@ function createWorkspaceFolder(
   }
 
   return applyMutations(service, 'Create folder', [{ path, type: 'create-folder' }]);
+}
+
+function initializeWorkspace(
+  context: ExtensionContext,
+  input: unknown,
+): WorkspaceCommandResult | undefined {
+  const service = getWorkspaceService(context);
+  if (!service) return undefined;
+
+  const initialState = readWorkspaceInitialState(input);
+  return applyMutations(
+    service,
+    'Initialize workspace',
+    [{ type: 'initialize-workspace', state: initialState }],
+    {
+      paths: [
+        ...readStringArray(input, 'folders'),
+        ...readWorkspaceFiles(input).map((file) => file.path),
+      ],
+    },
+  );
 }
 
 function openWorkspaceTargets(
@@ -384,6 +412,39 @@ function readStringArray(input: unknown, key: string): string[] {
   if (!Array.isArray(value)) return [];
 
   return value.filter((entry): entry is string => typeof entry === 'string');
+}
+
+function readWorkspaceInitialState(input: unknown): VirtualWorkspaceInitialState {
+  return {
+    expandedPaths: readStringArray(input, 'expandedPaths'),
+    files: readWorkspaceFiles(input),
+    folders: readStringArray(input, 'folders'),
+    openPaths: readStringArray(input, 'openPaths'),
+    searchQuery: readString(input, 'searchQuery') ?? '',
+    selectedPath: readString(input, 'selectedPath'),
+  };
+}
+
+function readWorkspaceFiles(input: unknown): WorkspaceFile[] {
+  const value = isRecord(input) ? input.files : undefined;
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((entry) => {
+    if (!isRecord(entry)) return [];
+
+    const path = typeof entry.path === 'string' ? entry.path : '';
+    if (!path) return [];
+
+    return [
+      {
+        content: typeof entry.content === 'string' ? entry.content : '',
+        mimeType: typeof entry.mimeType === 'string' ? entry.mimeType : undefined,
+        path,
+        source: entry.source === 'assistant' || entry.source === 'user' ? entry.source : undefined,
+        updatedAt: typeof entry.updatedAt === 'string' ? entry.updatedAt : undefined,
+      },
+    ];
+  });
 }
 
 function readString(input: unknown, key: string): string | undefined {

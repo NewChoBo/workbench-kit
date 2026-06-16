@@ -85,6 +85,7 @@ export type VirtualWorkspaceAction =
   | { mimeType?: string; name: string; path: string; type: 'rename-file' }
   | { name: string; path: string; type: 'rename-folder' }
   | { file: WriteWorkspaceFileInput; path: string; type: 'save-file' }
+  | { state: VirtualWorkspaceInitialState; type: 'initialize-workspace' }
   | { query: string; type: 'set-search-query' }
   | { path: string; type: 'toggle-folder' };
 
@@ -349,6 +350,10 @@ export function virtualWorkspaceReducer(
   state: VirtualWorkspaceState,
   action: VirtualWorkspaceAction,
 ): VirtualWorkspaceState {
+  if (action.type === 'initialize-workspace') {
+    return initializeVirtualWorkspaceState(action.state);
+  }
+
   if (action.type === 'set-search-query') {
     return { ...state, searchQuery: action.query };
   }

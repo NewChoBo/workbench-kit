@@ -39,6 +39,28 @@ describe('virtual workspace model', () => {
     expect(state.selectedPath).toBe('src/App.tsx');
   });
 
+  it('initializes workspace state through a reducer action', () => {
+    const state = reduceWorkspace(
+      { files: [{ content: 'stale', path: 'stale.txt' }], openPaths: ['stale.txt'] },
+      [
+        {
+          state: {
+            expandedPaths: ['src'],
+            files: [{ content: 'app', path: 'src/App.tsx' }],
+            folders: ['src'],
+          },
+          type: 'initialize-workspace',
+        },
+      ],
+    );
+
+    expect(state.files).toEqual([{ content: 'app', path: 'src/App.tsx' }]);
+    expect(state.folders).toEqual(['src']);
+    expect([...state.expandedPaths]).toEqual(['src']);
+    expect(state.openPaths).toEqual([]);
+    expect(state.selectedPath).toBeUndefined();
+  });
+
   it('creates files and folders while preventing path conflicts', () => {
     const state = reduceWorkspace({ files: [{ content: 'readme', path: 'README.md' }] }, [
       { path: 'src', type: 'create-folder' },
