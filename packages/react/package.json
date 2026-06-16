@@ -18,6 +18,7 @@
     "./workbench/shell": "./src/workbench/shell.ts",
     "./workbench/split-view": "./src/workbench/SplitView.tsx",
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
+    "./workbench/workspace/editor": "./src/workbench/workspace/WorkspaceEditor.tsx",
     "./workbench/workspace/explorer": "./src/workbench/workspace/WorkspaceExplorer.tsx",
     "./jdw": "./src/jdw/index.ts",
     "./jdw/parse": "./src/jdw/parse.ts",

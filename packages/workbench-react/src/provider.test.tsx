@@ -1,12 +1,31 @@
 /** @vitest-environment jsdom */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { act, StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { parseWorkbenchLayoutConfig } from '@workbench-kit/workbench-config';
 import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
 import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
+
+vi.mock('@monaco-editor/react', () => ({
+  default: ({
+    onChange,
+    value,
+  }: {
+    onChange?: ((value?: string) => void) | undefined;
+    value?: string | undefined;
+  }) => (
+    <textarea
+      data-testid="monaco-editor"
+      value={value ?? ''}
+      onChange={(event) => onChange?.(event.currentTarget.value)}
+    />
+  ),
+  loader: { config: () => undefined },
+}));
+
+vi.mock('monaco-editor', () => ({}));
 
 import { WorkbenchProvider, WorkbenchShell, useEditorService, useWorkbench } from './index.js';
 
