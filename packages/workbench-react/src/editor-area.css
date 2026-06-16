@@ -231,6 +231,8 @@
 .workbench-editor-area__form,
 .workbench-editor-area__form-placeholder {
   box-sizing: border-box;
+  flex: 1 1 auto;
+  align-self: stretch;
   min-width: 0;
   min-height: 0;
   width: 100%;
@@ -239,9 +241,10 @@
 
 .workbench-editor-area__form {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 10px;
-  max-width: 56rem;
+  max-width: none;
 }
 
 .workbench-editor-area__form-field {
