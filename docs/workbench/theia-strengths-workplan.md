@@ -62,6 +62,7 @@ preference scopes.
 
 ## Progress
 
+- 2026-06-16: WB-28 S1 added `EditorService`, `EditorResolverRegistry`, SDK editor contribution/resolver types, and React `useEditor*` hooks wired to `EditorHostFactoryRegistry`.
 - 2026-06-14: WB-27 added workspace resource contracts (`resource-uri`, `resource-snapshot`,
   `resource-mutation`, `resource-transaction`) on top of `virtualWorkspaceReducer` without
   breaking existing exports.

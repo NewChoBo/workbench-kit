@@ -33,11 +33,11 @@ i18n, preview zoom/pan), or deferred kit items WB-15 / WB-20 / WB-22.
 
 ### Completion estimate
 
-| Scope                                        | Estimate                        | Caveats                                                                                                                                      |
-| -------------------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Lane A (WB-23 → WB-31)**                   | **~55%** (5 of 9 slices landed) | WB-27 implementation exists but is **uncommitted** at plan time; resource contracts are not yet consumed by React shell or built-in explorer |
-| **Workbench Kit foundation (WB-01 → WB-22)** | **~90%**                        | WB-15 deferred; WB-20 / WB-22 blocked on dirty policy                                                                                        |
-| **End-to-end "product-ready workbench"**     | **~40%**                        | Sample host is minimal; Integrated Shell in Storybook still carries richer demo flows                                                        |
+| Scope                                        | Estimate                                              | Caveats                                                                               |
+| -------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Lane A (WB-23 → WB-31)**                   | **~60%** (5 of 9 slices landed; WB-28 S1 in progress) | WB-27 committed (`813cbca`); editor tab UI and transaction save paths remain          |
+| **Workbench Kit foundation (WB-01 → WB-22)** | **~90%**                                              | WB-15 deferred; WB-20 / WB-22 blocked on dirty policy                                 |
+| **End-to-end "product-ready workbench"**     | **~40%**                                              | Sample host is minimal; Integrated Shell in Storybook still carries richer demo flows |
 
 Treat percentages as planning signals, not release metrics. The remaining Lane A
 work is **integration-heavy** (editor + explorer on commands + preference scopes),
@@ -76,18 +76,16 @@ Canonical direction docs: [theia-strengths-workplan.md](./theia-strengths-workpl
 
 ### Lane A slices (WB-23 → WB-27)
 
-| ID        | Item                                             | Status                 | Evidence paths                                                                                                                                                                                                      | Validation                                                          |
-| --------- | ------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| **WB-23** | Workbench sample host + launch boundary          | **Done**               | `examples/workbench-sample/`, root script `pnpm workbench-sample`, `scripts/check-launch-boundary.mjs`                                                                                                              | `pnpm --filter workbench-sample typecheck`, `pnpm validate`         |
-| **WB-24** | ViewHost lifecycle contract                      | **Done**               | `packages/workbench-extension-sdk/` (ViewHost metadata + hooks), `packages/workbench-react/src/shell.tsx` (show/hide/focus/blur/resize)                                                                             | SDK + react typecheck; Storybook integrated shell                   |
-| **WB-26** | Disposable `CapabilityRegistry`                  | **Done**               | `packages/workbench-core/src/capability-registry.ts`, `extension-registry.ts` (`capabilityRegistry`, extension `registerProvider`)                                                                                  | `packages/workbench-core/src/capability-registry.test.ts`           |
-| **WB-25** | View/editor host factory registry                | **Done**               | `packages/workbench-core/src/host-factory-registry.ts`, `workbench-react` factory resolution; `EditorHostFactoryRegistry` **scaffold only**                                                                         | `host-factory-registry.test.ts`                                     |
-| **WB-27** | Resource URI / snapshot / mutation / transaction | **Done (uncommitted)** | `packages/workspace/src/resource-uri.ts`, `resource-snapshot.ts`, `resource-mutation.ts`, `resource-transaction.ts`, `resource-transaction.test.ts`; `packages/contracts/src/resource-uri.ts` (generic URI helpers) | `pnpm --filter @workbench-kit/workspace typecheck`; workspace tests |
+| ID        | Item                                             | Status               | Evidence paths                                                                                                                                                        | Validation                                                          |
+| --------- | ------------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **WB-23** | Workbench sample host + launch boundary          | **Done**             | `examples/workbench-sample/`, root script `pnpm workbench-sample`, `scripts/check-launch-boundary.mjs`                                                                | `pnpm --filter workbench-sample typecheck`, `pnpm validate`         |
+| **WB-24** | ViewHost lifecycle contract                      | **Done**             | `packages/workbench-extension-sdk/` (ViewHost metadata + hooks), `packages/workbench-react/src/shell.tsx` (show/hide/focus/blur/resize)                               | SDK + react typecheck; Storybook integrated shell                   |
+| **WB-26** | Disposable `CapabilityRegistry`                  | **Done**             | `packages/workbench-core/src/capability-registry.ts`, `extension-registry.ts` (`capabilityRegistry`, extension `registerProvider`)                                    | `packages/workbench-core/src/capability-registry.test.ts`           |
+| **WB-25** | View/editor host factory registry                | **Done**             | `packages/workbench-core/src/host-factory-registry.ts`, `workbench-react` factory resolution; `EditorHostFactoryRegistry` **scaffold only**                           | `host-factory-registry.test.ts`                                     |
+| **WB-27** | Resource URI / snapshot / mutation / transaction | **Done**             | `packages/workspace/src/resource-uri.ts`, `resource-snapshot.ts`, `resource-mutation.ts`, `resource-transaction.ts`, `resource-transaction.test.ts`; commit `813cbca` | `pnpm --filter @workbench-kit/workspace typecheck`; workspace tests |
+| **WB-28** | Editor contribution and service model            | **In progress (S1)** | `EditorService`, `EditorResolverRegistry`, SDK editor types, React `useEditor*` hooks                                                                                 | `workbench-core` + `workbench-react` tests                          |
 
-> **Commit note:** WB-27 files were uncommitted when this plan was written
-> (`resource-*.ts`, `workspace/index.ts`, `extension-registry.ts` touch-ups).
-> Land WB-27 in a dedicated commit before or alongside WB-28; do not assume CI
-> green on other machines until pushed.
+> **Commit note:** WB-27 landed in commit `813cbca`. Continue WB-28 S2 (React tab chrome) and S3 (save via transactions) on this branch.
 
 ### Prior foundation (selected)
 
@@ -365,6 +363,7 @@ WB-27 commit → WB-28 → WB-29 → WB-30 → WB-31 → Lane A DoD checklist
 
 ## Progress log
 
-| Date       | Note                                                         |
-| ---------- | ------------------------------------------------------------ |
-| 2026-06-16 | Initial completion plan authored; WB-27 noted as uncommitted |
+| Date       | Note                                                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------ |
+| 2026-06-16 | WB-27 committed (`813cbca`); WB-28 S1 foundation (EditorService, resolver registry, React hooks) |
+| 2026-06-16 | Initial completion plan authored; WB-27 noted as uncommitted                                     |

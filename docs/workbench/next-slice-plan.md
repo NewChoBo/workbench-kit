@@ -221,7 +221,9 @@ interface CapabilityRegistry {
 **Goal:** Add resource URI, snapshot, mutation, and transaction contracts on top of
 the existing virtual workspace reducer without breaking current exports.
 
-## Slice 5 — WB-28 Editor contribution and service model (P1) — **Next**
+## Slice 5 — WB-28 Editor contribution and service model (P1) — **In progress (S1)**
+
+**Status:** 2026-06-16 — SDK editor types, `EditorService`, `EditorResolverRegistry`, `EditorRegistry`, and React `useEditor*` hooks landed. Tab strip UI, sample-host open flow, and save-via-transaction remain for S2/S3.
 
 **Goal:** Establish editor tabs/groups, dirty state, preview/pinned state, and editor resolver hooks on top of host factories and resource transactions.
 

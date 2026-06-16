@@ -60,10 +60,17 @@ export interface ConfigurationContribution {
   properties: Record<string, ConfigurationPropertyContribution>;
 }
 
+export interface EditorContribution {
+  icon?: string;
+  id: string;
+  label: string;
+}
+
 export interface ExtensionContributes {
   activities?: ActivityContribution[];
   commands?: CommandContribution[];
   configuration?: ConfigurationContribution;
+  editors?: EditorContribution[];
   keybindings?: KeybindingContribution[];
   menus?: MenuContribution[];
   views?: Record<string, ViewContribution[]>;
@@ -109,13 +116,21 @@ export interface ViewHostFactory {
 export const DEFAULT_VIEW_HOST_FACTORY_ID = 'workbench-kit.view-host.provider' as const;
 
 export interface EditorHost {
+  readonly dirty?: boolean;
+  readonly icon?: string;
+  readonly pinned?: boolean;
+  readonly preview?: boolean;
+  readonly title?: string;
   dispose(): void;
+  onDidChangeDirty?(dirty: boolean): void;
   render(): unknown;
 }
 
 export interface EditorHostCreateContext {
   readonly editorId: string;
   readonly resource?: unknown | undefined;
+  readonly resourceUri?: string | undefined;
+  readonly tabId?: string | undefined;
 }
 
 export interface EditorHostFactory {
@@ -135,6 +150,21 @@ export interface ExtensionEditorHostFactoryRegistry {
   registerFactory(factory: EditorHostFactory): Disposable;
 }
 
+export interface EditorResolveContext {
+  readonly resourceUri: string;
+}
+
+export interface EditorResolver {
+  readonly id: string;
+  readonly priority?: number | undefined;
+  canResolve?(context: EditorResolveContext): boolean;
+  resolve(context: EditorResolveContext): string;
+}
+
+export interface ExtensionEditorResolverRegistry {
+  registerResolver(resolver: EditorResolver): Disposable;
+}
+
 export interface ExtensionCapabilityProvider<T = unknown> {
   readonly id: string;
   dispose?: () => void;
@@ -149,6 +179,7 @@ export interface ExtensionContext {
   readonly capabilities: ExtensionCapabilityRegistry;
   readonly commands: ExtensionCommandRegistry;
   readonly editorHostFactories: ExtensionEditorHostFactoryRegistry;
+  readonly editorResolvers: ExtensionEditorResolverRegistry;
   readonly extensionId: string;
   readonly extensionPath: string;
   readonly subscriptions: { add(disposable: Disposable): void };
