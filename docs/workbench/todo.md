@@ -101,7 +101,7 @@ primitive rather than hard-code the downstream concept.
 | WB-24 | done     | P1       | Lifecycle  | ViewHost lifecycle contract                   | Existing ViewHost                   | `@workbench-kit/workbench-extension-sdk`, `@workbench-kit/workbench-react`                                  | Adds optional title/icon/closable metadata, show/hide/focus/blur/resize hooks, and codicon-backed activity icons without breaking existing providers. |
 | WB-25 | done     | P1       | Registry   | View/editor host factory registry             | WB-24                               | `@workbench-kit/workbench-core`, `@workbench-kit/workbench-extension-sdk`                                   | `ViewHostFactoryRegistry` + default provider factory; `workbench-react` resolves hosts through factories.                                             |
 | WB-26 | done     | P1       | Capability | Disposable capability registry                | Current static capability map       | `@workbench-kit/workbench-core`                                                                             | `CapabilityRegistry` with host seeding and extension `registerProvider`; disposed on deactivate.                                                      |
-| WB-27 | pending  | P1       | Workspace  | Resource mutation and transaction model       | Existing virtual workspace reducer  | `@workbench-kit/workspace`                                                                                  | Add resource URI, snapshot, mutation, and transaction contracts while preserving current file/path helpers.                                           |
+| WB-27 | done     | P1       | Workspace  | Resource mutation and transaction model       | Existing virtual workspace reducer  | `@workbench-kit/workspace`                                                                                  | Add resource URI, snapshot, mutation, and transaction contracts while preserving current file/path helpers.                                           |
 | WB-28 | pending  | P1       | Editor     | Editor contribution and service model         | WB-24, WB-25, WB-27                 | `@workbench-kit/workbench-core`, `@workbench-kit/workbench-react`, `@workbench-kit/workbench-extension-sdk` | Establish editor tabs/groups, dirty state, preview/pinned state, and editor resolver hooks.                                                           |
 | WB-29 | pending  | P2       | Workspace  | Command-backed built-in explorer              | WB-24, WB-26, WB-27                 | `extensions/builtin.explorer`, `@workbench-kit/workspace`, `@workbench-kit/workbench-react`                 | Back explorer create/rename/delete/move/search/reveal behavior with virtual workspace commands.                                                       |
 | WB-30 | pending  | P2       | Config     | Preference scope and merge order              | Existing configuration contribution | `@workbench-kit/workbench-config`, `@workbench-kit/platform`                                                | Start with default/workspace/local preference scopes and leave user/resource/secret scopes explicit for later hardening.                              |
@@ -133,7 +133,9 @@ primitive rather than hard-code the downstream concept.
 
 ## Recommended Next Slice
 
-**Active plan:** [next-slice-plan.md](./next-slice-plan.md) (2026-06-14).
+**Master completion roadmap:** [completion-plan.md](./completion-plan.md) (Lane A phases, sessions, DoD).
+
+**Active slice detail:** [next-slice-plan.md](./next-slice-plan.md) (2026-06-14).
 
 | Order | Slice       | Item                                                          | Mode                    |
 | ----- | ----------- | ------------------------------------------------------------- | ----------------------- |
@@ -141,8 +143,9 @@ primitive rather than hard-code the downstream concept.
 | 1     | Doc hygiene | Align JSON widget / preview zoom doc truth with `widget-tree` | Done (prior pass)       |
 | 2     | WB-23       | `examples/workbench-sample` frontend-only host                | **Done** (2026-06-14)   |
 | 3     | WB-26       | Disposable `CapabilityRegistry` in `workbench-core`           | **Done** (2026-06-14)   |
-| 4     | WB-25       | View/editor host factory registry                             | **Done** (2026-06-14)     |
-| 5     | WB-27       | Resource URI / mutation / transaction model                   | **Next implementation**   |
+| 4     | WB-25       | View/editor host factory registry                             | **Done** (2026-06-14)   |
+| 5     | WB-27       | Resource URI / mutation / transaction model                   | **Done** (2026-06-14)   |
+| 6     | WB-28       | Editor contribution and service model                         | **Next implementation** |
 
 The first downstream extraction pass is complete for command metadata,
 sectioned settings layout, structured data forms, and command grouping

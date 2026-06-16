@@ -1,9 +1,10 @@
 # Next Slice Plan
 
+> **For the full Lane A completion roadmap** (phases WB-28 → WB-31, sessions, DoD,
+> risks), see [completion-plan.md](./completion-plan.md).
+
 **Status:** Active planning (2026-06-14)  
 **Branch:** `feature/theia-strengths-workbench`  
-**Mode:** Plan-first — implementation follows slice acceptance criteria below.
-
 **Mode:** Plan-first — implementation follows slice acceptance criteria below.
 
 ## Pre-plan checklist (before Slice 1)
@@ -213,10 +214,16 @@ interface CapabilityRegistry {
 - WB-26 stable capability lookup (done).
 - WB-24 lifecycle hooks (done).
 
-## Slice 4 — WB-27 Resource URI / mutation / transaction (P1) — **Next**
+## Slice 4 — WB-27 Resource URI / mutation / transaction (P1) — **Done**
+
+**Status:** Implemented 2026-06-14 (`resource-uri`, `resource-snapshot`, `resource-mutation`, `resource-transaction` in `@workbench-kit/workspace`).
 
 **Goal:** Add resource URI, snapshot, mutation, and transaction contracts on top of
 the existing virtual workspace reducer without breaking current exports.
+
+## Slice 5 — WB-28 Editor contribution and service model (P1) — **Next**
+
+**Goal:** Establish editor tabs/groups, dirty state, preview/pinned state, and editor resolver hooks on top of host factories and resource transactions.
 
 ## Deferred backlog (no slice assignment yet)
 

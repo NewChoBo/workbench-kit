@@ -15,7 +15,8 @@ legacy paths.
 
 | Document                                                        | Purpose                                                                                     |
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| [**Next Slice Plan**](./next-slice-plan.md)                     | **Active plan:** code truth, WB-23 → WB-26 → WB-25 slices, trade-offs, acceptance criteria. |
+| [**Completion Plan**](./completion-plan.md)                     | **Master roadmap:** Lane A DoD, phased WB-28 → WB-31, sessions, risks, completion %.        |
+| [**Next Slice Plan**](./next-slice-plan.md)                     | **Active slice detail:** code truth, WB-23 → WB-27 slices, trade-offs, acceptance criteria. |
 | [Future Capabilities](./future-capabilities.md)                 | Deferred backlog for JSON widget, i18n, theme, layout, playground, and node-graph ideas.    |
 | [JSON Widget MVP](./json-widget-mvp.md)                         | Current JSON widget package and Storybook validation status.                                |
 | [JSON Widget Port Strategy](./json-widget-port-then-replace.md) | Product-neutral extraction boundaries for JSON widget work.                                 |
