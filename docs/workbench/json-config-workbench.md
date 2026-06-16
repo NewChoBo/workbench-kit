@@ -53,10 +53,10 @@ pnpm storybook
 
 Stories under **JDW/Config/Workbench**:
 
-- **SchemaSettings** — app settings schema + split editor
-- **WidgetPreview** — widget JSON with registry render
-- **AutoPreview** — auto-detected widget document
-- **Interaction** — baseline play test (form edit, dirty, discard)
+- **SchemaSettings** — schema settings in Code(JSON) + preview layout
+- **SchemaFormEditing** — baseline play test for form edit, dirty state, discard
+- **WidgetPreview** — widget JSON with registry render and mode-switch baseline play
+- **AutoPreview** — auto-detected widget document in focused preview mode
 
 Play gate:
 
