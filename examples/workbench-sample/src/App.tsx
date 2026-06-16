@@ -25,6 +25,8 @@ import {
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 let sampleWorkspaceInitialized = false;
 
+const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
+
 type SampleTheme = WorkspaceEditorTheme;
 
 interface SampleOpenTarget {
@@ -270,6 +272,14 @@ function SampleEditorOverview({
           }}
         >
           Show explorer
+        </Button>
+        <Button
+          icon="codicon-settings-gear"
+          onClick={() => {
+            void executeCommand(OPEN_SETTINGS_COMMAND_ID);
+          }}
+        >
+          Open settings
         </Button>
         <div className="workbench-sample-overview__theme" role="group" aria-label="Theme">
           <button

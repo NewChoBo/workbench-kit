@@ -33,6 +33,7 @@ export {
   DEFAULT_EDITOR_HOST_FACTORY_ID,
   DEFAULT_VIEW_HOST_FACTORY_ID,
   WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
+  WORKBENCH_SETTINGS_CAPABILITY_ID,
 } from './contributions.js';
 export type {
   ActivateFunction,
@@ -68,4 +69,5 @@ export type {
   ViewProvider,
   WorkbenchEditorSavePort,
   WorkbenchEditorServiceCapability,
+  WorkbenchSettingsCapability,
 } from './contributions.js';

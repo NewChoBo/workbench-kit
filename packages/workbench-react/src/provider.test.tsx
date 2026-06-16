@@ -122,6 +122,21 @@ function WorkspaceMoveFolderCommandProbe({ onResult }: { onResult: (result: unkn
   return null;
 }
 
+function OpenSettingsCommandButton() {
+  const { executeCommand } = useWorkbench();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        void executeCommand('workbench-kit.builtin.settings.open');
+      }}
+    >
+      Open Settings Command
+    </button>
+  );
+}
+
 describe('WorkbenchProvider', () => {
   it('provides configured core registries to React children', () => {
     const markup = renderToStaticMarkup(
@@ -172,7 +187,11 @@ describe('WorkbenchProvider', () => {
       root.render(
         <WorkbenchProvider
           extensionsConfig={{
-            enabled: ['workbench-kit.builtin.settings'],
+            enabled: [
+              'workbench-kit.builtin.accounts',
+              'workbench-kit.builtin.settings',
+              'workbench-kit.builtin.workspace',
+            ],
             recommendations: [],
           }}
         >
@@ -201,6 +220,46 @@ describe('WorkbenchProvider', () => {
     expect(dialog?.textContent).toContain('Settings');
     expect(dialog?.textContent).toContain('workbench.settings.openOnStartup');
     expect(dialog?.textContent).toContain('default: false');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('opens contributed settings through the built-in settings command', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.settings'],
+            recommendations: [],
+          }}
+        >
+          <WorkbenchShell editorArea={<main>Editor Area</main>} />
+          <OpenSettingsCommandButton />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    const commandButton = findButtonByText(container, 'Open Settings Command');
+    expect(commandButton).toBeDefined();
+
+    await act(async () => {
+      commandButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('Settings');
+    expect(dialog?.textContent).toContain('workbench.settings.openOnStartup');
+    expect(dialog?.textContent).not.toContain('workbench.accounts.enabledEnable');
 
     await act(async () => {
       root.unmount();
