@@ -4,6 +4,9 @@
 **Branch:** `feature/theia-strengths-workbench`  
 **Audience:** Implementation sessions; English body with Korean executive summary for the team.
 
+**Codex handoff:** Autonomous implementation packages, acceptance criteria, and file
+pointers — [codex-delegation-plan.md](./codex-delegation-plan.md).
+
 This document is the **actionable session plan** for the next 2–3 weeks. Master roadmap:
 [completion-plan.md](./completion-plan.md). Slice acceptance detail:
 [next-slice-plan.md](./next-slice-plan.md). Work queue: [todo.md](./todo.md).
@@ -24,6 +27,7 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 
 ## 요약
 
+- **Codex 위임:** Lane A 잔여 작업(S8.6 → WB-29 → WB-30)은 [codex-delegation-plan.md](./codex-delegation-plan.md)의 5개 패키지로 Codex 자율 실행 가능. 첫 작업 **S8.6**.
 - **지금 어디:** Lane A **~75%**. WB-23~WB-27 완료. **WB-28(S1–S3)** 완료 — 탭 크롬, 트랜잭션 저장, 샘플 오픈 플로우. **S8.5** 완료 — `EditorArea` Source/Form 토글. Storybook wrapper 정리(`54602b9`), editor view model 문서(`9191bb9`) 반영. `pnpm validate` green (2026-06-16).
 - **다음 3세션:**
   1. **S8.6** — Preview + Split in `EditorArea` (VS Code MD 정렬); JDW JSON 자동 감지 + `JdwPreview` / `SplitView`.
@@ -440,6 +444,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Document                                                               | Purpose                                           |
 | ---------------------------------------------------------------------- | ------------------------------------------------- |
+| [codex-delegation-plan.md](./codex-delegation-plan.md)                 | Codex handoff packages, constraints, verification |
 | [completion-plan.md](./completion-plan.md)                             | Master Lane A roadmap, phases, DoD                |
 | [next-slice-plan.md](./next-slice-plan.md)                             | Slice detail, code truth, trade-offs              |
 | [todo.md](./todo.md)                                                   | WB queue and acceptance criteria                  |
