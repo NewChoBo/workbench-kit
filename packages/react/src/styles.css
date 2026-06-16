@@ -1650,6 +1650,17 @@
   transition: color 0.1s;
 }
 
+.ui-workbench-activity-bar__item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: transparent;
+}
+
 .ui-workbench-activity-bar__item::before {
   content: '';
   position: absolute;
@@ -1686,7 +1697,14 @@
 }
 
 .ui-workbench-activity-bar__item--active {
-  color: var(--color-text);
+  color: var(--vscode-activityBar-activeForeground, var(--color-text));
+}
+
+.ui-workbench-activity-bar__item--active::after {
+  background: var(
+    --vscode-activityBar-activeBorder,
+    var(--color-focus-border, var(--color-accent))
+  );
 }
 
 .ui-workbench-activity-bar__item--active::before {
