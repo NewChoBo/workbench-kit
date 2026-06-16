@@ -62,4 +62,5 @@ export type {
   ViewHostFactory,
   ViewHostSize,
   ViewProvider,
+  WorkbenchEditorSavePort,
 } from './contributions.js';

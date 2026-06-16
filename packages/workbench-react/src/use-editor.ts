@@ -43,8 +43,6 @@ export function useEditorHost(tabId?: string): EditorHost | undefined {
   const forceRender = useForceRender();
 
   const host = useMemo(() => {
-    hostRef.current?.dispose();
-
     if (!resolvedTabId) {
       hostRef.current = undefined;
       return undefined;
@@ -61,13 +59,6 @@ export function useEditorHost(tabId?: string): EditorHost | undefined {
       disposable.dispose();
     };
   }, [editorService, forceRender]);
-
-  useEffect(() => {
-    return () => {
-      hostRef.current?.dispose();
-      hostRef.current = undefined;
-    };
-  }, []);
 
   return host;
 }

@@ -47,11 +47,14 @@ export const DEFAULT_EDITOR_GROUP_ID = 'workbench.editor.group.main' as const;
 export interface EditorServiceOptions {
   readonly editorHostFactories: EditorHostFactoryRegistry;
   readonly editorResolvers?: EditorResolverRegistry | undefined;
+  readonly resolveEditorResource?: ((resourceUri: string) => unknown) | undefined;
 }
 
 export class EditorService implements Disposable {
   private readonly editorHostFactories: EditorHostFactoryRegistry;
   private readonly editorResolvers?: EditorResolverRegistry | undefined;
+  private readonly resolveEditorResource?: ((resourceUri: string) => unknown) | undefined;
+  private readonly editorHosts = new Map<string, EditorHost>();
   private readonly onDidChangeEditorsEmitter = new Emitter<EditorChangeEvent>();
   private state: EditorState;
   private tabSequence = 0;
@@ -61,6 +64,7 @@ export class EditorService implements Disposable {
   constructor(options: EditorServiceOptions) {
     this.editorHostFactories = options.editorHostFactories;
     this.editorResolvers = options.editorResolvers;
+    this.resolveEditorResource = options.resolveEditorResource;
     this.state = createDefaultEditorState();
   }
 
@@ -115,6 +119,8 @@ export class EditorService implements Disposable {
     if (!location) {
       return;
     }
+
+    this.disposeEditorHost(tabId);
 
     const nextTabs = location.group.tabs.filter((tab) => tab.id !== tabId);
     const nextActiveTabId =
@@ -205,17 +211,33 @@ export class EditorService implements Disposable {
     return activeGroup.tabs.find((tab) => tab.id === activeGroup.activeTabId);
   }
 
+  getEditorHost(tabId: string): EditorHost | undefined {
+    return this.editorHosts.get(tabId);
+  }
+
   createEditorHost(tabId: string): EditorHost | undefined {
+    const cached = this.editorHosts.get(tabId);
+    if (cached) {
+      return cached;
+    }
+
     const location = this.findTabLocation(tabId);
     if (!location) {
       return undefined;
     }
 
-    return this.editorHostFactories.createEditorHost({
+    const host = this.editorHostFactories.createEditorHost({
       editorId: location.tab.editorId,
+      resource: this.resolveEditorResource?.(location.tab.resourceUri),
       resourceUri: location.tab.resourceUri,
       tabId: location.tab.id,
     });
+    if (!host) {
+      return undefined;
+    }
+
+    this.editorHosts.set(tabId, host);
+    return host;
   }
 
   resolveEditorId(resourceUri: string): string | undefined {
@@ -223,7 +245,21 @@ export class EditorService implements Disposable {
   }
 
   dispose(): void {
+    for (const host of this.editorHosts.values()) {
+      host.dispose();
+    }
+    this.editorHosts.clear();
     this.onDidChangeEditorsEmitter.dispose();
+  }
+
+  private disposeEditorHost(tabId: string): void {
+    const host = this.editorHosts.get(tabId);
+    if (!host) {
+      return;
+    }
+
+    host.dispose();
+    this.editorHosts.delete(tabId);
   }
 
   private getActiveGroup(): EditorGroupState | undefined {

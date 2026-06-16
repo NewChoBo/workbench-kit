@@ -8,6 +8,7 @@ export type {
   EditorResolver,
   ViewHostCreateContext,
   ViewHostFactory,
+  WorkbenchEditorSavePort,
 } from '@workbench-kit/workbench-extension-sdk';
 export {
   DEFAULT_EDITOR_HOST_FACTORY_ID,
@@ -39,6 +40,13 @@ export {
   type EditorTabState,
   type OpenEditorOptions,
 } from './editor-service.js';
+export {
+  EDITOR_SAVE_COMMAND_ID,
+  registerEditorSaveCommand,
+  saveActiveEditor,
+  type SaveActiveEditorInput,
+  type SaveActiveEditorResult,
+} from './editor-save.js';
 export {
   createDefaultViewHostFactory,
   createEditorHostFactoryRegistry,
