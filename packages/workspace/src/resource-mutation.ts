@@ -12,6 +12,7 @@ export type WorkspaceResourceMutation =
   | { type: 'delete-file'; path: string }
   | { type: 'rename-file'; path: string; name: string; mimeType?: string | undefined }
   | { type: 'move-file'; sourcePath: string; targetFolderPath: string }
+  | { type: 'move-folder'; sourcePath: string; targetFolderPath: string }
   | { type: 'create-folder'; path: string }
   | { type: 'delete-folder'; path: string }
   | { type: 'rename-folder'; path: string; name: string };
@@ -38,6 +39,12 @@ export function workspaceResourceMutationToAction(
     case 'move-file':
       return {
         type: 'move-file',
+        sourcePath: mutation.sourcePath,
+        targetFolderPath: mutation.targetFolderPath,
+      };
+    case 'move-folder':
+      return {
+        type: 'move-folder',
         sourcePath: mutation.sourcePath,
         targetFolderPath: mutation.targetFolderPath,
       };
@@ -72,6 +79,12 @@ export function virtualWorkspaceActionToResourceMutation(
     case 'move-file':
       return {
         type: 'move-file',
+        sourcePath: action.sourcePath,
+        targetFolderPath: action.targetFolderPath,
+      };
+    case 'move-folder':
+      return {
+        type: 'move-folder',
         sourcePath: action.sourcePath,
         targetFolderPath: action.targetFolderPath,
       };
