@@ -361,6 +361,7 @@ WB-27 commit → WB-28 → WB-29 → WB-30 → WB-31 → Lane A DoD checklist
 | [theia-strengths-workplan.md](./theia-strengths-workplan.md)   | Theia adopt/do-not-adopt, validation ladder               |
 | [strengths-inheritance.md](./strengths-inheritance.md)         | Reference repo adoption audit                             |
 | [README.md](./README.md)                                       | Index of workbench notes                                  |
+| [codex-delegation-plan.md](./codex-delegation-plan.md)         | Codex autonomous handoff packages for Lane A completion   |
 | [workbench-core.md](../architecture/workbench-core.md)         | Registry and factory architecture                         |
 | [standalone-host.md](./standalone-host.md)                     | Host assembly without legacy VS Code packages             |
 | [widget-layout-schema-plan.md](./widget-layout-schema-plan.md) | Lane B schema plan                                        |

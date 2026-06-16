@@ -16,6 +16,7 @@ legacy paths.
 | Document                                                        | Purpose                                                                                                     |
 | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | [**Completion Plan**](./completion-plan.md)                     | **Master roadmap:** Lane A DoD, phased WB-28 → WB-31, sessions, risks, completion %.                        |
+| [**Codex Delegation Plan**](./codex-delegation-plan.md)         | **Codex handoff:** Lane A work packages, constraints, acceptance criteria, file pointers.                   |
 | [**Session Work Plan**](./session-work-plan.md)                 | **Actionable sessions:** S7–S12 breakdown, tracks A/B/C/D, WB-28 S1/S2/S3 status, Korean 요약.              |
 | [**Structural Review**](./structural-review.md)                 | **Package/layer analysis:** dependency layers, JDW/Workbench stacks, smells, P1–P3 priorities (no subtree). |
 | [**Next Slice Plan**](./next-slice-plan.md)                     | **Active slice detail:** code truth, WB-23 → WB-27 slices, trade-offs, acceptance criteria.                 |
