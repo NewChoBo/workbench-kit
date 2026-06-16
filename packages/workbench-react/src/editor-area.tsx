@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { parseJsonWidgetData } from '@workbench-kit/react/jdw/parse';
 import { JdwPreview } from '@workbench-kit/react/jdw/preview';
+import { JDW_DOCUMENT_FILE_EXTENSION, JDW_DOCUMENT_MIME } from '@workbench-kit/react/jdw/document';
 import { EditorTabs, type EditorTab } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import {
@@ -112,6 +113,7 @@ function EditorHostSurface({ activeTab }: { activeTab: EditorTabState | undefine
       <TextEditorSurface
         host={host as TextEditorHostLike}
         initialContent={rendered.initialContent}
+        mimeType={rendered.mimeType}
         resourceUri={rendered.resourceUri}
         tabId={activeTab.id}
       />
@@ -140,6 +142,7 @@ interface TextEditorHostLike extends EditorHost {
 interface TextEditorRenderPayload {
   initialContent: string;
   kind: 'workbench-kit.builtin.editor/text';
+  mimeType?: string | undefined;
   resourceUri: string;
 }
 
@@ -149,11 +152,13 @@ type JsonPath = readonly (string | number)[];
 function TextEditorSurface({
   host,
   initialContent,
+  mimeType,
   resourceUri,
   tabId,
 }: {
   host: TextEditorHostLike;
   initialContent: string;
+  mimeType?: string | undefined;
   resourceUri: string;
   tabId: string;
 }) {
@@ -164,10 +169,10 @@ function TextEditorSurface({
   const editorFile = useMemo(
     () => ({
       content,
-      mimeType: mimeTypeForResource(resourceUri),
+      mimeType: mimeType ?? mimeTypeForResource(resourceUri),
       path: pathForResource(resourceUri),
     }),
-    [content, resourceUri],
+    [content, mimeType, resourceUri],
   );
   const formEligible = useMemo(
     () => isJsonFormEligible(resourceUri, content),
@@ -658,6 +663,7 @@ function pathForResource(resourceUri: string): string {
 function mimeTypeForResource(resourceUri: string): string | undefined {
   const path = pathForResource(resourceUri).toLowerCase();
 
+  if (path.endsWith(JDW_DOCUMENT_FILE_EXTENSION)) return JDW_DOCUMENT_MIME;
   if (path.endsWith('.json')) return 'application/json';
   if (path.endsWith('.ts') || path.endsWith('.tsx')) return 'text/typescript';
   if (path.endsWith('.js') || path.endsWith('.jsx')) return 'text/javascript';

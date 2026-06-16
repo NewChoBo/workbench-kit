@@ -5,11 +5,13 @@ export const TEXT_EDITOR_HOST_RENDER_KIND = 'workbench-kit.builtin.editor/text' 
 export interface TextEditorHostRenderData {
   readonly initialContent: string;
   readonly kind: typeof TEXT_EDITOR_HOST_RENDER_KIND;
+  readonly mimeType?: string | undefined;
   readonly resourceUri: string;
 }
 
 export interface TextEditorHostOptions {
   readonly initialContent?: string | undefined;
+  readonly mimeType?: string | undefined;
   readonly resourceUri: string;
   readonly tabId?: string | undefined;
 }
@@ -54,6 +56,7 @@ export class TextEditorHost implements EditorHost {
     return {
       initialContent: this.content,
       kind: TEXT_EDITOR_HOST_RENDER_KIND,
+      mimeType: this.options.mimeType,
       resourceUri: this.options.resourceUri,
     };
   }

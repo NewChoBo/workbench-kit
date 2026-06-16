@@ -80,6 +80,9 @@ importers:
 
   examples/workbench-sample:
     dependencies:
+      '@workbench-kit/jdw':
+        specifier: workspace:*
+        version: link:../../packages/json-widget
       '@workbench-kit/react':
         specifier: workspace:*
         version: link:../../packages/react

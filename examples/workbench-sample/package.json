@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@workbench-kit/jdw": "workspace:*",
     "@workbench-kit/react": "workspace:*",
     "@workbench-kit/workbench-config": "workspace:*",
     "@workbench-kit/workbench-react": "workspace:*",
