@@ -308,7 +308,12 @@ function EditorGroupPane({
         .filter(Boolean)
         .join(' ')}
       data-editor-group-id={group.id}
+      data-drop-side={dropSide ?? undefined}
+      onDragLeave={handleGroupDragLeave}
+      onDragOver={handleGroupDragOver}
+      onDrop={handleGroupDrop}
     >
+      {dropSide ? <div aria-hidden className="workbench-editor-area__drop-overlay" /> : null}
       <EditorTabs
         activeId={activeTabId}
         draggableTabs
@@ -336,14 +341,7 @@ function EditorGroupPane({
         }
         tabs={editorTabs}
       />
-      <div
-        className="workbench-editor-area__group-body"
-        data-drop-side={dropSide ?? undefined}
-        onDragLeave={handleGroupDragLeave}
-        onDragOver={handleGroupDragOver}
-        onDrop={handleGroupDrop}
-      >
-        {dropSide ? <div aria-hidden className="workbench-editor-area__drop-overlay" /> : null}
+      <div className="workbench-editor-area__group-body">
         <EditorHostSurface
           activeTab={activeTab}
           modeToolbarHost={modeToolbarHost}
