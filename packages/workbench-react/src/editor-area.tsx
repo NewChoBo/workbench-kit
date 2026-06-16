@@ -9,8 +9,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { parseJsonWidgetData } from '@workbench-kit/react/jdw/parse';
-import { JdwPreview } from '@workbench-kit/react/jdw/preview';
 import { JDW_DOCUMENT_FILE_EXTENSION, JDW_DOCUMENT_MIME } from '@workbench-kit/react/jdw/document';
 import { EditorTabs, type EditorTab } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
@@ -29,6 +27,11 @@ import {
   useEditorState,
 } from './use-editor.js';
 import { useWorkbench } from './provider.js';
+import {
+  DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
+  resolveEditorDocumentViews,
+  type EditorDocumentViewProvider,
+} from './editor-view-providers.js';
 
 const WorkspaceEditor = lazy(async () => {
   const module = await import('@workbench-kit/react/workbench/workspace/editor');
@@ -37,9 +40,10 @@ const WorkspaceEditor = lazy(async () => {
 
 export interface EditorAreaProps {
   emptyState?: ReactNode | undefined;
+  viewProviders?: readonly EditorDocumentViewProvider[] | undefined;
 }
 
-export function EditorArea({ emptyState }: EditorAreaProps) {
+export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
   const editorService = useEditorService();
   const editorState = useEditorState();
   const activeTab = useActiveEditorTab();
@@ -77,13 +81,19 @@ export function EditorArea({ emptyState }: EditorAreaProps) {
         tabs={editorTabs}
       />
       <div className="workbench-editor-area__content">
-        <EditorHostSurface activeTab={activeTab} />
+        <EditorHostSurface activeTab={activeTab} viewProviders={viewProviders} />
       </div>
     </main>
   );
 }
 
-function EditorHostSurface({ activeTab }: { activeTab: EditorTabState | undefined }) {
+function EditorHostSurface({
+  activeTab,
+  viewProviders,
+}: {
+  activeTab: EditorTabState | undefined;
+  viewProviders: readonly EditorDocumentViewProvider[] | undefined;
+}) {
   const editorService = useEditorService();
   const host = useEditorHost(activeTab?.id);
   const hostFrameRef = useRef<HTMLDivElement>(null);
@@ -116,6 +126,7 @@ function EditorHostSurface({ activeTab }: { activeTab: EditorTabState | undefine
         mimeType={rendered.mimeType}
         resourceUri={rendered.resourceUri}
         tabId={activeTab.id}
+        viewProviders={viewProviders}
       />
     );
   }
@@ -147,7 +158,6 @@ interface TextEditorRenderPayload {
 }
 
 type EditorViewMode = 'code' | 'form' | 'preview';
-type JsonPath = readonly (string | number)[];
 
 function TextEditorSurface({
   host,
@@ -155,33 +165,42 @@ function TextEditorSurface({
   mimeType,
   resourceUri,
   tabId,
+  viewProviders,
 }: {
   host: TextEditorHostLike;
   initialContent: string;
   mimeType?: string | undefined;
   resourceUri: string;
   tabId: string;
+  viewProviders: readonly EditorDocumentViewProvider[] | undefined;
 }) {
   const editorService = useEditorService();
   const { executeCommand, workspaceHostPort } = useWorkbench();
   const [content, setContent] = useState(initialContent);
   const [viewMode, setViewMode] = useState<EditorViewMode>('code');
-  const editorFile = useMemo(
+  const documentViewProviders = useMemo(
+    () =>
+      viewProviders
+        ? [...viewProviders, ...DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS]
+        : DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
+    [viewProviders],
+  );
+  const editorDocument = useMemo(
     () => ({
       content,
       mimeType: mimeType ?? mimeTypeForResource(resourceUri),
       path: pathForResource(resourceUri),
+      resourceUri,
     }),
     [content, mimeType, resourceUri],
   );
-  const formEligible = useMemo(
-    () => isJsonFormEligible(resourceUri, content),
-    [content, resourceUri],
+  const { formProvider, previewProvider } = useMemo(
+    () => resolveEditorDocumentViews(editorDocument, documentViewProviders),
+    [documentViewProviders, editorDocument],
   );
-  const previewEligible = useMemo(
-    () => formEligible && isJdwWidgetJson(content),
-    [content, formEligible],
-  );
+  const formEligible = Boolean(formProvider);
+  const previewEligible = Boolean(previewProvider);
+  const codeViewLabel = isJsonSourceDocument(editorDocument) ? 'Code (JSON)' : 'Code';
 
   useEffect(() => {
     setContent(initialContent);
@@ -208,24 +227,6 @@ function TextEditorSurface({
     [editorService, host, tabId],
   );
 
-  const handleFormFieldChange = useCallback(
-    (path: JsonPath, nextValue: string) => {
-      const parsed = parseJsonObject(content);
-      if (!parsed) {
-        return;
-      }
-
-      const previousValue = getJsonPathValue(parsed, path);
-      const nextRecord = updateJsonPathValue(
-        parsed,
-        path,
-        coerceFormFieldValue(previousValue, nextValue),
-      );
-      handleChange(JSON.stringify(nextRecord, null, 2));
-    },
-    [content, handleChange],
-  );
-
   const handleSave = useCallback(
     (nextContent: string) => {
       if (nextContent !== content) {
@@ -247,7 +248,7 @@ function TextEditorSurface({
         }
       >
         <WorkspaceEditor
-          file={editorFile}
+          file={editorDocument}
           showFileBar={false}
           showHeader={false}
           value={content}
@@ -258,33 +259,38 @@ function TextEditorSurface({
     </div>
   );
 
-  const previewPane = (
+  const previewPane = previewProvider ? (
     <section aria-label="Preview" className="workbench-editor-area__preview-pane">
-      <JdwPreview className="workbench-editor-area__jdw-preview" json={content} />
+      {previewProvider.render({ document: editorDocument, onContentChange: handleChange })}
     </section>
-  );
-  const formPane = <JsonObjectFormView content={content} onFieldChange={handleFormFieldChange} />;
-  const splitWithPreview = (label: string, pane: ReactNode) => (
-    <SplitView
-      className="workbench-editor-area__split"
-      defaultPrimarySizePercent={50}
-      minPrimarySizePercent={25}
-      primary={
-        <section aria-label={label} className="workbench-editor-area__split-pane">
-          {pane}
-        </section>
-      }
-      secondary={previewPane}
-    />
-  );
+  ) : null;
+  const formPane = formProvider
+    ? formProvider.render({ document: editorDocument, onContentChange: handleChange })
+    : null;
+  const splitWithPreview = (label: string, pane: ReactNode) =>
+    previewPane ? (
+      <SplitView
+        className="workbench-editor-area__split"
+        defaultPrimarySizePercent={50}
+        minPrimarySizePercent={25}
+        primary={
+          <section aria-label={label} className="workbench-editor-area__split-pane">
+            {pane}
+          </section>
+        }
+        secondary={previewPane}
+      />
+    ) : (
+      pane
+    );
   const editorBody =
-    viewMode === 'preview' && previewEligible
+    viewMode === 'preview' && previewPane
       ? previewPane
-      : viewMode === 'form' && formEligible
-        ? previewEligible
+      : viewMode === 'form' && formPane
+        ? previewPane
           ? splitWithPreview('Form', formPane)
           : formPane
-        : previewEligible
+        : previewPane
           ? splitWithPreview('Code JSON', sourcePane)
           : sourcePane;
 
@@ -294,8 +300,10 @@ function TextEditorSurface({
       className="workbench-editor-area__text-editor"
       data-resource-uri={resourceUri}
     >
-      {formEligible ? (
+      {formEligible || previewEligible ? (
         <EditorViewModeToolbar
+          codeLabel={codeViewLabel}
+          formEligible={formEligible}
           mode={viewMode}
           previewEligible={previewEligible}
           onModeChange={setViewMode}
@@ -307,10 +315,14 @@ function TextEditorSurface({
 }
 
 function EditorViewModeToolbar({
+  codeLabel,
+  formEligible,
   mode,
   previewEligible,
   onModeChange,
 }: {
+  codeLabel: string;
+  formEligible: boolean;
   mode: EditorViewMode;
   previewEligible: boolean;
   onModeChange: (mode: EditorViewMode) => void;
@@ -330,19 +342,21 @@ function EditorViewModeToolbar({
         }}
         type="button"
       >
-        Code (JSON)
+        {codeLabel}
       </button>
-      <button
-        aria-pressed={mode === 'form'}
-        className="workbench-editor-area__view-button"
-        data-active={mode === 'form' ? 'true' : undefined}
-        onClick={() => {
-          onModeChange('form');
-        }}
-        type="button"
-      >
-        Form
-      </button>
+      {formEligible ? (
+        <button
+          aria-pressed={mode === 'form'}
+          className="workbench-editor-area__view-button"
+          data-active={mode === 'form' ? 'true' : undefined}
+          onClick={() => {
+            onModeChange('form');
+          }}
+          type="button"
+        >
+          Form
+        </button>
+      ) : null}
       {previewEligible ? (
         <>
           <button
@@ -360,298 +374,6 @@ function EditorViewModeToolbar({
       ) : null}
     </div>
   );
-}
-
-function JsonObjectFormView({
-  content,
-  onFieldChange,
-}: {
-  content: string;
-  onFieldChange: (path: JsonPath, value: string) => void;
-}) {
-  const parsed = parseJsonObject(content);
-
-  if (!parsed) {
-    return (
-      <div className="workbench-editor-area__form-placeholder">
-        <p>Form view is unavailable while the document is not valid JSON.</p>
-        <p>Switch to Source to fix parse errors.</p>
-      </div>
-    );
-  }
-
-  const entries = Object.entries(parsed);
-
-  if (entries.length === 0) {
-    return (
-      <div className="workbench-editor-area__form-placeholder">
-        <p>Form view</p>
-        <p>This JSON object has no top-level fields yet.</p>
-      </div>
-    );
-  }
-
-  return (
-    <form
-      className="workbench-editor-area__form"
-      onSubmit={(event) => {
-        event.preventDefault();
-      }}
-    >
-      {entries.map(([key, value]) => (
-        <JsonValueFormField
-          key={key}
-          label={key}
-          path={[key]}
-          value={value}
-          onFieldChange={onFieldChange}
-        />
-      ))}
-    </form>
-  );
-}
-
-function JsonValueFormField({
-  label,
-  path,
-  value,
-  onFieldChange,
-}: {
-  label: string;
-  path: JsonPath;
-  value: unknown;
-  onFieldChange: (path: JsonPath, value: string) => void;
-}) {
-  if (Array.isArray(value)) {
-    return (
-      <JsonFormGroup label={label} meta={`array (${value.length})`} path={path}>
-        {value.length === 0 ? (
-          <div className="workbench-editor-area__form-empty">Empty array</div>
-        ) : (
-          value.map((item, index) => (
-            <JsonValueFormField
-              key={index}
-              label={`[${index}]`}
-              path={[...path, index]}
-              value={item}
-              onFieldChange={onFieldChange}
-            />
-          ))
-        )}
-      </JsonFormGroup>
-    );
-  }
-
-  if (isJsonRecord(value)) {
-    const entries = Object.entries(value);
-
-    return (
-      <JsonFormGroup label={label} meta={`object (${entries.length})`} path={path}>
-        {entries.length === 0 ? (
-          <div className="workbench-editor-area__form-empty">Empty object</div>
-        ) : (
-          entries.map(([key, childValue]) => (
-            <JsonValueFormField
-              key={key}
-              label={key}
-              path={[...path, key]}
-              value={childValue}
-              onFieldChange={onFieldChange}
-            />
-          ))
-        )}
-      </JsonFormGroup>
-    );
-  }
-
-  const fieldLabel = getJsonPathLabel(path);
-
-  if (typeof value === 'boolean') {
-    return (
-      <label className="workbench-editor-area__form-field">
-        <span className="workbench-editor-area__form-label">{label}</span>
-        <select
-          aria-label={fieldLabel}
-          className="workbench-editor-area__form-input"
-          value={String(value)}
-          onChange={(event) => {
-            onFieldChange(path, event.currentTarget.value);
-          }}
-        >
-          <option value="true">true</option>
-          <option value="false">false</option>
-        </select>
-      </label>
-    );
-  }
-
-  if (typeof value === 'string' || typeof value === 'number') {
-    return (
-      <label className="workbench-editor-area__form-field">
-        <span className="workbench-editor-area__form-label">{label}</span>
-        <input
-          aria-label={fieldLabel}
-          className="workbench-editor-area__form-input"
-          onChange={(event) => {
-            onFieldChange(path, event.currentTarget.value);
-          }}
-          step={typeof value === 'number' ? 'any' : undefined}
-          type={typeof value === 'number' ? 'number' : 'text'}
-          value={formatFormFieldValue(value)}
-        />
-      </label>
-    );
-  }
-
-  return (
-    <div className="workbench-editor-area__form-field">
-      <span className="workbench-editor-area__form-label">{label}</span>
-      <output aria-label={fieldLabel} className="workbench-editor-area__form-readonly">
-        {formatFormFieldValue(value)}
-      </output>
-    </div>
-  );
-}
-
-function JsonFormGroup({
-  children,
-  label,
-  meta,
-  path,
-}: {
-  children: ReactNode;
-  label: string;
-  meta: string;
-  path: JsonPath;
-}) {
-  return (
-    <fieldset aria-label={getJsonPathLabel(path)} className="workbench-editor-area__form-group">
-      <legend className="workbench-editor-area__form-group-header">
-        <span className="workbench-editor-area__form-label">{label}</span>
-        <span className="workbench-editor-area__form-badge">{meta}</span>
-      </legend>
-      <div className="workbench-editor-area__form-group-body">{children}</div>
-    </fieldset>
-  );
-}
-
-function isJsonFormEligible(resourceUri: string, content: string): boolean {
-  if (resourceUri.toLowerCase().endsWith('.json')) {
-    return true;
-  }
-
-  return parseJsonObject(content) !== null;
-}
-
-function parseJsonObject(content: string): Record<string, unknown> | null {
-  const trimmed = content.trim();
-  if (!trimmed) {
-    return {};
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(trimmed);
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      return null;
-    }
-
-    return parsed as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-function isJsonRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function isJdwWidgetJson(content: string): boolean {
-  const parsed = parseJsonWidgetData(content);
-  return parsed.value !== null;
-}
-
-function formatFormFieldValue(value: unknown): string {
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
-
-  return JSON.stringify(value) ?? String(value);
-}
-
-function coerceFormFieldValue(previousValue: unknown, nextValue: string): unknown {
-  if (typeof previousValue === 'number') {
-    const parsedNumber = Number(nextValue);
-    return Number.isNaN(parsedNumber) ? previousValue : parsedNumber;
-  }
-
-  if (typeof previousValue === 'boolean') {
-    if (nextValue === 'true') {
-      return true;
-    }
-
-    if (nextValue === 'false') {
-      return false;
-    }
-  }
-
-  return nextValue;
-}
-
-function getJsonPathValue(value: unknown, path: JsonPath): unknown {
-  let cursor = value;
-
-  for (const segment of path) {
-    if (Array.isArray(cursor) && typeof segment === 'number') {
-      cursor = cursor[segment];
-      continue;
-    }
-
-    if (isJsonRecord(cursor) && typeof segment === 'string') {
-      cursor = cursor[segment];
-      continue;
-    }
-
-    return undefined;
-  }
-
-  return cursor;
-}
-
-function updateJsonPathValue(value: unknown, path: JsonPath, nextValue: unknown): unknown {
-  if (path.length === 0) {
-    return nextValue;
-  }
-
-  const [head, ...tail] = path;
-
-  if (Array.isArray(value) && typeof head === 'number') {
-    const nextArray = [...value];
-    nextArray[head] = updateJsonPathValue(nextArray[head], tail, nextValue);
-    return nextArray;
-  }
-
-  if (isJsonRecord(value) && typeof head === 'string') {
-    return {
-      ...value,
-      [head]: updateJsonPathValue(value[head], tail, nextValue),
-    };
-  }
-
-  return value;
-}
-
-function getJsonPathLabel(path: JsonPath): string {
-  return path.reduce<string>((label, segment) => {
-    if (typeof segment === 'number') {
-      return `${label}[${segment}]`;
-    }
-
-    return label ? `${label}.${segment}` : segment;
-  }, '');
 }
 
 function pathForResource(resourceUri: string): string {
@@ -673,6 +395,11 @@ function mimeTypeForResource(resourceUri: string): string | undefined {
   if (path.endsWith('.yml') || path.endsWith('.yaml')) return 'text/yaml';
 
   return undefined;
+}
+
+function isJsonSourceDocument(document: { mimeType?: string | undefined; path: string }): boolean {
+  const mimeType = document.mimeType?.toLowerCase();
+  return document.path.toLowerCase().endsWith('.json') || Boolean(mimeType?.includes('json'));
 }
 
 function toEditorTabModel(tab: EditorTabState): EditorTab {

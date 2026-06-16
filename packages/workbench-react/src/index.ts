@@ -7,6 +7,18 @@ export {
   type WorkbenchWorkspaceHostPort,
 } from './provider.js';
 export { EditorArea, type EditorAreaProps } from './editor-area.js';
+export {
+  DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
+  JDW_PREVIEW_PROVIDER_ID,
+  JSON_FORM_PROVIDER_ID,
+  resolveEditorDocumentViewProvider,
+  resolveEditorDocumentViews,
+  type EditorDocumentContext,
+  type EditorDocumentViewKind,
+  type EditorDocumentViewProvider,
+  type EditorDocumentViewRenderContext,
+  type ResolvedEditorDocumentViews,
+} from './editor-view-providers.js';
 export { WorkbenchShell, type WorkbenchShellProps } from './shell.js';
 export {
   useActiveEditorTab,

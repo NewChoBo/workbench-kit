@@ -31,6 +31,7 @@ vi.mock('@monaco-editor/react', () => ({
 vi.mock('monaco-editor', () => ({}));
 
 import { EditorArea } from './editor-area.js';
+import type { EditorDocumentViewProvider } from './editor-view-providers.js';
 import { WorkbenchProvider } from './provider.js';
 import { useEditorService } from './use-editor.js';
 
@@ -261,6 +262,82 @@ describe('EditorArea', () => {
     expect(
       container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
     ).toBe('json');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('uses injected extension preview providers without requiring JSON form mode', async () => {
+    function OpenCustomEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/diagrams/sample.flow') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/diagrams/sample.flow',
+            title: 'sample.flow',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return null;
+    }
+
+    const customPreviewProvider: EditorDocumentViewProvider = {
+      id: 'sample.flow.preview',
+      kind: 'preview',
+      label: 'Preview',
+      matches: (document) => document.path.endsWith('.flow'),
+      render: ({ document }) => (
+        <div data-testid="custom-flow-preview">Preview for {document.path}</div>
+      ),
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <OpenCustomEditorProbe />
+          <EditorArea viewProviders={[customPreviewProvider]} />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    expect(container.textContent).toContain('Code');
+    expect(container.textContent).not.toContain('Code (JSON)');
+    expect(container.textContent).toContain('Preview');
+    expect(container.textContent).not.toContain('Form');
+    expect(container.textContent).toContain('Preview for diagrams/sample.flow');
+    expect(container.querySelector('[data-testid="custom-flow-preview"]')).not.toBeNull();
 
     await act(async () => {
       root.unmount();
