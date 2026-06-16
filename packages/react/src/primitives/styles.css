@@ -488,6 +488,10 @@
 }
 
 .ui-editor-tabs__tab {
+  --ui-editor-tabs-active-border: var(
+    --vscode-tab-activeBorderTop,
+    var(--vscode-focusBorder, var(--color-focus-border, var(--color-accent)))
+  );
   box-sizing: border-box;
   display: inline-flex;
   flex: 0 1 auto;
@@ -500,7 +504,7 @@
   color: var(--vscode-tab-inactiveForeground, var(--color-text-muted));
   background: var(--vscode-tab-inactiveBackground, var(--color-surface));
   border-right: 1px solid var(--vscode-tab-border, var(--color-border));
-  border-top: 1px solid transparent;
+  border-top: 2px solid transparent;
   font: inherit;
   cursor: pointer;
 }
@@ -508,7 +512,8 @@
 .ui-editor-tabs__tab--active {
   color: var(--vscode-tab-activeForeground, var(--color-text));
   background: var(--vscode-tab-activeBackground, var(--color-bg));
-  border-top-color: var(--vscode-focusBorder, var(--color-focus-border));
+  border-top-color: var(--ui-editor-tabs-active-border);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ui-editor-tabs-active-border) 55%, transparent);
 }
 
 .ui-editor-tabs__label {

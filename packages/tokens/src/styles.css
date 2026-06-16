@@ -13,6 +13,8 @@
   --color-text-subtle: #7d8590;
   --color-accent: #2f81f7;
   --color-accent-hover: #388bfd;
+  --color-accent-foreground: #ffffff;
+  --color-focus-border: #2f81f7;
   --color-danger: #da3633;
   --color-danger-hover: #f85149;
   --file-icon-archive: #a9b4c0;
@@ -52,6 +54,8 @@
   --color-text-subtle: #6e7781;
   --color-accent: #0969da;
   --color-accent-hover: #0860ca;
+  --color-accent-foreground: #ffffff;
+  --color-focus-border: #0969da;
   --color-danger: #cf222e;
   --color-danger-hover: #a40e26;
   --file-icon-archive: #57606a;
