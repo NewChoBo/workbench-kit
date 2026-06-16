@@ -23,6 +23,13 @@ export { NumberInput } from './NumberInput';
 export type { NumberInputProps } from './NumberInput';
 export { Select } from './Select';
 export type { SelectProps } from './Select';
+export { ScrollArea } from './ScrollArea';
+export type {
+  ScrollAreaGutter,
+  ScrollAreaOrientation,
+  ScrollAreaProps,
+  ScrollAreaScrollbarVisibility,
+} from './ScrollArea';
 export { StatusBar, StatusBarLabel, StatusBarSection } from './StatusBar';
 export type {
   StatusBarLabelProps,

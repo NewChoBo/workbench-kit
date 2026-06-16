@@ -1,3 +1,26 @@
+.ui-scroll-area {
+  min-width: 0;
+  min-height: 0;
+}
+
+.ui-scroll-area--both {
+  overflow: auto;
+}
+
+.ui-scroll-area--horizontal {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.ui-scroll-area--vertical {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.ui-scroll-area--stable-gutter {
+  scrollbar-gutter: stable;
+}
+
 .ui-workbench-scrollbar,
 .panel-body,
 .workbench-settings-content,

@@ -7,6 +7,7 @@ import {
 } from '@workbench-kit/react/jdw/document';
 import { parseJsonWidgetData } from '@workbench-kit/react/jdw/parse';
 import { JdwPreview } from '@workbench-kit/react/jdw/preview';
+import { ScrollArea } from '@workbench-kit/react/primitives';
 
 export type EditorDocumentViewKind = 'form' | 'preview';
 type JsonPath = readonly (string | number)[];
@@ -114,10 +115,10 @@ function JsonObjectFormView({
 
   if (!parsed) {
     return (
-      <div className="workbench-editor-area__form-placeholder">
+      <ScrollArea className="workbench-editor-area__form-placeholder" orientation="vertical">
         <p>Form view is unavailable while the document is not valid JSON.</p>
         <p>Switch to Source to fix parse errors.</p>
-      </div>
+      </ScrollArea>
     );
   }
 
@@ -125,16 +126,18 @@ function JsonObjectFormView({
 
   if (entries.length === 0) {
     return (
-      <div className="workbench-editor-area__form-placeholder">
+      <ScrollArea className="workbench-editor-area__form-placeholder" orientation="vertical">
         <p>Form view</p>
         <p>This JSON object has no top-level fields yet.</p>
-      </div>
+      </ScrollArea>
     );
   }
 
   return (
-    <form
+    <ScrollArea
+      as="form"
       className="workbench-editor-area__form"
+      orientation="vertical"
       onSubmit={(event) => {
         event.preventDefault();
       }}
@@ -148,7 +151,7 @@ function JsonObjectFormView({
           onFieldChange={handleFieldChange}
         />
       ))}
-    </form>
+    </ScrollArea>
   );
 }
 
