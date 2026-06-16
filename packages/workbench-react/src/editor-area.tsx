@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import {
   JDW_DOCUMENT_FILE_EXTENSION,
   JDW_DOCUMENT_MIME,
@@ -61,8 +62,16 @@ export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
     editorState.groups[0];
   const tabs = activeGroup?.tabs ?? [];
   const activeTabId = activeGroup?.activeTabId ?? tabs[0]?.id ?? '';
+  const [modeToolbarHost, setModeToolbarHost] = useState<HTMLDivElement | null>(null);
+  const [modeToolbarVisible, setModeToolbarVisible] = useState(false);
 
   const editorTabs = useMemo(() => tabs.map((tab) => toEditorTabModel(tab)), [tabs]);
+  const handleModeToolbarHost = useCallback((node: HTMLDivElement | null) => {
+    setModeToolbarHost(node);
+  }, []);
+  const handleModeToolbarVisibleChange = useCallback((visible: boolean) => {
+    setModeToolbarVisible(visible);
+  }, []);
 
   if (tabs.length === 0) {
     return (
@@ -87,10 +96,23 @@ export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
         onSelect={(tabId) => {
           editorService.setActiveEditor(tabId);
         }}
+        addons={
+          modeToolbarVisible ? (
+            <div
+              ref={handleModeToolbarHost}
+              className="workbench-editor-area__mode-toolbar-outlet"
+            />
+          ) : undefined
+        }
         tabs={editorTabs}
       />
       <div className="workbench-editor-area__content">
-        <EditorHostSurface activeTab={activeTab} viewProviders={viewProviders} />
+        <EditorHostSurface
+          activeTab={activeTab}
+          modeToolbarHost={modeToolbarHost}
+          onModeToolbarVisibleChange={handleModeToolbarVisibleChange}
+          viewProviders={viewProviders}
+        />
       </div>
     </main>
   );
@@ -98,9 +120,13 @@ export function EditorArea({ emptyState, viewProviders }: EditorAreaProps) {
 
 function EditorHostSurface({
   activeTab,
+  modeToolbarHost,
+  onModeToolbarVisibleChange,
   viewProviders,
 }: {
   activeTab: EditorTabState | undefined;
+  modeToolbarHost: HTMLDivElement | null;
+  onModeToolbarVisibleChange: (visible: boolean) => void;
   viewProviders: readonly EditorDocumentViewProvider[] | undefined;
 }) {
   const editorService = useEditorService();
@@ -132,7 +158,9 @@ function EditorHostSurface({
       <TextEditorSurface
         host={host as TextEditorHostLike}
         initialContent={rendered.initialContent}
+        modeToolbarHost={modeToolbarHost}
         mimeType={rendered.mimeType}
+        onModeToolbarVisibleChange={onModeToolbarVisibleChange}
         resourceUri={rendered.resourceUri}
         tabId={activeTab.id}
         viewProviders={viewProviders}
@@ -171,14 +199,18 @@ type EditorViewMode = 'code' | 'form' | 'preview';
 function TextEditorSurface({
   host,
   initialContent,
+  modeToolbarHost,
   mimeType,
+  onModeToolbarVisibleChange,
   resourceUri,
   tabId,
   viewProviders,
 }: {
   host: TextEditorHostLike;
   initialContent: string;
+  modeToolbarHost: HTMLDivElement | null;
   mimeType?: string | undefined;
+  onModeToolbarVisibleChange: (visible: boolean) => void;
   resourceUri: string;
   tabId: string;
   viewProviders: readonly EditorDocumentViewProvider[] | undefined;
@@ -210,11 +242,20 @@ function TextEditorSurface({
   const formEligible = Boolean(formProvider);
   const previewEligible = Boolean(previewProvider);
   const codeViewLabel = isJsonSourceDocument(editorDocument) ? 'Code (JSON)' : 'Code';
+  const modeToolbarVisible = formEligible || previewEligible;
 
   useEffect(() => {
     setContent(initialContent);
     setViewMode('code');
   }, [initialContent, resourceUri]);
+
+  useEffect(() => {
+    onModeToolbarVisibleChange(modeToolbarVisible);
+
+    return () => {
+      onModeToolbarVisibleChange(false);
+    };
+  }, [modeToolbarVisible, onModeToolbarVisibleChange]);
 
   useEffect(() => {
     if (viewMode === 'form' && !formEligible) {
@@ -302,24 +343,31 @@ function TextEditorSurface({
         : previewPane
           ? splitWithPreview('Code JSON', sourcePane)
           : sourcePane;
+  const modeToolbar =
+    modeToolbarVisible && modeToolbarHost
+      ? createPortal(
+          <EditorViewModeToolbar
+            codeLabel={codeViewLabel}
+            formEligible={formEligible}
+            mode={viewMode}
+            previewEligible={previewEligible}
+            onModeChange={setViewMode}
+          />,
+          modeToolbarHost,
+        )
+      : null;
 
   return (
-    <section
-      aria-label={host.title ?? resourceUri}
-      className="workbench-editor-area__text-editor"
-      data-resource-uri={resourceUri}
-    >
-      {formEligible || previewEligible ? (
-        <EditorViewModeToolbar
-          codeLabel={codeViewLabel}
-          formEligible={formEligible}
-          mode={viewMode}
-          previewEligible={previewEligible}
-          onModeChange={setViewMode}
-        />
-      ) : null}
-      <div className="workbench-editor-area__text-editor-body">{editorBody}</div>
-    </section>
+    <>
+      {modeToolbar}
+      <section
+        aria-label={host.title ?? resourceUri}
+        className="workbench-editor-area__text-editor"
+        data-resource-uri={resourceUri}
+      >
+        <div className="workbench-editor-area__text-editor-body">{editorBody}</div>
+      </section>
+    </>
   );
 }
 
