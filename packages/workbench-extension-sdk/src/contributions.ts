@@ -158,6 +158,12 @@ export interface WorkbenchEditorServiceCapability {
   }): unknown;
 }
 
+export const WORKBENCH_SETTINGS_CAPABILITY_ID = 'workbench.settings' as const;
+
+export interface WorkbenchSettingsCapability {
+  openSettings(): void;
+}
+
 export interface ExtensionViewHostFactoryRegistry {
   registerFactory(factory: ViewHostFactory): Disposable;
 }

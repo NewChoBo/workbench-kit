@@ -14,12 +14,14 @@ export {
   DEFAULT_EDITOR_HOST_FACTORY_ID,
   DEFAULT_VIEW_HOST_FACTORY_ID,
   WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
+  WORKBENCH_SETTINGS_CAPABILITY_ID,
 } from '@workbench-kit/workbench-extension-sdk';
 export type {
   ViewHost,
   ViewHostSize,
   ViewProvider,
   WorkbenchEditorServiceCapability,
+  WorkbenchSettingsCapability,
 } from '@workbench-kit/workbench-extension-sdk';
 export {
   BUILTIN_WORKBENCH_EXTENSIONS,

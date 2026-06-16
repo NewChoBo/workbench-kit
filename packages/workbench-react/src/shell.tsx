@@ -21,10 +21,12 @@ import {
   type StatusBarItemModel,
   type StatusBarSectionModel,
 } from '@workbench-kit/react/workbench/shell';
+import { WORKBENCH_SETTINGS_CAPABILITY_ID } from '@workbench-kit/workbench-core';
 import type {
   ViewHost,
   ViewHostFactoryRegistry,
   ViewProvider,
+  WorkbenchSettingsCapability,
 } from '@workbench-kit/workbench-core';
 
 import { EditorArea } from './editor-area.js';
@@ -42,6 +44,7 @@ export interface WorkbenchShellProps {
 }
 
 const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
+const SETTINGS_EXTENSION_ID = 'workbench-kit.builtin.settings';
 const SETTINGS_ACTIVITY_ITEM_ID = 'workbench-kit.shell.settings';
 
 export function WorkbenchShell({
@@ -58,6 +61,15 @@ export function WorkbenchShell({
   const forceRender = useForceRender();
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [settingsSearchValue, setSettingsSearchValue] = useState('');
+  const showSettingsModal = useCallback(() => {
+    setSettingsOpen(true);
+  }, []);
+  const settingsCapability = useMemo<WorkbenchSettingsCapability>(
+    () => ({
+      openSettings: showSettingsModal,
+    }),
+    [showSettingsModal],
+  );
   const layout = layoutService.getState();
   const resolvedStatusSections =
     statusSections ?? createDefaultStatusSections(extensionRegistry, missingExtensionIds);
@@ -67,6 +79,9 @@ export function WorkbenchShell({
     () => createSettingsCategories(extensionRegistry),
     [extensionRegistry],
   );
+  const defaultSettingsCategoryId =
+    settingsCategories.find((category) => category.id === SETTINGS_EXTENSION_ID)?.id ??
+    settingsCategories[0]?.id;
   const settingsContributionCount = extensionRegistry.configurations.getConfigurations().length;
 
   useEffect(() => {
@@ -89,8 +104,23 @@ export function WorkbenchShell({
     }
   }, [activeViewContainerId, extensionRegistry, forceRender]);
 
+  useEffect(() => {
+    if (extensionRegistry.capabilityRegistry.has(WORKBENCH_SETTINGS_CAPABILITY_ID)) {
+      return undefined;
+    }
+
+    const disposable = extensionRegistry.capabilityRegistry.register({
+      id: WORKBENCH_SETTINGS_CAPABILITY_ID,
+      get: () => settingsCapability,
+    });
+
+    return () => {
+      disposable.dispose();
+    };
+  }, [extensionRegistry, settingsCapability]);
+
   const openSettings = () => {
-    setSettingsOpen(true);
+    showSettingsModal();
     if (extensionRegistry.commands.hasCommand(OPEN_SETTINGS_COMMAND_ID)) {
       void executeCommand(OPEN_SETTINGS_COMMAND_ID).catch(() => undefined);
     }
@@ -133,7 +163,7 @@ export function WorkbenchShell({
         isSettingsOpen ? (
           <WorkbenchSettingsModal
             categories={settingsCategories}
-            defaultActiveCategoryId={settingsCategories[0]?.id}
+            defaultActiveCategoryId={defaultSettingsCategoryId}
             footer={<Button onClick={() => setSettingsOpen(false)}>Close</Button>}
             scopes={[
               { id: 'user', label: 'User' },
