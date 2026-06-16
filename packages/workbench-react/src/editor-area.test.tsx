@@ -52,6 +52,19 @@ const WIDGET_JSON = JSON.stringify(
   2,
 );
 
+const SCHEMA_JSON = JSON.stringify(
+  {
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    type: 'object',
+    properties: {
+      type: { type: 'string' },
+      args: { type: 'object' },
+    },
+  },
+  null,
+  2,
+);
+
 describe('EditorArea', () => {
   it('renders empty state when no editors are open', () => {
     const markup = renderToStaticMarkup(
@@ -483,6 +496,94 @@ describe('EditorArea', () => {
       container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
     ).toBe('json');
     expect(container.querySelector('[role="tab"] .codicon-layout')).not.toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('renders JDW schema files as a flat JSON code editor without preview split', async () => {
+    function OpenSchemaEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId(
+              'workspace://file/schemas/widget-document.v1.jdw.schema.json',
+            ) === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/schemas/widget-document.v1.jdw.schema.json',
+            title: 'widget-document.v1.jdw.schema.json',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+          workspaceHostPort={{
+            applySave: () => ({ transactionId: 'test-save' }),
+            resolveResource: () => ({
+              content: SCHEMA_JSON,
+              path: 'schemas/widget-document.v1.jdw.schema.json',
+            }),
+          }}
+        >
+          <OpenSchemaEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
+
+    expect(container.querySelector('.workbench-editor-area__source-pane')).not.toBeNull();
+    expect(container.querySelector('.workbench-editor-area__preview-pane')).toBeNull();
+    expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
+    ).toBeNull();
+    expect(
+      container.querySelector(
+        '.ui-editor-tabs__addons button[aria-label="Code (JSON)"][aria-pressed="true"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
+    ).toBe('json');
+    expect(container.querySelector('[data-testid="jdw-preview-output"]')).toBeNull();
 
     await act(async () => {
       root.unmount();
