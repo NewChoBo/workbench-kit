@@ -26,43 +26,11 @@ body,
   overflow: hidden;
 }
 
-.workbench-sample-toolbar {
-  box-sizing: border-box;
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: space-between;
-  min-width: 0;
-  min-height: 38px;
-  gap: 12px;
-  padding: 5px 10px;
-  border-bottom: 1px solid var(--vscode-editorGroupHeader-tabsBorder, var(--color-border));
-  background: var(--vscode-editorGroupHeader-tabsBackground, var(--color-bg-subtle));
-}
-
-.workbench-sample-toolbar__title,
-.workbench-sample-toolbar__actions {
+.workbench-sample-titlebar-actions {
   display: flex;
   align-items: center;
   min-width: 0;
-}
-
-.workbench-sample-toolbar__title {
-  gap: 8px;
-  color: var(--vscode-foreground, var(--color-text));
-  font-size: var(--font-size-sm, 0.875rem);
-  font-weight: 600;
-}
-
-.workbench-sample-toolbar__title > span:not(.ui-badge) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.workbench-sample-toolbar__actions {
-  flex-shrink: 0;
-  gap: 8px;
+  gap: 6px;
 }
 
 .workbench-sample-theme-switch {
@@ -100,18 +68,36 @@ body,
   box-shadow: inset 0 0 0 1px var(--vscode-focusBorder, var(--color-focus-border));
 }
 
-@media (max-width: 780px) {
-  .workbench-sample-toolbar {
-    align-items: stretch;
-    flex-direction: column;
-  }
+.workbench-sample-help {
+  display: grid;
+  gap: 18px;
+  color: var(--vscode-foreground, var(--color-text));
+  font-size: var(--font-size-sm, 0.875rem);
+  line-height: 1.55;
+}
 
-  .workbench-sample-toolbar__actions,
-  .workbench-sample-toolbar__title {
-    width: 100%;
-  }
+.workbench-sample-help__section {
+  display: grid;
+  gap: 8px;
+}
 
-  .workbench-sample-toolbar__actions {
-    justify-content: space-between;
-  }
+.workbench-sample-help h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.workbench-sample-help p,
+.workbench-sample-help ul {
+  margin: 0;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+}
+
+.workbench-sample-help ul {
+  padding-left: 18px;
+}
+
+.workbench-sample-help code {
+  color: var(--vscode-textPreformat-foreground, var(--color-text));
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
 }

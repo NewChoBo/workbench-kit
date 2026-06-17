@@ -59,6 +59,67 @@
   overflow: hidden;
 }
 
+.ui-workbench-titlebar {
+  box-sizing: border-box;
+  flex: 0 0 34px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 8px 0 12px;
+  color: var(--vscode-titleBar-activeForeground, var(--color-text));
+  background: var(--vscode-titleBar-activeBackground, var(--color-surface));
+  border-bottom: 1px solid var(--vscode-titleBar-border, var(--color-border));
+  user-select: none;
+}
+
+.workbench-shell-titlebar__identity,
+.workbench-shell-titlebar__actions {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.workbench-shell-titlebar__identity {
+  flex: 1 1 auto;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.workbench-shell-titlebar__identity > .codicon {
+  flex: 0 0 auto;
+  color: var(--vscode-icon-foreground, var(--color-text-muted));
+  font-size: 15px;
+}
+
+.workbench-shell-titlebar__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workbench-shell-titlebar__meta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.workbench-shell-titlebar__actions {
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.workbench-shell-titlebar__action.ui-icon-button {
+  color: var(--vscode-titleBar-activeForeground, var(--color-text-muted));
+}
+
+.workbench-shell-titlebar__action.ui-icon-button:hover {
+  color: var(--vscode-titleBar-activeForeground, var(--color-text));
+}
+
 .ide-panel {
   position: relative;
   flex: 1;
@@ -627,6 +688,15 @@
   display: flex;
   flex-direction: column;
   background: var(--color-bg);
+}
+
+.workbench-help-modal {
+  --ui-modal-width: 640px;
+}
+
+.workbench-help-modal__body {
+  overflow: auto;
+  padding: 20px 24px;
 }
 
 .workbench-settings-search {

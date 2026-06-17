@@ -9,6 +9,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./modal": "./src/modal/Modal.tsx",
     "./overlay": "./src/overlay/ContextMenu.tsx",
     "./primitives": "./src/primitives/index.ts",
     "./primitives.css": "./src/primitives/styles.css",
