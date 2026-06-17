@@ -23,8 +23,6 @@ body,
 }
 
 .workbench-sample-editor-frame > .workbench-editor-area--empty {
-  align-items: stretch;
-  justify-items: center;
   overflow: hidden;
 }
 
@@ -67,8 +65,7 @@ body,
   gap: 8px;
 }
 
-.workbench-sample-theme-switch,
-.workbench-sample-overview__theme {
+.workbench-sample-theme-switch {
   display: inline-flex;
   align-items: center;
   padding: 2px;
@@ -77,8 +74,7 @@ body,
   background: var(--vscode-input-background, var(--color-bg));
 }
 
-.workbench-sample-theme-switch__button,
-.workbench-sample-overview__theme-button {
+.workbench-sample-theme-switch__button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -93,240 +89,15 @@ body,
   font: inherit;
 }
 
-.workbench-sample-theme-switch__button:hover,
-.workbench-sample-overview__theme-button:hover {
+.workbench-sample-theme-switch__button:hover {
   background: var(--vscode-toolbar-hoverBackground, var(--color-bg-hover));
   color: var(--vscode-foreground, var(--color-text));
 }
 
-.workbench-sample-theme-switch__button[data-active='true'],
-.workbench-sample-overview__theme-button[data-active='true'] {
+.workbench-sample-theme-switch__button[data-active='true'] {
   background: var(--vscode-toolbar-activeBackground, var(--color-bg-hover));
   color: var(--vscode-foreground, var(--color-text));
   box-shadow: inset 0 0 0 1px var(--vscode-focusBorder, var(--color-focus-border));
-}
-
-.workbench-sample-overview {
-  box-sizing: border-box;
-  display: grid;
-  grid-template-rows: auto;
-  gap: 14px;
-  align-content: start;
-  align-self: center;
-  width: min(100%, 1180px);
-  height: 100%;
-  min-height: 0;
-  padding: 18px;
-}
-
-.workbench-sample-overview__summary {
-  display: grid;
-  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
-  gap: 14px;
-  align-items: stretch;
-}
-
-.workbench-sample-overview__heading {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-  padding: 14px 16px;
-  border: 1px solid var(--vscode-panel-border, var(--color-border));
-  border-radius: var(--radius-sm, 4px);
-  background: var(--vscode-sideBar-background, var(--color-bg-elevated));
-}
-
-.workbench-sample-overview__eyebrow {
-  color: var(--vscode-descriptionForeground, var(--color-text-muted));
-  font-size: var(--font-size-xs, 0.75rem);
-  text-transform: uppercase;
-}
-
-.workbench-sample-overview__heading h1 {
-  margin: 4px 0 0;
-  font-size: 1.35rem;
-  font-weight: 600;
-  letter-spacing: 0;
-}
-
-.workbench-sample-overview__metrics {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  min-width: 0;
-  margin: 0;
-}
-
-.workbench-sample-overview__metrics div {
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--vscode-panel-border, var(--color-border));
-  border-radius: var(--radius-sm, 4px);
-  background: var(--vscode-sideBar-background, var(--color-bg-elevated));
-}
-
-.workbench-sample-overview__metrics dt {
-  margin: 0 0 4px;
-  color: var(--vscode-descriptionForeground, var(--color-text-muted));
-  font-size: var(--font-size-sm, 0.875rem);
-}
-
-.workbench-sample-overview__metrics dd {
-  overflow: hidden;
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
-  font-size: var(--font-size-sm, 0.875rem);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.workbench-sample-overview__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  min-width: 0;
-}
-
-.workbench-sample-overview__theme {
-  gap: 2px;
-}
-
-.workbench-sample-overview__theme-button {
-  gap: 6px;
-}
-
-.workbench-sample-section {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-}
-
-.workbench-sample-section__header {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  min-width: 0;
-  gap: 12px;
-}
-
-.workbench-sample-section__header > div {
-  min-width: 0;
-}
-
-.workbench-sample-section__header h2 {
-  margin: 2px 0 0;
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: 0;
-}
-
-.workbench-sample-library-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  grid-auto-rows: minmax(130px, auto);
-  gap: 10px;
-  align-content: start;
-  min-width: 0;
-  min-height: 0;
-}
-
-.workbench-sample-overview__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  grid-auto-rows: minmax(112px, auto);
-  gap: 10px;
-  align-content: start;
-  min-width: 0;
-  min-height: 0;
-}
-
-.workbench-sample-target {
-  box-sizing: border-box;
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-  min-width: 0;
-  min-height: 118px;
-  padding: 12px;
-  border: 1px solid var(--vscode-panel-border, var(--color-border));
-  border-radius: var(--radius-sm, 4px);
-  background: var(--vscode-editor-background, var(--color-bg));
-  color: var(--vscode-foreground, var(--color-text));
-  cursor: pointer;
-  font: inherit;
-  text-align: left;
-}
-
-.workbench-sample-target--library {
-  min-height: 132px;
-  background: var(--vscode-sideBar-background, var(--color-bg-elevated));
-}
-
-.workbench-sample-target:hover {
-  border-color: var(--vscode-focusBorder, var(--color-focus-border));
-  background: var(--vscode-list-hoverBackground, var(--color-bg-hover));
-}
-
-.workbench-sample-target:focus-visible {
-  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
-  outline-offset: 2px;
-}
-
-.workbench-sample-target__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm, 4px);
-  background: var(--vscode-badge-background, var(--color-bg-elevated));
-  color: var(--vscode-badge-foreground, var(--color-text));
-}
-
-.workbench-sample-target__body {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-
-.workbench-sample-target__package {
-  overflow: hidden;
-  color: var(--vscode-descriptionForeground, var(--color-text-muted));
-  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
-  font-size: var(--font-size-xs, 0.75rem);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.workbench-sample-target__label {
-  overflow: hidden;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.workbench-sample-target__detail {
-  color: var(--vscode-descriptionForeground, var(--color-text-muted));
-  font-size: var(--font-size-sm, 0.875rem);
-  line-height: 1.4;
-}
-
-.workbench-sample-target__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.workbench-sample-target__tag {
-  padding: 1px 6px;
-  border: 1px solid var(--vscode-badge-background, var(--color-border));
-  border-radius: var(--radius-sm, 4px);
-  color: var(--vscode-descriptionForeground, var(--color-text-muted));
-  font-size: var(--font-size-xs, 0.75rem);
-  line-height: 1.4;
 }
 
 @media (max-width: 780px) {
@@ -342,24 +113,5 @@ body,
 
   .workbench-sample-toolbar__actions {
     justify-content: space-between;
-  }
-
-  .workbench-sample-overview {
-    padding: 10px;
-  }
-
-  .workbench-sample-overview__summary,
-  .workbench-sample-overview__grid,
-  .workbench-sample-library-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .workbench-sample-overview__metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .workbench-sample-section__header {
-    align-items: start;
-    flex-direction: column;
   }
 }

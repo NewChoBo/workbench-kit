@@ -6,7 +6,7 @@ export {
   type WorkbenchContextValue,
   type WorkbenchWorkspaceHostPort,
 } from './provider.js';
-export { EditorArea, type EditorAreaProps } from './editor-area.js';
+export { EditorArea, type EditorAreaProps, type EditorViewMode } from './editor-area.js';
 export {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
   JDW_PREVIEW_PROVIDER_ID,
