@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { DEFAULT_EDITOR_GROUP_ID } from '@workbench-kit/workbench-core';
 
-import { WorkbenchProvider, useWorkbench } from './index.js';
+import { WorkbenchProvider, useWorkbench } from './provider.js';
 import { useEditorService } from './use-editor.js';
 
 function EditorServiceProbe() {

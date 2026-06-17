@@ -7,6 +7,14 @@ import {
 } from 'react';
 import { ContextMenu, type ContextMenuItem } from '@workbench-kit/react/overlay';
 import {
+  WORKBENCH_COMMAND_SURFACE_WORKSPACE,
+  commandMenuItemsToContextMenuItems,
+  createWorkbenchWorkspaceCommands,
+  createWorkbenchWorkspaceFolderMenuEntries,
+  createWorkbenchWorkspaceTargetMenuEntries,
+  type WorkbenchWorkspaceCommandContext,
+} from '@workbench-kit/react/workbench';
+import {
   WorkspaceExplorer,
   type WorkspaceExplorerInlineEditCommitMeta,
   type WorkspaceExplorerInlineEditKind,
@@ -32,6 +40,11 @@ import {
   type WorkspaceSelectionState,
   type WorkspaceTreeNode,
 } from '@workbench-kit/workspace';
+import {
+  createCommandRegistry,
+  executeCommand as executeRegisteredCommand,
+  resolveCommandMenuItems,
+} from '@workbench-kit/platform';
 
 import './explorer-view.css';
 
@@ -65,6 +78,12 @@ interface ExplorerContextMenuState {
   readonly x: number;
   readonly y: number;
 }
+
+const workspaceCommandRegistry = createCommandRegistry(createWorkbenchWorkspaceCommands());
+const workspaceFolderMenuEntries =
+  createWorkbenchWorkspaceFolderMenuEntries<WorkbenchWorkspaceCommandContext>();
+const workspaceTargetMenuEntries =
+  createWorkbenchWorkspaceTargetMenuEntries<WorkbenchWorkspaceCommandContext>();
 
 export function isBuiltinExplorerViewRenderData(
   value: unknown,
@@ -333,6 +352,7 @@ export function BuiltinExplorerView() {
               paths,
             });
           },
+          files: workspaceState?.files ?? [],
           node,
           openFiles: (paths) => {
             void executeWorkspaceCommand(WORKBENCH_WORKSPACE_OPEN_COMMAND_ID, {
@@ -340,13 +360,16 @@ export function BuiltinExplorerView() {
               paths,
             });
           },
+          revealFolder: (path) => {
+            setExpandedPaths((currentPaths) => new Set([...currentPaths, path]));
+          },
           renameTarget: () => startRename(node, meta.actionPaths),
         }),
         x: event.clientX,
         y: event.clientY,
       });
     },
-    [executeWorkspaceCommand, startCreate, startRename],
+    [executeWorkspaceCommand, startCreate, startRename, workspaceState?.files],
   );
 
   const handleSelectionChange = useCallback(
@@ -438,8 +461,10 @@ function createExplorerItemContextMenuItems({
   createFile,
   createFolder,
   deleteTargets,
+  files,
   node,
   openFiles,
+  revealFolder,
   renameTarget,
 }: {
   actionPaths: readonly string[];
@@ -447,83 +472,54 @@ function createExplorerItemContextMenuItems({
   createFile: (parentPath: string) => void;
   createFolder: (parentPath: string) => void;
   deleteTargets: (paths: readonly string[]) => void;
+  files: VirtualWorkspaceState['files'];
   node: WorkspaceTreeNode;
   openFiles: (paths: readonly string[]) => void;
+  revealFolder: (path: string) => void;
   renameTarget: () => void;
 }): ContextMenuItem[] {
-  const multiSelection = actionPaths.length > 1;
+  const targetPaths =
+    node.type === 'folder' ? [node.path] : actionPaths.length > 0 ? [...actionPaths] : [node.path];
+  const filePathSet = new Set(files.map((file) => file.path));
+  const fileActionPaths =
+    node.type === 'file' ? targetPaths.filter((path) => filePathSet.has(path)) : [];
+  const contextKeys = {
+    'workspace.hasSelection': targetPaths.length > 0,
+    'workspace.multiSelection': targetPaths.length > 1,
+  };
+  const context: WorkbenchWorkspaceCommandContext = {
+    copyWorkspaceTarget: () => copyPaths(targetPaths),
+    createWorkspaceFile: () => createFile(node.type === 'folder' ? node.path : ''),
+    createWorkspaceFolder: () => createFolder(node.type === 'folder' ? node.path : ''),
+    deleteWorkspaceTarget: () =>
+      deleteTargets(node.type === 'folder' ? [node.path] : fileActionPaths),
+    fileActionPaths,
+    multiFileAction: fileActionPaths.length > 1,
+    openWorkspaceTarget: () => {
+      if (node.type === 'folder') {
+        revealFolder(node.path);
+        return;
+      }
 
-  if (node.type === 'folder') {
-    return [
-      {
-        id: 'workbench.explorer.newFile',
-        icon: 'new-file',
-        label: 'New file',
-        onSelect: () => createFile(node.path),
-      },
-      {
-        id: 'workbench.explorer.newFolder',
-        icon: 'new-folder',
-        label: 'New folder',
-        onSelect: () => createFolder(node.path),
-      },
-      { id: 'workbench.explorer.separator.folder-create', type: 'separator' },
-      {
-        id: 'workbench.explorer.copyPath',
-        icon: 'copy',
-        label: 'Copy path',
-        onSelect: () => copyPaths([node.path]),
-      },
-      {
-        id: 'workbench.explorer.rename',
-        icon: 'edit',
-        label: 'Rename',
-        shortcut: 'F2',
-        onSelect: renameTarget,
-      },
-      { id: 'workbench.explorer.separator.folder-danger', type: 'separator' },
-      {
-        id: 'workbench.explorer.delete',
-        danger: true,
-        icon: 'trash',
-        label: 'Delete folder',
-        shortcut: 'Del',
-        onSelect: () => deleteTargets([node.path]),
-      },
-    ];
-  }
+      openFiles(fileActionPaths);
+    },
+    renameWorkspaceTarget: renameTarget,
+    targetPaths,
+    workspaceTargetKind: node.type,
+  };
+  const entries = node.type === 'folder' ? workspaceFolderMenuEntries : workspaceTargetMenuEntries;
 
-  return [
-    {
-      id: 'workbench.explorer.open',
-      icon: 'go-to-file',
-      label: multiSelection ? 'Open selected files' : 'Open file',
-      onSelect: () => openFiles(actionPaths),
-    },
-    {
-      id: 'workbench.explorer.copyPath',
-      icon: 'copy',
-      label: multiSelection ? 'Copy paths' : 'Copy path',
-      onSelect: () => copyPaths(actionPaths),
-    },
-    { id: 'workbench.explorer.separator.file-edit', type: 'separator' },
-    {
-      id: 'workbench.explorer.rename',
-      disabled: multiSelection,
-      icon: 'edit',
-      label: 'Rename',
-      shortcut: 'F2',
-      onSelect: renameTarget,
-    },
-    {
-      id: 'workbench.explorer.delete',
-      danger: true,
-      icon: 'trash',
-      label: multiSelection ? `Delete ${actionPaths.length} files` : 'Delete',
-      shortcut: 'Del',
-      onSelect: () => deleteTargets(actionPaths),
-    },
-  ];
+  return commandMenuItemsToContextMenuItems(
+    resolveCommandMenuItems({
+      context,
+      contextKeys,
+      entries,
+      registry: workspaceCommandRegistry,
+      surface: WORKBENCH_COMMAND_SURFACE_WORKSPACE,
+    }),
+    (commandId) =>
+      executeRegisteredCommand(workspaceCommandRegistry, commandId, context, contextKeys),
+  );
 }
 
 function useWorkspaceResourceState(
