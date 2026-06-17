@@ -25,5 +25,5 @@
     "typescript": "^5.9.3",
     "vite": "^6.0.0"
   },
-  "description": "Frontend-only Workbench Kit sample host with bundled built-in extensions."
+  "description": "Frontend-only Workbench Kit integration showcase with bundled built-in extensions."
 }

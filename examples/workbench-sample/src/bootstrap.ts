@@ -15,10 +15,17 @@ export interface SampleWorkspaceInfo {
   readonly fileCount: number;
   readonly name: string;
   readonly folderCount: number;
+  readonly rootFolderCount: number;
 }
 
 export const SAMPLE_APP_PATH = 'src/App.tsx';
 export const SAMPLE_README_PATH = 'README.md';
+export const SAMPLE_SHOWCASE_WORKBENCH_REACT_PATH = 'showcase/workbench-react.md';
+export const SAMPLE_SHOWCASE_REACT_PATH = 'showcase/react-primitives.md';
+export const SAMPLE_SHOWCASE_WORKSPACE_PATH = 'showcase/workspace.md';
+export const SAMPLE_SHOWCASE_JDW_PATH = 'showcase/jdw.md';
+export const SAMPLE_SHOWCASE_CONFIG_PATH = 'showcase/workbench-config.md';
+export const SAMPLE_SHOWCASE_EXTENSIONS_PATH = 'showcase/extensions.md';
 export const SAMPLE_JDW_DOCUMENT_PATH = 'jdw/workbench-sample.jdw.json';
 export const SAMPLE_JDW_NODE_SCHEMA_PATH = 'schemas/jdw-node.jdw.schema.json';
 export const SAMPLE_JDW_SCHEMA_PATH = 'schemas/widget-document.v1.jdw.schema.json';
@@ -36,8 +43,85 @@ export const initialLayout = (() => {
   };
 })();
 
+const sampleShowcaseDocuments = [
+  {
+    content: [
+      '# @workbench-kit/workbench-react',
+      '',
+      'This package assembles the host-facing workbench shell.',
+      '',
+      '- `WorkbenchProvider` wires extensions, layout state, commands, and workspace ports.',
+      '- `WorkbenchShell` renders the activity bar, sidebar, editor area, panels, and status bar.',
+      '- `EditorArea` hosts tabs, Monaco-backed documents, JDW view modes, and split editor groups.',
+      '',
+      'The sample app uses this package as the integration layer instead of importing shell internals from lower packages.',
+    ].join('\n'),
+    path: SAMPLE_SHOWCASE_WORKBENCH_REACT_PATH,
+  },
+  {
+    content: [
+      '# @workbench-kit/react',
+      '',
+      'This package owns reusable React UI surfaces.',
+      '',
+      '- Primitives used here: `Button`, `Badge`, and `ScrollArea`.',
+      '- Workbench UI used through the shell includes status bar models, workspace editor chrome, settings modal UI, and file icons.',
+      '- JDW React rendering lives under `@workbench-kit/react/jdw` and is selected automatically for `.jdw.json` files.',
+    ].join('\n'),
+    path: SAMPLE_SHOWCASE_REACT_PATH,
+  },
+  {
+    content: [
+      '# @workbench-kit/workspace',
+      '',
+      'This package keeps workspace behavior framework-neutral.',
+      '',
+      '- `createWorkbenchWorkspaceHostPort()` creates the browser-side host port used by this sample.',
+      '- `workspace.init` receives this virtual file tree at launch.',
+      '- Explorer, editor open, save, rename, and file transactions consume the same workspace state.',
+    ].join('\n'),
+    path: SAMPLE_SHOWCASE_WORKSPACE_PATH,
+  },
+  {
+    content: [
+      '# @workbench-kit/jdw',
+      '',
+      'This package is the headless JSON Dynamic Widget engine.',
+      '',
+      '- Schema JSON is imported from `@workbench-kit/jdw/schemas/*`.',
+      '- `.jdw.json` documents use one JSON source for code, form, and preview modes.',
+      '- React preview rendering is layered through `@workbench-kit/react/jdw`, while parsing and schema contracts stay headless.',
+    ].join('\n'),
+    path: SAMPLE_SHOWCASE_JDW_PATH,
+  },
+  {
+    content: [
+      '# @workbench-kit/workbench-config',
+      '',
+      'This package parses shareable `.workbench` configuration.',
+      '',
+      '- `.workbench/extensions.json` selects bundled extensions.',
+      '- `.workbench/layout.default.json` seeds sidebar visibility and active container.',
+      '- `.workbench/workspace.json` provides sample workspace metadata.',
+    ].join('\n'),
+    path: SAMPLE_SHOWCASE_CONFIG_PATH,
+  },
+  {
+    content: [
+      '# Built-in extensions and SDK contracts',
+      '',
+      'The sample runs with bundled workbench extensions instead of hard-coded sidebar panels.',
+      '',
+      '- Explorer and settings are contributed through extension manifests.',
+      '- Commands route through the platform command service.',
+      '- Settings opens through a capability-backed modal so extension code does not depend on React shell internals.',
+    ].join('\n'),
+    path: SAMPLE_SHOWCASE_EXTENSIONS_PATH,
+  },
+] as const;
+
 export const initialWorkspace: VirtualWorkspaceInitialState = {
-  expandedPaths: ['src', 'schemas', 'jdw'],
+  expandedPaths: ['src', 'showcase', 'schemas', 'jdw'],
   files: [
     {
       content: [
@@ -53,13 +137,15 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
       content: [
         '# Workbench Kit Sample',
         '',
-        'Frontend-only host demonstrating editor tabs, workspace save, and JDW preview.',
+        'Frontend-only host demonstrating Workbench Kit package integration.',
         '',
+        '- `showcase/` contains package-by-package notes for the libraries used by this app.',
         '- `jdw/workbench-sample.jdw.json` is the editable JDW document.',
         '- `schemas/widget-document.v1.jdw.schema.json` is imported from `@workbench-kit/jdw`.',
       ].join('\n'),
       path: SAMPLE_README_PATH,
     },
+    ...sampleShowcaseDocuments,
     {
       content: formatSampleJson(widgetDocumentSchemaJson),
       mimeType: JDW_SCHEMA_DOCUMENT_MIME,
@@ -102,13 +188,14 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
       path: SAMPLE_JDW_DOCUMENT_PATH,
     },
   ],
-  folders: ['src', 'schemas', 'jdw'],
+  folders: ['src', 'showcase', 'schemas', 'jdw'],
 };
 
 export const workspaceInfo: SampleWorkspaceInfo = {
   fileCount: initialWorkspace.files?.length ?? 0,
-  folderCount: readWorkspaceFolderCount(workspaceJson),
+  folderCount: initialWorkspace.folders?.length ?? 0,
   name: readWorkspaceName(workspaceJson),
+  rootFolderCount: readWorkspaceFolderCount(workspaceJson),
 };
 
 function formatSampleJson(value: unknown): string {

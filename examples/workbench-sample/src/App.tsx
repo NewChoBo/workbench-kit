@@ -19,6 +19,12 @@ import {
   SAMPLE_JDW_NODE_SCHEMA_PATH,
   SAMPLE_JDW_SCHEMA_PATH,
   SAMPLE_README_PATH,
+  SAMPLE_SHOWCASE_CONFIG_PATH,
+  SAMPLE_SHOWCASE_EXTENSIONS_PATH,
+  SAMPLE_SHOWCASE_JDW_PATH,
+  SAMPLE_SHOWCASE_REACT_PATH,
+  SAMPLE_SHOWCASE_WORKBENCH_REACT_PATH,
+  SAMPLE_SHOWCASE_WORKSPACE_PATH,
   workspaceInfo,
 } from './bootstrap.js';
 
@@ -35,6 +41,10 @@ interface SampleOpenTarget {
   readonly label: string;
   readonly path: string;
   readonly tags: readonly string[];
+}
+
+interface SampleShowcaseItem extends SampleOpenTarget {
+  readonly packageName: string;
 }
 
 const SAMPLE_OPEN_TARGETS: readonly SampleOpenTarget[] = [
@@ -72,6 +82,57 @@ const SAMPLE_OPEN_TARGETS: readonly SampleOpenTarget[] = [
     label: 'jdw-node schema',
     path: SAMPLE_JDW_NODE_SCHEMA_PATH,
     tags: ['schema'],
+  },
+];
+
+const SAMPLE_SHOWCASE_ITEMS: readonly SampleShowcaseItem[] = [
+  {
+    detail: 'Provider, shell chrome, editor tabs, status wiring',
+    icon: 'codicon-layout',
+    label: 'Workbench shell assembly',
+    packageName: '@workbench-kit/workbench-react',
+    path: SAMPLE_SHOWCASE_WORKBENCH_REACT_PATH,
+    tags: ['shell', 'editor'],
+  },
+  {
+    detail: 'Primitives, ScrollArea, settings UI, workspace UI exports',
+    icon: 'codicon-symbol-interface',
+    label: 'Reusable React surfaces',
+    packageName: '@workbench-kit/react',
+    path: SAMPLE_SHOWCASE_REACT_PATH,
+    tags: ['primitives', 'ui'],
+  },
+  {
+    detail: 'Virtual file tree, host port, explorer/editor transactions',
+    icon: 'codicon-root-folder-opened',
+    label: 'Workspace state model',
+    packageName: '@workbench-kit/workspace',
+    path: SAMPLE_SHOWCASE_WORKSPACE_PATH,
+    tags: ['workspace'],
+  },
+  {
+    detail: 'Headless schema, parse, validate, and preview pipeline',
+    icon: 'codicon-json',
+    label: 'JSON Dynamic Widget engine',
+    packageName: '@workbench-kit/jdw',
+    path: SAMPLE_SHOWCASE_JDW_PATH,
+    tags: ['jdw', 'schema'],
+  },
+  {
+    detail: 'Repository .workbench files parsed into host state',
+    icon: 'codicon-settings',
+    label: 'Shareable workbench config',
+    packageName: '@workbench-kit/workbench-config',
+    path: SAMPLE_SHOWCASE_CONFIG_PATH,
+    tags: ['config'],
+  },
+  {
+    detail: 'Manifest contributions, commands, capabilities, built-ins',
+    icon: 'codicon-extensions',
+    label: 'Extension contribution contracts',
+    packageName: '@workbench-kit/workbench-extension-sdk',
+    path: SAMPLE_SHOWCASE_EXTENSIONS_PATH,
+    tags: ['extensions'],
   },
 ];
 
@@ -234,7 +295,7 @@ function SampleEditorOverview({
 
   return (
     <ScrollArea
-      aria-label="Sample review targets"
+      aria-label="Workbench sample showcase"
       as="section"
       className="workbench-sample-overview"
       orientation="vertical"
@@ -242,10 +303,11 @@ function SampleEditorOverview({
       <div className="workbench-sample-overview__summary">
         <div className="workbench-sample-overview__heading">
           <span className="workbench-sample-overview__eyebrow">Workbench Kit</span>
-          <h1>Sample Host Review</h1>
+          <h1>Integrated Library Showcase</h1>
         </div>
         <dl className="workbench-sample-overview__metrics">
           <SampleMetric label="Workspace" value={workspaceInfo.name} />
+          <SampleMetric label="Roots" value={workspaceInfo.rootFolderCount} />
           <SampleMetric label="Folders" value={workspaceInfo.folderCount} />
           <SampleMetric label="Files" value={workspaceInfo.fileCount} />
           <SampleMetric label="Extensions" value={extensionsConfig.enabled.length} />
@@ -305,34 +367,104 @@ function SampleEditorOverview({
         </div>
       </div>
 
-      <div className="workbench-sample-overview__grid" aria-label="Sample review targets">
-        {SAMPLE_OPEN_TARGETS.map((target) => (
-          <button
-            key={target.path}
-            className="workbench-sample-target"
-            type="button"
-            onClick={() => {
-              void executeCommand('workspace.open', { path: target.path });
-            }}
-          >
-            <span className="workbench-sample-target__icon">
-              <i aria-hidden className={`codicon ${target.icon}`} />
-            </span>
-            <span className="workbench-sample-target__body">
-              <span className="workbench-sample-target__label">{target.label}</span>
-              <span className="workbench-sample-target__detail">{target.detail}</span>
-              <span className="workbench-sample-target__tags">
-                {target.tags.map((tag) => (
-                  <span key={tag} className="workbench-sample-target__tag">
-                    {tag}
-                  </span>
-                ))}
-              </span>
-            </span>
-          </button>
+      <SampleShowcaseSection
+        items={SAMPLE_SHOWCASE_ITEMS}
+        onOpen={(path) => {
+          void executeCommand('workspace.open', { path });
+        }}
+      />
+
+      <section className="workbench-sample-section" aria-labelledby="sample-review-targets-title">
+        <div className="workbench-sample-section__header">
+          <div>
+            <span className="workbench-sample-overview__eyebrow">Runtime surfaces</span>
+            <h2 id="sample-review-targets-title">Review Targets</h2>
+          </div>
+          <Badge variant="muted">{SAMPLE_OPEN_TARGETS.length} files</Badge>
+        </div>
+        <div className="workbench-sample-overview__grid" aria-label="Sample review targets">
+          {SAMPLE_OPEN_TARGETS.map((target) => (
+            <SampleOpenTargetCard
+              key={target.path}
+              target={target}
+              onOpen={(path) => {
+                void executeCommand('workspace.open', { path });
+              }}
+            />
+          ))}
+        </div>
+      </section>
+    </ScrollArea>
+  );
+}
+
+function SampleShowcaseSection({
+  items,
+  onOpen,
+}: {
+  items: readonly SampleShowcaseItem[];
+  onOpen: (path: string) => void;
+}) {
+  return (
+    <section className="workbench-sample-section" aria-labelledby="sample-library-showcase-title">
+      <div className="workbench-sample-section__header">
+        <div>
+          <span className="workbench-sample-overview__eyebrow">Integrated packages</span>
+          <h2 id="sample-library-showcase-title">Library Showcase</h2>
+        </div>
+        <Badge variant="muted">{items.length} packages</Badge>
+      </div>
+      <div className="workbench-sample-library-grid" aria-label="Workbench Kit library showcase">
+        {items.map((item) => (
+          <SampleOpenTargetCard
+            key={item.packageName}
+            target={item}
+            variant="library"
+            onOpen={onOpen}
+          />
         ))}
       </div>
-    </ScrollArea>
+    </section>
+  );
+}
+
+function SampleOpenTargetCard({
+  target,
+  variant = 'review',
+  onOpen,
+}: {
+  target: SampleOpenTarget | SampleShowcaseItem;
+  variant?: 'library' | 'review';
+  onOpen: (path: string) => void;
+}) {
+  const packageName = 'packageName' in target ? target.packageName : undefined;
+  const className = [
+    'workbench-sample-target',
+    variant === 'library' ? 'workbench-sample-target--library' : undefined,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <button className={className} type="button" onClick={() => onOpen(target.path)}>
+      <span className="workbench-sample-target__icon">
+        <i aria-hidden className={`codicon ${target.icon}`} />
+      </span>
+      <span className="workbench-sample-target__body">
+        {packageName ? (
+          <span className="workbench-sample-target__package">{packageName}</span>
+        ) : null}
+        <span className="workbench-sample-target__label">{target.label}</span>
+        <span className="workbench-sample-target__detail">{target.detail}</span>
+        <span className="workbench-sample-target__tags">
+          {target.tags.map((tag) => (
+            <span key={tag} className="workbench-sample-target__tag">
+              {tag}
+            </span>
+          ))}
+        </span>
+      </span>
+    </button>
   );
 }
 
