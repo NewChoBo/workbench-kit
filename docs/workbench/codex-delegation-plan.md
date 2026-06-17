@@ -18,15 +18,15 @@
 
 ## 1. Mission
 
-| Field                 | Value                                                                                                                |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **Goal**              | Complete Lane A (WB-28 polish → WB-29 → WB-30 → WB-31 → DoD) via autonomous Codex sessions                           |
-| **Branch**            | `feature/theia-strengths-workbench` — do not rebase onto main without explicit request                               |
-| **Validate gate**     | `pnpm validate` after every implementation package; `pnpm validate:full` only for WB-31 / Lane A closeout            |
-| **Docs-only changes** | `pnpm format:check` sufficient                                                                                       |
-| **Commit policy**     | English Conventional Commits; one logical unit per package; include validation note in commit body when code changed |
-| **Do not commit**     | Unless explicitly asked in the session prompt; this handoff doc assumes Codex commits per package                    |
-| **Master plans**      | [session-work-plan.md](./session-work-plan.md), [completion-plan.md](./completion-plan.md), [todo.md](./todo.md)     |
+| Field                 | Value                                                                                                                                                                       |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Goal**              | Complete Lane A (WB-28 polish → WB-29 → WB-30 → WB-31 → DoD) via autonomous Codex sessions                                                                                  |
+| **Branch**            | `feature/theia-strengths-workbench` — do not rebase onto main without explicit request                                                                                      |
+| **Validate gate**     | `pnpm validate:fast` for focused implementation slices; `pnpm validate` before package commits that affect Storybook; `pnpm validate:full` only for WB-31 / Lane A closeout |
+| **Docs-only changes** | `pnpm format:check` sufficient                                                                                                                                              |
+| **Commit policy**     | English Conventional Commits; one logical unit per package; include validation note in commit body when code changed                                                        |
+| **Do not commit**     | Unless explicitly asked in the session prompt; this handoff doc assumes Codex commits per package                                                                           |
+| **Master plans**      | [session-work-plan.md](./session-work-plan.md), [completion-plan.md](./completion-plan.md), [todo.md](./todo.md)                                                            |
 
 ---
 
@@ -449,6 +449,12 @@ Blocked until **WB-29** lands per user decision (2026-06-16).
 ## 7. Verification Playbook
 
 ### Per-package (code changes)
+
+```powershell
+pnpm validate:fast
+```
+
+### Storybook-impacting changes
 
 ```powershell
 pnpm validate
