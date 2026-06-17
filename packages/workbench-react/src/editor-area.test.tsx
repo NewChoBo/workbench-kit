@@ -905,6 +905,10 @@ describe('EditorArea', () => {
     expect(
       container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
     ).toBe('json');
+    expect(container.querySelector('.workspace-editor__file-bar')).not.toBeNull();
+    expect(container.querySelector('.workspace-editor__file-path')?.textContent).toBe(
+      'widget.jdw.json',
+    );
     expect(container.querySelector('[role="tab"] .codicon-layout')).not.toBeNull();
 
     await act(async () => {
@@ -993,6 +997,10 @@ describe('EditorArea', () => {
     expect(
       container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
     ).toBe('json');
+    expect(container.querySelector('.workspace-editor__file-bar')).not.toBeNull();
+    expect(container.querySelector('.workspace-editor__file-path')?.textContent).toBe(
+      'schemas/widget-document.v1.jdw.schema.json',
+    );
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).toBeNull();
 
     await act(async () => {
@@ -1143,6 +1151,9 @@ describe('EditorArea', () => {
 
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
     expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
+    expect(container.querySelector('.workspace-editor__file-path')?.textContent).toBe(
+      'widget.jdw.json',
+    );
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
     expect(
       container.querySelector(
@@ -1163,6 +1174,7 @@ describe('EditorArea', () => {
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
     expect(container.textContent).toContain('Preview title');
     expect(container.querySelector('.workspace-editor__monaco')).toBeNull();
+    expect(container.querySelector('.workspace-editor__file-bar')).toBeNull();
     expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
 
     const codeButton = container.querySelector(
@@ -1176,6 +1188,9 @@ describe('EditorArea', () => {
 
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
     expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
+    expect(container.querySelector('.workspace-editor__file-path')?.textContent).toBe(
+      'widget.jdw.json',
+    );
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
 
     const formButton = container.querySelector(

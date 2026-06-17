@@ -12,3 +12,14 @@ export function toLineLengthValue(start: number | string, end: number | string) 
   }
   return `max(1px, calc(${toLengthValue(end)} - ${toLengthValue(start)}))`;
 }
+
+export const DEFAULT_WORKBENCH_TREE_BASE_INDENT = 8;
+export const DEFAULT_WORKBENCH_TREE_INDENT_SIZE = 14;
+
+export function workbenchTreeIndentOffset(
+  depth: number,
+  indentSize: number = DEFAULT_WORKBENCH_TREE_INDENT_SIZE,
+  baseIndent: number = DEFAULT_WORKBENCH_TREE_BASE_INDENT,
+) {
+  return `${baseIndent + Math.max(0, depth) * indentSize}px`;
+}
