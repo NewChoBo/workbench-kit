@@ -8,6 +8,7 @@ import {
 import { parseJsonWidgetData } from '@workbench-kit/react/jdw/parse';
 import { JdwPreview } from '@workbench-kit/react/jdw/preview';
 import { ScrollArea } from '@workbench-kit/react/primitives';
+import { WorkbenchMarkdownPreview } from '@workbench-kit/react/workbench/markdown-preview';
 
 export type EditorDocumentViewKind = 'form' | 'preview';
 type JsonPath = readonly (string | number)[];
@@ -40,6 +41,7 @@ export interface ResolvedEditorDocumentViews {
 
 export const JSON_FORM_PROVIDER_ID = 'workbench-kit.editor.form.json' as const;
 export const JDW_PREVIEW_PROVIDER_ID = 'workbench-kit.editor.preview.jdw' as const;
+export const MARKDOWN_PREVIEW_PROVIDER_ID = 'workbench-kit.editor.preview.markdown' as const;
 
 const JSON_FORM_PROVIDER: EditorDocumentViewProvider = {
   id: JSON_FORM_PROVIDER_ID,
@@ -65,8 +67,18 @@ const JDW_PREVIEW_PROVIDER: EditorDocumentViewProvider = {
   ),
 };
 
+const MARKDOWN_PREVIEW_PROVIDER: EditorDocumentViewProvider = {
+  id: MARKDOWN_PREVIEW_PROVIDER_ID,
+  kind: 'preview',
+  label: 'Preview',
+  priority: 5,
+  matches: isMarkdownDocument,
+  render: ({ document }) => <WorkbenchMarkdownPreview source={document.content} />,
+};
+
 export const DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS: readonly EditorDocumentViewProvider[] = [
   JDW_PREVIEW_PROVIDER,
+  MARKDOWN_PREVIEW_PROVIDER,
   JSON_FORM_PROVIDER,
 ];
 
@@ -294,6 +306,13 @@ function isJsonLikeDocument(document: EditorDocumentContext): boolean {
 
 function isJdwDocument(document: EditorDocumentContext): boolean {
   return document.mimeType === JDW_DOCUMENT_MIME || isJdwDocumentPath(document.path);
+}
+
+function isMarkdownDocument(document: EditorDocumentContext): boolean {
+  const mimeType = document.mimeType?.toLowerCase();
+  const path = document.path.toLowerCase();
+
+  return path.endsWith('.md') || path.endsWith('.mdx') || mimeType === 'text/markdown';
 }
 
 function parseJsonObject(content: string): Record<string, unknown> | null {

@@ -16,6 +16,7 @@
     "./workbench/chat": "./src/workbench/chat/index.ts",
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",
+    "./workbench/markdown-preview": "./src/workbench/MarkdownPreview.tsx",
     "./workbench/shell": "./src/workbench/shell.ts",
     "./workbench/split-view": "./src/workbench/SplitView.tsx",
     "./workbench/workspace": "./src/workbench/workspace/index.ts",

@@ -69,6 +69,18 @@ const SCHEMA_JSON = JSON.stringify(
   2,
 );
 
+const MARKDOWN_SOURCE = [
+  '# Workbench Notes',
+  '',
+  'Markdown documents render a GitHub-style preview in the editor.',
+  '',
+  '```mermaid',
+  'graph TD',
+  '  A[Source] --> B[Preview]',
+  '  B --> C[Review]',
+  '```',
+].join('\n');
+
 describe('EditorArea', () => {
   it('renders empty state when no editors are open', () => {
     const markup = renderToStaticMarkup(
@@ -1084,6 +1096,103 @@ describe('EditorArea', () => {
       container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
     ).not.toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"]')).toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('renders Markdown preview beside code and supports preview-only mode', async () => {
+    function OpenMarkdownEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/README.md') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/README.md',
+            title: 'README.md',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+          workspaceHostPort={{
+            applySave: () => ({ transactionId: 'test-save' }),
+            resolveResource: () => ({ content: MARKDOWN_SOURCE, path: 'README.md' }),
+          }}
+        >
+          <OpenMarkdownEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
+
+    expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Code"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
+    ).not.toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"]')).toBeNull();
+    expect(
+      container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
+    ).toBe('markdown');
+    expect(container.querySelector('.workspace-editor__file-path')?.textContent).toBe('README.md');
+    expect(container.querySelector('.ui-workbench-markdown-preview')).not.toBeNull();
+    expect(container.querySelector('[data-testid="markdown-mermaid-preview"]')).not.toBeNull();
+    expect(container.textContent).toContain('Workbench Notes');
+    expect(container.textContent).toContain('Markdown documents render a GitHub-style preview');
+    expect(container.textContent).toContain('Source');
+    expect(container.textContent).toContain('Preview');
+
+    const previewButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Preview"]',
+    ) as HTMLButtonElement | null;
+    expect(previewButton).toBeDefined();
+
+    await act(async () => {
+      previewButton?.click();
+    });
+
+    expect(container.querySelector('.workspace-editor__monaco')).toBeNull();
+    expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
+    expect(container.querySelector('.ui-workbench-markdown-preview')).not.toBeNull();
+    expect(container.querySelector('[data-testid="markdown-mermaid-preview"]')).not.toBeNull();
 
     await act(async () => {
       root.unmount();

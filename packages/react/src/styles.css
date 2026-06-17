@@ -3833,6 +3833,230 @@
   font-size: 0.9rem;
 }
 
+.ui-workbench-markdown-preview {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  color: var(--vscode-editor-foreground, var(--color-text));
+  font-size: var(--font-size-base, 0.875rem);
+  line-height: 1.65;
+}
+
+.ui-workbench-markdown-preview > :first-child {
+  margin-top: 0;
+}
+
+.ui-workbench-markdown-preview > :last-child {
+  margin-bottom: 0;
+}
+
+.ui-workbench-markdown-preview h1,
+.ui-workbench-markdown-preview h2,
+.ui-workbench-markdown-preview h3,
+.ui-workbench-markdown-preview h4,
+.ui-workbench-markdown-preview h5,
+.ui-workbench-markdown-preview h6 {
+  margin: 24px 0 12px;
+  color: var(--vscode-editor-foreground, var(--color-text));
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.ui-workbench-markdown-preview h1,
+.ui-workbench-markdown-preview h2 {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--vscode-editorGroup-border, var(--color-border));
+}
+
+.ui-workbench-markdown-preview h1 {
+  font-size: 1.75rem;
+}
+
+.ui-workbench-markdown-preview h2 {
+  font-size: 1.35rem;
+}
+
+.ui-workbench-markdown-preview h3 {
+  font-size: 1.12rem;
+}
+
+.ui-workbench-markdown-preview p,
+.ui-workbench-markdown-preview ul,
+.ui-workbench-markdown-preview ol,
+.ui-workbench-markdown-preview blockquote,
+.ui-workbench-markdown-preview pre,
+.ui-workbench-markdown-preview table,
+.ui-workbench-markdown-preview figure {
+  margin: 0 0 16px;
+}
+
+.ui-workbench-markdown-preview ul,
+.ui-workbench-markdown-preview ol {
+  padding-left: 2em;
+}
+
+.ui-workbench-markdown-preview li + li {
+  margin-top: 4px;
+}
+
+.ui-workbench-markdown-preview a {
+  color: var(--vscode-textLink-foreground, #2f81f7);
+  text-decoration: none;
+}
+
+.ui-workbench-markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+.ui-workbench-markdown-preview blockquote {
+  padding: 0 1em;
+  border-left: 0.25em solid var(--vscode-editorGroup-border, var(--color-border));
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+}
+
+.ui-workbench-markdown-preview hr {
+  height: 1px;
+  margin: 24px 0;
+  border: 0;
+  background: var(--vscode-editorGroup-border, var(--color-border));
+}
+
+.ui-workbench-markdown-preview img {
+  max-width: 100%;
+}
+
+.ui-workbench-markdown-preview table {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+.ui-workbench-markdown-preview th,
+.ui-workbench-markdown-preview td {
+  padding: 6px 13px;
+  border: 1px solid var(--vscode-editorGroup-border, var(--color-border));
+}
+
+.ui-workbench-markdown-preview tr:nth-child(2n) {
+  background: var(--vscode-editorWidget-background, var(--color-bg-elevated));
+}
+
+.ui-workbench-markdown-preview__code {
+  padding: 0.18em 0.38em;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--vscode-textCodeBlock-background, var(--color-bg-elevated));
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.88em;
+}
+
+.ui-workbench-markdown-preview pre {
+  overflow: hidden;
+  border: 1px solid var(--vscode-editorGroup-border, var(--color-border));
+  border-radius: var(--radius-sm, 4px);
+  background: var(--vscode-textCodeBlock-background, var(--color-bg-elevated));
+}
+
+.ui-workbench-markdown-preview pre .ui-workbench-markdown-preview__code {
+  display: block;
+  min-width: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+.ui-workbench-markdown-preview__mermaid {
+  overflow: hidden;
+  border: 1px solid var(--vscode-editorGroup-border, var(--color-border));
+  border-radius: var(--radius-md, 6px);
+  background: var(--vscode-editor-background, var(--color-bg));
+}
+
+.ui-workbench-markdown-preview__mermaid-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--vscode-editorGroup-border, var(--color-border));
+  background: var(--vscode-editorWidget-background, var(--color-bg-elevated));
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: var(--font-size-xs, 0.75rem);
+}
+
+.ui-workbench-markdown-preview__mermaid-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--vscode-editor-foreground, var(--color-text));
+  font-weight: 600;
+}
+
+.ui-workbench-markdown-preview__mermaid-kind {
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  text-transform: lowercase;
+}
+
+.ui-workbench-markdown-preview__mermaid-canvas {
+  display: grid;
+  min-height: 150px;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--vscode-focusBorder, var(--color-focus-border)) 10%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--vscode-focusBorder, var(--color-focus-border)) 10%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 24px 24px;
+}
+
+.ui-workbench-markdown-preview__mermaid-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-workbench-markdown-preview__mermaid-node {
+  position: relative;
+  max-width: 180px;
+  padding: 7px 12px;
+  border: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  border-radius: var(--radius-sm, 4px);
+  background: var(--vscode-editor-background, var(--color-bg));
+  box-shadow: 0 6px 18px rgb(0 0 0 / 16%);
+  color: var(--vscode-editor-foreground, var(--color-text));
+  font-size: var(--font-size-sm, 0.875rem);
+  overflow-wrap: anywhere;
+}
+
+.ui-workbench-markdown-preview__mermaid-node:not(:last-child)::after {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 5px);
+  width: 14px;
+  height: 1px;
+  background: var(--vscode-focusBorder, var(--color-focus-border));
+  content: '';
+}
+
+.ui-workbench-markdown-preview__mermaid-source {
+  max-width: 100%;
+  margin: 0;
+  overflow-x: auto;
+  color: var(--vscode-editor-foreground, var(--color-text));
+}
+
 .message__cursor {
   width: 2px;
   height: 14px;

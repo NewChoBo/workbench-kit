@@ -5,6 +5,7 @@ import {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
   JDW_PREVIEW_PROVIDER_ID,
   JSON_FORM_PROVIDER_ID,
+  MARKDOWN_PREVIEW_PROVIDER_ID,
   resolveEditorDocumentViews,
   type EditorDocumentContext,
   type EditorDocumentViewProvider,
@@ -58,6 +59,19 @@ describe('resolveEditorDocumentViews', () => {
 
     expect(resolved.formProvider?.id).toBe(JSON_FORM_PROVIDER_ID);
     expect(resolved.previewProvider?.id).toBe(JDW_PREVIEW_PROVIDER_ID);
+  });
+
+  it('resolves Markdown preview without JSON form mode', () => {
+    const resolved = resolveEditorDocumentViews(
+      createDocument({
+        content: '# Notes\n\n```mermaid\ngraph TD\n  A[Start] --> B[Preview]\n```',
+        mimeType: 'text/markdown',
+        path: 'docs/notes.md',
+      }),
+    );
+
+    expect(resolved.formProvider).toBeUndefined();
+    expect(resolved.previewProvider?.id).toBe(MARKDOWN_PREVIEW_PROVIDER_ID);
   });
 
   it('allows higher-priority extension providers to override default form and preview providers', () => {
