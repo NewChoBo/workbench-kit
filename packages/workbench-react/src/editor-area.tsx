@@ -637,6 +637,7 @@ function EditorGroupPane({
             editorService,
             groupId: group.id,
             tab: contextTab,
+            tabs,
           })}
           x={tabContextMenu.x}
           y={tabContextMenu.y}
@@ -1046,11 +1047,15 @@ function createEditorTabContextItems({
   editorService,
   groupId,
   tab,
+  tabs,
 }: {
   editorService: ReturnType<typeof useEditorService>;
   groupId: string;
   tab: EditorTabState;
+  tabs: readonly EditorTabState[];
 }): ContextMenuItem[] {
+  const closeableTabs = tabs.filter((candidate) => candidate.id !== tab.id);
+
   return [
     {
       id: 'workbench.editor.togglePinned',
@@ -1068,6 +1073,14 @@ function createEditorTabContextItems({
         editorService.splitEditor({ afterGroupId: groupId, tabId: tab.id });
       },
     },
+    {
+      id: 'workbench.editor.copyPath',
+      icon: 'copy',
+      label: 'Copy path',
+      onSelect: () => {
+        copyResourcePath(tab.resourceUri);
+      },
+    },
     { id: 'workbench.editor.separator.close', type: 'separator' },
     {
       id: 'workbench.editor.close',
@@ -1075,6 +1088,24 @@ function createEditorTabContextItems({
       label: 'Close',
       onSelect: () => {
         editorService.closeEditor(tab.id);
+      },
+    },
+    {
+      id: 'workbench.editor.closeOthers',
+      disabled: closeableTabs.length === 0,
+      icon: 'close-all',
+      label: 'Close others',
+      onSelect: () => {
+        closeableTabs.forEach((candidate) => editorService.closeEditor(candidate.id));
+      },
+    },
+    {
+      id: 'workbench.editor.closeAll',
+      disabled: tabs.length === 0,
+      icon: 'close-all',
+      label: 'Close all',
+      onSelect: () => {
+        tabs.forEach((candidate) => editorService.closeEditor(candidate.id));
       },
     },
   ];
@@ -1268,6 +1299,11 @@ function getResourceLabel(resourceUri: string): string {
     : resourceUri;
   const segments = path.split('/');
   return segments[segments.length - 1] || path;
+}
+
+function copyResourcePath(resourceUri: string): void {
+  const path = pathForResource(resourceUri);
+  void globalThis.navigator?.clipboard?.writeText(path).catch(() => undefined);
 }
 
 function isTextEditorRenderPayload(value: unknown): value is TextEditorRenderPayload {

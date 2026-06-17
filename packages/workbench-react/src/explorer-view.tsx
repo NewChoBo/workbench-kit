@@ -1,9 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
+import { ContextMenu, type ContextMenuItem } from '@workbench-kit/react/overlay';
 import {
   WorkspaceExplorer,
   type WorkspaceExplorerInlineEditCommitMeta,
   type WorkspaceExplorerInlineEditKind,
   type WorkspaceExplorerInlineEditState,
+  type WorkspaceExplorerItemContextMenuMeta,
   type WorkspaceExplorerItemKeyboardActionMeta,
   type WorkspaceExplorerMoveRequestMeta,
   type WorkspaceExplorerSelectionChangeMeta,
@@ -36,6 +44,7 @@ export const BUILTIN_EXPLORER_REFRESH_COMMAND_ID =
   'workbench-kit.builtin.explorer.refresh' as const;
 
 const WORKBENCH_WORKSPACE_DELETE_COMMAND_ID = 'workspace.delete' as const;
+const WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID = 'workspace.copyPath' as const;
 const WORKBENCH_WORKSPACE_NEW_FILE_COMMAND_ID = 'workspace.newFile' as const;
 const WORKBENCH_WORKSPACE_NEW_FOLDER_COMMAND_ID = 'workspace.newFolder' as const;
 const WORKBENCH_WORKSPACE_OPEN_COMMAND_ID = 'workspace.open' as const;
@@ -48,6 +57,13 @@ export interface BuiltinExplorerViewRenderData {
 interface WorkspaceCommandResult {
   readonly path?: string | undefined;
   readonly paths?: readonly string[] | undefined;
+}
+
+interface ExplorerContextMenuState {
+  readonly ariaLabel: string;
+  readonly items: ContextMenuItem[];
+  readonly x: number;
+  readonly y: number;
 }
 
 export function isBuiltinExplorerViewRenderData(
@@ -69,6 +85,7 @@ export function BuiltinExplorerView() {
   const workspaceState = useWorkspaceResourceState(workspaceService);
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
   const [inlineEdit, setInlineEdit] = useState<WorkspaceExplorerInlineEditState | undefined>();
+  const [contextMenu, setContextMenu] = useState<ExplorerContextMenuState | null>(null);
   const [selection, setSelection] = useState<WorkspaceSelectionState>({
     paths: [],
   });
@@ -294,6 +311,44 @@ export function BuiltinExplorerView() {
     [startRename],
   );
 
+  const handleItemContextMenu = useCallback(
+    (
+      event: ReactMouseEvent<HTMLButtonElement>,
+      node: WorkspaceTreeNode,
+      meta: WorkspaceExplorerItemContextMenuMeta,
+    ) => {
+      event.preventDefault();
+      setContextMenu({
+        ariaLabel: `${node.name} menu`,
+        items: createExplorerItemContextMenuItems({
+          actionPaths: meta.actionPaths,
+          copyPaths: (paths) => {
+            void executeWorkspaceCommand(WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID, { paths });
+          },
+          createFile: (parentPath) => startCreate('create-file', parentPath),
+          createFolder: (parentPath) => startCreate('create-folder', parentPath),
+          deleteTargets: (paths) => {
+            void executeWorkspaceCommand(WORKBENCH_WORKSPACE_DELETE_COMMAND_ID, {
+              kind: node.type,
+              paths,
+            });
+          },
+          node,
+          openFiles: (paths) => {
+            void executeWorkspaceCommand(WORKBENCH_WORKSPACE_OPEN_COMMAND_ID, {
+              kind: 'file',
+              paths,
+            });
+          },
+          renameTarget: () => startRename(node, meta.actionPaths),
+        }),
+        x: event.clientX,
+        y: event.clientY,
+      });
+    },
+    [executeWorkspaceCommand, startCreate, startRename],
+  );
+
   const handleSelectionChange = useCallback(
     (nextSelection: WorkspaceSelectionState, _meta: WorkspaceExplorerSelectionChangeMeta) => {
       setSelection(nextSelection);
@@ -354,6 +409,7 @@ export function BuiltinExplorerView() {
         selectedPaths={selection.paths}
         selectionAnchorPath={selection.anchorPath}
         onActivateFile={handleActivateFile}
+        onItemContextMenu={handleItemContextMenu}
         onInlineEditCancel={() => setInlineEdit(undefined)}
         onInlineEditCommit={handleInlineEditCommit}
         onInlineEditValueChange={handleInlineEditValueChange}
@@ -363,8 +419,111 @@ export function BuiltinExplorerView() {
         onSelectionChange={handleSelectionChange}
         onToggleFolder={handleToggleFolder}
       />
+      {contextMenu ? (
+        <ContextMenu
+          ariaLabel={contextMenu.ariaLabel}
+          items={contextMenu.items}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+        />
+      ) : null}
     </section>
   );
+}
+
+function createExplorerItemContextMenuItems({
+  actionPaths,
+  copyPaths,
+  createFile,
+  createFolder,
+  deleteTargets,
+  node,
+  openFiles,
+  renameTarget,
+}: {
+  actionPaths: readonly string[];
+  copyPaths: (paths: readonly string[]) => void;
+  createFile: (parentPath: string) => void;
+  createFolder: (parentPath: string) => void;
+  deleteTargets: (paths: readonly string[]) => void;
+  node: WorkspaceTreeNode;
+  openFiles: (paths: readonly string[]) => void;
+  renameTarget: () => void;
+}): ContextMenuItem[] {
+  const multiSelection = actionPaths.length > 1;
+
+  if (node.type === 'folder') {
+    return [
+      {
+        id: 'workbench.explorer.newFile',
+        icon: 'new-file',
+        label: 'New file',
+        onSelect: () => createFile(node.path),
+      },
+      {
+        id: 'workbench.explorer.newFolder',
+        icon: 'new-folder',
+        label: 'New folder',
+        onSelect: () => createFolder(node.path),
+      },
+      { id: 'workbench.explorer.separator.folder-create', type: 'separator' },
+      {
+        id: 'workbench.explorer.copyPath',
+        icon: 'copy',
+        label: 'Copy path',
+        onSelect: () => copyPaths([node.path]),
+      },
+      {
+        id: 'workbench.explorer.rename',
+        icon: 'edit',
+        label: 'Rename',
+        shortcut: 'F2',
+        onSelect: renameTarget,
+      },
+      { id: 'workbench.explorer.separator.folder-danger', type: 'separator' },
+      {
+        id: 'workbench.explorer.delete',
+        danger: true,
+        icon: 'trash',
+        label: 'Delete folder',
+        shortcut: 'Del',
+        onSelect: () => deleteTargets([node.path]),
+      },
+    ];
+  }
+
+  return [
+    {
+      id: 'workbench.explorer.open',
+      icon: 'go-to-file',
+      label: multiSelection ? 'Open selected files' : 'Open file',
+      onSelect: () => openFiles(actionPaths),
+    },
+    {
+      id: 'workbench.explorer.copyPath',
+      icon: 'copy',
+      label: multiSelection ? 'Copy paths' : 'Copy path',
+      onSelect: () => copyPaths(actionPaths),
+    },
+    { id: 'workbench.explorer.separator.file-edit', type: 'separator' },
+    {
+      id: 'workbench.explorer.rename',
+      disabled: multiSelection,
+      icon: 'edit',
+      label: 'Rename',
+      shortcut: 'F2',
+      onSelect: renameTarget,
+    },
+    {
+      id: 'workbench.explorer.delete',
+      danger: true,
+      icon: 'trash',
+      label: multiSelection ? `Delete ${actionPaths.length} files` : 'Delete',
+      shortcut: 'Del',
+      onSelect: () => deleteTargets(actionPaths),
+    },
+  ];
 }
 
 function useWorkspaceResourceState(
