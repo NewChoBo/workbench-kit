@@ -94,6 +94,18 @@ interaction playback. Use `validate` before committing package changes that can
 affect rendered Storybook surfaces, and `validate:full` for Lane or release
 closeout.
 
+## Workbench Sample Pages
+
+The `Deploy Workbench Sample` workflow builds `examples/workbench-sample` and
+deploys the Vite output to GitHub Pages. Configure repository Pages settings to
+use **GitHub Actions** as the publishing source. The deployment URL is exposed on
+the `github-pages` environment for successful runs on `main`.
+
+The workflow passes `actions/configure-pages` `base_path` into
+`WORKBENCH_SAMPLE_BASE_PATH` so Vite emits assets relative to either the
+repository Pages path or a custom-domain root. Local builds keep the default `/`
+base path.
+
 ## Publishing
 
 Packages are published from GitHub Actions through npm trusted publishing. The
