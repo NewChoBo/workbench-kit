@@ -192,10 +192,16 @@
 }
 
 .workbench-editor-area__source-pane .workbench-monaco-panel,
-.workbench-editor-area__source-pane .workbench-monaco-panel__body,
-.workbench-editor-area__source-pane .workspace-editor__monaco {
+.workbench-editor-area__source-pane .workbench-monaco-panel__body {
   box-sizing: border-box;
   flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.workbench-editor-area__source-pane .workbench-monaco-panel,
+.workbench-editor-area__source-pane .workspace-editor__monaco {
+  box-sizing: border-box;
   min-width: 0;
   min-height: 0;
   height: 100%;

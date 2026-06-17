@@ -817,7 +817,7 @@ function TextEditorSurface({
       >
         <WorkspaceEditor
           file={editorDocument}
-          showFileBar={false}
+          showFileBar
           showHeader={false}
           theme={theme}
           value={content}

@@ -4,7 +4,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type DragEvent,
   type KeyboardEvent,
   type MouseEvent,
@@ -18,7 +17,7 @@ import {
   type WorkspaceSelectionMode,
   type WorkspaceSelectionState,
 } from '@workbench-kit/workspace';
-import { SideBarList, SideBarListItem } from '../../layout/SideBarViewFrame';
+import { SideBarList, SideBarListItem, sideBarTreeDepthStyle } from '../../layout/SideBarViewFrame';
 import { cxCodicon } from '../../utils/codicon';
 import { flattenWorkspaceTree } from './tree';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
@@ -394,7 +393,7 @@ export function WorkspaceExplorer({
   }) => {
     if (!inlineEdit) return null;
 
-    const depthStyle = { '--depth': depth } as CSSProperties;
+    const depthStyle = sideBarTreeDepthStyle(depth);
 
     return (
       <li key={key} className="ui-side-bar-list-entry">

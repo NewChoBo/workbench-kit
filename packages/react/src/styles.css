@@ -1897,7 +1897,7 @@
   --ui-side-bar-footer-height: 0px;
   --ui-side-bar-inline-padding: 8px;
   --ui-side-bar-row-block-padding: 6px;
-  --ui-side-bar-tree-indent-step: 8px;
+  --ui-side-bar-tree-indent-step: 14px;
 }
 
 .ui-side-bar-view__header-addon {
@@ -2006,14 +2006,17 @@
 
 .ui-side-bar-list-item {
   --depth: 0;
+  --ui-side-bar-tree-indent-offset: calc(
+    var(--ui-side-bar-inline-padding, 8px) +
+      (var(--depth) * var(--ui-side-bar-tree-indent-step, 14px))
+  );
   width: 100%;
   min-width: 0;
   min-height: 26px;
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 0 var(--ui-side-bar-inline-padding) 0
-    calc(var(--ui-side-bar-inline-padding) + (var(--depth) * var(--ui-side-bar-tree-indent-step)));
+  padding: 0 var(--ui-side-bar-inline-padding, 8px) 0 var(--ui-side-bar-tree-indent-offset);
   border: 0;
   border-radius: 0;
   color: var(--color-text-muted);
@@ -3244,12 +3247,15 @@
 
 .ui-side-bar-inline-edit {
   --depth: 0;
+  --ui-side-bar-tree-indent-offset: calc(
+    var(--ui-side-bar-inline-padding, 8px) +
+      (var(--depth) * var(--ui-side-bar-tree-indent-step, 14px))
+  );
   min-height: 26px;
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 2px var(--ui-side-bar-inline-padding) 2px
-    calc(var(--ui-side-bar-inline-padding) + (var(--depth) * var(--ui-side-bar-tree-indent-step)));
+  padding: 2px var(--ui-side-bar-inline-padding, 8px) 2px var(--ui-side-bar-tree-indent-offset);
 }
 
 .ui-side-bar-inline-edit__input {
@@ -3267,11 +3273,12 @@
 
 .ui-side-bar-inline-edit__error {
   --depth: 0;
-  padding: 1px var(--ui-side-bar-inline-padding) 4px
-    calc(
-      var(--ui-side-bar-inline-padding) + 19px +
-        (var(--depth) * var(--ui-side-bar-tree-indent-step))
-    );
+  --ui-side-bar-tree-indent-offset: calc(
+    var(--ui-side-bar-inline-padding, 8px) +
+      (var(--depth) * var(--ui-side-bar-tree-indent-step, 14px))
+  );
+  padding: 1px var(--ui-side-bar-inline-padding, 8px) 4px
+    calc(var(--ui-side-bar-tree-indent-offset) + 19px);
   color: var(--color-danger);
   font-size: var(--font-size-xs);
   line-height: 1.35;
