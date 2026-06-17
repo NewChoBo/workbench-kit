@@ -1,0 +1,31 @@
+{
+  "name": "@workbench-kit/workbench-react",
+  "version": "0.0.1-prototype.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run src",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workbench-kit/react": "workspace:*",
+    "@workbench-kit/platform": "workspace:*",
+    "@workbench-kit/tokens": "workspace:*",
+    "@workbench-kit/workbench-config": "workspace:*",
+    "@workbench-kit/workbench-core": "workspace:*",
+    "@workbench-kit/workspace": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "description": "React workbench provider and shell assembly for Workbench Kit.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/workbench-react"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@workbench-kit/extension-builtin-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workbench-kit/workbench-extension-sdk": "workspace:*"
+  },
+  "description": "Built-in workspace extension that contributes workspace metadata configuration and the workspace info command."
+}

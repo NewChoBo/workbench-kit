@@ -1,0 +1,13 @@
+{
+  "name": "@workbench-kit/extension-builtin-settings",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workbench-kit/workbench-extension-sdk": "workspace:*"
+  },
+  "description": "Built-in settings extension that contributes the settings activity, view, command, menu entry, and configuration."
+}

@@ -1,0 +1,69 @@
+.ui-scroll-area {
+  min-width: 0;
+  min-height: 0;
+}
+
+.ui-scroll-area--both {
+  overflow: auto;
+}
+
+.ui-scroll-area--horizontal {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.ui-scroll-area--vertical {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.ui-scroll-area--stable-gutter {
+  scrollbar-gutter: stable;
+}
+
+.ui-workbench-scrollbar {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+
+.ui-workbench-scrollbar::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+.ui-workbench-scrollbar::-webkit-scrollbar-button {
+  display: none;
+}
+
+.ui-workbench-scrollbar::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+.ui-workbench-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border: var(--scrollbar-thumb-inset) solid transparent;
+  border-radius: calc(var(--scrollbar-size) / 2);
+  background-clip: content-box;
+}
+
+.ui-workbench-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: content-box;
+}
+
+.ui-workbench-scrollbar::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-active);
+  background-clip: content-box;
+}
+
+.ui-workbench-scrollbar--hidden,
+.workbench-primary-side-bar .panel-body {
+  scrollbar-gutter: auto;
+  scrollbar-width: none;
+}
+
+.ui-workbench-scrollbar--hidden::-webkit-scrollbar,
+.workbench-primary-side-bar .panel-body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

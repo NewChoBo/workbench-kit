@@ -1,0 +1,21 @@
+.ui-workbench-panel-region {
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+}
+
+.ui-workbench-panel-region--scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 18px 16px 28px;
+}
+
+.ui-workbench-panel-region--fill {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  align-content: stretch;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+}

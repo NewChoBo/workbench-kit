@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.builtin.explorer",
+  "name": "builtin-explorer",
+  "displayName": "Explorer",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": [
+    "onView:workbench-kit.builtin.explorer.tree",
+    "onCommand:workbench-kit.builtin.explorer.refresh",
+    "onCommand:workbench-kit.builtin.explorer.reveal",
+    "onCommand:workbench-kit.builtin.explorer.focus",
+    "onCommand:workbench-kit.builtin.explorer.move",
+    "onCommand:workspace.newFile",
+    "onCommand:workspace.newFolder",
+    "onCommand:workspace.init",
+    "onCommand:workspace.open",
+    "onCommand:workspace.copyPath",
+    "onCommand:workspace.rename",
+    "onCommand:workspace.delete"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "workbench-kit.builtin.explorer.refresh",
+        "title": "Refresh Explorer",
+        "category": "Explorer"
+      },
+      {
+        "command": "workbench-kit.builtin.explorer.reveal",
+        "title": "Reveal in Explorer",
+        "category": "Explorer"
+      },
+      {
+        "command": "workbench-kit.builtin.explorer.focus",
+        "title": "Focus Explorer",
+        "category": "Explorer"
+      },
+      {
+        "command": "workbench-kit.builtin.explorer.move",
+        "title": "Move Workspace Entry",
+        "category": "Explorer"
+      },
+      {
+        "command": "workspace.newFile",
+        "title": "New File",
+        "category": "Workspace",
+        "icon": "new-file"
+      },
+      {
+        "command": "workspace.newFolder",
+        "title": "New Folder",
+        "category": "Workspace",
+        "icon": "new-folder"
+      },
+      {
+        "command": "workspace.init",
+        "title": "Initialize Workspace",
+        "category": "Workspace"
+      },
+      {
+        "command": "workspace.open",
+        "title": "Open",
+        "category": "Workspace",
+        "icon": "go-to-file"
+      },
+      {
+        "command": "workspace.copyPath",
+        "title": "Copy Path",
+        "category": "Workspace",
+        "icon": "copy"
+      },
+      {
+        "command": "workspace.rename",
+        "title": "Rename",
+        "category": "Workspace",
+        "icon": "edit"
+      },
+      {
+        "command": "workspace.delete",
+        "title": "Delete",
+        "category": "Workspace",
+        "icon": "trash"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "workbench-kit.builtin.explorer.refresh",
+          "group": "navigation",
+          "order": 1,
+          "when": "view == workbench-kit.builtin.explorer.tree"
+        }
+      ]
+    },
+    "viewContainers": {
+      "activitybar": [
+        {
+          "id": "explorer",
+          "title": "Explorer",
+          "icon": "files"
+        }
+      ]
+    },
+    "activities": [
+      {
+        "id": "workbench-kit.builtin.explorer.activity",
+        "viewContainerId": "explorer",
+        "icon": "files",
+        "title": "Explorer"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "workbench-kit.builtin.explorer.tree",
+          "name": "Explorer"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,156 @@
+export { mimeTypeForPath } from './mimeType';
+export {
+  WorkspaceEditor,
+  MONACO_DARK_THEME_ID,
+  MONACO_LIGHT_THEME_ID,
+  defineMonacoWorkbenchTheme,
+  languageForFile,
+  monacoThemeForWorkspaceTheme,
+} from './WorkspaceEditor';
+export type { WorkspaceEditorProps, WorkspaceEditorTheme } from './WorkspaceEditor';
+export { WorkspaceEditorPanel } from './WorkspaceEditorPanel';
+export type {
+  WorkspaceEditorPanelProps,
+  WorkspaceEditorPanelRenderEditor,
+  WorkspaceEditorPanelRenderEditorContext,
+  WorkspaceEditorPanelRenderTabActions,
+  WorkspaceEditorPanelRenderTabActionsContext,
+} from './WorkspaceEditorPanel';
+export {
+  WORKSPACE_EXPLORER_DRAG_DATA_TYPE,
+  WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE,
+  WorkspaceExplorer,
+} from './WorkspaceExplorer';
+export type {
+  WorkspaceExplorerItemActionMeta,
+  WorkspaceExplorerItemContextMenuMeta,
+  WorkspaceExplorerItemKeyboardActionMeta,
+  WorkspaceExplorerInlineEditCommitMeta,
+  WorkspaceExplorerDragMetadataContext,
+  WorkspaceExplorerDragMetadataFactory,
+  WorkspaceExplorerInlineEditKind,
+  WorkspaceExplorerInlineEditState,
+  WorkspaceExplorerMoveRequestMeta,
+  WorkspaceExplorerProps,
+  WorkspaceExplorerSelectionChangeMeta,
+} from './WorkspaceExplorer';
+export { WorkspaceFileIcon, codiconForFileKind, fileIconKindForPath } from './WorkspaceFileIcon';
+export type { WorkspaceFileIconKind, WorkspaceFileIconProps } from './WorkspaceFileIcon';
+export { WorkspaceHighlightedText } from './WorkspaceHighlightedText';
+export type { WorkspaceHighlightedTextProps } from './WorkspaceHighlightedText';
+export {
+  WorkbenchMultiProviderExplorer,
+  collectWorkbenchExplorerEntryRefs,
+  countWorkbenchExplorerEntries,
+  flattenWorkbenchExplorerProviders,
+  getWorkbenchExplorerEntryContext,
+  getWorkbenchExplorerEntryKey,
+  getWorkbenchExplorerProviderEntryCount,
+  isWorkbenchExplorerActionDisabled,
+  isWorkbenchExplorerEntryDisabled,
+  isWorkbenchExplorerEntrySelectable,
+  isWorkbenchExplorerProviderDisabled,
+  normalizeWorkbenchExplorerEntryKeys,
+} from './MultiProviderExplorer';
+export type {
+  WorkbenchExplorerActionDescriptor,
+  WorkbenchExplorerEntryContext,
+  WorkbenchExplorerEntryContextInput,
+  WorkbenchExplorerEntryDescriptor,
+  WorkbenchExplorerEntryKind,
+  WorkbenchExplorerEntryRef,
+  WorkbenchExplorerEntrySelectContext,
+  WorkbenchExplorerEntryToggleContext,
+  WorkbenchExplorerFlattenedEntry,
+  WorkbenchExplorerProviderActionContext,
+  WorkbenchExplorerProviderCollapseContext,
+  WorkbenchExplorerProviderDescriptor,
+  WorkbenchExplorerProviderKind,
+  WorkbenchMultiProviderExplorerProps,
+} from './MultiProviderExplorer';
+export { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
+export type { WorkspaceSearchPanelProps } from './WorkspaceSearchPanel';
+export { WorkspaceSearchResults } from './WorkspaceSearchResults';
+export type { WorkspaceSearchResultsProps } from './WorkspaceSearchResults';
+export {
+  extensionOfPath,
+  fileNameOfPath,
+  isSimpleWorkspaceName,
+  joinWorkspacePath,
+  normalizeWorkspacePath,
+  parentPathOf,
+  parentPathsOf,
+  workspacePathSegments,
+} from './path';
+export {
+  createWorkspaceFileDraft,
+  discardWorkspaceFileDraft,
+  isWorkspaceFileDraftDirty,
+  resolveWorkspaceFileDraft,
+  saveWorkspaceFileDraft,
+  updateWorkspaceFileDraft,
+  type DiscardWorkspaceFileDraftInput,
+  type ResolveWorkspaceFileDraftInput,
+  type SaveWorkspaceFileDraftInput,
+  type UpdateWorkspaceFileDraftInput,
+  type WorkspaceFileDraft,
+  type WorkspaceFileDraftMap,
+} from '@workbench-kit/workspace';
+export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
+export {
+  getWorkspaceSelectionActionPaths,
+  getWorkspaceSelectionRange,
+  normalizeWorkspaceSelectionPaths,
+  pruneWorkspaceSelection,
+  updateWorkspaceSelection,
+  type UpdateWorkspaceSelectionInput,
+  type WorkspaceSelectionActionPathsInput,
+  type WorkspaceSelectionMode,
+  type WorkspaceSelectionState,
+} from '@workbench-kit/workspace';
+export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
+export {
+  getAvailableWorkspaceEntryName,
+  getWorkspaceEntryMovePlan,
+  getWorkspaceFileMovePlan,
+  initializeVirtualWorkspaceState,
+  isWorkspaceEntryPathAvailable,
+  useVirtualWorkspace,
+  virtualWorkspaceReducer,
+} from './useVirtualWorkspace';
+export type {
+  CreateWorkspaceFileInput,
+  VirtualWorkspaceAction,
+  VirtualWorkspaceApi,
+  VirtualWorkspaceInitialState,
+  VirtualWorkspaceState,
+  WorkspaceEntryNameSuggestionInput,
+  WorkspaceEntryMove,
+  WorkspaceEntryMoveKind,
+  WorkspaceEntryMovePlan,
+  WorkspaceEntryMovePlanInput,
+  WorkspaceEntryPathAvailabilityInput,
+  WorkspaceFileMove,
+  WorkspaceFileMovePlan,
+  WorkspaceFileMovePlanInput,
+  WriteWorkspaceFileInput,
+} from './useVirtualWorkspace';
+export type {
+  VisibleWorkspaceNode,
+  WorkspaceFile,
+  WorkspaceFileSource,
+  WorkspaceHighlightPart,
+  WorkspaceNodeType,
+  WorkspaceSearchMatchKind,
+  WorkspaceSearchResult,
+  WorkspaceTreeNode,
+} from './types';
+export {
+  WorkspaceDraftsContext,
+  WorkspaceDraftsProvider,
+  useWorkspaceDrafts,
+} from './WorkspaceDraftsContext';
+export type {
+  WorkspaceDraftsContextValue,
+  WorkspaceDraftsProviderProps,
+} from './WorkspaceDraftsContext';

@@ -1,7 +1,14 @@
-import type { ComponentPropsWithRef, CSSProperties, PointerEvent, ReactNode } from 'react';
+import type {
+  ComponentPropsWithRef,
+  CSSProperties,
+  HTMLAttributes,
+  PointerEvent,
+  ReactNode,
+} from 'react';
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cx } from '../utils/cx';
 import { Panel, PanelBody, PanelHeader, type PanelBodyProps, type PanelProps } from './Panel';
+import { workbenchTreeIndentOffset } from './layoutHelpers';
 
 type SideBarFooterPlacement = 'static' | 'overlay';
 
@@ -260,38 +267,84 @@ export function SideBarList({ className, dropTarget, fill, ...props }: SideBarLi
 
 export interface SideBarListItemProps extends ComponentPropsWithRef<'button'> {
   active?: boolean;
+  after?: ReactNode;
   depth?: number;
   dropTarget?: boolean;
+  noLi?: boolean;
+  selected?: boolean;
   variant?: 'default' | 'stacked';
+  wrapperProps?: HTMLAttributes<HTMLLIElement>;
 }
 
-export function SideBarListItem({
-  active,
-  className,
-  depth = 0,
-  dropTarget,
-  style,
-  type = 'button',
-  variant = 'default',
-  ...props
-}: SideBarListItemProps) {
-  const depthStyle = { '--depth': depth, ...style } as CSSProperties;
-
-  return (
-    <button
-      type={type}
-      className={cx(
-        'ui-side-bar-list-item',
-        variant === 'stacked' && 'ui-side-bar-list-item--stacked',
-        active && 'ui-side-bar-list-item--active',
-        dropTarget && 'ui-side-bar-list-item--drop-target',
-        className,
-      )}
-      style={depthStyle}
-      {...props}
-    />
-  );
+export function sideBarTreeDepthStyle(depth: number, style?: CSSProperties): CSSProperties {
+  return {
+    '--depth': depth,
+    '--ui-side-bar-tree-indent-offset': workbenchTreeIndentOffset(depth),
+    ...style,
+  } as CSSProperties;
 }
+
+export const SideBarListItem = forwardRef<HTMLButtonElement, SideBarListItemProps>(
+  function SideBarListItem(
+    {
+      active,
+      after,
+      'aria-current': ariaCurrent,
+      className,
+      depth = 0,
+      dropTarget,
+      noLi,
+      selected,
+      style,
+      type = 'button',
+      variant = 'default',
+      wrapperProps,
+      ...props
+    },
+    ref,
+  ) {
+    const depthStyle = sideBarTreeDepthStyle(depth, style);
+    const { className: wrapperClassName, ...restWrapperProps } = wrapperProps ?? {};
+
+    const button = (
+      <button
+        ref={ref}
+        type={type}
+        aria-current={ariaCurrent ?? (active ? 'true' : undefined)}
+        className={cx(
+          'ui-side-bar-list-item',
+          variant === 'stacked' && 'ui-side-bar-list-item--stacked',
+          active && 'ui-side-bar-list-item--active',
+          selected && 'ui-side-bar-list-item--selected',
+          dropTarget && 'ui-side-bar-list-item--drop-target',
+          className,
+        )}
+        data-selected={selected ? 'true' : undefined}
+        style={depthStyle}
+        {...props}
+      />
+    );
+
+    if (noLi) {
+      if (after) {
+        return (
+          <>
+            {button}
+            {after}
+          </>
+        );
+      }
+      return button;
+    }
+
+    return (
+      <li className={cx('ui-side-bar-list-entry', wrapperClassName)} {...restWrapperProps}>
+        {button}
+        {after}
+      </li>
+    );
+  },
+);
 
 export type SideBarRowProps = ComponentPropsWithRef<'div'>;
 

@@ -1,0 +1,69 @@
+name: Publish Workbench Kit
+
+on:
+  release:
+    types: [published]
+  push:
+    tags:
+      - 'v*'
+      - 'workbench-kit-v*'
+  workflow_dispatch:
+    inputs:
+      npm_tag:
+        description: npm dist-tag to publish with
+        required: false
+        default: prototype
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-workbench-kit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish packages to npm
+    runs-on: ubuntu-latest
+    env:
+      NPM_DIST_TAG: ${{ inputs.npm_tag || 'prototype' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync package version from tag
+        if: github.ref_type == 'tag'
+        run: node scripts/sync-version-from-tag.mjs
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.5.1 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build workspace packages
+        run: node scripts/build-workspace-packages.mjs
+
+      - name: Verify release tag
+        run: node scripts/check-release-version.mjs
+
+      - name: Ensure npm supports trusted publishing
+        run: npm install -g npm@11
+
+      - name: Preflight npm publish auth
+        run: node scripts/preflight-npm-publish.mjs
+
+      - name: Validate
+        run: pnpm validate
+
+      - name: Publish
+        run: node scripts/publish-packages.mjs

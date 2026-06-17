@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.builtin.keybindings",
+  "name": "builtin-keybindings",
+  "displayName": "Keybindings",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onStartup"],
+  "contributes": {
+    "keybindings": []
+  }
+}

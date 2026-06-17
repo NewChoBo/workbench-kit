@@ -1,0 +1,73 @@
+import type { ExtensionContributes } from './contributions.js';
+
+export const WORKBENCH_KIT_EXTENSION_SDK_VERSION = '0.0.0' as const;
+
+export type ExtensionManifestSchemaVersion = 1;
+
+export type WorkbenchExtensionManifest = {
+  schemaVersion: ExtensionManifestSchemaVersion;
+  id: string;
+  name: string;
+  displayName: string;
+  version: string;
+  publisher: string;
+  engines: {
+    workbench: string;
+    extensionApi: string;
+  };
+  activationEvents: string[];
+  capabilities?: ExtensionCapabilities;
+  contributes?: ExtensionContributes;
+  extensionDependencies?: string[];
+  extensionOptionalDependencies?: string[];
+  extensionPack?: string[];
+  permissions?: string[];
+};
+
+export type ExtensionCapabilities = {
+  requires?: string[];
+  provides?: string[];
+};
+
+export {
+  DEFAULT_EDITOR_HOST_FACTORY_ID,
+  DEFAULT_VIEW_HOST_FACTORY_ID,
+  WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
+  WORKBENCH_SETTINGS_CAPABILITY_ID,
+} from './contributions.js';
+export type {
+  ActivateFunction,
+  ActivityContribution,
+  CommandContribution,
+  ConfigurationContribution,
+  ConfigurationPropertyContribution,
+  ConfigurationPropertyScope,
+  DeactivateFunction,
+  EditorContribution,
+  EditorHost,
+  EditorHostCreateContext,
+  EditorHostFactory,
+  EditorResolveContext,
+  EditorResolver,
+  ExtensionCapabilityProvider,
+  ExtensionCapabilityRegistry,
+  ExtensionCommandRegistry,
+  ExtensionEditorHostFactoryRegistry,
+  ExtensionEditorResolverRegistry,
+  ExtensionViewHostFactoryRegistry,
+  ExtensionContext,
+  ExtensionContributes,
+  ExtensionViewRegistry,
+  KeybindingContribution,
+  MenuContribution,
+  ViewContainerContribution,
+  ViewContribution,
+  ViewHost,
+  ViewHostCreateContext,
+  ViewHostFactory,
+  ViewHostSize,
+  ViewProvider,
+  WorkbenchEditorSavePort,
+  WorkbenchEditorServiceCapability,
+  WorkbenchSettingsCapability,
+} from './contributions.js';
