@@ -9,6 +9,7 @@ import {
   type FocusEvent,
   type ReactNode,
 } from 'react';
+import { Modal } from '@workbench-kit/react/modal';
 import { Badge, Button, Field } from '@workbench-kit/react/primitives';
 import {
   WorkbenchSettingsModal,
@@ -36,11 +37,17 @@ import { useWorkbench } from './provider.js';
 export interface WorkbenchShellProps {
   compactStatus?: boolean;
   editorArea?: ReactNode;
+  helpContent?: ReactNode;
+  helpTitle?: ReactNode;
   onStatusItemActivate?: (item: StatusBarItemModel) => void;
   primarySidebar?: ReactNode;
   rootClassName?: string;
   statusSections?: StatusBarSectionModel[];
   theme?: string;
+  title?: ReactNode;
+  titleBar?: ReactNode;
+  titleBarActions?: ReactNode;
+  titleMeta?: ReactNode;
 }
 
 const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
@@ -50,18 +57,26 @@ const SETTINGS_ACTIVITY_ITEM_ID = 'workbench-kit.shell.settings';
 export function WorkbenchShell({
   compactStatus = true,
   editorArea,
+  helpContent,
+  helpTitle = 'Workbench Help',
   onStatusItemActivate,
   primarySidebar,
   rootClassName,
   statusSections,
   theme,
+  title = 'Workbench',
+  titleBar,
+  titleBarActions,
+  titleMeta,
 }: WorkbenchShellProps) {
   const resolvedEditorArea = editorArea ?? <EditorArea />;
   const { executeCommand, extensionRegistry, layoutService, missingExtensionIds } = useWorkbench();
   const forceRender = useForceRender();
+  const [isHelpOpen, setHelpOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [settingsSearchValue, setSettingsSearchValue] = useState('');
   const showSettingsModal = useCallback(() => {
+    setHelpOpen(false);
     setSettingsOpen(true);
   }, []);
   const settingsCapability = useMemo<WorkbenchSettingsCapability>(
@@ -83,6 +98,22 @@ export function WorkbenchShell({
     settingsCategories.find((category) => category.id === SETTINGS_EXTENSION_ID)?.id ??
     settingsCategories[0]?.id;
   const settingsContributionCount = extensionRegistry.configurations.getConfigurations().length;
+  const showHelpModal = useCallback(() => {
+    setSettingsOpen(false);
+    setHelpOpen(true);
+  }, []);
+  const resolvedTitleBar =
+    titleBar === undefined ? (
+      <WorkbenchShellTitleBar
+        helpContent={helpContent}
+        title={title}
+        titleBarActions={titleBarActions}
+        titleMeta={titleMeta}
+        onHelpOpen={showHelpModal}
+      />
+    ) : (
+      titleBar
+    );
 
   useEffect(() => {
     const layoutDisposable = layoutService.onDidChangeLayout(forceRender);
@@ -158,32 +189,85 @@ export function WorkbenchShell({
       rootClassName={rootClassName}
       secondaryArea={resolvedEditorArea}
       statusSections={resolvedStatusSections}
+      titleBar={resolvedTitleBar}
       theme={theme}
       overlays={
-        isSettingsOpen ? (
-          <WorkbenchSettingsModal
-            categories={settingsCategories}
-            defaultActiveCategoryId={defaultSettingsCategoryId}
-            footer={<Button onClick={() => setSettingsOpen(false)}>Close</Button>}
-            scopes={[
-              { id: 'user', label: 'User' },
-              { id: 'workspace', label: 'Workspace' },
-            ]}
-            searchValue={settingsSearchValue}
-            title="Settings"
-            titleSuffix={
-              <Badge variant="muted">
-                {settingsContributionCount === 1
-                  ? '1 contribution'
-                  : `${settingsContributionCount} contributions`}
-              </Badge>
-            }
-            onClose={() => setSettingsOpen(false)}
-            onSearchValueChange={setSettingsSearchValue}
-          />
-        ) : null
+        <>
+          {isSettingsOpen ? (
+            <WorkbenchSettingsModal
+              categories={settingsCategories}
+              defaultActiveCategoryId={defaultSettingsCategoryId}
+              footer={<Button onClick={() => setSettingsOpen(false)}>Close</Button>}
+              scopes={[
+                { id: 'user', label: 'User' },
+                { id: 'workspace', label: 'Workspace' },
+              ]}
+              searchValue={settingsSearchValue}
+              title="Settings"
+              titleSuffix={
+                <Badge variant="muted">
+                  {settingsContributionCount === 1
+                    ? '1 contribution'
+                    : `${settingsContributionCount} contributions`}
+                </Badge>
+              }
+              onClose={() => setSettingsOpen(false)}
+              onSearchValueChange={setSettingsSearchValue}
+            />
+          ) : null}
+          {isHelpOpen && helpContent ? (
+            <Modal
+              bodyClassName="workbench-help-modal__body"
+              className="workbench-help-modal"
+              closeLabel="Close help"
+              footer={<Button onClick={() => setHelpOpen(false)}>Close</Button>}
+              title={helpTitle}
+              onClose={() => setHelpOpen(false)}
+            >
+              {helpContent}
+            </Modal>
+          ) : null}
+        </>
       }
     />
+  );
+}
+
+function WorkbenchShellTitleBar({
+  helpContent,
+  title,
+  titleBarActions,
+  titleMeta,
+  onHelpOpen,
+}: {
+  helpContent: ReactNode | undefined;
+  title: ReactNode;
+  titleBarActions: ReactNode | undefined;
+  titleMeta: ReactNode | undefined;
+  onHelpOpen: () => void;
+}) {
+  return (
+    <>
+      <div className="workbench-shell-titlebar__identity">
+        <i aria-hidden className="codicon codicon-layout" />
+        <span className="workbench-shell-titlebar__title">{title}</span>
+        {titleMeta ? <span className="workbench-shell-titlebar__meta">{titleMeta}</span> : null}
+      </div>
+      <div className="workbench-shell-titlebar__actions">
+        {titleBarActions}
+        {helpContent ? (
+          <button
+            aria-label="Help"
+            className="ui-icon-button ui-icon-button--compact workbench-shell-titlebar__action"
+            title="Help"
+            type="button"
+            onClick={onHelpOpen}
+          >
+            <i aria-hidden className="codicon codicon-question" />
+          </button>
+        ) : null}
+      </div>
+    </>
   );
 }
 

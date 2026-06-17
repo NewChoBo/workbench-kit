@@ -267,6 +267,55 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 
+  it('renders shell titlebar actions and opens help in a modal overlay', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+        >
+          <WorkbenchShell
+            editorArea={<main>Editor Area</main>}
+            helpContent={<p>Open example.jdw.json to preview the sample.</p>}
+            title="Workbench Sample"
+            titleBarActions={<button type="button">Sample Action</button>}
+            titleMeta={<span>4 files</span>}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    const titleBar = container.querySelector('.ui-workbench-titlebar');
+    expect(titleBar?.textContent).toContain('Workbench Sample');
+    expect(titleBar?.textContent).toContain('4 files');
+    expect(titleBar?.textContent).toContain('Sample Action');
+
+    const helpButton = container.querySelector<HTMLButtonElement>('button[aria-label="Help"]');
+    expect(helpButton).toBeDefined();
+
+    await act(async () => {
+      helpButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('Workbench Help');
+    expect(dialog?.textContent).toContain('Open example.jdw.json to preview the sample.');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('renders the built-in explorer from the virtual workspace and opens files', async () => {
     const workspaceHostPort = createWorkbenchWorkspaceHostPort();
     const initialState = {

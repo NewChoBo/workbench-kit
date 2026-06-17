@@ -24,6 +24,7 @@ export interface WorkbenchShellProps {
   rootStyle?: CSSProperties;
   secondaryArea: ReactNode;
   statusSections: StatusBarSectionModel[];
+  titleBar?: ReactNode;
   overlays?: ReactNode;
   theme?: string;
 }
@@ -38,6 +39,7 @@ export function WorkbenchShell({
   rootStyle,
   secondaryArea,
   statusSections,
+  titleBar,
   theme,
 }: WorkbenchShellProps) {
   const body = primarySidebar?.isVisible ? (
@@ -56,6 +58,7 @@ export function WorkbenchShell({
 
   return (
     <div className={rootClassName} data-theme={theme} style={rootStyle}>
+      {titleBar ? <header className="ui-workbench-titlebar">{titleBar}</header> : null}
       <div className="ide-body">
         <ActivityBar {...activityBar} />
         {body}

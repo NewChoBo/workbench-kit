@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Badge, Button } from '@workbench-kit/react/primitives';
+import { Badge } from '@workbench-kit/react/primitives';
 import type { StatusBarSectionModel } from '@workbench-kit/react/workbench/shell';
 import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/workspace/editor';
 import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
@@ -41,10 +41,11 @@ export function App() {
       <WorkspaceInitCommand />
       <WorkbenchShell
         editorArea={
-          <SampleEditorFrame theme={theme} onThemeChange={setTheme}>
+          <SampleEditorFrame theme={theme}>
             <EditorSaveShortcut />
           </SampleEditorFrame>
         }
+        helpContent={<SampleHelpContent />}
         onStatusItemActivate={(item) => {
           if (item.id === 'sample.theme') {
             setTheme((current) => nextSampleTheme(current));
@@ -53,6 +54,9 @@ export function App() {
         rootClassName="ide-root"
         statusSections={statusSections}
         theme={theme}
+        title="Workbench Sample"
+        titleBarActions={<SampleTitleBarActions theme={theme} onThemeChange={setTheme} />}
+        titleMeta={<Badge variant="muted">{workspaceInfo.fileCount} files</Badge>}
       />
     </WorkbenchProvider>
   );
@@ -95,25 +99,16 @@ function EditorSaveShortcut() {
   return null;
 }
 
-function SampleEditorFrame({
-  children,
-  theme,
-  onThemeChange,
-}: {
-  children: ReactNode;
-  theme: SampleTheme;
-  onThemeChange: (theme: SampleTheme) => void;
-}) {
+function SampleEditorFrame({ children, theme }: { children: ReactNode; theme: SampleTheme }) {
   return (
     <section className="workbench-sample-editor-frame" aria-label="Sample editor workspace">
-      <SampleWorkbenchToolbar theme={theme} onThemeChange={onThemeChange} />
       {children}
       <EditorArea defaultViewModeForResource={getSampleDefaultViewMode} theme={theme} />
     </section>
   );
 }
 
-function SampleWorkbenchToolbar({
+function SampleTitleBarActions({
   theme,
   onThemeChange,
 }: {
@@ -123,46 +118,67 @@ function SampleWorkbenchToolbar({
   const { executeCommand } = useWorkbench();
 
   return (
-    <header className="workbench-sample-toolbar">
-      <div className="workbench-sample-toolbar__title">
-        <i aria-hidden className="codicon codicon-layout" />
-        <span>Workbench Sample</span>
-        <Badge variant="muted">{workspaceInfo.fileCount} files</Badge>
-      </div>
-      <div className="workbench-sample-toolbar__actions">
-        <div className="workbench-sample-theme-switch" role="group" aria-label="Workbench theme">
-          <button
-            aria-label="Use dark theme"
-            className="workbench-sample-theme-switch__button"
-            data-active={theme === 'dark' ? 'true' : undefined}
-            title="Dark theme"
-            type="button"
-            onClick={() => onThemeChange('dark')}
-          >
-            <i aria-hidden className="codicon codicon-color-mode" />
-          </button>
-          <button
-            aria-label="Use light theme"
-            className="workbench-sample-theme-switch__button"
-            data-active={theme === 'light' ? 'true' : undefined}
-            title="Light theme"
-            type="button"
-            onClick={() => onThemeChange('light')}
-          >
-            <i aria-hidden className="codicon codicon-lightbulb" />
-          </button>
-        </div>
-        <Button
-          compact
-          icon="codicon-preview"
-          onClick={() => {
-            void executeCommand('workspace.open', { path: SAMPLE_EXAMPLE_JDW_PATH });
-          }}
+    <div className="workbench-sample-titlebar-actions">
+      <button
+        aria-label="Open example"
+        className="ui-icon-button ui-icon-button--compact workbench-shell-titlebar__action"
+        title="Open example"
+        type="button"
+        onClick={() => {
+          void executeCommand('workspace.open', { path: SAMPLE_EXAMPLE_JDW_PATH });
+        }}
+      >
+        <i aria-hidden className="codicon codicon-preview" />
+      </button>
+      <div className="workbench-sample-theme-switch" role="group" aria-label="Workbench theme">
+        <button
+          aria-label="Use dark theme"
+          className="workbench-sample-theme-switch__button"
+          data-active={theme === 'dark' ? 'true' : undefined}
+          title="Dark theme"
+          type="button"
+          onClick={() => onThemeChange('dark')}
         >
-          Open example
-        </Button>
+          <i aria-hidden className="codicon codicon-color-mode" />
+        </button>
+        <button
+          aria-label="Use light theme"
+          className="workbench-sample-theme-switch__button"
+          data-active={theme === 'light' ? 'true' : undefined}
+          title="Light theme"
+          type="button"
+          onClick={() => onThemeChange('light')}
+        >
+          <i aria-hidden className="codicon codicon-lightbulb" />
+        </button>
       </div>
-    </header>
+    </div>
+  );
+}
+
+function SampleHelpContent() {
+  return (
+    <div className="workbench-sample-help">
+      <section className="workbench-sample-help__section">
+        <h2>Sample workspace</h2>
+        <p>
+          Open <code>{SAMPLE_EXAMPLE_JDW_PATH}</code> from the titlebar or explorer to review the
+          JDW preview, form, and JSON code modes.
+        </p>
+      </section>
+      <section className="workbench-sample-help__section">
+        <h2>Workbench surfaces</h2>
+        <ul>
+          <li>
+            Explorer, editor tabs, status bar, and settings are contributed through the shell.
+          </li>
+          <li>
+            The empty editor area intentionally stays minimal until a workspace file is opened.
+          </li>
+          <li>Theme switching is exposed in the titlebar and status bar for quick verification.</li>
+        </ul>
+      </section>
+    </div>
   );
 }
 
