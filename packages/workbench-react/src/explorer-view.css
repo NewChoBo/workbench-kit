@@ -1,0 +1,39 @@
+.workbench-explorer-view {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+}
+
+.workbench-explorer-view__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.25rem 0.375rem;
+  border-bottom: 1px solid var(--workbench-border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+.workbench-explorer-view__tool-button {
+  display: inline-flex;
+  width: 1.625rem;
+  height: 1.625rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.workbench-explorer-view__tool-button:hover {
+  border-color: var(--workbench-border-subtle, rgba(255, 255, 255, 0.12));
+  background: var(--workbench-surface-hover, rgba(255, 255, 255, 0.08));
+}
+
+.workbench-explorer-view__empty {
+  margin: 0;
+  padding: 0.75rem;
+  color: var(--workbench-foreground-muted, #8b949e);
+  font-size: 0.8125rem;
+}

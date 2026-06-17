@@ -1,0 +1,50 @@
+{
+  "name": "@workbench-kit/jdw",
+  "version": "0.0.1-prototype.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "test": "pnpm exec vitest run --config ../../vitest.config.ts src",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schemas/jdw-node.jdw.schema.json": "./schemas/jdw-node.jdw.schema.json",
+    "./schemas/jdw-node.json": "./schemas/jdw-node.json",
+    "./schemas/widget-asset-manifest.v1.jdw.schema.json": "./schemas/widget-asset-manifest.v1.jdw.schema.json",
+    "./schemas/widget-document.v1.jdw.schema.json": "./schemas/widget-document.v1.jdw.schema.json",
+    "./schemas/widget-document.v1.json": "./schemas/widget-document.v1.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "schemas",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
+  ],
+  "dependencies": {
+    "@workbench-kit/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0"
+  },
+  "description": "Framework-neutral JDW engine: parse, layout, screen-spec compile, and widget document ops.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/json-widget"
+  }
+}

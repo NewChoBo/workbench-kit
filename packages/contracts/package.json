@@ -1,0 +1,40 @@
+{
+  "name": "@workbench-kit/contracts",
+  "version": "0.0.1-prototype.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
+  ],
+  "devDependencies": {
+    "tsup": "^8.5.0"
+  },
+  "description": "Shared Workbench Kit contracts for chat, save, patch, library, launchpad mapping, widget renderer, and plugin flows.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/contracts"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.builtin.accounts",
+  "name": "builtin-accounts",
+  "displayName": "Accounts",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onStartup"],
+  "capabilities": {
+    "requires": ["workbench.auth"]
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "workbench-kit.builtin.accounts.manage",
+        "title": "Manage Accounts",
+        "category": "Accounts"
+      }
+    ],
+    "menus": {
+      "status/account": [
+        {
+          "command": "workbench-kit.builtin.accounts.manage",
+          "group": "account",
+          "order": 1
+        }
+      ]
+    },
+    "configuration": {
+      "properties": {
+        "workbench.accounts.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Enable the workbench account entry point."
+        }
+      }
+    }
+  },
+  "permissions": ["account.read"]
+}

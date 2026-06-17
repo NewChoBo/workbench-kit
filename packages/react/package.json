@@ -1,24 +1,86 @@
 {
-  "name": "@newchobo-ui/react",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@workbench-kit/react",
+  "version": "0.0.1-prototype.0",
+  "private": false,
   "type": "module",
   "scripts": {
+    "test": "pnpm exec vitest run --config ../../vitest.config.ts src/widget-tree",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
     ".": "./src/index.ts",
+    "./modal": "./src/modal/Modal.tsx",
+    "./overlay": "./src/overlay/ContextMenu.tsx",
+    "./primitives": "./src/primitives/index.ts",
+    "./primitives.css": "./src/primitives/styles.css",
+    "./workbench/auth": "./src/workbench/auth/index.ts",
+    "./workbench/chat": "./src/workbench/chat/index.ts",
+    "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",
+    "./workbench/markdown-preview": "./src/workbench/MarkdownPreview.tsx",
+    "./workbench/shell": "./src/workbench/shell.ts",
+    "./workbench/split-view": "./src/workbench/SplitView.tsx",
+    "./workbench/workspace": "./src/workbench/workspace/index.ts",
+    "./workbench/workspace/editor": "./src/workbench/workspace/WorkspaceEditor.tsx",
+    "./workbench/workspace/explorer": "./src/workbench/workspace/WorkspaceExplorer.tsx",
+    "./workbench/workspace/file-icon": "./src/workbench/workspace/WorkspaceFileIcon.tsx",
+    "./jdw": "./src/jdw/index.ts",
+    "./jdw/document": "./src/jdw/document.ts",
+    "./jdw/parse": "./src/jdw/parse.ts",
+    "./jdw/preview": "./src/jdw/JdwPreview.tsx",
+    "./jdw/samples": "./src/jdw/fixtures/jdw-sample-screens.ts",
+    "./jdw/config": "./src/json-config/index.ts",
+    "./widget-tree": "./src/widget-tree/index.ts",
+    "./widget-asset": "./src/widget-asset/index.ts",
+    "./widget-studio": "./src/widget-studio/index.ts",
     "./styles.css": "./src/styles.css"
   },
   "files": [
-    "src"
+    "src",
+    "!src/workbench/demo",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
   ],
   "dependencies": {
-    "@newchobo-ui/tokens": "workspace:*",
+    "@dnd-kit/core": "^6.3.1",
+    "@workbench-kit/platform": "workspace:*",
+    "@workbench-kit/adapters": "workspace:*",
+    "@workbench-kit/contracts": "workspace:*",
+    "@workbench-kit/jdw": "workspace:*",
+    "@workbench-kit/runtime": "workspace:*",
+    "@workbench-kit/services": "workspace:*",
+    "@workbench-kit/tokens": "workspace:*",
+    "@workbench-kit/workspace": "workspace:*",
     "@vscode/codicons": "^0.0.45"
   },
   "peerDependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "monaco-editor": "^0.55.1",
+    "react-markdown": "^10.1.0",
     "react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@monaco-editor/react": {
+      "optional": true
+    },
+    "monaco-editor": {
+      "optional": true
+    },
+    "react-markdown": {
+      "optional": true
+    }
+  },
+  "description": "React primitives and workbench components for Workbench Kit.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/react"
   }
 }

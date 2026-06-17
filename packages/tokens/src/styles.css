@@ -6,12 +6,15 @@
   --color-primary-side-bar-bg-75: rgba(17, 23, 32, 0.75);
   --color-surface: #161b22;
   --color-surface-hover: #21262d;
+  --color-surface-elevated: #21262d;
   --color-border: #30363d;
   --color-text: #f0f6fc;
   --color-text-muted: #a9b4c0;
   --color-text-subtle: #7d8590;
   --color-accent: #2f81f7;
   --color-accent-hover: #388bfd;
+  --color-accent-foreground: #ffffff;
+  --color-focus-border: #2f81f7;
   --color-danger: #da3633;
   --color-danger-hover: #f85149;
   --file-icon-archive: #a9b4c0;
@@ -23,12 +26,15 @@
   --file-icon-git: #f85149;
   --file-icon-html: #e37933;
   --file-icon-image: #d2a8ff;
+  --file-icon-jdw: #58a6ff;
+  --file-icon-jdw-schema: #d2a8ff;
   --file-icon-javascript: #f2cc60;
   --file-icon-json: #f2cc60;
   --file-icon-lock: #8b949e;
   --file-icon-markdown: #6cb6ff;
   --file-icon-package: #f0883e;
   --file-icon-pdf: #ff7b72;
+  --file-icon-schema: #d2a8ff;
   --file-icon-sql: #7ee787;
   --file-icon-text: #a9b4c0;
   --file-icon-typescript: #58a6ff;
@@ -44,12 +50,15 @@
   --color-primary-side-bar-bg-75: rgba(246, 248, 250, 0.75);
   --color-surface: #f6f8fa;
   --color-surface-hover: #eaeef2;
+  --color-surface-elevated: #ffffff;
   --color-border: #d0d7de;
   --color-text: #1f2328;
   --color-text-muted: #57606a;
   --color-text-subtle: #6e7781;
   --color-accent: #0969da;
   --color-accent-hover: #0860ca;
+  --color-accent-foreground: #ffffff;
+  --color-focus-border: #0969da;
   --color-danger: #cf222e;
   --color-danger-hover: #a40e26;
   --file-icon-archive: #57606a;
@@ -61,12 +70,15 @@
   --file-icon-git: #cf222e;
   --file-icon-html: #bc4c00;
   --file-icon-image: #8250df;
+  --file-icon-jdw: #0969da;
+  --file-icon-jdw-schema: #8250df;
   --file-icon-javascript: #9a6700;
   --file-icon-json: #9a6700;
   --file-icon-lock: #6e7781;
   --file-icon-markdown: #0969da;
   --file-icon-package: #bc4c00;
   --file-icon-pdf: #cf222e;
+  --file-icon-schema: #8250df;
   --file-icon-sql: #1a7f37;
   --file-icon-text: #57606a;
   --file-icon-typescript: #0969da;
@@ -81,4 +93,22 @@
   --font-size-sm: 0.8125rem;
   --font-size-base: 0.875rem;
   --workbench-header-height: 35px;
+  --shadow-md: 0 8px 24px rgb(0 0 0 / 20%);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 24%);
+}
+
+:root,
+[data-theme='dark'] {
+  --scrollbar-size: 10px;
+  --scrollbar-thumb-inset: 2px;
+  --scrollbar-thumb: #30363d66;
+  --scrollbar-thumb-hover: #484f5888;
+  --scrollbar-thumb-active: #7d8590aa;
+  --scrollbar-track: transparent;
+}
+
+[data-theme='light'] {
+  --scrollbar-thumb: #d0d7de66;
+  --scrollbar-thumb-hover: #9198a188;
+  --scrollbar-thumb-active: #656d76aa;
 }

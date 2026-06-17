@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/NewChoBo/workbench-kit/schemas/workbench/extensions.schema.json",
+  "title": "Workbench Extensions",
+  "type": "object",
+  "properties": {
+    "recommendations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Extension IDs recommended for this workspace"
+    },
+    "enabled": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Extension IDs enabled for this workspace"
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,340 @@
+.workbench-editor-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--vscode-editor-background, var(--color-bg));
+}
+
+.workbench-editor-area--empty {
+  display: grid;
+  place-items: center;
+}
+
+.workbench-editor-area__empty {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.workbench-editor-area__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.workbench-editor-area__group-split.ui-workbench-split-view {
+  width: 100%;
+  height: 100%;
+}
+
+.workbench-editor-area__group-pane {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--vscode-editor-background, var(--color-bg));
+}
+
+.workbench-editor-area__group-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.workbench-editor-area__drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.workbench-editor-area__group-pane[data-drop-side='left'] .workbench-editor-area__drop-overlay {
+  right: 50%;
+  background: var(
+    --vscode-editorGroup-dropBackground,
+    color-mix(in srgb, var(--vscode-focusBorder, var(--color-focus-border)) 18%, transparent)
+  );
+  outline: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -2px;
+}
+
+.workbench-editor-area__group-pane[data-drop-side='right'] .workbench-editor-area__drop-overlay {
+  left: 50%;
+  background: var(
+    --vscode-editorGroup-dropBackground,
+    color-mix(in srgb, var(--vscode-focusBorder, var(--color-focus-border)) 18%, transparent)
+  );
+  outline: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -2px;
+}
+
+.workbench-editor-area__group-pane[data-drop-side='center'] .workbench-editor-area__drop-overlay {
+  background: var(
+    --vscode-editorGroup-dropBackground,
+    color-mix(in srgb, var(--vscode-focusBorder, var(--color-focus-border)) 12%, transparent)
+  );
+  outline: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -2px;
+}
+
+.workbench-editor-area__group-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 100%;
+}
+
+.workbench-editor-area__host {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 16px;
+}
+
+.workbench-editor-area__text-editor {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+}
+
+.workbench-editor-area__mode-toolbar-outlet {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+
+.workbench-editor-area__view-toolbar {
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+}
+
+.workbench-editor-area__view-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 22px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.4;
+}
+
+.workbench-editor-area__view-button .codicon {
+  flex: 0 0 auto;
+  font-size: 15px;
+}
+
+.workbench-editor-area__view-button:hover {
+  background: var(--vscode-toolbar-hoverBackground, var(--color-bg-hover));
+  color: var(--vscode-foreground, var(--color-text));
+}
+
+.workbench-editor-area__view-button[data-active='true'] {
+  background: var(
+    --vscode-toolbar-activeBackground,
+    var(--vscode-toolbar-hoverBackground, transparent)
+  );
+  color: var(--vscode-foreground, var(--color-text));
+}
+
+.workbench-editor-area__text-editor-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.workbench-editor-area__split.ui-workbench-split-view {
+  width: 100%;
+  height: 100%;
+}
+
+.workbench-editor-area__split-pane {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.workbench-editor-area__source-pane {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.workbench-editor-area__source-pane .workbench-monaco-panel {
+  --panel-bg: var(--vscode-editor-background, var(--color-bg));
+  background: var(--vscode-editor-background, var(--color-bg));
+}
+
+.workbench-editor-area__source-pane .workbench-monaco-panel,
+.workbench-editor-area__source-pane .workbench-monaco-panel__body {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.workbench-editor-area__source-pane .workbench-monaco-panel,
+.workbench-editor-area__source-pane .workspace-editor__monaco {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.workbench-editor-area__source-pane .workbench-monaco-panel__body {
+  padding: 0;
+  border: 0;
+}
+
+.workbench-editor-area__editor-loading {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.workbench-editor-area__preview-pane {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px;
+  background: var(--vscode-editor-background, var(--color-bg));
+}
+
+.workbench-editor-area__jdw-preview {
+  min-height: 100%;
+}
+
+.workbench-editor-area__form,
+.workbench-editor-area__form-placeholder {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  padding: 16px;
+}
+
+.workbench-editor-area__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 10px;
+  max-width: none;
+}
+
+.workbench-editor-area__form-field {
+  display: grid;
+  grid-template-columns: minmax(7rem, 32%) minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.workbench-editor-area__form-label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm, 0.875rem);
+  overflow-wrap: anywhere;
+}
+
+.workbench-editor-area__form-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  padding: 6px 8px;
+  border: 1px solid var(--vscode-input-border, var(--color-border));
+  border-radius: var(--radius-sm, 4px);
+  background: var(--vscode-input-background, var(--color-bg));
+  color: var(--vscode-input-foreground, var(--color-text));
+  font: inherit;
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.workbench-editor-area__form-readonly {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--vscode-input-border, var(--color-border));
+  border-radius: var(--radius-sm, 4px);
+  background: var(--vscode-input-background, var(--color-bg));
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  font-size: var(--font-size-xs, 0.75rem);
+  line-height: 1.5;
+}
+
+.workbench-editor-area__form-group {
+  min-width: 0;
+  margin: 0;
+  padding: 2px 0 2px 12px;
+  border: 0;
+  border-left: 1px solid var(--vscode-editorGroup-border, var(--color-border));
+}
+
+.workbench-editor-area__form-group-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.workbench-editor-area__form-badge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--vscode-badge-background, var(--color-bg-elevated));
+  color: var(--vscode-badge-foreground, var(--color-text-muted));
+  font-size: var(--font-size-xs, 0.75rem);
+  line-height: 1.4;
+}
+
+.workbench-editor-area__form-group-body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.workbench-editor-area__form-empty {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.workbench-editor-area__form-placeholder p {
+  margin: 0 0 8px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm, 0.875rem);
+  line-height: 1.5;
+}

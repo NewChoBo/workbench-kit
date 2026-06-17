@@ -1,0 +1,13 @@
+{
+  "name": "@workbench-kit/extension-builtin-editor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workbench-kit/workbench-extension-sdk": "workspace:*"
+  },
+  "description": "Built-in text editor contribution with workspace file resolver and editor host factory."
+}

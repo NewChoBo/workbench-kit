@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://workbench-kit.dev/schemas/extensions/grid.json",
+  "title": "GridWidget",
+  "description": "Workbench kit extension (not stock JDW).",
+  "type": "object",
+  "required": ["type", "args"],
+  "properties": {
+    "type": { "const": "grid" },
+    "id": { "type": "string" },
+    "listen": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "args": {
+      "type": "object",
+      "required": ["columns"],
+      "properties": {
+        "columns": { "type": "number", "minimum": 1 },
+        "gap": { "type": "number", "minimum": 0 },
+        "padding": { "type": "number", "minimum": 0 },
+        "background": { "type": "string" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "../jdw-node.jdw.schema.json" }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

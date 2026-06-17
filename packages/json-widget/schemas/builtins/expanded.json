@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://workbench-kit.dev/schemas/builtins/expanded.json",
+  "title": "ExpandedWidget",
+  "type": "object",
+  "required": ["type", "args"],
+  "properties": {
+    "type": { "const": "expanded" },
+    "id": { "type": "string" },
+    "listen": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "args": {
+      "type": "object",
+      "required": ["child"],
+      "properties": {
+        "flex": { "type": "number", "minimum": 0 },
+        "child": { "$ref": "../jdw-node.jdw.schema.json" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

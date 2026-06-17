@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.builtin.workspace",
+  "name": "builtin-workspace",
+  "displayName": "Workspace",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onStartup"],
+  "contributes": {
+    "commands": [
+      {
+        "command": "workbench-kit.builtin.workspace.showInfo",
+        "title": "Show Workspace Info",
+        "category": "Workspace"
+      }
+    ],
+    "configuration": {
+      "properties": {
+        "workbench.workspace.name": {
+          "type": "string",
+          "default": "Workbench",
+          "scope": "workspace",
+          "description": "Display name for the active workspace."
+        }
+      }
+    },
+    "views": {}
+  }
+}

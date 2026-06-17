@@ -1,0 +1,42 @@
+{
+  "name": "@workbench-kit/adapters",
+  "version": "0.0.1-prototype.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run src",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./library": "./src/library.ts",
+    "./runtime": "./src/runtime.ts",
+    "./workspace": "./src/workspace.ts",
+    "./workbench-demo": "./src/workbench-demo.ts",
+    "./workbench-demo-config": "./src/workbench-demo-config.ts",
+    "./persistence": "./src/persistence.ts"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
+  ],
+  "dependencies": {
+    "@workbench-kit/contracts": "workspace:*",
+    "@workbench-kit/runtime": "workspace:*",
+    "@workbench-kit/workspace": "workspace:*"
+  },
+  "description": "Workbench Kit adapters for workspace repositories and runtime transports.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/adapters"
+  }
+}

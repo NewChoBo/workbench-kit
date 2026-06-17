@@ -1,0 +1,33 @@
+{
+  "name": "@workbench-kit/runtime",
+  "version": "0.0.1-prototype.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.stories.ts",
+    "!src/**/*.stories.tsx"
+  ],
+  "dependencies": {
+    "@workbench-kit/contracts": "workspace:*"
+  },
+  "description": "Framework-neutral Workbench Kit runtime events and mock runtime utilities.",
+  "publishConfig": {
+    "access": "public",
+    "tag": "prototype",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/runtime"
+  }
+}

@@ -4,17 +4,21 @@ Choose the narrowest validation lane that covers the changed surface. Do not
 report a validation as passed if it was not run. Include the executed commands
 in the final report and in non-trivial commit bodies.
 
+The repository is pnpm-first. Use `pnpm install` for dependency installation.
+Root package scripts shell through `pnpm`, so `npm run <script>` delegates the
+actual tool execution to pnpm. Do not use npm for dependency installation or
+lockfile updates.
+
 ## Validation Lanes
 
-| Changed surface                      | Minimum validation                                  | Extended validation                             |
-| ------------------------------------ | --------------------------------------------------- | ----------------------------------------------- |
-| Workspace, package exports, lockfile | `pnpm validate`                                     | Public-boundary search                          |
-| `packages/tokens` CSS variables      | `pnpm validate`                                     | Sample or Storybook visual check                |
-| `packages/react` primitives          | `pnpm --filter @newchobo-ui/react typecheck`        | `pnpm validate`, browser smoke                  |
-| `examples/react-sample`              | `pnpm --filter @newchobo-ui/react-sample typecheck` | `pnpm --filter @newchobo-ui/react-sample build` |
-| Storybook config or stories          | `pnpm build:storybook`                              | Interaction test, browser smoke                 |
-| Lint/format config                   | `pnpm lint && pnpm format:check`                    | `pnpm validate`                                 |
-| README and conventions               | Manual docs review                                  | Public-boundary search                          |
+| Changed surface                      | Minimum validation                             | Extended validation            |
+| ------------------------------------ | ---------------------------------------------- | ------------------------------ |
+| Workspace, package exports, lockfile | `pnpm validate`                                | Public-boundary search         |
+| `packages/tokens` CSS variables      | `pnpm validate`                                | Storybook visual check         |
+| `packages/react` primitives          | `pnpm --filter @workbench-kit/react typecheck` | `pnpm validate`, browser smoke |
+| Storybook config or stories          | `pnpm build:storybook`                         | Browser smoke                  |
+| Lint/format config                   | `pnpm lint && pnpm format:check`               | `pnpm validate`                |
+| README and conventions               | Manual docs review                             | Public-boundary search         |
 
 ## UI Smoke
 
@@ -24,7 +28,7 @@ For UI changes, verify the result in a real browser whenever practical.
 - Do text, inputs, and buttons stay inside their parent containers?
 - Do dialogs, menus, and form controls have accessible names?
 - Do basic interactions such as click, check, select, and close work?
-- Does the public sample avoid private product knowledge and internal sample data?
+- Do Storybook fixtures avoid private product knowledge and internal sample data?
 
 ## Reporting
 

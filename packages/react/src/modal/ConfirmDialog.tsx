@@ -13,6 +13,8 @@ export interface ConfirmDialogProps {
   cancelLabel?: ReactNode;
   closeLabel?: string;
   className?: string;
+  confirmDisabled?: boolean;
+  confirmPending?: boolean;
   variant?: ConfirmDialogVariant;
   onCancel: () => void;
   onConfirm: () => void;
@@ -22,7 +24,9 @@ export function ConfirmDialog({
   cancelLabel = 'Cancel',
   className,
   closeLabel = 'Close confirmation dialog',
+  confirmDisabled = false,
   confirmLabel = 'Confirm',
+  confirmPending = false,
   detail,
   message,
   title,
@@ -40,8 +44,12 @@ export function ConfirmDialog({
       footer={
         <>
           <Button onClick={onCancel}>{cancelLabel}</Button>
-          <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={onConfirm}>
-            {confirmLabel}
+          <Button
+            disabled={confirmDisabled || confirmPending}
+            variant={variant === 'danger' ? 'danger' : 'primary'}
+            onClick={onConfirm}
+          >
+            {confirmPending ? 'Working…' : confirmLabel}
           </Button>
         </>
       }

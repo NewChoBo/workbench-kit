@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 
 export interface EmptyStateProps extends ComponentPropsWithRef<'div'> {
@@ -19,7 +20,7 @@ export function EmptyState({
       className={cx('ui-empty-state', compact && 'ui-empty-state--compact', className)}
       {...props}
     >
-      <i className={`codicon ${icon}`} />
+      <i className={cxCodicon(icon)} />
       <span>{children}</span>
     </div>
   );

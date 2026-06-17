@@ -1,0 +1,140 @@
+.ui-select {
+  position: relative;
+  display: inline-block;
+  box-sizing: border-box;
+  min-width: 0;
+  vertical-align: top;
+}
+
+.ui-select[data-width='default'] {
+  width: var(--ui-select-width-default, 180px);
+}
+
+.ui-select[data-width='wide'] {
+  width: var(--ui-select-width-wide, 260px);
+}
+
+.ui-select[data-width='full'] {
+  width: 100%;
+}
+
+.ui-select__trigger {
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--ui-select-trigger-height, 26px);
+  min-width: 0;
+  padding: 0 28px 0 8px;
+  color: var(--vscode-input-foreground, var(--color-text));
+  background: var(--vscode-input-background, var(--color-surface));
+  border: 1px solid var(--vscode-input-border, var(--color-border));
+  border-radius: var(--ui-select-trigger-radius, 0);
+  outline: none;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-select__trigger:disabled {
+  color: var(--color-text-subtle);
+  cursor: default;
+}
+
+.ui-select__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-select__chevron {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.ui-select__chevron .codicon {
+  font-size: 14px;
+}
+
+.ui-select__listbox {
+  position: fixed;
+  z-index: 10000;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  color: var(--vscode-menu-foreground, var(--color-text));
+  background: var(--vscode-menu-background, var(--color-surface));
+  border: 1px solid var(--vscode-menu-border, var(--color-border));
+  border-radius: var(--radius-sm, 0);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.ui-select__option {
+  min-height: var(--ui-select-option-height, 26px);
+  padding: var(--ui-select-option-padding, 4px 10px);
+  border-radius: var(--ui-select-option-radius, 0);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.ui-select__option[aria-disabled='true'] {
+  color: var(--color-text-subtle);
+  cursor: default;
+}
+
+.ui-select__option:hover,
+.ui-select__option--highlighted {
+  color: var(--vscode-menu-selectionForeground, var(--color-text));
+  background: var(--vscode-menu-selectionBackground, var(--color-surface-hover));
+}
+
+.ui-select__option--selected {
+  color: var(--vscode-list-activeSelectionForeground, var(--color-text));
+  background: var(--vscode-list-activeSelectionBackground, var(--color-surface-hover));
+  font-weight: 600;
+}
+
+.ui-select__native {
+  position: absolute;
+  width: 0;
+  height: 0;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.ui-select__trigger:focus {
+  border-color: var(--vscode-focusBorder, var(--color-accent, var(--color-focus-border)));
+}
+
+.ui-select__trigger:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -1px;
+}
+
+.ui-select__option:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -1px;
+}
