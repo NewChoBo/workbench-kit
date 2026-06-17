@@ -4,11 +4,7 @@ import { IconButton } from '../primitives/IconButton';
 import type { IconButtonProps } from '../primitives/IconButton';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
-import { toLengthValue } from './layoutHelpers';
-
-function treeIndentOffset(depth: number, indentSize: number) {
-  return `${8 + depth * indentSize}px`;
-}
+import { toLengthValue, workbenchTreeIndentOffset } from './layoutHelpers';
 
 export interface WorkbenchTreeProps extends ComponentPropsWithRef<'div'> {
   indentSize?: number | string;
@@ -75,7 +71,7 @@ export const WorkbenchTreeItem = forwardRef<HTMLDivElement, WorkbenchTreeItemPro
   ) {
     const itemStyle = {
       '--ui-workbench-tree-depth': depth,
-      '--ui-workbench-tree-indent-offset': treeIndentOffset(depth, indentSize),
+      '--ui-workbench-tree-indent-offset': workbenchTreeIndentOffset(depth, indentSize),
       ...style,
     } as CSSProperties;
 
@@ -221,7 +217,7 @@ export const WorkbenchTreeDropZone = forwardRef<HTMLDivElement, WorkbenchTreeDro
   ) {
     const zoneStyle = {
       '--ui-workbench-tree-depth': depth,
-      '--ui-workbench-tree-indent-offset': treeIndentOffset(depth, indentSize),
+      '--ui-workbench-tree-indent-offset': workbenchTreeIndentOffset(depth, indentSize),
       ...style,
     } as CSSProperties;
 

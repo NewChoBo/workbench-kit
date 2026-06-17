@@ -2,6 +2,7 @@ import { useId, type ReactNode } from 'react';
 import { Button } from '../../primitives/Button';
 import { Field } from '../../primitives/Field';
 import { IconButton } from '../../primitives/IconButton';
+import { ScrollArea } from '../../primitives/ScrollArea';
 import { cx } from '../../utils/cx';
 import { WorkbenchSectionedPanel } from './SectionedPanel';
 import {
@@ -282,7 +283,7 @@ function renderSchemaTableSection({
 
   return (
     <div className={classNames.tableEditor}>
-      <div className={classNames.tableScroll}>
+      <ScrollArea className={classNames.tableScroll} gutter="auto" orientation="both">
         <div className={classNames.tableGrid} role="table">
           <div className={classNames.tableHeaderRow} role="row">
             {columns.map((column) => (
@@ -349,7 +350,7 @@ function renderSchemaTableSection({
             );
           })}
         </div>
-      </div>
+      </ScrollArea>
       {readOnly ? null : (
         <div className={classNames.tableFooter}>
           <Button

@@ -4,7 +4,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type DragEvent,
   type KeyboardEvent,
   type MouseEvent,
@@ -18,7 +17,7 @@ import {
   type WorkspaceSelectionMode,
   type WorkspaceSelectionState,
 } from '@workbench-kit/workspace';
-import { SideBarList, SideBarListItem } from '../../layout/SideBarViewFrame';
+import { SideBarList, SideBarListItem, sideBarTreeDepthStyle } from '../../layout/SideBarViewFrame';
 import { cxCodicon } from '../../utils/codicon';
 import { flattenWorkspaceTree } from './tree';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
@@ -255,10 +254,15 @@ export function WorkspaceExplorer({
   const canDropToFolder = (targetFolderPath: string) =>
     Boolean(onRequestMove) &&
     draggedPathsRef.current.length > 0 &&
-    draggedPathsRef.current.some((sourcePath) => parentPathOf(sourcePath) !== targetFolderPath);
+    draggedPathsRef.current.some(
+      (sourcePath) =>
+        parentPathOf(sourcePath) !== targetFolderPath &&
+        sourcePath !== targetFolderPath &&
+        !targetFolderPath.startsWith(`${sourcePath}/`),
+    );
 
   const handleItemDragStart = (event: DragEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
-    if (!onRequestMove || node.type !== 'file') {
+    if (!onRequestMove) {
       event.preventDefault();
       return;
     }
@@ -389,7 +393,7 @@ export function WorkspaceExplorer({
   }) => {
     if (!inlineEdit) return null;
 
-    const depthStyle = { '--depth': depth } as CSSProperties;
+    const depthStyle = sideBarTreeDepthStyle(depth);
 
     return (
       <li key={key} className="ui-side-bar-list-entry">
@@ -456,7 +460,7 @@ export function WorkspaceExplorer({
               active={activePath === node.path}
               data-workspace-path={node.path}
               depth={depth}
-              draggable={node.type === 'file' && Boolean(onRequestMove)}
+              draggable={Boolean(onRequestMove)}
               dropTarget={dropTarget}
               selected={selected}
               onClick={(event) => {

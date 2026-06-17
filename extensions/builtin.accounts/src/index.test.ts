@@ -22,11 +22,17 @@ describe('builtin accounts extension', () => {
     } satisfies WorkbenchAuthProvider;
 
     activate({
+      capabilities: {
+        registerProvider: () => ({ dispose() {} }),
+      },
       commands: {
         registerCommand: (commandId, handler) => {
           handlers.set(commandId, handler);
           return { dispose() {} };
         },
+      },
+      editorHostFactories: {
+        registerFactory: () => ({ dispose() {} }),
       },
       extensionId: 'workbench-kit.builtin.accounts',
       extensionPath: 'extensions/builtin.accounts',
@@ -34,6 +40,9 @@ describe('builtin accounts extension', () => {
         (capabilityId === WORKBENCH_AUTH_CAPABILITY_ID ? authProvider : undefined) as T | undefined,
       subscriptions: {
         add() {},
+      },
+      viewHostFactories: {
+        registerFactory: () => ({ dispose() {} }),
       },
       views: {
         registerViewProvider: () => ({ dispose() {} }),

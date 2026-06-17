@@ -65,7 +65,7 @@ export interface UseWorkbenchShellStateResult<
   togglePrimarySidebar: () => void;
 }
 
-const DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT = 24;
+export const DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT = 20;
 const MIN_PRIMARY_SIDEBAR_SIZE_PERCENT = 10;
 const MAX_PRIMARY_SIDEBAR_SIZE_PERCENT = 90;
 

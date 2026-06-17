@@ -47,7 +47,7 @@ export function createIntegratedShellBootstrapInitialState(
   return {
     activeActivityId: 'explorer',
     isPrimarySidebarVisible: true,
-    primarySidebarSizePercent: 24,
+    primarySidebarSizePercent: 20,
     primarySidebarMinPercent: 16,
     primarySidebarMaxPercent: 40,
     settingsCategoryId: 'appearance',

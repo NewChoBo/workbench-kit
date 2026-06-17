@@ -192,7 +192,7 @@ export function Select({
     open && overlayPosition ? (
       <ul
         ref={listboxRef}
-        className="ui-select__listbox"
+        className="ui-select__listbox ui-workbench-scrollbar"
         id={listboxId}
         role="listbox"
         style={overlayListboxStyle(overlayPosition)}

@@ -60,6 +60,25 @@ accepts the parsed `.workbench/layout.default.json` contract from
 `workbench-config`; personal layout deltas and last-opened UI state remain local
 ignored state.
 
+### ViewHostFactoryRegistry
+
+Registers factories that instantiate `ViewHost` instances from `ViewProvider`
+contributions. `workbench-react` calls `createViewHost` instead of invoking
+`provider.resolveViewHost()` directly. A default provider-backed factory is
+registered automatically; extensions and hosts may register higher-priority
+factories through `context.viewHostFactories.registerFactory`.
+
+`EditorHostFactoryRegistry` provides the parallel editor-host contract for WB-28;
+it is registered on `ExtensionRegistry` but not yet consumed by the React shell.
+
+### CapabilityRegistry
+
+Registers runtime capability providers by stable ID (for example `workbench.auth`).
+Hosts seed providers through `ExtensionRegistry` options or
+`ExtensionRegistry.capabilityRegistry`. Extensions may call
+`context.capabilities.registerProvider` during `activate`; registrations dispose
+when the extension deactivates.
+
 ### ExtensionRegistry
 
 Loads extension manifests, validates manifest shape and hard dependencies, orders activation, and exposes contribution points to other registries. Integrates with `workbench-config` for `.workbench/extensions.json` and lockfile data.

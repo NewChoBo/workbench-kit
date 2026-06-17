@@ -1,10 +1,8 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
-
-const targets = ['../custom_launcher', '../tile_paper'];
 
 const forbiddenPatterns = [
   {
@@ -21,28 +19,19 @@ const forbiddenPatterns = [
   },
 ];
 
-const allowlist = [
-  /[\\/]custom_launcher[\\/]tests[\\/].*\.test\.ts$/,
-  /[\\/]custom_launcher[\\/]tests[\\/].*\.test\.tsx$/,
-  /[\\/]custom_launcher[\\/]shared[\\/]launch-target\.ts$/,
-  /[\\/]tile_paper[\\/]tests[\\/].*\.test\.ts$/,
-  /[\\/]tile_paper[\\/]tests[\\/].*\.test\.tsx$/,
-];
-
-function isAllowed(filePath) {
-  const normalized = filePath.replace(/\//g, '\\');
-  return allowlist.some((pattern) => pattern.test(normalized));
-}
+const skippedDirectoryNames = new Set([
+  '.git',
+  'node_modules',
+  'dist',
+  'out',
+  'build',
+  'coverage',
+  'storybook-static',
+]);
 
 function scanDirectory(currentPath, violations) {
   for (const name of readdirSync(currentPath)) {
-    if (
-      name === 'node_modules' ||
-      name === '.git' ||
-      name === 'dist' ||
-      name === 'out' ||
-      name === 'build'
-    ) {
+    if (skippedDirectoryNames.has(name)) {
       continue;
     }
 
@@ -58,17 +47,13 @@ function scanDirectory(currentPath, violations) {
       continue;
     }
 
-    if (isAllowed(next)) {
-      continue;
-    }
-
     const content = readFileSync(next, 'utf8');
 
     content.split(/\r?\n/).forEach((line, index) => {
       for (const pattern of forbiddenPatterns) {
         if (pattern.regex.test(line)) {
           violations.push({
-            path: relative(process.cwd(), next),
+            path: relative(repoRoot, next),
             line: index + 1,
             rule: pattern.name,
             text: line.trim(),
@@ -81,22 +66,19 @@ function scanDirectory(currentPath, violations) {
 
 const violations = [];
 
-for (const target of targets) {
-  const absolute = join(repoRoot, target);
-  if (!existsSync(absolute)) {
-    continue;
-  }
+scanDirectory(repoRoot, violations);
 
-  scanDirectory(absolute, violations);
-}
+const filteredViolations = violations.filter(
+  (violation) => violation.path.replace(/\\/g, '/') !== 'scripts/check-launch-boundary.mjs',
+);
 
-if (violations.length > 0) {
-  console.error('Launch boundary check failed: legacy launch policy usage found.');
-  for (const violation of violations) {
+if (filteredViolations.length > 0) {
+  console.error('Launch boundary check failed: legacy launch policy usage found in workbench-kit.');
+  for (const violation of filteredViolations) {
     console.error(`${violation.path}:${violation.line} [${violation.rule}] ${violation.text}`);
   }
   process.exit(1);
 }
 
-console.log('Launch boundary check passed.');
+console.log('Launch boundary check passed (workbench-kit scope).');
 process.exit(0);

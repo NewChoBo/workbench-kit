@@ -2,6 +2,7 @@ import { Emitter, toDisposable, type Disposable } from '@workbench-kit/base';
 import type {
   ActivityContribution,
   ConfigurationContribution,
+  EditorContribution,
   MenuContribution,
   ViewContainerContribution,
   ViewContribution,
@@ -168,6 +169,46 @@ export class ViewRegistry implements Disposable {
     this.onDidRegisterViewEmitter.dispose();
     this.onDidRegisterViewContainerEmitter.dispose();
     this.onDidRegisterViewProviderEmitter.dispose();
+  }
+}
+
+export interface WorkbenchEditorContribution extends EditorContribution {
+  extensionId?: string;
+}
+
+export class EditorRegistry implements Disposable {
+  private readonly editorsById = new Map<string, WorkbenchEditorContribution>();
+  private readonly onDidRegisterEditorEmitter = new Emitter<WorkbenchEditorContribution>();
+
+  readonly onDidRegisterEditor = this.onDidRegisterEditorEmitter.event;
+
+  getEditor(editorId: string): WorkbenchEditorContribution | undefined {
+    return this.editorsById.get(editorId);
+  }
+
+  getEditors(): readonly WorkbenchEditorContribution[] {
+    return [...this.editorsById.values()];
+  }
+
+  registerEditor(editor: WorkbenchEditorContribution): Disposable {
+    if (this.editorsById.has(editor.id)) {
+      throw new Error(`Editor "${editor.id}" is already registered.`);
+    }
+
+    this.editorsById.set(editor.id, editor);
+    this.onDidRegisterEditorEmitter.fire(editor);
+
+    return toDisposable(() => {
+      const current = this.editorsById.get(editor.id);
+      if (current === editor) {
+        this.editorsById.delete(editor.id);
+      }
+    });
+  }
+
+  dispose(): void {
+    this.editorsById.clear();
+    this.onDidRegisterEditorEmitter.dispose();
   }
 }
 

@@ -7,13 +7,13 @@ activation handlers.
 
 ## Built-In Extensions
 
-| Extension             | Runtime role                                                                                                         |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `builtin.accounts`    | Account status command, account menu entry, account capability lookup, and account configuration.                    |
-| `builtin.explorer`    | Explorer activity, explorer view provider, refresh command, and view title menu action.                              |
-| `builtin.settings`    | Settings activity, settings view provider, open settings command, command palette entry, and settings configuration. |
-| `builtin.workspace`   | Workspace info command and workspace display-name configuration.                                                     |
-| `builtin.keybindings` | Reserved built-in package that owns future keybinding contributions.                                                 |
+| Extension             | Runtime role                                                                                       |
+| --------------------- | -------------------------------------------------------------------------------------------------- |
+| `builtin.accounts`    | Account status command, account menu entry, account capability lookup, and account configuration.  |
+| `builtin.explorer`    | Explorer activity, explorer view provider, refresh command, and view title menu action.            |
+| `builtin.settings`    | Open settings command, command palette entry, and settings configuration for modal settings hosts. |
+| `builtin.workspace`   | Workspace info command and workspace display-name configuration.                                   |
+| `builtin.keybindings` | Reserved built-in package that owns future keybinding contributions.                               |
 
 ## Samples
 

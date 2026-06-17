@@ -127,7 +127,7 @@ function publishPermissionError(actor, packageName, authMode) {
 
   if (authMode === 'trusted-publisher') {
     hints.push(
-      '- Trusted publisher may be missing or mismatched for NewChoBo/newchobo-ui-package / publish.yml.',
+      '- Trusted publisher may be missing or mismatched for NewChoBo/workbench-kit / publish.yml.',
       '- Confirm npm org workbench-kit grants publish access to the trusted publisher owner account.',
     );
   } else {

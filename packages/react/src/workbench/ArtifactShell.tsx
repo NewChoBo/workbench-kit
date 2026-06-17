@@ -179,7 +179,7 @@ export function getWorkbenchPreviewRenderer(
 
 function defaultCodePane(artifact: WorkbenchArtifactDescriptor) {
   return (
-    <pre className="ui-workbench-artifact-shell__code">
+    <pre className="ui-workbench-artifact-shell__code ui-workbench-scrollbar">
       <code>{formatWorkbenchArtifactContent(artifact.content)}</code>
     </pre>
   );

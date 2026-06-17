@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react';
+import { ScrollArea } from '../../primitives/ScrollArea';
 import { cx } from '../../utils/cx';
 
 type WorkbenchPanelRegionLayout = 'fill' | 'scroll';
@@ -17,16 +18,28 @@ export function WorkbenchPanelRegion({
   ...props
 }: WorkbenchPanelRegionProps) {
   const Component = (as ?? 'div') as ElementType;
+  const classNames = cx(
+    'ui-workbench-panel-region',
+    layout === 'fill' ? 'ui-workbench-panel-region--fill' : 'ui-workbench-panel-region--scroll',
+    className,
+  );
+
+  if (layout === 'scroll') {
+    return (
+      <ScrollArea
+        as={Component}
+        className={classNames}
+        orientation="vertical"
+        gutter="stable"
+        {...props}
+      >
+        {children}
+      </ScrollArea>
+    );
+  }
 
   return (
-    <Component
-      className={cx(
-        'ui-workbench-panel-region',
-        layout === 'fill' ? 'ui-workbench-panel-region--fill' : 'ui-workbench-panel-region--scroll',
-        className,
-      )}
-      {...props}
-    >
+    <Component className={classNames} {...props}>
       {children}
     </Component>
   );

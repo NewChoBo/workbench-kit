@@ -38,6 +38,8 @@ export {
   groupWorkbenchCommands,
   isWorkbenchCommandRunnable,
 } from './CommandPalette';
+export { WorkbenchMarkdownPreview } from './MarkdownPreview';
+export type { WorkbenchMarkdownPreviewProps } from './MarkdownPreview';
 export { getSlashCommandQuery, isSlashCommandInput, parseSlashCommand } from './chat/slashCommand';
 export { useSlashCommandSuggest } from './chat/useSlashCommandSuggest';
 export type {

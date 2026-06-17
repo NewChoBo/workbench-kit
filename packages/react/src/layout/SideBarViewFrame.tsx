@@ -8,6 +8,7 @@ import type {
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cx } from '../utils/cx';
 import { Panel, PanelBody, PanelHeader, type PanelBodyProps, type PanelProps } from './Panel';
+import { workbenchTreeIndentOffset } from './layoutHelpers';
 
 type SideBarFooterPlacement = 'static' | 'overlay';
 
@@ -275,6 +276,14 @@ export interface SideBarListItemProps extends ComponentPropsWithRef<'button'> {
   wrapperProps?: HTMLAttributes<HTMLLIElement>;
 }
 
+export function sideBarTreeDepthStyle(depth: number, style?: CSSProperties): CSSProperties {
+  return {
+    '--depth': depth,
+    '--ui-side-bar-tree-indent-offset': workbenchTreeIndentOffset(depth),
+    ...style,
+  } as CSSProperties;
+}
+
 export const SideBarListItem = forwardRef<HTMLButtonElement, SideBarListItemProps>(
   function SideBarListItem(
     {
@@ -294,7 +303,7 @@ export const SideBarListItem = forwardRef<HTMLButtonElement, SideBarListItemProp
     },
     ref,
   ) {
-    const depthStyle = { '--depth': depth, ...style } as CSSProperties;
+    const depthStyle = sideBarTreeDepthStyle(depth, style);
     const { className: wrapperClassName, ...restWrapperProps } = wrapperProps ?? {};
 
     const button = (

@@ -1,5 +1,6 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { EmptyState } from '../../primitives/EmptyState';
+import { ScrollArea } from '../../primitives/ScrollArea';
 import { cx } from '../../utils/cx';
 import {
   getWorkbenchStructuredDataValue,
@@ -86,7 +87,11 @@ export function WorkbenchStructuredDataTableView({
           {table.emptyLabel ?? 'No rows'}
         </EmptyState>
       ) : (
-        <div className="ui-workbench-structured-data-table-view__scroll">
+        <ScrollArea
+          className="ui-workbench-structured-data-table-view__scroll"
+          gutter="auto"
+          orientation="both"
+        >
           <table className="ui-workbench-structured-data-table-view__table">
             <thead>
               <tr>
@@ -115,7 +120,7 @@ export function WorkbenchStructuredDataTableView({
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollArea>
       )}
     </section>
   );

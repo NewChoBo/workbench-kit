@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { createWidgetJsonSchema, DEMO_WIDGET_JSON_SCHEMA } from './widget-json-schema.js';
+import {
+  createJdwDocumentJsonSchema,
+  createWidgetJsonSchema,
+  DEMO_WIDGET_JSON_SCHEMA,
+} from './widget-json-schema.js';
 
 describe('createWidgetJsonSchema', () => {
   it('includes core widget definitions', () => {
@@ -28,5 +32,13 @@ describe('createWidgetJsonSchema', () => {
     ]) as { definitions?: Record<string, unknown> };
 
     expect(schema.definitions?.CustomWidget_demo_card).toBeDefined();
+  });
+
+  it('allows JDW documents to declare their schema URI', () => {
+    const schema = createJdwDocumentJsonSchema() as {
+      properties?: Record<string, unknown>;
+    };
+
+    expect(schema.properties?.$schema).toEqual({ type: 'string', minLength: 1 });
   });
 });

@@ -1,4 +1,10 @@
 import { cxCodicon } from '../../utils/codicon';
+import {
+  JDW_DOCUMENT_MIME,
+  JDW_SCHEMA_DOCUMENT_MIME,
+  isJdwDocumentPath,
+  isJdwSchemaDocumentPath,
+} from '../../jdw/document';
 import { extensionOfPath, fileNameOfPath } from './path';
 
 export type WorkspaceFileIconKind =
@@ -11,12 +17,15 @@ export type WorkspaceFileIconKind =
   | 'git'
   | 'html'
   | 'image'
+  | 'jdw'
+  | 'jdw-schema'
   | 'javascript'
   | 'json'
   | 'lock'
   | 'markdown'
   | 'package'
   | 'pdf'
+  | 'schema'
   | 'sql'
   | 'text'
   | 'typescript'
@@ -32,6 +41,9 @@ export function fileIconKindForPath(path: string, mimeType?: string): WorkspaceF
   if (fileName.endsWith('.lock') || fileName.includes('lock')) return 'lock';
   if (fileName.startsWith('.env')) return 'env';
   if (fileName.startsWith('.git')) return 'git';
+  if (isJdwSchemaDocumentPath(path) || mimeType === JDW_SCHEMA_DOCUMENT_MIME) return 'jdw-schema';
+  if (isJdwDocumentPath(path) || mimeType === JDW_DOCUMENT_MIME) return 'jdw';
+  if (fileName.endsWith('.schema.json') || mimeType === 'application/schema+json') return 'schema';
   if (mimeType?.startsWith('image/')) return 'image';
   if (mimeType === 'application/pdf' || extension === 'pdf') return 'pdf';
 
@@ -104,6 +116,10 @@ export function codiconForFileKind(kind: WorkspaceFileIconKind) {
       return 'codicon-code';
     case 'image':
       return 'codicon-file-media';
+    case 'jdw':
+      return 'codicon-layout';
+    case 'jdw-schema':
+      return 'codicon-symbol-property';
     case 'javascript':
       return 'codicon-symbol-method';
     case 'json':
@@ -116,6 +132,8 @@ export function codiconForFileKind(kind: WorkspaceFileIconKind) {
       return 'codicon-package';
     case 'pdf':
       return 'codicon-file-pdf';
+    case 'schema':
+      return 'codicon-symbol-property';
     case 'sql':
       return 'codicon-database';
     case 'text':

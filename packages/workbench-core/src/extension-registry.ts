@@ -22,11 +22,28 @@ import type {
 import {
   ActivityRegistry,
   ConfigurationRegistry,
+  EditorRegistry,
   MenuRegistry,
   ViewRegistry,
   type WorkbenchViewContainerContribution,
   type WorkbenchViewContribution,
 } from './registries.js';
+import {
+  createCapabilityRegistry,
+  toCapabilityMap,
+  type CapabilityProvider,
+  type CapabilityRegistry,
+} from './capability-registry.js';
+import {
+  createEditorHostFactoryRegistry,
+  createViewHostFactoryRegistry,
+  type EditorHostFactoryRegistry,
+  type ViewHostFactoryRegistry,
+} from './host-factory-registry.js';
+import {
+  createEditorResolverRegistry,
+  type EditorResolverRegistry,
+} from './editor-resolver-registry.js';
 
 export interface WorkbenchExtensionModule {
   activate?: ActivateFunction;
@@ -42,10 +59,15 @@ export interface WorkbenchExtensionDescription {
 export interface ExtensionRegistryOptions {
   activities?: ActivityRegistry;
   capabilities?: ReadonlyMap<string, unknown> | Record<string, unknown>;
+  capabilityRegistry?: CapabilityRegistry;
   commands?: CommandRegistry;
   configurations?: ConfigurationRegistry;
+  editorHostFactories?: EditorHostFactoryRegistry;
+  editorResolvers?: EditorResolverRegistry;
+  editors?: EditorRegistry;
   keybindings?: KeybindingRegistry;
   menus?: MenuRegistry;
+  viewHostFactories?: ViewHostFactoryRegistry;
   views?: ViewRegistry;
 }
 
@@ -67,14 +89,19 @@ interface ActiveExtension {
 
 export class ExtensionRegistry implements Disposable {
   readonly activities: ActivityRegistry;
+  readonly capabilityRegistry: CapabilityRegistry;
   readonly commands: CommandRegistry;
   readonly configurations: ConfigurationRegistry;
+  readonly editorHostFactories: EditorHostFactoryRegistry;
+  readonly editorResolvers: EditorResolverRegistry;
+  readonly editors: EditorRegistry;
   readonly keybindings: KeybindingRegistry;
   readonly menus: MenuRegistry;
+  readonly viewHostFactories: ViewHostFactoryRegistry;
   readonly views: ViewRegistry;
 
   private readonly activeExtensions = new Map<string, ActiveExtension>();
-  private readonly capabilities: ReadonlyMap<string, unknown>;
+  private readonly activatingExtensions = new Map<string, Promise<ActivatedExtension>>();
   private readonly extensions = new Map<string, RegisteredExtension>();
 
   constructor(options: ExtensionRegistryOptions = {}) {
@@ -84,7 +111,19 @@ export class ExtensionRegistry implements Disposable {
     this.keybindings = options.keybindings ?? new KeybindingRegistry();
     this.menus = options.menus ?? new MenuRegistry();
     this.views = options.views ?? new ViewRegistry();
-    this.capabilities = toCapabilityMap(options.capabilities);
+    if (options.capabilityRegistry) {
+      this.capabilityRegistry = options.capabilityRegistry;
+      if (options.capabilities !== undefined) {
+        this.capabilityRegistry.registerStatic(toCapabilityMap(options.capabilities));
+      }
+    } else {
+      this.capabilityRegistry = createCapabilityRegistry(options.capabilities);
+    }
+
+    this.viewHostFactories = options.viewHostFactories ?? createViewHostFactoryRegistry();
+    this.editorHostFactories = options.editorHostFactories ?? createEditorHostFactoryRegistry();
+    this.editorResolvers = options.editorResolvers ?? createEditorResolverRegistry();
+    this.editors = options.editors ?? new EditorRegistry();
   }
 
   getActiveExtensions(): readonly ActivatedExtension[] {
@@ -199,6 +238,22 @@ export class ExtensionRegistry implements Disposable {
       };
     }
 
+    const pending = this.activatingExtensions.get(extensionId);
+    if (pending) {
+      return pending;
+    }
+
+    const activation = this.doActivateExtension(extensionId);
+    this.activatingExtensions.set(extensionId, activation);
+
+    try {
+      return await activation;
+    } finally {
+      this.activatingExtensions.delete(extensionId);
+    }
+  }
+
+  private async doActivateExtension(extensionId: string): Promise<ActivatedExtension> {
     const extension = this.extensions.get(extensionId);
     if (!extension) {
       throw new Error(`Extension "${extensionId}" is not registered.`);
@@ -209,22 +264,27 @@ export class ExtensionRegistry implements Disposable {
     }
 
     const subscriptions = new DisposableStore();
-    const context = this.createExtensionContext(extension.description, subscriptions);
-    const activationResult = await extension.description.module?.activate?.(context);
-    if (isDisposable(activationResult)) {
-      subscriptions.add(activationResult);
+    try {
+      const context = this.createExtensionContext(extension.description, subscriptions);
+      const activationResult = await extension.description.module?.activate?.(context);
+      if (isDisposable(activationResult)) {
+        subscriptions.add(activationResult);
+      }
+
+      this.activeExtensions.set(extensionId, {
+        deactivate: extension.description.module?.deactivate,
+        extensionId,
+        subscriptions,
+      });
+
+      return {
+        extensionId,
+        subscriptions,
+      };
+    } catch (error) {
+      subscriptions.dispose();
+      throw error;
     }
-
-    this.activeExtensions.set(extensionId, {
-      deactivate: extension.description.module?.deactivate,
-      extensionId,
-      subscriptions,
-    });
-
-    return {
-      extensionId,
-      subscriptions,
-    };
   }
 
   async deactivateExtension(extensionId: string): Promise<void> {
@@ -256,6 +316,11 @@ export class ExtensionRegistry implements Disposable {
     this.keybindings.dispose();
     this.menus.dispose();
     this.views.dispose();
+    this.editors.dispose();
+    this.viewHostFactories.dispose();
+    this.editorHostFactories.dispose();
+    this.editorResolvers.dispose();
+    this.capabilityRegistry.dispose();
   }
 
   private assertDependencyGraph(): void {
@@ -296,14 +361,27 @@ export class ExtensionRegistry implements Disposable {
     subscriptions: DisposableStore,
   ): ExtensionContext {
     return {
+      capabilities: {
+        registerProvider: <T>(provider: CapabilityProvider<T>) =>
+          subscriptions.add(this.capabilityRegistry.register(provider)),
+      },
       commands: {
         registerCommand: (commandId, handler) =>
           subscriptions.add(this.registerCommandHandler(commandId, handler)),
       },
+      editorHostFactories: {
+        registerFactory: (factory) => subscriptions.add(this.editorHostFactories.register(factory)),
+      },
+      editorResolvers: {
+        registerResolver: (resolver) => subscriptions.add(this.editorResolvers.register(resolver)),
+      },
       extensionId: description.manifest.id,
       extensionPath: description.extensionPath ?? '',
-      getCapability: <T>(capabilityId: string) => this.capabilities.get(capabilityId) as T,
+      getCapability: <T>(capabilityId: string) => this.capabilityRegistry.get<T>(capabilityId),
       subscriptions,
+      viewHostFactories: {
+        registerFactory: (factory) => subscriptions.add(this.viewHostFactories.register(factory)),
+      },
       views: {
         registerViewProvider: (provider) =>
           subscriptions.add(this.views.registerViewProvider(provider)),
@@ -369,6 +447,15 @@ export class ExtensionRegistry implements Disposable {
       );
     }
 
+    for (const editor of contributes.editors ?? []) {
+      disposables.add(
+        this.editors.registerEditor({
+          ...editor,
+          extensionId: description.manifest.id,
+        }),
+      );
+    }
+
     if (contributes.configuration !== undefined) {
       disposables.add(
         this.configurations.registerConfiguration(
@@ -378,16 +465,6 @@ export class ExtensionRegistry implements Disposable {
       );
     }
   }
-}
-
-function toCapabilityMap(
-  capabilities: ReadonlyMap<string, unknown> | Record<string, unknown> | undefined,
-): ReadonlyMap<string, unknown> {
-  if (capabilities instanceof Map) {
-    return capabilities;
-  }
-
-  return new Map(Object.entries(capabilities ?? {}));
 }
 
 function toCommandDefinition(command: {
