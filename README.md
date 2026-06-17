@@ -69,17 +69,30 @@ tooling through `pnpm`, so `npm run <script>` delegates script execution to
 ```powershell
 pnpm install
 pnpm typecheck
+pnpm typecheck:foundation
+pnpm typecheck:workbench
+pnpm typecheck:jdw
 pnpm lint
 pnpm format:check
+pnpm validate:static
+pnpm validate:fast
 pnpm validate
+pnpm validate:ui
+pnpm validate:ui:full
 pnpm storybook
 pnpm test:storybook-play
 pnpm test:storybook-play:required
 pnpm build:storybook
-node ./scripts/check-workbench-dependency-graph.mjs
+pnpm check:dependency-graph
 pnpm check:public-exports
 pnpm validate:full
 ```
+
+Use `validate:fast` for day-to-day code checks. It runs typecheck, lint,
+format, package boundary checks, and unit tests without Storybook build or
+interaction playback. Use `validate` before committing package changes that can
+affect rendered Storybook surfaces, and `validate:full` for Lane or release
+closeout.
 
 ## Publishing
 

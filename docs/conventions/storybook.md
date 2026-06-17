@@ -51,12 +51,15 @@ Use these root scripts:
   "build:storybook": "pnpm exec storybook build",
   "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",
   "test:storybook-play:required": "pnpm exec node ./scripts/test-storybook-play.mjs --required",
-  "validate:full": "pnpm validate && pnpm test:storybook-play:required"
+  "validate:ui": "pnpm build:storybook",
+  "validate:ui:full": "pnpm build:storybook && pnpm test:storybook-play:required",
+  "validate:full": "pnpm validate:fast && pnpm validate:ui:full"
 }
 ```
 
 `pnpm validate` includes `build:storybook` so Storybook drift is caught with the
-rest of the package gate.
+rest of the package gate. `pnpm validate:fast` skips Storybook work for
+day-to-day code checks, while `pnpm validate:ui` runs only the Storybook build.
 
 `validate:full` adds required Storybook interaction playback via
 `test:storybook-play:required`. The default `test:storybook-play` runner executes
