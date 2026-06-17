@@ -130,6 +130,8 @@ export function WorkbenchSettingsModal({
       closeLabel={closeLabel}
       footer={footer}
       labelledBy={titleId}
+      maximizable
+      movable
       title={title}
       titleSuffix={titleSuffix}
       onClose={onClose}
