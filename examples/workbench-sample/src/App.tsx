@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Badge } from '@workbench-kit/react/primitives';
 import type { StatusBarSectionModel } from '@workbench-kit/react/workbench/shell';
 import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/workspace/editor';
@@ -9,6 +9,7 @@ import {
   WorkbenchShell,
   useWorkbench,
   type EditorViewMode,
+  type WorkbenchThemeOption,
 } from '@workbench-kit/workbench-react';
 
 import {
@@ -24,9 +25,27 @@ let sampleWorkspaceInitialized = false;
 
 type SampleTheme = WorkspaceEditorTheme;
 
+const SAMPLE_THEME_OPTIONS = [
+  {
+    description: 'Dim workbench surfaces for editor-first review.',
+    id: 'dark',
+    label: 'Dark',
+  },
+  {
+    description: 'Light workbench surfaces for shell and layout review.',
+    id: 'light',
+    label: 'Light',
+  },
+] satisfies readonly WorkbenchThemeOption[];
+
 export function App() {
   const [theme, setTheme] = useState<SampleTheme>('dark');
   const statusSections = useMemo(() => createSampleStatusSections(theme), [theme]);
+  const handleThemeChange = useCallback((nextTheme: string) => {
+    if (isSampleTheme(nextTheme)) {
+      setTheme(nextTheme);
+    }
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -51,11 +70,13 @@ export function App() {
             setTheme((current) => nextSampleTheme(current));
           }
         }}
+        onThemeChange={handleThemeChange}
         rootClassName="ide-root"
         statusSections={statusSections}
         theme={theme}
+        themeOptions={SAMPLE_THEME_OPTIONS}
         title="Workbench Sample"
-        titleBarActions={<SampleTitleBarActions theme={theme} onThemeChange={setTheme} />}
+        titleBarActions={<SampleTitleBarActions />}
         titleMeta={<Badge variant="muted">{workspaceInfo.fileCount} files</Badge>}
       />
     </WorkbenchProvider>
@@ -108,13 +129,7 @@ function SampleEditorFrame({ children, theme }: { children: ReactNode; theme: Sa
   );
 }
 
-function SampleTitleBarActions({
-  theme,
-  onThemeChange,
-}: {
-  theme: SampleTheme;
-  onThemeChange: (theme: SampleTheme) => void;
-}) {
+function SampleTitleBarActions() {
   const { executeCommand } = useWorkbench();
 
   return (
@@ -130,28 +145,6 @@ function SampleTitleBarActions({
       >
         <i aria-hidden className="codicon codicon-preview" />
       </button>
-      <div className="workbench-sample-theme-switch" role="group" aria-label="Workbench theme">
-        <button
-          aria-label="Use dark theme"
-          className="workbench-sample-theme-switch__button"
-          data-active={theme === 'dark' ? 'true' : undefined}
-          title="Dark theme"
-          type="button"
-          onClick={() => onThemeChange('dark')}
-        >
-          <i aria-hidden className="codicon codicon-color-mode" />
-        </button>
-        <button
-          aria-label="Use light theme"
-          className="workbench-sample-theme-switch__button"
-          data-active={theme === 'light' ? 'true' : undefined}
-          title="Light theme"
-          type="button"
-          onClick={() => onThemeChange('light')}
-        >
-          <i aria-hidden className="codicon codicon-lightbulb" />
-        </button>
-      </div>
     </div>
   );
 }
@@ -175,7 +168,9 @@ function SampleHelpContent() {
           <li>
             The empty editor area intentionally stays minimal until a workspace file is opened.
           </li>
-          <li>Theme switching is exposed in the titlebar and status bar for quick verification.</li>
+          <li>
+            Theme selection is exposed in Settings, with a status bar shortcut for quick checks.
+          </li>
         </ul>
       </section>
     </div>
@@ -231,6 +226,10 @@ function createSampleStatusSections(theme: SampleTheme): StatusBarSectionModel[]
 
 function nextSampleTheme(theme: SampleTheme): SampleTheme {
   return theme === 'dark' ? 'light' : 'dark';
+}
+
+function isSampleTheme(value: string): value is SampleTheme {
+  return value === 'dark' || value === 'light';
 }
 
 function getSampleDefaultViewMode(resourceUri: string): EditorViewMode | undefined {

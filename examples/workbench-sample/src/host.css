@@ -33,41 +33,6 @@ body,
   gap: 6px;
 }
 
-.workbench-sample-theme-switch {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px;
-  border: 1px solid var(--vscode-input-border, var(--color-border));
-  border-radius: var(--radius-sm, 4px);
-  background: var(--vscode-input-background, var(--color-bg));
-}
-
-.workbench-sample-theme-switch__button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  height: 26px;
-  padding: 0 8px;
-  border: 0;
-  border-radius: var(--radius-sm, 4px);
-  background: transparent;
-  color: var(--vscode-descriptionForeground, var(--color-text-muted));
-  cursor: pointer;
-  font: inherit;
-}
-
-.workbench-sample-theme-switch__button:hover {
-  background: var(--vscode-toolbar-hoverBackground, var(--color-bg-hover));
-  color: var(--vscode-foreground, var(--color-text));
-}
-
-.workbench-sample-theme-switch__button[data-active='true'] {
-  background: var(--vscode-toolbar-activeBackground, var(--color-bg-hover));
-  color: var(--vscode-foreground, var(--color-text));
-  box-shadow: inset 0 0 0 1px var(--vscode-focusBorder, var(--color-focus-border));
-}
-
 .workbench-sample-help {
   display: grid;
   gap: 18px;
