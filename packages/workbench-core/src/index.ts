@@ -43,6 +43,8 @@ export {
   EditorService,
   type EditorChangeEvent,
   type EditorGroupState,
+  type EditorLayoutDirection,
+  type EditorLayoutNode,
   type EditorServiceOptions,
   type EditorState,
   type EditorTabState,

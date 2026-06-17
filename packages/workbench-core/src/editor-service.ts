@@ -21,9 +21,25 @@ export interface EditorGroupState {
   readonly tabs: readonly EditorTabState[];
 }
 
+export type EditorLayoutDirection = 'horizontal' | 'vertical';
+
+export interface EditorGroupLayoutNode {
+  readonly groupId: string;
+  readonly type: 'group';
+}
+
+export interface EditorSplitLayoutNode {
+  readonly children: readonly EditorLayoutNode[];
+  readonly direction: EditorLayoutDirection;
+  readonly type: 'split';
+}
+
+export type EditorLayoutNode = EditorGroupLayoutNode | EditorSplitLayoutNode;
+
 export interface EditorState {
   readonly activeGroupId?: string;
   readonly groups: readonly EditorGroupState[];
+  readonly layout: EditorLayoutNode;
 }
 
 export interface OpenEditorOptions {
@@ -518,12 +534,16 @@ export class EditorService implements Disposable {
   }
 
   private setState(nextPartial: Partial<EditorState>): void {
+    const groups = nextPartial.groups ?? this.state.groups;
     const nextState: EditorState = {
       activeGroupId:
         nextPartial.activeGroupId !== undefined
           ? nextPartial.activeGroupId
           : this.state.activeGroupId,
-      groups: nextPartial.groups ?? this.state.groups,
+      groups,
+      layout:
+        nextPartial.layout ??
+        (nextPartial.groups ? createEditorLayoutFromGroups(groups) : this.state.layout),
     };
 
     const previousState = this.state;
@@ -544,15 +564,18 @@ export function createEditorService(options: EditorServiceOptions): EditorServic
 }
 
 function createDefaultEditorState(): EditorState {
+  const groups: EditorGroupState[] = [
+    {
+      activeTabId: undefined,
+      id: DEFAULT_EDITOR_GROUP_ID,
+      tabs: [],
+    },
+  ];
+
   return {
     activeGroupId: DEFAULT_EDITOR_GROUP_ID,
-    groups: [
-      {
-        activeTabId: undefined,
-        id: DEFAULT_EDITOR_GROUP_ID,
-        tabs: [],
-      },
-    ],
+    groups,
+    layout: createEditorLayoutFromGroups(groups),
   };
 }
 
@@ -564,6 +587,35 @@ function cloneEditorState(state: EditorState): EditorState {
       id: group.id,
       tabs: [...group.tabs],
     })),
+    layout: cloneEditorLayout(state.layout),
+  };
+}
+
+function createEditorLayoutFromGroups(groups: readonly EditorGroupState[]): EditorLayoutNode {
+  const groupNodes = groups.map<EditorGroupLayoutNode>((group) => ({
+    groupId: group.id,
+    type: 'group',
+  }));
+
+  if (groupNodes.length <= 1) {
+    return groupNodes[0] ?? { groupId: DEFAULT_EDITOR_GROUP_ID, type: 'group' };
+  }
+
+  return {
+    children: groupNodes,
+    direction: 'horizontal',
+    type: 'split',
+  };
+}
+
+function cloneEditorLayout(layout: EditorLayoutNode): EditorLayoutNode {
+  if (layout.type === 'group') {
+    return { ...layout };
+  }
+
+  return {
+    ...layout,
+    children: layout.children.map(cloneEditorLayout),
   };
 }
 
@@ -723,7 +775,11 @@ function copyEditorHostState(
 }
 
 function isSameEditorState(left: EditorState, right: EditorState): boolean {
-  if (left.activeGroupId !== right.activeGroupId || left.groups.length !== right.groups.length) {
+  if (
+    left.activeGroupId !== right.activeGroupId ||
+    left.groups.length !== right.groups.length ||
+    !isSameEditorLayout(left.layout, right.layout)
+  ) {
     return false;
   }
 
@@ -759,4 +815,27 @@ function isSameEditorState(left: EditorState, right: EditorState): boolean {
       );
     });
   });
+}
+
+function isSameEditorLayout(left: EditorLayoutNode, right: EditorLayoutNode): boolean {
+  if (left.type !== right.type) {
+    return false;
+  }
+
+  if (left.type === 'group' && right.type === 'group') {
+    return left.groupId === right.groupId;
+  }
+
+  if (left.type === 'split' && right.type === 'split') {
+    return (
+      left.direction === right.direction &&
+      left.children.length === right.children.length &&
+      left.children.every((child, index) => {
+        const otherChild = right.children[index];
+        return otherChild ? isSameEditorLayout(child, otherChild) : false;
+      })
+    );
+  }
+
+  return false;
 }

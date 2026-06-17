@@ -207,6 +207,11 @@ describe('EditorService', () => {
     expect(state.groups[0]?.tabs.map((tab) => tab.id)).toEqual([opened.id]);
     expect(state.groups[1]?.tabs.map((tab) => tab.id)).toEqual([split?.id]);
     expect(state.activeGroupId).toBe(state.groups[1]?.id);
+    expect(state.layout).toEqual({
+      children: state.groups.map((group) => ({ groupId: group.id, type: 'group' })),
+      direction: 'horizontal',
+      type: 'split',
+    });
     expect(service.createEditorHost(split?.id ?? '')?.render()).toBe('unsaved split content');
 
     const inserted = service.splitEditor({
@@ -222,6 +227,11 @@ describe('EditorService', () => {
       inserted?.id,
       split?.id,
     ]);
+    expect(nextState.layout).toEqual({
+      children: nextState.groups.map((group) => ({ groupId: group.id, type: 'group' })),
+      direction: 'horizontal',
+      type: 'split',
+    });
   });
 
   it('moves editor tabs between groups without duplicating hosts', () => {
@@ -296,6 +306,10 @@ describe('EditorService', () => {
         tabs: [second, first],
       },
     ]);
+    expect(mergedState.layout).toEqual({
+      groupId: DEFAULT_EDITOR_GROUP_ID,
+      type: 'group',
+    });
     expect(service.createEditorHost(first.id)).toBe(firstHost);
   });
 
