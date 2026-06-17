@@ -17,6 +17,7 @@ legacy paths.
 | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | [**Workbench Change Guidelines**](./workbench-change-guidelines.md)             | **Implementation guardrails:** VS Code/Theia baselines, existing-logic-first workflow, review checklist.    |
 | [**Project-Wide Review 2026-06-18**](./project-wide-review-2026-06-18.md)       | **Current review:** package-wide findings and next improvement slice based on the guidelines.               |
+| [**Extensibility Review 2026-06-18**](./extensibility-review-2026-06-18.md)     | **Scalability review:** npm publish, package artifacts, CI/CD, Pages, extension/theme expansion risks.      |
 | [**Recommended Work Items 2026-06-18**](./recommended-work-items-2026-06-18.md) | **Execution backlog:** prioritized next work items and selected goal for the current run.                   |
 | [**Completion Plan**](./completion-plan.md)                                     | **Master roadmap:** Lane A DoD, phased WB-28 → WB-31, sessions, risks, completion %.                        |
 | [**Codex Delegation Plan**](./codex-delegation-plan.md)                         | **Codex handoff:** Lane A work packages, constraints, acceptance criteria, file pointers.                   |

@@ -99,7 +99,12 @@ closeout.
 The `Deploy Workbench Sample` workflow builds `examples/workbench-sample` and
 deploys the Vite output to GitHub Pages. Configure repository Pages settings to
 use **GitHub Actions** as the publishing source. The deployment URL is exposed on
-the `github-pages` environment for successful runs on `main`.
+the `github-pages` environment for successful release/tag runs.
+
+Pages deploys from published GitHub releases and pushed release tags matching
+`v*` or `workbench-kit-v*`, so the public sample follows the latest release
+artifact instead of unreleased `main` branch changes. Manual workflow runs can
+build any selected ref; they deploy only when the selected ref is a tag.
 
 The workflow passes `actions/configure-pages` `base_path` into
 `WORKBENCH_SAMPLE_BASE_PATH` so Vite emits assets relative to either the
