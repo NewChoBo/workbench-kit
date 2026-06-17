@@ -105,7 +105,6 @@ function CommandStoryFrame({ children }: { children: ReactNode }) {
         background: 'var(--color-surface)',
         display: 'grid',
         gap: 16,
-        minHeight: '100vh',
         padding: 24,
       }}
     >

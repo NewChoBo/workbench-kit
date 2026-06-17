@@ -1,5 +1,21 @@
 export { JdwPreview, type JdwPreviewProps } from './JdwPreview.js';
 export {
+  JDW_DOCUMENT_FILE_EXTENSION,
+  JDW_DOCUMENT_MIME,
+  JDW_SCHEMA_DOCUMENT_FILE_EXTENSION,
+  JDW_SCHEMA_DOCUMENT_MIME,
+  JDW_WIDGET_DOCUMENT_FILE_EXTENSION,
+  JDW_WIDGET_DOCUMENT_MIME,
+  isJdwDocument,
+  isJdwDocumentMimeType,
+  isJdwDocumentPath,
+  isJdwSchemaDocument,
+  isJdwSchemaDocumentMimeType,
+  isJdwSchemaDocumentPath,
+  type JdwDocumentRef,
+  type JdwSchemaDocumentRef,
+} from './document.js';
+export {
   JsonCodeEditorPane,
   JsonConfigValidationBanner,
   type JsonCodeEditorPaneProps,

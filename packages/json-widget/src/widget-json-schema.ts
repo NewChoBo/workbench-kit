@@ -146,6 +146,7 @@ export function createJdwDocumentJsonSchema(): WidgetJsonSchema {
     type: 'object',
     required: ['type', 'args'],
     properties: {
+      $schema: { type: 'string', minLength: 1 },
       type: { type: 'string', minLength: 1 },
       id: { type: 'string' },
       listen: { type: 'array', items: { type: 'string' } },

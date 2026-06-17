@@ -20,7 +20,6 @@ function ScreenSpecEditorHarness({ sampleId = 'user-profile' }: { readonly sampl
         gridTemplateColumns: '1fr 1fr',
         gap: 16,
         minHeight: 520,
-        padding: 16,
       }}
     >
       <ScreenSpecEditor value={pipeline.spec} onChange={pipeline.setSpec} />
@@ -50,7 +49,6 @@ function PlaygroundHarness() {
         gridTemplateColumns: '1fr 1fr',
         gap: 16,
         minHeight: 520,
-        padding: 16,
       }}
     >
       <ScreenSpecEditor
@@ -68,7 +66,7 @@ function PlaygroundHarness() {
 const meta = {
   title: 'JDW/ScreenSpecEditor',
   parameters: {
-    layout: 'fullscreen',
+    layout: 'padded',
     backgrounds: { default: 'dark' },
   },
 } satisfies Meta;

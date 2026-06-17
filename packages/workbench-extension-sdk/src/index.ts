@@ -29,6 +29,12 @@ export type ExtensionCapabilities = {
   provides?: string[];
 };
 
+export {
+  DEFAULT_EDITOR_HOST_FACTORY_ID,
+  DEFAULT_VIEW_HOST_FACTORY_ID,
+  WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
+  WORKBENCH_SETTINGS_CAPABILITY_ID,
+} from './contributions.js';
 export type {
   ActivateFunction,
   ActivityContribution,
@@ -37,7 +43,18 @@ export type {
   ConfigurationPropertyContribution,
   ConfigurationPropertyScope,
   DeactivateFunction,
+  EditorContribution,
+  EditorHost,
+  EditorHostCreateContext,
+  EditorHostFactory,
+  EditorResolveContext,
+  EditorResolver,
+  ExtensionCapabilityProvider,
+  ExtensionCapabilityRegistry,
   ExtensionCommandRegistry,
+  ExtensionEditorHostFactoryRegistry,
+  ExtensionEditorResolverRegistry,
+  ExtensionViewHostFactoryRegistry,
   ExtensionContext,
   ExtensionContributes,
   ExtensionViewRegistry,
@@ -46,5 +63,11 @@ export type {
   ViewContainerContribution,
   ViewContribution,
   ViewHost,
+  ViewHostCreateContext,
+  ViewHostFactory,
+  ViewHostSize,
   ViewProvider,
+  WorkbenchEditorSavePort,
+  WorkbenchEditorServiceCapability,
+  WorkbenchSettingsCapability,
 } from './contributions.js';

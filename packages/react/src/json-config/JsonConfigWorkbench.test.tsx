@@ -8,7 +8,9 @@ import { JsonConfigWorkbench, resolveJsonConfigPreviewKind } from './JsonConfigW
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
 
 vi.mock('@monaco-editor/react', () => ({
-  default: () => <div data-testid="monaco-editor">Mocked Monaco Editor</div>,
+  default: ({ value }: { value?: string }) => (
+    <pre data-testid="monaco-editor">{value ?? 'Mocked Monaco Editor'}</pre>
+  ),
   loader: {
     config: vi.fn(),
   },
@@ -41,8 +43,8 @@ interface DemoWidget extends WidgetTypeShape {
 }
 
 describe('resolveJsonConfigPreviewKind', () => {
-  it('prefers schema preview when schema is provided in auto mode', () => {
-    expect(resolveJsonConfigPreviewKind('auto', settingsSchema, settingsJson)).toBe('schema');
+  it('keeps schema documents out of the preview resolver after form separation', () => {
+    expect(resolveJsonConfigPreviewKind('auto', settingsSchema, settingsJson)).toBe('none');
   });
 
   it('detects widget preview in auto mode when JSON is valid JDW', () => {
@@ -59,10 +61,10 @@ describe('resolveJsonConfigPreviewKind', () => {
 });
 
 describe('JsonConfigWorkbench', () => {
-  it('renders split mode with schema form preview', () => {
+  it('renders form mode with schema-driven controls and a separate preview pane', () => {
     const markup = renderToStaticMarkup(
       <JsonConfigWorkbench
-        defaultMode="split"
+        defaultMode="form"
         previewKind="schema"
         schema={settingsSchema}
         value={settingsJson}
@@ -71,9 +73,29 @@ describe('JsonConfigWorkbench', () => {
     );
 
     expect(markup).toContain('ui-json-config-workbench');
-    expect(markup).toContain('data-mode="split"');
+    expect(markup).toContain('data-mode="form"');
     expect(markup).toContain('General');
     expect(markup).toContain('value="Content Hub"');
+    expect(markup).toContain('No preview available for this document.');
+  });
+
+  it('renders JSON source in code mode without showing an unchanged banner', () => {
+    const markup = renderToStaticMarkup(
+      <JsonConfigWorkbench
+        baselineValue={settingsJson}
+        defaultMode="code"
+        previewKind="schema"
+        schema={settingsSchema}
+        value={settingsJson}
+        onChange={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('data-mode="code"');
+    expect(markup).toContain('data-testid="monaco-editor"');
+    expect(markup).toContain('&quot;appName&quot;');
+    expect(markup).not.toContain('No changes');
+    expect(markup).not.toContain('JSON valid');
   });
 
   it('renders widget preview when previewKind is widget', () => {
@@ -99,6 +121,22 @@ describe('JsonConfigWorkbench', () => {
 
     expect(markup).toContain('Tile preview');
     expect(markup).toContain('data-testid="jdw-preview-output"');
+  });
+
+  it('keeps preview mode focused on read-only output', () => {
+    const markup = renderToStaticMarkup(
+      <JsonConfigWorkbench
+        defaultMode="preview"
+        previewKind="schema"
+        schema={settingsSchema}
+        value={settingsJson}
+        onChange={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('data-mode="preview"');
+    expect(markup).toContain('No preview available for this document.');
+    expect(markup).not.toContain('value="Content Hub"');
   });
 
   it('shows dirty indicator when value differs from baseline', () => {

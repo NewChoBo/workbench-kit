@@ -23,6 +23,7 @@ const packageRules = toRuleMap({
     '@workbench-kit/tokens',
     '@workbench-kit/workbench-config',
     '@workbench-kit/workbench-core',
+    '@workbench-kit/workspace',
   ],
   '@workbench-kit/monaco': ['@workbench-kit/base', '@workbench-kit/platform'],
   '@workbench-kit/contracts': [],
@@ -53,6 +54,7 @@ const extensionAllowedDependencies = new Set([
   '@workbench-kit/platform',
   '@workbench-kit/react',
   '@workbench-kit/workbench-extension-sdk',
+  '@workbench-kit/workspace',
 ]);
 
 const violations = [];

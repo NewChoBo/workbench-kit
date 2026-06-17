@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import {
   fileNameOfPath,
   getAvailableWorkspaceEntryName,
-  getWorkspaceFileMovePlan,
+  getWorkspaceEntryMovePlan,
   isSimpleWorkspaceName,
   isWorkspaceEntryPathAvailable,
   joinWorkspacePath,
@@ -74,6 +74,7 @@ export function useIntegratedShellWorkspaceOrchestration({
     files,
     folders,
     moveFile: moveWorkspaceFile,
+    moveFolder: moveWorkspaceFolder,
     openFile,
     renameFile: renameWorkspaceFile,
     renameFolder: renameWorkspaceFolder,
@@ -333,7 +334,7 @@ export function useIntegratedShellWorkspaceOrchestration({
 
   const handleExplorerRequestMove = useCallback(
     (meta: WorkspaceExplorerMoveRequestMeta) => {
-      const plan = getWorkspaceFileMovePlan({
+      const plan = getWorkspaceEntryMovePlan({
         files,
         folders,
         sourcePaths: meta.sourcePaths,
@@ -341,29 +342,35 @@ export function useIntegratedShellWorkspaceOrchestration({
       });
 
       plan.moves.forEach((move) => {
+        if (move.kind === 'folder') {
+          moveWorkspaceFolder(move.sourcePath, plan.targetFolderPath);
+          return;
+        }
+
         moveWorkspaceFile(move.sourcePath, plan.targetFolderPath);
       });
 
-      if (plan.moves.length > 0) {
+      const fileMoves = plan.moves.filter((move) => move.kind === 'file');
+      if (fileMoves.length > 0) {
         setExplorerSelection({
-          anchorPath: plan.moves[plan.moves.length - 1]?.destinationPath,
-          paths: plan.moves.map((move) => move.destinationPath),
+          anchorPath: fileMoves[fileMoves.length - 1]?.destinationPath,
+          paths: fileMoves.map((move) => move.destinationPath),
         });
       }
 
       const targetLabel = plan.targetFolderPath || 'workspace root';
       if (plan.moves.length === 0) {
-        onNotify(`Move blocked for ${plan.blockedPaths.length} files`);
+        onNotify(`Move blocked for ${plan.blockedPaths.length} entries`);
         return;
       }
 
       onNotify(
         plan.blockedPaths.length > 0
-          ? `Moved ${plan.moves.length} files to ${targetLabel}, blocked ${plan.blockedPaths.length}`
-          : `Moved ${plan.moves.length} files to ${targetLabel}`,
+          ? `Moved ${plan.moves.length} entries to ${targetLabel}, blocked ${plan.blockedPaths.length}`
+          : `Moved ${plan.moves.length} entries to ${targetLabel}`,
       );
     },
-    [files, folders, moveWorkspaceFile, onNotify],
+    [files, folders, moveWorkspaceFile, moveWorkspaceFolder, onNotify],
   );
 
   const handleExplorerSelectionChange = useCallback(

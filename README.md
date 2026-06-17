@@ -69,17 +69,47 @@ tooling through `pnpm`, so `npm run <script>` delegates script execution to
 ```powershell
 pnpm install
 pnpm typecheck
+pnpm typecheck:foundation
+pnpm typecheck:workbench
+pnpm typecheck:jdw
 pnpm lint
 pnpm format:check
+pnpm validate:static
+pnpm validate:fast
 pnpm validate
+pnpm validate:ui
+pnpm validate:ui:full
 pnpm storybook
 pnpm test:storybook-play
 pnpm test:storybook-play:required
 pnpm build:storybook
-node ./scripts/check-workbench-dependency-graph.mjs
+pnpm check:dependency-graph
 pnpm check:public-exports
 pnpm validate:full
 ```
+
+Use `validate:fast` for day-to-day code checks. It runs typecheck, lint,
+format, package boundary checks, and unit tests without Storybook build or
+interaction playback. Use `validate` before committing package changes that can
+affect rendered Storybook surfaces, and `validate:full` for Lane or release
+closeout.
+
+## Workbench Sample Pages
+
+The `Deploy Workbench Sample` workflow builds `examples/workbench-sample` and
+deploys the Vite output to GitHub Pages. Configure repository Pages settings to
+use **GitHub Actions** as the publishing source. The deployment URL is exposed on
+the `github-pages` environment for successful release/tag runs.
+
+Pages deploys from published GitHub releases and pushed release tags matching
+`v*` or `workbench-kit-v*`, so the public sample follows the latest release
+artifact instead of unreleased `main` branch changes. Manual workflow runs can
+build any selected ref; they deploy only when the selected ref is a tag.
+
+The workflow passes `actions/configure-pages` `base_path` into
+`WORKBENCH_SAMPLE_BASE_PATH` so Vite emits assets relative to either the
+repository Pages path or a custom-domain root. Local builds keep the default `/`
+base path.
 
 ## Publishing
 

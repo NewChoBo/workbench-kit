@@ -13,7 +13,7 @@ See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-
 | Phase       | Kit action                                                                                                                   | Consumer action                                  |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | 1 Reference | Study tile_paper tree/editor + launcher preview bridge                                                                       | Keep local stacks                                |
-| 2 Port      | Extract neutral primitives into `@workbench-kit/jdw`, `@workbench-kit/react/json-widget`, `@workbench-kit/react/json-config` | Reference-only                                   |
+| 2 Port      | Extract neutral primitives into `@workbench-kit/jdw`, `@workbench-kit/react/widget-tree`, `@workbench-kit/react/json-config` | Reference-only                                   |
 | 3 Complete  | Storybook baselines, public APIs, play gates, docs                                                                           | Validate kit readiness                           |
 | 4 Swap      | —                                                                                                                            | Point consumers at kit; delete duplicated chrome |
 
@@ -32,12 +32,15 @@ See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-
 - Headless editor sync (`editor-sync`, `path`, `selection`, `widget-tree`, `widget-patch`, `widget-child-ops`)
 - Layout helpers that do not depend on tile_paper domain types (`layout/grid`, `layout/stack`, `layout/linear`)
 
-### Ports to `@workbench-kit/react/json-widget`
+### Ports to `@workbench-kit/react/widget-tree`
 
-- `JsonWidgetPreview` validation bridge (partially done)
-- Editor chrome: `JsonWidgetEditor`, `WidgetTreePanel`, `WidgetInspectorPanel`, `useJsonWidgetEditorSync`
-- Monaco ↔ tree ↔ inspector ↔ preview sync via headless `editor-sync` module (cursor sync wired)
-- DnD tree reorder via `@dnd-kit/core` and full patch types
+- `WidgetTreeLab` / `WidgetTreeWorkbench` — Monaco ↔ tree ↔ inspector ↔ `JdwPreview` sync
+- `WidgetTreeView`, `WidgetInspectorPanel`, `WidgetSourceEditor`
+- Registry-driven inspector metadata via `WidgetRegistryContract`
+- DnD tree reorder via `@dnd-kit/core` and `@workbench-kit/jdw` patch types (where enabled in lab)
+
+> **Note:** `@workbench-kit/react/json-widget` was a short-lived export path (re-export only)
+> and is **not** in the tree. Do not add it back without a full module surface.
 
 ### Ports to `@workbench-kit/react/json-config`
 
@@ -54,7 +57,7 @@ Single source of truth while editing:
 | Document string    | Host or `JsonConfigWorkbench` controlled `value` | Monaco and tree derive from this               |
 | Parsed tree        | `@workbench-kit/jdw` parse result                | Parse errors block preview update              |
 | Selected node path | React editor chrome state                        | Drives properties panel                        |
-| Preview render     | `JsonWidgetPreview` + registry                   | Read-only; reflects parse + selection          |
+| Preview render     | `JdwPreview` + registry                          | Read-only; reflects parse + selection          |
 | Dirty baseline     | Host `baselineValue` prop                        | Toolbar save/discard compares against baseline |
 
 Sync rules:
@@ -66,41 +69,32 @@ Sync rules:
 
 ## Kit checklist status
 
+### Completed (Phase 2–3)
+
 - [x] P1 port boundary map (this document)
 - [x] P1 editor sync contract (above)
-- [x] P1 `JsonConfigWorkbench` widget mode parity with json-widget-editor baseline flows
-- [x] P2 full editor chrome port from tile_paper `json-widget-editor` (tree, inspector, preview slot; DnD deferred)
-- [x] P2 `JsonWidget/Editor` Storybook story + play baseline
-- [x] P3 Monaco cursor ↔ tree path sync (`findPathForLineAndColumn` wired in React layer)
-- [x] P3 DnD tree reorder + full `WidgetPatch` types (`reorder-child`, `reparent-widget`, etc.)
+- [x] P1 `JsonConfigWorkbench` widget mode baseline flows
+- [x] P2 editor chrome in `@workbench-kit/react/widget-tree` (tree, inspector, preview slot)
+- [x] P2 `JDW/WidgetTree/Lab` Storybook + `InteractionSmoke` play baseline (`storybook-play-required`)
 - [x] P3 neutral layout calculators (grid/stack/linear) in `@workbench-kit/jdw`
-- [x] P3 `EditorInteraction` promoted to `storybook-play-required`
 - [x] P3 parity gate tests (layout + patch + registry patterns)
-- [x] P3 `JsonWidget/Playground → Interactive` — full editor sandbox (add widget, DnD tree, Monaco, inspector, structural preview)
-- [x] P3.1 playground visual preview — `PlaygroundWidgetRenderer` + `JsonWidgetPreviewCanvas` (grid/stack/text/box/row/column)
-- [x] P3.1 playground inspector parity — builtin property sections for demo types (text/grid/stack/row/column/box)
-- [x] P3.1 playground authoring UX — sibling insert, delete selected, duplicate selected, starter templates
-- [x] P3.1 Monaco playground schema — `createPlaygroundWidgetJsonSchema` wired via `JsonWidgetEditor.jsonSchema`
-- [x] P3.1 preview click-to-select — `interactivePreview` bridges canvas selection to tree/inspector
-- [x] P3.2 strengths inheritance — zoom/pan canvas, preview toolbar, Monaco problems/Ctrl+S/view shortcuts, config Apply banner ([strengths-inheritance.md](./strengths-inheritance.md))
-- [x] P3.2 playground widget types — simplified `button`, `list-view`, `tile`, **`input`** in playground registry/schema/renderer
-- [x] P3.4 playground widget types — **`divider`**, **`image`**, **`document`** shell in playground registry/schema/renderer
-- [x] P3.4 inspector placement sections — grid/stack/linear child placement + box border in inspector
-- [x] P3.4 canvas drag-to-move — grid col/row + stack left/top drag; grid resize handle on selection
-- [x] P3.4 problems panel — parse errors merged into Monaco problems list with auto-open
-- [x] P3.4 GUI mode label — preview mode control labeled **GUI** (tile_paper parity)
-- [x] P3.4 playground export — Copy JSON + Download toolbar actions
-- [x] P3.4 starter templates — media card, form column, document shell
-- [x] P3.3 simplified preview selection chrome — `PlaygroundEditorWidgetWrapper` (`WorkbenchCanvasItemFrame` + badge)
-- [x] P3.3 full playground E2E play — `JsonWidget/Playground → InteractiveSmoke` (add, inspector, preview select, DnD, save)
-- [x] P3.3 required play promotion — `InteractiveSmoke` (`JDW/Config/WidgetInteraction` stays baseline; save requires dirty Monaco edit)
-- [x] **Phase 3 kit milestone complete** — see [application-complete.md](./application-complete.md)
-- [x] P4 consumer swap guidance captured as historical notes; future consumer
-      swap work should start from the current [Workbench Notes](./README.md)
-      index.
-- [ ] P4 custom_launcher preview toolbar → `PreviewZoomToolbar` (in progress)
-- [ ] P4 tile_paper domain types (full `WidgetPropertySections`, drag/resize `EditorWidgetWrapper` with registry wrapper pattern)
-- [ ] P4 full `createWidgetJsonSchema` parity (tile-ref, spacer, dataSource, multi-schema project configs)
+- [x] Phase 3 kit milestone — headless JDW + widget-tree lab + json-config workbench
+
+### Historical (removed playground lane — audit only)
+
+The following referred to `JsonWidget/Playground` and related symbols that are no
+longer in the tree. Do not treat checked items below as runnable acceptance tests.
+
+- [x] P3 `JsonWidget/Playground → Interactive` (superseded by `JDW/WidgetTree/Lab`)
+- [x] P3.1–P3.4 playground widget types, canvas drag, export toolbar, etc. (playground removed)
+- [x] P3.2 strengths inheritance doc pass (see [strengths-inheritance.md](./strengths-inheritance.md))
+
+### Open (Phase 4+)
+
+- [ ] P4 consumer swap runbook execution in tile_paper / custom_launcher
+- [ ] P4 tile_paper domain types (full property sections, registry wrapper pattern)
+- [ ] P4 full `createWidgetJsonSchema` parity (tile-ref, spacer, dataSource, multi-schema)
+- [ ] Preview zoom/pan toolbar — **deferred** ([widget-layout-schema-plan.md](./widget-layout-schema-plan.md) §2; not in tree as of 2026-06-14)
 
 ## Verification
 

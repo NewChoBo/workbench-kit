@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   getAvailableWorkspaceEntryName,
+  getWorkspaceEntryMovePlan,
   getWorkspaceFileMovePlan,
   initializeVirtualWorkspaceState,
   isWorkspaceEntryPathAvailable,
@@ -37,6 +38,28 @@ describe('virtual workspace model', () => {
     expect([...state.expandedPaths]).toEqual(['src']);
     expect(state.openPaths).toEqual(['src/App.tsx']);
     expect(state.selectedPath).toBe('src/App.tsx');
+  });
+
+  it('initializes workspace state through a reducer action', () => {
+    const state = reduceWorkspace(
+      { files: [{ content: 'stale', path: 'stale.txt' }], openPaths: ['stale.txt'] },
+      [
+        {
+          state: {
+            expandedPaths: ['src'],
+            files: [{ content: 'app', path: 'src/App.tsx' }],
+            folders: ['src'],
+          },
+          type: 'initialize-workspace',
+        },
+      ],
+    );
+
+    expect(state.files).toEqual([{ content: 'app', path: 'src/App.tsx' }]);
+    expect(state.folders).toEqual(['src']);
+    expect([...state.expandedPaths]).toEqual(['src']);
+    expect(state.openPaths).toEqual([]);
+    expect(state.selectedPath).toBeUndefined();
   });
 
   it('creates files and folders while preventing path conflicts', () => {
@@ -125,6 +148,25 @@ describe('virtual workspace model', () => {
     expect(state.selectedPath).toBe('docs/notes.md');
   });
 
+  it('moves folders to folders and keeps descendants aligned', () => {
+    const state = reduceWorkspace(
+      {
+        expandedPaths: ['src', 'src/components'],
+        files: [{ content: 'button', path: 'src/components/Button.tsx' }],
+        folders: ['docs', 'src/components'],
+        openPaths: ['src/components/Button.tsx'],
+        selectedPath: 'src/components/Button.tsx',
+      },
+      [{ sourcePath: 'src/components', targetFolderPath: 'docs', type: 'move-folder' }],
+    );
+
+    expect(state.files[0]?.path).toBe('docs/components/Button.tsx');
+    expect(state.folders).toEqual(['docs', 'docs/components', 'src']);
+    expect(state.openPaths).toEqual(['docs/components/Button.tsx']);
+    expect(state.selectedPath).toBe('docs/components/Button.tsx');
+    expect([...state.expandedPaths].sort()).toEqual(['docs', 'docs/components', 'src']);
+  });
+
   it('preserves source folders when moving the last file out', () => {
     const state = reduceWorkspace(
       {
@@ -192,6 +234,40 @@ describe('virtual workspace model', () => {
       blockedPaths: ['src/App.tsx'],
       moves: [],
       targetFolderPath: 'src',
+    });
+  });
+
+  it('plans mixed entry moves and blocks folder cycles', () => {
+    expect(
+      getWorkspaceEntryMovePlan({
+        files: [{ content: 'button', path: 'src/components/Button.tsx' }],
+        folders: ['docs', 'src/components'],
+        sourcePaths: ['src/components'],
+        targetFolderPath: 'docs',
+      }),
+    ).toEqual({
+      blockedPaths: [],
+      moves: [
+        {
+          destinationPath: 'docs/components',
+          kind: 'folder',
+          sourcePath: 'src/components',
+        },
+      ],
+      targetFolderPath: 'docs',
+    });
+
+    expect(
+      getWorkspaceEntryMovePlan({
+        files: [{ content: 'button', path: 'src/components/Button.tsx' }],
+        folders: ['src/components'],
+        sourcePaths: ['src'],
+        targetFolderPath: 'src/components',
+      }),
+    ).toEqual({
+      blockedPaths: ['src'],
+      moves: [],
+      targetFolderPath: 'src/components',
     });
   });
 

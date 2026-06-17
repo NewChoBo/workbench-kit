@@ -157,6 +157,65 @@ describe('ExtensionRegistry', () => {
     expect(registry.views.getViewProvider('workbench-kit.builtin.explorer.tree')).toBeUndefined();
   });
 
+  it('shares concurrent extension activation for the same activation event', async () => {
+    const registry = new ExtensionRegistry();
+    let activateCalls = 0;
+    let resolveActivation: () => void = () => undefined;
+    const activationGate = new Promise<void>((resolve) => {
+      resolveActivation = resolve;
+    });
+
+    registry.registerExtension({
+      manifest: {
+        schemaVersion: 1,
+        id: 'workbench-kit.builtin.explorer',
+        name: 'builtin-explorer',
+        displayName: 'Explorer',
+        version: '0.0.0',
+        publisher: 'workbench-kit',
+        engines: {
+          workbench: '^0.0.0',
+          extensionApi: '^0.0.0',
+        },
+        activationEvents: ['onView:workbench-kit.builtin.explorer.tree'],
+        contributes: {
+          views: {
+            explorer: [
+              {
+                id: 'workbench-kit.builtin.explorer.tree',
+                name: 'Explorer',
+              } as never,
+            ],
+          },
+        },
+      },
+      module: {
+        activate: async (context) => {
+          activateCalls += 1;
+          await activationGate;
+          context.views.registerViewProvider({
+            viewId: 'workbench-kit.builtin.explorer.tree',
+            resolveViewHost: () => ({
+              dispose() {},
+              render: () => 'Explorer Tree',
+            }),
+          });
+        },
+      },
+    });
+
+    const firstActivation = registry.activateView('workbench-kit.builtin.explorer.tree');
+    const secondActivation = registry.activateView('workbench-kit.builtin.explorer.tree');
+
+    await Promise.resolve();
+    expect(activateCalls).toBe(1);
+
+    resolveActivation();
+    await expect(Promise.all([firstActivation, secondActivation])).resolves.toHaveLength(2);
+    expect(activateCalls).toBe(1);
+    expect(registry.views.getViewProvider('workbench-kit.builtin.explorer.tree')).toBeDefined();
+  });
+
   it('normalizes views, view containers, menus, activities, and configuration', () => {
     const registry = new ExtensionRegistry();
     registry.registerExtension({
@@ -367,5 +426,122 @@ describe('ExtensionRegistry', () => {
     ).toThrow('Extension dependency cycle detected: first -> second -> first');
 
     expect(registry.getExtensions()).toEqual([]);
+  });
+
+  it('resolves host-seeded capabilities through getCapability', async () => {
+    const registry = new ExtensionRegistry({
+      capabilities: {
+        'workbench.auth': { id: 'host-auth' },
+      },
+    });
+    registry.registerExtension({
+      ...helloWorldExtension,
+      manifest: {
+        ...helloWorldExtension.manifest,
+        activationEvents: ['onStartup'],
+      },
+      module: {
+        activate: (context) => {
+          expect(context.getCapability<{ id: string }>('workbench.auth')).toEqual({
+            id: 'host-auth',
+          });
+        },
+      },
+    });
+
+    await registry.activateStartup();
+  });
+
+  it('disposes extension-provided capabilities on deactivate', async () => {
+    const registry = new ExtensionRegistry();
+    let disposed = false;
+
+    registry.registerExtension({
+      manifest: {
+        schemaVersion: 1,
+        id: 'workbench-kit.capability-provider',
+        name: 'capability-provider',
+        displayName: 'Capability Provider',
+        version: '0.0.0',
+        publisher: 'workbench-kit',
+        engines: {
+          workbench: '^0.0.0',
+          extensionApi: '^0.0.0',
+        },
+        activationEvents: ['onStartup'],
+        capabilities: {
+          provides: ['workbench.workspace'],
+        },
+      },
+      module: {
+        activate: (context) => {
+          context.capabilities.registerProvider({
+            id: 'workbench.workspace',
+            get: () => ({ ready: true }),
+            dispose: () => {
+              disposed = true;
+            },
+          });
+        },
+      },
+    });
+
+    await registry.activateStartup();
+    expect(registry.capabilityRegistry.get<{ ready: boolean }>('workbench.workspace')).toEqual({
+      ready: true,
+    });
+
+    await registry.deactivateExtension('workbench-kit.capability-provider');
+
+    expect(disposed).toBe(true);
+    expect(registry.capabilityRegistry.has('workbench.workspace')).toBe(false);
+  });
+
+  it('disposes extension-provided view host factories on deactivate', async () => {
+    const registry = new ExtensionRegistry();
+
+    registry.registerExtension({
+      manifest: {
+        schemaVersion: 1,
+        id: 'workbench-kit.view-host-factory',
+        name: 'view-host-factory',
+        displayName: 'View Host Factory',
+        version: '0.0.0',
+        publisher: 'workbench-kit',
+        engines: {
+          workbench: '^0.0.0',
+          extensionApi: '^0.0.0',
+        },
+        activationEvents: ['onStartup'],
+      },
+      module: {
+        activate: (context) => {
+          context.viewHostFactories.registerFactory({
+            id: 'workbench-kit.test.view-host-factory',
+            priority: 100,
+            canCreate: ({ viewId }) => viewId === 'workbench-kit.test.view',
+            create: () => ({
+              dispose() {},
+              render: () => 'factory-host',
+            }),
+          });
+        },
+      },
+    });
+
+    await registry.activateStartup();
+    expect(
+      registry.viewHostFactories
+        .getFactories()
+        .some((factory) => factory.id === 'workbench-kit.test.view-host-factory'),
+    ).toBe(true);
+
+    await registry.deactivateExtension('workbench-kit.view-host-factory');
+
+    expect(
+      registry.viewHostFactories
+        .getFactories()
+        .some((factory) => factory.id === 'workbench-kit.test.view-host-factory'),
+    ).toBe(false);
   });
 });

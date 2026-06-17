@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.builtin.editor",
+  "name": "builtin-editor",
+  "displayName": "Text Editor",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onStartup"],
+  "contributes": {
+    "editors": [
+      {
+        "id": "workbench-kit.builtin.editor.text",
+        "label": "Text Editor",
+        "icon": "file"
+      }
+    ]
+  }
+}

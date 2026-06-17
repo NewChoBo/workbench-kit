@@ -1,4 +1,5 @@
 import Markdown from 'react-markdown';
+import { cx } from '../../utils/cx';
 import type { ChatMessage } from './types';
 
 export interface ChatMessageItemProps {
@@ -27,7 +28,15 @@ export function ChatMessageItem({
         {message.label ?? assistantLabel}
       </div>
       <div className="md-content">
-        <Markdown>{message.content}</Markdown>
+        <Markdown
+          components={{
+            code: ({ className, ...props }) => (
+              <code className={cx('ui-workbench-scrollbar', className)} {...props} />
+            ),
+          }}
+        >
+          {message.content}
+        </Markdown>
         {isStreaming ? <span aria-hidden="true" className="message__cursor" /> : null}
       </div>
     </div>

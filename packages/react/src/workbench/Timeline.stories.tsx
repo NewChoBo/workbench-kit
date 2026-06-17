@@ -86,7 +86,6 @@ export const OrderedOperationTimeline: Story = {
     <div
       style={{
         background: 'var(--color-bg)',
-        minHeight: '100vh',
         padding: 24,
         width: 'min(100%, 760px)',
       }}
@@ -120,7 +119,6 @@ export const CompactTimeline: Story = {
     <div
       style={{
         background: 'var(--color-bg)',
-        minHeight: '100vh',
         padding: 24,
         width: 'min(100%, 520px)',
       }}
@@ -139,7 +137,6 @@ export const CustomPayloadViews: Story = {
     <div
       style={{
         background: 'var(--color-bg)',
-        minHeight: '100vh',
         padding: 24,
         width: 'min(100%, 760px)',
       }}

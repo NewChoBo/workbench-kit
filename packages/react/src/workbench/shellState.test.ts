@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT,
   initializeWorkbenchShellState,
   workbenchShellStateReducer,
   type WorkbenchShellAction,
@@ -20,6 +21,16 @@ function reduceShellState(
 }
 
 describe('workbench shell state', () => {
+  it('uses a compact VS Code-like primary sidebar default', () => {
+    const state = initializeWorkbenchShellState<TestActivityId, TestTheme>({
+      activeActivityId: 'explorer',
+      theme: 'dark',
+    });
+
+    expect(DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT).toBe(20);
+    expect(state.primarySidebarSizePercent).toBe(DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT);
+  });
+
   it('initializes layout, settings, and theme state with clamped sidebar size', () => {
     const state = initializeWorkbenchShellState<TestActivityId, TestTheme>({
       activeActivityId: 'explorer',

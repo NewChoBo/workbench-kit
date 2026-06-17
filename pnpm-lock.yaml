@@ -78,6 +78,46 @@ importers:
         specifier: ^4.1.8
         version: 4.1.8(@types/node@25.9.1)(jsdom@29.1.1)(vite@6.4.3(@types/node@25.9.1))
 
+  examples/workbench-sample:
+    dependencies:
+      '@workbench-kit/jdw':
+        specifier: workspace:*
+        version: link:../../packages/json-widget
+      '@workbench-kit/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@workbench-kit/workbench-config':
+        specifier: workspace:*
+        version: link:../../packages/workbench-config
+      '@workbench-kit/workbench-react':
+        specifier: workspace:*
+        version: link:../../packages/workbench-react
+      '@workbench-kit/workspace':
+        specifier: workspace:*
+        version: link:../../packages/workspace
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.16
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.16)
+      '@vitejs/plugin-react':
+        specifier: ^5.0.0
+        version: 5.2.0(vite@6.4.3(@types/node@25.9.1))
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.3(@types/node@25.9.1)
+
   extensions/builtin.accounts:
     dependencies:
       '@workbench-kit/platform':
@@ -87,11 +127,20 @@ importers:
         specifier: workspace:*
         version: link:../../packages/workbench-extension-sdk
 
+  extensions/builtin.editor:
+    dependencies:
+      '@workbench-kit/workbench-extension-sdk':
+        specifier: workspace:*
+        version: link:../../packages/workbench-extension-sdk
+
   extensions/builtin.explorer:
     dependencies:
       '@workbench-kit/workbench-extension-sdk':
         specifier: workspace:*
         version: link:../../packages/workbench-extension-sdk
+      '@workbench-kit/workspace':
+        specifier: workspace:*
+        version: link:../../packages/workspace
 
   extensions/builtin.keybindings:
     dependencies:
@@ -276,6 +325,9 @@ importers:
       '@workbench-kit/workbench-core':
         specifier: workspace:*
         version: link:../workbench-core
+      '@workbench-kit/workspace':
+        specifier: workspace:*
+        version: link:../workspace
       react:
         specifier: ^19.0.0
         version: 19.2.7

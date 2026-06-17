@@ -6,12 +6,13 @@ Status: **MVP** — kit primitive for JSON-based settings and configuration scre
 
 `JsonConfigWorkbench` composes existing workbench-kit pieces into a reusable **JSON config editor** pattern:
 
-| Region          | Component                                                   | Role                                       |
-| --------------- | ----------------------------------------------------------- | ------------------------------------------ |
-| Shell           | `Panel` + `WorkbenchArtifactModeControls`                   | Code / preview / split layout              |
-| Left (code)     | `WorkspaceEditor`                                           | Monaco JSON editing                        |
-| Right (preview) | `WorkbenchStructuredDataSchemaPanel` or `JsonWidgetPreview` | Schema-driven form or widget live preview  |
-| Toolbar         | Save / Discard (optional)                                   | Controlled dirty state via `baselineValue` |
+| Region          | Component                            | Role                                       |
+| --------------- | ------------------------------------ | ------------------------------------------ |
+| Shell           | `Panel` + JSON config mode controls  | Code(JSON) / form / preview layout         |
+| Left (code)     | `WorkspaceEditor`                    | Monaco JSON editing                        |
+| Left (form)     | `WorkbenchStructuredDataSchemaPanel` | Schema-driven form editing                 |
+| Right (preview) | `JdwPreview` or empty preview state  | Read-only live preview                     |
+| Toolbar         | Save / Discard (optional)            | Controlled dirty state via `baselineValue` |
 
 Consumers (tile_paper, custom_launcher) can adopt this without migrating full `json-widget-editor` chrome yet.
 
@@ -29,15 +30,18 @@ import {
 - `value` / `onChange` — controlled JSON document string
 - `baselineValue` — compare for dirty indicator; pair with `onSave` / `onDiscard`
 - `schema` — optional `WorkbenchStructuredDataSchemaDocument` for form preview
-- `previewKind` — `'auto' | 'schema' | 'widget' | 'none'` (default `'auto'`)
+- `previewKind` — `'auto' | 'schema' | 'widget' | 'none'` (default `'auto'`; `schema` enables the form surface, not a read-only preview)
 - `widgetRegistry` — optional registry for widget JSON preview
-- `defaultMode` / `mode` — `'code' | 'preview' | 'split'` (default `'split'`)
+- `defaultMode` / `mode` — `'code' | 'form' | 'preview'` (`'split'` is accepted as a legacy alias for `'code'`)
 
 ### Preview resolution (`auto`)
 
-1. If `schema` is provided → structured form preview
-2. Else if JSON parses as an object with a string `type` field → widget preview
-3. Else → empty preview state
+1. If JSON parses as an object with a string `type` field → widget preview
+2. Else → empty preview state
+
+Schema-driven editing is handled by **Form** mode on the left editor pane. Code
+and Form modes keep a right preview pane beside the active editor surface; Preview
+mode focuses the read-only preview only.
 
 ## Storybook
 
@@ -49,10 +53,10 @@ pnpm storybook
 
 Stories under **JDW/Config/Workbench**:
 
-- **SchemaSettings** — app settings schema + split editor
-- **WidgetPreview** — widget JSON with registry render
-- **AutoPreview** — auto-detected widget document
-- **Interaction** — baseline play test (form edit, dirty, discard)
+- **SchemaSettings** — schema settings in Code(JSON) + preview layout
+- **SchemaFormEditing** — baseline play test for form edit, dirty state, discard
+- **WidgetPreview** — widget JSON with registry render and mode-switch baseline play
+- **AutoPreview** — auto-detected widget document in focused preview mode
 
 Play gate:
 
@@ -69,13 +73,13 @@ pnpm typecheck
 
 ## Related work
 
-| Area                                                   | Status                                                                 |
-| ------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `@workbench-kit/jdw` parse/registry                    | Done                                                                   |
-| `@workbench-kit/react/json-widget` `JsonWidgetPreview` | Done                                                                   |
-| `StructuredArtifactEditor` (workspace file + drafts)   | Done — use when editing workspace files with `WorkspaceDraftsProvider` |
-| `JsonConfigWorkbench` (controlled JSON config)         | **This MVP**                                                           |
-| tile_paper `json-widget-editor` migration              | Deferred — keep local until consumers adopt kit primitive              |
+| Area                                                 | Status                                                                 |
+| ---------------------------------------------------- | ---------------------------------------------------------------------- |
+| `@workbench-kit/jdw` parse/registry                  | Done                                                                   |
+| `@workbench-kit/react/jdw` `JdwPreview`              | Done                                                                   |
+| `StructuredArtifactEditor` (workspace file + drafts) | Done — use when editing workspace files with `WorkspaceDraftsProvider` |
+| `JsonConfigWorkbench` (controlled JSON config)       | **This MVP**                                                           |
+| tile_paper `json-widget-editor` migration            | Deferred — keep local until consumers adopt kit primitive              |
 
 ## Consumer adoption sketch
 

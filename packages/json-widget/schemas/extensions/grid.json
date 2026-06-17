@@ -22,7 +22,7 @@
         "background": { "type": "string" },
         "children": {
           "type": "array",
-          "items": { "$ref": "../jdw-node.json" }
+          "items": { "$ref": "../jdw-node.jdw.schema.json" }
         }
       },
       "additionalProperties": true

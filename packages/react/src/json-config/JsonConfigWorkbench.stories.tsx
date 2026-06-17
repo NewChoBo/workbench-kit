@@ -12,6 +12,7 @@ const meta = {
   title: 'JDW/Config/Workbench',
   component: JsonConfigWorkbench,
   parameters: {
+    fullHeightShell: '640px',
     layout: 'fullscreen',
   },
 } satisfies Meta;
@@ -96,7 +97,7 @@ function ConfigHarness({
   const [baseline, setBaseline] = useState(initialValue);
 
   return (
-    <div style={{ padding: 24, height: 640, background: 'var(--color-bg)' }}>
+    <div style={{ background: 'var(--color-bg)', height: '100%' }}>
       <JsonConfigWorkbench
         baselineValue={baseline}
         path="settings.json"
@@ -115,7 +116,7 @@ export const SchemaSettings: Story = {
   render: () => (
     <ConfigHarness
       initialValue={settingsJson}
-      defaultMode="split"
+      defaultMode="code"
       previewKind="schema"
       schema={settingsSchema}
     />
@@ -126,20 +127,7 @@ export const WidgetPreview: Story = {
   render: () => (
     <ConfigHarness
       initialValue={widgetJson}
-      defaultMode="split"
-      path="widget.json"
-      previewKind="widget"
-      title="Widget config"
-      widgetRegistry={demoRegistry}
-    />
-  ),
-};
-
-export const WidgetInteraction: Story = {
-  render: () => (
-    <ConfigHarness
-      initialValue={widgetJson}
-      defaultMode="split"
+      defaultMode="code"
       path="widget.json"
       previewKind="widget"
       title="Widget config"
@@ -155,7 +143,7 @@ export const WidgetInteraction: Story = {
       'Preview from JsonConfigWorkbench widget mode.',
     );
 
-    await expect(canvas.getByRole('button', { name: 'Split' })).toHaveAttribute(
+    await expect(canvas.getByRole('button', { name: 'Code (JSON)' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -166,8 +154,8 @@ export const WidgetInteraction: Story = {
       'true',
     );
 
-    await userEvent.click(canvas.getByRole('button', { name: 'Code' }));
-    await expect(canvas.getByRole('button', { name: 'Code' })).toHaveAttribute(
+    await userEvent.click(canvas.getByRole('button', { name: 'Code (JSON)' }));
+    await expect(canvas.getByRole('button', { name: 'Code (JSON)' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -187,11 +175,11 @@ export const AutoPreview: Story = {
   ),
 };
 
-export const Interaction: Story = {
+export const SchemaFormEditing: Story = {
   render: () => (
     <ConfigHarness
       initialValue={settingsJson}
-      defaultMode="split"
+      defaultMode="form"
       previewKind="schema"
       schema={settingsSchema}
     />

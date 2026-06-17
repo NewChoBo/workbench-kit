@@ -36,15 +36,46 @@ export {
   type WorkspaceSelectionMode,
   type WorkspaceSelectionState,
 } from './selection';
+export {
+  virtualWorkspaceActionToResourceMutation,
+  workspaceResourceMutationToAction,
+  type WorkspaceResourceMutation,
+} from './resource-mutation';
+export {
+  createWorkspaceResourceSnapshot,
+  snapshotMatchesWorkspaceState,
+  type WorkspaceResourceSnapshot,
+} from './resource-snapshot';
+export {
+  applyWorkspaceResourceMutation,
+  applyWorkspaceResourceTransaction,
+  createWorkspaceResourceTransaction,
+  type WorkspaceResourceTransaction,
+} from './resource-transaction';
+export {
+  WORKSPACE_RESOURCE_SCHEME,
+  formatWorkspaceResourceUri,
+  parseWorkspaceResourceUri,
+  workspacePathFromResourceUri,
+  workspaceResourceUriForFile,
+  workspaceResourceUriForFolder,
+  type WorkspaceResourceKind,
+  type WorkspaceResourceUri,
+} from './resource-uri';
 export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
 export {
   getAvailableWorkspaceEntryName,
   getWorkspaceFileMovePlan,
+  getWorkspaceEntryMovePlan,
   initializeVirtualWorkspaceState,
   isWorkspaceEntryPathAvailable,
   virtualWorkspaceReducer,
   type CreateWorkspaceFileInput,
   type WorkspaceEntryNameSuggestionInput,
+  type WorkspaceEntryMove,
+  type WorkspaceEntryMoveKind,
+  type WorkspaceEntryMovePlan,
+  type WorkspaceEntryMovePlanInput,
   type WorkspaceEntryPathAvailabilityInput,
   type VirtualWorkspaceAction,
   type VirtualWorkspaceInitialState,
@@ -77,3 +108,14 @@ export {
   type WorkbenchStructuredDataPath,
   type WorkbenchStructuredDataRecord,
 } from './structuredPath';
+export {
+  WORKBENCH_WORKSPACE_CAPABILITY_ID,
+  WorkspaceResourceService,
+  buildEditorSaveMutation,
+  createEditorSaveTransaction,
+  createWorkbenchWorkspaceHostPort,
+  type WorkbenchEditorSavePort,
+  type WorkbenchWorkspaceHostPort,
+  type WorkspaceChangeEvent,
+  type WorkspaceResourceServiceOptions,
+} from './workbench-workspace-host';

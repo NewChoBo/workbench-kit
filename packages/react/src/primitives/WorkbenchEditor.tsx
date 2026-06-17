@@ -2,7 +2,9 @@ import { useRef, useState } from 'react';
 import type {
   CSSProperties,
   ComponentPropsWithRef,
+  DragEvent as ReactDragEvent,
   KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from 'react';
@@ -71,6 +73,7 @@ export function SegmentedControl<TValue extends string = string>({
 export interface EditorTab {
   closable?: boolean | undefined;
   dirty?: boolean | undefined;
+  dropPosition?: EditorTabDropPosition | undefined;
   icon?: string | undefined;
   id: string;
   label: ReactNode;
@@ -79,12 +82,23 @@ export interface EditorTab {
   title?: string | undefined;
 }
 
+export type EditorTabDropPosition = 'after' | 'before';
+
 export interface EditorTabsProps extends Omit<ComponentPropsWithRef<'div'>, 'onSelect'> {
   activeId: string;
   addons?: ReactNode | undefined;
+  draggableTabs?: boolean | undefined;
   onClose?: ((id: string) => void) | undefined;
   onNewTab?: (() => void) | undefined;
+  onPinToggle?: ((id: string) => void) | undefined;
   onSelect: (id: string) => void;
+  onTabContextMenu?: ((id: string, event: ReactMouseEvent<HTMLElement>) => void) | undefined;
+  onTabDoubleClick?: ((id: string, event: ReactMouseEvent<HTMLElement>) => void) | undefined;
+  onTabDragEnd?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
+  onTabDragLeave?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
+  onTabDragOver?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
+  onTabDragStart?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
+  onTabDrop?: ((id: string, event: ReactDragEvent<HTMLElement>) => void) | undefined;
   tabs: readonly EditorTab[];
 }
 
@@ -92,15 +106,24 @@ export function EditorTabs({
   activeId,
   addons,
   className,
+  draggableTabs,
   onClose,
   onNewTab,
+  onPinToggle,
   onSelect,
+  onTabContextMenu,
+  onTabDoubleClick,
+  onTabDragEnd,
+  onTabDragLeave,
+  onTabDragOver,
+  onTabDragStart,
+  onTabDrop,
   tabs,
   ...props
 }: EditorTabsProps) {
   return (
     <div className={cx('ui-editor-tabs', className)} role="tablist" {...props}>
-      <div className="ui-editor-tabs__scroller">
+      <div className="ui-editor-tabs__scroller ui-workbench-scrollbar--hidden">
         {tabs.map((tab) => {
           const active = tab.id === activeId;
           return (
@@ -108,7 +131,30 @@ export function EditorTabs({
               key={tab.id}
               aria-selected={active}
               className={cx('ui-editor-tabs__tab', active && 'ui-editor-tabs__tab--active')}
+              data-drop-position={tab.dropPosition}
+              draggable={draggableTabs}
               onClick={() => onSelect(tab.id)}
+              onContextMenu={(event) => {
+                onTabContextMenu?.(tab.id, event);
+              }}
+              onDoubleClick={(event) => {
+                onTabDoubleClick?.(tab.id, event);
+              }}
+              onDragEnd={(event) => {
+                onTabDragEnd?.(tab.id, event);
+              }}
+              onDragLeave={(event) => {
+                onTabDragLeave?.(tab.id, event);
+              }}
+              onDragOver={(event) => {
+                onTabDragOver?.(tab.id, event);
+              }}
+              onDragStart={(event) => {
+                onTabDragStart?.(tab.id, event);
+              }}
+              onDrop={(event) => {
+                onTabDrop?.(tab.id, event);
+              }}
               onKeyDown={(event) => {
                 if (event.key !== 'Enter' && event.key !== ' ') return;
                 event.preventDefault();
@@ -118,17 +164,60 @@ export function EditorTabs({
               tabIndex={active ? 0 : -1}
               title={tab.title}
             >
-              {tab.icon ? <i aria-hidden className={cxCodicon(tab.icon)} /> : null}
+              {tab.icon ? (
+                <i aria-hidden className={cxCodicon(tab.icon, 'ui-editor-tabs__file-icon')} />
+              ) : null}
               <span className="ui-editor-tabs__label">{tab.label}</span>
-              {tab.preview ? <i aria-hidden className={cxCodicon('eye')} /> : null}
+              {tab.preview ? (
+                <i
+                  aria-hidden
+                  className={cxCodicon(
+                    'preview',
+                    'ui-editor-tabs__status-icon',
+                    'ui-editor-tabs__status-icon--preview',
+                  )}
+                />
+              ) : null}
               {tab.dirty ? (
                 <span aria-label="Unsaved changes" className="ui-editor-tabs__dirty">
                   &bull;
                 </span>
               ) : null}
-              {tab.pinned ? <i aria-hidden className={cxCodicon('pinned')} /> : null}
+              {tab.pinned ? (
+                onPinToggle ? (
+                  <button
+                    aria-label="Unpin tab"
+                    className="ui-editor-tabs__status-button"
+                    title="Unpin tab"
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onPinToggle(tab.id);
+                    }}
+                  >
+                    <i
+                      aria-hidden
+                      className={cxCodicon(
+                        'pinned',
+                        'ui-editor-tabs__status-icon',
+                        'ui-editor-tabs__status-icon--pinned',
+                      )}
+                    />
+                  </button>
+                ) : (
+                  <i
+                    aria-hidden
+                    className={cxCodicon(
+                      'pinned',
+                      'ui-editor-tabs__status-icon',
+                      'ui-editor-tabs__status-icon--pinned',
+                    )}
+                  />
+                )
+              ) : null}
               {(tab.closable ?? true) && onClose ? (
                 <IconButton
+                  compact
                   className="ui-editor-tabs__close"
                   icon="codicon-close"
                   label="Close tab"
@@ -144,6 +233,7 @@ export function EditorTabs({
       </div>
       {onNewTab ? (
         <IconButton
+          compact
           className="ui-editor-tabs__new"
           icon="codicon-add"
           label="New tab"

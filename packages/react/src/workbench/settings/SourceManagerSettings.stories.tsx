@@ -14,6 +14,7 @@ import { WorkbenchSettingsSection } from './WorkbenchSettingsSection';
 const meta = {
   title: 'React/Workbench/Settings/SourceManagerSettings',
   parameters: {
+    fullHeightShell: '640px',
     layout: 'fullscreen',
   },
 } satisfies Meta;
@@ -43,7 +44,7 @@ function SourceManagerHarness() {
   return (
     <div
       className="workbench-story-shell"
-      style={{ background: 'var(--color-bg)', minHeight: 640, padding: 24 }}
+      style={{ background: 'var(--color-bg)', height: '100%' }}
     >
       <div aria-label="Source manager event log" role="status" style={{ marginBottom: 12 }}>
         {eventLog}

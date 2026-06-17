@@ -65,7 +65,8 @@ describe('resolveWorkbenchExtensions', () => {
         .getViewProvider('workbench-kit.builtin.explorer.tree')
         ?.resolveViewHost()
         .render(),
-    ).toContain('Explorer');
+    ).toEqual({ kind: 'workbench-kit.builtin.explorer.view' });
+    expect(registry.commands.getCommand('workspace.newFile')).toBeDefined();
     expect(registry.commands.getCommand('workbench-kit.builtin.settings.open')).toBeUndefined();
     expect(registry.getExtension('workbench-kit.builtin.settings')).toBeUndefined();
   });

@@ -110,8 +110,7 @@ function ShellHarness({
     <div
       style={{
         background: 'var(--color-bg)',
-        height: 'min(calc(100vh - 96px), 680px)',
-        padding: 24,
+        height: 'min(calc(100% - 96px), 680px)',
         width: 'min(100%, 960px)',
       }}
     >

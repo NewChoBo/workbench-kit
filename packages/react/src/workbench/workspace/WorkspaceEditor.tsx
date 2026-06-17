@@ -7,6 +7,11 @@ import { Toolbar } from '../../primitives/Toolbar';
 import { extensionOfPath } from './path';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceFile } from './types';
+import { JDW_DOCUMENT_MIME } from '../../jdw/document';
+import {
+  configureWorkspaceEditorJsonDiagnostics,
+  monacoModelPathForWorkspaceFile,
+} from './workspaceJsonDiagnostics';
 
 loader.config({ monaco });
 
@@ -103,6 +108,7 @@ export function languageForFile(path: string, mimeType?: string) {
     case 'text/javascript':
       return 'javascript';
     case 'application/json':
+    case JDW_DOCUMENT_MIME:
     case 'application/vnd.workbench-kit.widget+json':
       return 'json';
     case 'application/typescript':
@@ -161,6 +167,7 @@ export interface WorkspaceEditorProps {
   onEditorMount?: OnMount;
   onSave?: (content: string) => void;
   readOnly?: boolean;
+  showFileBar?: boolean;
   showHeader?: boolean;
   theme?: WorkspaceEditorTheme;
   value?: string;
@@ -173,12 +180,14 @@ export function WorkspaceEditor({
   onEditorMount,
   onSave,
   readOnly = !onChange,
+  showFileBar = true,
   showHeader = true,
   theme = 'dark',
   value = file.content,
 }: WorkspaceEditorProps) {
   const language = languageForFile(file.path, file.mimeType);
   const handleMount: OnMount = (editor, monacoInstance) => {
+    configureWorkspaceEditorJsonDiagnostics(monacoInstance, file);
     onEditorMount?.(editor, monacoInstance);
 
     if (!onSave) return;
@@ -205,13 +214,13 @@ export function WorkspaceEditor({
             {file.path}
           </span>
         </PanelHeader>
-      ) : (
+      ) : showFileBar ? (
         <div className="workspace-editor__file-bar" title={file.path}>
           <WorkspaceFileIcon mimeType={file.mimeType} path={file.path} />
           <span className="workspace-editor__file-path">{file.path}</span>
           <span className="workspace-editor__file-meta">{file.mimeType ?? language}</span>
         </div>
-      )}
+      ) : null}
       <PanelBody className="workbench-monaco-panel__body">
         <div className="workspace-editor__monaco">
           <Editor
@@ -239,7 +248,7 @@ export function WorkspaceEditor({
               tabSize: 2,
               wordWrap: 'on',
             }}
-            path={file.path}
+            path={monacoModelPathForWorkspaceFile(file.path)}
             theme={monacoThemeForWorkspaceTheme(theme)}
             value={value}
             onChange={(nextValue) => onChange?.(nextValue ?? '')}

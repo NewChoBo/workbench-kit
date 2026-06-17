@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { ActivityBar, type ActivityBarProps, type ActivityBarItem } from './ActivityBar';
 import { SplitView } from './SplitView';
 import { StatusBar, type StatusBarItemModel, type StatusBarSectionModel } from './StatusBar';
+import { DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT } from './shellState';
 
 export interface WorkbenchShellProps {
   activityBar: Omit<ActivityBarProps, 'items'> & {
@@ -23,6 +24,7 @@ export interface WorkbenchShellProps {
   rootStyle?: CSSProperties;
   secondaryArea: ReactNode;
   statusSections: StatusBarSectionModel[];
+  titleBar?: ReactNode;
   overlays?: ReactNode;
   theme?: string;
 }
@@ -37,6 +39,7 @@ export function WorkbenchShell({
   rootStyle,
   secondaryArea,
   statusSections,
+  titleBar,
   theme,
 }: WorkbenchShellProps) {
   const body = primarySidebar?.isVisible ? (
@@ -46,7 +49,7 @@ export function WorkbenchShell({
       maxPrimarySizePercent={primarySidebar?.maxPrimarySizePercent}
       onPrimarySizePercentChange={primarySidebar?.onSizePercentChange}
       primary={primarySidebar.node}
-      primarySizePercent={primarySidebar.primarySizePercent}
+      primarySizePercent={primarySidebar.primarySizePercent ?? DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT}
       secondary={secondaryArea}
     />
   ) : (
@@ -55,6 +58,7 @@ export function WorkbenchShell({
 
   return (
     <div className={rootClassName} data-theme={theme} style={rootStyle}>
+      {titleBar ? <header className="ui-workbench-titlebar">{titleBar}</header> : null}
       <div className="ide-body">
         <ActivityBar {...activityBar} />
         {body}

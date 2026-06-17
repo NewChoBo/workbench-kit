@@ -10,6 +10,7 @@ describe('bundled workbench extensions', () => {
   it('exports built-in and sample extension manifests', () => {
     expect(BUILTIN_WORKBENCH_EXTENSIONS.map(({ manifest }) => manifest.id)).toEqual([
       'workbench-kit.builtin.accounts',
+      'workbench-kit.builtin.editor',
       'workbench-kit.builtin.explorer',
       'workbench-kit.builtin.keybindings',
       'workbench-kit.builtin.settings',
@@ -48,10 +49,17 @@ describe('bundled workbench extensions', () => {
       containerId: 'explorer',
       name: 'Explorer',
     });
+    expect(registry.editors.getEditor('workbench-kit.builtin.editor.text')).toMatchObject({
+      label: 'Text Editor',
+    });
     expect(
       registry.activities.getActivity('workbench-kit.builtin.explorer.activity'),
     ).toMatchObject({
       viewContainerId: 'explorer',
     });
+    expect(
+      registry.activities.getActivity('workbench-kit.builtin.settings.activity'),
+    ).toBeUndefined();
+    expect(registry.views.getView('workbench-kit.builtin.settings.view')).toBeUndefined();
   });
 });

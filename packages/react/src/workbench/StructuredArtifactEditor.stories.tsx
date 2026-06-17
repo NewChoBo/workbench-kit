@@ -19,6 +19,7 @@ const meta = {
     ),
   ],
   parameters: {
+    fullHeightShell: '600px',
     layout: 'fullscreen',
   },
 } satisfies Meta;
@@ -63,7 +64,7 @@ function EditorHarness(props: Partial<StructuredArtifactEditorProps>) {
   };
 
   return (
-    <div style={{ padding: 24, height: 600, background: 'var(--color-bg)' }}>
+    <div style={{ background: 'var(--color-bg)', height: '100%' }}>
       <StructuredArtifactEditor
         file={file}
         schema={mockSchema}

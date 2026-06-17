@@ -27,9 +27,21 @@ export interface WorkspaceFileMove {
   sourcePath: string;
 }
 
+export type WorkspaceEntryMoveKind = 'file' | 'folder';
+
+export interface WorkspaceEntryMove extends WorkspaceFileMove {
+  kind: WorkspaceEntryMoveKind;
+}
+
 export interface WorkspaceFileMovePlan {
   blockedPaths: string[];
   moves: WorkspaceFileMove[];
+  targetFolderPath: string;
+}
+
+export interface WorkspaceEntryMovePlan {
+  blockedPaths: string[];
+  moves: WorkspaceEntryMove[];
   targetFolderPath: string;
 }
 
@@ -39,6 +51,8 @@ export interface WorkspaceFileMovePlanInput {
   sourcePaths: Iterable<string>;
   targetFolderPath?: string;
 }
+
+export type WorkspaceEntryMovePlanInput = WorkspaceFileMovePlanInput;
 
 export interface WorkspaceEntryPathAvailabilityInput {
   excludedPaths?: Iterable<string>;
@@ -81,10 +95,12 @@ export type VirtualWorkspaceAction =
   | { path: string; type: 'delete-file' }
   | { path: string; type: 'delete-folder' }
   | { sourcePath: string; targetFolderPath: string; type: 'move-file' }
+  | { sourcePath: string; targetFolderPath: string; type: 'move-folder' }
   | { path: string; type: 'open-file' }
   | { mimeType?: string; name: string; path: string; type: 'rename-file' }
   | { name: string; path: string; type: 'rename-folder' }
   | { file: WriteWorkspaceFileInput; path: string; type: 'save-file' }
+  | { state: VirtualWorkspaceInitialState; type: 'initialize-workspace' }
   | { query: string; type: 'set-search-query' }
   | { path: string; type: 'toggle-folder' };
 
@@ -310,6 +326,105 @@ export function getWorkspaceFileMovePlan({
   };
 }
 
+export function getWorkspaceEntryMovePlan({
+  files,
+  folders = [],
+  sourcePaths,
+  targetFolderPath = '',
+}: WorkspaceEntryMovePlanInput): WorkspaceEntryMovePlan {
+  const normalizedFiles = normalizeFiles(files);
+  const normalizedFolders = normalizeFolders(folders);
+  const targetPath = normalizeWorkspacePath(targetFolderPath);
+  const sourcePathSet = new Set([...sourcePaths].map(normalizeWorkspacePath).filter(Boolean));
+  const blockedPaths = new Set<string>();
+  const moves: WorkspaceEntryMove[] = [];
+  const filesByPath = fileMap(normalizedFiles);
+  const foldersByPath = folderPathSet(normalizedFiles, normalizedFolders);
+  const destinationPathSet = new Set<string>();
+
+  if (targetPath && !foldersByPath.has(targetPath)) {
+    return {
+      blockedPaths: [...sourcePathSet],
+      moves,
+      targetFolderPath: targetPath,
+    };
+  }
+
+  const folderSourcePaths = [...sourcePathSet].filter(
+    (sourcePath) => !filesByPath.has(sourcePath) && foldersByPath.has(sourcePath),
+  );
+  const filesOutsideSources = normalizedFiles.filter(
+    (file) =>
+      !sourcePathSet.has(file.path) &&
+      !folderSourcePaths.some((sourcePath) => isUnderPath(file.path, sourcePath)),
+  );
+  const foldersOutsideSources = normalizedFolders.filter(
+    (folder) => !folderSourcePaths.some((sourcePath) => isUnderPath(folder, sourcePath)),
+  );
+
+  sourcePathSet.forEach((sourcePath) => {
+    if (filesByPath.has(sourcePath)) {
+      if (
+        parentPathOf(sourcePath) === targetPath ||
+        folderSourcePaths.some((folderSourcePath) => isUnderPath(sourcePath, folderSourcePath))
+      ) {
+        blockedPaths.add(sourcePath);
+        return;
+      }
+
+      const destinationPath = joinWorkspacePath(targetPath, fileNameOfPath(sourcePath));
+      if (
+        !destinationPath ||
+        destinationPathSet.has(destinationPath) ||
+        hasPathConflict(filesOutsideSources, foldersOutsideSources, destinationPath)
+      ) {
+        blockedPaths.add(sourcePath);
+        return;
+      }
+
+      destinationPathSet.add(destinationPath);
+      moves.push({ destinationPath, kind: 'file', sourcePath });
+      return;
+    }
+
+    if (!foldersByPath.has(sourcePath)) {
+      blockedPaths.add(sourcePath);
+      return;
+    }
+
+    if (
+      parentPathOf(sourcePath) === targetPath ||
+      (targetPath && isUnderPath(targetPath, sourcePath)) ||
+      folderSourcePaths.some(
+        (folderSourcePath) =>
+          folderSourcePath !== sourcePath && isUnderPath(sourcePath, folderSourcePath),
+      )
+    ) {
+      blockedPaths.add(sourcePath);
+      return;
+    }
+
+    const destinationPath = joinWorkspacePath(targetPath, fileNameOfPath(sourcePath));
+    if (
+      !destinationPath ||
+      destinationPathSet.has(destinationPath) ||
+      hasPathConflict(filesOutsideSources, foldersOutsideSources, destinationPath)
+    ) {
+      blockedPaths.add(sourcePath);
+      return;
+    }
+
+    destinationPathSet.add(destinationPath);
+    moves.push({ destinationPath, kind: 'folder', sourcePath });
+  });
+
+  return {
+    blockedPaths: [...blockedPaths],
+    moves,
+    targetFolderPath: targetPath,
+  };
+}
+
 export function initializeVirtualWorkspaceState({
   expandedPaths = [],
   files = [],
@@ -349,6 +464,10 @@ export function virtualWorkspaceReducer(
   state: VirtualWorkspaceState,
   action: VirtualWorkspaceAction,
 ): VirtualWorkspaceState {
+  if (action.type === 'initialize-workspace') {
+    return initializeVirtualWorkspaceState(action.state);
+  }
+
   if (action.type === 'set-search-query') {
     return { ...state, searchQuery: action.query };
   }
@@ -614,6 +733,72 @@ export function virtualWorkspaceReducer(
       [...state.expandedPaths]
         .map((expandedPath) =>
           isUnderPath(expandedPath, path) ? renamePath(expandedPath) : expandedPath,
+        )
+        .concat(parentPathsOf(destinationPath), destinationPath),
+    );
+
+    return {
+      ...state,
+      expandedPaths: pruneExpandedPaths(expandedPaths, files, folders),
+      files,
+      folders,
+      openPaths,
+      selectedPath,
+    };
+  }
+
+  if (action.type === 'move-folder') {
+    const sourcePath = normalizeWorkspacePath(action.sourcePath);
+    const targetFolderPath = normalizeWorkspacePath(action.targetFolderPath);
+    if (
+      !sourcePath ||
+      !folderPathSet(state.files, state.folders).has(sourcePath) ||
+      parentPathOf(sourcePath) === targetFolderPath ||
+      (targetFolderPath && isUnderPath(targetFolderPath, sourcePath))
+    ) {
+      return state;
+    }
+
+    if (targetFolderPath && !folderPathSet(state.files, state.folders).has(targetFolderPath)) {
+      return state;
+    }
+
+    const destinationPath = joinWorkspacePath(targetFolderPath, fileNameOfPath(sourcePath));
+    if (!destinationPath || destinationPath === sourcePath) return state;
+
+    const filesOutsideSource = state.files.filter((file) => !isUnderPath(file.path, sourcePath));
+    const foldersOutsideSource = state.folders.filter((folder) => !isUnderPath(folder, sourcePath));
+    if (hasPathConflict(filesOutsideSource, foldersOutsideSource, destinationPath)) return state;
+
+    const movePath = (currentPath: string) =>
+      currentPath === sourcePath
+        ? destinationPath
+        : `${destinationPath}/${currentPath.slice(sourcePath.length + 1)}`;
+    const files = state.files.map((file) =>
+      isUnderPath(file.path, sourcePath)
+        ? {
+            ...file,
+            path: movePath(file.path),
+            updatedAt: nowIso(),
+          }
+        : file,
+    );
+    const folders = materializeFolders(files, [
+      ...foldersOutsideSource,
+      ...state.folders.filter((folder) => isUnderPath(folder, sourcePath)).map(movePath),
+      destinationPath,
+    ]);
+    const openPaths = state.openPaths.map((openFilePath) =>
+      isUnderPath(openFilePath, sourcePath) ? movePath(openFilePath) : openFilePath,
+    );
+    const selectedPath =
+      state.selectedPath && isUnderPath(state.selectedPath, sourcePath)
+        ? movePath(state.selectedPath)
+        : state.selectedPath;
+    const expandedPaths = new Set(
+      [...state.expandedPaths]
+        .map((expandedPath) =>
+          isUnderPath(expandedPath, sourcePath) ? movePath(expandedPath) : expandedPath,
         )
         .concat(parentPathsOf(destinationPath), destinationPath),
     );

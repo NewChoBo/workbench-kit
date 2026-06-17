@@ -1,5 +1,6 @@
 import type { WorkbenchExtensionDescription } from '../extension-registry.js';
 import * as builtinAccountsModule from '../../../../extensions/builtin.accounts/src/index.ts';
+import * as builtinEditorModule from '../../../../extensions/builtin.editor/src/index.ts';
 import * as builtinExplorerModule from '../../../../extensions/builtin.explorer/src/index.ts';
 import * as builtinKeybindingsModule from '../../../../extensions/builtin.keybindings/src/index.ts';
 import * as builtinSettingsModule from '../../../../extensions/builtin.settings/src/index.ts';
@@ -60,6 +61,32 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
     module: builtinAccountsModule,
   },
   {
+    extensionPath: 'extensions/builtin.editor',
+    manifest: {
+      schemaVersion: 1,
+      id: 'workbench-kit.builtin.editor',
+      name: 'builtin-editor',
+      displayName: 'Text Editor',
+      version: '0.0.0',
+      publisher: 'workbench-kit',
+      engines: {
+        workbench: '^0.0.0',
+        extensionApi: '^0.0.0',
+      },
+      activationEvents: ['onStartup'],
+      contributes: {
+        editors: [
+          {
+            id: 'workbench-kit.builtin.editor.text',
+            label: 'Text Editor',
+            icon: 'file',
+          },
+        ],
+      },
+    },
+    module: builtinEditorModule,
+  },
+  {
     extensionPath: 'extensions/builtin.explorer',
     manifest: {
       schemaVersion: 1,
@@ -75,6 +102,16 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
       activationEvents: [
         'onView:workbench-kit.builtin.explorer.tree',
         'onCommand:workbench-kit.builtin.explorer.refresh',
+        'onCommand:workbench-kit.builtin.explorer.reveal',
+        'onCommand:workbench-kit.builtin.explorer.focus',
+        'onCommand:workbench-kit.builtin.explorer.move',
+        'onCommand:workspace.newFile',
+        'onCommand:workspace.newFolder',
+        'onCommand:workspace.init',
+        'onCommand:workspace.open',
+        'onCommand:workspace.copyPath',
+        'onCommand:workspace.rename',
+        'onCommand:workspace.delete',
       ],
       contributes: {
         commands: [
@@ -82,6 +119,62 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
             command: 'workbench-kit.builtin.explorer.refresh',
             title: 'Refresh Explorer',
             category: 'Explorer',
+          },
+          {
+            command: 'workbench-kit.builtin.explorer.reveal',
+            title: 'Reveal in Explorer',
+            category: 'Explorer',
+          },
+          {
+            command: 'workbench-kit.builtin.explorer.focus',
+            title: 'Focus Explorer',
+            category: 'Explorer',
+          },
+          {
+            command: 'workbench-kit.builtin.explorer.move',
+            title: 'Move Workspace Entry',
+            category: 'Explorer',
+          },
+          {
+            command: 'workspace.newFile',
+            title: 'New File',
+            category: 'Workspace',
+            icon: 'new-file',
+          },
+          {
+            command: 'workspace.newFolder',
+            title: 'New Folder',
+            category: 'Workspace',
+            icon: 'new-folder',
+          },
+          {
+            command: 'workspace.init',
+            title: 'Initialize Workspace',
+            category: 'Workspace',
+          },
+          {
+            command: 'workspace.open',
+            title: 'Open',
+            category: 'Workspace',
+            icon: 'go-to-file',
+          },
+          {
+            command: 'workspace.copyPath',
+            title: 'Copy Path',
+            category: 'Workspace',
+            icon: 'copy',
+          },
+          {
+            command: 'workspace.rename',
+            title: 'Rename',
+            category: 'Workspace',
+            icon: 'edit',
+          },
+          {
+            command: 'workspace.delete',
+            title: 'Delete',
+            category: 'Workspace',
+            icon: 'trash',
           },
         ],
         menus: {
@@ -156,10 +249,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
         workbench: '^0.0.0',
         extensionApi: '^0.0.0',
       },
-      activationEvents: [
-        'onView:workbench-kit.builtin.settings.view',
-        'onCommand:workbench-kit.builtin.settings.open',
-      ],
+      activationEvents: ['onCommand:workbench-kit.builtin.settings.open'],
       contributes: {
         commands: [
           {
@@ -174,31 +264,6 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
               command: 'workbench-kit.builtin.settings.open',
               group: 'preferences',
               order: 1,
-            },
-          ],
-        },
-        viewContainers: {
-          activitybar: [
-            {
-              id: 'settings',
-              title: 'Settings',
-              icon: 'gear',
-            },
-          ],
-        },
-        activities: [
-          {
-            id: 'workbench-kit.builtin.settings.activity',
-            viewContainerId: 'settings',
-            icon: 'gear',
-            title: 'Settings',
-          },
-        ],
-        views: {
-          settings: [
-            {
-              id: 'workbench-kit.builtin.settings.view',
-              name: 'Settings',
             },
           ],
         },

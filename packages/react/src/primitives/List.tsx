@@ -12,7 +12,7 @@ export function List({ ariaLabel, className, role = 'listbox', ...props }: ListP
   return (
     <div
       aria-label={ariaLabel ?? props['aria-label']}
-      className={cx('ui-list', className)}
+      className={cx('ui-list', 'ui-workbench-scrollbar', className)}
       role={role}
       {...props}
     />
