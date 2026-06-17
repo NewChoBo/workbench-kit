@@ -49,6 +49,7 @@ import {
   EDITOR_SAVE_COMMAND_ID,
   type EditorGroupState,
   type EditorHost,
+  type EditorLayoutNode,
   type EditorTabState,
   type MoveEditorOptions,
 } from '@workbench-kit/workbench-core';
@@ -109,6 +110,14 @@ export function EditorArea({
 }: EditorAreaProps) {
   const editorState = useEditorState();
   const editorGroups = editorState.groups.filter((group) => group.tabs.length > 0);
+  const editorGroupsById = useMemo(
+    () => new Map(editorGroups.map((group) => [group.id, group])),
+    [editorGroups],
+  );
+  const editorLayout = useMemo(
+    () => pruneEditorLayout(editorState.layout, editorGroupsById),
+    [editorGroupsById, editorState.layout],
+  );
   const draggedEditorTabRef = useRef<EditorTabDragPayload | null>(null);
 
   const handleEditorTabDragStart = useCallback(
@@ -132,7 +141,7 @@ export function EditorArea({
     return event ? readEditorTabDragPayload(event) : null;
   }, []);
 
-  if (editorGroups.length === 0) {
+  if (editorGroups.length === 0 || !editorLayout) {
     return (
       <main aria-label="Editor area" className="workbench-editor-area workbench-editor-area--empty">
         {emptyState ?? (
@@ -151,7 +160,8 @@ export function EditorArea({
           activeGroupId={editorState.activeGroupId}
           defaultViewModeForResource={defaultViewModeForResource}
           getDraggedEditorTab={getDraggedEditorTab}
-          groups={editorGroups}
+          groupsById={editorGroupsById}
+          layout={editorLayout}
           onEditorTabDragEnd={handleEditorTabDragEnd}
           onEditorTabDragStart={handleEditorTabDragStart}
           theme={theme}
@@ -162,11 +172,38 @@ export function EditorArea({
   );
 }
 
+function pruneEditorLayout(
+  layout: EditorLayoutNode,
+  groupsById: ReadonlyMap<string, EditorGroupState>,
+): EditorLayoutNode | null {
+  if (layout.type === 'group') {
+    return groupsById.has(layout.groupId) ? layout : null;
+  }
+
+  const children = layout.children
+    .map((child) => pruneEditorLayout(child, groupsById))
+    .filter((child): child is EditorLayoutNode => child !== null);
+
+  if (children.length === 0) {
+    return null;
+  }
+
+  if (children.length === 1) {
+    return children[0] ?? null;
+  }
+
+  return {
+    ...layout,
+    children,
+  };
+}
+
 function EditorGroupSplit({
   activeGroupId,
   defaultViewModeForResource,
   getDraggedEditorTab,
-  groups,
+  groupsById,
+  layout,
   onEditorTabDragEnd,
   onEditorTabDragStart,
   theme,
@@ -175,24 +212,25 @@ function EditorGroupSplit({
   activeGroupId: string | undefined;
   defaultViewModeForResource: ((resourceUri: string) => EditorViewMode | undefined) | undefined;
   getDraggedEditorTab: (event?: ReactDragEvent<HTMLElement>) => EditorTabDragPayload | null;
-  groups: readonly EditorGroupState[];
+  groupsById: ReadonlyMap<string, EditorGroupState>;
+  layout: EditorLayoutNode;
   onEditorTabDragEnd: () => void;
   onEditorTabDragStart: (payload: EditorTabDragPayload, event: ReactDragEvent<HTMLElement>) => void;
   theme: WorkspaceEditorTheme | undefined;
   viewProviders: readonly EditorDocumentViewProvider[] | undefined;
 }) {
-  const [primaryGroup, ...secondaryGroups] = groups;
-  if (!primaryGroup) {
-    return null;
-  }
+  if (layout.type === 'group') {
+    const group = groupsById.get(layout.groupId);
+    if (!group) {
+      return null;
+    }
 
-  if (secondaryGroups.length === 0) {
     return (
       <EditorGroupPane
-        active={primaryGroup.id === activeGroupId}
+        active={group.id === activeGroupId}
         defaultViewModeForResource={defaultViewModeForResource}
         getDraggedEditorTab={getDraggedEditorTab}
-        group={primaryGroup}
+        group={group}
         onEditorTabDragEnd={onEditorTabDragEnd}
         onEditorTabDragStart={onEditorTabDragStart}
         theme={theme}
@@ -201,17 +239,48 @@ function EditorGroupSplit({
     );
   }
 
+  const [primaryLayout, ...secondaryLayouts] = layout.children;
+  if (!primaryLayout) {
+    return null;
+  }
+
+  if (secondaryLayouts.length === 0) {
+    return (
+      <EditorGroupSplit
+        activeGroupId={activeGroupId}
+        defaultViewModeForResource={defaultViewModeForResource}
+        getDraggedEditorTab={getDraggedEditorTab}
+        groupsById={groupsById}
+        layout={primaryLayout}
+        onEditorTabDragEnd={onEditorTabDragEnd}
+        onEditorTabDragStart={onEditorTabDragStart}
+        theme={theme}
+        viewProviders={viewProviders}
+      />
+    );
+  }
+
+  const secondaryLayout: EditorLayoutNode =
+    secondaryLayouts.length === 1
+      ? secondaryLayouts[0]
+      : {
+          children: secondaryLayouts,
+          direction: layout.direction,
+          type: 'split',
+        };
+
   return (
     <SplitView
       className="workbench-editor-area__group-split"
-      defaultPrimarySizePercent={100 / groups.length}
+      defaultPrimarySizePercent={100 / layout.children.length}
       minPrimarySizePercent={20}
       primary={
-        <EditorGroupPane
-          active={primaryGroup.id === activeGroupId}
+        <EditorGroupSplit
+          activeGroupId={activeGroupId}
           defaultViewModeForResource={defaultViewModeForResource}
           getDraggedEditorTab={getDraggedEditorTab}
-          group={primaryGroup}
+          groupsById={groupsById}
+          layout={primaryLayout}
           onEditorTabDragEnd={onEditorTabDragEnd}
           onEditorTabDragStart={onEditorTabDragStart}
           theme={theme}
@@ -223,7 +292,8 @@ function EditorGroupSplit({
           activeGroupId={activeGroupId}
           defaultViewModeForResource={defaultViewModeForResource}
           getDraggedEditorTab={getDraggedEditorTab}
-          groups={secondaryGroups}
+          groupsById={groupsById}
+          layout={secondaryLayout}
           onEditorTabDragEnd={onEditorTabDragEnd}
           onEditorTabDragStart={onEditorTabDragStart}
           theme={theme}
