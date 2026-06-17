@@ -73,14 +73,21 @@ interface EditorTabDropTarget {
 }
 
 type EditorTabDropSide = 'center' | 'left' | 'right';
+export type EditorViewMode = 'code' | 'form' | 'preview';
 
 export interface EditorAreaProps {
+  defaultViewModeForResource?: ((resourceUri: string) => EditorViewMode | undefined) | undefined;
   emptyState?: ReactNode | undefined;
   theme?: WorkspaceEditorTheme | undefined;
   viewProviders?: readonly EditorDocumentViewProvider[] | undefined;
 }
 
-export function EditorArea({ emptyState, theme, viewProviders }: EditorAreaProps) {
+export function EditorArea({
+  defaultViewModeForResource,
+  emptyState,
+  theme,
+  viewProviders,
+}: EditorAreaProps) {
   const editorState = useEditorState();
   const editorGroups = editorState.groups.filter((group) => group.tabs.length > 0);
   const draggedEditorTabRef = useRef<EditorTabDragPayload | null>(null);
@@ -123,6 +130,7 @@ export function EditorArea({ emptyState, theme, viewProviders }: EditorAreaProps
       <div className="workbench-editor-area__content">
         <EditorGroupSplit
           activeGroupId={editorState.activeGroupId}
+          defaultViewModeForResource={defaultViewModeForResource}
           getDraggedEditorTab={getDraggedEditorTab}
           groups={editorGroups}
           onEditorTabDragEnd={handleEditorTabDragEnd}
@@ -137,6 +145,7 @@ export function EditorArea({ emptyState, theme, viewProviders }: EditorAreaProps
 
 function EditorGroupSplit({
   activeGroupId,
+  defaultViewModeForResource,
   getDraggedEditorTab,
   groups,
   onEditorTabDragEnd,
@@ -145,6 +154,7 @@ function EditorGroupSplit({
   viewProviders,
 }: {
   activeGroupId: string | undefined;
+  defaultViewModeForResource: ((resourceUri: string) => EditorViewMode | undefined) | undefined;
   getDraggedEditorTab: (event?: ReactDragEvent<HTMLElement>) => EditorTabDragPayload | null;
   groups: readonly EditorGroupState[];
   onEditorTabDragEnd: () => void;
@@ -161,6 +171,7 @@ function EditorGroupSplit({
     return (
       <EditorGroupPane
         active={primaryGroup.id === activeGroupId}
+        defaultViewModeForResource={defaultViewModeForResource}
         getDraggedEditorTab={getDraggedEditorTab}
         group={primaryGroup}
         onEditorTabDragEnd={onEditorTabDragEnd}
@@ -179,6 +190,7 @@ function EditorGroupSplit({
       primary={
         <EditorGroupPane
           active={primaryGroup.id === activeGroupId}
+          defaultViewModeForResource={defaultViewModeForResource}
           getDraggedEditorTab={getDraggedEditorTab}
           group={primaryGroup}
           onEditorTabDragEnd={onEditorTabDragEnd}
@@ -190,6 +202,7 @@ function EditorGroupSplit({
       secondary={
         <EditorGroupSplit
           activeGroupId={activeGroupId}
+          defaultViewModeForResource={defaultViewModeForResource}
           getDraggedEditorTab={getDraggedEditorTab}
           groups={secondaryGroups}
           onEditorTabDragEnd={onEditorTabDragEnd}
@@ -204,6 +217,7 @@ function EditorGroupSplit({
 
 function EditorGroupPane({
   active,
+  defaultViewModeForResource,
   getDraggedEditorTab,
   group,
   onEditorTabDragEnd,
@@ -212,6 +226,7 @@ function EditorGroupPane({
   viewProviders,
 }: {
   active: boolean;
+  defaultViewModeForResource: ((resourceUri: string) => EditorViewMode | undefined) | undefined;
   getDraggedEditorTab: (event?: ReactDragEvent<HTMLElement>) => EditorTabDragPayload | null;
   group: EditorGroupState;
   onEditorTabDragEnd: () => void;
@@ -608,6 +623,7 @@ function EditorGroupPane({
       >
         <EditorHostSurface
           activeTab={activeTab}
+          defaultViewModeForResource={defaultViewModeForResource}
           modeToolbarHost={modeToolbarHost}
           onModeToolbarVisibleChange={handleModeToolbarVisibleChange}
           theme={theme}
@@ -633,12 +649,14 @@ function EditorGroupPane({
 
 function EditorHostSurface({
   activeTab,
+  defaultViewModeForResource,
   modeToolbarHost,
   onModeToolbarVisibleChange,
   theme,
   viewProviders,
 }: {
   activeTab: EditorTabState | undefined;
+  defaultViewModeForResource: ((resourceUri: string) => EditorViewMode | undefined) | undefined;
   modeToolbarHost: HTMLDivElement | null;
   onModeToolbarVisibleChange: (visible: boolean) => void;
   theme: WorkspaceEditorTheme | undefined;
@@ -671,6 +689,7 @@ function EditorHostSurface({
   if (isTextEditorRenderPayload(rendered)) {
     return (
       <TextEditorSurface
+        defaultViewModeForResource={defaultViewModeForResource}
         host={host as TextEditorHostLike}
         initialContent={rendered.initialContent}
         modeToolbarHost={modeToolbarHost}
@@ -710,9 +729,8 @@ interface TextEditorRenderPayload {
   resourceUri: string;
 }
 
-type EditorViewMode = 'code' | 'form' | 'preview';
-
 function TextEditorSurface({
+  defaultViewModeForResource,
   host,
   initialContent,
   modeToolbarHost,
@@ -723,6 +741,7 @@ function TextEditorSurface({
   theme,
   viewProviders,
 }: {
+  defaultViewModeForResource: ((resourceUri: string) => EditorViewMode | undefined) | undefined;
   host: TextEditorHostLike;
   initialContent: string;
   modeToolbarHost: HTMLDivElement | null;
@@ -736,7 +755,13 @@ function TextEditorSurface({
   const editorService = useEditorService();
   const { executeCommand, workspaceHostPort } = useWorkbench();
   const [content, setContent] = useState(initialContent);
-  const [viewMode, setViewMode] = useState<EditorViewMode>('code');
+  const [viewMode, setViewMode] = useState<EditorViewMode>(
+    () => defaultViewModeForResource?.(resourceUri) ?? 'code',
+  );
+  const getDefaultViewMode = useCallback(
+    () => defaultViewModeForResource?.(resourceUri) ?? 'code',
+    [defaultViewModeForResource, resourceUri],
+  );
   const documentViewProviders = useMemo(
     () =>
       viewProviders
@@ -764,8 +789,8 @@ function TextEditorSurface({
 
   useEffect(() => {
     setContent(initialContent);
-    setViewMode('code');
-  }, [initialContent, resourceUri]);
+    setViewMode(getDefaultViewMode());
+  }, [getDefaultViewMode, initialContent]);
 
   useEffect(() => {
     onModeToolbarVisibleChange(modeToolbarVisible);
