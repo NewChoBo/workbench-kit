@@ -522,6 +522,7 @@ describe('WorkbenchProvider', () => {
     const folderMenu = container.querySelector('[role="menu"]');
     expect(folderMenu?.textContent).toContain('New file');
     expect(folderMenu?.textContent).toContain('New folder');
+    expect(folderMenu?.textContent).toContain('Reveal folder');
     expect(folderMenu?.textContent).toContain('Copy path');
     expect(folderMenu?.textContent).toContain('Rename');
     expect(folderMenu?.textContent).toContain('Delete folder');

@@ -12,6 +12,11 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  createCommandRegistry,
+  executeCommand as executeRegisteredCommand,
+  resolveCommandMenuItems,
+} from '@workbench-kit/platform';
 import { ContextMenu, type ContextMenuItem } from '@workbench-kit/react/overlay';
 import {
   JDW_DOCUMENT_FILE_EXTENSION,
@@ -32,6 +37,14 @@ import {
   fileIconKindForPath,
 } from '@workbench-kit/react/workbench/workspace/file-icon';
 import { WORKSPACE_EXPLORER_DRAG_DATA_TYPE } from '@workbench-kit/react/workbench/workspace/explorer';
+import {
+  WORKBENCH_COMMAND_SURFACE_EDITOR,
+  WORKBENCH_EDITOR_DELETE_COMMAND_ID,
+  commandMenuItemsToContextMenuItems,
+  createWorkbenchEditorCommands,
+  createWorkbenchEditorTabMenuEntries,
+  type WorkbenchEditorCommandContext,
+} from '@workbench-kit/react/workbench';
 import {
   EDITOR_SAVE_COMMAND_ID,
   type EditorGroupState,
@@ -60,6 +73,12 @@ const INTERNAL_EDITOR_AREA_DRAG_DATA_TYPES = [
   EDITOR_TAB_DRAG_DATA_TYPE,
   WORKSPACE_EXPLORER_DRAG_DATA_TYPE,
 ] as const;
+const editorCommandRegistry = createCommandRegistry(createWorkbenchEditorCommands());
+const editorTabMenuEntries = createWorkbenchEditorTabMenuEntries().filter((entry) =>
+  entry.type === 'separator'
+    ? entry.id !== 'tab-danger-separator'
+    : entry.commandId !== WORKBENCH_EDITOR_DELETE_COMMAND_ID,
+);
 
 interface EditorTabDragPayload {
   groupId: string;
@@ -1055,6 +1074,12 @@ function createEditorTabContextItems({
   tabs: readonly EditorTabState[];
 }): ContextMenuItem[] {
   const closeableTabs = tabs.filter((candidate) => candidate.id !== tab.id);
+  const standardItems = createEditorTabCommandContextItems({
+    closeableTabs,
+    editorService,
+    tab,
+    tabs,
+  });
 
   return [
     {
@@ -1073,42 +1098,53 @@ function createEditorTabContextItems({
         editorService.splitEditor({ afterGroupId: groupId, tabId: tab.id });
       },
     },
-    {
-      id: 'workbench.editor.copyPath',
-      icon: 'copy',
-      label: 'Copy path',
-      onSelect: () => {
-        copyResourcePath(tab.resourceUri);
-      },
-    },
-    { id: 'workbench.editor.separator.close', type: 'separator' },
-    {
-      id: 'workbench.editor.close',
-      icon: 'close',
-      label: 'Close',
-      onSelect: () => {
-        editorService.closeEditor(tab.id);
-      },
-    },
-    {
-      id: 'workbench.editor.closeOthers',
-      disabled: closeableTabs.length === 0,
-      icon: 'close-all',
-      label: 'Close others',
-      onSelect: () => {
-        closeableTabs.forEach((candidate) => editorService.closeEditor(candidate.id));
-      },
-    },
-    {
-      id: 'workbench.editor.closeAll',
-      disabled: tabs.length === 0,
-      icon: 'close-all',
-      label: 'Close all',
-      onSelect: () => {
-        tabs.forEach((candidate) => editorService.closeEditor(candidate.id));
-      },
-    },
+    { id: 'workbench.editor.separator.standard', type: 'separator' },
+    ...standardItems,
   ];
+}
+
+function createEditorTabCommandContextItems({
+  closeableTabs,
+  editorService,
+  tab,
+  tabs,
+}: {
+  closeableTabs: readonly EditorTabState[];
+  editorService: ReturnType<typeof useEditorService>;
+  tab: EditorTabState;
+  tabs: readonly EditorTabState[];
+}): ContextMenuItem[] {
+  const context: WorkbenchEditorCommandContext = {
+    canCloseAll: tabs.length > 0,
+    canCloseOthers: closeableTabs.length > 0,
+    canClosePath: true,
+    canCopyPath: true,
+    canDeletePath: false,
+    canDiscardFile: false,
+    canSaveFile: false,
+    closeAll: () => tabs.forEach((candidate) => editorService.closeEditor(candidate.id)),
+    closeOthers: () =>
+      closeableTabs.forEach((candidate) => editorService.closeEditor(candidate.id)),
+    closePath: () => editorService.closeEditor(tab.id),
+    copyPath: () => copyResourcePath(tab.resourceUri),
+    deletePath: () => undefined,
+    discardFile: () => undefined,
+    filePath: pathForResource(tab.resourceUri),
+    hasMultipleOpenFiles: tabs.length > 1,
+    hasOpenFiles: tabs.length > 0,
+    hasUnsavedChanges: tab.dirty,
+    saveFile: () => undefined,
+  };
+
+  return commandMenuItemsToContextMenuItems(
+    resolveCommandMenuItems({
+      context,
+      entries: editorTabMenuEntries,
+      registry: editorCommandRegistry,
+      surface: WORKBENCH_COMMAND_SURFACE_EDITOR,
+    }),
+    (commandId) => executeRegisteredCommand(editorCommandRegistry, commandId, context),
+  );
 }
 
 function readEditorTabDragPayload(event: ReactDragEvent<HTMLElement>): EditorTabDragPayload | null {
@@ -1303,7 +1339,10 @@ function getResourceLabel(resourceUri: string): string {
 
 function copyResourcePath(resourceUri: string): void {
   const path = pathForResource(resourceUri);
-  void globalThis.navigator?.clipboard?.writeText(path).catch(() => undefined);
+  const clipboard = globalThis.navigator?.clipboard;
+  if (!clipboard) return;
+
+  void clipboard.writeText(path).catch(() => undefined);
 }
 
 function isTextEditorRenderPayload(value: unknown): value is TextEditorRenderPayload {
