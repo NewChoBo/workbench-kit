@@ -34,7 +34,7 @@ jobs:
         run: node scripts/build-workspace-packages.mjs
 
       - name: Install Playwright browser
-        run: pnpm exec --package=playwright@1.60.0 playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Validate
         # validate:full = validate + required storybook baseline play runs
