@@ -267,6 +267,76 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 
+  it('exposes theme selection through the settings appearance category', async () => {
+    const themeChanges: string[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.settings'],
+            recommendations: [],
+          }}
+        >
+          <WorkbenchShell
+            editorArea={<main>Editor Area</main>}
+            theme="dark"
+            themeOptions={[
+              { id: 'dark', label: 'Dark' },
+              { id: 'light', label: 'Light' },
+            ]}
+            onThemeChange={(nextTheme) => {
+              themeChanges.push(nextTheme);
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    const settingsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Settings"]',
+    );
+    expect(settingsButton).toBeDefined();
+
+    await act(async () => {
+      settingsButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const appearanceButton = findButtonByText(container, 'Appearance');
+    expect(appearanceButton).toBeDefined();
+
+    await act(async () => {
+      appearanceButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
+    expect(dialog?.textContent).toContain('Color theme');
+
+    const themeSelect = dialog?.querySelector<HTMLSelectElement>(
+      '.workbench-appearance-settings select',
+    );
+    expect(themeSelect).not.toBeNull();
+
+    await act(async () => {
+      themeSelect!.value = 'light';
+      themeSelect!.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(themeChanges).toEqual(['light']);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('renders shell titlebar actions and opens help in a modal overlay', async () => {
     const container = document.createElement('div');
     document.body.append(container);

@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Modal } from '@workbench-kit/react/modal';
-import { Badge, Button, Field } from '@workbench-kit/react/primitives';
+import { Badge, Button, Field, Select } from '@workbench-kit/react/primitives';
 import {
   WorkbenchSettingsModal,
   WorkbenchSettingsSection,
@@ -39,18 +39,27 @@ export interface WorkbenchShellProps {
   editorArea?: ReactNode;
   helpContent?: ReactNode;
   helpTitle?: ReactNode;
+  onThemeChange?: ((theme: string) => void) | undefined;
   onStatusItemActivate?: (item: StatusBarItemModel) => void;
   primarySidebar?: ReactNode;
   rootClassName?: string;
   statusSections?: StatusBarSectionModel[];
   theme?: string;
+  themeOptions?: readonly WorkbenchThemeOption[] | undefined;
   title?: ReactNode;
   titleBar?: ReactNode;
   titleBarActions?: ReactNode;
   titleMeta?: ReactNode;
 }
 
+export interface WorkbenchThemeOption {
+  description?: ReactNode;
+  id: string;
+  label: string;
+}
+
 const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
+const APPEARANCE_SETTINGS_CATEGORY_ID = 'workbench.appearance';
 const SETTINGS_EXTENSION_ID = 'workbench-kit.builtin.settings';
 const SETTINGS_ACTIVITY_ITEM_ID = 'workbench-kit.shell.settings';
 
@@ -59,11 +68,13 @@ export function WorkbenchShell({
   editorArea,
   helpContent,
   helpTitle = 'Workbench Help',
+  onThemeChange,
   onStatusItemActivate,
   primarySidebar,
   rootClassName,
   statusSections,
   theme,
+  themeOptions,
   title = 'Workbench',
   titleBar,
   titleBarActions,
@@ -91,8 +102,13 @@ export function WorkbenchShell({
   const activeViewContainerId = layout.sideBar.activeViewContainer;
   const activityItems = createActivityItems(extensionRegistry, activeViewContainerId);
   const settingsCategories = useMemo(
-    () => createSettingsCategories(extensionRegistry),
-    [extensionRegistry],
+    () =>
+      createSettingsCategories(extensionRegistry, {
+        onThemeChange,
+        theme,
+        themeOptions,
+      }),
+    [extensionRegistry, onThemeChange, theme, themeOptions],
   );
   const defaultSettingsCategoryId =
     settingsCategories.find((category) => category.id === SETTINGS_EXTENSION_ID)?.id ??
@@ -335,28 +351,30 @@ function createDefaultStatusSections(
 
 function createSettingsCategories(
   extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
+  appearanceSettings: WorkbenchAppearanceSettingsInput,
 ): WorkbenchSettingsCategory[] {
   const configurations = extensionRegistry.configurations.getConfigurations();
+  const appearanceCategory = createAppearanceSettingsCategory(appearanceSettings);
 
   if (configurations.length === 0) {
-    return [
-      {
-        content: (
-          <WorkbenchSettingsSection
-            id="workbench-settings-empty"
-            title="Workbench"
-            description="No extension settings are currently registered."
-          >
-            <p className="workbench-settings-empty">Enable extensions to contribute settings.</p>
-          </WorkbenchSettingsSection>
-        ),
-        id: 'workbench',
-        label: 'Workbench',
-      },
-    ];
+    const fallbackCategory = {
+      content: (
+        <WorkbenchSettingsSection
+          id="workbench-settings-empty"
+          title="Workbench"
+          description="No extension settings are currently registered."
+        >
+          <p className="workbench-settings-empty">Enable extensions to contribute settings.</p>
+        </WorkbenchSettingsSection>
+      ),
+      id: 'workbench',
+      label: 'Workbench',
+    } satisfies WorkbenchSettingsCategory;
+
+    return appearanceCategory ? [appearanceCategory, fallbackCategory] : [fallbackCategory];
   }
 
-  return configurations.map(({ extensionId, configuration }) => {
+  const contributedCategories = configurations.map(({ extensionId, configuration }) => {
     const extension = extensionRegistry.getExtension(extensionId);
     const displayName = extension?.manifest.displayName ?? titleFromExtensionId(extensionId);
     const properties = Object.entries(configuration.properties ?? {});
@@ -386,8 +404,86 @@ function createSettingsCategories(
       id: extensionId,
       label: displayName,
       title: extensionId,
-    };
+    } satisfies WorkbenchSettingsCategory;
   });
+
+  return appearanceCategory
+    ? [appearanceCategory, ...contributedCategories]
+    : contributedCategories;
+}
+
+interface WorkbenchAppearanceSettingsInput {
+  onThemeChange: ((theme: string) => void) | undefined;
+  theme: string | undefined;
+  themeOptions: readonly WorkbenchThemeOption[] | undefined;
+}
+
+function createAppearanceSettingsCategory({
+  onThemeChange,
+  theme,
+  themeOptions,
+}: WorkbenchAppearanceSettingsInput): WorkbenchSettingsCategory | undefined {
+  if (!themeOptions?.length) {
+    return undefined;
+  }
+
+  return {
+    content: (
+      <AppearanceSettingsSection
+        theme={theme}
+        themeOptions={themeOptions}
+        onThemeChange={onThemeChange}
+      />
+    ),
+    id: APPEARANCE_SETTINGS_CATEGORY_ID,
+    label: 'Appearance',
+  };
+}
+
+function AppearanceSettingsSection({
+  onThemeChange,
+  theme,
+  themeOptions,
+}: WorkbenchAppearanceSettingsInput & {
+  themeOptions: readonly WorkbenchThemeOption[];
+}) {
+  const selectedTheme = themeOptions.find((option) => option.id === theme) ?? themeOptions[0];
+  const selectedThemeId = selectedTheme?.id ?? '';
+
+  return (
+    <WorkbenchSettingsSection
+      id="workbench-settings-appearance"
+      title="Appearance"
+      description="Configure how the workbench is presented."
+    >
+      <div className="workbench-appearance-settings">
+        <Field
+          className="workbench-appearance-settings__field"
+          label="Color theme"
+          description="Select the active workbench color theme."
+        >
+          <Select
+            aria-label="Color theme"
+            controlWidth="full"
+            disabled={!onThemeChange}
+            value={selectedThemeId}
+            onValueChange={(nextTheme) => onThemeChange?.(nextTheme)}
+          >
+            {themeOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+          {selectedTheme?.description ? (
+            <p className="workbench-appearance-settings__description">
+              {selectedTheme.description}
+            </p>
+          ) : null}
+        </Field>
+      </div>
+    </WorkbenchSettingsSection>
+  );
 }
 
 function SettingContributionField({
