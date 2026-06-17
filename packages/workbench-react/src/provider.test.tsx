@@ -468,6 +468,102 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 
+  it('opens built-in explorer item context menus with file and folder actions', async () => {
+    const workspaceHostPort = createWorkbenchWorkspaceHostPort();
+    const initialState = {
+      expandedPaths: ['src'],
+      files: [
+        {
+          content: 'export const sample = true;',
+          path: 'src/App.tsx',
+        },
+        {
+          content: '# Notes',
+          path: 'README.md',
+        },
+      ],
+      folders: ['src'],
+    } satisfies VirtualWorkspaceInitialState;
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor', 'workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+          initialLayout={parseWorkbenchLayoutConfig({
+            sideBar: {
+              activeViewContainer: 'explorer',
+              visible: true,
+            },
+          })}
+          workspaceHostPort={workspaceHostPort}
+        >
+          <WorkspaceInitCommandProbe initialState={initialState} onResult={() => undefined} />
+          <WorkbenchShell />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    const srcButton = findButtonByText(container, 'src');
+    expect(srcButton).toBeDefined();
+
+    await act(async () => {
+      dispatchTestMouseEvent(srcButton, 'contextmenu');
+    });
+    await flushReactEffects();
+
+    const folderMenu = container.querySelector('[role="menu"]');
+    expect(folderMenu?.textContent).toContain('New file');
+    expect(folderMenu?.textContent).toContain('New folder');
+    expect(folderMenu?.textContent).toContain('Copy path');
+    expect(folderMenu?.textContent).toContain('Rename');
+    expect(folderMenu?.textContent).toContain('Delete folder');
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' }));
+    });
+    await flushReactEffects();
+
+    const appButton = findButtonByText(container, 'App.tsx');
+    expect(appButton).toBeDefined();
+
+    await act(async () => {
+      dispatchTestMouseEvent(appButton, 'contextmenu');
+    });
+    await flushReactEffects();
+
+    const fileMenu = container.querySelector('[role="menu"]');
+    expect(fileMenu?.textContent).toContain('Open file');
+    expect(fileMenu?.textContent).toContain('Copy path');
+    expect(fileMenu?.textContent).toContain('Rename');
+    expect(fileMenu?.textContent).toContain('Delete');
+
+    const renameItem = findMenuItemByText(container, 'Rename');
+    expect(renameItem).toBeDefined();
+
+    await act(async () => {
+      renameItem?.click();
+    });
+    await flushReactEffects();
+
+    const inlineEdit = container.querySelector<HTMLInputElement>(
+      'input[aria-label="Workspace item name"]',
+    );
+    expect(inlineEdit?.value).toBe('App.tsx');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('routes workspace create commands through resource transactions', async () => {
     const workspaceHostPort = createWorkbenchWorkspaceHostPort();
     const commandResults: unknown[] = [];
@@ -701,6 +797,23 @@ async function flushReactEffects(): Promise<void> {
 function findButtonByText(container: HTMLElement, text: string): HTMLButtonElement | undefined {
   return Array.from(container.querySelectorAll('button')).find(
     (button) => button.textContent === text,
+  );
+}
+
+function findMenuItemByText(container: HTMLElement, text: string): HTMLButtonElement | undefined {
+  return Array.from(container.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')).find(
+    (button) => button.textContent?.includes(text),
+  );
+}
+
+function dispatchTestMouseEvent(target: Element | undefined, type: string): void {
+  target?.dispatchEvent(
+    new MouseEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      clientX: 24,
+      clientY: 36,
+    }),
   );
 }
 

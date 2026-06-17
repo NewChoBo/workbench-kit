@@ -724,7 +724,10 @@ describe('EditorArea', () => {
     expect(container.querySelector('[role="menu"]')).not.toBeNull();
     expect(container.textContent).toContain('Unpin');
     expect(container.textContent).toContain('Split Right');
+    expect(container.textContent).toContain('Copy path');
     expect(container.textContent).toContain('Close');
+    expect(container.textContent).toContain('Close others');
+    expect(container.textContent).toContain('Close all');
 
     const unpinItem = Array.from(container.querySelectorAll('[role="menuitem"]')).find((item) =>
       item.textContent?.includes('Unpin'),
