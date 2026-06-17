@@ -4,9 +4,8 @@ import { execFileSync } from 'node:child_process';
 import {
   NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
-  clearNpmRegistryAuth,
-  isTrustedPublisherAvailable,
   packageDirectoryNameForPackageName,
+  requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
 
 const root = process.cwd();
@@ -14,8 +13,8 @@ const dryRun = process.argv.includes('--dry-run') || process.env.DRY_RUN === 'tr
 const distTag = process.env.NPM_DIST_TAG || 'prototype';
 const registry = NPM_REGISTRY;
 const packDir = path.join(root, '.npm-pack');
-const trustedPublisherAvailable = isTrustedPublisherAvailable();
-const useTrustedPublisher = resolvePublishAuthMode(trustedPublisherAvailable);
+
+requireTrustedPublisherAuth('publish');
 
 const publishOrder = NPM_PUBLISH_ORDER;
 
@@ -33,42 +32,12 @@ for (const packageName of publishOrder) {
 
   const tarball = packPackage(pkg.name);
   const args = ['publish', tarball, '--access', 'public', '--tag', distTag, '--registry', registry];
-  if (!useTrustedPublisher) {
-    args.push('--provenance=false');
-  }
   if (dryRun) {
     args.push('--dry-run');
   }
 
-  console.log(`${dryRun ? 'dry-run publish' : 'publish'} ${spec} with tag ${distTag}`);
+  console.log(`${dryRun ? 'dry-run publish' : 'publish'} ${spec} with tag ${distTag} via trusted publishing`);
   run('npm', args, { stdio: 'inherit' });
-}
-
-function resolvePublishAuthMode(trustedPublisherAvailable) {
-  const hasAuthToken = Boolean(process.env.NODE_AUTH_TOKEN?.trim());
-  if (!hasAuthToken) {
-    if (trustedPublisherAvailable) {
-      clearNpmRegistryAuth();
-      return true;
-    }
-    throw new Error('NODE_AUTH_TOKEN is required when trusted publishing is unavailable.');
-  }
-
-  try {
-    run('npm', ['whoami', '--registry', registry], { stdio: 'ignore' });
-    return false;
-  } catch {
-    if (trustedPublisherAvailable) {
-      console.warn(
-        '[publish] NODE_AUTH_TOKEN is invalid; publishing with trusted publishing (OIDC).',
-      );
-      clearNpmRegistryAuth();
-      return true;
-    }
-    throw new Error(
-      'npm whoami failed with NODE_AUTH_TOKEN. Check NPM_TOKEN secret value, expiry, and automation/2FA settings.',
-    );
-  }
 }
 
 function packageDirFor(packageName) {

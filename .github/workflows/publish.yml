@@ -61,8 +61,17 @@ jobs:
       - name: Ensure npm supports trusted publishing
         run: npm install -g npm@11
 
+      - name: Clear token auth (trusted publishing only)
+        run: |
+          unset NODE_AUTH_TOKEN || true
+          if [ -n "${NPM_TOKEN:-}" ]; then
+            echo "::warning::NPM_TOKEN secret is set but ignored. Publish uses trusted publishing only."
+          fi
+
       - name: Preflight npm publish auth
         run: node scripts/preflight-npm-publish.mjs
+        env:
+          NODE_AUTH_TOKEN: ''
 
       - name: Validate
         run: pnpm validate
@@ -76,7 +85,11 @@ jobs:
       - name: Publish (dry run)
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run'
         run: node scripts/publish-packages.mjs --dry-run
+        env:
+          NODE_AUTH_TOKEN: ''
 
       - name: Publish
         if: github.event_name == 'release' || github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'publish')
         run: node scripts/publish-packages.mjs
+        env:
+          NODE_AUTH_TOKEN: ''
