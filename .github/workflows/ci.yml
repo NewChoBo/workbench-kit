@@ -24,22 +24,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Enable pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@11.5.1 --activate
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'pnpm'
+      - name: Setup Node and pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build workspace packages
         run: node scripts/build-workspace-packages.mjs
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Validate
         # validate:full = validate + required storybook baseline play runs

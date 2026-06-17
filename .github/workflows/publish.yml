@@ -13,6 +13,16 @@ on:
         description: npm dist-tag to publish with
         required: false
         default: prototype
+      mode:
+        description: dry-run validates the pipeline without pushing to npm
+        type: choice
+        options:
+          - dry-run
+          - publish
+        default: dry-run
+      branch_publish_confirm:
+        description: Required for branch publish — enter publish-from-branch
+        required: false
 
 permissions:
   contents: read
@@ -36,16 +46,8 @@ jobs:
         if: github.ref_type == 'tag'
         run: node scripts/sync-version-from-tag.mjs
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          package-manager-cache: false
-
-      - name: Enable pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@11.5.1 --activate
+      - name: Setup Node and pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
@@ -65,5 +67,16 @@ jobs:
       - name: Validate
         run: pnpm validate
 
+      - name: Guard branch publish
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'publish' && github.ref_type != 'tag' && inputs.branch_publish_confirm != 'publish-from-branch'
+        run: |
+          echo "::error::Publishing from a branch requires branch_publish_confirm=publish-from-branch"
+          exit 1
+
+      - name: Publish (dry run)
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run'
+        run: node scripts/publish-packages.mjs --dry-run
+
       - name: Publish
+        if: github.event_name == 'release' || github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'publish')
         run: node scripts/publish-packages.mjs
