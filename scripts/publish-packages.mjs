@@ -5,6 +5,8 @@ import {
   NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
   buildNpmPublishArgs,
+  clearNpmRegistryAuth,
+  isTrustedPublisherAvailable,
   npmViewExists,
   packageDirectoryNameForPackageName,
   parsePublishMode,
@@ -53,9 +55,30 @@ for (const packageName of publishOrder) {
     `${dryRun ? 'dry-run publish' : 'publish'} ${spec} with tag ${distTag} via trusted publishing`,
   );
   try {
-    run('npm', args, { stdio: 'inherit' });
+    publishWithTrustedAuth(args);
   } catch (error) {
     throw publishFailureError(pkg.name, error);
+  }
+}
+
+function publishWithTrustedAuth(args) {
+  const maxAttempts = isTrustedPublisherAvailable() ? 2 : 1;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    clearNpmRegistryAuth();
+
+    try {
+      run('npm', args, { stdio: 'inherit' });
+      return;
+    } catch (error) {
+      if (attempt >= maxAttempts) {
+        throw error;
+      }
+
+      console.warn(
+        `[publish] npm publish failed (attempt ${attempt}/${maxAttempts}); clearing auth and retrying OIDC...`,
+      );
+    }
   }
 }
 
@@ -106,6 +129,8 @@ function readJson(filePath) {
 }
 
 function run(command, args, options = {}) {
+  clearNpmRegistryAuth();
+
   if (process.platform === 'win32') {
     return execFileSync(
       process.env.ComSpec || 'cmd.exe',
