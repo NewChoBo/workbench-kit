@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import {
   NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
+  buildNpmPublishArgs,
   packageDirectoryNameForPackageName,
   requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
@@ -28,19 +29,12 @@ const probeJson = readJson(path.join(probeDir, 'package.json'));
 const probeSpec = `${probeJson.name}@${probeJson.version}`;
 const tarball = packPackage(probePackage);
 
-const args = [
-  'publish',
-  tarball,
-  '--access',
-  'public',
-  '--tag',
-  distTag,
-  '--registry',
-  NPM_REGISTRY,
-  '--dry-run',
-];
+const args = buildNpmPublishArgs({ tarball, distTag, dryRun: true });
 
 console.log(`[preflight-npm] Dry-run publish probe for ${probeSpec}...`);
+console.log(
+  '[preflight-npm] Note: dry-run may pass even when OIDC auth fails on real publish. Each package needs its own trusted publisher (or org-level publisher).',
+);
 try {
   run('npm', args, { stdio: 'inherit' });
 } catch {
@@ -55,6 +49,8 @@ function publishPermissionError(packageName) {
       `npm publish preflight failed for ${packageName}.`,
       'Auth mode: trusted-publisher (github-actions-trusted-publisher)',
       '- Trusted publisher may be missing or mismatched for NewChoBo/workbench-kit / publish.yml.',
+      '- If Environment is set on npm, publish.yml must use the same GitHub environment name (or clear Environment on npm).',
+      '- New packages such as @workbench-kit/base need trusted publisher registration before first publish.',
       '- Confirm npm org @workbench-kit grants publish access to the trusted publisher owner account.',
       'Common causes for npm E404/E401 on scoped publish:',
       '- The @workbench-kit npm organization exists but trusted publishing is not configured for this repo/workflow.',

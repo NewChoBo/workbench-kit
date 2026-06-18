@@ -6,38 +6,63 @@ import {
   NPM_REGISTRY,
   buildNpmPublishArgs,
   packageDirectoryNameForPackageName,
-  requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
 
 const root = process.cwd();
-const dryRun = process.argv.includes('--dry-run') || process.env.DRY_RUN === 'true';
+const dryRun = process.argv.includes('--dry-run');
+const newOnly = process.argv.includes('--new-only') || !process.argv.includes('--all');
 const distTag = process.env.NPM_DIST_TAG || 'prototype';
-const registry = NPM_REGISTRY;
 const packDir = path.join(root, '.npm-pack');
 
-requireTrustedPublisherAuth('publish');
-
-const publishOrder = NPM_PUBLISH_ORDER;
+assertLocalNpmAuth();
 
 resetDirectory(packDir);
 
-for (const packageName of publishOrder) {
+for (const packageName of NPM_PUBLISH_ORDER) {
   const packageDir = packageDirFor(packageName);
   const pkg = readJson(path.join(packageDir, 'package.json'));
   const spec = `${pkg.name}@${pkg.version}`;
 
-  if (isPublished(spec)) {
-    console.log(`skip ${spec}: already published`);
+  if (newOnly && isPublished(spec)) {
+    console.log(`skip ${spec}: already on npm`);
     continue;
   }
 
   const tarball = packPackage(pkg.name);
-  const args = buildNpmPublishArgs({ tarball, distTag, dryRun });
+  const args = buildNpmPublishArgs({ tarball, distTag, dryRun, provenance: false });
 
   console.log(
-    `${dryRun ? 'dry-run publish' : 'publish'} ${spec} with tag ${distTag} via trusted publishing`,
+    `${dryRun ? 'dry-run publish' : 'publish'} ${spec} with tag ${distTag} via local npm auth`,
   );
-  run('npm', args, { stdio: 'inherit' });
+  run('npm', args, {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      npm_config_provenance: 'false',
+    },
+  });
+}
+
+function assertLocalNpmAuth() {
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    throw new Error(
+      'Local npm publish is not allowed in GitHub Actions. Use publish.yml (trusted publishing) instead.',
+    );
+  }
+
+  try {
+    const whoami = run('npm', ['whoami', '--registry', NPM_REGISTRY], { encoding: 'utf8' }).trim();
+    console.log(`[publish-local] npm auth ok (${whoami})`);
+  } catch {
+    throw new Error(
+      [
+        'Local npm publish requires an authenticated npm session.',
+        'Run `npm login` (2FA) or set NODE_AUTH_TOKEN, then retry.',
+        'Use this script only for first-time package releases.',
+        'Routine version updates should go through publish.yml on tag push.',
+      ].join('\n'),
+    );
+  }
 }
 
 function packageDirFor(packageName) {
@@ -56,7 +81,7 @@ function packPackage(packageName) {
 
 function isPublished(spec) {
   try {
-    run('npm', ['view', spec, 'version', '--registry', registry], {
+    run('npm', ['view', spec, 'version', '--registry', NPM_REGISTRY], {
       stdio: 'ignore',
     });
     return true;
@@ -80,20 +105,25 @@ function readJson(filePath) {
 }
 
 function run(command, args, options = {}) {
+  const { env: envOverride, ...restOptions } = options;
+  const env = envOverride ? { ...process.env, ...envOverride } : process.env;
+
   if (process.platform === 'win32') {
     return execFileSync(
       process.env.ComSpec || 'cmd.exe',
       ['/d', '/s', '/c', [command, ...args].map(quoteCmdArg).join(' ')],
       {
         cwd: root,
-        ...options,
+        env,
+        ...restOptions,
       },
     );
   }
 
   return execFileSync(command, args, {
     cwd: root,
-    ...options,
+    env,
+    ...restOptions,
   });
 }
 

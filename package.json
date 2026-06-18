@@ -41,7 +41,9 @@
     "sync:version-from-tag": "node scripts/sync-version-from-tag.mjs",
     "preflight:npm-publish": "node scripts/preflight-npm-publish.mjs",
     "publish:packages": "node scripts/publish-packages.mjs",
-    "publish:packages:dry-run": "node scripts/publish-packages.mjs --dry-run"
+    "publish:packages:dry-run": "node scripts/publish-packages.mjs --dry-run",
+    "publish:packages:local": "node scripts/publish-packages-local.mjs",
+    "publish:packages:local:dry-run": "node scripts/publish-packages-local.mjs --dry-run"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
