@@ -86,8 +86,12 @@ jobs:
 
       - name: Publish (dry run)
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run'
-        run: node scripts/publish-packages.mjs --dry-run
+        run: |
+          unset NODE_AUTH_TOKEN NPM_TOKEN || true
+          node scripts/publish-packages.mjs --dry-run
 
       - name: Publish
         if: github.event_name == 'release' || github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'publish')
-        run: node scripts/publish-packages.mjs
+        run: |
+          unset NODE_AUTH_TOKEN NPM_TOKEN || true
+          node scripts/publish-packages.mjs

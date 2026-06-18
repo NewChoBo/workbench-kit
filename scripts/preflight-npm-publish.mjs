@@ -2,10 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import {
+  NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
   buildNpmPublishArgs,
+  clearNpmRegistryAuth,
+  npmViewExists,
   packageDirectoryNameForPackageName,
-  probePackageForTrustedPublisher,
   requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
 
@@ -23,25 +25,32 @@ console.log('[preflight-npm] Skipping npm whoami because OIDC auth is resolved a
 
 resetDirectory(packDir);
 
-const probePackage = probePackageForTrustedPublisher();
-const probeDir = packageDirFor(probePackage);
-const probeJson = readJson(path.join(probeDir, 'package.json'));
-const probeSpec = `${probeJson.name}@${probeJson.version}`;
-const tarball = packPackage(probePackage);
-
-const args = buildNpmPublishArgs({ tarball, distTag, dryRun: true });
-
-console.log(`[preflight-npm] Dry-run publish probe for ${probeSpec}...`);
-console.log(
-  '[preflight-npm] Note: dry-run may pass even when OIDC auth fails on real publish. Each package needs its own trusted publisher (or org-level publisher).',
-);
-try {
-  run('npm', args, { stdio: 'inherit' });
-} catch {
-  throw publishPermissionError(probeJson.name);
+const probePackages = NPM_PUBLISH_ORDER.filter((packageName) => npmViewExists(packageName));
+if (probePackages.length === 0) {
+  probePackages.push(NPM_PUBLISH_ORDER[0]);
 }
 
-console.log('[preflight-npm] Publish auth preflight passed.');
+for (const probePackage of probePackages) {
+  clearNpmRegistryAuth();
+
+  const probeDir = packageDirFor(probePackage);
+  const probeJson = readJson(path.join(probeDir, 'package.json'));
+  const probeSpec = `${probeJson.name}@${probeJson.version}`;
+  const tarball = packPackage(probePackage);
+
+  const args = buildNpmPublishArgs({ tarball, distTag, dryRun: true });
+
+  console.log(`[preflight-npm] Dry-run publish probe for ${probeSpec}...`);
+  try {
+    run('npm', args, { stdio: 'inherit' });
+  } catch {
+    throw publishPermissionError(probeJson.name);
+  }
+}
+
+console.log(
+  `[preflight-npm] Dry-run passed for ${probePackages.length} package(s). Real publish still requires per-package OIDC auth.`,
+);
 
 function publishPermissionError(packageName) {
   return new Error(
@@ -89,6 +98,8 @@ function readJson(filePath) {
 }
 
 function run(command, args, options = {}) {
+  clearNpmRegistryAuth();
+
   if (process.platform === 'win32') {
     return execFileSync(
       process.env.ComSpec || 'cmd.exe',
