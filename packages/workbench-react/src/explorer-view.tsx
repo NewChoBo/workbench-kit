@@ -34,6 +34,7 @@ import {
   parentPathOf,
   parseWorkspaceResourceUri,
   pruneWorkspaceSelection,
+  resolveWorkspaceCreateParentPath,
   type VirtualWorkspaceState,
   type WorkspaceChangeEvent,
   type WorkspaceResourceService,
@@ -121,8 +122,10 @@ export function BuiltinExplorerView() {
   );
 
   useEffect(() => {
-    setSelection((currentSelection) => pruneWorkspaceSelection(currentSelection, filePaths));
-  }, [filePaths]);
+    setSelection((currentSelection) =>
+      pruneWorkspaceSelection(currentSelection, filePaths, workspaceState?.folders ?? []),
+    );
+  }, [filePaths, workspaceState?.folders]);
 
   const activePath = useMemo(() => {
     if (!activeTab?.resourceUri) return undefined;
@@ -136,6 +139,7 @@ export function BuiltinExplorerView() {
 
     setSelection({
       anchorPath: activePath,
+      focusedPath: activePath,
       paths: [activePath],
     });
     setExpandedPaths((currentPaths) => new Set([...currentPaths, ...parentPaths(activePath)]));
@@ -144,6 +148,11 @@ export function BuiltinExplorerView() {
   const nodes = useMemo(
     () => buildWorkspaceTree(workspaceState?.folders ?? [], workspaceState?.files ?? []),
     [workspaceState],
+  );
+
+  const createParentPath = useMemo(
+    () => resolveWorkspaceCreateParentPath(selection.focusedPath, workspaceState?.folders ?? []),
+    [selection.focusedPath, workspaceState?.folders],
   );
 
   const executeWorkspaceCommand = useCallback(
@@ -397,7 +406,7 @@ export function BuiltinExplorerView() {
         <button
           aria-label="New file"
           className="workbench-explorer-view__tool-button"
-          onClick={() => startCreate('create-file')}
+          onClick={() => startCreate('create-file', createParentPath)}
           title="New file"
           type="button"
         >
@@ -406,7 +415,7 @@ export function BuiltinExplorerView() {
         <button
           aria-label="New folder"
           className="workbench-explorer-view__tool-button"
-          onClick={() => startCreate('create-folder')}
+          onClick={() => startCreate('create-folder', createParentPath)}
           title="New folder"
           type="button"
         >
@@ -427,6 +436,7 @@ export function BuiltinExplorerView() {
       <WorkspaceExplorer
         activePath={activePath}
         expandedPaths={expandedPaths}
+        focusedPath={selection.focusedPath}
         inlineEdit={inlineEdit}
         nodes={nodes}
         selectedPaths={selection.paths}

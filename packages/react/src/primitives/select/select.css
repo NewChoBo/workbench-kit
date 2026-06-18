@@ -83,6 +83,7 @@
 }
 
 .ui-select__option {
+  box-sizing: border-box;
   min-height: var(--ui-select-option-height, 26px);
   padding: var(--ui-select-option-padding, 4px 10px);
   border-radius: var(--ui-select-option-radius, 0);

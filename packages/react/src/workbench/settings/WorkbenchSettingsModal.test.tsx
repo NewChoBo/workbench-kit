@@ -20,7 +20,7 @@ describe('WorkbenchSettingsModal', () => {
     );
 
     expect(markup).toContain('role="dialog"');
-    expect(markup).toContain('data-draggable="true"');
+    expect(markup).toContain('ui-modal__titlebar-drag');
     expect(markup).toContain('aria-label="Maximize modal"');
     expect(markup).toContain('Appearance controls');
   });

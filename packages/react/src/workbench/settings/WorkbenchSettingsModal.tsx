@@ -9,7 +9,15 @@ import type { WorkbenchSettingsCategory, WorkbenchSettingsScope } from './types'
 
 export interface WorkbenchSettingsModalProps extends Pick<
   ModalProps,
-  'className' | 'closeLabel' | 'footer' | 'labelledBy' | 'onClose' | 'title' | 'titleSuffix'
+  | 'className'
+  | 'closeLabel'
+  | 'footer'
+  | 'labelledBy'
+  | 'minHeight'
+  | 'minWidth'
+  | 'onClose'
+  | 'title'
+  | 'titleSuffix'
 > {
   categories: WorkbenchSettingsCategory[];
   activeCategoryId?: string;
@@ -62,6 +70,8 @@ export function WorkbenchSettingsModal({
   emptyContent = null,
   footer,
   labelledBy,
+  minHeight,
+  minWidth,
   onActiveCategoryIdChange,
   onClose,
   onScopeChange,
@@ -130,8 +140,8 @@ export function WorkbenchSettingsModal({
       closeLabel={closeLabel}
       footer={footer}
       labelledBy={titleId}
-      maximizable
-      movable
+      minHeight={minHeight}
+      minWidth={minWidth}
       title={title}
       titleSuffix={titleSuffix}
       onClose={onClose}

@@ -8,6 +8,7 @@
 @import './workbench/settings/structured-data-schema-panel.css';
 @import './workbench/settings/structured-data-table-view.css';
 @import './workbench/settings/panel-region.css';
+@import './modal/modal.css';
 
 .ui-workbench-host-document,
 .ui-workbench-host,
@@ -481,141 +482,6 @@
   word-break: break-word;
 }
 
-.ui-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--ui-modal-z-index, 200);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--ui-modal-overlay-bg, rgba(0, 0, 0, 0.48));
-}
-
-.ui-modal {
-  width: var(--ui-modal-width, 640px);
-  height: var(--ui-modal-height, auto);
-  max-width: var(--ui-modal-max-width, calc(100vw - 96px));
-  max-height: var(--ui-modal-max-height, calc(100vh - 96px));
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  color: var(--color-text);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-}
-
-.ui-modal[data-maximized='true'] {
-  width: calc(100vw - 16px);
-  height: calc(100vh - 16px);
-  max-width: none;
-  max-height: none;
-}
-
-.ui-modal__titlebar {
-  height: 34px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px 0 16px;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.ui-modal__titlebar[data-draggable='true'] {
-  cursor: move;
-}
-
-.ui-modal__title {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ui-modal__controls {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 2px;
-}
-
-.ui-modal__control {
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
-  background: transparent;
-  cursor: pointer;
-}
-
-.ui-modal__control:hover {
-  color: var(--color-text);
-  background: var(--color-surface-hover);
-}
-
-.ui-modal__body {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.ui-modal__footer {
-  height: 48px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 0 16px;
-  border-top: 1px solid var(--color-border);
-  background: var(--color-surface);
-}
-
-.ui-confirm-dialog {
-  --ui-modal-width: 420px;
-}
-
-.ui-confirm-dialog__body {
-  padding: 20px;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-
-.ui-confirm-dialog__message {
-  margin: 0 0 12px;
-  line-height: 1.5;
-}
-
-.ui-confirm-dialog__detail {
-  display: block;
-  padding: 8px;
-  overflow: hidden;
-  color: var(--color-text);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ui-confirm-dialog__detail code {
-  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
-}
-
 .ui-workbench-confirmation-flow {
   --ui-modal-width: 440px;
 }
@@ -742,6 +608,7 @@
 }
 
 .workbench-settings-tab {
+  position: relative;
   height: 34px;
   padding: 0;
   border: 0;
@@ -765,7 +632,9 @@
 
 .workbench-settings-tab--active {
   color: var(--color-text);
-  border-bottom-color: var(--color-text);
+  margin-bottom: -1px;
+  border-bottom-color: var(--color-bg);
+  z-index: 1;
 }
 
 .workbench-settings-layout {
@@ -1506,8 +1375,8 @@
 
 @media (max-width: 760px) {
   .workbench-settings-modal {
-    --ui-modal-max-width: calc(100vw - 24px);
-    --ui-modal-max-height: calc(100vh - 24px);
+    --ui-modal-max-width: 100vw;
+    --ui-modal-max-height: 100vh;
   }
 
   .ui-workbench-navigation-panel,
@@ -4321,6 +4190,7 @@
   display: flex;
   align-items: center;
   background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .workspace-editor__tabs {
@@ -4333,6 +4203,7 @@
 }
 
 .workspace-editor__tab {
+  position: relative;
   width: 180px;
   min-width: 120px;
   max-width: 240px;
@@ -4354,6 +4225,9 @@
 .workspace-editor__tab--active:hover {
   color: var(--color-text);
   background: var(--panel-bg, var(--color-bg));
+  margin-bottom: -1px;
+  border-bottom: 1px solid var(--panel-bg, var(--color-bg));
+  z-index: 1;
 }
 
 .workspace-editor__tab-button {
@@ -4832,6 +4706,7 @@
 }
 
 .ui-tabbed-panels__tab {
+  position: relative;
   box-sizing: border-box;
   display: inline-flex;
   flex: 0 0 auto;
@@ -4851,6 +4726,9 @@
 .ui-tabbed-panels__tab--active {
   color: var(--vscode-tab-activeForeground, var(--color-text));
   background: var(--vscode-tab-activeBackground, var(--color-bg));
+  margin-bottom: -1px;
+  border-bottom: 1px solid var(--vscode-tab-activeBackground, var(--color-bg));
+  z-index: 1;
 }
 
 .ui-tabbed-panels__tab-label {
@@ -4957,9 +4835,10 @@
 .ui-editor-tabs__tab--active {
   color: var(--vscode-tab-activeForeground, var(--color-text));
   background: var(--vscode-tab-activeBackground, var(--color-bg));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--ui-editor-tabs-active-border) 45%, transparent),
-    inset 0 -1px 0 var(--vscode-editor-background, var(--color-bg));
+  margin-bottom: -1px;
+  border-bottom: 1px solid var(--vscode-editor-background, var(--color-bg));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ui-editor-tabs-active-border) 45%, transparent);
+  z-index: 1;
 }
 
 .ui-editor-tabs__tab--active::before {

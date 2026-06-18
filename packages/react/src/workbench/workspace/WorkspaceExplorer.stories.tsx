@@ -8,6 +8,7 @@ import {
   isWorkspaceEntryPathAvailable,
   joinWorkspacePath,
   parentPathOf,
+  resolveWorkspaceCreateParentPath,
   type WorkspaceEntryMove,
   type WorkspaceSelectionState,
   type WorkspaceFile,
@@ -124,6 +125,7 @@ function ExplorerHarness({
   });
   const [selection, setSelection] = useState<WorkspaceSelectionState>({
     anchorPath: selectedPath,
+    focusedPath: selectedPath,
     paths: selectedPath ? [selectedPath] : [],
   });
   const [inlineEdit, setInlineEdit] = useState<WorkspaceExplorerInlineEditState | undefined>();
@@ -382,12 +384,22 @@ function ExplorerHarness({
             <IconButton
               icon="codicon-new-file"
               label="New file"
-              onClick={() => startCreate('create-file')}
+              onClick={() =>
+                startCreate(
+                  'create-file',
+                  resolveWorkspaceCreateParentPath(selection.focusedPath, workspace.folders),
+                )
+              }
             />
             <IconButton
               icon="codicon-new-folder"
               label="New folder"
-              onClick={() => startCreate('create-folder')}
+              onClick={() =>
+                startCreate(
+                  'create-folder',
+                  resolveWorkspaceCreateParentPath(selection.focusedPath, workspace.folders),
+                )
+              }
             />
           </Toolbar>
         }
@@ -403,6 +415,7 @@ function ExplorerHarness({
           dragMetadataDataType={dragMetadataDataType}
           dragMetadataFactory={dragMetadataFactory}
           expandedPaths={workspace.expandedPaths}
+          focusedPath={selection.focusedPath}
           inlineEdit={inlineEdit}
           nodes={workspace.workspaceTree}
           selectedPaths={selection.paths}

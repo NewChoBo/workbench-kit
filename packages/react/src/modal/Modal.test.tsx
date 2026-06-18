@@ -18,7 +18,7 @@ describe('Modal', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders the legacy centered dialog without window controls by default', () => {
+  it('renders a workbench window with titlebar controls', () => {
     const markup = renderToStaticMarkup(
       <Modal title="Basic" onClose={() => undefined}>
         Content
@@ -26,25 +26,15 @@ describe('Modal', () => {
     );
 
     expect(markup).toContain('role="dialog"');
-    expect(markup).not.toContain('Maximize modal');
-    expect(markup).not.toContain('data-draggable');
-  });
-
-  it('can render as a movable and maximizable workbench window', () => {
-    const markup = renderToStaticMarkup(
-      <Modal title="Settings" maximizable movable onClose={() => undefined}>
-        Content
-      </Modal>,
-    );
-
+    expect(markup).toContain('ui-modal__surface');
+    expect(markup).toContain('ui-modal__titlebar-drag');
     expect(markup).toContain('aria-label="Maximize modal"');
-    expect(markup).toContain('codicon-chrome-maximize');
-    expect(markup).toContain('data-draggable="true"');
+    expect(markup).toContain('ui-modal__resize-handle--se');
   });
 
   it('can start maximized and expose the restore control', () => {
     const markup = renderToStaticMarkup(
-      <Modal title="Settings" defaultMaximized maximizable movable onClose={() => undefined}>
+      <Modal title="Settings" defaultMaximized onClose={() => undefined}>
         Content
       </Modal>,
     );
@@ -55,41 +45,30 @@ describe('Modal', () => {
   });
 
   it('moves from titlebar drag and toggles maximize/restore', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 600 });
+
     const container = document.createElement('div');
     document.body.append(container);
     const root = createRoot(container);
 
     await act(async () => {
       root.render(
-        <Modal title="Settings" maximizable movable onClose={() => undefined}>
+        <Modal title="Settings" defaultHeight={300} defaultWidth={400} onClose={() => undefined}>
           Content
         </Modal>,
       );
     });
 
     const dialog = container.querySelector('[role="dialog"]') as HTMLElement | null;
-    const titlebar = container.querySelector('.ui-modal__titlebar') as HTMLElement | null;
+    const titlebarDrag = container.querySelector('.ui-modal__titlebar-drag') as HTMLElement | null;
     expect(dialog).not.toBeNull();
-    expect(titlebar).not.toBeNull();
-
-    Object.defineProperty(dialog, 'getBoundingClientRect', {
-      configurable: true,
-      value: () =>
-        ({
-          bottom: 400,
-          height: 300,
-          left: 100,
-          right: 500,
-          top: 100,
-          width: 400,
-          x: 100,
-          y: 100,
-          toJSON: () => ({}),
-        }) as DOMRect,
-    });
+    expect(titlebarDrag).not.toBeNull();
+    expect(dialog?.getAttribute('style')).toContain('left: 200px');
+    expect(dialog?.getAttribute('style')).toContain('top: 150px');
 
     await act(async () => {
-      titlebar?.dispatchEvent(createPointerLikeEvent('pointerdown', 200, 120));
+      titlebarDrag?.dispatchEvent(createPointerLikeEvent('pointerdown', 200, 120));
     });
 
     await act(async () => {
@@ -100,7 +79,8 @@ describe('Modal', () => {
       window.dispatchEvent(createPointerLikeEvent('pointerup', 260, 160));
     });
 
-    expect(dialog?.getAttribute('style')).toContain('translate3d(60px, 40px, 0)');
+    expect(dialog?.getAttribute('style')).toContain('left: 260px');
+    expect(dialog?.getAttribute('style')).toContain('top: 190px');
 
     const maximizeButton = container.querySelector(
       'button[aria-label="Maximize modal"]',
@@ -112,6 +92,7 @@ describe('Modal', () => {
     });
 
     expect(dialog?.dataset.maximized).toBe('true');
+    expect(dialog?.getAttribute('style') ?? '').not.toContain('left:');
     const restoreButton = container.querySelector(
       'button[aria-label="Restore modal"]',
     ) as HTMLButtonElement | null;
@@ -127,9 +108,67 @@ describe('Modal', () => {
       root.unmount();
     });
   });
+
+  it('keeps titlebar controls clickable', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 600 });
+
+    let closed = false;
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <Modal
+          title="Settings"
+          defaultHeight={300}
+          defaultWidth={400}
+          onClose={() => {
+            closed = true;
+          }}
+        >
+          Content
+        </Modal>,
+      );
+    });
+
+    const dialog = container.querySelector('[role="dialog"]') as HTMLElement | null;
+    const maximizeButton = container.querySelector(
+      'button[aria-label="Maximize modal"]',
+    ) as HTMLButtonElement | null;
+    const closeButton = container.querySelector(
+      'button[aria-label="Close modal"]',
+    ) as HTMLButtonElement | null;
+
+    expect(dialog).not.toBeNull();
+    expect(maximizeButton).not.toBeNull();
+    expect(closeButton).not.toBeNull();
+
+    await act(async () => {
+      maximizeButton?.click();
+    });
+
+    expect(dialog?.dataset.maximized).toBe('true');
+
+    await act(async () => {
+      closeButton?.click();
+    });
+
+    expect(closed).toBe(true);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
 });
 
-function createPointerLikeEvent(type: string, clientX: number, clientY: number): PointerEvent {
+function createPointerLikeEvent(
+  type: string,
+  clientX: number,
+  clientY: number,
+  target?: EventTarget,
+): PointerEvent {
   const event = new MouseEvent(type, {
     bubbles: true,
     button: 0,
@@ -139,6 +178,10 @@ function createPointerLikeEvent(type: string, clientX: number, clientY: number):
   }) as PointerEvent;
 
   Object.defineProperty(event, 'pointerId', { value: 1 });
+  if (target) {
+    Object.defineProperty(event, 'target', { value: target });
+    Object.defineProperty(event, 'currentTarget', { value: target });
+  }
 
   return event;
 }

@@ -83,6 +83,7 @@ export function useIntegratedShellWorkspaceOrchestration({
 
   const [explorerSelection, setExplorerSelection] = useState<WorkspaceSelectionState>({
     anchorPath: defaultSelectionPath,
+    focusedPath: defaultSelectionPath,
     paths: [defaultSelectionPath],
   });
   const [explorerInlineEdit, setExplorerInlineEdit] = useState<

@@ -33,6 +33,7 @@ export type {
   WorkspaceExplorerMoveRequestMeta,
   WorkspaceExplorerProps,
   WorkspaceExplorerSelectionChangeMeta,
+  WorkspaceExplorerSelectionChangeReason,
 } from './WorkspaceExplorer';
 export { WorkspaceFileIcon, codiconForFileKind, fileIconKindForPath } from './WorkspaceFileIcon';
 export type { WorkspaceFileIconKind, WorkspaceFileIconProps } from './WorkspaceFileIcon';
@@ -98,10 +99,12 @@ export {
 } from '@workbench-kit/workspace';
 export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
 export {
+  createEmptyWorkspaceSelection,
   getWorkspaceSelectionActionPaths,
   getWorkspaceSelectionRange,
   normalizeWorkspaceSelectionPaths,
   pruneWorkspaceSelection,
+  resolveWorkspaceCreateParentPath,
   updateWorkspaceSelection,
   type UpdateWorkspaceSelectionInput,
   type WorkspaceSelectionActionPathsInput,

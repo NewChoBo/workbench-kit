@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, within } from 'storybook/test';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
 import { Checkbox } from '../../primitives/Checkbox';
@@ -298,4 +298,26 @@ export const DirtyStateFlow: Story = {
       'Maintenance task queued',
     );
   },
+};
+
+export const ColorThemeListboxFit: Story = {
+  render: () => <SettingsModalHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole('combobox', { name: 'Color theme' }));
+
+    const listbox = await screen.findByRole('listbox');
+    const options = within(listbox).getAllByRole('option');
+
+    await expect(options).toHaveLength(2);
+    await expect(within(listbox).getByRole('option', { name: 'Dark Modern' })).toBeVisible();
+    await expect(within(listbox).getByRole('option', { name: 'Light Modern' })).toBeVisible();
+
+    expect(listbox.scrollHeight).toBeLessThanOrEqual(listbox.clientHeight + 1);
+
+    const maxHeight = Number.parseFloat(getComputedStyle(listbox).maxHeight);
+    expect(maxHeight).toBeGreaterThanOrEqual(64);
+  },
+  tags: ['storybook-play-baseline', 'storybook-play-required', 'select-listbox-fit'],
 };

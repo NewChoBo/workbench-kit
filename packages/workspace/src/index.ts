@@ -26,10 +26,12 @@ export {
 } from './draft';
 export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
 export {
+  createEmptyWorkspaceSelection,
   getWorkspaceSelectionActionPaths,
   getWorkspaceSelectionRange,
   normalizeWorkspaceSelectionPaths,
   pruneWorkspaceSelection,
+  resolveWorkspaceCreateParentPath,
   updateWorkspaceSelection,
   type UpdateWorkspaceSelectionInput,
   type WorkspaceSelectionActionPathsInput,

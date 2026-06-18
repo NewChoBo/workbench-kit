@@ -1,0 +1,244 @@
+.ui-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--ui-modal-z-index, 200);
+  display: block;
+  background: var(--ui-modal-overlay-bg, rgba(0, 0, 0, 0.48));
+}
+
+.ui-modal {
+  position: fixed;
+  margin: 0;
+  width: var(--ui-modal-width, 640px);
+  height: var(--ui-modal-height, auto);
+  max-width: none;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.ui-modal[data-ready='false']:not([data-maximized='true']) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ui-modal[data-maximized='true'] {
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  border-radius: 0;
+}
+
+.ui-modal__titlebar {
+  position: relative;
+  z-index: 2;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px 0 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ui-modal__titlebar-drag {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 16px;
+}
+
+.ui-modal:not([data-maximized='true']) .ui-modal__titlebar-drag {
+  cursor: move;
+}
+
+.ui-modal__surface {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-modal__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-modal__title {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-modal__controls {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: center;
+  gap: 2px;
+}
+
+.ui-modal__control {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.ui-modal__control:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.ui-modal__body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-modal__footer {
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.ui-modal__resize-handle {
+  position: absolute;
+  z-index: 1;
+}
+
+.ui-modal__resize-handle--n,
+.ui-modal__resize-handle--s {
+  left: 8px;
+  right: 8px;
+  height: 6px;
+}
+
+.ui-modal__resize-handle--e,
+.ui-modal__resize-handle--w {
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+}
+
+.ui-modal__resize-handle--n {
+  top: 0;
+  cursor: ns-resize;
+}
+
+.ui-modal__resize-handle--s {
+  bottom: -3px;
+  cursor: ns-resize;
+}
+
+.ui-modal__resize-handle--e {
+  right: -3px;
+  cursor: ew-resize;
+}
+
+.ui-modal__resize-handle--w {
+  left: -3px;
+  cursor: ew-resize;
+}
+
+.ui-modal__resize-handle--ne,
+.ui-modal__resize-handle--nw,
+.ui-modal__resize-handle--se,
+.ui-modal__resize-handle--sw {
+  width: 12px;
+  height: 12px;
+}
+
+.ui-modal__resize-handle--ne {
+  top: 0;
+  right: -3px;
+  cursor: nesw-resize;
+}
+
+.ui-modal__resize-handle--nw {
+  top: 0;
+  left: -3px;
+  cursor: nwse-resize;
+}
+
+.ui-modal__resize-handle--se {
+  right: -3px;
+  bottom: -3px;
+  cursor: nwse-resize;
+}
+
+.ui-modal__resize-handle--sw {
+  left: -3px;
+  bottom: -3px;
+  cursor: nesw-resize;
+}
+
+.ui-confirm-dialog {
+  --ui-modal-width: 420px;
+}
+
+.ui-confirm-dialog__body {
+  padding: 20px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.ui-confirm-dialog__message {
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.ui-confirm-dialog__detail {
+  display: block;
+  padding: 8px;
+  overflow: hidden;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-confirm-dialog__detail code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+}

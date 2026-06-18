@@ -39,6 +39,7 @@ import { WorkbenchStandaloneShell } from '../WorkbenchStandaloneShell';
 import type { WorkbenchStandaloneShellContext } from '../WorkbenchStandaloneShell';
 import {
   WorkspaceEditorPanel,
+  resolveWorkspaceCreateParentPath,
   type WorkspaceEditorTheme,
   WorkspaceExplorer,
   WorkspaceSearchPanel,
@@ -144,6 +145,7 @@ export function IntegratedShellDemo({
     deleteFile: deleteWorkspaceFile,
     expandedPaths,
     files,
+    folders,
     moveFile: moveWorkspaceFile,
     openFile,
     openPaths,
@@ -181,6 +183,11 @@ export function IntegratedShellDemo({
     onNotify: setLastCommandLabel,
     workspace,
   });
+
+  const explorerCreateParentPath = useMemo(
+    () => resolveWorkspaceCreateParentPath(explorerSelection.focusedPath, folders),
+    [explorerSelection.focusedPath, folders],
+  );
 
   const openFileRef = useRef(openFile);
   useEffect(() => {
@@ -347,8 +354,8 @@ export function IntegratedShellDemo({
     shellContext: WorkbenchStandaloneShellContext<IntegratedShellActivityId, WorkspaceEditorTheme>,
     overrides: Partial<IntegratedShellCommandContext> = {},
   ): IntegratedShellCommandContext => ({
-    createWorkspaceFile: () => startWorkspaceCreate('create-file'),
-    createWorkspaceFolder: () => startWorkspaceCreate('create-folder'),
+    createWorkspaceFile: () => startWorkspaceCreate('create-file', explorerCreateParentPath),
+    createWorkspaceFolder: () => startWorkspaceCreate('create-folder', explorerCreateParentPath),
     deleteWorkspaceTarget: () => undefined,
     fileActionPaths: [],
     isPrimarySidebarVisible: shellContext.isPrimarySidebarVisible,
@@ -588,12 +595,12 @@ export function IntegratedShellDemo({
                   <IconButton
                     icon="codicon-new-file"
                     label="New file"
-                    onClick={() => startWorkspaceCreate('create-file')}
+                    onClick={() => startWorkspaceCreate('create-file', explorerCreateParentPath)}
                   />
                   <IconButton
                     icon="codicon-new-folder"
                     label="New folder"
-                    onClick={() => startWorkspaceCreate('create-folder')}
+                    onClick={() => startWorkspaceCreate('create-folder', explorerCreateParentPath)}
                   />
                   <IconButton icon="codicon-refresh" label="Refresh" />
                 </>
@@ -617,6 +624,7 @@ export function IntegratedShellDemo({
               activePath={selectedPath}
               expandedPaths={expandedPaths}
               filterQuery={filterQuery}
+              focusedPath={explorerSelection.focusedPath}
               inlineEdit={explorerInlineEdit}
               nodes={workspaceTree}
               selectedPaths={explorerSelection.paths}

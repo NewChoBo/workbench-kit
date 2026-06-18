@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, screen, userEvent, within } from 'storybook/test';
 import { HelpText } from '../layout/Panel';
 import { EmptyState } from './EmptyState';
 import { Field } from './Field';
@@ -163,4 +164,31 @@ export const StatusSeverity: Story = {
       </StatusBar>
     </div>
   ),
+};
+
+export const SelectListboxFit: Story = {
+  render: () => (
+    <section style={stackStyle}>
+      <Field label="Mode" description="Short option lists should not clip inside the listbox.">
+        <Select aria-label="Mode" controlWidth="full" defaultValue="compact">
+          <option value="compact">Compact</option>
+          <option value="comfortable">Comfortable</option>
+        </Select>
+      </Field>
+    </section>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole('combobox', { name: 'Mode' }));
+
+    const listbox = await screen.findByRole('listbox');
+    const options = within(listbox).getAllByRole('option');
+
+    await expect(options).toHaveLength(2);
+    await expect(within(listbox).getByRole('option', { name: 'Compact' })).toBeVisible();
+    await expect(within(listbox).getByRole('option', { name: 'Comfortable' })).toBeVisible();
+    expect(listbox.scrollHeight).toBeLessThanOrEqual(listbox.clientHeight + 1);
+  },
+  tags: ['storybook-play-baseline', 'select-listbox-fit'],
 };

@@ -412,6 +412,7 @@
 }
 
 .ui-tabbed-panels__tab {
+  position: relative;
   box-sizing: border-box;
   display: inline-flex;
   flex: 0 0 auto;
@@ -431,6 +432,9 @@
 .ui-tabbed-panels__tab--active {
   color: var(--vscode-tab-activeForeground, var(--color-text));
   background: var(--vscode-tab-activeBackground, var(--color-bg));
+  margin-bottom: -1px;
+  border-bottom: 1px solid var(--vscode-tab-activeBackground, var(--color-bg));
+  z-index: 1;
 }
 
 .ui-tabbed-panels__tab-label {
@@ -537,9 +541,10 @@
 .ui-editor-tabs__tab--active {
   color: var(--vscode-tab-activeForeground, var(--color-text));
   background: var(--vscode-tab-activeBackground, var(--color-bg));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--ui-editor-tabs-active-border) 45%, transparent),
-    inset 0 -1px 0 var(--vscode-editor-background, var(--color-bg));
+  margin-bottom: -1px;
+  border-bottom: 1px solid var(--vscode-editor-background, var(--color-bg));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ui-editor-tabs-active-border) 45%, transparent);
+  z-index: 1;
 }
 
 .ui-editor-tabs__tab--active::before {
