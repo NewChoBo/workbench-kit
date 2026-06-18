@@ -22,6 +22,10 @@ import {
   workspaceInfo,
 } from './bootstrap.js';
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/workbench-react';
+import {
+  getSampleCommandPaletteShortcutLabel,
+  SampleCommandPalette,
+} from './sample-command-palette.js';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 let sampleWorkspaceInitialized = false;
@@ -112,6 +116,7 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
   return (
     <>
       <WorkspaceInitCommand />
+      <SampleCommandPalette />
       <WorkbenchShell
         editorArea={
           <SampleEditorFrame theme={theme}>
@@ -242,6 +247,10 @@ function SampleHelpContent() {
           </li>
           <li>
             Toggle the primary sidebar from the status bar to review layout persistence.
+          </li>
+          <li>
+            Press <code>{getSampleCommandPaletteShortcutLabel()}</code> to open the command palette
+            for view switches, quick file opens, and built-in extension commands.
           </li>
         </ul>
       </section>
