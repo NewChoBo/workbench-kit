@@ -38,6 +38,8 @@ export type {
   StatusBarSectionProps,
   StatusBarSeverity,
 } from './StatusBar';
+export { ClearableTextInput } from './ClearableTextInput';
+export type { ClearableTextInputProps } from './ClearableTextInput';
 export { TextInput } from './TextInput';
 export type { ControlWidth, TextInputProps } from './TextInput';
 export { TextArea } from './TextArea';

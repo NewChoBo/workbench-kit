@@ -1,9 +1,9 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { SideBarHeaderControl, SideBarViewFrame } from '../../layout/SideBarViewFrame';
 import { Badge } from '../../primitives/Badge';
+import { ClearableTextInput } from '../../primitives/ClearableTextInput';
 import { EmptyState } from '../../primitives/EmptyState';
 import { IconButton } from '../../primitives/IconButton';
-import { TextInput } from '../../primitives/TextInput';
 import { Toolbar } from '../../primitives/Toolbar';
 import { WorkspaceSearchResults } from './WorkspaceSearchResults';
 import type { WorkspaceSearchResult } from './types';
@@ -55,6 +55,7 @@ export function WorkspaceSearchPanel({
     if (event.key === 'Escape' && query) {
       event.preventDefault();
       onQueryChange('');
+      return;
     }
   };
 
@@ -72,24 +73,16 @@ export function WorkspaceSearchPanel({
       headerAddon={
         <SideBarHeaderControl>
           <div className="workbench-search-control">
-            <TextInput
+            <ClearableTextInput
               aria-label={searchLabel}
-              className="workbench-search-control__input"
+              clearLabel="Clear search"
               controlWidth="full"
               placeholder={placeholder}
               value={query}
+              onClear={() => onQueryChange('')}
               onChange={(event) => onQueryChange(event.currentTarget.value)}
               onKeyDown={handleQueryKeyDown}
             />
-            {query ? (
-              <IconButton
-                className="workbench-search-control__clear"
-                compact
-                icon="codicon-close"
-                label="Clear search"
-                onClick={() => onQueryChange('')}
-              />
-            ) : null}
           </div>
         </SideBarHeaderControl>
       }

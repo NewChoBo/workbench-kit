@@ -27,7 +27,7 @@ import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
 import { IconButton } from '../../primitives/IconButton';
-import { TextInput } from '../../primitives/TextInput';
+import { ClearableTextInput } from '../../primitives/ClearableTextInput';
 import { ChatPanel, type ChatMessage } from '../chat';
 import {
   commandMenuItemsToContextMenuItems,
@@ -650,11 +650,13 @@ export function IntegratedShellDemo({
             }
             headerAddon={
               <SideBarHeaderControl>
-                <TextInput
+                <ClearableTextInput
                   aria-label={`Filter ${activeActivity.label}`}
+                  clearLabel={`Clear ${activeActivity.label} filter`}
                   controlWidth="full"
                   placeholder="Filter"
                   value={filterQuery}
+                  onClear={() => setFilterQuery('')}
                   onChange={(event) => setFilterQuery(event.currentTarget.value)}
                 />
               </SideBarHeaderControl>

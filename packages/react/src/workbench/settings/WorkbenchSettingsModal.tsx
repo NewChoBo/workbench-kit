@@ -1,7 +1,7 @@
 import { useId, useState, type FormEventHandler, type ReactNode } from 'react';
 import { Modal } from '../../modal/Modal';
 import type { ModalProps } from '../../modal/Modal';
-import { TextInput } from '../../primitives/TextInput';
+import { ClearableTextInput } from '../../primitives/ClearableTextInput';
 import { cx } from '../../utils/cx';
 import { WorkbenchNavigationPanel } from './NavigationPanel';
 import { WorkbenchSettingsNav } from './WorkbenchSettingsNav';
@@ -149,11 +149,13 @@ export function WorkbenchSettingsModal({
     >
       {showSearch ? (
         <div className="workbench-settings-search">
-          <TextInput
+          <ClearableTextInput
             aria-label={searchPlaceholder}
+            clearLabel="Clear settings search"
             controlWidth="full"
             placeholder={searchPlaceholder}
             value={resolvedSearchValue}
+            onClear={() => handleSearchChange('')}
             onChange={(event) => handleSearchChange(event.currentTarget.value)}
           />
         </div>
