@@ -17,6 +17,27 @@ export function isTrustedPublisherAvailable() {
   );
 }
 
+export function requireTrustedPublisherAuth(context = 'npm-publish') {
+  if (process.env.NODE_AUTH_TOKEN?.trim()) {
+    console.warn(
+      `[${context}] Ignoring NODE_AUTH_TOKEN; npm publish uses GitHub Actions trusted publishing only.`,
+    );
+  }
+
+  clearNpmRegistryAuth();
+
+  if (!isTrustedPublisherAvailable()) {
+    throw new Error(
+      [
+        'npm publish requires GitHub Actions trusted publishing (OIDC).',
+        'Token auth (NPM_TOKEN / NODE_AUTH_TOKEN) is not supported.',
+        'Run publish from publish.yml with permissions.id-token: write.',
+        'Configure npm trusted publisher for NewChoBo/workbench-kit · Publish Workbench Kit / publish.yml.',
+      ].join('\n'),
+    );
+  }
+}
+
 export function clearNpmRegistryAuth() {
   const userConfig = process.env.NPM_CONFIG_USERCONFIG;
   if (userConfig && fs.existsSync(userConfig)) {
