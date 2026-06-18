@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import {
-  NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
   buildNpmPublishArgs,
   packageDirectoryNameForPackageName,
+  probePackageForTrustedPublisher,
   requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
 
@@ -23,7 +23,7 @@ console.log('[preflight-npm] Skipping npm whoami because OIDC auth is resolved a
 
 resetDirectory(packDir);
 
-const probePackage = NPM_PUBLISH_ORDER[0];
+const probePackage = probePackageForTrustedPublisher();
 const probeDir = packageDirFor(probePackage);
 const probeJson = readJson(path.join(probeDir, 'package.json'));
 const probeSpec = `${probeJson.name}@${probeJson.version}`;

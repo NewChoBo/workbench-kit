@@ -5,17 +5,23 @@ import {
   NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
   buildNpmPublishArgs,
+  npmViewExists,
   packageDirectoryNameForPackageName,
+  parsePublishMode,
   requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
 
 const root = process.cwd();
-const dryRun = process.argv.includes('--dry-run') || process.env.DRY_RUN === 'true';
+const { dryRun, updatesOnly } = parsePublishMode();
 const distTag = process.env.NPM_DIST_TAG || 'prototype';
 const registry = NPM_REGISTRY;
 const packDir = path.join(root, '.npm-pack');
 
 requireTrustedPublisherAuth('publish');
+
+if (updatesOnly) {
+  console.log('[publish] updates-only mode: skipping packages not yet on npm (use local publish first).');
+}
 
 const publishOrder = NPM_PUBLISH_ORDER;
 
@@ -31,13 +37,22 @@ for (const packageName of publishOrder) {
     continue;
   }
 
+  if (updatesOnly && !npmViewExists(pkg.name)) {
+    console.log(`skip ${spec}: package not on npm yet (publish locally with publish-packages-local.mjs)`);
+    continue;
+  }
+
   const tarball = packPackage(pkg.name);
   const args = buildNpmPublishArgs({ tarball, distTag, dryRun });
 
   console.log(
     `${dryRun ? 'dry-run publish' : 'publish'} ${spec} with tag ${distTag} via trusted publishing`,
   );
-  run('npm', args, { stdio: 'inherit' });
+  try {
+    run('npm', args, { stdio: 'inherit' });
+  } catch (error) {
+    throw publishFailureError(pkg.name, error);
+  }
 }
 
 function packageDirFor(packageName) {
@@ -55,14 +70,21 @@ function packPackage(packageName) {
 }
 
 function isPublished(spec) {
-  try {
-    run('npm', ['view', spec, 'version', '--registry', registry], {
-      stdio: 'ignore',
-    });
-    return true;
-  } catch {
-    return false;
-  }
+  return npmViewExists(spec, registry);
+}
+
+function publishFailureError(packageName, error) {
+  return new Error(
+    [
+      `npm publish failed for ${packageName}.`,
+      'Trusted publishing checklist:',
+      '- npm Trusted Publisher: NewChoBo / workbench-kit / publish.yml (Environment blank).',
+      '- First release of a package must use: node scripts/publish-packages-local.mjs',
+      '- After local first publish, register the same trusted publisher on that package for CI updates.',
+      error instanceof Error ? error.message : String(error),
+    ].join('\n'),
+    { cause: error },
+  );
 }
 
 function resetDirectory(target) {
