@@ -16,7 +16,9 @@ import {
   extensionsConfig,
   initialLayout,
   initialWorkspace,
+  SAMPLE_BUTTON_PATH,
   SAMPLE_EXAMPLE_JDW_PATH,
+  SAMPLE_README_PATH,
   workspaceInfo,
 } from './bootstrap.js';
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/workbench-react';
@@ -158,9 +160,26 @@ function SampleHelpContent() {
       <section className="workbench-sample-help__section">
         <h2>Sample workspace</h2>
         <p>
-          Open <code>{SAMPLE_EXAMPLE_JDW_PATH}</code> from the titlebar or explorer to review the
-          JDW preview, form, and JSON code modes.
+          <code>{SAMPLE_EXAMPLE_JDW_PATH}</code> opens on startup. Use Code, Form, or Preview to
+          review the JDW editor flow.
         </p>
+        <p>
+          Open <code>{SAMPLE_README_PATH}</code> and switch to Preview for markdown rendering.
+        </p>
+      </section>
+      <section className="workbench-sample-help__section">
+        <h2>Explorer and search</h2>
+        <ul>
+          <li>
+            Right-click files or folders in Explorer for rename, delete, and create actions.
+          </li>
+          <li>
+            Drag files to move them; inline rename works on the selected item.
+          </li>
+          <li>
+            Search for <code>button</code> to find <code>{SAMPLE_BUTTON_PATH}</code>.
+          </li>
+        </ul>
       </section>
       <section className="workbench-sample-help__section">
         <h2>Workbench surfaces</h2>
@@ -172,9 +191,6 @@ function SampleHelpContent() {
           <li>
             Layout preferences such as activity order and the active sidebar are restored from
             browser local storage (`workbench-kit/.workbench/layout`).
-          </li>
-          <li>
-            The empty editor area intentionally stays minimal until a workspace file is opened.
           </li>
           <li>
             Theme selection is exposed in Settings, with a status bar shortcut for quick checks.

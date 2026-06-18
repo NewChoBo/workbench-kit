@@ -19,6 +19,7 @@ export interface SampleWorkspaceInfo {
 }
 
 export const SAMPLE_APP_PATH = 'src/App.tsx';
+export const SAMPLE_BUTTON_PATH = 'src/components/Button.tsx';
 export const SAMPLE_README_PATH = 'README.md';
 export const SAMPLE_EXAMPLE_JDW_PATH = 'example.jdw.json';
 export const SAMPLE_JDW_NODE_SCHEMA_PATH = 'schemas/jdw-node.jdw.schema.json';
@@ -42,7 +43,8 @@ export const initialLayout = (() => {
 })();
 
 export const initialWorkspace: VirtualWorkspaceInitialState = {
-  expandedPaths: ['src', 'schemas'],
+  expandedPaths: ['src', 'src/components', 'schemas'],
+  openPaths: [SAMPLE_EXAMPLE_JDW_PATH],
   files: [
     {
       content: [
@@ -53,6 +55,22 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
         '}',
       ].join('\n'),
       path: SAMPLE_APP_PATH,
+    },
+    {
+      content: [
+        "import type { ComponentPropsWithRef } from 'react';",
+        '',
+        "type ButtonVariant = 'default' | 'primary' | 'danger';",
+        '',
+        "interface ButtonProps extends ComponentPropsWithRef<'button'> {",
+        '  variant?: ButtonVariant;',
+        '}',
+        '',
+        'export function Button({ variant = "default", ...props }: ButtonProps) {',
+        '  return <button data-variant={variant} {...props} />;',
+        '}',
+      ].join('\n'),
+      path: SAMPLE_BUTTON_PATH,
     },
     {
       content: [
@@ -122,7 +140,7 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
       path: SAMPLE_EXAMPLE_JDW_PATH,
     },
   ],
-  folders: ['src', 'schemas'],
+  folders: ['src', 'src/components', 'schemas'],
 };
 
 export const workspaceInfo: SampleWorkspaceInfo = {
