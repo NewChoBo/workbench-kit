@@ -1,0 +1,129 @@
+import {
+  parseWorkbenchLayoutConfig,
+  type WorkbenchLayoutConfig,
+} from '@workbench-kit/workbench-config';
+import {
+  createWorkbenchLayoutState,
+  type WorkbenchLayoutState,
+  type WorkbenchLayoutStateInput,
+} from '@workbench-kit/workbench-core';
+
+export const DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY = 'workbench-kit/.workbench/layout';
+
+export function isWorkbenchLayoutPersistenceAvailable(): boolean {
+  try {
+    return typeof globalThis.localStorage !== 'undefined';
+  } catch {
+    return false;
+  }
+}
+
+export function workbenchLayoutConfigToInput(
+  config: WorkbenchLayoutConfig,
+): WorkbenchLayoutStateInput {
+  return {
+    activityBar: {
+      itemOrder: config.activityBar.itemOrder,
+      visible: config.activityBar.visible,
+    },
+    panel: {
+      visible: config.panel.visible,
+    },
+    sideBar: {
+      activeViewContainer: config.sideBar.activeViewContainer,
+      visible: config.sideBar.visible,
+    },
+  };
+}
+
+export function workbenchLayoutStateToStorageValue(
+  state: WorkbenchLayoutState,
+): WorkbenchLayoutConfig {
+  return {
+    activityBar: {
+      visible: state.activityBar.visible,
+      ...(state.activityBar.itemOrder?.length
+        ? { itemOrder: [...state.activityBar.itemOrder] }
+        : {}),
+    },
+    panel: {
+      visible: state.panel.visible,
+    },
+    sideBar: {
+      visible: state.sideBar.visible,
+      ...(state.sideBar.activeViewContainer
+        ? { activeViewContainer: state.sideBar.activeViewContainer }
+        : {}),
+    },
+  };
+}
+
+export function readPersistedWorkbenchLayout(
+  storageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
+  storage?: Pick<Storage, 'getItem'>,
+): WorkbenchLayoutStateInput | undefined {
+  const resolvedStorage = storage ?? getBrowserLocalStorage();
+  if (!resolvedStorage) return undefined;
+
+  try {
+    const raw = resolvedStorage.getItem(storageKey);
+    if (!raw) return undefined;
+
+    return workbenchLayoutConfigToInput(parseWorkbenchLayoutConfig(JSON.parse(raw) as unknown));
+  } catch {
+    return undefined;
+  }
+}
+
+export function writePersistedWorkbenchLayout(
+  state: WorkbenchLayoutState,
+  storageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
+  storage?: Pick<Storage, 'setItem'>,
+): void {
+  const resolvedStorage = storage ?? getBrowserLocalStorage();
+  if (!resolvedStorage) return;
+
+  try {
+    resolvedStorage.setItem(
+      storageKey,
+      JSON.stringify(workbenchLayoutStateToStorageValue(state), null, 2),
+    );
+  } catch {
+    // Ignore quota and security errors so the shell keeps working offline.
+  }
+}
+
+export function resolvePersistedWorkbenchLayout(
+  initialLayout: WorkbenchLayoutStateInput | undefined,
+  options: {
+    persistLayout?: boolean | undefined;
+    storage?: Pick<Storage, 'getItem'> | undefined;
+    storageKey?: string | undefined;
+  } = {},
+): WorkbenchLayoutStateInput | undefined {
+  const {
+    initialLayout: baseLayout,
+    persistLayout = options.storage !== undefined || isWorkbenchLayoutPersistenceAvailable(),
+    storage,
+    storageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
+  } = { initialLayout, ...options };
+
+  if (!persistLayout) {
+    return baseLayout;
+  }
+
+  const persisted = readPersistedWorkbenchLayout(storageKey, storage);
+  if (!persisted) {
+    return baseLayout;
+  }
+
+  return createWorkbenchLayoutState(persisted, createWorkbenchLayoutState(baseLayout ?? {}));
+}
+
+function getBrowserLocalStorage(): Storage | undefined {
+  if (!isWorkbenchLayoutPersistenceAvailable()) {
+    return undefined;
+  }
+
+  return globalThis.localStorage;
+}

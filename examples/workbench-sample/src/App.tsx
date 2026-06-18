@@ -19,6 +19,7 @@ import {
   SAMPLE_EXAMPLE_JDW_PATH,
   workspaceInfo,
 } from './bootstrap.js';
+import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/workbench-react';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 let sampleWorkspaceInitialized = false;
@@ -55,6 +56,8 @@ export function App() {
     <WorkbenchProvider
       extensionsConfig={extensionsConfig}
       initialLayout={initialLayout}
+      layoutStorageKey={DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY}
+      persistLayout
       workspaceHostPort={workspaceHostPort}
     >
       <WorkspaceInitCommand />
@@ -166,6 +169,10 @@ function SampleHelpContent() {
             Explorer, editor tabs, status bar, and settings are contributed through the shell.
           </li>
           <li>Chatting and AI Chat are available from the activity bar for sidebar chat testing.</li>
+          <li>
+            Layout preferences such as activity order and the active sidebar are restored from
+            browser local storage (`workbench-kit/.workbench/layout`).
+          </li>
           <li>
             The empty editor area intentionally stays minimal until a workspace file is opened.
           </li>

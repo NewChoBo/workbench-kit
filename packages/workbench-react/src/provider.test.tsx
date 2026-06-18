@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -138,6 +138,10 @@ function OpenSettingsCommandButton() {
 }
 
 describe('WorkbenchProvider', () => {
+  beforeEach(() => {
+    globalThis.localStorage?.clear();
+  });
+
   it('provides configured core registries to React children', () => {
     const markup = renderToStaticMarkup(
       <WorkbenchProvider

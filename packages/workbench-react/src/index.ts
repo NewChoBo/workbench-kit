@@ -6,6 +6,13 @@ export {
   type WorkbenchContextValue,
   type WorkbenchWorkspaceHostPort,
 } from './provider.js';
+export {
+  DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
+  isWorkbenchLayoutPersistenceAvailable,
+  readPersistedWorkbenchLayout,
+  resolvePersistedWorkbenchLayout,
+  writePersistedWorkbenchLayout,
+} from './workbench-layout-storage.js';
 export { EditorArea, type EditorAreaProps, type EditorViewMode } from './editor-area.js';
 export {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,

@@ -13,6 +13,12 @@ import {
   type WorkbenchLayoutStateInput,
 } from '@workbench-kit/workbench-core';
 import type { WorkbenchExtensionsConfig } from '@workbench-kit/workbench-config';
+import {
+  DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
+  isWorkbenchLayoutPersistenceAvailable,
+  resolvePersistedWorkbenchLayout,
+  writePersistedWorkbenchLayout,
+} from './workbench-layout-storage.js';
 
 export interface WorkbenchWorkspaceHostPort extends WorkbenchEditorSavePort {
   readonly capabilityId?: string | undefined;
@@ -25,6 +31,8 @@ export interface WorkbenchProviderProps {
   children: ReactNode;
   extensionsConfig?: WorkbenchExtensionsConfig;
   initialLayout?: WorkbenchLayoutStateInput;
+  layoutStorageKey?: string;
+  persistLayout?: boolean;
   workspaceHostPort?: WorkbenchWorkspaceHostPort | undefined;
 }
 
@@ -60,12 +68,22 @@ export function WorkbenchProvider({
   children,
   extensionsConfig,
   initialLayout,
+  layoutStorageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
+  persistLayout = isWorkbenchLayoutPersistenceAvailable(),
   workspaceHostPort,
 }: WorkbenchProviderProps) {
   const deferredDisposeRef = useRef<DeferredProviderDispose | undefined>(undefined);
+  const resolvedInitialLayout = useMemo(
+    () =>
+      resolvePersistedWorkbenchLayout(initialLayout, {
+        persistLayout,
+        storageKey: layoutStorageKey,
+      }),
+    [initialLayout, layoutStorageKey, persistLayout],
+  );
   const services = useMemo<WorkbenchProviderServices>(() => {
     const extensionRegistry = new ExtensionRegistry();
-    const layoutService = new LayoutService(initialLayout);
+    const layoutService = new LayoutService(resolvedInitialLayout);
     const editorService = createEditorService({
       editorHostFactories: extensionRegistry.editorHostFactories,
       editorResolvers: extensionRegistry.editorResolvers,
@@ -122,7 +140,21 @@ export function WorkbenchProvider({
       missingExtensionIds: resolution.missingExtensionIds,
       workspaceHostPort,
     };
-  }, [availableExtensions, extensionsConfig, initialLayout, workspaceHostPort]);
+  }, [availableExtensions, extensionsConfig, resolvedInitialLayout, workspaceHostPort]);
+
+  useEffect(() => {
+    if (!persistLayout) {
+      return undefined;
+    }
+
+    const disposable = services.layoutService.onDidChangeLayout(({ state }) => {
+      writePersistedWorkbenchLayout(state, layoutStorageKey);
+    });
+
+    return () => {
+      disposable.dispose();
+    };
+  }, [layoutStorageKey, persistLayout, services.layoutService]);
 
   useEffect(() => {
     const deferredDispose = deferredDisposeRef.current;
