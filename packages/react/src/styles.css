@@ -3525,9 +3525,19 @@
 }
 
 .workbench-search-control {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px;
+  position: relative;
+  min-width: 0;
+}
+
+.workbench-search-control__input {
+  padding-right: 30px;
+}
+
+.workbench-search-control__clear {
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  transform: translateY(-50%);
 }
 
 .workbench-search-mark {

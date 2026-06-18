@@ -74,18 +74,22 @@ export function WorkspaceSearchPanel({
           <div className="workbench-search-control">
             <TextInput
               aria-label={searchLabel}
+              className="workbench-search-control__input"
               controlWidth="full"
               placeholder={placeholder}
               value={query}
               onChange={(event) => onQueryChange(event.currentTarget.value)}
               onKeyDown={handleQueryKeyDown}
             />
-            <IconButton
-              disabled={!query}
-              icon="codicon-close"
-              label="Clear search"
-              onClick={() => onQueryChange('')}
-            />
+            {query ? (
+              <IconButton
+                className="workbench-search-control__clear"
+                compact
+                icon="codicon-close"
+                label="Clear search"
+                onClick={() => onQueryChange('')}
+              />
+            ) : null}
           </div>
         </SideBarHeaderControl>
       }
