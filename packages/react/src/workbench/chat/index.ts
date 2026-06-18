@@ -1,11 +1,22 @@
 export { ChatComposer } from './ChatComposer';
 export type { ChatComposerProps } from './ChatComposer';
+export { ChatConversationBar } from './ChatConversationBar';
+export type { ChatConversationBarProps } from './ChatConversationBar';
+export { ChatHistoryMenu } from './ChatHistoryMenu';
+export type { ChatHistoryMenuProps } from './ChatHistoryMenu';
 export { ChatMessageItem } from './ChatMessageItem';
 export type { ChatMessageItemProps } from './ChatMessageItem';
 export { ChatMessageList } from './ChatMessageList';
 export type { ChatMessageListProps } from './ChatMessageList';
 export { ChatPanel } from './ChatPanel';
 export type { ChatPanelProps } from './ChatPanel';
+export { ChatRenameDialog } from './ChatRenameDialog';
+export type { ChatRenameDialogProps } from './ChatRenameDialog';
+export { defaultWorkbenchChatConversationLabels } from './chatConversation';
+export type {
+  WorkbenchChatConversation,
+  WorkbenchChatConversationLabels,
+} from './chatConversation';
 export type { ChatMessage, ChatMessageSource } from './types';
 export { useChatRuntimeState } from './useChatRuntimeState';
 export type { UseChatRuntimeStateInput, UseChatRuntimeStateResult } from './useChatRuntimeState';

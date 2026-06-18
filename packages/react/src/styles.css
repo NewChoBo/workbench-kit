@@ -1,6 +1,8 @@
 @import '@workbench-kit/tokens/styles.css';
 @import '@vscode/codicons/dist/codicon.css';
 @import './scrollbars.css';
+@import './workbench-menu-surfaces.css';
+@import './workbench/chat/chat-conversation.css';
 @import './primitives/select/select.css';
 @import './primitives/select/select.app.css';
 @import './workbench/settings/structured-data-schema-panel.css';

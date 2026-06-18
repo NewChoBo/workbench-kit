@@ -40,6 +40,21 @@ export {
 } from './CommandPalette';
 export { WorkbenchMarkdownPreview } from './MarkdownPreview';
 export type { WorkbenchMarkdownPreviewProps } from './MarkdownPreview';
+export {
+  ChatConversationBar,
+  ChatHistoryMenu,
+  ChatPanel,
+  ChatRenameDialog,
+  defaultWorkbenchChatConversationLabels,
+} from './chat';
+export type {
+  ChatConversationBarProps,
+  ChatHistoryMenuProps,
+  ChatPanelProps,
+  ChatRenameDialogProps,
+  WorkbenchChatConversation,
+  WorkbenchChatConversationLabels,
+} from './chat';
 export { getSlashCommandQuery, isSlashCommandInput, parseSlashCommand } from './chat/slashCommand';
 export { useSlashCommandSuggest } from './chat/useSlashCommandSuggest';
 export type {

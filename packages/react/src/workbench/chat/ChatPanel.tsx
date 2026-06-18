@@ -1,6 +1,7 @@
 import { SideBarViewFrame } from '../../layout/SideBarViewFrame';
 import { ChatComposer, type ChatComposerProps } from './ChatComposer';
 import { ChatMessageList, type ChatMessageListProps } from './ChatMessageList';
+import type { ReactNode } from 'react';
 
 export interface ChatPanelProps
   extends
@@ -16,10 +17,12 @@ export interface ChatPanelProps
       | 'showTools'
       | 'value'
     > {
+  headerAddon?: ReactNode | undefined;
   title?: string;
 }
 
 export function ChatPanel({
+  headerAddon,
   title = 'Chat',
   value,
   onValueChange,
@@ -47,6 +50,7 @@ export function ChatPanel({
         />
       }
       footerPlacement="overlay"
+      headerAddon={headerAddon}
       title={title}
     >
       <ChatMessageList isStreaming={isRunning} {...messageListProps} />

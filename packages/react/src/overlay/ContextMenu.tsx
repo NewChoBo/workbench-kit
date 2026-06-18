@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
+import { useClampedFixedOverlayPosition } from './useClampedFixedOverlayPosition';
+import { useFixedOverlayDismiss } from './useFixedOverlayDismiss';
 
 export type ContextMenuItem =
   | {
@@ -40,40 +42,11 @@ export function ContextMenu({
   onClose,
 }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x, y });
+  const position = useClampedFixedOverlayPosition(ref, { x, y }, items.length);
+
+  useFixedOverlayDismiss({ containerRef: ref, onClose });
 
   useEffect(() => {
-    setPosition({ x, y });
-  }, [x, y]);
-
-  useEffect(() => {
-    const menu = ref.current;
-    if (!menu || typeof window === 'undefined') return;
-
-    const frame = window.requestAnimationFrame(() => {
-      const rect = menu.getBoundingClientRect();
-      setPosition({
-        x: Math.max(4, Math.min(x, window.innerWidth - rect.width - 4)),
-        y: Math.max(4, Math.min(y, window.innerHeight - rect.height - 4)),
-      });
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [items.length, x, y]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-      }
-    };
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (ref.current?.contains(event.target as Node)) return;
-      onClose();
-    };
-
     const handleContextMenu = (event: MouseEvent) => {
       if (ref.current?.contains(event.target as Node)) {
         event.preventDefault();
@@ -82,19 +55,8 @@ export function ContextMenu({
       onClose();
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('pointerdown', handlePointerDown, true);
     window.addEventListener('contextmenu', handleContextMenu, true);
-    window.addEventListener('resize', onClose);
-    window.addEventListener('scroll', onClose, true);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('pointerdown', handlePointerDown, true);
-      window.removeEventListener('contextmenu', handleContextMenu, true);
-      window.removeEventListener('resize', onClose);
-      window.removeEventListener('scroll', onClose, true);
-    };
+    return () => window.removeEventListener('contextmenu', handleContextMenu, true);
   }, [onClose]);
 
   useEffect(() => {

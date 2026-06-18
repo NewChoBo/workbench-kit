@@ -34,7 +34,8 @@
     "./widget-tree": "./src/widget-tree/index.ts",
     "./widget-asset": "./src/widget-asset/index.ts",
     "./widget-studio": "./src/widget-studio/index.ts",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./workbench-menu-surfaces.css": "./src/workbench-menu-surfaces.css"
   },
   "files": [
     "src",

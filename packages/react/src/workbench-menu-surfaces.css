@@ -1,0 +1,50 @@
+/* Optional compact menu density for context menus and command lists. */
+
+.ui-context-menu {
+  padding: 0;
+}
+
+.ui-context-menu__item {
+  border-radius: 0;
+  min-height: 28px;
+  padding: 4px 10px;
+}
+
+.ui-context-menu__separator {
+  margin: 0;
+}
+
+.ui-context-menu__shortcut {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-subtle);
+}
+
+.ui-workbench-command-list {
+  padding: 0;
+}
+
+.ui-workbench-command-item {
+  border-radius: 0;
+  padding: 7px 10px;
+}
+
+.ui-workbench-command-group-shell__nav {
+  padding: 0;
+}
+
+.ui-workbench-command-group-shell__nav-link {
+  border-radius: 0;
+}
+
+.ui-workbench-command-group-shell__content {
+  padding: 0;
+}
+
+.ui-workbench-command-group-shell__section {
+  padding: 0;
+}
+
+.ui-workbench-command-group-shell__section-header {
+  min-height: 28px;
+  padding: 4px 10px;
+}
