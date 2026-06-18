@@ -8,6 +8,7 @@ export interface ChatMessageItemProps {
   isStreaming?: boolean;
   layout?: ChatMessageLayout;
   message: ChatMessage;
+  showSenderLabel?: boolean;
   userLabel?: string;
 }
 
@@ -16,13 +17,22 @@ export function ChatMessageItem({
   isStreaming = false,
   layout = 'assistant',
   message,
+  showSenderLabel = true,
   userLabel,
 }: ChatMessageItemProps) {
   if (message.source === 'user') {
-    const displayUserLabel = layout === 'peer' ? (message.label ?? userLabel) : undefined;
+    const displayUserLabel =
+      layout === 'peer' && showSenderLabel ? (message.label ?? userLabel) : undefined;
 
     return (
-      <div className={cx('message', 'message--user', layout === 'peer' && 'message--user-peer')}>
+      <div
+        className={cx(
+          'message',
+          'message--user',
+          layout === 'peer' && 'message--user-peer',
+          layout === 'peer' && !showSenderLabel && 'message--continued',
+        )}
+      >
         {displayUserLabel ? <div className="message__user-label">{displayUserLabel}</div> : null}
         <div className="message__bubble">{message.content}</div>
       </div>
@@ -30,10 +40,10 @@ export function ChatMessageItem({
   }
 
   if (layout === 'peer') {
-    const peerLabel = message.label ?? assistantLabel;
+    const peerLabel = showSenderLabel ? (message.label ?? assistantLabel) : undefined;
 
     return (
-      <div className="message message--peer">
+      <div className={cx('message', 'message--peer', !showSenderLabel && 'message--continued')}>
         {peerLabel ? <div className="message__peer-label">{peerLabel}</div> : null}
         <div className="message__bubble message__bubble--peer">{message.content}</div>
       </div>

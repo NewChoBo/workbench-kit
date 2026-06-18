@@ -3625,6 +3625,10 @@
   padding: 10px 0;
 }
 
+.message--continued {
+  padding-top: 2px;
+}
+
 .message--user {
   display: flex;
   justify-content: flex-end;

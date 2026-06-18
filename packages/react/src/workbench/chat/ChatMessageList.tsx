@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { SideBarScrollSpacer } from '../../layout/SideBarViewFrame';
 import { cx } from '../../utils/cx';
 import { ChatMessageItem } from './ChatMessageItem';
+import { shouldShowPeerChatSenderLabel } from './chatMessageGrouping';
 import type { ChatMessage, ChatMessageLayout } from './types';
 
 export interface ChatMessageListProps {
@@ -50,6 +51,13 @@ export function ChatMessageList({
           }
           layout={messageLayout}
           message={message}
+          showSenderLabel={
+            messageLayout !== 'peer' ||
+            shouldShowPeerChatSenderLabel(messages, index, {
+              assistantLabel,
+              userLabel: resolvedUserLabel,
+            })
+          }
           userLabel={resolvedUserLabel}
         />
       ))}
