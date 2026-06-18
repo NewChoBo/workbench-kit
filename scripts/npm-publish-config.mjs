@@ -106,6 +106,12 @@ export function npmViewExists(specOrName, registry = NPM_REGISTRY) {
 }
 
 export function probePackageForTrustedPublisher() {
+  for (const packageName of NPM_CI_PUBLISH_PACKAGES) {
+    if (npmViewExists(packageName)) {
+      return packageName;
+    }
+  }
+
   for (const packageName of NPM_PUBLISH_ORDER) {
     if (npmViewExists(packageName)) {
       return packageName;
@@ -113,6 +119,10 @@ export function probePackageForTrustedPublisher() {
   }
 
   return NPM_PUBLISH_ORDER[0];
+}
+
+export function isCiPublishPackage(packageName) {
+  return NPM_CI_PUBLISH_PACKAGES.has(packageName);
 }
 
 export function parsePublishMode(argv = process.argv, env = process.env) {
@@ -139,3 +149,16 @@ export const NPM_PUBLISH_ORDER = [
   '@workbench-kit/react',
   '@workbench-kit/jdw-editor',
 ];
+
+// Packages eligible for CI trusted publishing. Add a name here only after:
+// 1) first release via publish-packages-local.mjs, and
+// 2) npm Trusted Publisher is configured for that package.
+export const NPM_CI_PUBLISH_PACKAGES = new Set([
+  '@workbench-kit/contracts',
+  '@workbench-kit/runtime',
+  '@workbench-kit/tokens',
+  '@workbench-kit/workspace',
+  '@workbench-kit/adapters',
+  '@workbench-kit/services',
+  '@workbench-kit/react',
+]);
