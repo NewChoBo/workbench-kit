@@ -35,16 +35,8 @@ jobs:
         if: github.event_name == 'release' || github.ref_type == 'tag'
         run: node scripts/check-release-version.mjs
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'pnpm'
-
-      - name: Enable pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@11.5.1 --activate
+      - name: Setup Node and pnpm
+        uses: ./.github/actions/setup-node-pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
