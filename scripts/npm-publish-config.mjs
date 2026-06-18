@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
 
 export const NPM_REGISTRY = process.env.NPM_CONFIG_REGISTRY || 'https://registry.npmjs.org/';
 
@@ -91,6 +92,36 @@ function npmUserConfigPaths() {
     paths.push(`${process.env.HOME}/.npmrc`);
   }
   return paths;
+}
+
+export function npmViewExists(specOrName, registry = NPM_REGISTRY) {
+  try {
+    execFileSync('npm', ['view', specOrName, 'version', '--registry', registry], {
+      stdio: 'ignore',
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function probePackageForTrustedPublisher() {
+  for (const packageName of NPM_PUBLISH_ORDER) {
+    if (npmViewExists(packageName)) {
+      return packageName;
+    }
+  }
+
+  return NPM_PUBLISH_ORDER[0];
+}
+
+export function parsePublishMode(argv = process.argv, env = process.env) {
+  const dryRun = argv.includes('--dry-run') || env.DRY_RUN === 'true';
+  const updatesOnly =
+    argv.includes('--updates-only') ||
+    (env.NPM_PUBLISH_UPDATES_ONLY === 'true' && !argv.includes('--all'));
+
+  return { dryRun, updatesOnly };
 }
 
 export const NPM_PUBLISH_ORDER = [

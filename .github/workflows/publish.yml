@@ -38,6 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NPM_DIST_TAG: ${{ inputs.npm_tag || 'prototype' }}
+      NPM_PUBLISH_UPDATES_ONLY: 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
