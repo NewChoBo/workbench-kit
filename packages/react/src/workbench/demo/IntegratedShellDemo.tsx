@@ -21,14 +21,13 @@ import {
   type WorkspacePatchEvent,
 } from '@workbench-kit/contracts';
 import { WorkspacePatchService, WorkspaceSaveService } from '@workbench-kit/services';
-import { SideBarHeaderControl, SideBarViewFrame } from '../../layout/SideBarViewFrame';
+import { SideBarViewFrame } from '../../layout/SideBarViewFrame';
 import { SidebarToolbar } from '../../layout/SidebarToolbar';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
 import { IconButton } from '../../primitives/IconButton';
-import { ClearableTextInput } from '../../primitives/ClearableTextInput';
 import { ChatPanel, type ChatMessage } from '../chat';
 import {
   commandMenuItemsToContextMenuItems,
@@ -42,9 +41,9 @@ import type { WorkbenchStandaloneShellContext } from '../WorkbenchStandaloneShel
 import {
   WorkspaceEditorPanel,
   ExplorerActionBar,
+  WorkspaceExplorerPanel,
   resolveWorkspaceCreateParentPath,
   type WorkspaceEditorTheme,
-  WorkspaceExplorer,
   WorkspaceSearchPanel,
   fileNameOfPath,
   formatWorkspacePathDisplay,
@@ -644,21 +643,9 @@ export function IntegratedShellDemo({
                 </SidebarToolbar>
               )
             }
-            headerAddon={
-              <SideBarHeaderControl>
-                <ClearableTextInput
-                  aria-label={`Filter ${activeActivity.label}`}
-                  clearLabel={`Clear ${activeActivity.label} filter`}
-                  controlWidth="full"
-                  placeholder="Filter"
-                  value={filterQuery}
-                  onClear={() => setFilterQuery('')}
-                  onChange={(event) => setFilterQuery(event.currentTarget.value)}
-                />
-              </SideBarHeaderControl>
-            }
+            headerAddon={null}
           >
-            <WorkspaceExplorer
+            <WorkspaceExplorerPanel
               activePath={selectedPath}
               expandedPaths={expandedPaths}
               filterQuery={filterQuery}
@@ -667,7 +654,9 @@ export function IntegratedShellDemo({
               nodes={workspaceTree}
               selectedPaths={explorerSelection.paths}
               selectionAnchorPath={explorerSelection.anchorPath}
+              toolbarLayout="none"
               onActivateFile={activateFile}
+              onFilterQueryChange={setFilterQuery}
               onInlineEditCancel={() => {
                 setExplorerInlineEdit(undefined);
                 setLastCommandLabel('Inline edit canceled');

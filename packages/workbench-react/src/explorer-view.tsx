@@ -16,10 +16,9 @@ import {
 } from '@workbench-kit/react/workbench';
 import { ViewEmptyState } from '@workbench-kit/react/primitives';
 import {
-  ExplorerActionBar,
+  WorkspaceExplorerPanel,
 } from '@workbench-kit/react/workbench/workspace';
 import {
-  WorkspaceExplorer,
   type WorkspaceExplorerInlineEditCommitMeta,
   type WorkspaceExplorerInlineEditKind,
   type WorkspaceExplorerInlineEditState,
@@ -401,15 +400,7 @@ export function BuiltinExplorerView() {
 
   return (
     <section className="workbench-explorer-view" aria-label="Workspace Explorer">
-      <ExplorerActionBar
-        layout="bar"
-        onNewFile={() => startCreate('create-file', createParentPath)}
-        onNewFolder={() => startCreate('create-folder', createParentPath)}
-        onRefresh={() => {
-          void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
-        }}
-      />
-      <WorkspaceExplorer
+      <WorkspaceExplorerPanel
         activePath={activePath}
         expandedPaths={expandedPaths}
         focusedPath={selection.focusedPath}
@@ -422,6 +413,11 @@ export function BuiltinExplorerView() {
         onInlineEditCancel={() => setInlineEdit(undefined)}
         onInlineEditCommit={handleInlineEditCommit}
         onInlineEditValueChange={handleInlineEditValueChange}
+        onNewFile={() => startCreate('create-file', createParentPath)}
+        onNewFolder={() => startCreate('create-folder', createParentPath)}
+        onRefresh={() => {
+          void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
+        }}
         onRequestDelete={handleRequestDelete}
         onRequestMove={handleRequestMove}
         onRequestRename={handleRequestRename}

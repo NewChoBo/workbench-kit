@@ -75,6 +75,10 @@ export { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 export type { WorkspaceSearchPanelProps } from './WorkspaceSearchPanel';
 export { ExplorerActionBar } from './ExplorerActionBar';
 export type { ExplorerActionBarLayout, ExplorerActionBarProps } from './ExplorerActionBar';
+export { WorkspaceExplorerPanel } from './WorkspaceExplorerPanel';
+export type { WorkspaceExplorerPanelProps } from './WorkspaceExplorerPanel';
+export { useWorkspaceExplorerFilter } from './useWorkspaceExplorerFilter';
+export type { WorkspaceExplorerFilterState } from './useWorkspaceExplorerFilter';
 export { WorkspaceSearchResults } from './WorkspaceSearchResults';
 export type { WorkspaceSearchResultsProps } from './WorkspaceSearchResults';
 export {
