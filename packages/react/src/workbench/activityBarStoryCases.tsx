@@ -34,7 +34,7 @@ export const integratedShellActivityDescriptors: ActivityBarStoryDescriptor[] = 
   },
   {
     id: 'chatting',
-    label: 'Chatting',
+    label: 'Chat',
     iconClass: 'codicon-comment-discussion',
     description: 'Direct messages and team channels with other people.',
   },

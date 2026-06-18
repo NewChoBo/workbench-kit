@@ -118,7 +118,7 @@ export const ActivityBarIntegratedShell: Story = {
       'aria-pressed',
       'true',
     );
-    await expect(canvas.getByRole('button', { name: 'Chatting' })).toHaveAttribute(
+    await expect(canvas.getByRole('button', { name: 'Chat' })).toHaveAttribute(
       'aria-pressed',
       'false',
     );

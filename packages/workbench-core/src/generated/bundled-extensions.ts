@@ -84,7 +84,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
           activitybar: [
             {
               id: 'chatting',
-              title: 'Chatting',
+              title: 'Chat',
               icon: 'comment-discussion',
               order: 30,
             },
@@ -101,7 +101,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
             id: 'workbench-kit.builtin.chat.chatting.activity',
             viewContainerId: 'chatting',
             icon: 'comment-discussion',
-            title: 'Chatting',
+            title: 'Chat',
             order: 30,
           },
           {
@@ -116,7 +116,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
           chatting: [
             {
               id: 'workbench-kit.builtin.chat.chatting',
-              name: 'Chatting',
+              name: 'Chat',
             },
           ],
           aiChat: [

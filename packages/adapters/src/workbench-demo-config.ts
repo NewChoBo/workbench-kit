@@ -12,7 +12,7 @@ export const integratedShellActivityOrder: IntegratedShellActivityId[] = [
 export const integratedShellActivityLabels: Record<IntegratedShellActivityId, string> = {
   explorer: 'Explorer',
   search: 'Search',
-  chatting: 'Chatting',
+  chatting: 'Chat',
   aiChat: 'AI Chat',
 };
 

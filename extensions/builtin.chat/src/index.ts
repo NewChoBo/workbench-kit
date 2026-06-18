@@ -22,7 +22,7 @@ export function activate(context: ExtensionContext): void {
         kind: CHAT_VIEW_RENDER_KIND,
         mode: 'chatting',
       }),
-      title: 'Chatting',
+      title: 'Chat',
     }),
   });
 

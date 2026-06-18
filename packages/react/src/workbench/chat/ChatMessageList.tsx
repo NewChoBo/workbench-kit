@@ -1,22 +1,30 @@
 import { useEffect, useRef } from 'react';
 import { SideBarScrollSpacer } from '../../layout/SideBarViewFrame';
+import { cx } from '../../utils/cx';
 import { ChatMessageItem } from './ChatMessageItem';
-import type { ChatMessage } from './types';
+import type { ChatMessage, ChatMessageLayout } from './types';
 
 export interface ChatMessageListProps {
   assistantLabel?: string;
   emptyLabel?: string;
   isStreaming?: boolean;
+  messageLayout?: ChatMessageLayout;
   messages: ChatMessage[];
+  userLabel?: string;
 }
 
 export function ChatMessageList({
   assistantLabel,
   emptyLabel = 'How can I help?',
   isStreaming = false,
+  messageLayout = 'assistant',
   messages,
+  userLabel,
 }: ChatMessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const emptyIconClass =
+    messageLayout === 'peer' ? 'codicon-comment-discussion' : 'codicon-sparkle';
+  const resolvedUserLabel = userLabel ?? (messageLayout === 'peer' ? 'Jay' : undefined);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
@@ -25,7 +33,7 @@ export function ChatMessageList({
   if (messages.length === 0) {
     return (
       <div className="message-empty">
-        <i className="codicon codicon-sparkle" />
+        <i className={cx('codicon', emptyIconClass)} />
         <span>{emptyLabel}</span>
       </div>
     );
@@ -40,7 +48,9 @@ export function ChatMessageList({
           isStreaming={
             isStreaming && index === messages.length - 1 && message.source === 'assistant'
           }
+          layout={messageLayout}
           message={message}
+          userLabel={resolvedUserLabel}
         />
       ))}
       <SideBarScrollSpacer ref={bottomRef} />

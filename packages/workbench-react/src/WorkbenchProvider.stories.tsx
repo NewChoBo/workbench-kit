@@ -112,7 +112,7 @@ export const ProviderShellChattingSidebar: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const activityBar = canvas.getByRole('navigation', { name: 'Activity bar' });
-    const chattingActivity = within(activityBar).getByRole('button', { name: 'Chatting' });
+    const chattingActivity = within(activityBar).getByRole('button', { name: 'Chat' });
 
     await expect(chattingActivity).toHaveAttribute('aria-pressed', 'true');
     await expect(canvas.getByPlaceholderText('Message your team')).toBeVisible();
@@ -178,7 +178,7 @@ export const ProviderShellChatActivitySwitch: Story = {
     await user.click(within(activityBar).getByRole('button', { name: 'AI Chat' }));
     await expect(canvas.getByPlaceholderText('Ask about this workspace')).toBeVisible();
 
-    await user.click(within(activityBar).getByRole('button', { name: 'Chatting' }));
+    await user.click(within(activityBar).getByRole('button', { name: 'Chat' }));
     await expect(canvas.getByPlaceholderText('Message your team')).toBeVisible();
   },
 };
@@ -202,6 +202,6 @@ export const ProviderShellActivityBarOrder: Story = {
       .map((button) => button.getAttribute('aria-label'))
       .filter((label): label is string => Boolean(label));
 
-    await expect(labels.slice(0, 4)).toEqual(['Explorer', 'Search', 'Chatting', 'AI Chat']);
+    await expect(labels.slice(0, 4)).toEqual(['Explorer', 'Search', 'Chat', 'AI Chat']);
   },
 };

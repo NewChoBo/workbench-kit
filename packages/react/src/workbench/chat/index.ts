@@ -17,7 +17,7 @@ export type {
   WorkbenchChatConversation,
   WorkbenchChatConversationLabels,
 } from './chatConversation';
-export type { ChatMessage, ChatMessageSource } from './types';
+export type { ChatMessage, ChatMessageLayout, ChatMessageSource } from './types';
 export { useChatRuntimeState } from './useChatRuntimeState';
 export type { UseChatRuntimeStateInput, UseChatRuntimeStateResult } from './useChatRuntimeState';
 export { useSlashCommandSuggest } from './useSlashCommandSuggest';

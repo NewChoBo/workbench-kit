@@ -57,7 +57,7 @@ interface ShellStateConfig {
 const verificationActivities = [
   { id: 'explorer', label: 'Explorer', icon: 'codicon-files', active: true },
   { id: 'search', label: 'Search', icon: 'codicon-search' },
-  { id: 'chatting', label: 'Chatting', icon: 'codicon-comment-discussion' },
+  { id: 'chatting', label: 'Chat', icon: 'codicon-comment-discussion' },
   { id: 'aiChat', label: 'AI Chat', icon: 'codicon-sparkle' },
 ] as const;
 

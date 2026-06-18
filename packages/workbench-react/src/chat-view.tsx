@@ -3,6 +3,7 @@ import {
   createChatTransportFromRuntime,
   createIntegratedShellChatRuntimeResponse,
   integratedShellInitialChattingMessages,
+  integratedShellInitialRuntimeMessages,
 } from '@workbench-kit/adapters';
 import type { ChatStreamEvent } from '@workbench-kit/contracts';
 import { ChatPanel, type ChatMessage } from '@workbench-kit/react/workbench/chat';
@@ -74,11 +75,13 @@ function BuiltinChattingView() {
   return (
     <div className="workbench-chat-view">
       <ChatPanel
-        assistantLabel="Peer"
+        assistantLabel="Alex"
         emptyLabel="Start a conversation with your team."
+        messageLayout="peer"
         messages={messages}
         placeholder="Message your team"
-        title="Chatting"
+        title="Chat"
+        userLabel="Jay"
         value={draft}
         onSubmit={(message) => {
           setDraft('');
@@ -102,6 +105,7 @@ function BuiltinAiChatView() {
     () =>
       createMockWorkbenchRuntime({
         idPrefix: 'workbench-chat-view',
+        initialMessages: integratedShellInitialRuntimeMessages,
         response: (message) => createIntegratedShellChatRuntimeResponse(message),
       }),
     [],
@@ -148,6 +152,7 @@ function BuiltinAiChatView() {
         disabled={runtimeStatus === 'error'}
         emptyLabel="Ask about this workspace."
         isRunning={runtimeStatus === 'running'}
+        messageLayout="assistant"
         messages={messages}
         placeholder="Ask about this workspace"
         showTools

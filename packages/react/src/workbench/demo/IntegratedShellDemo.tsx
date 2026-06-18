@@ -577,11 +577,13 @@ export function IntegratedShellDemo({
           />
         ) : shellContext.activityId === 'chatting' ? (
           <ChatPanel
-            assistantLabel="Peer"
+            assistantLabel="Alex"
             emptyLabel="Direct messages and team channels will appear here."
+            messageLayout="peer"
             messages={chattingMessages}
             placeholder="Message your team"
-            title="Chatting"
+            title="Chat"
+            userLabel="Jay"
             value={chattingDraft}
             onSubmit={(message) => {
               const trimmed = message.trim();
@@ -598,7 +600,7 @@ export function IntegratedShellDemo({
                   content: trimmed,
                 },
               ]);
-              setLastCommandLabel('Chatting message sent');
+              setLastCommandLabel('Chat message sent');
             }}
             onValueChange={setChattingDraft}
           />

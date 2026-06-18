@@ -53,7 +53,7 @@ describe('bundled workbench extensions', () => {
     });
     expect(registry.views.getView('workbench-kit.builtin.chat.chatting')).toMatchObject({
       containerId: 'chatting',
-      name: 'Chatting',
+      name: 'Chat',
     });
     expect(registry.views.getView('workbench-kit.builtin.chat.aiChat')).toMatchObject({
       containerId: 'aiChat',

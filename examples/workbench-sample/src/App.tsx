@@ -168,7 +168,7 @@ function SampleHelpContent() {
           <li>
             Explorer, editor tabs, status bar, and settings are contributed through the shell.
           </li>
-          <li>Chatting and AI Chat are available from the activity bar for sidebar chat testing.</li>
+          <li>Chat and AI Chat are available from the activity bar for sidebar chat testing.</li>
           <li>
             Layout preferences such as activity order and the active sidebar are restored from
             browser local storage (`workbench-kit/.workbench/layout`).
