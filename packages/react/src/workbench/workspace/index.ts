@@ -167,3 +167,20 @@ export type {
   WorkspaceDraftsContextValue,
   WorkspaceDraftsProviderProps,
 } from './WorkspaceDraftsContext';
+export { createVirtualWorkspaceExplorerPort } from './createVirtualWorkspaceExplorerPort';
+export { useWorkspaceExplorerController } from './useWorkspaceExplorerController';
+export type {
+  UseWorkspaceExplorerControllerOptions,
+  WorkspaceExplorerController,
+} from './useWorkspaceExplorerController';
+export {
+  applyWorkspaceExplorerMutationResult,
+  createWorkspaceExplorerInlineEditDraft,
+  createWorkspaceExplorerRenameDraft,
+  workspaceExplorerParentPaths,
+} from './workspaceExplorerController';
+export type {
+  WorkspaceExplorerControllerPort,
+  WorkspaceExplorerMutationResult,
+  WorkspaceExplorerWorkspaceSnapshot,
+} from './workspaceExplorerController';

@@ -246,6 +246,7 @@ export function WorkspaceEditor({
             options={{
               automaticLayout: true,
               contextmenu: true,
+              fixedOverflowWidgets: true,
               fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
               fontSize: 13,
               lineHeight: 20,

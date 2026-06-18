@@ -27,7 +27,7 @@ export function WorkspaceExplorerPanel({
   onNewFolder,
   onRefresh,
   refreshLabel,
-  showFilter = true,
+  showFilter = false,
   toolbarLayout = 'bar',
   ...explorerProps
 }: WorkspaceExplorerPanelProps) {

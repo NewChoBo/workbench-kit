@@ -1947,7 +1947,7 @@
   --ui-side-bar-footer-height: 0px;
   --ui-side-bar-inline-padding: 8px;
   --ui-side-bar-row-block-padding: 6px;
-  --ui-side-bar-tree-indent-step: 14px;
+  --ui-side-bar-tree-indent-step: 10px;
 }
 
 .ui-side-bar-view__header-addon {
@@ -3584,6 +3584,17 @@
   min-height: 0;
   overflow: hidden;
   background: var(--color-bg);
+  position: relative;
+  z-index: 0;
+}
+
+.workspace-editor__monaco .monaco-editor .overflowingContentWidgets {
+  z-index: 40;
+}
+
+.monaco-editor-hover,
+.monaco-hover {
+  z-index: 50;
 }
 
 .workbench-status-dot {

@@ -119,7 +119,6 @@ export function IntegratedShellDemo({
   );
   const [compactRows, setCompactRows] = useState(initialCompactRows);
   const [contextMenu, setContextMenu] = useState<DemoContextMenuState | null>(null);
-  const [filterQuery, setFilterQuery] = useState('');
   const [lastCommandLabel, setLastCommandLabel] = useState(
     `Command contribution policy: ${integratedShellCommandPolicy}`,
   );
@@ -650,15 +649,14 @@ export function IntegratedShellDemo({
             <WorkspaceExplorerPanel
               activePath={selectedPath}
               expandedPaths={expandedPaths}
-              filterQuery={filterQuery}
               focusedPath={explorerSelection.focusedPath}
               inlineEdit={explorerInlineEdit}
               nodes={workspaceTree}
               selectedPaths={explorerSelection.paths}
               selectionAnchorPath={explorerSelection.anchorPath}
+              showFilter={false}
               toolbarLayout="none"
               onActivateFile={activateFile}
-              onFilterQueryChange={setFilterQuery}
               onInlineEditCancel={() => {
                 setExplorerInlineEdit(undefined);
                 setLastCommandLabel('Inline edit canceled');

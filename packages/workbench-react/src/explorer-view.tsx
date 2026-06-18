@@ -17,29 +17,15 @@ import {
 import { ViewEmptyState } from '@workbench-kit/react/primitives';
 import {
   WorkspaceExplorerPanel,
+  useWorkspaceExplorerController,
 } from '@workbench-kit/react/workbench/workspace';
 import {
-  type WorkspaceExplorerInlineEditCommitMeta,
-  type WorkspaceExplorerInlineEditKind,
-  type WorkspaceExplorerInlineEditState,
   type WorkspaceExplorerItemContextMenuMeta,
-  type WorkspaceExplorerItemKeyboardActionMeta,
-  type WorkspaceExplorerMoveRequestMeta,
-  type WorkspaceExplorerSelectionChangeMeta,
 } from '@workbench-kit/react/workbench/workspace/explorer';
 import {
   buildWorkspaceTree,
-  fileNameOfPath,
-  getAvailableWorkspaceEntryName,
-  isSimpleWorkspaceName,
-  isWorkspaceEntryPathAvailable,
-  joinWorkspacePath,
-  parentPathOf,
   parseWorkspaceResourceUri,
-  pruneWorkspaceSelection,
   resolveWorkspaceCreateParentPath,
-  type VirtualWorkspaceState,
-  type WorkspaceSelectionState,
   type WorkspaceTreeNode,
 } from '@workbench-kit/workspace';
 import {
@@ -50,6 +36,7 @@ import {
 
 import './explorer-view.css';
 
+import { createCommandWorkspaceExplorerPort } from './createCommandWorkspaceExplorerPort.js';
 import { useWorkbench } from './provider.js';
 import { useActiveEditorTab } from './use-editor.js';
 import { isWorkspaceResourceService, useWorkspaceResourceState } from './workspace-view-state.js';
@@ -59,20 +46,12 @@ export const BUILTIN_EXPLORER_MOVE_COMMAND_ID = 'workbench-kit.builtin.explorer.
 export const BUILTIN_EXPLORER_REFRESH_COMMAND_ID =
   'workbench-kit.builtin.explorer.refresh' as const;
 
-const WORKBENCH_WORKSPACE_DELETE_COMMAND_ID = 'workspace.delete' as const;
 const WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID = 'workspace.copyPath' as const;
-const WORKBENCH_WORKSPACE_NEW_FILE_COMMAND_ID = 'workspace.newFile' as const;
-const WORKBENCH_WORKSPACE_NEW_FOLDER_COMMAND_ID = 'workspace.newFolder' as const;
+const WORKBENCH_WORKSPACE_DELETE_COMMAND_ID = 'workspace.delete' as const;
 const WORKBENCH_WORKSPACE_OPEN_COMMAND_ID = 'workspace.open' as const;
-const WORKBENCH_WORKSPACE_RENAME_COMMAND_ID = 'workspace.rename' as const;
 
 export interface BuiltinExplorerViewRenderData {
   readonly kind: typeof BUILTIN_EXPLORER_VIEW_RENDER_KIND;
-}
-
-interface WorkspaceCommandResult {
-  readonly path?: string | undefined;
-  readonly paths?: readonly string[] | undefined;
 }
 
 interface ExplorerContextMenuState {
@@ -105,29 +84,8 @@ export function BuiltinExplorerView() {
     ? workspaceHostPort.service
     : undefined;
   const workspaceState = useWorkspaceResourceState(workspaceService);
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
-  const [inlineEdit, setInlineEdit] = useState<WorkspaceExplorerInlineEditState | undefined>();
   const [contextMenu, setContextMenu] = useState<ExplorerContextMenuState | null>(null);
-  const [selection, setSelection] = useState<WorkspaceSelectionState>({
-    paths: [],
-  });
-
-  useEffect(() => {
-    if (!workspaceState) return;
-
-    setExpandedPaths((currentPaths) => new Set([...currentPaths, ...workspaceState.expandedPaths]));
-  }, [workspaceState]);
-
-  const filePaths = useMemo(
-    () => workspaceState?.files.map((file) => file.path) ?? [],
-    [workspaceState],
-  );
-
-  useEffect(() => {
-    setSelection((currentSelection) =>
-      pruneWorkspaceSelection(currentSelection, filePaths, workspaceState?.folders ?? []),
-    );
-  }, [filePaths, workspaceState?.folders]);
+  const [seededExpandedPaths, setSeededExpandedPaths] = useState(false);
 
   const activePath = useMemo(() => {
     if (!activeTab?.resourceUri) return undefined;
@@ -136,16 +94,31 @@ export function BuiltinExplorerView() {
     return resource?.kind === 'file' ? resource.path : undefined;
   }, [activeTab?.resourceUri]);
 
-  useEffect(() => {
-    if (!activePath) return;
+  const port = useMemo(
+    () =>
+      createCommandWorkspaceExplorerPort({
+        executeCommand,
+        workspaceState,
+      }),
+    [executeCommand, workspaceState],
+  );
 
-    setSelection({
-      anchorPath: activePath,
-      focusedPath: activePath,
-      paths: [activePath],
+  const explorer = useWorkspaceExplorerController({
+    activePath,
+    initialExpandedPaths: workspaceState?.expandedPaths,
+    port,
+  });
+
+  useEffect(() => {
+    if (!workspaceState || seededExpandedPaths) {
+      return;
+    }
+
+    workspaceState.expandedPaths.forEach((path) => {
+      explorer.revealFolder(path);
     });
-    setExpandedPaths((currentPaths) => new Set([...currentPaths, ...parentPaths(activePath)]));
-  }, [activePath]);
+    setSeededExpandedPaths(true);
+  }, [explorer, seededExpandedPaths, workspaceState]);
 
   const nodes = useMemo(
     () => buildWorkspaceTree(workspaceState?.folders ?? [], workspaceState?.files ?? []),
@@ -153,192 +126,15 @@ export function BuiltinExplorerView() {
   );
 
   const createParentPath = useMemo(
-    () => resolveWorkspaceCreateParentPath(selection.focusedPath, workspaceState?.folders ?? []),
-    [selection.focusedPath, workspaceState?.folders],
+    () => resolveWorkspaceCreateParentPath(explorer.selection.focusedPath, workspaceState?.folders ?? []),
+    [explorer.selection.focusedPath, workspaceState?.folders],
   );
 
   const executeWorkspaceCommand = useCallback(
-    async (commandId: string, payload?: unknown): Promise<WorkspaceCommandResult | undefined> => {
-      const result = await executeCommand(commandId, payload);
-      return isWorkspaceCommandResult(result) ? result : undefined;
+    async (commandId: string, payload?: unknown) => {
+      await executeCommand(commandId, payload);
     },
     [executeCommand],
-  );
-
-  const startCreate = useCallback(
-    (
-      kind: Extract<WorkspaceExplorerInlineEditKind, 'create-file' | 'create-folder'>,
-      parentPath = '',
-    ) => {
-      if (!workspaceState) return;
-
-      const value = getAvailableWorkspaceEntryName({
-        files: workspaceState.files,
-        folders: workspaceState.folders,
-        parentPath,
-        preferredName: kind === 'create-file' ? 'untitled.md' : 'new-folder',
-      });
-
-      if (parentPath) {
-        setExpandedPaths((currentPaths) => new Set([...currentPaths, parentPath]));
-      }
-
-      setInlineEdit({
-        id: `${kind}:${parentPath}:${value}`,
-        kind,
-        parentPath,
-        value,
-      });
-    },
-    [workspaceState],
-  );
-
-  const startRename = useCallback((node: WorkspaceTreeNode, actionPaths: readonly string[]) => {
-    const targetPath = actionPaths[0] ?? node.path;
-
-    setInlineEdit({
-      id: `rename:${targetPath}`,
-      kind: node.type === 'folder' ? 'rename-folder' : 'rename-file',
-      path: targetPath,
-      value: fileNameOfPath(targetPath),
-    });
-  }, []);
-
-  const setInlineEditError = useCallback(
-    (edit: WorkspaceExplorerInlineEditState, error: string) => {
-      setInlineEdit({ ...edit, error });
-    },
-    [],
-  );
-
-  const handleInlineEditCommit = useCallback(
-    ({ edit, value }: WorkspaceExplorerInlineEditCommitMeta) => {
-      if (!workspaceState) return;
-
-      void (async () => {
-        const name = value.trim();
-        if (!isSimpleWorkspaceName(name)) {
-          setInlineEditError(edit, 'Use a simple file or folder name.');
-          return;
-        }
-
-        if (edit.kind === 'create-file' || edit.kind === 'create-folder') {
-          const parentPath = edit.parentPath ?? '';
-          const path = joinWorkspacePath(parentPath, name);
-          if (
-            !isWorkspaceEntryPathAvailable({
-              files: workspaceState.files,
-              folders: workspaceState.folders,
-              path,
-            })
-          ) {
-            setInlineEditError(edit, `${name} already exists.`);
-            return;
-          }
-
-          const result = await executeWorkspaceCommand(
-            edit.kind === 'create-file'
-              ? WORKBENCH_WORKSPACE_NEW_FILE_COMMAND_ID
-              : WORKBENCH_WORKSPACE_NEW_FOLDER_COMMAND_ID,
-            { name, parentPath },
-          );
-          setInlineEdit(undefined);
-          selectCommandResult(result, setSelection);
-          return;
-        }
-
-        const sourcePath = edit.path ?? '';
-        const destinationPath = joinWorkspacePath(parentPathOf(sourcePath), name);
-        if (
-          !sourcePath ||
-          !destinationPath ||
-          !isWorkspaceEntryPathAvailable({
-            excludedPaths: [sourcePath],
-            files: workspaceState.files,
-            folders: workspaceState.folders,
-            path: destinationPath,
-          })
-        ) {
-          setInlineEditError(edit, `${name} already exists.`);
-          return;
-        }
-
-        if (sourcePath === destinationPath) {
-          setInlineEdit(undefined);
-          return;
-        }
-
-        const result = await executeWorkspaceCommand(WORKBENCH_WORKSPACE_RENAME_COMMAND_ID, {
-          kind: edit.kind === 'rename-folder' ? 'folder' : 'file',
-          name,
-          path: sourcePath,
-        });
-        setInlineEdit(undefined);
-        selectCommandResult(result, setSelection);
-      })();
-    },
-    [executeWorkspaceCommand, setInlineEditError, workspaceState],
-  );
-
-  const handleInlineEditValueChange = useCallback(
-    (value: string, edit: WorkspaceExplorerInlineEditState) => {
-      setInlineEdit({ ...edit, error: undefined, value });
-    },
-    [],
-  );
-
-  const handleActivateFile = useCallback(
-    (path: string) => {
-      void executeWorkspaceCommand(WORKBENCH_WORKSPACE_OPEN_COMMAND_ID, {
-        kind: 'file',
-        path,
-        paths: [path],
-      });
-    },
-    [executeWorkspaceCommand],
-  );
-
-  const handleToggleFolder = useCallback((path: string) => {
-    setExpandedPaths((currentPaths) => {
-      const nextPaths = new Set(currentPaths);
-      if (nextPaths.has(path)) {
-        nextPaths.delete(path);
-      } else {
-        nextPaths.add(path);
-      }
-      return nextPaths;
-    });
-  }, []);
-
-  const handleRequestDelete = useCallback(
-    (meta: WorkspaceExplorerItemKeyboardActionMeta) => {
-      const paths = meta.node.type === 'folder' ? [meta.node.path] : meta.actionPaths;
-      void executeWorkspaceCommand(WORKBENCH_WORKSPACE_DELETE_COMMAND_ID, {
-        kind: meta.node.type,
-        paths,
-      });
-    },
-    [executeWorkspaceCommand],
-  );
-
-  const handleRequestMove = useCallback(
-    (meta: WorkspaceExplorerMoveRequestMeta) => {
-      void (async () => {
-        const result = await executeWorkspaceCommand(BUILTIN_EXPLORER_MOVE_COMMAND_ID, {
-          sourcePaths: meta.sourcePaths,
-          targetFolderPath: meta.targetFolderPath,
-        });
-        selectCommandResult(result, setSelection);
-      })();
-    },
-    [executeWorkspaceCommand],
-  );
-
-  const handleRequestRename = useCallback(
-    (meta: WorkspaceExplorerItemKeyboardActionMeta) => {
-      startRename(meta.node, meta.actionPaths);
-    },
-    [startRename],
   );
 
   const handleItemContextMenu = useCallback(
@@ -355,8 +151,8 @@ export function BuiltinExplorerView() {
           copyPaths: (paths) => {
             void executeWorkspaceCommand(WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID, { paths });
           },
-          createFile: (parentPath) => startCreate('create-file', parentPath),
-          createFolder: (parentPath) => startCreate('create-folder', parentPath),
+          createFile: (parentPath) => explorer.startCreate('create-file', parentPath),
+          createFolder: (parentPath) => explorer.startCreate('create-folder', parentPath),
           deleteTargets: (paths) => {
             void executeWorkspaceCommand(WORKBENCH_WORKSPACE_DELETE_COMMAND_ID, {
               kind: node.type,
@@ -371,23 +167,14 @@ export function BuiltinExplorerView() {
               paths,
             });
           },
-          revealFolder: (path) => {
-            setExpandedPaths((currentPaths) => new Set([...currentPaths, path]));
-          },
-          renameTarget: () => startRename(node, meta.actionPaths),
+          revealFolder: explorer.revealFolder,
+          renameTarget: () => explorer.startRename(node, meta.actionPaths),
         }),
         x: event.clientX,
         y: event.clientY,
       });
     },
-    [executeWorkspaceCommand, startCreate, startRename, workspaceState?.files],
-  );
-
-  const handleSelectionChange = useCallback(
-    (nextSelection: WorkspaceSelectionState, _meta: WorkspaceExplorerSelectionChangeMeta) => {
-      setSelection(nextSelection);
-    },
-    [],
+    [executeWorkspaceCommand, explorer, workspaceState?.files],
   );
 
   if (!workspaceService || !workspaceState) {
@@ -402,27 +189,28 @@ export function BuiltinExplorerView() {
     <section className="workbench-explorer-view" aria-label="Workspace Explorer">
       <WorkspaceExplorerPanel
         activePath={activePath}
-        expandedPaths={expandedPaths}
-        focusedPath={selection.focusedPath}
-        inlineEdit={inlineEdit}
+        expandedPaths={explorer.expandedPaths}
+        focusedPath={explorer.selection.focusedPath}
+        inlineEdit={explorer.inlineEdit}
         nodes={nodes}
-        selectedPaths={selection.paths}
-        selectionAnchorPath={selection.anchorPath}
-        onActivateFile={handleActivateFile}
+        selectedPaths={explorer.selection.paths}
+        selectionAnchorPath={explorer.selection.anchorPath}
+        showFilter={false}
+        onActivateFile={explorer.handleActivateFile}
         onItemContextMenu={handleItemContextMenu}
-        onInlineEditCancel={() => setInlineEdit(undefined)}
-        onInlineEditCommit={handleInlineEditCommit}
-        onInlineEditValueChange={handleInlineEditValueChange}
-        onNewFile={() => startCreate('create-file', createParentPath)}
-        onNewFolder={() => startCreate('create-folder', createParentPath)}
+        onInlineEditCancel={explorer.cancelInlineEdit}
+        onInlineEditCommit={explorer.handleInlineEditCommit}
+        onInlineEditValueChange={explorer.handleInlineEditValueChange}
+        onNewFile={() => explorer.startCreate('create-file', createParentPath)}
+        onNewFolder={() => explorer.startCreate('create-folder', createParentPath)}
         onRefresh={() => {
           void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
         }}
-        onRequestDelete={handleRequestDelete}
-        onRequestMove={handleRequestMove}
-        onRequestRename={handleRequestRename}
-        onSelectionChange={handleSelectionChange}
-        onToggleFolder={handleToggleFolder}
+        onRequestDelete={explorer.handleRequestDelete}
+        onRequestMove={explorer.handleRequestMove}
+        onRequestRename={explorer.handleRequestRename}
+        onSelectionChange={explorer.handleSelectionChange}
+        onToggleFolder={explorer.handleToggleFolder}
       />
       {contextMenu ? (
         <ContextMenu
@@ -450,33 +238,32 @@ function createExplorerItemContextMenuItems({
   renameTarget,
 }: {
   actionPaths: readonly string[];
-  copyPaths: (paths: readonly string[]) => void;
+  copyPaths: (paths: string[]) => void;
   createFile: (parentPath: string) => void;
   createFolder: (parentPath: string) => void;
-  deleteTargets: (paths: readonly string[]) => void;
-  files: VirtualWorkspaceState['files'];
+  deleteTargets: (paths: string[]) => void;
+  files: { path: string }[];
   node: WorkspaceTreeNode;
-  openFiles: (paths: readonly string[]) => void;
+  openFiles: (paths: string[]) => void;
   revealFolder: (path: string) => void;
   renameTarget: () => void;
 }): ContextMenuItem[] {
-  const targetPaths =
-    node.type === 'folder' ? [node.path] : actionPaths.length > 0 ? [...actionPaths] : [node.path];
-  const filePathSet = new Set(files.map((file) => file.path));
   const fileActionPaths =
-    node.type === 'file' ? targetPaths.filter((path) => filePathSet.has(path)) : [];
-  const contextKeys = {
-    'workspace.hasSelection': targetPaths.length > 0,
-    'workspace.multiSelection': targetPaths.length > 1,
-  };
+    node.type === 'file'
+      ? actionPaths.length > 0
+        ? [...actionPaths]
+        : [node.path]
+      : actionPaths.filter((path) => files.some((file) => file.path === path));
+  const multiFileAction = fileActionPaths.length > 1;
+  const targetPaths = node.type === 'folder' ? [node.path] : [...fileActionPaths];
+
   const context: WorkbenchWorkspaceCommandContext = {
-    copyWorkspaceTarget: () => copyPaths(targetPaths),
-    createWorkspaceFile: () => createFile(node.type === 'folder' ? node.path : ''),
-    createWorkspaceFolder: () => createFolder(node.type === 'folder' ? node.path : ''),
-    deleteWorkspaceTarget: () =>
-      deleteTargets(node.type === 'folder' ? [node.path] : fileActionPaths),
+    copyWorkspaceTarget: () => copyPaths([...targetPaths]),
+    createWorkspaceFile: () => createFile(node.type === 'folder' ? node.path : parentPathOf(node.path)),
+    createWorkspaceFolder: () => createFolder(node.type === 'folder' ? node.path : parentPathOf(node.path)),
+    deleteWorkspaceTarget: () => deleteTargets([...targetPaths]),
     fileActionPaths,
-    multiFileAction: fileActionPaths.length > 1,
+    multiFileAction,
     openWorkspaceTarget: () => {
       if (node.type === 'folder') {
         revealFolder(node.path);
@@ -489,48 +276,21 @@ function createExplorerItemContextMenuItems({
     targetPaths,
     workspaceTargetKind: node.type,
   };
-  const entries = node.type === 'folder' ? workspaceFolderMenuEntries : workspaceTargetMenuEntries;
 
   return commandMenuItemsToContextMenuItems(
     resolveCommandMenuItems({
       context,
-      contextKeys,
-      entries,
+      entries:
+        node.type === 'folder' ? workspaceFolderMenuEntries : workspaceTargetMenuEntries,
       registry: workspaceCommandRegistry,
       surface: WORKBENCH_COMMAND_SURFACE_WORKSPACE,
     }),
     (commandId) =>
-      executeRegisteredCommand(workspaceCommandRegistry, commandId, context, contextKeys),
+      executeRegisteredCommand(workspaceCommandRegistry, commandId, context, undefined),
   );
 }
 
-function isWorkspaceCommandResult(value: unknown): value is WorkspaceCommandResult {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const result = value as WorkspaceCommandResult;
-  return (
-    (result.path === undefined || typeof result.path === 'string') &&
-    (result.paths === undefined ||
-      (Array.isArray(result.paths) && result.paths.every((path) => typeof path === 'string')))
-  );
-}
-
-function selectCommandResult(
-  result: WorkspaceCommandResult | undefined,
-  setSelection: (selection: WorkspaceSelectionState) => void,
-): void {
-  const paths = result?.paths ?? (result?.path ? [result.path] : []);
-  if (paths.length === 0) return;
-
-  setSelection({
-    anchorPath: paths[paths.length - 1],
-    paths: [...paths],
-  });
-}
-
-function parentPaths(path: string): string[] {
-  const segments = path.split('/').filter(Boolean);
-  return segments.slice(0, -1).map((_, index) => segments.slice(0, index + 1).join('/'));
+function parentPathOf(path: string): string {
+  const index = path.lastIndexOf('/');
+  return index === -1 ? '' : path.slice(0, index);
 }

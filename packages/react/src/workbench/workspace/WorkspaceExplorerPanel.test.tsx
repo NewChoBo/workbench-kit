@@ -10,6 +10,7 @@ describe('WorkspaceExplorerPanel', () => {
         expandedPaths={new Set()}
         filterQuery="app"
         nodes={[]}
+        showFilter
         onActivateFile={() => undefined}
         onToggleFolder={() => undefined}
         onNewFile={() => undefined}
