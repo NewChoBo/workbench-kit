@@ -20,7 +20,9 @@ const packDir = path.join(root, '.npm-pack');
 requireTrustedPublisherAuth('publish');
 
 if (updatesOnly) {
-  console.log('[publish] updates-only mode: skipping packages not yet on npm (use local publish first).');
+  console.log(
+    '[publish] updates-only mode: skipping packages not yet on npm (use local publish first).',
+  );
 }
 
 const publishOrder = NPM_PUBLISH_ORDER;
@@ -38,7 +40,9 @@ for (const packageName of publishOrder) {
   }
 
   if (updatesOnly && !npmViewExists(pkg.name)) {
-    console.log(`skip ${spec}: package not on npm yet (publish locally with publish-packages-local.mjs)`);
+    console.log(
+      `skip ${spec}: package not on npm yet (publish locally with publish-packages-local.mjs)`,
+    );
     continue;
   }
 
