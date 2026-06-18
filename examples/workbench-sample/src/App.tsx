@@ -43,12 +43,6 @@ const SAMPLE_THEME_OPTIONS = [
 
 export function App() {
   const [theme, setTheme] = useState<SampleTheme>('dark');
-  const statusSections = useMemo(() => createSampleStatusSections(theme), [theme]);
-  const handleThemeChange = useCallback((nextTheme: string) => {
-    if (isSampleTheme(nextTheme)) {
-      setTheme(nextTheme);
-    }
-  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -62,6 +56,61 @@ export function App() {
       persistLayout
       workspaceHostPort={workspaceHostPort}
     >
+      <SampleWorkbenchHost theme={theme} onThemeChange={setTheme} />
+    </WorkbenchProvider>
+  );
+}
+
+interface SampleWorkbenchHostProps {
+  onThemeChange: (theme: SampleTheme) => void;
+  theme: SampleTheme;
+}
+
+function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps) {
+  const { layoutService } = useWorkbench();
+  const [layout, setLayout] = useState(() => layoutService.getState());
+
+  useEffect(() => {
+    const disposable = layoutService.onDidChangeLayout(({ state }) => {
+      setLayout(state);
+    });
+
+    return () => {
+      disposable.dispose();
+    };
+  }, [layoutService]);
+
+  const statusSections = useMemo(
+    () =>
+      createSampleStatusSections({
+        sideBarVisible: layout.sideBar.visible,
+        theme,
+      }),
+    [layout.sideBar.visible, theme],
+  );
+
+  const handleThemeChange = useCallback((nextTheme: string) => {
+    if (isSampleTheme(nextTheme)) {
+      onThemeChange(nextTheme);
+    }
+  }, [onThemeChange]);
+
+  const handleStatusItemActivate = useCallback(
+    (item: { id: string }) => {
+      if (item.id === 'sample.theme') {
+        onThemeChange(nextSampleTheme(theme));
+        return;
+      }
+
+      if (item.id === 'sample.sidebar') {
+        layoutService.setSideBarVisible(!layout.sideBar.visible);
+      }
+    },
+    [layout.sideBar.visible, layoutService, onThemeChange, theme],
+  );
+
+  return (
+    <>
       <WorkspaceInitCommand />
       <WorkbenchShell
         editorArea={
@@ -70,11 +119,7 @@ export function App() {
           </SampleEditorFrame>
         }
         helpContent={<SampleHelpContent />}
-        onStatusItemActivate={(item) => {
-          if (item.id === 'sample.theme') {
-            setTheme((current) => nextSampleTheme(current));
-          }
-        }}
+        onStatusItemActivate={handleStatusItemActivate}
         onThemeChange={handleThemeChange}
         rootClassName="ide-root"
         statusSections={statusSections}
@@ -84,7 +129,7 @@ export function App() {
         titleBarActions={<SampleTitleBarActions />}
         titleMeta={<Badge variant="muted">{workspaceInfo.fileCount} files</Badge>}
       />
-    </WorkbenchProvider>
+    </>
   );
 }
 
@@ -195,13 +240,24 @@ function SampleHelpContent() {
           <li>
             Theme selection is exposed in Settings, with a status bar shortcut for quick checks.
           </li>
+          <li>
+            Toggle the primary sidebar from the status bar to review layout persistence.
+          </li>
         </ul>
       </section>
     </div>
   );
 }
 
-function createSampleStatusSections(theme: SampleTheme): StatusBarSectionModel[] {
+interface SampleStatusSectionsInput {
+  sideBarVisible: boolean;
+  theme: SampleTheme;
+}
+
+function createSampleStatusSections({
+  sideBarVisible,
+  theme,
+}: SampleStatusSectionsInput): StatusBarSectionModel[] {
   return [
     {
       id: 'sample-primary',
@@ -211,6 +267,13 @@ function createSampleStatusSections(theme: SampleTheme): StatusBarSectionModel[]
           id: 'sample.workspace',
           label: workspaceInfo.name,
           title: 'Sample workspace',
+        },
+        {
+          active: sideBarVisible,
+          icon: 'layout-sidebar-left',
+          id: 'sample.sidebar',
+          label: sideBarVisible ? 'sidebar: shown' : 'sidebar: hidden',
+          title: sideBarVisible ? 'Hide primary sidebar' : 'Show primary sidebar',
         },
         {
           active: true,
