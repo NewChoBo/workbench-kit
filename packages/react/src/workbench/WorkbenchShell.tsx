@@ -43,14 +43,22 @@ export function WorkbenchShell({
   titleBar,
   theme,
 }: WorkbenchShellProps) {
+  const primarySidebarSizePercent =
+    primarySidebar?.onSizePercentChange !== undefined
+      ? (primarySidebar.primarySizePercent ?? DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT)
+      : undefined;
+
   const body = primarySidebar?.isVisible ? (
     <SplitView
       className={primarySidebar?.className}
+      defaultPrimarySizePercent={
+        primarySidebar?.primarySizePercent ?? DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT
+      }
       minPrimarySizePercent={primarySidebar?.minPrimarySizePercent}
       maxPrimarySizePercent={primarySidebar?.maxPrimarySizePercent}
       onPrimarySizePercentChange={primarySidebar?.onSizePercentChange}
       primary={primarySidebar.node}
-      primarySizePercent={primarySidebar.primarySizePercent ?? DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT}
+      primarySizePercent={primarySidebarSizePercent}
       secondary={secondaryArea}
     />
   ) : (

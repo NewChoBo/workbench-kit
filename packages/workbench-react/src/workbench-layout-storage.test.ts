@@ -79,6 +79,7 @@ describe('workbench-layout-storage', () => {
         panel: { visible: false },
         sideBar: {
           activeViewContainer: 'aiChat',
+          sizePercent: 28,
           visible: false,
         },
       },
@@ -94,6 +95,7 @@ describe('workbench-layout-storage', () => {
       panel: { visible: false },
       sideBar: {
         activeViewContainer: 'aiChat',
+        sizePercent: 28,
         visible: false,
       },
     });

@@ -10,6 +10,7 @@ export interface WorkbenchLayoutState {
   };
   readonly sideBar: {
     readonly activeViewContainer?: string;
+    readonly sizePercent?: number;
     readonly visible: boolean;
   };
 }
@@ -96,6 +97,14 @@ export class LayoutService implements Disposable {
     });
   }
 
+  setSideBarSizePercent(sizePercent: number): void {
+    this.update({
+      sideBar: {
+        sizePercent: clampSideBarSizePercent(sizePercent),
+      },
+    });
+  }
+
   update(partialState: WorkbenchLayoutStateInput): void {
     this.setState(createWorkbenchLayoutState(partialState, this.state));
   }
@@ -135,6 +144,7 @@ export function createWorkbenchLayoutState(
         input.sideBar?.activeViewContainer,
         base.sideBar.activeViewContainer,
       ),
+      sizePercent: readOptionalSizePercent(input.sideBar?.sizePercent, base.sideBar.sizePercent),
       visible: readBoolean(input.sideBar?.visible, base.sideBar.visible),
     },
   };
@@ -146,6 +156,22 @@ function cloneLayoutState(state: WorkbenchLayoutState): WorkbenchLayoutState {
 
 function readBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
+}
+
+function readOptionalSizePercent(value: unknown, fallback: number | undefined): number | undefined {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return clampSideBarSizePercent(value);
+}
+
+function clampSideBarSizePercent(value: number): number {
+  return Math.min(90, Math.max(10, value));
 }
 
 function readOptionalString(value: unknown, fallback: string | undefined): string | undefined {
@@ -177,6 +203,7 @@ function isSameLayoutState(left: WorkbenchLayoutState, right: WorkbenchLayoutSta
     areSameStringArrays(left.activityBar.itemOrder, right.activityBar.itemOrder) &&
     left.panel.visible === right.panel.visible &&
     left.sideBar.activeViewContainer === right.sideBar.activeViewContainer &&
+    left.sideBar.sizePercent === right.sideBar.sizePercent &&
     left.sideBar.visible === right.sideBar.visible
   );
 }

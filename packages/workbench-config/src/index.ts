@@ -26,6 +26,7 @@ export interface WorkbenchLayoutConfig {
   };
   readonly sideBar: {
     readonly activeViewContainer?: string;
+    readonly sizePercent?: number;
     readonly visible: boolean;
   };
 }
@@ -86,7 +87,7 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
 
   assertKnownKeys(activityBar, ['itemOrder', 'visible'], 'layout config activityBar');
   assertKnownKeys(panel, ['visible'], 'layout config panel');
-  assertKnownKeys(sideBar, ['activeViewContainer', 'visible'], 'layout config sideBar');
+  assertKnownKeys(sideBar, ['activeViewContainer', 'sizePercent', 'visible'], 'layout config sideBar');
 
   return {
     activityBar: {
@@ -102,6 +103,7 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
     },
     sideBar: {
       ...readOptionalLayoutId(sideBar, 'activeViewContainer'),
+      ...readOptionalSizePercent(sideBar, 'sizePercent'),
       visible: readOptionalBoolean(
         sideBar,
         'visible',
@@ -209,6 +211,28 @@ function readOptionalLayoutId(
   return {
     activeViewContainer: value,
   };
+}
+
+function readOptionalSizePercent(
+  record: Record<string, unknown>,
+  key: string,
+): { readonly sizePercent?: number } {
+  const value = record[key];
+  if (value === undefined) {
+    return {};
+  }
+
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new WorkbenchConfigValidationError(`Expected "${key}" to be a finite number.`);
+  }
+
+  return {
+    sizePercent: clampLayoutSizePercent(value),
+  };
+}
+
+function clampLayoutSizePercent(value: number): number {
+  return Math.min(90, Math.max(10, value));
 }
 
 function assertKnownKeys(record: Record<string, unknown>, keys: readonly string[], label: string) {

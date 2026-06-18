@@ -1314,7 +1314,7 @@ describe('EditorArea', () => {
       formButton?.click();
     });
 
-    const argsGroup = container.querySelector('fieldset[aria-label="args"]');
+    const argsGroup = container.querySelector('[role="group"][aria-label="args"]');
     const argsText = container.querySelector(
       'input[aria-label="args.text"]',
     ) as HTMLInputElement | null;

@@ -200,18 +200,21 @@ export const integratedShellInitialRuntimeMessages: RuntimeChatMessage[] = [
   {
     id: 'm1',
     source: 'user',
+    createdAt: '2026-06-18T09:12:00.000Z',
     content:
       'Check whether the workbench shell covers explorer, search, chatting, AI chat, settings, and status surfaces.',
   },
   {
     id: 'm2',
     source: 'assistant',
+    createdAt: '2026-06-18T09:12:18.000Z',
     content:
       'The integrated story now keeps those surfaces in one stateful shell with public mock data.',
   },
   {
     id: 'm3',
     source: 'assistant',
+    createdAt: '2026-06-18T09:12:42.000Z',
     content:
       'Search results, file icons, and the editor preview are driven by the same virtual workspace.',
   },
@@ -222,17 +225,20 @@ export const integratedShellInitialChattingMessages: RuntimeChatMessage[] = [
     id: 'c1',
     source: 'assistant',
     label: 'Alex',
+    createdAt: '2026-06-18T10:05:00.000Z',
     content: 'Can you review the widget tree changes before we merge?',
   },
   {
     id: 'c2',
     source: 'user',
+    createdAt: '2026-06-18T10:06:14.000Z',
     content: 'Sure — I will check after the CI run finishes.',
   },
   {
     id: 'c3',
     source: 'assistant',
     label: 'Alex',
+    createdAt: '2026-06-18T10:07:02.000Z',
     content: 'Thanks. Ping me in #workbench when the preview is ready.',
   },
 ];

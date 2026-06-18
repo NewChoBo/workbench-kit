@@ -1,6 +1,8 @@
 import Markdown from 'react-markdown';
 import { cx } from '../../utils/cx';
 import { workbenchMarkdownRemarkPlugins } from '../markdownRemarkPlugins';
+import { ChatMessageCollapsible } from './ChatMessageCollapsible';
+import { ChatMessageTime } from './chatMessageTime';
 import type { ChatMessage, ChatMessageLayout } from './types';
 
 export interface ChatMessageItemProps {
@@ -12,6 +14,14 @@ export interface ChatMessageItemProps {
   userLabel?: string;
 }
 
+function renderMessageTimestamp(createdAt?: string) {
+  if (!createdAt) {
+    return undefined;
+  }
+
+  return <ChatMessageTime className="message__time" createdAt={createdAt} />;
+}
+
 export function ChatMessageItem({
   assistantLabel = 'Assistant',
   isStreaming = false,
@@ -20,6 +30,8 @@ export function ChatMessageItem({
   showSenderLabel = true,
   userLabel,
 }: ChatMessageItemProps) {
+  const timestamp = renderMessageTimestamp(message.createdAt);
+
   if (message.source === 'user') {
     const displayUserLabel =
       layout === 'peer' && showSenderLabel ? (message.label ?? userLabel) : undefined;
@@ -34,7 +46,14 @@ export function ChatMessageItem({
         )}
       >
         {displayUserLabel ? <div className="message__user-label">{displayUserLabel}</div> : null}
-        <div className="message__bubble">{message.content}</div>
+        <ChatMessageCollapsible
+          content={message.content}
+          footer={timestamp}
+          isStreaming={isStreaming}
+          surfaceClassName="message__bubble"
+        >
+          {message.content}
+        </ChatMessageCollapsible>
       </div>
     );
   }
@@ -45,7 +64,14 @@ export function ChatMessageItem({
     return (
       <div className={cx('message', 'message--peer', !showSenderLabel && 'message--continued')}>
         {peerLabel ? <div className="message__peer-label">{peerLabel}</div> : null}
-        <div className="message__bubble message__bubble--peer">{message.content}</div>
+        <ChatMessageCollapsible
+          content={message.content}
+          footer={timestamp}
+          isStreaming={isStreaming}
+          surfaceClassName="message__bubble message__bubble--peer"
+        >
+          {message.content}
+        </ChatMessageCollapsible>
       </div>
     );
   }
@@ -56,19 +82,27 @@ export function ChatMessageItem({
         <i className="codicon codicon-sparkle message__label-icon" />
         {message.label ?? assistantLabel}
       </div>
-      <div className="md-content">
-        <Markdown
-          remarkPlugins={workbenchMarkdownRemarkPlugins}
-          components={{
-            code: ({ className, ...props }) => (
-              <code className={cx('ui-workbench-scrollbar', className)} {...props} />
-            ),
-          }}
-        >
-          {message.content}
-        </Markdown>
-        {isStreaming ? <span aria-hidden="true" className="message__cursor" /> : null}
-      </div>
+      <ChatMessageCollapsible
+        className="message__assistant-collapsible"
+        content={message.content}
+        footer={timestamp}
+        isStreaming={isStreaming}
+        surfaceClassName="message__collapsible-surface--assistant"
+      >
+        <div className="md-content">
+          <Markdown
+            remarkPlugins={workbenchMarkdownRemarkPlugins}
+            components={{
+              code: ({ className, ...props }) => (
+                <code className={cx('ui-workbench-scrollbar', className)} {...props} />
+              ),
+            }}
+          >
+            {message.content}
+          </Markdown>
+          {isStreaming ? <span aria-hidden="true" className="message__cursor" /> : null}
+        </div>
+      </ChatMessageCollapsible>
     </div>
   );
 }

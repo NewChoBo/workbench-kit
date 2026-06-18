@@ -46,6 +46,7 @@ function runtimeMessagesToChatMessages(
 ): ChatMessage[] {
   return messages.map((message) => ({
     content: message.content,
+    createdAt: message.createdAt,
     id: message.id,
     label: message.label,
     source: message.source,
@@ -66,6 +67,7 @@ function BuiltinChattingView() {
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
     integratedShellInitialChattingMessages.map((message) => ({
       content: message.content,
+      createdAt: message.createdAt,
       id: message.id,
       label: message.label,
       source: message.source,
@@ -89,6 +91,7 @@ function BuiltinChattingView() {
             ...currentMessages,
             {
               content: message,
+              createdAt: new Date().toISOString(),
               id: `chatting-user-${Date.now()}`,
               source: 'user',
             },

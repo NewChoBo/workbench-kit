@@ -53,12 +53,11 @@ export class WorkbenchChatService {
       return undefined;
     }
 
-    const request = message.trim();
-    if (!request) return undefined;
+    if (!message) return undefined;
     this.status = 'running';
 
     try {
-      return await this.transport.sendMessage(request, {
+      return await this.transport.sendMessage(message, {
         context,
       });
     } catch (error) {

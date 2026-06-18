@@ -76,6 +76,7 @@ function ChatRuntimeHarness({
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
     runtime.getMessages().map((message) => ({
       content: message.content,
+      createdAt: message.createdAt,
       id: message.id,
       label: message.label,
       source: message.source,

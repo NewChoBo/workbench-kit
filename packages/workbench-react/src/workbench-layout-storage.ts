@@ -31,6 +31,7 @@ export function workbenchLayoutConfigToInput(
     },
     sideBar: {
       activeViewContainer: config.sideBar.activeViewContainer,
+      sizePercent: config.sideBar.sizePercent,
       visible: config.sideBar.visible,
     },
   };
@@ -53,6 +54,9 @@ export function workbenchLayoutStateToStorageValue(
       visible: state.sideBar.visible,
       ...(state.sideBar.activeViewContainer
         ? { activeViewContainer: state.sideBar.activeViewContainer }
+        : {}),
+      ...(state.sideBar.sizePercent !== undefined
+        ? { sizePercent: state.sideBar.sizePercent }
         : {}),
     },
   };

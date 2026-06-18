@@ -49,6 +49,7 @@ describe('LayoutService', () => {
     service.setSideBarVisible(false);
     service.setActiveViewContainer('search');
     service.setActivityBarItemOrder(['search', 'explorer', 'chatting', 'aiChat']);
+    service.setSideBarSizePercent(32);
 
     expect(service.getState()).toEqual({
       activityBar: {
@@ -60,10 +61,11 @@ describe('LayoutService', () => {
       },
       sideBar: {
         activeViewContainer: 'search',
+        sizePercent: 32,
         visible: false,
       },
     });
-    expect(changes).toEqual(['false:explorer', 'false:search', 'false:search']);
+    expect(changes).toEqual(['false:explorer', 'false:search', 'false:search', 'false:search']);
   });
 
   it('exports the default public layout contract', () => {

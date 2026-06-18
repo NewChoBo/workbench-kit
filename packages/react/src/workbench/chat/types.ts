@@ -7,6 +7,7 @@ export type ChatMessageLayout = 'assistant' | 'peer';
 
 export interface ChatMessage {
   content: string;
+  createdAt?: string;
   id: string;
   label?: ReactNode;
   source: ChatMessageSource;

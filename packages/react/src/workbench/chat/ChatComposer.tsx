@@ -69,10 +69,9 @@ export const ChatComposer = forwardRef<HTMLTextAreaElement, ChatComposerProps>(
     }, [value]);
 
     const handleSubmit = () => {
-      const trimmed = value.trim();
-      if (!trimmed || disabled || isRunning) return;
+      if (!value || disabled || isRunning) return;
 
-      onSubmit(trimmed);
+      onSubmit(value);
       window.requestAnimationFrame(() => {
         if (!textareaRef.current) return;
 
@@ -148,7 +147,7 @@ export const ChatComposer = forwardRef<HTMLTextAreaElement, ChatComposerProps>(
                 <button
                   aria-label={submitLabel}
                   className="composer__send-btn"
-                  disabled={disabled || !value.trim()}
+                  disabled={disabled || !value}
                   title={submitLabel}
                   type="button"
                   onClick={handleSubmit}

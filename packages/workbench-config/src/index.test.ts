@@ -107,6 +107,28 @@ describe('parseWorkbenchLayoutConfig', () => {
     ).toThrow('Unexpected layout config sideBar field "lastFocusedFile".');
   });
 
+  it('parses sidebar size percent', () => {
+    expect(
+      parseWorkbenchLayoutConfig({
+        sideBar: {
+          sizePercent: 28,
+          visible: true,
+        },
+      }).sideBar,
+    ).toEqual({
+      sizePercent: 28,
+      visible: true,
+    });
+    expect(
+      parseWorkbenchLayoutConfig({
+        sideBar: {
+          sizePercent: 120,
+          visible: true,
+        },
+      }).sideBar.sizePercent,
+    ).toBe(90);
+  });
+
   it('parses layout config from JSON text', () => {
     expect(
       parseWorkbenchLayoutConfigJson(`{

@@ -210,8 +210,14 @@ export function WorkbenchShell({
       onStatusItemActivate={onStatusItemActivate}
       primarySidebar={{
         isVisible: layout.sideBar.visible,
+        maxPrimarySizePercent: 40,
+        minPrimarySizePercent: 16,
         node:
           primarySidebar ?? renderDefaultPrimarySidebar(extensionRegistry, activeViewContainerId),
+        onSizePercentChange: (sizePercent) => {
+          layoutService.setSideBarSizePercent(sizePercent);
+        },
+        primarySizePercent: layout.sideBar.sizePercent ?? 20,
       }}
       rootClassName={rootClassName}
       secondaryArea={resolvedEditorArea}

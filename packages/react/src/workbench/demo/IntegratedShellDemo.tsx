@@ -93,6 +93,7 @@ function runtimeMessagesToChatMessages(
 ): ChatMessage[] {
   return messages.map((message) => ({
     content: message.content,
+    createdAt: message.createdAt,
     id: message.id,
     label: message.label,
     source: message.source,
@@ -110,6 +111,7 @@ export function IntegratedShellDemo({
   const [chattingMessages, setChattingMessages] = useState<ChatMessage[]>(() =>
     integratedShellInitialChattingMessages.map((message) => ({
       content: message.content,
+      createdAt: message.createdAt,
       id: message.id,
       label: message.label,
       source: message.source,
@@ -587,8 +589,7 @@ export function IntegratedShellDemo({
             userLabel="Jay"
             value={chattingDraft}
             onSubmit={(message) => {
-              const trimmed = message.trim();
-              if (!trimmed) {
+              if (!message) {
                 return;
               }
 
@@ -598,7 +599,8 @@ export function IntegratedShellDemo({
                 {
                   id: `chatting-user-${Date.now()}`,
                   source: 'user',
-                  content: trimmed,
+                  content: message,
+                  createdAt: new Date().toISOString(),
                 },
               ]);
               setLastCommandLabel('Chat message sent');

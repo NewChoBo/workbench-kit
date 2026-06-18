@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import {
   JDW_DOCUMENT_MIME,
   JDW_SCHEMA_DOCUMENT_MIME,
@@ -157,6 +157,7 @@ function JsonObjectFormView({
       {entries.map(([key, value]) => (
         <JsonValueFormField
           key={key}
+          depth={0}
           label={key}
           path={[key]}
           value={value}
@@ -168,11 +169,13 @@ function JsonObjectFormView({
 }
 
 function JsonValueFormField({
+  depth = 0,
   label,
   path,
   value,
   onFieldChange,
 }: {
+  depth?: number;
   label: string;
   path: JsonPath;
   value: unknown;
@@ -180,13 +183,16 @@ function JsonValueFormField({
 }) {
   if (Array.isArray(value)) {
     return (
-      <JsonFormGroup label={label} meta={`array (${value.length})`} path={path}>
+      <JsonFormGroup depth={depth} label={label} meta={`array (${value.length})`} path={path}>
         {value.length === 0 ? (
-          <div className="workbench-editor-area__form-empty">Empty array</div>
+          <div className="workbench-editor-area__form-empty" style={formDepthStyle(depth + 1)}>
+            Empty array
+          </div>
         ) : (
           value.map((item, index) => (
             <JsonValueFormField
               key={index}
+              depth={depth + 1}
               label={`[${index}]`}
               path={[...path, index]}
               value={item}
@@ -202,13 +208,16 @@ function JsonValueFormField({
     const entries = Object.entries(value);
 
     return (
-      <JsonFormGroup label={label} meta={`object (${entries.length})`} path={path}>
+      <JsonFormGroup depth={depth} label={label} meta={`object (${entries.length})`} path={path}>
         {entries.length === 0 ? (
-          <div className="workbench-editor-area__form-empty">Empty object</div>
+          <div className="workbench-editor-area__form-empty" style={formDepthStyle(depth + 1)}>
+            Empty object
+          </div>
         ) : (
           entries.map(([key, childValue]) => (
             <JsonValueFormField
               key={key}
+              depth={depth + 1}
               label={key}
               path={[...path, key]}
               value={childValue}
@@ -221,11 +230,14 @@ function JsonValueFormField({
   }
 
   const fieldLabel = getJsonPathLabel(path);
+  const labelStyle = formDepthStyle(depth);
 
   if (typeof value === 'boolean') {
     return (
       <label className="workbench-editor-area__form-field">
-        <span className="workbench-editor-area__form-label">{label}</span>
+        <span className="workbench-editor-area__form-label" style={labelStyle}>
+          {label}
+        </span>
         <select
           aria-label={fieldLabel}
           className="workbench-editor-area__form-input"
@@ -244,7 +256,9 @@ function JsonValueFormField({
   if (typeof value === 'string' || typeof value === 'number') {
     return (
       <label className="workbench-editor-area__form-field">
-        <span className="workbench-editor-area__form-label">{label}</span>
+        <span className="workbench-editor-area__form-label" style={labelStyle}>
+          {label}
+        </span>
         <input
           aria-label={fieldLabel}
           className="workbench-editor-area__form-input"
@@ -261,7 +275,9 @@ function JsonValueFormField({
 
   return (
     <div className="workbench-editor-area__form-field">
-      <span className="workbench-editor-area__form-label">{label}</span>
+      <span className="workbench-editor-area__form-label" style={labelStyle}>
+        {label}
+      </span>
       <output aria-label={fieldLabel} className="workbench-editor-area__form-readonly">
         {formatFormFieldValue(value)}
       </output>
@@ -271,24 +287,37 @@ function JsonValueFormField({
 
 function JsonFormGroup({
   children,
+  depth,
   label,
   meta,
   path,
 }: {
   children: ReactNode;
+  depth: number;
   label: string;
   meta: string;
   path: JsonPath;
 }) {
   return (
-    <fieldset aria-label={getJsonPathLabel(path)} className="workbench-editor-area__form-group">
-      <legend className="workbench-editor-area__form-group-header">
+    <>
+      <div
+        aria-label={getJsonPathLabel(path)}
+        className="workbench-editor-area__form-group-header"
+        role="group"
+        style={formDepthStyle(depth)}
+      >
         <span className="workbench-editor-area__form-label">{label}</span>
         <span className="workbench-editor-area__form-badge">{meta}</span>
-      </legend>
-      <div className="workbench-editor-area__form-group-body">{children}</div>
-    </fieldset>
+      </div>
+      {children}
+    </>
   );
+}
+
+function formDepthStyle(depth: number): CSSProperties {
+  return {
+    '--workbench-editor-form-depth': String(depth),
+  } as CSSProperties;
 }
 
 function isJsonLikeDocument(document: EditorDocumentContext): boolean {
