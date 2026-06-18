@@ -106,12 +106,6 @@ export function npmViewExists(specOrName, registry = NPM_REGISTRY) {
 }
 
 export function probePackageForTrustedPublisher() {
-  for (const packageName of NPM_CI_PUBLISH_PACKAGES) {
-    if (npmViewExists(packageName)) {
-      return packageName;
-    }
-  }
-
   for (const packageName of NPM_PUBLISH_ORDER) {
     if (npmViewExists(packageName)) {
       return packageName;
@@ -150,15 +144,8 @@ export const NPM_PUBLISH_ORDER = [
   '@workbench-kit/jdw-editor',
 ];
 
-// Packages eligible for CI trusted publishing. Add a name here only after:
-// 1) first release via publish-packages-local.mjs, and
-// 2) npm Trusted Publisher is configured for that package.
-export const NPM_CI_PUBLISH_PACKAGES = new Set([
-  '@workbench-kit/contracts',
-  '@workbench-kit/runtime',
-  '@workbench-kit/tokens',
-  '@workbench-kit/workspace',
-  '@workbench-kit/adapters',
-  '@workbench-kit/services',
-  '@workbench-kit/react',
-]);
+// All public publish packages are CI targets. Private preview shells
+// (monaco, workbench-core, workbench-react) stay out of NPM_PUBLISH_ORDER.
+// First release of a package still uses publish-packages-local.mjs; CI updates-only
+// skips packages that are not on npm yet.
+export const NPM_CI_PUBLISH_PACKAGES = new Set(NPM_PUBLISH_ORDER);
