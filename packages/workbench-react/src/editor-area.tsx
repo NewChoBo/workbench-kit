@@ -394,13 +394,6 @@ function EditorGroupPane({
     [editorService],
   );
 
-  const handleTabPinToggle = useCallback(
-    (tabId: string) => {
-      editorService.togglePinnedEditor(tabId);
-    },
-    [editorService],
-  );
-
   const handleTabDragOver = useCallback(
     (targetTabId: string, event: ReactDragEvent<HTMLElement>) => {
       const draggedTab = getDraggedEditorTab(event);
@@ -679,7 +672,6 @@ function EditorGroupPane({
         onClose={(tabId) => {
           editorService.closeEditor(tabId);
         }}
-        onPinToggle={handleTabPinToggle}
         onSelect={(tabId) => {
           editorService.setActiveEditor(tabId);
         }}

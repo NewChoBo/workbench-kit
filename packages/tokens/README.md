@@ -10,7 +10,7 @@ Import the stylesheet once in your app shell or Storybook preview:
 import '@workbench-kit/tokens/styles.css';
 ```
 
-`styles.css` includes semantic file-icon surfaces (`ui-file-icon`, `workspace-file-icon`) backed by `--file-icon-*` theme variables.
+`styles.css` includes the `ui-file-icon` surface backed by `--file-icon-*` theme variables.
 
 Optional direct import:
 

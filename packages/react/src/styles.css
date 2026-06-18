@@ -4831,32 +4831,6 @@
   opacity: 0.82;
 }
 
-.ui-editor-tabs__status-button {
-  box-sizing: border-box;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 20px;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.ui-editor-tabs__status-button:hover .ui-editor-tabs__status-icon,
-.ui-editor-tabs__status-button:focus-visible .ui-editor-tabs__status-icon {
-  opacity: 1;
-}
-
-.ui-editor-tabs__status-button:focus-visible {
-  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
-  outline-offset: -1px;
-}
-
 .ui-editor-tabs__tab--active .ui-editor-tabs__status-icon {
   color: var(--vscode-tab-activeForeground, var(--color-text));
   opacity: 0.9;

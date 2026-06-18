@@ -94,7 +94,6 @@ export interface EditorTabsProps extends Omit<ComponentPropsWithRef<'div'>, 'onS
   draggableTabs?: boolean | undefined;
   onClose?: ((id: string) => void) | undefined;
   onNewTab?: (() => void) | undefined;
-  onPinToggle?: ((id: string) => void) | undefined;
   onSelect: (id: string) => void;
   onTabContextMenu?: ((id: string, event: ReactMouseEvent<HTMLElement>) => void) | undefined;
   onTabDoubleClick?: ((id: string, event: ReactMouseEvent<HTMLElement>) => void) | undefined;
@@ -113,7 +112,6 @@ export function EditorTabs({
   draggableTabs,
   onClose,
   onNewTab,
-  onPinToggle: _onPinToggle,
   onSelect,
   onTabContextMenu,
   onTabDoubleClick,

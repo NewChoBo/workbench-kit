@@ -178,7 +178,7 @@ Import shared styles once, then compose the workbench primitives in your app she
   --workspace-accent: #4aa8ff;
 }
 
-.workspace-file-icon {
+.ui-file-icon {
   color: var(--workspace-accent);
 }
 `,

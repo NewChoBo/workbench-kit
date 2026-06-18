@@ -1,14 +1,5 @@
-import {
-  codiconForFileKind,
-  fileIconKindForPath,
-  type FileIconKind,
-  type WorkspaceFileIconKind,
-} from '../../icons/file-icon';
+import { codiconForFileKind, fileIconKindForPath, type FileIconKind } from '../../icons/file-icon';
 import { FileIcon } from '../../primitives/FileIcon';
-
-export type { FileIconKind, WorkspaceFileIconKind };
-
-export { codiconForFileKind, fileIconKindForPath };
 
 export interface WorkspaceFileIconProps {
   className?: string;

@@ -35,10 +35,10 @@ export type {
   WorkspaceExplorerSelectionChangeMeta,
   WorkspaceExplorerSelectionChangeReason,
 } from './WorkspaceExplorer';
-export { WorkspaceFileIcon, codiconForFileKind, fileIconKindForPath } from './WorkspaceFileIcon';
-export type { WorkspaceFileIconKind, WorkspaceFileIconProps } from './WorkspaceFileIcon';
+export { WorkspaceFileIcon } from './WorkspaceFileIcon';
+export type { WorkspaceFileIconProps } from './WorkspaceFileIcon';
+export { FILE_ICON_KINDS, codiconForFileKind, fileIconKindForPath } from '../../icons/file-icon';
 export type { FileIconKind } from '../../icons/file-icon';
-export { FILE_ICON_KINDS } from '../../icons/file-icon';
 export { WorkspaceHighlightedText } from './WorkspaceHighlightedText';
 export type { WorkspaceHighlightedTextProps } from './WorkspaceHighlightedText';
 export {

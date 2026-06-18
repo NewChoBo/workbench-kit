@@ -35,9 +35,6 @@ export const FILE_ICON_KINDS = [
 
 export type FileIconKind = (typeof FILE_ICON_KINDS)[number];
 
-/** @deprecated Use `FileIconKind` */
-export type WorkspaceFileIconKind = FileIconKind;
-
 export function fileIconKindForPath(path: string, mimeType?: string): FileIconKind {
   const fileName = fileNameOfPath(path).toLowerCase();
   const extension = extensionOfPath(path);
