@@ -72,7 +72,7 @@
   z-index: 10000;
   box-sizing: border-box;
   margin: 0;
-  padding: 4px;
+  padding: 0;
   list-style: none;
   color: var(--vscode-menu-foreground, var(--color-text));
   background: var(--vscode-menu-background, var(--color-surface));
@@ -84,12 +84,37 @@
 
 .ui-select__option {
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-select-option-gap, 6px);
   min-height: var(--ui-select-option-height, 26px);
-  padding: var(--ui-select-option-padding, 4px 10px);
+  padding: var(--ui-select-option-padding, 4px 8px);
   border-radius: var(--ui-select-option-radius, 0);
   font-size: var(--font-size-sm);
-  line-height: 1.4;
   cursor: pointer;
+}
+
+.ui-select__option-check {
+  flex: 0 0 var(--ui-select-option-check-size, 16px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-select-option-check-size, 16px);
+  color: var(--vscode-menu-foreground, var(--color-text-muted));
+  font-size: 14px;
+}
+
+.ui-select__option--selected .ui-select__option-check {
+  color: var(--vscode-menu-selectionForeground, var(--color-text));
+}
+
+.ui-select__option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: var(--ui-select-option-line-height, 20px);
 }
 
 .ui-select__option[aria-disabled='true'] {
@@ -104,9 +129,13 @@
 }
 
 .ui-select__option--selected {
-  color: var(--vscode-list-activeSelectionForeground, var(--color-text));
-  background: var(--vscode-list-activeSelectionBackground, var(--color-surface-hover));
-  font-weight: 600;
+  color: var(--vscode-menu-foreground, var(--color-text));
+  background: transparent;
+}
+
+.ui-select__option--selected.ui-select__option--highlighted {
+  color: var(--vscode-menu-selectionForeground, var(--color-text));
+  background: var(--vscode-menu-selectionBackground, var(--color-surface-hover));
 }
 
 .ui-select__native {

@@ -317,7 +317,7 @@ export const ColorThemeListboxFit: Story = {
     expect(listbox.scrollHeight).toBeLessThanOrEqual(listbox.clientHeight + 1);
 
     const maxHeight = Number.parseFloat(getComputedStyle(listbox).maxHeight);
-    expect(maxHeight).toBeGreaterThanOrEqual(64);
+    expect(maxHeight).toBeGreaterThanOrEqual(56);
   },
   tags: ['storybook-play-baseline', 'storybook-play-required', 'select-listbox-fit'],
 };

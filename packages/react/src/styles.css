@@ -632,9 +632,7 @@
 
 .workbench-settings-tab--active {
   color: var(--color-text);
-  margin-bottom: -1px;
-  border-bottom-color: var(--color-bg);
-  z-index: 1;
+  border-bottom-color: var(--vscode-focusBorder, var(--color-accent, var(--color-text)));
 }
 
 .workbench-settings-layout {
@@ -4210,24 +4208,47 @@
   height: 100%;
   display: flex;
   align-items: center;
-  color: var(--color-text-muted);
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
+  color: var(--vscode-tab-inactiveForeground, var(--color-text-muted));
+  background: var(--vscode-tab-inactiveBackground, var(--color-surface));
+  border-right: 1px solid
+    color-mix(in srgb, var(--vscode-tab-border, var(--color-border)) 88%, transparent);
   font-size: var(--font-size-sm);
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.workspace-editor__tab::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  content: '';
+  background: transparent;
+  transition: background 120ms ease;
 }
 
 .workspace-editor__tab:hover {
-  color: var(--color-text);
-  background: var(--color-surface-hover);
+  color: var(--vscode-tab-hoverForeground, var(--vscode-tab-activeForeground, var(--color-text)));
+  background: var(--vscode-tab-hoverBackground, var(--color-surface-hover));
 }
 
 .workspace-editor__tab--active,
 .workspace-editor__tab--active:hover {
-  color: var(--color-text);
-  background: var(--panel-bg, var(--color-bg));
+  color: var(--vscode-tab-activeForeground, var(--color-text));
+  background: var(--vscode-tab-activeBackground, var(--panel-bg, var(--color-bg)));
   margin-bottom: -1px;
-  border-bottom: 1px solid var(--panel-bg, var(--color-bg));
+  border-bottom: 1px solid var(--vscode-editor-background, var(--panel-bg, var(--color-bg)));
+  font-weight: 500;
   z-index: 1;
+}
+
+.workspace-editor__tab--active::before {
+  background: var(
+    --vscode-tab-activeBorderTop,
+    var(--vscode-focusBorder, var(--color-focus-border, var(--color-accent)))
+  );
+  box-shadow: 0 0 10px
+    color-mix(in srgb, var(--vscode-tab-activeBorderTop, var(--color-accent)) 28%, transparent);
 }
 
 .workspace-editor__tab-button {
@@ -4271,6 +4292,7 @@
   color: inherit;
   font-size: var(--font-size-sm);
   font-weight: 500;
+  line-height: 20px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -4805,13 +4827,19 @@
   gap: 6px;
   min-width: 96px;
   max-width: 240px;
-  min-height: 34px;
-  padding: 0 6px 0 10px;
+  min-height: 35px;
+  padding: 0 8px 0 10px;
   color: var(--vscode-tab-inactiveForeground, var(--color-text-muted));
   background: var(--vscode-tab-inactiveBackground, var(--color-surface));
-  border-right: 1px solid var(--vscode-tab-border, var(--color-border));
+  border-right: 1px solid
+    color-mix(in srgb, var(--vscode-tab-border, var(--color-border)) 88%, transparent);
   font: inherit;
+  font-size: var(--font-size-sm, 13px);
+  line-height: 20px;
   cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 }
 
 .ui-editor-tabs__tab::before {
@@ -4820,6 +4848,7 @@
   height: 2px;
   content: '';
   background: transparent;
+  transition: background 120ms ease;
 }
 
 .ui-editor-tabs__tab:hover {
@@ -4837,12 +4866,18 @@
   background: var(--vscode-tab-activeBackground, var(--color-bg));
   margin-bottom: -1px;
   border-bottom: 1px solid var(--vscode-editor-background, var(--color-bg));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ui-editor-tabs-active-border) 45%, transparent);
+  font-weight: 500;
   z-index: 1;
 }
 
 .ui-editor-tabs__tab--active::before {
   background: var(--ui-editor-tabs-active-border);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ui-editor-tabs-active-border) 28%, transparent);
+}
+
+.ui-editor-tabs__tab--preview .ui-editor-tabs__label {
+  font-style: italic;
+  opacity: 0.92;
 }
 
 .ui-editor-tabs__tab[data-drop-position]::after {
@@ -4874,6 +4909,13 @@
   flex: 0 0 auto;
   color: var(--vscode-icon-foreground, var(--color-icon));
   font-size: 15px;
+  opacity: 0.86;
+  transition: opacity 120ms ease;
+}
+
+.ui-editor-tabs__tab--active .ui-editor-tabs__file-icon,
+.ui-editor-tabs__tab:hover .ui-editor-tabs__file-icon {
+  opacity: 1;
 }
 
 .ui-editor-tabs__status-icon {

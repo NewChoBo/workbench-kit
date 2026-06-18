@@ -33,7 +33,7 @@ describe('measureOverlayPosition', () => {
       placement: 'bottom',
       left: 16,
       width: 320,
-      maxHeight: 64,
+      maxHeight: 56,
       triggerTop: 200,
       triggerBottom: 228,
     });
@@ -46,7 +46,7 @@ describe('measureOverlayPosition', () => {
     const position = measureOverlayPosition(trigger, 2);
 
     expect(position?.placement).toBe('top');
-    expect(position?.maxHeight).toBe(64);
+    expect(position?.maxHeight).toBe(56);
   });
 
   it('keeps compact lists at full height even when viewport space is tight', () => {
@@ -55,7 +55,7 @@ describe('measureOverlayPosition', () => {
 
     const position = measureOverlayPosition(trigger, 2);
 
-    expect(position?.maxHeight).toBe(64);
+    expect(position?.maxHeight).toBe(56);
   });
 
   it('clamps height when the list cannot fully fit in the viewport', () => {

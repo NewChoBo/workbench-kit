@@ -216,7 +216,10 @@ export function Select({
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => selectOption(option)}
             >
-              {option.label}
+              <span className="ui-select__option-check" aria-hidden="true">
+                {isSelected ? <i className={cxCodicon('check')} /> : null}
+              </span>
+              <span className="ui-select__option-label">{option.label}</span>
             </li>
           );
         })}

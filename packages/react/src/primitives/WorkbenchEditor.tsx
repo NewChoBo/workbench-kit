@@ -109,7 +109,7 @@ export function EditorTabs({
   draggableTabs,
   onClose,
   onNewTab,
-  onPinToggle,
+  onPinToggle: _onPinToggle,
   onSelect,
   onTabContextMenu,
   onTabDoubleClick,
@@ -130,7 +130,11 @@ export function EditorTabs({
             <div
               key={tab.id}
               aria-selected={active}
-              className={cx('ui-editor-tabs__tab', active && 'ui-editor-tabs__tab--active')}
+              className={cx(
+                'ui-editor-tabs__tab',
+                active && 'ui-editor-tabs__tab--active',
+                tab.preview && 'ui-editor-tabs__tab--preview',
+              )}
               data-drop-position={tab.dropPosition}
               draggable={draggableTabs}
               onClick={() => onSelect(tab.id)}
@@ -182,38 +186,6 @@ export function EditorTabs({
                 <span aria-label="Unsaved changes" className="ui-editor-tabs__dirty">
                   &bull;
                 </span>
-              ) : null}
-              {tab.pinned ? (
-                onPinToggle ? (
-                  <button
-                    aria-label="Unpin tab"
-                    className="ui-editor-tabs__status-button"
-                    title="Unpin tab"
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onPinToggle(tab.id);
-                    }}
-                  >
-                    <i
-                      aria-hidden
-                      className={cxCodicon(
-                        'pinned',
-                        'ui-editor-tabs__status-icon',
-                        'ui-editor-tabs__status-icon--pinned',
-                      )}
-                    />
-                  </button>
-                ) : (
-                  <i
-                    aria-hidden
-                    className={cxCodicon(
-                      'pinned',
-                      'ui-editor-tabs__status-icon',
-                      'ui-editor-tabs__status-icon--pinned',
-                    )}
-                  />
-                )
               ) : null}
               {(tab.closable ?? true) && onClose ? (
                 <IconButton

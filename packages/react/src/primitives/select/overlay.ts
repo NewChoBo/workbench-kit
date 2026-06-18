@@ -3,7 +3,7 @@ import type { ListboxPlacement, OverlayPosition } from './types';
 
 const LISTBOX_MAX_HEIGHT = 240;
 const LISTBOX_OPTION_HEIGHT = 28;
-const LISTBOX_PADDING = 8;
+const LISTBOX_PADDING = 0;
 const VIEWPORT_PADDING = 8;
 
 export function isTriggerVisible(trigger: HTMLElement) {
