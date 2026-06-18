@@ -1899,6 +1899,25 @@
   gap: 6px;
 }
 
+.ui-sidebar-toolbar {
+  min-width: 0;
+}
+
+.ui-view-empty-state {
+  margin: 0;
+  padding: 12px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.ui-explorer-action-bar--bar {
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+
 .ui-side-bar-view .panel-header {
   border-bottom: 0;
   padding: 0 var(--ui-side-bar-inline-padding);
@@ -3305,7 +3324,6 @@
 
 .workbench-tree-prefix,
 .workbench-editor-title,
-.workbench-search-card strong,
 .ui-side-bar-list-item strong {
   min-width: 0;
   display: inline-flex;
@@ -3331,8 +3349,6 @@
 
 .workbench-tree-label,
 .workbench-editor-title,
-.workbench-search-card strong,
-.workbench-search-card span,
 .ui-side-bar-list-item strong,
 .ui-side-bar-list-item span {
   min-width: 0;
@@ -3533,34 +3549,6 @@
   color: var(--color-text);
   background: color-mix(in srgb, var(--color-accent) 34%, transparent);
   border-radius: 2px;
-}
-
-.workbench-search-card {
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
-  background: var(--color-surface);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.workbench-search-card:hover,
-.workbench-search-card[data-active='true'] {
-  color: var(--color-text);
-  background: var(--color-surface-hover);
-}
-
-.workbench-search-card__meta {
-  display: inline-flex;
-  flex-shrink: 0;
-  gap: 6px;
 }
 
 .workbench-monaco-panel {

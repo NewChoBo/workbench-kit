@@ -46,6 +46,10 @@ export { TextArea } from './TextArea';
 export type { TextAreaProps } from './TextArea';
 export { Toolbar } from './Toolbar';
 export type { ToolbarProps } from './Toolbar';
+export { ViewEmptyState } from '../layout/ViewEmptyState';
+export type { ViewEmptyStateProps } from '../layout/ViewEmptyState';
+export { SidebarToolbar } from '../layout/SidebarToolbar';
+export type { SidebarToolbarProps } from '../layout/SidebarToolbar';
 export { ActivityBar, Collapsible, SideBar, TabbedPanels, WorkbenchShell } from './WorkbenchChrome';
 export type {
   ActivityBarProps,

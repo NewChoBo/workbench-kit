@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { ViewEmptyState } from '@workbench-kit/react/primitives';
 import { WorkspaceSearchPanel } from '@workbench-kit/react/workbench/workspace';
 import {
   parseWorkspaceResourceUri,
@@ -53,7 +54,7 @@ export function BuiltinSearchView() {
   if (!workspaceState) {
     return (
       <section aria-label="Workspace Search" className="workbench-search-view">
-        <p className="workbench-search-view__empty">No virtual workspace is registered.</p>
+        <ViewEmptyState>No virtual workspace is registered.</ViewEmptyState>
       </section>
     );
   }

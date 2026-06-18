@@ -73,6 +73,8 @@ export type {
 } from './MultiProviderExplorer';
 export { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 export type { WorkspaceSearchPanelProps } from './WorkspaceSearchPanel';
+export { ExplorerActionBar } from './ExplorerActionBar';
+export type { ExplorerActionBarLayout, ExplorerActionBarProps } from './ExplorerActionBar';
 export { WorkspaceSearchResults } from './WorkspaceSearchResults';
 export type { WorkspaceSearchResultsProps } from './WorkspaceSearchResults';
 export {

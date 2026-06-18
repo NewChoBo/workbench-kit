@@ -22,6 +22,7 @@ import {
 } from '@workbench-kit/contracts';
 import { WorkspacePatchService, WorkspaceSaveService } from '@workbench-kit/services';
 import { SideBarHeaderControl, SideBarViewFrame } from '../../layout/SideBarViewFrame';
+import { SidebarToolbar } from '../../layout/SidebarToolbar';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { Badge } from '../../primitives/Badge';
@@ -40,6 +41,7 @@ import { WorkbenchStandaloneShell } from '../WorkbenchStandaloneShell';
 import type { WorkbenchStandaloneShellContext } from '../WorkbenchStandaloneShell';
 import {
   WorkspaceEditorPanel,
+  ExplorerActionBar,
   resolveWorkspaceCreateParentPath,
   type WorkspaceEditorTheme,
   WorkspaceExplorer,
@@ -631,21 +633,15 @@ export function IntegratedShellDemo({
             title={activeActivity.label}
             actions={
               shellContext.activityId === 'explorer' ? (
-                <>
-                  <IconButton
-                    icon="codicon-new-file"
-                    label="New file"
-                    onClick={() => startWorkspaceCreate('create-file', explorerCreateParentPath)}
-                  />
-                  <IconButton
-                    icon="codicon-new-folder"
-                    label="New folder"
-                    onClick={() => startWorkspaceCreate('create-folder', explorerCreateParentPath)}
-                  />
-                  <IconButton icon="codicon-refresh" label="Refresh" />
-                </>
+                <ExplorerActionBar
+                  onNewFile={() => startWorkspaceCreate('create-file', explorerCreateParentPath)}
+                  onNewFolder={() => startWorkspaceCreate('create-folder', explorerCreateParentPath)}
+                  refreshLabel="Refresh"
+                />
               ) : (
-                <IconButton icon="codicon-refresh" label="Refresh" />
+                <SidebarToolbar>
+                  <IconButton icon="codicon-refresh" label="Refresh" />
+                </SidebarToolbar>
               )
             }
             headerAddon={

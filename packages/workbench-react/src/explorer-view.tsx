@@ -14,6 +14,10 @@ import {
   createWorkbenchWorkspaceTargetMenuEntries,
   type WorkbenchWorkspaceCommandContext,
 } from '@workbench-kit/react/workbench';
+import { ViewEmptyState } from '@workbench-kit/react/primitives';
+import {
+  ExplorerActionBar,
+} from '@workbench-kit/react/workbench/workspace';
 import {
   WorkspaceExplorer,
   type WorkspaceExplorerInlineEditCommitMeta,
@@ -390,48 +394,21 @@ export function BuiltinExplorerView() {
   if (!workspaceService || !workspaceState) {
     return (
       <section className="workbench-explorer-view" aria-label="Workspace Explorer">
-        <p className="workbench-explorer-view__empty">No virtual workspace is registered.</p>
+        <ViewEmptyState>No virtual workspace is registered.</ViewEmptyState>
       </section>
     );
   }
 
   return (
     <section className="workbench-explorer-view" aria-label="Workspace Explorer">
-      <div
-        className="workbench-explorer-view__toolbar"
-        role="toolbar"
-        aria-label="Explorer actions"
-      >
-        <button
-          aria-label="New file"
-          className="workbench-explorer-view__tool-button"
-          onClick={() => startCreate('create-file', createParentPath)}
-          title="New file"
-          type="button"
-        >
-          <i aria-hidden="true" className="codicon codicon-new-file" />
-        </button>
-        <button
-          aria-label="New folder"
-          className="workbench-explorer-view__tool-button"
-          onClick={() => startCreate('create-folder', createParentPath)}
-          title="New folder"
-          type="button"
-        >
-          <i aria-hidden="true" className="codicon codicon-new-folder" />
-        </button>
-        <button
-          aria-label="Refresh Explorer"
-          className="workbench-explorer-view__tool-button"
-          onClick={() => {
-            void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
-          }}
-          title="Refresh Explorer"
-          type="button"
-        >
-          <i aria-hidden="true" className="codicon codicon-refresh" />
-        </button>
-      </div>
+      <ExplorerActionBar
+        layout="bar"
+        onNewFile={() => startCreate('create-file', createParentPath)}
+        onNewFolder={() => startCreate('create-folder', createParentPath)}
+        onRefresh={() => {
+          void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
+        }}
+      />
       <WorkspaceExplorer
         activePath={activePath}
         expandedPaths={expandedPaths}

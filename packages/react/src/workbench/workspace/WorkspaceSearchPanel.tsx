@@ -1,10 +1,10 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { SideBarHeaderControl, SideBarViewFrame } from '../../layout/SideBarViewFrame';
+import { SidebarToolbar } from '../../layout/SidebarToolbar';
 import { Badge } from '../../primitives/Badge';
 import { ClearableTextInput } from '../../primitives/ClearableTextInput';
 import { EmptyState } from '../../primitives/EmptyState';
 import { IconButton } from '../../primitives/IconButton';
-import { Toolbar } from '../../primitives/Toolbar';
 import { WorkspaceSearchResults } from './WorkspaceSearchResults';
 import type { WorkspaceSearchResult } from './types';
 
@@ -63,12 +63,12 @@ export function WorkspaceSearchPanel({
     <SideBarViewFrame
       title={title}
       actions={
-        <Toolbar>
+        <SidebarToolbar>
           <Badge variant="muted">{resultLabel}</Badge>
           {onRefresh ? (
             <IconButton icon="codicon-refresh" label="Refresh results" onClick={onRefresh} />
           ) : null}
-        </Toolbar>
+        </SidebarToolbar>
       }
       headerAddon={
         <SideBarHeaderControl>
