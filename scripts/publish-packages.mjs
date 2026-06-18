@@ -5,6 +5,7 @@ import {
   NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
   buildNpmPublishArgs,
+  isCiPublishPackage,
   npmViewExists,
   packageDirectoryNameForPackageName,
   parsePublishMode,
@@ -21,7 +22,7 @@ requireTrustedPublisherAuth('publish');
 
 if (updatesOnly) {
   console.log(
-    '[publish] updates-only mode: skipping packages not yet on npm (use local publish first).',
+    '[publish] CI updates-only mode: publish allowlisted packages with trusted publisher only.',
   );
 }
 
@@ -42,6 +43,13 @@ for (const packageName of publishOrder) {
   if (updatesOnly && !npmViewExists(pkg.name)) {
     console.log(
       `skip ${spec}: package not on npm yet (publish locally with publish-packages-local.mjs)`,
+    );
+    continue;
+  }
+
+  if (updatesOnly && !isCiPublishPackage(pkg.name)) {
+    console.log(
+      `skip ${spec}: not in NPM_CI_PUBLISH_PACKAGES (add after npm trusted publisher is configured)`,
     );
     continue;
   }
@@ -84,7 +92,7 @@ function publishFailureError(packageName, error) {
       'Trusted publishing checklist:',
       '- npm Trusted Publisher: NewChoBo / workbench-kit / publish.yml (Environment blank).',
       '- First release of a package must use: node scripts/publish-packages-local.mjs',
-      '- After local first publish, register the same trusted publisher on that package for CI updates.',
+      '- After local first publish, register trusted publisher on npm and add the package to NPM_CI_PUBLISH_PACKAGES.',
       error instanceof Error ? error.message : String(error),
     ].join('\n'),
     { cause: error },
