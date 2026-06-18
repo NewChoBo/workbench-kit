@@ -20,6 +20,20 @@ lockfile updates.
 | Lint/format config                   | `pnpm lint && pnpm format:check`               | `pnpm validate`                |
 | README and conventions               | Manual docs review                             | Public-boundary search         |
 
+## Changed-Package Matrix (inner loop)
+
+Use package-scoped commands during frequent iteration. Reserve `pnpm validate:fast`
+for cross-package slices and `pnpm validate` / `pnpm validate:full` for merge or
+release closeout.
+
+| Package / area                                                 | Typecheck                                  | Focused tests                                                                      |
+| -------------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `@workbench-kit/base`, `platform`                              | `pnpm typecheck:foundation`                | `pnpm exec vitest run packages/base packages/platform`                             |
+| `@workbench-kit/workbench-core`, `workbench-react`, extensions | `pnpm typecheck:workbench`                 | `pnpm exec vitest run packages/workbench-core packages/workbench-react extensions` |
+| `@workbench-kit/jdw`, `react`, `jdw-editor`                    | `pnpm typecheck:jdw`                       | `pnpm test:widget-tree` or targeted `vitest run packages/react/src/...`            |
+| `examples/workbench-sample`                                    | `pnpm --filter workbench-sample typecheck` | `pnpm --filter workbench-sample build`                                             |
+| Public exports / publish metadata                              | `pnpm check:public-exports`                | `pnpm publish:packages:local:dry-run`                                              |
+
 ## UI Smoke
 
 For UI changes, verify the result in a real browser whenever practical.

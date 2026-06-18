@@ -29,6 +29,7 @@
     "./jdw/parse": "./src/jdw/parse.ts",
     "./jdw/preview": "./src/jdw/JdwPreview.tsx",
     "./jdw/samples": "./src/jdw/fixtures/jdw-sample-screens.ts",
+    "./json-config": "./src/json-config/index.ts",
     "./jdw/config": "./src/json-config/index.ts",
     "./widget-tree": "./src/widget-tree/index.ts",
     "./widget-asset": "./src/widget-asset/index.ts",
@@ -45,21 +46,22 @@
   ],
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
-    "@workbench-kit/platform": "workspace:*",
+    "@vscode/codicons": "^0.0.45",
     "@workbench-kit/adapters": "workspace:*",
     "@workbench-kit/contracts": "workspace:*",
     "@workbench-kit/jdw": "workspace:*",
+    "@workbench-kit/platform": "workspace:*",
     "@workbench-kit/runtime": "workspace:*",
     "@workbench-kit/services": "workspace:*",
     "@workbench-kit/tokens": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
-    "@vscode/codicons": "^0.0.45"
+    "remark-gfm": "^4.0.1"
   },
   "peerDependencies": {
     "@monaco-editor/react": "^4.7.0",
     "monaco-editor": "^0.55.1",
-    "react-markdown": "^10.1.0",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "react-markdown": "^10.1.0"
   },
   "peerDependenciesMeta": {
     "@monaco-editor/react": {

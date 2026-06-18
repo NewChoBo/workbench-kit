@@ -396,7 +396,6 @@ export type {
 export { StructuredArtifactEditor } from './StructuredArtifactEditor';
 export type { StructuredArtifactEditorProps } from './StructuredArtifactEditor';
 export type {
-  JsonWorkbenchDocument,
   WorkbenchDocument,
   WorkbenchDocumentAdapter,
   WorkbenchDocumentMeta,

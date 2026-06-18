@@ -1,5 +1,6 @@
 import Markdown from 'react-markdown';
 import { cx } from '../../utils/cx';
+import { workbenchMarkdownRemarkPlugins } from '../markdownRemarkPlugins';
 import type { ChatMessage } from './types';
 
 export interface ChatMessageItemProps {
@@ -29,6 +30,7 @@ export function ChatMessageItem({
       </div>
       <div className="md-content">
         <Markdown
+          remarkPlugins={workbenchMarkdownRemarkPlugins}
           components={{
             code: ({ className, ...props }) => (
               <code className={cx('ui-workbench-scrollbar', className)} {...props} />
