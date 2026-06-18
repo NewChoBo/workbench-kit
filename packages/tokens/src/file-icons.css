@@ -1,0 +1,121 @@
+/* Semantic file-type icon surface. Color tokens live in styles.css (--file-icon-*). */
+.ui-file-icon,
+.workspace-file-icon {
+  flex-shrink: 0;
+  color: var(--file-icon-default);
+}
+
+.ui-file-icon[data-file-kind='archive'],
+.workspace-file-icon[data-file-kind='archive'] {
+  color: var(--file-icon-archive);
+}
+
+.ui-file-icon[data-file-kind='config'],
+.workspace-file-icon[data-file-kind='config'] {
+  color: var(--file-icon-config);
+}
+
+.ui-file-icon[data-file-kind='css'],
+.workspace-file-icon[data-file-kind='css'] {
+  color: var(--file-icon-css);
+}
+
+.ui-file-icon[data-file-kind='env'],
+.workspace-file-icon[data-file-kind='env'] {
+  color: var(--file-icon-env);
+}
+
+.ui-file-icon[data-file-kind='folder'],
+.workspace-file-icon[data-file-kind='folder'] {
+  color: var(--file-icon-folder);
+}
+
+.ui-file-icon[data-file-kind='git'],
+.workspace-file-icon[data-file-kind='git'] {
+  color: var(--file-icon-git);
+}
+
+.ui-file-icon[data-file-kind='html'],
+.workspace-file-icon[data-file-kind='html'] {
+  color: var(--file-icon-html);
+}
+
+.ui-file-icon[data-file-kind='image'],
+.workspace-file-icon[data-file-kind='image'] {
+  color: var(--file-icon-image);
+}
+
+.ui-file-icon[data-file-kind='jdw'],
+.workspace-file-icon[data-file-kind='jdw'] {
+  color: var(--file-icon-jdw);
+}
+
+.ui-file-icon[data-file-kind='jdw-schema'],
+.workspace-file-icon[data-file-kind='jdw-schema'] {
+  color: var(--file-icon-jdw-schema);
+}
+
+.ui-file-icon[data-file-kind='javascript'],
+.workspace-file-icon[data-file-kind='javascript'] {
+  color: var(--file-icon-javascript);
+}
+
+.ui-file-icon[data-file-kind='json'],
+.workspace-file-icon[data-file-kind='json'] {
+  color: var(--file-icon-json);
+}
+
+.ui-file-icon[data-file-kind='lock'],
+.workspace-file-icon[data-file-kind='lock'] {
+  color: var(--file-icon-lock);
+}
+
+.ui-file-icon[data-file-kind='markdown'],
+.workspace-file-icon[data-file-kind='markdown'] {
+  color: var(--file-icon-markdown);
+}
+
+.ui-file-icon[data-file-kind='package'],
+.workspace-file-icon[data-file-kind='package'] {
+  color: var(--file-icon-package);
+}
+
+.ui-file-icon[data-file-kind='pdf'],
+.workspace-file-icon[data-file-kind='pdf'] {
+  color: var(--file-icon-pdf);
+}
+
+.ui-file-icon[data-file-kind='schema'],
+.workspace-file-icon[data-file-kind='schema'] {
+  color: var(--file-icon-schema);
+}
+
+.ui-file-icon[data-file-kind='sql'],
+.workspace-file-icon[data-file-kind='sql'] {
+  color: var(--file-icon-sql);
+}
+
+.ui-file-icon[data-file-kind='text'],
+.workspace-file-icon[data-file-kind='text'] {
+  color: var(--file-icon-text);
+}
+
+.ui-file-icon[data-file-kind='typescript'],
+.workspace-file-icon[data-file-kind='typescript'] {
+  color: var(--file-icon-typescript);
+}
+
+.ui-file-icon[data-file-kind='vue'],
+.workspace-file-icon[data-file-kind='vue'] {
+  color: var(--file-icon-vue);
+}
+
+.ui-file-icon[data-file-kind='xml'],
+.workspace-file-icon[data-file-kind='xml'] {
+  color: var(--file-icon-xml);
+}
+
+.ui-file-icon[data-file-kind='yaml'],
+.workspace-file-icon[data-file-kind='yaml'] {
+  color: var(--file-icon-yaml);
+}

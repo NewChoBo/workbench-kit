@@ -591,10 +591,13 @@
 
 .ui-editor-tabs__file-icon {
   flex: 0 0 auto;
-  color: var(--vscode-icon-foreground, var(--color-icon));
   font-size: 15px;
-  opacity: 0.86;
+  opacity: 0.92;
   transition: opacity 120ms ease;
+}
+
+.ui-editor-tabs__file-icon:not([data-file-kind]) {
+  color: var(--vscode-icon-foreground, var(--color-icon));
 }
 
 .ui-editor-tabs__tab--active .ui-editor-tabs__file-icon,

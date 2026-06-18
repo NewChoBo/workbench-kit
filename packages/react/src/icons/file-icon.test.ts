@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { JDW_DOCUMENT_MIME, JDW_SCHEMA_DOCUMENT_MIME } from '../../jdw/document';
-import { codiconForFileKind, fileIconKindForPath } from './WorkspaceFileIcon';
+import { JDW_DOCUMENT_MIME, JDW_SCHEMA_DOCUMENT_MIME } from '../jdw/document';
+import { codiconForFileKind, fileIconKindForPath } from './file-icon';
 
-describe('WorkspaceFileIcon', () => {
+describe('file-icon', () => {
   it('distinguishes JDW widget and schema documents from generic JSON files', () => {
     expect(fileIconKindForPath('jdw/workbench-sample.jdw.json')).toBe('jdw');
     expect(fileIconKindForPath('schemas/widget-document.v1.jdw.schema.json')).toBe('jdw-schema');

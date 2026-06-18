@@ -8,8 +8,10 @@ import type {
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from 'react';
+import type { FileIconKind } from '../icons/file-icon';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
+import { FileIcon } from './FileIcon';
 import { IconButton } from './IconButton';
 
 export interface ButtonGroupProps extends ComponentPropsWithRef<'div'> {
@@ -74,6 +76,8 @@ export interface EditorTab {
   closable?: boolean | undefined;
   dirty?: boolean | undefined;
   dropPosition?: EditorTabDropPosition | undefined;
+  /** File-type token for themed icon coloring (see `@workbench-kit/tokens` `--file-icon-*`). */
+  fileIconKind?: FileIconKind | undefined;
   icon?: string | undefined;
   id: string;
   label: ReactNode;
@@ -169,7 +173,11 @@ export function EditorTabs({
               title={tab.title}
             >
               {tab.icon ? (
-                <i aria-hidden className={cxCodicon(tab.icon, 'ui-editor-tabs__file-icon')} />
+                <FileIcon
+                  className="ui-editor-tabs__file-icon"
+                  icon={tab.icon}
+                  kind={tab.fileIconKind}
+                />
               ) : null}
               <span className="ui-editor-tabs__label">{tab.label}</span>
               {tab.preview ? (

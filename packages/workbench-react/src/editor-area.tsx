@@ -1119,10 +1119,14 @@ function toEditorTabModel(
   tab: EditorTabState,
   dropPosition?: EditorTabDropPosition | undefined,
 ): EditorTab {
+  const path = pathForResource(tab.resourceUri);
+  const mimeType = mimeTypeForResource(tab.resourceUri);
+
   return {
     closable: true,
     dirty: tab.dirty,
     dropPosition,
+    fileIconKind: fileIconKindForPath(path, mimeType),
     icon: tab.icon ?? iconForEditorTab(tab),
     id: tab.id,
     label: tab.title ?? getResourceLabel(tab.resourceUri),

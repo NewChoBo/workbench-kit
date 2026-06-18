@@ -54,6 +54,8 @@ export type {
   TabbedPanelsProps,
   WorkbenchShellProps,
 } from './WorkbenchChrome';
+export { FileIcon, UI_FILE_ICON_CLASS } from './FileIcon';
+export type { FileIconProps } from './FileIcon';
 export { ButtonGroup, EditorTabs, ResizablePanels, SegmentedControl } from './WorkbenchEditor';
 export type {
   ButtonGroupProps,

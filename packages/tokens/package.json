@@ -4,7 +4,8 @@
   "private": false,
   "type": "module",
   "exports": {
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./file-icons.css": "./src/file-icons.css"
   },
   "files": [
     "src",

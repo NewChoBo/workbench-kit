@@ -3492,103 +3492,6 @@
   background: color-mix(in srgb, var(--color-text-subtle) 54%, transparent);
 }
 
-.workspace-file-icon {
-  flex-shrink: 0;
-  color: var(--file-icon-default, var(--color-text-muted));
-}
-
-.workspace-file-icon[data-file-kind='archive'] {
-  color: var(--file-icon-archive, #55b9ad);
-}
-
-.workspace-file-icon[data-file-kind='config'] {
-  color: var(--file-icon-config, #9fb0c3);
-}
-
-.workspace-file-icon[data-file-kind='css'] {
-  color: var(--file-icon-css, #b07cff);
-}
-
-.workspace-file-icon[data-file-kind='env'] {
-  color: var(--file-icon-env, #d88955);
-}
-
-.workspace-file-icon[data-file-kind='folder'] {
-  color: var(--file-icon-folder, #d6aa37);
-}
-
-.workspace-file-icon[data-file-kind='git'] {
-  color: var(--file-icon-git, #d88955);
-}
-
-.workspace-file-icon[data-file-kind='html'] {
-  color: var(--file-icon-html, #ef7d57);
-}
-
-.workspace-file-icon[data-file-kind='image'] {
-  color: var(--file-icon-image, #d678c8);
-}
-
-.workspace-file-icon[data-file-kind='jdw'] {
-  color: var(--file-icon-jdw, var(--color-accent));
-}
-
-.workspace-file-icon[data-file-kind='jdw-schema'] {
-  color: var(--file-icon-jdw-schema, #d2a8ff);
-}
-
-.workspace-file-icon[data-file-kind='javascript'] {
-  color: var(--file-icon-javascript, #e7c349);
-}
-
-.workspace-file-icon[data-file-kind='json'] {
-  color: var(--file-icon-json, #7fc972);
-}
-
-.workspace-file-icon[data-file-kind='lock'] {
-  color: var(--file-icon-lock, #d88955);
-}
-
-.workspace-file-icon[data-file-kind='markdown'] {
-  color: var(--file-icon-markdown, #9fb0c3);
-}
-
-.workspace-file-icon[data-file-kind='package'] {
-  color: var(--file-icon-package, #7fc972);
-}
-
-.workspace-file-icon[data-file-kind='pdf'] {
-  color: var(--file-icon-pdf, #55b9ad);
-}
-
-.workspace-file-icon[data-file-kind='schema'] {
-  color: var(--file-icon-schema, #d2a8ff);
-}
-
-.workspace-file-icon[data-file-kind='sql'] {
-  color: var(--file-icon-sql, #55b9ad);
-}
-
-.workspace-file-icon[data-file-kind='text'] {
-  color: var(--file-icon-text, #9fb0c3);
-}
-
-.workspace-file-icon[data-file-kind='typescript'] {
-  color: var(--file-icon-typescript, #4aa8ff);
-}
-
-.workspace-file-icon[data-file-kind='vue'] {
-  color: var(--file-icon-vue, #7fc972);
-}
-
-.workspace-file-icon[data-file-kind='xml'] {
-  color: var(--file-icon-xml, #ef7d57);
-}
-
-.workspace-file-icon[data-file-kind='yaml'] {
-  color: var(--file-icon-yaml, #7fc972);
-}
-
 .workbench-search-control {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -4907,10 +4810,13 @@
 
 .ui-editor-tabs__file-icon {
   flex: 0 0 auto;
-  color: var(--vscode-icon-foreground, var(--color-icon));
   font-size: 15px;
-  opacity: 0.86;
+  opacity: 0.92;
   transition: opacity 120ms ease;
+}
+
+.ui-editor-tabs__file-icon:not([data-file-kind]) {
+  color: var(--vscode-icon-foreground, var(--color-icon));
 }
 
 .ui-editor-tabs__tab--active .ui-editor-tabs__file-icon,
