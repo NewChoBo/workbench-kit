@@ -18,6 +18,7 @@ export interface WorkbenchExtensionsConfig {
 
 export interface WorkbenchLayoutConfig {
   readonly activityBar: {
+    readonly itemOrder?: readonly string[];
     readonly visible: boolean;
   };
   readonly panel: {
@@ -58,8 +59,8 @@ export function parseWorkbenchExtensionsConfig(input: unknown): WorkbenchExtensi
   const record = assertRecord(input, 'extensions config');
 
   return {
-    enabled: readOptionalStringArray(record, 'enabled'),
-    recommendations: readOptionalStringArray(record, 'recommendations'),
+    enabled: readOptionalStringArrayFromExtensionsConfig(record, 'enabled'),
+    recommendations: readOptionalStringArrayFromExtensionsConfig(record, 'recommendations'),
   };
 }
 
@@ -83,12 +84,13 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
   const panel = readOptionalRecord(record, 'panel');
   const sideBar = readOptionalRecord(record, 'sideBar');
 
-  assertKnownKeys(activityBar, ['visible'], 'layout config activityBar');
+  assertKnownKeys(activityBar, ['itemOrder', 'visible'], 'layout config activityBar');
   assertKnownKeys(panel, ['visible'], 'layout config panel');
   assertKnownKeys(sideBar, ['activeViewContainer', 'visible'], 'layout config sideBar');
 
   return {
     activityBar: {
+      itemOrder: readOptionalStringArray(activityBar, 'itemOrder'),
       visible: readOptionalBoolean(
         activityBar,
         'visible',
@@ -143,6 +145,22 @@ function readOptionalRecord(record: Record<string, unknown>, key: string): Recor
 }
 
 function readOptionalStringArray(
+  record: Record<string, unknown>,
+  key: string,
+): readonly string[] | undefined {
+  const value = record[key];
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
+    throw new WorkbenchConfigValidationError(`Expected "${key}" to be an array of strings.`);
+  }
+
+  return [...new Set(value.map((item) => item.trim()).filter(Boolean))];
+}
+
+function readOptionalStringArrayFromExtensionsConfig(
   record: Record<string, unknown>,
   key: keyof WorkbenchExtensionsConfig,
 ): readonly string[] {

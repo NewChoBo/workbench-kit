@@ -3,6 +3,7 @@ import { ActivityBar, type ActivityBarProps, type ActivityBarItem } from './Acti
 import { SplitView } from './SplitView';
 import { StatusBar, type StatusBarItemModel, type StatusBarSectionModel } from './StatusBar';
 import { DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT } from './shellState';
+import { suppressNativeBrowserContextMenu } from './workbenchContextMenu';
 
 export interface WorkbenchShellProps {
   activityBar: Omit<ActivityBarProps, 'items'> & {
@@ -57,7 +58,12 @@ export function WorkbenchShell({
   );
 
   return (
-    <div className={rootClassName} data-theme={theme} style={rootStyle}>
+    <div
+      className={rootClassName}
+      data-theme={theme}
+      style={rootStyle}
+      onContextMenu={suppressNativeBrowserContextMenu}
+    >
       {titleBar ? <header className="ui-workbench-titlebar">{titleBar}</header> : null}
       <div className="ide-body">
         <ActivityBar {...activityBar} />

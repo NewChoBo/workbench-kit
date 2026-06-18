@@ -9,8 +9,8 @@ import {
 
 describe('workbench demo config', () => {
   it('exposes stable integrated shell activity metadata', () => {
-    expect(integratedShellActivityOrder).toEqual(['explorer', 'search', 'chat']);
-    expect(integratedShellCommandActivities).toHaveLength(3);
+    expect(integratedShellActivityOrder).toEqual(['explorer', 'search', 'chatting', 'aiChat']);
+    expect(integratedShellCommandActivities).toHaveLength(4);
     expect(isIntegratedShellActivityId('explorer')).toBe(true);
     expect(isIntegratedShellActivityId('settings')).toBe(false);
   });

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.builtin.search",
+  "name": "builtin-search",
+  "displayName": "Search",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onView:workbench-kit.builtin.search.panel"],
+  "contributes": {
+    "viewContainers": {
+      "activitybar": [
+        {
+          "id": "search",
+          "title": "Search",
+          "icon": "search",
+          "order": 20
+        }
+      ]
+    },
+    "activities": [
+      {
+        "id": "workbench-kit.builtin.search.activity",
+        "viewContainerId": "search",
+        "icon": "search",
+        "title": "Search",
+        "order": 20
+      }
+    ],
+    "views": {
+      "search": [
+        {
+          "id": "workbench-kit.builtin.search.panel",
+          "name": "Search"
+        }
+      ]
+    }
+  }
+}

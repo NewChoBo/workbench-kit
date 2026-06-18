@@ -21,6 +21,7 @@ export interface KeybindingContribution {
 export interface ViewContainerContribution {
   icon?: string;
   id: string;
+  order?: number;
   title: string;
 }
 
@@ -42,6 +43,7 @@ export interface MenuContribution {
 export interface ActivityContribution {
   icon: string;
   id: string;
+  order?: number;
   title: string;
   viewContainerId: string;
   when?: string;

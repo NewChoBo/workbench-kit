@@ -1014,7 +1014,7 @@ describe('EditorArea', () => {
     ).toBe('json');
     expect(container.querySelector('.workspace-editor__file-bar')).not.toBeNull();
     expect(container.querySelector('.workspace-editor__file-path')?.textContent).toBe(
-      'schemas/widget-document.v1.jdw.schema.json',
+      'schemas > widget-document.v1.jdw.schema.json',
     );
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).toBeNull();
 

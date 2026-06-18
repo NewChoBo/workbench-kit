@@ -1,8 +1,10 @@
 import type { WorkbenchExtensionDescription } from '../extension-registry.js';
 import * as builtinAccountsModule from '../../../../extensions/builtin.accounts/src/index.ts';
+import * as builtinChatModule from '../../../../extensions/builtin.chat/src/index.ts';
 import * as builtinEditorModule from '../../../../extensions/builtin.editor/src/index.ts';
 import * as builtinExplorerModule from '../../../../extensions/builtin.explorer/src/index.ts';
 import * as builtinKeybindingsModule from '../../../../extensions/builtin.keybindings/src/index.ts';
+import * as builtinSearchModule from '../../../../extensions/builtin.search/src/index.ts';
 import * as builtinSettingsModule from '../../../../extensions/builtin.settings/src/index.ts';
 import * as builtinWorkspaceModule from '../../../../extensions/builtin.workspace/src/index.ts';
 import * as samplesHelloWorldModule from '../../../../extensions/samples.hello-world/src/index.ts';
@@ -59,6 +61,74 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
       permissions: ['account.read'],
     },
     module: builtinAccountsModule,
+  },
+  {
+    extensionPath: 'extensions/builtin.chat',
+    manifest: {
+      schemaVersion: 1,
+      id: 'workbench-kit.builtin.chat',
+      name: 'builtin-chat',
+      displayName: 'Chat',
+      version: '0.0.0',
+      publisher: 'workbench-kit',
+      engines: {
+        workbench: '^0.0.0',
+        extensionApi: '^0.0.0',
+      },
+      activationEvents: [
+        'onView:workbench-kit.builtin.chat.chatting',
+        'onView:workbench-kit.builtin.chat.aiChat',
+      ],
+      contributes: {
+        viewContainers: {
+          activitybar: [
+            {
+              id: 'chatting',
+              title: 'Chatting',
+              icon: 'comment-discussion',
+              order: 30,
+            },
+            {
+              id: 'aiChat',
+              title: 'AI Chat',
+              icon: 'sparkle',
+              order: 40,
+            },
+          ],
+        },
+        activities: [
+          {
+            id: 'workbench-kit.builtin.chat.chatting.activity',
+            viewContainerId: 'chatting',
+            icon: 'comment-discussion',
+            title: 'Chatting',
+            order: 30,
+          },
+          {
+            id: 'workbench-kit.builtin.chat.aiChat.activity',
+            viewContainerId: 'aiChat',
+            icon: 'sparkle',
+            title: 'AI Chat',
+            order: 40,
+          },
+        ],
+        views: {
+          chatting: [
+            {
+              id: 'workbench-kit.builtin.chat.chatting',
+              name: 'Chatting',
+            },
+          ],
+          aiChat: [
+            {
+              id: 'workbench-kit.builtin.chat.aiChat',
+              name: 'AI Chat',
+            },
+          ],
+        },
+      },
+    },
+    module: builtinChatModule,
   },
   {
     extensionPath: 'extensions/builtin.editor',
@@ -193,6 +263,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
               id: 'explorer',
               title: 'Explorer',
               icon: 'files',
+              order: 10,
             },
           ],
         },
@@ -202,6 +273,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
             viewContainerId: 'explorer',
             icon: 'files',
             title: 'Explorer',
+            order: 10,
           },
         ],
         views: {
@@ -235,6 +307,52 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
       },
     },
     module: builtinKeybindingsModule,
+  },
+  {
+    extensionPath: 'extensions/builtin.search',
+    manifest: {
+      schemaVersion: 1,
+      id: 'workbench-kit.builtin.search',
+      name: 'builtin-search',
+      displayName: 'Search',
+      version: '0.0.0',
+      publisher: 'workbench-kit',
+      engines: {
+        workbench: '^0.0.0',
+        extensionApi: '^0.0.0',
+      },
+      activationEvents: ['onView:workbench-kit.builtin.search.panel'],
+      contributes: {
+        viewContainers: {
+          activitybar: [
+            {
+              id: 'search',
+              title: 'Search',
+              icon: 'search',
+              order: 20,
+            },
+          ],
+        },
+        activities: [
+          {
+            id: 'workbench-kit.builtin.search.activity',
+            viewContainerId: 'search',
+            icon: 'search',
+            title: 'Search',
+            order: 20,
+          },
+        ],
+        views: {
+          search: [
+            {
+              id: 'workbench-kit.builtin.search.panel',
+              name: 'Search',
+            },
+          ],
+        },
+      },
+    },
+    module: builtinSearchModule,
   },
   {
     extensionPath: 'extensions/builtin.settings',

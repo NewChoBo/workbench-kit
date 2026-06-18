@@ -31,7 +31,11 @@ import type {
 } from '@workbench-kit/workbench-core';
 
 import { EditorArea } from './editor-area.js';
+import { BuiltinChatView, isBuiltinChatViewRenderData } from './chat-view.js';
 import { BuiltinExplorerView, isBuiltinExplorerViewRenderData } from './explorer-view.js';
+import { BuiltinSearchView } from './search-view.js';
+import { isBuiltinSearchViewRenderData } from './search-view-data.js';
+import { sortActivityBarItems } from '@workbench-kit/react/workbench/activityBarOrder';
 import { useWorkbench } from './provider.js';
 
 export interface WorkbenchShellProps {
@@ -100,7 +104,10 @@ export function WorkbenchShell({
   const resolvedStatusSections =
     statusSections ?? createDefaultStatusSections(extensionRegistry, missingExtensionIds);
   const activeViewContainerId = layout.sideBar.activeViewContainer;
-  const activityItems = createActivityItems(extensionRegistry, activeViewContainerId);
+  const activityItems = sortActivityBarItems(
+    createActivityItems(extensionRegistry, activeViewContainerId),
+    layout.activityBar.itemOrder,
+  );
   const settingsCategories = useMemo(
     () =>
       createSettingsCategories(extensionRegistry, {
@@ -177,6 +184,7 @@ export function WorkbenchShell({
     <ReactWorkbenchShell
       activityBar={{
         items: activityItems,
+        reorderable: true,
         secondaryItems: [
           {
             active: isSettingsOpen,
@@ -193,6 +201,9 @@ export function WorkbenchShell({
 
           layoutService.setActiveViewContainer(item.id);
           layoutService.setSideBarVisible(true);
+        },
+        onItemsReorder: (itemIds) => {
+          layoutService.setActivityBarItemOrder(itemIds);
         },
       }}
       compactStatus={compactStatus}
@@ -301,12 +312,16 @@ function createActivityItems(
 ) {
   const activities = extensionRegistry.activities.getActivities();
   if (activities.length > 0) {
-    return activities.map<ActivityBarItem>((activity) => ({
-      active: activity.viewContainerId === activeViewContainerId,
-      icon: resolveIcon(activity.icon),
-      id: activity.viewContainerId,
-      label: activity.title,
-    }));
+    return activities
+      .map<ActivityBarItem & { order?: number }>((activity) => ({
+        active: activity.viewContainerId === activeViewContainerId,
+        icon: resolveIcon(activity.icon),
+        id: activity.viewContainerId,
+        label: activity.title,
+        order: activity.order,
+      }))
+      .sort((left, right) => (left.order ?? Number.MAX_SAFE_INTEGER) - (right.order ?? Number.MAX_SAFE_INTEGER))
+      .map(({ order: _order, ...item }) => item);
   }
 
   const viewContainerIds = new Set(
@@ -530,7 +545,7 @@ function renderDefaultPrimarySidebar(
   }
 
   return (
-    <aside aria-label="Primary sidebar">
+    <aside aria-label="Primary sidebar" className="workbench-react-primary-sidebar">
       {views.map((view) => (
         <section key={view.id} data-view-id={view.id}>
           <WorkbenchViewHost
@@ -650,6 +665,14 @@ function toReactNode(value: unknown, fallback: ReactNode): ReactNode {
 function toViewHostReactNode(value: unknown, fallback: ReactNode): ReactNode {
   if (isBuiltinExplorerViewRenderData(value)) {
     return <BuiltinExplorerView />;
+  }
+
+  if (isBuiltinChatViewRenderData(value)) {
+    return <BuiltinChatView mode={value.mode} />;
+  }
+
+  if (isBuiltinSearchViewRenderData(value)) {
+    return <BuiltinSearchView />;
   }
 
   return toReactNode(value, fallback);

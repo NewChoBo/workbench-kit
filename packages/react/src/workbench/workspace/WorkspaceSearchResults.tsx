@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react';
 import { SideBarList, SideBarListItem } from '../../layout/SideBarViewFrame';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import { WorkspaceHighlightedText } from './WorkspaceHighlightedText';
+import { formatWorkspacePathDisplay } from './path';
 import type { WorkspaceSearchResult } from './types';
 
 export interface WorkspaceSearchResultsProps {
@@ -34,7 +35,10 @@ export function WorkspaceSearchResults({
         >
           <strong>
             <WorkspaceFileIcon mimeType={result.file.mimeType} path={result.path} />
-            <WorkspaceHighlightedText query={query} text={result.path} />
+            <WorkspaceHighlightedText
+              query={query}
+              text={formatWorkspacePathDisplay(result.path)}
+            />
           </strong>
           <span>
             Line {result.line}: <WorkspaceHighlightedText query={query} text={result.preview} />

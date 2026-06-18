@@ -10,9 +10,11 @@ describe('bundled workbench extensions', () => {
   it('exports built-in and sample extension manifests', () => {
     expect(BUILTIN_WORKBENCH_EXTENSIONS.map(({ manifest }) => manifest.id)).toEqual([
       'workbench-kit.builtin.accounts',
+      'workbench-kit.builtin.chat',
       'workbench-kit.builtin.editor',
       'workbench-kit.builtin.explorer',
       'workbench-kit.builtin.keybindings',
+      'workbench-kit.builtin.search',
       'workbench-kit.builtin.settings',
       'workbench-kit.builtin.workspace',
     ]);
@@ -48,6 +50,18 @@ describe('bundled workbench extensions', () => {
     expect(registry.views.getView('workbench-kit.builtin.explorer.tree')).toMatchObject({
       containerId: 'explorer',
       name: 'Explorer',
+    });
+    expect(registry.views.getView('workbench-kit.builtin.chat.chatting')).toMatchObject({
+      containerId: 'chatting',
+      name: 'Chatting',
+    });
+    expect(registry.views.getView('workbench-kit.builtin.chat.aiChat')).toMatchObject({
+      containerId: 'aiChat',
+      name: 'AI Chat',
+    });
+    expect(registry.views.getView('workbench-kit.builtin.search.panel')).toMatchObject({
+      containerId: 'search',
+      name: 'Search',
     });
     expect(registry.editors.getEditor('workbench-kit.builtin.editor.text')).toMatchObject({
       label: 'Text Editor',

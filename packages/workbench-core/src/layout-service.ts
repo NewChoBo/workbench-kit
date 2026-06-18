@@ -2,6 +2,7 @@ import { Emitter, type Disposable } from '@workbench-kit/base';
 
 export interface WorkbenchLayoutState {
   readonly activityBar: {
+    readonly itemOrder?: readonly string[];
     readonly visible: boolean;
   };
   readonly panel: {
@@ -63,6 +64,14 @@ export class LayoutService implements Disposable {
     });
   }
 
+  setActivityBarItemOrder(itemOrder: readonly string[]): void {
+    this.update({
+      activityBar: {
+        itemOrder: normalizeActivityBarItemOrder(itemOrder),
+      },
+    });
+  }
+
   setActivityBarVisible(visible: boolean): void {
     this.update({
       activityBar: {
@@ -115,6 +124,7 @@ export function createWorkbenchLayoutState(
 ): WorkbenchLayoutState {
   return {
     activityBar: {
+      itemOrder: readOptionalStringArray(input.activityBar?.itemOrder, base.activityBar.itemOrder),
       visible: readBoolean(input.activityBar?.visible, base.activityBar.visible),
     },
     panel: {
@@ -142,11 +152,40 @@ function readOptionalString(value: unknown, fallback: string | undefined): strin
   return typeof value === 'string' && value.trim().length > 0 ? value : fallback;
 }
 
+function readOptionalStringArray(
+  value: unknown,
+  fallback: readonly string[] | undefined,
+): readonly string[] | undefined {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+    return fallback;
+  }
+
+  return normalizeActivityBarItemOrder(value);
+}
+
+function normalizeActivityBarItemOrder(itemOrder: readonly string[]): readonly string[] {
+  return [...new Set(itemOrder.map((item) => item.trim()).filter(Boolean))];
+}
+
 function isSameLayoutState(left: WorkbenchLayoutState, right: WorkbenchLayoutState): boolean {
   return (
     left.activityBar.visible === right.activityBar.visible &&
+    areSameStringArrays(left.activityBar.itemOrder, right.activityBar.itemOrder) &&
     left.panel.visible === right.panel.visible &&
     left.sideBar.activeViewContainer === right.sideBar.activeViewContainer &&
     left.sideBar.visible === right.sideBar.visible
   );
+}
+
+function areSameStringArrays(
+  left: readonly string[] | undefined,
+  right: readonly string[] | undefined,
+): boolean {
+  if (!left && !right) return true;
+  if (!left || !right || left.length !== right.length) return false;
+  return left.every((value, index) => value === right[index]);
 }

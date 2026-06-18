@@ -10,11 +10,12 @@ import { Select } from '../primitives/Select';
 import { TextInput } from '../primitives/TextInput';
 import { ActivityBar } from './ActivityBar';
 import {
-  integratedShellActivityOrder,
-  integratedShellActivities,
-  IntegratedShellDemo,
-  type IntegratedShellActivityId,
-} from './demo';
+  integratedShellActivityDescriptors,
+  settingsSecondaryItem,
+  toActivityBarItems,
+  type ActivityBarStoryCaseId,
+} from './activityBarStoryCases';
+import { IntegratedShellDemo, type IntegratedShellActivityId } from './demo';
 import { WorkbenchSettingsModal, WorkbenchSettingsSection } from './settings';
 import { SplitView } from './SplitView';
 import { StatusBar, type StatusBarSectionModel } from './StatusBar';
@@ -53,28 +54,14 @@ function getStatusFooterSections(): StatusBarSectionModel[] {
   ];
 }
 
-function getActivityItems(activeActivityId = 'explorer') {
-  return integratedShellActivityOrder.map((id) => ({
-    id,
-    label: integratedShellActivities[id].label,
-    icon: integratedShellActivities[id].icon,
-    active: id === activeActivityId,
-  }));
+function getActivityItems(activeActivityId: ActivityBarStoryCaseId = 'explorer') {
+  return toActivityBarItems(integratedShellActivityDescriptors, { activeId: activeActivityId });
 }
 
 export const ActivityRail: Story = {
   render: () => (
     <div style={{ height: 'min(calc(100% - 120px), 500px)', background: 'var(--color-bg)' }}>
-      <ActivityBar
-        items={getActivityItems()}
-        secondaryItems={[
-          {
-            id: 'settings',
-            label: 'Settings',
-            icon: <i className="codicon codicon-settings-gear" />,
-          },
-        ]}
-      />
+      <ActivityBar items={getActivityItems()} secondaryItems={[settingsSecondaryItem()]} />
     </div>
   ),
 };
@@ -122,7 +109,7 @@ export const IntegratedShell: StoryObj<IntegratedShellStoryArgs> = {
   argTypes: {
     initialActivityId: {
       control: 'select',
-      options: ['explorer', 'search', 'chat'],
+      options: ['explorer', 'search', 'chatting', 'aiChat'],
       description: 'Activity shown when the shell mounts.',
     },
     initialTheme: {
@@ -187,7 +174,7 @@ export const IntegratedShell: StoryObj<IntegratedShellStoryArgs> = {
     await expect(within(settingsDialog).getByRole('button', { name: 'Appearance' })).toBeVisible();
     await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Cancel' }));
 
-    await userEvent.click(canvas.getByRole('button', { name: 'Chat' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'AI Chat' }));
     const chatComposer = await canvas.findByPlaceholderText('Ask about this workspace');
     await expect(chatComposer).toBeVisible();
     await userEvent.type(chatComposer, 'Create runtime notes');
@@ -263,7 +250,7 @@ function SettingsDialogPreview() {
                   <Field inline label="Compact rows">
                     <Checkbox
                       checked={compactRows}
-                      label="Use compact explorer, search, and chat rows"
+                      label="Use compact explorer, search, chatting, and AI chat rows"
                       onChange={(event) => setCompactRows(event.currentTarget.checked)}
                     />
                   </Field>

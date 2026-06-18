@@ -2,6 +2,7 @@ import { useState, type ComponentPropsWithRef, type ReactNode } from 'react';
 import { EmptyState } from '../primitives/EmptyState';
 import { IconButton } from '../primitives/IconButton';
 import { cx } from '../utils/cx';
+import { WorkspacePathLabel } from './workspace/WorkspacePathLabel';
 import { SplitView } from './SplitView';
 
 export type WorkbenchArtifactMode = 'code' | 'preview' | 'split';
@@ -348,7 +349,10 @@ export function WorkbenchArtifactShell({
           <div className="ui-workbench-artifact-shell__title-group">
             <span className="ui-workbench-artifact-shell__title">{title}</span>
             {artifact.path ? (
-              <span className="ui-workbench-artifact-shell__path">{artifact.path}</span>
+              <WorkspacePathLabel
+                className="ui-workbench-artifact-shell__path"
+                path={artifact.path}
+              />
             ) : null}
           </div>
           <div className="ui-workbench-artifact-shell__meta">

@@ -36,8 +36,6 @@ import {
   pruneWorkspaceSelection,
   resolveWorkspaceCreateParentPath,
   type VirtualWorkspaceState,
-  type WorkspaceChangeEvent,
-  type WorkspaceResourceService,
   type WorkspaceSelectionState,
   type WorkspaceTreeNode,
 } from '@workbench-kit/workspace';
@@ -51,6 +49,7 @@ import './explorer-view.css';
 
 import { useWorkbench } from './provider.js';
 import { useActiveEditorTab } from './use-editor.js';
+import { isWorkspaceResourceService, useWorkspaceResourceState } from './workspace-view-state.js';
 
 export const BUILTIN_EXPLORER_VIEW_RENDER_KIND = 'workbench-kit.builtin.explorer.view' as const;
 export const BUILTIN_EXPLORER_MOVE_COMMAND_ID = 'workbench-kit.builtin.explorer.move' as const;
@@ -529,35 +528,6 @@ function createExplorerItemContextMenuItems({
     }),
     (commandId) =>
       executeRegisteredCommand(workspaceCommandRegistry, commandId, context, contextKeys),
-  );
-}
-
-function useWorkspaceResourceState(
-  workspaceService: WorkspaceResourceService | undefined,
-): VirtualWorkspaceState | undefined {
-  const [state, setState] = useState(() => workspaceService?.getState());
-
-  useEffect(() => {
-    if (!workspaceService) {
-      setState(undefined);
-      return undefined;
-    }
-
-    setState(workspaceService.getState());
-    return workspaceService.onDidChangeWorkspace((event: WorkspaceChangeEvent) => {
-      setState(event.state);
-    });
-  }, [workspaceService]);
-
-  return state;
-}
-
-function isWorkspaceResourceService(value: unknown): value is WorkspaceResourceService {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as WorkspaceResourceService).getState === 'function' &&
-    typeof (value as WorkspaceResourceService).onDidChangeWorkspace === 'function'
   );
 }
 

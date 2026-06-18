@@ -201,7 +201,7 @@ export const integratedShellInitialRuntimeMessages: RuntimeChatMessage[] = [
     id: 'm1',
     source: 'user',
     content:
-      'Check whether the workbench shell covers explorer, search, chat, settings, and status surfaces.',
+      'Check whether the workbench shell covers explorer, search, chatting, AI chat, settings, and status surfaces.',
   },
   {
     id: 'm2',
@@ -217,10 +217,31 @@ export const integratedShellInitialRuntimeMessages: RuntimeChatMessage[] = [
   },
 ];
 
+export const integratedShellInitialChattingMessages: RuntimeChatMessage[] = [
+  {
+    id: 'c1',
+    source: 'assistant',
+    label: 'Alex',
+    content: 'Can you review the widget tree changes before we merge?',
+  },
+  {
+    id: 'c2',
+    source: 'user',
+    content: 'Sure — I will check after the CI run finishes.',
+  },
+  {
+    id: 'c3',
+    source: 'assistant',
+    label: 'Alex',
+    content: 'Thanks. Ping me in #workbench when the preview is ready.',
+  },
+];
+
 export const integratedShellDefaultSelectionByActivity = {
   explorer: 'src/App.tsx',
   search: 'src/components/Button.tsx',
-  chat: 'src/App.tsx',
+  chatting: 'src/App.tsx',
+  aiChat: 'src/App.tsx',
 } as const;
 
 export function createIntegratedShellChatRuntimeResponse(message: RuntimeChatMessage) {

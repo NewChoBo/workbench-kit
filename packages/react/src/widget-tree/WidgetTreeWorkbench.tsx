@@ -6,6 +6,7 @@ import { Button } from '../primitives/Button';
 import { Toolbar } from '../primitives/Toolbar';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import { fileNameOfPath } from '../workbench/workspace/path';
+import { WorkspacePathLabel } from '../workbench/workspace/WorkspacePathLabel';
 import { WidgetTreeLab } from './WidgetTreeLab.js';
 import { WidgetTreeModeControls } from './WidgetTreeModeControls.js';
 import { DEFAULT_WIDGET_TREE_VIEW_MODE, type WidgetTreeViewMode } from './widget-tree-mode.js';
@@ -82,9 +83,7 @@ export function WidgetTreeWorkbench({
         <span className="widget-tree-workbench__title">
           {resolvedTitle}
           {path ? (
-            <span className="widget-tree-workbench__path" title={path}>
-              {path}
-            </span>
+            <WorkspacePathLabel className="widget-tree-workbench__path" path={path} />
           ) : null}
           {dirty ? (
             <span className="widget-tree-workbench__dirty-indicator" title="Unsaved changes">

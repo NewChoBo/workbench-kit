@@ -63,7 +63,7 @@ export function renderIntegratedShellSettingsCategory({
         <Field inline label="Compact rows">
           <Checkbox
             checked={compactRows}
-            label="Use compact explorer, search, and chat rows"
+            label="Use compact explorer, search, chatting, and AI chat rows"
             onChange={(event) => onCompactRowsChange(event.currentTarget.checked)}
           />
         </Field>

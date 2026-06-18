@@ -48,9 +48,11 @@ describe('LayoutService', () => {
 
     service.setSideBarVisible(false);
     service.setActiveViewContainer('search');
+    service.setActivityBarItemOrder(['search', 'explorer', 'chatting', 'aiChat']);
 
     expect(service.getState()).toEqual({
       activityBar: {
+        itemOrder: ['search', 'explorer', 'chatting', 'aiChat'],
         visible: true,
       },
       panel: {
@@ -61,7 +63,7 @@ describe('LayoutService', () => {
         visible: false,
       },
     });
-    expect(changes).toEqual(['false:explorer', 'false:search']);
+    expect(changes).toEqual(['false:explorer', 'false:search', 'false:search']);
   });
 
   it('exports the default public layout contract', () => {

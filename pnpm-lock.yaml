@@ -130,6 +130,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/workbench-extension-sdk
 
+  extensions/builtin.chat:
+    dependencies:
+      '@workbench-kit/workbench-extension-sdk':
+        specifier: workspace:*
+        version: link:../../packages/workbench-extension-sdk
+
   extensions/builtin.editor:
     dependencies:
       '@workbench-kit/workbench-extension-sdk':
@@ -146,6 +152,12 @@ importers:
         version: link:../../packages/workspace
 
   extensions/builtin.keybindings:
+    dependencies:
+      '@workbench-kit/workbench-extension-sdk':
+        specifier: workspace:*
+        version: link:../../packages/workbench-extension-sdk
+
+  extensions/builtin.search:
     dependencies:
       '@workbench-kit/workbench-extension-sdk':
         specifier: workspace:*
@@ -316,12 +328,24 @@ importers:
 
   packages/workbench-react:
     dependencies:
+      '@workbench-kit/adapters':
+        specifier: workspace:*
+        version: link:../adapters
+      '@workbench-kit/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@workbench-kit/platform':
         specifier: workspace:*
         version: link:../platform
       '@workbench-kit/react':
         specifier: workspace:*
         version: link:../react
+      '@workbench-kit/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@workbench-kit/services':
+        specifier: workspace:*
+        version: link:../services
       '@workbench-kit/tokens':
         specifier: workspace:*
         version: link:../tokens

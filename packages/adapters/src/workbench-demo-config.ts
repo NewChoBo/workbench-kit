@@ -1,23 +1,26 @@
 import type { RuntimeStatus } from '@workbench-kit/runtime';
 
-export type IntegratedShellActivityId = 'explorer' | 'search' | 'chat';
+export type IntegratedShellActivityId = 'explorer' | 'search' | 'chatting' | 'aiChat';
 
 export const integratedShellActivityOrder: IntegratedShellActivityId[] = [
   'explorer',
   'search',
-  'chat',
+  'chatting',
+  'aiChat',
 ];
 
 export const integratedShellActivityLabels: Record<IntegratedShellActivityId, string> = {
   explorer: 'Explorer',
   search: 'Search',
-  chat: 'Chat',
+  chatting: 'Chatting',
+  aiChat: 'AI Chat',
 };
 
 const integratedShellActivityIcons: Record<IntegratedShellActivityId, string> = {
   explorer: 'codicon-files',
   search: 'codicon-search',
-  chat: 'codicon-comment-discussion',
+  chatting: 'codicon-comment-discussion',
+  aiChat: 'codicon-sparkle',
 };
 
 export const integratedShellCommandActivities = integratedShellActivityOrder.map((id) => ({
@@ -27,7 +30,7 @@ export const integratedShellCommandActivities = integratedShellActivityOrder.map
 }));
 
 export function isIntegratedShellActivityId(id: string): id is IntegratedShellActivityId {
-  return id === 'explorer' || id === 'search' || id === 'chat';
+  return id === 'explorer' || id === 'search' || id === 'chatting' || id === 'aiChat';
 }
 
 export interface IntegratedShellBootstrapInitialState {

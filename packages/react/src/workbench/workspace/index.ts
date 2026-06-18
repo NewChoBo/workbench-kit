@@ -76,8 +76,10 @@ export type { WorkspaceSearchPanelProps } from './WorkspaceSearchPanel';
 export { WorkspaceSearchResults } from './WorkspaceSearchResults';
 export type { WorkspaceSearchResultsProps } from './WorkspaceSearchResults';
 export {
+  WORKSPACE_PATH_DISPLAY_SEPARATOR,
   extensionOfPath,
   fileNameOfPath,
+  formatWorkspacePathDisplay,
   isSimpleWorkspaceName,
   joinWorkspacePath,
   normalizeWorkspacePath,

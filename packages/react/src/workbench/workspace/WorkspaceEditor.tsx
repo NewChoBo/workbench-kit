@@ -5,6 +5,7 @@ import { Badge } from '../../primitives/Badge';
 import { IconButton } from '../../primitives/IconButton';
 import { Toolbar } from '../../primitives/Toolbar';
 import { extensionOfPath } from './path';
+import { WorkspacePathLabel } from './WorkspacePathLabel';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceFile } from './types';
 import { JDW_DOCUMENT_MIME } from '../../jdw/document';
@@ -12,6 +13,7 @@ import {
   configureWorkspaceEditorJsonDiagnostics,
   monacoModelPathForWorkspaceFile,
 } from './workspaceJsonDiagnostics';
+import { configureWorkspaceEditorTypeScriptDiagnostics } from './workspaceTypeScriptDiagnostics';
 
 loader.config({ monaco });
 
@@ -56,7 +58,11 @@ export function defineMonacoWorkbenchTheme(monacoInstance: typeof monaco) {
       'editorWhitespace.foreground': '#30363d',
       'editorBracketMatch.background': '#21262d',
       'editorBracketMatch.border': '#7d8590',
+      'editorError.foreground': '#f8514966',
+      'editorWarning.foreground': '#d2992266',
       'editorOverviewRuler.border': '#0d1117',
+      'editorOverviewRuler.errorForeground': '#f8514926',
+      'editorOverviewRuler.warningForeground': '#d2992226',
     },
   });
 
@@ -92,10 +98,19 @@ export function defineMonacoWorkbenchTheme(monacoInstance: typeof monaco) {
       'editorWhitespace.foreground': '#d0d7de',
       'editorBracketMatch.background': '#eaeef2',
       'editorBracketMatch.border': '#656d76',
+      'editorError.foreground': '#cf222e66',
+      'editorWarning.foreground': '#9a670066',
       'editorOverviewRuler.border': '#ffffff',
+      'editorOverviewRuler.errorForeground': '#cf222e26',
+      'editorOverviewRuler.warningForeground': '#9a670026',
     },
   });
   monacoThemeDefined = true;
+}
+
+export function prepareMonacoWorkbenchEditor(monacoInstance: typeof monaco) {
+  defineMonacoWorkbenchTheme(monacoInstance);
+  configureWorkspaceEditorTypeScriptDiagnostics(monacoInstance);
 }
 
 export function monacoThemeForWorkspaceTheme(theme: WorkspaceEditorTheme) {
@@ -211,20 +226,20 @@ export function WorkspaceEditor({
         >
           <span className="workbench-editor-title">
             <WorkspaceFileIcon mimeType={file.mimeType} path={file.path} />
-            {file.path}
+            <WorkspacePathLabel path={file.path} />
           </span>
         </PanelHeader>
       ) : showFileBar ? (
         <div className="workspace-editor__file-bar" title={file.path}>
           <WorkspaceFileIcon mimeType={file.mimeType} path={file.path} />
-          <span className="workspace-editor__file-path">{file.path}</span>
+          <WorkspacePathLabel className="workspace-editor__file-path" path={file.path} />
           <span className="workspace-editor__file-meta">{file.mimeType ?? language}</span>
         </div>
       ) : null}
       <PanelBody className="workbench-monaco-panel__body">
         <div className="workspace-editor__monaco">
           <Editor
-            beforeMount={defineMonacoWorkbenchTheme}
+            beforeMount={prepareMonacoWorkbenchEditor}
             height="100%"
             language={language}
             loading={<div className="workspace-editor__loading">Loading editor...</div>}
@@ -234,8 +249,10 @@ export function WorkspaceEditor({
               fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
               fontSize: 13,
               lineHeight: 20,
+              glyphMargin: false,
               minimap: { enabled: false },
               overviewRulerBorder: false,
+              overviewRulerLanes: 0,
               padding: { bottom: 12, top: 12 },
               readOnly,
               renderLineHighlight: 'line',

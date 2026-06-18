@@ -6,6 +6,7 @@ import {
   createIntegratedShellChatRuntimeResponse,
   createWorkspaceFileRepository,
   integratedShellDefaultSelectionByActivity,
+  integratedShellInitialChattingMessages,
   integratedShellInitialRuntimeMessages,
   integratedShellWorkspaceFiles,
   integratedShellWorkspaceFolders,
@@ -44,6 +45,7 @@ import {
   WorkspaceExplorer,
   WorkspaceSearchPanel,
   fileNameOfPath,
+  formatWorkspacePathDisplay,
   useVirtualWorkspace,
   type WorkspaceTreeNode,
 } from '../workspace';
@@ -103,6 +105,15 @@ export function IntegratedShellDemo({
   initialTheme = 'dark',
 }: IntegratedShellDemoProps = {}) {
   const [chatDraft, setChatDraft] = useState('');
+  const [chattingDraft, setChattingDraft] = useState('');
+  const [chattingMessages, setChattingMessages] = useState<ChatMessage[]>(() =>
+    integratedShellInitialChattingMessages.map((message) => ({
+      content: message.content,
+      id: message.id,
+      label: message.label,
+      source: message.source,
+    })),
+  );
   const [compactRows, setCompactRows] = useState(initialCompactRows);
   const [contextMenu, setContextMenu] = useState<DemoContextMenuState | null>(null);
   const [filterQuery, setFilterQuery] = useState('');
@@ -545,7 +556,7 @@ export function IntegratedShellDemo({
           );
         }}
       >
-        {shellContext.activityId === 'chat' ? (
+        {shellContext.activityId === 'aiChat' ? (
           <ChatPanel
             assistantLabel="Assistant"
             disabled={runtimeStatus === 'error'}
@@ -554,15 +565,42 @@ export function IntegratedShellDemo({
             messages={runtimeMessages}
             placeholder="Ask about this workspace"
             showTools
-            title="Chat"
+            title="AI Chat"
             value={chatDraft}
             onCancel={() => chatService.cancel()}
             onSubmit={(message) => {
               setChatDraft('');
               void chatService.sendMessage(message);
-              setLastCommandLabel('Chat draft sent');
+              setLastCommandLabel('AI chat draft sent');
             }}
             onValueChange={setChatDraft}
+          />
+        ) : shellContext.activityId === 'chatting' ? (
+          <ChatPanel
+            assistantLabel="Peer"
+            emptyLabel="Direct messages and team channels will appear here."
+            messages={chattingMessages}
+            placeholder="Message your team"
+            title="Chatting"
+            value={chattingDraft}
+            onSubmit={(message) => {
+              const trimmed = message.trim();
+              if (!trimmed) {
+                return;
+              }
+
+              setChattingDraft('');
+              setChattingMessages((current) => [
+                ...current,
+                {
+                  id: `chatting-user-${Date.now()}`,
+                  source: 'user',
+                  content: trimmed,
+                },
+              ]);
+              setLastCommandLabel('Chatting message sent');
+            }}
+            onValueChange={setChattingDraft}
           />
         ) : shellContext.activityId === 'search' ? (
           <WorkspaceSearchPanel
@@ -674,7 +712,7 @@ export function IntegratedShellDemo({
           detail={
             <div className="workbench-delete-targets ui-workbench-scrollbar">
               {pendingDelete.paths.map((path) => (
-                <code key={path}>{path}</code>
+                <code key={path}>{formatWorkspacePathDisplay(path)}</code>
               ))}
             </div>
           }

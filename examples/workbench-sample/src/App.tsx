@@ -165,6 +165,7 @@ function SampleHelpContent() {
           <li>
             Explorer, editor tabs, status bar, and settings are contributed through the shell.
           </li>
+          <li>Chatting and AI Chat are available from the activity bar for sidebar chat testing.</li>
           <li>
             The empty editor area intentionally stays minimal until a workspace file is opened.
           </li>

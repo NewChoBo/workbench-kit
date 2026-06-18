@@ -6,6 +6,7 @@ import { Button } from '../primitives/Button';
 import { Toolbar } from '../primitives/Toolbar';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import { fileNameOfPath } from '../workbench/workspace/path';
+import { WorkspacePathLabel } from '../workbench/workspace/WorkspacePathLabel';
 import type { WorkspaceFile } from '../workbench/workspace/types.js';
 import { WidgetAssetEditor } from './WidgetAssetEditor.js';
 import { WidgetAssetModeControls } from './WidgetAssetModeControls.js';
@@ -83,9 +84,7 @@ export function WidgetAssetWorkbench({
         <span className="widget-asset-workbench__title">
           {resolvedTitle}
           {path ? (
-            <span className="widget-asset-workbench__path" title={path}>
-              {path}
-            </span>
+            <WorkspacePathLabel className="widget-asset-workbench__path" path={path} />
           ) : null}
           {dirty ? (
             <span className="widget-asset-workbench__dirty-indicator" title="Unsaved changes">

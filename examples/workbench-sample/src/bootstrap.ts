@@ -30,6 +30,10 @@ export const initialLayout = (() => {
   const layout = parseWorkbenchLayoutConfig(layoutJson);
 
   return {
+    activityBar: {
+      itemOrder: layout.activityBar.itemOrder,
+      visible: layout.activityBar.visible,
+    },
     sideBar: {
       activeViewContainer: layout.sideBar.activeViewContainer,
       visible: layout.sideBar.visible,
