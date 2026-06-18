@@ -36,7 +36,9 @@ for (const packageName of publishOrder) {
     args.push('--dry-run');
   }
 
-  console.log(`${dryRun ? 'dry-run publish' : 'publish'} ${spec} with tag ${distTag} via trusted publishing`);
+  console.log(
+    `${dryRun ? 'dry-run publish' : 'publish'} ${spec} with tag ${distTag} via trusted publishing`,
+  );
   run('npm', args, { stdio: 'inherit' });
 }
 
