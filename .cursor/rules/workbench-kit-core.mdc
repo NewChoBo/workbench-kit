@@ -1,0 +1,38 @@
+---
+description: Workbench Kit monorepo defaults for agents
+alwaysApply: true
+---
+
+# Workbench Kit — Agent Defaults
+
+Repository: `NewChoBo/workbench-kit` (pnpm monorepo, `@workbench-kit/*` packages).
+
+## Tooling
+
+- Use **pnpm** only (`npm install` is blocked).
+- UI copy in English; structure for i18n later.
+- Validation lanes: `pnpm validate:static`, `pnpm validate:fast`, `pnpm validate`.
+- Public API changes: `pnpm check:public-exports`.
+
+## Change discipline
+
+- Minimize scope; match existing patterns in touched packages.
+- Do not commit or push unless the user asks.
+- Do not force-push `main` / `master`.
+
+## Release work
+
+When touching publish/release surfaces, follow `docs/conventions/npm-release.md` and rule `npm-release`.
+
+Key facts agents often get wrong:
+
+1. CI publishes **all** `NPM_PUBLISH_ORDER` packages, not a manual allowlist subset.
+2. `npm view @workbench-kit/react version` shows **`latest`**, not `@prototype`.
+3. Partial CI publish breaks installs — re-run workflow after fixing OIDC; exact-version skip is safe.
+4. First npm release of a package is **local**; CI is for updates only (`updates-only` skips packages not on npm yet).
+
+## Docs index
+
+- Conventions: `docs/conventions/`
+- Architecture: `docs/architecture/`
+- Workbench notes: `docs/workbench/`

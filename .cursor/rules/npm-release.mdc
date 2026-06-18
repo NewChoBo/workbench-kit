@@ -1,0 +1,45 @@
+---
+description: npm release, trusted publishing, and publish.yml conventions
+globs: scripts/npm-publish-config.mjs,scripts/publish-packages*.mjs,scripts/preflight-npm-publish.mjs,scripts/sync-version-from-tag.mjs,.github/workflows/publish.yml,packages/*/package.json
+alwaysApply: false
+---
+
+# npm Release & CI/CD
+
+Read `docs/conventions/npm-release.md` before changing publish scripts or release workflows.
+
+## Publish scope
+
+- `NPM_CI_PUBLISH_PACKAGES` must equal `NPM_PUBLISH_ORDER` (all public packages).
+- Never shrink the CI publish set without explicit user approval.
+- Do not add private-preview shells (`monaco`, `workbench-core`, `workbench-react`) to publish order.
+- `@workbench-kit/jdw` → directory `packages/json-widget`.
+
+## Two release paths
+
+| Case | Command / trigger |
+| --- | --- |
+| First release on npm | `publish-packages-local.mjs` (local `npm login`, `--provenance=false`) |
+| Version updates | Tag `v*` / `workbench-kit-v*` → `publish.yml` (OIDC only) |
+
+## OIDC — do not regress
+
+- No `NPM_TOKEN` / `NODE_AUTH_TOKEN` in CI publish paths.
+- Call `clearNpmRegistryAuth()` before each `npm publish`.
+- Unset token env vars in the workflow publish step.
+- Do not add `registry-url` to `setup-node` (breaks OIDC).
+- Preflight must dry-run all packages on npm, not one probe.
+
+## Versions & dist-tags
+
+- Tag sync sets **all** package versions; skip only when exact `@name@version` already exists on npm.
+- Older `@prototype` versions do not block a newer release.
+- Default dist-tag is `prototype`, not `latest`. Document `@prototype` for consumers.
+
+## Trusted Publisher
+
+`NewChoBo` / `workbench-kit` / `publish.yml`, Environment blank unless workflow uses a matching GitHub Environment.
+
+## After changes
+
+Run `pnpm format:check` on touched scripts. Prefer CI `workflow_dispatch` dry-run for publish validation.

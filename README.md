@@ -115,7 +115,8 @@ base path.
 
 Packages are published from GitHub Actions through npm trusted publishing. The
 release workflow is `.github/workflows/publish.yml` and publishes with the
-`prototype` dist tag by default.
+`prototype` dist tag by default. See [npm Release & CI/CD](./docs/conventions/npm-release.md)
+for the full release checklist, OIDC rules, and common failure modes.
 
 Trusted publisher settings must be configured on npm for each public package:
 
@@ -141,6 +142,7 @@ bundled extension modules are packaged as public-safe artifacts.
 - [Language Policy](./docs/conventions/language-policy.md)
 - [Package Manager Policy](./docs/conventions/package-manager.md)
 - [Public API Governance](./docs/conventions/public-api-governance.md)
+- [npm Release & CI/CD](./docs/conventions/npm-release.md)
 - [Storybook Direction](./docs/conventions/storybook.md)
 
 ## Workbench Notes
