@@ -21,13 +21,10 @@ import {
   type WorkspacePatchEvent,
 } from '@workbench-kit/contracts';
 import { WorkspacePatchService, WorkspaceSaveService } from '@workbench-kit/services';
-import { SideBarViewFrame } from '../../layout/SideBarViewFrame';
-import { SidebarToolbar } from '../../layout/SidebarToolbar';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
-import { IconButton } from '../../primitives/IconButton';
 import { ChatPanel, type ChatMessage } from '../chat';
 import {
   commandMenuItemsToContextMenuItems,
@@ -40,7 +37,6 @@ import { WorkbenchStandaloneShell } from '../WorkbenchStandaloneShell';
 import type { WorkbenchStandaloneShellContext } from '../WorkbenchStandaloneShell';
 import {
   WorkspaceEditorPanel,
-  ExplorerActionBar,
   WorkspaceExplorerPanel,
   resolveWorkspaceCreateParentPath,
   type WorkspaceEditorTheme,
@@ -629,54 +625,38 @@ export function IntegratedShellDemo({
             }
           />
         ) : (
-          <SideBarViewFrame
-            title={activeActivity.label}
-            actions={
-              shellContext.activityId === 'explorer' ? (
-                <ExplorerActionBar
-                  onNewFile={() => startWorkspaceCreate('create-file', explorerCreateParentPath)}
-                  onNewFolder={() => startWorkspaceCreate('create-folder', explorerCreateParentPath)}
-                  refreshLabel="Refresh"
-                />
-              ) : (
-                <SidebarToolbar>
-                  <IconButton icon="codicon-refresh" label="Refresh" />
-                </SidebarToolbar>
+          <WorkspaceExplorerPanel
+            activePath={selectedPath}
+            expandedPaths={expandedPaths}
+            focusedPath={explorerSelection.focusedPath}
+            inlineEdit={explorerInlineEdit}
+            nodes={workspaceTree}
+            selectedPaths={explorerSelection.paths}
+            selectionAnchorPath={explorerSelection.anchorPath}
+            showFilter={false}
+            onActivateFile={activateFile}
+            onNewFile={() => startWorkspaceCreate('create-file', explorerCreateParentPath)}
+            onNewFolder={() => startWorkspaceCreate('create-folder', explorerCreateParentPath)}
+            onRefresh={() => setLastCommandLabel('Explorer refreshed')}
+            onInlineEditCancel={() => {
+              setExplorerInlineEdit(undefined);
+              setLastCommandLabel('Inline edit canceled');
+            }}
+            onInlineEditCommit={handleExplorerInlineEditCommit}
+            onInlineEditValueChange={handleExplorerInlineEditValueChange}
+            onItemContextMenu={(event, node, meta) =>
+              openContextMenu(
+                event,
+                createWorkspaceMenuItems(shellContext, node, meta.actionPaths),
+                'Workspace item menu',
               )
             }
-            headerAddon={null}
-          >
-            <WorkspaceExplorerPanel
-              activePath={selectedPath}
-              expandedPaths={expandedPaths}
-              focusedPath={explorerSelection.focusedPath}
-              inlineEdit={explorerInlineEdit}
-              nodes={workspaceTree}
-              selectedPaths={explorerSelection.paths}
-              selectionAnchorPath={explorerSelection.anchorPath}
-              showFilter={false}
-              toolbarLayout="none"
-              onActivateFile={activateFile}
-              onInlineEditCancel={() => {
-                setExplorerInlineEdit(undefined);
-                setLastCommandLabel('Inline edit canceled');
-              }}
-              onInlineEditCommit={handleExplorerInlineEditCommit}
-              onInlineEditValueChange={handleExplorerInlineEditValueChange}
-              onItemContextMenu={(event, node, meta) =>
-                openContextMenu(
-                  event,
-                  createWorkspaceMenuItems(shellContext, node, meta.actionPaths),
-                  'Workspace item menu',
-                )
-              }
-              onRequestDelete={handleExplorerRequestDelete}
-              onRequestMove={handleExplorerRequestMove}
-              onRequestRename={handleExplorerRequestRename}
-              onSelectionChange={handleExplorerSelectionChange}
-              onToggleFolder={toggleFolder}
-            />
-          </SideBarViewFrame>
+            onRequestDelete={handleExplorerRequestDelete}
+            onRequestMove={handleExplorerRequestMove}
+            onRequestRename={handleExplorerRequestRename}
+            onSelectionChange={handleExplorerSelectionChange}
+            onToggleFolder={toggleFolder}
+          />
         )}
       </aside>
     );

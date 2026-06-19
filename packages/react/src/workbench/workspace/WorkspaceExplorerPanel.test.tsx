@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { WorkspaceExplorerPanel } from './WorkspaceExplorerPanel';
 
 describe('WorkspaceExplorerPanel', () => {
-  it('renders toolbar, filter, and explorer tree surface', () => {
+  it('renders section chrome, filter, and explorer tree surface', () => {
     const markup = renderToStaticMarkup(
       <WorkspaceExplorerPanel
         expandedPaths={new Set()}
@@ -23,21 +23,5 @@ describe('WorkspaceExplorerPanel', () => {
     expect(markup).toContain('ui-workbench-sidebar-section');
     expect(markup).toContain('aria-label="Filter workspace"');
     expect(markup).toContain('value="app"');
-  });
-
-  it('renders a standalone toolbar when section chrome is disabled', () => {
-    const markup = renderToStaticMarkup(
-      <WorkspaceExplorerPanel
-        expandedPaths={new Set()}
-        nodes={[]}
-        showSection={false}
-        onActivateFile={() => undefined}
-        onToggleFolder={() => undefined}
-        onNewFile={() => undefined}
-        onRefresh={() => undefined}
-      />,
-    );
-
-    expect(markup).toContain('ui-explorer-action-bar--bar');
   });
 });

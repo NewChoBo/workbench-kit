@@ -1,7 +1,7 @@
 import { ClearableTextInput } from '../../primitives/ClearableTextInput';
 import { WorkbenchSidebarSection } from '../../layout/WorkbenchSidebarActions';
 import { cx } from '../../utils/cx';
-import { ExplorerActionBar, type ExplorerActionBarLayout } from './ExplorerActionBar';
+import { ExplorerActionBar } from './ExplorerActionBar';
 import { WorkspaceExplorer, type WorkspaceExplorerProps } from './WorkspaceExplorer';
 import { useWorkspaceExplorerFilter } from './useWorkspaceExplorerFilter';
 
@@ -16,8 +16,6 @@ export interface WorkspaceExplorerPanelProps extends WorkspaceExplorerProps {
   refreshLabel?: string;
   sectionTitle?: string;
   showFilter?: boolean;
-  showSection?: boolean;
-  toolbarLayout?: ExplorerActionBarLayout | 'none';
 }
 
 export function WorkspaceExplorerPanel({
@@ -32,8 +30,6 @@ export function WorkspaceExplorerPanel({
   refreshLabel,
   sectionTitle = 'Workspace',
   showFilter = false,
-  showSection = true,
-  toolbarLayout = 'bar',
   ...explorerProps
 }: WorkspaceExplorerPanelProps) {
   const uncontrolledFilter = useWorkspaceExplorerFilter();
@@ -43,31 +39,23 @@ export function WorkspaceExplorerPanel({
     ? () => onFilterQueryChange('')
     : uncontrolledFilter.clearFilter;
 
-  const showToolbar =
-    toolbarLayout !== 'none' && (onNewFile || onNewFolder || onRefresh);
-  const headerActions = showToolbar ? (
-    <ExplorerActionBar
-      layout="inline"
-      onNewFile={onNewFile}
-      onNewFolder={onNewFolder}
-      onRefresh={onRefresh}
-      refreshLabel={refreshLabel}
-    />
-  ) : undefined;
-
-  const tree = <WorkspaceExplorer filterQuery={filterQuery} {...explorerProps} />;
+  const headerActions =
+    onNewFile || onNewFolder || onRefresh ? (
+      <ExplorerActionBar
+        onNewFile={onNewFile}
+        onNewFolder={onNewFolder}
+        onRefresh={onRefresh}
+        refreshLabel={refreshLabel}
+      />
+    ) : undefined;
 
   return (
-    <div className={cx('ui-workspace-explorer-panel', className)}>
-      {showToolbar && !showSection ? (
-        <ExplorerActionBar
-          layout={toolbarLayout}
-          onNewFile={onNewFile}
-          onNewFolder={onNewFolder}
-          onRefresh={onRefresh}
-          refreshLabel={refreshLabel}
-        />
-      ) : null}
+    <WorkbenchSidebarSection
+      actions={headerActions}
+      className={cx('ui-workspace-explorer-panel', className)}
+      id="workspace-explorer-section"
+      title={sectionTitle}
+    >
       {showFilter ? (
         <div className="ui-workspace-explorer-panel__filter">
           <ClearableTextInput
@@ -81,18 +69,7 @@ export function WorkspaceExplorerPanel({
           />
         </div>
       ) : null}
-      {showSection ? (
-        <WorkbenchSidebarSection
-          actions={headerActions}
-          className="ui-workspace-explorer-panel__section"
-          id="workspace-explorer-section"
-          title={sectionTitle}
-        >
-          {tree}
-        </WorkbenchSidebarSection>
-      ) : (
-        tree
-      )}
-    </div>
+      <WorkspaceExplorer filterQuery={filterQuery} {...explorerProps} />
+    </WorkbenchSidebarSection>
   );
 }

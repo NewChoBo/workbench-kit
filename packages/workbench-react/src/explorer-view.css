@@ -1,7 +1,0 @@
-.workbench-explorer-view,
-.workbench-explorer-view .ui-side-bar-view {
-  display: flex;
-  min-height: 0;
-  flex: 1 1 auto;
-  flex-direction: column;
-}

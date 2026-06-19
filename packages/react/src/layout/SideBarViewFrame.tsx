@@ -8,7 +8,11 @@ import type {
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cx } from '../utils/cx';
 import { Panel, PanelBody, PanelHeader, type PanelBodyProps, type PanelProps } from './Panel';
-import { workbenchTreeIndentOffset } from './layoutHelpers';
+import {
+  DEFAULT_WORKBENCH_TREE_BASE_INDENT,
+  DEFAULT_WORKBENCH_TREE_INDENT_SIZE,
+  workbenchTreeIndentOffset,
+} from './layoutHelpers';
 
 type SideBarFooterPlacement = 'static' | 'overlay';
 
@@ -279,10 +283,15 @@ export interface SideBarListItemProps extends ComponentPropsWithRef<'button'> {
   wrapperProps?: HTMLAttributes<HTMLLIElement>;
 }
 
-export function sideBarTreeDepthStyle(depth: number, style?: CSSProperties): CSSProperties {
+export function sideBarTreeDepthStyle(
+  depth: number,
+  style?: CSSProperties,
+  indentSize = DEFAULT_WORKBENCH_TREE_INDENT_SIZE,
+  baseIndent = DEFAULT_WORKBENCH_TREE_BASE_INDENT,
+): CSSProperties {
   return {
     '--depth': depth,
-    '--ui-side-bar-tree-indent-offset': workbenchTreeIndentOffset(depth),
+    '--ui-side-bar-tree-indent-offset': workbenchTreeIndentOffset(depth, indentSize, baseIndent),
     ...style,
   } as CSSProperties;
 }

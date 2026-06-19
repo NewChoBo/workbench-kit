@@ -8,8 +8,6 @@ import {
   type WorkbenchSidebarSectionProps,
 } from './WorkbenchSidebarActions';
 
-export const WORKBENCH_SIDEBAR_DOCK_SECTIONS_BODY_CLASS = 'ui-side-bar-view__body--dock-sections';
-
 export interface WorkbenchSidebarSectionStackItem
   extends Pick<
     WorkbenchSidebarSectionProps,

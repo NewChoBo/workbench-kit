@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildWorkspaceExplorerNodes } from './build-workspace-explorer-nodes.js';
+import { buildWorkspaceExplorerNodes, resolveWorkspaceExplorerSectionTitle } from './build-workspace-explorer-nodes.js';
 
 describe('buildWorkspaceExplorerNodes', () => {
   it('builds a single workspace tree for repository paths', () => {
@@ -20,5 +20,25 @@ describe('buildWorkspaceExplorerNodes', () => {
 
   it('returns an empty tree when the workspace is empty', () => {
     expect(buildWorkspaceExplorerNodes({ files: [], folders: [] })).toEqual([]);
+  });
+});
+
+describe('resolveWorkspaceExplorerSectionTitle', () => {
+  it('prefers the first configured workspace folder name', () => {
+    expect(
+      resolveWorkspaceExplorerSectionTitle([
+        {
+          content: JSON.stringify({
+            folders: [{ name: 'Repository Root', path: '.' }],
+            name: 'Workbench Kit',
+          }),
+          path: '.workbench/workspace.json',
+        },
+      ]),
+    ).toBe('Repository Root');
+  });
+
+  it('falls back to the default label when workspace metadata is missing', () => {
+    expect(resolveWorkspaceExplorerSectionTitle([])).toBe('Workspace');
   });
 });

@@ -6,6 +6,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react';
 import { ContextMenu, type ContextMenuItem } from '@workbench-kit/react/overlay';
+import { ViewEmptyState } from '@workbench-kit/react/primitives';
 import {
   WORKBENCH_COMMAND_SURFACE_WORKSPACE,
   commandMenuItemsToContextMenuItems,
@@ -14,11 +15,10 @@ import {
   createWorkbenchWorkspaceTargetMenuEntries,
   type WorkbenchWorkspaceCommandContext,
 } from '@workbench-kit/react/workbench';
-import { SideBarViewFrame } from '@workbench-kit/react';
-import { ViewEmptyState } from '@workbench-kit/react/primitives';
 import {
   WorkspaceExplorerPanel,
   buildWorkspaceExplorerNodes,
+  resolveWorkspaceExplorerSectionTitle,
   useWorkspaceExplorerController,
 } from '@workbench-kit/react/workbench/workspace';
 import {
@@ -34,8 +34,6 @@ import {
   executeCommand as executeRegisteredCommand,
   resolveCommandMenuItems,
 } from '@workbench-kit/platform';
-
-import './explorer-view.css';
 
 import { createCommandWorkspaceExplorerPort } from './createCommandWorkspaceExplorerPort.js';
 import { useWorkbench } from './provider.js';
@@ -130,6 +128,11 @@ export function BuiltinExplorerView() {
     [workspaceState],
   );
 
+  const sectionTitle = useMemo(
+    () => resolveWorkspaceExplorerSectionTitle(workspaceState?.files ?? []),
+    [workspaceState?.files],
+  );
+
   const createParentPath = useMemo(
     () => resolveWorkspaceCreateParentPath(explorer.selection.focusedPath, workspaceState?.folders ?? []),
     [explorer.selection.focusedPath, workspaceState?.folders],
@@ -192,34 +195,32 @@ export function BuiltinExplorerView() {
 
   return (
     <section className="workbench-explorer-view" aria-label="Workspace Explorer">
-      <SideBarViewFrame className="ui-side-bar-view--chromeless">
-        <WorkspaceExplorerPanel
-          activePath={activePath}
-          expandedPaths={explorer.expandedPaths}
-          focusedPath={explorer.selection.focusedPath}
-          inlineEdit={explorer.inlineEdit}
-          nodes={nodes}
-          onNewFile={() => explorer.startCreate('create-file', createParentPath)}
-          onNewFolder={() => explorer.startCreate('create-folder', createParentPath)}
-          onRefresh={() => {
-            void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
-          }}
-          selectedPaths={explorer.selection.paths}
-          selectionAnchorPath={explorer.selection.anchorPath}
-          showFilter={false}
-          toolbarLayout="inline"
-          onActivateFile={explorer.handleActivateFile}
-          onItemContextMenu={handleItemContextMenu}
-          onInlineEditCancel={explorer.cancelInlineEdit}
-          onInlineEditCommit={explorer.handleInlineEditCommit}
-          onInlineEditValueChange={explorer.handleInlineEditValueChange}
-          onRequestDelete={explorer.handleRequestDelete}
-          onRequestMove={explorer.handleRequestMove}
-          onRequestRename={explorer.handleRequestRename}
-          onSelectionChange={explorer.handleSelectionChange}
-          onToggleFolder={explorer.handleToggleFolder}
-        />
-      </SideBarViewFrame>
+      <WorkspaceExplorerPanel
+        activePath={activePath}
+        expandedPaths={explorer.expandedPaths}
+        focusedPath={explorer.selection.focusedPath}
+        inlineEdit={explorer.inlineEdit}
+        nodes={nodes}
+        onNewFile={() => explorer.startCreate('create-file', createParentPath)}
+        onNewFolder={() => explorer.startCreate('create-folder', createParentPath)}
+        onRefresh={() => {
+          void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
+        }}
+        sectionTitle={sectionTitle}
+        selectedPaths={explorer.selection.paths}
+        selectionAnchorPath={explorer.selection.anchorPath}
+        showFilter={false}
+        onActivateFile={explorer.handleActivateFile}
+        onItemContextMenu={handleItemContextMenu}
+        onInlineEditCancel={explorer.cancelInlineEdit}
+        onInlineEditCommit={explorer.handleInlineEditCommit}
+        onInlineEditValueChange={explorer.handleInlineEditValueChange}
+        onRequestDelete={explorer.handleRequestDelete}
+        onRequestMove={explorer.handleRequestMove}
+        onRequestRename={explorer.handleRequestRename}
+        onSelectionChange={explorer.handleSelectionChange}
+        onToggleFolder={explorer.handleToggleFolder}
+      />
       {contextMenu ? (
         <ContextMenu
           ariaLabel={contextMenu.ariaLabel}

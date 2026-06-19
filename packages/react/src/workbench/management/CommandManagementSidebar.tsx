@@ -9,7 +9,6 @@ import {
 import { SidebarToolbar } from '../../layout/SidebarToolbar';
 import {
   WorkbenchSidebarSectionStack,
-  WORKBENCH_SIDEBAR_DOCK_SECTIONS_BODY_CLASS,
 } from '../../layout/WorkbenchSidebarSectionStack';
 import { Badge } from '../../primitives/Badge';
 import { ClearableTextInput } from '../../primitives/ClearableTextInput';
@@ -78,7 +77,7 @@ export function CommandManagementSidebar({
           ) : null}
         </SidebarToolbar>
       }
-      bodyClassName={cx('workbench-commands-sidebar__body', WORKBENCH_SIDEBAR_DOCK_SECTIONS_BODY_CLASS)}
+      bodyClassName="workbench-commands-sidebar__body ui-side-bar-view__body--dock-sections"
       className={cx('workbench-commands-sidebar', className)}
       footer={
         runStateLabel ? (

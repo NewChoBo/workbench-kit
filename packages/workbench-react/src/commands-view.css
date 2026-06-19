@@ -1,26 +1,6 @@
-.workbench-commands-view {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-.workbench-commands-sidebar {
-  height: 100%;
-  min-height: 0;
-}
-
 .workbench-commands-sidebar__body {
   display: grid;
   gap: 0;
-}
-
-.workbench-commands-sidebar .ui-workbench-sidebar-section + .ui-workbench-sidebar-section {
-  padding-top: 2px;
-}
-
-.workbench-commands-sidebar .ui-workbench-sidebar-section__header {
-  min-height: 22px;
 }
 
 .workbench-commands-sidebar__list {

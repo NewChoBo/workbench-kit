@@ -239,10 +239,7 @@ export type {
   WorkbenchSidebarSectionHeaderProps,
   WorkbenchSidebarSectionProps,
 } from './layout/WorkbenchSidebarActions';
-export {
-  WorkbenchSidebarSectionStack,
-  WORKBENCH_SIDEBAR_DOCK_SECTIONS_BODY_CLASS,
-} from './layout/WorkbenchSidebarSectionStack';
+export { WorkbenchSidebarSectionStack } from './layout/WorkbenchSidebarSectionStack';
 export type {
   WorkbenchSidebarSectionStackItem,
   WorkbenchSidebarSectionStackProps,
