@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { WorkbenchAuthGate } from '@workbench-kit/react/workbench/auth';
-import { WorkbenchLoginBrandMark } from '@workbench-kit/react';
 import { useSampleAuth } from './useSampleAuth.js';
 
 export interface SampleAuthShellProps {
@@ -12,12 +11,11 @@ export function SampleAuthShell({ children, theme }: SampleAuthShellProps) {
   const auth = useSampleAuth();
 
   return (
-    <div data-theme={theme}>
+    <div className="ui-workbench-host-root" data-theme={theme}>
       <WorkbenchAuthGate
         authStatus={auth.status}
         loadingLabel="Checking sample session..."
         loginViewProps={{
-          brandMark: <WorkbenchLoginBrandMark />,
           busy: auth.busy,
           busyLabel: 'Signing in...',
           defaultIdentifier: '',

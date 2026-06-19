@@ -6,6 +6,18 @@ body,
   margin: 0;
 }
 
+html {
+  min-height: 100%;
+}
+
+body.ui-workbench-host {
+  min-height: 100%;
+}
+
+#root.ui-workbench-host-root {
+  min-height: 100%;
+}
+
 .workbench-sample-editor-frame {
   display: flex;
   flex-direction: column;

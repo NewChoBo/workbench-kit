@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent, type ReactNode } from 'react';
+import { TilepaperAppIcon } from '../../brand/TilepaperAppIcon';
 import { Button } from '../../primitives/Button';
 import { TextInput } from '../../primitives/TextInput';
 import { cx } from '../../utils/cx';
@@ -164,10 +165,7 @@ export interface WorkbenchPasswordResetViewProps {
 export function WorkbenchLoginBrandMark() {
   return (
     <div className="workbench-login-brand-mark" aria-hidden>
-      <span className="workbench-login-brand-mark__ring workbench-login-brand-mark__ring--primary" />
-      <span className="workbench-login-brand-mark__ring workbench-login-brand-mark__ring--secondary" />
-      <span className="workbench-login-brand-mark__ring workbench-login-brand-mark__ring--tertiary" />
-      <span className="workbench-login-brand-mark__ring workbench-login-brand-mark__ring--small" />
+      <TilepaperAppIcon />
     </div>
   );
 }

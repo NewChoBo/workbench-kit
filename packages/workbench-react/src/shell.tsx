@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Modal } from '@workbench-kit/react/modal';
+import { TilepaperAppIcon } from '@workbench-kit/react';
 import { Badge, Button, Field, Select } from '@workbench-kit/react/primitives';
 import {
   WorkbenchSettingsModal,
@@ -291,7 +292,9 @@ function WorkbenchShellTitleBar({
   return (
     <>
       <div className="workbench-shell-titlebar__identity">
-        <i aria-hidden className="codicon codicon-layout" />
+        <span aria-hidden className="workbench-shell-titlebar__app-icon">
+          <TilepaperAppIcon />
+        </span>
         <span className="workbench-shell-titlebar__title">{title}</span>
         {titleMeta ? <span className="workbench-shell-titlebar__meta">{titleMeta}</span> : null}
       </div>
