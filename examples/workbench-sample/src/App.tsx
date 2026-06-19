@@ -28,6 +28,7 @@ import {
   createSamplePaletteCommandRunner,
   sampleAdditionalPaletteCommands,
 } from './sample-palette-commands.js';
+import { SampleAuthShell } from './SampleAuthShell.js';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 
@@ -54,17 +55,19 @@ export function App() {
   }, [theme]);
 
   return (
-    <WorkbenchProvider
-      extensionsConfig={extensionsConfig}
-      initialLayout={initialLayout}
-      layoutStorageKey={DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY}
-      persistLayout
-      workspaceHostPort={workspaceHostPort}
-    >
-      <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={initialWorkspace}>
-        <SampleWorkbenchHost theme={theme} onThemeChange={setTheme} />
-      </WorkbenchStartupGate>
-    </WorkbenchProvider>
+    <SampleAuthShell theme={theme}>
+      <WorkbenchProvider
+        extensionsConfig={extensionsConfig}
+        initialLayout={initialLayout}
+        layoutStorageKey={DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY}
+        persistLayout
+        workspaceHostPort={workspaceHostPort}
+      >
+        <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={initialWorkspace}>
+          <SampleWorkbenchHost theme={theme} onThemeChange={setTheme} />
+        </WorkbenchStartupGate>
+      </WorkbenchProvider>
+    </SampleAuthShell>
   );
 }
 
@@ -179,6 +182,13 @@ function SampleTitleBarActions() {
 function SampleHelpContent() {
   return (
     <div className="workbench-sample-help">
+      <section className="workbench-sample-help__section">
+        <h2>Sign in</h2>
+        <p>
+          Demo account: <code>tester</code> / <code>tester</code>. After sign-in, startup tasks load
+          extensions and the virtual workspace before the shell appears.
+        </p>
+      </section>
       <section className="workbench-sample-help__section">
         <h2>Sample workspace</h2>
         <p>
