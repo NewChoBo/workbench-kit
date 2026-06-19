@@ -305,8 +305,7 @@ export function WorkbenchShell({
             return;
           }
 
-          layoutService.setActiveViewContainer(item.id);
-          layoutService.setSideBarVisible(true);
+          layoutService.focusSideBarViewContainer(item.id);
         },
         onItemsReorder: (itemIds) => {
           layoutService.setActivityBarItemOrder(itemIds);

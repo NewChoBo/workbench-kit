@@ -68,6 +68,29 @@ describe('LayoutService', () => {
     expect(changes).toEqual(['false:explorer', 'false:search', 'false:search', 'false:search']);
   });
 
+  it('hides the sidebar when the active view container is focused again', () => {
+    const service = new LayoutService({
+      sideBar: {
+        activeViewContainer: 'explorer',
+        visible: true,
+      },
+    });
+
+    service.focusSideBarViewContainer('explorer');
+
+    expect(service.getState().sideBar).toEqual({
+      activeViewContainer: 'explorer',
+      visible: false,
+    });
+
+    service.focusSideBarViewContainer('explorer');
+
+    expect(service.getState().sideBar).toEqual({
+      activeViewContainer: 'explorer',
+      visible: true,
+    });
+  });
+
   it('exports the default public layout contract', () => {
     expect(DEFAULT_WORKBENCH_LAYOUT_STATE).toEqual({
       activityBar: {

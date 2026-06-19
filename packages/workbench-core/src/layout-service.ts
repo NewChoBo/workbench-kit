@@ -65,6 +65,22 @@ export class LayoutService implements Disposable {
     });
   }
 
+  focusSideBarViewContainer(viewContainerId: string): void {
+    const { sideBar } = this.state;
+
+    if (sideBar.activeViewContainer === viewContainerId && sideBar.visible) {
+      this.setSideBarVisible(false);
+      return;
+    }
+
+    this.update({
+      sideBar: {
+        activeViewContainer: viewContainerId,
+        visible: true,
+      },
+    });
+  }
+
   setActivityBarItemOrder(itemOrder: readonly string[]): void {
     this.update({
       activityBar: {
