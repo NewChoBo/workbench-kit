@@ -8,6 +8,7 @@ import {
   getWorkbenchCommandPaletteShortcutLabel,
   WorkbenchProvider,
   WorkbenchShell,
+  WorkbenchStartupGate,
   useWorkbench,
   type EditorViewMode,
   type WorkbenchThemeOption,
@@ -29,7 +30,6 @@ import {
 } from './sample-palette-commands.js';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
-let sampleWorkspaceInitialized = false;
 
 type SampleTheme = WorkspaceEditorTheme;
 
@@ -61,7 +61,9 @@ export function App() {
       persistLayout
       workspaceHostPort={workspaceHostPort}
     >
-      <SampleWorkbenchHost theme={theme} onThemeChange={setTheme} />
+      <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={initialWorkspace}>
+        <SampleWorkbenchHost theme={theme} onThemeChange={setTheme} />
+      </WorkbenchStartupGate>
     </WorkbenchProvider>
   );
 }
@@ -121,7 +123,6 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
 
   return (
     <>
-      <WorkspaceInitCommand />
       <WorkbenchShell
         commandHost={{
           additionalCommands: sampleAdditionalPaletteCommands,
@@ -145,23 +146,6 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
       />
     </>
   );
-}
-
-function WorkspaceInitCommand() {
-  const { executeCommand } = useWorkbench();
-
-  useEffect(() => {
-    if (sampleWorkspaceInitialized) {
-      return;
-    }
-
-    sampleWorkspaceInitialized = true;
-    void executeCommand('workspace.init', initialWorkspace).catch(() => {
-      sampleWorkspaceInitialized = false;
-    });
-  }, [executeCommand]);
-
-  return null;
 }
 
 function SampleEditorFrame({ children }: { children: ReactNode }) {

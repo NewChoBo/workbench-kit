@@ -120,6 +120,20 @@ export type {
   WorkbenchSignUpViewProps,
 } from './workbench/auth';
 export {
+  WorkbenchBootstrapGate,
+  WorkbenchBootstrapView,
+  useWorkbenchBootstrap,
+} from './workbench/bootstrap';
+export type {
+  WorkbenchBootstrapController,
+  WorkbenchBootstrapGateProps,
+  WorkbenchBootstrapRunStatus,
+  WorkbenchBootstrapTaskDefinition,
+  WorkbenchBootstrapTaskStatus,
+  WorkbenchBootstrapTaskViewModel,
+  WorkbenchBootstrapViewProps,
+} from './workbench/bootstrap';
+export {
   WorkbenchTimeline,
   WorkbenchTimelineItem,
   formatWorkbenchTimelineMetadataValue,

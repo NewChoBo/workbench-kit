@@ -14,6 +14,7 @@
     "./primitives": "./src/primitives/index.ts",
     "./primitives.css": "./src/primitives/styles.css",
     "./workbench/auth": "./src/workbench/auth/index.ts",
+    "./workbench/bootstrap": "./src/workbench/bootstrap/index.ts",
     "./workbench/chat": "./src/workbench/chat/index.ts",
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",

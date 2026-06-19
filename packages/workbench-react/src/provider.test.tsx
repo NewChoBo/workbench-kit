@@ -524,6 +524,15 @@ describe('WorkbenchProvider', () => {
     });
 
     await flushReactEffects();
+    await act(async () => {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        if (findButtonByText(container, 'App.tsx')) {
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    });
 
     const srcButton = findButtonByText(container, 'src');
     expect(srcButton).toBeDefined();
@@ -565,6 +574,10 @@ describe('WorkbenchProvider', () => {
 
     await act(async () => {
       renameItem?.click();
+    });
+    await flushReactEffects();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
     await flushReactEffects();
 

@@ -92,7 +92,8 @@ export function useWorkspaceExplorerController({
     initialSelection ?? { paths: [] },
   );
 
-  const filePaths = snapshot.files.map((file) => file.path);
+  const availableFilePathKey = snapshot.files.map((file) => file.path).join('\u0000');
+  const availableFolderPathKey = snapshot.folders.join('\u0000');
 
   const updateExpandedPaths = useCallback(
     (updater: (currentPaths: Set<string>) => Set<string>) => {
@@ -111,14 +112,34 @@ export function useWorkspaceExplorerController({
       return;
     }
 
-    updateExpandedPaths((currentPaths) => new Set([...currentPaths, path]));
+    updateExpandedPaths((currentPaths) => {
+      if (currentPaths.has(path)) {
+        return currentPaths;
+      }
+
+      return new Set([...currentPaths, path]);
+    });
   }, [expandedPathsProp, onToggleFolder, updateExpandedPaths]);
 
   useEffect(() => {
-    setSelection((currentSelection) =>
-      pruneWorkspaceSelection(currentSelection, filePaths, snapshot.folders),
-    );
-  }, [filePaths, snapshot.folders]);
+    const filePaths =
+      availableFilePathKey.length === 0
+        ? []
+        : availableFilePathKey.split('\u0000');
+    const folderPaths =
+      availableFolderPathKey.length === 0
+        ? []
+        : availableFolderPathKey.split('\u0000');
+
+    setSelection((currentSelection) => {
+      const next = pruneWorkspaceSelection(currentSelection, filePaths, folderPaths);
+      if (isWorkspaceSelectionEqual(next, currentSelection)) {
+        return currentSelection;
+      }
+
+      return next;
+    });
+  }, [availableFilePathKey, availableFolderPathKey]);
 
   useEffect(() => {
     if (!syncSelectionFromActivePath || !activePath) {
@@ -320,4 +341,16 @@ export function useWorkspaceExplorerController({
     startCreate,
     startRename,
   };
+}
+
+function isWorkspaceSelectionEqual(
+  left: WorkspaceSelectionState,
+  right: WorkspaceSelectionState,
+): boolean {
+  return (
+    left.anchorPath === right.anchorPath &&
+    left.focusedPath === right.focusedPath &&
+    left.paths.length === right.paths.length &&
+    left.paths.every((path, index) => path === right.paths[index])
+  );
 }

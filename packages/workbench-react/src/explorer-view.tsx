@@ -256,6 +256,10 @@ function createExplorerItemContextMenuItems({
       : actionPaths.filter((path) => files.some((file) => file.path === path));
   const multiFileAction = fileActionPaths.length > 1;
   const targetPaths = node.type === 'folder' ? [node.path] : [...fileActionPaths];
+  const contextKeys = {
+    'workspace.hasSelection': targetPaths.length > 0,
+    'workspace.multiSelection': node.type === 'file' && multiFileAction,
+  };
 
   const context: WorkbenchWorkspaceCommandContext = {
     copyWorkspaceTarget: () => copyPaths([...targetPaths]),
@@ -280,13 +284,14 @@ function createExplorerItemContextMenuItems({
   return commandMenuItemsToContextMenuItems(
     resolveCommandMenuItems({
       context,
+      contextKeys,
       entries:
         node.type === 'folder' ? workspaceFolderMenuEntries : workspaceTargetMenuEntries,
       registry: workspaceCommandRegistry,
       surface: WORKBENCH_COMMAND_SURFACE_WORKSPACE,
     }),
     (commandId) =>
-      executeRegisteredCommand(workspaceCommandRegistry, commandId, context, undefined),
+      executeRegisteredCommand(workspaceCommandRegistry, commandId, context, contextKeys),
   );
 }
 

@@ -43,6 +43,7 @@ export interface WorkbenchContextValue {
   extensionRegistry: ExtensionRegistry;
   layoutService: LayoutService;
   missingExtensionIds: readonly string[];
+  waitForExtensionStartup(): Promise<void>;
   workspaceHostPort?: WorkbenchWorkspaceHostPort | undefined;
 }
 
@@ -53,6 +54,7 @@ interface WorkbenchProviderServices {
   extensionRegistry: ExtensionRegistry;
   layoutService: LayoutService;
   missingExtensionIds: readonly string[];
+  waitForExtensionStartup(): Promise<void>;
   workspaceHostPort?: WorkbenchWorkspaceHostPort | undefined;
 }
 
@@ -116,11 +118,14 @@ export function WorkbenchProvider({
         })
       : undefined;
     let startupActivation: Promise<readonly { readonly extensionId: string }[]> | undefined;
+    const ensureStartupActivation = () => {
+      startupActivation ??= extensionRegistry.activateStartup();
+      return startupActivation;
+    };
 
     return {
       activateStartup: () => {
-        startupActivation ??= extensionRegistry.activateStartup();
-        void startupActivation;
+        void ensureStartupActivation();
       },
       dispose: () => {
         saveCommandDisposable?.dispose();
@@ -138,6 +143,7 @@ export function WorkbenchProvider({
       extensionRegistry,
       layoutService,
       missingExtensionIds: resolution.missingExtensionIds,
+      waitForExtensionStartup: () => ensureStartupActivation().then(() => undefined),
       workspaceHostPort,
     };
   }, [availableExtensions, extensionsConfig, resolvedInitialLayout, workspaceHostPort]);
@@ -186,6 +192,7 @@ export function WorkbenchProvider({
       extensionRegistry: services.extensionRegistry,
       layoutService: services.layoutService,
       missingExtensionIds: services.missingExtensionIds,
+      waitForExtensionStartup: services.waitForExtensionStartup,
       workspaceHostPort: services.workspaceHostPort,
     }),
     [services],

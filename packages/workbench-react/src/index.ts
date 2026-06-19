@@ -33,6 +33,10 @@ export {
   type WorkbenchCommandHostProps,
 } from './workbench-command-host.js';
 export {
+  WorkbenchStartupGate,
+  type WorkbenchStartupGateProps,
+} from './workbench-startup-gate.js';
+export {
   normalizeKeybindingKeyFromEvent,
   resolveExtensionKeybindingCommand,
 } from './workbench-keybinding-bridge.js';

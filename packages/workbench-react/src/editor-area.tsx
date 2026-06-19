@@ -876,11 +876,13 @@ function TextEditorSurface({
 
   useEffect(() => {
     onModeToolbarVisibleChange(modeToolbarVisible);
+  }, [modeToolbarVisible, onModeToolbarVisibleChange]);
 
+  useEffect(() => {
     return () => {
       onModeToolbarVisibleChange(false);
     };
-  }, [modeToolbarVisible, onModeToolbarVisibleChange]);
+  }, [onModeToolbarVisibleChange]);
 
   useEffect(() => {
     if (viewMode === 'form' && !formEligible) {

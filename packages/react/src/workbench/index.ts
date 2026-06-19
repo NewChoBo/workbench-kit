@@ -152,6 +152,20 @@ export type {
   WorkbenchSignUpViewProps,
 } from './auth';
 export {
+  WorkbenchBootstrapGate,
+  WorkbenchBootstrapView,
+  useWorkbenchBootstrap,
+} from './bootstrap';
+export type {
+  WorkbenchBootstrapController,
+  WorkbenchBootstrapGateProps,
+  WorkbenchBootstrapRunStatus,
+  WorkbenchBootstrapTaskDefinition,
+  WorkbenchBootstrapTaskStatus,
+  WorkbenchBootstrapTaskViewModel,
+  WorkbenchBootstrapViewProps,
+} from './bootstrap';
+export {
   WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID,
