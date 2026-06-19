@@ -560,7 +560,7 @@ function renderDefaultPrimarySidebar(
   }
 
   return (
-    <aside aria-label="Primary sidebar" className="workbench-react-primary-sidebar">
+    <aside aria-label="Primary sidebar" className="workbench-primary-side-bar workbench-react-primary-sidebar">
       {views.map((view) => (
         <section key={view.id} data-view-id={view.id}>
           <WorkbenchViewHost

@@ -30,6 +30,14 @@ vi.mock('@monaco-editor/react', () => ({
 
 vi.mock('monaco-editor', () => ({}));
 
+class ResizeObserverMock {
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+}
+
+vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+
 import {
   WorkbenchProvider,
   WorkbenchShell,
