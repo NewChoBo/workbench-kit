@@ -32,6 +32,78 @@ export interface WorkbenchActionItem {
 
 type WorkbenchSidebarHeadingLevel = 2 | 3 | 4 | 5 | 6;
 
+export interface WorkbenchSidebarSectionHeaderProps {
+  actions?: ReactNode;
+  badge?: ReactNode;
+  collapsible?: boolean;
+  collapsed: boolean;
+  contentId?: string;
+  headingId: string;
+  headingLevel?: WorkbenchSidebarHeadingLevel;
+  onToggle?: () => void;
+  title: ReactNode;
+}
+
+export function WorkbenchSidebarSectionHeader({
+  actions,
+  badge,
+  collapsible = true,
+  collapsed,
+  contentId,
+  headingId,
+  headingLevel = 3,
+  onToggle,
+  title,
+}: WorkbenchSidebarSectionHeaderProps) {
+  return (
+    <div className="ui-workbench-sidebar-section__header">
+      {collapsible ? (
+        <button
+          aria-controls={contentId}
+          aria-expanded={!collapsed}
+          className="ui-workbench-sidebar-section__toggle"
+          type="button"
+          onClick={onToggle}
+        >
+          <i
+            aria-hidden="true"
+            className={cxCodicon(
+              collapsed ? 'chevron-right' : 'chevron-down',
+              'ui-workbench-sidebar-section__chevron',
+            )}
+          />
+          <span
+            id={headingId}
+            aria-level={headingLevel}
+            className="ui-workbench-sidebar-section__title"
+            role="heading"
+          >
+            {title}
+          </span>
+        </button>
+      ) : (
+        <div className="ui-workbench-sidebar-section__static-title">
+          <span className="ui-workbench-sidebar-section__chevron" />
+          <span
+            id={headingId}
+            aria-level={headingLevel}
+            className="ui-workbench-sidebar-section__title"
+            role="heading"
+          >
+            {title}
+          </span>
+        </div>
+      )}
+      {badge || actions ? (
+        <div className="ui-workbench-sidebar-section__meta">
+          {badge}
+          {actions}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export interface WorkbenchSidebarSectionProps extends Omit<
   ComponentPropsWithRef<'section'>,
   'title'
@@ -90,51 +162,17 @@ export function WorkbenchSidebarSection({
       className={cx('ui-workbench-sidebar-section', className)}
       {...props}
     >
-      <div className="ui-workbench-sidebar-section__header">
-        {collapsible ? (
-          <button
-            aria-controls={contentId}
-            aria-expanded={!resolvedCollapsed}
-            className="ui-workbench-sidebar-section__toggle"
-            type="button"
-            onClick={handleToggle}
-          >
-            <i
-              aria-hidden="true"
-              className={cxCodicon(
-                resolvedCollapsed ? 'chevron-right' : 'chevron-down',
-                'ui-workbench-sidebar-section__chevron',
-              )}
-            />
-            <span
-              id={headingId}
-              aria-level={headingLevel}
-              className="ui-workbench-sidebar-section__title"
-              role="heading"
-            >
-              {title}
-            </span>
-          </button>
-        ) : (
-          <div className="ui-workbench-sidebar-section__static-title">
-            <span className="ui-workbench-sidebar-section__chevron" />
-            <span
-              id={headingId}
-              aria-level={headingLevel}
-              className="ui-workbench-sidebar-section__title"
-              role="heading"
-            >
-              {title}
-            </span>
-          </div>
-        )}
-        {resolvedBadge || actions ? (
-          <div className="ui-workbench-sidebar-section__meta">
-            {resolvedBadge}
-            {actions}
-          </div>
-        ) : null}
-      </div>
+      <WorkbenchSidebarSectionHeader
+        actions={actions}
+        badge={resolvedBadge}
+        collapsible={collapsible}
+        collapsed={resolvedCollapsed}
+        contentId={contentId}
+        headingId={headingId}
+        headingLevel={headingLevel}
+        title={title}
+        onToggle={handleToggle}
+      />
       <div
         id={contentId}
         className="ui-workbench-sidebar-section__content"

@@ -1,4 +1,5 @@
 import type { ContextKeyValue, KeybindingRegistry } from '@workbench-kit/platform';
+import { resolveKeybindingWithOverrides, type KeybindingDefinition } from '@workbench-kit/platform';
 
 function normalizeKeyToken(token: string): string {
   const key = token.trim().toLowerCase();
@@ -32,8 +33,22 @@ export function resolveExtensionKeybindingCommand(
   registry: KeybindingRegistry,
   event: Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'shiftKey'>,
   contextKeys: Readonly<Record<string, ContextKeyValue>> = {},
+  overrides: readonly KeybindingDefinition[] = [],
 ) {
   const key = normalizeKeybindingKeyFromEvent(event);
+
+  if (overrides.length > 0) {
+    const match = resolveKeybindingWithOverrides(
+      registry.getKeybindings(),
+      overrides,
+      key,
+      contextKeys,
+    );
+    if (match) {
+      return match;
+    }
+  }
+
   const matches = registry.resolveKeybindings(key, contextKeys);
   return matches[0];
 }

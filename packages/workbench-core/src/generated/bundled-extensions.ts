@@ -1,6 +1,7 @@
 import type { WorkbenchExtensionDescription } from '../extension-registry.js';
 import * as builtinAccountsModule from '../../../../extensions/builtin.accounts/src/index.ts';
 import * as builtinChatModule from '../../../../extensions/builtin.chat/src/index.ts';
+import * as builtinCommandsModule from '../../../../extensions/builtin.commands/src/index.ts';
 import * as builtinEditorModule from '../../../../extensions/builtin.editor/src/index.ts';
 import * as builtinExplorerModule from '../../../../extensions/builtin.explorer/src/index.ts';
 import * as builtinKeybindingsModule from '../../../../extensions/builtin.keybindings/src/index.ts';
@@ -129,6 +130,73 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
       },
     },
     module: builtinChatModule,
+  },
+  {
+    extensionPath: 'extensions/builtin.commands',
+    manifest: {
+      schemaVersion: 1,
+      id: 'workbench-kit.builtin.commands',
+      name: 'builtin-commands',
+      displayName: 'Commands',
+      version: '0.0.0',
+      publisher: 'workbench-kit',
+      engines: {
+        workbench: '^0.0.0',
+        extensionApi: '^0.0.0',
+      },
+      activationEvents: ['onView:workbench-kit.builtin.commands.panel'],
+      contributes: {
+        commands: [
+          {
+            command: 'workbench-kit.builtin.commands.focus',
+            title: 'Focus Commands Sidebar',
+            category: 'Workbench',
+          },
+          {
+            command: 'workbench-kit.builtin.commands.refresh',
+            title: 'Refresh Command Registry',
+            category: 'Workbench',
+          },
+        ],
+        viewContainers: {
+          activitybar: [
+            {
+              id: 'commands',
+              title: 'Commands',
+              icon: 'terminal',
+              order: 25,
+            },
+          ],
+        },
+        activities: [
+          {
+            id: 'workbench-kit.builtin.commands.activity',
+            viewContainerId: 'commands',
+            icon: 'terminal',
+            title: 'Commands',
+            order: 25,
+          },
+        ],
+        views: {
+          commands: [
+            {
+              id: 'workbench-kit.builtin.commands.panel',
+              name: 'Commands',
+            },
+          ],
+        },
+        menus: {
+          'view/title': [
+            {
+              command: 'workbench-kit.builtin.commands.refresh',
+              group: 'navigation',
+              when: 'view == workbench-kit.builtin.commands.panel',
+            },
+          ],
+        },
+      },
+    },
+    module: builtinCommandsModule,
   },
   {
     extensionPath: 'extensions/builtin.editor',

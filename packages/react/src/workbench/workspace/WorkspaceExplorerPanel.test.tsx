@@ -20,8 +20,24 @@ describe('WorkspaceExplorerPanel', () => {
     );
 
     expect(markup).toContain('ui-workspace-explorer-panel');
-    expect(markup).toContain('ui-explorer-action-bar--bar');
+    expect(markup).toContain('ui-workbench-sidebar-section');
     expect(markup).toContain('aria-label="Filter workspace"');
     expect(markup).toContain('value="app"');
+  });
+
+  it('renders a standalone toolbar when section chrome is disabled', () => {
+    const markup = renderToStaticMarkup(
+      <WorkspaceExplorerPanel
+        expandedPaths={new Set()}
+        nodes={[]}
+        showSection={false}
+        onActivateFile={() => undefined}
+        onToggleFolder={() => undefined}
+        onNewFile={() => undefined}
+        onRefresh={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('ui-explorer-action-bar--bar');
   });
 });

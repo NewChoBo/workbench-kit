@@ -7,6 +7,12 @@ export {
   type WorkbenchWorkspaceHostPort,
 } from './provider.js';
 export {
+  DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
+  isWorkbenchKeybindingPersistenceAvailable,
+  readPersistedKeybindingOverrides,
+  writePersistedKeybindingOverrides,
+} from './keybinding-overrides-storage.js';
+export {
   DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   isWorkbenchLayoutPersistenceAvailable,
   readPersistedWorkbenchLayout,
@@ -48,8 +54,25 @@ export {
   resolveShellCommandActivities,
 } from './workbench-command-palette.js';
 export {
+  executeWorkbenchUserCommandAction,
+  registerWorkbenchUserCommands,
+} from './workbench-user-commands.js';
+export {
   useActiveEditorTab,
   useEditorHost,
   useEditorService,
   useEditorState,
 } from './use-editor.js';
+export {
+  MANAGE_ACCOUNTS_COMMAND_ID,
+  MANAGE_COMMANDS_COMMAND_ID,
+  MANAGE_KEYBINDINGS_COMMAND_ID,
+  WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
+  WORKBENCH_COMMANDS_SETTINGS_CATEGORY_ID,
+  WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID,
+  WorkbenchAccountManagementSettings,
+  WorkbenchCommandManagementSettings,
+  WorkbenchKeybindingManagementSettings,
+  createWorkbenchManagementPaletteCommands,
+  type WorkbenchAccountManagementInput,
+} from './management-settings.js';

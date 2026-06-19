@@ -229,14 +229,24 @@ export {
   WorkbenchActionList,
   WorkbenchActionListItem,
   WorkbenchSidebarSection,
+  WorkbenchSidebarSectionHeader,
 } from './layout/WorkbenchSidebarActions';
 export type {
   WorkbenchActionItem,
   WorkbenchActionListItemProps,
   WorkbenchActionListProps,
   WorkbenchActionStatus,
+  WorkbenchSidebarSectionHeaderProps,
   WorkbenchSidebarSectionProps,
 } from './layout/WorkbenchSidebarActions';
+export {
+  WorkbenchSidebarSectionStack,
+  WORKBENCH_SIDEBAR_DOCK_SECTIONS_BODY_CLASS,
+} from './layout/WorkbenchSidebarSectionStack';
+export type {
+  WorkbenchSidebarSectionStackItem,
+  WorkbenchSidebarSectionStackProps,
+} from './layout/WorkbenchSidebarSectionStack';
 export {
   WorkbenchBanner,
   WorkbenchBannerIcon,

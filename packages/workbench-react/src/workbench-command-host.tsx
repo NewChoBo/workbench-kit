@@ -42,7 +42,7 @@ export function WorkbenchCommandHost({
   onOpenSettings,
   onRunCommand,
 }: WorkbenchCommandHostProps) {
-  const { executeCommand, extensionRegistry, layoutService } = useWorkbench();
+  const { executeCommand, extensionRegistry, keybindingOverrides, layoutService } = useWorkbench();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [layout, setLayout] = useState(() => layoutService.getState());
 
@@ -160,7 +160,12 @@ export function WorkbenchCommandHost({
         return;
       }
 
-      const match = resolveExtensionKeybindingCommand(extensionRegistry.keybindings, event);
+      const match = resolveExtensionKeybindingCommand(
+        extensionRegistry.keybindings,
+        event,
+        {},
+        keybindingOverrides,
+      );
       if (!match) {
         return;
       }
@@ -173,7 +178,7 @@ export function WorkbenchCommandHost({
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [enableExtensionKeybindings, executeCommand, extensionRegistry.keybindings]);
+  }, [enableExtensionKeybindings, executeCommand, extensionRegistry.keybindings, keybindingOverrides]);
 
   return (
     <>

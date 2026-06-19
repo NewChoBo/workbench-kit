@@ -1,3 +1,5 @@
+import { WorkbenchConfigValidationError } from './validation-error.js';
+
 export const WORKBENCH_KIT_WORKBENCH_CONFIG_VERSION = '0.0.0' as const;
 
 export const WORKBENCH_CONFIG_DIR = '.workbench' as const;
@@ -6,6 +8,7 @@ export type WorkbenchConfigFileName =
   | 'workspace.json'
   | 'settings.json'
   | 'keybindings.json'
+  | 'user-commands.json'
   | 'extensions.json'
   | 'extensions.lock.json'
   | 'layout.default.json'
@@ -49,12 +52,7 @@ export const DEFAULT_WORKBENCH_LAYOUT_CONFIG: WorkbenchLayoutConfig = {
   },
 };
 
-export class WorkbenchConfigValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'WorkbenchConfigValidationError';
-  }
-}
+export { WorkbenchConfigValidationError };
 
 export function parseWorkbenchExtensionsConfig(input: unknown): WorkbenchExtensionsConfig {
   const record = assertRecord(input, 'extensions config');
@@ -124,6 +122,26 @@ export function parseWorkbenchLayoutConfigJson(jsonText: string): WorkbenchLayou
     throw new WorkbenchConfigValidationError('Expected layout config to be valid JSON.');
   }
 }
+
+export {
+  parseWorkbenchKeybindingsConfig,
+  parseWorkbenchKeybindingsConfigJson,
+  type WorkbenchKeybindingDefinition,
+} from './keybindings-config.js';
+export {
+  parseWorkbenchSettingsConfig,
+  parseWorkbenchSettingsConfigJson,
+  type WorkbenchSettingsConfig,
+} from './settings-config.js';
+export {
+  parseWorkbenchUserCommandsConfig,
+  parseWorkbenchUserCommandsConfigJson,
+  type WorkbenchUserCommandAction,
+  type WorkbenchUserCommandDefinition,
+  type WorkbenchUserCommandExecuteAction,
+  type WorkbenchUserCommandSequenceAction,
+  type WorkbenchUserCommandsConfig,
+} from './user-commands-config.js';
 
 function assertRecord(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {

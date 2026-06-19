@@ -1,11 +1,7 @@
-.workbench-explorer-view {
+.workbench-explorer-view,
+.workbench-explorer-view .ui-side-bar-view {
   display: flex;
   min-height: 0;
-  height: 100%;
-  flex-direction: column;
-}
-
-.workbench-explorer-view .ui-side-bar-view {
   flex: 1 1 auto;
-  min-height: 0;
+  flex-direction: column;
 }

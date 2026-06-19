@@ -1,6 +1,12 @@
 import {
   parseWorkbenchExtensionsConfig,
+  parseWorkbenchKeybindingsConfig,
   parseWorkbenchLayoutConfig,
+  parseWorkbenchSettingsConfig,
+  parseWorkbenchUserCommandsConfig,
+  type WorkbenchKeybindingDefinition,
+  type WorkbenchSettingsConfig,
+  type WorkbenchUserCommandDefinition,
 } from '@workbench-kit/workbench-config';
 import jdwNodeSchemaJson from '@workbench-kit/jdw/schemas/jdw-node.jdw.schema.json';
 import widgetDocumentSchemaJson from '@workbench-kit/jdw/schemas/widget-document.v1.jdw.schema.json';
@@ -8,7 +14,11 @@ import { JDW_DOCUMENT_MIME, JDW_SCHEMA_DOCUMENT_MIME } from '@workbench-kit/reac
 import type { VirtualWorkspaceInitialState } from '@workbench-kit/workspace';
 
 import extensionsJson from '../../../.workbench/extensions.json';
+import keybindingsJson from '../../../.workbench/keybindings.json';
 import layoutJson from '../../../.workbench/layout.default.json';
+import settingsJson from '../../../.workbench/settings.json';
+import tasksJson from '../../../.workbench/tasks.json';
+import userCommandsJson from '../../../.workbench/user-commands.json';
 import workspaceJson from '../../../.workbench/workspace.json';
 
 export interface SampleWorkspaceInfo {
@@ -25,7 +35,12 @@ export const SAMPLE_EXAMPLE_JDW_PATH = 'example.jdw.json';
 export const SAMPLE_JDW_NODE_SCHEMA_PATH = 'schemas/jdw-node.jdw.schema.json';
 export const SAMPLE_JDW_SCHEMA_PATH = 'schemas/widget-document.v1.jdw.schema.json';
 
+export const workbenchSettings: WorkbenchSettingsConfig = parseWorkbenchSettingsConfig(settingsJson);
 export const extensionsConfig = parseWorkbenchExtensionsConfig(extensionsJson);
+export const workbenchKeybindings: readonly WorkbenchKeybindingDefinition[] =
+  parseWorkbenchKeybindingsConfig(keybindingsJson);
+export const workbenchUserCommands: readonly WorkbenchUserCommandDefinition[] =
+  parseWorkbenchUserCommandsConfig(userCommandsJson).commands;
 
 export const initialLayout = (() => {
   const layout = parseWorkbenchLayoutConfig(layoutJson);
@@ -42,8 +57,10 @@ export const initialLayout = (() => {
   };
 })();
 
+const workbenchConfigFiles = createWorkbenchConfigVirtualFiles();
+
 export const initialWorkspace: VirtualWorkspaceInitialState = {
-  expandedPaths: ['src', 'src/components', 'schemas'],
+  expandedPaths: ['src', 'src/components', 'schemas', '.workbench'],
   openPaths: [SAMPLE_EXAMPLE_JDW_PATH],
   files: [
     {
@@ -79,7 +96,7 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
         'Frontend-only host demonstrating Workbench Kit package integration.',
         '',
         '- `example.jdw.json` is the editable JDW showcase document.',
-        '- `schemas/widget-document.v1.jdw.schema.json` is imported from `@workbench-kit/jdw`.',
+        '- `.workbench/` holds shareable workbench configuration for the sample host.',
         '',
         '```mermaid',
         'graph TD',
@@ -139,8 +156,9 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
       mimeType: JDW_DOCUMENT_MIME,
       path: SAMPLE_EXAMPLE_JDW_PATH,
     },
+    ...workbenchConfigFiles,
   ],
-  folders: ['src', 'src/components', 'schemas'],
+  folders: ['src', 'src/components', 'schemas', '.workbench'],
 };
 
 export const workspaceInfo: SampleWorkspaceInfo = {
@@ -149,6 +167,18 @@ export const workspaceInfo: SampleWorkspaceInfo = {
   name: readWorkspaceName(workspaceJson),
   rootFolderCount: readWorkspaceFolderCount(workspaceJson),
 };
+
+function createWorkbenchConfigVirtualFiles() {
+  return [
+    { content: formatSampleJson(workspaceJson), path: '.workbench/workspace.json' },
+    { content: formatSampleJson(extensionsJson), path: '.workbench/extensions.json' },
+    { content: formatSampleJson(layoutJson), path: '.workbench/layout.default.json' },
+    { content: formatSampleJson(settingsJson), path: '.workbench/settings.json' },
+    { content: formatSampleJson(keybindingsJson), path: '.workbench/keybindings.json' },
+    { content: formatSampleJson(userCommandsJson), path: '.workbench/user-commands.json' },
+    { content: formatSampleJson(tasksJson), path: '.workbench/tasks.json' },
+  ];
+}
 
 function formatSampleJson(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;

@@ -77,6 +77,7 @@ export { ExplorerActionBar } from './ExplorerActionBar';
 export type { ExplorerActionBarLayout, ExplorerActionBarProps } from './ExplorerActionBar';
 export { WorkspaceExplorerPanel } from './WorkspaceExplorerPanel';
 export type { WorkspaceExplorerPanelProps } from './WorkspaceExplorerPanel';
+export { buildWorkspaceExplorerNodes } from './build-workspace-explorer-nodes.js';
 export { useWorkspaceExplorerFilter } from './useWorkspaceExplorerFilter';
 export type { WorkspaceExplorerFilterState } from './useWorkspaceExplorerFilter';
 export { WorkspaceSearchResults } from './WorkspaceSearchResults';

@@ -4,10 +4,22 @@
     "workbench-kit.builtin.accounts": {
       "version": "0.0.0"
     },
+    "workbench-kit.builtin.chat": {
+      "version": "0.0.0"
+    },
+    "workbench-kit.builtin.commands": {
+      "version": "0.0.0"
+    },
+    "workbench-kit.builtin.editor": {
+      "version": "0.0.0"
+    },
     "workbench-kit.builtin.explorer": {
       "version": "0.0.0"
     },
     "workbench-kit.builtin.keybindings": {
+      "version": "0.0.0"
+    },
+    "workbench-kit.builtin.search": {
       "version": "0.0.0"
     },
     "workbench-kit.builtin.settings": {

@@ -36,11 +36,31 @@ import { BuiltinChatView, isBuiltinChatViewRenderData } from './chat-view.js';
 import { BuiltinExplorerView, isBuiltinExplorerViewRenderData } from './explorer-view.js';
 import { BuiltinSearchView } from './search-view.js';
 import { isBuiltinSearchViewRenderData } from './search-view-data.js';
+import { BuiltinCommandsView } from './commands-view.js';
+import {
+  BUILTIN_COMMANDS_VIEW_CONTAINER_ID,
+  isBuiltinCommandsViewRenderData,
+} from './commands-view-data.js';
 import { sortActivityBarItems } from '@workbench-kit/react/workbench/activityBarOrder';
 import { useWorkbench } from './provider.js';
 import { WorkbenchCommandHost, type WorkbenchCommandHostProps } from './workbench-command-host.js';
+import {
+  MANAGE_ACCOUNTS_COMMAND_ID,
+  MANAGE_COMMANDS_COMMAND_ID,
+  MANAGE_KEYBINDINGS_COMMAND_ID,
+  WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
+  WORKBENCH_COMMANDS_SETTINGS_CATEGORY_ID,
+  WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID,
+  WorkbenchAccountManagementSettings,
+  WorkbenchCommandManagementSettings,
+  WorkbenchKeybindingManagementSettings,
+  createWorkbenchManagementPaletteCommands,
+  type WorkbenchAccountManagementInput,
+} from './management-settings.js';
+import { mergeWorkbenchCommandDescriptors } from './workbench-command-palette.js';
 
 export interface WorkbenchShellProps {
+  accountManagement?: WorkbenchAccountManagementInput | undefined;
   commandHost?: false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'>;
   compactStatus?: boolean;
   editorArea?: ReactNode;
@@ -71,6 +91,7 @@ const SETTINGS_EXTENSION_ID = 'workbench-kit.builtin.settings';
 const SETTINGS_ACTIVITY_ITEM_ID = 'workbench-kit.shell.settings';
 
 export function WorkbenchShell({
+  accountManagement,
   commandHost,
   compactStatus = true,
   editorArea,
@@ -94,8 +115,10 @@ export function WorkbenchShell({
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [settingsSearchValue, setSettingsSearchValue] = useState('');
-  const showSettingsModal = useCallback(() => {
+  const [settingsCategoryId, setSettingsCategoryId] = useState<string | undefined>();
+  const showSettingsModal = useCallback((categoryId?: string) => {
     setHelpOpen(false);
+    setSettingsCategoryId(categoryId);
     setSettingsOpen(true);
   }, []);
   const settingsCapability = useMemo<WorkbenchSettingsCapability>(
@@ -105,22 +128,53 @@ export function WorkbenchShell({
     [showSettingsModal],
   );
   const layout = layoutService.getState();
-  const resolvedStatusSections =
-    statusSections ?? createDefaultStatusSections(extensionRegistry, missingExtensionIds);
+  const resolvedStatusSections = useMemo(
+    () =>
+      statusSections ??
+      createDefaultStatusSections(extensionRegistry, missingExtensionIds, accountManagement),
+    [accountManagement, extensionRegistry, missingExtensionIds, statusSections],
+  );
   const activeViewContainerId = layout.sideBar.activeViewContainer;
   const activityItems = sortActivityBarItems(
     createActivityItems(extensionRegistry, activeViewContainerId),
     layout.activityBar.itemOrder,
   );
-  const settingsCategories = useMemo(
-    () =>
-      createSettingsCategories(extensionRegistry, {
+  const settingsCategories = useMemo(() => {
+    const managementCategories: WorkbenchSettingsCategory[] = [];
+
+    if (commandHost !== false) {
+      managementCategories.push({
+        content: <WorkbenchCommandManagementSettings />,
+        id: WORKBENCH_COMMANDS_SETTINGS_CATEGORY_ID,
+        label: 'Commands',
+        title: 'Command management',
+      });
+      managementCategories.push({
+        content: <WorkbenchKeybindingManagementSettings />,
+        id: WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID,
+        label: 'Keyboard Shortcuts',
+        title: 'Keyboard shortcut management',
+      });
+    }
+
+    if (accountManagement) {
+      managementCategories.push({
+        content: <WorkbenchAccountManagementSettings accountManagement={accountManagement} />,
+        id: WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
+        label: 'Accounts',
+        title: 'Account management',
+      });
+    }
+
+    return [
+      ...managementCategories,
+      ...createSettingsCategories(extensionRegistry, {
         onThemeChange,
         theme,
         themeOptions,
       }),
-    [extensionRegistry, onThemeChange, theme, themeOptions],
-  );
+    ];
+  }, [accountManagement, commandHost, extensionRegistry, onThemeChange, theme, themeOptions]);
   const defaultSettingsCategoryId =
     settingsCategories.find((category) => category.id === SETTINGS_EXTENSION_ID)?.id ??
     settingsCategories[0]?.id;
@@ -177,12 +231,60 @@ export function WorkbenchShell({
     };
   }, [extensionRegistry, settingsCapability]);
 
-  const openSettings = () => {
-    showSettingsModal();
+  const openSettings = (categoryId?: string) => {
+    showSettingsModal(categoryId);
     if (extensionRegistry.commands.hasCommand(OPEN_SETTINGS_COMMAND_ID)) {
       void executeCommand(OPEN_SETTINGS_COMMAND_ID).catch(() => undefined);
     }
   };
+
+  const resolvedCommandHost = useMemo((): false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'> => {
+    if (commandHost === false) {
+      return false;
+    }
+
+    const hostProps = commandHost ?? {};
+    const additionalCommands = mergeWorkbenchCommandDescriptors(
+      [...createWorkbenchManagementPaletteCommands()],
+      [...(hostProps.additionalCommands ?? [])],
+    );
+
+    return {
+      ...hostProps,
+      additionalCommands,
+      onRunCommand: (command, context) => {
+        if (command.id === MANAGE_COMMANDS_COMMAND_ID) {
+          layoutService.setActiveViewContainer(BUILTIN_COMMANDS_VIEW_CONTAINER_ID);
+          layoutService.setSideBarVisible(true);
+          return true;
+        }
+
+        if (command.id === MANAGE_KEYBINDINGS_COMMAND_ID) {
+          openSettings(WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID);
+          return true;
+        }
+
+        if (command.id === MANAGE_ACCOUNTS_COMMAND_ID) {
+          openSettings(WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID);
+          return true;
+        }
+
+        return hostProps.onRunCommand?.(command, context) ?? false;
+      },
+    };
+  }, [commandHost, layoutService]);
+
+  const handleStatusItemActivate = useCallback(
+    (item: StatusBarItemModel) => {
+      if (item.id === 'workbench.account' && accountManagement) {
+        openSettings(WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID);
+        return;
+      }
+
+      onStatusItemActivate?.(item);
+    },
+    [accountManagement, onStatusItemActivate],
+  );
 
   return (
     <ReactWorkbenchShell
@@ -211,7 +313,7 @@ export function WorkbenchShell({
         },
       }}
       compactStatus={compactStatus}
-      onStatusItemActivate={onStatusItemActivate}
+      onStatusItemActivate={handleStatusItemActivate}
       primarySidebar={{
         isVisible: layout.sideBar.visible,
         maxPrimarySizePercent: 40,
@@ -232,12 +334,13 @@ export function WorkbenchShell({
         <>
           {commandHost !== false ? (
             <WorkbenchCommandHost
-              {...(commandHost ?? {})}
-              onOpenSettings={openSettings}
+              {...(resolvedCommandHost === false ? {} : resolvedCommandHost)}
+              onOpenSettings={() => openSettings()}
             />
           ) : null}
           {isSettingsOpen ? (
             <WorkbenchSettingsModal
+              activeCategoryId={settingsCategoryId}
               categories={settingsCategories}
               defaultActiveCategoryId={defaultSettingsCategoryId}
               footer={<Button onClick={() => setSettingsOpen(false)}>Close</Button>}
@@ -254,6 +357,7 @@ export function WorkbenchShell({
                     : `${settingsContributionCount} contributions`}
                 </Badge>
               }
+              onActiveCategoryIdChange={setSettingsCategoryId}
               onClose={() => setSettingsOpen(false)}
               onSearchValueChange={setSettingsSearchValue}
             />
@@ -362,7 +466,12 @@ function createActivityItems(
 function createDefaultStatusSections(
   extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
   missingExtensionIds: readonly string[],
+  accountManagement: WorkbenchAccountManagementInput | undefined,
 ): StatusBarSectionModel[] {
+  const activeAccount =
+    accountManagement?.accounts.find((account) => account.id === accountManagement.activeAccountId) ??
+    accountManagement?.accounts.find((account) => account.status === 'active');
+
   return [
     {
       id: 'workbench',
@@ -377,6 +486,22 @@ function createDefaultStatusSections(
           label: `missing: ${missingExtensionIds.length}`,
           status: 'waiting',
         },
+      ],
+    },
+    {
+      align: 'end',
+      id: 'workbench-meta',
+      items: [
+        ...(activeAccount
+          ? [
+              {
+                icon: 'account' as const,
+                id: 'workbench.account',
+                label: activeAccount.displayName,
+                title: 'Manage accounts',
+              },
+            ]
+          : []),
       ],
     },
   ];
@@ -691,6 +816,10 @@ function toViewHostReactNode(value: unknown, fallback: ReactNode): ReactNode {
 
   if (isBuiltinSearchViewRenderData(value)) {
     return <BuiltinSearchView />;
+  }
+
+  if (isBuiltinCommandsViewRenderData(value)) {
+    return <BuiltinCommandsView />;
   }
 
   return toReactNode(value, fallback);

@@ -17,15 +17,14 @@ import {
 import { SideBarViewFrame } from '@workbench-kit/react';
 import { ViewEmptyState } from '@workbench-kit/react/primitives';
 import {
-  ExplorerActionBar,
   WorkspaceExplorerPanel,
+  buildWorkspaceExplorerNodes,
   useWorkspaceExplorerController,
 } from '@workbench-kit/react/workbench/workspace';
 import {
   type WorkspaceExplorerItemContextMenuMeta,
 } from '@workbench-kit/react/workbench/workspace/explorer';
 import {
-  buildWorkspaceTree,
   parseWorkspaceResourceUri,
   resolveWorkspaceCreateParentPath,
   type WorkspaceTreeNode,
@@ -123,7 +122,11 @@ export function BuiltinExplorerView() {
   }, [explorer, seededExpandedPaths, workspaceState]);
 
   const nodes = useMemo(
-    () => buildWorkspaceTree(workspaceState?.folders ?? [], workspaceState?.files ?? []),
+    () =>
+      buildWorkspaceExplorerNodes({
+        files: workspaceState?.files ?? [],
+        folders: workspaceState?.folders ?? [],
+      }),
     [workspaceState],
   );
 
@@ -189,29 +192,22 @@ export function BuiltinExplorerView() {
 
   return (
     <section className="workbench-explorer-view" aria-label="Workspace Explorer">
-      <SideBarViewFrame
-        actions={
-          <ExplorerActionBar
-            layout="inline"
-            onNewFile={() => explorer.startCreate('create-file', createParentPath)}
-            onNewFolder={() => explorer.startCreate('create-folder', createParentPath)}
-            onRefresh={() => {
-              void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
-            }}
-          />
-        }
-        title="Explorer"
-      >
+      <SideBarViewFrame className="ui-side-bar-view--chromeless">
         <WorkspaceExplorerPanel
           activePath={activePath}
           expandedPaths={explorer.expandedPaths}
           focusedPath={explorer.selection.focusedPath}
           inlineEdit={explorer.inlineEdit}
           nodes={nodes}
+          onNewFile={() => explorer.startCreate('create-file', createParentPath)}
+          onNewFolder={() => explorer.startCreate('create-folder', createParentPath)}
+          onRefresh={() => {
+            void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
+          }}
           selectedPaths={explorer.selection.paths}
           selectionAnchorPath={explorer.selection.anchorPath}
           showFilter={false}
-          toolbarLayout="none"
+          toolbarLayout="inline"
           onActivateFile={explorer.handleActivateFile}
           onItemContextMenu={handleItemContextMenu}
           onInlineEditCancel={explorer.cancelInlineEdit}

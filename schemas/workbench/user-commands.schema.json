@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/NewChoBo/workbench-kit/schemas/workbench/user-commands.schema.json",
+  "title": "Workbench User Commands",
+  "type": "object",
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": { "$ref": "#/definitions/action" },
+          "category": { "type": "string" },
+          "command": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 }
+        },
+        "required": ["action", "command", "title"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["commands"],
+  "additionalProperties": false,
+  "definitions": {
+    "action": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "executeCommand" },
+            "command": { "type": "string", "minLength": 1 },
+            "args": {}
+          },
+          "required": ["type", "command"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "sequence" },
+            "steps": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/action" },
+              "minItems": 1
+            }
+          },
+          "required": ["type", "steps"],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

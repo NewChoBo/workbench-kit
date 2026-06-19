@@ -1,4 +1,6 @@
 {
   "workbench.colorTheme": "default",
-  "editor.fontSize": 14
+  "workbench.commandPalette.shortcutHint": "Ctrl+Shift+P",
+  "editor.fontSize": 14,
+  "editor.tabSize": 2
 }

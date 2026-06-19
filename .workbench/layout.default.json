@@ -1,7 +1,7 @@
 {
   "activityBar": {
     "visible": true,
-    "itemOrder": ["explorer", "search", "chatting", "aiChat"]
+    "itemOrder": ["explorer", "search", "commands", "chatting", "aiChat"]
   },
   "sideBar": {
     "visible": true,

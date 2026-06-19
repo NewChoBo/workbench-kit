@@ -78,6 +78,18 @@ export {
 
 export { KeybindingRegistry } from './keybindings/keybinding-registry.js';
 export {
+  buildKeybindingManagementEntries,
+  filterKeybindingManagementEntries,
+  findKeybindingConflict,
+  type KeybindingManagementCommandInput,
+  type KeybindingManagementEntry,
+} from './keybindings/build-keybinding-management-entries.js';
+export { formatKeybindingLabel } from './keybindings/format-keybinding-label.js';
+export {
+  getEffectiveKeybindingForCommand,
+  resolveKeybindingWithOverrides,
+} from './keybindings/resolve-keybinding-with-overrides.js';
+export {
   type KeybindingDefinition,
   type KeybindingMatch,
   type KeybindingResolveOptions,

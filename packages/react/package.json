@@ -16,6 +16,7 @@
     "./workbench/auth": "./src/workbench/auth/index.ts",
     "./workbench/bootstrap": "./src/workbench/bootstrap/index.ts",
     "./workbench/chat": "./src/workbench/chat/index.ts",
+    "./workbench/management": "./src/workbench/management/index.ts",
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",
     "./workbench/activityBarOrder": "./src/workbench/activityBarOrder.ts",

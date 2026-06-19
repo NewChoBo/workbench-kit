@@ -21,6 +21,8 @@ import {
   SAMPLE_BUTTON_PATH,
   SAMPLE_EXAMPLE_JDW_PATH,
   SAMPLE_README_PATH,
+  workbenchKeybindings,
+  workbenchUserCommands,
   workspaceInfo,
 } from './bootstrap.js';
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/workbench-react';
@@ -29,6 +31,7 @@ import {
   sampleAdditionalPaletteCommands,
 } from './sample-palette-commands.js';
 import { SampleAuthShell } from './SampleAuthShell.js';
+import { useSampleAccount } from './sample-account-context.js';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 
@@ -58,9 +61,11 @@ export function App() {
     <SampleAuthShell theme={theme}>
       <WorkbenchProvider
         extensionsConfig={extensionsConfig}
+        initialKeybindingOverrides={workbenchKeybindings}
         initialLayout={initialLayout}
         layoutStorageKey={DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY}
         persistLayout
+        userCommands={workbenchUserCommands}
         workspaceHostPort={workspaceHostPort}
       >
         <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={initialWorkspace}>
@@ -77,6 +82,7 @@ interface SampleWorkbenchHostProps {
 }
 
 function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps) {
+  const auth = useSampleAccount();
   const { executeCommand, layoutService } = useWorkbench();
   const [layout, setLayout] = useState(() => layoutService.getState());
 
@@ -90,13 +96,41 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
     };
   }, [layoutService]);
 
+  const accountManagement = useMemo(
+    () =>
+      auth.status === 'authenticated'
+        ? {
+            accounts: [
+              {
+                displayName: 'Tester',
+                email: 'tester@workbench-sample.local',
+                id: 'tester',
+                providerId: 'sample-login',
+                providerLabel: 'Sample Login',
+                status: 'active' as const,
+              },
+            ],
+            activeAccountId: 'tester',
+            automationHint:
+              'This sample host stores a demo session in sessionStorage and exposes account management inside Settings.',
+            onSignOut: () => {
+              auth.signOut();
+            },
+            sessionLabel: 'Demo session active · managed automatically after sign-in',
+          }
+        : undefined,
+    [auth],
+  );
+
   const statusSections = useMemo(
     () =>
       createSampleStatusSections({
+        activeAccountName:
+          auth.status === 'authenticated' ? accountManagement?.accounts[0]?.displayName : undefined,
         sideBarVisible: layout.sideBar.visible,
         theme,
       }),
-    [layout.sideBar.visible, theme],
+    [accountManagement?.accounts, auth.status, layout.sideBar.visible, theme],
   );
 
   const handleThemeChange = useCallback((nextTheme: string) => {
@@ -127,6 +161,7 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
   return (
     <>
       <WorkbenchShell
+        accountManagement={accountManagement}
         commandHost={{
           additionalCommands: sampleAdditionalPaletteCommands,
           onRunCommand: runSamplePaletteCommand,
@@ -231,8 +266,12 @@ function SampleHelpContent() {
             Toggle the primary sidebar from the status bar to review layout persistence.
           </li>
           <li>
-            Press <code>{getWorkbenchCommandPaletteShortcutLabel()}</code> to open the command palette
-            for view switches, quick file opens, and built-in extension commands.
+            Open Settings and choose <strong>Commands</strong> or <strong>Accounts</strong> to review
+            registered commands or manage the demo session.
+          </li>
+          <li>
+            Press <code>{getWorkbenchCommandPaletteShortcutLabel()}</code> and run{' '}
+            <strong>Manage Commands</strong> or <strong>Manage Accounts</strong>.
           </li>
         </ul>
       </section>
@@ -241,11 +280,13 @@ function SampleHelpContent() {
 }
 
 interface SampleStatusSectionsInput {
+  activeAccountName?: string | undefined;
   sideBarVisible: boolean;
   theme: SampleTheme;
 }
 
 function createSampleStatusSections({
+  activeAccountName,
   sideBarVisible,
   theme,
 }: SampleStatusSectionsInput): StatusBarSectionModel[] {
@@ -279,6 +320,16 @@ function createSampleStatusSections({
       align: 'end',
       id: 'sample-meta',
       items: [
+        ...(activeAccountName
+          ? [
+              {
+                icon: 'account' as const,
+                id: 'workbench.account',
+                label: activeAccountName,
+                title: 'Manage accounts',
+              },
+            ]
+          : []),
         {
           icon: 'files',
           id: 'sample.files',

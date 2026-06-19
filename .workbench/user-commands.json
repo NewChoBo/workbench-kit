@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "commands": [
+    {
+      "command": "workbench-kit.user.open-readme",
+      "title": "Open README",
+      "category": "Sample",
+      "action": {
+        "type": "executeCommand",
+        "command": "workspace.open",
+        "args": {
+          "kind": "file",
+          "paths": ["README.md"]
+        }
+      }
+    },
+    {
+      "command": "workbench-kit.user.open-sample-jdw",
+      "title": "Open Sample JDW",
+      "category": "Sample",
+      "action": {
+        "type": "executeCommand",
+        "command": "workspace.open",
+        "args": {
+          "kind": "file",
+          "paths": ["example.jdw.json"]
+        }
+      }
+    },
+    {
+      "command": "workbench-kit.user.save-and-manage-keybindings",
+      "title": "Save and Open Keyboard Shortcuts",
+      "category": "Sample",
+      "action": {
+        "type": "sequence",
+        "steps": [
+          {
+            "type": "executeCommand",
+            "command": "editor.save"
+          },
+          {
+            "type": "executeCommand",
+            "command": "workbench-kit.shell.keybindings.manage"
+          }
+        ]
+      }
+    }
+  ]
+}

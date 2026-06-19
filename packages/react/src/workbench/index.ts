@@ -281,6 +281,23 @@ export {
   buildWorkbenchStructuredDataTableFromRecords,
   formatWorkbenchStructuredDataTableCell,
 } from './settings';
+export {
+  AccountManagementPanel,
+  CommandManagementPanel,
+  buildCommandManagementGroups,
+  countCommandManagementEntries,
+  filterCommandManagementGroups,
+} from './management';
+export type {
+  AccountManagementEntry,
+  AccountManagementEntryStatus,
+  AccountManagementPanelProps,
+  CommandManagementEntry,
+  CommandManagementEntryStatus,
+  CommandManagementGroup,
+  CommandManagementPanelProps,
+  CommandManagementRunState,
+} from './management';
 export type {
   WorkbenchPanelRegionProps,
   WorkbenchNavigationPanelProps,

@@ -20,7 +20,7 @@ export interface SideBarViewFrameProps extends Omit<PanelProps, 'children' | 'ti
   footer?: ReactNode;
   footerPlacement?: SideBarFooterPlacement;
   headerAddon?: ReactNode;
-  title: ReactNode;
+  title?: ReactNode;
 }
 
 export function SideBarViewFrame({
@@ -195,12 +195,15 @@ export function SideBarViewFrame({
     '--ui-side-bar-footer-height': `${footerHeight}px`,
     ...style,
   } as CSSProperties;
+  const showHeader = Boolean(title || actions || headerAddon);
 
   return (
     <Panel className={cx('ui-side-bar-view', className)} style={panelStyle} {...props}>
-      <PanelHeader actions={actions} className="ui-side-bar-view__header">
-        {title}
-      </PanelHeader>
+      {showHeader ? (
+        <PanelHeader actions={actions} className="ui-side-bar-view__header">
+          {title}
+        </PanelHeader>
+      ) : null}
       {headerAddon ? <div className="ui-side-bar-view__header-addon">{headerAddon}</div> : null}
       <div className="ui-side-bar-view__scroll-region">
         <PanelBody
