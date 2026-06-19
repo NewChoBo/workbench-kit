@@ -9,12 +9,18 @@ const REFERENCE_TILE_CORNER_RATIO = REFERENCE_TILE_RX / 416;
 /** @deprecated Use TILEPAPER_ICON_UNIFIED_RX — kept for reference only. */
 export const TILEPAPER_ICON_BORDER_RADIUS_RATIO = REFERENCE_TILE_CORNER_RATIO;
 
+/** Base rhythm for canvas → root panel inset. */
+export const TILEPAPER_ICON_SPACING = 48;
+
+/** Pulls the motif slightly toward the canvas center (px): wider outer rim, tighter tile grid. */
+export const TILEPAPER_ICON_CENTER_CLUSTER = 8;
+
 /** Ambient backdrop around the elevated root surface. */
-export const TILEPAPER_ICON_CANVAS_MARGIN = 48;
+export const TILEPAPER_ICON_CANVAS_MARGIN = TILEPAPER_ICON_SPACING + TILEPAPER_ICON_CENTER_CLUSTER / 2;
 
 /** Inset of the 4 tiles inside the root surface. */
-export const TILEPAPER_ICON_GRID_MARGIN = 32;
-export const TILEPAPER_ICON_GRID_GAP = 32;
+export const TILEPAPER_ICON_GRID_MARGIN = TILEPAPER_ICON_SPACING - TILEPAPER_ICON_CENTER_CLUSTER;
+export const TILEPAPER_ICON_GRID_GAP = TILEPAPER_ICON_SPACING - TILEPAPER_ICON_CENTER_CLUSTER;
 
 /** Material-style elevation for the root surface panel. */
 export const TILEPAPER_ICON_ROOT_ELEVATION = {
