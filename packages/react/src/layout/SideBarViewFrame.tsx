@@ -2,10 +2,9 @@ import type {
   ComponentPropsWithRef,
   CSSProperties,
   HTMLAttributes,
-  PointerEvent,
   ReactNode,
 } from 'react';
-import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { forwardRef, useLayoutEffect, useRef, useState } from 'react';
 import { cx } from '../utils/cx';
 import { Panel, PanelBody, PanelHeader, type PanelBodyProps, type PanelProps } from './Panel';
 import { workbenchTreeIndentOffset } from './layoutHelpers';
@@ -38,137 +37,9 @@ export function SideBarViewFrame({
 }: SideBarViewFrameProps) {
   const { className: bodyPropsClassName, ...resolvedBodyProps } = bodyProps ?? {};
   const hasFooter = Boolean(footer);
-  const bodyRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
-  const [scrollbar, setScrollbar] = useState({ needed: false, top: 0, height: 0 });
-  const [isDraggingScrollbar, setIsDraggingScrollbar] = useState(false);
   const [footerHeight, setFooterHeight] = useState(0);
-  const dragStateRef = useRef<{
-    maxScrollTop: number;
-    maxThumbTop: number;
-    startScrollTop: number;
-    startY: number;
-  } | null>(null);
-
-  const updateScrollbar = useCallback(() => {
-    const element = bodyRef.current;
-    if (!element) return;
-
-    const viewportHeight = element.clientHeight;
-    const scrollHeight = element.scrollHeight;
-    const maxScrollTop = scrollHeight - viewportHeight;
-    if (viewportHeight <= 0 || maxScrollTop <= 1) {
-      setScrollbar((current) => (current.needed ? { needed: false, top: 0, height: 0 } : current));
-      return;
-    }
-
-    const thumbHeight = Math.max(24, Math.round((viewportHeight / scrollHeight) * viewportHeight));
-    const maxThumbTop = Math.max(0, viewportHeight - thumbHeight);
-    const thumbTop = Math.round((element.scrollTop / maxScrollTop) * maxThumbTop);
-
-    setScrollbar((current) => {
-      if (current.needed && current.top === thumbTop && current.height === thumbHeight) {
-        return current;
-      }
-
-      return { needed: true, top: thumbTop, height: thumbHeight };
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    updateScrollbar();
-  });
-
-  useEffect(() => {
-    const element = bodyRef.current;
-    if (!element) return undefined;
-
-    element.addEventListener('scroll', updateScrollbar, { passive: true });
-
-    const resizeObserver = new ResizeObserver(updateScrollbar);
-    resizeObserver.observe(element);
-
-    const mutationObserver = new MutationObserver(updateScrollbar);
-    mutationObserver.observe(element, {
-      attributes: true,
-      characterData: true,
-      childList: true,
-      subtree: true,
-    });
-
-    return () => {
-      element.removeEventListener('scroll', updateScrollbar);
-      resizeObserver.disconnect();
-      mutationObserver.disconnect();
-    };
-  }, [updateScrollbar]);
-
-  useEffect(() => {
-    if (!isDraggingScrollbar) return undefined;
-
-    const handlePointerMove = (event: globalThis.PointerEvent) => {
-      const element = bodyRef.current;
-      const dragState = dragStateRef.current;
-      if (!element || !dragState || dragState.maxThumbTop <= 0) return;
-
-      const deltaY = event.clientY - dragState.startY;
-      element.scrollTop =
-        dragState.startScrollTop + (deltaY / dragState.maxThumbTop) * dragState.maxScrollTop;
-    };
-
-    const handlePointerUp = () => {
-      dragStateRef.current = null;
-      setIsDraggingScrollbar(false);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-  }, [isDraggingScrollbar]);
-
-  const handleScrollbarTrackPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.target !== event.currentTarget) return;
-
-    const element = bodyRef.current;
-    if (!element) return;
-
-    event.preventDefault();
-    const maxScrollTop = element.scrollHeight - element.clientHeight;
-    const maxThumbTop = element.clientHeight - scrollbar.height;
-    if (maxScrollTop <= 0 || maxThumbTop <= 0) return;
-
-    const trackTop = event.currentTarget.getBoundingClientRect().top;
-    const nextThumbTop = Math.min(
-      maxThumbTop,
-      Math.max(0, event.clientY - trackTop - scrollbar.height / 2),
-    );
-
-    element.scrollTop = (nextThumbTop / maxThumbTop) * maxScrollTop;
-  };
-
-  const handleScrollbarThumbPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    const element = bodyRef.current;
-    if (!element) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-
-    const maxScrollTop = element.scrollHeight - element.clientHeight;
-    const maxThumbTop = element.clientHeight - scrollbar.height;
-    if (maxScrollTop <= 0 || maxThumbTop <= 0) return;
-
-    dragStateRef.current = {
-      maxScrollTop,
-      maxThumbTop,
-      startScrollTop: element.scrollTop,
-      startY: event.clientY,
-    };
-    setIsDraggingScrollbar(true);
-  };
+  const showHeader = Boolean(title || actions || headerAddon);
 
   useLayoutEffect(() => {
     const element = footerRef.current;
@@ -195,7 +66,6 @@ export function SideBarViewFrame({
     '--ui-side-bar-footer-height': `${footerHeight}px`,
     ...style,
   } as CSSProperties;
-  const showHeader = Boolean(title || actions || headerAddon);
 
   return (
     <Panel className={cx('ui-side-bar-view', className)} style={panelStyle} {...props}>
@@ -205,37 +75,16 @@ export function SideBarViewFrame({
         </PanelHeader>
       ) : null}
       {headerAddon ? <div className="ui-side-bar-view__header-addon">{headerAddon}</div> : null}
-      <div className="ui-side-bar-view__scroll-region">
-        <PanelBody
-          {...resolvedBodyProps}
-          ref={bodyRef}
-          className={cx('ui-side-bar-view__body', bodyClassName, bodyPropsClassName)}
-        >
-          {children}
-        </PanelBody>
-        {scrollbar.needed ? (
-          <div
-            aria-hidden="true"
-            className={cx(
-              'ui-side-bar-overlay-scrollbar',
-              isDraggingScrollbar && 'ui-side-bar-overlay-scrollbar--dragging',
-            )}
-            onPointerDown={handleScrollbarTrackPointerDown}
-          >
-            <div
-              className="ui-side-bar-overlay-scrollbar__thumb"
-              style={{
-                height: scrollbar.height,
-                transform: `translateY(${scrollbar.top}px)`,
-              }}
-              onPointerDown={handleScrollbarThumbPointerDown}
-            />
-          </div>
-        ) : null}
-      </div>
+      <PanelBody
+        {...resolvedBodyProps}
+        className={cx('ui-side-bar-view__body', bodyClassName, bodyPropsClassName)}
+      >
+        {children}
+        {footerPlacement === 'overlay' && hasFooter ? <SideBarScrollSpacer /> : null}
+      </PanelBody>
       {hasFooter ? (
         <div
-          ref={footerRef}
+          ref={footerPlacement === 'overlay' ? footerRef : undefined}
           className={cx(
             'panel-footer',
             'ui-side-bar-view__footer',

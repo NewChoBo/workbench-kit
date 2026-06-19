@@ -1,12 +1,7 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { Badge } from '../primitives/Badge';
 import { cx } from '../utils/cx';
-import {
-  WorkbenchSidebarSection,
-  WorkbenchSidebarSectionHeader,
-  type WorkbenchSidebarSectionProps,
-} from './WorkbenchSidebarActions';
+import { WorkbenchSidebarSection, type WorkbenchSidebarSectionProps } from './WorkbenchSidebarActions';
 
 export interface WorkbenchSidebarSectionStackItem
   extends Pick<
@@ -95,84 +90,54 @@ export function WorkbenchSidebarSectionStack({
 
   const dockPlacement = resolveCollapsedDockPlacement(expandedItems.length, collapsedItems.length);
 
+  const renderSection = (
+    item: WorkbenchSidebarSectionStackItem,
+    options: { collapsed: boolean; docked: boolean },
+  ) => (
+    <WorkbenchSidebarSection
+      key={item.id}
+      actions={item.actions}
+      badge={item.badge}
+      className={cx(
+        item.className,
+        options.docked && 'ui-workbench-sidebar-section--collapsed-dock',
+      )}
+      collapsible={item.collapsible}
+      collapsed={options.collapsed}
+      count={item.count}
+      id={item.id}
+      title={item.title}
+      onCollapsedChange={(nextCollapsed) => {
+        setCollapsed(item.id, nextCollapsed);
+      }}
+    >
+      {options.collapsed ? null : item.children}
+    </WorkbenchSidebarSection>
+  );
+
   return (
     <div className={cx('ui-workbench-sidebar-section-stack', className)} {...props}>
       {dockPlacement === 'top' ? (
-        <CollapsedSectionDock collapsedItems={collapsedItems} setCollapsed={setCollapsed} />
+        <div
+          aria-label="Collapsed sections"
+          className="ui-workbench-sidebar-section-stack__collapsed"
+          role="group"
+        >
+          {collapsedItems.map((item) => renderSection(item, { collapsed: true, docked: true }))}
+        </div>
       ) : null}
       <div className="ui-workbench-sidebar-section-stack__expanded ui-workbench-scrollbar">
-        {expandedItems.map((item) => (
-          <WorkbenchSidebarSection
-            key={item.id}
-            actions={item.actions}
-            badge={item.badge}
-            className={item.className}
-            collapsible={item.collapsible}
-            collapsed={false}
-            count={item.count}
-            id={item.id}
-            title={item.title}
-            onCollapsedChange={(nextCollapsed) => {
-              setCollapsed(item.id, nextCollapsed);
-            }}
-          >
-            {item.children}
-          </WorkbenchSidebarSection>
-        ))}
+        {expandedItems.map((item) => renderSection(item, { collapsed: false, docked: false }))}
       </div>
       {dockPlacement === 'bottom' ? (
-        <CollapsedSectionDock collapsedItems={collapsedItems} setCollapsed={setCollapsed} />
+        <div
+          aria-label="Collapsed sections"
+          className="ui-workbench-sidebar-section-stack__collapsed"
+          role="group"
+        >
+          {collapsedItems.map((item) => renderSection(item, { collapsed: true, docked: true }))}
+        </div>
       ) : null}
-    </div>
-  );
-}
-
-function CollapsedSectionDock({
-  collapsedItems,
-  setCollapsed,
-}: {
-  collapsedItems: readonly WorkbenchSidebarSectionStackItem[];
-  setCollapsed: (id: string, collapsed: boolean) => void;
-}) {
-  if (collapsedItems.length === 0) {
-    return null;
-  }
-
-  return (
-    <div
-      aria-label="Collapsed sections"
-      className="ui-workbench-sidebar-section-stack__collapsed"
-      role="group"
-    >
-      {collapsedItems.map((item) => {
-        const headingId = `${item.id}-heading`;
-        const contentId = `${item.id}-content`;
-        const resolvedBadge =
-          item.badge ??
-          (item.count !== undefined ? <Badge variant="muted">{item.count}</Badge> : null);
-
-        return (
-          <section
-            key={item.id}
-            aria-labelledby={headingId}
-            className="ui-workbench-sidebar-section ui-workbench-sidebar-section--collapsed-dock"
-            id={item.id}
-          >
-            <WorkbenchSidebarSectionHeader
-              actions={item.actions}
-              badge={resolvedBadge}
-              collapsible={item.collapsible ?? true}
-              collapsed
-              contentId={contentId}
-              headingId={headingId}
-              title={item.title}
-              onToggle={() => {
-                setCollapsed(item.id, false);
-              }}
-            />
-          </section>
-        );
-      })}
     </div>
   );
 }

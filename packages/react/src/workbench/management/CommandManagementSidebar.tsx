@@ -77,7 +77,7 @@ export function CommandManagementSidebar({
           ) : null}
         </SidebarToolbar>
       }
-      bodyClassName="workbench-commands-sidebar__body ui-side-bar-view__body--dock-sections"
+      bodyClassName="ui-side-bar-view__body--dock-sections"
       className={cx('workbench-commands-sidebar', className)}
       footer={
         runStateLabel ? (
