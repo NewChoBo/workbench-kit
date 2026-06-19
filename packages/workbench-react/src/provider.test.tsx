@@ -30,13 +30,23 @@ vi.mock('@monaco-editor/react', () => ({
 
 vi.mock('monaco-editor', () => ({}));
 
-import { WorkbenchProvider, WorkbenchShell, useEditorService, useWorkbench } from './index.js';
+import {
+  WorkbenchProvider,
+  WorkbenchShell,
+  useEditorService,
+  useWorkbench,
+  type WorkbenchShellProps,
+} from './index.js';
 
 const testGlobal = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
 
 testGlobal.IS_REACT_ACT_ENVIRONMENT = true;
+
+function TestWorkbenchShell(props: Omit<WorkbenchShellProps, 'commandHost'>) {
+  return <WorkbenchShell {...props} commandHost={false} />;
+}
 
 function CommandProbe() {
   const workbench = useWorkbench();
@@ -171,7 +181,7 @@ describe('WorkbenchProvider', () => {
           },
         })}
       >
-        <WorkbenchShell editorArea={<main>Editor Area</main>} />
+        <TestWorkbenchShell editorArea={<main>Editor Area</main>} />
       </WorkbenchProvider>,
     );
 
@@ -199,7 +209,7 @@ describe('WorkbenchProvider', () => {
             recommendations: [],
           }}
         >
-          <WorkbenchShell editorArea={<main>Editor Area</main>} />
+          <TestWorkbenchShell editorArea={<main>Editor Area</main>} />
         </WorkbenchProvider>,
       );
     });
@@ -244,7 +254,7 @@ describe('WorkbenchProvider', () => {
             recommendations: [],
           }}
         >
-          <WorkbenchShell editorArea={<main>Editor Area</main>} />
+          <TestWorkbenchShell editorArea={<main>Editor Area</main>} />
           <OpenSettingsCommandButton />
         </WorkbenchProvider>,
       );
@@ -285,7 +295,7 @@ describe('WorkbenchProvider', () => {
             recommendations: [],
           }}
         >
-          <WorkbenchShell
+          <TestWorkbenchShell
             editorArea={<main>Editor Area</main>}
             theme="dark"
             themeOptions={[
@@ -354,7 +364,7 @@ describe('WorkbenchProvider', () => {
             recommendations: [],
           }}
         >
-          <WorkbenchShell
+          <TestWorkbenchShell
             editorArea={<main>Editor Area</main>}
             helpContent={<p>Open example.jdw.json to preview the sample.</p>}
             title="Workbench Sample"
@@ -432,7 +442,7 @@ describe('WorkbenchProvider', () => {
               commandResults.push(result);
             }}
           />
-          <WorkbenchShell />
+          <TestWorkbenchShell />
         </WorkbenchProvider>,
       );
     });
@@ -508,7 +518,7 @@ describe('WorkbenchProvider', () => {
           workspaceHostPort={workspaceHostPort}
         >
           <WorkspaceInitCommandProbe initialState={initialState} onResult={() => undefined} />
-          <WorkbenchShell />
+          <TestWorkbenchShell />
         </WorkbenchProvider>,
       );
     });
@@ -699,7 +709,7 @@ describe('WorkbenchProvider', () => {
             },
           })}
         >
-          <WorkbenchShell editorArea={<main>Editor Area</main>} />
+          <TestWorkbenchShell editorArea={<main>Editor Area</main>} />
         </WorkbenchProvider>,
       );
     });

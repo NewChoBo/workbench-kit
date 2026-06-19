@@ -303,7 +303,12 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
       },
       activationEvents: ['onStartup'],
       contributes: {
-        keybindings: [],
+        keybindings: [
+          {
+            command: 'editor.save',
+            key: 'ctrl+s',
+          },
+        ],
       },
     },
     module: builtinKeybindingsModule,

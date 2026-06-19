@@ -128,8 +128,8 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
           onRunCommand: runSamplePaletteCommand,
         }}
         editorArea={
-          <SampleEditorFrame theme={theme}>
-            <EditorSaveShortcut />
+          <SampleEditorFrame>
+            <EditorArea defaultViewModeForResource={getSampleDefaultViewMode} theme={theme} />
           </SampleEditorFrame>
         }
         helpContent={<SampleHelpContent />}
@@ -164,31 +164,10 @@ function WorkspaceInitCommand() {
   return null;
 }
 
-function EditorSaveShortcut() {
-  const { executeCommand } = useWorkbench();
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
-        event.preventDefault();
-        void executeCommand('editor.save');
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [executeCommand]);
-
-  return null;
-}
-
-function SampleEditorFrame({ children, theme }: { children: ReactNode; theme: SampleTheme }) {
+function SampleEditorFrame({ children }: { children: ReactNode }) {
   return (
     <section className="workbench-sample-editor-frame" aria-label="Sample editor workspace">
       {children}
-      <EditorArea defaultViewModeForResource={getSampleDefaultViewMode} theme={theme} />
     </section>
   );
 }

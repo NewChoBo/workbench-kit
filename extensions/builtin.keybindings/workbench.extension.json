@@ -11,6 +11,11 @@
   },
   "activationEvents": ["onStartup"],
   "contributes": {
-    "keybindings": []
+    "keybindings": [
+      {
+        "command": "editor.save",
+        "key": "ctrl+s"
+      }
+    ]
   }
 }

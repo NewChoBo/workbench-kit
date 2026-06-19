@@ -33,6 +33,10 @@ export {
   type WorkbenchCommandHostProps,
 } from './workbench-command-host.js';
 export {
+  normalizeKeybindingKeyFromEvent,
+  resolveExtensionKeybindingCommand,
+} from './workbench-keybinding-bridge.js';
+export {
   WORKBENCH_COMMAND_PALETTE_SHORTCUT,
   buildWorkbenchPaletteCommands,
   matchesWorkbenchCommandPaletteShortcut,

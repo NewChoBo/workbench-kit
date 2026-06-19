@@ -20,10 +20,12 @@ import {
   resolveShellCommandActivities,
   WORKBENCH_COMMAND_PALETTE_SHORTCUT,
 } from './workbench-command-palette.js';
+import { resolveExtensionKeybindingCommand } from './workbench-keybinding-bridge.js';
 
 export interface WorkbenchCommandHostProps {
   additionalCommands?: readonly WorkbenchCommandDescriptor[];
   enableCommandPalette?: boolean;
+  enableExtensionKeybindings?: boolean;
   enableShortcutBridge?: boolean;
   onOpenSettings: () => void;
   onRunCommand?: (
@@ -35,6 +37,7 @@ export interface WorkbenchCommandHostProps {
 export function WorkbenchCommandHost({
   additionalCommands = [],
   enableCommandPalette = true,
+  enableExtensionKeybindings = true,
   enableShortcutBridge = true,
   onOpenSettings,
   onRunCommand,
@@ -146,6 +149,31 @@ export function WorkbenchCommandHost({
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [enableCommandPalette]);
+
+  useEffect(() => {
+    if (!enableExtensionKeybindings) {
+      return undefined;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (matchesWorkbenchCommandPaletteShortcut(event)) {
+        return;
+      }
+
+      const match = resolveExtensionKeybindingCommand(extensionRegistry.keybindings, event);
+      if (!match) {
+        return;
+      }
+
+      event.preventDefault();
+      void executeCommand(match.command, ...(match.args ?? []));
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [enableExtensionKeybindings, executeCommand, extensionRegistry.keybindings]);
 
   return (
     <>
