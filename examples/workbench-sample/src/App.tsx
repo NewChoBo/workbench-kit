@@ -5,6 +5,7 @@ import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/worksp
 import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
 import {
   EditorArea,
+  getWorkbenchCommandPaletteShortcutLabel,
   WorkbenchProvider,
   WorkbenchShell,
   useWorkbench,
@@ -23,9 +24,9 @@ import {
 } from './bootstrap.js';
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/workbench-react';
 import {
-  getSampleCommandPaletteShortcutLabel,
-  SampleCommandPalette,
-} from './sample-command-palette.js';
+  createSamplePaletteCommandRunner,
+  sampleAdditionalPaletteCommands,
+} from './sample-palette-commands.js';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 let sampleWorkspaceInitialized = false;
@@ -71,7 +72,7 @@ interface SampleWorkbenchHostProps {
 }
 
 function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps) {
-  const { layoutService } = useWorkbench();
+  const { executeCommand, layoutService } = useWorkbench();
   const [layout, setLayout] = useState(() => layoutService.getState());
 
   useEffect(() => {
@@ -113,11 +114,19 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
     [layout.sideBar.visible, layoutService, onThemeChange, theme],
   );
 
+  const runSamplePaletteCommand = useCallback(
+    createSamplePaletteCommandRunner(executeCommand),
+    [executeCommand],
+  );
+
   return (
     <>
       <WorkspaceInitCommand />
-      <SampleCommandPalette />
       <WorkbenchShell
+        commandHost={{
+          additionalCommands: sampleAdditionalPaletteCommands,
+          onRunCommand: runSamplePaletteCommand,
+        }}
         editorArea={
           <SampleEditorFrame theme={theme}>
             <EditorSaveShortcut />
@@ -249,7 +258,7 @@ function SampleHelpContent() {
             Toggle the primary sidebar from the status bar to review layout persistence.
           </li>
           <li>
-            Press <code>{getSampleCommandPaletteShortcutLabel()}</code> to open the command palette
+            Press <code>{getWorkbenchCommandPaletteShortcutLabel()}</code> to open the command palette
             for view switches, quick file opens, and built-in extension commands.
           </li>
         </ul>

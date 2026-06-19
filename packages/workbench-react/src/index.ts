@@ -28,6 +28,18 @@ export {
 } from './editor-view-providers.js';
 export { WorkbenchShell, type WorkbenchShellProps, type WorkbenchThemeOption } from './shell.js';
 export {
+  getWorkbenchCommandPaletteShortcutLabel,
+  WorkbenchCommandHost,
+  type WorkbenchCommandHostProps,
+} from './workbench-command-host.js';
+export {
+  WORKBENCH_COMMAND_PALETTE_SHORTCUT,
+  buildWorkbenchPaletteCommands,
+  matchesWorkbenchCommandPaletteShortcut,
+  mergeWorkbenchCommandDescriptors,
+  resolveShellCommandActivities,
+} from './workbench-command-palette.js';
+export {
   useActiveEditorTab,
   useEditorHost,
   useEditorService,

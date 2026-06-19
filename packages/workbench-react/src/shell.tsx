@@ -37,8 +37,10 @@ import { BuiltinSearchView } from './search-view.js';
 import { isBuiltinSearchViewRenderData } from './search-view-data.js';
 import { sortActivityBarItems } from '@workbench-kit/react/workbench/activityBarOrder';
 import { useWorkbench } from './provider.js';
+import { WorkbenchCommandHost, type WorkbenchCommandHostProps } from './workbench-command-host.js';
 
 export interface WorkbenchShellProps {
+  commandHost?: false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'>;
   compactStatus?: boolean;
   editorArea?: ReactNode;
   helpContent?: ReactNode;
@@ -68,6 +70,7 @@ const SETTINGS_EXTENSION_ID = 'workbench-kit.builtin.settings';
 const SETTINGS_ACTIVITY_ITEM_ID = 'workbench-kit.shell.settings';
 
 export function WorkbenchShell({
+  commandHost,
   compactStatus = true,
   editorArea,
   helpContent,
@@ -226,6 +229,12 @@ export function WorkbenchShell({
       theme={theme}
       overlays={
         <>
+          {commandHost !== false ? (
+            <WorkbenchCommandHost
+              {...(commandHost ?? {})}
+              onOpenSettings={openSettings}
+            />
+          ) : null}
           {isSettingsOpen ? (
             <WorkbenchSettingsModal
               categories={settingsCategories}
