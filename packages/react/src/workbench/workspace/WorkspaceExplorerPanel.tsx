@@ -1,75 +1,53 @@
-import { ClearableTextInput } from '../../primitives/ClearableTextInput';
+import { SidebarToolbar } from '../../layout/SidebarToolbar';
 import { WorkbenchSidebarSection } from '../../layout/WorkbenchSidebarActions';
+import { IconButton } from '../../primitives/IconButton';
 import { cx } from '../../utils/cx';
-import { ExplorerActionBar } from './ExplorerActionBar';
 import { WorkspaceExplorer, type WorkspaceExplorerProps } from './WorkspaceExplorer';
-import { useWorkspaceExplorerFilter } from './useWorkspaceExplorerFilter';
 
 export interface WorkspaceExplorerPanelProps extends WorkspaceExplorerProps {
+  'aria-label'?: string | undefined;
   className?: string | undefined;
-  filterLabel?: string;
-  filterPlaceholder?: string;
-  onFilterQueryChange?: (query: string) => void;
   onNewFile?: (() => void) | undefined;
   onNewFolder?: (() => void) | undefined;
   onRefresh?: (() => void) | undefined;
   refreshLabel?: string;
   sectionTitle?: string;
-  showFilter?: boolean;
 }
 
 export function WorkspaceExplorerPanel({
+  'aria-label': ariaLabel,
   className,
-  filterLabel = 'Filter workspace',
-  filterPlaceholder = 'Filter',
-  filterQuery: filterQueryProp,
-  onFilterQueryChange,
   onNewFile,
   onNewFolder,
   onRefresh,
-  refreshLabel,
+  refreshLabel = 'Refresh Explorer',
   sectionTitle = 'Workspace',
-  showFilter = false,
   ...explorerProps
 }: WorkspaceExplorerPanelProps) {
-  const uncontrolledFilter = useWorkspaceExplorerFilter();
-  const filterQuery = filterQueryProp ?? uncontrolledFilter.filterQuery;
-  const setFilterQuery = onFilterQueryChange ?? uncontrolledFilter.setFilterQuery;
-  const clearFilter = onFilterQueryChange
-    ? () => onFilterQueryChange('')
-    : uncontrolledFilter.clearFilter;
-
   const headerActions =
     onNewFile || onNewFolder || onRefresh ? (
-      <ExplorerActionBar
-        onNewFile={onNewFile}
-        onNewFolder={onNewFolder}
-        onRefresh={onRefresh}
-        refreshLabel={refreshLabel}
-      />
+      <SidebarToolbar aria-label="Explorer actions" className="ui-explorer-action-bar" role="toolbar">
+        {onNewFile ? (
+          <IconButton compact icon="codicon-new-file" label="New file" onClick={onNewFile} />
+        ) : null}
+        {onNewFolder ? (
+          <IconButton compact icon="codicon-new-folder" label="New folder" onClick={onNewFolder} />
+        ) : null}
+        {onRefresh ? (
+          <IconButton compact icon="codicon-refresh" label={refreshLabel} onClick={onRefresh} />
+        ) : null}
+      </SidebarToolbar>
     ) : undefined;
 
   return (
     <WorkbenchSidebarSection
       actions={headerActions}
-      className={cx('ui-workspace-explorer-panel', className)}
+      aria-label={ariaLabel}
+      className={cx('workbench-explorer-view', 'ui-workspace-explorer-panel', className)}
       id="workspace-explorer-section"
       title={sectionTitle}
     >
-      {showFilter ? (
-        <div className="ui-workspace-explorer-panel__filter">
-          <ClearableTextInput
-            aria-label={filterLabel}
-            clearLabel={`Clear ${filterLabel.toLowerCase()}`}
-            controlWidth="full"
-            placeholder={filterPlaceholder}
-            value={filterQuery}
-            onClear={clearFilter}
-            onChange={(event) => setFilterQuery(event.currentTarget.value)}
-          />
-        </div>
-      ) : null}
-      <WorkspaceExplorer filterQuery={filterQuery} {...explorerProps} />
+      <WorkspaceExplorer {...explorerProps} />
     </WorkbenchSidebarSection>
   );
 }

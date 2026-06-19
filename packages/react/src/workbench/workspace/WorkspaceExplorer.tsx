@@ -18,9 +18,9 @@ import {
   type WorkspaceSelectionMode,
   type WorkspaceSelectionState,
 } from '@workbench-kit/workspace';
-import { VS_CODE_TREE_BASE_INDENT, VS_CODE_TREE_INDENT_SIZE } from '../../layout/layoutHelpers';
-import { SideBarList, SideBarListItem, sideBarTreeDepthStyle } from '../../layout/SideBarViewFrame';
+import { SideBarList, SideBarListItem } from '../../layout/SideBarViewFrame';
 import { cxCodicon } from '../../utils/codicon';
+import { explorerTreeDepthStyle } from './explorer-tree-style';
 import { flattenWorkspaceTree } from './tree';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceTreeNode } from './types';
@@ -462,7 +462,7 @@ export function WorkspaceExplorer({
   }) => {
     if (!inlineEdit) return null;
 
-    const depthStyle = sideBarTreeDepthStyle(depth, undefined, VS_CODE_TREE_INDENT_SIZE, VS_CODE_TREE_BASE_INDENT);
+    const depthStyle = explorerTreeDepthStyle(depth);
 
     return (
       <li key={key} className="ui-side-bar-list-entry">

@@ -633,7 +633,6 @@ export function IntegratedShellDemo({
             nodes={workspaceTree}
             selectedPaths={explorerSelection.paths}
             selectionAnchorPath={explorerSelection.anchorPath}
-            showFilter={false}
             onActivateFile={activateFile}
             onNewFile={() => startWorkspaceCreate('create-file', explorerCreateParentPath)}
             onNewFolder={() => startWorkspaceCreate('create-folder', explorerCreateParentPath)}

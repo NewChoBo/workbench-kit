@@ -1,7 +1,5 @@
 import { CommandManagementSidebar } from '@workbench-kit/react/workbench/management';
 
-import './commands-view.css';
-
 import {
   BUILTIN_COMMANDS_VIEW_RENDER_KIND,
   isBuiltinCommandsViewRenderData,

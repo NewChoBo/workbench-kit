@@ -10,8 +10,6 @@ import { ChatPanel, type ChatMessage } from '@workbench-kit/react/workbench/chat
 import { createMockWorkbenchRuntime, type RuntimeStatus } from '@workbench-kit/runtime';
 import { WorkbenchChatService } from '@workbench-kit/services';
 
-import './chat-view.css';
-
 export const BUILTIN_CHAT_VIEW_RENDER_KIND = 'workbench-kit.builtin.chat.view' as const;
 
 export type BuiltinChatViewMode = 'aiChat' | 'chatting';

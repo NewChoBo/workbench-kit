@@ -41,45 +41,11 @@ export { FILE_ICON_KINDS, codiconForFileKind, fileIconKindForPath } from '../../
 export type { FileIconKind } from '../../icons/file-icon';
 export { WorkspaceHighlightedText } from './WorkspaceHighlightedText';
 export type { WorkspaceHighlightedTextProps } from './WorkspaceHighlightedText';
-export {
-  WorkbenchMultiProviderExplorer,
-  collectWorkbenchExplorerEntryRefs,
-  countWorkbenchExplorerEntries,
-  flattenWorkbenchExplorerProviders,
-  getWorkbenchExplorerEntryContext,
-  getWorkbenchExplorerEntryKey,
-  getWorkbenchExplorerProviderEntryCount,
-  isWorkbenchExplorerActionDisabled,
-  isWorkbenchExplorerEntryDisabled,
-  isWorkbenchExplorerEntrySelectable,
-  isWorkbenchExplorerProviderDisabled,
-  normalizeWorkbenchExplorerEntryKeys,
-} from './MultiProviderExplorer';
-export type {
-  WorkbenchExplorerActionDescriptor,
-  WorkbenchExplorerEntryContext,
-  WorkbenchExplorerEntryContextInput,
-  WorkbenchExplorerEntryDescriptor,
-  WorkbenchExplorerEntryKind,
-  WorkbenchExplorerEntryRef,
-  WorkbenchExplorerEntrySelectContext,
-  WorkbenchExplorerEntryToggleContext,
-  WorkbenchExplorerFlattenedEntry,
-  WorkbenchExplorerProviderActionContext,
-  WorkbenchExplorerProviderCollapseContext,
-  WorkbenchExplorerProviderDescriptor,
-  WorkbenchExplorerProviderKind,
-  WorkbenchMultiProviderExplorerProps,
-} from './MultiProviderExplorer';
 export { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 export type { WorkspaceSearchPanelProps } from './WorkspaceSearchPanel';
-export { ExplorerActionBar } from './ExplorerActionBar';
-export type { ExplorerActionBarProps } from './ExplorerActionBar';
 export { WorkspaceExplorerPanel } from './WorkspaceExplorerPanel';
 export type { WorkspaceExplorerPanelProps } from './WorkspaceExplorerPanel';
 export { buildWorkspaceExplorerNodes, resolveWorkspaceExplorerSectionTitle } from './build-workspace-explorer-nodes.js';
-export { useWorkspaceExplorerFilter } from './useWorkspaceExplorerFilter';
-export type { WorkspaceExplorerFilterState } from './useWorkspaceExplorerFilter';
 export { WorkspaceSearchResults } from './WorkspaceSearchResults';
 export type { WorkspaceSearchResultsProps } from './WorkspaceSearchResults';
 export {

@@ -187,16 +187,15 @@ export function BuiltinExplorerView() {
 
   if (!workspaceService || !workspaceState) {
     return (
-      <section className="workbench-explorer-view" aria-label="Workspace Explorer">
-        <ViewEmptyState>No virtual workspace is registered.</ViewEmptyState>
-      </section>
+      <ViewEmptyState className="workbench-explorer-view">No virtual workspace is registered.</ViewEmptyState>
     );
   }
 
   return (
-    <section className="workbench-explorer-view" aria-label="Workspace Explorer">
+    <>
       <WorkspaceExplorerPanel
         activePath={activePath}
+        aria-label="Workspace Explorer"
         expandedPaths={explorer.expandedPaths}
         focusedPath={explorer.selection.focusedPath}
         inlineEdit={explorer.inlineEdit}
@@ -209,7 +208,6 @@ export function BuiltinExplorerView() {
         sectionTitle={sectionTitle}
         selectedPaths={explorer.selection.paths}
         selectionAnchorPath={explorer.selection.anchorPath}
-        showFilter={false}
         onActivateFile={explorer.handleActivateFile}
         onItemContextMenu={handleItemContextMenu}
         onInlineEditCancel={explorer.cancelInlineEdit}
@@ -230,7 +228,7 @@ export function BuiltinExplorerView() {
           onClose={() => setContextMenu(null)}
         />
       ) : null}
-    </section>
+    </>
   );
 }
 

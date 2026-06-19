@@ -4,13 +4,11 @@ import { describe, expect, it } from 'vitest';
 import { WorkspaceExplorerPanel } from './WorkspaceExplorerPanel';
 
 describe('WorkspaceExplorerPanel', () => {
-  it('renders section chrome, filter, and explorer tree surface', () => {
+  it('renders section chrome and explorer tree surface', () => {
     const markup = renderToStaticMarkup(
       <WorkspaceExplorerPanel
         expandedPaths={new Set()}
-        filterQuery="app"
         nodes={[]}
-        showFilter
         onActivateFile={() => undefined}
         onToggleFolder={() => undefined}
         onNewFile={() => undefined}
@@ -19,9 +17,9 @@ describe('WorkspaceExplorerPanel', () => {
       />,
     );
 
+    expect(markup).toContain('workbench-explorer-view');
     expect(markup).toContain('ui-workspace-explorer-panel');
     expect(markup).toContain('ui-workbench-sidebar-section');
-    expect(markup).toContain('aria-label="Filter workspace"');
-    expect(markup).toContain('value="app"');
+    expect(markup).toContain('aria-label="New file"');
   });
 });
