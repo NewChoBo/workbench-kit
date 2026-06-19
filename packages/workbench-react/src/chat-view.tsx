@@ -10,26 +10,13 @@ import { ChatPanel, type ChatMessage } from '@workbench-kit/react/workbench/chat
 import { createMockWorkbenchRuntime, type RuntimeStatus } from '@workbench-kit/runtime';
 import { WorkbenchChatService } from '@workbench-kit/services';
 
-export const BUILTIN_CHAT_VIEW_RENDER_KIND = 'workbench-kit.builtin.chat.view' as const;
+import {
+  type BuiltinChatViewMode,
+  type BuiltinChatViewRenderData,
+} from './chat-view-data.js';
 
-export type BuiltinChatViewMode = 'aiChat' | 'chatting';
-
-export interface BuiltinChatViewRenderData {
-  readonly kind: typeof BUILTIN_CHAT_VIEW_RENDER_KIND;
-  readonly mode: BuiltinChatViewMode;
-}
-
-export function isBuiltinChatViewRenderData(value: unknown): value is BuiltinChatViewRenderData {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const candidate = value as Partial<BuiltinChatViewRenderData>;
-  return (
-    candidate.kind === BUILTIN_CHAT_VIEW_RENDER_KIND &&
-    (candidate.mode === 'chatting' || candidate.mode === 'aiChat')
-  );
-}
+export type { BuiltinChatViewMode, BuiltinChatViewRenderData };
+export { BUILTIN_CHAT_VIEW_RENDER_KIND, isBuiltinChatViewRenderData } from './chat-view-data.js';
 
 export function BuiltinChatView({ mode }: { mode: BuiltinChatViewMode }) {
   if (mode === 'aiChat') {

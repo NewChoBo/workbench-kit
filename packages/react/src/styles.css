@@ -2266,6 +2266,7 @@
 
 .workbench-explorer-view,
 .workbench-commands-view,
+.workbench-search-view,
 .workbench-primary-side-bar .ui-side-bar-view,
 .workbench-react-primary-sidebar {
   display: flex;

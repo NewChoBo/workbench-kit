@@ -5,12 +5,13 @@ import type {
 } from '@workbench-kit/react/workbench/workspace';
 import type { VirtualWorkspaceState } from '@workbench-kit/workspace';
 
+import { BUILTIN_EXPLORER_MOVE_COMMAND_ID } from './explorer-view-data.js';
+
 const WORKBENCH_WORKSPACE_DELETE_COMMAND_ID = 'workspace.delete' as const;
 const WORKBENCH_WORKSPACE_NEW_FILE_COMMAND_ID = 'workspace.newFile' as const;
 const WORKBENCH_WORKSPACE_NEW_FOLDER_COMMAND_ID = 'workspace.newFolder' as const;
 const WORKBENCH_WORKSPACE_OPEN_COMMAND_ID = 'workspace.open' as const;
 const WORKBENCH_WORKSPACE_RENAME_COMMAND_ID = 'workspace.rename' as const;
-const BUILTIN_EXPLORER_MOVE_COMMAND_ID = 'workbench-kit.builtin.explorer.move' as const;
 
 interface WorkspaceCommandResult {
   readonly path?: string | undefined;

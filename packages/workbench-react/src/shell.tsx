@@ -32,8 +32,10 @@ import type {
 } from '@workbench-kit/workbench-core';
 
 import { EditorArea } from './editor-area.js';
-import { BuiltinChatView, isBuiltinChatViewRenderData } from './chat-view.js';
-import { BuiltinExplorerView, isBuiltinExplorerViewRenderData } from './explorer-view.js';
+import { BuiltinChatView } from './chat-view.js';
+import { isBuiltinChatViewRenderData } from './chat-view-data.js';
+import { BuiltinExplorerView } from './explorer-view.js';
+import { isBuiltinExplorerViewRenderData } from './explorer-view-data.js';
 import { BuiltinSearchView } from './search-view.js';
 import { isBuiltinSearchViewRenderData } from './search-view-data.js';
 import { BuiltinCommandsView } from './commands-view.js';

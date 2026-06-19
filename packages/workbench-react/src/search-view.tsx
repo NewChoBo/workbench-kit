@@ -7,8 +7,6 @@ import {
   type WorkspaceSearchResult,
 } from '@workbench-kit/workspace';
 
-import './search-view.css';
-
 import { useWorkbench } from './provider.js';
 import { useActiveEditorTab } from './use-editor.js';
 import {
@@ -53,21 +51,20 @@ export function BuiltinSearchView() {
 
   if (!workspaceState) {
     return (
-      <section aria-label="Workspace Search" className="workbench-search-view">
-        <ViewEmptyState>No virtual workspace is registered.</ViewEmptyState>
-      </section>
+      <ViewEmptyState className="workbench-search-view">
+        No virtual workspace is registered.
+      </ViewEmptyState>
     );
   }
 
   return (
-    <section aria-label="Workspace Search" className="workbench-search-view">
-      <WorkspaceSearchPanel
-        activePath={activePath}
-        query={query}
-        results={results}
-        onActivateResult={openResult}
-        onQueryChange={setQuery}
-      />
-    </section>
+    <WorkspaceSearchPanel
+      activePath={activePath}
+      className="workbench-search-view"
+      query={query}
+      results={results}
+      onActivateResult={openResult}
+      onQueryChange={setQuery}
+    />
   );
 }

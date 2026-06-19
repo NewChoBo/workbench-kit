@@ -36,22 +36,20 @@ import {
 } from '@workbench-kit/platform';
 
 import { createCommandWorkspaceExplorerPort } from './createCommandWorkspaceExplorerPort.js';
+import {
+  BUILTIN_EXPLORER_REFRESH_COMMAND_ID,
+  type BuiltinExplorerViewRenderData,
+} from './explorer-view-data.js';
 import { useWorkbench } from './provider.js';
 import { useActiveEditorTab } from './use-editor.js';
 import { isWorkspaceResourceService, useWorkspaceResourceState } from './workspace-view-state.js';
 
-export const BUILTIN_EXPLORER_VIEW_RENDER_KIND = 'workbench-kit.builtin.explorer.view' as const;
-export const BUILTIN_EXPLORER_MOVE_COMMAND_ID = 'workbench-kit.builtin.explorer.move' as const;
-export const BUILTIN_EXPLORER_REFRESH_COMMAND_ID =
-  'workbench-kit.builtin.explorer.refresh' as const;
+export type { BuiltinExplorerViewRenderData };
+export { BUILTIN_EXPLORER_MOVE_COMMAND_ID, BUILTIN_EXPLORER_REFRESH_COMMAND_ID, BUILTIN_EXPLORER_VIEW_RENDER_KIND, isBuiltinExplorerViewRenderData } from './explorer-view-data.js';
 
 const WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID = 'workspace.copyPath' as const;
 const WORKBENCH_WORKSPACE_DELETE_COMMAND_ID = 'workspace.delete' as const;
 const WORKBENCH_WORKSPACE_OPEN_COMMAND_ID = 'workspace.open' as const;
-
-export interface BuiltinExplorerViewRenderData {
-  readonly kind: typeof BUILTIN_EXPLORER_VIEW_RENDER_KIND;
-}
 
 interface ExplorerContextMenuState {
   readonly ariaLabel: string;
@@ -65,16 +63,6 @@ const workspaceFolderMenuEntries =
   createWorkbenchWorkspaceFolderMenuEntries<WorkbenchWorkspaceCommandContext>();
 const workspaceTargetMenuEntries =
   createWorkbenchWorkspaceTargetMenuEntries<WorkbenchWorkspaceCommandContext>();
-
-export function isBuiltinExplorerViewRenderData(
-  value: unknown,
-): value is BuiltinExplorerViewRenderData {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    (value as { kind?: unknown }).kind === BUILTIN_EXPLORER_VIEW_RENDER_KIND
-  );
-}
 
 export function BuiltinExplorerView() {
   const { executeCommand, workspaceHostPort } = useWorkbench();

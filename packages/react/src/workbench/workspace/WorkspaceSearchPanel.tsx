@@ -5,11 +5,14 @@ import { Badge } from '../../primitives/Badge';
 import { ClearableTextInput } from '../../primitives/ClearableTextInput';
 import { EmptyState } from '../../primitives/EmptyState';
 import { IconButton } from '../../primitives/IconButton';
+import { cx } from '../../utils/cx';
 import { WorkspaceSearchResults } from './WorkspaceSearchResults';
 import type { WorkspaceSearchResult } from './types';
 
 export interface WorkspaceSearchPanelProps {
   activePath?: string;
+  'aria-label'?: string | undefined;
+  className?: string | undefined;
   compactRows?: boolean;
   emptyQueryLabel?: ReactNode;
   noResultsLabel?: ReactNode;
@@ -26,6 +29,8 @@ export interface WorkspaceSearchPanelProps {
 
 export function WorkspaceSearchPanel({
   activePath,
+  'aria-label': ariaLabel = 'Workspace Search',
+  className,
   compactRows,
   emptyQueryLabel = 'Type to search files',
   noResultsLabel = 'No results',
@@ -61,6 +66,8 @@ export function WorkspaceSearchPanel({
 
   return (
     <SideBarViewFrame
+      aria-label={ariaLabel}
+      className={cx('ui-workspace-search-panel', className)}
       title={title}
       actions={
         <SidebarToolbar>
