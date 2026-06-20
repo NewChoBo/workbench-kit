@@ -90,6 +90,7 @@ export interface WorkbenchThemeOption {
 const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
 const APPEARANCE_SETTINGS_CATEGORY_ID = 'workbench.appearance';
 const SETTINGS_EXTENSION_ID = 'workbench-kit.builtin.settings';
+const ACCOUNT_ACTIVITY_ITEM_ID = 'workbench-kit.shell.accounts';
 const SETTINGS_ACTIVITY_ITEM_ID = 'workbench-kit.shell.settings';
 
 export function WorkbenchShell({
@@ -235,7 +236,10 @@ export function WorkbenchShell({
 
   const openSettings = (categoryId?: string) => {
     showSettingsModal(categoryId);
-    if (extensionRegistry.commands.hasCommand(OPEN_SETTINGS_COMMAND_ID)) {
+    if (
+      categoryId === undefined &&
+      extensionRegistry.commands.hasCommand(OPEN_SETTINGS_COMMAND_ID)
+    ) {
       void executeCommand(OPEN_SETTINGS_COMMAND_ID).catch(() => undefined);
     }
   };
@@ -296,14 +300,33 @@ export function WorkbenchShell({
         items: activityItems,
         reorderable: true,
         secondaryItems: [
+          ...(accountManagement
+            ? [
+                {
+                  active:
+                    isSettingsOpen &&
+                    settingsCategoryId === WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
+                  icon: <i aria-hidden="true" className="codicon codicon-account" />,
+                  id: ACCOUNT_ACTIVITY_ITEM_ID,
+                  label: 'Accounts',
+                  title: 'Manage accounts',
+                },
+              ]
+            : []),
           {
-            active: isSettingsOpen,
+            active:
+              isSettingsOpen && settingsCategoryId !== WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
             icon: <i aria-hidden="true" className="codicon codicon-settings-gear" />,
             id: SETTINGS_ACTIVITY_ITEM_ID,
             label: 'Settings',
           },
         ],
         onItemActivate: (item) => {
+          if (item.id === ACCOUNT_ACTIVITY_ITEM_ID) {
+            openSettings(WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID);
+            return;
+          }
+
           if (item.id === SETTINGS_ACTIVITY_ITEM_ID) {
             openSettings();
             return;

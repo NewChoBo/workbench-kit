@@ -290,6 +290,70 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 
+  it('opens account management from the secondary activity bar action', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.accounts', 'workbench-kit.builtin.settings'],
+            recommendations: [],
+          }}
+        >
+          <TestWorkbenchShell
+            accountManagement={{
+              accounts: [
+                {
+                  displayName: 'Tester',
+                  email: 'tester@example.com',
+                  id: 'tester',
+                  providerId: 'sample',
+                  providerLabel: 'Sample',
+                  status: 'active',
+                },
+              ],
+              activeAccountId: 'tester',
+            }}
+            editorArea={<main>Editor Area</main>}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    const activityBar = container.querySelector('[aria-label="Activity bar"]');
+    const activityLabels = Array.from(
+      activityBar?.querySelectorAll<HTMLButtonElement>('button') ?? [],
+    ).map((button) => button.getAttribute('aria-label'));
+
+    expect(activityLabels.indexOf('Accounts')).toBeLessThan(activityLabels.indexOf('Settings'));
+
+    const accountsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Accounts"]',
+    );
+    expect(accountsButton).toBeDefined();
+
+    await act(async () => {
+      accountsButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('Settings');
+    expect(dialog?.textContent).toContain('Signed-in Accounts');
+    expect(dialog?.textContent).toContain('Tester');
+    expect(accountsButton?.getAttribute('aria-pressed')).toBe('true');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('opens contributed settings through the built-in settings command', async () => {
     const container = document.createElement('div');
     document.body.append(container);
