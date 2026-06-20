@@ -83,5 +83,7 @@ showcase notes, and light/dark theme switching in one screen. For integrated
 workspace/chat/editor flows, use Storybook `Integrated Shell`
 (`@workbench-kit/react/workbench/demo`).
 
-See [next-slice-plan.md](../../docs/workbench/next-slice-plan.md) for follow-up slices
-(WB-26 CapabilityRegistry, WB-25 host factories).
+See [Sample Host Backend API](../../docs/workbench/sample-host-backend-api.md)
+for the dummy backend contract and
+[Workbench Completion Plan](../../docs/workbench/completion-plan.md) for the
+current workbench roadmap.

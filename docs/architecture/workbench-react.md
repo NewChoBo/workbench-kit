@@ -2,7 +2,13 @@
 
 `@workbench-kit/workbench-react` provides the React workbench shell that composes existing primitives from `@workbench-kit/react` with services from `workbench-core` and `platform`.
 
-Phase 3 provides the initial implementation: `WorkbenchProvider` owns registry and layout service creation, resolves `.workbench` extension configuration against bundled manifests, activates startup extensions, and exposes the services through React context. `WorkbenchShell` composes the shell-only layout export from `@workbench-kit/react` and derives activities, views, and default status entries from `workbench-core` registries.
+The current implementation is the default in-repo workbench host path:
+`WorkbenchProvider` owns registry, editor service, and layout service creation,
+resolves `.workbench` extension configuration against bundled manifests,
+activates startup extensions, and exposes the services through React context.
+`WorkbenchShell` composes the shell-only layout export from
+`@workbench-kit/react` and derives activities, views, editor hosts, and default
+status entries from `workbench-core` registries.
 
 ## Relationship to `@workbench-kit/react`
 
@@ -19,7 +25,7 @@ Phase 3 provides the initial implementation: `WorkbenchProvider` owns registry a
 
 React context provider that:
 
-- Bootstraps `workbench-core` services (`ExtensionRegistry`, `LayoutService`)
+- Bootstraps `workbench-core` services (`ExtensionRegistry`, `EditorService`, `LayoutService`)
 - Accepts initial `.workbench` extension configuration and optional extension manifest list
 - Accepts parsed `.workbench/layout.default.json` data as `initialLayout`
 - Resolves enabled and missing extensions from bundled manifests by default
@@ -60,11 +66,17 @@ Hosts sidebar views registered for the active activity (e.g. Explorer, Search). 
 
 ### EditorArea
 
-Tabbed or single editor region. Delegates to editor contributions and optional `monaco` package for code editing. Layout splits use `SplitView` from `react`.
+Tabbed editor region backed by `EditorService`. Editor resolver contributions
+choose an editor for a resource, `EditorHostFactoryRegistry` creates the host,
+and `EditorArea` renders the active host surface. The built-in text editor
+contribution is active today; optional `monaco` integration remains a separate
+package concern.
 
 ### BottomPanel
 
-Panel views (terminal placeholder, problems, output) in a bottom dock. Visibility and size controlled by `LayoutService`.
+Deferred bottom dock for future panel views such as terminal, problems, or
+output. `LayoutService` owns the framework-neutral panel visibility state, but
+the current sample host focuses on activity/sidebar/editor/status surfaces.
 
 ### StatusBar
 
@@ -90,9 +102,23 @@ be invoked with one JSON argument, for example
 
 ### Account menu entry
 
-Status bar or activity area entry opening account/session UI. Uses the auth and
-account service contracts from `platform`; does not read tokens from
-`.workbench` (see [Account Auth](./account-auth.md)).
+The secondary activity bar can show a service profile action above settings.
+That action opens `WorkbenchProfileModal` for the currently signed-in Workbench
+service account. Linked external/project accounts stay in settings through the
+account management surface. Both surfaces use account/auth contracts from
+`platform` and must not read tokens from `.workbench` (see
+[Account Auth](./account-auth.md)).
+
+### Management surfaces
+
+Command, keybinding, and linked-account management panels share the
+`ManagementPanelFrame` primitives from `@workbench-kit/react/workbench`. The
+shared frame owns the settings-section wrapper, filter toolbar, summaries, empty
+states, and command run-state display so each panel only carries domain-specific
+rows/actions.
+
+Modal-based shell surfaces use common `Modal` sizing, scroll, body padding, and
+stack layout options instead of per-modal body CSS for repeated shell chrome.
 
 ## Data Flow
 
@@ -102,7 +128,8 @@ account service contracts from `platform`; does not read tokens from
 4. `WorkbenchCommandHost` registers shell command handlers into the provider command registry.
 5. User actions, command palette selections, and chat slash commands dispatch
    through `useWorkbench().executeCommand(...)`.
-6. View hosts render extension-provided values via stable SDK contracts, mapping valid React nodes and simple text values into the shell.
+6. View hosts and editor hosts render extension-provided values via stable SDK
+   contracts, mapping valid React nodes and simple text values into the shell.
 
 ## Styling
 

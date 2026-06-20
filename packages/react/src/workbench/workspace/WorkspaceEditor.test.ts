@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { JDW_DOCUMENT_MIME } from '../../jdw/document';
+import { JDW_WIDGET_DOCUMENT_MIME } from '../../jdw/document';
 import {
   JDW_NODE_SCHEMA_URI,
   JDW_WIDGET_DOCUMENT_SCHEMA_URI,
@@ -20,7 +20,7 @@ describe('WorkspaceEditor', () => {
   it('registers JDW document schemas in canonical and workspace-relative forms', () => {
     const schemas = getWorkspaceEditorJsonDiagnosticsSchemas({
       content: '{}',
-      mimeType: JDW_DOCUMENT_MIME,
+      mimeType: JDW_WIDGET_DOCUMENT_MIME,
       path: 'jdw/workbench-sample.jdw.json',
     });
 

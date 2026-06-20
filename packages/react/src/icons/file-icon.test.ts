@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { JDW_DOCUMENT_MIME, JDW_SCHEMA_DOCUMENT_MIME } from '../jdw/document';
+import { JDW_SCHEMA_DOCUMENT_MIME, JDW_WIDGET_DOCUMENT_MIME } from '../jdw/document';
 import { codiconForFileKind, fileIconKindForPath } from './file-icon';
 
 describe('file-icon', () => {
@@ -12,7 +12,7 @@ describe('file-icon', () => {
   });
 
   it('uses JDW mime types when a host provides them', () => {
-    expect(fileIconKindForPath('untitled', JDW_DOCUMENT_MIME)).toBe('jdw');
+    expect(fileIconKindForPath('untitled', JDW_WIDGET_DOCUMENT_MIME)).toBe('jdw');
     expect(fileIconKindForPath('untitled', JDW_SCHEMA_DOCUMENT_MIME)).toBe('jdw-schema');
     expect(fileIconKindForPath('untitled', 'application/schema+json')).toBe('schema');
   });

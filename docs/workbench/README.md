@@ -5,7 +5,7 @@ for product-neutral backlog, Storybook direction, plugin concepts, and JSON
 widget extraction. Canonical package structure and migration status live under
 [`docs/architecture`](../architecture/README.md).
 
-Historical execution plans that depended on removed packages such as
+Historical execution plans that depended on legacy packages such as
 `@workbench-kit/core`, `@workbench-kit/vscode-host`, or
 `@workbench-kit/vscode-extension` have been removed from this folder. New work
 should link to the current architecture documents instead of reviving those
@@ -23,11 +23,11 @@ legacy paths.
 | [**Layout & CSS Improvement Plan 2026-06-20**](./layout-css-improvement-plan-2026-06-20.md) | **Master plan:** project-wide layout/scroll/CSS audit, flex-fill contracts, Phases 0–4.                     |
 | [**Sidebar Simplification Plan 2026-06-20**](./sidebar-simplification-plan-2026-06-20.md)   | **Sub-track:** primary sidebar builtin views, render data, section stack (under master plan).               |
 | [**Recommended Work Items 2026-06-18**](./recommended-work-items-2026-06-18.md)             | **Execution backlog:** prioritized next work items and selected goal for the current run.                   |
-| [**Completion Plan**](./completion-plan.md)                                                 | **Master roadmap:** Lane A DoD, phased WB-28 → WB-31, sessions, risks, completion %.                        |
+| [**Completion Plan**](./completion-plan.md)                                                 | **Master roadmap:** Lane A DoD, WB-29 closeout → WB-31, sessions, risks, completion %.                      |
 | [**Codex Delegation Plan**](./codex-delegation-plan.md)                                     | **Codex handoff:** Lane A work packages, constraints, acceptance criteria, file pointers.                   |
-| [**Session Work Plan**](./session-work-plan.md)                                             | **Actionable sessions:** S7–S12 breakdown, tracks A/B/C/D, WB-28 S1/S2/S3 status, Korean 요약.              |
+| [**Session Work Plan**](./session-work-plan.md)                                             | **Actionable sessions:** WB-29 closeout, tracks A/B/C/D, Korean 요약.                                       |
 | [**Structural Review**](./structural-review.md)                                             | **Package/layer analysis:** dependency layers, JDW/Workbench stacks, smells, P1–P3 priorities (no subtree). |
-| [**Next Slice Plan**](./next-slice-plan.md)                                                 | **Active slice detail:** code truth, WB-23 → WB-27 slices, trade-offs, acceptance criteria.                 |
+| [**Next Slice Plan**](./next-slice-plan.md)                                                 | **Historical slice detail:** code truth, WB-23 → WB-27 slices, trade-offs, acceptance criteria.             |
 | [Future Capabilities](./future-capabilities.md)                                             | Deferred backlog for JSON widget, i18n, theme, layout, playground, and node-graph ideas.                    |
 | [JSON Widget MVP](./json-widget-mvp.md)                                                     | Current JSON widget package and Storybook validation status.                                                |
 | [JSON Widget Port Strategy](./json-widget-port-then-replace.md)                             | Product-neutral extraction boundaries for JSON widget work.                                                 |
@@ -51,5 +51,5 @@ legacy paths.
 - Keep new documents product-neutral and package-current.
 - Use `@workbench-kit/platform`, `workbench-core`, `workbench-react`, and the
   extension SDK as the current workbench boundaries.
-- Do not add plans that depend on removed legacy packages or VS Code wrapper
+- Do not add plans that depend on legacy packages or VS Code wrapper
   lanes.

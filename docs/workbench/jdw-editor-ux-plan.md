@@ -1,6 +1,6 @@
 # JDW Editor UX Improvement Plan
 
-> **Status:** Active (2026-06-16)  
+> **Status:** Active (updated 2026-06-20)
 > **Related:** [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md), [strengths-inheritance.md](./strengths-inheritance.md), [session-work-plan.md](./session-work-plan.md), [json-config-workbench.md](./json-config-workbench.md)
 
 ## 요약
@@ -9,7 +9,7 @@
 - **핵심 UX 갭:** 프리뷰 클릭 선택·캔버스 동기화 없음, `JsonConfigWorkbench` 대비 validation banner·baseline/dirty 패턴 미적용, 아웃라인 DnD 재정렬 UI 없음(헤드리스 patch만 존재), 줌/팬·캔버스 제스처는 의도적 보류.
 - **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). Lane B B2(매핑) / B3(캔버스 배선) 전에는 트리·인스pector·Monaco 동기화를 먼저 다듬는다.
 - **단계:** UX-1(에디터 discipline) → UX-2(아웃라인) → UX-3(인스pector·에셋) → UX-4(프리뷰 hit-test 선택) → UX-5(캔버스, B3 의존).
-- **첫 세션 권장:** **B-UX1 / UX-1** — validation banner + baseline dirty parity (`WidgetTreeWorkbench` ↔ `JsonConfigWorkbench`). **시작 시점:** Lane A WB-28 S3 → WB-29 마일스톤 이후(B-UX 전체 연기).
+- **첫 세션 권장:** **B-UX1 / UX-1** — validation banner + baseline dirty parity (`WidgetTreeWorkbench` ↔ `JsonConfigWorkbench`). **시작 시점:** WB-29 closeout 이후(B-UX 전체 연기).
 
 ---
 
@@ -102,7 +102,7 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 - [ ] `pnpm test:storybook-play` passes new/changed play test
 - [ ] Unit test for widget editor state helper
 
-**Depends on:** None (parallel to WB-28 S2).  
+**Depends on:** None; WB-28 editor chrome is already stable.
 **Lane B tie-in:** None.
 
 ---
@@ -189,7 +189,7 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 - [ ] No `WorkbenchDocument` written to widget files
 - [ ] Phase 4 checklist items from widget-layout-schema plan partially satisfied
 
-**Depends on:** **B3**; WB-28 S2 stable for host embedding.  
+**Depends on:** **B3**; editor shell host embedding is already stable.
 **Lane B tie-in:** B3, B4.
 
 ---
@@ -230,7 +230,7 @@ User selects container in outline
 ```text
 Edit → dirty + validation banner
   → invalid: Save disabled, problems listed
-  → valid + dirty: Save/Discard in header (host WB-28 S3 transaction)
+  → valid + dirty: Save/Discard in header (host editor transaction path)
   → optional Apply: intermediate baseline bump (match JsonConfigWorkbench)
 ```
 
@@ -245,7 +245,7 @@ Edit → dirty + validation banner
 | B3 Canvas in lab          | UX-5                          | Wire `WorkbenchPreviewCanvas` into `WidgetTreeLab` |
 | B4 Drag reparent / reflow | UX-5 polish                   | Grid reflow, optional zoom overlap with Lane C     |
 
-**Sequencing rule:** Track B-UX **deferred until Lane A WB-28 S3 → WB-29**; then UX-1–UX-3 may proceed in parallel with B1/B2 headless work. UX-4 starts after B2 tests. UX-5 waits for B3 and WB-28 S2+ editor chrome for real host tabs.
+**Sequencing rule:** Track B-UX **deferred until WB-29 closeout**; then UX-1–UX-3 may proceed in parallel with B1/B2 headless work. UX-4 starts after B2 tests. UX-5 waits for B3 and the already-stable editor shell for real host tabs.
 
 ---
 

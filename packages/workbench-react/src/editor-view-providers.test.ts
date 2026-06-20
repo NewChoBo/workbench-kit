@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { JDW_DOCUMENT_MIME, JDW_SCHEMA_DOCUMENT_MIME } from '@workbench-kit/react/jdw/document';
+import {
+  JDW_SCHEMA_DOCUMENT_MIME,
+  JDW_WIDGET_DOCUMENT_MIME,
+} from '@workbench-kit/react/jdw/document';
 
 import {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
@@ -52,7 +55,7 @@ describe('resolveEditorDocumentViews', () => {
     const resolved = resolveEditorDocumentViews(
       createDocument({
         content: '{',
-        mimeType: JDW_DOCUMENT_MIME,
+        mimeType: JDW_WIDGET_DOCUMENT_MIME,
         path: 'jdw/home.jdw.json',
       }),
     );

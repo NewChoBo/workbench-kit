@@ -10,7 +10,10 @@ import {
 } from '@workbench-kit/workbench-config';
 import jdwNodeSchemaJson from '@workbench-kit/jdw/schemas/jdw-node.jdw.schema.json';
 import widgetDocumentSchemaJson from '@workbench-kit/jdw/schemas/widget-document.v1.jdw.schema.json';
-import { JDW_DOCUMENT_MIME, JDW_SCHEMA_DOCUMENT_MIME } from '@workbench-kit/react/jdw/document';
+import {
+  JDW_SCHEMA_DOCUMENT_MIME,
+  JDW_WIDGET_DOCUMENT_MIME,
+} from '@workbench-kit/react/jdw/document';
 import type { VirtualWorkspaceInitialState } from '@workbench-kit/workspace';
 
 import extensionsJson from '../../../.workbench/extensions.json';
@@ -154,7 +157,7 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
           ],
         },
       }),
-      mimeType: JDW_DOCUMENT_MIME,
+      mimeType: JDW_WIDGET_DOCUMENT_MIME,
       path: SAMPLE_EXAMPLE_JDW_PATH,
     },
     ...workbenchConfigFiles,

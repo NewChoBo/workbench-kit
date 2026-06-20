@@ -215,7 +215,6 @@ export {
   SideBarListItem,
   SideBarViewFrame,
   SideBarRow,
-  SideBarScrollSpacer,
 } from './layout/SideBarViewFrame';
 export type {
   SideBarHeaderControlProps,
@@ -223,7 +222,6 @@ export type {
   SideBarListProps,
   SideBarViewFrameProps,
   SideBarRowProps,
-  SideBarScrollSpacerProps,
 } from './layout/SideBarViewFrame';
 export {
   WorkbenchActionList,

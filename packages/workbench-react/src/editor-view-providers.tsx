@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
-  JDW_DOCUMENT_MIME,
   JDW_SCHEMA_DOCUMENT_MIME,
+  JDW_WIDGET_DOCUMENT_MIME,
   isJdwDocumentPath,
   isJdwSchemaDocument,
 } from '@workbench-kit/react/jdw/document';
@@ -334,7 +334,7 @@ function isJsonLikeDocument(document: EditorDocumentContext): boolean {
 }
 
 function isJdwDocument(document: EditorDocumentContext): boolean {
-  return document.mimeType === JDW_DOCUMENT_MIME || isJdwDocumentPath(document.path);
+  return document.mimeType === JDW_WIDGET_DOCUMENT_MIME || isJdwDocumentPath(document.path);
 }
 
 function isMarkdownDocument(document: EditorDocumentContext): boolean {

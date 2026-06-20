@@ -7,13 +7,17 @@ activation handlers.
 
 ## Built-In Extensions
 
-| Extension             | Runtime role                                                                                       |
-| --------------------- | -------------------------------------------------------------------------------------------------- |
-| `builtin.accounts`    | Account status command, account menu entry, account capability lookup, and account configuration.  |
-| `builtin.explorer`    | Explorer activity, explorer view provider, refresh command, and view title menu action.            |
-| `builtin.settings`    | Open settings command, command palette entry, and settings configuration for modal settings hosts. |
-| `builtin.workspace`   | Workspace info command and workspace display-name configuration.                                   |
-| `builtin.keybindings` | Reserved built-in package that owns future keybinding contributions.                               |
+| Extension             | Runtime role                                                                                        |
+| --------------------- | --------------------------------------------------------------------------------------------------- |
+| `builtin.accounts`    | Account status command, account menu entry, account capability lookup, and account configuration.   |
+| `builtin.chat`        | Chat and AI Chat activities, sidebar views, and slash command execution through workbench commands. |
+| `builtin.commands`    | Commands activity, registry sidebar, focus/refresh commands, and view title refresh action.         |
+| `builtin.editor`      | Built-in text editor contribution resolved by the editor service and rendered by the React shell.   |
+| `builtin.explorer`    | Explorer activity, explorer view provider, refresh command, and view title menu action.             |
+| `builtin.keybindings` | Default workbench keybindings such as `ctrl+s` for `editor.save`.                                   |
+| `builtin.search`      | Search activity container and sidebar view provider.                                                |
+| `builtin.settings`    | Open settings command, command palette entry, and settings configuration for modal settings hosts.  |
+| `builtin.workspace`   | Workspace info command and workspace display-name configuration.                                    |
 
 ## Samples
 

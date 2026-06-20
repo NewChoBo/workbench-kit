@@ -18,6 +18,10 @@ workbench-kit/
 │   ├── workbench-extension-sdk/   # Stable extension contribution types and helpers
 │   ├── workbench-config/          # `.workbench` config loading and validation
 │   ├── monaco/                    # Optional Monaco editor integration placeholder
+│   ├── core/                      # Legacy platform compatibility package
+│   ├── vscode-host/               # Legacy VS Code host compatibility package
+│   ├── vscode-extension/          # Legacy VS Code extension compatibility package
+│   ├── workbench-vscode-adapter/  # Legacy VS Code adapter compatibility package
 │   ├── contracts/                 # Domain contracts (chat, save, patch, widget)
 │   ├── services/                  # Domain orchestration services
 │   ├── adapters/                  # Host/repo/runtime adapters
@@ -27,10 +31,14 @@ workbench-kit/
 │   └── jdw-editor/                # Screen spec editor
 ├── extensions/
 │   ├── builtin.accounts/
-│   ├── builtin.workspace/
+│   ├── builtin.chat/
+│   ├── builtin.commands/
+│   ├── builtin.editor/
 │   ├── builtin.explorer/
-│   ├── builtin.settings/
 │   ├── builtin.keybindings/
+│   ├── builtin.search/
+│   ├── builtin.settings/
+│   ├── builtin.workspace/
 │   └── samples.hello-world/
 ├── schemas/
 │   └── workbench/                 # JSON Schema for workspace and extension manifests
@@ -79,6 +87,14 @@ Load, merge, and validate `.workbench` workspace files using schemas under `sche
 
 Optional placeholder for Monaco editor bundling and workbench editor integration. Not required for Phase 0.
 
+### Legacy compatibility packages
+
+`packages/core`, `packages/vscode-host`, `packages/vscode-extension`, and
+`packages/workbench-vscode-adapter` still exist in the repository for legacy
+compatibility. They are outside the target workbench dependency graph; new shell
+work should use `platform`, `workbench-core`, `workbench-react`, and
+`workbench-extension-sdk` instead.
+
 ## Extensions
 
 Built-in extensions live under `extensions/builtin.*` and ship as repository-local, build-time bundled artifacts. They contribute commands, views, menus, settings, and activities through `workbench.extension.json` and the extension SDK.
@@ -91,7 +107,11 @@ Sample extensions under `extensions/samples.*` demonstrate minimal contribution 
 
 ## Examples
 
-`examples/workbench-sample` (planned) will demonstrate assembling `workbench-react` with built-in extensions and a `.workbench` directory. Not implemented in Phase 0.
+`examples/workbench-sample` is the frontend-only integration host. It assembles
+`workbench-react` with bundled built-in extensions, reads `.workbench`
+configuration, mounts a virtual workspace/editor flow, and uses the in-browser
+dummy backend for fixed auth/profile responses without requiring a separate
+server process.
 
 ## Domain Packages (unchanged by shell migration)
 

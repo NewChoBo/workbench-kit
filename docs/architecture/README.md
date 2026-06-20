@@ -29,4 +29,8 @@ Workbench Kit architecture documents for the VS Code–like workbench shell, ext
 
 ## Migration Note
 
-M0-M5 are complete for the in-repo migration baseline. Bulk replacement is acceptable for in-repo consumers, and prototype consumers should move directly to the target package surfaces. The legacy `@workbench-kit/core` and VS Code bridge packages have been removed; see [Migration Strategy](./migration-strategy.md).
+M0-M5 are complete for the in-repo migration baseline. Bulk replacement is
+acceptable for in-repo consumers, and prototype consumers should move directly
+to the target package surfaces. Legacy `@workbench-kit/core` and VS Code bridge
+packages are outside the target workbench graph; new work should not add
+dependencies on them. See [Migration Strategy](./migration-strategy.md).

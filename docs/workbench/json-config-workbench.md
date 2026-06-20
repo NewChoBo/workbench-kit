@@ -32,7 +32,7 @@ import {
 - `schema` — optional `WorkbenchStructuredDataSchemaDocument` for form preview
 - `previewKind` — `'auto' | 'schema' | 'widget' | 'none'` (default `'auto'`; `schema` enables the form surface, not a read-only preview)
 - `widgetRegistry` — optional registry for widget JSON preview
-- `defaultMode` / `mode` — `'code' | 'form' | 'preview'` (`'split'` is accepted as a legacy alias for `'code'`)
+- `defaultMode` / `mode` — `'code' | 'form' | 'preview'`
 
 ### Preview resolution (`auto`)
 

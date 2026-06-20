@@ -36,24 +36,23 @@ scripts. This was a static repository review, not a browser UX pass.
 
 ## Findings
 
-### P1 - Planning docs are stale against code truth
+### P1 - Planning docs require drift control
 
-Several planning documents still describe WB-29 as pending and describe
-`EditorArea`/explorer gaps that are already implemented. Examples include
-`docs/workbench/todo.md`, `docs/workbench/session-work-plan.md`,
-`docs/workbench/completion-plan.md`, and
-`docs/workbench/structural-review.md`.
+2026-06-20 follow-up: the main planning documents now reflect that WB-28 is
+landed and WB-29 command handlers are implemented, with closeout focused on
+selection/reveal/search behavior and sample smoke coverage.
 
-Impact: future work can easily reimplement already landed behavior or make the
-wrong slice the next priority.
+Impact: because the active lane is still moving, docs can drift back into
+already-landed behavior unless closeout updates happen in the same slice as code.
 
 Recommended work:
 
-- Refresh or archive stale plan sections after the current code truth.
+- Keep `todo.md`, `session-work-plan.md`, `completion-plan.md`, and
+  `structural-review.md` aligned whenever WB-29 closeout status changes.
 - Keep this review and `workbench-change-guidelines.md` as the entry point for
   future implementation instructions.
-- Update `examples/workbench-sample/README.md`, which still points follow-up
-  readers to already-landed WB-25/WB-26-era items.
+- Treat historical slice plans as reference material, not the source of the next
+  active task.
 
 ### P1 - Editor layout is present but not yet a durable split model
 

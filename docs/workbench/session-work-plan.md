@@ -1,6 +1,6 @@
 # Session Work Plan — Workbench Kit
 
-**Status:** Active (2026-06-16)  
+**Status:** Active (updated 2026-06-20)
 **Branch:** `feature/theia-strengths-workbench`  
 **Audience:** Implementation sessions; English body with Korean executive summary for the team.
 
@@ -17,7 +17,7 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 
 | #   | Session  | Goal                                                        | Exit signal                                                        |
 | --- | -------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
-| 1   | **S9**   | **WB-29** — command-backed explorer + `WorkspaceExplorer`   | Tree CRUD via commands + transactions; selection ↔ editor resource |
+| 1   | **S9**   | **WB-29** — command-backed explorer closeout                | Selection/reveal/search smoke; command-backed UI behavior verified |
 | 2   | **S10**  | **WB-30** — preference scopes (default / workspace / local) | Merge helper + one scoped setting demonstrated                     |
 | 3   | **S11**  | **WB-31** — devtools inspectors (Storybook)                 | Registry / transaction journal read-only panel                     |
 | 4   | **S12**  | Lane A closeout                                             | DoD checklist complete; `pnpm validate:full`                       |
@@ -27,21 +27,21 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 
 ## 요약
 
-- **Codex 위임:** Lane A 잔여 작업(WB-29 → WB-30 → WB-31)은 [codex-delegation-plan.md](./codex-delegation-plan.md)의 패키지 흐름으로 Codex 자율 실행 가능. 다음 작업 **WB-29**.
-- **지금 어디:** Lane A **~80%**. WB-23~WB-28(S1–S3, S8.5–S8.6) 완료 — 탭 크롬, 트랜잭션 저장, 샘플 오픈 플로우, `EditorArea` Code(JSON)/Form/Preview 정렬. Storybook wrapper 정리(`54602b9`), editor view model 문서(`9191bb9`) 반영. `pnpm validate` green (2026-06-16).
+- **Codex 위임:** Lane A 잔여 작업(WB-29 closeout → WB-30 → WB-31)은 [codex-delegation-plan.md](./codex-delegation-plan.md)의 패키지 흐름으로 Codex 자율 실행 가능. 다음 작업 **WB-29 closeout**.
+- **지금 어디:** Lane A **~80%**. WB-23~WB-28 완료, WB-29 command handlers/UI dispatch 일부 완료 — 다음은 selection/reveal/search closeout과 sample smoke. 마지막 전체 검증 기준점은 `pnpm validate` green (2026-06-16).
 - **다음 3세션:**
-  1. **S9 / WB-29** — 커맨드 기반 익스플로러; `WorkspaceExplorer`를 샘플 호스트에 연결; CRUD = `WorkspaceResourceTransaction`.
+  1. **S9 / WB-29** — 커맨드 기반 익스플로러 closeout; selection/reveal/search와 sample smoke 검증.
   2. **S10 / WB-30** — 프리퍼런스 스코프 merge; 최소 1개 설정 키 소비.
   3. **S11 / WB-31** — registry / transaction journal read-only devtools.
-- **B-UX:** WB-29 이후로 연기 (사용자 결정). Lane A 마일스톤 우선.
+- **B-UX:** WB-29 closeout 이후로 연기 (사용자 결정). Lane A 마일스톤 우선.
 - **Track D:** D0–D1은 S9와 **병렬** 가능. D2는 Lane B B1 이후. D3는 Lane A DoD 이후.
-- **병렬 트랙 B:** Lane B(JDW/widget-tree) B1~B2는 **헤드리스 우선**으로 병렬 가능. 캔버스/에디터 크롬 확장(B3~B4)은 Lane A WB-28 S2 이후.
-- **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). **B-UX 전체는 Lane A 마일스톤(WB-28 S3 → WB-29) 이후** 시작; 프리뷰 hit-test(B-UX4)는 B2 이후, 캔버스(B-UX5)는 B3 이후.
+- **병렬 트랙 B:** Lane B(JDW/widget-tree) B1~B2는 **헤드리스 우선**으로 병렬 가능. 캔버스/에디터 크롬 확장(B3~B4)은 WB-29 closeout 이후 별도 우선순위로 검토.
+- **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). **B-UX 전체는 WB-29 closeout 이후** 시작; 프리뷰 hit-test(B-UX4)는 B2 이후, 캔버스(B-UX5)는 B3 이후.
 - **보류 트랙 C:** WB-15 dirty guard, WB-20/22 리소스 드래프트, consumer swap, i18n/테마, preview zoom/pan — Lane A DoD 이후.
-- **정리 트랙 D (in-repo only):** D0–D1(인벤토리·dead WIP)은 S7–S8과 병렬. D2(이중 렌더 통합)는 Track B B1 이후. D3(legacy shim 제거)는 Lane A DoD 이후. 우선순위: P1 이중 렌더 → P2 `./jdw/config` alias → P3 validation 무시. **패키지 분리·git subtree는 범위 밖.**
+- **정리 트랙 D (in-repo only):** D0–D1(인벤토리·dead WIP)은 병렬 진행. D2(이중 렌더 통합)는 Track B B1 이후. D3(legacy shim 제거)는 Lane A DoD 이후. 우선순위: P1 이중 렌더 → P2 validation 무시. **패키지 분리·git subtree는 범위 밖.**
 - **React JDW 위치:** `packages/react/src/jdw` 유지. headless는 `@workbench-kit/jdw`. 별도 `jdw-react` 패키지·git subtree **계획 제외(out of scope)**.
 - **React JDW-like:** 범용 오픈소스 React JDW 라이브러리 없음. repo는 headless + `react/jdw` + widget-tree/json-config/jdw-editor **레이어 분리**. 실질 중복은 이중 렌더 전략과 WorkbenchDocument vs JDW 이중 모델.
-- **핵심 의존:** WB-28 S3는 WB-27 트랜잭션 API 소비. WB-29는 WB-28 리소스 URI 바인딩 필요. WB-15 미정으로 에디터 dirty는 **로컬 상태**만.
+- **핵심 의존:** WB-28 S3는 WB-27 트랜잭션 API를 소비 완료. WB-29는 이미 `WorkspaceResourceUri`/editor open path를 사용하며, 남은 일은 selection/reveal/search closeout. WB-15 미정으로 에디터 dirty는 **로컬 상태**만.
 - **이중 모델 주의:** `WorkbenchDocument`(절대 좌표) vs JDW — 위젯 파일은 JDW 단일 SSoT. `WorkbenchCanvasShell` 데모와 혼용 금지.
 - **검증 기준:** 각 세션 종료 시 `pnpm validate` 통과. Lane A 마감 시 `pnpm validate:full`.
 - **세션 번호:** 본 문서 S7–S12 = [completion-plan.md](./completion-plan.md) S2–S7에 대응.
@@ -52,7 +52,7 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 
 | Field               | Value                                                                                                        |
 | ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Date**            | 2026-06-16                                                                                                   |
+| **Date**            | 2026-06-20                                                                                                   |
 | **Branch**          | `feature/theia-strengths-workbench`                                                                          |
 | **Working tree**    | Clean                                                                                                        |
 | **Last commits**    | `750a547` JSON config story cleanup · `fc3f2f7` JSON config modes · `767900c` S8.6 · `54602b9` story cleanup |
@@ -69,50 +69,50 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 WB-29 → WB-30 → WB-31 → Lane A DoD
 ```
 
-| Milestone | Status   | Next action                                     |
-| --------- | -------- | ----------------------------------------------- |
-| WB-23     | **Done** | —                                               |
-| WB-24     | **Done** | —                                               |
-| WB-25     | **Done** | Consumed in WB-28 S2/S3                         |
-| WB-26     | **Done** | —                                               |
-| WB-27     | **Done** | Consumed by WB-28 S3 save path                  |
-| WB-28     | **Done** | S1–S3 + S8.5 sample polish landed               |
-| S8.6      | **Done** | Code(JSON) / Form / Preview in `EditorArea`     |
-| WB-29     | Pending  | Command-backed explorer + sample tree wiring    |
-| WB-30     | Pending  | After WB-29 (editor settings consumer optional) |
-| WB-31     | Pending  | After WB-28/29 event streams                    |
+| Milestone | Status      | Next action                                                                          |
+| --------- | ----------- | ------------------------------------------------------------------------------------ |
+| WB-23     | **Done**    | —                                                                                    |
+| WB-24     | **Done**    | —                                                                                    |
+| WB-25     | **Done**    | Consumed in WB-28 S2/S3                                                              |
+| WB-26     | **Done**    | —                                                                                    |
+| WB-27     | **Done**    | Consumed by WB-28 S3 save path                                                       |
+| WB-28     | **Done**    | S1–S3 + S8.5 sample polish landed                                                    |
+| S8.6      | **Done**    | Code(JSON) / Form / Preview in `EditorArea`                                          |
+| WB-29     | In progress | Command handlers/UI dispatch landed; closeout selection/reveal/search + sample smoke |
+| WB-30     | Pending     | After WB-29 (editor settings consumer optional)                                      |
+| WB-31     | Pending     | After WB-28/29 event streams                                                         |
 
 ### Track B — JDW / widget-tree (parallel, headless-first)
 
 From [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md) §8:
 
-| Phase | Scope                                               | Priority | Blocks on Lane A?        |
-| ----- | --------------------------------------------------- | -------- | ------------------------ |
-| B0    | JDW v7 parse/patch/layout                           | **Done** | No                       |
-| B1    | Schema parity; preview pipeline hardening           | Parallel | No (headless)            |
-| B2    | Mapping layer spec (hit-test → patch → normalize)   | Parallel | No (design + tests only) |
-| B3    | Wire canvas into `WidgetTreeLab`; tree ↔ canvas sel | Lower    | **Yes** — after WB-28 S2 |
-| B4    | Drag reparent, grid reflow, optional zoom/pan       | Deferred | Yes — Lane C overlap     |
+| Phase | Scope                                               | Priority | Blocks on Lane A?              |
+| ----- | --------------------------------------------------- | -------- | ------------------------------ |
+| B0    | JDW v7 parse/patch/layout                           | **Done** | No                             |
+| B1    | Schema parity; preview pipeline hardening           | Parallel | No (headless)                  |
+| B2    | Mapping layer spec (hit-test → patch → normalize)   | Parallel | No (design + tests only)       |
+| B3    | Wire canvas into `WidgetTreeLab`; tree ↔ canvas sel | Lower    | **Yes** — after WB-29 closeout |
+| B4    | Drag reparent, grid reflow, optional zoom/pan       | Deferred | Yes — Lane C overlap           |
 
 ### Track B-UX — JDW editor UX (parallel, tree-first)
 
 From [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). Improves `WidgetTreeLab` / `WidgetTreeWorkbench` without waiting for canvas unless noted.
 
-| Session   | UX phase | Scope                                                                  | Effort | Timing vs Lane A / Lane B                          |
-| --------- | -------- | ---------------------------------------------------------------------- | ------ | -------------------------------------------------- |
-| **B-UX1** | UX-1     | Validation banner + baseline dirty/Save gating parity with JsonConfig  | S–M    | **Deferred** — after **WB-29** (Lane A milestone)  |
-| **B-UX2** | UX-2     | Outline DnD reorder + keyboard navigation + Monaco reveal (basic)      | M      | After B-UX1; parallel to S8–S9 when unblocked      |
-| **B-UX3** | UX-3     | Stack placement inspector, side-panel layout, asset insert auto-select | M      | Parallel to **B-S1 (B1)** schema parity            |
-| **B-UX4** | UX-4     | Preview hit-test selection ↔ outline sync                              | M      | **After B-S2 (B2)** mapping spec + headless tests  |
-| **B-UX5** | UX-5     | Canvas wire-in to lab (gesture commit)                                 | L      | **After WB-28 S2 + B3** — shares React layout work |
+| Session   | UX phase | Scope                                                                  | Effort | Timing vs Lane A / Lane B                         |
+| --------- | -------- | ---------------------------------------------------------------------- | ------ | ------------------------------------------------- |
+| **B-UX1** | UX-1     | Validation banner + baseline dirty/Save gating parity with JsonConfig  | S–M    | **Deferred** — after **WB-29** (Lane A milestone) |
+| **B-UX2** | UX-2     | Outline DnD reorder + keyboard navigation + Monaco reveal (basic)      | M      | After B-UX1; parallel to S8–S9 when unblocked     |
+| **B-UX3** | UX-3     | Stack placement inspector, side-panel layout, asset insert auto-select | M      | Parallel to **B-S1 (B1)** schema parity           |
+| **B-UX4** | UX-4     | Preview hit-test selection ↔ outline sync                              | M      | **After B-S2 (B2)** mapping spec + headless tests |
+| **B-UX5** | UX-5     | Canvas wire-in to lab (gesture commit)                                 | L      | **After B3** — shares React layout work           |
 
-**First session recommendation (when unblocked):** **B-UX1** — highest ROI, no mapping-layer dependency, closes gap vs `JsonConfigWorkbench`. **Blocked until WB-29 lands.**
+**First session recommendation (when unblocked):** **B-UX1** — highest ROI, no mapping-layer dependency, closes gap vs `JsonConfigWorkbench`. **Blocked until WB-29 closeout.**
 
 ### Track D — timing (refreshed)
 
 | Phase | When to start                          | Notes                                       |
 | ----- | -------------------------------------- | ------------------------------------------- |
-| D0–D1 | **Now** — parallel with S8.6 / S9 prep | Inventory + dead WIP; no Lane A block       |
+| D0–D1 | **Now** — parallel with WB-29 closeout | Inventory + dead WIP; no Lane A block       |
 | D2    | After Track B **B1**                   | Dual render unify; ties to preview strategy |
 | D3    | After **Lane A DoD**                   | Legacy shim removal                         |
 | D4    | Continuous                             | Doc truth; close with S12                   |
@@ -137,7 +137,7 @@ Inventory and low-risk cleanup can run **parallel to S7–S8** (D0–D1). Render
 | Phase | Scope                                                                                         | Priority | Timing                        | Blocks on Lane A? |
 | ----- | --------------------------------------------------------------------------------------------- | -------- | ----------------------------- | ----------------- |
 | D0    | Inventory: React JDW surface, headless `@workbench-kit/jdw`, dual render, dual document model | Parallel | **S7–S8** (any session)       | No                |
-| D1    | Remove dead WIP / misleading paths (`./jdw/config` alias, `JsonWorkbenchDocument` shim, etc.) | Parallel | **S7–S8**                     | No                |
+| D1    | Remove dead WIP / misleading paths (`JsonWorkbenchDocument` shim, validation shim, etc.)      | Parallel | Any cleanup pass              | No                |
 | D2    | Unify dual render paths (`cssRenderBackend` vs `renderBuiltinWidgetNode`)                     | P1       | **After Track B B1**          | No (Lane B tie)   |
 | D3    | Drop legacy compat shims (static capability seed, URI models, editor scaffold trim)           | P6–P8    | **After Lane A DoD**          | Yes               |
 | D4    | Doc truth: cleanup register, render-mode decision, stale README footers                       | —        | Continuous; closeout with S12 | Partial           |
@@ -155,7 +155,6 @@ Inventory and low-risk cleanup can run **parallel to S7–S8** (D0–D1). Render
 
 **D1 candidates (low risk)**
 
-- `./jdw/config` export → actual `packages/react/src/json-config/index.ts` (name mismatch)
 - `JsonWorkbenchDocument` type alias in `workbench/schema/index.ts`
 - `renderJdw` calls `validateJsonWidgetData` but ignores issues (`renderJdw.tsx`)
 
@@ -167,7 +166,7 @@ Single preview strategy: `JdwPreview` + `BUILTIN_JDW_REGISTRY` should not mix re
 
 - `ExtensionRegistry` static capability map seed
 - Generic `ResourceUri` vs `WorkspaceResourceUri` dual model
-- `EditorHostFactoryRegistry` scaffold trim (after WB-28 S2 consumption stable)
+- `EditorHostFactoryRegistry` API trim only after a second editor host proves extra context is unnecessary
 
 See [React JDW-like surfaces](#react-jdw-like-surfaces-duplicate-vs-consumer) for duplicate vs consumer relationships.
 
@@ -327,27 +326,27 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ### S3 — Done (2026-06-16)
 
-| Deliverable                                        | Status  | Notes                                                     |
-| -------------------------------------------------- | ------- | --------------------------------------------------------- |
-| Save command → `applyWorkspaceResourceTransaction` | Done    | `editor.save` via `WorkspaceService` + `saveActiveEditor` |
-| Dirty sync with last applied snapshot              | Done    | Tab + host dirty cleared; snapshot version increments     |
-| Text file create/update mutation                   | Done    | `buildEditorSaveMutation` chooses create vs save          |
-| Explorer open → editor tab (resource identity)     | Missing | Depends on WB-29 precursor                                |
+| Deliverable                                        | Status | Notes                                                                        |
+| -------------------------------------------------- | ------ | ---------------------------------------------------------------------------- |
+| Save command → `applyWorkspaceResourceTransaction` | Done   | `editor.save` via `WorkspaceService` + `saveActiveEditor`                    |
+| Dirty sync with last applied snapshot              | Done   | Tab + host dirty cleared; snapshot version increments                        |
+| Text file create/update mutation                   | Done   | `buildEditorSaveMutation` chooses create vs save                             |
+| Explorer open → editor tab (resource identity)     | Done   | `workspace.open` command opens editor tabs through editor service capability |
 
 ---
 
 ## 5. Dependencies & Blockers
 
-| Dependency / blocker                    | Impact on plan                                              | Mitigation                                                         |
-| --------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
-| **WB-15 deferred**                      | WB-20/22 out of scope; no global dirty guard dialog         | WB-28 uses editor-local dirty only until policy written            |
-| **Dual render paths**                   | `@workbench-kit/react` demo shell vs `workbench-react` host | Sample host proves Lane A; Integrated Shell stays extended demo    |
-| **WorkbenchDocument vs JDW**            | Widget files must not persist absolute canvas coords        | JDW canonical; mapping layer for Figma gestures (Lane B B2)        |
-| **EditorHostFactory scaffold**          | API may evolve during S2                                    | Keep scaffold through S2; trim only after React consumption stable |
-| **Generic vs workspace ResourceUri**    | Editor/explorer binding confusion                           | `WorkspaceResourceUri` for virtual workspace only                  |
-| **WB-29 needs WB-28 resource identity** | Explorer reveal/open blocked                                | Complete S2 before S9; S3 recommended before S9                    |
-| **Transaction persistence**             | No undo stack or disk adapter                               | In-memory virtual workspace for Lane A                             |
-| **Lane B canvas UX**                    | Touches shared React layout                                 | B1–B2 headless only; B3 after WB-28 S3 / Lane A priority           |
+| Dependency / blocker                 | Impact on plan                                              | Mitigation                                                                       |
+| ------------------------------------ | ----------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **WB-15 deferred**                   | WB-20/22 out of scope; no global dirty guard dialog         | WB-28 uses editor-local dirty only until policy written                          |
+| **Dual render paths**                | `@workbench-kit/react` demo shell vs `workbench-react` host | Sample host proves Lane A; Integrated Shell stays extended demo                  |
+| **WorkbenchDocument vs JDW**         | Widget files must not persist absolute canvas coords        | JDW canonical; mapping layer for Figma gestures (Lane B B2)                      |
+| **Editor host API stabilization**    | New editor hosts may need additional context fields         | Keep the factory contract minimal; add fields only when a second host needs them |
+| **Generic vs workspace ResourceUri** | Editor/explorer binding confusion                           | `WorkspaceResourceUri` for virtual workspace only                                |
+| **WB-29 selection/reveal closeout**  | Explorer/editor sync still needs browser smoke coverage     | Verify current command handlers and sample flows before moving to WB-30          |
+| **Transaction persistence**          | No undo stack or disk adapter                               | In-memory virtual workspace for Lane A                                           |
+| **Lane B canvas UX**                 | Touches shared React layout                                 | B1–B2 headless only; B3 after WB-29 closeout / Lane A priority                   |
 
 ---
 
@@ -398,8 +397,8 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ### WB-29 → WB-31
 
-- [ ] WB-29 — Command-backed explorer CRUD
-- [ ] WB-29 — Tree selection ↔ editor resource sync
+- [x] WB-29 — Command handlers and UI dispatch for explorer CRUD/open
+- [ ] WB-29 — Selection/reveal/search closeout and sample smoke
 - [ ] WB-30 — Preference scopes (default/workspace/local)
 - [ ] WB-30 — At least one scoped setting demonstrated
 - [ ] WB-31 — Devtools inspectors (Storybook)
@@ -420,12 +419,13 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 - [ ] B-UX2 — Outline DnD reorder + keyboard nav (UX-2)
 - [ ] B-UX3 — Stack placement + side panel + asset UX (UX-3)
 - [ ] B-UX4 — Preview hit-test selection (UX-4; after B2)
-- [ ] B-UX5 — Canvas authoring in lab (UX-5; after B3 + WB-28 S2)
+- [ ] B-UX5 — Canvas authoring in lab (UX-5; after B3; editor shell is already stable)
 
 ### Track D (cleanup)
 
 - [ ] D0 — Inventory React JDW / dual render / dual document model
-- [ ] D1 — Remove dead WIP paths (`./jdw/config` alias, validation shim, type alias)
+- [x] D1 — Remove misleading `./jdw/config` export alias
+- [ ] D1 — Remove remaining dead WIP paths (validation shim, type alias)
 - [ ] D2 — Unify dual render paths (after B1)
 - [ ] D3 — Drop legacy compat shims (after Lane A DoD)
 - [ ] D4 — Doc truth aligned with code
@@ -465,6 +465,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Date       | Note                                                                                                                                |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-20 | Plan refresh: WB-29 command handlers/UI dispatch landed; closeout remains for selection/reveal/search and sample smoke coverage     |
 | 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7                                                    |
 | 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                                                                                 |
 | 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow                                                              |

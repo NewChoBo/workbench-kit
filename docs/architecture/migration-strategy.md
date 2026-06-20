@@ -22,28 +22,33 @@ This document defines how Workbench Kit moves from the **current published stack
 
 ## Bulk Replacement Phases
 
-### M0 — Structure lock (done / in progress)
+### M0 — Structure lock
 
 - Architecture docs, schemas, package skeletons, `.workbench` sample
 - [Package Map](./package-map.md) and this document approved
 
-**Exit:** No new features in removed legacy package paths or `react/workbench` orchestration without migration ticket.
+**Exit:** No new features in legacy package paths or `react/workbench`
+orchestration without migration ticket.
 
 ### M1 — Platform consolidation
 
 **Goal:** Single command/context/keybinding implementation.
 
-**Status:** Done. `@workbench-kit/platform` owns command, menu, context-key, when-clause, and keybinding APIs. The legacy `@workbench-kit/core` compatibility shim has been removed.
+**Status:** Done for canonical API ownership. `@workbench-kit/platform` owns
+command, menu, context-key, when-clause, and keybinding APIs. Legacy
+compatibility packages remain in the repository, but are isolated from the
+target workbench graph.
 
 | Step | Action                                                                                                                          |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------- |
 | 1    | Move `core/src/commands.ts`, `when-clause.ts`, `context-keys.ts` into `platform` (or make `platform` re-export them internally) |
 | 2    | Align `platform` Phase 1 APIs with merged code; delete duplicate minimal `evaluate-when` if redundant                           |
-| 3    | Remove `@workbench-kit/core` after bulk replacement                                                                             |
-| 4    | Remove legacy VS Code bridge packages once demo runtime wiring uses `platform` / `services` directly                            |
+| 3    | Keep new work off `@workbench-kit/core`; remove the package in a later compatibility cleanup                                    |
+| 4    | Keep new work off legacy VS Code bridge packages; remove them in a later compatibility cleanup                                  |
 | 5    | Root `typecheck` + tests green                                                                                                  |
 
-**Exit:** `core` has no unique implementation and no package, import, or publish reference remains.
+**Exit:** `core` has no unique target implementation and no new target-graph
+imports.
 
 ### M2 — Workbench core host
 
@@ -97,10 +102,10 @@ This document defines how Workbench Kit moves from the **current published stack
 | Step | Action                                                                                                         |
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Add public-ready `base`, `platform`, `workbench-extension-sdk`, `workbench-config` to `NPM_PUBLISH_ORDER`      |
-| 2    | Remove the legacy `core` package from the workspace and publish order                                          |
+| 2    | Keep legacy `core` out of publish order and target graph; package removal remains cleanup work                 |
 | 3    | Update README package list and private-preview shell package notes                                             |
 | 4    | Add `check:dependency-graph` and wire it into `pnpm validate` as the dependency-cruiser equivalent for this M5 |
-| 5    | Remove VS Code bridge and adapter packages; future VS Code work is outside the current package graph           |
+| 5    | Keep VS Code bridge and adapter packages out of the current package graph; removal remains cleanup work        |
 | 6    | Add `check:public-exports` and wire it into `pnpm validate` for package export/publish metadata hardening      |
 
 ## What Not to Bulk-Replace

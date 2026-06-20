@@ -255,27 +255,6 @@ export const ActivityBarSecondarySettings: Story = {
   ),
 };
 
-/** @deprecated Use ActivityBarIntegratedShell — kept for baseline play alias. */
-export const ActivityBarStandalone: Story = {
-  name: 'ActivityBar / Standalone (legacy)',
-  render: () => (
-    <div style={{ height: 'min(calc(100% - 120px), 500px)', background: 'var(--color-bg)' }}>
-      <ActivityBar
-        items={toActivityBarItems(integratedShellActivityDescriptors, { activeId: 'explorer' })}
-        secondaryItems={[settingsSecondaryItem()]}
-      />
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvas.getByRole('navigation', { name: 'Activity bar' })).toBeVisible();
-    await expect(canvas.getByRole('button', { name: 'Explorer' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-  },
-};
-
 export const SplitViewStandalone: Story = {
   render: () => {
     const [primarySizePercent, setPrimarySizePercent] = useState(32);

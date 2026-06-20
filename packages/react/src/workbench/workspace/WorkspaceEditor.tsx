@@ -8,7 +8,7 @@ import { extensionOfPath } from './path';
 import { WorkspacePathLabel } from './WorkspacePathLabel';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceFile } from './types';
-import { JDW_DOCUMENT_MIME } from '../../jdw/document';
+import { JDW_WIDGET_DOCUMENT_MIME } from '../../jdw/document';
 import {
   configureWorkspaceEditorJsonDiagnostics,
   monacoModelPathForWorkspaceFile,
@@ -123,7 +123,7 @@ export function languageForFile(path: string, mimeType?: string) {
     case 'text/javascript':
       return 'javascript';
     case 'application/json':
-    case JDW_DOCUMENT_MIME:
+    case JDW_WIDGET_DOCUMENT_MIME:
     case 'application/vnd.workbench-kit.widget+json':
       return 'json';
     case 'application/typescript':

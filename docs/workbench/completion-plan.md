@@ -1,11 +1,11 @@
 # Workbench Completion Plan — Lane A (Theia-Inspired Core)
 
-**Status:** Active roadmap (2026-06-16)  
+**Status:** Active roadmap (updated 2026-06-20)
 **Branch:** `feature/theia-strengths-workbench`  
 **Audience:** Korean-speaking team; document language is English per project convention.
 
 This document is the **master completion roadmap** for the Theia-inspired workbench
-lane (Lane A). Slice-level detail for the next implementation pass remains in
+lane (Lane A). Historical slice detail remains in
 [next-slice-plan.md](./next-slice-plan.md). The work queue and acceptance criteria
 for individual WB items remain in [todo.md](./todo.md).
 
@@ -33,11 +33,11 @@ i18n, preview zoom/pan), or deferred kit items WB-15 / WB-20 / WB-22.
 
 ### Completion estimate
 
-| Scope                                        | Estimate                                                             | Caveats                                                                               |
-| -------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| **Lane A (WB-23 → WB-31)**                   | **~60%** (5 of 9 slices landed; WB-28 S2 done; S3 save path remains) | WB-27 committed (`813cbca`); editor transaction save path remains                     |
-| **Workbench Kit foundation (WB-01 → WB-22)** | **~90%**                                                             | WB-15 deferred; WB-20 / WB-22 blocked on dirty policy                                 |
-| **End-to-end "product-ready workbench"**     | **~40%**                                                             | Sample host is minimal; Integrated Shell in Storybook still carries richer demo flows |
+| Scope                                        | Estimate                                                       | Caveats                                                                                    |
+| -------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Lane A (WB-23 → WB-31)**                   | **~80%** (WB-23 → WB-28 landed; WB-29 command handlers landed) | WB-29 closeout, preference scopes, and registry inspectors remain                          |
+| **Workbench Kit foundation (WB-01 → WB-22)** | **~90%**                                                       | WB-15 deferred; WB-20 / WB-22 blocked on dirty policy                                      |
+| **End-to-end "product-ready workbench"**     | **~50%**                                                       | Sample host covers shell/editor/auth slices; plugin store and real backend remain deferred |
 
 Treat percentages as planning signals, not release metrics. The remaining Lane A
 work is **integration-heavy** (editor + explorer on commands + preference scopes),
@@ -76,16 +76,17 @@ Canonical direction docs: [theia-strengths-workplan.md](./theia-strengths-workpl
 
 ### Lane A slices (WB-23 → WB-27)
 
-| ID        | Item                                             | Status               | Evidence paths                                                                                                                                                        | Validation                                                          |
-| --------- | ------------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| **WB-23** | Workbench sample host + launch boundary          | **Done**             | `examples/workbench-sample/`, root script `pnpm workbench-sample`, `scripts/check-launch-boundary.mjs`                                                                | `pnpm --filter workbench-sample typecheck`, `pnpm validate`         |
-| **WB-24** | ViewHost lifecycle contract                      | **Done**             | `packages/workbench-extension-sdk/` (ViewHost metadata + hooks), `packages/workbench-react/src/shell.tsx` (show/hide/focus/blur/resize)                               | SDK + react typecheck; Storybook integrated shell                   |
-| **WB-26** | Disposable `CapabilityRegistry`                  | **Done**             | `packages/workbench-core/src/capability-registry.ts`, `extension-registry.ts` (`capabilityRegistry`, extension `registerProvider`)                                    | `packages/workbench-core/src/capability-registry.test.ts`           |
-| **WB-25** | View/editor host factory registry                | **Done**             | `packages/workbench-core/src/host-factory-registry.ts`, `workbench-react` factory resolution; `EditorHostFactoryRegistry` **scaffold only**                           | `host-factory-registry.test.ts`                                     |
-| **WB-27** | Resource URI / snapshot / mutation / transaction | **Done**             | `packages/workspace/src/resource-uri.ts`, `resource-snapshot.ts`, `resource-mutation.ts`, `resource-transaction.ts`, `resource-transaction.test.ts`; commit `813cbca` | `pnpm --filter @workbench-kit/workspace typecheck`; workspace tests |
-| **WB-28** | Editor contribution and service model            | **In progress (S2)** | `EditorService`, `EditorArea` tab chrome, `builtin.editor` text resolver/host, sample open-file flow                                                                  | `workbench-core` + `workbench-react` tests; `pnpm validate`         |
+| ID        | Item                                             | Status   | Evidence paths                                                                                                                                                        | Validation                                                          |
+| --------- | ------------------------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **WB-23** | Workbench sample host + launch boundary          | **Done** | `examples/workbench-sample/`, root script `pnpm workbench-sample`, `scripts/check-launch-boundary.mjs`                                                                | `pnpm --filter workbench-sample typecheck`, `pnpm validate`         |
+| **WB-24** | ViewHost lifecycle contract                      | **Done** | `packages/workbench-extension-sdk/` (ViewHost metadata + hooks), `packages/workbench-react/src/shell.tsx` (show/hide/focus/blur/resize)                               | SDK + react typecheck; Storybook integrated shell                   |
+| **WB-26** | Disposable `CapabilityRegistry`                  | **Done** | `packages/workbench-core/src/capability-registry.ts`, `extension-registry.ts` (`capabilityRegistry`, extension `registerProvider`)                                    | `packages/workbench-core/src/capability-registry.test.ts`           |
+| **WB-25** | View/editor host factory registry                | **Done** | `packages/workbench-core/src/host-factory-registry.ts`, `workbench-react` view factory resolution, editor factories consumed through `EditorService`                  | `host-factory-registry.test.ts`                                     |
+| **WB-27** | Resource URI / snapshot / mutation / transaction | **Done** | `packages/workspace/src/resource-uri.ts`, `resource-snapshot.ts`, `resource-mutation.ts`, `resource-transaction.ts`, `resource-transaction.test.ts`; commit `813cbca` | `pnpm --filter @workbench-kit/workspace typecheck`; workspace tests |
+| **WB-28** | Editor contribution and service model            | **Done** | `EditorService`, `EditorArea` tab chrome, `builtin.editor` text resolver/host, `editor.save` transaction path, sample Code/Form/Preview editor flow                   | `workbench-core` + `workbench-react` tests; `pnpm validate`         |
 
-> **Commit note:** WB-27 landed in commit `813cbca`. Continue WB-28 S2 (React tab chrome) and S3 (save via transactions) on this branch.
+> **Status note:** Explorer open/reveal integration now belongs to WB-29 so
+> explorer UI, palette, and context menus can share command-backed handlers.
 
 ### Prior foundation (selected)
 
@@ -108,12 +109,15 @@ Canonical direction docs: [theia-strengths-workplan.md](./theia-strengths-workpl
 ## 4. Remaining Work — Phased Completion Plan
 
 Each phase maps to one WB item. Phases are **sequential** unless noted.
+Phase A is retained below as a completed reference; active remaining work starts
+at Phase B.
 
-### Phase A — WB-28 Editor contribution and service model (P1)
+### Completed Phase A — WB-28 Editor contribution and service model (P1)
 
 | Field          | Detail                                                                                                                                   |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Depends on** | WB-24, WB-25, WB-27 (land WB-27 commit first)                                                                                            |
+| **Status**     | Done                                                                                                                                     |
+| **Depends on** | WB-24, WB-25, WB-27                                                                                                                      |
 | **Packages**   | `@workbench-kit/workbench-core`, `@workbench-kit/workbench-react`, `@workbench-kit/workbench-extension-sdk`, `@workbench-kit/workspace`  |
 | **Goal**       | Editor tabs/groups, dirty state, preview/pinned semantics, editor resolver hooks; **consume** `EditorHostFactoryRegistry` in React shell |
 
@@ -146,10 +150,11 @@ pnpm workbench-sample
 
 ---
 
-### Phase B — WB-29 Command-backed built-in explorer (P2)
+### In-progress Phase B — WB-29 Command-backed built-in explorer (P2)
 
 | Field          | Detail                                                                                                                 |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Status**     | Command handlers and UI command dispatch landed; closeout and validation remain                                        |
 | **Depends on** | WB-26, WB-27, WB-28 (resource identity for reveal/open)                                                                |
 | **Packages**   | `extensions/builtin.explorer`, `@workbench-kit/workspace`, `@workbench-kit/workbench-react`, `@workbench-kit/platform` |
 
@@ -159,6 +164,13 @@ pnpm workbench-sample
 2. Commands: create, rename, delete, move, search, reveal — handlers apply `WorkspaceResourceTransaction`.
 3. Built-in explorer view provider calls `executeCommand` instead of mutating reducer directly from UI events.
 4. Selection sync: tree selection ↔ active editor resource.
+
+**Current status**
+
+- `extensions/builtin.explorer` registers workspace create/open/copy/rename/delete/move command handlers.
+- Mutating handlers apply `WorkspaceResourceTransaction` through the workspace service capability.
+- `workbench-react` explorer UI dispatches workspace operations through `executeCommand(...)`.
+- Remaining closeout should confirm selection/reveal sync, search behavior, and browser smoke coverage.
 
 **Acceptance criteria**
 
@@ -265,13 +277,14 @@ pnpm validate:full
 | --------------------------------------------------- | ---------- | ---------------------------------------------------------------------- |
 | `PreviewZoomToolbar`, `usePreviewViewport`          | 2026-06-14 | [next-slice-plan.md](./next-slice-plan.md) § Code truth                |
 | `@workbench-kit/react/json-widget` export           | 2026-06-14 | Use `widget-tree` or `jdw`                                             |
+| `@workbench-kit/react/jdw/config` export alias      | 2026-06-20 | Use `@workbench-kit/react/json-config`                                 |
 | `JsonWidget/Playground`, `demo-playground-registry` | Prior      | [strengths-inheritance.md](./strengths-inheritance.md) historical rows |
 
 ### Intentionally retained (scaffolds / demos)
 
 | Item                                                | Location                                 | Action                                                                   |
 | --------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------ |
-| `EditorHostFactoryRegistry`                         | `workbench-core`                         | **Keep** until WB-28 wires React shell; trim only if WB-28 redesigns API |
+| `EditorHostFactoryRegistry`                         | `workbench-core`                         | **Keep**; React shell consumes it through `EditorService` / `EditorArea` |
 | `packages/react/src/workbench/demo/`                | Integrated Shell Storybook               | Keep as rich demo; sample host stays minimal                             |
 | Monaco skeleton in widget-tree / json-config        | `@workbench-kit/react`                   | Keep; not Lane A scope                                                   |
 | React JDW render layer                              | `packages/react/src/jdw/`                | **Keep in-repo** — no separate `jdw-react` package or git subtree split  |
@@ -280,17 +293,16 @@ pnpm validate:full
 
 ### Open — Track D (cleanup & compatibility removal)
 
-| Item                                                                                                      | Priority | Doc / timing                                                                                                   |
-| --------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
-| Track D: dual JDW render unify, `./jdw/config` alias, validation gating, legacy shim removal — see phases | P1–P8    | [session-work-plan.md](./session-work-plan.md) Track D; D0–D1 parallel S7–S8; D2 after B1; D3 after Lane A DoD |
+| Item                                                                                | Priority | Doc / timing                                                                                          |
+| ----------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
+| Track D: dual JDW render unify, validation gating, legacy shim removal — see phases | P1–P8    | [session-work-plan.md](./session-work-plan.md) Track D; D1 parallel, D2 after B1, D3 after Lane A DoD |
 
-### Doc hygiene still stale
+### Doc hygiene watchlist
 
-| Document                               | Issue                                       | Action                                      |
-| -------------------------------------- | ------------------------------------------- | ------------------------------------------- |
-| `examples/workbench-sample/README.md`  | Footer still lists WB-26/WB-25 as follow-up | Update when WB-28 starts                    |
-| `next-slice-plan.md`                   | Slice 5 detail thin vs earlier slices       | Keep slice detail here; roadmap in this doc |
-| `theia-strengths-workplan.md` Progress | Add WB-27 commit SHA when landed            | Update on WB-27 commit                      |
+| Document                               | Issue                              | Action                                     |
+| -------------------------------------- | ---------------------------------- | ------------------------------------------ |
+| `next-slice-plan.md`                   | Historical 2026-06-14 slice detail | Keep as history; roadmap stays in this doc |
+| `theia-strengths-workplan.md` Progress | Needs current WB-28/WB-29 split    | Keep progress log aligned with `todo.md`   |
 
 ---
 
@@ -299,14 +311,14 @@ pnpm validate:full
 Use this checklist for branch merge or release tagging of the Theia-inspired lane.
 
 - [ ] **Runnable host:** `pnpm build:workbench-extensions && pnpm workbench-sample` shows activity bar, explorer with workspace tree, editor tabs, status bar.
-- [ ] **Factories wired:** View hosts created via `ViewHostFactoryRegistry`; editors via `EditorHostFactoryRegistry`.
+- [x] **Factories wired:** View hosts created via `ViewHostFactoryRegistry`; editors via `EditorHostFactoryRegistry`.
 - [ ] **Resources consumed:** Explorer CRUD and editor save paths use `WorkspaceResourceTransaction` / mutations, not ad hoc reducer calls from UI.
 - [ ] **Commands:** Built-in explorer operations registered as commands with shared handlers for palette, context menu, and tree UI.
 - [ ] **Capabilities:** Extensions can `registerProvider` and receive dispose on deactivate; no new static cross-imports.
 - [ ] **Preferences:** Default / workspace / local merge demonstrated with at least one setting key.
 - [ ] **Devtools (optional v1):** Storybook inspector story lists registry snapshots after WB-31.
 - [ ] **Validation:** `pnpm validate:full` passes on CI-equivalent clean install.
-- [ ] **Docs:** `todo.md`, `theia-strengths-workplan.md`, and this plan reflect final status; WB-27 commit referenced.
+- [ ] **Docs:** `todo.md`, `theia-strengths-workplan.md`, and this plan reflect final Lane A status.
 - [ ] **Boundaries:** `check-launch-boundary`, manifest, dependency graph, and public export checks pass.
 
 ---
@@ -316,25 +328,25 @@ Use this checklist for branch merge or release tagging of the Theia-inspired lan
 ### Slice order (strict)
 
 ```text
-WB-27 commit → WB-28 → WB-29 → WB-30 → WB-31 → Lane A DoD checklist
+WB-29 closeout → WB-30 → WB-31 → Lane A DoD checklist
 ```
 
-### Sessions (5–8)
+### Sessions
 
-| Session | Goal                             | Exit criteria                                                                       |
-| ------- | -------------------------------- | ----------------------------------------------------------------------------------- |
-| **S0**  | Land WB-27 + doc cross-links     | WB-27 files committed; workspace tests green; this plan linked from README/todo     |
-| **S1**  | WB-28a — SDK + core editor model | Types, editor group state, factory consumption contract reviewed; core tests pass   |
-| **S2**  | WB-28b — React editor chrome     | Tab strip, dirty/preview/pin in `workbench-react`; sample host opens a file         |
-| **S3**  | WB-28c — Save via transactions   | Editor save applies `WorkspaceResourceTransaction`; Integrated Shell or sample demo |
-| **S4**  | WB-29 — Command-backed explorer  | Tree CRUD via commands; sample host create/rename/delete                            |
-| **S5**  | WB-30 — Preference scopes        | Merge helper + one scoped setting in sample or Storybook                            |
-| **S6**  | WB-31 — Devtools inspectors      | Storybook devtools story; registry/transaction visibility                           |
-| **S7**  | Lane A closeout                  | `validate:full`, DoD checklist, update progress in `theia-strengths-workplan.md`    |
+| Session | Goal                             | Exit criteria                                                                     |
+| ------- | -------------------------------- | --------------------------------------------------------------------------------- |
+| **S0**  | Land WB-27 + doc cross-links     | Done                                                                              |
+| **S1**  | WB-28a — SDK + core editor model | Done                                                                              |
+| **S2**  | WB-28b — React editor chrome     | Done                                                                              |
+| **S3**  | WB-28c — Save via transactions   | Done                                                                              |
+| **S4**  | WB-29 — Command-backed explorer  | Closeout selection/reveal/search behavior; sample host create/rename/delete smoke |
+| **S5**  | WB-30 — Preference scopes        | Merge helper + one scoped setting in sample or Storybook                          |
+| **S6**  | WB-31 — Devtools inspectors      | Storybook devtools story; registry/transaction visibility                         |
+| **S7**  | Lane A closeout                  | `validate:full`, DoD checklist, update progress in `theia-strengths-workplan.md`  |
 
-**First session after this plan:** Commit WB-27 + documentation updates **or** start WB-28 SDK types in parallel only if WB-27 commit is queued in the same PR.
+**Next active session:** WB-29 command-backed explorer closeout.
 
-**Estimated remaining slices:** 4 primary (WB-28 → WB-31) + 1 commit hygiene (WB-27) ≈ **5 implementation units** at current granularity.
+**Estimated remaining slices:** 3 primary (WB-29 → WB-31) + Lane A closeout.
 
 ---
 
@@ -343,29 +355,28 @@ WB-27 commit → WB-28 → WB-29 → WB-30 → WB-31 → Lane A DoD checklist
 | Risk / decision                                           | Impact                                            | Recommendation                                                                                              |
 | --------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | **WB-15 dirty policy** blocks WB-20/22                    | Resource draft shells stay out of Lane A          | Keep WB-15 deferred; WB-28 uses editor-local dirty until policy is written                                  |
-| **EditorHostFactory scaffold** vs trim                    | WB-28 may reshape editor host context             | **Keep scaffold** through WB-28a; delete unused fields only after React consumption is stable               |
+| **Editor host API stabilization**                         | New editor hosts may need more context fields     | Keep the factory contract minimal; add fields only when a second editor host needs them                     |
 | **Dual resource URI models** (`contracts` vs `workspace`) | Confusion in editor/explorer binding              | Use `WorkspaceResourceUri` for virtual workspace; generic `ResourceUri` for cross-domain contracts only     |
 | **Sample host vs Integrated Shell**                       | Demo drift                                        | Sample host proves Lane A flows; Storybook Integrated Shell remains extended demo — document both in README |
-| **WB-27 uncommitted**                                     | Other clones lack resource APIs                   | Prioritize S0 commit before wide WB-28 refactor                                                             |
 | **Transaction persistence**                               | No undo stack or disk adapter yet                 | In-memory virtual workspace only for Lane A; journal adapter is post–Lane A                                 |
-| **Lane B parallel work**                                  | Widget-tree changes may touch shared React layout | Lane B stays headless-first; no editor chrome expansion until WB-28 lands                                   |
+| **Lane B parallel work**                                  | Widget-tree changes may touch shared React layout | Lane B stays headless-first; avoid changing editor shell contracts during WB-29                             |
 
 ---
 
 ## 9. References
 
-| Document                                                       | Purpose                                                   |
-| -------------------------------------------------------------- | --------------------------------------------------------- |
-| [todo.md](./todo.md)                                           | Full WB queue, acceptance criteria, API shapes            |
-| [next-slice-plan.md](./next-slice-plan.md)                     | Active slice detail, code-truth table, pre-plan checklist |
-| [theia-strengths-workplan.md](./theia-strengths-workplan.md)   | Theia adopt/do-not-adopt, validation ladder               |
-| [strengths-inheritance.md](./strengths-inheritance.md)         | Reference repo adoption audit                             |
-| [README.md](./README.md)                                       | Index of workbench notes                                  |
-| [codex-delegation-plan.md](./codex-delegation-plan.md)         | Codex autonomous handoff packages for Lane A completion   |
-| [workbench-core.md](../architecture/workbench-core.md)         | Registry and factory architecture                         |
-| [standalone-host.md](./standalone-host.md)                     | Host assembly without legacy VS Code packages             |
-| [widget-layout-schema-plan.md](./widget-layout-schema-plan.md) | Lane B schema plan                                        |
-| [future-capabilities.md](./future-capabilities.md)             | Lane C deferred backlog                                   |
+| Document                                                       | Purpose                                                 |
+| -------------------------------------------------------------- | ------------------------------------------------------- |
+| [todo.md](./todo.md)                                           | Full WB queue, acceptance criteria, API shapes          |
+| [next-slice-plan.md](./next-slice-plan.md)                     | Historical slice detail and code-truth checkpoint       |
+| [theia-strengths-workplan.md](./theia-strengths-workplan.md)   | Theia adopt/do-not-adopt, validation ladder             |
+| [strengths-inheritance.md](./strengths-inheritance.md)         | Reference repo adoption audit                           |
+| [README.md](./README.md)                                       | Index of workbench notes                                |
+| [codex-delegation-plan.md](./codex-delegation-plan.md)         | Codex autonomous handoff packages for Lane A completion |
+| [workbench-core.md](../architecture/workbench-core.md)         | Registry and factory architecture                       |
+| [standalone-host.md](./standalone-host.md)                     | Host assembly without legacy VS Code packages           |
+| [widget-layout-schema-plan.md](./widget-layout-schema-plan.md) | Lane B schema plan                                      |
+| [future-capabilities.md](./future-capabilities.md)             | Lane C deferred backlog                                 |
 
 ---
 
@@ -373,6 +384,7 @@ WB-27 commit → WB-28 → WB-29 → WB-30 → WB-31 → Lane A DoD checklist
 
 | Date       | Note                                                                                             |
 | ---------- | ------------------------------------------------------------------------------------------------ |
+| 2026-06-20 | WB-28 shell/editor scope treated as landed; WB-29 command handlers landed and closeout remains   |
 | 2026-06-16 | WB-27 committed (`813cbca`); WB-28 S1 foundation (EditorService, resolver registry, React hooks) |
 | 2026-06-16 | Initial completion plan authored; WB-27 noted as uncommitted                                     |
 | 2026-06-16 | Track D cross-ref added to §5 Cleanup & Debt Register                                            |

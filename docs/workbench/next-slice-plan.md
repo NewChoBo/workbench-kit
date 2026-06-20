@@ -3,7 +3,8 @@
 > **For the full Lane A completion roadmap** (phases WB-28 → WB-31, sessions, DoD,
 > risks), see [completion-plan.md](./completion-plan.md).
 
-**Status:** Active planning (2026-06-14)  
+**Status:** Historical slice plan (2026-06-14); current roadmap lives in
+[completion-plan.md](./completion-plan.md)
 **Branch:** `feature/theia-strengths-workbench`  
 **Mode:** Plan-first — implementation follows slice acceptance criteria below.
 

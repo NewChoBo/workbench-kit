@@ -62,8 +62,11 @@ git switch -c feature/codex/chatting-ui
 3. Commit by logical unit.
 4. Write a body for each non-trivial commit.
 5. Run the validation lane selected for the changed surface.
-6. Confirm that no private knowledge or internal sample data entered public source.
-7. Merge by policy:
+6. Review related docs and update stale status tables, sample READMEs, architecture
+   notes, or plans in the same logical commit when behavior or public contracts
+   changed.
+7. Confirm that no private knowledge or internal sample data entered public source.
+8. Merge by policy:
    - single-topic work can merge directly to `main`;
    - grouped work should merge through `staging` first.
 
@@ -256,6 +259,9 @@ Validation: <commands and results>
 - A commit without a body is allowed only for an obvious one-line change.
 - UI changes should mention rendering, accessibility, or browser smoke results.
 - Public-boundary changes should mention private-info search or manual review.
+- Non-doc code changes should either include related documentation updates or
+  state that no docs changed because no public behavior, status table, plan, or
+  sample guidance was affected.
 
 Example:
 

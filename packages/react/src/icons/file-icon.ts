@@ -1,6 +1,6 @@
 import {
-  JDW_DOCUMENT_MIME,
   JDW_SCHEMA_DOCUMENT_MIME,
+  JDW_WIDGET_DOCUMENT_MIME,
   isJdwDocumentPath,
   isJdwSchemaDocumentPath,
 } from '../jdw/document';
@@ -44,7 +44,7 @@ export function fileIconKindForPath(path: string, mimeType?: string): FileIconKi
   if (fileName.startsWith('.env')) return 'env';
   if (fileName.startsWith('.git')) return 'git';
   if (isJdwSchemaDocumentPath(path) || mimeType === JDW_SCHEMA_DOCUMENT_MIME) return 'jdw-schema';
-  if (isJdwDocumentPath(path) || mimeType === JDW_DOCUMENT_MIME) return 'jdw';
+  if (isJdwDocumentPath(path) || mimeType === JDW_WIDGET_DOCUMENT_MIME) return 'jdw';
   if (fileName.endsWith('.schema.json') || mimeType === 'application/schema+json') return 'schema';
   if (mimeType?.startsWith('image/')) return 'image';
   if (mimeType === 'application/pdf' || extension === 'pdf') return 'pdf';

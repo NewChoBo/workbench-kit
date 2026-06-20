@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  JDW_DOCUMENT_FILE_EXTENSION,
-  JDW_DOCUMENT_MIME,
   JDW_SCHEMA_DOCUMENT_FILE_EXTENSION,
   JDW_SCHEMA_DOCUMENT_MIME,
-  JDW_WIDGET_DOCUMENT_FILE_EXTENSION,
   JDW_WIDGET_DOCUMENT_MIME,
   isJdwDocument,
   isJdwDocumentMimeType,
@@ -16,11 +13,6 @@ import {
 } from './document.js';
 
 describe('JDW document file type helpers', () => {
-  it('keeps legacy document constants aliased to widget document constants', () => {
-    expect(JDW_DOCUMENT_FILE_EXTENSION).toBe(JDW_WIDGET_DOCUMENT_FILE_EXTENSION);
-    expect(JDW_DOCUMENT_MIME).toBe(JDW_WIDGET_DOCUMENT_MIME);
-  });
-
   it('separates widget documents from schema documents by extension and MIME', () => {
     expect(isJdwDocumentPath('jdw/home.jdw.json')).toBe(true);
     expect(isJdwDocumentMimeType(JDW_WIDGET_DOCUMENT_MIME)).toBe(true);

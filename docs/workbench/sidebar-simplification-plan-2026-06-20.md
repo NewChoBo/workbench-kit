@@ -26,7 +26,7 @@ Reduce **primary sidebar** complexity while preserving VS Code-like UX:
 - Secondary sidebar / right activity bar
 - Keybinding sidebar view (unless explicitly scoped later)
 - Editor layout ownership (separate backlog — see [Recommended Work Items](./recommended-work-items-2026-06-18.md))
-- Breaking public `@workbench-kit/react` exports without migration note
+- Reintroducing removed public compatibility aliases without a current consumer
 
 ---
 
@@ -228,7 +228,7 @@ pnpm exec vitest run src/layout src/workbench/workspace src/workbench/management
 
 - [ ] Chat composer always visible without spacer hack
 - [ ] Commands status footer does not cover last list item
-- [ ] Remove unused `SideBarScrollSpacer` from Chat if no other consumers
+- [ ] Remove overlay-only spacer code after all consumers migrate to static footer
 
 **Estimate:** 0 h (keep) or ~2 h (static + cleanup)
 

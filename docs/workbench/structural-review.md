@@ -1,6 +1,6 @@
 # Structural Review — Workbench Kit Monorepo
 
-**Status:** Active analysis (2026-06-16)  
+**Status:** Active analysis (updated 2026-06-20)
 **Scope:** Package/layer boundaries, JDW stack, Workbench stack, workspace model, dependency-graph rules  
 **Decision:** No git subtree, no separate `@workbench-kit/jdw-react` package in the current plan.
 
@@ -11,8 +11,8 @@
 - **레이어 구조는 대체로 명확함:** `base → platform → contracts → jdw → workbench-core → workbench-react → react` 순으로 의존하며, `scripts/check-workbench-dependency-graph.mjs`가 금지 엣지를 CI에서 검증함.
 - **가장 큰 구조적 리스크는 JDW 이중 렌더:** `cssRenderBackend`(headless rect → absolute CSS)와 `renderBuiltinWidgetNode`(flex/grid 재귀)가 동일 트리에서 혼재할 수 있음. Track D D2 / Lane B B1에서 통합 필요.
 - **이중 문서 모델:** 위젯 영속화는 JDW v7 단일 SSoT. `WorkbenchDocument`(절대 좌표 캔버스)는 `WorkbenchCanvasShell` 데모 전용이며 위젯 파일과 혼용 금지; **장기 목표는 JDW render + event layer로 통합 후 demo 경로 제거**(Lane A DoD / B2 mapping 이후).
-- **Lane A 갭 (WB-28):** S2(`cb968d2`)에서 `EditorArea`·`builtin.editor`·샘플 open-file 완료; S3 트랜잭션 저장 경로만 남음.
-- **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합 → P2 `./jdw/config` export 정정 → P3 `renderJdw` validation 무시 → Lane A DoD 후 legacy shim 제거.
+- **Lane A 갭:** WB-28 editor shell scope is landed; WB-29 closeout remains for explorer selection/reveal/search smoke coverage.
+- **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합 → P2 `renderJdw` validation 무시 → Lane A DoD 후 legacy shim 제거. `./jdw/config` export alias는 2026-06-20 제거됨.
 - **패키지 분리 제외:** React JDW는 `packages/react/src/jdw`에 유지. headless는 `@workbench-kit/jdw` (`packages/json-widget/`).
 
 ---
@@ -199,7 +199,7 @@ Evidence:
 | Core registries     | `workbench-core`                       | Views, commands, menus, capabilities, editor       |
 | React shell         | `workbench-react`                      | `WorkbenchProvider`, `WorkbenchShell`              |
 | React chrome        | `@workbench-kit/react/workbench/shell` | Activity bar, sidebar, status (presentation)       |
-| Sample host         | `examples/workbench-sample`            | Bundled extensions + minimal editor placeholder    |
+| Sample host         | `examples/workbench-sample`            | Bundled extensions + editor/auth/workspace smoke   |
 | Built-in extensions | `extensions/builtin.*`                 | Explorer, settings, workspace, accounts            |
 
 ### 4.2 Extension activation flow
@@ -234,19 +234,19 @@ sequenceDiagram
 - `packages/workbench-core/src/extension-registry.ts` — `registerContributions` at register time; lazy `activateExtension` on events.
 - `packages/workbench-react/src/shell.tsx` — `activateView` when sidebar container changes; view hosts via `ViewHostFactoryRegistry`.
 
-### 4.3 Finding: EditorService vs shell placeholder (WB-28)
+### 4.3 Finding: EditorService and shell editor flow (WB-28)
 
-| Component          | Status      | Evidence                                               |
-| ------------------ | ----------- | ------------------------------------------------------ |
-| `EditorService`    | Done S1     | `packages/workbench-core/src/editor-service.ts`        |
-| `useEditor*` hooks | Done S1     | `packages/workbench-react/src/use-editor.ts`           |
-| Tab strip UI       | Missing     | No `EditorArea` in `workbench-react`                   |
-| Shell wiring       | Partial     | `WorkbenchShell` requires `editorArea: ReactNode` prop |
-| Sample host        | Placeholder | `examples/workbench-sample/src/App.tsx` — static card  |
+| Component          | Status | Evidence                                        |
+| ------------------ | ------ | ----------------------------------------------- |
+| `EditorService`    | Done   | `packages/workbench-core/src/editor-service.ts` |
+| `useEditor*` hooks | Done   | `packages/workbench-react/src/use-editor.ts`    |
+| Tab strip UI       | Done   | `packages/workbench-react/src/editor-area.tsx`  |
+| Shell wiring       | Done   | `packages/workbench-react/src/shell.tsx`        |
+| Sample host        | Done   | `examples/workbench-sample/src/bootstrap.ts`    |
 
-`WorkbenchShell` passes `editorArea` to `secondaryArea` unchanged — no `EditorService` consumption.
-
-**Recommendation:** WB-28 S2 — build tab chrome in `workbench-react`, wire `useEditorHost`, replace sample `SampleEditorArea`.
+WB-28 editor shell scope is complete: `EditorArea` consumes `EditorService`,
+editor host factories create tab hosts, and the sample host exercises open/save
+flows. WB-29 owns the remaining explorer selection/reveal/search closeout.
 
 ### 4.4 Finding: static capability seed vs `registerProvider`
 
@@ -293,9 +293,9 @@ Checked against `check-workbench-dependency-graph.mjs` rules and spot-read of cr
 | --- | --------------------------------------------------- | -------- | ---------------------------------------------------------------------------- |
 | S1  | Dual JDW render strategies                          | High     | `cssRenderBackend.tsx` + `createBuiltinJdwRegistry.ts`                       |
 | S2  | `WorkbenchDocument` vs JDW dual model               | High     | `contracts/workbench-document-*` vs `json-widget`; widget-tree uses JDW only |
-| S3  | `./jdw/config` export name mismatch                 | Medium   | `packages/react/package.json` → `json-config/index.ts`                       |
+| S3  | `./jdw/config` export name mismatch                 | Resolved | Removed from `packages/react/package.json`; use `./json-config`              |
 | S4  | `renderJdw` ignores validation issues               | Medium   | `renderJdw.tsx` calls `validateJsonWidgetData` but does not gate render      |
-| S5  | Editor shell placeholder gap                        | High     | `shell.tsx` + `workbench-sample/App.tsx`                                     |
+| S5  | Editor shell integration                            | Resolved | `EditorArea`, `EditorService`, `builtin.editor`, sample open/save flow       |
 | S6  | Static capability seed dual path                    | Low      | `extension-registry.ts` + `capability-registry.ts`                           |
 | S7  | `jdw-editor` depends on full `@workbench-kit/react` | Low      | `jdw-editor/package.json` — pulls primitives + shell, not jdw-only           |
 | S8  | `JsonWorkbenchDocument` type alias                  | Low      | `packages/react/src/workbench/schema/index.ts`                               |
@@ -319,7 +319,8 @@ Checked against `check-workbench-dependency-graph.mjs` rules and spot-read of cr
 | Extensions        | Primitives, workbench subsets                                         | Via allowed dep list         |
 | `widget-tree`     | Internal `../jdw/JdwPreview`                                          | In-package relative import   |
 
-**Note:** Public JDW entrypoints: `./jdw`, `./jdw/preview`, `./jdw/samples`. Misleading `./jdw/config` points at `json-config` (see S3).
+**Note:** Public JDW entrypoints: `./jdw`, `./jdw/preview`, and `./jdw/samples`.
+JSON configuration lives under `./json-config`.
 
 ---
 
@@ -330,8 +331,6 @@ Checked against `check-workbench-dependency-graph.mjs` rules and spot-read of cr
 | Priority | Item                          | Action                                             | Track / lane          |
 | -------- | ----------------------------- | -------------------------------------------------- | --------------------- |
 | **P1**   | Dual render unify             | Strategy A only; registry = leaves                 | Track D D2, Lane B B1 |
-| **P1**   | WB-28 editor shell            | Tab UI + `useEditorHost` in default shell flow     | Lane A                |
-| **P2**   | `./jdw/config` alias          | Rename export or add re-export shim + deprecation  | Track D D1            |
 | **P2**   | Validation gating             | Surface `validateJsonWidgetData` issues in preview | Track D D1            |
 | **P3**   | `JsonWorkbenchDocument` alias | Remove or document-only                            | Track D D1            |
 | **P3**   | Capability static seed        | Migrate to `registerProvider` where possible       | Track D D3            |
@@ -350,9 +349,9 @@ Checked against `check-workbench-dependency-graph.mjs` rules and spot-read of cr
 
 | When             | Refactor                                                   |
 | ---------------- | ---------------------------------------------------------- |
-| S7–S8 (parallel) | D0 inventory, D1 dead paths (`./jdw/config`, validation)   |
+| S7–S8 (parallel) | D0 inventory, D1 dead paths (validation/type aliases)      |
 | After Lane B B1  | D2 dual render unify                                       |
-| WB-28 S2         | Editor tab chrome replaces placeholder                     |
+| WB-29 closeout   | Explorer selection/reveal/search smoke coverage            |
 | After Lane A DoD | D3 legacy shims (static capabilities, URI doc enforcement) |
 | Lane C           | `WorkbenchDocument` adapter before any persistence merge   |
 
@@ -364,10 +363,10 @@ Checked against `check-workbench-dependency-graph.mjs` rules and spot-read of cr
 | ------ | ------------- | ------------------------------------------- | ------------------------------------------------ | ------------ |
 | STR-01 | JDW render    | Dual paths: layout backend vs flex registry | Unify Strategy A; leaves-only registry (D2)      | Post-B1      |
 | STR-02 | JDW model     | `WorkbenchDocument` vs JDW drift            | JDW SSoT for widgets; demo adapter only (Lane C) | Deferred     |
-| STR-03 | React exports | `./jdw/config` → `json-config` mismatch     | Fix export path or alias (D1)                    | S7–S8        |
+| STR-03 | React exports | `./jdw/config` → `json-config` mismatch     | Done: remove alias; use `./json-config`          | Done         |
 | STR-04 | JDW quality   | `renderJdw` ignores validation              | Gate or warn in `JdwPreview` (D1)                | S7–S8        |
-| STR-05 | Lane A        | EditorService not in shell                  | WB-28 S2 tab UI + sample host open file          | S7           |
-| STR-06 | Lane A        | Save not via transactions                   | WB-28 S3 `applyWorkspaceResourceTransaction`     | S8           |
+| STR-05 | Lane A        | EditorService shell integration             | Done: `EditorArea` consumes `EditorService`      | Done         |
+| STR-06 | Lane A        | Editor save transaction path                | Done: editor save uses workspace transactions    | Done         |
 | STR-07 | Capabilities  | Static seed + `registerProvider` dual path  | Migrate host seeds; document ownership (D3)      | Post-DoD     |
 | STR-08 | Workspace     | Generic vs `WorkspaceResourceUri`           | Explorer/editor bind workspace scheme only       | WB-28/29     |
 | STR-09 | jdw-editor    | Full `react` dependency                     | Accept for now; optional slim entry later        | Low priority |

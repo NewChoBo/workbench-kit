@@ -3,9 +3,6 @@ export const JDW_WIDGET_DOCUMENT_MIME = 'application/vnd.workbench-kit.jdw+json'
 export const JDW_SCHEMA_DOCUMENT_FILE_EXTENSION = '.jdw.schema.json';
 export const JDW_SCHEMA_DOCUMENT_MIME = 'application/vnd.workbench-kit.jdw-schema+json';
 
-export const JDW_DOCUMENT_FILE_EXTENSION = JDW_WIDGET_DOCUMENT_FILE_EXTENSION;
-export const JDW_DOCUMENT_MIME = JDW_WIDGET_DOCUMENT_MIME;
-
 export interface JdwDocumentRef {
   readonly mimeType?: string | undefined;
   readonly path: string;

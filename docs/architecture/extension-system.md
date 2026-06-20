@@ -60,7 +60,27 @@ refuses to generate a bundle from invalid manifests.
 
 ## Built-in Extensions
 
-Repository-local extensions under `extensions/builtin.*` provide first-party features (accounts UI shell, workspace, explorer, settings, keybindings). They follow the same manifest and SDK rules as sample extensions. The generated bundle includes both manifest data and the entry module, so `.workbench/extensions.json` controls which built-ins are registered and activatable.
+Repository-local extensions under `extensions/builtin.*` provide first-party
+workbench features. They follow the same manifest and SDK rules as sample
+extensions. The generated bundle includes both manifest data and the entry
+module, so `.workbench/extensions.json` controls which built-ins are registered
+and activatable.
+
+| Extension             | Current role                                                                  |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `builtin.accounts`    | Account command/menu/config/capability metadata and profile entry points      |
+| `builtin.chat`        | Chat and AI Chat activity containers, sidebar views, and slash command input  |
+| `builtin.commands`    | Commands activity/sidebar, focus/refresh commands, and view-title menu action |
+| `builtin.editor`      | Text editor contribution resolved by the editor service and React shell       |
+| `builtin.explorer`    | Explorer activity, tree view provider, file commands, and view title actions  |
+| `builtin.keybindings` | Default keybinding contributions such as `ctrl+s` for `editor.save`           |
+| `builtin.search`      | Search activity container and sidebar view                                    |
+| `builtin.settings`    | Settings command, palette entry, and settings configuration contribution      |
+| `builtin.workspace`   | Workspace info command and workspace display-name configuration               |
+
+The root `.workbench/extensions.json` currently enables all repository built-ins
+above for the sample host and keeps the most visible workbench features in
+`recommendations`.
 
 ## Sample Extensions
 

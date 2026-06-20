@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { JDW_DOCUMENT_MIME, JDW_SCHEMA_DOCUMENT_MIME } from '../../jdw/document.js';
+import { JDW_SCHEMA_DOCUMENT_MIME, JDW_WIDGET_DOCUMENT_MIME } from '../../jdw/document.js';
 import { mimeTypeForPath } from './mimeType.js';
 
 describe('mimeTypeForPath', () => {
   it('predefines .jdw.json as a JDW JSON document', () => {
-    expect(mimeTypeForPath('jdw/home.jdw.json')).toBe(JDW_DOCUMENT_MIME);
+    expect(mimeTypeForPath('jdw/home.jdw.json')).toBe(JDW_WIDGET_DOCUMENT_MIME);
     expect(mimeTypeForPath('package.json')).toBe('application/json');
   });
 

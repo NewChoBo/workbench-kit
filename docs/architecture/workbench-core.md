@@ -68,8 +68,10 @@ contributions. `workbench-react` calls `createViewHost` instead of invoking
 registered automatically; extensions and hosts may register higher-priority
 factories through `context.viewHostFactories.registerFactory`.
 
-`EditorHostFactoryRegistry` provides the parallel editor-host contract for WB-28;
-it is registered on `ExtensionRegistry` but not yet consumed by the React shell.
+`EditorHostFactoryRegistry` provides the parallel editor-host contract.
+`ExtensionRegistry` exposes it to extensions, `EditorService` creates and caches
+hosts for editor tabs, and `workbench-react` consumes those hosts through
+`EditorArea` / `useEditorHost`.
 
 ### CapabilityRegistry
 

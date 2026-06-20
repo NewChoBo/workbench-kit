@@ -19,10 +19,10 @@ import {
 } from '@workbench-kit/platform';
 import { ContextMenu, type ContextMenuItem } from '@workbench-kit/react/overlay';
 import {
-  JDW_DOCUMENT_FILE_EXTENSION,
-  JDW_DOCUMENT_MIME,
   JDW_SCHEMA_DOCUMENT_FILE_EXTENSION,
   JDW_SCHEMA_DOCUMENT_MIME,
+  JDW_WIDGET_DOCUMENT_FILE_EXTENSION,
+  JDW_WIDGET_DOCUMENT_MIME,
 } from '@workbench-kit/react/jdw/document';
 import {
   EditorTabs,
@@ -1092,7 +1092,7 @@ function mimeTypeForResource(resourceUri: string): string | undefined {
   const path = pathForResource(resourceUri).toLowerCase();
 
   if (path.endsWith(JDW_SCHEMA_DOCUMENT_FILE_EXTENSION)) return JDW_SCHEMA_DOCUMENT_MIME;
-  if (path.endsWith(JDW_DOCUMENT_FILE_EXTENSION)) return JDW_DOCUMENT_MIME;
+  if (path.endsWith(JDW_WIDGET_DOCUMENT_FILE_EXTENSION)) return JDW_WIDGET_DOCUMENT_MIME;
   if (path.endsWith('.json')) return 'application/json';
   if (path.endsWith('.ts') || path.endsWith('.tsx')) return 'text/typescript';
   if (path.endsWith('.js') || path.endsWith('.jsx')) return 'text/javascript';
