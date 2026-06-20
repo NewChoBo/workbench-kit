@@ -19,6 +19,7 @@ export interface ModalProps {
   footer?: ReactNode | undefined;
   className?: string | undefined;
   bodyClassName?: string | undefined;
+  bodyScroll?: 'auto' | 'hidden' | undefined;
   closeLabel?: string | undefined;
   defaultHeight?: number | undefined;
   defaultMaximized?: boolean | undefined;
@@ -34,6 +35,7 @@ export interface ModalProps {
 
 interface ModalFrameProps {
   bodyClassName?: string | undefined;
+  bodyScroll: 'auto' | 'hidden';
   children: ReactNode;
   dataAttrs: Record<string, string | undefined>;
   footer?: ReactNode | undefined;
@@ -48,6 +50,7 @@ interface ModalFrameProps {
 
 function ModalFrame({
   bodyClassName,
+  bodyScroll,
   children,
   dataAttrs,
   footer,
@@ -64,7 +67,14 @@ function ModalFrame({
       {titlebar}
       <div className="ui-modal__surface">
         <div className="ui-modal__content">
-          <div className={cx('ui-modal__body', 'ui-workbench-scrollbar', bodyClassName)}>
+          <div
+            className={cx(
+              'ui-modal__body',
+              bodyScroll === 'auto' &&
+                'ui-scroll-area ui-scroll-area--both ui-scroll-area--stable-gutter ui-workbench-scrollbar',
+              bodyClassName,
+            )}
+          >
             {children}
           </div>
           {footer ? <div className="ui-modal__footer">{footer}</div> : null}
@@ -103,6 +113,7 @@ export function Modal({
   footer,
   className,
   bodyClassName,
+  bodyScroll = 'hidden',
   closeLabel,
   defaultHeight,
   defaultMaximized = false,
@@ -141,6 +152,7 @@ export function Modal({
     <div className="ui-modal-overlay" onClick={onClose}>
       <ModalFrame
         bodyClassName={bodyClassName}
+        bodyScroll={bodyScroll}
         dataAttrs={{
           'data-maximized': maximized ? 'true' : undefined,
           'data-ready': isPositioned ? undefined : 'false',

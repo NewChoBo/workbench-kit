@@ -611,7 +611,6 @@
 }
 
 .workbench-help-modal__body {
-  overflow: auto;
   padding: 20px 24px;
 }
 

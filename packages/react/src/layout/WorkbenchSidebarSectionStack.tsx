@@ -18,6 +18,7 @@ export interface WorkbenchSidebarSectionStackProps extends Omit<
   ComponentPropsWithRef<'div'>,
   'children'
 > {
+  collapsedBehavior?: 'dock' | 'in-flow';
   items: readonly WorkbenchSidebarSectionStackItem[];
 }
 
@@ -40,6 +41,7 @@ function resolveCollapsedDockPlacement(
 
 export function WorkbenchSidebarSectionStack({
   className,
+  collapsedBehavior = 'in-flow',
   items,
   ...props
 }: WorkbenchSidebarSectionStackProps) {
@@ -91,6 +93,7 @@ export function WorkbenchSidebarSectionStack({
   );
 
   const dockPlacement = resolveCollapsedDockPlacement(expandedItems.length, collapsedItems.length);
+  const renderInFlow = collapsedBehavior === 'in-flow';
 
   const renderSection = (
     item: WorkbenchSidebarSectionStackItem,
@@ -119,7 +122,7 @@ export function WorkbenchSidebarSectionStack({
 
   return (
     <div className={cx('ui-workbench-sidebar-section-stack', className)} {...props}>
-      {dockPlacement === 'top' ? (
+      {!renderInFlow && dockPlacement === 'top' ? (
         <div
           aria-label="Collapsed sections"
           className="ui-workbench-sidebar-section-stack__collapsed"
@@ -129,9 +132,16 @@ export function WorkbenchSidebarSectionStack({
         </div>
       ) : null}
       <div className="ui-workbench-sidebar-section-stack__expanded ui-workbench-scrollbar">
-        {expandedItems.map((item) => renderSection(item, { collapsed: false, docked: false }))}
+        {renderInFlow
+          ? items.map((item) =>
+              renderSection(item, {
+                collapsed: item.collapsible !== false && collapsedById[item.id],
+                docked: false,
+              }),
+            )
+          : expandedItems.map((item) => renderSection(item, { collapsed: false, docked: false }))}
       </div>
-      {dockPlacement === 'bottom' ? (
+      {!renderInFlow && dockPlacement === 'bottom' ? (
         <div
           aria-label="Collapsed sections"
           className="ui-workbench-sidebar-section-stack__collapsed"

@@ -368,6 +368,7 @@ export function WorkbenchShell({
           {isHelpOpen && helpContent ? (
             <Modal
               bodyClassName="workbench-help-modal__body"
+              bodyScroll="auto"
               className="workbench-help-modal"
               closeLabel="Close help"
               footer={<Button onClick={() => setHelpOpen(false)}>Close</Button>}

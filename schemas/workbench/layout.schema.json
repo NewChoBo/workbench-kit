@@ -7,6 +7,11 @@
     "activityBar": {
       "type": "object",
       "properties": {
+        "itemOrder": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
         "visible": { "type": "boolean" }
       },
       "required": ["visible"],
@@ -15,8 +20,13 @@
     "sideBar": {
       "type": "object",
       "properties": {
-        "visible": { "type": "boolean" },
-        "activeViewContainer": { "type": "string", "minLength": 1 }
+        "activeViewContainer": { "type": "string", "minLength": 1 },
+        "sizePercent": {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 90
+        },
+        "visible": { "type": "boolean" }
       },
       "required": ["visible"],
       "additionalProperties": false

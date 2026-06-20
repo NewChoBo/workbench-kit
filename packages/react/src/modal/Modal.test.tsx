@@ -28,8 +28,23 @@ describe('Modal', () => {
     expect(markup).toContain('role="dialog"');
     expect(markup).toContain('ui-modal__surface');
     expect(markup).toContain('ui-modal__titlebar-drag');
+    expect(markup).toContain('ui-modal__body');
+    expect(markup).not.toContain('ui-scroll-area--both');
     expect(markup).toContain('aria-label="Maximize modal"');
     expect(markup).toContain('ui-modal__resize-handle--se');
+  });
+
+  it('can opt modal body into shared scroll styling', () => {
+    const markup = renderToStaticMarkup(
+      <Modal title="Scrollable" bodyScroll="auto" onClose={() => undefined}>
+        Content
+      </Modal>,
+    );
+
+    expect(markup).toContain('ui-modal__body');
+    expect(markup).toContain('ui-scroll-area--both');
+    expect(markup).toContain('ui-scroll-area--stable-gutter');
+    expect(markup).toContain('ui-workbench-scrollbar');
   });
 
   it('can start maximized and expose the restore control', () => {

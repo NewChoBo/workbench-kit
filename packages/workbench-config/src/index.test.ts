@@ -130,6 +130,20 @@ describe('parseWorkbenchLayoutConfig', () => {
     ).toBe(90);
   });
 
+  it('parses activity bar item order', () => {
+    expect(
+      parseWorkbenchLayoutConfig({
+        activityBar: {
+          itemOrder: ['explorer', 'search', 'explorer', 'commands'],
+          visible: true,
+        },
+      }).activityBar,
+    ).toEqual({
+      itemOrder: ['explorer', 'search', 'commands'],
+      visible: true,
+    });
+  });
+
   it('parses layout config from JSON text', () => {
     expect(
       parseWorkbenchLayoutConfigJson(`{
