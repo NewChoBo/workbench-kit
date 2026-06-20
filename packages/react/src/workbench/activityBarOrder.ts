@@ -72,3 +72,15 @@ export function sortActivityBarItems<T extends { id: string }>(
     return leftIndex - rightIndex;
   });
 }
+
+export function filterActivityBarItems<T extends { id: string }>(
+  items: readonly T[],
+  hiddenItemIds?: readonly string[] | undefined,
+): T[] {
+  if (!hiddenItemIds?.length) {
+    return [...items];
+  }
+
+  const hiddenItems = new Set(hiddenItemIds);
+  return items.filter((item) => !hiddenItems.has(item.id));
+}

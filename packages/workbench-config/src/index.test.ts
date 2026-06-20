@@ -134,11 +134,13 @@ describe('parseWorkbenchLayoutConfig', () => {
     expect(
       parseWorkbenchLayoutConfig({
         activityBar: {
+          hiddenItemIds: ['aiChat', 'chatting', 'aiChat'],
           itemOrder: ['explorer', 'search', 'explorer', 'commands'],
           visible: true,
         },
       }).activityBar,
     ).toEqual({
+      hiddenItemIds: ['aiChat', 'chatting'],
       itemOrder: ['explorer', 'search', 'commands'],
       visible: true,
     });

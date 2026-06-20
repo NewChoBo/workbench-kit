@@ -53,10 +53,6 @@ const SAMPLE_THEME_OPTIONS = [
 export function App() {
   const [theme, setTheme] = useState<SampleTheme>('dark');
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
-
   return (
     <SampleAuthShell theme={theme}>
       <WorkbenchProvider

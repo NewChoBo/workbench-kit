@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  filterActivityBarItems,
   getActivityBarDropPosition,
   reorderActivityBarItems,
   sortActivityBarItems,
@@ -82,5 +83,21 @@ describe('sortActivityBarItems', () => {
       'search',
       'extensions',
     ]);
+  });
+});
+
+describe('filterActivityBarItems', () => {
+  it('removes configured hidden activity items without mutating the source list', () => {
+    const items = [
+      { id: 'explorer', label: 'Explorer' },
+      { id: 'search', label: 'Search' },
+      { id: 'chatting', label: 'Chat' },
+    ];
+
+    expect(filterActivityBarItems(items, ['search']).map((item) => item.id)).toEqual([
+      'explorer',
+      'chatting',
+    ]);
+    expect(items.map((item) => item.id)).toEqual(['explorer', 'search', 'chatting']);
   });
 });

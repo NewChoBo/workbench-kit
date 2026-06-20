@@ -21,6 +21,7 @@ export interface WorkbenchExtensionsConfig {
 
 export interface WorkbenchLayoutConfig {
   readonly activityBar: {
+    readonly hiddenItemIds?: readonly string[];
     readonly itemOrder?: readonly string[];
     readonly visible: boolean;
   };
@@ -83,7 +84,11 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
   const panel = readOptionalRecord(record, 'panel');
   const sideBar = readOptionalRecord(record, 'sideBar');
 
-  assertKnownKeys(activityBar, ['itemOrder', 'visible'], 'layout config activityBar');
+  assertKnownKeys(
+    activityBar,
+    ['hiddenItemIds', 'itemOrder', 'visible'],
+    'layout config activityBar',
+  );
   assertKnownKeys(panel, ['visible'], 'layout config panel');
   assertKnownKeys(
     sideBar,
@@ -93,6 +98,7 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
 
   return {
     activityBar: {
+      hiddenItemIds: readOptionalStringArray(activityBar, 'hiddenItemIds'),
       itemOrder: readOptionalStringArray(activityBar, 'itemOrder'),
       visible: readOptionalBoolean(
         activityBar,

@@ -39,6 +39,7 @@ describe('workbench-layout-storage', () => {
       DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
       JSON.stringify({
         activityBar: {
+          hiddenItemIds: ['aiChat'],
           itemOrder: ['search', 'explorer', 'chatting', 'aiChat'],
           visible: true,
         },
@@ -63,6 +64,7 @@ describe('workbench-layout-storage', () => {
       { storage },
     );
 
+    expect(resolved?.activityBar?.hiddenItemIds).toEqual(['aiChat']);
     expect(resolved?.activityBar?.itemOrder).toEqual(['search', 'explorer', 'chatting', 'aiChat']);
     expect(resolved?.sideBar?.activeViewContainer).toBe('search');
   });
@@ -73,6 +75,7 @@ describe('workbench-layout-storage', () => {
     writePersistedWorkbenchLayout(
       {
         activityBar: {
+          hiddenItemIds: ['search'],
           itemOrder: ['explorer', 'aiChat', 'search', 'chatting'],
           visible: true,
         },
@@ -89,6 +92,7 @@ describe('workbench-layout-storage', () => {
 
     expect(readPersistedWorkbenchLayout(DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY, storage)).toEqual({
       activityBar: {
+        hiddenItemIds: ['search'],
         itemOrder: ['explorer', 'aiChat', 'search', 'chatting'],
         visible: true,
       },

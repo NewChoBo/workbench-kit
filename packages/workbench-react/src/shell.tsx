@@ -43,7 +43,10 @@ import {
   BUILTIN_COMMANDS_VIEW_CONTAINER_ID,
   isBuiltinCommandsViewRenderData,
 } from './commands-view-data.js';
-import { sortActivityBarItems } from '@workbench-kit/react/workbench/activityBarOrder';
+import {
+  filterActivityBarItems,
+  sortActivityBarItems,
+} from '@workbench-kit/react/workbench/activityBarOrder';
 import { useWorkbench } from './provider.js';
 import { WorkbenchCommandHost, type WorkbenchCommandHostProps } from './workbench-command-host.js';
 import {
@@ -60,6 +63,10 @@ import {
   type WorkbenchAccountManagementInput,
 } from './management-settings.js';
 import { mergeWorkbenchCommandDescriptors } from './workbench-command-palette.js';
+import {
+  createWorkbenchSecondaryActivityItems,
+  getWorkbenchSecondaryActivityRoute,
+} from './shell-secondary-actions.js';
 
 export interface WorkbenchShellProps {
   accountManagement?: WorkbenchAccountManagementInput | undefined;
@@ -90,8 +97,6 @@ export interface WorkbenchThemeOption {
 const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
 const APPEARANCE_SETTINGS_CATEGORY_ID = 'workbench.appearance';
 const SETTINGS_EXTENSION_ID = 'workbench-kit.builtin.settings';
-const ACCOUNT_ACTIVITY_ITEM_ID = 'workbench-kit.shell.accounts';
-const SETTINGS_ACTIVITY_ITEM_ID = 'workbench-kit.shell.settings';
 
 export function WorkbenchShell({
   accountManagement,
@@ -142,6 +147,15 @@ export function WorkbenchShell({
     createActivityItems(extensionRegistry, activeViewContainerId),
     layout.activityBar.itemOrder,
   );
+  const visibleActivityItems = filterActivityBarItems(
+    activityItems,
+    layout.activityBar.hiddenItemIds,
+  );
+  const secondaryActivityItems = createWorkbenchSecondaryActivityItems({
+    hasAccountManagement: accountManagement !== undefined,
+    isSettingsOpen,
+    settingsCategoryId,
+  });
   const settingsCategories = useMemo(() => {
     const managementCategories: WorkbenchSettingsCategory[] = [];
 
@@ -297,37 +311,17 @@ export function WorkbenchShell({
   return (
     <ReactWorkbenchShell
       activityBar={{
-        items: activityItems,
+        items: visibleActivityItems,
         reorderable: true,
-        secondaryItems: [
-          ...(accountManagement
-            ? [
-                {
-                  active:
-                    isSettingsOpen &&
-                    settingsCategoryId === WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
-                  icon: <i aria-hidden="true" className="codicon codicon-account" />,
-                  id: ACCOUNT_ACTIVITY_ITEM_ID,
-                  label: 'Accounts',
-                  title: 'Manage accounts',
-                },
-              ]
-            : []),
-          {
-            active:
-              isSettingsOpen && settingsCategoryId !== WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
-            icon: <i aria-hidden="true" className="codicon codicon-settings-gear" />,
-            id: SETTINGS_ACTIVITY_ITEM_ID,
-            label: 'Settings',
-          },
-        ],
+        secondaryItems: secondaryActivityItems,
         onItemActivate: (item) => {
-          if (item.id === ACCOUNT_ACTIVITY_ITEM_ID) {
+          const secondaryActivityRoute = getWorkbenchSecondaryActivityRoute(item.id);
+          if (secondaryActivityRoute === 'accounts') {
             openSettings(WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID);
             return;
           }
 
-          if (item.id === SETTINGS_ACTIVITY_ITEM_ID) {
+          if (secondaryActivityRoute === 'settings') {
             openSettings();
             return;
           }
@@ -335,7 +329,9 @@ export function WorkbenchShell({
           layoutService.focusSideBarViewContainer(item.id);
         },
         onItemsReorder: (itemIds) => {
-          layoutService.setActivityBarItemOrder(itemIds);
+          const preservedItemIds =
+            layout.activityBar.itemOrder?.filter((itemId) => !itemIds.includes(itemId)) ?? [];
+          layoutService.setActivityBarItemOrder([...itemIds, ...preservedItemIds]);
         },
       }}
       compactStatus={compactStatus}

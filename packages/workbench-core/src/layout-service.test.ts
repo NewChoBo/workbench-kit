@@ -49,10 +49,12 @@ describe('LayoutService', () => {
     service.setSideBarVisible(false);
     service.setActiveViewContainer('search');
     service.setActivityBarItemOrder(['search', 'explorer', 'chatting', 'aiChat']);
+    service.setActivityBarHiddenItemIds(['aiChat', 'chatting', 'aiChat']);
     service.setSideBarSizePercent(32);
 
     expect(service.getState()).toEqual({
       activityBar: {
+        hiddenItemIds: ['aiChat', 'chatting'],
         itemOrder: ['search', 'explorer', 'chatting', 'aiChat'],
         visible: true,
       },
@@ -65,7 +67,13 @@ describe('LayoutService', () => {
         visible: false,
       },
     });
-    expect(changes).toEqual(['false:explorer', 'false:search', 'false:search', 'false:search']);
+    expect(changes).toEqual([
+      'false:explorer',
+      'false:search',
+      'false:search',
+      'false:search',
+      'false:search',
+    ]);
   });
 
   it('hides the sidebar when the active view container is focused again', () => {

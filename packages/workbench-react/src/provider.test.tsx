@@ -241,6 +241,32 @@ describe('WorkbenchProvider', () => {
     expect(markup).toContain('extensions: 1');
   });
 
+  it('hides configured primary activity bar items from layout state', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchProvider
+        extensionsConfig={{
+          enabled: ['workbench-kit.builtin.explorer', 'workbench-kit.builtin.search'],
+          recommendations: [],
+        }}
+        initialLayout={parseWorkbenchLayoutConfig({
+          activityBar: {
+            hiddenItemIds: ['search'],
+            visible: true,
+          },
+          sideBar: {
+            activeViewContainer: 'explorer',
+            visible: true,
+          },
+        })}
+      >
+        <TestWorkbenchShell editorArea={<main>Editor Area</main>} />
+      </WorkbenchProvider>,
+    );
+
+    expect(markup).toContain('aria-label="Explorer"');
+    expect(markup).not.toContain('aria-label="Search"');
+  });
+
   it('opens contributed settings in a modal overlay', async () => {
     const container = document.createElement('div');
     document.body.append(container);

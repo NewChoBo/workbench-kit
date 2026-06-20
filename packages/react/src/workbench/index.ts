@@ -70,6 +70,8 @@ export {
 } from './keyboard';
 export { resolveWorkbenchTheme, useResolvedWorkbenchTheme } from './theme';
 export type { ResolvedWorkbenchTheme } from './theme';
+export { WorkbenchThemeProvider } from './WorkbenchThemeProvider';
+export type { WorkbenchThemeProviderProps } from './WorkbenchThemeProvider';
 export {
   WorkbenchShortcutCommandBridge,
   getWorkbenchShortcutCommandBindings,

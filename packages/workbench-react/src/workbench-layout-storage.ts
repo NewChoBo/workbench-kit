@@ -23,6 +23,7 @@ export function workbenchLayoutConfigToInput(
 ): WorkbenchLayoutStateInput {
   return {
     activityBar: {
+      hiddenItemIds: config.activityBar.hiddenItemIds,
       itemOrder: config.activityBar.itemOrder,
       visible: config.activityBar.visible,
     },
@@ -43,6 +44,9 @@ export function workbenchLayoutStateToStorageValue(
   return {
     activityBar: {
       visible: state.activityBar.visible,
+      ...(state.activityBar.hiddenItemIds?.length
+        ? { hiddenItemIds: [...state.activityBar.hiddenItemIds] }
+        : {}),
       ...(state.activityBar.itemOrder?.length
         ? { itemOrder: [...state.activityBar.itemOrder] }
         : {}),

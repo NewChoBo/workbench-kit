@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { WorkbenchAuthGate } from '@workbench-kit/react/workbench/auth';
+import { WorkbenchThemeProvider } from '@workbench-kit/react/workbench';
 import { SampleAccountProvider } from './sample-account-context.js';
 import { useSampleAuth } from './useSampleAuth.js';
 
@@ -12,7 +13,7 @@ export function SampleAuthShell({ children, theme }: SampleAuthShellProps) {
   const auth = useSampleAuth();
 
   return (
-    <div className="ui-workbench-host-root" data-theme={theme}>
+    <WorkbenchThemeProvider className="ui-workbench-host-root" syncDocumentElement theme={theme}>
       <SampleAccountProvider value={auth}>
         <WorkbenchAuthGate
           authStatus={auth.status}
@@ -38,6 +39,6 @@ export function SampleAuthShell({ children, theme }: SampleAuthShellProps) {
           {children}
         </WorkbenchAuthGate>
       </SampleAccountProvider>
-    </div>
+    </WorkbenchThemeProvider>
   );
 }

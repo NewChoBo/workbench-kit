@@ -2,6 +2,7 @@ import { Emitter, type Disposable } from '@workbench-kit/base';
 
 export interface WorkbenchLayoutState {
   readonly activityBar: {
+    readonly hiddenItemIds?: readonly string[];
     readonly itemOrder?: readonly string[];
     readonly visible: boolean;
   };
@@ -84,7 +85,15 @@ export class LayoutService implements Disposable {
   setActivityBarItemOrder(itemOrder: readonly string[]): void {
     this.update({
       activityBar: {
-        itemOrder: normalizeActivityBarItemOrder(itemOrder),
+        itemOrder: normalizeActivityBarItemIds(itemOrder),
+      },
+    });
+  }
+
+  setActivityBarHiddenItemIds(hiddenItemIds: readonly string[]): void {
+    this.update({
+      activityBar: {
+        hiddenItemIds: normalizeActivityBarItemIds(hiddenItemIds),
       },
     });
   }
@@ -149,6 +158,10 @@ export function createWorkbenchLayoutState(
 ): WorkbenchLayoutState {
   return {
     activityBar: {
+      hiddenItemIds: readOptionalStringArray(
+        input.activityBar?.hiddenItemIds,
+        base.activityBar.hiddenItemIds,
+      ),
       itemOrder: readOptionalStringArray(input.activityBar?.itemOrder, base.activityBar.itemOrder),
       visible: readBoolean(input.activityBar?.visible, base.activityBar.visible),
     },
@@ -206,16 +219,17 @@ function readOptionalStringArray(
     return fallback;
   }
 
-  return normalizeActivityBarItemOrder(value);
+  return normalizeActivityBarItemIds(value);
 }
 
-function normalizeActivityBarItemOrder(itemOrder: readonly string[]): readonly string[] {
-  return [...new Set(itemOrder.map((item) => item.trim()).filter(Boolean))];
+function normalizeActivityBarItemIds(itemIds: readonly string[]): readonly string[] {
+  return [...new Set(itemIds.map((item) => item.trim()).filter(Boolean))];
 }
 
 function isSameLayoutState(left: WorkbenchLayoutState, right: WorkbenchLayoutState): boolean {
   return (
     left.activityBar.visible === right.activityBar.visible &&
+    areSameStringArrays(left.activityBar.hiddenItemIds, right.activityBar.hiddenItemIds) &&
     areSameStringArrays(left.activityBar.itemOrder, right.activityBar.itemOrder) &&
     left.panel.visible === right.panel.visible &&
     left.sideBar.activeViewContainer === right.sideBar.activeViewContainer &&

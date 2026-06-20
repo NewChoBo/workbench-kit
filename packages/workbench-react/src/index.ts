@@ -83,3 +83,11 @@ export {
   createWorkbenchManagementPaletteCommands,
   type WorkbenchAccountManagementInput,
 } from './management-settings.js';
+export {
+  WORKBENCH_ACCOUNT_ACTIVITY_ITEM_ID,
+  WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID,
+  createWorkbenchSecondaryActivityItems,
+  getWorkbenchSecondaryActivityRoute,
+  type WorkbenchSecondaryActivityItemsInput,
+  type WorkbenchSecondaryActivityRoute,
+} from './shell-secondary-actions.js';
