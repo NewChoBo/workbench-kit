@@ -90,6 +90,14 @@ export {
   type WorkbenchLayoutStateInput,
 } from './layout-service.js';
 export {
+  collectConfigurationContributionDefaults,
+  collectConfigurationDefaults,
+  PreferenceService,
+  type PreferenceChangeEvent,
+  type PreferenceInspection,
+  type PreferenceServiceOptions,
+} from './preference-service.js';
+export {
   ActivityRegistry,
   ConfigurationRegistry,
   EditorRegistry,

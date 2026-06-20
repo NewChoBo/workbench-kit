@@ -361,7 +361,7 @@ describe('WorkbenchProvider', () => {
     const dialog = container.querySelector('[role="dialog"]');
     expect(dialog?.textContent).toContain('Settings');
     expect(dialog?.textContent).toContain('workbench.settings.openOnStartup');
-    expect(dialog?.textContent).toContain('default: false');
+    expect(dialog?.textContent).toContain('effective: false');
 
     await act(async () => {
       root.unmount();

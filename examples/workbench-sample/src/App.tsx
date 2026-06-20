@@ -23,6 +23,7 @@ import {
   SAMPLE_EXAMPLE_JDW_PATH,
   SAMPLE_README_PATH,
   workbenchKeybindings,
+  workbenchSettings,
   workbenchUserCommands,
   workspaceInfo,
 } from './bootstrap.js';
@@ -60,6 +61,7 @@ export function App() {
         extensionsConfig={extensionsConfig}
         initialKeybindingOverrides={workbenchKeybindings}
         initialLayout={initialLayout}
+        initialWorkspaceSettings={workbenchSettings}
         layoutStorageKey={DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY}
         persistLayout
         userCommands={workbenchUserCommands}

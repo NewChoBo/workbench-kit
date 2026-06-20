@@ -10,13 +10,16 @@ import {
 } from 'react';
 import {
   BUILTIN_WORKBENCH_EXTENSIONS,
+  collectConfigurationDefaults,
   createEditorService,
   ExtensionRegistry,
   LayoutService,
+  PreferenceService,
   registerEditorSaveCommand,
   resolveWorkbenchExtensions,
   WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
   type EditorService,
+  type PreferenceService as PreferenceServiceType,
   type WorkbenchEditorSavePort,
   type WorkbenchExtensionDescription,
   type WorkbenchLayoutStateInput,
@@ -24,6 +27,7 @@ import {
 import type {
   WorkbenchExtensionsConfig,
   WorkbenchKeybindingDefinition,
+  WorkbenchSettingsConfig,
   WorkbenchUserCommandDefinition,
 } from '@workbench-kit/workbench-config';
 import {
@@ -43,6 +47,12 @@ import {
   publishExplorerRevealRequest,
   runExplorerHostCommandSideEffects,
 } from './explorer-reveal.js';
+import {
+  DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
+  isWorkbenchLocalPreferencePersistenceAvailable,
+  readPersistedLocalPreferences,
+  writePersistedLocalPreferences,
+} from './preference-settings-storage.js';
 import { registerWorkbenchUserCommands } from './workbench-user-commands.js';
 
 export interface WorkbenchWorkspaceHostPort extends WorkbenchEditorSavePort {
@@ -57,13 +67,16 @@ export interface WorkbenchProviderProps {
   extensionsConfig?: WorkbenchExtensionsConfig;
   initialKeybindingOverrides?: readonly WorkbenchKeybindingDefinition[];
   initialLayout?: WorkbenchLayoutStateInput;
+  initialWorkspaceSettings?: WorkbenchSettingsConfig;
   keybindingOverridesStorageKey?: string;
   layoutStorageKey?: string;
+  localPreferenceStorageKey?: string;
   onKeybindingOverridesChange?:
     | ((overrides: readonly WorkbenchKeybindingDefinition[]) => void)
     | undefined;
   persistKeybindingOverrides?: boolean;
   persistLayout?: boolean;
+  persistLocalPreferences?: boolean;
   userCommands?: readonly WorkbenchUserCommandDefinition[];
   workspaceHostPort?: WorkbenchWorkspaceHostPort | undefined;
 }
@@ -76,6 +89,7 @@ export interface WorkbenchContextValue {
   keybindingOverrides: readonly WorkbenchKeybindingDefinition[];
   layoutService: LayoutService;
   missingExtensionIds: readonly string[];
+  preferenceService: PreferenceServiceType;
   resetCommandKeybindingOverride(commandId: string): void;
   setCommandKeybindingOverride(commandId: string, key: string): void;
   waitForExtensionStartup(): Promise<void>;
@@ -89,6 +103,7 @@ interface WorkbenchProviderServices {
   extensionRegistry: ExtensionRegistry;
   layoutService: LayoutService;
   missingExtensionIds: readonly string[];
+  preferenceService: PreferenceServiceType;
   waitForExtensionStartup(): Promise<void>;
   workspaceHostPort?: WorkbenchWorkspaceHostPort | undefined;
 }
@@ -106,11 +121,14 @@ export function WorkbenchProvider({
   extensionsConfig,
   initialKeybindingOverrides,
   initialLayout,
+  initialWorkspaceSettings,
   keybindingOverridesStorageKey = DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
   layoutStorageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
+  localPreferenceStorageKey = DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
   onKeybindingOverridesChange,
   persistKeybindingOverrides = isWorkbenchKeybindingPersistenceAvailable(),
   persistLayout = isWorkbenchLayoutPersistenceAvailable(),
+  persistLocalPreferences = isWorkbenchLocalPreferencePersistenceAvailable(),
   userCommands = [],
   workspaceHostPort,
 }: WorkbenchProviderProps) {
@@ -166,6 +184,11 @@ export function WorkbenchProvider({
     persistKeybindingOverrides,
   ]);
 
+  const resolvedInitialLocalPreferences = useMemo(
+    () => (persistLocalPreferences ? readPersistedLocalPreferences(localPreferenceStorageKey) : {}),
+    [localPreferenceStorageKey, persistLocalPreferences],
+  );
+
   const services = useMemo<WorkbenchProviderServices>(() => {
     const extensionRegistry = new ExtensionRegistry();
     const layoutService = new LayoutService(resolvedInitialLayout);
@@ -201,6 +224,15 @@ export function WorkbenchProvider({
         })
       : undefined;
     const userCommandDisposables = registerWorkbenchUserCommands(extensionRegistry, userCommands);
+    const preferenceService = new PreferenceService({
+      contributionDefaults: collectConfigurationDefaults(
+        extensionRegistry.configurations.getConfigurations(),
+      ),
+      initialValuesByScope: {
+        local: resolvedInitialLocalPreferences,
+        workspace: initialWorkspaceSettings ?? {},
+      },
+    });
     let startupActivation: Promise<readonly { readonly extensionId: string }[]> | undefined;
     const ensureStartupActivation = () => {
       startupActivation ??= extensionRegistry.activateStartup();
@@ -223,18 +255,22 @@ export function WorkbenchProvider({
         editorService.dispose();
         extensionRegistry.dispose();
         layoutService.dispose();
+        preferenceService.dispose();
       },
       editorService,
       extensionRegistry,
       layoutService,
       missingExtensionIds: resolution.missingExtensionIds,
+      preferenceService,
       waitForExtensionStartup: () => ensureStartupActivation().then(() => undefined),
       workspaceHostPort,
     };
   }, [
     availableExtensions,
     extensionsConfig,
+    initialWorkspaceSettings,
     resolvedInitialLayout,
+    resolvedInitialLocalPreferences,
     userCommands,
     workspaceHostPort,
   ]);
@@ -252,6 +288,27 @@ export function WorkbenchProvider({
       disposable.dispose();
     };
   }, [layoutStorageKey, persistLayout, services.layoutService]);
+
+  useEffect(() => {
+    if (!persistLocalPreferences) {
+      return undefined;
+    }
+
+    const disposable = services.preferenceService.onDidChangePreference((event) => {
+      if (event.scope !== 'local') {
+        return;
+      }
+
+      writePersistedLocalPreferences(
+        services.preferenceService.getScopedValues('local'),
+        localPreferenceStorageKey,
+      );
+    });
+
+    return () => {
+      disposable.dispose();
+    };
+  }, [localPreferenceStorageKey, persistLocalPreferences, services.preferenceService]);
 
   useEffect(() => {
     const deferredDispose = deferredDisposeRef.current;
@@ -293,6 +350,7 @@ export function WorkbenchProvider({
       keybindingOverrides,
       layoutService: services.layoutService,
       missingExtensionIds: services.missingExtensionIds,
+      preferenceService: services.preferenceService,
       resetCommandKeybindingOverride,
       setCommandKeybindingOverride,
       waitForExtensionStartup: services.waitForExtensionStartup,

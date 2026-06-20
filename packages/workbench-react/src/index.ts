@@ -13,6 +13,12 @@ export {
   writePersistedKeybindingOverrides,
 } from './keybinding-overrides-storage.js';
 export {
+  DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
+  isWorkbenchLocalPreferencePersistenceAvailable,
+  readPersistedLocalPreferences,
+  writePersistedLocalPreferences,
+} from './preference-settings-storage.js';
+export {
   DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   isWorkbenchLayoutPersistenceAvailable,
   readPersistedWorkbenchLayout,

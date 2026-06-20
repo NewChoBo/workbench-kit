@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { Modal } from '@workbench-kit/react/modal';
 import { TilepaperAppIcon } from '@workbench-kit/react';
-import { Badge, Button, Field, Select } from '@workbench-kit/react/primitives';
+import { Badge, Button, Checkbox, Field, Select } from '@workbench-kit/react/primitives';
 import {
   WorkbenchSettingsModal,
   WorkbenchSettingsSection,
@@ -25,11 +25,13 @@ import {
 } from '@workbench-kit/react/workbench/shell';
 import { WORKBENCH_SETTINGS_CAPABILITY_ID } from '@workbench-kit/workbench-core';
 import type {
+  PreferenceService,
   ViewHost,
   ViewHostFactoryRegistry,
   ViewProvider,
   WorkbenchSettingsCapability,
 } from '@workbench-kit/workbench-core';
+import { isPreferenceScope, type PreferenceScope } from '@workbench-kit/workbench-config';
 
 import { EditorArea } from './editor-area.js';
 import { BuiltinChatView } from './chat-view.js';
@@ -99,6 +101,11 @@ export interface WorkbenchThemeOption {
 const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
 const APPEARANCE_SETTINGS_CATEGORY_ID = 'workbench.appearance';
 const SETTINGS_EXTENSION_ID = 'workbench-kit.builtin.settings';
+const WORKBENCH_PREFERENCE_SCOPES = [
+  { id: 'default', label: 'Default' },
+  { id: 'workspace', label: 'Workspace' },
+  { id: 'local', label: 'Local' },
+] as const satisfies ReadonlyArray<{ id: PreferenceScope; label: string }>;
 
 export function WorkbenchShell({
   accountManagement,
@@ -121,13 +128,20 @@ export function WorkbenchShell({
   titleMeta,
 }: WorkbenchShellProps) {
   const resolvedEditorArea = editorArea ?? <EditorArea />;
-  const { executeCommand, extensionRegistry, layoutService, missingExtensionIds } = useWorkbench();
+  const {
+    executeCommand,
+    extensionRegistry,
+    layoutService,
+    missingExtensionIds,
+    preferenceService,
+  } = useWorkbench();
   const forceRender = useForceRender();
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [settingsSearchValue, setSettingsSearchValue] = useState('');
   const [settingsCategoryId, setSettingsCategoryId] = useState<string | undefined>();
+  const [settingsScopeId, setSettingsScopeId] = useState<PreferenceScope>('workspace');
   const showSettingsModal = useCallback((categoryId?: string) => {
     setHelpOpen(false);
     setProfileOpen(false);
@@ -191,12 +205,23 @@ export function WorkbenchShell({
     return [
       ...managementCategories,
       ...createSettingsCategories(extensionRegistry, {
+        activeScope: settingsScopeId,
         onThemeChange,
+        preferenceService,
         theme,
         themeOptions,
       }),
     ];
-  }, [accountManagement, commandHost, extensionRegistry, onThemeChange, theme, themeOptions]);
+  }, [
+    accountManagement,
+    commandHost,
+    extensionRegistry,
+    onThemeChange,
+    preferenceService,
+    settingsScopeId,
+    theme,
+    themeOptions,
+  ]);
   const defaultSettingsCategoryId =
     settingsCategories.find((category) => category.id === SETTINGS_EXTENSION_ID)?.id ??
     settingsCategories[0]?.id;
@@ -227,12 +252,14 @@ export function WorkbenchShell({
   useEffect(() => {
     const layoutDisposable = layoutService.onDidChangeLayout(forceRender);
     const viewProviderDisposable = extensionRegistry.views.onDidRegisterViewProvider(forceRender);
+    const preferenceDisposable = preferenceService.onDidChangePreference(forceRender);
 
     return () => {
       layoutDisposable.dispose();
       viewProviderDisposable.dispose();
+      preferenceDisposable.dispose();
     };
-  }, [extensionRegistry, forceRender, layoutService]);
+  }, [extensionRegistry, forceRender, layoutService, preferenceService]);
 
   useEffect(() => {
     if (!activeViewContainerId) {
@@ -383,13 +410,12 @@ export function WorkbenchShell({
           {isSettingsOpen ? (
             <WorkbenchSettingsModal
               activeCategoryId={settingsCategoryId}
+              activeScopeId={settingsScopeId}
               categories={settingsCategories}
               defaultActiveCategoryId={defaultSettingsCategoryId}
+              defaultActiveScopeId="workspace"
               footer={<Button onClick={() => setSettingsOpen(false)}>Close</Button>}
-              scopes={[
-                { id: 'user', label: 'User' },
-                { id: 'workspace', label: 'Workspace' },
-              ]}
+              scopes={[...WORKBENCH_PREFERENCE_SCOPES]}
               searchValue={settingsSearchValue}
               title="Settings"
               titleSuffix={
@@ -401,6 +427,11 @@ export function WorkbenchShell({
               }
               onActiveCategoryIdChange={setSettingsCategoryId}
               onClose={() => setSettingsOpen(false)}
+              onScopeChange={(scopeId) => {
+                if (isPreferenceScope(scopeId)) {
+                  setSettingsScopeId(scopeId);
+                }
+              }}
               onSearchValueChange={setSettingsSearchValue}
             />
           ) : null}
@@ -573,10 +604,23 @@ function createDefaultStatusSections(
 
 function createSettingsCategories(
   extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
-  appearanceSettings: WorkbenchAppearanceSettingsInput,
+  {
+    activeScope,
+    onThemeChange,
+    preferenceService,
+    theme,
+    themeOptions,
+  }: WorkbenchAppearanceSettingsInput & {
+    activeScope: PreferenceScope;
+    preferenceService: PreferenceService;
+  },
 ): WorkbenchSettingsCategory[] {
   const configurations = extensionRegistry.configurations.getConfigurations();
-  const appearanceCategory = createAppearanceSettingsCategory(appearanceSettings);
+  const appearanceCategory = createAppearanceSettingsCategory({
+    onThemeChange,
+    theme,
+    themeOptions,
+  });
 
   if (configurations.length === 0) {
     const fallbackCategory = {
@@ -613,7 +657,13 @@ function createSettingsCategories(
           {properties.length ? (
             <div className="workbench-settings-contribution-list">
               {properties.map(([key, value]) => (
-                <SettingContributionField key={key} propertyKey={key} propertyValue={value} />
+                <SettingContributionField
+                  key={key}
+                  activeScope={activeScope}
+                  preferenceService={preferenceService}
+                  propertyKey={key}
+                  propertyValue={value}
+                />
               ))}
             </div>
           ) : (
@@ -709,9 +759,13 @@ function AppearanceSettingsSection({
 }
 
 function SettingContributionField({
+  activeScope,
+  preferenceService,
   propertyKey,
   propertyValue,
 }: {
+  activeScope: PreferenceScope;
+  preferenceService: PreferenceService;
   propertyKey: string;
   propertyValue: unknown;
 }) {
@@ -720,6 +774,10 @@ function SettingContributionField({
   const scope = typeof property.scope === 'string' ? property.scope : undefined;
   const type = formatSettingType(property.type);
   const hasDefault = Object.prototype.hasOwnProperty.call(property, 'default');
+  const inspection = preferenceService.inspect(propertyKey);
+  const scopedValue = preferenceService.getScopedValue(propertyKey, activeScope);
+  const editableValue =
+    scopedValue !== undefined ? scopedValue : (inspection.effectiveValue ?? property.default);
 
   return (
     <Field
@@ -730,8 +788,17 @@ function SettingContributionField({
       <div className="workbench-settings-contribution-meta">
         {type ? <Badge variant="muted">{type}</Badge> : null}
         {scope ? <Badge variant="muted">{scope}</Badge> : null}
+        <Badge variant="muted">effective: {formatSettingDefault(inspection.effectiveValue)}</Badge>
       </div>
-      {hasDefault ? (
+      {property.type === 'boolean' ? (
+        <Checkbox
+          checked={editableValue === true}
+          label={`${activeScope} value`}
+          onCheckedChange={(checked) => {
+            preferenceService.setScopedValue(propertyKey, activeScope, checked);
+          }}
+        />
+      ) : hasDefault ? (
         <code className="workbench-settings-contribution-default">
           default: {formatSettingDefault(property.default)}
         </code>
