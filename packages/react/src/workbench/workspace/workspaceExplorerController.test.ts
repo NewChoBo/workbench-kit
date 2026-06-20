@@ -35,11 +35,13 @@ describe('workspaceExplorerController', () => {
       parentPath: 'src',
       value: 'untitled.md',
     });
-    expect(createWorkspaceExplorerRenameDraft({ path: 'src/App.tsx', type: 'file' })).toMatchObject({
-      kind: 'rename-file',
-      path: 'src/App.tsx',
-      value: 'App.tsx',
-    });
+    expect(createWorkspaceExplorerRenameDraft({ path: 'src/App.tsx', type: 'file' })).toMatchObject(
+      {
+        kind: 'rename-file',
+        path: 'src/App.tsx',
+        value: 'App.tsx',
+      },
+    );
   });
 
   it('checks create path availability', () => {

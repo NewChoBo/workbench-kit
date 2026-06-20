@@ -30,9 +30,7 @@ function getMonacoTypeScriptLanguageService(
   return monacoInstance.languages.typescript as unknown as MonacoTypeScriptLanguageService;
 }
 
-export function configureWorkspaceEditorTypeScriptDiagnostics(
-  monacoInstance: typeof Monaco,
-): void {
+export function configureWorkspaceEditorTypeScriptDiagnostics(monacoInstance: typeof Monaco): void {
   if (workspaceTypeScriptDiagnosticsConfigured) return;
 
   const typescript = getMonacoTypeScriptLanguageService(monacoInstance);

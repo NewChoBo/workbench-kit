@@ -85,7 +85,11 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
 
   assertKnownKeys(activityBar, ['itemOrder', 'visible'], 'layout config activityBar');
   assertKnownKeys(panel, ['visible'], 'layout config panel');
-  assertKnownKeys(sideBar, ['activeViewContainer', 'sizePercent', 'visible'], 'layout config sideBar');
+  assertKnownKeys(
+    sideBar,
+    ['activeViewContainer', 'sizePercent', 'visible'],
+    'layout config sideBar',
+  );
 
   return {
     activityBar: {

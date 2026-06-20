@@ -151,11 +151,7 @@ export type {
   WorkbenchSignUpSubmitContext,
   WorkbenchSignUpViewProps,
 } from './auth';
-export {
-  WorkbenchBootstrapGate,
-  WorkbenchBootstrapView,
-  useWorkbenchBootstrap,
-} from './bootstrap';
+export { WorkbenchBootstrapGate, WorkbenchBootstrapView, useWorkbenchBootstrap } from './bootstrap';
 export type {
   WorkbenchBootstrapController,
   WorkbenchBootstrapGateProps,

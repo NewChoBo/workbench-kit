@@ -7,37 +7,25 @@ import {
   SideBarViewFrame,
 } from '../../layout/SideBarViewFrame';
 import { SidebarToolbar } from '../../layout/SidebarToolbar';
-import {
-  WorkbenchSidebarSectionStack,
-} from '../../layout/WorkbenchSidebarSectionStack';
+import { WorkbenchSidebarSectionStack } from '../../layout/WorkbenchSidebarSectionStack';
 import { Badge } from '../../primitives/Badge';
 import { ClearableTextInput } from '../../primitives/ClearableTextInput';
 import { EmptyState } from '../../primitives/EmptyState';
 import { cx } from '../../utils/cx';
-import { countCommandManagementEntries, filterCommandManagementGroups } from './build-command-management-groups.js';
+import {
+  countCommandManagementEntries,
+  filterCommandManagementGroups,
+} from './build-command-management-groups.js';
+import { formatCommandRunState } from './format-command-run-state.js';
 import type { CommandManagementPanelProps } from './types.js';
 
-export interface CommandManagementSidebarProps
-  extends Pick<CommandManagementPanelProps, 'groups' | 'lastRun' | 'onRunCommand' | 'summaryLabel'> {
+export interface CommandManagementSidebarProps extends Pick<
+  CommandManagementPanelProps,
+  'groups' | 'lastRun' | 'onRunCommand' | 'summaryLabel'
+> {
   className?: string | undefined;
   emptyLabel?: string | undefined;
   onRefresh?: (() => void) | undefined;
-}
-
-function formatRunState(lastRun: CommandManagementSidebarProps['lastRun']): string | undefined {
-  if (!lastRun) {
-    return undefined;
-  }
-
-  if (lastRun.status === 'running') {
-    return `Running ${lastRun.commandId}…`;
-  }
-
-  if (lastRun.status === 'error') {
-    return lastRun.message ? `Failed: ${lastRun.message}` : `Failed: ${lastRun.commandId}`;
-  }
-
-  return `Ran ${lastRun.commandId}`;
 }
 
 export function CommandManagementSidebar({
@@ -56,7 +44,7 @@ export function CommandManagementSidebar({
   );
   const visibleCount = countCommandManagementEntries(filteredGroups);
   const totalCount = countCommandManagementEntries(groups);
-  const runStateLabel = formatRunState(lastRun);
+  const runStateLabel = formatCommandRunState(lastRun);
   const countLabel = summaryLabel ?? `${visibleCount}/${totalCount}`;
 
   return (
@@ -121,7 +109,9 @@ export function CommandManagementSidebar({
           {filteredGroups[0]?.entries.map((entry) => (
             <CommandSidebarListItem
               key={entry.id}
-              disabled={entry.status !== 'available' || !onRunCommand || lastRun?.status === 'running'}
+              disabled={
+                entry.status !== 'available' || !onRunCommand || lastRun?.status === 'running'
+              }
               entry={entry}
               onRun={() => {
                 void onRunCommand?.(entry.id);
@@ -133,11 +123,16 @@ export function CommandManagementSidebar({
         <WorkbenchSidebarSectionStack
           items={filteredGroups.map((group) => ({
             children: (
-              <SideBarList aria-label={`${group.label} commands`} className="workbench-commands-sidebar__list">
+              <SideBarList
+                aria-label={`${group.label} commands`}
+                className="workbench-commands-sidebar__list"
+              >
                 {group.entries.map((entry) => (
                   <CommandSidebarListItem
                     key={entry.id}
-                    disabled={entry.status !== 'available' || !onRunCommand || lastRun?.status === 'running'}
+                    disabled={
+                      entry.status !== 'available' || !onRunCommand || lastRun?.status === 'running'
+                    }
                     entry={entry}
                     onRun={() => {
                       void onRunCommand?.(entry.id);

@@ -1,6 +1,5 @@
 import {
   createCommandRegistryFromContributions,
-  executeCommand as executeRegistryCommand,
   type CommandRegistry,
 } from '@workbench-kit/platform';
 import {
@@ -11,9 +10,10 @@ import {
   type WorkbenchCommandRunContext,
   type WorkbenchShellCommandContext,
 } from '@workbench-kit/react/workbench';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useWorkbench } from './provider.js';
+import { registerWorkbenchShellCommandHandlers } from './workbench-shell-command-registration.js';
 import {
   buildWorkbenchPaletteCommands,
   matchesWorkbenchCommandPaletteShortcut,
@@ -45,6 +45,7 @@ export function WorkbenchCommandHost({
   const { executeCommand, extensionRegistry, keybindingOverrides, layoutService } = useWorkbench();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [layout, setLayout] = useState(() => layoutService.getState());
+  const shellContextRef = useRef<WorkbenchShellCommandContext | undefined>(undefined);
 
   useEffect(() => {
     const disposable = layoutService.onDidChangeLayout(({ state }) => {
@@ -94,6 +95,27 @@ export function WorkbenchCommandHost({
     [layout.sideBar.visible, layoutService, onOpenSettings],
   );
 
+  shellContextRef.current = shellContext;
+
+  useEffect(() => {
+    const registration = registerWorkbenchShellCommandHandlers(
+      extensionRegistry.commands,
+      shellCommandDefinitions,
+      () => {
+        const context = shellContextRef.current;
+        if (!context) {
+          throw new Error('Workbench shell command context is not available.');
+        }
+
+        return context;
+      },
+    );
+
+    return () => {
+      registration.dispose();
+    };
+  }, [extensionRegistry.commands, shellCommandDefinitions]);
+
   const paletteCommands = useMemo(
     () =>
       buildWorkbenchPaletteCommands({
@@ -120,14 +142,9 @@ export function WorkbenchCommandHost({
         return;
       }
 
-      if (executeRegistryCommand(shellCommandRegistry, command.id, shellContext)) {
-        finish();
-        return;
-      }
-
       void executeCommand(command.id).finally(finish);
     },
-    [closePalette, executeCommand, onRunCommand, shellCommandRegistry, shellContext],
+    [closePalette, executeCommand, onRunCommand],
   );
 
   useEffect(() => {
@@ -178,7 +195,12 @@ export function WorkbenchCommandHost({
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [enableExtensionKeybindings, executeCommand, extensionRegistry.keybindings, keybindingOverrides]);
+  }, [
+    enableExtensionKeybindings,
+    executeCommand,
+    extensionRegistry.keybindings,
+    keybindingOverrides,
+  ]);
 
   return (
     <>

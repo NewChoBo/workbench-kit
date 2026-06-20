@@ -14,13 +14,17 @@ export interface WorkbenchStartupGateProps {
   heading?: string | undefined;
   onFailed?: ((error: Error) => void) | undefined;
   onReady?: (() => void) | undefined;
-  renderBootstrap?: ((bootstrap: ReturnType<typeof useWorkbenchBootstrap>) => ReactNode) | undefined;
+  renderBootstrap?:
+    | ((bootstrap: ReturnType<typeof useWorkbenchBootstrap>) => ReactNode)
+    | undefined;
   subtitle?: string | undefined;
   tasks?: readonly WorkbenchBootstrapTaskDefinition[] | undefined;
   workspaceInit?: VirtualWorkspaceInitialState | undefined;
 }
 
-function countWorkspaceEntries(workspaceInit: VirtualWorkspaceInitialState | undefined): string | undefined {
+function countWorkspaceEntries(
+  workspaceInit: VirtualWorkspaceInitialState | undefined,
+): string | undefined {
   if (!workspaceInit) {
     return undefined;
   }
@@ -65,9 +69,7 @@ export function WorkbenchStartupGate({
     const resolvedTasks: WorkbenchBootstrapTaskDefinition[] = [
       {
         detail:
-          missingExtensionIds.length > 0
-            ? `${missingExtensionIds.length} missing`
-            : undefined,
+          missingExtensionIds.length > 0 ? `${missingExtensionIds.length} missing` : undefined,
         id: 'extensions',
         label: 'Loading extensions',
         run: async () => {

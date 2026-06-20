@@ -11,6 +11,7 @@ describe('bundled workbench extensions', () => {
     expect(BUILTIN_WORKBENCH_EXTENSIONS.map(({ manifest }) => manifest.id)).toEqual([
       'workbench-kit.builtin.accounts',
       'workbench-kit.builtin.chat',
+      'workbench-kit.builtin.commands',
       'workbench-kit.builtin.editor',
       'workbench-kit.builtin.explorer',
       'workbench-kit.builtin.keybindings',
@@ -62,6 +63,13 @@ describe('bundled workbench extensions', () => {
     expect(registry.views.getView('workbench-kit.builtin.search.panel')).toMatchObject({
       containerId: 'search',
       name: 'Search',
+    });
+    expect(registry.views.getView('workbench-kit.builtin.commands.panel')).toMatchObject({
+      containerId: 'commands',
+      name: 'Commands',
+    });
+    expect(registry.commands.getCommand('workbench-kit.builtin.commands.refresh')).toMatchObject({
+      title: 'Refresh Command Registry',
     });
     expect(registry.editors.getEditor('workbench-kit.builtin.editor.text')).toMatchObject({
       label: 'Text Editor',

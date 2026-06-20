@@ -116,7 +116,9 @@ export const ProviderShellChattingSidebar: Story = {
 
     await expect(chattingActivity).toHaveAttribute('aria-pressed', 'true');
     await expect(canvas.getByPlaceholderText('Message your team')).toBeVisible();
-    await expect(canvas.getByText('Can you review the widget tree changes before we merge?')).toBeVisible();
+    await expect(
+      canvas.getByText('Can you review the widget tree changes before we merge?'),
+    ).toBeVisible();
   },
 };
 

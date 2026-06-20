@@ -106,30 +106,28 @@ export function useWorkspaceExplorerController({
     [expandedPathsProp],
   );
 
-  const revealFolder = useCallback((path: string) => {
-    if (onToggleFolder && expandedPathsProp && !expandedPathsProp.has(path)) {
-      onToggleFolder(path);
-      return;
-    }
-
-    updateExpandedPaths((currentPaths) => {
-      if (currentPaths.has(path)) {
-        return currentPaths;
+  const revealFolder = useCallback(
+    (path: string) => {
+      if (onToggleFolder && expandedPathsProp && !expandedPathsProp.has(path)) {
+        onToggleFolder(path);
+        return;
       }
 
-      return new Set([...currentPaths, path]);
-    });
-  }, [expandedPathsProp, onToggleFolder, updateExpandedPaths]);
+      updateExpandedPaths((currentPaths) => {
+        if (currentPaths.has(path)) {
+          return currentPaths;
+        }
+
+        return new Set([...currentPaths, path]);
+      });
+    },
+    [expandedPathsProp, onToggleFolder, updateExpandedPaths],
+  );
 
   useEffect(() => {
-    const filePaths =
-      availableFilePathKey.length === 0
-        ? []
-        : availableFilePathKey.split('\u0000');
+    const filePaths = availableFilePathKey.length === 0 ? [] : availableFilePathKey.split('\u0000');
     const folderPaths =
-      availableFolderPathKey.length === 0
-        ? []
-        : availableFolderPathKey.split('\u0000');
+      availableFolderPathKey.length === 0 ? [] : availableFolderPathKey.split('\u0000');
 
     setSelection((currentSelection) => {
       const next = pruneWorkspaceSelection(currentSelection, filePaths, folderPaths);
@@ -178,9 +176,12 @@ export function useWorkspaceExplorerController({
     [revealFolder, snapshot],
   );
 
-  const startRename = useCallback((node: WorkspaceTreeNode, actionPaths: readonly string[] = [node.path]) => {
-    setInlineEdit(createWorkspaceExplorerRenameDraft(node, actionPaths));
-  }, []);
+  const startRename = useCallback(
+    (node: WorkspaceTreeNode, actionPaths: readonly string[] = [node.path]) => {
+      setInlineEdit(createWorkspaceExplorerRenameDraft(node, actionPaths));
+    },
+    [],
+  );
 
   const handleInlineEditCommit = useCallback(
     ({ edit, value }: WorkspaceExplorerInlineEditCommitMeta) => {
@@ -258,22 +259,25 @@ export function useWorkspaceExplorerController({
     [port],
   );
 
-  const handleToggleFolder = useCallback((path: string) => {
-    if (onToggleFolder) {
-      onToggleFolder(path);
-      return;
-    }
-
-    updateExpandedPaths((currentPaths) => {
-      const nextPaths = new Set(currentPaths);
-      if (nextPaths.has(path)) {
-        nextPaths.delete(path);
-      } else {
-        nextPaths.add(path);
+  const handleToggleFolder = useCallback(
+    (path: string) => {
+      if (onToggleFolder) {
+        onToggleFolder(path);
+        return;
       }
-      return nextPaths;
-    });
-  }, [onToggleFolder, updateExpandedPaths]);
+
+      updateExpandedPaths((currentPaths) => {
+        const nextPaths = new Set(currentPaths);
+        if (nextPaths.has(path)) {
+          nextPaths.delete(path);
+        } else {
+          nextPaths.add(path);
+        }
+        return nextPaths;
+      });
+    },
+    [onToggleFolder, updateExpandedPaths],
+  );
 
   const handleRequestDelete = useCallback(
     (meta: WorkspaceExplorerItemKeyboardActionMeta) => {

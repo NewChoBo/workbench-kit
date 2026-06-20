@@ -116,9 +116,9 @@ function KeybindingManagementRow({
           }}
         />
         {canReset ? (
-        <Button compact type="button" onClick={() => onResetKeybinding(entry.commandId)}>
-          Reset
-        </Button>
+          <Button compact type="button" onClick={() => onResetKeybinding(entry.commandId)}>
+            Reset
+          </Button>
         ) : null}
       </div>
     </li>

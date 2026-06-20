@@ -334,24 +334,12 @@ importers:
 
   packages/workbench-react:
     dependencies:
-      '@workbench-kit/adapters':
-        specifier: workspace:*
-        version: link:../adapters
-      '@workbench-kit/contracts':
-        specifier: workspace:*
-        version: link:../contracts
       '@workbench-kit/platform':
         specifier: workspace:*
         version: link:../platform
       '@workbench-kit/react':
         specifier: workspace:*
         version: link:../react
-      '@workbench-kit/runtime':
-        specifier: workspace:*
-        version: link:../runtime
-      '@workbench-kit/services':
-        specifier: workspace:*
-        version: link:../services
       '@workbench-kit/tokens':
         specifier: workspace:*
         version: link:../tokens

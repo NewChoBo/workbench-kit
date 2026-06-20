@@ -37,6 +37,10 @@ class ResizeObserverMock {
 }
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+Object.defineProperty(Element.prototype, 'scrollIntoView', {
+  configurable: true,
+  value: vi.fn(),
+});
 
 import {
   WorkbenchProvider,
@@ -45,6 +49,9 @@ import {
   useWorkbench,
   type WorkbenchShellProps,
 } from './index.js';
+import { BUILTIN_EXPLORER_MOVE_COMMAND_ID } from './explorer-view-data.js';
+
+const WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID = 'workbench.togglePrimarySidebar';
 
 const testGlobal = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -122,7 +129,7 @@ function WorkspaceMoveFolderCommandProbe({ onResult }: { onResult: (result: unkn
         openPaths: ['src/components/Button.tsx'],
         selectedPath: 'src/components/Button.tsx',
       });
-      const result = await executeCommand('workbench-kit.builtin.explorer.move', {
+      const result = await executeCommand(BUILTIN_EXPLORER_MOVE_COMMAND_ID, {
         sourcePaths: ['src/components'],
         targetFolderPath: 'docs',
       });
@@ -153,6 +160,40 @@ function OpenSettingsCommandButton() {
       Open Settings Command
     </button>
   );
+}
+
+function ToggleSidebarShellCommandButton({ onResult }: { onResult: (visible: boolean) => void }) {
+  const { executeCommand, layoutService } = useWorkbench();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        void executeCommand(WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID).then(() => {
+          onResult(layoutService.getState().sideBar.visible);
+        });
+      }}
+    >
+      Toggle Sidebar Command
+    </button>
+  );
+}
+
+function SidebarVisibilityProbe({ onChange }: { onChange: (visible: boolean) => void }) {
+  const { layoutService } = useWorkbench();
+
+  useEffect(() => {
+    onChange(layoutService.getState().sideBar.visible);
+    const disposable = layoutService.onDidChangeLayout(({ state }) => {
+      onChange(state.sideBar.visible);
+    });
+
+    return () => {
+      disposable.dispose();
+    };
+  }, [layoutService, onChange]);
+
+  return null;
 }
 
 describe('WorkbenchProvider', () => {
@@ -282,6 +323,113 @@ describe('WorkbenchProvider', () => {
     expect(dialog?.textContent).toContain('Settings');
     expect(dialog?.textContent).toContain('workbench.settings.openOnStartup');
     expect(dialog?.textContent).not.toContain('workbench.accounts.enabledEnable');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('routes shell commands through the provider command registry', async () => {
+    const sidebarStates: boolean[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+          initialLayout={parseWorkbenchLayoutConfig({
+            sideBar: {
+              activeViewContainer: 'explorer',
+              visible: true,
+            },
+          })}
+        >
+          <WorkbenchShell editorArea={<main>Editor Area</main>} />
+          <ToggleSidebarShellCommandButton
+            onResult={(visible) => {
+              sidebarStates.push(visible);
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    const commandButton = findButtonByText(container, 'Toggle Sidebar Command');
+    expect(commandButton).toBeDefined();
+
+    await act(async () => {
+      commandButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    expect(sidebarStates).toEqual([false]);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('runs workbench commands from the built-in chat slash input', async () => {
+    const sidebarStates: boolean[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.chat'],
+            recommendations: [],
+          }}
+          initialLayout={parseWorkbenchLayoutConfig({
+            sideBar: {
+              activeViewContainer: 'chatting',
+              visible: true,
+            },
+          })}
+        >
+          <WorkbenchShell editorArea={<main>Editor Area</main>} />
+          <SidebarVisibilityProbe
+            onChange={(visible) => {
+              sidebarStates.push(visible);
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    const textarea = await waitForElement(() =>
+      container.querySelector<HTMLTextAreaElement>('textarea[placeholder="Message your team"]'),
+    );
+    expect(textarea).not.toBeNull();
+
+    await act(async () => {
+      setTextAreaValue(textarea, '/workbench.togglePrimarySidebar');
+    });
+    await waitForText(container, 'Toggle primary sidebar');
+
+    await act(async () => {
+      textarea.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          key: 'Enter',
+        }),
+      );
+    });
+    await flushReactEffects();
+
+    expect(sidebarStates[sidebarStates.length - 1]).toBe(false);
 
     await act(async () => {
       root.unmount();
@@ -851,6 +999,49 @@ function dispatchTestMouseEvent(target: Element | undefined, type: string): void
       clientY: 36,
     }),
   );
+}
+
+async function waitForElement<T extends Element>(query: () => T | null): Promise<T> {
+  let element = query();
+
+  await act(async () => {
+    for (let attempt = 0; attempt < 20 && !element; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      element = query();
+    }
+  });
+
+  if (!element) {
+    throw new Error('Element was not rendered before timeout.');
+  }
+
+  return element;
+}
+
+async function waitForText(container: HTMLElement, text: string): Promise<void> {
+  let found = false;
+
+  await act(async () => {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      if (container.textContent?.includes(text)) {
+        found = true;
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  });
+
+  if (!found) {
+    throw new Error(`Text was not rendered before timeout: ${text}`);
+  }
+}
+
+function setTextAreaValue(textarea: HTMLTextAreaElement, value: string): void {
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
+
+  valueSetter?.call(textarea, value);
+  textarea.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 function createLifecycleProbeExtension(events: string[]): WorkbenchExtensionDescription {

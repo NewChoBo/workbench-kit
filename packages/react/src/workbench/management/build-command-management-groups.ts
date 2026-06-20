@@ -11,12 +11,14 @@ interface BuildCommandManagementGroupsInput {
   }[];
   readonly keybindingsByCommandId?: Readonly<Record<string, string>> | undefined;
   readonly menuSurfacesByCommandId?: Readonly<Record<string, readonly string[]>> | undefined;
-  readonly shellCommands?: readonly {
-    readonly category?: string | undefined;
-    readonly handler?: unknown;
-    readonly id: string;
-    readonly label: string;
-  }[] | undefined;
+  readonly shellCommands?:
+    | readonly {
+        readonly category?: string | undefined;
+        readonly handler?: unknown;
+        readonly id: string;
+        readonly label: string;
+      }[]
+    | undefined;
 }
 
 function toEntry(
@@ -51,7 +53,10 @@ export function buildCommandManagementGroups({
   menuSurfacesByCommandId,
   shellCommands = [],
 }: BuildCommandManagementGroupsInput): CommandManagementGroup[] {
-  const groups = new Map<string, { entries: CommandManagementEntry[]; id: string; label: string }>();
+  const groups = new Map<
+    string,
+    { entries: CommandManagementEntry[]; id: string; label: string }
+  >();
   const ensureGroup = (id: string, label: string) => {
     const existing = groups.get(id);
     if (existing) {
@@ -66,7 +71,13 @@ export function buildCommandManagementGroups({
   for (const command of shellCommands) {
     const group = ensureGroup('workbench.shell', 'Workbench Shell');
     group.entries.push(
-      toEntry(command, 'workbench.shell', 'Workbench Shell', keybindingsByCommandId, menuSurfacesByCommandId),
+      toEntry(
+        command,
+        'workbench.shell',
+        'Workbench Shell',
+        keybindingsByCommandId,
+        menuSurfacesByCommandId,
+      ),
     );
   }
 

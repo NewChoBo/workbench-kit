@@ -45,7 +45,10 @@ export { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 export type { WorkspaceSearchPanelProps } from './WorkspaceSearchPanel';
 export { WorkspaceExplorerPanel } from './WorkspaceExplorerPanel';
 export type { WorkspaceExplorerPanelProps } from './WorkspaceExplorerPanel';
-export { buildWorkspaceExplorerNodes, resolveWorkspaceExplorerSectionTitle } from './build-workspace-explorer-nodes.js';
+export {
+  buildWorkspaceExplorerNodes,
+  resolveWorkspaceExplorerSectionTitle,
+} from './build-workspace-explorer-nodes.js';
 export { WorkspaceSearchResults } from './WorkspaceSearchResults';
 export type { WorkspaceSearchResultsProps } from './WorkspaceSearchResults';
 export {

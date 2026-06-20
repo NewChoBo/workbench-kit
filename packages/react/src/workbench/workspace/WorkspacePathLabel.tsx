@@ -14,7 +14,11 @@ export function WorkspacePathLabel({ className, path }: WorkspacePathLabelProps)
   }
 
   if (segments.length === 1) {
-    return <span className={cx('workspace-path-label', className)} title={path}>{segments[0]}</span>;
+    return (
+      <span className={cx('workspace-path-label', className)} title={path}>
+        {segments[0]}
+      </span>
+    );
   }
 
   return (

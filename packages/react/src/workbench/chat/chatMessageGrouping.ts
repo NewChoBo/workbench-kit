@@ -36,7 +36,5 @@ export function shouldShowPeerChatSenderLabel(
     return true;
   }
 
-  return (
-    getPeerChatSenderKey(message, options) !== getPeerChatSenderKey(previousMessage, options)
-  );
+  return getPeerChatSenderKey(message, options) !== getPeerChatSenderKey(previousMessage, options);
 }

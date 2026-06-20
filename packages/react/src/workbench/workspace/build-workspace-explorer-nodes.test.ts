@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildWorkspaceExplorerNodes, resolveWorkspaceExplorerSectionTitle } from './build-workspace-explorer-nodes.js';
+import {
+  buildWorkspaceExplorerNodes,
+  resolveWorkspaceExplorerSectionTitle,
+} from './build-workspace-explorer-nodes.js';
 
 describe('buildWorkspaceExplorerNodes', () => {
   it('builds a single workspace tree for repository paths', () => {

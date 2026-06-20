@@ -1,13 +1,15 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { cx } from '../utils/cx';
-import { WorkbenchSidebarSection, type WorkbenchSidebarSectionProps } from './WorkbenchSidebarActions';
+import {
+  WorkbenchSidebarSection,
+  type WorkbenchSidebarSectionProps,
+} from './WorkbenchSidebarActions';
 
-export interface WorkbenchSidebarSectionStackItem
-  extends Pick<
-    WorkbenchSidebarSectionProps,
-    'actions' | 'badge' | 'className' | 'collapsible' | 'count' | 'defaultCollapsed' | 'title'
-  > {
+export interface WorkbenchSidebarSectionStackItem extends Pick<
+  WorkbenchSidebarSectionProps,
+  'actions' | 'badge' | 'className' | 'collapsible' | 'count' | 'defaultCollapsed' | 'title'
+> {
   children: ReactNode;
   id: string;
 }

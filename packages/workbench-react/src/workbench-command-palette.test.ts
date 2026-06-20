@@ -1,4 +1,7 @@
-import { createCommandRegistryFromContributions, type CommandDefinition } from '@workbench-kit/platform';
+import {
+  createCommandRegistryFromContributions,
+  type CommandDefinition,
+} from '@workbench-kit/platform';
 import type { WorkbenchShellCommandContext } from '@workbench-kit/react/workbench';
 import { describe, expect, it } from 'vitest';
 
@@ -61,6 +64,34 @@ describe('workbench-command-palette helpers', () => {
     expect(commands.some((command) => command.id === 'workbench.togglePrimarySidebar')).toBe(true);
     expect(commands.some((command) => command.id === 'workspace.open')).toBe(true);
     expect(commands.some((command) => command.id === 'sample.open')).toBe(true);
+  });
+
+  it('keeps contributed commands visible before handler activation', () => {
+    const shellContext = {
+      isPrimarySidebarVisible: true,
+      openSettings: () => undefined,
+      showActivity: () => undefined,
+      togglePrimarySidebar: () => undefined,
+    };
+    const commands = buildWorkbenchPaletteCommands({
+      extensionCommands: [
+        {
+          category: 'Workspace',
+          id: 'workspace.open',
+          title: 'Open File',
+        },
+      ],
+      shellCommands: [],
+      shellContext,
+    });
+
+    expect(commands).toContainEqual(
+      expect.objectContaining({
+        category: 'Workspace',
+        id: 'workspace.open',
+        label: 'Open File',
+      }),
+    );
   });
 
   it('matches the default command palette shortcut', () => {

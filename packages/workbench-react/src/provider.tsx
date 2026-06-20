@@ -1,4 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   BUILTIN_WORKBENCH_EXTENSIONS,
   createEditorService,
@@ -12,7 +21,11 @@ import {
   type WorkbenchExtensionDescription,
   type WorkbenchLayoutStateInput,
 } from '@workbench-kit/workbench-core';
-import type { WorkbenchExtensionsConfig, WorkbenchKeybindingDefinition, WorkbenchUserCommandDefinition } from '@workbench-kit/workbench-config';
+import type {
+  WorkbenchExtensionsConfig,
+  WorkbenchKeybindingDefinition,
+  WorkbenchUserCommandDefinition,
+} from '@workbench-kit/workbench-config';
 import {
   DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   isWorkbenchLayoutPersistenceAvailable,
@@ -41,7 +54,9 @@ export interface WorkbenchProviderProps {
   initialLayout?: WorkbenchLayoutStateInput;
   keybindingOverridesStorageKey?: string;
   layoutStorageKey?: string;
-  onKeybindingOverridesChange?: ((overrides: readonly WorkbenchKeybindingDefinition[]) => void) | undefined;
+  onKeybindingOverridesChange?:
+    | ((overrides: readonly WorkbenchKeybindingDefinition[]) => void)
+    | undefined;
   persistKeybindingOverrides?: boolean;
   persistLayout?: boolean;
   userCommands?: readonly WorkbenchUserCommandDefinition[];
@@ -111,7 +126,9 @@ export function WorkbenchProvider({
         : []),
     [initialKeybindingOverrides, keybindingOverridesStorageKey, persistKeybindingOverrides],
   );
-  const [keybindingOverrides, setKeybindingOverridesState] = useState(resolvedInitialKeybindingOverrides);
+  const [keybindingOverrides, setKeybindingOverridesState] = useState(
+    resolvedInitialKeybindingOverrides,
+  );
 
   useEffect(() => {
     setKeybindingOverridesState(resolvedInitialKeybindingOverrides);
@@ -137,7 +154,12 @@ export function WorkbenchProvider({
     }
 
     writePersistedKeybindingOverrides(keybindingOverrides, keybindingOverridesStorageKey);
-  }, [keybindingOverrides, keybindingOverridesStorageKey, onKeybindingOverridesChange, persistKeybindingOverrides]);
+  }, [
+    keybindingOverrides,
+    keybindingOverridesStorageKey,
+    onKeybindingOverridesChange,
+    persistKeybindingOverrides,
+  ]);
 
   const services = useMemo<WorkbenchProviderServices>(() => {
     const extensionRegistry = new ExtensionRegistry();
@@ -204,7 +226,13 @@ export function WorkbenchProvider({
       waitForExtensionStartup: () => ensureStartupActivation().then(() => undefined),
       workspaceHostPort,
     };
-  }, [availableExtensions, extensionsConfig, resolvedInitialLayout, userCommands, workspaceHostPort]);
+  }, [
+    availableExtensions,
+    extensionsConfig,
+    resolvedInitialLayout,
+    userCommands,
+    workspaceHostPort,
+  ]);
 
   useEffect(() => {
     if (!persistLayout) {
@@ -256,12 +284,7 @@ export function WorkbenchProvider({
       waitForExtensionStartup: services.waitForExtensionStartup,
       workspaceHostPort: services.workspaceHostPort,
     }),
-    [
-      keybindingOverrides,
-      resetCommandKeybindingOverride,
-      services,
-      setCommandKeybindingOverride,
-    ],
+    [keybindingOverrides, resetCommandKeybindingOverride, services, setCommandKeybindingOverride],
   );
 
   return <WorkbenchContext.Provider value={value}>{children}</WorkbenchContext.Provider>;

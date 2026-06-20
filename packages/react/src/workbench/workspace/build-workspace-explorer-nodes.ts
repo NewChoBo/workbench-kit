@@ -1,4 +1,8 @@
-import { buildWorkspaceTree, type WorkspaceFile, type WorkspaceTreeNode } from '@workbench-kit/workspace';
+import {
+  buildWorkspaceTree,
+  type WorkspaceFile,
+  type WorkspaceTreeNode,
+} from '@workbench-kit/workspace';
 
 export function buildWorkspaceExplorerNodes({
   files,

@@ -7,7 +7,9 @@ export interface WorkbenchKeybindingDefinition {
   readonly when?: string;
 }
 
-export function parseWorkbenchKeybindingsConfig(input: unknown): readonly WorkbenchKeybindingDefinition[] {
+export function parseWorkbenchKeybindingsConfig(
+  input: unknown,
+): readonly WorkbenchKeybindingDefinition[] {
   if (!Array.isArray(input)) {
     throw new WorkbenchConfigValidationError('Expected keybindings config to be an array.');
   }
@@ -15,7 +17,9 @@ export function parseWorkbenchKeybindingsConfig(input: unknown): readonly Workbe
   return input.map((entry, index) => parseWorkbenchKeybindingDefinition(entry, index));
 }
 
-export function parseWorkbenchKeybindingsConfigJson(jsonText: string): readonly WorkbenchKeybindingDefinition[] {
+export function parseWorkbenchKeybindingsConfigJson(
+  jsonText: string,
+): readonly WorkbenchKeybindingDefinition[] {
   try {
     return parseWorkbenchKeybindingsConfig(JSON.parse(jsonText) as unknown);
   } catch (error) {
@@ -27,7 +31,10 @@ export function parseWorkbenchKeybindingsConfigJson(jsonText: string): readonly 
   }
 }
 
-function parseWorkbenchKeybindingDefinition(input: unknown, index: number): WorkbenchKeybindingDefinition {
+function parseWorkbenchKeybindingDefinition(
+  input: unknown,
+  index: number,
+): WorkbenchKeybindingDefinition {
   const record = assertRecord(input, `keybindings[${index}]`);
   assertKnownKeys(record, ['args', 'command', 'key', 'when'], `keybindings[${index}]`);
 

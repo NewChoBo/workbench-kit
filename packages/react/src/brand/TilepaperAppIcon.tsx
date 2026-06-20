@@ -10,7 +10,7 @@ import {
   tilepaperPaperFoldPaths,
 } from './tilepaper-app-icon-geometry.js';
 
-export interface TilepaperAppIconProps extends Omit<SVGProps<SVGSVGElement>, 'viewBox'> {}
+export type TilepaperAppIconProps = Omit<SVGProps<SVGSVGElement>, 'viewBox'>;
 
 export function TilepaperAppIcon({ className, ...props }: TilepaperAppIconProps) {
   const idPrefix = `tilepaper-icon-${useId().replace(/:/g, '')}`;

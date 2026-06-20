@@ -1,9 +1,4 @@
-import type {
-  ComponentPropsWithRef,
-  CSSProperties,
-  HTMLAttributes,
-  ReactNode,
-} from 'react';
+import type { ComponentPropsWithRef, CSSProperties, HTMLAttributes, ReactNode } from 'react';
 import { forwardRef, useLayoutEffect, useRef, useState } from 'react';
 import { cx } from '../utils/cx';
 import { Panel, PanelBody, PanelHeader, type PanelBodyProps, type PanelProps } from './Panel';
@@ -41,6 +36,7 @@ export function SideBarViewFrame({
   const [footerHeight, setFooterHeight] = useState(0);
   const showHeader = Boolean(title || actions || headerAddon);
 
+  // Overlay footers float above scroll content; expose the measured height so spacers keep final rows reachable.
   useLayoutEffect(() => {
     const element = footerRef.current;
     if (!element || footerPlacement !== 'overlay' || !hasFooter) {

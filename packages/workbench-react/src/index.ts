@@ -38,10 +38,7 @@ export {
   WorkbenchCommandHost,
   type WorkbenchCommandHostProps,
 } from './workbench-command-host.js';
-export {
-  WorkbenchStartupGate,
-  type WorkbenchStartupGateProps,
-} from './workbench-startup-gate.js';
+export { WorkbenchStartupGate, type WorkbenchStartupGateProps } from './workbench-startup-gate.js';
 export {
   normalizeKeybindingKeyFromEvent,
   resolveExtensionKeybindingCommand,
@@ -53,6 +50,16 @@ export {
   mergeWorkbenchCommandDescriptors,
   resolveShellCommandActivities,
 } from './workbench-command-palette.js';
+export {
+  parseWorkbenchChatCommandInput,
+  type WorkbenchChatCommandInputParseResult,
+} from './chat-command-input.js';
+export {
+  useWorkbenchChatCommandSurface,
+  type WorkbenchChatCommandRunResult,
+  type WorkbenchChatCommandSurfaceOptions,
+} from './chat-command-surface.js';
+export { useWorkbenchCommandDescriptors } from './use-workbench-command-descriptors.js';
 export {
   executeWorkbenchUserCommandAction,
   registerWorkbenchUserCommands,

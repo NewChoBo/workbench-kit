@@ -137,9 +137,14 @@ export const IntegratedShell: StoryObj<IntegratedShellStoryArgs> = {
     await expect(await canvas.findByRole('textbox', { name: 'Search workspace' })).toBeVisible();
     await expect(statusBar).toHaveTextContent('Search opened');
 
-    await fireEvent.contextMenu(
-      await canvas.findByRole('button', { name: /src\/components\/.*Button.*\.tsx/ }),
-    );
+    const workspaceSearchPanel = canvas.getByLabelText('Workspace Search');
+    const searchResults = within(workspaceSearchPanel).getByRole('list', {
+      name: 'Search results',
+    });
+    const buttonSearchResult = within(searchResults).getByRole('button', {
+      name: /Button\s*\.tsx/,
+    });
+    await fireEvent.contextMenu(buttonSearchResult);
     await expect(await canvas.findByRole('menu', { name: 'Search result menu' })).toBeVisible();
     await userEvent.click(await canvas.findByRole('menuitem', { name: 'Copy path' }));
     await expect(statusBar).toHaveTextContent('Copied src/components/Button.tsx');
@@ -147,17 +152,17 @@ export const IntegratedShell: StoryObj<IntegratedShellStoryArgs> = {
     const activityBar = canvas.getByRole('navigation', { name: 'Activity bar' });
     const explorerActivity = within(activityBar).getByRole('button', { name: 'Explorer' });
 
-    let explorerFilter = await canvas
-      .findByRole('textbox', { name: 'Filter Explorer' }, { timeout: 500 })
+    let workspaceFiles = await canvas
+      .findByRole('list', { name: 'Workspace files' }, { timeout: 500 })
       .catch(() => null);
-    for (let attempt = 0; !explorerFilter && attempt < 2; attempt += 1) {
+    for (let attempt = 0; !workspaceFiles && attempt < 2; attempt += 1) {
       await userEvent.click(explorerActivity);
-      explorerFilter = await canvas
-        .findByRole('textbox', { name: 'Filter Explorer' }, { timeout: 500 })
+      workspaceFiles = await canvas
+        .findByRole('list', { name: 'Workspace files' }, { timeout: 500 })
         .catch(() => null);
     }
-    if (!explorerFilter) throw new Error('Explorer filter did not become visible.');
-    await expect(explorerFilter).toBeVisible();
+    if (!workspaceFiles) throw new Error('Explorer workspace files did not become visible.');
+    await expect(workspaceFiles).toBeVisible();
     await fireEvent.contextMenu(canvas.getByRole('tab', { name: /App\.tsx/ }));
     await expect(await canvas.findByRole('menu', { name: 'Editor tab menu' })).toBeVisible();
     await userEvent.click(await canvas.findByRole('menuitem', { name: 'Copy path' }));

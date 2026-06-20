@@ -93,7 +93,7 @@ export function KeybindingCaptureField({
           }
         }}
       >
-        {recording ? 'Press shortcut…' : displayValue ?? placeholder}
+        {recording ? 'Press shortcut…' : (displayValue ?? placeholder)}
       </button>
       {value ? (
         <Button

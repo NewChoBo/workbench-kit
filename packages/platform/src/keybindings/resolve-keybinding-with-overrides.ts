@@ -8,8 +8,7 @@ function bindingMatchesKey(
   context: Readonly<Record<string, ContextKeyValue>>,
 ): boolean {
   return (
-    binding.key === key &&
-    (binding.when === undefined || evaluateWhenClause(binding.when, context))
+    binding.key === key && (binding.when === undefined || evaluateWhenClause(binding.when, context))
   );
 }
 

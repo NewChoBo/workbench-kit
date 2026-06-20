@@ -44,7 +44,9 @@ export function parseWorkbenchUserCommandsConfig(input: unknown): WorkbenchUserC
   };
 }
 
-export function parseWorkbenchUserCommandsConfigJson(jsonText: string): WorkbenchUserCommandsConfig {
+export function parseWorkbenchUserCommandsConfigJson(
+  jsonText: string,
+): WorkbenchUserCommandsConfig {
   try {
     return parseWorkbenchUserCommandsConfig(JSON.parse(jsonText) as unknown);
   } catch (error) {
@@ -62,7 +64,9 @@ function parseUserCommandDefinition(input: unknown, index: number): WorkbenchUse
 
   return {
     action: parseUserCommandAction(record.action, `user commands[${index}].action`),
-    ...(readOptionalString(record, 'category') ? { category: readOptionalString(record, 'category') } : {}),
+    ...(readOptionalString(record, 'category')
+      ? { category: readOptionalString(record, 'category') }
+      : {}),
     command: readRequiredString(record, 'command'),
     title: readRequiredString(record, 'title'),
   };
@@ -85,7 +89,9 @@ function parseUserCommandAction(input: unknown, label: string): WorkbenchUserCom
     assertKnownKeys(record, ['steps', 'type'], label);
     const steps = record.steps;
     if (!Array.isArray(steps) || steps.length === 0) {
-      throw new WorkbenchConfigValidationError(`Expected "${label}.steps" to be a non-empty array.`);
+      throw new WorkbenchConfigValidationError(
+        `Expected "${label}.steps" to be a non-empty array.`,
+      );
     }
 
     return {

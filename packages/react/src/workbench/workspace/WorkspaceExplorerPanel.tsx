@@ -26,7 +26,11 @@ export function WorkspaceExplorerPanel({
 }: WorkspaceExplorerPanelProps) {
   const headerActions =
     onNewFile || onNewFolder || onRefresh ? (
-      <SidebarToolbar aria-label="Explorer actions" className="ui-explorer-action-bar" role="toolbar">
+      <SidebarToolbar
+        aria-label="Explorer actions"
+        className="ui-explorer-action-bar"
+        role="toolbar"
+      >
         {onNewFile ? (
           <IconButton compact icon="codicon-new-file" label="New file" onClick={onNewFile} />
         ) : null}

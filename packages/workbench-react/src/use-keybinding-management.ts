@@ -10,8 +10,12 @@ import { useWorkbench } from './provider.js';
 import { resolveShellCommandActivities } from './workbench-command-palette.js';
 
 export function useKeybindingManagementModel() {
-  const { extensionRegistry, keybindingOverrides, resetCommandKeybindingOverride, setCommandKeybindingOverride } =
-    useWorkbench();
+  const {
+    extensionRegistry,
+    keybindingOverrides,
+    resetCommandKeybindingOverride,
+    setCommandKeybindingOverride,
+  } = useWorkbench();
 
   const defaults = useMemo(
     () => extensionRegistry.keybindings.getKeybindings(),
@@ -56,13 +60,19 @@ function collectKeybindingManagementCommands(extensionRegistry: ExtensionRegistr
     sourceLabel?: string | undefined;
   }> = [];
   const seen = new Set<string>();
+  const shellCommands = createWorkbenchShellCommands({
+    activities: resolveShellCommandActivities(extensionRegistry),
+    includeSettings: true,
+    includeSidebarToggle: true,
+  });
+  const shellCommandIds = new Set(shellCommands.map((command) => command.id));
 
   for (const extension of extensionRegistry.getExtensions()) {
     const extensionLabel = extension.manifest.displayName ?? extension.manifest.id;
 
     for (const contribution of extension.manifest.contributes?.commands ?? []) {
       const command = extensionRegistry.commands.getCommand(contribution.command);
-      if (!command || seen.has(contribution.command)) {
+      if (!command || seen.has(contribution.command) || shellCommandIds.has(contribution.command)) {
         continue;
       }
 
@@ -77,7 +87,7 @@ function collectKeybindingManagementCommands(extensionRegistry: ExtensionRegistr
   }
 
   for (const command of extensionRegistry.commands.getCommands()) {
-    if (seen.has(command.id)) {
+    if (seen.has(command.id) || shellCommandIds.has(command.id)) {
       continue;
     }
 
@@ -89,11 +99,7 @@ function collectKeybindingManagementCommands(extensionRegistry: ExtensionRegistr
     });
   }
 
-  for (const command of createWorkbenchShellCommands({
-    activities: resolveShellCommandActivities(extensionRegistry),
-    includeSettings: true,
-    includeSidebarToggle: true,
-  })) {
+  for (const command of shellCommands) {
     if (seen.has(command.id)) {
       continue;
     }

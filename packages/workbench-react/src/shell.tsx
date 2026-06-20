@@ -240,7 +240,9 @@ export function WorkbenchShell({
     }
   };
 
-  const resolvedCommandHost = useMemo((): false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'> => {
+  const resolvedCommandHost = useMemo(():
+    | false
+    | Omit<WorkbenchCommandHostProps, 'onOpenSettings'> => {
     if (commandHost === false) {
       return false;
     }
@@ -443,7 +445,10 @@ function createActivityItems(
         label: activity.title,
         order: activity.order,
       }))
-      .sort((left, right) => (left.order ?? Number.MAX_SAFE_INTEGER) - (right.order ?? Number.MAX_SAFE_INTEGER))
+      .sort(
+        (left, right) =>
+          (left.order ?? Number.MAX_SAFE_INTEGER) - (right.order ?? Number.MAX_SAFE_INTEGER),
+      )
       .map(({ order: _order, ...item }) => item);
   }
 
@@ -470,8 +475,9 @@ function createDefaultStatusSections(
   accountManagement: WorkbenchAccountManagementInput | undefined,
 ): StatusBarSectionModel[] {
   const activeAccount =
-    accountManagement?.accounts.find((account) => account.id === accountManagement.activeAccountId) ??
-    accountManagement?.accounts.find((account) => account.status === 'active');
+    accountManagement?.accounts.find(
+      (account) => account.id === accountManagement.activeAccountId,
+    ) ?? accountManagement?.accounts.find((account) => account.status === 'active');
 
   return [
     {
@@ -689,7 +695,10 @@ function renderDefaultPrimarySidebar(
   }
 
   return (
-    <aside aria-label="Primary sidebar" className="workbench-primary-side-bar workbench-react-primary-sidebar">
+    <aside
+      aria-label="Primary sidebar"
+      className="workbench-primary-side-bar workbench-react-primary-sidebar"
+    >
       {views.map((view) => (
         <section key={view.id} data-view-id={view.id}>
           <WorkbenchViewHost

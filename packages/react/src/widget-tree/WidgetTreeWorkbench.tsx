@@ -82,9 +82,7 @@ export function WidgetTreeWorkbench({
       >
         <span className="widget-tree-workbench__title">
           {resolvedTitle}
-          {path ? (
-            <WorkspacePathLabel className="widget-tree-workbench__path" path={path} />
-          ) : null}
+          {path ? <WorkspacePathLabel className="widget-tree-workbench__path" path={path} /> : null}
           {dirty ? (
             <span className="widget-tree-workbench__dirty-indicator" title="Unsaved changes">
               ●

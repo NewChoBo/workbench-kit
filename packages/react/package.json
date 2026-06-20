@@ -27,6 +27,7 @@
     "./workbench/workspace/editor": "./src/workbench/workspace/WorkspaceEditor.tsx",
     "./workbench/workspace/explorer": "./src/workbench/workspace/WorkspaceExplorer.tsx",
     "./workbench/workspace/file-icon": "./src/icons/file-icon.ts",
+    "./workbench/commands": "./src/workbench/commands.ts",
     "./jdw": "./src/jdw/index.ts",
     "./jdw/document": "./src/jdw/document.ts",
     "./jdw/parse": "./src/jdw/parse.ts",

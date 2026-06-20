@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  BUILTIN_CHAT_VIEW_RENDER_KIND,
-  isBuiltinChatViewRenderData,
-} from './chat-view-data.js';
+import { BUILTIN_CHAT_VIEW_RENDER_KIND, isBuiltinChatViewRenderData } from './chat-view-data.js';
 
 describe('chat-view', () => {
   it('recognizes builtin chat view render payloads', () => {

@@ -101,48 +101,48 @@ export function ActivityBar({
     const isDropTarget = dropTarget?.itemId === item.id;
 
     return (
-    <button
-      key={item.id}
-      type="button"
-      aria-label={item.label}
-      aria-pressed={item.active}
-      className={cx(
-        'ui-workbench-activity-bar__item',
-        item.active && 'ui-workbench-activity-bar__item--active',
-        options.reorderable && 'ui-workbench-activity-bar__item--reorderable',
-        draggingItemId === item.id && 'ui-workbench-activity-bar__item--dragging',
-      )}
-      data-drop-position={isDropTarget ? dropTarget.position : undefined}
-      disabled={item.disabled}
-      draggable={options.reorderable && !item.disabled}
-      title={item.title ?? item.label}
-      onClick={() => onItemActivate?.(item)}
-      onDragEnd={() => {
-        setDraggingItemId(null);
-        setDropTarget(null);
-      }}
-      onDragLeave={() => {
-        if (dropTarget?.itemId === item.id) {
+      <button
+        key={item.id}
+        type="button"
+        aria-label={item.label}
+        aria-pressed={item.active}
+        className={cx(
+          'ui-workbench-activity-bar__item',
+          item.active && 'ui-workbench-activity-bar__item--active',
+          options.reorderable && 'ui-workbench-activity-bar__item--reorderable',
+          draggingItemId === item.id && 'ui-workbench-activity-bar__item--dragging',
+        )}
+        data-drop-position={isDropTarget ? dropTarget.position : undefined}
+        disabled={item.disabled}
+        draggable={options.reorderable && !item.disabled}
+        title={item.title ?? item.label}
+        onClick={() => onItemActivate?.(item)}
+        onDragEnd={() => {
+          setDraggingItemId(null);
           setDropTarget(null);
-        }
-      }}
-      onDragOver={(event) => handleDragOver(item, event)}
-      onDragStart={(event) => handleDragStart(item, event)}
-      onDrop={(event) => handleDrop(item, event)}
-    >
-      {isDropTarget ? (
-        <span
-          aria-hidden
-          className={cx(
-            'ui-workbench-activity-bar__drop-indicator',
-            dropTarget.position === 'before'
-              ? 'ui-workbench-activity-bar__drop-indicator--before'
-              : 'ui-workbench-activity-bar__drop-indicator--after',
-          )}
-        />
-      ) : null}
-      <span className="ui-workbench-activity-bar__icon">{item.icon}</span>
-    </button>
+        }}
+        onDragLeave={() => {
+          if (dropTarget?.itemId === item.id) {
+            setDropTarget(null);
+          }
+        }}
+        onDragOver={(event) => handleDragOver(item, event)}
+        onDragStart={(event) => handleDragStart(item, event)}
+        onDrop={(event) => handleDrop(item, event)}
+      >
+        {isDropTarget ? (
+          <span
+            aria-hidden
+            className={cx(
+              'ui-workbench-activity-bar__drop-indicator',
+              dropTarget.position === 'before'
+                ? 'ui-workbench-activity-bar__drop-indicator--before'
+                : 'ui-workbench-activity-bar__drop-indicator--after',
+            )}
+          />
+        ) : null}
+        <span className="ui-workbench-activity-bar__icon">{item.icon}</span>
+      </button>
     );
   };
 

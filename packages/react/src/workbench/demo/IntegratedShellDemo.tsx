@@ -534,8 +534,6 @@ export function IntegratedShellDemo({
   const renderPrimarySidebar = (
     shellContext: WorkbenchStandaloneShellContext<IntegratedShellActivityId, WorkspaceEditorTheme>,
   ) => {
-    const activeActivity = integratedShellActivities[shellContext.activityId];
-
     return (
       <aside
         aria-label="Primary sidebar"

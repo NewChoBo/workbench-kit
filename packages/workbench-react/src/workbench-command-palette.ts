@@ -89,11 +89,9 @@ export function shellCommandDefinitionToDescriptor<TContext>(
   };
 }
 
-export function extensionCommandToDescriptor(command: ExtensionCommand): WorkbenchCommandDescriptor | undefined {
-  if (!command.handler) {
-    return undefined;
-  }
-
+export function extensionCommandToDescriptor(
+  command: ExtensionCommand,
+): WorkbenchCommandDescriptor {
   return {
     category: command.category,
     icon: resolveExtensionCommandIcon(command.icon),
@@ -131,16 +129,18 @@ export function buildWorkbenchPaletteCommands({
   const shellDescriptors = shellCommands.map((command) =>
     shellCommandDefinitionToDescriptor(command, shellContext),
   );
-  const contributedDescriptors = extensionCommands
-    .map((command) => extensionCommandToDescriptor(command))
-    .filter((command): command is WorkbenchCommandDescriptor => command !== undefined);
+  const contributedDescriptors = extensionCommands.map((command) =>
+    extensionCommandToDescriptor(command),
+  );
 
   return mergeWorkbenchCommandDescriptors(shellDescriptors, contributedDescriptors, [
     ...additionalCommands,
   ]);
 }
 
-export function matchesWorkbenchCommandPaletteShortcut(event: Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'shiftKey'>) {
+export function matchesWorkbenchCommandPaletteShortcut(
+  event: Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'shiftKey'>,
+) {
   const key = event.key.toLowerCase();
 
   if (key !== 'p') {

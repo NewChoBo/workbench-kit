@@ -45,9 +45,7 @@ export function createVirtualWorkspaceExplorerPort({
       }
 
       paths.forEach((path) => workspace.deleteFile(path));
-      notify(
-        paths.length === 1 ? `Deleted ${paths[0]}` : `Deleted ${paths.length} files`,
-      );
+      notify(paths.length === 1 ? `Deleted ${paths[0]}` : `Deleted ${paths.length} files`);
     },
     moveEntries({ sourcePaths, targetFolderPath }) {
       const plan = getWorkspaceEntryMovePlan({
@@ -122,7 +120,9 @@ export function applyVirtualWorkspaceRenameSelection(
         : currentPath;
 
   return {
-    anchorPath: selection.anchorPath ? renameDescendantPath(selection.anchorPath) : selection.anchorPath,
+    anchorPath: selection.anchorPath
+      ? renameDescendantPath(selection.anchorPath)
+      : selection.anchorPath,
     focusedPath: selection.focusedPath
       ? renameDescendantPath(selection.focusedPath)
       : selection.focusedPath,

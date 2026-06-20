@@ -1,13 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ViewEmptyState } from '@workbench-kit/react/primitives';
 import { WorkspaceSearchPanel } from '@workbench-kit/react/workbench/workspace';
-import {
-  parseWorkspaceResourceUri,
-  searchWorkspaceFiles,
-  type WorkspaceSearchResult,
-} from '@workbench-kit/workspace';
+import { searchWorkspaceFiles, type WorkspaceSearchResult } from '@workbench-kit/workspace';
 
 import { useWorkbench } from './provider.js';
+import { useActiveWorkspacePath } from './use-active-workspace-path.js';
 import { useActiveEditorTab } from './use-editor.js';
 import {
   BUILTIN_SEARCH_VIEW_RENDER_KIND,
@@ -30,12 +27,7 @@ export function BuiltinSearchView() {
   const workspaceState = useWorkspaceResourceState(workspaceService);
   const [query, setQuery] = useState(workspaceState?.searchQuery ?? '');
 
-  const activePath = useMemo(() => {
-    if (!activeTab?.resourceUri) return undefined;
-
-    const resource = parseWorkspaceResourceUri(activeTab.resourceUri);
-    return resource?.kind === 'file' ? resource.path : undefined;
-  }, [activeTab?.resourceUri]);
+  const activePath = useActiveWorkspacePath(activeTab?.resourceUri);
 
   const results = useMemo<WorkspaceSearchResult[]>(() => {
     if (!workspaceState) return [];

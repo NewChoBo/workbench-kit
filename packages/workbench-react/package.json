@@ -11,12 +11,8 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@workbench-kit/adapters": "workspace:*",
-    "@workbench-kit/contracts": "workspace:*",
     "@workbench-kit/react": "workspace:*",
     "@workbench-kit/platform": "workspace:*",
-    "@workbench-kit/runtime": "workspace:*",
-    "@workbench-kit/services": "workspace:*",
     "@workbench-kit/tokens": "workspace:*",
     "@workbench-kit/workbench-config": "workspace:*",
     "@workbench-kit/workbench-core": "workspace:*",

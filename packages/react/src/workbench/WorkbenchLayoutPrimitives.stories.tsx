@@ -25,13 +25,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-function ActivityBarStoryFrame({
-  children,
-  preview,
-}: {
-  children: ReactNode;
-  preview?: string;
-}) {
+function ActivityBarStoryFrame({ children, preview }: { children: ReactNode; preview?: string }) {
   return (
     <div
       className="ide-root"
@@ -99,7 +93,8 @@ export const ActivityBarIntegratedShell: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Default explorer, search, chatting, and AI Chat activities with settings pinned to the bottom.',
+        story:
+          'Default explorer, search, chatting, and AI Chat activities with settings pinned to the bottom.',
       },
     },
   },
@@ -241,7 +236,9 @@ export const ActivityBarPrimaryOnly: Story = {
   name: 'ActivityBar / Primary only',
   render: () => (
     <ActivityBarStoryFrame preview="No secondary rail items">
-      <ActivityBar items={toActivityBarItems(integratedShellActivityDescriptors, { activeId: 'search' })} />
+      <ActivityBar
+        items={toActivityBarItems(integratedShellActivityDescriptors, { activeId: 'search' })}
+      />
     </ActivityBarStoryFrame>
   ),
 };

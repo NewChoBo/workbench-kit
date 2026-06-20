@@ -26,8 +26,7 @@ export function useCommandManagementModel() {
   }, [extensionRegistry]);
 
   const groups = useMemo(
-    () =>
-      buildCommandManagementModelGroups(extensionRegistry, refreshToken),
+    () => buildCommandManagementModelGroups(extensionRegistry, refreshToken),
     [extensionRegistry, refreshToken],
   );
 
@@ -70,24 +69,33 @@ export function buildCommandManagementModelGroups(
   extensionRegistry: ExtensionRegistry,
   _refreshToken = 0,
 ) {
+  const shellCommands = createWorkbenchShellCommands({
+    activities: resolveShellCommandActivities(extensionRegistry),
+    includeSettings: true,
+    includeSidebarToggle: true,
+  });
+  const shellCommandIds = new Set(shellCommands.map((command) => command.id));
+
   return buildCommandManagementGroups({
-    extensionCommands: collectExtensionCommandEntries(extensionRegistry),
+    extensionCommands: collectExtensionCommandEntries(extensionRegistry, shellCommandIds),
     keybindingsByCommandId: collectKeybindingsByCommandId(extensionRegistry),
     menuSurfacesByCommandId: collectMenuSurfacesByCommandId(extensionRegistry),
-    shellCommands: createWorkbenchShellCommands({
-      activities: resolveShellCommandActivities(extensionRegistry),
-      includeSettings: true,
-      includeSidebarToggle: true,
-    }).map((command) => ({
-      category: command.category,
-      handler: command.handler,
+    shellCommands: shellCommands.map((command) => ({
+      category: command.category ?? 'Workbench',
+      handler:
+        extensionRegistry.commands.getCommand(command.id)?.handler ??
+        command.handler ??
+        command.run,
       id: command.id,
-      label: command.title ?? command.id,
+      label: typeof command.label === 'string' ? command.label : (command.title ?? command.id),
     })),
   });
 }
 
-function collectExtensionCommandEntries(extensionRegistry: ExtensionRegistry) {
+function collectExtensionCommandEntries(
+  extensionRegistry: ExtensionRegistry,
+  skippedCommandIds: ReadonlySet<string>,
+) {
   const entries: Array<{
     category?: string | undefined;
     extensionId: string;
@@ -103,7 +111,11 @@ function collectExtensionCommandEntries(extensionRegistry: ExtensionRegistry) {
 
     for (const contribution of extension.manifest.contributes?.commands ?? []) {
       const command = extensionRegistry.commands.getCommand(contribution.command);
-      if (!command || seen.has(contribution.command)) {
+      if (
+        !command ||
+        seen.has(contribution.command) ||
+        skippedCommandIds.has(contribution.command)
+      ) {
         continue;
       }
 
@@ -120,7 +132,7 @@ function collectExtensionCommandEntries(extensionRegistry: ExtensionRegistry) {
   }
 
   for (const command of extensionRegistry.commands.getCommands()) {
-    if (seen.has(command.id)) {
+    if (seen.has(command.id) || skippedCommandIds.has(command.id)) {
       continue;
     }
 

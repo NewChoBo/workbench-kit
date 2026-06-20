@@ -1,22 +1,34 @@
-import { useEffect, useMemo, useState } from 'react';
-import {
-  createChatTransportFromRuntime,
-  createIntegratedShellChatRuntimeResponse,
-  integratedShellInitialChattingMessages,
-  integratedShellInitialRuntimeMessages,
-} from '@workbench-kit/adapters';
-import type { ChatStreamEvent } from '@workbench-kit/contracts';
+import { useCallback, useState } from 'react';
 import { ChatPanel, type ChatMessage } from '@workbench-kit/react/workbench/chat';
-import { createMockWorkbenchRuntime, type RuntimeStatus } from '@workbench-kit/runtime';
-import { WorkbenchChatService } from '@workbench-kit/services';
 
+import { type BuiltinChatViewMode, type BuiltinChatViewRenderData } from './chat-view-data.js';
 import {
-  type BuiltinChatViewMode,
-  type BuiltinChatViewRenderData,
-} from './chat-view-data.js';
+  useWorkbenchChatCommandSurface,
+  type WorkbenchChatCommandRunResult,
+} from './chat-command-surface.js';
 
 export type { BuiltinChatViewMode, BuiltinChatViewRenderData };
 export { BUILTIN_CHAT_VIEW_RENDER_KIND, isBuiltinChatViewRenderData } from './chat-view-data.js';
+
+type BuiltinChatRuntimeStatus = 'idle' | 'running' | 'error';
+
+const initialChattingMessages: readonly ChatMessage[] = [
+  {
+    content: 'Share updates here while working in the workspace.',
+    id: 'workbench-chatting-intro',
+    label: 'Alex',
+    source: 'assistant',
+  },
+];
+
+const initialAiChatMessages: readonly ChatMessage[] = [
+  {
+    content: 'Ask about the workspace or run a command with `/command.id`.',
+    id: 'workbench-ai-chat-intro',
+    label: 'Assistant',
+    source: 'assistant',
+  },
+];
 
 export function BuiltinChatView({ mode }: { mode: BuiltinChatViewMode }) {
   if (mode === 'aiChat') {
@@ -26,43 +38,56 @@ export function BuiltinChatView({ mode }: { mode: BuiltinChatViewMode }) {
   return <BuiltinChattingView />;
 }
 
-function runtimeMessagesToChatMessages(
-  messages: ReturnType<ReturnType<typeof createMockWorkbenchRuntime>['getMessages']>,
-): ChatMessage[] {
-  return messages.map((message) => ({
-    content: message.content,
-    createdAt: message.createdAt,
-    id: message.id,
-    label: message.label,
-    source: message.source,
-  }));
+function createChatCommandFeedbackMessage(result: WorkbenchChatCommandRunResult): ChatMessage {
+  const title = result.label ?? result.commandId;
+  const status =
+    result.status === 'success' ? `Ran command \`${title}\`.` : `Command failed: \`${title}\`.`;
+
+  return {
+    content: result.message ? `${status}\n\n${result.message}` : status,
+    createdAt: new Date().toISOString(),
+    id: `chat-command-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    label: 'Workbench',
+    source: 'assistant',
+  };
 }
 
-function updateMessages(currentMessages: ChatMessage[], message: ChatMessage): ChatMessage[] {
-  const index = currentMessages.findIndex((entry) => entry.id === message.id);
-  if (index < 0) return [...currentMessages, message];
+function createChatMessageId(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
-  const nextMessages = [...currentMessages];
-  nextMessages[index] = message;
-  return nextMessages;
+function createAiChatResponse(message: string): ChatMessage {
+  return {
+    content: `Received: ${message}`,
+    createdAt: new Date().toISOString(),
+    id: createChatMessageId('ai-chat-assistant'),
+    label: 'Assistant',
+    source: 'assistant',
+  };
 }
 
 function BuiltinChattingView() {
   const [draft, setDraft] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>(() =>
-    integratedShellInitialChattingMessages.map((message) => ({
-      content: message.content,
-      createdAt: message.createdAt,
-      id: message.id,
-      label: message.label,
-      source: message.source,
-    })),
-  );
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [...initialChattingMessages]);
+  const appendCommandResult = useCallback((result: WorkbenchChatCommandRunResult) => {
+    setMessages((currentMessages) => [
+      ...currentMessages,
+      createChatCommandFeedbackMessage(result),
+    ]);
+  }, []);
+  const chatCommands = useWorkbenchChatCommandSurface({
+    onCommandResult: appendCommandResult,
+    onValueChange: setDraft,
+    value: draft,
+  });
 
   return (
     <div className="workbench-chat-view">
       <ChatPanel
         assistantLabel="Alex"
+        commandLabel="Show commands"
+        commandSuggestPopover={chatCommands.commandSuggestPopover}
+        composerRef={chatCommands.composerRef}
         emptyLabel="Start a conversation with your team."
         messageLayout="peer"
         messages={messages}
@@ -70,14 +95,20 @@ function BuiltinChattingView() {
         title="Chat"
         userLabel="Jay"
         value={draft}
+        onCommandClick={chatCommands.onCommandClick}
+        onKeyDown={chatCommands.onKeyDown}
         onSubmit={(message) => {
+          if (chatCommands.runInputAsCommand(message)) {
+            return;
+          }
+
           setDraft('');
           setMessages((currentMessages) => [
             ...currentMessages,
             {
               content: message,
               createdAt: new Date().toISOString(),
-              id: `chatting-user-${Date.now()}`,
+              id: createChatMessageId('chatting-user'),
               source: 'user',
             },
           ]);
@@ -89,54 +120,28 @@ function BuiltinChattingView() {
 }
 
 function BuiltinAiChatView() {
-  const runtime = useMemo(
-    () =>
-      createMockWorkbenchRuntime({
-        idPrefix: 'workbench-chat-view',
-        initialMessages: integratedShellInitialRuntimeMessages,
-        response: (message) => createIntegratedShellChatRuntimeResponse(message),
-      }),
-    [],
-  );
-  const chatRuntimeTransport = useMemo(
-    () => createChatTransportFromRuntime({ runtime }),
-    [runtime],
-  );
-  const chatService = useMemo(
-    () =>
-      new WorkbenchChatService({
-        transport: chatRuntimeTransport,
-      }),
-    [chatRuntimeTransport],
-  );
   const [draft, setDraft] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>(() =>
-    runtimeMessagesToChatMessages(runtime.getMessages()),
-  );
-  const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus>(() => runtime.getStatus());
-
-  useEffect(() => {
-    const unsubscribe = chatService.subscribe((event: ChatStreamEvent) => {
-      if (event.type === 'message' || event.type === 'message-delta') {
-        setMessages((currentMessages) => updateMessages(currentMessages, event.message));
-      }
-
-      if (event.type === 'status') {
-        setRuntimeStatus(event.status);
-      }
-    });
-
-    return () => {
-      unsubscribe();
-      chatService.dispose();
-      runtime.dispose();
-    };
-  }, [chatService, runtime]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [...initialAiChatMessages]);
+  const [runtimeStatus, setRuntimeStatus] = useState<BuiltinChatRuntimeStatus>('idle');
+  const appendCommandResult = useCallback((result: WorkbenchChatCommandRunResult) => {
+    setMessages((currentMessages) => [
+      ...currentMessages,
+      createChatCommandFeedbackMessage(result),
+    ]);
+  }, []);
+  const chatCommands = useWorkbenchChatCommandSurface({
+    onCommandResult: appendCommandResult,
+    onValueChange: setDraft,
+    value: draft,
+  });
 
   return (
     <div className="workbench-chat-view">
       <ChatPanel
         assistantLabel="Assistant"
+        commandLabel="Show commands"
+        commandSuggestPopover={chatCommands.commandSuggestPopover}
+        composerRef={chatCommands.composerRef}
         disabled={runtimeStatus === 'error'}
         emptyLabel="Ask about this workspace."
         isRunning={runtimeStatus === 'running'}
@@ -146,10 +151,27 @@ function BuiltinAiChatView() {
         showTools
         title="AI Chat"
         value={draft}
-        onCancel={() => chatService.cancel()}
+        onCancel={() => setRuntimeStatus('idle')}
+        onCommandClick={chatCommands.onCommandClick}
+        onKeyDown={chatCommands.onKeyDown}
         onSubmit={(message) => {
+          if (chatCommands.runInputAsCommand(message)) {
+            return;
+          }
+
           setDraft('');
-          void chatService.sendMessage(message);
+          setRuntimeStatus('running');
+          setMessages((currentMessages) => [
+            ...currentMessages,
+            {
+              content: message,
+              createdAt: new Date().toISOString(),
+              id: createChatMessageId('ai-chat-user'),
+              source: 'user',
+            },
+            createAiChatResponse(message),
+          ]);
+          setRuntimeStatus('idle');
         }}
         onValueChange={setDraft}
       />

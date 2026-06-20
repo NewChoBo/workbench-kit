@@ -35,7 +35,8 @@ export const SAMPLE_EXAMPLE_JDW_PATH = 'example.jdw.json';
 export const SAMPLE_JDW_NODE_SCHEMA_PATH = 'schemas/jdw-node.jdw.schema.json';
 export const SAMPLE_JDW_SCHEMA_PATH = 'schemas/widget-document.v1.jdw.schema.json';
 
-export const workbenchSettings: WorkbenchSettingsConfig = parseWorkbenchSettingsConfig(settingsJson);
+export const workbenchSettings: WorkbenchSettingsConfig =
+  parseWorkbenchSettingsConfig(settingsJson);
 export const extensionsConfig = parseWorkbenchExtensionsConfig(extensionsJson);
 export const workbenchKeybindings: readonly WorkbenchKeybindingDefinition[] =
   parseWorkbenchKeybindingsConfig(keybindingsJson);

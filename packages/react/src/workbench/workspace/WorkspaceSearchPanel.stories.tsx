@@ -164,9 +164,13 @@ export const KeyboardFlow: Story = {
     await expect(canvas.getByText('Type to search files')).toBeVisible();
     await expect(canvas.getByText('0 results')).toBeVisible();
 
+    await userEvent.click(searchInput);
     await userEvent.type(searchInput, 'button');
+    await expect(searchInput).toHaveValue('button');
+
+    const searchResults = await canvas.findByRole('list', { name: 'Search results' });
     await expect(
-      await canvas.findByRole('button', { name: /src\/components\/.*Button.*\.tsx/ }),
+      await within(searchResults).findByRole('button', { name: /Button\s*\.tsx/ }),
     ).toBeVisible();
     await expect(canvas.getByText('1 result')).toBeVisible();
 

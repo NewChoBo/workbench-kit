@@ -47,7 +47,9 @@ export function AccountManagementPanel({
                 >
                   <div className="workbench-management-account-card__header">
                     <div>
-                      <p className="workbench-management-account-card__name">{account.displayName}</p>
+                      <p className="workbench-management-account-card__name">
+                        {account.displayName}
+                      </p>
                       {account.email ? (
                         <p className="workbench-management-account-card__email">{account.email}</p>
                       ) : null}

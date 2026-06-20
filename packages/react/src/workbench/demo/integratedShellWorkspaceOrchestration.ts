@@ -64,8 +64,12 @@ export function useIntegratedShellWorkspaceOrchestration({
   onNotify,
   workspace,
 }: UseIntegratedShellWorkspaceOrchestrationOptions): IntegratedShellWorkspaceOrchestration {
-  const { deleteFile: deleteWorkspaceFile, deleteFolder: deleteWorkspaceFolder, files, toggleFolder } =
-    workspace;
+  const {
+    deleteFile: deleteWorkspaceFile,
+    deleteFolder: deleteWorkspaceFolder,
+    files,
+    toggleFolder,
+  } = workspace;
   const [pendingDelete, setPendingDelete] = useState<IntegratedShellPendingDelete | null>(null);
 
   const port = useMemo(
@@ -135,9 +139,7 @@ export function useIntegratedShellWorkspaceOrchestration({
         ),
         { mode: 'single', reason: 'click' },
       );
-      onNotify(
-        paths.length === 1 ? `Deleted ${paths[0]}` : `Deleted ${paths.length} files`,
-      );
+      onNotify(paths.length === 1 ? `Deleted ${paths[0]}` : `Deleted ${paths.length} files`);
     },
     [controller, deleteWorkspaceFile, files, onNotify],
   );
@@ -205,10 +207,7 @@ export function useIntegratedShellWorkspaceOrchestration({
   );
 
   const startWorkspaceCreate = useCallback(
-    (
-      kind: Parameters<typeof controller.startCreate>[0],
-      parentPath?: string,
-    ) => {
+    (kind: Parameters<typeof controller.startCreate>[0], parentPath?: string) => {
       controller.startCreate(kind, parentPath);
       onNotify(kind === 'create-file' ? 'New file queued' : 'New folder queued');
     },

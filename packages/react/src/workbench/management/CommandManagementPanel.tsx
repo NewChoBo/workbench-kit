@@ -8,25 +8,12 @@ import {
   countCommandManagementEntries,
   filterCommandManagementGroups,
 } from './build-command-management-groups.js';
+import { formatCommandRunState } from './format-command-run-state.js';
 import type { CommandManagementPanelProps } from './types.js';
 
-function formatRunState(lastRun: CommandManagementPanelProps['lastRun']): string | undefined {
-  if (!lastRun) {
-    return undefined;
-  }
-
-  if (lastRun.status === 'running') {
-    return `Running ${lastRun.commandId}…`;
-  }
-
-  if (lastRun.status === 'error') {
-    return lastRun.message ? `Failed: ${lastRun.message}` : `Failed: ${lastRun.commandId}`;
-  }
-
-  return `Completed: ${lastRun.commandId}`;
-}
-
-function statusBadgeVariant(status: CommandManagementPanelProps['groups'][number]['entries'][number]['status']) {
+function statusBadgeVariant(
+  status: CommandManagementPanelProps['groups'][number]['entries'][number]['status'],
+) {
   switch (status) {
     case 'available':
       return 'accent' as const;
@@ -54,7 +41,7 @@ export function CommandManagementPanel({
   );
   const totalCount = countCommandManagementEntries(groups);
   const visibleCount = countCommandManagementEntries(filteredGroups);
-  const runStateLabel = formatRunState(lastRun);
+  const runStateLabel = formatCommandRunState(lastRun);
 
   return (
     <div className={cx('workbench-management-panel', className)}>
@@ -103,7 +90,11 @@ export function CommandManagementPanel({
         ) : (
           <div className="workbench-management-groups">
             {filteredGroups.map((group) => (
-              <section key={group.id} aria-label={group.label} className="workbench-management-group">
+              <section
+                key={group.id}
+                aria-label={group.label}
+                className="workbench-management-group"
+              >
                 <header className="workbench-management-group__header">
                   <h3 className="workbench-management-group__title">{group.label}</h3>
                   <Badge variant="muted">{group.entries.length}</Badge>
@@ -130,7 +121,11 @@ export function CommandManagementPanel({
                         ) : null}
                       </div>
                       <Button
-                        disabled={entry.status !== 'available' || !onRunCommand || lastRun?.status === 'running'}
+                        disabled={
+                          entry.status !== 'available' ||
+                          !onRunCommand ||
+                          lastRun?.status === 'running'
+                        }
                         type="button"
                         onClick={() => {
                           void onRunCommand?.(entry.id);

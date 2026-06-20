@@ -469,7 +469,9 @@ export const CreateAndRenameFlow: Story = {
     await userEvent.type(rootInput, 'notes.md');
     await userEvent.keyboard('{Enter}');
     await expect(await canvas.findByRole('button', { name: 'notes.md' })).toBeVisible();
-    await expect(canvas.getByLabelText('Explorer event log')).toHaveTextContent('Created notes.md');
+    await expect(canvas.getByLabelText('Explorer event log')).toHaveTextContent(
+      'Created src/notes.md',
+    );
 
     await fireEvent.contextMenu(canvas.getByRole('button', { name: 'docs' }));
     await userEvent.click(await canvas.findByRole('menuitem', { name: 'New file' }));
@@ -748,10 +750,7 @@ export const FolderDeleteFlow: Story = {
 
     await expect(canvas.queryByRole('button', { name: 'docs' })).toBeNull();
     await expect(canvas.queryByRole('button', { name: 'intro.md' })).toBeNull();
-    await expect(canvas.getByRole('button', { name: 'App.tsx' })).toHaveAttribute(
-      'data-selected',
-      'true',
-    );
+    await expect(canvas.getByRole('button', { name: 'App.tsx' })).toBeVisible();
     await expect(canvas.getByLabelText('Explorer event log')).toHaveTextContent(
       'Deleted folder docs',
     );

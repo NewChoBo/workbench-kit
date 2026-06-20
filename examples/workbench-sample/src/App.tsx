@@ -133,11 +133,14 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
     [accountManagement?.accounts, auth.status, layout.sideBar.visible, theme],
   );
 
-  const handleThemeChange = useCallback((nextTheme: string) => {
-    if (isSampleTheme(nextTheme)) {
-      onThemeChange(nextTheme);
-    }
-  }, [onThemeChange]);
+  const handleThemeChange = useCallback(
+    (nextTheme: string) => {
+      if (isSampleTheme(nextTheme)) {
+        onThemeChange(nextTheme);
+      }
+    },
+    [onThemeChange],
+  );
 
   const handleStatusItemActivate = useCallback(
     (item: { id: string }) => {
@@ -153,10 +156,9 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
     [layout.sideBar.visible, layoutService, onThemeChange, theme],
   );
 
-  const runSamplePaletteCommand = useCallback(
-    createSamplePaletteCommandRunner(executeCommand),
-    [executeCommand],
-  );
+  const runSamplePaletteCommand = useCallback(createSamplePaletteCommandRunner(executeCommand), [
+    executeCommand,
+  ]);
 
   return (
     <>
@@ -237,12 +239,8 @@ function SampleHelpContent() {
       <section className="workbench-sample-help__section">
         <h2>Explorer and search</h2>
         <ul>
-          <li>
-            Right-click files or folders in Explorer for rename, delete, and create actions.
-          </li>
-          <li>
-            Drag files to move them; inline rename works on the selected item.
-          </li>
+          <li>Right-click files or folders in Explorer for rename, delete, and create actions.</li>
+          <li>Drag files to move them; inline rename works on the selected item.</li>
           <li>
             Search for <code>button</code> to find <code>{SAMPLE_BUTTON_PATH}</code>.
           </li>
@@ -262,12 +260,10 @@ function SampleHelpContent() {
           <li>
             Theme selection is exposed in Settings, with a status bar shortcut for quick checks.
           </li>
+          <li>Toggle the primary sidebar from the status bar to review layout persistence.</li>
           <li>
-            Toggle the primary sidebar from the status bar to review layout persistence.
-          </li>
-          <li>
-            Open Settings and choose <strong>Commands</strong> or <strong>Accounts</strong> to review
-            registered commands or manage the demo session.
+            Open Settings and choose <strong>Commands</strong> or <strong>Accounts</strong> to
+            review registered commands or manage the demo session.
           </li>
           <li>
             Press <code>{getWorkbenchCommandPaletteShortcutLabel()}</code> and run{' '}

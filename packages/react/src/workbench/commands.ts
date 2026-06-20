@@ -177,6 +177,7 @@ export function createWorkbenchShellCommands<TActivityId extends string>({
       label: ({ isPrimarySidebarVisible }) =>
         isPrimarySidebarVisible ? 'Hide primary sidebar' : 'Show primary sidebar',
       run: ({ togglePrimarySidebar }) => togglePrimarySidebar(),
+      title: 'Toggle primary sidebar',
     });
   }
 
@@ -186,6 +187,7 @@ export function createWorkbenchShellCommands<TActivityId extends string>({
       icon: settingsIcon,
       label: settingsLabel,
       run: ({ openSettings }) => openSettings(),
+      title: settingsLabel,
     });
   }
 

@@ -74,6 +74,20 @@ Left/right status entries from contributions and platform services (branch name,
 
 Modal command search UI bound to `CommandRegistry` and `KeybindingRegistry` hints. Filters by context keys and command enablement. Full palette ownership moves to `workbench-react` after the provider path is the default shell entry.
 
+`WorkbenchCommandHost` also attaches first-party shell command handlers (for
+example activity selection, primary sidebar toggle, and settings open) to
+`ExtensionRegistry.commands` at runtime, so palette execution and direct
+`useWorkbench().executeCommand(...)` calls share the same provider command path.
+
+### Chat command surface
+
+Built-in Chat and AI Chat reuse the same command descriptors and command suggest
+UI for `/command.id` input. `useWorkbenchChatCommandSurface` keeps chat-specific
+input handling local while routing execution through `useWorkbench().executeCommand(...)`;
+it does not introduce a second command service. Commands that need payloads can
+be invoked with one JSON argument, for example
+`/workspace.open {"paths":["src/App.tsx"]}`.
+
 ### Account menu entry
 
 Status bar or activity area entry opening account/session UI. Uses the auth and
@@ -85,8 +99,10 @@ account service contracts from `platform`; does not read tokens from
 1. `WorkbenchProvider` loads config and registers extensions.
 2. `ExtensionRegistry` merges contributions into registries.
 3. `WorkbenchShell` subscribes to layout and context key changes.
-4. User actions dispatch commands through `CommandRegistry`.
-5. View hosts render extension-provided values via stable SDK contracts, mapping valid React nodes and simple text values into the shell.
+4. `WorkbenchCommandHost` registers shell command handlers into the provider command registry.
+5. User actions, command palette selections, and chat slash commands dispatch
+   through `useWorkbench().executeCommand(...)`.
+6. View hosts render extension-provided values via stable SDK contracts, mapping valid React nodes and simple text values into the shell.
 
 ## Styling
 

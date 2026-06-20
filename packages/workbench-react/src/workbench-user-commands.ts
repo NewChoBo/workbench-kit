@@ -1,4 +1,7 @@
-import type { WorkbenchUserCommandAction, WorkbenchUserCommandDefinition } from '@workbench-kit/workbench-config';
+import type {
+  WorkbenchUserCommandAction,
+  WorkbenchUserCommandDefinition,
+} from '@workbench-kit/workbench-config';
 import type { ExtensionRegistry } from '@workbench-kit/workbench-core';
 
 export async function executeWorkbenchUserCommandAction(

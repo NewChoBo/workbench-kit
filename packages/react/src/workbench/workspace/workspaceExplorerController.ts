@@ -29,36 +29,22 @@ export interface WorkspaceExplorerControllerPort {
   createFile(input: {
     name: string;
     parentPath: string;
-  }):
-    | WorkspaceExplorerMutationResult
-    | void
-    | Promise<WorkspaceExplorerMutationResult | void>;
+  }): WorkspaceExplorerMutationResult | void | Promise<WorkspaceExplorerMutationResult | void>;
   createFolder(input: {
     name: string;
     parentPath: string;
-  }):
-    | WorkspaceExplorerMutationResult
-    | void
-    | Promise<WorkspaceExplorerMutationResult | void>;
-  deleteEntries(input: {
-    kind: 'file' | 'folder';
-    paths: readonly string[];
-  }): void | Promise<void>;
-  moveEntries?(
-    input: {
-      sourcePaths: readonly string[];
-      targetFolderPath: string;
-    },
-  ): WorkspaceExplorerMutationResult | void | Promise<WorkspaceExplorerMutationResult | void>;
+  }): WorkspaceExplorerMutationResult | void | Promise<WorkspaceExplorerMutationResult | void>;
+  deleteEntries(input: { kind: 'file' | 'folder'; paths: readonly string[] }): void | Promise<void>;
+  moveEntries?(input: {
+    sourcePaths: readonly string[];
+    targetFolderPath: string;
+  }): WorkspaceExplorerMutationResult | void | Promise<WorkspaceExplorerMutationResult | void>;
   openFile(path: string): void | Promise<void>;
   renameEntry(input: {
     kind: 'file' | 'folder';
     name: string;
     path: string;
-  }):
-    | WorkspaceExplorerMutationResult
-    | void
-    | Promise<WorkspaceExplorerMutationResult | void>;
+  }): WorkspaceExplorerMutationResult | void | Promise<WorkspaceExplorerMutationResult | void>;
   reportError?(message: string): void;
 }
 

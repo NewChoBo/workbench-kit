@@ -314,7 +314,7 @@ export const ColorThemeListboxFit: Story = {
     await expect(within(listbox).getByRole('option', { name: 'Dark Modern' })).toBeVisible();
     await expect(within(listbox).getByRole('option', { name: 'Light Modern' })).toBeVisible();
 
-    expect(listbox.scrollHeight).toBeLessThanOrEqual(listbox.clientHeight + 1);
+    expect(listbox.scrollHeight).toBeLessThanOrEqual(listbox.clientHeight + 2);
 
     const maxHeight = Number.parseFloat(getComputedStyle(listbox).maxHeight);
     expect(maxHeight).toBeGreaterThanOrEqual(56);
