@@ -64,7 +64,9 @@ function ModalFrame({
       {titlebar}
       <div className="ui-modal__surface">
         <div className="ui-modal__content">
-          <div className={cx('ui-modal__body', bodyClassName)}>{children}</div>
+          <div className={cx('ui-modal__body', 'ui-workbench-scrollbar', bodyClassName)}>
+            {children}
+          </div>
           {footer ? <div className="ui-modal__footer">{footer}</div> : null}
         </div>
         {resizeHandles}
