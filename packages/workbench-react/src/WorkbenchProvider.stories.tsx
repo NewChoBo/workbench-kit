@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { WorkbenchStoryHost } from '@workbench-kit/react/workbench';
 import { expect, within } from 'storybook/test';
 
 import { WorkbenchProvider, WorkbenchShell } from './index.js';
@@ -47,9 +48,11 @@ export const ProviderShell: Story = {
     },
   },
   render: () => (
-    <WorkbenchProvider extensionsConfig={sampleExtensionsConfig} initialLayout={defaultLayout}>
-      <WorkbenchShell rootClassName="ide-root" theme="dark" />
-    </WorkbenchProvider>
+    <WorkbenchStoryHost>
+      <WorkbenchProvider extensionsConfig={sampleExtensionsConfig} initialLayout={defaultLayout}>
+        <WorkbenchShell rootClassName="ide-root" theme="dark" />
+      </WorkbenchProvider>
+    </WorkbenchStoryHost>
   ),
 };
 

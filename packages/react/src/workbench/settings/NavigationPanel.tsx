@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
+import { ScrollArea } from '../../primitives/ScrollArea';
 import { cx } from '../../utils/cx';
 
 export interface WorkbenchNavigationPanelProps extends Omit<
@@ -33,14 +34,26 @@ export function WorkbenchNavigationPanel({
     >
       {hasNav ? (
         <nav className={cx('ui-workbench-navigation-panel__nav', navClassName)} {...navProps}>
-          {nav}
+          <ScrollArea
+            className="ui-workbench-navigation-panel__nav-scroll"
+            gutter="stable"
+            orientation="vertical"
+          >
+            {nav}
+          </ScrollArea>
         </nav>
       ) : null}
       <div
         className={cx('ui-workbench-navigation-panel__content', contentClassName)}
         {...contentProps}
       >
-        {content}
+        <ScrollArea
+          className="ui-workbench-navigation-panel__content-scroll"
+          gutter="stable"
+          orientation="vertical"
+        >
+          {content}
+        </ScrollArea>
       </div>
     </div>
   );

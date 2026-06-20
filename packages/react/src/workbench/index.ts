@@ -72,6 +72,8 @@ export { resolveWorkbenchTheme, useResolvedWorkbenchTheme } from './theme';
 export type { ResolvedWorkbenchTheme } from './theme';
 export { WorkbenchThemeProvider } from './WorkbenchThemeProvider';
 export type { WorkbenchThemeProviderProps } from './WorkbenchThemeProvider';
+export { WorkbenchStoryHost } from './story/WorkbenchStoryHost';
+export type { WorkbenchStoryHostProps } from './story/WorkbenchStoryHost';
 export {
   WorkbenchShortcutCommandBridge,
   getWorkbenchShortcutCommandBindings,

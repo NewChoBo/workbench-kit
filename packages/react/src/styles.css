@@ -183,6 +183,8 @@
   flex-direction: column;
 }
 
+/* Canonical panel header for full workbench shell. Primitives-only bundle duplicates
+   a subset in packages/react/src/primitives/styles.css — keep in sync when editing. */
 .panel-header {
   flex-shrink: 0;
   height: var(--panel-header-height, var(--workbench-header-height));
@@ -778,8 +780,7 @@
   flex-direction: column;
   gap: 2px;
   padding: 14px 12px 14px 24px;
-  border-right: 1px solid var(--color-border);
-  overflow-y: auto;
+  border-right: 0;
 }
 
 .workbench-settings-nav-item {
@@ -820,7 +821,6 @@
 .workbench-settings-content {
   min-width: 0;
   padding: 0 24px 32px;
-  overflow-y: auto;
 }
 
 .workbench-settings-section {
@@ -1171,16 +1171,26 @@
   min-width: 0;
   min-height: 0;
   height: 100%;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   overscroll-behavior: contain;
   border-right: 1px solid var(--color-border);
+}
+
+.ui-workbench-navigation-panel__nav-scroll,
+.ui-workbench-navigation-panel__content-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .ui-workbench-navigation-panel__content {
   min-width: 0;
   min-height: 0;
   height: 100%;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   overscroll-behavior: contain;
 }
 
@@ -1812,6 +1822,9 @@
     height: auto;
     border-right: 0;
     border-bottom: 1px solid var(--color-border);
+  }
+
+  .ui-workbench-navigation-panel__nav-scroll.ui-scroll-area--vertical {
     overflow-x: auto;
     overflow-y: hidden;
   }
@@ -1819,10 +1832,7 @@
   .workbench-settings-sidebar {
     flex-direction: row;
     padding: 8px 12px;
-    border-right: 0;
-    border-bottom: 1px solid var(--color-border);
-    overflow-x: auto;
-    overflow-y: hidden;
+    border-bottom: 0;
   }
 
   .workbench-settings-nav-item {
@@ -2338,6 +2348,7 @@
 .workbench-explorer-view,
 .workbench-commands-view,
 .workbench-search-view,
+.workbench-chat-view,
 .workbench-primary-side-bar .ui-side-bar-view,
 .workbench-react-primary-sidebar {
   display: flex;
@@ -2358,14 +2369,6 @@
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
-}
-
-.workbench-chat-view {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
 }
 
 .workbench-chat-view .chat-side-bar-view {

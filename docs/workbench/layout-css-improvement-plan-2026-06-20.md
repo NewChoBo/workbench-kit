@@ -316,23 +316,40 @@ pnpm exec vitest run src/
 
 ## Decision log
 
-| Date       | ID          | Decision                                                 | Rationale                           |
-| ---------- | ----------- | -------------------------------------------------------- | ----------------------------------- |
-| 2026-06-20 | —           | Master plan is project-wide CSS/layout, not sidebar-only | User goal clarification             |
-| 2026-06-20 | —           | Sidebar simplification becomes sub-track                 | Preserves completed work context    |
-| 2026-06-20 | P1-5        | Unify panel-header in full `styles.css` path             | Avoid split-brain primitives bundle |
-| TBD        | P1-3        | Settings nav vs content scroll owner                     | Pick one after manual scroll test   |
-| TBD        | Sidebar B-2 | Overlay footer keep vs static                            | Input to scroll policy §3           |
+| Date       | ID          | Decision                                                 | Rationale                                                 |
+| ---------- | ----------- | -------------------------------------------------------- | --------------------------------------------------------- |
+| 2026-06-20 | —           | Master plan is project-wide CSS/layout, not sidebar-only | User goal clarification                                   |
+| 2026-06-20 | —           | Sidebar simplification becomes sub-track                 | Preserves completed work context                          |
+| 2026-06-20 | P1-5        | Unify panel-header in full `styles.css` path             | Avoid split-brain primitives bundle                       |
+| 2026-06-20 | P1-3        | Nav + content each own scroll via `ScrollArea`           | VS Code-like independent rails; no duplicate overflow CSS |
+| TBD        | Sidebar B-2 | Overlay footer keep vs static                            | Input to scroll policy §3                                 |
+
+---
+
+## UI Commonization Slice — 2026-06-20
+
+Focused Phase 1 execution slice (scroll ownership, devtools tokens, story host).
+
+| ID    | Task                         | Status   | Notes                                                                     |
+| ----- | ---------------------------- | -------- | ------------------------------------------------------------------------- |
+| P1-3  | Settings single scroll owner | **Done** | `ScrollArea` in `WorkbenchNavigationPanel`; settings CSS overflow removed |
+| P1-2  | Sidebar view flex merge      | **Done** | `.workbench-chat-view` merged into shared sidebar view host group         |
+| P1-5  | Panel-header duplication     | **Done** | Cross-link comments in `styles.css` ↔ `primitives/styles.css`             |
+| P3-2  | Story host wrapper           | **Done** | `WorkbenchStoryHost` + Devtools / ProviderShell stories                   |
+| WB-31 | Devtools ScrollArea + tokens | **Done** | `WorkbenchDevtoolsPanel` uses `ScrollArea`; `--ide-*` → token vars        |
+
+**Deferred:** Phase 2 CSS extraction, `ide-*` rename (P3-1), ThemeRegistry (WB-36), full story migration.
 
 ---
 
 ## Audit log
 
-| Date       | Phase            | Result                                                   |
-| ---------- | ---------------- | -------------------------------------------------------- |
-| 2026-06-20 | Initial audit    | L1–L8 documented; `styles.css` ~7079 lines               |
-| 2026-06-20 | Sidebar baseline | Commits through `91acc15`; MultiProviderExplorer removed |
-| TBD        | Phase 1 complete | —                                                        |
+| Date       | Phase                  | Result                                                    |
+| ---------- | ---------------------- | --------------------------------------------------------- |
+| 2026-06-20 | Initial audit          | L1–L8 documented; `styles.css` ~7079 lines                |
+| 2026-06-20 | Sidebar baseline       | Commits through `91acc15`; MultiProviderExplorer removed  |
+| 2026-06-20 | UI Commonization slice | P1-3, P1-2, P1-5, P3-2, WB-31 devtools alignment complete |
+| TBD        | Phase 1 complete       | —                                                         |
 
 ---
 

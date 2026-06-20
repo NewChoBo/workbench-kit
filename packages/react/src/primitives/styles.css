@@ -13,6 +13,7 @@
   background: var(--panel-bg, var(--color-bg));
 }
 
+/* Primitives-only bundle variant. Canonical shell rules: packages/react/src/styles.css */
 .panel-header {
   box-sizing: border-box;
   display: flex;

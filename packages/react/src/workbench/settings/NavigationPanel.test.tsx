@@ -17,6 +17,7 @@ describe('WorkbenchNavigationPanel', () => {
     expect(markup).toContain('ui-workbench-navigation-panel');
     expect(markup).toContain('data-has-nav="true"');
     expect(markup).toContain('ui-workbench-navigation-panel__nav custom-nav');
+    expect(markup).toContain('ui-scroll-area');
     expect(markup).toContain('aria-label="Settings categories"');
     expect(markup).toContain('ui-workbench-navigation-panel__content custom-content');
     expect(markup).toContain('Settings content');
