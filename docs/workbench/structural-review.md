@@ -8,7 +8,7 @@
 
 ## 요약
 
-- **레이어 구조는 대체로 명확함:** `base → platform → contracts → jdw → workbench-core → workbench-react → react` 순으로 의존하며, `scripts/check-workbench-dependency-graph.mjs`가 금지 엣지를 CI에서 검증함.
+- **레이어 구조는 대체로 명확함:** `base → platform → contracts → jdw → workbench-core → shell-react → react` 순으로 의존하며, `scripts/check-workbench-dependency-graph.mjs`가 금지 엣지를 CI에서 검증함.
 - **가장 큰 구조적 리스크는 JDW 이중 렌더:** `cssRenderBackend`(headless rect → absolute CSS)와 `renderBuiltinWidgetNode`(flex/grid 재귀)가 동일 트리에서 혼재할 수 있음. Track D D2 / Lane B B1에서 통합 필요.
 - **이중 문서 모델:** 위젯 영속화는 JDW v7 단일 SSoT. `WorkbenchDocument`(절대 좌표 캔버스)는 `WorkbenchCanvasShell` 데모 전용이며 위젯 파일과 혼용 금지; **장기 목표는 JDW render + event layer로 통합 후 demo 경로 제거**(Lane A DoD / B2 mapping 이후).
 - **Lane A 갭:** WB-29 closeout landed (reveal/focus bridge + editor↔tree sync tests); next is WB-30 preference scopes.
@@ -60,7 +60,7 @@ flowchart TB
 
   subgraph L4["L4 — React surfaces"]
     REACT["@workbench-kit/react"]
-    WB_REACT["@workbench-kit/workbench-react"]
+    WB_REACT["@workbench-kit/shell-react"]
     JDW_EDITOR["@workbench-kit/jdw-editor"]
   end
 
@@ -87,39 +87,39 @@ flowchart TB
 
 ### 2.2 Enforced rules (`check-workbench-dependency-graph.mjs`)
 
-| Package                          | Allowed `@workbench-kit/*` deps                                                          |
-| -------------------------------- | ---------------------------------------------------------------------------------------- |
-| `@workbench-kit/base`            | —                                                                                        |
-| `@workbench-kit/platform`        | `base`                                                                                   |
-| `@workbench-kit/contracts`       | —                                                                                        |
-| `@workbench-kit/jdw`             | `contracts`                                                                              |
-| `@workbench-kit/workbench-core`  | `base`, `platform`, `workbench-config`, `workbench-extension-sdk`                        |
-| `@workbench-kit/workbench-react` | `platform`, `react`, `tokens`, `workbench-config`, `workbench-core`                      |
-| `@workbench-kit/react`           | `adapters`, `contracts`, `jdw`, `platform`, `runtime`, `services`, `tokens`, `workspace` |
-| Extensions                       | `base`, `platform`, `react`, `workbench-extension-sdk` only                              |
+| Package                         | Allowed `@workbench-kit/*` deps                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------------------- |
+| `@workbench-kit/base`           | —                                                                                        |
+| `@workbench-kit/platform`       | `base`                                                                                   |
+| `@workbench-kit/contracts`      | —                                                                                        |
+| `@workbench-kit/jdw`            | `contracts`                                                                              |
+| `@workbench-kit/workbench-core` | `base`, `platform`, `workbench-config`, `workbench-extension-sdk`                        |
+| `@workbench-kit/shell-react`    | `platform`, `react`, `tokens`, `workbench-config`, `workbench-core`                      |
+| `@workbench-kit/react`          | `adapters`, `contracts`, `jdw`, `platform`, `runtime`, `services`, `tokens`, `workspace` |
+| Extensions                      | `base`, `platform`, `react`, `workbench-extension-sdk` only                              |
 
-**Verified:** `workbench-core` has no React imports. `workbench-react` composes
+**Verified:** `workbench-core` has no React imports. `shell-react` composes
 `@workbench-kit/react/workbench/shell` for chrome only — it does not import `./jdw`.
 
 ### 2.3 Package map (feature-oriented)
 
-| Layer           | Path                                | Role                                                     |
-| --------------- | ----------------------------------- | -------------------------------------------------------- |
-| Base            | `packages/base/`                    | `Disposable`, stores                                     |
-| Platform        | `packages/platform/`                | Commands, keybindings                                    |
-| Contracts       | `packages/contracts/`               | Cross-domain types (`WorkbenchDocument`, registry)       |
-| JDW headless    | `packages/json-widget/`             | Parse, layout, patch, screen-spec (`@workbench-kit/jdw`) |
-| Workspace       | `packages/workspace/`               | Virtual FS, resource URI, transactions                   |
-| Runtime         | `packages/runtime/`                 | Contract runtime helpers                                 |
-| Services        | `packages/services/`                | Service contracts                                        |
-| Adapters        | `packages/adapters/`                | Demo / host adapters                                     |
-| Workbench SDK   | `packages/workbench-extension-sdk/` | Extension manifest + contribution types                  |
-| Workbench core  | `packages/workbench-core/`          | `ExtensionRegistry`, registries, `EditorService`         |
-| Workbench React | `packages/workbench-react/`         | `WorkbenchProvider`, shell assembly                      |
-| React kit       | `packages/react/`                   | Primitives, workbench UI, JDW render, widget-tree        |
-| JDW editor      | `packages/jdw-editor/`              | Screen-spec authoring UI                                 |
-| Extensions      | `extensions/*`                      | Built-in contributions                                   |
-| Sample host     | `examples/workbench-sample/`        | Lane A validation harness                                |
+| Layer          | Path                                | Role                                                     |
+| -------------- | ----------------------------------- | -------------------------------------------------------- |
+| Base           | `packages/base/`                    | `Disposable`, stores                                     |
+| Platform       | `packages/platform/`                | Commands, keybindings                                    |
+| Contracts      | `packages/contracts/`               | Cross-domain types (`WorkbenchDocument`, registry)       |
+| JDW headless   | `packages/json-widget/`             | Parse, layout, patch, screen-spec (`@workbench-kit/jdw`) |
+| Workspace      | `packages/workspace/`               | Virtual FS, resource URI, transactions                   |
+| Runtime        | `packages/runtime/`                 | Contract runtime helpers                                 |
+| Services       | `packages/services/`                | Service contracts                                        |
+| Adapters       | `packages/adapters/`                | Demo / host adapters                                     |
+| Workbench SDK  | `packages/workbench-extension-sdk/` | Extension manifest + contribution types                  |
+| Workbench core | `packages/workbench-core/`          | `ExtensionRegistry`, registries, `EditorService`         |
+| Shell React    | `packages/shell-react/`             | `WorkbenchProvider`, shell assembly                      |
+| React kit      | `packages/react/`                   | Primitives, workbench UI, JDW render, widget-tree        |
+| JDW editor     | `packages/jdw-editor/`              | Screen-spec authoring UI                                 |
+| Extensions     | `extensions/*`                      | Built-in contributions                                   |
+| Sample host    | `examples/workbench-sample/`        | Lane A validation harness                                |
 
 ---
 
@@ -197,7 +197,7 @@ Evidence:
 | ------------------- | -------------------------------------- | -------------------------------------------------- |
 | Extension SDK       | `workbench-extension-sdk`              | Manifest schema, `ExtensionContext`, contributions |
 | Core registries     | `workbench-core`                       | Views, commands, menus, capabilities, editor       |
-| React shell         | `workbench-react`                      | `WorkbenchProvider`, `WorkbenchShell`              |
+| React shell         | `shell-react`                          | `WorkbenchProvider`, `WorkbenchShell`              |
 | React chrome        | `@workbench-kit/react/workbench/shell` | Activity bar, sidebar, status (presentation)       |
 | Sample host         | `examples/workbench-sample`            | Bundled extensions + editor/auth/workspace smoke   |
 | Built-in extensions | `extensions/builtin.*`                 | Explorer, settings, workspace, accounts            |
@@ -230,18 +230,18 @@ sequenceDiagram
 
 **Verified paths:**
 
-- `packages/workbench-react/src/provider.tsx` — creates registry, resolves extensions, `activateStartup()` on mount.
+- `packages/shell-react/src/provider.tsx` — creates registry, resolves extensions, `activateStartup()` on mount.
 - `packages/workbench-core/src/extension-registry.ts` — `registerContributions` at register time; lazy `activateExtension` on events.
-- `packages/workbench-react/src/shell.tsx` — `activateView` when sidebar container changes; view hosts via `ViewHostFactoryRegistry`.
+- `packages/shell-react/src/shell.tsx` — `activateView` when sidebar container changes; view hosts via `ViewHostFactoryRegistry`.
 
 ### 4.3 Finding: EditorService and shell editor flow (WB-28)
 
 | Component          | Status | Evidence                                        |
 | ------------------ | ------ | ----------------------------------------------- |
 | `EditorService`    | Done   | `packages/workbench-core/src/editor-service.ts` |
-| `useEditor*` hooks | Done   | `packages/workbench-react/src/use-editor.ts`    |
-| Tab strip UI       | Done   | `packages/workbench-react/src/editor-area.tsx`  |
-| Shell wiring       | Done   | `packages/workbench-react/src/shell.tsx`        |
+| `useEditor*` hooks | Done   | `packages/shell-react/src/use-editor.ts`        |
+| Tab strip UI       | Done   | `packages/shell-react/src/editor-area.tsx`      |
+| Shell wiring       | Done   | `packages/shell-react/src/shell.tsx`            |
 | Sample host        | Done   | `examples/workbench-sample/src/bootstrap.ts`    |
 
 WB-28 editor shell scope is complete: `EditorArea` consumes `EditorService`,
@@ -312,12 +312,12 @@ Checked against `check-workbench-dependency-graph.mjs` rules and spot-read of cr
 
 ## 7. React Import Patterns
 
-| Consumer          | Imports from `@workbench-kit/react`                                   | Pattern                      |
-| ----------------- | --------------------------------------------------------------------- | ---------------------------- |
-| `workbench-react` | `./workbench/shell` only                                              | Chrome delegation            |
-| `jdw-editor`      | `./jdw/preview`, `./jdw/samples`, `./primitives`, `./workbench/shell` | Feature package on react kit |
-| Extensions        | Primitives, workbench subsets                                         | Via allowed dep list         |
-| `widget-tree`     | Internal `../jdw/JdwPreview`                                          | In-package relative import   |
+| Consumer      | Imports from `@workbench-kit/react`                                   | Pattern                      |
+| ------------- | --------------------------------------------------------------------- | ---------------------------- |
+| `shell-react` | `./workbench/shell` only                                              | Chrome delegation            |
+| `jdw-editor`  | `./jdw/preview`, `./jdw/samples`, `./primitives`, `./workbench/shell` | Feature package on react kit |
+| Extensions    | Primitives, workbench subsets                                         | Via allowed dep list         |
+| `widget-tree` | Internal `../jdw/JdwPreview`                                          | In-package relative import   |
 
 **Note:** Public JDW entrypoints: `./jdw`, `./jdw/preview`, and `./jdw/samples`.
 JSON configuration lives under `./json-config`.
@@ -387,7 +387,7 @@ JSON configuration lives under `./json-config`.
 | Builtin registry            | `packages/react/src/jdw/createBuiltinJdwRegistry.ts` |
 | Extension registry          | `packages/workbench-core/src/extension-registry.ts`  |
 | Editor service              | `packages/workbench-core/src/editor-service.ts`      |
-| Workbench shell             | `packages/workbench-react/src/shell.tsx`             |
+| Workbench shell             | `packages/shell-react/src/shell.tsx`                 |
 | Resource transactions       | `packages/workspace/src/resource-transaction.ts`     |
 
 ---

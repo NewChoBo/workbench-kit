@@ -1,6 +1,6 @@
-# Workbench React
+# Shell React
 
-`@workbench-kit/workbench-react` provides the React workbench shell that composes existing primitives from `@workbench-kit/react` with services from `workbench-core` and `platform`.
+`@workbench-kit/shell-react` provides the React workbench shell that composes existing primitives from `@workbench-kit/react` with services from `workbench-core` and `platform`.
 
 The current implementation is the default in-repo workbench host path:
 `WorkbenchProvider` owns registry, editor service, and layout service creation,
@@ -12,12 +12,12 @@ status entries from `workbench-core` registries.
 
 ## Relationship to `@workbench-kit/react`
 
-| Layer             | Responsibility                                                                                  |
-| ----------------- | ----------------------------------------------------------------------------------------------- |
-| `react`           | Low-level primitives (`Button`, `SplitView`, `ActivityBar` chrome pieces), styling via `tokens` |
-| `workbench-react` | Full workbench layout, registry wiring, extension view hosting, command palette                 |
+| Layer         | Responsibility                                                                                  |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| `react`       | Low-level primitives (`Button`, `SplitView`, `ActivityBar` chrome pieces), styling via `tokens` |
+| `shell-react` | Full workbench layout, registry wiring, extension view hosting, command palette                 |
 
-`workbench-react` **consumes** `react` primitives; it does not fork or duplicate them. Existing exports under `@workbench-kit/react` remain stable for non-workbench consumers.
+`shell-react` **consumes** `react` primitives; it does not fork or duplicate them. Existing exports under `@workbench-kit/react` remain stable for non-workbench consumers.
 
 ## Root Components
 
@@ -87,7 +87,7 @@ Left/right status entries from contributions and platform services (branch name,
 
 ### CommandPalette
 
-Modal command search UI bound to `CommandRegistry` and `KeybindingRegistry` hints. Filters by context keys and command enablement. Full palette ownership moves to `workbench-react` after the provider path is the default shell entry.
+Modal command search UI bound to `CommandRegistry` and `KeybindingRegistry` hints. Filters by context keys and command enablement. Full palette ownership moves to `shell-react` after the provider path is the default shell entry.
 
 `WorkbenchCommandHost` also attaches first-party shell command handlers (for
 example activity selection, primary sidebar toggle, and settings open) to
@@ -142,7 +142,7 @@ Shell chrome uses `tokens` CSS variables. `react` primitive styles remain import
 
 - Storybook story for the primary provider shell path
 - Integration tests with in-memory extension manifests
-- No dependency from `react` package tests on `workbench-react`
+- No dependency from `react` package tests on `shell-react`
 
 ## Related Documents
 

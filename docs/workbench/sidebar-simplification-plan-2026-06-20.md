@@ -15,7 +15,7 @@ Related guardrails: [Workbench Change Guidelines](./workbench-change-guidelines.
 Reduce **primary sidebar** complexity while preserving VS Code-like UX:
 
 - One flex column layout path for primary sidebar views
-- Thin `Builtin*View` adapters in `workbench-react`
+- Thin `Builtin*View` adapters in `shell-react`
 - Render contracts (`*-view-data.ts`) separated from React components
 - No reintroduction of legacy explorer paths (MultiProviderExplorer, filter hook, overlay scrollbar)
 
@@ -108,7 +108,7 @@ WorkbenchShell
 
 **Tasks**
 
-1. Add `packages/workbench-react/src/use-active-workspace-path.ts`:
+1. Add `packages/shell-react/src/use-active-workspace-path.ts`:
    - Input: `activeTab?.resourceUri`
    - Output: `string | undefined` (file path only)
 2. Replace duplicated `useMemo` in:
@@ -119,7 +119,7 @@ WorkbenchShell
 **Acceptance**
 
 - [x] Active file highlight unchanged in Explorer tree and Search results
-- [x] `pnpm exec vitest run src/` in `workbench-react` passes
+- [x] `pnpm exec vitest run src/` in `shell-react` passes
 
 **Estimate:** ~20 min
 
@@ -149,7 +149,7 @@ WorkbenchShell
 Run before merge:
 
 ```powershell
-Set-Location packages/workbench-react
+Set-Location packages/shell-react
 pnpm exec vitest run src/
 
 Set-Location ../react
@@ -178,7 +178,7 @@ pnpm exec vitest run src/layout src/workbench/workspace src/workbench/management
 
 **Tasks**
 
-1. Create `packages/workbench-react/src/explorer-context-menu.ts`:
+1. Create `packages/shell-react/src/explorer-context-menu.ts`:
    - Export `createExplorerItemContextMenuItems(...)` (move from `explorer-view.tsx`)
    - Keep command registry + menu entries module-local or co-located
 2. `explorer-view.tsx` imports helper; retains `ContextMenu` state only
@@ -244,8 +244,8 @@ pnpm exec vitest run src/layout src/workbench/workspace src/workbench/management
 
 - Render single active view host without per-view `<section>` when registry guarantees one visible view
 - Collapse CSS:
-  - `.workbench-react-primary-sidebar > section`
-  - `.workbench-react-primary-sidebar > section > [data-view-host-id]`
+  - `.shell-react-primary-sidebar > section`
+  - `.shell-react-primary-sidebar > section > [data-view-host-id]`
 
 **Risks**
 
@@ -254,7 +254,7 @@ pnpm exec vitest run src/layout src/workbench/workspace src/workbench/management
 
 **Acceptance**
 
-- [ ] Document active-view-only assumption in `docs/architecture/workbench-react.md`
+- [ ] Document active-view-only assumption in `docs/architecture/shell-react.md`
 - [ ] Full storybook sidebar stories still layout correctly
 
 **Estimate:** ~3–4 h
@@ -319,7 +319,7 @@ Phase C-*  only when A/B stable
 | PR  | Title (suggested)                                                 | Scope    |
 | --- | ----------------------------------------------------------------- | -------- |
 | 1   | `refactor(management): share command run-state formatter`         | A-1      |
-| 2   | `refactor(workbench-react): share active workspace path hook`     | A-2, A-3 |
+| 2   | `refactor(shell-react): share active workspace path hook`         | A-2, A-3 |
 | 3   | `refactor(explorer): extract context menu builder`                | B-1      |
 | 4   | `refactor(sidebar): static footer for chat/commands` _(optional)_ | B-2      |
 
@@ -365,7 +365,7 @@ Phase C-*  only when A/B stable
 
 | Resource                        | Path                                                         |
 | ------------------------------- | ------------------------------------------------------------ |
-| Shell wiring                    | `packages/workbench-react/src/shell.tsx`                     |
+| Shell wiring                    | `packages/shell-react/src/shell.tsx`                         |
 | Sidebar frame                   | `packages/react/src/layout/SideBarViewFrame.tsx`             |
 | Section stack                   | `packages/react/src/layout/WorkbenchSidebarSectionStack.tsx` |
 | Primary sidebar CSS             | `packages/react/src/styles.css` (~L2267+)                    |

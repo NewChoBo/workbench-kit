@@ -2,6 +2,7 @@ import { type CSSProperties, type ReactElement, useEffect, useMemo, useState } f
 import { createCommandRegistryFromContributions } from '@workbench-kit/platform';
 import { integratedShellWorkspaceFiles } from '@workbench-kit/adapters';
 import { Button } from '../primitives/Button';
+import { TextArea } from '../primitives/TextArea';
 import { TextInput } from '../primitives/TextInput';
 import { SideBarViewFrame } from '../layout/SideBarViewFrame';
 import { createWorkbenchShellCommands } from './commands';
@@ -561,7 +562,7 @@ export function WorkbenchCanvasShell({
     const prefix = `${'\u00a0'.repeat(Math.max(depth - 1, 0) * 2)}${depth > 0 ? '↳ ' : ''}`;
 
     const row = (
-      <button
+      <Button
         key={node.id}
         onClick={() => selectNode(node.id)}
         style={{
@@ -592,7 +593,7 @@ export function WorkbenchCanvasShell({
           {prefix}
           {node.name}
         </span>
-      </button>
+      </Button>
     );
 
     return [row, ...children.flatMap((childId: string) => renderNodeRow(childId, depth + 1))];
@@ -774,13 +775,14 @@ export function WorkbenchCanvasShell({
                     </Button>
                     <span style={{ fontSize: 12, opacity: 0.8 }}>Editing document source</span>
                   </div>
-                  <textarea
+                  <TextArea
+                    controlWidth="full"
+                    resize="none"
                     value={sourceText}
                     onChange={(event) => setSourceText(event.currentTarget.value)}
                     style={{
                       width: '100%',
                       height: '100%',
-                      resize: 'none',
                       background: '#020617',
                       color: '#f8fafc',
                       border: '1px solid rgba(148, 163, 184, 0.3)',

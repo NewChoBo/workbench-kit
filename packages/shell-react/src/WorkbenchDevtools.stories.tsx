@@ -7,7 +7,7 @@ import { WorkbenchDevtoolsShell } from './devtools/WorkbenchDevtoolsShell.js';
 import { WorkbenchProvider, WorkbenchShell } from './index.js';
 
 const meta = {
-  title: 'Workbench React/Devtools',
+  title: 'Shell React/Devtools',
   parameters: {
     layout: 'fullscreen',
   },

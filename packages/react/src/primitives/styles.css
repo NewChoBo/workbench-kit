@@ -85,27 +85,59 @@
 
 .ui-button {
   box-sizing: border-box;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text);
-  background: var(--color-surface);
-  font-family: inherit;
-  font-size: var(--font-size-sm);
-  cursor: pointer;
+  width: var(--ui-button-width, auto);
+  min-width: var(--ui-button-min-width, 0);
+  max-width: var(--ui-button-max-width, none);
+  height: var(--ui-button-height, var(--ui-button-height-default));
+  min-height: var(--ui-button-min-height, 0);
+  display: var(--ui-button-display, inline-flex);
+  flex: var(--ui-button-flex, initial);
+  flex-shrink: var(--ui-button-flex-shrink, initial);
+  align-self: var(--ui-button-align-self, auto);
+  align-items: var(--ui-button-align-items, center);
+  justify-content: var(--ui-button-justify-content, center);
+  gap: var(--ui-button-gap, 6px);
+  grid-template-columns: var(--ui-button-grid-template-columns, none);
+  padding: var(--ui-button-padding, 0 var(--ui-button-padding-x));
+  border: var(--ui-button-border, 1px solid var(--color-border));
+  border-bottom: var(
+    --ui-button-border-bottom,
+    var(--ui-button-border, 1px solid var(--color-border))
+  );
+  border-radius: var(--ui-button-border-radius, var(--radius-sm));
+  color: var(--ui-button-color, var(--color-text));
+  background: var(--ui-button-background, var(--color-surface));
+  font-family: var(--ui-button-font-family, inherit);
+  font-size: var(--ui-button-font-size, var(--font-size-sm));
+  font-weight: var(--ui-button-font-weight, 400);
+  line-height: var(--ui-button-line-height, 1.2);
+  text-align: var(--ui-button-text-align, center);
+  cursor: var(--ui-button-cursor, pointer);
 }
 
 .ui-button:hover {
-  background: var(--color-surface-hover);
+  color: var(--ui-button-hover-color, var(--ui-button-color, var(--color-text)));
+  background: var(--ui-button-hover-background, var(--color-surface-hover));
+}
+
+.ui-button:disabled,
+.ui-button:disabled:hover {
+  color: var(--ui-button-disabled-color, var(--color-text-subtle));
+  background: var(
+    --ui-button-disabled-background,
+    var(--ui-button-background, var(--color-surface))
+  );
+  cursor: var(--ui-button-disabled-cursor, default);
 }
 
 .ui-button--block {
   width: 100%;
+}
+
+.ui-button--compact {
+  height: var(--ui-button-height-compact);
+  min-height: var(--ui-button-height-compact);
+  padding: 0 var(--ui-button-padding-x-compact);
 }
 
 .ui-button[data-variant='primary'] {
@@ -130,35 +162,39 @@
 
 .ui-icon-button {
   box-sizing: border-box;
-  width: 26px;
-  height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
-  background: transparent;
-  font-family: inherit;
-  cursor: pointer;
+  width: var(--ui-icon-button-width, var(--ui-icon-button-size-default));
+  height: var(--ui-icon-button-height, var(--ui-icon-button-size-default));
+  min-width: var(--ui-icon-button-min-width, 0);
+  min-height: var(--ui-icon-button-min-height, 0);
+  display: var(--ui-icon-button-display, inline-flex);
+  flex-shrink: var(--ui-icon-button-flex-shrink, initial);
+  align-items: var(--ui-icon-button-align-items, center);
+  justify-content: var(--ui-icon-button-justify-content, center);
+  padding: var(--ui-icon-button-padding, 0);
+  border: var(--ui-icon-button-border, 1px solid transparent);
+  border-radius: var(--ui-icon-button-border-radius, var(--radius-sm));
+  color: var(--ui-icon-button-color, var(--color-text-muted));
+  background: var(--ui-icon-button-background, transparent);
+  font-family: var(--ui-icon-button-font-family, inherit);
+  cursor: var(--ui-icon-button-cursor, pointer);
 }
 
 .ui-icon-button:hover {
-  color: var(--color-text);
-  background: var(--color-surface-hover);
+  color: var(--ui-icon-button-hover-color, var(--color-text));
+  background: var(--ui-icon-button-hover-background, var(--color-surface-hover));
 }
 
 .ui-icon-button:disabled {
-  color: var(--color-text-subtle);
-  background: transparent;
-  cursor: default;
+  color: var(--ui-icon-button-disabled-color, var(--color-text-subtle));
+  background: var(--ui-icon-button-disabled-background, transparent);
+  cursor: var(--ui-icon-button-disabled-cursor, default);
 }
 
 .ui-icon-button--compact {
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  min-height: 22px;
+  width: var(--ui-icon-button-size-compact);
+  height: var(--ui-icon-button-size-compact);
+  min-width: var(--ui-icon-button-size-compact);
+  min-height: var(--ui-icon-button-size-compact);
 }
 
 .ui-icon-button[data-variant='danger']:hover {
@@ -168,7 +204,7 @@
 }
 
 .ui-icon-button .codicon {
-  font-size: 16px;
+  font-size: var(--ui-icon-button-icon-size, 16px);
 }
 
 .ui-list {
@@ -888,17 +924,19 @@
 .ui-workbench-field,
 .ui-workbench-select {
   box-sizing: border-box;
-  width: 100%;
-  height: 26px;
-  min-width: 0;
-  padding: 0 8px;
-  color: var(--vscode-input-foreground, var(--color-text));
-  background: var(--vscode-input-background, var(--color-surface));
-  border: 1px solid var(--vscode-input-border, var(--color-border));
-  border-radius: 0;
-  outline: none;
-  font: inherit;
-  font-size: var(--font-size-sm);
+  width: var(--ui-input-width, 100%);
+  height: var(--ui-input-height, var(--ui-input-height-default));
+  min-width: var(--ui-input-min-width, 0);
+  padding: var(--ui-input-padding, 0 var(--ui-input-padding-x));
+  color: var(--ui-input-color, var(--vscode-input-foreground, var(--color-text)));
+  background: var(--ui-input-background, var(--vscode-input-background, var(--color-surface)));
+  border: var(--ui-input-border, 1px solid var(--vscode-input-border, var(--color-border)));
+  border-radius: var(--ui-input-border-radius, 0);
+  outline: var(--ui-input-outline, none);
+  font-family: var(--ui-input-font-family, inherit);
+  font-size: var(--ui-input-font-size, var(--font-size-sm));
+  font-weight: var(--ui-input-font-weight, 400);
+  line-height: var(--ui-input-line-height, normal);
 }
 
 .ui-input[data-width='default'] {
@@ -930,24 +968,33 @@
 .ui-workbench-select:focus,
 .ui-input:focus,
 .ui-textarea:focus {
-  border-color: var(--vscode-focusBorder, var(--color-focus-border));
+  border-color: var(
+    --ui-input-focus-border-color,
+    var(--vscode-focusBorder, var(--color-focus-border))
+  );
+  outline: var(--ui-input-focus-outline, none);
 }
 
 .ui-textarea {
   box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  min-height: 80px;
-  padding: 8px;
-  color: var(--vscode-input-foreground, var(--color-text));
-  background: var(--vscode-input-background, var(--color-surface));
-  border: 1px solid var(--vscode-input-border, var(--color-border));
-  border-radius: 0;
-  outline: none;
-  font: inherit;
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
-  resize: vertical;
+  width: var(--ui-input-width, 100%);
+  min-width: var(--ui-input-min-width, 0);
+  min-height: var(--ui-textarea-min-height, 80px);
+  max-height: var(--ui-textarea-max-height, none);
+  display: var(--ui-textarea-display, initial);
+  margin: var(--ui-textarea-margin, 0);
+  padding: var(--ui-textarea-padding, 8px);
+  overflow-y: var(--ui-textarea-overflow-y, auto);
+  color: var(--ui-input-color, var(--vscode-input-foreground, var(--color-text)));
+  background: var(--ui-input-background, var(--vscode-input-background, var(--color-surface)));
+  border: var(--ui-input-border, 1px solid var(--vscode-input-border, var(--color-border)));
+  border-radius: var(--ui-input-border-radius, 0);
+  outline: var(--ui-input-outline, none);
+  font-family: var(--ui-input-font-family, inherit);
+  font-size: var(--ui-input-font-size, var(--font-size-sm));
+  font-weight: var(--ui-input-font-weight, 400);
+  line-height: var(--ui-input-line-height, 1.5);
+  resize: var(--ui-textarea-resize, vertical);
 }
 
 .ui-textarea[data-width='default'] {
@@ -983,4 +1030,86 @@
 .ui-workbench-thumbnail__icon {
   color: var(--vscode-icon-foreground, var(--color-icon));
   font-size: 14px;
+}
+
+.ui-checkbox {
+  --ui-checkbox-size: var(--ui-checkbox-size-default);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: var(--control-height-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.ui-checkbox[data-disabled='true'] {
+  color: var(--color-text-subtle);
+  cursor: default;
+}
+
+.ui-checkbox__control {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 var(--ui-checkbox-size);
+  width: var(--ui-checkbox-size);
+  height: var(--ui-checkbox-size);
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-checkbox__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.ui-checkbox__indicator {
+  box-sizing: border-box;
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--vscode-checkbox-border, var(--color-border));
+  border-radius: var(--ui-checkbox-border-radius);
+  background: var(--vscode-checkbox-background, var(--color-bg));
+}
+
+.ui-checkbox__indicator::after {
+  content: '';
+  width: 8px;
+  height: 4px;
+  border-color: var(--vscode-checkbox-foreground, var(--color-accent-foreground));
+  border-style: solid;
+  border-width: 0 0 2px 2px;
+  opacity: 0;
+  transform: rotate(-45deg) translate(1px, -1px) scale(0.8);
+}
+
+.ui-checkbox__input:checked + .ui-checkbox__indicator {
+  border-color: var(--vscode-checkbox-selectBorder, var(--color-accent));
+  background: var(--vscode-checkbox-selectBackground, var(--color-accent));
+}
+
+.ui-checkbox__input:checked + .ui-checkbox__indicator::after {
+  opacity: 1;
+  transform: rotate(-45deg) translate(1px, -1px) scale(1);
+}
+
+.ui-checkbox__input:focus-visible + .ui-checkbox__indicator {
+  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: 2px;
+}
+
+.ui-checkbox__input:disabled + .ui-checkbox__indicator {
+  border-color: color-mix(in srgb, var(--color-border) 70%, transparent);
+  background: var(--color-surface);
+  opacity: 0.62;
 }

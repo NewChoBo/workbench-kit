@@ -263,7 +263,7 @@ Edit → dirty + validation banner
 
 ## 7.1 Workbench host editor view modes (Lane A)
 
-Lane A sample host (`workbench-react` `EditorArea`) adds a **Code(JSON) / Form / Preview** toolbar **left above the editor body** (below tab strip) for JSON-capable text files (`.json` or parseable top-level object). Code/Form stay editable and render a side-by-side preview when the current JSON is a JDW widget document; Preview focuses the read-only output.
+Lane A sample host (`shell-react` `EditorArea`) adds a **Code(JSON) / Form / Preview** toolbar **left above the editor body** (below tab strip) for JSON-capable text files (`.json` or parseable top-level object). Code/Form stay editable and render a side-by-side preview when the current JSON is a JDW widget document; Preview focuses the read-only output.
 
 | Layer                                               | Responsibility                                                                                                                          |
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |

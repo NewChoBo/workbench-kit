@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { Button } from '../primitives/Button';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import { useClampedFixedOverlayPosition } from './useClampedFixedOverlayPosition';
@@ -81,13 +82,12 @@ export function ContextMenu({
         item.type === 'separator' ? (
           <div key={itemKey(item, index)} className="ui-context-menu__separator" role="separator" />
         ) : (
-          <button
+          <Button
             key={itemKey(item, index)}
             className="ui-context-menu__item"
             data-danger={item.danger ? 'true' : undefined}
             disabled={item.disabled}
             role="menuitem"
-            type="button"
             onClick={() => {
               item.onSelect();
               onClose();
@@ -100,7 +100,7 @@ export function ContextMenu({
             {item.shortcut ? (
               <span className="ui-context-menu__shortcut">{item.shortcut}</span>
             ) : null}
-          </button>
+          </Button>
         ),
       )}
     </div>

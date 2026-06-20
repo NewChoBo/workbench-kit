@@ -10,7 +10,7 @@ const publishPackageNames = new Set(NPM_PUBLISH_ORDER);
 const privatePreviewPackageNames = new Set([
   '@workbench-kit/monaco',
   '@workbench-kit/workbench-core',
-  '@workbench-kit/workbench-react',
+  '@workbench-kit/shell-react',
 ]);
 const requiredSrcExclusions = [
   '!src/**/*.test.ts',

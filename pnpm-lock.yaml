@@ -95,9 +95,9 @@ importers:
       '@workbench-kit/workbench-config':
         specifier: workspace:*
         version: link:../../packages/workbench-config
-      '@workbench-kit/workbench-react':
+      '@workbench-kit/shell-react':
         specifier: workspace:*
-        version: link:../../packages/workbench-react
+        version: link:../../packages/shell-react
       '@workbench-kit/workspace':
         specifier: workspace:*
         version: link:../../packages/workspace
@@ -359,7 +359,7 @@ importers:
         specifier: workspace:*
         version: link:../platform
 
-  packages/workbench-react:
+  packages/shell-react:
     dependencies:
       '@workbench-kit/platform':
         specifier: workspace:*

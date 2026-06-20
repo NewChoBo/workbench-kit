@@ -52,7 +52,7 @@ f1ab57e docs(workbench): add JDW architecture and Figma authoring analysis
 | Item        | Status | Evidence                                                              |
 | ----------- | ------ | --------------------------------------------------------------------- |
 | WB-23       | Done   | `examples/workbench-sample/`, launch boundary                         |
-| WB-24       | Done   | ViewHost lifecycle in SDK + `workbench-react` shell                   |
+| WB-24       | Done   | ViewHost lifecycle in SDK + `shell-react` shell                       |
 | WB-25       | Done   | `ViewHostFactoryRegistry`, `EditorHostFactoryRegistry` scaffold       |
 | WB-26       | Done   | Disposable `CapabilityRegistry`                                       |
 | WB-27       | Done   | Resource URI, snapshot, mutation, transaction (`packages/workspace/`) |
@@ -123,9 +123,9 @@ Extend `EditorArea` with **Code(JSON) | Form | Preview** view modes for JSON-cap
 
 | File                                                       | Action                                                           |
 | ---------------------------------------------------------- | ---------------------------------------------------------------- |
-| `packages/workbench-react/src/editor-area.tsx`             | Extend `EditorViewMode`, toolbar, preview-backed code/form panes |
-| `packages/workbench-react/src/editor-area.css`             | Side-by-side preview pane styles                                 |
-| `packages/workbench-react/src/editor-area.test.tsx`        | Preview toolbar, JDW detection, code/form preview layout tests   |
+| `packages/shell-react/src/editor-area.tsx`                 | Extend `EditorViewMode`, toolbar, preview-backed code/form panes |
+| `packages/shell-react/src/editor-area.css`                 | Side-by-side preview pane styles                                 |
+| `packages/shell-react/src/editor-area.test.tsx`            | Preview toolbar, JDW detection, code/form preview layout tests   |
 | `examples/workbench-sample/src/bootstrap` or `config.json` | Optional: widget JSON sample file for manual demo                |
 
 #### Patterns to reuse (do not reinvent)
@@ -162,14 +162,14 @@ Extend `EditorArea` with **Code(JSON) | Form | Preview** view modes for JSON-cap
 - [x] **Code/Form** show editor/form and preview side-by-side via `SplitView` when preview is available.
 - [x] **Form** remains S8.5 shallow top-level key/value demo (no `WidgetTreeLab` embed).
 - [x] Non-JDW `.json` shows Code(JSON) | Form only (no Preview).
-- [x] `pnpm --filter @workbench-kit/workbench-react test` passes.
+- [x] `pnpm --filter @workbench-kit/shell-react test` passes.
 - [x] `pnpm validate` passes.
 - [x] Manual/Playwright: `pnpm workbench-sample` — open config.json, toggle Code(JSON), Form, and Preview.
 
 #### Validate command
 
 ```powershell
-pnpm --filter @workbench-kit/workbench-react test
+pnpm --filter @workbench-kit/shell-react test
 pnpm validate
 pnpm workbench-sample
 ```
@@ -182,7 +182,7 @@ feat(workbench): align editor JSON view modes in EditorArea
 Extend sample host JSON editor with Code(JSON)|Form|Preview toolbar.
 Reuse JdwPreview and SplitView from @workbench-kit/react for side-by-side preview.
 
-Validation: pnpm --filter @workbench-kit/workbench-react test && pnpm validate
+Validation: pnpm --filter @workbench-kit/shell-react test && pnpm validate
 ```
 
 ---
@@ -199,7 +199,7 @@ Wire built-in explorer extension to virtual workspace tree: create/rename/delete
 | ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
 | `extensions/builtin.explorer/src/index.ts`             | Replace placeholder view with real explorer host                                       |
 | `extensions/builtin.explorer/workbench.extension.json` | Command contributions, menus, activation events                                        |
-| `packages/workbench-react/src/`                        | New explorer view host component (e.g. `explorer-view.tsx`) wiring `WorkspaceExplorer` |
+| `packages/shell-react/src/`                            | New explorer view host component (e.g. `explorer-view.tsx`) wiring `WorkspaceExplorer` |
 | `packages/workspace/src/workbench-workspace-host.ts`   | Ensure CRUD helpers emit transactions (may already exist)                              |
 | `examples/workbench-sample/src/App.tsx` or bootstrap   | Enable explorer activity; remove static placeholder if any                             |
 | Tests                                                  | Extension + workspace transaction tests                                                |
@@ -237,7 +237,7 @@ Wire built-in explorer extension to virtual workspace tree: create/rename/delete
 | `workspace.delete`    | Delete file/folder          |
 | `workspace.copyPath`  | Copy path (optional for v1) |
 
-Register handlers in extension `activate()` or via `workbench-react` bridge that binds `WorkspaceResourceService` to command context.
+Register handlers in extension `activate()` or via `shell-react` bridge that binds `WorkspaceResourceService` to command context.
 
 #### WorkspaceResourceTransaction mapping
 
@@ -464,7 +464,7 @@ pnpm validate
 
 | Package         | Extra commands                                                                                              |
 | --------------- | ----------------------------------------------------------------------------------------------------------- |
-| S8.6            | `pnpm --filter @workbench-kit/workbench-react test` · `pnpm workbench-sample`                               |
+| S8.6            | `pnpm --filter @workbench-kit/shell-react test` · `pnpm workbench-sample`                                   |
 | WB-29           | `pnpm build:workbench-extensions` · `pnpm --filter @workbench-kit/workspace test` · `pnpm workbench-sample` |
 | WB-30           | `pnpm --filter @workbench-kit/workbench-config typecheck`                                                   |
 | D2              | `pnpm exec vitest run packages/react/src/jdw`                                                               |
@@ -472,12 +472,12 @@ pnpm validate
 
 ### Storybook smoke stories
 
-| Story                                 | Proves                             |
-| ------------------------------------- | ---------------------------------- |
-| `WorkbenchProvider` (workbench-react) | Editor tabs + `EditorArea`         |
-| `JDW/JsonConfig/*`                    | Preview/split patterns             |
-| `JDW/WidgetTree/Lab`                  | JdwPreview rendering               |
-| Integrated Shell explorer             | Reference CRUD UX (Storybook demo) |
+| Story                             | Proves                             |
+| --------------------------------- | ---------------------------------- |
+| `WorkbenchProvider` (shell-react) | Editor tabs + `EditorArea`         |
+| `JDW/JsonConfig/*`                | Preview/split patterns             |
+| `JDW/WidgetTree/Lab`              | JdwPreview rendering               |
+| Integrated Shell explorer         | Reference CRUD UX (Storybook demo) |
 
 ### Sample host manual checks
 
@@ -533,8 +533,8 @@ Package 2 (WB-29) → Package 3 (WB-30) → WB-31 → Lane A DoD
 
 | Area                           | Path                                                                         |
 | ------------------------------ | ---------------------------------------------------------------------------- |
-| EditorArea (S8.6)              | `packages/workbench-react/src/editor-area.tsx`                               |
-| Editor tests                   | `packages/workbench-react/src/editor-area.test.tsx`                          |
+| EditorArea (S8.6)              | `packages/shell-react/src/editor-area.tsx`                                   |
+| Editor tests                   | `packages/shell-react/src/editor-area.test.tsx`                              |
 | Editor service                 | `packages/workbench-core/src/editor-service.ts`                              |
 | Save / transactions            | `packages/workspace/src/workbench-workspace-host.ts`                         |
 | Resource mutations             | `packages/workspace/src/resource-mutation.ts`                                |

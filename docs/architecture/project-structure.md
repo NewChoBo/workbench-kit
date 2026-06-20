@@ -14,7 +14,7 @@ workbench-kit/
 │   ├── tokens/                    # Design tokens (no React)
 │   ├── react/                     # React primitives and lightweight workbench chrome
 │   ├── workbench-core/            # Registries, layout service, extension registry
-│   ├── workbench-react/           # React workbench shell (ActivityBar, panels, palette)
+│   ├── shell-react/           # React workbench shell (ActivityBar, panels, palette)
 │   ├── workbench-extension-sdk/   # Stable extension contribution types and helpers
 │   ├── workbench-config/          # `.workbench` config loading and validation
 │   ├── monaco/                    # Optional Monaco editor integration placeholder
@@ -64,7 +64,7 @@ Platform services and interfaces: command/keybinding/context abstractions, confi
 
 ### `packages/tokens`
 
-CSS variables, theme tokens, and design-system constants. No React dependency. Consumed by `react` and optionally by `workbench-react` for shell theming.
+CSS variables, theme tokens, and design-system constants. No React dependency. Consumed by `react` and optionally by `shell-react` for shell theming.
 
 ### `packages/react`
 
@@ -74,7 +74,7 @@ React primitives (buttons, inputs, layout helpers) and existing lightweight work
 
 Framework-neutral workbench engine: registries, layout state, extension registry, activation orchestration. Depends on `base`, `platform`, `workbench-extension-sdk`, and `workbench-config` as appropriate. No React.
 
-### `packages/workbench-react`
+### `packages/shell-react`
 
 React workbench shell: `WorkbenchProvider`, `WorkbenchShell`, side bars, editor area, command palette, account menu entry points. Depends on `react`, `workbench-core`, `platform`, and `tokens`.
 
@@ -95,7 +95,7 @@ Optional placeholder for Monaco editor bundling and workbench editor integration
 `packages/core`, `packages/vscode-host`, `packages/vscode-extension`, and
 `packages/workbench-vscode-adapter` still exist in the repository for legacy
 compatibility. They are outside the target workbench dependency graph; new shell
-work should use `platform`, `workbench-core`, `workbench-react`, and
+work should use `platform`, `workbench-core`, `shell-react`, and
 `workbench-extension-sdk` instead.
 
 ## Extensions
@@ -130,7 +130,7 @@ See [Extension Install](./extension-install.md) for catalog schema and pipeline 
 ## Examples
 
 `examples/workbench-sample` is the frontend-only integration host. It assembles
-`workbench-react` with bundled built-in extensions, reads `.workbench`
+`shell-react` with bundled built-in extensions, reads `.workbench`
 configuration, mounts a virtual workspace/editor flow, and uses the in-browser
 dummy backend for fixed auth/profile responses without requiring a separate
 server process.
@@ -151,7 +151,7 @@ These stay **outside** the extension host; React modules (`jdw`, `widget-tree`, 
 
 ## Migration Stance
 
-Bulk replacement is allowed for in-repo shell wiring. `@workbench-kit/platform` owns the former core command/context surface; `react/workbench` orchestration moves to `workbench-react` and built-in extensions. Details: [Migration Strategy](./migration-strategy.md).
+Bulk replacement is allowed for in-repo shell wiring. `@workbench-kit/platform` owns the former core command/context surface; `react/workbench` orchestration moves to `shell-react` and built-in extensions. Details: [Migration Strategy](./migration-strategy.md).
 
 ## Related Documents
 
@@ -162,7 +162,7 @@ Bulk replacement is allowed for in-repo shell wiring. `@workbench-kit/platform` 
 - [Contribution Contracts](./contribution-contracts.md)
 - [Capability Model](./capability-model.md)
 - [Workbench Core](./workbench-core.md)
-- [Workbench React](./workbench-react.md)
+- [Shell React](./shell-react.md)
 - [Extension System](./extension-system.md)
 - [Workbench Config](./workbench-config.md)
 - [Security Boundary](./security-boundary.md)

@@ -103,7 +103,7 @@ workbench-core
     menus: MenuRegistry
     executeCommand(id, args...)
 
-workbench-react
+shell-react
   WorkbenchProvider
     exposes executeCommand only
   WorkbenchCommandHost
@@ -130,7 +130,7 @@ Command examples:
 
 ## Applied Slice
 
-- Added shell command runtime registration in `workbench-react` so shell command
+- Added shell command runtime registration in `shell-react` so shell command
   handlers are attached to the shared provider command registry.
 - Palette command execution now uses provider `executeCommand` after host-level
   overrides, instead of running shell commands through a local registry first.
@@ -206,5 +206,5 @@ Prerequisites:
 - Command palette, command management, activity bar, Explorer, and Search can
   invoke the same command ids.
 - No duplicate shell/runtime command entries appear in management screens.
-- `@workbench-kit/workbench-react` tests cover provider command execution.
+- `@workbench-kit/shell-react` tests cover provider command execution.
 - Package typecheck passes for touched packages.

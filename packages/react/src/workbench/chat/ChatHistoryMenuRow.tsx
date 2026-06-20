@@ -1,3 +1,4 @@
+import { Button } from '../../primitives/Button';
 import { IconButton } from '../../primitives/IconButton';
 import type {
   WorkbenchChatConversation,
@@ -32,7 +33,7 @@ export function ChatHistoryMenuRow({
         onOpenRowMenu({ x: event.clientX, y: event.clientY });
       }}
     >
-      <button
+      <Button
         className="ui-context-menu__item chat-history-menu__select"
         role="menuitem"
         title={
@@ -40,7 +41,6 @@ export function ChatHistoryMenuRow({
             ? conversation.metaSummary
             : conversation.title
         }
-        type="button"
         onClick={onActivate}
       >
         <span className="ui-context-menu__icon">
@@ -55,7 +55,7 @@ export function ChatHistoryMenuRow({
             <span className="chat-history-menu__meta">{conversation.metaSummary}</span>
           ) : null}
         </span>
-      </button>
+      </Button>
 
       <IconButton
         className="chat-history-menu__delete"

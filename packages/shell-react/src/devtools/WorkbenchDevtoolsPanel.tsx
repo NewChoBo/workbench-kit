@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { ScrollArea } from '@workbench-kit/react/primitives';
+import { Button, ScrollArea } from '@workbench-kit/react/primitives';
 
 import { useWorkbenchDevtoolsSnapshot } from './use-workbench-devtools-snapshot.js';
 
@@ -90,17 +90,17 @@ export function WorkbenchDevtoolsPanel() {
       <p className="workbench-devtools-panel__timestamp">Updated {snapshot.capturedAt}</p>
       <nav aria-label="Devtools sections" className="workbench-devtools-panel__tabs">
         {DEVTOOLS_SECTIONS.map((section) => (
-          <button
+          <Button
             key={section.id}
             aria-pressed={activeSection === section.id}
+            compact
             className="workbench-devtools-panel__tab"
-            type="button"
             onClick={() => {
               setActiveSection(section.id);
             }}
           >
             {section.label}
-          </button>
+          </Button>
         ))}
       </nav>
       <ScrollArea

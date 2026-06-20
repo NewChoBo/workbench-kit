@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
+import { Button } from '../primitives/Button';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import {
@@ -148,7 +149,7 @@ export function StatusBarItem({
   const resolvedIcon = resolveStatusBarIcon(icon);
 
   return (
-    <button
+    <Button
       type={type}
       className={cx(
         'ui-workbench-status-bar__item',
@@ -173,6 +174,6 @@ export function StatusBarItem({
           <span aria-hidden="true" className="ui-workbench-status-bar__status-dot" />
         </span>
       ) : null}
-    </button>
+    </Button>
   );
 }

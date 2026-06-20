@@ -51,7 +51,7 @@ titlebar, maximize, restore, close, and unchanged form submission behavior.
 | Explorer resource operations         | Built-in workspace/explorer commands + `@workbench-kit/workspace` transactions | Render `WorkspaceExplorer` and translate gestures to commands     |
 | JDW parse, validation, layout        | `@workbench-kit/jdw`                                                           | Render preview/form/editor surfaces through narrow JDW subpaths   |
 | Presentational shell primitives      | `@workbench-kit/react`                                                         | Provide reusable chrome, primitives, tokens, modals, and overlays |
-| Full app assembly                    | `@workbench-kit/workbench-react`                                               | Compose providers, built-ins, and product-neutral shell wiring    |
+| Full app assembly                    | `@workbench-kit/shell-react`                                                   | Compose providers, built-ins, and product-neutral shell wiring    |
 | Sample workspace data                | `examples/workbench-sample`                                                    | Showcase current library integration without becoming core logic  |
 
 ## Anti-Patterns
@@ -65,7 +65,7 @@ titlebar, maximize, restore, close, and unchanged form submission behavior.
 - Reimplementing editor split, tab reorder, or pin/dirty semantics outside
   `EditorService`.
 - Adding broad public exports from `@workbench-kit/react` when a narrow subpath
-  or `workbench-react` integration point is sufficient.
+  or `shell-react` integration point is sufficient.
 - Persisting widget or document data in a new format when JDW or
   `WorkbenchDocument` can own the contract.
 - Adding product-specific names to public package APIs.
@@ -79,7 +79,7 @@ titlebar, maximize, restore, close, and unchanged form submission behavior.
 Run this checklist before implementation and again before reporting completion.
 
 - Package boundary: Does the change belong in `platform`, `workbench-core`,
-  `workbench-react`, `react`, an extension, or a domain package?
+  `shell-react`, `react`, an extension, or a domain package?
 - Command path: Does user-visible behavior go through commands, menus, context
   keys, and keybindings where those abstractions exist?
 - Service ownership: Is durable state owned by a service or registry rather than

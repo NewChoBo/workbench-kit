@@ -6,16 +6,34 @@ export interface CheckboxProps extends Omit<ComponentPropsWithRef<'input'>, 'typ
   onCheckedChange?: (checked: boolean, event: ChangeEvent<HTMLInputElement>) => void;
 }
 
-export function Checkbox({ className, label, onChange, onCheckedChange, ...props }: CheckboxProps) {
+export function Checkbox({
+  className,
+  disabled,
+  label,
+  onChange,
+  onCheckedChange,
+  ...props
+}: CheckboxProps) {
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange?.(event);
     onCheckedChange?.(event.currentTarget.checked, event);
   };
 
   return (
-    <label className={cx('ui-checkbox', className)}>
-      <input type="checkbox" onChange={handleChange} {...props} />
-      {label !== undefined && label !== null && label !== '' ? <span>{label}</span> : null}
+    <label className={cx('ui-checkbox', className)} data-disabled={disabled ? 'true' : undefined}>
+      <span className="ui-checkbox__control">
+        <input
+          className="ui-checkbox__input"
+          disabled={disabled}
+          type="checkbox"
+          onChange={handleChange}
+          {...props}
+        />
+        <span aria-hidden="true" className="ui-checkbox__indicator" />
+      </span>
+      {label !== undefined && label !== null && label !== '' ? (
+        <span className="ui-checkbox__label">{label}</span>
+      ) : null}
     </label>
   );
 }

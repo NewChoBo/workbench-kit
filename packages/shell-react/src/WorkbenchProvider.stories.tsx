@@ -5,7 +5,7 @@ import { expect, within } from 'storybook/test';
 import { WorkbenchProvider, WorkbenchShell } from './index.js';
 
 const meta = {
-  title: 'Workbench React/Shell',
+  title: 'Shell React/Shell',
   parameters: {
     layout: 'fullscreen',
   },
@@ -43,7 +43,7 @@ export const ProviderShell: Story = {
     docs: {
       description: {
         story:
-          'Primary shell path composed through @workbench-kit/workbench-react using workbench-core registries and bundled extension manifests.',
+          'Primary shell path composed through @workbench-kit/shell-react using workbench-core registries and bundled extension manifests.',
       },
     },
   },

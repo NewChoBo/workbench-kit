@@ -17,7 +17,7 @@ Do not use this directory for:
 - Product application entrypoints.
 - Extension host or runtime contracts.
 - Reusable workbench orchestration that belongs in
-  `@workbench-kit/workbench-react`, `@workbench-kit/workbench-core`, platform,
+  `@workbench-kit/shell-react`, `@workbench-kit/workbench-core`, platform,
   adapters, or services packages.
 
 When demo behavior becomes reusable, extract it to the appropriate package first,

@@ -19,6 +19,7 @@ import {
   type WorkspaceSelectionState,
 } from '@workbench-kit/workspace';
 import { SideBarList, SideBarListItem } from '../../layout/SideBarViewFrame';
+import { TextInput } from '../../primitives/TextInput';
 import { cxCodicon } from '../../utils/codicon';
 import { explorerTreeDepthStyle } from './explorer-tree-style';
 import { flattenWorkspaceTree } from './tree';
@@ -471,13 +472,14 @@ export function WorkspaceExplorer({
             <span className="workbench-tree-spacer" />
             <WorkspaceFileIcon directory={directory} mimeType={mimeType} path={path} />
           </span>
-          <input
+          <TextInput
             ref={inlineEditInputRef}
             aria-label="Workspace item name"
             className="ui-side-bar-inline-edit__input"
+            controlWidth="full"
             value={inlineEdit.value}
             onBlur={commitInlineEdit}
-            onChange={(event) => onInlineEditValueChange?.(event.currentTarget.value, inlineEdit)}
+            onValueChange={(value) => onInlineEditValueChange?.(value, inlineEdit)}
             onKeyDown={handleInlineEditKeyDown}
           />
         </div>

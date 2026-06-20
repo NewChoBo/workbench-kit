@@ -25,7 +25,7 @@ Establish and enforce a **single layout + scroll contract** across:
 | Panels  | `Panel`, `SideBarViewFrame`, `SplitView`, settings modal                 |
 | Scroll  | `ScrollArea`, scrollbar tokens, overflow ownership                       |
 | CSS org | `styles.css` monolith, co-located CSS, `primitives.css` overlap          |
-| Hosts   | `workbench-react`, `workbench-sample`, Storybook stories                 |
+| Hosts   | `shell-react`, `workbench-sample`, Storybook stories                     |
 
 ### Success criteria
 
@@ -100,11 +100,11 @@ Same `ui-workbench-shell` block appears twice in the repo CSS graph.
 
 ### L4 — Editor height chain split across 3 files
 
-| File                                           | Rule                                                                      |
-| ---------------------------------------------- | ------------------------------------------------------------------------- |
-| `packages/react/src/styles.css`                | `.workbench-editor-area { flex:1; min-height:0; overflow:hidden }`        |
-| `packages/workbench-react/src/editor-area.css` | `.workbench-editor-area { height:100%; … }`                               |
-| `examples/workbench-sample/src/host.css`       | `.workbench-sample-editor-frame > .workbench-editor-area { height:auto }` |
+| File                                       | Rule                                                                      |
+| ------------------------------------------ | ------------------------------------------------------------------------- |
+| `packages/react/src/styles.css`            | `.workbench-editor-area { flex:1; min-height:0; overflow:hidden }`        |
+| `packages/shell-react/src/editor-area.css` | `.workbench-editor-area { height:100%; … }`                               |
+| `examples/workbench-sample/src/host.css`   | `.workbench-sample-editor-frame > .workbench-editor-area { height:auto }` |
 
 Monaco host repeats `height:100%` + `min-height:0` inside `editor-area.css`.
 
@@ -131,12 +131,12 @@ Documented in sidebar plan. CSS repeats the same flex column for
 
 ### L8 — Dead / stale artifacts
 
-| Item                                                  | Status (2026-06-20)                           |
-| ----------------------------------------------------- | --------------------------------------------- |
-| `ui-workbench-scrollbar--overlay`                     | CSS only, remove candidate                    |
-| `MultiProviderExplorer`                               | **Removed** in `18b4faa` — do not reintroduce |
-| Custom sidebar overlay scrollbar JS                   | **Removed** in `ae8efbe`                      |
-| `chat-view.css`, `search-view.css` in workbench-react | Removed / never imported in source tree       |
+| Item                                              | Status (2026-06-20)                           |
+| ------------------------------------------------- | --------------------------------------------- |
+| `ui-workbench-scrollbar--overlay`                 | CSS only, remove candidate                    |
+| `MultiProviderExplorer`                           | **Removed** in `18b4faa` — do not reintroduce |
+| Custom sidebar overlay scrollbar JS               | **Removed** in `ae8efbe`                      |
+| `chat-view.css`, `search-view.css` in shell-react | Removed / never imported in source tree       |
 
 ---
 
@@ -173,12 +173,12 @@ to this doc or an open improvement ticket.
 
 ### CSS organization contract
 
-| Rule                 | Guidance                                                                        |
-| -------------------- | ------------------------------------------------------------------------------- |
-| New feature CSS      | Co-located `*.css` + `@import` from `styles.css`                                |
-| Shell/sidebar/editor | Extract to `layout/shell.css`, `layout/sidebar.css`, etc. when touched          |
-| Primitives           | No duplicate of workbench shell rules in `primitives/styles.css`                |
-| Package CSS          | `workbench-react` only for host-specific overrides (e.g. editor-area internals) |
+| Rule                 | Guidance                                                                    |
+| -------------------- | --------------------------------------------------------------------------- |
+| New feature CSS      | Co-located `*.css` + `@import` from `styles.css`                            |
+| Shell/sidebar/editor | Extract to `layout/shell.css`, `layout/sidebar.css`, etc. when touched      |
+| Primitives           | No duplicate of workbench shell rules in `primitives/styles.css`            |
+| Package CSS          | `shell-react` only for host-specific overrides (e.g. editor-area internals) |
 
 ---
 
@@ -210,7 +210,7 @@ to this doc or an open improvement ticket.
 
 **Acceptance**
 
-- [ ] Vitest: react layout/workspace/management + workbench-react
+- [ ] Vitest: react layout/workspace/management + shell-react
 - [ ] Browser: sidebar 4 views, settings nav scroll, editor Monaco visible
 - [ ] No new raw `overflow: auto` without comment
 
@@ -288,7 +288,7 @@ Sidebar Phase A/B-1 remains valid. Sidebar Phase B-2 (overlay footer) is a
 Set-Location packages/react
 pnpm exec vitest run src/layout src/workbench/workspace src/workbench/settings
 
-Set-Location ../workbench-react
+Set-Location ../shell-react
 pnpm exec vitest run src/
 ```
 

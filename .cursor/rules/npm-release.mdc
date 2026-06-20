@@ -12,7 +12,7 @@ Read `docs/conventions/npm-release.md` before changing publish scripts or releas
 
 - `NPM_CI_PUBLISH_PACKAGES` must equal `NPM_PUBLISH_ORDER` (all public packages).
 - Never shrink the CI publish set without explicit user approval.
-- Do not add private-preview shells (`monaco`, `workbench-core`, `workbench-react`) to publish order.
+- Do not add private-preview shells (`monaco`, `workbench-core`, `shell-react`) to publish order.
 - `@workbench-kit/jdw` → directory `packages/json-widget`.
 
 ## Two release paths

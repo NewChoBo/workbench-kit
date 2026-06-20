@@ -32,7 +32,7 @@ Governance: [Public API Governance](../conventions/public-api-governance.md).
 | `@workbench-kit/react`                   | `packages/react`                   | React primitives and workbench components             |
 | `@workbench-kit/jdw-editor`              | `packages/jdw-editor`              | Screen spec editor UI and pipeline hooks              |
 
-**Private preview (monorepo only):** `workbench-core`, `workbench-react`, `monaco`.
+**Private preview (monorepo only):** `workbench-core`, `shell-react`, `monaco`.
 
 Install example:
 

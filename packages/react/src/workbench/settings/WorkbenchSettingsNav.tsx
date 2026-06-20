@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef } from 'react';
+import { Button } from '../../primitives/Button';
 import { cx } from '../../utils/cx';
 import type { WorkbenchSettingsCategory } from './types';
 
@@ -26,9 +27,8 @@ export function WorkbenchSettingsNav({
     const isActive = category.id === activeCategoryId;
 
     return (
-      <button
+      <Button
         key={category.id}
-        type="button"
         className={cx(
           'workbench-settings-nav-item',
           isActive && 'workbench-settings-nav-item--active',
@@ -39,7 +39,7 @@ export function WorkbenchSettingsNav({
         onClick={() => onSelectCategory(category.id)}
       >
         {category.label}
-      </button>
+      </Button>
     );
   });
 

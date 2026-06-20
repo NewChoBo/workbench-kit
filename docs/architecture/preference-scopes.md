@@ -16,7 +16,7 @@ Implementation:
 
 - `@workbench-kit/workbench-config` — `PreferenceScope`, `mergeScopedPreferences`, `mergePreferenceValuesByScope`
 - `@workbench-kit/workbench-core` — `PreferenceService` with `getEffectiveValue`, `setScopedValue`, `onDidChangePreference`
-- `@workbench-kit/workbench-react` — provider wiring, local persistence, settings UI checkbox for boolean contributions
+- `@workbench-kit/shell-react` — provider wiring, local persistence, settings UI checkbox for boolean contributions
 
 ## Future scopes (not implemented)
 

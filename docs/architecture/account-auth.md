@@ -1,7 +1,7 @@
 # Account and Authentication
 
 Account and authentication are platform concerns exposed as service contracts in
-`@workbench-kit/platform` and consumed by `workbench-react` for UI entry points.
+`@workbench-kit/platform` and consumed by `shell-react` for UI entry points.
 The current public boundary defines stable capability IDs and framework-neutral
 interfaces; concrete providers are supplied by the host or later built-in
 extension work.
@@ -71,7 +71,7 @@ Host enforces permissions at SDK boundaries.
 
 ## Account UI Entry Points
 
-`workbench-react` provides:
+`shell-react` provides:
 
 - Status bar account indicator
 - Command palette sign-in/sign-out commands (from contributions)

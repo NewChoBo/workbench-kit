@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Button } from '../../primitives/Button';
 import { cx } from '../../utils/cx';
 
 export const CHAT_MESSAGE_COLLAPSE_MAX_LINES = 8;
@@ -84,14 +85,13 @@ export function ChatMessageCollapsible({
           {children}
         </div>
         {canCollapse && !isStreaming ? (
-          <button
+          <Button
             aria-expanded={expanded}
             className={cx('message__collapse-toggle', toggleClassName)}
-            type="button"
             onClick={() => setExpanded((current) => !current)}
           >
             {expanded ? 'Show less' : 'Show more'}
-          </button>
+          </Button>
         ) : null}
         {footer ? <div className="message__bubble-footer">{footer}</div> : null}
       </div>

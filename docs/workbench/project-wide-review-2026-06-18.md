@@ -12,7 +12,7 @@ scripts. This was a static repository review, not a browser UX pass.
 ## Confirmed Current State
 
 - The current target package graph is coherent: `platform` owns command/context
-  primitives, `workbench-core` owns registries and services, `workbench-react`
+  primitives, `workbench-core` owns registries and services, `shell-react`
   assembles the shell, and `react` keeps primitives/domain UI.
 - The built-in explorer is no longer a placeholder. It registers workspace
   commands such as `workspace.init`, `workspace.open`, `workspace.newFile`,
@@ -86,7 +86,7 @@ of reusable workbench behavior.
 
 Recommended work:
 
-- Promote `EditorDocumentViewProvider` into a core or workbench-react registry.
+- Promote `EditorDocumentViewProvider` into a core or shell-react registry.
 - Allow built-in extensions to contribute form/preview providers by MIME type,
   path pattern, and priority.
 - Keep `EditorArea` as the resolver/renderer only.
@@ -173,7 +173,7 @@ Recommended work:
 
 The package intentionally exposes primitives plus many workbench/domain modules.
 The architecture plan says some orchestration and settings/workspace behavior
-should continue moving into `workbench-react` and built-in extensions.
+should continue moving into `shell-react` and built-in extensions.
 
 Impact: the public surface can harden before package boundaries are fully
 settled.

@@ -33,7 +33,7 @@ Full detail: [`docs/conventions/npm-release.md`](docs/conventions/npm-release.md
 | ----------------------- | --------------------------------------------------------------------- |
 | Public publish set      | `NPM_PUBLISH_ORDER` in `scripts/npm-publish-config.mjs` (13 packages) |
 | CI publish set          | Same as `NPM_PUBLISH_ORDER` — do not maintain a smaller allowlist     |
-| Private (never publish) | `monaco`, `workbench-core`, `workbench-react`                         |
+| Private (never publish) | `monaco`, `workbench-core`, `shell-react`                             |
 | First release           | Local: `pnpm publish:packages:local`                                  |
 | Updates                 | Push tag `v<version>` → `publish.yml` (npm OIDC trusted publishing)   |
 | Consumer install tag    | `@prototype` (CI does not move `latest`)                              |

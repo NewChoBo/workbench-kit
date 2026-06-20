@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ContextMenu } from '../../overlay/ContextMenu';
 import { useClampedFixedOverlayPosition } from '../../overlay/useClampedFixedOverlayPosition';
 import { useFixedOverlayDismiss } from '../../overlay/useFixedOverlayDismiss';
+import { Button } from '../../primitives/Button';
 import { ChatHistoryMenuRow } from './ChatHistoryMenuRow';
 import { ChatRenameDialog } from './ChatRenameDialog';
 import type {
@@ -91,10 +92,9 @@ export function ChatHistoryMenu({
         role="menu"
         style={{ left: position.x, top: position.y, position: 'fixed' }}
       >
-        <button
+        <Button
           className="ui-context-menu__item"
           role="menuitem"
-          type="button"
           onClick={() => {
             onCreate();
             onClose();
@@ -104,7 +104,7 @@ export function ChatHistoryMenu({
             <i aria-hidden="true" className="codicon codicon-add" />
           </span>
           <span className="ui-context-menu__label">{labels.newChat}</span>
-        </button>
+        </Button>
 
         <div className="ui-context-menu__separator" role="separator" />
 

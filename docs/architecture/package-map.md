@@ -19,17 +19,17 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 | `@workbench-kit/base`                    | Phase 5: public-ready foundation package                                             | Foundation utilities                                                                 | **Keep**                                                                    |
 | `@workbench-kit/platform`                | Phase 5: public-ready canonical platform package                                     | Canonical platform services (commands, context, keybindings, auth/account contracts) | **Keep** — **absorbed `core`**                                              |
 | `@workbench-kit/workbench-core`          | Phase 4: registries, extension activation, layout, bundled modules (private preview) | Extension registry, menu/view/layout registries, host orchestration                  | **Keep**                                                                    |
-| `@workbench-kit/workbench-react`         | Phase 3: provider and registry-backed shell wiring (private preview)                 | WorkbenchProvider, shell wiring, palette/account entry                               | **Keep** — **absorbs `react/workbench` orchestration**                      |
+| `@workbench-kit/shell-react`             | Phase 3: provider and registry-backed shell wiring (private preview)                 | WorkbenchProvider, shell wiring, palette/account entry                               | **Keep** — **absorbs `react/workbench` orchestration**                      |
 | `@workbench-kit/workbench-extension-sdk` | Phase 5: public-ready manifest plus command/view provider context APIs               | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
 | `@workbench-kit/workbench-config`        | Phase 5: public-ready `.workbench` extension/layout config parsing                   | `.workbench` load/merge/validate                                                     | **Keep**                                                                    |
 | `@workbench-kit/monaco`                  | Skeleton                                                                             | Editor integration                                                                   | **Keep** (optional)                                                         |
 
 ## UI Stack
 
-| Package                 | Current state                                       | Target role                                                                                  | Action                                                                                                           |
-| ----------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `@workbench-kit/tokens` | Published CSS variables                             | Design tokens                                                                                | **Keep**                                                                                                         |
-| `@workbench-kit/react`  | Published; primitives + large `./workbench` surface | React primitives, chrome pieces (ActivityBar, SplitView), domain UI modules (jdw, widget-\*) | **Keep** — **Split**: shell orchestration → `workbench-react`; Storybook demo helpers are private workspace-only |
+| Package                 | Current state                                       | Target role                                                                                  | Action                                                                                                       |
+| ----------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `@workbench-kit/tokens` | Published CSS variables                             | Design tokens                                                                                | **Keep**                                                                                                     |
+| `@workbench-kit/react`  | Published; primitives + large `./workbench` surface | React primitives, chrome pieces (ActivityBar, SplitView), domain UI modules (jdw, widget-\*) | **Keep** — **Split**: shell orchestration → `shell-react`; Storybook demo helpers are private workspace-only |
 
 ### `@workbench-kit/react` export migration
 
@@ -37,10 +37,10 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `./primitives`, `./styles.css`                                      | Stay in `react`                                                                                                  |
 | `./workbench` (ActivityBar, SplitView, StatusBar chrome)            | Stay in `react` (presentational)                                                                                 |
-| `./workbench/shell` (WorkbenchShell layout only)                    | Stay in `react`; `workbench-react` composes it without loading the broader `./workbench` surface                 |
-| `./workbench` (CommandPalette wiring, command registries)           | Move to `workbench-react` + `workbench-core`; remaining exports are presentational or demo-only during migration |
+| `./workbench/shell` (WorkbenchShell layout only)                    | Stay in `react`; `shell-react` composes it without loading the broader `./workbench` surface                     |
+| `./workbench` (CommandPalette wiring, command registries)           | Move to `shell-react` + `workbench-core`; remaining exports are presentational or demo-only during migration     |
 | `./workbench/demo`                                                  | Private Storybook/workspace-only helpers; excluded from npm export and package files                             |
-| `./workbench/settings`, `./workbench/auth`, `./workbench/workspace` | Move to `extensions/builtin.*` + thin `workbench-react` hosts                                                    |
+| `./workbench/settings`, `./workbench/auth`, `./workbench/workspace` | Move to `extensions/builtin.*` + thin `shell-react` hosts                                                        |
 | `./jdw`, `./widget-tree`, `./widget-asset`, `./widget-studio`       | Stay in `react` for rendering, fixtures, and domain UI; editor-specific ScreenSpec surfaces live in `jdw-editor` |
 | `./jdw/preview`, `./jdw/samples`                                    | Narrow public JDW subpaths for editor packages that must avoid the broad `./jdw` barrel                          |
 
@@ -65,19 +65,19 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 
 ## Naming Clarification
 
-| Name              | Meaning                                                   |
-| ----------------- | --------------------------------------------------------- |
-| `workbench-core`  | **Target** workbench engine (registries + extension host) |
-| `platform`        | **Target** low-level platform services                    |
-| `react`           | **Target** UI primitives and domain React modules         |
-| `workbench-react` | **Target** full workbench assembly                        |
+| Name             | Meaning                                                   |
+| ---------------- | --------------------------------------------------------- |
+| `workbench-core` | **Target** workbench engine (registries + extension host) |
+| `platform`       | **Target** low-level platform services                    |
+| `react`          | **Target** UI primitives and domain React modules         |
+| `shell-react`    | **Target** full workbench assembly                        |
 
 ## Dependency Target Graph
 
 ```
 extensions ──► workbench-extension-sdk ──► platform ──► base
                     ▲
-workbench-react ──► react ──► tokens
+shell-react ──► react ──► tokens
        │              │
        └──────► workbench-core ──► workbench-config
                       │

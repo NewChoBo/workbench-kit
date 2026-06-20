@@ -51,17 +51,19 @@
   padding: 0 8px 8px;
 }
 
-.workbench-devtools-panel__tab {
-  background: transparent;
+.workbench-devtools-panel__tab.ui-button {
+  height: auto;
+  min-height: 26px;
+  padding: 4px 8px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
+  background: transparent;
   color: inherit;
-  cursor: pointer;
   font: inherit;
-  padding: 4px 8px;
+  font-weight: 400;
 }
 
-.workbench-devtools-panel__tab[aria-pressed='true'] {
+.workbench-devtools-panel__tab.ui-button[aria-pressed='true'] {
   background: var(--color-surface-hover);
   border-color: var(--color-accent);
 }

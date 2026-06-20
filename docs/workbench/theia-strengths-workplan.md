@@ -14,15 +14,15 @@ preference scopes.
 
 ## Adopt
 
-| Theia strength                        | Workbench Kit mapping                                                                                                          | First target                                 |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
-| Widget lifecycle                      | Extend `ViewHost` with show, hide, focus, blur, and resize hooks                                                               | `workbench-extension-sdk`, `workbench-react` |
-| WidgetFactory                         | Add view/editor host factory registration instead of constructing hosts directly in the shell                                  | `workbench-core`                             |
-| WidgetContribution / ViewContribution | Keep declarative manifest contributions and runtime provider registration                                                      | `workbench-extension-sdk`, `workbench-core`  |
-| Services and contribution points      | Promote static capability maps into a disposable `CapabilityRegistry`                                                          | `workbench-core`                             |
-| Command/Menu/Keybinding model         | Keep UI events routed through command execution and menu/keybinding registries                                                 | `platform`, `workbench-core`                 |
-| TreeWidget behavior                   | Apply reusable tree selection, expansion, filtering, keyboard, and lazy child patterns to virtual explorer                     | `workspace`, `react`, `builtin.explorer`     |
-| Preference scopes                     | Move from application/window/workspace-only metadata toward default, user, workspace, local, resource, and secret-aware scopes | `workbench-config`, `platform`               |
+| Theia strength                        | Workbench Kit mapping                                                                                                          | First target                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
+| Widget lifecycle                      | Extend `ViewHost` with show, hide, focus, blur, and resize hooks                                                               | `workbench-extension-sdk`, `shell-react`    |
+| WidgetFactory                         | Add view/editor host factory registration instead of constructing hosts directly in the shell                                  | `workbench-core`                            |
+| WidgetContribution / ViewContribution | Keep declarative manifest contributions and runtime provider registration                                                      | `workbench-extension-sdk`, `workbench-core` |
+| Services and contribution points      | Promote static capability maps into a disposable `CapabilityRegistry`                                                          | `workbench-core`                            |
+| Command/Menu/Keybinding model         | Keep UI events routed through command execution and menu/keybinding registries                                                 | `platform`, `workbench-core`                |
+| TreeWidget behavior                   | Apply reusable tree selection, expansion, filtering, keyboard, and lazy child patterns to virtual explorer                     | `workspace`, `react`, `builtin.explorer`    |
+| Preference scopes                     | Move from application/window/workspace-only metadata toward default, user, workspace, local, resource, and secret-aware scopes | `workbench-config`, `platform`              |
 
 ## Do Not Adopt
 
@@ -48,17 +48,17 @@ preference scopes.
 
 ## Work Queue
 
-| ID    | Status  | Priority | Area       | Item                                                                  | Package target                                                 | Notes                                                                                                                 |
-| ----- | ------- | -------- | ---------- | --------------------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| WB-23 | done    | P0       | Harness    | Restore workbench sample host and scope launch boundary check         | `examples/workbench-sample`, `scripts`                         | Reuse or replay the previous sample-host/lifecycle commit before deeper architecture changes.                         |
-| WB-24 | done    | P1       | Lifecycle  | Extend `ViewHost` lifecycle metadata and callbacks                    | `workbench-extension-sdk`, `workbench-react`                   | Add optional title, icon, closable, show, hide, focus, blur, and resize hooks while preserving existing providers.    |
-| WB-25 | done    | P1       | Registry   | Add view/editor host factory registry                                 | `workbench-core`, `workbench-extension-sdk`                    | Separate descriptor registration from host instantiation, following the useful part of Theia's WidgetFactory pattern. |
-| WB-26 | done    | P1       | Capability | Implement disposable `CapabilityRegistry`                             | `workbench-core`                                               | Replace static capability lookup with provider registration, permission-aware lookup hooks, and tests.                |
-| WB-27 | done    | P1       | Workspace  | Introduce resource URI, snapshot, mutation, and transaction contracts | `workspace`                                                    | Build on existing file reducer and draft helpers without breaking current exports.                                    |
-| WB-28 | done    | P1       | Editor     | Add editor contribution and editor service model                      | `workbench-core`, `workbench-react`, `workbench-extension-sdk` | Editor tabs/groups, dirty state, preview/pinned state, editor resolver hooks, and save transaction path landed.       |
-| WB-29 | done    | P2       | Explorer   | Back built-in explorer with virtual workspace commands                | `builtin.explorer`, `workspace`, `workbench-react`             | Reveal/focus bridge, editor↔tree sync, and integration tests landed; optional sample browser smoke.                   |
-| WB-30 | pending | P2       | Config     | Add preference scope model and merge order                            | `workbench-config`, `platform`                                 | Start with default, workspace, and local scopes; leave user/resource/secret as explicit future scopes.                |
-| WB-31 | pending | P3       | Devtools   | Add registry/lifecycle inspectors                                     | `workbench-react`                                              | Command, context key, view, capability, layout, workflow, and workspace transaction inspectors.                       |
+| ID    | Status  | Priority | Area       | Item                                                                  | Package target                                             | Notes                                                                                                                 |
+| ----- | ------- | -------- | ---------- | --------------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| WB-23 | done    | P0       | Harness    | Restore workbench sample host and scope launch boundary check         | `examples/workbench-sample`, `scripts`                     | Reuse or replay the previous sample-host/lifecycle commit before deeper architecture changes.                         |
+| WB-24 | done    | P1       | Lifecycle  | Extend `ViewHost` lifecycle metadata and callbacks                    | `workbench-extension-sdk`, `shell-react`                   | Add optional title, icon, closable, show, hide, focus, blur, and resize hooks while preserving existing providers.    |
+| WB-25 | done    | P1       | Registry   | Add view/editor host factory registry                                 | `workbench-core`, `workbench-extension-sdk`                | Separate descriptor registration from host instantiation, following the useful part of Theia's WidgetFactory pattern. |
+| WB-26 | done    | P1       | Capability | Implement disposable `CapabilityRegistry`                             | `workbench-core`                                           | Replace static capability lookup with provider registration, permission-aware lookup hooks, and tests.                |
+| WB-27 | done    | P1       | Workspace  | Introduce resource URI, snapshot, mutation, and transaction contracts | `workspace`                                                | Build on existing file reducer and draft helpers without breaking current exports.                                    |
+| WB-28 | done    | P1       | Editor     | Add editor contribution and editor service model                      | `workbench-core`, `shell-react`, `workbench-extension-sdk` | Editor tabs/groups, dirty state, preview/pinned state, editor resolver hooks, and save transaction path landed.       |
+| WB-29 | done    | P2       | Explorer   | Back built-in explorer with virtual workspace commands                | `builtin.explorer`, `workspace`, `shell-react`             | Reveal/focus bridge, editor↔tree sync, and integration tests landed; optional sample browser smoke.                   |
+| WB-30 | pending | P2       | Config     | Add preference scope model and merge order                            | `workbench-config`, `platform`                             | Start with default, workspace, and local scopes; leave user/resource/secret as explicit future scopes.                |
+| WB-31 | pending | P3       | Devtools   | Add registry/lifecycle inspectors                                     | `shell-react`                                              | Command, context key, view, capability, layout, workflow, and workspace transaction inspectors.                       |
 
 ## Progress
 
@@ -70,7 +70,7 @@ preference scopes.
   `resource-mutation`, `resource-transaction`) on top of `virtualWorkspaceReducer` without
   breaking existing exports.
 - 2026-06-14: WB-25 added `ViewHostFactoryRegistry` and `EditorHostFactoryRegistry`.
-  `workbench-react` now creates view hosts through factories with a default
+  `shell-react` now creates view hosts through factories with a default
   provider-backed implementation for existing `resolveViewHost` providers.
 - 2026-06-14: WB-26 added `CapabilityRegistry` to `workbench-core` with host seeding,
   `ExtensionRegistry.capabilityRegistry`, and extension `context.capabilities.registerProvider`
@@ -85,7 +85,7 @@ preference scopes.
   [widget-layout-schema-plan.md](./widget-layout-schema-plan.md).
 - 2026-06-12: WB-24 implemented the first Theia-inspired ViewHost lifecycle
   slice. The SDK now exposes optional host metadata and lifecycle hooks,
-  `workbench-react` notifies show, hide, focus, blur, and resize events, and
+  `shell-react` notifies show, hide, focus, blur, and resize events, and
   manifest activity icons render through VS Code codicon classes.
 - 2026-06-12: Removed stale sibling-repo launch boundary scanning from
   `check-launch-boundary`; the check now validates only the current
@@ -134,7 +134,7 @@ node scripts/check-public-package-exports.mjs
 node scripts/check-launch-boundary.mjs
 pnpm --filter @workbench-kit/workbench-extension-sdk typecheck
 pnpm --filter @workbench-kit/workbench-core typecheck
-pnpm --filter @workbench-kit/workbench-react typecheck
+pnpm --filter @workbench-kit/shell-react typecheck
 pnpm --filter @workbench-kit/workspace typecheck
 pnpm validate
 ```

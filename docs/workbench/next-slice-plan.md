@@ -52,7 +52,7 @@ narrows the next three slices, records code/doc truth, and lists trade-offs.
 | Config editor        | `@workbench-kit/react/json-config`            | `JsonConfigWorkbench`                                                                |
 | JDW preview render   | `@workbench-kit/react/jdw`                    | `JdwPreview`, `JsonCodeEditorPane`, CSS layout backend                               |
 | Screen spec editor   | `@workbench-kit/jdw-editor`                   | `ScreenSpecEditor` (separate from widget-tree lab)                                   |
-| Workbench shell      | `@workbench-kit/workbench-react`              | `WorkbenchProvider`, `WorkbenchShell`                                                |
+| Workbench shell      | `@workbench-kit/shell-react`                  | `WorkbenchProvider`, `WorkbenchShell`                                                |
 | Storybook editor lab | `JDW/WidgetTree/Lab`                          | `InteractionSmoke` is `storybook-play-required`                                      |
 | Sample host          | `examples/workbench-sample`                   | **Done** — WB-23 minimal Vite host (`pnpm workbench-sample`)                         |
 
@@ -95,7 +95,7 @@ and a shareable `.workbench` workspace.
 | In scope                                                       | Out of scope                           |
 | -------------------------------------------------------------- | -------------------------------------- |
 | `examples/workbench-sample` Vite app                           | Backend, auth, product routes          |
-| Import `@workbench-kit/workbench-react` shell                  | VS Code extension host                 |
+| Import `@workbench-kit/shell-react` shell                      | VS Code extension host                 |
 | Load `BUILTIN_WORKBENCH_EXTENSIONS` via existing bundle script | Runtime npm install / marketplace      |
 | `.workbench/workspace.json` from repo root                     | Private env files or credentials       |
 | `pnpm --filter workbench-sample dev` script at repo root       | Full parity with Integrated Shell demo |
@@ -104,7 +104,7 @@ and a shareable `.workbench` workspace.
 
 ```text
 examples/workbench-sample/
-  package.json          # private, depends on workbench-react, react, tokens
+  package.json          # private, depends on shell-react, react, tokens
   index.html
   src/
     main.tsx            # WorkbenchProvider + minimal host wiring
@@ -205,7 +205,7 @@ interface CapabilityRegistry {
 
 ## Slice 3 — WB-25 Host factory registry (P1) — **Done**
 
-**Status:** Implemented 2026-06-14 (`ViewHostFactoryRegistry`, `EditorHostFactoryRegistry`, `workbench-react` factory resolution).
+**Status:** Implemented 2026-06-14 (`ViewHostFactoryRegistry`, `EditorHostFactoryRegistry`, `shell-react` factory resolution).
 
 **Goal:** Separate view/editor descriptor registration from host instantiation
 (Theia WidgetFactory pattern, not WidgetManager clone).

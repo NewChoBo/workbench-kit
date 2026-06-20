@@ -79,11 +79,11 @@ Canonical direction docs: [theia-strengths-workplan.md](./theia-strengths-workpl
 | ID        | Item                                             | Status   | Evidence paths                                                                                                                                                        | Validation                                                          |
 | --------- | ------------------------------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **WB-23** | Workbench sample host + launch boundary          | **Done** | `examples/workbench-sample/`, root script `pnpm workbench-sample`, `scripts/check-launch-boundary.mjs`                                                                | `pnpm --filter workbench-sample typecheck`, `pnpm validate`         |
-| **WB-24** | ViewHost lifecycle contract                      | **Done** | `packages/workbench-extension-sdk/` (ViewHost metadata + hooks), `packages/workbench-react/src/shell.tsx` (show/hide/focus/blur/resize)                               | SDK + react typecheck; Storybook integrated shell                   |
+| **WB-24** | ViewHost lifecycle contract                      | **Done** | `packages/workbench-extension-sdk/` (ViewHost metadata + hooks), `packages/shell-react/src/shell.tsx` (show/hide/focus/blur/resize)                                   | SDK + react typecheck; Storybook integrated shell                   |
 | **WB-26** | Disposable `CapabilityRegistry`                  | **Done** | `packages/workbench-core/src/capability-registry.ts`, `extension-registry.ts` (`capabilityRegistry`, extension `registerProvider`)                                    | `packages/workbench-core/src/capability-registry.test.ts`           |
-| **WB-25** | View/editor host factory registry                | **Done** | `packages/workbench-core/src/host-factory-registry.ts`, `workbench-react` view factory resolution, editor factories consumed through `EditorService`                  | `host-factory-registry.test.ts`                                     |
+| **WB-25** | View/editor host factory registry                | **Done** | `packages/workbench-core/src/host-factory-registry.ts`, `shell-react` view factory resolution, editor factories consumed through `EditorService`                      | `host-factory-registry.test.ts`                                     |
 | **WB-27** | Resource URI / snapshot / mutation / transaction | **Done** | `packages/workspace/src/resource-uri.ts`, `resource-snapshot.ts`, `resource-mutation.ts`, `resource-transaction.ts`, `resource-transaction.test.ts`; commit `813cbca` | `pnpm --filter @workbench-kit/workspace typecheck`; workspace tests |
-| **WB-28** | Editor contribution and service model            | **Done** | `EditorService`, `EditorArea` tab chrome, `builtin.editor` text resolver/host, `editor.save` transaction path, sample Code/Form/Preview editor flow                   | `workbench-core` + `workbench-react` tests; `pnpm validate`         |
+| **WB-28** | Editor contribution and service model            | **Done** | `EditorService`, `EditorArea` tab chrome, `builtin.editor` text resolver/host, `editor.save` transaction path, sample Code/Form/Preview editor flow                   | `workbench-core` + `shell-react` tests; `pnpm validate`             |
 
 > **Status note:** Explorer open/reveal integration now belongs to WB-29 so
 > explorer UI, palette, and context menus can share command-backed handlers.
@@ -118,14 +118,14 @@ at Phase B.
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | **Status**     | Done                                                                                                                                     |
 | **Depends on** | WB-24, WB-25, WB-27                                                                                                                      |
-| **Packages**   | `@workbench-kit/workbench-core`, `@workbench-kit/workbench-react`, `@workbench-kit/workbench-extension-sdk`, `@workbench-kit/workspace`  |
+| **Packages**   | `@workbench-kit/workbench-core`, `@workbench-kit/shell-react`, `@workbench-kit/workbench-extension-sdk`, `@workbench-kit/workspace`      |
 | **Goal**       | Editor tabs/groups, dirty state, preview/pinned semantics, editor resolver hooks; **consume** `EditorHostFactoryRegistry` in React shell |
 
 **Deliverables**
 
 1. Editor service / contribution types in extension SDK (editor id, resource URI binding, preview tab flag, pin state).
 2. Headless editor group state in `workbench-core` (or platform) with disposable registrations.
-3. `workbench-react` editor area: tab strip, active editor, dirty indicator, preview → pin promotion.
+3. `shell-react` editor area: tab strip, active editor, dirty indicator, preview → pin promotion.
 4. Wire `EditorHostFactoryRegistry.createEditorHost` for at least one built-in editor contribution.
 5. Apply resource mutations through `applyWorkspaceResourceTransaction` when editor saves (initial: text file create/update).
 
@@ -142,7 +142,7 @@ at Phase B.
 ```powershell
 pnpm --filter @workbench-kit/workbench-core typecheck
 pnpm --filter @workbench-kit/workbench-extension-sdk typecheck
-pnpm --filter @workbench-kit/workbench-react typecheck
+pnpm --filter @workbench-kit/shell-react typecheck
 pnpm --filter @workbench-kit/workspace typecheck
 pnpm validate
 pnpm workbench-sample
@@ -152,11 +152,11 @@ pnpm workbench-sample
 
 ### In-progress Phase B — WB-29 Command-backed built-in explorer (P2)
 
-| Field          | Detail                                                                                                                 |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Status**     | Done — command handlers, UI dispatch, reveal/focus bridge, and selection sync tests landed                             |
-| **Depends on** | WB-26, WB-27, WB-28 (resource identity for reveal/open)                                                                |
-| **Packages**   | `extensions/builtin.explorer`, `@workbench-kit/workspace`, `@workbench-kit/workbench-react`, `@workbench-kit/platform` |
+| Field          | Detail                                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Status**     | Done — command handlers, UI dispatch, reveal/focus bridge, and selection sync tests landed                         |
+| **Depends on** | WB-26, WB-27, WB-28 (resource identity for reveal/open)                                                            |
+| **Packages**   | `extensions/builtin.explorer`, `@workbench-kit/workspace`, `@workbench-kit/shell-react`, `@workbench-kit/platform` |
 
 **Deliverables**
 
@@ -169,7 +169,7 @@ pnpm workbench-sample
 
 - `extensions/builtin.explorer` registers workspace create/open/copy/rename/delete/move command handlers.
 - Mutating handlers apply `WorkspaceResourceTransaction` through the workspace service capability.
-- `workbench-react` explorer UI dispatches workspace operations through `executeCommand(...)`.
+- `shell-react` explorer UI dispatches workspace operations through `executeCommand(...)`.
 - Remaining closeout confirmed selection/reveal sync, search open path, reveal/focus command bridge, and integration tests. Optional manual `pnpm workbench-sample` smoke remains.
 
 **Acceptance criteria**
@@ -225,7 +225,7 @@ pnpm validate
 | Field          | Detail                                                    |
 | -------------- | --------------------------------------------------------- |
 | **Depends on** | WB-26, WB-27, stable registry event streams from WB-28/29 |
-| **Packages**   | `@workbench-kit/workbench-react`                          |
+| **Packages**   | `@workbench-kit/shell-react`                              |
 
 **Deliverables**
 

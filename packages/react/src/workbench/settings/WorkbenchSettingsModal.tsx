@@ -1,6 +1,7 @@
 import { useId, useState, type FormEventHandler, type ReactNode } from 'react';
 import { Modal } from '../../modal/Modal';
 import type { ModalProps } from '../../modal/Modal';
+import { Button } from '../../primitives/Button';
 import { ClearableTextInput } from '../../primitives/ClearableTextInput';
 import { cx } from '../../utils/cx';
 import { WorkbenchNavigationPanel } from './NavigationPanel';
@@ -167,9 +168,8 @@ export function WorkbenchSettingsModal({
             const isActive = scope.id === selectedScopeId;
 
             return (
-              <button
+              <Button
                 key={scope.id}
-                type="button"
                 className={cx(
                   'workbench-settings-tab',
                   isActive && 'workbench-settings-tab--active',
@@ -179,7 +179,7 @@ export function WorkbenchSettingsModal({
                 onClick={() => handleSelectScope(scope.id)}
               >
                 {scope.label}
-              </button>
+              </Button>
             );
           })}
         </div>

@@ -126,34 +126,20 @@
   height: 100%;
 }
 
-.workbench-editor-area__view-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 22px;
-  min-width: 0;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm, 4px);
-  background: transparent;
+.workbench-editor-area__view-button.ui-icon-button {
   color: var(--vscode-descriptionForeground, var(--color-text-muted));
-  cursor: pointer;
-  font: inherit;
-  line-height: 1.4;
 }
 
-.workbench-editor-area__view-button .codicon {
-  flex: 0 0 auto;
+.workbench-editor-area__view-button.ui-icon-button .codicon {
   font-size: 15px;
 }
 
-.workbench-editor-area__view-button:hover {
+.workbench-editor-area__view-button.ui-icon-button:hover {
   background: var(--vscode-toolbar-hoverBackground, var(--color-bg-hover));
   color: var(--vscode-foreground, var(--color-text));
 }
 
-.workbench-editor-area__view-button[data-active='true'] {
+.workbench-editor-area__view-button.ui-icon-button[data-active='true'] {
   background: var(
     --vscode-toolbar-activeBackground,
     var(--vscode-toolbar-hoverBackground, transparent)
@@ -274,25 +260,17 @@
   text-align: end;
 }
 
-.workbench-editor-area__form-input,
+.workbench-editor-area__form-control,
 .workbench-editor-area__form-readonly {
   grid-column: 2;
   align-self: start;
 }
 
-.workbench-editor-area__form-input {
-  box-sizing: border-box;
+.workbench-editor-area__form-control.ui-input,
+.workbench-editor-area__form-control.ui-select {
   width: 100%;
   max-width: 640px;
   min-width: 0;
-  min-height: 28px;
-  padding: 6px 8px;
-  border: 1px solid var(--vscode-input-border, var(--color-border));
-  border-radius: var(--radius-sm, 4px);
-  background: var(--vscode-input-background, var(--color-bg));
-  color: var(--vscode-input-foreground, var(--color-text));
-  font: inherit;
-  font-size: var(--font-size-sm, 0.875rem);
 }
 
 .workbench-editor-area__form-readonly {

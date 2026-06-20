@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Badge } from '@workbench-kit/react/primitives';
+import { Badge, IconButton } from '@workbench-kit/react/primitives';
 import type { StatusBarSectionModel } from '@workbench-kit/react/workbench/shell';
 import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/workspace/editor';
 import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
@@ -13,7 +13,7 @@ import {
   type EditorViewMode,
   type WorkbenchProfileInput,
   type WorkbenchThemeOption,
-} from '@workbench-kit/workbench-react';
+} from '@workbench-kit/shell-react';
 
 import {
   extensionsConfig,
@@ -27,7 +27,7 @@ import {
   workbenchUserCommands,
   workspaceInfo,
 } from './bootstrap.js';
-import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/workbench-react';
+import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react';
 import {
   createSamplePaletteCommandRunner,
   sampleAdditionalPaletteCommands,
@@ -210,17 +210,15 @@ function SampleTitleBarActions() {
 
   return (
     <div className="workbench-sample-titlebar-actions">
-      <button
-        aria-label="Open example"
-        className="ui-icon-button ui-icon-button--compact workbench-shell-titlebar__action"
-        title="Open example"
-        type="button"
+      <IconButton
+        className="workbench-shell-titlebar__action"
+        compact
+        icon="preview"
+        label="Open example"
         onClick={() => {
           void executeCommand('workspace.open', { path: SAMPLE_EXAMPLE_JDW_PATH });
         }}
-      >
-        <i aria-hidden className="codicon codicon-preview" />
-      </button>
+      />
     </div>
   );
 }

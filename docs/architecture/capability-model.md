@@ -24,7 +24,7 @@ Manifest fields are defined in [Extension Dependencies](./extension-dependencies
 | `workbench.auth`          | `WorkbenchAuthProvider`                                  | Host / `builtin.accounts`  |
 | `workbench.editor`        | `EditorResolver` (planned)                               | Host + optional `monaco`   |
 | `workbench.configuration` | `ConfigurationService` (planned)                         | Host + `workbench-config`  |
-| `workbench.views`         | `ViewHost` from `@workbench-kit/workbench-extension-sdk` | `workbench-react`          |
+| `workbench.views`         | `ViewHost` from `@workbench-kit/workbench-extension-sdk` | `shell-react`              |
 
 New capability IDs require an architecture doc update and SDK type export.
 
@@ -74,7 +74,7 @@ Prefer:
 Avoid:
 
 - Extension A importing extension B package directly
-- Extension A importing `workbench-react` internals
+- Extension A importing `shell-react` internals
 
 ## Bulk Migration Impact
 

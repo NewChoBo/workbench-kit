@@ -1,7 +1,7 @@
 # Workbench Sample Host
 
 Frontend-only integration host for Workbench Kit. It composes
-`@workbench-kit/workbench-react`, `@workbench-kit/react`,
+`@workbench-kit/shell-react`, `@workbench-kit/react`,
 `@workbench-kit/workspace`, `@workbench-kit/jdw`, and
 `@workbench-kit/workbench-config` with bundled built-in extensions, reads
 shareable configuration from the repository `.workbench/` directory, and uses an
@@ -67,7 +67,7 @@ pnpm validate
 
 | Library                           | Surface in the sample                                      |
 | --------------------------------- | ---------------------------------------------------------- |
-| `@workbench-kit/workbench-react`  | Provider, shell, editor area, status sections              |
+| `@workbench-kit/shell-react`      | Provider, shell, editor area, status sections              |
 | `@workbench-kit/react`            | Button, Badge, ScrollArea, workbench and JDW React UI      |
 | `@workbench-kit/workspace`        | Virtual workspace host port and explorer/editor state      |
 | `@workbench-kit/jdw`              | Schema imports and `.jdw.json` code/form/preview workflow  |

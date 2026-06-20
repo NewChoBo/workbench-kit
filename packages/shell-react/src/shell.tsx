@@ -11,7 +11,14 @@ import {
 } from 'react';
 import { Modal } from '@workbench-kit/react/modal';
 import { TilepaperAppIcon } from '@workbench-kit/react';
-import { Badge, Button, Checkbox, Field, Select } from '@workbench-kit/react/primitives';
+import {
+  Badge,
+  Button,
+  Checkbox,
+  Field,
+  IconButton,
+  Select,
+} from '@workbench-kit/react/primitives';
 import {
   WorkbenchSettingsModal,
   WorkbenchSettingsSection,
@@ -118,6 +125,10 @@ const WORKBENCH_PREFERENCE_SCOPES = [
   { id: 'workspace', label: 'Workspace' },
   { id: 'local', label: 'Local' },
 ] as const satisfies ReadonlyArray<{ id: PreferenceScope; label: string }>;
+
+function formatPreferenceScopeLabel(scope: PreferenceScope): string {
+  return WORKBENCH_PREFERENCE_SCOPES.find((candidate) => candidate.id === scope)?.label ?? scope;
+}
 
 export function WorkbenchShell({
   accountManagement,
@@ -508,15 +519,13 @@ function WorkbenchShellTitleBar({
       <div className="workbench-shell-titlebar__actions">
         {titleBarActions}
         {helpContent ? (
-          <button
-            aria-label="Help"
-            className="ui-icon-button ui-icon-button--compact workbench-shell-titlebar__action"
-            title="Help"
-            type="button"
+          <IconButton
+            className="workbench-shell-titlebar__action"
+            compact
+            icon="question"
+            label="Help"
             onClick={onHelpOpen}
-          >
-            <i aria-hidden className="codicon codicon-question" />
-          </button>
+          />
         ) : null}
       </div>
     </>
@@ -924,7 +933,7 @@ function SettingContributionField({
       {property.type === 'boolean' ? (
         <Checkbox
           checked={editableValue === true}
-          label={`${activeScope} value`}
+          label={`${formatPreferenceScopeLabel(activeScope)} value`}
           onCheckedChange={(checked) => {
             preferenceService.setScopedValue(propertyKey, activeScope, checked);
           }}
@@ -953,7 +962,7 @@ function renderDefaultPrimarySidebar(
   return (
     <aside
       aria-label="Primary sidebar"
-      className="workbench-primary-side-bar workbench-react-primary-sidebar"
+      className="workbench-primary-side-bar shell-react-primary-sidebar"
     >
       {views.map((view) => (
         <section key={view.id} data-view-id={view.id}>

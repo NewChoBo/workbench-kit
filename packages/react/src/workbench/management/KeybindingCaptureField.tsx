@@ -65,7 +65,7 @@ export function KeybindingCaptureField({
 
   return (
     <div className={cx('workbench-keybinding-capture', className)}>
-      <button
+      <Button
         ref={buttonRef}
         aria-label={ariaLabel}
         className={cx(
@@ -94,7 +94,7 @@ export function KeybindingCaptureField({
         }}
       >
         {recording ? 'Press shortcut…' : (displayValue ?? placeholder)}
-      </button>
+      </Button>
       {value ? (
         <Button
           aria-label="Clear keyboard shortcut"

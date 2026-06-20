@@ -23,7 +23,7 @@ Install only the packages your app needs. Common starting points:
 | `@workbench-kit/tokens`                  | CSS variables and theme tokens                         |
 | `@workbench-kit/jdw`                     | JDW document engine                                    |
 
-**Private preview (not on npm):** `@workbench-kit/workbench-core`, `@workbench-kit/workbench-react`, and `@workbench-kit/monaco` are consumed from this monorepo only until packaged for public release.
+**Private preview (not on npm):** `@workbench-kit/workbench-core`, `@workbench-kit/shell-react`, and `@workbench-kit/monaco` are consumed from this monorepo only until packaged for public release.
 
 **Verify installed version:**
 

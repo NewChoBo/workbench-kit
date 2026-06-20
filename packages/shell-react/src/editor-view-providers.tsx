@@ -7,7 +7,7 @@ import {
 } from '@workbench-kit/react/jdw/document';
 import { parseJsonWidgetData } from '@workbench-kit/react/jdw/parse';
 import { JdwPreview } from '@workbench-kit/react/jdw/preview';
-import { ScrollArea } from '@workbench-kit/react/primitives';
+import { ScrollArea, Select, TextInput } from '@workbench-kit/react/primitives';
 import { WorkbenchMarkdownPreview } from '@workbench-kit/react/workbench/markdown-preview';
 
 export type EditorDocumentViewKind = 'form' | 'preview';
@@ -238,17 +238,18 @@ function JsonValueFormField({
         <span className="workbench-editor-area__form-label" style={labelStyle}>
           {label}
         </span>
-        <select
+        <Select
           aria-label={fieldLabel}
-          className="workbench-editor-area__form-input"
+          className="workbench-editor-area__form-control"
+          controlWidth="full"
           value={String(value)}
-          onChange={(event) => {
-            onFieldChange(path, event.currentTarget.value);
+          onValueChange={(nextValue) => {
+            onFieldChange(path, nextValue);
           }}
         >
           <option value="true">true</option>
           <option value="false">false</option>
-        </select>
+        </Select>
       </label>
     );
   }
@@ -259,11 +260,12 @@ function JsonValueFormField({
         <span className="workbench-editor-area__form-label" style={labelStyle}>
           {label}
         </span>
-        <input
+        <TextInput
           aria-label={fieldLabel}
-          className="workbench-editor-area__form-input"
-          onChange={(event) => {
-            onFieldChange(path, event.currentTarget.value);
+          className="workbench-editor-area__form-control"
+          controlWidth="full"
+          onValueChange={(nextValue) => {
+            onFieldChange(path, nextValue);
           }}
           step={typeof value === 'number' ? 'any' : undefined}
           type={typeof value === 'number' ? 'number' : 'text'}

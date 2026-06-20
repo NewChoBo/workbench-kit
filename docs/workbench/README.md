@@ -51,7 +51,7 @@ legacy paths.
   [Workbench Change Guidelines](./workbench-change-guidelines.md), then verify
   current code truth before trusting older planning notes.
 - Keep new documents product-neutral and package-current.
-- Use `@workbench-kit/platform`, `workbench-core`, `workbench-react`, and the
+- Use `@workbench-kit/platform`, `workbench-core`, `shell-react`, and the
   extension SDK as the current workbench boundaries.
 - Do not add plans that depend on legacy packages or VS Code wrapper
   lanes.

@@ -26,6 +26,7 @@ import {
 } from '@workbench-kit/react/jdw/document';
 import {
   EditorTabs,
+  IconButton,
   ScrollArea,
   type EditorTab,
   type EditorTabDropPosition,
@@ -1066,19 +1067,16 @@ function EditorViewModeButton({
   onModeChange: (mode: EditorViewMode) => void;
 }) {
   return (
-    <button
-      aria-label={label}
+    <IconButton
       aria-pressed={active}
       className="workbench-editor-area__view-button"
       data-active={active ? 'true' : undefined}
+      icon={icon}
+      label={label}
       onClick={() => {
         onModeChange(mode);
       }}
-      title={label}
-      type="button"
-    >
-      <i aria-hidden className={`codicon ${icon}`} />
-    </button>
+    />
   );
 }
 

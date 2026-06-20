@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Button } from '../../primitives/Button';
 import { cx } from '../../utils/cx';
 
 export interface ManagementFilterChipOption<TValue extends string> {
@@ -25,15 +26,14 @@ export function ManagementFilterChips<TValue extends string>({
         const selected = option.value === value;
 
         return (
-          <button
+          <Button
             key={option.value}
             aria-pressed={selected}
             className={cx('ui-filter-chip', selected && 'ui-filter-chip--selected')}
-            type="button"
             onClick={() => onChange(option.value)}
           >
             <span className="ui-filter-chip__label">{option.label}</span>
-          </button>
+          </Button>
         );
       })}
     </div>

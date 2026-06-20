@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
+import { Button } from '../primitives/Button';
 import { ScrollArea } from '../primitives/ScrollArea';
 import { cx } from '../utils/cx';
 
@@ -66,7 +67,7 @@ export function FilterChip({
   ...props
 }: FilterChipProps) {
   return (
-    <button className={cx('ui-filter-chip', className)} type={type} {...props}>
+    <Button className={cx('ui-filter-chip', className)} type={type} {...props}>
       <span className="ui-filter-chip__label">{label}</span>
       {count !== undefined ? <span className="ui-filter-chip__count">{count}</span> : null}
       {onDismiss ? (
@@ -81,7 +82,7 @@ export function FilterChip({
           <i className="codicon codicon-close" />
         </span>
       ) : null}
-    </button>
+    </Button>
   );
 }
 
@@ -103,9 +104,9 @@ export function FilterBarActiveChips({
         {children}
       </div>
       {onClearAll ? (
-        <button className="ui-filter-bar__clear-all" type="button" onClick={onClearAll}>
+        <Button className="ui-filter-bar__clear-all" onClick={onClearAll}>
           {clearAllLabel}
-        </button>
+        </Button>
       ) : null}
     </FilterBarRow>
   );

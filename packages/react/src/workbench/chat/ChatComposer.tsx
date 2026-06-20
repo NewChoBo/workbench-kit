@@ -7,6 +7,8 @@ import {
   type ReactNode,
   type TextareaHTMLAttributes,
 } from 'react';
+import { IconButton } from '../../primitives/IconButton';
+import { TextArea } from '../../primitives/TextArea';
 import { cx } from '../../utils/cx';
 
 export interface ChatComposerProps extends Omit<
@@ -94,12 +96,14 @@ export const ChatComposer = forwardRef<HTMLTextAreaElement, ChatComposerProps>(
       <div className="composer">
         {commandSuggestPopover}
         <div className="composer__box">
-          <textarea
+          <TextArea
             ref={textareaRef}
             {...props}
             className={cx('composer__textarea', 'ui-workbench-scrollbar', className)}
+            controlWidth="full"
             disabled={disabled}
             placeholder={placeholder}
+            resize="none"
             rows={1}
             value={value}
             onChange={(event) => onValueChange(event.currentTarget.value)}
@@ -111,49 +115,37 @@ export const ChatComposer = forwardRef<HTMLTextAreaElement, ChatComposerProps>(
               {toolbarStart}
               {showTools ? (
                 <>
-                  <button
-                    aria-label={contextLabel}
+                  <IconButton
                     className="composer__tool-btn"
-                    title={contextLabel}
-                    type="button"
+                    icon="add"
+                    label={contextLabel}
                     onClick={onContextClick}
-                  >
-                    <i className="codicon codicon-add" />
-                  </button>
-                  <button
-                    aria-label={commandLabel}
+                  />
+                  <IconButton
                     className="composer__tool-btn"
-                    title={commandLabel}
-                    type="button"
+                    icon="terminal"
+                    label={commandLabel}
                     onClick={onCommandClick}
-                  >
-                    <i className="codicon codicon-terminal" />
-                  </button>
+                  />
                 </>
               ) : null}
             </div>
             <div className="composer__toolbar-right">
               {isRunning ? (
-                <button
-                  aria-label={cancelLabel}
+                <IconButton
                   className="composer__send-btn composer__send-btn--cancel"
-                  title={cancelLabel}
-                  type="button"
+                  icon="stop-circle"
+                  label={cancelLabel}
                   onClick={onCancel}
-                >
-                  <i className="codicon codicon-stop-circle" />
-                </button>
+                />
               ) : (
-                <button
-                  aria-label={submitLabel}
+                <IconButton
                   className="composer__send-btn"
                   disabled={disabled || !value}
-                  title={submitLabel}
-                  type="button"
+                  icon="send"
+                  label={submitLabel}
                   onClick={handleSubmit}
-                >
-                  <i className="codicon codicon-send" />
-                </button>
+                />
               )}
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { useState, type ComponentPropsWithoutRef, type DragEvent, type ReactNode } from 'react';
+import { Button } from '../primitives/Button';
 import { cx } from '../utils/cx';
 import {
   getActivityBarDropPosition,
@@ -101,9 +102,8 @@ export function ActivityBar({
     const isDropTarget = dropTarget?.itemId === item.id;
 
     return (
-      <button
+      <Button
         key={item.id}
-        type="button"
         aria-label={item.label}
         aria-pressed={item.active}
         className={cx(
@@ -142,7 +142,7 @@ export function ActivityBar({
           />
         ) : null}
         <span className="ui-workbench-activity-bar__icon">{item.icon}</span>
-      </button>
+      </Button>
     );
   };
 

@@ -1,5 +1,5 @@
 {
-  "name": "@workbench-kit/workbench-react",
+  "name": "@workbench-kit/shell-react",
   "version": "0.0.1-prototype.0",
   "private": true,
   "type": "module",
@@ -22,10 +22,10 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
-  "description": "React workbench provider and shell assembly for Workbench Kit.",
+  "description": "React shell and host assembly for Workbench Kit.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NewChoBo/workbench-kit.git",
-    "directory": "packages/workbench-react"
+    "directory": "packages/shell-react"
   }
 }

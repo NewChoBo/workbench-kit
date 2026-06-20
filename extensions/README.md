@@ -32,7 +32,7 @@ activation handlers.
 - Extension core code depends on `@workbench-kit/workbench-extension-sdk`.
 - Runtime activation registers commands or view providers through
   `ExtensionContext`.
-- Extension packages must not import `workbench-react` or private package source
+- Extension packages must not import `shell-react` or private package source
   paths.
 - Host installation, marketplace loading, and trust escalation remain outside
   these repository-local built-ins.

@@ -17,7 +17,7 @@ const packageRules = toRuleMap({
     '@workbench-kit/workbench-config',
     '@workbench-kit/workbench-extension-sdk',
   ],
-  '@workbench-kit/workbench-react': [
+  '@workbench-kit/shell-react': [
     '@workbench-kit/platform',
     '@workbench-kit/react',
     '@workbench-kit/tokens',

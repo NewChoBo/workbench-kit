@@ -105,7 +105,7 @@ Phase 1 UI 공통화(Settings scroll, `WorkbenchStoryHost`, devtools tokens) —
 
 ### 하지 않음
 
-mock admin 서버 · API 안정화 전 `workbench-react` npm 공개 · runtime npm extension install · **외부 상용 대시보드 템플릿을 Workbench에 그대로 임베드**
+mock admin 서버 · API 안정화 전 `shell-react` npm 공개 · runtime npm extension install · **외부 상용 대시보드 템플릿을 Workbench에 그대로 임베드**
 
 ---
 

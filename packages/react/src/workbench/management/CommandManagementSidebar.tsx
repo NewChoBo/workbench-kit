@@ -11,6 +11,7 @@ import { WorkbenchSidebarSectionStack } from '../../layout/WorkbenchSidebarSecti
 import { Badge } from '../../primitives/Badge';
 import { ClearableTextInput } from '../../primitives/ClearableTextInput';
 import { EmptyState } from '../../primitives/EmptyState';
+import { IconButton } from '../../primitives/IconButton';
 import { cx } from '../../utils/cx';
 import {
   countCommandManagementEntries,
@@ -53,15 +54,12 @@ export function CommandManagementSidebar({
         <SidebarToolbar>
           <Badge variant="muted">{countLabel}</Badge>
           {onRefresh ? (
-            <button
-              aria-label="Refresh command registry"
-              className="ui-icon-button ui-icon-button--compact"
-              title="Refresh"
-              type="button"
+            <IconButton
+              compact
+              icon="refresh"
+              label="Refresh command registry"
               onClick={onRefresh}
-            >
-              <i aria-hidden className="codicon codicon-refresh" />
-            </button>
+            />
           ) : null}
         </SidebarToolbar>
       }

@@ -201,13 +201,13 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ### S7 — WB-28 S2: React editor chrome
 
-| Field                | Detail                                                                                                                                                                                                                  |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Goal**             | Tab strip, active editor, dirty/preview/pin indicators; wire `EditorHostFactoryRegistry` in shell; sample host opens a workspace file.                                                                                  |
-| **Packages / files** | `packages/workbench-react/` (new `EditorArea`, tab components), `packages/react/src/workbench/shell/` (tab strip primitives if reused), `examples/workbench-sample/src/App.tsx`, built-in text editor contribution stub |
-| **Acceptance**       | Open resource → tab with stable `resourceUri`; preview tab visually distinct; edit promotes to pinned; dirty dot on unsaved buffer; `useEditorHost` renders host content; view-only extensions unchanged                |
-| **Validate**         | `pnpm --filter @workbench-kit/workbench-react typecheck` · `pnpm --filter workbench-sample typecheck` · `pnpm validate` · `pnpm workbench-sample`                                                                       |
-| **Effort**           | **M**                                                                                                                                                                                                                   |
+| Field                | Detail                                                                                                                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Goal**             | Tab strip, active editor, dirty/preview/pin indicators; wire `EditorHostFactoryRegistry` in shell; sample host opens a workspace file.                                                                              |
+| **Packages / files** | `packages/shell-react/` (new `EditorArea`, tab components), `packages/react/src/workbench/shell/` (tab strip primitives if reused), `examples/workbench-sample/src/App.tsx`, built-in text editor contribution stub |
+| **Acceptance**       | Open resource → tab with stable `resourceUri`; preview tab visually distinct; edit promotes to pinned; dirty dot on unsaved buffer; `useEditorHost` renders host content; view-only extensions unchanged            |
+| **Validate**         | `pnpm --filter @workbench-kit/shell-react typecheck` · `pnpm --filter workbench-sample typecheck` · `pnpm validate` · `pnpm workbench-sample`                                                                       |
+| **Effort**           | **M**                                                                                                                                                                                                               |
 
 ### S8 — WB-28 S3: Save via workspace transactions
 
@@ -224,9 +224,9 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | Field                | Detail                                                                                                                                                                                                                                        |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Goal**             | IDE-like sample chrome without blocking WB-29: explorer sidebar visual polish in `workbench-sample`; editor **Source / Form** view toggle above text editor body for JSON files.                                                              |
-| **Packages / files** | `examples/workbench-sample/` (`host.css`, bootstrap `config.json`), `packages/workbench-react/src/editor-area.tsx` (view toolbar in `EditorArea` chrome, not tab strip)                                                                       |
+| **Packages / files** | `examples/workbench-sample/` (`host.css`, bootstrap `config.json`), `packages/shell-react/src/editor-area.tsx` (view toolbar in `EditorArea` chrome, not tab strip)                                                                           |
 | **Acceptance**       | Explorer: improved sidebar spacing/icons only — **no** command-backed CRUD (WB-29). Editor: `.json` (or parseable object JSON) shows left-aligned **Source** / **Form** toolbar above editor content; Form edits round-trip to source string. |
-| **Validate**         | `pnpm --filter @workbench-kit/workbench-react test` · `pnpm validate` · manual `pnpm workbench-sample`                                                                                                                                        |
+| **Validate**         | `pnpm --filter @workbench-kit/shell-react test` · `pnpm validate` · manual `pnpm workbench-sample`                                                                                                                                            |
 | **Effort**           | **S**                                                                                                                                                                                                                                         |
 | **Timing**           | **Hybrid** — light chrome now; real explorer tree waits for WB-29                                                                                                                                                                             |
 
@@ -235,9 +235,9 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | Field                | Detail                                                                                                                                                                                                                                                                          |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Goal**             | Extend `EditorArea` with **Code(JSON) \| Form \| Preview** toolbar and JsonConfig-aligned side-by-side preview layout in the sample host.                                                                                                                                       |
-| **Packages / files** | `packages/workbench-react/src/editor-area.tsx` (view toolbar + split chrome), `@workbench-kit/react` `SplitView`, `JdwPreview` (widget JSON auto-detect), `JsonConfigWorkbench` patterns for code/form/preview                                                                  |
+| **Packages / files** | `packages/shell-react/src/editor-area.tsx` (view toolbar + split chrome), `@workbench-kit/react` `SplitView`, `JdwPreview` (widget JSON auto-detect), `JsonConfigWorkbench` patterns for code/form/preview                                                                      |
 | **Acceptance**       | `.json` (or parseable widget JSON) shows **Code(JSON) \| Form \| Preview** above editor body; Preview renders `JdwPreview` when document is JDW widget JSON; Code/Form reuse `SplitView` when preview is available; Form remains shallow demo until WB-22/WB-29 dedicated hosts |
-| **Validate**         | `pnpm --filter @workbench-kit/workbench-react test` · `pnpm validate` · manual `pnpm workbench-sample`                                                                                                                                                                          |
+| **Validate**         | `pnpm --filter @workbench-kit/shell-react test` · `pnpm validate` · manual `pnpm workbench-sample`                                                                                                                                                                              |
 | **Effort**           | **S**                                                                                                                                                                                                                                                                           |
 | **Timing**           | Completed before WB-29; command-backed explorer CRUD remains next                                                                                                                                                                                                               |
 
@@ -246,7 +246,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | Field                | Detail                                                                                                                                                                         |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Goal**             | Virtual workspace tree; create/rename/delete/move/search/reveal via commands; UI calls `executeCommand`, not direct reducer mutation; wire `WorkspaceExplorer` in sample host. |
-| **Packages / files** | `extensions/builtin.explorer/`, `@workbench-kit/workspace`, `@workbench-kit/workbench-react`, `@workbench-kit/platform`                                                        |
+| **Packages / files** | `extensions/builtin.explorer/`, `@workbench-kit/workspace`, `@workbench-kit/shell-react`, `@workbench-kit/platform`                                                            |
 | **Acceptance**       | Explorer shows virtual files; CRUD = one transaction per user action; palette/context menu share command IDs; tree selection ↔ active editor resource                          |
 | **Validate**         | `pnpm build:workbench-extensions` · `pnpm --filter @workbench-kit/workspace test` · `pnpm validate` · `pnpm workbench-sample`                                                  |
 | **Effort**           | **L**                                                                                                                                                                          |
@@ -266,7 +266,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | Field                | Detail                                                                                                                           |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | **Goal**             | Read-only Storybook devtools panel: command registry, context keys, view/capability registry, layout state, transaction journal. |
-| **Packages / files** | `packages/workbench-react/` (devtools story + panel), Storybook integrated shell story                                           |
+| **Packages / files** | `packages/shell-react/` (devtools story + panel), Storybook integrated shell story                                               |
 | **Acceptance**       | Inspectors update on command run, view activate, transaction apply; gated behind dev flag or Storybook only                      |
 | **Validate**         | `pnpm validate:full`                                                                                                             |
 | **Effort**           | **M**                                                                                                                            |
@@ -308,8 +308,8 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | `EditorResolverRegistry`          | Done   | `packages/workbench-core/src/editor-resolver-registry.ts`                               |
 | Headless `EditorService`          | Done   | `packages/workbench-core/src/editor-service.ts` — groups, tabs, dirty/preview/pin state |
 | `EditorService` unit tests        | Done   | `packages/workbench-core/src/editor-service.test.ts`                                    |
-| React `useEditor*` hooks          | Done   | `packages/workbench-react/src/use-editor.ts`                                            |
-| `WorkbenchProvider` wires service | Done   | `packages/workbench-react/src/provider.tsx`                                             |
+| React `useEditor*` hooks          | Done   | `packages/shell-react/src/use-editor.ts`                                                |
+| `WorkbenchProvider` wires service | Done   | `packages/shell-react/src/provider.tsx`                                                 |
 | Core remains React-free           | Done   | No React imports in `workbench-core`                                                    |
 
 ### S2 — Done (2026-06-16)
@@ -337,16 +337,16 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ## 5. Dependencies & Blockers
 
-| Dependency / blocker                 | Impact on plan                                              | Mitigation                                                                       |
-| ------------------------------------ | ----------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| **WB-15 deferred**                   | WB-20/22 out of scope; no global dirty guard dialog         | WB-28 uses editor-local dirty only until policy written                          |
-| **Dual render paths**                | `@workbench-kit/react` demo shell vs `workbench-react` host | Sample host proves Lane A; Integrated Shell stays extended demo                  |
-| **WorkbenchDocument vs JDW**         | Widget files must not persist absolute canvas coords        | JDW canonical; mapping layer for Figma gestures (Lane B B2)                      |
-| **Editor host API stabilization**    | New editor hosts may need additional context fields         | Keep the factory contract minimal; add fields only when a second host needs them |
-| **Generic vs workspace ResourceUri** | Editor/explorer binding confusion                           | `WorkspaceResourceUri` for virtual workspace only                                |
-| **WB-29 selection/reveal closeout**  | Explorer/editor sync still needs browser smoke coverage     | Verify current command handlers and sample flows before moving to WB-30          |
-| **Transaction persistence**          | No undo stack or disk adapter                               | In-memory virtual workspace for Lane A                                           |
-| **Lane B canvas UX**                 | Touches shared React layout                                 | B1–B2 headless only; B3 after WB-29 closeout / Lane A priority                   |
+| Dependency / blocker                 | Impact on plan                                          | Mitigation                                                                       |
+| ------------------------------------ | ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **WB-15 deferred**                   | WB-20/22 out of scope; no global dirty guard dialog     | WB-28 uses editor-local dirty only until policy written                          |
+| **Dual render paths**                | `@workbench-kit/react` demo shell vs `shell-react` host | Sample host proves Lane A; Integrated Shell stays extended demo                  |
+| **WorkbenchDocument vs JDW**         | Widget files must not persist absolute canvas coords    | JDW canonical; mapping layer for Figma gestures (Lane B B2)                      |
+| **Editor host API stabilization**    | New editor hosts may need additional context fields     | Keep the factory contract minimal; add fields only when a second host needs them |
+| **Generic vs workspace ResourceUri** | Editor/explorer binding confusion                       | `WorkspaceResourceUri` for virtual workspace only                                |
+| **WB-29 selection/reveal closeout**  | Explorer/editor sync still needs browser smoke coverage | Verify current command handlers and sample flows before moving to WB-30          |
+| **Transaction persistence**          | No undo stack or disk adapter                           | In-memory virtual workspace for Lane A                                           |
+| **Lane B canvas UX**                 | Touches shared React layout                             | B1–B2 headless only; B3 after WB-29 closeout / Lane A priority                   |
 
 ---
 
@@ -467,7 +467,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | -------- | ---------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------ | ------------------------- |
 | P0       | **WB-30** preference scopes (default/workspace/local)                        | Sequential (Lane A)    | `workbench-config`, `platform`, `workbench-core` | Next single PR scope      |
 | P0       | **S12** Lane A DoD + `validate:full`                                         | After WB-31            | docs/, CI scripts                                | Closeout gate             |
-| P1       | **WB-31** devtools inspectors (Storybook)                                    | Sequential after WB-30 | `workbench-react` stories                        | Read-only panels          |
+| P1       | **WB-31** devtools inspectors (Storybook)                                    | Sequential after WB-30 | `shell-react` stories                            | Read-only panels          |
 | P1       | **Layout CSS P1-2~P1-5** (sidebar flex, settings scroll, panel-header dedup) | Parallel-safe          | `packages/react/src/styles.css`, settings modal  | P1-1 overlay CSS done     |
 | P1       | **Editor layout ownership** (`EditorService` split model)                    | Parallel-safe          | `editor-service.ts`, `EditorArea` DnD            | recommended-work-items P1 |
 | P2       | **Track D D0–D1** inventory + dead WIP cleanup                               | Parallel-safe          | `react/jdw`, validation shims                    | No Lane A block           |

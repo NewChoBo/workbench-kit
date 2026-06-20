@@ -8,6 +8,7 @@ import { isSaveSuccess, type SaveResult } from '@workbench-kit/contracts';
 import { useWorkspaceDrafts } from './WorkspaceDraftsContext';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
+import { Button } from '../../primitives/Button';
 import { EmptyState } from '../../primitives/EmptyState';
 import { IconButton } from '../../primitives/IconButton';
 import { Panel, PanelBody } from '../../layout/Panel';
@@ -234,11 +235,10 @@ export function WorkspaceEditorPanel({
                       title={file.path}
                       onContextMenu={(event) => handleTabContextMenu(event, file.path)}
                     >
-                      <button
+                      <Button
                         aria-selected={isActive}
                         className="workspace-editor__tab-button"
                         role="tab"
-                        type="button"
                         onClick={() => onSelectedPathChange(file.path)}
                       >
                         <WorkspaceFileIcon mimeType={file.mimeType} path={file.path} />
@@ -246,7 +246,7 @@ export function WorkspaceEditorPanel({
                         {isDirtyValue ? (
                           <span className="workspace-editor__dirty" aria-label="Unsaved changes" />
                         ) : null}
-                      </button>
+                      </Button>
                       <IconButton
                         className="workspace-editor__tab-close"
                         icon="codicon-close"

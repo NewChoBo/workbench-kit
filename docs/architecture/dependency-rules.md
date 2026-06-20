@@ -13,7 +13,7 @@ Dependency direction enforces a VS Code–like layering: UI-independent core at 
 | `workbench-extension-sdk`    | `base`, `platform` (types and minimal utilities only)                                                                       |
 | `workbench-config`           | `base`, `platform`, schemas (as data)                                                                                       |
 | `workbench-core`             | `base`, `platform`, `workbench-extension-sdk`, `workbench-config`                                                           |
-| `workbench-react`            | `react`, `workbench-core`, `workbench-config`, `platform`, `tokens`                                                         |
+| `shell-react`                | `react`, `workbench-core`, `workbench-config`, `platform`, `tokens`                                                         |
 | `monaco`                     | `base`, `platform` (optional); may peer `react` for editor UI                                                               |
 | Built-in / sample extensions | `workbench-extension-sdk`                                                                                                   |
 | `contracts`                  | _(nothing in-repo required; keep acyclic)_                                                                                  |
@@ -27,29 +27,29 @@ Dependency direction enforces a VS Code–like layering: UI-independent core at 
 ### Extension Boundary
 
 - Extension **core** logic (activation, contribution builders) must depend on `workbench-extension-sdk` and optionally `platform` / `base`.
-- Extension UI may depend on `react` or host-provided render hooks, but must **not** depend directly on `workbench-react`.
+- Extension UI may depend on `react` or host-provided render hooks, but must **not** depend directly on `shell-react`.
 - Host applications wire extension UI through registries and view contributions, not by importing shell internals.
 
 ## Forbidden Dependencies
 
-| Rule                                                           | Rationale                                             |
-| -------------------------------------------------------------- | ----------------------------------------------------- |
-| `base` must not depend on React                                | Keeps foundation usable in non-React hosts            |
-| `platform` must not depend on React                            | Platform services are UI-framework neutral            |
-| `workbench-core` must not depend on React                      | Core registries and layout engine stay portable       |
-| `react` must not depend on `workbench-core`                    | Primitives stay usable outside the full workbench     |
-| `workbench-extension-sdk` must not depend on `workbench-react` | Extensions must not couple to shell implementation    |
-| Extension core must not depend directly on `workbench-react`   | Prevents hidden shell coupling; use SDK contributions |
-| `tokens` must not depend on React                              | Tokens are style-only                                 |
-| `workbench-core` must not depend on `workbench-react`          | Shell depends on core, not the reverse                |
-| Extensions must not import private paths of other packages     | Use public exports and SDK types only                 |
+| Rule                                                       | Rationale                                             |
+| ---------------------------------------------------------- | ----------------------------------------------------- |
+| `base` must not depend on React                            | Keeps foundation usable in non-React hosts            |
+| `platform` must not depend on React                        | Platform services are UI-framework neutral            |
+| `workbench-core` must not depend on React                  | Core registries and layout engine stay portable       |
+| `react` must not depend on `workbench-core`                | Primitives stay usable outside the full workbench     |
+| `workbench-extension-sdk` must not depend on `shell-react` | Extensions must not couple to shell implementation    |
+| Extension core must not depend directly on `shell-react`   | Prevents hidden shell coupling; use SDK contributions |
+| `tokens` must not depend on React                          | Tokens are style-only                                 |
+| `workbench-core` must not depend on `shell-react`          | Shell depends on core, not the reverse                |
+| Extensions must not import private paths of other packages | Use public exports and SDK types only                 |
 
 ## Dependency Graph (high level)
 
 ```
 extensions ──► workbench-extension-sdk ──► platform ──► base
                     ▲
-workbench-react ──► react ──► tokens
+shell-react ──► react ──► tokens
        │              │
        └──────► workbench-core ──► workbench-config
 ```

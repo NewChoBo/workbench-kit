@@ -30,7 +30,7 @@ change while the first consuming apps harden the model.
 ## Private preview packages
 
 - `@workbench-kit/workbench-core`: framework-neutral extension registry, layout, and host orchestration
-- `@workbench-kit/workbench-react`: React provider and shell assembly over `workbench-core`
+- `@workbench-kit/shell-react`: React provider and shell assembly over `workbench-core`
 - `@workbench-kit/monaco`: future optional Monaco integration
 
 ## Headless packages
@@ -131,7 +131,7 @@ The workflow runs on published GitHub releases and pushed tags matching
 as `v0.0.1-prototype.0` or `workbench-kit-v0.0.1-prototype.0`.
 
 The current publish pipeline excludes private-preview shell packages. The full
-`workbench-core` / `workbench-react` shell stack remains private preview until
+`workbench-core` / `shell-react` shell stack remains private preview until
 bundled extension modules are packaged as public-safe artifacts.
 
 ## Documentation

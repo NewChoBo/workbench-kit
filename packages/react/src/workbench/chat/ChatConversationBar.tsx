@@ -1,5 +1,6 @@
 import { useCallback, useId, useRef, useState, type ReactNode } from 'react';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
+import { Button } from '../../primitives/Button';
 import { IconButton } from '../../primitives/IconButton';
 import { ChatHistoryMenu } from './ChatHistoryMenu';
 import type {
@@ -59,21 +60,20 @@ export function ChatConversationBar({
     <>
       <div className="chat-conversation-bar">
         <div className="chat-conversation-bar__pill-wrap">
-          <button
+          <Button
             ref={pillRef}
             aria-describedby={activeConversation?.metaTooltip ? metaTooltipId : undefined}
             aria-expanded={menu?.kind === 'history'}
             aria-haspopup="menu"
             aria-label={labels.historyTitle(activeTitle)}
             className="chat-conversation-bar__pill"
-            type="button"
             onClick={() => {
               if (pillRef.current) openMenu('history', pillRef.current);
             }}
           >
             <span className="chat-conversation-bar__pill-label">{activeTitle}</span>
             <i aria-hidden="true" className="codicon codicon-chevron-down" />
-          </button>
+          </Button>
 
           {activeConversation?.metaTooltip ? (
             <div className="chat-conversation-bar__meta-wrap" id={metaTooltipId} role="tooltip">

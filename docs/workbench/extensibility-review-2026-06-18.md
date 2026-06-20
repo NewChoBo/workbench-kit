@@ -123,7 +123,7 @@ Recommendation:
 
 ### P2: Private shell packages block full workbench npm consumption
 
-`@workbench-kit/workbench-core`, `@workbench-kit/workbench-react`, and
+`@workbench-kit/workbench-core`, `@workbench-kit/shell-react`, and
 `@workbench-kit/monaco` are intentionally private preview.
 
 Impact:
@@ -195,7 +195,7 @@ Action taken:
    - Exclude unintentional demo/play helper files.
    - Add tarball denylist checks.
 4. **Full shell publish readiness**
-   - Create checklist for `workbench-core`, `workbench-react`, and `monaco`.
+   - Create checklist for `workbench-core`, `shell-react`, and `monaco`.
 5. **Theme/token productization**
    - Promote color/shape/density/shell tokens into a stable settings-driven
      theme model.

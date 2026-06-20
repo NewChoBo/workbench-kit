@@ -69,7 +69,7 @@ export const initialWorkspace: VirtualWorkspaceInitialState = {
   files: [
     {
       content: [
-        'import { WorkbenchProvider, WorkbenchShell } from "@workbench-kit/workbench-react";',
+        'import { WorkbenchProvider, WorkbenchShell } from "@workbench-kit/shell-react";',
         '',
         'export function App() {',
         '  return <WorkbenchShell />;',

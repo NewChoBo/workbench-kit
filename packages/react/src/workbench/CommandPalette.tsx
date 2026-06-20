@@ -9,7 +9,10 @@ import {
   type ReactNode,
 } from 'react';
 import type { CommandMenuItem, ResolvedCommandMenuCommandItem } from '@workbench-kit/platform';
+import { Button } from '../primitives/Button';
 import { EmptyState } from '../primitives/EmptyState';
+import { IconButton } from '../primitives/IconButton';
+import { TextInput } from '../primitives/TextInput';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import {
@@ -373,7 +376,7 @@ export function WorkbenchCommandList({
         const disabledReasonId = command.disabledReason ? `${itemId}-disabled` : undefined;
 
         return (
-          <button
+          <Button
             key={command.id}
             id={itemId}
             aria-busy={command.status && isWorkbenchStatusBusy(command.status) ? true : undefined}
@@ -387,7 +390,6 @@ export function WorkbenchCommandList({
             data-status={command.status ?? (command.disabled ? 'disabled' : 'idle')}
             disabled={disabled}
             role="option"
-            type="button"
             onClick={() => onRunCommand?.(command, { index, query, source })}
             onMouseDown={(event) => {
               if (source === 'suggest') event.preventDefault();
@@ -418,7 +420,7 @@ export function WorkbenchCommandList({
               ) : null}
               {commandStatus(command)}
             </span>
-          </button>
+          </Button>
         );
       })}
     </div>
@@ -723,26 +725,25 @@ export function WorkbenchCommandPalette({
           <span id={titleId} className="ui-workbench-command-palette__title">
             {title}
           </span>
-          <button
-            aria-label={closeLabel}
+          <IconButton
             className="ui-workbench-command-palette__close"
-            type="button"
+            icon="codicon-close"
+            label={closeLabel}
             onClick={closePalette}
-          >
-            <i aria-hidden="true" className="codicon codicon-close" />
-          </button>
+          />
         </div>
         <div className="ui-workbench-command-palette__search">
           <i aria-hidden="true" className="codicon codicon-search" />
-          <input
+          <TextInput
             ref={inputRef}
             aria-controls={listId}
             aria-label={placeholder}
             className="ui-workbench-command-palette__input"
+            controlWidth="full"
             placeholder={placeholder}
             type="search"
             value={resolvedQuery}
-            onChange={(event) => setResolvedQuery(event.currentTarget.value)}
+            onValueChange={setResolvedQuery}
             onKeyDown={handleKeyDown}
           />
         </div>

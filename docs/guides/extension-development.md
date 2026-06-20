@@ -59,7 +59,7 @@ Example `package.json`:
 **Rules:**
 
 - Extension code depends on `@workbench-kit/workbench-extension-sdk` only.
-- Do not import `workbench-react` or private host source paths from extensions.
+- Do not import `shell-react` or private host source paths from extensions.
 - Register commands and views through `ExtensionContext`, not by mutating host singletons.
 
 ---

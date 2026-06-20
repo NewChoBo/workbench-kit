@@ -127,7 +127,7 @@ interface ViewHost {
 }
 ```
 
-Runtime view providers are registered in `activate()` via `context.views.registerViewProvider(...)`. `workbench-react` maps `ViewProvider` results to React nodes when possible; the SDK stays UI-framework neutral (`unknown` / callback registration).
+Runtime view providers are registered in `activate()` via `context.views.registerViewProvider(...)`. `shell-react` maps `ViewProvider` results to React nodes when possible; the SDK stays UI-framework neutral (`unknown` / callback registration).
 
 ## Menu Contributions
 
