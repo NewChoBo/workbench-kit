@@ -134,6 +134,17 @@ The current publish pipeline excludes private-preview shell packages. The full
 `workbench-core` / `workbench-react` shell stack remains private preview until
 bundled extension modules are packaged as public-safe artifacts.
 
+## Documentation
+
+Task-oriented guides and API indexes for integrators and extension authors:
+
+- [Guides](./docs/guides/README.md) — start here for use cases and how-to flows
+- [Use Case Scenarios](./docs/guides/use-cases.md) — install packages, run sample, develop extensions, command lifecycle
+- [Extension Development](./docs/guides/extension-development.md) — manifest, activation, bundle pipeline
+- [API Reference](./docs/guides/api-reference.md) — OpenAPI, contracts, public package exports
+- [Architecture](./docs/architecture/README.md) — workbench layers, extension system, migration
+- [Workbench Notes](./docs/workbench/README.md) — planning notes and sample host backend API
+
 ## Conventions
 
 - [Git Workflow](./docs/conventions/git-workflow.md)
@@ -144,7 +155,3 @@ bundled extension modules are packaged as public-safe artifacts.
 - [Public API Governance](./docs/conventions/public-api-governance.md)
 - [npm Release & CI/CD](./docs/conventions/npm-release.md)
 - [Storybook Direction](./docs/conventions/storybook.md)
-
-## Workbench Notes
-
-- [Workbench Notes](./docs/workbench/README.md)

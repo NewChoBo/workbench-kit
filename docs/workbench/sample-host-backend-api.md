@@ -18,6 +18,8 @@ the long-term architecture boundary — see
 [Account and Authentication](../architecture/account-auth.md). This API is the
 **sample host integration surface**, not a replacement for platform auth.
 
+See also [API Reference](../guides/api-reference.md) for the OpenAPI index and contract entrypoints.
+
 ---
 
 ## How the dummy backend works today

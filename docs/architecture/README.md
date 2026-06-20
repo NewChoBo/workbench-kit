@@ -6,6 +6,7 @@ Workbench Kit architecture documents for the VS Code–like workbench shell, ext
 
 | Document                                      | Purpose                                                        |
 | --------------------------------------------- | -------------------------------------------------------------- |
+| [Guides](../guides/README.md)                 | Use cases, extension development, API reference index          |
 | [Package Map](./package-map.md)               | Every package: current role, target role, migration action     |
 | [Migration Strategy](./migration-strategy.md) | Direct migration plan (`platform`, shell -> `workbench-react`) |
 | [Phase Roadmap](./phase-roadmap.md)           | Phased delivery and exit criteria                              |

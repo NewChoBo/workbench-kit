@@ -84,6 +84,7 @@ workspace/chat/editor flows, use Storybook `Integrated Shell`
 (`@workbench-kit/react/workbench/demo`).
 
 See [Sample Host Backend API](../../docs/workbench/sample-host-backend-api.md)
-for the dummy backend contract and
+for the dummy backend contract,
+[Use Case Scenarios](../../docs/guides/use-cases.md) for integration flows, and
 [Workbench Completion Plan](../../docs/workbench/completion-plan.md) for the
 current workbench roadmap.

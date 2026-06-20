@@ -5,6 +5,8 @@ for product-neutral backlog, Storybook direction, plugin concepts, and JSON
 widget extraction. Canonical package structure and migration status live under
 [`docs/architecture`](../architecture/README.md).
 
+**Task-oriented guides:** [Guides](../guides/README.md) · [Use Case Scenarios](../guides/use-cases.md) · [Extension Development](../guides/extension-development.md) · [API Reference](../guides/api-reference.md)
+
 Historical execution plans that depended on legacy packages such as
 `@workbench-kit/core`, `@workbench-kit/vscode-host`, or
 `@workbench-kit/vscode-extension` have been removed from this folder. New work

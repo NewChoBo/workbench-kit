@@ -123,5 +123,7 @@ Reproducible team workspaces depend on committing the lockfile; local-only exten
 ## Related Documents
 
 - [Extension System](./extension-system.md)
+- [Extension Development Guide](../guides/extension-development.md)
+- [Use Case Scenarios — dependency model](../guides/use-cases.md#scenario-6--extension-dependency-model)
 - [Workbench Config](./workbench-config.md)
 - [Security Boundary](./security-boundary.md)

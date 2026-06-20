@@ -5,6 +5,8 @@ Extensions in this directory are repository-local packages consumed by the
 `workbench.extension.json` for contribution metadata and `src/index.ts` for
 activation handlers.
 
+**Guides:** [Extension Development](../docs/guides/extension-development.md) · [Use Case Scenarios](../docs/guides/use-cases.md)
+
 ## Built-In Extensions
 
 | Extension             | Runtime role                                                                                        |
