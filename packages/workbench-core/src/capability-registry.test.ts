@@ -56,6 +56,14 @@ describe('CapabilityRegistry', () => {
     expect(registry.get<{ id: string }>('workbench.auth')).toEqual({ id: 'seeded-auth' });
   });
 
+  it('lists registered provider ids', () => {
+    const registry = new CapabilityRegistry();
+    registry.registerValue('workbench.auth', { id: 'seeded-auth' });
+    registry.registerValue('workbench.workspace', { ready: true });
+
+    expect(registry.listProviderIds()).toEqual(['workbench.auth', 'workbench.workspace']);
+  });
+
   it('disposes all providers when the registry is disposed', () => {
     const registry = new CapabilityRegistry();
     const disposed: string[] = [];

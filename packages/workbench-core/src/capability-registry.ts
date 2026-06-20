@@ -57,6 +57,10 @@ export class CapabilityRegistry implements Disposable {
     return this.providers.has(capabilityId);
   }
 
+  listProviderIds(): readonly string[] {
+    return [...this.providers.keys()];
+  }
+
   dispose(): void {
     if (this.disposed) {
       return;

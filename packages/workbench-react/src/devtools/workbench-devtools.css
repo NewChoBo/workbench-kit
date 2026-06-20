@@ -1,0 +1,80 @@
+.workbench-devtools-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) min(360px, 34vw);
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+.workbench-devtools-shell__main {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.workbench-devtools-panel {
+  background: var(--color-bg);
+  border-left: 1px solid var(--color-border);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--vscode-font-family, system-ui, sans-serif);
+  font-size: var(--font-size-sm);
+  min-height: 0;
+  min-width: 0;
+}
+
+.workbench-devtools-panel__header {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 12px 12px 4px;
+}
+
+.workbench-devtools-panel__meta {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.workbench-devtools-panel__timestamp {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  margin: 0;
+  padding: 0 12px 8px;
+}
+
+.workbench-devtools-panel__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 8px 8px;
+}
+
+.workbench-devtools-panel__tab {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 4px 8px;
+}
+
+.workbench-devtools-panel__tab[aria-pressed='true'] {
+  background: var(--color-surface-hover);
+  border-color: var(--color-accent);
+}
+
+.workbench-devtools-panel__output {
+  border-top: 1px solid var(--color-border);
+  flex: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  margin: 0;
+  min-height: 0;
+  padding: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
