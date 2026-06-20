@@ -84,6 +84,7 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
   const auth = useSampleAccount();
   const { executeCommand, layoutService } = useWorkbench();
   const [layout, setLayout] = useState(() => layoutService.getState());
+  const [locale, setLocale] = useState('en');
 
   useEffect(() => {
     const disposable = layoutService.onDidChangeLayout(({ state }) => {
@@ -179,6 +180,8 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
           </SampleEditorFrame>
         }
         helpContent={<SampleHelpContent />}
+        locale={locale}
+        onLocaleChange={setLocale}
         onStatusItemActivate={handleStatusItemActivate}
         onThemeChange={handleThemeChange}
         profile={profile}

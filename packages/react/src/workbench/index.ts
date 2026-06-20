@@ -284,6 +284,7 @@ export {
 export {
   AccountManagementPanel,
   CommandManagementPanel,
+  ExtensionManagementPanel,
   KeybindingManagementPanel,
   ManagementPanelEmptyState,
   ManagementPanelFrame,
@@ -304,6 +305,9 @@ export type {
   CommandManagementGroup,
   CommandManagementPanelProps,
   CommandManagementRunState,
+  ExtensionCatalogBrowseEntry,
+  ExtensionManagementEntry,
+  ExtensionManagementPanelProps,
   KeybindingManagementPanelProps,
   ManagementPanelFrameProps,
   ManagementPanelToolbarProps,

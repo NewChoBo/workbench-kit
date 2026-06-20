@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.samples.locale-ko",
+  "name": "samples-locale-ko",
+  "displayName": "Korean Locale Pack",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onStartup"],
+  "contributes": {
+    "localizations": [
+      {
+        "locale": "ko",
+        "label": "Korean",
+        "translations": {
+          "activityBar.explorer": "탐색기",
+          "activityBar.search": "검색",
+          "activityBar.chat": "채팅",
+          "activityBar.commands": "명령",
+          "settings.appearance": "모양",
+          "settings.colorTheme": "색 테마",
+          "settings.displayLanguage": "표시 언어",
+          "settings.extensions": "확장",
+          "settings.installed": "설치됨",
+          "settings.browse": "찾아보기"
+        }
+      }
+    ]
+  }
+}

@@ -44,6 +44,8 @@ import {
   createEditorResolverRegistry,
   type EditorResolverRegistry,
 } from './editor-resolver-registry.js';
+import { LocalizationRegistry } from './localization-registry.js';
+import { ThemeRegistry } from './theme-registry.js';
 
 export interface WorkbenchExtensionModule {
   activate?: ActivateFunction;
@@ -66,7 +68,9 @@ export interface ExtensionRegistryOptions {
   editorResolvers?: EditorResolverRegistry;
   editors?: EditorRegistry;
   keybindings?: KeybindingRegistry;
+  localizations?: LocalizationRegistry;
   menus?: MenuRegistry;
+  themes?: ThemeRegistry;
   viewHostFactories?: ViewHostFactoryRegistry;
   views?: ViewRegistry;
 }
@@ -117,7 +121,9 @@ export class ExtensionRegistry implements Disposable {
   readonly editorResolvers: EditorResolverRegistry;
   readonly editors: EditorRegistry;
   readonly keybindings: KeybindingRegistry;
+  readonly localizations: LocalizationRegistry;
   readonly menus: MenuRegistry;
+  readonly themes: ThemeRegistry;
   readonly viewHostFactories: ViewHostFactoryRegistry;
   readonly views: ViewRegistry;
 
@@ -130,7 +136,9 @@ export class ExtensionRegistry implements Disposable {
     this.commands = options.commands ?? new CommandRegistry();
     this.configurations = options.configurations ?? new ConfigurationRegistry();
     this.keybindings = options.keybindings ?? new KeybindingRegistry();
+    this.localizations = options.localizations ?? new LocalizationRegistry();
     this.menus = options.menus ?? new MenuRegistry();
+    this.themes = options.themes ?? new ThemeRegistry();
     this.views = options.views ?? new ViewRegistry();
     if (options.capabilityRegistry) {
       this.capabilityRegistry = options.capabilityRegistry;
@@ -341,7 +349,9 @@ export class ExtensionRegistry implements Disposable {
     this.commands.dispose();
     this.configurations.dispose();
     this.keybindings.dispose();
+    this.localizations.dispose();
     this.menus.dispose();
+    this.themes.dispose();
     this.views.dispose();
     this.editors.dispose();
     this.viewHostFactories.dispose();
@@ -489,6 +499,24 @@ export class ExtensionRegistry implements Disposable {
           description.manifest.id,
           normalizeConfiguration(contributes.configuration),
         ),
+      );
+    }
+
+    for (const theme of contributes.themes ?? []) {
+      disposables.add(
+        this.themes.registerTheme({
+          ...theme,
+          extensionId: description.manifest.id,
+        }),
+      );
+    }
+
+    for (const localization of contributes.localizations ?? []) {
+      disposables.add(
+        this.localizations.registerLocalization({
+          ...localization,
+          extensionId: description.manifest.id,
+        }),
       );
     }
   }

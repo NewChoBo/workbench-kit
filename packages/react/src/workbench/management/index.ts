@@ -7,6 +7,7 @@ export { AccountManagementPanel } from './AccountManagementPanel.js';
 export { CommandManagementPanel } from './CommandManagementPanel.js';
 export { CommandManagementSidebar } from './CommandManagementSidebar.js';
 export type { CommandManagementSidebarProps } from './CommandManagementSidebar.js';
+export { ExtensionManagementPanel } from './ExtensionManagementPanel.js';
 export { KeybindingCaptureField } from './KeybindingCaptureField.js';
 export type { KeybindingCaptureFieldProps } from './KeybindingCaptureField.js';
 export { KeybindingManagementPanel } from './KeybindingManagementPanel.js';
@@ -32,4 +33,7 @@ export type {
   CommandManagementGroup,
   CommandManagementPanelProps,
   CommandManagementRunState,
+  ExtensionCatalogBrowseEntry,
+  ExtensionManagementEntry,
+  ExtensionManagementPanelProps,
 } from './types.js';

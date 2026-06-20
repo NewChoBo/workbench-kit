@@ -38,7 +38,12 @@ export {
   type EditorDocumentViewRenderContext,
   type ResolvedEditorDocumentViews,
 } from './editor-view-providers.js';
-export { WorkbenchShell, type WorkbenchShellProps, type WorkbenchThemeOption } from './shell.js';
+export {
+  WorkbenchShell,
+  type WorkbenchLocaleOption,
+  type WorkbenchShellProps,
+  type WorkbenchThemeOption,
+} from './shell.js';
 export {
   getWorkbenchCommandPaletteShortcutLabel,
   WorkbenchCommandHost,
@@ -79,12 +84,15 @@ export {
 export {
   MANAGE_ACCOUNTS_COMMAND_ID,
   MANAGE_COMMANDS_COMMAND_ID,
+  MANAGE_EXTENSIONS_COMMAND_ID,
   MANAGE_KEYBINDINGS_COMMAND_ID,
   WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
   WORKBENCH_COMMANDS_SETTINGS_CATEGORY_ID,
+  WORKBENCH_EXTENSIONS_SETTINGS_CATEGORY_ID,
   WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID,
   WorkbenchAccountManagementSettings,
   WorkbenchCommandManagementSettings,
+  WorkbenchExtensionManagementSettings,
   WorkbenchKeybindingManagementSettings,
   createWorkbenchManagementPaletteCommands,
   type WorkbenchAccountManagementInput,

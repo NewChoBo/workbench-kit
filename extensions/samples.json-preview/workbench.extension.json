@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.samples.json-preview",
+  "name": "samples-json-preview",
+  "displayName": "JSON Preview",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onStartup"],
+  "contributes": {
+    "editors": [
+      {
+        "id": "workbench-kit.samples.json-preview.preview",
+        "label": "JSON Preview",
+        "icon": "json"
+      }
+    ]
+  }
+}

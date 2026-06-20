@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "workbench-kit.samples.theme-alt",
+      "displayName": "Alternate Theme Pack",
+      "description": "Adds a dark blue alternate color theme with token overrides.",
+      "category": "theme",
+      "manifestUrl": "workbench-kit.samples.theme-alt",
+      "icon": "color-mode"
+    },
+    {
+      "id": "workbench-kit.samples.locale-ko",
+      "displayName": "Korean Locale Pack",
+      "description": "Adds Korean labels for activity bar and settings surfaces.",
+      "category": "locale",
+      "manifestUrl": "workbench-kit.samples.locale-ko",
+      "icon": "globe"
+    },
+    {
+      "id": "workbench-kit.samples.json-preview",
+      "displayName": "JSON Preview",
+      "description": "Routes JSON workspace files to a preview-oriented editor contribution.",
+      "category": "editor",
+      "manifestUrl": "workbench-kit.samples.json-preview",
+      "icon": "json"
+    },
+    {
+      "id": "workbench-kit.samples.hello-world",
+      "displayName": "Hello World Sample",
+      "description": "Minimal command activation sample for extension development.",
+      "category": "utility",
+      "manifestUrl": "workbench-kit.samples.hello-world",
+      "icon": "extensions"
+    }
+  ]
+}

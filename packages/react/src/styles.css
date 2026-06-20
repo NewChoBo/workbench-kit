@@ -1146,6 +1146,192 @@
   justify-content: flex-start;
 }
 
+.workbench-extension-management-notice {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-surface) 92%, var(--color-accent, #3794ff) 8%);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.workbench-extension-browse-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.workbench-extension-category-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.workbench-extension-category-filter {
+  appearance: none;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 12px;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.workbench-extension-category-filter:hover {
+  border-color: color-mix(in srgb, var(--color-accent, #3794ff) 35%, var(--color-border));
+  color: var(--color-text);
+}
+
+.workbench-extension-category-filter--active {
+  background: color-mix(in srgb, var(--color-accent, #3794ff) 16%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-accent, #3794ff) 55%, var(--color-border));
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.workbench-extension-browse-groups {
+  display: grid;
+  gap: 20px;
+}
+
+.workbench-extension-browse-group {
+  display: grid;
+  gap: 10px;
+}
+
+.workbench-extension-browse-group__header {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.workbench-extension-browse-group__icon {
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.workbench-extension-browse-group__title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.workbench-extension-card-list {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.workbench-extension-card {
+  align-items: flex-start;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 14px;
+}
+
+@media (min-width: 720px) {
+  .workbench-extension-card {
+    align-items: center;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+.workbench-extension-card__icon-wrap {
+  align-items: center;
+  border-radius: 10px;
+  display: inline-flex;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.workbench-extension-card__icon-wrap--feature {
+  background: color-mix(in srgb, var(--color-accent, #3794ff) 14%, var(--color-surface));
+  color: var(--color-accent, #3794ff);
+}
+
+.workbench-extension-card__icon-wrap--editor {
+  background: color-mix(in srgb, #89d185 14%, var(--color-surface));
+  color: #89d185;
+}
+
+.workbench-extension-card__icon-wrap--theme {
+  background: color-mix(in srgb, #c586c0 14%, var(--color-surface));
+  color: #c586c0;
+}
+
+.workbench-extension-card__icon-wrap--language {
+  background: color-mix(in srgb, #dcdcaa 14%, var(--color-surface));
+  color: #dcdcaa;
+}
+
+.workbench-extension-card__icon {
+  font-size: 18px;
+}
+
+.workbench-extension-card__body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.workbench-extension-card__header {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.workbench-extension-card__title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.workbench-extension-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.workbench-extension-card__id {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.workbench-extension-card__description {
+  color: var(--color-text-subtle);
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.workbench-extension-card__actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+}
+
+@media (min-width: 720px) {
+  .workbench-extension-card__actions {
+    grid-column: auto;
+  }
+}
+
 .ui-workbench-navigation-panel {
   --ui-workbench-navigation-panel-nav-min-width: 200px;
   --ui-workbench-navigation-panel-nav-width: 240px;

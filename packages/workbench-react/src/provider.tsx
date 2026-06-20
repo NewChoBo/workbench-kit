@@ -14,9 +14,14 @@ import {
   createEditorService,
   ExtensionRegistry,
   LayoutService,
+  loadInstalledExtensions,
+  mergeExtensionsConfigWithInstallState,
   PreferenceService,
   registerEditorSaveCommand,
+  resolveInstalledAvailableExtensions,
   resolveWorkbenchExtensions,
+  SAMPLE_WORKBENCH_EXTENSIONS,
+  DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
   type EditorService,
   type PreferenceService as PreferenceServiceType,
@@ -61,6 +66,11 @@ export interface WorkbenchWorkspaceHostPort extends WorkbenchEditorSavePort {
   dispose?(): void;
 }
 
+const DEFAULT_AVAILABLE_EXTENSIONS = [
+  ...BUILTIN_WORKBENCH_EXTENSIONS,
+  ...SAMPLE_WORKBENCH_EXTENSIONS,
+] as const;
+
 export interface WorkbenchProviderProps {
   availableExtensions?: readonly WorkbenchExtensionDescription[];
   children: ReactNode;
@@ -68,6 +78,7 @@ export interface WorkbenchProviderProps {
   initialKeybindingOverrides?: readonly WorkbenchKeybindingDefinition[];
   initialLayout?: WorkbenchLayoutStateInput;
   initialWorkspaceSettings?: WorkbenchSettingsConfig;
+  installedExtensionsStorageKey?: string;
   keybindingOverridesStorageKey?: string;
   layoutStorageKey?: string;
   localPreferenceStorageKey?: string;
@@ -116,12 +127,13 @@ interface DeferredProviderDispose {
 const WorkbenchContext = createContext<WorkbenchContextValue | undefined>(undefined);
 
 export function WorkbenchProvider({
-  availableExtensions = BUILTIN_WORKBENCH_EXTENSIONS,
+  availableExtensions = DEFAULT_AVAILABLE_EXTENSIONS,
   children,
   extensionsConfig,
   initialKeybindingOverrides,
   initialLayout,
   initialWorkspaceSettings,
+  installedExtensionsStorageKey = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   keybindingOverridesStorageKey = DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
   layoutStorageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   localPreferenceStorageKey = DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
@@ -197,13 +209,20 @@ export function WorkbenchProvider({
       editorResolvers: extensionRegistry.editorResolvers,
       resolveEditorResource: workspaceHostPort?.resolveResource?.bind(workspaceHostPort),
     });
-    const config =
+    const installedRecords = loadInstalledExtensions(installedExtensionsStorageKey);
+    const resolvedAvailableExtensions = resolveInstalledAvailableExtensions(
+      availableExtensions,
+      installedRecords,
+    );
+    const config = mergeExtensionsConfigWithInstallState(
       extensionsConfig ??
-      ({
-        enabled: availableExtensions.map(({ manifest }) => manifest.id),
-        recommendations: [],
-      } satisfies WorkbenchExtensionsConfig);
-    const resolution = resolveWorkbenchExtensions(config, availableExtensions);
+        ({
+          enabled: resolvedAvailableExtensions.map(({ manifest }) => manifest.id),
+          recommendations: [],
+        } satisfies WorkbenchExtensionsConfig),
+      installedRecords,
+    );
+    const resolution = resolveWorkbenchExtensions(config, resolvedAvailableExtensions);
     const extensionDisposables = extensionRegistry.registerExtensions(resolution.enabledExtensions);
     const editorServiceCapabilityDisposable = extensionRegistry.capabilityRegistry.register({
       id: WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
@@ -269,6 +288,7 @@ export function WorkbenchProvider({
     availableExtensions,
     extensionsConfig,
     initialWorkspaceSettings,
+    installedExtensionsStorageKey,
     resolvedInitialLayout,
     resolvedInitialLocalPreferences,
     userCommands,

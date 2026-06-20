@@ -39,7 +39,10 @@ workbench-kit/
 │   ├── builtin.search/
 │   ├── builtin.settings/
 │   ├── builtin.workspace/
-│   └── samples.hello-world/
+│   ├── samples.hello-world/
+│   ├── samples.theme-alt/
+│   ├── samples.locale-ko/
+│   └── samples.json-preview/
 ├── schemas/
 │   └── workbench/                 # JSON Schema for workspace and extension manifests
 ├── examples/
@@ -100,6 +103,25 @@ work should use `platform`, `workbench-core`, `workbench-react`, and
 Built-in extensions live under `extensions/builtin.*` and ship as repository-local, build-time bundled artifacts. They contribute commands, views, menus, settings, and activities through `workbench.extension.json` and the extension SDK.
 
 Sample extensions under `extensions/samples.*` demonstrate minimal contribution patterns without production functionality.
+
+### Extension taxonomy (MVP)
+
+| Category  | Sample extension       | Contribution surface        |
+| --------- | ---------------------- | --------------------------- |
+| `theme`   | `samples.theme-alt`    | `contributes.themes`        |
+| `locale`  | `samples.locale-ko`    | `contributes.localizations` |
+| `editor`  | `samples.json-preview` | `contributes.editors`       |
+| `utility` | `samples.hello-world`  | `contributes.commands`      |
+
+### Extension install path
+
+1. Static catalog JSON (for example `examples/workbench-sample/public/extension-catalog.json`)
+2. Browse/install UI (`ExtensionManagementPanel` in Settings)
+3. Browser persistence key `workbench-kit/.workbench/installed-extensions`
+4. `WorkbenchProvider` resolves bundled extensions against install state
+5. Contributed themes/localizations merge into `ThemeRegistry` / `LocalizationRegistry`
+
+See [Extension Install](./extension-install.md) for catalog schema and pipeline details.
 
 ## Schemas
 

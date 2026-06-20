@@ -54,3 +54,36 @@ export interface CommandManagementPanelProps {
   query?: string | undefined;
   summaryLabel?: string | undefined;
 }
+
+export type ExtensionManagementEntrySource = 'bundled' | 'installed';
+
+export interface ExtensionManagementEntry {
+  readonly category: string;
+  readonly description?: string | undefined;
+  readonly displayName: string;
+  readonly enabled: boolean;
+  readonly id: string;
+  readonly installedAt?: string | undefined;
+  readonly manifestUrl?: string | undefined;
+  readonly source: ExtensionManagementEntrySource;
+}
+
+export interface ExtensionCatalogBrowseEntry {
+  readonly category: string;
+  readonly description: string;
+  readonly displayName: string;
+  readonly icon?: string | undefined;
+  readonly id: string;
+  readonly installed: boolean;
+  readonly manifestUrl: string;
+}
+
+export interface ExtensionManagementPanelProps {
+  browseEntries: readonly ExtensionCatalogBrowseEntry[];
+  catalogError?: string | undefined;
+  catalogLoading?: boolean | undefined;
+  className?: string | undefined;
+  installedEntries: readonly ExtensionManagementEntry[];
+  onInstall?: ((entry: ExtensionCatalogBrowseEntry) => void) | undefined;
+  onToggleEnabled?: ((entry: ExtensionManagementEntry, enabled: boolean) => void) | undefined;
+}

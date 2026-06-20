@@ -1,24 +1,29 @@
 import {
   AccountManagementPanel,
   CommandManagementPanel,
+  ExtensionManagementPanel,
   type AccountManagementEntry,
 } from '@workbench-kit/react/workbench/management';
 import type { WorkbenchCommandDescriptor } from '@workbench-kit/react/workbench';
 
 import { useCommandManagementModel } from './use-command-management.js';
+import { useExtensionManagementModel } from './use-extension-management.js';
 import { WorkbenchKeybindingManagementSettings } from './keybinding-management-settings.js';
 import {
   MANAGE_ACCOUNTS_COMMAND_ID,
   MANAGE_COMMANDS_COMMAND_ID,
+  MANAGE_EXTENSIONS_COMMAND_ID,
   MANAGE_KEYBINDINGS_COMMAND_ID,
 } from './management-settings-ids.js';
 
 export {
   MANAGE_ACCOUNTS_COMMAND_ID,
   MANAGE_COMMANDS_COMMAND_ID,
+  MANAGE_EXTENSIONS_COMMAND_ID,
   MANAGE_KEYBINDINGS_COMMAND_ID,
   WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
   WORKBENCH_COMMANDS_SETTINGS_CATEGORY_ID,
+  WORKBENCH_EXTENSIONS_SETTINGS_CATEGORY_ID,
   WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID,
 } from './management-settings-ids.js';
 
@@ -37,6 +42,12 @@ export function createWorkbenchManagementPaletteCommands(): readonly WorkbenchCo
       icon: 'codicon-keyboard',
       id: MANAGE_KEYBINDINGS_COMMAND_ID,
       label: 'Keyboard Shortcuts',
+    },
+    {
+      category: 'Workbench',
+      icon: 'codicon-extensions',
+      id: MANAGE_EXTENSIONS_COMMAND_ID,
+      label: 'Manage Extensions',
     },
     {
       category: 'Accounts',
@@ -65,6 +76,32 @@ export function WorkbenchCommandManagementSettings() {
       lastRun={lastRun}
       summaryLabel={`${totalCount} registered command${totalCount === 1 ? '' : 's'} · auto-updated from extensions`}
       onRunCommand={runCommand}
+    />
+  );
+}
+
+export function WorkbenchExtensionManagementSettings({
+  catalogUrl,
+}: {
+  catalogUrl?: string | undefined;
+}) {
+  const {
+    browseEntries,
+    catalogError,
+    catalogLoading,
+    installCatalogEntry,
+    installedEntries,
+    toggleInstalledEntry,
+  } = useExtensionManagementModel({ catalogUrl });
+
+  return (
+    <ExtensionManagementPanel
+      browseEntries={browseEntries}
+      catalogError={catalogError}
+      catalogLoading={catalogLoading}
+      installedEntries={installedEntries}
+      onInstall={installCatalogEntry}
+      onToggleEnabled={toggleInstalledEntry}
     />
   );
 }

@@ -78,6 +78,37 @@ export {
   type WorkbenchExtensionModule,
 } from './extension-registry.js';
 export {
+  parseExtensionCatalog,
+  type ExtensionCatalog,
+  type ExtensionCatalogCategory,
+  type ExtensionCatalogEntry,
+} from './extension-catalog.js';
+export {
+  DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  getInstalledExtensionRecord,
+  installExtensionRecord,
+  isInstalledExtensionPersistenceAvailable,
+  loadInstalledExtensions,
+  saveInstalledExtensions,
+  toggleInstalledExtensionEnabled,
+  type InstalledExtensionCategory,
+  type InstalledExtensionRecord,
+} from './extension-install-state.js';
+export {
+  mergeExtensionsConfigWithInstallState,
+  resolveBundledExtensionByManifestUrl,
+  resolveInstalledAvailableExtensions,
+} from './extension-install-resolution.js';
+export {
+  applyThemeTokenOverrides,
+  ThemeRegistry,
+  type WorkbenchThemeContribution,
+} from './theme-registry.js';
+export {
+  LocalizationRegistry,
+  type WorkbenchLocalizationContribution,
+} from './localization-registry.js';
+export {
   resolveWorkbenchExtensions,
   type WorkbenchExtensionResolution,
 } from './extension-resolution.js';

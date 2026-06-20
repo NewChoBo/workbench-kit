@@ -23,7 +23,10 @@ import {
   type StatusBarItemModel,
   type StatusBarSectionModel,
 } from '@workbench-kit/react/workbench/shell';
-import { WORKBENCH_SETTINGS_CAPABILITY_ID } from '@workbench-kit/workbench-core';
+import {
+  WORKBENCH_SETTINGS_CAPABILITY_ID,
+  applyThemeTokenOverrides,
+} from '@workbench-kit/workbench-core';
 import type {
   PreferenceService,
   ViewHost,
@@ -54,12 +57,15 @@ import { WorkbenchCommandHost, type WorkbenchCommandHostProps } from './workbenc
 import {
   MANAGE_ACCOUNTS_COMMAND_ID,
   MANAGE_COMMANDS_COMMAND_ID,
+  MANAGE_EXTENSIONS_COMMAND_ID,
   MANAGE_KEYBINDINGS_COMMAND_ID,
   WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
   WORKBENCH_COMMANDS_SETTINGS_CATEGORY_ID,
+  WORKBENCH_EXTENSIONS_SETTINGS_CATEGORY_ID,
   WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID,
   WorkbenchAccountManagementSettings,
   WorkbenchCommandManagementSettings,
+  WorkbenchExtensionManagementSettings,
   WorkbenchKeybindingManagementSettings,
   createWorkbenchManagementPaletteCommands,
   type WorkbenchAccountManagementInput,
@@ -73,12 +79,15 @@ import { WorkbenchProfileModal, type WorkbenchProfileInput } from './workbench-p
 
 export interface WorkbenchShellProps {
   accountManagement?: WorkbenchAccountManagementInput | undefined;
+  catalogUrl?: string | undefined;
   commandHost?: false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'>;
   compactStatus?: boolean;
   editorArea?: ReactNode;
   helpContent?: ReactNode;
   helpTitle?: ReactNode;
   onThemeChange?: ((theme: string) => void) | undefined;
+  onLocaleChange?: ((locale: string) => void) | undefined;
+  locale?: string | undefined;
   onStatusItemActivate?: (item: StatusBarItemModel) => void;
   primarySidebar?: ReactNode;
   profile?: WorkbenchProfileInput | undefined;
@@ -109,11 +118,14 @@ const WORKBENCH_PREFERENCE_SCOPES = [
 
 export function WorkbenchShell({
   accountManagement,
+  catalogUrl = '/extension-catalog.json',
   commandHost,
   compactStatus = true,
   editorArea,
   helpContent,
   helpTitle = 'Workbench Help',
+  locale = 'en',
+  onLocaleChange,
   onThemeChange,
   onStatusItemActivate,
   primarySidebar,
@@ -191,6 +203,12 @@ export function WorkbenchShell({
         label: 'Keyboard Shortcuts',
         title: 'Keyboard shortcut management',
       });
+      managementCategories.push({
+        content: <WorkbenchExtensionManagementSettings catalogUrl={catalogUrl} />,
+        id: WORKBENCH_EXTENSIONS_SETTINGS_CATEGORY_ID,
+        label: 'Extensions',
+        title: 'Extension management',
+      });
     }
 
     if (accountManagement) {
@@ -206,6 +224,8 @@ export function WorkbenchShell({
       ...managementCategories,
       ...createSettingsCategories(extensionRegistry, {
         activeScope: settingsScopeId,
+        locale,
+        onLocaleChange,
         onThemeChange,
         preferenceService,
         theme,
@@ -214,8 +234,11 @@ export function WorkbenchShell({
     ];
   }, [
     accountManagement,
+    catalogUrl,
     commandHost,
     extensionRegistry,
+    locale,
+    onLocaleChange,
     onThemeChange,
     preferenceService,
     settingsScopeId,
@@ -321,6 +344,11 @@ export function WorkbenchShell({
 
         if (command.id === MANAGE_KEYBINDINGS_COMMAND_ID) {
           openSettings(WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID);
+          return true;
+        }
+
+        if (command.id === MANAGE_EXTENSIONS_COMMAND_ID) {
+          openSettings(WORKBENCH_EXTENSIONS_SETTINGS_CATEGORY_ID);
           return true;
         }
 
@@ -606,6 +634,8 @@ function createSettingsCategories(
   extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
   {
     activeScope,
+    locale,
+    onLocaleChange,
     onThemeChange,
     preferenceService,
     theme,
@@ -616,10 +646,15 @@ function createSettingsCategories(
   },
 ): WorkbenchSettingsCategory[] {
   const configurations = extensionRegistry.configurations.getConfigurations();
+  const mergedThemeOptions = mergeThemeOptions(themeOptions, extensionRegistry.themes.getThemes());
+  const localeOptions = buildLocaleOptions(extensionRegistry.localizations.getLocalizations());
   const appearanceCategory = createAppearanceSettingsCategory({
+    locale,
+    localeOptions,
+    onLocaleChange,
     onThemeChange,
     theme,
-    themeOptions,
+    themeOptions: mergedThemeOptions,
   });
 
   if (configurations.length === 0) {
@@ -685,25 +720,78 @@ function createSettingsCategories(
 }
 
 interface WorkbenchAppearanceSettingsInput {
-  onThemeChange: ((theme: string) => void) | undefined;
-  theme: string | undefined;
-  themeOptions: readonly WorkbenchThemeOption[] | undefined;
+  locale?: string | undefined;
+  localeOptions?: readonly WorkbenchLocaleOption[] | undefined;
+  onLocaleChange?: ((locale: string) => void) | undefined;
+  onThemeChange?: ((theme: string) => void) | undefined;
+  theme?: string | undefined;
+  themeOptions?: readonly WorkbenchThemeOption[] | undefined;
+}
+
+export interface WorkbenchLocaleOption {
+  id: string;
+  label: string;
+}
+
+function mergeThemeOptions(
+  baseOptions: readonly WorkbenchThemeOption[] | undefined,
+  contributedThemes: readonly {
+    id: string;
+    label: string;
+    tokenOverrides?: Record<string, string> | undefined;
+  }[],
+): readonly WorkbenchThemeOption[] {
+  const merged = new Map<string, WorkbenchThemeOption>();
+
+  for (const option of baseOptions ?? []) {
+    merged.set(option.id, option);
+  }
+
+  for (const theme of contributedThemes) {
+    merged.set(theme.id, {
+      description: theme.tokenOverrides
+        ? 'Contributed theme with token overrides.'
+        : 'Contributed theme.',
+      id: theme.id,
+      label: theme.label,
+    });
+  }
+
+  return [...merged.values()];
+}
+
+function buildLocaleOptions(
+  localizations: readonly { locale: string; label: string }[],
+): readonly WorkbenchLocaleOption[] {
+  const options: WorkbenchLocaleOption[] = [{ id: 'en', label: 'English' }];
+
+  for (const localization of localizations) {
+    options.push({ id: localization.locale, label: localization.label });
+  }
+
+  return options;
 }
 
 function createAppearanceSettingsCategory({
+  locale,
+  localeOptions,
+  onLocaleChange,
   onThemeChange,
   theme,
   themeOptions,
 }: WorkbenchAppearanceSettingsInput): WorkbenchSettingsCategory | undefined {
-  if (!themeOptions?.length) {
+  if (!themeOptions?.length && !localeOptions?.length) {
     return undefined;
   }
 
   return {
     content: (
       <AppearanceSettingsSection
+        locale={locale}
+        localeOptions={localeOptions ?? []}
         theme={theme}
-        themeOptions={themeOptions}
+        themeOptions={themeOptions ?? []}
+        onLocaleChange={onLocaleChange}
         onThemeChange={onThemeChange}
       />
     ),
@@ -713,14 +801,36 @@ function createAppearanceSettingsCategory({
 }
 
 function AppearanceSettingsSection({
+  locale,
+  localeOptions,
+  onLocaleChange,
   onThemeChange,
   theme,
   themeOptions,
 }: WorkbenchAppearanceSettingsInput & {
+  localeOptions: readonly WorkbenchLocaleOption[];
   themeOptions: readonly WorkbenchThemeOption[];
 }) {
+  const { extensionRegistry } = useWorkbench();
+  const previousThemeOverridesRef = useRef<Readonly<Record<string, string>> | undefined>(undefined);
   const selectedTheme = themeOptions.find((option) => option.id === theme) ?? themeOptions[0];
   const selectedThemeId = selectedTheme?.id ?? '';
+  const selectedLocale = localeOptions.find((option) => option.id === locale) ?? localeOptions[0];
+  const selectedLocaleId = selectedLocale?.id ?? 'en';
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const contributedTheme = extensionRegistry.themes.getTheme(selectedThemeId);
+    applyThemeTokenOverrides(
+      document.documentElement,
+      contributedTheme?.tokenOverrides,
+      previousThemeOverridesRef.current,
+    );
+    previousThemeOverridesRef.current = contributedTheme?.tokenOverrides;
+  }, [extensionRegistry.themes, selectedThemeId]);
 
   return (
     <WorkbenchSettingsSection
@@ -729,30 +839,53 @@ function AppearanceSettingsSection({
       description="Configure how the workbench is presented."
     >
       <div className="workbench-appearance-settings">
-        <Field
-          className="workbench-appearance-settings__field"
-          label="Color theme"
-          description="Select the active workbench color theme."
-        >
-          <Select
-            aria-label="Color theme"
-            controlWidth="full"
-            disabled={!onThemeChange}
-            value={selectedThemeId}
-            onValueChange={(nextTheme) => onThemeChange?.(nextTheme)}
+        {themeOptions.length ? (
+          <Field
+            className="workbench-appearance-settings__field"
+            label="Color theme"
+            description="Select the active workbench color theme."
           >
-            {themeOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
-          {selectedTheme?.description ? (
-            <p className="workbench-appearance-settings__description">
-              {selectedTheme.description}
-            </p>
-          ) : null}
-        </Field>
+            <Select
+              aria-label="Color theme"
+              controlWidth="full"
+              disabled={!onThemeChange}
+              value={selectedThemeId}
+              onValueChange={(nextTheme) => onThemeChange?.(nextTheme)}
+            >
+              {themeOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+            {selectedTheme?.description ? (
+              <p className="workbench-appearance-settings__description">
+                {selectedTheme.description}
+              </p>
+            ) : null}
+          </Field>
+        ) : null}
+        {localeOptions.length > 1 ? (
+          <Field
+            className="workbench-appearance-settings__field"
+            label="Display language"
+            description="Select the active workbench display language."
+          >
+            <Select
+              aria-label="Display language"
+              controlWidth="full"
+              disabled={!onLocaleChange}
+              value={selectedLocaleId}
+              onValueChange={(nextLocale) => onLocaleChange?.(nextLocale)}
+            >
+              {localeOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        ) : null}
       </div>
     </WorkbenchSettingsSection>
   );

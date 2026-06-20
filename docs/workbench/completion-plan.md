@@ -33,11 +33,11 @@ i18n, preview zoom/pan), or deferred kit items WB-15 / WB-20 / WB-22.
 
 ### Completion estimate
 
-| Scope                                        | Estimate                                                       | Caveats                                                                                    |
-| -------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Lane A (WB-23 → WB-31)**                   | **~80%** (WB-23 → WB-28 landed; WB-29 command handlers landed) | WB-29 closeout, preference scopes, and registry inspectors remain                          |
-| **Workbench Kit foundation (WB-01 → WB-22)** | **~90%**                                                       | WB-15 deferred; WB-20 / WB-22 blocked on dirty policy                                      |
-| **End-to-end "product-ready workbench"**     | **~50%**                                                       | Sample host covers shell/editor/auth slices; plugin store and real backend remain deferred |
+| Scope                                        | Estimate                        | Caveats                                                                                    |
+| -------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Lane A (WB-23 → WB-31)**                   | **~95%** (WB-23 → WB-31 landed) | Lane A DoD closeout and `validate:full` remain                                             |
+| **Workbench Kit foundation (WB-01 → WB-22)** | **~90%**                        | WB-15 deferred; WB-20 / WB-22 blocked on dirty policy                                      |
+| **End-to-end "product-ready workbench"**     | **~50%**                        | Sample host covers shell/editor/auth slices; plugin store and real backend remain deferred |
 
 Treat percentages as planning signals, not release metrics. The remaining Lane A
 work is **integration-heavy** (editor + explorer on commands + preference scopes),

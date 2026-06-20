@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.samples.theme-alt",
+  "name": "samples-theme-alt",
+  "displayName": "Alternate Theme Pack",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onStartup"],
+  "contributes": {
+    "themes": [
+      {
+        "id": "workbench-kit.samples.theme-alt.dark-blue",
+        "label": "Dark Blue Alt",
+        "tokenOverrides": {
+          "--color-bg": "#0a1628",
+          "--color-surface": "#12243d",
+          "--color-accent": "#5b9bd5"
+        }
+      }
+    ]
+  }
+}

@@ -68,13 +68,27 @@ export interface EditorContribution {
   label: string;
 }
 
+export interface ThemeContribution {
+  id: string;
+  label: string;
+  tokenOverrides?: Record<string, string>;
+}
+
+export interface LocalizationContribution {
+  locale: string;
+  label: string;
+  translations: Record<string, string>;
+}
+
 export interface ExtensionContributes {
   activities?: ActivityContribution[];
   commands?: CommandContribution[];
   configuration?: ConfigurationContribution;
   editors?: EditorContribution[];
   keybindings?: KeybindingContribution[];
+  localizations?: LocalizationContribution[];
   menus?: MenuContribution[];
+  themes?: ThemeContribution[];
   views?: Record<string, ViewContribution[]>;
   viewContainers?: Record<string, ViewContainerContribution[]>;
 }

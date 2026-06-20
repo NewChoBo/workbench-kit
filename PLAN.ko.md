@@ -3,7 +3,21 @@
 > **할 일·우선순위 전용.** 소개·빠른 시작은 [`README.md`](./README.md).  
 > 영문 DoD: [`completion-plan.md`](./docs/workbench/completion-plan.md) · CSS 공통화: [`layout-css-improvement-plan-2026-06-20.md`](./docs/workbench/layout-css-improvement-plan-2026-06-20.md)
 
-**갱신:** 2026-06-20
+**갱신:** 2026-06-20 (Extension Platform MVP — 미커밋)
+
+---
+
+## Extension Platform MVP (2026-06-20, 미커밋)
+
+| 항목                                      | 상태                            |
+| ----------------------------------------- | ------------------------------- |
+| WB-33 install (bundled id + localStorage) | **MVP**                         |
+| WB-34/35 관리 화면 (Installed \| Browse)  | **MVP** — Settings → Extensions |
+| WB-36 theme/locale registry + samples     | **MVP** — Appearance dropdown   |
+| docs `extension-install.md`               | 추가                            |
+| `validate:static`                         | 통과                            |
+
+**잔여:** remote manifest-url, reload 없는 toggle, locale 전역 UI, `validate:full`, 커밋
 
 ---
 
@@ -73,13 +87,13 @@ Phase 1 UI 공통화(Settings scroll, `WorkbenchStoryHost`, devtools tokens) —
 
 ### P2 (extension · 구조)
 
-| ID    | 항목                                                     | 선행                 |
-| ----- | -------------------------------------------------------- | -------------------- |
-| WB-32 | 프로젝트 구조 문서                                       | S12                  |
-| WB-33 | Extension 설치 (`local` / `url` / `manifest-url`)        | S12                  |
-| WB-34 | Extension 관리 (enable/disable, `.workbench/extensions`) | WB-33                |
-| WB-35 | Extension store (정적 catalog)                           | WB-33, WB-34         |
-| WB-36 | 테마·언어팩 `contributes.*` + Settings                   | WB-33, ThemeRegistry |
+| ID    | 항목               | 선행                                                     |
+| ----- | ------------------ | -------------------------------------------------------- |
+| WB-32 | 프로젝트 구조 문서 | **MVP** (`extension-install.md`, `project-structure.md`) |
+| WB-33 | Extension 설치     | **MVP** (bundled + localStorage; remote URL 후속)        |
+| WB-34 | Extension 관리     | **MVP** (Settings Extensions 탭)                         |
+| WB-35 | Extension store    | **MVP** (`extension-catalog.json` Browse)                |
+| WB-36 | 테마·언어팩        | **MVP** (registry + Appearance 옵션)                     |
 
 기타: EditorService layout, command-core 잔여, sidebar sub-track P1-4
 

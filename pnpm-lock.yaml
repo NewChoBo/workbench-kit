@@ -190,6 +190,24 @@ importers:
         specifier: workspace:*
         version: link:../../packages/workbench-extension-sdk
 
+  extensions/samples.json-preview:
+    dependencies:
+      '@workbench-kit/workbench-extension-sdk':
+        specifier: workspace:*
+        version: link:../../packages/workbench-extension-sdk
+
+  extensions/samples.locale-ko:
+    dependencies:
+      '@workbench-kit/workbench-extension-sdk':
+        specifier: workspace:*
+        version: link:../../packages/workbench-extension-sdk
+
+  extensions/samples.theme-alt:
+    dependencies:
+      '@workbench-kit/workbench-extension-sdk':
+        specifier: workspace:*
+        version: link:../../packages/workbench-extension-sdk
+
   packages/adapters:
     dependencies:
       '@workbench-kit/contracts':
