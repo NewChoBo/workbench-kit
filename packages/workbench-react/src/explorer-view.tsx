@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
 } from 'react';
@@ -22,6 +23,7 @@ import { type WorkspaceExplorerItemContextMenuMeta } from '@workbench-kit/react/
 import { resolveWorkspaceCreateParentPath, type WorkspaceTreeNode } from '@workbench-kit/workspace';
 import { createCommandWorkspaceExplorerPort } from './createCommandWorkspaceExplorerPort.js';
 import { createExplorerItemContextMenuItems } from './explorer-context-menu.js';
+import { applyExplorerPathReveal, subscribeExplorerRevealRequest } from './explorer-reveal.js';
 import {
   BUILTIN_EXPLORER_REFRESH_COMMAND_ID,
   type BuiltinExplorerViewRenderData,
@@ -72,6 +74,8 @@ export function BuiltinExplorerView() {
     initialExpandedPaths: workspaceState?.expandedPaths,
     port,
   });
+  const explorerRef = useRef(explorer);
+  explorerRef.current = explorer;
 
   useEffect(() => {
     if (!workspaceState || seededExpandedPaths) {
@@ -83,6 +87,20 @@ export function BuiltinExplorerView() {
     });
     setSeededExpandedPaths(true);
   }, [explorer, seededExpandedPaths, workspaceState]);
+
+  useEffect(
+    () =>
+      subscribeExplorerRevealRequest((path) => {
+        const currentExplorer = explorerRef.current;
+        applyExplorerPathReveal(path, {
+          revealFolder: currentExplorer.revealFolder,
+          setSelection: (selection) => {
+            currentExplorer.handleSelectionChange(selection, { mode: 'single', reason: 'click' });
+          },
+        });
+      }),
+    [],
+  );
 
   const nodes = useMemo(
     () =>

@@ -49,7 +49,60 @@ import {
   useWorkbench,
   type WorkbenchShellProps,
 } from './index.js';
-import { BUILTIN_EXPLORER_MOVE_COMMAND_ID } from './explorer-view-data.js';
+import {
+  BUILTIN_EXPLORER_MOVE_COMMAND_ID,
+  BUILTIN_EXPLORER_REVEAL_COMMAND_ID,
+} from './explorer-view-data.js';
+
+function ExplorerRevealCommandProbe({
+  initialState,
+  onResult,
+  path,
+}: {
+  initialState: VirtualWorkspaceInitialState;
+  onResult: (result: unknown) => void;
+  path: string;
+}) {
+  const { executeCommand } = useWorkbench();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      await executeCommand('workspace.init', initialState);
+      const result = await executeCommand(BUILTIN_EXPLORER_REVEAL_COMMAND_ID, { path });
+      if (!cancelled) {
+        onResult(result);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [executeCommand, initialState, onResult, path]);
+
+  return null;
+}
+
+function OpenEditorTabProbe({ path, onReady }: { onReady: () => void; path: string }) {
+  const { executeCommand } = useWorkbench();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void executeCommand('workspace.open', { path }).then(() => {
+      if (!cancelled) {
+        onReady();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [executeCommand, onReady, path]);
+
+  return null;
+}
 
 const WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID = 'workbench.togglePrimarySidebar';
 
@@ -760,6 +813,142 @@ describe('WorkbenchProvider', () => {
     await flushReactEffects();
 
     expect(container.querySelector('[role="tab"]')?.textContent).toContain('App.tsx');
+    expect(findButtonByText(container, 'App.tsx')?.getAttribute('aria-current')).toBe('true');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('reveals nested workspace paths through the explorer reveal command', async () => {
+    const workspaceHostPort = createWorkbenchWorkspaceHostPort();
+    const initialState = {
+      expandedPaths: [],
+      files: [
+        {
+          content: 'export const sample = true;',
+          path: 'src/App.tsx',
+        },
+      ],
+      folders: ['src'],
+    } satisfies VirtualWorkspaceInitialState;
+    const commandResults: unknown[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+          initialLayout={parseWorkbenchLayoutConfig({
+            sideBar: {
+              activeViewContainer: 'explorer',
+              visible: true,
+            },
+          })}
+          workspaceHostPort={workspaceHostPort}
+        >
+          <ExplorerRevealCommandProbe
+            initialState={initialState}
+            path="src/App.tsx"
+            onResult={(result) => {
+              commandResults.push(result);
+            }}
+          />
+          <TestWorkbenchShell />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await act(async () => {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        if (commandResults[0] && findButtonByText(container, 'App.tsx')) {
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    });
+    await flushReactEffects();
+
+    expect(commandResults[0]).toMatchObject({
+      path: 'src/App.tsx',
+      viewId: 'workbench-kit.builtin.explorer.tree',
+    });
+    expect(findButtonByText(container, 'App.tsx')?.dataset.selected).toBe('true');
+    expect(findButtonByText(container, 'src')?.querySelector('.codicon-chevron-down')).toBeTruthy();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('syncs explorer active highlighting when a file is opened from the editor service', async () => {
+    const workspaceHostPort = createWorkbenchWorkspaceHostPort();
+    const initialState = {
+      expandedPaths: [],
+      files: [
+        {
+          content: 'export const sample = true;',
+          path: 'src/App.tsx',
+        },
+        {
+          content: '{}',
+          path: 'config.json',
+        },
+      ],
+      folders: ['src'],
+    } satisfies VirtualWorkspaceInitialState;
+    let editorReady = false;
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor', 'workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+          initialLayout={parseWorkbenchLayoutConfig({
+            sideBar: {
+              activeViewContainer: 'explorer',
+              visible: true,
+            },
+          })}
+          workspaceHostPort={workspaceHostPort}
+        >
+          <WorkspaceInitCommandProbe initialState={initialState} onResult={() => undefined} />
+          <OpenEditorTabProbe
+            path="config.json"
+            onReady={() => {
+              editorReady = true;
+            }}
+          />
+          <TestWorkbenchShell />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForText(container, 'config.json');
+    await act(async () => {
+      for (let attempt = 0; attempt < 20 && !editorReady; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    });
+    await flushReactEffects();
+
+    expect(container.querySelector('[role="tab"]')?.textContent).toContain('config.json');
+    expect(findButtonByText(container, 'config.json')?.getAttribute('aria-current')).toBe('true');
 
     await act(async () => {
       root.unmount();

@@ -154,7 +154,7 @@ pnpm workbench-sample
 
 | Field          | Detail                                                                                                                 |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Status**     | Command handlers and UI command dispatch landed; closeout and validation remain                                        |
+| **Status**     | Done — command handlers, UI dispatch, reveal/focus bridge, and selection sync tests landed                             |
 | **Depends on** | WB-26, WB-27, WB-28 (resource identity for reveal/open)                                                                |
 | **Packages**   | `extensions/builtin.explorer`, `@workbench-kit/workspace`, `@workbench-kit/workbench-react`, `@workbench-kit/platform` |
 
@@ -170,7 +170,7 @@ pnpm workbench-sample
 - `extensions/builtin.explorer` registers workspace create/open/copy/rename/delete/move command handlers.
 - Mutating handlers apply `WorkspaceResourceTransaction` through the workspace service capability.
 - `workbench-react` explorer UI dispatches workspace operations through `executeCommand(...)`.
-- Remaining closeout should confirm selection/reveal sync, search behavior, and browser smoke coverage.
+- Remaining closeout confirmed selection/reveal sync, search open path, reveal/focus command bridge, and integration tests. Optional manual `pnpm workbench-sample` smoke remains.
 
 **Acceptance criteria**
 

@@ -15,25 +15,25 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 
 ## Next 2 weeks (priority order)
 
-| #   | Session  | Goal                                                        | Exit signal                                                        |
-| --- | -------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
-| 1   | **S9**   | **WB-29** — command-backed explorer closeout                | Selection/reveal/search smoke; command-backed UI behavior verified |
-| 2   | **S10**  | **WB-30** — preference scopes (default / workspace / local) | Merge helper + one scoped setting demonstrated                     |
-| 3   | **S11**  | **WB-31** — devtools inspectors (Storybook)                 | Registry / transaction journal read-only panel                     |
-| 4   | **S12**  | Lane A closeout                                             | DoD checklist complete; `pnpm validate:full`                       |
-| —   | **D-S1** | Track D0–D1 inventory + dead-path cleanup (parallel)        | Inventory doc + low-risk alias/shim removal; no Lane A block       |
+| #   | Session  | Goal                                                        | Exit signal                                                  |
+| --- | -------- | ----------------------------------------------------------- | ------------------------------------------------------------ |
+| 1   | **S9**   | **WB-29** — command-backed explorer closeout                | **Done** — selection/reveal/search sync + integration tests  |
+| 2   | **S10**  | **WB-30** — preference scopes (default / workspace / local) | Merge helper + one scoped setting demonstrated               |
+| 3   | **S11**  | **WB-31** — devtools inspectors (Storybook)                 | Registry / transaction journal read-only panel               |
+| 4   | **S12**  | Lane A closeout                                             | DoD checklist complete; `pnpm validate:full`                 |
+| —   | **D-S1** | Track D0–D1 inventory + dead-path cleanup (parallel)        | Inventory doc + low-risk alias/shim removal; no Lane A block |
 
 ---
 
 ## 요약
 
-- **Codex 위임:** Lane A 잔여 작업(WB-29 closeout → WB-30 → WB-31)은 [codex-delegation-plan.md](./codex-delegation-plan.md)의 패키지 흐름으로 Codex 자율 실행 가능. 다음 작업 **WB-29 closeout**.
-- **지금 어디:** Lane A **~80%**. WB-23~WB-28 완료, WB-29 command handlers/UI dispatch 일부 완료 — 다음은 selection/reveal/search closeout과 sample smoke. 마지막 전체 검증 기준점은 `pnpm validate` green (2026-06-16).
+- **Codex 위임:** Lane A 잔여 작업(WB-30 → WB-31 → S12)은 [codex-delegation-plan.md](./codex-delegation-plan.md) 패키지 흐름으로 Codex 자율 실행 가능. 다음 작업 **WB-30**.
+- **지금 어디:** Lane A **~85%**. WB-23~WB-29 완료(reveal/focus bridge + integration tests). WB-29 미커밋 closeout은 `validate:static` + targeted vitest green (2026-06-20). 다음은 WB-30 preference scopes.
 - **다음 3세션:**
-  1. **S9 / WB-29** — 커맨드 기반 익스플로러 closeout; selection/reveal/search와 sample smoke 검증.
-  2. **S10 / WB-30** — 프리퍼런스 스코프 merge; 최소 1개 설정 키 소비.
-  3. **S11 / WB-31** — registry / transaction journal read-only devtools.
-- **B-UX:** WB-29 closeout 이후로 연기 (사용자 결정). Lane A 마일스톤 우선.
+  1. **S10 / WB-30** — 프리퍼런스 스코프 merge; 최소 1개 설정 키 소비.
+  2. **S11 / WB-31** — registry / transaction journal read-only devtools.
+  3. **S12** — Lane A DoD + `pnpm validate:full`.
+- **B-UX:** WB-29 완료로 **B-UX1 시작 가능** (사용자 결정 시). Lane A 마일스톤(WB-30/31) 우선.
 - **Track D:** D0–D1은 S9와 **병렬** 가능. D2는 Lane B B1 이후. D3는 Lane A DoD 이후.
 - **병렬 트랙 B:** Lane B(JDW/widget-tree) B1~B2는 **헤드리스 우선**으로 병렬 가능. 캔버스/에디터 크롬 확장(B3~B4)은 WB-29 closeout 이후 별도 우선순위로 검토.
 - **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). **B-UX 전체는 WB-29 closeout 이후** 시작; 프리뷰 hit-test(B-UX4)는 B2 이후, 캔버스(B-UX5)는 B3 이후.
@@ -50,14 +50,14 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 
 ## 1. Current Snapshot
 
-| Field               | Value                                                                                                        |
-| ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Date**            | 2026-06-20                                                                                                   |
-| **Branch**          | `feature/theia-strengths-workbench`                                                                          |
-| **Working tree**    | Clean                                                                                                        |
-| **Last commits**    | `750a547` JSON config story cleanup · `fc3f2f7` JSON config modes · `767900c` S8.6 · `54602b9` story cleanup |
-| **Lane A progress** | ~80% (WB-23–WB-28 done; S8.5/S8.6 sample polish done)                                                        |
-| **Validate note**   | `pnpm validate` green 2026-06-16 (typecheck, lint, 436 tests, Storybook build, boundary checks)              |
+| Field               | Value                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| **Date**            | 2026-06-20                                                                            |
+| **Branch**          | `feature/theia-strengths-workbench`                                                   |
+| **Working tree**    | Uncommitted WB-29 closeout + CSS P1-1 + doc alignment (2026-06-20)                    |
+| **Last commits**    | Branch ahead of origin by 9 commits; recent: sidebar Phase A/B, explorer context menu |
+| **Lane A progress** | ~85% (WB-23–WB-29 done; S8.5/S8.6 sample polish done)                                 |
+| **Validate note**   | `pnpm validate:static` green 2026-06-20; targeted explorer/provider vitest 26/26      |
 
 ---
 
@@ -69,18 +69,18 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 WB-29 → WB-30 → WB-31 → Lane A DoD
 ```
 
-| Milestone | Status      | Next action                                                                          |
-| --------- | ----------- | ------------------------------------------------------------------------------------ |
-| WB-23     | **Done**    | —                                                                                    |
-| WB-24     | **Done**    | —                                                                                    |
-| WB-25     | **Done**    | Consumed in WB-28 S2/S3                                                              |
-| WB-26     | **Done**    | —                                                                                    |
-| WB-27     | **Done**    | Consumed by WB-28 S3 save path                                                       |
-| WB-28     | **Done**    | S1–S3 + S8.5 sample polish landed                                                    |
-| S8.6      | **Done**    | Code(JSON) / Form / Preview in `EditorArea`                                          |
-| WB-29     | In progress | Command handlers/UI dispatch landed; closeout selection/reveal/search + sample smoke |
-| WB-30     | Pending     | After WB-29 (editor settings consumer optional)                                      |
-| WB-31     | Pending     | After WB-28/29 event streams                                                         |
+| Milestone | Status   | Next action                                                          |
+| --------- | -------- | -------------------------------------------------------------------- |
+| WB-23     | **Done** | —                                                                    |
+| WB-24     | **Done** | —                                                                    |
+| WB-25     | **Done** | Consumed in WB-28 S2/S3                                              |
+| WB-26     | **Done** | —                                                                    |
+| WB-27     | **Done** | Consumed by WB-28 S3 save path                                       |
+| WB-28     | **Done** | S1–S3 + S8.5 sample polish landed                                    |
+| S8.6      | **Done** | Code(JSON) / Form / Preview in `EditorArea`                          |
+| WB-29     | Done     | Closeout landed: reveal/focus command bridge, editor↔tree sync tests |
+| WB-30     | Pending  | After WB-29 (editor settings consumer optional)                      |
+| WB-31     | Pending  | After WB-28/29 event streams                                         |
 
 ### Track B — JDW / widget-tree (parallel, headless-first)
 
@@ -398,7 +398,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 ### WB-29 → WB-31
 
 - [x] WB-29 — Command handlers and UI dispatch for explorer CRUD/open
-- [ ] WB-29 — Selection/reveal/search closeout and sample smoke
+- [x] WB-29 — Selection/reveal/search closeout and integration tests
 - [ ] WB-30 — Preference scopes (default/workspace/local)
 - [ ] WB-30 — At least one scoped setting demonstrated
 - [ ] WB-31 — Devtools inspectors (Storybook)
@@ -461,10 +461,28 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ---
 
+## Work backlog snapshot (2026-06-20)
+
+| Priority | Item                                                                         | Parallel?              | Conflict hotspots                                | Notes                     |
+| -------- | ---------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------ | ------------------------- |
+| P0       | **WB-30** preference scopes (default/workspace/local)                        | Sequential (Lane A)    | `workbench-config`, `platform`, `workbench-core` | Next single PR scope      |
+| P0       | **S12** Lane A DoD + `validate:full`                                         | After WB-31            | docs/, CI scripts                                | Closeout gate             |
+| P1       | **WB-31** devtools inspectors (Storybook)                                    | Sequential after WB-30 | `workbench-react` stories                        | Read-only panels          |
+| P1       | **Layout CSS P1-2~P1-5** (sidebar flex, settings scroll, panel-header dedup) | Parallel-safe          | `packages/react/src/styles.css`, settings modal  | P1-1 overlay CSS done     |
+| P1       | **Editor layout ownership** (`EditorService` split model)                    | Parallel-safe          | `editor-service.ts`, `EditorArea` DnD            | recommended-work-items P1 |
+| P2       | **Track D D0–D1** inventory + dead WIP cleanup                               | Parallel-safe          | `react/jdw`, validation shims                    | No Lane A block           |
+| P2       | **Sidebar Phase B-2** overlay footer decision (Chat/Commands)                | Parallel-safe          | `SideBarViewFrame`, Chat/Commands                | Browser smoke only        |
+| P2       | **Track B B1/B2** JDW schema parity + mapping spec                           | Parallel-safe          | `@workbench-kit/jdw`, headless tests             | Headless only             |
+
+**Suggested next PR:** Commit WB-29 closeout slice (`explorer-reveal` bridge, provider/explorer-view wiring, tests) as one PR; start WB-30 in the following PR.
+
+---
+
 ## Progress log
 
 | Date       | Note                                                                                                                                |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-20 | Validation pass: WB-29 closeout kept (reveal bridge, 26 vitest, validate:static); backlog snapshot added; next WB-30                |
 | 2026-06-20 | Plan refresh: WB-29 command handlers/UI dispatch landed; closeout remains for selection/reveal/search and sample smoke coverage     |
 | 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7                                                    |
 | 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                                                                                 |

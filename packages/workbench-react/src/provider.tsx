@@ -38,6 +38,11 @@ import {
   readPersistedKeybindingOverrides,
   writePersistedKeybindingOverrides,
 } from './keybinding-overrides-storage.js';
+import {
+  BUILTIN_EXPLORER_VIEW_CONTAINER_ID,
+  publishExplorerRevealRequest,
+  runExplorerHostCommandSideEffects,
+} from './explorer-reveal.js';
 import { registerWorkbenchUserCommands } from './workbench-user-commands.js';
 
 export interface WorkbenchWorkspaceHostPort extends WorkbenchEditorSavePort {
@@ -273,8 +278,17 @@ export function WorkbenchProvider({
     () => ({
       activateCommand: (commandId) => services.extensionRegistry.activateCommand(commandId),
       editorService: services.editorService,
-      executeCommand: (commandId, ...args) =>
-        services.extensionRegistry.executeCommand(commandId, ...args),
+      executeCommand: async (commandId, ...args) => {
+        const result = await services.extensionRegistry.executeCommand(commandId, ...args);
+        await runExplorerHostCommandSideEffects(commandId, args, result, {
+          focusExplorerView: () => {
+            services.layoutService.setActiveViewContainer(BUILTIN_EXPLORER_VIEW_CONTAINER_ID);
+            services.layoutService.setSideBarVisible(true);
+          },
+          revealPath: publishExplorerRevealRequest,
+        });
+        return result;
+      },
       extensionRegistry: services.extensionRegistry,
       keybindingOverrides,
       layoutService: services.layoutService,

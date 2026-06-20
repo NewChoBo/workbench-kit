@@ -202,7 +202,7 @@ to this doc or an open improvement ticket.
 
 | ID   | Task                               | Files                                 | Approach                                                                                                               |
 | ---- | ---------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| P1-1 | Remove dead overlay scrollbar CSS  | `scrollbars.css`                      | Delete `.ui-workbench-scrollbar--overlay` block                                                                        |
+| P1-1 | Remove dead overlay scrollbar CSS  | `scrollbars.css`                      | **Done** — removed `.ui-workbench-scrollbar--overlay` block (2026-06-20)                                               |
 | P1-2 | Merge sidebar view flex selectors  | `styles.css`                          | Single `.workbench-sidebar-view-host` or extend existing group; drop redundant `.workbench-chat-view` height duplicate |
 | P1-3 | Settings single scroll owner       | `styles.css`, settings components     | One of nav/content pair owns scroll; prefer `ScrollArea` via `WorkbenchPanelRegion`                                    |
 | P1-4 | Sidebar sub-track Phase A          | see sidebar plan                      | `formatCommandRunState`, `useActiveWorkspacePath` — wiring dedup                                                       |
