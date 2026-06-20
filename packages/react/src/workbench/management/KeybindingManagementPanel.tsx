@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { KeybindingManagementEntry } from '@workbench-kit/platform';
 import { filterKeybindingManagementEntries } from '@workbench-kit/platform';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
-import { ClearableTextInput } from '../../primitives/ClearableTextInput';
-import { WorkbenchSettingsSection } from '../settings/WorkbenchSettingsSection';
-import { cx } from '../../utils/cx';
 import { KeybindingCaptureField } from './KeybindingCaptureField.js';
+import {
+  ManagementPanelEmptyState,
+  ManagementPanelFrame,
+  ManagementPanelToolbar,
+  useManagementPanelQuery,
+} from './ManagementPanelFrame.js';
 
 export interface KeybindingManagementPanelProps {
   className?: string | undefined;
@@ -27,54 +30,45 @@ export function KeybindingManagementPanel({
   query: controlledQuery,
   summaryLabel,
 }: KeybindingManagementPanelProps) {
-  const [uncontrolledQuery, setUncontrolledQuery] = useState('');
-  const query = controlledQuery ?? uncontrolledQuery;
+  const { query, updateQuery } = useManagementPanelQuery(controlledQuery);
   const filteredEntries = useMemo(
     () => filterKeybindingManagementEntries(entries, query),
     [entries, query],
   );
 
   return (
-    <div className={cx('workbench-management-panel', className)}>
-      <WorkbenchSettingsSection
-        description="Assign keyboard shortcuts to registered commands. User overrides replace the default binding for that command and persist in this host."
-        id="workbench-keybinding-management"
-        title="Keyboard Shortcuts"
-      >
-        <div className="workbench-management-toolbar">
-          <ClearableTextInput
-            aria-label="Filter keyboard shortcuts"
-            className="workbench-management-search"
-            placeholder="Filter by command, id, category, or shortcut"
-            value={query}
-            onChange={(event) => {
-              if (controlledQuery === undefined) {
-                setUncontrolledQuery(event.currentTarget.value);
-              }
-            }}
-          />
-          <p className="workbench-management-summary" role="status">
-            {summaryLabel ??
-              `${filteredEntries.length} of ${entries.length} command${entries.length === 1 ? '' : 's'} visible`}
-          </p>
-        </div>
+    <ManagementPanelFrame
+      className={className}
+      description="Assign keyboard shortcuts to registered commands. User overrides replace the default binding for that command and persist in this host."
+      id="workbench-keybinding-management"
+      title="Keyboard Shortcuts"
+    >
+      <ManagementPanelToolbar
+        filterLabel="Filter keyboard shortcuts"
+        filterPlaceholder="Filter by command, id, category, or shortcut"
+        query={query}
+        summary={
+          summaryLabel ??
+          `${filteredEntries.length} of ${entries.length} command${entries.length === 1 ? '' : 's'} visible`
+        }
+        onQueryChange={updateQuery}
+      />
 
-        {filteredEntries.length === 0 ? (
-          <p className="workbench-management-empty">{emptyLabel}</p>
-        ) : (
-          <ul className="workbench-keybinding-list">
-            {filteredEntries.map((entry) => (
-              <KeybindingManagementRow
-                key={entry.commandId}
-                entry={entry}
-                onResetKeybinding={onResetKeybinding}
-                onSetKeybinding={onSetKeybinding}
-              />
-            ))}
-          </ul>
-        )}
-      </WorkbenchSettingsSection>
-    </div>
+      {filteredEntries.length === 0 ? (
+        <ManagementPanelEmptyState>{emptyLabel}</ManagementPanelEmptyState>
+      ) : (
+        <ul className="workbench-management-list">
+          {filteredEntries.map((entry) => (
+            <KeybindingManagementRow
+              key={entry.commandId}
+              entry={entry}
+              onResetKeybinding={onResetKeybinding}
+              onSetKeybinding={onSetKeybinding}
+            />
+          ))}
+        </ul>
+      )}
+    </ManagementPanelFrame>
   );
 }
 
@@ -91,11 +85,11 @@ function KeybindingManagementRow({
   const canReset = hasOverride && onResetKeybinding;
 
   return (
-    <li className="workbench-keybinding-list-item">
-      <div className="workbench-keybinding-list-item__main">
-        <span className="workbench-keybinding-list-item__label">{entry.commandLabel}</span>
-        <code className="workbench-keybinding-list-item__id">{entry.commandId}</code>
-        <div className="workbench-keybinding-list-item__meta">
+    <li className="workbench-management-list-item workbench-management-list-item--responsive">
+      <div className="workbench-management-list-item__main">
+        <span className="workbench-management-list-item__label">{entry.commandLabel}</span>
+        <code className="workbench-management-list-item__id">{entry.commandId}</code>
+        <div className="workbench-management-list-item__meta">
           {entry.category ? <Badge variant="muted">{entry.category}</Badge> : null}
           {entry.sourceLabel ? <Badge variant="muted">{entry.sourceLabel}</Badge> : null}
           {entry.defaultKeyLabel && hasOverride ? (
@@ -107,7 +101,7 @@ function KeybindingManagementRow({
         </div>
       </div>
 
-      <div className="workbench-keybinding-list-item__actions">
+      <div className="workbench-management-list-item__actions">
         <KeybindingCaptureField
           ariaLabel={`Keyboard shortcut for ${entry.commandLabel}`}
           value={entry.userKey ?? entry.defaultKey}

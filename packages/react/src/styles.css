@@ -610,21 +610,9 @@
   --ui-modal-width: 640px;
 }
 
-.workbench-help-modal__body {
-  padding: 20px 24px;
-}
-
 .workbench-profile-modal {
   --ui-modal-width: 520px;
   --ui-modal-height: 520px;
-}
-
-.workbench-profile-modal__body {
-  display: grid;
-  align-content: start;
-  gap: 18px;
-  padding: 22px 24px 24px;
-  background: var(--color-bg);
 }
 
 .workbench-profile-modal__footer-spacer {
@@ -1008,6 +996,17 @@
   background: var(--color-surface);
 }
 
+.workbench-management-list-item--responsive {
+  display: grid;
+}
+
+@media (min-width: 720px) {
+  .workbench-management-list-item--responsive {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
 .workbench-management-list-item__main {
   min-width: 0;
   display: grid;
@@ -1036,54 +1035,7 @@
   font-size: 12px;
 }
 
-.workbench-keybinding-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 10px;
-}
-
-.workbench-keybinding-list-item {
-  display: grid;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background: var(--color-surface);
-}
-
-@media (min-width: 720px) {
-  .workbench-keybinding-list-item {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-  }
-}
-
-.workbench-keybinding-list-item__main {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-
-.workbench-keybinding-list-item__label {
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
-.workbench-keybinding-list-item__id {
-  color: var(--color-text-muted);
-  font-size: 12px;
-}
-
-.workbench-keybinding-list-item__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.workbench-keybinding-list-item__actions {
+.workbench-management-list-item__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;

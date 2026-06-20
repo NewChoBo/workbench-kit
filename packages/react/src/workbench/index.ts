@@ -282,9 +282,16 @@ export {
 export {
   AccountManagementPanel,
   CommandManagementPanel,
+  KeybindingManagementPanel,
+  ManagementPanelEmptyState,
+  ManagementPanelFrame,
+  ManagementPanelRunState,
+  ManagementPanelSummary,
+  ManagementPanelToolbar,
   buildCommandManagementGroups,
   countCommandManagementEntries,
   filterCommandManagementGroups,
+  useManagementPanelQuery,
 } from './management';
 export type {
   AccountManagementEntry,
@@ -295,6 +302,9 @@ export type {
   CommandManagementGroup,
   CommandManagementPanelProps,
   CommandManagementRunState,
+  KeybindingManagementPanelProps,
+  ManagementPanelFrameProps,
+  ManagementPanelToolbarProps,
 } from './management';
 export type {
   WorkbenchPanelRegionProps,

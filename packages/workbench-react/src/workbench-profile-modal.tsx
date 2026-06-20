@@ -31,7 +31,8 @@ export function WorkbenchProfileModal({ profile, onClose }: WorkbenchProfileModa
 
   return (
     <Modal
-      bodyClassName="workbench-profile-modal__body"
+      bodyLayout="stack"
+      bodyPadding="lg"
       bodyScroll="auto"
       className="workbench-profile-modal"
       closeLabel="Close profile"

@@ -12,6 +12,9 @@ import { useModalWindowFrame } from './useModalWindowFrame';
 
 export type { ModalBounds, ModalPosition, ModalSize } from './modalTypes';
 
+export type ModalBodyLayout = 'block' | 'stack';
+export type ModalBodyPadding = 'none' | 'md' | 'lg';
+
 export interface ModalProps {
   title: ReactNode;
   titleSuffix?: ReactNode | undefined;
@@ -19,6 +22,8 @@ export interface ModalProps {
   footer?: ReactNode | undefined;
   className?: string | undefined;
   bodyClassName?: string | undefined;
+  bodyLayout?: ModalBodyLayout | undefined;
+  bodyPadding?: ModalBodyPadding | undefined;
   bodyScroll?: 'auto' | 'hidden' | undefined;
   closeLabel?: string | undefined;
   defaultHeight?: number | undefined;
@@ -35,6 +40,8 @@ export interface ModalProps {
 
 interface ModalFrameProps {
   bodyClassName?: string | undefined;
+  bodyLayout: ModalBodyLayout;
+  bodyPadding: ModalBodyPadding;
   bodyScroll: 'auto' | 'hidden';
   children: ReactNode;
   dataAttrs: Record<string, string | undefined>;
@@ -50,6 +57,8 @@ interface ModalFrameProps {
 
 function ModalFrame({
   bodyClassName,
+  bodyLayout,
+  bodyPadding,
   bodyScroll,
   children,
   dataAttrs,
@@ -70,6 +79,8 @@ function ModalFrame({
           <div
             className={cx(
               'ui-modal__body',
+              bodyLayout !== 'block' && `ui-modal__body--${bodyLayout}`,
+              bodyPadding !== 'none' && `ui-modal__body--padding-${bodyPadding}`,
               bodyScroll === 'auto' &&
                 'ui-scroll-area ui-scroll-area--both ui-scroll-area--stable-gutter ui-workbench-scrollbar',
               bodyClassName,
@@ -113,6 +124,8 @@ export function Modal({
   footer,
   className,
   bodyClassName,
+  bodyLayout = 'block',
+  bodyPadding = 'none',
   bodyScroll = 'hidden',
   closeLabel,
   defaultHeight,
@@ -152,6 +165,8 @@ export function Modal({
     <div className="ui-modal-overlay" onClick={onClose}>
       <ModalFrame
         bodyClassName={bodyClassName}
+        bodyLayout={bodyLayout}
+        bodyPadding={bodyPadding}
         bodyScroll={bodyScroll}
         dataAttrs={{
           'data-maximized': maximized ? 'true' : undefined,

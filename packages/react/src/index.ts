@@ -1,5 +1,5 @@
 export { Modal } from './modal/Modal';
-export type { ModalProps } from './modal/Modal';
+export type { ModalBodyLayout, ModalBodyPadding, ModalProps } from './modal/Modal';
 export { TilepaperAppIcon } from './brand/TilepaperAppIcon';
 export type { TilepaperAppIconProps } from './brand/TilepaperAppIcon';
 export { commandMenuItemsToContextMenuItems } from './workbench/commands';

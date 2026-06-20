@@ -129,6 +129,20 @@
   overflow: hidden;
 }
 
+.ui-modal__body--stack {
+  display: grid;
+  align-content: start;
+  gap: var(--ui-modal-body-gap, 18px);
+}
+
+.ui-modal__body--padding-md {
+  padding: 20px;
+}
+
+.ui-modal__body--padding-lg {
+  padding: 22px 24px 24px;
+}
+
 .ui-modal__footer {
   height: 48px;
   flex-shrink: 0;

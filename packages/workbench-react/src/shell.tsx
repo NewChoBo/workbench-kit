@@ -409,7 +409,7 @@ export function WorkbenchShell({
           ) : null}
           {isHelpOpen && helpContent ? (
             <Modal
-              bodyClassName="workbench-help-modal__body"
+              bodyPadding="lg"
               bodyScroll="auto"
               className="workbench-help-modal"
               closeLabel="Close help"

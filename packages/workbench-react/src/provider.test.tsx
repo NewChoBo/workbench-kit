@@ -676,9 +676,7 @@ describe('WorkbenchProvider', () => {
     expect(dialog?.textContent).toContain('Workbench Help');
     expect(dialog?.textContent).toContain('Open example.jdw.json to preview the sample.');
     expect(
-      dialog
-        ?.querySelector('.workbench-help-modal__body')
-        ?.classList.contains('ui-workbench-scrollbar'),
+      dialog?.querySelector('.ui-modal__body')?.classList.contains('ui-workbench-scrollbar'),
     ).toBe(true);
 
     await act(async () => {
