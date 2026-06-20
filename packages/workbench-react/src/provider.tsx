@@ -53,6 +53,10 @@ import {
   runExplorerHostCommandSideEffects,
 } from './explorer-reveal.js';
 import {
+  BUILTIN_EXTENSIONS_FOCUS_COMMAND_ID,
+  BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID,
+} from './extensions-view-data.js';
+import {
   DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
   isWorkbenchLocalPreferencePersistenceAvailable,
   readPersistedLocalPreferences,
@@ -127,7 +131,7 @@ interface DeferredProviderDispose {
 const WorkbenchContext = createContext<WorkbenchContextValue | undefined>(undefined);
 
 export function WorkbenchProvider({
-  availableExtensions = DEFAULT_AVAILABLE_EXTENSIONS,
+  availableExtensions,
   children,
   extensionsConfig,
   initialKeybindingOverrides,
@@ -144,6 +148,7 @@ export function WorkbenchProvider({
   userCommands = [],
   workspaceHostPort,
 }: WorkbenchProviderProps) {
+  const hostAvailableExtensions = availableExtensions ?? DEFAULT_AVAILABLE_EXTENSIONS;
   const deferredDisposeRef = useRef<DeferredProviderDispose | undefined>(undefined);
   const resolvedInitialLayout = useMemo(
     () =>
@@ -210,10 +215,10 @@ export function WorkbenchProvider({
       resolveEditorResource: workspaceHostPort?.resolveResource?.bind(workspaceHostPort),
     });
     const installedRecords = loadInstalledExtensions(installedExtensionsStorageKey);
-    const resolvedAvailableExtensions = resolveInstalledAvailableExtensions(
-      availableExtensions,
-      installedRecords,
-    );
+    const resolvedAvailableExtensions =
+      availableExtensions === undefined
+        ? resolveInstalledAvailableExtensions(hostAvailableExtensions, installedRecords)
+        : hostAvailableExtensions;
     const config = mergeExtensionsConfigWithInstallState(
       extensionsConfig ??
         ({
@@ -286,6 +291,7 @@ export function WorkbenchProvider({
     };
   }, [
     availableExtensions,
+    hostAvailableExtensions,
     extensionsConfig,
     initialWorkspaceSettings,
     installedExtensionsStorageKey,
@@ -364,6 +370,10 @@ export function WorkbenchProvider({
           },
           revealPath: publishExplorerRevealRequest,
         });
+        if (commandId === BUILTIN_EXTENSIONS_FOCUS_COMMAND_ID) {
+          services.layoutService.setActiveViewContainer(BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID);
+          services.layoutService.setSideBarVisible(true);
+        }
         return result;
       },
       extensionRegistry: services.extensionRegistry,

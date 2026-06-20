@@ -14,6 +14,7 @@ describe('bundled workbench extensions', () => {
       'workbench-kit.builtin.commands',
       'workbench-kit.builtin.editor',
       'workbench-kit.builtin.explorer',
+      'workbench-kit.builtin.extensions',
       'workbench-kit.builtin.keybindings',
       'workbench-kit.builtin.search',
       'workbench-kit.builtin.settings',
@@ -70,6 +71,10 @@ describe('bundled workbench extensions', () => {
     expect(registry.views.getView('workbench-kit.builtin.commands.panel')).toMatchObject({
       containerId: 'commands',
       name: 'Commands',
+    });
+    expect(registry.views.getView('workbench-kit.builtin.extensions.panel')).toMatchObject({
+      containerId: 'extensions',
+      name: 'Extensions',
     });
     expect(registry.commands.getCommand('workbench-kit.builtin.commands.refresh')).toMatchObject({
       title: 'Refresh Command Registry',

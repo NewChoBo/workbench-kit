@@ -53,6 +53,7 @@ import {
   BUILTIN_EXPLORER_MOVE_COMMAND_ID,
   BUILTIN_EXPLORER_REVEAL_COMMAND_ID,
 } from './explorer-view-data.js';
+import { BUILTIN_EXTENSIONS_FOCUS_COMMAND_ID } from './extensions-view-data.js';
 
 function ExplorerRevealCommandProbe({
   initialState,
@@ -129,6 +130,26 @@ function WorkspaceCreateCommandProbe({ onResult }: { onResult: (result: unknown)
     let cancelled = false;
 
     void executeCommand('workspace.newFile', { path: 'notes.md' }).then((result) => {
+      if (!cancelled) {
+        onResult(result);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [executeCommand, onResult]);
+
+  return null;
+}
+
+function FocusExtensionsCommandProbe({ onResult }: { onResult: (result: unknown) => void }) {
+  const { executeCommand } = useWorkbench();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void executeCommand(BUILTIN_EXTENSIONS_FOCUS_COMMAND_ID).then((result) => {
       if (!cancelled) {
         onResult(result);
       }
@@ -318,6 +339,62 @@ describe('WorkbenchProvider', () => {
 
     expect(markup).toContain('aria-label="Explorer"');
     expect(markup).not.toContain('aria-label="Search"');
+  });
+
+  it('opens the extensions sidebar from the built-in focus command', async () => {
+    const commandResults: unknown[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.extensions'],
+            recommendations: [],
+          }}
+          initialLayout={parseWorkbenchLayoutConfig({
+            sideBar: {
+              visible: false,
+            },
+          })}
+        >
+          <FocusExtensionsCommandProbe
+            onResult={(result) => {
+              commandResults.push(result);
+            }}
+          />
+          <TestWorkbenchShell catalogUrl="" editorArea={<main>Editor Area</main>} />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await act(async () => {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        if (container.querySelector('[data-view-id="workbench-kit.builtin.extensions.panel"]')) {
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    });
+    await flushReactEffects();
+
+    expect(commandResults[0]).toMatchObject({
+      focused: true,
+      viewId: 'workbench-kit.builtin.extensions.panel',
+    });
+    expect(
+      container.querySelector('[data-view-id="workbench-kit.builtin.extensions.panel"]'),
+    ).toBeTruthy();
+    expect(container.textContent).toContain('Extensions');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
   });
 
   it('opens contributed settings in a modal overlay', async () => {

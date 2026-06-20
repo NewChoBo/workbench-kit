@@ -3,21 +3,23 @@
 > **할 일·우선순위 전용.** 소개·빠른 시작은 [`README.md`](./README.md).  
 > 영문 DoD: [`completion-plan.md`](./docs/workbench/completion-plan.md) · CSS 공통화: [`layout-css-improvement-plan-2026-06-20.md`](./docs/workbench/layout-css-improvement-plan-2026-06-20.md)
 
-**갱신:** 2026-06-20 (Extension Platform MVP — 미커밋)
+**갱신:** 2026-06-20 (Extension sidebar + management commonization — 미커밋)
 
 ---
 
 ## Extension Platform MVP (2026-06-20, 미커밋)
 
-| 항목                                      | 상태                            |
-| ----------------------------------------- | ------------------------------- |
-| WB-33 install (bundled id + localStorage) | **MVP**                         |
-| WB-34/35 관리 화면 (Installed \| Browse)  | **MVP** — Settings → Extensions |
-| WB-36 theme/locale registry + samples     | **MVP** — Appearance dropdown   |
-| docs `extension-install.md`               | 추가                            |
-| `validate:static`                         | 통과                            |
+| 항목                                      | 상태                                        |
+| ----------------------------------------- | ------------------------------------------- |
+| WB-33 install (bundled id + localStorage) | **MVP**                                     |
+| WB-34/35 관리 화면 (Installed \| Browse)  | **MVP** — Activity Bar → Extensions sidebar |
+| WB-36 theme/locale registry + samples     | **MVP** — Appearance dropdown               |
+| docs `extension-install.md`               | 추가                                        |
+| `validate:full`                           | 통과                                        |
 
-**잔여:** remote manifest-url, reload 없는 toggle, locale 전역 UI, `validate:full`, 커밋
+**추가 진행:** Extensions built-in activity/sidebar, management card/filter/group 공통화, focus command → sidebar 연결
+
+**잔여:** remote manifest-url, reload 없는 toggle, locale 전역 UI, 커밋
 
 ---
 
@@ -36,7 +38,7 @@
 
 **분석·운영**
 
-- Lane A: WB-23~31 → **S12 closeout** (`validate:full`, 영문 plan 정렬)
+- Lane A: WB-23~31 → **S12 closeout** (영문 plan 정렬)
 - npm OIDC trusted publish, mock admin 서버 **불필요**
 - **외부 UI 템플릿·스타터 키트**는 Workbench에 붙이는 대상이 아니라 **유형별 제공 방식 벤치마크** (아래 § 참고)
 - 한글 todo는 **이 파일만**; WB-32~36은 `todo.md`에 동기화하지 않음
@@ -91,8 +93,8 @@ Phase 1 UI 공통화(Settings scroll, `WorkbenchStoryHost`, devtools tokens) —
 | ----- | ------------------ | -------------------------------------------------------- |
 | WB-32 | 프로젝트 구조 문서 | **MVP** (`extension-install.md`, `project-structure.md`) |
 | WB-33 | Extension 설치     | **MVP** (bundled + localStorage; remote URL 후속)        |
-| WB-34 | Extension 관리     | **MVP** (Settings Extensions 탭)                         |
-| WB-35 | Extension store    | **MVP** (`extension-catalog.json` Browse)                |
+| WB-34 | Extension 관리     | **MVP** (Extensions activity/sidebar)                    |
+| WB-35 | Extension store    | **MVP** (`extension-catalog.json` Browse + sidebar UI)   |
 | WB-36 | 테마·언어팩        | **MVP** (registry + Appearance 옵션)                     |
 
 기타: EditorService layout, command-core 잔여, sidebar sub-track P1-4
@@ -109,11 +111,11 @@ mock admin 서버 · API 안정화 전 `workbench-react` npm 공개 · runtime n
 
 ## 완료 기준선
 
-| 항목              | 상태                       |
-| ----------------- | -------------------------- |
-| WB-23 ~ WB-31     | 완료                       |
-| Phase 1 UI 공통화 | 완료 (`c444056`)           |
-| docs/guides       | `a859c84`                  |
-| Lane A            | S12 + `validate:full` 잔여 |
+| 항목              | 상태                   |
+| ----------------- | ---------------------- |
+| WB-23 ~ WB-31     | 완료                   |
+| Phase 1 UI 공통화 | 완료 (`c444056`)       |
+| docs/guides       | `a859c84`              |
+| Lane A            | S12 문서 closeout 잔여 |
 
 **최근:** `c444056` · `3813df6` · `a859c84`

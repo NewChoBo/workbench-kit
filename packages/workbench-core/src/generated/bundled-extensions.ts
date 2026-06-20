@@ -4,6 +4,7 @@ import * as builtinChatModule from '../../../../extensions/builtin.chat/src/inde
 import * as builtinCommandsModule from '../../../../extensions/builtin.commands/src/index.ts';
 import * as builtinEditorModule from '../../../../extensions/builtin.editor/src/index.ts';
 import * as builtinExplorerModule from '../../../../extensions/builtin.explorer/src/index.ts';
+import * as builtinExtensionsModule from '../../../../extensions/builtin.extensions/src/index.ts';
 import * as builtinKeybindingsModule from '../../../../extensions/builtin.keybindings/src/index.ts';
 import * as builtinSearchModule from '../../../../extensions/builtin.search/src/index.ts';
 import * as builtinSettingsModule from '../../../../extensions/builtin.settings/src/index.ts';
@@ -358,6 +359,62 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
       },
     },
     module: builtinExplorerModule,
+  },
+  {
+    extensionPath: 'extensions/builtin.extensions',
+    manifest: {
+      schemaVersion: 1,
+      id: 'workbench-kit.builtin.extensions',
+      name: 'builtin-extensions',
+      displayName: 'Extensions',
+      version: '0.0.0',
+      publisher: 'workbench-kit',
+      engines: {
+        workbench: '^0.0.0',
+        extensionApi: '^0.0.0',
+      },
+      activationEvents: [
+        'onView:workbench-kit.builtin.extensions.panel',
+        'onCommand:workbench-kit.builtin.extensions.focus',
+      ],
+      contributes: {
+        commands: [
+          {
+            command: 'workbench-kit.builtin.extensions.focus',
+            title: 'Focus Extensions Sidebar',
+            category: 'Workbench',
+          },
+        ],
+        viewContainers: {
+          activitybar: [
+            {
+              id: 'extensions',
+              title: 'Extensions',
+              icon: 'extensions',
+              order: 35,
+            },
+          ],
+        },
+        activities: [
+          {
+            id: 'workbench-kit.builtin.extensions.activity',
+            viewContainerId: 'extensions',
+            icon: 'extensions',
+            title: 'Extensions',
+            order: 35,
+          },
+        ],
+        views: {
+          extensions: [
+            {
+              id: 'workbench-kit.builtin.extensions.panel',
+              name: 'Extensions',
+            },
+          ],
+        },
+      },
+    },
+    module: builtinExtensionsModule,
   },
   {
     extensionPath: 'extensions/builtin.keybindings',

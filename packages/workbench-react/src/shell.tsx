@@ -48,6 +48,11 @@ import {
   BUILTIN_COMMANDS_VIEW_CONTAINER_ID,
   isBuiltinCommandsViewRenderData,
 } from './commands-view-data.js';
+import { BuiltinExtensionsView } from './extensions-view.js';
+import {
+  BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID,
+  isBuiltinExtensionsViewRenderData,
+} from './extensions-view-data.js';
 import {
   filterActivityBarItems,
   sortActivityBarItems,
@@ -61,11 +66,9 @@ import {
   MANAGE_KEYBINDINGS_COMMAND_ID,
   WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
   WORKBENCH_COMMANDS_SETTINGS_CATEGORY_ID,
-  WORKBENCH_EXTENSIONS_SETTINGS_CATEGORY_ID,
   WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID,
   WorkbenchAccountManagementSettings,
   WorkbenchCommandManagementSettings,
-  WorkbenchExtensionManagementSettings,
   WorkbenchKeybindingManagementSettings,
   createWorkbenchManagementPaletteCommands,
   type WorkbenchAccountManagementInput,
@@ -203,12 +206,6 @@ export function WorkbenchShell({
         label: 'Keyboard Shortcuts',
         title: 'Keyboard shortcut management',
       });
-      managementCategories.push({
-        content: <WorkbenchExtensionManagementSettings catalogUrl={catalogUrl} />,
-        id: WORKBENCH_EXTENSIONS_SETTINGS_CATEGORY_ID,
-        label: 'Extensions',
-        title: 'Extension management',
-      });
     }
 
     if (accountManagement) {
@@ -234,7 +231,6 @@ export function WorkbenchShell({
     ];
   }, [
     accountManagement,
-    catalogUrl,
     commandHost,
     extensionRegistry,
     locale,
@@ -348,7 +344,8 @@ export function WorkbenchShell({
         }
 
         if (command.id === MANAGE_EXTENSIONS_COMMAND_ID) {
-          openSettings(WORKBENCH_EXTENSIONS_SETTINGS_CATEGORY_ID);
+          layoutService.setActiveViewContainer(BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID);
+          layoutService.setSideBarVisible(true);
           return true;
         }
 
@@ -416,7 +413,8 @@ export function WorkbenchShell({
         maxPrimarySizePercent: 40,
         minPrimarySizePercent: 16,
         node:
-          primarySidebar ?? renderDefaultPrimarySidebar(extensionRegistry, activeViewContainerId),
+          primarySidebar ??
+          renderDefaultPrimarySidebar(extensionRegistry, activeViewContainerId, catalogUrl),
         onSizePercentChange: (sizePercent) => {
           layoutService.setSideBarSizePercent(sizePercent);
         },
@@ -943,6 +941,7 @@ function SettingContributionField({
 function renderDefaultPrimarySidebar(
   extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
   activeViewContainerId: string | undefined,
+  catalogUrl?: string | undefined,
 ) {
   const views = activeViewContainerId
     ? extensionRegistry.views.getViews(activeViewContainerId)
@@ -959,6 +958,7 @@ function renderDefaultPrimarySidebar(
       {views.map((view) => (
         <section key={view.id} data-view-id={view.id}>
           <WorkbenchViewHost
+            catalogUrl={catalogUrl}
             fallback={view.name}
             provider={extensionRegistry.views.getViewProvider(view.id)}
             viewHostFactories={extensionRegistry.viewHostFactories}
@@ -971,11 +971,13 @@ function renderDefaultPrimarySidebar(
 }
 
 function WorkbenchViewHost({
+  catalogUrl,
   fallback,
   provider,
   viewHostFactories,
   viewId,
 }: {
+  catalogUrl?: string | undefined;
   fallback: ReactNode;
   provider: ViewProvider | undefined;
   viewHostFactories: ViewHostFactoryRegistry;
@@ -1033,7 +1035,7 @@ function WorkbenchViewHost({
       onBlur={(event) => notifyViewHostBlur(host, event)}
       onFocus={(event) => notifyViewHostFocus(host, event)}
     >
-      {toViewHostReactNode(host.render(), fallback)}
+      {toViewHostReactNode(host.render(), fallback, { catalogUrl })}
     </div>
   );
 }
@@ -1072,7 +1074,11 @@ function toReactNode(value: unknown, fallback: ReactNode): ReactNode {
   return fallback;
 }
 
-function toViewHostReactNode(value: unknown, fallback: ReactNode): ReactNode {
+function toViewHostReactNode(
+  value: unknown,
+  fallback: ReactNode,
+  options: { catalogUrl?: string | undefined } = {},
+): ReactNode {
   if (isBuiltinExplorerViewRenderData(value)) {
     return <BuiltinExplorerView />;
   }
@@ -1087,6 +1093,10 @@ function toViewHostReactNode(value: unknown, fallback: ReactNode): ReactNode {
 
   if (isBuiltinCommandsViewRenderData(value)) {
     return <BuiltinCommandsView />;
+  }
+
+  if (isBuiltinExtensionsViewRenderData(value)) {
+    return <BuiltinExtensionsView catalogUrl={options.catalogUrl} />;
   }
 
   return toReactNode(value, fallback);

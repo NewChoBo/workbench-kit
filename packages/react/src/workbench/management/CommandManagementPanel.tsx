@@ -5,6 +5,8 @@ import {
   countCommandManagementEntries,
   filterCommandManagementGroups,
 } from './build-command-management-groups.js';
+import { ManagementCard, ManagementCardList } from './ManagementCard.js';
+import { ManagementGroup, ManagementGroups } from './ManagementGroup.js';
 import {
   ManagementPanelEmptyState,
   ManagementPanelFrame,
@@ -67,53 +69,60 @@ export function CommandManagementPanel({
       {filteredGroups.length === 0 ? (
         <ManagementPanelEmptyState>{emptyLabel}</ManagementPanelEmptyState>
       ) : (
-        <div className="workbench-management-groups">
+        <ManagementGroups>
           {filteredGroups.map((group) => (
-            <section key={group.id} aria-label={group.label} className="workbench-management-group">
-              <header className="workbench-management-group__header">
-                <h3 className="workbench-management-group__title">{group.label}</h3>
-                <Badge variant="muted">{group.entries.length}</Badge>
-              </header>
-              <ul className="workbench-management-list">
+            <ManagementGroup
+              key={group.id}
+              count={group.entries.length}
+              label={group.label}
+              labelId={`workbench-command-group-${group.id}`}
+              variant="section"
+            >
+              <ManagementCardList>
                 {group.entries.map((entry) => (
-                  <li key={entry.id} className="workbench-management-list-item">
-                    <div className="workbench-management-list-item__main">
-                      <span className="workbench-management-list-item__label">{entry.label}</span>
-                      <code className="workbench-management-list-item__id">{entry.id}</code>
-                      <div className="workbench-management-list-item__meta">
-                        {entry.category ? <Badge variant="muted">{entry.category}</Badge> : null}
-                        {entry.keybinding ? (
-                          <Badge variant="muted">{entry.keybinding}</Badge>
-                        ) : null}
-                        <Badge variant={statusBadgeVariant(entry.status)}>
-                          {entry.status === 'available' ? 'Runnable' : entry.status}
-                        </Badge>
-                      </div>
-                      {entry.menuSurfaces?.length ? (
-                        <p className="workbench-management-list-item__menus">
-                          Menus: {entry.menuSurfaces.join(', ')}
-                        </p>
-                      ) : null}
-                    </div>
-                    <Button
-                      disabled={
-                        entry.status !== 'available' ||
-                        !onRunCommand ||
-                        lastRun?.status === 'running'
+                  <li key={entry.id}>
+                    <ManagementCard
+                      actions={
+                        <Button
+                          disabled={
+                            entry.status !== 'available' ||
+                            !onRunCommand ||
+                            lastRun?.status === 'running'
+                          }
+                          type="button"
+                          onClick={() => {
+                            void onRunCommand?.(entry.id);
+                          }}
+                        >
+                          Run
+                        </Button>
                       }
-                      type="button"
-                      onClick={() => {
-                        void onRunCommand?.(entry.id);
-                      }}
-                    >
-                      Run
-                    </Button>
+                      badges={
+                        <>
+                          {entry.category ? <Badge variant="muted">{entry.category}</Badge> : null}
+                          {entry.keybinding ? (
+                            <Badge variant="muted">{entry.keybinding}</Badge>
+                          ) : null}
+                          <Badge variant={statusBadgeVariant(entry.status)}>
+                            {entry.status === 'available' ? 'Runnable' : entry.status}
+                          </Badge>
+                        </>
+                      }
+                      description={
+                        entry.menuSurfaces?.length
+                          ? `Menus: ${entry.menuSurfaces.join(', ')}`
+                          : undefined
+                      }
+                      id={entry.id}
+                      layout="row"
+                      title={entry.label}
+                    />
                   </li>
                 ))}
-              </ul>
-            </section>
+              </ManagementCardList>
+            </ManagementGroup>
           ))}
-        </div>
+        </ManagementGroups>
       )}
     </ManagementPanelFrame>
   );

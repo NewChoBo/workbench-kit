@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.builtin.extensions",
+  "name": "builtin-extensions",
+  "displayName": "Extensions",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": [
+    "onView:workbench-kit.builtin.extensions.panel",
+    "onCommand:workbench-kit.builtin.extensions.focus"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "workbench-kit.builtin.extensions.focus",
+        "title": "Focus Extensions Sidebar",
+        "category": "Workbench"
+      }
+    ],
+    "viewContainers": {
+      "activitybar": [
+        {
+          "id": "extensions",
+          "title": "Extensions",
+          "icon": "extensions",
+          "order": 35
+        }
+      ]
+    },
+    "activities": [
+      {
+        "id": "workbench-kit.builtin.extensions.activity",
+        "viewContainerId": "extensions",
+        "icon": "extensions",
+        "title": "Extensions",
+        "order": 35
+      }
+    ],
+    "views": {
+      "extensions": [
+        {
+          "id": "workbench-kit.builtin.extensions.panel",
+          "name": "Extensions"
+        }
+      ]
+    }
+  }
+}

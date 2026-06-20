@@ -47,7 +47,7 @@ export function createWorkbenchManagementPaletteCommands(): readonly WorkbenchCo
       category: 'Workbench',
       icon: 'codicon-extensions',
       id: MANAGE_EXTENSIONS_COMMAND_ID,
-      label: 'Manage Extensions',
+      label: 'Extensions',
     },
     {
       category: 'Accounts',

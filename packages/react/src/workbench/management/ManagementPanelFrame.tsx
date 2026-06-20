@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
-import { ClearableTextInput } from '../../primitives/ClearableTextInput';
 import { cx } from '../../utils/cx';
 import { WorkbenchSettingsSection } from '../settings/WorkbenchSettingsSection';
+import { ManagementPanelControls } from './ManagementPanelControls.js';
 import type { CommandManagementRunState } from './types.js';
 import { formatCommandRunState } from './format-command-run-state.js';
 
@@ -54,18 +54,13 @@ export function ManagementPanelToolbar({
   onQueryChange,
 }: ManagementPanelToolbarProps) {
   return (
-    <div className="workbench-management-toolbar">
-      <ClearableTextInput
-        aria-label={filterLabel}
-        className="workbench-management-search"
-        clearLabel="Clear filter"
-        placeholder={filterPlaceholder}
-        value={query}
-        onClear={() => onQueryChange?.('')}
-        onValueChange={(value) => onQueryChange?.(value)}
-      />
-      <ManagementPanelSummary>{summary}</ManagementPanelSummary>
-    </div>
+    <ManagementPanelControls
+      filterLabel={filterLabel}
+      filterPlaceholder={filterPlaceholder}
+      query={query}
+      summary={summary}
+      onQueryChange={onQueryChange}
+    />
   );
 }
 
@@ -79,6 +74,10 @@ export function ManagementPanelSummary({ children }: { children: ReactNode }) {
 
 export function ManagementPanelEmptyState({ children }: { children: ReactNode }) {
   return <p className="workbench-management-empty">{children}</p>;
+}
+
+export function ManagementPanelNotice({ children }: { children: ReactNode }) {
+  return <p className="workbench-management-notice">{children}</p>;
 }
 
 export function ManagementPanelRunState({

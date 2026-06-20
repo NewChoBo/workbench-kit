@@ -1,12 +1,20 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
 import { TabbedPanels } from '../../primitives/WorkbenchChrome';
-import { cx } from '../../utils/cx';
+import {
+  extensionCategoryIcon,
+  extensionCategoryIconTone,
+  formatExtensionCategoryLabel,
+} from './extension-category-display.js';
+import { ManagementFilterChips } from './ManagementFilterChips.js';
+import { ManagementCard, ManagementCardList } from './ManagementCard.js';
+import { ManagementGroup, ManagementGroups } from './ManagementGroup.js';
+import { ManagementPanelControls } from './ManagementPanelControls.js';
 import {
   ManagementPanelEmptyState,
   ManagementPanelFrame,
-  ManagementPanelToolbar,
+  ManagementPanelNotice,
 } from './ManagementPanelFrame.js';
 import type {
   ExtensionCatalogBrowseEntry,
@@ -15,8 +23,14 @@ import type {
 } from './types.js';
 
 const BROWSE_CATEGORIES = ['all', 'feature', 'editor', 'theme', 'language'] as const;
+const EXTENSION_MANAGEMENT_DEFAULT_TAB = 'installed' as const;
 
 type BrowseCategoryFilter = (typeof BROWSE_CATEGORIES)[number];
+
+const CATEGORY_FILTER_OPTIONS = BROWSE_CATEGORIES.map((category) => ({
+  label: category === 'all' ? 'All' : formatExtensionCategoryLabel(category),
+  value: category,
+}));
 
 export function ExtensionManagementPanel({
   browseEntries,
@@ -27,7 +41,9 @@ export function ExtensionManagementPanel({
   onInstall,
   onToggleEnabled,
 }: ExtensionManagementPanelProps) {
-  const [activeTab, setActiveTab] = useState<'installed' | 'browse'>('installed');
+  const [activeTab, setActiveTab] = useState<'installed' | 'browse'>(
+    EXTENSION_MANAGEMENT_DEFAULT_TAB,
+  );
   const [installedQuery, setInstalledQuery] = useState('');
   const [browseQuery, setBrowseQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<BrowseCategoryFilter>('all');
@@ -47,6 +63,7 @@ export function ExtensionManagementPanel({
   );
 
   const browseGroups = useMemo(() => groupBrowseEntries(filteredBrowse), [filteredBrowse]);
+  const showBrowseGroups = categoryFilter === 'all' && browseGroups.length > 1;
 
   return (
     <ManagementPanelFrame
@@ -57,6 +74,7 @@ export function ExtensionManagementPanel({
     >
       <TabbedPanels
         activeId={activeTab}
+        className="workbench-management-tabs"
         items={[
           {
             id: 'installed',
@@ -81,8 +99,10 @@ export function ExtensionManagementPanel({
                 catalogLoading={catalogLoading}
                 categoryFilter={categoryFilter}
                 emptyLabel="No catalog extensions match the current filter."
+                entries={filteredBrowse}
                 groups={browseGroups}
                 query={browseQuery}
+                showGroups={showBrowseGroups}
                 summary={`${filteredBrowse.length} of ${browseEntries.length} in catalog`}
                 onCategoryChange={setCategoryFilter}
                 onInstall={onInstall}
@@ -93,9 +113,9 @@ export function ExtensionManagementPanel({
         ]}
         onSelect={(tabId) => setActiveTab(tabId as 'installed' | 'browse')}
       />
-      <p className="workbench-extension-management-notice">
+      <ManagementPanelNotice>
         Installing or toggling extensions reloads the workbench to apply contributions.
-      </p>
+      </ManagementPanelNotice>
     </ManagementPanelFrame>
   );
 }
@@ -117,7 +137,7 @@ function InstalledExtensionsTab({
 }) {
   return (
     <>
-      <ManagementPanelToolbar
+      <ManagementPanelControls
         filterLabel="Filter installed extensions"
         filterPlaceholder="Search by name, id, or category"
         query={query}
@@ -127,10 +147,10 @@ function InstalledExtensionsTab({
       {entries.length === 0 ? (
         <ManagementPanelEmptyState>{emptyLabel}</ManagementPanelEmptyState>
       ) : (
-        <ul className="workbench-extension-card-list">
+        <ManagementCardList>
           {entries.map((entry) => (
             <li key={entry.id}>
-              <ExtensionCard
+              <ManagementCard
                 actions={
                   <Button
                     compact
@@ -142,23 +162,27 @@ function InstalledExtensionsTab({
                     {entry.enabled ? 'Disable' : 'Enable'}
                   </Button>
                 }
-                category={entry.category}
-                description={entry.description}
-                displayName={entry.displayName}
-                id={entry.id}
-                status={
-                  entry.source === 'bundled' ? (
-                    <Badge variant="muted">Built-in</Badge>
-                  ) : (
-                    <Badge variant={entry.enabled ? 'accent' : 'muted'}>
-                      {entry.enabled ? 'Enabled' : 'Disabled'}
-                    </Badge>
-                  )
+                badges={
+                  <>
+                    <Badge variant="muted">{formatExtensionCategoryLabel(entry.category)}</Badge>
+                    {entry.source === 'bundled' ? (
+                      <Badge variant="muted">Built-in</Badge>
+                    ) : (
+                      <Badge variant={entry.enabled ? 'accent' : 'muted'}>
+                        {entry.enabled ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    )}
+                  </>
                 }
+                description={entry.description}
+                icon={extensionCategoryIcon(entry.category)}
+                iconTone={extensionCategoryIconTone(entry.category)}
+                id={entry.id}
+                title={entry.displayName}
               />
             </li>
           ))}
-        </ul>
+        </ManagementCardList>
       )}
     </>
   );
@@ -169,158 +193,130 @@ function BrowseExtensionsTab({
   catalogLoading,
   categoryFilter,
   emptyLabel,
+  entries,
   groups,
   onCategoryChange,
   onInstall,
   onQueryChange,
   query,
+  showGroups,
   summary,
 }: {
   catalogError?: string | undefined;
   catalogLoading?: boolean | undefined;
   categoryFilter: BrowseCategoryFilter;
   emptyLabel: string;
+  entries: readonly ExtensionCatalogBrowseEntry[];
   groups: ReadonlyArray<{ category: string; entries: readonly ExtensionCatalogBrowseEntry[] }>;
   onCategoryChange: (category: BrowseCategoryFilter) => void;
   onInstall?: ExtensionManagementPanelProps['onInstall'];
   onQueryChange: (query: string) => void;
   query: string;
+  showGroups: boolean;
   summary: string;
 }) {
+  const flatEntries = showGroups ? [] : entries;
+
   return (
     <>
-      <div className="workbench-extension-browse-controls">
-        <ManagementPanelToolbar
-          filterLabel="Filter catalog extensions"
-          filterPlaceholder="Search catalog"
-          query={query}
-          summary={summary}
-          onQueryChange={onQueryChange}
-        />
-        <div
-          aria-label="Catalog categories"
-          className="workbench-extension-category-filters"
-          role="toolbar"
-        >
-          {BROWSE_CATEGORIES.map((category) => (
-            <button
-              key={category}
-              aria-pressed={categoryFilter === category}
-              className={cx(
-                'workbench-extension-category-filter',
-                categoryFilter === category && 'workbench-extension-category-filter--active',
-              )}
-              type="button"
-              onClick={() => onCategoryChange(category)}
-            >
-              {category === 'all' ? 'All' : formatCategoryLabel(category)}
-            </button>
-          ))}
-        </div>
-      </div>
+      <ManagementPanelControls
+        filterLabel="Filter catalog extensions"
+        filterPlaceholder="Search catalog"
+        filters={
+          <ManagementFilterChips
+            ariaLabel="Catalog categories"
+            options={CATEGORY_FILTER_OPTIONS}
+            value={categoryFilter}
+            onChange={onCategoryChange}
+          />
+        }
+        query={query}
+        summary={summary}
+        onQueryChange={onQueryChange}
+      />
       {catalogLoading ? (
         <ManagementPanelEmptyState>Loading catalog…</ManagementPanelEmptyState>
       ) : null}
       {catalogError ? <ManagementPanelEmptyState>{catalogError}</ManagementPanelEmptyState> : null}
-      {!catalogLoading && !catalogError && groups.length === 0 ? (
+      {!catalogLoading && !catalogError && entries.length === 0 ? (
         <ManagementPanelEmptyState>{emptyLabel}</ManagementPanelEmptyState>
       ) : null}
-      {!catalogLoading && !catalogError && groups.length > 0 ? (
-        <div className="workbench-extension-browse-groups">
+      {!catalogLoading && !catalogError && showGroups ? (
+        <ManagementGroups>
           {groups.map((group) => (
-            <section
+            <ManagementGroup
               key={group.category}
-              aria-label={formatCategoryLabel(group.category)}
-              className="workbench-extension-browse-group"
+              count={group.entries.length}
+              icon={extensionCategoryIcon(group.category)}
+              label={formatExtensionCategoryLabel(group.category)}
+              labelId={`workbench-extension-category-${group.category}`}
+              variant="section"
             >
-              <header className="workbench-extension-browse-group__header">
-                <i
-                  aria-hidden
-                  className={cx(
-                    'codicon',
-                    categoryIcon(group.category),
-                    'workbench-extension-browse-group__icon',
-                  )}
-                />
-                <h3 className="workbench-extension-browse-group__title">
-                  {formatCategoryLabel(group.category)}
-                </h3>
-                <Badge variant="muted">{group.entries.length}</Badge>
-              </header>
-              <ul className="workbench-extension-card-list">
+              <ManagementCardList>
                 {group.entries.map((entry) => (
                   <li key={entry.id}>
-                    <ExtensionCard
-                      actions={
-                        <Button
-                          compact
-                          disabled={!onInstall || entry.installed}
-                          icon={entry.installed ? 'check' : 'cloud-download'}
-                          type="button"
-                          variant={entry.installed ? 'default' : 'primary'}
-                          onClick={() => onInstall?.(entry)}
-                        >
-                          {entry.installed ? 'Installed' : 'Install'}
-                        </Button>
-                      }
-                      category={entry.category}
-                      description={entry.description}
-                      displayName={entry.displayName}
-                      id={entry.id}
-                      status={entry.installed ? <Badge variant="accent">Installed</Badge> : null}
+                    <ExtensionCatalogCard
+                      entry={entry}
+                      onInstall={onInstall}
+                      showCategory={false}
                     />
                   </li>
                 ))}
-              </ul>
-            </section>
+              </ManagementCardList>
+            </ManagementGroup>
           ))}
-        </div>
+        </ManagementGroups>
+      ) : null}
+      {!catalogLoading && !catalogError && !showGroups && flatEntries.length > 0 ? (
+        <ManagementCardList>
+          {flatEntries.map((entry) => (
+            <li key={entry.id}>
+              <ExtensionCatalogCard entry={entry} onInstall={onInstall} showCategory />
+            </li>
+          ))}
+        </ManagementCardList>
       ) : null}
     </>
   );
 }
 
-function ExtensionCard({
-  actions,
-  category,
-  description,
-  displayName,
-  id,
-  status,
+function ExtensionCatalogCard({
+  entry,
+  onInstall,
+  showCategory,
 }: {
-  actions: ReactNode;
-  category: string;
-  description?: string | undefined;
-  displayName: string;
-  id: string;
-  status?: ReactNode;
+  entry: ExtensionCatalogBrowseEntry;
+  onInstall?: ExtensionManagementPanelProps['onInstall'];
+  showCategory: boolean;
 }) {
   return (
-    <article className="workbench-extension-card">
-      <div
-        aria-hidden
-        className={cx(
-          'workbench-extension-card__icon-wrap',
-          `workbench-extension-card__icon-wrap--${sanitizeCategoryClass(category)}`,
-        )}
-      >
-        <i className={cx('codicon', categoryIcon(category), 'workbench-extension-card__icon')} />
-      </div>
-      <div className="workbench-extension-card__body">
-        <div className="workbench-extension-card__header">
-          <span className="workbench-extension-card__title">{displayName}</span>
-          <div className="workbench-extension-card__badges">
-            <Badge variant="muted">{formatCategoryLabel(category)}</Badge>
-            {status}
-          </div>
-        </div>
-        <code className="workbench-extension-card__id">{id}</code>
-        {description ? (
-          <p className="workbench-extension-card__description">{description}</p>
-        ) : null}
-      </div>
-      <div className="workbench-extension-card__actions">{actions}</div>
-    </article>
+    <ManagementCard
+      actions={
+        <Button
+          compact
+          disabled={!onInstall || entry.installed}
+          icon={entry.installed ? 'check' : 'cloud-download'}
+          type="button"
+          variant={entry.installed ? 'default' : 'primary'}
+          onClick={() => onInstall?.(entry)}
+        >
+          {entry.installed ? 'Installed' : 'Install'}
+        </Button>
+      }
+      badges={
+        <>
+          {showCategory ? (
+            <Badge variant="muted">{formatExtensionCategoryLabel(entry.category)}</Badge>
+          ) : null}
+          {entry.installed ? <Badge variant="accent">Installed</Badge> : null}
+        </>
+      }
+      description={entry.description}
+      icon={extensionCategoryIcon(entry.category)}
+      iconTone={extensionCategoryIconTone(entry.category)}
+      id={entry.id}
+      title={entry.displayName}
+    />
   );
 }
 
@@ -375,36 +371,4 @@ function filterBrowseEntries(
       .toLowerCase()
       .includes(normalized);
   });
-}
-
-function formatCategoryLabel(category: string) {
-  switch (category) {
-    case 'feature':
-      return 'Features';
-    case 'editor':
-      return 'Editors';
-    case 'theme':
-      return 'Themes';
-    case 'language':
-      return 'Languages';
-    default:
-      return category.charAt(0).toUpperCase() + category.slice(1);
-  }
-}
-
-function categoryIcon(category: string) {
-  switch (category) {
-    case 'theme':
-      return 'codicon-symbol-color';
-    case 'language':
-      return 'codicon-globe';
-    case 'editor':
-      return 'codicon-file-code';
-    default:
-      return 'codicon-extensions';
-  }
-}
-
-function sanitizeCategoryClass(category: string) {
-  return category.replace(/[^a-z0-9-]/gi, '-').toLowerCase();
 }
