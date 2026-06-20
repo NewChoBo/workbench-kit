@@ -42,7 +42,7 @@ export function createWorkbenchManagementPaletteCommands(): readonly WorkbenchCo
       category: 'Accounts',
       icon: 'codicon-account',
       id: MANAGE_ACCOUNTS_COMMAND_ID,
-      label: 'Manage Accounts',
+      label: 'Manage Linked Accounts',
     },
   ];
 }
@@ -74,5 +74,11 @@ export function WorkbenchAccountManagementSettings({
 }: {
   accountManagement: WorkbenchAccountManagementInput;
 }) {
-  return <AccountManagementPanel {...accountManagement} />;
+  return (
+    <AccountManagementPanel
+      automationHint="Linked accounts are project integrations exposed by extensions or host providers. Your Workbench service profile is managed from the profile menu."
+      emptyLabel="No linked project accounts are configured."
+      {...accountManagement}
+    />
+  );
 }

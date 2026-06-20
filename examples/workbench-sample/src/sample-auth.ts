@@ -1,22 +1,27 @@
-export const SAMPLE_AUTH_USERNAME = 'tester' as const;
-export const SAMPLE_AUTH_SESSION_KEY = 'workbench-sample.auth.session' as const;
+import { createSampleHostBackendClient } from './dummy-backend/index.js';
 
-export function validateSampleLogin(identifier: string, password: string): boolean {
-  return identifier.trim() === SAMPLE_AUTH_USERNAME && password === SAMPLE_AUTH_USERNAME;
+export * from './dummy-backend/index.js';
+
+const defaultSampleHostBackendClient = createSampleHostBackendClient();
+
+/** @deprecated Prefer `createSampleHostBackendClient().getSession()` */
+export function readSampleDummyBackendSession(workspaceLabel: string) {
+  return defaultSampleHostBackendClient.getSession({ workspaceLabel });
 }
 
-export function readSampleAuthSession(): boolean {
-  if (typeof sessionStorage === 'undefined') {
-    return false;
-  }
-
-  return sessionStorage.getItem(SAMPLE_AUTH_SESSION_KEY) === SAMPLE_AUTH_USERNAME;
+/** @deprecated Prefer `createSampleHostBackendClient().signIn()` */
+export function signInSampleDummyBackend(
+  credentials: { readonly identifier: string; readonly password: string },
+  workspaceLabel: string,
+) {
+  return defaultSampleHostBackendClient.signIn({
+    identifier: credentials.identifier,
+    password: credentials.password,
+    workspaceLabel,
+  });
 }
 
-export function writeSampleAuthSession(): void {
-  sessionStorage.setItem(SAMPLE_AUTH_SESSION_KEY, SAMPLE_AUTH_USERNAME);
-}
-
-export function clearSampleAuthSession(): void {
-  sessionStorage.removeItem(SAMPLE_AUTH_SESSION_KEY);
+/** @deprecated Prefer `createSampleHostBackendClient().signOut()` */
+export function signOutSampleDummyBackend() {
+  return defaultSampleHostBackendClient.signOut();
 }

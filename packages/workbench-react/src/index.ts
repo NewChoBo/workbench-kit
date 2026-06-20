@@ -84,6 +84,7 @@ export {
   type WorkbenchAccountManagementInput,
 } from './management-settings.js';
 export {
+  WORKBENCH_PROFILE_ACTIVITY_ITEM_ID,
   WORKBENCH_ACCOUNT_ACTIVITY_ITEM_ID,
   WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID,
   createWorkbenchSecondaryActivityItems,
@@ -91,3 +92,9 @@ export {
   type WorkbenchSecondaryActivityItemsInput,
   type WorkbenchSecondaryActivityRoute,
 } from './shell-secondary-actions.js';
+export {
+  WorkbenchProfileModal,
+  type WorkbenchProfileDetail,
+  type WorkbenchProfileInput,
+  type WorkbenchProfileModalProps,
+} from './workbench-profile-modal.js';

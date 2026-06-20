@@ -7,9 +7,9 @@ import type { AccountManagementPanelProps } from './types.js';
 export function AccountManagementPanel({
   accounts,
   activeAccountId,
-  automationHint = 'Accounts are discovered from the host auth provider. Switching providers and token refresh stay host-controlled.',
+  automationHint = 'Linked accounts are discovered from project integrations. Switching providers and token refresh stay host-controlled.',
   className,
-  emptyLabel = 'No signed-in accounts are available for this host.',
+  emptyLabel = 'No linked accounts are available for this project.',
   onSignOut,
   sessionLabel,
 }: AccountManagementPanelProps) {
@@ -22,7 +22,7 @@ export function AccountManagementPanel({
       <WorkbenchSettingsSection
         description={automationHint}
         id="workbench-account-management"
-        title="Signed-in Accounts"
+        title="Linked Accounts"
       >
         {sessionLabel ? (
           <p className="workbench-management-summary" role="status">

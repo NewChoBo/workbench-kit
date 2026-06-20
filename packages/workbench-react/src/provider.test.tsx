@@ -316,7 +316,7 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 
-  it('opens account management from the secondary activity bar action', async () => {
+  it('opens the service profile from the secondary activity bar action', async () => {
     const container = document.createElement('div');
     document.body.append(container);
     const root = createRoot(container);
@@ -333,17 +333,25 @@ describe('WorkbenchProvider', () => {
             accountManagement={{
               accounts: [
                 {
-                  displayName: 'Tester',
-                  email: 'tester@example.com',
-                  id: 'tester',
-                  providerId: 'sample',
-                  providerLabel: 'Sample',
-                  status: 'active',
+                  displayName: 'GitHub Project Access',
+                  email: 'project@example.com',
+                  id: 'github-project',
+                  providerId: 'github',
+                  providerLabel: 'GitHub',
+                  status: 'signed-out',
                 },
               ],
-              activeAccountId: 'tester',
             }}
             editorArea={<main>Editor Area</main>}
+            profile={{
+              accountId: 'tester',
+              displayName: 'Tester',
+              email: 'tester@example.com',
+              providerLabel: 'Sample Login',
+              sessionLabel: 'Demo session active',
+              statusLabel: 'Active',
+              workspaceLabel: 'Demo Workspace',
+            }}
           />
         </WorkbenchProvider>,
       );
@@ -356,23 +364,51 @@ describe('WorkbenchProvider', () => {
       activityBar?.querySelectorAll<HTMLButtonElement>('button') ?? [],
     ).map((button) => button.getAttribute('aria-label'));
 
-    expect(activityLabels.indexOf('Accounts')).toBeLessThan(activityLabels.indexOf('Settings'));
+    expect(activityLabels.indexOf('Profile')).toBeLessThan(activityLabels.indexOf('Settings'));
 
-    const accountsButton = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Accounts"]',
+    const profileButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Profile"]',
     );
-    expect(accountsButton).toBeDefined();
+    expect(profileButton).toBeDefined();
 
     await act(async () => {
-      accountsButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      profileButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
     await flushReactEffects();
 
     const dialog = container.querySelector('[role="dialog"]');
-    expect(dialog?.textContent).toContain('Settings');
-    expect(dialog?.textContent).toContain('Signed-in Accounts');
+    expect(dialog?.textContent).toContain('Profile');
     expect(dialog?.textContent).toContain('Tester');
-    expect(accountsButton?.getAttribute('aria-pressed')).toBe('true');
+    expect(dialog?.textContent).toContain('Demo Workspace');
+    expect(dialog?.textContent).not.toContain('Linked Accounts');
+    expect(profileButton?.getAttribute('aria-pressed')).toBe('true');
+
+    const closeButton = findButtonByText(container, 'Close');
+    await act(async () => {
+      closeButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const settingsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Settings"]',
+    );
+    await act(async () => {
+      settingsButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const settingsDialog = container.querySelector('[role="dialog"]');
+    expect(settingsDialog?.textContent).toContain('Linked Accounts');
+
+    const linkedAccountsButton = findButtonByText(container, 'Linked Accounts');
+    await act(async () => {
+      linkedAccountsButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const linkedAccountsDialog = container.querySelector('[role="dialog"]');
+    expect(linkedAccountsDialog?.textContent).toContain('Linked Accounts');
+    expect(linkedAccountsDialog?.textContent).toContain('GitHub Project Access');
 
     await act(async () => {
       root.unmount();

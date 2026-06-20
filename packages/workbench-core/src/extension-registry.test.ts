@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { ExtensionRegistry, type WorkbenchExtensionDescription } from './index.js';
+import {
+  collectExtensionDependencyDiagnostics,
+  ExtensionRegistry,
+  type WorkbenchExtensionDescription,
+} from './index.js';
 
 const helloWorldExtension: WorkbenchExtensionDescription = {
   manifest: {
@@ -426,6 +430,136 @@ describe('ExtensionRegistry', () => {
     ).toThrow('Extension dependency cycle detected: first -> second -> first');
 
     expect(registry.getExtensions()).toEqual([]);
+  });
+
+  it('reports extension dependency diagnostics without blocking registration', () => {
+    const registry = new ExtensionRegistry();
+    registry.registerExtensions([
+      {
+        manifest: {
+          schemaVersion: 1,
+          id: 'workbench-kit.accounts',
+          name: 'accounts',
+          displayName: 'Accounts',
+          version: '0.0.0',
+          publisher: 'workbench-kit',
+          engines: {
+            workbench: '^0.0.0',
+            extensionApi: '^0.0.0',
+          },
+          activationEvents: ['onStartup'],
+          capabilities: {
+            requires: ['workbench.auth'],
+          },
+          extensionOptionalDependencies: ['workbench-kit.optional-theme'],
+        },
+      },
+      {
+        manifest: {
+          schemaVersion: 1,
+          id: 'workbench-kit.orphan-command',
+          name: 'orphan-command',
+          displayName: 'Orphan Command',
+          version: '0.0.0',
+          publisher: 'workbench-kit',
+          engines: {
+            workbench: '^0.0.0',
+            extensionApi: '^0.0.0',
+          },
+          activationEvents: [],
+          contributes: {
+            commands: [
+              {
+                command: 'workbench-kit.orphan-command.run',
+                title: 'Run Orphan Command',
+              },
+            ],
+          },
+        },
+      },
+    ]);
+
+    expect(
+      registry
+        .getDependencyDiagnostics()
+        .map(({ capabilityId, commandId, dependencyId, kind, severity }) => ({
+          capabilityId,
+          commandId,
+          dependencyId,
+          kind,
+          severity,
+        })),
+    ).toEqual([
+      {
+        capabilityId: undefined,
+        commandId: undefined,
+        dependencyId: 'workbench-kit.optional-theme',
+        kind: 'missing-optional-extension-dependency',
+        severity: 'warning',
+      },
+      {
+        capabilityId: 'workbench.auth',
+        commandId: undefined,
+        dependencyId: undefined,
+        kind: 'missing-capability',
+        severity: 'error',
+      },
+      {
+        capabilityId: undefined,
+        commandId: 'workbench-kit.orphan-command.run',
+        dependencyId: undefined,
+        kind: 'command-activation-missing',
+        severity: 'warning',
+      },
+    ]);
+  });
+
+  it('accepts required capabilities satisfied by the host or an extension provider', () => {
+    expect(
+      collectExtensionDependencyDiagnostics(
+        [
+          {
+            manifest: {
+              schemaVersion: 1,
+              id: 'workbench-kit.consumer',
+              name: 'consumer',
+              displayName: 'Consumer',
+              version: '0.0.0',
+              publisher: 'workbench-kit',
+              engines: {
+                workbench: '^0.0.0',
+                extensionApi: '^0.0.0',
+              },
+              activationEvents: [],
+              capabilities: {
+                requires: ['workbench.auth', 'workbench.workspace'],
+              },
+            },
+          },
+          {
+            manifest: {
+              schemaVersion: 1,
+              id: 'workbench-kit.workspace-provider',
+              name: 'workspace-provider',
+              displayName: 'Workspace Provider',
+              version: '0.0.0',
+              publisher: 'workbench-kit',
+              engines: {
+                workbench: '^0.0.0',
+                extensionApi: '^0.0.0',
+              },
+              activationEvents: ['onStartup'],
+              capabilities: {
+                provides: ['workbench.workspace'],
+              },
+            },
+          },
+        ],
+        {
+          hasCapability: (capabilityId) => capabilityId === 'workbench.auth',
+        },
+      ),
+    ).toEqual([]);
   });
 
   it('resolves host-seeded capabilities through getCapability', async () => {

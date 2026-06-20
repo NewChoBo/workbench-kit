@@ -614,6 +614,126 @@
   padding: 20px 24px;
 }
 
+.workbench-profile-modal {
+  --ui-modal-width: 520px;
+  --ui-modal-height: 520px;
+}
+
+.workbench-profile-modal__body {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding: 22px 24px 24px;
+  background: var(--color-bg);
+}
+
+.workbench-profile-modal__footer-spacer {
+  flex: 1;
+}
+
+.workbench-profile-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.workbench-profile-card__avatar {
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--color-accent, #3794ff) 45%, var(--color-border));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent, #3794ff) 18%, var(--color-surface));
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.workbench-profile-card__identity {
+  min-width: 0;
+}
+
+.workbench-profile-card__identity h2 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workbench-profile-card__identity p {
+  margin: 5px 0 0;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workbench-profile-session {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+}
+
+.workbench-profile-section {
+  display: grid;
+  gap: 12px;
+}
+
+.workbench-profile-section h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.workbench-profile-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.workbench-profile-detail-grid div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.workbench-profile-detail-grid dt {
+  color: var(--color-text-subtle);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.workbench-profile-detail-grid dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
 .workbench-settings-search {
   flex-shrink: 0;
   padding: 14px 24px 8px;

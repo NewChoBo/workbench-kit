@@ -1,58 +1,61 @@
 import { describe, expect, it } from 'vitest';
 
-import { WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID } from './management-settings-ids.js';
 import {
   createWorkbenchSecondaryActivityItems,
   getWorkbenchSecondaryActivityRoute,
   WORKBENCH_ACCOUNT_ACTIVITY_ITEM_ID,
+  WORKBENCH_PROFILE_ACTIVITY_ITEM_ID,
   WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID,
 } from './shell-secondary-actions.js';
 
 describe('shell secondary activity actions', () => {
-  it('places account management above settings when account management is available', () => {
+  it('places profile above settings when a profile is available', () => {
     expect(
       createWorkbenchSecondaryActivityItems({
-        hasAccountManagement: true,
+        hasProfile: true,
+        isProfileOpen: false,
         isSettingsOpen: false,
       }).map((item) => item.id),
-    ).toEqual([WORKBENCH_ACCOUNT_ACTIVITY_ITEM_ID, WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID]);
+    ).toEqual([WORKBENCH_PROFILE_ACTIVITY_ITEM_ID, WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID]);
   });
 
-  it('keeps settings as the only secondary action without account management', () => {
+  it('keeps settings as the only secondary action without a profile', () => {
     expect(
       createWorkbenchSecondaryActivityItems({
-        hasAccountManagement: false,
+        hasProfile: false,
+        isProfileOpen: false,
         isSettingsOpen: false,
       }).map((item) => item.id),
     ).toEqual([WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID]);
   });
 
-  it('resolves active state from the open settings category', () => {
+  it('resolves profile and settings active states independently', () => {
     expect(
       createWorkbenchSecondaryActivityItems({
-        hasAccountManagement: true,
+        hasProfile: true,
+        isProfileOpen: true,
         isSettingsOpen: true,
-        settingsCategoryId: WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
       }).map((item) => [item.id, item.active]),
     ).toEqual([
       [WORKBENCH_ACCOUNT_ACTIVITY_ITEM_ID, true],
-      [WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID, false],
+      [WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID, true],
     ]);
 
     expect(
       createWorkbenchSecondaryActivityItems({
-        hasAccountManagement: true,
-        isSettingsOpen: true,
-        settingsCategoryId: 'workbench.appearance',
+        hasProfile: true,
+        isProfileOpen: false,
+        isSettingsOpen: false,
       }).map((item) => [item.id, item.active]),
     ).toEqual([
       [WORKBENCH_ACCOUNT_ACTIVITY_ITEM_ID, false],
-      [WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID, true],
+      [WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID, false],
     ]);
   });
 
   it('routes fixed secondary activity item IDs', () => {
-    expect(getWorkbenchSecondaryActivityRoute(WORKBENCH_ACCOUNT_ACTIVITY_ITEM_ID)).toBe('accounts');
+    expect(getWorkbenchSecondaryActivityRoute(WORKBENCH_ACCOUNT_ACTIVITY_ITEM_ID)).toBe('profile');
+    expect(getWorkbenchSecondaryActivityRoute(WORKBENCH_PROFILE_ACTIVITY_ITEM_ID)).toBe('profile');
     expect(getWorkbenchSecondaryActivityRoute(WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID)).toBe(
       'settings',
     );

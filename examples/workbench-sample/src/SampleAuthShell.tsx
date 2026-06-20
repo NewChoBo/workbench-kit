@@ -31,7 +31,8 @@ export function SampleAuthShell({ children, theme }: SampleAuthShellProps) {
             passwordPlaceholder: 'Enter password',
             productName: 'Workbench Sample',
             requireCredentials: true,
-            statusLabel: 'Use the demo account to open the virtual workspace.',
+            statusLabel:
+              'The in-browser dummy backend accepts the demo account and returns fixed sample data.',
             submitLabel: 'Sign in',
             onSubmit: auth.signIn,
           }}

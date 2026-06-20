@@ -11,6 +11,7 @@ import {
   WorkbenchStartupGate,
   useWorkbench,
   type EditorViewMode,
+  type WorkbenchProfileInput,
   type WorkbenchThemeOption,
 } from '@workbench-kit/workbench-react';
 
@@ -92,41 +93,47 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
     };
   }, [layoutService]);
 
+  const profile = useMemo<WorkbenchProfileInput | undefined>(
+    () =>
+      auth.status === 'authenticated' && auth.profile
+        ? {
+            accountId: auth.profile.accountId,
+            displayName: auth.profile.displayName,
+            email: auth.profile.email,
+            providerLabel: auth.profile.providerLabel,
+            roleLabel: auth.profile.roleLabel,
+            onSignOut: () => {
+              auth.signOut();
+            },
+            sessionLabel: auth.profile.sessionLabel,
+            statusLabel: auth.profile.statusLabel,
+            workspaceLabel: auth.profile.workspaceLabel ?? workspaceInfo.name,
+          }
+        : undefined,
+    [auth],
+  );
   const accountManagement = useMemo(
     () =>
       auth.status === 'authenticated'
         ? {
-            accounts: [
-              {
-                displayName: 'Tester',
-                email: 'tester@workbench-sample.local',
-                id: 'tester',
-                providerId: 'sample-login',
-                providerLabel: 'Sample Login',
-                status: 'active' as const,
-              },
-            ],
-            activeAccountId: 'tester',
+            accounts: auth.linkedAccounts,
             automationHint:
-              'This sample host stores a demo session in sessionStorage and exposes account management inside Settings.',
-            onSignOut: () => {
-              auth.signOut();
-            },
-            sessionLabel: 'Demo session active · managed automatically after sign-in',
+              'Linked accounts are fixed responses from the dummy backend and remain separate from the Workbench service profile.',
+            sessionLabel:
+              'Dummy backend returns project integrations without starting a separate server.',
           }
         : undefined,
-    [auth],
+    [auth.linkedAccounts, auth.status],
   );
 
   const statusSections = useMemo(
     () =>
       createSampleStatusSections({
-        activeAccountName:
-          auth.status === 'authenticated' ? accountManagement?.accounts[0]?.displayName : undefined,
+        activeAccountName: auth.status === 'authenticated' ? profile?.displayName : undefined,
         sideBarVisible: layout.sideBar.visible,
         theme,
       }),
-    [accountManagement?.accounts, auth.status, layout.sideBar.visible, theme],
+    [auth.status, layout.sideBar.visible, profile?.displayName, theme],
   );
 
   const handleThemeChange = useCallback(
@@ -172,6 +179,7 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
         helpContent={<SampleHelpContent />}
         onStatusItemActivate={handleStatusItemActivate}
         onThemeChange={handleThemeChange}
+        profile={profile}
         rootClassName="ide-root"
         statusSections={statusSections}
         theme={theme}
@@ -218,8 +226,8 @@ function SampleHelpContent() {
       <section className="workbench-sample-help__section">
         <h2>Sign in</h2>
         <p>
-          Demo account: <code>tester</code> / <code>tester</code>. After sign-in, startup tasks load
-          extensions and the virtual workspace before the shell appears.
+          Demo account: <code>tester</code> / <code>tester</code>. The in-browser dummy backend
+          returns fixed profile and linked-account data without running a separate server.
         </p>
       </section>
       <section className="workbench-sample-help__section">
@@ -258,12 +266,12 @@ function SampleHelpContent() {
           </li>
           <li>Toggle the primary sidebar from the status bar to review layout persistence.</li>
           <li>
-            Open Settings and choose <strong>Commands</strong> or <strong>Accounts</strong> to
-            review registered commands or manage the demo session.
+            Open the profile action above Settings to review the service account, or open Settings
+            and choose <strong>Linked Accounts</strong> to review project integrations.
           </li>
           <li>
             Press <code>{getWorkbenchCommandPaletteShortcutLabel()}</code> and run{' '}
-            <strong>Manage Commands</strong> or <strong>Manage Accounts</strong>.
+            <strong>Manage Commands</strong> or <strong>Manage Linked Accounts</strong>.
           </li>
         </ul>
       </section>
@@ -318,7 +326,7 @@ function createSampleStatusSections({
                 icon: 'account' as const,
                 id: 'workbench.account',
                 label: activeAccountName,
-                title: 'Manage accounts',
+                title: 'Open profile',
               },
             ]
           : []),

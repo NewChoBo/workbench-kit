@@ -3,8 +3,9 @@
 Frontend-only integration host for Workbench Kit. It composes
 `@workbench-kit/workbench-react`, `@workbench-kit/react`,
 `@workbench-kit/workspace`, `@workbench-kit/jdw`, and
-`@workbench-kit/workbench-config` with bundled built-in extensions and reads
-shareable configuration from the repository `.workbench/` directory.
+`@workbench-kit/workbench-config` with bundled built-in extensions, reads
+shareable configuration from the repository `.workbench/` directory, and uses an
+in-browser dummy backend for fixed auth/profile responses.
 
 ## Prerequisites
 
@@ -27,6 +28,24 @@ pnpm workbench-sample
 Opens `http://127.0.0.1:5173` with activity bar, explorer sidebar, status bar, and a
 library showcase surface that can open package notes, runtime editor targets, JDW,
 schema, and settings-related workbench slices.
+
+No separate backend process is required by default. The sample auth flow uses a
+dummy backend client (`src/dummy-backend/`) that implements the
+[Sample Host Backend API](../../docs/workbench/sample-host-backend-api.md).
+
+| Endpoint-like action | Route                                    | Fixed behavior (in-memory mode)       |
+| -------------------- | ---------------------------------------- | ------------------------------------- |
+| Session check        | `GET /api/sample-host/v1/auth/session`   | Restores session from browser storage |
+| Login                | `POST /api/sample-host/v1/auth/sign-in`  | Accepts `tester` / `tester`           |
+| Logout               | `POST /api/sample-host/v1/auth/sign-out` | Clears sample session                 |
+| Linked accounts      | Included in authenticated session body   | Fixed GitHub and npm records          |
+
+Optional HTTP mode:
+
+```env
+VITE_SAMPLE_HOST_BACKEND_TRANSPORT=http
+VITE_SAMPLE_HOST_BACKEND_BASE_URL=http://127.0.0.1:8787
+```
 
 ## Validate
 

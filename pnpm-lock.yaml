@@ -83,6 +83,9 @@ importers:
 
   examples/workbench-sample:
     dependencies:
+      '@workbench-kit/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@workbench-kit/jdw':
         specifier: workspace:*
         version: link:../../packages/json-widget

@@ -67,8 +67,12 @@ export {
   ViewHostFactoryRegistry,
 } from './host-factory-registry.js';
 export {
+  collectExtensionDependencyDiagnostics,
   ExtensionRegistry,
   type ActivatedExtension,
+  type ExtensionDependencyDiagnostic,
+  type ExtensionDependencyDiagnosticKind,
+  type ExtensionDependencyDiagnosticSeverity,
   type ExtensionRegistryOptions,
   type WorkbenchExtensionDescription,
   type WorkbenchExtensionModule,

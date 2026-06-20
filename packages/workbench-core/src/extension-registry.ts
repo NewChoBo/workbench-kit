@@ -76,6 +76,27 @@ export interface ActivatedExtension {
   readonly subscriptions: DisposableStore;
 }
 
+export type ExtensionDependencyDiagnosticSeverity = 'error' | 'warning';
+
+export type ExtensionDependencyDiagnosticKind =
+  | 'command-activation-missing'
+  | 'duplicate-capability-provider'
+  | 'host-capability-provider-conflict'
+  | 'missing-capability'
+  | 'missing-extension-dependency'
+  | 'missing-optional-extension-dependency';
+
+export interface ExtensionDependencyDiagnostic {
+  readonly capabilityId?: string | undefined;
+  readonly commandId?: string | undefined;
+  readonly dependencyId?: string | undefined;
+  readonly extensionId: string;
+  readonly kind: ExtensionDependencyDiagnosticKind;
+  readonly message: string;
+  readonly providerExtensionIds?: readonly string[] | undefined;
+  readonly severity: ExtensionDependencyDiagnosticSeverity;
+}
+
 interface RegisteredExtension {
   readonly contributionDisposables: DisposableStore;
   readonly description: WorkbenchExtensionDescription;
@@ -139,6 +160,12 @@ export class ExtensionRegistry implements Disposable {
 
   getExtensions(): readonly WorkbenchExtensionDescription[] {
     return [...this.extensions.values()].map((entry) => entry.description);
+  }
+
+  getDependencyDiagnostics(): readonly ExtensionDependencyDiagnostic[] {
+    return collectExtensionDependencyDiagnostics(this.getExtensions(), {
+      hasCapability: (capabilityId) => this.capabilityRegistry.has(capabilityId),
+    });
   }
 
   isActive(extensionId: string): boolean {
@@ -465,6 +492,121 @@ export class ExtensionRegistry implements Disposable {
       );
     }
   }
+}
+
+export function collectExtensionDependencyDiagnostics(
+  descriptions: readonly WorkbenchExtensionDescription[],
+  options: {
+    hasCapability?: ((capabilityId: string) => boolean) | undefined;
+  } = {},
+): ExtensionDependencyDiagnostic[] {
+  const diagnostics: ExtensionDependencyDiagnostic[] = [];
+  const extensionIds = new Set(descriptions.map((description) => description.manifest.id));
+  const capabilityProviders = collectCapabilityProviders(descriptions);
+
+  for (const [capabilityId, providerExtensionIds] of capabilityProviders) {
+    if (providerExtensionIds.length > 1) {
+      diagnostics.push({
+        capabilityId,
+        extensionId: providerExtensionIds[0] ?? 'unknown',
+        kind: 'duplicate-capability-provider',
+        message: `Capability "${capabilityId}" is provided by multiple extensions: ${providerExtensionIds
+          .map((extensionId) => `"${extensionId}"`)
+          .join(', ')}.`,
+        providerExtensionIds,
+        severity: 'error',
+      });
+    }
+
+    if (options.hasCapability?.(capabilityId)) {
+      diagnostics.push({
+        capabilityId,
+        extensionId: providerExtensionIds[0] ?? 'unknown',
+        kind: 'host-capability-provider-conflict',
+        message: `Capability "${capabilityId}" is already provided by the host.`,
+        providerExtensionIds,
+        severity: 'error',
+      });
+    }
+  }
+
+  for (const description of descriptions) {
+    const { manifest } = description;
+
+    for (const dependencyId of manifest.extensionDependencies ?? []) {
+      if (!extensionIds.has(dependencyId)) {
+        diagnostics.push({
+          dependencyId,
+          extensionId: manifest.id,
+          kind: 'missing-extension-dependency',
+          message: `Extension "${manifest.id}" depends on missing extension "${dependencyId}".`,
+          severity: 'error',
+        });
+      }
+    }
+
+    for (const dependencyId of manifest.extensionOptionalDependencies ?? []) {
+      if (!extensionIds.has(dependencyId)) {
+        diagnostics.push({
+          dependencyId,
+          extensionId: manifest.id,
+          kind: 'missing-optional-extension-dependency',
+          message: `Extension "${manifest.id}" optionally depends on unavailable extension "${dependencyId}".`,
+          severity: 'warning',
+        });
+      }
+    }
+
+    for (const capabilityId of manifest.capabilities?.requires ?? []) {
+      const providerExtensionIds =
+        capabilityProviders
+          .get(capabilityId)
+          ?.filter((extensionId) => extensionId !== manifest.id) ?? [];
+      if (!options.hasCapability?.(capabilityId) && providerExtensionIds.length === 0) {
+        diagnostics.push({
+          capabilityId,
+          extensionId: manifest.id,
+          kind: 'missing-capability',
+          message: `Extension "${manifest.id}" requires missing capability "${capabilityId}".`,
+          severity: 'error',
+        });
+      }
+    }
+
+    for (const command of manifest.contributes?.commands ?? []) {
+      const commandActivationEvent = `onCommand:${command.command}`;
+      if (
+        !manifest.activationEvents.includes('onStartup') &&
+        !manifest.activationEvents.includes(commandActivationEvent)
+      ) {
+        diagnostics.push({
+          commandId: command.command,
+          extensionId: manifest.id,
+          kind: 'command-activation-missing',
+          message: `Command "${command.command}" is contributed by "${manifest.id}" without "${commandActivationEvent}" or "onStartup" activation.`,
+          severity: 'warning',
+        });
+      }
+    }
+  }
+
+  return diagnostics;
+}
+
+function collectCapabilityProviders(
+  descriptions: readonly WorkbenchExtensionDescription[],
+): Map<string, string[]> {
+  const providers = new Map<string, string[]>();
+
+  for (const { manifest } of descriptions) {
+    for (const capabilityId of manifest.capabilities?.provides ?? []) {
+      const extensionIds = providers.get(capabilityId) ?? [];
+      extensionIds.push(manifest.id);
+      providers.set(capabilityId, extensionIds);
+    }
+  }
+
+  return providers;
 }
 
 function toCommandDefinition(command: {

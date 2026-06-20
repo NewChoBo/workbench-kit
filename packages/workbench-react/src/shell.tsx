@@ -67,6 +67,7 @@ import {
   createWorkbenchSecondaryActivityItems,
   getWorkbenchSecondaryActivityRoute,
 } from './shell-secondary-actions.js';
+import { WorkbenchProfileModal, type WorkbenchProfileInput } from './workbench-profile-modal.js';
 
 export interface WorkbenchShellProps {
   accountManagement?: WorkbenchAccountManagementInput | undefined;
@@ -78,6 +79,7 @@ export interface WorkbenchShellProps {
   onThemeChange?: ((theme: string) => void) | undefined;
   onStatusItemActivate?: (item: StatusBarItemModel) => void;
   primarySidebar?: ReactNode;
+  profile?: WorkbenchProfileInput | undefined;
   rootClassName?: string;
   statusSections?: StatusBarSectionModel[];
   theme?: string;
@@ -108,6 +110,7 @@ export function WorkbenchShell({
   onThemeChange,
   onStatusItemActivate,
   primarySidebar,
+  profile,
   rootClassName,
   statusSections,
   theme,
@@ -121,11 +124,13 @@ export function WorkbenchShell({
   const { executeCommand, extensionRegistry, layoutService, missingExtensionIds } = useWorkbench();
   const forceRender = useForceRender();
   const [isHelpOpen, setHelpOpen] = useState(false);
+  const [isProfileOpen, setProfileOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [settingsSearchValue, setSettingsSearchValue] = useState('');
   const [settingsCategoryId, setSettingsCategoryId] = useState<string | undefined>();
   const showSettingsModal = useCallback((categoryId?: string) => {
     setHelpOpen(false);
+    setProfileOpen(false);
     setSettingsCategoryId(categoryId);
     setSettingsOpen(true);
   }, []);
@@ -139,8 +144,8 @@ export function WorkbenchShell({
   const resolvedStatusSections = useMemo(
     () =>
       statusSections ??
-      createDefaultStatusSections(extensionRegistry, missingExtensionIds, accountManagement),
-    [accountManagement, extensionRegistry, missingExtensionIds, statusSections],
+      createDefaultStatusSections(extensionRegistry, missingExtensionIds, profile),
+    [extensionRegistry, missingExtensionIds, profile, statusSections],
   );
   const activeViewContainerId = layout.sideBar.activeViewContainer;
   const activityItems = sortActivityBarItems(
@@ -152,9 +157,9 @@ export function WorkbenchShell({
     layout.activityBar.hiddenItemIds,
   );
   const secondaryActivityItems = createWorkbenchSecondaryActivityItems({
-    hasAccountManagement: accountManagement !== undefined,
+    hasProfile: profile !== undefined,
+    isProfileOpen,
     isSettingsOpen,
-    settingsCategoryId,
   });
   const settingsCategories = useMemo(() => {
     const managementCategories: WorkbenchSettingsCategory[] = [];
@@ -178,8 +183,8 @@ export function WorkbenchShell({
       managementCategories.push({
         content: <WorkbenchAccountManagementSettings accountManagement={accountManagement} />,
         id: WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
-        label: 'Accounts',
-        title: 'Account management',
+        label: 'Linked Accounts',
+        title: 'Linked account management',
       });
     }
 
@@ -198,7 +203,13 @@ export function WorkbenchShell({
   const settingsContributionCount = extensionRegistry.configurations.getConfigurations().length;
   const showHelpModal = useCallback(() => {
     setSettingsOpen(false);
+    setProfileOpen(false);
     setHelpOpen(true);
+  }, []);
+  const showProfileModal = useCallback(() => {
+    setSettingsOpen(false);
+    setHelpOpen(false);
+    setProfileOpen(true);
   }, []);
   const resolvedTitleBar =
     titleBar === undefined ? (
@@ -298,14 +309,23 @@ export function WorkbenchShell({
 
   const handleStatusItemActivate = useCallback(
     (item: StatusBarItemModel) => {
-      if (item.id === 'workbench.account' && accountManagement) {
-        openSettings(WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID);
+      if (item.id === 'workbench.account') {
+        if (profile) {
+          showProfileModal();
+          return;
+        }
+
+        if (accountManagement) {
+          openSettings(WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID);
+          return;
+        }
+
         return;
       }
 
       onStatusItemActivate?.(item);
     },
-    [accountManagement, onStatusItemActivate],
+    [accountManagement, onStatusItemActivate, profile, showProfileModal],
   );
 
   return (
@@ -316,8 +336,8 @@ export function WorkbenchShell({
         secondaryItems: secondaryActivityItems,
         onItemActivate: (item) => {
           const secondaryActivityRoute = getWorkbenchSecondaryActivityRoute(item.id);
-          if (secondaryActivityRoute === 'accounts') {
-            openSettings(WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID);
+          if (secondaryActivityRoute === 'profile') {
+            showProfileModal();
             return;
           }
 
@@ -383,6 +403,9 @@ export function WorkbenchShell({
               onClose={() => setSettingsOpen(false)}
               onSearchValueChange={setSettingsSearchValue}
             />
+          ) : null}
+          {isProfileOpen && profile ? (
+            <WorkbenchProfileModal profile={profile} onClose={() => setProfileOpen(false)} />
           ) : null}
           {isHelpOpen && helpContent ? (
             <Modal
@@ -492,12 +515,12 @@ function createActivityItems(
 function createDefaultStatusSections(
   extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
   missingExtensionIds: readonly string[],
-  accountManagement: WorkbenchAccountManagementInput | undefined,
+  profile: WorkbenchProfileInput | undefined,
 ): StatusBarSectionModel[] {
-  const activeAccount =
-    accountManagement?.accounts.find(
-      (account) => account.id === accountManagement.activeAccountId,
-    ) ?? accountManagement?.accounts.find((account) => account.status === 'active');
+  const dependencyDiagnostics = extensionRegistry.getDependencyDiagnostics();
+  const errorDependencyDiagnostics = dependencyDiagnostics.filter(
+    (diagnostic) => diagnostic.severity === 'error',
+  );
 
   return [
     {
@@ -513,19 +536,33 @@ function createDefaultStatusSections(
           label: `missing: ${missingExtensionIds.length}`,
           status: 'waiting',
         },
+        {
+          hidden: dependencyDiagnostics.length === 0,
+          id: 'extension-dependencies',
+          label: `deps: ${dependencyDiagnostics.length}`,
+          status: errorDependencyDiagnostics.length > 0 ? 'failed' : 'waiting',
+          title:
+            errorDependencyDiagnostics.length > 0
+              ? `${errorDependencyDiagnostics.length} extension dependency error${
+                  errorDependencyDiagnostics.length === 1 ? '' : 's'
+                }`
+              : `${dependencyDiagnostics.length} extension dependency warning${
+                  dependencyDiagnostics.length === 1 ? '' : 's'
+                }`,
+        },
       ],
     },
     {
       align: 'end',
       id: 'workbench-meta',
       items: [
-        ...(activeAccount
+        ...(profile
           ? [
               {
                 icon: 'account' as const,
                 id: 'workbench.account',
-                label: activeAccount.displayName,
-                title: 'Manage accounts',
+                label: profile.displayName,
+                title: 'Open profile',
               },
             ]
           : []),

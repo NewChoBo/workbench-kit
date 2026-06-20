@@ -1,0 +1,194 @@
+openapi: 3.1.0
+info:
+  title: Workbench Sample Host Backend API
+  version: 1.0.0
+  description: |
+    Reference REST contract for the Workbench Sample Host authentication and
+    account-management surface. The sample host ships an in-browser adapter that
+    implements the same shapes without running a server.
+servers:
+  - url: /api/sample-host/v1
+    description: Sample host backend (relative to the host origin)
+tags:
+  - name: auth
+    description: Session restore, sign-in, and sign-out
+paths:
+  /auth/session:
+    get:
+      tags: [auth]
+      operationId: getSession
+      summary: Restore the current session
+      parameters:
+        - name: workspaceLabel
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional workspace label echoed in the profile payload
+      responses:
+        '200':
+          description: Current session state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /auth/sign-in:
+    post:
+      tags: [auth]
+      operationId: signIn
+      summary: Sign in with identifier and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignInRequest'
+      responses:
+        '200':
+          description: Authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          $ref: '#/components/responses/InvalidCredentials'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /auth/sign-out:
+    post:
+      tags: [auth]
+      operationId: signOut
+      summary: Sign out the current session
+      responses:
+        '200':
+          description: Cleared session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  schemas:
+    AuthStatus:
+      type: string
+      enum: [authenticated, unauthenticated]
+    LinkedAccountStatus:
+      type: string
+      enum: [active, expired, signed-out]
+    Profile:
+      type: object
+      required:
+        - accountId
+        - displayName
+        - email
+        - providerLabel
+        - roleLabel
+        - sessionLabel
+        - statusLabel
+      properties:
+        accountId:
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+          format: email
+        providerLabel:
+          type: string
+        roleLabel:
+          type: string
+        sessionLabel:
+          type: string
+        statusLabel:
+          type: string
+        workspaceLabel:
+          type: string
+    LinkedAccount:
+      type: object
+      required: [id, providerId, displayName]
+      properties:
+        id:
+          type: string
+        providerId:
+          type: string
+        displayName:
+          type: string
+        providerLabel:
+          type: string
+        email:
+          type: string
+          format: email
+        status:
+          $ref: '#/components/schemas/LinkedAccountStatus'
+    Session:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/AuthStatus'
+        profile:
+          $ref: '#/components/schemas/Profile'
+        linkedAccounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkedAccount'
+    SignInRequest:
+      type: object
+      required: [identifier, password]
+      properties:
+        identifier:
+          type: string
+        password:
+          type: string
+          format: password
+        workspaceLabel:
+          type: string
+    ErrorBody:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - invalid_credentials
+                - network_error
+                - session_expired
+                - unexpected_response
+                - validation_error
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+  responses:
+    InvalidCredentials:
+      description: Identifier or password is invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          example:
+            error:
+              code: invalid_credentials
+              message: Invalid username or password.
+    ValidationError:
+      description: Request payload failed validation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    InternalError:
+      description: Unexpected server failure
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'

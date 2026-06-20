@@ -272,3 +272,25 @@ export {
   providerActionToLaunchAction,
   providerActionTypeLabel,
 } from './provider-library-mapping';
+export type {
+  SampleHostBackendAuthStatus,
+  SampleHostBackendClient,
+  SampleHostBackendErrorBody,
+  SampleHostBackendErrorCode,
+  SampleHostBackendLinkedAccount,
+  SampleHostBackendLinkedAccountStatus,
+  SampleHostBackendProfile,
+  SampleHostBackendSession,
+  SampleHostBackendSessionQuery,
+  SampleHostBackendSignInRequest,
+} from './sample-host-backend-api';
+export {
+  SampleHostBackendApiError,
+  SampleHostBackendRoutes,
+  SAMPLE_HOST_BACKEND_API_PREFIX,
+  SAMPLE_HOST_BACKEND_API_VERSION,
+  createSampleHostBackendErrorBody,
+  isSampleHostBackendApiError,
+  isSampleHostBackendErrorBody,
+  parseSampleHostBackendSession,
+} from './sample-host-backend-api';
