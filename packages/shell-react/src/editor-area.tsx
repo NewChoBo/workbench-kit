@@ -1298,9 +1298,7 @@ function iconForEditorTab(tab: EditorTabState): string {
 }
 
 function getResourceLabel(resourceUri: string): string {
-  const path = resourceUri.startsWith('workspace://file/')
-    ? resourceUri.slice('workspace://file/'.length)
-    : resourceUri;
+  const path = pathForResource(resourceUri);
   const segments = path.split('/');
   return segments[segments.length - 1] || path;
 }
