@@ -11,10 +11,18 @@ import {
   createWorkbenchEditorCommands,
   createWorkbenchEditorTabMenuEntries,
   type WorkbenchEditorCommandContext,
-} from '@workbench-kit/react/workbench';
-import type { EditorService, EditorTabState } from '@workbench-kit/workbench-core';
+} from '@workbench-kit/react/workbench/commands';
+import type {
+  EditorService,
+  EditorTabState,
+  ExtensionRegistry,
+} from '@workbench-kit/workbench-core';
 
 import { copyResourcePath, pathForResource } from './editor-resource.js';
+import {
+  appendExtensionContextMenuItems,
+  createExtensionContextMenuItems,
+} from './extension-context-menu.js';
 
 const editorCommandRegistry = createCommandRegistry(createWorkbenchEditorCommands());
 const editorTabMenuEntries = createWorkbenchEditorTabMenuEntries().filter((entry) =>
@@ -22,14 +30,20 @@ const editorTabMenuEntries = createWorkbenchEditorTabMenuEntries().filter((entry
     ? entry.id !== 'tab-danger-separator'
     : entry.commandId !== WORKBENCH_EDITOR_DELETE_COMMAND_ID,
 );
+const EDITOR_TAB_CONTEXT_MENU = 'editor/tab/context';
+const EDITOR_TAB_EXTENSION_MENU_SEPARATOR_ID = 'editor-tab-extension-separator';
 
 export function createEditorTabContextMenuItems({
   editorService,
+  executeExtensionCommand,
+  extensionRegistry,
   groupId,
   tab,
   tabs,
 }: {
   editorService: EditorService;
+  executeExtensionCommand?: ((commandId: string) => unknown) | undefined;
+  extensionRegistry?: ExtensionRegistry | undefined;
   groupId: string;
   tab: EditorTabState;
   tabs: readonly EditorTabState[];
@@ -74,13 +88,31 @@ export function createEditorTabContextMenuItems({
     togglePinned: () => editorService.togglePinnedEditor(tab.id),
   };
 
-  return commandMenuItemsToContextMenuItems(
+  const contextKeys = {
+    'editor.hasResource': Boolean(tab.resourceUri),
+    'editor.isDirty': tab.dirty,
+    'editor.isPinned': tab.pinned,
+  };
+
+  const baseItems = commandMenuItemsToContextMenuItems(
     resolveCommandMenuItems({
       context,
+      contextKeys,
       entries: editorTabMenuEntries,
       registry: editorCommandRegistry,
       surface: WORKBENCH_COMMAND_SURFACE_EDITOR,
     }),
-    (commandId) => executeRegisteredCommand(editorCommandRegistry, commandId, context),
+    (commandId) => executeRegisteredCommand(editorCommandRegistry, commandId, context, contextKeys),
+  );
+
+  return appendExtensionContextMenuItems(
+    baseItems,
+    createExtensionContextMenuItems({
+      contextKeys,
+      executeCommand: executeExtensionCommand,
+      extensionRegistry,
+      menu: EDITOR_TAB_CONTEXT_MENU,
+    }),
+    EDITOR_TAB_EXTENSION_MENU_SEPARATOR_ID,
   );
 }

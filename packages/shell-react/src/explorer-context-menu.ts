@@ -13,12 +13,19 @@ import {
   resolveCommandMenuItems,
 } from '@workbench-kit/platform';
 import { parentPathOf, type WorkspaceTreeNode } from '@workbench-kit/workspace';
+import type { ExtensionRegistry } from '@workbench-kit/workbench-core';
+import {
+  appendExtensionContextMenuItems,
+  createExtensionContextMenuItems,
+} from './extension-context-menu.js';
 
 const workspaceCommandRegistry = createCommandRegistry(createWorkbenchWorkspaceCommands());
 const workspaceFolderMenuEntries =
   createWorkbenchWorkspaceFolderMenuEntries<WorkbenchWorkspaceCommandContext>();
 const workspaceTargetMenuEntries =
   createWorkbenchWorkspaceTargetMenuEntries<WorkbenchWorkspaceCommandContext>();
+const EXPLORER_CONTEXT_MENU = 'explorer/context';
+const EXPLORER_EXTENSION_MENU_SEPARATOR_ID = 'explorer-extension-separator';
 
 export function createExplorerItemContextMenuItems({
   actionPaths,
@@ -26,6 +33,8 @@ export function createExplorerItemContextMenuItems({
   createFile,
   createFolder,
   deleteTargets,
+  executeExtensionCommand,
+  extensionRegistry,
   files,
   node,
   openFiles,
@@ -37,6 +46,8 @@ export function createExplorerItemContextMenuItems({
   createFile: (parentPath: string) => void;
   createFolder: (parentPath: string) => void;
   deleteTargets: (paths: string[]) => void;
+  executeExtensionCommand?: ((commandId: string) => unknown) | undefined;
+  extensionRegistry?: ExtensionRegistry | undefined;
   files: readonly { path: string }[];
   node: WorkspaceTreeNode;
   openFiles: (paths: string[]) => void;
@@ -78,7 +89,7 @@ export function createExplorerItemContextMenuItems({
     workspaceTargetKind: node.type,
   };
 
-  return commandMenuItemsToContextMenuItems(
+  const baseItems = commandMenuItemsToContextMenuItems(
     resolveCommandMenuItems({
       context,
       contextKeys,
@@ -88,5 +99,16 @@ export function createExplorerItemContextMenuItems({
     }),
     (commandId) =>
       executeRegisteredCommand(workspaceCommandRegistry, commandId, context, contextKeys),
+  );
+
+  return appendExtensionContextMenuItems(
+    baseItems,
+    createExtensionContextMenuItems({
+      contextKeys,
+      executeCommand: executeExtensionCommand,
+      extensionRegistry,
+      menu: EXPLORER_CONTEXT_MENU,
+    }),
+    EXPLORER_EXTENSION_MENU_SEPARATOR_ID,
   );
 }

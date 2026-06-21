@@ -114,6 +114,15 @@ example activity selection, primary sidebar toggle, and settings open) to
 `ExtensionRegistry.commands` at runtime, so palette execution and direct
 `useWorkbench().executeCommand(...)` calls share the same provider command path.
 
+### Context Menus
+
+Editor tab and explorer item context menus combine first-party shell actions
+with extension `menus` contributions. `shell-react` resolves contributed
+`editor/tab/context` and `explorer/context` items through
+`resolveWorkbenchMenuContributions()`, then executes selections through
+`useWorkbench().executeCommand(...)` so menu-triggered extension commands use
+the same activation/execution path as palette and chat commands.
+
 ### Chat command surface
 
 Built-in Chat and AI Chat reuse the same command descriptors and command suggest

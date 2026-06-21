@@ -9,6 +9,7 @@ import {
 } from '@workbench-kit/react/workbench/commands';
 import type { ContextMenuItem } from '@workbench-kit/react/overlay';
 import type { WorkspaceTreeNode } from '@workbench-kit/workspace';
+import { ExtensionRegistry } from '@workbench-kit/workbench-core';
 
 import { createExplorerItemContextMenuItems } from './explorer-context-menu.js';
 
@@ -87,6 +88,42 @@ describe('createExplorerItemContextMenuItems', () => {
       'copy:src/App.tsx,README.md',
       'delete:src/App.tsx,README.md',
     ]);
+  });
+
+  it('appends extension explorer context menu contributions', () => {
+    const extensionRegistry = new ExtensionRegistry();
+    const calls: string[] = [];
+
+    extensionRegistry.commands.registerCommand({
+      id: 'sample.action.inspectFile',
+      title: 'Inspect File',
+    });
+    extensionRegistry.menus.registerMenuItem({
+      command: 'sample.action.inspectFile',
+      menu: 'explorer/context',
+    });
+
+    const items = createExplorerItemContextMenuItems({
+      actionPaths: ['src/App.tsx'],
+      copyPaths: (paths) => calls.push(`copy:${paths.join(',')}`),
+      createFile: (parentPath) => calls.push(`newFile:${parentPath}`),
+      createFolder: (parentPath) => calls.push(`newFolder:${parentPath}`),
+      deleteTargets: (paths) => calls.push(`delete:${paths.join(',')}`),
+      executeExtensionCommand: (commandId) => calls.push(`extension:${commandId}`),
+      extensionRegistry,
+      files: [{ path: 'src/App.tsx' }],
+      node: fileNode('src/App.tsx'),
+      openFiles: (paths) => calls.push(`open:${paths.join(',')}`),
+      revealFolder: (path) => calls.push(`reveal:${path}`),
+      renameTarget: () => calls.push('rename'),
+    });
+
+    expect(itemIds(items)).toContain('explorer-extension-separator');
+    expect(itemIds(items)).toContain('explorer/context:sample.action.inspectFile:0');
+
+    selectItem(items, 'explorer/context:sample.action.inspectFile:0');
+
+    expect(calls).toEqual(['extension:sample.action.inspectFile']);
   });
 });
 

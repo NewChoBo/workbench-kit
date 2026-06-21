@@ -49,7 +49,7 @@ interface ExplorerContextMenuState {
 }
 
 export function BuiltinExplorerView() {
-  const { executeCommand, workspaceHostPort } = useWorkbench();
+  const { executeCommand, extensionRegistry, workspaceHostPort } = useWorkbench();
   const activeTab = useActiveEditorTab();
   const workspaceService = isWorkspaceResourceService(workspaceHostPort?.service)
     ? workspaceHostPort.service
@@ -154,6 +154,8 @@ export function BuiltinExplorerView() {
               paths,
             });
           },
+          executeExtensionCommand: (commandId) => executeCommand(commandId),
+          extensionRegistry,
           files: workspaceState?.files ?? [],
           node,
           openFiles: (paths) => {

@@ -336,6 +336,7 @@ function EditorGroupPane({
   viewProviders: readonly EditorDocumentViewProvider[];
 }) {
   const editorService = useEditorService();
+  const { executeCommand, extensionRegistry } = useWorkbench();
   const tabs = group.tabs;
   const activeTabId = group.activeTabId ?? tabs[0]?.id ?? '';
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
@@ -730,6 +731,8 @@ function EditorGroupPane({
           ariaLabel="Editor tab menu"
           items={createEditorTabContextMenuItems({
             editorService,
+            executeExtensionCommand: (commandId) => executeCommand(commandId),
+            extensionRegistry,
             groupId: group.id,
             tab: contextTab,
             tabs,
