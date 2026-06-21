@@ -11,6 +11,27 @@ export interface InstalledExtensionRecord {
   readonly manifestUrl: string;
 }
 
+export interface ApplyExtensionInstallPlanToRecordsInput {
+  readonly currentRecords: readonly InstalledExtensionRecord[];
+  readonly installSources: readonly ExtensionInstallPlanRecordSource[];
+  readonly installedAt?: string | undefined;
+  readonly plan: ExtensionInstallPlanRecordPlan;
+}
+
+export interface ExtensionInstallPlanRecordSource {
+  readonly category: InstalledExtensionCategory;
+  readonly id: string;
+  readonly manifestUrl: string;
+}
+
+interface ExtensionInstallPlanRecordPlan {
+  readonly actions: readonly {
+    readonly extensionId: string;
+    readonly kind: 'already-enabled' | 'enable' | 'install';
+  }[];
+  readonly blocked: boolean;
+}
+
 export function isInstalledExtensionPersistenceAvailable(): boolean {
   try {
     return typeof globalThis.localStorage !== 'undefined';
@@ -75,6 +96,50 @@ export function installExtensionRecord(
   const next = [...without, nextRecord];
   saveInstalledExtensions(next, storageKey, storage);
   return next;
+}
+
+export function applyExtensionInstallPlanToRecords({
+  currentRecords,
+  installSources,
+  installedAt = new Date().toISOString(),
+  plan,
+}: ApplyExtensionInstallPlanToRecordsInput): InstalledExtensionRecord[] {
+  if (plan.blocked) {
+    return [...currentRecords];
+  }
+
+  const nextById = new Map(currentRecords.map((record) => [record.id, record]));
+  const installSourcesById = new Map(installSources.map((source) => [source.id, source]));
+
+  for (const action of plan.actions) {
+    if (action.kind === 'already-enabled') {
+      continue;
+    }
+
+    const current = nextById.get(action.extensionId);
+    if (current) {
+      nextById.set(action.extensionId, {
+        ...current,
+        enabled: true,
+      });
+      continue;
+    }
+
+    const source = installSourcesById.get(action.extensionId);
+    if (!source) {
+      continue;
+    }
+
+    nextById.set(action.extensionId, {
+      category: source.category,
+      enabled: true,
+      id: source.id,
+      installedAt,
+      manifestUrl: source.manifestUrl,
+    });
+  }
+
+  return [...nextById.values()];
 }
 
 export function toggleInstalledExtensionEnabled(

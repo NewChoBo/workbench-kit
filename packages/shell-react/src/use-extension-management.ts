@@ -2,18 +2,21 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BUILTIN_WORKBENCH_EXTENSIONS,
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  applyExtensionInstallPlanToRecords,
   SAMPLE_WORKBENCH_EXTENSIONS,
   createExtensionInstallPlan,
   createExtensionFeatureSpec,
-  installExtensionRecord,
   loadInstalledExtensions,
   parseExtensionCatalog,
   resolveBundledExtensionByManifestUrl,
+  saveInstalledExtensions,
   toggleInstalledExtensionEnabled,
   type ExtensionFeatureInspection,
   type ExtensionFeatureSpec,
   type ExtensionRegistry,
+  type ExtensionInstallPlan,
   type ExtensionCatalogEntry,
+  type ExtensionInstallPlanInstallSource,
   type InstalledExtensionRecord,
   type WorkbenchExtensionDescription,
 } from '@workbench-kit/workbench-core';
@@ -168,37 +171,28 @@ export function useExtensionManagementModel({
 
   const browseEntries = useMemo<readonly ExtensionCatalogBrowseEntry[]>(() => {
     const installedIds = new Set(installedRecords.map((record) => record.id));
-    const enabledExtensionIds = extensionRegistry
-      .getExtensions()
-      .map((extension) => extension.manifest.id);
-    const availableExtensions = mergeUniqueExtensionDescriptions([
-      ...BUNDLED_EXTENSIONS,
-      ...extensionRegistry.getExtensions(),
-    ]);
+    const installContext = createExtensionInstallPlanningContext({
+      catalogEntries,
+      extensionRegistry,
+      installedRecords,
+    });
 
     return catalogEntries.map((entry) => {
       const bundledExtension = resolveBundledExtensionByManifestUrl(
         entry.manifestUrl,
-        availableExtensions,
+        installContext.availableExtensions,
       );
-      const plan = bundledExtension
-        ? createExtensionInstallPlan({
-            availableExtensions,
-            enabledExtensionIds,
-            hostCapabilityIds: extensionRegistry.capabilityRegistry.listProviderIds(),
-            installedRecords,
-            targetExtensionId: bundledExtension.manifest.id,
-          })
-        : undefined;
+      const extensionId = bundledExtension?.manifest.id ?? entry.id;
+      const plan = createCatalogEntryInstallPlan(entry, installContext);
 
       return {
         category: entry.category,
         description: entry.description,
         displayName: entry.displayName,
         icon: entry.icon,
-        id: entry.id,
+        id: extensionId,
         installPlan: plan ? toExtensionInstallPlanSummary(plan) : undefined,
-        installed: installedIds.has(entry.id),
+        installed: installedIds.has(extensionId),
         manifestUrl: entry.manifestUrl,
       };
     });
@@ -206,17 +200,23 @@ export function useExtensionManagementModel({
 
   const installCatalogEntry = useCallback(
     (entry: ExtensionCatalogBrowseEntry) => {
-      if (entry.installPlan?.blocked) {
+      const installContext = createExtensionInstallPlanningContext({
+        catalogEntries,
+        extensionRegistry,
+        installedRecords,
+      });
+      const plan = createCatalogEntryInstallPlan(entry, installContext);
+      if (!plan || plan.blocked) {
         return;
       }
 
-      const next = installExtensionRecord(
-        {
-          category: entry.category,
-          enabled: true,
-          id: entry.id,
-          manifestUrl: entry.manifestUrl,
-        },
+      const next = applyExtensionInstallPlanToRecords({
+        currentRecords: installedRecords,
+        installSources: installContext.installSources,
+        plan,
+      });
+      saveInstalledExtensions(
+        next,
         resolvedInstalledExtensionsStorageKey,
         resolvedInstalledExtensionsStorage,
       );
@@ -225,7 +225,13 @@ export function useExtensionManagementModel({
         window.location.reload();
       }
     },
-    [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey],
+    [
+      catalogEntries,
+      extensionRegistry,
+      installedRecords,
+      resolvedInstalledExtensionsStorage,
+      resolvedInstalledExtensionsStorageKey,
+    ],
   );
 
   const toggleInstalledEntry = useCallback(
@@ -256,6 +262,86 @@ export function useExtensionManagementModel({
     installedEntries,
     toggleInstalledEntry,
   };
+}
+
+function createExtensionInstallPlanningContext({
+  catalogEntries,
+  extensionRegistry,
+  installedRecords,
+}: {
+  readonly catalogEntries: readonly ExtensionCatalogEntry[];
+  readonly extensionRegistry: ExtensionRegistry;
+  readonly installedRecords: readonly InstalledExtensionRecord[];
+}) {
+  const availableExtensions = mergeUniqueExtensionDescriptions([
+    ...BUNDLED_EXTENSIONS,
+    ...extensionRegistry.getExtensions(),
+  ]);
+
+  return {
+    availableExtensions,
+    enabledExtensionIds: extensionRegistry
+      .getExtensions()
+      .map((extension) => extension.manifest.id),
+    hostCapabilityIds: extensionRegistry.capabilityRegistry.listProviderIds(),
+    installSources: createExtensionInstallSources(catalogEntries, availableExtensions),
+    installedRecords,
+  };
+}
+
+function createCatalogEntryInstallPlan(
+  entry: Pick<ExtensionCatalogBrowseEntry, 'manifestUrl'>,
+  {
+    availableExtensions,
+    enabledExtensionIds,
+    hostCapabilityIds,
+    installedRecords,
+    installSources,
+  }: {
+    readonly availableExtensions: readonly WorkbenchExtensionDescription[];
+    readonly enabledExtensionIds: readonly string[];
+    readonly hostCapabilityIds: readonly string[];
+    readonly installSources: readonly ExtensionInstallPlanInstallSource[];
+    readonly installedRecords: readonly InstalledExtensionRecord[];
+  },
+): ExtensionInstallPlan | undefined {
+  const bundledExtension = resolveBundledExtensionByManifestUrl(
+    entry.manifestUrl,
+    availableExtensions,
+  );
+  if (!bundledExtension) {
+    return undefined;
+  }
+
+  return createExtensionInstallPlan({
+    availableExtensions,
+    enabledExtensionIds,
+    hostCapabilityIds,
+    installSources,
+    installedRecords,
+    targetExtensionId: bundledExtension.manifest.id,
+  });
+}
+
+function createExtensionInstallSources(
+  catalogEntries: readonly ExtensionCatalogEntry[],
+  availableExtensions: readonly WorkbenchExtensionDescription[],
+): readonly ExtensionInstallPlanInstallSource[] {
+  const byId = new Map<string, ExtensionInstallPlanInstallSource>();
+  for (const entry of catalogEntries) {
+    const bundledExtension = resolveBundledExtensionByManifestUrl(
+      entry.manifestUrl,
+      availableExtensions,
+    );
+    const extensionId = bundledExtension?.manifest.id ?? entry.id;
+    byId.set(extensionId, {
+      category: entry.category,
+      id: extensionId,
+      manifestUrl: entry.manifestUrl,
+    });
+  }
+
+  return [...byId.values()];
 }
 
 function mergeUniqueExtensionDescriptions(

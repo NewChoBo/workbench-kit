@@ -78,8 +78,10 @@ at runtime and activation recursively activates hard dependencies first.
 for management surfaces and plugin-store style review.
 `createExtensionInstallPlan()` reuses the same dependency/capability diagnostics
 before install state is written, and adds install-specific blocking diagnostics
-for missing catalog targets, missing extension-pack members, and dependency
-cycles.
+for missing catalog targets, missing catalog install sources, missing
+extension-pack members, and dependency cycles. Non-blocked plans are applied
+with `applyExtensionInstallPlanToRecords()` so dependency enable/install actions
+are committed as one local install-state update.
 
 ## Resolution Algorithm
 

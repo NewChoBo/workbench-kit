@@ -119,12 +119,15 @@ export {
 } from './extension-catalog.js';
 export {
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  applyExtensionInstallPlanToRecords,
   getInstalledExtensionRecord,
   installExtensionRecord,
   isInstalledExtensionPersistenceAvailable,
   loadInstalledExtensions,
   saveInstalledExtensions,
   toggleInstalledExtensionEnabled,
+  type ApplyExtensionInstallPlanToRecordsInput,
+  type ExtensionInstallPlanRecordSource,
   type InstalledExtensionCategory,
   type InstalledExtensionRecord,
 } from './extension-install-state.js';
@@ -142,6 +145,7 @@ export {
   type ExtensionInstallPlanCapabilitySummary,
   type ExtensionInstallPlanDiagnostic,
   type ExtensionInstallPlanDiagnosticKind,
+  type ExtensionInstallPlanInstallSource,
   type ExtensionInstallPlanReason,
 } from './extension-install-plan.js';
 export {

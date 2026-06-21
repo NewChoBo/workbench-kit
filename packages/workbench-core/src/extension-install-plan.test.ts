@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { createExtensionInstallPlan, type WorkbenchExtensionDescription } from './index.js';
+import {
+  applyExtensionInstallPlanToRecords,
+  createExtensionInstallPlan,
+  type WorkbenchExtensionDescription,
+} from './index.js';
 
 function extension(
   id: string,
@@ -70,6 +74,75 @@ describe('createExtensionInstallPlan', () => {
     });
   });
 
+  it('applies install plans to installed extension records', () => {
+    const plan = createExtensionInstallPlan({
+      availableExtensions: [
+        extension('pack', {
+          extensionDependencies: ['dependency'],
+          extensionPack: ['theme'],
+        }),
+        extension('dependency'),
+        extension('theme'),
+      ],
+      installSources: [
+        { category: 'feature', id: 'pack', manifestUrl: 'catalog/pack.json' },
+        { category: 'extension-pack', id: 'theme', manifestUrl: 'catalog/theme.json' },
+      ],
+      installedRecords: [
+        {
+          category: 'utility',
+          enabled: false,
+          id: 'dependency',
+          installedAt: '2026-06-20T00:00:00.000Z',
+          manifestUrl: 'dependency',
+        },
+      ],
+      targetExtensionId: 'pack',
+    });
+
+    expect(
+      applyExtensionInstallPlanToRecords({
+        currentRecords: [
+          {
+            category: 'utility',
+            enabled: false,
+            id: 'dependency',
+            installedAt: '2026-06-20T00:00:00.000Z',
+            manifestUrl: 'dependency',
+          },
+        ],
+        installedAt: '2026-06-21T00:00:00.000Z',
+        installSources: [
+          { category: 'feature', id: 'pack', manifestUrl: 'catalog/pack.json' },
+          { category: 'extension-pack', id: 'theme', manifestUrl: 'catalog/theme.json' },
+        ],
+        plan,
+      }),
+    ).toEqual([
+      {
+        category: 'utility',
+        enabled: true,
+        id: 'dependency',
+        installedAt: '2026-06-20T00:00:00.000Z',
+        manifestUrl: 'dependency',
+      },
+      {
+        category: 'extension-pack',
+        enabled: true,
+        id: 'theme',
+        installedAt: '2026-06-21T00:00:00.000Z',
+        manifestUrl: 'catalog/theme.json',
+      },
+      {
+        category: 'feature',
+        enabled: true,
+        id: 'pack',
+        installedAt: '2026-06-21T00:00:00.000Z',
+        manifestUrl: 'catalog/pack.json',
+      },
+    ]);
+  });
+
   it('blocks plans with missing hard dependencies', () => {
     const plan = createExtensionInstallPlan({
       availableExtensions: [
@@ -133,6 +206,24 @@ describe('createExtensionInstallPlan', () => {
         severity: 'error',
       }),
     ]);
+  });
+
+  it('blocks install actions without catalog install sources when sources are provided', () => {
+    const plan = createExtensionInstallPlan({
+      availableExtensions: [extension('target')],
+      installSources: [],
+      targetExtensionId: 'target',
+    });
+
+    expect(plan.blocked).toBe(true);
+    expect(plan.installExtensionIds).toEqual(['target']);
+    expect(plan.diagnostics).toContainEqual(
+      expect.objectContaining({
+        dependencyId: 'target',
+        kind: 'install-source-not-found',
+        severity: 'error',
+      }),
+    );
   });
 
   it('keeps hard dependency reason ahead of extension-pack reason', () => {
@@ -210,5 +301,31 @@ describe('createExtensionInstallPlan', () => {
         severity: 'error',
       }),
     );
+    expect(
+      applyExtensionInstallPlanToRecords({
+        currentRecords: [
+          {
+            category: 'utility',
+            enabled: false,
+            id: 'existing',
+            installedAt: '2026-06-20T00:00:00.000Z',
+            manifestUrl: 'existing',
+          },
+        ],
+        installSources: [
+          { category: 'feature', id: 'first', manifestUrl: 'first' },
+          { category: 'dependency', id: 'second', manifestUrl: 'second' },
+        ],
+        plan,
+      }),
+    ).toEqual([
+      {
+        category: 'utility',
+        enabled: false,
+        id: 'existing',
+        installedAt: '2026-06-20T00:00:00.000Z',
+        manifestUrl: 'existing',
+      },
+    ]);
   });
 });

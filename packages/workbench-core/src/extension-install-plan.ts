@@ -16,6 +16,7 @@ export type ExtensionInstallPlanActionKind = 'already-enabled' | 'enable' | 'ins
 export type ExtensionInstallPlanDiagnosticKind =
   | ExtensionDependencyDiagnosticKind
   | 'dependency-cycle'
+  | 'install-source-not-found'
   | 'missing-extension-pack'
   | 'target-extension-not-found';
 
@@ -34,6 +35,12 @@ export interface ExtensionInstallPlanAction {
   readonly reason: ExtensionInstallPlanReason;
 }
 
+export interface ExtensionInstallPlanInstallSource {
+  readonly category: string;
+  readonly id: string;
+  readonly manifestUrl: string;
+}
+
 export interface ExtensionInstallPlanCapabilitySummary {
   readonly provides: readonly string[];
   readonly requires: readonly string[];
@@ -43,6 +50,7 @@ export interface CreateExtensionInstallPlanInput {
   readonly availableExtensions: readonly WorkbenchExtensionDescription[];
   readonly enabledExtensionIds?: readonly string[] | undefined;
   readonly hostCapabilityIds?: readonly string[] | undefined;
+  readonly installSources?: readonly ExtensionInstallPlanInstallSource[] | undefined;
   readonly installedRecords?: readonly InstalledExtensionRecord[] | undefined;
   readonly targetExtensionId: string;
 }
@@ -66,6 +74,7 @@ export function createExtensionInstallPlan({
   availableExtensions,
   enabledExtensionIds,
   hostCapabilityIds = [],
+  installSources,
   installedRecords = [],
   targetExtensionId,
 }: CreateExtensionInstallPlanInput): ExtensionInstallPlan {
@@ -78,6 +87,10 @@ export function createExtensionInstallPlan({
       installedRecords.filter((record) => record.enabled).map((record) => record.id),
   );
   const diagnostics: ExtensionInstallPlanDiagnostic[] = [];
+  const installSourcesById =
+    installSources !== undefined
+      ? new Map(installSources.map((source) => [source.id, source]))
+      : undefined;
   const reasonById = new Map<string, ExtensionInstallPlanReason>();
   const orderedIds: string[] = [];
   const visitedIds = new Set<string>();
@@ -110,6 +123,21 @@ export function createExtensionInstallPlan({
 
     return { extensionId, kind: 'install', reason };
   });
+  if (installSourcesById) {
+    for (const action of actions) {
+      if (action.kind !== 'install' || installSourcesById.has(action.extensionId)) {
+        continue;
+      }
+
+      diagnostics.push({
+        dependencyId: action.extensionId,
+        extensionId: action.extensionId,
+        kind: 'install-source-not-found',
+        message: `Extension "${action.extensionId}" is planned for install but has no catalog install source.`,
+        severity: 'error',
+      });
+    }
+  }
   const newExtensionIds = actions
     .filter((action) => action.kind !== 'already-enabled')
     .map((action) => action.extensionId);
