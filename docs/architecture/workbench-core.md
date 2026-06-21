@@ -40,7 +40,9 @@ Maintains a scoped key–value context model (booleans, strings, numbers) used b
 
 ### MenuRegistry
 
-Accepts menu contributions (location, group, order, command/submenu entries, separators). Resolves visible items given current context keys and command enablement. Menu-specific reads return deterministic items by first-seen group, numeric order, then registration order.
+Accepts menu contributions (location, group, order, command/submenu entries, separators). Menu-specific reads return deterministic items by first-seen group, numeric order, then registration order.
+
+`resolveWorkbenchMenuContributions()` adapts registry items to command-menu items for UI surfaces. It filters missing or `when`-blocked commands, carries command metadata such as label/icon/danger, and keeps enablement-blocked commands visible as disabled items.
 
 Standard menu locations include command palette categories, activity bar context, editor title, view title, and account menu (see [Account Auth](./account-auth.md)).
 

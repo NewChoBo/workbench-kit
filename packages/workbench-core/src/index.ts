@@ -155,6 +155,11 @@ export {
   type WorkbenchLayoutStateInput,
 } from './layout-service.js';
 export {
+  resolveWorkbenchMenuContributions,
+  type ResolvedWorkbenchMenuContributionItem,
+  type ResolveWorkbenchMenuContributionsInput,
+} from './menu-contribution-resolution.js';
+export {
   collectConfigurationContributionDefaults,
   collectConfigurationDefaults,
   PreferenceService,

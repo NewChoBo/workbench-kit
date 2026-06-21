@@ -186,7 +186,7 @@ export function canExecuteCommand<TContext>(
   return Boolean(
     command?.run &&
     isVisible(command, undefined, context, contextKeys) &&
-    isEnabled(command, undefined, context),
+    isEnabled(command, undefined, context, contextKeys),
   );
 }
 
@@ -243,7 +243,7 @@ export function resolveCommandMenuItems<TContext>({
       {
         commandId: command.id,
         danger: resolveValue(entry.danger ?? command.danger, context),
-        disabled: !isEnabled(command, entry, context),
+        disabled: !isEnabled(command, entry, context, contextKeys),
         icon: resolveValue(entry.icon ?? command.icon, context),
         id: entry.id ?? command.id,
         label: resolveCommandLabel(command, entry, context),
@@ -303,8 +303,13 @@ function isEnabled<TContext>(
   command: CommandDefinition<TContext>,
   entry: CommandMenuCommandEntry<TContext> | undefined,
   context: TContext,
+  contextKeys: object | undefined,
 ) {
-  return command.isEnabled?.(context) !== false && entry?.isEnabled?.(context) !== false;
+  return (
+    resolveWhenClause(command.enablement, context, contextKeys) &&
+    command.isEnabled?.(context) !== false &&
+    entry?.isEnabled?.(context) !== false
+  );
 }
 
 function matchesSurface<TContext>(
