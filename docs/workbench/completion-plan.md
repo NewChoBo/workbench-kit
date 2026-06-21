@@ -317,8 +317,8 @@ Use this checklist for branch merge or release tagging of the Theia-inspired lan
 - [x] **Capabilities:** Extensions can `registerProvider` and receive dispose on deactivate; no new static cross-imports.
 - [x] **Preferences:** Default / workspace / local merge demonstrated with at least one setting key.
 - [x] **Devtools (optional v1):** Storybook inspector story lists registry snapshots after WB-31.
-- [ ] **Validation:** `pnpm validate:full` passes on CI-equivalent clean install.
-- [ ] **Docs:** `todo.md`, `theia-strengths-workplan.md`, and this plan reflect final Lane A status.
+- [x] **Validation:** `pnpm validate:full` passes on CI-equivalent clean install.
+- [x] **Docs:** `todo.md`, `theia-strengths-workplan.md`, and this plan reflect final Lane A status.
 - [x] **Boundaries:** `check-launch-boundary`, manifest, dependency graph, and public export checks pass.
 
 ---
@@ -344,9 +344,9 @@ WB-29 closeout → WB-30 → WB-31 → Lane A DoD checklist
 | **S6**  | WB-31 — Devtools inspectors      | Storybook devtools story; registry/transaction visibility                         |
 | **S7**  | Lane A closeout                  | `validate:full`, DoD checklist, update progress in `theia-strengths-workplan.md`  |
 
-**Next active session:** S7 Lane A final validation.
+**Next active session:** Lane A is complete; pick the next hardening or plugin-store slice.
 
-**Estimated remaining slices:** 1 closeout gate (`validate:full` + final docs status).
+**Estimated remaining slices:** 0 for Lane A.
 
 ---
 
@@ -384,6 +384,7 @@ WB-29 closeout → WB-30 → WB-31 → Lane A DoD checklist
 
 | Date       | Note                                                                                                                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-06-21 | Lane A closeout passed `pnpm validate:full`; full static, Vitest, Storybook build, and required Storybook play gates completed.                              |
 | 2026-06-21 | DoD audit confirmed resource transactions, command-backed explorer handlers, capability dispose lifecycle, and static boundary checks.                       |
 | 2026-06-21 | Runnable host smoke verified with bundled extensions, sample production build, dummy login, activity bar, explorer tree, editor empty state, and status bar. |
 | 2026-06-20 | WB-28 shell/editor scope treated as landed; WB-29 command handlers landed and closeout remains                                                               |

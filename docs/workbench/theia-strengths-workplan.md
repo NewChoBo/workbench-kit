@@ -44,7 +44,7 @@ preference scopes.
 | Workspace         | `VirtualWorkspaceState`, reducer actions, search, tree, selection, draft helpers, and resource URI/snapshot/mutation/transaction contracts exist                                                                                                                            | Repository adapter and transaction journal for persistence are not implemented yet. |
 | Built-in explorer | Registers explorer activity/view provider plus workspace create/open/copy/rename/delete/move command handlers; reveal/focus bridge syncs tree selection with editor tabs                                                                                                    | Optional sample browser smoke only.                                                 |
 | Sample host       | `examples/workbench-sample` — `pnpm workbench-sample` with bundled extensions, editor tabs, virtual workspace, and dummy auth backend                                                                                                                                       | Plugin store and real backend integration remain deferred.                          |
-| Validation        | `validate:static` passes, including manifest, dependency graph, public export, and workbench-kit scoped launch boundary checks                                                                                                                                              | Final `pnpm validate:full` remains as the Lane A closeout gate.                     |
+| Validation        | `validate:full` passes, including static checks, Vitest, Storybook build, and required Storybook play coverage                                                                                                                                                              | Large Storybook chunks remain a build warning, not a failing gate.                  |
 
 ## Work Queue
 
@@ -75,7 +75,10 @@ build`. Browser smoke verified dummy login, activity bar, explorer tree,
   editor empty state, status bar, and zero console errors.
 - 2026-06-21: Lane A DoD audit confirmed resource transaction usage,
   command-backed explorer handlers, capability provider deactivate cleanup, and
-  static boundary checks. Final remaining closeout is `pnpm validate:full`.
+  static boundary checks before the final full gate.
+- 2026-06-21: Lane A closeout passed `pnpm validate:full`, including static
+  checks, 170 Vitest files / 679 tests, Storybook build, and 11 required
+  Storybook play suites.
 - 2026-06-16: WB-28 S1 added `EditorService`, `EditorResolverRegistry`, SDK editor contribution/resolver types, and React `useEditor*` hooks wired to `EditorHostFactoryRegistry`.
 - 2026-06-14: WB-27 added workspace resource contracts (`resource-uri`, `resource-snapshot`,
   `resource-mutation`, `resource-transaction`) on top of `virtualWorkspaceReducer` without
@@ -116,10 +119,10 @@ Summary:
 
 ## Suggested Order
 
-1. Run Lane A final closeout: `pnpm validate:full`, then update the DoD docs
-   status if it passes.
-2. Defer user/resource/secret preference scopes and runtime plugin-store
+1. Defer user/resource/secret preference scopes and runtime plugin-store
    execution to later hardening slices.
+2. Start the next platform slice from plugin store install planning or layout
+   persistence hardening.
 
 ## Acceptance Criteria
 
