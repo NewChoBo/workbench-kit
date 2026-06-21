@@ -186,6 +186,10 @@ within each group by numeric `order`, and preserves registration order when
 group/order are equal. This mirrors IDE-style contribution ordering while
 remaining stable for extensions that load in a deterministic order.
 
+Manifest authors may use array form with `menu` on each contribution, or object
+form keyed by menu location. Object form entries inherit the menu location from
+the key; array form entries must declare `menu` explicitly.
+
 ## Configuration Contributions
 
 ```ts

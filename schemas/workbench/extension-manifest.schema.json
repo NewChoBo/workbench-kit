@@ -146,6 +146,15 @@
       "required": ["command"],
       "additionalProperties": true
     },
+    "menuContributionWithLocation": {
+      "allOf": [
+        { "$ref": "#/definitions/menuContribution" },
+        {
+          "type": "object",
+          "required": ["menu"]
+        }
+      ]
+    },
     "themeContribution": {
       "type": "object",
       "properties": {
@@ -235,7 +244,7 @@
           "oneOf": [
             {
               "type": "array",
-              "items": { "$ref": "#/definitions/menuContribution" }
+              "items": { "$ref": "#/definitions/menuContributionWithLocation" }
             },
             {
               "type": "object",

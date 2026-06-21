@@ -340,9 +340,7 @@ function validateContributes(entry, violations, repoRoot) {
     ['translations', isRecord(item.translations)],
   ]);
   validateConfigurationContribution(entry, contributes.configuration, violations, repoRoot);
-  validateContributionArrayMap(entry, contributes, 'menus', violations, repoRoot, (item) => [
-    ['command', stringValue(item.command)],
-  ]);
+  validateMenuContributions(entry, contributes, violations, repoRoot);
   validateContributionArrayMap(
     entry,
     contributes,
@@ -405,18 +403,6 @@ function validateContributionArrayMap(
     return;
   }
 
-  if (Array.isArray(value) && field === 'menus') {
-    validateContributionItems(
-      entry,
-      `contributes.${field}`,
-      value,
-      violations,
-      repoRoot,
-      requiredFields,
-    );
-    return;
-  }
-
   if (!isRecord(value)) {
     violations.push({
       location: fieldLocation(entry.manifestPath, `contributes.${field}`, repoRoot),
@@ -443,6 +429,51 @@ function validateContributionArrayMap(
       violations,
       repoRoot,
       requiredFields,
+    );
+  }
+}
+
+function validateMenuContributions(entry, contributes, violations, repoRoot) {
+  const value = contributes.menus;
+  if (value === undefined) {
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    validateContributionItems(entry, 'contributes.menus', value, violations, repoRoot, (item) => [
+      ['menu', stringValue(item.menu)],
+      ['command', stringValue(item.command)],
+    ]);
+    return;
+  }
+
+  if (!isRecord(value)) {
+    violations.push({
+      location: fieldLocation(entry.manifestPath, 'contributes.menus', repoRoot),
+      message:
+        'contributes.menus must be an array or an object whose values are contribution arrays.',
+      rule: 'manifest-contributes',
+    });
+    return;
+  }
+
+  for (const [surface, items] of Object.entries(value)) {
+    if (!Array.isArray(items)) {
+      violations.push({
+        location: fieldLocation(entry.manifestPath, `contributes.menus.${surface}`, repoRoot),
+        message: `contributes.menus.${surface} must be an array.`,
+        rule: 'manifest-contributes',
+      });
+      continue;
+    }
+
+    validateContributionItems(
+      entry,
+      `contributes.menus.${surface}`,
+      items,
+      violations,
+      repoRoot,
+      (item) => [['command', stringValue(item.command)]],
     );
   }
 }

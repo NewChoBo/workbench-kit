@@ -146,4 +146,53 @@ describe('workbench extension manifest validation', () => {
       'extensions/builtin.test/workbench.extension.json#contributes.configuration.properties.workbench.test.enabled.type',
     ]);
   });
+
+  it('requires array-form menu contributions to declare a menu location', () => {
+    const violations = validateWorkbenchExtensionManifests(
+      [
+        createManifestEntry(
+          createValidManifest({
+            contributes: {
+              menus: [
+                {
+                  command: 'workbench-kit.test.run',
+                },
+              ],
+            },
+          }),
+        ),
+      ],
+      repoRoot,
+    );
+
+    expect(violations).toEqual([
+      expect.objectContaining({
+        location: 'extensions/builtin.test/workbench.extension.json#contributes.menus[0].menu',
+        rule: 'manifest-contributes',
+      }),
+    ]);
+  });
+
+  it('allows object-form menu contributions to inherit the menu location from the surface key', () => {
+    const violations = validateWorkbenchExtensionManifests(
+      [
+        createManifestEntry(
+          createValidManifest({
+            contributes: {
+              menus: {
+                'explorer/context': [
+                  {
+                    command: 'workbench-kit.test.run',
+                  },
+                ],
+              },
+            },
+          }),
+        ),
+      ],
+      repoRoot,
+    );
+
+    expect(violations).toEqual([]);
+  });
 });
