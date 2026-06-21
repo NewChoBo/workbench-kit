@@ -157,6 +157,11 @@ of `shell.tsx`. That keeps shell layout, view hosting, and settings field
 rendering in separate files so parallel work on shell chrome and configuration
 UI does not converge on the same large module.
 
+Editor group layout, tab drag/drop, and split behavior stay in `editor-area.tsx`;
+active editor host rendering and text-editor view-mode surfaces live in
+`editor-host-surface.tsx`. This lets layout/editor-shell work and document
+surface work proceed independently.
+
 ## Data Flow
 
 1. `WorkbenchProvider` loads config and registers extensions.
