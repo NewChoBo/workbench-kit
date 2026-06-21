@@ -152,6 +152,11 @@ rows/actions.
 Modal-based shell surfaces use common `Modal` sizing, scroll, body padding, and
 stack layout options instead of per-modal body CSS for repeated shell chrome.
 
+Settings and appearance category assembly lives in `shell-settings.tsx` instead
+of `shell.tsx`. That keeps shell layout, view hosting, and settings field
+rendering in separate files so parallel work on shell chrome and configuration
+UI does not converge on the same large module.
+
 ## Data Flow
 
 1. `WorkbenchProvider` loads config and registers extensions.
