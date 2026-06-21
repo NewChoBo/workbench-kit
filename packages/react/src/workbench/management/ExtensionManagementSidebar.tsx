@@ -1,10 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import {
-  SideBarHeaderControl,
-  SideBarList,
-  SideBarListItem,
-  SideBarViewFrame,
-} from '../../layout/SideBarViewFrame';
+import { SideBarHeaderControl, SideBarList, SideBarViewFrame } from '../../layout/SideBarViewFrame';
 import { SidebarToolbar } from '../../layout/SidebarToolbar';
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
@@ -22,6 +17,7 @@ import { ManagementFilterChips } from './ManagementFilterChips.js';
 import type {
   ExtensionCatalogBrowseEntry,
   ExtensionManagementEntry,
+  ExtensionManagementFeatureSummary,
   ExtensionManagementPanelProps,
 } from './types.js';
 
@@ -178,6 +174,7 @@ function InstalledExtensionList({
           }
           category={entry.category}
           description={entry.description}
+          features={entry.features}
           meta={
             entry.source === 'bundled' ? (
               <Badge variant="muted">Built-in</Badge>
@@ -262,42 +259,80 @@ function ExtensionSidebarListItem({
   action,
   category,
   description,
+  features,
   meta,
   title,
 }: {
   action: ReactNode;
   category: string;
   description?: string | undefined;
+  features?: ExtensionManagementFeatureSummary | undefined;
   meta?: ReactNode;
   title: string;
 }) {
   const iconTone = extensionCategoryIconTone(category);
+  const featureBadges = getExtensionFeatureBadges(features);
 
   return (
-    <SideBarListItem className="workbench-extensions-sidebar__item">
-      <div className="workbench-extensions-sidebar__item-main">
-        <div
-          aria-hidden
-          className={cx(
-            'workbench-extensions-sidebar__icon',
-            `workbench-extensions-sidebar__icon--${iconTone}`,
-          )}
-        >
-          <i className={cxCodicon(extensionCategoryIcon(category))} />
-        </div>
-        <div className="workbench-extensions-sidebar__copy">
-          <div className="workbench-extensions-sidebar__title-row">
-            <span className="workbench-extensions-sidebar__title">{title}</span>
-            {meta}
+    <li className="ui-side-bar-list-entry">
+      <div className="ui-side-bar-list-item workbench-extensions-sidebar__item">
+        <div className="workbench-extensions-sidebar__item-main">
+          <div
+            aria-hidden
+            className={cx(
+              'workbench-extensions-sidebar__icon',
+              `workbench-extensions-sidebar__icon--${iconTone}`,
+            )}
+          >
+            <i className={cxCodicon(extensionCategoryIcon(category))} />
           </div>
-          {description ? (
-            <p className="workbench-extensions-sidebar__description">{description}</p>
-          ) : null}
+          <div className="workbench-extensions-sidebar__copy">
+            <div className="workbench-extensions-sidebar__title-row">
+              <span className="workbench-extensions-sidebar__title">{title}</span>
+              {meta}
+            </div>
+            {description ? (
+              <p className="workbench-extensions-sidebar__description">{description}</p>
+            ) : null}
+            {featureBadges.length > 0 ? (
+              <div className="workbench-extensions-sidebar__features">
+                {featureBadges.map((badge) => (
+                  <span key={badge}>{badge}</span>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
+        <div className="workbench-extensions-sidebar__actions">{action}</div>
       </div>
-      <div className="workbench-extensions-sidebar__actions">{action}</div>
-    </SideBarListItem>
+    </li>
   );
+}
+
+function getExtensionFeatureBadges(features: ExtensionManagementFeatureSummary | undefined) {
+  if (!features) {
+    return [];
+  }
+
+  return [
+    formatFeatureBadge('Commands', features.commands?.length ?? 0),
+    formatFeatureBadge('Document views', features.documentViews?.length ?? 0),
+    formatFeatureBadge('Settings', features.settings?.length ?? 0),
+    formatFeatureBadge('Views', features.views?.length ?? 0),
+    formatFeatureBadge(
+      'Capabilities',
+      (features.capabilities?.requires.length ?? 0) + (features.capabilities?.provides.length ?? 0),
+    ),
+    formatFeatureBadge('Permissions', features.permissions?.length ?? 0),
+  ].filter((badge): badge is string => badge !== undefined);
+}
+
+function formatFeatureBadge(label: string, count: number) {
+  if (count === 0) {
+    return undefined;
+  }
+
+  return `${label} ${count}`;
 }
 
 function filterInstalledEntries(entries: readonly ExtensionManagementEntry[], query: string) {

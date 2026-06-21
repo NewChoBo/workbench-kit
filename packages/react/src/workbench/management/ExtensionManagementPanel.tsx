@@ -19,6 +19,7 @@ import {
 import type {
   ExtensionCatalogBrowseEntry,
   ExtensionManagementEntry,
+  ExtensionManagementFeatureSummary,
   ExtensionManagementPanelProps,
 } from './types.js';
 
@@ -179,13 +180,88 @@ function InstalledExtensionsTab({
                 iconTone={extensionCategoryIconTone(entry.category)}
                 id={entry.id}
                 title={entry.displayName}
-              />
+              >
+                <ExtensionFeatureDetails entry={entry} />
+              </ManagementCard>
             </li>
           ))}
         </ManagementCardList>
       )}
     </>
   );
+}
+
+function ExtensionFeatureDetails({ entry }: { entry: ExtensionManagementEntry }) {
+  const rows = getExtensionFeatureDetailRows(entry.features);
+  const diagnostics = entry.diagnostics ?? [];
+
+  if (rows.length === 0 && diagnostics.length === 0) {
+    return null;
+  }
+
+  return (
+    <dl className="workbench-management-card__details">
+      {rows.map((row) => (
+        <div key={row.label}>
+          <dt>{row.label}</dt>
+          <dd>{row.value}</dd>
+        </div>
+      ))}
+      {diagnostics.length > 0 ? (
+        <div>
+          <dt>Diagnostics</dt>
+          <dd>{diagnostics.map((diagnostic) => diagnostic.message).join(' ')}</dd>
+        </div>
+      ) : null}
+    </dl>
+  );
+}
+
+function getExtensionFeatureDetailRows(features: ExtensionManagementFeatureSummary | undefined) {
+  if (!features) {
+    return [];
+  }
+
+  return [
+    createFeatureDetailRow('Commands', features.commands),
+    createFeatureDetailRow('Document views', features.documentViews),
+    createFeatureDetailRow('Settings', features.settings),
+    createFeatureDetailRow('Views', features.views),
+    createTextListDetailRow('Capabilities', [
+      ...(features.capabilities?.requires ?? []),
+      ...(features.capabilities?.provides ?? []),
+    ]),
+    createTextListDetailRow('Permissions', features.permissions ?? []),
+  ].filter((row): row is { label: string; value: string } => row !== undefined);
+}
+
+function createFeatureDetailRow(label: string, items: readonly { label: string }[] | undefined) {
+  if (!items?.length) {
+    return undefined;
+  }
+
+  return {
+    label,
+    value: formatFeatureList(items.map((item) => item.label)),
+  };
+}
+
+function createTextListDetailRow(label: string, items: readonly string[]) {
+  if (items.length === 0) {
+    return undefined;
+  }
+
+  return {
+    label,
+    value: formatFeatureList(items),
+  };
+}
+
+function formatFeatureList(items: readonly string[]) {
+  const visibleItems = items.slice(0, 3);
+  const suffix =
+    items.length > visibleItems.length ? ` +${items.length - visibleItems.length}` : '';
+  return `${visibleItems.join(', ')}${suffix}`;
 }
 
 function BrowseExtensionsTab({

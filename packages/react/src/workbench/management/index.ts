@@ -57,6 +57,9 @@ export type {
   CommandManagementPanelProps,
   CommandManagementRunState,
   ExtensionCatalogBrowseEntry,
+  ExtensionManagementDiagnosticSummary,
   ExtensionManagementEntry,
+  ExtensionManagementFeatureItem,
+  ExtensionManagementFeatureSummary,
   ExtensionManagementPanelProps,
 } from './types.js';

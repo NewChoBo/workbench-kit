@@ -150,6 +150,7 @@ function validateManifestShape(entry, violations, repoRoot) {
   }
 
   validateCapabilities(entry, violations, repoRoot);
+  validateContributes(entry, violations, repoRoot);
 }
 
 function validateExtensionPackage(entry, violations, repoRoot) {
@@ -287,6 +288,230 @@ function validateCapabilities(entry, violations, repoRoot) {
         });
       }
       seen.add(item);
+    }
+  }
+}
+
+function validateContributes(entry, violations, repoRoot) {
+  const { contributes } = entry.manifest;
+  if (contributes === undefined) {
+    return;
+  }
+
+  if (!isRecord(contributes)) {
+    violations.push({
+      location: fieldLocation(entry.manifestPath, 'contributes', repoRoot),
+      message: 'contributes must be an object.',
+      rule: 'manifest-contributes',
+    });
+    return;
+  }
+
+  validateContributionArray(entry, contributes, 'commands', violations, repoRoot, (item) => [
+    ['command', stringValue(item.command)],
+    ['title', stringValue(item.title)],
+  ]);
+  validateContributionArray(entry, contributes, 'keybindings', violations, repoRoot, (item) => [
+    ['command', stringValue(item.command)],
+    ['key', stringValue(item.key)],
+  ]);
+  validateContributionArray(entry, contributes, 'activities', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['viewContainerId', stringValue(item.viewContainerId)],
+    ['icon', stringValue(item.icon)],
+    ['title', stringValue(item.title)],
+  ]);
+  validateContributionArray(entry, contributes, 'editors', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['label', stringValue(item.label)],
+  ]);
+  validateContributionArray(entry, contributes, 'documentViews', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['kind', item.kind === 'form' || item.kind === 'preview'],
+    ['label', stringValue(item.label)],
+  ]);
+  validateContributionArray(entry, contributes, 'themes', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['label', stringValue(item.label)],
+  ]);
+  validateContributionArray(entry, contributes, 'localizations', violations, repoRoot, (item) => [
+    ['locale', stringValue(item.locale)],
+    ['label', stringValue(item.label)],
+    ['translations', isRecord(item.translations)],
+  ]);
+  validateConfigurationContribution(entry, contributes.configuration, violations, repoRoot);
+  validateContributionArrayMap(entry, contributes, 'menus', violations, repoRoot, (item) => [
+    ['command', stringValue(item.command)],
+  ]);
+  validateContributionArrayMap(
+    entry,
+    contributes,
+    'viewContainers',
+    violations,
+    repoRoot,
+    (item) => [
+      ['id', stringValue(item.id)],
+      ['title', stringValue(item.title)],
+    ],
+  );
+  validateContributionArrayMap(entry, contributes, 'views', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['name', stringValue(item.name)],
+  ]);
+}
+
+function validateContributionArray(
+  entry,
+  contributes,
+  field,
+  violations,
+  repoRoot,
+  requiredFields,
+) {
+  const value = contributes[field];
+  if (value === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(value)) {
+    violations.push({
+      location: fieldLocation(entry.manifestPath, `contributes.${field}`, repoRoot),
+      message: `contributes.${field} must be an array.`,
+      rule: 'manifest-contributes',
+    });
+    return;
+  }
+
+  validateContributionItems(
+    entry,
+    `contributes.${field}`,
+    value,
+    violations,
+    repoRoot,
+    requiredFields,
+  );
+}
+
+function validateContributionArrayMap(
+  entry,
+  contributes,
+  field,
+  violations,
+  repoRoot,
+  requiredFields,
+) {
+  const value = contributes[field];
+  if (value === undefined) {
+    return;
+  }
+
+  if (Array.isArray(value) && field === 'menus') {
+    validateContributionItems(
+      entry,
+      `contributes.${field}`,
+      value,
+      violations,
+      repoRoot,
+      requiredFields,
+    );
+    return;
+  }
+
+  if (!isRecord(value)) {
+    violations.push({
+      location: fieldLocation(entry.manifestPath, `contributes.${field}`, repoRoot),
+      message: `contributes.${field} must be an object whose values are contribution arrays.`,
+      rule: 'manifest-contributes',
+    });
+    return;
+  }
+
+  for (const [surface, items] of Object.entries(value)) {
+    if (!Array.isArray(items)) {
+      violations.push({
+        location: fieldLocation(entry.manifestPath, `contributes.${field}.${surface}`, repoRoot),
+        message: `contributes.${field}.${surface} must be an array.`,
+        rule: 'manifest-contributes',
+      });
+      continue;
+    }
+
+    validateContributionItems(
+      entry,
+      `contributes.${field}.${surface}`,
+      items,
+      violations,
+      repoRoot,
+      requiredFields,
+    );
+  }
+}
+
+function validateContributionItems(entry, field, items, violations, repoRoot, requiredFields) {
+  for (const [index, value] of items.entries()) {
+    if (!isRecord(value)) {
+      violations.push({
+        location: fieldLocation(entry.manifestPath, `${field}[${index}]`, repoRoot),
+        message: `${field} entries must be objects.`,
+        rule: 'manifest-contributes',
+      });
+      continue;
+    }
+
+    for (const [requiredField, valid] of requiredFields(value)) {
+      if (!valid) {
+        violations.push({
+          location: fieldLocation(
+            entry.manifestPath,
+            `${field}[${index}].${requiredField}`,
+            repoRoot,
+          ),
+          message: `${field} entries must declare ${requiredField}.`,
+          rule: 'manifest-contributes',
+        });
+      }
+    }
+  }
+}
+
+function validateConfigurationContribution(entry, configuration, violations, repoRoot) {
+  if (configuration === undefined) {
+    return;
+  }
+
+  if (!isRecord(configuration) || !isRecord(configuration.properties)) {
+    violations.push({
+      location: fieldLocation(entry.manifestPath, 'contributes.configuration.properties', repoRoot),
+      message: 'contributes.configuration must include a properties object.',
+      rule: 'manifest-contributes',
+    });
+    return;
+  }
+
+  for (const [key, property] of Object.entries(configuration.properties)) {
+    if (!isRecord(property)) {
+      violations.push({
+        location: fieldLocation(
+          entry.manifestPath,
+          `contributes.configuration.properties.${key}`,
+          repoRoot,
+        ),
+        message: `Configuration property "${key}" must be an object.`,
+        rule: 'manifest-contributes',
+      });
+      continue;
+    }
+
+    if (!['array', 'boolean', 'number', 'object', 'string'].includes(property.type)) {
+      violations.push({
+        location: fieldLocation(
+          entry.manifestPath,
+          `contributes.configuration.properties.${key}.type`,
+          repoRoot,
+        ),
+        message: `Configuration property "${key}" must declare a supported type.`,
+        rule: 'manifest-contributes',
+      });
     }
   }
 }

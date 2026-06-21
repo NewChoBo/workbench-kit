@@ -17,6 +17,9 @@ export const WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID = 'workbench.togglePrim
 export const WORKBENCH_EDITOR_SAVE_COMMAND_ID = 'editor.save';
 export const WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID = 'editor.discardChanges';
 export const WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID = 'editor.copyPath';
+export const WORKBENCH_EDITOR_TOGGLE_PINNED_COMMAND_ID = 'editor.togglePinned';
+export const WORKBENCH_EDITOR_SPLIT_RIGHT_COMMAND_ID = 'editor.splitRight';
+export const WORKBENCH_EDITOR_SPLIT_DOWN_COMMAND_ID = 'editor.splitDown';
 export const WORKBENCH_EDITOR_CLOSE_COMMAND_ID = 'editor.close';
 export const WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID = 'editor.closeOthers';
 export const WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID = 'editor.closeAll';
@@ -112,6 +115,9 @@ export interface WorkbenchEditorCommandContext {
   canDeletePath: boolean;
   canDiscardFile: boolean;
   canSaveFile: boolean;
+  canSplitDown: boolean;
+  canSplitRight: boolean;
+  canTogglePinned: boolean;
   closeAll: () => void;
   closeOthers: () => void;
   closePath: () => void;
@@ -122,7 +128,11 @@ export interface WorkbenchEditorCommandContext {
   hasMultipleOpenFiles: boolean;
   hasOpenFiles: boolean;
   hasUnsavedChanges: boolean;
+  isPinned: boolean;
   saveFile: () => void;
+  splitDown: () => void;
+  splitRight: () => void;
+  togglePinned: () => void;
 }
 
 export interface WorkbenchWorkspaceCommandContext {
@@ -267,6 +277,30 @@ export function createWorkbenchEditorCommands({
         run: ({ copyPath }) => copyPath(),
       },
       {
+        id: WORKBENCH_EDITOR_TOGGLE_PINNED_COMMAND_ID,
+        icon: 'codicon-pinned',
+        isEnabled: ({ canTogglePinned, filePath }) => Boolean(filePath && canTogglePinned),
+        isVisible: ({ canTogglePinned, filePath }) => Boolean(filePath && canTogglePinned),
+        label: ({ isPinned }) => (isPinned ? 'Unpin' : 'Pin'),
+        run: ({ togglePinned }) => togglePinned(),
+      },
+      {
+        id: WORKBENCH_EDITOR_SPLIT_RIGHT_COMMAND_ID,
+        icon: 'codicon-split-horizontal',
+        isEnabled: ({ canSplitRight, filePath }) => Boolean(filePath && canSplitRight),
+        isVisible: ({ canSplitRight, filePath }) => Boolean(filePath && canSplitRight),
+        label: 'Split Right',
+        run: ({ splitRight }) => splitRight(),
+      },
+      {
+        id: WORKBENCH_EDITOR_SPLIT_DOWN_COMMAND_ID,
+        icon: 'codicon-split-vertical',
+        isEnabled: ({ canSplitDown, filePath }) => Boolean(filePath && canSplitDown),
+        isVisible: ({ canSplitDown, filePath }) => Boolean(filePath && canSplitDown),
+        label: 'Split Down',
+        run: ({ splitDown }) => splitDown(),
+      },
+      {
         id: WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
         icon: 'codicon-close',
         isEnabled: ({ canClosePath, filePath }) => Boolean(filePath && canClosePath),
@@ -311,6 +345,16 @@ export function createWorkbenchEditorTabListMenuEntries(): CommandMenuEntry<Work
 
 export function createWorkbenchEditorTabMenuEntries(): CommandMenuEntry<WorkbenchEditorCommandContext>[] {
   return [
+    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_TOGGLE_PINNED_COMMAND_ID, {
+      surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
+    }),
+    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_SPLIT_RIGHT_COMMAND_ID, {
+      surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
+    }),
+    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_SPLIT_DOWN_COMMAND_ID, {
+      surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
+    }),
+    commandMenuSeparator('tab-layout-separator'),
     commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID, {
       surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
     }),

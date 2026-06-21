@@ -4,6 +4,7 @@
     "workbench-kit.builtin.search",
     "workbench-kit.builtin.chat",
     "workbench-kit.builtin.commands",
+    "workbench-kit.builtin.extensions",
     "workbench-kit.builtin.settings",
     "workbench-kit.builtin.workspace"
   ],
@@ -12,6 +13,7 @@
     "workbench-kit.builtin.chat",
     "workbench-kit.builtin.commands",
     "workbench-kit.builtin.editor",
+    "workbench-kit.builtin.extensions",
     "workbench-kit.builtin.explorer",
     "workbench-kit.builtin.search",
     "workbench-kit.builtin.keybindings",

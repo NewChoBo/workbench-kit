@@ -5,7 +5,7 @@ import { act, StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { parseWorkbenchLayoutConfig } from '@workbench-kit/workbench-config';
-import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
+import type { EditorState, WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
 import {
   createWorkbenchWorkspaceHostPort,
   type VirtualWorkspaceInitialState,
@@ -43,10 +43,12 @@ Object.defineProperty(Element.prototype, 'scrollIntoView', {
 });
 
 import {
+  DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   WorkbenchProvider,
   WorkbenchShell,
   useEditorService,
   useWorkbench,
+  type WorkbenchStorageAdapter,
   type WorkbenchShellProps,
 } from './index.js';
 import {
@@ -105,6 +107,54 @@ function OpenEditorTabProbe({ path, onReady }: { onReady: () => void; path: stri
   return null;
 }
 
+function PersistEditorStateProbe({ onReady }: { onReady: () => void }) {
+  const editorService = useEditorService();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      while (
+        !cancelled &&
+        editorService.resolveEditorId('workspace://file/src/App.tsx') === undefined
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+
+      if (cancelled) {
+        return;
+      }
+
+      const opened = editorService.openEditor({
+        pinned: true,
+        resourceUri: 'workspace://file/src/App.tsx',
+        title: 'App.tsx',
+      });
+      editorService.splitEditor({
+        direction: 'vertical',
+        tabId: opened.id,
+      });
+      onReady();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [editorService, onReady]);
+
+  return null;
+}
+
+function CaptureEditorStateProbe({ onState }: { onState: (state: EditorState) => void }) {
+  const editorService = useEditorService();
+
+  useEffect(() => {
+    onState(editorService.getState());
+  }, [editorService, onState]);
+
+  return null;
+}
+
 const WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID = 'workbench.togglePrimarySidebar';
 
 const testGlobal = globalThis as typeof globalThis & {
@@ -117,10 +167,29 @@ function TestWorkbenchShell(props: Omit<WorkbenchShellProps, 'commandHost'>) {
   return <WorkbenchShell {...props} commandHost={false} />;
 }
 
+function createMemoryStorage(): WorkbenchStorageAdapter {
+  const values = new Map<string, string>();
+
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => {
+      values.set(key, value);
+    },
+  };
+}
+
 function CommandProbe() {
   const workbench = useWorkbench();
 
   return <span>{workbench.extensionRegistry.getExtensions().length}</span>;
+}
+
+function CommandTitleProbe({ commandId }: { commandId: string }) {
+  const workbench = useWorkbench();
+
+  return (
+    <span>{workbench.extensionRegistry.commands.getCommand(commandId)?.title ?? 'missing'}</span>
+  );
 }
 
 function WorkspaceCreateCommandProbe({ onResult }: { onResult: (result: unknown) => void }) {
@@ -288,6 +357,34 @@ describe('WorkbenchProvider', () => {
     );
 
     expect(markup).toContain('<span>1</span>');
+  });
+
+  it('loads installed extension records from an injected storage adapter', () => {
+    const installedExtensionsStorageKey = 'workbench-kit/.workbench/installed-extensions/test';
+    const installedExtensionsStorage = createMemoryStorage();
+    installedExtensionsStorage.setItem(
+      installedExtensionsStorageKey,
+      JSON.stringify([
+        {
+          category: 'sample',
+          enabled: true,
+          id: 'workbench-kit.samples.hello-world',
+          installedAt: '2026-06-21T00:00:00.000Z',
+          manifestUrl: '/extensions/samples.hello-world/workbench.extension.json',
+        },
+      ]),
+    );
+
+    const markup = renderToStaticMarkup(
+      <WorkbenchProvider
+        installedExtensionsStorage={installedExtensionsStorage}
+        installedExtensionsStorageKey={installedExtensionsStorageKey}
+      >
+        <CommandTitleProbe commandId="workbench-kit.samples.hello-world.sayHello" />
+      </WorkbenchProvider>,
+    );
+
+    expect(markup).toContain('Hello World: Say Hello');
   });
 
   it('renders a workbench shell from registered view contributions', () => {
@@ -1031,6 +1128,87 @@ describe('WorkbenchProvider', () => {
       root.unmount();
     });
     container.remove();
+  });
+
+  it('persists and restores editor service state through an injected storage adapter', async () => {
+    const storageKey = `${DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY}/provider-test`;
+    const editorStateStorage = createMemoryStorage();
+    const firstContainer = document.createElement('div');
+    document.body.append(firstContainer);
+    const firstRoot = createRoot(firstContainer);
+    let persistedReady = false;
+
+    await act(async () => {
+      firstRoot.render(
+        <WorkbenchProvider
+          editorStateStorage={editorStateStorage}
+          editorStateStorageKey={storageKey}
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <PersistEditorStateProbe
+            onReady={() => {
+              persistedReady = true;
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    for (let attempt = 0; attempt < 20 && !persistedReady; attempt += 1) {
+      await flushReactEffects();
+    }
+
+    expect(persistedReady).toBe(true);
+    const rawPersisted = editorStateStorage.getItem(storageKey);
+    expect(rawPersisted).toContain('workspace://file/src/App.tsx');
+    expect(rawPersisted).toContain('"direction": "vertical"');
+
+    await act(async () => {
+      firstRoot.unmount();
+    });
+    firstContainer.remove();
+    await flushReactEffects();
+
+    const secondContainer = document.createElement('div');
+    document.body.append(secondContainer);
+    const secondRoot = createRoot(secondContainer);
+    const restoredStates: EditorState[] = [];
+
+    await act(async () => {
+      secondRoot.render(
+        <WorkbenchProvider
+          editorStateStorage={editorStateStorage}
+          editorStateStorageKey={storageKey}
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <CaptureEditorStateProbe
+            onState={(state) => {
+              restoredStates.push(state);
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    expect(restoredStates[0]?.groups).toHaveLength(2);
+    expect(restoredStates[0]?.layout).toEqual({
+      children: restoredStates[0]?.groups.map((group) => ({ groupId: group.id, type: 'group' })),
+      direction: 'vertical',
+      type: 'split',
+    });
+
+    await act(async () => {
+      secondRoot.unmount();
+    });
+    secondContainer.remove();
   });
 
   it('opens built-in explorer item context menus with file and folder actions', async () => {

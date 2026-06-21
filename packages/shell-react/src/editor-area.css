@@ -74,6 +74,26 @@
   outline-offset: -2px;
 }
 
+.workbench-editor-area__group-pane[data-drop-side='top'] .workbench-editor-area__drop-overlay {
+  bottom: 50%;
+  background: var(
+    --vscode-editorGroup-dropBackground,
+    color-mix(in srgb, var(--vscode-focusBorder, var(--color-focus-border)) 18%, transparent)
+  );
+  outline: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -2px;
+}
+
+.workbench-editor-area__group-pane[data-drop-side='bottom'] .workbench-editor-area__drop-overlay {
+  top: 50%;
+  background: var(
+    --vscode-editorGroup-dropBackground,
+    color-mix(in srgb, var(--vscode-focusBorder, var(--color-focus-border)) 18%, transparent)
+  );
+  outline: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -2px;
+}
+
 .workbench-editor-area__group-pane[data-drop-side='center'] .workbench-editor-area__drop-overlay {
   background: var(
     --vscode-editorGroup-dropBackground,

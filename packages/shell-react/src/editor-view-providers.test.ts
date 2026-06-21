@@ -9,6 +9,7 @@ import {
   JDW_PREVIEW_PROVIDER_ID,
   JSON_FORM_PROVIDER_ID,
   MARKDOWN_PREVIEW_PROVIDER_ID,
+  createEditorDocumentViewProviderRegistry,
   resolveEditorDocumentViews,
   type EditorDocumentContext,
   type EditorDocumentViewProvider,
@@ -102,5 +103,80 @@ describe('resolveEditorDocumentViews', () => {
 
     expect(resolved.formProvider?.id).toBe('custom.form');
     expect(resolved.previewProvider?.id).toBe('custom.preview');
+  });
+
+  it('resolves providers from manifest-style mime type and filename selectors', () => {
+    const selectorPreviewProvider: EditorDocumentViewProvider = {
+      filenamePatterns: ['*.preview.json'],
+      id: 'selector.preview',
+      kind: 'preview',
+      label: 'Selector Preview',
+      mimeTypes: ['application/json'],
+      render: () => null,
+    };
+
+    expect(
+      resolveEditorDocumentViews(
+        createDocument({
+          mimeType: 'application/json',
+          path: 'reports/sample.preview.json',
+        }),
+        [selectorPreviewProvider],
+      ).previewProvider?.id,
+    ).toBe('selector.preview');
+    expect(
+      resolveEditorDocumentViews(
+        createDocument({
+          mimeType: 'text/plain',
+          path: 'reports/sample.preview.json',
+        }),
+        [selectorPreviewProvider],
+      ).previewProvider,
+    ).toBeUndefined();
+  });
+});
+
+describe('EditorDocumentViewProviderRegistry', () => {
+  it('registers default and host-provided document view providers', () => {
+    const customPreviewProvider: EditorDocumentViewProvider = {
+      id: 'custom.preview',
+      kind: 'preview',
+      label: 'Custom Preview',
+      matches: (document) => document.path.endsWith('.custom'),
+      render: () => null,
+    };
+    const registry = createEditorDocumentViewProviderRegistry({
+      providers: [customPreviewProvider],
+    });
+
+    expect(registry.getProviders().map((provider) => provider.id)).toEqual([
+      JDW_PREVIEW_PROVIDER_ID,
+      MARKDOWN_PREVIEW_PROVIDER_ID,
+      JSON_FORM_PROVIDER_ID,
+      'custom.preview',
+    ]);
+
+    registry.dispose();
+  });
+
+  it('rejects duplicate document view provider ids', () => {
+    const registry = createEditorDocumentViewProviderRegistry({
+      includeDefaultProviders: false,
+    });
+    const provider: EditorDocumentViewProvider = {
+      id: 'duplicate.preview',
+      kind: 'preview',
+      label: 'Preview',
+      matches: () => true,
+      render: () => null,
+    };
+
+    registry.registerProvider(provider);
+
+    expect(() => registry.registerProvider(provider)).toThrow(
+      'Editor document view provider "duplicate.preview" is already registered.',
+    );
+
+    registry.dispose();
   });
 });

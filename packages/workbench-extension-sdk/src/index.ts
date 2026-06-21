@@ -36,6 +36,18 @@ export {
   WORKBENCH_SETTINGS_CAPABILITY_ID,
 } from './contributions.js';
 export type {
+  ExtensionCommandChatSpec,
+  ExtensionCommandFeatureSpec,
+  ExtensionDocumentViewFeatureSpec,
+  ExtensionFeatureCapabilities,
+  ExtensionFeatureDependencies,
+  ExtensionFeatureSpec,
+  ExtensionJsonSchemaLike,
+  ExtensionSettingFeatureSpec,
+  ExtensionViewContainerFeatureSpec,
+  ExtensionViewFeatureSpec,
+} from './feature-spec.js';
+export type {
   ActivateFunction,
   ActivityContribution,
   CommandContribution,
@@ -43,6 +55,11 @@ export type {
   ConfigurationPropertyContribution,
   ConfigurationPropertyScope,
   DeactivateFunction,
+  EditorDocumentContext,
+  EditorDocumentViewContribution,
+  EditorDocumentViewKind,
+  EditorDocumentViewProvider,
+  EditorDocumentViewRenderContext,
   EditorContribution,
   EditorHost,
   EditorHostCreateContext,
@@ -53,6 +70,7 @@ export type {
   ExtensionCapabilityRegistry,
   ExtensionCommandRegistry,
   ExtensionEditorHostFactoryRegistry,
+  ExtensionEditorDocumentViewRegistry,
   ExtensionEditorResolverRegistry,
   ExtensionViewHostFactoryRegistry,
   ExtensionContext,

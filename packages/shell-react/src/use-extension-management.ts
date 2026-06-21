@@ -3,38 +3,66 @@ import {
   BUILTIN_WORKBENCH_EXTENSIONS,
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   SAMPLE_WORKBENCH_EXTENSIONS,
+  createExtensionFeatureSpec,
   installExtensionRecord,
   loadInstalledExtensions,
   parseExtensionCatalog,
   toggleInstalledExtensionEnabled,
+  type ExtensionFeatureInspection,
+  type ExtensionFeatureSpec,
+  type ExtensionRegistry,
   type ExtensionCatalogEntry,
   type InstalledExtensionRecord,
 } from '@workbench-kit/workbench-core';
 import type {
   ExtensionCatalogBrowseEntry,
+  ExtensionManagementDiagnosticSummary,
   ExtensionManagementEntry,
+  ExtensionManagementFeatureSummary,
 } from '@workbench-kit/react/workbench/management';
 
-import { useWorkbench } from './provider.js';
+import { useWorkbench, type WorkbenchStorageAdapter } from './provider.js';
 
 const BUNDLED_EXTENSIONS = [...BUILTIN_WORKBENCH_EXTENSIONS, ...SAMPLE_WORKBENCH_EXTENSIONS];
 
 export interface UseExtensionManagementModelOptions {
   catalogUrl?: string | undefined;
+  installedExtensionsStorage?: WorkbenchStorageAdapter | undefined;
   installedExtensionsStorageKey?: string | undefined;
 }
 
 export function useExtensionManagementModel({
   catalogUrl = '/extension-catalog.json',
-  installedExtensionsStorageKey = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  installedExtensionsStorage,
+  installedExtensionsStorageKey,
 }: UseExtensionManagementModelOptions = {}) {
-  const { extensionRegistry } = useWorkbench();
+  const workbench = useWorkbench();
+  const { extensionRegistry } = workbench;
+  const resolvedInstalledExtensionsStorage =
+    installedExtensionsStorage ?? workbench.installedExtensionsStorage;
+  const resolvedInstalledExtensionsStorageKey =
+    installedExtensionsStorageKey ??
+    workbench.installedExtensionsStorageKey ??
+    DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY;
   const [catalogEntries, setCatalogEntries] = useState<readonly ExtensionCatalogEntry[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(Boolean(catalogUrl));
   const [catalogError, setCatalogError] = useState<string | undefined>();
   const [installedRecords, setInstalledRecords] = useState<readonly InstalledExtensionRecord[]>(
-    () => loadInstalledExtensions(installedExtensionsStorageKey),
+    () =>
+      loadInstalledExtensions(
+        resolvedInstalledExtensionsStorageKey,
+        resolvedInstalledExtensionsStorage,
+      ),
   );
+
+  useEffect(() => {
+    setInstalledRecords(
+      loadInstalledExtensions(
+        resolvedInstalledExtensionsStorageKey,
+        resolvedInstalledExtensionsStorage,
+      ),
+    );
+  }, [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey]);
 
   useEffect(() => {
     if (!catalogUrl) {
@@ -80,15 +108,22 @@ export function useExtensionManagementModel({
 
   const installedEntries = useMemo<readonly ExtensionManagementEntry[]>(() => {
     const installedById = new Map(installedRecords.map((record) => [record.id, record]));
+    const extensionFeatures = createExtensionManagementFeatureMaps(extensionRegistry);
     const bundledEntries = BUNDLED_EXTENSIONS.map((extension) => {
       const installed = installedById.get(extension.manifest.id);
       const isBuiltin = extension.manifest.id.startsWith('workbench-kit.builtin.');
+      const featureState = resolveExtensionManagementFeatureState(
+        extension.manifest.id,
+        extensionFeatures,
+      );
 
       return {
         category: installed?.category ?? (isBuiltin ? 'builtin' : 'sample'),
         description: extension.manifest.displayName,
+        diagnostics: featureState.diagnostics,
         displayName: extension.manifest.displayName,
         enabled: isBuiltin ? true : (installed?.enabled ?? false),
+        features: featureState.features,
         id: extension.manifest.id,
         installedAt: installed?.installedAt,
         manifestUrl: installed?.manifestUrl,
@@ -102,19 +137,26 @@ export function useExtensionManagementModel({
         (extension) =>
           !BUNDLED_EXTENSIONS.some((bundled) => bundled.manifest.id === extension.manifest.id),
       )
-      .map(
-        (extension) =>
-          ({
-            category: installedById.get(extension.manifest.id)?.category ?? 'installed',
-            description: extension.manifest.displayName,
-            displayName: extension.manifest.displayName,
-            enabled: installedById.get(extension.manifest.id)?.enabled ?? true,
-            id: extension.manifest.id,
-            installedAt: installedById.get(extension.manifest.id)?.installedAt,
-            manifestUrl: installedById.get(extension.manifest.id)?.manifestUrl,
-            source: 'installed',
-          }) satisfies ExtensionManagementEntry,
-      );
+      .map((extension) => {
+        const installed = installedById.get(extension.manifest.id);
+        const featureState = resolveExtensionManagementFeatureState(
+          extension.manifest.id,
+          extensionFeatures,
+        );
+
+        return {
+          category: installed?.category ?? 'installed',
+          description: extension.manifest.displayName,
+          diagnostics: featureState.diagnostics,
+          displayName: extension.manifest.displayName,
+          enabled: installed?.enabled ?? true,
+          features: featureState.features,
+          id: extension.manifest.id,
+          installedAt: installed?.installedAt,
+          manifestUrl: installed?.manifestUrl,
+          source: 'installed',
+        } satisfies ExtensionManagementEntry;
+      });
 
     return [...bundledEntries, ...activeExtensions].sort((left, right) =>
       left.displayName.localeCompare(right.displayName),
@@ -144,14 +186,15 @@ export function useExtensionManagementModel({
           id: entry.id,
           manifestUrl: entry.manifestUrl,
         },
-        installedExtensionsStorageKey,
+        resolvedInstalledExtensionsStorageKey,
+        resolvedInstalledExtensionsStorage,
       );
       setInstalledRecords(next);
       if (typeof window !== 'undefined') {
         window.location.reload();
       }
     },
-    [installedExtensionsStorageKey],
+    [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey],
   );
 
   const toggleInstalledEntry = useCallback(
@@ -163,14 +206,15 @@ export function useExtensionManagementModel({
       const next = toggleInstalledExtensionEnabled(
         entry.id,
         enabled,
-        installedExtensionsStorageKey,
+        resolvedInstalledExtensionsStorageKey,
+        resolvedInstalledExtensionsStorage,
       );
       setInstalledRecords(next);
       if (typeof window !== 'undefined') {
         window.location.reload();
       }
     },
-    [installedExtensionsStorageKey],
+    [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey],
   );
 
   return {
@@ -180,5 +224,70 @@ export function useExtensionManagementModel({
     installCatalogEntry,
     installedEntries,
     toggleInstalledEntry,
+  };
+}
+
+function createExtensionManagementFeatureMaps(extensionRegistry: ExtensionRegistry) {
+  return {
+    bundledFeaturesById: new Map(
+      BUNDLED_EXTENSIONS.map((extension) => [
+        extension.manifest.id,
+        createExtensionFeatureSpec(extension),
+      ]),
+    ),
+    inspectionsById: new Map(
+      extensionRegistry
+        .getFeatureInspections()
+        .map((inspection) => [inspection.feature.id, inspection]),
+    ),
+  };
+}
+
+function resolveExtensionManagementFeatureState(
+  extensionId: string,
+  {
+    bundledFeaturesById,
+    inspectionsById,
+  }: {
+    bundledFeaturesById: ReadonlyMap<string, ExtensionFeatureSpec>;
+    inspectionsById: ReadonlyMap<string, ExtensionFeatureInspection>;
+  },
+): {
+  readonly diagnostics?: readonly ExtensionManagementDiagnosticSummary[] | undefined;
+  readonly features?: ExtensionManagementFeatureSummary | undefined;
+} {
+  const inspection = inspectionsById.get(extensionId);
+  const feature = inspection?.feature ?? bundledFeaturesById.get(extensionId);
+
+  return {
+    diagnostics: inspection?.diagnostics.map(({ message, severity }) => ({ message, severity })),
+    features: feature ? toExtensionManagementFeatureSummary(feature) : undefined,
+  };
+}
+
+function toExtensionManagementFeatureSummary(
+  feature: ExtensionFeatureSpec,
+): ExtensionManagementFeatureSummary {
+  return {
+    capabilities: feature.capabilities,
+    commands: feature.commands.map((command) => ({
+      description: command.description,
+      id: command.id,
+      label: command.title,
+    })),
+    documentViews: feature.documentViews.map((view) => ({
+      id: view.id,
+      label: view.label,
+    })),
+    permissions: feature.permissions,
+    settings: feature.settings.map((setting) => ({
+      description: setting.description,
+      id: setting.key,
+      label: setting.key,
+    })),
+    views: feature.views.map((view) => ({
+      id: view.id,
+      label: view.name,
+    })),
   };
 }

@@ -3,6 +3,7 @@ import type { WorkbenchCommandDescriptor } from '@workbench-kit/react/workbench'
 
 import { useWorkbench } from './provider.js';
 import {
+  collectExtensionCommandFeaturesById,
   extensionCommandToDescriptor,
   mergeWorkbenchCommandDescriptors,
 } from './workbench-command-palette.js';
@@ -25,14 +26,16 @@ export function useWorkbenchCommandDescriptors(
     };
   }, [extensionRegistry.commands]);
 
-  return useMemo(
-    () =>
-      mergeWorkbenchCommandDescriptors(
-        extensionRegistry.commands
-          .getCommands()
-          .map((command) => extensionCommandToDescriptor(command)),
-        [...additionalCommands],
-      ),
-    [additionalCommands, extensionRegistry.commands, refreshToken],
-  );
+  return useMemo(() => {
+    const commandFeaturesById = collectExtensionCommandFeaturesById(extensionRegistry);
+
+    return mergeWorkbenchCommandDescriptors(
+      extensionRegistry.commands
+        .getCommands()
+        .map((command) =>
+          extensionCommandToDescriptor(command, commandFeaturesById.get(command.id)),
+        ),
+      [...additionalCommands],
+    );
+  }, [additionalCommands, extensionRegistry, refreshToken]);
 }

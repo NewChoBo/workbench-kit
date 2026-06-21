@@ -8,6 +8,8 @@ import {
 } from 'react';
 import { cx } from '../utils/cx';
 
+export type SplitViewOrientation = 'horizontal' | 'vertical';
+
 export interface SplitViewProps {
   className?: string;
   defaultPrimarySizePercent?: number;
@@ -15,6 +17,7 @@ export interface SplitViewProps {
   maxPrimarySizePercent?: number;
   minPrimarySizePercent?: number;
   onPrimarySizePercentChange?: (primarySizePercent: number) => void;
+  orientation?: SplitViewOrientation | undefined;
   primary: ReactNode;
   primarySizePercent?: number;
   secondary: ReactNode;
@@ -27,6 +30,7 @@ export function SplitView({
   maxPrimarySizePercent = 85,
   minPrimarySizePercent = 15,
   onPrimarySizePercentChange,
+  orientation = 'horizontal',
   primary,
   primarySizePercent: controlledPrimarySizePercent,
   secondary,
@@ -52,10 +56,12 @@ export function SplitView({
     onPrimarySizePercentChange?.(nextValue);
   };
 
-  const updatePrimarySize = (clientX: number) => {
+  const updatePrimarySize = (clientPosition: number) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const pct = ((clientX - rect.left) / rect.width) * 100;
+    const totalSize = orientation === 'vertical' ? rect.height : rect.width;
+    const startPosition = orientation === 'vertical' ? rect.top : rect.left;
+    const pct = ((clientPosition - startPosition) / totalSize) * 100;
     commitPrimarySize(pct);
   };
 
@@ -68,7 +74,7 @@ export function SplitView({
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (!dragging.current) return;
-    updatePrimarySize(event.clientX);
+    updatePrimarySize(orientation === 'vertical' ? event.clientY : event.clientX);
   };
 
   const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
@@ -80,13 +86,16 @@ export function SplitView({
   };
 
   const onSeparatorKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'ArrowLeft') {
+    const previousKey = orientation === 'vertical' ? 'ArrowUp' : 'ArrowLeft';
+    const nextKey = orientation === 'vertical' ? 'ArrowDown' : 'ArrowRight';
+
+    if (event.key === previousKey) {
       event.preventDefault();
       commitPrimarySize(primarySizePercent - keyboardStepPercent);
       return;
     }
 
-    if (event.key === 'ArrowRight') {
+    if (event.key === nextKey) {
       event.preventDefault();
       commitPrimarySize(primarySizePercent + keyboardStepPercent);
       return;
@@ -108,6 +117,7 @@ export function SplitView({
     <div
       ref={containerRef}
       className={cx('ui-workbench-split-view', className)}
+      data-orientation={orientation}
       style={
         {
           '--ui-workbench-split-primary-size': `${primarySizePercent}%`,
@@ -116,7 +126,7 @@ export function SplitView({
     >
       <div className="ui-workbench-split-view__primary">{primary}</div>
       <div
-        aria-orientation="vertical"
+        aria-orientation={orientation === 'vertical' ? 'horizontal' : 'vertical'}
         aria-valuemax={maxPrimarySizePercent}
         aria-valuemin={minPrimarySizePercent}
         aria-valuenow={Math.round(primarySizePercent)}

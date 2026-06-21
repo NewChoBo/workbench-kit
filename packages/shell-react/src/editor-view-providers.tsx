@@ -9,30 +9,27 @@ import { parseJsonWidgetData } from '@workbench-kit/react/jdw/parse';
 import { JdwPreview } from '@workbench-kit/react/jdw/preview';
 import { ScrollArea, Select, TextInput } from '@workbench-kit/react/primitives';
 import { WorkbenchMarkdownPreview } from '@workbench-kit/react/workbench/markdown-preview';
+import {
+  createEditorDocumentViewProviderRegistry as createCoreEditorDocumentViewProviderRegistry,
+  EditorDocumentViewProviderRegistry,
+  type CreateEditorDocumentViewProviderRegistryOptions as CoreCreateEditorDocumentViewProviderRegistryOptions,
+} from '@workbench-kit/workbench-core';
+import type {
+  EditorDocumentContext,
+  EditorDocumentViewKind,
+  EditorDocumentViewProvider,
+  EditorDocumentViewRenderContext,
+} from '@workbench-kit/workbench-core';
 
-export type EditorDocumentViewKind = 'form' | 'preview';
 type JsonPath = readonly (string | number)[];
 
-export interface EditorDocumentContext {
-  readonly content: string;
-  readonly mimeType?: string | undefined;
-  readonly path: string;
-  readonly resourceUri: string;
-}
-
-export interface EditorDocumentViewRenderContext {
-  readonly document: EditorDocumentContext;
-  readonly onContentChange: (content: string) => void;
-}
-
-export interface EditorDocumentViewProvider {
-  readonly id: string;
-  readonly kind: EditorDocumentViewKind;
-  readonly label: string;
-  readonly priority?: number | undefined;
-  matches(document: EditorDocumentContext): boolean;
-  render(context: EditorDocumentViewRenderContext): ReactNode;
-}
+export type {
+  EditorDocumentContext,
+  EditorDocumentViewKind,
+  EditorDocumentViewProvider,
+  EditorDocumentViewRenderContext,
+};
+export { EditorDocumentViewProviderRegistry };
 
 export interface ResolvedEditorDocumentViews {
   readonly formProvider: EditorDocumentViewProvider | undefined;
@@ -82,6 +79,20 @@ export const DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS: readonly EditorDocumentView
   JSON_FORM_PROVIDER,
 ];
 
+export interface CreateEditorDocumentViewProviderRegistryOptions extends CoreCreateEditorDocumentViewProviderRegistryOptions {
+  readonly includeDefaultProviders?: boolean | undefined;
+}
+
+export function createEditorDocumentViewProviderRegistry(
+  options: CreateEditorDocumentViewProviderRegistryOptions = {},
+): EditorDocumentViewProviderRegistry {
+  const providers = [
+    ...(options.includeDefaultProviders === false ? [] : DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS),
+    ...(options.providers ?? []),
+  ];
+  return createCoreEditorDocumentViewProviderRegistry({ providers });
+}
+
 export function resolveEditorDocumentViews(
   document: EditorDocumentContext,
   providers: readonly EditorDocumentViewProvider[] = DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
@@ -98,8 +109,82 @@ export function resolveEditorDocumentViewProvider(
   providers: readonly EditorDocumentViewProvider[] = DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
 ): EditorDocumentViewProvider | undefined {
   return providers
-    .filter((provider) => provider.kind === kind && provider.matches(document))
+    .filter(
+      (provider) => provider.kind === kind && matchesEditorDocumentViewProvider(provider, document),
+    )
     .sort((left, right) => (right.priority ?? 0) - (left.priority ?? 0))[0];
+}
+
+export function matchesEditorDocumentViewProvider(
+  provider: EditorDocumentViewProvider,
+  document: EditorDocumentContext,
+): boolean {
+  if (provider.matches) {
+    return provider.matches(document);
+  }
+
+  const mimeType = document.mimeType?.toLowerCase();
+  const path = normalizePath(document.path);
+  const hasMimeTypes = Boolean(provider.mimeTypes?.length);
+  const hasFilenamePatterns = Boolean(provider.filenamePatterns?.length);
+
+  if (!hasMimeTypes && !hasFilenamePatterns) {
+    return false;
+  }
+
+  const mimeMatches =
+    !hasMimeTypes ||
+    Boolean(provider.mimeTypes?.some((candidate) => candidate.toLowerCase() === mimeType));
+  const pathMatches =
+    !hasFilenamePatterns ||
+    Boolean(provider.filenamePatterns?.some((pattern) => matchesFilenamePattern(pattern, path)));
+
+  return mimeMatches && pathMatches;
+}
+
+function matchesFilenamePattern(pattern: string, path: string): boolean {
+  const normalizedPattern = normalizePath(pattern);
+  const segments = path.split('/');
+  const target = normalizedPattern.includes('/') ? path : (segments[segments.length - 1] ?? path);
+  const regex = new RegExp(`^${globToRegExpSource(normalizedPattern)}$`, 'i');
+  return regex.test(target);
+}
+
+function globToRegExpSource(pattern: string): string {
+  let source = '';
+
+  for (let index = 0; index < pattern.length; index += 1) {
+    const char = pattern[index];
+    const nextChar = pattern[index + 1];
+
+    if (char === '*' && nextChar === '*') {
+      source += '.*';
+      index += 1;
+      continue;
+    }
+
+    if (char === '*') {
+      source += '[^/]*';
+      continue;
+    }
+
+    if (char === '?') {
+      source += '[^/]';
+      continue;
+    }
+
+    source += escapeRegExp(char ?? '');
+  }
+
+  return source;
+}
+
+function normalizePath(path: string): string {
+  return path.split('\\').join('/');
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function JsonObjectFormView({

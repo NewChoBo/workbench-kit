@@ -4,10 +4,15 @@ import type { CommandServiceHandler } from '@workbench-kit/platform';
 /** Stable contribution types for workbench.extension.json and activate() registration. */
 
 export interface CommandContribution {
+  argsSchema?: Record<string, unknown>;
   category?: string;
+  chat?: boolean | { argsHint?: string; description?: string; trigger?: string };
   command: string;
+  danger?: boolean;
+  description?: string;
   enablement?: string;
   icon?: string;
+  requiresApproval?: boolean;
   title: string;
 }
 
@@ -54,6 +59,7 @@ export type ConfigurationPropertyScope = 'application' | 'workspace' | 'window';
 export interface ConfigurationPropertyContribution {
   default?: unknown;
   description?: string;
+  enum?: readonly (boolean | number | string)[];
   scope?: ConfigurationPropertyScope;
   type: 'string' | 'number' | 'boolean' | 'array' | 'object';
 }
@@ -66,6 +72,18 @@ export interface EditorContribution {
   icon?: string;
   id: string;
   label: string;
+}
+
+export type EditorDocumentViewKind = 'form' | 'preview';
+
+export interface EditorDocumentViewContribution {
+  filenamePatterns?: readonly string[];
+  id: string;
+  kind: EditorDocumentViewKind;
+  label: string;
+  mimeTypes?: readonly string[];
+  priority?: number | undefined;
+  when?: string | undefined;
 }
 
 export interface ThemeContribution {
@@ -84,6 +102,7 @@ export interface ExtensionContributes {
   activities?: ActivityContribution[];
   commands?: CommandContribution[];
   configuration?: ConfigurationContribution;
+  documentViews?: EditorDocumentViewContribution[];
   editors?: EditorContribution[];
   keybindings?: KeybindingContribution[];
   localizations?: LocalizationContribution[];
@@ -203,6 +222,27 @@ export interface ExtensionEditorResolverRegistry {
   registerResolver(resolver: EditorResolver): Disposable;
 }
 
+export interface EditorDocumentContext {
+  readonly content: string;
+  readonly mimeType?: string | undefined;
+  readonly path: string;
+  readonly resourceUri: string;
+}
+
+export interface EditorDocumentViewRenderContext {
+  readonly document: EditorDocumentContext;
+  readonly onContentChange: (content: string) => void;
+}
+
+export interface EditorDocumentViewProvider extends EditorDocumentViewContribution {
+  matches?(document: EditorDocumentContext): boolean;
+  render(context: EditorDocumentViewRenderContext): unknown;
+}
+
+export interface ExtensionEditorDocumentViewRegistry {
+  registerProvider(provider: EditorDocumentViewProvider): Disposable;
+}
+
 export interface ExtensionCapabilityProvider<T = unknown> {
   readonly id: string;
   dispose?: () => void;
@@ -216,6 +256,7 @@ export interface ExtensionCapabilityRegistry {
 export interface ExtensionContext {
   readonly capabilities: ExtensionCapabilityRegistry;
   readonly commands: ExtensionCommandRegistry;
+  readonly editorDocumentViews: ExtensionEditorDocumentViewRegistry;
   readonly editorHostFactories: ExtensionEditorHostFactoryRegistry;
   readonly editorResolvers: ExtensionEditorResolverRegistry;
   readonly extensionId: string;

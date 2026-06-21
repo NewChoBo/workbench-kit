@@ -4,7 +4,7 @@ import type {
   WorkbenchShellCommandActivity,
   WorkbenchShellCommandContext,
 } from '@workbench-kit/react/workbench';
-import type { ExtensionRegistry } from '@workbench-kit/workbench-core';
+import type { ExtensionCommandFeatureSpec, ExtensionRegistry } from '@workbench-kit/workbench-core';
 
 export const WORKBENCH_COMMAND_PALETTE_SHORTCUT = 'Ctrl+Shift+P';
 export const WORKBENCH_QUICK_ACCESS_SHORTCUT = 'Ctrl+P';
@@ -92,13 +92,39 @@ export function shellCommandDefinitionToDescriptor<TContext>(
 
 export function extensionCommandToDescriptor(
   command: ExtensionCommand,
+  feature?: ExtensionCommandFeatureSpec | undefined,
 ): WorkbenchCommandDescriptor {
+  const metadata = {
+    argsSchema: feature?.argsSchema,
+    chat: feature?.chat,
+    requiresApproval: feature?.requiresApproval,
+  };
+
   return {
-    category: command.category,
+    category: command.category ?? feature?.category,
+    danger: feature?.danger,
+    description: feature?.description,
     icon: resolveExtensionCommandIcon(command.icon),
     id: command.id,
-    label: command.title ?? command.id,
+    keywords: feature
+      ? [feature.command, feature.title].filter((value) => value !== command.id)
+      : undefined,
+    label: command.title ?? feature?.title ?? command.id,
+    metadata:
+      metadata.argsSchema || metadata.chat || metadata.requiresApproval !== undefined
+        ? metadata
+        : undefined,
   };
+}
+
+export function collectExtensionCommandFeaturesById(
+  extensionRegistry: ExtensionRegistry,
+): ReadonlyMap<string, ExtensionCommandFeatureSpec> {
+  return new Map(
+    extensionRegistry
+      .getFeatureSpecs()
+      .flatMap((feature) => feature.commands.map((command) => [command.id, command] as const)),
+  );
 }
 
 export function mergeWorkbenchCommandDescriptors(
@@ -118,11 +144,13 @@ export function mergeWorkbenchCommandDescriptors(
 
 export function buildWorkbenchPaletteCommands({
   additionalCommands = [],
+  extensionCommandFeaturesById,
   extensionCommands,
   shellCommands,
   shellContext,
 }: {
   additionalCommands?: readonly WorkbenchCommandDescriptor[];
+  extensionCommandFeaturesById?: ReadonlyMap<string, ExtensionCommandFeatureSpec> | undefined;
   extensionCommands: readonly ExtensionCommand[];
   shellCommands: readonly CommandDefinition<WorkbenchShellCommandContext>[];
   shellContext: WorkbenchShellCommandContext;
@@ -131,7 +159,7 @@ export function buildWorkbenchPaletteCommands({
     shellCommandDefinitionToDescriptor(command, shellContext),
   );
   const contributedDescriptors = extensionCommands.map((command) =>
-    extensionCommandToDescriptor(command),
+    extensionCommandToDescriptor(command, extensionCommandFeaturesById?.get(command.id)),
   );
 
   return mergeWorkbenchCommandDescriptors(shellDescriptors, contributedDescriptors, [

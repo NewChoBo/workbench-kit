@@ -4,8 +4,15 @@ export {
   WorkbenchProvider,
   useWorkbench,
   type WorkbenchContextValue,
+  type WorkbenchStorageAdapter,
   type WorkbenchWorkspaceHostPort,
 } from './provider.js';
+export {
+  DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
+  isWorkbenchEditorStatePersistenceAvailable,
+  readPersistedEditorState,
+  writePersistedEditorState,
+} from './editor-state-storage.js';
 export {
   DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
   isWorkbenchKeybindingPersistenceAvailable,
@@ -28,10 +35,13 @@ export {
 export { EditorArea, type EditorAreaProps, type EditorViewMode } from './editor-area.js';
 export {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
+  EditorDocumentViewProviderRegistry,
   JDW_PREVIEW_PROVIDER_ID,
   JSON_FORM_PROVIDER_ID,
+  createEditorDocumentViewProviderRegistry,
   resolveEditorDocumentViewProvider,
   resolveEditorDocumentViews,
+  type CreateEditorDocumentViewProviderRegistryOptions,
   type EditorDocumentContext,
   type EditorDocumentViewKind,
   type EditorDocumentViewProvider,
@@ -80,6 +90,7 @@ export {
 } from './workbench-user-commands.js';
 export {
   useActiveEditorTab,
+  useEditorDocumentViewProviders,
   useEditorHost,
   useEditorService,
   useEditorState,

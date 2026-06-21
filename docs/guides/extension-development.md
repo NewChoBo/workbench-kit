@@ -167,6 +167,7 @@ export function deactivate(): void {
 | `subscriptions`                            | Disposable store — cleaned up on deactivate        |
 | `commands`                                 | Register command handlers                          |
 | `views`                                    | Register view providers                            |
+| `editorDocumentViews`                      | Register text editor form/preview providers        |
 | `capabilities`                             | Register capability providers for dependents       |
 | `viewHostFactories`, `editorHostFactories` | Register host factories for custom render surfaces |
 | `getCapability(id)`                        | Resolve a capability from another extension        |

@@ -23,6 +23,7 @@ import {
   SAMPLE_WORKBENCH_EXTENSIONS,
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
+  type EditorState,
   type EditorService,
   type PreferenceService as PreferenceServiceType,
   type WorkbenchEditorSavePort,
@@ -41,6 +42,12 @@ import {
   resolvePersistedWorkbenchLayout,
   writePersistedWorkbenchLayout,
 } from './workbench-layout-storage.js';
+import {
+  DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
+  isWorkbenchEditorStatePersistenceAvailable,
+  readPersistedEditorState,
+  writePersistedEditorState,
+} from './editor-state-storage.js';
 import {
   DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
   isWorkbenchKeybindingPersistenceAvailable,
@@ -63,12 +70,19 @@ import {
   writePersistedLocalPreferences,
 } from './preference-settings-storage.js';
 import { registerWorkbenchUserCommands } from './workbench-user-commands.js';
+import {
+  DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
+  type EditorDocumentViewProvider,
+} from './editor-view-providers.js';
+import type { EditorDocumentViewProviderRegistry } from '@workbench-kit/workbench-core';
 
 export interface WorkbenchWorkspaceHostPort extends WorkbenchEditorSavePort {
   readonly capabilityId?: string | undefined;
   readonly service?: unknown;
   dispose?(): void;
 }
+
+export type WorkbenchStorageAdapter = Pick<Storage, 'getItem' | 'setItem'>;
 
 const DEFAULT_AVAILABLE_EXTENSIONS = [
   ...BUILTIN_WORKBENCH_EXTENSIONS,
@@ -78,17 +92,27 @@ const DEFAULT_AVAILABLE_EXTENSIONS = [
 export interface WorkbenchProviderProps {
   availableExtensions?: readonly WorkbenchExtensionDescription[];
   children: ReactNode;
+  documentViewProviders?: readonly EditorDocumentViewProvider[] | undefined;
   extensionsConfig?: WorkbenchExtensionsConfig;
+  editorStateStorage?: WorkbenchStorageAdapter;
+  editorStateStorageKey?: string;
   initialKeybindingOverrides?: readonly WorkbenchKeybindingDefinition[];
+  initialEditorState?: EditorState;
   initialLayout?: WorkbenchLayoutStateInput;
   initialWorkspaceSettings?: WorkbenchSettingsConfig;
+  includeDefaultDocumentViewProviders?: boolean | undefined;
+  installedExtensionsStorage?: WorkbenchStorageAdapter;
   installedExtensionsStorageKey?: string;
+  keybindingOverridesStorage?: WorkbenchStorageAdapter;
   keybindingOverridesStorageKey?: string;
+  layoutStorage?: WorkbenchStorageAdapter;
   layoutStorageKey?: string;
+  localPreferenceStorage?: WorkbenchStorageAdapter;
   localPreferenceStorageKey?: string;
   onKeybindingOverridesChange?:
     | ((overrides: readonly WorkbenchKeybindingDefinition[]) => void)
     | undefined;
+  persistEditorState?: boolean;
   persistKeybindingOverrides?: boolean;
   persistLayout?: boolean;
   persistLocalPreferences?: boolean;
@@ -98,9 +122,12 @@ export interface WorkbenchProviderProps {
 
 export interface WorkbenchContextValue {
   activateCommand(commandId: string): Promise<readonly { readonly extensionId: string }[]>;
+  editorDocumentViewProviders: EditorDocumentViewProviderRegistry;
   editorService: EditorService;
   executeCommand(commandId: string, ...args: unknown[]): Promise<unknown>;
   extensionRegistry: ExtensionRegistry;
+  installedExtensionsStorage?: WorkbenchStorageAdapter;
+  installedExtensionsStorageKey: string;
   keybindingOverrides: readonly WorkbenchKeybindingDefinition[];
   layoutService: LayoutService;
   missingExtensionIds: readonly string[];
@@ -114,6 +141,7 @@ export interface WorkbenchContextValue {
 interface WorkbenchProviderServices {
   activateStartup(): void;
   dispose(): void;
+  editorDocumentViewProviders: EditorDocumentViewProviderRegistry;
   editorService: EditorService;
   extensionRegistry: ExtensionRegistry;
   layoutService: LayoutService;
@@ -133,38 +161,76 @@ const WorkbenchContext = createContext<WorkbenchContextValue | undefined>(undefi
 export function WorkbenchProvider({
   availableExtensions,
   children,
+  documentViewProviders,
+  editorStateStorage,
+  editorStateStorageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   extensionsConfig,
+  initialEditorState,
   initialKeybindingOverrides,
   initialLayout,
   initialWorkspaceSettings,
+  includeDefaultDocumentViewProviders,
+  installedExtensionsStorage,
   installedExtensionsStorageKey = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  keybindingOverridesStorage,
   keybindingOverridesStorageKey = DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
+  layoutStorage,
   layoutStorageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
+  localPreferenceStorage,
   localPreferenceStorageKey = DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
   onKeybindingOverridesChange,
-  persistKeybindingOverrides = isWorkbenchKeybindingPersistenceAvailable(),
-  persistLayout = isWorkbenchLayoutPersistenceAvailable(),
-  persistLocalPreferences = isWorkbenchLocalPreferencePersistenceAvailable(),
+  persistEditorState,
+  persistKeybindingOverrides,
+  persistLayout,
+  persistLocalPreferences,
   userCommands = [],
   workspaceHostPort,
 }: WorkbenchProviderProps) {
   const hostAvailableExtensions = availableExtensions ?? DEFAULT_AVAILABLE_EXTENSIONS;
   const deferredDisposeRef = useRef<DeferredProviderDispose | undefined>(undefined);
+  const shouldPersistEditorState =
+    persistEditorState ??
+    (editorStateStorage !== undefined || isWorkbenchEditorStatePersistenceAvailable());
+  const shouldPersistKeybindingOverrides =
+    persistKeybindingOverrides ??
+    (keybindingOverridesStorage !== undefined || isWorkbenchKeybindingPersistenceAvailable());
+  const shouldPersistLayout =
+    persistLayout ?? (layoutStorage !== undefined || isWorkbenchLayoutPersistenceAvailable());
+  const shouldPersistLocalPreferences =
+    persistLocalPreferences ??
+    (localPreferenceStorage !== undefined || isWorkbenchLocalPreferencePersistenceAvailable());
   const resolvedInitialLayout = useMemo(
     () =>
       resolvePersistedWorkbenchLayout(initialLayout, {
-        persistLayout,
+        persistLayout: shouldPersistLayout,
+        storage: layoutStorage,
         storageKey: layoutStorageKey,
       }),
-    [initialLayout, layoutStorageKey, persistLayout],
+    [initialLayout, layoutStorage, layoutStorageKey, shouldPersistLayout],
+  );
+  const resolvedInitialEditorState = useMemo(
+    () =>
+      initialEditorState ??
+      (shouldPersistEditorState
+        ? readPersistedEditorState(editorStateStorageKey, editorStateStorage)
+        : undefined),
+    [editorStateStorage, editorStateStorageKey, initialEditorState, shouldPersistEditorState],
   );
   const resolvedInitialKeybindingOverrides = useMemo(
     () =>
       initialKeybindingOverrides ??
-      (persistKeybindingOverrides
-        ? readPersistedKeybindingOverrides(keybindingOverridesStorageKey)
+      (shouldPersistKeybindingOverrides
+        ? readPersistedKeybindingOverrides(
+            keybindingOverridesStorageKey,
+            keybindingOverridesStorage,
+          )
         : []),
-    [initialKeybindingOverrides, keybindingOverridesStorageKey, persistKeybindingOverrides],
+    [
+      initialKeybindingOverrides,
+      keybindingOverridesStorage,
+      keybindingOverridesStorageKey,
+      shouldPersistKeybindingOverrides,
+    ],
   );
   const [keybindingOverrides, setKeybindingOverridesState] = useState(
     resolvedInitialKeybindingOverrides,
@@ -189,32 +255,51 @@ export function WorkbenchProvider({
 
   useEffect(() => {
     onKeybindingOverridesChange?.(keybindingOverrides);
-    if (!persistKeybindingOverrides) {
+    if (!shouldPersistKeybindingOverrides) {
       return;
     }
 
-    writePersistedKeybindingOverrides(keybindingOverrides, keybindingOverridesStorageKey);
+    writePersistedKeybindingOverrides(
+      keybindingOverrides,
+      keybindingOverridesStorageKey,
+      keybindingOverridesStorage,
+    );
   }, [
     keybindingOverrides,
+    keybindingOverridesStorage,
     keybindingOverridesStorageKey,
     onKeybindingOverridesChange,
-    persistKeybindingOverrides,
+    shouldPersistKeybindingOverrides,
   ]);
 
   const resolvedInitialLocalPreferences = useMemo(
-    () => (persistLocalPreferences ? readPersistedLocalPreferences(localPreferenceStorageKey) : {}),
-    [localPreferenceStorageKey, persistLocalPreferences],
+    () =>
+      shouldPersistLocalPreferences
+        ? readPersistedLocalPreferences(localPreferenceStorageKey, localPreferenceStorage)
+        : {},
+    [localPreferenceStorage, localPreferenceStorageKey, shouldPersistLocalPreferences],
   );
 
   const services = useMemo<WorkbenchProviderServices>(() => {
     const extensionRegistry = new ExtensionRegistry();
+    const editorDocumentViewProviders = extensionRegistry.editorDocumentViews;
+    const editorDocumentViewProviderDisposables = [
+      ...(includeDefaultDocumentViewProviders === false
+        ? []
+        : DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS),
+      ...(documentViewProviders ?? []),
+    ].map((provider) => editorDocumentViewProviders.registerProvider(provider));
     const layoutService = new LayoutService(resolvedInitialLayout);
     const editorService = createEditorService({
       editorHostFactories: extensionRegistry.editorHostFactories,
       editorResolvers: extensionRegistry.editorResolvers,
+      initialState: resolvedInitialEditorState,
       resolveEditorResource: workspaceHostPort?.resolveResource?.bind(workspaceHostPort),
     });
-    const installedRecords = loadInstalledExtensions(installedExtensionsStorageKey);
+    const installedRecords = loadInstalledExtensions(
+      installedExtensionsStorageKey,
+      installedExtensionsStorage,
+    );
     const resolvedAvailableExtensions =
       availableExtensions === undefined
         ? resolveInstalledAvailableExtensions(hostAvailableExtensions, installedRecords)
@@ -277,10 +362,14 @@ export function WorkbenchProvider({
           workspaceHostPort?.dispose?.();
         }
         editorService.dispose();
+        for (const disposable of editorDocumentViewProviderDisposables) {
+          disposable.dispose();
+        }
         extensionRegistry.dispose();
         layoutService.dispose();
         preferenceService.dispose();
       },
+      editorDocumentViewProviders,
       editorService,
       extensionRegistry,
       layoutService,
@@ -291,10 +380,14 @@ export function WorkbenchProvider({
     };
   }, [
     availableExtensions,
+    documentViewProviders,
     hostAvailableExtensions,
     extensionsConfig,
+    includeDefaultDocumentViewProviders,
     initialWorkspaceSettings,
+    installedExtensionsStorage,
     installedExtensionsStorageKey,
+    resolvedInitialEditorState,
     resolvedInitialLayout,
     resolvedInitialLocalPreferences,
     userCommands,
@@ -302,21 +395,35 @@ export function WorkbenchProvider({
   ]);
 
   useEffect(() => {
-    if (!persistLayout) {
+    if (!shouldPersistLayout) {
       return undefined;
     }
 
     const disposable = services.layoutService.onDidChangeLayout(({ state }) => {
-      writePersistedWorkbenchLayout(state, layoutStorageKey);
+      writePersistedWorkbenchLayout(state, layoutStorageKey, layoutStorage);
     });
 
     return () => {
       disposable.dispose();
     };
-  }, [layoutStorageKey, persistLayout, services.layoutService]);
+  }, [layoutStorage, layoutStorageKey, services.layoutService, shouldPersistLayout]);
 
   useEffect(() => {
-    if (!persistLocalPreferences) {
+    if (!shouldPersistEditorState) {
+      return undefined;
+    }
+
+    const disposable = services.editorService.onDidChangeEditors(({ state }) => {
+      writePersistedEditorState(state, editorStateStorageKey, editorStateStorage);
+    });
+
+    return () => {
+      disposable.dispose();
+    };
+  }, [editorStateStorage, editorStateStorageKey, services.editorService, shouldPersistEditorState]);
+
+  useEffect(() => {
+    if (!shouldPersistLocalPreferences) {
       return undefined;
     }
 
@@ -328,13 +435,19 @@ export function WorkbenchProvider({
       writePersistedLocalPreferences(
         services.preferenceService.getScopedValues('local'),
         localPreferenceStorageKey,
+        localPreferenceStorage,
       );
     });
 
     return () => {
       disposable.dispose();
     };
-  }, [localPreferenceStorageKey, persistLocalPreferences, services.preferenceService]);
+  }, [
+    localPreferenceStorage,
+    localPreferenceStorageKey,
+    services.preferenceService,
+    shouldPersistLocalPreferences,
+  ]);
 
   useEffect(() => {
     const deferredDispose = deferredDisposeRef.current;
@@ -360,6 +473,7 @@ export function WorkbenchProvider({
   const value = useMemo<WorkbenchContextValue>(
     () => ({
       activateCommand: (commandId) => services.extensionRegistry.activateCommand(commandId),
+      editorDocumentViewProviders: services.editorDocumentViewProviders,
       editorService: services.editorService,
       executeCommand: async (commandId, ...args) => {
         const result = await services.extensionRegistry.executeCommand(commandId, ...args);
@@ -377,6 +491,8 @@ export function WorkbenchProvider({
         return result;
       },
       extensionRegistry: services.extensionRegistry,
+      installedExtensionsStorage,
+      installedExtensionsStorageKey,
       keybindingOverrides,
       layoutService: services.layoutService,
       missingExtensionIds: services.missingExtensionIds,
@@ -386,7 +502,14 @@ export function WorkbenchProvider({
       waitForExtensionStartup: services.waitForExtensionStartup,
       workspaceHostPort: services.workspaceHostPort,
     }),
-    [keybindingOverrides, resetCommandKeybindingOverride, services, setCommandKeybindingOverride],
+    [
+      installedExtensionsStorage,
+      installedExtensionsStorageKey,
+      keybindingOverrides,
+      resetCommandKeybindingOverride,
+      services,
+      setCommandKeybindingOverride,
+    ],
   );
 
   return <WorkbenchContext.Provider value={value}>{children}</WorkbenchContext.Provider>;

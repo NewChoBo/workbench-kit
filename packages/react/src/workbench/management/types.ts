@@ -2,6 +2,7 @@ export type CommandManagementEntryStatus = 'available' | 'disabled' | 'no-handle
 
 export interface CommandManagementEntry {
   readonly category?: string | undefined;
+  readonly description?: string | undefined;
   readonly id: string;
   readonly keybinding?: string | undefined;
   readonly label: string;
@@ -57,11 +58,36 @@ export interface CommandManagementPanelProps {
 
 export type ExtensionManagementEntrySource = 'bundled' | 'installed';
 
+export interface ExtensionManagementFeatureItem {
+  readonly description?: string | undefined;
+  readonly id: string;
+  readonly label: string;
+}
+
+export interface ExtensionManagementFeatureSummary {
+  readonly capabilities?: {
+    readonly provides: readonly string[];
+    readonly requires: readonly string[];
+  };
+  readonly commands?: readonly ExtensionManagementFeatureItem[] | undefined;
+  readonly documentViews?: readonly ExtensionManagementFeatureItem[] | undefined;
+  readonly permissions?: readonly string[] | undefined;
+  readonly settings?: readonly ExtensionManagementFeatureItem[] | undefined;
+  readonly views?: readonly ExtensionManagementFeatureItem[] | undefined;
+}
+
+export interface ExtensionManagementDiagnosticSummary {
+  readonly message: string;
+  readonly severity: 'error' | 'warning';
+}
+
 export interface ExtensionManagementEntry {
   readonly category: string;
   readonly description?: string | undefined;
+  readonly diagnostics?: readonly ExtensionManagementDiagnosticSummary[] | undefined;
   readonly displayName: string;
   readonly enabled: boolean;
+  readonly features?: ExtensionManagementFeatureSummary | undefined;
   readonly id: string;
   readonly installedAt?: string | undefined;
   readonly manifestUrl?: string | undefined;

@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildWorkbenchPaletteCommands,
+  extensionCommandToDescriptor,
   matchesWorkbenchCommandPaletteShortcut,
   matchesWorkbenchQuickAccessShortcut,
   mergeWorkbenchCommandDescriptors,
@@ -91,6 +92,83 @@ describe('workbench-command-palette helpers', () => {
         category: 'Workspace',
         id: 'workspace.open',
         label: 'Open File',
+      }),
+    );
+  });
+
+  it('adds extension command feature metadata to descriptors', () => {
+    expect(
+      extensionCommandToDescriptor(
+        {
+          id: 'workbench-kit.feature.run',
+          title: 'Run Feature',
+        },
+        {
+          argsSchema: {
+            type: 'array',
+          },
+          chat: {
+            trigger: 'feature',
+          },
+          command: 'workbench-kit.feature.run',
+          danger: true,
+          description: 'Runs a feature command.',
+          id: 'workbench-kit.feature.run',
+          requiresApproval: true,
+          title: 'Run Feature',
+        },
+      ),
+    ).toEqual(
+      expect.objectContaining({
+        danger: true,
+        description: 'Runs a feature command.',
+        id: 'workbench-kit.feature.run',
+        metadata: {
+          argsSchema: {
+            type: 'array',
+          },
+          chat: {
+            trigger: 'feature',
+          },
+          requiresApproval: true,
+        },
+      }),
+    );
+  });
+
+  it('adds extension command feature metadata through the palette builder', () => {
+    const shellContext = {
+      isPrimarySidebarVisible: true,
+      openSettings: () => undefined,
+      showActivity: () => undefined,
+      togglePrimarySidebar: () => undefined,
+    };
+    const commands = buildWorkbenchPaletteCommands({
+      extensionCommandFeaturesById: new Map([
+        [
+          'workbench-kit.feature.run',
+          {
+            command: 'workbench-kit.feature.run',
+            description: 'Runs a feature command.',
+            id: 'workbench-kit.feature.run',
+            title: 'Run Feature',
+          },
+        ],
+      ]),
+      extensionCommands: [
+        {
+          id: 'workbench-kit.feature.run',
+          title: 'Run Feature',
+        },
+      ],
+      shellCommands: [],
+      shellContext,
+    });
+
+    expect(commands).toContainEqual(
+      expect.objectContaining({
+        description: 'Runs a feature command.',
+        id: 'workbench-kit.feature.run',
       }),
     );
   });

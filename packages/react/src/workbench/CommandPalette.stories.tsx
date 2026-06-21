@@ -282,6 +282,9 @@ function ShortcutCommandBridgeHarness() {
       canDeletePath: false,
       canDiscardFile: dirty,
       canSaveFile: true,
+      canSplitDown: false,
+      canSplitRight: false,
+      canTogglePinned: false,
       closeAll: () => undefined,
       closeOthers: () => undefined,
       closePath: () => undefined,
@@ -295,10 +298,14 @@ function ShortcutCommandBridgeHarness() {
       hasMultipleOpenFiles: false,
       hasOpenFiles: true,
       hasUnsavedChanges: dirty,
+      isPinned: false,
       saveFile: () => {
         setDirty(false);
         setStatus('Saved active file');
       },
+      splitDown: () => undefined,
+      splitRight: () => undefined,
+      togglePinned: () => undefined,
     }),
     [dirty],
   );

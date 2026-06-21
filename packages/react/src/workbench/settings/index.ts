@@ -116,6 +116,14 @@ export {
   isWorkbenchSchemaFormSubmittable,
   normalizeWorkbenchSchemaFormValues,
 } from './SchemaForm';
+export {
+  createWorkbenchSchemaFormFieldFromSetting,
+  createWorkbenchSchemaFormFieldsFromSettings,
+} from './extensionSettingsForm';
+export type {
+  WorkbenchExtensionSettingSpec,
+  WorkbenchExtensionSettingValueType,
+} from './extensionSettingsForm';
 export type {
   WorkbenchSchemaFormCancelContext,
   WorkbenchSchemaFormCheckboxField,

@@ -16,6 +16,7 @@ import { useWorkbench } from './provider.js';
 import { registerWorkbenchShellCommandHandlers } from './workbench-shell-command-registration.js';
 import {
   buildWorkbenchPaletteCommands,
+  collectExtensionCommandFeaturesById,
   matchesWorkbenchCommandPaletteShortcut,
   matchesWorkbenchQuickAccessShortcut,
   resolveShellCommandActivities,
@@ -123,6 +124,7 @@ export function WorkbenchCommandHost({
     () =>
       buildWorkbenchPaletteCommands({
         additionalCommands,
+        extensionCommandFeaturesById: collectExtensionCommandFeaturesById(extensionRegistry),
         extensionCommands: extensionRegistry.commands.getCommands(),
         shellCommands: shellCommandDefinitions,
         shellContext,

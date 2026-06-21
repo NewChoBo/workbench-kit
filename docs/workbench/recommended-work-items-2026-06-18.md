@@ -32,8 +32,8 @@ Status: completed in this run.
 | -------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | P1       | Settings modal window parity      | Completed: common `Modal` supports `movable`/`maximizable`; Settings enables it; tests cover drag and maximize/restore.   |
 | P1       | Editor layout ownership           | Move split direction, ratios, nested split intent, and group merge into `EditorService` operations.                       |
-| P1       | Document view provider registry   | Promote code/form/preview providers from `EditorArea` locals into a registry or extension contribution path.              |
-| P1       | Context menu contribution parity  | Route editor-tab and explorer context menus through canonical command/menu contribution points.                           |
+| P1       | Document view provider registry   | In progress: manifest/runtime document view contribution is wired; next step is richer matching and host docs.            |
+| P1       | Context menu contribution parity  | Progress: editor-tab and explorer item menus are command-backed; next is extension/user menu contribution ordering.       |
 | P2       | Stale workbench planning docs     | Refresh or archive WB-28/WB-29-era docs that no longer match current code truth.                                          |
 | P2       | JDW validation/render consistency | Reuse parsed/validated JDW results across code/form/preview and decide `WorkbenchDocument` boundary.                      |
 | P2       | Scrollbar standardization         | Replace new raw scroll containers with `ScrollArea`; keep custom overlay scrollbars only where intentionally specialized. |
@@ -55,3 +55,55 @@ Scope:
 3. Preserve same-group reorder, no-op self-drop, cross-group move, split left,
    split right, and empty-group cleanup.
 4. Keep React as renderer/dispatcher for the service-owned layout model.
+
+Progress as of 2026-06-21:
+
+- `EditorService` owns split direction and primary size ratio state for the
+  current layout tree.
+- React `EditorArea` renders the service-owned split orientation/size and writes
+  sash resize changes back through the service.
+- Editor tab context menu exposes both `Split Right` and `Split Down`; DnD
+  left/right/top/bottom split operations pass layout intent to the service.
+- Drop-zone side resolution and move-option mapping are extracted into
+  framework-neutral `workbench-core` helpers with geometry-based tests.
+- New group insertion preserves nested split intent instead of flattening the
+  whole editor layout tree.
+- `EditorService` accepts restored editor state, normalizes stale layout nodes,
+  and resumes tab/group id sequences without collisions.
+- `shell-react` persists editor state in browser storage and restores tabs,
+  groups, split direction, and split ratios on provider startup.
+- `WorkbenchProvider` accepts `Storage`-compatible adapters for editor state,
+  workbench layout, keybinding overrides, local preference persistence, and
+  extension install-state management, so a non-browser shell can bridge those
+  snapshots to host-owned `state.json` or user-data storage.
+- Remaining work: provide a concrete host file-backed adapter and define the
+  plugin store install/update plan on top of the shared extension install-state
+  storage contract.
+
+Document view provider progress as of 2026-06-21:
+
+- `shell-react` owns an `EditorDocumentViewProviderRegistry` instead of keeping
+  JSON form, JDW preview, and Markdown preview resolution local to `EditorArea`.
+- `WorkbenchProvider` registers default document view providers and accepts
+  host-provided document view providers through `documentViewProviders`.
+- `EditorArea` reads provider-level registry state and keeps its `viewProviders`
+  prop as a local override path for embedded or specialized editor surfaces.
+- Extension manifests can declare `contributes.documentViews`, feature specs and
+  management UI expose those providers, and activated extensions can register
+  runtime providers through `context.editorDocumentViews.registerProvider(...)`.
+- Remaining work: document advanced matching rules and decide whether document
+  view provider rendering should remain shell-react-owned or become a broader
+  host adapter contract.
+
+Context menu contribution progress as of 2026-06-21:
+
+- Editor tab `Pin`/`Unpin`, `Split Right`, and `Split Down` are defined in the
+  shared editor command preset and resolved through the same menu pipeline as
+  copy/close/delete.
+- `EditorArea` keeps only surface-specific callback context for the active tab
+  and group, so future keybinding/palette/menu surfaces can target the same
+  command ids.
+- Explorer item menus already use workspace command preset entries for open,
+  create, rename, delete, and copy path.
+- Remaining work: accept extension/user-provided context menu contributions and
+  define deterministic ordering/visibility rules.

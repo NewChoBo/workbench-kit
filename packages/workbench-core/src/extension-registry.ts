@@ -12,6 +12,7 @@ import type {
   ActivateFunction,
   ConfigurationContribution,
   DeactivateFunction,
+  ExtensionFeatureSpec,
   ExtensionContext,
   MenuContribution,
   ViewContainerContribution,
@@ -44,8 +45,13 @@ import {
   createEditorResolverRegistry,
   type EditorResolverRegistry,
 } from './editor-resolver-registry.js';
+import {
+  createEditorDocumentViewProviderRegistry,
+  type EditorDocumentViewProviderRegistry,
+} from './editor-document-view-registry.js';
 import { LocalizationRegistry } from './localization-registry.js';
 import { ThemeRegistry } from './theme-registry.js';
+import { createExtensionFeatureSpecs } from './extension-feature-spec.js';
 
 export interface WorkbenchExtensionModule {
   activate?: ActivateFunction;
@@ -64,6 +70,7 @@ export interface ExtensionRegistryOptions {
   capabilityRegistry?: CapabilityRegistry;
   commands?: CommandRegistry;
   configurations?: ConfigurationRegistry;
+  editorDocumentViews?: EditorDocumentViewProviderRegistry;
   editorHostFactories?: EditorHostFactoryRegistry;
   editorResolvers?: EditorResolverRegistry;
   editors?: EditorRegistry;
@@ -78,6 +85,11 @@ export interface ExtensionRegistryOptions {
 export interface ActivatedExtension {
   readonly extensionId: string;
   readonly subscriptions: DisposableStore;
+}
+
+export interface ExtensionFeatureInspection {
+  readonly diagnostics: readonly ExtensionDependencyDiagnostic[];
+  readonly feature: ExtensionFeatureSpec;
 }
 
 export type ExtensionDependencyDiagnosticSeverity = 'error' | 'warning';
@@ -117,6 +129,7 @@ export class ExtensionRegistry implements Disposable {
   readonly capabilityRegistry: CapabilityRegistry;
   readonly commands: CommandRegistry;
   readonly configurations: ConfigurationRegistry;
+  readonly editorDocumentViews: EditorDocumentViewProviderRegistry;
   readonly editorHostFactories: EditorHostFactoryRegistry;
   readonly editorResolvers: EditorResolverRegistry;
   readonly editors: EditorRegistry;
@@ -149,6 +162,8 @@ export class ExtensionRegistry implements Disposable {
       this.capabilityRegistry = createCapabilityRegistry(options.capabilities);
     }
 
+    this.editorDocumentViews =
+      options.editorDocumentViews ?? createEditorDocumentViewProviderRegistry();
     this.viewHostFactories = options.viewHostFactories ?? createViewHostFactoryRegistry();
     this.editorHostFactories = options.editorHostFactories ?? createEditorHostFactoryRegistry();
     this.editorResolvers = options.editorResolvers ?? createEditorResolverRegistry();
@@ -168,6 +183,18 @@ export class ExtensionRegistry implements Disposable {
 
   getExtensions(): readonly WorkbenchExtensionDescription[] {
     return [...this.extensions.values()].map((entry) => entry.description);
+  }
+
+  getFeatureSpecs(): readonly ExtensionFeatureSpec[] {
+    return createExtensionFeatureSpecs(this.getExtensions());
+  }
+
+  getFeatureInspections(): readonly ExtensionFeatureInspection[] {
+    const diagnostics = this.getDependencyDiagnostics();
+    return this.getFeatureSpecs().map((feature) => ({
+      diagnostics: diagnostics.filter((diagnostic) => diagnostic.extensionId === feature.id),
+      feature,
+    }));
   }
 
   getDependencyDiagnostics(): readonly ExtensionDependencyDiagnostic[] {
@@ -354,6 +381,7 @@ export class ExtensionRegistry implements Disposable {
     this.themes.dispose();
     this.views.dispose();
     this.editors.dispose();
+    this.editorDocumentViews.dispose();
     this.viewHostFactories.dispose();
     this.editorHostFactories.dispose();
     this.editorResolvers.dispose();
@@ -405,6 +433,10 @@ export class ExtensionRegistry implements Disposable {
       commands: {
         registerCommand: (commandId, handler) =>
           subscriptions.add(this.registerCommandHandler(commandId, handler)),
+      },
+      editorDocumentViews: {
+        registerProvider: (provider) =>
+          subscriptions.add(this.editorDocumentViews.registerProvider(provider)),
       },
       editorHostFactories: {
         registerFactory: (factory) => subscriptions.add(this.editorHostFactories.register(factory)),

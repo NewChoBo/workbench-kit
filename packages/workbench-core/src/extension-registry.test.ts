@@ -161,6 +161,66 @@ describe('ExtensionRegistry', () => {
     expect(registry.views.getViewProvider('workbench-kit.builtin.explorer.tree')).toBeUndefined();
   });
 
+  it('registers editor document view providers during extension activation', async () => {
+    const registry = new ExtensionRegistry();
+    registry.registerExtension({
+      manifest: {
+        schemaVersion: 1,
+        id: 'workbench-kit.samples.document-view',
+        name: 'samples-document-view',
+        displayName: 'Document View',
+        version: '0.0.0',
+        publisher: 'workbench-kit',
+        engines: {
+          workbench: '^0.0.0',
+          extensionApi: '^0.0.0',
+        },
+        activationEvents: ['onStartup'],
+        contributes: {
+          documentViews: [
+            {
+              filenamePatterns: ['*.preview.json'],
+              id: 'workbench-kit.samples.document-view.preview',
+              kind: 'preview',
+              label: 'Preview',
+            },
+          ],
+        },
+      },
+      module: {
+        activate: (context) => {
+          context.editorDocumentViews.registerProvider({
+            filenamePatterns: ['*.preview.json'],
+            id: 'workbench-kit.samples.document-view.preview',
+            kind: 'preview',
+            label: 'Preview',
+            render: ({ document }) => `Preview ${document.path}`,
+          });
+        },
+      },
+    });
+
+    expect(registry.editorDocumentViews.getProviders()).toHaveLength(0);
+
+    await registry.activateStartup();
+
+    expect(registry.editorDocumentViews.getProviders()).toHaveLength(1);
+    expect(
+      registry.editorDocumentViews.getProviders()[0]?.render({
+        document: {
+          content: '{}',
+          path: 'sample.preview.json',
+          resourceUri: 'workspace://file/sample.preview.json',
+        },
+        onContentChange: () => undefined,
+      }),
+    ).toBe('Preview sample.preview.json');
+
+    await registry.deactivateExtension('workbench-kit.samples.document-view');
+
+    expect(registry.editorDocumentViews.getProviders()).toHaveLength(0);
+  });
+
   it('shares concurrent extension activation for the same activation event', async () => {
     const registry = new ExtensionRegistry();
     let activateCalls = 0;

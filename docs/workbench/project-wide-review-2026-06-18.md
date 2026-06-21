@@ -74,6 +74,30 @@ Recommended work:
 - Let React render the service layout instead of reconstructing intent from
   group order.
 
+2026-06-21 progress:
+
+- Split direction and primary size ratio are now first-class `EditorService`
+  layout state.
+- `EditorArea` renders service-owned split orientation and controlled resize
+  state instead of keeping split size local to React.
+- The editor tab menu supports `Split Right` and `Split Down`.
+- Editor group DnD supports left/right/top/bottom split zones with horizontal or
+  vertical layout intent.
+- Drop-zone side resolution and move-option mapping now live in framework-neutral
+  `workbench-core` helpers.
+- New group insertion preserves nested split intent instead of flattening the
+  whole editor layout tree.
+- `EditorService` accepts restored editor state, normalizes stale layout nodes,
+  and resumes tab/group id sequences without collisions.
+- `shell-react` persists editor state in browser storage and restores tabs,
+  groups, split direction, and split ratios on provider startup.
+- `WorkbenchProvider` accepts `Storage`-compatible adapters for editor state,
+  workbench layout, keybinding overrides, local preference persistence, and
+  extension install-state management, so a non-browser shell can bridge those
+  snapshots to host-owned `state.json` or user-data storage.
+- Still open: a concrete host file-backed adapter and plugin store install/update
+  planning on top of the shared extension install-state storage contract.
+
 ### P1 - Document view modes need a registry boundary
 
 `EditorArea` has a good local provider shape for code/form/preview, but the
@@ -91,6 +115,20 @@ Recommended work:
   path pattern, and priority.
 - Keep `EditorArea` as the resolver/renderer only.
 
+2026-06-21 progress:
+
+- `shell-react` now owns `EditorDocumentViewProviderRegistry`.
+- `WorkbenchProvider` registers default JSON form, JDW preview, and Markdown
+  preview providers and accepts host-provided document view providers.
+- `EditorArea` reads provider-level registry state and remains the renderer; its
+  `viewProviders` prop is retained for local surface-specific overrides.
+- Extension manifests can declare `contributes.documentViews`, feature specs and
+  management UI expose those providers, and activated extensions can register
+  runtime providers through `context.editorDocumentViews.registerProvider(...)`.
+- Still open: advanced matching docs and a decision on whether document view
+  rendering remains shell-react-owned or becomes a broader host adapter
+  contract.
+
 ### P1 - Context menus are partially command-backed
 
 Explorer and editor tabs use command registries for standard menu items, but
@@ -106,6 +144,18 @@ Recommended work:
 - Register pin, split, reveal, create, rename, delete, copy path, and open
   through the same command/menu pipeline.
 - Keep surface-specific callbacks only for pointer coordinates and focus.
+
+2026-06-21 progress:
+
+- Editor tab pin/unpin and split-right/split-down are now first-class editor
+  command preset entries instead of local `EditorArea` context-menu closures.
+- `EditorArea` builds the full tab menu through `resolveCommandMenuItems` and
+  supplies only host-specific command context callbacks such as current tab id,
+  group id, and split direction.
+- Explorer item menus were checked and already use workspace command preset
+  entries for open, create, rename, delete, and copy-path behavior.
+- Still open: extension-contributed context menu placement and user/extension
+  overrides for menu ordering.
 
 ### P2 - JDW/render contracts are still split
 

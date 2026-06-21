@@ -31,6 +31,7 @@ export interface EditorGroupLayoutNode {
 export interface EditorSplitLayoutNode {
   readonly children: readonly EditorLayoutNode[];
   readonly direction: EditorLayoutDirection;
+  readonly primarySizePercent?: number | undefined;
   readonly type: 'split';
 }
 
@@ -56,6 +57,7 @@ export interface OpenEditorOptions {
 export interface SplitEditorOptions {
   readonly afterGroupId?: string | undefined;
   readonly beforeGroupId?: string | undefined;
+  readonly direction?: EditorLayoutDirection | undefined;
   readonly groupId?: string | undefined;
   readonly tabId?: string | undefined;
 }
@@ -63,9 +65,20 @@ export interface SplitEditorOptions {
 export interface MoveEditorOptions {
   readonly afterGroupId?: string | undefined;
   readonly beforeGroupId?: string | undefined;
+  readonly direction?: EditorLayoutDirection | undefined;
   readonly groupId?: string | undefined;
   readonly tabId?: string | undefined;
   readonly targetIndex?: number | undefined;
+}
+
+export interface SetEditorSplitDirectionOptions {
+  readonly direction: EditorLayoutDirection;
+  readonly path: readonly number[];
+}
+
+export interface SetEditorSplitPrimarySizeOptions {
+  readonly path: readonly number[];
+  readonly primarySizePercent: number;
 }
 
 export interface EditorChangeEvent {
@@ -78,6 +91,7 @@ export const DEFAULT_EDITOR_GROUP_ID = 'workbench.editor.group.main' as const;
 export interface EditorServiceOptions {
   readonly editorHostFactories: EditorHostFactoryRegistry;
   readonly editorResolvers?: EditorResolverRegistry | undefined;
+  readonly initialState?: EditorState | undefined;
   readonly resolveEditorResource?: ((resourceUri: string) => unknown) | undefined;
 }
 
@@ -97,7 +111,9 @@ export class EditorService implements Disposable {
     this.editorHostFactories = options.editorHostFactories;
     this.editorResolvers = options.editorResolvers;
     this.resolveEditorResource = options.resolveEditorResource;
-    this.state = createDefaultEditorState();
+    this.state = createInitialEditorState(options.initialState);
+    this.groupSequence = getMaxEditorGroupSequence(this.state.groups);
+    this.tabSequence = getMaxEditorTabSequence(this.state.groups);
   }
 
   getState(): EditorState {
@@ -174,9 +190,18 @@ export class EditorService implements Disposable {
         ? insertGroupBefore(this.state.groups, anchorGroupId, nextTargetGroup)
         : insertGroupAfter(this.state.groups, anchorGroupId, nextTargetGroup);
 
+    const nextLayout = targetGroup
+      ? createEditorLayoutOverride(this.state.layout, nextGroups, options.direction)
+      : createEditorLayoutForInsertedGroup(this.state.layout, nextGroups, {
+          anchorGroupId,
+          before: Boolean(options.beforeGroupId),
+          direction: options.direction,
+          groupId: targetGroupId,
+        });
     this.setState({
       activeGroupId: targetGroupId,
       groups: nextGroups,
+      ...(nextLayout ? { layout: nextLayout } : {}),
     });
 
     const targetHost = this.createEditorHost(nextTab.id);
@@ -269,12 +294,46 @@ export class EditorService implements Disposable {
       });
     }
 
+    const nextLayout = targetGroup
+      ? createEditorLayoutOverride(this.state.layout, nextGroups, options.direction)
+      : createEditorLayoutForInsertedGroup(this.state.layout, nextGroups, {
+          anchorGroupId: options.beforeGroupId ?? options.afterGroupId ?? sourceLocation.group.id,
+          before: Boolean(options.beforeGroupId),
+          direction: options.direction,
+          groupId: targetGroupId,
+        });
     this.setState({
       activeGroupId: targetGroupId,
       groups: nextGroups,
+      ...(nextLayout ? { layout: nextLayout } : {}),
     });
 
     return sourceLocation.tab;
+  }
+
+  setEditorSplitDirection(options: SetEditorSplitDirectionOptions): void {
+    const nextLayout = updateEditorSplitLayout(this.state.layout, options.path, (layout) => ({
+      ...layout,
+      direction: options.direction,
+    }));
+    if (!nextLayout) {
+      return;
+    }
+
+    this.setState({ layout: nextLayout });
+  }
+
+  setEditorSplitPrimarySize(options: SetEditorSplitPrimarySizeOptions): void {
+    const primarySizePercent = normalizeEditorSplitPrimarySizePercent(options.primarySizePercent);
+    const nextLayout = updateEditorSplitLayout(this.state.layout, options.path, (layout) => ({
+      ...layout,
+      primarySizePercent,
+    }));
+    if (!nextLayout) {
+      return;
+    }
+
+    this.setState({ layout: nextLayout });
   }
 
   closeEditor(tabId: string): void {
@@ -543,7 +602,9 @@ export class EditorService implements Disposable {
       groups,
       layout:
         nextPartial.layout ??
-        (nextPartial.groups ? createEditorLayoutFromGroups(groups) : this.state.layout),
+        (nextPartial.groups
+          ? reconcileEditorLayoutWithGroups(this.state.layout, groups, this.state.groups)
+          : this.state.layout),
     };
 
     const previousState = this.state;
@@ -579,6 +640,67 @@ function createDefaultEditorState(): EditorState {
   };
 }
 
+function createInitialEditorState(initialState: EditorState | undefined): EditorState {
+  if (!initialState) {
+    return createDefaultEditorState();
+  }
+
+  const groups = normalizeEditorGroups(initialState.groups);
+  return {
+    activeGroupId: groups.some((group) => group.id === initialState.activeGroupId)
+      ? initialState.activeGroupId
+      : groups[0]?.id,
+    groups,
+    layout: normalizeEditorLayoutWithGroups(initialState.layout, groups),
+  };
+}
+
+function normalizeEditorGroups(groups: readonly EditorGroupState[]): EditorGroupState[] {
+  const seenGroupIds = new Set<string>();
+  const seenTabIds = new Set<string>();
+  const normalizedGroups = groups.flatMap<EditorGroupState>((group) => {
+    if (!group.id || seenGroupIds.has(group.id)) {
+      return [];
+    }
+
+    seenGroupIds.add(group.id);
+    const tabs = group.tabs.flatMap<EditorTabState>((tab) => {
+      if (!tab.id || seenTabIds.has(tab.id) || !tab.editorId || !tab.resourceUri) {
+        return [];
+      }
+
+      seenTabIds.add(tab.id);
+      return [
+        {
+          dirty: tab.dirty,
+          editorId: tab.editorId,
+          icon: tab.icon,
+          id: tab.id,
+          pinned: tab.pinned,
+          preview: tab.preview,
+          resourceUri: tab.resourceUri,
+          title: tab.title,
+        },
+      ];
+    });
+    return [
+      {
+        activeTabId: tabs.some((tab) => tab.id === group.activeTabId)
+          ? group.activeTabId
+          : tabs[0]?.id,
+        id: group.id,
+        tabs,
+      },
+    ];
+  });
+
+  if (normalizedGroups.length === 0) {
+    return createDefaultEditorState().groups.map((group) => ({ ...group }));
+  }
+
+  return normalizedGroups;
+}
+
 function cloneEditorState(state: EditorState): EditorState {
   return {
     activeGroupId: state.activeGroupId,
@@ -591,20 +713,39 @@ function cloneEditorState(state: EditorState): EditorState {
   };
 }
 
-function createEditorLayoutFromGroups(groups: readonly EditorGroupState[]): EditorLayoutNode {
-  const groupNodes = groups.map<EditorGroupLayoutNode>((group) => ({
-    groupId: group.id,
-    type: 'group',
-  }));
+function createEditorLayoutFromGroups(
+  groups: readonly EditorGroupState[],
+  options: {
+    readonly direction?: EditorLayoutDirection | undefined;
+    readonly primarySizePercent?: number | undefined;
+  } = {},
+): EditorLayoutNode {
+  const groupNodes = groups.map<EditorGroupLayoutNode>((group) =>
+    createEditorGroupLayoutNode(group.id),
+  );
 
   if (groupNodes.length <= 1) {
     return groupNodes[0] ?? { groupId: DEFAULT_EDITOR_GROUP_ID, type: 'group' };
   }
 
-  return {
+  const split: EditorSplitLayoutNode = {
     children: groupNodes,
-    direction: 'horizontal',
+    direction: options.direction ?? 'horizontal',
     type: 'split',
+  };
+
+  return options.primarySizePercent === undefined
+    ? split
+    : {
+        ...split,
+        primarySizePercent: options.primarySizePercent,
+      };
+}
+
+function createEditorGroupLayoutNode(groupId: string): EditorGroupLayoutNode {
+  return {
+    groupId,
+    type: 'group',
   };
 }
 
@@ -619,8 +760,329 @@ function cloneEditorLayout(layout: EditorLayoutNode): EditorLayoutNode {
   };
 }
 
+function createEditorLayoutOverride(
+  currentLayout: EditorLayoutNode,
+  groups: readonly EditorGroupState[],
+  direction: EditorLayoutDirection | undefined,
+): EditorLayoutNode | undefined {
+  if (!direction) {
+    return undefined;
+  }
+
+  return createEditorLayoutFromGroups(
+    groups,
+    currentLayout.type === 'split'
+      ? {
+          direction,
+          primarySizePercent: currentLayout.primarySizePercent,
+        }
+      : { direction },
+  );
+}
+
+function createEditorLayoutForInsertedGroup(
+  currentLayout: EditorLayoutNode,
+  groups: readonly EditorGroupState[],
+  options: {
+    readonly anchorGroupId: string;
+    readonly before: boolean;
+    readonly direction?: EditorLayoutDirection | undefined;
+    readonly groupId: string;
+  },
+): EditorLayoutNode {
+  const direction = options.direction ?? resolveEditorLayoutInsertionDirection(currentLayout);
+  const fallbackOptions =
+    currentLayout.type === 'split'
+      ? {
+          direction,
+          primarySizePercent: currentLayout.primarySizePercent,
+        }
+      : { direction };
+  const insertedLayout = insertEditorGroupLayout(currentLayout, {
+    anchorGroupId: options.anchorGroupId,
+    before: options.before,
+    direction,
+    groupId: options.groupId,
+  });
+
+  return insertedLayout
+    ? normalizeEditorLayoutWithGroups(insertedLayout, groups, fallbackOptions)
+    : createEditorLayoutFromGroups(groups, fallbackOptions);
+}
+
+function resolveEditorLayoutInsertionDirection(layout: EditorLayoutNode): EditorLayoutDirection {
+  return layout.type === 'split' ? layout.direction : 'horizontal';
+}
+
+function insertEditorGroupLayout(
+  layout: EditorLayoutNode,
+  options: {
+    readonly anchorGroupId: string;
+    readonly before: boolean;
+    readonly direction: EditorLayoutDirection;
+    readonly groupId: string;
+  },
+): EditorLayoutNode | undefined {
+  if (layout.type === 'group') {
+    if (layout.groupId !== options.anchorGroupId) {
+      return undefined;
+    }
+
+    return createEditorSplitLayoutFromAnchor({
+      anchor: layout,
+      before: options.before,
+      direction: options.direction,
+      groupId: options.groupId,
+    });
+  }
+
+  const directAnchorIndex = layout.children.findIndex(
+    (child) => child.type === 'group' && child.groupId === options.anchorGroupId,
+  );
+  if (directAnchorIndex >= 0) {
+    const anchor = layout.children[directAnchorIndex];
+    if (!anchor || anchor.type !== 'group') {
+      return undefined;
+    }
+
+    if (layout.direction === options.direction) {
+      const nextChildren = [...layout.children];
+      nextChildren.splice(
+        options.before ? directAnchorIndex : directAnchorIndex + 1,
+        0,
+        createEditorGroupLayoutNode(options.groupId),
+      );
+      return {
+        ...layout,
+        children: nextChildren,
+      };
+    }
+
+    return {
+      ...layout,
+      children: layout.children.map((child, index) =>
+        index === directAnchorIndex
+          ? createEditorSplitLayoutFromAnchor({
+              anchor,
+              before: options.before,
+              direction: options.direction,
+              groupId: options.groupId,
+            })
+          : child,
+      ),
+    };
+  }
+
+  for (let index = 0; index < layout.children.length; index += 1) {
+    const child = layout.children[index];
+    if (!child) {
+      continue;
+    }
+
+    const nextChild = insertEditorGroupLayout(child, options);
+    if (!nextChild) {
+      continue;
+    }
+
+    return {
+      ...layout,
+      children: layout.children.map((entry, childIndex) =>
+        childIndex === index ? nextChild : entry,
+      ),
+    };
+  }
+
+  return undefined;
+}
+
+function createEditorSplitLayoutFromAnchor({
+  anchor,
+  before,
+  direction,
+  groupId,
+}: {
+  readonly anchor: EditorGroupLayoutNode;
+  readonly before: boolean;
+  readonly direction: EditorLayoutDirection;
+  readonly groupId: string;
+}): EditorSplitLayoutNode {
+  const inserted = createEditorGroupLayoutNode(groupId);
+  return {
+    children: before ? [inserted, anchor] : [anchor, inserted],
+    direction,
+    type: 'split',
+  };
+}
+
+function reconcileEditorLayoutWithGroups(
+  layout: EditorLayoutNode,
+  groups: readonly EditorGroupState[],
+  previousGroups: readonly EditorGroupState[],
+): EditorLayoutNode {
+  if (hasSameEditorGroupIds(groups, previousGroups)) {
+    return cloneEditorLayout(layout);
+  }
+
+  return normalizeEditorLayoutWithGroups(
+    layout,
+    groups,
+    layout.type === 'split'
+      ? {
+          direction: layout.direction,
+          primarySizePercent: layout.primarySizePercent,
+        }
+      : undefined,
+  );
+}
+
+function normalizeEditorLayoutWithGroups(
+  layout: EditorLayoutNode,
+  groups: readonly EditorGroupState[],
+  options: {
+    readonly direction?: EditorLayoutDirection | undefined;
+    readonly primarySizePercent?: number | undefined;
+  } = {},
+): EditorLayoutNode {
+  const groupIds = new Set(groups.map((group) => group.id));
+  const seenGroupIds = new Set<string>();
+  const prunedLayout = pruneEditorLayout(layout, groupIds, seenGroupIds);
+  if (!prunedLayout) {
+    return createEditorLayoutFromGroups(groups, options);
+  }
+
+  const missingGroups = groups.filter((group) => !seenGroupIds.has(group.id));
+  if (missingGroups.length === 0) {
+    return prunedLayout;
+  }
+
+  const missingNodes = missingGroups.map((group) => createEditorGroupLayoutNode(group.id));
+  if (prunedLayout.type === 'split' && prunedLayout.direction === options.direction) {
+    return {
+      ...prunedLayout,
+      children: [...prunedLayout.children, ...missingNodes],
+    };
+  }
+
+  return {
+    children: [prunedLayout, ...missingNodes],
+    direction: options.direction ?? resolveEditorLayoutInsertionDirection(prunedLayout),
+    ...(options.primarySizePercent === undefined
+      ? {}
+      : { primarySizePercent: options.primarySizePercent }),
+    type: 'split',
+  };
+}
+
+function pruneEditorLayout(
+  layout: EditorLayoutNode,
+  groupIds: ReadonlySet<string>,
+  seenGroupIds: Set<string>,
+): EditorLayoutNode | undefined {
+  if (layout.type === 'group') {
+    if (!groupIds.has(layout.groupId) || seenGroupIds.has(layout.groupId)) {
+      return undefined;
+    }
+
+    seenGroupIds.add(layout.groupId);
+    return { ...layout };
+  }
+
+  const children = layout.children
+    .map((child) => pruneEditorLayout(child, groupIds, seenGroupIds))
+    .filter((child): child is EditorLayoutNode => child !== undefined);
+
+  if (children.length === 0) {
+    return undefined;
+  }
+
+  if (children.length === 1) {
+    return children[0];
+  }
+
+  return {
+    ...layout,
+    children,
+  };
+}
+
+function hasSameEditorGroupIds(
+  left: readonly EditorGroupState[],
+  right: readonly EditorGroupState[],
+): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  const rightIds = new Set(right.map((group) => group.id));
+  return left.every((group) => rightIds.has(group.id));
+}
+
+function updateEditorSplitLayout(
+  layout: EditorLayoutNode,
+  path: readonly number[],
+  updater: (layout: EditorSplitLayoutNode) => EditorSplitLayoutNode,
+): EditorLayoutNode | undefined {
+  if (path.length === 0) {
+    return layout.type === 'split' ? updater(layout) : undefined;
+  }
+
+  if (layout.type !== 'split') {
+    return undefined;
+  }
+
+  const [childIndex, ...restPath] = path;
+  if (childIndex === undefined || childIndex < 0 || childIndex >= layout.children.length) {
+    return undefined;
+  }
+
+  const child = layout.children[childIndex];
+  const nextChild = child ? updateEditorSplitLayout(child, restPath, updater) : undefined;
+  if (!nextChild) {
+    return undefined;
+  }
+
+  return {
+    ...layout,
+    children: layout.children.map((entry, index) => (index === childIndex ? nextChild : entry)),
+  };
+}
+
+function normalizeEditorSplitPrimarySizePercent(primarySizePercent: number): number {
+  if (!Number.isFinite(primarySizePercent)) {
+    return 50;
+  }
+
+  return Math.min(Math.max(primarySizePercent, 5), 95);
+}
+
 function createEditorTabId(sequence: number): string {
   return `workbench.editor.tab.${sequence}`;
+}
+
+function getMaxEditorGroupSequence(groups: readonly EditorGroupState[]): number {
+  return Math.max(
+    0,
+    ...groups.map((group) => parseEditorSequence(group.id, /^workbench\.editor\.group\.(\d+)$/)),
+  );
+}
+
+function getMaxEditorTabSequence(groups: readonly EditorGroupState[]): number {
+  return Math.max(
+    0,
+    ...groups.flatMap((group) =>
+      group.tabs.map((tab) => parseEditorSequence(tab.id, /^workbench\.editor\.tab\.(\d+)$/)),
+    ),
+  );
+}
+
+function parseEditorSequence(value: string, pattern: RegExp): number {
+  const match = pattern.exec(value);
+  if (!match?.[1]) {
+    return 0;
+  }
+
+  const sequence = Number.parseInt(match[1], 10);
+  return Number.isFinite(sequence) ? sequence : 0;
 }
 
 function replaceGroup(
@@ -829,6 +1291,7 @@ function isSameEditorLayout(left: EditorLayoutNode, right: EditorLayoutNode): bo
   if (left.type === 'split' && right.type === 'split') {
     return (
       left.direction === right.direction &&
+      left.primarySizePercent === right.primarySizePercent &&
       left.children.length === right.children.length &&
       left.children.every((child, index) => {
         const otherChild = right.children[index];

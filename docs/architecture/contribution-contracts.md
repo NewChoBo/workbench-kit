@@ -22,6 +22,7 @@ interface ExtensionContext {
   readonly capabilities: ExtensionCapabilityRegistry;
   readonly viewHostFactories: ExtensionViewHostFactoryRegistry;
   readonly editorHostFactories: ExtensionEditorHostFactoryRegistry;
+  readonly editorDocumentViews: ExtensionEditorDocumentViewRegistry;
   readonly views: ExtensionViewRegistry;
   readonly commands: ExtensionCommandRegistry;
   getCapability<T>(id: string): T | undefined;
@@ -33,6 +34,10 @@ interface ExtensionViewHostFactoryRegistry {
 
 interface ExtensionEditorHostFactoryRegistry {
   registerFactory(factory: EditorHostFactory): Disposable;
+}
+
+interface ExtensionEditorDocumentViewRegistry {
+  registerProvider(provider: EditorDocumentViewProvider): Disposable;
 }
 
 interface ExtensionCapabilityRegistry {
@@ -129,6 +134,35 @@ interface ViewHost {
 
 Runtime view providers are registered in `activate()` via `context.views.registerViewProvider(...)`. `shell-react` maps `ViewProvider` results to React nodes when possible; the SDK stays UI-framework neutral (`unknown` / callback registration).
 
+## Document View Contributions
+
+`contributes.documentViews` describes form/preview modes for text editor
+documents. Manifest metadata is visible in extension management and feature
+inspection, while the runtime renderer is registered during activation.
+
+```ts
+interface EditorDocumentViewContribution {
+  id: string;
+  kind: 'form' | 'preview';
+  label: string;
+  priority?: number;
+  mimeTypes?: readonly string[];
+  filenamePatterns?: readonly string[];
+  when?: string;
+}
+
+interface EditorDocumentViewProvider extends EditorDocumentViewContribution {
+  matches?(document: EditorDocumentContext): boolean;
+  render(context: EditorDocumentViewRenderContext): unknown;
+}
+```
+
+Runtime providers are registered with
+`context.editorDocumentViews.registerProvider(...)`. `shell-react` converts the
+opaque render result to a React node when possible and also supports
+manifest-style `mimeTypes` / `filenamePatterns` matching when `matches` is not
+provided.
+
 ## Menu Contributions
 
 ```ts
@@ -192,9 +226,24 @@ Recommended command ID prefix: `<publisher>.<extension>.<name>`.
 @workbench-kit/workbench-extension-sdk
   manifest types
   contribution types
+  ExtensionFeatureSpec read-model types
   ExtensionContext.commands.registerCommand
   ExtensionContext.views.registerViewProvider
+  ExtensionContext.editorDocumentViews.registerProvider
 ```
+
+## Feature Spec Read Model
+
+`ExtensionFeatureSpec` is the normalized, UI-facing shape for a manifest. It
+keeps `commands`, `settings`, `views`, `viewContainers`, `menus`, `keybindings`,
+`documentViews`, `activities`, `capabilities`, `permissions`, and dependency
+fields in flat collections so command palette, chat slash commands, extension
+management, document view selection, and settings form adapters can read the
+same metadata.
+
+The model is not an execution API. Commands still execute through the platform
+`CommandRegistry` / `ExtensionRegistry.executeCommand()` path, and providers are
+still registered during activation.
 
 ## Related Documents
 

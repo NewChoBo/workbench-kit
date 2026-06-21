@@ -4,6 +4,11 @@ export type {
   EditorHost,
   EditorHostCreateContext,
   EditorHostFactory,
+  EditorDocumentContext,
+  EditorDocumentViewContribution,
+  EditorDocumentViewKind,
+  EditorDocumentViewProvider,
+  EditorDocumentViewRenderContext,
   EditorResolveContext,
   EditorResolver,
   ViewHostCreateContext,
@@ -34,9 +39,23 @@ export {
   type CapabilityProvider,
 } from './capability-registry.js';
 export {
+  createEditorDocumentViewProviderRegistry,
+  EditorDocumentViewProviderRegistry,
+  type CreateEditorDocumentViewProviderRegistryOptions,
+} from './editor-document-view-registry.js';
+export {
   createEditorResolverRegistry,
   EditorResolverRegistry,
 } from './editor-resolver-registry.js';
+export {
+  createEditorGroupDropMoveOptions,
+  resolveEditorGroupDropSide,
+  type CreateEditorGroupDropMoveOptionsInput,
+  type EditorDropPoint,
+  type EditorDropRect,
+  type EditorGroupDropSide,
+  type ResolveEditorGroupDropSideOptions,
+} from './editor-layout.js';
 export {
   createEditorService,
   DEFAULT_EDITOR_GROUP_ID,
@@ -50,6 +69,8 @@ export {
   type EditorTabState,
   type MoveEditorOptions,
   type OpenEditorOptions,
+  type SetEditorSplitDirectionOptions,
+  type SetEditorSplitPrimarySizeOptions,
   type SplitEditorOptions,
 } from './editor-service.js';
 export {
@@ -73,10 +94,23 @@ export {
   type ExtensionDependencyDiagnostic,
   type ExtensionDependencyDiagnosticKind,
   type ExtensionDependencyDiagnosticSeverity,
+  type ExtensionFeatureInspection,
   type ExtensionRegistryOptions,
   type WorkbenchExtensionDescription,
   type WorkbenchExtensionModule,
 } from './extension-registry.js';
+export {
+  createExtensionFeatureSpec,
+  createExtensionFeatureSpecs,
+  type WorkbenchExtensionFeatureDescription,
+} from './extension-feature-spec.js';
+export type {
+  ExtensionCommandFeatureSpec,
+  ExtensionFeatureSpec,
+  ExtensionSettingFeatureSpec,
+  ExtensionViewContainerFeatureSpec,
+  ExtensionViewFeatureSpec,
+} from '@workbench-kit/workbench-extension-sdk';
 export {
   parseExtensionCatalog,
   type ExtensionCatalog,

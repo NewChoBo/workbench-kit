@@ -2,6 +2,7 @@ import { useEffect, useMemo, useReducer, useRef } from 'react';
 import type { EditorHost, EditorService, EditorTabState } from '@workbench-kit/workbench-core';
 
 import { useWorkbench } from './provider.js';
+import type { EditorDocumentViewProvider } from './editor-view-providers.js';
 
 export function useEditorService(): EditorService {
   return useWorkbench().editorService;
@@ -61,6 +62,30 @@ export function useEditorHost(tabId?: string): EditorHost | undefined {
   }, [editorService, forceRender]);
 
   return host;
+}
+
+export function useEditorDocumentViewProviders(
+  localProviders?: readonly EditorDocumentViewProvider[] | undefined,
+): readonly EditorDocumentViewProvider[] {
+  const { editorDocumentViewProviders } = useWorkbench();
+  const forceRender = useForceRender();
+
+  useEffect(() => {
+    const disposable = editorDocumentViewProviders.onDidChangeProviders(forceRender);
+    return () => {
+      disposable.dispose();
+    };
+  }, [editorDocumentViewProviders, forceRender]);
+
+  const registryProviders = editorDocumentViewProviders.getProviders();
+
+  return useMemo(
+    () =>
+      localProviders && localProviders.length > 0
+        ? [...localProviders, ...registryProviders]
+        : registryProviders,
+    [localProviders, registryProviders],
+  );
 }
 
 function useForceRender() {

@@ -3,6 +3,7 @@ import type { CommandManagementEntry, CommandManagementGroup } from './types.js'
 interface BuildCommandManagementGroupsInput {
   readonly extensionCommands: readonly {
     readonly category?: string | undefined;
+    readonly description?: string | undefined;
     readonly extensionId: string;
     readonly extensionLabel: string;
     readonly handler?: unknown;
@@ -14,6 +15,7 @@ interface BuildCommandManagementGroupsInput {
   readonly shellCommands?:
     | readonly {
         readonly category?: string | undefined;
+        readonly description?: string | undefined;
         readonly handler?: unknown;
         readonly id: string;
         readonly label: string;
@@ -24,6 +26,7 @@ interface BuildCommandManagementGroupsInput {
 function toEntry(
   command: {
     readonly category?: string | undefined;
+    readonly description?: string | undefined;
     readonly handler?: unknown;
     readonly id: string;
     readonly label: string;
@@ -37,6 +40,7 @@ function toEntry(
 
   return {
     category: command.category,
+    description: command.description,
     id: command.id,
     keybinding: keybindingsByCommandId?.[command.id],
     label: command.label,
@@ -119,6 +123,7 @@ export function filterCommandManagementGroups(
           entry.label,
           entry.id,
           entry.category,
+          entry.description,
           entry.sourceLabel,
           entry.keybinding,
           ...(entry.menuSurfaces ?? []),

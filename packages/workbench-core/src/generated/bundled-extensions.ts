@@ -612,6 +612,16 @@ export const SAMPLE_WORKBENCH_EXTENSIONS = [
       },
       activationEvents: ['onStartup'],
       contributes: {
+        documentViews: [
+          {
+            id: 'workbench-kit.samples.json-preview.document-preview',
+            kind: 'preview',
+            label: 'JSON Preview',
+            priority: 30,
+            mimeTypes: ['application/json'],
+            filenamePatterns: ['*.preview.json'],
+          },
+        ],
         editors: [
           {
             id: 'workbench-kit.samples.json-preview.preview',

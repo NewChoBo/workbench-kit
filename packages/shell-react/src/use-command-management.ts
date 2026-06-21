@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useState } from 'react';
-import type { ExtensionRegistry } from '@workbench-kit/workbench-core';
+import type { ExtensionCommandFeatureSpec, ExtensionRegistry } from '@workbench-kit/workbench-core';
 import {
   buildCommandManagementGroups,
   countCommandManagementEntries,
@@ -8,7 +8,10 @@ import {
 import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench';
 
 import { useWorkbench } from './provider.js';
-import { resolveShellCommandActivities } from './workbench-command-palette.js';
+import {
+  collectExtensionCommandFeaturesById,
+  resolveShellCommandActivities,
+} from './workbench-command-palette.js';
 
 export function useCommandManagementModel() {
   const { executeCommand, extensionRegistry } = useWorkbench();
@@ -75,9 +78,14 @@ export function buildCommandManagementModelGroups(
     includeSidebarToggle: true,
   });
   const shellCommandIds = new Set(shellCommands.map((command) => command.id));
+  const commandFeaturesById = collectExtensionCommandFeaturesById(extensionRegistry);
 
   return buildCommandManagementGroups({
-    extensionCommands: collectExtensionCommandEntries(extensionRegistry, shellCommandIds),
+    extensionCommands: collectExtensionCommandEntries(
+      extensionRegistry,
+      shellCommandIds,
+      commandFeaturesById,
+    ),
     keybindingsByCommandId: collectKeybindingsByCommandId(extensionRegistry),
     menuSurfacesByCommandId: collectMenuSurfacesByCommandId(extensionRegistry),
     shellCommands: shellCommands.map((command) => ({
@@ -95,9 +103,11 @@ export function buildCommandManagementModelGroups(
 function collectExtensionCommandEntries(
   extensionRegistry: ExtensionRegistry,
   skippedCommandIds: ReadonlySet<string>,
+  commandFeaturesById: ReadonlyMap<string, ExtensionCommandFeatureSpec>,
 ) {
   const entries: Array<{
     category?: string | undefined;
+    description?: string | undefined;
     extensionId: string;
     extensionLabel: string;
     handler?: unknown;
@@ -106,23 +116,20 @@ function collectExtensionCommandEntries(
   }> = [];
   const seen = new Set<string>();
 
-  for (const extension of extensionRegistry.getExtensions()) {
-    const extensionLabel = extension.manifest.displayName ?? extension.manifest.id;
+  for (const feature of extensionRegistry.getFeatureSpecs()) {
+    const extensionLabel = feature.displayName;
 
-    for (const contribution of extension.manifest.contributes?.commands ?? []) {
-      const command = extensionRegistry.commands.getCommand(contribution.command);
-      if (
-        !command ||
-        seen.has(contribution.command) ||
-        skippedCommandIds.has(contribution.command)
-      ) {
+    for (const contribution of feature.commands) {
+      const command = extensionRegistry.commands.getCommand(contribution.id);
+      if (!command || seen.has(contribution.id) || skippedCommandIds.has(contribution.id)) {
         continue;
       }
 
-      seen.add(contribution.command);
+      seen.add(contribution.id);
       entries.push({
         category: command.category ?? contribution.category,
-        extensionId: extension.manifest.id,
+        description: contribution.description,
+        extensionId: feature.id,
         extensionLabel,
         handler: command.handler,
         id: command.id,
@@ -138,6 +145,7 @@ function collectExtensionCommandEntries(
 
     entries.push({
       category: command.category,
+      description: commandFeaturesById.get(command.id)?.description,
       extensionId: 'runtime',
       extensionLabel: 'Runtime',
       handler: command.handler,

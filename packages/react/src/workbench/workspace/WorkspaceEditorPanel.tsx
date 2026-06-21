@@ -154,6 +154,9 @@ export function WorkspaceEditorPanel({
       canDeletePath: Boolean(onDeletePath),
       canDiscardFile: Boolean(filePath),
       canSaveFile: Boolean(filePath),
+      canSplitDown: false,
+      canSplitRight: false,
+      canTogglePinned: false,
       closeAll: () => onCloseAll?.(),
       closeOthers: () => {
         if (filePath) onCloseOthers?.(filePath);
@@ -174,9 +177,13 @@ export function WorkspaceEditorPanel({
       hasMultipleOpenFiles: openFiles.length > 1,
       hasOpenFiles: openFiles.length > 0,
       hasUnsavedChanges: Boolean(file && isDirty(file.path, file.content)),
+      isPinned: false,
       saveFile: () => {
         if (filePath) saveFile(filePath, content);
       },
+      splitDown: () => undefined,
+      splitRight: () => undefined,
+      togglePinned: () => undefined,
     };
   };
 

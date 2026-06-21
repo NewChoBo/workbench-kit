@@ -38,9 +38,23 @@ Required manifest concepts:
 3. `ExtensionRegistry` validates the hard dependency graph.
 4. On activation events, extension `activate` runs and registers disposables with `ExtensionContext`.
 5. Contributions merge into platform registries (`CommandRegistry`, `ViewRegistry`, etc.).
-6. Runtime handlers and view providers registered from `activate()` are scoped to the extension lifecycle and disposed on deactivate.
+6. Runtime handlers, sidebar view providers, and editor document view providers
+   registered from `activate()` are scoped to the extension lifecycle and
+   disposed on deactivate.
 
 Extensions register contributions **through the SDK**, not by mutating internal registry singletons.
+
+## Extension Feature Spec
+
+The host also exposes a normalized `ExtensionFeatureSpec` read model derived
+from `workbench.extension.json`. It flattens command, keybinding, menu,
+configuration, view, activity, theme, localization, capability, permission, and
+dependency metadata for management UI, command surfaces, settings forms, and
+future store review flows.
+
+`ExtensionFeatureSpec` is additive: it does not replace activation or runtime
+handler registration. Manifest contributions remain the source of declarative
+features, while `activate()` still registers executable handlers and providers.
 
 `pnpm check:extension-manifests` validates repository-local extension manifests
 before `pnpm validate` completes, and `scripts/bundle-workbench-extensions.mjs`

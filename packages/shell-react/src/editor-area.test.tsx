@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -33,6 +33,10 @@ vi.mock('@monaco-editor/react', () => ({
 
 vi.mock('monaco-editor', () => ({}));
 
+import {
+  BUILTIN_WORKBENCH_EXTENSIONS,
+  type WorkbenchExtensionDescription,
+} from '@workbench-kit/workbench-core';
 import { WORKSPACE_EXPLORER_DRAG_DATA_TYPE } from '@workbench-kit/react/workbench/workspace/explorer';
 import { EditorArea } from './editor-area.js';
 import type { EditorDocumentViewProvider } from './editor-view-providers.js';
@@ -82,6 +86,10 @@ const MARKDOWN_SOURCE = [
 ].join('\n');
 
 describe('EditorArea', () => {
+  beforeEach(() => {
+    globalThis.localStorage?.clear();
+  });
+
   it('renders empty state when no editors are open', () => {
     const markup = renderToStaticMarkup(
       <WorkbenchProvider
@@ -282,9 +290,18 @@ describe('EditorArea', () => {
     setElementRect(mergeTargetPane, { height: 480, left: 0, top: 0, width: 360 });
 
     await act(async () => {
-      dispatchTestDragEvent(movedTab, 'dragstart', mergeDataTransfer, { clientX: 340 });
-      dispatchTestDragEvent(mergeTargetPane, 'dragover', mergeDataTransfer, { clientX: 180 });
-      dispatchTestDragEvent(mergeTargetPane, 'drop', mergeDataTransfer, { clientX: 180 });
+      dispatchTestDragEvent(movedTab, 'dragstart', mergeDataTransfer, {
+        clientX: 340,
+        clientY: 240,
+      });
+      dispatchTestDragEvent(mergeTargetPane, 'dragover', mergeDataTransfer, {
+        clientX: 180,
+        clientY: 240,
+      });
+      dispatchTestDragEvent(mergeTargetPane, 'drop', mergeDataTransfer, {
+        clientX: 180,
+        clientY: 240,
+      });
     });
 
     await flushReactEffects();
@@ -295,6 +312,170 @@ describe('EditorArea', () => {
     expect(findTabsByLabel(container, 'app.ts')).toHaveLength(1);
     expect(findTabsByLabel(container, 'README.md')).toHaveLength(1);
     expect(getTabLabels(container)).toEqual(['README.md', 'app.ts']);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('splits editor tabs through top and bottom group drop zones', async () => {
+    function OpenEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/src/app.ts') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/src/app.ts',
+            title: 'app.ts',
+          });
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/README.md',
+            title: 'README.md',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <OpenEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, '[role="tab"]');
+
+    const appTab = findTabByLabel(container, 'app.ts');
+    const groupPane = container.querySelector(
+      '.workbench-editor-area__group-pane',
+    ) as HTMLElement | null;
+    const bottomDataTransfer = createTestDataTransfer();
+    setElementRect(groupPane, { height: 480, left: 0, top: 0, width: 360 });
+
+    await act(async () => {
+      dispatchTestDragEvent(appTab, 'dragstart', bottomDataTransfer, {
+        clientX: 180,
+        clientY: 60,
+      });
+      dispatchTestDragEvent(groupPane, 'dragover', bottomDataTransfer, {
+        clientX: 180,
+        clientY: 470,
+      });
+    });
+
+    expect(groupPane?.getAttribute('data-drop-side')).toBe('bottom');
+
+    await act(async () => {
+      dispatchTestDragEvent(groupPane, 'drop', bottomDataTransfer, {
+        clientX: 180,
+        clientY: 470,
+      });
+    });
+
+    await flushReactEffects();
+
+    expect(
+      container
+        .querySelector('.workbench-editor-area__group-split.ui-workbench-split-view')
+        ?.getAttribute('data-orientation'),
+    ).toBe('vertical');
+    expect(container.querySelectorAll('.workbench-editor-area__group-pane')).toHaveLength(2);
+
+    const splitPanes = Array.from(
+      container.querySelectorAll('.workbench-editor-area__group-pane'),
+    ) as HTMLElement[];
+    const movedTab = findTabByLabel(splitPanes[1], 'app.ts');
+    const mergeTargetPane = splitPanes[0] ?? null;
+    const mergeDataTransfer = createTestDataTransfer();
+    setElementRect(mergeTargetPane, { height: 480, left: 0, top: 0, width: 360 });
+
+    await act(async () => {
+      dispatchTestDragEvent(movedTab, 'dragstart', mergeDataTransfer, {
+        clientX: 180,
+        clientY: 360,
+      });
+      dispatchTestDragEvent(mergeTargetPane, 'dragover', mergeDataTransfer, {
+        clientX: 180,
+        clientY: 240,
+      });
+      dispatchTestDragEvent(mergeTargetPane, 'drop', mergeDataTransfer, {
+        clientX: 180,
+        clientY: 240,
+      });
+    });
+
+    await flushReactEffects();
+
+    expect(container.querySelectorAll('.workbench-editor-area__group-pane')).toHaveLength(1);
+
+    const mergedPane = container.querySelector(
+      '.workbench-editor-area__group-pane',
+    ) as HTMLElement | null;
+    const mergedAppTab = findTabByLabel(container, 'app.ts');
+    const topDataTransfer = createTestDataTransfer();
+    setElementRect(mergedPane, { height: 480, left: 0, top: 0, width: 360 });
+
+    await act(async () => {
+      dispatchTestDragEvent(mergedAppTab, 'dragstart', topDataTransfer, {
+        clientX: 180,
+        clientY: 240,
+      });
+      dispatchTestDragEvent(mergedPane, 'dragover', topDataTransfer, {
+        clientX: 180,
+        clientY: 8,
+      });
+    });
+
+    expect(mergedPane?.getAttribute('data-drop-side')).toBe('top');
+
+    await act(async () => {
+      dispatchTestDragEvent(mergedPane, 'drop', topDataTransfer, {
+        clientX: 180,
+        clientY: 8,
+      });
+    });
+
+    await flushReactEffects();
+
+    expect(
+      container
+        .querySelector('.workbench-editor-area__group-split.ui-workbench-split-view')
+        ?.getAttribute('data-orientation'),
+    ).toBe('vertical');
+    expect(container.querySelectorAll('.workbench-editor-area__group-pane')).toHaveLength(2);
 
     await act(async () => {
       root.unmount();
@@ -724,6 +905,7 @@ describe('EditorArea', () => {
     expect(container.querySelector('[role="menu"]')).not.toBeNull();
     expect(container.textContent).toContain('Unpin');
     expect(container.textContent).toContain('Split Right');
+    expect(container.textContent).toContain('Split Down');
     expect(container.textContent).toContain('Copy path');
     expect(container.textContent).toContain('Close');
     expect(container.textContent).toContain('Close others');
@@ -741,6 +923,91 @@ describe('EditorArea', () => {
 
     expect(container.querySelector('[aria-label="Unpin tab"]')).toBeNull();
     expect(container.querySelector('.ui-editor-tabs__status-icon--preview')).not.toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('splits an editor down from the tab context menu', async () => {
+    function OpenEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/src/app.ts') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/src/app.ts',
+            title: 'app.ts',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return <EditorArea />;
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <OpenEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, '[role="tab"]');
+
+    const tab = container.querySelector('[role="tab"]') as HTMLElement | null;
+
+    await act(async () => {
+      dispatchTestMouseEvent(tab, 'contextmenu');
+    });
+
+    await flushReactEffects();
+
+    const splitDownItem = Array.from(container.querySelectorAll('[role="menuitem"]')).find((item) =>
+      item.textContent?.includes('Split Down'),
+    ) as HTMLButtonElement | undefined;
+
+    await act(async () => {
+      splitDownItem?.click();
+    });
+
+    await flushReactEffects();
+
+    expect(container.querySelectorAll('.workbench-editor-area__group-pane')).toHaveLength(2);
+    expect(
+      container
+        .querySelector('.workbench-editor-area__group-split.ui-workbench-split-view')
+        ?.getAttribute('data-orientation'),
+    ).toBe('vertical');
 
     await act(async () => {
       root.unmount();
@@ -1099,6 +1366,191 @@ describe('EditorArea', () => {
       container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
     ).not.toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"]')).toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('uses provider-level document view providers as the editor registry source', async () => {
+    function OpenCustomEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/reports/sample.report') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/reports/sample.report',
+            title: 'sample.report',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return null;
+    }
+
+    const customPreviewProvider: EditorDocumentViewProvider = {
+      id: 'sample.report.preview',
+      kind: 'preview',
+      label: 'Preview',
+      matches: (document) => document.path.endsWith('.report'),
+      render: ({ document }) => (
+        <div data-testid="custom-report-preview">Report preview for {document.path}</div>
+      ),
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          documentViewProviders={[customPreviewProvider]}
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+        >
+          <OpenCustomEditorProbe />
+          <EditorArea />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
+
+    expect(container.textContent).toContain('Report preview for reports/sample.report');
+    expect(container.querySelector('[data-testid="custom-report-preview"]')).not.toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
+    ).not.toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('uses document view providers registered by activated extensions', async () => {
+    function OpenExtensionDocumentProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/reports/generated.preview.json') ===
+              undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/reports/generated.preview.json',
+            title: 'generated.preview.json',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return null;
+    }
+
+    const documentViewExtension: WorkbenchExtensionDescription = {
+      manifest: {
+        schemaVersion: 1,
+        id: 'workbench-kit.test.document-view',
+        name: 'test-document-view',
+        displayName: 'Document View Test',
+        version: '0.0.0',
+        publisher: 'workbench-kit',
+        engines: {
+          extensionApi: '^0.0.0',
+          workbench: '^0.0.0',
+        },
+        activationEvents: ['onStartup'],
+        contributes: {
+          documentViews: [
+            {
+              filenamePatterns: ['*.preview.json'],
+              id: 'workbench-kit.test.document-view.preview',
+              kind: 'preview',
+              label: 'Document Preview',
+              mimeTypes: ['application/json'],
+              priority: 40,
+            },
+          ],
+        },
+      },
+      module: {
+        activate: (context) => {
+          context.editorDocumentViews.registerProvider({
+            filenamePatterns: ['*.preview.json'],
+            id: 'workbench-kit.test.document-view.preview',
+            kind: 'preview',
+            label: 'Document Preview',
+            mimeTypes: ['application/json'],
+            priority: 40,
+            render: ({ document }) => `Extension preview for ${document.path}`,
+          });
+        },
+      },
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          availableExtensions={[...BUILTIN_WORKBENCH_EXTENSIONS, documentViewExtension]}
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor', 'workbench-kit.test.document-view'],
+            recommendations: [],
+          }}
+        >
+          <OpenExtensionDocumentProbe />
+          <EditorArea />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
+
+    expect(container.textContent).toContain('Extension preview for reports/generated.preview.json');
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
+    ).not.toBeNull();
 
     await act(async () => {
       root.unmount();

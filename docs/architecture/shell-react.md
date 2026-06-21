@@ -32,6 +32,10 @@ React context provider that:
 - Applies browser install-state filtering to the default bundled extension set;
   explicitly supplied `availableExtensions` are treated as the host-owned
   extension list and resolve directly from `extensionsConfig`
+- Persists extension install state, workbench layout, keybinding overrides,
+  local preferences, and editor restore state when the corresponding `persist*`
+  flags are enabled. Browser `localStorage` is the default adapter; hosts can
+  inject `Storage`-compatible adapters for file-backed or user-data persistence.
 - Activates startup extensions and disposes registries on unmount
 - Exposes command activation/execution helpers through `useWorkbench`
 
@@ -74,6 +78,22 @@ choose an editor for a resource, `EditorHostFactoryRegistry` creates the host,
 and `EditorArea` renders the active host surface. The built-in text editor
 contribution is active today; optional `monaco` integration remains a separate
 package concern.
+
+`EditorService` owns editor groups, tabs, split direction, split ratios, nested
+layout mutation, and restored editor state. `shell-react` stores the browser
+MVP restore snapshot in `localStorage` by default, and `WorkbenchProvider`
+accepts `Storage`-compatible adapters so non-browser hosts can bridge the same
+state through a host-owned `state.json` or user data store.
+
+`WorkbenchProvider` also uses the `EditorDocumentViewProviderRegistry` owned by
+`ExtensionRegistry` for text editor surfaces. Built-in JSON form, JDW preview,
+and Markdown preview providers are registered by default. Hosts can contribute
+additional form/preview providers through `documentViewProviders`, and activated
+extensions can register runtime providers through
+`context.editorDocumentViews.registerProvider(...)` for manifest-declared
+`contributes.documentViews`. `EditorArea` can still accept local `viewProviders`
+for surface-specific overrides, but the provider registry is the canonical shell
+source.
 
 ### BottomPanel
 

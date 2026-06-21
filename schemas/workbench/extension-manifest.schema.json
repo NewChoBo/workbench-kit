@@ -3,6 +3,185 @@
   "$id": "https://github.com/NewChoBo/workbench-kit/schemas/workbench/extension-manifest.schema.json",
   "title": "Workbench Extension Manifest",
   "type": "object",
+  "definitions": {
+    "activityContribution": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "viewContainerId": { "type": "string", "minLength": 1 },
+        "icon": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "order": { "type": "number" },
+        "when": { "type": "string", "minLength": 1 }
+      },
+      "required": ["id", "viewContainerId", "icon", "title"],
+      "additionalProperties": true
+    },
+    "commandContribution": {
+      "type": "object",
+      "properties": {
+        "command": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "category": { "type": "string", "minLength": 1 },
+        "icon": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "enablement": { "type": "string", "minLength": 1 },
+        "argsSchema": { "type": "object" },
+        "danger": { "type": "boolean" },
+        "requiresApproval": { "type": "boolean" },
+        "chat": {
+          "oneOf": [
+            { "type": "boolean" },
+            {
+              "type": "object",
+              "properties": {
+                "trigger": { "type": "string", "minLength": 1 },
+                "description": { "type": "string", "minLength": 1 },
+                "argsHint": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": true
+            }
+          ]
+        }
+      },
+      "required": ["command", "title"],
+      "additionalProperties": true
+    },
+    "configurationContribution": {
+      "type": "object",
+      "properties": {
+        "properties": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/configurationPropertyContribution" }
+        }
+      },
+      "required": ["properties"],
+      "additionalProperties": true
+    },
+    "configurationPropertyContribution": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["string", "number", "boolean", "array", "object"]
+        },
+        "default": {},
+        "description": { "type": "string" },
+        "scope": { "enum": ["application", "workspace", "window"] },
+        "enum": {
+          "type": "array",
+          "items": {
+            "type": ["boolean", "number", "string"]
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": ["type"],
+      "additionalProperties": true
+    },
+    "editorContribution": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "icon": { "type": "string", "minLength": 1 }
+      },
+      "required": ["id", "label"],
+      "additionalProperties": true
+    },
+    "documentViewContribution": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["form", "preview"] },
+        "label": { "type": "string", "minLength": 1 },
+        "priority": { "type": "number" },
+        "mimeTypes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "filenamePatterns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "when": { "type": "string", "minLength": 1 }
+      },
+      "required": ["id", "kind", "label"],
+      "additionalProperties": true
+    },
+    "keybindingContribution": {
+      "type": "object",
+      "properties": {
+        "command": { "type": "string", "minLength": 1 },
+        "key": { "type": "string", "minLength": 1 },
+        "when": { "type": "string", "minLength": 1 },
+        "args": { "type": "array" }
+      },
+      "required": ["command", "key"],
+      "additionalProperties": true
+    },
+    "localizationContribution": {
+      "type": "object",
+      "properties": {
+        "locale": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "translations": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "required": ["locale", "label", "translations"],
+      "additionalProperties": true
+    },
+    "menuContribution": {
+      "type": "object",
+      "properties": {
+        "menu": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "group": { "type": "string", "minLength": 1 },
+        "order": { "type": "number" },
+        "when": { "type": "string", "minLength": 1 }
+      },
+      "required": ["command"],
+      "additionalProperties": true
+    },
+    "themeContribution": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "tokenOverrides": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "required": ["id", "label"],
+      "additionalProperties": true
+    },
+    "viewContainerContribution": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "icon": { "type": "string", "minLength": 1 },
+        "order": { "type": "number" }
+      },
+      "required": ["id", "title"],
+      "additionalProperties": true
+    },
+    "viewContribution": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "containerId": { "type": "string", "minLength": 1 },
+        "when": { "type": "string", "minLength": 1 }
+      },
+      "required": ["id", "name"],
+      "additionalProperties": true
+    }
+  },
   "properties": {
     "schemaVersion": { "const": 1 },
     "id": { "type": "string", "minLength": 1 },
@@ -26,6 +205,66 @@
     },
     "contributes": {
       "type": "object",
+      "properties": {
+        "activities": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/activityContribution" }
+        },
+        "commands": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/commandContribution" }
+        },
+        "configuration": { "$ref": "#/definitions/configurationContribution" },
+        "documentViews": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/documentViewContribution" }
+        },
+        "editors": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/editorContribution" }
+        },
+        "keybindings": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/keybindingContribution" }
+        },
+        "localizations": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/localizationContribution" }
+        },
+        "menus": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": { "$ref": "#/definitions/menuContribution" }
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/menuContribution" }
+              }
+            }
+          ]
+        },
+        "themes": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/themeContribution" }
+        },
+        "viewContainers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/viewContainerContribution" }
+          }
+        },
+        "views": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/viewContribution" }
+          }
+        }
+      },
       "additionalProperties": true
     },
     "extensionDependencies": {
