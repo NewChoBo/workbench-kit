@@ -71,6 +71,7 @@ export interface ExtensionManagementFeatureSummary {
   };
   readonly commands?: readonly ExtensionManagementFeatureItem[] | undefined;
   readonly documentViews?: readonly ExtensionManagementFeatureItem[] | undefined;
+  readonly menus?: readonly ExtensionManagementFeatureItem[] | undefined;
   readonly permissions?: readonly string[] | undefined;
   readonly settings?: readonly ExtensionManagementFeatureItem[] | undefined;
   readonly views?: readonly ExtensionManagementFeatureItem[] | undefined;

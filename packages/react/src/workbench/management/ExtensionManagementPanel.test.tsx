@@ -39,6 +39,12 @@ describe('ExtensionManagementPanel', () => {
                   label: 'Editor Preview',
                 },
               ],
+              menus: [
+                {
+                  id: 'view/title:workbench-kit.builtin.explorer.refresh',
+                  label: 'view/title: Refresh Explorer',
+                },
+              ],
               permissions: ['workspace.read'],
               settings: [
                 {
@@ -68,6 +74,8 @@ describe('ExtensionManagementPanel', () => {
     expect(markup).toContain('workbench.explorer.compactFolders');
     expect(markup).toContain('Views');
     expect(markup).toContain('Explorer');
+    expect(markup).toContain('Menus');
+    expect(markup).toContain('view/title: Refresh Explorer');
     expect(markup).toContain('Capabilities');
     expect(markup).toContain('workbench.workspace');
     expect(markup).toContain('Permissions');

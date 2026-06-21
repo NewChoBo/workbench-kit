@@ -32,6 +32,12 @@ export type ExtensionCapabilities = {
 export {
   DEFAULT_EDITOR_HOST_FACTORY_ID,
   DEFAULT_VIEW_HOST_FACTORY_ID,
+  WORKBENCH_MENU_COMMAND_PALETTE,
+  WORKBENCH_MENU_EDITOR_CONTEXT,
+  WORKBENCH_MENU_EDITOR_TAB_CONTEXT,
+  WORKBENCH_MENU_EDITOR_TITLE,
+  WORKBENCH_MENU_EXPLORER_CONTEXT,
+  WORKBENCH_MENU_VIEW_TITLE,
   WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
   WORKBENCH_SETTINGS_CAPABILITY_ID,
 } from './contributions.js';
@@ -89,5 +95,6 @@ export type {
   ViewProvider,
   WorkbenchEditorSavePort,
   WorkbenchEditorServiceCapability,
+  WorkbenchMenuLocation,
   WorkbenchSettingsCapability,
 } from './contributions.js';

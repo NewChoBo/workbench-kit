@@ -227,6 +227,7 @@ function getExtensionFeatureDetailRows(features: ExtensionManagementFeatureSumma
     createFeatureDetailRow('Document views', features.documentViews),
     createFeatureDetailRow('Settings', features.settings),
     createFeatureDetailRow('Views', features.views),
+    createFeatureDetailRow('Menus', features.menus),
     createTextListDetailRow('Capabilities', [
       ...(features.capabilities?.requires ?? []),
       ...(features.capabilities?.provides ?? []),

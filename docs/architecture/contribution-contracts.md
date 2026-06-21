@@ -167,7 +167,7 @@ provided.
 
 ```ts
 interface MenuContribution {
-  menu: string; // e.g. CommandPalette, ViewTitle, StatusBarAccount
+  menu: WorkbenchMenuLocation;
   command: string;
   group?: string;
   order?: number;
@@ -175,7 +175,11 @@ interface MenuContribution {
 }
 ```
 
-Menu locations are enumerated in SDK constants (to be added).
+Common locations are exported as SDK constants:
+`WORKBENCH_MENU_COMMAND_PALETTE`, `WORKBENCH_MENU_VIEW_TITLE`,
+`WORKBENCH_MENU_EDITOR_TITLE`, `WORKBENCH_MENU_EDITOR_CONTEXT`,
+`WORKBENCH_MENU_EDITOR_TAB_CONTEXT`, and `WORKBENCH_MENU_EXPLORER_CONTEXT`.
+Custom host locations remain valid strings for host-specific surfaces.
 
 ## Configuration Contributions
 

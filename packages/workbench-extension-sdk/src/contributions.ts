@@ -37,10 +37,26 @@ export interface ViewContribution {
   when?: string;
 }
 
+export const WORKBENCH_MENU_COMMAND_PALETTE = 'commandPalette' as const;
+export const WORKBENCH_MENU_EDITOR_CONTEXT = 'editor/context' as const;
+export const WORKBENCH_MENU_EDITOR_TITLE = 'editor/title' as const;
+export const WORKBENCH_MENU_EDITOR_TAB_CONTEXT = 'editor/tab/context' as const;
+export const WORKBENCH_MENU_EXPLORER_CONTEXT = 'explorer/context' as const;
+export const WORKBENCH_MENU_VIEW_TITLE = 'view/title' as const;
+
+export type WorkbenchMenuLocation =
+  | typeof WORKBENCH_MENU_COMMAND_PALETTE
+  | typeof WORKBENCH_MENU_EDITOR_CONTEXT
+  | typeof WORKBENCH_MENU_EDITOR_TITLE
+  | typeof WORKBENCH_MENU_EDITOR_TAB_CONTEXT
+  | typeof WORKBENCH_MENU_EXPLORER_CONTEXT
+  | typeof WORKBENCH_MENU_VIEW_TITLE
+  | (string & {});
+
 export interface MenuContribution {
   command: string;
   group?: string;
-  menu: string;
+  menu: WorkbenchMenuLocation;
   order?: number;
   when?: string;
 }

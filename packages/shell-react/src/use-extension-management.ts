@@ -268,6 +268,8 @@ function resolveExtensionManagementFeatureState(
 function toExtensionManagementFeatureSummary(
   feature: ExtensionFeatureSpec,
 ): ExtensionManagementFeatureSummary {
+  const commandTitlesById = new Map(feature.commands.map((command) => [command.id, command.title]));
+
   return {
     capabilities: feature.capabilities,
     commands: feature.commands.map((command) => ({
@@ -278,6 +280,11 @@ function toExtensionManagementFeatureSummary(
     documentViews: feature.documentViews.map((view) => ({
       id: view.id,
       label: view.label,
+    })),
+    menus: feature.menus.map((menu) => ({
+      description: formatMenuContributionDescription(menu.group, menu.order),
+      id: `${menu.menu}:${menu.command}`,
+      label: `${menu.menu}: ${commandTitlesById.get(menu.command) ?? menu.command}`,
     })),
     permissions: feature.permissions,
     settings: feature.settings.map((setting) => ({
@@ -290,4 +297,16 @@ function toExtensionManagementFeatureSummary(
       label: view.name,
     })),
   };
+}
+
+function formatMenuContributionDescription(
+  group: string | undefined,
+  order: number | undefined,
+): string | undefined {
+  const parts = [
+    group ? `group: ${group}` : undefined,
+    order !== undefined ? `order: ${order}` : undefined,
+  ].filter((part): part is string => part !== undefined);
+
+  return parts.length > 0 ? parts.join(', ') : undefined;
 }
