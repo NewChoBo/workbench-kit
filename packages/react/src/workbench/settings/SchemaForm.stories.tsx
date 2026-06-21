@@ -180,7 +180,7 @@ export const EditableSettings: Story = {
 
     await userEvent.type(displayName, 'Workbench');
     await userEvent.click(canvas.getByRole('combobox', { name: 'Density' }));
-    await userEvent.click(screen.getByRole('option', { name: 'Compact' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Compact' }));
     await userEvent.clear(canvas.getByRole('spinbutton', { name: 'Maximum recent items' }));
     await userEvent.type(canvas.getByRole('spinbutton', { name: 'Maximum recent items' }), '8');
     await userEvent.click(canvas.getByRole('checkbox', { name: 'Confirm before side effects' }));
