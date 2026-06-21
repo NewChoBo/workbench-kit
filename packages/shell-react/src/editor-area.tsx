@@ -8,17 +8,9 @@ import {
   type ReactNode,
 } from 'react';
 import { ContextMenu } from '@workbench-kit/react/overlay';
-import {
-  EditorTabs,
-  type EditorTab,
-  type EditorTabDropPosition,
-} from '@workbench-kit/react/primitives';
+import { EditorTabs, type EditorTabDropPosition } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/workspace/editor';
-import {
-  codiconForFileKind,
-  fileIconKindForPath,
-} from '@workbench-kit/react/workbench/workspace/file-icon';
 import { WORKSPACE_EXPLORER_DRAG_DATA_TYPE } from '@workbench-kit/react/workbench/workspace/explorer';
 import {
   createEditorGroupDropMoveOptions,
@@ -35,9 +27,9 @@ import './editor-area.css';
 import { useEditorDocumentViewProviders, useEditorService, useEditorState } from './use-editor.js';
 import { useWorkbench } from './provider.js';
 import { type EditorDocumentViewProvider } from './editor-view-providers.js';
-import { mimeTypeForResource, pathForResource } from './editor-resource.js';
 import { EditorHostSurface, type EditorViewMode } from './editor-host-surface.js';
 import { createEditorTabContextMenuItems } from './editor-tab-context-menu.js';
+import { pruneEditorLayout, toEditorTabModel } from './editor-area-model.js';
 
 const EDITOR_TAB_DRAG_DATA_TYPE = 'application/x-workbench-kit-editor-tab';
 const INTERNAL_EDITOR_AREA_DRAG_DATA_TYPES = [
@@ -135,32 +127,6 @@ export function EditorArea({
       </div>
     </main>
   );
-}
-
-function pruneEditorLayout(
-  layout: EditorLayoutNode,
-  groupsById: ReadonlyMap<string, EditorGroupState>,
-): EditorLayoutNode | null {
-  if (layout.type === 'group') {
-    return groupsById.has(layout.groupId) ? layout : null;
-  }
-
-  const children = layout.children
-    .map((child) => pruneEditorLayout(child, groupsById))
-    .filter((child): child is EditorLayoutNode => child !== null);
-
-  if (children.length === 0) {
-    return null;
-  }
-
-  if (children.length === 1) {
-    return children[0] ?? null;
-  }
-
-  return {
-    ...layout,
-    children,
-  };
 }
 
 function EditorGroupSplit({
@@ -719,27 +685,6 @@ function EditorGroupPane({
   );
 }
 
-function toEditorTabModel(
-  tab: EditorTabState,
-  dropPosition?: EditorTabDropPosition | undefined,
-): EditorTab {
-  const path = pathForResource(tab.resourceUri);
-  const mimeType = mimeTypeForResource(tab.resourceUri);
-
-  return {
-    closable: true,
-    dirty: tab.dirty,
-    dropPosition,
-    fileIconKind: fileIconKindForPath(path, mimeType),
-    icon: tab.icon ?? iconForEditorTab(tab),
-    id: tab.id,
-    label: tab.title ?? getResourceLabel(tab.resourceUri),
-    pinned: tab.pinned,
-    preview: tab.preview,
-    title: tab.resourceUri,
-  };
-}
-
 function readEditorTabDragPayload(event: ReactDragEvent<HTMLElement>): EditorTabDragPayload | null {
   try {
     const rawPayload = event.dataTransfer.getData(EDITOR_TAB_DRAG_DATA_TYPE);
@@ -900,15 +845,4 @@ function getEditorTabDropPosition(target: HTMLElement, clientX: number): EditorT
   }
 
   return clientX < rect.left + rect.width / 2 ? 'before' : 'after';
-}
-
-function iconForEditorTab(tab: EditorTabState): string {
-  const path = pathForResource(tab.resourceUri);
-  return codiconForFileKind(fileIconKindForPath(path, mimeTypeForResource(tab.resourceUri)));
-}
-
-function getResourceLabel(resourceUri: string): string {
-  const path = pathForResource(resourceUri);
-  const segments = path.split('/');
-  return segments[segments.length - 1] || path;
 }
