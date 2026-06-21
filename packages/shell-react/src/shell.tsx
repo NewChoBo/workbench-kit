@@ -1,14 +1,4 @@
-import {
-  isValidElement,
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-  type FocusEvent,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react';
 import { Modal } from '@workbench-kit/react/modal';
 import { TilepaperAppIcon } from '@workbench-kit/react';
 import { Badge, Button, IconButton } from '@workbench-kit/react/primitives';
@@ -22,31 +12,12 @@ import {
   type StatusBarSectionModel,
 } from '@workbench-kit/react/workbench/shell';
 import { WORKBENCH_SETTINGS_CAPABILITY_ID } from '@workbench-kit/workbench-core';
-import type {
-  ViewHost,
-  ViewHostFactoryRegistry,
-  ViewProvider,
-  WorkbenchSettingsCapability,
-} from '@workbench-kit/workbench-core';
+import type { WorkbenchSettingsCapability } from '@workbench-kit/workbench-core';
 import { isPreferenceScope, type PreferenceScope } from '@workbench-kit/workbench-config';
 
 import { EditorArea } from './editor-area.js';
-import { BuiltinChatView } from './chat-view.js';
-import { isBuiltinChatViewRenderData } from './chat-view-data.js';
-import { BuiltinExplorerView } from './explorer-view.js';
-import { isBuiltinExplorerViewRenderData } from './explorer-view-data.js';
-import { BuiltinSearchView } from './search-view.js';
-import { isBuiltinSearchViewRenderData } from './search-view-data.js';
-import { BuiltinCommandsView } from './commands-view.js';
-import {
-  BUILTIN_COMMANDS_VIEW_CONTAINER_ID,
-  isBuiltinCommandsViewRenderData,
-} from './commands-view-data.js';
-import { BuiltinExtensionsView } from './extensions-view.js';
-import {
-  BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID,
-  isBuiltinExtensionsViewRenderData,
-} from './extensions-view-data.js';
+import { BUILTIN_COMMANDS_VIEW_CONTAINER_ID } from './commands-view-data.js';
+import { BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID } from './extensions-view-data.js';
 import {
   filterActivityBarItems,
   sortActivityBarItems,
@@ -82,6 +53,7 @@ import {
   createDefaultWorkbenchStatusSections,
   createWorkbenchShellActivityItems,
 } from './shell-model.js';
+import { renderDefaultPrimarySidebar } from './shell-view-host.js';
 import { WorkbenchProfileModal, type WorkbenchProfileInput } from './workbench-profile-modal.js';
 export type { WorkbenchLocaleOption, WorkbenchThemeOption } from './shell-settings.js';
 
@@ -529,168 +501,4 @@ function useForceRender() {
   return useCallback(() => {
     forceRender();
   }, []);
-}
-
-function renderDefaultPrimarySidebar(
-  extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
-  activeViewContainerId: string | undefined,
-  catalogUrl?: string | undefined,
-) {
-  const views = activeViewContainerId
-    ? extensionRegistry.views.getViews(activeViewContainerId)
-    : extensionRegistry.views.getViews();
-  if (views.length === 0) {
-    return <aside aria-label="Primary sidebar" />;
-  }
-
-  return (
-    <aside
-      aria-label="Primary sidebar"
-      className="workbench-primary-side-bar shell-react-primary-sidebar"
-    >
-      {views.map((view) => (
-        <section key={view.id} data-view-id={view.id}>
-          <WorkbenchViewHost
-            catalogUrl={catalogUrl}
-            fallback={view.name}
-            provider={extensionRegistry.views.getViewProvider(view.id)}
-            viewHostFactories={extensionRegistry.viewHostFactories}
-            viewId={view.id}
-          />
-        </section>
-      ))}
-    </aside>
-  );
-}
-
-function WorkbenchViewHost({
-  catalogUrl,
-  fallback,
-  provider,
-  viewHostFactories,
-  viewId,
-}: {
-  catalogUrl?: string | undefined;
-  fallback: ReactNode;
-  provider: ViewProvider | undefined;
-  viewHostFactories: ViewHostFactoryRegistry;
-  viewId: string;
-}) {
-  const hostFrameRef = useRef<HTMLDivElement>(null);
-  const host = useMemo(() => {
-    if (!provider) {
-      return undefined;
-    }
-
-    return viewHostFactories.createViewHost({ viewId, provider });
-  }, [provider, viewHostFactories, viewId]);
-
-  useEffect(() => {
-    if (!host) {
-      return undefined;
-    }
-
-    host.onDidShow?.();
-
-    const resizeObserver =
-      typeof ResizeObserver !== 'undefined' && host.onDidResize
-        ? new ResizeObserver((entries) => {
-            const entry = entries[0];
-            if (!entry) return;
-
-            host.onDidResize?.({
-              height: entry.contentRect.height,
-              width: entry.contentRect.width,
-            });
-          })
-        : undefined;
-
-    if (resizeObserver && hostFrameRef.current) {
-      resizeObserver.observe(hostFrameRef.current);
-    }
-
-    return () => {
-      resizeObserver?.disconnect();
-      host.onDidHide?.();
-      host.dispose();
-    };
-  }, [host]);
-
-  if (!host) {
-    return <>{fallback}</>;
-  }
-
-  return (
-    <div
-      ref={hostFrameRef}
-      aria-label={host.title}
-      data-view-host-id={host.id ?? provider?.viewId}
-      onBlur={(event) => notifyViewHostBlur(host, event)}
-      onFocus={(event) => notifyViewHostFocus(host, event)}
-    >
-      {toViewHostReactNode(host.render(), fallback, { catalogUrl })}
-    </div>
-  );
-}
-
-function notifyViewHostFocus(host: ViewHost, event: FocusEvent<HTMLDivElement>): void {
-  if (!event.currentTarget.contains(event.relatedTarget)) {
-    host.onDidFocus?.();
-  }
-}
-
-function notifyViewHostBlur(host: ViewHost, event: FocusEvent<HTMLDivElement>): void {
-  if (!event.currentTarget.contains(event.relatedTarget)) {
-    host.onDidBlur?.();
-  }
-}
-
-function toReactNode(value: unknown, fallback: ReactNode): ReactNode {
-  if (
-    value === undefined ||
-    value === null ||
-    typeof value === 'boolean' ||
-    typeof value === 'symbol' ||
-    typeof value === 'function'
-  ) {
-    return fallback;
-  }
-
-  if (typeof value === 'string' || typeof value === 'number' || isValidElement(value)) {
-    return value;
-  }
-
-  if (Array.isArray(value)) {
-    return value as ReactNode;
-  }
-
-  return fallback;
-}
-
-function toViewHostReactNode(
-  value: unknown,
-  fallback: ReactNode,
-  options: { catalogUrl?: string | undefined } = {},
-): ReactNode {
-  if (isBuiltinExplorerViewRenderData(value)) {
-    return <BuiltinExplorerView />;
-  }
-
-  if (isBuiltinChatViewRenderData(value)) {
-    return <BuiltinChatView mode={value.mode} />;
-  }
-
-  if (isBuiltinSearchViewRenderData(value)) {
-    return <BuiltinSearchView />;
-  }
-
-  if (isBuiltinCommandsViewRenderData(value)) {
-    return <BuiltinCommandsView />;
-  }
-
-  if (isBuiltinExtensionsViewRenderData(value)) {
-    return <BuiltinExtensionsView catalogUrl={options.catalogUrl} />;
-  }
-
-  return toReactNode(value, fallback);
 }
