@@ -312,14 +312,14 @@ Use this checklist for branch merge or release tagging of the Theia-inspired lan
 
 - [x] **Runnable host:** `pnpm build:workbench-extensions && pnpm workbench-sample` shows activity bar, explorer with workspace tree, editor tabs, status bar.
 - [x] **Factories wired:** View hosts created via `ViewHostFactoryRegistry`; editors via `EditorHostFactoryRegistry`.
-- [ ] **Resources consumed:** Explorer CRUD and editor save paths use `WorkspaceResourceTransaction` / mutations, not ad hoc reducer calls from UI.
-- [ ] **Commands:** Built-in explorer operations registered as commands with shared handlers for palette, context menu, and tree UI.
-- [ ] **Capabilities:** Extensions can `registerProvider` and receive dispose on deactivate; no new static cross-imports.
+- [x] **Resources consumed:** Explorer CRUD and editor save paths use `WorkspaceResourceTransaction` / mutations, not ad hoc reducer calls from UI.
+- [x] **Commands:** Built-in explorer operations registered as commands with shared handlers for palette, context menu, and tree UI.
+- [x] **Capabilities:** Extensions can `registerProvider` and receive dispose on deactivate; no new static cross-imports.
 - [x] **Preferences:** Default / workspace / local merge demonstrated with at least one setting key.
 - [x] **Devtools (optional v1):** Storybook inspector story lists registry snapshots after WB-31.
 - [ ] **Validation:** `pnpm validate:full` passes on CI-equivalent clean install.
 - [ ] **Docs:** `todo.md`, `theia-strengths-workplan.md`, and this plan reflect final Lane A status.
-- [ ] **Boundaries:** `check-launch-boundary`, manifest, dependency graph, and public export checks pass.
+- [x] **Boundaries:** `check-launch-boundary`, manifest, dependency graph, and public export checks pass.
 
 ---
 
@@ -344,9 +344,9 @@ WB-29 closeout → WB-30 → WB-31 → Lane A DoD checklist
 | **S6**  | WB-31 — Devtools inspectors      | Storybook devtools story; registry/transaction visibility                         |
 | **S7**  | Lane A closeout                  | `validate:full`, DoD checklist, update progress in `theia-strengths-workplan.md`  |
 
-**Next active session:** WB-29 command-backed explorer closeout.
+**Next active session:** S7 Lane A final validation.
 
-**Estimated remaining slices:** 3 primary (WB-29 → WB-31) + Lane A closeout.
+**Estimated remaining slices:** 1 closeout gate (`validate:full` + final docs status).
 
 ---
 
@@ -384,6 +384,7 @@ WB-29 closeout → WB-30 → WB-31 → Lane A DoD checklist
 
 | Date       | Note                                                                                                                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-06-21 | DoD audit confirmed resource transactions, command-backed explorer handlers, capability dispose lifecycle, and static boundary checks.                       |
 | 2026-06-21 | Runnable host smoke verified with bundled extensions, sample production build, dummy login, activity bar, explorer tree, editor empty state, and status bar. |
 | 2026-06-20 | WB-28 shell/editor scope treated as landed; WB-29 command handlers landed and closeout remains                                                               |
 | 2026-06-16 | WB-27 committed (`813cbca`); WB-28 S1 foundation (EditorService, resolver registry, React hooks)                                                             |
