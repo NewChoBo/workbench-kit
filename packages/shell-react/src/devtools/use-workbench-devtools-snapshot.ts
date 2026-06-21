@@ -22,6 +22,12 @@ export function useWorkbenchDevtoolsSnapshot(): WorkbenchDevtoolsSnapshot {
         extensionRegistry.commands.onDidRegisterCommand(() => {
           onStoreChange();
         }),
+        extensionRegistry.menus.onDidRegisterMenuItem(() => {
+          onStoreChange();
+        }),
+        extensionRegistry.keybindings.onDidRegisterKeybinding(() => {
+          onStoreChange();
+        }),
         extensionRegistry.views.onDidRegisterView(() => {
           onStoreChange();
         }),

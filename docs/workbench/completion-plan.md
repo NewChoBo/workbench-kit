@@ -315,8 +315,8 @@ Use this checklist for branch merge or release tagging of the Theia-inspired lan
 - [ ] **Resources consumed:** Explorer CRUD and editor save paths use `WorkspaceResourceTransaction` / mutations, not ad hoc reducer calls from UI.
 - [ ] **Commands:** Built-in explorer operations registered as commands with shared handlers for palette, context menu, and tree UI.
 - [ ] **Capabilities:** Extensions can `registerProvider` and receive dispose on deactivate; no new static cross-imports.
-- [ ] **Preferences:** Default / workspace / local merge demonstrated with at least one setting key.
-- [ ] **Devtools (optional v1):** Storybook inspector story lists registry snapshots after WB-31.
+- [x] **Preferences:** Default / workspace / local merge demonstrated with at least one setting key.
+- [x] **Devtools (optional v1):** Storybook inspector story lists registry snapshots after WB-31.
 - [ ] **Validation:** `pnpm validate:full` passes on CI-equivalent clean install.
 - [ ] **Docs:** `todo.md`, `theia-strengths-workplan.md`, and this plan reflect final Lane A status.
 - [ ] **Boundaries:** `check-launch-boundary`, manifest, dependency graph, and public export checks pass.

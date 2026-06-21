@@ -30,7 +30,19 @@ export interface WorkbenchDevtoolsSnapshot {
   readonly contextKeys: Readonly<Record<string, boolean | number | string>>;
   readonly dependencyDiagnostics: readonly ExtensionDependencyDiagnostic[];
   readonly editor: EditorState;
+  readonly keybindings: readonly {
+    readonly command: string;
+    readonly key: string;
+    readonly when?: string | undefined;
+  }[];
   readonly layout: WorkbenchLayoutState;
+  readonly menus: readonly {
+    readonly command: string;
+    readonly group?: string | undefined;
+    readonly menu: string;
+    readonly order?: number | undefined;
+    readonly when?: string | undefined;
+  }[];
   readonly transactions: readonly WorkspaceResourceTransaction[];
   readonly viewContainers: readonly {
     readonly icon?: string;
@@ -91,7 +103,19 @@ export function collectWorkbenchDevtoolsSnapshot({
     },
     dependencyDiagnostics: extensionRegistry.getDependencyDiagnostics(),
     editor,
+    keybindings: extensionRegistry.keybindings.getKeybindings().map((binding) => ({
+      command: binding.command,
+      key: binding.key,
+      when: binding.when,
+    })),
     layout,
+    menus: extensionRegistry.menus.getMenuItems().map((menu) => ({
+      command: menu.command,
+      group: menu.group,
+      menu: menu.menu,
+      order: menu.order,
+      when: menu.when,
+    })),
     transactions: readWorkspaceTransactionJournal(workspaceHostPort),
     viewContainers: extensionRegistry.views.getViewContainers().map((container) => ({
       icon: container.icon,

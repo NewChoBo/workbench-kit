@@ -45,6 +45,17 @@ describe('collectWorkbenchDevtoolsSnapshot', () => {
       id: 'sample.hello',
       title: 'Hello',
     });
+    extensionRegistry.keybindings.registerKeybinding({
+      command: 'sample.hello',
+      key: 'ctrl+h',
+      when: 'editorTextFocus',
+    });
+    extensionRegistry.menus.registerMenuItem({
+      command: 'sample.hello',
+      group: 'navigation',
+      menu: 'commandPalette',
+      order: 1,
+    });
     extensionRegistry.capabilityRegistry.registerValue('sample.capability', { ready: true });
     extensionRegistry.views.registerViewContainer({
       id: 'explorer',
@@ -71,6 +82,22 @@ describe('collectWorkbenchDevtoolsSnapshot', () => {
         category: undefined,
         id: 'sample.hello',
         title: 'Hello',
+      },
+    ]);
+    expect(snapshot.keybindings).toEqual([
+      {
+        command: 'sample.hello',
+        key: 'ctrl+h',
+        when: 'editorTextFocus',
+      },
+    ]);
+    expect(snapshot.menus).toEqual([
+      {
+        command: 'sample.hello',
+        group: 'navigation',
+        menu: 'commandPalette',
+        order: 1,
+        when: undefined,
       },
     ]);
     expect(snapshot.capabilities).toEqual(['sample.capability']);

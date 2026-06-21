@@ -45,7 +45,7 @@ export const RegistryInspectors: Story = {
     docs: {
       description: {
         story:
-          'Read-only WB-31 devtools panel for command, context key, view, capability, layout, editor, and workspace transaction snapshots.',
+          'Read-only WB-31 devtools panel for command, menu, keybinding, context key, view, capability, layout, editor, and workspace transaction snapshots.',
       },
     },
   },
@@ -69,6 +69,12 @@ export const RegistryInspectors: Story = {
     await expect(devtools).toBeVisible();
     await expect(canvas.getByTestId('workbench-devtools-shell')).toBeVisible();
     await expect(devtools).toHaveTextContent('workbench-kit.builtin.explorer');
+
+    await user.click(within(devtools).getByRole('button', { name: 'Menus' }));
+    await expect(devtools).toHaveTextContent('"menu": "view/title"');
+
+    await user.click(within(devtools).getByRole('button', { name: 'Keybindings' }));
+    await expect(devtools).toHaveTextContent('workbench.action.togglePrimarySidebar');
 
     await user.click(within(devtools).getByRole('button', { name: 'Layout' }));
     await expect(devtools).toHaveTextContent('"activeViewContainer": "explorer"');

@@ -6,6 +6,8 @@ import { useWorkbenchDevtoolsSnapshot } from './use-workbench-devtools-snapshot.
 
 type DevtoolsSectionId =
   | 'commands'
+  | 'menus'
+  | 'keybindings'
   | 'contextKeys'
   | 'capabilities'
   | 'layout'
@@ -19,6 +21,8 @@ const DEVTOOLS_SECTIONS: readonly {
   readonly label: string;
 }[] = [
   { id: 'commands', label: 'Commands' },
+  { id: 'menus', label: 'Menus' },
+  { id: 'keybindings', label: 'Keybindings' },
   { id: 'contextKeys', label: 'Context keys' },
   { id: 'capabilities', label: 'Capabilities' },
   { id: 'layout', label: 'Layout' },
@@ -35,6 +39,10 @@ function formatSectionValue(
   switch (sectionId) {
     case 'commands':
       return JSON.stringify(snapshot.commands, null, 2);
+    case 'menus':
+      return JSON.stringify(snapshot.menus, null, 2);
+    case 'keybindings':
+      return JSON.stringify(snapshot.keybindings, null, 2);
     case 'contextKeys':
       return JSON.stringify(snapshot.contextKeys, null, 2);
     case 'capabilities':
