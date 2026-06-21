@@ -20,9 +20,17 @@ import {
   type WorkbenchDocumentPatchHistoryState,
   type WorkbenchDocumentPatchResult,
 } from './schema';
-
-const DEFAULT_CANVAS_ACTIVITY_ID = 'design';
-const DEFAULT_CANVAS_THEME = 'dark';
+import {
+  DEFAULT_CANVAS_ACTIVITY_ID,
+  DEFAULT_CANVAS_THEME,
+  DEFAULT_WORKBENCH_CANVAS_DOCUMENT,
+  WORKBENCH_CANVAS_PLACEHOLDER_IMAGE_SRC,
+} from './WorkbenchCanvasShell.defaults';
+import {
+  createWorkbenchCanvasLayoutUpdate,
+  getWorkbenchCanvasNodeChildren,
+  getWorkbenchCanvasRootNodeIds,
+} from './WorkbenchCanvasShell.model';
 
 type StudioShellTab = 'source' | 'preview' | 'window' | 'layout' | 'tile' | 'layer';
 
@@ -31,108 +39,6 @@ type StudioShellActivityId = 'design';
 type WorkbenchPatchApplyResult = {
   state: WorkbenchDocumentPatchHistoryState;
   result: WorkbenchDocumentPatchResult;
-};
-
-const placeholderImageSrc = `data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#334155"/></linearGradient></defs><rect width="320" height="180" fill="url(%23g)"/><text x="50%" y="52%" fill="white" font-size="24" text-anchor="middle" font-family="Arial">Image Layer</text></svg>',
-)}`;
-
-const defaultDocument: WorkbenchDocument = {
-  version: '1.0.0',
-  schemaVersion: 1,
-  pages: [
-    {
-      id: 'page-shell-canvas',
-      name: 'Design',
-      width: 1280,
-      height: 760,
-      background: '#1f2937',
-      nodes: [
-        {
-          id: 'shell-frame',
-          type: 'frame',
-          name: 'Window',
-          layout: { x: 80, y: 60, width: 980, height: 560 },
-          style: {
-            backgroundColor: '#0f172a',
-            borderColor: '#475569',
-            borderWidth: 1,
-            borderRadius: 12,
-            boxShadow: '0 12px 30px rgba(0, 0, 0, 0.45)',
-          },
-          children: ['tile-1', 'tile-2', 'tile-3'],
-        },
-        {
-          id: 'tile-1',
-          type: 'frame',
-          name: 'Tile: Header',
-          parentId: 'shell-frame',
-          layout: { x: 22, y: 18, width: 300, height: 180 },
-          style: {
-            backgroundColor: '#0ea5e9',
-            borderRadius: 10,
-            borderColor: '#0284c7',
-            borderWidth: 1,
-          },
-          children: ['tile-1-image', 'tile-1-text'],
-        },
-        {
-          id: 'tile-1-image',
-          type: 'image',
-          name: 'Image Layer',
-          parentId: 'tile-1',
-          layout: { x: 12, y: 12, width: 126, height: 90 },
-          src: placeholderImageSrc,
-          style: {
-            borderRadius: 8,
-            borderColor: '#0c4a6e',
-            borderWidth: 1,
-          },
-        },
-        {
-          id: 'tile-1-text',
-          type: 'text',
-          name: 'Text Layer',
-          parentId: 'tile-1',
-          layout: { x: 146, y: 36, width: 140, height: 80 },
-          content: 'Tile title',
-          style: {
-            color: '#f8fafc',
-            fontSize: 20,
-            fontFamily: 'Inter, "Segoe UI", sans-serif',
-            fontWeight: 700,
-          },
-        },
-        {
-          id: 'tile-2',
-          type: 'rectangle',
-          name: 'Action Tile',
-          parentId: 'shell-frame',
-          layout: { x: 336, y: 18, width: 280, height: 180 },
-          style: {
-            backgroundColor: '#7c3aed',
-            borderRadius: 10,
-            borderColor: '#6d28d9',
-            borderWidth: 1,
-            boxShadow: '0 8px 20px rgba(88, 28, 135, 0.45)',
-          },
-        },
-        {
-          id: 'tile-3',
-          type: 'rectangle',
-          name: 'Action Tile 2',
-          parentId: 'shell-frame',
-          layout: { x: 632, y: 18, width: 280, height: 180 },
-          style: {
-            backgroundColor: '#f59e0b',
-            borderRadius: 10,
-            borderColor: '#d97706',
-            borderWidth: 1,
-          },
-        },
-      ],
-    },
-  ],
 };
 
 export interface WorkbenchCanvasShellProps {
@@ -145,7 +51,7 @@ export interface WorkbenchCanvasShellProps {
 }
 
 export function WorkbenchCanvasShell({
-  initialDocument = defaultDocument,
+  initialDocument = DEFAULT_WORKBENCH_CANVAS_DOCUMENT,
   initialTheme = DEFAULT_CANVAS_THEME,
   rootClassName,
   rootStyle,
@@ -213,18 +119,7 @@ export function WorkbenchCanvasShell({
   }, [activePage?.nodes]);
 
   const rootNodeIds = useMemo(() => {
-    const childIdSet = new Set(
-      activePage?.nodes.flatMap((node: WorkbenchDocumentNode) => {
-        const nodeChildren =
-          'children' in node ? (node as { children?: readonly string[] }).children : undefined;
-        return nodeChildren ?? [];
-      }) ?? [],
-    );
-    return (
-      activePage?.nodes
-        .filter((node: WorkbenchDocumentNode) => !node.parentId && !childIdSet.has(node.id))
-        .map((node: WorkbenchDocumentNode) => node.id) ?? []
-    );
+    return getWorkbenchCanvasRootNodeIds(activePage?.nodes ?? []);
   }, [activePage?.nodes]);
 
   useEffect(() => {
@@ -360,7 +255,7 @@ export function WorkbenchCanvasShell({
             borderColor: '#94a3b8',
             borderWidth: 1,
           },
-          src: placeholderImageSrc,
+          src: WORKBENCH_CANVAS_PLACEHOLDER_IMAGE_SRC,
         },
       });
       return;
@@ -453,22 +348,12 @@ export function WorkbenchCanvasShell({
       setStatusText('select a node first');
       return;
     }
-    const parseNumber = (value: string) => {
-      const trimmed = value.trim();
-      const n = Number(trimmed);
-      if (trimmed === '' || !Number.isFinite(n)) {
-        return undefined;
-      }
-      return n;
-    };
-
-    const nextLayout = {
-      ...(selectedNode.layout ?? {}),
-      ...(parseNumber(layoutXInput) !== undefined ? { x: parseNumber(layoutXInput) } : {}),
-      ...(parseNumber(layoutYInput) !== undefined ? { y: parseNumber(layoutYInput) } : {}),
-      ...(parseNumber(layoutWInput) !== undefined ? { width: parseNumber(layoutWInput) } : {}),
-      ...(parseNumber(layoutHInput) !== undefined ? { height: parseNumber(layoutHInput) } : {}),
-    };
+    const nextLayout = createWorkbenchCanvasLayoutUpdate(selectedNode.layout, {
+      height: layoutHInput,
+      width: layoutWInput,
+      x: layoutXInput,
+      y: layoutYInput,
+    });
 
     applyAction({
       action: 'replace-layout',
@@ -556,8 +441,7 @@ export function WorkbenchCanvasShell({
       return [];
     }
 
-    const children =
-      'children' in node ? ((node as { children?: readonly string[] }).children ?? []) : [];
+    const children = getWorkbenchCanvasNodeChildren(node);
     const isSelected = node.id === selectedNodeId;
     const prefix = `${'\u00a0'.repeat(Math.max(depth - 1, 0) * 2)}${depth > 0 ? '↳ ' : ''}`;
 
