@@ -181,6 +181,11 @@ Common locations are exported as SDK constants:
 `WORKBENCH_MENU_EDITOR_TAB_CONTEXT`, and `WORKBENCH_MENU_EXPLORER_CONTEXT`.
 Custom host locations remain valid strings for host-specific surfaces.
 
+For a single menu location, the core registry keeps first-seen group order, sorts
+within each group by numeric `order`, and preserves registration order when
+group/order are equal. This mirrors IDE-style contribution ordering while
+remaining stable for extensions that load in a deterministic order.
+
 ## Configuration Contributions
 
 ```ts

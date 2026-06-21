@@ -40,7 +40,7 @@ Maintains a scoped key–value context model (booleans, strings, numbers) used b
 
 ### MenuRegistry
 
-Accepts menu contributions (location, group, order, command/submenu entries, separators). Resolves visible items given current context keys and command enablement.
+Accepts menu contributions (location, group, order, command/submenu entries, separators). Resolves visible items given current context keys and command enablement. Menu-specific reads return deterministic items by first-seen group, numeric order, then registration order.
 
 Standard menu locations include command palette categories, activity bar context, editor title, view title, and account menu (see [Account Auth](./account-auth.md)).
 
