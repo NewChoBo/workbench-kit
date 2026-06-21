@@ -11,15 +11,11 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
 import { EditorTabs, type EditorTabDropPosition } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/workspace/editor';
-import { WORKSPACE_EXPLORER_DRAG_DATA_TYPE } from '@workbench-kit/react/workbench/workspace/explorer';
 import {
   createEditorGroupDropMoveOptions,
-  resolveEditorGroupDropSide,
-  type EditorDropRect,
   type EditorGroupDropSide,
   type EditorGroupState,
   type EditorLayoutNode,
-  type EditorTabState,
 } from '@workbench-kit/workbench-core';
 
 import './editor-area.css';
@@ -30,23 +26,16 @@ import { type EditorDocumentViewProvider } from './editor-view-providers.js';
 import { EditorHostSurface, type EditorViewMode } from './editor-host-surface.js';
 import { createEditorTabContextMenuItems } from './editor-tab-context-menu.js';
 import { pruneEditorLayout, toEditorTabModel } from './editor-area-model.js';
-
-const EDITOR_TAB_DRAG_DATA_TYPE = 'application/x-workbench-kit-editor-tab';
-const INTERNAL_EDITOR_AREA_DRAG_DATA_TYPES = [
+import {
   EDITOR_TAB_DRAG_DATA_TYPE,
-  WORKSPACE_EXPLORER_DRAG_DATA_TYPE,
-] as const;
-
-interface EditorTabDragPayload {
-  groupId: string;
-  tabId: string;
-}
-
-interface EditorTabDropTarget {
-  position: EditorTabDropPosition;
-  tabId: string;
-  targetIndex: number;
-}
+  getEditorGroupDropSide,
+  isEditorTabsScrollerEventTarget,
+  isInternalEditorAreaDrag,
+  readEditorTabDragPayload,
+  resolveEditorTabDropTarget,
+  resolveEditorTabStripDropTarget,
+  type EditorTabDragPayload,
+} from './editor-area-dnd.js';
 
 export type { EditorViewMode } from './editor-host-surface.js';
 
@@ -94,7 +83,7 @@ export function EditorArea({
       return draggedEditorTabRef.current;
     }
 
-    return event ? readEditorTabDragPayload(event) : null;
+    return event ? readEditorTabDragPayload(event.dataTransfer) : null;
   }, []);
 
   if (editorGroups.length === 0 || !editorLayout) {
@@ -429,7 +418,7 @@ function EditorGroupPane({
   const handleTabStripDragOver = useCallback(
     (event: ReactDragEvent<HTMLElement>) => {
       const draggedTab = getDraggedEditorTab(event);
-      if (!draggedTab || !isEditorTabsScrollerEvent(event)) {
+      if (!draggedTab || !isEditorTabsScrollerEventTarget(event.target)) {
         return;
       }
 
@@ -459,7 +448,7 @@ function EditorGroupPane({
   const handleTabStripDrop = useCallback(
     (event: ReactDragEvent<HTMLElement>) => {
       const draggedTab = getDraggedEditorTab(event);
-      if (!draggedTab || !isEditorTabsScrollerEvent(event)) {
+      if (!draggedTab || !isEditorTabsScrollerEventTarget(event.target)) {
         return;
       }
 
@@ -514,7 +503,7 @@ function EditorGroupPane({
   const handleGroupBodyDragOverCapture = useCallback(
     (event: ReactDragEvent<HTMLElement>) => {
       const draggedTab = getDraggedEditorTab(event);
-      if (!isInternalEditorAreaDrag(event, draggedTab)) {
+      if (!isInternalEditorAreaDrag(event.dataTransfer, draggedTab)) {
         return;
       }
 
@@ -560,7 +549,7 @@ function EditorGroupPane({
   const handleGroupBodyDropCapture = useCallback(
     (event: ReactDragEvent<HTMLElement>) => {
       const draggedTab = getDraggedEditorTab(event);
-      if (!isInternalEditorAreaDrag(event, draggedTab)) {
+      if (!isInternalEditorAreaDrag(event.dataTransfer, draggedTab)) {
         return;
       }
 
@@ -683,166 +672,4 @@ function EditorGroupPane({
       ) : null}
     </section>
   );
-}
-
-function readEditorTabDragPayload(event: ReactDragEvent<HTMLElement>): EditorTabDragPayload | null {
-  try {
-    const rawPayload = event.dataTransfer.getData(EDITOR_TAB_DRAG_DATA_TYPE);
-    if (!rawPayload) {
-      return null;
-    }
-
-    const payload = JSON.parse(rawPayload) as Partial<EditorTabDragPayload>;
-    if (typeof payload.groupId !== 'string' || typeof payload.tabId !== 'string') {
-      return null;
-    }
-
-    return {
-      groupId: payload.groupId,
-      tabId: payload.tabId,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function isInternalEditorAreaDrag(
-  event: ReactDragEvent<HTMLElement>,
-  draggedTab: EditorTabDragPayload | null,
-): boolean {
-  return (
-    draggedTab !== null ||
-    INTERNAL_EDITOR_AREA_DRAG_DATA_TYPES.some((dataType) =>
-      dataTransferHasType(event.dataTransfer, dataType),
-    )
-  );
-}
-
-function dataTransferHasType(dataTransfer: DataTransfer, dataType: string): boolean {
-  return Array.from(dataTransfer.types).includes(dataType);
-}
-
-function isEditorTabsScrollerEvent(event: ReactDragEvent<HTMLElement>): boolean {
-  const target = event.target;
-  if (!(target instanceof Element)) {
-    return false;
-  }
-
-  if (target.closest('.ui-editor-tabs__tab')) {
-    return false;
-  }
-
-  return Boolean(target.closest('.ui-editor-tabs__scroller'));
-}
-
-function resolveEditorTabDropTarget({
-  clientX,
-  draggedTab,
-  groupId,
-  preferredPosition,
-  tabs,
-  target,
-  targetTabId,
-}: {
-  clientX: number;
-  draggedTab: EditorTabDragPayload;
-  groupId: string;
-  preferredPosition?: EditorTabDropPosition | undefined;
-  tabs: readonly EditorTabState[];
-  target: HTMLElement;
-  targetTabId: string;
-}): EditorTabDropTarget | null {
-  const targetTabIndex = tabs.findIndex((tab) => tab.id === targetTabId);
-  if (targetTabIndex < 0) {
-    return null;
-  }
-
-  const position = preferredPosition ?? getEditorTabDropPosition(target, clientX);
-  const targetIndex = position === 'after' ? targetTabIndex + 1 : targetTabIndex;
-  if (isEditorTabMoveNoop({ draggedTab, groupId, tabs, targetIndex })) {
-    return null;
-  }
-
-  return {
-    position,
-    tabId: targetTabId,
-    targetIndex,
-  };
-}
-
-function resolveEditorTabStripDropTarget({
-  draggedTab,
-  groupId,
-  tabs,
-}: {
-  draggedTab: EditorTabDragPayload;
-  groupId: string;
-  tabs: readonly EditorTabState[];
-}): EditorTabDropTarget | null {
-  const lastTab = tabs[tabs.length - 1];
-  if (!lastTab) {
-    return null;
-  }
-
-  const targetIndex = tabs.length;
-  if (isEditorTabMoveNoop({ draggedTab, groupId, tabs, targetIndex })) {
-    return null;
-  }
-
-  return {
-    position: 'after',
-    tabId: lastTab.id,
-    targetIndex,
-  };
-}
-
-function isEditorTabMoveNoop({
-  draggedTab,
-  groupId,
-  tabs,
-  targetIndex,
-}: {
-  draggedTab: EditorTabDragPayload;
-  groupId: string;
-  tabs: readonly EditorTabState[];
-  targetIndex: number;
-}): boolean {
-  if (draggedTab.groupId !== groupId) {
-    return false;
-  }
-
-  const sourceIndex = tabs.findIndex((tab) => tab.id === draggedTab.tabId);
-  return sourceIndex >= 0 && (targetIndex === sourceIndex || targetIndex === sourceIndex + 1);
-}
-
-function getEditorGroupDropSide(
-  target: HTMLElement,
-  clientX: number,
-  clientY: number,
-): EditorGroupDropSide {
-  return resolveEditorGroupDropSide({
-    point: { x: clientX, y: clientY },
-    rect: getEditorDropRect(target),
-  });
-}
-
-function getEditorDropRect(target: HTMLElement): EditorDropRect {
-  const rect = target.getBoundingClientRect();
-  return {
-    bottom: rect.bottom,
-    height: rect.height,
-    left: rect.left,
-    right: rect.right,
-    top: rect.top,
-    width: rect.width,
-  };
-}
-
-function getEditorTabDropPosition(target: HTMLElement, clientX: number): EditorTabDropPosition {
-  const rect = target.getBoundingClientRect();
-  if (rect.width <= 0) {
-    return 'after';
-  }
-
-  return clientX < rect.left + rect.width / 2 ? 'before' : 'after';
 }
