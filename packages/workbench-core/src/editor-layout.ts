@@ -5,7 +5,7 @@ import type {
   EditorLayoutNode,
   EditorSplitLayoutNode,
   MoveEditorOptions,
-} from './editor-service.js';
+} from './editor-state.js';
 
 export type EditorGroupDropSide = 'bottom' | 'center' | 'left' | 'right' | 'top';
 

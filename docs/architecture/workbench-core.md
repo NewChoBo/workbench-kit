@@ -76,10 +76,12 @@ hosts for editor tabs, and `shell-react` consumes those hosts through
 `EditorArea` / `useEditorHost`.
 
 `EditorService` owns editor groups, active tabs, dirty/pinned/preview state, and
-host lifecycle. Pure editor layout tree work, such as split insertion,
-normalization, comparison, drop-side resolution, and move-option mapping, lives
-in `editor-layout.ts` so the service does not also carry geometry and tree
-helper responsibility.
+host lifecycle. Editor state shape, initialization, cloning, tab/group insertion,
+and sequence helpers live in `editor-state.ts` so state-model changes can be
+reviewed separately from host orchestration. Pure editor layout tree work, such
+as split insertion, normalization, comparison, drop-side resolution, and
+move-option mapping, lives in `editor-layout.ts` so the service does not also
+carry geometry and tree helper responsibility.
 
 ### CapabilityRegistry
 
