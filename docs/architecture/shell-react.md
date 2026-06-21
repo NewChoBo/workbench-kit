@@ -108,6 +108,9 @@ Left/right status entries from contributions and platform services (branch name,
 ### CommandPalette
 
 Modal command search UI bound to `CommandRegistry` and `KeybindingRegistry` hints. Filters by context keys and command enablement. Full palette ownership moves to `shell-react` after the provider path is the default shell entry.
+`packages/react/src/workbench/command-model.ts` owns descriptor conversion,
+search, grouping, and keyboard navigation helpers so command metadata changes
+can be reviewed separately from palette/suggest rendering.
 
 `WorkbenchCommandHost` also attaches first-party shell command handlers (for
 example activity selection, primary sidebar toggle, and settings open) to
