@@ -119,10 +119,11 @@ Summary:
 
 ## Suggested Order
 
-1. Defer user/resource/secret preference scopes and runtime plugin-store
-   execution to later hardening slices.
-2. Start the next platform slice from plugin store install planning or layout
-   persistence hardening.
+1. Continue plugin store hardening from install-plan UI exposure: present
+   dependency actions, permissions, and blocking diagnostics before writing
+   install state.
+2. Defer user/resource/secret preference scopes, external artifact loading, and
+   runtime plugin execution to later hardening slices.
 
 ## Acceptance Criteria
 

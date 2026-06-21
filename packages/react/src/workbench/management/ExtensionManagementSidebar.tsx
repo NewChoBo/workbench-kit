@@ -16,6 +16,7 @@ import {
 import { ManagementFilterChips } from './ManagementFilterChips.js';
 import type {
   ExtensionCatalogBrowseEntry,
+  ExtensionInstallPlanSummary,
   ExtensionManagementEntry,
   ExtensionManagementFeatureSummary,
   ExtensionManagementPanelProps,
@@ -236,17 +237,24 @@ function MarketplaceExtensionList({
           action={
             <Button
               compact
-              disabled={!onInstall || entry.installed}
-              icon={entry.installed ? 'check' : 'cloud-download'}
+              disabled={!onInstall || entry.installed || entry.installPlan?.blocked}
+              icon={
+                entry.installed
+                  ? 'check'
+                  : entry.installPlan?.blocked
+                    ? 'warning'
+                    : 'cloud-download'
+              }
               type="button"
               variant={entry.installed ? 'default' : 'primary'}
               onClick={() => onInstall?.(entry)}
             >
-              {entry.installed ? 'Installed' : 'Install'}
+              {entry.installed ? 'Installed' : entry.installPlan?.blocked ? 'Blocked' : 'Install'}
             </Button>
           }
           category={entry.category}
           description={entry.description}
+          installPlan={entry.installPlan}
           meta={entry.installed ? <Badge variant="accent">Installed</Badge> : null}
           title={entry.displayName}
         />
@@ -260,6 +268,7 @@ function ExtensionSidebarListItem({
   category,
   description,
   features,
+  installPlan,
   meta,
   title,
 }: {
@@ -267,11 +276,15 @@ function ExtensionSidebarListItem({
   category: string;
   description?: string | undefined;
   features?: ExtensionManagementFeatureSummary | undefined;
+  installPlan?: ExtensionInstallPlanSummary | undefined;
   meta?: ReactNode;
   title: string;
 }) {
   const iconTone = extensionCategoryIconTone(category);
-  const featureBadges = getExtensionFeatureBadges(features);
+  const featureBadges = [
+    ...getExtensionFeatureBadges(features),
+    ...getExtensionInstallPlanBadges(installPlan),
+  ];
 
   return (
     <li className="ui-side-bar-list-entry">
@@ -307,6 +320,19 @@ function ExtensionSidebarListItem({
       </div>
     </li>
   );
+}
+
+function getExtensionInstallPlanBadges(plan: ExtensionInstallPlanSummary | undefined) {
+  if (!plan) {
+    return [];
+  }
+
+  return [
+    plan.blocked ? 'Blocked' : undefined,
+    formatFeatureBadge('Install', plan.installExtensionIds?.length ?? 0),
+    formatFeatureBadge('Enable', plan.enableExtensionIds?.length ?? 0),
+    formatFeatureBadge('Permissions', plan.permissions?.length ?? 0),
+  ].filter((badge): badge is string => badge !== undefined);
 }
 
 function getExtensionFeatureBadges(features: ExtensionManagementFeatureSummary | undefined) {

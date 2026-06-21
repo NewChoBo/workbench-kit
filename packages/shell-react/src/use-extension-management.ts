@@ -3,16 +3,19 @@ import {
   BUILTIN_WORKBENCH_EXTENSIONS,
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   SAMPLE_WORKBENCH_EXTENSIONS,
+  createExtensionInstallPlan,
   createExtensionFeatureSpec,
   installExtensionRecord,
   loadInstalledExtensions,
   parseExtensionCatalog,
+  resolveBundledExtensionByManifestUrl,
   toggleInstalledExtensionEnabled,
   type ExtensionFeatureInspection,
   type ExtensionFeatureSpec,
   type ExtensionRegistry,
   type ExtensionCatalogEntry,
   type InstalledExtensionRecord,
+  type WorkbenchExtensionDescription,
 } from '@workbench-kit/workbench-core';
 import type {
   ExtensionCatalogBrowseEntry,
@@ -165,20 +168,48 @@ export function useExtensionManagementModel({
 
   const browseEntries = useMemo<readonly ExtensionCatalogBrowseEntry[]>(() => {
     const installedIds = new Set(installedRecords.map((record) => record.id));
+    const enabledExtensionIds = extensionRegistry
+      .getExtensions()
+      .map((extension) => extension.manifest.id);
+    const availableExtensions = mergeUniqueExtensionDescriptions([
+      ...BUNDLED_EXTENSIONS,
+      ...extensionRegistry.getExtensions(),
+    ]);
 
-    return catalogEntries.map((entry) => ({
-      category: entry.category,
-      description: entry.description,
-      displayName: entry.displayName,
-      icon: entry.icon,
-      id: entry.id,
-      installed: installedIds.has(entry.id),
-      manifestUrl: entry.manifestUrl,
-    }));
-  }, [catalogEntries, installedRecords]);
+    return catalogEntries.map((entry) => {
+      const bundledExtension = resolveBundledExtensionByManifestUrl(
+        entry.manifestUrl,
+        availableExtensions,
+      );
+      const plan = bundledExtension
+        ? createExtensionInstallPlan({
+            availableExtensions,
+            enabledExtensionIds,
+            hostCapabilityIds: extensionRegistry.capabilityRegistry.listProviderIds(),
+            installedRecords,
+            targetExtensionId: bundledExtension.manifest.id,
+          })
+        : undefined;
+
+      return {
+        category: entry.category,
+        description: entry.description,
+        displayName: entry.displayName,
+        icon: entry.icon,
+        id: entry.id,
+        installPlan: plan ? toExtensionInstallPlanSummary(plan) : undefined,
+        installed: installedIds.has(entry.id),
+        manifestUrl: entry.manifestUrl,
+      };
+    });
+  }, [catalogEntries, extensionRegistry, installedRecords]);
 
   const installCatalogEntry = useCallback(
     (entry: ExtensionCatalogBrowseEntry) => {
+      if (entry.installPlan?.blocked) {
+        return;
+      }
+
       const next = installExtensionRecord(
         {
           category: entry.category,
@@ -225,6 +256,16 @@ export function useExtensionManagementModel({
     installedEntries,
     toggleInstalledEntry,
   };
+}
+
+function mergeUniqueExtensionDescriptions(
+  descriptions: readonly WorkbenchExtensionDescription[],
+): readonly WorkbenchExtensionDescription[] {
+  const byId = new Map<string, WorkbenchExtensionDescription>();
+  for (const description of descriptions) {
+    byId.set(description.manifest.id, description);
+  }
+  return [...byId.values()];
 }
 
 function createExtensionManagementFeatureMaps(extensionRegistry: ExtensionRegistry) {
@@ -296,6 +337,19 @@ function toExtensionManagementFeatureSummary(
       id: view.id,
       label: view.name,
     })),
+  };
+}
+
+function toExtensionInstallPlanSummary(
+  plan: ReturnType<typeof createExtensionInstallPlan>,
+): ExtensionCatalogBrowseEntry['installPlan'] {
+  return {
+    blocked: plan.blocked,
+    diagnostics: plan.diagnostics.map(({ message, severity }) => ({ message, severity })),
+    enableExtensionIds: plan.enableExtensionIds,
+    installExtensionIds: plan.installExtensionIds,
+    permissions: plan.permissions,
+    requiresApproval: plan.requiresApproval,
   };
 }
 

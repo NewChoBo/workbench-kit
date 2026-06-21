@@ -18,6 +18,7 @@ import {
 } from './ManagementPanelFrame.js';
 import type {
   ExtensionCatalogBrowseEntry,
+  ExtensionInstallPlanSummary,
   ExtensionManagementEntry,
   ExtensionManagementFeatureSummary,
   ExtensionManagementPanelProps,
@@ -371,13 +372,15 @@ function ExtensionCatalogCard({
       actions={
         <Button
           compact
-          disabled={!onInstall || entry.installed}
-          icon={entry.installed ? 'check' : 'cloud-download'}
+          disabled={!onInstall || entry.installed || entry.installPlan?.blocked}
+          icon={
+            entry.installed ? 'check' : entry.installPlan?.blocked ? 'warning' : 'cloud-download'
+          }
           type="button"
           variant={entry.installed ? 'default' : 'primary'}
           onClick={() => onInstall?.(entry)}
         >
-          {entry.installed ? 'Installed' : 'Install'}
+          {entry.installed ? 'Installed' : entry.installPlan?.blocked ? 'Blocked' : 'Install'}
         </Button>
       }
       badges={
@@ -386,6 +389,10 @@ function ExtensionCatalogCard({
             <Badge variant="muted">{formatExtensionCategoryLabel(entry.category)}</Badge>
           ) : null}
           {entry.installed ? <Badge variant="accent">Installed</Badge> : null}
+          {entry.installPlan?.blocked ? <Badge variant="danger">Blocked</Badge> : null}
+          {entry.installPlan?.requiresApproval && !entry.installed ? (
+            <Badge variant="muted">Approval required</Badge>
+          ) : null}
         </>
       }
       description={entry.description}
@@ -393,8 +400,48 @@ function ExtensionCatalogCard({
       iconTone={extensionCategoryIconTone(entry.category)}
       id={entry.id}
       title={entry.displayName}
-    />
+    >
+      <ExtensionInstallPlanDetails plan={entry.installPlan} />
+    </ManagementCard>
   );
+}
+
+function ExtensionInstallPlanDetails({ plan }: { plan?: ExtensionInstallPlanSummary | undefined }) {
+  const rows = getExtensionInstallPlanRows(plan);
+  const diagnostics = plan?.diagnostics ?? [];
+
+  if (rows.length === 0 && diagnostics.length === 0) {
+    return null;
+  }
+
+  return (
+    <dl className="workbench-management-card__details">
+      {rows.map((row) => (
+        <div key={row.label}>
+          <dt>{row.label}</dt>
+          <dd>{row.value}</dd>
+        </div>
+      ))}
+      {diagnostics.length > 0 ? (
+        <div>
+          <dt>Install review</dt>
+          <dd>{diagnostics.map((diagnostic) => diagnostic.message).join(' ')}</dd>
+        </div>
+      ) : null}
+    </dl>
+  );
+}
+
+function getExtensionInstallPlanRows(plan: ExtensionInstallPlanSummary | undefined) {
+  if (!plan) {
+    return [];
+  }
+
+  return [
+    createTextListDetailRow('Will install', plan.installExtensionIds ?? []),
+    createTextListDetailRow('Will enable', plan.enableExtensionIds ?? []),
+    createTextListDetailRow('Permissions', plan.permissions ?? []),
+  ].filter((row): row is { label: string; value: string } => row !== undefined);
 }
 
 function groupBrowseEntries(entries: readonly ExtensionCatalogBrowseEntry[]) {

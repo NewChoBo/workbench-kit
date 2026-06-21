@@ -134,6 +134,17 @@ export {
   resolveInstalledAvailableExtensions,
 } from './extension-install-resolution.js';
 export {
+  createExtensionInstallPlan,
+  type CreateExtensionInstallPlanInput,
+  type ExtensionInstallPlan,
+  type ExtensionInstallPlanAction,
+  type ExtensionInstallPlanActionKind,
+  type ExtensionInstallPlanCapabilitySummary,
+  type ExtensionInstallPlanDiagnostic,
+  type ExtensionInstallPlanDiagnosticKind,
+  type ExtensionInstallPlanReason,
+} from './extension-install-plan.js';
+export {
   applyThemeTokenOverrides,
   ThemeRegistry,
   type WorkbenchThemeContribution,

@@ -44,10 +44,37 @@ Parsing is handled by `parseExtensionCatalog()` in `@workbench-kit/workbench-cor
 
 1. Host serves a catalog JSON file (for example `examples/workbench-sample/public/extension-catalog.json`).
 2. Browse UI loads the catalog via `fetch()` or receives entries through props.
-3. **Install** writes an `InstalledExtensionRecord` to localStorage and reloads the page.
-4. `WorkbenchProvider` reads install state and filters bundled extensions through `resolveInstalledAvailableExtensions()`.
-5. Enabled extension ids are merged into the effective `.workbench/extensions.json` config through `mergeExtensionsConfigWithInstallState()`.
-6. `ExtensionRegistry` registers enabled extensions and merges contributed themes/localizations into registries.
+3. `createExtensionInstallPlan()` builds the pre-install review plan:
+   dependency order, install/enable/already-enabled actions, extension-pack
+   members, required approval, permissions, capability summary, and blocking
+   diagnostics.
+4. **Install** writes `InstalledExtensionRecord` entries only after the host
+   accepts a non-blocked plan.
+5. `WorkbenchProvider` reads install state and filters bundled extensions through
+   `resolveInstalledAvailableExtensions()`.
+6. Enabled extension ids are merged into the effective
+   `.workbench/extensions.json` config through
+   `mergeExtensionsConfigWithInstallState()`.
+7. `ExtensionRegistry` registers enabled extensions and merges contributed
+   themes/localizations into registries.
+
+## Install review plan
+
+`createExtensionInstallPlan()` is framework-neutral and lives in
+`@workbench-kit/workbench-core`. It returns:
+
+- ordered install/enable/already-enabled actions
+- hard dependency and extension-pack members that will be pulled in
+- permissions and capabilities introduced by newly enabled extensions
+- blocking diagnostics for missing targets, missing hard dependencies, missing
+  extension-pack members, dependency cycles, and unsatisfied capabilities
+- warning diagnostics such as optional dependency gaps and command activation
+  gaps
+
+React management surfaces consume a small summary of this plan so catalog cards
+can show install impact before the user writes install state. This mirrors the
+VS Code / Theia expectation that extension install is a reviewable operation,
+not just a blind localStorage toggle.
 
 ## Persistence key
 
@@ -75,6 +102,7 @@ Helpers live in `@workbench-kit/workbench-core`:
 - `saveInstalledExtensions()`
 - `installExtensionRecord()`
 - `toggleInstalledExtensionEnabled()`
+- `createExtensionInstallPlan()`
 
 ## MVP constraints
 
@@ -82,6 +110,8 @@ Helpers live in `@workbench-kit/workbench-core`:
 - Static manifest JSON paths are reserved for future manifest-url installs; MVP sample host uses bundled ids
 - Install/uninstall/enable/disable currently require `window.location.reload()`
 - No runtime npm package download or external JS execution
+- Install planning is framework-neutral and host-owned UI decides how to present
+  approval, permission, and blocking diagnostic state.
 
 ## Related documents
 

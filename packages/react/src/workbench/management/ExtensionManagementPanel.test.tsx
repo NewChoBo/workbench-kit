@@ -108,4 +108,68 @@ describe('ExtensionManagementPanel', () => {
       '<button type="button" class="ui-side-bar-list-item workbench-extensions-sidebar__item"',
     );
   });
+
+  it('renders sidebar catalog install plan summaries before install', () => {
+    const markup = renderToStaticMarkup(
+      createElement(ExtensionManagementSidebar, {
+        browseEntries: [
+          {
+            category: 'utility',
+            description: 'Installs a command pack.',
+            displayName: 'Command Pack',
+            id: 'workbench-kit.samples.command-pack',
+            installPlan: {
+              blocked: false,
+              enableExtensionIds: ['workbench-kit.samples.shared'],
+              installExtensionIds: ['workbench-kit.samples.command-pack'],
+              permissions: ['workspace.write'],
+              requiresApproval: true,
+            },
+            installed: false,
+            manifestUrl: 'workbench-kit.samples.command-pack',
+          },
+        ],
+        installedEntries: [],
+      }),
+    );
+
+    expect(markup).toContain('Install 1');
+    expect(markup).toContain('Enable 1');
+    expect(markup).toContain('Permissions 1');
+  });
+
+  it('blocks sidebar catalog installs when the install plan has errors', () => {
+    const markup = renderToStaticMarkup(
+      createElement(ExtensionManagementSidebar, {
+        browseEntries: [
+          {
+            category: 'utility',
+            description: 'Needs a missing dependency.',
+            displayName: 'Blocked Pack',
+            id: 'workbench-kit.samples.blocked-pack',
+            installPlan: {
+              blocked: true,
+              diagnostics: [
+                {
+                  message: 'Extension depends on missing extension "missing".',
+                  severity: 'error',
+                },
+              ],
+              enableExtensionIds: [],
+              installExtensionIds: ['workbench-kit.samples.blocked-pack'],
+              permissions: [],
+              requiresApproval: false,
+            },
+            installed: false,
+            manifestUrl: 'workbench-kit.samples.blocked-pack',
+          },
+        ],
+        installedEntries: [],
+        onInstall: () => undefined,
+      }),
+    );
+
+    expect(markup).toContain('Blocked');
+    expect(markup).toContain('disabled=""');
+  });
 });

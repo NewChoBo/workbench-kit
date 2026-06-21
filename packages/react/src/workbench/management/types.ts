@@ -82,6 +82,15 @@ export interface ExtensionManagementDiagnosticSummary {
   readonly severity: 'error' | 'warning';
 }
 
+export interface ExtensionInstallPlanSummary {
+  readonly blocked: boolean;
+  readonly diagnostics?: readonly ExtensionManagementDiagnosticSummary[] | undefined;
+  readonly enableExtensionIds?: readonly string[] | undefined;
+  readonly installExtensionIds?: readonly string[] | undefined;
+  readonly permissions?: readonly string[] | undefined;
+  readonly requiresApproval: boolean;
+}
+
 export interface ExtensionManagementEntry {
   readonly category: string;
   readonly description?: string | undefined;
@@ -101,6 +110,7 @@ export interface ExtensionCatalogBrowseEntry {
   readonly displayName: string;
   readonly icon?: string | undefined;
   readonly id: string;
+  readonly installPlan?: ExtensionInstallPlanSummary | undefined;
   readonly installed: boolean;
   readonly manifestUrl: string;
 }

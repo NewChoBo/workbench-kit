@@ -76,6 +76,10 @@ The manifest check currently enforces:
 at runtime and activation recursively activates hard dependencies first.
 `ExtensionRegistry.getDependencyDiagnostics()` exposes non-blocking diagnostics
 for management surfaces and plugin-store style review.
+`createExtensionInstallPlan()` reuses the same dependency/capability diagnostics
+before install state is written, and adds install-specific blocking diagnostics
+for missing catalog targets, missing extension-pack members, and dependency
+cycles.
 
 ## Resolution Algorithm
 
