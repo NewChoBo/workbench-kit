@@ -73,6 +73,12 @@ factories through `context.viewHostFactories.registerFactory`.
 hosts for editor tabs, and `shell-react` consumes those hosts through
 `EditorArea` / `useEditorHost`.
 
+`EditorService` owns editor groups, active tabs, dirty/pinned/preview state, and
+host lifecycle. Pure editor layout tree work, such as split insertion,
+normalization, comparison, drop-side resolution, and move-option mapping, lives
+in `editor-layout.ts` so the service does not also carry geometry and tree
+helper responsibility.
+
 ### CapabilityRegistry
 
 Registers runtime capability providers by stable ID (for example `workbench.auth`).
