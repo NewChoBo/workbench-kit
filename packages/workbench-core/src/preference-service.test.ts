@@ -32,12 +32,18 @@ describe('PreferenceService', () => {
         'workbench.settings.openOnStartup': false,
       },
     });
-    const changes: Array<{ key: string; scope: string; effectiveValue: unknown }> = [];
+    const changes: Array<{
+      effectiveValue: unknown;
+      key: string;
+      previousEffectiveValue: unknown;
+      scope: string;
+    }> = [];
 
     const disposable = service.onDidChangePreference((event) => {
       changes.push({
         effectiveValue: event.effectiveValue,
         key: event.key,
+        previousEffectiveValue: event.previousEffectiveValue,
         scope: event.scope,
       });
     });
@@ -48,6 +54,7 @@ describe('PreferenceService', () => {
       {
         effectiveValue: true,
         key: 'workbench.settings.openOnStartup',
+        previousEffectiveValue: false,
         scope: 'workspace',
       },
     ]);

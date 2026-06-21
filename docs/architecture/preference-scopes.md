@@ -15,7 +15,7 @@ Merge rule: **workspace overrides default; local overrides workspace** for the s
 Implementation:
 
 - `@workbench-kit/workbench-config` — `PreferenceScope`, `mergeScopedPreferences`, `mergePreferenceValuesByScope`
-- `@workbench-kit/workbench-core` — `PreferenceService` with `getEffectiveValue`, `setScopedValue`, `onDidChangePreference`
+- `@workbench-kit/workbench-core` — `PreferenceService` with `getEffectiveValue`, `setScopedValue`, and `onDidChangePreference` events that include previous/current effective values
 - `@workbench-kit/shell-react` — provider wiring, local persistence, settings UI checkbox for boolean contributions
 
 ## Future scopes (not implemented)

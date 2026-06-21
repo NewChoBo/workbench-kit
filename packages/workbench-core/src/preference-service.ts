@@ -82,12 +82,14 @@ export class PreferenceService implements Disposable {
   }
 
   setScopedValue(key: string, scope: PreferenceScope, value: unknown): void {
+    const previousEffectiveValue = this.getEffectiveValue(key);
+
     if (scope === 'default') {
       this.contributionDefaults = {
         ...this.contributionDefaults,
         [key]: value,
       };
-      this.emitPreferenceChange(key, 'default');
+      this.emitPreferenceChange(key, 'default', previousEffectiveValue);
       return;
     }
 
@@ -97,7 +99,7 @@ export class PreferenceService implements Disposable {
       ...this.valuesByScope,
       [scope]: currentScopeValues,
     };
-    this.emitPreferenceChange(key, scope);
+    this.emitPreferenceChange(key, scope, previousEffectiveValue);
   }
 
   updateValuesByScope(scope: PreferenceScope, values: WorkbenchSettingsConfig): void {
@@ -124,12 +126,16 @@ export class PreferenceService implements Disposable {
     this.onDidChangePreferenceEmitter.dispose();
   }
 
-  private emitPreferenceChange(key: string, scope: PreferenceScope): void {
+  private emitPreferenceChange(
+    key: string,
+    scope: PreferenceScope,
+    previousEffectiveValue: unknown,
+  ): void {
     const effectiveValue = this.getEffectiveValue(key);
     this.onDidChangePreferenceEmitter.fire({
       effectiveValue,
       key,
-      previousEffectiveValue: undefined,
+      previousEffectiveValue,
       scope,
     });
   }
