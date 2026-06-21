@@ -96,6 +96,7 @@ Loads extension manifests, validates manifest shape and hard dependencies, order
 M2 behavior:
 
 - Manifest contributions are registered into platform command/keybinding registries and workbench menu/view/activity/config registries.
+- Manifest contribution shape mapping lives in `extension-contribution-normalizers.ts`, keeping activation/lifecycle edits separate from contribution mapping edits.
 - Duplicate extension IDs and duplicate command IDs hard-fail during registration.
 - `onStartup`, `onCommand:*`, and `onView:*` activation events are supported.
 - `executeCommand(commandId)` activates matching `onCommand:` extensions before invoking a handler registered by the activated extension.

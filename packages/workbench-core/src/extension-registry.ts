@@ -4,19 +4,13 @@ import {
   CommandNoHandlerError,
   CommandNotFoundError,
   KeybindingRegistry,
-  type CommandDefinition,
   type CommandServiceHandler,
-  type KeybindingDefinition,
 } from '@workbench-kit/platform';
 import type {
   ActivateFunction,
-  ConfigurationContribution,
   DeactivateFunction,
   ExtensionFeatureSpec,
   ExtensionContext,
-  MenuContribution,
-  ViewContainerContribution,
-  ViewContribution,
   WorkbenchExtensionManifest,
 } from '@workbench-kit/workbench-extension-sdk';
 
@@ -26,8 +20,6 @@ import {
   EditorRegistry,
   MenuRegistry,
   ViewRegistry,
-  type WorkbenchViewContainerContribution,
-  type WorkbenchViewContribution,
 } from './registries.js';
 import {
   createCapabilityRegistry,
@@ -52,6 +44,14 @@ import {
 import { LocalizationRegistry } from './localization-registry.js';
 import { ThemeRegistry } from './theme-registry.js';
 import { createExtensionFeatureSpecs } from './extension-feature-spec.js';
+import {
+  normalizeConfiguration,
+  normalizeMenuContributions,
+  normalizeViewContainers,
+  normalizeViews,
+  toCommandDefinition,
+  toKeybindingDefinition,
+} from './extension-contribution-normalizers.js';
 
 export interface WorkbenchExtensionModule {
   activate?: ActivateFunction;
@@ -667,108 +667,4 @@ function collectCapabilityProviders(
   }
 
   return providers;
-}
-
-function toCommandDefinition(command: {
-  category?: string;
-  command: string;
-  enablement?: string;
-  icon?: string;
-  title: string;
-}): CommandDefinition {
-  return {
-    category: command.category,
-    enablement: command.enablement,
-    icon: command.icon,
-    id: command.command,
-    title: command.title,
-  };
-}
-
-function toKeybindingDefinition(keybinding: {
-  args?: readonly unknown[];
-  command: string;
-  key: string;
-  when?: string;
-}): KeybindingDefinition {
-  return {
-    args: keybinding.args,
-    command: keybinding.command,
-    key: keybinding.key,
-    when: keybinding.when,
-  };
-}
-
-function normalizeConfiguration(configuration: unknown): ConfigurationContribution {
-  if (!isRecord(configuration) || !isRecord(configuration.properties)) {
-    return { properties: {} };
-  }
-
-  return configuration as unknown as ConfigurationContribution;
-}
-
-function normalizeMenuContributions(value: unknown): MenuContribution[] {
-  if (value === undefined) {
-    return [];
-  }
-
-  if (Array.isArray(value)) {
-    return value as MenuContribution[];
-  }
-
-  if (!isRecord(value)) {
-    return [];
-  }
-
-  return Object.entries(value).flatMap(([menu, entries]) => {
-    if (!Array.isArray(entries)) {
-      return [];
-    }
-
-    return entries.map((entry) => ({ ...(entry as object), menu }) as MenuContribution);
-  });
-}
-
-function normalizeViewContainers(value: unknown): WorkbenchViewContainerContribution[] {
-  if (!isRecord(value)) {
-    return [];
-  }
-
-  return Object.entries(value).flatMap(([location, containers]) => {
-    if (!Array.isArray(containers)) {
-      return [];
-    }
-
-    return containers.map(
-      (container) =>
-        ({
-          ...(container as ViewContainerContribution),
-          location,
-        }) satisfies WorkbenchViewContainerContribution,
-    );
-  });
-}
-
-function normalizeViews(value: unknown): WorkbenchViewContribution[] {
-  if (!isRecord(value)) {
-    return [];
-  }
-
-  return Object.entries(value).flatMap(([containerId, views]) => {
-    if (!Array.isArray(views)) {
-      return [];
-    }
-
-    return views.map((view) => {
-      const partialView = view as Partial<ViewContribution>;
-      return {
-        ...partialView,
-        containerId: partialView.containerId ?? containerId,
-      } as WorkbenchViewContribution;
-    });
-  });
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
