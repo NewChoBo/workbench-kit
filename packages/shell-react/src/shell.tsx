@@ -18,7 +18,6 @@ import {
 } from '@workbench-kit/react/workbench/settings';
 import {
   WorkbenchShell as ReactWorkbenchShell,
-  type ActivityBarItem,
   type StatusBarItemModel,
   type StatusBarSectionModel,
 } from '@workbench-kit/react/workbench/shell';
@@ -79,6 +78,10 @@ import {
   createSettingsCategories,
   type WorkbenchThemeOption,
 } from './shell-settings.js';
+import {
+  createDefaultWorkbenchStatusSections,
+  createWorkbenchShellActivityItems,
+} from './shell-model.js';
 import { WorkbenchProfileModal, type WorkbenchProfileInput } from './workbench-profile-modal.js';
 export type { WorkbenchLocaleOption, WorkbenchThemeOption } from './shell-settings.js';
 
@@ -162,12 +165,22 @@ export function WorkbenchShell({
   const resolvedStatusSections = useMemo(
     () =>
       statusSections ??
-      createDefaultStatusSections(extensionRegistry, missingExtensionIds, profile),
+      createDefaultWorkbenchStatusSections({
+        dependencyDiagnostics: extensionRegistry.getDependencyDiagnostics(),
+        extensionCount: extensionRegistry.getExtensions().length,
+        missingExtensionIds,
+        profile,
+      }),
     [extensionRegistry, missingExtensionIds, profile, statusSections],
   );
   const activeViewContainerId = layout.sideBar.activeViewContainer;
   const activityItems = sortActivityBarItems(
-    createActivityItems(extensionRegistry, activeViewContainerId),
+    createWorkbenchShellActivityItems({
+      activeViewContainerId,
+      activities: extensionRegistry.activities.getActivities(),
+      viewContainers: extensionRegistry.views.getViewContainers(),
+      views: extensionRegistry.views.getViews(),
+    }),
     layout.activityBar.itemOrder,
   );
   const visibleActivityItems = filterActivityBarItems(
@@ -518,103 +531,6 @@ function useForceRender() {
   }, []);
 }
 
-function createActivityItems(
-  extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
-  activeViewContainerId: string | undefined,
-) {
-  const activities = extensionRegistry.activities.getActivities();
-  if (activities.length > 0) {
-    return activities
-      .map<ActivityBarItem & { order?: number }>((activity) => ({
-        active: activity.viewContainerId === activeViewContainerId,
-        icon: resolveIcon(activity.icon),
-        id: activity.viewContainerId,
-        label: activity.title,
-        order: activity.order,
-      }))
-      .sort(
-        (left, right) =>
-          (left.order ?? Number.MAX_SAFE_INTEGER) - (right.order ?? Number.MAX_SAFE_INTEGER),
-      )
-      .map(({ order: _order, ...item }) => item);
-  }
-
-  const viewContainerIds = new Set(
-    extensionRegistry.views.getViews().map((view) => view.containerId),
-  );
-
-  return [...viewContainerIds].map<ActivityBarItem>((containerId) => {
-    const container = extensionRegistry.views.getViewContainer(containerId);
-    const firstView = extensionRegistry.views.getViews(containerId)[0];
-
-    return {
-      active: containerId === activeViewContainerId,
-      icon: resolveIcon(container?.icon ?? firstView?.name ?? containerId),
-      id: containerId,
-      label: container?.title ?? firstView?.name ?? containerId,
-    };
-  });
-}
-
-function createDefaultStatusSections(
-  extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
-  missingExtensionIds: readonly string[],
-  profile: WorkbenchProfileInput | undefined,
-): StatusBarSectionModel[] {
-  const dependencyDiagnostics = extensionRegistry.getDependencyDiagnostics();
-  const errorDependencyDiagnostics = dependencyDiagnostics.filter(
-    (diagnostic) => diagnostic.severity === 'error',
-  );
-
-  return [
-    {
-      id: 'workbench',
-      items: [
-        {
-          id: 'extensions',
-          label: `extensions: ${extensionRegistry.getExtensions().length}`,
-        },
-        {
-          hidden: missingExtensionIds.length === 0,
-          id: 'missing-extensions',
-          label: `missing: ${missingExtensionIds.length}`,
-          status: 'waiting',
-        },
-        {
-          hidden: dependencyDiagnostics.length === 0,
-          id: 'extension-dependencies',
-          label: `deps: ${dependencyDiagnostics.length}`,
-          status: errorDependencyDiagnostics.length > 0 ? 'failed' : 'waiting',
-          title:
-            errorDependencyDiagnostics.length > 0
-              ? `${errorDependencyDiagnostics.length} extension dependency error${
-                  errorDependencyDiagnostics.length === 1 ? '' : 's'
-                }`
-              : `${dependencyDiagnostics.length} extension dependency warning${
-                  dependencyDiagnostics.length === 1 ? '' : 's'
-                }`,
-        },
-      ],
-    },
-    {
-      align: 'end',
-      id: 'workbench-meta',
-      items: [
-        ...(profile
-          ? [
-              {
-                icon: 'account' as const,
-                id: 'workbench.account',
-                label: profile.displayName,
-                title: 'Open profile',
-              },
-            ]
-          : []),
-      ],
-    },
-  ];
-}
-
 function renderDefaultPrimarySidebar(
   extensionRegistry: ReturnType<typeof useWorkbench>['extensionRegistry'],
   activeViewContainerId: string | undefined,
@@ -777,28 +693,4 @@ function toViewHostReactNode(
   }
 
   return toReactNode(value, fallback);
-}
-
-function resolveIcon(icon: ReactNode | string | undefined): ReactNode {
-  if (icon === undefined) {
-    return <span aria-hidden="true">W</span>;
-  }
-
-  if (typeof icon !== 'string') {
-    return icon;
-  }
-
-  const className = getCodiconClassName(icon);
-  if (className) {
-    return <i aria-hidden="true" className={`codicon ${className}`} />;
-  }
-
-  return <span aria-hidden="true">W</span>;
-}
-
-function getCodiconClassName(icon: string): string | undefined {
-  const token = icon.trim();
-  if (!token) return undefined;
-
-  return token.startsWith('codicon-') ? token : `codicon-${token}`;
 }
