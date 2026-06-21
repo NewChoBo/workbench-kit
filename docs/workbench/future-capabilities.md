@@ -118,8 +118,9 @@ Low priority — defer until standalone shell and host bootstrap are stable in p
 
 - [ ] **P3** Secondary sidebar region (right activity bar + auxiliary views).
 - [ ] **P3** Panel regions (bottom terminal/output) with resize and visibility commands.
-- [ ] **P3** Layout persistence adapter (sidebar width, panel height, activity visibility) via
-      host storage, not kit-internal localStorage.
+- [x] **P3** Layout persistence adapter MVP for sidebar width, panel visibility, and
+      activity visibility/order via `WorkbenchProvider` host storage adapters.
+      Panel height persistence remains tied to the future panel sizing model.
 
 ## Playground & sandbox (P1–P3)
 
