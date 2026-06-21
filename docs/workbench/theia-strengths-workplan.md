@@ -79,6 +79,9 @@ build`. Browser smoke verified dummy login, activity bar, explorer tree,
 - 2026-06-21: Lane A closeout passed `pnpm validate:full`, including static
   checks, 170 Vitest files / 679 tests, Storybook build, and 11 required
   Storybook play suites.
+- 2026-06-21: Extension management install planning now separates core plan
+  creation, local install-state application, and shell React model assembly so
+  catalog/review/storage work can land in smaller files.
 - 2026-06-16: WB-28 S1 added `EditorService`, `EditorResolverRegistry`, SDK editor contribution/resolver types, and React `useEditor*` hooks wired to `EditorHostFactoryRegistry`.
 - 2026-06-14: WB-27 added workspace resource contracts (`resource-uri`, `resource-snapshot`,
   `resource-mutation`, `resource-transaction`) on top of `virtualWorkspaceReducer` without
