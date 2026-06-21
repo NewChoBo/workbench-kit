@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   createWorkspaceFileDraft,
   discardWorkspaceFileDraft,
+  getWorkspaceDirtyDraftPaths,
+  getWorkspaceFileDraft,
+  hasWorkspaceDirtyDrafts,
   isWorkspaceFileDraftDirty,
   resolveWorkspaceFileDraft,
   saveWorkspaceFileDraft,
@@ -66,6 +69,10 @@ describe('workspace file draft helpers', () => {
       },
     });
     expect(isWorkspaceFileDraftDirty(file, drafts['src/App.tsx'])).toBe(true);
+    expect(getWorkspaceFileDraft({ drafts, path: '/src//App.tsx' })).toEqual({
+      content: 'local edit',
+      savedContent: 'saved',
+    });
   });
 
   it('saves and discards draft content by path', () => {
@@ -100,5 +107,25 @@ describe('workspace file draft helpers', () => {
         savedContent: 'saved',
       },
     });
+  });
+
+  it('lists dirty draft paths in stable order', () => {
+    const drafts: WorkspaceFileDraftMap = {
+      'src/App.tsx': {
+        content: 'saved',
+        savedContent: 'saved',
+      },
+      'src/index.ts': {
+        content: 'edit',
+        savedContent: 'saved',
+      },
+      'README.md': {
+        content: 'edit',
+        savedContent: 'saved',
+      },
+    };
+
+    expect(getWorkspaceDirtyDraftPaths(drafts)).toEqual(['README.md', 'src/index.ts']);
+    expect(hasWorkspaceDirtyDrafts(drafts)).toBe(true);
   });
 });

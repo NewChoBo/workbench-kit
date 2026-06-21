@@ -131,6 +131,7 @@ export type {
 export {
   WorkspaceDraftsContext,
   WorkspaceDraftsProvider,
+  useWorkspaceDraftController,
   useWorkspaceDrafts,
 } from './WorkspaceDraftsContext';
 export type {

@@ -556,6 +556,7 @@ export type { ToolbarProps } from './primitives/Toolbar';
 export {
   WorkspaceDraftsContext,
   WorkspaceDraftsProvider,
+  useWorkspaceDraftController,
   useWorkspaceDrafts,
 } from './workbench/workspace/WorkspaceDraftsContext';
 export type {
