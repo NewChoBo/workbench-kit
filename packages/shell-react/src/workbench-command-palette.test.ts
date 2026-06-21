@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildWorkbenchPaletteCommands,
   matchesWorkbenchCommandPaletteShortcut,
+  matchesWorkbenchQuickAccessShortcut,
   mergeWorkbenchCommandDescriptors,
 } from './workbench-command-palette.js';
 
@@ -110,6 +111,28 @@ describe('workbench-command-palette helpers', () => {
         altKey: false,
         ctrlKey: true,
         key: 'K',
+        metaKey: false,
+        shiftKey: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('matches the quick access shortcut without shadowing the command palette shortcut', () => {
+    expect(
+      matchesWorkbenchQuickAccessShortcut({
+        altKey: false,
+        ctrlKey: true,
+        key: 'P',
+        metaKey: false,
+        shiftKey: false,
+      }),
+    ).toBe(true);
+
+    expect(
+      matchesWorkbenchQuickAccessShortcut({
+        altKey: false,
+        ctrlKey: true,
+        key: 'P',
         metaKey: false,
         shiftKey: true,
       }),

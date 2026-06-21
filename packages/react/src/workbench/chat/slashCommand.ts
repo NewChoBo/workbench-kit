@@ -3,14 +3,14 @@ export type SlashCommandParseResult =
   | { type: 'run'; commandId: string }
   | { type: 'unknown'; token: string };
 
+const slashCommandInputPattern = /(?:^|\s)\/([^\s]*)$/;
+
 export function isSlashCommandInput(value: string): boolean {
-  return value.trimStart().startsWith('/');
+  return slashCommandInputPattern.test(value);
 }
 
 export function getSlashCommandQuery(value: string): string {
-  const trimmed = value.trimStart();
-  if (!trimmed.startsWith('/')) return '';
-  return trimmed.slice(1);
+  return slashCommandInputPattern.exec(value)?.[1] ?? '';
 }
 
 export function parseSlashCommand(

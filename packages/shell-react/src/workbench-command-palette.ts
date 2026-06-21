@@ -7,6 +7,7 @@ import type {
 import type { ExtensionRegistry } from '@workbench-kit/workbench-core';
 
 export const WORKBENCH_COMMAND_PALETTE_SHORTCUT = 'Ctrl+Shift+P';
+export const WORKBENCH_QUICK_ACCESS_SHORTCUT = 'Ctrl+P';
 
 type ExtensionCommand = ReturnType<ExtensionRegistry['commands']['getCommands']>[number];
 
@@ -148,6 +149,22 @@ export function matchesWorkbenchCommandPaletteShortcut(
   }
 
   if (!(event.ctrlKey || event.metaKey) || !event.shiftKey || event.altKey) {
+    return false;
+  }
+
+  return true;
+}
+
+export function matchesWorkbenchQuickAccessShortcut(
+  event: Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'shiftKey'>,
+) {
+  const key = event.key.toLowerCase();
+
+  if (key !== 'p') {
+    return false;
+  }
+
+  if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.altKey) {
     return false;
   }
 

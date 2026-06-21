@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import { formatKeybindingLabel } from '@workbench-kit/platform';
 import {
   SideBarHeaderControl,
@@ -20,6 +20,18 @@ import {
 import { formatCommandRunState } from './format-command-run-state.js';
 import type { CommandManagementPanelProps } from './types.js';
 
+const commandManagementListClassName = 'workbench-commands-sidebar__list ui-workbench-scrollbar';
+const commandNavigationKeys = new Set([
+  'ArrowDown',
+  'ArrowUp',
+  'End',
+  'Home',
+  'PageDown',
+  'PageUp',
+]);
+
+type CommandManagementEntry = CommandManagementPanelProps['groups'][number]['entries'][number];
+
 export interface CommandManagementSidebarProps extends Pick<
   CommandManagementPanelProps,
   'groups' | 'lastRun' | 'onRunCommand' | 'summaryLabel'
@@ -39,14 +51,90 @@ export function CommandManagementSidebar({
   summaryLabel,
 }: CommandManagementSidebarProps) {
   const [query, setQuery] = useState('');
+  const [activeEntryId, setActiveEntryId] = useState<string>();
   const filteredGroups = useMemo(
     () => filterCommandManagementGroups(groups, query),
     [groups, query],
+  );
+  const canRunCommands = Boolean(onRunCommand) && lastRun?.status !== 'running';
+  const runnableEntries = useMemo(
+    () =>
+      filteredGroups.flatMap((group) =>
+        group.entries.filter((entry) => canRunCommands && entry.status === 'available'),
+      ),
+    [canRunCommands, filteredGroups],
   );
   const visibleCount = countCommandManagementEntries(filteredGroups);
   const totalCount = countCommandManagementEntries(groups);
   const runStateLabel = formatCommandRunState(lastRun);
   const countLabel = summaryLabel ?? `${visibleCount}/${totalCount}`;
+
+  useEffect(() => {
+    setActiveEntryId((currentEntryId) => {
+      if (currentEntryId && runnableEntries.some((entry) => entry.id === currentEntryId)) {
+        return currentEntryId;
+      }
+
+      return runnableEntries[0]?.id;
+    });
+  }, [runnableEntries]);
+
+  const focusCommandEntry = (entryId: string | undefined) => {
+    if (!entryId || typeof document === 'undefined') return;
+
+    setActiveEntryId(entryId);
+    window.requestAnimationFrame(() => {
+      const button = Array.from(
+        document.querySelectorAll<HTMLButtonElement>(
+          '.workbench-commands-sidebar [data-command-entry-id]',
+        ),
+      ).find((candidate) => candidate.dataset.commandEntryId === entryId);
+
+      button?.focus();
+      button?.scrollIntoView?.({ block: 'nearest' });
+    });
+  };
+
+  const getNextEntryId = (currentEntryId: string | undefined, key: string): string | undefined => {
+    if (runnableEntries.length === 0) return undefined;
+
+    if (key === 'Home') return runnableEntries[0]?.id;
+    if (key === 'End') return runnableEntries[runnableEntries.length - 1]?.id;
+
+    const direction = key === 'ArrowUp' || key === 'PageUp' ? -1 : 1;
+    const stepCount = key === 'PageDown' || key === 'PageUp' ? 5 : 1;
+    const currentIndex = Math.max(
+      0,
+      runnableEntries.findIndex((entry) => entry.id === currentEntryId),
+    );
+    const nextIndex =
+      (currentIndex + direction * stepCount + runnableEntries.length) % runnableEntries.length;
+
+    return runnableEntries[nextIndex]?.id;
+  };
+
+  const handleFilterKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+
+    event.preventDefault();
+    focusCommandEntry(
+      event.key === 'ArrowUp'
+        ? runnableEntries[runnableEntries.length - 1]?.id
+        : runnableEntries[0]?.id,
+    );
+  };
+
+  const handleListKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
+    if (!commandNavigationKeys.has(event.key)) return;
+
+    const currentEntryId =
+      event.target instanceof HTMLElement
+        ? event.target.closest<HTMLButtonElement>('[data-command-entry-id]')?.dataset.commandEntryId
+        : undefined;
+
+    event.preventDefault();
+    focusCommandEntry(getNextEntryId(currentEntryId ?? activeEntryId, event.key));
+  };
 
   return (
     <SideBarViewFrame
@@ -93,6 +181,7 @@ export function CommandManagementSidebar({
             placeholder="Filter"
             value={query}
             onChange={(event) => setQuery(event.currentTarget.value)}
+            onKeyDown={handleFilterKeyDown}
           />
         </SideBarHeaderControl>
       }
@@ -103,14 +192,20 @@ export function CommandManagementSidebar({
           {emptyLabel}
         </EmptyState>
       ) : filteredGroups.length === 1 ? (
-        <SideBarList aria-label="Commands" className="workbench-commands-sidebar__list">
+        <SideBarList
+          aria-label="Commands"
+          className={commandManagementListClassName}
+          onKeyDown={handleListKeyDown}
+        >
           {filteredGroups[0]?.entries.map((entry) => (
             <CommandSidebarListItem
               key={entry.id}
+              active={entry.id === activeEntryId}
               disabled={
                 entry.status !== 'available' || !onRunCommand || lastRun?.status === 'running'
               }
               entry={entry}
+              onActivate={() => setActiveEntryId(entry.id)}
               onRun={() => {
                 void onRunCommand?.(entry.id);
               }}
@@ -123,15 +218,18 @@ export function CommandManagementSidebar({
             children: (
               <SideBarList
                 aria-label={`${group.label} commands`}
-                className="workbench-commands-sidebar__list"
+                className={commandManagementListClassName}
+                onKeyDown={handleListKeyDown}
               >
                 {group.entries.map((entry) => (
                   <CommandSidebarListItem
                     key={entry.id}
+                    active={entry.id === activeEntryId}
                     disabled={
                       entry.status !== 'available' || !onRunCommand || lastRun?.status === 'running'
                     }
                     entry={entry}
+                    onActivate={() => setActiveEntryId(entry.id)}
                     onRun={() => {
                       void onRunCommand?.(entry.id);
                     }}
@@ -139,7 +237,6 @@ export function CommandManagementSidebar({
                 ))}
               </SideBarList>
             ),
-            defaultCollapsed: filteredGroups.length > 4,
             id: `command-group-${group.id}`,
             title: group.label,
           }))}
@@ -150,12 +247,16 @@ export function CommandManagementSidebar({
 }
 
 function CommandSidebarListItem({
+  active,
   disabled,
   entry,
+  onActivate,
   onRun,
 }: {
+  active: boolean;
   disabled: boolean;
-  entry: CommandManagementPanelProps['groups'][number]['entries'][number];
+  entry: CommandManagementEntry;
+  onActivate: () => void;
   onRun: () => void;
 }) {
   const shortcutLabel = entry.keybinding ? formatKeybindingLabel(entry.keybinding) : undefined;
@@ -163,9 +264,13 @@ function CommandSidebarListItem({
   return (
     <SideBarListItem
       className="workbench-commands-sidebar__item"
+      data-command-entry-id={entry.id}
       disabled={disabled}
+      selected={active}
       title={entry.id}
       onClick={onRun}
+      onFocus={onActivate}
+      onMouseEnter={onActivate}
     >
       <span className="workbench-commands-sidebar__label">{entry.label}</span>
       {shortcutLabel ? (

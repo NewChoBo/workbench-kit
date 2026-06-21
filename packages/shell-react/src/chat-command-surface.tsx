@@ -126,7 +126,7 @@ export function useWorkbenchChatCommandSurface({
 
   const commandSuggestPopover = (
     <WorkbenchCommandSuggest
-      activeCommandId={suggest.activeCommand?.id}
+      activeCommandId={suggest.activeCommandId}
       commands={suggest.suggestedCommands}
       query={suggest.commandQuery}
       visible={suggest.isOpen}

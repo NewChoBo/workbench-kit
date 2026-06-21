@@ -17,8 +17,10 @@ import { registerWorkbenchShellCommandHandlers } from './workbench-shell-command
 import {
   buildWorkbenchPaletteCommands,
   matchesWorkbenchCommandPaletteShortcut,
+  matchesWorkbenchQuickAccessShortcut,
   resolveShellCommandActivities,
   WORKBENCH_COMMAND_PALETTE_SHORTCUT,
+  WORKBENCH_QUICK_ACCESS_SHORTCUT,
 } from './workbench-command-palette.js';
 import { resolveExtensionKeybindingCommand } from './workbench-keybinding-bridge.js';
 
@@ -44,6 +46,7 @@ export function WorkbenchCommandHost({
 }: WorkbenchCommandHostProps) {
   const { executeCommand, extensionRegistry, keybindingOverrides, layoutService } = useWorkbench();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteQuery, setPaletteQuery] = useState('');
   const [layout, setLayout] = useState(() => layoutService.getState());
   const shellContextRef = useRef<WorkbenchShellCommandContext | undefined>(undefined);
 
@@ -131,6 +134,11 @@ export function WorkbenchCommandHost({
     setPaletteOpen(false);
   }, []);
 
+  const openPalette = useCallback((query = '') => {
+    setPaletteQuery(query);
+    setPaletteOpen(true);
+  }, []);
+
   const runPaletteCommand = useCallback(
     (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => {
       const finish = () => {
@@ -153,19 +161,23 @@ export function WorkbenchCommandHost({
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (!matchesWorkbenchCommandPaletteShortcut(event)) {
+      if (matchesWorkbenchCommandPaletteShortcut(event)) {
+        event.preventDefault();
+        openPalette('>');
         return;
       }
 
-      event.preventDefault();
-      setPaletteOpen(true);
+      if (matchesWorkbenchQuickAccessShortcut(event)) {
+        event.preventDefault();
+        openPalette();
+      }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [enableCommandPalette]);
+  }, [enableCommandPalette, openPalette]);
 
   useEffect(() => {
     if (!enableExtensionKeybindings) {
@@ -173,7 +185,10 @@ export function WorkbenchCommandHost({
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (matchesWorkbenchCommandPaletteShortcut(event)) {
+      if (
+        matchesWorkbenchCommandPaletteShortcut(event) ||
+        matchesWorkbenchQuickAccessShortcut(event)
+      ) {
         return;
       }
 
@@ -215,9 +230,11 @@ export function WorkbenchCommandHost({
         <WorkbenchCommandPalette
           commands={paletteCommands}
           open={paletteOpen}
-          placeholder="Type a command name"
+          placeholder="Search commands"
+          query={paletteQuery}
           title="Command Palette"
           onClose={closePalette}
+          onQueryChange={setPaletteQuery}
           onRunCommand={runPaletteCommand}
         />
       ) : null}
@@ -227,4 +244,8 @@ export function WorkbenchCommandHost({
 
 export function getWorkbenchCommandPaletteShortcutLabel() {
   return WORKBENCH_COMMAND_PALETTE_SHORTCUT;
+}
+
+export function getWorkbenchQuickAccessShortcutLabel() {
+  return WORKBENCH_QUICK_ACCESS_SHORTCUT;
 }

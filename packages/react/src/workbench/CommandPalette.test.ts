@@ -3,12 +3,14 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {
   WorkbenchCommandGroupShell,
+  WorkbenchCommandList,
   commandMenuItemsToWorkbenchCommandDescriptors,
   filterWorkbenchCommands,
   getNextWorkbenchCommandIndex,
   getWorkbenchCommandExecutionLabel,
   groupWorkbenchCommands,
   isWorkbenchCommandRunnable,
+  normalizeWorkbenchCommandQuery,
   type WorkbenchCommandDescriptor,
 } from './CommandPalette';
 
@@ -56,6 +58,13 @@ describe('workbench command helpers', () => {
       filterWorkbenchCommands({ commands, query: 'quality-gate' }).map((command) => command.id),
     ).toEqual(['operation.validateSelection']);
     expect(filterWorkbenchCommands({ commands, query: 'missing' })).toEqual([]);
+  });
+
+  it('treats a leading command prefix as palette chrome', () => {
+    expect(normalizeWorkbenchCommandQuery('> preview')).toBe('preview');
+    expect(
+      filterWorkbenchCommands({ commands, query: '> preview' }).map((command) => command.id),
+    ).toEqual(['artifact.openPreview']);
   });
 
   it('limits filtered commands when requested', () => {
@@ -230,10 +239,18 @@ describe('workbench command helpers', () => {
 
     expect(markup).toContain('ui-workbench-command-group-shell');
     expect(markup).toContain('Command groups');
+    expect(markup).toContain('ui-workbench-command-group-shell__content ui-workbench-scrollbar');
     expect(markup).toContain('View');
     expect(markup).toContain('Workspace');
     expect(markup).toContain('Validate selection');
     expect(markup).toContain('data-status="waiting"');
+  });
+
+  it('marks command lists as shared scrollbar surfaces', () => {
+    const markup = renderToStaticMarkup(createElement(WorkbenchCommandList, { commands }));
+
+    expect(markup).toContain('ui-workbench-command-list');
+    expect(markup).toContain('ui-workbench-scrollbar');
   });
 
   it('renders grouped command shell without group navigation', () => {

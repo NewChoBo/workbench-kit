@@ -46,6 +46,7 @@ export {
 } from './shell.js';
 export {
   getWorkbenchCommandPaletteShortcutLabel,
+  getWorkbenchQuickAccessShortcutLabel,
   WorkbenchCommandHost,
   type WorkbenchCommandHostProps,
 } from './workbench-command-host.js';
@@ -56,8 +57,10 @@ export {
 } from './workbench-keybinding-bridge.js';
 export {
   WORKBENCH_COMMAND_PALETTE_SHORTCUT,
+  WORKBENCH_QUICK_ACCESS_SHORTCUT,
   buildWorkbenchPaletteCommands,
   matchesWorkbenchCommandPaletteShortcut,
+  matchesWorkbenchQuickAccessShortcut,
   mergeWorkbenchCommandDescriptors,
   resolveShellCommandActivities,
 } from './workbench-command-palette.js';

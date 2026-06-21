@@ -1,6 +1,7 @@
 import {
   useEffect,
   useId,
+  useCallback,
   useMemo,
   useRef,
   useState,
@@ -21,6 +22,11 @@ import {
   isWorkbenchStatusDisabled,
   type WorkbenchStatus,
 } from './status';
+
+interface WorkbenchCommandPaletteKeyEvent {
+  key: string;
+  preventDefault: () => void;
+}
 
 export type WorkbenchCommandStatus = WorkbenchStatus;
 
@@ -143,6 +149,12 @@ function commandSearchText(command: WorkbenchCommandDescriptor) {
   );
 }
 
+export function normalizeWorkbenchCommandQuery(query = '') {
+  const trimmed = query.trimStart();
+
+  return trimmed.startsWith('>') ? trimmed.slice(1).trimStart() : query;
+}
+
 export function getWorkbenchCommandStatusLabel(status: WorkbenchCommandStatus) {
   return getWorkbenchStatusLabel(status);
 }
@@ -224,7 +236,9 @@ export function filterWorkbenchCommands({
   limit,
   query = '',
 }: WorkbenchCommandFilterInput) {
-  const tokens = normalizedSearchText(query).split(/\s+/).filter(Boolean);
+  const tokens = normalizedSearchText(normalizeWorkbenchCommandQuery(query))
+    .split(/\s+/)
+    .filter(Boolean);
   const filtered = tokens.length
     ? commands.filter((command) => {
         const searchText = commandSearchText(command);
@@ -349,10 +363,25 @@ export function WorkbenchCommandList({
 }: WorkbenchCommandListProps) {
   const generatedId = useId();
   const listId = id ?? generatedId;
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activeCommandId) return;
+
+    const activeElement = Array.from(
+      listRef.current?.querySelectorAll<HTMLElement>('[data-command-id]') ?? [],
+    ).find((element) => element.dataset.commandId === activeCommandId);
+
+    activeElement?.scrollIntoView?.({ block: 'nearest' });
+  }, [activeCommandId, commands]);
 
   if (commands.length === 0) {
     return (
-      <div id={id} className={cx('ui-workbench-command-list', className)} {...props}>
+      <div
+        id={id}
+        className={cx('ui-workbench-command-list', 'ui-workbench-scrollbar', className)}
+        {...props}
+      >
         <EmptyState compact icon="codicon-search">
           {emptyLabel}
         </EmptyState>
@@ -364,9 +393,10 @@ export function WorkbenchCommandList({
     <div
       id={id}
       aria-label={props['aria-label'] ?? 'Commands'}
-      className={cx('ui-workbench-command-list', className)}
+      className={cx('ui-workbench-command-list', 'ui-workbench-scrollbar', className)}
       role="listbox"
       {...props}
+      ref={listRef}
     >
       {commands.map((command, index) => {
         const active = command.id === activeCommandId;
@@ -386,6 +416,7 @@ export function WorkbenchCommandList({
             aria-selected={active}
             className="ui-workbench-command-item"
             data-active={active ? 'true' : undefined}
+            data-command-id={command.id}
             data-danger={command.danger ? 'true' : undefined}
             data-status={command.status ?? (command.disabled ? 'disabled' : 'idle')}
             disabled={disabled}
@@ -492,7 +523,10 @@ export function WorkbenchCommandGroupShell({
       {...props}
     >
       {showGroupNav ? (
-        <nav aria-label={groupNavLabel} className="ui-workbench-command-group-shell__nav">
+        <nav
+          aria-label={groupNavLabel}
+          className="ui-workbench-command-group-shell__nav ui-workbench-scrollbar"
+        >
           {groups.map((group) => (
             <a
               key={group.id}
@@ -505,7 +539,7 @@ export function WorkbenchCommandGroupShell({
           ))}
         </nav>
       ) : null}
-      <div className="ui-workbench-command-group-shell__content">
+      <div className="ui-workbench-command-group-shell__content ui-workbench-scrollbar">
         {groups.map((group) => {
           const titleId = `${generatedId}-${group.id}-title`;
 
@@ -616,41 +650,49 @@ export function WorkbenchCommandPalette({
     onQueryChange,
     query,
   });
+  const commandQuery = normalizeWorkbenchCommandQuery(resolvedQuery);
   const filteredCommands = useMemo(
-    () => filterWorkbenchCommands({ commands, query: resolvedQuery }),
-    [commands, resolvedQuery],
+    () => filterWorkbenchCommands({ commands, query: commandQuery }),
+    [commandQuery, commands],
   );
-  const resolvedActiveCommandId = activeCommandId ?? uncontrolledActiveCommandId;
+  const fallbackActiveCommand = filteredCommands.find((command) =>
+    isWorkbenchCommandRunnable(command),
+  );
+  const resolvedActiveCommandId =
+    activeCommandId ?? uncontrolledActiveCommandId ?? fallbackActiveCommand?.id;
   const activeIndex = filteredCommands.findIndex(
     (command) => command.id === resolvedActiveCommandId,
   );
-  const activeCommand =
-    activeIndex >= 0
-      ? filteredCommands[activeIndex]
-      : filteredCommands.find((command) => isWorkbenchCommandRunnable(command));
+  const activeCommand = activeIndex >= 0 ? filteredCommands[activeIndex] : fallbackActiveCommand;
 
-  const updateActiveCommand = (commandId: string | undefined) => {
-    if (!commandId) return;
-    if (activeCommandId === undefined) {
-      setUncontrolledActiveCommandId(commandId);
-    }
-    onActiveCommandChange?.(commandId);
-  };
+  const updateActiveCommand = useCallback(
+    (commandId: string | undefined) => {
+      if (!commandId) return;
+      if (activeCommandId === undefined) {
+        setUncontrolledActiveCommandId(commandId);
+      }
+      onActiveCommandChange?.(commandId);
+    },
+    [activeCommandId, onActiveCommandChange],
+  );
 
-  const restoreFocus = () => {
+  const restoreFocus = useCallback(() => {
     if (!restoreFocusOnClose) return;
     previousFocusRef.current?.focus();
-  };
+  }, [restoreFocusOnClose]);
 
-  const closePalette = () => {
+  const closePalette = useCallback(() => {
     restoreFocus();
     onClose();
-  };
+  }, [onClose, restoreFocus]);
 
-  const runCommand = (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => {
-    if (!isWorkbenchCommandRunnable(command)) return;
-    onRunCommand?.(command, context);
-  };
+  const runCommand = useCallback(
+    (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => {
+      if (!isWorkbenchCommandRunnable(command)) return;
+      onRunCommand?.(command, context);
+    },
+    [onRunCommand],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -662,51 +704,117 @@ export function WorkbenchCommandPalette({
       window.cancelAnimationFrame(frame);
       restoreFocus();
     };
-  }, [open]);
+  }, [open, restoreFocus]);
 
   useEffect(() => {
     if (!open) return;
-    if (filteredCommands.length === 0) return;
-    if (activeCommand && isWorkbenchCommandRunnable(activeCommand)) return;
+    if (activeCommandId !== undefined) return;
 
-    const nextIndex = getNextWorkbenchCommandIndex({
-      commands: filteredCommands,
-      currentIndex: -1,
-      direction: 'next',
+    setUncontrolledActiveCommandId((currentCommandId) => {
+      const nextCommandId = fallbackActiveCommand?.id;
+
+      return currentCommandId === nextCommandId ? currentCommandId : nextCommandId;
     });
-    updateActiveCommand(filteredCommands[nextIndex]?.id);
-  }, [activeCommand, filteredCommands, open]);
+  }, [activeCommandId, fallbackActiveCommand?.id, open]);
+
+  const handlePaletteKeyDown = useCallback(
+    (event: WorkbenchCommandPaletteKeyEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closePalette();
+        return;
+      }
+
+      if (
+        event.key !== 'ArrowDown' &&
+        event.key !== 'ArrowUp' &&
+        event.key !== 'Home' &&
+        event.key !== 'End' &&
+        event.key !== 'PageDown' &&
+        event.key !== 'PageUp' &&
+        event.key !== 'Enter'
+      ) {
+        return;
+      }
+
+      if (event.key === 'Enter') {
+        if (!activeCommand) return;
+        event.preventDefault();
+        runCommand(activeCommand, {
+          index: filteredCommands.findIndex((command) => command.id === activeCommand.id),
+          query: commandQuery,
+          source: 'palette',
+        });
+        return;
+      }
+
+      event.preventDefault();
+
+      const direction =
+        event.key === 'ArrowUp' || event.key === 'End' || event.key === 'PageUp'
+          ? 'previous'
+          : 'next';
+      const stepCount = event.key === 'PageDown' || event.key === 'PageUp' ? 5 : 1;
+      let nextIndex =
+        event.key === 'Home'
+          ? getNextWorkbenchCommandIndex({
+              commands: filteredCommands,
+              currentIndex: -1,
+              direction: 'next',
+            })
+          : event.key === 'End'
+            ? getNextWorkbenchCommandIndex({
+                commands: filteredCommands,
+                currentIndex: 0,
+                direction: 'previous',
+              })
+            : activeIndex;
+
+      if (event.key !== 'Home' && event.key !== 'End') {
+        for (let step = 0; step < stepCount; step += 1) {
+          const steppedIndex = getNextWorkbenchCommandIndex({
+            commands: filteredCommands,
+            currentIndex: nextIndex,
+            direction,
+          });
+
+          if (steppedIndex < 0 || steppedIndex === nextIndex) break;
+          nextIndex = steppedIndex;
+        }
+      }
+
+      if (nextIndex >= 0) {
+        updateActiveCommand(filteredCommands[nextIndex]?.id);
+      }
+    },
+    [
+      activeCommand,
+      activeIndex,
+      closePalette,
+      commandQuery,
+      filteredCommands,
+      runCommand,
+      updateActiveCommand,
+    ],
+  );
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+
+      handlePaletteKeyDown(event);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [handlePaletteKeyDown, open]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      closePalette();
-      return;
-    }
-
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Enter') return;
-
-    if (event.key === 'Enter') {
-      if (!activeCommand) return;
-      event.preventDefault();
-      runCommand(activeCommand, {
-        index: filteredCommands.findIndex((command) => command.id === activeCommand.id),
-        query: resolvedQuery,
-        source: 'palette',
-      });
-      return;
-    }
-
-    const nextIndex = getNextWorkbenchCommandIndex({
-      commands: filteredCommands,
-      currentIndex: activeIndex,
-      direction: event.key === 'ArrowDown' ? 'next' : 'previous',
-    });
-
-    if (nextIndex >= 0) {
-      event.preventDefault();
-      updateActiveCommand(filteredCommands[nextIndex]?.id);
-    }
+    handlePaletteKeyDown(event);
   };
 
   if (!open) return null;
@@ -736,6 +844,7 @@ export function WorkbenchCommandPalette({
           <i aria-hidden="true" className="codicon codicon-search" />
           <TextInput
             ref={inputRef}
+            aria-activedescendant={activeCommand ? `${listId}-${activeCommand.id}` : undefined}
             aria-controls={listId}
             aria-label={placeholder}
             className="ui-workbench-command-palette__input"
