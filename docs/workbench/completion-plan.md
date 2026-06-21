@@ -310,7 +310,7 @@ pnpm validate:full
 
 Use this checklist for branch merge or release tagging of the Theia-inspired lane.
 
-- [ ] **Runnable host:** `pnpm build:workbench-extensions && pnpm workbench-sample` shows activity bar, explorer with workspace tree, editor tabs, status bar.
+- [x] **Runnable host:** `pnpm build:workbench-extensions && pnpm workbench-sample` shows activity bar, explorer with workspace tree, editor tabs, status bar.
 - [x] **Factories wired:** View hosts created via `ViewHostFactoryRegistry`; editors via `EditorHostFactoryRegistry`.
 - [ ] **Resources consumed:** Explorer CRUD and editor save paths use `WorkspaceResourceTransaction` / mutations, not ad hoc reducer calls from UI.
 - [ ] **Commands:** Built-in explorer operations registered as commands with shared handlers for palette, context menu, and tree UI.
@@ -382,9 +382,10 @@ WB-29 closeout → WB-30 → WB-31 → Lane A DoD checklist
 
 ## Progress log
 
-| Date       | Note                                                                                             |
-| ---------- | ------------------------------------------------------------------------------------------------ |
-| 2026-06-20 | WB-28 shell/editor scope treated as landed; WB-29 command handlers landed and closeout remains   |
-| 2026-06-16 | WB-27 committed (`813cbca`); WB-28 S1 foundation (EditorService, resolver registry, React hooks) |
-| 2026-06-16 | Initial completion plan authored; WB-27 noted as uncommitted                                     |
-| 2026-06-16 | Track D cross-ref added to §5 Cleanup & Debt Register                                            |
+| Date       | Note                                                                                                                                                         |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-06-21 | Runnable host smoke verified with bundled extensions, sample production build, dummy login, activity bar, explorer tree, editor empty state, and status bar. |
+| 2026-06-20 | WB-28 shell/editor scope treated as landed; WB-29 command handlers landed and closeout remains                                                               |
+| 2026-06-16 | WB-27 committed (`813cbca`); WB-28 S1 foundation (EditorService, resolver registry, React hooks)                                                             |
+| 2026-06-16 | Initial completion plan authored; WB-27 noted as uncommitted                                                                                                 |
+| 2026-06-16 | Track D cross-ref added to §5 Cleanup & Debt Register                                                                                                        |

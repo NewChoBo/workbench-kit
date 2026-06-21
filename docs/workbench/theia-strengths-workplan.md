@@ -40,7 +40,7 @@ preference scopes.
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | SDK view host     | `ViewHost` exposes lifecycle hooks; hosts resolve through `ViewHostFactoryRegistry`                                                                                                                                                                                         | Additional editor-specific lifecycle hooks should wait for a second editor host.    |
 | Core registries   | `ExtensionRegistry`, `ViewRegistry`, `MenuRegistry`, `ActivityRegistry`, `ConfigurationRegistry`, `CapabilityRegistry`, preference scopes, and host factory registries exist                                                                                                | User/resource/secret preference scopes remain future hardening.                     |
-| React host        | `WorkbenchShell` activates active views, renders provider output, notifies view host lifecycle hooks, renders manifest icons as VS Code codicons, creates view hosts through factories, renders editor tabs through `EditorArea`, and exposes read-only devtools inspectors | Optional full sample browser smoke remains.                                         |
+| React host        | `WorkbenchShell` activates active views, renders provider output, notifies view host lifecycle hooks, renders manifest icons as VS Code codicons, creates view hosts through factories, renders editor tabs through `EditorArea`, and exposes read-only devtools inspectors | Full sample browser smoke passed on 2026-06-21.                                     |
 | Workspace         | `VirtualWorkspaceState`, reducer actions, search, tree, selection, draft helpers, and resource URI/snapshot/mutation/transaction contracts exist                                                                                                                            | Repository adapter and transaction journal for persistence are not implemented yet. |
 | Built-in explorer | Registers explorer activity/view provider plus workspace create/open/copy/rename/delete/move command handlers; reveal/focus bridge syncs tree selection with editor tabs                                                                                                    | Optional sample browser smoke only.                                                 |
 | Sample host       | `examples/workbench-sample` — `pnpm workbench-sample` with bundled extensions, editor tabs, virtual workspace, and dummy auth backend                                                                                                                                       | Plugin store and real backend integration remain deferred.                          |
@@ -69,6 +69,10 @@ preference scopes.
   default/workspace/local merge is implemented, and read-only devtools include
   command, menu, keybinding, context key, view, capability, layout, editor, and
   workspace transaction snapshots.
+- 2026-06-21: Runnable sample host smoke passed after `node
+scripts/bundle-workbench-extensions.mjs` and `pnpm --filter workbench-sample
+build`. Browser smoke verified dummy login, activity bar, explorer tree,
+  editor empty state, status bar, and zero console errors.
 - 2026-06-16: WB-28 S1 added `EditorService`, `EditorResolverRegistry`, SDK editor contribution/resolver types, and React `useEditor*` hooks wired to `EditorHostFactoryRegistry`.
 - 2026-06-14: WB-27 added workspace resource contracts (`resource-uri`, `resource-snapshot`,
   `resource-mutation`, `resource-transaction`) on top of `virtualWorkspaceReducer` without
