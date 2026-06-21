@@ -147,6 +147,11 @@ server process.
 | `json-widget` (`jdw`) | JDW parse, layout, screen-spec, widget documents              |
 | `jdw-editor`          | Screen spec editor UI                                         |
 
+`workspace` keeps public reducer/action APIs in `virtualWorkspace.ts`; reusable
+normalization, conflict, selection, and expansion helpers live in
+`virtualWorkspaceModel.ts` so explorer/search/editor changes do not all collide
+in the reducer file.
+
 These stay **outside** the extension host; React modules (`jdw`, `widget-tree`, etc.) consume them from `@workbench-kit/react` exports until a future optional split.
 
 ## Migration Stance
