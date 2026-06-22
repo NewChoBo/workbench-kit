@@ -112,6 +112,8 @@ export type {
   StorySidebarFrameProps,
   StorySidebarFrameVariant,
 } from './story/StorySidebarFrame';
+export { ChatRuntimeHarness } from './story/ChatRuntimeHarness';
+export type { ChatRuntimeHarnessProps } from './story/ChatRuntimeHarness';
 export {
   WorkbenchShortcutCommandBridge,
   getWorkbenchShortcutCommandBindings,
