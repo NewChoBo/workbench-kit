@@ -36,7 +36,13 @@ to replace browser E2E smoke for the flows it explicitly covers.
 
 ## Current Stories
 
-The current required set is sample-host focused:
+The required gate combines **~5 integration** stories in `WorkbenchSample.stories.tsx`
+(sample app behind `pnpm dev`) with **~23 component** stories when package stories
+are included in the Storybook glob. Target **~25–30** required total; see
+[Story scope balance](../workbench/storybook-e2e-coverage.md#story-scope-balance)
+for tier rules and duplicate avoidance.
+
+Integration required set:
 
 1. `Workbench Sample/Dev App` - Login gate
 2. `Workbench Sample/Dev App` - Login submit flow
@@ -106,8 +112,8 @@ Interaction tests use two tags:
   and `pnpm validate:full`
 
 Promote a baseline story to required only after it is stable across repeated runs.
-The current required stories are the five `Workbench Sample/Dev App` flows listed
-above. See `scripts/test-storybook-play.mjs` for tag filtering.
+See [Story scope balance](../workbench/storybook-e2e-coverage.md#story-scope-balance)
+before expanding the gate beyond ~30 stories.
 
 The default `test:storybook-play` runner executes stories tagged with
 `storybook-play-baseline`; pass `--required` to run only `storybook-play-required` stories.
