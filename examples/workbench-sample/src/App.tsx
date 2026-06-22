@@ -52,6 +52,7 @@ import {
 import {
   createSamplePermissionRoleSettingsCategory,
 } from './sample-permission-role-settings.js';
+import { createSamplePermissionRoleProfileExtra } from './sample-permission-role-profile.js';
 import { SampleAuthShell } from './SampleAuthShell.js';
 import { useSampleAccount } from './sample-account-context.js';
 import {
@@ -279,6 +280,16 @@ function SampleWorkbenchHost({
     [auth.profile?.accountId, onPermissionRoleOverrideChange, permissionRoleOverride],
   );
 
+  const permissionRoleProfileExtra = useMemo(
+    () =>
+      createSamplePermissionRoleProfileExtra({
+        authDerivedRole: resolveSampleWorkbenchRole(auth.profile?.accountId),
+        roleOverride: permissionRoleOverride,
+        onRoleOverrideChange: onPermissionRoleOverrideChange,
+      }),
+    [auth.profile?.accountId, onPermissionRoleOverrideChange, permissionRoleOverride],
+  );
+
   const handleRunCommand = useCallback(
     (
       command: Parameters<typeof runSamplePaletteCommand>[0],
@@ -321,6 +332,7 @@ function SampleWorkbenchHost({
         onStatusItemActivate={handleStatusItemActivate}
         onThemeChange={handleThemeChange}
         profile={profile}
+        profileExtraContent={permissionRoleProfileExtra}
         rootClassName="ide-root"
         statusSections={statusSections}
         theme={appearance.themePreference}
@@ -406,15 +418,17 @@ function SampleHelpContent() {
           </li>
           <li>
             Permission role demo overrides are restored from browser local storage (
-            <code>workbench-kit/.workbench/sample-permission-role</code>). Open Settings and choose{' '}
+            <code>workbench-kit/.workbench/sample-permission-role</code>). Open Profile and use{' '}
+            <strong>Permission (demo)</strong>, open Settings and choose{' '}
             <strong>Permissions (demo)</strong>, or run <strong>Permission Role (Demo)</strong>{' '}
             from the command palette.
           </li>
           <li>Toggle the color scheme from the status bar to review theme persistence.</li>
           <li>Toggle the primary sidebar from the status bar to review layout persistence.</li>
           <li>
-            Open the profile action above Settings to review the service account, or open Settings
-            and choose <strong>Linked Accounts</strong> to review project integrations.
+            Open the profile action above Settings to review the service account and switch demo
+            permission roles, or open Settings and choose <strong>Linked Accounts</strong> to review
+            project integrations.
           </li>
           <li>
             Press <code>{getWorkbenchCommandPaletteShortcutLabel()}</code> and run{' '}

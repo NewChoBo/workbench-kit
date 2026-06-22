@@ -21,11 +21,12 @@ export interface WorkbenchProfileInput {
 }
 
 export interface WorkbenchProfileModalProps {
+  extraContent?: ReactNode | undefined;
   profile: WorkbenchProfileInput;
   onClose: () => void;
 }
 
-export function WorkbenchProfileModal({ profile, onClose }: WorkbenchProfileModalProps) {
+export function WorkbenchProfileModal({ extraContent, profile, onClose }: WorkbenchProfileModalProps) {
   const initials = getProfileInitials(profile.displayName);
   const details = createProfileDetails(profile);
 
@@ -82,6 +83,8 @@ export function WorkbenchProfileModal({ profile, onClose }: WorkbenchProfileModa
           ))}
         </dl>
       </section>
+
+      {extraContent}
     </Modal>
   );
 }

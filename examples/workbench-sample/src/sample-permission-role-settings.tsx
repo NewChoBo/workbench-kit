@@ -4,14 +4,15 @@ import type { WorkbenchPermissionRole } from '@workbench-kit/platform';
 import type { WorkbenchSettingsCategory } from '@workbench-kit/react/workbench/settings';
 
 import type { SamplePermissionRoleOverride } from './sample-permission-role-storage.js';
+import {
+  SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS,
+  resolveSamplePermissionRoleOptionId,
+  resolveSamplePermissionRoleOverrideFromOptionId,
+} from './sample-permission-role-controls.js';
 
 export const SAMPLE_PERMISSION_ROLE_SETTINGS_CATEGORY_ID = 'workbench.sample.permissions-demo';
 
-const ROLE_OVERRIDE_OPTIONS = [
-  { id: 'auth', label: 'Use sign-in role' },
-  { id: 'admin', label: 'Admin' },
-  { id: 'basic', label: 'Basic' },
-] as const;
+const ROLE_OVERRIDE_OPTIONS = SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS;
 
 export interface SamplePermissionRoleSettingsInput {
   authDerivedRole: WorkbenchPermissionRole;
@@ -43,8 +44,7 @@ function SamplePermissionRoleSettingsSection({
   roleOverride,
   onRoleOverrideChange,
 }: SamplePermissionRoleSettingsInput) {
-  const selectedOptionId =
-    roleOverride === null ? 'auth' : roleOverride === 'admin' ? 'admin' : 'basic';
+  const selectedOptionId = resolveSamplePermissionRoleOptionId(roleOverride);
   const effectiveRole = roleOverride ?? authDerivedRole;
 
   return (
@@ -64,13 +64,9 @@ function SamplePermissionRoleSettingsSection({
             controlWidth="full"
             value={selectedOptionId}
             onValueChange={(nextValue) => {
-              if (nextValue === 'auth') {
-                onRoleOverrideChange(null);
-                return;
-              }
-
-              if (nextValue === 'admin' || nextValue === 'basic') {
-                onRoleOverrideChange(nextValue);
+              const nextOverride = resolveSamplePermissionRoleOverrideFromOptionId(nextValue);
+              if (nextOverride !== undefined) {
+                onRoleOverrideChange(nextOverride);
               }
             }}
           >
@@ -82,9 +78,8 @@ function SamplePermissionRoleSettingsSection({
           </Select>
         </Field>
         <p className="workbench-sample-permission-role-settings__hint">
-          If Settings is hidden while Basic is active, run{' '}
-          <strong>Permission Role (Demo)</strong> from the command palette or switch roles here
-          before closing this dialog.
+          If Settings is hidden while Basic is active, open Profile and switch roles here or run{' '}
+          <strong>Permission Role (Demo)</strong> from the command palette.
         </p>
       </div>
     </WorkbenchSettingsSection>

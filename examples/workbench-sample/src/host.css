@@ -78,3 +78,39 @@ body.ui-workbench-host {
   color: var(--vscode-textPreformat-foreground, var(--color-text));
   font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
 }
+
+.workbench-sample-permission-role-profile__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.workbench-sample-permission-role-profile__header h3 {
+  margin: 0;
+}
+
+.workbench-sample-permission-role-profile__summary,
+.workbench-sample-permission-role-profile__hint {
+  margin: 0;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: var(--font-size-sm, 0.875rem);
+  line-height: 1.5;
+}
+
+.workbench-sample-permission-role-profile .ui-segmented-control__item {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.workbench-sample-permission-role-settings {
+  display: grid;
+  gap: 12px;
+}
+
+.workbench-sample-permission-role-settings__hint {
+  margin: 0;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: var(--font-size-sm, 0.875rem);
+  line-height: 1.5;
+}

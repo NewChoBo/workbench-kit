@@ -83,6 +83,7 @@ export interface WorkbenchShellProps {
   onStatusItemActivate?: (item: StatusBarItemModel) => void;
   primarySidebar?: ReactNode;
   profile?: WorkbenchProfileInput | undefined;
+  profileExtraContent?: ReactNode;
   rootClassName?: string;
   statusSections?: StatusBarSectionModel[];
   theme?: string;
@@ -114,6 +115,7 @@ export function WorkbenchShell({
   onStatusItemActivate,
   primarySidebar,
   profile,
+  profileExtraContent,
   rootClassName,
   statusSections,
   theme,
@@ -497,7 +499,11 @@ export function WorkbenchShell({
             />
           ) : null}
           {isProfileOpen && profile ? (
-            <WorkbenchProfileModal profile={profile} onClose={() => setProfileOpen(false)} />
+            <WorkbenchProfileModal
+              extraContent={profileExtraContent}
+              profile={profile}
+              onClose={() => setProfileOpen(false)}
+            />
           ) : null}
           {isHelpOpen && helpContent ? (
             <Modal
