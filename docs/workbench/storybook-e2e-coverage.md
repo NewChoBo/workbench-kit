@@ -12,6 +12,11 @@ Today that is:
 
 ```text
 examples/workbench-sample/src/**/*.stories.@(ts|tsx)
+packages/react/src/primitives/Controls.stories.@(ts|tsx)
+packages/react/src/primitives/EditorChrome.stories.@(ts|tsx)
+packages/react/src/modal/OverlayDialogs.stories.@(ts|tsx)
+packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)
+packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)
 ```
 
 The canonical integration story file is:
@@ -24,33 +29,35 @@ That file renders `examples/workbench-sample/src/App.tsx` directly and imports t
 sample host CSS, so integration stories follow the dev sample bootstrap instead of a
 separate story-only workbench harness.
 
-Component stories may live beside their package modules (for example
-`packages/react/src/workbench/**/*.stories.tsx`) when they use the shared story
-harness (`StorySidebarFrame`, `StoryWorkbenchShellFrame`, `ChatRuntimeHarness`) and
-are included in the Storybook glob. Do not add a second integration harness such as
-`WorkbenchStandaloneShell` story copies or removed `StandaloneShell` fixtures.
+Component stories live beside their package modules only when they are explicitly
+listed in `.storybook/main.ts`. Do not use broad package globs and do not add a
+second integration harness such as `WorkbenchStandaloneShell` story copies or
+removed `StandaloneShell` fixtures.
 
 ## Story scope balance
 
 Use tiers to decide what belongs in Storybook and whether it blocks release.
 
-| Tier | What | Gate | Examples |
-| ---- | ---- | ---- | -------- |
-| Component | Single component or panel; args plus one or two play flows | `storybook-play-baseline`, or `storybook-play-required` when user-facing and stable | `ChatPanel`, `AppearanceSettings`, `ExtensionManagementSidebar` |
-| Integration | Full sample shell; one scenario per concern | `storybook-play-required` sparingly (~5) | `Workbench Sample/Dev App` login, journey, permission scope |
-| Visual / manual | Docs, layout matrix, no play or smoke-only | Never required | Shell verification matrix, layout primitives |
-| Avoid | Duplicate full-shell stories, orphan plays, per-story CSS on product components, 100+ line inline fixtures | Remove or demote | Removed `StandaloneShell`; duplicate sample-shell copies |
+| Tier            | What                                                                                                       | Gate                                                                                | Examples                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Component       | Single component or panel; args plus one or two play flows                                                 | `storybook-play-baseline`, or `storybook-play-required` when user-facing and stable | `Controls`, `EditorTabs`, `ChatPanel`, `WorkspaceSearchPanel` |
+| Integration     | Full sample shell; one scenario per concern                                                                | `storybook-play-required` sparingly (~5)                                            | `Workbench Sample/Dev App` login, journey, permission scope   |
+| Visual / manual | Docs, layout matrix, no play or smoke-only                                                                 | Never required                                                                      | Shell verification matrix, layout primitives                  |
+| Avoid           | Duplicate full-shell stories, orphan plays, per-story CSS on product components, 100+ line inline fixtures | Remove or demote                                                                    | Removed `StandaloneShell`; duplicate sample-shell copies      |
 
 ### Rules to prevent excess
 
 - **One integration path per concern.** Do not require the same assertion in both a
   component story and a sample integration story unless the tiers prove different
   contracts (panel API vs host wiring).
-- **Component framing.** Prefer `StorySidebarFrame` / `StoryWorkbenchShellFrame` and
-  shared harness modules under `packages/react/src/workbench/story/`. Do not attach
-  inline `style` to product components in stories.
+- **Component framing.** Prefer one small local harness per story. Use
+  `StorySidebarFrame` / `StoryWorkbenchShellFrame` only when the component needs
+  workbench panel framing. Pick the frame by production placement: sidebar panel,
+  editor/main area, settings/form surface, or overlay trigger surface. Do not
+  attach inline `style` to product components in stories.
 - **Required tag discipline.** Tag `storybook-play-required` only for flows that
-  block release. Target roughly **25–30** required stories, not 50+.
+  block release. Keep the current curated gate small, roughly sample integration
+  plus five component stories, unless a broader matrix has an explicit owner.
 - **Orphan plays.** Every `play` function must carry `storybook-play-baseline` or
   `storybook-play-required`. Delete the play or add a tag.
 - **New component default.** Ship one default story (args / static render). Add at
@@ -65,21 +72,25 @@ See also `docs/conventions/storybook.md` for promotion criteria and scripts.
 
 ### Integration tier (sample app)
 
-| Story | Flow covered |
-| ----- | ------------ |
-| `Workbench Sample/Dev App` - Login gate | Unauthenticated sample login screen and dummy credentials copy |
-| `Workbench Sample/Dev App` - Login submit flow | Dummy backend sign-in failure, error display, successful tester sign-in, and shell handoff |
-| `Workbench Sample/Dev App` - Tester workbench | Authenticated administrator workbench shell, explorer, status bar, and activity bar |
+| Story                                               | Flow covered                                                                                                                                                     |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Workbench Sample/Dev App` - Login gate             | Unauthenticated sample login screen and dummy credentials copy                                                                                                   |
+| `Workbench Sample/Dev App` - Login submit flow      | Dummy backend sign-in failure, error display, successful tester sign-in, and shell handoff                                                                       |
+| `Workbench Sample/Dev App` - Tester workbench       | Authenticated administrator workbench shell, explorer, status bar, and activity bar                                                                              |
 | `Workbench Sample/Dev App` - Tester dev app journey | Dev-app integration path: startup editor state, search result open, command palette, chat, AI chat composer, settings, profile permission override, and sign-out |
-| `Workbench Sample/Dev App` - Basic permission scope | Basic account permission projection; only Explorer and Profile remain visible |
+| `Workbench Sample/Dev App` - Basic permission scope | Basic account permission projection; only Explorer and Profile remain visible                                                                                    |
 
 ### Component tier (package harness)
 
-When component stories are enabled in the Storybook glob, the required component set
-targets **~23** stories across panels such as chat runtime, settings modals, workspace
-explorer/search/editor, extension sidebar, confirmation flow, widget-tree lab, and
-editor pane toggles. Each file should contribute one or two required plays, not a
-mini integration suite.
+The current required component set is intentionally small:
+
+| Story                                                          | Container                            | Flow covered                                                                          |
+| -------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------- |
+| `React/Primitives/Controls` - Form controls                    | Settings/form surface                | Controlled text, number, checkbox, select, textarea, button, and icon-button behavior |
+| `React/Primitives/Editor Chrome` - Tabs and mode controls      | Editor/main area                     | Editor tab selection, mode segmented control, close action, and new-tab action        |
+| `React/Overlay/Dialog Actions` - Confirmation and context menu | Main-area trigger with fixed overlay | Confirm dialog cancel/confirm plus context-menu disabled and select behavior          |
+| `React/Workbench/Chat Components` - Runtime controls           | Sidebar chat panel                   | Chat command proposal allow flow plus composer submit/reset                           |
+| `React/Workbench/Workspace Search` - Search panel flow         | Sidebar search panel                 | Empty, result, Enter activation, clear, no-result, and refresh behavior               |
 
 Add a required story only when it proves a stable, user-visible flow and can fail
 with an actionable product-level case name. Promote from `storybook-play-baseline`
@@ -88,17 +99,17 @@ after repeated green runs.
 ### Duplicate concern audit (post-harness refactor)
 
 After the shared harness refactor and `StandaloneShell` removal, watch these overlaps
-when both component and integration tiers are present (~28 required total):
+when both component and integration tiers are present:
 
-| Concern | Component / panel | Integration | Verdict |
-| ------- | ----------------- | ----------- | ------- |
-| Settings appearance | `AppearanceSettings` | Journey settings + any sample-shell settings story | **Review** — keep component for schema/combobox contract; integration proves modal open from activity bar only |
-| Extensions list | `ExtensionManagementSidebar` | Sample extensions view or journey | **Review** — avoid duplicate install/list assertions; pick one required path |
-| Permission projection | Profile / role controls (component) | `Basic permission scope`, journey profile override | **Justified split** — sign-in role vs runtime override vs activity-bar projection |
-| Search | `WorkspaceSearchPanel` (panel flows) | Journey search open | **Justified split** — panel API vs activity wiring |
-| Chat / AI | `ChatPanel` runtime flows | Journey chat + AI composer | **Justified split** — transport/runtime vs sidebar navigation |
-| Authenticated shell smoke | `Integrated Shell` or workbench smoke | `Tester workbench` / sample authenticated story | **Avoid duplicate** — one required authenticated shell smoke across tiers |
-| Full-shell harness | — | Second sample-shell file mirroring `WorkbenchSample` | **Remove** — max one integration file per host (`App.tsx`) |
+| Concern                   | Component / panel                     | Integration                                          | Verdict                                                                                                        |
+| ------------------------- | ------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Settings appearance       | `AppearanceSettings`                  | Journey settings + any sample-shell settings story   | **Review** — keep component for schema/combobox contract; integration proves modal open from activity bar only |
+| Extensions list           | `ExtensionManagementSidebar`          | Sample extensions view or journey                    | **Review** — avoid duplicate install/list assertions; pick one required path                                   |
+| Permission projection     | Profile / role controls (component)   | `Basic permission scope`, journey profile override   | **Justified split** — sign-in role vs runtime override vs activity-bar projection                              |
+| Search                    | `WorkspaceSearchPanel` (panel flows)  | Journey search open                                  | **Justified split** — panel API vs activity wiring                                                             |
+| Chat / AI                 | `ChatPanel` runtime flows             | Journey chat + AI composer                           | **Justified split** — transport/runtime vs sidebar navigation                                                  |
+| Authenticated shell smoke | `Integrated Shell` or workbench smoke | `Tester workbench` / sample authenticated story      | **Avoid duplicate** — one required authenticated shell smoke across tiers                                      |
+| Full-shell harness        | —                                     | Second sample-shell file mirroring `WorkbenchSample` | **Remove** — max one integration file per host (`App.tsx`)                                                     |
 
 No new excess was introduced by the harness refactor itself. The main risk is
 re-adding parallel full-shell stories or requiring the same UI assertion at both
@@ -109,6 +120,8 @@ component and integration tiers without a tier-specific reason.
 | Script                              | Scope                                              |
 | ----------------------------------- | -------------------------------------------------- |
 | `pnpm storybook`                    | Local Storybook dev server on `127.0.0.1:6010`     |
+| `pnpm storybook:components`         | Local Storybook opened on the first component case |
+| `pnpm storybook:sample`             | Local Storybook opened on the sample journey case  |
 | `pnpm build:storybook`              | Static Storybook build                             |
 | `pnpm test:storybook-play:required` | Required play stories only                         |
 | `pnpm validate:ui`                  | `build:storybook` + `test:storybook-play:required` |

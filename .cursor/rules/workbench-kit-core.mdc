@@ -18,12 +18,16 @@ Repository: `NewChoBo/workbench-kit` (pnpm monorepo, `@workbench-kit/*` packages
 ## Storybook
 
 - Storybook currently validates the `examples/workbench-sample` app behind
-  `pnpm dev`; do not reintroduce package-wide story galleries without an
-  explicit owner and required verification path.
+  `pnpm dev` plus a small curated package-story tier; do not reintroduce
+  package-wide story galleries without an explicit owner and required
+  verification path.
+- Component stories must choose the shared story frame that matches production
+  placement before adding interactions: sidebar panel, editor/main area,
+  settings/form surface, or overlay trigger surface.
 - Storybook changes should follow `docs/conventions/storybook.md` and update
   `docs/workbench/storybook-e2e-coverage.md` when required flows change.
-- Run `pnpm validate:ui` for Storybook config, stories, or sample-host UI flows
-  that are intended to replace browser E2E smoke.
+- Run `pnpm validate:ui` for Storybook config, stories, sample-host flows, or
+  curated component flows that are intended to replace browser E2E smoke.
 
 ## Change discipline
 

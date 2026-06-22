@@ -62,7 +62,7 @@ const preview: Preview = {
   parameters: {
     options: {
       storySort: {
-        order: ['Workbench Sample'],
+        order: ['Workbench Sample', 'React'],
         method: 'alphabetical',
         locales: 'en-US',
       },

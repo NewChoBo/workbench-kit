@@ -8,15 +8,22 @@ to replace browser E2E smoke for the flows it explicitly covers.
 
 - Keep a root `.storybook` directory.
 - Use `@storybook/react-vite`.
-- Collect stories only from `examples/workbench-sample/src/**/*.stories.tsx`.
-- Render `examples/workbench-sample/src/App.tsx` directly in required stories.
-- Treat `examples/workbench-sample` as the canonical Storybook source until a
-  broader story matrix has an explicit maintenance plan, owner, and required
-  verification path.
-- Do not reintroduce package-wide component galleries as default Storybook
-  coverage. Isolated package stories are acceptable only with a stable owner,
-  focused assertions, and a clear reason they cannot be covered through the
-  sample host.
+- Collect stories from `examples/workbench-sample/src/**/*.stories.tsx` plus the
+  curated package story files listed in `.storybook/main.ts`.
+- Render `examples/workbench-sample/src/App.tsx` directly in integration stories.
+- Treat `examples/workbench-sample` as the canonical integration Storybook
+  source. Component stories are allowed only for focused public surfaces whose
+  state, accessibility, or overlay behavior is not covered by the sample app.
+- Component stories must use the smallest story container that matches the
+  component's production placement. Sidebar panels use `StorySidebarFrame`;
+  editor/main chrome uses `StoryWorkbenchShellFrame` with `variant="editor"`;
+  settings and form surfaces use `variant="settings"`; overlays put the trigger
+  in the owning surface and assert the fixed overlay through document-scope
+  queries.
+- Do not reintroduce package-wide component galleries as default coverage.
+  Isolated package stories are acceptable only when they are explicitly listed
+  in `.storybook/main.ts`, have focused assertions, and prove a contract that is
+  too low-level for the sample host.
 
 ## Screen Size Presets
 
@@ -36,10 +43,10 @@ to replace browser E2E smoke for the flows it explicitly covers.
 
 ## Current Stories
 
-The required gate combines **~5 integration** stories in `WorkbenchSample.stories.tsx`
-(sample app behind `pnpm dev`) with **~23 component** stories when package stories
-are included in the Storybook glob. Target **~25–30** required total; see
-[Story scope balance](../workbench/storybook-e2e-coverage.md#story-scope-balance)
+The required gate combines five integration stories in `WorkbenchSample.stories.tsx`
+(sample app behind `pnpm dev`) with a small curated package tier. Keep the gate
+around 10 stable stories unless a broader matrix has an explicit maintenance plan.
+See [Story scope balance](../workbench/storybook-e2e-coverage.md#story-scope-balance)
 for tier rules and duplicate avoidance.
 
 Integration required set:
@@ -56,6 +63,14 @@ require a separate browser E2E smoke: startup editor state, search result openin
 command palette, chat, AI chat composer, settings, profile permission overrides, and
 sign-out. Add new required stories only when they cover a stable sample-host
 workflow and can be verified by `test:storybook-play:required`.
+
+First-pass component required set:
+
+1. `React/Primitives/Controls` - Form controls in a settings/form surface
+2. `React/Primitives/Editor Chrome` - Tabs and mode controls in the editor/main area
+3. `React/Overlay/Dialog Actions` - Confirmation and context menu from a main-area trigger
+4. `React/Workbench/Chat Components` - Runtime controls in a sidebar chat panel
+5. `React/Workbench/Workspace Search` - Search panel flow in a sidebar search panel
 
 ## E2E Replacement Criteria
 
@@ -85,6 +100,7 @@ Use these root scripts:
 ```json
 {
   "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
+  "storybook:components": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=react-primitives-controls--form-controls&viewMode=story",
   "storybook:sample": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=workbench-sample-dev-app--tester-dev-app-journey&viewMode=story",
   "build:storybook": "pnpm exec storybook build",
   "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",
@@ -113,25 +129,33 @@ Interaction tests use two tags:
 
 Promote a baseline story to required only after it is stable across repeated runs.
 See [Story scope balance](../workbench/storybook-e2e-coverage.md#story-scope-balance)
-before expanding the gate beyond ~30 stories.
+before expanding the curated gate beyond the current sample plus component set.
 
 The default `test:storybook-play` runner executes stories tagged with
 `storybook-play-baseline`; pass `--required` to run only `storybook-play-required` stories.
 
 Do not add a required story just because a component changed. Add or extend a
-required story when the change affects a stable sample-host workflow. Cover
-package-local logic with typecheck and unit tests first, then use Storybook for
-the end-to-end visible behavior.
+required story when the change affects either a stable sample-host workflow or a
+focused public component contract that users experience through state,
+accessibility, overlay, or keyboard behavior. Cover package-local logic with
+typecheck and unit tests first, then use Storybook for the visible behavior.
 
 ## Workbench Stories
 
 Workbench stories should validate realistic product-like UI flows while keeping
-the reusable behavior in package modules. The current Storybook surface renders
-the sample host directly, so ambiguous behavior should be checked against
-`pnpm dev` before adding or changing a story.
+the reusable behavior in package modules. Integration stories render the sample
+host directly, so ambiguous host behavior should be checked against `pnpm dev`
+before adding or changing a story.
 
-- Stories may set up sample `sessionStorage` and local storage only to reach a
-  deterministic sample-host state.
+- Integration stories may set up sample `sessionStorage` and local storage only
+  to reach a deterministic sample-host state.
+- Component stories should use one local harness and a small fixture. Avoid
+  full-shell copies, product-specific data, and fixture blobs that belong in unit
+  tests or the sample host.
+- Component stories should pick a container by placement before adding
+  interactions: sidebar panel, editor/main area, settings/form surface, or overlay
+  trigger surface. Do not invent a custom mini-workbench container unless a real
+  production region cannot be represented by the shared story frames.
 - Components, hooks, reducers, and command helpers own reusable behavior.
 - Sample-host stories may use sample-owned account, workspace, and permission
   data. They must not encode private runtime details, real server addresses, or

@@ -20,6 +20,7 @@
     "test:widget-tree": "pnpm exec vitest run packages/json-widget/src/jdw-node.test.ts packages/json-widget/src/document.test.ts packages/json-widget/src/apply-widget-document-patch.test.ts packages/json-widget/src/widget-asset-file.test.ts packages/json-widget/src/validate-json-widget-data.test.ts packages/json-widget/src/validate-widget-asset.test.ts packages/json-widget/src/widget-placement-asset.test.ts packages/json-widget/src/widget-asset-package.test.ts packages/json-widget/src/widget-normalize.test.ts packages/json-widget/src/layout/layout-widget.test.ts packages/json-widget/src/widget-patch-materialize.test.ts packages/react/src/jdw packages/react/src/widget-tree packages/react/src/widget-asset packages/react/src/widget-studio",
     "build:storybook": "pnpm exec storybook build",
     "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
+    "storybook:components": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=react-primitives-controls--form-controls&viewMode=story",
     "storybook:sample": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=workbench-sample-dev-app--tester-dev-app-journey&viewMode=story",
     "workbench-sample": "pnpm --filter workbench-sample dev",
     "workbench-sample:build": "pnpm --filter workbench-sample build",

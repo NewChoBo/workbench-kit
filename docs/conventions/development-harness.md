@@ -43,8 +43,13 @@ For UI changes, verify the result in a real browser whenever practical.
 - Do text, inputs, and buttons stay inside their parent containers?
 - Do dialogs, menus, and form controls have accessible names?
 - Do basic interactions such as click, check, select, and close work?
-- For Storybook, does the flow render the `pnpm dev` sample app path and assert
-  visible behavior through required play tests?
+- For Storybook integration stories, does the flow render the `pnpm dev` sample
+  app path and assert visible behavior through required play tests?
+- For Storybook component stories, is the story limited to a focused public
+  component contract rather than a duplicate shell or broad gallery?
+- For Storybook component stories, does the container match production placement
+  such as sidebar panel, editor/main area, settings/form surface, or overlay
+  trigger surface?
 - Do Storybook scenarios use only sample-owned data and avoid private runtime
   details, real server addresses, and external product names?
 

@@ -19,7 +19,14 @@ function getStorybookBasePath(value: string | undefined): string {
 const storybookBasePath = getStorybookBasePath(process.env.STORYBOOK_BASE_PATH);
 
 const config: StorybookConfig = {
-  stories: ['../examples/workbench-sample/src/**/*.stories.@(ts|tsx)'],
+  stories: [
+    '../examples/workbench-sample/src/**/*.stories.@(ts|tsx)',
+    '../packages/react/src/primitives/Controls.stories.@(ts|tsx)',
+    '../packages/react/src/primitives/EditorChrome.stories.@(ts|tsx)',
+    '../packages/react/src/modal/OverlayDialogs.stories.@(ts|tsx)',
+    '../packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)',
+    '../packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)',
+  ],
   addons: ['@storybook/addon-docs'],
   framework: {
     name: '@storybook/react-vite',
