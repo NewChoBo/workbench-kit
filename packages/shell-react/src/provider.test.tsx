@@ -842,8 +842,13 @@ describe('WorkbenchProvider', () => {
     expect(dialog?.textContent).toContain('Light preset');
     expect(dialog?.textContent).toContain('Dark preset');
 
-    const themeSelect = dialog?.querySelector<HTMLSelectElement>(
-      '.workbench-appearance-settings select',
+    const colorSchemeCombobox = Array.from(
+      dialog?.querySelectorAll<HTMLButtonElement>('button[role="combobox"]') ?? [],
+    ).find((button) => button.getAttribute('aria-label') === 'Color scheme');
+    expect(colorSchemeCombobox).toBeDefined();
+
+    const themeSelect = colorSchemeCombobox?.parentElement?.querySelector<HTMLSelectElement>(
+      'select.ui-select__native',
     );
     expect(themeSelect).not.toBeNull();
 
@@ -851,6 +856,7 @@ describe('WorkbenchProvider', () => {
       themeSelect!.value = 'light';
       themeSelect!.dispatchEvent(new Event('change', { bubbles: true }));
     });
+    await flushReactEffects();
 
     expect(themeChanges).toEqual(['light']);
 

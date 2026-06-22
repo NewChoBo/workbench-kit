@@ -30,6 +30,11 @@ import {
   type WorkbenchExtensionDescription,
   type WorkbenchLayoutStateInput,
 } from '@workbench-kit/workbench-core';
+import {
+  ContextKeyService,
+  createWorkbenchPermissionContextKeys,
+  type ContextKeyValue,
+} from '@workbench-kit/platform';
 import type {
   WorkbenchExtensionsConfig,
   WorkbenchKeybindingDefinition,
@@ -92,6 +97,7 @@ const DEFAULT_AVAILABLE_EXTENSIONS = [
 export interface WorkbenchProviderProps {
   availableExtensions?: readonly WorkbenchExtensionDescription[];
   children: ReactNode;
+  contextKeyValues?: Readonly<Record<string, ContextKeyValue>> | undefined;
   documentViewProviders?: readonly EditorDocumentViewProvider[] | undefined;
   extensionsConfig?: WorkbenchExtensionsConfig;
   editorStateStorage?: WorkbenchStorageAdapter;
@@ -122,6 +128,7 @@ export interface WorkbenchProviderProps {
 
 export interface WorkbenchContextValue {
   activateCommand(commandId: string): Promise<readonly { readonly extensionId: string }[]>;
+  contextKeyService: ContextKeyService;
   editorDocumentViewProviders: EditorDocumentViewProviderRegistry;
   editorService: EditorService;
   executeCommand(commandId: string, ...args: unknown[]): Promise<unknown>;
@@ -161,6 +168,7 @@ const WorkbenchContext = createContext<WorkbenchContextValue | undefined>(undefi
 export function WorkbenchProvider({
   availableExtensions,
   children,
+  contextKeyValues,
   documentViewProviders,
   editorStateStorage,
   editorStateStorageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
@@ -235,6 +243,31 @@ export function WorkbenchProvider({
   const [keybindingOverrides, setKeybindingOverridesState] = useState(
     resolvedInitialKeybindingOverrides,
   );
+  const contextKeyService = useMemo(() => {
+    const service = new ContextKeyService();
+    for (const [key, value] of Object.entries(
+      createWorkbenchPermissionContextKeys({ role: 'admin' }),
+    )) {
+      service.set(key, value);
+    }
+    return service;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      contextKeyService.dispose();
+    };
+  }, [contextKeyService]);
+
+  useEffect(() => {
+    if (contextKeyValues === undefined) {
+      return;
+    }
+
+    for (const [key, value] of Object.entries(contextKeyValues)) {
+      contextKeyService.set(key, value);
+    }
+  }, [contextKeyService, contextKeyValues]);
 
   useEffect(() => {
     setKeybindingOverridesState(resolvedInitialKeybindingOverrides);
@@ -473,6 +506,7 @@ export function WorkbenchProvider({
   const value = useMemo<WorkbenchContextValue>(
     () => ({
       activateCommand: (commandId) => services.extensionRegistry.activateCommand(commandId),
+      contextKeyService,
       editorDocumentViewProviders: services.editorDocumentViewProviders,
       editorService: services.editorService,
       executeCommand: async (commandId, ...args) => {
@@ -503,6 +537,7 @@ export function WorkbenchProvider({
       workspaceHostPort: services.workspaceHostPort,
     }),
     [
+      contextKeyService,
       installedExtensionsStorage,
       installedExtensionsStorageKey,
       keybindingOverrides,

@@ -75,6 +75,15 @@ export {
   type ContextKeyChangeEvent,
   type ContextKeyValue,
 } from './context/context-key-value.js';
+export {
+  WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_MANAGE_COMMANDS,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_USE_CHAT,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_ROLE,
+  createWorkbenchPermissionContextKeys,
+  type WorkbenchPermissionContextInput,
+  type WorkbenchPermissionRole,
+} from './context/permission-context-keys.js';
 
 export { KeybindingRegistry } from './keybindings/keybinding-registry.js';
 export {

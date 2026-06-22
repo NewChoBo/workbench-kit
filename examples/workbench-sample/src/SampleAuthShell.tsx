@@ -45,14 +45,14 @@ export function SampleAuthShell({ appearance, children }: SampleAuthShellProps) 
             error: auth.error,
             footerBrand: 'Workbench Kit Sample',
             identifierLabel: 'Username',
-            identifierPlaceholder: 'tester',
+            identifierPlaceholder: 'tester or basic',
             loginLabel: 'Sign in to Workbench Sample',
             passwordLabel: 'Password',
             passwordPlaceholder: 'Enter password',
             productName: 'Workbench Sample',
             requireCredentials: true,
             statusLabel:
-              'The in-browser dummy backend accepts the demo account and returns fixed sample data.',
+              'Administrator: tester/tester. Basic: basic/basic (Explorer and Chat activity items only).',
             submitLabel: 'Sign in',
             onSubmit: auth.signIn,
           }}

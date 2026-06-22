@@ -29,6 +29,17 @@ describe('shell secondary activity actions', () => {
     ).toEqual([WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID]);
   });
 
+  it('omits settings when showSettings is false', () => {
+    expect(
+      createWorkbenchSecondaryActivityItems({
+        hasProfile: false,
+        isProfileOpen: false,
+        isSettingsOpen: false,
+        showSettings: false,
+      }).map((item) => item.id),
+    ).toEqual([]);
+  });
+
   it('resolves profile and settings active states independently', () => {
     expect(
       createWorkbenchSecondaryActivityItems({

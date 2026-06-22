@@ -39,7 +39,8 @@
         "viewContainerId": "commands",
         "icon": "terminal",
         "title": "Commands",
-        "order": 25
+        "order": 25,
+        "when": "workbench.permissions.canManageCommands"
       }
     ],
     "views": {

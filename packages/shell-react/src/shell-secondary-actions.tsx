@@ -10,12 +10,14 @@ export interface WorkbenchSecondaryActivityItemsInput {
   hasProfile: boolean;
   isProfileOpen: boolean;
   isSettingsOpen: boolean;
+  showSettings?: boolean | undefined;
 }
 
 export function createWorkbenchSecondaryActivityItems({
   hasProfile,
   isProfileOpen,
   isSettingsOpen,
+  showSettings = true,
 }: WorkbenchSecondaryActivityItemsInput): ActivityBarItem[] {
   return [
     ...(hasProfile
@@ -29,12 +31,16 @@ export function createWorkbenchSecondaryActivityItems({
           },
         ]
       : []),
-    {
-      active: isSettingsOpen,
-      icon: <i aria-hidden="true" className="codicon codicon-settings-gear" />,
-      id: WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID,
-      label: 'Settings',
-    },
+    ...(showSettings
+      ? [
+          {
+            active: isSettingsOpen,
+            icon: <i aria-hidden="true" className="codicon codicon-settings-gear" />,
+            id: WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID,
+            label: 'Settings',
+          },
+        ]
+      : []),
   ];
 }
 

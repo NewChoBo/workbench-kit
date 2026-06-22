@@ -12,6 +12,7 @@ import {
 
 export const SAMPLE_HOST_BACKEND_NAME = 'Sample Dummy Backend' as const;
 export const SAMPLE_AUTH_USERNAME = 'tester' as const;
+export const SAMPLE_AUTH_BASIC_USERNAME = 'basic' as const;
 export const SAMPLE_AUTH_SESSION_KEY = 'workbench-sample.auth.session' as const;
 
 const SAMPLE_HOST_BACKEND_SESSION_LATENCY_MS = 350;
@@ -23,13 +24,18 @@ export type SampleLinkedAccount = SampleHostBackendLinkedAccount;
 export type SampleAuthSession = SampleHostBackendSession;
 export type SampleAuthCredentials = Pick<SampleHostBackendSignInRequest, 'identifier' | 'password'>;
 
-export function createSampleMockProfile(workspaceLabel: string): SampleHostBackendProfile {
+export function createSampleMockProfile(
+  workspaceLabel: string,
+  accountId: string = SAMPLE_AUTH_USERNAME,
+): SampleHostBackendProfile {
+  const isBasic = accountId === SAMPLE_AUTH_BASIC_USERNAME;
+
   return {
-    accountId: SAMPLE_AUTH_USERNAME,
-    displayName: 'Tester',
-    email: 'tester@workbench-sample.local',
+    accountId,
+    displayName: isBasic ? 'Basic User' : 'Tester',
+    email: isBasic ? 'basic@workbench-sample.local' : 'tester@workbench-sample.local',
     providerLabel: SAMPLE_HOST_BACKEND_NAME,
-    roleLabel: 'Developer',
+    roleLabel: isBasic ? 'Basic' : 'Administrator',
     sessionLabel: 'Dummy backend session active - fixed response without a running server',
     statusLabel: 'Active',
     workspaceLabel,
@@ -61,11 +67,12 @@ export function createInMemorySampleHostBackendClient(): SampleHostBackendClient
   return {
     getSession(query) {
       return delaySampleHostBackend(() => {
-        if (!readSampleAuthSession()) {
+        const accountId = readSampleAuthSession();
+        if (!accountId) {
           return { status: 'unauthenticated' };
         }
 
-        return createSampleAuthenticatedSession(query?.workspaceLabel ?? 'Workbench Sample');
+        return createSampleAuthenticatedSession(query?.workspaceLabel ?? 'Workbench Sample', accountId);
       }, SAMPLE_HOST_BACKEND_SESSION_LATENCY_MS);
     },
     signIn(request) {
@@ -78,8 +85,11 @@ export function createInMemorySampleHostBackendClient(): SampleHostBackendClient
           );
         }
 
-        writeSampleAuthSession();
-        return createSampleAuthenticatedSession(request.workspaceLabel ?? 'Workbench Sample');
+        writeSampleAuthSession(request.identifier.trim());
+        return createSampleAuthenticatedSession(
+          request.workspaceLabel ?? 'Workbench Sample',
+          request.identifier.trim(),
+        );
       }, SAMPLE_HOST_BACKEND_SIGN_IN_LATENCY_MS);
     },
     signOut() {
@@ -92,23 +102,36 @@ export function createInMemorySampleHostBackendClient(): SampleHostBackendClient
 }
 
 export function validateSampleLogin(identifier: string, password: string): boolean {
-  return identifier.trim() === SAMPLE_AUTH_USERNAME && password === SAMPLE_AUTH_USERNAME;
-}
+  const normalizedIdentifier = identifier.trim();
 
-export function readSampleAuthSession(): boolean {
-  if (typeof sessionStorage === 'undefined') {
-    return false;
+  if (normalizedIdentifier === SAMPLE_AUTH_USERNAME && password === SAMPLE_AUTH_USERNAME) {
+    return true;
   }
 
-  return sessionStorage.getItem(SAMPLE_AUTH_SESSION_KEY) === SAMPLE_AUTH_USERNAME;
+  return (
+    normalizedIdentifier === SAMPLE_AUTH_BASIC_USERNAME && password === SAMPLE_AUTH_BASIC_USERNAME
+  );
 }
 
-export function writeSampleAuthSession(): void {
+export function readSampleAuthSession(): string | undefined {
+  if (typeof sessionStorage === 'undefined') {
+    return undefined;
+  }
+
+  const value = sessionStorage.getItem(SAMPLE_AUTH_SESSION_KEY);
+  if (value === SAMPLE_AUTH_USERNAME || value === SAMPLE_AUTH_BASIC_USERNAME) {
+    return value;
+  }
+
+  return undefined;
+}
+
+export function writeSampleAuthSession(accountId: string): void {
   if (typeof sessionStorage === 'undefined') {
     return;
   }
 
-  sessionStorage.setItem(SAMPLE_AUTH_SESSION_KEY, SAMPLE_AUTH_USERNAME);
+  sessionStorage.setItem(SAMPLE_AUTH_SESSION_KEY, accountId);
 }
 
 export function clearSampleAuthSession(): void {
@@ -119,10 +142,13 @@ export function clearSampleAuthSession(): void {
   sessionStorage.removeItem(SAMPLE_AUTH_SESSION_KEY);
 }
 
-function createSampleAuthenticatedSession(workspaceLabel: string): SampleHostBackendSession {
+function createSampleAuthenticatedSession(
+  workspaceLabel: string,
+  accountId: string,
+): SampleHostBackendSession {
   return {
     linkedAccounts: createSampleMockLinkedAccounts(),
-    profile: createSampleMockProfile(workspaceLabel),
+    profile: createSampleMockProfile(workspaceLabel, accountId),
     status: 'authenticated',
   };
 }

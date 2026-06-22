@@ -11,8 +11,9 @@ import {
   type StatusBarItemModel,
   type StatusBarSectionModel,
 } from '@workbench-kit/react/workbench/shell';
-import { WORKBENCH_SETTINGS_CAPABILITY_ID } from '@workbench-kit/workbench-core';
+import { WORKBENCH_SETTINGS_CAPABILITY_ID, filterActivitiesByWhenClause } from '@workbench-kit/workbench-core';
 import type { WorkbenchSettingsCapability } from '@workbench-kit/workbench-core';
+import { WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS } from '@workbench-kit/platform';
 import { isPreferenceScope, type PreferenceScope } from '@workbench-kit/workbench-config';
 import type { DarkThemePresetId, LightThemePresetId } from '@workbench-kit/react/workbench';
 import {
@@ -60,6 +61,7 @@ import {
 } from './shell-model.js';
 import { renderDefaultPrimarySidebar } from './shell-view-host.js';
 import { WorkbenchProfileModal, type WorkbenchProfileInput } from './workbench-profile-modal.js';
+import { useContextKeyRevision } from './use-context-key-revision.js';
 export type { WorkbenchLocaleOption, WorkbenchThemeOption } from './shell-settings.js';
 
 export interface WorkbenchShellProps {
@@ -126,12 +128,14 @@ export function WorkbenchShell({
       ? resolveActiveThemePreset(resolvedWorkbenchTheme, { darkPreset, lightPreset })
       : undefined;
   const {
+    contextKeyService,
     executeCommand,
     extensionRegistry,
     layoutService,
     missingExtensionIds,
     preferenceService,
   } = useWorkbench();
+  const contextKeyRevision = useContextKeyRevision(contextKeyService);
   const forceRender = useForceRender();
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
@@ -164,10 +168,18 @@ export function WorkbenchShell({
     [extensionRegistry, missingExtensionIds, profile, statusSections],
   );
   const activeViewContainerId = layout.sideBar.activeViewContainer;
+  const visibleActivities = useMemo(
+    () =>
+      filterActivitiesByWhenClause(
+        extensionRegistry.activities.getActivities(),
+        contextKeyService.createSnapshot(),
+      ),
+    [contextKeyRevision, contextKeyService, extensionRegistry],
+  );
   const activityItems = sortActivityBarItems(
     createWorkbenchShellActivityItems({
       activeViewContainerId,
-      activities: extensionRegistry.activities.getActivities(),
+      activities: visibleActivities,
       viewContainers: extensionRegistry.views.getViewContainers(),
       views: extensionRegistry.views.getViews(),
     }),
@@ -177,11 +189,29 @@ export function WorkbenchShell({
     activityItems,
     layout.activityBar.hiddenItemIds,
   );
+  const canOpenSettingsValue = contextKeyService.get(
+    WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS,
+  );
   const secondaryActivityItems = createWorkbenchSecondaryActivityItems({
     hasProfile: profile !== undefined,
     isProfileOpen,
     isSettingsOpen,
+    showSettings: canOpenSettingsValue !== false,
   });
+
+  useEffect(() => {
+    if (visibleActivityItems.length === 0) {
+      return;
+    }
+
+    const visibleActivityIds = new Set(visibleActivityItems.map((item) => item.id));
+    if (
+      activeViewContainerId !== undefined &&
+      !visibleActivityIds.has(activeViewContainerId)
+    ) {
+      layoutService.setActiveViewContainer(visibleActivityItems[0]?.id);
+    }
+  }, [activeViewContainerId, layoutService, visibleActivityItems]);
   const settingsCategories = useMemo(() => {
     const managementCategories: WorkbenchSettingsCategory[] = [];
 

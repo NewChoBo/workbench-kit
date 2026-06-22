@@ -45,6 +45,10 @@ import {
 } from './sample-appearance-storage.js';
 import { SampleAuthShell } from './SampleAuthShell.js';
 import { useSampleAccount } from './sample-account-context.js';
+import {
+  createSamplePermissionContextKeys,
+  resolveSampleExtensionsConfig,
+} from './sample-permission-context.js';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 
@@ -59,21 +63,48 @@ export function App() {
 
   return (
     <SampleAuthShell appearance={appearance}>
-      <WorkbenchProvider
-        extensionsConfig={extensionsConfig}
-        initialKeybindingOverrides={workbenchKeybindings}
-        initialLayout={initialLayout}
-        initialWorkspaceSettings={workbenchSettings}
-        layoutStorageKey={DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY}
-        persistLayout
-        userCommands={workbenchUserCommands}
-        workspaceHostPort={workspaceHostPort}
-      >
-        <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={initialWorkspace}>
-          <SampleWorkbenchHost appearance={appearance} onAppearanceChange={setAppearance} />
-        </WorkbenchStartupGate>
-      </WorkbenchProvider>
+      <SampleAuthenticatedWorkbench appearance={appearance} onAppearanceChange={setAppearance} />
     </SampleAuthShell>
+  );
+}
+
+interface SampleAuthenticatedWorkbenchProps {
+  appearance: SampleAppearanceSettings;
+  onAppearanceChange: (appearance: SampleAppearanceSettings) => void;
+}
+
+function SampleAuthenticatedWorkbench({
+  appearance,
+  onAppearanceChange,
+}: SampleAuthenticatedWorkbenchProps) {
+  const auth = useSampleAccount();
+  const accountId = auth.profile?.accountId;
+  const contextKeyValues = useMemo(
+    () => createSamplePermissionContextKeys(accountId),
+    [accountId],
+  );
+  const resolvedExtensionsConfig = useMemo(
+    () => resolveSampleExtensionsConfig(accountId),
+    [accountId],
+  );
+
+  return (
+    <WorkbenchProvider
+      contextKeyValues={contextKeyValues}
+      extensionsConfig={resolvedExtensionsConfig}
+      initialKeybindingOverrides={workbenchKeybindings}
+      initialLayout={initialLayout}
+      initialWorkspaceSettings={workbenchSettings}
+      key={accountId ?? 'anonymous'}
+      layoutStorageKey={DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY}
+      persistLayout
+      userCommands={workbenchUserCommands}
+      workspaceHostPort={workspaceHostPort}
+    >
+      <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={initialWorkspace}>
+        <SampleWorkbenchHost appearance={appearance} onAppearanceChange={onAppearanceChange} />
+      </WorkbenchStartupGate>
+    </WorkbenchProvider>
   );
 }
 
@@ -265,8 +296,9 @@ function SampleHelpContent() {
       <section className="workbench-sample-help__section">
         <h2>Sign in</h2>
         <p>
-          Demo account: <code>tester</code> / <code>tester</code>. The in-browser dummy backend
-          returns fixed profile and linked-account data without running a separate server.
+          Demo accounts: <code>tester</code> / <code>tester</code> (administrator) and{' '}
+          <code>basic</code> / <code>basic</code> (explorer and chat only). The in-browser dummy
+          backend returns fixed profile and linked-account data without running a separate server.
         </p>
       </section>
       <section className="workbench-sample-help__section">

@@ -182,6 +182,7 @@ export {
   type PreferenceInspection,
   type PreferenceServiceOptions,
 } from './preference-service.js';
+export { filterActivitiesByWhenClause } from './activity-contribution-resolution.js';
 export {
   ActivityRegistry,
   ConfigurationRegistry,
