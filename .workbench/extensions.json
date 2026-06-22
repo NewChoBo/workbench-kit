@@ -7,6 +7,7 @@
     "workbench-kit.builtin.extensions",
     "workbench-kit.builtin.settings",
     "workbench-kit.builtin.workspace",
+    "workbench-kit.samples.hello-world",
     "workbench-kit.samples.theme-alt"
   ],
   "enabled": [
@@ -20,6 +21,7 @@
     "workbench-kit.builtin.keybindings",
     "workbench-kit.builtin.settings",
     "workbench-kit.builtin.workspace",
+    "workbench-kit.samples.hello-world",
     "workbench-kit.samples.theme-alt"
   ]
 }

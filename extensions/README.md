@@ -20,12 +20,16 @@ activation handlers.
 | `builtin.search`      | Search activity container and sidebar view provider.                                                |
 | `builtin.settings`    | Open settings command, command palette entry, and settings configuration for modal settings hosts.  |
 | `builtin.workspace`   | Workspace info command and workspace display-name configuration.                                    |
+| `builtin.extensions`  | Extensions activity, marketplace sidebar, and extension management commands.                        |
 
 ## Samples
 
-| Extension             | Runtime role                                                   |
-| --------------------- | -------------------------------------------------------------- |
-| `samples.hello-world` | Minimal command activation sample for extension SDK consumers. |
+| Extension                    | Runtime role                                                                 |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| `samples.hello-world`        | Minimal command activation sample (`Hello World` command in the palette).    |
+| `samples.json-preview`       | JSON document preview editor contribution sample.                            |
+| `samples.locale-ko`          | Korean display-language localization contribution sample.                    |
+| `samples.theme-alt`          | Alternate dark color theme (`Dark Blue Alt`) for Settings → Appearance.    |
 
 ## Rules
 

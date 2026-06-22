@@ -9,7 +9,7 @@ export { CommandManagementSidebar } from './CommandManagementSidebar.js';
 export type { CommandManagementSidebarProps } from './CommandManagementSidebar.js';
 export { ExtensionManagementPanel } from './ExtensionManagementPanel.js';
 export { ExtensionManagementSidebar } from './ExtensionManagementSidebar.js';
-export type { ExtensionManagementSidebarProps } from './ExtensionManagementSidebar.js';
+export type { ExtensionManagementSidebarProps, ExtensionManagementPendingAction } from './ExtensionManagementSidebar.js';
 export { KeybindingCaptureField } from './KeybindingCaptureField.js';
 export type { KeybindingCaptureFieldProps } from './KeybindingCaptureField.js';
 export { KeybindingManagementPanel } from './KeybindingManagementPanel.js';

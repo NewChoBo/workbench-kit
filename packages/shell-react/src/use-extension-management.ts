@@ -12,6 +12,7 @@ import {
 import type {
   ExtensionCatalogBrowseEntry,
   ExtensionManagementEntry,
+  ExtensionManagementPendingAction,
 } from '@workbench-kit/react/workbench/management';
 
 import {
@@ -44,6 +45,7 @@ export function useExtensionManagementModel({
   const [catalogEntries, setCatalogEntries] = useState<readonly ExtensionCatalogEntry[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(Boolean(catalogUrl));
   const [catalogError, setCatalogError] = useState<string | undefined>();
+  const [pendingAction, setPendingAction] = useState<ExtensionManagementPendingAction | undefined>();
   const [installedRecords, setInstalledRecords] = useState<readonly InstalledExtensionRecord[]>(
     () =>
       loadInstalledExtensions(
@@ -138,8 +140,11 @@ export function useExtensionManagementModel({
         resolvedInstalledExtensionsStorage,
       );
       setInstalledRecords(next);
+      setPendingAction({ entryId: entry.id, kind: 'install' });
       if (typeof window !== 'undefined') {
-        window.location.reload();
+        window.requestAnimationFrame(() => {
+          window.location.reload();
+        });
       }
     },
     [
@@ -164,8 +169,11 @@ export function useExtensionManagementModel({
         resolvedInstalledExtensionsStorage,
       );
       setInstalledRecords(next);
+      setPendingAction({ entryId: entry.id, kind: 'toggle' });
       if (typeof window !== 'undefined') {
-        window.location.reload();
+        window.requestAnimationFrame(() => {
+          window.location.reload();
+        });
       }
     },
     [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey],
@@ -177,6 +185,7 @@ export function useExtensionManagementModel({
     catalogLoading,
     installCatalogEntry,
     installedEntries,
+    pendingAction,
     toggleInstalledEntry,
   };
 }

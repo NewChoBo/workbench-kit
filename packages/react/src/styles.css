@@ -3025,10 +3025,61 @@
 }
 
 .workbench-extensions-sidebar__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   margin: 0;
   color: var(--color-text-muted);
   font-size: 11px;
   line-height: 1.35;
+}
+
+.workbench-extensions-sidebar__notice .codicon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--color-accent);
+  font-size: 12px;
+}
+
+.workbench-extensions-sidebar__alert {
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-danger, #e51400) 35%, var(--color-border));
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--color-danger, #e51400) 8%, var(--color-surface));
+  color: var(--color-text);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.workbench-extensions-sidebar__alert strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.workbench-extensions-sidebar__alert p {
+  margin: 0;
+}
+
+.workbench-extensions-sidebar__diagnostics {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workbench-extensions-sidebar__diagnostic {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.workbench-extensions-sidebar__diagnostic--error {
+  color: var(--color-danger, #e51400);
+}
+
+.workbench-extensions-sidebar__diagnostic--warning {
+  color: var(--color-warning, #bf8803);
 }
 
 .workbench-extensions-sidebar .ui-side-bar-view__footer--overlay {

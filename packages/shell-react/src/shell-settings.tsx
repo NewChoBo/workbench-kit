@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Badge, Checkbox, Field, Select } from '@workbench-kit/react/primitives';
 import {
   applyWorkbenchAppearance,
@@ -23,6 +23,8 @@ import type { PreferenceScope } from '@workbench-kit/workbench-config';
 import { useWorkbench } from './provider.js';
 
 const APPEARANCE_SETTINGS_CATEGORY_ID = 'workbench.appearance';
+const CONTRIBUTED_COLOR_THEME_PREFERENCE_KEY = 'workbench.appearance.contributedColorTheme';
+const NO_CONTRIBUTED_COLOR_THEME = '';
 
 export const SETTINGS_EXTENSION_ID = 'workbench-kit.builtin.settings';
 export const WORKBENCH_PREFERENCE_SCOPES = [
@@ -154,6 +156,11 @@ export function createSettingsCategories(
     : contributedCategories;
 }
 
+function readContributedColorThemePreference(preferenceService: PreferenceService): string {
+  const value = preferenceService.getEffectiveValue(CONTRIBUTED_COLOR_THEME_PREFERENCE_KEY);
+  return typeof value === 'string' ? value : NO_CONTRIBUTED_COLOR_THEME;
+}
+
 function formatPreferenceScopeLabel(scope: PreferenceScope): string {
   return WORKBENCH_PREFERENCE_SCOPES.find((candidate) => candidate.id === scope)?.label ?? scope;
 }
@@ -253,9 +260,23 @@ function AppearanceSettingsSection({
   localeOptions: readonly WorkbenchLocaleOption[];
   themeOptions: readonly WorkbenchThemeOption[];
 }) {
-  const { extensionRegistry } = useWorkbench();
+  const { extensionRegistry, preferenceService } = useWorkbench();
   const previousThemeOverridesRef = useRef<Readonly<Record<string, string>> | undefined>(undefined);
   const usesAppearancePresets = lightPreset !== undefined && darkPreset !== undefined;
+  const contributedThemeOptions = useMemo(
+    () =>
+      extensionRegistry.themes.getThemes().map((contributedTheme) => ({
+        description: contributedTheme.tokenOverrides
+          ? 'Contributed theme with token overrides.'
+          : 'Contributed theme.',
+        id: contributedTheme.id,
+        label: contributedTheme.label,
+      })),
+    [extensionRegistry.themes],
+  );
+  const [contributedColorThemeId, setContributedColorThemeId] = useState(() =>
+    readContributedColorThemePreference(preferenceService),
+  );
   const selectedTheme = themeOptions.find((option) => option.id === theme) ?? themeOptions[0];
   const selectedThemeId = selectedTheme?.id ?? '';
   const selectedColorScheme =
@@ -271,6 +292,24 @@ function AppearanceSettingsSection({
     DARK_THEME_PRESET_OPTIONS[0];
   const selectedLocale = localeOptions.find((option) => option.id === locale) ?? localeOptions[0];
   const selectedLocaleId = selectedLocale?.id ?? 'en';
+  const selectedContributedTheme =
+    contributedThemeOptions.find((option) => option.id === contributedColorThemeId) ??
+    contributedThemeOptions[0];
+  const selectedContributedThemeId = selectedContributedTheme?.id ?? NO_CONTRIBUTED_COLOR_THEME;
+
+  useEffect(() => {
+    const disposable = preferenceService.onDidChangePreference((event) => {
+      if (event.key !== CONTRIBUTED_COLOR_THEME_PREFERENCE_KEY) {
+        return;
+      }
+
+      setContributedColorThemeId(readContributedColorThemePreference(preferenceService));
+    });
+
+    return () => {
+      disposable.dispose();
+    };
+  }, [preferenceService]);
 
   useEffect(() => {
     if (typeof document === 'undefined') {
@@ -285,8 +324,13 @@ function AppearanceSettingsSection({
       });
     }
 
-    const contributedThemeId = usesAppearancePresets ? selectedColorSchemeId : selectedThemeId;
-    const contributedTheme = extensionRegistry.themes.getTheme(contributedThemeId);
+    const contributedThemeId = usesAppearancePresets
+      ? selectedContributedThemeId
+      : selectedThemeId;
+    const contributedTheme =
+      contributedThemeId && contributedThemeId !== NO_CONTRIBUTED_COLOR_THEME
+        ? extensionRegistry.themes.getTheme(contributedThemeId)
+        : undefined;
     applyThemeTokenOverrides(
       document.documentElement,
       contributedTheme?.tokenOverrides,
@@ -296,6 +340,7 @@ function AppearanceSettingsSection({
   }, [
     extensionRegistry.themes,
     selectedColorSchemeId,
+    selectedContributedThemeId,
     selectedDarkPreset.id,
     selectedLightPreset.id,
     selectedThemeId,
@@ -372,6 +417,41 @@ function AppearanceSettingsSection({
                 ))}
               </Select>
             </Field>
+            {contributedThemeOptions.length > 0 ? (
+              <Field
+                className="workbench-appearance-settings__field"
+                label="Extension color theme"
+                description="Optional token overrides contributed by enabled theme extensions."
+              >
+                <Select
+                  aria-label="Extension color theme"
+                  controlWidth="full"
+                  value={selectedContributedThemeId}
+                  onValueChange={(nextThemeId) => {
+                    const normalizedThemeId =
+                      nextThemeId === NO_CONTRIBUTED_COLOR_THEME ? NO_CONTRIBUTED_COLOR_THEME : nextThemeId;
+                    preferenceService.setScopedValue(
+                      CONTRIBUTED_COLOR_THEME_PREFERENCE_KEY,
+                      'local',
+                      normalizedThemeId || undefined,
+                    );
+                    setContributedColorThemeId(normalizedThemeId);
+                  }}
+                >
+                  <option value={NO_CONTRIBUTED_COLOR_THEME}>None (presets only)</option>
+                  {contributedThemeOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+                {selectedContributedTheme?.description ? (
+                  <p className="workbench-appearance-settings__description">
+                    {selectedContributedTheme.description}
+                  </p>
+                ) : null}
+              </Field>
+            ) : null}
           </>
         ) : themeOptions.length ? (
           <Field

@@ -109,6 +109,37 @@ describe('ExtensionManagementPanel', () => {
     );
   });
 
+  it('renders sidebar diagnostics and missing-extension alerts', () => {
+    const markup = renderToStaticMarkup(
+      createElement(ExtensionManagementSidebar, {
+        browseEntries: [],
+        defaultTab: 'installed',
+        installedEntries: [
+          {
+            category: 'builtin',
+            description: 'Explorer',
+            diagnostics: [
+              {
+                message: 'Capability "workbench.workspace" is missing.',
+                severity: 'warning',
+              },
+            ],
+            displayName: 'Explorer',
+            enabled: true,
+            id: 'workbench-kit.builtin.explorer',
+            source: 'bundled',
+          },
+        ],
+        missingExtensionIds: ['workbench-kit.missing.sample'],
+      }),
+    );
+
+    expect(markup).toContain('Missing extensions');
+    expect(markup).toContain('workbench-kit.missing.sample');
+    expect(markup).toContain('Capability &quot;workbench.workspace&quot; is missing.');
+    expect(markup).toContain('1 warning');
+  });
+
   it('renders sidebar catalog install plan summaries before install', () => {
     const markup = renderToStaticMarkup(
       createElement(ExtensionManagementSidebar, {
@@ -171,5 +202,6 @@ describe('ExtensionManagementPanel', () => {
 
     expect(markup).toContain('Blocked');
     expect(markup).toContain('disabled=""');
+    expect(markup).toContain('Extension depends on missing extension');
   });
 });

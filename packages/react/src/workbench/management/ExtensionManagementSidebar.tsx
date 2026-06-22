@@ -32,8 +32,16 @@ const CATEGORY_FILTER_OPTIONS = BROWSE_CATEGORIES.map((category) => ({
 }));
 
 export interface ExtensionManagementSidebarProps extends ExtensionManagementPanelProps {
+  defaultTab?: 'installed' | 'marketplace' | undefined;
   emptyInstalledLabel?: string | undefined;
   emptyMarketplaceLabel?: string | undefined;
+  missingExtensionIds?: readonly string[] | undefined;
+  pendingAction?: ExtensionManagementPendingAction | undefined;
+}
+
+export interface ExtensionManagementPendingAction {
+  readonly entryId: string;
+  readonly kind: 'install' | 'toggle';
 }
 
 export function ExtensionManagementSidebar({
@@ -41,13 +49,16 @@ export function ExtensionManagementSidebar({
   catalogError,
   catalogLoading = false,
   className,
+  defaultTab = 'marketplace',
   emptyInstalledLabel = 'No installed extensions match the filter.',
   emptyMarketplaceLabel = 'No marketplace extensions match the filter.',
   installedEntries,
+  missingExtensionIds = [],
   onInstall,
   onToggleEnabled,
+  pendingAction,
 }: ExtensionManagementSidebarProps) {
-  const [activeTab, setActiveTab] = useState<'installed' | 'marketplace'>('marketplace');
+  const [activeTab, setActiveTab] = useState<'installed' | 'marketplace'>(defaultTab);
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<BrowseCategoryFilter>('all');
 
@@ -81,13 +92,24 @@ export function ExtensionManagementSidebar({
       bodyClassName="ui-side-bar-view__body--dock-sections"
       className={cx('workbench-extensions-sidebar', className)}
       footer={
-        <p className="workbench-extensions-sidebar__notice">
-          Installing or toggling extensions reloads the workbench.
+        <p className="workbench-extensions-sidebar__notice" role="note">
+          <i aria-hidden className={cxCodicon('codicon-info')} />
+          Installing or enabling extensions reloads the workbench to apply contributions.
         </p>
       }
       footerPlacement="overlay"
       headerAddon={
         <div className="workbench-extensions-sidebar__controls">
+          {missingExtensionIds.length > 0 ? (
+            <div className="workbench-extensions-sidebar__alert" role="alert">
+              <strong>Missing extensions</strong>
+              <p>
+                {missingExtensionIds.length} enabled extension
+                {missingExtensionIds.length === 1 ? ' is' : 's are'} unavailable:{' '}
+                {missingExtensionIds.join(', ')}
+              </p>
+            </div>
+          ) : null}
           <SegmentedControl
             ariaLabel="Extension lists"
             options={[
@@ -127,12 +149,14 @@ export function ExtensionManagementSidebar({
           catalogLoading={catalogLoading}
           emptyLabel={emptyMarketplaceLabel}
           entries={filteredBrowse}
+          pendingAction={pendingAction}
           onInstall={onInstall}
         />
       ) : (
         <InstalledExtensionList
           emptyLabel={emptyInstalledLabel}
           entries={filteredInstalled}
+          pendingAction={pendingAction}
           onToggleEnabled={onToggleEnabled}
         />
       )}
@@ -144,10 +168,12 @@ function InstalledExtensionList({
   emptyLabel,
   entries,
   onToggleEnabled,
+  pendingAction,
 }: {
   emptyLabel: string;
   entries: readonly ExtensionManagementEntry[];
   onToggleEnabled?: ExtensionManagementPanelProps['onToggleEnabled'];
+  pendingAction?: ExtensionManagementPendingAction | undefined;
 }) {
   if (entries.length === 0) {
     return (
@@ -159,35 +185,62 @@ function InstalledExtensionList({
 
   return (
     <SideBarList aria-label="Installed extensions" className="workbench-extensions-sidebar__list">
-      {entries.map((entry) => (
-        <ExtensionSidebarListItem
-          key={entry.id}
-          action={
-            <Button
-              compact
-              disabled={!onToggleEnabled || entry.source === 'bundled'}
-              type="button"
-              variant={entry.enabled ? 'default' : 'primary'}
-              onClick={() => onToggleEnabled?.(entry, !entry.enabled)}
-            >
-              {entry.enabled ? 'Disable' : 'Enable'}
-            </Button>
-          }
-          category={entry.category}
-          description={entry.description}
-          features={entry.features}
-          meta={
-            entry.source === 'bundled' ? (
-              <Badge variant="muted">Built-in</Badge>
-            ) : (
-              <Badge variant={entry.enabled ? 'accent' : 'muted'}>
-                {entry.enabled ? 'Enabled' : 'Disabled'}
-              </Badge>
-            )
-          }
-          title={entry.displayName}
-        />
-      ))}
+      {entries.map((entry) => {
+        const isPendingToggle =
+          pendingAction?.kind === 'toggle' && pendingAction.entryId === entry.id;
+        const errorDiagnostics = (entry.diagnostics ?? []).filter(
+          (diagnostic) => diagnostic.severity === 'error',
+        );
+        const warningDiagnostics = (entry.diagnostics ?? []).filter(
+          (diagnostic) => diagnostic.severity === 'warning',
+        );
+
+        return (
+          <ExtensionSidebarListItem
+            key={entry.id}
+            action={
+              <Button
+                compact
+                disabled={!onToggleEnabled || entry.source === 'bundled' || isPendingToggle}
+                type="button"
+                variant={entry.enabled ? 'default' : 'primary'}
+                onClick={() => onToggleEnabled?.(entry, !entry.enabled)}
+              >
+                {isPendingToggle ? 'Reloading…' : entry.enabled ? 'Disable' : 'Enable'}
+              </Button>
+            }
+            category={entry.category}
+            description={entry.description}
+            diagnostics={entry.diagnostics}
+            features={entry.features}
+            meta={
+              <>
+                {entry.source === 'bundled' ? (
+                  <Badge variant="muted">Built-in</Badge>
+                ) : (
+                  <Badge variant={entry.enabled ? 'accent' : 'muted'}>
+                    {entry.enabled ? 'Enabled' : 'Disabled'}
+                  </Badge>
+                )}
+                {errorDiagnostics.length > 0 ? (
+                  <Badge title={errorDiagnostics.map((diagnostic) => diagnostic.message).join(' ')} variant="danger">
+                    {errorDiagnostics.length} error{errorDiagnostics.length === 1 ? '' : 's'}
+                  </Badge>
+                ) : null}
+                {warningDiagnostics.length > 0 ? (
+                  <Badge
+                    title={warningDiagnostics.map((diagnostic) => diagnostic.message).join(' ')}
+                    variant="muted"
+                  >
+                    {warningDiagnostics.length} warning{warningDiagnostics.length === 1 ? '' : 's'}
+                  </Badge>
+                ) : null}
+              </>
+            }
+            title={entry.displayName}
+          />
+        );
+      })}
     </SideBarList>
   );
 }
@@ -198,12 +251,14 @@ function MarketplaceExtensionList({
   emptyLabel,
   entries,
   onInstall,
+  pendingAction,
 }: {
   catalogError?: string | undefined;
   catalogLoading?: boolean | undefined;
   emptyLabel: string;
   entries: readonly ExtensionCatalogBrowseEntry[];
   onInstall?: ExtensionManagementPanelProps['onInstall'];
+  pendingAction?: ExtensionManagementPendingAction | undefined;
 }) {
   if (catalogLoading) {
     return (
@@ -231,34 +286,51 @@ function MarketplaceExtensionList({
 
   return (
     <SideBarList aria-label="Marketplace extensions" className="workbench-extensions-sidebar__list">
-      {entries.map((entry) => (
-        <ExtensionSidebarListItem
-          key={entry.id}
-          action={
-            <Button
-              compact
-              disabled={!onInstall || entry.installed || entry.installPlan?.blocked}
-              icon={
-                entry.installed
-                  ? 'check'
-                  : entry.installPlan?.blocked
-                    ? 'warning'
-                    : 'cloud-download'
-              }
-              type="button"
-              variant={entry.installed ? 'default' : 'primary'}
-              onClick={() => onInstall?.(entry)}
-            >
-              {entry.installed ? 'Installed' : entry.installPlan?.blocked ? 'Blocked' : 'Install'}
-            </Button>
-          }
-          category={entry.category}
-          description={entry.description}
-          installPlan={entry.installPlan}
-          meta={entry.installed ? <Badge variant="accent">Installed</Badge> : null}
-          title={entry.displayName}
-        />
-      ))}
+      {entries.map((entry) => {
+        const isPendingInstall =
+          pendingAction?.kind === 'install' && pendingAction.entryId === entry.id;
+        const blockedDiagnostics = entry.installPlan?.diagnostics ?? [];
+
+        return (
+          <ExtensionSidebarListItem
+            key={entry.id}
+            action={
+              <Button
+                compact
+                disabled={
+                  !onInstall || entry.installed || entry.installPlan?.blocked || isPendingInstall
+                }
+                icon={
+                  entry.installed
+                    ? 'check'
+                    : entry.installPlan?.blocked
+                      ? 'warning'
+                      : isPendingInstall
+                        ? 'loading'
+                        : 'cloud-download'
+                }
+                type="button"
+                variant={entry.installed ? 'default' : 'primary'}
+                onClick={() => onInstall?.(entry)}
+              >
+                {entry.installed
+                  ? 'Installed'
+                  : isPendingInstall
+                    ? 'Reloading…'
+                    : entry.installPlan?.blocked
+                      ? 'Blocked'
+                      : 'Install'}
+              </Button>
+            }
+            category={entry.category}
+            description={entry.description}
+            diagnostics={blockedDiagnostics}
+            installPlan={entry.installPlan}
+            meta={entry.installed ? <Badge variant="accent">Installed</Badge> : null}
+            title={entry.displayName}
+          />
+        );
+      })}
     </SideBarList>
   );
 }
@@ -267,6 +339,7 @@ function ExtensionSidebarListItem({
   action,
   category,
   description,
+  diagnostics,
   features,
   installPlan,
   meta,
@@ -275,6 +348,7 @@ function ExtensionSidebarListItem({
   action: ReactNode;
   category: string;
   description?: string | undefined;
+  diagnostics?: readonly { message: string; severity: 'error' | 'warning' }[] | undefined;
   features?: ExtensionManagementFeatureSummary | undefined;
   installPlan?: ExtensionInstallPlanSummary | undefined;
   meta?: ReactNode;
@@ -306,6 +380,21 @@ function ExtensionSidebarListItem({
             </div>
             {description ? (
               <p className="workbench-extensions-sidebar__description">{description}</p>
+            ) : null}
+            {diagnostics && diagnostics.length > 0 ? (
+              <ul className="workbench-extensions-sidebar__diagnostics">
+                {diagnostics.map((diagnostic) => (
+                  <li
+                    key={`${diagnostic.severity}:${diagnostic.message}`}
+                    className={cx(
+                      'workbench-extensions-sidebar__diagnostic',
+                      `workbench-extensions-sidebar__diagnostic--${diagnostic.severity}`,
+                    )}
+                  >
+                    {diagnostic.message}
+                  </li>
+                ))}
+              </ul>
             ) : null}
             {featureBadges.length > 0 ? (
               <div className="workbench-extensions-sidebar__features">
