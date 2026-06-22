@@ -10,9 +10,12 @@ import {
   tilepaperPaperFoldPaths,
 } from './tilepaper-app-icon-geometry.js';
 
-export type TilepaperAppIconProps = Omit<SVGProps<SVGSVGElement>, 'viewBox'>;
+export type TilepaperAppIconProps = Omit<SVGProps<SVGSVGElement>, 'viewBox'> & {
+  /** Flat rendering for small surfaces (e.g. titlebar) where elevation blur reads muddy. */
+  compact?: boolean;
+};
 
-export function TilepaperAppIcon({ className, ...props }: TilepaperAppIconProps) {
+export function TilepaperAppIcon({ className, compact = false, ...props }: TilepaperAppIconProps) {
   const idPrefix = `tilepaper-icon-${useId().replace(/:/g, '')}`;
   const bgId = `${idPrefix}-bg`;
   const panelId = `${idPrefix}-panel`;
@@ -38,22 +41,24 @@ export function TilepaperAppIcon({ className, ...props }: TilepaperAppIconProps)
       {...props}
     >
       <defs>
-        <filter
-          id={elevationId}
-          x="-12%"
-          y="-8%"
-          width="124%"
-          height="128%"
-          colorInterpolationFilters="sRGB"
-        >
-          <feDropShadow
-            dx="0"
-            dy={TILEPAPER_ICON_ROOT_ELEVATION.dy}
-            floodColor={TILEPAPER_ICON_ROOT_ELEVATION.floodColor}
-            floodOpacity={TILEPAPER_ICON_ROOT_ELEVATION.floodOpacity}
-            stdDeviation={TILEPAPER_ICON_ROOT_ELEVATION.stdDeviation}
-          />
-        </filter>
+        {compact ? null : (
+          <filter
+            id={elevationId}
+            x="-12%"
+            y="-8%"
+            width="124%"
+            height="128%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feDropShadow
+              dx="0"
+              dy={TILEPAPER_ICON_ROOT_ELEVATION.dy}
+              floodColor={TILEPAPER_ICON_ROOT_ELEVATION.floodColor}
+              floodOpacity={TILEPAPER_ICON_ROOT_ELEVATION.floodOpacity}
+              stdDeviation={TILEPAPER_ICON_ROOT_ELEVATION.stdDeviation}
+            />
+          </filter>
+        )}
         <linearGradient
           id={bgId}
           x1={TILEPAPER_ICON_GRADIENTS.bg.x1}
@@ -129,7 +134,7 @@ export function TilepaperAppIcon({ className, ...props }: TilepaperAppIconProps)
         fill={`url(#${bgId})`}
       />
       <rect
-        filter={`url(#${elevationId})`}
+        filter={compact ? undefined : `url(#${elevationId})`}
         fill={`url(#${panelId})`}
         height={TILEPAPER_ICON_ROOT_PANEL.size}
         rx={TILEPAPER_ICON_ROOT_PANEL.rx}

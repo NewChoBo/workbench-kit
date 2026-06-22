@@ -110,15 +110,24 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   overflow: visible;
 }
 
-.workbench-shell-titlebar__app-icon > .tilepaper-app-icon {
-  width: 16px;
-  height: 16px;
+.workbench-shell-titlebar__app-icon > .tilepaper-app-icon,
+.workbench-shell-titlebar__app-icon > img {
+  display: block;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
+  border-radius: 4px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.workbench-shell-titlebar__app-icon > .tilepaper-app-icon {
+  shape-rendering: geometricPrecision;
 }
 
 .tilepaper-app-icon {

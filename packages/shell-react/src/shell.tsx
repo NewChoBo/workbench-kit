@@ -531,7 +531,7 @@ function WorkbenchShellTitleBar({
     <>
       <div className="workbench-shell-titlebar__identity">
         <span aria-hidden className="workbench-shell-titlebar__app-icon">
-          <TilepaperAppIcon />
+          <TilepaperAppIcon compact />
         </span>
         <span className="workbench-shell-titlebar__title">{title}</span>
         {titleMeta ? <span className="workbench-shell-titlebar__meta">{titleMeta}</span> : null}
