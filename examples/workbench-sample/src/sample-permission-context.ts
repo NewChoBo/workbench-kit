@@ -6,6 +6,7 @@ import {
 import type { WorkbenchExtensionsConfig } from '@workbench-kit/workbench-config';
 
 import { extensionsConfig } from './bootstrap.js';
+import type { SamplePermissionRoleOverride } from './sample-permission-role-storage.js';
 
 const BASIC_ROLE_EXTENSION_IDS = [
   'workbench-kit.builtin.accounts',
@@ -20,18 +21,31 @@ export function resolveSampleWorkbenchRole(accountId: string | undefined): Workb
   return accountId === 'basic' ? 'basic' : 'admin';
 }
 
+export function resolveSampleEffectiveRole(
+  accountId: string | undefined,
+  roleOverride?: SamplePermissionRoleOverride,
+): WorkbenchPermissionRole {
+  if (roleOverride === 'admin' || roleOverride === 'basic') {
+    return roleOverride;
+  }
+
+  return resolveSampleWorkbenchRole(accountId);
+}
+
 export function createSamplePermissionContextKeys(
   accountId: string | undefined,
+  roleOverride?: SamplePermissionRoleOverride,
 ): Readonly<Record<string, ContextKeyValue>> {
   return createWorkbenchPermissionContextKeys({
-    role: resolveSampleWorkbenchRole(accountId),
+    role: resolveSampleEffectiveRole(accountId, roleOverride),
   });
 }
 
 export function resolveSampleExtensionsConfig(
   accountId: string | undefined,
+  roleOverride?: SamplePermissionRoleOverride,
 ): WorkbenchExtensionsConfig {
-  if (resolveSampleWorkbenchRole(accountId) === 'admin') {
+  if (resolveSampleEffectiveRole(accountId, roleOverride) === 'admin') {
     return extensionsConfig;
   }
 

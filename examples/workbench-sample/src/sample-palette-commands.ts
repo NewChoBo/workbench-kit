@@ -41,13 +41,23 @@ const SAMPLE_QUICK_OPEN_COMMANDS = [
   },
 ] as const;
 
-export const sampleAdditionalPaletteCommands: WorkbenchCommandDescriptor[] =
-  SAMPLE_QUICK_OPEN_COMMANDS.map(({ category, icon, id, label }) => ({
+export const SAMPLE_OPEN_PERMISSION_ROLE_SETTINGS_COMMAND_ID =
+  'sample.openPermissionRoleSettings' as const;
+
+export const sampleAdditionalPaletteCommands: WorkbenchCommandDescriptor[] = [
+  ...SAMPLE_QUICK_OPEN_COMMANDS.map(({ category, icon, id, label }) => ({
     category,
     icon,
     id,
     label,
-  }));
+  })),
+  {
+    category: 'Developer',
+    icon: 'shield',
+    id: SAMPLE_OPEN_PERMISSION_ROLE_SETTINGS_COMMAND_ID,
+    label: 'Permission Role (Demo)',
+  },
+];
 
 export function createSamplePaletteCommandRunner(
   executeCommand: (commandId: string, ...args: unknown[]) => Promise<unknown>,

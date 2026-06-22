@@ -66,6 +66,7 @@ export type { WorkbenchLocaleOption, WorkbenchThemeOption } from './shell-settin
 
 export interface WorkbenchShellProps {
   accountManagement?: WorkbenchAccountManagementInput | undefined;
+  additionalSettingsCategories?: readonly WorkbenchSettingsCategory[] | undefined;
   catalogUrl?: string | undefined;
   commandHost?: false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'>;
   compactStatus?: boolean;
@@ -96,6 +97,7 @@ const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
 
 export function WorkbenchShell({
   accountManagement,
+  additionalSettingsCategories,
   catalogUrl = '/extension-catalog.json',
   commandHost,
   compactStatus = true,
@@ -241,6 +243,7 @@ export function WorkbenchShell({
 
     return [
       ...managementCategories,
+      ...(additionalSettingsCategories ?? []),
       ...createSettingsCategories(extensionRegistry, {
         activeScope: settingsScopeId,
         darkPreset,
@@ -257,6 +260,7 @@ export function WorkbenchShell({
     ];
   }, [
     accountManagement,
+    additionalSettingsCategories,
     commandHost,
     darkPreset,
     extensionRegistry,

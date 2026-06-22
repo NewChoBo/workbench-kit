@@ -36,6 +36,7 @@ import {
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react';
 import {
   createSamplePaletteCommandRunner,
+  SAMPLE_OPEN_PERMISSION_ROLE_SETTINGS_COMMAND_ID,
   sampleAdditionalPaletteCommands,
 } from './sample-palette-commands.js';
 import {
@@ -43,12 +44,23 @@ import {
   writePersistedSampleAppearance,
   type SampleAppearanceSettings,
 } from './sample-appearance-storage.js';
+import {
+  readPersistedSamplePermissionRoleOverride,
+  writePersistedSamplePermissionRoleOverride,
+  type SamplePermissionRoleOverride,
+} from './sample-permission-role-storage.js';
+import {
+  createSamplePermissionRoleSettingsCategory,
+} from './sample-permission-role-settings.js';
 import { SampleAuthShell } from './SampleAuthShell.js';
 import { useSampleAccount } from './sample-account-context.js';
 import {
   createSamplePermissionContextKeys,
   resolveSampleExtensionsConfig,
+  resolveSampleWorkbenchRole,
 } from './sample-permission-context.js';
+
+const WORKBENCH_SETTINGS_CAPABILITY_ID = 'workbench.settings';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 
@@ -56,36 +68,51 @@ export function App() {
   const [appearance, setAppearance] = useState<SampleAppearanceSettings>(() =>
     readPersistedSampleAppearance(),
   );
+  const [permissionRoleOverride, setPermissionRoleOverride] =
+    useState<SamplePermissionRoleOverride>(() => readPersistedSamplePermissionRoleOverride());
 
   useEffect(() => {
     writePersistedSampleAppearance(appearance);
   }, [appearance]);
 
+  useEffect(() => {
+    writePersistedSamplePermissionRoleOverride(permissionRoleOverride);
+  }, [permissionRoleOverride]);
+
   return (
     <SampleAuthShell appearance={appearance}>
-      <SampleAuthenticatedWorkbench appearance={appearance} onAppearanceChange={setAppearance} />
+      <SampleAuthenticatedWorkbench
+        appearance={appearance}
+        permissionRoleOverride={permissionRoleOverride}
+        onAppearanceChange={setAppearance}
+        onPermissionRoleOverrideChange={setPermissionRoleOverride}
+      />
     </SampleAuthShell>
   );
 }
 
 interface SampleAuthenticatedWorkbenchProps {
   appearance: SampleAppearanceSettings;
+  permissionRoleOverride: SamplePermissionRoleOverride;
   onAppearanceChange: (appearance: SampleAppearanceSettings) => void;
+  onPermissionRoleOverrideChange: (roleOverride: SamplePermissionRoleOverride) => void;
 }
 
 function SampleAuthenticatedWorkbench({
   appearance,
+  permissionRoleOverride,
   onAppearanceChange,
+  onPermissionRoleOverrideChange,
 }: SampleAuthenticatedWorkbenchProps) {
   const auth = useSampleAccount();
   const accountId = auth.profile?.accountId;
   const contextKeyValues = useMemo(
-    () => createSamplePermissionContextKeys(accountId),
-    [accountId],
+    () => createSamplePermissionContextKeys(accountId, permissionRoleOverride),
+    [accountId, permissionRoleOverride],
   );
   const resolvedExtensionsConfig = useMemo(
-    () => resolveSampleExtensionsConfig(accountId),
-    [accountId],
+    () => resolveSampleExtensionsConfig(accountId, permissionRoleOverride),
+    [accountId, permissionRoleOverride],
   );
 
   return (
@@ -102,7 +129,12 @@ function SampleAuthenticatedWorkbench({
       workspaceHostPort={workspaceHostPort}
     >
       <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={initialWorkspace}>
-        <SampleWorkbenchHost appearance={appearance} onAppearanceChange={onAppearanceChange} />
+        <SampleWorkbenchHost
+          appearance={appearance}
+          permissionRoleOverride={permissionRoleOverride}
+          onAppearanceChange={onAppearanceChange}
+          onPermissionRoleOverrideChange={onPermissionRoleOverrideChange}
+        />
       </WorkbenchStartupGate>
     </WorkbenchProvider>
   );
@@ -110,12 +142,19 @@ function SampleAuthenticatedWorkbench({
 
 interface SampleWorkbenchHostProps {
   appearance: SampleAppearanceSettings;
+  permissionRoleOverride: SamplePermissionRoleOverride;
   onAppearanceChange: (appearance: SampleAppearanceSettings) => void;
+  onPermissionRoleOverrideChange: (roleOverride: SamplePermissionRoleOverride) => void;
 }
 
-function SampleWorkbenchHost({ appearance, onAppearanceChange }: SampleWorkbenchHostProps) {
+function SampleWorkbenchHost({
+  appearance,
+  permissionRoleOverride,
+  onAppearanceChange,
+  onPermissionRoleOverrideChange,
+}: SampleWorkbenchHostProps) {
   const auth = useSampleAccount();
-  const { executeCommand, layoutService } = useWorkbench();
+  const { executeCommand, extensionRegistry, layoutService } = useWorkbench();
   const [layout, setLayout] = useState(() => layoutService.getState());
   const [locale, setLocale] = useState('en');
   const resolvedTheme = useResolvedWorkbenchTheme(appearance.themePreference);
@@ -230,13 +269,42 @@ function SampleWorkbenchHost({ appearance, onAppearanceChange }: SampleWorkbench
     executeCommand,
   ]);
 
+  const permissionRoleSettingsCategory = useMemo(
+    () =>
+      createSamplePermissionRoleSettingsCategory({
+        authDerivedRole: resolveSampleWorkbenchRole(auth.profile?.accountId),
+        roleOverride: permissionRoleOverride,
+        onRoleOverrideChange: onPermissionRoleOverrideChange,
+      }),
+    [auth.profile?.accountId, onPermissionRoleOverrideChange, permissionRoleOverride],
+  );
+
+  const handleRunCommand = useCallback(
+    (
+      command: Parameters<typeof runSamplePaletteCommand>[0],
+      context: Parameters<typeof runSamplePaletteCommand>[1],
+    ) => {
+      if (command.id === SAMPLE_OPEN_PERMISSION_ROLE_SETTINGS_COMMAND_ID) {
+        const settings = extensionRegistry.capabilityRegistry.get<{
+          openSettings: (categoryId?: string) => void;
+        }>(WORKBENCH_SETTINGS_CAPABILITY_ID);
+        settings?.openSettings(permissionRoleSettingsCategory.id);
+        return true;
+      }
+
+      return runSamplePaletteCommand(command, context);
+    },
+    [extensionRegistry.capabilityRegistry, permissionRoleSettingsCategory.id, runSamplePaletteCommand],
+  );
+
   return (
     <>
       <WorkbenchShell
         accountManagement={accountManagement}
+        additionalSettingsCategories={[permissionRoleSettingsCategory]}
         commandHost={{
           additionalCommands: sampleAdditionalPaletteCommands,
-          onRunCommand: runSamplePaletteCommand,
+          onRunCommand: handleRunCommand,
         }}
         darkPreset={appearance.darkPreset}
         editorArea={
@@ -335,6 +403,12 @@ function SampleHelpContent() {
           <li>
             Appearance settings (color scheme, light preset, dark preset) are restored from browser
             local storage (`workbench-kit/.workbench/sample-appearance`).
+          </li>
+          <li>
+            Permission role demo overrides are restored from browser local storage (
+            <code>workbench-kit/.workbench/sample-permission-role</code>). Open Settings and choose{' '}
+            <strong>Permissions (demo)</strong>, or run <strong>Permission Role (Demo)</strong>{' '}
+            from the command palette.
           </li>
           <li>Toggle the color scheme from the status bar to review theme persistence.</li>
           <li>Toggle the primary sidebar from the status bar to review layout persistence.</li>
