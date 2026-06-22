@@ -388,7 +388,8 @@ export const SettingsNavigationScroll: Story = {
     expect(navScroll).toBeTruthy();
     expect(navScroll!.scrollHeight).toBeGreaterThan(navScroll!.clientHeight + 4);
 
-    const lastCategoryLabel = scrollNavigationCategories.at(-1)?.label ?? 'Section 24';
+    const lastCategoryLabel =
+      scrollNavigationCategories[scrollNavigationCategories.length - 1]?.label ?? 'Section 24';
     await userEvent.click(within(settingsDialog).getByRole('button', { name: lastCategoryLabel }));
     await expect(within(settingsDialog).getByRole('heading', { name: lastCategoryLabel })).toBeVisible();
     await expect(within(settingsDialog).getByLabelText('Section marker')).toHaveValue(
