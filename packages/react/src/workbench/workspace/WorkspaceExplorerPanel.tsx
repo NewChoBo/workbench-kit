@@ -1,3 +1,4 @@
+import { SideBarViewFrame } from '../../layout/SideBarViewFrame';
 import { SidebarToolbar } from '../../layout/SidebarToolbar';
 import { WorkbenchSidebarSection } from '../../layout/WorkbenchSidebarActions';
 import { IconButton } from '../../primitives/IconButton';
@@ -12,6 +13,7 @@ export interface WorkspaceExplorerPanelProps extends WorkspaceExplorerProps {
   onRefresh?: (() => void) | undefined;
   refreshLabel?: string;
   sectionTitle?: string;
+  title?: string;
 }
 
 export function WorkspaceExplorerPanel({
@@ -22,6 +24,7 @@ export function WorkspaceExplorerPanel({
   onRefresh,
   refreshLabel = 'Refresh Explorer',
   sectionTitle = 'Workspace',
+  title = 'Explorer',
   ...explorerProps
 }: WorkspaceExplorerPanelProps) {
   const headerActions =
@@ -44,14 +47,15 @@ export function WorkspaceExplorerPanel({
     ) : undefined;
 
   return (
-    <WorkbenchSidebarSection
+    <SideBarViewFrame
       actions={headerActions}
       aria-label={ariaLabel}
       className={cx('workbench-explorer-view', 'ui-workspace-explorer-panel', className)}
-      id="workspace-explorer-section"
-      title={sectionTitle}
+      title={title}
     >
-      <WorkspaceExplorer {...explorerProps} />
-    </WorkbenchSidebarSection>
+      <WorkbenchSidebarSection id="workspace-explorer-section" title={sectionTitle}>
+        <WorkspaceExplorer {...explorerProps} />
+      </WorkbenchSidebarSection>
+    </SideBarViewFrame>
   );
 }

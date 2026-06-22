@@ -19,6 +19,8 @@ describe('WorkspaceExplorerPanel', () => {
 
     expect(markup).toContain('workbench-explorer-view');
     expect(markup).toContain('ui-workspace-explorer-panel');
+    expect(markup).toContain('ui-side-bar-view');
+    expect(markup).toContain('Explorer');
     expect(markup).toContain('ui-workbench-sidebar-section');
     expect(markup).toContain('aria-label="New file"');
   });
