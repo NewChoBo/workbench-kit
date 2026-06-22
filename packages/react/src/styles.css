@@ -6154,7 +6154,7 @@
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  background: var(--vscode-editorGroupHeader-tabsBackground, var(--color-bg));
+  background: var(--vscode-editorGroupHeader-tabsBackground, var(--color-editor-tab-strip-bg));
   border-bottom: 1px solid var(--vscode-panel-border, var(--color-border));
 }
 
@@ -6169,7 +6169,7 @@
   height: 34px;
   padding: 0 10px;
   color: var(--vscode-tab-inactiveForeground, var(--color-text-muted));
-  background: var(--vscode-tab-inactiveBackground, var(--color-surface));
+  background: var(--vscode-tab-inactiveBackground, var(--color-editor-tab-inactive-bg));
   border: 0;
   border-right: 1px solid var(--vscode-tab-border, var(--color-border));
   font: inherit;
@@ -6178,9 +6178,9 @@
 
 .ui-tabbed-panels__tab--active {
   color: var(--vscode-tab-activeForeground, var(--color-text));
-  background: var(--vscode-tab-activeBackground, var(--color-bg));
+  background: var(--vscode-tab-activeBackground, var(--color-editor-tab-active-bg));
   margin-bottom: -1px;
-  border-bottom: 1px solid var(--vscode-tab-activeBackground, var(--color-bg));
+  border-bottom: 1px solid var(--vscode-tab-activeBackground, var(--color-editor-tab-active-bg));
   z-index: 1;
 }
 
@@ -6234,7 +6234,7 @@
   min-width: 0;
   min-height: 35px;
   overflow: hidden;
-  background: var(--vscode-editorGroupHeader-tabsBackground, var(--color-bg));
+  background: var(--vscode-editorGroupHeader-tabsBackground, var(--color-editor-tab-strip-bg));
   border-bottom: 1px solid var(--vscode-editorGroupHeader-border, var(--color-border));
 }
 
@@ -6261,7 +6261,7 @@
   min-height: 35px;
   padding: 0 8px 0 10px;
   color: var(--vscode-tab-inactiveForeground, var(--color-text-muted));
-  background: var(--vscode-tab-inactiveBackground, var(--color-surface));
+  background: var(--vscode-tab-inactiveBackground, var(--color-editor-tab-inactive-bg));
   border-right: 1px solid
     color-mix(in srgb, var(--vscode-tab-border, var(--color-border)) 88%, transparent);
   font: inherit;
@@ -6294,9 +6294,9 @@
 
 .ui-editor-tabs__tab--active {
   color: var(--vscode-tab-activeForeground, var(--color-text));
-  background: var(--vscode-tab-activeBackground, var(--color-bg));
+  background: var(--vscode-tab-activeBackground, var(--color-editor-tab-active-bg));
   margin-bottom: -1px;
-  border-bottom: 1px solid var(--vscode-editor-background, var(--color-bg));
+  border-bottom: 1px solid var(--vscode-editor-background, var(--color-editor-tab-active-bg));
   font-weight: 500;
   z-index: 1;
 }

@@ -135,6 +135,16 @@
   --workbench-header-height: 35px;
   --shadow-md: 0 8px 24px rgb(0 0 0 / 20%);
   --shadow-lg: 0 12px 32px rgb(0 0 0 / 24%);
+
+  /* Editor tab strip — VS Code: strip = inactive tab bg; active tab = editor surface */
+  --color-editor-tab-strip-bg: var(--color-surface);
+  --color-editor-tab-inactive-bg: var(--color-surface);
+  --color-editor-tab-active-bg: var(--color-bg);
+  --vscode-editorGroupHeader-tabsBackground: var(--color-editor-tab-strip-bg);
+  --vscode-editorGroupHeader-border: var(--color-border);
+  --vscode-tab-inactiveBackground: var(--color-editor-tab-inactive-bg);
+  --vscode-tab-activeBackground: var(--color-editor-tab-active-bg);
+  --vscode-editor-background: var(--color-editor-tab-active-bg);
 }
 
 :root,
