@@ -1,11 +1,10 @@
-import { Badge, Field, Select } from '@workbench-kit/react/primitives';
+import { Badge, Field } from '@workbench-kit/react/primitives';
 import type { WorkbenchPermissionRole } from '@workbench-kit/platform';
 
 import {
-  SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS,
+  SamplePermissionRoleOverrideSelect,
   formatSamplePermissionRoleLabel,
   resolveSamplePermissionRoleOptionId,
-  resolveSamplePermissionRoleOverrideFromOptionId,
 } from './sample-permission-role-controls.js';
 import type { SamplePermissionRoleOverride } from './sample-permission-role-storage.js';
 
@@ -46,23 +45,10 @@ export function createSamplePermissionRoleProfileExtra({
         label="Permission role (demo)"
         description="Switch tiers to compare Activity Bar visibility without signing out."
       >
-        <Select
-          aria-label="Permission role (demo)"
-          controlWidth="full"
-          value={selectedOptionId}
-          onValueChange={(nextValue) => {
-            const nextOverride = resolveSamplePermissionRoleOverrideFromOptionId(nextValue);
-            if (nextOverride !== undefined) {
-              onRoleOverrideChange(nextOverride);
-            }
-          }}
-        >
-          {SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.label}
-            </option>
-          ))}
-        </Select>
+        <SamplePermissionRoleOverrideSelect
+          roleOverride={roleOverride}
+          onRoleOverrideChange={onRoleOverrideChange}
+        />
       </Field>
       <p className="workbench-sample-permission-role-profile__hint">
         Viewer shows Explorer only. Reporter adds Chat. Developer adds Search. Maintainer adds

@@ -98,11 +98,6 @@ body.ui-workbench-host {
   line-height: 1.5;
 }
 
-.workbench-sample-permission-role-profile .ui-segmented-control__item {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
 .workbench-sample-permission-role-settings,
 .workbench-sample-permission-role-profile {
   display: grid;

@@ -3,7 +3,6 @@ import {
   normalizeWorkbenchPermissionRole,
   type ContextKeyValue,
   type WorkbenchPermissionRole,
-  type WorkbenchPermissionRoleInput,
 } from '@workbench-kit/platform';
 import type { WorkbenchExtensionsConfig } from '@workbench-kit/workbench-config';
 
@@ -91,10 +90,4 @@ export function resolveSampleExtensionsConfig(
     ...extensionsConfig,
     enabled: extensionsConfig.enabled.filter((extensionId) => enabled.has(extensionId)),
   };
-}
-
-export function isDeprecatedSamplePermissionRoleInput(
-  role: WorkbenchPermissionRoleInput,
-): role is 'admin' | 'basic' {
-  return role === 'admin' || role === 'basic';
 }

@@ -1,7 +1,7 @@
 import {
   normalizeWorkbenchPermissionRole,
   type WorkbenchPermissionRole,
-  type WorkbenchPermissionRoleInput,
+  type WorkbenchPermissionRoleDeprecatedAlias,
 } from '@workbench-kit/platform';
 
 export const SAMPLE_PERMISSION_ROLE_STORAGE_KEY =
@@ -27,7 +27,7 @@ function isCanonicalSamplePermissionRole(value: unknown): value is WorkbenchPerm
 
 function isDeprecatedSamplePermissionRoleAlias(
   value: unknown,
-): value is WorkbenchPermissionRoleInput {
+): value is WorkbenchPermissionRoleDeprecatedAlias {
   return value === 'admin' || value === 'basic';
 }
 

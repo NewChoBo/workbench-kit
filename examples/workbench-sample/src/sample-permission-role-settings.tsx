@@ -1,19 +1,15 @@
-import { Field, Select } from '@workbench-kit/react/primitives';
+import { Field } from '@workbench-kit/react/primitives';
 import { WorkbenchSettingsSection } from '@workbench-kit/react/workbench/settings';
 import type { WorkbenchPermissionRole } from '@workbench-kit/platform';
 import type { WorkbenchSettingsCategory } from '@workbench-kit/react/workbench/settings';
 
 import type { SamplePermissionRoleOverride } from './sample-permission-role-storage.js';
 import {
-  SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS,
+  SamplePermissionRoleOverrideSelect,
   formatSamplePermissionRoleLabel,
-  resolveSamplePermissionRoleOptionId,
-  resolveSamplePermissionRoleOverrideFromOptionId,
 } from './sample-permission-role-controls.js';
 
 export const SAMPLE_PERMISSION_ROLE_SETTINGS_CATEGORY_ID = 'workbench.sample.permissions-demo';
-
-const ROLE_OVERRIDE_OPTIONS = SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS;
 
 export interface SamplePermissionRoleSettingsInput {
   authDerivedRole: WorkbenchPermissionRole;
@@ -45,7 +41,6 @@ function SamplePermissionRoleSettingsSection({
   roleOverride,
   onRoleOverrideChange,
 }: SamplePermissionRoleSettingsInput) {
-  const selectedOptionId = resolveSamplePermissionRoleOptionId(roleOverride);
   const effectiveRole = roleOverride ?? authDerivedRole;
 
   return (
@@ -60,23 +55,10 @@ function SamplePermissionRoleSettingsSection({
           label="Permission role (demo)"
           description={`Signed-in account maps to ${formatSamplePermissionRoleLabel(authDerivedRole)}. Override the demo role without signing out. Effective role: ${formatSamplePermissionRoleLabel(effectiveRole)}.`}
         >
-          <Select
-            aria-label="Permission role (demo)"
-            controlWidth="full"
-            value={selectedOptionId}
-            onValueChange={(nextValue) => {
-              const nextOverride = resolveSamplePermissionRoleOverrideFromOptionId(nextValue);
-              if (nextOverride !== undefined) {
-                onRoleOverrideChange(nextOverride);
-              }
-            }}
-          >
-            {ROLE_OVERRIDE_OPTIONS.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
+          <SamplePermissionRoleOverrideSelect
+            roleOverride={roleOverride}
+            onRoleOverrideChange={onRoleOverrideChange}
+          />
         </Field>
         <p className="workbench-sample-permission-role-settings__hint">
           If Settings is hidden for your tier, open Profile and switch roles here or run{' '}
