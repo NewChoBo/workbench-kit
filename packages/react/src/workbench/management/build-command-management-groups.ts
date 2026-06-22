@@ -141,3 +141,17 @@ export function filterCommandManagementGroups(
 export function countCommandManagementEntries(groups: readonly CommandManagementGroup[]): number {
   return groups.reduce((total, group) => total + group.entries.length, 0);
 }
+
+export function findCommandManagementEntry(
+  groups: readonly CommandManagementGroup[],
+  commandId: string,
+): CommandManagementEntry | undefined {
+  for (const group of groups) {
+    const entry = group.entries.find((candidate) => candidate.id === commandId);
+    if (entry) {
+      return entry;
+    }
+  }
+
+  return undefined;
+}

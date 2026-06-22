@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { formatKeybindingLabel } from '@workbench-kit/platform';
 import {
   SideBarHeaderControl,
@@ -38,6 +38,7 @@ export interface CommandManagementSidebarProps extends Pick<
 > {
   className?: string | undefined;
   emptyLabel?: string | undefined;
+  onInspectCommand?: ((commandId: string) => void) | undefined;
   onRefresh?: (() => void) | undefined;
 }
 
@@ -46,6 +47,7 @@ export function CommandManagementSidebar({
   emptyLabel = 'No commands match the filter.',
   groups,
   lastRun,
+  onInspectCommand,
   onRefresh,
   onRunCommand,
   summaryLabel,
@@ -206,6 +208,7 @@ export function CommandManagementSidebar({
               }
               entry={entry}
               onActivate={() => setActiveEntryId(entry.id)}
+              onInspect={onInspectCommand}
               onRun={() => {
                 void onRunCommand?.(entry.id);
               }}
@@ -230,6 +233,7 @@ export function CommandManagementSidebar({
                     }
                     entry={entry}
                     onActivate={() => setActiveEntryId(entry.id)}
+                    onInspect={onInspectCommand}
                     onRun={() => {
                       void onRunCommand?.(entry.id);
                     }}
@@ -251,15 +255,46 @@ function CommandSidebarListItem({
   disabled,
   entry,
   onActivate,
+  onInspect,
   onRun,
 }: {
   active: boolean;
   disabled: boolean;
   entry: CommandManagementEntry;
   onActivate: () => void;
+  onInspect?: ((commandId: string) => void) | undefined;
   onRun: () => void;
 }) {
   const shortcutLabel = entry.keybinding ? formatKeybindingLabel(entry.keybinding) : undefined;
+  const runClickTimeoutRef = useRef<number | undefined>(undefined);
+
+  const scheduleRun = () => {
+    if (runClickTimeoutRef.current !== undefined) {
+      window.clearTimeout(runClickTimeoutRef.current);
+    }
+
+    runClickTimeoutRef.current = window.setTimeout(() => {
+      runClickTimeoutRef.current = undefined;
+      onRun();
+    }, 220);
+  };
+
+  const handleDoubleClick = () => {
+    if (runClickTimeoutRef.current !== undefined) {
+      window.clearTimeout(runClickTimeoutRef.current);
+      runClickTimeoutRef.current = undefined;
+    }
+
+    onInspect?.(entry.id);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (runClickTimeoutRef.current !== undefined) {
+        window.clearTimeout(runClickTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <SideBarListItem
@@ -267,8 +302,9 @@ function CommandSidebarListItem({
       data-command-entry-id={entry.id}
       disabled={disabled}
       selected={active}
-      title={entry.id}
-      onClick={onRun}
+      title={onInspect ? `${entry.id} (double-click to inspect)` : entry.id}
+      onClick={scheduleRun}
+      onDoubleClick={onInspect ? handleDoubleClick : undefined}
       onFocus={onActivate}
       onMouseEnter={onActivate}
     >

@@ -1,5 +1,11 @@
 import type { ExtensionContext } from '@workbench-kit/workbench-extension-sdk';
 
+import {
+  COMMAND_INSPECTOR_EDITOR_ID,
+  CommandInspectorEditorHost,
+  parseCommandInspectorUri,
+} from './command-inspector-editor-host.js';
+
 export const EXTENSION_ID = 'workbench-kit.builtin.commands' as const;
 export const COMMANDS_VIEW_ID = 'workbench-kit.builtin.commands.panel' as const;
 export const COMMANDS_VIEW_RENDER_KIND = 'workbench-kit.builtin.commands.view' as const;
@@ -10,7 +16,36 @@ export interface BuiltinCommandsViewRenderData {
   readonly kind: typeof COMMANDS_VIEW_RENDER_KIND;
 }
 
+export {
+  COMMAND_INSPECTOR_EDITOR_HOST_RENDER_KIND,
+  COMMAND_INSPECTOR_EDITOR_ID,
+  CommandInspectorEditorHost,
+  isCommandInspectorEditorHostRenderData,
+  parseCommandInspectorUri,
+  type CommandInspectorEditorHostRenderData,
+} from './command-inspector-editor-host.js';
+
 export function activate(context: ExtensionContext): void {
+  context.editorResolvers.registerResolver({
+    id: 'command-inspector',
+    priority: 20,
+    canResolve: ({ resourceUri }) => parseCommandInspectorUri(resourceUri) !== undefined,
+    resolve: () => COMMAND_INSPECTOR_EDITOR_ID,
+  });
+
+  context.editorHostFactories.registerFactory({
+    id: 'workbench-kit.builtin.commands.inspectorHost',
+    priority: 20,
+    canCreate: ({ editorId }) => editorId === COMMAND_INSPECTOR_EDITOR_ID,
+    create: ({ resourceUri, tabId }) => {
+      if (!resourceUri) {
+        throw new Error('Command inspector host requires a resource URI.');
+      }
+
+      return new CommandInspectorEditorHost({ resourceUri, tabId });
+    },
+  });
+
   context.commands.registerCommand(FOCUS_COMMAND_ID, () => ({
     focused: true,
     viewId: COMMANDS_VIEW_ID,

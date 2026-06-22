@@ -19,6 +19,7 @@ import {
   type EditorTabState,
 } from '@workbench-kit/workbench-core';
 
+import { CommandInspectorSurface } from './command-inspector-surface.js';
 import {
   resolveEditorDocumentViews,
   type EditorDocumentViewProvider,
@@ -82,6 +83,16 @@ export function EditorHostSurface({
         resourceUri={rendered.resourceUri}
         tabId={activeTab.id}
         title={host.title ?? activeTab.title}
+      />
+    );
+  }
+
+  if (isCommandInspectorEditorRenderPayload(rendered)) {
+    return (
+      <CommandInspectorSurface
+        commandId={rendered.commandId}
+        resourceUri={rendered.resourceUri}
+        tabId={activeTab.id}
       />
     );
   }
@@ -395,6 +406,27 @@ function EditorViewModeButton({
 function isJsonSourceDocument(document: { mimeType?: string | undefined; path: string }): boolean {
   const mimeType = document.mimeType?.toLowerCase();
   return document.path.toLowerCase().endsWith('.json') || Boolean(mimeType?.includes('json'));
+}
+
+interface CommandInspectorEditorRenderPayload {
+  readonly commandId: string;
+  readonly kind: 'workbench-kit.builtin.commands/inspector';
+  readonly resourceUri: string;
+}
+
+function isCommandInspectorEditorRenderPayload(
+  value: unknown,
+): value is CommandInspectorEditorRenderPayload {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<CommandInspectorEditorRenderPayload>;
+  return (
+    candidate.kind === 'workbench-kit.builtin.commands/inspector' &&
+    typeof candidate.commandId === 'string' &&
+    typeof candidate.resourceUri === 'string'
+  );
 }
 
 function isTextEditorRenderPayload(value: unknown): value is TextEditorRenderPayload {

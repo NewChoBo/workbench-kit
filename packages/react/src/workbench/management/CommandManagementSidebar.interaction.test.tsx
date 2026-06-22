@@ -84,4 +84,40 @@ describe('CommandManagementSidebar interactions', () => {
       window.requestAnimationFrame = originalRequestAnimationFrame;
     }
   });
+
+  it('opens inspect on double-click without relying on single-click run', async () => {
+    const inspected: string[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    try {
+      await act(async () => {
+        root.render(
+          <CommandManagementSidebar
+            groups={groups}
+            onInspectCommand={(commandId) => {
+              inspected.push(commandId);
+            }}
+            onRunCommand={() => undefined}
+          />,
+        );
+      });
+
+      const firstItem = container.querySelector<HTMLButtonElement>(
+        '[data-command-entry-id="workbench.commands.first"]',
+      );
+
+      await act(async () => {
+        firstItem?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      });
+
+      expect(inspected).toEqual(['workbench.commands.first']);
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
 });
