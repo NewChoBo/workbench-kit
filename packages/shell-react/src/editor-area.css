@@ -153,9 +153,9 @@
 
 .workbench-editor-area__group-actions {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 4px;
-  min-width: 0;
   height: 100%;
 }
 
@@ -179,9 +179,9 @@
 
 .workbench-editor-area__mode-toolbar-outlet {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   height: 100%;
-  min-width: 0;
 }
 
 .workbench-editor-area__view-toolbar {
@@ -190,7 +190,6 @@
   flex-shrink: 0;
   gap: 2px;
   align-items: center;
-  min-width: 0;
   height: 100%;
 }
 

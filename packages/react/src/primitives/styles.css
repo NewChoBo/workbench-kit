@@ -531,9 +531,10 @@
 
 .ui-editor-tabs__scroller {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   min-width: 0;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .ui-editor-tabs__tab {
@@ -544,7 +545,7 @@
   position: relative;
   box-sizing: border-box;
   display: inline-flex;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   align-items: center;
   gap: 6px;
   min-width: 96px;
@@ -699,10 +700,9 @@
 
 .ui-editor-tabs__addons {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 6px;
-  min-width: 0;
-  margin-left: auto;
   padding: 0 8px;
 }
 
