@@ -250,6 +250,50 @@ function createOverflowMessages(count: number): ChatMessage[] {
   }));
 }
 
+const timestampDemoMessages: ChatMessage[] = [
+  {
+    content: 'Can you summarize the release notes?',
+    createdAt: '2026-06-18T14:30:10.000Z',
+    id: 'timestamp-user-1',
+    source: 'user',
+  },
+  {
+    content: 'Also include the migration checklist.',
+    createdAt: '2026-06-18T14:30:45.000Z',
+    id: 'timestamp-user-2',
+    source: 'user',
+  },
+  {
+    content: 'Here is a short summary of the release notes and migration checklist.',
+    createdAt: '2026-06-18T14:31:05.000Z',
+    id: 'timestamp-assistant-1',
+    source: 'assistant',
+  },
+  {
+    content: 'Let me know if you want the full diff.',
+    createdAt: '2026-06-18T14:31:40.000Z',
+    id: 'timestamp-assistant-2',
+    source: 'assistant',
+  },
+];
+
+export const MessageTimestampHover: Story = {
+  name: 'Chat / Message timestamp hover',
+  render: () => (
+    <StorySidebarFrame variant="chatCompact">
+      <ChatPanel
+        assistantLabel="Assistant"
+        messages={timestampDemoMessages}
+        placeholder="Type a message"
+        title="Timestamp hover"
+        value=""
+        onSubmit={() => undefined}
+        onValueChange={() => undefined}
+      />
+    </StorySidebarFrame>
+  ),
+};
+
 export const MessageListOverflowScroll: Story = {
   name: 'Chat / Message List Overflow',
   render: () => (

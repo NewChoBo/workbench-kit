@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { SideBarScrollSpacer } from '../../layout/SideBarViewFrame';
 import { cx } from '../../utils/cx';
 import { ChatMessageItem, type ChatMessageItemProps } from './ChatMessageItem';
-import { shouldShowPeerChatSenderLabel } from './chatMessageGrouping';
+import { shouldShowChatMessageTimestamp, shouldShowPeerChatSenderLabel } from './chatMessageGrouping';
 import type { ChatMessage, ChatMessageLayout } from './types';
 
 export interface ChatMessageListProps {
@@ -64,6 +64,7 @@ export function ChatMessageList({
               userLabel: resolvedUserLabel,
             })
           }
+          showTimestamp={shouldShowChatMessageTimestamp(messages, index)}
           userLabel={resolvedUserLabel}
         />
       ))}

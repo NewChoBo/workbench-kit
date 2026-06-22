@@ -26,6 +26,8 @@ export interface ChatCommandProposal {
   status: ChatCommandProposalStatus;
 }
 
+export type ChatMessageTimestamp = number | Date | string;
+
 export interface ChatMessage {
   commandProposals?: readonly ChatCommandProposal[] | undefined;
   content: string;
@@ -33,4 +35,6 @@ export interface ChatMessage {
   id: string;
   label?: ReactNode;
   source: ChatMessageSource;
+  /** Preferred timestamp for display; falls back to `createdAt` when omitted. */
+  timestamp?: ChatMessageTimestamp;
 }

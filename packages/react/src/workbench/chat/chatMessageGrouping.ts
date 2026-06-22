@@ -1,3 +1,4 @@
+import { getChatMessageTimeMinuteKey, resolveChatMessageTimestamp } from './chatMessageTime';
 import type { ChatMessage } from './types';
 
 export function getPeerChatSenderKey(
@@ -37,4 +38,31 @@ export function shouldShowPeerChatSenderLabel(
   }
 
   return getPeerChatSenderKey(message, options) !== getPeerChatSenderKey(previousMessage, options);
+}
+
+export function shouldShowChatMessageTimestamp(
+  messages: readonly ChatMessage[],
+  index: number,
+): boolean {
+  const message = messages[index];
+  if (!message) {
+    return false;
+  }
+
+  const timeKey = getChatMessageTimeMinuteKey(resolveChatMessageTimestamp(message));
+  if (!timeKey) {
+    return false;
+  }
+
+  const nextMessage = messages[index + 1];
+  if (!nextMessage) {
+    return true;
+  }
+
+  const nextTimeKey = getChatMessageTimeMinuteKey(resolveChatMessageTimestamp(nextMessage));
+  if (!nextTimeKey) {
+    return true;
+  }
+
+  return timeKey !== nextTimeKey;
 }
