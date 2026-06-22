@@ -51,7 +51,11 @@ function OpenWorkspacePathsOnReady({ paths }: { paths: readonly string[] }) {
     openedRef.current = true;
     void (async () => {
       for (const path of paths) {
-        await executeCommand('workspace.open', { path });
+        await executeCommand('workspace.open', {
+          kind: 'file',
+          path,
+          paths: [path],
+        });
       }
     })();
   }, [executeCommand, paths]);

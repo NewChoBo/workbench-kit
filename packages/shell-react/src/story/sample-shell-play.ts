@@ -35,6 +35,20 @@ export async function openSettingsModal(canvas: SampleShellCanvas) {
   );
 }
 
+export async function openSettingsAppearanceCategory(dialog: HTMLElement) {
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Appearance' }));
+  await waitFor(
+    () => {
+      expect(within(dialog).getByRole('combobox', { name: 'Color scheme' })).toBeVisible();
+    },
+    { timeout: 15_000 },
+  );
+}
+
+export async function waitForEditorTab(canvas: SampleShellCanvas, tabName: string) {
+  return canvas.findByRole('tab', { name: tabName }, { timeout: 30_000 });
+}
+
 export function createSampleShellCanvas(canvasElement: HTMLElement): SampleShellCanvas {
   return within(canvasElement);
 }

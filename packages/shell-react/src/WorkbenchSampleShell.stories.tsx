@@ -63,7 +63,7 @@ export const AuthenticatedWorkbench: Story = {
     await expect(canvas.getByLabelText('Editor area')).toBeVisible();
     await expect(canvas.getByLabelText('Status bar')).toBeVisible();
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const SettingsAppearance: Story = {
@@ -88,7 +88,7 @@ export const SettingsAppearance: Story = {
     await expect(within(dialog).getByRole('combobox', { name: 'Light preset' })).toBeVisible();
     await expect(within(dialog).getByRole('combobox', { name: 'Dark preset' })).toBeVisible();
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const PermissionOwnerActivityBar: Story = {
@@ -114,7 +114,7 @@ export const PermissionOwnerActivityBar: Story = {
     await expect(canvas.getByRole('button', { name: 'Search' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Extensions' })).toBeVisible();
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const PermissionViewerActivityBar: Story = {
@@ -139,7 +139,7 @@ export const PermissionViewerActivityBar: Story = {
     await expect(canvas.queryByRole('button', { name: 'Extensions' })).toBeNull();
     await expect(canvas.queryByRole('button', { name: 'Settings' })).toBeNull();
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const ExtensionsView: Story = {
@@ -176,7 +176,7 @@ export const ExtensionsView: Story = {
     expect(within(installedList).getAllByText('Explorer').length).toBeGreaterThanOrEqual(1);
     expect(within(installedList).getAllByText('Search').length).toBeGreaterThanOrEqual(1);
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const ReadmeEditorPaneToggles: Story = {

@@ -120,6 +120,7 @@ const baselineMode = required || !runAll;
 const runArgs = [
   '--ci',
   '--maxWorkers=1',
+  '--testTimeout=90000',
   '--disable-telemetry',
   '--browsers=chromium',
   `--url=${removeTrailingSlash(storybookUrl)}`,
