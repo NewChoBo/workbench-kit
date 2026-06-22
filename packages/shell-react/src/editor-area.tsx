@@ -23,7 +23,8 @@ import './editor-area.css';
 import { useEditorDocumentViewProviders, useEditorService, useEditorState } from './use-editor.js';
 import { useWorkbench } from './provider.js';
 import { type EditorDocumentViewProvider } from './editor-view-providers.js';
-import { EditorHostSurface, type EditorViewMode } from './editor-host-surface.js';
+import { EditorHostSurface } from './editor-host-surface.js';
+import type { EditorViewMode } from './editor-pane-visibility.js';
 import { createEditorTabContextMenuItems } from './editor-tab-context-menu.js';
 import { pruneEditorLayout, toEditorTabModel } from './editor-area-model.js';
 import {
@@ -37,7 +38,7 @@ import {
   type EditorTabDragPayload,
 } from './editor-area-dnd.js';
 
-export type { EditorViewMode } from './editor-host-surface.js';
+export type { EditorViewMode } from './editor-pane-visibility.js';
 
 export interface EditorAreaProps {
   defaultViewModeForResource?: ((resourceUri: string) => EditorViewMode | undefined) | undefined;

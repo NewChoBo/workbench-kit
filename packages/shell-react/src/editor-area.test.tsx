@@ -1080,10 +1080,13 @@ describe('EditorArea', () => {
       Array.from(toolbar?.querySelectorAll('button') ?? []).map((button) =>
         button.textContent?.trim(),
       ),
-    ).toEqual(['', '']);
+    ).toEqual(['', '', '']);
     expect(
       container.querySelector('.workbench-editor-area__text-editor > [role="toolbar"]'),
     ).toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Source"][title="Source"]'),
+    ).not.toBeNull();
     expect(
       container.querySelector(
         '.ui-editor-tabs__addons button[aria-label="Code (JSON)"][title="Code (JSON)"]',
@@ -1169,10 +1172,13 @@ describe('EditorArea', () => {
       Array.from(toolbar?.querySelectorAll('button') ?? []).map((button) =>
         button.textContent?.trim(),
       ),
-    ).toEqual(['', '', '']);
+    ).toEqual(['', '', '', '']);
     expect(
       container.querySelector('.workbench-editor-area__text-editor > [role="toolbar"]'),
     ).toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Source"][title="Source"]'),
+    ).not.toBeNull();
     expect(
       container.querySelector(
         '.ui-editor-tabs__addons button[aria-label="Code (JSON)"][title="Code (JSON)"]',
@@ -1275,6 +1281,11 @@ describe('EditorArea', () => {
     ).toBeNull();
     expect(
       container.querySelector(
+        '.ui-editor-tabs__addons button[aria-label="Source"][aria-pressed="true"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      container.querySelector(
         '.ui-editor-tabs__addons button[aria-label="Code (JSON)"][aria-pressed="true"]',
       ),
     ).not.toBeNull();
@@ -1361,16 +1372,27 @@ describe('EditorArea', () => {
     await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
     expect(container.textContent).not.toContain('Code (JSON)');
-    expect(container.textContent).toContain('Preview for diagrams/sample.flow');
-    expect(container.querySelector('[data-testid="custom-flow-preview"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="custom-flow-preview"]')).toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons [role="toolbar"]')).not.toBeNull();
     expect(
-      container.querySelector('.ui-editor-tabs__addons button[aria-label="Code"]'),
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Source"]'),
     ).not.toBeNull();
     expect(
       container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
     ).not.toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"]')).toBeNull();
+
+    const previewButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Preview"]',
+    ) as HTMLButtonElement | null;
+    expect(previewButton).toBeDefined();
+
+    await act(async () => {
+      previewButton?.click();
+    });
+
+    expect(container.textContent).toContain('Preview for diagrams/sample.flow');
+    expect(container.querySelector('[data-testid="custom-flow-preview"]')).not.toBeNull();
 
     await act(async () => {
       root.unmount();
@@ -1443,11 +1465,23 @@ describe('EditorArea', () => {
     await flushReactEffects();
     await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
-    expect(container.textContent).toContain('Report preview for reports/sample.report');
-    expect(container.querySelector('[data-testid="custom-report-preview"]')).not.toBeNull();
+    expect(container.textContent).not.toContain('Report preview for');
+    expect(container.querySelector('[data-testid="custom-report-preview"]')).toBeNull();
     expect(
       container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
     ).not.toBeNull();
+
+    const previewButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Preview"]',
+    ) as HTMLButtonElement | null;
+    expect(previewButton).toBeDefined();
+
+    await act(async () => {
+      previewButton?.click();
+    });
+
+    expect(container.textContent).toContain('Report preview for reports/sample.report');
+    expect(container.querySelector('[data-testid="custom-report-preview"]')).not.toBeNull();
 
     await act(async () => {
       root.unmount();
@@ -1552,10 +1586,21 @@ describe('EditorArea', () => {
     await flushReactEffects();
     await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
-    expect(container.textContent).toContain('Extension preview for reports/generated.preview.json');
+    expect(container.textContent).not.toContain('Extension preview for');
     expect(
       container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
     ).not.toBeNull();
+
+    const previewButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Preview"]',
+    ) as HTMLButtonElement | null;
+    expect(previewButton).toBeDefined();
+
+    await act(async () => {
+      previewButton?.click();
+    });
+
+    expect(container.textContent).toContain('Extension preview for reports/generated.preview.json');
 
     await act(async () => {
       root.unmount();
@@ -1563,7 +1608,7 @@ describe('EditorArea', () => {
     container.remove();
   });
 
-  it('renders Markdown preview beside code and supports preview-only mode', async () => {
+  it('renders Markdown preview beside source and supports preview-only mode', async () => {
     function OpenMarkdownEditorProbe() {
       const editorService = useEditorService();
 
@@ -1621,9 +1666,9 @@ describe('EditorArea', () => {
     await flushReactEffects();
     await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
-    expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
+    expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
     expect(
-      container.querySelector('.ui-editor-tabs__addons button[aria-label="Code"]'),
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Source"]'),
     ).not.toBeNull();
     expect(
       container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
@@ -1633,12 +1678,7 @@ describe('EditorArea', () => {
       container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
     ).toBe('markdown');
     expect(container.querySelector('.workspace-editor__file-path')?.textContent).toBe('README.md');
-    expect(container.querySelector('.ui-workbench-markdown-preview')).not.toBeNull();
-    expect(container.querySelector('[data-testid="markdown-mermaid-preview"]')).not.toBeNull();
-    expect(container.textContent).toContain('Workbench Notes');
-    expect(container.textContent).toContain('Markdown documents render a GitHub-style preview');
-    expect(container.textContent).toContain('Source');
-    expect(container.textContent).toContain('Preview');
+    expect(container.querySelector('.ui-workbench-markdown-preview')).toBeNull();
 
     const previewButton = container.querySelector(
       '.ui-editor-tabs__addons button[aria-label="Preview"]',
@@ -1647,6 +1687,23 @@ describe('EditorArea', () => {
 
     await act(async () => {
       previewButton?.click();
+    });
+
+    expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
+    expect(container.querySelector('.ui-workbench-markdown-preview')).not.toBeNull();
+    expect(container.querySelector('[data-testid="markdown-mermaid-preview"]')).not.toBeNull();
+    expect(container.textContent).toContain('Workbench Notes');
+    expect(container.textContent).toContain('Markdown documents render a GitHub-style preview');
+    expect(container.textContent).toContain('Source');
+    expect(container.textContent).toContain('Preview');
+
+    const sourceButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Source"]',
+    ) as HTMLButtonElement | null;
+    expect(sourceButton).toBeDefined();
+
+    await act(async () => {
+      sourceButton?.click();
     });
 
     expect(container.querySelector('.workspace-editor__monaco')).toBeNull();
@@ -1660,7 +1717,7 @@ describe('EditorArea', () => {
     container.remove();
   });
 
-  it('renders JDW preview beside code and form panes from the shared source content', async () => {
+  it('renders JDW preview beside source and form panes from the shared source content', async () => {
     function OpenJsonEditorProbe() {
       const editorService = useEditorService();
 
@@ -1718,6 +1775,19 @@ describe('EditorArea', () => {
     await flushReactEffects();
     await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
 
+    expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
+    expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
+    expect(container.querySelector('[data-testid="jdw-preview-output"]')).toBeNull();
+
+    const previewButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Preview"]',
+    ) as HTMLButtonElement | null;
+    expect(previewButton).toBeDefined();
+
+    await act(async () => {
+      previewButton?.click();
+    });
+
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
     expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
     expect(container.querySelector('.workspace-editor__file-path')?.textContent).toBe(
@@ -1731,13 +1801,25 @@ describe('EditorArea', () => {
     ).not.toBeNull();
     expect(container.textContent).toContain('Preview title');
 
-    const previewButton = container.querySelector(
-      '.ui-editor-tabs__addons button[aria-label="Preview"]',
-    ) as HTMLButtonElement | null;
-    expect(previewButton).toBeDefined();
+    await act(async () => {
+      previewButton?.click();
+    });
+
+    expect(container.querySelector('[data-testid="jdw-preview-output"]')).toBeNull();
+    expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
+    expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
 
     await act(async () => {
       previewButton?.click();
+    });
+
+    const sourceButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Source"]',
+    ) as HTMLButtonElement | null;
+    expect(sourceButton).toBeDefined();
+
+    await act(async () => {
+      sourceButton?.click();
     });
 
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
@@ -1746,13 +1828,8 @@ describe('EditorArea', () => {
     expect(container.querySelector('.workspace-editor__file-bar')).toBeNull();
     expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
 
-    const codeButton = container.querySelector(
-      '.ui-editor-tabs__addons button[aria-label="Code (JSON)"]',
-    ) as HTMLButtonElement | null;
-    expect(codeButton).toBeDefined();
-
     await act(async () => {
-      codeButton?.click();
+      sourceButton?.click();
     });
 
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
@@ -1861,6 +1938,11 @@ describe('EditorArea', () => {
     expect(
       container.querySelector(
         '.ui-editor-tabs__addons button[aria-label="Preview"][aria-pressed="true"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      container.querySelector(
+        '.ui-editor-tabs__addons button[aria-label="Source"][aria-pressed="false"]',
       ),
     ).not.toBeNull();
 

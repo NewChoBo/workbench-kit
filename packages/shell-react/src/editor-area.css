@@ -195,7 +195,8 @@
 }
 
 .workbench-editor-area__view-button.ui-icon-button {
-  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  color: var(--vscode-tab-inactiveForeground, var(--color-text-muted));
+  opacity: 0.62;
 }
 
 .workbench-editor-area__view-button.ui-icon-button .codicon {
@@ -203,16 +204,34 @@
 }
 
 .workbench-editor-area__view-button.ui-icon-button:hover {
+  opacity: 1;
   background: var(--vscode-toolbar-hoverBackground, var(--color-bg-hover));
-  color: var(--vscode-foreground, var(--color-text));
+  color: var(--vscode-tab-hoverForeground, var(--vscode-foreground, var(--color-text)));
 }
 
-.workbench-editor-area__view-button.ui-icon-button[data-active='true'] {
-  background: var(
-    --vscode-toolbar-activeBackground,
-    var(--vscode-toolbar-hoverBackground, transparent)
+.workbench-editor-area__view-button.ui-icon-button[aria-pressed='true'],
+.workbench-editor-area__view-button--active.ui-icon-button {
+  opacity: 1;
+  color: var(--vscode-tab-activeForeground, var(--color-text));
+  background: color-mix(
+    in srgb,
+    var(--vscode-tab-activeForeground, var(--color-text)) 14%,
+    transparent
   );
-  color: var(--vscode-foreground, var(--color-text));
+  border-color: color-mix(
+    in srgb,
+    var(--vscode-focusBorder, var(--color-focus-border, var(--color-accent))) 35%,
+    transparent
+  );
+}
+
+.workbench-editor-area__view-button.ui-icon-button[aria-pressed='true']:hover,
+.workbench-editor-area__view-button--active.ui-icon-button:hover {
+  background: color-mix(
+    in srgb,
+    var(--vscode-tab-activeForeground, var(--color-text)) 20%,
+    transparent
+  );
 }
 
 .workbench-editor-area__text-editor-body {
