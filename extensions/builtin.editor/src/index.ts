@@ -1,11 +1,18 @@
 import type { ExtensionContext } from '@workbench-kit/workbench-extension-sdk';
 
+import { MissingResourceEditorHost } from './missing-resource-editor-host.js';
 import { TextEditorHost } from './text-editor-host.js';
 
 export const EXTENSION_ID = 'workbench-kit.builtin.editor' as const;
 export const TEXT_EDITOR_ID = 'workbench-kit.builtin.editor.text' as const;
 export const TEXT_EDITOR_HOST_FACTORY_ID = 'workbench-kit.builtin.editor.textHost' as const;
 
+export {
+  MISSING_RESOURCE_EDITOR_HOST_RENDER_KIND,
+  MissingResourceEditorHost,
+  isMissingResourceEditorHostRenderData,
+  type MissingResourceEditorHostRenderData,
+} from './missing-resource-editor-host.js';
 export {
   TEXT_EDITOR_HOST_RENDER_KIND,
   TextEditorHost,
@@ -25,9 +32,13 @@ export function activate(context: ExtensionContext): void {
     id: TEXT_EDITOR_HOST_FACTORY_ID,
     priority: 10,
     canCreate: ({ editorId }) => editorId === TEXT_EDITOR_ID,
-    create: ({ resource, resourceUri, tabId }) => {
+    create: ({ resource, resourceMissing, resourceUri, tabId }) => {
       if (!resourceUri) {
         throw new Error('Text editor host requires a resource URI.');
+      }
+
+      if (resourceMissing) {
+        return new MissingResourceEditorHost({ resourceUri, tabId });
       }
 
       const initialContent = readWorkspaceFileContent(resource);

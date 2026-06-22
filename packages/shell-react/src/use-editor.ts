@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 import type { EditorHost, EditorService, EditorTabState } from '@workbench-kit/workbench-core';
 
 import { useWorkbench } from './provider.js';
@@ -38,30 +38,42 @@ export function useActiveEditorTab(): EditorTabState | undefined {
 
 export function useEditorHost(tabId?: string): EditorHost | undefined {
   const editorService = useEditorService();
-  const activeTab = useActiveEditorTab();
-  const resolvedTabId = tabId ?? activeTab?.id;
-  const hostRef = useRef<EditorHost | undefined>(undefined);
-  const forceRender = useForceRender();
+  const { waitForExtensionStartup } = useWorkbench();
+  const editorState = useEditorState();
+  const [extensionsReady, setExtensionsReady] = useState(false);
+  const activeGroup = editorState.groups.find((group) => group.id === editorState.activeGroupId);
+  const resolvedTabId = tabId ?? activeGroup?.activeTabId;
+  const resolvedTab = resolvedTabId
+    ? editorState.groups.flatMap((group) => group.tabs).find((tab) => tab.id === resolvedTabId)
+    : undefined;
 
-  const host = useMemo(() => {
-    if (!resolvedTabId) {
-      hostRef.current = undefined;
+  useEffect(() => {
+    let cancelled = false;
+
+    void waitForExtensionStartup().then(() => {
+      if (!cancelled) {
+        setExtensionsReady(true);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [waitForExtensionStartup]);
+
+  return useMemo(() => {
+    if (!resolvedTabId || !extensionsReady) {
       return undefined;
     }
 
-    const nextHost = editorService.createEditorHost(resolvedTabId);
-    hostRef.current = nextHost;
-    return nextHost;
-  }, [editorService, resolvedTabId]);
-
-  useEffect(() => {
-    const disposable = editorService.onDidChangeEditors(forceRender);
-    return () => {
-      disposable.dispose();
-    };
-  }, [editorService, forceRender]);
-
-  return host;
+    return editorService.createEditorHost(resolvedTabId);
+  }, [
+    editorService,
+    extensionsReady,
+    resolvedTab?.resourceMissing,
+    resolvedTab?.resourceUri,
+    resolvedTabId,
+  ]);
 }
 
 export function useEditorDocumentViewProviders(

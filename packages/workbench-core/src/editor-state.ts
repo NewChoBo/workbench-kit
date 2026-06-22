@@ -12,6 +12,7 @@ export interface EditorTabState {
   readonly id: string;
   readonly pinned: boolean;
   readonly preview: boolean;
+  readonly resourceMissing?: boolean | undefined;
   readonly resourceUri: string;
   readonly title?: string;
 }
@@ -312,7 +313,8 @@ export function isSameEditorState(left: EditorState, right: EditorState): boolea
         tab.icon === otherTab.icon &&
         tab.dirty === otherTab.dirty &&
         tab.preview === otherTab.preview &&
-        tab.pinned === otherTab.pinned
+        tab.pinned === otherTab.pinned &&
+        tab.resourceMissing === otherTab.resourceMissing
       );
     });
   });

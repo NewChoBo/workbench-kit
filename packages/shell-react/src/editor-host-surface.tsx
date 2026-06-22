@@ -75,6 +75,17 @@ export function EditorHostSurface({
 
   const rendered = host.render();
 
+  if (isMissingResourceEditorRenderPayload(rendered)) {
+    return (
+      <MissingResourceEditorSurface
+        message={rendered.message}
+        resourceUri={rendered.resourceUri}
+        tabId={activeTab.id}
+        title={host.title ?? activeTab.title}
+      />
+    );
+  }
+
   if (isTextEditorRenderPayload(rendered)) {
     return (
       <TextEditorSurface
@@ -396,6 +407,65 @@ function isTextEditorRenderPayload(value: unknown): value is TextEditorRenderPay
     candidate.kind === 'workbench-kit.builtin.editor/text' &&
     typeof candidate.resourceUri === 'string' &&
     typeof candidate.initialContent === 'string'
+  );
+}
+
+interface MissingResourceEditorRenderPayload {
+  readonly kind: 'workbench-kit.builtin.editor/missing-resource';
+  readonly message: string;
+  readonly resourceUri: string;
+}
+
+function isMissingResourceEditorRenderPayload(
+  value: unknown,
+): value is MissingResourceEditorRenderPayload {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<MissingResourceEditorRenderPayload>;
+  return (
+    candidate.kind === 'workbench-kit.builtin.editor/missing-resource' &&
+    typeof candidate.resourceUri === 'string' &&
+    typeof candidate.message === 'string'
+  );
+}
+
+function MissingResourceEditorSurface({
+  message,
+  resourceUri,
+  tabId,
+  title,
+}: {
+  message: string;
+  resourceUri: string;
+  tabId: string;
+  title?: string | undefined;
+}) {
+  const editorService = useEditorService();
+  const path = pathForResource(resourceUri);
+
+  return (
+    <section
+      aria-label={title ?? path}
+      className="workbench-editor-area__missing-resource"
+      data-resource-uri={resourceUri}
+    >
+      <div className="workbench-editor-area__missing-resource-body" role="alert">
+        <p className="workbench-editor-area__missing-resource-title">Unable to open editor</p>
+        <p className="workbench-editor-area__missing-resource-message">{message}</p>
+        <p className="workbench-editor-area__missing-resource-path">{path}</p>
+        <button
+          className="workbench-editor-area__missing-resource-close"
+          type="button"
+          onClick={() => {
+            editorService.closeEditor(tabId);
+          }}
+        >
+          Close tab
+        </button>
+      </div>
+    </section>
   );
 }
 

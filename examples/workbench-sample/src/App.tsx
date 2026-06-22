@@ -17,6 +17,7 @@ import {
   WorkbenchShell,
   WorkbenchStartupGate,
   useWorkbench,
+  useWorkspaceResourceState,
   type EditorViewMode,
   type WorkbenchProfileInput,
 } from '@workbench-kit/shell-react';
@@ -155,7 +156,10 @@ function SampleWorkbenchHost({
   onPermissionRoleOverrideChange,
 }: SampleWorkbenchHostProps) {
   const auth = useSampleAccount();
-  const { executeCommand, extensionRegistry, layoutService } = useWorkbench();
+  const { executeCommand, extensionRegistry, layoutService, workspaceHostPort } = useWorkbench();
+  const workspaceState = useWorkspaceResourceState(workspaceHostPort?.service);
+  const liveFileCount = workspaceState?.files.length ?? 0;
+  const liveFolderCount = workspaceState?.folders.length ?? 0;
   const [layout, setLayout] = useState(() => layoutService.getState());
   const [locale, setLocale] = useState('en');
   const resolvedTheme = useResolvedWorkbenchTheme(appearance.themePreference);
@@ -209,10 +213,20 @@ function SampleWorkbenchHost({
       createSampleStatusSections({
         activeAccountName: auth.status === 'authenticated' ? profile?.displayName : undefined,
         appearance,
+        fileCount: liveFileCount,
+        folderCount: liveFolderCount,
         resolvedTheme,
         sideBarVisible: layout.sideBar.visible,
       }),
-    [appearance, auth.status, layout.sideBar.visible, profile?.displayName, resolvedTheme],
+    [
+      appearance,
+      auth.status,
+      layout.sideBar.visible,
+      liveFileCount,
+      liveFolderCount,
+      profile?.displayName,
+      resolvedTheme,
+    ],
   );
 
   const handleThemeChange = useCallback(
@@ -338,7 +352,7 @@ function SampleWorkbenchHost({
         theme={appearance.themePreference}
         title="Workbench Sample"
         titleBarActions={<SampleTitleBarActions />}
-        titleMeta={<Badge variant="muted">{workspaceInfo.fileCount} files</Badge>}
+        titleMeta={<Badge variant="muted">{liveFileCount} files</Badge>}
       />
     </>
   );
@@ -443,6 +457,8 @@ function SampleHelpContent() {
 interface SampleStatusSectionsInput {
   activeAccountName?: string | undefined;
   appearance: SampleAppearanceSettings;
+  fileCount: number;
+  folderCount: number;
   resolvedTheme: WorkspaceEditorTheme;
   sideBarVisible: boolean;
 }
@@ -450,6 +466,8 @@ interface SampleStatusSectionsInput {
 function createSampleStatusSections({
   activeAccountName,
   appearance,
+  fileCount,
+  folderCount,
   resolvedTheme,
   sideBarVisible,
 }: SampleStatusSectionsInput): StatusBarSectionModel[] {
@@ -498,13 +516,13 @@ function createSampleStatusSections({
         {
           icon: 'files',
           id: 'sample.files',
-          label: `${workspaceInfo.fileCount} files`,
+          label: `${fileCount} files`,
           title: 'Virtual workspace files',
         },
         {
           icon: 'folder',
           id: 'sample.folders',
-          label: `${workspaceInfo.folderCount} folders`,
+          label: `${folderCount} folders`,
           title: 'Virtual workspace folders',
         },
         {

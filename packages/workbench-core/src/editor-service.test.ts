@@ -674,4 +674,50 @@ describe('EditorService', () => {
       third.id,
     ]);
   });
+
+  it('marks workspace file tabs missing when resources are unavailable', () => {
+    const editorHostFactories = createEditorHostFactoryRegistry();
+    editorHostFactories.register({
+      id: 'text-editor-host',
+      create: ({ resourceUri }) => ({
+        dispose() {},
+        render: () => resourceUri ?? 'missing-resource',
+        title: 'Text Editor',
+      }),
+    });
+
+    const editorResolvers = createEditorResolverRegistry();
+    editorResolvers.register({
+      id: 'workspace-file',
+      resolve: () => 'workbench.editor.text',
+    });
+
+    const service = createEditorService({
+      editorHostFactories,
+      editorResolvers,
+    });
+
+    const opened = service.openEditor({
+      dirty: true,
+      resourceUri: 'workspace://file/src/app.ts',
+      title: 'app.ts',
+    });
+
+    service.createEditorHost(opened.id);
+    service.reconcileWorkspaceFileTabs(() => false);
+
+    expect(service.getState().groups[0]?.tabs[0]).toMatchObject({
+      dirty: false,
+      id: opened.id,
+      resourceMissing: true,
+    });
+
+    service.reconcileWorkspaceFileTabs((resourceUri) => resourceUri === 'workspace://file/src/app.ts');
+
+    expect(service.getState().groups[0]?.tabs[0]).toMatchObject({
+      dirty: false,
+      id: opened.id,
+    });
+    expect(service.getState().groups[0]?.tabs[0]).not.toHaveProperty('resourceMissing');
+  });
 });

@@ -180,6 +180,7 @@ export interface EditorHost {
 export interface EditorHostCreateContext {
   readonly editorId: string;
   readonly resource?: unknown | undefined;
+  readonly resourceMissing?: boolean | undefined;
   readonly resourceUri?: string | undefined;
   readonly tabId?: string | undefined;
 }

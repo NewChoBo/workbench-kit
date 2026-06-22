@@ -75,6 +75,7 @@ import {
   writePersistedLocalPreferences,
 } from './preference-settings-storage.js';
 import { registerWorkbenchUserCommands } from './workbench-user-commands.js';
+import { EditorWorkspaceReconciler } from './editor-workspace-reconcile.js';
 import {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
   type EditorDocumentViewProvider,
@@ -547,7 +548,12 @@ export function WorkbenchProvider({
     ],
   );
 
-  return <WorkbenchContext.Provider value={value}>{children}</WorkbenchContext.Provider>;
+  return (
+    <WorkbenchContext.Provider value={value}>
+      <EditorWorkspaceReconciler />
+      {children}
+    </WorkbenchContext.Provider>
+  );
 }
 
 export function useWorkbench(): WorkbenchContextValue {

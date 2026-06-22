@@ -72,6 +72,26 @@ describe('editor-area-model', () => {
   it('uses the final resource path segment as the fallback label', () => {
     expect(getResourceLabel('workspace://file/docs/README.md')).toBe('README.md');
   });
+
+  it('marks tabs for missing workspace resources', () => {
+    expect(
+      toEditorTabModel({
+        dirty: false,
+        editorId: 'workbench-kit.builtin.editor.text',
+        id: 'tab-missing',
+        pinned: true,
+        preview: false,
+        resourceMissing: true,
+        resourceUri: 'workspace://file/example.jdw.json',
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        id: 'tab-missing',
+        label: 'example.jdw.json',
+        missing: true,
+      }),
+    );
+  });
 });
 
 function createGroup(id: string): EditorGroupState {

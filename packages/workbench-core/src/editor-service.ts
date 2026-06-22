@@ -441,6 +441,41 @@ export class EditorService implements Disposable {
     return undefined;
   }
 
+  reconcileWorkspaceFileTabs(
+    isWorkspaceFileAvailable: (resourceUri: string) => boolean,
+  ): void {
+    let changed = false;
+    const nextGroups = this.state.groups.map((group) => ({
+      ...group,
+      tabs: group.tabs.map((tab) => {
+        if (!isWorkspaceFileResourceUri(tab.resourceUri)) {
+          if (!tab.resourceMissing) {
+            return tab;
+          }
+
+          changed = true;
+          this.disposeEditorHost(tab.id);
+          return clearResourceMissing(tab);
+        }
+
+        const missing = !isWorkspaceFileAvailable(tab.resourceUri);
+        if (Boolean(tab.resourceMissing) === missing) {
+          return tab;
+        }
+
+        changed = true;
+        this.disposeEditorHost(tab.id);
+        return missing ? markResourceMissing(tab) : clearResourceMissing(tab);
+      }),
+    }));
+
+    if (!changed) {
+      return;
+    }
+
+    this.setState({ groups: nextGroups });
+  }
+
   getActiveTab(): EditorTabState | undefined {
     const activeGroup = this.getActiveGroup();
     if (!activeGroup?.activeTabId) {
@@ -468,6 +503,7 @@ export class EditorService implements Disposable {
     const host = this.editorHostFactories.createEditorHost({
       editorId: location.tab.editorId,
       resource: this.resolveEditorResource?.(location.tab.resourceUri),
+      resourceMissing: location.tab.resourceMissing,
       resourceUri: location.tab.resourceUri,
       tabId: location.tab.id,
     });
@@ -616,4 +652,25 @@ function copyEditorHostState(
   }
 
   (targetHost as StatefulEditorHost).setDirty?.(dirty);
+}
+
+function isWorkspaceFileResourceUri(resourceUri: string): boolean {
+  return resourceUri.startsWith('workspace://file/');
+}
+
+function markResourceMissing(tab: EditorTabState): EditorTabState {
+  return {
+    ...tab,
+    dirty: false,
+    resourceMissing: true,
+  };
+}
+
+function clearResourceMissing(tab: EditorTabState): EditorTabState {
+  if (!tab.resourceMissing) {
+    return tab;
+  }
+
+  const { resourceMissing: _resourceMissing, ...rest } = tab;
+  return rest;
 }

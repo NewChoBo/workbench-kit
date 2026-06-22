@@ -52,6 +52,7 @@ export function toEditorTabModel(
     icon: tab.icon ?? iconForEditorTab(tab),
     id: tab.id,
     label: tab.title ?? getResourceLabel(tab.resourceUri),
+    missing: tab.resourceMissing,
     pinned: tab.pinned,
     preview: tab.preview,
     title: tab.resourceUri,

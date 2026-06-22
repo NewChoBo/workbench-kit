@@ -31,7 +31,12 @@ vi.mock('@monaco-editor/react', () => ({
   loader: { config: () => undefined },
 }));
 
-vi.mock('monaco-editor', () => ({}));
+vi.mock('monaco-editor', () => ({
+  editor: {
+    defineTheme: () => undefined,
+    setTheme: () => undefined,
+  },
+}));
 
 import {
   BUILTIN_WORKBENCH_EXTENSIONS,

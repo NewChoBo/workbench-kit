@@ -16,6 +16,54 @@
   font-size: var(--font-size-sm, 0.875rem);
 }
 
+.workbench-editor-area__missing-resource {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 24px;
+}
+
+.workbench-editor-area__missing-resource-body {
+  max-width: 32rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.workbench-editor-area__missing-resource-title {
+  margin: 0 0 8px;
+  color: var(--vscode-foreground, var(--color-text));
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.workbench-editor-area__missing-resource-message,
+.workbench-editor-area__missing-resource-path {
+  margin: 0 0 8px;
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.workbench-editor-area__missing-resource-path {
+  font-family: var(--font-family-mono, monospace);
+  word-break: break-all;
+}
+
+.workbench-editor-area__missing-resource-close {
+  margin-top: 12px;
+  padding: 6px 12px;
+  border: 1px solid var(--vscode-button-border, var(--color-border));
+  border-radius: 4px;
+  background: var(--vscode-button-secondaryBackground, var(--color-bg-subtle));
+  color: var(--vscode-button-secondaryForeground, var(--color-text));
+  cursor: pointer;
+  font: inherit;
+}
+
+.workbench-editor-area__missing-resource-close:hover {
+  background: var(--vscode-button-secondaryHoverBackground, var(--color-bg-muted));
+}
+
 .workbench-editor-area__content {
   display: flex;
   flex-direction: column;

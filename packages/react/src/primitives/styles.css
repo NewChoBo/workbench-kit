@@ -603,6 +603,11 @@
   opacity: 0.92;
 }
 
+.ui-editor-tabs__tab--missing .ui-editor-tabs__label {
+  font-style: italic;
+  opacity: 0.82;
+}
+
 .ui-editor-tabs__tab[data-drop-position]::after {
   position: absolute;
   inset-block: 4px;

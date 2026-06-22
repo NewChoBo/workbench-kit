@@ -81,6 +81,7 @@ export interface EditorTab {
   icon?: string | undefined;
   id: string;
   label: ReactNode;
+  missing?: boolean | undefined;
   pinned?: boolean | undefined;
   preview?: boolean | undefined;
   title?: string | undefined;
@@ -136,6 +137,7 @@ export function EditorTabs({
                 'ui-editor-tabs__tab',
                 active && 'ui-editor-tabs__tab--active',
                 tab.preview && 'ui-editor-tabs__tab--preview',
+                tab.missing && 'ui-editor-tabs__tab--missing',
               )}
               data-drop-position={tab.dropPosition}
               draggable={draggableTabs}
