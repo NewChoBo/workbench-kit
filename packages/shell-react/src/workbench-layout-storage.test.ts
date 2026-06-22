@@ -79,6 +79,7 @@ describe('workbench-layout-storage', () => {
           itemOrder: ['explorer', 'aiChat', 'search', 'chatting'],
           visible: true,
         },
+        auxiliaryBar: { visible: true },
         panel: { visible: false },
         sideBar: {
           activeViewContainer: 'aiChat',
@@ -96,6 +97,7 @@ describe('workbench-layout-storage', () => {
         itemOrder: ['explorer', 'aiChat', 'search', 'chatting'],
         visible: true,
       },
+      auxiliaryBar: { visible: true },
       panel: { visible: false },
       sideBar: {
         activeViewContainer: 'aiChat',

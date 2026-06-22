@@ -67,6 +67,9 @@ describe('parseWorkbenchLayoutConfig', () => {
       activityBar: {
         visible: true,
       },
+      auxiliaryBar: {
+        visible: false,
+      },
       panel: {
         visible: false,
       },
@@ -157,6 +160,9 @@ describe('parseWorkbenchLayoutConfig', () => {
     ).toEqual({
       activityBar: {
         visible: true,
+      },
+      auxiliaryBar: {
+        visible: false,
       },
       panel: {
         visible: false,

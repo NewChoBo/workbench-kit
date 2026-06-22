@@ -25,6 +25,9 @@ describe('LayoutService', () => {
       activityBar: {
         visible: true,
       },
+      auxiliaryBar: {
+        visible: false,
+      },
       panel: {
         visible: false,
       },
@@ -57,6 +60,9 @@ describe('LayoutService', () => {
         hiddenItemIds: ['aiChat', 'chatting'],
         itemOrder: ['search', 'explorer', 'chatting', 'aiChat'],
         visible: true,
+      },
+      auxiliaryBar: {
+        visible: false,
       },
       panel: {
         visible: false,
@@ -104,6 +110,9 @@ describe('LayoutService', () => {
       activityBar: {
         visible: true,
       },
+      auxiliaryBar: {
+        visible: false,
+      },
       panel: {
         visible: false,
       },
@@ -125,6 +134,9 @@ describe('LayoutService', () => {
         {
           activityBar: {
             visible: true,
+          },
+          auxiliaryBar: {
+            visible: false,
           },
           panel: {
             visible: false,

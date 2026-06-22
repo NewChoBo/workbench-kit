@@ -25,6 +25,9 @@ export interface WorkbenchLayoutConfig {
     readonly itemOrder?: readonly string[];
     readonly visible: boolean;
   };
+  readonly auxiliaryBar: {
+    readonly visible: boolean;
+  };
   readonly panel: {
     readonly visible: boolean;
   };
@@ -37,6 +40,7 @@ export interface WorkbenchLayoutConfig {
 
 export type WorkbenchLayoutConfigInput = Partial<{
   activityBar: Partial<WorkbenchLayoutConfig['activityBar']>;
+  auxiliaryBar: Partial<WorkbenchLayoutConfig['auxiliaryBar']>;
   panel: Partial<WorkbenchLayoutConfig['panel']>;
   sideBar: Partial<WorkbenchLayoutConfig['sideBar']>;
 }>;
@@ -44,6 +48,9 @@ export type WorkbenchLayoutConfigInput = Partial<{
 export const DEFAULT_WORKBENCH_LAYOUT_CONFIG: WorkbenchLayoutConfig = {
   activityBar: {
     visible: true,
+  },
+  auxiliaryBar: {
+    visible: false,
   },
   panel: {
     visible: false,
@@ -78,9 +85,10 @@ export function parseWorkbenchExtensionsConfigJson(jsonText: string): WorkbenchE
 
 export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfig {
   const record = assertRecord(input, 'layout config');
-  assertKnownKeys(record, ['activityBar', 'panel', 'sideBar'], 'layout config');
+  assertKnownKeys(record, ['activityBar', 'auxiliaryBar', 'panel', 'sideBar'], 'layout config');
 
   const activityBar = readOptionalRecord(record, 'activityBar');
+  const auxiliaryBar = readOptionalRecord(record, 'auxiliaryBar');
   const panel = readOptionalRecord(record, 'panel');
   const sideBar = readOptionalRecord(record, 'sideBar');
 
@@ -89,6 +97,7 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
     ['hiddenItemIds', 'itemOrder', 'visible'],
     'layout config activityBar',
   );
+  assertKnownKeys(auxiliaryBar, ['visible'], 'layout config auxiliaryBar');
   assertKnownKeys(panel, ['visible'], 'layout config panel');
   assertKnownKeys(
     sideBar,
@@ -104,6 +113,13 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
         activityBar,
         'visible',
         DEFAULT_WORKBENCH_LAYOUT_CONFIG.activityBar.visible,
+      ),
+    },
+    auxiliaryBar: {
+      visible: readOptionalBoolean(
+        auxiliaryBar,
+        'visible',
+        DEFAULT_WORKBENCH_LAYOUT_CONFIG.auxiliaryBar.visible,
       ),
     },
     panel: {

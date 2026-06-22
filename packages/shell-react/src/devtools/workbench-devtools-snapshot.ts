@@ -96,6 +96,7 @@ export function collectWorkbenchDevtoolsSnapshot({
       'editor.activeGroupId': editor.activeGroupId ?? '',
       'editor.openTabCount': activeTabCount,
       'layout.activityBar.visible': layout.activityBar.visible,
+      'layout.auxiliaryBar.visible': layout.auxiliaryBar.visible,
       'layout.panel.visible': layout.panel.visible,
       'layout.sideBar.activeViewContainer': layout.sideBar.activeViewContainer ?? '',
       'layout.sideBar.visible': layout.sideBar.visible,

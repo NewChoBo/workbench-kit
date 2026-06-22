@@ -27,6 +27,9 @@ export function workbenchLayoutConfigToInput(
       itemOrder: config.activityBar.itemOrder,
       visible: config.activityBar.visible,
     },
+    auxiliaryBar: {
+      visible: config.auxiliaryBar.visible,
+    },
     panel: {
       visible: config.panel.visible,
     },
@@ -50,6 +53,9 @@ export function workbenchLayoutStateToStorageValue(
       ...(state.activityBar.itemOrder?.length
         ? { itemOrder: [...state.activityBar.itemOrder] }
         : {}),
+    },
+    auxiliaryBar: {
+      visible: state.auxiliaryBar.visible,
     },
     panel: {
       visible: state.panel.visible,

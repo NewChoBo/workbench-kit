@@ -50,6 +50,23 @@ describe('WorkbenchShell', () => {
     expect(markup).toContain('overlay layer');
   });
 
+  it('renders an auxiliary sidebar when requested', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchShell
+        activityBar={{ items: [{ id: 'explorer', icon: 'E', label: 'Explorer' }] }}
+        auxiliarySidebar={{
+          isVisible: true,
+          node: <aside>auxiliary area</aside>,
+        }}
+        secondaryArea={<main>secondary area</main>}
+        statusSections={[]}
+      />,
+    );
+
+    expect(markup).toContain('auxiliary area');
+    expect(markup).toContain('ui-workbench-split-view');
+  });
+
   it('renders secondary area directly when primary sidebar is hidden', () => {
     const markup = renderToStaticMarkup(
       <WorkbenchShell

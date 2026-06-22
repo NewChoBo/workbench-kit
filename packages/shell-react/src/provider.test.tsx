@@ -918,6 +918,61 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 
+  it('renders shell titlebar layout controls and toggles the primary sidebar', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+        >
+          <TestWorkbenchShell editorArea={<main>Editor Area</main>} title="Workbench Sample" />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    const primaryToggle = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Toggle Primary Side Bar"]',
+    );
+    const secondaryToggle = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Toggle Secondary Side Bar"]',
+    );
+    expect(primaryToggle).not.toBeNull();
+    expect(secondaryToggle).not.toBeNull();
+    expect(primaryToggle?.getAttribute('aria-pressed')).toBe('true');
+    expect(secondaryToggle?.getAttribute('aria-pressed')).toBe('false');
+    expect(container.querySelector('.workbench-primary-side-bar')).not.toBeNull();
+    expect(container.querySelector('.workbench-auxiliary-side-bar')).toBeNull();
+
+    await act(async () => {
+      primaryToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    expect(primaryToggle?.getAttribute('aria-pressed')).toBe('false');
+    expect(container.querySelector('.workbench-primary-side-bar')).toBeNull();
+
+    await act(async () => {
+      secondaryToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    expect(secondaryToggle?.getAttribute('aria-pressed')).toBe('true');
+    expect(container.querySelector('.workbench-auxiliary-side-bar')).not.toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('renders the built-in explorer from the virtual workspace and opens files', async () => {
     const workspaceHostPort = createWorkbenchWorkspaceHostPort();
     const initialState = {

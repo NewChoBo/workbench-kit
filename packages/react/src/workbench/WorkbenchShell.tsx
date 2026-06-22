@@ -9,6 +9,12 @@ export interface WorkbenchShellProps {
   activityBar: Omit<ActivityBarProps, 'items'> & {
     items: ActivityBarItem[];
   };
+  auxiliarySidebar?: {
+    isVisible: boolean;
+    node: ReactNode;
+    className?: string;
+    style?: CSSProperties;
+  };
   compactStatus?: boolean;
   onStatusItemActivate?: (item: StatusBarItemModel) => void;
   primarySidebar?: {
@@ -33,6 +39,7 @@ export interface WorkbenchShellProps {
 
 export function WorkbenchShell({
   activityBar,
+  auxiliarySidebar,
   compactStatus = true,
   onStatusItemActivate,
   overlays,
@@ -50,6 +57,19 @@ export function WorkbenchShell({
       ? (primarySidebar.primarySizePercent ?? DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT)
       : undefined;
 
+  const centerArea = auxiliarySidebar?.isVisible ? (
+    <SplitView
+      className={auxiliarySidebar.className}
+      defaultPrimarySizePercent={75}
+      maxPrimarySizePercent={90}
+      minPrimarySizePercent={50}
+      primary={secondaryArea}
+      secondary={auxiliarySidebar.node}
+    />
+  ) : (
+    secondaryArea
+  );
+
   const body = primarySidebar?.isVisible ? (
     <SplitView
       className={primarySidebar?.className}
@@ -61,10 +81,10 @@ export function WorkbenchShell({
       onPrimarySizePercentChange={primarySidebar?.onSizePercentChange}
       primary={primarySidebar.node}
       primarySizePercent={primarySidebarSizePercent}
-      secondary={secondaryArea}
+      secondary={centerArea}
     />
   ) : (
-    secondaryArea
+    centerArea
   );
 
   return (

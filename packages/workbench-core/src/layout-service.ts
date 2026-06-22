@@ -6,6 +6,9 @@ export interface WorkbenchLayoutState {
     readonly itemOrder?: readonly string[];
     readonly visible: boolean;
   };
+  readonly auxiliaryBar: {
+    readonly visible: boolean;
+  };
   readonly panel: {
     readonly visible: boolean;
   };
@@ -18,6 +21,7 @@ export interface WorkbenchLayoutState {
 
 export type WorkbenchLayoutStateInput = Partial<{
   activityBar: Partial<WorkbenchLayoutState['activityBar']>;
+  auxiliaryBar: Partial<WorkbenchLayoutState['auxiliaryBar']>;
   panel: Partial<WorkbenchLayoutState['panel']>;
   sideBar: Partial<WorkbenchLayoutState['sideBar']>;
 }>;
@@ -30,6 +34,9 @@ export interface WorkbenchLayoutChangeEvent {
 export const DEFAULT_WORKBENCH_LAYOUT_STATE: WorkbenchLayoutState = {
   activityBar: {
     visible: true,
+  },
+  auxiliaryBar: {
+    visible: false,
   },
   panel: {
     visible: false,
@@ -114,6 +121,14 @@ export class LayoutService implements Disposable {
     });
   }
 
+  setAuxiliaryBarVisible(visible: boolean): void {
+    this.update({
+      auxiliaryBar: {
+        visible,
+      },
+    });
+  }
+
   setSideBarVisible(visible: boolean): void {
     this.update({
       sideBar: {
@@ -164,6 +179,9 @@ export function createWorkbenchLayoutState(
       ),
       itemOrder: readOptionalStringArray(input.activityBar?.itemOrder, base.activityBar.itemOrder),
       visible: readBoolean(input.activityBar?.visible, base.activityBar.visible),
+    },
+    auxiliaryBar: {
+      visible: readBoolean(input.auxiliaryBar?.visible, base.auxiliaryBar.visible),
     },
     panel: {
       visible: readBoolean(input.panel?.visible, base.panel.visible),
@@ -231,6 +249,7 @@ function isSameLayoutState(left: WorkbenchLayoutState, right: WorkbenchLayoutSta
     left.activityBar.visible === right.activityBar.visible &&
     areSameStringArrays(left.activityBar.hiddenItemIds, right.activityBar.hiddenItemIds) &&
     areSameStringArrays(left.activityBar.itemOrder, right.activityBar.itemOrder) &&
+    left.auxiliaryBar.visible === right.auxiliaryBar.visible &&
     left.panel.visible === right.panel.visible &&
     left.sideBar.activeViewContainer === right.sideBar.activeViewContainer &&
     left.sideBar.sizePercent === right.sideBar.sizePercent &&
