@@ -71,6 +71,7 @@ export interface WorkbenchStructuredDataSchemaPanelProps {
   ariaLabel: string;
   classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
   data: unknown;
+  fieldErrors?: Record<string, ReactNode> | undefined;
   fill?: boolean | undefined;
   headerActions?: ReactNode | undefined;
   labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
@@ -142,9 +143,29 @@ function getSchemaFieldValue({
   return record?.[fieldPath] ?? null;
 }
 
+function formatSchemaFieldErrorKey(path: string | readonly string[]) {
+  const segments = typeof path === 'string' ? path.split('.') : path;
+  return segments.filter(Boolean).join('.');
+}
+
+function renderSchemaFieldError(
+  fieldErrors: Record<string, ReactNode> | undefined,
+  errorKey: string,
+) {
+  const error = fieldErrors?.[errorKey];
+  if (error === undefined || error === null || error === false || error === '') return null;
+
+  return (
+    <div className="ui-workbench-structured-data-form__error" role="alert">
+      {error}
+    </div>
+  );
+}
+
 function renderSchemaFormSection({
   classNames = {},
   data,
+  fieldErrors,
   labels = {},
   onDataValueChange,
   readOnly,
@@ -153,6 +174,7 @@ function renderSchemaFormSection({
   value,
 }: WorkbenchStructuredDataSchemaSectionView & {
   classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
+  fieldErrors?: Record<string, ReactNode> | undefined;
   labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
   onDataValueChange: (path: string[], value: unknown) => void;
   readOnly: boolean;
@@ -195,6 +217,7 @@ function renderSchemaFormSection({
                   />
                 </div>
               </Field>
+              {renderSchemaFieldError(fieldErrors, dataPath)}
             </div>
           );
         })}
@@ -211,38 +234,41 @@ function renderSchemaFormSection({
     <div className={classNames.settingsList}>
       {Object.entries(record)
         .slice(0, 10)
-        .map(([key, entry]) => (
-          <div key={key} className={classNames.settingRow}>
-            <Field
-              className={classNames.field}
-              label={formatWorkbenchStructuredDataSchemaLabel(key)}
-            >
-              <div className={classNames.fieldInput}>
-                <WorkbenchStructuredDataSchemaFieldInput
-                  checkboxClassName={classNames.checkbox}
-                  className={classNames.settingControl}
-                  definition={undefined}
-                  fieldPath={key}
-                  readOnly={readOnly}
-                  textareaClassName={classNames.settingControlTextarea}
-                  value={entry}
-                  onValueChange={(nextValue) =>
-                    onDataValueChange(
-                      getWorkbenchStructuredDataSchemaFieldDataPath(section, key).split('.'),
-                      nextValue,
-                    )
-                  }
-                />
-              </div>
-            </Field>
-          </div>
-        ))}
+        .map(([key, entry]) => {
+          const dataPath = getWorkbenchStructuredDataSchemaFieldDataPath(section, key);
+
+          return (
+            <div key={key} className={classNames.settingRow}>
+              <Field
+                className={classNames.field}
+                label={formatWorkbenchStructuredDataSchemaLabel(key)}
+              >
+                <div className={classNames.fieldInput}>
+                  <WorkbenchStructuredDataSchemaFieldInput
+                    checkboxClassName={classNames.checkbox}
+                    className={classNames.settingControl}
+                    definition={undefined}
+                    fieldPath={key}
+                    readOnly={readOnly}
+                    textareaClassName={classNames.settingControlTextarea}
+                    value={entry}
+                    onValueChange={(nextValue) =>
+                      onDataValueChange(dataPath.split('.'), nextValue)
+                    }
+                  />
+                </div>
+              </Field>
+              {renderSchemaFieldError(fieldErrors, dataPath)}
+            </div>
+          );
+        })}
     </div>
   );
 }
 
 function renderSchemaTableSection({
   classNames = {},
+  fieldErrors,
   labels = {},
   onDataValueChange,
   preferredTableColumns = [],
@@ -253,6 +279,7 @@ function renderSchemaTableSection({
   ...sectionView
 }: WorkbenchStructuredDataSchemaSectionView & {
   classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
+  fieldErrors?: Record<string, ReactNode> | undefined;
   labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
   onDataValueChange: (path: string[], value: unknown) => void;
   preferredTableColumns?: readonly string[] | undefined;
@@ -269,6 +296,7 @@ function renderSchemaTableSection({
     return renderSchemaFormSection({
       ...sectionView,
       classNames,
+      fieldErrors,
       labels,
       onDataValueChange,
       readOnly,
@@ -298,35 +326,38 @@ function renderSchemaTableSection({
 
             return (
               <div key={rowKey} className={classNames.tableRow} role="row">
-                {columns.map((column) => (
-                  <span key={column} role="cell">
-                    <WorkbenchStructuredDataSchemaFieldInput
-                      addTextArrayLabel={labels.addTextArrayItem}
-                      checkboxClassName={classNames.checkbox}
-                      className={classNames.settingControl}
-                      definition={getWorkbenchStructuredDataSchemaDocumentColumnDefinition(
-                        schema,
-                        section,
-                        column,
-                      )}
-                      fieldPath={column}
-                      readOnly={readOnly}
-                      removeTextArrayLabel={labels.removeTextArrayItem}
-                      textareaClassName={classNames.settingControlTextarea}
-                      value={row[column]}
-                      onValueChange={(nextValue) => {
-                        onDataValueChange(
-                          getWorkbenchStructuredDataSchemaTableCellPath({
-                            column,
-                            rowKey,
-                            section,
-                          }),
-                          nextValue,
-                        );
-                      }}
-                    />
-                  </span>
-                ))}
+                {columns.map((column) => {
+                  const cellPath = getWorkbenchStructuredDataSchemaTableCellPath({
+                    column,
+                    rowKey,
+                    section,
+                  });
+                  const errorKey = formatSchemaFieldErrorKey(cellPath);
+
+                  return (
+                    <span key={column} className={classNames.fieldInput} role="cell">
+                      <WorkbenchStructuredDataSchemaFieldInput
+                        addTextArrayLabel={labels.addTextArrayItem}
+                        checkboxClassName={classNames.checkbox}
+                        className={classNames.settingControl}
+                        definition={getWorkbenchStructuredDataSchemaDocumentColumnDefinition(
+                          schema,
+                          section,
+                          column,
+                        )}
+                        fieldPath={column}
+                        readOnly={readOnly}
+                        removeTextArrayLabel={labels.removeTextArrayItem}
+                        textareaClassName={classNames.settingControlTextarea}
+                        value={row[column]}
+                        onValueChange={(nextValue) => {
+                          onDataValueChange(cellPath, nextValue);
+                        }}
+                      />
+                      {renderSchemaFieldError(fieldErrors, errorKey)}
+                    </span>
+                  );
+                })}
                 {readOnly ? null : (
                   <span className={classNames.tableActions} role="cell">
                     <IconButton
@@ -394,6 +425,7 @@ function renderSchemaTableSection({
 function renderSchemaPanelSection({
   anchorId,
   classNames = {},
+  fieldErrors,
   headerActions,
   labels,
   onDataValueChange,
@@ -403,6 +435,7 @@ function renderSchemaPanelSection({
 }: {
   anchorId?: string | undefined;
   classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
+  fieldErrors?: Record<string, ReactNode> | undefined;
   headerActions?: ReactNode | undefined;
   labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
   onDataValueChange: (path: string[], value: unknown) => void;
@@ -430,6 +463,7 @@ function renderSchemaPanelSection({
         ? renderSchemaTableSection({
             ...sectionView,
             classNames,
+            fieldErrors,
             labels,
             onDataValueChange,
             preferredTableColumns,
@@ -438,6 +472,7 @@ function renderSchemaPanelSection({
         : renderSchemaFormSection({
             ...sectionView,
             classNames,
+            fieldErrors,
             labels,
             onDataValueChange,
             readOnly,
@@ -451,6 +486,7 @@ export function WorkbenchStructuredDataSchemaPanel({
   ariaLabel,
   classNames,
   data,
+  fieldErrors,
   fill = false,
   headerActions,
   labels,
@@ -534,6 +570,7 @@ export function WorkbenchStructuredDataSchemaPanel({
           renderSchemaPanelSection({
             anchorId,
             classNames: resolvedClassNames,
+            fieldErrors,
             headerActions: index === 0 ? headerActions : undefined,
             labels,
             onDataValueChange: handleDataValueChange,
