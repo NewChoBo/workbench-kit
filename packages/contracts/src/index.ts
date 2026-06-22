@@ -193,7 +193,6 @@ export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from '.
 export type {
   WidgetRendererComponent,
   WidgetRendererEvent,
-  WidgetRendererEventLike,
   WidgetRendererEventKind,
   WidgetRendererProps,
   WidgetRendererRect,

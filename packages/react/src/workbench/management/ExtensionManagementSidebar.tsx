@@ -223,7 +223,10 @@ function InstalledExtensionList({
                   </Badge>
                 )}
                 {errorDiagnostics.length > 0 ? (
-                  <Badge title={errorDiagnostics.map((diagnostic) => diagnostic.message).join(' ')} variant="danger">
+                  <Badge
+                    title={errorDiagnostics.map((diagnostic) => diagnostic.message).join(' ')}
+                    variant="danger"
+                  >
                     {errorDiagnostics.length} error{errorDiagnostics.length === 1 ? '' : 's'}
                   </Badge>
                 ) : null}

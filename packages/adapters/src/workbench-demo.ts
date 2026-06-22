@@ -81,8 +81,8 @@ export function Panel({ children, title, ...props }: PanelProps) {
 `,
   },
   {
-    path: 'src/widgets/home.widget.json',
-    mimeType: 'application/vnd.workbench-kit.widget+json',
+    path: 'src/widgets/home.jdw.json',
+    mimeType: 'application/vnd.workbench-kit.jdw+json',
     updatedAt: '2026-06-02T09:28:00.000Z',
     source: 'user',
     content: `{

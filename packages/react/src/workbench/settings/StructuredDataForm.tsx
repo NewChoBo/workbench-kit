@@ -376,8 +376,7 @@ export function WorkbenchStructuredDataSchemaFieldInput({
     className,
     invalid && 'ui-workbench-structured-data-schema-field-input--invalid',
   );
-  const describedBy =
-    fieldErrorId && validationMessage ? fieldErrorId : fieldErrorId || undefined;
+  const describedBy = fieldErrorId && validationMessage ? fieldErrorId : fieldErrorId || undefined;
   const min = definition?.minimum ?? definition?.min;
   const max = definition?.maximum ?? definition?.max;
   const selectOptions = buildWorkbenchStructuredDataSchemaSelectOptions(definition);

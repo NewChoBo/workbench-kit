@@ -1,7 +1,4 @@
-import type {
-  WorkbenchCommandDescriptor,
-  WorkbenchCommandExecutionPolicy,
-} from './command-model';
+import type { WorkbenchCommandDescriptor, WorkbenchCommandExecutionPolicy } from './command-model';
 
 export interface ResolveWorkbenchCommandExecutionPolicyInput {
   /** Fallback for non-mutating commands without an explicit policy. */
@@ -24,9 +21,7 @@ export function isWorkbenchCommandExecutionPolicy(
   return value === 'auto-allow' || value === 'approval-required' || value === 'auto-deny';
 }
 
-export function getWorkbenchCommandExecutionPolicyLabel(
-  policy: WorkbenchCommandExecutionPolicy,
-) {
+export function getWorkbenchCommandExecutionPolicyLabel(policy: WorkbenchCommandExecutionPolicy) {
   return policyLabels[policy];
 }
 

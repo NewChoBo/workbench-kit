@@ -13,9 +13,6 @@ export type { WorkbenchAppearanceSettings } from '@workbench-kit/react/workbench
 
 export const DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY = 'workbench-kit/.workbench/appearance';
 
-/** @deprecated Sample-only key; migrated automatically on read. */
-const LEGACY_SAMPLE_APPEARANCE_STORAGE_KEY = 'workbench-kit/.workbench/sample-appearance';
-
 export const DEFAULT_WORKBENCH_APPEARANCE: WorkbenchAppearanceSettings = {
   darkPreset: DEFAULT_DARK_THEME_PRESET,
   lightPreset: DEFAULT_LIGHT_THEME_PRESET,
@@ -32,7 +29,7 @@ export function isWorkbenchAppearancePersistenceAvailable(): boolean {
 
 export function readPersistedWorkbenchAppearance(
   storageKey = DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
-  storage?: Pick<Storage, 'getItem' | 'removeItem' | 'setItem'>,
+  storage?: Pick<Storage, 'getItem'>,
 ): WorkbenchAppearanceSettings {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) {
@@ -40,10 +37,7 @@ export function readPersistedWorkbenchAppearance(
   }
 
   try {
-    let raw = resolvedStorage.getItem(storageKey);
-    if (!raw && storageKey === DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY) {
-      raw = migrateLegacySampleAppearance(resolvedStorage);
-    }
+    const raw = resolvedStorage.getItem(storageKey);
     if (!raw) {
       return DEFAULT_WORKBENCH_APPEARANCE;
     }
@@ -69,24 +63,6 @@ export function writePersistedWorkbenchAppearance(
   } catch {
     // Ignore quota and security errors so the shell keeps working offline.
   }
-}
-
-function migrateLegacySampleAppearance(
-  storage: Pick<Storage, 'getItem' | 'removeItem' | 'setItem'>,
-): string | null {
-  const legacy = storage.getItem(LEGACY_SAMPLE_APPEARANCE_STORAGE_KEY);
-  if (!legacy) {
-    return null;
-  }
-
-  try {
-    storage.setItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, legacy);
-    storage.removeItem(LEGACY_SAMPLE_APPEARANCE_STORAGE_KEY);
-  } catch {
-    // Keep legacy value readable even when migration write fails.
-  }
-
-  return legacy;
 }
 
 function normalizeWorkbenchAppearance(value: unknown): WorkbenchAppearanceSettings {

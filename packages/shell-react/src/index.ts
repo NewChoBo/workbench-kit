@@ -112,10 +112,7 @@ export {
   useEditorService,
   useEditorState,
 } from './use-editor.js';
-export {
-  isWorkspaceResourceService,
-  useWorkspaceResourceState,
-} from './workspace-view-state.js';
+export { isWorkspaceResourceService, useWorkspaceResourceState } from './workspace-view-state.js';
 export {
   MANAGE_ACCOUNTS_COMMAND_ID,
   MANAGE_COMMANDS_COMMAND_ID,

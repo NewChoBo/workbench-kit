@@ -15,25 +15,10 @@ export const WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_MANAGE_EXTENSIONS =
   'workbench.permissions.canManageExtensions' as const;
 
 /** Product-neutral permission tiers inspired by common VCS role models. */
-export type WorkbenchPermissionRole =
-  | 'owner'
-  | 'maintainer'
-  | 'developer'
-  | 'reporter'
-  | 'viewer';
-
-/**
- * Deprecated aliases kept for backward compatibility.
- * Prefer `owner` and `viewer`.
- */
-export type WorkbenchPermissionRoleDeprecatedAlias = 'admin' | 'basic';
-
-export type WorkbenchPermissionRoleInput =
-  | WorkbenchPermissionRole
-  | WorkbenchPermissionRoleDeprecatedAlias;
+export type WorkbenchPermissionRole = 'owner' | 'maintainer' | 'developer' | 'reporter' | 'viewer';
 
 export interface WorkbenchPermissionContextInput {
-  readonly role: WorkbenchPermissionRoleInput;
+  readonly role: WorkbenchPermissionRole;
 }
 
 export interface WorkbenchPermissionCapabilities {
@@ -46,31 +31,13 @@ export interface WorkbenchPermissionCapabilities {
   readonly canManageExtensions: boolean;
 }
 
-const ROLE_ALIASES: Readonly<Record<WorkbenchPermissionRoleDeprecatedAlias, WorkbenchPermissionRole>> =
-  {
-    admin: 'owner',
-    basic: 'viewer',
-  };
-
-export function normalizeWorkbenchPermissionRole(
-  role: WorkbenchPermissionRoleInput,
-): WorkbenchPermissionRole {
-  if (role === 'admin' || role === 'basic') {
-    return ROLE_ALIASES[role];
-  }
-
-  return role;
-}
-
 export function resolveWorkbenchPermissionCapabilities(
-  role: WorkbenchPermissionRoleInput,
+  role: WorkbenchPermissionRole,
 ): WorkbenchPermissionCapabilities {
-  const normalizedRole = normalizeWorkbenchPermissionRole(role);
-
-  switch (normalizedRole) {
+  switch (role) {
     case 'owner':
       return {
-        role: normalizedRole,
+        role,
         tier: 5,
         canManageCommands: true,
         canOpenSettings: true,
@@ -80,7 +47,7 @@ export function resolveWorkbenchPermissionCapabilities(
       };
     case 'maintainer':
       return {
-        role: normalizedRole,
+        role,
         tier: 4,
         canManageCommands: true,
         canOpenSettings: false,
@@ -90,7 +57,7 @@ export function resolveWorkbenchPermissionCapabilities(
       };
     case 'developer':
       return {
-        role: normalizedRole,
+        role,
         tier: 3,
         canManageCommands: false,
         canOpenSettings: false,
@@ -100,7 +67,7 @@ export function resolveWorkbenchPermissionCapabilities(
       };
     case 'reporter':
       return {
-        role: normalizedRole,
+        role,
         tier: 2,
         canManageCommands: false,
         canOpenSettings: false,
@@ -110,7 +77,7 @@ export function resolveWorkbenchPermissionCapabilities(
       };
     case 'viewer':
       return {
-        role: normalizedRole,
+        role,
         tier: 1,
         canManageCommands: false,
         canOpenSettings: false,

@@ -712,7 +712,9 @@ describe('EditorService', () => {
       resourceMissing: true,
     });
 
-    service.reconcileWorkspaceFileTabs((resourceUri) => resourceUri === 'workspace://file/src/app.ts');
+    service.reconcileWorkspaceFileTabs(
+      (resourceUri) => resourceUri === 'workspace://file/src/app.ts',
+    );
 
     expect(service.getState().groups[0]?.tabs[0]).toMatchObject({
       dirty: false,

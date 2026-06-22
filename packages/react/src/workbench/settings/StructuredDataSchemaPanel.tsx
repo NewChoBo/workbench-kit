@@ -275,8 +275,7 @@ function renderSchemaFormSection({
                   mergedFieldErrors: fieldErrors,
                   onValidateField,
                   value: fieldValue,
-                  onValueChange: (nextValue) =>
-                    onDataValueChange(dataPath.split('.'), nextValue),
+                  onValueChange: (nextValue) => onDataValueChange(dataPath.split('.'), nextValue),
                 })
               : null;
 
@@ -348,9 +347,7 @@ function renderSchemaFormSection({
                     readOnly={readOnly}
                     textareaClassName={classNames.settingControlTextarea}
                     value={entry}
-                    onValueChange={(nextValue) =>
-                      onDataValueChange(dataPath.split('.'), nextValue)
-                    }
+                    onValueChange={(nextValue) => onDataValueChange(dataPath.split('.'), nextValue)}
                   />
                 </div>
               </Field>

@@ -1,6 +1,5 @@
 import {
   createWorkbenchPermissionContextKeys,
-  normalizeWorkbenchPermissionRole,
   type ContextKeyValue,
   type WorkbenchPermissionRole,
 } from '@workbench-kit/platform';
@@ -60,7 +59,7 @@ export function resolveSampleEffectiveRole(
   roleOverride?: SamplePermissionRoleOverride,
 ): WorkbenchPermissionRole {
   if (roleOverride !== null && roleOverride !== undefined) {
-    return normalizeWorkbenchPermissionRole(roleOverride);
+    return roleOverride;
   }
 
   return resolveSampleWorkbenchRole(accountId);

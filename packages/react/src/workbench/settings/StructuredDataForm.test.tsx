@@ -176,9 +176,9 @@ describe('WorkbenchStructuredDataForm helpers', () => {
 
   it('interprets lightweight schema field definitions', () => {
     expect(getWorkbenchStructuredDataSchemaFieldControl({ enum: ['A', 'B'] })).toBe('radio');
-    expect(
-      getWorkbenchStructuredDataSchemaFieldControl({ enum: ['A', 'B', 'C', 'D', 'E'] }),
-    ).toBe('select');
+    expect(getWorkbenchStructuredDataSchemaFieldControl({ enum: ['A', 'B', 'C', 'D', 'E'] })).toBe(
+      'select',
+    );
     expect(getWorkbenchStructuredDataSchemaFieldControl({ format: 'color' })).toBe('color');
     expect(getWorkbenchStructuredDataSchemaFieldControl({ type: 'boolean' })).toBe('checkbox');
     expect(getWorkbenchStructuredDataSchemaFieldControl({ type: 'array' })).toBe('textarea');

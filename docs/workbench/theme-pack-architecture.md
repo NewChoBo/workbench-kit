@@ -12,11 +12,11 @@ installable theme distribution in workbench-kit.
 Hosts apply appearance on a DOM root (usually `document.documentElement` or the shell
 wrapper):
 
-| Attribute | Values | Role |
-| --------- | ------ | ---- |
-| `data-theme` | `light` \| `dark` | Resolved color scheme |
+| Attribute               | Values                        | Role                               |
+| ----------------------- | ----------------------------- | ---------------------------------- |
+| `data-theme`            | `light` \| `dark`             | Resolved color scheme              |
 | `data-theme-preference` | `system` \| `light` \| `dark` | User preference (optional on root) |
-| `data-theme-preset` | preset id | Active palette for resolved scheme |
+| `data-theme-preset`     | preset id                     | Active palette for resolved scheme |
 
 Base tokens live in `@workbench-kit/tokens/styles.css`. Preset overrides are loaded via
 `theme-presets.css`, which `@import`s one file per preset.
@@ -57,22 +57,22 @@ packages/react/src/workbench/
 
 Each preset overrides the workbench chrome palette subset:
 
-| Token | Typical VS Code color key |
-| ----- | ------------------------- |
-| `--color-bg` | `editor.background` |
-| `--color-primary-side-bar-bg` | `sideBar.background` |
-| `--color-surface` | `panel.background` / list surfaces |
-| `--color-surface-hover` | `list.hoverBackground` |
-| `--color-surface-elevated` | inputs, elevated panels |
-| `--color-border` | `sideBar.border` / `panel.border` |
-| `--color-text` | `editor.foreground` / `foreground` |
-| `--color-text-muted` | `descriptionForeground` |
-| `--color-text-subtle` | disabled / tertiary text |
-| `--color-accent` | `button.background` |
-| `--color-accent-hover` | `button.hoverBackground` |
-| `--color-focus-border` | `focusBorder` |
-| `--color-danger` | `errorForeground` / notifications |
-| `--scrollbar-thumb*` | derived from border/surface |
+| Token                         | Typical VS Code color key          |
+| ----------------------------- | ---------------------------------- |
+| `--color-bg`                  | `editor.background`                |
+| `--color-primary-side-bar-bg` | `sideBar.background`               |
+| `--color-surface`             | `panel.background` / list surfaces |
+| `--color-surface-hover`       | `list.hoverBackground`             |
+| `--color-surface-elevated`    | inputs, elevated panels            |
+| `--color-border`              | `sideBar.border` / `panel.border`  |
+| `--color-text`                | `editor.foreground` / `foreground` |
+| `--color-text-muted`          | `descriptionForeground`            |
+| `--color-text-subtle`         | disabled / tertiary text           |
+| `--color-accent`              | `button.background`                |
+| `--color-accent-hover`        | `button.hoverBackground`           |
+| `--color-focus-border`        | `focusBorder`                      |
+| `--color-danger`              | `errorForeground` / notifications  |
+| `--scrollbar-thumb*`          | derived from border/surface        |
 
 File icons and control metrics stay in `styles.css`; presets only swap semantic colors.
 
@@ -80,31 +80,31 @@ File icons and control metrics stay in `styles.css`; presets only swap semantic 
 
 ### Shipped today
 
-| Id | Label | Scheme | Notes |
-| -- | ----- | ------ | ----- |
-| `skyblue` | Sky Blue | light | Default light preset |
-| `orange` | Light Orange | light | Warm variant |
-| `light-plus` | Light+ | light | VS Code Default Light+ |
-| `navy` | Deep Navy | dark | Cool blue-gray |
-| `purple` | Purple | dark | Default dark preset |
-| `modern` | Modern Dark | dark | Neutral gray (VS Code–adjacent) |
-| `dark-plus` | Dark+ | dark | VS Code Default Dark+ |
-| `hc-black` | High Contrast Black | dark | VS Code HC Black |
+| Id           | Label               | Scheme | Notes                           |
+| ------------ | ------------------- | ------ | ------------------------------- |
+| `skyblue`    | Sky Blue            | light  | Default light preset            |
+| `orange`     | Light Orange        | light  | Warm variant                    |
+| `light-plus` | Light+              | light  | VS Code Default Light+          |
+| `navy`       | Deep Navy           | dark   | Cool blue-gray                  |
+| `purple`     | Purple              | dark   | Default dark preset             |
+| `modern`     | Modern Dark         | dark   | Neutral gray (VS Code–adjacent) |
+| `dark-plus`  | Dark+               | dark   | VS Code Default Dark+           |
+| `hc-black`   | High Contrast Black | dark   | VS Code HC Black                |
 
 ### VS Code–inspired backlog (not yet implemented)
 
 Candidates for a follow-up pack; map the same CSS variables from theme JSON `colors`:
 
-| Proposed id | VS Code reference | Scheme | Mapping notes |
-| ----------- | ----------------- | ------ | ------------- |
-| `quiet-light` | Quiet Light | light | Soft gray sidebar `#F3F3F3`, muted accent |
-| `solarized-light` | Solarized Light | light | `#fdf6e3` bg, `#268bd2` accent |
-| `github-light` | GitHub Light | light | GitHub palette; border `#d0d7de` |
-| `monokai` | Monokai | dark | `#272822` bg, `#a6e22e` accent (brand) |
-| `one-dark-pro` | One Dark Pro | dark | `#282c34` bg, `#61afef` accent |
-| `dracula` | Dracula | dark | `#282a36` bg, `#bd93f9` accent |
-| `hc-light` | High Contrast Light | light | White bg, thick `#000000` borders |
-| `abyss` | Abyss | dark | Deep blue `#000c18`, cyan accent |
+| Proposed id       | VS Code reference   | Scheme | Mapping notes                             |
+| ----------------- | ------------------- | ------ | ----------------------------------------- |
+| `quiet-light`     | Quiet Light         | light  | Soft gray sidebar `#F3F3F3`, muted accent |
+| `solarized-light` | Solarized Light     | light  | `#fdf6e3` bg, `#268bd2` accent            |
+| `github-light`    | GitHub Light        | light  | GitHub palette; border `#d0d7de`          |
+| `monokai`         | Monokai             | dark   | `#272822` bg, `#a6e22e` accent (brand)    |
+| `one-dark-pro`    | One Dark Pro        | dark   | `#282c34` bg, `#61afef` accent            |
+| `dracula`         | Dracula             | dark   | `#282a36` bg, `#bd93f9` accent            |
+| `hc-light`        | High Contrast Light | light  | White bg, thick `#000000` borders         |
+| `abyss`           | Abyss               | dark   | Deep blue `#000c18`, cyan accent          |
 
 Monaco syntax themes (T3) are separate from chrome presets; only shared token names overlap.
 
@@ -172,23 +172,23 @@ validation, incomplete mappings, IP/licensing of community themes.
 
 ### Comparison
 
-| Approach | Runtime install | Full chrome | VS Code JSON | Extension manifest |
-| -------- | --------------- | ----------- | ------------ | ------------------ |
-| Built-in CSS presets | Bundled | Yes | Manual port | N/A |
-| `ThemeContribution` | Yes | Partial (overrides) | Convert to overrides | Yes |
-| npm theme package | Build/deploy | Yes | Optional build step | Optional wrapper ext |
-| JSON import (T2) | Yes | Yes (mapped) | Native | Via contributes.themes |
+| Approach             | Runtime install | Full chrome         | VS Code JSON         | Extension manifest     |
+| -------------------- | --------------- | ------------------- | -------------------- | ---------------------- |
+| Built-in CSS presets | Bundled         | Yes                 | Manual port          | N/A                    |
+| `ThemeContribution`  | Yes             | Partial (overrides) | Convert to overrides | Yes                    |
+| npm theme package    | Build/deploy    | Yes                 | Optional build step  | Optional wrapper ext   |
+| JSON import (T2)     | Yes             | Yes (mapped)        | Native               | Via contributes.themes |
 
 ## Phased roadmap
 
-| Phase | Deliverable | Status |
-| ----- | ----------- | ------ |
-| **T0** | Document `data-theme` + token mapping | This doc + split CSS |
-| **T0.5** | Per-preset files + manifest registry | Done |
-| **T1** | `registerWorkbenchTheme` wired in integrated shell | Backlog |
-| **T2** | VS Code `colors` JSON → CSS variables | Backlog |
-| **T3** | Monaco theme sync from active preset | Partial (`useMonacoWorkbenchThemeSync`) |
-| **T4** | Settings UI + persistence via registry | Appearance story + shell-settings |
+| Phase    | Deliverable                                        | Status                                  |
+| -------- | -------------------------------------------------- | --------------------------------------- |
+| **T0**   | Document `data-theme` + token mapping              | This doc + split CSS                    |
+| **T0.5** | Per-preset files + manifest registry               | Done                                    |
+| **T1**   | `registerWorkbenchTheme` wired in integrated shell | Backlog                                 |
+| **T2**   | VS Code `colors` JSON → CSS variables              | Backlog                                 |
+| **T3**   | Monaco theme sync from active preset               | Partial (`useMonacoWorkbenchThemeSync`) |
+| **T4**   | Settings UI + persistence via registry             | Appearance story + shell-settings       |
 
 Installable **extension themes** are feasible now for override-style packs (Channel A).
 Installable **full presets** are feasible via npm CSS packs (Channel B) today and JSON import

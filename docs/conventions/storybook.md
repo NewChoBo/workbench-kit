@@ -1,16 +1,22 @@
 # Storybook Direction
 
-Storybook owns component-level documentation, state matrices, and integrated
-composition smoke checks. Keep public UI scenarios in Storybook so the package
-has one visual validation surface.
+Storybook is the required UI regression gate for the sample app that runs through
+`pnpm dev`. Keep the Storybook surface narrow, deterministic, and detailed enough
+to replace browser E2E smoke for the flows it explicitly covers.
 
 ## Current Shape
 
 - Keep a root `.storybook` directory.
 - Use `@storybook/react-vite`.
-- Collect stories from `packages/react/src/**/*.stories.tsx` and
-  `stories/**/*.stories.tsx`.
-- Keep integrated workbench scenarios in Storybook rather than a separate app.
+- Collect stories only from `examples/workbench-sample/src/**/*.stories.tsx`.
+- Render `examples/workbench-sample/src/App.tsx` directly in required stories.
+- Treat `examples/workbench-sample` as the canonical Storybook source until a
+  broader story matrix has an explicit maintenance plan, owner, and required
+  verification path.
+- Do not reintroduce package-wide component galleries as default Storybook
+  coverage. Isolated package stories are acceptable only with a stable owner,
+  focused assertions, and a clear reason they cannot be covered through the
+  sample host.
 
 ## Screen Size Presets
 
@@ -28,18 +34,43 @@ has one visual validation surface.
   changing Storybook viewport size affects layout more realistically than component-fixed
   pixel sizes.
 
-## Initial Stories
+## Current Stories
 
-Initial stories are added in this order:
+The current required set is sample-host focused:
 
-1. `Badge`, `Button`, `IconButton`
-2. `TextInput`, `Select`, `Checkbox`, `Field`
-3. `Panel`, `SideBarViewFrame`
-4. `ActivityBar`, `SplitView`
-5. `ConfirmDialog`, `ContextMenu`
+1. `Workbench Sample/Dev App` - Login gate
+2. `Workbench Sample/Dev App` - Login submit flow
+3. `Workbench Sample/Dev App` - Tester workbench
+4. `Workbench Sample/Dev App` - Tester dev app journey
+5. `Workbench Sample/Dev App` - Basic permission scope
 
-Each story should be valid on dark and light backgrounds. Use generic UI copy
-instead of private business data.
+These stories render the sample app directly instead of using synthetic package
+fixtures. The long journey story should cover dev-app surfaces that would otherwise
+require a separate browser E2E smoke: startup editor state, search result opening,
+command palette, chat, AI chat composer, settings, profile permission overrides, and
+sign-out. Add new required stories only when they cover a stable sample-host
+workflow and can be verified by `test:storybook-play:required`.
+
+## E2E Replacement Criteria
+
+A Storybook flow can replace a browser E2E smoke only when it satisfies all of
+these conditions:
+
+1. It renders the sample app path used by `pnpm dev`, not a story-only shell copy.
+2. It sets only deterministic sample `sessionStorage` or local storage needed to
+   reach the scenario.
+3. It drives the UI through `@storybook/test` user interactions such as click,
+   typing, keyboard shortcuts, and combobox option selection.
+4. It asserts user-visible outcomes through ARIA roles, labels, text, status
+   regions, tabs, dialogs, or stable DOM state.
+5. It is tagged `storybook-play-required` and passes
+   `pnpm test:storybook-play:required` repeatedly.
+6. It does not require a real backend, a local filesystem watcher, real network
+   services, or private product data.
+
+Flows that need real directory access, file watcher behavior, extension reload,
+Monaco deep editing, drag-and-drop persistence, real auth, or host deep links
+remain true browser E2E or manual sample-host checks.
 
 ## Scripts
 
@@ -48,11 +79,13 @@ Use these root scripts:
 ```json
 {
   "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
+  "storybook:sample": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=workbench-sample-dev-app--tester-dev-app-journey&viewMode=story",
   "build:storybook": "pnpm exec storybook build",
   "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",
   "test:storybook-play:required": "pnpm exec node ./scripts/test-storybook-play.mjs --required",
-  "validate:ui": "pnpm build:storybook",
+  "validate:ui": "pnpm build:storybook && pnpm test:storybook-play:required",
   "validate:ui:full": "pnpm build:storybook && pnpm test:storybook-play:required",
+  "validate": "pnpm validate:fast && pnpm validate:ui",
   "validate:full": "pnpm validate:fast && pnpm validate:ui:full"
 }
 ```
@@ -73,44 +106,32 @@ Interaction tests use two tags:
   and `pnpm validate:full`
 
 Promote a baseline story to required only after it is stable across repeated runs.
-The integrated shell story and workspace/chat/editor flows are required today; Appearance
-scheme/preset controls, settings navigation scroll, and chat message-list overflow scroll are
-also required. See `scripts/test-storybook-play.mjs` for tag filtering.
+The current required stories are the five `Workbench Sample/Dev App` flows listed
+above. See `scripts/test-storybook-play.mjs` for tag filtering.
 
 The default `test:storybook-play` runner executes stories tagged with
 `storybook-play-baseline`; pass `--required` to run only `storybook-play-required` stories.
 
-Add interaction tests first to components where accessibility or state regressions
-are most likely:
-
-- `ConfirmDialog`: open state, accessible name, confirm/cancel, disabled/pending
-- `Checkbox`: checked state
-- `Select`: value changes
-- `ContextMenu`: open state, menu item selection, close behavior
+Do not add a required story just because a component changed. Add or extend a
+required story when the change affects a stable sample-host workflow. Cover
+package-local logic with typecheck and unit tests first, then use Storybook for
+the end-to-end visible behavior.
 
 ## Workbench Stories
 
 Workbench stories should validate realistic product-like UI flows while keeping
-the reusable behavior in package modules. Use `JDW/Config/Workbench` for the
-production config-editor pattern and `JDW/WidgetTree/Lab` as the widget editor
-lab; see [future-capabilities.md](../workbench/future-capabilities.md)
-for the playground backlog.
+the reusable behavior in package modules. The current Storybook surface renders
+the sample host directly, so ambiguous behavior should be checked against
+`pnpm dev` before adding or changing a story.
 
-- Stories provide public fixture data and scenario-specific initial state.
-- Shared demo fixtures for the integrated shell live in `@workbench-kit/adapters/workbench-demo`.
-- Integrated shell orchestration lives in `packages/react/src/workbench/demo/IntegratedShellDemo.tsx`
-  with workspace flows in `integratedShellWorkspaceOrchestration.ts`, composed through
-  `WorkbenchStandaloneShell` (same host pattern as production host apps).
-- `packages/react/src/workbench/demo` is workspace-only Storybook support code,
-  is excluded from package files, and must not be imported as a public API.
+- Stories may set up sample `sessionStorage` and local storage only to reach a
+  deterministic sample-host state.
 - Components, hooks, reducers, and command helpers own reusable behavior.
-- Integrated stories should compose Explorer, Search, Chat, Editor, Settings,
-  ActivityBar, SplitView, and StatusBar through the same public APIs that a host
-  app would use, preferably via `WorkbenchStandaloneShell` and host callbacks.
-- Mock runtime adapters may be used for send/cancel/streaming and workspace
-  update scenarios when a real service is not required.
-- Do not encode private runtime details, storage keys, server addresses, or
-  project-specific command names in stories.
+- Sample-host stories may use sample-owned account, workspace, and permission
+  data. They must not encode private runtime details, real server addresses, or
+  product-specific command names.
+- Do not reintroduce broad component galleries unless they have a stable owner,
+  focused assertions, and a path into the required play gate.
 
 ## Command Menu Surface Review
 

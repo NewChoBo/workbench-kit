@@ -74,12 +74,7 @@ export function useEditorHost(tabId?: string): EditorHost | undefined {
     }
 
     return editorService.createEditorHost(resolvedTabId);
-  }, [
-    editorService,
-    resolvedTab?.resourceMissing,
-    resolvedTab?.resourceUri,
-    resolvedTabId,
-  ]);
+  }, [editorService, resolvedTab?.resourceMissing, resolvedTab?.resourceUri, resolvedTabId]);
 }
 
 export function useEditorDocumentViewProviders(

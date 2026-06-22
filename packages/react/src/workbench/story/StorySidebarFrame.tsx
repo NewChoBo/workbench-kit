@@ -36,9 +36,7 @@ export interface StoryEventLogProps {
 }
 
 export function StoryEventLog({ 'aria-label': ariaLabel, children, compact }: StoryEventLogProps) {
-  const classes = compact
-    ? 'ui-story-event-log ui-story-event-log--compact'
-    : 'ui-story-event-log';
+  const classes = compact ? 'ui-story-event-log ui-story-event-log--compact' : 'ui-story-event-log';
 
   return (
     <div aria-label={ariaLabel} className={classes} role="status">

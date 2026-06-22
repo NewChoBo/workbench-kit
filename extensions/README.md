@@ -24,12 +24,12 @@ activation handlers.
 
 ## Samples
 
-| Extension                    | Runtime role                                                                 |
-| ---------------------------- | ---------------------------------------------------------------------------- |
-| `samples.hello-world`        | Minimal command activation sample (`Hello World` command in the palette).    |
-| `samples.json-preview`       | JSON document preview editor contribution sample.                            |
-| `samples.locale-ko`          | Korean display-language localization contribution sample.                    |
-| `samples.theme-alt`          | Alternate dark color theme (`Dark Blue Alt`) for Settings → Appearance.    |
+| Extension              | Runtime role                                                              |
+| ---------------------- | ------------------------------------------------------------------------- |
+| `samples.hello-world`  | Minimal command activation sample (`Hello World` command in the palette). |
+| `samples.json-preview` | JSON document preview editor contribution sample.                         |
+| `samples.locale-ko`    | Korean display-language localization contribution sample.                 |
+| `samples.theme-alt`    | Alternate dark color theme (`Dark Blue Alt`) for Settings → Appearance.   |
 
 ## Rules
 

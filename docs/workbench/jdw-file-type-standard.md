@@ -44,8 +44,8 @@ Canonical package exports:
 | `@workbench-kit/jdw/schemas/jdw-node.jdw.schema.json`                 | Recursive JDW v7 node schema    |
 | `@workbench-kit/jdw/schemas/widget-asset-manifest.v1.jdw.schema.json` | Widget asset manifest schema    |
 
-Existing `*.json` schema exports remain compatibility aliases for older consumers, but new examples, generated files, and editor routing should use `*.jdw.schema.json`.
+Schema exports use the `*.jdw.schema.json` names only. New examples, generated files, and editor routing must use the canonical JDW schema paths.
 
-## Compatibility
+## Removed Compatibility Paths
 
-`*.widget.json` and legacy `@workbench-kit/jdw/schemas/*.json` schema names may still be accepted where existing code already supports them. They are not the preferred naming for new JDW files.
+The previous `*.widget.json` document route and legacy `@workbench-kit/jdw/schemas/*.json` schema names have been removed. Use `*.jdw.json` for widget documents and `*.jdw.schema.json` for schemas.

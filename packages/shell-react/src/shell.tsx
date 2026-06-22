@@ -11,7 +11,10 @@ import {
   type StatusBarItemModel,
   type StatusBarSectionModel,
 } from '@workbench-kit/react/workbench/shell';
-import { WORKBENCH_SETTINGS_CAPABILITY_ID, filterActivitiesByWhenClause } from '@workbench-kit/workbench-core';
+import {
+  WORKBENCH_SETTINGS_CAPABILITY_ID,
+  filterActivitiesByWhenClause,
+} from '@workbench-kit/workbench-core';
 import type { WorkbenchSettingsCapability } from '@workbench-kit/workbench-core';
 import { WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS } from '@workbench-kit/platform';
 import { isPreferenceScope, type PreferenceScope } from '@workbench-kit/workbench-config';
@@ -210,10 +213,7 @@ export function WorkbenchShell({
     }
 
     const visibleActivityIds = new Set(visibleActivityItems.map((item) => item.id));
-    if (
-      activeViewContainerId !== undefined &&
-      !visibleActivityIds.has(activeViewContainerId)
-    ) {
+    if (activeViewContainerId !== undefined && !visibleActivityIds.has(activeViewContainerId)) {
       layoutService.setActiveViewContainer(visibleActivityItems[0]?.id);
     }
   }, [activeViewContainerId, layoutService, visibleActivityItems]);

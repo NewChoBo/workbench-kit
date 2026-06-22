@@ -30,16 +30,19 @@ describe('validateWorkbenchStructuredDataSchemaFieldValue', () => {
 
   it('validates numeric minimum and maximum bounds', () => {
     expect(
-      validateWorkbenchStructuredDataSchemaFieldValue({ maximum: 10, minimum: 2, type: 'number' }, 1),
+      validateWorkbenchStructuredDataSchemaFieldValue(
+        { maximum: 10, minimum: 2, type: 'number' },
+        1,
+      ),
     ).toBe(SCHEMA_FIELD_MIN_WARNING);
     expect(
-      validateWorkbenchStructuredDataSchemaFieldValue(
-        { max: 10, min: 2, type: 'integer' },
-        12,
-      ),
+      validateWorkbenchStructuredDataSchemaFieldValue({ max: 10, min: 2, type: 'integer' }, 12),
     ).toBe(SCHEMA_FIELD_MAX_WARNING);
     expect(
-      validateWorkbenchStructuredDataSchemaFieldValue({ maximum: 10, minimum: 2, type: 'number' }, 5),
+      validateWorkbenchStructuredDataSchemaFieldValue(
+        { maximum: 10, minimum: 2, type: 'number' },
+        5,
+      ),
     ).toBeUndefined();
   });
 });

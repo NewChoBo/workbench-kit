@@ -20,10 +20,7 @@ export type {
   WorkbenchChatConversationLabels,
 } from './chatConversation';
 export type { ChatMessage, ChatMessageLayout, ChatMessageSource } from './types';
-export type {
-  ChatCommandProposal,
-  ChatCommandProposalStatus,
-} from './types';
+export type { ChatCommandProposal, ChatCommandProposalStatus } from './types';
 export { useChatRuntimeState } from './useChatRuntimeState';
 export type { UseChatRuntimeStateInput, UseChatRuntimeStateResult } from './useChatRuntimeState';
 export { useSlashCommandSuggest } from './useSlashCommandSuggest';

@@ -45,7 +45,9 @@ export function useExtensionManagementModel({
   const [catalogEntries, setCatalogEntries] = useState<readonly ExtensionCatalogEntry[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(Boolean(catalogUrl));
   const [catalogError, setCatalogError] = useState<string | undefined>();
-  const [pendingAction, setPendingAction] = useState<ExtensionManagementPendingAction | undefined>();
+  const [pendingAction, setPendingAction] = useState<
+    ExtensionManagementPendingAction | undefined
+  >();
   const [installedRecords, setInstalledRecords] = useState<readonly InstalledExtensionRecord[]>(
     () =>
       loadInstalledExtensions(

@@ -1,9 +1,7 @@
 import { Badge } from '../../primitives/Badge';
 import { Button } from '../../primitives/Button';
 import { cx } from '../../utils/cx';
-import {
-  getWorkbenchCommandExecutionPolicyLabel,
-} from '../command-execution-policy';
+import { getWorkbenchCommandExecutionPolicyLabel } from '../command-execution-policy';
 import type { WorkbenchCommandExecutionPolicy } from '../command-model';
 import type { ChatCommandProposal, ChatCommandProposalStatus } from './types';
 
@@ -82,7 +80,9 @@ export function ChatCommandProposalCard({
     >
       <div className="chat-command-proposal__header">
         <div className="chat-command-proposal__title-group">
-          <span className="chat-command-proposal__label">{proposal.label ?? proposal.commandId}</span>
+          <span className="chat-command-proposal__label">
+            {proposal.label ?? proposal.commandId}
+          </span>
           <code className="chat-command-proposal__command-id">{proposal.commandId}</code>
         </div>
         <Badge variant={getPolicyBadgeVariant(proposal.policy)}>

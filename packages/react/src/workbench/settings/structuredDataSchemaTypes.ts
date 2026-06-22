@@ -49,11 +49,13 @@ export interface WorkbenchStructuredDataSchemaFieldDefinition {
   min?: number | undefined;
   minimum?: number | undefined;
   minLength?: number | undefined;
-  oneOf?: readonly {
-    const?: boolean | number | string | undefined;
-    description?: string | undefined;
-    title?: string | undefined;
-  }[] | undefined;
+  oneOf?:
+    | readonly {
+        const?: boolean | number | string | undefined;
+        description?: string | undefined;
+        title?: string | undefined;
+      }[]
+    | undefined;
   pattern?: string | undefined;
   selectable?: boolean | undefined;
   title?: string | undefined;

@@ -34,10 +34,7 @@ export function createSamplePermissionRoleProfileExtra({
       <p className="workbench-sample-permission-role-profile__summary">
         Current role: <strong>{formatSamplePermissionRoleLabel(effectiveRole)}</strong>
         {selectedOptionId === 'auth' ? (
-          <>
-            {' '}
-            (from sign-in: {formatSamplePermissionRoleLabel(authDerivedRole)})
-          </>
+          <> (from sign-in: {formatSamplePermissionRoleLabel(authDerivedRole)})</>
         ) : null}
       </p>
       <Field

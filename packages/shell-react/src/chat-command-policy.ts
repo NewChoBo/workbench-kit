@@ -5,8 +5,7 @@ import type {
 
 import { readPersistedLocalPreferences } from './preference-settings-storage.js';
 
-export const WORKBENCH_AI_CHAT_COMMAND_DEFAULT_POLICY_KEY =
-  'workbench.chat.aiCommandDefaultPolicy';
+export const WORKBENCH_AI_CHAT_COMMAND_DEFAULT_POLICY_KEY = 'workbench.chat.aiCommandDefaultPolicy';
 
 function isWorkbenchCommandExecutionPolicy(
   value: unknown,

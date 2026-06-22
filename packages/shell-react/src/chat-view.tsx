@@ -5,7 +5,10 @@ import {
   createMockAiChatCommandProposals,
   createMockAiChatResponseContent,
 } from './chat-ai-mock-proposals.js';
-import { readWorkbenchAiChatCommandPolicyInput, mergeWorkbenchAiChatCommandPolicyInput } from './chat-command-policy.js';
+import {
+  readWorkbenchAiChatCommandPolicyInput,
+  mergeWorkbenchAiChatCommandPolicyInput,
+} from './chat-command-policy.js';
 import {
   useWorkbenchChatCommandSurface,
   type WorkbenchChatCommandRunResult,

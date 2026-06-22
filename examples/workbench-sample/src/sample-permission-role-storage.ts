@@ -1,11 +1,6 @@
-import {
-  normalizeWorkbenchPermissionRole,
-  type WorkbenchPermissionRole,
-  type WorkbenchPermissionRoleDeprecatedAlias,
-} from '@workbench-kit/platform';
+import type { WorkbenchPermissionRole } from '@workbench-kit/platform';
 
-export const SAMPLE_PERMISSION_ROLE_STORAGE_KEY =
-  'workbench-kit/.workbench/sample-permission-role';
+export const SAMPLE_PERMISSION_ROLE_STORAGE_KEY = 'workbench-kit/.workbench/sample-permission-role';
 
 /** `null` means follow the signed-in account role. */
 export type SamplePermissionRoleOverride = WorkbenchPermissionRole | null;
@@ -25,39 +20,15 @@ function isCanonicalSamplePermissionRole(value: unknown): value is WorkbenchPerm
   );
 }
 
-function isDeprecatedSamplePermissionRoleAlias(
-  value: unknown,
-): value is WorkbenchPermissionRoleDeprecatedAlias {
-  return value === 'admin' || value === 'basic';
-}
-
 export function isSamplePermissionRoleOverride(
   value: unknown,
 ): value is SamplePermissionRoleOverride {
   return value === null || isCanonicalSamplePermissionRole(value);
 }
 
-export function migratePersistedSamplePermissionRoleOverride(
-  value: unknown,
-): SamplePermissionRoleOverride {
-  if (value === null) {
-    return null;
-  }
-
-  if (isCanonicalSamplePermissionRole(value)) {
-    return value;
-  }
-
-  if (isDeprecatedSamplePermissionRoleAlias(value)) {
-    return normalizeWorkbenchPermissionRole(value);
-  }
-
-  return null;
-}
-
 export function readPersistedSamplePermissionRoleOverride(
   storageKey = SAMPLE_PERMISSION_ROLE_STORAGE_KEY,
-  storage?: Pick<Storage, 'getItem' | 'setItem'>,
+  storage?: Pick<Storage, 'getItem'>,
 ): SamplePermissionRoleOverride {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) {
@@ -71,16 +42,7 @@ export function readPersistedSamplePermissionRoleOverride(
     }
 
     const parsed: unknown = JSON.parse(raw);
-    const migrated = migratePersistedSamplePermissionRoleOverride(parsed);
-    if (!isSamplePermissionRoleOverride(migrated)) {
-      return null;
-    }
-
-    if (isDeprecatedSamplePermissionRoleAlias(parsed) && migrated !== null) {
-      resolvedStorage.setItem(storageKey, JSON.stringify(migrated));
-    }
-
-    return migrated;
+    return isSamplePermissionRoleOverride(parsed) ? parsed : null;
   } catch {
     return null;
   }

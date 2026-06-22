@@ -84,8 +84,9 @@ shell-react ──► react ──► tokens
 domain (contracts, services, adapters, jdw, …) ──► consumed by react / extensions / adapters
 ```
 
-The legacy `core`, `vscode-host`, `vscode-extension`, and `workbench-vscode-adapter`
-packages are removed from the target graph.
+The legacy `core`, `vscode-host`, `vscode-extension`, and
+`workbench-vscode-adapter` packages have been removed from the repository and
+must not be reintroduced into the target graph.
 
 ## Related Documents
 

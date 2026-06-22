@@ -41,10 +41,7 @@ describe('resolveWorkbenchCommandExecutionPolicy', () => {
     };
 
     expect(
-      resolveWorkbenchCommandExecutionPolicy(
-        descriptor({ id: 'demo.read', label: 'Read' }),
-        input,
-      ),
+      resolveWorkbenchCommandExecutionPolicy(descriptor({ id: 'demo.read', label: 'Read' }), input),
     ).toBe('auto-deny');
   });
 

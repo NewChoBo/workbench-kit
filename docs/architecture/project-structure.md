@@ -18,10 +18,6 @@ workbench-kit/
 │   ├── workbench-extension-sdk/   # Stable extension contribution types and helpers
 │   ├── workbench-config/          # `.workbench` config loading and validation
 │   ├── monaco/                    # Optional Monaco editor integration placeholder
-│   ├── core/                      # Legacy platform compatibility package
-│   ├── vscode-host/               # Legacy VS Code host compatibility package
-│   ├── vscode-extension/          # Legacy VS Code extension compatibility package
-│   ├── workbench-vscode-adapter/  # Legacy VS Code adapter compatibility package
 │   ├── contracts/                 # Domain contracts (chat, save, patch, widget)
 │   ├── services/                  # Domain orchestration services
 │   ├── adapters/                  # Host/repo/runtime adapters
@@ -90,13 +86,12 @@ Load, merge, and validate `.workbench` workspace files using schemas under `sche
 
 Optional placeholder for Monaco editor bundling and workbench editor integration. Not required for Phase 0.
 
-### Legacy compatibility packages
+### Removed legacy compatibility packages
 
 `packages/core`, `packages/vscode-host`, `packages/vscode-extension`, and
-`packages/workbench-vscode-adapter` still exist in the repository for legacy
-compatibility. They are outside the target workbench dependency graph; new shell
-work should use `platform`, `workbench-core`, `shell-react`, and
-`workbench-extension-sdk` instead.
+`packages/workbench-vscode-adapter` have been removed. New shell work must use
+`platform`, `workbench-core`, `shell-react`, and `workbench-extension-sdk`
+instead of recreating legacy compatibility paths.
 
 ## Extensions
 

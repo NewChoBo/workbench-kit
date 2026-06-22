@@ -4,11 +4,11 @@ Workbench Kit lets hosts decide how AI-proposed commands are executed before the
 
 ## Policy values
 
-| Policy | Behavior |
-| --- | --- |
-| `auto-allow` | Execute immediately when the proposal is rendered |
-| `approval-required` | Show a proposal card with **Allow** / **Deny** |
-| `auto-deny` | Block execution and show a blocked status |
+| Policy              | Behavior                                          |
+| ------------------- | ------------------------------------------------- |
+| `auto-allow`        | Execute immediately when the proposal is rendered |
+| `approval-required` | Show a proposal card with **Allow** / **Deny**    |
+| `auto-deny`         | Block execution and show a blocked status         |
 
 ## Resolution order
 

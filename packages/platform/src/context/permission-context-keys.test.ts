@@ -2,16 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createWorkbenchPermissionContextKeys,
-  normalizeWorkbenchPermissionRole,
   resolveWorkbenchPermissionCapabilities,
 } from './permission-context-keys.js';
-
-describe('normalizeWorkbenchPermissionRole', () => {
-  it('maps deprecated aliases to canonical roles', () => {
-    expect(normalizeWorkbenchPermissionRole('admin')).toBe('owner');
-    expect(normalizeWorkbenchPermissionRole('basic')).toBe('viewer');
-  });
-});
 
 describe('resolveWorkbenchPermissionCapabilities', () => {
   it('matches the documented tier matrix', () => {
@@ -59,8 +51,8 @@ describe('resolveWorkbenchPermissionCapabilities', () => {
 });
 
 describe('createWorkbenchPermissionContextKeys', () => {
-  it('writes normalized role and capability flags', () => {
-    expect(createWorkbenchPermissionContextKeys({ role: 'admin' })).toEqual({
+  it('writes the role and capability flags', () => {
+    expect(createWorkbenchPermissionContextKeys({ role: 'owner' })).toEqual({
       'workbench.permissions.role': 'owner',
       'workbench.permissions.tier': 5,
       'workbench.permissions.canManageCommands': true,
@@ -69,7 +61,7 @@ describe('createWorkbenchPermissionContextKeys', () => {
       'workbench.permissions.canUseSearch': true,
       'workbench.permissions.canManageExtensions': true,
     });
-    expect(createWorkbenchPermissionContextKeys({ role: 'basic' })).toEqual({
+    expect(createWorkbenchPermissionContextKeys({ role: 'viewer' })).toEqual({
       'workbench.permissions.role': 'viewer',
       'workbench.permissions.tier': 1,
       'workbench.permissions.canManageCommands': false,

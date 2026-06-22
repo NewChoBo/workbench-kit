@@ -62,33 +62,7 @@ const preview: Preview = {
   parameters: {
     options: {
       storySort: {
-        order: [
-          'Introduction',
-          ['JsonConfig', ['Workbench']],
-          ['JsonWidget', ['WidgetTree', ['Lab', 'Workbench'], 'Preview']],
-          [
-            'React',
-            [
-              'Primitives',
-              'Layout',
-              'Overlays',
-              [
-                'Workbench',
-                [
-                  'Shell',
-                  'Workspace',
-                  'Settings',
-                  'Chat',
-                  'Commands',
-                  'Catalog',
-                  'Flows',
-                  'Auth',
-                  'Verification',
-                ],
-              ],
-            ],
-          ],
-        ],
+        order: ['Workbench Sample'],
         method: 'alphabetical',
         locales: 'en-US',
       },
@@ -98,11 +72,11 @@ const preview: Preview = {
       options: {
         workbench: { name: 'workbench', value: '#0d1117' },
         surface: { name: 'surface', value: '#161b22' },
-        light: { name: 'light', value: '#ffffff' }
-      }
+        light: { name: 'light', value: '#ffffff' },
+      },
     },
     viewport: {
-      options: monitorViewports
+      options: monitorViewports,
     },
     storybookGrid: {
       enabled: true,
@@ -114,13 +88,13 @@ const preview: Preview = {
   initialGlobals: {
     viewport: {
       value: 'monitor-1366x768',
-      isRotated: false
+      isRotated: false,
     },
 
     backgrounds: {
-      value: 'workbench'
-    }
-  }
+      value: 'workbench',
+    },
+  },
 };
 
 export default preview;

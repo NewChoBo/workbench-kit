@@ -32,9 +32,9 @@ export function hasWorkbenchStructuredDataSchemaSelectOptions(
   if (!definition) return false;
   return Boolean(
     definition.selectable ||
-      definition.oneOf?.length ||
-      definition.ui?.options?.length ||
-      definition.enum?.length,
+    definition.oneOf?.length ||
+    definition.ui?.options?.length ||
+    definition.enum?.length,
   );
 }
 

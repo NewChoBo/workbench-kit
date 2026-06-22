@@ -141,7 +141,7 @@ export function IntegratedShellDemo({
       'src/App.tsx',
       'src/components/Button.tsx',
       'src/workbench/Shell.tsx',
-      'src/widgets/home.widget.json',
+      'src/widgets/home.jdw.json',
     ],
     searchQuery: initialSearchQuery,
     selectedPath: integratedShellDefaultSelectionByActivity.explorer,

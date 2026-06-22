@@ -1,7 +1,7 @@
 # Widget Layout, Schema, and Render Foundation Plan
 
 > **Status:** Planning (2026-06-10, revised)  
-> **Branch context:** `feature/widget-with-schema` — widget studio shell, canonical `*.jdw.json` documents, legacy `*.widget.json` compatibility, asset packages (`manifest.json` + `content.json`)
+> **Branch context:** `feature/widget-with-schema` — widget studio shell, canonical `*.jdw.json` documents, asset packages (`manifest.json` + `content.json`)
 > **Priority:** Schema + JSON model + layout/render engine **before** editor UX expansion.  
 > **Wire format decision (locked):** [json_dynamic_widget](https://pub.dev/documentation/json_dynamic_widget/latest/) **v7 envelope** is the **only** on-disk widget node format. No flat `type`+props dual-read. Early-stage codebase migrates in place.
 
@@ -23,7 +23,7 @@ External references (wire format + patterns, not runtime import):
 
 Establish a **JSON-first foundation** aligned with **JDW wire format**, implemented as **json_dynamic_widget for React** (TypeScript registry + recursive render; **no Dart/Flutter runtime in the kit**):
 
-1. **Widget documents** (`*.jdw.json`; legacy `*.widget.json` read compatibility) — root `JsonWidgetNode` tree in JDW v7 envelope.
+1. **Widget documents** (`*.jdw.json`) — root `JsonWidgetNode` tree in JDW v7 envelope.
 2. **Widget assets** (directory packages) — `manifest.json` catalog metadata + `content.json` JDW subtree.
 3. **Layout engine** — headless measure/layout for registered layout types (`row`, `column`, `expanded`, kit `grid`, …).
 4. **Render pipeline** — `parse → validate → renderJsonWidget` (React); layout rects optional for canvas mode.
@@ -109,7 +109,7 @@ Every widget node on disk uses this envelope ([JDW v7](https://github.com/peiffe
 }
 ```
 
-A `*.jdw.json` file is either a single root node object as above, or `{ "root": <node> }` if we need document-level metadata later (TBD; prefer single root node in v1). Existing `*.widget.json` fixtures are legacy compatibility inputs, not the preferred authoring extension.
+A `*.jdw.json` file is either a single root node object as above, or `{ "root": <node> }` if we need document-level metadata later (TBD; prefer single root node in v1). `*.widget.json` fixtures are not supported in the current authoring path.
 
 ### 3.2 Layout mental model (JDW types)
 
@@ -422,15 +422,15 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 
 ## 12. Current codebase snapshot
 
-| Area                                                          | Exists                                                  | Gap                                                  |
-| ------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------- |
-| `*.jdw.json` / legacy `*.widget.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer`             | —                                                    |
-| Asset parse                                                   | `parseWidgetAssetPackage`, `validateWidgetAssetPackage` | `schema.json` substitution deferred                  |
-| Document parse                                                | `createWidgetDocument` / `parseJsonWidgetData`          | Semantic placement validation partial                |
-| Patch / tree ops                                              | `applyWidgetPatch` + `normalizeWidgetForParent`         | DnD reparent polish deferred                         |
-| Layout                                                        | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts`     | Preview pipeline integration pending                 |
-| Preview                                                       | `renderJsonWidget`, `JsonWidgetPreview`                 | Layout engine not wired into preview yet             |
-| Template assets                                               | Builtin + custom packages                               | Editor insert uses `materializeWidgetPlacementAsset` |
+| Area                                 | Exists                                                  | Gap                                                  |
+| ------------------------------------ | ------------------------------------------------------- | ---------------------------------------------------- |
+| `*.jdw.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer`             | —                                                    |
+| Asset parse                          | `parseWidgetAssetPackage`, `validateWidgetAssetPackage` | `schema.json` substitution deferred                  |
+| Document parse                       | `createWidgetDocument` / `parseJsonWidgetData`          | Semantic placement validation partial                |
+| Patch / tree ops                     | `applyWidgetPatch` + `normalizeWidgetForParent`         | DnD reparent polish deferred                         |
+| Layout                               | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts`     | Preview pipeline integration pending                 |
+| Preview                              | `renderJsonWidget`, `JsonWidgetPreview`                 | Layout engine not wired into preview yet             |
+| Template assets                      | Builtin + custom packages                               | Editor insert uses `materializeWidgetPlacementAsset` |
 
 ## 13. Resolved and open decisions
 

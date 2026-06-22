@@ -17,7 +17,7 @@ describe('editor-pane-visibility', () => {
     });
   });
 
-  it('maps legacy preview view mode to preview-only visibility', () => {
+  it('maps preview view mode to preview-only visibility', () => {
     expect(editorViewModeToPaneVisibility('preview')).toEqual({
       code: false,
       form: false,
@@ -25,7 +25,7 @@ describe('editor-pane-visibility', () => {
     });
   });
 
-  it('maps legacy form view mode to form-only visibility', () => {
+  it('maps form view mode to form-only visibility', () => {
     expect(editorViewModeToPaneVisibility('form')).toEqual({
       code: false,
       form: true,
@@ -34,24 +34,18 @@ describe('editor-pane-visibility', () => {
   });
 
   it('prevents turning off the last visible pane', () => {
-    expect(
-      toggleEditorPaneVisibility(
-        { code: true, form: false, preview: false },
-        'code',
-      ),
-    ).toEqual({
-      code: true,
-      form: false,
-      preview: false,
-    });
+    expect(toggleEditorPaneVisibility({ code: true, form: false, preview: false }, 'code')).toEqual(
+      {
+        code: true,
+        form: false,
+        preview: false,
+      },
+    );
   });
 
   it('allows split visibility when multiple panes can be shown', () => {
     expect(
-      toggleEditorPaneVisibility(
-        { code: true, form: false, preview: false },
-        'preview',
-      ),
+      toggleEditorPaneVisibility({ code: true, form: false, preview: false }, 'preview'),
     ).toEqual({
       code: true,
       form: false,

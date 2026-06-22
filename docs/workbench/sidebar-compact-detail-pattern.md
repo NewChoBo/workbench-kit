@@ -30,11 +30,11 @@ Detail panel component (reuses management / settings primitives)
 
 Use stable, product-neutral URIs under a `workbench://` scheme:
 
-| Detail kind        | URI example                                              |
-| ------------------ | -------------------------------------------------------- |
-| Command inspector  | `workbench://command/inspect/{encodeURIComponent(id)}`   |
-| Extension detail   | `workbench://extension/inspect/{id}` _(backlog)_         |
-| Search result doc  | open workspace file URI in existing text editor          |
+| Detail kind       | URI example                                            |
+| ----------------- | ------------------------------------------------------ |
+| Command inspector | `workbench://command/inspect/{encodeURIComponent(id)}` |
+| Extension detail  | `workbench://extension/inspect/{id}` _(backlog)_       |
+| Search result doc | open workspace file URI in existing text editor        |
 
 Helpers for commands live in `@workbench-kit/react/workbench/management`:
 
@@ -76,14 +76,14 @@ Gesture defaults:
 
 ## Pilot: Commands (implemented)
 
-| Layer        | File |
-| ------------ | ---- |
-| URI helpers  | `packages/react/src/workbench/management/command-inspector-uri.ts` |
+| Layer        | File                                                                |
+| ------------ | ------------------------------------------------------------------- |
+| URI helpers  | `packages/react/src/workbench/management/command-inspector-uri.ts`  |
 | Detail UI    | `packages/react/src/workbench/management/CommandInspectorPanel.tsx` |
-| Sidebar      | `CommandManagementSidebar` — `onInspectCommand`, double-click |
-| Shell wiring | `packages/shell-react/src/commands-view.tsx` |
-| Editor host  | `extensions/builtin.commands/src/command-inspector-editor-host.ts` |
-| Surface      | `packages/shell-react/src/command-inspector-surface.tsx` |
+| Sidebar      | `CommandManagementSidebar` — `onInspectCommand`, double-click       |
+| Shell wiring | `packages/shell-react/src/commands-view.tsx`                        |
+| Editor host  | `extensions/builtin.commands/src/command-inspector-editor-host.ts`  |
+| Surface      | `packages/shell-react/src/command-inspector-surface.tsx`            |
 
 **Before:** sidebar list only; rich metadata visible in Settings → Commands panel.
 
@@ -92,13 +92,13 @@ editor tab with ID, description, source, keybinding, menu surfaces, and Run.
 
 ## Sidebar audit (2026-06-22)
 
-| View       | Current sidebar content                         | Too heavy? | Detail candidate (editor tab)        |
-| ---------- | ----------------------------------------------- | ---------- | ------------------------------------ |
-| Explorer   | Tree, section header, toolbar actions           | No         | File preview / properties _(backlog)_ |
-| Search     | Query + compact result list                     | Borderline | Multi-line match preview, replace UI |
-| Commands   | Filter, grouped list, shortcuts, run footer     | Medium     | **Command inspector (pilot)**        |
-| Extensions | Segmented tabs, chips, descriptions, diagnostics | **Yes**    | Extension manifest / install plan    |
-| Chat       | Message stream + composer overlay               | OK in panel | Long transcripts / tool logs _(later)_ |
+| View       | Current sidebar content                          | Too heavy?  | Detail candidate (editor tab)          |
+| ---------- | ------------------------------------------------ | ----------- | -------------------------------------- |
+| Explorer   | Tree, section header, toolbar actions            | No          | File preview / properties _(backlog)_  |
+| Search     | Query + compact result list                      | Borderline  | Multi-line match preview, replace UI   |
+| Commands   | Filter, grouped list, shortcuts, run footer      | Medium      | **Command inspector (pilot)**          |
+| Extensions | Segmented tabs, chips, descriptions, diagnostics | **Yes**     | Extension manifest / install plan      |
+| Chat       | Message stream + composer overlay                | OK in panel | Long transcripts / tool logs _(later)_ |
 
 ## CSS compact pass
 

@@ -149,9 +149,7 @@ function SampleWorkbenchHost({
   const auth = useSampleAccount();
   const { executeCommand, extensionRegistry, layoutService, workspaceHostPort } = useWorkbench();
   const workspaceState = useWorkspaceResourceState(
-    isWorkspaceResourceService(workspaceHostPort?.service)
-      ? workspaceHostPort.service
-      : undefined,
+    isWorkspaceResourceService(workspaceHostPort?.service) ? workspaceHostPort.service : undefined,
   );
   const liveFileCount = workspaceState?.files.length ?? 0;
   const liveFolderCount = workspaceState?.folders.length ?? 0;
@@ -286,7 +284,11 @@ function SampleWorkbenchHost({
 
       return runSamplePaletteCommand(command, context);
     },
-    [extensionRegistry.capabilityRegistry, permissionRoleSettingsCategory.id, runSamplePaletteCommand],
+    [
+      extensionRegistry.capabilityRegistry,
+      permissionRoleSettingsCategory.id,
+      runSamplePaletteCommand,
+    ],
   );
 
   return (
@@ -407,8 +409,8 @@ function SampleHelpContent() {
             Permission role demo overrides are restored from browser local storage (
             <code>workbench-kit/.workbench/sample-permission-role</code>). Open Profile and use{' '}
             <strong>Permission (demo)</strong>, open Settings and choose{' '}
-            <strong>Permissions (demo)</strong>, or run <strong>Permission Role (Demo)</strong>{' '}
-            from the command palette.
+            <strong>Permissions (demo)</strong>, or run <strong>Permission Role (Demo)</strong> from
+            the command palette.
           </li>
           <li>Toggle the color scheme from the status bar to review theme persistence.</li>
           <li>Toggle the primary sidebar from the status bar to review layout persistence.</li>

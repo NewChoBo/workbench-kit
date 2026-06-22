@@ -2,9 +2,9 @@ import { useMemo } from 'react';
 import type { WidgetJsonSchema } from '@workbench-kit/contracts';
 
 import { JsonCodeEditorPane } from '../jdw/JsonCodeEditorPane.js';
+import { JDW_WIDGET_DOCUMENT_MIME } from '../jdw/document.js';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import type { WorkspaceFile } from '../workbench/workspace/types.js';
-import { WIDGET_TREE_DOCUMENT_MIME } from './widget-tree-document.js';
 
 export interface WidgetSourceEditorProps {
   readonly path?: string | undefined;
@@ -32,7 +32,7 @@ export function WidgetSourceEditor({
   const file = useMemo<WorkspaceFile>(
     () => ({
       content: value,
-      mimeType: WIDGET_TREE_DOCUMENT_MIME,
+      mimeType: JDW_WIDGET_DOCUMENT_MIME,
       path,
     }),
     [path, value],

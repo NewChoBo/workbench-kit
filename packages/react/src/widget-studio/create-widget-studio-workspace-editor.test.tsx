@@ -24,8 +24,8 @@ describe('createWidgetStudioWorkspaceEditorRenderer', () => {
       renderer({
         content: WIDGET_TREE_WELCOME_DOCUMENT,
         file: {
-          path: 'src/widgets/home.widget.json',
-          mimeType: 'application/vnd.workbench-kit.widget+json',
+          path: 'src/widgets/home.jdw.json',
+          mimeType: 'application/vnd.workbench-kit.jdw+json',
           content: WIDGET_TREE_WELCOME_DOCUMENT,
         },
         isDirty: false,

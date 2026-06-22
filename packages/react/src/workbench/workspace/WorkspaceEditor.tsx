@@ -49,7 +49,6 @@ export function languageForFile(path: string, mimeType?: string) {
       return 'javascript';
     case 'application/json':
     case JDW_WIDGET_DOCUMENT_MIME:
-    case 'application/vnd.workbench-kit.widget+json':
       return 'json';
     case 'application/typescript':
     case 'text/typescript':

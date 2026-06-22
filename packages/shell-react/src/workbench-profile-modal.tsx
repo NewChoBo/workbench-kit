@@ -26,7 +26,11 @@ export interface WorkbenchProfileModalProps {
   onClose: () => void;
 }
 
-export function WorkbenchProfileModal({ extraContent, profile, onClose }: WorkbenchProfileModalProps) {
+export function WorkbenchProfileModal({
+  extraContent,
+  profile,
+  onClose,
+}: WorkbenchProfileModalProps) {
   const initials = getProfileInitials(profile.displayName);
   const details = createProfileDetails(profile);
 

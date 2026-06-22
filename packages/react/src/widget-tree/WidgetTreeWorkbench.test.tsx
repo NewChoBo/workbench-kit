@@ -16,14 +16,14 @@ import { isWidgetTreeDocument } from './widget-tree-document.js';
 import { JDW_WIDGET_DOCUMENT_MIME } from '../jdw/document.js';
 
 describe('isWidgetTreeDocument', () => {
-  it('matches widget mime type plus .widget.json and .jdw.json paths', () => {
+  it('matches canonical JDW mime type and .jdw.json paths', () => {
     expect(
       isWidgetTreeDocument({
-        path: 'src/widgets/home.widget.json',
-        mimeType: 'application/vnd.workbench-kit.widget+json',
+        path: 'src/widgets/home.jdw.json',
+        mimeType: JDW_WIDGET_DOCUMENT_MIME,
       }),
     ).toBe(true);
-    expect(isWidgetTreeDocument({ path: 'layout.widget.json' })).toBe(true);
+    expect(isWidgetTreeDocument({ path: 'layout.widget.json' })).toBe(false);
     expect(isWidgetTreeDocument({ path: 'jdw/home.jdw.json' })).toBe(true);
     expect(
       isWidgetTreeDocument({ path: 'jdw/home.json', mimeType: JDW_WIDGET_DOCUMENT_MIME }),
@@ -37,7 +37,7 @@ describe('WidgetTreeWorkbench', () => {
     const markup = renderToStaticMarkup(
       <WidgetTreeWorkbench
         dirty
-        path="src/widgets/home.widget.json"
+        path="src/widgets/home.jdw.json"
         registry={WIDGET_TREE_DEMO_REGISTRY}
         value={WIDGET_TREE_WELCOME_DOCUMENT}
         onChange={() => undefined}

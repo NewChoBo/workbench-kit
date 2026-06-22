@@ -8,14 +8,14 @@ embedding product-specific roles in the framework.
 
 **Yes, with caveats.**
 
-| Layer | Status |
-| ----- | ------ |
-| `ActivityContribution.when` in manifest / SDK | Supported in schema and types |
-| `@workbench-kit/platform` when-clause evaluator | Implemented (`ContextKeyService`, `evaluateWorkbenchContextKeyWhenClause`) |
-| Shell activity rendering | Filters contributed activities by `when` against host context keys |
-| Secondary shell items (Profile, Settings) | Gated by `workbench.permissions.canOpenSettings` when the host sets it |
-| View visibility inside a container | `ViewContribution.when` exists; sidebar view host filtering is a follow-up |
-| Extension install-time enablement | Separate concern — `extensions.json` `enabled` list; hosts can combine with context keys |
+| Layer                                           | Status                                                                                   |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `ActivityContribution.when` in manifest / SDK   | Supported in schema and types                                                            |
+| `@workbench-kit/platform` when-clause evaluator | Implemented (`ContextKeyService`, `evaluateWorkbenchContextKeyWhenClause`)               |
+| Shell activity rendering                        | Filters contributed activities by `when` against host context keys                       |
+| Secondary shell items (Profile, Settings)       | Gated by `workbench.permissions.canOpenSettings` when the host sets it                   |
+| View visibility inside a container              | `ViewContribution.when` exists; sidebar view host filtering is a follow-up               |
+| Extension install-time enablement               | Separate concern — `extensions.json` `enabled` list; hosts can combine with context keys |
 
 The kit does **not** ship a `PermissionService` interface yet. Hosts own
 authorization and map grants to context keys. That keeps the framework
@@ -35,15 +35,15 @@ product-neutral while matching the VS Code pattern (`when` + context keys).
 
 Exported from `@workbench-kit/platform`:
 
-| Key | Type | Meaning |
-| --- | ---- | ------- |
-| `workbench.permissions.role` | `'owner' \| 'maintainer' \| 'developer' \| 'reporter' \| 'viewer'` | Canonical role for diagnostics / compound `when` clauses |
-| `workbench.permissions.tier` | `number` (1–5) | Numeric tier for comparisons such as `workbench.permissions.tier >= 3` |
-| `workbench.permissions.canManageCommands` | `boolean` | Commands activity + command registry sidebar |
-| `workbench.permissions.canOpenSettings` | `boolean` | Shell Settings secondary activity item |
-| `workbench.permissions.canUseChat` | `boolean` | Chat activities |
-| `workbench.permissions.canUseSearch` | `boolean` | Search activity |
-| `workbench.permissions.canManageExtensions` | `boolean` | Extensions activity |
+| Key                                         | Type                                                               | Meaning                                                                |
+| ------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `workbench.permissions.role`                | `'owner' \| 'maintainer' \| 'developer' \| 'reporter' \| 'viewer'` | Canonical role for diagnostics / compound `when` clauses               |
+| `workbench.permissions.tier`                | `number` (1–5)                                                     | Numeric tier for comparisons such as `workbench.permissions.tier >= 3` |
+| `workbench.permissions.canManageCommands`   | `boolean`                                                          | Commands activity + command registry sidebar                           |
+| `workbench.permissions.canOpenSettings`     | `boolean`                                                          | Shell Settings secondary activity item                                 |
+| `workbench.permissions.canUseChat`          | `boolean`                                                          | Chat activities                                                        |
+| `workbench.permissions.canUseSearch`        | `boolean`                                                          | Search activity                                                        |
+| `workbench.permissions.canManageExtensions` | `boolean`                                                          | Extensions activity                                                    |
 
 Use `createWorkbenchPermissionContextKeys({ role })` as a starting point; hosts
 should extend or replace keys for their own products.
@@ -53,35 +53,30 @@ should extend or replace keys for their own products.
 Product-neutral tiers inspired by common VCS role models. Hosts may rename roles
 in their own UI while still mapping to these keys.
 
-| Role | Tier | Explorer | Chat | Search | Commands | Extensions | Settings |
-| ---- | ---- | -------- | ---- | ------ | -------- | ---------- | -------- |
-| `owner` | 5 | yes | yes | yes | yes | yes | yes |
-| `maintainer` | 4 | yes | yes | yes | yes | yes | no |
-| `developer` | 3 | yes | yes | yes | no | no | no |
-| `reporter` | 2 | yes | yes | no | no | no | no |
-| `viewer` | 1 | yes | no | no | no | no | no |
+| Role         | Tier | Explorer | Chat | Search | Commands | Extensions | Settings |
+| ------------ | ---- | -------- | ---- | ------ | -------- | ---------- | -------- |
+| `owner`      | 5    | yes      | yes  | yes    | yes      | yes        | yes      |
+| `maintainer` | 4    | yes      | yes  | yes    | yes      | yes        | no       |
+| `developer`  | 3    | yes      | yes  | yes    | no       | no         | no       |
+| `reporter`   | 2    | yes      | yes  | no     | no       | no         | no       |
+| `viewer`     | 1    | yes      | no   | no     | no       | no         | no       |
 
 Context key mapping:
 
-| Role | `canUseChat` | `canUseSearch` | `canManageCommands` | `canManageExtensions` | `canOpenSettings` |
-| ---- | ------------ | -------------- | --------------------- | --------------------- | ----------------- |
-| `owner` | true | true | true | true | true |
-| `maintainer` | true | true | true | true | false |
-| `developer` | true | true | false | false | false |
-| `reporter` | true | false | false | false | false |
-| `viewer` | false | false | false | false | false |
+| Role         | `canUseChat` | `canUseSearch` | `canManageCommands` | `canManageExtensions` | `canOpenSettings` |
+| ------------ | ------------ | -------------- | ------------------- | --------------------- | ----------------- |
+| `owner`      | true         | true           | true                | true                  | true              |
+| `maintainer` | true         | true           | true                | true                  | false             |
+| `developer`  | true         | true           | false               | false                 | false             |
+| `reporter`   | true         | false          | false               | false                 | false             |
+| `viewer`     | false        | false          | false               | false                 | false             |
 
-#### Backward compatibility
+#### Canonical roles only
 
-`createWorkbenchPermissionContextKeys` still accepts deprecated role inputs:
-
-| Deprecated input | Normalized role |
-| ---------------- | --------------- |
-| `admin` | `owner` |
-| `basic` | `viewer` |
-
-The returned `workbench.permissions.role` value is always canonical. Existing
-hosts that pass `admin` / `basic` keep prior behavior without code changes.
+`createWorkbenchPermissionContextKeys` accepts only canonical role inputs:
+`owner`, `maintainer`, `developer`, `reporter`, and `viewer`. In-repo hosts and
+prototype consumers should migrate directly to those values rather than relying
+on role aliases.
 
 ### Example activity contribution
 
@@ -125,20 +120,20 @@ Activity items re-render when context keys change.
 
 ## Sample host demo (`examples/workbench-sample`)
 
-| Account | Password | Sign-in role | Activity Bar (primary) | Settings |
-| ------- | -------- | ------------ | ---------------------- | -------- |
-| `tester` | `tester` | `owner` | Explorer, Search, Chat, Commands, Extensions, … | Shown |
-| `basic` | `basic` | `viewer` | Explorer only | Hidden |
+| Account  | Password | Sign-in role | Activity Bar (primary)                          | Settings |
+| -------- | -------- | ------------ | ----------------------------------------------- | -------- |
+| `tester` | `tester` | `owner`      | Explorer, Search, Chat, Commands, Extensions, … | Shown    |
+| `basic`  | `basic`  | `viewer`     | Explorer only                                   | Hidden   |
 
 Demo override picker (Profile or Settings → Permissions demo):
 
-| Override | Activity Bar (primary) | Settings |
-| -------- | ---------------------- | -------- |
-| Owner | full primary set | Shown |
-| Maintainer | Explorer, Search, Chat, Commands, Extensions | Hidden |
-| Developer | Explorer, Search, Chat | Hidden |
-| Reporter | Explorer, Chat | Hidden |
-| Viewer | Explorer | Hidden |
+| Override   | Activity Bar (primary)                       | Settings |
+| ---------- | -------------------------------------------- | -------- |
+| Owner      | full primary set                             | Shown    |
+| Maintainer | Explorer, Search, Chat, Commands, Extensions | Hidden   |
+| Developer  | Explorer, Search, Chat                       | Hidden   |
+| Reporter   | Explorer, Chat                               | Hidden   |
+| Viewer     | Explorer                                     | Hidden   |
 
 Implementation in the sample (not in kit core):
 
@@ -148,8 +143,7 @@ Implementation in the sample (not in kit core):
   `canManageCommands`, `canManageExtensions`).
 - `WorkbenchProvider` receives `contextKeyValues` and a role-scoped
   `extensionsConfig`.
-- `sample-permission-role-storage.ts` migrates persisted `admin` → `owner` and
-  `basic` → `viewer`.
+- `sample-permission-role-storage.ts` persists only canonical override values.
 
 Sign out and sign in with the other account, or use the Profile / Settings demo
 picker, to compare layouts.

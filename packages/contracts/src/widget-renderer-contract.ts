@@ -10,32 +10,8 @@ export interface WidgetRendererEvent {
   readonly value?: string;
 }
 
-export interface WidgetRendererEventLike {
-  readonly type?: unknown;
-  readonly kind?: unknown;
-  readonly widgetId?: unknown;
-  readonly value?: unknown;
-  readonly payload?: unknown;
-}
-
-const WIDGET_RENDERER_EVENT_TYPES_MAP = {
-  'on-press': 'press',
-  'on-change': 'change',
-} as const;
-
 export function isWidgetRendererEventKind(value: string): value is WidgetRendererEventKind {
   return value === 'press' || value === 'change';
-}
-
-function normalizeWidgetRendererEventType(value: string): WidgetRendererEventKind | null {
-  if (isWidgetRendererEventKind(value)) {
-    return value;
-  }
-  return (
-    value in WIDGET_RENDERER_EVENT_TYPES_MAP
-      ? WIDGET_RENDERER_EVENT_TYPES_MAP[value as keyof typeof WIDGET_RENDERER_EVENT_TYPES_MAP]
-      : null
-  ) as WidgetRendererEventKind | null;
 }
 
 export function isWidgetRendererEvent(value: unknown): value is WidgetRendererEvent {
@@ -64,9 +40,7 @@ export function isWidgetRendererEvent(value: unknown): value is WidgetRendererEv
   return true;
 }
 
-export function normalizeWidgetRendererEvent(
-  event: WidgetRendererEventLike,
-): WidgetRendererEvent | null {
+export function normalizeWidgetRendererEvent(event: unknown): WidgetRendererEvent | null {
   if (isWidgetRendererEvent(event)) {
     return {
       type: event.type,
@@ -75,44 +49,7 @@ export function normalizeWidgetRendererEvent(
     };
   }
 
-  if (!event || typeof event !== 'object') {
-    return null;
-  }
-
-  const candidate = event as {
-    type?: unknown;
-    kind?: unknown;
-    widgetId?: unknown;
-    value?: unknown;
-    payload?: unknown;
-  };
-  if (typeof candidate.widgetId !== 'string' || candidate.widgetId.length === 0) {
-    return null;
-  }
-
-  const candidateType = candidate.type ?? candidate.kind;
-  if (typeof candidateType !== 'string') {
-    return null;
-  }
-
-  const normalizedType = normalizeWidgetRendererEventType(candidateType);
-  if (normalizedType === null) {
-    return null;
-  }
-
-  if (candidate.payload !== undefined && typeof candidate.payload !== 'string') {
-    return null;
-  }
-  if (candidate.value !== undefined && typeof candidate.value !== 'string') {
-    return null;
-  }
-
-  const value = candidate.value === undefined ? candidate.payload : candidate.value;
-  return {
-    type: normalizedType,
-    widgetId: candidate.widgetId,
-    ...(value === undefined ? undefined : { value }),
-  };
+  return null;
 }
 
 /**

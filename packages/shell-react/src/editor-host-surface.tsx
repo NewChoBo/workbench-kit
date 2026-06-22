@@ -339,10 +339,7 @@ function composeEditorPaneLayout(
         defaultPrimarySizePercent={50}
         minPrimarySizePercent={25}
         primary={
-          <section
-            aria-label={primaryLabel}
-            className="workbench-editor-area__split-pane"
-          >
+          <section aria-label={primaryLabel} className="workbench-editor-area__split-pane">
             {primary}
           </section>
         }

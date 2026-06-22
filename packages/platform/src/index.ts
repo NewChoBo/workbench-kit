@@ -84,13 +84,10 @@ export {
   WORKBENCH_PERMISSION_CONTEXT_KEY_ROLE,
   WORKBENCH_PERMISSION_CONTEXT_KEY_TIER,
   createWorkbenchPermissionContextKeys,
-  normalizeWorkbenchPermissionRole,
   resolveWorkbenchPermissionCapabilities,
   type WorkbenchPermissionCapabilities,
   type WorkbenchPermissionContextInput,
   type WorkbenchPermissionRole,
-  type WorkbenchPermissionRoleDeprecatedAlias,
-  type WorkbenchPermissionRoleInput,
 } from './context/permission-context-keys.js';
 
 export { KeybindingRegistry } from './keybindings/keybinding-registry.js';

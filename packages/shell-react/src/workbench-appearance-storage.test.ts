@@ -43,37 +43,17 @@ describe('workbench-appearance-storage', () => {
 
     writePersistedWorkbenchAppearance(settings, DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage);
 
-    expect(readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage)).toEqual(
-      settings,
-    );
-  });
-
-  it('migrates legacy sample appearance storage key', () => {
-    const storage = createMemoryStorage();
-    storage.setItem(
-      'workbench-kit/.workbench/sample-appearance',
-      JSON.stringify({
-        darkPreset: 'navy',
-        lightPreset: 'orange',
-        themePreference: 'light',
-      }),
-    );
-
-    expect(readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage)).toEqual({
-      darkPreset: 'navy',
-      lightPreset: 'orange',
-      themePreference: 'light',
-    });
-    expect(storage.getItem('workbench-kit/.workbench/sample-appearance')).toBeNull();
-    expect(storage.getItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY)).toContain('"orange"');
+    expect(
+      readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage),
+    ).toEqual(settings);
   });
 
   it('falls back to defaults for invalid payloads', () => {
     const storage = createMemoryStorage();
     storage.setItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, '{not-json');
 
-    expect(readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage)).toEqual(
-      DEFAULT_WORKBENCH_APPEARANCE,
-    );
+    expect(
+      readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage),
+    ).toEqual(DEFAULT_WORKBENCH_APPEARANCE);
   });
 });

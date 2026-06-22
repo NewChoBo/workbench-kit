@@ -324,9 +324,7 @@ function AppearanceSettingsSection({
       });
     }
 
-    const contributedThemeId = usesAppearancePresets
-      ? selectedContributedThemeId
-      : selectedThemeId;
+    const contributedThemeId = usesAppearancePresets ? selectedContributedThemeId : selectedThemeId;
     const contributedTheme =
       contributedThemeId && contributedThemeId !== NO_CONTRIBUTED_COLOR_THEME
         ? extensionRegistry.themes.getTheme(contributedThemeId)
@@ -429,7 +427,9 @@ function AppearanceSettingsSection({
                   value={selectedContributedThemeId}
                   onValueChange={(nextThemeId) => {
                     const normalizedThemeId =
-                      nextThemeId === NO_CONTRIBUTED_COLOR_THEME ? NO_CONTRIBUTED_COLOR_THEME : nextThemeId;
+                      nextThemeId === NO_CONTRIBUTED_COLOR_THEME
+                        ? NO_CONTRIBUTED_COLOR_THEME
+                        : nextThemeId;
                     preferenceService.setScopedValue(
                       CONTRIBUTED_COLOR_THEME_PREFERENCE_KEY,
                       'local',

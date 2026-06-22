@@ -4,10 +4,6 @@ export const TILEPAPER_ICON_CANVAS_SIZE = 1024;
 const REFERENCE_TILE_SIZE = 314;
 /** Unified squircle radius — bumped for a softer, rounder Material feel. */
 const REFERENCE_TILE_RX = 116;
-const REFERENCE_TILE_CORNER_RATIO = REFERENCE_TILE_RX / 416;
-
-/** @deprecated Use TILEPAPER_ICON_UNIFIED_RX — kept for reference only. */
-export const TILEPAPER_ICON_BORDER_RADIUS_RATIO = REFERENCE_TILE_CORNER_RATIO;
 
 /** Base rhythm for canvas → root panel inset. */
 export const TILEPAPER_ICON_SPACING = 48;
@@ -70,9 +66,6 @@ export const TILEPAPER_ICON_ROOT_PANEL = {
   size: panelSize,
   rx: panelRx,
 } as const;
-
-/** @deprecated Use TILEPAPER_ICON_ROOT_PANEL. */
-export const TILEPAPER_ICON_PANEL = TILEPAPER_ICON_ROOT_PANEL;
 
 export const TILEPAPER_ICON_GRID = {
   margin: TILEPAPER_ICON_GRID_MARGIN,

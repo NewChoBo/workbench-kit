@@ -87,17 +87,17 @@ describe('filterActivitiesByWhenClause', () => {
     expect(activityIdsForRole('viewer')).toEqual(['explorer.activity']);
   });
 
-  it('accepts deprecated admin/basic aliases through context key helpers', () => {
+  it('uses canonical permission roles only', () => {
     expect(
       filterActivitiesByWhenClause(
         sampleActivities,
-        createWorkbenchPermissionContextKeys({ role: 'admin' }),
+        createWorkbenchPermissionContextKeys({ role: 'owner' }),
       ).map((activity) => activity.id),
     ).toEqual(activityIdsForRole('owner'));
     expect(
       filterActivitiesByWhenClause(
         sampleActivities,
-        createWorkbenchPermissionContextKeys({ role: 'basic' }),
+        createWorkbenchPermissionContextKeys({ role: 'viewer' }),
       ).map((activity) => activity.id),
     ).toEqual(activityIdsForRole('viewer'));
   });

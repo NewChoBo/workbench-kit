@@ -36,15 +36,14 @@ orchestration without migration ticket.
 
 **Status:** Done for canonical API ownership. `@workbench-kit/platform` owns
 command, menu, context-key, when-clause, and keybinding APIs. Legacy
-compatibility packages remain in the repository, but are isolated from the
-target workbench graph.
+compatibility packages have been removed from the repository.
 
 | Step | Action                                                                                                                          |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------- |
 | 1    | Move `core/src/commands.ts`, `when-clause.ts`, `context-keys.ts` into `platform` (or make `platform` re-export them internally) |
 | 2    | Align `platform` Phase 1 APIs with merged code; delete duplicate minimal `evaluate-when` if redundant                           |
-| 3    | Keep new work off `@workbench-kit/core`; remove the package in a later compatibility cleanup                                    |
-| 4    | Keep new work off legacy VS Code bridge packages; remove them in a later compatibility cleanup                                  |
+| 3    | Keep new work off removed `@workbench-kit/core` paths                                                                           |
+| 4    | Keep new work off removed legacy VS Code bridge package paths                                                                   |
 | 5    | Root `typecheck` + tests green                                                                                                  |
 
 **Exit:** `core` has no unique target implementation and no new target-graph
@@ -102,10 +101,10 @@ imports.
 | Step | Action                                                                                                         |
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Add public-ready `base`, `platform`, `workbench-extension-sdk`, `workbench-config` to `NPM_PUBLISH_ORDER`      |
-| 2    | Keep legacy `core` out of publish order and target graph; package removal remains cleanup work                 |
+| 2    | Keep removed legacy `core` paths out of publish order and target graph                                         |
 | 3    | Update README package list and private-preview shell package notes                                             |
 | 4    | Add `check:dependency-graph` and wire it into `pnpm validate` as the dependency-cruiser equivalent for this M5 |
-| 5    | Keep VS Code bridge and adapter packages out of the current package graph; removal remains cleanup work        |
+| 5    | Keep removed VS Code bridge and adapter paths out of the current package graph                                 |
 | 6    | Add `check:public-exports` and wire it into `pnpm validate` for package export/publish metadata hardening      |
 
 ## What Not to Bulk-Replace

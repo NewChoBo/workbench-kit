@@ -13,9 +13,9 @@ const SAMPLE_PERMISSION_ROLE_LABELS = {
 
 export const SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS = [
   { id: 'auth', label: 'Use sign-in role' },
-  ...(Object.entries(SAMPLE_PERMISSION_ROLE_LABELS) as Array<
-    [WorkbenchPermissionRole, string]
-  >).map(([id, label]) => ({ id, label })),
+  ...(
+    Object.entries(SAMPLE_PERMISSION_ROLE_LABELS) as Array<[WorkbenchPermissionRole, string]>
+  ).map(([id, label]) => ({ id, label })),
 ] as const;
 
 export type SamplePermissionRoleOptionId =

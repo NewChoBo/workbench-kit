@@ -441,9 +441,7 @@ export class EditorService implements Disposable {
     return undefined;
   }
 
-  reconcileWorkspaceFileTabs(
-    isWorkspaceFileAvailable: (resourceUri: string) => boolean,
-  ): void {
+  reconcileWorkspaceFileTabs(isWorkspaceFileAvailable: (resourceUri: string) => boolean): void {
     let changed = false;
     const nextGroups = this.state.groups.map((group) => ({
       ...group,

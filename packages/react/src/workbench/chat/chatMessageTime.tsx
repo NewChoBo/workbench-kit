@@ -45,9 +45,7 @@ export function formatChatMessageTime(value: ChatMessageTimestampInput): string 
   return chatMessageTimeFormatter.format(date);
 }
 
-export function getChatMessageTimeMinuteKey(
-  value: ChatMessageTimestampInput | undefined,
-): string {
+export function getChatMessageTimeMinuteKey(value: ChatMessageTimestampInput | undefined): string {
   if (value === undefined) {
     return '';
   }

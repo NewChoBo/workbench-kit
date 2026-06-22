@@ -72,7 +72,10 @@ export function createInMemorySampleHostBackendClient(): SampleHostBackendClient
           return { status: 'unauthenticated' };
         }
 
-        return createSampleAuthenticatedSession(query?.workspaceLabel ?? 'Workbench Sample', accountId);
+        return createSampleAuthenticatedSession(
+          query?.workspaceLabel ?? 'Workbench Sample',
+          accountId,
+        );
       }, SAMPLE_HOST_BACKEND_SESSION_LATENCY_MS);
     },
     signIn(request) {

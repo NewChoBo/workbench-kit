@@ -33,7 +33,8 @@ export function CommandInspectorPanel({
   const shortcutLabel = entry.keybinding ? formatKeybindingLabel(entry.keybinding) : undefined;
   const runStateLabel =
     lastRun?.commandId === entry.id ? formatCommandRunState(lastRun) : undefined;
-  const canRun = entry.status === 'available' && Boolean(onRunCommand) && lastRun?.status !== 'running';
+  const canRun =
+    entry.status === 'available' && Boolean(onRunCommand) && lastRun?.status !== 'running';
 
   return (
     <ManagementPanelFrame
@@ -96,7 +97,8 @@ export function CommandInspectorPanel({
         <div className="workbench-command-inspector__detail">
           <dt>Source</dt>
           <dd>
-            {entry.sourceLabel} <span className="workbench-command-inspector__subtle">({entry.source})</span>
+            {entry.sourceLabel}{' '}
+            <span className="workbench-command-inspector__subtle">({entry.source})</span>
           </dd>
         </div>
         {shortcutLabel ? (

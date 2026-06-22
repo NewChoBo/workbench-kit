@@ -126,7 +126,7 @@ describe('contract helpers', () => {
     expect(widgetRenderer(props)).toBe(null);
   });
 
-  it('normalizes widget renderer events across legacy and standard shapes', () => {
+  it('normalizes canonical widget renderer events only', () => {
     expect(isWidgetRendererEventKind('press')).toBe(true);
     expect(isWidgetRendererEventKind('on-press')).toBe(false);
 
@@ -144,35 +144,23 @@ describe('contract helpers', () => {
         type: 'on-change',
         widgetId: 'widget-b',
       }),
-    ).toMatchObject({
-      type: 'change',
-      widgetId: 'widget-b',
-      value: 'p',
-    });
+    ).toBe(null);
     expect(
       normalizeWidgetRendererEvent({
         kind: 'on-press',
         widgetId: 'widget-d',
       }),
-    ).toMatchObject({
-      type: 'press',
-      widgetId: 'widget-d',
-    });
+    ).toBe(null);
     expect(
       normalizeWidgetRendererEvent({ type: 'on-press', widgetId: 'widget-c', payload: 1 }),
     ).toBe(null);
     expect(
       normalizeWidgetRendererEvent({
-        payload: 'legacy-only',
         type: 'on-change',
         value: 'preferred-value',
         widgetId: 'widget-e',
       }),
-    ).toMatchObject({
-      type: 'change',
-      widgetId: 'widget-e',
-      value: 'preferred-value',
-    });
+    ).toBe(null);
     expect(normalizeWidgetRendererEvent({ type: 'unknown', widgetId: 'widget-f' })).toBe(null);
   });
 

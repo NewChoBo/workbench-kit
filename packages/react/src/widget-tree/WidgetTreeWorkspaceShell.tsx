@@ -18,7 +18,7 @@ import {
 import { createWidgetStudioWorkspaceEditorRenderer } from '../widget-studio/create-widget-studio-workspace-editor.js';
 import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';
 
-const JDW_WORKSPACE_DEFAULT_WIDGET_PATH = 'src/widgets/home.widget.json';
+const JDW_WORKSPACE_DEFAULT_WIDGET_PATH = 'src/widgets/home.jdw.json';
 
 function withJdwWelcomeDocument(files: readonly WorkspaceFile[]): WorkspaceFile[] {
   return files.map((file) =>

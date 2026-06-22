@@ -11,8 +11,19 @@ Repository: `NewChoBo/workbench-kit` (pnpm monorepo, `@workbench-kit/*` packages
 
 - Use **pnpm** only (`npm install` is blocked).
 - UI copy in English; structure for i18n later.
-- Validation lanes: `pnpm validate:static`, `pnpm validate:fast`, `pnpm validate`.
+- Validation lanes: `pnpm validate:static`, `pnpm validate:fast`,
+  `pnpm validate:ui`, `pnpm validate`.
 - Public API changes: `pnpm check:public-exports`.
+
+## Storybook
+
+- Storybook currently validates the `examples/workbench-sample` app behind
+  `pnpm dev`; do not reintroduce package-wide story galleries without an
+  explicit owner and required verification path.
+- Storybook changes should follow `docs/conventions/storybook.md` and update
+  `docs/workbench/storybook-e2e-coverage.md` when required flows change.
+- Run `pnpm validate:ui` for Storybook config, stories, or sample-host UI flows
+  that are intended to replace browser E2E smoke.
 
 ## Change discipline
 

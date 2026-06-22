@@ -19,12 +19,7 @@ function getStorybookBasePath(value: string | undefined): string {
 const storybookBasePath = getStorybookBasePath(process.env.STORYBOOK_BASE_PATH);
 
 const config: StorybookConfig = {
-  stories: [
-    '../stories/**/*.stories.@(ts|tsx)',
-    '../packages/react/src/**/*.stories.@(ts|tsx)',
-    '../packages/jdw-editor/src/**/*.stories.@(ts|tsx)',
-    '../packages/shell-react/src/**/*.stories.@(ts|tsx)',
-  ],
+  stories: ['../examples/workbench-sample/src/**/*.stories.@(ts|tsx)'],
   addons: ['@storybook/addon-docs'],
   framework: {
     name: '@storybook/react-vite',
