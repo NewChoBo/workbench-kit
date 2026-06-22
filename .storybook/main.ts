@@ -1,6 +1,23 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import path from 'node:path';
 
+function getStorybookBasePath(value: string | undefined): string {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return '/';
+  }
+
+  if (trimmed === './' || /^https?:\/\//.test(trimmed)) {
+    return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+  }
+
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
+}
+
+const storybookBasePath = getStorybookBasePath(process.env.STORYBOOK_BASE_PATH);
+
 const config: StorybookConfig = {
   stories: [
     '../stories/**/*.stories.@(ts|tsx)',
@@ -17,6 +34,8 @@ const config: StorybookConfig = {
     disableTelemetry: true,
   },
   async viteFinal(config) {
+    config.base = storybookBasePath;
+
     config.resolve ??= {};
     config.resolve.dedupe = Array.from(
       new Set([...(config.resolve.dedupe ?? []), 'react', 'react-dom']),
