@@ -561,30 +561,39 @@ export const SplitResizeVerification: Story = {
 
 export const SplitResizeNarrowViewport: Story = {
   name: 'Layout / Split & Resize (320px)',
+
   parameters: {
     fullHeightShell: '100vh',
-    viewport: {
-      defaultViewport: 'verify-mobile-320',
-    },
+
     docs: {
       description: {
         story:
           'Same split/resize layout locked to the 320px verification viewport. Sidebar and nested panes should clamp without horizontal overflow.',
       },
-    },
+    }
   },
+
   render: () => (
     <div style={{ height: '100%', minHeight: 0, width: 320 }}>
       <SplitResizeDemo compact />
     </div>
   ),
+
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByText('Editor pane')).toBeVisible();
     await expect(canvas.getByText(/src\/App\.tsx/)).toBeVisible();
   },
+
   tags: ['storybook-play-baseline'],
+
+  globals: {
+    viewport: {
+      value: 'verify-mobile-320',
+      isRotated: false
+    }
+  }
 };
 
 export const WorkbenchKitShellRail: Story = {

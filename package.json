@@ -48,8 +48,8 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@monaco-editor/react": "^4.7.0",
-    "@storybook/addon-docs": "^10.4.3",
-    "@storybook/react-vite": "^10.4.3",
+    "@storybook/addon-docs": "^10.4.6",
+    "@storybook/react-vite": "^10.4.6",
     "@storybook/test-runner": "^0.24.4",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -64,11 +64,12 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
-    "storybook": "^10.4.3",
+    "storybook": "^10.4.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.60.1",
     "vite": "^6.0.0",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "eslint-plugin-storybook": "10.4.6"
   },
   "repository": {
     "type": "git",
