@@ -70,6 +70,24 @@ export {
 } from './keyboard';
 export { resolveWorkbenchTheme, useResolvedWorkbenchTheme } from './theme';
 export type { ResolvedWorkbenchTheme } from './theme';
+export {
+  applyWorkbenchThemeAttributes,
+  DARK_THEME_PRESET_OPTIONS,
+  DEFAULT_DARK_THEME_PRESET,
+  DEFAULT_LIGHT_THEME_PRESET,
+  isDarkThemePresetId,
+  isLightThemePresetId,
+  LIGHT_THEME_PRESET_OPTIONS,
+  resolveActiveThemePreset,
+} from './themePresets';
+export type {
+  DarkThemePresetId,
+  LightThemePresetId,
+  ThemePresetId,
+  WorkbenchThemeDocumentAttributes,
+  WorkbenchThemePresetOption,
+  WorkbenchThemePresetSelection,
+} from './themePresets';
 export { WorkbenchThemeProvider } from './WorkbenchThemeProvider';
 export type { WorkbenchThemeProviderProps } from './WorkbenchThemeProvider';
 export { WorkbenchStoryHost } from './story/WorkbenchStoryHost';

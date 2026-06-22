@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./styles.css": "./src/styles.css",
+    "./theme-presets.css": "./src/theme-presets.css",
     "./file-icons.css": "./src/file-icons.css"
   },
   "files": [
