@@ -103,9 +103,17 @@ body.ui-workbench-host {
   min-width: 0;
 }
 
-.workbench-sample-permission-role-settings {
+.workbench-sample-permission-role-settings,
+.workbench-sample-permission-role-profile {
   display: grid;
   gap: 12px;
+}
+
+.workbench-sample-permission-role-settings .ui-select__trigger,
+.workbench-sample-permission-role-profile .ui-select__trigger {
+  color: var(--color-input-text, var(--color-text));
+  background: var(--color-input-bg, var(--color-surface-elevated));
+  border-color: var(--color-input-border, var(--color-border));
 }
 
 .workbench-sample-permission-role-settings__hint {

@@ -129,6 +129,20 @@
   overflow: hidden;
 }
 
+.ui-modal__body.ui-scroll-area--both {
+  overflow: auto;
+}
+
+.ui-modal__body.ui-scroll-area--vertical {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.ui-modal__body.ui-scroll-area--horizontal {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 .ui-modal__body--stack {
   display: grid;
   align-content: start;
