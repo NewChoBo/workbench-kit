@@ -5,3 +5,5 @@ storybook-static/
 .turbo/
 .pnpm-store/
 .npm-pack/
+tmp/
+debug-storybook.log
