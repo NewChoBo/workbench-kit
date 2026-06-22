@@ -22,6 +22,7 @@
     "./workbench/activityBarOrder": "./src/workbench/activityBarOrder.ts",
     "./workbench/markdown-preview": "./src/workbench/MarkdownPreview.tsx",
     "./workbench/shell": "./src/workbench/shell.ts",
+    "./workbench/themePresets": "./src/workbench/themePresets.ts",
     "./workbench/split-view": "./src/workbench/SplitView.tsx",
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
     "./workbench/workspace/editor": "./src/workbench/workspace/WorkspaceEditor.tsx",

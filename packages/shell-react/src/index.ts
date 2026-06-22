@@ -32,6 +32,23 @@ export {
   resolvePersistedWorkbenchLayout,
   writePersistedWorkbenchLayout,
 } from './workbench-layout-storage.js';
+export {
+  DEFAULT_WORKBENCH_APPEARANCE,
+  DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
+  isWorkbenchAppearancePersistenceAvailable,
+  readPersistedWorkbenchAppearance,
+  writePersistedWorkbenchAppearance,
+  type WorkbenchAppearanceSettings,
+} from './workbench-appearance-storage.js';
+export {
+  usePersistedWorkbenchAppearance,
+  type UsePersistedWorkbenchAppearanceOptions,
+} from './use-persisted-workbench-appearance.js';
+export {
+  createWorkspaceResourceStatusItems,
+  mergeWorkbenchStatusSections,
+  type WorkspaceResourceStatusItemsInput,
+} from './workbench-status-sections.js';
 export { EditorArea, type EditorAreaProps, type EditorViewMode } from './editor-area.js';
 export {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,

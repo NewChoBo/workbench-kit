@@ -1049,6 +1049,10 @@
   max-width: 560px;
 }
 
+.workbench-settings-section .ui-select__trigger,
+.workbench-settings-section .ui-input,
+.workbench-profile-section .ui-select__trigger,
+.workbench-profile-section .ui-input,
 .workbench-appearance-settings .ui-select__trigger,
 .workbench-appearance-settings .ui-input {
   color: var(--color-input-text, var(--color-text));
