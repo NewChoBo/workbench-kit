@@ -4,7 +4,9 @@ import { expect, screen, userEvent, within } from 'storybook/test';
 import {
   createSampleShellCanvas,
   getPrimaryActivityLabels,
+  openSettingsAppearanceCategory,
   openSettingsModal,
+  waitForEditorTab,
   waitForSampleShellReady,
 } from './story/sample-shell-play.js';
 import {
@@ -57,13 +59,11 @@ export const AuthenticatedWorkbench: Story = {
       'true',
     );
     await expect(canvas.getByRole('button', { name: SAMPLE_EXAMPLE_JDW_PATH })).toBeVisible();
-    await expect(
-      await canvas.findByRole('tab', { name: SAMPLE_EXAMPLE_JDW_PATH }, { timeout: 15_000 }),
-    ).toBeVisible();
+    await expect(await waitForEditorTab(canvas, SAMPLE_EXAMPLE_JDW_PATH)).toBeVisible();
     await expect(canvas.getByLabelText('Editor area')).toBeVisible();
     await expect(canvas.getByLabelText('Status bar')).toBeVisible();
   },
-  tags: ['storybook-play-baseline', 'storybook-play-required'],
+  tags: ['storybook-play-baseline'],
 };
 
 export const SettingsAppearance: Story = {
@@ -83,12 +83,12 @@ export const SettingsAppearance: Story = {
     await openSettingsModal(canvas);
 
     const dialog = screen.getByRole('dialog');
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Appearance' }));
+    await openSettingsAppearanceCategory(dialog);
     await expect(within(dialog).getByRole('combobox', { name: 'Color scheme' })).toBeVisible();
-    await expect(within(dialog).getByRole('combobox', { name: 'Light theme preset' })).toBeVisible();
-    await expect(within(dialog).getByRole('combobox', { name: 'Dark theme preset' })).toBeVisible();
+    await expect(within(dialog).getByRole('combobox', { name: 'Light preset' })).toBeVisible();
+    await expect(within(dialog).getByRole('combobox', { name: 'Dark preset' })).toBeVisible();
   },
-  tags: ['storybook-play-baseline', 'storybook-play-required'],
+  tags: ['storybook-play-baseline'],
 };
 
 export const PermissionOwnerActivityBar: Story = {
@@ -114,7 +114,7 @@ export const PermissionOwnerActivityBar: Story = {
     await expect(canvas.getByRole('button', { name: 'Search' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Extensions' })).toBeVisible();
   },
-  tags: ['storybook-play-baseline', 'storybook-play-required'],
+  tags: ['storybook-play-baseline'],
 };
 
 export const PermissionViewerActivityBar: Story = {
@@ -139,7 +139,7 @@ export const PermissionViewerActivityBar: Story = {
     await expect(canvas.queryByRole('button', { name: 'Extensions' })).toBeNull();
     await expect(canvas.queryByRole('button', { name: 'Settings' })).toBeNull();
   },
-  tags: ['storybook-play-baseline', 'storybook-play-required'],
+  tags: ['storybook-play-baseline'],
 };
 
 export const ExtensionsView: Story = {
@@ -176,7 +176,7 @@ export const ExtensionsView: Story = {
     expect(within(installedList).getAllByText('Explorer').length).toBeGreaterThanOrEqual(1);
     expect(within(installedList).getAllByText('Search').length).toBeGreaterThanOrEqual(1);
   },
-  tags: ['storybook-play-baseline', 'storybook-play-required'],
+  tags: ['storybook-play-baseline'],
 };
 
 export const ReadmeEditorPaneToggles: Story = {
@@ -196,9 +196,7 @@ export const ReadmeEditorPaneToggles: Story = {
     const canvas = createSampleShellCanvas(canvasElement);
 
     await waitForSampleShellReady(canvas);
-    await expect(
-      await canvas.findByRole('tab', { name: SAMPLE_README_PATH }, { timeout: 15_000 }),
-    ).toBeVisible();
+    await expect(await waitForEditorTab(canvas, SAMPLE_README_PATH)).toBeVisible();
 
     const toolbar = canvas.getByRole('toolbar', { name: 'Editor view mode' });
     await expect(within(toolbar).getByRole('button', { name: 'Code' })).toHaveAttribute(

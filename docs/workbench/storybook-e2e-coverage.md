@@ -25,7 +25,7 @@ Stories tagged only `storybook-play-baseline` are broader smoke coverage; promot
 
 Runner: `scripts/test-storybook-play.mjs` — starts Storybook on port `6010` when not already running, then invokes `test-storybook` with `--includeTags`.
 
-**Required story count:** 19 before this slice → **23** after component stories (+4: schema panel validation, chat command proposal, extension diagnostics, editor pane toggles) → **28** after sample shell integration (+5: authenticated layout, settings appearance, permission owner/viewer, extensions view). README editor toggles remain baseline-only.
+**Required story count:** 19 before this slice → **23** after component stories (+4: schema panel validation, chat command proposal, extension diagnostics, editor pane toggles). Sample shell integration (+5) remains **baseline-only** until editor-tab timing is stable in CI (see below).
 
 ## Stories with `play` functions (by area)
 
@@ -43,31 +43,28 @@ Runner: `scripts/test-storybook-play.mjs` — starts Storybook on port `6010` wh
 | `React/Workbench/Settings/Schema Form` | Schema-driven settings form |
 | `React/Workbench/Settings/Panel Primitives` · Schema color/enum/validation | Structured data schema panel controls |
 | `React/Workbench/Management/Extension Sidebar` · Diagnostics | Missing-extension alert + diagnostics badges |
-| `React/Workbench` · Integrated shell | Workbench composition smoke (`WorkbenchStandaloneShell`) |
+| `React/Workbench/Shell` · Integrated Shell (full flow) | Adapter demo shell smoke via `IntegratedShellDemo` / `WorkbenchStandaloneShell` |
 | `React/Workbench/Confirmation Flow` | Confirm dialog flow |
 | `React/Workbench/Workbench Document Renderer` | Document render path |
 | `JDW/WidgetTree/Workbench`, `JDW/WidgetTree/Lab` | Widget tree lab flows |
 | `Shell React/Editor` · Pane toggles | Code / Form / Preview toolbar toggles |
-| `React/Workbench/Integration/Sample Shell` · Authenticated workbench | Virtual workspace bootstrap, explorer, editor tab, status bar |
-| `React/Workbench/Integration/Sample Shell` · Settings appearance | Settings modal → Appearance scheme/preset comboboxes |
-| `React/Workbench/Integration/Sample Shell` · Permission owner | Owner activity bar (Search, Commands, Extensions) |
-| `React/Workbench/Integration/Sample Shell` · Permission viewer | Viewer activity bar (Explorer only) |
-| `React/Workbench/Integration/Sample Shell` · Extensions view | Extensions activity → Installed catalog |
 
 ### Baseline only (representative)
 
 Shell verification matrices, command palette scenarios, structured data form (sectioned), auth sign-in, layout primitives, shell provider sidebars (`Shell React/Shell` play stories are baseline), devtools inspectors, timeline, library catalog, and other component stories with `storybook-play-baseline`.
 
-**Sample shell integration (baseline optional):** `React/Workbench/Integration/Sample Shell` · README editor toggles in `WorkbenchSampleShell.stories.tsx` — Code/Preview toolbar on README tab. Harness: `WorkbenchSampleStoryShell.tsx`; seed: `sample-workspace.seed.ts`; play helpers: `sample-shell-play.ts`. Five other sample shell stories are in the required gate above.
+**Sample shell integration (baseline, promotion deferred):** `React/Workbench/Integration/Sample Shell` in `WorkbenchSampleShell.stories.tsx` — authenticated layout, settings appearance, permission owner/viewer, extensions view, README editor toggles. Harness: `WorkbenchSampleStoryShell.tsx`; seed: `sample-workspace.seed.ts`; play helpers: `sample-shell-play.ts`.
+
+**Promotion blocked (audit 87a1f4a9):** `AuthenticatedWorkbench` play fails in `test:storybook-play:required` — editor tab `example.jdw.json` does not appear within 15s after virtual `workspace.open` in the Storybook test-runner (explorer button visible, tab role missing). Re-promote after fixing async tab open in `OpenWorkspacePathsOnReady` or adding a stable ready gate; do not raise required count until 5/5 sample shell stories pass without `--testTimeout=90000`.
 
 ## Critical flow matrix
 
 | Flow | Storybook | Gap / notes |
 | ---- | --------- | ----------- |
-| Appearance scheme + presets | Required (settings story + sample shell) | — |
-| Editor Code / Form / Preview toggles | Required (shell story) | Full editor-area DnD / Monaco still E2E-only |
-| Permission role demo | Required (sample shell owner vs viewer) | Profile/settings override UI still sample E2E |
-| Extensions view + diagnostics | Required (sidebar + sample shell) | Install/reload lifecycle needs full shell |
+| Appearance scheme + presets | Required (settings story); baseline (sample shell) | Sample shell promotion deferred |
+| Editor Code / Form / Preview toggles | Required (shell story); baseline (sample README toggles) | Full editor-area DnD / Monaco still E2E-only |
+| Permission role demo | Baseline (sample shell owner vs viewer) | Profile/settings override UI still sample E2E |
+| Extensions view + diagnostics | Required (sidebar); baseline (sample shell extensions view) | Install/reload lifecycle needs full shell |
 | Command inspector | Devtools baseline story | Dedicated inspector editor tab story optional |
 | AI chat command proposals | Required | Full `chat-view` mock runtime path in shell optional |
 | Schema form / panel validation | Required (form + panel) | Host JSON config round-trip still sample E2E |
