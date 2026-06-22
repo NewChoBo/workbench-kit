@@ -6,7 +6,8 @@
     "workbench-kit.builtin.commands",
     "workbench-kit.builtin.extensions",
     "workbench-kit.builtin.settings",
-    "workbench-kit.builtin.workspace"
+    "workbench-kit.builtin.workspace",
+    "workbench-kit.samples.theme-alt"
   ],
   "enabled": [
     "workbench-kit.builtin.accounts",
@@ -18,6 +19,7 @@
     "workbench-kit.builtin.search",
     "workbench-kit.builtin.keybindings",
     "workbench-kit.builtin.settings",
-    "workbench-kit.builtin.workspace"
+    "workbench-kit.builtin.workspace",
+    "workbench-kit.samples.theme-alt"
   ]
 }
