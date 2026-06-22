@@ -16,6 +16,7 @@
     "@workbench-kit/react": "workspace:*",
     "@workbench-kit/workbench-config": "workspace:*",
     "@workbench-kit/shell-react": "workspace:*",
+    "@workbench-kit/workbench-core": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

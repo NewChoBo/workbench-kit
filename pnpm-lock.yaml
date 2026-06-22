@@ -101,6 +101,9 @@ importers:
       '@workbench-kit/workbench-config':
         specifier: workspace:*
         version: link:../../packages/workbench-config
+      '@workbench-kit/workbench-core':
+        specifier: workspace:*
+        version: link:../../packages/workbench-core
       '@workbench-kit/workspace':
         specifier: workspace:*
         version: link:../../packages/workspace
