@@ -1,4 +1,5 @@
 import { SideBarViewFrame } from '../../layout/SideBarViewFrame';
+import { cx } from '../../utils/cx';
 import { ChatComposer, type ChatComposerProps } from './ChatComposer';
 import { ChatMessageList, type ChatMessageListProps } from './ChatMessageList';
 import type { ReactNode, Ref } from 'react';
@@ -21,12 +22,14 @@ export interface ChatPanelProps
       | 'showTools'
       | 'value'
     > {
+  className?: string | undefined;
   composerRef?: Ref<HTMLTextAreaElement> | undefined;
   headerAddon?: ReactNode | undefined;
   title?: string;
 }
 
 export function ChatPanel({
+  className,
   commandLabel,
   commandSuggestPopover,
   composerRef,
@@ -46,7 +49,7 @@ export function ChatPanel({
 }: ChatPanelProps) {
   return (
     <SideBarViewFrame
-      className="chat-side-bar-view"
+      className={cx('chat-side-bar-view', className)}
       footer={
         <ChatComposer
           ref={composerRef}

@@ -284,7 +284,6 @@ export const MessageListOverflowScroll: Story = {
         assistantLabel="Assistant"
         messages={createOverflowMessages(48)}
         placeholder="Type a message"
-        style={{ flex: 1, minHeight: 0 }}
         title="Overflow Chat"
         value=""
         onSubmit={() => undefined}
