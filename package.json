@@ -33,7 +33,7 @@
     "typecheck:jdw": "pnpm --filter \"@workbench-kit/jdw*\" --filter @workbench-kit/react --if-present typecheck",
     "validate:static": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm check:extension-manifests && pnpm check:public-exports && pnpm check:dependency-graph && pnpm check:launch-boundary",
     "validate:fast": "pnpm validate:static && pnpm test",
-    "validate:ui": "pnpm build:storybook",
+    "validate:ui": "pnpm build:storybook && pnpm test:storybook-play:required",
     "validate:ui:full": "pnpm build:storybook && pnpm test:storybook-play:required",
     "validate": "pnpm validate:fast && pnpm validate:ui",
     "validate:full": "pnpm validate:fast && pnpm validate:ui:full",

@@ -258,6 +258,56 @@ export const CancelRuntimeFlow: Story = {
   tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
+function createOverflowMessages(count: number): ChatMessage[] {
+  return Array.from({ length: count }, (_, index) => ({
+    content: `Overflow check message ${index + 1}. ${'The quick brown fox jumps over the lazy dog. '.repeat(4)}`,
+    id: `overflow-message-${index + 1}`,
+    source: index % 2 === 0 ? 'user' : 'assistant',
+  }));
+}
+
+export const MessageListOverflowScroll: Story = {
+  name: 'Chat / Message List Overflow',
+  render: () => (
+    <div
+      style={{
+        background: 'var(--color-bg)',
+        display: 'flex',
+        flexDirection: 'column',
+        height: 200,
+        overflow: 'hidden',
+        padding: 16,
+        width: 'min(100%, 420px)',
+      }}
+    >
+      <ChatPanel
+        assistantLabel="Assistant"
+        messages={createOverflowMessages(48)}
+        placeholder="Type a message"
+        style={{ flex: 1, minHeight: 0 }}
+        title="Overflow Chat"
+        value=""
+        onSubmit={() => undefined}
+        onValueChange={() => undefined}
+      />
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const messageScroll = canvasElement.querySelector<HTMLElement>(
+      '.chat-side-bar-view .ui-side-bar-view__body',
+    );
+
+    expect(messageScroll).toBeTruthy();
+    expect(messageScroll!.scrollHeight).toBeGreaterThan(messageScroll!.clientHeight + 8);
+    await expect(canvas.getByText(/^Overflow check message 1\. /)).toBeVisible();
+
+    messageScroll!.scrollTop = messageScroll!.scrollHeight;
+    await expect(canvas.getByText(/^Overflow check message 48\. /)).toBeVisible();
+  },
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
+};
+
 export const WorkspacePatchRuntimeFlow: Story = {
   render: () => (
     <ChatRuntimeHarness

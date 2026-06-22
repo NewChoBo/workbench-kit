@@ -57,14 +57,12 @@ Use these root scripts:
 }
 ```
 
-`pnpm validate` includes `build:storybook` so Storybook drift is caught with the
+`pnpm validate` includes `build:storybook` and required Storybook interaction playback
+(`test:storybook-play:required`) so Storybook drift and key UI regressions are caught with the
 rest of the package gate. `pnpm validate:fast` skips Storybook work for
-day-to-day code checks, while `pnpm validate:ui` runs only the Storybook build.
+day-to-day code checks, while `pnpm validate:ui` runs the Storybook build plus required play tests.
 
-`validate:full` adds required Storybook interaction playback via
-`test:storybook-play:required`. The default `test:storybook-play` runner executes
-stories tagged with `storybook-play-baseline`; pass `--required` to run only
-`storybook-play-required` stories.
+`validate:full` matches `validate` today (fast checks + Storybook build + required play tests).
 
 ## Interaction Tests
 
@@ -75,8 +73,12 @@ Interaction tests use two tags:
   and `pnpm validate:full`
 
 Promote a baseline story to required only after it is stable across repeated runs.
-The integrated shell story and workspace/chat/editor flows are required today; see
-`scripts/test-storybook-play.mjs` for tag filtering.
+The integrated shell story and workspace/chat/editor flows are required today; Appearance
+scheme/preset controls, settings navigation scroll, and chat message-list overflow scroll are
+also required. See `scripts/test-storybook-play.mjs` for tag filtering.
+
+The default `test:storybook-play` runner executes stories tagged with
+`storybook-play-baseline`; pass `--required` to run only `storybook-play-required` stories.
 
 Add interaction tests first to components where accessibility or state regressions
 are most likely:

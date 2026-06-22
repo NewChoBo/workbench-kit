@@ -321,3 +321,79 @@ export const ColorThemeListboxFit: Story = {
   },
   tags: ['storybook-play-baseline', 'storybook-play-required', 'select-listbox-fit'],
 };
+
+const scrollNavigationCategories: WorkbenchSettingsCategory[] = Array.from(
+  { length: 24 },
+  (_, index) => ({
+    id: `settings-scroll-${index + 1}`,
+    label: `Section ${String(index + 1).padStart(2, '0')}`,
+  }),
+);
+
+function SettingsNavigationScrollHarness() {
+  const [activeCategoryId, setActiveCategoryId] = useState(scrollNavigationCategories[0]?.id ?? '');
+
+  return (
+    <>
+      <style>{`
+        .workbench-settings-modal--nav-scroll-test {
+          --ui-modal-height: 320px;
+        }
+      `}</style>
+      <div
+        className="workbench-story-shell"
+        style={{ background: 'var(--color-bg)', minHeight: 480, padding: 16 }}
+      >
+        <WorkbenchSettingsModal
+          activeCategoryId={activeCategoryId}
+          categories={scrollNavigationCategories}
+          className="workbench-settings-modal workbench-settings-modal--nav-scroll-test"
+          minHeight={280}
+          showSearch={false}
+          title="Settings"
+          onActiveCategoryIdChange={setActiveCategoryId}
+          onClose={() => undefined}
+          renderCategory={(category) => (
+            <WorkbenchSettingsSection
+              id={`settings-scroll-content-${category.id}`}
+              title={category.label}
+              description="Scroll the category list to reach sections that overflow the navigation rail."
+            >
+            <Field label="Section marker" htmlFor="settings-scroll-marker">
+              <TextInput
+                id="settings-scroll-marker"
+                controlWidth="full"
+                readOnly
+                value={`Active section: ${category.label}`}
+              />
+            </Field>
+            </WorkbenchSettingsSection>
+          )}
+        />
+      </div>
+    </>
+  );
+}
+
+export const SettingsNavigationScroll: Story = {
+  name: 'Settings / Navigation Scroll',
+  render: () => <SettingsNavigationScrollHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const settingsDialog = canvas.getByRole('dialog', { name: /Settings/ });
+    const navScroll = settingsDialog.querySelector<HTMLElement>(
+      '.ui-workbench-navigation-panel__nav-scroll',
+    );
+
+    expect(navScroll).toBeTruthy();
+    expect(navScroll!.scrollHeight).toBeGreaterThan(navScroll!.clientHeight + 4);
+
+    const lastCategoryLabel = scrollNavigationCategories.at(-1)?.label ?? 'Section 24';
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: lastCategoryLabel }));
+    await expect(within(settingsDialog).getByRole('heading', { name: lastCategoryLabel })).toBeVisible();
+    await expect(within(settingsDialog).getByLabelText('Section marker')).toHaveValue(
+      `Active section: ${lastCategoryLabel}`,
+    );
+  },
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
+};
