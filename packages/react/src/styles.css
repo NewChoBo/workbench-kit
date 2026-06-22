@@ -843,8 +843,22 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 14px 12px 14px 24px;
+  padding: 14px 0;
   border-right: 0;
+}
+
+.workbench-settings-layout .ui-workbench-navigation-panel__nav-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.workbench-settings-layout
+  .ui-workbench-navigation-panel__nav-scroll
+  > .workbench-settings-nav-item {
+  margin-inline: 24px 12px;
+  width: auto;
+  align-self: stretch;
 }
 
 .workbench-settings-nav-item {
@@ -908,7 +922,15 @@
 
 .workbench-settings-content {
   min-width: 0;
-  padding: 0 24px 32px;
+  padding: 0;
+}
+
+.workbench-settings-content > .ui-workbench-navigation-panel__content-scroll > * {
+  padding-inline: 24px;
+}
+
+.workbench-settings-content > .ui-workbench-navigation-panel__content-scroll > *:last-child {
+  padding-bottom: 32px;
 }
 
 .workbench-settings-section {
@@ -2139,7 +2161,7 @@
     flex: 0 0 auto;
   }
 
-  .workbench-settings-content {
+  .workbench-settings-content > .ui-workbench-navigation-panel__content-scroll > * {
     padding-inline: 16px;
   }
 
