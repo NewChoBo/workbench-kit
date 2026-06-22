@@ -25,7 +25,7 @@ Stories tagged only `storybook-play-baseline` are broader smoke coverage; promot
 
 Runner: `scripts/test-storybook-play.mjs` — starts Storybook on port `6010` when not already running, then invokes `test-storybook` with `--includeTags`.
 
-**Required story count:** 19 before this slice → **23** after (+4: schema panel validation, chat command proposal, extension diagnostics, editor pane toggles).
+**Required story count:** 19 before this slice → **23** after (+4: schema panel validation, chat command proposal, extension diagnostics, editor pane toggles). Sample shell integration stories are baseline-only and are **not** included in this gate.
 
 ## Stories with `play` functions (by area)
 
@@ -57,10 +57,10 @@ Shell verification matrices, command palette scenarios, structured data form (se
 
 | Flow | Storybook | Gap / notes |
 | ---- | --------- | ----------- |
-| Appearance scheme + presets | Required | Extension theme contribution still needs shell-level story |
+| Appearance scheme + presets | Required (settings + sample shell) | — |
 | Editor Code / Form / Preview toggles | Required (shell story) | Full editor-area DnD / Monaco still E2E-only |
-| Permission role demo | Partial (unit tests on `permission-context-keys`) | Sample shell integration stories planned (baseline) |
-| Extensions view + diagnostics | Required (sidebar story) | Install/reload lifecycle needs full shell |
+| Permission role demo | Required (sample shell owner vs viewer) | Profile/settings override UI still sample E2E |
+| Extensions view + diagnostics | Required (sidebar + sample shell extensions view) | Install/reload lifecycle needs full shell |
 | Command inspector | Devtools baseline story | Dedicated inspector editor tab story optional |
 | AI chat command proposals | Required | Full `chat-view` mock runtime path in shell optional |
 | Schema form / panel validation | Required (form + panel) | Host JSON config round-trip still sample E2E |
