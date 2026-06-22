@@ -77,12 +77,20 @@ export {
 } from './context/context-key-value.js';
 export {
   WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_MANAGE_COMMANDS,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_MANAGE_EXTENSIONS,
   WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS,
   WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_USE_CHAT,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_USE_SEARCH,
   WORKBENCH_PERMISSION_CONTEXT_KEY_ROLE,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_TIER,
   createWorkbenchPermissionContextKeys,
+  normalizeWorkbenchPermissionRole,
+  resolveWorkbenchPermissionCapabilities,
+  type WorkbenchPermissionCapabilities,
   type WorkbenchPermissionContextInput,
   type WorkbenchPermissionRole,
+  type WorkbenchPermissionRoleDeprecatedAlias,
+  type WorkbenchPermissionRoleInput,
 } from './context/permission-context-keys.js';
 
 export { KeybindingRegistry } from './keybindings/keybinding-registry.js';

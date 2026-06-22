@@ -1,4 +1,4 @@
-import { Badge, SegmentedControl } from '@workbench-kit/react/primitives';
+import { Badge, Field, Select } from '@workbench-kit/react/primitives';
 import type { WorkbenchPermissionRole } from '@workbench-kit/platform';
 
 import {
@@ -41,23 +41,32 @@ export function createSamplePermissionRoleProfileExtra({
           </>
         ) : null}
       </p>
-      <SegmentedControl
-        ariaLabel="Permission role (demo)"
-        options={SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS.map((option) => ({
-          label: option.label,
-          testId: `sample-permission-role-profile-${option.id}`,
-          value: option.id,
-        }))}
-        value={selectedOptionId}
-        onChange={(nextValue) => {
-          const nextOverride = resolveSamplePermissionRoleOverrideFromOptionId(nextValue);
-          if (nextOverride !== undefined) {
-            onRoleOverrideChange(nextOverride);
-          }
-        }}
-      />
+      <Field
+        className="workbench-sample-permission-role-profile__field"
+        label="Permission role (demo)"
+        description="Switch tiers to compare Activity Bar visibility without signing out."
+      >
+        <Select
+          aria-label="Permission role (demo)"
+          controlWidth="full"
+          value={selectedOptionId}
+          onValueChange={(nextValue) => {
+            const nextOverride = resolveSamplePermissionRoleOverrideFromOptionId(nextValue);
+            if (nextOverride !== undefined) {
+              onRoleOverrideChange(nextOverride);
+            }
+          }}
+        >
+          {SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+      </Field>
       <p className="workbench-sample-permission-role-profile__hint">
-        Switch to Basic to hide Settings while keeping this profile menu available.
+        Viewer shows Explorer only. Reporter adds Chat. Developer adds Search. Maintainer adds
+        Commands and Extensions. Owner also shows Settings.
       </p>
     </section>
   );

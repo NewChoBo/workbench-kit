@@ -108,6 +108,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
             icon: 'comment-discussion',
             title: 'Chat',
             order: 30,
+            when: 'workbench.permissions.canUseChat',
           },
           {
             id: 'workbench-kit.builtin.chat.aiChat.activity',
@@ -115,6 +116,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
             icon: 'sparkle',
             title: 'AI Chat',
             order: 40,
+            when: 'workbench.permissions.canUseChat',
           },
         ],
         views: {
@@ -403,6 +405,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
             icon: 'extensions',
             title: 'Extensions',
             order: 35,
+            when: 'workbench.permissions.canManageExtensions',
           },
         ],
         views: {
@@ -474,6 +477,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
             icon: 'search',
             title: 'Search',
             order: 20,
+            when: 'workbench.permissions.canUseSearch',
           },
         ],
         views: {

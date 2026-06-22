@@ -37,7 +37,8 @@
         "viewContainerId": "extensions",
         "icon": "extensions",
         "title": "Extensions",
-        "order": 35
+        "order": 35,
+        "when": "workbench.permissions.canManageExtensions"
       }
     ],
     "views": {

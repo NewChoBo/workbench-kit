@@ -6,6 +6,7 @@ import type { WorkbenchSettingsCategory } from '@workbench-kit/react/workbench/s
 import type { SamplePermissionRoleOverride } from './sample-permission-role-storage.js';
 import {
   SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS,
+  formatSamplePermissionRoleLabel,
   resolveSamplePermissionRoleOptionId,
   resolveSamplePermissionRoleOverrideFromOptionId,
 } from './sample-permission-role-controls.js';
@@ -57,7 +58,7 @@ function SamplePermissionRoleSettingsSection({
         <Field
           className="workbench-sample-permission-role-settings__field"
           label="Permission role (demo)"
-          description={`Signed-in account maps to ${authDerivedRole}. Choose Admin or Basic to override without signing out. Effective role: ${effectiveRole}.`}
+          description={`Signed-in account maps to ${formatSamplePermissionRoleLabel(authDerivedRole)}. Override the demo role without signing out. Effective role: ${formatSamplePermissionRoleLabel(effectiveRole)}.`}
         >
           <Select
             aria-label="Permission role (demo)"
@@ -78,7 +79,7 @@ function SamplePermissionRoleSettingsSection({
           </Select>
         </Field>
         <p className="workbench-sample-permission-role-settings__hint">
-          If Settings is hidden while Basic is active, open Profile and switch roles here or run{' '}
+          If Settings is hidden for your tier, open Profile and switch roles here or run{' '}
           <strong>Permission Role (Demo)</strong> from the command palette.
         </p>
       </div>

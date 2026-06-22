@@ -27,7 +27,8 @@
         "viewContainerId": "search",
         "icon": "search",
         "title": "Search",
-        "order": 20
+        "order": 20,
+        "when": "workbench.permissions.canUseSearch"
       }
     ],
     "views": {

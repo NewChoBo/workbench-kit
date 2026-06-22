@@ -246,7 +246,7 @@ export function WorkbenchProvider({
   const contextKeyService = useMemo(() => {
     const service = new ContextKeyService();
     for (const [key, value] of Object.entries(
-      createWorkbenchPermissionContextKeys({ role: 'admin' }),
+      createWorkbenchPermissionContextKeys({ role: 'owner' }),
     )) {
       service.set(key, value);
     }

@@ -4,17 +4,28 @@ import type { SamplePermissionRoleOverride } from './sample-permission-role-stor
 
 export const SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS = [
   { id: 'auth', label: 'Use sign-in role' },
-  { id: 'admin', label: 'Admin' },
-  { id: 'basic', label: 'Basic' },
+  { id: 'owner', label: 'Owner' },
+  { id: 'maintainer', label: 'Maintainer' },
+  { id: 'developer', label: 'Developer' },
+  { id: 'reporter', label: 'Reporter' },
+  { id: 'viewer', label: 'Viewer' },
 ] as const;
 
 export type SamplePermissionRoleOptionId =
   (typeof SAMPLE_PERMISSION_ROLE_OVERRIDE_OPTIONS)[number]['id'];
 
+const SAMPLE_PERMISSION_ROLE_LABELS: Readonly<Record<WorkbenchPermissionRole, string>> = {
+  owner: 'Owner',
+  maintainer: 'Maintainer',
+  developer: 'Developer',
+  reporter: 'Reporter',
+  viewer: 'Viewer',
+};
+
 export function resolveSamplePermissionRoleOptionId(
   roleOverride: SamplePermissionRoleOverride,
 ): SamplePermissionRoleOptionId {
-  if (roleOverride === 'admin' || roleOverride === 'basic') {
+  if (roleOverride !== null) {
     return roleOverride;
   }
 
@@ -28,7 +39,13 @@ export function resolveSamplePermissionRoleOverrideFromOptionId(
     return null;
   }
 
-  if (optionId === 'admin' || optionId === 'basic') {
+  if (
+    optionId === 'owner' ||
+    optionId === 'maintainer' ||
+    optionId === 'developer' ||
+    optionId === 'reporter' ||
+    optionId === 'viewer'
+  ) {
     return optionId;
   }
 
@@ -36,5 +53,5 @@ export function resolveSamplePermissionRoleOverrideFromOptionId(
 }
 
 export function formatSamplePermissionRoleLabel(role: WorkbenchPermissionRole): string {
-  return role === 'admin' ? 'Admin' : 'Basic';
+  return SAMPLE_PERMISSION_ROLE_LABELS[role];
 }

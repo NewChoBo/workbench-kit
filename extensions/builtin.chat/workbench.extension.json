@@ -36,14 +36,16 @@
         "viewContainerId": "chatting",
         "icon": "comment-discussion",
         "title": "Chat",
-        "order": 30
+        "order": 30,
+        "when": "workbench.permissions.canUseChat"
       },
       {
         "id": "workbench-kit.builtin.chat.aiChat.activity",
         "viewContainerId": "aiChat",
         "icon": "sparkle",
         "title": "AI Chat",
-        "order": 40
+        "order": 40,
+        "when": "workbench.permissions.canUseChat"
       }
     ],
     "views": {
