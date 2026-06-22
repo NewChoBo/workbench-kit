@@ -53,14 +53,16 @@ Runner: `scripts/test-storybook-play.mjs` — starts Storybook on port `6010` wh
 
 Shell verification matrices, command palette scenarios, structured data form (sectioned), auth sign-in, layout primitives, shell provider sidebars (`Shell React/Shell` play stories are baseline), devtools inspectors, timeline, library catalog, and other component stories with `storybook-play-baseline`.
 
+**Sample shell integration (WIP, baseline only):** `React/Workbench/Integration/Sample Shell` in `WorkbenchSampleShell.stories.tsx` — E2E-style host composition without `workbench-sample` `:5173`. Harness: `packages/shell-react/src/story/WorkbenchSampleStoryShell.tsx`. Tagged `storybook-play-baseline` only; promote to `storybook-play-required` after stable across repeated runs.
+
 ## Critical flow matrix
 
 | Flow | Storybook | Gap / notes |
 | ---- | --------- | ----------- |
-| Appearance scheme + presets | Required (settings + sample shell) | — |
+| Appearance scheme + presets | Required (settings story) | Shell-level appearance via sample shell baseline (not in required gate) |
 | Editor Code / Form / Preview toggles | Required (shell story) | Full editor-area DnD / Monaco still E2E-only |
-| Permission role demo | Required (sample shell owner vs viewer) | Profile/settings override UI still sample E2E |
-| Extensions view + diagnostics | Required (sidebar + sample shell extensions view) | Install/reload lifecycle needs full shell |
+| Permission role demo | Baseline (sample shell owner vs viewer) | Profile/settings override UI still sample E2E |
+| Extensions view + diagnostics | Required (sidebar story) | Extensions activity in sample shell baseline (not in required gate); install/reload lifecycle needs full shell |
 | Command inspector | Devtools baseline story | Dedicated inspector editor tab story optional |
 | AI chat command proposals | Required | Full `chat-view` mock runtime path in shell optional |
 | Schema form / panel validation | Required (form + panel) | Host JSON config round-trip still sample E2E |
@@ -112,6 +114,22 @@ pnpm exec serve storybook-static
 - Keep story definitions in `*.stories.tsx` only — avoid per-component `Foo.stories.css` files.
 - Wrap panels in shared hosts from `packages/react/src/workbench/story/`: `WorkbenchStoryHost` (theme shell), `StorySidebarFrame` (sidebar width/height presets), `StoryEventLog` (harness status footer).
 - Prefer these components over inline `style` or ad-hoc `className` layout in stories; product components should not gain story-only `style` props.
+
+### Fixture data: when inline arrays are OK
+
+| Pattern | Use for | Example in repo |
+| ------- | ------- | --------------- |
+| **`args` + component** | Single component, few props | Most primitive stories |
+| **`render` + small harness** | Stateful wrapper around one surface | `AppearanceSettings.stories.tsx` (`AppearanceSettingsHarness`) |
+| **Per-story inline objects** | Scenario-specific mock plans (2–5 fields) | `ChatPanel.stories.tsx` (`response`, `workspacePatches`) |
+| **Shared harness module** | Full host composition (providers, virtual workspace, permissions) | `WorkbenchSampleStoryShell.tsx` |
+| **Imported JSON** | Large or host-owned config trees | `examples/workbench-sample/src/bootstrap.ts` (`.workbench/*.json`) |
+
+**Default (component / panel stories):** do **not** build large inline fixture arrays in `*.stories.tsx`. Import the real component, use `args` or a thin `render` harness, and keep scenario data next to the story (small objects only).
+
+**Exception (integration shell stories):** a trimmed virtual workspace seed and extension/layout config **may** live in a dedicated harness file when the story mirrors `workbench-sample` without `:5173`. Keep wiring (providers, gates) in the harness; override per story via props (`permissionRole`, `workspaceInit.openPaths`) — see `WorkbenchSampleShell.stories.tsx`. Avoid duplicating the full `bootstrap.ts` tree (schemas, `.workbench/` mirror) unless a play test needs it.
+
+**Not the norm:** monolithic fixture blobs inside every story file, or copy-pasting `bootstrap.ts` into stories — extract to harness + exports, or share JSON when the fixture grows past ~100 lines or must stay in sync with the sample app.
 
 ## Adding a new required play test
 
