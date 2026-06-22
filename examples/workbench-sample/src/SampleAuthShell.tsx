@@ -1,19 +1,39 @@
 import type { ReactNode } from 'react';
+import {
+  resolveActiveThemePreset,
+  useResolvedWorkbenchTheme,
+  WorkbenchThemeProvider,
+  type DarkThemePresetId,
+  type LightThemePresetId,
+  type WorkbenchColorSchemePreference,
+} from '@workbench-kit/react/workbench';
 import { WorkbenchAuthGate } from '@workbench-kit/react/workbench/auth';
-import { WorkbenchThemeProvider } from '@workbench-kit/react/workbench';
+
 import { SampleAccountProvider } from './sample-account-context.js';
 import { useSampleAuth } from './useSampleAuth.js';
 
 export interface SampleAuthShellProps {
+  appearance: {
+    darkPreset: DarkThemePresetId;
+    lightPreset: LightThemePresetId;
+    themePreference: WorkbenchColorSchemePreference;
+  };
   children: ReactNode;
-  theme: 'dark' | 'light';
 }
 
-export function SampleAuthShell({ children, theme }: SampleAuthShellProps) {
+export function SampleAuthShell({ appearance, children }: SampleAuthShellProps) {
   const auth = useSampleAuth();
+  const resolvedTheme = useResolvedWorkbenchTheme(appearance.themePreference);
+  const activePreset = resolveActiveThemePreset(resolvedTheme, appearance);
 
   return (
-    <WorkbenchThemeProvider className="ui-workbench-host-root" syncDocumentElement theme={theme}>
+    <WorkbenchThemeProvider
+      className="ui-workbench-host-root"
+      syncDocumentElement
+      theme={resolvedTheme}
+      themePreset={activePreset}
+      themePreference={appearance.themePreference}
+    >
       <SampleAccountProvider value={auth}>
         <WorkbenchAuthGate
           authStatus={auth.status}

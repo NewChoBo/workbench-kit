@@ -805,12 +805,10 @@ describe('WorkbenchProvider', () => {
           }}
         >
           <TestWorkbenchShell
+            darkPreset="purple"
             editorArea={<main>Editor Area</main>}
-            theme="dark"
-            themeOptions={[
-              { id: 'dark', label: 'Dark' },
-              { id: 'light', label: 'Light' },
-            ]}
+            lightPreset="skyblue"
+            theme="system"
             onThemeChange={(nextTheme) => {
               themeChanges.push(nextTheme);
             }}
@@ -840,7 +838,9 @@ describe('WorkbenchProvider', () => {
     await flushReactEffects();
 
     const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
-    expect(dialog?.textContent).toContain('Color theme');
+    expect(dialog?.textContent).toContain('Color scheme');
+    expect(dialog?.textContent).toContain('Light preset');
+    expect(dialog?.textContent).toContain('Dark preset');
 
     const themeSelect = dialog?.querySelector<HTMLSelectElement>(
       '.workbench-appearance-settings select',

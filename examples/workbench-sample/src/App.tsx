@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Badge, IconButton } from '@workbench-kit/react/primitives';
+import {
+  resolveActiveThemePreset,
+  useResolvedWorkbenchTheme,
+  type DarkThemePresetId,
+  type LightThemePresetId,
+  type WorkbenchColorSchemePreference,
+} from '@workbench-kit/react/workbench';
 import type { StatusBarSectionModel } from '@workbench-kit/react/workbench/shell';
 import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/workspace/editor';
 import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
@@ -12,7 +19,6 @@ import {
   useWorkbench,
   type EditorViewMode,
   type WorkbenchProfileInput,
-  type WorkbenchThemeOption,
 } from '@workbench-kit/shell-react';
 
 import {
@@ -32,31 +38,27 @@ import {
   createSamplePaletteCommandRunner,
   sampleAdditionalPaletteCommands,
 } from './sample-palette-commands.js';
+import {
+  readPersistedSampleAppearance,
+  writePersistedSampleAppearance,
+  type SampleAppearanceSettings,
+} from './sample-appearance-storage.js';
 import { SampleAuthShell } from './SampleAuthShell.js';
 import { useSampleAccount } from './sample-account-context.js';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 
-type SampleTheme = WorkspaceEditorTheme;
-
-const SAMPLE_THEME_OPTIONS = [
-  {
-    description: 'Dim workbench surfaces for editor-first review.',
-    id: 'dark',
-    label: 'Dark',
-  },
-  {
-    description: 'Light workbench surfaces for shell and layout review.',
-    id: 'light',
-    label: 'Light',
-  },
-] satisfies readonly WorkbenchThemeOption[];
-
 export function App() {
-  const [theme, setTheme] = useState<SampleTheme>('dark');
+  const [appearance, setAppearance] = useState<SampleAppearanceSettings>(() =>
+    readPersistedSampleAppearance(),
+  );
+
+  useEffect(() => {
+    writePersistedSampleAppearance(appearance);
+  }, [appearance]);
 
   return (
-    <SampleAuthShell theme={theme}>
+    <SampleAuthShell appearance={appearance}>
       <WorkbenchProvider
         extensionsConfig={extensionsConfig}
         initialKeybindingOverrides={workbenchKeybindings}
@@ -68,7 +70,7 @@ export function App() {
         workspaceHostPort={workspaceHostPort}
       >
         <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={initialWorkspace}>
-          <SampleWorkbenchHost theme={theme} onThemeChange={setTheme} />
+          <SampleWorkbenchHost appearance={appearance} onAppearanceChange={setAppearance} />
         </WorkbenchStartupGate>
       </WorkbenchProvider>
     </SampleAuthShell>
@@ -76,15 +78,17 @@ export function App() {
 }
 
 interface SampleWorkbenchHostProps {
-  onThemeChange: (theme: SampleTheme) => void;
-  theme: SampleTheme;
+  appearance: SampleAppearanceSettings;
+  onAppearanceChange: (appearance: SampleAppearanceSettings) => void;
 }
 
-function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps) {
+function SampleWorkbenchHost({ appearance, onAppearanceChange }: SampleWorkbenchHostProps) {
   const auth = useSampleAccount();
   const { executeCommand, layoutService } = useWorkbench();
   const [layout, setLayout] = useState(() => layoutService.getState());
   const [locale, setLocale] = useState('en');
+  const resolvedTheme = useResolvedWorkbenchTheme(appearance.themePreference);
+  const editorTheme: WorkspaceEditorTheme = resolvedTheme;
 
   useEffect(() => {
     const disposable = layoutService.onDidChangeLayout(({ state }) => {
@@ -133,25 +137,54 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
     () =>
       createSampleStatusSections({
         activeAccountName: auth.status === 'authenticated' ? profile?.displayName : undefined,
+        appearance,
+        resolvedTheme,
         sideBarVisible: layout.sideBar.visible,
-        theme,
       }),
-    [auth.status, layout.sideBar.visible, profile?.displayName, theme],
+    [appearance, auth.status, layout.sideBar.visible, profile?.displayName, resolvedTheme],
   );
 
   const handleThemeChange = useCallback(
     (nextTheme: string) => {
-      if (isSampleTheme(nextTheme)) {
-        onThemeChange(nextTheme);
+      if (!isSampleColorScheme(nextTheme)) {
+        return;
       }
+
+      onAppearanceChange({
+        ...appearance,
+        themePreference: nextTheme,
+      });
     },
-    [onThemeChange],
+    [appearance, onAppearanceChange],
+  );
+
+  const handleLightPresetChange = useCallback(
+    (nextPreset: LightThemePresetId) => {
+      onAppearanceChange({
+        ...appearance,
+        lightPreset: nextPreset,
+      });
+    },
+    [appearance, onAppearanceChange],
+  );
+
+  const handleDarkPresetChange = useCallback(
+    (nextPreset: DarkThemePresetId) => {
+      onAppearanceChange({
+        ...appearance,
+        darkPreset: nextPreset,
+      });
+    },
+    [appearance, onAppearanceChange],
   );
 
   const handleStatusItemActivate = useCallback(
     (item: { id: string }) => {
       if (item.id === 'sample.theme') {
-        onThemeChange(nextSampleTheme(theme));
+        onAppearanceChange({
+          ...appearance,
+          themePreference: nextSampleColorScheme(appearance.themePreference),
+        });
         return;
       }
 
@@ -159,7 +192,7 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
         layoutService.setSideBarVisible(!layout.sideBar.visible);
       }
     },
-    [layout.sideBar.visible, layoutService, onThemeChange, theme],
+    [appearance, layout.sideBar.visible, layoutService, onAppearanceChange],
   );
 
   const runSamplePaletteCommand = useCallback(createSamplePaletteCommandRunner(executeCommand), [
@@ -174,21 +207,24 @@ function SampleWorkbenchHost({ onThemeChange, theme }: SampleWorkbenchHostProps)
           additionalCommands: sampleAdditionalPaletteCommands,
           onRunCommand: runSamplePaletteCommand,
         }}
+        darkPreset={appearance.darkPreset}
         editorArea={
           <SampleEditorFrame>
-            <EditorArea defaultViewModeForResource={getSampleDefaultViewMode} theme={theme} />
+            <EditorArea defaultViewModeForResource={getSampleDefaultViewMode} theme={editorTheme} />
           </SampleEditorFrame>
         }
         helpContent={<SampleHelpContent />}
+        lightPreset={appearance.lightPreset}
         locale={locale}
+        onDarkPresetChange={handleDarkPresetChange}
+        onLightPresetChange={handleLightPresetChange}
         onLocaleChange={setLocale}
         onStatusItemActivate={handleStatusItemActivate}
         onThemeChange={handleThemeChange}
         profile={profile}
         rootClassName="ide-root"
         statusSections={statusSections}
-        theme={theme}
-        themeOptions={SAMPLE_THEME_OPTIONS}
+        theme={appearance.themePreference}
         title="Workbench Sample"
         titleBarActions={<SampleTitleBarActions />}
         titleMeta={<Badge variant="muted">{workspaceInfo.fileCount} files</Badge>}
@@ -265,8 +301,10 @@ function SampleHelpContent() {
             browser local storage (`workbench-kit/.workbench/layout`).
           </li>
           <li>
-            Theme selection is exposed in Settings, with a status bar shortcut for quick checks.
+            Appearance settings (color scheme, light preset, dark preset) are restored from browser
+            local storage (`workbench-kit/.workbench/sample-appearance`).
           </li>
+          <li>Toggle the color scheme from the status bar to review theme persistence.</li>
           <li>Toggle the primary sidebar from the status bar to review layout persistence.</li>
           <li>
             Open the profile action above Settings to review the service account, or open Settings
@@ -284,15 +322,19 @@ function SampleHelpContent() {
 
 interface SampleStatusSectionsInput {
   activeAccountName?: string | undefined;
+  appearance: SampleAppearanceSettings;
+  resolvedTheme: WorkspaceEditorTheme;
   sideBarVisible: boolean;
-  theme: SampleTheme;
 }
 
 function createSampleStatusSections({
   activeAccountName,
+  appearance,
+  resolvedTheme,
   sideBarVisible,
-  theme,
 }: SampleStatusSectionsInput): StatusBarSectionModel[] {
+  const activePreset = resolveActiveThemePreset(resolvedTheme, appearance);
+
   return [
     {
       id: 'sample-primary',
@@ -314,8 +356,8 @@ function createSampleStatusSections({
           active: true,
           icon: 'color-mode',
           id: 'sample.theme',
-          label: `theme: ${theme}`,
-          title: 'Toggle sample theme',
+          label: `scheme: ${appearance.themePreference} · ${activePreset}`,
+          title: 'Cycle color scheme (system, light, dark)',
         },
       ],
     },
@@ -356,12 +398,22 @@ function createSampleStatusSections({
   ];
 }
 
-function nextSampleTheme(theme: SampleTheme): SampleTheme {
-  return theme === 'dark' ? 'light' : 'dark';
+function nextSampleColorScheme(
+  scheme: WorkbenchColorSchemePreference,
+): WorkbenchColorSchemePreference {
+  if (scheme === 'system') {
+    return 'light';
+  }
+
+  if (scheme === 'light') {
+    return 'dark';
+  }
+
+  return 'system';
 }
 
-function isSampleTheme(value: string): value is SampleTheme {
-  return value === 'dark' || value === 'light';
+function isSampleColorScheme(value: string): value is WorkbenchColorSchemePreference {
+  return value === 'system' || value === 'light' || value === 'dark';
 }
 
 function getSampleDefaultViewMode(resourceUri: string): EditorViewMode | undefined {
