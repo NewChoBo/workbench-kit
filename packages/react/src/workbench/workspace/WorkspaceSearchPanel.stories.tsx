@@ -17,6 +17,7 @@ import {
 } from '../commands';
 import { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 import type { WorkspaceSearchResult } from './types';
+import { StorySidebarFrame } from '../story/StorySidebarFrame';
 
 const meta = {
   title: 'React/Workbench/Workspace/WorkspaceSearchPanel',
@@ -105,10 +106,7 @@ function SearchHarness({ initialQuery = '' }: SearchHarnessProps) {
   };
 
   return (
-    <div
-      className="workspace-search-panel-story"
-      style={{ height: 'min(calc(100% - 120px), 560px)', width: 'min(100%, 380px)' }}
-    >
+    <StorySidebarFrame variant="workspace">
       <WorkspaceSearchPanel
         activePath={activePath}
         query={query}
@@ -130,7 +128,7 @@ function SearchHarness({ initialQuery = '' }: SearchHarnessProps) {
           onClose={() => setContextMenu(null)}
         />
       ) : null}
-    </div>
+    </StorySidebarFrame>
   );
 }
 

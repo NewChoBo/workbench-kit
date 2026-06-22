@@ -107,6 +107,12 @@ pnpm exec serve storybook-static
 - **Separate workflow** (`storybook-pages.yml` on `workflow_dispatch`) — redundant when a subfolder deploy is sufficient.
 - **Storybook-only Pages** — would replace the sample at `/`; avoided to keep the public demo intact.
 
+## Story layout conventions
+
+- Keep story definitions in `*.stories.tsx` only — avoid per-component `Foo.stories.css` files.
+- Wrap panels in shared hosts from `packages/react/src/workbench/story/`: `WorkbenchStoryHost` (theme shell), `StorySidebarFrame` (sidebar width/height presets), `StoryEventLog` (harness status footer).
+- Prefer these components over inline `style` or ad-hoc `className` layout in stories; product components should not gain story-only `style` props.
+
 ## Adding a new required play test
 
 1. Add or extend a `*.stories.tsx` file under `packages/react/src` or `packages/shell-react/src`.

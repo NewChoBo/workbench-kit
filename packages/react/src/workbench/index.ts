@@ -106,6 +106,12 @@ export { WorkbenchThemeProvider } from './WorkbenchThemeProvider';
 export type { WorkbenchThemeProviderProps } from './WorkbenchThemeProvider';
 export { WorkbenchStoryHost } from './story/WorkbenchStoryHost';
 export type { WorkbenchStoryHostProps } from './story/WorkbenchStoryHost';
+export { StoryEventLog, StorySidebarFrame } from './story/StorySidebarFrame';
+export type {
+  StoryEventLogProps,
+  StorySidebarFrameProps,
+  StorySidebarFrameVariant,
+} from './story/StorySidebarFrame';
 export {
   WorkbenchShortcutCommandBridge,
   getWorkbenchShortcutCommandBindings,

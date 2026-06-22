@@ -18,6 +18,7 @@ import type {
   WorkspacePatchEvent,
 } from '@workbench-kit/contracts';
 import { createDemoRuntimeServices } from '../demo/demoRuntimeServices';
+import { StoryEventLog, StorySidebarFrame } from '../story/StorySidebarFrame';
 import { ChatPanel } from './ChatPanel';
 import type { ChatMessage, ChatCommandProposalStatus } from './types';
 
@@ -144,14 +145,7 @@ function ChatRuntimeHarness({
   }, [chatService, runtime, extensionRuntime]);
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateRows: '1fr auto',
-        height: 'min(calc(100% - 120px), 620px)',
-        width: 'min(100%, 420px)',
-      }}
-    >
+    <StorySidebarFrame variant="chat">
       <ChatPanel
         assistantLabel="Assistant"
         emptyLabel="Start a runtime conversation."
@@ -174,23 +168,13 @@ function ChatRuntimeHarness({
         }}
         onValueChange={setDraft}
       />
-      <div
-        aria-label="Runtime event log"
-        role="status"
-        style={{
-          borderTop: '1px solid var(--color-border)',
-          color: 'var(--color-text-muted)',
-          font: '12px/1.4 var(--font-mono)',
-          minHeight: 44,
-          padding: 8,
-        }}
-      >
+      <StoryEventLog aria-label="Runtime event log">
         <div>{runtimeStatusLabel(status)}</div>
         {workspacePatchLog.map((entry) => (
           <div key={entry}>{entry}</div>
         ))}
-      </div>
-    </div>
+      </StoryEventLog>
+    </StorySidebarFrame>
   );
 }
 
@@ -269,17 +253,7 @@ function createOverflowMessages(count: number): ChatMessage[] {
 export const MessageListOverflowScroll: Story = {
   name: 'Chat / Message List Overflow',
   render: () => (
-    <div
-      style={{
-        background: 'var(--color-bg)',
-        display: 'flex',
-        flexDirection: 'column',
-        height: 200,
-        overflow: 'hidden',
-        padding: 16,
-        width: 'min(100%, 420px)',
-      }}
-    >
+    <StorySidebarFrame variant="overflow">
       <ChatPanel
         assistantLabel="Assistant"
         messages={createOverflowMessages(48)}
@@ -289,7 +263,7 @@ export const MessageListOverflowScroll: Story = {
         onSubmit={() => undefined}
         onValueChange={() => undefined}
       />
-    </div>
+    </StorySidebarFrame>
   ),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -382,14 +356,7 @@ function CommandProposalHarness() {
   };
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateRows: '1fr auto',
-        height: 'min(calc(100% - 120px), 520px)',
-        width: 'min(100%, 420px)',
-      }}
-    >
+    <StorySidebarFrame variant="chatCompact">
       <ChatPanel
         assistantLabel="Assistant"
         messages={messages}
@@ -407,20 +374,10 @@ function CommandProposalHarness() {
         onSubmit={() => undefined}
         onValueChange={() => undefined}
       />
-      <div
-        aria-label="Proposal event log"
-        role="status"
-        style={{
-          borderTop: '1px solid var(--color-border)',
-          color: 'var(--color-text-muted)',
-          font: '12px/1.4 var(--font-mono)',
-          minHeight: 36,
-          padding: 8,
-        }}
-      >
+      <StoryEventLog aria-label="Proposal event log" compact>
         {eventLog}
-      </div>
-    </div>
+      </StoryEventLog>
+    </StorySidebarFrame>
   );
 }
 

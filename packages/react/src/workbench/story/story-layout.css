@@ -1,0 +1,53 @@
+.ui-story-sidebar-frame {
+  width: min(100%, var(--ui-story-sidebar-width, 420px));
+}
+
+.ui-story-sidebar-frame--workspace {
+  --ui-story-sidebar-width: 380px;
+  height: min(calc(100% - 120px), 560px);
+}
+
+.ui-story-sidebar-frame--workspace > .ui-side-bar-view {
+  height: 100%;
+}
+
+.ui-story-sidebar-frame--chat,
+.ui-story-sidebar-frame--chat-compact {
+  --ui-story-sidebar-width: 420px;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+
+.ui-story-sidebar-frame--chat {
+  height: min(calc(100% - 120px), 620px);
+}
+
+.ui-story-sidebar-frame--chat-compact {
+  height: min(calc(100% - 120px), 520px);
+}
+
+.ui-story-sidebar-frame--overflow {
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  height: 200px;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.ui-story-sidebar-frame--overflow > .chat-side-bar-view {
+  flex: 1;
+  min-height: 0;
+}
+
+.ui-story-event-log {
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font: 12px/1.4 var(--font-mono);
+  min-height: 44px;
+  padding: 8px;
+}
+
+.ui-story-event-log--compact {
+  min-height: 36px;
+}

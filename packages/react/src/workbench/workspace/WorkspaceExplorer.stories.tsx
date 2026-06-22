@@ -32,6 +32,7 @@ import type {
   WorkspaceExplorerItemKeyboardActionMeta,
 } from './WorkspaceExplorer';
 import { useVirtualWorkspace } from './useVirtualWorkspace';
+import { StorySidebarFrame } from '../story/StorySidebarFrame';
 
 const meta = {
   title: 'React/Workbench/Workspace/WorkspaceExplorer',
@@ -376,7 +377,7 @@ function ExplorerHarness({
   };
 
   return (
-    <div className="workspace-explorer-story">
+    <StorySidebarFrame variant="workspace">
       <SideBarViewFrame
         title="Explorer"
         actions={
@@ -408,7 +409,6 @@ function ExplorerHarness({
             {status}
           </div>
         }
-        style={{ height: 'min(calc(100% - 120px), 560px)', width: 'min(100%, 380px)' }}
       >
         <WorkspaceExplorer
           activePath={workspace.selectedPath}
@@ -449,7 +449,7 @@ function ExplorerHarness({
           onClose={() => setContextMenu(null)}
         />
       ) : null}
-    </div>
+    </StorySidebarFrame>
   );
 }
 
