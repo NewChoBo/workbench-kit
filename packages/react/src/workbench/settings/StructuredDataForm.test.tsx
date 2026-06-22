@@ -175,8 +175,11 @@ describe('WorkbenchStructuredDataForm helpers', () => {
   });
 
   it('interprets lightweight schema field definitions', () => {
-    expect(getWorkbenchStructuredDataSchemaFieldControl({ enum: ['A', 'B'] })).toBe('select');
-    expect(getWorkbenchStructuredDataSchemaFieldControl({ format: 'date' })).toBe('date');
+    expect(getWorkbenchStructuredDataSchemaFieldControl({ enum: ['A', 'B'] })).toBe('radio');
+    expect(
+      getWorkbenchStructuredDataSchemaFieldControl({ enum: ['A', 'B', 'C', 'D', 'E'] }),
+    ).toBe('select');
+    expect(getWorkbenchStructuredDataSchemaFieldControl({ format: 'color' })).toBe('color');
     expect(getWorkbenchStructuredDataSchemaFieldControl({ type: 'boolean' })).toBe('checkbox');
     expect(getWorkbenchStructuredDataSchemaFieldControl({ type: 'array' })).toBe('textarea');
     expect(getWorkbenchStructuredDataSchemaFieldDefaultValue({ type: 'integer' })).toBe(0);
@@ -499,9 +502,23 @@ describe('WorkbenchStructuredDataForm rendering', () => {
     const selectMarkup = renderToStaticMarkup(
       <WorkbenchStructuredDataSchemaFieldInput
         className="custom-control"
-        definition={{ enum: ['A', 'B'], title: 'Status' }}
+        definition={{ enum: ['A', 'B', 'C', 'D', 'E'], title: 'Status' }}
         fieldPath="status"
         value="A"
+      />,
+    );
+    const colorMarkup = renderToStaticMarkup(
+      <WorkbenchStructuredDataSchemaFieldInput
+        definition={{ format: 'color', title: 'Accent', type: 'string' }}
+        fieldPath="accent"
+        value="#3366ff"
+      />,
+    );
+    const radioMarkup = renderToStaticMarkup(
+      <WorkbenchStructuredDataSchemaFieldInput
+        definition={{ enum: ['left', 'center', 'right'], title: 'Align' }}
+        fieldPath="align"
+        value="center"
       />,
     );
     const textareaMarkup = renderToStaticMarkup(
@@ -526,6 +543,10 @@ describe('WorkbenchStructuredDataForm rendering', () => {
     expect(selectMarkup).toContain('<select');
     expect(selectMarkup).toContain('aria-label="Status"');
     expect(selectMarkup).toContain('custom-control');
+    expect(colorMarkup).toContain('type="color"');
+    expect(colorMarkup).toContain('value="#3366ff"');
+    expect(radioMarkup).toContain('ui-segmented-control__item');
+    expect(radioMarkup).toContain('aria-pressed="true"');
     expect(textareaMarkup).toContain('<textarea');
     expect(textareaMarkup).toContain('custom-textarea');
     expect(textareaMarkup).toContain('rows="8"');

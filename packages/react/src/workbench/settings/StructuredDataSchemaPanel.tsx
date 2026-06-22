@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react';
+import { useCallback, useId, useMemo, useState, type ReactNode } from 'react';
 import { Button } from '../../primitives/Button';
 import { Field } from '../../primitives/Field';
 import { IconButton } from '../../primitives/IconButton';
@@ -31,7 +31,9 @@ import {
   getWorkbenchStructuredDataValue,
   removeWorkbenchStructuredDataSchemaTableRow,
   setWorkbenchStructuredDataPathOrRootValue,
+  validateWorkbenchStructuredDataSchemaFieldValue,
   type WorkbenchStructuredDataSchemaDocument,
+  type WorkbenchStructuredDataSchemaFieldDefinition,
   type WorkbenchStructuredDataSchemaSectionAliases,
   type WorkbenchStructuredDataSchemaSectionSummary,
   type WorkbenchStructuredDataPath,
@@ -151,23 +153,88 @@ function formatSchemaFieldErrorKey(path: string | readonly string[]) {
 function renderSchemaFieldError(
   fieldErrors: Record<string, ReactNode> | undefined,
   errorKey: string,
+  options?: { errorId?: string | undefined; localErrorKeys?: ReadonlySet<string> | undefined },
 ) {
   const error = fieldErrors?.[errorKey];
   if (error === undefined || error === null || error === false || error === '') return null;
 
+  const isWarning = options?.localErrorKeys?.has(errorKey) ?? false;
+
   return (
-    <div className="ui-workbench-structured-data-form__error" role="alert">
+    <div
+      id={options?.errorId}
+      className={
+        isWarning
+          ? 'ui-workbench-structured-data-form__warning'
+          : 'ui-workbench-structured-data-form__error'
+      }
+      role="alert"
+    >
       {error}
     </div>
   );
+}
+
+interface WorkbenchStructuredDataSchemaFieldValidationProps {
+  dataPath: string;
+  definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined;
+  fieldErrorId?: string | undefined;
+  invalid: boolean;
+  onBlur: () => void;
+  onValueChange: (value: unknown) => void;
+  validationMessage?: ReactNode | undefined;
+  value: unknown;
+}
+
+function createSchemaFieldValidationProps({
+  dataPath,
+  definition,
+  getFieldErrorId,
+  mergedFieldErrors,
+  onValidateField,
+  value,
+  onValueChange,
+}: {
+  dataPath: string;
+  definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined;
+  getFieldErrorId: (dataPath: string) => string | undefined;
+  localErrorKeys: ReadonlySet<string>;
+  mergedFieldErrors: Record<string, ReactNode>;
+  onValidateField: (
+    dataPath: string,
+    definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
+    value: unknown,
+  ) => void;
+  value: unknown;
+  onValueChange: (value: unknown) => void;
+}): WorkbenchStructuredDataSchemaFieldValidationProps {
+  const validationMessage = mergedFieldErrors[dataPath];
+  const fieldErrorId = getFieldErrorId(dataPath);
+
+  return {
+    dataPath,
+    definition,
+    fieldErrorId,
+    invalid: Boolean(validationMessage),
+    onBlur: () => onValidateField(dataPath, definition, value),
+    onValueChange: (nextValue) => {
+      onValueChange(nextValue);
+      onValidateField(dataPath, definition, nextValue);
+    },
+    validationMessage,
+    value,
+  };
 }
 
 function renderSchemaFormSection({
   classNames = {},
   data,
   fieldErrors,
+  getFieldErrorId,
   labels = {},
+  localErrorKeys,
   onDataValueChange,
+  onValidateField,
   readOnly,
   schema,
   section,
@@ -175,8 +242,15 @@ function renderSchemaFormSection({
 }: WorkbenchStructuredDataSchemaSectionView & {
   classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
   fieldErrors?: Record<string, ReactNode> | undefined;
+  getFieldErrorId?: ((dataPath: string) => string | undefined) | undefined;
   labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
+  localErrorKeys?: ReadonlySet<string> | undefined;
   onDataValueChange: (path: string[], value: unknown) => void;
+  onValidateField?: (
+    dataPath: string,
+    definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
+    value: unknown,
+  ) => void;
   readOnly: boolean;
 }) {
   const fields = section.fields ?? [];
@@ -190,6 +264,21 @@ function renderSchemaFormSection({
             fieldPath,
           );
           const dataPath = getWorkbenchStructuredDataSchemaFieldDataPath(section, fieldPath);
+          const fieldValue = getSchemaFieldValue({ data, fieldPath, section, sectionValue: value });
+          const validationProps =
+            onValidateField && getFieldErrorId && fieldErrors
+              ? createSchemaFieldValidationProps({
+                  dataPath,
+                  definition,
+                  getFieldErrorId,
+                  localErrorKeys: localErrorKeys ?? new Set(),
+                  mergedFieldErrors: fieldErrors,
+                  onValidateField,
+                  value: fieldValue,
+                  onValueChange: (nextValue) =>
+                    onDataValueChange(dataPath.split('.'), nextValue),
+                })
+              : null;
 
           return (
             <div key={fieldPath} className={classNames.settingRow}>
@@ -208,16 +297,23 @@ function renderSchemaFormSection({
                     checkboxClassName={classNames.checkbox}
                     className={classNames.settingControl}
                     definition={definition}
+                    fieldErrorId={validationProps?.fieldErrorId}
                     fieldPath={dataPath}
+                    invalid={validationProps?.invalid}
                     readOnly={readOnly}
                     removeTextArrayLabel={labels.removeTextArrayItem}
                     textareaClassName={classNames.settingControlTextarea}
-                    value={getSchemaFieldValue({ data, fieldPath, section, sectionValue: value })}
-                    onValueChange={(nextValue) => onDataValueChange(dataPath.split('.'), nextValue)}
+                    validationMessage={validationProps?.validationMessage}
+                    value={fieldValue}
+                    onBlur={validationProps?.onBlur}
+                    onValueChange={validationProps?.onValueChange}
                   />
                 </div>
               </Field>
-              {renderSchemaFieldError(fieldErrors, dataPath)}
+              {renderSchemaFieldError(fieldErrors, dataPath, {
+                errorId: validationProps?.fieldErrorId,
+                localErrorKeys,
+              })}
             </div>
           );
         })}
@@ -269,8 +365,11 @@ function renderSchemaFormSection({
 function renderSchemaTableSection({
   classNames = {},
   fieldErrors,
+  getFieldErrorId,
   labels = {},
+  localErrorKeys,
   onDataValueChange,
+  onValidateField,
   preferredTableColumns = [],
   readOnly,
   schema,
@@ -280,8 +379,15 @@ function renderSchemaTableSection({
 }: WorkbenchStructuredDataSchemaSectionView & {
   classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
   fieldErrors?: Record<string, ReactNode> | undefined;
+  getFieldErrorId?: ((dataPath: string) => string | undefined) | undefined;
   labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
+  localErrorKeys?: ReadonlySet<string> | undefined;
   onDataValueChange: (path: string[], value: unknown) => void;
+  onValidateField?: (
+    dataPath: string,
+    definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
+    value: unknown,
+  ) => void;
   preferredTableColumns?: readonly string[] | undefined;
   readOnly: boolean;
 }) {
@@ -297,8 +403,11 @@ function renderSchemaTableSection({
       ...sectionView,
       classNames,
       fieldErrors,
+      getFieldErrorId,
       labels,
+      localErrorKeys,
       onDataValueChange,
+      onValidateField,
       readOnly,
       schema,
       section,
@@ -333,6 +442,27 @@ function renderSchemaTableSection({
                     section,
                   });
                   const errorKey = formatSchemaFieldErrorKey(cellPath);
+                  const definition = getWorkbenchStructuredDataSchemaDocumentColumnDefinition(
+                    schema,
+                    section,
+                    column,
+                  );
+                  const cellValue = row[column];
+                  const validationProps =
+                    onValidateField && getFieldErrorId && fieldErrors
+                      ? createSchemaFieldValidationProps({
+                          dataPath: errorKey,
+                          definition,
+                          getFieldErrorId,
+                          localErrorKeys: localErrorKeys ?? new Set(),
+                          mergedFieldErrors: fieldErrors,
+                          onValidateField,
+                          value: cellValue,
+                          onValueChange: (nextValue) => {
+                            onDataValueChange(cellPath, nextValue);
+                          },
+                        })
+                      : null;
 
                   return (
                     <span key={column} className={classNames.fieldInput} role="cell">
@@ -340,21 +470,22 @@ function renderSchemaTableSection({
                         addTextArrayLabel={labels.addTextArrayItem}
                         checkboxClassName={classNames.checkbox}
                         className={classNames.settingControl}
-                        definition={getWorkbenchStructuredDataSchemaDocumentColumnDefinition(
-                          schema,
-                          section,
-                          column,
-                        )}
+                        definition={definition}
+                        fieldErrorId={validationProps?.fieldErrorId}
                         fieldPath={column}
+                        invalid={validationProps?.invalid}
                         readOnly={readOnly}
                         removeTextArrayLabel={labels.removeTextArrayItem}
                         textareaClassName={classNames.settingControlTextarea}
-                        value={row[column]}
-                        onValueChange={(nextValue) => {
-                          onDataValueChange(cellPath, nextValue);
-                        }}
+                        validationMessage={validationProps?.validationMessage}
+                        value={cellValue}
+                        onBlur={validationProps?.onBlur}
+                        onValueChange={validationProps?.onValueChange}
                       />
-                      {renderSchemaFieldError(fieldErrors, errorKey)}
+                      {renderSchemaFieldError(fieldErrors, errorKey, {
+                        errorId: validationProps?.fieldErrorId,
+                        localErrorKeys,
+                      })}
                     </span>
                   );
                 })}
@@ -426,9 +557,12 @@ function renderSchemaPanelSection({
   anchorId,
   classNames = {},
   fieldErrors,
+  getFieldErrorId,
   headerActions,
   labels,
+  localErrorKeys,
   onDataValueChange,
+  onValidateField,
   preferredTableColumns,
   readOnly,
   sectionView,
@@ -436,9 +570,16 @@ function renderSchemaPanelSection({
   anchorId?: string | undefined;
   classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
   fieldErrors?: Record<string, ReactNode> | undefined;
+  getFieldErrorId?: ((dataPath: string) => string | undefined) | undefined;
   headerActions?: ReactNode | undefined;
   labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
+  localErrorKeys?: ReadonlySet<string> | undefined;
   onDataValueChange: (path: string[], value: unknown) => void;
+  onValidateField?: (
+    dataPath: string,
+    definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
+    value: unknown,
+  ) => void;
   preferredTableColumns?: readonly string[] | undefined;
   readOnly: boolean;
   sectionView: WorkbenchStructuredDataSchemaSectionView;
@@ -464,8 +605,11 @@ function renderSchemaPanelSection({
             ...sectionView,
             classNames,
             fieldErrors,
+            getFieldErrorId,
             labels,
+            localErrorKeys,
             onDataValueChange,
+            onValidateField,
             preferredTableColumns,
             readOnly,
           })
@@ -473,8 +617,11 @@ function renderSchemaPanelSection({
             ...sectionView,
             classNames,
             fieldErrors,
+            getFieldErrorId,
             labels,
+            localErrorKeys,
             onDataValueChange,
+            onValidateField,
             readOnly,
           })}
     </section>
@@ -499,6 +646,42 @@ export function WorkbenchStructuredDataSchemaPanel({
 }: WorkbenchStructuredDataSchemaPanelProps) {
   const resolvedClassNames = resolveSchemaPanelClassNames(classNames);
   const panelId = useId().replace(/:/g, '');
+  const [localFieldErrors, setLocalFieldErrors] = useState<Record<string, string>>({});
+  const localErrorKeys = useMemo(() => new Set(Object.keys(localFieldErrors)), [localFieldErrors]);
+  const mergedFieldErrors = useMemo(
+    () => ({ ...localFieldErrors, ...(fieldErrors ?? {}) }),
+    [fieldErrors, localFieldErrors],
+  );
+
+  const onValidateField = useCallback(
+    (
+      dataPath: string,
+      definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
+      value: unknown,
+    ) => {
+      const message = validateWorkbenchStructuredDataSchemaFieldValue(definition, value);
+      setLocalFieldErrors((previous) => {
+        const next = { ...previous };
+        if (message) {
+          next[dataPath] = message;
+        } else {
+          delete next[dataPath];
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
+  const getFieldErrorId = useCallback(
+    (dataPath: string) => {
+      const error = mergedFieldErrors[dataPath];
+      if (!error) return undefined;
+      return `${panelId}-field-error-${formatSchemaFieldErrorKey(dataPath)}`;
+    },
+    [mergedFieldErrors, panelId],
+  );
+
   const pattern = activePattern ?? schema?.activePattern ?? schema?.pattern ?? 'DBtoDB';
   const panelData = getWorkbenchStructuredDataSchemaDocumentPanelData({ data, pattern, schema });
   const schemaSections = getWorkbenchStructuredDataSchemaDocumentSections(schema, pattern);
@@ -570,10 +753,13 @@ export function WorkbenchStructuredDataSchemaPanel({
           renderSchemaPanelSection({
             anchorId,
             classNames: resolvedClassNames,
-            fieldErrors,
+            fieldErrors: mergedFieldErrors,
+            getFieldErrorId,
             headerActions: index === 0 ? headerActions : undefined,
             labels,
+            localErrorKeys,
             onDataValueChange: handleDataValueChange,
+            onValidateField,
             preferredTableColumns,
             readOnly,
             sectionView: {

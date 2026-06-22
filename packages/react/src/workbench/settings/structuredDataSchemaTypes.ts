@@ -19,25 +19,50 @@ export type WorkbenchStructuredDataFormErrors = Record<string, ReactNode>;
 
 export type WorkbenchStructuredDataSchemaFieldControl =
   | 'checkbox'
+  | 'color'
   | 'date'
   | 'number'
+  | 'radio'
   | 'select'
   | 'text'
   | 'textarea';
+
+export interface WorkbenchStructuredDataSchemaSelectOption {
+  disabled?: boolean | undefined;
+  label?: string | undefined;
+  value: boolean | number | string;
+}
 
 export interface WorkbenchStructuredDataSchemaFieldDefinition {
   default?: unknown;
   description?: string | undefined;
   enum?: readonly (boolean | number | string)[] | undefined;
+  enumNames?: readonly string[] | undefined;
   format?: string | undefined;
   items?: {
     type?: string | undefined;
   };
   markdownDescription?: string | undefined;
+  max?: number | undefined;
+  maximum?: number | undefined;
+  maxLength?: number | undefined;
+  min?: number | undefined;
+  minimum?: number | undefined;
+  minLength?: number | undefined;
+  oneOf?: readonly {
+    const?: boolean | number | string | undefined;
+    description?: string | undefined;
+    title?: string | undefined;
+  }[] | undefined;
+  pattern?: string | undefined;
+  selectable?: boolean | undefined;
   title?: string | undefined;
   type?: string | undefined;
+  'x-workbench-color'?: boolean | undefined;
   ui?: {
     control?: WorkbenchStructuredDataSchemaFieldControl | string | undefined;
+    enumLabels?: Record<string, string> | readonly string[] | undefined;
+    options?: readonly WorkbenchStructuredDataSchemaSelectOption[] | undefined;
     placeholder?: string | undefined;
     rows?: number | undefined;
   };
@@ -186,12 +211,16 @@ export interface WorkbenchStructuredDataSchemaFieldInputProps {
   checkboxClassName?: string | undefined;
   className?: string | undefined;
   definition?: WorkbenchStructuredDataSchemaFieldDefinition | undefined;
+  fieldErrorId?: string | undefined;
   fieldPath: string;
+  invalid?: boolean | undefined;
   readOnly?: boolean | undefined;
   removeTextArrayLabel?: string | undefined;
   textareaClassName?: string | undefined;
   textArrayClassName?: string | undefined;
+  validationMessage?: ReactNode | undefined;
   value: unknown;
+  onBlur?: (() => void) | undefined;
   onValueChange?: ((value: unknown) => void) | undefined;
 }
 

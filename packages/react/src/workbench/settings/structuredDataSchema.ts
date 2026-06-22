@@ -46,6 +46,13 @@ export {
   stringifyWorkbenchStructuredDataSchemaFieldValue,
 } from './structuredDataSchemaField';
 export {
+  buildWorkbenchStructuredDataSchemaSelectOptions,
+  hasWorkbenchStructuredDataSchemaSelectOptions,
+  isWorkbenchStructuredDataSchemaColorField,
+  shouldUseWorkbenchStructuredDataSchemaRadioControl,
+  validateWorkbenchStructuredDataSchemaFieldValue,
+} from './structuredDataSchemaValidation';
+export {
   getWorkbenchStructuredDataSchemaFieldDataPath,
   getWorkbenchStructuredDataSchemaFieldDefinition,
   getWorkbenchStructuredDataSchemaSectionAnchorId,

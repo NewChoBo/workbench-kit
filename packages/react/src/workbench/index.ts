@@ -419,6 +419,7 @@ export {
   appendWorkbenchStructuredDataSchemaTableRow,
   asWorkbenchStructuredDataRecord,
   booleanWorkbenchStructuredDataSchemaFieldValue,
+  buildWorkbenchStructuredDataSchemaSelectOptions,
   coerceWorkbenchStructuredDataFormFieldValue,
   coerceWorkbenchStructuredDataSchemaFieldValue,
   coerceWorkbenchSchemaFormFieldValue,
@@ -454,6 +455,8 @@ export {
   getWorkbenchStructuredDataSchemaTablePath,
   getWorkbenchStructuredDataSchemaTableRowKey,
   getWorkbenchStructuredDataSchemaTableRows,
+  hasWorkbenchStructuredDataSchemaSelectOptions,
+  isWorkbenchStructuredDataSchemaColorField,
   getWorkbenchStructuredDataValue,
   getWorkbenchSchemaFormErrors,
   getWorkbenchSchemaFormFieldDefaultValue,
@@ -465,8 +468,10 @@ export {
   removeWorkbenchStructuredDataSchemaTableRow,
   setWorkbenchStructuredDataPathOrRootValue,
   setWorkbenchStructuredDataValue,
+  shouldUseWorkbenchStructuredDataSchemaRadioControl,
   slugWorkbenchStructuredDataSchemaAnchor,
   stringifyWorkbenchStructuredDataSchemaFieldValue,
+  validateWorkbenchStructuredDataSchemaFieldValue,
 } from './settings';
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';

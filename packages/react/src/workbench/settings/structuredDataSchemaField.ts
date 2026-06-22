@@ -2,6 +2,11 @@ import type {
   WorkbenchStructuredDataSchemaFieldControl,
   WorkbenchStructuredDataSchemaFieldDefinition,
 } from './structuredDataSchemaTypes';
+import {
+  hasWorkbenchStructuredDataSchemaSelectOptions,
+  isWorkbenchStructuredDataSchemaColorField,
+  shouldUseWorkbenchStructuredDataSchemaRadioControl,
+} from './structuredDataSchemaValidation';
 
 export function getWorkbenchStructuredDataSchemaFieldControl(
   definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
@@ -9,7 +14,10 @@ export function getWorkbenchStructuredDataSchemaFieldControl(
   if (definition?.ui?.control) {
     return definition.ui.control as WorkbenchStructuredDataSchemaFieldControl;
   }
-  if (definition?.enum?.length) return 'select';
+  if (isWorkbenchStructuredDataSchemaColorField(definition)) return 'color';
+  if (hasWorkbenchStructuredDataSchemaSelectOptions(definition)) {
+    return shouldUseWorkbenchStructuredDataSchemaRadioControl(definition) ? 'radio' : 'select';
+  }
   if (definition?.type === 'array') return 'textarea';
   if (definition?.type === 'boolean') return 'checkbox';
   if (definition?.type === 'number' || definition?.type === 'integer') return 'number';
@@ -57,6 +65,16 @@ export function coerceWorkbenchStructuredDataSchemaFieldValue(
 
   if (definition?.enum?.length) {
     return definition.enum.find((option) => String(option) === rawValue) ?? rawValue;
+  }
+
+  if (definition?.oneOf?.length) {
+    const match = definition.oneOf.find((option) => String(option.const) === rawValue);
+    return match?.const ?? rawValue;
+  }
+
+  if (definition?.ui?.options?.length) {
+    const match = definition.ui.options.find((option) => String(option.value) === rawValue);
+    return match?.value ?? rawValue;
   }
 
   return rawValue;
