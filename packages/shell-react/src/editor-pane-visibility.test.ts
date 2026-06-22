@@ -1,63 +1,84 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  DEFAULT_EDITOR_PANE_LAYOUT,
-  editorViewModeToPaneLayout,
+  DEFAULT_EDITOR_PANE_VISIBILITY,
+  editorViewModeToPaneVisibility,
+  getVisibleEditorPaneKinds,
+  sanitizeEditorPaneVisibility,
   toggleEditorPaneVisibility,
-  withEditorSourceKind,
 } from './editor-pane-visibility.js';
 
 describe('editor-pane-visibility', () => {
-  it('defaults to source on and preview off', () => {
-    expect(DEFAULT_EDITOR_PANE_LAYOUT).toEqual({
-      previewVisible: false,
-      sourceKind: 'code',
-      sourceVisible: true,
+  it('defaults to code on and form/preview off', () => {
+    expect(DEFAULT_EDITOR_PANE_VISIBILITY).toEqual({
+      code: true,
+      form: false,
+      preview: false,
     });
   });
 
-  it('maps legacy preview view mode to preview-only layout', () => {
-    expect(editorViewModeToPaneLayout('preview')).toEqual({
-      previewVisible: true,
-      sourceKind: 'code',
-      sourceVisible: false,
+  it('maps legacy preview view mode to preview-only visibility', () => {
+    expect(editorViewModeToPaneVisibility('preview')).toEqual({
+      code: false,
+      form: false,
+      preview: true,
+    });
+  });
+
+  it('maps legacy form view mode to form-only visibility', () => {
+    expect(editorViewModeToPaneVisibility('form')).toEqual({
+      code: false,
+      form: true,
+      preview: false,
     });
   });
 
   it('prevents turning off the last visible pane', () => {
     expect(
       toggleEditorPaneVisibility(
-        { previewVisible: false, sourceVisible: true },
-        'sourceVisible',
+        { code: true, form: false, preview: false },
+        'code',
       ),
     ).toEqual({
-      previewVisible: false,
-      sourceVisible: true,
+      code: true,
+      form: false,
+      preview: false,
     });
   });
 
-  it('allows split visibility when both panes can be shown', () => {
+  it('allows split visibility when multiple panes can be shown', () => {
     expect(
       toggleEditorPaneVisibility(
-        { previewVisible: false, sourceVisible: true },
-        'previewVisible',
+        { code: true, form: false, preview: false },
+        'preview',
       ),
     ).toEqual({
-      previewVisible: true,
-      sourceVisible: true,
+      code: true,
+      form: false,
+      preview: true,
     });
   });
 
-  it('switches source kind and keeps source visible', () => {
+  it('returns visible pane kinds in stable order', () => {
     expect(
-      withEditorSourceKind(
-        { previewVisible: true, sourceKind: 'code', sourceVisible: false },
-        'form',
+      getVisibleEditorPaneKinds({
+        code: true,
+        form: true,
+        preview: true,
+      }),
+    ).toEqual(['code', 'form', 'preview']);
+  });
+
+  it('drops ineligible panes and falls back to code when none remain', () => {
+    expect(
+      sanitizeEditorPaneVisibility(
+        { code: false, form: true, preview: true },
+        { formEligible: false, previewEligible: false },
       ),
     ).toEqual({
-      previewVisible: true,
-      sourceKind: 'form',
-      sourceVisible: true,
+      code: true,
+      form: false,
+      preview: false,
     });
   });
 });

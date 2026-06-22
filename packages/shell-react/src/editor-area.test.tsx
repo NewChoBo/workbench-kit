@@ -1080,17 +1080,12 @@ describe('EditorArea', () => {
       Array.from(toolbar?.querySelectorAll('button') ?? []).map((button) =>
         button.textContent?.trim(),
       ),
-    ).toEqual(['', '', '']);
+    ).toEqual(['', '']);
     expect(
       container.querySelector('.workbench-editor-area__text-editor > [role="toolbar"]'),
     ).toBeNull();
     expect(
-      container.querySelector('.ui-editor-tabs__addons button[aria-label="Source"][title="Source"]'),
-    ).not.toBeNull();
-    expect(
-      container.querySelector(
-        '.ui-editor-tabs__addons button[aria-label="Code (JSON)"][title="Code (JSON)"]',
-      ),
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Code"][title="Code"]'),
     ).not.toBeNull();
     expect(
       container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"][title="Form"]'),
@@ -1172,17 +1167,12 @@ describe('EditorArea', () => {
       Array.from(toolbar?.querySelectorAll('button') ?? []).map((button) =>
         button.textContent?.trim(),
       ),
-    ).toEqual(['', '', '', '']);
+    ).toEqual(['', '', '']);
     expect(
       container.querySelector('.workbench-editor-area__text-editor > [role="toolbar"]'),
     ).toBeNull();
     expect(
-      container.querySelector('.ui-editor-tabs__addons button[aria-label="Source"][title="Source"]'),
-    ).not.toBeNull();
-    expect(
-      container.querySelector(
-        '.ui-editor-tabs__addons button[aria-label="Code (JSON)"][title="Code (JSON)"]',
-      ),
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Code"][title="Code"]'),
     ).not.toBeNull();
     expect(
       container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"][title="Form"]'),
@@ -1281,12 +1271,7 @@ describe('EditorArea', () => {
     ).toBeNull();
     expect(
       container.querySelector(
-        '.ui-editor-tabs__addons button[aria-label="Source"][aria-pressed="true"]',
-      ),
-    ).not.toBeNull();
-    expect(
-      container.querySelector(
-        '.ui-editor-tabs__addons button[aria-label="Code (JSON)"][aria-pressed="true"]',
+        '.ui-editor-tabs__addons button[aria-label="Code"][aria-pressed="true"]',
       ),
     ).not.toBeNull();
     expect(
@@ -1375,7 +1360,7 @@ describe('EditorArea', () => {
     expect(container.querySelector('[data-testid="custom-flow-preview"]')).toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons [role="toolbar"]')).not.toBeNull();
     expect(
-      container.querySelector('.ui-editor-tabs__addons button[aria-label="Source"]'),
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Code"]'),
     ).not.toBeNull();
     expect(
       container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
@@ -1668,7 +1653,7 @@ describe('EditorArea', () => {
 
     expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
     expect(
-      container.querySelector('.ui-editor-tabs__addons button[aria-label="Source"]'),
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Code"]'),
     ).not.toBeNull();
     expect(
       container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
@@ -1694,16 +1679,20 @@ describe('EditorArea', () => {
     expect(container.querySelector('[data-testid="markdown-mermaid-preview"]')).not.toBeNull();
     expect(container.textContent).toContain('Workbench Notes');
     expect(container.textContent).toContain('Markdown documents render a GitHub-style preview');
-    expect(container.textContent).toContain('Source');
-    expect(container.textContent).toContain('Preview');
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Code"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
+    ).not.toBeNull();
 
-    const sourceButton = container.querySelector(
-      '.ui-editor-tabs__addons button[aria-label="Source"]',
+    const codeButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Code"]',
     ) as HTMLButtonElement | null;
-    expect(sourceButton).toBeDefined();
+    expect(codeButton).toBeDefined();
 
     await act(async () => {
-      sourceButton?.click();
+      codeButton?.click();
     });
 
     expect(container.querySelector('.workspace-editor__monaco')).toBeNull();
@@ -1712,12 +1701,16 @@ describe('EditorArea', () => {
     expect(container.querySelector('[data-testid="markdown-mermaid-preview"]')).not.toBeNull();
 
     await act(async () => {
+      codeButton?.click();
+    });
+
+    await act(async () => {
       root.unmount();
     });
     container.remove();
   });
 
-  it('renders JDW preview beside source and form panes from the shared source content', async () => {
+  it('renders JDW preview beside code and form panes from the shared source content', async () => {
     function OpenJsonEditorProbe() {
       const editorService = useEditorService();
 
@@ -1813,13 +1806,13 @@ describe('EditorArea', () => {
       previewButton?.click();
     });
 
-    const sourceButton = container.querySelector(
-      '.ui-editor-tabs__addons button[aria-label="Source"]',
+    const codeButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Code"]',
     ) as HTMLButtonElement | null;
-    expect(sourceButton).toBeDefined();
+    expect(codeButton).toBeDefined();
 
     await act(async () => {
-      sourceButton?.click();
+      codeButton?.click();
     });
 
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
@@ -1829,7 +1822,7 @@ describe('EditorArea', () => {
     expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
 
     await act(async () => {
-      sourceButton?.click();
+      codeButton?.click();
     });
 
     expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
@@ -1852,8 +1845,9 @@ describe('EditorArea', () => {
     const argsText = container.querySelector(
       'input[aria-label="args.text"]',
     ) as HTMLInputElement | null;
-    expect(container.querySelector('.ui-workbench-split-view')).not.toBeNull();
+    expect(container.querySelectorAll('.ui-workbench-split-view').length).toBeGreaterThan(0);
     expect(container.querySelector('[data-testid="jdw-preview-output"]')).not.toBeNull();
+    expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
     expect(
       container.querySelector('.workbench-editor-area__form.ui-scroll-area.ui-workbench-scrollbar'),
     ).not.toBeNull();
@@ -1942,7 +1936,7 @@ describe('EditorArea', () => {
     ).not.toBeNull();
     expect(
       container.querySelector(
-        '.ui-editor-tabs__addons button[aria-label="Source"][aria-pressed="false"]',
+        '.ui-editor-tabs__addons button[aria-label="Code"][aria-pressed="false"]',
       ),
     ).not.toBeNull();
 

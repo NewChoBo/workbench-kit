@@ -1,59 +1,58 @@
 export type EditorViewMode = 'code' | 'form' | 'preview';
 
+export type EditorPaneKind = 'code' | 'form' | 'preview';
+
 export interface EditorPaneVisibility {
-  readonly previewVisible: boolean;
-  readonly sourceVisible: boolean;
-}
-
-export type EditorSourceKind = 'code' | 'form';
-
-export interface EditorPaneLayoutState extends EditorPaneVisibility {
-  readonly sourceKind: EditorSourceKind;
+  readonly code: boolean;
+  readonly form: boolean;
+  readonly preview: boolean;
 }
 
 export const DEFAULT_EDITOR_PANE_VISIBILITY: EditorPaneVisibility = {
-  previewVisible: false,
-  sourceVisible: true,
+  code: true,
+  form: false,
+  preview: false,
 };
 
-export const DEFAULT_EDITOR_PANE_LAYOUT: EditorPaneLayoutState = {
-  ...DEFAULT_EDITOR_PANE_VISIBILITY,
-  sourceKind: 'code',
-};
-
-export function editorViewModeToPaneLayout(mode: EditorViewMode): EditorPaneLayoutState {
+export function editorViewModeToPaneVisibility(mode: EditorViewMode): EditorPaneVisibility {
   switch (mode) {
     case 'form':
       return {
-        previewVisible: false,
-        sourceKind: 'form',
-        sourceVisible: true,
+        code: false,
+        form: true,
+        preview: false,
       };
     case 'preview':
       return {
-        previewVisible: true,
-        sourceKind: 'code',
-        sourceVisible: false,
+        code: false,
+        form: false,
+        preview: true,
       };
     case 'code':
     default:
-      return DEFAULT_EDITOR_PANE_LAYOUT;
+      return DEFAULT_EDITOR_PANE_VISIBILITY;
   }
 }
 
-export function resolveDefaultEditorPaneLayout(
+export function resolveDefaultEditorPaneVisibility(
   defaultViewMode: EditorViewMode | undefined,
-): EditorPaneLayoutState {
-  return defaultViewMode ? editorViewModeToPaneLayout(defaultViewMode) : DEFAULT_EDITOR_PANE_LAYOUT;
+): EditorPaneVisibility {
+  return defaultViewMode
+    ? editorViewModeToPaneVisibility(defaultViewMode)
+    : DEFAULT_EDITOR_PANE_VISIBILITY;
+}
+
+export function countVisibleEditorPanes(visibility: EditorPaneVisibility): number {
+  return Number(visibility.code) + Number(visibility.form) + Number(visibility.preview);
 }
 
 export function toggleEditorPaneVisibility(
   visibility: EditorPaneVisibility,
-  pane: keyof EditorPaneVisibility,
+  pane: EditorPaneKind,
 ): EditorPaneVisibility {
   const nextValue = !visibility[pane];
 
-  if (!nextValue && !visibility[pane === 'sourceVisible' ? 'previewVisible' : 'sourceVisible']) {
+  if (!nextValue && countVisibleEditorPanes(visibility) <= 1) {
     return visibility;
   }
 
@@ -63,13 +62,41 @@ export function toggleEditorPaneVisibility(
   };
 }
 
-export function withEditorSourceKind(
-  layout: EditorPaneLayoutState,
-  sourceKind: EditorSourceKind,
-): EditorPaneLayoutState {
-  return {
-    ...layout,
-    sourceKind,
-    sourceVisible: true,
-  };
+export function sanitizeEditorPaneVisibility(
+  visibility: EditorPaneVisibility,
+  options: { formEligible: boolean; previewEligible: boolean },
+): EditorPaneVisibility {
+  let next: EditorPaneVisibility = visibility;
+
+  if (!options.formEligible && next.form) {
+    next = { ...next, form: false };
+  }
+
+  if (!options.previewEligible && next.preview) {
+    next = { ...next, preview: false };
+  }
+
+  if (countVisibleEditorPanes(next) === 0) {
+    return DEFAULT_EDITOR_PANE_VISIBILITY;
+  }
+
+  return next;
+}
+
+export function getVisibleEditorPaneKinds(visibility: EditorPaneVisibility): EditorPaneKind[] {
+  const kinds: EditorPaneKind[] = [];
+
+  if (visibility.code) {
+    kinds.push('code');
+  }
+
+  if (visibility.form) {
+    kinds.push('form');
+  }
+
+  if (visibility.preview) {
+    kinds.push('preview');
+  }
+
+  return kinds;
 }

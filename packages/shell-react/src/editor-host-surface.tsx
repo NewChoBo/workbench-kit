@@ -26,11 +26,12 @@ import {
 } from './editor-view-providers.js';
 import { mimeTypeForResource, pathForResource } from './editor-resource.js';
 import {
-  resolveDefaultEditorPaneLayout,
+  getVisibleEditorPaneKinds,
+  resolveDefaultEditorPaneVisibility,
+  sanitizeEditorPaneVisibility,
   toggleEditorPaneVisibility,
-  withEditorSourceKind,
-  type EditorPaneLayoutState,
-  type EditorSourceKind,
+  type EditorPaneKind,
+  type EditorPaneVisibility,
   type EditorViewMode,
 } from './editor-pane-visibility.js';
 import { useWorkbench } from './provider.js';
@@ -174,11 +175,11 @@ function TextEditorSurface({
   const editorService = useEditorService();
   const { executeCommand, workspaceHostPort } = useWorkbench();
   const [content, setContent] = useState(initialContent);
-  const [paneLayout, setPaneLayout] = useState<EditorPaneLayoutState>(() =>
-    resolveDefaultEditorPaneLayout(defaultViewModeForResource?.(resourceUri)),
+  const [paneVisibility, setPaneVisibility] = useState<EditorPaneVisibility>(() =>
+    resolveDefaultEditorPaneVisibility(defaultViewModeForResource?.(resourceUri)),
   );
-  const getDefaultPaneLayout = useCallback(
-    () => resolveDefaultEditorPaneLayout(defaultViewModeForResource?.(resourceUri)),
+  const getDefaultPaneVisibility = useCallback(
+    () => resolveDefaultEditorPaneVisibility(defaultViewModeForResource?.(resourceUri)),
     [defaultViewModeForResource, resourceUri],
   );
   const editorDocument = useMemo(
@@ -196,13 +197,13 @@ function TextEditorSurface({
   );
   const formEligible = Boolean(formProvider);
   const previewEligible = Boolean(previewProvider);
-  const codeViewLabel = isJsonSourceDocument(editorDocument) ? 'Code (JSON)' : 'Code';
+  const codeIcon = isJsonSourceDocument(editorDocument) ? 'codicon-json' : 'codicon-code';
   const modeToolbarVisible = formEligible || previewEligible;
 
   useEffect(() => {
     setContent(initialContent);
-    setPaneLayout(getDefaultPaneLayout());
-  }, [getDefaultPaneLayout, initialContent]);
+    setPaneVisibility(getDefaultPaneVisibility());
+  }, [getDefaultPaneVisibility, initialContent]);
 
   useEffect(() => {
     onModeToolbarVisibleChange(modeToolbarVisible);
@@ -215,21 +216,10 @@ function TextEditorSurface({
   }, [onModeToolbarVisibleChange]);
 
   useEffect(() => {
-    if (paneLayout.sourceKind === 'form' && !formEligible) {
-      setPaneLayout((current) => ({
-        ...current,
-        sourceKind: 'code',
-      }));
-    }
-
-    if (paneLayout.previewVisible && !previewEligible) {
-      setPaneLayout((current) => ({
-        ...current,
-        previewVisible: false,
-        sourceVisible: true,
-      }));
-    }
-  }, [formEligible, paneLayout.previewVisible, paneLayout.sourceKind, previewEligible]);
+    setPaneVisibility((current) =>
+      sanitizeEditorPaneVisibility(current, { formEligible, previewEligible }),
+    );
+  }, [formEligible, previewEligible]);
 
   const handleChange = useCallback(
     (nextContent: string) => {
@@ -289,54 +279,25 @@ function TextEditorSurface({
   const formPane = formProvider
     ? toReactNode(formProvider.render({ document: editorDocument, onContentChange: handleChange }))
     : null;
-  const activeSourcePane =
-    paneLayout.sourceKind === 'form' && formPane ? formPane : sourcePane;
-  const editorBody = !previewPane
-    ? activeSourcePane
-    : paneLayout.sourceVisible && paneLayout.previewVisible
-      ? (
-          <SplitView
-            className="workbench-editor-area__split"
-            defaultPrimarySizePercent={50}
-            minPrimarySizePercent={25}
-            primary={
-              <section
-                aria-label={paneLayout.sourceKind === 'form' ? 'Form' : 'Source'}
-                className="workbench-editor-area__split-pane"
-              >
-                {activeSourcePane}
-              </section>
-            }
-            secondary={previewPane}
-          />
-        )
-      : paneLayout.sourceVisible
-        ? activeSourcePane
-        : paneLayout.previewVisible
-          ? previewPane
-          : activeSourcePane;
+  const paneByKind: Record<EditorPaneKind, ReactNode | null> = {
+    code: sourcePane,
+    form: formPane,
+    preview: previewPane,
+  };
+  const visiblePaneEntries = getVisibleEditorPaneKinds(paneVisibility)
+    .map((kind) => ({ kind, node: paneByKind[kind] }))
+    .filter((entry): entry is { kind: EditorPaneKind; node: ReactNode } => entry.node !== null);
+  const editorBody = composeEditorPaneLayout(visiblePaneEntries);
   const modeToolbar =
     modeToolbarVisible && modeToolbarHost
       ? createPortal(
           <EditorPaneVisibilityToolbar
+            codeIcon={codeIcon}
             formEligible={formEligible}
-            layout={paneLayout}
             previewEligible={previewEligible}
-            sourceKindLabel={codeViewLabel}
-            onSourceKindChange={(sourceKind) => {
-              setPaneLayout((current) => withEditorSourceKind(current, sourceKind));
-            }}
-            onTogglePreview={() => {
-              setPaneLayout((current) => ({
-                ...current,
-                ...toggleEditorPaneVisibility(current, 'previewVisible'),
-              }));
-            }}
-            onToggleSource={() => {
-              setPaneLayout((current) => ({
-                ...current,
-                ...toggleEditorPaneVisibility(current, 'sourceVisible'),
-              }));
+            visibility={paneVisibility}
+            onTogglePane={(pane) => {
+              setPaneVisibility((current) => toggleEditorPaneVisibility(current, pane));
             }}
           />,
           modeToolbarHost,
@@ -357,22 +318,70 @@ function TextEditorSurface({
   );
 }
 
+function composeEditorPaneLayout(
+  panes: readonly { kind: EditorPaneKind; node: ReactNode }[],
+): ReactNode {
+  if (panes.length === 0) {
+    return null;
+  }
+
+  if (panes.length === 1) {
+    return panes[0]?.node ?? null;
+  }
+
+  return panes.slice(1).reduce<ReactNode>((primary, entry) => {
+    const primaryKind = panes[0]?.kind;
+    const primaryLabel = primaryKind ? editorPaneKindLabel(primaryKind) : 'Editor pane';
+
+    return (
+      <SplitView
+        className="workbench-editor-area__split"
+        defaultPrimarySizePercent={50}
+        minPrimarySizePercent={25}
+        primary={
+          <section
+            aria-label={primaryLabel}
+            className="workbench-editor-area__split-pane"
+          >
+            {primary}
+          </section>
+        }
+        secondary={
+          <section
+            aria-label={editorPaneKindLabel(entry.kind)}
+            className="workbench-editor-area__split-pane"
+          >
+            {entry.node}
+          </section>
+        }
+      />
+    );
+  }, panes[0]?.node ?? null);
+}
+
+function editorPaneKindLabel(kind: EditorPaneKind): string {
+  switch (kind) {
+    case 'code':
+      return 'Code';
+    case 'form':
+      return 'Form';
+    case 'preview':
+      return 'Preview';
+  }
+}
+
 function EditorPaneVisibilityToolbar({
+  codeIcon,
   formEligible,
-  layout,
+  onTogglePane,
   previewEligible,
-  sourceKindLabel,
-  onSourceKindChange,
-  onTogglePreview,
-  onToggleSource,
+  visibility,
 }: {
+  codeIcon: string;
   formEligible: boolean;
-  layout: EditorPaneLayoutState;
+  onTogglePane: (pane: EditorPaneKind) => void;
   previewEligible: boolean;
-  sourceKindLabel: string;
-  onSourceKindChange: (sourceKind: EditorSourceKind) => void;
-  onTogglePreview: () => void;
-  onToggleSource: () => void;
+  visibility: EditorPaneVisibility;
 }) {
   return (
     <div
@@ -381,38 +390,32 @@ function EditorPaneVisibilityToolbar({
       role="toolbar"
     >
       <EditorPaneToggleButton
-        active={layout.sourceVisible}
-        icon="codicon-code"
-        label="Source"
-        onClick={onToggleSource}
+        active={visibility.code}
+        icon={codeIcon}
+        label="Code"
+        onClick={() => {
+          onTogglePane('code');
+        }}
       />
-      {previewEligible ? (
+      {formEligible ? (
         <EditorPaneToggleButton
-          active={layout.previewVisible}
-          icon="codicon-preview"
-          label="Preview"
-          onClick={onTogglePreview}
+          active={visibility.form}
+          icon="codicon-symbol-field"
+          label="Form"
+          onClick={() => {
+            onTogglePane('form');
+          }}
         />
       ) : null}
-      {formEligible ? (
-        <>
-          <EditorSourceKindButton
-            active={layout.sourceKind === 'code'}
-            icon={sourceKindLabel === 'Code (JSON)' ? 'codicon-json' : 'codicon-code'}
-            label={sourceKindLabel}
-            onClick={() => {
-              onSourceKindChange('code');
-            }}
-          />
-          <EditorSourceKindButton
-            active={layout.sourceKind === 'form'}
-            icon="codicon-symbol-field"
-            label="Form"
-            onClick={() => {
-              onSourceKindChange('form');
-            }}
-          />
-        </>
+      {previewEligible ? (
+        <EditorPaneToggleButton
+          active={visibility.preview}
+          icon="codicon-preview"
+          label="Preview"
+          onClick={() => {
+            onTogglePane('preview');
+          }}
+        />
       ) : null}
     </div>
   );
@@ -434,35 +437,6 @@ function EditorPaneToggleButton({
       aria-pressed={active}
       className={[
         'workbench-editor-area__view-button',
-        active && 'workbench-editor-area__view-button--active',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      compact
-      icon={icon}
-      label={label}
-      onClick={onClick}
-    />
-  );
-}
-
-function EditorSourceKindButton({
-  active,
-  icon,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  icon: string;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <IconButton
-      aria-pressed={active}
-      className={[
-        'workbench-editor-area__view-button',
-        'workbench-editor-area__view-button--kind',
         active && 'workbench-editor-area__view-button--active',
       ]
         .filter(Boolean)
