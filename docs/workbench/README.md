@@ -20,7 +20,7 @@ legacy paths.
 | [**Workbench Change Guidelines**](./workbench-change-guidelines.md)                         | **Implementation guardrails:** VS Code/Theia baselines, existing-logic-first workflow, review checklist.    |
 | [**Project-Wide Review 2026-06-18**](./project-wide-review-2026-06-18.md)                   | **Current review:** package-wide findings and next improvement slice based on the guidelines.               |
 | [**Extensibility Review 2026-06-18**](./extensibility-review-2026-06-18.md)                 | **Scalability review:** npm publish, package artifacts, CI/CD, Pages, extension/theme expansion risks.      |
-| [**Command Core Alignment Plan 2026-06-20**](./command-core-alignment-plan-2026-06-20.md)   | **Command architecture:** VS Code/Theia/dev-agent comparison and single command execution path.             |
+| [**Command Core Alignment Plan 2026-06-20**](./command-core-alignment-plan-2026-06-20.md)   | **Command architecture:** VS Code/Theia/consumer-host comparison and single command execution path.         |
 | [**Sample Host Backend API**](./sample-host-backend-api.md)                                 | **Reference API:** dummy backend routes/DTOs, in-memory vs HTTP transport, real-backend migration.          |
 | [**Layout & CSS Improvement Plan 2026-06-20**](./layout-css-improvement-plan-2026-06-20.md) | **Master plan:** project-wide layout/scroll/CSS audit, flex-fill contracts, Phases 0–4.                     |
 | [**Sidebar Simplification Plan 2026-06-20**](./sidebar-simplification-plan-2026-06-20.md)   | **Sub-track:** primary sidebar builtin views, render data, section stack (under master plan).               |

@@ -2,7 +2,7 @@
 
 `WorkbenchStandaloneShell` is the primary React entry for composing a VS Code–style
 workbench without product-specific runtime wiring. Host apps (Storybook demos,
-dev-agent, tile_paper) supply bootstrap data and render callbacks; the shell owns
+integrating host apps) supply bootstrap data and render callbacks; the shell owns
 chrome layout, activity routing, settings modal visibility, and theme state.
 
 ## Responsibilities

@@ -42,20 +42,18 @@ search result open, settings open, user commands, and future plugin commands.
   telemetry, devtools, and command audit trails.
 - Source: <https://github.com/eclipse-theia/theia/blob/master/packages/core/src/common/command.ts>
 
-### dev-agent frontend
+### External host reference model
 
-Observed path:
+Observed patterns in production consumer hosts:
 
-- `features/commands/commandDefinitions.ts` centralizes command id, title, icon,
-  shortcut, and danger metadata.
-- `commandMenuItem(...)` converts command metadata into context menu items.
-- `useWorkbenchCommands` maps `workbench.view.*` and sidebar commands to shell
-  bridge actions. Activity re-selection hides the primary sidebar.
-- `useWorkspaceCommands` maps workspace context menu actions to virtual
-  workspace operations.
-- `features/agent/registry/devAgentCommands.ts` maps domain commands into rich
-  workbench command descriptors with category, keywords, output policy,
-  side-effect level, and disabled reasons.
+- Centralized command definitions carry id, title, icon, shortcut, and danger metadata.
+- Context menu builders project command metadata into menu items.
+- Shell bridge hooks map `workbench.view.*` and sidebar commands to layout actions.
+  Activity re-selection hides the primary sidebar.
+- Workspace command hooks map explorer context menu actions to virtual workspace
+  operations.
+- Domain command registries can attach rich descriptors: category, keywords,
+  output policy, side-effect level, and disabled reasons.
 
 What to keep:
 
@@ -71,6 +69,10 @@ What not to copy directly:
   activation, so command execution should converge there instead.
 - Static TypeScript command lists are useful for built-ins, but future plugin
   commands must come from manifests and runtime registrations.
+
+> **Appendix (illustrative only):** File-specific paths from an external host are
+> listed in [Appendix A](#appendix-a-external-host-file-paths-illustrative) for
+> migration context. Do not treat them as kit APIs or required structure.
 
 ## Current Code Truth
 
@@ -189,8 +191,8 @@ Prerequisites:
    the local registry only for shortcut matching if needed.
 4. Add command alias support for VS Code-like ids if compatibility becomes
    desirable, for example `workbench.action.toggleSidebarVisibility`.
-5. Extend command descriptors with dev-agent-style execution metadata only where
-   it is product-neutral: side-effect level, output target, disabled reason, and
+5. Extend command descriptors with rich execution metadata only where it is
+   product-neutral: side-effect level, output target, disabled reason, and
    keywords.
 6. Promote command descriptor assembly into a single shared source for palette,
    management, keybinding views, and chat suggestions.
@@ -208,3 +210,17 @@ Prerequisites:
 - No duplicate shell/runtime command entries appear in management screens.
 - `@workbench-kit/shell-react` tests cover provider command execution.
 - Package typecheck passes for touched packages.
+
+## Appendix A: External host file paths (illustrative)
+
+> **Disclaimer:** Paths below come from one external consumer host and are
+> documented only as a migration reference. They are not part of Workbench Kit
+> public APIs.
+
+| Concern                 | Illustrative path (external host)             |
+| ----------------------- | --------------------------------------------- |
+| Command definitions     | `features/commands/commandDefinitions.ts`     |
+| Context menu helper     | `commandMenuItem(...)`                        |
+| Shell bridge hooks      | `useWorkbenchCommands`                        |
+| Workspace commands      | `useWorkspaceCommands`                        |
+| Domain command registry | `features/agent/registry/devAgentCommands.ts` |

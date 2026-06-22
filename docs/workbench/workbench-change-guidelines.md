@@ -29,7 +29,7 @@ Before adding local state, event handling, menu arrays, or render branches:
 ## Reference Porting Rule
 
 When a request names another project as a reference, such as
-`vue3-chatbot/dev-agent`, do not assume the referenced behavior exists. Inspect
+`another-repo/host-app`, do not assume the referenced behavior exists. Inspect
 the source first, then report one of these outcomes in the implementation notes:
 
 - reused directly from the reference,

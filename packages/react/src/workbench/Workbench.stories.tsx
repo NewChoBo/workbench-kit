@@ -96,7 +96,7 @@ export const IntegratedShell: StoryObj<IntegratedShellStoryArgs> = {
         component:
           'Reference host for explorer, search, chat, editor, settings, and mock runtime flows. Orchestration lives in `workbench/demo/IntegratedShellDemo` and fixtures in `@workbench-kit/adapters/workbench-demo`.',
         story:
-          'End-to-end integrated shell composed through `WorkbenchStandaloneShell` (same pattern as dev-agent). Use **Verify ·** viewport presets for responsive checks. Compare chrome states in **React / Workbench / Verification**.',
+          'End-to-end integrated shell composed through `WorkbenchStandaloneShell` (same pattern as a host app). Use **Verify ·** viewport presets for responsive checks. Compare chrome states in **React / Workbench / Verification**.',
       },
     },
   },

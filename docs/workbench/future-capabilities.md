@@ -86,12 +86,12 @@ Do **not** start these while Phases 1–3 are open:
 
 ## i18n (P1)
 
-- [ ] **P1** Adopt `react-i18next` in host apps (dev-agent, Storybook hosts) with a shared
+- [ ] **P1** Adopt `react-i18next` in host apps (Storybook demos and integrating products) with a shared
       namespace layout (`workbench.*`, `commands.*`, `settings.*`).
 - [ ] **P1** Define kit-level i18n override pattern: prop labels + optional `t()` hook injection
       on shell primitives (`ActivityBar`, `StatusBar`, settings sections) without hard-coded
       English in package defaults.
-- [ ] **P1** Unify dev-agent KO/EN strings through one translation catalog; remove duplicate
+- [ ] **P1** Unify host-app KO/EN strings through one translation catalog; remove duplicate
       inline labels in shell bridge and feature modules.
 - [ ] **P2** Command registry single source: command `title`/`category` keys resolved through
       i18n at menu projection time (`resolveCommandMenuItems`), not at contribution registration.
@@ -141,7 +141,7 @@ Storybook-first playground strategy. No standalone public playground app in the 
 - [ ] **P2** Evaluate merging JsonWidget Playground editing UX into `JsonConfigWorkbench` widget mode vs keeping separate low-level demo.
 - [ ] **P2** Export pattern: compose `@workbench-kit/react/json-config` + `@workbench-kit/react/workbench/demo` — defer monolithic `WorkbenchPlayground` until host demand is clear.
 - [ ] **P3** Sample app / standalone launch reproducing ≥3 Storybook baselines outside Storybook (multilane Step 3).
-- [ ] **P3** Optional in-app `/playground` route in dev-agent or tile_paper only if Storybook is insufficient for backend-integrated experiments.
+- [ ] **P3** Optional in-app `/playground` route in integrating host apps only if Storybook is insufficient for backend-integrated experiments.
 
 ### Related
 

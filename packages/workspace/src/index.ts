@@ -72,6 +72,18 @@ export {
 } from './resource-uri';
 export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
 export {
+  mapVirtualFileLikeListToWorkspaceFiles,
+  mapVirtualFileLikeRecordToWorkspaceFiles,
+  mapVirtualFileLikeToWorkspaceFile,
+  mapVirtualFileOriginToSource,
+  mapWorkspaceFileToVirtualFile,
+  mapWorkspaceSourceToVirtualFileOrigin,
+  type MapWorkspaceFileToVirtualFileOptions,
+  type MappedVirtualFile,
+  type VirtualFileLike,
+  type VirtualFileOrigin,
+} from './virtual-file-adapter';
+export {
   getAvailableWorkspaceEntryName,
   getWorkspaceFileMovePlan,
   getWorkspaceEntryMovePlan,

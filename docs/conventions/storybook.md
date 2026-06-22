@@ -98,7 +98,7 @@ for the playground backlog.
 - Shared demo fixtures for the integrated shell live in `@workbench-kit/adapters/workbench-demo`.
 - Integrated shell orchestration lives in `packages/react/src/workbench/demo/IntegratedShellDemo.tsx`
   with workspace flows in `integratedShellWorkspaceOrchestration.ts`, composed through
-  `WorkbenchStandaloneShell` (same host pattern as dev-agent).
+  `WorkbenchStandaloneShell` (same host pattern as production host apps).
 - `packages/react/src/workbench/demo` is workspace-only Storybook support code,
   is excluded from package files, and must not be imported as a public API.
 - Components, hooks, reducers, and command helpers own reusable behavior.
