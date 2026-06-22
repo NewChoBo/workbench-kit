@@ -9,8 +9,7 @@ import {
 } from '@workbench-kit/react/workbench';
 import { WorkbenchAuthGate } from '@workbench-kit/react/workbench/auth';
 
-import { SampleAccountProvider } from './sample-account-context.js';
-import { useSampleAuth } from './useSampleAuth.js';
+import { SampleAccountProvider, useSampleAuth } from './useSampleAuth.js';
 
 export interface SampleAuthShellProps {
   appearance: {

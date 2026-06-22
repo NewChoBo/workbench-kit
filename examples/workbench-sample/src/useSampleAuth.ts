@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { WorkbenchLoginSubmitContext } from '@workbench-kit/react';
 import type { WorkbenchAuthStatus } from '@workbench-kit/react/workbench/auth';
 import { isSampleHostBackendApiError } from '@workbench-kit/contracts';
@@ -19,6 +19,27 @@ export interface SampleAuthController {
   signIn: (context: WorkbenchLoginSubmitContext) => void;
   signOut: () => void;
   status: WorkbenchAuthStatus;
+}
+
+const SampleAccountContext = createContext<SampleAuthController | null>(null);
+
+export function SampleAccountProvider({
+  children,
+  value,
+}: {
+  children: ReactNode;
+  value: SampleAuthController;
+}) {
+  return createElement(SampleAccountContext.Provider, { value }, children);
+}
+
+export function useSampleAccount(): SampleAuthController {
+  const value = useContext(SampleAccountContext);
+  if (!value) {
+    throw new Error('useSampleAccount must be used within SampleAccountProvider.');
+  }
+
+  return value;
 }
 
 export function useSampleAuth(): SampleAuthController {

@@ -3,16 +3,21 @@ import { Badge, IconButton } from '@workbench-kit/react/primitives';
 import {
   resolveActiveThemePreset,
   useResolvedWorkbenchTheme,
-  type DarkThemePresetId,
-  type LightThemePresetId,
+  type WorkbenchAppearanceSettings,
   type WorkbenchColorSchemePreference,
 } from '@workbench-kit/react/workbench';
 import type { StatusBarSectionModel } from '@workbench-kit/react/workbench/shell';
 import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/workspace/editor';
 import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
 import {
+  createWorkspaceResourceStatusItems,
+  DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
+  DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   EditorArea,
   getWorkbenchCommandPaletteShortcutLabel,
+  isWorkspaceResourceService,
+  mergeWorkbenchStatusSections,
+  usePersistedWorkbenchAppearance,
   WorkbenchProvider,
   WorkbenchShell,
   WorkbenchStartupGate,
@@ -34,28 +39,20 @@ import {
   workbenchUserCommands,
   workspaceInfo,
 } from './bootstrap.js';
-import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react';
 import {
   createSamplePaletteCommandRunner,
   SAMPLE_OPEN_PERMISSION_ROLE_SETTINGS_COMMAND_ID,
   sampleAdditionalPaletteCommands,
 } from './sample-palette-commands.js';
 import {
-  readPersistedSampleAppearance,
-  writePersistedSampleAppearance,
-  type SampleAppearanceSettings,
-} from './sample-appearance-storage.js';
-import {
   readPersistedSamplePermissionRoleOverride,
   writePersistedSamplePermissionRoleOverride,
   type SamplePermissionRoleOverride,
 } from './sample-permission-role-storage.js';
-import {
-  createSamplePermissionRoleSettingsCategory,
-} from './sample-permission-role-settings.js';
+import { createSamplePermissionRoleSettingsCategory } from './sample-permission-role-settings.js';
 import { createSamplePermissionRoleProfileExtra } from './sample-permission-role-profile.js';
 import { SampleAuthShell } from './SampleAuthShell.js';
-import { useSampleAccount } from './sample-account-context.js';
+import { useSampleAccount } from './useSampleAuth.js';
 import {
   createSamplePermissionContextKeys,
   resolveSampleExtensionsConfig,
@@ -67,15 +64,9 @@ const WORKBENCH_SETTINGS_CAPABILITY_ID = 'workbench.settings';
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 
 export function App() {
-  const [appearance, setAppearance] = useState<SampleAppearanceSettings>(() =>
-    readPersistedSampleAppearance(),
-  );
+  const [appearance, setAppearance] = usePersistedWorkbenchAppearance();
   const [permissionRoleOverride, setPermissionRoleOverride] =
     useState<SamplePermissionRoleOverride>(() => readPersistedSamplePermissionRoleOverride());
-
-  useEffect(() => {
-    writePersistedSampleAppearance(appearance);
-  }, [appearance]);
 
   useEffect(() => {
     writePersistedSamplePermissionRoleOverride(permissionRoleOverride);
@@ -94,9 +85,9 @@ export function App() {
 }
 
 interface SampleAuthenticatedWorkbenchProps {
-  appearance: SampleAppearanceSettings;
+  appearance: WorkbenchAppearanceSettings;
   permissionRoleOverride: SamplePermissionRoleOverride;
-  onAppearanceChange: (appearance: SampleAppearanceSettings) => void;
+  onAppearanceChange: (appearance: WorkbenchAppearanceSettings) => void;
   onPermissionRoleOverrideChange: (roleOverride: SamplePermissionRoleOverride) => void;
 }
 
@@ -143,9 +134,9 @@ function SampleAuthenticatedWorkbench({
 }
 
 interface SampleWorkbenchHostProps {
-  appearance: SampleAppearanceSettings;
+  appearance: WorkbenchAppearanceSettings;
   permissionRoleOverride: SamplePermissionRoleOverride;
-  onAppearanceChange: (appearance: SampleAppearanceSettings) => void;
+  onAppearanceChange: (appearance: WorkbenchAppearanceSettings) => void;
   onPermissionRoleOverrideChange: (roleOverride: SamplePermissionRoleOverride) => void;
 }
 
@@ -157,7 +148,11 @@ function SampleWorkbenchHost({
 }: SampleWorkbenchHostProps) {
   const auth = useSampleAccount();
   const { executeCommand, extensionRegistry, layoutService, workspaceHostPort } = useWorkbench();
-  const workspaceState = useWorkspaceResourceState(workspaceHostPort?.service);
+  const workspaceState = useWorkspaceResourceState(
+    isWorkspaceResourceService(workspaceHostPort?.service)
+      ? workspaceHostPort.service
+      : undefined,
+  );
   const liveFileCount = workspaceState?.files.length ?? 0;
   const liveFolderCount = workspaceState?.folders.length ?? 0;
   const [layout, setLayout] = useState(() => layoutService.getState());
@@ -229,36 +224,9 @@ function SampleWorkbenchHost({
     ],
   );
 
-  const handleThemeChange = useCallback(
-    (nextTheme: string) => {
-      if (!isSampleColorScheme(nextTheme)) {
-        return;
-      }
-
-      onAppearanceChange({
-        ...appearance,
-        themePreference: nextTheme,
-      });
-    },
-    [appearance, onAppearanceChange],
-  );
-
-  const handleLightPresetChange = useCallback(
-    (nextPreset: LightThemePresetId) => {
-      onAppearanceChange({
-        ...appearance,
-        lightPreset: nextPreset,
-      });
-    },
-    [appearance, onAppearanceChange],
-  );
-
-  const handleDarkPresetChange = useCallback(
-    (nextPreset: DarkThemePresetId) => {
-      onAppearanceChange({
-        ...appearance,
-        darkPreset: nextPreset,
-      });
+  const handleAppearancePatch = useCallback(
+    (patch: Partial<WorkbenchAppearanceSettings>) => {
+      onAppearanceChange({ ...appearance, ...patch });
     },
     [appearance, onAppearanceChange],
   );
@@ -266,8 +234,7 @@ function SampleWorkbenchHost({
   const handleStatusItemActivate = useCallback(
     (item: { id: string }) => {
       if (item.id === 'sample.theme') {
-        onAppearanceChange({
-          ...appearance,
+        handleAppearancePatch({
           themePreference: nextSampleColorScheme(appearance.themePreference),
         });
         return;
@@ -277,7 +244,7 @@ function SampleWorkbenchHost({
         layoutService.setSideBarVisible(!layout.sideBar.visible);
       }
     },
-    [appearance, layout.sideBar.visible, layoutService, onAppearanceChange],
+    [appearance.themePreference, handleAppearancePatch, layout.sideBar.visible, layoutService],
   );
 
   const runSamplePaletteCommand = useCallback(createSamplePaletteCommandRunner(executeCommand), [
@@ -323,38 +290,44 @@ function SampleWorkbenchHost({
   );
 
   return (
-    <>
-      <WorkbenchShell
-        accountManagement={accountManagement}
-        additionalSettingsCategories={[permissionRoleSettingsCategory]}
-        commandHost={{
-          additionalCommands: sampleAdditionalPaletteCommands,
-          onRunCommand: handleRunCommand,
-        }}
-        darkPreset={appearance.darkPreset}
-        editorArea={
-          <SampleEditorFrame>
-            <EditorArea defaultViewModeForResource={getSampleDefaultViewMode} theme={editorTheme} />
-          </SampleEditorFrame>
+    <WorkbenchShell
+      accountManagement={accountManagement}
+      additionalSettingsCategories={[permissionRoleSettingsCategory]}
+      commandHost={{
+        additionalCommands: sampleAdditionalPaletteCommands,
+        onRunCommand: handleRunCommand,
+      }}
+      darkPreset={appearance.darkPreset}
+      editorArea={
+        <SampleEditorFrame>
+          <EditorArea defaultViewModeForResource={getSampleDefaultViewMode} theme={editorTheme} />
+        </SampleEditorFrame>
+      }
+      helpContent={<SampleHelpContent />}
+      lightPreset={appearance.lightPreset}
+      locale={locale}
+      onDarkPresetChange={(nextPreset) => {
+        handleAppearancePatch({ darkPreset: nextPreset });
+      }}
+      onLightPresetChange={(nextPreset) => {
+        handleAppearancePatch({ lightPreset: nextPreset });
+      }}
+      onLocaleChange={setLocale}
+      onStatusItemActivate={handleStatusItemActivate}
+      onThemeChange={(nextTheme) => {
+        if (isSampleColorScheme(nextTheme)) {
+          handleAppearancePatch({ themePreference: nextTheme });
         }
-        helpContent={<SampleHelpContent />}
-        lightPreset={appearance.lightPreset}
-        locale={locale}
-        onDarkPresetChange={handleDarkPresetChange}
-        onLightPresetChange={handleLightPresetChange}
-        onLocaleChange={setLocale}
-        onStatusItemActivate={handleStatusItemActivate}
-        onThemeChange={handleThemeChange}
-        profile={profile}
-        profileExtraContent={permissionRoleProfileExtra}
-        rootClassName="ide-root"
-        statusSections={statusSections}
-        theme={appearance.themePreference}
-        title="Workbench Sample"
-        titleBarActions={<SampleTitleBarActions />}
-        titleMeta={<Badge variant="muted">{liveFileCount} files</Badge>}
-      />
-    </>
+      }}
+      profile={profile}
+      profileExtraContent={permissionRoleProfileExtra}
+      rootClassName="ide-root"
+      statusSections={statusSections}
+      theme={appearance.themePreference}
+      title="Workbench Sample"
+      titleBarActions={<SampleTitleBarActions />}
+      titleMeta={<Badge variant="muted">{liveFileCount} files</Badge>}
+    />
   );
 }
 
@@ -428,7 +401,7 @@ function SampleHelpContent() {
           </li>
           <li>
             Appearance settings (color scheme, light preset, dark preset) are restored from browser
-            local storage (`workbench-kit/.workbench/sample-appearance`).
+            local storage (<code>{DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY}</code>).
           </li>
           <li>
             Permission role demo overrides are restored from browser local storage (
@@ -456,7 +429,7 @@ function SampleHelpContent() {
 
 interface SampleStatusSectionsInput {
   activeAccountName?: string | undefined;
-  appearance: SampleAppearanceSettings;
+  appearance: WorkbenchAppearanceSettings;
   fileCount: number;
   folderCount: number;
   resolvedTheme: WorkspaceEditorTheme;
@@ -473,67 +446,67 @@ function createSampleStatusSections({
 }: SampleStatusSectionsInput): StatusBarSectionModel[] {
   const activePreset = resolveActiveThemePreset(resolvedTheme, appearance);
 
-  return [
-    {
-      id: 'sample-primary',
-      items: [
-        {
-          icon: 'root-folder',
-          id: 'sample.workspace',
-          label: workspaceInfo.name,
-          title: 'Sample workspace',
-        },
-        {
-          active: sideBarVisible,
-          icon: 'layout-sidebar-left',
-          id: 'sample.sidebar',
-          label: sideBarVisible ? 'sidebar: shown' : 'sidebar: hidden',
-          title: sideBarVisible ? 'Hide primary sidebar' : 'Show primary sidebar',
-        },
-        {
-          active: true,
-          icon: 'color-mode',
-          id: 'sample.theme',
-          label: `scheme: ${appearance.themePreference} · ${activePreset}`,
-          title: 'Cycle color scheme (system, light, dark)',
-        },
-      ],
-    },
-    {
-      align: 'end',
-      id: 'sample-meta',
-      items: [
-        ...(activeAccountName
-          ? [
-              {
-                icon: 'account' as const,
-                id: 'workbench.account',
-                label: activeAccountName,
-                title: 'Open profile',
-              },
-            ]
-          : []),
-        {
-          icon: 'files',
-          id: 'sample.files',
-          label: `${fileCount} files`,
-          title: 'Virtual workspace files',
-        },
-        {
-          icon: 'folder',
-          id: 'sample.folders',
-          label: `${folderCount} folders`,
-          title: 'Virtual workspace folders',
-        },
-        {
-          icon: 'extensions',
-          id: 'sample.extensions',
-          label: `${extensionsConfig.enabled.length} extensions`,
-          title: 'Enabled built-in extensions',
-        },
-      ],
-    },
-  ];
+  return mergeWorkbenchStatusSections(
+    [
+      {
+        id: 'sample-primary',
+        items: [
+          {
+            icon: 'root-folder',
+            id: 'sample.workspace',
+            label: workspaceInfo.name,
+            title: 'Sample workspace',
+          },
+          {
+            active: sideBarVisible,
+            icon: 'layout-sidebar-left',
+            id: 'sample.sidebar',
+            label: sideBarVisible ? 'sidebar: shown' : 'sidebar: hidden',
+            title: sideBarVisible ? 'Hide primary sidebar' : 'Show primary sidebar',
+          },
+          {
+            active: true,
+            icon: 'color-mode',
+            id: 'sample.theme',
+            label: `scheme: ${appearance.themePreference} · ${activePreset}`,
+            title: 'Cycle color scheme (system, light, dark)',
+          },
+        ],
+      },
+    ],
+    [
+      {
+        align: 'end',
+        id: 'sample-meta',
+        items: [
+          ...(activeAccountName
+            ? [
+                {
+                  icon: 'account' as const,
+                  id: 'workbench.account',
+                  label: activeAccountName,
+                  title: 'Open profile',
+                },
+              ]
+            : []),
+          ...createWorkspaceResourceStatusItems({
+            fileCount,
+            fileItemId: 'sample.files',
+            fileTitle: 'Virtual workspace files',
+            folderCount,
+            folderItemId: 'sample.folders',
+            folderTitle: 'Virtual workspace folders',
+          }),
+          {
+            icon: 'extensions',
+            id: 'sample.extensions',
+            label: `${extensionsConfig.enabled.length} extensions`,
+            title: 'Enabled built-in extensions',
+          },
+        ],
+      },
+    ],
+  );
 }
 
 function nextSampleColorScheme(
