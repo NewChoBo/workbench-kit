@@ -179,6 +179,7 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
             icon: 'terminal',
             title: 'Commands',
             order: 25,
+            when: 'workbench.permissions.canManageCommands',
           },
         ],
         views: {
