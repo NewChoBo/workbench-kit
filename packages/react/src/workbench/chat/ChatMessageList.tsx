@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { SideBarScrollSpacer } from '../../layout/SideBarViewFrame';
 import { cx } from '../../utils/cx';
-import { ChatMessageItem } from './ChatMessageItem';
+import { ChatMessageItem, type ChatMessageItemProps } from './ChatMessageItem';
 import { shouldShowPeerChatSenderLabel } from './chatMessageGrouping';
 import type { ChatMessage, ChatMessageLayout } from './types';
 
@@ -11,6 +11,8 @@ export interface ChatMessageListProps {
   isStreaming?: boolean;
   messageLayout?: ChatMessageLayout;
   messages: ChatMessage[];
+  onCommandProposalAllow?: ChatMessageItemProps['onCommandProposalAllow'];
+  onCommandProposalDeny?: ChatMessageItemProps['onCommandProposalDeny'];
   userLabel?: string;
 }
 
@@ -20,6 +22,8 @@ export function ChatMessageList({
   isStreaming = false,
   messageLayout = 'assistant',
   messages,
+  onCommandProposalAllow,
+  onCommandProposalDeny,
   userLabel,
 }: ChatMessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -51,6 +55,8 @@ export function ChatMessageList({
           }
           layout={messageLayout}
           message={message}
+          onCommandProposalAllow={onCommandProposalAllow}
+          onCommandProposalDeny={onCommandProposalDeny}
           showSenderLabel={
             messageLayout !== 'peer' ||
             shouldShowPeerChatSenderLabel(messages, index, {

@@ -37,10 +37,17 @@ export {
   isWorkbenchCommandRunnable,
   normalizeWorkbenchCommandQuery,
 } from './command-model';
+export {
+  getWorkbenchCommandExecutionPolicyLabel,
+  isWorkbenchCommandExecutionPolicy,
+  resolveWorkbenchCommandExecutionPolicy,
+} from './command-execution-policy';
+export type { ResolveWorkbenchCommandExecutionPolicyInput } from './command-execution-policy';
 export type {
   WorkbenchCommandDescriptor,
   WorkbenchCommandDescriptorOverrides,
   WorkbenchCommandExecution,
+  WorkbenchCommandExecutionPolicy,
   WorkbenchCommandFeedback,
   WorkbenchCommandFilterInput,
   WorkbenchCommandGroup,

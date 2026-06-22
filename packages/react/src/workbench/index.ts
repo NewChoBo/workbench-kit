@@ -34,13 +34,17 @@ export {
   filterWorkbenchCommands,
   getNextWorkbenchCommandIndex,
   getWorkbenchCommandExecutionLabel,
+  getWorkbenchCommandExecutionPolicyLabel,
   getWorkbenchCommandStatusLabel,
   groupWorkbenchCommands,
+  isWorkbenchCommandExecutionPolicy,
   isWorkbenchCommandRunnable,
+  resolveWorkbenchCommandExecutionPolicy,
 } from './CommandPalette';
 export { WorkbenchMarkdownPreview } from './MarkdownPreview';
 export type { WorkbenchMarkdownPreviewProps } from './MarkdownPreview';
 export {
+  ChatCommandProposalCard,
   ChatConversationBar,
   ChatHistoryMenu,
   ChatPanel,
@@ -48,6 +52,9 @@ export {
   defaultWorkbenchChatConversationLabels,
 } from './chat';
 export type {
+  ChatCommandProposal,
+  ChatCommandProposalCardProps,
+  ChatCommandProposalStatus,
   ChatConversationBarProps,
   ChatHistoryMenuProps,
   ChatPanelProps,
@@ -112,6 +119,7 @@ export type {
   WorkbenchCommandDescriptor,
   WorkbenchCommandDescriptorOverrides,
   WorkbenchCommandExecution,
+  WorkbenchCommandExecutionPolicy,
   WorkbenchCommandFeedback,
   WorkbenchCommandFilterInput,
   WorkbenchCommandGroup,
@@ -128,6 +136,7 @@ export type {
   WorkbenchCommandStatus,
   WorkbenchCommandSuggestProps,
 } from './CommandPalette';
+export type { ResolveWorkbenchCommandExecutionPolicyInput } from './CommandPalette';
 export type {
   UseWorkbenchShortcutCommandsOptions,
   WorkbenchShortcutCommandBinding,

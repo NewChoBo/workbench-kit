@@ -12,6 +12,7 @@ export interface WorkbenchCommandExecution {
 export type WorkbenchCommandFeedback = 'none' | 'status' | 'timeline';
 export type WorkbenchCommandOutput = 'none' | 'message' | 'event' | 'artifact';
 export type WorkbenchCommandSideEffect = 'none' | 'workspace-write' | 'external-write';
+export type WorkbenchCommandExecutionPolicy = 'auto-allow' | 'approval-required' | 'auto-deny';
 export type WorkbenchCommandRunSource = 'grouped-list' | 'list' | 'palette' | 'suggest';
 export type WorkbenchCommandGroupBy =
   | 'category'
@@ -30,6 +31,7 @@ export interface WorkbenchCommandDescriptor {
   disabled?: boolean | undefined;
   disabledReason?: string | undefined;
   execution?: WorkbenchCommandExecution | undefined;
+  executionPolicy?: WorkbenchCommandExecutionPolicy | undefined;
   feedback?: WorkbenchCommandFeedback | undefined;
   icon?: string | undefined;
   id: string;

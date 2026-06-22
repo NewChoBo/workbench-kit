@@ -1,15 +1,18 @@
 import Markdown from 'react-markdown';
 import { cx } from '../../utils/cx';
 import { workbenchMarkdownRemarkPlugins } from '../markdownRemarkPlugins';
+import { ChatCommandProposalCard } from './ChatCommandProposalCard';
 import { ChatMessageCollapsible } from './ChatMessageCollapsible';
 import { ChatMessageTime } from './chatMessageTime';
-import type { ChatMessage, ChatMessageLayout } from './types';
+import type { ChatCommandProposal, ChatMessage, ChatMessageLayout } from './types';
 
 export interface ChatMessageItemProps {
   assistantLabel?: string;
   isStreaming?: boolean;
   layout?: ChatMessageLayout;
   message: ChatMessage;
+  onCommandProposalAllow?: ((messageId: string, proposal: ChatCommandProposal) => void) | undefined;
+  onCommandProposalDeny?: ((messageId: string, proposal: ChatCommandProposal) => void) | undefined;
   showSenderLabel?: boolean;
   userLabel?: string;
 }
@@ -27,6 +30,8 @@ export function ChatMessageItem({
   isStreaming = false,
   layout = 'assistant',
   message,
+  onCommandProposalAllow,
+  onCommandProposalDeny,
   showSenderLabel = true,
   userLabel,
 }: ChatMessageItemProps) {
@@ -103,6 +108,26 @@ export function ChatMessageItem({
           {isStreaming ? <span aria-hidden="true" className="message__cursor" /> : null}
         </div>
       </ChatMessageCollapsible>
+      {message.commandProposals?.length ? (
+        <div className="message__command-proposals">
+          {message.commandProposals.map((proposal) => (
+            <ChatCommandProposalCard
+              key={proposal.id}
+              proposal={proposal}
+              onAllow={
+                onCommandProposalAllow
+                  ? (currentProposal) => onCommandProposalAllow(message.id, currentProposal)
+                  : undefined
+              }
+              onDeny={
+                onCommandProposalDeny
+                  ? (currentProposal) => onCommandProposalDeny(message.id, currentProposal)
+                  : undefined
+              }
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

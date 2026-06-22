@@ -1,3 +1,5 @@
+export { ChatCommandProposalCard } from './ChatCommandProposalCard';
+export type { ChatCommandProposalCardProps } from './ChatCommandProposalCard';
 export { ChatComposer } from './ChatComposer';
 export type { ChatComposerProps } from './ChatComposer';
 export { ChatConversationBar } from './ChatConversationBar';
@@ -18,6 +20,10 @@ export type {
   WorkbenchChatConversationLabels,
 } from './chatConversation';
 export type { ChatMessage, ChatMessageLayout, ChatMessageSource } from './types';
+export type {
+  ChatCommandProposal,
+  ChatCommandProposalStatus,
+} from './types';
 export { useChatRuntimeState } from './useChatRuntimeState';
 export type { UseChatRuntimeStateInput, UseChatRuntimeStateResult } from './useChatRuntimeState';
 export { useSlashCommandSuggest } from './useSlashCommandSuggest';
