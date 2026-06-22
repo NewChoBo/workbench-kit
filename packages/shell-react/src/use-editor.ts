@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer } from 'react';
 import type { EditorHost, EditorService, EditorTabState } from '@workbench-kit/workbench-core';
 
 import { useWorkbench } from './provider.js';
@@ -40,7 +40,7 @@ export function useEditorHost(tabId?: string): EditorHost | undefined {
   const editorService = useEditorService();
   const { waitForExtensionStartup } = useWorkbench();
   const editorState = useEditorState();
-  const [extensionsReady, setExtensionsReady] = useState(false);
+  const forceRender = useForceRender();
   const activeGroup = editorState.groups.find((group) => group.id === editorState.activeGroupId);
   const resolvedTabId = tabId ?? activeGroup?.activeTabId;
   const resolvedTab = resolvedTabId
@@ -48,28 +48,34 @@ export function useEditorHost(tabId?: string): EditorHost | undefined {
     : undefined;
 
   useEffect(() => {
+    const disposable = editorService.onDidChangeEditors(forceRender);
+    return () => {
+      disposable.dispose();
+    };
+  }, [editorService, forceRender]);
+
+  useEffect(() => {
     let cancelled = false;
 
     void waitForExtensionStartup().then(() => {
       if (!cancelled) {
-        setExtensionsReady(true);
+        forceRender();
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [waitForExtensionStartup]);
+  }, [forceRender, waitForExtensionStartup]);
 
   return useMemo(() => {
-    if (!resolvedTabId || !extensionsReady) {
+    if (!resolvedTabId) {
       return undefined;
     }
 
     return editorService.createEditorHost(resolvedTabId);
   }, [
     editorService,
-    extensionsReady,
     resolvedTab?.resourceMissing,
     resolvedTab?.resourceUri,
     resolvedTabId,
