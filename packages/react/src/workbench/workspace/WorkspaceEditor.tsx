@@ -1,5 +1,6 @@
 import Editor, { loader, type OnMount } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
+import { useCallback } from 'react';
 import { Panel, PanelBody, PanelHeader } from '../../layout/Panel';
 import { Badge } from '../../primitives/Badge';
 import { IconButton } from '../../primitives/IconButton';
@@ -14,107 +15,31 @@ import {
   monacoModelPathForWorkspaceFile,
 } from './workspaceJsonDiagnostics';
 import { configureWorkspaceEditorTypeScriptDiagnostics } from './workspaceTypeScriptDiagnostics';
+import {
+  defineMonacoWorkbenchTheme,
+  MONACO_DARK_THEME_ID,
+  MONACO_LIGHT_THEME_ID,
+  monacoThemeForWorkspaceTheme,
+} from './monacoWorkbenchTheme';
+import { useMonacoWorkbenchThemeSync } from './useMonacoWorkbenchThemeSync';
 
 loader.config({ monaco });
 
 export type WorkspaceEditorTheme = 'dark' | 'light';
 
-export const MONACO_DARK_THEME_ID = 'newchobo-workbench-dark';
-export const MONACO_LIGHT_THEME_ID = 'newchobo-workbench-light';
-let monacoThemeDefined = false;
+export {
+  MONACO_DARK_THEME_ID,
+  MONACO_LIGHT_THEME_ID,
+  defineMonacoWorkbenchTheme,
+  monacoThemeForWorkspaceTheme,
+};
 
-export function defineMonacoWorkbenchTheme(monacoInstance: typeof monaco) {
-  if (monacoThemeDefined) return;
-
-  monacoInstance.editor.defineTheme(MONACO_DARK_THEME_ID, {
-    base: 'vs-dark',
-    inherit: true,
-    rules: [],
-    colors: {
-      'editor.background': '#0d1117',
-      'editor.foreground': '#e6edf3',
-      'editorGutter.background': '#0d1117',
-      'editorLineNumber.foreground': '#484f58',
-      'editorLineNumber.activeForeground': '#7d8590',
-      'editorCursor.foreground': '#e6edf3',
-      'editor.lineHighlightBackground': '#161b22',
-      'editor.selectionBackground': '#264f78',
-      'editor.inactiveSelectionBackground': '#1f3a53',
-      'editorWidget.background': '#161b22',
-      'editorWidget.border': '#30363d',
-      'editorHoverWidget.background': '#161b22',
-      'editorHoverWidget.border': '#30363d',
-      'editorSuggestWidget.background': '#161b22',
-      'editorSuggestWidget.border': '#30363d',
-      focusBorder: '#2f81f7',
-      'input.background': '#0d1117',
-      'input.border': '#30363d',
-      'minimap.background': '#0d1117',
-      'scrollbarSlider.background': '#30363d66',
-      'scrollbarSlider.hoverBackground': '#484f5888',
-      'scrollbarSlider.activeBackground': '#7d8590aa',
-      'editorIndentGuide.background1': '#30363d',
-      'editorIndentGuide.activeBackground1': '#7d8590',
-      'editorWhitespace.foreground': '#30363d',
-      'editorBracketMatch.background': '#21262d',
-      'editorBracketMatch.border': '#7d8590',
-      'editorError.foreground': '#f8514966',
-      'editorWarning.foreground': '#d2992266',
-      'editorOverviewRuler.border': '#0d1117',
-      'editorOverviewRuler.errorForeground': '#f8514926',
-      'editorOverviewRuler.warningForeground': '#d2992226',
-    },
-  });
-
-  monacoInstance.editor.defineTheme(MONACO_LIGHT_THEME_ID, {
-    base: 'vs',
-    inherit: true,
-    rules: [],
-    colors: {
-      'editor.background': '#ffffff',
-      'editor.foreground': '#1f2328',
-      'editorGutter.background': '#ffffff',
-      'editorLineNumber.foreground': '#9198a1',
-      'editorLineNumber.activeForeground': '#656d76',
-      'editorCursor.foreground': '#1f2328',
-      'editor.lineHighlightBackground': '#f6f8fa',
-      'editor.selectionBackground': '#bfdbfe',
-      'editor.inactiveSelectionBackground': '#dbeafe',
-      'editorWidget.background': '#f6f8fa',
-      'editorWidget.border': '#d0d7de',
-      'editorHoverWidget.background': '#f6f8fa',
-      'editorHoverWidget.border': '#d0d7de',
-      'editorSuggestWidget.background': '#f6f8fa',
-      'editorSuggestWidget.border': '#d0d7de',
-      focusBorder: '#0969da',
-      'input.background': '#ffffff',
-      'input.border': '#d0d7de',
-      'minimap.background': '#ffffff',
-      'scrollbarSlider.background': '#d0d7de66',
-      'scrollbarSlider.hoverBackground': '#9198a188',
-      'scrollbarSlider.activeBackground': '#656d76aa',
-      'editorIndentGuide.background1': '#d0d7de',
-      'editorIndentGuide.activeBackground1': '#656d76',
-      'editorWhitespace.foreground': '#d0d7de',
-      'editorBracketMatch.background': '#eaeef2',
-      'editorBracketMatch.border': '#656d76',
-      'editorError.foreground': '#cf222e66',
-      'editorWarning.foreground': '#9a670066',
-      'editorOverviewRuler.border': '#ffffff',
-      'editorOverviewRuler.errorForeground': '#cf222e26',
-      'editorOverviewRuler.warningForeground': '#9a670026',
-    },
-  });
-  monacoThemeDefined = true;
-}
-
-export function prepareMonacoWorkbenchEditor(monacoInstance: typeof monaco) {
-  defineMonacoWorkbenchTheme(monacoInstance);
+export function prepareMonacoWorkbenchEditor(
+  monacoInstance: typeof monaco,
+  resolvedTheme: WorkspaceEditorTheme = 'dark',
+) {
+  defineMonacoWorkbenchTheme(monacoInstance, resolvedTheme);
   configureWorkspaceEditorTypeScriptDiagnostics(monacoInstance);
-}
-
-export function monacoThemeForWorkspaceTheme(theme: WorkspaceEditorTheme) {
-  return theme === 'light' ? MONACO_LIGHT_THEME_ID : MONACO_DARK_THEME_ID;
 }
 
 export function languageForFile(path: string, mimeType?: string) {
@@ -201,6 +126,13 @@ export function WorkspaceEditor({
   value = file.content,
 }: WorkspaceEditorProps) {
   const language = languageForFile(file.path, file.mimeType);
+  useMonacoWorkbenchThemeSync(theme);
+  const handleBeforeMount = useCallback(
+    (monacoInstance: typeof monaco) => {
+      prepareMonacoWorkbenchEditor(monacoInstance, theme);
+    },
+    [theme],
+  );
   const handleMount: OnMount = (editor, monacoInstance) => {
     configureWorkspaceEditorJsonDiagnostics(monacoInstance, file);
     onEditorMount?.(editor, monacoInstance);
@@ -239,7 +171,7 @@ export function WorkspaceEditor({
       <PanelBody className="workbench-monaco-panel__body">
         <div className="workspace-editor__monaco">
           <Editor
-            beforeMount={prepareMonacoWorkbenchEditor}
+            beforeMount={handleBeforeMount}
             height="100%"
             language={language}
             loading={<div className="workspace-editor__loading">Loading editor...</div>}

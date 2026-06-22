@@ -175,7 +175,7 @@ describe('EditorArea', () => {
     expect(container.querySelector('[data-testid="monaco-editor"]')).not.toBeNull();
     expect(
       container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-theme'),
-    ).toBe('newchobo-workbench-light');
+    ).toBe('workbench-kit-light');
 
     await act(async () => {
       root.unmount();
