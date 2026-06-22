@@ -89,15 +89,18 @@ importers:
       '@workbench-kit/jdw':
         specifier: workspace:*
         version: link:../../packages/json-widget
+      '@workbench-kit/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
       '@workbench-kit/react':
         specifier: workspace:*
         version: link:../../packages/react
-      '@workbench-kit/workbench-config':
-        specifier: workspace:*
-        version: link:../../packages/workbench-config
       '@workbench-kit/shell-react':
         specifier: workspace:*
         version: link:../../packages/shell-react
+      '@workbench-kit/workbench-config':
+        specifier: workspace:*
+        version: link:../../packages/workbench-config
       '@workbench-kit/workspace':
         specifier: workspace:*
         version: link:../../packages/workspace
@@ -324,6 +327,33 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
+  packages/shell-react:
+    dependencies:
+      '@workbench-kit/platform':
+        specifier: workspace:*
+        version: link:../platform
+      '@workbench-kit/react':
+        specifier: workspace:*
+        version: link:../react
+      '@workbench-kit/tokens':
+        specifier: workspace:*
+        version: link:../tokens
+      '@workbench-kit/workbench-config':
+        specifier: workspace:*
+        version: link:../workbench-config
+      '@workbench-kit/workbench-core':
+        specifier: workspace:*
+        version: link:../workbench-core
+      '@workbench-kit/workspace':
+        specifier: workspace:*
+        version: link:../workspace
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
+
   packages/tokens: {}
 
   packages/workbench-config:
@@ -358,33 +388,6 @@ importers:
       '@workbench-kit/platform':
         specifier: workspace:*
         version: link:../platform
-
-  packages/shell-react:
-    dependencies:
-      '@workbench-kit/platform':
-        specifier: workspace:*
-        version: link:../platform
-      '@workbench-kit/react':
-        specifier: workspace:*
-        version: link:../react
-      '@workbench-kit/tokens':
-        specifier: workspace:*
-        version: link:../tokens
-      '@workbench-kit/workbench-config':
-        specifier: workspace:*
-        version: link:../workbench-config
-      '@workbench-kit/workbench-core':
-        specifier: workspace:*
-        version: link:../workbench-core
-      '@workbench-kit/workspace':
-        specifier: workspace:*
-        version: link:../workspace
-      react:
-        specifier: ^19.0.0
-        version: 19.2.7
-      react-dom:
-        specifier: ^19.0.0
-        version: 19.2.7(react@19.2.7)
 
   packages/workspace: {}
 
