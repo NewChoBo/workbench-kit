@@ -36,8 +36,11 @@ describe('themePresets', () => {
 
   it('validates preset ids', () => {
     expect(isLightThemePresetId('skyblue')).toBe(true);
+    expect(isLightThemePresetId('light-plus')).toBe(true);
     expect(isLightThemePresetId('purple')).toBe(false);
     expect(isDarkThemePresetId('modern')).toBe(true);
+    expect(isDarkThemePresetId('dark-plus')).toBe(true);
+    expect(isDarkThemePresetId('hc-black')).toBe(true);
     expect(isDarkThemePresetId('orange')).toBe(false);
   });
 

@@ -74,11 +74,13 @@ export {
   applyWorkbenchAppearance,
   applyWorkbenchThemeAttributes,
   DARK_THEME_PRESET_OPTIONS,
+  DARK_THEME_PRESET_MANIFEST,
   DEFAULT_DARK_THEME_PRESET,
   DEFAULT_LIGHT_THEME_PRESET,
   isDarkThemePresetId,
   isLightThemePresetId,
   LIGHT_THEME_PRESET_OPTIONS,
+  LIGHT_THEME_PRESET_MANIFEST,
   resolveActiveThemePreset,
   WORKBENCH_COLOR_SCHEME_OPTIONS,
 } from './themePresets';
@@ -90,6 +92,7 @@ export type {
   WorkbenchColorSchemePreference,
   WorkbenchThemeDocumentAttributes,
   WorkbenchThemePresetOption,
+  WorkbenchThemePresetManifestEntry,
   WorkbenchThemePresetSelection,
 } from './themePresets';
 export { WorkbenchThemeProvider } from './WorkbenchThemeProvider';

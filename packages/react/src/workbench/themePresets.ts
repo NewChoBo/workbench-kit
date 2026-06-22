@@ -1,8 +1,28 @@
 import { resolveWorkbenchTheme, type ResolvedWorkbenchTheme } from './theme';
 import type { WorkbenchTheme } from './standalone';
 
-export type LightThemePresetId = 'orange' | 'skyblue';
-export type DarkThemePresetId = 'navy' | 'purple' | 'modern';
+export interface WorkbenchThemePresetManifestEntry<TId extends string = string> {
+  readonly id: TId;
+  readonly label: string;
+}
+
+/** One manifest entry per CSS preset file under `@workbench-kit/tokens/src/themes/`. */
+export const LIGHT_THEME_PRESET_MANIFEST = [
+  { id: 'orange', label: 'Light Orange' },
+  { id: 'skyblue', label: 'Sky Blue' },
+  { id: 'light-plus', label: 'Light+' },
+] as const satisfies readonly WorkbenchThemePresetManifestEntry[];
+
+export const DARK_THEME_PRESET_MANIFEST = [
+  { id: 'navy', label: 'Deep Navy' },
+  { id: 'purple', label: 'Purple' },
+  { id: 'modern', label: 'Modern Dark' },
+  { id: 'dark-plus', label: 'Dark+' },
+  { id: 'hc-black', label: 'High Contrast Black' },
+] as const satisfies readonly WorkbenchThemePresetManifestEntry[];
+
+export type LightThemePresetId = (typeof LIGHT_THEME_PRESET_MANIFEST)[number]['id'];
+export type DarkThemePresetId = (typeof DARK_THEME_PRESET_MANIFEST)[number]['id'];
 export type ThemePresetId = LightThemePresetId | DarkThemePresetId;
 
 export const DEFAULT_LIGHT_THEME_PRESET: LightThemePresetId = 'skyblue';
@@ -22,16 +42,16 @@ export interface WorkbenchThemePresetOption<TId extends string = string> {
   label: string;
 }
 
-export const LIGHT_THEME_PRESET_OPTIONS: WorkbenchThemePresetOption<LightThemePresetId>[] = [
-  { id: 'orange', label: 'Light Orange' },
-  { id: 'skyblue', label: 'Sky Blue' },
-];
+export const LIGHT_THEME_PRESET_OPTIONS: WorkbenchThemePresetOption<LightThemePresetId>[] =
+  LIGHT_THEME_PRESET_MANIFEST.map((entry) => ({ id: entry.id, label: entry.label }));
 
-export const DARK_THEME_PRESET_OPTIONS: WorkbenchThemePresetOption<DarkThemePresetId>[] = [
-  { id: 'navy', label: 'Deep Navy' },
-  { id: 'purple', label: 'Purple' },
-  { id: 'modern', label: 'Modern Dark' },
-];
+export const DARK_THEME_PRESET_OPTIONS: WorkbenchThemePresetOption<DarkThemePresetId>[] =
+  DARK_THEME_PRESET_MANIFEST.map((entry) => ({ id: entry.id, label: entry.label }));
+
+const LIGHT_THEME_PRESET_IDS = new Set<string>(
+  LIGHT_THEME_PRESET_MANIFEST.map((entry) => entry.id),
+);
+const DARK_THEME_PRESET_IDS = new Set<string>(DARK_THEME_PRESET_MANIFEST.map((entry) => entry.id));
 
 export interface WorkbenchThemePresetSelection {
   lightPreset: LightThemePresetId;
@@ -41,11 +61,11 @@ export interface WorkbenchThemePresetSelection {
 export function isLightThemePresetId(
   value: string | null | undefined,
 ): value is LightThemePresetId {
-  return value === 'orange' || value === 'skyblue';
+  return value != null && LIGHT_THEME_PRESET_IDS.has(value);
 }
 
 export function isDarkThemePresetId(value: string | null | undefined): value is DarkThemePresetId {
-  return value === 'navy' || value === 'purple' || value === 'modern';
+  return value != null && DARK_THEME_PRESET_IDS.has(value);
 }
 
 export function resolveActiveThemePreset(

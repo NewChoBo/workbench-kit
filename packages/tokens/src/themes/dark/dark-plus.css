@@ -1,0 +1,24 @@
+/* VS Code Default Dark+ — editor.background, sideBar.background, button.background */
+
+[data-theme='dark'][data-theme-preset='dark-plus'] {
+  --color-bg: #1e1e1e;
+  --color-bg-75: rgba(30, 30, 30, 0.75);
+  --color-primary-side-bar-bg: #252526;
+  --color-primary-side-bar-bg-75: rgba(37, 37, 38, 0.75);
+  --color-surface: #252526;
+  --color-surface-hover: #2a2d2e;
+  --color-surface-elevated: #2d2d2d;
+  --color-border: #454545;
+  --color-text: #d4d4d4;
+  --color-text-muted: #989898;
+  --color-text-subtle: #858585;
+  --color-accent: #0e639c;
+  --color-accent-hover: #1177bb;
+  --color-accent-foreground: #ffffff;
+  --color-focus-border: #007fd4;
+  --color-danger: #f14c4c;
+  --color-danger-hover: #ff6b6b;
+  --scrollbar-thumb: #45454566;
+  --scrollbar-thumb-hover: #5a5a5a88;
+  --scrollbar-thumb-active: #7a7a7aaa;
+}

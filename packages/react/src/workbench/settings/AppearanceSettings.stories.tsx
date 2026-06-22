@@ -197,6 +197,9 @@ export const SchemeAndPresets: Story = {
     await expect(root).toHaveAttribute('data-theme-preference', 'light');
     await expect(root).toHaveAttribute('data-theme-preset', 'skyblue');
 
+    await selectOption(canvas, 'Light theme preset', 'Light+');
+    await expect(root).toHaveAttribute('data-theme-preset', 'light-plus');
+
     await selectOption(canvas, 'Light theme preset', 'Light Orange');
     await expect(root).toHaveAttribute('data-theme-preset', 'orange');
 
@@ -204,6 +207,9 @@ export const SchemeAndPresets: Story = {
     await expect(root).toHaveAttribute('data-theme', 'dark');
     await expect(root).toHaveAttribute('data-theme-preference', 'dark');
     await expect(root).toHaveAttribute('data-theme-preset', 'purple');
+
+    await selectOption(canvas, 'Dark theme preset', 'Dark+');
+    await expect(root).toHaveAttribute('data-theme-preset', 'dark-plus');
 
     await selectOption(canvas, 'Dark theme preset', 'Modern Dark');
     await expect(root).toHaveAttribute('data-theme-preset', 'modern');
