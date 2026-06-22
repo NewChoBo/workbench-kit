@@ -71,6 +71,7 @@ export {
 export { resolveWorkbenchTheme, useResolvedWorkbenchTheme } from './theme';
 export type { ResolvedWorkbenchTheme } from './theme';
 export {
+  applyWorkbenchAppearance,
   applyWorkbenchThemeAttributes,
   DARK_THEME_PRESET_OPTIONS,
   DEFAULT_DARK_THEME_PRESET,
@@ -79,11 +80,14 @@ export {
   isLightThemePresetId,
   LIGHT_THEME_PRESET_OPTIONS,
   resolveActiveThemePreset,
+  WORKBENCH_COLOR_SCHEME_OPTIONS,
 } from './themePresets';
 export type {
   DarkThemePresetId,
   LightThemePresetId,
   ThemePresetId,
+  WorkbenchAppearanceSettings,
+  WorkbenchColorSchemePreference,
   WorkbenchThemeDocumentAttributes,
   WorkbenchThemePresetOption,
   WorkbenchThemePresetSelection,

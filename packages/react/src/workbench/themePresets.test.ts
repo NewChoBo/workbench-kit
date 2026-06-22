@@ -1,11 +1,15 @@
+/** @vitest-environment jsdom */
+
 import { describe, expect, it } from 'vitest';
 
 import {
+  applyWorkbenchAppearance,
   DEFAULT_DARK_THEME_PRESET,
   DEFAULT_LIGHT_THEME_PRESET,
   isDarkThemePresetId,
   isLightThemePresetId,
   resolveActiveThemePreset,
+  WORKBENCH_COLOR_SCHEME_OPTIONS,
 } from './themePresets';
 
 describe('themePresets', () => {
@@ -35,5 +39,27 @@ describe('themePresets', () => {
     expect(isLightThemePresetId('purple')).toBe(false);
     expect(isDarkThemePresetId('modern')).toBe(true);
     expect(isDarkThemePresetId('orange')).toBe(false);
+  });
+
+  it('exposes color scheme options', () => {
+    expect(WORKBENCH_COLOR_SCHEME_OPTIONS.map((option) => option.id)).toEqual([
+      'system',
+      'light',
+      'dark',
+    ]);
+  });
+
+  it('applies appearance settings to a DOM root', () => {
+    const root = document.createElement('html');
+
+    applyWorkbenchAppearance(root, {
+      darkPreset: 'purple',
+      lightPreset: 'skyblue',
+      themePreference: 'dark',
+    });
+
+    expect(root.dataset.theme).toBe('dark');
+    expect(root.dataset.themePreference).toBe('dark');
+    expect(root.dataset.themePreset).toBe('purple');
   });
 });

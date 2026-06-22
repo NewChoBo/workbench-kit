@@ -14,6 +14,7 @@ import {
 import { WORKBENCH_SETTINGS_CAPABILITY_ID } from '@workbench-kit/workbench-core';
 import type { WorkbenchSettingsCapability } from '@workbench-kit/workbench-core';
 import { isPreferenceScope, type PreferenceScope } from '@workbench-kit/workbench-config';
+import type { DarkThemePresetId, LightThemePresetId } from '@workbench-kit/react/workbench';
 
 import { EditorArea } from './editor-area.js';
 import { BUILTIN_COMMANDS_VIEW_CONTAINER_ID } from './commands-view-data.js';
@@ -62,9 +63,13 @@ export interface WorkbenchShellProps {
   catalogUrl?: string | undefined;
   commandHost?: false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'>;
   compactStatus?: boolean;
+  darkPreset?: DarkThemePresetId | undefined;
   editorArea?: ReactNode;
   helpContent?: ReactNode;
   helpTitle?: ReactNode;
+  lightPreset?: LightThemePresetId | undefined;
+  onDarkPresetChange?: ((preset: DarkThemePresetId) => void) | undefined;
+  onLightPresetChange?: ((preset: LightThemePresetId) => void) | undefined;
   onThemeChange?: ((theme: string) => void) | undefined;
   onLocaleChange?: ((locale: string) => void) | undefined;
   locale?: string | undefined;
@@ -88,10 +93,14 @@ export function WorkbenchShell({
   catalogUrl = '/extension-catalog.json',
   commandHost,
   compactStatus = true,
+  darkPreset,
   editorArea,
   helpContent,
   helpTitle = 'Workbench Help',
+  lightPreset,
   locale = 'en',
+  onDarkPresetChange,
+  onLightPresetChange,
   onLocaleChange,
   onThemeChange,
   onStatusItemActivate,
@@ -195,7 +204,11 @@ export function WorkbenchShell({
       ...managementCategories,
       ...createSettingsCategories(extensionRegistry, {
         activeScope: settingsScopeId,
+        darkPreset,
+        lightPreset,
         locale,
+        onDarkPresetChange,
+        onLightPresetChange,
         onLocaleChange,
         onThemeChange,
         preferenceService,
@@ -206,8 +219,12 @@ export function WorkbenchShell({
   }, [
     accountManagement,
     commandHost,
+    darkPreset,
     extensionRegistry,
+    lightPreset,
     locale,
+    onDarkPresetChange,
+    onLightPresetChange,
     onLocaleChange,
     onThemeChange,
     preferenceService,

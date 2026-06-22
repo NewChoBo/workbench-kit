@@ -1,6 +1,15 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Badge, Checkbox, Field, Select } from '@workbench-kit/react/primitives';
 import {
+  applyWorkbenchAppearance,
+  DARK_THEME_PRESET_OPTIONS,
+  LIGHT_THEME_PRESET_OPTIONS,
+  WORKBENCH_COLOR_SCHEME_OPTIONS,
+  type DarkThemePresetId,
+  type LightThemePresetId,
+  type WorkbenchColorSchemePreference,
+} from '@workbench-kit/react/workbench';
+import {
   WorkbenchSettingsSection,
   type WorkbenchSettingsCategory,
 } from '@workbench-kit/react/workbench/settings';
@@ -34,8 +43,12 @@ export interface WorkbenchLocaleOption {
 }
 
 interface WorkbenchAppearanceSettingsInput {
+  darkPreset?: DarkThemePresetId | undefined;
+  lightPreset?: LightThemePresetId | undefined;
   locale?: string | undefined;
   localeOptions?: readonly WorkbenchLocaleOption[] | undefined;
+  onDarkPresetChange?: ((preset: DarkThemePresetId) => void) | undefined;
+  onLightPresetChange?: ((preset: LightThemePresetId) => void) | undefined;
   onLocaleChange?: ((locale: string) => void) | undefined;
   onThemeChange?: ((theme: string) => void) | undefined;
   theme?: string | undefined;
@@ -51,7 +64,11 @@ export function createSettingsCategories(
   extensionRegistry: ExtensionRegistry,
   {
     activeScope,
+    darkPreset,
+    lightPreset,
     locale,
+    onDarkPresetChange,
+    onLightPresetChange,
     onLocaleChange,
     onThemeChange,
     preferenceService,
@@ -63,8 +80,12 @@ export function createSettingsCategories(
   const mergedThemeOptions = mergeThemeOptions(themeOptions, extensionRegistry.themes.getThemes());
   const localeOptions = buildLocaleOptions(extensionRegistry.localizations.getLocalizations());
   const appearanceCategory = createAppearanceSettingsCategory({
+    darkPreset,
+    lightPreset,
     locale,
     localeOptions,
+    onDarkPresetChange,
+    onLightPresetChange,
     onLocaleChange,
     onThemeChange,
     theme,
@@ -177,24 +198,37 @@ function buildLocaleOptions(
 }
 
 function createAppearanceSettingsCategory({
+  darkPreset,
+  lightPreset,
   locale,
   localeOptions,
+  onDarkPresetChange,
+  onLightPresetChange,
   onLocaleChange,
   onThemeChange,
   theme,
   themeOptions,
-}: WorkbenchAppearanceSettingsInput): WorkbenchSettingsCategory | undefined {
-  if (!themeOptions?.length && !localeOptions?.length) {
+}: WorkbenchAppearanceSettingsInput & {
+  localeOptions: readonly WorkbenchLocaleOption[];
+  themeOptions: readonly WorkbenchThemeOption[];
+}): WorkbenchSettingsCategory | undefined {
+  const usesAppearancePresets = lightPreset !== undefined && darkPreset !== undefined;
+
+  if (!usesAppearancePresets && !themeOptions?.length && !localeOptions?.length) {
     return undefined;
   }
 
   return {
     content: (
       <AppearanceSettingsSection
+        darkPreset={darkPreset}
+        lightPreset={lightPreset}
         locale={locale}
         localeOptions={localeOptions ?? []}
         theme={theme}
         themeOptions={themeOptions ?? []}
+        onDarkPresetChange={onDarkPresetChange}
+        onLightPresetChange={onLightPresetChange}
         onLocaleChange={onLocaleChange}
         onThemeChange={onThemeChange}
       />
@@ -205,8 +239,12 @@ function createAppearanceSettingsCategory({
 }
 
 function AppearanceSettingsSection({
+  darkPreset,
+  lightPreset,
   locale,
   localeOptions,
+  onDarkPresetChange,
+  onLightPresetChange,
   onLocaleChange,
   onThemeChange,
   theme,
@@ -217,8 +255,20 @@ function AppearanceSettingsSection({
 }) {
   const { extensionRegistry } = useWorkbench();
   const previousThemeOverridesRef = useRef<Readonly<Record<string, string>> | undefined>(undefined);
+  const usesAppearancePresets = lightPreset !== undefined && darkPreset !== undefined;
   const selectedTheme = themeOptions.find((option) => option.id === theme) ?? themeOptions[0];
   const selectedThemeId = selectedTheme?.id ?? '';
+  const selectedColorScheme =
+    WORKBENCH_COLOR_SCHEME_OPTIONS.find((option) => option.id === theme) ??
+    WORKBENCH_COLOR_SCHEME_OPTIONS[0];
+  const selectedColorSchemeId = (selectedColorScheme?.id ??
+    'system') as WorkbenchColorSchemePreference;
+  const selectedLightPreset =
+    LIGHT_THEME_PRESET_OPTIONS.find((option) => option.id === lightPreset) ??
+    LIGHT_THEME_PRESET_OPTIONS[0];
+  const selectedDarkPreset =
+    DARK_THEME_PRESET_OPTIONS.find((option) => option.id === darkPreset) ??
+    DARK_THEME_PRESET_OPTIONS[0];
   const selectedLocale = localeOptions.find((option) => option.id === locale) ?? localeOptions[0];
   const selectedLocaleId = selectedLocale?.id ?? 'en';
 
@@ -227,14 +277,30 @@ function AppearanceSettingsSection({
       return;
     }
 
-    const contributedTheme = extensionRegistry.themes.getTheme(selectedThemeId);
+    if (usesAppearancePresets) {
+      applyWorkbenchAppearance(document.documentElement, {
+        darkPreset: selectedDarkPreset.id,
+        lightPreset: selectedLightPreset.id,
+        themePreference: selectedColorSchemeId,
+      });
+    }
+
+    const contributedThemeId = usesAppearancePresets ? selectedColorSchemeId : selectedThemeId;
+    const contributedTheme = extensionRegistry.themes.getTheme(contributedThemeId);
     applyThemeTokenOverrides(
       document.documentElement,
       contributedTheme?.tokenOverrides,
       previousThemeOverridesRef.current,
     );
     previousThemeOverridesRef.current = contributedTheme?.tokenOverrides;
-  }, [extensionRegistry.themes, selectedThemeId]);
+  }, [
+    extensionRegistry.themes,
+    selectedColorSchemeId,
+    selectedDarkPreset.id,
+    selectedLightPreset.id,
+    selectedThemeId,
+    usesAppearancePresets,
+  ]);
 
   return (
     <WorkbenchSettingsSection
@@ -243,7 +309,71 @@ function AppearanceSettingsSection({
       description="Configure how the workbench is presented."
     >
       <div className="workbench-appearance-settings">
-        {themeOptions.length ? (
+        {usesAppearancePresets ? (
+          <>
+            <Field
+              className="workbench-appearance-settings__field"
+              label="Color scheme"
+              description="Choose System to follow the OS, or force Light or Dark mode."
+            >
+              <Select
+                aria-label="Color scheme"
+                controlWidth="full"
+                disabled={!onThemeChange}
+                value={selectedColorSchemeId}
+                onValueChange={(nextTheme) => onThemeChange?.(nextTheme)}
+              >
+                {WORKBENCH_COLOR_SCHEME_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field
+              className="workbench-appearance-settings__field"
+              label="Light preset"
+              description="Palette used when the workbench resolves to light mode."
+            >
+              <Select
+                aria-label="Light preset"
+                controlWidth="full"
+                disabled={!onLightPresetChange}
+                value={selectedLightPreset.id}
+                onValueChange={(nextPreset) =>
+                  onLightPresetChange?.(nextPreset as LightThemePresetId)
+                }
+              >
+                {LIGHT_THEME_PRESET_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field
+              className="workbench-appearance-settings__field"
+              label="Dark preset"
+              description="Palette used when the workbench resolves to dark mode."
+            >
+              <Select
+                aria-label="Dark preset"
+                controlWidth="full"
+                disabled={!onDarkPresetChange}
+                value={selectedDarkPreset.id}
+                onValueChange={(nextPreset) =>
+                  onDarkPresetChange?.(nextPreset as DarkThemePresetId)
+                }
+              >
+                {DARK_THEME_PRESET_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </>
+        ) : themeOptions.length ? (
           <Field
             className="workbench-appearance-settings__field"
             label="Color theme"

@@ -1,4 +1,5 @@
-import type { ResolvedWorkbenchTheme } from './theme';
+import { resolveWorkbenchTheme, type ResolvedWorkbenchTheme } from './theme';
+import type { WorkbenchTheme } from './standalone';
 
 export type LightThemePresetId = 'orange' | 'skyblue';
 export type DarkThemePresetId = 'navy' | 'purple' | 'modern';
@@ -6,6 +7,15 @@ export type ThemePresetId = LightThemePresetId | DarkThemePresetId;
 
 export const DEFAULT_LIGHT_THEME_PRESET: LightThemePresetId = 'skyblue';
 export const DEFAULT_DARK_THEME_PRESET: DarkThemePresetId = 'purple';
+
+export type WorkbenchColorSchemePreference = 'system' | WorkbenchTheme;
+
+export const WORKBENCH_COLOR_SCHEME_OPTIONS: WorkbenchThemePresetOption<WorkbenchColorSchemePreference>[] =
+  [
+    { id: 'system', label: 'System' },
+    { id: 'light', label: 'Light' },
+    { id: 'dark', label: 'Dark' },
+  ];
 
 export interface WorkbenchThemePresetOption<TId extends string = string> {
   id: TId;
@@ -66,4 +76,25 @@ export function applyWorkbenchThemeAttributes(
   }
 
   root.dataset.themePreset = resolveActiveThemePreset(attributes.resolvedTheme, attributes);
+}
+
+export interface WorkbenchAppearanceSettings {
+  darkPreset: DarkThemePresetId;
+  lightPreset: LightThemePresetId;
+  themePreference: WorkbenchColorSchemePreference;
+}
+
+/**
+ * Applies color scheme preference and light/dark presets to a DOM root (typically `document.documentElement`).
+ */
+export function applyWorkbenchAppearance(
+  root: HTMLElement,
+  settings: WorkbenchAppearanceSettings,
+): void {
+  applyWorkbenchThemeAttributes(root, {
+    darkPreset: settings.darkPreset,
+    lightPreset: settings.lightPreset,
+    resolvedTheme: resolveWorkbenchTheme(settings.themePreference),
+    themePreference: settings.themePreference,
+  });
 }
