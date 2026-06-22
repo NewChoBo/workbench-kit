@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EditorTabs, IconButton } from '@workbench-kit/react/primitives';
+import { StoryWorkbenchShellFrame } from '@workbench-kit/react/workbench';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import {
@@ -108,17 +109,7 @@ function EditorPaneTogglesHarness() {
   };
 
   return (
-    <div
-      className="workbench-story-shell"
-      style={{
-        background: 'var(--color-bg)',
-        color: 'var(--color-text)',
-        display: 'grid',
-        gridTemplateRows: 'auto minmax(0, 1fr) auto',
-        height: 'min(calc(100% - 96px), 520px)',
-        width: 'min(100%, 920px)',
-      }}
-    >
+    <StoryWorkbenchShellFrame variant="editor">
       <EditorTabs
         activeId="readme"
         addons={
@@ -174,7 +165,7 @@ function EditorPaneTogglesHarness() {
       >
         visible={visiblePanes}
       </div>
-    </div>
+    </StoryWorkbenchShellFrame>
   );
 }
 

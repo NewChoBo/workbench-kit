@@ -25,7 +25,7 @@ Stories tagged only `storybook-play-baseline` are broader smoke coverage; promot
 
 Runner: `scripts/test-storybook-play.mjs` — starts Storybook on port `6010` when not already running, then invokes `test-storybook` with `--includeTags`.
 
-**Required story count:** 19 before this slice → **23** after (+4: schema panel validation, chat command proposal, extension diagnostics, editor pane toggles). Sample shell integration stories are baseline-only and are **not** included in this gate.
+**Required story count:** 19 before this slice → **23** after component stories (+4: schema panel validation, chat command proposal, extension diagnostics, editor pane toggles) → **28** after sample shell integration (+5: authenticated layout, settings appearance, permission owner/viewer, extensions view). README editor toggles remain baseline-only.
 
 ## Stories with `play` functions (by area)
 
@@ -48,21 +48,26 @@ Runner: `scripts/test-storybook-play.mjs` — starts Storybook on port `6010` wh
 | `React/Workbench/Workbench Document Renderer` | Document render path |
 | `JDW/WidgetTree/Workbench`, `JDW/WidgetTree/Lab` | Widget tree lab flows |
 | `Shell React/Editor` · Pane toggles | Code / Form / Preview toolbar toggles |
+| `React/Workbench/Integration/Sample Shell` · Authenticated workbench | Virtual workspace bootstrap, explorer, editor tab, status bar |
+| `React/Workbench/Integration/Sample Shell` · Settings appearance | Settings modal → Appearance scheme/preset comboboxes |
+| `React/Workbench/Integration/Sample Shell` · Permission owner | Owner activity bar (Search, Commands, Extensions) |
+| `React/Workbench/Integration/Sample Shell` · Permission viewer | Viewer activity bar (Explorer only) |
+| `React/Workbench/Integration/Sample Shell` · Extensions view | Extensions activity → Installed catalog |
 
 ### Baseline only (representative)
 
 Shell verification matrices, command palette scenarios, structured data form (sectioned), auth sign-in, layout primitives, shell provider sidebars (`Shell React/Shell` play stories are baseline), devtools inspectors, timeline, library catalog, and other component stories with `storybook-play-baseline`.
 
-**Sample shell integration (WIP, baseline only):** `React/Workbench/Integration/Sample Shell` in `WorkbenchSampleShell.stories.tsx` — E2E-style host composition without `workbench-sample` `:5173`. Harness: `packages/shell-react/src/story/WorkbenchSampleStoryShell.tsx`. Tagged `storybook-play-baseline` only; promote to `storybook-play-required` after stable across repeated runs.
+**Sample shell integration (baseline optional):** `React/Workbench/Integration/Sample Shell` · README editor toggles in `WorkbenchSampleShell.stories.tsx` — Code/Preview toolbar on README tab. Harness: `WorkbenchSampleStoryShell.tsx`; seed: `sample-workspace.seed.ts`; play helpers: `sample-shell-play.ts`. Five other sample shell stories are in the required gate above.
 
 ## Critical flow matrix
 
 | Flow | Storybook | Gap / notes |
 | ---- | --------- | ----------- |
-| Appearance scheme + presets | Required (settings story) | Shell-level appearance via sample shell baseline (not in required gate) |
+| Appearance scheme + presets | Required (settings story + sample shell) | — |
 | Editor Code / Form / Preview toggles | Required (shell story) | Full editor-area DnD / Monaco still E2E-only |
-| Permission role demo | Baseline (sample shell owner vs viewer) | Profile/settings override UI still sample E2E |
-| Extensions view + diagnostics | Required (sidebar story) | Extensions activity in sample shell baseline (not in required gate); install/reload lifecycle needs full shell |
+| Permission role demo | Required (sample shell owner vs viewer) | Profile/settings override UI still sample E2E |
+| Extensions view + diagnostics | Required (sidebar + sample shell) | Install/reload lifecycle needs full shell |
 | Command inspector | Devtools baseline story | Dedicated inspector editor tab story optional |
 | AI chat command proposals | Required | Full `chat-view` mock runtime path in shell optional |
 | Schema form / panel validation | Required (form + panel) | Host JSON config round-trip still sample E2E |
@@ -111,9 +116,23 @@ pnpm exec serve storybook-static
 
 ## Story layout conventions
 
+Stories follow a thin file structure: **meta** (title, shared `parameters`) → **harness** (local or imported) → **story variants** with minimal `render` bodies and `play` assertions.
+
+### Harness layers
+
+| Layer | Component / module | Use when |
+| ----- | ------------------ | -------- |
+| Theme root | `WorkbenchStoryHost` | Full-shell or provider stories need document theme sync |
+| Panel shell | `StoryWorkbenchShellFrame` | Settings, sidebar, or editor-island stories (`variant`: `settings` \| `sidebar` \| `editor`) |
+| Sidebar layout | `StorySidebarFrame` | Chat, workspace explorer, search panel width/height presets |
+| Status footer | `StoryEventLog` | Harness event/status log for play assertions |
+| Integration host | `WorkbenchSampleStoryShell` + `sample-workspace.seed.ts` | Sample-app mirror without `:5173` |
+| Runtime chat | `ChatRuntimeHarness` | Mock runtime + transport wiring for `ChatPanel` plays |
+| Play helpers | `sample-shell-play.ts` | Sample shell ready gates, activity bar queries, settings modal |
+
 - Keep story definitions in `*.stories.tsx` only — avoid per-component `Foo.stories.css` files.
-- Wrap panels in shared hosts from `packages/react/src/workbench/story/`: `WorkbenchStoryHost` (theme shell), `StorySidebarFrame` (sidebar width/height presets), `StoryEventLog` (harness status footer).
-- Prefer these components over inline `style` or ad-hoc `className` layout in stories; product components should not gain story-only `style` props.
+- Prefer harness components over inline `style` or ad-hoc `className` layout; product components should not gain story-only `style` props.
+- Override integration scenarios via harness **props** (`permissionRole`, `workspaceInit`) or seed helpers (`sampleWorkspaceWithOpenPaths`, `sampleWorkspaceWithoutOpenTabs`) — not copy-pasted fixture blobs per story.
 
 ### Fixture data: when inline arrays are OK
 
@@ -122,7 +141,9 @@ pnpm exec serve storybook-static
 | **`args` + component** | Single component, few props | Most primitive stories |
 | **`render` + small harness** | Stateful wrapper around one surface | `AppearanceSettings.stories.tsx` (`AppearanceSettingsHarness`) |
 | **Per-story inline objects** | Scenario-specific mock plans (2–5 fields) | `ChatPanel.stories.tsx` (`response`, `workspacePatches`) |
-| **Shared harness module** | Full host composition (providers, virtual workspace, permissions) | `WorkbenchSampleStoryShell.tsx` |
+| **Shared runtime harness** | Mock runtime + chat transport wiring | `ChatRuntimeHarness.tsx` |
+| **Shared harness module** | Full host composition (providers, virtual workspace, permissions) | `WorkbenchSampleStoryShell.tsx`, `sample-workspace.seed.ts` |
+| **Play helpers** | Repeated ready gates and canvas queries | `sample-shell-play.ts` |
 | **Imported JSON** | Large or host-owned config trees | `examples/workbench-sample/src/bootstrap.ts` (`.workbench/*.json`) |
 
 **Default (component / panel stories):** do **not** build large inline fixture arrays in `*.stories.tsx`. Import the real component, use `args` or a thin `render` harness, and keep scenario data next to the story (small objects only).

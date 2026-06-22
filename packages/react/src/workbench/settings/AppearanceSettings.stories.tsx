@@ -4,6 +4,10 @@ import { expect, screen, userEvent, within } from 'storybook/test';
 import { Field } from '../../primitives/Field';
 import { Select } from '../../primitives/Select';
 import {
+  StoryWorkbenchShellFrame,
+  WORKBENCH_STORY_SHELL_CLASS,
+} from '../story/StoryWorkbenchShellFrame';
+import {
   applyWorkbenchAppearance,
   DARK_THEME_PRESET_OPTIONS,
   DEFAULT_DARK_THEME_PRESET,
@@ -144,16 +148,7 @@ function AppearanceSettingsHarness() {
   }, [appearance]);
 
   return (
-    <div
-      ref={rootRef}
-      className="workbench-story-shell"
-      style={{
-        background: 'var(--color-bg)',
-        color: 'var(--color-text)',
-        minHeight: 640,
-        padding: 24,
-      }}
-    >
+    <StoryWorkbenchShellFrame ref={rootRef} variant="settings">
       <div
         aria-label="Appearance state"
         role="status"
@@ -168,7 +163,7 @@ function AppearanceSettingsHarness() {
           onAppearanceChange={setAppearance}
         />
       </div>
-    </div>
+    </StoryWorkbenchShellFrame>
   );
 }
 
@@ -187,7 +182,7 @@ export const SchemeAndPresets: Story = {
   render: () => <AppearanceSettingsHarness />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const root = canvasElement.querySelector('.workbench-story-shell');
+    const root = canvasElement.querySelector(`.${WORKBENCH_STORY_SHELL_CLASS}`);
 
     await expect(canvas.getByRole('heading', { name: 'Appearance' })).toBeVisible();
     await expect(canvas.getByLabelText('Appearance state')).toHaveTextContent('scheme=system');

@@ -51,3 +51,27 @@
 .ui-story-event-log--compact {
   min-height: 36px;
 }
+
+.ui-story-workbench-shell {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.ui-story-workbench-shell--settings {
+  min-height: 640px;
+  padding: 24px;
+}
+
+.ui-story-workbench-shell--sidebar {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: min(calc(100% - 96px), 640px);
+  width: min(100%, 420px);
+}
+
+.ui-story-workbench-shell--editor {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: min(calc(100% - 96px), 520px);
+  width: min(100%, 920px);
+}

@@ -4,6 +4,8 @@ import { expect, userEvent, within } from 'storybook/test';
 
 import { ExtensionManagementSidebar } from './ExtensionManagementSidebar';
 import type { ExtensionCatalogBrowseEntry, ExtensionManagementEntry } from './types';
+import { StoryEventLog } from '../story/StorySidebarFrame';
+import { StoryWorkbenchShellFrame } from '../story/StoryWorkbenchShellFrame';
 
 const meta = {
   title: 'React/Workbench/Management/Extension Sidebar',
@@ -63,17 +65,7 @@ function ExtensionSidebarHarness() {
   const [installedEntries, setInstalledEntries] = useState(installedFixture);
 
   return (
-    <div
-      className="workbench-story-shell"
-      style={{
-        background: 'var(--color-bg)',
-        color: 'var(--color-text)',
-        display: 'grid',
-        gridTemplateRows: 'minmax(0, 1fr) auto',
-        height: 'min(calc(100% - 96px), 640px)',
-        width: 'min(100%, 420px)',
-      }}
-    >
+    <StoryWorkbenchShellFrame variant="sidebar">
       <ExtensionManagementSidebar
         browseEntries={marketplaceFixture}
         defaultTab="installed"
@@ -87,14 +79,8 @@ function ExtensionSidebarHarness() {
           setEventLog(`${enabled ? 'Enable' : 'Disable'} requested: ${entry.id}`);
         }}
       />
-      <div
-        aria-label="Extension sidebar event log"
-        role="status"
-        style={{ borderTop: '1px solid var(--color-border)', fontSize: 12, padding: 8 }}
-      >
-        {eventLog}
-      </div>
-    </div>
+      <StoryEventLog aria-label="Extension sidebar event log">{eventLog}</StoryEventLog>
+    </StoryWorkbenchShellFrame>
   );
 }
 

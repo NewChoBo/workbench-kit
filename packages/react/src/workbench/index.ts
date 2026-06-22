@@ -112,6 +112,14 @@ export type {
   StorySidebarFrameProps,
   StorySidebarFrameVariant,
 } from './story/StorySidebarFrame';
+export {
+  StoryWorkbenchShellFrame,
+  WORKBENCH_STORY_SHELL_CLASS,
+} from './story/StoryWorkbenchShellFrame';
+export type {
+  StoryWorkbenchShellFrameProps,
+  StoryWorkbenchShellFrameVariant,
+} from './story/StoryWorkbenchShellFrame';
 export { ChatRuntimeHarness } from './story/ChatRuntimeHarness';
 export type { ChatRuntimeHarnessProps } from './story/ChatRuntimeHarness';
 export {

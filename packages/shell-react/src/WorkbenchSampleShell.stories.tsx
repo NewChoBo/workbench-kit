@@ -1,17 +1,25 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+import { expect, screen, userEvent, within } from 'storybook/test';
 
+import {
+  createSampleShellCanvas,
+  getPrimaryActivityLabels,
+  openSettingsModal,
+  waitForSampleShellReady,
+} from './story/sample-shell-play.js';
 import {
   SAMPLE_EXAMPLE_JDW_PATH,
   SAMPLE_README_PATH,
-  sampleVirtualWorkspace,
   WorkbenchSampleStoryShell,
+  sampleWorkspaceWithOpenPaths,
+  sampleWorkspaceWithoutOpenTabs,
 } from './story/WorkbenchSampleStoryShell.js';
 
 const meta = {
   title: 'React/Workbench/Integration/Sample Shell',
   parameters: {
     layout: 'fullscreen',
+    fullHeightShell: '100vh',
     storybookGrid: { enabled: false },
     test: {
       timeout: 60_000,
@@ -29,43 +37,9 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-async function waitForSampleShellReady(canvas: ReturnType<typeof within>) {
-  await waitFor(
-    () => {
-      expect(canvas.getByRole('navigation', { name: 'Activity bar' })).toBeVisible();
-    },
-    { timeout: 60_000 },
-  );
-  await canvas.findByLabelText('Workspace Explorer', {}, { timeout: 30_000 });
-  await waitFor(() => {
-    expect(canvas.queryByText('Preparing workbench')).toBeNull();
-  });
-}
-
-function getPrimaryActivityLabels(canvas: ReturnType<typeof within>): string[] {
-  const activityBar = canvas.getByRole('navigation', { name: 'Activity bar' });
-  return within(activityBar)
-    .getAllByRole('button')
-    .map((button) => button.getAttribute('aria-label'))
-    .filter((label): label is string => Boolean(label));
-}
-
-async function openSettingsModal(canvas: ReturnType<typeof within>) {
-  await userEvent.click(
-    await canvas.findByRole('button', { name: 'Settings' }, { timeout: 30_000 }),
-  );
-  await waitFor(
-    async () => {
-      expect(screen.getByRole('dialog')).toBeVisible();
-    },
-    { timeout: 30_000 },
-  );
-}
-
 export const AuthenticatedWorkbench: Story = {
   name: 'Sample / Authenticated workbench',
   parameters: {
-    fullHeightShell: '100vh',
     docs: {
       description: {
         story:
@@ -75,7 +49,7 @@ export const AuthenticatedWorkbench: Story = {
   },
   render: () => <WorkbenchSampleStoryShell />,
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+    const canvas = createSampleShellCanvas(canvasElement);
 
     await waitForSampleShellReady(canvas);
     await expect(canvas.getByRole('button', { name: 'Explorer' })).toHaveAttribute(
@@ -89,13 +63,12 @@ export const AuthenticatedWorkbench: Story = {
     await expect(canvas.getByLabelText('Editor area')).toBeVisible();
     await expect(canvas.getByLabelText('Status bar')).toBeVisible();
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const SettingsAppearance: Story = {
   name: 'Sample / Settings appearance',
   parameters: {
-    fullHeightShell: '100vh',
     docs: {
       description: {
         story: 'Opens the settings modal and verifies Appearance scheme and preset controls.',
@@ -104,7 +77,7 @@ export const SettingsAppearance: Story = {
   },
   render: () => <WorkbenchSampleStoryShell />,
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+    const canvas = createSampleShellCanvas(canvasElement);
 
     await waitForSampleShellReady(canvas);
     await openSettingsModal(canvas);
@@ -115,13 +88,12 @@ export const SettingsAppearance: Story = {
     await expect(within(dialog).getByRole('combobox', { name: 'Light theme preset' })).toBeVisible();
     await expect(within(dialog).getByRole('combobox', { name: 'Dark theme preset' })).toBeVisible();
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const PermissionOwnerActivityBar: Story = {
   name: 'Sample / Permission owner',
   parameters: {
-    fullHeightShell: '100vh',
     docs: {
       description: {
         story:
@@ -131,7 +103,7 @@ export const PermissionOwnerActivityBar: Story = {
   },
   render: () => <WorkbenchSampleStoryShell permissionRole="owner" />,
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+    const canvas = createSampleShellCanvas(canvasElement);
 
     await waitForSampleShellReady(canvas);
     const labels = getPrimaryActivityLabels(canvas);
@@ -142,13 +114,12 @@ export const PermissionOwnerActivityBar: Story = {
     await expect(canvas.getByRole('button', { name: 'Search' })).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Extensions' })).toBeVisible();
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const PermissionViewerActivityBar: Story = {
   name: 'Sample / Permission viewer',
   parameters: {
-    fullHeightShell: '100vh',
     docs: {
       description: {
         story:
@@ -158,7 +129,7 @@ export const PermissionViewerActivityBar: Story = {
   },
   render: () => <WorkbenchSampleStoryShell permissionRole="viewer" />,
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+    const canvas = createSampleShellCanvas(canvasElement);
 
     await waitForSampleShellReady(canvas);
     const labels = getPrimaryActivityLabels(canvas);
@@ -168,13 +139,12 @@ export const PermissionViewerActivityBar: Story = {
     await expect(canvas.queryByRole('button', { name: 'Extensions' })).toBeNull();
     await expect(canvas.queryByRole('button', { name: 'Settings' })).toBeNull();
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const ExtensionsView: Story = {
   name: 'Sample / Extensions view',
   parameters: {
-    fullHeightShell: '100vh',
     docs: {
       description: {
         story: 'Switches to the extensions activity and verifies the installed extension catalog.',
@@ -184,14 +154,11 @@ export const ExtensionsView: Story = {
   render: () => (
     <WorkbenchSampleStoryShell
       permissionRole="owner"
-      workspaceInit={{
-        ...sampleVirtualWorkspace,
-        openPaths: [],
-      }}
+      workspaceInit={sampleWorkspaceWithoutOpenTabs()}
     />
   ),
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+    const canvas = createSampleShellCanvas(canvasElement);
 
     await waitForSampleShellReady(canvas);
     await userEvent.click(canvas.getByRole('button', { name: 'Extensions' }));
@@ -209,13 +176,12 @@ export const ExtensionsView: Story = {
     expect(within(installedList).getAllByText('Explorer').length).toBeGreaterThanOrEqual(1);
     expect(within(installedList).getAllByText('Search').length).toBeGreaterThanOrEqual(1);
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const ReadmeEditorPaneToggles: Story = {
   name: 'Sample / README editor toggles',
   parameters: {
-    fullHeightShell: '100vh',
     docs: {
       description: {
         story:
@@ -224,15 +190,10 @@ export const ReadmeEditorPaneToggles: Story = {
     },
   },
   render: () => (
-    <WorkbenchSampleStoryShell
-      workspaceInit={{
-        ...sampleVirtualWorkspace,
-        openPaths: [SAMPLE_README_PATH],
-      }}
-    />
+    <WorkbenchSampleStoryShell workspaceInit={sampleWorkspaceWithOpenPaths([SAMPLE_README_PATH])} />
   ),
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+    const canvas = createSampleShellCanvas(canvasElement);
 
     await waitForSampleShellReady(canvas);
     await expect(
