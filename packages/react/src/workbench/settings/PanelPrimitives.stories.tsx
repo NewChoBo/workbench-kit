@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, within } from 'storybook/test';
 import { Badge } from '../../primitives/Badge';
 import { Field } from '../../primitives/Field';
 import { TextInput } from '../../primitives/TextInput';
@@ -119,4 +119,89 @@ export const StructuredDataSchemaPanel: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByLabelText('Name')).toHaveValue('Workbench Kit');
   },
+};
+
+const schemaControlsDocument: WorkbenchStructuredDataSchemaDocument = {
+  schema: {
+    properties: {
+      'theme.accent': { format: 'color', title: 'Accent color', type: 'string' },
+      'theme.align': { enum: ['left', 'center', 'right'], title: 'Alignment', type: 'string' },
+      'theme.status': {
+        enum: ['draft', 'published', 'archived', 'retired', 'deleted'],
+        enumNames: ['Draft', 'Published', 'Archived', 'Retired', 'Deleted'],
+        title: 'Status',
+        type: 'string',
+      },
+      'theme.code': { pattern: '^[A-Z]{3}$', title: 'Region code', type: 'string' },
+    },
+    sections: [
+      {
+        fields: ['accent', 'align', 'status', 'code'],
+        sectionKey: 'theme',
+        title: 'Theme',
+        type: 'form',
+      },
+    ],
+  },
+};
+
+function SchemaPanelControlsHarness() {
+  const [data, setData] = useState({
+    theme: {
+      accent: '#3366ff',
+      align: 'left',
+      code: 'KOR',
+      status: 'draft',
+    },
+  });
+
+  return (
+    <div
+      className="workbench-story-shell"
+      style={{ background: 'var(--color-bg)', height: 560, minHeight: 560 }}
+    >
+      <WorkbenchStructuredDataSchemaPanel
+        ariaLabel="Schema controls panel"
+        data={data}
+        schema={schemaControlsDocument}
+        onDataChange={(nextData) => setData(nextData as typeof data)}
+      />
+    </div>
+  );
+}
+
+export const SchemaPanelColorEnumValidation: Story = {
+  name: 'Schema panel / Color, enum & validation',
+  render: () => <SchemaPanelControlsHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByRole('heading', { name: 'Theme' })).toBeVisible();
+    await expect(canvas.getByText('Accent color')).toBeVisible();
+
+    const colorInput = canvasElement.querySelector<HTMLInputElement>('input[type="color"]');
+    expect(colorInput).toBeTruthy();
+    await expect(colorInput!).toHaveValue('#3366ff');
+
+    await expect(canvas.getByRole('button', { name: 'left', pressed: true })).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'center' }));
+    await expect(canvas.getByRole('button', { name: 'center', pressed: true })).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('combobox', { name: 'Status' }));
+    await userEvent.click(screen.getByRole('option', { name: 'Published' }));
+    await expect(canvas.getByRole('combobox', { name: 'Status' })).toHaveTextContent('Published');
+
+    const regionCode = canvas.getByRole('textbox', { name: 'Region code' });
+    await userEvent.clear(regionCode);
+    await userEvent.type(regionCode, 'abc');
+    await userEvent.tab();
+    await expect(canvas.getByText('Value does not match the required format.')).toBeVisible();
+
+    await userEvent.clear(regionCode);
+    await userEvent.type(regionCode, 'USA');
+    await userEvent.tab();
+    await expect(canvas.queryByText('Value does not match the required format.')).toBeNull();
+  },
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };

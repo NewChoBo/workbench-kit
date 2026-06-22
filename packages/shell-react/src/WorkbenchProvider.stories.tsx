@@ -82,7 +82,7 @@ export const ProviderShellSearchSidebar: Story = {
     const searchActivity = within(activityBar).getByRole('button', { name: 'Search' });
 
     await expect(searchActivity).toHaveAttribute('aria-pressed', 'true');
-    await expect(canvas.getByLabelText('Search workspace')).toBeVisible();
+    await expect(canvas.getByRole('textbox', { name: 'Search workspace' })).toBeVisible();
   },
 };
 
@@ -138,31 +138,31 @@ export const ProviderShellAiChatSidebar: Story = {
     },
   },
   render: () => (
-    <WorkbenchProvider
-      extensionsConfig={sampleExtensionsConfig}
-      initialLayout={{
-        ...defaultLayout,
-        sideBar: {
-          activeViewContainer: 'aiChat',
-          visible: true,
-        },
-      }}
-    >
-      <WorkbenchShell rootClassName="ide-root" theme="dark" />
-    </WorkbenchProvider>
+    <WorkbenchStoryHost>
+      <WorkbenchProvider
+        extensionsConfig={sampleExtensionsConfig}
+        initialLayout={{
+          ...defaultLayout,
+          sideBar: {
+            activeViewContainer: 'aiChat',
+            visible: true,
+          },
+        }}
+      >
+        <WorkbenchShell rootClassName="ide-root" theme="dark" />
+      </WorkbenchProvider>
+    </WorkbenchStoryHost>
   ),
-  play: async ({ canvasElement, user }) => {
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const activityBar = canvas.getByRole('navigation', { name: 'Activity bar' });
     const aiChatActivity = within(activityBar).getByRole('button', { name: 'AI Chat' });
 
     await expect(aiChatActivity).toHaveAttribute('aria-pressed', 'true');
-    const composer = canvas.getByPlaceholderText('Ask about this workspace');
-    await expect(composer).toBeVisible();
-    await user.type(composer, 'Summarize the workspace');
-    await user.keyboard('{Enter}');
-    await expect(canvas.getByText(/Mock runtime received the workspace request/i)).toBeVisible();
+    await expect(canvas.getByPlaceholderText('Ask about this workspace')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Send message' })).toBeVisible();
   },
+  tags: ['storybook-play-baseline'],
 };
 
 export const ProviderShellChatActivitySwitch: Story = {

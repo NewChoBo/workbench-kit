@@ -19,7 +19,7 @@ import type {
 } from '@workbench-kit/contracts';
 import { createDemoRuntimeServices } from '../demo/demoRuntimeServices';
 import { ChatPanel } from './ChatPanel';
-import type { ChatMessage } from './types';
+import type { ChatMessage, ChatCommandProposalStatus } from './types';
 
 const meta = {
   title: 'React/Workbench/Chat/ChatPanel',
@@ -338,6 +338,112 @@ export const WorkspacePatchRuntimeFlow: Story = {
     );
     await expect(canvas.getByLabelText('Runtime event log')).toHaveTextContent('Runtime idle');
   },
+};
+
+function CommandProposalHarness() {
+  const [eventLog, setEventLog] = useState('Ready');
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      commandProposals: [
+        {
+          args: ['soft'],
+          commandId: 'workbench.action.reloadWindow',
+          description: 'Reloads the workbench to apply extension changes.',
+          id: 'proposal-reload',
+          label: 'Reload workbench',
+          policy: 'approval-required',
+          status: 'pending',
+        },
+      ],
+      content: 'I can reload the workbench to apply pending extension changes.',
+      id: 'assistant-proposal',
+      source: 'assistant',
+    },
+  ]);
+
+  const updateProposalStatus = (
+    messageId: string,
+    proposalId: string,
+    status: ChatCommandProposalStatus,
+  ) => {
+    setMessages((current) =>
+      current.map((message) => {
+        if (message.id !== messageId || !message.commandProposals) {
+          return message;
+        }
+
+        return {
+          ...message,
+          commandProposals: message.commandProposals.map((proposal) =>
+            proposal.id === proposalId ? { ...proposal, status } : proposal,
+          ),
+        };
+      }),
+    );
+  };
+
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateRows: '1fr auto',
+        height: 'min(calc(100% - 120px), 520px)',
+        width: 'min(100%, 420px)',
+      }}
+    >
+      <ChatPanel
+        assistantLabel="Assistant"
+        messages={messages}
+        placeholder="Ask the assistant"
+        title="Command proposals"
+        value=""
+        onCommandProposalAllow={(messageId, proposal) => {
+          updateProposalStatus(messageId, proposal.id, 'allowed');
+          setEventLog(`Allowed ${proposal.commandId}`);
+        }}
+        onCommandProposalDeny={(messageId, proposal) => {
+          updateProposalStatus(messageId, proposal.id, 'denied');
+          setEventLog(`Denied ${proposal.commandId}`);
+        }}
+        onSubmit={() => undefined}
+        onValueChange={() => undefined}
+      />
+      <div
+        aria-label="Proposal event log"
+        role="status"
+        style={{
+          borderTop: '1px solid var(--color-border)',
+          color: 'var(--color-text-muted)',
+          font: '12px/1.4 var(--font-mono)',
+          minHeight: 36,
+          padding: 8,
+        }}
+      >
+        {eventLog}
+      </div>
+    </div>
+  );
+}
+
+export const CommandProposalFlow: Story = {
+  name: 'Chat / Command proposal allow-deny',
+  render: () => <CommandProposalHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const eventLog = canvas.getByLabelText('Proposal event log');
+
+    await expect(canvas.getByText('Reload workbench')).toBeVisible();
+    await expect(canvas.getByText('workbench.action.reloadWindow')).toBeVisible();
+    await expect(canvas.getByText('Approval required')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Allow' })).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Deny' })).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Allow' }));
+    await expect(eventLog).toHaveTextContent('Allowed workbench.action.reloadWindow');
+    await expect(canvas.getByText('Allowed')).toBeVisible();
+    await expect(canvas.queryByRole('button', { name: 'Allow' })).toBeNull();
+  },
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
 };
 
 export const ErrorTransportFlow: Story = {
