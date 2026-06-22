@@ -6,12 +6,18 @@ export type ResolvedWorkbenchTheme = 'dark' | 'light';
 const LIGHT_QUERY = '(prefers-color-scheme: light)';
 
 function getSystemTheme(): ResolvedWorkbenchTheme {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'dark';
+  }
+
   return window.matchMedia(LIGHT_QUERY).matches ? 'light' : 'dark';
 }
 
 function subscribeToSystemTheme(onChange: () => void): () => void {
-  if (typeof window === 'undefined') return () => undefined;
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return () => undefined;
+  }
+
   const mediaQuery = window.matchMedia(LIGHT_QUERY);
   mediaQuery.addEventListener('change', onChange);
   return () => mediaQuery.removeEventListener('change', onChange);

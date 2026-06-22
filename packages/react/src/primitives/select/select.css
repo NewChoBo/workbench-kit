@@ -27,9 +27,9 @@
   height: var(--ui-select-trigger-height, 26px);
   min-width: 0;
   padding: 0 28px 0 8px;
-  color: var(--vscode-input-foreground, var(--color-text));
-  background: var(--vscode-input-background, var(--color-surface));
-  border: 1px solid var(--vscode-input-border, var(--color-border));
+  color: var(--color-input-text, var(--vscode-input-foreground, var(--color-text)));
+  background: var(--color-input-bg, var(--vscode-input-background, var(--color-surface-elevated)));
+  border: 1px solid var(--color-input-border, var(--vscode-input-border, var(--color-border)));
   border-radius: var(--ui-select-trigger-radius, 0);
   outline: none;
   font: inherit;

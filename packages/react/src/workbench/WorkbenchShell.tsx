@@ -28,6 +28,7 @@ export interface WorkbenchShellProps {
   titleBar?: ReactNode;
   overlays?: ReactNode;
   theme?: string;
+  themePreset?: string;
 }
 
 export function WorkbenchShell({
@@ -42,6 +43,7 @@ export function WorkbenchShell({
   statusSections,
   titleBar,
   theme,
+  themePreset,
 }: WorkbenchShellProps) {
   const primarySidebarSizePercent =
     primarySidebar?.onSizePercentChange !== undefined
@@ -69,6 +71,7 @@ export function WorkbenchShell({
     <div
       className={rootClassName}
       data-theme={theme}
+      data-theme-preset={themePreset}
       style={rootStyle}
       onContextMenu={suppressNativeBrowserContextMenu}
     >

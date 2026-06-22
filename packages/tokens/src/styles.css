@@ -18,6 +18,9 @@
   --color-accent-hover: #388bfd;
   --color-accent-foreground: #ffffff;
   --color-focus-border: #2f81f7;
+  --color-input-bg: var(--color-surface-elevated);
+  --color-input-border: var(--color-border);
+  --color-input-text: var(--color-text);
   --color-danger: #da3633;
   --color-danger-hover: #f85149;
   --file-icon-archive: #a9b4c0;
@@ -62,6 +65,9 @@
   --color-accent-hover: #0860ca;
   --color-accent-foreground: #ffffff;
   --color-focus-border: #0969da;
+  --color-input-bg: var(--color-surface-elevated);
+  --color-input-border: var(--color-border);
+  --color-input-text: var(--color-text);
   --color-danger: #cf222e;
   --color-danger-hover: #a40e26;
   --file-icon-archive: #57606a;

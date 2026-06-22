@@ -15,6 +15,10 @@ import { WORKBENCH_SETTINGS_CAPABILITY_ID } from '@workbench-kit/workbench-core'
 import type { WorkbenchSettingsCapability } from '@workbench-kit/workbench-core';
 import { isPreferenceScope, type PreferenceScope } from '@workbench-kit/workbench-config';
 import type { DarkThemePresetId, LightThemePresetId } from '@workbench-kit/react/workbench';
+import {
+  resolveActiveThemePreset,
+  useResolvedWorkbenchTheme,
+} from '@workbench-kit/react/workbench';
 
 import { EditorArea } from './editor-area.js';
 import { BUILTIN_COMMANDS_VIEW_CONTAINER_ID } from './commands-view-data.js';
@@ -116,6 +120,11 @@ export function WorkbenchShell({
   titleMeta,
 }: WorkbenchShellProps) {
   const resolvedEditorArea = editorArea ?? <EditorArea />;
+  const resolvedWorkbenchTheme = useResolvedWorkbenchTheme(theme ?? 'system');
+  const activeThemePreset =
+    lightPreset !== undefined && darkPreset !== undefined
+      ? resolveActiveThemePreset(resolvedWorkbenchTheme, { darkPreset, lightPreset })
+      : undefined;
   const {
     executeCommand,
     extensionRegistry,
@@ -415,7 +424,8 @@ export function WorkbenchShell({
       secondaryArea={resolvedEditorArea}
       statusSections={resolvedStatusSections}
       titleBar={resolvedTitleBar}
-      theme={theme}
+      theme={resolvedWorkbenchTheme}
+      themePreset={activeThemePreset}
       overlays={
         <>
           {commandHost !== false ? (
