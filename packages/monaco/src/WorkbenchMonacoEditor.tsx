@@ -82,23 +82,22 @@ export function WorkbenchMonacoEditor({
   );
 
   return (
-    <div className={className}>
-      <Editor
-        beforeMount={handleBeforeMount}
-        height={height}
-        language={language}
-        loading={loading}
-        options={{
-          ...defaultEditorOptions,
-          ...options,
-          readOnly,
-        }}
-        path={path}
-        theme={monacoThemeForWorkspaceTheme(theme)}
-        value={value}
-        onChange={(nextValue) => onChange?.(nextValue ?? '')}
-        onMount={onMount}
-      />
-    </div>
+    <Editor
+      className={className}
+      beforeMount={handleBeforeMount}
+      height={height}
+      language={language}
+      loading={loading}
+      options={{
+        ...defaultEditorOptions,
+        ...options,
+        readOnly,
+      }}
+      path={path}
+      theme={monacoThemeForWorkspaceTheme(theme)}
+      value={value}
+      onChange={(nextValue) => onChange?.(nextValue ?? '')}
+      onMount={onMount}
+    />
   );
 }
