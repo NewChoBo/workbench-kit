@@ -11,6 +11,14 @@ pnpm validate:static
 
 Package manager is **pnpm** only. Root scripts delegate tooling through pnpm.
 
+## Workspace isolation (consumer apps)
+
+Workbench Kit is a **library**; host applications consume published or linked packages. A **consumer monorepo must not include this repository’s `packages/*` in its own `pnpm-workspace.yaml`** — that merges installs and can symlink React, `@types/react`, and peers from the host into this repo’s `node_modules`.
+
+- Run `pnpm install` only from the **workbench-kit repository root** when working on this repo.
+- Host apps should depend on `@workbench-kit/*` via `link:` / `file:` / published npm versions, not by absorbing packages into the host workspace.
+- `pnpm check:workspace-isolation` fails when any `node_modules` symlink resolves outside this repository.
+
 ## Before you change code
 
 1. Read surrounding code and match existing naming, exports, and validation lanes.
