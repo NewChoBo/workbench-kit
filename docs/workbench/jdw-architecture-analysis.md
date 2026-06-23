@@ -1,6 +1,6 @@
 # JDW Architecture Analysis
 
-> **Status:** Analysis (2026-06-16)  
+> **Status:** Analysis (updated 2026-06-23)
 > **Profile:** `workbench-jdw-react-v1`  
 > **Scope:** `@workbench-kit/jdw` + `@workbench-kit/react/jdw`
 
@@ -14,7 +14,18 @@ The workbench-kit JDW stack already implements a **self-owned, CSS-based render 
 
 **Custom HTML tags** should be supported **conditionally**: via registry metadata and allowlisted semantic tags—not free-form tag strings in JSON. Custom components map to registry `type` entries with vetted `build()` functions.
 
-**Gaps vs Flutter mental model:** no unified recursive `renderJsonWidget`; dual render paths; `${variable}` / `listen` deferred; partial alignment/flex parity; `stack` layout exists but no builtin registry entry.
+**Gaps vs Flutter mental model:** no unified recursive `renderJsonWidget`; `${variable}` resolves only from explicit render/preview values and `listen` has dependency analysis, editor warnings, value-diff driven preview invalidation candidates, but no runtime scheduler; full Flutter builder parity is still incomplete. Static authoring now covers recursive JDW schema, semantic validation, alignment-aware layout including `expanded`/`flexible` fit, registry measurement hooks for static leaves, stack/wrapper/static leaf preview, invalid preview/save gating, and a single preview layout strategy.
+
+### 2026-06-23 backup branch reference assessment
+
+The disposable `backup/workspace-codex` branch was useful as a direction signal, not as a patch source. The durable principles brought forward were:
+
+- Treat JDW support as a coherent contract: profile support table, static schema files, Monaco schema, validator, registry metadata, preview renderer, and inspector must agree on the same type set.
+- Block unsafe or invalid documents at product boundaries: `JdwPreview`, widget save, and Monaco problems should all use semantic validation, not parse-only checks.
+- Close Flutter JDW parity gaps first for static authoring: `stack`, single-child wrappers (`container`, `padding`, `align`, `center`, `sized_box`), static leaves (`image`, `icon`, `button`), and row/column alignment are higher-value than broad Storybook or theme churn.
+- Prefer headless layout/test coverage in `@workbench-kit/jdw`; React surfaces should consume that result instead of duplicating layout math.
+
+Applied slice on the current branch: support metadata, recursive source and published schemas, per-type schema files with `check:jdw-schemas`, validator, linear/wrapper/flexible-fit layout, registry intrinsic measurement for static leaves, static leaf rendering, Strategy A preview unification, preview selection paths, stack/flex placement inspector, asset insert selection, invalid-save gating, first-pass `${var}` value resolution for render/preview, schema allowance for exact dynamic scalar expressions, headless dynamic dependency / listen binding analysis, source editor warnings for `listen` mismatches, and value-diff driven preview invalidation candidate reporting. Not carried forward: branch-wide Storybook/fixture churn, package deletions, unrelated theme/sample rewrites, and commit history.
 
 ---
 
@@ -69,18 +80,18 @@ flowchart TB
 
 ### Component responsibility table
 
-| Stage        | Module                                                      | Package                    | Role                                                   |
-| ------------ | ----------------------------------------------------------- | -------------------------- | ------------------------------------------------------ |
-| Parse        | `parseJsonWidgetData`, `jdwNodeToGenericWidget`             | `@workbench-kit/jdw`       | JDW v7 envelope; nested `args.children` / `args.child` |
-| Validate     | `validateJsonWidgetData`                                    | `@workbench-kit/jdw`       | Per-type semantic checks; optional `strictKnownTypes`  |
-| Document     | `createWidgetDocument`, `applyWidgetDocumentPatch`          | `@workbench-kit/jdw`       | Editor round-trip via `GenericWidget`                  |
-| Normalize    | `normalizeWidgetSubtree`, `materializeWidgetPlacementAsset` | `@workbench-kit/jdw`       | Placement policy on insert                             |
-| Layout       | `layoutWidget`, `linear/grid/stack`                         | `@workbench-kit/jdw`       | Headless rect tree                                     |
-| Screen spec  | `compileScreenSpecToJdwNode`                                | `@workbench-kit/jdw`       | Alternate DSL → JDW nodes                              |
-| Render entry | `renderJdw`, `JdwPreview`                                   | `@workbench-kit/react/jdw` | Parse + optional registry                              |
-| CSS backend  | `renderJdwWithLayout`, `renderCssLayoutTree`                | `@workbench-kit/react/jdw` | Layout rects → absolute CSS                            |
-| Registry     | `createBuiltinJdwRegistry`, `BUILTIN_JDW_REGISTRY`          | `@workbench-kit/react/jdw` | `type` → `build()` for leaves                          |
-| Builtins     | `renderBuiltinWidgetNode`, `renderBuiltinWidgetLeaf`        | `@workbench-kit/react/jdw` | Flex/grid CSS fallback (registry path)                 |
+| Stage        | Module                                                      | Package                    | Role                                                                  |
+| ------------ | ----------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------- |
+| Parse        | `parseJsonWidgetData`, `jdwNodeToGenericWidget`             | `@workbench-kit/jdw`       | JDW v7 envelope; nested `args.children` / `args.child`                |
+| Validate     | `validateJsonWidgetData`                                    | `@workbench-kit/jdw`       | Per-type semantic checks; optional `strictKnownTypes`                 |
+| Document     | `createWidgetDocument`, `applyWidgetDocumentPatch`          | `@workbench-kit/jdw`       | Editor round-trip via `GenericWidget`                                 |
+| Normalize    | `normalizeWidgetSubtree`, `materializeWidgetPlacementAsset` | `@workbench-kit/jdw`       | Placement policy on insert                                            |
+| Layout       | `layoutWidget`, `linear/grid/stack`                         | `@workbench-kit/jdw`       | Headless rect tree                                                    |
+| Screen spec  | `compileScreenSpecToJdwNode`                                | `@workbench-kit/jdw`       | Alternate DSL → JDW nodes                                             |
+| Render entry | `renderJdw`, `JdwPreview`                                   | `@workbench-kit/react/jdw` | Parse + optional registry                                             |
+| CSS backend  | `renderJdwWithLayout`, `renderCssLayoutTree`                | `@workbench-kit/react/jdw` | Layout rects → absolute CSS                                           |
+| Registry     | `createBuiltinJdwRegistry`, `BUILTIN_JDW_REGISTRY`          | `@workbench-kit/react/jdw` | `type` → `build()` for leaves                                         |
+| Builtins     | `renderBuiltinWidgetNode`, `renderBuiltinWidgetLeaf`        | `@workbench-kit/react/jdw` | Leaf-only registry fallback; container layout stays in `layoutWidget` |
 
 ---
 
@@ -127,9 +138,9 @@ graph LR
 
 ## 4. CSS Render Backend Deep Dive
 
-### Two coexisting render strategies
+### Render strategy
 
-**Strategy A — Layout backend (primary in `JdwPreview`):**
+**Strategy A — Layout backend (primary and only container preview path in `JdwPreview`):**
 
 ```127:134:packages/react/src/jdw/cssRenderBackend.tsx
 export function renderJdwWithLayout(
@@ -146,32 +157,32 @@ export function renderJdwWithLayout(
 - Leaves → registry `build()` or `renderBuiltinWidgetLeaf` fallback.
 - All host elements are hardcoded `div` / `span` with `data-widget-type` attributes.
 
-**Strategy B — Registry recursive flex/grid (`renderBuiltinWidgetNode`):**
+**Leaf registry build path:**
 
-- Used when registry `build()` is invoked for container types.
-- Uses native CSS `display: flex` / `display: grid` recursively—not layout engine rects.
-- Creates a **second layout mental model** inside the same preview when registry handles containers.
+- Builtin registry `build()` functions are kept leaf-only (`text`, `image`, `icon`, `button`, etc.).
+- Container nodes (`row`, `column`, `grid`, `stack`, wrappers) are always positioned from the headless layout result tree.
+- The legacy `renderBuiltinWidgetNode` export remains as a leaf-only compatibility hook; it no longer performs recursive flex/grid container layout.
 
 ### Design implication
 
-The CSS backend achieves a **canvas-like, Flutter-layout-parity preview** (single rect tree, design-surface friendly). Registry builders remain useful for **leaf customization** and future `renderJsonWidget`-style recursion, but container types should not mix both strategies in one tree without explicit mode selection.
+The CSS backend achieves a **canvas-like, Flutter-layout-parity preview** (single rect tree, design-surface friendly). Registry builders remain useful for **leaf customization** and future `renderJsonWidget`-style recursion, but built-in container layout is centralized in `layoutWidget` so authoring overlays and preview agree on the same geometry.
 
 ---
 
 ## 5. Flutter JSON Dynamic Widget Comparison
 
-| Aspect               | Flutter `json_dynamic_widget`  | workbench-kit JDW (today)                                 |
-| -------------------- | ------------------------------ | --------------------------------------------------------- |
-| Wire format          | v7 `type` + `args`             | ✅ Same (`jdw-node.ts`)                                   |
-| Registry             | `JsonWidgetRegistry` → builder | ✅ `WidgetRegistry` + `WidgetRegistryContract`            |
-| Recursive render     | Single `build()` per node      | ⚠️ Split: layout backend + registry builtins              |
-| Dynamic values       | `${var}`, `listen`             | ❌ Not implemented (Phase 4 in plan)                      |
-| Layout               | Flutter render/layout          | ✅ Headless `layoutWidget` + CSS absolute                 |
-| Asset packages       | plugin_components              | ✅ `manifest.json` + `content.json`                       |
-| JSON Schema per type | flutter_json_schemas           | ✅ Partial (`schemas/builtins/*`, `extensions/grid.json`) |
-| Kit extensions       | N/A                            | ✅ `grid` as extension type                               |
-| Screen spec DSL      | N/A                            | ✅ `screen-spec/` compiles to JDW                         |
-| Semantic HTML tags   | Widget-specific                | ❌ Fixed `div`/`span`                                     |
+| Aspect               | Flutter `json_dynamic_widget`  | workbench-kit JDW (today)                                                                                                                                                                                            |
+| -------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Wire format          | v7 `type` + `args`             | ✅ Same (`jdw-node.ts`)                                                                                                                                                                                              |
+| Registry             | `JsonWidgetRegistry` → builder | ✅ `WidgetRegistry` + `WidgetRegistryContract`                                                                                                                                                                       |
+| Recursive render     | Single `build()` per node      | ⚠️ Preview uses one layout tree + leaf registry builders                                                                                                                                                             |
+| Dynamic values       | `${var}`, `listen`             | ⚠️ `${var}` resolves from explicit render/preview `values`; exact scalar expressions are schema-allowed; source warnings and value-diff preview invalidation candidates exist; runtime scheduling is not implemented |
+| Layout               | Flutter render/layout          | ✅ Headless `layoutWidget` + CSS absolute, including `expanded` / `flexible` fit and static leaf measurement                                                                                                         |
+| Asset packages       | plugin_components              | ✅ `manifest.json` + `content.json`                                                                                                                                                                                  |
+| JSON Schema per type | flutter_json_schemas           | ✅ Recursive published `jdw-node.jdw.schema.json` + profile-aligned per-type files                                                                                                                                   |
+| Kit extensions       | N/A                            | ✅ `grid`, `box`, and `button` extension types                                                                                                                                                                       |
+| Screen spec DSL      | N/A                            | ✅ `screen-spec/` compiles to JDW                                                                                                                                                                                    |
+| Semantic HTML tags   | Widget-specific                | ❌ Fixed `div`/`span`                                                                                                                                                                                                |
 
 ---
 
@@ -194,13 +205,12 @@ Evidence:
 
 ### Risks
 
-| Risk              | Detail                                                                            |
-| ----------------- | --------------------------------------------------------------------------------- |
-| Dual render paths | Layout backend vs flex registry causes inconsistent previews                      |
-| Alignment gaps    | `mainAxisAlignment` / `crossAxisAlignment` validated but `linear.ts` ignores them |
-| Accessibility     | All containers as `div`; no semantic roles                                        |
-| Performance       | Deep trees with absolute positioning + nested wrappers                            |
-| Validation bypass | `renderJdw` calls `validateJsonWidgetData` but ignores issues for render gating   |
+| Risk             | Detail                                                                                                                                                                                                         |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accessibility    | All containers as `div`; no semantic roles                                                                                                                                                                     |
+| Performance      | Deep trees with absolute positioning + nested wrappers                                                                                                                                                         |
+| Intrinsic sizing | Static leaf measurement exists; dynamic text wrapping and host font metrics remain approximate                                                                                                                 |
+| Dynamic values   | `${variable}` is resolved from explicit render/preview values; headless dependency/listen analysis feeds source editor warnings and value-diff preview invalidation candidates; runtime scheduling is inactive |
 
 ---
 
@@ -210,7 +220,7 @@ Evidence:
 
 #### Do
 
-1. **Registry-driven host element** — extend `WidgetTypeDefinition` (contracts) with optional `hostTag?: 'div' | 'section' | 'article' | 'span' | ...` from a fixed allowlist.
+1. **Registry-driven host element** — implemented: `WidgetTypeDefinition` exposes optional `hostTag` from a fixed allowlist, and the CSS backend falls back to `div` for anything outside that contract.
 2. **Custom components** — new JSON `type` values registered in host-provided registry with React `build()` only.
 3. **Per-node override** — optional `args.semanticTag` only when type schema explicitly allows it and value passes allowlist validator.
 4. **Asset templates** — reusable fragments stay JDW nodes; tag semantics live in registry, not raw JSON inventiveness.
@@ -266,7 +276,7 @@ Aligns with existing `WidgetRegistryContract` in
 
 - Flutter runtime import
 - Full playground canvas DnD (deferred in `widget-layout-schema-plan.md` §2)
-- `${variable}` / `listen` until static render is stable
+- `listen`-driven invalidation and runtime binding graph until static render is stable
 - Arbitrary HTML from end-user JSON
 
 ---
@@ -280,13 +290,13 @@ Aligns with existing `WidgetRegistryContract` in
 
 From `completion-plan.md` Lane B:
 
-1. **Unify render mode** — pick primary: layout-backend preview OR recursive `renderJsonWidget`; document secondary as opt-in.
-2. **Complete layout parity** — implement `mainAxisAlignment` / `crossAxisAlignment` / child `align` in `linear.ts`.
-3. **Register `stack`** in builtin registry + schema.
-4. **Introduce `renderJsonWidget`** (or rename `renderJdw`) as documented recursive builder matching Flutter `data.build()`.
-5. **Optional `hostTag`** on `WidgetTypeDefinition` with validator allowlist.
-6. **Wire validation into preview** — surface `validateJsonWidgetData` issues in `JdwPreview` (partial today via parse only).
-7. **Phase 4** — `${var}` / `listen` after static pipeline stable.
+1. **Unify render mode** — implemented for preview: layout-backend is the primary container path; `renderBuiltinWidgetNode` is leaf-only compatibility.
+2. **Complete static layout parity** — implemented for row/column alignment, stack, wrappers, flexible fit, and registry-driven static leaf measurement; dynamic text wrapping remains future work.
+3. **Register `stack` and static builtins** — implemented in profile/schema/registry/validator.
+4. **Introduce `renderJsonWidget`** (or rename `renderJdw`) as documented recursive builder matching Flutter `data.build()`; still future work if a recursive non-layout path is needed.
+5. **Registry host tags** — implemented for registry-provided `hostTag`; per-node `semanticTag` remains future work.
+6. **Wire validation into preview** — implemented through `validateJsonWidgetData` in `JdwPreview` with strict known-type validation.
+7. **Phase 4** — first slice implemented for `${var}` value resolution, dependency/listen analysis, editor warnings, and value-diff preview invalidation candidates; `listen` runtime scheduling remains future work.
 
 ```mermaid
 gantt

@@ -66,7 +66,7 @@ Every widget node on disk uses this envelope ([JDW v7](https://github.com/peiffe
 
 - `child` and `children` live **inside `args`** (not at the top level).
 - Explicit `null` in `args` is stripped at parse time (JDW behavior); use sentinels only when a builder requires them.
-- `${variable}` expressions in `args` are **Phase 4**; parser may preserve strings unchanged until then.
+- `${variable}` expressions in `args` have first-pass static support through explicit render/preview `values`; exact scalar expressions are schema-allowed, and headless dependency/listen binding analysis feeds source editor warnings plus value-diff preview invalidation candidates, while runtime scheduling remains **Phase 4**.
 
 ### 3.1 Document example
 
@@ -302,13 +302,13 @@ function layoutWidget(
 
 ### 7.2 Implementation phases inside layout
 
-| Step | Scope                                                | Existing code                                      |
-| ---- | ---------------------------------------------------- | -------------------------------------------------- |
-| L1   | `row` / `column` flex + gap + padding + child `flex` | Extend `layout/linear.ts`                          |
-| L2   | `mainAxisAlignment` / `crossAxisAlignment` on parent | New                                                |
-| L3   | `grid` cell rects                                    | `layout/grid.ts` — integrate under `layoutWidget`  |
-| L4   | `stack` absolute rects                               | `layout/stack.ts` — integrate under `layoutWidget` |
-| L5   | Leaf intrinsic sizing hooks via registry             | New optional `measure` capability on definitions   |
+| Step | Scope                                                                 | Existing code                                      |
+| ---- | --------------------------------------------------------------------- | -------------------------------------------------- |
+| L1   | `row` / `column` flex + gap + padding + child `flex` / `flexible.fit` | Extend `layout/linear.ts`                          |
+| L2   | `mainAxisAlignment` / `crossAxisAlignment` on parent                  | New                                                |
+| L3   | `grid` cell rects                                                     | `layout/grid.ts` — integrate under `layoutWidget`  |
+| L4   | `stack` absolute rects                                                | `layout/stack.ts` — integrate under `layoutWidget` |
+| L5   | Leaf intrinsic sizing hooks via registry                              | `WidgetTypeDefinition.measure` for static leaves   |
 
 ### 7.3 Principle
 
@@ -370,6 +370,8 @@ Current `widget-json-schema.ts` defines container types but **not**:
 
 - [x] Vendored or referenced schemas for `row`, `column`, `text`, `expanded` under `packages/json-widget/schemas/`
 - [x] Kit extension schema `grid.json`
+- [x] Per-type schemas for current profile builtins/extensions: `flexible`, `stack`, wrappers, static leaves, `box`, and `button`
+- [x] `pnpm check:jdw-schemas` guards profile/schema drift in `validate:static`
 - [x] `widget-asset-manifest.v1.jdw.schema.json` + package `content.json`
 - [x] `validateJsonWidgetData` + asset two-pass tests
 - [x] `@workbench-kit/react/json-dynamic-widget`: `JsonWidgetRegistry`, `renderJsonWidget`, builtins (`row`, `column`, `text`, `expanded`)
@@ -393,8 +395,9 @@ Current `widget-json-schema.ts` defines container types but **not**:
 
 **Exit criteria:**
 
-- [x] `layoutWidget` implements row/column (L1–L2)
+- [x] `layoutWidget` implements row/column (L1–L2), including `expanded`/`flexible` fit metadata
 - [x] Grid/stack integrated (L3–L4) with rect snapshot tests
+- [x] Registry `measure` hooks feed intrinsic static leaf sizes into linear and wrapper layout (L5 partial)
 - [ ] `CssRenderBackend` applies `layoutWidget` rects in preview
 - [ ] `JsonWidgetPreview` uses pipeline (parse → validate → layout → render)
 - [x] Storybook story: **JDW/Layout** — layout rect fixtures
@@ -403,7 +406,7 @@ Current `widget-json-schema.ts` defines container types but **not**:
 
 **Exit criteria:**
 
-- [ ] `WidgetTreeLab` insert path uses `materializeWidgetAsset` + normalize
+- [x] `WidgetTreeLab` insert path uses `materializeWidgetPlacementAsset` + normalize for click insert and outline asset drop
 - [ ] Inspector edits trigger validate + optional reflow (e.g. grid `columns` change)
 - [ ] DnD reparent uses normalize on commit
 - [ ] Promote layout fixture stories to `storybook-play-required` when stable
@@ -422,15 +425,15 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 
 ## 12. Current codebase snapshot
 
-| Area                                 | Exists                                                  | Gap                                                  |
-| ------------------------------------ | ------------------------------------------------------- | ---------------------------------------------------- |
-| `*.jdw.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer`             | —                                                    |
-| Asset parse                          | `parseWidgetAssetPackage`, `validateWidgetAssetPackage` | `schema.json` substitution deferred                  |
-| Document parse                       | `createWidgetDocument` / `parseJsonWidgetData`          | Semantic placement validation partial                |
-| Patch / tree ops                     | `applyWidgetPatch` + `normalizeWidgetForParent`         | DnD reparent polish deferred                         |
-| Layout                               | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts`     | Preview pipeline integration pending                 |
-| Preview                              | `renderJsonWidget`, `JsonWidgetPreview`                 | Layout engine not wired into preview yet             |
-| Template assets                      | Builtin + custom packages                               | Editor insert uses `materializeWidgetPlacementAsset` |
+| Area                                 | Exists                                                  | Gap                                                                                 |
+| ------------------------------------ | ------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `*.jdw.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer`             | —                                                                                   |
+| Asset parse                          | `parseWidgetAssetPackage`, `validateWidgetAssetPackage` | `schema.json` substitution deferred                                                 |
+| Document parse                       | `createWidgetDocument` / `parseJsonWidgetData`          | Semantic placement validation partial                                               |
+| Patch / tree ops                     | `applyWidgetPatch` + `normalizeWidgetForParent`         | Outline reorder/reparent and asset drop are wired; preview/canvas gestures deferred |
+| Layout                               | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts`     | Dynamic text wrapping / host font metrics deferred                                  |
+| Preview                              | `renderJdw`, `JdwPreview`, CSS layout backend           | `listen` invalidation candidates are value-diff driven; scheduler deferred          |
+| Template assets                      | Builtin + custom packages                               | Editor click insert and outline drop use `materializeWidgetPlacementAsset`          |
 
 ## 13. Resolved and open decisions
 
@@ -445,14 +448,14 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 
 ### Open
 
-| #   | Question                                        | Proposal                                            |
-| --- | ----------------------------------------------- | --------------------------------------------------- |
-| D1  | Grid child `col`/`row` required at rest?        | Normalize on insert/save; validator warns           |
-| D2  | `$schema` URL host                              | `https://workbench-kit.dev/schemas/...` placeholder |
-| D3  | `list-view` / `box` in v1 builtins              | Registry-only unless needed for parity tests        |
-| D4  | Grid columns change reflow                      | Phase 2 `reflowGridChildren`                        |
-| D5  | Document wrapper `{ "root": node }` vs raw node | **Raw root node** for v1                            |
-| D6  | `${var}` / `listen` timeline                    | Phase 4 after static render stable                  |
+| #   | Question                                        | Proposal                                                                                                                                        |
+| --- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Grid child `col`/`row` required at rest?        | Normalize on insert/save; validator warns                                                                                                       |
+| D2  | `$schema` URL host                              | `https://workbench-kit.dev/schemas/...` placeholder                                                                                             |
+| D3  | `list-view` / `box` in v1 builtins              | Registry-only unless needed for parity tests                                                                                                    |
+| D4  | Grid columns change reflow                      | Phase 2 `reflowGridChildren`                                                                                                                    |
+| D5  | Document wrapper `{ "root": node }` vs raw node | **Raw root node** for v1                                                                                                                        |
+| D6  | `${var}` / `listen` timeline                    | `${var}` static values, dependency analysis, editor warnings, and value-diff preview invalidation candidates started; scheduler remains Phase 4 |
 
 ## 14. Suggested first PR slice
 
@@ -463,7 +466,9 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 
 ## 15. Changelog
 
-| Date       | Change                                                                                                       |
-| ---------- | ------------------------------------------------------------------------------------------------------------ |
-| 2026-06-10 | Initial plan — dual schema, layout engine first, asset template model                                        |
-| 2026-06-10 | **Locked JDW v7 wire format**; React json-dynamic-widget target; plugin_components assets; Phase 0 migration |
+| Date       | Change                                                                                                                                                                                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-06-24 | Added outline asset drag/drop path that materializes palette assets through the same normalized insert pipeline as click placement                                                                                                                                       |
+| 2026-06-23 | Expanded JDW profile schemas, added static schema drift check, implemented `flexible.fit`, added registry measurement hooks, and started explicit `${var}` value resolution/schema allowance plus dependency analysis/editor warnings/value-diff invalidation candidates |
+| 2026-06-10 | Initial plan — dual schema, layout engine first, asset template model                                                                                                                                                                                                    |
+| 2026-06-10 | **Locked JDW v7 wire format**; React json-dynamic-widget target; plugin_components assets; Phase 0 migration                                                                                                                                                             |

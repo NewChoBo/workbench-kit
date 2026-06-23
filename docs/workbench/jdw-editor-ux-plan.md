@@ -1,27 +1,27 @@
 # JDW Editor UX Improvement Plan
 
-> **Status:** Active (updated 2026-06-20)
+> **Status:** Active (updated 2026-06-24)
 > **Related:** [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md), [strengths-inheritance.md](./strengths-inheritance.md), [session-work-plan.md](./session-work-plan.md), [json-config-workbench.md](./json-config-workbench.md)
 
 ## 요약
 
-- **현재 편집면:** `WidgetTreeLab`(트리·인스pector·Monaco·읽기 전용 프리뷰)이 JDW 위젯 편집의 주 표면. `JsonConfigWorkbench`는 범용 JSON용. `ScreenSpecEditor`는 screen-spec → JDW 컴파일 전용.
-- **핵심 UX 갭:** 프리뷰 클릭 선택·캔버스 동기화 없음, `JsonConfigWorkbench` 대비 validation banner·baseline/dirty 패턴 미적용, 아웃라인 DnD 재정렬 UI 없음(헤드리스 patch만 존재), 줌/팬·캔버스 제스처는 의도적 보류.
-- **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). Lane B B2(매핑) / B3(캔버스 배선) 전에는 트리·인스pector·Monaco 동기화를 먼저 다듬는다.
-- **단계:** UX-1(에디터 discipline) → UX-2(아웃라인) → UX-3(인스pector·에셋) → UX-4(프리뷰 hit-test 선택) → UX-5(캔버스, B3 의존).
-- **첫 세션 권장:** **B-UX1 / UX-1** — validation banner + baseline dirty parity (`WidgetTreeWorkbench` ↔ `JsonConfigWorkbench`). **시작 시점:** WB-29 closeout 이후(B-UX 전체 연기).
+- **현재 편집면:** `WidgetTreeLab`(트리·인스pector·Monaco·선택 가능한 프리뷰)이 JDW 위젯 편집의 주 표면. `WidgetTreeWorkbench`는 validation banner·baseline/dirty·save gating을 제공한다. `JsonConfigWorkbench`는 범용 JSON용. `ScreenSpecEditor`는 screen-spec → JDW 컴파일 전용.
+- **핵심 UX 갭:** 아웃라인 reorder/reparent/collapse/drop-position, asset-to-outline drop, Monaco reveal/sync 기본 동작은 가능하지만 side panel tab friction, hover/focus chrome 부족, 줌/팬·캔버스 제스처는 의도적 보류.
+- **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). 정적 preview selection, editor discipline, outline ergonomics core는 완료 방향으로 이동했으므로, 다음은 Storybook play 검증·캔버스 매핑을 좁게 밀어붙인다.
+- **단계:** UX-1(에디터 discipline, core 완료) → UX-2(아웃라인, keyboard 일부 완료) → UX-3(인스pector·에셋, stack/insert 일부 완료) → UX-4(프리뷰 hit-test 선택, click-select 완료) → UX-5(캔버스, B3 의존).
+- **다음 권장:** **UX-2 story coverage + UX-3 tab-friction reduction** — outline/source/preview 선택과 drop-position 동작이 실제 작성 흐름에서 깨지지 않는지 play로 고정하고, assets/props 전환 비용을 낮춘다.
 
 ---
 
 ## 1. Current Editor Surfaces Map
 
-| Surface                      | Package / entry                                                              | Primary user                              | Edit model                                                | Preview                          | Selection                                   | Save / dirty                                                                              |
-| ---------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------- | -------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| **WidgetTreeLab**            | `packages/react/src/widget-tree/WidgetTreeLab.tsx` via `WidgetTreeWorkbench` | JDW widget JSON authoring                 | Monaco string SSoT + patch ops from tree/inspector/assets | `JdwPreview` (read-only)         | Tree outline only → inspector               | Optional `dirty`/`onSave`/`onDiscard` on workbench shell; **no validation banner**        |
-| **WidgetTreeWorkspaceShell** | `WidgetTreeWorkspaceShell.tsx` + widget-studio renderer                      | Integrated Storybook host                 | Same as lab; virtual workspace tabs                       | Same                             | Same                                        | Workspace `isDirty` wired; no Apply gating                                                |
-| **JsonConfigWorkbench**      | `packages/react/src/json-config/JsonConfigWorkbench.tsx`                     | Generic JSON / settings                   | Monaco; optional schema form preview                      | Schema panel or `JdwPreview`     | N/A (no tree)                               | `baselineValue`, `JsonConfigValidationBanner`, Apply/Save/Discard — **reference pattern** |
-| **ScreenSpecEditor**         | `packages/jdw-editor/src/ScreenSpecEditor.tsx`                               | Screen-spec (typed tree) → compile to JDW | In-memory `JdwScreenSpec`; no Monaco                      | External `JdwPreview` in stories | Screen-spec outline → `ScreenNodeInspector` | Compile error callback only; no file dirty model                                          |
-| **WorkbenchCanvasShell**     | `packages/react/src/workbench/`                                              | Absolute-coordinate demo                  | `WorkbenchDocument` (not JDW persistence)                 | Drag/resize chrome               | Canvas + tree in demo                       | Separate model — **not widget editor**                                                    |
+| Surface                      | Package / entry                                                              | Primary user                              | Edit model                                                | Preview                          | Selection                                    | Save / dirty                                                                              |
+| ---------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------- | -------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **WidgetTreeLab**            | `packages/react/src/widget-tree/WidgetTreeLab.tsx` via `WidgetTreeWorkbench` | JDW widget JSON authoring                 | Monaco string SSoT + patch ops from tree/inspector/assets | `JdwPreview` (click-select)      | Outline + preview path selection → inspector | `WidgetTreeWorkbench` baseline dirty, validation banner, invalid-save gating              |
+| **WidgetTreeWorkspaceShell** | `WidgetTreeWorkspaceShell.tsx` + widget-studio renderer                      | Integrated Storybook host                 | Same as lab; virtual workspace tabs                       | Same                             | Same                                         | Workspace `isDirty` wired; editor-level validation gating still host-dependent            |
+| **JsonConfigWorkbench**      | `packages/react/src/json-config/JsonConfigWorkbench.tsx`                     | Generic JSON / settings                   | Monaco; optional schema form preview                      | Schema panel or `JdwPreview`     | N/A (no tree)                                | `baselineValue`, `JsonConfigValidationBanner`, Apply/Save/Discard — **reference pattern** |
+| **ScreenSpecEditor**         | `packages/jdw-editor/src/ScreenSpecEditor.tsx`                               | Screen-spec (typed tree) → compile to JDW | In-memory `JdwScreenSpec`; no Monaco                      | External `JdwPreview` in stories | Screen-spec outline → `ScreenNodeInspector`  | Compile error callback only; no file dirty model                                          |
+| **WorkbenchCanvasShell**     | `packages/react/src/workbench/`                                              | Absolute-coordinate demo                  | `WorkbenchDocument` (not JDW persistence)                 | Drag/resize chrome               | Canvas + tree in demo                        | Separate model — **not widget editor**                                                    |
 
 ### Layout (WidgetTreeLab design mode)
 
@@ -29,7 +29,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │ WidgetTreeWorkbench header: title · dirty dot · Save/Discard · Design/Code │
 ├──────────────────────────────┬──────────────────────────────────┤
-│ Source (Monaco + problems)   │ Preview (JdwPreview, read-only)   │
+│ Source (Monaco + problems)   │ Preview (JdwPreview, click-select)│
 ├──────────────────────────────┤                                   │
 │ Side panel tabs:             │                                   │
 │  Outline | Assets | Props    │                                   │
@@ -51,20 +51,20 @@ Code mode hides preview and side panel — Monaco only.
 
 ## 2. UX Pain Points (code-verified)
 
-| #   | Pain point                                                         | Evidence                                                                                                                                                                         | Severity |
-| --- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| P1  | **Preview is read-only** — no click-to-select, no hover chrome     | `WidgetTreeLab` renders `<JdwPreview json={value} />` with no selection props; `JdwPreview` has no `onSelectPath`                                                                | High     |
-| P2  | **Tree ↔ preview desync** — selection exists only in outline state | `WidgetTreeView` `onSelectPath`; preview never receives `selection`                                                                                                              | High     |
-| P3  | **No validation banner / Apply discipline** in widget lab          | `JsonConfigWorkbench` uses `createJsonConfigEditorState` + `JsonConfigValidationBanner`; `WidgetTreeLab` only feeds first issue into Monaco problems via `sourceValidationError` | Medium   |
-| P4  | **Dirty indicator without baseline contract in stories**           | `WidgetTreeWorkbench` accepts `dirty` prop; `WidgetTreeLabHarness` in stories omits `baselineValue`/dirty wiring                                                                 | Medium   |
-| P5  | **Outline DnD reorder not wired**                                  | `@workbench-kit/jdw` supports `reorder-child` patch; `WidgetTreeView` is flat clickable list — no drag handles                                                                   | Medium   |
-| P6  | **Side panel tab friction**                                        | `WidgetTreeSidePanel` shows one of Outline / Assets / Props; editing props after picking asset requires tab switching                                                            | Medium   |
-| P7  | **Placement inspector partial**                                    | `WidgetInspectorPanel` grid/flex only; stack insets (`left`/`top`/…) not exposed; registry inspector fields demo-limited                                                         | Medium   |
-| P8  | **Asset palette click-only**                                       | `WidgetAssetPalette` appends to selected container on click; no drag-to-preview/container                                                                                        | Low      |
-| P9  | **Keyboard shortcuts partial**                                     | Monaco Ctrl+S when `onSave` set; no Design/Code shortcut; no arrow-key tree nav; view toggles not on `WidgetTreeModeControls`                                                    | Low      |
-| P10 | **Zoom / pan removed**                                             | [strengths-inheritance.md](./strengths-inheritance.md), [next-slice-plan.md](./next-slice-plan.md) — explicit deferral                                                           | Deferred |
-| P11 | **ScreenSpecEditor isolated**                                      | No shared chrome with `WidgetTreeLab`; authors pick screen-spec vs raw JDW manually                                                                                              | Low      |
-| P12 | **Monaco ↔ tree selection not linked**                             | Editing JSON does not scroll/highlight corresponding outline node; outline click does not reveal JSON range                                                                      | Medium   |
+| #   | Pain point                                                                            | Evidence                                                                                                                                               | Severity |
+| --- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| P1  | **Preview chrome still shallow** — click-to-select exists, hover/focus polish missing | `JdwPreview` receives `selectedPath` / `onSelectPath` and CSS backend emits widget paths; hover chrome and scroll/focus affordances remain minimal     | Medium   |
+| P2  | **Tree ↔ preview/source selection mostly wired**                                      | Outline, preview, and Monaco cursor/reveal now share widget paths; source range highlighting remains shallow                                           | Low      |
+| P3  | **Validation banner core wired; host parity still uneven**                            | `WidgetTreeWorkbench` renders `JsonConfigValidationBanner` and disables invalid save; workspace shell policy and story coverage still need tightening  | Low      |
+| P4  | **Dirty/baseline core wired; stories need curation**                                  | `WidgetTreeWorkbench` computes dirty from `baselineValue`; Storybook harnesses should assert discard/save flows                                        | Low      |
+| P5  | **Outline drop-position story coverage still missing**                                | Same-parent/cross-parent before/after/inside operation resolution and row affordance are wired; Storybook DnD play coverage remains                    | Low      |
+| P6  | **Side panel tab friction**                                                           | `WidgetTreeSidePanel` shows one of Outline / Assets / Props; editing props after picking asset requires tab switching                                  | Medium   |
+| P7  | **Placement inspector partial**                                                       | Stack inset fields are exposed; registry inspector fields remain demo-limited and container-specific affordances are still sparse                      | Medium   |
+| P8  | **Asset palette preview drop missing**                                                | `WidgetAssetPalette` can click-add to selected containers and drag assets onto outline before/inside/after targets; preview/canvas drop remains future | Low      |
+| P9  | **Keyboard shortcuts partial**                                                        | Outline Arrow/Home/End/Delete and Alt+ArrowUp/Down move exist; Enter-to-props, Design/Code shortcut, and richer view-toggle shortcuts remain           | Low      |
+| P10 | **Zoom / pan removed**                                                                | [strengths-inheritance.md](./strengths-inheritance.md), [next-slice-plan.md](./next-slice-plan.md) — explicit deferral                                 | Deferred |
+| P11 | **ScreenSpecEditor isolated**                                                         | No shared chrome with `WidgetTreeLab`; authors pick screen-spec vs raw JDW manually                                                                    | Low      |
+| P12 | **Monaco ↔ tree selection polish remains shallow**                                    | Outline selection reveals the widget source position and cursor movement can select widgets; full JSON range highlight is not implemented              | Low      |
 
 ---
 
@@ -88,15 +88,17 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 
 **Goal:** Widget lab matches config workbench feedback loop for parse/validation/dirty.
 
-| Item              | Action                                                                                                                                                                    |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Validation banner | Add widget-specific editor state helper (parse + `validateJsonWidgetData`) and render `JsonConfigValidationBanner` (or shared alias) in `WidgetTreeWorkbench` header body |
-| Baseline / dirty  | Document `baselineValue` prop on `WidgetTreeWorkbench`; wire harness + workspace shell stories                                                                            |
-| Save gating       | Disable Save when invalid; optional Apply before host save (if WB-28 draft pattern adopted)                                                                               |
-| Problems panel    | Keep Monaco markers; banner shows first blocking issue for at-a-glance                                                                                                    |
+| Item              | Action                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Validation banner | Done in `WidgetTreeWorkbench` with semantic `validateJsonWidgetData`; extract shared helper only if another host needs it |
+| Baseline / dirty  | `baselineValue` prop is wired in `WidgetTreeWorkbench`; story/workspace shell coverage remains                            |
+| Save gating       | Done for workbench Save button; optional Apply before host save remains future                                            |
+| Problems panel    | Keep Monaco markers; banner shows first blocking issue for at-a-glance                                                    |
 
 **Acceptance criteria**
 
+- [x] Unit: invalid JSON shows banner + Save disabled
+- [x] Component: dirty derives from `baselineValue`
 - [ ] Story: invalid JSON shows banner + Save disabled; valid edit shows “Valid — unsaved changes”
 - [ ] Story: Discard restores baseline; dirty dot clears
 - [ ] `pnpm test:storybook-play` passes new/changed play test
@@ -111,18 +113,23 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 
 **Goal:** Tree is the primary navigation surface until canvas lands.
 
-| Item        | Action                                                                                                    |
-| ----------- | --------------------------------------------------------------------------------------------------------- |
-| DnD reorder | Use `WorkbenchTree` draggable interaction or HTML DnD; emit `reorder-child` / `move-child` patches        |
-| Keyboard    | ↑/↓ select sibling; Enter focus props tab; Delete → remove (with confirm optional)                        |
-| Collapse    | Optional expand/collapse for deep trees (if node count hurts scan)                                        |
-| Monaco sync | On outline select, optional `revealLine` near widget path; defer full JSON pointer sync to UX-1 follow-up |
+| Item        | Action                                                                                                                                                     |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DnD reorder | Done for before/after/inside target resolution; same-parent and cross-parent drops commit through `reparent-widget`; row affordance marks insertion target |
+| Keyboard    | Done for flattened outline ArrowUp/Down/Home/End, Alt+ArrowUp/Down move, and Delete/Backspace remove; Enter focus props remains                            |
+| Collapse    | Done for local outline state; visible-node navigation ignores collapsed descendants                                                                        |
+| Monaco sync | Done for path-to-position reveal and cursor-position-to-widget selection; source range highlight remains future                                            |
 
 **Acceptance criteria**
 
-- [ ] Story: drag row reorder updates preview order and JSON
-- [ ] Story: keyboard select moves selection and inspector
-- [ ] Headless tests for reorder patch integration unchanged/green
+- [x] Story: drag row reorder/reparent updates preview order and JSON
+- [x] Unit: keyboard navigation resolves flattened outline order
+- [x] Unit: keyboard reorder resolves same-parent `reorder-child` operation
+- [x] Unit: drop before/after/inside resolves same-parent and cross-parent `reparent-widget` operation
+- [x] Unit: collapse filters descendants from visible outline navigation
+- [x] Unit: source editor maps selected widget paths to JDW v7 `args` locations and cursor locations back to widget paths
+- [x] Story: keyboard select moves selection and preview chrome
+- [x] Headless tests for reorder/reparent patch integration unchanged/green
 
 **Depends on:** UX-1 recommended first (invalid doc blocks reorder safely).  
 **Lane B tie-in:** None.
@@ -135,17 +142,19 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 
 | Item                    | Action                                                                                     |
 | ----------------------- | ------------------------------------------------------------------------------------------ |
-| Stack placement section | Add inset fields when parent is `stack`                                                    |
+| Stack placement section | Done for static stack child inset fields                                                   |
 | Side panel layout       | Consider split: persistent outline + bottom inspector **or** Props pinned alongside Assets |
 | Registry coverage       | Expand demo registry inspector metadata for layout builtins used in stories                |
-| Asset palette           | Optional drag-start with drop target on outline row / future preview                       |
-| Insert feedback         | After asset place, auto-select new child path                                              |
+| Asset palette           | Done for drag-start with outline before/inside/after targets; future preview drop remains  |
+| Insert feedback         | Done for array children and single-child wrappers                                          |
 
 **Acceptance criteria**
 
+- [x] Inspector tests for stack section
+- [x] Unit: asset insertion path targets new child
+- [x] Unit: asset drag payload and outline before/inside/after drop operation resolution
 - [ ] Story: stack child insets editable and reflected in preview
 - [ ] Story: asset insert selects new node without manual outline hunt
-- [ ] Inspector tests for stack section
 
 **Depends on:** UX-1; **B1** schema parity for placement args in JSON Schema (Monaco hints).  
 **Lane B tie-in:** B1.
@@ -156,14 +165,16 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 
 **Goal:** Tree ↔ preview sync without full canvas shell.
 
-| Item               | Action                                                                       |
-| ------------------ | ---------------------------------------------------------------------------- |
-| Layout rects       | Expose hit-test map from `layoutWidget` / CSS backend (same rects as render) |
-| Preview chrome     | Hover + selection outline on widget rects; click sets `WidgetSelectionState` |
-| Bidirectional sync | Outline select scrolls preview focus; preview select updates outline         |
+| Item               | Action                                                                                    |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| Layout rects       | Done for DOM path markers from `layoutWidget` / CSS backend (same rects as render)        |
+| Preview chrome     | Click sets `WidgetSelectionState`; selected outline exists; hover/focus chrome remains    |
+| Bidirectional sync | Outline select marks preview; preview select updates outline; scroll/focus reveal remains |
 
 **Acceptance criteria**
 
+- [x] Unit/render: preview layout nodes carry selectable widget paths
+- [x] Component: outline and preview share selected path
 - [ ] Story: click preview text node selects matching outline row and opens inspector fields
 - [ ] Story: outline select shows selection chrome on preview
 - [ ] No persistence of selection to JSON
@@ -221,7 +232,8 @@ User edits field
 ```text
 User selects container in outline
   → Assets tab enabled
-  → click asset → materializeWidgetPlacementAsset → insert-child patch
+  → click asset or drop asset on outline target
+  → materializeWidgetPlacementAsset → insert-child patch
   → auto-select new path (UX-3)
 ```
 

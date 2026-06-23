@@ -75,27 +75,27 @@ Placement keys are **parent-type scoped**: `stripExternalPlacement` removes inco
 
 ## 4. Current Kit Alignment
 
-| Layer                                   | Status                 | Evidence                                       |
-| --------------------------------------- | ---------------------- | ---------------------------------------------- |
-| JDW parse / patch / normalize           | **Adopted**            | `@workbench-kit/jdw` (`packages/json-widget`)  |
-| Headless layout (row/column/grid/stack) | **Adopted**            | `layoutWidget`, rect tests                     |
-| CSS render from layout rects            | **Adopted**            | `cssRenderBackend.tsx` → `renderJdwWithLayout` |
-| Tree + inspector + Monaco + preview     | **Adopted**            | `WidgetTreeLab.tsx`                            |
-| Grid/flex placement in inspector        | **Partial**            | `WidgetInspectorPanel` placement sections      |
-| Asset insert + materialize              | **Adopted**            | `materializeWidgetPlacementAsset` in lab       |
-| Figma canvas primitives                 | **Partial (stories)**  | `WorkbenchCanvas.tsx` — not wired to lab       |
-| Canvas drag / resize → JDW              | **Missing**            | strengths-inheritance: Deferred                |
-| Tree ↔ canvas selection sync            | **Partial**            | Tree ↔ inspector only                          |
-| Preview zoom / pan                      | **Removed / deferred** | next-slice-plan code truth                     |
+| Layer                                   | Status                 | Evidence                                                                   |
+| --------------------------------------- | ---------------------- | -------------------------------------------------------------------------- |
+| JDW parse / patch / normalize           | **Adopted**            | `@workbench-kit/jdw` (`packages/json-widget`)                              |
+| Headless layout (row/column/grid/stack) | **Adopted**            | `layoutWidget`, rect tests                                                 |
+| CSS render from layout rects            | **Adopted**            | `cssRenderBackend.tsx` → `renderJdwWithLayout`                             |
+| Tree + inspector + Monaco + preview     | **Adopted**            | `WidgetTreeLab.tsx`                                                        |
+| Grid/flex placement in inspector        | **Partial**            | `WidgetInspectorPanel` placement sections                                  |
+| Asset insert + materialize              | **Adopted**            | Click insert and outline drop use `materializeWidgetPlacementAsset` in lab |
+| Figma canvas primitives                 | **Partial (stories)**  | `WorkbenchCanvas.tsx` — not wired to lab                                   |
+| Canvas drag / resize → JDW              | **Missing**            | strengths-inheritance: Deferred                                            |
+| Tree ↔ canvas selection sync            | **Partial**            | Tree ↔ inspector only                                                      |
+| Preview zoom / pan                      | **Removed / deferred** | next-slice-plan code truth                                                 |
 
 Editor chrome explicitly lagged schema/layout work ([widget-layout-schema-plan.md](./widget-layout-schema-plan.md) Phase 4).
 
 ## 5. Gaps — Figma Placement Not in JDW Export Path
 
 1. **No canvas authoring pipeline** in `WidgetTreeLab` — preview is read-only `JdwPreview`.
-2. **No gesture → patch mapper** — patches today come from tree/inspector/asset palette, not canvas hit targets.
+2. **No canvas gesture → patch mapper** — patches today come from tree/inspector/asset palette and outline asset drop, not canvas hit targets.
 3. **Functional resize handles** exist as layout primitives but do not emit JDW placement updates.
-4. **Phase 4 checklist incomplete** — DnD reparent polish, full materialize on all insert paths, layout-driven preview promotion.
+4. **Phase 4 checklist incomplete** — outline DnD and asset materialization are wired; canvas gestures, grid reflow polish, and layout-driven preview promotion remain.
 5. **Parallel `WorkbenchDocument`** — Figma-like absolute layout in `packages/contracts/src/workbench-document.ts` / `WorkbenchCanvasShell` is not the JDW widget document path; using both without an adapter risks dual-model drift.
 6. **JSON Schema gaps** — child placement properties not fully reflected in document schema ([widget-layout-schema-plan.md](./widget-layout-schema-plan.md) §9.1).
 
