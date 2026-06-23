@@ -318,14 +318,22 @@
 }
 
 .workbench-editor-area__form {
+  padding: 0;
+}
+
+.workbench-editor-area__form-grid {
   --workbench-editor-form-indent: 14px;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: minmax(9rem, 34%) minmax(12rem, 1fr);
   column-gap: 20px;
   row-gap: 4px;
   align-items: start;
   align-content: start;
+  width: 100%;
   max-width: 960px;
+  min-height: min-content;
+  padding: 16px;
 }
 
 .workbench-editor-area__form-field {
@@ -387,7 +395,7 @@
   border-top: 1px solid var(--vscode-editorGroup-border, var(--color-border));
 }
 
-.workbench-editor-area__form > .workbench-editor-area__form-group-header {
+.workbench-editor-area__form-grid > .workbench-editor-area__form-group-header {
   margin-top: 0;
   padding-top: 0;
   border-top: 0;

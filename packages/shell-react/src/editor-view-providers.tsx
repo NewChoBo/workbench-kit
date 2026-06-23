@@ -239,16 +239,18 @@ function JsonObjectFormView({
         event.preventDefault();
       }}
     >
-      {entries.map(([key, value]) => (
-        <JsonValueFormField
-          key={key}
-          depth={0}
-          label={key}
-          path={[key]}
-          value={value}
-          onFieldChange={handleFieldChange}
-        />
-      ))}
+      <div className="workbench-editor-area__form-grid">
+        {entries.map(([key, value]) => (
+          <JsonValueFormField
+            key={key}
+            depth={0}
+            label={key}
+            path={[key]}
+            value={value}
+            onFieldChange={handleFieldChange}
+          />
+        ))}
+      </div>
     </ScrollArea>
   );
 }
