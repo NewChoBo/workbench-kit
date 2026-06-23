@@ -29,9 +29,14 @@ export interface WidgetTreeViewProps {
   readonly parseError: string | null;
   readonly selection?: WidgetSelectionState | undefined;
   readonly onSelectPath?: ((path: WidgetPath) => void) | undefined;
+  readonly onActivatePath?: ((path: WidgetPath) => void) | undefined;
   readonly onDeletePath?: ((path: WidgetPath) => void) | undefined;
   readonly onMovePath?: ((operation: WidgetTreeMoveOperation) => void) | undefined;
   readonly onPlaceAssetPath?: ((operation: WidgetTreeAssetDropOperation) => void) | undefined;
+}
+
+export function isWidgetTreeActivateKey(key: string): boolean {
+  return key === 'Enter';
 }
 
 type WidgetTreeNavigationKey = 'ArrowDown' | 'ArrowUp' | 'Home' | 'End';
@@ -358,6 +363,7 @@ export function WidgetTreeView({
   parseError,
   selection,
   onSelectPath,
+  onActivatePath,
   onDeletePath,
   onMovePath,
   onPlaceAssetPath,
@@ -426,6 +432,14 @@ export function WidgetTreeView({
         event.preventDefault();
         onDeletePath?.(current.path);
       }
+      return;
+    }
+
+    const current = visibleNodes[selectedIndex];
+    if (current && isWidgetTreeActivateKey(event.key) && onActivatePath) {
+      event.preventDefault();
+      onSelectPath?.(current.path);
+      onActivatePath(current.path);
     }
   };
 

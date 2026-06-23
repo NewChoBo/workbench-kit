@@ -12,6 +12,7 @@ import {
   filterVisibleWidgetNodes,
   hasCollapsibleWidgetChildren,
   isRootWidgetPath,
+  isWidgetTreeActivateKey,
   resolveWidgetTreeAssetDropOperation,
   resolveWidgetTreeDropOperation,
   resolveWidgetTreeMoveOperation,
@@ -42,6 +43,11 @@ const textAsset: WidgetPlacementAsset<GenericWidget> = {
 };
 
 describe('WidgetTreeView', () => {
+  it('treats Enter as the outline activate key', () => {
+    expect(isWidgetTreeActivateKey('Enter')).toBe(true);
+    expect(isWidgetTreeActivateKey(' ')).toBe(false);
+  });
+
   it('resolves keyboard navigation against the flattened outline order', () => {
     const nodes = collectWidgetNodes(outlineRoot);
     const rowPath = nodes[2]!.path;

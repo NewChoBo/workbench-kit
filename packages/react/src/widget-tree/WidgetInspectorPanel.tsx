@@ -1,3 +1,4 @@
+import type { Ref } from 'react';
 import type {
   WidgetInspectorField,
   WidgetInspectorSection,
@@ -24,6 +25,7 @@ export interface WidgetInspectorPanelProps {
   readonly path: WidgetPath | null;
   readonly parentWidget?: GenericWidget | null | undefined;
   readonly widgetRegistry?: WidgetRegistryContract<unknown> | undefined;
+  readonly panelRef?: Ref<HTMLDivElement> | undefined;
   readonly readOnly?: boolean | undefined;
   readonly onPatch?: ((next: GenericWidget) => void) | undefined;
   readonly onRemove?: (() => void) | undefined;
@@ -33,6 +35,7 @@ export function WidgetInspectorPanel({
   widget,
   path,
   parentWidget = null,
+  panelRef,
   widgetRegistry,
   readOnly = false,
   onPatch,
@@ -57,6 +60,8 @@ export function WidgetInspectorPanel({
     <WorkbenchPropertyPanel
       className="widget-tree-inspector"
       data-testid="widget-tree-inspector-panel"
+      ref={panelRef}
+      tabIndex={-1}
     >
       {!widget ? (
         <WorkbenchPropertyHint>Select a node in the outline.</WorkbenchPropertyHint>

@@ -13,7 +13,11 @@ export type {
 export { WidgetInspectorPanel } from './WidgetInspectorPanel.js';
 export type { WidgetInspectorPanelProps } from './WidgetInspectorPanel.js';
 export { WidgetTreeSidePanel } from './WidgetTreeSidePanel.js';
-export type { WidgetTreeSidePanelProps, WidgetTreeSidePanelTab } from './WidgetTreeSidePanel.js';
+export type {
+  WidgetTreeSidePanelProps,
+  WidgetTreeSidePanelDetailTab,
+  WidgetTreeSidePanelTab,
+} from './WidgetTreeSidePanel.js';
 export { WidgetAssetPalette } from './WidgetAssetPalette.js';
 export type { WidgetAssetPaletteProps } from './WidgetAssetPalette.js';
 export {

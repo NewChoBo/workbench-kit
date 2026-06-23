@@ -4,12 +4,27 @@ import { SegmentedControl } from '../primitives/WorkbenchEditor.js';
 import { cx } from '../utils/cx.js';
 
 export type WidgetTreeSidePanelTab = 'outline' | 'assets' | 'properties';
+export type WidgetTreeSidePanelDetailTab = Exclude<WidgetTreeSidePanelTab, 'outline'>;
+
+const WIDGET_TREE_DETAIL_TABS = [
+  { label: 'Props', value: 'properties' },
+  { label: 'Assets', value: 'assets' },
+] as const satisfies ReadonlyArray<{
+  readonly label: string;
+  readonly value: WidgetTreeSidePanelDetailTab;
+}>;
+
+function resolveWidgetTreeDetailTab(tab: WidgetTreeSidePanelTab): WidgetTreeSidePanelDetailTab {
+  return tab === 'assets' ? 'assets' : 'properties';
+}
 
 export interface WidgetTreeSidePanelProps {
   readonly outline: ReactNode;
   readonly assets: ReactNode;
   readonly properties: ReactNode;
   readonly defaultTab?: WidgetTreeSidePanelTab | undefined;
+  readonly detailTab?: WidgetTreeSidePanelDetailTab | undefined;
+  readonly onDetailTabChange?: ((tab: WidgetTreeSidePanelDetailTab) => void) | undefined;
 }
 
 export function WidgetTreeSidePanel({
@@ -17,32 +32,53 @@ export function WidgetTreeSidePanel({
   assets,
   properties,
   defaultTab = 'outline',
+  detailTab,
+  onDetailTabChange,
 }: WidgetTreeSidePanelProps) {
-  const [tab, setTab] = useState<WidgetTreeSidePanelTab>(defaultTab);
+  const [uncontrolledTab, setUncontrolledTab] = useState<WidgetTreeSidePanelDetailTab>(() =>
+    resolveWidgetTreeDetailTab(defaultTab),
+  );
+  const tab = detailTab ?? uncontrolledTab;
+
+  const setTab = (nextTab: WidgetTreeSidePanelDetailTab) => {
+    if (detailTab === undefined) {
+      setUncontrolledTab(nextTab);
+    }
+    onDetailTabChange?.(nextTab);
+  };
 
   return (
-    <section className="widget-tree-side-panel" data-testid="widget-tree-side-panel">
-      <header className="widget-tree-side-panel__header">
-        <SegmentedControl
-          ariaLabel="Widget side panel"
-          options={[
-            { label: 'Outline', value: 'outline' },
-            { label: 'Assets', value: 'assets' },
-            { label: 'Props', value: 'properties' },
-          ]}
-          value={tab}
-          onChange={setTab}
-        />
-      </header>
+    <section
+      aria-label="Widget tree side panel"
+      className="widget-tree-side-panel"
+      data-testid="widget-tree-side-panel"
+    >
       <div
-        className={cx(
-          'widget-tree-side-panel__body',
-          tab === 'outline' && 'widget-tree-side-panel__body--outline',
-          tab === 'assets' && 'widget-tree-side-panel__body--assets',
-          tab === 'properties' && 'widget-tree-side-panel__body--properties',
-        )}
+        aria-label="Widget outline"
+        className="widget-tree-side-panel__outline"
+        data-testid="widget-tree-side-panel-outline"
+        role="region"
       >
-        {tab === 'outline' ? outline : tab === 'assets' ? assets : properties}
+        {outline}
+      </div>
+      <div aria-label="Widget details" className="widget-tree-side-panel__detail" role="region">
+        <header className="widget-tree-side-panel__header">
+          <SegmentedControl
+            ariaLabel="Widget side panel detail"
+            options={WIDGET_TREE_DETAIL_TABS}
+            value={tab}
+            onChange={setTab}
+          />
+        </header>
+        <div
+          className={cx(
+            'widget-tree-side-panel__body',
+            tab === 'assets' && 'widget-tree-side-panel__body--assets',
+            tab === 'properties' && 'widget-tree-side-panel__body--properties',
+          )}
+        >
+          {tab === 'assets' ? assets : properties}
+        </div>
       </div>
     </section>
   );

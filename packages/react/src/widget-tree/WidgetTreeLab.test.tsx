@@ -30,6 +30,7 @@ describe('WidgetTreeLab', () => {
     expect(markup).toContain('data-testid="widget-tree-lab-render-pane"');
     expect(markup).toContain('data-testid="jdw-preview-output"');
     expect(markup).toContain('data-testid="widget-tree-side-panel"');
+    expect(markup).toContain('data-testid="widget-tree-side-panel-outline"');
     expect(markup).toContain('Assets');
     expect(markup).toContain('Widget Tree');
     expect(markup).toContain('data-widget-type="grid"');

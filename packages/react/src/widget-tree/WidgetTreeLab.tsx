@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import type { WidgetAssetCatalogContract, WidgetPlacementAsset } from '@workbench-kit/contracts';
 import {
@@ -28,7 +28,7 @@ import type { JsonEditorProblem } from '../jdw/JsonCodeEditorPane.js';
 import { WidgetAssetPalette } from './WidgetAssetPalette.js';
 import { WidgetInspectorPanel } from './WidgetInspectorPanel.js';
 import { WidgetSourceEditor } from './WidgetSourceEditor.js';
-import { WidgetTreeSidePanel } from './WidgetTreeSidePanel.js';
+import { WidgetTreeSidePanel, type WidgetTreeSidePanelDetailTab } from './WidgetTreeSidePanel.js';
 import {
   WidgetTreeView,
   type WidgetTreeAssetDropOperation,
@@ -129,6 +129,10 @@ export function WidgetTreeLab({
   }, [validation, value]);
 
   const [selection, setSelection] = useState<WidgetSelectionState>({ pathKeys: new Set() });
+  const [sidePanelDetailTab, setSidePanelDetailTab] =
+    useState<WidgetTreeSidePanelDetailTab>('properties');
+  const [inspectorFocusRequest, setInspectorFocusRequest] = useState(0);
+  const inspectorPanelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (document.parseError !== null || document.root === null) {
@@ -157,8 +161,34 @@ export function WidgetTreeLab({
     return getWidgetAtPath(document.root, selectedPath.slice(0, -1));
   }, [document.root, selectedPath]);
 
+  useEffect(() => {
+    if (inspectorFocusRequest === 0 || sidePanelDetailTab !== 'properties') return;
+
+    const panel = inspectorPanelRef.current;
+    const focusTarget = panel?.querySelector<HTMLElement>(
+      'input:not(:disabled), select:not(:disabled), textarea:not(:disabled), button:not(:disabled), [tabindex]:not([tabindex="-1"])',
+    );
+
+    (focusTarget ?? panel)?.focus();
+  }, [inspectorFocusRequest, sidePanelDetailTab, selectedPath]);
+
+  const focusPropertyDetailTab = () => {
+    setSidePanelDetailTab('properties');
+    setInspectorFocusRequest((current) => current + 1);
+  };
+
   const handleSelectPath = (nextPath: WidgetPath) => {
     setSelection((current) => selectWidgetPath(current, nextPath));
+  };
+
+  const handleActivatePath = (nextPath: WidgetPath) => {
+    setSelection((current) => selectWidgetPath(current, nextPath));
+    focusPropertyDetailTab();
+  };
+
+  const handlePreviewSelectPath = (nextPath: WidgetPath) => {
+    setSelection((current) => selectWidgetPath(current, nextPath));
+    setSidePanelDetailTab('properties');
   };
 
   const applyPatch = (patch: Parameters<typeof applyWidgetDocumentPatch>[1]): boolean => {
@@ -194,6 +224,7 @@ export function WidgetTreeLab({
     });
     if (changed) {
       setSelection((current) => selectWidgetPath(current, insertedPath));
+      focusPropertyDetailTab();
     }
   };
 
@@ -216,6 +247,7 @@ export function WidgetTreeLab({
     });
     if (changed) {
       setSelection((current) => selectWidgetPath(current, operation.nextPath));
+      focusPropertyDetailTab();
     }
   };
 
@@ -274,6 +306,7 @@ export function WidgetTreeLab({
 
   const sidePanel = (
     <WidgetTreeSidePanel
+      detailTab={sidePanelDetailTab}
       assets={
         assetCatalog ? (
           <WidgetAssetPalette
@@ -293,6 +326,7 @@ export function WidgetTreeLab({
           parseError={document.parseError}
           root={document.root}
           selection={selection}
+          onActivatePath={handleActivatePath}
           onDeletePath={readOnly ? undefined : handleRemovePath}
           onMovePath={readOnly ? undefined : handleMovePath}
           onPlaceAssetPath={readOnly ? undefined : handlePlaceAssetPath}
@@ -301,6 +335,7 @@ export function WidgetTreeLab({
       }
       properties={
         <WidgetInspectorPanel
+          panelRef={inspectorPanelRef}
           parentWidget={parentWidget}
           path={selectedPath}
           readOnly={readOnly}
@@ -310,6 +345,7 @@ export function WidgetTreeLab({
           onRemove={handleRemove}
         />
       }
+      onDetailTabChange={setSidePanelDetailTab}
     />
   );
 
@@ -321,7 +357,7 @@ export function WidgetTreeLab({
           json={value}
           registry={registry}
           selectedPath={selectedPath}
-          onSelectPath={handleSelectPath}
+          onSelectPath={handlePreviewSelectPath}
         />
       </div>
     </section>

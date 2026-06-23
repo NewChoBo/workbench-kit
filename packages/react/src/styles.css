@@ -9091,13 +9091,28 @@
   border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
 }
 
+.widget-tree-side-panel__outline {
+  flex: 1 1 52%;
+  min-height: 160px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
+}
+
+.widget-tree-side-panel__detail {
+  flex: 1 1 48%;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .widget-tree-side-panel__body {
   flex: 1;
   min-height: 0;
   overflow: hidden;
 }
 
-.widget-tree-side-panel__body--outline .widget-tree-outline,
+.widget-tree-side-panel__outline .widget-tree-outline,
 .widget-tree-side-panel__body--assets .widget-tree-asset-palette,
 .widget-tree-side-panel__body--properties .widget-tree-inspector {
   height: 100%;

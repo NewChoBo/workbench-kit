@@ -6,10 +6,10 @@
 ## 요약
 
 - **현재 편집면:** `WidgetTreeLab`(트리·인스pector·Monaco·선택 가능한 프리뷰)이 JDW 위젯 편집의 주 표면. `WidgetTreeWorkbench`는 validation banner·baseline/dirty·save gating을 제공한다. `JsonConfigWorkbench`는 범용 JSON용. `ScreenSpecEditor`는 screen-spec → JDW 컴파일 전용.
-- **핵심 UX 갭:** 아웃라인 reorder/reparent/collapse/drop-position, asset-to-outline drop, Monaco reveal/sync 기본 동작은 가능하지만 side panel tab friction, hover/focus chrome 부족, 줌/팬·캔버스 제스처는 의도적 보류.
+- **핵심 UX 갭:** 아웃라인 reorder/reparent/collapse/drop-position, asset-to-outline drop, Monaco reveal/sync, persistent outline + Props/Assets detail tabs는 완료. hover/focus chrome, 줌/팬·캔버스 제스처는 의도적 보류.
 - **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). 정적 preview selection, editor discipline, outline ergonomics core는 완료 방향으로 이동했으므로, 다음은 Storybook play 검증·캔버스 매핑을 좁게 밀어붙인다.
-- **단계:** UX-1(에디터 discipline, core 완료) → UX-2(아웃라인, keyboard 일부 완료) → UX-3(인스pector·에셋, stack/insert 일부 완료) → UX-4(프리뷰 hit-test 선택, click-select 완료) → UX-5(캔버스, B3 의존).
-- **다음 권장:** **UX-2 story coverage + UX-3 tab-friction reduction** — outline/source/preview 선택과 drop-position 동작이 실제 작성 흐름에서 깨지지 않는지 play로 고정하고, assets/props 전환 비용을 낮춘다.
+- **단계:** UX-1(에디터 discipline, core 완료) → UX-2(아웃라인, keyboard Enter→Props 완료) → UX-3(인스pector·에셋, stack/insert + tab friction 완료) → UX-4(프리뷰 hit-test 선택, click-select 완료) → UX-5(캔버스, B3 의존).
+- **다음 권장:** **UX-2/UX-3 story play coverage** — outline DnD, asset insert→Props focus, preview select→Props, validation/dirty flows를 play로 고정한다.
 
 ---
 
@@ -31,8 +31,9 @@
 ├──────────────────────────────┬──────────────────────────────────┤
 │ Source (Monaco + problems)   │ Preview (JdwPreview, click-select)│
 ├──────────────────────────────┤                                   │
-│ Side panel tabs:             │                                   │
-│  Outline | Assets | Props    │                                   │
+│ Side panel:                  │                                   │
+│  Outline (always visible)    │                                   │
+│  Props | Assets detail tabs  │                                   │
 └──────────────────────────────┴──────────────────────────────────┘
 ```
 
@@ -51,20 +52,20 @@ Code mode hides preview and side panel — Monaco only.
 
 ## 2. UX Pain Points (code-verified)
 
-| #   | Pain point                                                                            | Evidence                                                                                                                                               | Severity |
-| --- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| P1  | **Preview chrome still shallow** — click-to-select exists, hover/focus polish missing | `JdwPreview` receives `selectedPath` / `onSelectPath` and CSS backend emits widget paths; hover chrome and scroll/focus affordances remain minimal     | Medium   |
-| P2  | **Tree ↔ preview/source selection mostly wired**                                      | Outline, preview, and Monaco cursor/reveal now share widget paths; source range highlighting remains shallow                                           | Low      |
-| P3  | **Validation banner core wired; host parity still uneven**                            | `WidgetTreeWorkbench` renders `JsonConfigValidationBanner` and disables invalid save; workspace shell policy and story coverage still need tightening  | Low      |
-| P4  | **Dirty/baseline core wired; stories need curation**                                  | `WidgetTreeWorkbench` computes dirty from `baselineValue`; Storybook harnesses should assert discard/save flows                                        | Low      |
-| P5  | **Outline drop-position story coverage still missing**                                | Same-parent/cross-parent before/after/inside operation resolution and row affordance are wired; Storybook DnD play coverage remains                    | Low      |
-| P6  | **Side panel tab friction**                                                           | `WidgetTreeSidePanel` shows one of Outline / Assets / Props; editing props after picking asset requires tab switching                                  | Medium   |
-| P7  | **Placement inspector partial**                                                       | Stack inset fields are exposed; registry inspector fields remain demo-limited and container-specific affordances are still sparse                      | Medium   |
-| P8  | **Asset palette preview drop missing**                                                | `WidgetAssetPalette` can click-add to selected containers and drag assets onto outline before/inside/after targets; preview/canvas drop remains future | Low      |
-| P9  | **Keyboard shortcuts partial**                                                        | Outline Arrow/Home/End/Delete and Alt+ArrowUp/Down move exist; Enter-to-props, Design/Code shortcut, and richer view-toggle shortcuts remain           | Low      |
-| P10 | **Zoom / pan removed**                                                                | [strengths-inheritance.md](./strengths-inheritance.md), [next-slice-plan.md](./next-slice-plan.md) — explicit deferral                                 | Deferred |
-| P11 | **ScreenSpecEditor isolated**                                                         | No shared chrome with `WidgetTreeLab`; authors pick screen-spec vs raw JDW manually                                                                    | Low      |
-| P12 | **Monaco ↔ tree selection polish remains shallow**                                    | Outline selection reveals the widget source position and cursor movement can select widgets; full JSON range highlight is not implemented              | Low      |
+| #   | Pain point                                                                            | Evidence                                                                                                                                                    | Severity |
+| --- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| P1  | **Preview chrome still shallow** — click-to-select exists, hover/focus polish missing | `JdwPreview` receives `selectedPath` / `onSelectPath` and CSS backend emits widget paths; hover chrome and scroll/focus affordances remain minimal          | Medium   |
+| P2  | **Tree ↔ preview/source selection mostly wired**                                      | Outline, preview, and Monaco cursor/reveal now share widget paths; source range highlighting remains shallow                                                | Low      |
+| P3  | **Validation banner core wired; host parity still uneven**                            | `WidgetTreeWorkbench` renders `JsonConfigValidationBanner` and disables invalid save; workspace shell policy and story coverage still need tightening       | Low      |
+| P4  | **Dirty/baseline core wired; stories need curation**                                  | `WidgetTreeWorkbench` computes dirty from `baselineValue`; Storybook harnesses should assert discard/save flows                                             | Low      |
+| P5  | **Outline drop-position story coverage still missing**                                | Same-parent/cross-parent before/after/inside operation resolution and row affordance are wired; Storybook DnD play coverage remains                         | Low      |
+| P6  | **Side panel tab friction**                                                           | **Resolved (2026-06-24):** `WidgetTreeSidePanel` keeps outline visible; Props/Assets detail tabs switch independently; preview/asset insert routes to Props | Resolved |
+| P7  | **Placement inspector partial**                                                       | Stack inset fields are exposed; registry inspector fields remain demo-limited and container-specific affordances are still sparse                           | Medium   |
+| P8  | **Asset palette preview drop missing**                                                | `WidgetAssetPalette` can click-add to selected containers and drag assets onto outline before/inside/after targets; preview/canvas drop remains future      | Low      |
+| P9  | **Keyboard shortcuts partial**                                                        | Outline Arrow/Home/End/Delete, Alt+ArrowUp/Down move, and Enter→Props focus exist; Design/Code shortcut and richer view-toggle shortcuts remain             | Low      |
+| P10 | **Zoom / pan removed**                                                                | [strengths-inheritance.md](./strengths-inheritance.md), [next-slice-plan.md](./next-slice-plan.md) — explicit deferral                                      | Deferred |
+| P11 | **ScreenSpecEditor isolated**                                                         | No shared chrome with `WidgetTreeLab`; authors pick screen-spec vs raw JDW manually                                                                         | Low      |
+| P12 | **Monaco ↔ tree selection polish remains shallow**                                    | Outline selection reveals the widget source position and cursor movement can select widgets; full JSON range highlight is not implemented                   | Low      |
 
 ---
 
