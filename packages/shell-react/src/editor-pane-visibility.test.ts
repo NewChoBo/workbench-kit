@@ -4,6 +4,7 @@ import {
   DEFAULT_EDITOR_PANE_VISIBILITY,
   editorViewModeToPaneVisibility,
   getVisibleEditorPaneKinds,
+  resolveEffectiveEditorPaneVisibility,
   sanitizeEditorPaneVisibility,
   toggleEditorPaneVisibility,
 } from './editor-pane-visibility.js';
@@ -74,5 +75,31 @@ describe('editor-pane-visibility', () => {
       form: false,
       preview: false,
     });
+  });
+
+  it('restores preferred panes when eligibility returns without mutating preference', () => {
+    const preference = {
+      code: true,
+      form: false,
+      preview: true,
+    };
+
+    expect(
+      resolveEffectiveEditorPaneVisibility(preference, {
+        formEligible: true,
+        previewEligible: false,
+      }),
+    ).toEqual({
+      code: true,
+      form: false,
+      preview: false,
+    });
+
+    expect(
+      resolveEffectiveEditorPaneVisibility(preference, {
+        formEligible: true,
+        previewEligible: true,
+      }),
+    ).toEqual(preference);
   });
 });

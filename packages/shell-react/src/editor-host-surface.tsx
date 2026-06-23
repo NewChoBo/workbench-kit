@@ -28,7 +28,7 @@ import { mimeTypeForResource, pathForResource } from './editor-resource.js';
 import {
   getVisibleEditorPaneKinds,
   resolveDefaultEditorPaneVisibility,
-  sanitizeEditorPaneVisibility,
+  resolveEffectiveEditorPaneVisibility,
   toggleEditorPaneVisibility,
   type EditorPaneKind,
   type EditorPaneVisibility,
@@ -176,7 +176,8 @@ function TextEditorSurface({
   const { executeCommand, workspaceHostPort } = useWorkbench();
   const [content, setContent] = useState(initialContent);
   const previousResourceUriRef = useRef<string | undefined>(undefined);
-  const [paneVisibility, setPaneVisibility] = useState<EditorPaneVisibility>(() =>
+  const splitSizesRef = useRef<Record<string, number>>({});
+  const [panePreference, setPanePreference] = useState<EditorPaneVisibility>(() =>
     resolveDefaultEditorPaneVisibility(defaultViewModeForResource?.(resourceUri)),
   );
   const editorDocument = useMemo(
@@ -194,6 +195,10 @@ function TextEditorSurface({
   );
   const formEligible = Boolean(formProvider);
   const previewEligible = Boolean(previewProvider);
+  const paneVisibility = useMemo(
+    () => resolveEffectiveEditorPaneVisibility(panePreference, { formEligible, previewEligible }),
+    [formEligible, panePreference, previewEligible],
+  );
   const codeIcon = isJsonSourceDocument(editorDocument) ? 'codicon-json' : 'codicon-code';
   const modeToolbarVisible = formEligible || previewEligible;
 
@@ -203,11 +208,14 @@ function TextEditorSurface({
 
     if (resourceChanged) {
       setContent(initialContent);
+      setPanePreference(
+        resolveDefaultEditorPaneVisibility(defaultViewModeForResource?.(resourceUri)),
+      );
       return;
     }
 
     setContent((current) => (current === initialContent ? current : initialContent));
-  }, [initialContent, resourceUri]);
+  }, [defaultViewModeForResource, initialContent, resourceUri]);
 
   useEffect(() => {
     onModeToolbarVisibleChange(modeToolbarVisible);
@@ -219,11 +227,13 @@ function TextEditorSurface({
     };
   }, [onModeToolbarVisibleChange]);
 
-  useEffect(() => {
-    setPaneVisibility((current) =>
-      sanitizeEditorPaneVisibility(current, { formEligible, previewEligible }),
-    );
-  }, [formEligible, previewEligible]);
+  const getSplitSize = useCallback((key: string, defaultPercent: number) => {
+    return splitSizesRef.current[key] ?? defaultPercent;
+  }, []);
+
+  const setSplitSize = useCallback((key: string, percent: number) => {
+    splitSizesRef.current[key] = percent;
+  }, []);
 
   const handleChange = useCallback(
     (nextContent: string) => {
@@ -291,7 +301,7 @@ function TextEditorSurface({
   const visiblePaneEntries = getVisibleEditorPaneKinds(paneVisibility)
     .map((kind) => ({ kind, node: paneByKind[kind] }))
     .filter((entry): entry is { kind: EditorPaneKind; node: ReactNode } => entry.node !== null);
-  const editorBody = composeEditorPaneLayout(visiblePaneEntries);
+  const editorBody = composeEditorPaneLayout(visiblePaneEntries, getSplitSize, setSplitSize);
   const modeToolbar =
     modeToolbarVisible && modeToolbarHost
       ? createPortal(
@@ -299,9 +309,9 @@ function TextEditorSurface({
             codeIcon={codeIcon}
             formEligible={formEligible}
             previewEligible={previewEligible}
-            visibility={paneVisibility}
+            visibility={panePreference}
             onTogglePane={(pane) => {
-              setPaneVisibility((current) => toggleEditorPaneVisibility(current, pane));
+              setPanePreference((current) => toggleEditorPaneVisibility(current, pane));
             }}
           />,
           modeToolbarHost,
@@ -324,6 +334,8 @@ function TextEditorSurface({
 
 function composeEditorPaneLayout(
   panes: readonly { kind: EditorPaneKind; node: ReactNode }[],
+  getSplitSize: (key: string, defaultPercent: number) => number,
+  onSplitSizeChange: (key: string, percent: number) => void,
 ): ReactNode {
   if (panes.length === 0) {
     return null;
@@ -333,15 +345,23 @@ function composeEditorPaneLayout(
     return panes[0]?.node ?? null;
   }
 
-  return panes.slice(1).reduce<ReactNode>((primary, entry) => {
+  const layoutSignature = panes.map((pane) => pane.kind).join('|');
+
+  return panes.slice(1).reduce<ReactNode>((primary, entry, splitIndex) => {
     const primaryKind = panes[0]?.kind;
     const primaryLabel = primaryKind ? editorPaneKindLabel(primaryKind) : 'Editor pane';
+    const splitKey = `${layoutSignature}#${splitIndex}`;
 
     return (
       <SplitView
+        key={splitKey}
         className="workbench-editor-area__split"
         defaultPrimarySizePercent={50}
         minPrimarySizePercent={25}
+        primarySizePercent={getSplitSize(splitKey, 50)}
+        onPrimarySizePercentChange={(percent) => {
+          onSplitSizeChange(splitKey, percent);
+        }}
         primary={
           <section aria-label={primaryLabel} className="workbench-editor-area__split-pane">
             {primary}

@@ -21,7 +21,12 @@ import type {
   EditorDocumentViewRenderContext,
 } from '@workbench-kit/workbench-core';
 
-type JsonPath = readonly (string | number)[];
+import {
+  replaceJsonValueAtPath,
+  type JsonFormPath,
+} from './json-form-source-patch.js';
+
+type JsonPath = JsonFormPath;
 
 export type {
   EditorDocumentContext,
@@ -204,12 +209,8 @@ function JsonObjectFormView({
     }
 
     const previousValue = getJsonPathValue(parsed, path);
-    const nextRecord = updateJsonPathValue(
-      parsed,
-      path,
-      coerceFormFieldValue(previousValue, nextValue),
-    );
-    onContentChange(JSON.stringify(nextRecord, null, 2));
+    const coerced = coerceFormFieldValue(previousValue, nextValue);
+    onContentChange(replaceJsonValueAtPath(content, path, coerced));
   };
 
   if (!parsed) {
@@ -511,29 +512,6 @@ function getJsonPathValue(value: unknown, path: JsonPath): unknown {
   }
 
   return cursor;
-}
-
-function updateJsonPathValue(value: unknown, path: JsonPath, nextValue: unknown): unknown {
-  if (path.length === 0) {
-    return nextValue;
-  }
-
-  const [head, ...tail] = path;
-
-  if (Array.isArray(value) && typeof head === 'number') {
-    const nextArray = [...value];
-    nextArray[head] = updateJsonPathValue(nextArray[head], tail, nextValue);
-    return nextArray;
-  }
-
-  if (isJsonRecord(value) && typeof head === 'string') {
-    return {
-      ...value,
-      [head]: updateJsonPathValue(value[head], tail, nextValue),
-    };
-  }
-
-  return value;
 }
 
 function getJsonPathLabel(path: JsonPath): string {

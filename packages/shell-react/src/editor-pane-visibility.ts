@@ -66,21 +66,24 @@ export function sanitizeEditorPaneVisibility(
   visibility: EditorPaneVisibility,
   options: { formEligible: boolean; previewEligible: boolean },
 ): EditorPaneVisibility {
-  let next: EditorPaneVisibility = visibility;
+  return resolveEffectiveEditorPaneVisibility(visibility, options);
+}
 
-  if (!options.formEligible && next.form) {
-    next = { ...next, form: false };
-  }
+export function resolveEffectiveEditorPaneVisibility(
+  preference: EditorPaneVisibility,
+  options: { formEligible: boolean; previewEligible: boolean },
+): EditorPaneVisibility {
+  const effective: EditorPaneVisibility = {
+    code: preference.code,
+    form: preference.form && options.formEligible,
+    preview: preference.preview && options.previewEligible,
+  };
 
-  if (!options.previewEligible && next.preview) {
-    next = { ...next, preview: false };
-  }
-
-  if (countVisibleEditorPanes(next) === 0) {
+  if (countVisibleEditorPanes(effective) === 0) {
     return DEFAULT_EDITOR_PANE_VISIBILITY;
   }
 
-  return next;
+  return effective;
 }
 
 export function getVisibleEditorPaneKinds(visibility: EditorPaneVisibility): EditorPaneKind[] {
