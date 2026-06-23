@@ -84,6 +84,7 @@ export interface WorkbenchStandaloneShellProps<
   ) => ReactNode;
   renderOverlays?: (context: WorkbenchStandaloneShellContext<TActivityId, TTheme>) => ReactNode;
   renderSecondaryArea: (context: WorkbenchStandaloneShellContext<TActivityId, TTheme>) => ReactNode;
+  renderTitleBar?: (context: WorkbenchStandaloneShellContext<TActivityId, TTheme>) => ReactNode;
   rootClassName?: string;
   rootStyle?: CSSProperties;
   settingsItemIcon?: ReactNode;
@@ -124,6 +125,7 @@ export function WorkbenchStandaloneShell<
   renderPrimarySidebar,
   renderOverlays,
   renderSecondaryArea,
+  renderTitleBar,
   rootClassName,
   rootStyle,
   settingsItemIcon,
@@ -257,6 +259,7 @@ export function WorkbenchStandaloneShell<
   const primarySidebarNode = renderPrimarySidebar(context);
   const secondaryArea = renderSecondaryArea(context);
   const overlays = renderOverlays?.(context);
+  const titleBar = renderTitleBar?.(context);
 
   return (
     <WorkspaceDraftsProvider>
@@ -311,6 +314,7 @@ export function WorkbenchStandaloneShell<
         secondaryArea={secondaryArea}
         statusSections={statusSections}
         theme={theme}
+        titleBar={titleBar}
         overlays={overlays}
       />
     </WorkspaceDraftsProvider>
