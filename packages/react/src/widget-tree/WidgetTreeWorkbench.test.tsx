@@ -50,4 +50,49 @@ describe('WidgetTreeWorkbench', () => {
     expect(markup).toContain('Save');
     expect(markup).toContain('Discard');
   });
+
+  it('disables save and shows validation status for invalid JDW', () => {
+    const markup = renderToStaticMarkup(
+      <WidgetTreeWorkbench
+        dirty
+        path="src/widgets/invalid.jdw.json"
+        registry={WIDGET_TREE_DEMO_REGISTRY}
+        value={JSON.stringify({
+          type: 'grid',
+          args: { children: [] },
+        })}
+        onChange={() => undefined}
+        onSave={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('data-testid="json-config-validation-banner"');
+    expect(markup).toContain('data-validation="invalid"');
+    expect(markup).toContain('disabled=""');
+    expect(markup).toContain('columns is required');
+  });
+
+  it('keeps save enabled for unresolved exact dynamic scalar expressions', () => {
+    const markup = renderToStaticMarkup(
+      <WidgetTreeWorkbench
+        dirty
+        path="src/widgets/dynamic.jdw.json"
+        registry={WIDGET_TREE_DEMO_REGISTRY}
+        value={JSON.stringify({
+          type: 'column',
+          listen: ['spacing'],
+          args: {
+            gap: '${spacing}',
+            children: [{ type: 'text', args: { text: 'Dynamic', fontSize: '${fontSize}' } }],
+          },
+        })}
+        onChange={() => undefined}
+        onSave={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('data-testid="json-config-validation-banner"');
+    expect(markup).toContain('data-validation="valid"');
+    expect(markup).toMatch(/<button[^>]*data-variant="primary"[^>]*>Save<\/button>/);
+  });
 });

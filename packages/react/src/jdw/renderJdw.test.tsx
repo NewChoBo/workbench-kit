@@ -14,4 +14,29 @@ describe('renderJdw', () => {
   it('returns null for invalid JSON', () => {
     expect(renderJdw('{ invalid')).toBeNull();
   });
+
+  it('renders resolved JDW variable values before validation and layout', () => {
+    const markup = renderToStaticMarkup(
+      <>
+        {renderJdw(
+          JSON.stringify({
+            type: 'text',
+            args: {
+              text: '${title}',
+              fontSize: '${fontSize}',
+            },
+          }),
+          {
+            values: {
+              title: 'Dynamic title',
+              fontSize: 22,
+            },
+          },
+        )}
+      </>,
+    );
+
+    expect(markup).toContain('Dynamic title');
+    expect(markup).toContain('font-size:22px');
+  });
 });

@@ -5,7 +5,11 @@ export type { WidgetTreeWorkbenchProps } from './WidgetTreeWorkbench.js';
 export { WidgetTreeWorkspaceShell } from './WidgetTreeWorkspaceShell.js';
 export type { WidgetTreeWorkspaceShellProps } from './WidgetTreeWorkspaceShell.js';
 export { WidgetTreeView } from './WidgetTreeView.js';
-export type { WidgetTreeViewProps } from './WidgetTreeView.js';
+export type {
+  WidgetTreeAssetDropOperation,
+  WidgetTreeMoveOperation,
+  WidgetTreeViewProps,
+} from './WidgetTreeView.js';
 export { WidgetInspectorPanel } from './WidgetInspectorPanel.js';
 export type { WidgetInspectorPanelProps } from './WidgetInspectorPanel.js';
 export { WidgetTreeSidePanel } from './WidgetTreeSidePanel.js';
@@ -23,5 +27,10 @@ export { WidgetTreeModeControls } from './WidgetTreeModeControls.js';
 export type { WidgetTreeModeControlsProps } from './WidgetTreeModeControls.js';
 export { isWidgetTreeDocument } from './widget-tree-document.js';
 export type { WidgetTreeDocumentRef } from './widget-tree-document.js';
+export {
+  WIDGET_PLACEMENT_ASSET_DRAG_MIME,
+  readWidgetPlacementAssetDragData,
+  writeWidgetPlacementAssetDragData,
+} from './widget-placement-asset-dnd.js';
 export { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';
 export { WIDGET_TREE_DEMO_ASSET_CATALOG } from './demo-widget-assets.js';

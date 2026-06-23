@@ -21,10 +21,7 @@ import type {
   EditorDocumentViewRenderContext,
 } from '@workbench-kit/workbench-core';
 
-import {
-  replaceJsonValueAtPath,
-  type JsonFormPath,
-} from './json-form-source-patch.js';
+import { replaceJsonValueAtPath, type JsonFormPath } from './json-form-source-patch.js';
 
 type JsonPath = JsonFormPath;
 

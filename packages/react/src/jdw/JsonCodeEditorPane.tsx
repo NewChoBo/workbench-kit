@@ -24,7 +24,7 @@ import {
 import { WorkspaceEditor, type WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor';
 import type { WorkspaceFile } from '../workbench/workspace/types';
 
-interface JsonEditorProblem {
+export interface JsonEditorProblem {
   endColumn: number;
   endLineNumber: number;
   message: string;
@@ -39,12 +39,68 @@ function toWorkbenchProblemSeverity(severity: number): WorkbenchProblemSeverity 
   return 'info';
 }
 
+function pluralizeProblemLabel(count: number, label: string): string {
+  return `${count} ${label}${count === 1 ? '' : 's'}`;
+}
+
+export function summarizeJsonEditorProblems(problems: readonly JsonEditorProblem[]): {
+  readonly icon: string;
+  readonly label: string;
+  readonly status: 'completed' | 'failed' | 'warning';
+} {
+  const errorCount = problems.filter(
+    (problem) => toWorkbenchProblemSeverity(problem.severity) === 'error',
+  ).length;
+  const warningCount = problems.filter(
+    (problem) => toWorkbenchProblemSeverity(problem.severity) === 'warning',
+  ).length;
+
+  if (errorCount > 0) {
+    return {
+      icon: 'error',
+      label:
+        warningCount > 0
+          ? `${pluralizeProblemLabel(errorCount, 'Error')}, ${pluralizeProblemLabel(
+              warningCount,
+              'Warning',
+            )}`
+          : pluralizeProblemLabel(errorCount, 'Error'),
+      status: 'failed',
+    };
+  }
+
+  if (warningCount > 0) {
+    return {
+      icon: 'warning',
+      label: pluralizeProblemLabel(warningCount, 'Warning'),
+      status: 'warning',
+    };
+  }
+
+  if (problems.length > 0) {
+    return {
+      icon: 'info',
+      label: pluralizeProblemLabel(problems.length, 'Info'),
+      status: 'completed',
+    };
+  }
+
+  return {
+    icon: 'check',
+    label: 'No Problems',
+    status: 'completed',
+  };
+}
+
 export interface JsonCodeEditorPaneProps {
   documentParseError?: string | null | undefined;
   file: WorkspaceFile;
   jsonSchema?: WidgetJsonSchema | null | undefined;
+  revealPosition?: JsonEditorPosition | null | undefined;
+  onCursorPositionChange?: ((position: JsonEditorPosition) => void) | undefined;
   onChange: (value: string) => void;
   onEditorMount?: OnMount | undefined;
+  problems?: readonly JsonEditorProblem[] | undefined;
   onSave?: (() => void) | undefined;
   readOnly?: boolean | undefined;
   showProblemsPanel?: boolean | undefined;
@@ -52,12 +108,20 @@ export interface JsonCodeEditorPaneProps {
   value: string;
 }
 
+export interface JsonEditorPosition {
+  readonly column: number;
+  readonly lineNumber: number;
+}
+
 export function JsonCodeEditorPane({
   documentParseError = null,
   file,
   jsonSchema = null,
+  revealPosition = null,
+  onCursorPositionChange,
   onChange,
   onEditorMount,
+  problems: externalProblems = [],
   onSave,
   readOnly = false,
   showProblemsPanel = true,
@@ -66,11 +130,17 @@ export function JsonCodeEditorPane({
 }: JsonCodeEditorPaneProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const markerListenerRef = useRef<IDisposable | null>(null);
+  const cursorListenerRef = useRef<IDisposable | null>(null);
+  const cursorChangeRef = useRef<typeof onCursorPositionChange>(onCursorPositionChange);
   const [monacoProblems, setMonacoProblems] = useState<JsonEditorProblem[]>([]);
   const [showProblems, setShowProblems] = useState(false);
 
+  useEffect(() => {
+    cursorChangeRef.current = onCursorPositionChange;
+  }, [onCursorPositionChange]);
+
   const problems = useMemo(() => {
-    if (!documentParseError) return monacoProblems;
+    if (!documentParseError) return [...externalProblems, ...monacoProblems];
     return [
       {
         endColumn: 1,
@@ -80,9 +150,11 @@ export function JsonCodeEditorPane({
         startColumn: 1,
         startLineNumber: 1,
       },
+      ...externalProblems,
       ...monacoProblems,
     ];
-  }, [documentParseError, monacoProblems]);
+  }, [documentParseError, externalProblems, monacoProblems]);
+  const problemSummary = useMemo(() => summarizeJsonEditorProblems(problems), [problems]);
 
   const previousProblemCountRef = useRef(0);
   useEffect(() => {
@@ -96,9 +168,21 @@ export function JsonCodeEditorPane({
     () => () => {
       markerListenerRef.current?.dispose();
       markerListenerRef.current = null;
+      cursorListenerRef.current?.dispose();
+      cursorListenerRef.current = null;
     },
     [],
   );
+
+  useEffect(() => {
+    if (!revealPosition) return;
+
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    editor.setPosition(revealPosition);
+    editor.revealPositionInCenter(revealPosition);
+  }, [revealPosition?.column, revealPosition?.lineNumber]);
 
   const configureJsonSchema = (monaco: WorkbenchMonaco, path: string) => {
     if (!jsonSchema) return;
@@ -115,7 +199,7 @@ export function JsonCodeEditorPane({
       enableSchemaRequest: false,
       schemas: [
         {
-          uri: 'https://workbench-kit.dev/schemas/widget-document.schema.json',
+          uri: 'https://workbench-kit.dev/schemas/widget-document.v1.jdw.schema.json',
           fileMatch: [path],
           schema: jsonSchema,
         },
@@ -127,6 +211,14 @@ export function JsonCodeEditorPane({
     editorRef.current = editor;
     configureJsonSchema(monaco, file.path);
     onEditorMount?.(editor, monaco);
+
+    cursorListenerRef.current?.dispose();
+    cursorListenerRef.current = editor.onDidChangeCursorPosition((event) => {
+      cursorChangeRef.current?.({
+        column: event.position.column,
+        lineNumber: event.position.lineNumber,
+      });
+    });
 
     if (onSave) {
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
@@ -224,12 +316,12 @@ export function JsonCodeEditorPane({
           <WorkbenchStatusBarSection>
             <WorkbenchStatusBarItem
               active={showProblems}
-              icon={problems.length > 0 ? 'error' : 'check'}
-              status={problems.length > 0 ? 'failed' : 'completed'}
+              icon={problemSummary.icon}
+              status={problemSummary.status}
               title="Toggle problems"
               onClick={() => setShowProblems((current) => !current)}
             >
-              {problems.length > 0 ? `${problems.length} Problems` : 'No Problems'}
+              {problemSummary.label}
             </WorkbenchStatusBarItem>
           </WorkbenchStatusBarSection>
         </WorkbenchStatusBar>

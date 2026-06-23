@@ -1,9 +1,11 @@
+import type { DragEvent } from 'react';
 import type { WidgetPlacementAsset } from '@workbench-kit/contracts';
 import type { GenericWidget } from '@workbench-kit/jdw';
 
 import { WorkbenchPropertyHint } from '../layout/WorkbenchPropertyPanel';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
+import { writeWidgetPlacementAssetDragData } from './widget-placement-asset-dnd.js';
 import { canAddChildren } from './widget-tree-layout.js';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -25,18 +27,35 @@ export function WidgetAssetPalette({
   readOnly = false,
   selectedContainer,
 }: WidgetAssetPaletteProps) {
-  const canPlace = canAddChildren(selectedContainer) && !readOnly;
+  const canClickPlace = canAddChildren(selectedContainer) && !readOnly;
+  const canDrag = !readOnly;
   const categories = Object.keys(assetsByCategory);
+
+  const handleAssetClick = (asset: WidgetPlacementAsset): void => {
+    if (!canClickPlace) return;
+    onPlaceAsset(asset);
+  };
+
+  const handleAssetDragStart = (
+    event: DragEvent<HTMLButtonElement>,
+    asset: WidgetPlacementAsset,
+  ): void => {
+    if (!canDrag) return;
+    writeWidgetPlacementAssetDragData(event.dataTransfer, asset);
+  };
 
   return (
     <div className="widget-tree-asset-palette" data-testid="widget-tree-asset-palette">
-      {!canPlace ? (
+      {readOnly ? (
+        <WorkbenchPropertyHint>Widget assets are read-only in this editor.</WorkbenchPropertyHint>
+      ) : !canClickPlace ? (
         <WorkbenchPropertyHint>
-          Select a container node in Outline to place an asset.
+          Select a container node in Outline to click-add, or drag an asset onto the outline.
         </WorkbenchPropertyHint>
       ) : (
         <WorkbenchPropertyHint>
-          Click an asset to add it to <strong>{selectedContainer?.type ?? 'container'}</strong>.
+          Click an asset to add it to <strong>{selectedContainer?.type ?? 'container'}</strong>, or
+          drag it onto the outline.
         </WorkbenchPropertyHint>
       )}
 
@@ -49,15 +68,20 @@ export function WidgetAssetPalette({
             {assetsByCategory[category]?.map((asset) => (
               <button
                 key={asset.id}
+                aria-disabled={!canClickPlace}
                 className={cx(
                   'widget-tree-asset-palette__card',
-                  !canPlace && 'widget-tree-asset-palette__card--disabled',
+                  canDrag && 'widget-tree-asset-palette__card--draggable',
+                  !canClickPlace && !readOnly && 'widget-tree-asset-palette__card--drop-only',
+                  readOnly && 'widget-tree-asset-palette__card--disabled',
                 )}
                 data-testid={`widget-asset-${asset.id}`}
-                disabled={!canPlace}
+                disabled={readOnly}
+                draggable={canDrag}
                 title={asset.description ?? asset.label}
                 type="button"
-                onClick={() => onPlaceAsset(asset)}
+                onClick={() => handleAssetClick(asset)}
+                onDragStart={(event) => handleAssetDragStart(event, asset)}
               >
                 {asset.icon ? (
                   <i aria-hidden className={cxCodicon(asset.icon)} />

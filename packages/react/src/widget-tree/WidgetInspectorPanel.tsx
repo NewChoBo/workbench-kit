@@ -43,7 +43,10 @@ export function WidgetInspectorPanel({
   const showPlacement =
     widget &&
     parentType &&
-    (parentType === 'grid' || parentType === 'row' || parentType === 'column');
+    (parentType === 'grid' ||
+      parentType === 'row' ||
+      parentType === 'column' ||
+      parentType === 'stack');
 
   const updateProp = (prop: string, value: unknown) => {
     if (!widget || !path || !onPatch || readOnly) return;
@@ -150,6 +153,37 @@ function PlacementSection({
     );
   }
 
+  if (parentType === 'stack') {
+    return (
+      <WorkbenchPropertySection title="Stack placement">
+        <WorkbenchPropertyNumberRow
+          label="Left"
+          disabled={readOnly}
+          value={typeof values.left === 'number' ? values.left : undefined}
+          onValueChange={(next) => onValueChange('left', next)}
+        />
+        <WorkbenchPropertyNumberRow
+          label="Top"
+          disabled={readOnly}
+          value={typeof values.top === 'number' ? values.top : undefined}
+          onValueChange={(next) => onValueChange('top', next)}
+        />
+        <WorkbenchPropertyNumberRow
+          label="Right"
+          disabled={readOnly}
+          value={typeof values.right === 'number' ? values.right : undefined}
+          onValueChange={(next) => onValueChange('right', next)}
+        />
+        <WorkbenchPropertyNumberRow
+          label="Bottom"
+          disabled={readOnly}
+          value={typeof values.bottom === 'number' ? values.bottom : undefined}
+          onValueChange={(next) => onValueChange('bottom', next)}
+        />
+      </WorkbenchPropertySection>
+    );
+  }
+
   return (
     <WorkbenchPropertySection title="Flex placement">
       <WorkbenchPropertyNumberRow
@@ -159,6 +193,17 @@ function PlacementSection({
         step={0.1}
         value={typeof values.flex === 'number' ? values.flex : undefined}
         onValueChange={(next) => onValueChange('flex', next)}
+      />
+      <WorkbenchPropertySelectRow
+        label="Fit"
+        disabled={readOnly}
+        options={[
+          { label: 'Auto', value: '' },
+          { label: 'Tight', value: 'tight' },
+          { label: 'Loose', value: 'loose' },
+        ]}
+        value={typeof values.flexFit === 'string' ? values.flexFit : ''}
+        onValueChange={(next) => onValueChange('flexFit', next.length > 0 ? next : undefined)}
       />
       <WorkbenchPropertySelectRow
         label="Align"

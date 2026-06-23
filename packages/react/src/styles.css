@@ -2782,6 +2782,10 @@
   background: var(--color-danger);
 }
 
+.ui-workbench-status-bar__item[data-status='warning'] .ui-workbench-status-bar__status-dot {
+  background: var(--color-warning);
+}
+
 .ui-workbench-status-bar__item[data-status='waiting'] .ui-workbench-status-bar__status-dot {
   background: #d6aa37;
 }
@@ -9058,6 +9062,17 @@
   overflow: auto;
 }
 
+.widget-tree-lab__preview-body [data-widget-interactive='true'] {
+  cursor: pointer;
+}
+
+.widget-tree-lab__preview-body [data-widget-selected='true'] {
+  outline: 1px solid var(--color-focus-border, #007acc);
+  outline-offset: -1px;
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--color-focus-border, #007acc) 70%, transparent);
+}
+
 .widget-tree-side-panel {
   display: flex;
   flex-direction: column;
@@ -9147,6 +9162,18 @@
   background: rgba(56, 139, 253, 0.08);
 }
 
+.widget-tree-asset-palette__card--draggable {
+  cursor: grab;
+}
+
+.widget-tree-asset-palette__card--draggable:active {
+  cursor: grabbing;
+}
+
+.widget-tree-asset-palette__card--drop-only {
+  opacity: 0.78;
+}
+
 .widget-tree-asset-palette__card--disabled,
 .widget-tree-asset-palette__card:disabled {
   opacity: 0.45;
@@ -9222,9 +9249,10 @@
 }
 
 .widget-tree-outline__item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   padding: 2px 0;
   color: var(--color-text);
   font-size: var(--font-size-sm);
@@ -9235,11 +9263,77 @@
   color: var(--color-list-activeSelectionForeground, var(--color-text));
 }
 
+.widget-tree-outline__item--movable .widget-tree-outline__button {
+  cursor: grab;
+}
+
+.widget-tree-outline__item--movable:active .widget-tree-outline__button {
+  cursor: grabbing;
+}
+
+.widget-tree-outline__item--drop-before::before,
+.widget-tree-outline__item--drop-after::after {
+  position: absolute;
+  left: 6px;
+  right: 8px;
+  z-index: 1;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--vscode-focusBorder, var(--color-focus-border, #007acc));
+  content: '';
+  pointer-events: none;
+}
+
+.widget-tree-outline__item--drop-before::before {
+  top: 0;
+}
+
+.widget-tree-outline__item--drop-after::after {
+  bottom: 0;
+}
+
+.widget-tree-outline__item--drop-inside .widget-tree-outline__button {
+  background: color-mix(
+    in srgb,
+    var(--vscode-focusBorder, var(--color-focus-border, #007acc)) 16%,
+    transparent
+  );
+  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border, #007acc));
+  outline-offset: -1px;
+}
+
+.widget-tree-outline__twistie {
+  display: inline-flex;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.widget-tree-outline__twistie:hover {
+  background: var(--color-toolbar-hoverBackground, rgba(255, 255, 255, 0.08));
+  color: var(--color-text);
+}
+
+.widget-tree-outline__twistie--spacer {
+  pointer-events: none;
+}
+
 .widget-tree-outline__button {
   display: flex;
+  flex: 1;
   align-items: center;
   gap: 8px;
-  width: 100%;
+  min-width: 0;
   padding: 4px 8px;
   border: 0;
   border-radius: 6px;

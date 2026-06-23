@@ -20,7 +20,9 @@ describe('replaceJsonValueAtPath', () => {
     expect(next).toContain('"text": "Updated title"');
     expect(next).not.toContain('"text": "Preview title"');
     expect(next.split('\n').length).toBe(WIDGET_JSON.split('\n').length);
-    expect(next.slice(0, next.indexOf('"args"'))).toBe(WIDGET_JSON.slice(0, WIDGET_JSON.indexOf('"args"')));
+    expect(next.slice(0, next.indexOf('"args"'))).toBe(
+      WIDGET_JSON.slice(0, WIDGET_JSON.indexOf('"args"')),
+    );
   });
 
   it('replaces a top-level field in compact JSON', () => {

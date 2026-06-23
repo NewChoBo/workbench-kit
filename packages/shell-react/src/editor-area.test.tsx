@@ -1234,7 +1234,9 @@ describe('EditorArea', () => {
     expect(container.querySelector('.workbench-editor-area__preview-pane')).toBeNull();
     expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons [role="toolbar"]')).toBeNull();
-    expect(container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]')).toBeNull();
+    expect(
+      container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
+    ).toBeNull();
     expect(container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"]')).toBeNull();
     expect(
       container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),

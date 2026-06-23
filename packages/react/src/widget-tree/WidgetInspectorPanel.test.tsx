@@ -40,6 +40,38 @@ describe('WidgetInspectorPanel', () => {
     expect(markup).toContain('Column');
   });
 
+  it('renders stack placement fields when parent is a stack', () => {
+    const markup = renderToStaticMarkup(
+      <WidgetInspectorPanel
+        parentWidget={{ type: 'stack', children: [] }}
+        path={[{ kind: 'children', index: 0 }]}
+        widget={{ type: 'text', text: 'A', left: 4, top: 8 }}
+        widgetRegistry={WIDGET_TREE_DEMO_REGISTRY}
+        onPatch={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('Stack placement');
+    expect(markup).toContain('Left');
+    expect(markup).toContain('Top');
+  });
+
+  it('renders flex fit placement fields when parent is linear', () => {
+    const markup = renderToStaticMarkup(
+      <WidgetInspectorPanel
+        parentWidget={{ type: 'row', children: [] }}
+        path={[{ kind: 'children', index: 0 }]}
+        widget={{ type: 'text', text: 'A', flex: 1, flexFit: 'loose' }}
+        widgetRegistry={WIDGET_TREE_DEMO_REGISTRY}
+        onPatch={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('Flex placement');
+    expect(markup).toContain('Fit');
+    expect(markup).toContain('Loose');
+  });
+
   it('prompts for selection when no widget is active', () => {
     const markup = renderToStaticMarkup(
       <WidgetInspectorPanel widget={null} path={[]} widgetRegistry={WIDGET_TREE_DEMO_REGISTRY} />,

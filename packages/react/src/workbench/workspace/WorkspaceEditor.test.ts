@@ -36,6 +36,24 @@ describe('WorkspaceEditor', () => {
     ]);
   });
 
+  it('loads the recursive static JDW node schema for workspace diagnostics', () => {
+    const schemas = getWorkspaceEditorJsonDiagnosticsSchemas({
+      content: '{}',
+      mimeType: JDW_WIDGET_DOCUMENT_MIME,
+      path: 'jdw/workbench-sample.jdw.json',
+    });
+    const nodeSchema = schemas[0]?.schema as
+      | {
+          definitions?: Record<string, unknown>;
+        }
+      | undefined;
+
+    expect(nodeSchema?.definitions?.JdwNode).toBeDefined();
+    expect(nodeSchema?.definitions?.StackJdwNode).toBeDefined();
+    expect(nodeSchema?.definitions?.ImageJdwNode).toBeDefined();
+    expect(nodeSchema?.definitions?.ButtonJdwNode).toBeDefined();
+  });
+
   it('does not override diagnostics for unrelated JSON files', () => {
     expect(
       getWorkspaceEditorJsonDiagnosticsSchemas({

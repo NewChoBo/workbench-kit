@@ -3,9 +3,11 @@ import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import type { WidgetAssetCatalogContract, WidgetPlacementAsset } from '@workbench-kit/contracts';
 import {
   applyWidgetDocumentPatch,
+  collectJsonWidgetListenBindings,
   createJdwDocumentJsonSchema,
   createWidgetDocument,
   firstSelectedWidgetPath,
+  findLineAndColumnForPath,
   getWidgetAtPath,
   getWidgetChildren,
   materializeWidgetPlacementAsset,
@@ -14,6 +16,7 @@ import {
   selectWidgetPath,
   validateJsonWidgetData,
   type GenericWidget,
+  type JsonWidgetNode,
   type WidgetPath,
   type WidgetSelectionState,
 } from '@workbench-kit/jdw';
@@ -21,17 +24,49 @@ import {
 import { ResizablePanels } from '../primitives/WorkbenchEditor.js';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import { JdwPreview } from '../jdw/JdwPreview.js';
+import type { JsonEditorProblem } from '../jdw/JsonCodeEditorPane.js';
 import { WidgetAssetPalette } from './WidgetAssetPalette.js';
 import { WidgetInspectorPanel } from './WidgetInspectorPanel.js';
 import { WidgetSourceEditor } from './WidgetSourceEditor.js';
 import { WidgetTreeSidePanel } from './WidgetTreeSidePanel.js';
-import { WidgetTreeView } from './WidgetTreeView.js';
-import { canAddChildren } from './widget-tree-layout.js';
+import {
+  WidgetTreeView,
+  type WidgetTreeAssetDropOperation,
+  type WidgetTreeMoveOperation,
+} from './WidgetTreeView.js';
+import { canAddChildren, insertedWidgetPathForParent } from './widget-tree-layout.js';
 import {
   DEFAULT_WIDGET_TREE_VIEW_MODE,
   resolveWidgetTreeLabMode,
   type WidgetTreeViewMode,
 } from './widget-tree-mode.js';
+
+export function createWidgetTreeListenProblems(
+  source: string,
+  node: JsonWidgetNode,
+): readonly JsonEditorProblem[] {
+  return collectJsonWidgetListenBindings(node).flatMap((binding) => {
+    const position = findLineAndColumnForPath(source, binding.widgetPath);
+    const location = {
+      startLineNumber: position.line,
+      startColumn: position.column,
+      endLineNumber: position.line,
+      endColumn: position.column + 1,
+    };
+    return [
+      ...binding.missingListen.map((dependency) => ({
+        ...location,
+        message: `${binding.nodePath}: listen is missing "${dependency}" for a dynamic value.`,
+        severity: 4,
+      })),
+      ...binding.unusedListen.map((dependency) => ({
+        ...location,
+        message: `${binding.nodePath}: listen includes "${dependency}" but this node does not reference it.`,
+        severity: 4,
+      })),
+    ];
+  });
+}
 
 export interface WidgetTreeLabProps {
   readonly path?: string | undefined;
@@ -70,7 +105,7 @@ export function WidgetTreeLab({
 
     return validateJsonWidgetData(value, {
       registeredTypes,
-      strictKnownTypes: Boolean(registry),
+      strictKnownTypes: true,
     });
   }, [document.parseError, registry, registeredTypes, value]);
   const sourceValidationError = useMemo(() => {
@@ -85,6 +120,13 @@ export function WidgetTreeLab({
     const [firstIssue] = validation.issues;
     return firstIssue ? `${firstIssue.path}: ${firstIssue.message}` : null;
   }, [document.parseError, validation]);
+  const sourceProblems = useMemo<readonly JsonEditorProblem[]>(() => {
+    if (!validation?.value || !validation.valid) {
+      return [];
+    }
+
+    return createWidgetTreeListenProblems(value, validation.value);
+  }, [validation, value]);
 
   const [selection, setSelection] = useState<WidgetSelectionState>({ pathKeys: new Set() });
 
@@ -119,11 +161,14 @@ export function WidgetTreeLab({
     setSelection((current) => selectWidgetPath(current, nextPath));
   };
 
-  const applyPatch = (patch: Parameters<typeof applyWidgetDocumentPatch>[1]) => {
+  const applyPatch = (patch: Parameters<typeof applyWidgetDocumentPatch>[1]): boolean => {
     const nextSource = applyWidgetDocumentPatch(value, patch);
     if (nextSource !== null) {
       onChange(nextSource);
+      return nextSource !== value;
     }
+
+    return false;
   };
 
   const handleInspectorPatch = (nextWidget: GenericWidget) => {
@@ -140,12 +185,16 @@ export function WidgetTreeLab({
   const handleInsertChild = (child: GenericWidget) => {
     if (!selectedPath || !selectedWidget) return;
     const index = getWidgetChildren(selectedWidget).length;
-    applyPatch({
+    const insertedPath = insertedWidgetPathForParent(selectedWidget, selectedPath, index);
+    const changed = applyPatch({
       type: 'insert-child',
       parentPath: selectedPath,
       index,
       child,
     });
+    if (changed) {
+      setSelection((current) => selectWidgetPath(current, insertedPath));
+    }
   };
 
   const handlePlaceAsset = (asset: WidgetPlacementAsset) => {
@@ -153,13 +202,56 @@ export function WidgetTreeLab({
     handleInsertChild(materializeWidgetPlacementAsset(asset, selectedWidget));
   };
 
-  const handleRemove = () => {
-    if (!selectedPath || selectedPath.length === 0) return;
+  const handlePlaceAssetPath = (operation: WidgetTreeAssetDropOperation) => {
+    if (!document.root) return;
+
+    const parent = getWidgetAtPath(document.root, operation.parentPath);
+    if (!parent || !canAddChildren(parent)) return;
+
+    const changed = applyPatch({
+      type: 'insert-child',
+      parentPath: operation.parentPath,
+      index: operation.insertIndex,
+      child: materializeWidgetPlacementAsset(operation.asset, parent),
+    });
+    if (changed) {
+      setSelection((current) => selectWidgetPath(current, operation.nextPath));
+    }
+  };
+
+  const handleRemovePath = (pathToRemove: WidgetPath) => {
+    if (pathToRemove.length === 0) return;
+    const parentPath = pathToRemove.slice(0, -1);
     applyPatch({
       type: 'remove-widget',
-      path: selectedPath,
+      path: pathToRemove,
     });
-    setSelection((current) => selectWidgetPath(current, ROOT_WIDGET_PATH));
+    setSelection((current) => selectWidgetPath(current, parentPath));
+  };
+
+  const handleRemove = () => {
+    if (!selectedPath) return;
+    handleRemovePath(selectedPath);
+  };
+
+  const handleMovePath = (operation: WidgetTreeMoveOperation) => {
+    const changed =
+      operation.kind === 'reorder'
+        ? applyPatch({
+            type: 'reorder-child',
+            parentPath: operation.parentPath,
+            fromIndex: operation.fromIndex,
+            toIndex: operation.toIndex,
+          })
+        : applyPatch({
+            type: 'reparent-widget',
+            fromPath: operation.fromPath,
+            toParentPath: operation.toParentPath,
+            insertIndex: operation.insertIndex,
+          });
+    if (changed) {
+      setSelection((current) => selectWidgetPath(current, operation.nextPath));
+    }
   };
 
   const sourcePane = (
@@ -167,12 +259,16 @@ export function WidgetTreeLab({
       jsonSchema={jsonSchema}
       parseError={sourceValidationError}
       path={path}
+      problems={sourceProblems}
       readOnly={readOnly}
+      root={document.root}
+      selectedPath={selectedPath}
       showProblemsPanel
       theme={theme}
       value={value}
       onChange={onChange}
       onSave={onSave}
+      onSelectPath={handleSelectPath}
     />
   );
 
@@ -197,6 +293,9 @@ export function WidgetTreeLab({
           parseError={document.parseError}
           root={document.root}
           selection={selection}
+          onDeletePath={readOnly ? undefined : handleRemovePath}
+          onMovePath={readOnly ? undefined : handleMovePath}
+          onPlaceAssetPath={readOnly ? undefined : handlePlaceAssetPath}
           onSelectPath={handleSelectPath}
         />
       }
@@ -218,7 +317,12 @@ export function WidgetTreeLab({
     <section aria-label="Widget preview" className="widget-tree-lab__preview">
       <header className="widget-tree-lab__preview-header">Preview</header>
       <div className="widget-tree-lab__preview-body">
-        <JdwPreview json={value} registry={registry} />
+        <JdwPreview
+          json={value}
+          registry={registry}
+          selectedPath={selectedPath}
+          onSelectPath={handleSelectPath}
+        />
       </div>
     </section>
   );

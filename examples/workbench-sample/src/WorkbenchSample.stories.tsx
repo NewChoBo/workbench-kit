@@ -148,10 +148,16 @@ export const TesterDevAppJourney: Story = {
     await expectEditorTabVisible(canvas, 'example.jdw.json');
 
     await userEvent.click(canvas.getByRole('button', { name: 'Search' }));
-    await expect(await canvas.findByLabelText('Workspace Search')).toBeVisible();
-    const searchInput = canvas.getByLabelText('Search workspace');
+    const searchPanel = await canvas.findByLabelText('Workspace Search');
+    await expect(searchPanel).toBeVisible();
+    const searchScope = within(searchPanel);
+    const searchInput = searchScope.getByLabelText('Search workspace');
     await userEvent.type(searchInput, 'button');
-    await expect(await canvas.findByText('1 result')).toBeVisible();
+    await waitFor(() => {
+      expect(searchScope.getByRole('list', { name: 'Search results' })).toHaveTextContent(
+        'Button.tsx',
+      );
+    });
     await userEvent.keyboard('{Enter}');
     await expectEditorTabVisible(canvas, 'Button.tsx');
 

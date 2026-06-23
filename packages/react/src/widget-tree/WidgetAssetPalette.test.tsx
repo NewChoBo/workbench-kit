@@ -23,7 +23,7 @@ describe('WidgetAssetPalette', () => {
     expect(markup).toContain('Templates');
   });
 
-  it('disables placement when no container is selected', () => {
+  it('keeps assets draggable when no click-placement container is selected', () => {
     const markup = renderToStaticMarkup(
       <WidgetAssetPalette
         assetsByCategory={WIDGET_TREE_DEMO_ASSET_CATALOG.assetsByCategory()}
@@ -32,7 +32,24 @@ describe('WidgetAssetPalette', () => {
       />,
     );
 
+    expect(markup).toContain('aria-disabled="true"');
+    expect(markup).toContain('draggable="true"');
+    expect(markup).toContain('widget-tree-asset-palette__card--drop-only');
+    expect(markup).toContain('Select a container node in Outline to click-add');
+  });
+
+  it('disables asset cards in read-only mode', () => {
+    const markup = renderToStaticMarkup(
+      <WidgetAssetPalette
+        readOnly
+        assetsByCategory={WIDGET_TREE_DEMO_ASSET_CATALOG.assetsByCategory()}
+        selectedContainer={{ type: 'column', children: [] }}
+        onPlaceAsset={() => undefined}
+      />,
+    );
+
     expect(markup).toContain('widget-tree-asset-palette__card--disabled');
-    expect(markup).toContain('Select a container node in Outline');
+    expect(markup).toContain('disabled=""');
+    expect(markup).toContain('Widget assets are read-only');
   });
 });

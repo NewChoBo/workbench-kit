@@ -3,6 +3,7 @@ export type WorkbenchStatus =
   | 'running'
   | 'completed'
   | 'failed'
+  | 'warning'
   | 'waiting'
   | 'cancelled'
   | 'disabled'
@@ -57,6 +58,14 @@ const workbenchStatusDescriptors: Record<WorkbenchStatus, WorkbenchStatusDescrip
     status: 'failed',
     unavailable: false,
     variant: 'danger',
+  },
+  warning: {
+    busy: false,
+    disabled: false,
+    label: 'Warning',
+    status: 'warning',
+    unavailable: false,
+    variant: 'warning',
   },
   idle: {
     busy: false,

@@ -1,4 +1,4 @@
-export { JdwPreview, type JdwPreviewProps } from './JdwPreview.js';
+export { getJdwPreviewInvalidations, JdwPreview, type JdwPreviewProps } from './JdwPreview.js';
 export {
   JDW_SCHEMA_DOCUMENT_FILE_EXTENSION,
   JDW_SCHEMA_DOCUMENT_MIME,

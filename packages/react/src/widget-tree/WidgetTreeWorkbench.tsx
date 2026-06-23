@@ -1,9 +1,11 @@
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import type { WidgetAssetCatalogContract, WidgetRegistryContract } from '@workbench-kit/contracts';
+import { validateJsonWidgetData } from '@workbench-kit/jdw';
 
 import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
 import { Button } from '../primitives/Button';
 import { Toolbar } from '../primitives/Toolbar';
+import { JsonConfigValidationBanner } from '../jdw/JsonCodeEditorPane.js';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import { fileNameOfPath } from '../workbench/workspace/path';
 import { WorkspacePathLabel } from '../workbench/workspace/WorkspacePathLabel';
@@ -16,6 +18,7 @@ export interface WidgetTreeWorkbenchProps {
   readonly title?: ReactNode | undefined;
   readonly value: string;
   readonly onChange: (value: string) => void;
+  readonly baselineValue?: string | undefined;
   readonly onSave?: (() => void) | undefined;
   readonly onDiscard?: (() => void) | undefined;
   readonly dirty?: boolean | undefined;
@@ -33,9 +36,10 @@ export function WidgetTreeWorkbench({
   title,
   value,
   onChange,
+  baselineValue,
   onSave,
   onDiscard,
-  dirty = false,
+  dirty,
   readOnly = false,
   registry,
   assetCatalog,
@@ -56,6 +60,24 @@ export function WidgetTreeWorkbench({
   };
 
   const resolvedTitle = title ?? (path ? fileNameOfPath(path) : 'Widget document');
+  const registeredTypes = useMemo(
+    () => registry?.definitions().map((definition) => definition.type),
+    [registry],
+  );
+  const validation = useMemo(
+    () =>
+      validateJsonWidgetData(value, {
+        registeredTypes,
+        strictKnownTypes: true,
+      }),
+    [registeredTypes, value],
+  );
+  const firstValidationError = validation.issues[0]
+    ? `${validation.issues[0].path}: ${validation.issues[0].message}`
+    : undefined;
+  const resolvedDirty = dirty ?? (baselineValue !== undefined && value !== baselineValue);
+  const saveEnabled = Boolean(onSave && resolvedDirty && validation.valid && !readOnly);
+  const resolvedOnSave = saveEnabled ? onSave : undefined;
 
   return (
     <Panel
@@ -66,11 +88,11 @@ export function WidgetTreeWorkbench({
       <PanelHeader
         actions={
           <Toolbar>
-            {dirty && !readOnly ? (
+            {resolvedDirty && !readOnly ? (
               <>
                 {onDiscard ? <Button onClick={onDiscard}>Discard</Button> : null}
                 {onSave ? (
-                  <Button variant="primary" onClick={onSave}>
+                  <Button disabled={!saveEnabled} variant="primary" onClick={resolvedOnSave}>
                     Save
                   </Button>
                 ) : null}
@@ -83,7 +105,7 @@ export function WidgetTreeWorkbench({
         <span className="widget-tree-workbench__title">
           {resolvedTitle}
           {path ? <WorkspacePathLabel className="widget-tree-workbench__path" path={path} /> : null}
-          {dirty ? (
+          {resolvedDirty ? (
             <span className="widget-tree-workbench__dirty-indicator" title="Unsaved changes">
               ●
             </span>
@@ -91,6 +113,13 @@ export function WidgetTreeWorkbench({
         </span>
       </PanelHeader>
       <PanelBody className="widget-tree-workbench__body">
+        {!validation.valid || (resolvedDirty && validation.valid) ? (
+          <JsonConfigValidationBanner
+            canApply={Boolean(resolvedDirty && validation.valid)}
+            firstError={firstValidationError}
+            validationOk={validation.valid}
+          />
+        ) : null}
         <WidgetTreeLab
           assetCatalog={assetCatalog}
           path={path}
@@ -100,7 +129,7 @@ export function WidgetTreeWorkbench({
           value={value}
           viewMode={resolvedViewMode}
           onChange={onChange}
-          onSave={onSave}
+          onSave={resolvedOnSave}
         />
       </PanelBody>
     </Panel>
