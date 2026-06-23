@@ -1,4 +1,4 @@
-import type { ChatMessage } from './types';
+import type { ChatMessage } from '../chat/types';
 
 /** Mirrors `BuiltinChattingView` intro in workbench-sample. */
 export const samplePeerChatIntroMessage: ChatMessage = {

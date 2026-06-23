@@ -3,8 +3,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 
 import { StoryEventLog, StorySidebarFrame } from '../story/StorySidebarFrame';
-import { expectPeerChatExampleThread, expectVisibleChatBubbleText } from './chatStoryAssertions';
-import { samplePeerChatIntroMessage, samplePeerChatThread } from './chatStoryFixtures';
+import { expectPeerChatExampleThread, expectVisibleChatBubbleText } from '../story/chatAssertions';
+import { samplePeerChatIntroMessage, samplePeerChatThread } from '../story/chatFixtures';
 import { ChatPanel, type ChatMessage } from './index';
 
 const initialAssistantMessages: ChatMessage[] = [

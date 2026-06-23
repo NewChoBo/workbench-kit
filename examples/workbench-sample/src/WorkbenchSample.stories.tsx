@@ -5,7 +5,7 @@ import {
   DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
 } from '@workbench-kit/shell-react';
 
-import { expectVisibleChatBubbleText } from '../../../packages/react/src/workbench/chat/chatStoryAssertions';
+import { expectVisibleChatBubbleText } from '../../../packages/react/src/workbench/story/chatAssertions';
 import { App } from './App.js';
 import { SAMPLE_AUTH_SESSION_KEY, SAMPLE_AUTH_USERNAME } from './dummy-backend/index.js';
 import { SAMPLE_PERMISSION_ROLE_STORAGE_KEY } from './sample-permission-role-storage.js';

@@ -44,6 +44,7 @@
   "files": [
     "src",
     "!src/workbench/demo",
+    "!src/workbench/story",
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",
     "!src/**/*.stories.ts",

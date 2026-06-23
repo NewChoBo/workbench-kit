@@ -66,7 +66,7 @@ for (const workspacePackage of workspacePackages) {
   }
 }
 
-validateReactPrivateDemoBoundary();
+validateReactPrivateStorySurfaces();
 
 if (violations.length > 0) {
   console.error('Public package export check failed.');
@@ -253,7 +253,7 @@ function validateLegacyEntryPoints(workspacePackage, fields) {
   }
 }
 
-function validateReactPrivateDemoBoundary() {
+function validateReactPrivateStorySurfaces() {
   const reactPackage = packageByName.get('@workbench-kit/react');
   if (!reactPackage) {
     return;
@@ -276,6 +276,22 @@ function validateReactPrivateDemoBoundary() {
       location: `${location}#files`,
       message: '@workbench-kit/react must exclude private workbench demo helpers.',
       rule: 'react-demo-files',
+    });
+  }
+
+  if (exportPaths.some((exportPath) => exportPath.startsWith('./workbench/story'))) {
+    violations.push({
+      location: `${location}#exports`,
+      message: '@workbench-kit/react must not export Storybook-only workbench helpers.',
+      rule: 'react-story-export',
+    });
+  }
+
+  if (!packageJson.files?.includes('!src/workbench/story')) {
+    violations.push({
+      location: `${location}#files`,
+      message: '@workbench-kit/react must exclude Storybook-only workbench helpers.',
+      rule: 'react-story-files',
     });
   }
 }

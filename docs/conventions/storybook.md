@@ -24,6 +24,10 @@ to replace browser E2E smoke for the flows it explicitly covers.
   Isolated package stories are acceptable only when they are explicitly listed
   in `.storybook/main.ts`, have focused assertions, and prove a contract that is
   too low-level for the sample host.
+- Storybook-only helpers (frames, play assertions, fixtures) live under
+  `packages/react/src/workbench/story/` and are excluded from npm publishes
+  (`package.json#files` → `!src/workbench/story`). Do not import them from
+  production hosts or public package exports.
 
 ## Screen Size Presets
 
