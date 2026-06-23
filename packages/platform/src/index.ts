@@ -15,6 +15,12 @@ export {
   type WorkbenchSecretStorageNamespace,
   type WorkbenchSecretStorageService,
 } from './auth/types.js';
+export {
+  clearBrowserStorageByPrefixes,
+  collectStorageKeysByPrefix,
+  type BrowserStorageKind,
+  type ClearBrowserStorageByPrefixesOptions,
+} from './browser-storage.js';
 export { CommandRegistry } from './commands/command-registry.js';
 export {
   assertNoCommandDefinitionConflicts,

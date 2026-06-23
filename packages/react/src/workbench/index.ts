@@ -78,6 +78,12 @@ export {
 export { resolveWorkbenchTheme, useResolvedWorkbenchTheme } from './theme';
 export type { ResolvedWorkbenchTheme } from './theme';
 export {
+  DEFAULT_WORKBENCH_HARD_RESET_CONFIRM_MESSAGE,
+  DEFAULT_WORKBENCH_STORAGE_PREFIX,
+  performWorkbenchHardReset,
+} from './hardReset';
+export type { WorkbenchHardResetOptions } from './hardReset';
+export {
   applyWorkbenchAppearance,
   applyWorkbenchThemeAttributes,
   DARK_THEME_PRESET_OPTIONS,

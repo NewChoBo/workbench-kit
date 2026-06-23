@@ -71,10 +71,7 @@ export function shouldShowChatMessageTimestamp(
   return timeKey !== nextTimeKey;
 }
 
-function getPreviousTimestampedDayKey(
-  messages: readonly ChatMessage[],
-  index: number,
-): string {
+function getPreviousTimestampedDayKey(messages: readonly ChatMessage[], index: number): string {
   for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
     const dayKey = getChatMessageCalendarDayKey(resolveChatMessageTimestamp(messages[cursor]));
     if (dayKey) {

@@ -2661,9 +2661,9 @@
   align-items: stretch;
   gap: 8px;
   padding: 0 8px;
-  color: var(--color-text);
-  background: var(--color-surface);
-  border-top: 1px solid var(--color-border);
+  color: var(--color-statusbar-text, var(--color-text));
+  background: var(--color-statusbar-bg, var(--color-surface));
+  border-top: 1px solid var(--color-statusbar-border, var(--color-border));
   font-size: 12px;
   user-select: none;
 }
@@ -5009,6 +5009,21 @@
 
 .chat-side-bar-view {
   --chat-side-bar-vertical-padding: var(--ui-side-bar-footer-gap);
+}
+
+.chat-side-bar-view > .panel-header,
+.chat-side-bar-view > .ui-side-bar-view__header {
+  position: relative;
+  z-index: 4;
+  overflow: visible;
+}
+
+.chat-side-bar-view .ui-panel-header__actions {
+  overflow: visible;
+}
+
+.chat-side-bar-view .chat-conversation-bar {
+  overflow: visible;
 }
 
 .message-list {

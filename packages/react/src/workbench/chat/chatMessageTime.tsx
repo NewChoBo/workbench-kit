@@ -49,9 +49,7 @@ export function resolveChatMessageTimestamp(
   return undefined;
 }
 
-export function getChatMessageCalendarDayKey(
-  value: ChatMessageTimestampInput | undefined,
-): string {
+export function getChatMessageCalendarDayKey(value: ChatMessageTimestampInput | undefined): string {
   const date = normalizeChatMessageTimestamp(value);
   if (!date) {
     return '';

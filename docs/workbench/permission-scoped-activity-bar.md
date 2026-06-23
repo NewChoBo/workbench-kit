@@ -161,7 +161,7 @@ capability approval — not Activity Bar visibility. Do not confuse the two.
 
 ## What not to do
 
-- Do **not** hardcode product roles (`dev-agent`, `mesim-admin`, …) inside
+- Do **not** hardcode product roles (host-specific admin slugs, tenant role names, …) inside
   `@workbench-kit/*` packages.
 - Do **not** fork builtin extensions per product; use context keys and host
   config instead.

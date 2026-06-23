@@ -66,6 +66,8 @@
   position: relative;
   min-width: 0;
   max-width: min(160px, 100%);
+  overflow: visible;
+  z-index: 1;
 }
 
 .chat-conversation-bar__pill-wrap .chat-conversation-bar__pill {
@@ -90,8 +92,9 @@
 .chat-conversation-bar__meta-wrap {
   position: absolute;
   top: calc(100% + 6px);
-  right: 0;
-  z-index: 30;
+  left: 0;
+  right: auto;
+  z-index: var(--ui-floating-menu-z-index, 120);
   display: none;
   pointer-events: none;
 }

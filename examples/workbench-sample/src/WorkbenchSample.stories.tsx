@@ -163,10 +163,7 @@ export const TesterDevAppJourney: Story = {
     await expectEditorTabVisible(canvas, 'README.md');
 
     await userEvent.click(canvas.getByRole('button', { name: 'Chat' }));
-    await expectVisibleChatBubbleText(
-      canvas,
-      'Share updates here while working in the workspace.',
-    );
+    await expectVisibleChatBubbleText(canvas, 'Share updates here while working in the workspace.');
 
     const chatComposer = canvas.getByPlaceholderText('Message your team');
     await userEvent.type(chatComposer, 'Storybook chat smoke');

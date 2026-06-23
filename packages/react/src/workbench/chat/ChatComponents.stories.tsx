@@ -55,10 +55,7 @@ export const PeerChatInteraction: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expectVisibleChatBubbleText(
-      canvas,
-      'Share updates here while working in the workspace.',
-    );
+    await expectVisibleChatBubbleText(canvas, 'Share updates here while working in the workspace.');
 
     const composer = canvas.getByPlaceholderText('Message your team');
     await userEvent.type(composer, 'Team update from Jay');

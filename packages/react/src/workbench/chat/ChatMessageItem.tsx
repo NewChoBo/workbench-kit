@@ -50,9 +50,7 @@ function MessageBubbleLine({
         align === 'end' ? 'message__bubble-line--end' : 'message__bubble-line--start',
       )}
     >
-      {align === 'end' && timestamp ? (
-        <div className="message__time-slot">{timestamp}</div>
-      ) : null}
+      {align === 'end' && timestamp ? <div className="message__time-slot">{timestamp}</div> : null}
       {children}
       {align === 'start' && timestamp ? (
         <div className="message__time-slot">{timestamp}</div>
@@ -90,7 +88,9 @@ export function ChatMessageItem({
       >
         <div className="message__row">
           <div className="message__main">
-            {displayUserLabel ? <div className="message__user-label">{displayUserLabel}</div> : null}
+            {displayUserLabel ? (
+              <div className="message__user-label">{displayUserLabel}</div>
+            ) : null}
             <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
               <ChatMessageCollapsible
                 content={message.content}

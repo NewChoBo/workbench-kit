@@ -1,4 +1,4 @@
-import { expect, within } from 'storybook/test';
+import { expect, type within } from 'storybook/test';
 
 type StoryCanvas = ReturnType<typeof within>;
 
@@ -31,16 +31,10 @@ export async function expectVisibleChatBubbleText(
   expect(rect.height).toBeGreaterThan(minHeight);
 }
 
-export async function expectPeerChatExampleThread(
-  canvas: StoryCanvas,
-  canvasElement: HTMLElement,
-) {
+export async function expectPeerChatExampleThread(canvas: StoryCanvas, canvasElement: HTMLElement) {
   expectChatDateDividers(canvasElement, 2);
 
-  await expectVisibleChatBubbleText(
-    canvas,
-    'Share updates here while working in the workspace.',
-  );
+  await expectVisibleChatBubbleText(canvas, 'Share updates here while working in the workspace.');
   await expectVisibleChatBubbleText(canvas, 'Kickoff sync for the workspace chat.');
   await expectVisibleChatBubbleText(canvas, 'Pushed the layout fix to the branch.');
   await expectVisibleChatBubbleText(canvas, 'Reviewing the explorer focus changes now.');
