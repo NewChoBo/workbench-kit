@@ -45,7 +45,9 @@ const JSON_FORM_PROVIDER: EditorDocumentViewProvider = {
   kind: 'form',
   label: 'Form',
   priority: 0,
-  matches: (document) => isJsonLikeDocument(document) || parseJsonObject(document.content) !== null,
+  matches: (document) =>
+    !isJdwSchemaDocument(document) &&
+    (isJsonLikeDocument(document) || parseJsonObject(document.content) !== null),
   render: ({ document, onContentChange }) => (
     <JsonObjectFormView content={document.content} onContentChange={onContentChange} />
   ),

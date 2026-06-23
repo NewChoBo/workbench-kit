@@ -20,7 +20,7 @@ Invariant: at least one pane must stay visible.
 | JSON config (`.json`)                         | yes  | yes    | hidden                         |
 | JDW widget (`*.jdw.json`, `example.jdw.json`) | yes  | yes    | yes (JdwPreview)               |
 | Markdown (`.md`)                              | yes  | hidden | yes (WorkbenchMarkdownPreview) |
-| JDW schema (`*.jdw.schema.json`)              | yes  | yes    | hidden                         |
+| JDW schema (`*.jdw.schema.json`)              | yes  | hidden | hidden                         |
 
 Form and Preview controls render only when the matching document view provider is resolved.
 

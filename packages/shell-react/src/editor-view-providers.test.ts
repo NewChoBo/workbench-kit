@@ -27,7 +27,7 @@ function createDocument(overrides: Partial<EditorDocumentContext> = {}): EditorD
 }
 
 describe('resolveEditorDocumentViews', () => {
-  it('resolves generic JSON form without a preview for schema JSON files', () => {
+  it('resolves code-only for JDW schema JSON files without form or preview', () => {
     const resolved = resolveEditorDocumentViews(
       createDocument({
         content: '{',
@@ -36,11 +36,11 @@ describe('resolveEditorDocumentViews', () => {
       }),
     );
 
-    expect(resolved.formProvider?.id).toBe(JSON_FORM_PROVIDER_ID);
+    expect(resolved.formProvider).toBeUndefined();
     expect(resolved.previewProvider).toBeUndefined();
   });
 
-  it('does not infer JDW preview for schema extension documents', () => {
+  it('does not infer JDW preview or form for schema extension documents', () => {
     const resolved = resolveEditorDocumentViews(
       createDocument({
         content: '{"type":"text","args":{"text":"schema-like but not a widget"}}',
@@ -48,7 +48,7 @@ describe('resolveEditorDocumentViews', () => {
       }),
     );
 
-    expect(resolved.formProvider?.id).toBe(JSON_FORM_PROVIDER_ID);
+    expect(resolved.formProvider).toBeUndefined();
     expect(resolved.previewProvider).toBeUndefined();
   });
 

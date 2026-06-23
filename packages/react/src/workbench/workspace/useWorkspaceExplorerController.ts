@@ -42,6 +42,10 @@ export interface UseWorkspaceExplorerControllerOptions {
   ) => void;
   onToggleFolder?: (path: string) => void;
   port: WorkspaceExplorerControllerPort;
+  /**
+   * When true, explorer selection follows the active editor tab path (VS Code-style
+   * optional reveal). Off by default so manual explorer selection is preserved.
+   */
   syncSelectionFromActivePath?: boolean;
 }
 
@@ -80,7 +84,7 @@ export function useWorkspaceExplorerController({
   onSelectionChange,
   onToggleFolder,
   port,
-  syncSelectionFromActivePath = true,
+  syncSelectionFromActivePath = false,
 }: UseWorkspaceExplorerControllerOptions): WorkspaceExplorerController {
   const { snapshot } = port;
   const [internalExpandedPaths, setInternalExpandedPaths] = useState<Set<string>>(

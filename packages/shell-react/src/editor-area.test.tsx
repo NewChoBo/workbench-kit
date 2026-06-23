@@ -1167,7 +1167,7 @@ describe('EditorArea', () => {
     container.remove();
   });
 
-  it('renders JDW schema files as a flat JSON code editor without preview split', async () => {
+  it('renders JDW schema files as a code-only JSON editor without form or preview', async () => {
     function OpenSchemaEditorProbe() {
       const editorService = useEditorService();
 
@@ -1228,22 +1228,14 @@ describe('EditorArea', () => {
     });
 
     await flushReactEffects();
-    await waitForSelector(container, '.ui-editor-tabs__addons [role="toolbar"]');
+    await waitForSelector(container, '[data-testid="monaco-editor"]');
 
     expect(container.querySelector('.workbench-editor-area__source-pane')).not.toBeNull();
     expect(container.querySelector('.workbench-editor-area__preview-pane')).toBeNull();
     expect(container.querySelector('.ui-workbench-split-view')).toBeNull();
-    expect(
-      container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]'),
-    ).toBeNull();
-    expect(
-      container.querySelector(
-        '.ui-editor-tabs__addons button[aria-label="Code"][aria-pressed="true"]',
-      ),
-    ).not.toBeNull();
-    expect(
-      container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"]'),
-    ).not.toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons [role="toolbar"]')).toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons button[aria-label="Preview"]')).toBeNull();
+    expect(container.querySelector('.ui-editor-tabs__addons button[aria-label="Form"]')).toBeNull();
     expect(
       container.querySelector('[data-testid="monaco-editor"]')?.getAttribute('data-language'),
     ).toBe('json');
