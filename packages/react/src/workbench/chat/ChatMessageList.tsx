@@ -1,11 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import { SideBarScrollSpacer } from '../../layout/SideBarViewFrame';
 import { cx } from '../../utils/cx';
+import { ChatMessageDateDivider } from './ChatMessageDateDivider';
 import { ChatMessageItem, type ChatMessageItemProps } from './ChatMessageItem';
 import {
+  shouldShowChatMessageDateDivider,
   shouldShowChatMessageTimestamp,
   shouldShowPeerChatSenderLabel,
 } from './chatMessageGrouping';
+import { resolveChatMessageTimestamp } from './chatMessageTime';
 import type { ChatMessage, ChatMessageLayout } from './types';
 
 export interface ChatMessageListProps {
@@ -49,28 +52,36 @@ export function ChatMessageList({
 
   return (
     <div className="message-list">
-      {messages.map((message, index) => (
-        <ChatMessageItem
-          key={message.id}
-          assistantLabel={assistantLabel}
-          isStreaming={
-            isStreaming && index === messages.length - 1 && message.source === 'assistant'
-          }
-          layout={messageLayout}
-          message={message}
-          onCommandProposalAllow={onCommandProposalAllow}
-          onCommandProposalDeny={onCommandProposalDeny}
-          showSenderLabel={
-            messageLayout !== 'peer' ||
-            shouldShowPeerChatSenderLabel(messages, index, {
-              assistantLabel,
-              userLabel: resolvedUserLabel,
-            })
-          }
-          showTimestamp={shouldShowChatMessageTimestamp(messages, index)}
-          userLabel={resolvedUserLabel}
-        />
-      ))}
+      {messages.map((message, index) => {
+        const messageTimestamp = resolveChatMessageTimestamp(message);
+
+        return (
+          <Fragment key={message.id}>
+            {shouldShowChatMessageDateDivider(messages, index) && messageTimestamp ? (
+              <ChatMessageDateDivider timestamp={messageTimestamp} />
+            ) : null}
+            <ChatMessageItem
+              assistantLabel={assistantLabel}
+              isStreaming={
+                isStreaming && index === messages.length - 1 && message.source === 'assistant'
+              }
+              layout={messageLayout}
+              message={message}
+              onCommandProposalAllow={onCommandProposalAllow}
+              onCommandProposalDeny={onCommandProposalDeny}
+              showSenderLabel={
+                messageLayout !== 'peer' ||
+                shouldShowPeerChatSenderLabel(messages, index, {
+                  assistantLabel,
+                  userLabel: resolvedUserLabel,
+                })
+              }
+              showTimestamp={shouldShowChatMessageTimestamp(messages, index)}
+              userLabel={resolvedUserLabel}
+            />
+          </Fragment>
+        );
+      })}
       <SideBarScrollSpacer ref={bottomRef} />
     </div>
   );

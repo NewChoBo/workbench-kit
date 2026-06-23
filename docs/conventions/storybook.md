@@ -69,7 +69,7 @@ First-pass component required set:
 1. `React/Primitives/Controls` - Form controls in a settings/form surface
 2. `React/Primitives/Editor Chrome` - Tabs and mode controls in the editor/main area
 3. `React/Overlay/Dialog Actions` - Confirmation and context menu from a main-area trigger
-4. `React/Workbench/Chat Components` - Runtime controls in a sidebar chat panel
+4. `React/Workbench/Chat Components` - Sample peer chat example, peer interaction, and assistant runtime controls
 5. `React/Workbench/Workspace Search` - Search panel flow in a sidebar search panel
 
 ## E2E Replacement Criteria
@@ -102,6 +102,7 @@ Use these root scripts:
   "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
   "storybook:components": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=react-primitives-controls--form-controls&viewMode=story",
   "storybook:sample": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=workbench-sample-dev-app--tester-dev-app-journey&viewMode=story",
+  "storybook:chat": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=react-workbench-chat-components--sample-peer-chat-example&viewMode=story",
   "build:storybook": "pnpm exec storybook build",
   "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",
   "test:storybook-play:required": "pnpm exec node ./scripts/test-storybook-play.mjs --required",

@@ -5,6 +5,7 @@ import {
   DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
 } from '@workbench-kit/shell-react';
 
+import { expectVisibleChatBubbleText } from '../../../packages/react/src/workbench/chat/chatStoryAssertions';
 import { App } from './App.js';
 import { SAMPLE_AUTH_SESSION_KEY, SAMPLE_AUTH_USERNAME } from './dummy-backend/index.js';
 import { SAMPLE_PERMISSION_ROLE_STORAGE_KEY } from './sample-permission-role-storage.js';
@@ -162,12 +163,20 @@ export const TesterDevAppJourney: Story = {
     await expectEditorTabVisible(canvas, 'README.md');
 
     await userEvent.click(canvas.getByRole('button', { name: 'Chat' }));
-    await expect(
-      await canvas.findByText('Share updates here while working in the workspace.'),
-    ).toBeVisible();
-    await userEvent.type(canvas.getByPlaceholderText('Message your team'), 'Storybook chat smoke');
+    await expectVisibleChatBubbleText(
+      canvas,
+      'Share updates here while working in the workspace.',
+    );
+
+    const chatComposer = canvas.getByPlaceholderText('Message your team');
+    await userEvent.type(chatComposer, 'Storybook chat smoke');
     await userEvent.click(canvas.getByRole('button', { name: 'Send message' }));
-    await expect(await canvas.findByText('Storybook chat smoke')).toBeVisible();
+    await expectVisibleChatBubbleText(canvas, 'Storybook chat smoke');
+    await expect(chatComposer).toHaveValue('');
+
+    await userEvent.type(chatComposer, 'Follow-up from Storybook');
+    await userEvent.click(canvas.getByRole('button', { name: 'Send message' }));
+    await expectVisibleChatBubbleText(canvas, 'Follow-up from Storybook');
 
     await userEvent.click(canvas.getByRole('button', { name: 'AI Chat' }));
     const aiChatInput = await canvas.findByPlaceholderText('Ask about this workspace');

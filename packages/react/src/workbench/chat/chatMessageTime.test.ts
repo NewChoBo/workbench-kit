@@ -1,10 +1,41 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatChatMessageDateLabel,
   formatChatMessageTime,
+  getChatMessageCalendarDayKey,
   getChatMessageTimeMinuteKey,
   normalizeChatMessageTimestamp,
 } from './chatMessageTime';
+
+describe('formatChatMessageDateLabel', () => {
+  const now = new Date(2026, 5, 18, 12, 0, 0);
+
+  it('labels the current calendar day as Today', () => {
+    expect(formatChatMessageDateLabel(new Date(2026, 5, 18, 8, 0, 0), now)).toBe('Today');
+  });
+
+  it('labels the previous calendar day as Yesterday', () => {
+    expect(formatChatMessageDateLabel(new Date(2026, 5, 17, 20, 0, 0), now)).toBe('Yesterday');
+  });
+
+  it('labels older dates in the same year without the year', () => {
+    expect(formatChatMessageDateLabel(new Date(2026, 5, 10, 12, 0, 0), now)).toBe('June 10');
+  });
+
+  it('includes the year for messages from another year', () => {
+    expect(formatChatMessageDateLabel(new Date(2025, 11, 31, 12, 0, 0), now)).toBe(
+      'December 31, 2025',
+    );
+  });
+});
+
+describe('getChatMessageCalendarDayKey', () => {
+  it('groups timestamps by local calendar day', () => {
+    expect(getChatMessageCalendarDayKey(new Date(2026, 5, 18, 1, 0, 0))).toBe('2026-06-18');
+    expect(getChatMessageCalendarDayKey('invalid')).toBe('');
+  });
+});
 
 describe('formatChatMessageTime', () => {
   it('formats ISO timestamps in English clock time', () => {

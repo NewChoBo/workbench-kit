@@ -1,4 +1,8 @@
-import { getChatMessageTimeMinuteKey, resolveChatMessageTimestamp } from './chatMessageTime';
+import {
+  getChatMessageCalendarDayKey,
+  getChatMessageTimeMinuteKey,
+  resolveChatMessageTimestamp,
+} from './chatMessageTime';
 import type { ChatMessage } from './types';
 
 export function getPeerChatSenderKey(
@@ -65,4 +69,40 @@ export function shouldShowChatMessageTimestamp(
   }
 
   return timeKey !== nextTimeKey;
+}
+
+function getPreviousTimestampedDayKey(
+  messages: readonly ChatMessage[],
+  index: number,
+): string {
+  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+    const dayKey = getChatMessageCalendarDayKey(resolveChatMessageTimestamp(messages[cursor]));
+    if (dayKey) {
+      return dayKey;
+    }
+  }
+
+  return '';
+}
+
+export function shouldShowChatMessageDateDivider(
+  messages: readonly ChatMessage[],
+  index: number,
+): boolean {
+  const message = messages[index];
+  if (!message) {
+    return false;
+  }
+
+  const currentDayKey = getChatMessageCalendarDayKey(resolveChatMessageTimestamp(message));
+  if (!currentDayKey) {
+    return false;
+  }
+
+  const previousDayKey = getPreviousTimestampedDayKey(messages, index);
+  if (!previousDayKey) {
+    return true;
+  }
+
+  return currentDayKey !== previousDayKey;
 }

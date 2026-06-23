@@ -25,6 +25,7 @@ type BuiltinChatRuntimeStatus = 'idle' | 'running' | 'error';
 const initialChattingMessages: readonly ChatMessage[] = [
   {
     content: 'Share updates here while working in the workspace.',
+    createdAt: '2026-06-18T14:29:00.000Z',
     id: 'workbench-chatting-intro',
     label: 'Alex',
     source: 'assistant',
@@ -34,6 +35,7 @@ const initialChattingMessages: readonly ChatMessage[] = [
 const initialAiChatMessages: readonly ChatMessage[] = [
   {
     content: 'Ask about the workspace or run a command with `/command.id`.',
+    createdAt: '2026-06-18T14:29:00.000Z',
     id: 'workbench-ai-chat-intro',
     label: 'Assistant',
     source: 'assistant',

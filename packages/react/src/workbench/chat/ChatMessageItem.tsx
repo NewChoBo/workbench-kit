@@ -15,32 +15,48 @@ export interface ChatMessageItemProps {
   onCommandProposalAllow?: ((messageId: string, proposal: ChatCommandProposal) => void) | undefined;
   onCommandProposalDeny?: ((messageId: string, proposal: ChatCommandProposal) => void) | undefined;
   showSenderLabel?: boolean;
+  /** When true, keeps the inline timestamp visible without hover. */
   showTimestamp?: boolean;
   userLabel?: string;
 }
 
-function renderMessageTimestamp(message: ChatMessage) {
+function renderMessageTimestamp(message: ChatMessage, pinned: boolean) {
   const timestamp = resolveChatMessageTimestamp(message);
   if (!timestamp) {
     return undefined;
   }
 
-  return <ChatMessageTime className="message__time" timestamp={timestamp} />;
+  return (
+    <ChatMessageTime
+      className={cx('message__time', pinned && 'message__time--pinned')}
+      timestamp={timestamp}
+    />
+  );
 }
 
-function MessageRow({
+function MessageBubbleLine({
+  align,
   children,
-  rowClassName,
   timestamp,
 }: {
+  align: 'start' | 'end';
   children: ReactNode;
-  rowClassName?: string;
   timestamp?: ReactNode;
 }) {
   return (
-    <div className={cx('message__row', rowClassName)}>
-      {timestamp ? <div className="message__time-slot">{timestamp}</div> : null}
-      <div className="message__main">{children}</div>
+    <div
+      className={cx(
+        'message__bubble-line',
+        align === 'end' ? 'message__bubble-line--end' : 'message__bubble-line--start',
+      )}
+    >
+      {align === 'end' && timestamp ? (
+        <div className="message__time-slot">{timestamp}</div>
+      ) : null}
+      {children}
+      {align === 'start' && timestamp ? (
+        <div className="message__time-slot">{timestamp}</div>
+      ) : null}
     </div>
   );
 }
@@ -56,9 +72,8 @@ export function ChatMessageItem({
   showTimestamp = false,
   userLabel,
 }: ChatMessageItemProps) {
-  const timestamp = showTimestamp ? renderMessageTimestamp(message) : undefined;
-  const rowClassName =
-    message.source === 'user' ? 'message__row--leading-time' : 'message__row--trailing-time';
+  const timestamp = renderMessageTimestamp(message, showTimestamp);
+  const bubbleAlign = message.source === 'user' ? 'end' : 'start';
 
   if (message.source === 'user') {
     const displayUserLabel =
@@ -73,16 +88,20 @@ export function ChatMessageItem({
           layout === 'peer' && !showSenderLabel && 'message--continued',
         )}
       >
-        <MessageRow rowClassName={rowClassName} timestamp={timestamp}>
-          {displayUserLabel ? <div className="message__user-label">{displayUserLabel}</div> : null}
-          <ChatMessageCollapsible
-            content={message.content}
-            isStreaming={isStreaming}
-            surfaceClassName="message__bubble"
-          >
-            {message.content}
-          </ChatMessageCollapsible>
-        </MessageRow>
+        <div className="message__row">
+          <div className="message__main">
+            {displayUserLabel ? <div className="message__user-label">{displayUserLabel}</div> : null}
+            <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
+              <ChatMessageCollapsible
+                content={message.content}
+                isStreaming={isStreaming}
+                surfaceClassName="message__bubble"
+              >
+                {message.content}
+              </ChatMessageCollapsible>
+            </MessageBubbleLine>
+          </div>
+        </div>
       </div>
     );
   }
@@ -92,68 +111,76 @@ export function ChatMessageItem({
 
     return (
       <div className={cx('message', 'message--peer', !showSenderLabel && 'message--continued')}>
-        <MessageRow rowClassName={rowClassName} timestamp={timestamp}>
-          {peerLabel ? <div className="message__peer-label">{peerLabel}</div> : null}
-          <ChatMessageCollapsible
-            content={message.content}
-            isStreaming={isStreaming}
-            surfaceClassName="message__bubble message__bubble--peer"
-          >
-            {message.content}
-          </ChatMessageCollapsible>
-        </MessageRow>
+        <div className="message__row">
+          <div className="message__main">
+            {peerLabel ? <div className="message__peer-label">{peerLabel}</div> : null}
+            <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
+              <ChatMessageCollapsible
+                content={message.content}
+                isStreaming={isStreaming}
+                surfaceClassName="message__bubble message__bubble--peer"
+              >
+                {message.content}
+              </ChatMessageCollapsible>
+            </MessageBubbleLine>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="message message--assistant">
-      <MessageRow rowClassName={rowClassName} timestamp={timestamp}>
-        <div className="message__label message__label--assistant">
-          <i className="codicon codicon-sparkle message__label-icon" />
-          {message.label ?? assistantLabel}
-        </div>
-        <ChatMessageCollapsible
-          className="message__assistant-collapsible"
-          content={message.content}
-          isStreaming={isStreaming}
-          surfaceClassName="message__collapsible-surface--assistant"
-        >
-          <div className="md-content">
-            <Markdown
-              remarkPlugins={workbenchMarkdownRemarkPlugins}
-              components={{
-                code: ({ className, ...props }) => (
-                  <code className={cx('ui-workbench-scrollbar', className)} {...props} />
-                ),
-              }}
+      <div className="message__row">
+        <div className="message__main">
+          <div className="message__label message__label--assistant">
+            <i className="codicon codicon-sparkle message__label-icon" />
+            {message.label ?? assistantLabel}
+          </div>
+          <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
+            <ChatMessageCollapsible
+              className="message__assistant-collapsible"
+              content={message.content}
+              isStreaming={isStreaming}
+              surfaceClassName="message__collapsible-surface--assistant"
             >
-              {message.content}
-            </Markdown>
-            {isStreaming ? <span aria-hidden="true" className="message__cursor" /> : null}
-          </div>
-        </ChatMessageCollapsible>
-        {message.commandProposals?.length ? (
-          <div className="message__command-proposals">
-            {message.commandProposals.map((proposal) => (
-              <ChatCommandProposalCard
-                key={proposal.id}
-                proposal={proposal}
-                onAllow={
-                  onCommandProposalAllow
-                    ? (currentProposal) => onCommandProposalAllow(message.id, currentProposal)
-                    : undefined
-                }
-                onDeny={
-                  onCommandProposalDeny
-                    ? (currentProposal) => onCommandProposalDeny(message.id, currentProposal)
-                    : undefined
-                }
-              />
-            ))}
-          </div>
-        ) : null}
-      </MessageRow>
+              <div className="md-content">
+                <Markdown
+                  remarkPlugins={workbenchMarkdownRemarkPlugins}
+                  components={{
+                    code: ({ className, ...props }) => (
+                      <code className={cx('ui-workbench-scrollbar', className)} {...props} />
+                    ),
+                  }}
+                >
+                  {message.content}
+                </Markdown>
+                {isStreaming ? <span aria-hidden="true" className="message__cursor" /> : null}
+              </div>
+            </ChatMessageCollapsible>
+          </MessageBubbleLine>
+          {message.commandProposals?.length ? (
+            <div className="message__command-proposals">
+              {message.commandProposals.map((proposal) => (
+                <ChatCommandProposalCard
+                  key={proposal.id}
+                  proposal={proposal}
+                  onAllow={
+                    onCommandProposalAllow
+                      ? (currentProposal) => onCommandProposalAllow(message.id, currentProposal)
+                      : undefined
+                  }
+                  onDeny={
+                    onCommandProposalDeny
+                      ? (currentProposal) => onCommandProposalDeny(message.id, currentProposal)
+                      : undefined
+                  }
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }

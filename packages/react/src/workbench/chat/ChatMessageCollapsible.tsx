@@ -15,6 +15,16 @@ export interface ChatMessageCollapsibleProps {
   toggleClassName?: string;
 }
 
+function measureChatMessageNeedsCollapse(body: HTMLElement, maxLines: number): boolean {
+  const style = getComputedStyle(body);
+  const fontSize = Number.parseFloat(style.fontSize) || 14;
+  const parsedLineHeight = Number.parseFloat(style.lineHeight);
+  const lineHeight =
+    Number.isFinite(parsedLineHeight) && parsedLineHeight > 0 ? parsedLineHeight : fontSize * 1.6;
+
+  return body.scrollHeight > lineHeight * maxLines + 1;
+}
+
 export function ChatMessageCollapsible({
   children,
   className,
@@ -27,12 +37,17 @@ export function ChatMessageCollapsible({
 }: ChatMessageCollapsibleProps) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
-  const [canCollapse, setCanCollapse] = useState(false);
-  const clamped = !expanded && !isStreaming;
+  const [needsCollapse, setNeedsCollapse] = useState(false);
+  const isClamped = needsCollapse && !expanded && !isStreaming;
+
+  useLayoutEffect(() => {
+    setExpanded(false);
+    setNeedsCollapse(false);
+  }, [content]);
 
   useLayoutEffect(() => {
     if (isStreaming) {
-      setCanCollapse(false);
+      setNeedsCollapse(false);
       return;
     }
 
@@ -45,7 +60,7 @@ export function ChatMessageCollapsible({
       return;
     }
 
-    setCanCollapse(body.scrollHeight > body.clientHeight + 1);
+    setNeedsCollapse(measureChatMessageNeedsCollapse(body, maxLines));
   }, [content, expanded, isStreaming, maxLines]);
 
   useLayoutEffect(() => {
@@ -59,7 +74,7 @@ export function ChatMessageCollapsible({
     }
 
     const observer = new ResizeObserver(() => {
-      setCanCollapse(body.scrollHeight > body.clientHeight + 1);
+      setNeedsCollapse(measureChatMessageNeedsCollapse(body, maxLines));
     });
     observer.observe(body);
 
@@ -73,9 +88,9 @@ export function ChatMessageCollapsible({
       <div className={cx('message__bubble-surface', surfaceClassName)}>
         <div
           ref={bodyRef}
-          className={cx('message__bubble-body', clamped && 'message__bubble-body--collapsed')}
+          className={cx('message__bubble-body', isClamped && 'message__bubble-body--collapsed')}
           style={
-            clamped
+            isClamped
               ? ({
                   '--chat-message-collapse-lines': String(maxLines),
                 } as CSSProperties)
@@ -84,7 +99,7 @@ export function ChatMessageCollapsible({
         >
           {children}
         </div>
-        {canCollapse && !isStreaming ? (
+        {needsCollapse && !isStreaming ? (
           <Button
             aria-expanded={expanded}
             className={cx('message__collapse-toggle', toggleClassName)}

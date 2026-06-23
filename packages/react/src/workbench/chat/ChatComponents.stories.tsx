@@ -3,9 +3,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 
 import { StoryEventLog, StorySidebarFrame } from '../story/StorySidebarFrame';
+import { expectPeerChatExampleThread, expectVisibleChatBubbleText } from './chatStoryAssertions';
+import { samplePeerChatIntroMessage, samplePeerChatThread } from './chatStoryFixtures';
 import { ChatPanel, type ChatMessage } from './index';
 
-const initialMessages: ChatMessage[] = [
+const initialAssistantMessages: ChatMessage[] = [
   {
     id: 'assistant-1',
     source: 'assistant',
@@ -29,15 +31,52 @@ const meta = {
     layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
-  render: () => <ChatComponentsHarness />,
 } satisfies Meta;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+export const SamplePeerChatExample: Story = {
+  name: 'Sample peer chat example',
+  render: () => <SamplePeerChatExampleHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expectPeerChatExampleThread(canvas, canvasElement);
+    expect(canvas.getAllByText('Jay', { selector: '.message__user-label' })).toHaveLength(2);
+    expect(canvas.getByText('Alex')).toBeVisible();
+  },
+  tags: ['storybook-play-required'],
+};
+
+export const PeerChatInteraction: Story = {
+  name: 'Peer chat interaction',
+  render: () => <PeerChatHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expectVisibleChatBubbleText(
+      canvas,
+      'Share updates here while working in the workspace.',
+    );
+
+    const composer = canvas.getByPlaceholderText('Message your team');
+    await userEvent.type(composer, 'Team update from Jay');
+    await userEvent.click(canvas.getByRole('button', { name: 'Send message' }));
+    await expectVisibleChatBubbleText(canvas, 'Team update from Jay');
+    await expect(composer).toHaveValue('');
+
+    await userEvent.type(composer, 'Follow-up note');
+    await userEvent.click(canvas.getByRole('button', { name: 'Send message' }));
+    await expectVisibleChatBubbleText(canvas, 'Follow-up note');
+    expect(canvas.getAllByText('Jay')).toHaveLength(1);
+  },
+  tags: ['storybook-play-required'],
+};
+
 export const RuntimeControls: Story = {
   name: 'Runtime controls',
+  render: () => <AssistantChatHarness />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
@@ -50,14 +89,70 @@ export const RuntimeControls: Story = {
     const composer = canvas.getByPlaceholderText('Message the workspace');
     await userEvent.type(composer, 'Run this after review');
     await userEvent.click(canvas.getByRole('button', { name: 'Send message' }));
-    await expect(await canvas.findByText('Run this after review')).toBeVisible();
+    await expectVisibleChatBubbleText(canvas, 'Run this after review');
     await expect(composer).toHaveValue('');
   },
   tags: ['storybook-play-required'],
 };
 
-function ChatComponentsHarness() {
-  const [messages, setMessages] = useState(initialMessages);
+function SamplePeerChatExampleHarness() {
+  return (
+    <section aria-label="Sample peer chat example" className="ui-story-sidebar-surface">
+      <StorySidebarFrame variant="chat">
+        <ChatPanel
+          assistantLabel="Alex"
+          emptyLabel="Start a conversation with your team."
+          messageLayout="peer"
+          messages={samplePeerChatThread}
+          placeholder="Message your team"
+          title="Chat"
+          userLabel="Jay"
+          value=""
+          onSubmit={() => undefined}
+          onValueChange={() => undefined}
+        />
+      </StorySidebarFrame>
+    </section>
+  );
+}
+
+function PeerChatHarness() {
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [samplePeerChatIntroMessage]);
+  const [value, setValue] = useState('');
+
+  return (
+    <section aria-label="Peer chat story surface" className="ui-story-sidebar-surface">
+      <StorySidebarFrame variant="chat">
+        <ChatPanel
+          assistantLabel="Alex"
+          emptyLabel="Start a conversation with your team."
+          messageLayout="peer"
+          messages={messages}
+          placeholder="Message your team"
+          title="Chat"
+          userLabel="Jay"
+          value={value}
+          onSubmit={(message) => {
+            setMessages((current) => [
+              ...current,
+              {
+                content: message,
+                createdAt: new Date().toISOString(),
+                id: `user-${current.length}`,
+                source: 'user',
+              },
+            ]);
+            setValue('');
+          }}
+          onValueChange={setValue}
+        />
+      </StorySidebarFrame>
+    </section>
+  );
+}
+
+function AssistantChatHarness() {
+  const [messages, setMessages] = useState(initialAssistantMessages);
   const [value, setValue] = useState('');
   const [status, setStatus] = useState('Ready');
 

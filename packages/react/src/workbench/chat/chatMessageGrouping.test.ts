@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  shouldShowChatMessageDateDivider,
   shouldShowChatMessageTimestamp,
   shouldShowPeerChatSenderLabel,
 } from './chatMessageGrouping';
@@ -57,5 +58,56 @@ describe('shouldShowChatMessageTimestamp', () => {
 
     expect(shouldShowChatMessageTimestamp(timestampedMessages, 0)).toBe(false);
     expect(shouldShowChatMessageTimestamp(timestampedMessages, 1)).toBe(true);
+  });
+});
+
+describe('shouldShowChatMessageDateDivider', () => {
+  it('shows a divider for the first timestamped message and when the day changes', () => {
+    const timestampedMessages: ChatMessage[] = [
+      {
+        id: '1',
+        source: 'user',
+        content: 'Earlier',
+        createdAt: new Date(2026, 5, 17, 10, 0, 0).toISOString(),
+      },
+      {
+        id: '2',
+        source: 'assistant',
+        content: 'Next day',
+        createdAt: new Date(2026, 5, 18, 9, 0, 0).toISOString(),
+      },
+      {
+        id: '3',
+        source: 'user',
+        content: 'Same day',
+        createdAt: new Date(2026, 5, 18, 10, 0, 0).toISOString(),
+      },
+      { id: '4', source: 'user', content: 'No time' },
+    ];
+
+    expect(shouldShowChatMessageDateDivider(timestampedMessages, 0)).toBe(true);
+    expect(shouldShowChatMessageDateDivider(timestampedMessages, 1)).toBe(true);
+    expect(shouldShowChatMessageDateDivider(timestampedMessages, 2)).toBe(false);
+    expect(shouldShowChatMessageDateDivider(timestampedMessages, 3)).toBe(false);
+  });
+
+  it('skips untimestamped messages when comparing day boundaries', () => {
+    const timestampedMessages: ChatMessage[] = [
+      {
+        id: '1',
+        source: 'user',
+        content: 'Day one',
+        createdAt: new Date(2026, 5, 17, 10, 0, 0).toISOString(),
+      },
+      { id: '2', source: 'user', content: 'No time between days' },
+      {
+        id: '3',
+        source: 'assistant',
+        content: 'Day two',
+        createdAt: new Date(2026, 5, 18, 9, 0, 0).toISOString(),
+      },
+    ];
+
+    expect(shouldShowChatMessageDateDivider(timestampedMessages, 2)).toBe(true);
   });
 });
