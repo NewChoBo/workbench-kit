@@ -175,12 +175,9 @@ function TextEditorSurface({
   const editorService = useEditorService();
   const { executeCommand, workspaceHostPort } = useWorkbench();
   const [content, setContent] = useState(initialContent);
+  const previousResourceUriRef = useRef<string | undefined>(undefined);
   const [paneVisibility, setPaneVisibility] = useState<EditorPaneVisibility>(() =>
     resolveDefaultEditorPaneVisibility(defaultViewModeForResource?.(resourceUri)),
-  );
-  const getDefaultPaneVisibility = useCallback(
-    () => resolveDefaultEditorPaneVisibility(defaultViewModeForResource?.(resourceUri)),
-    [defaultViewModeForResource, resourceUri],
   );
   const editorDocument = useMemo(
     () => ({
@@ -201,9 +198,16 @@ function TextEditorSurface({
   const modeToolbarVisible = formEligible || previewEligible;
 
   useEffect(() => {
-    setContent(initialContent);
-    setPaneVisibility(getDefaultPaneVisibility());
-  }, [getDefaultPaneVisibility, initialContent]);
+    const resourceChanged = previousResourceUriRef.current !== resourceUri;
+    previousResourceUriRef.current = resourceUri;
+
+    if (resourceChanged) {
+      setContent(initialContent);
+      return;
+    }
+
+    setContent((current) => (current === initialContent ? current : initialContent));
+  }, [initialContent, resourceUri]);
 
   useEffect(() => {
     onModeToolbarVisibleChange(modeToolbarVisible);

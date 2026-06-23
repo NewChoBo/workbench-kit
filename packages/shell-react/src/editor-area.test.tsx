@@ -1912,6 +1912,136 @@ describe('EditorArea', () => {
     });
     container.remove();
   });
+
+  it('keeps the selected view mode when editing a default-preview resource', async () => {
+    function OpenJsonEditorProbe() {
+      const editorService = useEditorService();
+
+      useEffect(() => {
+        let cancelled = false;
+
+        void (async () => {
+          while (
+            !cancelled &&
+            editorService.resolveEditorId('workspace://file/example.jdw.json') === undefined
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          editorService.openEditor({
+            pinned: true,
+            resourceUri: 'workspace://file/example.jdw.json',
+            title: 'example.jdw.json',
+          });
+        })();
+
+        return () => {
+          cancelled = true;
+        };
+      }, [editorService]);
+
+      return (
+        <EditorArea
+          defaultViewModeForResource={(resourceUri) =>
+            resourceUri.endsWith('/example.jdw.json') ? 'preview' : undefined
+          }
+        />
+      );
+    }
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor'],
+            recommendations: [],
+          }}
+          workspaceHostPort={{
+            applySave: () => ({ transactionId: 'test-save' }),
+            resolveResource: () => ({ content: WIDGET_JSON, path: 'example.jdw.json' }),
+          }}
+        >
+          <OpenJsonEditorProbe />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    await waitForSelector(container, '[data-testid="jdw-preview-output"]');
+
+    const codeButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Code"]',
+    ) as HTMLButtonElement | null;
+    expect(codeButton).not.toBeNull();
+
+    await act(async () => {
+      codeButton?.click();
+    });
+
+    const previewButton = container.querySelector(
+      '.ui-editor-tabs__addons button[aria-label="Preview"]',
+    ) as HTMLButtonElement | null;
+    expect(previewButton).not.toBeNull();
+
+    await act(async () => {
+      previewButton?.click();
+    });
+
+    expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
+    expect(
+      container.querySelector(
+        '.ui-editor-tabs__addons button[aria-label="Code"][aria-pressed="true"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      container.querySelector(
+        '.ui-editor-tabs__addons button[aria-label="Preview"][aria-pressed="false"]',
+      ),
+    ).not.toBeNull();
+
+    const monacoEditor = container.querySelector(
+      '[data-testid="monaco-editor"]',
+    ) as HTMLTextAreaElement | null;
+    expect(monacoEditor).not.toBeNull();
+
+    await act(async () => {
+      if (!monacoEditor) {
+        return;
+      }
+
+      monacoEditor.value = `${WIDGET_JSON}\n`;
+      monacoEditor.dispatchEvent(new Event('input', { bubbles: true }));
+      monacoEditor.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    await flushReactEffects();
+
+    expect(
+      container.querySelector(
+        '.ui-editor-tabs__addons button[aria-label="Code"][aria-pressed="true"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      container.querySelector(
+        '.ui-editor-tabs__addons button[aria-label="Preview"][aria-pressed="false"]',
+      ),
+    ).not.toBeNull();
+    expect(container.querySelector('.workspace-editor__monaco')).not.toBeNull();
+    expect(container.querySelector('[data-testid="jdw-preview-output"]')).toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
 });
 
 async function flushReactEffects(): Promise<void> {
