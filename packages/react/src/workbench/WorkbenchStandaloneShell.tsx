@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useResolvedWorkbenchTheme } from './theme';
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { cxCodicon } from '../utils/codicon';
 import type { StatusBarItemModel, StatusBarSectionModel } from './StatusBar';
@@ -95,6 +96,8 @@ export interface WorkbenchStandaloneShellProps<
   getStatusSections?: (
     context: WorkbenchStandaloneShellContext<TActivityId, TTheme>,
   ) => StatusBarSectionModel[];
+  /** Active CSS preset for the resolved document theme (e.g. `skyblue`, `purple`). */
+  documentThemePreset?: string;
 }
 
 function toWorkbenchActivityItems<TActivityId extends string>(
@@ -134,6 +137,7 @@ export function WorkbenchStandaloneShell<
   primarySidebarClassName,
   primarySidebarStyle,
   getStatusSections,
+  documentThemePreset,
 }: WorkbenchStandaloneShellProps<TActivityId, TTheme>) {
   const { contract, initialState } = bootstrap;
   const activityIds = useMemo(
@@ -162,6 +166,7 @@ export function WorkbenchStandaloneShell<
     theme,
     activeActivityId,
   } = shell.state;
+  const resolvedTheme = useResolvedWorkbenchTheme(theme as WorkbenchTheme | 'system');
 
   const emitEvent = (event: WorkbenchStandaloneBootstrapEvent<TActivityId>) => {
     onEvent?.(event);
@@ -313,7 +318,9 @@ export function WorkbenchStandaloneShell<
         rootStyle={rootStyle}
         secondaryArea={secondaryArea}
         statusSections={statusSections}
-        theme={theme}
+        theme={resolvedTheme}
+        themePreference={theme}
+        themePreset={documentThemePreset}
         titleBar={titleBar}
         overlays={overlays}
       />
