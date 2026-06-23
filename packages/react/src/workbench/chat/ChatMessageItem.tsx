@@ -4,7 +4,7 @@ import { cx } from '../../utils/cx';
 import { workbenchMarkdownRemarkPlugins } from '../markdownRemarkPlugins';
 import { ChatCommandProposalCard } from './ChatCommandProposalCard';
 import { ChatMessageCollapsible } from './ChatMessageCollapsible';
-import { ChatMessageTime, resolveChatMessageTimestamp } from './chatMessageTime';
+import { ChatMessageTime, resolveChatMessageTimestamp } from './chatMessageMeta';
 import type { ChatCommandProposal, ChatMessage, ChatMessageLayout } from './types';
 
 export interface ChatMessageItemProps {

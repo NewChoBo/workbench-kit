@@ -1,14 +1,14 @@
 import { Fragment, useEffect, useRef } from 'react';
 import { SideBarScrollSpacer } from '../../layout/SideBarViewFrame';
 import { cx } from '../../utils/cx';
-import { ChatMessageDateDivider } from './ChatMessageDateDivider';
 import { ChatMessageItem, type ChatMessageItemProps } from './ChatMessageItem';
 import {
+  ChatMessageDateDivider,
+  resolveChatMessageTimestamp,
   shouldShowChatMessageDateDivider,
   shouldShowChatMessageTimestamp,
   shouldShowPeerChatSenderLabel,
-} from './chatMessageGrouping';
-import { resolveChatMessageTimestamp } from './chatMessageTime';
+} from './chatMessageMeta';
 import type { ChatMessage, ChatMessageLayout } from './types';
 
 export interface ChatMessageListProps {
