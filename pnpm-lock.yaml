@@ -92,6 +92,9 @@ importers:
       '@workbench-kit/jdw':
         specifier: workspace:*
         version: link:../../packages/json-widget
+      '@workbench-kit/monaco':
+        specifier: workspace:*
+        version: link:../../packages/monaco
       '@workbench-kit/platform':
         specifier: workspace:*
         version: link:../../packages/platform
@@ -265,7 +268,20 @@ importers:
         specifier: ^8.5.0
         version: 8.5.1(@swc/core@1.15.40)(postcss@8.5.15)(typescript@5.9.3)
 
-  packages/monaco: {}
+  packages/monaco:
+    dependencies:
+      '@monaco-editor/react':
+        specifier: ^4.7.0
+        version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      monaco-editor:
+        specifier: ^0.55.1
+        version: 0.55.1
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
 
   packages/platform:
     dependencies:
@@ -278,9 +294,6 @@ importers:
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@monaco-editor/react':
-        specifier: ^4.7.0
-        version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@vscode/codicons':
         specifier: ^0.0.45
         version: 0.0.45
@@ -293,6 +306,9 @@ importers:
       '@workbench-kit/jdw':
         specifier: workspace:*
         version: link:../json-widget
+      '@workbench-kit/monaco':
+        specifier: workspace:*
+        version: link:../monaco
       '@workbench-kit/platform':
         specifier: workspace:*
         version: link:../platform
@@ -308,9 +324,6 @@ importers:
       '@workbench-kit/workspace':
         specifier: workspace:*
         version: link:../workspace
-      monaco-editor:
-        specifier: ^0.55.1
-        version: 0.55.1
       react:
         specifier: ^19.0.0
         version: 19.2.7

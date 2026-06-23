@@ -5,14 +5,10 @@ import { WidgetTreeLab } from './WidgetTreeLab.js';
 import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';
 import { WIDGET_TREE_DEMO_ASSET_CATALOG } from './demo-widget-assets.js';
 
-vi.mock('@monaco-editor/react', () => ({
-  default: () => <div data-testid="monaco-editor">Mocked Monaco Editor</div>,
-  loader: {
-    config: vi.fn(),
-  },
-}));
-
-vi.mock('monaco-editor', () => ({}));
+vi.mock('@workbench-kit/monaco', async () => {
+  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
+  return createWorkbenchMonacoMockModule();
+});
 
 describe('WidgetTreeLab', () => {
   it('renders source, tree, and preview surfaces', () => {

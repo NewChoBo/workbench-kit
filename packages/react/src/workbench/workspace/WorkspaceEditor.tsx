@@ -1,6 +1,8 @@
-import Editor, { loader, type OnMount } from '@monaco-editor/react';
-import * as monaco from 'monaco-editor';
-import { useCallback } from 'react';
+import {
+  useMonacoWorkbenchThemeSync,
+  WorkbenchMonacoEditor,
+  type OnMount,
+} from '@workbench-kit/monaco';
 import { Panel, PanelBody, PanelHeader } from '../../layout/Panel';
 import { Badge } from '../../primitives/Badge';
 import { IconButton } from '../../primitives/IconButton';
@@ -14,16 +16,6 @@ import {
   configureWorkspaceEditorJsonDiagnostics,
   monacoModelPathForWorkspaceFile,
 } from './workspaceJsonDiagnostics';
-import { configureWorkspaceEditorTypeScriptDiagnostics } from './workspaceTypeScriptDiagnostics';
-import {
-  defineMonacoWorkbenchTheme,
-  MONACO_DARK_THEME_ID,
-  MONACO_LIGHT_THEME_ID,
-  monacoThemeForWorkspaceTheme,
-} from './monacoWorkbenchTheme';
-import { useMonacoWorkbenchThemeSync } from './useMonacoWorkbenchThemeSync';
-
-loader.config({ monaco });
 
 export type WorkspaceEditorTheme = 'dark' | 'light';
 
@@ -32,15 +24,8 @@ export {
   MONACO_LIGHT_THEME_ID,
   defineMonacoWorkbenchTheme,
   monacoThemeForWorkspaceTheme,
-};
-
-export function prepareMonacoWorkbenchEditor(
-  monacoInstance: typeof monaco,
-  resolvedTheme: WorkspaceEditorTheme = 'dark',
-) {
-  defineMonacoWorkbenchTheme(monacoInstance, resolvedTheme);
-  configureWorkspaceEditorTypeScriptDiagnostics(monacoInstance);
-}
+  prepareMonacoWorkbenchEditor,
+} from '@workbench-kit/monaco';
 
 export function languageForFile(path: string, mimeType?: string) {
   switch (mimeType) {
@@ -126,12 +111,6 @@ export function WorkspaceEditor({
 }: WorkspaceEditorProps) {
   const language = languageForFile(file.path, file.mimeType);
   useMonacoWorkbenchThemeSync(theme);
-  const handleBeforeMount = useCallback(
-    (monacoInstance: typeof monaco) => {
-      prepareMonacoWorkbenchEditor(monacoInstance, theme);
-    },
-    [theme],
-  );
   const handleMount: OnMount = (editor, monacoInstance) => {
     configureWorkspaceEditorJsonDiagnostics(monacoInstance, file);
     onEditorMount?.(editor, monacoInstance);
@@ -169,38 +148,14 @@ export function WorkspaceEditor({
       ) : null}
       <PanelBody className="workbench-monaco-panel__body">
         <div className="workspace-editor__monaco">
-          <Editor
-            beforeMount={handleBeforeMount}
-            height="100%"
+          <WorkbenchMonacoEditor
+            className="workspace-editor__monaco-surface"
             language={language}
-            loading={<div className="workspace-editor__loading">Loading editor...</div>}
-            options={{
-              automaticLayout: true,
-              contextmenu: true,
-              fixedOverflowWidgets: true,
-              fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
-              fontSize: 13,
-              lineHeight: 20,
-              glyphMargin: false,
-              minimap: { enabled: false },
-              overviewRulerBorder: false,
-              overviewRulerLanes: 0,
-              padding: { bottom: 12, top: 12 },
-              readOnly,
-              renderLineHighlight: 'line',
-              scrollBeyondLastLine: false,
-              scrollbar: {
-                alwaysConsumeMouseWheel: false,
-                horizontalScrollbarSize: 10,
-                verticalScrollbarSize: 10,
-              },
-              tabSize: 2,
-              wordWrap: 'on',
-            }}
             path={monacoModelPathForWorkspaceFile(file.path)}
-            theme={monacoThemeForWorkspaceTheme(theme)}
+            readOnly={readOnly}
+            theme={theme}
             value={value}
-            onChange={(nextValue) => onChange?.(nextValue ?? '')}
+            onChange={onChange}
             onMount={handleMount}
           />
         </div>

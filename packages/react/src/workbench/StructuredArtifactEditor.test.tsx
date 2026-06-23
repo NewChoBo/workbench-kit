@@ -5,14 +5,10 @@ import { WorkspaceDraftsProvider } from './workspace/WorkspaceDraftsContext';
 import { type WorkspaceFile } from './workspace/types';
 import { type WorkbenchStructuredDataSchemaDocument } from './settings/StructuredDataForm';
 
-vi.mock('@monaco-editor/react', () => ({
-  default: () => <div data-testid="monaco-editor">Mocked Monaco Editor</div>,
-  loader: {
-    config: vi.fn(),
-  },
-}));
-
-vi.mock('monaco-editor', () => ({}));
+vi.mock('@workbench-kit/monaco', async () => {
+  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
+  return createWorkbenchMonacoMockModule();
+});
 
 const mockSchema: WorkbenchStructuredDataSchemaDocument = {
   activePattern: 'DBtoDB',

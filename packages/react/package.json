@@ -56,6 +56,7 @@
     "@workbench-kit/adapters": "workspace:*",
     "@workbench-kit/contracts": "workspace:*",
     "@workbench-kit/jdw": "workspace:*",
+    "@workbench-kit/monaco": "workspace:*",
     "@workbench-kit/platform": "workspace:*",
     "@workbench-kit/runtime": "workspace:*",
     "@workbench-kit/services": "workspace:*",
@@ -64,18 +65,10 @@
     "remark-gfm": "^4.0.1"
   },
   "peerDependencies": {
-    "@monaco-editor/react": "^4.7.0",
-    "monaco-editor": "^0.55.1",
     "react": "^19.0.0",
     "react-markdown": "^10.1.0"
   },
   "peerDependenciesMeta": {
-    "@monaco-editor/react": {
-      "optional": true
-    },
-    "monaco-editor": {
-      "optional": true
-    },
     "react-markdown": {
       "optional": true
     }

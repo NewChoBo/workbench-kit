@@ -25,7 +25,7 @@ export default defineConfig({
   base: getBasePath(process.env.WORKBENCH_SAMPLE_BASE_PATH),
   plugins: [react()],
   resolve: {
-    dedupe: ['react', 'react-dom'],
+    dedupe: ['react', 'react-dom', 'monaco-editor'],
   },
   server: {
     host: '127.0.0.1',

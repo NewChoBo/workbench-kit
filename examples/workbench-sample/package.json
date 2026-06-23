@@ -12,6 +12,7 @@
   "dependencies": {
     "@workbench-kit/contracts": "workspace:*",
     "@workbench-kit/jdw": "workspace:*",
+    "@workbench-kit/monaco": "workspace:*",
     "@workbench-kit/platform": "workspace:*",
     "@workbench-kit/react": "workspace:*",
     "@workbench-kit/workbench-config": "workspace:*",

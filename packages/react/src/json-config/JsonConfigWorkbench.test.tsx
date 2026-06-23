@@ -7,16 +7,12 @@ import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/jdw';
 import { JsonConfigWorkbench, resolveJsonConfigPreviewKind } from './JsonConfigWorkbench.js';
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
 
-vi.mock('@monaco-editor/react', () => ({
-  default: ({ value }: { value?: string }) => (
+vi.mock('@workbench-kit/monaco', async () => {
+  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
+  return createWorkbenchMonacoMockModule(({ value }) => (
     <pre data-testid="monaco-editor">{value ?? 'Mocked Monaco Editor'}</pre>
-  ),
-  loader: {
-    config: vi.fn(),
-  },
-}));
-
-vi.mock('monaco-editor', () => ({}));
+  ));
+});
 
 const settingsSchema: WorkbenchStructuredDataSchemaDocument = {
   activePattern: 'AppSettings',

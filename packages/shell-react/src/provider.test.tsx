@@ -11,30 +11,6 @@ import {
   type VirtualWorkspaceInitialState,
 } from '@workbench-kit/workspace';
 
-vi.mock('@monaco-editor/react', () => ({
-  default: ({
-    onChange,
-    value,
-  }: {
-    onChange?: ((value?: string) => void) | undefined;
-    value?: string | undefined;
-  }) => (
-    <textarea
-      data-testid="monaco-editor"
-      value={value ?? ''}
-      onChange={(event) => onChange?.(event.currentTarget.value)}
-    />
-  ),
-  loader: { config: () => undefined },
-}));
-
-vi.mock('monaco-editor', () => ({
-  editor: {
-    defineTheme: () => undefined,
-    setTheme: () => undefined,
-  },
-}));
-
 class ResizeObserverMock {
   disconnect() {}
   observe() {}

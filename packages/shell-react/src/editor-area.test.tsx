@@ -1,42 +1,9 @@
 /** @vitest-environment jsdom */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { act, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-
-vi.mock('@monaco-editor/react', () => ({
-  default: ({
-    language,
-    onChange,
-    path,
-    theme,
-    value,
-  }: {
-    language?: string | undefined;
-    onChange?: ((value?: string) => void) | undefined;
-    path?: string | undefined;
-    theme?: string | undefined;
-    value?: string | undefined;
-  }) => (
-    <textarea
-      data-language={language}
-      data-path={path}
-      data-theme={theme}
-      data-testid="monaco-editor"
-      value={value ?? ''}
-      onChange={(event) => onChange?.(event.currentTarget.value)}
-    />
-  ),
-  loader: { config: () => undefined },
-}));
-
-vi.mock('monaco-editor', () => ({
-  editor: {
-    defineTheme: () => undefined,
-    setTheme: () => undefined,
-  },
-}));
 
 import {
   BUILTIN_WORKBENCH_EXTENSIONS,

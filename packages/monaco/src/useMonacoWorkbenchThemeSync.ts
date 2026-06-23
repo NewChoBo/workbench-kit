@@ -1,11 +1,12 @@
-import * as monaco from 'monaco-editor';
 import { useEffect, useState } from 'react';
+
+import { monaco } from './monaco-loader.js';
 import {
   defineMonacoWorkbenchTheme,
   getWorkbenchThemeAppearanceSignature,
   monacoThemeForWorkspaceTheme,
   type MonacoWorkbenchResolvedTheme,
-} from './monacoWorkbenchTheme';
+} from './monacoWorkbenchTheme.js';
 
 function useWorkbenchThemeAppearanceSignature(): string {
   const [signature, setSignature] = useState(() => getWorkbenchThemeAppearanceSignature());

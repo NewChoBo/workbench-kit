@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { WidgetJsonSchema } from '@workbench-kit/contracts';
-import type { OnMount } from '@monaco-editor/react';
-import type * as Monaco from 'monaco-editor';
+import type { IDisposable, OnMount, WorkbenchMonaco, editor } from '@workbench-kit/monaco';
 
 import { IconButton } from '../primitives/IconButton';
 import { ListEmptyState } from '../primitives/List';
@@ -65,8 +64,8 @@ export function JsonCodeEditorPane({
   theme = 'dark',
   value,
 }: JsonCodeEditorPaneProps) {
-  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
-  const markerListenerRef = useRef<Monaco.IDisposable | null>(null);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const markerListenerRef = useRef<IDisposable | null>(null);
   const [monacoProblems, setMonacoProblems] = useState<JsonEditorProblem[]>([]);
   const [showProblems, setShowProblems] = useState(false);
 
@@ -101,7 +100,7 @@ export function JsonCodeEditorPane({
     [],
   );
 
-  const configureJsonSchema = (monaco: typeof Monaco, path: string) => {
+  const configureJsonSchema = (monaco: WorkbenchMonaco, path: string) => {
     if (!jsonSchema) return;
 
     const jsonDefaults = (
@@ -146,7 +145,7 @@ export function JsonCodeEditorPane({
     const updateProblems = () => {
       const markers = monaco.editor.getModelMarkers({ resource: model.uri });
       setMonacoProblems(
-        markers.map((marker: Monaco.editor.IMarker) => ({
+        markers.map((marker: editor.IMarker) => ({
           message: marker.message,
           severity: marker.severity,
           startLineNumber: marker.startLineNumber,

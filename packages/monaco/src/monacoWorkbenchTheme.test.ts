@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
+
 import {
   buildMonacoThemeColors,
   withAlpha,
   type WorkbenchThemeCssColors,
-} from './monacoWorkbenchTheme';
+} from './monacoWorkbenchTheme.js';
 
 const sampleColors: WorkbenchThemeCssColors = {
   accent: '#0284c7',

@@ -41,6 +41,7 @@ const packageRules = toRuleMap({
     '@workbench-kit/adapters',
     '@workbench-kit/contracts',
     '@workbench-kit/jdw',
+    '@workbench-kit/monaco',
     '@workbench-kit/platform',
     '@workbench-kit/runtime',
     '@workbench-kit/services',
@@ -48,6 +49,10 @@ const packageRules = toRuleMap({
     '@workbench-kit/workspace',
   ],
 });
+
+const allowedPrivateRuntimeDependencies = new Map([
+  ['@workbench-kit/react', new Set(['@workbench-kit/monaco'])],
+]);
 
 const extensionAllowedDependencies = new Set([
   '@workbench-kit/base',
@@ -134,7 +139,8 @@ function checkPackageDependencies(workspacePackage, allowedDependencies, workspa
     const dependencyPackage = workspacePackageByName.get(dependency);
     if (
       workspacePackage.packageJson.private !== true &&
-      dependencyPackage?.packageJson.private === true
+      dependencyPackage?.packageJson.private === true &&
+      !allowedPrivateRuntimeDependencies.get(workspacePackage.name)?.has(dependency)
     ) {
       violations.push({
         location: relativePath(path.join(workspacePackage.directory, 'package.json')),
