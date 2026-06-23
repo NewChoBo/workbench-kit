@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://workbench-kit.dev/schemas/builtins/text.json",
-  "title": "TextWidget",
+  "$id": "https://workbench-kit.dev/schemas/builtins/stack.json",
+  "title": "StackWidget",
   "type": "object",
   "required": ["type", "args"],
   "properties": {
-    "type": { "const": "text" },
+    "type": { "const": "stack" },
     "id": { "type": "string" },
     "listen": {
       "type": "array",
@@ -13,16 +13,11 @@
     },
     "args": {
       "type": "object",
-      "required": ["text"],
       "properties": {
-        "text": { "type": "string" },
-        "color": { "type": "string" },
         "background": { "type": "string" },
-        "fontSize": {
-          "oneOf": [
-            { "type": "number", "minimum": 1 },
-            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
-          ]
+        "children": {
+          "type": "array",
+          "items": { "$ref": "../jdw-node.jdw.schema.json" }
         }
       },
       "additionalProperties": true

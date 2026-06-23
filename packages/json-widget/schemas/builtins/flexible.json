@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://workbench-kit.dev/schemas/builtins/row.json",
-  "title": "RowWidget",
+  "$id": "https://workbench-kit.dev/schemas/builtins/flexible.json",
+  "title": "FlexibleWidget",
   "type": "object",
   "required": ["type", "args"],
   "properties": {
-    "type": { "const": "row" },
+    "type": { "const": "flexible" },
     "id": { "type": "string" },
     "listen": {
       "type": "array",
@@ -13,26 +13,21 @@
     },
     "args": {
       "type": "object",
+      "required": ["child"],
       "properties": {
-        "gap": {
+        "flex": {
           "oneOf": [
             { "type": "number", "minimum": 0 },
             { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
           ]
         },
-        "padding": {
+        "fit": {
           "oneOf": [
-            { "type": "number", "minimum": 0 },
+            { "type": "string", "enum": ["tight", "loose"] },
             { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
           ]
         },
-        "background": { "type": "string" },
-        "mainAxisAlignment": { "type": "string" },
-        "crossAxisAlignment": { "type": "string" },
-        "children": {
-          "type": "array",
-          "items": { "$ref": "../jdw-node.jdw.schema.json" }
-        }
+        "child": { "$ref": "../jdw-node.jdw.schema.json" }
       },
       "additionalProperties": true
     }

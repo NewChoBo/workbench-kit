@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://workbench-kit.dev/schemas/builtins/row.json",
-  "title": "RowWidget",
+  "$id": "https://workbench-kit.dev/schemas/builtins/image.json",
+  "title": "ImageWidget",
   "type": "object",
   "required": ["type", "args"],
   "properties": {
-    "type": { "const": "row" },
+    "type": { "const": "image" },
     "id": { "type": "string" },
     "listen": {
       "type": "array",
@@ -13,25 +13,22 @@
     },
     "args": {
       "type": "object",
+      "required": ["src"],
       "properties": {
-        "gap": {
+        "src": { "type": "string", "minLength": 1 },
+        "alt": { "type": "string" },
+        "fit": { "type": "string" },
+        "width": {
           "oneOf": [
             { "type": "number", "minimum": 0 },
             { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
           ]
         },
-        "padding": {
+        "height": {
           "oneOf": [
             { "type": "number", "minimum": 0 },
             { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
           ]
-        },
-        "background": { "type": "string" },
-        "mainAxisAlignment": { "type": "string" },
-        "crossAxisAlignment": { "type": "string" },
-        "children": {
-          "type": "array",
-          "items": { "$ref": "../jdw-node.jdw.schema.json" }
         }
       },
       "additionalProperties": true

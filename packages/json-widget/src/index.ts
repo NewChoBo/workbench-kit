@@ -2,6 +2,9 @@ export type {
   WidgetInspectorField,
   WidgetInspectorSection,
   WidgetJsonSchema,
+  WidgetMeasureConstraints,
+  WidgetMeasureFunction,
+  WidgetMeasureResult,
   WidgetRegistryContract,
   WidgetTypeDefinition,
   WidgetTypeShape,
@@ -72,19 +75,32 @@ export {
   layoutWidget,
   type LayoutConstraints,
   type LayoutNodeResult,
+  type LayoutWidgetOptions,
 } from './layout/layout-widget.js';
 
 export type { WidgetPatch } from './widget-patch.js';
 
 export { applyWidgetPatch } from './widget-patch.js';
 
-export type { JsonWidgetNode, ParsedJsonWidgetData } from './jdw-node.js';
+export type {
+  JsonWidgetInvalidation,
+  JsonWidgetListenBinding,
+  JsonWidgetNode,
+  JsonWidgetValueMap,
+  ParsedJsonWidgetData,
+} from './jdw-node.js';
 
 export {
+  collectJsonWidgetChangedValuePaths,
+  collectJsonWidgetInvalidations,
+  collectJsonWidgetListenBindings,
+  collectJsonWidgetValueDependencies,
   formatJsonWidgetData,
   genericWidgetToJdwNode,
+  isJsonWidgetDynamicValueExpression,
   jdwNodeToGenericWidget,
   parseJsonWidgetData,
+  resolveJsonWidgetValues,
 } from './jdw-node.js';
 
 export type { WidgetDocument } from './document.js';
@@ -105,7 +121,13 @@ export {
   WORKBENCH_JDW_BUILTIN_TYPES,
   WORKBENCH_KIT_EXTENSION_TYPES,
   WORKBENCH_JDW_KNOWN_TYPES,
+  WORKBENCH_JDW_TYPE_SUPPORT,
+  getWorkbenchJdwTypeSupport,
+  listWorkbenchJdwTypesBySupportLevel,
   type WorkbenchJdwKnownType,
+  type WorkbenchJdwSupportLevel,
+  type WorkbenchJdwTypeCategory,
+  type WorkbenchJdwTypeSupport,
 } from './jdw-profile.js';
 export {
   validateJsonWidgetData,

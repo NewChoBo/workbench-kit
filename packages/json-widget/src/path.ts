@@ -119,6 +119,8 @@ export function findLineAndColumnForPath(
     let braceLevel = 0;
     let bracketLevel = 0;
     let foundKeyPos = -1;
+    let argsBraceLevel: number | null = null;
+    let pendingArgsObject = false;
 
     while (true) {
       const token = getNextToken(currentPos);
@@ -126,14 +128,33 @@ export function findLineAndColumnForPath(
 
       if (token.type === 'openBrace') {
         braceLevel++;
+        if (pendingArgsObject) {
+          argsBraceLevel = braceLevel;
+          pendingArgsObject = false;
+        }
       } else if (token.type === 'closeBrace') {
+        if (argsBraceLevel === braceLevel) {
+          argsBraceLevel = null;
+        }
         braceLevel--;
         if (braceLevel < 0) break;
       } else if (token.type === 'openBracket') {
         bracketLevel++;
       } else if (token.type === 'closeBracket') {
         bracketLevel--;
-      } else if (token.type === 'key' && braceLevel === 1 && bracketLevel === 0) {
+      } else if (token.type === 'key' && bracketLevel === 0) {
+        const isDirectWidgetKey = braceLevel === 1;
+        const isJdwArgsKey = argsBraceLevel !== null && braceLevel === argsBraceLevel;
+
+        if (isDirectWidgetKey && token.value === 'args') {
+          pendingArgsObject = true;
+        }
+
+        if (!isDirectWidgetKey && !isJdwArgsKey) {
+          currentPos = token.pos + token.length;
+          continue;
+        }
+
         if (token.value === targetKey) {
           foundKeyPos = token.pos;
           const nextColonPos = token.pos + token.length;

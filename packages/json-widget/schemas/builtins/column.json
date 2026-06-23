@@ -14,8 +14,18 @@
     "args": {
       "type": "object",
       "properties": {
-        "gap": { "type": "number", "minimum": 0 },
-        "padding": { "type": "number", "minimum": 0 },
+        "gap": {
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        },
+        "padding": {
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        },
         "background": { "type": "string" },
         "mainAxisAlignment": { "type": "string" },
         "crossAxisAlignment": { "type": "string" },

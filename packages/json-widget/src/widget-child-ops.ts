@@ -6,7 +6,7 @@ import { getWidgetChildAtSegment, getWidgetChildren } from './widget-tree.js';
 export type ArrayChildWidget = GenericWidget;
 
 const GRID_PLACEMENT_KEYS = ['colSpan', 'rowSpan'] as const;
-const LINEAR_PLACEMENT_KEYS = ['flex', 'align'] as const;
+const LINEAR_PLACEMENT_KEYS = ['flex', 'flexFit', 'align'] as const;
 const STACK_PLACEMENT_KEYS = ['left', 'top', 'right', 'bottom'] as const;
 
 function isFiniteNumber(value: unknown): value is number {
@@ -42,6 +42,17 @@ function removeAtIndex<T>(items: readonly T[], index: number): T[] {
   return [...items.slice(0, index), ...items.slice(index + 1)];
 }
 
+function isSingleChildContainerType(type: string): boolean {
+  return (
+    type === 'box' ||
+    type === 'container' ||
+    type === 'padding' ||
+    type === 'align' ||
+    type === 'center' ||
+    type === 'sized_box'
+  );
+}
+
 function containerKind(
   widget: GenericWidget,
 ): 'grid' | 'linear' | 'stack' | 'array' | 'box' | null {
@@ -55,9 +66,8 @@ function containerKind(
       return 'stack';
     case 'list-view':
       return 'array';
-    case 'box':
-      return 'box';
     default:
+      if (isSingleChildContainerType(widget.type)) return 'box';
       if (isGenericWidget(widget.child)) return 'box';
       if (Array.isArray(widget.children)) return 'array';
       return null;
@@ -167,6 +177,10 @@ export function insertArrayChild(
         ...parent,
         children: insertAtIndex(getWidgetChildren(parent), targetIndex, child),
       };
+    }
+    case 'box': {
+      if (index !== 0 || isGenericWidget(parent.child)) return null;
+      return { ...parent, child };
     }
     default:
       return null;

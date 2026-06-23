@@ -34,6 +34,17 @@ function isGenericWidget(value: unknown): value is GenericWidget {
   );
 }
 
+function isSingleChildContainerType(type: string): boolean {
+  return (
+    type === 'box' ||
+    type === 'container' ||
+    type === 'padding' ||
+    type === 'align' ||
+    type === 'center' ||
+    type === 'sized_box'
+  );
+}
+
 export function getWidgetChildren(widget: GenericWidget): readonly GenericWidget[] {
   const children = widget.children;
   if (!Array.isArray(children)) return [];
@@ -77,7 +88,7 @@ function replaceDescendant(
   if (!replacement) return null;
 
   if (segment.kind === 'child') {
-    return isGenericWidget(current.child) || current.type === 'box'
+    return isGenericWidget(current.child) || isSingleChildContainerType(current.type)
       ? { ...current, child: replacement }
       : null;
   }
@@ -127,7 +138,9 @@ export function setBoxChildAtPath(
   child: GenericWidget | undefined,
 ): WidgetTreeEditResult {
   return updateWidgetAtPath(root, boxPath, (box) => {
-    if (!isGenericWidget(box.child) && box.type !== 'box' && !('child' in box)) return box;
+    if (!isGenericWidget(box.child) && !isSingleChildContainerType(box.type) && !('child' in box)) {
+      return box;
+    }
     if (child === undefined) {
       if (!box.child) return box;
       const { child: _removedChild, ...next } = box;
@@ -235,25 +248,29 @@ export function reparentWidgetAtPath(
   const removeResult = removeWidgetAtPath(root, fromPath);
   if (!removeResult.changed) return { root, changed: false };
 
-  const adjustedToParentPath = toParentPath.map((seg, depth) => {
-    if (seg.kind !== 'children') return seg;
-    if (fromPath.length > depth) {
-      const fromPathSeg = fromPath[depth];
-      if (fromPathSeg && fromPathSeg.kind === 'children') {
-        const match = fromPath.slice(0, depth).every((s, i) => {
-          const ts = toParentPath[i];
-          return (
-            s.kind === ts?.kind &&
-            (s.kind !== 'children' || s.index === (ts as { index: number }).index)
-          );
-        });
-        if (match && fromPathSeg.index < seg.index) {
-          return { kind: 'children', index: seg.index - 1 } as const;
-        }
-      }
-    }
-    return seg;
-  });
+  const removedSegment = fromPath[fromPath.length - 1];
+  const removedParentPath = fromPath.slice(0, -1);
+  const adjustedToParentPath =
+    removedSegment?.kind === 'children'
+      ? toParentPath.map((seg, depth) => {
+          if (seg.kind !== 'children' || depth !== removedParentPath.length) return seg;
+
+          const sameParent = removedParentPath.every((parentSeg, index) => {
+            const targetSeg = toParentPath[index];
+            return (
+              parentSeg.kind === targetSeg?.kind &&
+              (parentSeg.kind !== 'children' ||
+                parentSeg.index === (targetSeg as { index: number }).index)
+            );
+          });
+
+          if (sameParent && removedSegment.index < seg.index) {
+            return { kind: 'children', index: seg.index - 1 } as const;
+          }
+
+          return seg;
+        })
+      : toParentPath;
 
   return insertWidgetChildAtPath(removeResult.root, adjustedToParentPath, insertIndex, child);
 }

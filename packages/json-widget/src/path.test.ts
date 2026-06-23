@@ -25,6 +25,33 @@ describe('widget path scanner', () => {
   ]
 }`;
 
+  const jdwJson = `{
+  "type": "column",
+  "args": {
+    "children": [
+      {
+        "type": "text",
+        "args": {
+          "text": "Title"
+        }
+      },
+      {
+        "type": "row",
+        "args": {
+          "children": [
+            {
+              "type": "text",
+              "args": {
+                "text": "Nested"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}`;
+
   describe('findLineAndColumnForPath', () => {
     it('finds root path position', () => {
       const pos = findLineAndColumnForPath(sampleJson, []);
@@ -48,6 +75,16 @@ describe('widget path scanner', () => {
       const pos = findLineAndColumnForPath(sampleJson, path);
       expect(pos.line).toBe(15);
     });
+
+    it('finds paths through JDW v7 args wrappers', () => {
+      expect(findLineAndColumnForPath(jdwJson, [{ kind: 'children', index: 1 }]).line).toBe(11);
+      expect(
+        findLineAndColumnForPath(jdwJson, [
+          { kind: 'children', index: 1 },
+          { kind: 'children', index: 0 },
+        ]).line,
+      ).toBe(15);
+    });
   });
 
   describe('findPathForLineAndColumn', () => {
@@ -64,6 +101,13 @@ describe('widget path scanner', () => {
     it('handles root path fallback', () => {
       const path = findPathForLineAndColumn(sampleJson, 2, 5);
       expect(path).toEqual([]);
+    });
+
+    it('maps JDW v7 args wrapper positions back to widget paths', () => {
+      expect(findPathForLineAndColumn(jdwJson, 16, 16)).toEqual([
+        { kind: 'children', index: 1 },
+        { kind: 'children', index: 0 },
+      ]);
     });
   });
 });

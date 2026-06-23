@@ -21,7 +21,10 @@ export interface GridChildPlacement {
 
 export interface LinearChildPlacement {
   readonly flex?: number | undefined;
+  readonly flexFit?: 'tight' | 'loose' | undefined;
   readonly align?: 'stretch' | 'start' | 'center' | 'end' | undefined;
+  readonly mainSize?: number | undefined;
+  readonly crossSize?: number | undefined;
 }
 
 export interface StackChildPlacement {
@@ -33,6 +36,15 @@ export interface StackChildPlacement {
 
 export interface LinearLayoutSpec {
   readonly type: 'row' | 'column';
+  readonly mainAxisAlignment?:
+    | 'start'
+    | 'center'
+    | 'end'
+    | 'spaceBetween'
+    | 'spaceAround'
+    | 'spaceEvenly'
+    | undefined;
+  readonly crossAxisAlignment?: 'stretch' | 'start' | 'center' | 'end' | undefined;
   readonly gap?: number | undefined;
   readonly padding?: number | undefined;
 }

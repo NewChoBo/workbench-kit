@@ -14,6 +14,7 @@ Repository: `NewChoBo/workbench-kit` (pnpm monorepo, `@workbench-kit/*` packages
 - Validation lanes: `pnpm validate:static`, `pnpm validate:fast`,
   `pnpm validate:ui`, `pnpm validate`.
 - Public API changes: `pnpm check:public-exports`.
+- JDW profile/schema changes: `pnpm check:jdw-schemas`.
 
 ## Storybook
 

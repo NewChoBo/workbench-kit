@@ -1,11 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://workbench-kit.dev/schemas/builtins/row.json",
-  "title": "RowWidget",
+  "$id": "https://workbench-kit.dev/schemas/extensions/box.json",
+  "title": "BoxWidget",
+  "description": "Workbench kit extension single-child wrapper.",
   "type": "object",
   "required": ["type", "args"],
   "properties": {
-    "type": { "const": "row" },
+    "type": { "const": "box" },
     "id": { "type": "string" },
     "listen": {
       "type": "array",
@@ -14,7 +15,13 @@
     "args": {
       "type": "object",
       "properties": {
-        "gap": {
+        "width": {
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        },
+        "height": {
           "oneOf": [
             { "type": "number", "minimum": 0 },
             { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
@@ -27,12 +34,7 @@
           ]
         },
         "background": { "type": "string" },
-        "mainAxisAlignment": { "type": "string" },
-        "crossAxisAlignment": { "type": "string" },
-        "children": {
-          "type": "array",
-          "items": { "$ref": "../jdw-node.jdw.schema.json" }
-        }
+        "child": { "$ref": "../jdw-node.jdw.schema.json" }
       },
       "additionalProperties": true
     }

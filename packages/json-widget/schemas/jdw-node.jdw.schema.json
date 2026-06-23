@@ -2,29 +2,605 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://workbench-kit.dev/schemas/jdw-node.jdw.schema.json",
   "title": "JsonWidgetNode",
-  "description": "JDW v7 widget envelope (type + args).",
-  "type": "object",
-  "required": ["type", "args"],
-  "properties": {
-    "$schema": {
+  "description": "Recursive JDW v7 widget envelope (type + args).",
+  "$ref": "#/definitions/JdwNode",
+  "definitions": {
+    "JdwDynamicValue": {
+      "title": "JdwDynamicValue",
+      "description": "Exact ${path} expression resolved from explicit render or preview values.",
       "type": "string",
-      "minLength": 1
+      "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$"
     },
-    "type": {
-      "type": "string",
-      "minLength": 1
+    "JdwNode": {
+      "oneOf": [
+        { "$ref": "#/definitions/TextJdwNode" },
+        { "$ref": "#/definitions/RowJdwNode" },
+        { "$ref": "#/definitions/ColumnJdwNode" },
+        { "$ref": "#/definitions/ExpandedJdwNode" },
+        { "$ref": "#/definitions/FlexibleJdwNode" },
+        { "$ref": "#/definitions/StackJdwNode" },
+        { "$ref": "#/definitions/ContainerJdwNode" },
+        { "$ref": "#/definitions/PaddingJdwNode" },
+        { "$ref": "#/definitions/AlignJdwNode" },
+        { "$ref": "#/definitions/CenterJdwNode" },
+        { "$ref": "#/definitions/SizedBoxJdwNode" },
+        { "$ref": "#/definitions/ImageJdwNode" },
+        { "$ref": "#/definitions/IconJdwNode" },
+        { "$ref": "#/definitions/GridJdwNode" },
+        { "$ref": "#/definitions/BoxJdwNode" },
+        { "$ref": "#/definitions/ButtonJdwNode" },
+        { "$ref": "#/definitions/CustomJdwNode" }
+      ]
     },
-    "id": {
-      "type": "string",
-      "minLength": 1
+    "CustomJdwNode": {
+      "title": "CustomJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "enum": [
+              "text",
+              "row",
+              "column",
+              "expanded",
+              "flexible",
+              "stack",
+              "container",
+              "padding",
+              "align",
+              "center",
+              "sized_box",
+              "image",
+              "icon",
+              "grid",
+              "box",
+              "button"
+            ]
+          }
+        },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": { "type": "object" }
+      },
+      "additionalProperties": false
     },
-    "listen": {
-      "type": "array",
-      "items": { "type": "string" }
+    "TextJdwNode": {
+      "title": "TextJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "text" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "required": ["text"],
+          "properties": {
+            "text": { "type": "string" },
+            "color": { "type": "string" },
+            "background": { "type": "string" },
+            "fontSize": {
+              "oneOf": [
+                { "type": "number", "minimum": 1 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
     },
-    "args": {
-      "type": "object"
+    "RowJdwNode": {
+      "title": "RowJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "row" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "properties": {
+            "gap": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "padding": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "background": { "type": "string" },
+            "mainAxisAlignment": { "type": "string" },
+            "crossAxisAlignment": { "type": "string" },
+            "children": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/JdwNode" }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ColumnJdwNode": {
+      "title": "ColumnJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "column" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "properties": {
+            "gap": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "padding": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "background": { "type": "string" },
+            "mainAxisAlignment": { "type": "string" },
+            "crossAxisAlignment": { "type": "string" },
+            "children": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/JdwNode" }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExpandedJdwNode": {
+      "title": "ExpandedJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "expanded" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "required": ["child"],
+          "properties": {
+            "flex": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "child": { "$ref": "#/definitions/JdwNode" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "FlexibleJdwNode": {
+      "title": "FlexibleJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "flexible" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "required": ["child"],
+          "properties": {
+            "flex": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "fit": {
+              "oneOf": [
+                { "type": "string", "enum": ["tight", "loose"] },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "child": { "$ref": "#/definitions/JdwNode" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "StackJdwNode": {
+      "title": "StackJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "stack" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "properties": {
+            "background": { "type": "string" },
+            "children": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/JdwNode" }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ContainerJdwNode": {
+      "title": "ContainerJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "container" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "height": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "padding": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "background": { "type": "string" },
+            "child": { "$ref": "#/definitions/JdwNode" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "PaddingJdwNode": {
+      "title": "PaddingJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "padding" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "properties": {
+            "padding": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "child": { "$ref": "#/definitions/JdwNode" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "AlignJdwNode": {
+      "title": "AlignJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "align" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "properties": {
+            "alignment": { "type": "string" },
+            "child": { "$ref": "#/definitions/JdwNode" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "CenterJdwNode": {
+      "title": "CenterJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "center" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "properties": {
+            "child": { "$ref": "#/definitions/JdwNode" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "SizedBoxJdwNode": {
+      "title": "SizedBoxJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "sized_box" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "height": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "child": { "$ref": "#/definitions/JdwNode" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ImageJdwNode": {
+      "title": "ImageJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "image" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "required": ["src"],
+          "properties": {
+            "src": { "type": "string", "minLength": 1 },
+            "alt": { "type": "string" },
+            "fit": { "type": "string" },
+            "width": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "height": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "IconJdwNode": {
+      "title": "IconJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "icon" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "color": { "type": "string" },
+            "size": {
+              "oneOf": [
+                { "type": "number", "minimum": 1 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "GridJdwNode": {
+      "title": "GridJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "grid" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "required": ["columns"],
+          "properties": {
+            "columns": {
+              "oneOf": [
+                { "type": "number", "minimum": 1 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "gap": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "padding": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "background": { "type": "string" },
+            "children": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/JdwNode" }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "BoxJdwNode": {
+      "title": "BoxJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "box" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "height": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "padding": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                { "$ref": "#/definitions/JdwDynamicValue" }
+              ]
+            },
+            "background": { "type": "string" },
+            "child": { "$ref": "#/definitions/JdwNode" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ButtonJdwNode": {
+      "title": "ButtonJdwNode",
+      "type": "object",
+      "required": ["type", "args"],
+      "properties": {
+        "type": { "const": "button" },
+        "$schema": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "listen": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "required": ["label"],
+          "properties": {
+            "label": { "type": "string", "minLength": 1 },
+            "variant": { "type": "string" },
+            "color": { "type": "string" },
+            "background": { "type": "string" },
+            "disabled": {
+              "oneOf": [{ "type": "boolean" }, { "$ref": "#/definitions/JdwDynamicValue" }]
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
     }
-  },
-  "additionalProperties": false
+  }
 }

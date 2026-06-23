@@ -3,7 +3,7 @@ import type { WidgetPlacementAssetKind, WidgetPlacementPolicy } from '@workbench
 import { getWidgetChildren, type GenericWidget } from './widget-tree.js';
 
 const GRID_PLACEMENT_KEYS = ['col', 'row', 'colSpan', 'rowSpan'] as const;
-const LINEAR_PLACEMENT_KEYS = ['flex', 'align'] as const;
+const LINEAR_PLACEMENT_KEYS = ['flex', 'flexFit', 'align'] as const;
 const STACK_PLACEMENT_KEYS = ['left', 'top', 'right', 'bottom'] as const;
 
 export interface NormalizeWidgetOptions {
@@ -25,6 +25,15 @@ function omitKeys(widget: GenericWidget, keys: readonly string[]): GenericWidget
 
 function hasGridPlacement(widget: GenericWidget): boolean {
   return isFiniteNumber(widget.col) && isFiniteNumber(widget.row);
+}
+
+function isGenericWidget(value: unknown): value is GenericWidget {
+  return (
+    value !== null &&
+    !Array.isArray(value) &&
+    typeof value === 'object' &&
+    typeof (value as GenericWidget).type === 'string'
+  );
 }
 
 export function stripExternalPlacement(widget: GenericWidget, parentType: string): GenericWidget {
@@ -86,14 +95,16 @@ export function normalizeWidgetSubtree(
   }
 
   const children = getWidgetChildren(next);
-  if (children.length === 0) {
+  const child = isGenericWidget(next.child) ? next.child : null;
+  if (children.length === 0 && child === null) {
     return next;
   }
 
   const normalizedChildren = children.map((child) => normalizeWidgetSubtree(child, next.type));
   return {
     ...next,
-    children: normalizedChildren,
+    ...(children.length > 0 ? { children: normalizedChildren } : {}),
+    ...(child ? { child: normalizeWidgetSubtree(child, next.type) } : {}),
   };
 }
 

@@ -1,3 +1,4 @@
+import type { WidgetPath } from './path.js';
 import type { GenericWidget } from './widget-tree.js';
 
 export interface JsonWidgetNode {
@@ -12,11 +13,241 @@ export interface ParsedJsonWidgetData {
   readonly parseError: string | null;
 }
 
+export type JsonWidgetValueMap = Readonly<Record<string, unknown>>;
+
+export interface JsonWidgetListenBinding {
+  readonly widgetPath: WidgetPath;
+  readonly nodePath: string;
+  readonly type: string;
+  readonly listen: readonly string[];
+  readonly dependencies: readonly string[];
+  readonly missingListen: readonly string[];
+  readonly unusedListen: readonly string[];
+}
+
+export interface JsonWidgetInvalidation {
+  readonly widgetPath: WidgetPath;
+  readonly nodePath: string;
+  readonly type: string;
+  readonly listen: readonly string[];
+  readonly changedListen: readonly string[];
+  readonly changedPaths: readonly string[];
+}
+
 const CONTAINER_CHILDREN_ARG = 'children';
 const SINGLE_CHILD_ARG = 'child';
+const EXACT_VARIABLE_PATTERN = /^\$\{([A-Za-z0-9_.-]+)\}$/;
+const TEMPLATE_VARIABLE_PATTERN = /\$\{([A-Za-z0-9_.-]+)\}/g;
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function isJsonWidgetDynamicValueExpression(value: unknown): value is string {
+  return typeof value === 'string' && EXACT_VARIABLE_PATTERN.test(value);
+}
+
+function addStringValueDependencies(value: string, dependencies: Set<string>): void {
+  for (const match of value.matchAll(TEMPLATE_VARIABLE_PATTERN)) {
+    dependencies.add(match[1]);
+  }
+}
+
+function collectValueDependencies(value: unknown, dependencies: Set<string>): void {
+  if (typeof value === 'string') {
+    addStringValueDependencies(value, dependencies);
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectValueDependencies(item, dependencies));
+    return;
+  }
+
+  if (isObjectRecord(value)) {
+    Object.values(value).forEach((nestedValue) =>
+      collectValueDependencies(nestedValue, dependencies),
+    );
+  }
+}
+
+function collectOwnArgsValueDependencies(args: Record<string, unknown>): readonly string[] {
+  const dependencies = new Set<string>();
+
+  for (const [key, value] of Object.entries(args)) {
+    if (key === CONTAINER_CHILDREN_ARG || key === SINGLE_CHILD_ARG) {
+      continue;
+    }
+    collectValueDependencies(value, dependencies);
+  }
+
+  return [...dependencies];
+}
+
+export function collectJsonWidgetValueDependencies(node: JsonWidgetNode): readonly string[] {
+  const dependencies = new Set<string>();
+  collectValueDependencies(node.args, dependencies);
+  return [...dependencies];
+}
+
+export function collectJsonWidgetListenBindings(
+  node: JsonWidgetNode,
+  nodePath = 'root',
+  widgetPath: WidgetPath = [],
+): readonly JsonWidgetListenBinding[] {
+  const listen = node.listen ?? [];
+  const dependencies = collectOwnArgsValueDependencies(node.args);
+  const bindings: JsonWidgetListenBinding[] = [
+    {
+      widgetPath,
+      nodePath,
+      type: node.type,
+      listen,
+      dependencies,
+      missingListen: dependencies.filter((dependency) => !listen.includes(dependency)),
+      unusedListen: listen.filter((dependency) => !dependencies.includes(dependency)),
+    },
+  ];
+
+  const children = node.args[CONTAINER_CHILDREN_ARG];
+  if (Array.isArray(children)) {
+    children.forEach((child, index) => {
+      if (isJdwLikeNode(child)) {
+        bindings.push(
+          ...collectJsonWidgetListenBindings(child, `${nodePath}.args.children[${index}]`, [
+            ...widgetPath,
+            { kind: 'children', index },
+          ]),
+        );
+      }
+    });
+  }
+
+  const child = node.args[SINGLE_CHILD_ARG];
+  if (isJdwLikeNode(child)) {
+    bindings.push(
+      ...collectJsonWidgetListenBindings(child, `${nodePath}.args.child`, [
+        ...widgetPath,
+        { kind: 'child' },
+      ]),
+    );
+  }
+
+  return bindings;
+}
+
+function isValuePathRelated(left: string, right: string): boolean {
+  return left === right || left.startsWith(`${right}.`) || right.startsWith(`${left}.`);
+}
+
+function changedListenForNode(
+  listen: readonly string[],
+  changedPaths: readonly string[],
+): readonly string[] {
+  return listen.filter((listenPath) =>
+    changedPaths.some((changedPath) => isValuePathRelated(listenPath, changedPath)),
+  );
+}
+
+export function collectJsonWidgetInvalidations(
+  node: JsonWidgetNode,
+  changedPaths: readonly string[],
+): readonly JsonWidgetInvalidation[] {
+  const uniqueChangedPaths = [
+    ...new Set(changedPaths.map((path) => path.trim()).filter((path) => path.length > 0)),
+  ];
+  if (uniqueChangedPaths.length === 0) {
+    return [];
+  }
+
+  return collectJsonWidgetListenBindings(node).flatMap((binding) => {
+    const changedListen = changedListenForNode(binding.listen, uniqueChangedPaths);
+    if (changedListen.length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        widgetPath: binding.widgetPath,
+        nodePath: binding.nodePath,
+        type: binding.type,
+        listen: binding.listen,
+        changedListen,
+        changedPaths: uniqueChangedPaths,
+      },
+    ];
+  });
+}
+
+function isTraversableValue(value: unknown): value is readonly unknown[] | Record<string, unknown> {
+  return Array.isArray(value) || isObjectRecord(value);
+}
+
+function valueChildKeys(value: readonly unknown[] | Record<string, unknown>): readonly string[] {
+  if (Array.isArray(value)) {
+    return value.map((_, index) => String(index));
+  }
+
+  return Object.keys(value);
+}
+
+function readValueChild(value: readonly unknown[] | Record<string, unknown>, key: string): unknown {
+  if (Array.isArray(value)) {
+    return (value as readonly unknown[])[Number(key)];
+  }
+
+  return (value as Record<string, unknown>)[key];
+}
+
+function collectChangedValuePathsForValue(
+  previousValue: unknown,
+  nextValue: unknown,
+  path: string,
+  changedPaths: string[],
+): void {
+  if (Object.is(previousValue, nextValue)) {
+    return;
+  }
+
+  if (!isTraversableValue(previousValue) || !isTraversableValue(nextValue)) {
+    changedPaths.push(path);
+    return;
+  }
+
+  const childKeys = new Set([...valueChildKeys(previousValue), ...valueChildKeys(nextValue)]);
+  if (childKeys.size === 0) {
+    changedPaths.push(path);
+    return;
+  }
+
+  for (const key of childKeys) {
+    collectChangedValuePathsForValue(
+      readValueChild(previousValue, key),
+      readValueChild(nextValue, key),
+      `${path}.${key}`,
+      changedPaths,
+    );
+  }
+}
+
+export function collectJsonWidgetChangedValuePaths(
+  previousValues: JsonWidgetValueMap | undefined,
+  nextValues: JsonWidgetValueMap | undefined,
+): readonly string[] {
+  if (Object.is(previousValues, nextValues)) {
+    return [];
+  }
+
+  const previousRecord = previousValues ?? {};
+  const nextRecord = nextValues ?? {};
+  const changedPaths: string[] = [];
+  const valueKeys = new Set([...Object.keys(previousRecord), ...Object.keys(nextRecord)]);
+
+  for (const key of valueKeys) {
+    collectChangedValuePathsForValue(previousRecord[key], nextRecord[key], key, changedPaths);
+  }
+
+  return [...new Set(changedPaths)];
 }
 
 function formatParseError(error: unknown): string {
@@ -109,6 +340,72 @@ export function parseJsonWidgetData(source: string): ParsedJsonWidgetData {
   }
 }
 
+function readValuePath(values: JsonWidgetValueMap, path: string): unknown {
+  let current: unknown = values;
+
+  for (const segment of path.split('.')) {
+    if (!isObjectRecord(current) || !(segment in current)) {
+      return undefined;
+    }
+    current = current[segment];
+  }
+
+  return current;
+}
+
+function stringifyTemplateValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+}
+
+function resolveStringValue(value: string, values: JsonWidgetValueMap): unknown {
+  const exactMatch = EXACT_VARIABLE_PATTERN.exec(value);
+  if (exactMatch) {
+    const resolved = readValuePath(values, exactMatch[1]);
+    return resolved === undefined ? value : resolved;
+  }
+
+  return value.replace(TEMPLATE_VARIABLE_PATTERN, (match, path: string) => {
+    const resolved = readValuePath(values, path);
+    return resolved === undefined ? match : stringifyTemplateValue(resolved);
+  });
+}
+
+function resolveValue(value: unknown, values: JsonWidgetValueMap): unknown {
+  if (typeof value === 'string') {
+    return resolveStringValue(value, values);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveValue(item, values));
+  }
+
+  if (isObjectRecord(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nestedValue]) => [key, resolveValue(nestedValue, values)]),
+    );
+  }
+
+  return value;
+}
+
+export function resolveJsonWidgetValues(
+  node: JsonWidgetNode,
+  values: JsonWidgetValueMap = {},
+): JsonWidgetNode {
+  return {
+    ...node,
+    args: resolveValue(node.args, values) as Record<string, unknown>,
+  };
+}
+
 export function jdwNodeToGenericWidget(node: JsonWidgetNode): GenericWidget {
   if (node.type === 'expanded' || node.type === 'flexible') {
     const child = node.args[SINGLE_CHILD_ARG];
@@ -118,9 +415,11 @@ export function jdwNodeToGenericWidget(node: JsonWidgetNode): GenericWidget {
 
     const unwrapped = jdwNodeToGenericWidget(readChildNode(child));
     const flex = node.args.flex;
+    const fit = node.type === 'expanded' ? 'tight' : node.args.fit === 'tight' ? 'tight' : 'loose';
     return {
       ...unwrapped,
       ...(typeof flex === 'number' ? { flex } : {}),
+      flexFit: fit,
     };
   }
 
@@ -167,7 +466,7 @@ export function genericWidgetToJdwNode(widget: GenericWidget): JsonWidgetNode {
       continue;
     }
 
-    if (key === 'flex' && typeof value === 'number') {
+    if ((key === 'flex' && typeof value === 'number') || key === 'flexFit') {
       continue;
     }
 
@@ -175,11 +474,14 @@ export function genericWidgetToJdwNode(widget: GenericWidget): JsonWidgetNode {
   }
 
   if (typeof widget.flex === 'number') {
+    const flexFit =
+      widget.flexFit === 'loose' || widget.flexFit === 'tight' ? widget.flexFit : null;
     const childRecord: GenericWidget = { type: widget.type };
     for (const [key, value] of Object.entries(widget)) {
       if (
         key === 'type' ||
         key === 'flex' ||
+        key === 'flexFit' ||
         key === 'children' ||
         key === 'child' ||
         value === undefined
@@ -197,9 +499,10 @@ export function genericWidgetToJdwNode(widget: GenericWidget): JsonWidgetNode {
     }
 
     return {
-      type: 'expanded',
+      type: flexFit === 'loose' ? 'flexible' : 'expanded',
       args: {
         flex: widget.flex,
+        ...(flexFit === 'loose' ? { fit: 'loose' } : {}),
         child: genericWidgetToJdwNode(childRecord),
       },
     };

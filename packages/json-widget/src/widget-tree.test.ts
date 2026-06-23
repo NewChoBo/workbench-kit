@@ -173,6 +173,22 @@ describe('generic widget tree', () => {
     expect(getWidgetAtPath(removed.root, appendBoxChildPath(boxPath))).toBeNull();
   });
 
+  it('inserts a child into empty single-child wrappers', () => {
+    const paddingRoot: GenericWidget = { type: 'padding', padding: 8 };
+    const result = applyWidgetPatch(paddingRoot, {
+      type: 'insert-child',
+      parentPath: ROOT_WIDGET_PATH,
+      index: 0,
+      child: { type: 'text', text: 'wrapped' },
+    });
+
+    expect(result.changed).toBe(true);
+    expect(getWidgetAtPath(result.root, appendBoxChildPath(ROOT_WIDGET_PATH))).toEqual({
+      type: 'text',
+      text: 'wrapped',
+    });
+  });
+
   it('removes array children by their widget path', () => {
     const result = applyWidgetPatch(rootWidget, {
       type: 'remove-widget',
@@ -199,6 +215,107 @@ describe('generic widget tree', () => {
     expect(newStack?.children).toHaveLength(2);
     expect((newStack?.children as GenericWidget[])[0]?.type).toBe('tile');
     expect(result.root.children).toHaveLength(1);
+  });
+
+  it('uses reparent patches for same-parent before and after moves', () => {
+    const root: GenericWidget = {
+      type: 'column',
+      children: [
+        { type: 'text', text: 'A' },
+        { type: 'text', text: 'B' },
+        { type: 'text', text: 'C' },
+      ],
+    };
+
+    const movedBefore = applyWidgetPatch(root, {
+      type: 'reparent-widget',
+      fromPath: appendChildrenPath(ROOT_WIDGET_PATH, 2),
+      toParentPath: ROOT_WIDGET_PATH,
+      insertIndex: 0,
+    });
+
+    expect((movedBefore.root.children as GenericWidget[]).map((child) => child.text)).toEqual([
+      'C',
+      'A',
+      'B',
+    ]);
+
+    const movedAfter = applyWidgetPatch(root, {
+      type: 'reparent-widget',
+      fromPath: appendChildrenPath(ROOT_WIDGET_PATH, 0),
+      toParentPath: ROOT_WIDGET_PATH,
+      insertIndex: 3,
+    });
+
+    expect((movedAfter.root.children as GenericWidget[]).map((child) => child.text)).toEqual([
+      'B',
+      'C',
+      'A',
+    ]);
+  });
+
+  it('adjusts reparent target parent paths after removing an earlier sibling', () => {
+    const root: GenericWidget = {
+      type: 'column',
+      children: [
+        { type: 'text', text: 'Title' },
+        {
+          type: 'row',
+          children: [
+            { type: 'text', text: 'Left' },
+            { type: 'text', text: 'Right' },
+          ],
+        },
+      ],
+    };
+
+    const result = applyWidgetPatch(root, {
+      type: 'reparent-widget',
+      fromPath: appendChildrenPath(ROOT_WIDGET_PATH, 0),
+      toParentPath: appendChildrenPath(ROOT_WIDGET_PATH, 1),
+      insertIndex: 1,
+    });
+
+    expect(result.changed).toBe(true);
+    expect(result.root.children).toHaveLength(1);
+    expect(
+      (
+        getWidgetAtPath(result.root, appendChildrenPath(ROOT_WIDGET_PATH, 0))?.children as
+          | GenericWidget[]
+          | undefined
+      )?.map((child) => child.text),
+    ).toEqual(['Left', 'Title', 'Right']);
+  });
+
+  it('reparents a single-child wrapper slot into an array container', () => {
+    const root: GenericWidget = {
+      type: 'column',
+      children: [
+        {
+          type: 'padding',
+          child: { type: 'text', text: 'Wrapped' },
+        },
+        {
+          type: 'row',
+          children: [],
+        },
+      ],
+    };
+
+    const result = applyWidgetPatch(root, {
+      type: 'reparent-widget',
+      fromPath: appendBoxChildPath(appendChildrenPath(ROOT_WIDGET_PATH, 0)),
+      toParentPath: appendChildrenPath(ROOT_WIDGET_PATH, 1),
+      insertIndex: 0,
+    });
+
+    expect(result.changed).toBe(true);
+    expect(
+      getWidgetAtPath(result.root, appendBoxChildPath(appendChildrenPath(ROOT_WIDGET_PATH, 0))),
+    ).toBeNull();
+    expect(
+      getWidgetAtPath(result.root, appendChildrenPath(appendChildrenPath(ROOT_WIDGET_PATH, 1), 0)),
+    ).toEqual({ type: 'text', text: 'Wrapped' });
   });
 
   it('applies replace-widget patches for demo types', () => {

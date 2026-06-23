@@ -4,6 +4,20 @@
  */
 export type WidgetJsonSchema = Record<string, unknown>;
 
+export const WIDGET_HOST_TAGS = [
+  'article',
+  'aside',
+  'div',
+  'footer',
+  'header',
+  'main',
+  'nav',
+  'section',
+  'span',
+] as const;
+
+export type WidgetHostTag = (typeof WIDGET_HOST_TAGS)[number];
+
 export type WidgetInspectorField =
   | {
       kind: 'text' | 'color';
@@ -40,6 +54,23 @@ export interface WidgetTypeShape {
   readonly type: string;
 }
 
+export interface WidgetMeasureConstraints {
+  readonly minWidth: number;
+  readonly maxWidth: number;
+  readonly minHeight: number;
+  readonly maxHeight: number;
+}
+
+export interface WidgetMeasureResult {
+  readonly width?: number | undefined;
+  readonly height?: number | undefined;
+}
+
+export type WidgetMeasureFunction = (
+  widget: WidgetTypeShape,
+  constraints: WidgetMeasureConstraints,
+) => WidgetMeasureResult | null | undefined;
+
 export interface WidgetTypeDefinition<
   W extends WidgetTypeShape = WidgetTypeShape,
   TBuild = unknown,
@@ -50,6 +81,12 @@ export interface WidgetTypeDefinition<
   readonly schema?: WidgetJsonSchema;
   readonly inspector?: readonly WidgetInspectorSection[];
   readonly capabilities?: readonly string[];
+  readonly hostTag?: WidgetHostTag;
+  readonly measure?: WidgetMeasureFunction;
+}
+
+export function isWidgetHostTag(value: unknown): value is WidgetHostTag {
+  return typeof value === 'string' && WIDGET_HOST_TAGS.includes(value as WidgetHostTag);
 }
 
 export interface WidgetRegistryContract<TBuild = unknown> {

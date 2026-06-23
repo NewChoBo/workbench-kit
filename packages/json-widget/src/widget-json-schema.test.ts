@@ -36,9 +36,50 @@ describe('createWidgetJsonSchema', () => {
 
   it('allows JDW documents to declare their schema URI', () => {
     const schema = createJdwDocumentJsonSchema() as {
-      properties?: Record<string, unknown>;
+      definitions?: {
+        CustomJdwNode?: { properties?: Record<string, unknown> };
+      };
     };
 
-    expect(schema.properties?.$schema).toEqual({ type: 'string', minLength: 1 });
+    expect(schema.definitions?.CustomJdwNode?.properties?.$schema).toEqual({
+      type: 'string',
+      minLength: 1,
+    });
+  });
+
+  it('describes recursive JDW node definitions for static authoring', () => {
+    const schema = createJdwDocumentJsonSchema() as {
+      definitions?: {
+        JdwNode?: { oneOf?: unknown[] };
+        JdwDynamicValue?: unknown;
+        TextJdwNode?: {
+          properties?: { args?: { properties?: { fontSize?: unknown } } };
+        };
+        FlexibleJdwNode?: {
+          properties?: { args?: { properties?: { fit?: unknown } } };
+        };
+        StackJdwNode?: unknown;
+        ImageJdwNode?: unknown;
+        ButtonJdwNode?: unknown;
+      };
+    };
+
+    expect(schema.definitions?.JdwNode?.oneOf?.length).toBeGreaterThanOrEqual(16);
+    expect(schema.definitions?.JdwDynamicValue).toMatchObject({
+      type: 'string',
+      pattern: '^\\$\\{[A-Za-z0-9_.-]+\\}$',
+    });
+    expect(schema.definitions?.StackJdwNode).toBeDefined();
+    expect(schema.definitions?.ImageJdwNode).toBeDefined();
+    expect(schema.definitions?.ButtonJdwNode).toBeDefined();
+    expect(schema.definitions?.TextJdwNode?.properties?.args?.properties?.fontSize).toEqual({
+      oneOf: [{ type: 'number', minimum: 1 }, { $ref: '#/definitions/JdwDynamicValue' }],
+    });
+    expect(schema.definitions?.FlexibleJdwNode?.properties?.args?.properties?.fit).toEqual({
+      oneOf: [
+        { type: 'string', enum: ['tight', 'loose'] },
+        { $ref: '#/definitions/JdwDynamicValue' },
+      ],
+    });
   });
 });

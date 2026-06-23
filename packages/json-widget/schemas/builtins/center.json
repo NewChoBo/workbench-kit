@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://workbench-kit.dev/schemas/builtins/expanded.json",
-  "title": "ExpandedWidget",
+  "$id": "https://workbench-kit.dev/schemas/builtins/center.json",
+  "title": "CenterWidget",
   "type": "object",
   "required": ["type", "args"],
   "properties": {
-    "type": { "const": "expanded" },
+    "type": { "const": "center" },
     "id": { "type": "string" },
     "listen": {
       "type": "array",
@@ -13,14 +13,7 @@
     },
     "args": {
       "type": "object",
-      "required": ["child"],
       "properties": {
-        "flex": {
-          "oneOf": [
-            { "type": "number", "minimum": 0 },
-            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
-          ]
-        },
         "child": { "$ref": "../jdw-node.jdw.schema.json" }
       },
       "additionalProperties": true

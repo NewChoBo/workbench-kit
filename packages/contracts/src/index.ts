@@ -243,10 +243,15 @@ export type {
   WidgetInspectorField,
   WidgetInspectorSection,
   WidgetJsonSchema,
+  WidgetHostTag,
+  WidgetMeasureConstraints,
+  WidgetMeasureFunction,
+  WidgetMeasureResult,
   WidgetRegistryContract,
   WidgetTypeDefinition,
   WidgetTypeShape,
 } from './widget-registry-contract';
+export { WIDGET_HOST_TAGS, isWidgetHostTag } from './widget-registry-contract';
 export type {
   WidgetAssetCatalogContract,
   WidgetPlacementAsset,

@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://workbench-kit.dev/schemas/builtins/expanded.json",
-  "title": "ExpandedWidget",
+  "$id": "https://workbench-kit.dev/schemas/builtins/icon.json",
+  "title": "IconWidget",
   "type": "object",
   "required": ["type", "args"],
   "properties": {
-    "type": { "const": "expanded" },
+    "type": { "const": "icon" },
     "id": { "type": "string" },
     "listen": {
       "type": "array",
@@ -13,15 +13,16 @@
     },
     "args": {
       "type": "object",
-      "required": ["child"],
+      "required": ["name"],
       "properties": {
-        "flex": {
+        "name": { "type": "string", "minLength": 1 },
+        "color": { "type": "string" },
+        "size": {
           "oneOf": [
-            { "type": "number", "minimum": 0 },
+            { "type": "number", "minimum": 1 },
             { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
           ]
-        },
-        "child": { "$ref": "../jdw-node.jdw.schema.json" }
+        }
       },
       "additionalProperties": true
     }
