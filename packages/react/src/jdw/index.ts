@@ -26,7 +26,6 @@ export {
   type CssRenderBackendOptions,
 } from './cssRenderBackend.js';
 export { BUILTIN_JDW_REGISTRY, createBuiltinJdwRegistry } from './createBuiltinJdwRegistry.js';
-export { renderBuiltinWidgetNode } from './builtins/renderBuiltinWidgetNode.js';
 export {
   formatJdwSampleScreenJson,
   formatJdwSampleScreenSpec,

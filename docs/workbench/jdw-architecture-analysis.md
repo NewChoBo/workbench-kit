@@ -55,7 +55,7 @@ flowchart TB
     CSS["renderJdwWithLayout"]
     TREE["renderCssLayoutTree"]
     REG["WidgetRegistryContract.build()"]
-    BUILTIN["renderBuiltinWidgetNode / Leaf"]
+    BUILTIN["renderBuiltinWidgetLeaf"]
     PREVIEW["JdwPreview"]
   end
 
@@ -91,7 +91,7 @@ flowchart TB
 | Render entry | `renderJdw`, `JdwPreview`                                   | `@workbench-kit/react/jdw` | Parse + optional registry                                             |
 | CSS backend  | `renderJdwWithLayout`, `renderCssLayoutTree`                | `@workbench-kit/react/jdw` | Layout rects → absolute CSS                                           |
 | Registry     | `createBuiltinJdwRegistry`, `BUILTIN_JDW_REGISTRY`          | `@workbench-kit/react/jdw` | `type` → `build()` for leaves                                         |
-| Builtins     | `renderBuiltinWidgetNode`, `renderBuiltinWidgetLeaf`        | `@workbench-kit/react/jdw` | Leaf-only registry fallback; container layout stays in `layoutWidget` |
+| Builtins     | `renderBuiltinWidgetLeaf`                                   | `@workbench-kit/react/jdw` | Leaf-only registry fallback; container layout stays in `layoutWidget` |
 
 ---
 
@@ -161,7 +161,7 @@ export function renderJdwWithLayout(
 
 - Builtin registry `build()` functions are kept leaf-only (`text`, `image`, `icon`, `button`, etc.).
 - Container nodes (`row`, `column`, `grid`, `stack`, wrappers) are always positioned from the headless layout result tree.
-- The legacy `renderBuiltinWidgetNode` export remains as a leaf-only compatibility hook; it no longer performs recursive flex/grid container layout.
+- The legacy `renderBuiltinWidgetNode` compatibility export has been removed; builtin definitions call `renderBuiltinWidgetLeaf` directly.
 
 ### Design implication
 
@@ -254,7 +254,7 @@ Example registry extension (conceptual):
 {
   type: 'section',
   hostTag: 'section',
-  build: (w) => renderBuiltinWidgetNode(w),
+  build: (w) => renderBuiltinWidgetLeaf(w),
   schema: { /* ... */ },
 }
 ```
@@ -268,7 +268,7 @@ Aligns with existing `WidgetRegistryContract` in
 
 ### Risks
 
-- Consolidating dual render paths incorrectly could break Storybook fixtures.
+- Extending custom container types without matching layout support could break preview geometry.
 - Custom tags increase XSS surface if allowlist is weak.
 - Lane A workbench integration may conflict with parallel Lane B editor changes.
 
@@ -290,7 +290,7 @@ Aligns with existing `WidgetRegistryContract` in
 
 From `completion-plan.md` Lane B:
 
-1. **Unify render mode** — implemented for preview: layout-backend is the primary container path; `renderBuiltinWidgetNode` is leaf-only compatibility.
+1. **Unify render mode** — implemented for preview: layout-backend is the primary container path; `renderBuiltinWidgetNode` compatibility export has been removed.
 2. **Complete static layout parity** — implemented for row/column alignment, stack, wrappers, flexible fit, and registry-driven static leaf measurement; dynamic text wrapping remains future work.
 3. **Register `stack` and static builtins** — implemented in profile/schema/registry/validator.
 4. **Introduce `renderJsonWidget`** (or rename `renderJdw`) as documented recursive builder matching Flutter `data.build()`; still future work if a recursive non-layout path is needed.

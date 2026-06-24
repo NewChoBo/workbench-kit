@@ -6,7 +6,7 @@ import type {
 } from '@workbench-kit/contracts';
 import { createWidgetRegistry, type GenericWidget } from '@workbench-kit/jdw';
 
-import { renderBuiltinWidgetNode } from './builtins/renderBuiltinWidgetNode.js';
+import { renderBuiltinWidgetLeaf } from './builtins/renderBuiltinWidgetLeaf.js';
 
 const LAYOUT_INSPECTOR = [
   {
@@ -66,7 +66,7 @@ const BUTTON_VARIANT_OPTIONS = [
 ] as const;
 
 function build(widget: WidgetTypeShape) {
-  return renderBuiltinWidgetNode(widget as GenericWidget);
+  return renderBuiltinWidgetLeaf(widget as GenericWidget);
 }
 
 function readNumber(value: unknown): number | undefined {

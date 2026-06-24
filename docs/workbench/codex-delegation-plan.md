@@ -10,7 +10,7 @@
 
 - **미션:** Lane A 마감을 Codex에 위임. 브랜치 `feature/theia-strengths-workbench` 유지. 각 패키지 완료 시 `pnpm validate` 통과 후 Conventional Commit (영문).
 - **현재 기준선:** WB-23~WB-28(S1–S3, S8.5~S8.6) 완료. Lane A **~80%**. 최근 커밋: `ec5b6e8`, `54602b9`, `9191bb9`, `0c2c068`, `111aa0c`.
-- **Codex 작업 패키지 5개:** P0 **S8.6**(완료) → P0 **WB-29**(command explorer) → P1 **WB-30**(preference scopes) → P2 **Track D D2**(dual render) → **B-UX**(연기, 포인터만).
+- **Codex 작업 패키지 5개:** P0 **S8.6**(완료) → P0 **WB-29**(command explorer) → P1 **WB-30**(preference scopes) → P2 **Track D D2**(완료) → **B-UX**(연기, 포인터만).
 - **첫 권장 작업:** **Package 2 — WB-29** (`WorkspaceExplorer`를 command-backed virtual workspace tree로 연결).
 - **필수 제약:** `workbench-core` React-free, `react`가 `workbench-core` 미import, JDW canonical, subtree 분리 금지, Strategy A 렌더, UI 영문.
 
@@ -355,9 +355,12 @@ feat(workbench): add preference scope merge for default/workspace/local (WB-30)
 
 ### Package 4: Track D D2 — Dual Render Unify (P2)
 
+**Status:** Done (2026-06-24). Builtin registry builders are leaf-only through
+`renderBuiltinWidgetLeaf`; public compatibility wrapper export was removed.
+
 #### Goal
 
-Unify JDW preview on **Strategy A** only: `layoutWidget` + `cssRenderBackend`; builtin registry handles **leaf** custom tags only — not container flex/grid via `renderBuiltinWidgetNode`.
+Unify JDW preview on **Strategy A** only: `layoutWidget` + `cssRenderBackend`; builtin registry handles **leaf** custom tags only.
 
 #### Timing
 
@@ -369,7 +372,7 @@ After S8.6 **or** parallel if no preview regressions. Ties to Lane B B1; does no
 | ------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | `packages/react/src/jdw/cssRenderBackend.tsx`                 | Primary render path                                                      |
 | `packages/react/src/jdw/createBuiltinJdwRegistry.ts`          | Leaf-only registry `build()`                                             |
-| `packages/react/src/jdw/builtins/renderBuiltinWidgetNode.tsx` | Remove or restrict container recursion                                   |
+| `packages/react/src/jdw/builtins/renderBuiltinWidgetLeaf.tsx` | Keep leaf-only builtin fallback                                          |
 | `packages/react/src/jdw/builtins/renderBuiltinWidgetLeaf.tsx` | Keep for unknown leaves                                                  |
 | `packages/react/src/jdw/renderJdw.tsx`                        | Optional validation gating                                               |
 | Tests                                                         | `cssRenderBackend.test.tsx`, `renderJdw.test.tsx`, `JdwPreview.test.tsx` |
@@ -377,9 +380,9 @@ After S8.6 **or** parallel if no preview regressions. Ties to Lane B B1; does no
 
 #### Acceptance criteria
 
-- [ ] Container nodes render via layout rects only (Strategy A).
-- [ ] Existing JDW fixture stories render without layout regression.
-- [ ] `pnpm validate` passes.
+- [x] Container nodes render via layout rects only (Strategy A).
+- [x] Existing JDW fixture stories render without layout regression.
+- [ ] `pnpm validate` passes for the current post-cleanup slice.
 
 #### Validate command
 
@@ -504,11 +507,11 @@ Package 2 (WB-29) → Package 3 (WB-30) → WB-31 → Lane A DoD
 
 ### Parallel options
 
-| Track              | Can run parallel with      | Notes                         |
-| ------------------ | -------------------------- | ----------------------------- |
-| D0–D1 inventory    | S8.6 prep                  | Docs + dead-path cleanup only |
-| D2 dual render     | After S8.6 or during WB-30 | Run JDW vitest after changes  |
-| Lane B B1 headless | WB-29                      | No canvas UI                  |
+| Track              | Can run parallel with | Notes                         |
+| ------------------ | --------------------- | ----------------------------- |
+| D0–D1 inventory    | S8.6 prep             | Docs + dead-path cleanup only |
+| D2 dual render     | Done 2026-06-24       | Run JDW vitest after changes  |
+| Lane B B1 headless | WB-29                 | No canvas UI                  |
 
 **Do not parallel:** WB-29 before S8.6 (user priority); B-UX before WB-29.
 

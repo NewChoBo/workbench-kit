@@ -9,10 +9,10 @@
 ## 요약
 
 - **레이어 구조는 대체로 명확함:** `base → platform → contracts → jdw → workbench-core → shell-react → react` 순으로 의존하며, `scripts/check-workbench-dependency-graph.mjs`가 금지 엣지를 CI에서 검증함.
-- **가장 큰 구조적 리스크는 JDW 이중 렌더:** `cssRenderBackend`(headless rect → absolute CSS)와 `renderBuiltinWidgetNode`(flex/grid 재귀)가 동일 트리에서 혼재할 수 있음. Track D D2 / Lane B B1에서 통합 필요.
+- **JDW 이중 렌더 리스크는 2026-06-24 정리됨:** builtin registry는 `renderBuiltinWidgetLeaf`만 직접 사용하고, public `renderBuiltinWidgetNode` compatibility export는 제거됨. Preview container geometry는 `cssRenderBackend` + headless `layoutWidget`가 단일 소스.
 - **이중 문서 모델:** 위젯 영속화는 JDW v7 단일 SSoT. `WorkbenchDocument`(절대 좌표 캔버스)는 `WorkbenchCanvasShell` 데모 전용이며 위젯 파일과 혼용 금지; **장기 목표는 JDW render + event layer로 통합 후 demo 경로 제거**(Lane A DoD / B2 mapping 이후).
 - **Lane A 갭:** WB-29 closeout landed (reveal/focus bridge + editor↔tree sync tests); next is WB-30 preference scopes.
-- **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합 → P2 `renderJdw` validation 무시 → Lane A DoD 후 legacy shim 제거. `./jdw/config` export alias는 2026-06-20 제거됨.
+- **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합은 완료. 다음은 preview/editor 검증면 강화와 Lane A DoD 후 legacy shim 제거. `./jdw/config` export alias는 2026-06-20 제거됨.
 - **패키지 분리 제외:** React JDW는 `packages/react/src/jdw`에 유지. headless는 `@workbench-kit/jdw` (`packages/json-widget/`).
 
 ---
@@ -148,7 +148,6 @@ flowchart LR
   TREE["LayoutNodeResult rect tree"]
   CSS["renderCssLayoutTree"]
   LEAF["registry.build() or renderBuiltinWidgetLeaf"]
-  ALT["renderBuiltinWidgetNode<br/>(flex/grid — alt path)"]
   DOM["React DOM (absolute CSS)"]
 
   JSON --> PARSE
@@ -158,34 +157,36 @@ flowchart LR
   LAYOUT --> TREE
   TREE --> CSS
   CSS --> LEAF
-  LEAF -.->|registry container types| ALT
   LEAF --> DOM
-  ALT -.-> DOM
 ```
 
 **Primary path (Strategy A):** `renderJdwWithLayout` → headless `layoutWidget` →
 `renderCssLayoutTree` with absolute child positioning.
 
-**Alternate path (Strategy B):** `BUILTIN_JDW_REGISTRY` registers `row`/`column`/`grid`
-with `build()` → `renderBuiltinWidgetNode` (native flex/grid, not layout rects).
+**Strategy B removed:** `BUILTIN_JDW_REGISTRY` now points builders directly at
+`renderBuiltinWidgetLeaf`; container types return `null` from the builder and are
+rendered by the layout backend.
 
 Evidence:
 
 - `packages/react/src/jdw/cssRenderBackend.tsx` — layout containers render empty shells + absolutely positioned children; leaves call registry or `renderBuiltinWidgetLeaf`.
-- `packages/react/src/jdw/createBuiltinJdwRegistry.ts` — all container types use `renderBuiltinWidgetNode` as `build()`.
-- When a custom registry overrides builtins, container nodes can take Strategy B inside a Strategy A tree.
+- `packages/react/src/jdw/createBuiltinJdwRegistry.ts` — all builtin definitions share a leaf-only builder.
+- `packages/react/src/jdw/index.ts` — no public `renderBuiltinWidgetNode` export remains.
 
-### 3.3 Finding: dual render paths (P1)
+### 3.3 Finding: dual render paths (resolved)
 
-| Aspect        | `cssRenderBackend`            | `renderBuiltinWidgetNode`         |
-| ------------- | ----------------------------- | --------------------------------- |
-| Layout source | Headless `layoutWidget` rects | CSS flex/grid recursion           |
-| Containers    | Absolute positioned shells    | `display: flex` / `display: grid` |
-| Used by       | `JdwPreview`, `renderJdw`     | `BUILTIN_JDW_REGISTRY.build()`    |
+| Aspect        | Current state                                            |
+| ------------- | -------------------------------------------------------- |
+| Layout source | Headless `layoutWidget` rects                            |
+| Containers    | Absolute positioned shells from `cssRenderBackend`       |
+| Leaves        | `registry.build()` or `renderBuiltinWidgetLeaf` fallback |
+| Public API    | `renderBuiltinWidgetNode` compatibility export removed   |
 
-**Risk:** Inconsistent preview for the same JSON when registry handles containers vs layout backend.
+**Result:** Builtin container nodes no longer have a second flex/grid render path.
 
-**Recommendation:** Track D D2 — unify on Strategy A; registry handles leaf custom tags only. Tie to Lane B B1.
+**Remaining risk:** Host-provided custom registry entries can still render custom
+leaf components; container-like custom types must be treated as explicit
+extensions with matching layout support before being considered first-class.
 
 ---
 
@@ -328,13 +329,13 @@ JSON configuration lives under `./json-config`.
 
 ### 8.1 In-repo consolidation priorities
 
-| Priority | Item                          | Action                                             | Track / lane          |
-| -------- | ----------------------------- | -------------------------------------------------- | --------------------- |
-| **P1**   | Dual render unify             | Strategy A only; registry = leaves                 | Track D D2, Lane B B1 |
-| **P2**   | Validation gating             | Surface `validateJsonWidgetData` issues in preview | Track D D1            |
-| **P3**   | `JsonWorkbenchDocument` alias | Remove or document-only                            | Track D D1            |
-| **P3**   | Capability static seed        | Migrate to `registerProvider` where possible       | Track D D3            |
-| **P3**   | Resource URI docs             | Enforce `WorkspaceResourceUri` in explorer/editor  | Lane A WB-28/29       |
+| Priority | Item                          | Action                                             | Track / lane    |
+| -------- | ----------------------------- | -------------------------------------------------- | --------------- |
+| **Done** | Dual render unify             | Strategy A only; registry = leaves                 | Track D D2      |
+| **P2**   | Validation gating             | Surface `validateJsonWidgetData` issues in preview | Track D D1      |
+| **P3**   | `JsonWorkbenchDocument` alias | Remove or document-only                            | Track D D1      |
+| **P3**   | Capability static seed        | Migrate to `registerProvider` where possible       | Track D D3      |
+| **P3**   | Resource URI docs             | Enforce `WorkspaceResourceUri` in explorer/editor  | Lane A WB-28/29 |
 
 ### 8.2 Keep as-is
 
@@ -350,7 +351,7 @@ JSON configuration lives under `./json-config`.
 | When             | Refactor                                                   |
 | ---------------- | ---------------------------------------------------------- |
 | S7–S8 (parallel) | D0 inventory, D1 dead paths (validation/type aliases)      |
-| After Lane B B1  | D2 dual render unify                                       |
+| Done 2026-06-24  | D2 dual render unify                                       |
 | WB-29 closeout   | Explorer selection/reveal/search smoke coverage            |
 | After Lane A DoD | D3 legacy shims (static capabilities, URI doc enforcement) |
 | Lane C           | `WorkbenchDocument` adapter before any persistence merge   |
@@ -361,7 +362,7 @@ JSON configuration lives under `./json-config`.
 
 | ID     | Area          | Issue                                       | Recommendation                                   | Phase        |
 | ------ | ------------- | ------------------------------------------- | ------------------------------------------------ | ------------ |
-| STR-01 | JDW render    | Dual paths: layout backend vs flex registry | Unify Strategy A; leaves-only registry (D2)      | Post-B1      |
+| STR-01 | JDW render    | Dual paths: layout backend vs flex registry | Done: Strategy A; leaves-only registry           | Done         |
 | STR-02 | JDW model     | `WorkbenchDocument` vs JDW drift            | JDW SSoT for widgets; demo adapter only (Lane C) | Deferred     |
 | STR-03 | React exports | `./jdw/config` → `json-config` mismatch     | Done: remove alias; use `./json-config`          | Done         |
 | STR-04 | JDW quality   | `renderJdw` ignores validation              | Gate or warn in `JdwPreview` (D1)                | S7–S8        |

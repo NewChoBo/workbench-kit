@@ -293,9 +293,9 @@ pnpm validate:full
 
 ### Open — Track D (cleanup & compatibility removal)
 
-| Item                                                                                | Priority | Doc / timing                                                                                          |
-| ----------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
-| Track D: dual JDW render unify, validation gating, legacy shim removal — see phases | P1–P8    | [session-work-plan.md](./session-work-plan.md) Track D; D1 parallel, D2 after B1, D3 after Lane A DoD |
+| Item                                                         | Priority | Doc / timing                                                                                    |
+| ------------------------------------------------------------ | -------- | ----------------------------------------------------------------------------------------------- |
+| Track D: validation gating, legacy shim removal — see phases | P2–P8    | [session-work-plan.md](./session-work-plan.md) Track D; D2 done 2026-06-24, D3 after Lane A DoD |
 
 ### Doc hygiene watchlist
 

@@ -34,11 +34,11 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
   2. **S11 / WB-31** — registry / transaction journal read-only devtools.
   3. **S12** — Lane A DoD + `pnpm validate:full`.
 - **B-UX:** WB-29 완료로 **B-UX1 시작 가능** (사용자 결정 시). Lane A 마일스톤(WB-30/31) 우선.
-- **Track D:** D0–D1은 S9와 **병렬** 가능. D2는 Lane B B1 이후. D3는 Lane A DoD 이후.
+- **Track D:** D0–D1은 S9와 **병렬** 가능. D2 이중 렌더 통합은 2026-06-24 완료. D3는 Lane A DoD 이후.
 - **병렬 트랙 B:** Lane B(JDW/widget-tree) B1~B2는 **헤드리스 우선**으로 병렬 가능. 캔버스/에디터 크롬 확장(B3~B4)은 WB-29 closeout 이후 별도 우선순위로 검토.
 - **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). **B-UX 전체는 WB-29 closeout 이후** 시작; 프리뷰 hit-test(B-UX4)는 B2 이후, 캔버스(B-UX5)는 B3 이후.
 - **보류 트랙 C:** WB-15 dirty guard, WB-20/22 리소스 드래프트, consumer swap, i18n/테마, preview zoom/pan — Lane A DoD 이후.
-- **정리 트랙 D (in-repo only):** D0–D1(인벤토리·dead WIP)은 병렬 진행. D2(이중 렌더 통합)는 Track B B1 이후. D3(legacy shim 제거)는 Lane A DoD 이후. 우선순위: P1 이중 렌더 → P2 validation 무시. **패키지 분리·git subtree는 범위 밖.**
+- **정리 트랙 D (in-repo only):** D0–D1(인벤토리·dead WIP)은 병렬 진행. D2(이중 렌더 통합)는 완료. D3(legacy shim 제거)는 Lane A DoD 이후. 다음 우선순위는 preview/editor 검증면 강화와 문서 truth 유지. **패키지 분리·git subtree는 범위 밖.**
 - **React JDW 위치:** `packages/react/src/jdw` 유지. headless는 `@workbench-kit/jdw`. 별도 `jdw-react` 패키지·git subtree **계획 제외(out of scope)**.
 - **React JDW-like:** 범용 오픈소스 React JDW 라이브러리 없음. repo는 headless + `react/jdw` + widget-tree/json-config/jdw-editor **레이어 분리**. 실질 중복은 이중 렌더 전략과 WorkbenchDocument vs JDW 이중 모델.
 - **핵심 의존:** WB-28 S3는 WB-27 트랜잭션 API를 소비 완료. WB-29는 이미 `WorkspaceResourceUri`/editor open path를 사용하며, 남은 일은 selection/reveal/search closeout. WB-15 미정으로 에디터 dirty는 **로컬 상태**만.
@@ -110,12 +110,12 @@ From [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). Improves `WidgetTreeLab` 
 
 ### Track D — timing (refreshed)
 
-| Phase | When to start                          | Notes                                       |
-| ----- | -------------------------------------- | ------------------------------------------- |
-| D0–D1 | **Now** — parallel with WB-29 closeout | Inventory + dead WIP; no Lane A block       |
-| D2    | After Track B **B1**                   | Dual render unify; ties to preview strategy |
-| D3    | After **Lane A DoD**                   | Legacy shim removal                         |
-| D4    | Continuous                             | Doc truth; close with S12                   |
+| Phase | When to start                          | Notes                                     |
+| ----- | -------------------------------------- | ----------------------------------------- |
+| D0–D1 | **Now** — parallel with WB-29 closeout | Inventory + dead WIP; no Lane A block     |
+| D2    | Done 2026-06-24                        | Dual render unified on Strategy A preview |
+| D3    | After **Lane A DoD**                   | Legacy shim removal                       |
+| D4    | Continuous                             | Doc truth; close with S12                 |
 
 ### Track C — Deferred (explicitly parked)
 
@@ -132,13 +132,13 @@ From [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). Improves `WidgetTreeLab` 
 
 **Out of scope:** git subtree extraction, separate `@workbench-kit/jdw-react` package split. React JDW stays under `packages/react/src/jdw`.
 
-Inventory and low-risk cleanup can run **parallel to S7–S8** (D0–D1). Render unification follows Lane B B1; legacy shim removal waits for Lane A DoD.
+Inventory and low-risk cleanup can run **parallel to S7–S8** (D0–D1). Builtin render unification is complete; legacy shim removal waits for Lane A DoD.
 
 | Phase | Scope                                                                                         | Priority | Timing                        | Blocks on Lane A? |
 | ----- | --------------------------------------------------------------------------------------------- | -------- | ----------------------------- | ----------------- |
 | D0    | Inventory: React JDW surface, headless `@workbench-kit/jdw`, dual render, dual document model | Parallel | **S7–S8** (any session)       | No                |
 | D1    | Remove dead WIP / misleading paths (`JsonWorkbenchDocument` shim, validation shim, etc.)      | Parallel | Any cleanup pass              | No                |
-| D2    | Unify dual render paths (`cssRenderBackend` vs `renderBuiltinWidgetNode`)                     | P1       | **After Track B B1**          | No (Lane B tie)   |
+| D2    | Unify dual render paths (`cssRenderBackend` + leaf-only builtin registry)                     | Done     | **Done 2026-06-24**           | No                |
 | D3    | Drop legacy compat shims (static capability seed, URI models, editor scaffold trim)           | P6–P8    | **After Lane A DoD**          | Yes               |
 | D4    | Doc truth: cleanup register, render-mode decision, stale README footers                       | —        | Continuous; closeout with S12 | Partial           |
 
@@ -149,7 +149,7 @@ Inventory and low-risk cleanup can run **parallel to S7–S8** (D0–D1). Render
 | React JDW surface  | `packages/react/src/jdw/` (17 files); exports `./jdw`, `./jdw/preview`, etc. |
 | Headless JDW       | `packages/json-widget/` → `@workbench-kit/jdw`                               |
 | Screen-spec editor | `packages/jdw-editor/` → `@workbench-kit/jdw-editor`                         |
-| Dual render        | `cssRenderBackend.tsx` vs `builtins/renderBuiltinWidgetNode.tsx`             |
+| Render strategy    | `cssRenderBackend.tsx` + `builtins/renderBuiltinWidgetLeaf.tsx`              |
 | Dual document      | `WorkbenchDocument` vs JDW (`WorkbenchCanvasShell`)                          |
 | Removed export     | `@workbench-kit/react/json-widget` (2026-06-14; do not reintroduce)          |
 
@@ -158,9 +158,9 @@ Inventory and low-risk cleanup can run **parallel to S7–S8** (D0–D1). Render
 - `JsonWorkbenchDocument` type alias in `workbench/schema/index.ts`
 - `renderJdw` calls `validateJsonWidgetData` but ignores issues (`renderJdw.tsx`)
 
-**D2 goal (ties to Lane B B1)**
+**D2 result (completed 2026-06-24)**
 
-Single preview strategy: `JdwPreview` + `BUILTIN_JDW_REGISTRY` should not mix registry `build()` → `renderBuiltinWidgetNode` (flex/grid) with `renderJdwWithLayout` (absolute rect). Files: `cssRenderBackend.tsx`, `createBuiltinJdwRegistry.ts`, `renderBuiltinWidgetNode.tsx`, `renderBuiltinWidgetLeaf.tsx`. Validate: `cssRenderBackend.test.tsx`, `renderJdw.test.tsx`, `JdwPreview.test.tsx`, Storybook `JDW/*`.
+Single preview strategy: `JdwPreview` + `renderJdwWithLayout` own container geometry through `layoutWidget`; `BUILTIN_JDW_REGISTRY` uses `renderBuiltinWidgetLeaf` directly and no longer exposes the compatibility wrapper. Validate: `cssRenderBackend.test.tsx`, `renderJdw.test.tsx`, `JdwPreview.test.tsx`, Storybook `JDW/*`.
 
 **D3 candidates (post–Lane A DoD)**
 
@@ -179,7 +179,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | Surface                | Location                            | Role                                   | JDW headless |       Preview render        | widget-tree edit | Relationship                                       |
 | ---------------------- | ----------------------------------- | -------------------------------------- | :----------: | :-------------------------: | :--------------: | -------------------------------------------------- |
 | `@workbench-kit/jdw`   | `packages/json-widget/`             | parse/layout/patch/screen-spec         |      ●       |              —              |     tree ops     | SSoT (headless)                                    |
-| `react/jdw`            | `packages/react/src/jdw/`           | `JdwPreview`, `renderJdw`, CSS backend |      ●       |              ●              |        —         | **Render layer**; dual render paths internal       |
+| `react/jdw`            | `packages/react/src/jdw/`           | `JdwPreview`, `renderJdw`, CSS backend |      ●       |              ●              |        —         | **Render layer**; Strategy A container path        |
 | `widget-tree`          | `packages/react/src/widget-tree/`   | tree/inspector/Monaco lab              |      ●       |      via `JdwPreview`       |        ●         | **Consumer** of jdw (not duplicate)                |
 | `json-config`          | `packages/react/src/json-config/`   | generic JSON workbench                 |  parse only  |    `JdwPreview` optional    |        —         | Lightweight alt to widget-tree for non-widget JSON |
 | `jdw-editor`           | `packages/jdw-editor/`              | screen-spec → JDW compile UI           |      ●       |     `react/jdw/preview`     | screen-spec tree | Separate screen-spec layer                         |
@@ -189,7 +189,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 **Consolidation direction**
 
-- Preview: unify on Strategy A (`renderJdwWithLayout`); registry handles leaf custom tags only.
+- Preview: Strategy A (`renderJdwWithLayout`) is landed; registry handles leaf custom tags only.
 - Editing: keep `WidgetTreeLab`; `JsonConfigWorkbench` for non-widget JSON.
 - `WorkbenchDocument`: ultimate target is JDW render + event layer; deprecate absolute demo path after Lane A DoD / B2 mapping — do not persist widget files.
 
@@ -291,7 +291,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | B-UX2    | UX-2 outline DnD + keyboard                | M      | After B-UX1 recommended             |
 | B-UX3    | UX-3 inspector + asset UX                  | M      | Parallel to B-S1                    |
 | D-S1     | D0 inventory + D1 dead-path cleanup        | S–M    | Parallel to S9; no Lane A block     |
-| D-S2     | D2 dual render unify (with B1)             | M      | After Track B B1                    |
+| D-S2     | D2 dual render unify                       | Done   | Completed 2026-06-24                |
 | **S8.5** | Sample explorer chrome + editor view modes | S      | **Done** (`0c2c068`)                |
 | **S8.6** | Editor Preview + Split in `EditorArea`     | S      | **Done** (`767900c`)                |
 
@@ -365,7 +365,8 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | 2026-06-16 | **Editor-local dirty** for WB-28                   | Unblocks S2/S3 without WB-15 policy                                                                                                                                                                                     |
 | 2026-06-16 | **No subtree / no jdw-react split**                | Git subtree and separate `@workbench-kit/jdw-react` package **excluded** from active plan; React JDW remains `packages/react/src/jdw`; headless stays `@workbench-kit/jdw`; Track D = in-repo cleanup only              |
 | 2026-06-16 | **Lane A priority over B-UX**                      | WB-28 S3 → WB-29 before Track B-UX sessions; B-UX deferred until Lane A milestones                                                                                                                                      |
-| 2026-06-16 | **D2 render: Strategy A (target)**                 | `layoutWidget` + `cssRenderBackend` single path; registry leaf-only — **target decision pending formal D2**; Strategy B not long-term                                                                                   |
+| 2026-06-24 | **D2 render: Strategy A landed**                   | `layoutWidget` + `cssRenderBackend` single path; builtin registry leaf-only; public compatibility wrapper removed                                                                                                       |
+| 2026-06-16 | **D2 render: Strategy A (target)**                 | `layoutWidget` + `cssRenderBackend` single path; registry leaf-only; Strategy B not long-term                                                                                                                           |
 | 2026-06-16 | **WorkbenchDocument deprecation direction**        | Ultimate goal: JDW render + event layer; remove `WorkbenchDocument` absolute demo parallel model over time after Lane A DoD / B2 mapping                                                                                |
 | 2026-06-16 | **S8.5 editor view modes in EditorArea chrome**    | Source/Form toggle lives in `EditorArea` above editor body (not tab strip); builtin text host stays textarea-only; rich form surfaces remain `JsonConfigWorkbench` / widget-tree inspector until dedicated editor hosts |
 | 2026-06-16 | **S8.6 editor Preview + Split alignment**          | Code(JSON)/Form/Preview via kit `JsonConfigWorkbench` / `SplitView` / `JdwPreview` patterns in sample `EditorArea`; completed before WB-29; dedicated JDW hosts remain WB-22/WB-29                                      |
@@ -426,7 +427,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 - [ ] D0 — Inventory React JDW / dual render / dual document model
 - [x] D1 — Remove misleading `./jdw/config` export alias
 - [ ] D1 — Remove remaining dead WIP paths (validation shim, type alias)
-- [ ] D2 — Unify dual render paths (after B1)
+- [x] D2 — Unify dual render paths (Strategy A + leaf-only builtin registry)
 - [ ] D3 — Drop legacy compat shims (after Lane A DoD)
 - [ ] D4 — Doc truth aligned with code
 
