@@ -911,6 +911,42 @@ export const PreviewHoverChrome: Story = {
   tags: ['storybook-play-required'],
 };
 
+export const PreviewFocusChrome: Story = {
+  name: 'Preview focus chrome',
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitForWidgetTreeSourcePane(canvasElement);
+    const snapshotBeforeFocus = readSnapshot(canvasElement);
+
+    const previewTitle = canvasElement.querySelector<HTMLElement>(
+      '[data-widget-path="$.children[0]"][data-widget-type="text"]',
+    );
+    expect(previewTitle).toBeTruthy();
+    previewTitle!.focus({ preventScroll: true });
+
+    const focusFrame = await canvas.findByTestId('widget-tree-canvas-focus-frame');
+    await waitFor(() => {
+      expect(canvasElement.ownerDocument.activeElement).toBe(previewTitle);
+    });
+    await expect(focusFrame).toHaveAttribute('data-widget-path', '$.children[0]');
+    await expect(focusFrame).toHaveAttribute('data-widget-type', 'text');
+    await expect(focusFrame).toHaveAttribute('data-focused', 'true');
+    expect(readSnapshot(canvasElement)).toEqual(snapshotBeforeFocus);
+
+    fireEvent.keyDown(previewTitle!, { key: 'Enter' });
+    const outlineTitle = await canvas.findByTestId('widget-tree-node-$.children[0]');
+    await waitFor(() => {
+      expect(outlineTitle).toHaveAttribute('aria-selected', 'true');
+      expect(canvas.getByTestId('widget-tree-canvas-selection-frame')).toHaveAttribute(
+        'data-focused',
+        'true',
+      );
+    });
+    expect(readSnapshot(canvasElement)).toEqual(snapshotBeforeFocus);
+  },
+  tags: ['storybook-play-required'],
+};
+
 function getOutlineNodeButton(node: HTMLElement): HTMLButtonElement {
   const button = node.querySelector<HTMLButtonElement>('.widget-tree-outline__button');
 

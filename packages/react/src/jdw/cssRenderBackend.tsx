@@ -1,4 +1,10 @@
-import { createElement, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
+import {
+  createElement,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 import { isWidgetHostTag, type WidgetRegistryContract } from '@workbench-kit/contracts';
 import {
   appendBoxChildPath,
@@ -114,6 +120,10 @@ function renderLeafContent(widget: GenericWidget, options: CssRenderBackendOptio
   return renderBuiltinWidgetLeaf(widget);
 }
 
+function isKeyboardActivationKey(key: string): boolean {
+  return key === 'Enter' || key === ' ' || key === 'Spacebar';
+}
+
 function layoutHostTag(widget: GenericWidget, options: CssRenderBackendOptions) {
   const { registry = BUILTIN_JDW_REGISTRY } = options;
   const hostTag = registry.definition(widget.type)?.hostTag;
@@ -128,20 +138,35 @@ function renderLayoutNode(
   path: WidgetPath,
 ): ReactNode {
   const widget = node.widget;
+  const hostTag = layoutHostTag(widget, options);
   const isLayoutContainer = LAYOUT_CONTAINER_TYPES.has(widget.type);
   const leafContent = isLayoutContainer ? null : renderLeafContent(widget, options);
   const selected = options.selectedPath ? widgetPathEquals(path, options.selectedPath) : false;
+  const interactive = Boolean(options.onSelectPath);
 
   return createElement(
-    layoutHostTag(widget, options),
+    hostTag,
     {
+      'aria-selected': interactive ? selected : undefined,
       'data-layout-node': true,
-      'data-widget-interactive': options.onSelectPath ? 'true' : undefined,
+      'data-widget-interactive': interactive ? 'true' : undefined,
       'data-widget-path': widgetPathKey(path),
       'data-widget-selected': selected ? 'true' : undefined,
       'data-widget-type': widget.type,
-      onClick: options.onSelectPath
-        ? (event: MouseEvent<HTMLDivElement>) => {
+      role: interactive && hostTag === 'div' ? 'button' : undefined,
+      tabIndex: interactive ? (selected ? 0 : -1) : undefined,
+      onClick: interactive
+        ? (event: MouseEvent<HTMLElement>) => {
+            event.stopPropagation();
+            event.currentTarget.focus({ preventScroll: true });
+            options.onSelectPath?.(path);
+          }
+        : undefined,
+      onKeyDown: interactive
+        ? (event: KeyboardEvent<HTMLElement>) => {
+            if (!isKeyboardActivationKey(event.key)) return;
+
+            event.preventDefault();
             event.stopPropagation();
             options.onSelectPath?.(path);
           }

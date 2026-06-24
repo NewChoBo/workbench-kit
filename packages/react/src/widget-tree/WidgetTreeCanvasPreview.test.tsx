@@ -281,6 +281,78 @@ describe('WidgetTreeCanvasPreview', () => {
       root.unmount();
     });
   });
+
+  it('shows focus chrome for preview nodes and keeps keyboard activation on the select path', async () => {
+    const rootWidget: GenericWidget = {
+      type: 'column',
+      width: 240,
+      height: 120,
+      children: [
+        { type: 'text', text: 'A', height: 40 },
+        { type: 'text', text: 'B', height: 40 },
+      ],
+    };
+    const onPatch = vi.fn((patch: WidgetPatch) => {
+      void patch;
+      return true;
+    });
+    const onSelectPath = vi.fn();
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WidgetTreeCanvasPreview
+          json={formatWidgetDocumentJson(rootWidget)}
+          root={rootWidget}
+          selectedPath={appendChildrenPath(ROOT_WIDGET_PATH, 1)}
+          onPatch={onPatch}
+          onSelectPath={onSelectPath}
+        />,
+      );
+    });
+
+    const selectedPreviewChild = container.querySelector(
+      '[data-widget-path="$.children[1]"][data-widget-type="text"]',
+    ) as HTMLElement;
+    const previewChild = container.querySelector(
+      '[data-widget-path="$.children[0]"][data-widget-type="text"]',
+    ) as HTMLElement;
+    expect(selectedPreviewChild?.getAttribute('tabindex')).toBe('0');
+    expect(previewChild?.getAttribute('tabindex')).toBe('-1');
+
+    await act(async () => {
+      previewChild.focus();
+    });
+
+    const focusFrame = container.querySelector('[data-testid="widget-tree-canvas-focus-frame"]');
+    expect(document.activeElement).toBe(previewChild);
+    expect(focusFrame?.getAttribute('data-widget-path')).toBe('$.children[0]');
+    expect(focusFrame?.getAttribute('data-widget-type')).toBe('text');
+    expect(focusFrame?.getAttribute('data-focused')).toBe('true');
+    expect(focusFrame?.getAttribute('data-transient')).toBe('true');
+    expect(onPatch).not.toHaveBeenCalled();
+    expect(onSelectPath).not.toHaveBeenCalled();
+
+    await act(async () => {
+      previewChild.dispatchEvent(createKeyboardLikeEvent('keydown', 'Enter'));
+    });
+
+    expect(onSelectPath).toHaveBeenCalledTimes(1);
+    expect(onSelectPath).toHaveBeenCalledWith(appendChildrenPath(ROOT_WIDGET_PATH, 0));
+    expect(onPatch).not.toHaveBeenCalled();
+
+    await act(async () => {
+      previewChild.blur();
+    });
+
+    expect(container.querySelector('[data-testid="widget-tree-canvas-focus-frame"]')).toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
 });
 
 function mockPointerCapture(handle: HTMLElement): void {
@@ -307,6 +379,14 @@ function createPointerLikeEvent(type: string, clientX: number, clientY: number):
 
   Object.defineProperty(event, 'pointerId', { value: 1 });
   return event;
+}
+
+function createKeyboardLikeEvent(type: string, key: string): KeyboardEvent {
+  return new KeyboardEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    key,
+  });
 }
 
 function mockElementRect(

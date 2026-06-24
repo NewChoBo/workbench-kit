@@ -89,14 +89,14 @@ Placement keys are **parent-type scoped**: `stripExternalPlacement` removes inco
 | Figma canvas primitives                 | **Partial (lab)**      | `WorkbenchCanvas.tsx` primitives are consumed by `WidgetTreeCanvasPreview`                                                                                                                               |
 | Canvas drag / resize → JDW              | **Partial**            | Selected stack/grid drag, stack 8-way resize, canvas reparent, grid drag-slot reflow, grid resize span reflow, row/column linear resize, wrapper-child resize, and asset preview drop commit JDW patches |
 | Inspector placement reflow              | **Partial**            | Grid `columns` edits reflow direct child placement through JDW patches; broader inspector reflow remains                                                                                                 |
-| Tree ↔ canvas selection sync            | **Partial**            | Outline selection drives selected canvas frame and preview hover drives transient canvas chrome; broader focus polish remains                                                                            |
+| Tree ↔ canvas selection sync            | **Partial**            | Outline selection drives selected canvas frame; preview hover/focus drives transient canvas chrome; richer placement indicators remain                                                                   |
 | Preview zoom / pan                      | **Removed / deferred** | next-slice-plan code truth                                                                                                                                                                               |
 
 Editor chrome explicitly lagged schema/layout work ([widget-layout-schema-plan.md](./widget-layout-schema-plan.md) Phase 4).
 
 ## 5. Gaps — Figma Placement Not in JDW Export Path
 
-1. **Canvas authoring pipeline is still narrow** — `WidgetTreeCanvasPreview` wraps `JdwPreview` with selected/hover layout frames and now accepts asset preview drops, but richer before/after placement indicators and focus chrome remain.
+1. **Canvas authoring pipeline is still narrow** — `WidgetTreeCanvasPreview` wraps `JdwPreview` with selected/hover/focus layout frames and now accepts asset preview drops, but richer before/after placement indicators remain.
 2. **React canvas gesture pipeline is partial** — selected stack/grid drag, stack 8-way resize, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper-child resize, and asset preview drop commit JDW patches; richer drop indicators remain.
 3. **Functional resize is parent-scoped** — stack resize maps edge insets; grid resize maps cell spans; row/column resize maps fixed width/height/align; selected single-child wrapper children map fixed width/height. Unconstrained free-form resize remains out of scope.
 4. **Phase 4 checklist incomplete** — outline DnD, asset materialization, B1 root schema placement parity, the B2 headless mapping base, the B3 first canvas wire-in, stack resize, grid column reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper-child resize, and asset preview drop are wired; broader layout-driven edge promotion remains.

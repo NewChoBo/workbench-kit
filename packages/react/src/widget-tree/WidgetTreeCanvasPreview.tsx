@@ -1,4 +1,4 @@
-import { useMemo, useState, type DragEvent, type PointerEvent } from 'react';
+import { useMemo, useState, type DragEvent, type FocusEvent, type PointerEvent } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import type { WidgetPlacementAsset } from '@workbench-kit/contracts';
 import {
@@ -175,6 +175,7 @@ export function WidgetTreeCanvasPreview({
     null,
   );
   const [hoveredPath, setHoveredPath] = useState<WidgetPath | null>(null);
+  const [focusedPath, setFocusedPath] = useState<WidgetPath | null>(null);
   const layout = useMemo(
     () => (root ? layoutWidget(root, layoutConstraints, { x: 0, y: 0 }, { registry }) : null),
     [layoutConstraints, registry, root],
@@ -187,10 +188,24 @@ export function WidgetTreeCanvasPreview({
     () => (layout && hoveredPath ? findLayoutNodeByPath(layout, hoveredPath) : null),
     [hoveredPath, layout],
   );
+  const focusedLayout = useMemo(
+    () => (layout && focusedPath ? findLayoutNodeByPath(layout, focusedPath) : null),
+    [focusedPath, layout],
+  );
+  const selectedLayoutFocused = Boolean(
+    focusedPath && selectedPath && widgetPathEquals(focusedPath, selectedPath),
+  );
   const showHoveredLayout = Boolean(
     hoveredLayout &&
     hoveredPath &&
     (!selectedPath || !widgetPathEquals(hoveredPath, selectedPath)) &&
+    (!focusedPath || !widgetPathEquals(hoveredPath, focusedPath)) &&
+    !assetDropTarget,
+  );
+  const showFocusedLayout = Boolean(
+    focusedLayout &&
+    focusedPath &&
+    (!selectedPath || !widgetPathEquals(focusedPath, selectedPath)) &&
     !assetDropTarget,
   );
   const canDrag = Boolean(
@@ -306,6 +321,20 @@ export function WidgetTreeCanvasPreview({
     setHoveredPath(null);
   };
 
+  const handlePreviewFocus = (event: FocusEvent<HTMLDivElement>) => {
+    setFocusedPath(widgetPathFromEventTarget(event.target));
+  };
+
+  const handlePreviewBlur = (event: FocusEvent<HTMLDivElement>) => {
+    const relatedTarget = event.relatedTarget;
+    if (relatedTarget instanceof Node && event.currentTarget.contains(relatedTarget)) {
+      setFocusedPath(widgetPathFromEventTarget(relatedTarget));
+      return;
+    }
+
+    setFocusedPath(null);
+  };
+
   return (
     <WorkbenchPreviewCanvas
       className="widget-tree-canvas-preview"
@@ -330,6 +359,8 @@ export function WidgetTreeCanvasPreview({
         onDragLeave={handleAssetDragLeave}
         onDragOver={handleAssetDragOver}
         onDrop={handleAssetDrop}
+        onBlur={handlePreviewBlur}
+        onFocus={handlePreviewFocus}
         onPointerLeave={handlePreviewPointerLeave}
         onPointerMove={handlePreviewPointerMove}
       >
@@ -356,6 +387,21 @@ export function WidgetTreeCanvasPreview({
               y={hoveredLayout.node.rect.y}
             />
           ) : null}
+          {showFocusedLayout && focusedPath && focusedLayout ? (
+            <WorkbenchCanvasItemFrame
+              className="widget-tree-canvas-preview__focus-frame"
+              data-testid="widget-tree-canvas-focus-frame"
+              data-widget-path={widgetPathKey(focusedPath)}
+              data-widget-type={focusedLayout.node.widget.type}
+              focused
+              transient
+              width={focusedLayout.node.rect.width}
+              height={focusedLayout.node.rect.height}
+              x={focusedLayout.node.rect.x}
+              y={focusedLayout.node.rect.y}
+              zIndex={95}
+            />
+          ) : null}
           {assetDropTarget ? (
             <WorkbenchCanvasDropIndicator
               data-testid="widget-tree-canvas-asset-drop-indicator"
@@ -373,6 +419,7 @@ export function WidgetTreeCanvasPreview({
               data-testid="widget-tree-canvas-selection-frame"
               data-widget-path={widgetPathKey(selectedPath)}
               data-widget-type={selectedLayout.node.widget.type}
+              focused={selectedLayoutFocused}
               interactive={canDrag || canResize}
               selected
               touchAction="none"

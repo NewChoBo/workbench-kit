@@ -11,6 +11,7 @@ import { toAngleValue, toLineLengthValue, toLengthValue } from './layoutHelpers'
 
 export interface WorkbenchCanvasItemFrameProps extends ComponentPropsWithRef<'div'> {
   cursor?: CSSProperties['cursor'] | undefined;
+  focused?: boolean | undefined;
   height: number | string;
   hovered?: boolean | undefined;
   interactive?: boolean | undefined;
@@ -32,6 +33,7 @@ export const WorkbenchCanvasItemFrame = forwardRef<HTMLDivElement, WorkbenchCanv
     {
       className,
       cursor,
+      focused = false,
       height,
       hovered = false,
       interactive = false,
@@ -75,6 +77,7 @@ export const WorkbenchCanvasItemFrame = forwardRef<HTMLDivElement, WorkbenchCanv
         ref={ref}
         aria-selected={selected}
         className={cx('ui-workbench-canvas-item-frame', className)}
+        data-focused={focused ? 'true' : 'false'}
         data-hovered={hovered ? 'true' : 'false'}
         data-interactive={interactive ? 'true' : 'false'}
         data-selected={selected ? 'true' : 'false'}
