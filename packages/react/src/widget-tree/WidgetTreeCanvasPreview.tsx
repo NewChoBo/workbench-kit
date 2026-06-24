@@ -23,6 +23,17 @@ import {
 } from '../layout/WorkbenchCanvas.js';
 import { JdwPreview } from '../jdw/JdwPreview.js';
 
+const STACK_RESIZE_HANDLE_POSITIONS = [
+  'n',
+  'ne',
+  'e',
+  'se',
+  's',
+  'sw',
+  'w',
+  'nw',
+] as const satisfies readonly WidgetResizeHandlePosition[];
+
 export interface WidgetTreeCanvasPreviewProps {
   readonly json: string;
   readonly layoutConstraints?: LayoutConstraints | undefined;
@@ -160,14 +171,17 @@ export function WidgetTreeCanvasPreview({
                   onDragEnd={commitDrag}
                 />
               ) : null}
-              {canResize ? (
-                <WorkbenchCanvasResizeHandle
-                  data-testid="widget-tree-canvas-resize-handle"
-                  label="Resize selected widget"
-                  position="se"
-                  onResizeEnd={(deltaX, deltaY) => commitResize('se', deltaX, deltaY)}
-                />
-              ) : null}
+              {canResize
+                ? STACK_RESIZE_HANDLE_POSITIONS.map((position) => (
+                    <WorkbenchCanvasResizeHandle
+                      key={position}
+                      data-testid={`widget-tree-canvas-resize-handle-${position}`}
+                      label={`Resize selected widget ${position}`}
+                      position={position}
+                      onResizeEnd={(deltaX, deltaY) => commitResize(position, deltaX, deltaY)}
+                    />
+                  ))
+                : null}
             </WorkbenchCanvasItemFrame>
           ) : null}
         </div>

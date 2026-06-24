@@ -135,52 +135,101 @@ describe('layout mapping', () => {
     });
   });
 
-  it('maps stack child resize deltas to edge-preserving replace patches', () => {
-    const root: GenericWidget = {
-      type: 'stack',
-      width: 200,
-      height: 100,
-      children: [{ type: 'text', text: 'Panel', left: 20, top: 10, right: 30, bottom: 15 }],
-    };
-    const path = appendChildrenPath(ROOT_WIDGET_PATH, 0);
-    const layout = layoutWidget(root, {
-      minWidth: 0,
-      maxWidth: 200,
-      minHeight: 0,
-      maxHeight: 100,
-    });
+  it.each([
+    [
+      'n',
+      { deltaX: 3, deltaY: -5 },
+      { left: 20, top: 5, right: 30, bottom: 15 },
+      { x: 20, y: 5, width: 150, height: 80 },
+    ],
+    [
+      'ne',
+      { deltaX: 15, deltaY: -5 },
+      { left: 20, top: 5, right: 15, bottom: 15 },
+      { x: 20, y: 5, width: 165, height: 80 },
+    ],
+    [
+      'e',
+      { deltaX: 15, deltaY: 3 },
+      { left: 20, top: 10, right: 15, bottom: 15 },
+      { x: 20, y: 10, width: 165, height: 75 },
+    ],
+    [
+      'se',
+      { deltaX: 15, deltaY: 10 },
+      { left: 20, top: 10, right: 15, bottom: 5 },
+      { x: 20, y: 10, width: 165, height: 85 },
+    ],
+    [
+      's',
+      { deltaX: 3, deltaY: 10 },
+      { left: 20, top: 10, right: 30, bottom: 5 },
+      { x: 20, y: 10, width: 150, height: 85 },
+    ],
+    [
+      'sw',
+      { deltaX: -10, deltaY: 10 },
+      { left: 10, top: 10, right: 30, bottom: 5 },
+      { x: 10, y: 10, width: 160, height: 85 },
+    ],
+    [
+      'w',
+      { deltaX: -10, deltaY: 3 },
+      { left: 10, top: 10, right: 30, bottom: 15 },
+      { x: 10, y: 10, width: 160, height: 75 },
+    ],
+    [
+      'nw',
+      { deltaX: -10, deltaY: -5 },
+      { left: 10, top: 5, right: 30, bottom: 15 },
+      { x: 10, y: 5, width: 160, height: 80 },
+    ],
+  ] as const)(
+    'maps stack child %s resize deltas to edge-preserving replace patches',
+    (position, delta, expectedPlacement, expectedRect) => {
+      const root: GenericWidget = {
+        type: 'stack',
+        width: 200,
+        height: 100,
+        children: [{ type: 'text', text: 'Panel', left: 20, top: 10, right: 30, bottom: 15 }],
+      };
+      const path = appendChildrenPath(ROOT_WIDGET_PATH, 0);
+      const layout = layoutWidget(root, {
+        minWidth: 0,
+        maxWidth: 200,
+        minHeight: 0,
+        maxHeight: 100,
+      });
 
-    const patch = createWidgetResizePatch({
-      root,
-      layout,
-      path,
-      position: 'se',
-      deltaX: 15,
-      deltaY: 10,
-    });
+      const patch = createWidgetResizePatch({
+        root,
+        layout,
+        path,
+        position,
+        deltaX: delta.deltaX,
+        deltaY: delta.deltaY,
+      });
 
-    expect(patch).toEqual({
-      type: 'replace-widget',
-      path,
-      widget: {
-        type: 'text',
-        text: 'Panel',
-        left: 20,
-        top: 10,
-        right: 15,
-        bottom: 5,
-      },
-    });
+      expect(patch).toEqual({
+        type: 'replace-widget',
+        path,
+        widget: {
+          type: 'text',
+          text: 'Panel',
+          ...expectedPlacement,
+        },
+      });
 
-    const result = applyWidgetPatch(root, patch!);
-    const nextLayout = layoutWidget(result.root, {
-      minWidth: 0,
-      maxWidth: 200,
-      minHeight: 0,
-      maxHeight: 100,
-    });
-    expect(nextLayout.children[0]?.rect).toEqual({ x: 20, y: 10, width: 165, height: 85 });
-  });
+      const result = applyWidgetPatch(root, patch!);
+      const nextLayout = layoutWidget(result.root, {
+        minWidth: 0,
+        maxWidth: 200,
+        minHeight: 0,
+        maxHeight: 100,
+      });
+      expect(nextLayout.children[0]?.rect).toEqual(expectedRect);
+    },
+  );
 
   it('does not produce drag patches for roots or box child slots', () => {
     const root: GenericWidget = {

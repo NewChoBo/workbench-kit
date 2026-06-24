@@ -297,7 +297,7 @@ export const StackPlacement: Story = {
       expect(movedChild?.args?.bottom).toBe(171);
     });
 
-    const resizeHandle = await labCanvas.findByTestId('widget-tree-canvas-resize-handle');
+    const resizeHandle = await labCanvas.findByTestId('widget-tree-canvas-resize-handle-se');
     fireEvent.pointerDown(resizeHandle, {
       button: 0,
       buttons: 1,
@@ -329,6 +329,44 @@ export const StackPlacement: Story = {
       const resizedChild = readSnapshot(canvasElement).args?.children?.[0];
       expect(resizedChild?.args?.left).toBe(24);
       expect(resizedChild?.args?.top).toBe(25);
+      expect(resizedChild?.args?.right).toBe(92);
+      expect(resizedChild?.args?.bottom).toBe(159);
+    });
+
+    const northwestResizeHandle = await labCanvas.findByTestId(
+      'widget-tree-canvas-resize-handle-nw',
+    );
+    fireEvent.pointerDown(northwestResizeHandle, {
+      button: 0,
+      buttons: 1,
+      clientX: 80,
+      clientY: 80,
+      isPrimary: true,
+      pointerId: 9,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerMove(northwestResizeHandle, {
+      buttons: 1,
+      clientX: 74,
+      clientY: 76,
+      isPrimary: true,
+      pointerId: 9,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(northwestResizeHandle, {
+      button: 0,
+      buttons: 0,
+      clientX: 74,
+      clientY: 76,
+      isPrimary: true,
+      pointerId: 9,
+      pointerType: 'mouse',
+    });
+
+    await waitFor(() => {
+      const resizedChild = readSnapshot(canvasElement).args?.children?.[0];
+      expect(resizedChild?.args?.left).toBe(18);
+      expect(resizedChild?.args?.top).toBe(21);
       expect(resizedChild?.args?.right).toBe(92);
       expect(resizedChild?.args?.bottom).toBe(159);
     });
