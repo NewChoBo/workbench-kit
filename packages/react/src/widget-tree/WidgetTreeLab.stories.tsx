@@ -77,6 +77,19 @@ const GRID_REFLOW_DOCUMENT = formatWidgetDocumentJson({
   ],
 });
 
+const GRID_SLOT_DRAG_DOCUMENT = formatWidgetDocumentJson({
+  type: 'grid',
+  columns: 2,
+  rows: 2,
+  width: 200,
+  height: 200,
+  children: [
+    { type: 'text', text: 'A', col: 0, row: 0 },
+    { type: 'text', text: 'B', col: 1, row: 0 },
+    { type: 'text', text: 'C', col: 0, row: 1 },
+  ],
+});
+
 const CANVAS_REPARENT_DOCUMENT = formatWidgetDocumentJson({
   type: 'stack',
   width: 360,
@@ -448,6 +461,59 @@ export const GridColumnReflow: Story = {
         row: 2,
         colSpan: 1,
       });
+    });
+  },
+  tags: ['storybook-play-required'],
+};
+
+export const GridDragSlotReflow: Story = {
+  name: 'Grid drag slot reflow',
+  render: () => <WidgetTreeStoryHarness initialValue={GRID_SLOT_DRAG_DOCUMENT} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const lab = await canvas.findByTestId('widget-tree-lab');
+    const labCanvas = within(lab);
+    await waitForWidgetTreeSourcePane(lab);
+
+    const draggedNode = await labCanvas.findByTestId('widget-tree-node-$.children[2]');
+    await userEvent.click(getOutlineNodeButton(draggedNode));
+
+    const dragHandle = await labCanvas.findByTestId('widget-tree-canvas-drag-handle');
+    fireEvent.pointerDown(dragHandle, {
+      button: 0,
+      buttons: 1,
+      clientX: 40,
+      clientY: 140,
+      isPrimary: true,
+      pointerId: 11,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerMove(dragHandle, {
+      buttons: 1,
+      clientX: 40,
+      clientY: 40,
+      isPrimary: true,
+      pointerId: 11,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(dragHandle, {
+      button: 0,
+      buttons: 0,
+      clientX: 40,
+      clientY: 40,
+      isPrimary: true,
+      pointerId: 11,
+      pointerType: 'mouse',
+    });
+
+    await waitFor(() => {
+      const children = readSnapshot(canvasElement).args?.children ?? [];
+      expect(children[0]?.args).toMatchObject({ text: 'A', col: 1, row: 0 });
+      expect(children[1]?.args).toMatchObject({ text: 'B', col: 0, row: 1 });
+      expect(children[2]?.args).toMatchObject({ text: 'C', col: 0, row: 0 });
+      expect(
+        lab.querySelector('[data-widget-path="$.children[2]"][data-widget-selected="true"]'),
+      ).toBeTruthy();
     });
   },
   tags: ['storybook-play-required'],

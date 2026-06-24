@@ -136,6 +136,61 @@ describe('layout mapping', () => {
     });
   });
 
+  it('reflows occupied grid slots when dragging a child onto a filled cell', () => {
+    const root: GenericWidget = {
+      type: 'grid',
+      columns: 2,
+      rows: 2,
+      width: 200,
+      height: 200,
+      children: [
+        { type: 'text', text: 'A', col: 0, row: 0 },
+        { type: 'text', text: 'B', col: 1, row: 0 },
+        { type: 'text', text: 'C', col: 0, row: 1 },
+      ],
+    };
+    const path = appendChildrenPath(ROOT_WIDGET_PATH, 2);
+    const layout = layoutWidget(root, {
+      minWidth: 0,
+      maxWidth: 200,
+      minHeight: 0,
+      maxHeight: 200,
+    });
+
+    const patch = createWidgetDragPatch({
+      root,
+      layout,
+      path,
+      deltaX: 0,
+      deltaY: -100,
+    });
+
+    expect(patch).toEqual({
+      type: 'replace-widget',
+      path: ROOT_WIDGET_PATH,
+      widget: {
+        type: 'grid',
+        columns: 2,
+        rows: 2,
+        width: 200,
+        height: 200,
+        children: [
+          { type: 'text', text: 'A', col: 1, row: 0 },
+          { type: 'text', text: 'B', col: 0, row: 1 },
+          { type: 'text', text: 'C', col: 0, row: 0 },
+        ],
+      },
+    });
+
+    const result = applyWidgetPatch(root, patch!);
+    const nextChildren = result.root.children as GenericWidget[];
+    expect(nextChildren.map((child) => `${child.text}:${child.col},${child.row}`)).toEqual([
+      'A:1,0',
+      'B:0,1',
+      'C:0,0',
+    ]);
+  });
+
   it('maps canvas drops onto other containers to reparent patches', () => {
     const root: GenericWidget = {
       type: 'stack',

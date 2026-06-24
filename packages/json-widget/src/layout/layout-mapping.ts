@@ -112,6 +112,11 @@ function clampNumber(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+function readPositiveInteger(value: unknown): number | null {
+  if (!isFiniteNumber(value) || value < 1) return null;
+  return Math.floor(value);
+}
+
 function pathStartsWith(path: WidgetPath, prefix: WidgetPath): boolean {
   if (prefix.length > path.length) return false;
   return prefix.every((segment, index) => {
@@ -255,12 +260,22 @@ function createStackResizePatch(
   };
 }
 
+interface GridSlotSpan {
+  readonly colSpan: number;
+  readonly rowSpan: number;
+}
+
+interface GridSlotPlacement {
+  readonly col: number;
+  readonly row: number;
+}
+
 function readGridPlacementAtPoint(
   parent: GenericWidget,
   parentRect: Rect,
   point: LayoutPoint,
   child: GenericWidget,
-): Pick<GenericWidget, 'col' | 'row'> | null {
+): GridSlotPlacement | null {
   const columns = Math.max(1, isFiniteNumber(parent.columns) ? parent.columns : 2);
   const gap = isFiniteNumber(parent.gap) ? parent.gap : 0;
   const padding = isFiniteNumber(parent.padding) ? parent.padding : 0;
@@ -285,11 +300,175 @@ function readGridPlacementAtPoint(
   };
 }
 
+function gridCellKey(col: number, row: number): string {
+  return `${col}:${row}`;
+}
+
+function readGridSlotSpan(child: GenericWidget, columns: number): GridSlotSpan {
+  return {
+    colSpan: Math.min(readPositiveInteger(child.colSpan) ?? 1, columns),
+    rowSpan: readPositiveInteger(child.rowSpan) ?? 1,
+  };
+}
+
+function readGridSlotPlacement(
+  child: GenericWidget,
+  fallbackIndex: number,
+  columns: number,
+  span: GridSlotSpan,
+): GridSlotPlacement {
+  const maxCol = Math.max(0, columns - span.colSpan);
+  const col = isFiniteNumber(child.col)
+    ? clampNumber(Math.floor(child.col), 0, maxCol)
+    : fallbackIndex % columns;
+  const row = isFiniteNumber(child.row)
+    ? Math.max(0, Math.floor(child.row))
+    : Math.floor(fallbackIndex / columns);
+
+  return { col, row };
+}
+
+function gridSlotIndex(placement: GridSlotPlacement, columns: number): number {
+  return placement.row * columns + placement.col;
+}
+
+function gridSlotConflicts(
+  occupied: ReadonlySet<string>,
+  placement: GridSlotPlacement,
+  span: GridSlotSpan,
+): boolean {
+  for (let rowOffset = 0; rowOffset < span.rowSpan; rowOffset += 1) {
+    for (let colOffset = 0; colOffset < span.colSpan; colOffset += 1) {
+      if (occupied.has(gridCellKey(placement.col + colOffset, placement.row + rowOffset))) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function occupyGridSlot(
+  occupied: Set<string>,
+  placement: GridSlotPlacement,
+  span: GridSlotSpan,
+): void {
+  for (let rowOffset = 0; rowOffset < span.rowSpan; rowOffset += 1) {
+    for (let colOffset = 0; colOffset < span.colSpan; colOffset += 1) {
+      occupied.add(gridCellKey(placement.col + colOffset, placement.row + rowOffset));
+    }
+  }
+}
+
+function nextFreeGridSlot(
+  occupied: ReadonlySet<string>,
+  startSlot: number,
+  columns: number,
+  span: GridSlotSpan,
+  childCount: number,
+): GridSlotPlacement {
+  const start = Math.max(0, startSlot);
+  const maxSearch = Math.max(columns * (childCount + 16) * Math.max(1, span.rowSpan), columns * 64);
+
+  for (let slot = start; slot <= start + maxSearch; slot += 1) {
+    const placement = {
+      col: slot % columns,
+      row: Math.floor(slot / columns),
+    };
+    if (placement.col + span.colSpan > columns) continue;
+    if (!gridSlotConflicts(occupied, placement, span)) return placement;
+  }
+
+  return {
+    col: 0,
+    row: Math.floor((start + maxSearch) / columns) + 1,
+  };
+}
+
+function withGridSlotPlacement(
+  child: GenericWidget,
+  placement: GridSlotPlacement,
+  span: GridSlotSpan,
+): GenericWidget {
+  return {
+    ...child,
+    col: placement.col,
+    row: placement.row,
+    ...(isFiniteNumber(child.colSpan) ? { colSpan: span.colSpan } : {}),
+    ...(isFiniteNumber(child.rowSpan) ? { rowSpan: span.rowSpan } : {}),
+  };
+}
+
+function reflowGridChildrenAroundSlot(
+  parent: GenericWidget,
+  selectedIndex: number,
+  targetPlacement: GridSlotPlacement,
+): GenericWidget {
+  const children = getWidgetChildren(parent);
+  const selected = children[selectedIndex];
+  if (!selected || parent.type !== 'grid') return parent;
+
+  const columns = Math.max(1, readPositiveInteger(parent.columns) ?? 2);
+  const selectedSpan = readGridSlotSpan(selected, columns);
+  const occupied = new Set<string>();
+  occupyGridSlot(occupied, targetPlacement, selectedSpan);
+
+  const nextChildren = [...children];
+  nextChildren[selectedIndex] = withGridSlotPlacement(selected, targetPlacement, selectedSpan);
+
+  children.forEach((child, index) => {
+    if (index === selectedIndex) return;
+
+    const span = readGridSlotSpan(child, columns);
+    const currentPlacement = readGridSlotPlacement(child, index, columns, span);
+    const placement = gridSlotConflicts(occupied, currentPlacement, span)
+      ? nextFreeGridSlot(
+          occupied,
+          gridSlotIndex(currentPlacement, columns),
+          columns,
+          span,
+          children.length,
+        )
+      : currentPlacement;
+
+    occupyGridSlot(occupied, placement, span);
+    nextChildren[index] = withGridSlotPlacement(child, placement, span);
+  });
+
+  return {
+    ...parent,
+    children: nextChildren,
+  };
+}
+
+function isGridSlotOccupied(
+  parent: GenericWidget,
+  selectedIndex: number,
+  targetPlacement: GridSlotPlacement,
+  selectedSpan: GridSlotSpan,
+): boolean {
+  const children = getWidgetChildren(parent);
+  return children.some((child, index) => {
+    if (index === selectedIndex) return false;
+    const span = readGridSlotSpan(child, Math.max(1, readPositiveInteger(parent.columns) ?? 2));
+    const placement = readGridSlotPlacement(
+      child,
+      index,
+      Math.max(1, readPositiveInteger(parent.columns) ?? 2),
+      span,
+    );
+    const occupied = new Set<string>();
+    occupyGridSlot(occupied, placement, span);
+    return gridSlotConflicts(occupied, targetPlacement, selectedSpan);
+  });
+}
+
 function createGridDragPatch(
   parent: GenericWidget,
   child: GenericWidget,
   childNode: LayoutNodeResult,
   parentNode: LayoutNodeResult,
+  parentPath: WidgetPath,
   path: WidgetPath,
   deltaX: number,
   deltaY: number,
@@ -300,6 +479,18 @@ function createGridDragPatch(
   };
   const placement = readGridPlacementAtPoint(parent, parentNode.rect, nextCenter, child);
   if (!placement) return null;
+
+  const segment = path[path.length - 1];
+  const selectedIndex = segment?.kind === 'children' ? segment.index : -1;
+  const columns = Math.max(1, readPositiveInteger(parent.columns) ?? 2);
+  const selectedSpan = readGridSlotSpan(child, columns);
+  if (selectedIndex >= 0 && isGridSlotOccupied(parent, selectedIndex, placement, selectedSpan)) {
+    return {
+      type: 'replace-widget',
+      path: parentPath,
+      widget: reflowGridChildrenAroundSlot(parent, selectedIndex, placement),
+    };
+  }
 
   return {
     type: 'replace-widget',
@@ -370,6 +561,7 @@ export function createWidgetDragPatch({
       child,
       childNode.node,
       parentNode.node,
+      parentPath,
       path,
       deltaX,
       deltaY,
