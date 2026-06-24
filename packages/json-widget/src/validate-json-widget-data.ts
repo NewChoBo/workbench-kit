@@ -2,6 +2,17 @@ import type { JsonWidgetNode } from './jdw-node.js';
 import { isJsonWidgetDynamicValueExpression, parseJsonWidgetData } from './jdw-node.js';
 import { WORKBENCH_JDW_KNOWN_TYPES } from './jdw-profile.js';
 
+const MAIN_AXIS_ALIGNMENT_VALUES = [
+  'start',
+  'center',
+  'end',
+  'spaceBetween',
+  'spaceAround',
+  'spaceEvenly',
+] as const;
+const CROSS_AXIS_ALIGNMENT_VALUES = ['stretch', 'start', 'center', 'end'] as const;
+const FLEX_FIT_VALUES = ['tight', 'loose'] as const;
+
 export interface ValidationIssue {
   readonly path: string;
   readonly message: string;
@@ -110,6 +121,34 @@ function readBoolean(value: unknown, path: string, issues: ValidationIssue[], la
   }
 }
 
+function readStringEnum(
+  value: unknown,
+  path: string,
+  issues: ValidationIssue[],
+  label: string,
+  values: readonly string[],
+): void {
+  if (value === undefined) {
+    return;
+  }
+
+  if (isJsonWidgetDynamicValueExpression(value)) {
+    return;
+  }
+
+  if (typeof value !== 'string') {
+    issues.push({ path, message: `${label} must be a string.` });
+    return;
+  }
+
+  if (!values.includes(value)) {
+    issues.push({
+      path,
+      message: `${label} must be one of: ${values.join(', ')}.`,
+    });
+  }
+}
+
 function isAllowedStaticImageSource(value: string): boolean {
   const source = value.trim();
   if (source.length === 0 || source.startsWith('//')) return false;
@@ -176,6 +215,18 @@ function isKnownType(type: string, options: ValidateJsonWidgetDataOptions): bool
   return options.registeredTypes?.includes(type) ?? false;
 }
 
+function validateLinearChildPlacement(
+  child: JsonWidgetNode,
+  path: string,
+  issues: ValidationIssue[],
+): void {
+  readMinNumber(child.args.width, `${path}.width`, issues, 'width', 0);
+  readMinNumber(child.args.height, `${path}.height`, issues, 'height', 0);
+  readMinNumber(child.args.flex, `${path}.flex`, issues, 'flex', 0);
+  readStringEnum(child.args.flexFit, `${path}.flexFit`, issues, 'flexFit', FLEX_FIT_VALUES);
+  readStringEnum(child.args.align, `${path}.align`, issues, 'align', CROSS_AXIS_ALIGNMENT_VALUES);
+}
+
 export function validateJsonWidgetNode(
   value: unknown,
   path: string,
@@ -210,19 +261,31 @@ export function validateJsonWidgetNode(
       readMinNumber(node.args.gap, `${argsPath}.gap`, issues, 'gap', 0);
       readMinNumber(node.args.padding, `${argsPath}.padding`, issues, 'padding', 0);
       readString(node.args.background, `${argsPath}.background`, issues, 'background');
-      readString(
+      readStringEnum(
         node.args.mainAxisAlignment,
         `${argsPath}.mainAxisAlignment`,
         issues,
         'mainAxisAlignment',
+        MAIN_AXIS_ALIGNMENT_VALUES,
       );
-      readString(
+      readStringEnum(
         node.args.crossAxisAlignment,
         `${argsPath}.crossAxisAlignment`,
         issues,
         'crossAxisAlignment',
+        CROSS_AXIS_ALIGNMENT_VALUES,
       );
       validateChildNodes(node.args.children, `${argsPath}.children`, issues, options);
+
+      if (Array.isArray(node.args.children)) {
+        node.args.children.forEach((child, index) => {
+          if (!isJdwNode(child)) {
+            return;
+          }
+
+          validateLinearChildPlacement(child, `${argsPath}.children[${index}].args`, issues);
+        });
+      }
       break;
     }
     case 'expanded':
@@ -232,8 +295,7 @@ export function validateJsonWidgetNode(
         node.type === 'flexible' &&
         node.args.fit !== undefined &&
         !isJsonWidgetDynamicValueExpression(node.args.fit) &&
-        node.args.fit !== 'tight' &&
-        node.args.fit !== 'loose'
+        !(FLEX_FIT_VALUES as readonly unknown[]).includes(node.args.fit)
       ) {
         issues.push({
           path: `${argsPath}.fit`,
@@ -260,8 +322,8 @@ export function validateJsonWidgetNode(
           }
 
           const childArgsPath = `${argsPath}.children[${index}].args`;
-          readNumber(child.args.col, `${childArgsPath}.col`, issues, 'col');
-          readNumber(child.args.row, `${childArgsPath}.row`, issues, 'row');
+          readMinNumber(child.args.col, `${childArgsPath}.col`, issues, 'col', 0);
+          readMinNumber(child.args.row, `${childArgsPath}.row`, issues, 'row', 0);
           readMinNumber(child.args.colSpan, `${childArgsPath}.colSpan`, issues, 'colSpan', 1);
           readMinNumber(child.args.rowSpan, `${childArgsPath}.rowSpan`, issues, 'rowSpan', 1);
         });

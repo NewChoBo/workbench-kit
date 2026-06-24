@@ -82,4 +82,55 @@ describe('createWidgetJsonSchema', () => {
       ],
     });
   });
+
+  it('describes JDW placement args for schema-backed authoring hints', () => {
+    const schema = createJdwDocumentJsonSchema() as {
+      definitions?: {
+        JdwPlacementArgs?: {
+          properties?: Record<string, unknown>;
+        };
+        TextJdwNode?: {
+          properties?: { args?: { allOf?: unknown[] } };
+        };
+        RowJdwNode?: {
+          properties?: { args?: { properties?: Record<string, unknown> } };
+        };
+      };
+    };
+    const placementArgs = schema.definitions?.JdwPlacementArgs?.properties ?? {};
+    const textArgs = schema.definitions?.TextJdwNode?.properties?.args;
+    const rowArgs = schema.definitions?.RowJdwNode?.properties?.args?.properties ?? {};
+
+    expect(textArgs?.allOf).toEqual([{ $ref: '#/definitions/JdwPlacementArgs' }]);
+    expect(placementArgs.width).toEqual({
+      oneOf: [{ type: 'number', minimum: 0 }, { $ref: '#/definitions/JdwDynamicValue' }],
+    });
+    expect(placementArgs.flexFit).toEqual({
+      oneOf: [
+        { type: 'string', enum: ['tight', 'loose'] },
+        { $ref: '#/definitions/JdwDynamicValue' },
+      ],
+    });
+    expect(placementArgs.align).toEqual({
+      oneOf: [
+        { type: 'string', enum: ['stretch', 'start', 'center', 'end'] },
+        { $ref: '#/definitions/JdwDynamicValue' },
+      ],
+    });
+    expect(placementArgs.colSpan).toEqual({
+      oneOf: [{ type: 'number', minimum: 1 }, { $ref: '#/definitions/JdwDynamicValue' }],
+    });
+    expect(placementArgs.left).toEqual({
+      oneOf: [{ type: 'number' }, { $ref: '#/definitions/JdwDynamicValue' }],
+    });
+    expect(rowArgs.mainAxisAlignment).toEqual({
+      oneOf: [
+        {
+          type: 'string',
+          enum: ['start', 'center', 'end', 'spaceBetween', 'spaceAround', 'spaceEvenly'],
+        },
+        { $ref: '#/definitions/JdwDynamicValue' },
+      ],
+    });
+  });
 });

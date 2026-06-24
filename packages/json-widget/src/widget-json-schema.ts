@@ -238,6 +238,16 @@ const JDW_NODE_DEFINITION_NAMES = [
 ] as const;
 
 const JDW_DYNAMIC_VALUE_PATTERN = '^\\$\\{[A-Za-z0-9_.-]+\\}$';
+const JDW_MAIN_AXIS_ALIGNMENT_VALUES = [
+  'start',
+  'center',
+  'end',
+  'spaceBetween',
+  'spaceAround',
+  'spaceEvenly',
+] as const;
+const JDW_CROSS_AXIS_ALIGNMENT_VALUES = ['stretch', 'start', 'center', 'end'] as const;
+const JDW_FLEX_FIT_VALUES = ['tight', 'loose'] as const;
 
 const JDW_COMMON_NODE_PROPERTIES = {
   $schema: { type: 'string', minLength: 1 },
@@ -270,6 +280,10 @@ function jdwNumberProperty(minimum: number): JsonSchemaObject {
   return withJdwDynamicValue({ type: 'number', minimum });
 }
 
+function jdwUnboundedNumberProperty(): JsonSchemaObject {
+  return withJdwDynamicValue({ type: 'number' });
+}
+
 function jdwBooleanProperty(): JsonSchemaObject {
   return withJdwDynamicValue({ type: 'boolean' });
 }
@@ -284,9 +298,28 @@ function jdwArgsDefinition(
 ): JsonSchemaObject {
   return {
     type: 'object',
+    allOf: [{ $ref: '#/definitions/JdwPlacementArgs' }],
     ...(required.length > 0 ? { required: [...required] } : {}),
     properties,
     additionalProperties: true,
+  };
+}
+
+function jdwPlacementArgsProperties(): JsonSchemaObject {
+  return {
+    width: jdwNumberProperty(0),
+    height: jdwNumberProperty(0),
+    flex: jdwNumberProperty(0),
+    flexFit: jdwStringEnumProperty(JDW_FLEX_FIT_VALUES),
+    align: jdwStringEnumProperty(JDW_CROSS_AXIS_ALIGNMENT_VALUES),
+    col: jdwNumberProperty(0),
+    row: jdwNumberProperty(0),
+    colSpan: jdwNumberProperty(1),
+    rowSpan: jdwNumberProperty(1),
+    left: jdwUnboundedNumberProperty(),
+    top: jdwUnboundedNumberProperty(),
+    right: jdwUnboundedNumberProperty(),
+    bottom: jdwUnboundedNumberProperty(),
   };
 }
 
@@ -315,6 +348,12 @@ function createJdwNodeDefinitions(): Record<string, JsonSchemaObject> {
       description: 'Exact ${path} expression resolved from explicit render or preview values.',
       type: 'string',
       pattern: JDW_DYNAMIC_VALUE_PATTERN,
+    },
+    JdwPlacementArgs: {
+      title: 'JdwPlacementArgs',
+      description: 'Parent-scoped placement hints used by row/column, grid, and stack containers.',
+      type: 'object',
+      properties: jdwPlacementArgsProperties(),
     },
     JdwNode: {
       oneOf: [
@@ -357,8 +396,8 @@ function createJdwNodeDefinitions(): Record<string, JsonSchemaObject> {
         gap: jdwNumberProperty(0),
         padding: jdwNumberProperty(0),
         background: { type: 'string' },
-        mainAxisAlignment: { type: 'string' },
-        crossAxisAlignment: { type: 'string' },
+        mainAxisAlignment: jdwStringEnumProperty(JDW_MAIN_AXIS_ALIGNMENT_VALUES),
+        crossAxisAlignment: jdwStringEnumProperty(JDW_CROSS_AXIS_ALIGNMENT_VALUES),
         children: jdwChildrenProperty(),
       }),
     ),
@@ -369,8 +408,8 @@ function createJdwNodeDefinitions(): Record<string, JsonSchemaObject> {
         gap: jdwNumberProperty(0),
         padding: jdwNumberProperty(0),
         background: { type: 'string' },
-        mainAxisAlignment: { type: 'string' },
-        crossAxisAlignment: { type: 'string' },
+        mainAxisAlignment: jdwStringEnumProperty(JDW_MAIN_AXIS_ALIGNMENT_VALUES),
+        crossAxisAlignment: jdwStringEnumProperty(JDW_CROSS_AXIS_ALIGNMENT_VALUES),
         children: jdwChildrenProperty(),
       }),
     ),
@@ -391,7 +430,7 @@ function createJdwNodeDefinitions(): Record<string, JsonSchemaObject> {
       jdwArgsDefinition(
         {
           flex: jdwNumberProperty(0),
-          fit: jdwStringEnumProperty(['tight', 'loose']),
+          fit: jdwStringEnumProperty(JDW_FLEX_FIT_VALUES),
           child: jdwNodeRef(),
         },
         ['child'],
@@ -578,7 +617,9 @@ export const DEMO_WIDGET_JSON_SCHEMA = createWidgetJsonSchema();
 export function createJdwDocumentJsonSchema(): WidgetJsonSchema {
   return {
     $schema: 'http://json-schema.org/draft-07/schema#',
-    title: 'JdwDocumentSchema',
+    $id: 'https://workbench-kit.dev/schemas/jdw-node.jdw.schema.json',
+    title: 'JsonWidgetNode',
+    description: 'Recursive JDW v7 widget envelope (type + args).',
     $ref: '#/definitions/JdwNode',
     definitions: createJdwNodeDefinitions(),
   };

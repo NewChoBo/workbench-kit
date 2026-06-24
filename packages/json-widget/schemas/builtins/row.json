@@ -27,8 +27,21 @@
           ]
         },
         "background": { "type": "string" },
-        "mainAxisAlignment": { "type": "string" },
-        "crossAxisAlignment": { "type": "string" },
+        "mainAxisAlignment": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": ["start", "center", "end", "spaceBetween", "spaceAround", "spaceEvenly"]
+            },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        },
+        "crossAxisAlignment": {
+          "oneOf": [
+            { "type": "string", "enum": ["stretch", "start", "center", "end"] },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        },
         "children": {
           "type": "array",
           "items": { "$ref": "../jdw-node.jdw.schema.json" }

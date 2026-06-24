@@ -342,12 +342,12 @@ source string
 
 ### 9.1 Document schema additions (vs today)
 
-Current `widget-json-schema.ts` defines container types but **not**:
+Current `widget-json-schema.ts` now defines root JDW placement hints, but still does **not** fully specialize children by parent type:
 
-- Child placement properties (`flex`, `align`, `col`, `row`, `colSpan`, `rowSpan`, stack insets)
-- Parent alignment (`mainAxisAlignment`, `crossAxisAlignment`)
-- Distinct `children.items` per parent type (linear vs grid vs stack)
-- `box` / `stack` / `list-view` core definitions (headless code supports; schema does not)
+- Root schema `JdwPlacementArgs` covers child placement properties (`width`, `height`, `flex`, `flexFit`, `align`, `col`, `row`, `colSpan`, `rowSpan`, stack insets)
+- Parent alignment (`mainAxisAlignment`, `crossAxisAlignment`) is enum-backed in root and row/column per-type schemas
+- `validateJsonWidgetData` now validates linear child placement, grid placement minimums, and parent alignment enums
+- Remaining gap: distinct `children.items` per parent type (linear vs grid vs stack) and any future `list-view` core definition
 
 ### 9.2 Asset schema (new)
 
@@ -371,6 +371,7 @@ Current `widget-json-schema.ts` defines container types but **not**:
 - [x] Vendored or referenced schemas for `row`, `column`, `text`, `expanded` under `packages/json-widget/schemas/`
 - [x] Kit extension schema `grid.json`
 - [x] Per-type schemas for current profile builtins/extensions: `flexible`, `stack`, wrappers, static leaves, `box`, and `button`
+- [x] Root JDW schema exposes parent-scoped placement args and row/column alignment enums
 - [x] `pnpm check:jdw-schemas` guards profile/schema drift in `validate:static`
 - [x] `widget-asset-manifest.v1.jdw.schema.json` + package `content.json`
 - [x] `validateJsonWidgetData` + asset two-pass tests
@@ -416,6 +417,7 @@ Current `widget-json-schema.ts` defines container types but **not**:
 - [x] Grid resize span reflow maps selected resize handles to `colSpan`/`rowSpan` and reflows occupied cells
 - [x] Row/column linear resize maps selected resize handles to fixed width/height/align through parent-scoped patches
 - [x] Wrapper/single-child resize maps selected wrapper child handles to fixed width/height patches
+- [x] B1 placement schema parity maps layout placement args into root schema and semantic validation
 - [ ] Broader inspector edits trigger optional reflow beyond grid columns
 - [ ] Promote layout fixture stories to `storybook-play-required` when stable
 
@@ -437,7 +439,7 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 | ------------------------------------ | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `*.jdw.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer`             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Asset parse                          | `parseWidgetAssetPackage`, `validateWidgetAssetPackage` | `schema.json` substitution deferred                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| Document parse                       | `createWidgetDocument` / `parseJsonWidgetData`          | Semantic placement validation partial                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Document parse                       | `createWidgetDocument` / `parseJsonWidgetData`          | Semantic placement validation covers linear/grid/stack placement; per-parent schema item specialization remains                                                                                                                                                                                                                                                                                                                                                  |
 | Patch / tree ops                     | `applyWidgetPatch` + `normalizeWidgetForParent`         | Outline reorder/reparent and asset drop are wired; headless stack/grid drag + stack 8-way resize + canvas reparent + grid drag-slot collision reflow + grid resize span reflow + row/column linear resize + wrapper-child resize mapping exists; selected React preview/canvas stack/grid drag, stack resize, grid columns reflow, canvas reparent, grid drag-slot reflow, grid resize span reflow, row/column linear resize, and wrapper-child resize are wired |
 | Layout                               | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts`     | Dynamic text wrapping / host font metrics deferred                                                                                                                                                                                                                                                                                                                                                                                                               |
 | Preview                              | `renderJdw`, `JdwPreview`, CSS layout backend           | `listen` invalidation candidates are value-diff driven; scheduler deferred                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -477,6 +479,7 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 | Date       | Change                                                                                                                                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 2026-06-25 | Added wrapper/single-child resize: selected wrapper child handles commit fixed width/height patches through `WidgetPatch`, with document serialization, React component, and required Storybook coverage                                                                 |
+| 2026-06-25 | Added B1 placement schema parity: root JDW schema now exposes parent-scoped placement args, row/column alignment enums, and validator checks for linear/grid/stack placement values                                                                                      |
 | 2026-06-25 | Added row/column linear resize: selected row/column child resize handles commit parent-scoped fixed width/height/align patches while preserving siblings, with headless, React, and required Storybook coverage                                                          |
 | 2026-06-25 | Added grid resize span reflow: selected grid resize handles commit `colSpan`/`rowSpan` through layout mapping and repack occupied sibling cells with required Storybook coverage                                                                                         |
 | 2026-06-25 | Added grid drag-slot collision reflow: dragging a grid child into an occupied cell replaces the parent grid with non-overlapping direct child `col`/`row` placement and required Storybook coverage                                                                      |

@@ -186,6 +186,134 @@ describe('validateJsonWidgetData', () => {
     expect(result.issues).toHaveLength(0);
   });
 
+  it('accepts parent-scoped placement args used by layout authoring', () => {
+    const result = validateJsonWidgetData(
+      JSON.stringify({
+        type: 'column',
+        args: {
+          children: [
+            {
+              type: 'row',
+              args: {
+                mainAxisAlignment: 'spaceBetween',
+                crossAxisAlignment: 'center',
+                children: [
+                  {
+                    type: 'text',
+                    args: {
+                      text: 'Linear',
+                      width: 120,
+                      height: 40,
+                      flex: 1,
+                      flexFit: 'loose',
+                      align: 'end',
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              type: 'grid',
+              args: {
+                columns: 4,
+                children: [
+                  {
+                    type: 'text',
+                    args: { text: 'Grid', col: 1, row: 0, colSpan: 2, rowSpan: 1 },
+                  },
+                ],
+              },
+            },
+            {
+              type: 'stack',
+              args: {
+                children: [
+                  {
+                    type: 'text',
+                    args: { text: 'Stack', left: -8, top: 4, right: 16, bottom: 12 },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+      { strictKnownTypes: true },
+    );
+
+    expect(result.valid).toBe(true);
+    expect(result.issues).toHaveLength(0);
+  });
+
+  it('rejects invalid parent-scoped placement args', () => {
+    const result = validateJsonWidgetData(
+      JSON.stringify({
+        type: 'column',
+        args: {
+          children: [
+            {
+              type: 'row',
+              args: {
+                mainAxisAlignment: 'middle',
+                crossAxisAlignment: 'baseline',
+                children: [
+                  {
+                    type: 'text',
+                    args: { text: 'Bad linear', width: -1, flex: -1, flexFit: 'cover' },
+                  },
+                ],
+              },
+            },
+            {
+              type: 'grid',
+              args: {
+                columns: 2,
+                children: [
+                  {
+                    type: 'text',
+                    args: { text: 'Bad grid', col: -1, row: -1, colSpan: 0, rowSpan: 0 },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+      { strictKnownTypes: true },
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        {
+          path: 'root.args.children[0].args.mainAxisAlignment',
+          message:
+            'mainAxisAlignment must be one of: start, center, end, spaceBetween, spaceAround, spaceEvenly.',
+        },
+        {
+          path: 'root.args.children[0].args.crossAxisAlignment',
+          message: 'crossAxisAlignment must be one of: stretch, start, center, end.',
+        },
+        {
+          path: 'root.args.children[0].args.children[0].args.width',
+          message: 'width must be >= 0.',
+        },
+        {
+          path: 'root.args.children[0].args.children[0].args.flexFit',
+          message: 'flexFit must be one of: tight, loose.',
+        },
+        {
+          path: 'root.args.children[1].args.children[0].args.col',
+          message: 'col must be >= 0.',
+        },
+        {
+          path: 'root.args.children[1].args.children[0].args.colSpan',
+          message: 'colSpan must be >= 1.',
+        },
+      ]),
+    );
+  });
+
   it('rejects template strings in numeric fields because they cannot preserve number types', () => {
     const result = validateJsonWidgetData(
       JSON.stringify({
