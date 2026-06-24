@@ -1,6 +1,6 @@
 # Session Work Plan — Workbench Kit
 
-**Status:** Active (updated 2026-06-20)
+**Status:** Active (updated 2026-06-25)
 **Branch:** `feature/theia-strengths-workbench`  
 **Audience:** Implementation sessions; English body with Korean executive summary for the team.
 
@@ -28,15 +28,15 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 ## 요약
 
 - **Codex 위임:** Lane A 잔여 작업(WB-30 → WB-31 → S12)은 [codex-delegation-plan.md](./codex-delegation-plan.md) 패키지 흐름으로 Codex 자율 실행 가능. 다음 작업 **WB-30**.
-- **지금 어디:** Lane A **~85%**. WB-23~WB-29 완료(reveal/focus bridge + integration tests). WB-29 미커밋 closeout은 `validate:static` + targeted vitest green (2026-06-20). 다음은 WB-30 preference scopes.
+- **지금 어디:** Lane A **~85%**. WB-23~WB-29 완료(reveal/focus bridge + integration tests). 현재 활성 context는 JDW Track B: D2 render unification, dev Storybook path, placement inspector fix 이후 **B2 headless mapping base**를 닫는 중이다. Lane A 다음 큰 작업은 WB-30 preference scopes.
 - **다음 3세션:**
   1. **S10 / WB-30** — 프리퍼런스 스코프 merge; 최소 1개 설정 키 소비.
   2. **S11 / WB-31** — registry / transaction journal read-only devtools.
   3. **S12** — Lane A DoD + `pnpm validate:full`.
-- **B-UX:** WB-29 완료로 **B-UX1 시작 가능** (사용자 결정 시). Lane A 마일스톤(WB-30/31) 우선.
+- **B-UX:** WB-29 이후 tree/preview 중심 UX-1~UX-4 core가 상당 부분 들어왔다. 캔버스 authoring은 B2 base를 소비하는 B3/B4로 분리한다.
 - **Track D:** D0–D1은 S9와 **병렬** 가능. D2 이중 렌더 통합은 2026-06-24 완료. D3는 Lane A DoD 이후.
-- **병렬 트랙 B:** Lane B(JDW/widget-tree) B1~B2는 **헤드리스 우선**으로 병렬 가능. 캔버스/에디터 크롬 확장(B3~B4)은 WB-29 closeout 이후 별도 우선순위로 검토.
-- **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). **B-UX 전체는 WB-29 closeout 이후** 시작; 프리뷰 hit-test(B-UX4)는 B2 이후, 캔버스(B-UX5)는 B3 이후.
+- **병렬 트랙 B:** Lane B(JDW/widget-tree) B2는 **headless base 완료 기준**으로 정리한다. 남은 B2 edge는 resize/reparent/grid reflow polish이고, 캔버스/에디터 크롬 확장(B3~B4)은 별도 우선순위로 검토.
+- **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). 프리뷰 hit-test(B-UX4)는 B2 base를 소비할 수 있고, 캔버스(B-UX5)는 B3 이후.
 - **보류 트랙 C:** WB-15 dirty guard, WB-20/22 리소스 드래프트, consumer swap, i18n/테마, preview zoom/pan — Lane A DoD 이후.
 - **정리 트랙 D (in-repo only):** D0–D1(인벤토리·dead WIP)은 병렬 진행. D2(이중 렌더 통합)는 완료. D3(legacy shim 제거)는 Lane A DoD 이후. 다음 우선순위는 preview/editor 검증면 강화와 문서 truth 유지. **패키지 분리·git subtree는 범위 밖.**
 - **React JDW 위치:** `packages/react/src/jdw` 유지. headless는 `@workbench-kit/jdw`. 별도 `jdw-react` 패키지·git subtree **계획 제외(out of scope)**.
@@ -50,14 +50,14 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 
 ## 1. Current Snapshot
 
-| Field               | Value                                                                                 |
-| ------------------- | ------------------------------------------------------------------------------------- |
-| **Date**            | 2026-06-20                                                                            |
-| **Branch**          | `feature/theia-strengths-workbench`                                                   |
-| **Working tree**    | Uncommitted WB-29 closeout + CSS P1-1 + doc alignment (2026-06-20)                    |
-| **Last commits**    | Branch ahead of origin by 9 commits; recent: sidebar Phase A/B, explorer context menu |
-| **Lane A progress** | ~85% (WB-23–WB-29 done; S8.5/S8.6 sample polish done)                                 |
-| **Validate note**   | `pnpm validate:static` green 2026-06-20; targeted explorer/provider vitest 26/26      |
+| Field               | Value                                                                                              |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| **Date**            | 2026-06-25                                                                                         |
+| **Branch**          | `feature/theia-strengths-workbench`                                                                |
+| **Working tree**    | JDW B2 headless layout mapping + doc truth slice                                                   |
+| **Last commits**    | Recent: JDW placement edits (`1f8da6b`), dev Storybook path (`6280a57`)                            |
+| **Lane A progress** | ~85% (WB-23–WB-29 done; S8.5/S8.6 sample polish done)                                              |
+| **Validate note**   | `pnpm validate:full` green 2026-06-25; Vitest 200 files / 887 tests; Storybook required play 19/19 |
 
 ---
 
@@ -86,27 +86,27 @@ WB-29 → WB-30 → WB-31 → Lane A DoD
 
 From [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md) §8:
 
-| Phase | Scope                                               | Priority | Blocks on Lane A?              |
-| ----- | --------------------------------------------------- | -------- | ------------------------------ |
-| B0    | JDW v7 parse/patch/layout                           | **Done** | No                             |
-| B1    | Schema parity; preview pipeline hardening           | Parallel | No (headless)                  |
-| B2    | Mapping layer spec (hit-test → patch → normalize)   | Parallel | No (design + tests only)       |
-| B3    | Wire canvas into `WidgetTreeLab`; tree ↔ canvas sel | Lower    | **Yes** — after WB-29 closeout |
-| B4    | Drag reparent, grid reflow, optional zoom/pan       | Deferred | Yes — Lane C overlap           |
+| Phase | Scope                                               | Priority        | Blocks on Lane A?              |
+| ----- | --------------------------------------------------- | --------------- | ------------------------------ |
+| B0    | JDW v7 parse/patch/layout                           | **Done**        | No                             |
+| B1    | Schema parity; preview pipeline hardening           | Parallel        | No (headless)                  |
+| B2    | Mapping layer spec (hit-test → patch → normalize)   | **Done (base)** | No — headless tests only       |
+| B3    | Wire canvas into `WidgetTreeLab`; tree ↔ canvas sel | Lower           | **Yes** — after WB-29 closeout |
+| B4    | Drag reparent, grid reflow, optional zoom/pan       | Deferred        | Yes — Lane C overlap           |
 
 ### Track B-UX — JDW editor UX (parallel, tree-first)
 
 From [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). Improves `WidgetTreeLab` / `WidgetTreeWorkbench` without waiting for canvas unless noted.
 
-| Session   | UX phase | Scope                                                                  | Effort | Timing vs Lane A / Lane B                         |
-| --------- | -------- | ---------------------------------------------------------------------- | ------ | ------------------------------------------------- |
-| **B-UX1** | UX-1     | Validation banner + baseline dirty/Save gating parity with JsonConfig  | S–M    | **Deferred** — after **WB-29** (Lane A milestone) |
-| **B-UX2** | UX-2     | Outline DnD reorder + keyboard navigation + Monaco reveal (basic)      | M      | After B-UX1; parallel to S8–S9 when unblocked     |
-| **B-UX3** | UX-3     | Stack placement inspector, side-panel layout, asset insert auto-select | M      | Parallel to **B-S1 (B1)** schema parity           |
-| **B-UX4** | UX-4     | Preview hit-test selection ↔ outline sync                              | M      | **After B-S2 (B2)** mapping spec + headless tests |
-| **B-UX5** | UX-5     | Canvas wire-in to lab (gesture commit)                                 | L      | **After B3** — shares React layout work           |
+| Session   | UX phase | Scope                                                                  | Effort | Timing vs Lane A / Lane B                                 |
+| --------- | -------- | ---------------------------------------------------------------------- | ------ | --------------------------------------------------------- |
+| **B-UX1** | UX-1     | Validation banner + baseline dirty/Save gating parity with JsonConfig  | S–M    | **Deferred** — after **WB-29** (Lane A milestone)         |
+| **B-UX2** | UX-2     | Outline DnD reorder + keyboard navigation + Monaco reveal (basic)      | M      | After B-UX1; parallel to S8–S9 when unblocked             |
+| **B-UX3** | UX-3     | Stack placement inspector, side-panel layout, asset insert auto-select | M      | Parallel to **B-S1 (B1)** schema parity                   |
+| **B-UX4** | UX-4     | Preview hit-test selection ↔ outline sync                              | M      | B2 base can be consumed; React hover/focus polish remains |
+| **B-UX5** | UX-5     | Canvas wire-in to lab (gesture commit)                                 | L      | **After B3** — shares React layout work                   |
 
-**First session recommendation (when unblocked):** **B-UX1** — highest ROI, no mapping-layer dependency, closes gap vs `JsonConfigWorkbench`. **Blocked until WB-29 closeout.**
+**Current JDW recommendation:** consume B2 base in a narrow B3 preview/canvas frame slice, or expand B2 edge coverage for resize/reparent/grid reflow before UI wiring.
 
 ### Track D — timing (refreshed)
 
@@ -191,7 +191,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 - Preview: Strategy A (`renderJdwWithLayout`) is landed; registry handles leaf custom tags only.
 - Editing: keep `WidgetTreeLab`; `JsonConfigWorkbench` for non-widget JSON.
-- `WorkbenchDocument`: ultimate target is JDW render + event layer; deprecate absolute demo path after Lane A DoD / B2 mapping — do not persist widget files.
+- `WorkbenchDocument`: ultimate target is JDW render + event layer; deprecate absolute demo path after Lane A DoD and B3 preview/canvas wire-in — do not persist widget files.
 
 ---
 
@@ -341,12 +341,12 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | ------------------------------------ | ------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | **WB-15 deferred**                   | WB-20/22 out of scope; no global dirty guard dialog     | WB-28 uses editor-local dirty only until policy written                          |
 | **Dual render paths**                | `@workbench-kit/react` demo shell vs `shell-react` host | Sample host proves Lane A; Integrated Shell stays extended demo                  |
-| **WorkbenchDocument vs JDW**         | Widget files must not persist absolute canvas coords    | JDW canonical; mapping layer for Figma gestures (Lane B B2)                      |
+| **WorkbenchDocument vs JDW**         | Widget files must not persist absolute canvas coords    | JDW canonical; B2 headless mapping base feeds future B3 canvas gestures          |
 | **Editor host API stabilization**    | New editor hosts may need additional context fields     | Keep the factory contract minimal; add fields only when a second host needs them |
 | **Generic vs workspace ResourceUri** | Editor/explorer binding confusion                       | `WorkspaceResourceUri` for virtual workspace only                                |
 | **WB-29 selection/reveal closeout**  | Explorer/editor sync still needs browser smoke coverage | Verify current command handlers and sample flows before moving to WB-30          |
 | **Transaction persistence**          | No undo stack or disk adapter                           | In-memory virtual workspace for Lane A                                           |
-| **Lane B canvas UX**                 | Touches shared React layout                             | B1–B2 headless only; B3 after WB-29 closeout / Lane A priority                   |
+| **Lane B canvas UX**                 | Touches shared React layout                             | B2 base remains headless; B3/B4 React canvas UI requires separate smoke coverage |
 
 ---
 
@@ -365,6 +365,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | 2026-06-16 | **Editor-local dirty** for WB-28                   | Unblocks S2/S3 without WB-15 policy                                                                                                                                                                                     |
 | 2026-06-16 | **No subtree / no jdw-react split**                | Git subtree and separate `@workbench-kit/jdw-react` package **excluded** from active plan; React JDW remains `packages/react/src/jdw`; headless stays `@workbench-kit/jdw`; Track D = in-repo cleanup only              |
 | 2026-06-16 | **Lane A priority over B-UX**                      | WB-28 S3 → WB-29 before Track B-UX sessions; B-UX deferred until Lane A milestones                                                                                                                                      |
+| 2026-06-25 | **B2 mapping base landed**                         | `layoutWidget` rects can be hit-tested to `WidgetPath`; stack/grid drag deltas map to JDW patches in headless tests. React preview/canvas wire-in remains B3                                                            |
 | 2026-06-24 | **D2 render: Strategy A landed**                   | `layoutWidget` + `cssRenderBackend` single path; builtin registry leaf-only; public compatibility wrapper removed                                                                                                       |
 | 2026-06-16 | **D2 render: Strategy A (target)**                 | `layoutWidget` + `cssRenderBackend` single path; registry leaf-only; Strategy B not long-term                                                                                                                           |
 | 2026-06-16 | **WorkbenchDocument deprecation direction**        | Ultimate goal: JDW render + event layer; remove `WorkbenchDocument` absolute demo parallel model over time after Lane A DoD / B2 mapping                                                                                |
@@ -410,7 +411,8 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 - [x] B0 — JDW parse/patch/layout/materialize
 - [ ] B1 — Schema parity for placement args
-- [ ] B2 — Gesture → patch mapping spec + headless tests
+- [x] B2 — Headless hit-test + stack/grid drag → patch mapping spec/tests
+- [ ] B2 edge — Resize/reparent/grid reflow polish beyond base mapping
 - [ ] B3 — Canvas wired into WidgetTreeLab
 - [ ] B4 — Drag reparent + grid reflow
 
@@ -462,7 +464,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ---
 
-## Work backlog snapshot (2026-06-20)
+## Work backlog snapshot (2026-06-25)
 
 | Priority | Item                                                                         | Parallel?              | Conflict hotspots                                | Notes                     |
 | -------- | ---------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------ | ------------------------- |
@@ -473,9 +475,9 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | P1       | **Editor layout ownership** (`EditorService` split model)                    | Parallel-safe          | `editor-service.ts`, `EditorArea` DnD            | recommended-work-items P1 |
 | P2       | **Track D D0–D1** inventory + dead WIP cleanup                               | Parallel-safe          | `react/jdw`, validation shims                    | No Lane A block           |
 | P2       | **Sidebar Phase B-2** overlay footer decision (Chat/Commands)                | Parallel-safe          | `SideBarViewFrame`, Chat/Commands                | Browser smoke only        |
-| P2       | **Track B B1/B2** JDW schema parity + mapping spec                           | Parallel-safe          | `@workbench-kit/jdw`, headless tests             | Headless only             |
+| P2       | **Track B B1/B2 edge** JDW schema parity + resize/reparent mapping polish    | Parallel-safe          | `@workbench-kit/jdw`, headless tests             | Headless only             |
 
-**Suggested next PR:** Commit WB-29 closeout slice (`explorer-reveal` bridge, provider/explorer-view wiring, tests) as one PR; start WB-30 in the following PR.
+**Suggested next slice:** Commit the B2 headless mapping base, then choose either B3 preview/canvas frame wire-in or B2 edge coverage depending on whether UI smoke coverage is available.
 
 ---
 
@@ -483,6 +485,8 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Date       | Note                                                                                                                                |
 | ---------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | Validation: `pnpm validate:full` green for B2 mapping base; Vitest 200 files / 887 tests and Storybook required play 19/19          |
+| 2026-06-25 | Context refresh: B2 headless mapping base added for layout hit-test and stack/grid drag patches; B3 canvas wire-in remains separate |
 | 2026-06-20 | Validation pass: WB-29 closeout kept (reveal bridge, 26 vitest, validate:static); backlog snapshot added; next WB-30                |
 | 2026-06-20 | Plan refresh: WB-29 command handlers/UI dispatch landed; closeout remains for selection/reveal/search and sample smoke coverage     |
 | 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7                                                    |

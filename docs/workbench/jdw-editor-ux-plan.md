@@ -1,15 +1,15 @@
 # JDW Editor UX Improvement Plan
 
-> **Status:** Active (updated 2026-06-24)
+> **Status:** Active (updated 2026-06-25)
 > **Related:** [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md), [strengths-inheritance.md](./strengths-inheritance.md), [session-work-plan.md](./session-work-plan.md), [json-config-workbench.md](./json-config-workbench.md)
 
 ## 요약
 
 - **현재 편집면:** `WidgetTreeLab`(트리·인스pector·Monaco·선택 가능한 프리뷰)이 JDW 위젯 편집의 주 표면. `WidgetTreeWorkbench`는 validation banner·baseline/dirty·save gating을 제공한다. `JsonConfigWorkbench`는 범용 JSON용. `ScreenSpecEditor`는 screen-spec → JDW 컴파일 전용.
 - **핵심 UX 갭:** 아웃라인 reorder/reparent/collapse/drop-position, asset-to-outline drop, Monaco reveal/sync, persistent outline + Props/Assets detail tabs는 완료. hover/focus chrome, 줌/팬·캔버스 제스처는 의도적 보류.
-- **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). 정적 preview selection, editor discipline, outline ergonomics core, stack placement controls/preview geometry는 required Storybook play로 고정했다. 다음은 preview/canvas mapping을 headless spec으로 좁힌다.
+- **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). 정적 preview selection, editor discipline, outline ergonomics core, stack placement controls/preview geometry는 required Storybook play로 고정했다. B2 headless mapping base도 들어왔으므로 다음은 preview/canvas wire-in과 resize/reparent edge를 분리해서 진행한다.
 - **단계:** UX-1(에디터 discipline, core 완료) → UX-2(아웃라인, keyboard Enter→Props 완료) → UX-3(인스pector·에셋, stack/insert + tab friction 완료) → UX-4(프리뷰 hit-test 선택, click-select 완료) → UX-5(캔버스, B3 의존).
-- **다음 권장:** **B2 mapping closeout** — preview/canvas hit-test 계약과 gesture→patch mapping을 headless spec으로 좁힌다.
+- **다음 권장:** **B3 preview/canvas wire-in planning** — `layout-mapping`의 hit-test/stack/grid patch 계약을 React preview frame에 연결하되, resize/reparent/grid reflow edge는 B4로 분리한다.
 
 ---
 
@@ -185,7 +185,7 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 - [x] No persistence of selection to JSON
 
 **Depends on:** **B2** mapping layer spec (hit-test → `WidgetPath`).  
-**Lane B tie-in:** B2 required; implement UI after headless tests exist.
+**Lane B tie-in:** B2 headless base exists through `layout-mapping`; UI polish can start after this contract is consumed by preview/canvas frames.
 
 ---
 
@@ -255,14 +255,14 @@ Edit → dirty + validation banner
 
 ## 6. Dependencies on Lane B
 
-| Lane B phase              | UX phase unblocked            | Notes                                              |
-| ------------------------- | ----------------------------- | -------------------------------------------------- |
-| B1 Schema parity          | UX-3 (Monaco placement hints) | JSON Schema completeness for child placement props |
-| B2 Mapping spec           | UX-4                          | Hit-test, gesture → patch contracts                |
-| B3 Canvas in lab          | UX-5                          | Wire `WorkbenchPreviewCanvas` into `WidgetTreeLab` |
-| B4 Drag reparent / reflow | UX-5 polish                   | Grid reflow, optional zoom overlap with Lane C     |
+| Lane B phase              | UX phase unblocked            | Notes                                                    |
+| ------------------------- | ----------------------------- | -------------------------------------------------------- |
+| B1 Schema parity          | UX-3 (Monaco placement hints) | JSON Schema completeness for child placement props       |
+| B2 Mapping base           | UX-4                          | Headless hit-test plus stack/grid drag → patch contracts |
+| B3 Canvas in lab          | UX-5                          | Wire `WorkbenchPreviewCanvas` into `WidgetTreeLab`       |
+| B4 Drag reparent / reflow | UX-5 polish                   | Grid reflow, optional zoom overlap with Lane C           |
 
-**Sequencing rule:** Track B-UX **deferred until WB-29 closeout**; then UX-1–UX-3 may proceed in parallel with B1/B2 headless work. UX-4 starts after B2 tests. UX-5 waits for B3 and the already-stable editor shell for real host tabs.
+**Sequencing rule:** Track B-UX **deferred until WB-29 closeout**; then UX-1–UX-3 may proceed in parallel with B1/B2 headless work. UX-4 can consume the B2 base contract; UX-5 waits for B3 and the already-stable editor shell for real host tabs.
 
 ---
 

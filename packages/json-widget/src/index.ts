@@ -78,6 +78,18 @@ export {
   type LayoutWidgetOptions,
 } from './layout/layout-widget.js';
 
+export type {
+  LayoutHitTestResult,
+  LayoutPoint,
+  WidgetDragMappingOptions,
+} from './layout/layout-mapping.js';
+
+export {
+  createWidgetDragPatch,
+  findLayoutNodeByPath,
+  hitTestLayoutTree,
+} from './layout/layout-mapping.js';
+
 export type { WidgetPatch } from './widget-patch.js';
 
 export { applyWidgetPatch } from './widget-patch.js';
