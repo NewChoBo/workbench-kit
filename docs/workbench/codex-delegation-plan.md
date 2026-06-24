@@ -9,9 +9,9 @@
 ## 요약
 
 - **미션:** Lane A 마감을 Codex에 위임. 브랜치 `feature/theia-strengths-workbench` 유지. 각 패키지 완료 시 `pnpm validate` 통과 후 Conventional Commit (영문).
-- **현재 기준선:** WB-23~WB-30(S1–S3, S8.5~S8.6, command explorer, preference scopes) 완료. Lane A **~90%**. 최근 커밋: `96e957f`, `712f922`, `835497e`, `66a1f08`, `d1af183`.
+- **현재 기준선:** WB-23~WB-31(S1–S3, S8.5~S8.6, command explorer, preference scopes, devtools inspectors) 완료. Lane A **~95%**. 최근 커밋: `9b37c8f`, `96e957f`, `712f922`, `835497e`, `66a1f08`.
 - **Codex 작업 패키지 5개:** P0 **S8.6**(완료) → P0 **WB-29**(완료) → P1 **WB-30**(완료) → P2 **Track D D2**(완료) → **B-UX**(부분 진행).
-- **첫 권장 작업:** **WB-31** registry / transaction journal read-only devtools inspectors.
+- **첫 권장 작업:** **S12** Lane A DoD audit; rerun `validate:full` only if the audit changes code or release-critical docs.
 - **필수 제약:** `workbench-core` React-free, `react`가 `workbench-core` 미import, JDW canonical, subtree 분리 금지, Strategy A 렌더, UI 영문.
 
 ---
@@ -35,16 +35,16 @@
 ### Recent commits (`git log -10 --oneline`)
 
 ```text
-ec5b6e8 docs(workbench): refresh session plan after WB-28 and S8.5
-54602b9 chore(storybook): remove unnecessary story wrappers
-9191bb9 docs(workbench): add editor view model alignment and S8.6 slice
-0c2c068 feat(workbench): add editor source/form view toggle in sample host
-111aa0c feat(workbench): wire editor save to workspace resource transactions (WB-28 S3)
-ee53ce1 docs(workbench): record Lane A priority and JDW render direction
-cb968d2 feat(workbench): wire editor tab chrome and sample host open-file (WB-28 S2)
-a3efc59 docs(workbench): add session plan, structural review, and JDW editor UX plan
-f1ab57e docs(workbench): add JDW architecture and Figma authoring analysis
-5d31491 feat(workbench): add editor service foundation with resolver hooks (WB-28)
+9b37c8f fix(workbench): refresh scoped settings updates
+96e957f feat(jdw): show asset drop placement marker
+712f922 feat(jdw): specialize parent child schemas
+835497e feat(jdw): show preview focus chrome
+66a1f08 feat(jdw): show preview hover chrome
+d1af183 feat(jdw): drop assets onto preview canvas
+d821254 feat(jdw): expose placement schema hints
+5f1daf6 feat(jdw): resize wrapper children from canvas
+68bb7ee feat(jdw): resize linear children from canvas
+33e3c92 feat(jdw): resize grid spans from canvas
 ```
 
 ### Done (Lane A)
@@ -61,19 +61,19 @@ f1ab57e docs(workbench): add JDW architecture and Figma authoring analysis
 | S8.6        | Done   | JDW Preview/Split modes in `EditorArea`; StrictMode-safe sample open  |
 | WB-29       | Done   | Command-backed explorer closeout + selection/reveal sync              |
 | WB-30       | Done   | Preference scopes + scoped setting UI/persistence coverage            |
+| WB-31       | Done   | Read-only devtools inspectors + required Storybook coverage           |
 
-### Remaining (Lane A ~10%)
+### Remaining (Lane A ~5%)
 
-| Item    | Priority | Blocker                      |
-| ------- | -------- | ---------------------------- |
-| WB-31   | P2       | After WB-28/29 event streams |
-| S12 DoD | P2       | After WB-31                  |
+| Item    | Priority | Blocker                         |
+| ------- | -------- | ------------------------------- |
+| S12 DoD | P2       | Final audit after WB-31 landing |
 
 ### Validate status
 
 Latest full validation is tracked in [session-work-plan.md](./session-work-plan.md);
-WB-30 closeout currently has targeted provider coverage proving scoped setting
-writes and local preference restore.
+WB-31 context closeout passed `pnpm validate:full` on 2026-06-25 with 202 Vitest
+files / 919 tests and 29/29 required Storybook plays.
 
 ---
 
@@ -510,7 +510,7 @@ pnpm workbench-sample
 ## 8. Suggested Codex Session Order
 
 ```text
-WB-31 → Lane A DoD
+S12 Lane A DoD
 ```
 
 ### Parallel options
@@ -567,5 +567,7 @@ WB-31 → Lane A DoD
 
 | Date       | Note                                                                                     |
 | ---------- | ---------------------------------------------------------------------------------------- |
+| 2026-06-25 | WB-31 context closeout passed `pnpm validate:full`; S12 audit remains                    |
+| 2026-06-25 | WB-31 devtools inspectors landed; remaining Lane A work is S12 DoD audit                 |
 | 2026-06-16 | Initial Codex delegation plan for Lane A handoff                                         |
 | 2026-06-16 | Completed S8.6 EditorArea JDW Preview/Split and StrictMode-safe sample open verification |

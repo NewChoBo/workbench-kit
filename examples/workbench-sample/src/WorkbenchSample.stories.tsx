@@ -130,6 +130,52 @@ export const TesterWorkbench: Story = {
   tags: ['storybook-play-required'],
 };
 
+export const DevtoolsInspectors: Story = {
+  name: 'Devtools inspectors',
+  render: () => {
+    resetSampleHostStorage('tester');
+    return <App devtools />;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitForWorkbenchReady(canvas);
+
+    const devtools = await canvas.findByLabelText('Workbench devtools');
+    const devtoolsScope = within(devtools);
+    await expect(devtoolsScope.getByText('Workbench Devtools')).toBeVisible();
+    await expect(devtoolsScope.getByText('Read-only')).toBeVisible();
+    await expect(devtoolsScope.getByRole('button', { name: 'Commands' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(devtools).toHaveTextContent('workbench-kit.builtin.settings.open');
+    await expect(devtools).toHaveTextContent('workspace.open');
+
+    await userEvent.click(devtoolsScope.getByRole('button', { name: 'Transactions' }));
+    await expect(devtools).toHaveTextContent('Initialize workspace');
+
+    await userEvent.click(devtoolsScope.getByRole('button', { name: 'Layout' }));
+    await expect(devtools).toHaveTextContent('"activeViewContainer": "explorer"');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Open example' }));
+    await expectEditorTabVisible(canvas, 'example.jdw.json');
+    await userEvent.click(devtoolsScope.getByRole('button', { name: 'Editor' }));
+    await expect(devtools).toHaveTextContent('example.jdw.json');
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
+    const settingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    await expect(settingsDialog).toBeVisible();
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(canvas.queryByRole('dialog', { name: /Settings/ })).toBeNull());
+
+    await userEvent.click(devtoolsScope.getByRole('button', { name: 'Capabilities' }));
+    await expect(devtools).toHaveTextContent('workbench-kit.builtin.settings');
+    await expect(devtools).toHaveTextContent('workbench.settings');
+  },
+  tags: ['storybook-play-required'],
+};
+
 export const TesterDevAppJourney: Story = {
   name: 'Tester dev app journey',
   render: () => {

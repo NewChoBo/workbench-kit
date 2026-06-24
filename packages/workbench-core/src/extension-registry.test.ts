@@ -88,6 +88,30 @@ describe('ExtensionRegistry', () => {
     expect(registry.isActive('workbench-kit.samples.hello-world')).toBe(true);
   });
 
+  it('emits extension lifecycle events when extensions activate and deactivate', async () => {
+    const registry = new ExtensionRegistry();
+    const events: string[] = [];
+    const activateDisposable = registry.onDidActivateExtension((event) => {
+      events.push(`activate:${event.extensionId}`);
+    });
+    const deactivateDisposable = registry.onDidDeactivateExtension((event) => {
+      events.push(`deactivate:${event.extensionId}`);
+    });
+
+    registry.registerExtension(helloWorldExtension);
+
+    await registry.activateCommand('workbench-kit.samples.hello-world.sayHello');
+    await registry.deactivateExtension('workbench-kit.samples.hello-world');
+
+    expect(events).toEqual([
+      'activate:workbench-kit.samples.hello-world',
+      'deactivate:workbench-kit.samples.hello-world',
+    ]);
+
+    activateDisposable.dispose();
+    deactivateDisposable.dispose();
+  });
+
   it('executes command handlers registered during activation', async () => {
     const registry = new ExtensionRegistry();
     registry.registerExtension({

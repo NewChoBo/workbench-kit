@@ -9,7 +9,7 @@
 - **핵심 UX 갭:** 아웃라인 reorder/reparent/collapse/drop-position, asset-to-outline drop, Monaco reveal/sync, persistent outline + Props/Assets detail tabs, selected canvas frame + stack/grid drag/stack 8방향 resize commit, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper/single-child resize, asset-to-preview drop + placement marker, preview hover/focus chrome, B1 root schema placement hints와 per-parent children schema specialization은 완료. drag/reparent ghost indicators, 줌/팬은 남았다.
 - **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). 정적 preview selection, editor discipline, outline ergonomics core, stack placement controls/preview geometry, selected frame drag/resize/reparent/grid-slot/grid-span/linear-resize/wrapper-resize commit, preview asset drop + marker, preview hover/focus chrome, root placement schema/validator parity, per-parent children schema refs는 required/headless checks로 고정한다.
 - **단계:** UX-1(에디터 discipline, core 완료) → UX-2(아웃라인, keyboard Enter→Props 완료) → UX-3(인스pector·에셋, stack/insert + tab friction 완료) → UX-4(프리뷰 hit-test 선택, click-select 완료) → UX-5(캔버스 B3 first slice + B4 edge 확장).
-- **다음 권장:** Lane A **WB-31 devtools inspectors**로 진행. JDW에 남는다면 drag/reparent ghost indicators를 좁은 slice로 진행한다.
+- **다음 권장:** Lane A **S12 closeout**로 진행. JDW에 남는다면 drag/reparent ghost indicators를 좁은 slice로 진행한다.
 
 ---
 

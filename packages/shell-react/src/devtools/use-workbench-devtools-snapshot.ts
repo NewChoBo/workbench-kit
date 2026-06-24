@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 
 import {
   collectWorkbenchDevtoolsSnapshot,
@@ -10,64 +10,75 @@ import type { WorkbenchWorkspaceHostPort as WorkspaceHostPort } from '@workbench
 export function useWorkbenchDevtoolsSnapshot(): WorkbenchDevtoolsSnapshot {
   const { editorService, extensionRegistry, layoutService, workspaceHostPort } = useWorkbench();
 
-  return useSyncExternalStore(
-    (onStoreChange) => {
-      const disposables = [
-        layoutService.onDidChangeLayout(() => {
-          onStoreChange();
-        }),
-        editorService.onDidChangeEditors(() => {
-          onStoreChange();
-        }),
-        extensionRegistry.commands.onDidRegisterCommand(() => {
-          onStoreChange();
-        }),
-        extensionRegistry.menus.onDidRegisterMenuItem(() => {
-          onStoreChange();
-        }),
-        extensionRegistry.keybindings.onDidRegisterKeybinding(() => {
-          onStoreChange();
-        }),
-        extensionRegistry.views.onDidRegisterView(() => {
-          onStoreChange();
-        }),
-        extensionRegistry.views.onDidRegisterViewContainer(() => {
-          onStoreChange();
-        }),
-        extensionRegistry.views.onDidRegisterViewProvider(() => {
-          onStoreChange();
-        }),
-        extensionRegistry.activities.onDidRegisterActivity(() => {
-          onStoreChange();
-        }),
-      ];
-
-      const workspacePort = workspaceHostPort as WorkspaceHostPort | undefined;
-      const unsubscribeWorkspace = workspacePort?.service.onDidChangeWorkspace(() => {
-        onStoreChange();
+  const store = useMemo(() => {
+    const collectSnapshot = () =>
+      collectWorkbenchDevtoolsSnapshot({
+        editorService,
+        extensionRegistry,
+        layoutService,
+        workspaceHostPort,
       });
+    let snapshot = collectSnapshot();
 
-      return () => {
-        for (const disposable of disposables) {
-          disposable.dispose();
-        }
+    const notifyChange = (onStoreChange: () => void) => {
+      snapshot = collectSnapshot();
+      onStoreChange();
+    };
 
-        unsubscribeWorkspace?.();
-      };
-    },
-    () =>
-      collectWorkbenchDevtoolsSnapshot({
-        editorService,
-        extensionRegistry,
-        layoutService,
-        workspaceHostPort,
-      }),
-    () =>
-      collectWorkbenchDevtoolsSnapshot({
-        editorService,
-        extensionRegistry,
-        layoutService,
-        workspaceHostPort,
-      }),
-  );
+    return {
+      getSnapshot: () => snapshot,
+      subscribe: (onStoreChange: () => void) => {
+        const disposables = [
+          layoutService.onDidChangeLayout(() => {
+            notifyChange(onStoreChange);
+          }),
+          editorService.onDidChangeEditors(() => {
+            notifyChange(onStoreChange);
+          }),
+          extensionRegistry.commands.onDidRegisterCommand(() => {
+            notifyChange(onStoreChange);
+          }),
+          extensionRegistry.menus.onDidRegisterMenuItem(() => {
+            notifyChange(onStoreChange);
+          }),
+          extensionRegistry.keybindings.onDidRegisterKeybinding(() => {
+            notifyChange(onStoreChange);
+          }),
+          extensionRegistry.views.onDidRegisterView(() => {
+            notifyChange(onStoreChange);
+          }),
+          extensionRegistry.views.onDidRegisterViewContainer(() => {
+            notifyChange(onStoreChange);
+          }),
+          extensionRegistry.views.onDidRegisterViewProvider(() => {
+            notifyChange(onStoreChange);
+          }),
+          extensionRegistry.activities.onDidRegisterActivity(() => {
+            notifyChange(onStoreChange);
+          }),
+          extensionRegistry.onDidActivateExtension(() => {
+            notifyChange(onStoreChange);
+          }),
+          extensionRegistry.onDidDeactivateExtension(() => {
+            notifyChange(onStoreChange);
+          }),
+        ];
+
+        const workspacePort = workspaceHostPort as WorkspaceHostPort | undefined;
+        const unsubscribeWorkspace = workspacePort?.service.onDidChangeWorkspace(() => {
+          notifyChange(onStoreChange);
+        });
+
+        return () => {
+          for (const disposable of disposables) {
+            disposable.dispose();
+          }
+
+          unsubscribeWorkspace?.();
+        };
+      },
+    };
+  }, [editorService, extensionRegistry, layoutService, workspaceHostPort]);
+
+  return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 }

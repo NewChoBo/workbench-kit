@@ -1,4 +1,10 @@
-import { DisposableStore, isDisposable, toDisposable, type Disposable } from '@workbench-kit/base';
+import {
+  DisposableStore,
+  Emitter,
+  isDisposable,
+  toDisposable,
+  type Disposable,
+} from '@workbench-kit/base';
 import {
   CommandRegistry,
   CommandNoHandlerError,
@@ -87,6 +93,10 @@ export interface ActivatedExtension {
   readonly subscriptions: DisposableStore;
 }
 
+export interface ExtensionLifecycleEvent {
+  readonly extensionId: string;
+}
+
 export interface ExtensionFeatureInspection {
   readonly diagnostics: readonly ExtensionDependencyDiagnostic[];
   readonly feature: ExtensionFeatureSpec;
@@ -140,9 +150,14 @@ export class ExtensionRegistry implements Disposable {
   readonly viewHostFactories: ViewHostFactoryRegistry;
   readonly views: ViewRegistry;
 
+  private readonly onDidActivateExtensionEmitter = new Emitter<ExtensionLifecycleEvent>();
+  private readonly onDidDeactivateExtensionEmitter = new Emitter<ExtensionLifecycleEvent>();
   private readonly activeExtensions = new Map<string, ActiveExtension>();
   private readonly activatingExtensions = new Map<string, Promise<ActivatedExtension>>();
   private readonly extensions = new Map<string, RegisteredExtension>();
+
+  readonly onDidActivateExtension = this.onDidActivateExtensionEmitter.event;
+  readonly onDidDeactivateExtension = this.onDidDeactivateExtensionEmitter.event;
 
   constructor(options: ExtensionRegistryOptions = {}) {
     this.activities = options.activities ?? new ActivityRegistry();
@@ -338,6 +353,7 @@ export class ExtensionRegistry implements Disposable {
         extensionId,
         subscriptions,
       });
+      this.onDidActivateExtensionEmitter.fire({ extensionId });
 
       return {
         extensionId,
@@ -358,6 +374,7 @@ export class ExtensionRegistry implements Disposable {
     this.activeExtensions.delete(extensionId);
     await active.deactivate?.();
     active.subscriptions.dispose();
+    this.onDidDeactivateExtensionEmitter.fire({ extensionId });
   }
 
   async deactivateAll(): Promise<void> {
@@ -386,6 +403,8 @@ export class ExtensionRegistry implements Disposable {
     this.editorHostFactories.dispose();
     this.editorResolvers.dispose();
     this.capabilityRegistry.dispose();
+    this.onDidActivateExtensionEmitter.dispose();
+    this.onDidDeactivateExtensionEmitter.dispose();
   }
 
   private assertDependencyGraph(): void {

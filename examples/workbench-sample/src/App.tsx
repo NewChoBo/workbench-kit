@@ -19,6 +19,7 @@ import {
   mergeWorkbenchStatusSections,
   usePersistedWorkbenchAppearance,
   WorkbenchProvider,
+  WorkbenchDevtoolsShell,
   WorkbenchShell,
   WorkbenchStartupGate,
   useWorkbench,
@@ -63,7 +64,11 @@ const WORKBENCH_SETTINGS_CAPABILITY_ID = 'workbench.settings';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 
-export function App() {
+export interface AppProps {
+  readonly devtools?: boolean | undefined;
+}
+
+export function App({ devtools = false }: AppProps) {
   const [appearance, setAppearance] = usePersistedWorkbenchAppearance();
   const [permissionRoleOverride, setPermissionRoleOverride] =
     useState<SamplePermissionRoleOverride>(() => readPersistedSamplePermissionRoleOverride());
@@ -76,6 +81,7 @@ export function App() {
     <SampleAuthShell appearance={appearance}>
       <SampleAuthenticatedWorkbench
         appearance={appearance}
+        devtools={devtools}
         permissionRoleOverride={permissionRoleOverride}
         onAppearanceChange={setAppearance}
         onPermissionRoleOverrideChange={setPermissionRoleOverride}
@@ -86,6 +92,7 @@ export function App() {
 
 interface SampleAuthenticatedWorkbenchProps {
   appearance: WorkbenchAppearanceSettings;
+  devtools: boolean;
   permissionRoleOverride: SamplePermissionRoleOverride;
   onAppearanceChange: (appearance: WorkbenchAppearanceSettings) => void;
   onPermissionRoleOverrideChange: (roleOverride: SamplePermissionRoleOverride) => void;
@@ -93,6 +100,7 @@ interface SampleAuthenticatedWorkbenchProps {
 
 function SampleAuthenticatedWorkbench({
   appearance,
+  devtools,
   permissionRoleOverride,
   onAppearanceChange,
   onPermissionRoleOverrideChange,
@@ -122,12 +130,23 @@ function SampleAuthenticatedWorkbench({
       workspaceHostPort={workspaceHostPort}
     >
       <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={initialWorkspace}>
-        <SampleWorkbenchHost
-          appearance={appearance}
-          permissionRoleOverride={permissionRoleOverride}
-          onAppearanceChange={onAppearanceChange}
-          onPermissionRoleOverrideChange={onPermissionRoleOverrideChange}
-        />
+        {devtools ? (
+          <WorkbenchDevtoolsShell>
+            <SampleWorkbenchHost
+              appearance={appearance}
+              permissionRoleOverride={permissionRoleOverride}
+              onAppearanceChange={onAppearanceChange}
+              onPermissionRoleOverrideChange={onPermissionRoleOverrideChange}
+            />
+          </WorkbenchDevtoolsShell>
+        ) : (
+          <SampleWorkbenchHost
+            appearance={appearance}
+            permissionRoleOverride={permissionRoleOverride}
+            onAppearanceChange={onAppearanceChange}
+            onPermissionRoleOverrideChange={onPermissionRoleOverrideChange}
+          />
+        )}
       </WorkbenchStartupGate>
     </WorkbenchProvider>
   );

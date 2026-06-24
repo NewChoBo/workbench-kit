@@ -8,6 +8,13 @@ export {
   type WorkbenchWorkspaceHostPort,
 } from './provider.js';
 export {
+  WorkbenchDevtoolsPanel,
+  WorkbenchDevtoolsShell,
+  useWorkbenchDevtoolsSnapshot,
+  type WorkbenchDevtoolsShellProps,
+  type WorkbenchDevtoolsSnapshot,
+} from './devtools/index.js';
+export {
   DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   isWorkbenchEditorStatePersistenceAvailable,
   readPersistedEditorState,

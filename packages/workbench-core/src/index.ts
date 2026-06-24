@@ -95,6 +95,7 @@ export {
   type ExtensionDependencyDiagnosticKind,
   type ExtensionDependencyDiagnosticSeverity,
   type ExtensionFeatureInspection,
+  type ExtensionLifecycleEvent,
   type ExtensionRegistryOptions,
   type WorkbenchExtensionDescription,
   type WorkbenchExtensionModule,

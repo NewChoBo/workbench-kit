@@ -1,6 +1,6 @@
 # Workbench Completion Plan — Lane A (Theia-Inspired Core)
 
-**Status:** Active roadmap (updated 2026-06-20)
+**Status:** Active roadmap (updated 2026-06-25)
 **Branch:** `feature/theia-strengths-workbench`  
 **Audience:** Korean-speaking team; document language is English per project convention.
 
@@ -40,8 +40,9 @@ i18n, preview zoom/pan), or deferred kit items WB-15 / WB-20 / WB-22.
 | **End-to-end "product-ready workbench"**     | **~50%**                        | Sample host covers shell/editor/auth slices; plugin store and real backend remain deferred |
 
 Treat percentages as planning signals, not release metrics. The remaining Lane A
-work is **integration-heavy** (editor + explorer on commands + preference scopes),
-so the last four slices may take longer per slice than WB-23–WB-27.
+work is the S12 closeout audit: confirm the DoD checklist against the current
+sample/devtools surface and keep docs aligned. The current full validation gate
+is green and should be rerun if S12 changes code or release-critical docs.
 
 ---
 
@@ -222,10 +223,11 @@ pnpm validate
 
 ### Phase D — WB-31 Devtools inspectors (P3)
 
-| Field          | Detail                                                    |
-| -------------- | --------------------------------------------------------- |
-| **Depends on** | WB-26, WB-27, stable registry event streams from WB-28/29 |
-| **Packages**   | `@workbench-kit/shell-react`                              |
+| Field          | Detail                                                                                               |
+| -------------- | ---------------------------------------------------------------------------------------------------- |
+| **Status**     | Done — read-only panel, public shell exports, lifecycle refresh, and required Storybook story landed |
+| **Depends on** | WB-26, WB-27, stable registry event streams from WB-28/29                                            |
+| **Packages**   | `@workbench-kit/shell-react`                                                                         |
 
 **Deliverables**
 
@@ -344,9 +346,9 @@ WB-29 closeout → WB-30 → WB-31 → Lane A DoD checklist
 | **S6**  | WB-31 — Devtools inspectors      | Storybook devtools story; registry/transaction visibility                         |
 | **S7**  | Lane A closeout                  | `validate:full`, DoD checklist, update progress in `theia-strengths-workplan.md`  |
 
-**Next active session:** Lane A is complete; pick the next hardening or plugin-store slice.
+**Next active session:** S12 Lane A closeout audit.
 
-**Estimated remaining slices:** 0 for Lane A.
+**Estimated remaining slices:** 1 for Lane A.
 
 ---
 
@@ -382,12 +384,14 @@ WB-29 closeout → WB-30 → WB-31 → Lane A DoD checklist
 
 ## Progress log
 
-| Date       | Note                                                                                                                                                         |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-06-21 | Lane A closeout passed `pnpm validate:full`; full static, Vitest, Storybook build, and required Storybook play gates completed.                              |
-| 2026-06-21 | DoD audit confirmed resource transactions, command-backed explorer handlers, capability dispose lifecycle, and static boundary checks.                       |
-| 2026-06-21 | Runnable host smoke verified with bundled extensions, sample production build, dummy login, activity bar, explorer tree, editor empty state, and status bar. |
-| 2026-06-20 | WB-28 shell/editor scope treated as landed; WB-29 command handlers landed and closeout remains                                                               |
-| 2026-06-16 | WB-27 committed (`813cbca`); WB-28 S1 foundation (EditorService, resolver registry, React hooks)                                                             |
-| 2026-06-16 | Initial completion plan authored; WB-27 noted as uncommitted                                                                                                 |
-| 2026-06-16 | Track D cross-ref added to §5 Cleanup & Debt Register                                                                                                        |
+| Date       | Note                                                                                                                                                           |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | Current branch full validation passed: 202 files / 919 Vitest tests, Storybook build, and 29/29 required Storybook plays.                                      |
+| 2026-06-25 | WB-31 devtools inspectors landed with read-only registry/layout/editor/workspace snapshots and required Storybook coverage; S12 closeout remains.              |
+| 2026-06-21 | Historical checkpoint recorded a full validation pass before later JDW and WB-31 slices.                                                                       |
+| 2026-06-21 | Historical DoD audit confirmed resource transactions, command-backed explorer handlers, capability dispose lifecycle, and static boundary checks.              |
+| 2026-06-21 | Historical runnable host smoke verified bundled extensions, sample production build, dummy login, activity bar, explorer tree, editor empty state, status bar. |
+| 2026-06-20 | WB-28 shell/editor scope treated as landed; WB-29 command handlers landed and closeout remains                                                                 |
+| 2026-06-16 | WB-27 committed (`813cbca`); WB-28 S1 foundation (EditorService, resolver registry, React hooks)                                                               |
+| 2026-06-16 | Initial completion plan authored; WB-27 noted as uncommitted                                                                                                   |
+| 2026-06-16 | Track D cross-ref added to §5 Cleanup & Debt Register                                                                                                          |

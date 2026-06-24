@@ -11,7 +11,7 @@
 - **레이어 구조는 대체로 명확함:** `base → platform → contracts → jdw → workbench-core → shell-react → react` 순으로 의존하며, `scripts/check-workbench-dependency-graph.mjs`가 금지 엣지를 CI에서 검증함.
 - **JDW 이중 렌더 리스크는 2026-06-24 정리됨:** builtin registry는 `renderBuiltinWidgetLeaf`만 직접 사용하고, public `renderBuiltinWidgetNode` compatibility export는 제거됨. Preview container geometry는 `cssRenderBackend` + headless `layoutWidget`가 단일 소스.
 - **이중 문서 모델:** 위젯 영속화는 JDW v7 단일 SSoT. `WorkbenchDocument`(절대 좌표 캔버스)는 `WorkbenchCanvasShell` 데모 전용이며 위젯 파일과 혼용 금지; **장기 목표는 JDW render + event layer로 통합 후 demo 경로 제거**(Lane A DoD / B2 mapping 이후).
-- **Lane A 갭:** WB-30 closeout landed (default/workspace/local preference scopes + settings UI consumer/persistence test); next is WB-31 devtools inspectors.
+- **Lane A 갭:** WB-31 devtools inspectors landed (read-only registry/layout/editor/workspace snapshots + required Storybook coverage); current full validation is green, and next is S12 closeout audit.
 - **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합은 완료. 다음은 preview/editor 검증면 강화와 Lane A DoD 후 legacy shim 제거. `./jdw/config` export alias는 2026-06-20 제거됨.
 - **패키지 분리 제외:** React JDW는 `packages/react/src/jdw`에 유지. headless는 `@workbench-kit/jdw` (`packages/json-widget/`).
 

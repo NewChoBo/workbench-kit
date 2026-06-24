@@ -17,6 +17,7 @@ packages/react/src/primitives/EditorChrome.stories.@(ts|tsx)
 packages/react/src/modal/OverlayDialogs.stories.@(ts|tsx)
 packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)
 packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)
+packages/react/src/widget-tree/WidgetTreeLab.stories.@(ts|tsx)
 ```
 
 The canonical integration story file is:
@@ -69,6 +70,8 @@ See also `docs/conventions/storybook.md` for promotion criteria and scripts.
 ## Required Play Gate
 
 `pnpm test:storybook-play:required` runs stories tagged `storybook-play-required`.
+The current required gate has 29 plays: 6 sample integration flows, 7 small
+component-panel flows, and 16 JDW widget-tree authoring flows.
 
 ### Integration tier (sample app)
 
@@ -77,20 +80,24 @@ See also `docs/conventions/storybook.md` for promotion criteria and scripts.
 | `Workbench Sample/Dev App` - Login gate             | Unauthenticated sample login screen and dummy credentials copy                                                                                                   |
 | `Workbench Sample/Dev App` - Login submit flow      | Dummy backend sign-in failure, error display, successful tester sign-in, and shell handoff                                                                       |
 | `Workbench Sample/Dev App` - Tester workbench       | Authenticated administrator workbench shell, explorer, status bar, and activity bar                                                                              |
+| `Workbench Sample/Dev App` - Devtools inspectors    | Storybook-only devtools shell opt-in; command, transaction, layout, editor, capability, and active extension snapshots                                           |
 | `Workbench Sample/Dev App` - Tester dev app journey | Dev-app integration path: startup editor state, search result open, command palette, chat, AI chat composer, settings, profile permission override, and sign-out |
 | `Workbench Sample/Dev App` - Basic permission scope | Basic account permission projection; only Explorer and Profile remain visible                                                                                    |
 
 ### Component tier (package harness)
 
-The current required component set is intentionally small:
+The current required component set keeps primitive/panel flows small and carries a
+broader JDW authoring matrix while widget-tree editing is an active product
+surface:
 
-| Story                                                          | Container                            | Flow covered                                                                          |
-| -------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------- |
-| `React/Primitives/Controls` - Form controls                    | Settings/form surface                | Controlled text, number, checkbox, select, textarea, button, and icon-button behavior |
-| `React/Primitives/Editor Chrome` - Tabs and mode controls      | Editor/main area                     | Editor tab selection, mode segmented control, close action, and new-tab action        |
-| `React/Overlay/Dialog Actions` - Confirmation and context menu | Main-area trigger with fixed overlay | Confirm dialog cancel/confirm plus context-menu disabled and select behavior          |
-| `React/Workbench/Chat Components` - Runtime controls           | Sidebar chat panel                   | Chat command proposal allow flow plus composer submit/reset                           |
-| `React/Workbench/Workspace Search` - Search panel flow         | Sidebar search panel                 | Empty, result, Enter activation, clear, no-result, and refresh behavior               |
+| Story                                                          | Container                            | Flow covered                                                                                                                              |
+| -------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `React/Primitives/Controls` - Form controls                    | Settings/form surface                | Controlled text, number, checkbox, select, textarea, button, and icon-button behavior                                                     |
+| `React/Primitives/Editor Chrome` - Tabs and mode controls      | Editor/main area                     | Editor tab selection, mode segmented control, close action, and new-tab action                                                            |
+| `React/Overlay/Dialog Actions` - Confirmation and context menu | Main-area trigger with fixed overlay | Confirm dialog cancel/confirm plus context-menu disabled and select behavior                                                              |
+| `React/Workbench/Chat Components` - Runtime controls           | Sidebar chat panel                   | Chat command proposal allow flow plus composer submit/reset                                                                               |
+| `React/Workbench/Workspace Search` - Search panel flow         | Sidebar search panel                 | Empty, result, Enter activation, clear, no-result, and refresh behavior                                                                   |
+| `JDW/WidgetTree/Lab` - Authoring flows                         | Widget-tree lab surface              | Validation, dirty/discard, outline selection/reorder, asset insert/drop, preview selection/chrome, grid/stack/linear/wrapper canvas edits |
 
 Add a required story only when it proves a stable, user-visible flow and can fail
 with an actionable product-level case name. Promote from `storybook-play-baseline`
@@ -117,18 +124,25 @@ component and integration tiers without a tier-specific reason.
 
 ## Scripts
 
-| Script                              | Scope                                              |
-| ----------------------------------- | -------------------------------------------------- |
-| `pnpm storybook`                    | Local Storybook dev server on `127.0.0.1:6010`     |
-| `pnpm storybook:components`         | Local Storybook opened on the first component case |
-| `pnpm storybook:sample`             | Local Storybook opened on the sample journey case  |
-| `pnpm build:storybook`              | Static Storybook build                             |
-| `pnpm test:storybook-play:required` | Required play stories only                         |
-| `pnpm validate:ui`                  | `build:storybook` + `test:storybook-play:required` |
-| `pnpm validate:full`                | Static/unit gates plus Storybook UI validation     |
+| Script                              | Scope                                                                          |
+| ----------------------------------- | ------------------------------------------------------------------------------ |
+| `pnpm dev`                          | Workbench sample on `127.0.0.1:5173` plus Storybook proxied from `/storybook/` |
+| `pnpm storybook`                    | Local Storybook dev server on `127.0.0.1:6010`                                 |
+| `pnpm storybook:components`         | Local Storybook opened on the first component case                             |
+| `pnpm storybook:sample`             | Local Storybook opened on the sample journey case                              |
+| `pnpm build:storybook`              | Static Storybook build                                                         |
+| `pnpm test:storybook-play:required` | Required play stories only                                                     |
+| `pnpm validate:ui`                  | `build:storybook` + `test:storybook-play:required`                             |
+| `pnpm validate:full`                | Static/unit gates plus Storybook UI validation                                 |
 
 `scripts/test-storybook-play.mjs` starts Storybook on port `6010` when needed, then
 invokes `test-storybook` with `--includeTags=storybook-play-required`.
+
+`pnpm dev` runs the workbench sample and Storybook together. The sample stays at
+`http://127.0.0.1:5173/`; Storybook remains a separate dev server internally but
+is reachable through the sample server at `http://127.0.0.1:5173/storybook/`.
+Use `WORKBENCH_SAMPLE_PORT`, `STORYBOOK_PORT`, and `STORYBOOK_BASE_PATH` to move
+those defaults.
 
 ## Scope Rules
 
