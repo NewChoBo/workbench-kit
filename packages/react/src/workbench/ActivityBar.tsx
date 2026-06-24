@@ -103,9 +103,7 @@ export function ActivityBar({
   const renderItem = (item: ActivityBarItem, options: { reorderable: boolean }) => {
     const isDropTarget = dropTarget?.itemId === item.id;
     const itemDataAttribute =
-      itemDataAttributeName === undefined
-        ? {}
-        : { [itemDataAttributeName]: item.id };
+      itemDataAttributeName === undefined ? {} : { [itemDataAttributeName]: item.id };
 
     return (
       <Button
