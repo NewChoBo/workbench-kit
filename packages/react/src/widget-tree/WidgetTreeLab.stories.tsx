@@ -5,6 +5,7 @@ import { formatWidgetDocumentJson } from '@workbench-kit/jdw';
 
 import { StoryWorkbenchShellFrame } from '../workbench/story/StoryWorkbenchShellFrame';
 import { WidgetTreeLab } from './WidgetTreeLab.js';
+import { WidgetTreeWorkbench } from './WidgetTreeWorkbench.js';
 import { WIDGET_TREE_DEMO_REGISTRY } from './demo-registry.js';
 import { WIDGET_TREE_DEMO_ASSET_CATALOG } from './demo-widget-assets.js';
 import { waitForWidgetTreeSourcePane } from './widget-tree-play-helpers.js';
@@ -25,6 +26,25 @@ const OUTLINE_STORY_DOCUMENT = formatWidgetDocumentJson({
     },
     { type: 'text', text: 'Footer' },
   ],
+});
+
+const VALIDATION_BASELINE_DOCUMENT = formatWidgetDocumentJson({
+  type: 'text',
+  text: 'Baseline',
+});
+
+const VALIDATION_INVALID_DOCUMENT = formatWidgetDocumentJson({
+  type: 'text',
+});
+
+const DIRTY_BASELINE_DOCUMENT = formatWidgetDocumentJson({
+  type: 'text',
+  text: 'Widget Tree',
+});
+
+const DIRTY_DRAFT_DOCUMENT = formatWidgetDocumentJson({
+  type: 'text',
+  text: 'Draft Copy',
 });
 
 const meta = {
@@ -60,7 +80,7 @@ export const OutlineKeyboard: Story = {
     await waitForWidgetTreeSourcePane(canvasElement);
 
     const titleNode = await canvas.findByTestId('widget-tree-node-$.children[0]');
-    await userEvent.click(within(titleNode).getByRole('button'));
+    await userEvent.click(getOutlineNodeButton(titleNode));
     await userEvent.keyboard('{ArrowDown}');
 
     const rowNode = await canvas.findByTestId('widget-tree-node-$.children[1]');
@@ -70,6 +90,59 @@ export const OutlineKeyboard: Story = {
         canvasElement.querySelector('[data-widget-path="$.children[1]"][data-widget-selected]'),
       ).toBeTruthy();
     });
+  },
+  tags: ['storybook-play-required'],
+};
+
+export const ValidationBanner: Story = {
+  name: 'Validation banner',
+  render: () => (
+    <WidgetTreeWorkbenchStoryHarness
+      baselineValue={VALIDATION_BASELINE_DOCUMENT}
+      initialValue={VALIDATION_INVALID_DOCUMENT}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitForWidgetTreeSourcePane(canvasElement);
+
+    const banner = await canvas.findByTestId('json-config-validation-banner');
+    await expect(banner).toBeVisible();
+    await expect(banner).toHaveAttribute('data-validation', 'invalid');
+    await expect(banner).toHaveTextContent('text is required');
+    await expect(canvas.getByRole('button', { name: 'Save' })).toBeDisabled();
+  },
+  tags: ['storybook-play-required'],
+};
+
+export const DirtyDiscard: Story = {
+  name: 'Dirty discard',
+  render: () => (
+    <WidgetTreeWorkbenchStoryHarness
+      baselineValue={DIRTY_BASELINE_DOCUMENT}
+      initialValue={DIRTY_DRAFT_DOCUMENT}
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitForWidgetTreeSourcePane(canvasElement);
+
+    await expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent('Draft Copy');
+
+    const banner = await canvas.findByTestId('json-config-validation-banner');
+    await expect(banner).toHaveAttribute('data-validation', 'valid');
+    await expect(banner).toHaveTextContent(/Valid.*unsaved changes/);
+    await expect(canvas.getByTitle('Unsaved changes')).toBeVisible();
+    await expect(canvas.getByRole('button', { name: 'Save' })).toBeEnabled();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Discard' }));
+
+    await waitFor(() =>
+      expect(canvas.getByTestId('jdw-preview-output')).toHaveTextContent('Widget Tree'),
+    );
+    await expect(canvas.queryByTestId('json-config-validation-banner')).not.toBeInTheDocument();
+    await expect(canvas.queryByTitle('Unsaved changes')).not.toBeInTheDocument();
+    expect(readSnapshot(canvasElement)).toEqual(JSON.parse(DIRTY_BASELINE_DOCUMENT));
   },
   tags: ['storybook-play-required'],
 };
@@ -101,6 +174,71 @@ export const OutlineReorderAndReparent: Story = {
   tags: ['storybook-play-required'],
 };
 
+export const AssetInsertSelect: Story = {
+  name: 'Asset insert selects node',
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitForWidgetTreeSourcePane(canvasElement);
+
+    const rootNode = await canvas.findByTestId('widget-tree-node-$');
+    await userEvent.click(getOutlineNodeButton(rootNode));
+    await userEvent.click(canvas.getByRole('button', { name: 'Assets' }));
+    await userEvent.click(await canvas.findByTestId('widget-asset-content.heading'));
+
+    const insertedNode = await canvas.findByTestId('widget-tree-node-$.children[3]');
+    await waitFor(() => {
+      expect(insertedNode).toHaveAttribute('aria-selected', 'true');
+      expect(insertedNode).toHaveTextContent('Heading');
+      expect(canvasElement.querySelector('[data-widget-path="$.children[3]"]')).toBeTruthy();
+    });
+    await expect(canvas.getByTestId('widget-tree-inspector-panel')).toBeVisible();
+    await expect(canvas.getByDisplayValue('Heading')).toBeVisible();
+  },
+  tags: ['storybook-play-required'],
+};
+
+export const PreviewSelection: Story = {
+  name: 'Preview selection',
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitForWidgetTreeSourcePane(canvasElement);
+    const snapshotBeforeSelect = readSnapshot(canvasElement);
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Assets' }));
+    await expect(canvas.getByTestId('widget-tree-asset-palette')).toBeVisible();
+
+    const previewTitle = canvasElement.querySelector<HTMLElement>(
+      '[data-widget-path="$.children[0]"][data-widget-type="text"]',
+    );
+    expect(previewTitle).toBeTruthy();
+    await userEvent.click(previewTitle!);
+
+    const outlineTitle = await canvas.findByTestId('widget-tree-node-$.children[0]');
+    await waitFor(() => {
+      expect(outlineTitle).toHaveAttribute('aria-selected', 'true');
+      expect(
+        canvasElement.querySelector(
+          '[data-widget-path="$.children[0]"][data-widget-selected="true"]',
+        ),
+      ).toBeTruthy();
+    });
+    await expect(canvas.getByTestId('widget-tree-inspector-panel')).toBeVisible();
+    await expect(canvas.getByDisplayValue('Title')).toBeVisible();
+    expect(readSnapshot(canvasElement)).toEqual(snapshotBeforeSelect);
+  },
+  tags: ['storybook-play-required'],
+};
+
+function getOutlineNodeButton(node: HTMLElement): HTMLButtonElement {
+  const button = node.querySelector<HTMLButtonElement>('.widget-tree-outline__button');
+
+  if (!button) {
+    throw new Error('Expected outline node button to exist.');
+  }
+
+  return button;
+}
+
 function WidgetTreeStoryHarness() {
   const [value, setValue] = useState(OUTLINE_STORY_DOCUMENT);
 
@@ -112,6 +250,37 @@ function WidgetTreeStoryHarness() {
           registry={WIDGET_TREE_DEMO_REGISTRY}
           value={value}
           onChange={setValue}
+        />
+        <pre data-testid="widget-tree-json-snapshot" hidden>
+          {value}
+        </pre>
+      </div>
+    </StoryWorkbenchShellFrame>
+  );
+}
+
+function WidgetTreeWorkbenchStoryHarness({
+  baselineValue,
+  initialValue,
+}: {
+  readonly baselineValue: string;
+  readonly initialValue: string;
+}) {
+  const [value, setValue] = useState(initialValue);
+  const [baseline, setBaseline] = useState(baselineValue);
+
+  return (
+    <StoryWorkbenchShellFrame variant="editor">
+      <div style={{ height: '100%', minHeight: 0 }}>
+        <WidgetTreeWorkbench
+          assetCatalog={WIDGET_TREE_DEMO_ASSET_CATALOG}
+          baselineValue={baseline}
+          path="src/widgets/story.jdw.json"
+          registry={WIDGET_TREE_DEMO_REGISTRY}
+          value={value}
+          onChange={setValue}
+          onDiscard={() => setValue(baseline)}
+          onSave={() => setBaseline(value)}
         />
         <pre data-testid="widget-tree-json-snapshot" hidden>
           {value}
