@@ -7,9 +7,9 @@
 
 - **현재 편집면:** `WidgetTreeLab`(트리·인스pector·Monaco·선택 가능한 프리뷰)이 JDW 위젯 편집의 주 표면. `WidgetTreeWorkbench`는 validation banner·baseline/dirty·save gating을 제공한다. `JsonConfigWorkbench`는 범용 JSON용. `ScreenSpecEditor`는 screen-spec → JDW 컴파일 전용.
 - **핵심 UX 갭:** 아웃라인 reorder/reparent/collapse/drop-position, asset-to-outline drop, Monaco reveal/sync, persistent outline + Props/Assets detail tabs는 완료. hover/focus chrome, 줌/팬·캔버스 제스처는 의도적 보류.
-- **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). 정적 preview selection, editor discipline, outline ergonomics core는 required Storybook play로 고정했으므로, 다음은 stack placement story와 캔버스 매핑을 좁게 밀어붙인다.
+- **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). 정적 preview selection, editor discipline, outline ergonomics core, stack placement controls/preview geometry는 required Storybook play로 고정했다. 다음은 preview/canvas mapping을 headless spec으로 좁힌다.
 - **단계:** UX-1(에디터 discipline, core 완료) → UX-2(아웃라인, keyboard Enter→Props 완료) → UX-3(인스pector·에셋, stack/insert + tab friction 완료) → UX-4(프리뷰 hit-test 선택, click-select 완료) → UX-5(캔버스, B3 의존).
-- **다음 권장:** **UX-3 StackPlacement story + B2 mapping closeout** — stack child inset edit→preview 반영을 play로 고정하고, preview/canvas hit-test 계약을 headless spec으로 좁힌다.
+- **다음 권장:** **B2 mapping closeout** — preview/canvas hit-test 계약과 gesture→patch mapping을 headless spec으로 좁힌다.
 
 ---
 
@@ -48,6 +48,7 @@ Code mode hides preview and side panel — Monaco only.
 | `JDW/WidgetTree/Lab` · Outline keyboard          | same                        | Keyboard selection updates outline + preview chrome |
 | `JDW/WidgetTree/Lab` · Outline reorder/reparent  | same                        | Outline DnD commits JSON and preview order changes  |
 | `JDW/WidgetTree/Lab` · Asset insert selects node | same                        | Asset insertion auto-selects the new outline node   |
+| `JDW/WidgetTree/Lab` · Stack placement           | same                        | Stack placement controls and preview geometry       |
 | `JDW/WidgetTree/Lab` · Preview selection         | same                        | Preview click selects outline without JSON mutation |
 
 ---
@@ -62,7 +63,7 @@ Code mode hides preview and side panel — Monaco only.
 | P4  | **Dirty/baseline core wired and covered**                                             | `WidgetTreeWorkbench` computes dirty from `baselineValue`; required play asserts dirty banner, dirty dot, and discard reset                                      | Resolved |
 | P5  | **Outline drop-position core covered; edge stories remain**                           | Same-parent/cross-parent before/after/inside operation resolution and row affordance are wired; required play covers reorder/reparent, not every drop edge       | Low      |
 | P6  | **Side panel tab friction**                                                           | **Resolved (2026-06-24):** `WidgetTreeSidePanel` keeps outline visible; Props/Assets detail tabs switch independently; preview/asset insert routes to Props      | Resolved |
-| P7  | **Placement inspector partial**                                                       | Stack inset fields are exposed; registry inspector fields remain demo-limited and container-specific affordances are still sparse                                | Medium   |
+| P7  | **Placement inspector partial**                                                       | Stack inset fields are labelled, editable, and patch-covered; registry inspector fields remain demo-limited and container-specific affordances are still sparse  | Low      |
 | P8  | **Asset palette preview drop missing**                                                | `WidgetAssetPalette` can click-add to selected containers and drag assets onto outline before/inside/after targets; preview/canvas drop remains future           | Low      |
 | P9  | **Keyboard shortcuts partial**                                                        | Outline Arrow/Home/End/Delete, Alt+ArrowUp/Down move, and Enter→Props focus exist; Design/Code shortcut and richer view-toggle shortcuts remain                  | Low      |
 | P10 | **Zoom / pan removed**                                                                | [strengths-inheritance.md](./strengths-inheritance.md), [next-slice-plan.md](./next-slice-plan.md) — explicit deferral                                           | Deferred |
@@ -145,7 +146,7 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 
 | Item                    | Action                                                                                     |
 | ----------------------- | ------------------------------------------------------------------------------------------ |
-| Stack placement section | Done for static stack child inset fields                                                   |
+| Stack placement section | Done for labelled stack child inset fields, patch updates, and preview geometry            |
 | Side panel layout       | Consider split: persistent outline + bottom inspector **or** Props pinned alongside Assets |
 | Registry coverage       | Expand demo registry inspector metadata for layout builtins used in stories                |
 | Asset palette           | Done for drag-start with outline before/inside/after targets; future preview drop remains  |
@@ -156,7 +157,8 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 - [x] Inspector tests for stack section
 - [x] Unit: asset insertion path targets new child
 - [x] Unit: asset drag payload and outline before/inside/after drop operation resolution
-- [ ] Story: stack child insets editable and reflected in preview
+- [x] Test: stack child inset edits emit inspector patches and source patch updates preview data
+- [x] Story: stack placement controls render with preview geometry
 - [x] Story: asset insert selects new node without manual outline hunt
 
 **Depends on:** UX-1; **B1** schema parity for placement args in JSON Schema (Monaco hints).  

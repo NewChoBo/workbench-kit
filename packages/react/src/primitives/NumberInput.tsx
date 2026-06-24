@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, InputEvent } from 'react';
 import { TextInput } from './TextInput';
 import type { ControlWidth, TextInputProps } from './TextInput';
 
@@ -14,6 +14,8 @@ export interface NumberInputProps extends Omit<
 export function NumberInput({
   controlWidth = 'default',
   defaultValue,
+  onChange,
+  onInput,
   onValueChange,
   value,
   ...props
@@ -21,16 +23,31 @@ export function NumberInput({
   const valueProps =
     value !== undefined ? { value } : defaultValue !== undefined ? { defaultValue } : {};
 
+  const emitValueChange = (rawValue: string, event: ChangeEvent<HTMLInputElement>) => {
+    const parsed = Number.parseFloat(rawValue);
+    if (!Number.isNaN(parsed)) {
+      onValueChange?.(parsed, event);
+    }
+  };
+
+  const handleInput = (event: InputEvent<HTMLInputElement>) => {
+    onInput?.(event);
+    emitValueChange(event.currentTarget.value, event as unknown as ChangeEvent<HTMLInputElement>);
+  };
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange?.(event);
+    if ((event.nativeEvent as Event).type !== 'input') {
+      emitValueChange(event.currentTarget.value, event);
+    }
+  };
+
   return (
     <TextInput
       controlWidth={controlWidth}
       type="number"
-      onValueChange={(next, event) => {
-        const parsed = Number.parseFloat(next);
-        if (!Number.isNaN(parsed)) {
-          onValueChange?.(parsed, event);
-        }
-      }}
+      onChange={handleChange}
+      onInput={handleInput}
       {...valueProps}
       {...props}
     />

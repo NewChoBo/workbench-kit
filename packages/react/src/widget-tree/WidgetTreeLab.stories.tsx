@@ -47,6 +47,23 @@ const DIRTY_DRAFT_DOCUMENT = formatWidgetDocumentJson({
   text: 'Draft Copy',
 });
 
+const STACK_PLACEMENT_DOCUMENT = formatWidgetDocumentJson({
+  type: 'stack',
+  width: 360,
+  height: 220,
+  background: '#f3f4f6',
+  children: [
+    {
+      type: 'text',
+      text: 'Floating label',
+      left: 12,
+      top: 16,
+      right: 120,
+      bottom: 180,
+    },
+  ],
+});
+
 const meta = {
   title: 'JDW/WidgetTree/Lab',
   parameters: {
@@ -69,7 +86,11 @@ interface JdwSnapshotNode {
   readonly args?: {
     readonly child?: JdwSnapshotNode;
     readonly children?: readonly JdwSnapshotNode[];
+    readonly bottom?: number;
+    readonly left?: number;
+    readonly right?: number;
     readonly text?: string;
+    readonly top?: number;
   };
 }
 
@@ -197,6 +218,48 @@ export const AssetInsertSelect: Story = {
   tags: ['storybook-play-required'],
 };
 
+export const StackPlacement: Story = {
+  name: 'Stack placement',
+  render: () => <WidgetTreeStoryHarness initialValue={STACK_PLACEMENT_DOCUMENT} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const lab = await canvas.findByTestId('widget-tree-lab');
+    const labCanvas = within(lab);
+    await waitForWidgetTreeSourcePane(lab);
+
+    const stackChildNode = await labCanvas.findByTestId('widget-tree-node-$.children[0]');
+    await userEvent.click(getOutlineNodeButton(stackChildNode));
+
+    const inspector = await labCanvas.findByTestId('widget-tree-inspector-panel');
+    await expect(inspector).toHaveTextContent('Stack placement');
+
+    const leftInput = within(inspector).getByRole('spinbutton', { name: 'Left' });
+    const topInput = within(inspector).getByRole('spinbutton', { name: 'Top' });
+    const rightInput = within(inspector).getByRole('spinbutton', { name: 'Right' });
+    const bottomInput = within(inspector).getByRole('spinbutton', { name: 'Bottom' });
+
+    await expect(leftInput).toHaveValue(12);
+    await expect(topInput).toHaveValue(16);
+    await expect(rightInput).toHaveValue(120);
+    await expect(bottomInput).toHaveValue(180);
+
+    const child = readSnapshot(canvasElement).args?.children?.[0];
+    expect(child?.args?.left).toBe(12);
+    expect(child?.args?.top).toBe(16);
+    expect(child?.args?.right).toBe(120);
+    expect(child?.args?.bottom).toBe(180);
+
+    const previewChild = lab.querySelector<HTMLElement>(
+      '[data-widget-path="$.children[0]"][data-widget-type="text"]',
+    );
+    expect(previewChild?.style.left).toBe('12px');
+    expect(previewChild?.style.top).toBe('16px');
+    expect(previewChild?.style.width).toBe('228px');
+    expect(previewChild?.style.height).toBe('24px');
+  },
+  tags: ['storybook-play-required'],
+};
+
 export const PreviewSelection: Story = {
   name: 'Preview selection',
   play: async ({ canvasElement }) => {
@@ -239,8 +302,12 @@ function getOutlineNodeButton(node: HTMLElement): HTMLButtonElement {
   return button;
 }
 
-function WidgetTreeStoryHarness() {
-  const [value, setValue] = useState(OUTLINE_STORY_DOCUMENT);
+function WidgetTreeStoryHarness({
+  initialValue = OUTLINE_STORY_DOCUMENT,
+}: {
+  initialValue?: string;
+}) {
+  const [value, setValue] = useState(initialValue);
 
   return (
     <StoryWorkbenchShellFrame variant="editor">

@@ -5,7 +5,7 @@ import { getWidgetChildAtSegment, getWidgetChildren } from './widget-tree.js';
 
 export type ArrayChildWidget = GenericWidget;
 
-const GRID_PLACEMENT_KEYS = ['colSpan', 'rowSpan'] as const;
+const GRID_PLACEMENT_KEYS = ['col', 'row', 'colSpan', 'rowSpan'] as const;
 const LINEAR_PLACEMENT_KEYS = ['flex', 'flexFit', 'align'] as const;
 const STACK_PLACEMENT_KEYS = ['left', 'top', 'right', 'bottom'] as const;
 
@@ -17,14 +17,16 @@ function isGridChild(child: GenericWidget): child is GenericWidget & { col: numb
   return isFiniteNumber(child.col) && isFiniteNumber(child.row);
 }
 
-function copyOptionalPlacement<T extends GenericWidget, K extends keyof T>(
-  source: T,
+function preserveMissingPlacement(
+  source: GenericWidget,
   target: GenericWidget,
-  keys: readonly K[],
+  keys: readonly string[],
 ): GenericWidget {
-  const placement: Partial<Pick<T, K>> = {};
+  const placement: Record<string, unknown> = {};
 
   for (const key of keys) {
+    if (target[key] !== undefined) continue;
+
     const value = source[key];
     if (value !== undefined) {
       placement[key] = value;
@@ -95,11 +97,7 @@ export function replaceArrayChild(
 
   switch (containerKind(parent)) {
     case 'grid': {
-      const replacement = {
-        ...copyOptionalPlacement(current, next, GRID_PLACEMENT_KEYS),
-        col: current.col,
-        row: current.row,
-      };
+      const replacement = preserveMissingPlacement(current, next, GRID_PLACEMENT_KEYS);
       return {
         ...parent,
         children: getWidgetChildren(parent).map((child, childIndex) =>
@@ -108,7 +106,7 @@ export function replaceArrayChild(
       };
     }
     case 'linear': {
-      const replacement = copyOptionalPlacement(current, next, LINEAR_PLACEMENT_KEYS);
+      const replacement = preserveMissingPlacement(current, next, LINEAR_PLACEMENT_KEYS);
       return {
         ...parent,
         children: getWidgetChildren(parent).map((child, childIndex) =>
@@ -117,7 +115,7 @@ export function replaceArrayChild(
       };
     }
     case 'stack': {
-      const replacement = copyOptionalPlacement(current, next, STACK_PLACEMENT_KEYS);
+      const replacement = preserveMissingPlacement(current, next, STACK_PLACEMENT_KEYS);
       return {
         ...parent,
         children: getWidgetChildren(parent).map((child, childIndex) =>

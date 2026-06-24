@@ -1,4 +1,4 @@
-import type { ComponentPropsWithRef, ReactNode } from 'react';
+import { useId, type ComponentPropsWithRef, type ReactNode } from 'react';
 import { Button } from '../primitives/Button';
 import type { ButtonProps } from '../primitives/Button';
 import { Checkbox } from '../primitives/Checkbox';
@@ -28,17 +28,22 @@ export interface WorkbenchPropertyTextRowProps extends Omit<WorkbenchPropertyRow
 export function WorkbenchPropertyTextRow({
   controlWidth = 'full',
   disabled,
+  htmlFor,
   onValueChange,
   placeholder,
   readOnly,
   value,
   ...props
 }: WorkbenchPropertyTextRowProps) {
+  const generatedId = useId();
+  const inputId = htmlFor ?? generatedId;
+
   return (
-    <WorkbenchPropertyRow {...props}>
+    <WorkbenchPropertyRow htmlFor={inputId} {...props}>
       <TextInput
         controlWidth={controlWidth}
         disabled={disabled}
+        id={inputId}
         placeholder={placeholder}
         readOnly={readOnly}
         value={value}
@@ -64,6 +69,7 @@ export interface WorkbenchPropertyNumberRowProps extends Omit<
 export function WorkbenchPropertyNumberRow({
   controlWidth = 'full',
   disabled,
+  htmlFor,
   max,
   min,
   onValueChange,
@@ -71,11 +77,15 @@ export function WorkbenchPropertyNumberRow({
   value,
   ...props
 }: WorkbenchPropertyNumberRowProps) {
+  const generatedId = useId();
+  const inputId = htmlFor ?? generatedId;
+
   return (
-    <WorkbenchPropertyRow {...props}>
+    <WorkbenchPropertyRow htmlFor={inputId} {...props}>
       <NumberInput
         controlWidth={controlWidth}
         disabled={disabled}
+        id={inputId}
         max={max}
         min={min}
         step={step}
@@ -179,16 +189,21 @@ export interface WorkbenchPropertySelectRowProps<TValue extends string = string>
 export function WorkbenchPropertySelectRow<TValue extends string = string>({
   controlWidth = 'full',
   disabled,
+  htmlFor,
   onValueChange,
   options,
   value,
   ...props
 }: WorkbenchPropertySelectRowProps<TValue>) {
+  const generatedId = useId();
+  const inputId = htmlFor ?? generatedId;
+
   return (
-    <WorkbenchPropertyRow {...props}>
+    <WorkbenchPropertyRow htmlFor={inputId} {...props}>
       <Select
         controlWidth={controlWidth}
         disabled={disabled}
+        id={inputId}
         value={value ?? options[0]?.value ?? ''}
         onValueChange={(next) => onValueChange(next as TValue)}
       >

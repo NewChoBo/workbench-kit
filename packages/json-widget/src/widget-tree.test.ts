@@ -91,6 +91,23 @@ describe('generic widget tree', () => {
     });
   });
 
+  it('updates explicit grid placement fields when a widget is replaced', () => {
+    const tilePath = appendChildrenPath(ROOT_WIDGET_PATH, 1);
+    const result = applyWidgetPatch(rootWidget, {
+      type: 'replace-widget',
+      path: tilePath,
+      widget: { type: 'text', text: 'replacement', col: 0, row: 1 },
+    });
+
+    expect(result.changed).toBe(true);
+    expect((result.root.children as GenericWidget[] | undefined)?.[1]).toMatchObject({
+      type: 'text',
+      text: 'replacement',
+      col: 0,
+      row: 1,
+    });
+  });
+
   it('updates a nested widget without mutating invalid paths', () => {
     const textPath = appendBoxChildPath(
       appendChildrenPath(appendChildrenPath(ROOT_WIDGET_PATH, 0), 0),
