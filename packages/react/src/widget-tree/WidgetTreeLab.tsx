@@ -12,6 +12,7 @@ import {
   getWidgetChildren,
   materializeWidgetPlacementAsset,
   normalizeWidgetForParent,
+  reflowGridChildren,
   ROOT_WIDGET_PATH,
   selectWidgetPath,
   validateJsonWidgetData,
@@ -204,8 +205,14 @@ export function WidgetTreeLab({
 
   const handleInspectorPatch = (nextWidget: GenericWidget) => {
     if (!selectedPath) return;
-    const widget =
+    const normalizedWidget =
       parentWidget !== null ? normalizeWidgetForParent(nextWidget, parentWidget) : nextWidget;
+    const widget =
+      selectedWidget?.type === 'grid' &&
+      normalizedWidget.type === 'grid' &&
+      selectedWidget.columns !== normalizedWidget.columns
+        ? reflowGridChildren(normalizedWidget)
+        : normalizedWidget;
     applyPatch({
       type: 'replace-widget',
       path: selectedPath,

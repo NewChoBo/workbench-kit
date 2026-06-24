@@ -182,6 +182,7 @@ export {
   normalizeWidgetForParent,
   normalizeWidgetForPlacementPolicy,
   normalizeWidgetSubtree,
+  reflowGridChildren,
   resolvePlacementPolicy,
   stripExternalPlacement,
   type NormalizeWidgetOptions,

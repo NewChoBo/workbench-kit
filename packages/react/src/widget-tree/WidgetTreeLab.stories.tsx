@@ -64,6 +64,19 @@ const STACK_PLACEMENT_DOCUMENT = formatWidgetDocumentJson({
   ],
 });
 
+const GRID_REFLOW_DOCUMENT = formatWidgetDocumentJson({
+  type: 'grid',
+  columns: 2,
+  gap: 8,
+  width: 320,
+  height: 180,
+  children: [
+    { type: 'text', text: 'A', col: 0, row: 0 },
+    { type: 'text', text: 'B', col: 1, row: 0 },
+    { type: 'text', text: 'Wide', col: 0, row: 1, colSpan: 2 },
+  ],
+});
+
 const meta = {
   title: 'JDW/WidgetTree/Lab',
   parameters: {
@@ -87,8 +100,12 @@ interface JdwSnapshotNode {
     readonly child?: JdwSnapshotNode;
     readonly children?: readonly JdwSnapshotNode[];
     readonly bottom?: number;
+    readonly col?: number;
+    readonly colSpan?: number;
+    readonly columns?: number;
     readonly left?: number;
     readonly right?: number;
+    readonly row?: number;
     readonly text?: string;
     readonly top?: number;
   };
@@ -369,6 +386,41 @@ export const StackPlacement: Story = {
       expect(resizedChild?.args?.top).toBe(21);
       expect(resizedChild?.args?.right).toBe(92);
       expect(resizedChild?.args?.bottom).toBe(159);
+    });
+  },
+  tags: ['storybook-play-required'],
+};
+
+export const GridColumnReflow: Story = {
+  name: 'Grid column reflow',
+  render: () => <WidgetTreeStoryHarness initialValue={GRID_REFLOW_DOCUMENT} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const lab = await canvas.findByTestId('widget-tree-lab');
+    const labCanvas = within(lab);
+    await waitForWidgetTreeSourcePane(lab);
+
+    const rootNode = await labCanvas.findByTestId('widget-tree-node-$');
+    await userEvent.click(getOutlineNodeButton(rootNode));
+
+    const inspector = await labCanvas.findByTestId('widget-tree-inspector-panel');
+    const columnsInput = within(inspector).getByRole('spinbutton', { name: 'Columns' });
+    await expect(columnsInput).toHaveValue(2);
+
+    fireEvent.input(columnsInput, { target: { value: '1' } });
+
+    await waitFor(() => {
+      const root = readSnapshot(canvasElement);
+      const children = root.args?.children ?? [];
+      expect(root.args?.columns).toBe(1);
+      expect(children[0]?.args).toMatchObject({ text: 'A', col: 0, row: 0 });
+      expect(children[1]?.args).toMatchObject({ text: 'B', col: 0, row: 1 });
+      expect(children[2]?.args).toMatchObject({
+        text: 'Wide',
+        col: 0,
+        row: 2,
+        colSpan: 1,
+      });
     });
   },
   tags: ['storybook-play-required'],

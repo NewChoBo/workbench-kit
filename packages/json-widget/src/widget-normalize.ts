@@ -27,6 +27,11 @@ function hasGridPlacement(widget: GenericWidget): boolean {
   return isFiniteNumber(widget.col) && isFiniteNumber(widget.row);
 }
 
+function readPositiveInteger(value: unknown): number | null {
+  if (!isFiniteNumber(value) || value < 1) return null;
+  return Math.floor(value);
+}
+
 function isGenericWidget(value: unknown): value is GenericWidget {
   return (
     value !== null &&
@@ -62,6 +67,44 @@ export function assignGridSlot(parent: GenericWidget, child: GenericWidget): Gen
     ...child,
     col: nextIndex % columns,
     row: Math.floor(nextIndex / columns),
+  };
+}
+
+export function reflowGridChildren(widget: GenericWidget): GenericWidget {
+  if (widget.type !== 'grid') return widget;
+
+  const children = getWidgetChildren(widget);
+  if (children.length === 0) return widget;
+
+  const columns = readPositiveInteger(widget.columns) ?? 1;
+  let nextCol = 0;
+  let nextRow = 0;
+  const nextChildren = children.map((child) => {
+    const span = Math.min(readPositiveInteger(child.colSpan) ?? 1, columns);
+    if (nextCol + span > columns) {
+      nextCol = 0;
+      nextRow += 1;
+    }
+
+    const nextChild: GenericWidget = {
+      ...child,
+      col: nextCol,
+      row: nextRow,
+      ...(isFiniteNumber(child.colSpan) ? { colSpan: span } : {}),
+    };
+
+    nextCol += span;
+    if (nextCol >= columns) {
+      nextCol = 0;
+      nextRow += 1;
+    }
+
+    return nextChild;
+  });
+
+  return {
+    ...widget,
+    children: nextChildren,
   };
 }
 
