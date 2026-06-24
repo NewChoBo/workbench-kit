@@ -884,6 +884,33 @@ export const PreviewSelection: Story = {
   tags: ['storybook-play-required'],
 };
 
+export const PreviewHoverChrome: Story = {
+  name: 'Preview hover chrome',
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitForWidgetTreeSourcePane(canvasElement);
+    const snapshotBeforeHover = readSnapshot(canvasElement);
+
+    const previewTitle = canvasElement.querySelector<HTMLElement>(
+      '[data-widget-path="$.children[0]"][data-widget-type="text"]',
+    );
+    expect(previewTitle).toBeTruthy();
+    fireEvent.pointerMove(previewTitle!, {
+      clientX: 20,
+      clientY: 20,
+      pointerId: 21,
+      pointerType: 'mouse',
+    });
+
+    const hoverFrame = await canvas.findByTestId('widget-tree-canvas-hover-frame');
+    await expect(hoverFrame).toHaveAttribute('data-widget-path', '$.children[0]');
+    await expect(hoverFrame).toHaveAttribute('data-widget-type', 'text');
+    await expect(hoverFrame).toHaveAttribute('data-hovered', 'true');
+    expect(readSnapshot(canvasElement)).toEqual(snapshotBeforeHover);
+  },
+  tags: ['storybook-play-required'],
+};
+
 function getOutlineNodeButton(node: HTMLElement): HTMLButtonElement {
   const button = node.querySelector<HTMLButtonElement>('.widget-tree-outline__button');
 

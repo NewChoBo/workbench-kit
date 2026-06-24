@@ -219,6 +219,68 @@ describe('WidgetTreeCanvasPreview', () => {
       root.unmount();
     });
   });
+
+  it('shows a transient hover frame for preview nodes without mutating JSON', async () => {
+    const rootWidget: GenericWidget = {
+      type: 'column',
+      width: 240,
+      height: 120,
+      children: [
+        { type: 'text', text: 'A', height: 40 },
+        { type: 'text', text: 'B', height: 40 },
+      ],
+    };
+    const onPatch = vi.fn((patch: WidgetPatch) => {
+      void patch;
+      return true;
+    });
+    const onSelectPath = vi.fn();
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WidgetTreeCanvasPreview
+          json={formatWidgetDocumentJson(rootWidget)}
+          root={rootWidget}
+          selectedPath={appendChildrenPath(ROOT_WIDGET_PATH, 1)}
+          onPatch={onPatch}
+          onSelectPath={onSelectPath}
+        />,
+      );
+    });
+
+    const previewChild = container.querySelector(
+      '[data-widget-path="$.children[0]"][data-widget-type="text"]',
+    ) as HTMLElement;
+    expect(previewChild).toBeTruthy();
+
+    await act(async () => {
+      previewChild.dispatchEvent(createPointerLikeEvent('pointermove', 12, 12));
+    });
+
+    const hoverFrame = container.querySelector('[data-testid="widget-tree-canvas-hover-frame"]');
+    expect(hoverFrame?.getAttribute('data-widget-path')).toBe('$.children[0]');
+    expect(hoverFrame?.getAttribute('data-widget-type')).toBe('text');
+    expect(hoverFrame?.getAttribute('data-hovered')).toBe('true');
+    expect(hoverFrame?.getAttribute('data-transient')).toBe('true');
+    expect(onPatch).not.toHaveBeenCalled();
+    expect(onSelectPath).not.toHaveBeenCalled();
+
+    const stage = container.querySelector(
+      '[data-testid="widget-tree-canvas-stage"]',
+    ) as HTMLElement;
+    await act(async () => {
+      stage.dispatchEvent(createPointerLikeEvent('pointerout', 260, 140));
+    });
+
+    expect(container.querySelector('[data-testid="widget-tree-canvas-hover-frame"]')).toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
 });
 
 function mockPointerCapture(handle: HTMLElement): void {

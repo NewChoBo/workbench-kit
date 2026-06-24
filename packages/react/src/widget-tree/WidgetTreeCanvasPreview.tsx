@@ -1,4 +1,4 @@
-import { useMemo, useState, type DragEvent } from 'react';
+import { useMemo, useState, type DragEvent, type PointerEvent } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import type { WidgetPlacementAsset } from '@workbench-kit/contracts';
 import {
@@ -11,6 +11,8 @@ import {
   getWidgetAtPath,
   hitTestLayoutTree,
   layoutWidget,
+  parseWidgetPathKey,
+  widgetPathEquals,
   widgetPathKey,
   type GenericWidget,
   type LayoutConstraints,
@@ -107,6 +109,13 @@ function widgetPathParent(path: WidgetPath): WidgetPath | null {
   return path.slice(0, -1);
 }
 
+function widgetPathFromEventTarget(target: EventTarget | null): WidgetPath | null {
+  if (!(target instanceof Element)) return null;
+
+  const pathKey = target.closest<HTMLElement>('[data-widget-path]')?.dataset.widgetPath;
+  return pathKey ? parseWidgetPathKey(pathKey) : null;
+}
+
 function eventPointInLayout(
   event: DragEvent<HTMLElement>,
   stage: HTMLElement,
@@ -165,6 +174,7 @@ export function WidgetTreeCanvasPreview({
   const [assetDropTarget, setAssetDropTarget] = useState<WidgetTreeCanvasAssetDropTarget | null>(
     null,
   );
+  const [hoveredPath, setHoveredPath] = useState<WidgetPath | null>(null);
   const layout = useMemo(
     () => (root ? layoutWidget(root, layoutConstraints, { x: 0, y: 0 }, { registry }) : null),
     [layoutConstraints, registry, root],
@@ -172,6 +182,16 @@ export function WidgetTreeCanvasPreview({
   const selectedLayout = useMemo(
     () => (layout && selectedPath ? findLayoutNodeByPath(layout, selectedPath) : null),
     [layout, selectedPath],
+  );
+  const hoveredLayout = useMemo(
+    () => (layout && hoveredPath ? findLayoutNodeByPath(layout, hoveredPath) : null),
+    [hoveredPath, layout],
+  );
+  const showHoveredLayout = Boolean(
+    hoveredLayout &&
+    hoveredPath &&
+    (!selectedPath || !widgetPathEquals(hoveredPath, selectedPath)) &&
+    !assetDropTarget,
   );
   const canDrag = Boolean(
     root && selectedPath && !readOnly && canDragSelectedPath(root, selectedPath),
@@ -270,6 +290,22 @@ export function WidgetTreeCanvasPreview({
     onPlaceAssetPath?.(operation);
   };
 
+  const handlePreviewPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const nextPath = widgetPathFromEventTarget(event.target);
+    if (!nextPath) {
+      setHoveredPath(null);
+      return;
+    }
+
+    setHoveredPath((current) =>
+      current && widgetPathEquals(current, nextPath) ? current : nextPath,
+    );
+  };
+
+  const handlePreviewPointerLeave = () => {
+    setHoveredPath(null);
+  };
+
   return (
     <WorkbenchPreviewCanvas
       className="widget-tree-canvas-preview"
@@ -294,6 +330,8 @@ export function WidgetTreeCanvasPreview({
         onDragLeave={handleAssetDragLeave}
         onDragOver={handleAssetDragOver}
         onDrop={handleAssetDrop}
+        onPointerLeave={handlePreviewPointerLeave}
+        onPointerMove={handlePreviewPointerMove}
       >
         <JdwPreview
           className="widget-tree-canvas-preview__render"
@@ -304,6 +342,20 @@ export function WidgetTreeCanvasPreview({
           onSelectPath={onSelectPath}
         />
         <div className="widget-tree-canvas-preview__frames" data-testid="widget-tree-canvas-frames">
+          {showHoveredLayout && hoveredPath && hoveredLayout ? (
+            <WorkbenchCanvasItemFrame
+              className="widget-tree-canvas-preview__hover-frame"
+              data-testid="widget-tree-canvas-hover-frame"
+              data-widget-path={widgetPathKey(hoveredPath)}
+              data-widget-type={hoveredLayout.node.widget.type}
+              hovered
+              transient
+              width={hoveredLayout.node.rect.width}
+              height={hoveredLayout.node.rect.height}
+              x={hoveredLayout.node.rect.x}
+              y={hoveredLayout.node.rect.y}
+            />
+          ) : null}
           {assetDropTarget ? (
             <WorkbenchCanvasDropIndicator
               data-testid="widget-tree-canvas-asset-drop-indicator"
