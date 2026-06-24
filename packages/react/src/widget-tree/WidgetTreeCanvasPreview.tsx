@@ -2,6 +2,7 @@ import { useMemo, useState, type DragEvent, type FocusEvent, type PointerEvent }
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import type { WidgetPlacementAsset } from '@workbench-kit/contracts';
 import {
+  computeGridChildRect,
   createWidgetDragPatch,
   createWidgetReparentPatch,
   createWidgetResizePatch,
@@ -66,9 +67,21 @@ export interface WidgetTreeCanvasAssetDropOperation {
 }
 
 interface WidgetTreeCanvasAssetDropTarget {
+  readonly insertIndex: number;
+  readonly markerRect: Rect;
+  readonly nextPath: WidgetPath;
+  readonly parentType: string;
   readonly path: WidgetPath;
   readonly rect: Rect;
+  readonly type: WidgetTreeCanvasAssetDropTargetType;
 }
+
+type WidgetTreeCanvasAssetDropTargetType =
+  | 'append-column'
+  | 'append-container'
+  | 'append-grid'
+  | 'append-row'
+  | 'append-stack';
 
 function canDragSelectedPath(root: GenericWidget, path: WidgetPath): boolean {
   const segment = path[path.length - 1];
@@ -129,6 +142,102 @@ function eventPointInLayout(
   return {
     x: (event.clientX - rect.left) * scaleX,
     y: (event.clientY - rect.top) * scaleY,
+  };
+}
+
+function readPositiveInteger(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) return null;
+  return Math.floor(value);
+}
+
+function readNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function appendLineRect(rect: Rect, axis: 'x' | 'y', children: readonly LayoutNodeResult[]): Rect {
+  const lastChildRect = children[children.length - 1]?.rect;
+  if (axis === 'x') {
+    const x = lastChildRect
+      ? Math.min(rect.x + rect.width - 2, lastChildRect.x + lastChildRect.width)
+      : rect.x;
+    return { x, y: rect.y, width: 2, height: rect.height };
+  }
+
+  const y = lastChildRect
+    ? Math.min(rect.y + rect.height - 2, lastChildRect.y + lastChildRect.height)
+    : rect.y;
+  return { x: rect.x, y, width: rect.width, height: 2 };
+}
+
+function createAssetDropTarget(
+  operation: WidgetTreeCanvasAssetDropOperation,
+  parent: GenericWidget,
+  target: LayoutNodeResult,
+): WidgetTreeCanvasAssetDropTarget {
+  const rect = target.rect;
+
+  if (parent.type === 'row') {
+    return {
+      insertIndex: operation.insertIndex,
+      markerRect: appendLineRect(rect, 'x', target.children),
+      nextPath: operation.nextPath,
+      parentType: parent.type,
+      path: operation.parentPath,
+      rect,
+      type: 'append-row',
+    };
+  }
+
+  if (parent.type === 'column') {
+    return {
+      insertIndex: operation.insertIndex,
+      markerRect: appendLineRect(rect, 'y', target.children),
+      nextPath: operation.nextPath,
+      parentType: parent.type,
+      path: operation.parentPath,
+      rect,
+      type: 'append-column',
+    };
+  }
+
+  if (parent.type === 'grid') {
+    const columns = readPositiveInteger(parent.columns) ?? 2;
+    const gap = readNumber(parent.gap);
+    const padding = readNumber(parent.padding);
+    const rows = readPositiveInteger(parent.rows) ?? undefined;
+    const markerRect = computeGridChildRect(
+      {
+        columns,
+        ...(gap !== undefined ? { gap } : {}),
+        ...(padding !== undefined ? { padding } : {}),
+        ...(rows !== undefined ? { rows } : {}),
+      },
+      {
+        col: operation.insertIndex % columns,
+        row: Math.floor(operation.insertIndex / columns),
+      },
+      rect,
+    );
+
+    return {
+      insertIndex: operation.insertIndex,
+      markerRect,
+      nextPath: operation.nextPath,
+      parentType: parent.type,
+      path: operation.parentPath,
+      rect,
+      type: 'append-grid',
+    };
+  }
+
+  return {
+    insertIndex: operation.insertIndex,
+    markerRect: rect,
+    nextPath: operation.nextPath,
+    parentType: parent.type,
+    path: operation.parentPath,
+    rect,
+    type: parent.type === 'stack' ? 'append-stack' : 'append-container',
   };
 }
 
@@ -273,20 +382,21 @@ export function WidgetTreeCanvasPreview({
 
   const handleAssetDragOver = (event: DragEvent<HTMLDivElement>) => {
     const operation = resolveAssetDrop(event);
-    if (!operation || !layout) {
+    if (!operation || !layout || !root) {
       setAssetDropTarget(null);
       return;
     }
 
     const target = findLayoutNodeByPath(layout, operation.parentPath);
-    if (!target) {
+    const parent = getWidgetAtPath(root, operation.parentPath);
+    if (!target || !parent) {
       setAssetDropTarget(null);
       return;
     }
 
     event.preventDefault();
     event.dataTransfer.dropEffect = 'copy';
-    setAssetDropTarget({ path: operation.parentPath, rect: target.node.rect });
+    setAssetDropTarget(createAssetDropTarget(operation, parent, target.node));
   };
 
   const handleAssetDragLeave = (event: DragEvent<HTMLDivElement>) => {
@@ -403,15 +513,35 @@ export function WidgetTreeCanvasPreview({
             />
           ) : null}
           {assetDropTarget ? (
-            <WorkbenchCanvasDropIndicator
-              data-testid="widget-tree-canvas-asset-drop-indicator"
-              data-widget-path={widgetPathKey(assetDropTarget.path)}
-              width={assetDropTarget.rect.width}
-              height={assetDropTarget.rect.height}
-              x={assetDropTarget.rect.x}
-              y={assetDropTarget.rect.y}
-              zIndex={30}
-            />
+            <>
+              <WorkbenchCanvasDropIndicator
+                className="widget-tree-canvas-preview__asset-drop-target"
+                data-testid="widget-tree-canvas-asset-drop-indicator"
+                data-insert-index={assetDropTarget.insertIndex}
+                data-next-widget-path={widgetPathKey(assetDropTarget.nextPath)}
+                data-parent-type={assetDropTarget.parentType}
+                data-widget-path={widgetPathKey(assetDropTarget.path)}
+                width={assetDropTarget.rect.width}
+                height={assetDropTarget.rect.height}
+                x={assetDropTarget.rect.x}
+                y={assetDropTarget.rect.y}
+                zIndex={30}
+              />
+              <WorkbenchCanvasDropIndicator
+                className="widget-tree-canvas-preview__asset-drop-marker"
+                data-testid="widget-tree-canvas-asset-drop-marker"
+                data-drop-target-type={assetDropTarget.type}
+                data-insert-index={assetDropTarget.insertIndex}
+                data-next-widget-path={widgetPathKey(assetDropTarget.nextPath)}
+                data-parent-type={assetDropTarget.parentType}
+                data-widget-path={widgetPathKey(assetDropTarget.path)}
+                width={assetDropTarget.markerRect.width}
+                height={assetDropTarget.markerRect.height}
+                x={assetDropTarget.markerRect.x}
+                y={assetDropTarget.markerRect.y}
+                zIndex={35}
+              />
+            </>
           ) : null}
           {selectedLayout && selectedPath ? (
             <WorkbenchCanvasItemFrame

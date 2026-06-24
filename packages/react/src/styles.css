@@ -9131,6 +9131,39 @@
   pointer-events: auto;
 }
 
+.widget-tree-canvas-preview__asset-drop-target {
+  background: color-mix(
+    in srgb,
+    var(--vscode-focusBorder, var(--color-focus-border)) 5%,
+    transparent
+  );
+  border-style: dashed;
+  border-color: color-mix(
+    in srgb,
+    var(--vscode-focusBorder, var(--color-focus-border)) 75%,
+    transparent
+  );
+}
+
+.widget-tree-canvas-preview__asset-drop-marker {
+  background: var(--vscode-focusBorder, var(--color-focus-border));
+  border: 0;
+  box-shadow: 0 0 0 1px var(--vscode-editor-background, var(--color-bg));
+}
+
+.widget-tree-canvas-preview__asset-drop-marker[data-drop-target-type='append-grid'],
+.widget-tree-canvas-preview__asset-drop-marker[data-drop-target-type='append-stack'],
+.widget-tree-canvas-preview__asset-drop-marker[data-drop-target-type='append-container'] {
+  background: color-mix(
+    in srgb,
+    var(--vscode-focusBorder, var(--color-focus-border)) 15%,
+    transparent
+  );
+  border: 2px solid var(--vscode-focusBorder, var(--color-focus-border));
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--vscode-focusBorder, var(--color-focus-border)) 35%, transparent);
+}
+
 .widget-tree-side-panel {
   display: flex;
   flex-direction: column;

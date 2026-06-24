@@ -201,6 +201,19 @@ describe('WidgetTreeCanvasPreview', () => {
       '[data-testid="widget-tree-canvas-asset-drop-indicator"]',
     );
     expect(indicator?.getAttribute('data-widget-path')).toBe('$');
+    expect(indicator?.getAttribute('data-parent-type')).toBe('column');
+    expect(indicator?.getAttribute('data-insert-index')).toBe('1');
+    expect(indicator?.getAttribute('data-next-widget-path')).toBe('$.children[1]');
+
+    const marker = container.querySelector('[data-testid="widget-tree-canvas-asset-drop-marker"]');
+    expect(marker?.getAttribute('data-widget-path')).toBe('$');
+    expect(marker?.getAttribute('data-parent-type')).toBe('column');
+    expect(marker?.getAttribute('data-drop-target-type')).toBe('append-column');
+    expect(marker?.getAttribute('data-next-widget-path')).toBe('$.children[1]');
+    expect(marker?.getAttribute('style')).toContain('--ui-workbench-canvas-drop-indicator-y: 40px');
+    expect(marker?.getAttribute('style')).toContain(
+      '--ui-workbench-canvas-drop-indicator-height: 2px',
+    );
 
     await act(async () => {
       stage.dispatchEvent(createDragLikeEvent('drop', 12, 12, dataTransfer));
@@ -214,6 +227,82 @@ describe('WidgetTreeCanvasPreview', () => {
       nextPath: appendChildrenPath(ROOT_WIDGET_PATH, 1),
     });
     expect(onPatch).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('shows grid slot markers for preview asset drops', async () => {
+    const rootWidget: GenericWidget = {
+      type: 'grid',
+      columns: 2,
+      width: 200,
+      height: 120,
+      children: [{ type: 'text', text: 'A', col: 0, row: 0 }],
+    };
+    const asset: WidgetPlacementAsset<GenericWidget> = {
+      category: 'content',
+      content: { type: 'text', text: 'Heading' },
+      id: 'content.heading',
+      label: 'Heading',
+    };
+    const onPlaceAssetPath = vi.fn();
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WidgetTreeCanvasPreview
+          json={formatWidgetDocumentJson(rootWidget)}
+          root={rootWidget}
+          selectedPath={appendChildrenPath(ROOT_WIDGET_PATH, 0)}
+          onPatch={() => true}
+          onPlaceAssetPath={onPlaceAssetPath}
+          onSelectPath={() => undefined}
+        />,
+      );
+    });
+
+    const stage = container.querySelector(
+      '[data-testid="widget-tree-canvas-stage"]',
+    ) as HTMLElement;
+    mockElementRect(stage, { left: 0, top: 0, width: 200, height: 120 });
+    const dataTransfer = createDataTransfer();
+    writeWidgetPlacementAssetDragData(dataTransfer, asset);
+
+    await act(async () => {
+      stage.dispatchEvent(createDragLikeEvent('dragover', 12, 12, dataTransfer));
+    });
+
+    const indicator = container.querySelector(
+      '[data-testid="widget-tree-canvas-asset-drop-indicator"]',
+    );
+    const marker = container.querySelector('[data-testid="widget-tree-canvas-asset-drop-marker"]');
+    expect(indicator?.getAttribute('data-parent-type')).toBe('grid');
+    expect(indicator?.getAttribute('data-insert-index')).toBe('1');
+    expect(indicator?.getAttribute('data-next-widget-path')).toBe('$.children[1]');
+    expect(marker?.getAttribute('data-drop-target-type')).toBe('append-grid');
+    expect(marker?.getAttribute('data-parent-type')).toBe('grid');
+    expect(marker?.getAttribute('style')).toContain(
+      '--ui-workbench-canvas-drop-indicator-x: 100px',
+    );
+    expect(marker?.getAttribute('style')).toContain(
+      '--ui-workbench-canvas-drop-indicator-width: 100px',
+    );
+
+    await act(async () => {
+      stage.dispatchEvent(createDragLikeEvent('drop', 12, 12, dataTransfer));
+    });
+
+    expect(onPlaceAssetPath).toHaveBeenCalledTimes(1);
+    expect(onPlaceAssetPath.mock.calls[0]?.[0]).toMatchObject({
+      asset,
+      parentPath: ROOT_WIDGET_PATH,
+      insertIndex: 1,
+      nextPath: appendChildrenPath(ROOT_WIDGET_PATH, 1),
+    });
 
     await act(async () => {
       root.unmount();

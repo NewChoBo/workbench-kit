@@ -332,6 +332,14 @@ export const AssetPreviewDrop: Story = {
     dispatchDragEvent(stage, 'dragover', { clientX, clientY, dataTransfer });
     const indicator = await canvas.findByTestId('widget-tree-canvas-asset-drop-indicator');
     await expect(indicator).toHaveAttribute('data-widget-path', '$');
+    await expect(indicator).toHaveAttribute('data-parent-type', 'column');
+    await expect(indicator).toHaveAttribute('data-insert-index', '3');
+    await expect(indicator).toHaveAttribute('data-next-widget-path', '$.children[3]');
+    const marker = await canvas.findByTestId('widget-tree-canvas-asset-drop-marker');
+    await expect(marker).toHaveAttribute('data-widget-path', '$');
+    await expect(marker).toHaveAttribute('data-parent-type', 'column');
+    await expect(marker).toHaveAttribute('data-drop-target-type', 'append-column');
+    await expect(marker).toHaveAttribute('data-next-widget-path', '$.children[3]');
     dispatchDragEvent(stage, 'drop', { clientX, clientY, dataTransfer });
 
     const insertedNode = await canvas.findByTestId('widget-tree-node-$.children[3]');
