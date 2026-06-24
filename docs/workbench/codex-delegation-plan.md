@@ -1,6 +1,6 @@
 # Codex Delegation Plan — Lane A Completion
 
-**Status:** Active handoff (2026-06-16)  
+**Status:** Lane A complete handoff (updated 2026-06-25)
 **Branch:** `feature/theia-strengths-workbench`  
 **Audience:** Autonomous Codex implementation sessions. English body; Korean executive summary at top.
 
@@ -9,9 +9,9 @@
 ## 요약
 
 - **미션:** Lane A 마감을 Codex에 위임. 브랜치 `feature/theia-strengths-workbench` 유지. 각 패키지 완료 시 `pnpm validate` 통과 후 Conventional Commit (영문).
-- **현재 기준선:** WB-23~WB-31(S1–S3, S8.5~S8.6, command explorer, preference scopes, devtools inspectors) 완료. Lane A **~95%**. 최근 커밋: `9b37c8f`, `96e957f`, `712f922`, `835497e`, `66a1f08`.
-- **Codex 작업 패키지 5개:** P0 **S8.6**(완료) → P0 **WB-29**(완료) → P1 **WB-30**(완료) → P2 **Track D D2**(완료) → **B-UX**(부분 진행).
-- **첫 권장 작업:** **S12** Lane A DoD audit; rerun `validate:full` only if the audit changes code or release-critical docs.
+- **현재 기준선:** WB-23~WB-31(S1–S3, S8.5~S8.6, command explorer, preference scopes, devtools inspectors)과 S12 DoD audit 완료. Lane A **완료**. 최근 커밋: `9d14182`, `9b37c8f`, `96e957f`, `712f922`, `835497e`.
+- **Codex 작업 패키지 5개:** P0 **S8.6**(완료) → P0 **WB-29**(완료) → P1 **WB-30**(완료) → P2 **Track D D2**(완료) → **S12 DoD**(완료).
+- **첫 권장 작업:** **Track D D3** legacy shim audit/removal. UI-heavy slice를 원하면 JDW drag/reparent ghost와 snap indicators를 진행한다.
 - **필수 제약:** `workbench-core` React-free, `react`가 `workbench-core` 미import, JDW canonical, subtree 분리 금지, Strategy A 렌더, UI 영문.
 
 ---
@@ -35,6 +35,7 @@
 ### Recent commits (`git log -10 --oneline`)
 
 ```text
+9d14182 feat(workbench): expose devtools inspectors
 9b37c8f fix(workbench): refresh scoped settings updates
 96e957f feat(jdw): show asset drop placement marker
 712f922 feat(jdw): specialize parent child schemas
@@ -44,7 +45,6 @@ d1af183 feat(jdw): drop assets onto preview canvas
 d821254 feat(jdw): expose placement schema hints
 5f1daf6 feat(jdw): resize wrapper children from canvas
 68bb7ee feat(jdw): resize linear children from canvas
-33e3c92 feat(jdw): resize grid spans from canvas
 ```
 
 ### Done (Lane A)
@@ -63,17 +63,17 @@ d821254 feat(jdw): expose placement schema hints
 | WB-30       | Done   | Preference scopes + scoped setting UI/persistence coverage            |
 | WB-31       | Done   | Read-only devtools inspectors + required Storybook coverage           |
 
-### Remaining (Lane A ~5%)
+### Remaining (Lane A)
 
-| Item    | Priority | Blocker                         |
-| ------- | -------- | ------------------------------- |
-| S12 DoD | P2       | Final audit after WB-31 landing |
+None. Lane A is closed by
+[lane-a-closeout-audit-2026-06-25.md](./lane-a-closeout-audit-2026-06-25.md).
 
 ### Validate status
 
 Latest full validation is tracked in [session-work-plan.md](./session-work-plan.md);
 WB-31 context closeout passed `pnpm validate:full` on 2026-06-25 with 202 Vitest
-files / 919 tests and 29/29 required Storybook plays.
+files / 919 tests and 29/29 required Storybook plays. S12 context alignment now
+requires the final closeout commit gate to rerun `pnpm validate:full`.
 
 ---
 
@@ -407,36 +407,36 @@ refactor(jdw): unify preview render on Strategy A layout backend (Track D D2)
 
 ---
 
-### Package 5: B-UX — Deferred (pointer only)
+### Package 5: B-UX — Post-Lane A pointer
 
-**Do not implement in Lane A Codex sessions** unless explicitly requested after WB-29.
+Lane A no longer blocks JDW authoring polish. Keep B-UX work narrow: improve one
+observable edit affordance at a time and preserve the JDW single-source-of-truth
+commit model.
 
-| Session | Scope                            | Doc                                                   |
-| ------- | -------------------------------- | ----------------------------------------------------- |
-| B-UX1   | Validation banner + dirty parity | [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md) UX-1 |
-| B-UX2   | Outline DnD + keyboard           | UX-2                                                  |
-| B-UX3   | Stack placement inspector        | UX-3                                                  |
-| B-UX4   | Preview hit-test selection       | UX-4 (after B2)                                       |
-| B-UX5   | Canvas wire-in                   | UX-5 (after B3)                                       |
-
-Blocked until **WB-29** lands per user decision (2026-06-16).
+| Session | Scope                            | Current state                                                     |
+| ------- | -------------------------------- | ----------------------------------------------------------------- |
+| B-UX1   | Validation banner + dirty parity | Core landed; keep parity covered in Storybook                     |
+| B-UX2   | Outline DnD + keyboard           | Core outline flows landed; remaining polish is narrow             |
+| B-UX3   | Stack placement inspector        | Stack/asset interactions landed in pieces                         |
+| B-UX4   | Preview hit-test selection       | Landed with hover/focus chrome                                    |
+| B-UX5   | Canvas wire-in                   | Drag/resize/reparent commits landed; ghost/snap indicators remain |
 
 ---
 
 ## 5. Explicit Non-Goals for Codex
 
-| Non-goal                                              | Reason                          |
-| ----------------------------------------------------- | ------------------------------- |
-| WB-15 dirty guard primitive                           | Policy undefined                |
-| WB-20 / WB-22 resource draft shells                   | Blocked on WB-15                |
-| Lane B schema/canvas (B1–B4)                          | Parallel track; headless-first  |
-| Track B-UX (B-UX1–B-UX5)                              | Deferred until WB-29            |
-| Track C: i18n, themes, preview zoom/pan               | Post–Lane A DoD                 |
-| Git subtree / `jdw-react` package split               | Out of scope                    |
-| `WorkbenchDocument` persistence for widgets           | Dual-model drift                |
-| Backend / auth / marketplace                          | Frontend-only scope             |
-| Theia fork / public Inversify DI                      | Architecture decision           |
-| Embedding full `WidgetTreeLab` in sample `EditorArea` | Dedicated hosts in WB-22/WB-29+ |
+| Non-goal                                              | Reason                                      |
+| ----------------------------------------------------- | ------------------------------------------- |
+| WB-15 dirty guard primitive                           | Policy undefined                            |
+| WB-20 / WB-22 resource draft shells                   | Blocked on WB-15                            |
+| Lane B schema/canvas (B1–B4)                          | Parallel track; headless-first              |
+| Broad Track B-UX rewrite                              | Split into narrow post-Lane A polish slices |
+| Track C: i18n, themes, preview zoom/pan               | Post–Lane A DoD                             |
+| Git subtree / `jdw-react` package split               | Out of scope                                |
+| `WorkbenchDocument` persistence for widgets           | Dual-model drift                            |
+| Backend / auth / marketplace                          | Frontend-only scope                         |
+| Theia fork / public Inversify DI                      | Architecture decision                       |
+| Embedding full `WidgetTreeLab` in sample `EditorArea` | Dedicated hosts in WB-22/WB-29+             |
 
 ---
 
@@ -510,18 +510,19 @@ pnpm workbench-sample
 ## 8. Suggested Codex Session Order
 
 ```text
-S12 Lane A DoD
+Track D D3 legacy shim audit -> JDW B-UX5 drag/reparent indicators
 ```
 
 ### Parallel options
 
-| Track              | Can run parallel with | Notes                         |
-| ------------------ | --------------------- | ----------------------------- |
-| D0–D1 inventory    | S8.6 prep             | Docs + dead-path cleanup only |
-| D2 dual render     | Done 2026-06-24       | Run JDW vitest after changes  |
-| Lane B B1 headless | WB-29                 | No canvas UI                  |
+| Track             | Can run parallel with | Notes                                        |
+| ----------------- | --------------------- | -------------------------------------------- |
+| D3 legacy cleanup | JDW polish            | Keep shared registry/resource changes scoped |
+| D2 dual render    | Done 2026-06-24       | Run JDW vitest after changes                 |
+| JDW B-UX5 polish  | Track D docs          | Storybook and widget-tree tests required     |
 
-**Do not parallel:** WB-29 before S8.6 (user priority); B-UX before WB-29.
+**Do not parallel:** broad shell/editor contract refactors with JDW canvas work
+unless the owner boundaries and validation lane are explicit.
 
 ---
 
@@ -529,16 +530,17 @@ S12 Lane A DoD
 
 ### Planning docs
 
-| Document            | Path                                                                   |
-| ------------------- | ---------------------------------------------------------------------- |
-| Session work plan   | [session-work-plan.md](./session-work-plan.md)                         |
-| Completion plan     | [completion-plan.md](./completion-plan.md)                             |
-| Todo / WB queue     | [todo.md](./todo.md)                                                   |
-| Next slice detail   | [next-slice-plan.md](./next-slice-plan.md)                             |
-| Structural review   | [structural-review.md](./structural-review.md)                         |
-| JDW editor UX       | [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md)                       |
-| JDW architecture    | [jdw-architecture-analysis.md](./jdw-architecture-analysis.md)         |
-| Workbench core arch | [../architecture/workbench-core.md](../architecture/workbench-core.md) |
+| Document            | Path                                                                         |
+| ------------------- | ---------------------------------------------------------------------------- |
+| Session work plan   | [session-work-plan.md](./session-work-plan.md)                               |
+| Completion plan     | [completion-plan.md](./completion-plan.md)                                   |
+| Lane A closeout     | [lane-a-closeout-audit-2026-06-25.md](./lane-a-closeout-audit-2026-06-25.md) |
+| Todo / WB queue     | [todo.md](./todo.md)                                                         |
+| Next slice detail   | [next-slice-plan.md](./next-slice-plan.md)                                   |
+| Structural review   | [structural-review.md](./structural-review.md)                               |
+| JDW editor UX       | [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md)                             |
+| JDW architecture    | [jdw-architecture-analysis.md](./jdw-architecture-analysis.md)               |
+| Workbench core arch | [../architecture/workbench-core.md](../architecture/workbench-core.md)       |
 
 ### Key code paths
 
@@ -567,7 +569,8 @@ S12 Lane A DoD
 
 | Date       | Note                                                                                     |
 | ---------- | ---------------------------------------------------------------------------------------- |
-| 2026-06-25 | WB-31 context closeout passed `pnpm validate:full`; S12 audit remains                    |
-| 2026-06-25 | WB-31 devtools inspectors landed; remaining Lane A work is S12 DoD audit                 |
+| 2026-06-25 | S12 Lane A DoD audit documented final evidence; Lane A is complete                       |
+| 2026-06-25 | WB-31 context closeout passed `pnpm validate:full`                                       |
+| 2026-06-25 | WB-31 devtools inspectors landed                                                         |
 | 2026-06-16 | Initial Codex delegation plan for Lane A handoff                                         |
 | 2026-06-16 | Completed S8.6 EditorArea JDW Preview/Split and StrictMode-safe sample open verification |

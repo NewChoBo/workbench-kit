@@ -20,28 +20,28 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 | 1   | **S9**   | **WB-29** — command-backed explorer closeout                | **Done** — selection/reveal/search sync + integration tests  |
 | 2   | **S10**  | **WB-30** — preference scopes (default / workspace / local) | **Done** — merge helper + scoped setting UI/persistence test |
 | 3   | **S11**  | **WB-31** — devtools inspectors (Storybook)                 | **Done** — registry / transaction journal read-only panel    |
-| 4   | **S12**  | Lane A closeout                                             | DoD checklist complete; `pnpm validate:full`                 |
-| —   | **D-S1** | Track D0–D1 inventory + dead-path cleanup (parallel)        | Inventory doc + low-risk alias/shim removal; no Lane A block |
+| 4   | **S12**  | Lane A closeout                                             | **Done** — DoD checklist audited and docs aligned            |
+| —   | **D-S1** | Track D3 legacy shim audit                                  | Now unblocked by Lane A completion                           |
 
 ---
 
 ## 요약
 
-- **Codex 위임:** Lane A 잔여 작업은 [codex-delegation-plan.md](./codex-delegation-plan.md) 패키지 흐름으로 Codex 자율 실행 가능. WB-31은 닫혔고 다음 작업은 **S12 Lane A closeout**.
-- **지금 어디:** Lane A **~95%**. WB-23~WB-31 완료(reveal/focus bridge + integration tests + default/workspace/local preference scopes + read-only devtools inspectors). 현재 활성 context는 JDW Track B/B-UX: B1 placement schema parity, B4 wrapper/single-child resize, preview asset drop + placement marker, preview hover/focus chrome, per-parent schema specialization까지 닫는 중이다. 현재 full validation은 green이고, Lane A 다음 큰 작업은 S12 DoD audit이다.
+- **Codex 위임:** Lane A 잔여 작업은 닫혔다. 현재 위임 컨텍스트는 [lane-a-closeout-audit-2026-06-25.md](./lane-a-closeout-audit-2026-06-25.md)를 기준으로 post-Lane A hardening 또는 JDW polish로 넘어간다.
+- **지금 어디:** Lane A **완료**. WB-23~WB-31과 S12 DoD audit이 닫혔고, 현재 활성 context는 JDW Track B/B-UX: B1 placement schema parity, B4 wrapper/single-child resize, preview asset drop + placement marker, preview hover/focus chrome, per-parent schema specialization까지 닫은 상태다. 현재 full validation은 green이며 다음 큰 작업은 Track D D3 또는 drag/reparent ghost와 snap indicators다.
 - **다음 3세션:**
-  1. **S12** — Lane A DoD audit.
-  2. **B-UX / Track D** — drag/reparent ghost indicators or dead-path cleanup only if Lane A is not the selected slice.
-  3. **Post-Lane A hardening** — D3 legacy shim removal after S12 confirms the lane.
+  1. **Track D D3** — static capability seed, URI model, editor scaffold legacy shim audit/removal.
+  2. **B-UX5 polish** — drag/reparent ghost와 snap indicators.
+  3. **Track C scoping** — dirty guard, resource draft shells, consumer swap, i18n/theme, preview zoom/pan 중 정책 결정이 필요한 항목 분리.
 - **B-UX:** WB-29 이후 tree/preview 중심 UX-1~UX-4 core가 상당 부분 들어왔다. 캔버스 authoring은 B3 first wire-in(선택 프레임 + stack/grid drag commit), stack 8방향 resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper/single-child resize, asset-to-preview drop + parent/index/slot marker, preview hover/focus chrome까지 들어왔고, root JDW schema/validator placement parity와 per-parent children schema specialization도 들어왔다. 남은 polish는 drag/reparent ghost와 snap indicators이다.
-- **Track D:** D0–D1은 S9와 **병렬** 가능. D2 이중 렌더 통합은 2026-06-24 완료. D3는 Lane A DoD 이후.
+- **Track D:** D0–D1은 병렬 가능. D2 이중 렌더 통합은 2026-06-24 완료. D3는 Lane A DoD 완료로 이제 착수 가능하다.
 - **병렬 트랙 B:** Lane B(JDW/widget-tree) B1 placement schema parity는 root schema/validator 기준 완료, B2는 **headless base 완료 기준**, B3는 **React first wire-in 완료 기준**, B4는 stack resize/grid columns/canvas reparent/grid drag-slot reflow/grid resize span reflow/row-column linear resize/wrapper-child resize/asset preview drop까지 **partial complete** 기준으로 정리한다. 남은 Track B edge는 더 넓은 placement polish다.
 - **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). 프리뷰 hit-test(B-UX4)는 완료됐고, 캔버스(B-UX5)는 frame/drag/resize/reparent/preview-drop까지 확장됐다.
-- **보류 트랙 C:** WB-15 dirty guard, WB-20/22 리소스 드래프트, consumer swap, i18n/테마, preview zoom/pan — Lane A DoD 이후.
-- **정리 트랙 D (in-repo only):** D0–D1(인벤토리·dead WIP)은 병렬 진행. D2(이중 렌더 통합)는 완료. D3(legacy shim 제거)는 Lane A DoD 이후. 다음 우선순위는 preview/editor 검증면 강화와 문서 truth 유지. **패키지 분리·git subtree는 범위 밖.**
+- **보류 트랙 C:** WB-15 dirty guard, WB-20/22 리소스 드래프트, consumer swap, i18n/테마, preview zoom/pan — post-Lane A 별도 정책/scope 필요.
+- **정리 트랙 D (in-repo only):** D0–D1(인벤토리·dead WIP)은 병렬 진행. D2(이중 렌더 통합)는 완료. D3(legacy shim 제거)는 Lane A DoD 완료로 착수 가능. 다음 우선순위는 preview/editor 검증면 강화와 문서 truth 유지. **패키지 분리·git subtree는 범위 밖.**
 - **React JDW 위치:** `packages/react/src/jdw` 유지. headless는 `@workbench-kit/jdw`. 별도 `jdw-react` 패키지·git subtree **계획 제외(out of scope)**.
 - **React JDW-like:** 범용 오픈소스 React JDW 라이브러리 없음. repo는 headless + `react/jdw` + widget-tree/json-config/jdw-editor **레이어 분리**. 실질 중복은 이중 렌더 전략과 WorkbenchDocument vs JDW 이중 모델.
-- **핵심 의존:** WB-28 S3는 WB-27 트랜잭션 API를 소비 완료. WB-29는 이미 `WorkspaceResourceUri`/editor open path를 사용하며, 남은 일은 selection/reveal/search closeout. WB-15 미정으로 에디터 dirty는 **로컬 상태**만.
+- **핵심 의존:** WB-28 S3는 WB-27 트랜잭션 API를 소비 완료. WB-29는 `WorkspaceResourceUri`/editor open path와 selection/reveal/search closeout까지 완료. WB-15 미정으로 에디터 dirty는 **로컬 상태**만.
 - **이중 모델 주의:** `WorkbenchDocument`(절대 좌표) vs JDW — 위젯 파일은 JDW 단일 SSoT. `WorkbenchCanvasShell` 데모와 혼용 금지.
 - **검증 기준:** 각 세션 종료 시 `pnpm validate` 통과. Lane A 마감 시 `pnpm validate:full`.
 - **세션 번호:** 본 문서 S7–S12 = [completion-plan.md](./completion-plan.md) S2–S7에 대응.
@@ -54,9 +54,9 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 | ------------------- | -------------------------------------------------------------------------------------------------- |
 | **Date**            | 2026-06-25                                                                                         |
 | **Branch**          | `feature/theia-strengths-workbench`                                                                |
-| **Working tree**    | WB-31 devtools inspectors closeout slice                                                           |
+| **Working tree**    | S12 Lane A closeout audit and context alignment                                                    |
 | **Last commits**    | Current slice: WB-31 devtools inspectors; previous: WB-30 preference scope closeout                |
-| **Lane A progress** | ~95% (WB-23–WB-31 done; S12 DoD closeout remains)                                                  |
+| **Lane A progress** | Complete (WB-23–WB-31 plus S12 DoD audit)                                                          |
 | **Validate note**   | `pnpm validate:full` green 2026-06-25; Vitest 202 files / 919 tests; Storybook required play 29/29 |
 
 ---
@@ -66,7 +66,7 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 ### Track A — Workbench Lane A (primary, sequential)
 
 ```text
-Lane A DoD
+Lane A complete -> Track D D3 or JDW B-UX5 polish
 ```
 
 | Milestone | Status   | Next action                                                          |
@@ -81,6 +81,7 @@ Lane A DoD
 | WB-29     | Done     | Closeout landed: reveal/focus command bridge, editor↔tree sync tests |
 | WB-30     | **Done** | default/workspace/local merge + settings UI consumer + local restore |
 | WB-31     | **Done** | Read-only devtools inspectors + required Storybook coverage          |
+| S12       | **Done** | Lane A DoD audit and context docs aligned                            |
 
 ### Track B — JDW / widget-tree (parallel, headless-first)
 
@@ -106,16 +107,16 @@ From [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). Improves `WidgetTreeLab` 
 | **B-UX4** | UX-4     | Preview hit-test selection ↔ outline sync                              | M      | B2 base is consumed; hover/focus chrome landed                                                                                                                                                                                                           |
 | **B-UX5** | UX-5     | Canvas wire-in to lab (gesture commit)                                 | L      | First slice + stack 8-way resize + grid columns reflow + canvas reparent + grid drag-slot reflow + grid resize span reflow + row/column linear resize + wrapper-child resize + asset preview drop + placement marker + preview hover/focus chrome landed |
 
-**Current JDW recommendation:** Lane A next is S12 closeout; if staying in JDW, target drag/reparent ghost and snap indicators.
+**Current JDW recommendation:** Lane A is complete; if staying in JDW, target drag/reparent ghost and snap indicators as the next narrow polish slice.
 
 ### Track D — timing (refreshed)
 
-| Phase | When to start                          | Notes                                     |
-| ----- | -------------------------------------- | ----------------------------------------- |
-| D0–D1 | **Now** — parallel with WB-29 closeout | Inventory + dead WIP; no Lane A block     |
-| D2    | Done 2026-06-24                        | Dual render unified on Strategy A preview |
-| D3    | After **Lane A DoD**                   | Legacy shim removal                       |
-| D4    | Continuous                             | Doc truth; close with S12                 |
+| Phase | When to start            | Notes                                     |
+| ----- | ------------------------ | ----------------------------------------- |
+| D0–D1 | **Now**                  | Inventory + dead WIP; no Lane A block     |
+| D2    | Done 2026-06-24          | Dual render unified on Strategy A preview |
+| D3    | **Now** after Lane A DoD | Legacy shim removal                       |
+| D4    | Continuous               | Doc truth stays aligned after S12         |
 
 ### Track C — Deferred (explicitly parked)
 
@@ -132,15 +133,15 @@ From [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). Improves `WidgetTreeLab` 
 
 **Out of scope:** git subtree extraction, separate `@workbench-kit/jdw-react` package split. React JDW stays under `packages/react/src/jdw`.
 
-Inventory and low-risk cleanup can run **parallel to S7–S8** (D0–D1). Builtin render unification is complete; legacy shim removal waits for Lane A DoD.
+Inventory and low-risk cleanup can run in parallel. Builtin render unification is complete; legacy shim removal is now unblocked by Lane A DoD.
 
-| Phase | Scope                                                                                         | Priority | Timing                        | Blocks on Lane A? |
-| ----- | --------------------------------------------------------------------------------------------- | -------- | ----------------------------- | ----------------- |
-| D0    | Inventory: React JDW surface, headless `@workbench-kit/jdw`, dual render, dual document model | Parallel | **S7–S8** (any session)       | No                |
-| D1    | Remove dead WIP / misleading paths (`JsonWorkbenchDocument` shim, validation shim, etc.)      | Parallel | Any cleanup pass              | No                |
-| D2    | Unify dual render paths (`cssRenderBackend` + leaf-only builtin registry)                     | Done     | **Done 2026-06-24**           | No                |
-| D3    | Drop legacy compat shims (static capability seed, URI models, editor scaffold trim)           | P6–P8    | **After Lane A DoD**          | Yes               |
-| D4    | Doc truth: cleanup register, render-mode decision, stale README footers                       | —        | Continuous; closeout with S12 | Partial           |
+| Phase | Scope                                                                                         | Priority | Timing                  | Blocks on Lane A? |
+| ----- | --------------------------------------------------------------------------------------------- | -------- | ----------------------- | ----------------- |
+| D0    | Inventory: React JDW surface, headless `@workbench-kit/jdw`, dual render, dual document model | Parallel | **S7–S8** (any session) | No                |
+| D1    | Remove dead WIP / misleading paths (`JsonWorkbenchDocument` shim, validation shim, etc.)      | Parallel | Any cleanup pass        | No                |
+| D2    | Unify dual render paths (`cssRenderBackend` + leaf-only builtin registry)                     | Done     | **Done 2026-06-24**     | No                |
+| D3    | Drop legacy compat shims (static capability seed, URI models, editor scaffold trim)           | P6–P8    | **Now**                 | No                |
+| D4    | Doc truth: cleanup register, render-mode decision, stale README footers                       | —        | Continuous              | No                |
 
 **D0 inventory targets**
 
@@ -162,7 +163,7 @@ Inventory and low-risk cleanup can run **parallel to S7–S8** (D0–D1). Builti
 
 Single preview strategy: `JdwPreview` + `renderJdwWithLayout` own container geometry through `layoutWidget`; `BUILTIN_JDW_REGISTRY` uses `renderBuiltinWidgetLeaf` directly and no longer exposes the compatibility wrapper. Validate: `cssRenderBackend.test.tsx`, `renderJdw.test.tsx`, `JdwPreview.test.tsx`, Storybook `JDW/*`.
 
-**D3 candidates (post–Lane A DoD)**
+**D3 candidates (post-Lane A, now unblocked)**
 
 - `ExtensionRegistry` static capability map seed
 - Generic `ResourceUri` vs `WorkspaceResourceUri` dual model
@@ -276,6 +277,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Field                | Detail                                                                                                                  |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **Status**           | Done — audited in [lane-a-closeout-audit-2026-06-25.md](./lane-a-closeout-audit-2026-06-25.md)                          |
 | **Goal**             | Lane A Definition of Done checklist; doc alignment; `validate:full` on clean checkout.                                  |
 | **Packages / files** | `docs/workbench/todo.md`, `theia-strengths-workplan.md`, `completion-plan.md`, `examples/workbench-sample/README.md`    |
 | **Acceptance**       | All DoD items in [completion-plan.md](./completion-plan.md) §6 checked; progress % updated; no stale WB-27/WB-28 status |
@@ -405,7 +407,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 - [x] WB-30 — Preference scopes (default/workspace/local)
 - [x] WB-30 — At least one scoped setting demonstrated
 - [x] WB-31 — Devtools inspectors (Storybook)
-- [ ] S12 — Lane A DoD checklist complete
+- [x] S12 — Lane A DoD checklist complete
 - [x] S12 — `pnpm validate:full` green
 
 ### Lane B (parallel)
@@ -440,8 +442,8 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 - [x] D1 — Remove misleading `./jdw/config` export alias
 - [ ] D1 — Remove remaining dead WIP paths (validation shim, type alias)
 - [x] D2 — Unify dual render paths (Strategy A + leaf-only builtin registry)
-- [ ] D3 — Drop legacy compat shims (after Lane A DoD)
-- [ ] D4 — Doc truth aligned with code
+- [ ] D3 — Drop legacy compat shims (post-Lane A)
+- [x] D4 — Doc truth aligned with code for Lane A closeout
 
 ### Parked (Track C)
 
@@ -455,22 +457,23 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ## 8. References
 
-| Document                                                               | Purpose                                           |
-| ---------------------------------------------------------------------- | ------------------------------------------------- |
-| [codex-delegation-plan.md](./codex-delegation-plan.md)                 | Codex handoff packages, constraints, verification |
-| [completion-plan.md](./completion-plan.md)                             | Master Lane A roadmap, phases, DoD                |
-| [next-slice-plan.md](./next-slice-plan.md)                             | Slice detail, code truth, trade-offs              |
-| [todo.md](./todo.md)                                                   | WB queue and acceptance criteria                  |
-| [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)       | JDW vs Figma authoring, Lane B phases B0–B4       |
-| [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md)                       | JDW edit UI/UX gaps, UX-1–UX-5, Storybook targets |
-| [jdw-architecture-analysis.md](./jdw-architecture-analysis.md)         | CSS render pipeline, custom tags                  |
-| [widget-layout-schema-plan.md](./widget-layout-schema-plan.md)         | JDW schema phases                                 |
-| [theia-strengths-workplan.md](./theia-strengths-workplan.md)           | Theia adopt/do-not-adopt                          |
-| [strengths-inheritance.md](./strengths-inheritance.md)                 | Reference UI adoption audit                       |
-| [standalone-host.md](./standalone-host.md)                             | Host assembly notes                               |
-| [future-capabilities.md](./future-capabilities.md)                     | Lane C deferred backlog                           |
-| [json-widget-port-then-replace.md](./json-widget-port-then-replace.md) | Consumer extraction boundaries                    |
-| [workbench-core.md](../architecture/workbench-core.md)                 | Registry and factory architecture                 |
+| Document                                                                     | Purpose                                           |
+| ---------------------------------------------------------------------------- | ------------------------------------------------- |
+| [codex-delegation-plan.md](./codex-delegation-plan.md)                       | Codex handoff packages, constraints, verification |
+| [completion-plan.md](./completion-plan.md)                                   | Master Lane A roadmap, phases, DoD                |
+| [next-slice-plan.md](./next-slice-plan.md)                                   | Slice detail, code truth, trade-offs              |
+| [todo.md](./todo.md)                                                         | WB queue and acceptance criteria                  |
+| [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)             | JDW vs Figma authoring, Lane B phases B0–B4       |
+| [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md)                             | JDW edit UI/UX gaps, UX-1–UX-5, Storybook targets |
+| [jdw-architecture-analysis.md](./jdw-architecture-analysis.md)               | CSS render pipeline, custom tags                  |
+| [widget-layout-schema-plan.md](./widget-layout-schema-plan.md)               | JDW schema phases                                 |
+| [theia-strengths-workplan.md](./theia-strengths-workplan.md)                 | Theia adopt/do-not-adopt                          |
+| [strengths-inheritance.md](./strengths-inheritance.md)                       | Reference UI adoption audit                       |
+| [standalone-host.md](./standalone-host.md)                                   | Host assembly notes                               |
+| [future-capabilities.md](./future-capabilities.md)                           | Lane C deferred backlog                           |
+| [json-widget-port-then-replace.md](./json-widget-port-then-replace.md)       | Consumer extraction boundaries                    |
+| [workbench-core.md](../architecture/workbench-core.md)                       | Registry and factory architecture                 |
+| [lane-a-closeout-audit-2026-06-25.md](./lane-a-closeout-audit-2026-06-25.md) | S12 DoD evidence and post-Lane A context          |
 
 ---
 
@@ -478,14 +481,14 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Priority | Item                                                                         | Parallel?     | Conflict hotspots                               | Notes                     |
 | -------- | ---------------------------------------------------------------------------- | ------------- | ----------------------------------------------- | ------------------------- |
-| P0       | **S12** Lane A DoD audit                                                     | After WB-31   | docs/, CI scripts                               | Next single PR scope      |
+| P0       | **Track D D3** legacy shim audit/removal                                     | Now           | `workbench-core`, resource URI docs, editor API | Post-Lane A cleanup       |
 | P1       | **Layout CSS P1-2~P1-5** (sidebar flex, settings scroll, panel-header dedup) | Parallel-safe | `packages/react/src/styles.css`, settings modal | P1-1 overlay CSS done     |
 | P1       | **Editor layout ownership** (`EditorService` split model)                    | Parallel-safe | `editor-service.ts`, `EditorArea` DnD           | recommended-work-items P1 |
-| P2       | **Track D D0–D1** inventory + dead WIP cleanup                               | Parallel-safe | `react/jdw`, validation shims                   | No Lane A block           |
+| P2       | **Track D D0–D1** inventory + remaining dead WIP cleanup                     | Parallel-safe | `react/jdw`, validation shims                   | No Lane A block           |
 | P2       | **Sidebar Phase B-2** overlay footer decision (Chat/Commands)                | Parallel-safe | `SideBarViewFrame`, Chat/Commands               | Browser smoke only        |
 | P2       | **Track B placement polish** drag/reparent ghost and snap indicators         | Parallel-safe | `@workbench-kit/jdw`, `react/widget-tree`       | Storybook                 |
 
-**Suggested next slice:** Close Lane A with S12 DoD audit; rerun `validate:full` if the audit changes code or release-critical docs. If the next slice should stay UI-heavy, take the remaining JDW drag/reparent indicator polish after the audit.
+**Suggested next slice:** Track D D3 legacy shim audit/removal. If the next slice should stay UI-heavy, take the remaining JDW drag/reparent ghost and snap indicator polish.
 
 ---
 
@@ -493,6 +496,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Date       | Note                                                                                                                                                                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | S12 Lane A closeout audit documented the final DoD evidence; Lane A is complete and the next recommended slices are Track D D3 or JDW drag/reparent indicator polish                                    |
 | 2026-06-25 | Validation: `pnpm validate:full` green for WB-31 context closeout; Vitest 202 files / 919 tests and Storybook required play 29/29                                                                       |
 | 2026-06-25 | Validation: `node scripts/bundle-workbench-extensions.mjs`, `pnpm workbench-sample:build`, and `git diff --check` passed after the WB-31 docs/code alignment                                            |
 | 2026-06-25 | WB-31 devtools inspectors: `shell-react` exposes read-only devtools APIs, sample Storybook can opt into a devtools shell, and registry lifecycle events refresh active extension snapshots              |

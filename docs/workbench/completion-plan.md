@@ -1,6 +1,6 @@
 # Workbench Completion Plan — Lane A (Theia-Inspired Core)
 
-**Status:** Active roadmap (updated 2026-06-25)
+**Status:** Lane A complete (updated 2026-06-25)
 **Branch:** `feature/theia-strengths-workbench`  
 **Audience:** Korean-speaking team; document language is English per project convention.
 
@@ -33,16 +33,17 @@ i18n, preview zoom/pan), or deferred kit items WB-15 / WB-20 / WB-22.
 
 ### Completion estimate
 
-| Scope                                        | Estimate                        | Caveats                                                                                    |
-| -------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------ |
-| **Lane A (WB-23 → WB-31)**                   | **~95%** (WB-23 → WB-31 landed) | Lane A DoD closeout and `validate:full` remain                                             |
-| **Workbench Kit foundation (WB-01 → WB-22)** | **~90%**                        | WB-15 deferred; WB-20 / WB-22 blocked on dirty policy                                      |
-| **End-to-end "product-ready workbench"**     | **~50%**                        | Sample host covers shell/editor/auth slices; plugin store and real backend remain deferred |
+| Scope                                        | Estimate     | Caveats                                                                                    |
+| -------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------ |
+| **Lane A (WB-23 → WB-31)**                   | **Complete** | WB-23 -> WB-31 plus S12 DoD audit are closed                                               |
+| **Workbench Kit foundation (WB-01 → WB-22)** | **~90%**     | WB-15 deferred; WB-20 / WB-22 blocked on dirty policy                                      |
+| **End-to-end "product-ready workbench"**     | **~50%**     | Sample host covers shell/editor/auth slices; plugin store and real backend remain deferred |
 
-Treat percentages as planning signals, not release metrics. The remaining Lane A
-work is the S12 closeout audit: confirm the DoD checklist against the current
-sample/devtools surface and keep docs aligned. The current full validation gate
-is green and should be rerun if S12 changes code or release-critical docs.
+Treat percentages as planning signals, not release metrics. The Lane A closeout
+evidence is recorded in
+[lane-a-closeout-audit-2026-06-25.md](./lane-a-closeout-audit-2026-06-25.md).
+The next work is post-Lane A hardening or JDW authoring polish, not another Lane
+A slice.
 
 ---
 
@@ -151,7 +152,7 @@ pnpm workbench-sample
 
 ---
 
-### In-progress Phase B — WB-29 Command-backed built-in explorer (P2)
+### Completed Phase B — WB-29 Command-backed built-in explorer (P2)
 
 | Field          | Detail                                                                                                             |
 | -------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -249,10 +250,10 @@ pnpm validate:full
 
 ### Deferred — Lane B (JDW / widget-tree)
 
-| Item                                                                      | Priority              | Notes                                                                |
-| ------------------------------------------------------------------------- | --------------------- | -------------------------------------------------------------------- |
-| [widget-layout-schema-plan.md](./widget-layout-schema-plan.md) Phases 1–3 | Parallel, lower       | Headless `@workbench-kit/jdw` first; editor chrome via `widget-tree` |
-| Screen spec / layout engine expansion                                     | After Lane A Slice 5+ | Does not block WB-28                                                 |
+| Item                                                                      | Priority                | Notes                                                                |
+| ------------------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------- |
+| [widget-layout-schema-plan.md](./widget-layout-schema-plan.md) Phases 1–3 | Post-Lane A if selected | Headless `@workbench-kit/jdw` first; editor chrome via `widget-tree` |
+| Screen spec / layout engine expansion                                     | Post-Lane A             | Does not block the completed Lane A                                  |
 
 ### Deferred — Lane C (consumer parity)
 
@@ -295,9 +296,9 @@ pnpm validate:full
 
 ### Open — Track D (cleanup & compatibility removal)
 
-| Item                                                         | Priority | Doc / timing                                                                                    |
-| ------------------------------------------------------------ | -------- | ----------------------------------------------------------------------------------------------- |
-| Track D: validation gating, legacy shim removal — see phases | P2–P8    | [session-work-plan.md](./session-work-plan.md) Track D; D2 done 2026-06-24, D3 after Lane A DoD |
+| Item                                                         | Priority | Doc / timing                                                                                 |
+| ------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------------------- |
+| Track D: validation gating, legacy shim removal — see phases | P2–P8    | [session-work-plan.md](./session-work-plan.md) Track D; D2 done 2026-06-24, D3 now unblocked |
 
 ### Doc hygiene watchlist
 
@@ -320,7 +321,7 @@ Use this checklist for branch merge or release tagging of the Theia-inspired lan
 - [x] **Preferences:** Default / workspace / local merge demonstrated with at least one setting key.
 - [x] **Devtools (optional v1):** Storybook inspector story lists registry snapshots after WB-31.
 - [x] **Validation:** `pnpm validate:full` passes on CI-equivalent clean install.
-- [x] **Docs:** `todo.md`, `theia-strengths-workplan.md`, and this plan reflect final Lane A status.
+- [x] **Docs:** `todo.md`, `theia-strengths-workplan.md`, this plan, and the S12 audit reflect final Lane A status.
 - [x] **Boundaries:** `check-launch-boundary`, manifest, dependency graph, and public export checks pass.
 
 ---
@@ -330,25 +331,26 @@ Use this checklist for branch merge or release tagging of the Theia-inspired lan
 ### Slice order (strict)
 
 ```text
-WB-29 closeout → WB-30 → WB-31 → Lane A DoD checklist
+WB-29 closeout -> WB-30 -> WB-31 -> S12 Lane A DoD audit
 ```
 
 ### Sessions
 
-| Session | Goal                             | Exit criteria                                                                     |
-| ------- | -------------------------------- | --------------------------------------------------------------------------------- |
-| **S0**  | Land WB-27 + doc cross-links     | Done                                                                              |
-| **S1**  | WB-28a — SDK + core editor model | Done                                                                              |
-| **S2**  | WB-28b — React editor chrome     | Done                                                                              |
-| **S3**  | WB-28c — Save via transactions   | Done                                                                              |
-| **S4**  | WB-29 — Command-backed explorer  | Closeout selection/reveal/search behavior; sample host create/rename/delete smoke |
-| **S5**  | WB-30 — Preference scopes        | Merge helper + one scoped setting in sample or Storybook                          |
-| **S6**  | WB-31 — Devtools inspectors      | Storybook devtools story; registry/transaction visibility                         |
-| **S7**  | Lane A closeout                  | `validate:full`, DoD checklist, update progress in `theia-strengths-workplan.md`  |
+| Session | Goal                             | Exit criteria |
+| ------- | -------------------------------- | ------------- |
+| **S0**  | Land WB-27 + doc cross-links     | Done          |
+| **S1**  | WB-28a — SDK + core editor model | Done          |
+| **S2**  | WB-28b — React editor chrome     | Done          |
+| **S3**  | WB-28c — Save via transactions   | Done          |
+| **S4**  | WB-29 — Command-backed explorer  | Done          |
+| **S5**  | WB-30 — Preference scopes        | Done          |
+| **S6**  | WB-31 — Devtools inspectors      | Done          |
+| **S7**  | Lane A closeout                  | Done          |
 
-**Next active session:** S12 Lane A closeout audit.
+**Next active session:** Lane A is complete. Recommended next slices are Track D
+D3 legacy shim audit or JDW drag/reparent ghost and snap indicators.
 
-**Estimated remaining slices:** 1 for Lane A.
+**Estimated remaining slices:** 0 for Lane A.
 
 ---
 
@@ -386,8 +388,9 @@ WB-29 closeout → WB-30 → WB-31 → Lane A DoD checklist
 
 | Date       | Note                                                                                                                                                           |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | S12 Lane A closeout audit passed and moved remaining work to post-Lane A Track D, JDW polish, and Lane C backlog.                                              |
 | 2026-06-25 | Current branch full validation passed: 202 files / 919 Vitest tests, Storybook build, and 29/29 required Storybook plays.                                      |
-| 2026-06-25 | WB-31 devtools inspectors landed with read-only registry/layout/editor/workspace snapshots and required Storybook coverage; S12 closeout remains.              |
+| 2026-06-25 | WB-31 devtools inspectors landed with read-only registry/layout/editor/workspace snapshots and required Storybook coverage.                                    |
 | 2026-06-21 | Historical checkpoint recorded a full validation pass before later JDW and WB-31 slices.                                                                       |
 | 2026-06-21 | Historical DoD audit confirmed resource transactions, command-backed explorer handlers, capability dispose lifecycle, and static boundary checks.              |
 | 2026-06-21 | Historical runnable host smoke verified bundled extensions, sample production build, dummy login, activity bar, explorer tree, editor empty state, status bar. |
