@@ -256,6 +256,46 @@ export const StackPlacement: Story = {
     expect(previewChild?.style.top).toBe('16px');
     expect(previewChild?.style.width).toBe('228px');
     expect(previewChild?.style.height).toBe('24px');
+
+    const selectionFrame = await labCanvas.findByTestId('widget-tree-canvas-selection-frame');
+    expect(selectionFrame).toHaveAttribute('data-widget-path', '$.children[0]');
+    expect(selectionFrame).toHaveAttribute('data-widget-type', 'text');
+
+    const dragHandle = await labCanvas.findByTestId('widget-tree-canvas-drag-handle');
+    fireEvent.pointerDown(dragHandle, {
+      button: 0,
+      buttons: 1,
+      clientX: 20,
+      clientY: 20,
+      isPrimary: true,
+      pointerId: 7,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerMove(dragHandle, {
+      buttons: 1,
+      clientX: 32,
+      clientY: 29,
+      isPrimary: true,
+      pointerId: 7,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(dragHandle, {
+      button: 0,
+      buttons: 0,
+      clientX: 32,
+      clientY: 29,
+      isPrimary: true,
+      pointerId: 7,
+      pointerType: 'mouse',
+    });
+
+    await waitFor(() => {
+      const movedChild = readSnapshot(canvasElement).args?.children?.[0];
+      expect(movedChild?.args?.left).toBe(24);
+      expect(movedChild?.args?.top).toBe(25);
+      expect(movedChild?.args?.right).toBe(108);
+      expect(movedChild?.args?.bottom).toBe(171);
+    });
   },
   tags: ['storybook-play-required'],
 };

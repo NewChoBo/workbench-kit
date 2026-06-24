@@ -17,15 +17,16 @@ import {
   validateJsonWidgetData,
   type GenericWidget,
   type JsonWidgetNode,
+  type WidgetPatch,
   type WidgetPath,
   type WidgetSelectionState,
 } from '@workbench-kit/jdw';
 
 import { ResizablePanels } from '../primitives/WorkbenchEditor.js';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
-import { JdwPreview } from '../jdw/JdwPreview.js';
 import type { JsonEditorProblem } from '../jdw/JsonCodeEditorPane.js';
 import { WidgetAssetPalette } from './WidgetAssetPalette.js';
+import { WidgetTreeCanvasPreview } from './WidgetTreeCanvasPreview.js';
 import { WidgetInspectorPanel } from './WidgetInspectorPanel.js';
 import { WidgetSourceEditor } from './WidgetSourceEditor.js';
 import { WidgetTreeSidePanel, type WidgetTreeSidePanelDetailTab } from './WidgetTreeSidePanel.js';
@@ -191,7 +192,7 @@ export function WidgetTreeLab({
     setSidePanelDetailTab('properties');
   };
 
-  const applyPatch = (patch: Parameters<typeof applyWidgetDocumentPatch>[1]): boolean => {
+  const applyPatch = (patch: WidgetPatch): boolean => {
     const nextSource = applyWidgetDocumentPatch(value, patch);
     if (nextSource !== null) {
       onChange(nextSource);
@@ -353,10 +354,13 @@ export function WidgetTreeLab({
     <section aria-label="Widget preview" className="widget-tree-lab__preview">
       <header className="widget-tree-lab__preview-header">Preview</header>
       <div className="widget-tree-lab__preview-body">
-        <JdwPreview
+        <WidgetTreeCanvasPreview
           json={value}
+          readOnly={readOnly}
           registry={registry}
+          root={document.root}
           selectedPath={selectedPath}
+          onPatch={applyPatch}
           onSelectPath={handlePreviewSelectPath}
         />
       </div>

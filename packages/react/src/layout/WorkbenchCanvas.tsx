@@ -499,6 +499,29 @@ interface WorkbenchCanvasFrameHandleDrag {
   startY: number;
 }
 
+function trySetPointerCapture(element: HTMLElement, pointerId: number): void {
+  if (typeof element.setPointerCapture !== 'function') return;
+
+  try {
+    element.setPointerCapture(pointerId);
+  } catch {
+    // Synthetic pointer events in Storybook/jsdom may not register an active pointer.
+  }
+}
+
+function tryReleasePointerCapture(element: HTMLElement | null, pointerId: number): void {
+  if (!element || typeof element.releasePointerCapture !== 'function') return;
+
+  try {
+    if (typeof element.hasPointerCapture === 'function' && !element.hasPointerCapture(pointerId)) {
+      return;
+    }
+    element.releasePointerCapture(pointerId);
+  } catch {
+    // Ignore stale synthetic pointer captures.
+  }
+}
+
 export interface WorkbenchCanvasFrameHandleProps extends Omit<
   ComponentPropsWithRef<'div'>,
   | 'children'
@@ -549,12 +572,12 @@ export function WorkbenchCanvasFrameHandle({
     if (!element) return;
 
     if (stopPropagation) event.stopPropagation();
-    element.setPointerCapture(event.pointerId);
     dragRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
     };
+    trySetPointerCapture(element, event.pointerId);
     onDragStart?.(event);
   };
 
@@ -570,7 +593,7 @@ export function WorkbenchCanvasFrameHandle({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
 
-    handleRef.current?.releasePointerCapture(event.pointerId);
+    tryReleasePointerCapture(handleRef.current, event.pointerId);
     dragRef.current = null;
     const dx = event.clientX - drag.startX;
     const dy = event.clientY - drag.startY;
@@ -586,7 +609,7 @@ export function WorkbenchCanvasFrameHandle({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
 
-    handleRef.current?.releasePointerCapture(event.pointerId);
+    tryReleasePointerCapture(handleRef.current, event.pointerId);
     dragRef.current = null;
     onDragCancel?.(event);
   };

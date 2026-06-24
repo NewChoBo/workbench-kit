@@ -9073,6 +9073,41 @@
     color-mix(in srgb, var(--color-focus-border, #007acc) 70%, transparent);
 }
 
+.widget-tree-canvas-preview {
+  min-height: 0;
+}
+
+.widget-tree-canvas-preview__viewport {
+  background: var(--vscode-editor-background, var(--color-bg));
+}
+
+.widget-tree-canvas-preview__stage {
+  position: relative;
+  overflow: hidden;
+  background: var(--vscode-editor-background, var(--color-bg));
+}
+
+.widget-tree-canvas-preview__render {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+
+.widget-tree-canvas-preview__frames {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.widget-tree-canvas-preview__selection-frame {
+  pointer-events: none;
+}
+
+.widget-tree-canvas-preview__selection-frame .ui-workbench-canvas-frame-handle {
+  pointer-events: auto;
+}
+
 .widget-tree-side-panel {
   display: flex;
   flex-direction: column;

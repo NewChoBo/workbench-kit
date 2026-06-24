@@ -408,6 +408,7 @@ Current `widget-json-schema.ts` defines container types but **not**:
 
 - [x] `WidgetTreeLab` insert path uses `materializeWidgetPlacementAsset` + normalize for click insert and outline asset drop
 - [x] Headless preview/canvas mapping base: layout hit-test → `WidgetPath`, stack/grid drag → `WidgetPatch`
+- [x] React preview/canvas first wire-in: `WidgetTreeLab` wraps `JdwPreview` in `WorkbenchPreviewCanvas` and commits selected stack/grid drag through `WidgetPatch`
 - [ ] Inspector edits trigger validate + optional reflow (e.g. grid `columns` change)
 - [ ] DnD reparent uses normalize on commit
 - [ ] Promote layout fixture stories to `storybook-play-required` when stable
@@ -426,15 +427,15 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 
 ## 12. Current codebase snapshot
 
-| Area                                 | Exists                                                  | Gap                                                                                                                                |
-| ------------------------------------ | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `*.jdw.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer`             | —                                                                                                                                  |
-| Asset parse                          | `parseWidgetAssetPackage`, `validateWidgetAssetPackage` | `schema.json` substitution deferred                                                                                                |
-| Document parse                       | `createWidgetDocument` / `parseJsonWidgetData`          | Semantic placement validation partial                                                                                              |
-| Patch / tree ops                     | `applyWidgetPatch` + `normalizeWidgetForParent`         | Outline reorder/reparent and asset drop are wired; headless stack/grid drag mapping exists; React preview/canvas gestures deferred |
-| Layout                               | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts`     | Dynamic text wrapping / host font metrics deferred                                                                                 |
-| Preview                              | `renderJdw`, `JdwPreview`, CSS layout backend           | `listen` invalidation candidates are value-diff driven; scheduler deferred                                                         |
-| Template assets                      | Builtin + custom packages                               | Editor click insert and outline drop use `materializeWidgetPlacementAsset`                                                         |
+| Area                                 | Exists                                                  | Gap                                                                                                                                                                                               |
+| ------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `*.jdw.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer`             | —                                                                                                                                                                                                 |
+| Asset parse                          | `parseWidgetAssetPackage`, `validateWidgetAssetPackage` | `schema.json` substitution deferred                                                                                                                                                               |
+| Document parse                       | `createWidgetDocument` / `parseJsonWidgetData`          | Semantic placement validation partial                                                                                                                                                             |
+| Patch / tree ops                     | `applyWidgetPatch` + `normalizeWidgetForParent`         | Outline reorder/reparent and asset drop are wired; headless stack/grid drag mapping exists; selected React preview/canvas stack/grid drag is wired; resize/reparent/grid reflow gestures deferred |
+| Layout                               | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts`     | Dynamic text wrapping / host font metrics deferred                                                                                                                                                |
+| Preview                              | `renderJdw`, `JdwPreview`, CSS layout backend           | `listen` invalidation candidates are value-diff driven; scheduler deferred                                                                                                                        |
+| Template assets                      | Builtin + custom packages                               | Editor click insert and outline drop use `materializeWidgetPlacementAsset`                                                                                                                        |
 
 ## 13. Resolved and open decisions
 
@@ -469,6 +470,7 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 
 | Date       | Change                                                                                                                                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-06-25 | Added React preview/canvas first wire-in for `WidgetTreeLab`: selected layout frame overlay plus stack/grid drag commits through JDW patches; resize/reparent/grid reflow remain Phase 4 edge work                                                                       |
 | 2026-06-25 | Added headless layout mapping contract for preview/canvas authoring: layout hit-test to `WidgetPath`, stack/grid drag deltas to `WidgetPatch`, with React canvas wire-in deferred                                                                                        |
 | 2026-06-24 | Added outline asset drag/drop path that materializes palette assets through the same normalized insert pipeline as click placement                                                                                                                                       |
 | 2026-06-23 | Expanded JDW profile schemas, added static schema drift check, implemented `flexible.fit`, added registry measurement hooks, and started explicit `${var}` value resolution/schema allowance plus dependency analysis/editor warnings/value-diff invalidation candidates |
