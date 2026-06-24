@@ -546,6 +546,90 @@ function clampGridLine(line: number, min: number, max: number | undefined): numb
   return clampNumber(line, min, max);
 }
 
+function isLinearParentType(type: string): type is 'row' | 'column' {
+  return type === 'row' || type === 'column';
+}
+
+function createLinearResizePatch(
+  parent: GenericWidget,
+  child: GenericWidget,
+  childNode: LayoutNodeResult,
+  parentPath: WidgetPath,
+  path: WidgetPath,
+  position: WidgetResizeHandlePosition,
+  deltaX: number,
+  deltaY: number,
+  minWidth: number,
+  minHeight: number,
+): WidgetPatch | null {
+  if (!isLinearParentType(parent.type)) return null;
+
+  const segment = path[path.length - 1];
+  const selectedIndex = segment?.kind === 'children' ? segment.index : -1;
+  if (selectedIndex < 0) return null;
+
+  const isRow = parent.type === 'row';
+  const next: GenericWidget = { ...child };
+  let mainChanged = false;
+  let crossChanged = false;
+
+  if (isRow) {
+    if (position.includes('e')) {
+      next.width = Math.max(minWidth, childNode.rect.width + deltaX);
+      mainChanged = true;
+    } else if (position.includes('w')) {
+      next.width = Math.max(minWidth, childNode.rect.width - deltaX);
+      mainChanged = true;
+    }
+
+    if (position.includes('s')) {
+      next.height = Math.max(minHeight, childNode.rect.height + deltaY);
+      next.align = 'start';
+      crossChanged = true;
+    } else if (position.includes('n')) {
+      next.height = Math.max(minHeight, childNode.rect.height - deltaY);
+      next.align = 'end';
+      crossChanged = true;
+    }
+  } else {
+    if (position.includes('s')) {
+      next.height = Math.max(minHeight, childNode.rect.height + deltaY);
+      mainChanged = true;
+    } else if (position.includes('n')) {
+      next.height = Math.max(minHeight, childNode.rect.height - deltaY);
+      mainChanged = true;
+    }
+
+    if (position.includes('e')) {
+      next.width = Math.max(minWidth, childNode.rect.width + deltaX);
+      next.align = 'start';
+      crossChanged = true;
+    } else if (position.includes('w')) {
+      next.width = Math.max(minWidth, childNode.rect.width - deltaX);
+      next.align = 'end';
+      crossChanged = true;
+    }
+  }
+
+  if (!mainChanged && !crossChanged) return null;
+
+  if (mainChanged) {
+    delete next.flex;
+    delete next.flexFit;
+  }
+
+  return {
+    type: 'replace-widget',
+    path: parentPath,
+    widget: {
+      ...parent,
+      children: getWidgetChildren(parent).map((sibling, index) =>
+        index === selectedIndex ? next : sibling,
+      ),
+    },
+  };
+}
+
 function createGridResizePatch(
   parent: GenericWidget,
   child: GenericWidget,
@@ -752,6 +836,21 @@ export function createWidgetResizePatch({
       position,
       deltaX,
       deltaY,
+    );
+  }
+
+  if (isLinearParentType(parent.type)) {
+    return createLinearResizePatch(
+      parent,
+      child,
+      childNode.node,
+      parentPath,
+      path,
+      position,
+      deltaX,
+      deltaY,
+      minWidth,
+      minHeight,
     );
   }
 

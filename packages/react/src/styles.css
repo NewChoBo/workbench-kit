@@ -9104,6 +9104,10 @@
   pointer-events: none;
 }
 
+.widget-tree-canvas-preview__selection-frame[data-interactive='true'] {
+  pointer-events: auto;
+}
+
 .widget-tree-canvas-preview__selection-frame .ui-workbench-canvas-frame-handle {
   pointer-events: auto;
 }

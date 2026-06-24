@@ -250,6 +250,110 @@ describe('layout mapping', () => {
     expect(nextLayout.children[2]?.rect).toEqual({ x: 200, y: 100, width: 100, height: 100 });
   });
 
+  it('maps row child resize deltas to fixed linear placement', () => {
+    const root: GenericWidget = {
+      type: 'row',
+      width: 300,
+      height: 120,
+      children: [
+        { type: 'text', text: 'A', flex: 1, flexFit: 'tight' },
+        { type: 'text', text: 'B', flex: 1 },
+      ],
+    };
+    const path = appendChildrenPath(ROOT_WIDGET_PATH, 0);
+    const layout = layoutWidget(root, {
+      minWidth: 0,
+      maxWidth: 300,
+      minHeight: 0,
+      maxHeight: 120,
+    });
+
+    const patch = createWidgetResizePatch({
+      root,
+      layout,
+      path,
+      position: 'se',
+      deltaX: -30,
+      deltaY: -40,
+    });
+
+    expect(patch).toEqual({
+      type: 'replace-widget',
+      path: ROOT_WIDGET_PATH,
+      widget: {
+        type: 'row',
+        width: 300,
+        height: 120,
+        children: [
+          { type: 'text', text: 'A', width: 120, height: 80, align: 'start' },
+          { type: 'text', text: 'B', flex: 1 },
+        ],
+      },
+    });
+
+    const result = applyWidgetPatch(root, patch!);
+    const nextLayout = layoutWidget(result.root, {
+      minWidth: 0,
+      maxWidth: 300,
+      minHeight: 0,
+      maxHeight: 120,
+    });
+    expect(nextLayout.children[0]?.rect).toEqual({ x: 0, y: 0, width: 120, height: 80 });
+    expect(nextLayout.children[1]?.rect).toEqual({ x: 120, y: 0, width: 180, height: 120 });
+  });
+
+  it('maps column child resize deltas to fixed linear placement', () => {
+    const root: GenericWidget = {
+      type: 'column',
+      width: 160,
+      height: 300,
+      children: [
+        { type: 'text', text: 'A', flex: 1, flexFit: 'tight' },
+        { type: 'text', text: 'B', flex: 1 },
+      ],
+    };
+    const path = appendChildrenPath(ROOT_WIDGET_PATH, 0);
+    const layout = layoutWidget(root, {
+      minWidth: 0,
+      maxWidth: 160,
+      minHeight: 0,
+      maxHeight: 300,
+    });
+
+    const patch = createWidgetResizePatch({
+      root,
+      layout,
+      path,
+      position: 'sw',
+      deltaX: 40,
+      deltaY: -50,
+    });
+
+    expect(patch).toEqual({
+      type: 'replace-widget',
+      path: ROOT_WIDGET_PATH,
+      widget: {
+        type: 'column',
+        width: 160,
+        height: 300,
+        children: [
+          { type: 'text', text: 'A', width: 120, height: 100, align: 'end' },
+          { type: 'text', text: 'B', flex: 1 },
+        ],
+      },
+    });
+
+    const result = applyWidgetPatch(root, patch!);
+    const nextLayout = layoutWidget(result.root, {
+      minWidth: 0,
+      maxWidth: 160,
+      minHeight: 0,
+      maxHeight: 300,
+    });
+    expect(nextLayout.children[0]?.rect).toEqual({ x: 40, y: 0, width: 120, height: 100 });
+    expect(nextLayout.children[1]?.rect).toEqual({ x: 0, y: 100, width: 160, height: 200 });
+  });
+
   it('maps canvas drops onto other containers to reparent patches', () => {
     const root: GenericWidget = {
       type: 'stack',

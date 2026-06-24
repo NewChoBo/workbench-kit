@@ -103,6 +103,16 @@ const GRID_RESIZE_DOCUMENT = formatWidgetDocumentJson({
   ],
 });
 
+const LINEAR_RESIZE_DOCUMENT = formatWidgetDocumentJson({
+  type: 'row',
+  width: 300,
+  height: 120,
+  children: [
+    { type: 'text', text: 'A', flex: 1, flexFit: 'tight' },
+    { type: 'text', text: 'B', flex: 1 },
+  ],
+});
+
 const CANVAS_REPARENT_DOCUMENT = formatWidgetDocumentJson({
   type: 'stack',
   width: 360,
@@ -156,11 +166,16 @@ interface JdwSnapshotNode {
     readonly col?: number;
     readonly colSpan?: number;
     readonly columns?: number;
+    readonly align?: string;
+    readonly flex?: number;
+    readonly flexFit?: string;
+    readonly height?: number;
     readonly left?: number;
     readonly right?: number;
     readonly row?: number;
     readonly text?: string;
     readonly top?: number;
+    readonly width?: number;
   };
 }
 
@@ -544,7 +559,16 @@ export const GridResizeSpanReflow: Story = {
     const resizedNode = await labCanvas.findByTestId('widget-tree-node-$.children[0]');
     await userEvent.click(getOutlineNodeButton(resizedNode));
 
-    const resizeHandle = await labCanvas.findByTestId('widget-tree-canvas-resize-handle-se');
+    const selectionFrame = await labCanvas.findByTestId('widget-tree-canvas-selection-frame');
+    await waitFor(() => {
+      expect(selectionFrame).toHaveAttribute('data-widget-path', '$.children[0]');
+      expect(selectionFrame).toHaveAttribute('data-widget-type', 'text');
+      expect(selectionFrame).toHaveAttribute('data-interactive', 'true');
+    });
+
+    const resizeHandle = await within(selectionFrame).findByTestId(
+      'widget-tree-canvas-resize-handle-se',
+    );
     fireEvent.pointerDown(resizeHandle, {
       button: 0,
       buttons: 1,
@@ -583,6 +607,77 @@ export const GridResizeSpanReflow: Story = {
       });
       expect(children[1]?.args).toMatchObject({ text: 'B', col: 2, row: 0 });
       expect(children[2]?.args).toMatchObject({ text: 'C', col: 2, row: 1 });
+      expect(
+        lab.querySelector('[data-widget-path="$.children[0]"][data-widget-selected="true"]'),
+      ).toBeTruthy();
+    });
+  },
+  tags: ['storybook-play-required'],
+};
+
+export const LinearResizePlacement: Story = {
+  name: 'Linear resize placement',
+  render: () => <WidgetTreeStoryHarness initialValue={LINEAR_RESIZE_DOCUMENT} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const lab = await canvas.findByTestId('widget-tree-lab');
+    const labCanvas = within(lab);
+    await waitForWidgetTreeSourcePane(lab);
+
+    const resizedNode = await labCanvas.findByTestId('widget-tree-node-$.children[0]');
+    await userEvent.click(getOutlineNodeButton(resizedNode));
+
+    const selectionFrame = await labCanvas.findByTestId('widget-tree-canvas-selection-frame');
+    await waitFor(() => {
+      expect(selectionFrame).toHaveAttribute('data-widget-path', '$.children[0]');
+      expect(selectionFrame).toHaveAttribute('data-widget-type', 'text');
+      expect(selectionFrame).toHaveAttribute('data-interactive', 'true');
+    });
+
+    const resizeHandle = await within(selectionFrame).findByTestId(
+      'widget-tree-canvas-resize-handle-se',
+    );
+    fireEvent.pointerDown(resizeHandle, {
+      button: 0,
+      buttons: 1,
+      clientX: 150,
+      clientY: 120,
+      isPrimary: true,
+      pointerId: 13,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerMove(resizeHandle, {
+      buttons: 1,
+      clientX: 120,
+      clientY: 80,
+      isPrimary: true,
+      pointerId: 13,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(resizeHandle, {
+      button: 0,
+      buttons: 0,
+      clientX: 120,
+      clientY: 80,
+      isPrimary: true,
+      pointerId: 13,
+      pointerType: 'mouse',
+    });
+
+    await waitFor(() => {
+      const children = readSnapshot(canvasElement).args?.children ?? [];
+      expect(children[0]?.type).toBe('text');
+      expect(children[0]?.args).toMatchObject({
+        text: 'A',
+        width: 120,
+        height: 80,
+        align: 'start',
+      });
+      expect(children[0]?.args?.flex).toBeUndefined();
+      expect(children[0]?.args?.flexFit).toBeUndefined();
+      expect(children[1]?.type).toBe('expanded');
+      expect(children[1]?.args?.flex).toBe(1);
+      expect(children[1]?.args?.child?.args?.text).toBe('B');
       expect(
         lab.querySelector('[data-widget-path="$.children[0]"][data-widget-selected="true"]'),
       ).toBeTruthy();

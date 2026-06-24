@@ -59,7 +59,12 @@ function canResizeSelectedPath(root: GenericWidget, path: WidgetPath): boolean {
   if (!segment || segment.kind !== 'children') return false;
 
   const parent = getWidgetAtPath(root, path.slice(0, -1));
-  return parent?.type === 'stack' || parent?.type === 'grid';
+  return (
+    parent?.type === 'stack' ||
+    parent?.type === 'grid' ||
+    parent?.type === 'row' ||
+    parent?.type === 'column'
+  );
 }
 
 export function WidgetTreeCanvasPreview({
@@ -167,7 +172,7 @@ export function WidgetTreeCanvasPreview({
               data-testid="widget-tree-canvas-selection-frame"
               data-widget-path={widgetPathKey(selectedPath)}
               data-widget-type={selectedLayout.node.widget.type}
-              interactive={canDrag}
+              interactive={canDrag || canResize}
               selected
               touchAction="none"
               width={selectedLayout.node.rect.width}
