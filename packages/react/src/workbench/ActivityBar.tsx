@@ -17,6 +17,7 @@ export interface ActivityBarItem {
 }
 
 export interface ActivityBarProps extends Omit<ComponentPropsWithoutRef<'nav'>, 'children'> {
+  itemDataAttributeName?: string;
   items: ActivityBarItem[];
   onItemActivate?: (item: ActivityBarItem) => void;
   onItemsReorder?: (itemIds: string[]) => void;
@@ -34,6 +35,7 @@ interface ActivityBarDropTarget {
 export function ActivityBar({
   'aria-label': ariaLabel = 'Activity bar',
   className,
+  itemDataAttributeName,
   items,
   onItemActivate,
   onItemsReorder,
@@ -100,6 +102,10 @@ export function ActivityBar({
 
   const renderItem = (item: ActivityBarItem, options: { reorderable: boolean }) => {
     const isDropTarget = dropTarget?.itemId === item.id;
+    const itemDataAttribute =
+      itemDataAttributeName === undefined
+        ? {}
+        : { [itemDataAttributeName]: item.id };
 
     return (
       <Button
@@ -116,6 +122,7 @@ export function ActivityBar({
         disabled={item.disabled}
         draggable={options.reorderable && !item.disabled}
         title={item.title ?? item.label}
+        {...itemDataAttribute}
         onClick={() => onItemActivate?.(item)}
         onDragEnd={() => {
           setDraggingItemId(null);
