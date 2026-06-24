@@ -18,7 +18,7 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 | #   | Session  | Goal                                                        | Exit signal                                                  |
 | --- | -------- | ----------------------------------------------------------- | ------------------------------------------------------------ |
 | 1   | **S9**   | **WB-29** — command-backed explorer closeout                | **Done** — selection/reveal/search sync + integration tests  |
-| 2   | **S10**  | **WB-30** — preference scopes (default / workspace / local) | Merge helper + one scoped setting demonstrated               |
+| 2   | **S10**  | **WB-30** — preference scopes (default / workspace / local) | **Done** — merge helper + scoped setting UI/persistence test |
 | 3   | **S11**  | **WB-31** — devtools inspectors (Storybook)                 | Registry / transaction journal read-only panel               |
 | 4   | **S12**  | Lane A closeout                                             | DoD checklist complete; `pnpm validate:full`                 |
 | —   | **D-S1** | Track D0–D1 inventory + dead-path cleanup (parallel)        | Inventory doc + low-risk alias/shim removal; no Lane A block |
@@ -27,12 +27,12 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 
 ## 요약
 
-- **Codex 위임:** Lane A 잔여 작업(WB-30 → WB-31 → S12)은 [codex-delegation-plan.md](./codex-delegation-plan.md) 패키지 흐름으로 Codex 자율 실행 가능. 다음 작업 **WB-30**.
-- **지금 어디:** Lane A **~85%**. WB-23~WB-29 완료(reveal/focus bridge + integration tests). 현재 활성 context는 JDW Track B/B-UX: B1 placement schema parity, B4 wrapper/single-child resize, preview asset drop + placement marker, preview hover/focus chrome, per-parent schema specialization까지 닫는 중이다. Lane A 다음 큰 작업은 WB-30 preference scopes.
+- **Codex 위임:** Lane A 잔여 작업(WB-31 → S12)은 [codex-delegation-plan.md](./codex-delegation-plan.md) 패키지 흐름으로 Codex 자율 실행 가능. 다음 작업 **WB-31**.
+- **지금 어디:** Lane A **~90%**. WB-23~WB-30 완료(reveal/focus bridge + integration tests + default/workspace/local preference scopes). 현재 활성 context는 JDW Track B/B-UX: B1 placement schema parity, B4 wrapper/single-child resize, preview asset drop + placement marker, preview hover/focus chrome, per-parent schema specialization까지 닫는 중이다. Lane A 다음 큰 작업은 WB-31 devtools inspectors.
 - **다음 3세션:**
-  1. **S10 / WB-30** — 프리퍼런스 스코프 merge; 최소 1개 설정 키 소비.
-  2. **S11 / WB-31** — registry / transaction journal read-only devtools.
-  3. **S12** — Lane A DoD + `pnpm validate:full`.
+  1. **S11 / WB-31** — registry / transaction journal read-only devtools.
+  2. **S12** — Lane A DoD + `pnpm validate:full`.
+  3. **B-UX / Track D** — drag/reparent ghost indicators or dead-path cleanup only if Lane A is not the selected slice.
 - **B-UX:** WB-29 이후 tree/preview 중심 UX-1~UX-4 core가 상당 부분 들어왔다. 캔버스 authoring은 B3 first wire-in(선택 프레임 + stack/grid drag commit), stack 8방향 resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper/single-child resize, asset-to-preview drop + parent/index/slot marker, preview hover/focus chrome까지 들어왔고, root JDW schema/validator placement parity와 per-parent children schema specialization도 들어왔다. 남은 polish는 drag/reparent ghost와 snap indicators이다.
 - **Track D:** D0–D1은 S9와 **병렬** 가능. D2 이중 렌더 통합은 2026-06-24 완료. D3는 Lane A DoD 이후.
 - **병렬 트랙 B:** Lane B(JDW/widget-tree) B1 placement schema parity는 root schema/validator 기준 완료, B2는 **headless base 완료 기준**, B3는 **React first wire-in 완료 기준**, B4는 stack resize/grid columns/canvas reparent/grid drag-slot reflow/grid resize span reflow/row-column linear resize/wrapper-child resize/asset preview drop까지 **partial complete** 기준으로 정리한다. 남은 Track B edge는 더 넓은 placement polish다.
@@ -54,10 +54,10 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 | ------------------- | -------------------------------------------------------------------------------------------------- |
 | **Date**            | 2026-06-25                                                                                         |
 | **Branch**          | `feature/theia-strengths-workbench`                                                                |
-| **Working tree**    | JDW B-UX5 asset preview drop marker slice                                                          |
-| **Last commits**    | Current slice: asset preview drop marker; previous: per-parent schema specialization               |
-| **Lane A progress** | ~85% (WB-23–WB-29 done; S8.5/S8.6 sample polish done)                                              |
-| **Validate note**   | `pnpm validate:full` green 2026-06-25; Vitest 202 files / 917 tests; Storybook required play 28/28 |
+| **Working tree**    | WB-30 preference scope closeout slice                                                              |
+| **Last commits**    | Current slice: preference scope closeout; previous: asset preview drop marker                      |
+| **Lane A progress** | ~90% (WB-23–WB-30 done; S8.5/S8.6 sample polish done)                                              |
+| **Validate note**   | `pnpm validate:full` green 2026-06-25; Vitest 202 files / 918 tests; Storybook required play 28/28 |
 
 ---
 
@@ -66,7 +66,7 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 ### Track A — Workbench Lane A (primary, sequential)
 
 ```text
-WB-29 → WB-30 → WB-31 → Lane A DoD
+WB-31 → Lane A DoD
 ```
 
 | Milestone | Status   | Next action                                                          |
@@ -79,7 +79,7 @@ WB-29 → WB-30 → WB-31 → Lane A DoD
 | WB-28     | **Done** | S1–S3 + S8.5 sample polish landed                                    |
 | S8.6      | **Done** | Code(JSON) / Form / Preview in `EditorArea`                          |
 | WB-29     | Done     | Closeout landed: reveal/focus command bridge, editor↔tree sync tests |
-| WB-30     | Pending  | After WB-29 (editor settings consumer optional)                      |
+| WB-30     | **Done** | default/workspace/local merge + settings UI consumer + local restore |
 | WB-31     | Pending  | After WB-28/29 event streams                                         |
 
 ### Track B — JDW / widget-tree (parallel, headless-first)
@@ -106,7 +106,7 @@ From [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). Improves `WidgetTreeLab` 
 | **B-UX4** | UX-4     | Preview hit-test selection ↔ outline sync                              | M      | B2 base is consumed; hover/focus chrome landed                                                                                                                                                                                                           |
 | **B-UX5** | UX-5     | Canvas wire-in to lab (gesture commit)                                 | L      | First slice + stack 8-way resize + grid columns reflow + canvas reparent + grid drag-slot reflow + grid resize span reflow + row/column linear resize + wrapper-child resize + asset preview drop + placement marker + preview hover/focus chrome landed |
 
-**Current JDW recommendation:** return to WB-30 preference scopes; if staying in JDW, target drag/reparent ghost and snap indicators.
+**Current JDW recommendation:** Lane A next is WB-31; if staying in JDW, target drag/reparent ghost and snap indicators.
 
 ### Track D — timing (refreshed)
 
@@ -344,7 +344,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | **WorkbenchDocument vs JDW**         | Widget files must not persist absolute canvas coords    | JDW canonical; B2 headless mapping base feeds future B3 canvas gestures          |
 | **Editor host API stabilization**    | New editor hosts may need additional context fields     | Keep the factory contract minimal; add fields only when a second host needs them |
 | **Generic vs workspace ResourceUri** | Editor/explorer binding confusion                       | `WorkspaceResourceUri` for virtual workspace only                                |
-| **WB-29 selection/reveal closeout**  | Explorer/editor sync still needs browser smoke coverage | Verify current command handlers and sample flows before moving to WB-30          |
+| **WB-29 selection/reveal closeout**  | Explorer/editor sync needs periodic smoke coverage      | Recheck command handlers and sample flows before Lane A DoD                      |
 | **Transaction persistence**          | No undo stack or disk adapter                           | In-memory virtual workspace for Lane A                                           |
 | **Lane B canvas UX**                 | Touches shared React layout                             | B2 base remains headless; B3/B4 React canvas UI requires separate smoke coverage |
 
@@ -401,8 +401,8 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 - [x] WB-29 — Command handlers and UI dispatch for explorer CRUD/open
 - [x] WB-29 — Selection/reveal/search closeout and integration tests
-- [ ] WB-30 — Preference scopes (default/workspace/local)
-- [ ] WB-30 — At least one scoped setting demonstrated
+- [x] WB-30 — Preference scopes (default/workspace/local)
+- [x] WB-30 — At least one scoped setting demonstrated
 - [ ] WB-31 — Devtools inspectors (Storybook)
 - [ ] S12 — Lane A DoD checklist complete
 - [ ] S12 — `pnpm validate:full` green
@@ -475,18 +475,17 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ## Work backlog snapshot (2026-06-25)
 
-| Priority | Item                                                                         | Parallel?              | Conflict hotspots                                | Notes                     |
-| -------- | ---------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------ | ------------------------- |
-| P0       | **WB-30** preference scopes (default/workspace/local)                        | Sequential (Lane A)    | `workbench-config`, `platform`, `workbench-core` | Next single PR scope      |
-| P0       | **S12** Lane A DoD + `validate:full`                                         | After WB-31            | docs/, CI scripts                                | Closeout gate             |
-| P1       | **WB-31** devtools inspectors (Storybook)                                    | Sequential after WB-30 | `shell-react` stories                            | Read-only panels          |
-| P1       | **Layout CSS P1-2~P1-5** (sidebar flex, settings scroll, panel-header dedup) | Parallel-safe          | `packages/react/src/styles.css`, settings modal  | P1-1 overlay CSS done     |
-| P1       | **Editor layout ownership** (`EditorService` split model)                    | Parallel-safe          | `editor-service.ts`, `EditorArea` DnD            | recommended-work-items P1 |
-| P2       | **Track D D0–D1** inventory + dead WIP cleanup                               | Parallel-safe          | `react/jdw`, validation shims                    | No Lane A block           |
-| P2       | **Sidebar Phase B-2** overlay footer decision (Chat/Commands)                | Parallel-safe          | `SideBarViewFrame`, Chat/Commands                | Browser smoke only        |
-| P2       | **Track B placement polish** drag/reparent ghost and snap indicators         | Parallel-safe          | `@workbench-kit/jdw`, `react/widget-tree`        | Storybook                 |
+| Priority | Item                                                                         | Parallel?           | Conflict hotspots                               | Notes                     |
+| -------- | ---------------------------------------------------------------------------- | ------------------- | ----------------------------------------------- | ------------------------- |
+| P0       | **WB-31** devtools inspectors (Storybook)                                    | Sequential (Lane A) | `shell-react` stories                           | Next single PR scope      |
+| P0       | **S12** Lane A DoD + `validate:full`                                         | After WB-31         | docs/, CI scripts                               | Closeout gate             |
+| P1       | **Layout CSS P1-2~P1-5** (sidebar flex, settings scroll, panel-header dedup) | Parallel-safe       | `packages/react/src/styles.css`, settings modal | P1-1 overlay CSS done     |
+| P1       | **Editor layout ownership** (`EditorService` split model)                    | Parallel-safe       | `editor-service.ts`, `EditorArea` DnD           | recommended-work-items P1 |
+| P2       | **Track D D0–D1** inventory + dead WIP cleanup                               | Parallel-safe       | `react/jdw`, validation shims                   | No Lane A block           |
+| P2       | **Sidebar Phase B-2** overlay footer decision (Chat/Commands)                | Parallel-safe       | `SideBarViewFrame`, Chat/Commands               | Browser smoke only        |
+| P2       | **Track B placement polish** drag/reparent ghost and snap indicators         | Parallel-safe       | `@workbench-kit/jdw`, `react/widget-tree`       | Storybook                 |
 
-**Suggested next slice:** Resume Lane A with WB-30 preference scopes, or take the remaining JDW drag/reparent indicator polish if the next slice should stay UI-heavy.
+**Suggested next slice:** Continue Lane A with WB-31 devtools inspectors, or take the remaining JDW drag/reparent indicator polish if the next slice should stay UI-heavy.
 
 ---
 
@@ -494,6 +493,8 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Date       | Note                                                                                                                                                                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | WB-30 preference scope closeout: settings modal now refreshes after scoped preference writes, and provider coverage proves local overrides workspace plus local preference restore                      |
+| 2026-06-25 | Validation: `pnpm validate:full` green for WB-30 closeout; Vitest 202 files / 918 tests and Storybook required play 28/28                                                                               |
 | 2026-06-25 | Validation: `pnpm validate:full` green for asset preview drop marker; Vitest 202 files / 917 tests and Storybook required play 28/28                                                                    |
 | 2026-06-25 | B-UX5 asset preview drop marker: preview asset dragover now shows parent type, insert index, next widget path, and row/column/grid-specific append marker before committing JSON                        |
 | 2026-06-25 | Validation: `pnpm validate:full` green for B1 per-parent schema specialization; Vitest 202 files / 916 tests and Storybook required play 28/28                                                          |

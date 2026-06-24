@@ -9,9 +9,9 @@
 ## 요약
 
 - **미션:** Lane A 마감을 Codex에 위임. 브랜치 `feature/theia-strengths-workbench` 유지. 각 패키지 완료 시 `pnpm validate` 통과 후 Conventional Commit (영문).
-- **현재 기준선:** WB-23~WB-28(S1–S3, S8.5~S8.6) 완료. Lane A **~80%**. 최근 커밋: `ec5b6e8`, `54602b9`, `9191bb9`, `0c2c068`, `111aa0c`.
-- **Codex 작업 패키지 5개:** P0 **S8.6**(완료) → P0 **WB-29**(command explorer) → P1 **WB-30**(preference scopes) → P2 **Track D D2**(완료) → **B-UX**(연기, 포인터만).
-- **첫 권장 작업:** **Package 2 — WB-29** (`WorkspaceExplorer`를 command-backed virtual workspace tree로 연결).
+- **현재 기준선:** WB-23~WB-30(S1–S3, S8.5~S8.6, command explorer, preference scopes) 완료. Lane A **~90%**. 최근 커밋: `96e957f`, `712f922`, `835497e`, `66a1f08`, `d1af183`.
+- **Codex 작업 패키지 5개:** P0 **S8.6**(완료) → P0 **WB-29**(완료) → P1 **WB-30**(완료) → P2 **Track D D2**(완료) → **B-UX**(부분 진행).
+- **첫 권장 작업:** **WB-31** registry / transaction journal read-only devtools inspectors.
 - **필수 제약:** `workbench-core` React-free, `react`가 `workbench-core` 미import, JDW canonical, subtree 분리 금지, Strategy A 렌더, UI 영문.
 
 ---
@@ -59,19 +59,21 @@ f1ab57e docs(workbench): add JDW architecture and Figma authoring analysis
 | WB-28 S1–S3 | Done   | `EditorService`, `EditorArea` tabs, save via transactions             |
 | S8.5        | Done   | Source/Form toolbar in `editor-area.tsx` (`0c2c068`)                  |
 | S8.6        | Done   | JDW Preview/Split modes in `EditorArea`; StrictMode-safe sample open  |
+| WB-29       | Done   | Command-backed explorer closeout + selection/reveal sync              |
+| WB-30       | Done   | Preference scopes + scoped setting UI/persistence coverage            |
 
-### Remaining (Lane A ~20%)
+### Remaining (Lane A ~10%)
 
 | Item    | Priority | Blocker                      |
 | ------- | -------- | ---------------------------- |
-| WB-29   | P0       | After S8.6                   |
-| WB-30   | P1       | After WB-29                  |
 | WB-31   | P2       | After WB-28/29 event streams |
 | S12 DoD | P2       | After WB-31                  |
 
 ### Validate status
 
-`pnpm validate` green on 2026-06-16 (typecheck, lint, 439 tests, Storybook build, boundary checks).
+Latest full validation is tracked in [session-work-plan.md](./session-work-plan.md);
+WB-30 closeout currently has targeted provider coverage proving scoped setting
+writes and local preference restore.
 
 ---
 
@@ -308,6 +310,12 @@ Validation: pnpm build:workbench-extensions && pnpm validate && pnpm workbench-s
 
 ### Package 3: WB-30 — Preference Scopes (P1)
 
+**Status:** Done (2026-06-25). `default` / `workspace` / `local`
+preference scopes exist in `workbench-config`; `PreferenceService` merges and
+emits scoped changes; shell settings writes a contributed setting through the
+selected scope and targeted provider coverage proves local overrides workspace
+and restores from local preference storage.
+
 #### Goal
 
 Implement `default` / `workspace` / `local` preference scopes with merge helper and demonstrate at least one scoped setting consumed by sample host or Storybook.
@@ -332,10 +340,10 @@ Implement `default` / `workspace` / `local` preference scopes with merge helper 
 
 #### Acceptance criteria
 
-- [ ] Merge helper unit tests: default &lt; workspace &lt; local precedence.
-- [ ] Extension configuration contributions still merge with manifests.
-- [ ] No credential/secret storage in repo.
-- [ ] `pnpm validate` passes.
+- [x] Merge helper unit tests: default &lt; workspace &lt; local precedence.
+- [x] Extension configuration contributions still merge with manifests.
+- [x] No credential/secret storage in repo.
+- [x] Scoped setting consumer covered by shell provider test.
 
 #### Validate command
 
@@ -465,13 +473,13 @@ pnpm validate
 
 ### Package-specific
 
-| Package         | Extra commands                                                                                              |
-| --------------- | ----------------------------------------------------------------------------------------------------------- |
-| S8.6            | `pnpm --filter @workbench-kit/shell-react test` · `pnpm workbench-sample`                                   |
-| WB-29           | `pnpm build:workbench-extensions` · `pnpm --filter @workbench-kit/workspace test` · `pnpm workbench-sample` |
-| WB-30           | `pnpm --filter @workbench-kit/workbench-config typecheck`                                                   |
-| D2              | `pnpm exec vitest run packages/react/src/jdw`                                                               |
-| Lane A closeout | `pnpm validate:full`                                                                                        |
+| Package         | Extra commands                                                                                                                |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| S8.6            | `pnpm --filter @workbench-kit/shell-react test` · `pnpm workbench-sample`                                                     |
+| WB-29           | `pnpm build:workbench-extensions` · `pnpm --filter @workbench-kit/workspace test` · `pnpm workbench-sample`                   |
+| WB-30           | `pnpm --filter @workbench-kit/workbench-config typecheck` · `pnpm exec vitest run packages/shell-react/src/provider.test.tsx` |
+| D2              | `pnpm exec vitest run packages/react/src/jdw`                                                                                 |
+| Lane A closeout | `pnpm validate:full`                                                                                                          |
 
 ### Storybook smoke stories
 
@@ -502,7 +510,7 @@ pnpm workbench-sample
 ## 8. Suggested Codex Session Order
 
 ```text
-Package 2 (WB-29) → Package 3 (WB-30) → WB-31 → Lane A DoD
+WB-31 → Lane A DoD
 ```
 
 ### Parallel options

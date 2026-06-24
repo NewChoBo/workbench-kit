@@ -145,6 +145,7 @@ export function WorkbenchShell({
   } = useWorkbench();
   const contextKeyRevision = useContextKeyRevision(contextKeyService);
   const forceRender = useForceRender();
+  const [preferenceRevision, bumpPreferenceRevision] = useReducer((count: number) => count + 1, 0);
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
@@ -274,6 +275,7 @@ export function WorkbenchShell({
     onLocaleChange,
     onThemeChange,
     preferenceService,
+    preferenceRevision,
     settingsScopeId,
     theme,
     themeOptions,
@@ -316,7 +318,7 @@ export function WorkbenchShell({
   useEffect(() => {
     const layoutDisposable = layoutService.onDidChangeLayout(forceRender);
     const viewProviderDisposable = extensionRegistry.views.onDidRegisterViewProvider(forceRender);
-    const preferenceDisposable = preferenceService.onDidChangePreference(forceRender);
+    const preferenceDisposable = preferenceService.onDidChangePreference(bumpPreferenceRevision);
 
     return () => {
       layoutDisposable.dispose();

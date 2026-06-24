@@ -24,6 +24,7 @@ Object.defineProperty(Element.prototype, 'scrollIntoView', {
 });
 
 import {
+  DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
   DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   WorkbenchProvider,
   WorkbenchShell,
@@ -171,6 +172,31 @@ function CommandTitleProbe({ commandId }: { commandId: string }) {
   return (
     <span>{workbench.extensionRegistry.commands.getCommand(commandId)?.title ?? 'missing'}</span>
   );
+}
+
+function PreferenceValueProbe({
+  onValue,
+  preferenceKey,
+}: {
+  onValue: (value: unknown) => void;
+  preferenceKey: string;
+}) {
+  const { preferenceService } = useWorkbench();
+
+  useEffect(() => {
+    onValue(preferenceService.getEffectiveValue(preferenceKey));
+    const disposable = preferenceService.onDidChangePreference((event) => {
+      if (event.key === preferenceKey) {
+        onValue(event.effectiveValue);
+      }
+    });
+
+    return () => {
+      disposable.dispose();
+    };
+  }, [onValue, preferenceKey, preferenceService]);
+
+  return null;
 }
 
 function WorkspaceCreateCommandProbe({ onResult }: { onResult: (result: unknown) => void }) {
@@ -522,6 +548,134 @@ describe('WorkbenchProvider', () => {
       root.unmount();
     });
     container.remove();
+  });
+
+  it('writes contributed settings through the selected preference scope', async () => {
+    const preferenceKey = 'workbench.settings.openOnStartup';
+    const storageKey = `${DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY}/provider-scope-test`;
+    const localPreferenceStorage = createMemoryStorage();
+    const observedValues: unknown[] = [];
+    const restoredValues: unknown[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.settings'],
+            recommendations: [],
+          }}
+          initialWorkspaceSettings={{
+            [preferenceKey]: true,
+          }}
+          localPreferenceStorage={localPreferenceStorage}
+          localPreferenceStorageKey={storageKey}
+          persistLocalPreferences
+        >
+          <PreferenceValueProbe
+            preferenceKey={preferenceKey}
+            onValue={(value) => observedValues.push(value)}
+          />
+          <TestWorkbenchShell editorArea={<main>Editor Area</main>} />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    expect(observedValues[observedValues.length - 1]).toBe(true);
+
+    const settingsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Settings"]',
+    );
+    expect(settingsButton).toBeDefined();
+
+    await act(async () => {
+      settingsButton?.click();
+    });
+    await flushReactEffects();
+
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('Settings');
+    expect(dialog?.textContent).toContain('Default');
+    expect(dialog?.textContent).toContain('Workspace');
+    expect(dialog?.textContent).toContain('Local');
+    expect(dialog?.textContent).toContain('effective: true');
+
+    const localScopeButton = findButtonByText(container, 'Local');
+    expect(localScopeButton).toBeDefined();
+
+    await act(async () => {
+      localScopeButton?.click();
+    });
+    await flushReactEffects();
+
+    const localCheckbox = container.querySelector<HTMLInputElement>('input[type="checkbox"]');
+    expect(localCheckbox?.checked).toBe(true);
+
+    await act(async () => {
+      localCheckbox?.click();
+    });
+    await flushReactEffects();
+
+    expect(observedValues[observedValues.length - 1]).toBe(false);
+    expect(container.querySelector('[role="dialog"]')?.textContent).toContain('effective: false');
+    expect(localPreferenceStorage.getItem(storageKey)).toContain(
+      '"workbench.settings.openOnStartup": false',
+    );
+
+    const workspaceScopeButton = findButtonByText(container, 'Workspace');
+    expect(workspaceScopeButton).toBeDefined();
+
+    await act(async () => {
+      workspaceScopeButton?.click();
+    });
+    await flushReactEffects();
+
+    const workspaceCheckbox = container.querySelector<HTMLInputElement>('input[type="checkbox"]');
+    expect(workspaceCheckbox?.checked).toBe(true);
+    expect(container.querySelector('[role="dialog"]')?.textContent).toContain('effective: false');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+    await flushReactEffects();
+
+    const restoredContainer = document.createElement('div');
+    document.body.append(restoredContainer);
+    const restoredRoot = createRoot(restoredContainer);
+
+    await act(async () => {
+      restoredRoot.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.settings'],
+            recommendations: [],
+          }}
+          initialWorkspaceSettings={{
+            [preferenceKey]: true,
+          }}
+          localPreferenceStorage={localPreferenceStorage}
+          localPreferenceStorageKey={storageKey}
+          persistLocalPreferences
+        >
+          <PreferenceValueProbe
+            preferenceKey={preferenceKey}
+            onValue={(value) => restoredValues.push(value)}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+    expect(restoredValues[restoredValues.length - 1]).toBe(false);
+
+    await act(async () => {
+      restoredRoot.unmount();
+    });
+    restoredContainer.remove();
   });
 
   it('opens the service profile from the secondary activity bar action', async () => {
