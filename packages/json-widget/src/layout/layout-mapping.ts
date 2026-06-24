@@ -1,7 +1,7 @@
 import { appendBoxChildPath, appendChildrenPath, widgetPathEquals } from '../path.js';
 import type { WidgetPath } from '../path.js';
 import type { WidgetPatch } from '../widget-patch.js';
-import { getWidgetAtPath } from '../widget-tree.js';
+import { getWidgetAtPath, getWidgetChildren } from '../widget-tree.js';
 import type { GenericWidget } from '../widget-tree.js';
 import type { LayoutNodeResult } from './layout-widget.js';
 import type { Rect } from './types.js';
@@ -34,6 +34,14 @@ export interface WidgetResizeMappingOptions {
   readonly minWidth?: number | undefined;
   readonly path: WidgetPath;
   readonly position: WidgetResizeHandlePosition;
+  readonly root: GenericWidget;
+}
+
+export interface WidgetReparentMappingOptions {
+  readonly deltaX: number;
+  readonly deltaY: number;
+  readonly layout: LayoutNodeResult;
+  readonly path: WidgetPath;
   readonly root: GenericWidget;
 }
 
@@ -102,6 +110,70 @@ export function findLayoutNodeByPath(
 
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function pathStartsWith(path: WidgetPath, prefix: WidgetPath): boolean {
+  if (prefix.length > path.length) return false;
+  return prefix.every((segment, index) => {
+    const candidate = path[index];
+    if (!candidate || candidate.kind !== segment.kind) return false;
+    if (segment.kind === 'child') return true;
+    return candidate.kind === 'children' && candidate.index === segment.index;
+  });
+}
+
+function isSingleChildContainerType(type: string): boolean {
+  return (
+    type === 'box' ||
+    type === 'container' ||
+    type === 'padding' ||
+    type === 'align' ||
+    type === 'center' ||
+    type === 'sized_box'
+  );
+}
+
+function canReceiveReparentedChild(widget: GenericWidget): boolean {
+  if (isSingleChildContainerType(widget.type)) {
+    return widget.child === undefined;
+  }
+
+  return (
+    widget.type === 'grid' ||
+    widget.type === 'row' ||
+    widget.type === 'column' ||
+    widget.type === 'stack' ||
+    widget.type === 'list-view' ||
+    Array.isArray(widget.children)
+  );
+}
+
+function reparentInsertIndex(widget: GenericWidget): number {
+  return isSingleChildContainerType(widget.type) ? 0 : getWidgetChildren(widget).length;
+}
+
+function findReparentTarget(
+  root: GenericWidget,
+  hitPath: WidgetPath,
+  sourcePath: WidgetPath,
+): { readonly path: WidgetPath; readonly insertIndex: number } | null {
+  const sourceParentPath = sourcePath.slice(0, -1);
+
+  for (let depth = hitPath.length; depth >= 0; depth -= 1) {
+    const candidatePath = hitPath.slice(0, depth);
+    if (widgetPathEquals(candidatePath, sourceParentPath)) continue;
+    if (pathStartsWith(candidatePath, sourcePath)) continue;
+
+    const candidate = getWidgetAtPath(root, candidatePath);
+    if (!candidate || !canReceiveReparentedChild(candidate)) continue;
+
+    return {
+      path: candidatePath,
+      insertIndex: reparentInsertIndex(candidate),
+    };
+  }
+
+  return null;
 }
 
 function createStackDragPatch(
@@ -236,6 +308,38 @@ function createGridDragPatch(
       ...child,
       ...placement,
     },
+  };
+}
+
+export function createWidgetReparentPatch({
+  deltaX,
+  deltaY,
+  layout,
+  path,
+  root,
+}: WidgetReparentMappingOptions): WidgetPatch | null {
+  const segment = path[path.length - 1];
+  if (!segment || segment.kind !== 'children') return null;
+
+  const child = getWidgetAtPath(root, path);
+  const childNode = findLayoutNodeByPath(layout, path);
+  if (!child || !childNode) return null;
+
+  const dropPoint = {
+    x: childNode.node.rect.x + childNode.node.rect.width / 2 + deltaX,
+    y: childNode.node.rect.y + childNode.node.rect.height / 2 + deltaY,
+  };
+  const hit = hitTestLayoutTree(layout, dropPoint);
+  if (!hit) return null;
+
+  const target = findReparentTarget(root, hit.path, path);
+  if (!target) return null;
+
+  return {
+    type: 'reparent-widget',
+    fromPath: path,
+    toParentPath: target.path,
+    insertIndex: target.insertIndex,
   };
 }
 

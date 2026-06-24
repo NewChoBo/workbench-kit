@@ -5,6 +5,7 @@ import { applyWidgetPatch } from '../widget-patch.js';
 import type { GenericWidget } from '../widget-tree.js';
 import {
   createWidgetDragPatch,
+  createWidgetReparentPatch,
   createWidgetResizePatch,
   hitTestLayoutTree,
 } from './layout-mapping.js';
@@ -133,6 +134,94 @@ describe('layout mapping', () => {
       path,
       widget: { type: 'text', text: 'Cell', col: 1, row: 1 },
     });
+  });
+
+  it('maps canvas drops onto other containers to reparent patches', () => {
+    const root: GenericWidget = {
+      type: 'stack',
+      width: 240,
+      height: 120,
+      children: [
+        { type: 'text', text: 'Move', left: 0, top: 0, right: 180, bottom: 80 },
+        {
+          type: 'grid',
+          columns: 2,
+          left: 120,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          children: [],
+        },
+      ],
+    };
+    const sourcePath = appendChildrenPath(ROOT_WIDGET_PATH, 0);
+    const targetPath = appendChildrenPath(ROOT_WIDGET_PATH, 1);
+    const layout = layoutWidget(root, {
+      minWidth: 0,
+      maxWidth: 240,
+      minHeight: 0,
+      maxHeight: 120,
+    });
+
+    const patch = createWidgetReparentPatch({
+      root,
+      layout,
+      path: sourcePath,
+      deltaX: 120,
+      deltaY: 0,
+    });
+
+    expect(patch).toEqual({
+      type: 'reparent-widget',
+      fromPath: sourcePath,
+      toParentPath: targetPath,
+      insertIndex: 0,
+    });
+
+    const result = applyWidgetPatch(root, patch!);
+    const target = (result.root.children as GenericWidget[] | undefined)?.[0];
+    expect(target?.type).toBe('grid');
+    expect((target?.children as GenericWidget[] | undefined)?.[0]).toMatchObject({
+      type: 'text',
+      text: 'Move',
+      col: 0,
+      row: 0,
+    });
+  });
+
+  it('does not map canvas drops into the selected widget descendants', () => {
+    const root: GenericWidget = {
+      type: 'stack',
+      width: 240,
+      height: 120,
+      children: [
+        {
+          type: 'stack',
+          left: 0,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          children: [{ type: 'text', text: 'Inner', left: 10, top: 10, right: 10, bottom: 10 }],
+        },
+      ],
+    };
+    const sourcePath = appendChildrenPath(ROOT_WIDGET_PATH, 0);
+    const layout = layoutWidget(root, {
+      minWidth: 0,
+      maxWidth: 240,
+      minHeight: 0,
+      maxHeight: 120,
+    });
+
+    expect(
+      createWidgetReparentPatch({
+        root,
+        layout,
+        path: sourcePath,
+        deltaX: -40,
+        deltaY: -20,
+      }),
+    ).toBeNull();
   });
 
   it.each([

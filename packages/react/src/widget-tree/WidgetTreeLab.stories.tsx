@@ -77,6 +77,33 @@ const GRID_REFLOW_DOCUMENT = formatWidgetDocumentJson({
   ],
 });
 
+const CANVAS_REPARENT_DOCUMENT = formatWidgetDocumentJson({
+  type: 'stack',
+  width: 360,
+  height: 180,
+  background: '#f3f4f6',
+  children: [
+    {
+      type: 'text',
+      text: 'Card',
+      left: 8,
+      top: 8,
+      right: 252,
+      bottom: 132,
+    },
+    {
+      type: 'grid',
+      columns: 2,
+      gap: 8,
+      left: 180,
+      top: 8,
+      right: 16,
+      bottom: 16,
+      children: [],
+    },
+  ],
+});
+
 const meta = {
   title: 'JDW/WidgetTree/Lab',
   parameters: {
@@ -422,6 +449,64 @@ export const GridColumnReflow: Story = {
         colSpan: 1,
       });
     });
+  },
+  tags: ['storybook-play-required'],
+};
+
+export const CanvasReparent: Story = {
+  name: 'Canvas reparent',
+  render: () => <WidgetTreeStoryHarness initialValue={CANVAS_REPARENT_DOCUMENT} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const lab = await canvas.findByTestId('widget-tree-lab');
+    const labCanvas = within(lab);
+    await waitForWidgetTreeSourcePane(lab);
+
+    const sourceNode = await labCanvas.findByTestId('widget-tree-node-$.children[0]');
+    await userEvent.click(getOutlineNodeButton(sourceNode));
+
+    const dragHandle = await labCanvas.findByTestId('widget-tree-canvas-drag-handle');
+    fireEvent.pointerDown(dragHandle, {
+      button: 0,
+      buttons: 1,
+      clientX: 20,
+      clientY: 20,
+      isPrimary: true,
+      pointerId: 10,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerMove(dragHandle, {
+      buttons: 1,
+      clientX: 180,
+      clientY: 32,
+      isPrimary: true,
+      pointerId: 10,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(dragHandle, {
+      button: 0,
+      buttons: 0,
+      clientX: 180,
+      clientY: 32,
+      isPrimary: true,
+      pointerId: 10,
+      pointerType: 'mouse',
+    });
+
+    await waitFor(() => {
+      const root = readSnapshot(canvasElement);
+      const grid = root.args?.children?.[0];
+      const moved = grid?.args?.children?.[0];
+      expect(grid?.type).toBe('grid');
+      expect(moved?.args).toMatchObject({ text: 'Card', col: 0, row: 0 });
+      expect(
+        lab.querySelector(
+          '[data-widget-path="$.children[0].children[0]"][data-widget-selected="true"]',
+        ),
+      ).toBeTruthy();
+    });
+    const movedNode = await labCanvas.findByTestId('widget-tree-node-$.children[0].children[0]');
+    await expect(movedNode).toHaveAttribute('aria-selected', 'true');
   },
   tags: ['storybook-play-required'],
 };

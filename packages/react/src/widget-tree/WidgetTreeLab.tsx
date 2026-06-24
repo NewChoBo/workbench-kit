@@ -82,6 +82,51 @@ export interface WidgetTreeLabProps {
   readonly viewMode?: WidgetTreeViewMode;
 }
 
+function widgetPathSegmentEquals(
+  left: WidgetPath[number],
+  right: WidgetPath[number] | undefined,
+): boolean {
+  if (!right || left.kind !== right.kind) return false;
+  if (left.kind === 'child') return true;
+  return right.kind === 'children' && left.index === right.index;
+}
+
+function adjustReparentTargetParentPath(
+  fromPath: WidgetPath,
+  toParentPath: WidgetPath,
+): WidgetPath {
+  const removedSegment = fromPath[fromPath.length - 1];
+  if (!removedSegment || removedSegment.kind !== 'children') return toParentPath;
+
+  const removedParentPath = fromPath.slice(0, -1);
+  return toParentPath.map((segment, depth) => {
+    if (segment.kind !== 'children' || depth !== removedParentPath.length) return segment;
+
+    const sameParent = removedParentPath.every((parentSegment, index) =>
+      widgetPathSegmentEquals(parentSegment, toParentPath[index]),
+    );
+    if (sameParent && removedSegment.index < segment.index) {
+      return { kind: 'children', index: segment.index - 1 } as const;
+    }
+
+    return segment;
+  });
+}
+
+function resolveReparentedSelectionPath(
+  root: GenericWidget,
+  patch: Extract<WidgetPatch, { type: 'reparent-widget' }>,
+): WidgetPath | null {
+  const targetParent = getWidgetAtPath(root, patch.toParentPath);
+  if (!targetParent) return null;
+
+  return insertedWidgetPathForParent(
+    targetParent,
+    adjustReparentTargetParentPath(patch.fromPath, patch.toParentPath),
+    patch.insertIndex,
+  );
+}
+
 export function WidgetTreeLab({
   path,
   value,
@@ -201,6 +246,19 @@ export function WidgetTreeLab({
     }
 
     return false;
+  };
+
+  const handleCanvasPatch = (patch: WidgetPatch): boolean => {
+    const nextSelectionPath =
+      patch.type === 'reparent-widget' && document.root
+        ? resolveReparentedSelectionPath(document.root, patch)
+        : null;
+    const changed = applyPatch(patch);
+    if (changed && nextSelectionPath) {
+      setSelection((current) => selectWidgetPath(current, nextSelectionPath));
+      focusPropertyDetailTab();
+    }
+    return changed;
   };
 
   const handleInspectorPatch = (nextWidget: GenericWidget) => {
@@ -367,7 +425,7 @@ export function WidgetTreeLab({
           registry={registry}
           root={document.root}
           selectedPath={selectedPath}
-          onPatch={applyPatch}
+          onPatch={handleCanvasPatch}
           onSelectPath={handlePreviewSelectPath}
         />
       </div>

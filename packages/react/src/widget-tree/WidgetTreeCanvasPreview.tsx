@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import {
   createWidgetDragPatch,
+  createWidgetReparentPatch,
   createWidgetResizePatch,
   DEFAULT_LAYOUT_CONSTRAINTS,
   findLayoutNodeByPath,
@@ -90,6 +91,17 @@ export function WidgetTreeCanvasPreview({
 
   const commitDrag = (deltaX: number, deltaY: number) => {
     if (!root || !layout || !selectedPath) return;
+
+    const reparentPatch = createWidgetReparentPatch({
+      deltaX,
+      deltaY,
+      layout,
+      path: selectedPath,
+      root,
+    });
+    if (reparentPatch && onPatch(reparentPatch)) {
+      return;
+    }
 
     const patch = createWidgetDragPatch({
       deltaX,
