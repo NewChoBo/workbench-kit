@@ -248,6 +248,15 @@ const JDW_MAIN_AXIS_ALIGNMENT_VALUES = [
 ] as const;
 const JDW_CROSS_AXIS_ALIGNMENT_VALUES = ['stretch', 'start', 'center', 'end'] as const;
 const JDW_FLEX_FIT_VALUES = ['tight', 'loose'] as const;
+const JDW_LINEAR_PLACEMENT_PROPERTY_NAMES = [
+  'width',
+  'height',
+  'flex',
+  'flexFit',
+  'align',
+] as const;
+const JDW_GRID_PLACEMENT_PROPERTY_NAMES = ['col', 'row', 'colSpan', 'rowSpan'] as const;
+const JDW_STACK_PLACEMENT_PROPERTY_NAMES = ['left', 'top', 'right', 'bottom'] as const;
 
 const JDW_COMMON_NODE_PROPERTIES = {
   $schema: { type: 'string', minLength: 1 },
@@ -255,14 +264,18 @@ const JDW_COMMON_NODE_PROPERTIES = {
   listen: { type: 'array', items: { type: 'string' } },
 } satisfies JsonSchemaObject;
 
-function jdwNodeRef(): JsonSchemaObject {
-  return { $ref: '#/definitions/JdwNode' };
+function jdwDefinitionRef(definitionName: string): JsonSchemaObject {
+  return { $ref: `#/definitions/${definitionName}` };
 }
 
-function jdwChildrenProperty(): JsonSchemaObject {
+function jdwNodeRef(): JsonSchemaObject {
+  return jdwDefinitionRef('JdwNode');
+}
+
+function jdwChildrenProperty(itemDefinitionName = 'JdwNode'): JsonSchemaObject {
   return {
     type: 'array',
-    items: jdwNodeRef(),
+    items: jdwDefinitionRef(itemDefinitionName),
   };
 }
 
@@ -298,7 +311,6 @@ function jdwArgsDefinition(
 ): JsonSchemaObject {
   return {
     type: 'object',
-    allOf: [{ $ref: '#/definitions/JdwPlacementArgs' }],
     ...(required.length > 0 ? { required: [...required] } : {}),
     properties,
     additionalProperties: true,
@@ -320,6 +332,51 @@ function jdwPlacementArgsProperties(): JsonSchemaObject {
     top: jdwUnboundedNumberProperty(),
     right: jdwUnboundedNumberProperty(),
     bottom: jdwUnboundedNumberProperty(),
+  };
+}
+
+function pickJdwPlacementArgsProperties(propertyNames: readonly string[]): JsonSchemaObject {
+  const properties = jdwPlacementArgsProperties();
+  return Object.fromEntries(
+    propertyNames.flatMap((propertyName) => {
+      const property = properties[propertyName];
+      return property ? [[propertyName, property]] : [];
+    }),
+  );
+}
+
+function jdwParentScopedPlacementDefinition(
+  title: string,
+  description: string,
+  propertyNames: readonly string[],
+): JsonSchemaObject {
+  return {
+    title,
+    description,
+    type: 'object',
+    properties: pickJdwPlacementArgsProperties(propertyNames),
+  };
+}
+
+function jdwParentScopedChildNodeDefinition(
+  title: string,
+  description: string,
+  placementDefinitionName: string,
+): JsonSchemaObject {
+  return {
+    title,
+    description,
+    allOf: [
+      jdwNodeRef(),
+      {
+        type: 'object',
+        properties: {
+          args: {
+            allOf: [jdwDefinitionRef(placementDefinitionName)],
+          },
+        },
+      },
+    ],
   };
 }
 
@@ -355,6 +412,36 @@ function createJdwNodeDefinitions(): Record<string, JsonSchemaObject> {
       type: 'object',
       properties: jdwPlacementArgsProperties(),
     },
+    JdwLinearChildPlacementArgs: jdwParentScopedPlacementDefinition(
+      'JdwLinearChildPlacementArgs',
+      'Placement hints available for direct row/column children.',
+      JDW_LINEAR_PLACEMENT_PROPERTY_NAMES,
+    ),
+    JdwGridChildPlacementArgs: jdwParentScopedPlacementDefinition(
+      'JdwGridChildPlacementArgs',
+      'Placement hints available for direct grid children.',
+      JDW_GRID_PLACEMENT_PROPERTY_NAMES,
+    ),
+    JdwStackChildPlacementArgs: jdwParentScopedPlacementDefinition(
+      'JdwStackChildPlacementArgs',
+      'Placement hints available for direct stack children.',
+      JDW_STACK_PLACEMENT_PROPERTY_NAMES,
+    ),
+    JdwLinearChildNode: jdwParentScopedChildNodeDefinition(
+      'JdwLinearChildNode',
+      'JDW node when authored as a direct row/column child.',
+      'JdwLinearChildPlacementArgs',
+    ),
+    JdwGridChildNode: jdwParentScopedChildNodeDefinition(
+      'JdwGridChildNode',
+      'JDW node when authored as a direct grid child.',
+      'JdwGridChildPlacementArgs',
+    ),
+    JdwStackChildNode: jdwParentScopedChildNodeDefinition(
+      'JdwStackChildNode',
+      'JDW node when authored as a direct stack child.',
+      'JdwStackChildPlacementArgs',
+    ),
     JdwNode: {
       oneOf: [
         ...JDW_NODE_DEFINITION_NAMES.map((name) => ({ $ref: `#/definitions/${name}` })),
@@ -398,7 +485,7 @@ function createJdwNodeDefinitions(): Record<string, JsonSchemaObject> {
         background: { type: 'string' },
         mainAxisAlignment: jdwStringEnumProperty(JDW_MAIN_AXIS_ALIGNMENT_VALUES),
         crossAxisAlignment: jdwStringEnumProperty(JDW_CROSS_AXIS_ALIGNMENT_VALUES),
-        children: jdwChildrenProperty(),
+        children: jdwChildrenProperty('JdwLinearChildNode'),
       }),
     ),
     ColumnJdwNode: jdwTypedNodeDefinition(
@@ -410,7 +497,7 @@ function createJdwNodeDefinitions(): Record<string, JsonSchemaObject> {
         background: { type: 'string' },
         mainAxisAlignment: jdwStringEnumProperty(JDW_MAIN_AXIS_ALIGNMENT_VALUES),
         crossAxisAlignment: jdwStringEnumProperty(JDW_CROSS_AXIS_ALIGNMENT_VALUES),
-        children: jdwChildrenProperty(),
+        children: jdwChildrenProperty('JdwLinearChildNode'),
       }),
     ),
     ExpandedJdwNode: jdwTypedNodeDefinition(
@@ -441,7 +528,7 @@ function createJdwNodeDefinitions(): Record<string, JsonSchemaObject> {
       'StackJdwNode',
       jdwArgsDefinition({
         background: { type: 'string' },
-        children: jdwChildrenProperty(),
+        children: jdwChildrenProperty('JdwStackChildNode'),
       }),
     ),
     ContainerJdwNode: jdwTypedNodeDefinition(
@@ -522,7 +609,7 @@ function createJdwNodeDefinitions(): Record<string, JsonSchemaObject> {
           gap: jdwNumberProperty(0),
           padding: jdwNumberProperty(0),
           background: { type: 'string' },
-          children: jdwChildrenProperty(),
+          children: jdwChildrenProperty('JdwGridChildNode'),
         },
         ['columns'],
       ),

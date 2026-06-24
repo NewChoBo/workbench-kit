@@ -89,19 +89,57 @@ describe('createWidgetJsonSchema', () => {
         JdwPlacementArgs?: {
           properties?: Record<string, unknown>;
         };
+        JdwLinearChildPlacementArgs?: {
+          properties?: Record<string, unknown>;
+        };
+        JdwGridChildPlacementArgs?: {
+          properties?: Record<string, unknown>;
+        };
+        JdwStackChildPlacementArgs?: {
+          properties?: Record<string, unknown>;
+        };
         TextJdwNode?: {
           properties?: { args?: { allOf?: unknown[] } };
         };
         RowJdwNode?: {
-          properties?: { args?: { properties?: Record<string, unknown> } };
+          properties?: {
+            args?: {
+              properties?: {
+                children?: { items?: unknown };
+                mainAxisAlignment?: unknown;
+              };
+            };
+          };
+        };
+        ColumnJdwNode?: {
+          properties?: { args?: { properties?: { children?: { items?: unknown } } } };
+        };
+        GridJdwNode?: {
+          properties?: { args?: { properties?: { children?: { items?: unknown } } } };
+        };
+        StackJdwNode?: {
+          properties?: { args?: { properties?: { children?: { items?: unknown } } } };
         };
       };
     };
     const placementArgs = schema.definitions?.JdwPlacementArgs?.properties ?? {};
+    const linearPlacementArgs = schema.definitions?.JdwLinearChildPlacementArgs?.properties ?? {};
+    const gridPlacementArgs = schema.definitions?.JdwGridChildPlacementArgs?.properties ?? {};
+    const stackPlacementArgs = schema.definitions?.JdwStackChildPlacementArgs?.properties ?? {};
     const textArgs = schema.definitions?.TextJdwNode?.properties?.args;
     const rowArgs = schema.definitions?.RowJdwNode?.properties?.args?.properties ?? {};
 
-    expect(textArgs?.allOf).toEqual([{ $ref: '#/definitions/JdwPlacementArgs' }]);
+    expect(textArgs?.allOf).toBeUndefined();
+    expect(rowArgs.children?.items).toEqual({ $ref: '#/definitions/JdwLinearChildNode' });
+    expect(
+      schema.definitions?.ColumnJdwNode?.properties?.args?.properties?.children?.items,
+    ).toEqual({ $ref: '#/definitions/JdwLinearChildNode' });
+    expect(schema.definitions?.GridJdwNode?.properties?.args?.properties?.children?.items).toEqual({
+      $ref: '#/definitions/JdwGridChildNode',
+    });
+    expect(schema.definitions?.StackJdwNode?.properties?.args?.properties?.children?.items).toEqual(
+      { $ref: '#/definitions/JdwStackChildNode' },
+    );
     expect(placementArgs.width).toEqual({
       oneOf: [{ type: 'number', minimum: 0 }, { $ref: '#/definitions/JdwDynamicValue' }],
     });
@@ -123,6 +161,31 @@ describe('createWidgetJsonSchema', () => {
     expect(placementArgs.left).toEqual({
       oneOf: [{ type: 'number' }, { $ref: '#/definitions/JdwDynamicValue' }],
     });
+    expect(linearPlacementArgs).toMatchObject({
+      align: placementArgs.align,
+      flex: placementArgs.flex,
+      flexFit: placementArgs.flexFit,
+      height: placementArgs.height,
+      width: placementArgs.width,
+    });
+    expect(linearPlacementArgs.col).toBeUndefined();
+    expect(linearPlacementArgs.left).toBeUndefined();
+    expect(gridPlacementArgs).toMatchObject({
+      col: placementArgs.col,
+      colSpan: placementArgs.colSpan,
+      row: placementArgs.row,
+      rowSpan: placementArgs.rowSpan,
+    });
+    expect(gridPlacementArgs.flex).toBeUndefined();
+    expect(gridPlacementArgs.left).toBeUndefined();
+    expect(stackPlacementArgs).toMatchObject({
+      bottom: placementArgs.bottom,
+      left: placementArgs.left,
+      right: placementArgs.right,
+      top: placementArgs.top,
+    });
+    expect(stackPlacementArgs.col).toBeUndefined();
+    expect(stackPlacementArgs.flex).toBeUndefined();
     expect(rowArgs.mainAxisAlignment).toEqual({
       oneOf: [
         {
