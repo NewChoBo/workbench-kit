@@ -1,19 +1,42 @@
 import { spawn } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+const isWindows = process.platform === 'win32';
+const repoRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
+const binRoot = path.join(repoRoot, 'node_modules', '.bin');
+const sampleRoot = path.join(repoRoot, 'examples', 'workbench-sample');
+const host = process.env.WORKBENCH_DEV_HOST || '127.0.0.1';
+const samplePort = process.env.WORKBENCH_SAMPLE_PORT || '5173';
+const storybookPort = process.env.STORYBOOK_PORT || '6010';
+const storybookBasePath = process.env.STORYBOOK_BASE_PATH || '/storybook/';
+const sampleUrl = `http://${host}:${samplePort}/`;
+const storybookUrl = new URL(storybookBasePath, sampleUrl).toString();
+
+function localBin(name) {
+  return path.join(binRoot, isWindows ? `${name}.CMD` : name);
+}
 
 const processes = [
   {
     name: 'workbench sample',
-    args: ['workbench-sample'],
-    env: {},
-    url: 'http://127.0.0.1:5173/',
+    command: localBin('vite'),
+    args: ['--host', host, '--port', samplePort, '--strictPort'],
+    cwd: sampleRoot,
+    env: {
+      WORKBENCH_SAMPLE_STORYBOOK_PROXY_TARGET: `http://${host}:${storybookPort}`,
+    },
+    url: sampleUrl,
   },
   {
     name: 'storybook',
-    args: ['storybook'],
-    env: {},
-    url: 'http://127.0.0.1:6010/',
+    command: localBin('storybook'),
+    args: ['dev', '--port', storybookPort, '--host', host, '--no-open'],
+    cwd: repoRoot,
+    env: {
+      STORYBOOK_BASE_PATH: storybookBasePath,
+    },
+    url: storybookUrl,
   },
 ];
 
@@ -26,18 +49,37 @@ function stopChildren(signal = 'SIGTERM') {
 
   for (const child of children) {
     if (!child.killed) {
-      child.kill(signal);
+      stopChild(child, signal);
     }
   }
 }
 
+function stopChild(child, signal) {
+  if (isWindows) {
+    const taskkill = spawn('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], {
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    taskkill.on('error', () => child.kill(signal));
+    return;
+  }
+
+  child.kill(signal);
+}
+
 function startProcess(processInfo) {
-  const child = spawn(pnpm, processInfo.args, {
+  const command = isWindows ? (process.env.ComSpec ?? 'cmd.exe') : processInfo.command;
+  const args = isWindows
+    ? ['/d', '/s', '/c', processInfo.command, ...processInfo.args]
+    : processInfo.args;
+  const child = spawn(command, args, {
+    cwd: processInfo.cwd,
     env: {
       ...process.env,
       ...processInfo.env,
     },
     stdio: 'inherit',
+    windowsHide: true,
   });
 
   children.add(child);
