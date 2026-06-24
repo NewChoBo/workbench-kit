@@ -6,10 +6,10 @@
 ## 요약
 
 - **현재 편집면:** `WidgetTreeLab`(트리·인스pector·Monaco·캔버스 프레임 프리뷰)이 JDW 위젯 편집의 주 표면. `WidgetTreeWorkbench`는 validation banner·baseline/dirty·save gating을 제공한다. `JsonConfigWorkbench`는 범용 JSON용. `ScreenSpecEditor`는 screen-spec → JDW 컴파일 전용.
-- **핵심 UX 갭:** 아웃라인 reorder/reparent/collapse/drop-position, asset-to-outline drop, Monaco reveal/sync, persistent outline + Props/Assets detail tabs, selected canvas frame + stack/grid drag/stack 8방향 resize commit, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper/single-child resize, B1 root schema placement hints는 완료. hover/focus chrome, asset-to-preview drop, per-parent schema specialization, 줌/팬은 남았다.
-- **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). 정적 preview selection, editor discipline, outline ergonomics core, stack placement controls/preview geometry, selected frame drag/resize/reparent/grid-slot/grid-span/linear-resize/wrapper-resize commit과 root placement schema/validator parity는 required/headless checks로 고정했다. 다음은 asset-to-preview drop 또는 per-parent schema specialization을 좁은 slice로 진행한다.
-- **단계:** UX-1(에디터 discipline, core 완료) → UX-2(아웃라인, keyboard Enter→Props 완료) → UX-3(인스pector·에셋, stack/insert + tab friction 완료) → UX-4(프리뷰 hit-test 선택, click-select 완료) → UX-5(캔버스 B3 first slice 완료).
-- **다음 권장:** **asset-to-preview drop** 또는 **per-parent schema specialization** — B1 root schema parity와 B3/B4 canvas resize/reparent slices는 `WidgetTreeLab`/`@workbench-kit/jdw`에 연결됐다.
+- **핵심 UX 갭:** 아웃라인 reorder/reparent/collapse/drop-position, asset-to-outline drop, Monaco reveal/sync, persistent outline + Props/Assets detail tabs, selected canvas frame + stack/grid drag/stack 8방향 resize commit, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper/single-child resize, asset-to-preview drop, B1 root schema placement hints는 완료. hover/focus chrome, richer drop indicators, per-parent schema specialization, 줌/팬은 남았다.
+- **개선 방향:** Figma 클론이 아니라 **JDW 단일 SSoT + 커밋형 제스처**([jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md)). 정적 preview selection, editor discipline, outline ergonomics core, stack placement controls/preview geometry, selected frame drag/resize/reparent/grid-slot/grid-span/linear-resize/wrapper-resize commit, preview asset drop, root placement schema/validator parity는 required/headless checks로 고정한다. 다음은 hover/focus chrome 또는 per-parent schema specialization을 좁은 slice로 진행한다.
+- **단계:** UX-1(에디터 discipline, core 완료) → UX-2(아웃라인, keyboard Enter→Props 완료) → UX-3(인스pector·에셋, stack/insert + tab friction 완료) → UX-4(프리뷰 hit-test 선택, click-select 완료) → UX-5(캔버스 B3 first slice + B4 edge 확장).
+- **다음 권장:** **hover/focus chrome** 또는 **per-parent schema specialization** — B1 root schema parity와 B3/B4 canvas resize/reparent/preview-drop slices는 `WidgetTreeLab`/`@workbench-kit/jdw`에 연결됐다.
 
 ---
 
@@ -55,6 +55,7 @@ Code mode hides preview and side panel — Monaco only.
 | `JDW/WidgetTree/Lab` · Linear resize placement   | same                        | Row/column child resize commits fixed width/height/align while preserving siblings    |
 | `JDW/WidgetTree/Lab` · Wrapper resize placement  | same                        | Single-child wrapper child resize commits fixed width/height JSON                     |
 | `JDW/WidgetTree/Lab` · Canvas reparent           | same                        | Selected canvas drag reparents into another container through JDW JSON                |
+| `JDW/WidgetTree/Lab` · Asset preview drop        | same                        | Palette asset drop on preview resolves nearest valid container and inserts JSON       |
 | `JDW/WidgetTree/Lab` · Preview selection         | same                        | Preview click selects outline without JSON mutation                                   |
 
 ---
@@ -70,7 +71,7 @@ Code mode hides preview and side panel — Monaco only.
 | P5  | **Outline drop-position core covered; edge stories remain**                          | Same-parent/cross-parent before/after/inside operation resolution and row affordance are wired; required play covers reorder/reparent, not every drop edge                                                                                                                                                                             | Low      |
 | P6  | **Side panel tab friction**                                                          | **Resolved (2026-06-24):** `WidgetTreeSidePanel` keeps outline visible; Props/Assets detail tabs switch independently; preview/asset insert routes to Props                                                                                                                                                                            | Resolved |
 | P7  | **Placement inspector partial**                                                      | Stack inset fields are labelled, editable, patch-covered, draggable, and 8-way-resizable on canvas; grid columns reflow children; canvas reparent uses JDW normalize; row/column and wrapper-child resize map to fixed placement; root schema/validator now expose those placement args; registry inspector fields remain demo-limited | Low      |
-| P8  | **Asset palette preview drop missing**                                               | `WidgetAssetPalette` can click-add to selected containers and drag assets onto outline before/inside/after targets; preview/canvas drop remains future                                                                                                                                                                                 | Low      |
+| P8  | **Asset palette preview drop core wired**                                            | `WidgetAssetPalette` can click-add to selected containers, drag assets onto outline before/inside/after targets, and drop assets onto the preview canvas; richer before/after preview indicators remain polish                                                                                                                         | Resolved |
 | P9  | **Keyboard shortcuts partial**                                                       | Outline Arrow/Home/End/Delete, Alt+ArrowUp/Down move, and Enter→Props focus exist; Design/Code shortcut and richer view-toggle shortcuts remain                                                                                                                                                                                        | Low      |
 | P10 | **Zoom / pan removed**                                                               | [strengths-inheritance.md](./strengths-inheritance.md), [next-slice-plan.md](./next-slice-plan.md) — explicit deferral                                                                                                                                                                                                                 | Deferred |
 | P11 | **ScreenSpecEditor isolated**                                                        | No shared chrome with `WidgetTreeLab`; authors pick screen-spec vs raw JDW manually                                                                                                                                                                                                                                                    | Low      |
@@ -155,7 +156,7 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 | Stack/grid/linear/wrapper placement | Done for labelled stack child inset fields, patch updates, preview geometry, canvas drag, 8-way resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, and wrapper-child resize |
 | Side panel layout                   | Consider split: persistent outline + bottom inspector **or** Props pinned alongside Assets                                                                                                                                                                 |
 | Registry coverage                   | Expand demo registry inspector metadata for layout builtins used in stories                                                                                                                                                                                |
-| Asset palette                       | Done for drag-start with outline before/inside/after targets; future preview drop remains                                                                                                                                                                  |
+| Asset palette                       | Done for click insert, outline before/inside/after drop, and preview canvas drop to the nearest valid container                                                                                                                                            |
 | Insert feedback                     | Done for array children and single-child wrappers                                                                                                                                                                                                          |
 
 **Acceptance criteria**
@@ -163,6 +164,7 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 - [x] Inspector tests for stack section
 - [x] Unit: asset insertion path targets new child
 - [x] Unit: asset drag payload and outline before/inside/after drop operation resolution
+- [x] Unit: asset preview drop resolves canvas hit-test containers without mutating JSON directly
 - [x] Test: stack child inset edits emit inspector patches and source patch updates preview data
 - [x] Story: stack placement controls render with preview geometry
 - [x] Story: asset insert selects new node without manual outline hunt
@@ -199,11 +201,11 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 
 **Goal:** Phase B3 — functional Figma-like authoring commits to JDW.
 
-| Item                           | Action                                                                                                                                                                                                              |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Replace read-only preview pane | Done: `WidgetTreeCanvasPreview` wraps `JdwPreview` in `WorkbenchPreviewCanvas` and overlays selected layout frames                                                                                                  |
-| Gestures                       | Done for selected stack/grid placement drag, stack 8-way resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, and wrapper-child resize |
-| Zoom / pan                     | **Only if** Lane C policy reverses; default remains deferred                                                                                                                                                        |
+| Item                           | Action                                                                                                                                                                                                                                  |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Replace read-only preview pane | Done: `WidgetTreeCanvasPreview` wraps `JdwPreview` in `WorkbenchPreviewCanvas` and overlays selected layout frames                                                                                                                      |
+| Gestures                       | Done for selected stack/grid placement drag, stack 8-way resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper-child resize, and preview asset drop |
+| Zoom / pan                     | **Only if** Lane C policy reverses; default remains deferred                                                                                                                                                                            |
 
 **Acceptance criteria**
 
@@ -214,6 +216,7 @@ Out of scope for target UX: full layer panel parity, marquee multi-select, ruler
 - [x] Story: grid resize updates span placement and reflows occupied cells
 - [x] Story: row/column resize edge updates JSON via patch
 - [x] Story: wrapper/single-child resize edge updates JSON via patch
+- [x] Story: asset dropped on preview canvas inserts through normalized `insert-child` materialization and selects the new node
 - [x] No `WorkbenchDocument` written to widget files
 - [x] Phase 4 checklist items from widget-layout-schema plan partially satisfied
 
@@ -249,7 +252,7 @@ User edits field
 ```text
 User selects container in outline
   → Assets tab enabled
-  → click asset or drop asset on outline target
+  → click asset, drop asset on outline target, or drop asset on preview canvas
   → materializeWidgetPlacementAsset → insert-child patch
   → auto-select new path (UX-3)
 ```
@@ -267,14 +270,14 @@ Edit → dirty + validation banner
 
 ## 6. Dependencies on Lane B
 
-| Lane B phase              | UX phase unblocked            | Notes                                                                                                                                                                                                               |
-| ------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B1 Schema parity          | UX-3 (Monaco placement hints) | Root schema + validator placement parity landed; per-parent `children.items` specialization remains optional polish                                                                                                 |
-| B2 Mapping base           | UX-4                          | Headless hit-test plus stack/grid drag → patch contracts                                                                                                                                                            |
-| B3 Canvas in lab          | UX-5                          | Done first slice: `WorkbenchPreviewCanvas` + selected frame stack/grid drag                                                                                                                                         |
-| B4 Drag reparent / reflow | UX-5 polish                   | Stack 8-way resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, and wrapper-child resize landed; optional zoom overlap remains Lane C |
+| Lane B phase              | UX phase unblocked            | Notes                                                                                                                                                                                                                                   |
+| ------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B1 Schema parity          | UX-3 (Monaco placement hints) | Root schema + validator placement parity landed; per-parent `children.items` specialization remains optional polish                                                                                                                     |
+| B2 Mapping base           | UX-4                          | Headless hit-test plus stack/grid drag → patch contracts                                                                                                                                                                                |
+| B3 Canvas in lab          | UX-5                          | Done first slice: `WorkbenchPreviewCanvas` + selected frame stack/grid drag                                                                                                                                                             |
+| B4 Drag reparent / reflow | UX-5 polish                   | Stack 8-way resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper-child resize, and asset preview drop landed; optional zoom overlap remains Lane C |
 
-**Sequencing rule:** Track B-UX **deferred until WB-29 closeout**; UX-1–UX-4 core, B1 root schema placement parity, the B3 first canvas wire-in, stack 8-way resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, and wrapper-child resize are now landed. Remaining UX polish should target asset-to-preview drop, hover/focus chrome, or per-parent schema specialization with dedicated headless + Storybook coverage.
+**Sequencing rule:** Track B-UX **deferred until WB-29 closeout**; UX-1–UX-4 core, B1 root schema placement parity, the B3 first canvas wire-in, stack 8-way resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper-child resize, and asset preview drop are now landed. Remaining UX polish should target hover/focus chrome, richer preview drop indicators, or per-parent schema specialization with dedicated headless + Storybook coverage.
 
 ---
 
@@ -347,7 +350,8 @@ Form view in the sample is intentionally shallow (top-level key/value fields). W
 | `JDW/WidgetTree/Lab/StackPlacement`         | Lab harness      | selected canvas frame + stack drag/resize commit | UX-5     |
 | `JDW/WidgetTree/Lab/LinearResizePlacement`  | Lab harness      | row/column fixed placement resize commit         | UX-5/B4  |
 | `JDW/WidgetTree/Lab/WrapperResizePlacement` | Lab harness      | wrapper/single-child fixed resize commit         | UX-5/B4  |
-| `JDW/WidgetTree/Lab/CanvasAuthoring`        | Lab harness      | asset-to-preview drop / richer authoring polish  | UX-5/B4  |
+| `JDW/WidgetTree/Lab/AssetPreviewDrop`       | Lab harness      | asset-to-preview drop through canvas hit-test    | UX-5/B4  |
+| `JDW/WidgetTree/Lab/CanvasAuthoring`        | Lab harness      | hover/focus chrome / richer authoring polish     | UX-5/B4  |
 | Update `InteractionSmoke`                   | existing         | Assert validation banner + dirty when wired      | UX-1     |
 | `JDW/ScreenSpecEditor/CompileError`         | ScreenSpecEditor | compile error banner UX                          | optional |
 

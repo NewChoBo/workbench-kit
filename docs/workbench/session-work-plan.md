@@ -28,15 +28,15 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 ## 요약
 
 - **Codex 위임:** Lane A 잔여 작업(WB-30 → WB-31 → S12)은 [codex-delegation-plan.md](./codex-delegation-plan.md) 패키지 흐름으로 Codex 자율 실행 가능. 다음 작업 **WB-30**.
-- **지금 어디:** Lane A **~85%**. WB-23~WB-29 완료(reveal/focus bridge + integration tests). 현재 활성 context는 JDW Track B/B-UX: B1 placement schema parity와 B4 wrapper/single-child resize까지 닫았고, 남은 Track B edge는 broader placement polish다. Lane A 다음 큰 작업은 WB-30 preference scopes.
+- **지금 어디:** Lane A **~85%**. WB-23~WB-29 완료(reveal/focus bridge + integration tests). 현재 활성 context는 JDW Track B/B-UX: B1 placement schema parity, B4 wrapper/single-child resize, preview asset drop까지 닫는 중이고, 남은 Track B edge는 hover/focus chrome, richer placement indicators, per-parent schema specialization이다. Lane A 다음 큰 작업은 WB-30 preference scopes.
 - **다음 3세션:**
   1. **S10 / WB-30** — 프리퍼런스 스코프 merge; 최소 1개 설정 키 소비.
   2. **S11 / WB-31** — registry / transaction journal read-only devtools.
   3. **S12** — Lane A DoD + `pnpm validate:full`.
-- **B-UX:** WB-29 이후 tree/preview 중심 UX-1~UX-4 core가 상당 부분 들어왔다. 캔버스 authoring은 B3 first wire-in(선택 프레임 + stack/grid drag commit), stack 8방향 resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper/single-child resize까지 들어왔고, root JDW schema/validator placement parity도 들어왔다. 남은 polish는 asset-to-preview drop, hover/focus chrome, per-parent schema specialization이다.
+- **B-UX:** WB-29 이후 tree/preview 중심 UX-1~UX-4 core가 상당 부분 들어왔다. 캔버스 authoring은 B3 first wire-in(선택 프레임 + stack/grid drag commit), stack 8방향 resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper/single-child resize, asset-to-preview drop까지 들어왔고, root JDW schema/validator placement parity도 들어왔다. 남은 polish는 hover/focus chrome, richer placement indicators, per-parent schema specialization이다.
 - **Track D:** D0–D1은 S9와 **병렬** 가능. D2 이중 렌더 통합은 2026-06-24 완료. D3는 Lane A DoD 이후.
-- **병렬 트랙 B:** Lane B(JDW/widget-tree) B1 placement schema parity는 root schema/validator 기준 완료, B2는 **headless base 완료 기준**, B3는 **React first wire-in 완료 기준**, B4는 stack resize/grid columns/canvas reparent/grid drag-slot reflow/grid resize span reflow/row-column linear resize/wrapper-child resize까지 **partial complete** 기준으로 정리한다. 남은 Track B edge는 더 넓은 placement polish다.
-- **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). 프리뷰 hit-test(B-UX4)는 완료됐고, 캔버스(B-UX5)는 first slice 완료 / edge 남음 상태다.
+- **병렬 트랙 B:** Lane B(JDW/widget-tree) B1 placement schema parity는 root schema/validator 기준 완료, B2는 **headless base 완료 기준**, B3는 **React first wire-in 완료 기준**, B4는 stack resize/grid columns/canvas reparent/grid drag-slot reflow/grid resize span reflow/row-column linear resize/wrapper-child resize/asset preview drop까지 **partial complete** 기준으로 정리한다. 남은 Track B edge는 더 넓은 placement polish다.
+- **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). 프리뷰 hit-test(B-UX4)는 완료됐고, 캔버스(B-UX5)는 frame/drag/resize/reparent/preview-drop까지 확장됐다.
 - **보류 트랙 C:** WB-15 dirty guard, WB-20/22 리소스 드래프트, consumer swap, i18n/테마, preview zoom/pan — Lane A DoD 이후.
 - **정리 트랙 D (in-repo only):** D0–D1(인벤토리·dead WIP)은 병렬 진행. D2(이중 렌더 통합)는 완료. D3(legacy shim 제거)는 Lane A DoD 이후. 다음 우선순위는 preview/editor 검증면 강화와 문서 truth 유지. **패키지 분리·git subtree는 범위 밖.**
 - **React JDW 위치:** `packages/react/src/jdw` 유지. headless는 `@workbench-kit/jdw`. 별도 `jdw-react` 패키지·git subtree **계획 제외(out of scope)**.
@@ -50,14 +50,14 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 
 ## 1. Current Snapshot
 
-| Field               | Value                                                                                              |
-| ------------------- | -------------------------------------------------------------------------------------------------- |
-| **Date**            | 2026-06-25                                                                                         |
-| **Branch**          | `feature/theia-strengths-workbench`                                                                |
-| **Working tree**    | JDW B1 placement schema parity slice                                                               |
-| **Last commits**    | Current slice: placement schema parity; previous: wrapper/single-child resize                      |
-| **Lane A progress** | ~85% (WB-23–WB-29 done; S8.5/S8.6 sample polish done)                                              |
-| **Validate note**   | `pnpm validate:full` green 2026-06-25; Vitest 202 files / 913 tests; Storybook required play 25/25 |
+| Field               | Value                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Date**            | 2026-06-25                                                                                            |
+| **Branch**          | `feature/theia-strengths-workbench`                                                                   |
+| **Working tree**    | JDW B-UX5 asset-to-preview drop slice                                                                 |
+| **Last commits**    | Current slice: asset-to-preview drop; previous: placement schema parity + wrapper/single-child resize |
+| **Lane A progress** | ~85% (WB-23–WB-29 done; S8.5/S8.6 sample polish done)                                                 |
+| **Validate note**   | `pnpm validate:full` green 2026-06-25; Vitest 202 files / 914 tests; Storybook required play 26/26    |
 
 ---
 
@@ -86,27 +86,27 @@ WB-29 → WB-30 → WB-31 → Lane A DoD
 
 From [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md) §8:
 
-| Phase | Scope                                                 | Priority        | Blocks on Lane A?                                                                                                                                                                                               |
-| ----- | ----------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B0    | JDW v7 parse/patch/layout                             | **Done**        | No                                                                                                                                                                                                              |
-| B1    | Schema parity; preview pipeline hardening             | **Done (root)** | Root JDW schema exposes parent-scoped placement args; validator checks linear/grid/stack placement; per-parent child specialization remains optional polish                                                     |
-| B2    | Mapping layer spec (hit-test → patch → normalize)     | **Done (base)** | No — headless tests only                                                                                                                                                                                        |
-| B3    | Wire canvas into `WidgetTreeLab`; tree ↔ canvas sel   | **First slice** | No — selected frame + stack/grid drag commit landed                                                                                                                                                             |
-| B4    | Drag reparent, resize, grid reflow, optional zoom/pan | **Partial**     | Stack 8-way resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, and wrapper-child resize landed; broader placement polish remains |
+| Phase | Scope                                                 | Priority        | Blocks on Lane A?                                                                                                                                                                                                                   |
+| ----- | ----------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B0    | JDW v7 parse/patch/layout                             | **Done**        | No                                                                                                                                                                                                                                  |
+| B1    | Schema parity; preview pipeline hardening             | **Done (root)** | Root JDW schema exposes parent-scoped placement args; validator checks linear/grid/stack placement; per-parent child specialization remains optional polish                                                                         |
+| B2    | Mapping layer spec (hit-test → patch → normalize)     | **Done (base)** | No — headless tests only                                                                                                                                                                                                            |
+| B3    | Wire canvas into `WidgetTreeLab`; tree ↔ canvas sel   | **First slice** | No — selected frame + stack/grid drag commit landed                                                                                                                                                                                 |
+| B4    | Drag reparent, resize, grid reflow, optional zoom/pan | **Partial**     | Stack 8-way resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper-child resize, and asset preview drop landed; broader placement polish remains |
 
 ### Track B-UX — JDW editor UX (parallel, tree-first)
 
 From [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). Improves `WidgetTreeLab` / `WidgetTreeWorkbench` without waiting for canvas unless noted.
 
-| Session   | UX phase | Scope                                                                  | Effort | Timing vs Lane A / Lane B                                                                                                                                                           |
-| --------- | -------- | ---------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **B-UX1** | UX-1     | Validation banner + baseline dirty/Save gating parity with JsonConfig  | S–M    | **Deferred** — after **WB-29** (Lane A milestone)                                                                                                                                   |
-| **B-UX2** | UX-2     | Outline DnD reorder + keyboard navigation + Monaco reveal (basic)      | M      | After B-UX1; parallel to S8–S9 when unblocked                                                                                                                                       |
-| **B-UX3** | UX-3     | Stack placement inspector, side-panel layout, asset insert auto-select | M      | Parallel to **B-S1 (B1)** schema parity                                                                                                                                             |
-| **B-UX4** | UX-4     | Preview hit-test selection ↔ outline sync                              | M      | B2 base can be consumed; React hover/focus polish remains                                                                                                                           |
-| **B-UX5** | UX-5     | Canvas wire-in to lab (gesture commit)                                 | L      | First slice + stack 8-way resize + grid columns reflow + canvas reparent + grid drag-slot reflow + grid resize span reflow + row/column linear resize + wrapper-child resize landed |
+| Session   | UX phase | Scope                                                                  | Effort | Timing vs Lane A / Lane B                                                                                                                                                                                |
+| --------- | -------- | ---------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **B-UX1** | UX-1     | Validation banner + baseline dirty/Save gating parity with JsonConfig  | S–M    | **Deferred** — after **WB-29** (Lane A milestone)                                                                                                                                                        |
+| **B-UX2** | UX-2     | Outline DnD reorder + keyboard navigation + Monaco reveal (basic)      | M      | After B-UX1; parallel to S8–S9 when unblocked                                                                                                                                                            |
+| **B-UX3** | UX-3     | Stack placement inspector, side-panel layout, asset insert auto-select | M      | Parallel to **B-S1 (B1)** schema parity                                                                                                                                                                  |
+| **B-UX4** | UX-4     | Preview hit-test selection ↔ outline sync                              | M      | B2 base can be consumed; React hover/focus polish remains                                                                                                                                                |
+| **B-UX5** | UX-5     | Canvas wire-in to lab (gesture commit)                                 | L      | First slice + stack 8-way resize + grid columns reflow + canvas reparent + grid drag-slot reflow + grid resize span reflow + row/column linear resize + wrapper-child resize + asset preview drop landed |
 
-**Current JDW recommendation:** choose asset-to-preview drop for the next UI-heavy slice, or per-parent schema specialization if the next slice should stay headless.
+**Current JDW recommendation:** choose hover/focus chrome or richer preview drop indicators for the next UI-heavy slice, or per-parent schema specialization if the next slice should stay headless.
 
 ### Track D — timing (refreshed)
 
@@ -416,6 +416,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 - [x] B3 — First canvas wire-in into WidgetTreeLab (selected frame + stack/grid drag patch commit)
 - [x] B4 edge — Row/column linear resize policy
 - [x] B4 edge — Wrapper/single-child resize policy
+- [x] B4 edge — Asset-to-preview drop into nearest canvas container
 - [ ] B4 edge — Broader placement polish
 
 ### Track B-UX (JDW editor UX)
@@ -425,7 +426,8 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 - [ ] B-UX3 — Stack placement + side panel + asset UX (UX-3)
 - [ ] B-UX4 — Preview hit-test selection (UX-4; after B2)
 - [x] B-UX5 first slice — Canvas authoring in lab: selected frame + stack/grid drag commit
-- [ ] B-UX5 edge — Non-stack resize polish
+- [x] B-UX5 edge — Preview asset drop through canvas hit-test
+- [ ] B-UX5 edge — Hover/focus chrome and richer placement indicators
 
 ### Track D (cleanup)
 
@@ -469,52 +471,54 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 ## Work backlog snapshot (2026-06-25)
 
-| Priority | Item                                                                          | Parallel?              | Conflict hotspots                                | Notes                     |
-| -------- | ----------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------ | ------------------------- |
-| P0       | **WB-30** preference scopes (default/workspace/local)                         | Sequential (Lane A)    | `workbench-config`, `platform`, `workbench-core` | Next single PR scope      |
-| P0       | **S12** Lane A DoD + `validate:full`                                          | After WB-31            | docs/, CI scripts                                | Closeout gate             |
-| P1       | **WB-31** devtools inspectors (Storybook)                                     | Sequential after WB-30 | `shell-react` stories                            | Read-only panels          |
-| P1       | **Layout CSS P1-2~P1-5** (sidebar flex, settings scroll, panel-header dedup)  | Parallel-safe          | `packages/react/src/styles.css`, settings modal  | P1-1 overlay CSS done     |
-| P1       | **Editor layout ownership** (`EditorService` split model)                     | Parallel-safe          | `editor-service.ts`, `EditorArea` DnD            | recommended-work-items P1 |
-| P2       | **Track D D0–D1** inventory + dead WIP cleanup                                | Parallel-safe          | `react/jdw`, validation shims                    | No Lane A block           |
-| P2       | **Sidebar Phase B-2** overlay footer decision (Chat/Commands)                 | Parallel-safe          | `SideBarViewFrame`, Chat/Commands                | Browser smoke only        |
-| P2       | **Track B placement polish** asset-to-preview drop + per-parent schema polish | Parallel-safe          | `@workbench-kit/jdw`, `react/widget-tree`        | Headless + Storybook      |
+| Priority | Item                                                                         | Parallel?              | Conflict hotspots                                | Notes                     |
+| -------- | ---------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------ | ------------------------- |
+| P0       | **WB-30** preference scopes (default/workspace/local)                        | Sequential (Lane A)    | `workbench-config`, `platform`, `workbench-core` | Next single PR scope      |
+| P0       | **S12** Lane A DoD + `validate:full`                                         | After WB-31            | docs/, CI scripts                                | Closeout gate             |
+| P1       | **WB-31** devtools inspectors (Storybook)                                    | Sequential after WB-30 | `shell-react` stories                            | Read-only panels          |
+| P1       | **Layout CSS P1-2~P1-5** (sidebar flex, settings scroll, panel-header dedup) | Parallel-safe          | `packages/react/src/styles.css`, settings modal  | P1-1 overlay CSS done     |
+| P1       | **Editor layout ownership** (`EditorService` split model)                    | Parallel-safe          | `editor-service.ts`, `EditorArea` DnD            | recommended-work-items P1 |
+| P2       | **Track D D0–D1** inventory + dead WIP cleanup                               | Parallel-safe          | `react/jdw`, validation shims                    | No Lane A block           |
+| P2       | **Sidebar Phase B-2** overlay footer decision (Chat/Commands)                | Parallel-safe          | `SideBarViewFrame`, Chat/Commands                | Browser smoke only        |
+| P2       | **Track B placement polish** hover/focus chrome + per-parent schema polish   | Parallel-safe          | `@workbench-kit/jdw`, `react/widget-tree`        | Headless + Storybook      |
 
-**Suggested next slice:** Choose asset-to-preview drop for a UI-heavy pass, or per-parent schema specialization for a headless-heavy pass.
+**Suggested next slice:** Choose hover/focus chrome or richer preview drop indicators for a UI-heavy pass, or per-parent schema specialization for a headless-heavy pass.
 
 ---
 
 ## Progress log
 
-| Date       | Note                                                                                                                                                             |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-06-25 | Validation: `pnpm validate:full` green for B1 placement schema parity; Vitest 202 files / 913 tests and Storybook required play 25/25                            |
-| 2026-06-25 | B1 placement schema parity: root JDW schema exposes parent-scoped placement args and validator checks linear/grid/stack placement values                         |
-| 2026-06-25 | Validation: `pnpm validate:full` green for wrapper/single-child resize; Vitest 202 files / 910 tests and Storybook required play 25/25                           |
-| 2026-06-25 | B4 wrapper/single-child resize: selected single-child wrapper children now commit fixed width/height patches with React and required Storybook coverage          |
-| 2026-06-25 | Validation: `pnpm validate:full` green for row/column linear resize; Vitest 202 files / 907 tests and Storybook required play 24/24                              |
-| 2026-06-25 | B4 row/column linear resize: selected row/column child resize handles now commit parent-scoped fixed width/height/align patches with required Storybook coverage |
-| 2026-06-25 | Validation: `pnpm validate:full` green for grid resize span reflow; Vitest 201 files / 903 tests and Storybook required play 23/23                               |
-| 2026-06-25 | B4 grid resize span reflow: selected grid resize handles now map to `colSpan`/`rowSpan` patches and reflow occupied sibling cells                                |
-| 2026-06-25 | Validation: `pnpm validate:full` green for grid drag-slot reflow; Vitest 201 files / 902 tests and Storybook required play 22/22                                 |
-| 2026-06-25 | B4 grid drag-slot reflow: dragging a grid child onto an occupied cell now replaces the parent grid with non-overlapping direct child placement                   |
-| 2026-06-25 | Validation: `pnpm validate:full` green for canvas reparent; Vitest 201 files / 901 tests and Storybook required play 21/21                                       |
-| 2026-06-25 | B4 canvas reparent: selected canvas drag can drop a widget into another container through `reparent-widget`, preserving JDW normalization and selection          |
-| 2026-06-25 | Validation: `pnpm validate:full` green for grid columns reflow; Vitest 201 files / 899 tests and Storybook required play 20/20                                   |
-| 2026-06-25 | B4 grid columns reflow: inspector column edits reflow direct grid child `col`/`row` placement through JDW patches                                                |
-| 2026-06-25 | Validation: `pnpm validate:full` green for stack 8-way resize; Vitest 201 files / 897 tests and Storybook required play 19/19                                    |
-| 2026-06-25 | B4 stack resize completion: all eight stack resize handles commit JDW patches; required play covers southeast and northwest paths                                |
-| 2026-06-25 | B4 first resize edge: stack southeast resize maps to JDW patches and is covered by headless tests plus Storybook required play                                   |
-| 2026-06-25 | B3 first wire-in: `WidgetTreeLab` preview uses canvas frames; selected stack/grid drag commits JDW patches through Storybook required play                       |
-| 2026-06-25 | Validation: `pnpm validate:full` green for B3 first wire-in; Vitest 201 files / 888 tests and Storybook required play 19/19                                      |
-| 2026-06-25 | Context refresh: B2 headless mapping base added for layout hit-test and stack/grid drag patches; B3 first canvas wire-in now consumes it                         |
-| 2026-06-20 | Validation pass: WB-29 closeout kept (reveal bridge, 26 vitest, validate:static); backlog snapshot added; next WB-30                                             |
-| 2026-06-20 | Plan refresh: WB-29 command handlers/UI dispatch landed; closeout remains for selection/reveal/search and sample smoke coverage                                  |
-| 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7                                                                                 |
-| 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                                                                                                              |
-| 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow                                                                                           |
-| 2026-06-16 | Subtree / jdw-react split excluded; Track D scoped to in-repo cleanup                                                                                            |
-| 2026-06-16 | WB-28 S3: editor save via workspace transactions, sample host Ctrl+S                                                                                             |
-| 2026-06-16 | S8.5: EditorArea Source/Form toolbar for JSON; sample `config.json`; explorer chrome deferred to WB-29                                                           |
-| 2026-06-16 | S8.6 done: EditorArea Code(JSON)/Form/Preview; Code/Form reuse split preview when JDW preview is available                                                       |
-| 2026-06-16 | Plan refresh: WB-28 + S8.5/S8.6 done; story cleanup `54602b9`; editor view model docs `9191bb9`; validate green; WB-29 → WB-30 next                              |
+| Date       | Note                                                                                                                                                                                                    |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | Validation: `pnpm validate:full` green for asset-to-preview drop; Vitest 202 files / 914 tests and Storybook required play 26/26                                                                        |
+| 2026-06-25 | B4/B-UX5 asset-to-preview drop: palette assets can be dropped on the preview canvas, resolve the nearest valid container by layout hit-test, and reuse the normalized insert-child materialization path |
+| 2026-06-25 | Validation: `pnpm validate:full` green for B1 placement schema parity; Vitest 202 files / 913 tests and Storybook required play 25/25                                                                   |
+| 2026-06-25 | B1 placement schema parity: root JDW schema exposes parent-scoped placement args and validator checks linear/grid/stack placement values                                                                |
+| 2026-06-25 | Validation: `pnpm validate:full` green for wrapper/single-child resize; Vitest 202 files / 910 tests and Storybook required play 25/25                                                                  |
+| 2026-06-25 | B4 wrapper/single-child resize: selected single-child wrapper children now commit fixed width/height patches with React and required Storybook coverage                                                 |
+| 2026-06-25 | Validation: `pnpm validate:full` green for row/column linear resize; Vitest 202 files / 907 tests and Storybook required play 24/24                                                                     |
+| 2026-06-25 | B4 row/column linear resize: selected row/column child resize handles now commit parent-scoped fixed width/height/align patches with required Storybook coverage                                        |
+| 2026-06-25 | Validation: `pnpm validate:full` green for grid resize span reflow; Vitest 201 files / 903 tests and Storybook required play 23/23                                                                      |
+| 2026-06-25 | B4 grid resize span reflow: selected grid resize handles now map to `colSpan`/`rowSpan` patches and reflow occupied sibling cells                                                                       |
+| 2026-06-25 | Validation: `pnpm validate:full` green for grid drag-slot reflow; Vitest 201 files / 902 tests and Storybook required play 22/22                                                                        |
+| 2026-06-25 | B4 grid drag-slot reflow: dragging a grid child onto an occupied cell now replaces the parent grid with non-overlapping direct child placement                                                          |
+| 2026-06-25 | Validation: `pnpm validate:full` green for canvas reparent; Vitest 201 files / 901 tests and Storybook required play 21/21                                                                              |
+| 2026-06-25 | B4 canvas reparent: selected canvas drag can drop a widget into another container through `reparent-widget`, preserving JDW normalization and selection                                                 |
+| 2026-06-25 | Validation: `pnpm validate:full` green for grid columns reflow; Vitest 201 files / 899 tests and Storybook required play 20/20                                                                          |
+| 2026-06-25 | B4 grid columns reflow: inspector column edits reflow direct grid child `col`/`row` placement through JDW patches                                                                                       |
+| 2026-06-25 | Validation: `pnpm validate:full` green for stack 8-way resize; Vitest 201 files / 897 tests and Storybook required play 19/19                                                                           |
+| 2026-06-25 | B4 stack resize completion: all eight stack resize handles commit JDW patches; required play covers southeast and northwest paths                                                                       |
+| 2026-06-25 | B4 first resize edge: stack southeast resize maps to JDW patches and is covered by headless tests plus Storybook required play                                                                          |
+| 2026-06-25 | B3 first wire-in: `WidgetTreeLab` preview uses canvas frames; selected stack/grid drag commits JDW patches through Storybook required play                                                              |
+| 2026-06-25 | Validation: `pnpm validate:full` green for B3 first wire-in; Vitest 201 files / 888 tests and Storybook required play 19/19                                                                             |
+| 2026-06-25 | Context refresh: B2 headless mapping base added for layout hit-test and stack/grid drag patches; B3 first canvas wire-in now consumes it                                                                |
+| 2026-06-20 | Validation pass: WB-29 closeout kept (reveal bridge, 26 vitest, validate:static); backlog snapshot added; next WB-30                                                                                    |
+| 2026-06-20 | Plan refresh: WB-29 command handlers/UI dispatch landed; closeout remains for selection/reveal/search and sample smoke coverage                                                                         |
+| 2026-06-16 | Initial session work plan; WB-28 S1 done; S7–S12 mapped to completion-plan S2–S7                                                                                                                        |
+| 2026-06-16 | Track D cleanup plan; JDW-like surfaces table added                                                                                                                                                     |
+| 2026-06-16 | WB-28 S2: EditorArea tab chrome, builtin.editor, sample open-file flow                                                                                                                                  |
+| 2026-06-16 | Subtree / jdw-react split excluded; Track D scoped to in-repo cleanup                                                                                                                                   |
+| 2026-06-16 | WB-28 S3: editor save via workspace transactions, sample host Ctrl+S                                                                                                                                    |
+| 2026-06-16 | S8.5: EditorArea Source/Form toolbar for JSON; sample `config.json`; explorer chrome deferred to WB-29                                                                                                  |
+| 2026-06-16 | S8.6 done: EditorArea Code(JSON)/Form/Preview; Code/Form reuse split preview when JDW preview is available                                                                                              |
+| 2026-06-16 | Plan refresh: WB-28 + S8.5/S8.6 done; story cleanup `54602b9`; editor view model docs `9191bb9`; validate green; WB-29 → WB-30 next                                                                     |

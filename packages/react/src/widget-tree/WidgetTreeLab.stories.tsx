@@ -9,6 +9,7 @@ import { WidgetTreeWorkbench } from './WidgetTreeWorkbench.js';
 import { WIDGET_TREE_DEMO_REGISTRY } from './demo-registry.js';
 import { WIDGET_TREE_DEMO_ASSET_CATALOG } from './demo-widget-assets.js';
 import { waitForWidgetTreeSourcePane } from './widget-tree-play-helpers.js';
+import { writeWidgetPlacementAssetDragData } from './widget-placement-asset-dnd.js';
 
 const OUTLINE_STORY_DOCUMENT = formatWidgetDocumentJson({
   type: 'column',
@@ -302,6 +303,41 @@ export const AssetInsertSelect: Story = {
     await waitFor(() => {
       expect(insertedNode).toHaveAttribute('aria-selected', 'true');
       expect(insertedNode).toHaveTextContent('Heading');
+      expect(canvasElement.querySelector('[data-widget-path="$.children[3]"]')).toBeTruthy();
+    });
+    await expect(canvas.getByTestId('widget-tree-inspector-panel')).toBeVisible();
+    await expect(canvas.getByDisplayValue('Heading')).toBeVisible();
+  },
+  tags: ['storybook-play-required'],
+};
+
+export const AssetPreviewDrop: Story = {
+  name: 'Asset preview drop',
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitForWidgetTreeSourcePane(canvasElement);
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Assets' }));
+    const asset = await canvas.findByTestId('widget-asset-content.heading');
+    const stage = await canvas.findByTestId('widget-tree-canvas-stage');
+    const rect = stage.getBoundingClientRect();
+    const clientX = rect.left + (rect.width > 0 ? Math.min(20, rect.width / 2) : 20);
+    const clientY = rect.top + (rect.height > 0 ? Math.min(20, rect.height / 2) : 20);
+    const dataTransfer = createMemoryDataTransfer();
+    const headingAsset = WIDGET_TREE_DEMO_ASSET_CATALOG.asset('content.heading');
+    expect(headingAsset).toBeTruthy();
+
+    dispatchDragEvent(asset, 'dragstart', { dataTransfer });
+    writeWidgetPlacementAssetDragData(dataTransfer, headingAsset!);
+    dispatchDragEvent(stage, 'dragover', { clientX, clientY, dataTransfer });
+    const indicator = await canvas.findByTestId('widget-tree-canvas-asset-drop-indicator');
+    await expect(indicator).toHaveAttribute('data-widget-path', '$');
+    dispatchDragEvent(stage, 'drop', { clientX, clientY, dataTransfer });
+
+    const insertedNode = await canvas.findByTestId('widget-tree-node-$.children[3]');
+    await waitFor(() => {
+      expect(readRootChildSummary(canvasElement)).toEqual(['Title', 'row', 'Footer', 'Heading']);
+      expect(insertedNode).toHaveAttribute('aria-selected', 'true');
       expect(canvasElement.querySelector('[data-widget-path="$.children[3]"]')).toBeTruthy();
     });
     await expect(canvas.getByTestId('widget-tree-inspector-panel')).toBeVisible();
@@ -962,6 +998,10 @@ function createDataTransfer(): DataTransfer {
     return new DataTransfer();
   }
 
+  return createMemoryDataTransfer();
+}
+
+function createMemoryDataTransfer(): DataTransfer {
   const store = new Map<string, string>();
   return {
     clearData: (format?: string) => {
@@ -979,6 +1019,24 @@ function createDataTransfer(): DataTransfer {
     },
     types: [],
   } as unknown as DataTransfer;
+}
+
+function dispatchDragEvent(
+  target: HTMLElement,
+  type: string,
+  init: {
+    readonly clientX?: number;
+    readonly clientY?: number;
+    readonly dataTransfer: DataTransfer;
+  },
+): void {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperties(event, {
+    clientX: { value: init.clientX ?? 0 },
+    clientY: { value: init.clientY ?? 0 },
+    dataTransfer: { value: init.dataTransfer },
+  });
+  target.dispatchEvent(event);
 }
 
 function readSnapshot(canvasElement: HTMLElement): JdwSnapshotNode {

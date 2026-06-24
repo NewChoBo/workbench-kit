@@ -1,16 +1,22 @@
-import { useMemo } from 'react';
+import { useMemo, useState, type DragEvent } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
+import type { WidgetPlacementAsset } from '@workbench-kit/contracts';
 import {
   createWidgetDragPatch,
   createWidgetReparentPatch,
   createWidgetResizePatch,
   DEFAULT_LAYOUT_CONSTRAINTS,
   findLayoutNodeByPath,
+  getWidgetChildren,
   getWidgetAtPath,
+  hitTestLayoutTree,
   layoutWidget,
   widgetPathKey,
   type GenericWidget,
   type LayoutConstraints,
+  type LayoutNodeResult,
+  type LayoutPoint,
+  type Rect,
   type WidgetPatch,
   type WidgetPath,
   type WidgetResizeHandlePosition,
@@ -21,8 +27,11 @@ import {
   WorkbenchCanvasItemFrame,
   WorkbenchPreviewCanvas,
   WorkbenchCanvasResizeHandle,
+  WorkbenchCanvasDropIndicator,
 } from '../layout/WorkbenchCanvas.js';
 import { JdwPreview } from '../jdw/JdwPreview.js';
+import { readWidgetPlacementAssetDragData } from './widget-placement-asset-dnd.js';
+import { canAddChildren, insertedWidgetPathForParent } from './widget-tree-layout.js';
 
 const RESIZE_HANDLE_POSITIONS = [
   'n',
@@ -43,7 +52,20 @@ export interface WidgetTreeCanvasPreviewProps {
   readonly root: GenericWidget | null;
   readonly selectedPath: WidgetPath | null;
   readonly onPatch: (patch: WidgetPatch) => boolean;
+  readonly onPlaceAssetPath?: ((operation: WidgetTreeCanvasAssetDropOperation) => void) | undefined;
   readonly onSelectPath: (path: WidgetPath) => void;
+}
+
+export interface WidgetTreeCanvasAssetDropOperation {
+  readonly asset: WidgetPlacementAsset;
+  readonly parentPath: WidgetPath;
+  readonly insertIndex: number;
+  readonly nextPath: WidgetPath;
+}
+
+interface WidgetTreeCanvasAssetDropTarget {
+  readonly path: WidgetPath;
+  readonly rect: Rect;
 }
 
 function canDragSelectedPath(root: GenericWidget, path: WidgetPath): boolean {
@@ -80,6 +102,55 @@ function canResizeSelectedPath(root: GenericWidget, path: WidgetPath): boolean {
   );
 }
 
+function widgetPathParent(path: WidgetPath): WidgetPath | null {
+  if (path.length === 0) return null;
+  return path.slice(0, -1);
+}
+
+function eventPointInLayout(
+  event: DragEvent<HTMLElement>,
+  stage: HTMLElement,
+  frameWidth: number,
+  frameHeight: number,
+): LayoutPoint {
+  const rect = stage.getBoundingClientRect();
+  const scaleX = rect.width > 0 ? frameWidth / rect.width : 1;
+  const scaleY = rect.height > 0 ? frameHeight / rect.height : 1;
+
+  return {
+    x: (event.clientX - rect.left) * scaleX,
+    y: (event.clientY - rect.top) * scaleY,
+  };
+}
+
+export function resolveWidgetCanvasAssetDropOperation(
+  asset: WidgetPlacementAsset,
+  root: GenericWidget,
+  layout: LayoutNodeResult,
+  point: LayoutPoint,
+): WidgetTreeCanvasAssetDropOperation | null {
+  const hit = hitTestLayoutTree(layout, point);
+  if (!hit) return null;
+
+  let candidatePath: WidgetPath | null = hit.path;
+  while (candidatePath !== null) {
+    const candidate = getWidgetAtPath(root, candidatePath);
+    if (candidate && canAddChildren(candidate)) {
+      const insertIndex = getWidgetChildren(candidate).length;
+      return {
+        asset,
+        parentPath: candidatePath,
+        insertIndex,
+        nextPath: insertedWidgetPathForParent(candidate, candidatePath, insertIndex),
+      };
+    }
+
+    candidatePath = widgetPathParent(candidatePath);
+  }
+
+  return null;
+}
+
 export function WidgetTreeCanvasPreview({
   json,
   layoutConstraints = DEFAULT_LAYOUT_CONSTRAINTS,
@@ -88,8 +159,12 @@ export function WidgetTreeCanvasPreview({
   root,
   selectedPath,
   onPatch,
+  onPlaceAssetPath,
   onSelectPath,
 }: WidgetTreeCanvasPreviewProps) {
+  const [assetDropTarget, setAssetDropTarget] = useState<WidgetTreeCanvasAssetDropTarget | null>(
+    null,
+  );
   const layout = useMemo(
     () => (root ? layoutWidget(root, layoutConstraints, { x: 0, y: 0 }, { registry }) : null),
     [layoutConstraints, registry, root],
@@ -149,6 +224,52 @@ export function WidgetTreeCanvasPreview({
     }
   };
 
+  const resolveAssetDrop = (
+    event: DragEvent<HTMLElement>,
+  ): WidgetTreeCanvasAssetDropOperation | null => {
+    if (readOnly || !root || !layout || !onPlaceAssetPath) return null;
+
+    const asset = readWidgetPlacementAssetDragData(event.dataTransfer);
+    if (!asset) return null;
+
+    const point = eventPointInLayout(event, event.currentTarget, frameWidth, frameHeight);
+    return resolveWidgetCanvasAssetDropOperation(asset, root, layout, point);
+  };
+
+  const handleAssetDragOver = (event: DragEvent<HTMLDivElement>) => {
+    const operation = resolveAssetDrop(event);
+    if (!operation || !layout) {
+      setAssetDropTarget(null);
+      return;
+    }
+
+    const target = findLayoutNodeByPath(layout, operation.parentPath);
+    if (!target) {
+      setAssetDropTarget(null);
+      return;
+    }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+    setAssetDropTarget({ path: operation.parentPath, rect: target.node.rect });
+  };
+
+  const handleAssetDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    const relatedTarget = event.relatedTarget;
+    if (relatedTarget instanceof Node && event.currentTarget.contains(relatedTarget)) return;
+
+    setAssetDropTarget(null);
+  };
+
+  const handleAssetDrop = (event: DragEvent<HTMLDivElement>) => {
+    const operation = resolveAssetDrop(event);
+    setAssetDropTarget(null);
+    if (!operation) return;
+
+    event.preventDefault();
+    onPlaceAssetPath?.(operation);
+  };
+
   return (
     <WorkbenchPreviewCanvas
       className="widget-tree-canvas-preview"
@@ -165,10 +286,14 @@ export function WidgetTreeCanvasPreview({
     >
       <div
         className="widget-tree-canvas-preview__stage"
+        data-testid="widget-tree-canvas-stage"
         style={{
           width: frameWidth,
           height: frameHeight,
         }}
+        onDragLeave={handleAssetDragLeave}
+        onDragOver={handleAssetDragOver}
+        onDrop={handleAssetDrop}
       >
         <JdwPreview
           className="widget-tree-canvas-preview__render"
@@ -179,6 +304,17 @@ export function WidgetTreeCanvasPreview({
           onSelectPath={onSelectPath}
         />
         <div className="widget-tree-canvas-preview__frames" data-testid="widget-tree-canvas-frames">
+          {assetDropTarget ? (
+            <WorkbenchCanvasDropIndicator
+              data-testid="widget-tree-canvas-asset-drop-indicator"
+              data-widget-path={widgetPathKey(assetDropTarget.path)}
+              width={assetDropTarget.rect.width}
+              height={assetDropTarget.rect.height}
+              x={assetDropTarget.rect.x}
+              y={assetDropTarget.rect.y}
+              zIndex={30}
+            />
+          ) : null}
           {selectedLayout && selectedPath ? (
             <WorkbenchCanvasItemFrame
               className="widget-tree-canvas-preview__selection-frame"

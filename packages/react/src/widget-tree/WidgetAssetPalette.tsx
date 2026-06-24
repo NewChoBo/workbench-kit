@@ -50,12 +50,13 @@ export function WidgetAssetPalette({
         <WorkbenchPropertyHint>Widget assets are read-only in this editor.</WorkbenchPropertyHint>
       ) : !canClickPlace ? (
         <WorkbenchPropertyHint>
-          Select a container node in Outline to click-add, or drag an asset onto the outline.
+          Select a container node in Outline to click-add, or drag an asset onto the outline or
+          preview.
         </WorkbenchPropertyHint>
       ) : (
         <WorkbenchPropertyHint>
           Click an asset to add it to <strong>{selectedContainer?.type ?? 'container'}</strong>, or
-          drag it onto the outline.
+          drag it onto the outline or preview.
         </WorkbenchPropertyHint>
       )}
 
