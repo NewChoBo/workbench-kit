@@ -4,7 +4,7 @@ import { applyWidgetDocumentPatch } from './apply-widget-document-patch.js';
 import { createWidgetDocument, formatWidgetDocumentJson } from './document.js';
 import { createWidgetResizePatch } from './layout/layout-mapping.js';
 import { layoutWidget } from './layout/layout-widget.js';
-import { appendChildrenPath, ROOT_WIDGET_PATH } from './path.js';
+import { appendBoxChildPath, appendChildrenPath, ROOT_WIDGET_PATH } from './path.js';
 
 describe('applyWidgetDocumentPatch', () => {
   it('applies a patch and re-serializes as JDW JSON', () => {
@@ -112,6 +112,42 @@ describe('applyWidgetDocumentPatch', () => {
     expect(next).toContain('"align": "start"');
     expect(next).not.toContain('"text": "A",\n            "flex"');
     expect(next).toContain('"type": "expanded"');
+  });
+
+  it('applies wrapper child resize patches through document serialization', () => {
+    const source = formatWidgetDocumentJson({
+      type: 'center',
+      width: 200,
+      height: 120,
+      child: { type: 'text', text: 'Wrapped', width: 100, height: 60 },
+    });
+    const document = createWidgetDocument(source);
+    const layout =
+      document.root !== null
+        ? layoutWidget(document.root, { minWidth: 0, maxWidth: 200, minHeight: 0, maxHeight: 120 })
+        : null;
+    const patch =
+      document.root !== null && layout !== null
+        ? createWidgetResizePatch({
+            root: document.root,
+            layout,
+            path: appendBoxChildPath(ROOT_WIDGET_PATH),
+            position: 'se',
+            deltaX: 20,
+            deltaY: 10,
+          })
+        : null;
+
+    expect(patch).not.toBeNull();
+    const next = patch ? applyWidgetDocumentPatch(source, patch) : null;
+    const snapshot = next ? JSON.parse(next) : null;
+
+    expect(snapshot?.args?.child?.type).toBe('text');
+    expect(snapshot?.args?.child?.args).toMatchObject({
+      text: 'Wrapped',
+      width: 120,
+      height: 70,
+    });
   });
 
   it('returns null for invalid source JSON', () => {

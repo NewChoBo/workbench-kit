@@ -354,6 +354,46 @@ describe('layout mapping', () => {
     expect(nextLayout.children[1]?.rect).toEqual({ x: 0, y: 100, width: 160, height: 200 });
   });
 
+  it('maps single-child wrapper resize deltas to fixed child size', () => {
+    const root: GenericWidget = {
+      type: 'center',
+      width: 200,
+      height: 120,
+      child: { type: 'text', text: 'Wrapped', width: 100, height: 60 },
+    };
+    const path = appendBoxChildPath(ROOT_WIDGET_PATH);
+    const layout = layoutWidget(root, {
+      minWidth: 0,
+      maxWidth: 200,
+      minHeight: 0,
+      maxHeight: 120,
+    });
+
+    const patch = createWidgetResizePatch({
+      root,
+      layout,
+      path,
+      position: 'se',
+      deltaX: 20,
+      deltaY: 10,
+    });
+
+    expect(patch).toEqual({
+      type: 'replace-widget',
+      path,
+      widget: { type: 'text', text: 'Wrapped', width: 120, height: 70 },
+    });
+
+    const result = applyWidgetPatch(root, patch!);
+    const nextLayout = layoutWidget(result.root, {
+      minWidth: 0,
+      maxWidth: 200,
+      minHeight: 0,
+      maxHeight: 120,
+    });
+    expect(nextLayout.children[0]?.rect).toEqual({ x: 40, y: 25, width: 120, height: 70 });
+  });
+
   it('maps canvas drops onto other containers to reparent patches', () => {
     const root: GenericWidget = {
       type: 'stack',
@@ -555,15 +595,6 @@ describe('layout mapping', () => {
       }),
     ).toBeNull();
     expect(
-      createWidgetDragPatch({
-        root,
-        layout,
-        path: appendBoxChildPath(ROOT_WIDGET_PATH),
-        deltaX: 10,
-        deltaY: 10,
-      }),
-    ).toBeNull();
-    expect(
       createWidgetResizePatch({
         root,
         layout,
@@ -574,11 +605,10 @@ describe('layout mapping', () => {
       }),
     ).toBeNull();
     expect(
-      createWidgetResizePatch({
+      createWidgetDragPatch({
         root,
         layout,
         path: appendBoxChildPath(ROOT_WIDGET_PATH),
-        position: 'se',
         deltaX: 10,
         deltaY: 10,
       }),

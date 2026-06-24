@@ -550,6 +550,44 @@ function isLinearParentType(type: string): type is 'row' | 'column' {
   return type === 'row' || type === 'column';
 }
 
+function createSingleChildResizePatch(
+  child: GenericWidget,
+  childNode: LayoutNodeResult,
+  path: WidgetPath,
+  position: WidgetResizeHandlePosition,
+  deltaX: number,
+  deltaY: number,
+  minWidth: number,
+  minHeight: number,
+): WidgetPatch | null {
+  const next: GenericWidget = { ...child };
+  let changed = false;
+
+  if (position.includes('e')) {
+    next.width = Math.max(minWidth, childNode.rect.width + deltaX);
+    changed = true;
+  } else if (position.includes('w')) {
+    next.width = Math.max(minWidth, childNode.rect.width - deltaX);
+    changed = true;
+  }
+
+  if (position.includes('s')) {
+    next.height = Math.max(minHeight, childNode.rect.height + deltaY);
+    changed = true;
+  } else if (position.includes('n')) {
+    next.height = Math.max(minHeight, childNode.rect.height - deltaY);
+    changed = true;
+  }
+
+  if (!changed) return null;
+
+  return {
+    type: 'replace-widget',
+    path,
+    widget: next,
+  };
+}
+
 function createLinearResizePatch(
   parent: GenericWidget,
   child: GenericWidget,
@@ -803,7 +841,7 @@ export function createWidgetResizePatch({
   root,
 }: WidgetResizeMappingOptions): WidgetPatch | null {
   const segment = path[path.length - 1];
-  if (!segment || segment.kind !== 'children') return null;
+  if (!segment) return null;
 
   const parentPath = path.slice(0, -1);
   const parent = getWidgetAtPath(root, parentPath);
@@ -811,6 +849,23 @@ export function createWidgetResizePatch({
   const parentNode = findLayoutNodeByPath(layout, parentPath);
   const childNode = findLayoutNodeByPath(layout, path);
   if (!parent || !child || !parentNode || !childNode) return null;
+
+  if (segment.kind === 'child') {
+    if (!isSingleChildContainerType(parent.type)) return null;
+
+    return createSingleChildResizePatch(
+      child,
+      childNode.node,
+      path,
+      position,
+      deltaX,
+      deltaY,
+      minWidth,
+      minHeight,
+    );
+  }
+
+  if (segment.kind !== 'children') return null;
 
   if (parent.type === 'stack') {
     return createStackResizePatch(

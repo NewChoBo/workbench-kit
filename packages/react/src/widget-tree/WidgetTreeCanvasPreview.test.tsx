@@ -3,7 +3,12 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { appendChildrenPath, formatWidgetDocumentJson, ROOT_WIDGET_PATH } from '@workbench-kit/jdw';
+import {
+  appendBoxChildPath,
+  appendChildrenPath,
+  formatWidgetDocumentJson,
+  ROOT_WIDGET_PATH,
+} from '@workbench-kit/jdw';
 import type { GenericWidget, WidgetPatch } from '@workbench-kit/jdw';
 
 import { WidgetTreeCanvasPreview } from './WidgetTreeCanvasPreview.js';
@@ -54,16 +59,7 @@ describe('WidgetTreeCanvasPreview', () => {
     const handle = container.querySelector(
       '[data-testid="widget-tree-canvas-resize-handle-se"]',
     ) as HTMLElement;
-    Object.defineProperty(handle, 'setPointerCapture', {
-      configurable: true,
-      value: () => {
-        throw new DOMException('No active pointer.', 'NotFoundError');
-      },
-    });
-    Object.defineProperty(handle, 'hasPointerCapture', {
-      configurable: true,
-      value: () => false,
-    });
+    mockPointerCapture(handle);
 
     await act(async () => {
       handle.dispatchEvent(createPointerLikeEvent('pointerdown', 150, 120));
@@ -92,7 +88,80 @@ describe('WidgetTreeCanvasPreview', () => {
       root.unmount();
     });
   });
+
+  it('emits fixed-size resize patches for selected wrapper children', async () => {
+    const rootWidget: GenericWidget = {
+      type: 'center',
+      width: 200,
+      height: 120,
+      child: { type: 'text', text: 'Wrapped', width: 100, height: 60 },
+    };
+    const selectedPath = appendBoxChildPath(ROOT_WIDGET_PATH);
+    const onPatch = vi.fn((patch: WidgetPatch) => {
+      void patch;
+      return true;
+    });
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WidgetTreeCanvasPreview
+          json={formatWidgetDocumentJson(rootWidget)}
+          root={rootWidget}
+          selectedPath={selectedPath}
+          onPatch={onPatch}
+          onSelectPath={() => undefined}
+        />,
+      );
+    });
+
+    const frame = container.querySelector('[data-testid="widget-tree-canvas-selection-frame"]');
+    expect(frame?.getAttribute('data-widget-path')).toBe('$.child');
+    expect(frame?.getAttribute('data-widget-type')).toBe('text');
+    expect(frame?.getAttribute('data-interactive')).toBe('true');
+
+    const handle = container.querySelector(
+      '[data-testid="widget-tree-canvas-resize-handle-se"]',
+    ) as HTMLElement;
+    mockPointerCapture(handle);
+
+    await act(async () => {
+      handle.dispatchEvent(createPointerLikeEvent('pointerdown', 150, 90));
+    });
+    await act(async () => {
+      handle.dispatchEvent(createPointerLikeEvent('pointermove', 170, 100));
+    });
+    await act(async () => {
+      handle.dispatchEvent(createPointerLikeEvent('pointerup', 170, 100));
+    });
+
+    expect(onPatch).toHaveBeenCalledTimes(1);
+    expect(onPatch.mock.calls[0]?.[0]).toMatchObject({
+      type: 'replace-widget',
+      path: appendBoxChildPath(ROOT_WIDGET_PATH),
+      widget: { type: 'text', text: 'Wrapped', width: 120, height: 70 },
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
 });
+
+function mockPointerCapture(handle: HTMLElement): void {
+  Object.defineProperty(handle, 'setPointerCapture', {
+    configurable: true,
+    value: () => {
+      throw new DOMException('No active pointer.', 'NotFoundError');
+    },
+  });
+  Object.defineProperty(handle, 'hasPointerCapture', {
+    configurable: true,
+    value: () => false,
+  });
+}
 
 function createPointerLikeEvent(type: string, clientX: number, clientY: number): PointerEvent {
   const event = new MouseEvent(type, {

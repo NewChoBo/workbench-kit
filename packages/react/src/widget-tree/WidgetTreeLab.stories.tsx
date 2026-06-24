@@ -113,6 +113,13 @@ const LINEAR_RESIZE_DOCUMENT = formatWidgetDocumentJson({
   ],
 });
 
+const WRAPPER_RESIZE_DOCUMENT = formatWidgetDocumentJson({
+  type: 'center',
+  width: 200,
+  height: 120,
+  child: { type: 'text', text: 'Wrapped', width: 100, height: 60 },
+});
+
 const CANVAS_REPARENT_DOCUMENT = formatWidgetDocumentJson({
   type: 'stack',
   width: 360,
@@ -680,6 +687,71 @@ export const LinearResizePlacement: Story = {
       expect(children[1]?.args?.child?.args?.text).toBe('B');
       expect(
         lab.querySelector('[data-widget-path="$.children[0]"][data-widget-selected="true"]'),
+      ).toBeTruthy();
+    });
+  },
+  tags: ['storybook-play-required'],
+};
+
+export const WrapperResizePlacement: Story = {
+  name: 'Wrapper resize placement',
+  render: () => <WidgetTreeStoryHarness initialValue={WRAPPER_RESIZE_DOCUMENT} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const lab = await canvas.findByTestId('widget-tree-lab');
+    const labCanvas = within(lab);
+    await waitForWidgetTreeSourcePane(lab);
+
+    const resizedNode = await labCanvas.findByTestId('widget-tree-node-$.child');
+    await userEvent.click(getOutlineNodeButton(resizedNode));
+
+    const selectionFrame = await labCanvas.findByTestId('widget-tree-canvas-selection-frame');
+    await waitFor(() => {
+      expect(selectionFrame).toHaveAttribute('data-widget-path', '$.child');
+      expect(selectionFrame).toHaveAttribute('data-widget-type', 'text');
+      expect(selectionFrame).toHaveAttribute('data-interactive', 'true');
+    });
+
+    const resizeHandle = await within(selectionFrame).findByTestId(
+      'widget-tree-canvas-resize-handle-se',
+    );
+    fireEvent.pointerDown(resizeHandle, {
+      button: 0,
+      buttons: 1,
+      clientX: 150,
+      clientY: 90,
+      isPrimary: true,
+      pointerId: 14,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerMove(resizeHandle, {
+      buttons: 1,
+      clientX: 170,
+      clientY: 100,
+      isPrimary: true,
+      pointerId: 14,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(resizeHandle, {
+      button: 0,
+      buttons: 0,
+      clientX: 170,
+      clientY: 100,
+      isPrimary: true,
+      pointerId: 14,
+      pointerType: 'mouse',
+    });
+
+    await waitFor(() => {
+      const root = readSnapshot(canvasElement);
+      expect(root.type).toBe('center');
+      expect(root.args?.child?.args).toMatchObject({
+        text: 'Wrapped',
+        width: 120,
+        height: 70,
+      });
+      expect(
+        lab.querySelector('[data-widget-path="$.child"][data-widget-selected="true"]'),
       ).toBeTruthy();
     });
   },

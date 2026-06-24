@@ -56,9 +56,22 @@ function canDragSelectedPath(root: GenericWidget, path: WidgetPath): boolean {
 
 function canResizeSelectedPath(root: GenericWidget, path: WidgetPath): boolean {
   const segment = path[path.length - 1];
-  if (!segment || segment.kind !== 'children') return false;
+  if (!segment) return false;
 
   const parent = getWidgetAtPath(root, path.slice(0, -1));
+  if (segment.kind === 'child') {
+    return (
+      parent?.type === 'box' ||
+      parent?.type === 'container' ||
+      parent?.type === 'padding' ||
+      parent?.type === 'align' ||
+      parent?.type === 'center' ||
+      parent?.type === 'sized_box'
+    );
+  }
+
+  if (segment.kind !== 'children') return false;
+
   return (
     parent?.type === 'stack' ||
     parent?.type === 'grid' ||
