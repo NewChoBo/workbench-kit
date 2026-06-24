@@ -9108,6 +9108,10 @@
   pointer-events: auto;
 }
 
+.widget-tree-canvas-preview__selection-frame .ui-workbench-canvas-resize-handle {
+  pointer-events: auto;
+}
+
 .widget-tree-side-panel {
   display: flex;
   flex-direction: column;

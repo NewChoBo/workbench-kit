@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { appendBoxChildPath, appendChildrenPath, ROOT_WIDGET_PATH } from '../path.js';
 import { applyWidgetPatch } from '../widget-patch.js';
 import type { GenericWidget } from '../widget-tree.js';
-import { createWidgetDragPatch, hitTestLayoutTree } from './layout-mapping.js';
+import {
+  createWidgetDragPatch,
+  createWidgetResizePatch,
+  hitTestLayoutTree,
+} from './layout-mapping.js';
 import { layoutWidget } from './layout-widget.js';
 
 describe('layout mapping', () => {
@@ -131,6 +135,53 @@ describe('layout mapping', () => {
     });
   });
 
+  it('maps stack child resize deltas to edge-preserving replace patches', () => {
+    const root: GenericWidget = {
+      type: 'stack',
+      width: 200,
+      height: 100,
+      children: [{ type: 'text', text: 'Panel', left: 20, top: 10, right: 30, bottom: 15 }],
+    };
+    const path = appendChildrenPath(ROOT_WIDGET_PATH, 0);
+    const layout = layoutWidget(root, {
+      minWidth: 0,
+      maxWidth: 200,
+      minHeight: 0,
+      maxHeight: 100,
+    });
+
+    const patch = createWidgetResizePatch({
+      root,
+      layout,
+      path,
+      position: 'se',
+      deltaX: 15,
+      deltaY: 10,
+    });
+
+    expect(patch).toEqual({
+      type: 'replace-widget',
+      path,
+      widget: {
+        type: 'text',
+        text: 'Panel',
+        left: 20,
+        top: 10,
+        right: 15,
+        bottom: 5,
+      },
+    });
+
+    const result = applyWidgetPatch(root, patch!);
+    const nextLayout = layoutWidget(result.root, {
+      minWidth: 0,
+      maxWidth: 200,
+      minHeight: 0,
+      maxHeight: 100,
+    });
+    expect(nextLayout.children[0]?.rect).toEqual({ x: 20, y: 10, width: 165, height: 85 });
+  });
+
   it('does not produce drag patches for roots or box child slots', () => {
     const root: GenericWidget = {
       type: 'box',
@@ -152,6 +203,26 @@ describe('layout mapping', () => {
         root,
         layout,
         path: appendBoxChildPath(ROOT_WIDGET_PATH),
+        deltaX: 10,
+        deltaY: 10,
+      }),
+    ).toBeNull();
+    expect(
+      createWidgetResizePatch({
+        root,
+        layout,
+        path: ROOT_WIDGET_PATH,
+        position: 'se',
+        deltaX: 10,
+        deltaY: 10,
+      }),
+    ).toBeNull();
+    expect(
+      createWidgetResizePatch({
+        root,
+        layout,
+        path: appendBoxChildPath(ROOT_WIDGET_PATH),
+        position: 'se',
         deltaX: 10,
         deltaY: 10,
       }),

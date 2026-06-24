@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import {
   createWidgetDragPatch,
+  createWidgetResizePatch,
   DEFAULT_LAYOUT_CONSTRAINTS,
   findLayoutNodeByPath,
   getWidgetAtPath,
@@ -11,12 +12,14 @@ import {
   type LayoutConstraints,
   type WidgetPatch,
   type WidgetPath,
+  type WidgetResizeHandlePosition,
 } from '@workbench-kit/jdw';
 
 import {
   WorkbenchCanvasFrameHandle,
   WorkbenchCanvasItemFrame,
   WorkbenchPreviewCanvas,
+  WorkbenchCanvasResizeHandle,
 } from '../layout/WorkbenchCanvas.js';
 import { JdwPreview } from '../jdw/JdwPreview.js';
 
@@ -37,6 +40,14 @@ function canDragSelectedPath(root: GenericWidget, path: WidgetPath): boolean {
 
   const parent = getWidgetAtPath(root, path.slice(0, -1));
   return parent?.type === 'stack' || parent?.type === 'grid';
+}
+
+function canResizeSelectedPath(root: GenericWidget, path: WidgetPath): boolean {
+  const segment = path[path.length - 1];
+  if (!segment || segment.kind !== 'children') return false;
+
+  const parent = getWidgetAtPath(root, path.slice(0, -1));
+  return parent?.type === 'stack';
 }
 
 export function WidgetTreeCanvasPreview({
@@ -60,6 +71,9 @@ export function WidgetTreeCanvasPreview({
   const canDrag = Boolean(
     root && selectedPath && !readOnly && canDragSelectedPath(root, selectedPath),
   );
+  const canResize = Boolean(
+    root && selectedPath && !readOnly && canResizeSelectedPath(root, selectedPath),
+  );
   const frameWidth = Math.max(1, layout?.rect.width ?? layoutConstraints.maxWidth);
   const frameHeight = Math.max(1, layout?.rect.height ?? layoutConstraints.maxHeight);
 
@@ -71,6 +85,22 @@ export function WidgetTreeCanvasPreview({
       deltaY,
       layout,
       path: selectedPath,
+      root,
+    });
+    if (patch) {
+      onPatch(patch);
+    }
+  };
+
+  const commitResize = (position: WidgetResizeHandlePosition, deltaX: number, deltaY: number) => {
+    if (!root || !layout || !selectedPath) return;
+
+    const patch = createWidgetResizePatch({
+      deltaX,
+      deltaY,
+      layout,
+      path: selectedPath,
+      position,
       root,
     });
     if (patch) {
@@ -128,6 +158,14 @@ export function WidgetTreeCanvasPreview({
                   data-testid="widget-tree-canvas-drag-handle"
                   label={selectedLayout.node.widget.type}
                   onDragEnd={commitDrag}
+                />
+              ) : null}
+              {canResize ? (
+                <WorkbenchCanvasResizeHandle
+                  data-testid="widget-tree-canvas-resize-handle"
+                  label="Resize selected widget"
+                  position="se"
+                  onResizeEnd={(deltaX, deltaY) => commitResize('se', deltaX, deltaY)}
                 />
               ) : null}
             </WorkbenchCanvasItemFrame>

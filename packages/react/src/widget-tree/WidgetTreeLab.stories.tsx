@@ -296,6 +296,42 @@ export const StackPlacement: Story = {
       expect(movedChild?.args?.right).toBe(108);
       expect(movedChild?.args?.bottom).toBe(171);
     });
+
+    const resizeHandle = await labCanvas.findByTestId('widget-tree-canvas-resize-handle');
+    fireEvent.pointerDown(resizeHandle, {
+      button: 0,
+      buttons: 1,
+      clientX: 60,
+      clientY: 60,
+      isPrimary: true,
+      pointerId: 8,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerMove(resizeHandle, {
+      buttons: 1,
+      clientX: 76,
+      clientY: 72,
+      isPrimary: true,
+      pointerId: 8,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(resizeHandle, {
+      button: 0,
+      buttons: 0,
+      clientX: 76,
+      clientY: 72,
+      isPrimary: true,
+      pointerId: 8,
+      pointerType: 'mouse',
+    });
+
+    await waitFor(() => {
+      const resizedChild = readSnapshot(canvasElement).args?.children?.[0];
+      expect(resizedChild?.args?.left).toBe(24);
+      expect(resizedChild?.args?.top).toBe(25);
+      expect(resizedChild?.args?.right).toBe(92);
+      expect(resizedChild?.args?.bottom).toBe(159);
+    });
   },
   tags: ['storybook-play-required'],
 };

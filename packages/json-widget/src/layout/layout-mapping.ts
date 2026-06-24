@@ -24,6 +24,19 @@ export interface WidgetDragMappingOptions {
   readonly root: GenericWidget;
 }
 
+export type WidgetResizeHandlePosition = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
+
+export interface WidgetResizeMappingOptions {
+  readonly deltaX: number;
+  readonly deltaY: number;
+  readonly layout: LayoutNodeResult;
+  readonly minHeight?: number | undefined;
+  readonly minWidth?: number | undefined;
+  readonly path: WidgetPath;
+  readonly position: WidgetResizeHandlePosition;
+  readonly root: GenericWidget;
+}
+
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
@@ -122,6 +135,54 @@ function createStackDragPatch(
   };
 }
 
+function createStackResizePatch(
+  child: GenericWidget,
+  childNode: LayoutNodeResult,
+  parentNode: LayoutNodeResult,
+  path: WidgetPath,
+  position: WidgetResizeHandlePosition,
+  deltaX: number,
+  deltaY: number,
+  minWidth: number,
+  minHeight: number,
+): WidgetPatch {
+  const left = childNode.rect.x - parentNode.rect.x;
+  const top = childNode.rect.y - parentNode.rect.y;
+  const right = parentNode.rect.width - left - childNode.rect.width;
+  const bottom = parentNode.rect.height - top - childNode.rect.height;
+  let nextLeft = left;
+  let nextTop = top;
+  let nextWidth = childNode.rect.width;
+  let nextHeight = childNode.rect.height;
+
+  if (position.includes('e')) {
+    nextWidth = Math.max(minWidth, childNode.rect.width + deltaX);
+  }
+  if (position.includes('s')) {
+    nextHeight = Math.max(minHeight, childNode.rect.height + deltaY);
+  }
+  if (position.includes('w')) {
+    nextWidth = Math.max(minWidth, childNode.rect.width - deltaX);
+    nextLeft = left + childNode.rect.width - nextWidth;
+  }
+  if (position.includes('n')) {
+    nextHeight = Math.max(minHeight, childNode.rect.height - deltaY);
+    nextTop = top + childNode.rect.height - nextHeight;
+  }
+
+  return {
+    type: 'replace-widget',
+    path,
+    widget: {
+      ...child,
+      left: nextLeft,
+      top: nextTop,
+      right: position.includes('w') ? right : parentNode.rect.width - nextLeft - nextWidth,
+      bottom: position.includes('n') ? bottom : parentNode.rect.height - nextTop - nextHeight,
+    },
+  };
+}
+
 function readGridPlacementAtPoint(
   parent: GenericWidget,
   parentRect: Rect,
@@ -212,4 +273,39 @@ export function createWidgetDragPatch({
   }
 
   return null;
+}
+
+export function createWidgetResizePatch({
+  deltaX,
+  deltaY,
+  layout,
+  minHeight = 1,
+  minWidth = 1,
+  path,
+  position,
+  root,
+}: WidgetResizeMappingOptions): WidgetPatch | null {
+  const segment = path[path.length - 1];
+  if (!segment || segment.kind !== 'children') return null;
+
+  const parentPath = path.slice(0, -1);
+  const parent = getWidgetAtPath(root, parentPath);
+  const child = getWidgetAtPath(root, path);
+  const parentNode = findLayoutNodeByPath(layout, parentPath);
+  const childNode = findLayoutNodeByPath(layout, path);
+  if (!parent || !child || !parentNode || !childNode) return null;
+
+  if (parent.type !== 'stack') return null;
+
+  return createStackResizePatch(
+    child,
+    childNode.node,
+    parentNode.node,
+    path,
+    position,
+    deltaX,
+    deltaY,
+    minWidth,
+    minHeight,
+  );
 }

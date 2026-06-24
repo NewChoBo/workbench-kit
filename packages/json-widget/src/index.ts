@@ -82,10 +82,13 @@ export type {
   LayoutHitTestResult,
   LayoutPoint,
   WidgetDragMappingOptions,
+  WidgetResizeHandlePosition,
+  WidgetResizeMappingOptions,
 } from './layout/layout-mapping.js';
 
 export {
   createWidgetDragPatch,
+  createWidgetResizePatch,
   findLayoutNodeByPath,
   hitTestLayoutTree,
 } from './layout/layout-mapping.js';

@@ -652,7 +652,12 @@ export interface WorkbenchCanvasResizeHandleProps extends Omit<
   'children'
 > {
   label?: string | undefined;
+  onResizeCancel?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onResizeEnd?: (dx: number, dy: number, event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onResizeMove?: (dx: number, dy: number, event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onResizeStart?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   position?: WorkbenchCanvasResizeHandlePosition | undefined;
+  stopPropagation?: boolean;
 }
 
 export type WorkbenchCanvasResizeHandlePosition = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
@@ -660,15 +665,82 @@ export type WorkbenchCanvasResizeHandlePosition = 'n' | 'ne' | 'e' | 'se' | 's' 
 export function WorkbenchCanvasResizeHandle({
   className,
   label = 'Resize',
+  onPointerCancel,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onResizeCancel,
+  onResizeEnd,
+  onResizeMove,
+  onResizeStart,
   position = 'se',
+  stopPropagation = true,
   type = 'button',
   ...props
 }: WorkbenchCanvasResizeHandleProps) {
+  const handleRef = useRef<HTMLButtonElement>(null);
+  const dragRef = useRef<WorkbenchCanvasFrameHandleDrag | null>(null);
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    onPointerDown?.(event);
+    if (event.defaultPrevented || event.button !== 0) return;
+
+    const element = handleRef.current;
+    if (!element) return;
+
+    if (stopPropagation) event.stopPropagation();
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+    };
+    trySetPointerCapture(element, event.pointerId);
+    onResizeStart?.(event);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    onPointerMove?.(event);
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    onResizeMove?.(event.clientX - drag.startX, event.clientY - drag.startY, event);
+  };
+
+  const handlePointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    onPointerUp?.(event);
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    tryReleasePointerCapture(handleRef.current, event.pointerId);
+    dragRef.current = null;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (dx !== 0 || dy !== 0) {
+      onResizeEnd?.(dx, dy, event);
+    } else {
+      onResizeCancel?.(event);
+    }
+  };
+
+  const handlePointerCancel = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    onPointerCancel?.(event);
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    tryReleasePointerCapture(handleRef.current, event.pointerId);
+    dragRef.current = null;
+    onResizeCancel?.(event);
+  };
+
   return (
     <button
+      ref={handleRef}
       aria-label={label}
       className={cx('ui-workbench-canvas-resize-handle', className)}
       data-position={position}
+      onPointerCancel={handlePointerCancel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
       title={label}
       type={type}
       {...props}
