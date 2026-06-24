@@ -90,6 +90,19 @@ const GRID_SLOT_DRAG_DOCUMENT = formatWidgetDocumentJson({
   ],
 });
 
+const GRID_RESIZE_DOCUMENT = formatWidgetDocumentJson({
+  type: 'grid',
+  columns: 3,
+  rows: 2,
+  width: 300,
+  height: 200,
+  children: [
+    { type: 'text', text: 'A', col: 0, row: 0 },
+    { type: 'text', text: 'B', col: 1, row: 0 },
+    { type: 'text', text: 'C', col: 2, row: 0 },
+  ],
+});
+
 const CANVAS_REPARENT_DOCUMENT = formatWidgetDocumentJson({
   type: 'stack',
   width: 360,
@@ -513,6 +526,65 @@ export const GridDragSlotReflow: Story = {
       expect(children[2]?.args).toMatchObject({ text: 'C', col: 0, row: 0 });
       expect(
         lab.querySelector('[data-widget-path="$.children[2]"][data-widget-selected="true"]'),
+      ).toBeTruthy();
+    });
+  },
+  tags: ['storybook-play-required'],
+};
+
+export const GridResizeSpanReflow: Story = {
+  name: 'Grid resize span reflow',
+  render: () => <WidgetTreeStoryHarness initialValue={GRID_RESIZE_DOCUMENT} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const lab = await canvas.findByTestId('widget-tree-lab');
+    const labCanvas = within(lab);
+    await waitForWidgetTreeSourcePane(lab);
+
+    const resizedNode = await labCanvas.findByTestId('widget-tree-node-$.children[0]');
+    await userEvent.click(getOutlineNodeButton(resizedNode));
+
+    const resizeHandle = await labCanvas.findByTestId('widget-tree-canvas-resize-handle-se');
+    fireEvent.pointerDown(resizeHandle, {
+      button: 0,
+      buttons: 1,
+      clientX: 100,
+      clientY: 100,
+      isPrimary: true,
+      pointerId: 12,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerMove(resizeHandle, {
+      buttons: 1,
+      clientX: 200,
+      clientY: 200,
+      isPrimary: true,
+      pointerId: 12,
+      pointerType: 'mouse',
+    });
+    fireEvent.pointerUp(resizeHandle, {
+      button: 0,
+      buttons: 0,
+      clientX: 200,
+      clientY: 200,
+      isPrimary: true,
+      pointerId: 12,
+      pointerType: 'mouse',
+    });
+
+    await waitFor(() => {
+      const children = readSnapshot(canvasElement).args?.children ?? [];
+      expect(children[0]?.args).toMatchObject({
+        text: 'A',
+        col: 0,
+        row: 0,
+        colSpan: 2,
+        rowSpan: 2,
+      });
+      expect(children[1]?.args).toMatchObject({ text: 'B', col: 2, row: 0 });
+      expect(children[2]?.args).toMatchObject({ text: 'C', col: 2, row: 1 });
+      expect(
+        lab.querySelector('[data-widget-path="$.children[0]"][data-widget-selected="true"]'),
       ).toBeTruthy();
     });
   },

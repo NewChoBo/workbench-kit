@@ -76,29 +76,29 @@ Placement keys are **parent-type scoped**: `stripExternalPlacement` removes inco
 
 ## 4. Current Kit Alignment
 
-| Layer                                   | Status                 | Evidence                                                                                                                              |
-| --------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| JDW parse / patch / normalize           | **Adopted**            | `@workbench-kit/jdw` (`packages/json-widget`)                                                                                         |
-| Headless layout (row/column/grid/stack) | **Adopted**            | `layoutWidget`, rect tests                                                                                                            |
-| CSS render from layout rects            | **Adopted**            | `cssRenderBackend.tsx` → `renderJdwWithLayout`                                                                                        |
-| Headless mapping layer                  | **Adopted (base)**     | `layout-mapping.ts` hit-test + stack/grid drag/reparent/grid-slot patch tests                                                         |
-| Tree + inspector + Monaco + preview     | **Adopted**            | `WidgetTreeLab.tsx`                                                                                                                   |
-| Grid/flex placement in inspector        | **Partial**            | `WidgetInspectorPanel` placement sections                                                                                             |
-| Asset insert + materialize              | **Adopted**            | Click insert and outline drop use `materializeWidgetPlacementAsset` in lab                                                            |
-| Figma canvas primitives                 | **Partial (lab)**      | `WorkbenchCanvas.tsx` primitives are consumed by `WidgetTreeCanvasPreview`                                                            |
-| Canvas drag / resize → JDW              | **Partial**            | Selected stack/grid drag, stack 8-way resize, canvas reparent, and grid drag-slot reflow commit JDW patches; non-stack resize remains |
-| Inspector placement reflow              | **Partial**            | Grid `columns` edits reflow direct child placement through JDW patches; broader inspector reflow remains                              |
-| Tree ↔ canvas selection sync            | **Partial**            | Outline selection drives selected canvas frame; broader focus/hover polish remains                                                    |
-| Preview zoom / pan                      | **Removed / deferred** | next-slice-plan code truth                                                                                                            |
+| Layer                                   | Status                 | Evidence                                                                                                                                                        |
+| --------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JDW parse / patch / normalize           | **Adopted**            | `@workbench-kit/jdw` (`packages/json-widget`)                                                                                                                   |
+| Headless layout (row/column/grid/stack) | **Adopted**            | `layoutWidget`, rect tests                                                                                                                                      |
+| CSS render from layout rects            | **Adopted**            | `cssRenderBackend.tsx` → `renderJdwWithLayout`                                                                                                                  |
+| Headless mapping layer                  | **Adopted (base)**     | `layout-mapping.ts` hit-test + stack/grid drag/reparent/grid-slot/grid-resize patch tests                                                                       |
+| Tree + inspector + Monaco + preview     | **Adopted**            | `WidgetTreeLab.tsx`                                                                                                                                             |
+| Grid/flex placement in inspector        | **Partial**            | `WidgetInspectorPanel` placement sections                                                                                                                       |
+| Asset insert + materialize              | **Adopted**            | Click insert and outline drop use `materializeWidgetPlacementAsset` in lab                                                                                      |
+| Figma canvas primitives                 | **Partial (lab)**      | `WorkbenchCanvas.tsx` primitives are consumed by `WidgetTreeCanvasPreview`                                                                                      |
+| Canvas drag / resize → JDW              | **Partial**            | Selected stack/grid drag, stack 8-way resize, canvas reparent, grid drag-slot reflow, and grid resize span reflow commit JDW patches; row/column resize remains |
+| Inspector placement reflow              | **Partial**            | Grid `columns` edits reflow direct child placement through JDW patches; broader inspector reflow remains                                                        |
+| Tree ↔ canvas selection sync            | **Partial**            | Outline selection drives selected canvas frame; broader focus/hover polish remains                                                                              |
+| Preview zoom / pan                      | **Removed / deferred** | next-slice-plan code truth                                                                                                                                      |
 
 Editor chrome explicitly lagged schema/layout work ([widget-layout-schema-plan.md](./widget-layout-schema-plan.md) Phase 4).
 
 ## 5. Gaps — Figma Placement Not in JDW Export Path
 
 1. **Canvas authoring pipeline is narrow** — `WidgetTreeCanvasPreview` wraps `JdwPreview` with selected layout frames, but asset preview drop and richer drop indicators are not implemented.
-2. **React canvas gesture pipeline is partial** — selected stack/grid drag, stack 8-way resize, canvas reparent, and grid drag-slot collision reflow commit JDW patches; non-stack resize coverage remains.
-3. **Functional resize is parent-scoped** — stack resize is wired through all handles; non-stack parent mappings remain future policy.
-4. **Phase 4 checklist incomplete** — outline DnD, asset materialization, the B2 headless mapping base, the B3 first canvas wire-in, stack resize, grid column reflow, canvas reparent, and grid drag-slot collision reflow are wired; broader layout-driven edge promotion remains.
+2. **React canvas gesture pipeline is partial** — selected stack/grid drag, stack 8-way resize, canvas reparent, grid drag-slot collision reflow, and grid resize span reflow commit JDW patches; row/column resize coverage remains.
+3. **Functional resize is parent-scoped** — stack resize maps edge insets; grid resize maps cell spans; row/column and wrapper mappings remain future policy.
+4. **Phase 4 checklist incomplete** — outline DnD, asset materialization, the B2 headless mapping base, the B3 first canvas wire-in, stack resize, grid column reflow, canvas reparent, grid drag-slot collision reflow, and grid resize span reflow are wired; broader layout-driven edge promotion remains.
 5. **Parallel `WorkbenchDocument`** — Figma-like absolute layout in `packages/contracts/src/workbench-document.ts` / `WorkbenchCanvasShell` is not the JDW widget document path; using both without an adapter risks dual-model drift.
 6. **JSON Schema gaps** — child placement properties not fully reflected in document schema ([widget-layout-schema-plan.md](./widget-layout-schema-plan.md) §9.1).
 
@@ -126,13 +126,13 @@ HTML tag names are a **render backend concern** (CSS div wrappers in `cssRenderB
 
 Aligned with [next-slice-plan.md](./next-slice-plan.md) Lane B (parallel, headless-first):
 
-| Phase              | Scope                                                                                                 | Exit                                                                                                                 |
-| ------------------ | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **B0 (done)**      | JDW v7 wire, parse, patch, materialize, `layoutWidget`                                                | widget-layout-schema Phases 0–2                                                                                      |
-| **B1**             | Schema parity for placement args; preview pipeline hardening                                          | Phase 3 exit criteria                                                                                                |
-| **B2 (base done)** | **Mapping layer spec** — hit-test on layout rects; stack/grid drag/reparent/grid-slot → `WidgetPatch` | `layout-mapping` headless tests                                                                                      |
-| **B3**             | Wire `WorkbenchPreviewCanvas` + frames into `WidgetTreeLab`; tree ↔ canvas selection                  | Done first slice: selected frame + stack/grid drag commit                                                            |
-| **B4**             | Drag reparent, resize, grid reflow, optional zoom/pan (Lane C overlap)                                | Stack 8-way resize, grid columns reflow, canvas reparent, and grid drag-slot reflow landed; non-stack resize remains |
+| Phase              | Scope                                                                                                 | Exit                                                                                                                                           |
+| ------------------ | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **B0 (done)**      | JDW v7 wire, parse, patch, materialize, `layoutWidget`                                                | widget-layout-schema Phases 0–2                                                                                                                |
+| **B1**             | Schema parity for placement args; preview pipeline hardening                                          | Phase 3 exit criteria                                                                                                                          |
+| **B2 (base done)** | **Mapping layer spec** — hit-test on layout rects; stack/grid drag/reparent/grid-slot → `WidgetPatch` | `layout-mapping` headless tests                                                                                                                |
+| **B3**             | Wire `WorkbenchPreviewCanvas` + frames into `WidgetTreeLab`; tree ↔ canvas selection                  | Done first slice: selected frame + stack/grid drag commit                                                                                      |
+| **B4**             | Drag reparent, resize, grid reflow, optional zoom/pan (Lane C overlap)                                | Stack 8-way resize, grid columns reflow, canvas reparent, grid drag-slot reflow, and grid resize span reflow landed; row/column resize remains |
 
 **Rule:** Lane B editor/canvas expansion does not block Lane A; re-prioritize explicitly if canvas authoring becomes P0.
 

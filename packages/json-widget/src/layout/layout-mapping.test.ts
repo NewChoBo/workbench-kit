@@ -191,6 +191,65 @@ describe('layout mapping', () => {
     ]);
   });
 
+  it('maps grid child resize deltas to span reflow patches', () => {
+    const root: GenericWidget = {
+      type: 'grid',
+      columns: 3,
+      rows: 2,
+      width: 300,
+      height: 200,
+      children: [
+        { type: 'text', text: 'A', col: 0, row: 0 },
+        { type: 'text', text: 'B', col: 1, row: 0 },
+        { type: 'text', text: 'C', col: 2, row: 0 },
+      ],
+    };
+    const path = appendChildrenPath(ROOT_WIDGET_PATH, 0);
+    const layout = layoutWidget(root, {
+      minWidth: 0,
+      maxWidth: 300,
+      minHeight: 0,
+      maxHeight: 200,
+    });
+
+    const patch = createWidgetResizePatch({
+      root,
+      layout,
+      path,
+      position: 'se',
+      deltaX: 100,
+      deltaY: 100,
+    });
+
+    expect(patch).toEqual({
+      type: 'replace-widget',
+      path: ROOT_WIDGET_PATH,
+      widget: {
+        type: 'grid',
+        columns: 3,
+        rows: 2,
+        width: 300,
+        height: 200,
+        children: [
+          { type: 'text', text: 'A', col: 0, row: 0, colSpan: 2, rowSpan: 2 },
+          { type: 'text', text: 'B', col: 2, row: 0 },
+          { type: 'text', text: 'C', col: 2, row: 1 },
+        ],
+      },
+    });
+
+    const result = applyWidgetPatch(root, patch!);
+    const nextLayout = layoutWidget(result.root, {
+      minWidth: 0,
+      maxWidth: 300,
+      minHeight: 0,
+      maxHeight: 200,
+    });
+    expect(nextLayout.children[0]?.rect).toEqual({ x: 0, y: 0, width: 200, height: 200 });
+    expect(nextLayout.children[1]?.rect).toEqual({ x: 200, y: 0, width: 100, height: 100 });
+    expect(nextLayout.children[2]?.rect).toEqual({ x: 200, y: 100, width: 100, height: 100 });
+  });
+
   it('maps canvas drops onto other containers to reparent patches', () => {
     const root: GenericWidget = {
       type: 'stack',

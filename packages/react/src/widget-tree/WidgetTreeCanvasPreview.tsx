@@ -24,7 +24,7 @@ import {
 } from '../layout/WorkbenchCanvas.js';
 import { JdwPreview } from '../jdw/JdwPreview.js';
 
-const STACK_RESIZE_HANDLE_POSITIONS = [
+const RESIZE_HANDLE_POSITIONS = [
   'n',
   'ne',
   'e',
@@ -59,7 +59,7 @@ function canResizeSelectedPath(root: GenericWidget, path: WidgetPath): boolean {
   if (!segment || segment.kind !== 'children') return false;
 
   const parent = getWidgetAtPath(root, path.slice(0, -1));
-  return parent?.type === 'stack';
+  return parent?.type === 'stack' || parent?.type === 'grid';
 }
 
 export function WidgetTreeCanvasPreview({
@@ -184,7 +184,7 @@ export function WidgetTreeCanvasPreview({
                 />
               ) : null}
               {canResize
-                ? STACK_RESIZE_HANDLE_POSITIONS.map((position) => (
+                ? RESIZE_HANDLE_POSITIONS.map((position) => (
                     <WorkbenchCanvasResizeHandle
                       key={position}
                       data-testid={`widget-tree-canvas-resize-handle-${position}`}

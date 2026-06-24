@@ -270,6 +270,11 @@ interface GridSlotPlacement {
   readonly row: number;
 }
 
+interface GridSlotPlacementWriteOptions {
+  readonly writeColSpan?: boolean | undefined;
+  readonly writeRowSpan?: boolean | undefined;
+}
+
 function readGridPlacementAtPoint(
   parent: GenericWidget,
   parentRect: Rect,
@@ -389,13 +394,14 @@ function withGridSlotPlacement(
   child: GenericWidget,
   placement: GridSlotPlacement,
   span: GridSlotSpan,
+  options: GridSlotPlacementWriteOptions = {},
 ): GenericWidget {
   return {
     ...child,
     col: placement.col,
     row: placement.row,
-    ...(isFiniteNumber(child.colSpan) ? { colSpan: span.colSpan } : {}),
-    ...(isFiniteNumber(child.rowSpan) ? { rowSpan: span.rowSpan } : {}),
+    ...(options.writeColSpan || isFiniteNumber(child.colSpan) ? { colSpan: span.colSpan } : {}),
+    ...(options.writeRowSpan || isFiniteNumber(child.rowSpan) ? { rowSpan: span.rowSpan } : {}),
   };
 }
 
@@ -403,18 +409,25 @@ function reflowGridChildrenAroundSlot(
   parent: GenericWidget,
   selectedIndex: number,
   targetPlacement: GridSlotPlacement,
+  targetSpan?: GridSlotSpan,
+  selectedWriteOptions?: GridSlotPlacementWriteOptions,
 ): GenericWidget {
   const children = getWidgetChildren(parent);
   const selected = children[selectedIndex];
   if (!selected || parent.type !== 'grid') return parent;
 
   const columns = Math.max(1, readPositiveInteger(parent.columns) ?? 2);
-  const selectedSpan = readGridSlotSpan(selected, columns);
+  const selectedSpan = targetSpan ?? readGridSlotSpan(selected, columns);
   const occupied = new Set<string>();
   occupyGridSlot(occupied, targetPlacement, selectedSpan);
 
   const nextChildren = [...children];
-  nextChildren[selectedIndex] = withGridSlotPlacement(selected, targetPlacement, selectedSpan);
+  nextChildren[selectedIndex] = withGridSlotPlacement(
+    selected,
+    targetPlacement,
+    selectedSpan,
+    selectedWriteOptions,
+  );
 
   children.forEach((child, index) => {
     if (index === selectedIndex) return;
@@ -499,6 +512,130 @@ function createGridDragPatch(
       ...child,
       ...placement,
     },
+  };
+}
+
+function readGridResizeStepSize(
+  parent: GenericWidget,
+  parentRect: Rect,
+): {
+  readonly columns: number;
+  readonly rows?: number | undefined;
+  readonly xStep: number;
+  readonly yStep: number;
+} | null {
+  const columns = Math.max(1, readPositiveInteger(parent.columns) ?? 2);
+  const rows = readPositiveInteger(parent.rows) ?? undefined;
+  const gap = isFiniteNumber(parent.gap) ? parent.gap : 0;
+  const padding = isFiniteNumber(parent.padding) ? parent.padding : 0;
+  const cellWidth = (parentRect.width - padding * 2 - gap * (columns - 1)) / columns;
+  const cellHeight = rows ? (parentRect.height - padding * 2 - gap * (rows - 1)) / rows : cellWidth;
+
+  if (cellWidth <= 0 || cellHeight <= 0) return null;
+
+  return {
+    columns,
+    ...(rows ? { rows } : {}),
+    xStep: cellWidth + gap,
+    yStep: cellHeight + gap,
+  };
+}
+
+function clampGridLine(line: number, min: number, max: number | undefined): number {
+  if (max === undefined) return Math.max(min, line);
+  return clampNumber(line, min, max);
+}
+
+function createGridResizePatch(
+  parent: GenericWidget,
+  child: GenericWidget,
+  parentNode: LayoutNodeResult,
+  parentPath: WidgetPath,
+  path: WidgetPath,
+  position: WidgetResizeHandlePosition,
+  deltaX: number,
+  deltaY: number,
+): WidgetPatch | null {
+  const segment = path[path.length - 1];
+  const selectedIndex = segment?.kind === 'children' ? segment.index : -1;
+  if (selectedIndex < 0) return null;
+
+  const metrics = readGridResizeStepSize(parent, parentNode.rect);
+  if (!metrics) return null;
+
+  const currentSpan = readGridSlotSpan(child, metrics.columns);
+  const currentPlacement = readGridSlotPlacement(
+    child,
+    selectedIndex,
+    metrics.columns,
+    currentSpan,
+  );
+  let targetCol = currentPlacement.col;
+  let targetRow = currentPlacement.row;
+  let targetColSpan = currentSpan.colSpan;
+  let targetRowSpan = currentSpan.rowSpan;
+  const horizontalStep = Math.round(deltaX / metrics.xStep);
+  const verticalStep = Math.round(deltaY / metrics.yStep);
+
+  if (position.includes('e')) {
+    const currentRight = currentPlacement.col + currentSpan.colSpan;
+    const nextRight = clampGridLine(
+      currentRight + horizontalStep,
+      currentPlacement.col + 1,
+      metrics.columns,
+    );
+    targetColSpan = nextRight - currentPlacement.col;
+  }
+
+  if (position.includes('w')) {
+    const currentRight = currentPlacement.col + currentSpan.colSpan;
+    const nextCol = clampGridLine(currentPlacement.col + horizontalStep, 0, currentRight - 1);
+    targetCol = nextCol;
+    targetColSpan = currentRight - nextCol;
+  }
+
+  if (position.includes('s')) {
+    const currentBottom = currentPlacement.row + currentSpan.rowSpan;
+    const nextBottom = clampGridLine(
+      currentBottom + verticalStep,
+      currentPlacement.row + 1,
+      metrics.rows,
+    );
+    targetRowSpan = nextBottom - currentPlacement.row;
+  }
+
+  if (position.includes('n')) {
+    const currentBottom = currentPlacement.row + currentSpan.rowSpan;
+    const nextRow = clampGridLine(currentPlacement.row + verticalStep, 0, currentBottom - 1);
+    targetRow = nextRow;
+    targetRowSpan = currentBottom - nextRow;
+  }
+
+  if (
+    targetCol === currentPlacement.col &&
+    targetRow === currentPlacement.row &&
+    targetColSpan === currentSpan.colSpan &&
+    targetRowSpan === currentSpan.rowSpan
+  ) {
+    return null;
+  }
+
+  const colSpanChanged = targetColSpan !== currentSpan.colSpan;
+  const rowSpanChanged = targetRowSpan !== currentSpan.rowSpan;
+
+  return {
+    type: 'replace-widget',
+    path: parentPath,
+    widget: reflowGridChildrenAroundSlot(
+      parent,
+      selectedIndex,
+      { col: targetCol, row: targetRow },
+      { colSpan: targetColSpan, rowSpan: targetRowSpan },
+      {
+        writeColSpan: colSpanChanged,
+        writeRowSpan: rowSpanChanged,
+      },
+    ),
   };
 }
 
@@ -591,17 +728,32 @@ export function createWidgetResizePatch({
   const childNode = findLayoutNodeByPath(layout, path);
   if (!parent || !child || !parentNode || !childNode) return null;
 
-  if (parent.type !== 'stack') return null;
+  if (parent.type === 'stack') {
+    return createStackResizePatch(
+      child,
+      childNode.node,
+      parentNode.node,
+      path,
+      position,
+      deltaX,
+      deltaY,
+      minWidth,
+      minHeight,
+    );
+  }
 
-  return createStackResizePatch(
-    child,
-    childNode.node,
-    parentNode.node,
-    path,
-    position,
-    deltaX,
-    deltaY,
-    minWidth,
-    minHeight,
-  );
+  if (parent.type === 'grid') {
+    return createGridResizePatch(
+      parent,
+      child,
+      parentNode.node,
+      parentPath,
+      path,
+      position,
+      deltaX,
+      deltaY,
+    );
+  }
+
+  return null;
 }
