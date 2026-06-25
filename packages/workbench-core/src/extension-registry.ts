@@ -27,12 +27,7 @@ import {
   MenuRegistry,
   ViewRegistry,
 } from './registries.js';
-import {
-  createCapabilityRegistry,
-  toCapabilityMap,
-  type CapabilityProvider,
-  type CapabilityRegistry,
-} from './capability-registry.js';
+import { CapabilityRegistry, type CapabilityProvider } from './capability-registry.js';
 import {
   createEditorHostFactoryRegistry,
   createViewHostFactoryRegistry,
@@ -72,7 +67,6 @@ export interface WorkbenchExtensionDescription {
 
 export interface ExtensionRegistryOptions {
   activities?: ActivityRegistry;
-  capabilities?: ReadonlyMap<string, unknown> | Record<string, unknown>;
   capabilityRegistry?: CapabilityRegistry;
   commands?: CommandRegistry;
   configurations?: ConfigurationRegistry;
@@ -168,14 +162,7 @@ export class ExtensionRegistry implements Disposable {
     this.menus = options.menus ?? new MenuRegistry();
     this.themes = options.themes ?? new ThemeRegistry();
     this.views = options.views ?? new ViewRegistry();
-    if (options.capabilityRegistry) {
-      this.capabilityRegistry = options.capabilityRegistry;
-      if (options.capabilities !== undefined) {
-        this.capabilityRegistry.registerStatic(toCapabilityMap(options.capabilities));
-      }
-    } else {
-      this.capabilityRegistry = createCapabilityRegistry(options.capabilities);
-    }
+    this.capabilityRegistry = options.capabilityRegistry ?? new CapabilityRegistry();
 
     this.editorDocumentViews =
       options.editorDocumentViews ?? createEditorDocumentViewProviderRegistry();

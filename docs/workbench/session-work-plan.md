@@ -30,7 +30,7 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 - **Codex 위임:** Lane A 잔여 작업은 닫혔다. 현재 위임 컨텍스트는 [lane-a-closeout-audit-2026-06-25.md](./lane-a-closeout-audit-2026-06-25.md)를 기준으로 post-Lane A hardening 또는 JDW polish로 넘어간다.
 - **지금 어디:** Lane A **완료**. WB-23~WB-31과 S12 DoD audit이 닫혔고, 현재 활성 context는 JDW Track B/B-UX: B1 placement schema parity, B4 wrapper/single-child resize, preview asset drop + placement marker, preview hover/focus chrome, per-parent schema specialization까지 닫은 상태다. 현재 full validation은 green이며 다음 큰 작업은 Track D D3 또는 drag/reparent ghost와 snap indicators다.
 - **다음 3세션:**
-  1. **Track D D3** — static capability seed, URI model, editor scaffold legacy shim audit/removal.
+  1. **Track D D3** — URI model and editor scaffold legacy shim audit/removal.
   2. **B-UX5 polish** — drag/reparent ghost와 snap indicators.
   3. **Track C scoping** — dirty guard, resource draft shells, consumer swap, i18n/theme, preview zoom/pan 중 정책 결정이 필요한 항목 분리.
 - **B-UX:** WB-29 이후 tree/preview 중심 UX-1~UX-4 core가 상당 부분 들어왔다. 캔버스 authoring은 B3 first wire-in(선택 프레임 + stack/grid drag commit), stack 8방향 resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper/single-child resize, asset-to-preview drop + parent/index/slot marker, preview hover/focus chrome까지 들어왔고, root JDW schema/validator placement parity와 per-parent children schema specialization도 들어왔다. 남은 polish는 drag/reparent ghost와 snap indicators이다.
@@ -140,7 +140,7 @@ Inventory and low-risk cleanup can run in parallel. Builtin render unification i
 | D0    | Inventory: React JDW surface, headless `@workbench-kit/jdw`, dual render, dual document model | Parallel | **S7–S8** (any session) | No                |
 | D1    | Remove dead WIP / misleading paths (`JsonWorkbenchDocument` shim, validation shim, etc.)      | Parallel | Any cleanup pass        | No                |
 | D2    | Unify dual render paths (`cssRenderBackend` + leaf-only builtin registry)                     | Done     | **Done 2026-06-24**     | No                |
-| D3    | Drop legacy compat shims (static capability seed, URI models, editor scaffold trim)           | P6–P8    | **Now**                 | No                |
+| D3    | Drop legacy compat shims (URI models, editor scaffold trim; capability seed done)             | P6–P8    | **Now**                 | No                |
 | D4    | Doc truth: cleanup register, render-mode decision, stale README footers                       | —        | Continuous              | No                |
 
 **D0 inventory targets**
@@ -165,7 +165,8 @@ Single preview strategy: `JdwPreview` + `renderJdwWithLayout` own container geom
 
 **D3 candidates (post-Lane A, now unblocked)**
 
-- `ExtensionRegistry` static capability map seed
+- Done 2026-06-25: `ExtensionRegistry` static capability map seed removed;
+  hosts now register providers explicitly through `capabilityRegistry`.
 - Generic `ResourceUri` vs `WorkspaceResourceUri` dual model
 - `EditorHostFactoryRegistry` API trim only after a second editor host proves extra context is unnecessary
 
@@ -496,6 +497,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Date       | Note                                                                                                                                                                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | Track D D3 first cleanup: `ExtensionRegistry` static capability seed path removed; host capability ownership now uses explicit `capabilityRegistry` providers                                           |
 | 2026-06-25 | S12 Lane A closeout audit documented the final DoD evidence; Lane A is complete and the next recommended slices are Track D D3 or JDW drag/reparent indicator polish                                    |
 | 2026-06-25 | Validation: `pnpm validate:full` green for WB-31 context closeout; Vitest 202 files / 919 tests and Storybook required play 29/29                                                                       |
 | 2026-06-25 | Validation: `node scripts/bundle-workbench-extensions.mjs`, `pnpm workbench-sample:build`, and `git diff --check` passed after the WB-31 docs/code alignment                                            |

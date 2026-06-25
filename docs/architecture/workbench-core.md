@@ -85,11 +85,11 @@ carry geometry and tree helper responsibility.
 
 ### CapabilityRegistry
 
-Registers runtime capability providers by stable ID (for example `workbench.auth`).
-Hosts seed providers through `ExtensionRegistry` options or
-`ExtensionRegistry.capabilityRegistry`. Extensions may call
-`context.capabilities.registerProvider` during `activate`; registrations dispose
-when the extension deactivates.
+Registers runtime capability providers by stable ID (for example
+`workbench.auth`). Hosts register providers explicitly through
+`ExtensionRegistry.capabilityRegistry` before extension activation. Extensions
+may call `context.capabilities.registerProvider` during `activate`;
+registrations dispose when the extension deactivates.
 
 ### ExtensionRegistry
 

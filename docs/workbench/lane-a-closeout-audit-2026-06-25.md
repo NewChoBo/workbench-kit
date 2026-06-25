@@ -36,7 +36,7 @@ hardening, JDW authoring polish, or deferred Lane C backlog.
 
 | Track           | Next slice                                                                      | Reason                                                                                                     |
 | --------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Track D D3      | Legacy shim audit and removal                                                   | Lane A no longer blocks cleanup of static capability seeds, URI model ambiguity, and editor scaffold trim. |
+| Track D D3      | Legacy shim audit and removal                                                   | Static capability seed cleanup has started; URI model ambiguity and editor scaffold trim remain.           |
 | Track B / B-UX5 | Drag/reparent ghost and snap indicators                                         | JDW canvas commit paths are present; live placement feedback is the remaining authoring polish.            |
 | Track C         | Dirty guard, resource draft shells, consumer swap, i18n/theme, preview zoom/pan | These remain explicitly outside Lane A and need separate product policy or consumer integration decisions. |
 

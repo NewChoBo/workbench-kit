@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { CapabilityRegistry, createCapabilityRegistry } from './capability-registry.js';
+import { CapabilityRegistry } from './capability-registry.js';
 
 describe('CapabilityRegistry', () => {
   it('registers providers and resolves values', () => {
@@ -46,14 +46,6 @@ describe('CapabilityRegistry', () => {
 
     expect(disposed).toBe(true);
     expect(registry.has('workbench.workspace')).toBe(false);
-  });
-
-  it('seeds static capabilities through createCapabilityRegistry', () => {
-    const registry = createCapabilityRegistry({
-      'workbench.auth': { id: 'seeded-auth' },
-    });
-
-    expect(registry.get<{ id: string }>('workbench.auth')).toEqual({ id: 'seeded-auth' });
   });
 
   it('lists registered provider ids', () => {

@@ -1,4 +1,4 @@
-import { DisposableStore, toDisposable, type Disposable } from '@workbench-kit/base';
+import { toDisposable, type Disposable } from '@workbench-kit/base';
 
 export interface CapabilityProvider<T = unknown> {
   readonly id: string;
@@ -39,16 +39,6 @@ export class CapabilityRegistry implements Disposable {
     });
   }
 
-  registerStatic(capabilities: ReadonlyMap<string, unknown>): Disposable {
-    const store = new DisposableStore();
-
-    for (const [id, value] of capabilities) {
-      store.add(this.registerValue(id, value));
-    }
-
-    return store;
-  }
-
   get<T>(capabilityId: string): T | undefined {
     return this.providers.get(capabilityId)?.get() as T | undefined;
   }
@@ -74,26 +64,4 @@ export class CapabilityRegistry implements Disposable {
 
     this.providers.clear();
   }
-}
-
-export function toCapabilityMap(
-  capabilities: ReadonlyMap<string, unknown> | Record<string, unknown>,
-): ReadonlyMap<string, unknown> {
-  if (capabilities instanceof Map) {
-    return capabilities;
-  }
-
-  return new Map(Object.entries(capabilities));
-}
-
-export function createCapabilityRegistry(
-  capabilities?: ReadonlyMap<string, unknown> | Record<string, unknown>,
-): CapabilityRegistry {
-  const registry = new CapabilityRegistry();
-
-  if (capabilities !== undefined) {
-    registry.registerStatic(toCapabilityMap(capabilities));
-  }
-
-  return registry;
 }

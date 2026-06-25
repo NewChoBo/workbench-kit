@@ -291,7 +291,7 @@ pnpm validate:full
 | `packages/react/src/workbench/demo/`                | Integrated Shell Storybook               | Keep as rich demo; sample host stays minimal                             |
 | Monaco skeleton in widget-tree / json-config        | `@workbench-kit/react`                   | Keep; not Lane A scope                                                   |
 | React JDW render layer                              | `packages/react/src/jdw/`                | **Keep in-repo** — no separate `jdw-react` package or git subtree split  |
-| Static capability map seed                          | `ExtensionRegistry` options              | Keep dual path until all extensions migrate to `registerProvider`        |
+| Static capability map seed                          | Removed 2026-06-25                       | Use explicit `ExtensionRegistry.capabilityRegistry.register*` providers  |
 | Generic `ResourceUri` in `@workbench-kit/contracts` | `packages/contracts/src/resource-uri.ts` | Keep; workspace scheme is separate (`workspace://file/...`)              |
 
 ### Open — Track D (cleanup & compatibility removal)

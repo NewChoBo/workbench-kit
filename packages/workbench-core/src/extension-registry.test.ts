@@ -646,12 +646,10 @@ describe('ExtensionRegistry', () => {
     ).toEqual([]);
   });
 
-  it('resolves host-seeded capabilities through getCapability', async () => {
-    const registry = new ExtensionRegistry({
-      capabilities: {
-        'workbench.auth': { id: 'host-auth' },
-      },
-    });
+  it('resolves host-registered capabilities through getCapability', async () => {
+    const registry = new ExtensionRegistry();
+    registry.capabilityRegistry.registerValue('workbench.auth', { id: 'host-auth' });
+
     registry.registerExtension({
       ...helloWorldExtension,
       manifest: {

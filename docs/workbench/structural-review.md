@@ -247,19 +247,25 @@ sequenceDiagram
 
 WB-28 editor shell scope is complete: `EditorArea` consumes `EditorService`,
 editor host factories create tab hosts, and the sample host exercises open/save
-flows. WB-29 owns the remaining explorer selection/reveal/search closeout.
+flows. WB-29 selection/reveal/search closeout is complete.
 
-### 4.4 Finding: static capability seed vs `registerProvider`
+### 4.4 Finding: static capability seed vs `registerProvider` (resolved)
 
-`ExtensionRegistry` constructor accepts `capabilities` map → `createCapabilityRegistry` → `registerStatic`.
+`ExtensionRegistry` no longer accepts a static `capabilities` map. Hosts register
+runtime providers directly on `extensionRegistry.capabilityRegistry` before
+extension activation.
 
 Extensions use `context.capabilities.registerProvider` for disposable providers.
 
-Test evidence: `extension-registry.test.ts` — host seeds `workbench.auth`; extension `getCapability` resolves it.
+Test evidence: `extension-registry.test.ts` — host registers `workbench.auth`;
+extension `getCapability` resolves it.
 
-**Risk:** Dual registration paths (host static seed vs extension `registerProvider`) can hide lifecycle ownership.
+**Result:** Capability ownership now has a single runtime provider path. Host
+providers and extension providers both produce disposables through
+`CapabilityRegistry`.
 
-**Recommendation:** Lane A DoD 후 (Track D D3) — migrate host seeds to explicit providers; document capability ownership.
+**Recommendation:** Continue D3 with URI model enforcement and editor scaffold
+trim; do not reintroduce constructor capability seeds.
 
 ---
 
@@ -297,7 +303,7 @@ Checked against `check-workbench-dependency-graph.mjs` rules and spot-read of cr
 | S3  | `./jdw/config` export name mismatch                 | Resolved | Removed from `packages/react/package.json`; use `./json-config`              |
 | S4  | `renderJdw` ignores validation issues               | Medium   | `renderJdw.tsx` calls `validateJsonWidgetData` but does not gate render      |
 | S5  | Editor shell integration                            | Resolved | `EditorArea`, `EditorService`, `builtin.editor`, sample open/save flow       |
-| S6  | Static capability seed dual path                    | Low      | `extension-registry.ts` + `capability-registry.ts`                           |
+| S6  | Static capability seed dual path                    | Resolved | Constructor seed removed; use explicit `capabilityRegistry.register*` calls  |
 | S7  | `jdw-editor` depends on full `@workbench-kit/react` | Low      | `jdw-editor/package.json` — pulls primitives + shell, not jdw-only           |
 | S8  | `JsonWorkbenchDocument` type alias                  | Low      | `packages/react/src/workbench/schema/index.ts`                               |
 
@@ -334,7 +340,7 @@ JSON configuration lives under `./json-config`.
 | **Done** | Dual render unify             | Strategy A only; registry = leaves                 | Track D D2      |
 | **P2**   | Validation gating             | Surface `validateJsonWidgetData` issues in preview | Track D D1      |
 | **P3**   | `JsonWorkbenchDocument` alias | Remove or document-only                            | Track D D1      |
-| **P3**   | Capability static seed        | Migrate to `registerProvider` where possible       | Track D D3      |
+| **Done** | Capability static seed        | Constructor seed removed; explicit providers only  | Track D D3      |
 | **P3**   | Resource URI docs             | Enforce `WorkspaceResourceUri` in explorer/editor  | Lane A WB-28/29 |
 
 ### 8.2 Keep as-is
@@ -348,30 +354,30 @@ JSON configuration lives under `./json-config`.
 
 ### 8.3 Refactor timing
 
-| When             | Refactor                                                   |
-| ---------------- | ---------------------------------------------------------- |
-| S7–S8 (parallel) | D0 inventory, D1 dead paths (validation/type aliases)      |
-| Done 2026-06-24  | D2 dual render unify                                       |
-| WB-29 closeout   | Explorer selection/reveal/search smoke coverage            |
-| After Lane A DoD | D3 legacy shims (static capabilities, URI doc enforcement) |
-| Lane C           | `WorkbenchDocument` adapter before any persistence merge   |
+| When             | Refactor                                                       |
+| ---------------- | -------------------------------------------------------------- |
+| S7–S8 (parallel) | D0 inventory, D1 dead paths (validation/type aliases)          |
+| Done 2026-06-24  | D2 dual render unify                                           |
+| WB-29 closeout   | Explorer selection/reveal/search smoke coverage                |
+| Now              | D3 remaining shims (URI doc enforcement, editor scaffold trim) |
+| Lane C           | `WorkbenchDocument` adapter before any persistence merge       |
 
 ---
 
 ## 9. Action Items
 
-| ID     | Area          | Issue                                       | Recommendation                                   | Phase        |
-| ------ | ------------- | ------------------------------------------- | ------------------------------------------------ | ------------ |
-| STR-01 | JDW render    | Dual paths: layout backend vs flex registry | Done: Strategy A; leaves-only registry           | Done         |
-| STR-02 | JDW model     | `WorkbenchDocument` vs JDW drift            | JDW SSoT for widgets; demo adapter only (Lane C) | Deferred     |
-| STR-03 | React exports | `./jdw/config` → `json-config` mismatch     | Done: remove alias; use `./json-config`          | Done         |
-| STR-04 | JDW quality   | `renderJdw` ignores validation              | Gate or warn in `JdwPreview` (D1)                | S7–S8        |
-| STR-05 | Lane A        | EditorService shell integration             | Done: `EditorArea` consumes `EditorService`      | Done         |
-| STR-06 | Lane A        | Editor save transaction path                | Done: editor save uses workspace transactions    | Done         |
-| STR-07 | Capabilities  | Static seed + `registerProvider` dual path  | Migrate host seeds; document ownership (D3)      | Post-DoD     |
-| STR-08 | Workspace     | Generic vs `WorkspaceResourceUri`           | Explorer/editor bind workspace scheme only       | WB-28/29     |
-| STR-09 | jdw-editor    | Full `react` dependency                     | Accept for now; optional slim entry later        | Low priority |
-| STR-10 | Docs          | Structural truth                            | Keep this doc aligned with Track D closeout (D4) | Continuous   |
+| ID     | Area          | Issue                                       | Recommendation                                          | Phase        |
+| ------ | ------------- | ------------------------------------------- | ------------------------------------------------------- | ------------ |
+| STR-01 | JDW render    | Dual paths: layout backend vs flex registry | Done: Strategy A; leaves-only registry                  | Done         |
+| STR-02 | JDW model     | `WorkbenchDocument` vs JDW drift            | JDW SSoT for widgets; demo adapter only (Lane C)        | Deferred     |
+| STR-03 | React exports | `./jdw/config` → `json-config` mismatch     | Done: remove alias; use `./json-config`                 | Done         |
+| STR-04 | JDW quality   | `renderJdw` ignores validation              | Gate or warn in `JdwPreview` (D1)                       | S7–S8        |
+| STR-05 | Lane A        | EditorService shell integration             | Done: `EditorArea` consumes `EditorService`             | Done         |
+| STR-06 | Lane A        | Editor save transaction path                | Done: editor save uses workspace transactions           | Done         |
+| STR-07 | Capabilities  | Static seed + `registerProvider` dual path  | Done: constructor seed removed; explicit providers only | Done         |
+| STR-08 | Workspace     | Generic vs `WorkspaceResourceUri`           | Explorer/editor bind workspace scheme only              | WB-28/29     |
+| STR-09 | jdw-editor    | Full `react` dependency                     | Accept for now; optional slim entry later               | Low priority |
+| STR-10 | Docs          | Structural truth                            | Keep this doc aligned with Track D closeout (D4)        | Continuous   |
 
 ---
 
@@ -397,4 +403,5 @@ JSON configuration lives under `./json-config`.
 
 | Date       | Note                                                        |
 | ---------- | ----------------------------------------------------------- |
+| 2026-06-25 | Track D D3 removed constructor capability seed path         |
 | 2026-06-16 | Initial structural review; subtree/jdw-react split excluded |

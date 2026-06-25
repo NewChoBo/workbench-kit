@@ -32,12 +32,7 @@ export {
   BUILTIN_WORKBENCH_EXTENSIONS,
   SAMPLE_WORKBENCH_EXTENSIONS,
 } from './generated/bundled-extensions.js';
-export {
-  CapabilityRegistry,
-  createCapabilityRegistry,
-  toCapabilityMap,
-  type CapabilityProvider,
-} from './capability-registry.js';
+export { CapabilityRegistry, type CapabilityProvider } from './capability-registry.js';
 export {
   createEditorDocumentViewProviderRegistry,
   EditorDocumentViewProviderRegistry,

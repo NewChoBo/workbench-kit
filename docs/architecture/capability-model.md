@@ -42,9 +42,12 @@ has(id): boolean
 
 Resolution order:
 
-1. Host-seeded providers (`ExtensionRegistry` `capabilities` option or shared `CapabilityRegistry`)
-2. Providers registered during extension `activate()` via `context.capabilities.registerProvider`
-3. Extension `capabilities.provides` is manifest metadata only today; runtime registration still uses `registerProvider`
+1. Host providers registered on `ExtensionRegistry.capabilityRegistry` before
+   extension activation
+2. Providers registered during extension `activate()` via
+   `context.capabilities.registerProvider`
+3. Extension `capabilities.provides` is manifest metadata only today; runtime
+   registration still uses `registerProvider`
 
 `ExtensionRegistry.capabilityRegistry` is public so hosts can register built-in providers before extension activation.
 
