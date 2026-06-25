@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import {
   collectJsonWidgetChangedValuePaths,
   collectJsonWidgetInvalidations,
   parseJsonWidgetData,
   resolveJsonWidgetValues,
-  validateJsonWidgetData,
   validateJsonWidgetNode,
   type LayoutConstraints,
   type JsonWidgetValueMap,
@@ -15,7 +14,7 @@ import {
 } from '@workbench-kit/jdw';
 
 import { WorkbenchParseError, WorkbenchRenderSurface } from '../layout/WorkbenchLayout.js';
-import { useRenderJdw } from './renderJdw.js';
+import { renderJdwWithLayout } from './cssRenderBackend.js';
 
 const EMPTY_CHANGED_VALUE_PATHS: readonly string[] = [];
 
@@ -57,6 +56,13 @@ function mergeChangedValuePaths(
   ];
 }
 
+interface JdwPreviewState {
+  readonly invalidations: readonly JsonWidgetInvalidation[];
+  readonly issues: readonly ValidationIssue[];
+  readonly renderOutput: ReactNode;
+  readonly valid: boolean;
+}
+
 export function JdwPreview({
   json,
   registry,
@@ -83,37 +89,58 @@ export function JdwPreview({
     previousValuesRef.current = values;
   }, [values]);
 
-  const parsed = parseJsonWidgetData(json);
-  const validation =
-    parsed.parseError !== null || parsed.value === null
-      ? validateJsonWidgetData(json, {
-          registeredTypes: registry?.types(),
-          strictKnownTypes,
-        })
-      : (() => {
-          const issues: ValidationIssue[] = [];
-          validateJsonWidgetNode(resolveJsonWidgetValues(parsed.value, values), 'root', issues, {
-            registeredTypes: registry?.types(),
-            strictKnownTypes,
-          });
-          return { issues, valid: issues.length === 0, value: parsed.value };
-        })();
-  const invalidations =
-    parsed.value === null
-      ? []
-      : collectJsonWidgetInvalidations(parsed.value, activeChangedValuePaths);
-  const renderOutput = useRenderJdw(json, {
-    registry,
+  const previewState = useMemo<JdwPreviewState>(() => {
+    const parsed = parseJsonWidgetData(json);
+    if (parsed.parseError !== null || parsed.value === null) {
+      return {
+        invalidations: [],
+        issues: [
+          {
+            path: 'root',
+            message: parsed.parseError ?? 'Invalid JSON widget data.',
+          },
+        ],
+        renderOutput: null,
+        valid: false,
+      };
+    }
+
+    const resolvedNode = resolveJsonWidgetValues(parsed.value, values);
+    const issues: ValidationIssue[] = [];
+    validateJsonWidgetNode(resolvedNode, 'root', issues, {
+      registeredTypes: registry?.types(),
+      strictKnownTypes,
+    });
+
+    return {
+      invalidations: collectJsonWidgetInvalidations(parsed.value, activeChangedValuePaths),
+      issues,
+      renderOutput:
+        issues.length === 0
+          ? renderJdwWithLayout(resolvedNode, {
+              registry,
+              emptyLabel,
+              layoutConstraints,
+              selectedPath,
+              onSelectPath,
+            })
+          : null,
+      valid: issues.length === 0,
+    };
+  }, [
+    activeChangedValuePaths,
     emptyLabel,
+    json,
     layoutConstraints,
+    onSelectPath,
+    registry,
     selectedPath,
     strictKnownTypes,
     values,
-    onSelectPath,
-  });
+  ]);
 
-  if (!validation.valid) {
-    const firstIssue = validation.issues[0];
+  if (!previewState.valid) {
+    const firstIssue = previewState.issues[0];
     return (
       <WorkbenchParseError role="alert" data-testid="jdw-preview-error">
         {firstIssue ? formatValidationMessage(firstIssue) : 'Invalid JDW document.'}
@@ -124,10 +151,12 @@ export function JdwPreview({
   return (
     <WorkbenchRenderSurface
       className={className}
-      data-jdw-invalidations={invalidations.length > 0 ? invalidations.length : undefined}
+      data-jdw-invalidations={
+        previewState.invalidations.length > 0 ? previewState.invalidations.length : undefined
+      }
       data-testid="jdw-preview-output"
     >
-      {renderOutput ?? emptyLabel}
+      {previewState.renderOutput ?? emptyLabel}
     </WorkbenchRenderSurface>
   );
 }

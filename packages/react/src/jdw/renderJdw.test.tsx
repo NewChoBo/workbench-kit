@@ -15,6 +15,19 @@ describe('renderJdw', () => {
     expect(renderJdw('{ invalid')).toBeNull();
   });
 
+  it('returns null for semantically invalid JDW JSON', () => {
+    expect(
+      renderJdw(
+        JSON.stringify({
+          type: 'grid',
+          args: {
+            children: [],
+          },
+        }),
+      ),
+    ).toBeNull();
+  });
+
   it('renders resolved JDW variable values before validation and layout', () => {
     const markup = renderToStaticMarkup(
       <>

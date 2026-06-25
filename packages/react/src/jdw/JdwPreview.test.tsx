@@ -3,7 +3,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
 import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/jdw';
@@ -60,6 +60,30 @@ describe('JdwPreview', () => {
     expect(markup).toContain('data-testid="jdw-preview-error"');
     expect(markup).toContain('columns is required');
     expect(markup).not.toContain('data-testid="jdw-preview-output"');
+  });
+
+  it('does not call registry renderers after semantic validation fails', () => {
+    const build = vi.fn(() => 'Should not render');
+    const registry = createWidgetRegistry([
+      {
+        type: 'text',
+        build,
+      },
+    ]);
+
+    const markup = renderToStaticMarkup(
+      <JdwPreview
+        json={formatJsonWidgetData({
+          type: 'text',
+          args: {},
+        })}
+        registry={registry}
+      />,
+    );
+
+    expect(markup).toContain('data-testid="jdw-preview-error"');
+    expect(markup).toContain('text is required');
+    expect(build).not.toHaveBeenCalled();
   });
 
   it('validates and renders resolved dynamic values', () => {

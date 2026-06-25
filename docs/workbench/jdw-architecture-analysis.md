@@ -25,7 +25,7 @@ The disposable `backup/workspace-codex` branch was useful as a direction signal,
 - Close Flutter JDW parity gaps first for static authoring: `stack`, single-child wrappers (`container`, `padding`, `align`, `center`, `sized_box`), static leaves (`image`, `icon`, `button`), and row/column alignment are higher-value than broad Storybook or theme churn.
 - Prefer headless layout/test coverage in `@workbench-kit/jdw`; React surfaces should consume that result instead of duplicating layout math.
 
-Applied slice on the current branch: support metadata, recursive source and published schemas, per-type schema files with `check:jdw-schemas`, validator, linear/wrapper/flexible-fit layout, registry intrinsic measurement for static leaves, static leaf rendering, Strategy A preview unification, preview selection paths, stack/flex placement inspector, asset insert selection, invalid-save gating, first-pass `${var}` value resolution for render/preview, schema allowance for exact dynamic scalar expressions, headless dynamic dependency / listen binding analysis, source editor warnings for `listen` mismatches, and value-diff driven preview invalidation candidate reporting. Not carried forward: branch-wide Storybook/fixture churn, package deletions, unrelated theme/sample rewrites, and commit history.
+Applied slice on the current branch: support metadata, recursive source and published schemas, per-type schema files with `check:jdw-schemas`, validator, linear/wrapper/flexible-fit layout, registry intrinsic measurement for static leaves, static leaf rendering, Strategy A preview unification, preview selection paths, stack/flex placement inspector, asset insert selection, invalid-save gating, first-pass `${var}` value resolution for render/preview, schema allowance for exact dynamic scalar expressions, headless dynamic dependency / listen binding analysis, source editor warnings for `listen` mismatches, value-diff driven preview invalidation candidate reporting, and single-pass preview parse/validate/render wiring. Not carried forward: branch-wide Storybook/fixture churn, package deletions, unrelated theme/sample rewrites, and commit history.
 
 ---
 
@@ -295,7 +295,7 @@ From `completion-plan.md` Lane B:
 3. **Register `stack` and static builtins** — implemented in profile/schema/registry/validator.
 4. **Introduce `renderJsonWidget`** (or rename `renderJdw`) as documented recursive builder matching Flutter `data.build()`; still future work if a recursive non-layout path is needed.
 5. **Registry host tags** — implemented for registry-provided `hostTag`; per-node `semanticTag` remains future work.
-6. **Wire validation into preview** — implemented through `validateJsonWidgetData` in `JdwPreview` with strict known-type validation.
+6. **Wire validation into preview** — implemented through the same semantic node validation used by `renderJdw`; `JdwPreview` computes parse, value resolution, validation, invalidation metadata, and render output in one path.
 7. **Phase 4** — first slice implemented for `${var}` value resolution, dependency/listen analysis, editor warnings, and value-diff preview invalidation candidates; `listen` runtime scheduling remains future work.
 
 ```mermaid

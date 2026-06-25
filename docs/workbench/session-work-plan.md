@@ -138,7 +138,7 @@ Inventory and low-risk cleanup can run in parallel. Builtin render unification i
 | Phase | Scope                                                                                         | Priority | Timing                  | Blocks on Lane A? |
 | ----- | --------------------------------------------------------------------------------------------- | -------- | ----------------------- | ----------------- |
 | D0    | Inventory: React JDW surface, headless `@workbench-kit/jdw`, dual render, dual document model | Parallel | **S7–S8** (any session) | No                |
-| D1    | Remove dead WIP / misleading paths (`JsonWorkbenchDocument` shim, validation shim, etc.)      | Parallel | Any cleanup pass        | No                |
+| D1    | Remove dead WIP / misleading paths (`JsonWorkbenchDocument` shim, validation shim, etc.)      | Done     | Done 2026-06-25         | No                |
 | D2    | Unify dual render paths (`cssRenderBackend` + leaf-only builtin registry)                     | Done     | **Done 2026-06-24**     | No                |
 | D3    | Drop legacy compat shims (URI models, editor scaffold trim; capability seed done)             | P6–P8    | **Now**                 | No                |
 | D4    | Doc truth: cleanup register, render-mode decision, stale README footers                       | —        | Continuous              | No                |
@@ -154,10 +154,14 @@ Inventory and low-risk cleanup can run in parallel. Builtin render unification i
 | Dual document      | `WorkbenchDocument` vs JDW (`WorkbenchCanvasShell`)                          |
 | Removed export     | `@workbench-kit/react/json-widget` (2026-06-14; do not reintroduce)          |
 
-**D1 candidates (low risk)**
+**D1 result (completed 2026-06-25)**
 
-- `JsonWorkbenchDocument` type alias in `workbench/schema/index.ts`
-- `renderJdw` calls `validateJsonWidgetData` but ignores issues (`renderJdw.tsx`)
+- `JsonWorkbenchDocument` no longer exists in the React workbench schema export
+  surface; the stale doc item was removed from the active queue.
+- `JdwPreview` now uses one memoized parse -> resolve -> validate -> render path
+  instead of validating and then calling `useRenderJdw` to parse/validate again.
+- `renderJdw` has test coverage proving semantically invalid JDW JSON returns
+  `null` instead of rendering a broken preview tree.
 
 **D2 result (completed 2026-06-24)**
 
@@ -445,7 +449,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 - [ ] D0 — Inventory React JDW / dual render / dual document model
 - [x] D1 — Remove misleading `./jdw/config` export alias
-- [ ] D1 — Remove remaining dead WIP paths (validation shim, type alias)
+- [x] D1 — Remove remaining dead WIP paths (validation shim, type alias)
 - [x] D2 — Unify dual render paths (Strategy A + leaf-only builtin registry)
 - [ ] D3 — Drop legacy compat shims (post-Lane A)
 - [x] D4 — Doc truth aligned with code for Lane A closeout
@@ -489,7 +493,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 | P0       | **Track D D3** legacy shim audit/removal                                     | Now           | `workbench-core`, resource URI docs, editor API | Post-Lane A cleanup       |
 | P1       | **Layout CSS P1-2~P1-5** (sidebar flex, settings scroll, panel-header dedup) | Parallel-safe | `packages/react/src/styles.css`, settings modal | P1-1 overlay CSS done     |
 | P1       | **Editor layout ownership** (`EditorService` split model)                    | Parallel-safe | `editor-service.ts`, `EditorArea` DnD           | recommended-work-items P1 |
-| P2       | **Track D D0–D1** inventory + remaining dead WIP cleanup                     | Parallel-safe | `react/jdw`, validation shims                   | No Lane A block           |
+| P2       | **Track D D0** inventory refresh                                             | Parallel-safe | `react/jdw`, workbench document demo paths      | D1 known candidates done  |
 | P2       | **Sidebar Phase B-2** overlay footer decision (Chat/Commands)                | Parallel-safe | `SideBarViewFrame`, Chat/Commands               | Browser smoke only        |
 | P2       | **Track B placement polish** drag/reparent ghost and snap indicators         | Parallel-safe | `@workbench-kit/jdw`, `react/widget-tree`       | Storybook                 |
 
@@ -501,6 +505,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Date       | Note                                                                                                                                                                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | Track D D1 cleanup: stale `JsonWorkbenchDocument` alias item closed; `JdwPreview` no longer reparses/revalidates through `useRenderJdw`, and `renderJdw` semantic invalid coverage was added            |
 | 2026-06-25 | Track D D3 URI cleanup: builtin editor resolver/labels and shell editor path helpers now parse workspace file URIs through `@workbench-kit/workspace` helpers; core keeps boundary-local URI checks     |
 | 2026-06-25 | Track D D3 first cleanup: `ExtensionRegistry` static capability seed path removed; host capability ownership now uses explicit `capabilityRegistry` providers                                           |
 | 2026-06-25 | S12 Lane A closeout audit documented the final DoD evidence; Lane A is complete and the next recommended slices are Track D D3 or JDW drag/reparent indicator polish                                    |

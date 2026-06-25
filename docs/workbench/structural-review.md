@@ -12,7 +12,7 @@
 - **JDW 이중 렌더 리스크는 2026-06-24 정리됨:** builtin registry는 `renderBuiltinWidgetLeaf`만 직접 사용하고, public `renderBuiltinWidgetNode` compatibility export는 제거됨. Preview container geometry는 `cssRenderBackend` + headless `layoutWidget`가 단일 소스.
 - **이중 문서 모델:** 위젯 영속화는 JDW v7 단일 SSoT. `WorkbenchDocument`(절대 좌표 캔버스)는 `WorkbenchCanvasShell` 데모 전용이며 위젯 파일과 혼용 금지; **장기 목표는 JDW render + event layer로 통합 후 demo 경로 제거**(Lane A DoD / B2 mapping 이후).
 - **Lane A 갭:** Lane A is complete. WB-31 devtools inspectors and S12 DoD audit are closed; post-Lane A cleanup is now the active workbench context.
-- **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합은 완료. Track D D3는 static capability seed와 editor-facing workspace URI slicing 제거가 진행됐고, 다음은 preview/editor 검증면 강화와 남은 scaffold trim이다. `./jdw/config` export alias는 2026-06-20 제거됨.
+- **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합은 완료. Track D D1의 known validation/type-alias cleanup은 닫혔고, Track D D3는 static capability seed와 editor-facing workspace URI slicing 제거가 진행됐다. 다음은 preview/editor 검증면 강화와 남은 scaffold trim이다. `./jdw/config` export alias는 2026-06-20 제거됨.
 - **패키지 분리 제외:** React JDW는 `packages/react/src/jdw`에 유지. headless는 `@workbench-kit/jdw` (`packages/json-widget/`).
 
 ---
@@ -302,17 +302,17 @@ dependency graph intentionally forbids a core -> workspace edge.
 
 Checked against `check-workbench-dependency-graph.mjs` rules and spot-read of cross-imports.
 
-| ID  | Smell                                               | Severity | Code evidence                                                                |
-| --- | --------------------------------------------------- | -------- | ---------------------------------------------------------------------------- |
-| S1  | Dual JDW render strategies                          | High     | `cssRenderBackend.tsx` + `createBuiltinJdwRegistry.ts`                       |
-| S2  | `WorkbenchDocument` vs JDW dual model               | High     | `contracts/workbench-document-*` vs `json-widget`; widget-tree uses JDW only |
-| S3  | `./jdw/config` export name mismatch                 | Resolved | Removed from `packages/react/package.json`; use `./json-config`              |
-| S4  | `renderJdw` ignores validation issues               | Medium   | `renderJdw.tsx` calls `validateJsonWidgetData` but does not gate render      |
-| S5  | Editor shell integration                            | Resolved | `EditorArea`, `EditorService`, `builtin.editor`, sample open/save flow       |
-| S6  | Static capability seed dual path                    | Resolved | Constructor seed removed; use explicit `capabilityRegistry.register*` calls  |
-| S7  | `jdw-editor` depends on full `@workbench-kit/react` | Low      | `jdw-editor/package.json` — pulls primitives + shell, not jdw-only           |
-| S8  | `JsonWorkbenchDocument` type alias                  | Low      | `packages/react/src/workbench/schema/index.ts`                               |
-| S9  | Direct workspace URI slicing in editor-facing code  | Resolved | `builtin.editor` and `shell-react` now use workspace URI parser helpers      |
+| ID  | Smell                                               | Severity | Code evidence                                                                 |
+| --- | --------------------------------------------------- | -------- | ----------------------------------------------------------------------------- |
+| S1  | Dual JDW render strategies                          | High     | `cssRenderBackend.tsx` + `createBuiltinJdwRegistry.ts`                        |
+| S2  | `WorkbenchDocument` vs JDW dual model               | High     | `contracts/workbench-document-*` vs `json-widget`; widget-tree uses JDW only  |
+| S3  | `./jdw/config` export name mismatch                 | Resolved | Removed from `packages/react/package.json`; use `./json-config`               |
+| S4  | `renderJdw` ignores validation issues               | Resolved | `renderJdw` gates invalid semantic JSON; `JdwPreview` validates before render |
+| S5  | Editor shell integration                            | Resolved | `EditorArea`, `EditorService`, `builtin.editor`, sample open/save flow        |
+| S6  | Static capability seed dual path                    | Resolved | Constructor seed removed; use explicit `capabilityRegistry.register*` calls   |
+| S7  | `jdw-editor` depends on full `@workbench-kit/react` | Low      | `jdw-editor/package.json` — pulls primitives + shell, not jdw-only            |
+| S8  | `JsonWorkbenchDocument` type alias                  | Resolved | React workbench schema exports no `JsonWorkbenchDocument` alias               |
+| S9  | Direct workspace URI slicing in editor-facing code  | Resolved | `builtin.editor` and `shell-react` now use workspace URI parser helpers       |
 
 **Dependency graph:** No forbidden edges found in rule set for current packages (graph check is part of `pnpm validate`).
 
@@ -345,8 +345,8 @@ JSON configuration lives under `./json-config`.
 | Priority | Item                          | Action                                                                                    | Track / lane |
 | -------- | ----------------------------- | ----------------------------------------------------------------------------------------- | ------------ |
 | **Done** | Dual render unify             | Strategy A only; registry = leaves                                                        | Track D D2   |
-| **P2**   | Validation gating             | Surface `validateJsonWidgetData` issues in preview                                        | Track D D1   |
-| **P3**   | `JsonWorkbenchDocument` alias | Remove or document-only                                                                   | Track D D1   |
+| **Done** | Validation gating             | Preview validates before rendering; `renderJdw` returns `null` for semantic invalid input | Track D D1   |
+| **Done** | `JsonWorkbenchDocument` alias | Alias is absent from current React workbench schema exports                               | Track D D1   |
 | **Done** | Capability static seed        | Constructor seed removed; explicit providers only                                         | Track D D3   |
 | **P3**   | Resource URI docs             | Partial: editor-facing code uses workspace parsers; core predicate remains boundary-local | Track D D3   |
 
@@ -361,13 +361,13 @@ JSON configuration lives under `./json-config`.
 
 ### 8.3 Refactor timing
 
-| When             | Refactor                                                       |
-| ---------------- | -------------------------------------------------------------- |
-| S7–S8 (parallel) | D0 inventory, D1 dead paths (validation/type aliases)          |
-| Done 2026-06-24  | D2 dual render unify                                           |
-| WB-29 closeout   | Explorer selection/reveal/search smoke coverage                |
-| Now              | D3 remaining shims (URI doc enforcement, editor scaffold trim) |
-| Lane C           | `WorkbenchDocument` adapter before any persistence merge       |
+| When            | Refactor                                                       |
+| --------------- | -------------------------------------------------------------- |
+| Done 2026-06-25 | D1 dead paths (validation/type aliases)                        |
+| Done 2026-06-24 | D2 dual render unify                                           |
+| WB-29 closeout  | Explorer selection/reveal/search smoke coverage                |
+| Now             | D3 remaining shims (URI doc enforcement, editor scaffold trim) |
+| Lane C          | `WorkbenchDocument` adapter before any persistence merge       |
 
 ---
 
@@ -378,7 +378,7 @@ JSON configuration lives under `./json-config`.
 | STR-01 | JDW render    | Dual paths: layout backend vs flex registry | Done: Strategy A; leaves-only registry                                                                | Done         |
 | STR-02 | JDW model     | `WorkbenchDocument` vs JDW drift            | JDW SSoT for widgets; demo adapter only (Lane C)                                                      | Deferred     |
 | STR-03 | React exports | `./jdw/config` → `json-config` mismatch     | Done: remove alias; use `./json-config`                                                               | Done         |
-| STR-04 | JDW quality   | `renderJdw` ignores validation              | Gate or warn in `JdwPreview` (D1)                                                                     | S7–S8        |
+| STR-04 | JDW quality   | `renderJdw` ignores validation              | Done: preview validates once before render; `renderJdw` gates semantic invalid input                  | Done         |
 | STR-05 | Lane A        | EditorService shell integration             | Done: `EditorArea` consumes `EditorService`                                                           | Done         |
 | STR-06 | Lane A        | Editor save transaction path                | Done: editor save uses workspace transactions                                                         | Done         |
 | STR-07 | Capabilities  | Static seed + `registerProvider` dual path  | Done: constructor seed removed; explicit providers only                                               | Done         |
@@ -410,6 +410,7 @@ JSON configuration lives under `./json-config`.
 
 | Date       | Note                                                                                       |
 | ---------- | ------------------------------------------------------------------------------------------ |
+| 2026-06-25 | Track D D1 closed stale validation/type-alias cleanup items                                |
 | 2026-06-25 | Track D D3 moved editor-facing workspace URI parsing to `@workbench-kit/workspace` helpers |
 | 2026-06-25 | Track D D3 removed constructor capability seed path                                        |
 | 2026-06-16 | Initial structural review; subtree/jdw-react split excluded                                |
