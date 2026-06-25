@@ -1,6 +1,6 @@
 # Structural Review — Workbench Kit Monorepo
 
-**Status:** Active analysis (updated 2026-06-20)
+**Status:** Active analysis (updated 2026-06-25)
 **Scope:** Package/layer boundaries, JDW stack, Workbench stack, workspace model, dependency-graph rules  
 **Decision:** No git subtree, no separate `@workbench-kit/jdw-react` package in the current plan.
 
@@ -12,7 +12,7 @@
 - **JDW 이중 렌더 리스크는 2026-06-24 정리됨:** builtin registry는 `renderBuiltinWidgetLeaf`만 직접 사용하고, public `renderBuiltinWidgetNode` compatibility export는 제거됨. Preview container geometry는 `cssRenderBackend` + headless `layoutWidget`가 단일 소스.
 - **이중 문서 모델:** 위젯 영속화는 JDW v7 단일 SSoT. `WorkbenchDocument`(절대 좌표 캔버스)는 `WorkbenchCanvasShell` 데모 전용이며 위젯 파일과 혼용 금지; **장기 목표는 JDW render + event layer로 통합 후 demo 경로 제거**(Lane A DoD / B2 mapping 이후).
 - **Lane A 갭:** Lane A is complete. WB-31 devtools inspectors and S12 DoD audit are closed; post-Lane A cleanup is now the active workbench context.
-- **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합은 완료. 다음은 preview/editor 검증면 강화와 Track D D3 legacy shim 제거. `./jdw/config` export alias는 2026-06-20 제거됨.
+- **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합은 완료. Track D D3는 static capability seed와 editor-facing workspace URI slicing 제거가 진행됐고, 다음은 preview/editor 검증면 강화와 남은 scaffold trim이다. `./jdw/config` export alias는 2026-06-20 제거됨.
 - **패키지 분리 제외:** React JDW는 `packages/react/src/jdw`에 유지. headless는 `@workbench-kit/jdw` (`packages/json-widget/`).
 
 ---
@@ -94,9 +94,9 @@ flowchart TB
 | `@workbench-kit/contracts`      | —                                                                                        |
 | `@workbench-kit/jdw`            | `contracts`                                                                              |
 | `@workbench-kit/workbench-core` | `base`, `platform`, `workbench-config`, `workbench-extension-sdk`                        |
-| `@workbench-kit/shell-react`    | `platform`, `react`, `tokens`, `workbench-config`, `workbench-core`                      |
+| `@workbench-kit/shell-react`    | `platform`, `react`, `tokens`, `workbench-config`, `workbench-core`, `workspace`         |
 | `@workbench-kit/react`          | `adapters`, `contracts`, `jdw`, `platform`, `runtime`, `services`, `tokens`, `workspace` |
-| Extensions                      | `base`, `platform`, `react`, `workbench-extension-sdk` only                              |
+| Extensions                      | `base`, `platform`, `react`, `workbench-extension-sdk`, `workspace` only                 |
 
 **Verified:** `workbench-core` has no React imports. `shell-react` composes
 `@workbench-kit/react/workbench/shell` for chrome only — it does not import `./jdw`.
@@ -290,6 +290,12 @@ trim; do not reintroduce constructor capability seeds.
 
 Lane A editor/explorer should bind **`WorkspaceResourceUri` only** for virtual workspace files.
 
+2026-06-25 D3 cleanup: `extensions/builtin.editor` now resolves workspace files
+and derives editor labels through `@workbench-kit/workspace` URI parser helpers.
+`packages/shell-react/src/editor-resource.ts` also uses the workspace parser
+helper. `workbench-core` still keeps boundary-local URI predicates because the
+dependency graph intentionally forbids a core -> workspace edge.
+
 ---
 
 ## 6. Boundary Violations & Architectural Smells
@@ -306,6 +312,7 @@ Checked against `check-workbench-dependency-graph.mjs` rules and spot-read of cr
 | S6  | Static capability seed dual path                    | Resolved | Constructor seed removed; use explicit `capabilityRegistry.register*` calls  |
 | S7  | `jdw-editor` depends on full `@workbench-kit/react` | Low      | `jdw-editor/package.json` — pulls primitives + shell, not jdw-only           |
 | S8  | `JsonWorkbenchDocument` type alias                  | Low      | `packages/react/src/workbench/schema/index.ts`                               |
+| S9  | Direct workspace URI slicing in editor-facing code  | Resolved | `builtin.editor` and `shell-react` now use workspace URI parser helpers      |
 
 **Dependency graph:** No forbidden edges found in rule set for current packages (graph check is part of `pnpm validate`).
 
@@ -335,13 +342,13 @@ JSON configuration lives under `./json-config`.
 
 ### 8.1 In-repo consolidation priorities
 
-| Priority | Item                          | Action                                             | Track / lane    |
-| -------- | ----------------------------- | -------------------------------------------------- | --------------- |
-| **Done** | Dual render unify             | Strategy A only; registry = leaves                 | Track D D2      |
-| **P2**   | Validation gating             | Surface `validateJsonWidgetData` issues in preview | Track D D1      |
-| **P3**   | `JsonWorkbenchDocument` alias | Remove or document-only                            | Track D D1      |
-| **Done** | Capability static seed        | Constructor seed removed; explicit providers only  | Track D D3      |
-| **P3**   | Resource URI docs             | Enforce `WorkspaceResourceUri` in explorer/editor  | Lane A WB-28/29 |
+| Priority | Item                          | Action                                                                                    | Track / lane |
+| -------- | ----------------------------- | ----------------------------------------------------------------------------------------- | ------------ |
+| **Done** | Dual render unify             | Strategy A only; registry = leaves                                                        | Track D D2   |
+| **P2**   | Validation gating             | Surface `validateJsonWidgetData` issues in preview                                        | Track D D1   |
+| **P3**   | `JsonWorkbenchDocument` alias | Remove or document-only                                                                   | Track D D1   |
+| **Done** | Capability static seed        | Constructor seed removed; explicit providers only                                         | Track D D3   |
+| **P3**   | Resource URI docs             | Partial: editor-facing code uses workspace parsers; core predicate remains boundary-local | Track D D3   |
 
 ### 8.2 Keep as-is
 
@@ -366,18 +373,18 @@ JSON configuration lives under `./json-config`.
 
 ## 9. Action Items
 
-| ID     | Area          | Issue                                       | Recommendation                                          | Phase        |
-| ------ | ------------- | ------------------------------------------- | ------------------------------------------------------- | ------------ |
-| STR-01 | JDW render    | Dual paths: layout backend vs flex registry | Done: Strategy A; leaves-only registry                  | Done         |
-| STR-02 | JDW model     | `WorkbenchDocument` vs JDW drift            | JDW SSoT for widgets; demo adapter only (Lane C)        | Deferred     |
-| STR-03 | React exports | `./jdw/config` → `json-config` mismatch     | Done: remove alias; use `./json-config`                 | Done         |
-| STR-04 | JDW quality   | `renderJdw` ignores validation              | Gate or warn in `JdwPreview` (D1)                       | S7–S8        |
-| STR-05 | Lane A        | EditorService shell integration             | Done: `EditorArea` consumes `EditorService`             | Done         |
-| STR-06 | Lane A        | Editor save transaction path                | Done: editor save uses workspace transactions           | Done         |
-| STR-07 | Capabilities  | Static seed + `registerProvider` dual path  | Done: constructor seed removed; explicit providers only | Done         |
-| STR-08 | Workspace     | Generic vs `WorkspaceResourceUri`           | Explorer/editor bind workspace scheme only              | WB-28/29     |
-| STR-09 | jdw-editor    | Full `react` dependency                     | Accept for now; optional slim entry later               | Low priority |
-| STR-10 | Docs          | Structural truth                            | Keep this doc aligned with Track D closeout (D4)        | Continuous   |
+| ID     | Area          | Issue                                       | Recommendation                                                                                        | Phase        |
+| ------ | ------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------ |
+| STR-01 | JDW render    | Dual paths: layout backend vs flex registry | Done: Strategy A; leaves-only registry                                                                | Done         |
+| STR-02 | JDW model     | `WorkbenchDocument` vs JDW drift            | JDW SSoT for widgets; demo adapter only (Lane C)                                                      | Deferred     |
+| STR-03 | React exports | `./jdw/config` → `json-config` mismatch     | Done: remove alias; use `./json-config`                                                               | Done         |
+| STR-04 | JDW quality   | `renderJdw` ignores validation              | Gate or warn in `JdwPreview` (D1)                                                                     | S7–S8        |
+| STR-05 | Lane A        | EditorService shell integration             | Done: `EditorArea` consumes `EditorService`                                                           | Done         |
+| STR-06 | Lane A        | Editor save transaction path                | Done: editor save uses workspace transactions                                                         | Done         |
+| STR-07 | Capabilities  | Static seed + `registerProvider` dual path  | Done: constructor seed removed; explicit providers only                                               | Done         |
+| STR-08 | Workspace     | Generic vs `WorkspaceResourceUri`           | Partial: editor-facing code parses workspace URIs via workspace helpers; core predicate remains local | Track D D3   |
+| STR-09 | jdw-editor    | Full `react` dependency                     | Accept for now; optional slim entry later                                                             | Low priority |
+| STR-10 | Docs          | Structural truth                            | Keep this doc aligned with Track D closeout (D4)                                                      | Continuous   |
 
 ---
 
@@ -401,7 +408,8 @@ JSON configuration lives under `./json-config`.
 
 ## Progress log
 
-| Date       | Note                                                        |
-| ---------- | ----------------------------------------------------------- |
-| 2026-06-25 | Track D D3 removed constructor capability seed path         |
-| 2026-06-16 | Initial structural review; subtree/jdw-react split excluded |
+| Date       | Note                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------ |
+| 2026-06-25 | Track D D3 moved editor-facing workspace URI parsing to `@workbench-kit/workspace` helpers |
+| 2026-06-25 | Track D D3 removed constructor capability seed path                                        |
+| 2026-06-16 | Initial structural review; subtree/jdw-react split excluded                                |

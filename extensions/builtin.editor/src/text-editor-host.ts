@@ -1,5 +1,7 @@
 import type { EditorHost } from '@workbench-kit/workbench-extension-sdk';
 
+import { labelForWorkspaceFileResource } from './resource-uri.js';
+
 export const TEXT_EDITOR_HOST_RENDER_KIND = 'workbench-kit.builtin.editor/text' as const;
 
 export interface TextEditorHostRenderData {
@@ -76,12 +78,7 @@ export function isTextEditorHostRenderData(value: unknown): value is TextEditorH
 }
 
 function getResourceLabel(resourceUri: string): string {
-  const path = resourceUri.startsWith('workspace://file/')
-    ? resourceUri.slice('workspace://file/'.length)
-    : resourceUri;
-
-  const segments = path.split('/');
-  return segments[segments.length - 1] || path;
+  return labelForWorkspaceFileResource(resourceUri);
 }
 
 function createPlaceholderContent(resourceUri: string): string {

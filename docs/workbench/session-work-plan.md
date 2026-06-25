@@ -54,8 +54,8 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 | ------------------- | -------------------------------------------------------------------------------------------------- |
 | **Date**            | 2026-06-25                                                                                         |
 | **Branch**          | `feature/theia-strengths-workbench`                                                                |
-| **Working tree**    | S12 Lane A closeout audit and context alignment                                                    |
-| **Last commits**    | Current slice: WB-31 devtools inspectors; previous: WB-30 preference scope closeout                |
+| **Working tree**    | Track D D3 URI model cleanup                                                                       |
+| **Last commits**    | Lane A closeout audit; Track D D3 static capability seed cleanup                                   |
 | **Lane A progress** | Complete (WB-23–WB-31 plus S12 DoD audit)                                                          |
 | **Validate note**   | `pnpm validate:full` green 2026-06-25; Vitest 202 files / 919 tests; Storybook required play 29/29 |
 
@@ -167,7 +167,11 @@ Single preview strategy: `JdwPreview` + `renderJdwWithLayout` own container geom
 
 - Done 2026-06-25: `ExtensionRegistry` static capability map seed removed;
   hosts now register providers explicitly through `capabilityRegistry`.
-- Generic `ResourceUri` vs `WorkspaceResourceUri` dual model
+- Done 2026-06-25: `builtin.editor` and shell editor path helpers now consume
+  workspace URI parser helpers instead of slicing `workspace://file/` prefixes.
+- Generic `ResourceUri` vs `WorkspaceResourceUri` dual model remains in
+  `workbench-core` boundary-local predicates; do not add a core -> workspace
+  dependency.
 - `EditorHostFactoryRegistry` API trim only after a second editor host proves extra context is unnecessary
 
 See [React JDW-like surfaces](#react-jdw-like-surfaces-duplicate-vs-consumer) for duplicate vs consumer relationships.
@@ -497,6 +501,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Date       | Note                                                                                                                                                                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | Track D D3 URI cleanup: builtin editor resolver/labels and shell editor path helpers now parse workspace file URIs through `@workbench-kit/workspace` helpers; core keeps boundary-local URI checks     |
 | 2026-06-25 | Track D D3 first cleanup: `ExtensionRegistry` static capability seed path removed; host capability ownership now uses explicit `capabilityRegistry` providers                                           |
 | 2026-06-25 | S12 Lane A closeout audit documented the final DoD evidence; Lane A is complete and the next recommended slices are Track D D3 or JDW drag/reparent indicator polish                                    |
 | 2026-06-25 | Validation: `pnpm validate:full` green for WB-31 context closeout; Vitest 202 files / 919 tests and Storybook required play 29/29                                                                       |

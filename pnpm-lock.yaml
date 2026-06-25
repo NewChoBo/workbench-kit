@@ -162,6 +162,9 @@ importers:
       '@workbench-kit/workbench-extension-sdk':
         specifier: workspace:*
         version: link:../../packages/workbench-extension-sdk
+      '@workbench-kit/workspace':
+        specifier: workspace:*
+        version: link:../../packages/workspace
 
   extensions/builtin.explorer:
     dependencies:

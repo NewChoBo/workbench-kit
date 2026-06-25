@@ -4,13 +4,11 @@ import {
   JDW_WIDGET_DOCUMENT_FILE_EXTENSION,
   JDW_WIDGET_DOCUMENT_MIME,
 } from '@workbench-kit/react/jdw/document';
-
-const WORKSPACE_FILE_RESOURCE_PREFIX = 'workspace://file/';
+import { parseWorkspaceResourceUri } from '@workbench-kit/workspace';
 
 export function pathForResource(resourceUri: string): string {
-  return resourceUri.startsWith(WORKSPACE_FILE_RESOURCE_PREFIX)
-    ? resourceUri.slice(WORKSPACE_FILE_RESOURCE_PREFIX.length)
-    : resourceUri;
+  const workspaceUri = parseWorkspaceResourceUri(resourceUri);
+  return workspaceUri?.kind === 'file' ? workspaceUri.path : resourceUri;
 }
 
 export function copyResourcePath(resourceUri: string): void {

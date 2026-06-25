@@ -1,6 +1,7 @@
 import type { ExtensionContext } from '@workbench-kit/workbench-extension-sdk';
 
 import { MissingResourceEditorHost } from './missing-resource-editor-host.js';
+import { isWorkspaceFileResourceUri } from './resource-uri.js';
 import { TextEditorHost } from './text-editor-host.js';
 
 export const EXTENSION_ID = 'workbench-kit.builtin.editor' as const;
@@ -24,7 +25,7 @@ export function activate(context: ExtensionContext): void {
   context.editorResolvers.registerResolver({
     id: 'workspace-file',
     priority: 10,
-    canResolve: ({ resourceUri }) => resourceUri.startsWith('workspace://file/'),
+    canResolve: ({ resourceUri }) => isWorkspaceFileResourceUri(resourceUri),
     resolve: () => TEXT_EDITOR_ID,
   });
 
