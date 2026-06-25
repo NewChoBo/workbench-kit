@@ -33,18 +33,14 @@ export function activate(context: ExtensionContext): void {
     id: TEXT_EDITOR_HOST_FACTORY_ID,
     priority: 10,
     canCreate: ({ editorId }) => editorId === TEXT_EDITOR_ID,
-    create: ({ resource, resourceMissing, resourceUri, tabId }) => {
-      if (!resourceUri) {
-        throw new Error('Text editor host requires a resource URI.');
-      }
-
+    create: ({ resource, resourceMissing, resourceUri }) => {
       if (resourceMissing) {
-        return new MissingResourceEditorHost({ resourceUri, tabId });
+        return new MissingResourceEditorHost({ resourceUri });
       }
 
       const initialContent = readWorkspaceFileContent(resource);
       const mimeType = readWorkspaceFileMimeType(resource);
-      return new TextEditorHost({ initialContent, mimeType, resourceUri, tabId });
+      return new TextEditorHost({ initialContent, mimeType, resourceUri });
     },
   });
 }

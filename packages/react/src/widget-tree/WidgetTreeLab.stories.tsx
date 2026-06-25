@@ -415,6 +415,17 @@ export const StackPlacement: Story = {
       pointerId: 7,
       pointerType: 'mouse',
     });
+    const dragGhost = await labCanvas.findByTestId('widget-tree-canvas-drag-ghost');
+    await expect(dragGhost).toHaveAttribute('data-widget-path', '$.children[0]');
+    await expect(dragGhost).toHaveAttribute('data-patch-type', 'replace-widget');
+    await expect(labCanvas.getByTestId('widget-tree-canvas-snap-guide-x')).toHaveAttribute(
+      'data-widget-path',
+      '$.children[0]',
+    );
+    await expect(labCanvas.getByTestId('widget-tree-canvas-snap-guide-y')).toHaveAttribute(
+      'data-widget-path',
+      '$.children[0]',
+    );
     fireEvent.pointerUp(dragHandle, {
       button: 0,
       buttons: 0,
@@ -832,6 +843,15 @@ export const CanvasReparent: Story = {
       pointerId: 10,
       pointerType: 'mouse',
     });
+    const dragGhost = await labCanvas.findByTestId('widget-tree-canvas-drag-ghost');
+    await expect(dragGhost).toHaveAttribute('data-widget-path', '$.children[0]');
+    await expect(dragGhost).toHaveAttribute('data-patch-type', 'reparent-widget');
+    const reparentIndicator = await labCanvas.findByTestId(
+      'widget-tree-canvas-reparent-drop-indicator',
+    );
+    await expect(reparentIndicator).toHaveAttribute('data-widget-path', '$.children[1]');
+    await expect(reparentIndicator).toHaveAttribute('data-parent-type', 'grid');
+    await expect(reparentIndicator).toHaveAttribute('data-insert-index', '0');
     fireEvent.pointerUp(dragHandle, {
       button: 0,
       buttons: 0,

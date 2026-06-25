@@ -151,6 +151,182 @@ describe('WidgetTreeCanvasPreview', () => {
     });
   });
 
+  it('shows drag ghost and snap guides while dragging a stack child', async () => {
+    const rootWidget: GenericWidget = {
+      type: 'stack',
+      width: 200,
+      height: 100,
+      children: [
+        {
+          type: 'text',
+          text: 'Dragged',
+          left: 8,
+          top: 8,
+          right: 120,
+          bottom: 60,
+        },
+      ],
+    };
+    const selectedPath = appendChildrenPath(ROOT_WIDGET_PATH, 0);
+    const onPatch = vi.fn((patch: WidgetPatch) => {
+      void patch;
+      return true;
+    });
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WidgetTreeCanvasPreview
+          json={formatWidgetDocumentJson(rootWidget)}
+          root={rootWidget}
+          selectedPath={selectedPath}
+          onPatch={onPatch}
+          onSelectPath={() => undefined}
+        />,
+      );
+    });
+
+    const handle = container.querySelector(
+      '[data-testid="widget-tree-canvas-drag-handle"]',
+    ) as HTMLElement;
+    mockPointerCapture(handle);
+
+    await act(async () => {
+      handle.dispatchEvent(createPointerLikeEvent('pointerdown', 20, 20));
+    });
+    await act(async () => {
+      handle.dispatchEvent(createPointerLikeEvent('pointermove', 36, 28));
+    });
+
+    const ghost = container.querySelector('[data-testid="widget-tree-canvas-drag-ghost"]');
+    expect(ghost?.getAttribute('data-widget-path')).toBe('$.children[0]');
+    expect(ghost?.getAttribute('data-widget-type')).toBe('text');
+    expect(ghost?.getAttribute('data-delta-x')).toBe('16');
+    expect(ghost?.getAttribute('data-delta-y')).toBe('8');
+    expect(ghost?.getAttribute('data-patch-type')).toBe('replace-widget');
+    expect(ghost?.getAttribute('style')).toContain(
+      '--ui-workbench-canvas-drag-preview-frame-x: 24px',
+    );
+    expect(ghost?.getAttribute('style')).toContain(
+      '--ui-workbench-canvas-drag-preview-frame-y: 16px',
+    );
+
+    const guideX = container.querySelector('[data-testid="widget-tree-canvas-snap-guide-x"]');
+    const guideY = container.querySelector('[data-testid="widget-tree-canvas-snap-guide-y"]');
+    expect(guideX?.getAttribute('data-axis')).toBe('x');
+    expect(guideX?.getAttribute('data-widget-path')).toBe('$.children[0]');
+    expect(guideY?.getAttribute('data-axis')).toBe('y');
+    expect(guideY?.getAttribute('data-widget-path')).toBe('$.children[0]');
+    expect(onPatch).not.toHaveBeenCalled();
+
+    await act(async () => {
+      handle.dispatchEvent(createPointerLikeEvent('pointerup', 36, 28));
+    });
+
+    expect(onPatch).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('shows reparent target indicators while dragging into another container', async () => {
+    const rootWidget: GenericWidget = {
+      type: 'stack',
+      width: 360,
+      height: 180,
+      children: [
+        {
+          type: 'text',
+          text: 'Card',
+          left: 8,
+          top: 8,
+          right: 252,
+          bottom: 132,
+        },
+        {
+          type: 'grid',
+          columns: 2,
+          gap: 8,
+          left: 180,
+          top: 8,
+          right: 16,
+          bottom: 16,
+          children: [],
+        },
+      ],
+    };
+    const selectedPath = appendChildrenPath(ROOT_WIDGET_PATH, 0);
+    const onPatch = vi.fn((patch: WidgetPatch) => {
+      void patch;
+      return true;
+    });
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WidgetTreeCanvasPreview
+          json={formatWidgetDocumentJson(rootWidget)}
+          root={rootWidget}
+          selectedPath={selectedPath}
+          onPatch={onPatch}
+          onSelectPath={() => undefined}
+        />,
+      );
+    });
+
+    const handle = container.querySelector(
+      '[data-testid="widget-tree-canvas-drag-handle"]',
+    ) as HTMLElement;
+    mockPointerCapture(handle);
+
+    await act(async () => {
+      handle.dispatchEvent(createPointerLikeEvent('pointerdown', 20, 20));
+    });
+    await act(async () => {
+      handle.dispatchEvent(createPointerLikeEvent('pointermove', 180, 32));
+    });
+
+    const ghost = container.querySelector('[data-testid="widget-tree-canvas-drag-ghost"]');
+    expect(ghost?.getAttribute('data-patch-type')).toBe('reparent-widget');
+
+    const indicator = container.querySelector(
+      '[data-testid="widget-tree-canvas-reparent-drop-indicator"]',
+    );
+    expect(indicator?.getAttribute('data-widget-path')).toBe('$.children[1]');
+    expect(indicator?.getAttribute('data-parent-type')).toBe('grid');
+    expect(indicator?.getAttribute('data-insert-index')).toBe('0');
+    expect(indicator?.getAttribute('data-drop-target-type')).toBe('append-grid');
+
+    const marker = container.querySelector(
+      '[data-testid="widget-tree-canvas-reparent-drop-marker"]',
+    );
+    expect(marker?.getAttribute('data-widget-path')).toBe('$.children[1]');
+    expect(marker?.getAttribute('data-parent-type')).toBe('grid');
+    expect(marker?.getAttribute('data-drop-target-type')).toBe('append-grid');
+    expect(onPatch).not.toHaveBeenCalled();
+
+    await act(async () => {
+      handle.dispatchEvent(createPointerLikeEvent('pointerup', 180, 32));
+    });
+
+    expect(onPatch).toHaveBeenCalledTimes(1);
+    expect(onPatch.mock.calls[0]?.[0]).toMatchObject({
+      type: 'reparent-widget',
+      fromPath: selectedPath,
+      toParentPath: appendChildrenPath(ROOT_WIDGET_PATH, 1),
+      insertIndex: 0,
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
   it('resolves palette asset drops against preview hit-test containers', async () => {
     const rootWidget: GenericWidget = {
       type: 'column',

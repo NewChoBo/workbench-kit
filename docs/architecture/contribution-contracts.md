@@ -134,6 +134,33 @@ interface ViewHost {
 
 Runtime view providers are registered in `activate()` via `context.views.registerViewProvider(...)`. `shell-react` maps `ViewProvider` results to React nodes when possible; the SDK stays UI-framework neutral (`unknown` / callback registration).
 
+## Editor Host Factories
+
+Editor host factories create runtime editor hosts for resolved editor tabs.
+`EditorService` owns tab identity and host caching; factories receive the
+required resource URI plus optional host resource data.
+
+```ts
+interface EditorHostCreateContext {
+  editorId: string;
+  resourceUri: string;
+  resource?: unknown;
+  resourceMissing?: boolean;
+}
+
+interface EditorHostFactory {
+  id: string;
+  priority?: number;
+  canCreate?(context: EditorHostCreateContext): boolean;
+  create(context: EditorHostCreateContext): EditorHost;
+}
+```
+
+Extensions register editor host factories during activation through
+`context.editorHostFactories.registerFactory(...)`. Factories should use
+`resourceUri` as the stable document identity; tab IDs remain internal editor
+service state and are not part of the extension host creation contract.
+
 ## Document View Contributions
 
 `contributes.documentViews` describes form/preview modes for text editor

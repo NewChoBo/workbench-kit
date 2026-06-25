@@ -31,6 +31,9 @@ import {
   WorkbenchPreviewCanvas,
   WorkbenchCanvasResizeHandle,
   WorkbenchCanvasDropIndicator,
+  WorkbenchCanvasDragPreviewFrame,
+  WorkbenchCanvasGuideLayer,
+  WorkbenchCanvasGuideLine,
 } from '../layout/WorkbenchCanvas.js';
 import { JdwPreview } from '../jdw/JdwPreview.js';
 import { readWidgetPlacementAssetDragData } from './widget-placement-asset-dnd.js';
@@ -82,6 +85,34 @@ type WidgetTreeCanvasAssetDropTargetType =
   | 'append-grid'
   | 'append-row'
   | 'append-stack';
+
+interface WidgetTreeCanvasDragPreviewState {
+  readonly deltaX: number;
+  readonly deltaY: number;
+  readonly ghostRect: Rect;
+  readonly patchType: WidgetPatch['type'] | 'none';
+  readonly reparentTarget: WidgetTreeCanvasReparentDropTarget | null;
+  readonly selectedPath: WidgetPath;
+  readonly selectedType: string;
+}
+
+interface WidgetTreeCanvasReparentDropTarget {
+  readonly insertIndex: number;
+  readonly markerRect: Rect;
+  readonly parentType: string;
+  readonly path: WidgetPath;
+  readonly rect: Rect;
+  readonly type: WidgetTreeCanvasAssetDropTargetType;
+}
+
+interface WidgetTreeCanvasAppendDropTarget {
+  readonly insertIndex: number;
+  readonly markerRect: Rect;
+  readonly parentType: string;
+  readonly path: WidgetPath;
+  readonly rect: Rect;
+  readonly type: WidgetTreeCanvasAssetDropTargetType;
+}
 
 function canDragSelectedPath(root: GenericWidget, path: WidgetPath): boolean {
   const segment = path[path.length - 1];
@@ -169,20 +200,20 @@ function appendLineRect(rect: Rect, axis: 'x' | 'y', children: readonly LayoutNo
   return { x: rect.x, y, width: rect.width, height: 2 };
 }
 
-function createAssetDropTarget(
-  operation: WidgetTreeCanvasAssetDropOperation,
+function createCanvasAppendDropTarget(
   parent: GenericWidget,
   target: LayoutNodeResult,
-): WidgetTreeCanvasAssetDropTarget {
+  path: WidgetPath,
+  insertIndex: number,
+): WidgetTreeCanvasAppendDropTarget {
   const rect = target.rect;
 
   if (parent.type === 'row') {
     return {
-      insertIndex: operation.insertIndex,
+      insertIndex,
       markerRect: appendLineRect(rect, 'x', target.children),
-      nextPath: operation.nextPath,
       parentType: parent.type,
-      path: operation.parentPath,
+      path,
       rect,
       type: 'append-row',
     };
@@ -190,11 +221,10 @@ function createAssetDropTarget(
 
   if (parent.type === 'column') {
     return {
-      insertIndex: operation.insertIndex,
+      insertIndex,
       markerRect: appendLineRect(rect, 'y', target.children),
-      nextPath: operation.nextPath,
       parentType: parent.type,
-      path: operation.parentPath,
+      path,
       rect,
       type: 'append-column',
     };
@@ -213,32 +243,49 @@ function createAssetDropTarget(
         ...(rows !== undefined ? { rows } : {}),
       },
       {
-        col: operation.insertIndex % columns,
-        row: Math.floor(operation.insertIndex / columns),
+        col: insertIndex % columns,
+        row: Math.floor(insertIndex / columns),
       },
       rect,
     );
 
     return {
-      insertIndex: operation.insertIndex,
+      insertIndex,
       markerRect,
-      nextPath: operation.nextPath,
       parentType: parent.type,
-      path: operation.parentPath,
+      path,
       rect,
       type: 'append-grid',
     };
   }
 
   return {
-    insertIndex: operation.insertIndex,
+    insertIndex,
     markerRect: rect,
-    nextPath: operation.nextPath,
     parentType: parent.type,
-    path: operation.parentPath,
+    path,
     rect,
     type: parent.type === 'stack' ? 'append-stack' : 'append-container',
   };
+}
+
+function createAssetDropTarget(
+  operation: WidgetTreeCanvasAssetDropOperation,
+  parent: GenericWidget,
+  target: LayoutNodeResult,
+): WidgetTreeCanvasAssetDropTarget {
+  return {
+    ...createCanvasAppendDropTarget(parent, target, operation.parentPath, operation.insertIndex),
+    nextPath: operation.nextPath,
+  };
+}
+
+function createReparentDropTarget(
+  patch: Extract<WidgetPatch, { type: 'reparent-widget' }>,
+  parent: GenericWidget,
+  target: LayoutNodeResult,
+): WidgetTreeCanvasReparentDropTarget {
+  return createCanvasAppendDropTarget(parent, target, patch.toParentPath, patch.insertIndex);
 }
 
 export function resolveWidgetCanvasAssetDropOperation(
@@ -283,6 +330,7 @@ export function WidgetTreeCanvasPreview({
   const [assetDropTarget, setAssetDropTarget] = useState<WidgetTreeCanvasAssetDropTarget | null>(
     null,
   );
+  const [dragPreview, setDragPreview] = useState<WidgetTreeCanvasDragPreviewState | null>(null);
   const [hoveredPath, setHoveredPath] = useState<WidgetPath | null>(null);
   const [focusedPath, setFocusedPath] = useState<WidgetPath | null>(null);
   const layout = useMemo(
@@ -309,13 +357,15 @@ export function WidgetTreeCanvasPreview({
     hoveredPath &&
     (!selectedPath || !widgetPathEquals(hoveredPath, selectedPath)) &&
     (!focusedPath || !widgetPathEquals(hoveredPath, focusedPath)) &&
-    !assetDropTarget,
+    !assetDropTarget &&
+    !dragPreview,
   );
   const showFocusedLayout = Boolean(
     focusedLayout &&
     focusedPath &&
     (!selectedPath || !widgetPathEquals(focusedPath, selectedPath)) &&
-    !assetDropTarget,
+    !assetDropTarget &&
+    !dragPreview,
   );
   const canDrag = Boolean(
     root && selectedPath && !readOnly && canDragSelectedPath(root, selectedPath),
@@ -326,7 +376,57 @@ export function WidgetTreeCanvasPreview({
   const frameWidth = Math.max(1, layout?.rect.width ?? layoutConstraints.maxWidth);
   const frameHeight = Math.max(1, layout?.rect.height ?? layoutConstraints.maxHeight);
 
+  const resolveDragPreview = (
+    deltaX: number,
+    deltaY: number,
+  ): WidgetTreeCanvasDragPreviewState | null => {
+    if (!root || !layout || !selectedPath || !selectedLayout) return null;
+    if (deltaX === 0 && deltaY === 0) return null;
+
+    const maybeReparentPatch = createWidgetReparentPatch({
+      deltaX,
+      deltaY,
+      layout,
+      path: selectedPath,
+      root,
+    });
+    const reparentPatch =
+      maybeReparentPatch?.type === 'reparent-widget' ? maybeReparentPatch : null;
+    const dragPatch = reparentPatch
+      ? null
+      : createWidgetDragPatch({
+          deltaX,
+          deltaY,
+          layout,
+          path: selectedPath,
+          root,
+        });
+    const targetLayout =
+      reparentPatch !== null ? findLayoutNodeByPath(layout, reparentPatch.toParentPath) : null;
+    const targetParent =
+      reparentPatch !== null ? getWidgetAtPath(root, reparentPatch.toParentPath) : null;
+
+    return {
+      deltaX,
+      deltaY,
+      ghostRect: {
+        x: selectedLayout.node.rect.x + deltaX,
+        y: selectedLayout.node.rect.y + deltaY,
+        width: selectedLayout.node.rect.width,
+        height: selectedLayout.node.rect.height,
+      },
+      patchType: reparentPatch?.type ?? dragPatch?.type ?? 'none',
+      reparentTarget:
+        reparentPatch && targetLayout && targetParent
+          ? createReparentDropTarget(reparentPatch, targetParent, targetLayout.node)
+          : null,
+      selectedPath,
+      selectedType: selectedLayout.node.widget.type,
+    };
+  };
+
   const commitDrag = (deltaX: number, deltaY: number) => {
+    setDragPreview(null);
     if (!root || !layout || !selectedPath) return;
 
     const reparentPatch = createWidgetReparentPatch({
@@ -381,6 +481,11 @@ export function WidgetTreeCanvasPreview({
   };
 
   const handleAssetDragOver = (event: DragEvent<HTMLDivElement>) => {
+    if (dragPreview) {
+      setAssetDropTarget(null);
+      return;
+    }
+
     const operation = resolveAssetDrop(event);
     if (!operation || !layout || !root) {
       setAssetDropTarget(null);
@@ -512,7 +617,7 @@ export function WidgetTreeCanvasPreview({
               zIndex={95}
             />
           ) : null}
-          {assetDropTarget ? (
+          {assetDropTarget && !dragPreview ? (
             <>
               <WorkbenchCanvasDropIndicator
                 className="widget-tree-canvas-preview__asset-drop-target"
@@ -543,6 +648,77 @@ export function WidgetTreeCanvasPreview({
               />
             </>
           ) : null}
+          {dragPreview ? (
+            <>
+              {dragPreview.reparentTarget ? (
+                <>
+                  <WorkbenchCanvasDropIndicator
+                    className="widget-tree-canvas-preview__reparent-drop-target"
+                    data-testid="widget-tree-canvas-reparent-drop-indicator"
+                    data-drop-target-type={dragPreview.reparentTarget.type}
+                    data-insert-index={dragPreview.reparentTarget.insertIndex}
+                    data-parent-type={dragPreview.reparentTarget.parentType}
+                    data-widget-path={widgetPathKey(dragPreview.reparentTarget.path)}
+                    width={dragPreview.reparentTarget.rect.width}
+                    height={dragPreview.reparentTarget.rect.height}
+                    x={dragPreview.reparentTarget.rect.x}
+                    y={dragPreview.reparentTarget.rect.y}
+                    zIndex={40}
+                  />
+                  <WorkbenchCanvasDropIndicator
+                    className="widget-tree-canvas-preview__reparent-drop-marker"
+                    data-testid="widget-tree-canvas-reparent-drop-marker"
+                    data-drop-target-type={dragPreview.reparentTarget.type}
+                    data-insert-index={dragPreview.reparentTarget.insertIndex}
+                    data-parent-type={dragPreview.reparentTarget.parentType}
+                    data-widget-path={widgetPathKey(dragPreview.reparentTarget.path)}
+                    width={dragPreview.reparentTarget.markerRect.width}
+                    height={dragPreview.reparentTarget.markerRect.height}
+                    x={dragPreview.reparentTarget.markerRect.x}
+                    y={dragPreview.reparentTarget.markerRect.y}
+                    zIndex={45}
+                  />
+                </>
+              ) : null}
+              <WorkbenchCanvasDragPreviewFrame
+                className="widget-tree-canvas-preview__drag-ghost"
+                data-testid="widget-tree-canvas-drag-ghost"
+                data-delta-x={dragPreview.deltaX}
+                data-delta-y={dragPreview.deltaY}
+                data-patch-type={dragPreview.patchType}
+                data-widget-path={widgetPathKey(dragPreview.selectedPath)}
+                data-widget-type={dragPreview.selectedType}
+                width={dragPreview.ghostRect.width}
+                height={dragPreview.ghostRect.height}
+                x={dragPreview.ghostRect.x}
+                y={dragPreview.ghostRect.y}
+                zIndex={80}
+              />
+              <WorkbenchCanvasGuideLayer
+                className="widget-tree-canvas-preview__snap-guides"
+                data-testid="widget-tree-canvas-snap-guides"
+              >
+                <WorkbenchCanvasGuideLine
+                  axis="x"
+                  data-testid="widget-tree-canvas-snap-guide-x"
+                  data-widget-path={widgetPathKey(dragPreview.selectedPath)}
+                  end={frameHeight}
+                  position={dragPreview.ghostRect.x}
+                  source="grid"
+                  start={0}
+                />
+                <WorkbenchCanvasGuideLine
+                  axis="y"
+                  data-testid="widget-tree-canvas-snap-guide-y"
+                  data-widget-path={widgetPathKey(dragPreview.selectedPath)}
+                  end={frameWidth}
+                  position={dragPreview.ghostRect.y}
+                  source="grid"
+                  start={0}
+                />
+              </WorkbenchCanvasGuideLayer>
+            </>
+          ) : null}
           {selectedLayout && selectedPath ? (
             <WorkbenchCanvasItemFrame
               className="widget-tree-canvas-preview__selection-frame"
@@ -563,7 +739,15 @@ export function WidgetTreeCanvasPreview({
                   aria-label="Move selected widget"
                   data-testid="widget-tree-canvas-drag-handle"
                   label={selectedLayout.node.widget.type}
+                  onDragCancel={() => setDragPreview(null)}
                   onDragEnd={commitDrag}
+                  onDragMove={(deltaX, deltaY) =>
+                    setDragPreview(resolveDragPreview(deltaX, deltaY))
+                  }
+                  onDragStart={() => {
+                    setAssetDropTarget(null);
+                    setDragPreview(null);
+                  }}
                 />
               ) : null}
               {canResize

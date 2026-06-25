@@ -503,7 +503,6 @@ export class EditorService implements Disposable {
       resource: this.resolveEditorResource?.(location.tab.resourceUri),
       resourceMissing: location.tab.resourceMissing,
       resourceUri: location.tab.resourceUri,
-      tabId: location.tab.id,
     });
     if (!host) {
       return undefined;

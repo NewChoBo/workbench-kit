@@ -15,7 +15,6 @@ export interface TextEditorHostOptions {
   readonly initialContent?: string | undefined;
   readonly mimeType?: string | undefined;
   readonly resourceUri: string;
-  readonly tabId?: string | undefined;
 }
 
 export class TextEditorHost implements EditorHost {

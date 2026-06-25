@@ -86,7 +86,12 @@ describe('EditorHostFactoryRegistry', () => {
   it('returns undefined when no factory is registered', () => {
     const registry = createEditorHostFactoryRegistry();
 
-    expect(registry.createEditorHost({ editorId: 'workbench.editor' })).toBeUndefined();
+    expect(
+      registry.createEditorHost({
+        editorId: 'workbench.editor',
+        resourceUri: 'workspace://file/src/app.ts',
+      }),
+    ).toBeUndefined();
   });
 
   it('creates editor hosts through registered factories', () => {
@@ -99,8 +104,13 @@ describe('EditorHostFactoryRegistry', () => {
       }),
     });
 
-    expect(registry.createEditorHost({ editorId: 'workbench.editor' })?.render()).toBe(
-      'editor-host',
-    );
+    expect(
+      registry
+        .createEditorHost({
+          editorId: 'workbench.editor',
+          resourceUri: 'workspace://file/src/app.ts',
+        })
+        ?.render(),
+    ).toBe('editor-host');
   });
 });

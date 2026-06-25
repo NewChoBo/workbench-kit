@@ -14,7 +14,6 @@ export interface CommandInspectorEditorHostRenderData {
 
 export interface CommandInspectorEditorHostOptions {
   readonly resourceUri: string;
-  readonly tabId?: string | undefined;
 }
 
 export class CommandInspectorEditorHost implements EditorHost {

@@ -37,12 +37,8 @@ export function activate(context: ExtensionContext): void {
     id: 'workbench-kit.builtin.commands.inspectorHost',
     priority: 20,
     canCreate: ({ editorId }) => editorId === COMMAND_INSPECTOR_EDITOR_ID,
-    create: ({ resourceUri, tabId }) => {
-      if (!resourceUri) {
-        throw new Error('Command inspector host requires a resource URI.');
-      }
-
-      return new CommandInspectorEditorHost({ resourceUri, tabId });
+    create: ({ resourceUri }) => {
+      return new CommandInspectorEditorHost({ resourceUri });
     },
   });
 

@@ -296,9 +296,9 @@ pnpm validate:full
 
 ### Open — Track D (cleanup & compatibility removal)
 
-| Item                                                         | Priority | Doc / timing                                                                                 |
-| ------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------------------- |
-| Track D: validation gating, legacy shim removal — see phases | P2–P8    | [session-work-plan.md](./session-work-plan.md) Track D; D2 done 2026-06-24, D3 now unblocked |
+| Item                                                         | Priority | Doc / timing                                                                                   |
+| ------------------------------------------------------------ | -------- | ---------------------------------------------------------------------------------------------- |
+| Track D: validation gating, legacy shim removal — see phases | Done     | [session-work-plan.md](./session-work-plan.md) Track D; D1/D2/D3 known cleanup done 2026-06-25 |
 
 ### Doc hygiene watchlist
 
@@ -347,8 +347,9 @@ WB-29 closeout -> WB-30 -> WB-31 -> S12 Lane A DoD audit
 | **S6**  | WB-31 — Devtools inspectors      | Done          |
 | **S7**  | Lane A closeout                  | Done          |
 
-**Next active session:** Lane A is complete. Recommended next slices are Track D
-D3 legacy shim audit or JDW drag/reparent ghost and snap indicators.
+**Next active session:** Lane A, Track D known cleanup, and the JDW B-UX5
+drag/reparent indicator polish are complete. Recommended next slices are editor
+layout ownership hardening or JDW validation/source polish.
 
 **Estimated remaining slices:** 0 for Lane A.
 
@@ -388,8 +389,9 @@ D3 legacy shim audit or JDW drag/reparent ghost and snap indicators.
 
 | Date       | Note                                                                                                                                                           |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | JDW B-UX5 drag/reparent indicator polish landed with live ghost, snap guides, and reparent drop target coverage.                                               |
 | 2026-06-25 | S12 Lane A closeout audit passed and moved remaining work to post-Lane A Track D, JDW polish, and Lane C backlog.                                              |
-| 2026-06-25 | Current branch full validation passed: 202 files / 919 Vitest tests, Storybook build, and 29/29 required Storybook plays.                                      |
+| 2026-06-25 | Current branch full validation passed: 204 files / 926 Vitest tests, Storybook build, and 29/29 required Storybook plays.                                      |
 | 2026-06-25 | WB-31 devtools inspectors landed with read-only registry/layout/editor/workspace snapshots and required Storybook coverage.                                    |
 | 2026-06-21 | Historical checkpoint recorded a full validation pass before later JDW and WB-31 slices.                                                                       |
 | 2026-06-21 | Historical DoD audit confirmed resource transactions, command-backed explorer handlers, capability dispose lifecycle, and static boundary checks.              |

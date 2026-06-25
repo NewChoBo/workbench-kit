@@ -12,7 +12,7 @@
 - **JDW 이중 렌더 리스크는 2026-06-24 정리됨:** builtin registry는 `renderBuiltinWidgetLeaf`만 직접 사용하고, public `renderBuiltinWidgetNode` compatibility export는 제거됨. Preview container geometry는 `cssRenderBackend` + headless `layoutWidget`가 단일 소스.
 - **이중 문서 모델:** 위젯 영속화는 JDW v7 단일 SSoT. `WorkbenchDocument`(절대 좌표 캔버스)는 `WorkbenchCanvasShell` 데모 전용이며 위젯 파일과 혼용 금지; **장기 목표는 JDW render + event layer로 통합 후 demo 경로 제거**(Lane A DoD / B2 mapping 이후).
 - **Lane A 갭:** Lane A is complete. WB-31 devtools inspectors and S12 DoD audit are closed; post-Lane A cleanup is now the active workbench context.
-- **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합은 완료. Track D D1의 known validation/type-alias cleanup은 닫혔고, Track D D3는 static capability seed와 editor-facing workspace URI slicing 제거가 진행됐다. 다음은 preview/editor 검증면 강화와 남은 scaffold trim이다. `./jdw/config` export alias는 2026-06-20 제거됨.
+- **정리 우선순위 (subtree 없음):** P1 이중 렌더 통합은 완료. Track D D1의 known validation/type-alias cleanup은 닫혔고, Track D D3는 static capability seed, editor-facing workspace URI slicing, and editor host context trim이 진행됐다. 다음은 preview/editor 검증면 강화와 JDW authoring polish다. `./jdw/config` export alias는 2026-06-20 제거됨.
 - **패키지 분리 제외:** React JDW는 `packages/react/src/jdw`에 유지. headless는 `@workbench-kit/jdw` (`packages/json-widget/`).
 
 ---
@@ -264,8 +264,9 @@ extension `getCapability` resolves it.
 providers and extension providers both produce disposables through
 `CapabilityRegistry`.
 
-**Recommendation:** Continue D3 with URI model enforcement and editor scaffold
-trim; do not reintroduce constructor capability seeds.
+**Recommendation:** Keep D3 changes focused on enforceable boundaries; do not
+reintroduce constructor capability seeds, optional editor resource identity, or
+tab-local state into extension host factory creation.
 
 ---
 
@@ -295,6 +296,10 @@ and derives editor labels through `@workbench-kit/workspace` URI parser helpers.
 `packages/shell-react/src/editor-resource.ts` also uses the workspace parser
 helper. `workbench-core` still keeps boundary-local URI predicates because the
 dependency graph intentionally forbids a core -> workspace edge.
+
+2026-06-25 D3 scaffold trim: `EditorHostCreateContext.resourceUri` is required.
+`EditorService` owns tab identity and host caching, so the unused `tabId`
+context was removed from the extension SDK and built-in editor hosts.
 
 ---
 
@@ -348,6 +353,7 @@ JSON configuration lives under `./json-config`.
 | **Done** | Validation gating             | Preview validates before rendering; `renderJdw` returns `null` for semantic invalid input | Track D D1   |
 | **Done** | `JsonWorkbenchDocument` alias | Alias is absent from current React workbench schema exports                               | Track D D1   |
 | **Done** | Capability static seed        | Constructor seed removed; explicit providers only                                         | Track D D3   |
+| **Done** | Editor host context trim      | Required `resourceUri`; removed unused `tabId` context and defensive missing-URI branches | Track D D3   |
 | **P3**   | Resource URI docs             | Partial: editor-facing code uses workspace parsers; core predicate remains boundary-local | Track D D3   |
 
 ### 8.2 Keep as-is
@@ -361,13 +367,13 @@ JSON configuration lives under `./json-config`.
 
 ### 8.3 Refactor timing
 
-| When            | Refactor                                                       |
-| --------------- | -------------------------------------------------------------- |
-| Done 2026-06-25 | D1 dead paths (validation/type aliases)                        |
-| Done 2026-06-24 | D2 dual render unify                                           |
-| WB-29 closeout  | Explorer selection/reveal/search smoke coverage                |
-| Now             | D3 remaining shims (URI doc enforcement, editor scaffold trim) |
-| Lane C          | `WorkbenchDocument` adapter before any persistence merge       |
+| When            | Refactor                                                 |
+| --------------- | -------------------------------------------------------- |
+| Done 2026-06-25 | D1 dead paths (validation/type aliases)                  |
+| Done 2026-06-24 | D2 dual render unify                                     |
+| WB-29 closeout  | Explorer selection/reveal/search smoke coverage          |
+| Done 2026-06-25 | D3 editor scaffold trim                                  |
+| Lane C          | `WorkbenchDocument` adapter before any persistence merge |
 
 ---
 
@@ -383,8 +389,9 @@ JSON configuration lives under `./json-config`.
 | STR-06 | Lane A        | Editor save transaction path                | Done: editor save uses workspace transactions                                                         | Done         |
 | STR-07 | Capabilities  | Static seed + `registerProvider` dual path  | Done: constructor seed removed; explicit providers only                                               | Done         |
 | STR-08 | Workspace     | Generic vs `WorkspaceResourceUri`           | Partial: editor-facing code parses workspace URIs via workspace helpers; core predicate remains local | Track D D3   |
-| STR-09 | jdw-editor    | Full `react` dependency                     | Accept for now; optional slim entry later                                                             | Low priority |
-| STR-10 | Docs          | Structural truth                            | Keep this doc aligned with Track D closeout (D4)                                                      | Continuous   |
+| STR-09 | Editor hosts  | Optional resource identity / unused tab id  | Done: `resourceUri` required; tab identity remains in `EditorService`                                 | Done         |
+| STR-10 | jdw-editor    | Full `react` dependency                     | Accept for now; optional slim entry later                                                             | Low priority |
+| STR-11 | Docs          | Structural truth                            | Keep this doc aligned with Track D closeout (D4)                                                      | Continuous   |
 
 ---
 
@@ -410,6 +417,7 @@ JSON configuration lives under `./json-config`.
 
 | Date       | Note                                                                                       |
 | ---------- | ------------------------------------------------------------------------------------------ |
+| 2026-06-25 | Track D D3 trimmed editor host creation context                                            |
 | 2026-06-25 | Track D D1 closed stale validation/type-alias cleanup items                                |
 | 2026-06-25 | Track D D3 moved editor-facing workspace URI parsing to `@workbench-kit/workspace` helpers |
 | 2026-06-25 | Track D D3 removed constructor capability seed path                                        |

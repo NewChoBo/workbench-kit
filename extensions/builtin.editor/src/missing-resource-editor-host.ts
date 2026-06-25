@@ -14,7 +14,6 @@ export interface MissingResourceEditorHostRenderData {
 export interface MissingResourceEditorHostOptions {
   readonly message?: string | undefined;
   readonly resourceUri: string;
-  readonly tabId?: string | undefined;
 }
 
 export class MissingResourceEditorHost implements EditorHost {

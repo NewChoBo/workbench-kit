@@ -11,7 +11,7 @@
 - **미션:** Lane A 마감을 Codex에 위임. 브랜치 `feature/theia-strengths-workbench` 유지. 각 패키지 완료 시 `pnpm validate` 통과 후 Conventional Commit (영문).
 - **현재 기준선:** WB-23~WB-31(S1–S3, S8.5~S8.6, command explorer, preference scopes, devtools inspectors)과 S12 DoD audit 완료. Lane A **완료**. 최근 커밋: `9d14182`, `9b37c8f`, `96e957f`, `712f922`, `835497e`.
 - **Codex 작업 패키지 5개:** P0 **S8.6**(완료) → P0 **WB-29**(완료) → P1 **WB-30**(완료) → P2 **Track D D2**(완료) → **S12 DoD**(완료).
-- **첫 권장 작업:** **Track D D3** legacy shim audit/removal. UI-heavy slice를 원하면 JDW drag/reparent ghost와 snap indicators를 진행한다.
+- **첫 권장 작업:** Track D D3 known cleanup과 JDW B-UX5 drag/reparent indicators는 닫혔다. 다음은 shell 쪽 **editor layout ownership hardening**, 또는 JDW 쪽 validation/source polish를 진행한다.
 - **필수 제약:** `workbench-core` React-free, `react`가 `workbench-core` 미import, JDW canonical, subtree 분리 금지, Strategy A 렌더, UI 영문.
 
 ---
@@ -70,10 +70,10 @@ None. Lane A is closed by
 
 ### Validate status
 
-Latest full validation is tracked in [session-work-plan.md](./session-work-plan.md);
-WB-31 context closeout passed `pnpm validate:full` on 2026-06-25 with 202 Vitest
-files / 919 tests and 29/29 required Storybook plays. S12 context alignment now
-requires the final closeout commit gate to rerun `pnpm validate:full`.
+Latest full validation is tracked in [session-work-plan.md](./session-work-plan.md).
+The current branch gate passed `pnpm validate:full` on 2026-06-25 with 204
+Vitest files / 926 tests and 29/29 required Storybook plays. The earlier WB-31
+context closeout remains historical evidence at 202 files / 919 tests.
 
 ---
 
@@ -413,13 +413,13 @@ Lane A no longer blocks JDW authoring polish. Keep B-UX work narrow: improve one
 observable edit affordance at a time and preserve the JDW single-source-of-truth
 commit model.
 
-| Session | Scope                            | Current state                                                     |
-| ------- | -------------------------------- | ----------------------------------------------------------------- |
-| B-UX1   | Validation banner + dirty parity | Core landed; keep parity covered in Storybook                     |
-| B-UX2   | Outline DnD + keyboard           | Core outline flows landed; remaining polish is narrow             |
-| B-UX3   | Stack placement inspector        | Stack/asset interactions landed in pieces                         |
-| B-UX4   | Preview hit-test selection       | Landed with hover/focus chrome                                    |
-| B-UX5   | Canvas wire-in                   | Drag/resize/reparent commits landed; ghost/snap indicators remain |
+| Session | Scope                            | Current state                                                 |
+| ------- | -------------------------------- | ------------------------------------------------------------- |
+| B-UX1   | Validation banner + dirty parity | Core landed; keep parity covered in Storybook                 |
+| B-UX2   | Outline DnD + keyboard           | Core outline flows landed; remaining polish is narrow         |
+| B-UX3   | Stack placement inspector        | Stack/asset interactions landed in pieces                     |
+| B-UX4   | Preview hit-test selection       | Landed with hover/focus chrome                                |
+| B-UX5   | Canvas wire-in                   | Drag/resize/reparent commits and ghost/snap indicators landed |
 
 ---
 
@@ -510,16 +510,16 @@ pnpm workbench-sample
 ## 8. Suggested Codex Session Order
 
 ```text
-Track D D3 legacy shim audit -> JDW B-UX5 drag/reparent indicators
+editor layout ownership hardening -> JDW validation/source polish
 ```
 
 ### Parallel options
 
-| Track             | Can run parallel with | Notes                                        |
-| ----------------- | --------------------- | -------------------------------------------- |
-| D3 legacy cleanup | JDW polish            | Keep shared registry/resource changes scoped |
-| D2 dual render    | Done 2026-06-24       | Run JDW vitest after changes                 |
-| JDW B-UX5 polish  | Track D docs          | Storybook and widget-tree tests required     |
+| Track             | Can run parallel with | Notes                                      |
+| ----------------- | --------------------- | ------------------------------------------ |
+| D3 legacy cleanup | Done 2026-06-25       | Capability, URI, editor host context       |
+| D2 dual render    | Done 2026-06-24       | Run JDW vitest after changes               |
+| JDW B-UX5 polish  | Done 2026-06-25       | Ghost/snap Storybook and widget-tree tests |
 
 **Do not parallel:** broad shell/editor contract refactors with JDW canvas work
 unless the owner boundaries and validation lane are explicit.
