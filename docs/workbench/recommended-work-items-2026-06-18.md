@@ -44,19 +44,23 @@ Status: completed in this run.
 
 ## Next Recommended Goal
 
-After this run, the next highest-value implementation goal is:
+After the 2026-06-25 editor layout hardening, the next highest-value
+implementation goal is:
 
-**Editor layout ownership in `EditorService`.**
+**JDW validation/source polish** or the remaining host-backed storage adapter
+work.
 
 Scope:
 
-1. Add service operations for split direction and nested layout updates.
-2. Move editor drop-zone decisions into reusable helpers with tests.
-3. Preserve same-group reorder, no-op self-drop, cross-group move, split left,
-   split right, and empty-group cleanup.
+1. Add source-range highlighting or stronger Monaco selection feedback for JDW
+   widget paths.
+2. Keep validation banner, Monaco diagnostics, and preview rendering on the same
+   parsed/validated JDW contract.
+3. If staying in shell infrastructure, provide a concrete file-backed storage
+   adapter and plugin install/update plan on top of existing storage contracts.
 4. Keep React as renderer/dispatcher for the service-owned layout model.
 
-Progress as of 2026-06-21:
+Progress as of 2026-06-25:
 
 - `EditorService` owns split direction and primary size ratio state for the
   current layout tree.
@@ -70,6 +74,9 @@ Progress as of 2026-06-21:
   whole editor layout tree.
 - `EditorService` accepts restored editor state, normalizes stale layout nodes,
   and resumes tab/group id sequences without collisions.
+- Existing-target split/move calls ignore stray split-direction hints and
+  preserve service-owned nested layout; empty source groups prune through layout
+  reconciliation.
 - `shell-react` persists editor state in browser storage and restores tabs,
   groups, split direction, and split ratios on provider startup.
 - `WorkbenchProvider` accepts `Storage`-compatible adapters for editor state,

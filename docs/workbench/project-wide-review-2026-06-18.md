@@ -95,6 +95,9 @@ Recommended work:
   workbench layout, keybinding overrides, local preference persistence, and
   extension install-state management, so a non-browser shell can bridge those
   snapshots to host-owned `state.json` or user-data storage.
+- 2026-06-25 hardening: existing-target split/move calls no longer let stray
+  direction hints rebuild the layout tree; `EditorService` preserves nested
+  split intent and prunes only empty groups.
 - Still open: a concrete host file-backed adapter and plugin store install/update
   planning on top of the shared extension install-state storage contract.
 
@@ -248,13 +251,15 @@ Recommended work:
 
 ## Suggested Next Slice
 
-The highest-value next implementation slice is editor layout ownership:
+The highest-value next implementation slice is JDW validation/source polish:
 
-1. Add first-class layout operations to `EditorService`.
-2. Extract editor-tab DnD decision helpers from `EditorArea`.
-3. Cover same-group reorder, no-op self-drop, cross-group move, split left,
-   split right, and empty-group cleanup in core tests.
-4. Keep React as a renderer of the service-owned layout tree.
+1. Add stronger source-range feedback for selected widget paths.
+2. Keep Monaco diagnostics, validation banner, and preview rendering aligned on
+   the same parsed/validated JDW contract.
+3. Cover the behavior with focused widget-tree tests and required Storybook play
+   only when the user-visible flow changes.
+4. If staying in shell infrastructure, take the concrete host file-backed
+   storage adapter or plugin install/update plan next.
 
-This addresses the most fragile VS Code-parity area while reusing the strongest
-logic already present in the repository.
+Editor layout ownership is now service-owned for split direction, ratios,
+nested insertions, existing-target moves, and empty-group pruning.

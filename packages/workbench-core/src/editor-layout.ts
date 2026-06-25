@@ -147,26 +147,6 @@ export function cloneEditorLayout(layout: EditorLayoutNode): EditorLayoutNode {
   };
 }
 
-export function createEditorLayoutOverride(
-  currentLayout: EditorLayoutNode,
-  groups: readonly EditorGroupState[],
-  direction: EditorLayoutDirection | undefined,
-): EditorLayoutNode | undefined {
-  if (!direction) {
-    return undefined;
-  }
-
-  return createEditorLayoutFromGroups(
-    groups,
-    currentLayout.type === 'split'
-      ? {
-          direction,
-          primarySizePercent: currentLayout.primarySizePercent,
-        }
-      : { direction },
-  );
-}
-
 export function createEditorLayoutForInsertedGroup(
   currentLayout: EditorLayoutNode,
   groups: readonly EditorGroupState[],

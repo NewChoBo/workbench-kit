@@ -5,7 +5,6 @@ import type { EditorHostFactoryRegistry } from './host-factory-registry.js';
 import type { EditorResolverRegistry } from './editor-resolver-registry.js';
 import {
   createEditorLayoutForInsertedGroup,
-  createEditorLayoutOverride,
   normalizeEditorSplitPrimarySizePercent,
   reconcileEditorLayoutWithGroups,
   updateEditorSplitLayout,
@@ -162,7 +161,7 @@ export class EditorService implements Disposable {
         : insertGroupAfter(this.state.groups, anchorGroupId, nextTargetGroup);
 
     const nextLayout = targetGroup
-      ? createEditorLayoutOverride(this.state.layout, nextGroups, options.direction)
+      ? undefined
       : createEditorLayoutForInsertedGroup(this.state.layout, nextGroups, {
           anchorGroupId,
           before: Boolean(options.beforeGroupId),
@@ -266,7 +265,7 @@ export class EditorService implements Disposable {
     }
 
     const nextLayout = targetGroup
-      ? createEditorLayoutOverride(this.state.layout, nextGroups, options.direction)
+      ? undefined
       : createEditorLayoutForInsertedGroup(this.state.layout, nextGroups, {
           anchorGroupId: options.beforeGroupId ?? options.afterGroupId ?? sourceLocation.group.id,
           before: Boolean(options.beforeGroupId),

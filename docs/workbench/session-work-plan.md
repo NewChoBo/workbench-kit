@@ -28,10 +28,10 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 ## 요약
 
 - **Codex 위임:** Lane A 잔여 작업은 닫혔다. 현재 위임 컨텍스트는 [lane-a-closeout-audit-2026-06-25.md](./lane-a-closeout-audit-2026-06-25.md)를 기준으로 post-Lane A hardening 또는 JDW polish로 넘어간다.
-- **지금 어디:** Lane A **완료**. WB-23~WB-31과 S12 DoD audit이 닫혔고, Track D D1/D2/D3 known cleanup도 닫혔다. 현재 활성 context는 JDW Track B/B-UX: B1 placement schema parity, B4 wrapper/single-child resize, preview asset drop + placement marker, preview hover/focus chrome, drag/reparent ghost + snap indicators, per-parent schema specialization까지 닫은 상태다. 다음 큰 작업은 editor layout ownership hardening 또는 JDW validation/source polish와 zoom/pan 정책 결정이다.
+- **지금 어디:** Lane A **완료**. WB-23~WB-31과 S12 DoD audit이 닫혔고, Track D D1/D2/D3 known cleanup도 닫혔다. 현재 활성 context는 JDW Track B/B-UX: B1 placement schema parity, B4 wrapper/single-child resize, preview asset drop + placement marker, preview hover/focus chrome, drag/reparent ghost + snap indicators, per-parent schema specialization까지 닫은 상태다. Editor layout ownership은 service-owned split/merge invariants까지 보강 중이며 다음 큰 작업은 JDW validation/source polish와 zoom/pan 정책 결정이다.
 - **다음 3세션:**
-  1. **Editor layout ownership** — split intent and group merge behavior remain service-owned and shell-thin.
-  2. **JDW validation/source polish** — validation banner parity, source selection range, and remaining outline edge cases.
+  1. **JDW validation/source polish** — validation banner parity, source selection range, and remaining outline edge cases.
+  2. **Host-backed storage / install state** — concrete file-backed adapter and plugin install/update plan.
   3. **Track C scoping** — dirty guard, resource draft shells, consumer swap, i18n/theme, preview zoom/pan 중 정책 결정이 필요한 항목 분리.
 - **B-UX:** WB-29 이후 tree/preview 중심 UX-1~UX-4 core가 상당 부분 들어왔다. 캔버스 authoring은 B3 first wire-in(선택 프레임 + stack/grid drag commit), stack 8방향 resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper/single-child resize, asset-to-preview drop + parent/index/slot marker, preview hover/focus chrome, drag/reparent ghost + snap indicators까지 들어왔고, root JDW schema/validator placement parity와 per-parent children schema specialization도 들어왔다. 남은 polish는 validation/source UX와 zoom/pan 정책 결정이다.
 - **Track D:** D1 validation/type-alias cleanup, D2 이중 렌더 통합, D3 legacy shim cleanup이 닫혔다. D0 inventory refresh와 D4 doc truth는 필요 시 계속 갱신한다.
@@ -54,8 +54,8 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 | ------------------- | -------------------------------------------------------------------------------------------------- |
 | **Date**            | 2026-06-25                                                                                         |
 | **Branch**          | `feature/theia-strengths-workbench`                                                                |
-| **Working tree**    | Track D D3 editor scaffold trim + JDW B-UX5 drag/reparent indicators                               |
-| **Last commits**    | D1 preview validation cleanup; D3 URI parser cleanup                                               |
+| **Working tree**    | Editor layout ownership hardening                                                                  |
+| **Last commits**    | B-UX5 drag feedback + editor host context cleanup; D1/D3 cleanup                                   |
 | **Lane A progress** | Complete (WB-23–WB-31 plus S12 DoD audit)                                                          |
 | **Validate note**   | `pnpm validate:full` green 2026-06-25; Vitest 204 files / 926 tests; Storybook required play 29/29 |
 
@@ -66,7 +66,7 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 ### Track A — Workbench Lane A (primary, sequential)
 
 ```text
-Lane A complete -> editor layout ownership or JDW validation/source polish
+Lane A complete -> JDW validation/source polish or Track C policy
 ```
 
 | Milestone | Status   | Next action                                                          |
@@ -87,13 +87,13 @@ Lane A complete -> editor layout ownership or JDW validation/source polish
 
 From [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md) §8:
 
-| Phase | Scope                                                 | Priority        | Blocks on Lane A?                                                                                                                                                                                                                                                            |
-| ----- | ----------------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B0    | JDW v7 parse/patch/layout                             | **Done**        | No                                                                                                                                                                                                                                                                           |
-| B1    | Schema parity; preview pipeline hardening             | **Done**        | Root JDW schema exposes parent-scoped placement args; validator checks linear/grid/stack placement; row/column, grid, and stack children now use parent-specific schema item definitions                                                                                     |
-| B2    | Mapping layer spec (hit-test → patch → normalize)     | **Done (base)** | No — headless tests only                                                                                                                                                                                                                                                     |
-| B3    | Wire canvas into `WidgetTreeLab`; tree ↔ canvas sel   | **First slice** | No — selected frame + stack/grid drag commit landed                                                                                                                                                                                                                          |
-| B4    | Drag reparent, resize, grid reflow, optional zoom/pan | **Partial**     | Stack 8-way resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper-child resize, asset preview drop, and asset preview drop marker landed; broader drag/reparent placement polish remains |
+| Phase | Scope                                                 | Priority        | Blocks on Lane A?                                                                                                                                                                                                                                                                               |
+| ----- | ----------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B0    | JDW v7 parse/patch/layout                             | **Done**        | No                                                                                                                                                                                                                                                                                              |
+| B1    | Schema parity; preview pipeline hardening             | **Done**        | Root JDW schema exposes parent-scoped placement args; validator checks linear/grid/stack placement; row/column, grid, and stack children now use parent-specific schema item definitions                                                                                                        |
+| B2    | Mapping layer spec (hit-test → patch → normalize)     | **Done (base)** | No — headless tests only                                                                                                                                                                                                                                                                        |
+| B3    | Wire canvas into `WidgetTreeLab`; tree ↔ canvas sel   | **First slice** | No — selected frame + stack/grid drag commit landed                                                                                                                                                                                                                                             |
+| B4    | Drag reparent, resize, grid reflow, optional zoom/pan | **Partial**     | Stack 8-way resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper-child resize, asset preview drop + marker, and drag/reparent ghost + snap indicators landed; broader placement policy and zoom/pan remain |
 
 ### Track B-UX — JDW editor UX (parallel, tree-first)
 
@@ -492,13 +492,13 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Priority | Item                                                                         | Parallel?     | Conflict hotspots                               | Notes                     |
 | -------- | ---------------------------------------------------------------------------- | ------------- | ----------------------------------------------- | ------------------------- |
-| P0       | **Editor layout ownership** (`EditorService` split model)                    | Parallel-safe | `editor-service.ts`, `EditorArea` DnD           | recommended-work-items P1 |
-| P1       | **JDW validation/source polish**                                             | Parallel-safe | `react/widget-tree`, `react/jdw`                | Storybook + component     |
+| P0       | **JDW validation/source polish**                                             | Parallel-safe | `react/widget-tree`, `react/jdw`                | Storybook + component     |
+| P1       | **Host-backed storage / install state plan**                                 | Parallel-safe | `shell-react/provider`, install-state storage   | recommended-work-items P1 |
 | P1       | **Layout CSS P1-2~P1-5** (sidebar flex, settings scroll, panel-header dedup) | Parallel-safe | `packages/react/src/styles.css`, settings modal | P1-1 overlay CSS done     |
 | P2       | **Track D D0** inventory refresh                                             | Parallel-safe | `react/jdw`, workbench document demo paths      | D1 known candidates done  |
 | P2       | **Sidebar Phase B-2** overlay footer decision (Chat/Commands)                | Parallel-safe | `SideBarViewFrame`, Chat/Commands               | Browser smoke only        |
 
-**Suggested next slice:** Editor layout ownership hardening. If staying in JDW, take validation/source polish or decide the preview zoom/pan policy before adding UI.
+**Suggested next slice:** JDW validation/source polish. If staying in shell infrastructure, take host-backed storage adapter or plugin install/update planning.
 
 ---
 
@@ -506,6 +506,7 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Date       | Note                                                                                                                                                                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | Editor layout ownership hardening: existing-target split/move ignores direction hints and preserves service-owned nested split layout while empty groups are pruned                                     |
 | 2026-06-25 | Validation: `pnpm validate:full` green for editor host context trim plus B-UX5 drag/reparent indicators; Vitest 204 files / 926 tests and Storybook required play 29/29                                 |
 | 2026-06-25 | B-UX5 drag/reparent indicators: canvas drag now shows a live ghost, snap guide lines, and reparent drop target/marker before committing JDW patches                                                     |
 | 2026-06-25 | Track D D3 editor scaffold trim: editor host factory context now requires `resourceUri`, removes unused `tabId`, and builtin editor/command hosts no longer carry defensive missing-URI branches        |

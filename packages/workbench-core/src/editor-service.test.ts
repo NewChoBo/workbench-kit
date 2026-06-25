@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { createEditorHostFactoryRegistry } from './host-factory-registry.js';
 import { createEditorResolverRegistry } from './editor-resolver-registry.js';
-import { createEditorService, DEFAULT_EDITOR_GROUP_ID } from './editor-service.js';
+import {
+  createEditorService,
+  DEFAULT_EDITOR_GROUP_ID,
+  type EditorState,
+} from './editor-service.js';
 
 describe('EditorResolverRegistry', () => {
   it('resolves editor ids by priority', () => {
@@ -314,6 +318,124 @@ describe('EditorService', () => {
         },
       ],
       direction: 'vertical',
+      type: 'split',
+    });
+  });
+
+  it('preserves service-owned layout when existing target groups receive direction hints', () => {
+    const editorHostFactories = createEditorHostFactoryRegistry();
+    const createServiceWithNestedLayout = () =>
+      createEditorService({
+        editorHostFactories,
+        initialState: {
+          activeGroupId: 'workbench.editor.group.main',
+          groups: [
+            {
+              activeTabId: 'workbench.editor.tab.1',
+              id: 'workbench.editor.group.main',
+              tabs: [
+                {
+                  dirty: false,
+                  editorId: 'workbench.editor.text',
+                  id: 'workbench.editor.tab.1',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/app.ts',
+                  title: 'app.ts',
+                },
+              ],
+            },
+            {
+              activeTabId: 'workbench.editor.tab.2',
+              id: 'workbench.editor.group.1',
+              tabs: [
+                {
+                  dirty: false,
+                  editorId: 'workbench.editor.text',
+                  id: 'workbench.editor.tab.2',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/details.ts',
+                  title: 'details.ts',
+                },
+              ],
+            },
+            {
+              activeTabId: 'workbench.editor.tab.3',
+              id: 'workbench.editor.group.2',
+              tabs: [
+                {
+                  dirty: false,
+                  editorId: 'workbench.editor.text',
+                  id: 'workbench.editor.tab.3',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/preview.ts',
+                  title: 'preview.ts',
+                },
+              ],
+            },
+          ],
+          layout: {
+            children: [
+              { groupId: 'workbench.editor.group.main', type: 'group' },
+              {
+                children: [
+                  { groupId: 'workbench.editor.group.1', type: 'group' },
+                  { groupId: 'workbench.editor.group.2', type: 'group' },
+                ],
+                direction: 'vertical',
+                primarySizePercent: 40,
+                type: 'split',
+              },
+            ],
+            direction: 'horizontal',
+            primarySizePercent: 60,
+            type: 'split',
+          },
+        } satisfies EditorState,
+      });
+
+    const splitService = createServiceWithNestedLayout();
+    const originalLayout = splitService.getState().layout;
+    const split = splitService.splitEditor({
+      direction: 'vertical',
+      groupId: 'workbench.editor.group.2',
+      tabId: 'workbench.editor.tab.1',
+    });
+    const splitState = splitService.getState();
+
+    expect(split?.id).toBe('workbench.editor.tab.4');
+    expect(splitState.layout).toEqual(originalLayout);
+    expect(splitState.groups[2]?.tabs.map((tab) => tab.id)).toEqual([
+      'workbench.editor.tab.3',
+      split?.id,
+    ]);
+
+    const moveService = createServiceWithNestedLayout();
+    const moved = moveService.moveEditor({
+      direction: 'vertical',
+      groupId: 'workbench.editor.group.2',
+      tabId: 'workbench.editor.tab.2',
+    });
+    const movedState = moveService.getState();
+
+    expect(moved?.id).toBe('workbench.editor.tab.2');
+    expect(movedState.groups.map((group) => group.id)).toEqual([
+      'workbench.editor.group.main',
+      'workbench.editor.group.2',
+    ]);
+    expect(movedState.groups[1]?.tabs.map((tab) => tab.id)).toEqual([
+      'workbench.editor.tab.3',
+      'workbench.editor.tab.2',
+    ]);
+    expect(movedState.layout).toEqual({
+      children: [
+        { groupId: 'workbench.editor.group.main', type: 'group' },
+        { groupId: 'workbench.editor.group.2', type: 'group' },
+      ],
+      direction: 'horizontal',
+      primarySizePercent: 60,
       type: 'split',
     });
   });
