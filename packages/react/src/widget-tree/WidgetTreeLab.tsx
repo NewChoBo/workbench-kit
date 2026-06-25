@@ -7,7 +7,7 @@ import {
   createJdwDocumentJsonSchema,
   createWidgetDocument,
   firstSelectedWidgetPath,
-  findLineAndColumnForPath,
+  findSourceRangeForPath,
   getWidgetAtPath,
   getWidgetChildren,
   materializeWidgetPlacementAsset,
@@ -18,8 +18,10 @@ import {
   validateJsonWidgetData,
   type GenericWidget,
   type JsonWidgetNode,
+  type ValidationIssue,
   type WidgetPatch,
   type WidgetPath,
+  type WidgetPathSegment,
   type WidgetSelectionState,
 } from '@workbench-kit/jdw';
 
@@ -46,18 +48,66 @@ import {
   type WidgetTreeViewMode,
 } from './widget-tree-mode.js';
 
+type JsonEditorProblemLocation = Pick<
+  JsonEditorProblem,
+  'startLineNumber' | 'startColumn' | 'endLineNumber' | 'endColumn'
+>;
+
+function fallbackJsonEditorProblemLocation(): JsonEditorProblemLocation {
+  return {
+    startLineNumber: 1,
+    startColumn: 1,
+    endLineNumber: 1,
+    endColumn: 2,
+  };
+}
+
+function resolveWidgetProblemLocation(source: string, path: WidgetPath): JsonEditorProblemLocation {
+  for (let depth = path.length; depth >= 0; depth--) {
+    const candidate = findSourceRangeForPath(source, path.slice(0, depth));
+    if (candidate) return candidate;
+  }
+
+  return fallbackJsonEditorProblemLocation();
+}
+
+export function widgetPathFromJdwIssuePath(issuePath: string): WidgetPath {
+  const path: WidgetPathSegment[] = [];
+  const childPattern = /\.args\.(children\[(\d+)\]|child)/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = childPattern.exec(issuePath)) !== null) {
+    if (match[1] === 'child') {
+      path.push({ kind: 'child' });
+      continue;
+    }
+
+    const index = Number(match[2]);
+    if (Number.isInteger(index) && index >= 0) {
+      path.push({ kind: 'children', index });
+    }
+  }
+
+  return path;
+}
+
+export function createWidgetTreeValidationProblems(
+  source: string,
+  issues: readonly ValidationIssue[],
+): readonly JsonEditorProblem[] {
+  return issues.map((issue) => ({
+    ...resolveWidgetProblemLocation(source, widgetPathFromJdwIssuePath(issue.path)),
+    message: `${issue.path}: ${issue.message}`,
+    severity: 8,
+  }));
+}
+
 export function createWidgetTreeListenProblems(
   source: string,
   node: JsonWidgetNode,
 ): readonly JsonEditorProblem[] {
   return collectJsonWidgetListenBindings(node).flatMap((binding) => {
-    const position = findLineAndColumnForPath(source, binding.widgetPath);
-    const location = {
-      startLineNumber: position.line,
-      startColumn: position.column,
-      endLineNumber: position.line,
-      endColumn: position.column + 1,
-    };
+    const location = resolveWidgetProblemLocation(source, binding.widgetPath);
     return [
       ...binding.missingListen.map((dependency) => ({
         ...location,
@@ -158,24 +208,17 @@ export function WidgetTreeLab({
       strictKnownTypes: true,
     });
   }, [document.parseError, registry, registeredTypes, value]);
-  const sourceValidationError = useMemo(() => {
-    if (document.parseError !== null) {
-      return document.parseError;
-    }
-
-    if (!validation || validation.valid || validation.issues.length === 0) {
-      return null;
-    }
-
-    const [firstIssue] = validation.issues;
-    return firstIssue ? `${firstIssue.path}: ${firstIssue.message}` : null;
-  }, [document.parseError, validation]);
   const sourceProblems = useMemo<readonly JsonEditorProblem[]>(() => {
-    if (!validation?.value || !validation.valid) {
+    if (!validation) {
       return [];
     }
 
-    return createWidgetTreeListenProblems(value, validation.value);
+    const validationProblems = createWidgetTreeValidationProblems(value, validation.issues);
+    if (!validation.valid || !validation.value) {
+      return validationProblems;
+    }
+
+    return [...validationProblems, ...createWidgetTreeListenProblems(value, validation.value)];
   }, [validation, value]);
 
   const [selection, setSelection] = useState<WidgetSelectionState>({ pathKeys: new Set() });
@@ -376,7 +419,7 @@ export function WidgetTreeLab({
   const sourcePane = (
     <WidgetSourceEditor
       jsonSchema={jsonSchema}
-      parseError={sourceValidationError}
+      parseError={document.parseError}
       path={path}
       problems={sourceProblems}
       readOnly={readOnly}

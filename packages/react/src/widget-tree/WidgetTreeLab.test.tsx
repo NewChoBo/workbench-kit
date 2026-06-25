@@ -1,8 +1,17 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { formatJsonWidgetData, parseJsonWidgetData } from '@workbench-kit/jdw';
+import {
+  formatJsonWidgetData,
+  parseJsonWidgetData,
+  validateJsonWidgetData,
+} from '@workbench-kit/jdw';
 
-import { createWidgetTreeListenProblems, WidgetTreeLab } from './WidgetTreeLab.js';
+import {
+  createWidgetTreeListenProblems,
+  createWidgetTreeValidationProblems,
+  widgetPathFromJdwIssuePath,
+  WidgetTreeLab,
+} from './WidgetTreeLab.js';
 import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';
 import { WIDGET_TREE_DEMO_ASSET_CATALOG } from './demo-widget-assets.js';
 
@@ -73,6 +82,48 @@ describe('WidgetTreeLab', () => {
     ]);
   });
 
+  it('maps JDW validation issue paths back to widget paths', () => {
+    expect(
+      widgetPathFromJdwIssuePath('root.args.children[1].args.children[0].args.fontSize'),
+    ).toEqual([
+      { kind: 'children', index: 1 },
+      { kind: 'children', index: 0 },
+    ]);
+    expect(widgetPathFromJdwIssuePath('root.args.child.args.text')).toEqual([{ kind: 'child' }]);
+    expect(widgetPathFromJdwIssuePath('root.args.columns')).toEqual([]);
+  });
+
+  it('creates blocking validation errors at the nearest widget source range', () => {
+    const source = `{
+  "type": "column",
+  "args": {
+    "children": [
+      {
+        "type": "text",
+        "args": {
+          "text": "Bad",
+          "fontSize": 0
+        }
+      }
+    ]
+  }
+}`;
+    const validation = validateJsonWidgetData(source);
+
+    const problems = createWidgetTreeValidationProblems(source, validation.issues);
+
+    expect(problems).toEqual([
+      {
+        startLineNumber: 5,
+        startColumn: 7,
+        endLineNumber: 11,
+        endColumn: 8,
+        message: 'root.args.children[0].args.fontSize: fontSize must be >= 1.',
+        severity: 8,
+      },
+    ]);
+  });
+
   it('surfaces listen binding warnings in the source problem count', () => {
     const markup = renderToStaticMarkup(
       <WidgetTreeLab
@@ -92,5 +143,23 @@ describe('WidgetTreeLab', () => {
     expect(markup).toContain('1 Warning');
     expect(markup).toContain('data-status="warning"');
     expect(markup).toContain('data-testid="jdw-preview-output"');
+  });
+
+  it('surfaces semantic validation errors in the source problem count', () => {
+    const markup = renderToStaticMarkup(
+      <WidgetTreeLab
+        registry={WIDGET_TREE_DEMO_REGISTRY}
+        value={JSON.stringify({
+          type: 'grid',
+          args: { children: [] },
+        })}
+        onChange={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('1 Error');
+    expect(markup).toContain('data-status="failed"');
+    expect(markup).toContain('data-testid="jdw-preview-error"');
+    expect(markup).toContain('root.args.columns: columns is required.');
   });
 });
