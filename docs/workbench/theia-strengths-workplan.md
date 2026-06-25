@@ -65,8 +65,9 @@ preference scopes.
 - 2026-06-25: S12 Lane A DoD audit closed the current workbench context. Lane A
   is complete. Track D known cleanup later closed capability seeds,
   editor-facing URI parsing, editor host context trim, JDW preview validation
-  duplication, JDW drag/reparent indicator polish, and editor layout hardening;
-  next work should start from JDW validation/source polish or host-backed
+  duplication, JDW drag/reparent indicator polish, editor layout hardening, and
+  JDW source range polish; next work should start from JDW validation/outline
+  polish or host-backed
   storage planning.
 - 2026-06-20: WB-28 editor shell scope was landed. Built-in explorer command
   handlers and UI command dispatch were present; WB-29 closeout still remained

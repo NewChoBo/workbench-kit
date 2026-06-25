@@ -93,6 +93,7 @@ export function summarizeJsonEditorProblems(problems: readonly JsonEditorProblem
 }
 
 export interface JsonCodeEditorPaneProps {
+  activeSourceRange?: JsonEditorRange | null | undefined;
   documentParseError?: string | null | undefined;
   file: WorkspaceFile;
   jsonSchema?: WidgetJsonSchema | null | undefined;
@@ -113,7 +114,33 @@ export interface JsonEditorPosition {
   readonly lineNumber: number;
 }
 
+export interface JsonEditorRange {
+  readonly startLineNumber: number;
+  readonly startColumn: number;
+  readonly endLineNumber: number;
+  readonly endColumn: number;
+}
+
+const MONACO_DECORATION_STICKINESS_NEVER_GROWS = 1;
+
+export function createJsonEditorActiveSourceRangeDecorations(
+  activeSourceRange: JsonEditorRange | null | undefined,
+): editor.IModelDeltaDecoration[] {
+  if (!activeSourceRange) return [];
+
+  return [
+    {
+      range: activeSourceRange,
+      options: {
+        className: 'ui-json-code-editor-pane__active-source-range',
+        stickiness: MONACO_DECORATION_STICKINESS_NEVER_GROWS,
+      },
+    },
+  ];
+}
+
 export function JsonCodeEditorPane({
+  activeSourceRange = null,
   documentParseError = null,
   file,
   jsonSchema = null,
@@ -129,6 +156,7 @@ export function JsonCodeEditorPane({
   value,
 }: JsonCodeEditorPaneProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const activeSourceRangeDecorationsRef = useRef<editor.IEditorDecorationsCollection | null>(null);
   const markerListenerRef = useRef<IDisposable | null>(null);
   const cursorListenerRef = useRef<IDisposable | null>(null);
   const cursorChangeRef = useRef<typeof onCursorPositionChange>(onCursorPositionChange);
@@ -170,6 +198,8 @@ export function JsonCodeEditorPane({
       markerListenerRef.current = null;
       cursorListenerRef.current?.dispose();
       cursorListenerRef.current = null;
+      activeSourceRangeDecorationsRef.current?.clear();
+      activeSourceRangeDecorationsRef.current = null;
     },
     [],
   );
@@ -183,6 +213,34 @@ export function JsonCodeEditorPane({
     editor.setPosition(revealPosition);
     editor.revealPositionInCenter(revealPosition);
   }, [revealPosition?.column, revealPosition?.lineNumber]);
+
+  const syncActiveSourceRangeDecorations = (monacoEditor: editor.IStandaloneCodeEditor) => {
+    const decorations = createJsonEditorActiveSourceRangeDecorations(activeSourceRange);
+    if (decorations.length === 0) {
+      activeSourceRangeDecorationsRef.current?.clear();
+      return;
+    }
+
+    if (!activeSourceRangeDecorationsRef.current) {
+      activeSourceRangeDecorationsRef.current =
+        monacoEditor.createDecorationsCollection(decorations);
+      return;
+    }
+
+    activeSourceRangeDecorationsRef.current.set(decorations);
+  };
+
+  useEffect(() => {
+    const monacoEditor = editorRef.current;
+    if (!monacoEditor) return;
+
+    syncActiveSourceRangeDecorations(monacoEditor);
+  }, [
+    activeSourceRange?.endColumn,
+    activeSourceRange?.endLineNumber,
+    activeSourceRange?.startColumn,
+    activeSourceRange?.startLineNumber,
+  ]);
 
   const configureJsonSchema = (monaco: WorkbenchMonaco, path: string) => {
     if (!jsonSchema) return;
@@ -209,6 +267,7 @@ export function JsonCodeEditorPane({
 
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+    syncActiveSourceRangeDecorations(editor);
     configureJsonSchema(monaco, file.path);
     onEditorMount?.(editor, monaco);
 

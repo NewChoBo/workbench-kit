@@ -12,7 +12,7 @@ export type {
 
 export { WidgetRegistry, createWidgetRegistry, type WidgetDefinition } from './widget-registry.js';
 
-export type { WidgetPath, WidgetPathSegment } from './path.js';
+export type { WidgetPath, WidgetPathSegment, WidgetSourceRange } from './path.js';
 
 export {
   ROOT_WIDGET_PATH,
@@ -20,6 +20,7 @@ export {
   appendChildrenPath,
   findLineAndColumnForPath,
   findPathForLineAndColumn,
+  findSourceRangeForPath,
   parseWidgetPathKey,
   widgetPathEquals,
   widgetPathKey,

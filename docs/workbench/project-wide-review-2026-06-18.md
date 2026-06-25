@@ -251,9 +251,9 @@ Recommended work:
 
 ## Suggested Next Slice
 
-The highest-value next implementation slice is JDW validation/source polish:
+The highest-value next implementation slice is JDW validation/outline polish:
 
-1. Add stronger source-range feedback for selected widget paths.
+1. Keep the newly wired source-range feedback covered while removing remaining validation and outline edge gaps.
 2. Keep Monaco diagnostics, validation banner, and preview rendering aligned on
    the same parsed/validated JDW contract.
 3. Cover the behavior with focused widget-tree tests and required Storybook play

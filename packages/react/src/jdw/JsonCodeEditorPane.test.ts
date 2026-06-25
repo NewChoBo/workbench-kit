@@ -5,7 +5,11 @@ vi.mock('@workbench-kit/monaco', async () => {
   return createWorkbenchMonacoMockModule();
 });
 
-import { summarizeJsonEditorProblems, type JsonEditorProblem } from './JsonCodeEditorPane.js';
+import {
+  createJsonEditorActiveSourceRangeDecorations,
+  summarizeJsonEditorProblems,
+  type JsonEditorProblem,
+} from './JsonCodeEditorPane.js';
 
 function problem(severity: number): JsonEditorProblem {
   return {
@@ -41,5 +45,30 @@ describe('summarizeJsonEditorProblems', () => {
       label: 'No Problems',
       status: 'completed',
     });
+  });
+});
+
+describe('createJsonEditorActiveSourceRangeDecorations', () => {
+  it('builds a Monaco decoration for the active JSON source range', () => {
+    const range = {
+      startLineNumber: 11,
+      startColumn: 5,
+      endLineNumber: 19,
+      endColumn: 6,
+    };
+
+    expect(createJsonEditorActiveSourceRangeDecorations(range)).toEqual([
+      {
+        range,
+        options: {
+          className: 'ui-json-code-editor-pane__active-source-range',
+          stickiness: 1,
+        },
+      },
+    ]);
+  });
+
+  it('returns no decorations when no source range is active', () => {
+    expect(createJsonEditorActiveSourceRangeDecorations(null)).toEqual([]);
   });
 });

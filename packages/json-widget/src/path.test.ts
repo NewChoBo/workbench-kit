@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { findLineAndColumnForPath, findPathForLineAndColumn, type WidgetPath } from './path.js';
+import {
+  findLineAndColumnForPath,
+  findPathForLineAndColumn,
+  findSourceRangeForPath,
+  type WidgetPath,
+} from './path.js';
 
 describe('widget path scanner', () => {
   const sampleJson = `{
@@ -108,6 +113,51 @@ describe('widget path scanner', () => {
         { kind: 'children', index: 1 },
         { kind: 'children', index: 0 },
       ]);
+    });
+  });
+
+  describe('findSourceRangeForPath', () => {
+    it('finds the full root object range', () => {
+      expect(findSourceRangeForPath(sampleJson, [])).toEqual({
+        startLineNumber: 1,
+        startColumn: 1,
+        endLineNumber: 21,
+        endColumn: 2,
+      });
+    });
+
+    it('finds a child object range in a children array', () => {
+      expect(findSourceRangeForPath(sampleJson, [{ kind: 'children', index: 1 }])).toEqual({
+        startLineNumber: 11,
+        startColumn: 5,
+        endLineNumber: 19,
+        endColumn: 6,
+      });
+    });
+
+    it('finds ranges through JDW v7 args wrappers', () => {
+      expect(
+        findSourceRangeForPath(jdwJson, [
+          { kind: 'children', index: 1 },
+          { kind: 'children', index: 0 },
+        ]),
+      ).toEqual({
+        startLineNumber: 15,
+        startColumn: 13,
+        endLineNumber: 20,
+        endColumn: 14,
+      });
+    });
+
+    it('returns null for paths that are missing from the current source', () => {
+      expect(findSourceRangeForPath(sampleJson, [{ kind: 'children', index: 3 }])).toBeNull();
+      expect(findSourceRangeForPath('', [])).toBeNull();
+    });
+
+    it('returns null for malformed child entries without stalling the scanner', () => {
+      expect(
+        findSourceRangeForPath('{"type":"grid","children":[@]}', [{ kind: 'children', index: 0 }]),
+      ).toBeNull();
     });
   });
 });

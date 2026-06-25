@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import type { WidgetJsonSchema } from '@workbench-kit/contracts';
 import {
-  findLineAndColumnForPath,
   findPathForLineAndColumn,
+  findSourceRangeForPath,
   getWidgetAtPath,
   type GenericWidget,
   type WidgetPath,
@@ -10,6 +10,7 @@ import {
 
 import {
   JsonCodeEditorPane,
+  type JsonEditorRange,
   type JsonEditorPosition,
   type JsonEditorProblem,
 } from '../jdw/JsonCodeEditorPane.js';
@@ -37,13 +38,21 @@ export function resolveWidgetSourceRevealPosition(
   source: string,
   path: WidgetPath | null | undefined,
 ): JsonEditorPosition | null {
-  if (!path) return null;
+  const position = resolveWidgetSourceActiveRange(source, path);
+  if (!position) return null;
 
-  const position = findLineAndColumnForPath(source, path);
   return {
-    column: position.column,
-    lineNumber: position.line,
+    column: position.startColumn,
+    lineNumber: position.startLineNumber,
   };
+}
+
+export function resolveWidgetSourceActiveRange(
+  source: string,
+  path: WidgetPath | null | undefined,
+): JsonEditorRange | null {
+  if (!path) return null;
+  return findSourceRangeForPath(source, path);
 }
 
 export function resolveWidgetPathForEditorPosition(
@@ -83,9 +92,19 @@ export function WidgetSourceEditor({
     }),
     [path, value],
   );
-  const revealPosition = useMemo(
-    () => resolveWidgetSourceRevealPosition(value, selectedPath),
+  const activeSourceRange = useMemo(
+    () => resolveWidgetSourceActiveRange(value, selectedPath),
     [selectedPath, value],
+  );
+  const revealPosition = useMemo(
+    () =>
+      activeSourceRange
+        ? {
+            column: activeSourceRange.startColumn,
+            lineNumber: activeSourceRange.startLineNumber,
+          }
+        : null,
+    [activeSourceRange?.startColumn, activeSourceRange?.startLineNumber],
   );
 
   const handleCursorPositionChange = ({
@@ -105,6 +124,7 @@ export function WidgetSourceEditor({
   return (
     <div className="widget-tree-source" data-testid="widget-tree-source">
       <JsonCodeEditorPane
+        activeSourceRange={activeSourceRange}
         documentParseError={parseError}
         file={file}
         jsonSchema={jsonSchema}

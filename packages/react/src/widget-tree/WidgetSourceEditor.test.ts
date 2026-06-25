@@ -7,6 +7,7 @@ import {
 } from '@workbench-kit/jdw';
 
 import {
+  resolveWidgetSourceActiveRange,
   resolveWidgetPathForEditorPosition,
   resolveWidgetSourceRevealPosition,
 } from './WidgetSourceEditor.js';
@@ -35,6 +36,21 @@ describe('WidgetSourceEditor helpers', () => {
     expect(position).toMatchObject({
       column: 7,
       lineNumber: 11,
+    });
+  });
+
+  it('resolves a selected widget path to a source editor range', () => {
+    const source = formatWidgetDocumentJson(sourceRoot);
+    const range = resolveWidgetSourceActiveRange(source, [
+      { kind: 'children', index: 1 },
+      { kind: 'children', index: 0 },
+    ]);
+
+    expect(range).toEqual({
+      startLineNumber: 15,
+      startColumn: 13,
+      endLineNumber: 20,
+      endColumn: 14,
     });
   });
 

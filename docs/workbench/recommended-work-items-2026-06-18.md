@@ -47,13 +47,13 @@ Status: completed in this run.
 After the 2026-06-25 editor layout hardening, the next highest-value
 implementation goal is:
 
-**JDW validation/source polish** or the remaining host-backed storage adapter
+**JDW validation/outline polish** or the remaining host-backed storage adapter
 work.
 
 Scope:
 
-1. Add source-range highlighting or stronger Monaco selection feedback for JDW
-   widget paths.
+1. Keep source-range highlighting covered while closing validation banner and
+   outline edge gaps.
 2. Keep validation banner, Monaco diagnostics, and preview rendering on the same
    parsed/validated JDW contract.
 3. If staying in shell infrastructure, provide a concrete file-backed storage

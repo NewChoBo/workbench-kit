@@ -4998,6 +4998,11 @@
   z-index: 40;
 }
 
+.ui-json-code-editor-pane__active-source-range {
+  background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--color-accent) 48%, transparent);
+}
+
 .monaco-editor-hover,
 .monaco-hover {
   z-index: 50;
