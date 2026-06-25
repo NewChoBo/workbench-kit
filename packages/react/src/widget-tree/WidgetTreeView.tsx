@@ -40,6 +40,7 @@ export function isWidgetTreeActivateKey(key: string): boolean {
 }
 
 type WidgetTreeNavigationKey = 'ArrowDown' | 'ArrowUp' | 'Home' | 'End';
+type WidgetTreeHorizontalNavigationKey = 'ArrowLeft' | 'ArrowRight';
 type WidgetTreeMoveDirection = 'up' | 'down';
 export type WidgetTreeDropPlacement = 'before' | 'inside' | 'after';
 
@@ -61,6 +62,11 @@ export interface WidgetTreeReparentOperation {
 }
 
 export type WidgetTreeMoveOperation = WidgetTreeReorderOperation | WidgetTreeReparentOperation;
+
+export type WidgetTreeHorizontalNavigationAction =
+  | { readonly type: 'collapse'; readonly path: WidgetPath }
+  | { readonly type: 'expand'; readonly path: WidgetPath }
+  | { readonly type: 'select'; readonly path: WidgetPath };
 
 export interface WidgetTreeAssetDropOperation {
   readonly asset: WidgetPlacementAsset;
@@ -97,6 +103,47 @@ export function resolveWidgetTreeNavigationPath(
   if (key === 'ArrowDown')
     return nodes[Math.min(nodes.length - 1, fallbackIndex + 1)]?.path ?? null;
   return nodes[Math.max(0, fallbackIndex - 1)]?.path ?? null;
+}
+
+function directChildPathOf(
+  nodes: readonly WidgetNode[],
+  parentPath: WidgetPath,
+): WidgetPath | null {
+  return (
+    nodes.find((node) => {
+      if (node.path.length !== parentPath.length + 1) return false;
+      return isPathPrefix(parentPath, node.path);
+    })?.path ?? null
+  );
+}
+
+export function resolveWidgetTreeHorizontalNavigationAction(
+  visibleNodes: readonly WidgetNode[],
+  selection: WidgetSelectionState | undefined,
+  collapsedPathKeys: ReadonlySet<string>,
+  key: WidgetTreeHorizontalNavigationKey,
+): WidgetTreeHorizontalNavigationAction | null {
+  const current = visibleNodes[selectedNodeIndex(visibleNodes, selection)];
+  if (!current) return null;
+
+  const currentPathKey = widgetPathKey(current.path);
+  const isCollapsed = collapsedPathKeys.has(currentPathKey);
+  const hasChildren = hasCollapsibleWidgetChildren(current.widget);
+
+  if (key === 'ArrowRight') {
+    if (!hasChildren) return null;
+    if (isCollapsed) return { type: 'expand', path: current.path };
+
+    const childPath = directChildPathOf(visibleNodes, current.path);
+    return childPath ? { type: 'select', path: childPath } : null;
+  }
+
+  if (hasChildren && !isCollapsed) {
+    return { type: 'collapse', path: current.path };
+  }
+
+  if (current.path.length === 0) return null;
+  return { type: 'select', path: current.path.slice(0, -1) };
 }
 
 export function isRootWidgetPath(path: WidgetPath): boolean {
@@ -380,6 +427,22 @@ export function WidgetTreeView({
   );
   const selectedIndex = selectedNodeIndex(visibleNodes, selection);
 
+  const setPathCollapsed = (path: WidgetPath, collapsed: boolean) => {
+    const pathKey = widgetPathKey(path);
+    setCollapsedPathKeys((current) => {
+      const alreadyCollapsed = current.has(pathKey);
+      if (alreadyCollapsed === collapsed) return current;
+
+      const next = new Set(current);
+      if (collapsed) {
+        next.add(pathKey);
+      } else {
+        next.delete(pathKey);
+      }
+      return next;
+    });
+  };
+
   useEffect(() => {
     if (!selectedPath) return;
 
@@ -398,6 +461,29 @@ export function WidgetTreeView({
     });
   }, [selectedPathKey, selectedPath]);
 
+  const handleHorizontalNavigation = (key: WidgetTreeHorizontalNavigationKey): boolean => {
+    const action = resolveWidgetTreeHorizontalNavigationAction(
+      visibleNodes,
+      selection,
+      collapsedPathKeys,
+      key,
+    );
+    if (!action) return false;
+
+    if (action.type === 'collapse') {
+      setPathCollapsed(action.path, true);
+      return true;
+    }
+
+    if (action.type === 'expand') {
+      setPathCollapsed(action.path, false);
+      return true;
+    }
+
+    onSelectPath?.(action.path);
+    return true;
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
     if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
       const operation = resolveWidgetTreeMoveOperation(
@@ -408,6 +494,13 @@ export function WidgetTreeView({
       if (operation && onMovePath) {
         event.preventDefault();
         onMovePath(operation);
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      if (handleHorizontalNavigation(event.key)) {
+        event.preventDefault();
       }
       return;
     }
@@ -444,17 +537,7 @@ export function WidgetTreeView({
   };
 
   const handleToggleCollapse = (path: WidgetPath, isCollapsed: boolean) => {
-    const pathKey = widgetPathKey(path);
-
-    setCollapsedPathKeys((current) => {
-      const next = new Set(current);
-      if (isCollapsed) {
-        next.delete(pathKey);
-      } else {
-        next.add(pathKey);
-      }
-      return next;
-    });
+    setPathCollapsed(path, !isCollapsed);
 
     if (
       !isCollapsed &&
@@ -579,7 +662,7 @@ export function WidgetTreeView({
         ) : (
           <ul
             aria-label="Widget outline"
-            aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown Delete Backspace"
+            aria-keyshortcuts="ArrowLeft ArrowRight Alt+ArrowUp Alt+ArrowDown Delete Backspace"
             className="widget-tree-outline__list"
             role="tree"
             onKeyDown={handleKeyDown}

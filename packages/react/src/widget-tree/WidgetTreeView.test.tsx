@@ -15,6 +15,7 @@ import {
   isWidgetTreeActivateKey,
   resolveWidgetTreeAssetDropOperation,
   resolveWidgetTreeDropOperation,
+  resolveWidgetTreeHorizontalNavigationAction,
   resolveWidgetTreeMoveOperation,
   resolveWidgetTreeNavigationPath,
   WidgetTreeView,
@@ -86,6 +87,68 @@ describe('WidgetTreeView', () => {
         'End',
       ),
     ).toEqual(nodes[2]!.path);
+  });
+
+  it('resolves VS Code style horizontal outline navigation actions', () => {
+    const nodes = collectWidgetNodes(outlineRoot);
+    const rowPath = nodes[2]!.path;
+    const rowSelection = selectWidgetPath({ pathKeys: new Set() }, rowPath);
+
+    expect(
+      resolveWidgetTreeHorizontalNavigationAction(nodes, rowSelection, new Set(), 'ArrowLeft'),
+    ).toEqual({
+      type: 'collapse',
+      path: rowPath,
+    });
+    expect(
+      resolveWidgetTreeHorizontalNavigationAction(
+        filterVisibleWidgetNodes(nodes, new Set(['$.children[1]'])),
+        rowSelection,
+        new Set(['$.children[1]']),
+        'ArrowRight',
+      ),
+    ).toEqual({
+      type: 'expand',
+      path: rowPath,
+    });
+    expect(
+      resolveWidgetTreeHorizontalNavigationAction(nodes, rowSelection, new Set(), 'ArrowRight'),
+    ).toEqual({
+      type: 'select',
+      path: nodes[3]!.path,
+    });
+  });
+
+  it('resolves ArrowLeft to parent selection for leaf outline nodes', () => {
+    const nodes = collectWidgetNodes(outlineRoot);
+    const nestedLeftPath = nodes[3]!.path;
+    const selection = selectWidgetPath({ pathKeys: new Set() }, nestedLeftPath);
+
+    expect(
+      resolveWidgetTreeHorizontalNavigationAction(nodes, selection, new Set(), 'ArrowLeft'),
+    ).toEqual({
+      type: 'select',
+      path: nodes[2]!.path,
+    });
+    expect(
+      resolveWidgetTreeHorizontalNavigationAction(
+        nodes,
+        selectWidgetPath({ pathKeys: new Set() }, []),
+        new Set(),
+        'ArrowLeft',
+      ),
+    ).toEqual({
+      type: 'collapse',
+      path: [],
+    });
+    expect(
+      resolveWidgetTreeHorizontalNavigationAction(
+        filterVisibleWidgetNodes(nodes, new Set(['$'])),
+        selectWidgetPath({ pathKeys: new Set() }, []),
+        new Set(['$']),
+        'ArrowLeft',
+      ),
+    ).toBeNull();
   });
 
   it('detects array and single-child nodes as collapsible', () => {
@@ -278,7 +341,9 @@ describe('WidgetTreeView', () => {
     );
 
     expect(markup).toContain('role="tree"');
-    expect(markup).toContain('aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown Delete Backspace"');
+    expect(markup).toContain(
+      'aria-keyshortcuts="ArrowLeft ArrowRight Alt+ArrowUp Alt+ArrowDown Delete Backspace"',
+    );
     expect(markup).toContain('aria-expanded="true"');
     expect(markup).toContain('Collapse row');
     expect(markup).toContain('aria-selected="true"');

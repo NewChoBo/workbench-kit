@@ -28,12 +28,12 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 ## 요약
 
 - **Codex 위임:** Lane A 잔여 작업은 닫혔다. 현재 위임 컨텍스트는 [lane-a-closeout-audit-2026-06-25.md](./lane-a-closeout-audit-2026-06-25.md)를 기준으로 post-Lane A hardening 또는 JDW polish로 넘어간다.
-- **지금 어디:** Lane A **완료**. WB-23~WB-31과 S12 DoD audit이 닫혔고, Track D D1/D2/D3 known cleanup도 닫혔다. 현재 활성 context는 JDW Track B/B-UX: B1 placement schema parity, B4 wrapper/single-child resize, preview asset drop + placement marker, preview hover/focus chrome, drag/reparent ghost + snap indicators, per-parent schema specialization, source selection range, semantic validation source problems까지 닫은 상태다. Editor layout ownership은 service-owned split/merge invariants까지 보강 완료했으며 다음 큰 작업은 JDW outline edge polish, remaining validation host parity, zoom/pan 정책 결정이다.
+- **지금 어디:** Lane A **완료**. WB-23~WB-31과 S12 DoD audit이 닫혔고, Track D D1/D2/D3 known cleanup도 닫혔다. 현재 활성 context는 JDW Track B/B-UX: B1 placement schema parity, B4 wrapper/single-child resize, preview asset drop + placement marker, preview hover/focus chrome, drag/reparent ghost + snap indicators, per-parent schema specialization, source selection range, semantic validation source problems, outline ArrowLeft/Right navigation, workspace host save gating까지 닫은 상태다. Editor layout ownership은 service-owned split/merge invariants까지 보강 완료했으며 다음 큰 작업은 remaining outline edge polish와 zoom/pan 정책 결정이다.
 - **다음 3세션:**
-  1. **JDW outline/validation polish** — remaining outline edge cases and validation host parity.
+  1. **JDW outline edge polish** — remaining outline keyboard/drop edge cases.
   2. **Host-backed storage / install state** — concrete file-backed adapter and plugin install/update plan.
   3. **Track C scoping** — dirty guard, resource draft shells, consumer swap, i18n/theme, preview zoom/pan 중 정책 결정이 필요한 항목 분리.
-- **B-UX:** WB-29 이후 tree/preview 중심 UX-1~UX-4 core가 상당 부분 들어왔다. 캔버스 authoring은 B3 first wire-in(선택 프레임 + stack/grid drag commit), stack 8방향 resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper/single-child resize, asset-to-preview drop + parent/index/slot marker, preview hover/focus chrome, drag/reparent ghost + snap indicators까지 들어왔고, root JDW schema/validator placement parity, per-parent children schema specialization, Monaco source range highlight, semantic validation source problems도 들어왔다. 남은 polish는 outline edge UX, validation host parity, zoom/pan 정책 결정이다.
+- **B-UX:** WB-29 이후 tree/preview 중심 UX-1~UX-4 core가 상당 부분 들어왔다. 캔버스 authoring은 B3 first wire-in(선택 프레임 + stack/grid drag commit), stack 8방향 resize, grid columns reflow, canvas reparent, grid drag-slot collision reflow, grid resize span reflow, row/column linear resize, wrapper/single-child resize, asset-to-preview drop + parent/index/slot marker, preview hover/focus chrome, drag/reparent ghost + snap indicators까지 들어왔고, root JDW schema/validator placement parity, per-parent children schema specialization, Monaco source range highlight, semantic validation source problems, outline ArrowLeft/Right navigation, workspace host save gating도 들어왔다. 남은 polish는 remaining outline edge UX와 zoom/pan 정책 결정이다.
 - **Track D:** D1 validation/type-alias cleanup, D2 이중 렌더 통합, D3 legacy shim cleanup이 닫혔다. D0 inventory refresh와 D4 doc truth는 필요 시 계속 갱신한다.
 - **병렬 트랙 B:** Lane B(JDW/widget-tree) B1 placement schema parity는 root schema/validator 기준 완료, B2는 **headless base 완료 기준**, B3는 **React first wire-in 완료 기준**, B4는 stack resize/grid columns/canvas reparent/grid drag-slot reflow/grid resize span reflow/row-column linear resize/wrapper-child resize/asset preview drop까지 **partial complete** 기준으로 정리한다. 남은 Track B edge는 더 넓은 placement polish다.
 - **JDW 편집 UX (Track B-UX):** 트리·Monaco·프리뷰 동기화·validation banner·아웃라인 DnD 등 — [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). 프리뷰 hit-test(B-UX4)는 완료됐고, 캔버스(B-UX5)는 frame/drag/resize/reparent/preview-drop과 live drag feedback까지 확장됐다.
@@ -54,10 +54,10 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 | ------------------- | -------------------------------------------------------------------------------------------------- |
 | **Date**            | 2026-06-25                                                                                         |
 | **Branch**          | `feature/theia-strengths-workbench`                                                                |
-| **Working tree**    | JDW semantic validation source problems                                                            |
-| **Last commits**    | Source selection range polish; editor layout ownership hardening                                   |
+| **Working tree**    | JDW outline and host save parity                                                                   |
+| **Last commits**    | Semantic validation source problems; source selection range polish                                 |
 | **Lane A progress** | Complete (WB-23–WB-31 plus S12 DoD audit)                                                          |
-| **Validate note**   | `pnpm validate:full` green 2026-06-25; Vitest 204 files / 938 tests; Storybook required play 29/29 |
+| **Validate note**   | `pnpm validate:full` green 2026-06-25; Vitest 205 files / 943 tests; Storybook required play 29/29 |
 
 ---
 
@@ -66,7 +66,7 @@ This document is the **actionable session plan** for the next 2–3 weeks. Maste
 ### Track A — Workbench Lane A (primary, sequential)
 
 ```text
-Lane A complete -> JDW outline/validation host polish or Track C policy
+Lane A complete -> JDW remaining outline edge polish or Track C policy
 ```
 
 | Milestone | Status   | Next action                                                          |
@@ -107,7 +107,7 @@ From [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md). Improves `WidgetTreeLab` 
 | **B-UX4** | UX-4     | Preview hit-test selection ↔ outline sync                              | M      | B2 base is consumed; hover/focus chrome landed                                                                                                                                                                                                                                      |
 | **B-UX5** | UX-5     | Canvas wire-in to lab (gesture commit)                                 | L      | First slice + stack 8-way resize + grid columns reflow + canvas reparent + grid drag-slot reflow + grid resize span reflow + row/column linear resize + wrapper-child resize + asset preview drop + placement marker + preview hover/focus chrome + drag/reparent indicators landed |
 
-**Current JDW recommendation:** Lane A is complete and the B-UX5 live drag feedback, source selection range, and semantic source validation slices are closed. The next JDW slice should be outline edge polish, validation host parity, or a deliberate zoom/pan policy decision.
+**Current JDW recommendation:** Lane A is complete and the B-UX5 live drag feedback, source selection range, semantic source validation, outline horizontal navigation, and workspace host save gating slices are closed. The next JDW slice should be remaining outline edge polish or a deliberate zoom/pan policy decision.
 
 ### Track D — timing (refreshed)
 
@@ -492,13 +492,13 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Priority | Item                                                                         | Parallel?     | Conflict hotspots                               | Notes                     |
 | -------- | ---------------------------------------------------------------------------- | ------------- | ----------------------------------------------- | ------------------------- |
-| P0       | **JDW outline/validation host polish**                                       | Parallel-safe | `react/widget-tree`, `react/jdw`                | Source diagnostics wired  |
+| P0       | **JDW remaining outline edge polish**                                        | Parallel-safe | `react/widget-tree`, `react/jdw`                | Keyboard/host save wired  |
 | P1       | **Host-backed storage / install state plan**                                 | Parallel-safe | `shell-react/provider`, install-state storage   | recommended-work-items P1 |
 | P1       | **Layout CSS P1-2~P1-5** (sidebar flex, settings scroll, panel-header dedup) | Parallel-safe | `packages/react/src/styles.css`, settings modal | P1-1 overlay CSS done     |
 | P2       | **Track D D0** inventory refresh                                             | Parallel-safe | `react/jdw`, workbench document demo paths      | D1 known candidates done  |
 | P2       | **Sidebar Phase B-2** overlay footer decision (Chat/Commands)                | Parallel-safe | `SideBarViewFrame`, Chat/Commands               | Browser smoke only        |
 
-**Suggested next slice:** JDW outline edge polish or validation host parity. If staying in shell infrastructure, take host-backed storage adapter or plugin install/update planning.
+**Suggested next slice:** JDW remaining outline edge polish. If staying in shell infrastructure, take host-backed storage adapter or plugin install/update planning.
 
 ---
 
@@ -506,6 +506,9 @@ No open-source React library implements JDW v7 parity. This repo layers headless
 
 | Date       | Note                                                                                                                                                                                                    |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | Validation: `pnpm validate:full` green for JDW outline and workspace host save parity; Vitest 205 files / 943 tests and Storybook required play 29/29                                                   |
+| 2026-06-25 | JDW workspace host save gating: `WorkspaceEditorPanel` accepts a save gate and `WidgetTreeWorkspaceShell` blocks invalid JDW saves before host-level Ctrl+S/tab-save reaches persistence                |
+| 2026-06-25 | JDW outline horizontal navigation: ArrowLeft/Right now resolve tree collapse, expand, parent selection, and first-child selection actions                                                               |
 | 2026-06-25 | Validation: `pnpm validate:full` green for JDW semantic validation source problems; Vitest 204 files / 938 tests and Storybook required play 29/29                                                      |
 | 2026-06-25 | JDW semantic validation source problems: validation issues now appear as Monaco problem entries located at the nearest widget source range instead of being treated as parse errors                     |
 | 2026-06-25 | Validation: `pnpm validate:full` green for JDW source selection range polish; Vitest 204 files / 935 tests and Storybook required play 29/29                                                            |

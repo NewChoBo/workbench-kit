@@ -10,6 +10,7 @@ export {
 export type { WorkspaceEditorProps, WorkspaceEditorTheme } from './WorkspaceEditor';
 export { WorkspaceEditorPanel } from './WorkspaceEditorPanel';
 export type {
+  WorkspaceEditorPanelCanSaveFile,
   WorkspaceEditorPanelProps,
   WorkspaceEditorPanelRenderEditor,
   WorkspaceEditorPanelRenderEditorContext,

@@ -52,8 +52,9 @@ work.
 
 Scope:
 
-1. Keep source-range highlighting and semantic source problems covered while
-   closing outline edge and host validation policy gaps.
+1. Keep source-range highlighting, semantic source problems, outline horizontal
+   keyboard navigation, and workspace host save gating covered while closing
+   remaining outline edge gaps.
 2. Keep validation banner, Monaco diagnostics, and preview rendering on the same
    parsed/validated JDW contract.
 3. If staying in shell infrastructure, provide a concrete file-backed storage

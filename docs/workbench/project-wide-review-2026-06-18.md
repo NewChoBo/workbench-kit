@@ -253,7 +253,7 @@ Recommended work:
 
 The highest-value next implementation slice is JDW outline/validation host polish:
 
-1. Keep the newly wired source-range and semantic source-problem feedback covered while removing remaining outline and host validation policy gaps.
+1. Keep the newly wired source-range feedback, semantic source-problem feedback, outline horizontal keyboard navigation, and workspace host save gate covered while removing remaining outline edge gaps.
 2. Keep Monaco diagnostics, validation banner, and preview rendering aligned on
    the same parsed/validated JDW contract.
 3. Cover the behavior with focused widget-tree tests and required Storybook play

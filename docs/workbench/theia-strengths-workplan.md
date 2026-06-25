@@ -66,9 +66,9 @@ preference scopes.
   is complete. Track D known cleanup later closed capability seeds,
   editor-facing URI parsing, editor host context trim, JDW preview validation
   duplication, JDW drag/reparent indicator polish, editor layout hardening, and
-  JDW source range polish, and semantic source validation problems; next work
-  should start from JDW outline/validation host polish or host-backed
-  storage planning.
+  JDW source range polish, semantic source validation problems, outline
+  horizontal navigation, and workspace host save gating; next work should start
+  from JDW remaining outline edge polish or host-backed storage planning.
 - 2026-06-20: WB-28 editor shell scope was landed. Built-in explorer command
   handlers and UI command dispatch were present; WB-29 closeout still remained
   at that checkpoint for selection/reveal/search behavior and sample smoke

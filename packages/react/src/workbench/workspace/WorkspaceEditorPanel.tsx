@@ -57,7 +57,14 @@ export type WorkspaceEditorPanelRenderTabActions = (
   context: WorkspaceEditorPanelRenderTabActionsContext,
 ) => ReactNode;
 
+export type WorkspaceEditorPanelCanSaveFile = (
+  path: string,
+  content: string,
+  file: WorkspaceFile,
+) => boolean;
+
 export interface WorkspaceEditorPanelProps {
+  canSaveFile?: WorkspaceEditorPanelCanSaveFile | undefined;
   emptyLabel?: string;
   files: WorkspaceFile[];
   onCloseAll?: () => void;
@@ -79,6 +86,7 @@ export interface WorkspaceEditorPanelProps {
 }
 
 export function WorkspaceEditorPanel({
+  canSaveFile,
   emptyLabel = 'Open a file from Explorer or Search.',
   files,
   onCloseAll,
@@ -119,7 +127,10 @@ export function WorkspaceEditorPanel({
   };
 
   const saveFile = (path: string, content: string) => {
-    Promise.resolve(onSaveFile?.(path, content, filesByPath.get(path)?.updatedAt))
+    const file = filesByPath.get(path);
+    if (!file || canSaveFile?.(path, content, file) === false) return;
+
+    Promise.resolve(onSaveFile?.(path, content, file.updatedAt))
       .then((result) => {
         if (!result || isSaveSuccess(result)) {
           saveDraftContext(path, content);
@@ -145,6 +156,7 @@ export function WorkspaceEditorPanel({
   ): WorkbenchEditorCommandContext => {
     const filePath = file?.path;
     const content = file ? getDraft(file.path, file.content) : '';
+    const saveAllowed = filePath && file ? canSaveFile?.(filePath, content, file) !== false : false;
 
     return {
       canCloseAll: Boolean(onCloseAll),
@@ -153,7 +165,7 @@ export function WorkspaceEditorPanel({
       canCopyPath: Boolean(onCopyPath),
       canDeletePath: Boolean(onDeletePath),
       canDiscardFile: Boolean(filePath),
-      canSaveFile: Boolean(filePath),
+      canSaveFile: saveAllowed,
       canSplitDown: false,
       canSplitRight: false,
       canTogglePinned: false,
