@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type DragEvent, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
 import type { WidgetPlacementAsset } from '@workbench-kit/contracts';
 import {
   collectWidgetNodes,
@@ -78,6 +78,13 @@ export interface WidgetTreeAssetDropOperation {
 interface WidgetTreeDropTarget {
   readonly pathKey: string;
   readonly placement: WidgetTreeDropPlacement;
+}
+
+export interface WidgetTreeDropPlacementGeometry {
+  readonly targetPath: WidgetPath;
+  readonly targetWidget: GenericWidget;
+  readonly offsetY: number;
+  readonly height: number;
 }
 
 function selectedNodeIndex(
@@ -388,21 +395,38 @@ function parentTypeForNode(
   return nodes.find((node) => widgetPathKey(node.path) === parentKey)?.widget.type;
 }
 
-function resolveDropPlacementFromEvent(
-  event: DragEvent<HTMLLIElement>,
-  targetWidget: GenericWidget,
-): WidgetTreeDropPlacement {
-  const rect = event.currentTarget.getBoundingClientRect();
-  const offset = event.clientY - rect.top;
-  const height = Math.max(1, rect.height);
+export function resolveWidgetTreeDropPlacement({
+  targetPath,
+  targetWidget,
+  offsetY,
+  height,
+}: WidgetTreeDropPlacementGeometry): WidgetTreeDropPlacement {
+  const resolvedHeight = Math.max(1, height);
 
-  if (canAddChildren(targetWidget)) {
-    if (offset < height / 3) return 'before';
-    if (offset > (height * 2) / 3) return 'after';
+  if (isRootWidgetPath(targetPath) && canAddChildren(targetWidget)) {
     return 'inside';
   }
 
-  return offset < height / 2 ? 'before' : 'after';
+  if (canAddChildren(targetWidget)) {
+    if (offsetY < resolvedHeight / 3) return 'before';
+    if (offsetY > (resolvedHeight * 2) / 3) return 'after';
+    return 'inside';
+  }
+
+  return offsetY < resolvedHeight / 2 ? 'before' : 'after';
+}
+
+function resolveDropPlacementFromEvent(
+  event: DragEvent<HTMLLIElement>,
+  targetNode: WidgetNode,
+): WidgetTreeDropPlacement {
+  const rect = event.currentTarget.getBoundingClientRect();
+  return resolveWidgetTreeDropPlacement({
+    targetPath: targetNode.path,
+    targetWidget: targetNode.widget,
+    offsetY: event.clientY - rect.top,
+    height: rect.height,
+  });
 }
 
 export function WidgetTreeView({
@@ -421,6 +445,7 @@ export function WidgetTreeView({
   const [collapsedPathKeys, setCollapsedPathKeys] = useState<ReadonlySet<string>>(() => new Set());
   const [dragPath, setDragPath] = useState<WidgetPath | null>(null);
   const [dropTarget, setDropTarget] = useState<WidgetTreeDropTarget | null>(null);
+  const treeButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const visibleNodes = useMemo(
     () => filterVisibleWidgetNodes(nodes, collapsedPathKeys),
     [collapsedPathKeys, nodes],
@@ -441,6 +466,10 @@ export function WidgetTreeView({
       }
       return next;
     });
+  };
+
+  const focusPath = (path: WidgetPath) => {
+    treeButtonRefs.current.get(widgetPathKey(path))?.focus();
   };
 
   useEffect(() => {
@@ -472,15 +501,18 @@ export function WidgetTreeView({
 
     if (action.type === 'collapse') {
       setPathCollapsed(action.path, true);
+      focusPath(action.path);
       return true;
     }
 
     if (action.type === 'expand') {
       setPathCollapsed(action.path, false);
+      focusPath(action.path);
       return true;
     }
 
     onSelectPath?.(action.path);
+    focusPath(action.path);
     return true;
   };
 
@@ -515,6 +547,7 @@ export function WidgetTreeView({
       if (nextPath) {
         event.preventDefault();
         onSelectPath?.(nextPath);
+        focusPath(nextPath);
       }
       return;
     }
@@ -563,7 +596,7 @@ export function WidgetTreeView({
   const handleDragOver = (event: DragEvent<HTMLLIElement>, targetNode: WidgetNode) => {
     const asset = onPlaceAssetPath ? readWidgetPlacementAssetDragData(event.dataTransfer) : null;
     if (asset) {
-      const placement = resolveDropPlacementFromEvent(event, targetNode.widget);
+      const placement = resolveDropPlacementFromEvent(event, targetNode);
       const operation = resolveWidgetTreeAssetDropOperation(
         nodes,
         asset,
@@ -572,7 +605,7 @@ export function WidgetTreeView({
       );
       const targetKey = widgetPathKey(targetNode.path);
       if (!operation) {
-        setDropTarget((current) => (current?.pathKey === targetKey ? null : current));
+        setDropTarget(null);
         return;
       }
 
@@ -584,11 +617,11 @@ export function WidgetTreeView({
 
     if (!dragPath) return;
 
-    const placement = resolveDropPlacementFromEvent(event, targetNode.widget);
+    const placement = resolveDropPlacementFromEvent(event, targetNode);
     const operation = resolveWidgetTreeDropOperation(nodes, dragPath, targetNode.path, placement);
     const targetKey = widgetPathKey(targetNode.path);
     if (!operation) {
-      setDropTarget((current) => (current?.pathKey === targetKey ? null : current));
+      setDropTarget(null);
       return;
     }
 
@@ -611,7 +644,7 @@ export function WidgetTreeView({
       const placement =
         dropTarget?.pathKey === widgetPathKey(targetNode.path)
           ? dropTarget.placement
-          : resolveDropPlacementFromEvent(event, targetNode.widget);
+          : resolveDropPlacementFromEvent(event, targetNode);
       const operation = resolveWidgetTreeAssetDropOperation(
         nodes,
         asset,
@@ -630,12 +663,15 @@ export function WidgetTreeView({
       return;
     }
 
-    if (!dragPath || !onMovePath) return;
+    if (!dragPath || !onMovePath) {
+      setDropTarget(null);
+      return;
+    }
 
     const placement =
       dropTarget?.pathKey === widgetPathKey(targetNode.path)
         ? dropTarget.placement
-        : resolveDropPlacementFromEvent(event, targetNode.widget);
+        : resolveDropPlacementFromEvent(event, targetNode);
     const operation = resolveWidgetTreeDropOperation(nodes, dragPath, targetNode.path, placement);
     if (!operation) {
       setDropTarget(null);
@@ -731,6 +767,13 @@ export function WidgetTreeView({
                   )}
                   <button
                     className="widget-tree-outline__button"
+                    ref={(button) => {
+                      if (button) {
+                        treeButtonRefs.current.set(pathKey, button);
+                      } else {
+                        treeButtonRefs.current.delete(pathKey);
+                      }
+                    }}
                     tabIndex={isSelected ? 0 : -1}
                     type="button"
                     onClick={() => onSelectPath?.(node.path)}

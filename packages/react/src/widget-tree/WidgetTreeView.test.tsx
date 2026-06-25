@@ -1,3 +1,8 @@
+/**
+ * @vitest-environment jsdom
+ */
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { WidgetPlacementAsset } from '@workbench-kit/contracts';
@@ -15,6 +20,7 @@ import {
   isWidgetTreeActivateKey,
   resolveWidgetTreeAssetDropOperation,
   resolveWidgetTreeDropOperation,
+  resolveWidgetTreeDropPlacement,
   resolveWidgetTreeHorizontalNavigationAction,
   resolveWidgetTreeMoveOperation,
   resolveWidgetTreeNavigationPath,
@@ -151,6 +157,68 @@ describe('WidgetTreeView', () => {
     ).toBeNull();
   });
 
+  it('moves DOM focus with vertical keyboard selection', async () => {
+    const selectedPaths: string[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WidgetTreeView
+          parseError={null}
+          root={outlineRoot}
+          selection={selectWidgetPath({ pathKeys: new Set() }, [])}
+          onSelectPath={(path) => selectedPaths.push(widgetPathKey(path))}
+        />,
+      );
+    });
+
+    const buttons = outlineButtons(container);
+    buttons[0]!.focus();
+    await pressOutlineKey(buttons[0]!, 'ArrowDown');
+
+    expect(selectedPaths).toEqual(['$.children[0]']);
+    expect(document.activeElement).toBe(buttons[1]);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('moves DOM focus with horizontal child selection', async () => {
+    const nodes = collectWidgetNodes(outlineRoot);
+    const rowPath = nodes[2]!.path;
+    const selectedPaths: string[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WidgetTreeView
+          parseError={null}
+          root={outlineRoot}
+          selection={selectWidgetPath({ pathKeys: new Set() }, rowPath)}
+          onSelectPath={(path) => selectedPaths.push(widgetPathKey(path))}
+        />,
+      );
+    });
+
+    const buttons = outlineButtons(container);
+    buttons[2]!.focus();
+    await pressOutlineKey(buttons[2]!, 'ArrowRight');
+
+    expect(selectedPaths).toEqual(['$.children[1].children[0]']);
+    expect(document.activeElement).toBe(buttons[3]);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('detects array and single-child nodes as collapsible', () => {
     expect(hasCollapsibleWidgetChildren(outlineRoot)).toBe(true);
     expect(hasCollapsibleWidgetChildren({ type: 'padding', child: { type: 'text' } })).toBe(true);
@@ -196,6 +264,73 @@ describe('WidgetTreeView', () => {
       insertIndex: 2,
     });
     expect(widgetPathKey(afterOperation!.nextPath)).toBe('$.children[1]');
+  });
+
+  it('resolves root outline drops as inside because root has no sibling slot', () => {
+    expect(
+      resolveWidgetTreeDropPlacement({
+        targetPath: [],
+        targetWidget: outlineRoot,
+        offsetY: 0,
+        height: 30,
+      }),
+    ).toBe('inside');
+    expect(
+      resolveWidgetTreeDropPlacement({
+        targetPath: [],
+        targetWidget: outlineRoot,
+        offsetY: 29,
+        height: 30,
+      }),
+    ).toBe('inside');
+  });
+
+  it('resolves outline drop placement zones for non-root containers and leaves', () => {
+    const nodes = collectWidgetNodes(outlineRoot);
+    const titleNode = nodes[1]!;
+    const rowNode = nodes[2]!;
+
+    expect(
+      resolveWidgetTreeDropPlacement({
+        targetPath: rowNode.path,
+        targetWidget: rowNode.widget,
+        offsetY: 4,
+        height: 30,
+      }),
+    ).toBe('before');
+    expect(
+      resolveWidgetTreeDropPlacement({
+        targetPath: rowNode.path,
+        targetWidget: rowNode.widget,
+        offsetY: 15,
+        height: 30,
+      }),
+    ).toBe('inside');
+    expect(
+      resolveWidgetTreeDropPlacement({
+        targetPath: rowNode.path,
+        targetWidget: rowNode.widget,
+        offsetY: 26,
+        height: 30,
+      }),
+    ).toBe('after');
+
+    expect(
+      resolveWidgetTreeDropPlacement({
+        targetPath: titleNode.path,
+        targetWidget: titleNode.widget,
+        offsetY: 12,
+        height: 30,
+      }),
+    ).toBe('before');
+    expect(
+      resolveWidgetTreeDropPlacement({
+        targetPath: titleNode.path,
+        targetWidget: titleNode.widget,
+        offsetY: 18,
+        height: 30,
+      }),
+    ).toBe('after');
   });
 
   it('resolves drop-on-container operations as reparent commits', () => {
@@ -352,3 +487,19 @@ describe('WidgetTreeView', () => {
     expect(markup).toContain('tabindex="-1"');
   });
 });
+
+function outlineButtons(container: HTMLElement): HTMLButtonElement[] {
+  return Array.from(container.querySelectorAll('.widget-tree-outline__button'));
+}
+
+async function pressOutlineKey(target: HTMLElement, key: string): Promise<void> {
+  await act(async () => {
+    target.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        key,
+      }),
+    );
+  });
+}

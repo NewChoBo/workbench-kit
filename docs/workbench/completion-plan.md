@@ -349,9 +349,10 @@ WB-29 closeout -> WB-30 -> WB-31 -> S12 Lane A DoD audit
 
 **Next active session:** Lane A, Track D known cleanup, JDW B-UX5 drag/reparent
 indicator polish, editor layout hardening, source range polish, semantic source
-validation problems, outline horizontal navigation, and workspace host save
-gating are complete. Recommended next slices are JDW remaining outline edge
-polish or host-backed storage / install-state planning.
+validation problems, outline horizontal navigation, outline root-drop edge
+handling, and workspace host save gating are complete. Recommended next slices
+are JDW outline Storybook edge coverage or host-backed storage / install-state
+planning.
 
 **Estimated remaining slices:** 0 for Lane A.
 

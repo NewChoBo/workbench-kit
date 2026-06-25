@@ -11,7 +11,7 @@
 - **미션:** Lane A 마감을 Codex에 위임. 브랜치 `feature/theia-strengths-workbench` 유지. 각 패키지 완료 시 `pnpm validate` 통과 후 Conventional Commit (영문).
 - **현재 기준선:** WB-23~WB-31(S1–S3, S8.5~S8.6, command explorer, preference scopes, devtools inspectors)과 S12 DoD audit 완료. Lane A **완료**. 최근 커밋: `9d14182`, `9b37c8f`, `96e957f`, `712f922`, `835497e`.
 - **Codex 작업 패키지 5개:** P0 **S8.6**(완료) → P0 **WB-29**(완료) → P1 **WB-30**(완료) → P2 **Track D D2**(완료) → **S12 DoD**(완료).
-- **첫 권장 작업:** Track D D3 known cleanup, JDW B-UX5 drag/reparent indicators, editor layout hardening, source range polish, semantic source validation problems, outline horizontal navigation, and workspace host save gating are closed. 다음은 **JDW remaining outline edge polish**, 또는 shell 쪽이면 host-backed storage / install-state planning을 진행한다.
+- **첫 권장 작업:** Track D D3 known cleanup, JDW B-UX5 drag/reparent indicators, editor layout hardening, source range polish, semantic source validation problems, outline horizontal navigation, outline root-drop edge handling, and workspace host save gating are closed. 다음은 **JDW outline Storybook edge coverage**, 또는 shell 쪽이면 host-backed storage / install-state planning을 진행한다.
 - **필수 제약:** `workbench-core` React-free, `react`가 `workbench-core` 미import, JDW canonical, subtree 분리 금지, Strategy A 렌더, UI 영문.
 
 ---
@@ -510,7 +510,7 @@ pnpm workbench-sample
 ## 8. Suggested Codex Session Order
 
 ```text
-JDW remaining outline edge polish -> host-backed storage / install-state planning
+JDW outline Storybook edge coverage -> host-backed storage / install-state planning
 ```
 
 ### Parallel options
