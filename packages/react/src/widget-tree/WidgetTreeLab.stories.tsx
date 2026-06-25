@@ -198,11 +198,47 @@ export const OutlineKeyboard: Story = {
     await userEvent.keyboard('{ArrowDown}');
 
     const rowNode = await canvas.findByTestId('widget-tree-node-$.children[1]');
+    const rowButton = getOutlineNodeButton(rowNode);
     await waitFor(() => {
       expect(rowNode).toHaveAttribute('aria-selected', 'true');
+      expect(canvasElement.ownerDocument.activeElement).toBe(rowButton);
       expect(
         canvasElement.querySelector('[data-widget-path="$.children[1]"][data-widget-selected]'),
       ).toBeTruthy();
+    });
+
+    await userEvent.keyboard('{ArrowRight}');
+
+    const leftNode = await canvas.findByTestId('widget-tree-node-$.children[1].children[0]');
+    const leftButton = getOutlineNodeButton(leftNode);
+    await waitFor(() => {
+      expect(leftNode).toHaveAttribute('aria-selected', 'true');
+      expect(canvasElement.ownerDocument.activeElement).toBe(leftButton);
+      expect(
+        canvasElement.querySelector(
+          '[data-widget-path="$.children[1].children[0]"][data-widget-selected]',
+        ),
+      ).toBeTruthy();
+    });
+
+    await userEvent.keyboard('{ArrowLeft}');
+    await waitFor(() => {
+      expect(rowNode).toHaveAttribute('aria-selected', 'true');
+      expect(canvasElement.ownerDocument.activeElement).toBe(rowButton);
+    });
+
+    await userEvent.keyboard('{ArrowLeft}');
+    await waitFor(() => {
+      expect(rowNode).toHaveAttribute('aria-expanded', 'false');
+      expect(canvas.queryByTestId('widget-tree-node-$.children[1].children[0]')).toBeNull();
+      expect(canvasElement.ownerDocument.activeElement).toBe(rowButton);
+    });
+
+    await userEvent.keyboard('{ArrowRight}');
+    await waitFor(() => {
+      expect(rowNode).toHaveAttribute('aria-expanded', 'true');
+      expect(canvas.getByTestId('widget-tree-node-$.children[1].children[0]')).toBeVisible();
+      expect(canvasElement.ownerDocument.activeElement).toBe(rowButton);
     });
   },
   tags: ['storybook-play-required'],
@@ -283,6 +319,15 @@ export const OutlineReorderAndReparent: Story = {
         '[data-widget-path="$.children[1]"][data-widget-type="row"]',
       );
       expect(rowPreview?.textContent ?? '').toContain('Title');
+    });
+
+    await dragOutlineNode(canvas, '$.children[1].children[2]', '$', 'before');
+    await waitFor(() => {
+      expect(readRootChildSummary(canvasElement)).toEqual(['Footer', 'row', 'Title']);
+      const movedTitle = canvasElement.querySelector(
+        '[data-widget-path="$.children[2]"][data-widget-type="text"]',
+      );
+      expect(movedTitle?.textContent ?? '').toContain('Title');
     });
   },
   tags: ['storybook-play-required'],

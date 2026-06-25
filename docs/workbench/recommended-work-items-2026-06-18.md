@@ -47,14 +47,14 @@ Status: completed in this run.
 After the 2026-06-25 editor layout hardening, the next highest-value
 implementation goal is:
 
-**JDW outline Storybook edge coverage** or the remaining host-backed storage
-adapter work.
+**Host-backed storage / install-state planning** or the remaining JDW zoom/pan
+policy decision.
 
 Scope:
 
 1. Keep source-range highlighting, semantic source problems, outline horizontal
-   keyboard navigation, outline root-drop edge handling, and workspace host save
-   gating covered while closing remaining outline Storybook edge gaps.
+   keyboard navigation, outline root-drop edge handling, outline Storybook
+   coverage, and workspace host save gating covered.
 2. Keep validation banner, Monaco diagnostics, and preview rendering on the same
    parsed/validated JDW contract.
 3. If staying in shell infrastructure, provide a concrete file-backed storage

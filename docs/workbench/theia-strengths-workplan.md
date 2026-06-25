@@ -68,8 +68,8 @@ preference scopes.
   duplication, JDW drag/reparent indicator polish, editor layout hardening, and
   JDW source range polish, semantic source validation problems, outline
   horizontal navigation, outline root-drop edge handling, and workspace host
-  save gating; next work should start from JDW outline Storybook edge coverage
-  or host-backed storage planning.
+  save gating, and outline Storybook edge coverage; next work should start
+  from host-backed storage planning or a JDW zoom/pan policy decision.
 - 2026-06-20: WB-28 editor shell scope was landed. Built-in explorer command
   handlers and UI command dispatch were present; WB-29 closeout still remained
   at that checkpoint for selection/reveal/search behavior and sample smoke
