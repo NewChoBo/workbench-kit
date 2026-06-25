@@ -59,6 +59,10 @@ import {
   resolveSampleExtensionsConfig,
   resolveSampleWorkbenchRole,
 } from './sample-permission-context.js';
+import {
+  createSampleInstalledExtensionsStorageKey,
+  getSampleInstalledExtensionsStorage,
+} from './sample-installed-extension-storage.js';
 
 const WORKBENCH_SETTINGS_CAPABILITY_ID = 'workbench.settings';
 
@@ -115,6 +119,11 @@ function SampleAuthenticatedWorkbench({
     () => resolveSampleExtensionsConfig(accountId, permissionRoleOverride),
     [accountId, permissionRoleOverride],
   );
+  const installedExtensionsStorage = useMemo(() => getSampleInstalledExtensionsStorage(), []);
+  const installedExtensionsStorageKey = useMemo(
+    () => createSampleInstalledExtensionsStorageKey(accountId),
+    [accountId],
+  );
 
   return (
     <WorkbenchProvider
@@ -123,6 +132,8 @@ function SampleAuthenticatedWorkbench({
       initialKeybindingOverrides={workbenchKeybindings}
       initialLayout={initialLayout}
       initialWorkspaceSettings={workbenchSettings}
+      installedExtensionsStorage={installedExtensionsStorage}
+      installedExtensionsStorageKey={installedExtensionsStorageKey}
       key={accountId ?? 'anonymous'}
       layoutStorageKey={DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY}
       persistLayout

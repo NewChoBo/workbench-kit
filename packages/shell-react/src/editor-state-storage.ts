@@ -4,6 +4,8 @@ import type {
   EditorLayoutNode,
   EditorState,
   EditorTabState,
+  WorkbenchStorageReader,
+  WorkbenchStorageWriter,
 } from '@workbench-kit/workbench-core';
 
 export const DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY = 'workbench-kit/.workbench/editors';
@@ -39,7 +41,7 @@ export function editorStateToStorageValue(state: EditorState): EditorState {
 
 export function readPersistedEditorState(
   storageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
-  storage?: Pick<Storage, 'getItem'>,
+  storage?: WorkbenchStorageReader,
 ): EditorState | undefined {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) return undefined;
@@ -57,7 +59,7 @@ export function readPersistedEditorState(
 export function writePersistedEditorState(
   state: EditorState,
   storageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
-  storage?: Pick<Storage, 'setItem'>,
+  storage?: WorkbenchStorageWriter,
 ): void {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) return;
@@ -182,7 +184,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function getBrowserLocalStorage(): Storage | undefined {
+function getBrowserLocalStorage(): (WorkbenchStorageReader & WorkbenchStorageWriter) | undefined {
   if (!isWorkbenchEditorStatePersistenceAvailable()) {
     return undefined;
   }

@@ -2,6 +2,7 @@ import type {
   ResolveWorkbenchCommandExecutionPolicyInput,
   WorkbenchCommandExecutionPolicy,
 } from '@workbench-kit/react/workbench';
+import type { WorkbenchStorageReader } from '@workbench-kit/workbench-core';
 
 import { readPersistedLocalPreferences } from './preference-settings-storage.js';
 
@@ -15,7 +16,7 @@ function isWorkbenchCommandExecutionPolicy(
 
 export function readWorkbenchAiChatCommandPolicyInput(
   storageKey?: string,
-  storage?: Pick<Storage, 'getItem'>,
+  storage?: WorkbenchStorageReader,
 ): ResolveWorkbenchCommandExecutionPolicyInput {
   const preferences = readPersistedLocalPreferences(storageKey, storage);
   const configuredDefault = preferences[WORKBENCH_AI_CHAT_COMMAND_DEFAULT_POLICY_KEY];

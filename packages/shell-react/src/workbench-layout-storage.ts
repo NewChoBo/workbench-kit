@@ -4,6 +4,8 @@ import {
 } from '@workbench-kit/workbench-config';
 import {
   createWorkbenchLayoutState,
+  type WorkbenchStorageReader,
+  type WorkbenchStorageWriter,
   type WorkbenchLayoutState,
   type WorkbenchLayoutStateInput,
 } from '@workbench-kit/workbench-core';
@@ -74,7 +76,7 @@ export function workbenchLayoutStateToStorageValue(
 
 export function readPersistedWorkbenchLayout(
   storageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
-  storage?: Pick<Storage, 'getItem'>,
+  storage?: WorkbenchStorageReader,
 ): WorkbenchLayoutStateInput | undefined {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) return undefined;
@@ -92,7 +94,7 @@ export function readPersistedWorkbenchLayout(
 export function writePersistedWorkbenchLayout(
   state: WorkbenchLayoutState,
   storageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
-  storage?: Pick<Storage, 'setItem'>,
+  storage?: WorkbenchStorageWriter,
 ): void {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) return;
@@ -111,7 +113,7 @@ export function resolvePersistedWorkbenchLayout(
   initialLayout: WorkbenchLayoutStateInput | undefined,
   options: {
     persistLayout?: boolean | undefined;
-    storage?: Pick<Storage, 'getItem'> | undefined;
+    storage?: WorkbenchStorageReader | undefined;
     storageKey?: string | undefined;
   } = {},
 ): WorkbenchLayoutStateInput | undefined {
@@ -134,7 +136,7 @@ export function resolvePersistedWorkbenchLayout(
   return createWorkbenchLayoutState(persisted, createWorkbenchLayoutState(baseLayout ?? {}));
 }
 
-function getBrowserLocalStorage(): Storage | undefined {
+function getBrowserLocalStorage(): (WorkbenchStorageReader & WorkbenchStorageWriter) | undefined {
   if (!isWorkbenchLayoutPersistenceAvailable()) {
     return undefined;
   }

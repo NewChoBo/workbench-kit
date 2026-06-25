@@ -80,10 +80,17 @@ Progress as of 2026-06-25:
   reconciliation.
 - `shell-react` persists editor state in browser storage and restores tabs,
   groups, split direction, and split ratios on provider startup.
-- `WorkbenchProvider` accepts `Storage`-compatible adapters for editor state,
+- `WorkbenchProvider` accepts `WorkbenchStorageAdapter` ports for editor state,
   workbench layout, keybinding overrides, local preference persistence, and
   extension install-state management, so a non-browser shell can bridge those
   snapshots to host-owned `state.json` or user-data storage.
+- 2026-06-25 progress: the shared install-state helpers and shell persistence
+  helpers now use DOM-free `WorkbenchStorageReader`/`WorkbenchStorageWriter`
+  contracts from `workbench-core`.
+- 2026-06-25 sample progress: the workbench sample passes an account-scoped
+  installed-extension storage adapter into `WorkbenchProvider`, with required
+  Storybook coverage proving the host-owned install state activates a bundled
+  catalog extension in the provider snapshot.
 - Remaining work: provide a concrete host file-backed adapter and define the
   plugin store install/update plan on top of the shared extension install-state
   storage contract.

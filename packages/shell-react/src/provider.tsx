@@ -26,6 +26,7 @@ import {
   type EditorState,
   type EditorService,
   type PreferenceService as PreferenceServiceType,
+  type WorkbenchStorageAdapter,
   type WorkbenchEditorSavePort,
   type WorkbenchExtensionDescription,
   type WorkbenchLayoutStateInput,
@@ -88,7 +89,7 @@ export interface WorkbenchWorkspaceHostPort extends WorkbenchEditorSavePort {
   dispose?(): void;
 }
 
-export type WorkbenchStorageAdapter = Pick<Storage, 'getItem' | 'setItem'>;
+export type { WorkbenchStorageAdapter };
 
 const DEFAULT_AVAILABLE_EXTENSIONS = [
   ...BUILTIN_WORKBENCH_EXTENSIONS,

@@ -280,6 +280,47 @@ describe('createExtensionInstallPlan', () => {
     expect(hostCapabilityPlan.blocked).toBe(false);
   });
 
+  it('ignores unrelated diagnostics from already enabled extensions when planning installs', () => {
+    const plan = createExtensionInstallPlan({
+      availableExtensions: [
+        extension('broken-enabled', {
+          capabilities: {
+            requires: ['workbench.auth'],
+          },
+        }),
+        extension('target'),
+      ],
+      enabledExtensionIds: ['broken-enabled'],
+      targetExtensionId: 'target',
+    });
+
+    expect(plan.blocked).toBe(false);
+    expect(plan.diagnostics).toEqual([]);
+    expect(plan.installExtensionIds).toEqual(['target']);
+  });
+
+  it('still uses enabled extensions to satisfy planned capability requirements', () => {
+    const plan = createExtensionInstallPlan({
+      availableExtensions: [
+        extension('auth-provider', {
+          capabilities: {
+            provides: ['workbench.auth'],
+          },
+        }),
+        extension('consumer', {
+          capabilities: {
+            requires: ['workbench.auth'],
+          },
+        }),
+      ],
+      enabledExtensionIds: ['auth-provider'],
+      targetExtensionId: 'consumer',
+    });
+
+    expect(plan.blocked).toBe(false);
+    expect(plan.diagnostics).toEqual([]);
+  });
+
   it('blocks dependency cycles before install state is written', () => {
     const plan = createExtensionInstallPlan({
       availableExtensions: [

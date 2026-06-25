@@ -2,6 +2,7 @@ import {
   parseWorkbenchKeybindingsConfig,
   type WorkbenchKeybindingDefinition,
 } from '@workbench-kit/workbench-config';
+import type { WorkbenchStorageReader, WorkbenchStorageWriter } from '@workbench-kit/workbench-core';
 
 export const DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY = 'workbench-kit/.workbench/keybindings';
 
@@ -15,7 +16,7 @@ export function isWorkbenchKeybindingPersistenceAvailable(): boolean {
 
 export function readPersistedKeybindingOverrides(
   storageKey = DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
-  storage?: Pick<Storage, 'getItem'>,
+  storage?: WorkbenchStorageReader,
 ): readonly WorkbenchKeybindingDefinition[] {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) {
@@ -37,7 +38,7 @@ export function readPersistedKeybindingOverrides(
 export function writePersistedKeybindingOverrides(
   overrides: readonly WorkbenchKeybindingDefinition[],
   storageKey = DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
-  storage?: Pick<Storage, 'setItem'>,
+  storage?: WorkbenchStorageWriter,
 ): void {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) {
@@ -47,7 +48,7 @@ export function writePersistedKeybindingOverrides(
   resolvedStorage.setItem(storageKey, JSON.stringify(overrides, null, 2));
 }
 
-function getBrowserLocalStorage(): Storage | undefined {
+function getBrowserLocalStorage(): (WorkbenchStorageReader & WorkbenchStorageWriter) | undefined {
   try {
     return globalThis.localStorage;
   } catch {

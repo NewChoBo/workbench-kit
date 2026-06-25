@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { WorkbenchStorageAdapter } from '@workbench-kit/workbench-core';
 
 import {
   readPersistedWorkbenchAppearance,
@@ -8,7 +9,7 @@ import {
 
 export interface UsePersistedWorkbenchAppearanceOptions {
   persist?: boolean | undefined;
-  storage?: Pick<Storage, 'getItem' | 'removeItem' | 'setItem'> | undefined;
+  storage?: WorkbenchStorageAdapter | undefined;
   storageKey?: string | undefined;
 }
 

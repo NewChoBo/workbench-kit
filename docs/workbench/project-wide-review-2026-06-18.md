@@ -91,13 +91,19 @@ Recommended work:
   and resumes tab/group id sequences without collisions.
 - `shell-react` persists editor state in browser storage and restores tabs,
   groups, split direction, and split ratios on provider startup.
-- `WorkbenchProvider` accepts `Storage`-compatible adapters for editor state,
+- `WorkbenchProvider` accepts `WorkbenchStorageAdapter` ports for editor state,
   workbench layout, keybinding overrides, local preference persistence, and
   extension install-state management, so a non-browser shell can bridge those
   snapshots to host-owned `state.json` or user-data storage.
 - 2026-06-25 hardening: existing-target split/move calls no longer let stray
   direction hints rebuild the layout tree; `EditorService` preserves nested
   split intent and prunes only empty groups.
+- 2026-06-25 storage contract progress: install-state and shell persistence
+  helpers use exported DOM-free storage reader/writer ports from
+  `workbench-core`.
+- 2026-06-25 sample progress: the sample host now injects an account-scoped
+  installed-extension storage adapter and the required Storybook gate covers a
+  host-owned preinstalled extension record through the provider snapshot.
 - Still open: a concrete host file-backed adapter and plugin store install/update
   planning on top of the shared extension install-state storage contract.
 
@@ -259,7 +265,8 @@ The highest-value next implementation slice is host-backed storage / install-sta
 3. Cover the behavior with focused widget-tree tests and required Storybook play
    only when the user-visible flow changes.
 4. If staying in shell infrastructure, take the concrete host file-backed
-   storage adapter or plugin install/update plan next.
+   storage adapter or plugin install/update plan next. The DOM-free storage port
+   contract is now in place.
 
 Editor layout ownership is now service-owned for split direction, ratios,
 nested insertions, existing-target moves, and empty-group pruning.

@@ -1,11 +1,12 @@
 # Extension Install
 
-This document describes the MVP extension catalog, install pipeline, and browser persistence model for Workbench Kit.
+This document describes the MVP extension catalog, install pipeline, and
+host-neutral persistence model for Workbench Kit.
 
 ## Goals
 
 - Install extensions from a **static catalog feed** without runtime `npm install`
-- Persist user install choices in browser `localStorage`
+- Persist user install choices through a `WorkbenchStorageAdapter`
 - Enable/disable installed extensions with a full page reload
 - Resolve installed sample extensions from the build-time bundled extension set
 
@@ -78,6 +79,11 @@ can show install impact before the user writes install state. This mirrors the
 VS Code / Theia expectation that extension install is a reviewable operation,
 not just a blind localStorage toggle.
 
+Install-plan dependency and capability diagnostics are scoped to the planned
+target, dependencies, extension-pack members, and providers that affect that
+plan. Unrelated diagnostics from already enabled extensions remain registry
+inspection concerns and do not block a new catalog install.
+
 ## Persistence key
 
 Installed extensions are stored at:
@@ -106,6 +112,30 @@ Helpers live in `@workbench-kit/workbench-core`:
 - `applyExtensionInstallPlanToRecords()`
 - `toggleInstalledExtensionEnabled()`
 - `createExtensionInstallPlan()`
+- `WorkbenchStorageReader`, `WorkbenchStorageWriter`, and
+  `WorkbenchStorageAdapter`
+
+## Host storage contract
+
+Install-state persistence accepts a small synchronous storage port instead of a
+DOM `Storage` object:
+
+```typescript
+interface WorkbenchStorageReader {
+  getItem(key: string): string | null;
+}
+
+interface WorkbenchStorageWriter {
+  setItem(key: string, value: string): void;
+}
+
+type WorkbenchStorageAdapter = WorkbenchStorageReader & WorkbenchStorageWriter;
+```
+
+Browser hosts can keep using `localStorage` implicitly. Desktop or embedded
+hosts can pass a file-backed or user-data-backed adapter through
+`WorkbenchProvider.installedExtensionsStorage` and the extension management
+model options.
 
 ## MVP constraints
 
@@ -113,7 +143,9 @@ Helpers live in `@workbench-kit/workbench-core`:
 - Extensions pulled in by a plan must have catalog install sources unless they
   are already installed and only need enabling.
 - Static manifest JSON paths are reserved for future manifest-url installs; MVP sample host uses bundled ids
-- Install/uninstall/enable/disable currently require `window.location.reload()`
+- Browser install/uninstall/enable/disable currently require
+  `window.location.reload()`; non-browser hosts should provide an equivalent
+  extension reload or restart path.
 - No runtime npm package download or external JS execution
 - Install planning is framework-neutral and host-owned UI decides how to present
   approval, permission, and blocking diagnostic state.

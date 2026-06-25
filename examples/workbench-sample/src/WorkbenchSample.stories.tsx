@@ -8,6 +8,7 @@ import {
 import { expectVisibleChatBubbleText } from '../../../packages/react/src/workbench/story/chatStory';
 import { App } from './App.js';
 import { SAMPLE_AUTH_SESSION_KEY, SAMPLE_AUTH_USERNAME } from './dummy-backend/index.js';
+import { createSampleInstalledExtensionsStorageKey } from './sample-installed-extension-storage.js';
 import { SAMPLE_PERMISSION_ROLE_STORAGE_KEY } from './sample-permission-role-storage.js';
 import './host.css';
 
@@ -176,6 +177,35 @@ export const DevtoolsInspectors: Story = {
   tags: ['storybook-play-required'],
 };
 
+export const HostInstallState: Story = {
+  name: 'Host install state',
+  render: () => {
+    resetSampleHostStorage('tester');
+    seedSampleInstalledExtension('tester', {
+      category: 'editor',
+      enabled: true,
+      id: 'workbench-kit.samples.json-preview',
+      installedAt: '2026-06-25T00:00:00.000Z',
+      manifestUrl: 'workbench-kit.samples.json-preview',
+    });
+    return <App devtools />;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitForWorkbenchReady(canvas);
+    const devtools = await canvas.findByLabelText('Workbench devtools');
+    const devtoolsScope = within(devtools);
+
+    await userEvent.click(devtoolsScope.getByRole('button', { name: 'Capabilities' }));
+    await expect(devtools).toHaveTextContent('workbench-kit.samples.json-preview');
+    expect(
+      window.localStorage.getItem(createSampleInstalledExtensionsStorageKey('tester')),
+    ).toContain('workbench-kit.samples.json-preview');
+  },
+  tags: ['storybook-play-required'],
+};
+
 export const TesterDevAppJourney: Story = {
   name: 'Tester dev app journey',
   render: () => {
@@ -309,6 +339,9 @@ function resetSampleHostStorage(account: SampleAccount) {
   window.localStorage.removeItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY);
   window.localStorage.removeItem(DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY);
   window.localStorage.removeItem(SAMPLE_PERMISSION_ROLE_STORAGE_KEY);
+  for (const storageAccount of ['anonymous', 'tester', 'basic']) {
+    window.localStorage.removeItem(createSampleInstalledExtensionsStorageKey(storageAccount));
+  }
 
   if (account === 'none') {
     window.sessionStorage.removeItem(SAMPLE_AUTH_SESSION_KEY);
@@ -318,6 +351,26 @@ function resetSampleHostStorage(account: SampleAccount) {
   window.sessionStorage.setItem(
     SAMPLE_AUTH_SESSION_KEY,
     account === 'tester' ? SAMPLE_AUTH_USERNAME : 'basic',
+  );
+}
+
+function seedSampleInstalledExtension(
+  account: Exclude<SampleAccount, 'none'>,
+  record: {
+    readonly category: string;
+    readonly enabled: boolean;
+    readonly id: string;
+    readonly installedAt: string;
+    readonly manifestUrl: string;
+  },
+) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(
+    createSampleInstalledExtensionsStorageKey(account),
+    JSON.stringify([record], null, 2),
   );
 }
 

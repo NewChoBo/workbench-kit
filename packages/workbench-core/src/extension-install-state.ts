@@ -1,3 +1,9 @@
+import type {
+  WorkbenchStorageAdapter,
+  WorkbenchStorageReader,
+  WorkbenchStorageWriter,
+} from './storage.js';
+
 export const DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY =
   'workbench-kit/.workbench/installed-extensions' as const;
 
@@ -42,7 +48,7 @@ export function isInstalledExtensionPersistenceAvailable(): boolean {
 
 export function loadInstalledExtensions(
   storageKey: string = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
-  storage?: Pick<Storage, 'getItem'>,
+  storage?: WorkbenchStorageReader,
 ): InstalledExtensionRecord[] {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) {
@@ -72,7 +78,7 @@ export function loadInstalledExtensions(
 export function saveInstalledExtensions(
   records: readonly InstalledExtensionRecord[],
   storageKey: string = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
-  storage?: Pick<Storage, 'setItem'>,
+  storage?: WorkbenchStorageWriter,
 ): void {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) {
@@ -85,7 +91,7 @@ export function saveInstalledExtensions(
 export function installExtensionRecord(
   record: Omit<InstalledExtensionRecord, 'installedAt'> & { installedAt?: string },
   storageKey: string = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
-  storage?: Pick<Storage, 'getItem' | 'setItem'>,
+  storage?: WorkbenchStorageAdapter,
 ): InstalledExtensionRecord[] {
   const current = loadInstalledExtensions(storageKey, storage);
   const nextRecord: InstalledExtensionRecord = {
@@ -146,7 +152,7 @@ export function toggleInstalledExtensionEnabled(
   extensionId: string,
   enabled: boolean,
   storageKey: string = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
-  storage?: Pick<Storage, 'getItem' | 'setItem'>,
+  storage?: WorkbenchStorageAdapter,
 ): InstalledExtensionRecord[] {
   const current = loadInstalledExtensions(storageKey, storage);
   const index = current.findIndex((entry) => entry.id === extensionId);
@@ -163,7 +169,7 @@ export function toggleInstalledExtensionEnabled(
 export function getInstalledExtensionRecord(
   extensionId: string,
   storageKey: string = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
-  storage?: Pick<Storage, 'getItem'>,
+  storage?: WorkbenchStorageReader,
 ): InstalledExtensionRecord | undefined {
   return loadInstalledExtensions(storageKey, storage).find((entry) => entry.id === extensionId);
 }
@@ -193,7 +199,7 @@ function normalizeInstalledExtensionRecord(value: unknown): InstalledExtensionRe
   };
 }
 
-function getBrowserLocalStorage(): Storage | undefined {
+function getBrowserLocalStorage(): WorkbenchStorageAdapter | undefined {
   try {
     return globalThis.localStorage;
   } catch {

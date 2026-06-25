@@ -7,26 +7,18 @@ import {
   loadInstalledExtensions,
   toggleInstalledExtensionEnabled,
 } from './extension-install-state.js';
-import { createExtensionInstallPlan, type WorkbenchExtensionDescription } from './index.js';
+import {
+  createExtensionInstallPlan,
+  type WorkbenchExtensionDescription,
+  type WorkbenchStorageAdapter,
+} from './index.js';
 
-function createMemoryStorage(): Storage {
+function createMemoryStorage(): WorkbenchStorageAdapter {
   const store = new Map<string, string>();
 
   return {
-    get length() {
-      return store.size;
-    },
-    clear() {
-      store.clear();
-    },
     getItem(key: string) {
       return store.get(key) ?? null;
-    },
-    key(index: number) {
-      return [...store.keys()][index] ?? null;
-    },
-    removeItem(key: string) {
-      store.delete(key);
     },
     setItem(key: string, value: string) {
       store.set(key, value);

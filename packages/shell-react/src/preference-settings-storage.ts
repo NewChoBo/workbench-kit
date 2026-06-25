@@ -2,6 +2,7 @@ import {
   parseWorkbenchSettingsConfig,
   type WorkbenchSettingsConfig,
 } from '@workbench-kit/workbench-config';
+import type { WorkbenchStorageReader, WorkbenchStorageWriter } from '@workbench-kit/workbench-core';
 
 export const DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY =
   'workbench-kit/.workbench/settings.local';
@@ -16,7 +17,7 @@ export function isWorkbenchLocalPreferencePersistenceAvailable(): boolean {
 
 export function readPersistedLocalPreferences(
   storageKey = DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
-  storage?: Pick<Storage, 'getItem'>,
+  storage?: WorkbenchStorageReader,
 ): WorkbenchSettingsConfig {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) {
@@ -38,7 +39,7 @@ export function readPersistedLocalPreferences(
 export function writePersistedLocalPreferences(
   values: WorkbenchSettingsConfig,
   storageKey = DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
-  storage?: Pick<Storage, 'setItem'>,
+  storage?: WorkbenchStorageWriter,
 ): void {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) {
@@ -48,7 +49,7 @@ export function writePersistedLocalPreferences(
   resolvedStorage.setItem(storageKey, JSON.stringify(values, null, 2));
 }
 
-function getBrowserLocalStorage(): Storage | undefined {
+function getBrowserLocalStorage(): (WorkbenchStorageReader & WorkbenchStorageWriter) | undefined {
   try {
     return globalThis.localStorage;
   } catch {

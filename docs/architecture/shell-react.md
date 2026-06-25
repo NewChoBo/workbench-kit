@@ -35,7 +35,8 @@ React context provider that:
 - Persists extension install state, workbench layout, keybinding overrides,
   local preferences, and editor restore state when the corresponding `persist*`
   flags are enabled. Browser `localStorage` is the default adapter; hosts can
-  inject `Storage`-compatible adapters for file-backed or user-data persistence.
+  inject `WorkbenchStorageAdapter` ports for file-backed or user-data
+  persistence without depending on DOM `Storage`.
 - Activates startup extensions and disposes registries on unmount
 - Exposes command activation/execution helpers through `useWorkbench`
 
@@ -82,8 +83,9 @@ package concern.
 `EditorService` owns editor groups, tabs, split direction, split ratios, nested
 layout mutation, and restored editor state. `shell-react` stores the browser
 MVP restore snapshot in `localStorage` by default, and `WorkbenchProvider`
-accepts `Storage`-compatible adapters so non-browser hosts can bridge the same
-state through a host-owned `state.json` or user data store.
+accepts `WorkbenchStorageAdapter` ports from `workbench-core` so non-browser
+hosts can bridge the same state through a host-owned `state.json` or user data
+store.
 
 `WorkbenchProvider` also uses the `EditorDocumentViewProviderRegistry` owned by
 `ExtensionRegistry` for text editor surfaces. Built-in JSON form, JDW preview,

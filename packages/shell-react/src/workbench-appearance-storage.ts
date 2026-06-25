@@ -8,6 +8,7 @@ import {
   type WorkbenchAppearanceSettings,
   type WorkbenchColorSchemePreference,
 } from '@workbench-kit/react/workbench/themePresets';
+import type { WorkbenchStorageReader, WorkbenchStorageWriter } from '@workbench-kit/workbench-core';
 
 export type { WorkbenchAppearanceSettings } from '@workbench-kit/react/workbench/themePresets';
 
@@ -29,7 +30,7 @@ export function isWorkbenchAppearancePersistenceAvailable(): boolean {
 
 export function readPersistedWorkbenchAppearance(
   storageKey = DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
-  storage?: Pick<Storage, 'getItem'>,
+  storage?: WorkbenchStorageReader,
 ): WorkbenchAppearanceSettings {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) {
@@ -51,7 +52,7 @@ export function readPersistedWorkbenchAppearance(
 export function writePersistedWorkbenchAppearance(
   settings: WorkbenchAppearanceSettings,
   storageKey = DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
-  storage?: Pick<Storage, 'setItem'>,
+  storage?: WorkbenchStorageWriter,
 ): void {
   const resolvedStorage = storage ?? getBrowserLocalStorage();
   if (!resolvedStorage) {
@@ -98,7 +99,7 @@ function normalizeThemePreference(value: unknown): WorkbenchColorSchemePreferenc
   return DEFAULT_WORKBENCH_APPEARANCE.themePreference;
 }
 
-function getBrowserLocalStorage(): Storage | undefined {
+function getBrowserLocalStorage(): (WorkbenchStorageReader & WorkbenchStorageWriter) | undefined {
   if (!isWorkbenchAppearancePersistenceAvailable()) {
     return undefined;
   }

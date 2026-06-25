@@ -108,7 +108,7 @@ export function createExtensionInstallPlan({
   diagnostics.push(
     ...collectExtensionDependencyDiagnostics(descriptionsForDiagnostics, {
       hasCapability: (capabilityId) => hostCapabilityIds.includes(capabilityId),
-    }),
+    }).filter((diagnostic) => isInstallPlanDiagnosticRelevant(diagnostic, plannedIds)),
   );
 
   const actions = orderedIds.map<ExtensionInstallPlanAction>((extensionId) => {
@@ -262,6 +262,23 @@ function uniqueInstallPlanDiagnostics(
     seen.add(key);
     return true;
   });
+}
+
+function isInstallPlanDiagnosticRelevant(
+  diagnostic: ExtensionDependencyDiagnostic,
+  plannedIds: ReadonlySet<string>,
+): boolean {
+  if (plannedIds.has(diagnostic.extensionId)) {
+    return true;
+  }
+
+  if (diagnostic.dependencyId && plannedIds.has(diagnostic.dependencyId)) {
+    return true;
+  }
+
+  return (
+    diagnostic.providerExtensionIds?.some((extensionId) => plannedIds.has(extensionId)) ?? false
+  );
 }
 
 function createMissingDiagnostic(

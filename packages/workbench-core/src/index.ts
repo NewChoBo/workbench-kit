@@ -127,6 +127,13 @@ export {
   type InstalledExtensionCategory,
   type InstalledExtensionRecord,
 } from './extension-install-state.js';
+export type {
+  WorkbenchRemovableStorageAdapter,
+  WorkbenchStorageAdapter,
+  WorkbenchStorageReader,
+  WorkbenchStorageRemover,
+  WorkbenchStorageWriter,
+} from './storage.js';
 export {
   mergeExtensionsConfigWithInstallState,
   resolveBundledExtensionByManifestUrl,
