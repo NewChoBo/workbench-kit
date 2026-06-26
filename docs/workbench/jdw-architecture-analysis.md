@@ -288,7 +288,7 @@ Aligns with existing `WidgetRegistryContract` in
 > `packages/react/src/jdw`; headless stays `@workbench-kit/jdw`. Evolution below is
 > **in-repo only** (render unification, layout parity, validation wiring).
 
-From `completion-plan.md` Lane B:
+From the current JDW direction:
 
 1. **Unify render mode** — implemented for preview: layout-backend is the primary container path; `renderBuiltinWidgetNode` compatibility export has been removed.
 2. **Complete static layout parity** — implemented for row/column alignment, stack, wrappers, flexible fit, and registry-driven static leaf measurement; dynamic text wrapping remains future work.
@@ -333,5 +333,5 @@ gantt
 | Builtin renderers      | `packages/react/src/jdw/builtins/`                      |
 | Schema plan            | `docs/workbench/widget-layout-schema-plan.md`           |
 | Strengths / JDW rows   | `docs/workbench/strengths-inheritance.md`               |
-| Lane B roadmap         | `docs/workbench/completion-plan.md`                     |
+| Current state          | `docs/workbench/current-state.md`                       |
 | JSON schemas           | `packages/json-widget/schemas/`                         |

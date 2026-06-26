@@ -25,7 +25,7 @@ Reduce **primary sidebar** complexity while preserving VS Code-like UX:
 - Settings / editor CSS modularization — see parent plan Phase 2
 - Secondary sidebar / right activity bar
 - Keybinding sidebar view (unless explicitly scoped later)
-- Editor layout ownership (separate backlog — see [Recommended Work Items](./recommended-work-items-2026-06-18.md))
+- Editor layout ownership (separate backlog — see [Current State](./current-state.md))
 - Reintroducing removed public compatibility aliases without a current consumer
 
 ---

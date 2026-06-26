@@ -1,7 +1,7 @@
 # JDW Editor UX Improvement Plan
 
 > **Status:** Active (updated 2026-06-25)
-> **Related:** [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md), [strengths-inheritance.md](./strengths-inheritance.md), [session-work-plan.md](./session-work-plan.md), [json-config-workbench.md](./json-config-workbench.md)
+> **Related:** [current-state.md](./current-state.md), [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md), [strengths-inheritance.md](./strengths-inheritance.md), [json-config-workbench.md](./json-config-workbench.md)
 
 ## 요약
 
@@ -76,7 +76,7 @@ Code mode hides preview and side panel — Monaco only.
 | P7  | **Placement inspector partial**                    | Stack inset fields are labelled, editable, patch-covered, draggable, and 8-way-resizable on canvas; grid columns reflow children; canvas reparent uses JDW normalize; row/column and wrapper-child resize map to fixed placement; root schema/validator now expose those placement args; registry inspector fields remain demo-limited | Low      |
 | P8  | **Asset palette preview drop core wired**          | `WidgetAssetPalette` can click-add to selected containers, drag assets onto outline before/inside/after targets, and drop assets onto the preview canvas; preview dragover shows parent type, insert index, next path, and row/column/grid append marker                                                                               | Resolved |
 | P9  | **Outline keyboard core wired**                    | Outline ArrowUp/Down/Home/End navigation, ArrowLeft/Right collapse/expand/parent-child navigation, DOM focus follow-up for keyboard selection, Delete/Backspace remove, Alt+ArrowUp/Down move, and Enter→Props focus exist; Design/Code shortcut and richer view-toggle shortcuts remain                                               | Low      |
-| P10 | **Zoom / pan removed**                             | [strengths-inheritance.md](./strengths-inheritance.md), [next-slice-plan.md](./next-slice-plan.md) — explicit deferral                                                                                                                                                                                                                 | Deferred |
+| P10 | **Zoom / pan removed**                             | [current-state.md](./current-state.md), [strengths-inheritance.md](./strengths-inheritance.md) — explicit deferral; host/editor-session state only if implemented                                                                                                                                                                      | Deferred |
 | P11 | **ScreenSpecEditor isolated**                      | No shared chrome with `WidgetTreeLab`; authors pick screen-spec vs raw JDW manually                                                                                                                                                                                                                                                    | Low      |
 | P12 | **Monaco ↔ tree selection range wired**            | Outline selection reveals and highlights the selected widget's full JSON object range; cursor movement still maps editor positions back to widget paths                                                                                                                                                                                | Resolved |
 
@@ -300,7 +300,8 @@ Edit → dirty + validation banner
 - Full Figma / Penpot clone (multiplayer, components library, vector tools)
 - Persisting viewport zoom/pan or canvas metadata to JDW
 - `WorkbenchDocument` absolute coordinates as widget save format
-- Preview zoom toolbar until Lane C policy changes ([session-work-plan.md](./session-work-plan.md) Track C)
+- Preview zoom toolbar until an explicit policy change; zoom/pan remains
+  editor-session state only and must not be persisted to JDW
 - Launchpad / tile-layer compositing editors ([strengths-inheritance.md](./strengths-inheritance.md))
 - Merging `ScreenSpecEditor` and `WidgetTreeLab` into one surface (remain separate layers)
 - Global undo/redo stack (host/editor session concern; WB-15 deferred)
@@ -317,7 +318,7 @@ Lane A sample host (`shell-react` `EditorArea`) adds a **Code(JSON) / Form / Pre
 | **Editor host** (`builtin.editor` `TextEditorHost`) | Buffer SSoT (`getContent` / `setContent`); no view-mode API yet                                                                         |
 | **Rich form surfaces**                              | `JsonConfigWorkbench` (schema form), `WidgetTreeLab` inspector — remain separate until dedicated JDW/widget editor hosts land in WB-29+ |
 
-Form view in the sample is intentionally shallow (top-level key/value fields). Widget/JDW authoring keeps `WidgetTreeLab` Design/Code modes per [session-work-plan.md](./session-work-plan.md) Track B-UX.
+Form view in the sample is intentionally shallow (top-level key/value fields). Widget/JDW authoring keeps `WidgetTreeLab` Design/Code modes; roadmap status lives in [current-state.md](./current-state.md).
 
 ---
 
@@ -380,4 +381,4 @@ Play tags: add `storybook-play-required` to UX-1 and UX-2 smokes once stable.
 - Code: `WidgetTreeLab.tsx`, `WidgetTreeView.tsx`, `WidgetInspectorPanel.tsx`, `WidgetSourceEditor.tsx`, `JsonConfigWorkbench.tsx`, `ScreenSpecEditor.tsx`
 - Audit: [strengths-inheritance.md](./strengths-inheritance.md) partial/deferred rows
 - Architecture: [jdw-schema-figma-authoring.md](./jdw-schema-figma-authoring.md), [structural-review.md](./structural-review.md)
-- Sessions: [session-work-plan.md](./session-work-plan.md) Track B-UX
+- Current state: [current-state.md](./current-state.md)

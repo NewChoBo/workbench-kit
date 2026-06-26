@@ -109,10 +109,10 @@ build`. Browser smoke verified dummy login, activity bar, explorer tree,
 - 2026-06-14: WB-23 added `examples/workbench-sample` — minimal Vite host using
   `WorkbenchProvider` / `WorkbenchShell`, bundled built-in extensions, and
   `.workbench` extensions/layout config (`pnpm workbench-sample`).
-- 2026-06-14: Added [next-slice-plan.md](./next-slice-plan.md) with WB-23 sample
-  host implementation plan, WB-26 CapabilityRegistry sketch, and code/doc truth
-  for JSON widget editor surfaces (`widget-tree` replaces stale `json-widget`
-  export paths). Preview zoom WIP removed from tree; zoom/pan stays deferred per
+- 2026-06-14: WB-23 sample host, WB-26 CapabilityRegistry, and code/doc truth
+  for JSON widget editor surfaces were aligned. `widget-tree` replaces stale
+  `json-widget` export paths. Preview zoom WIP was removed from tree; zoom/pan
+  stays deferred per [current-state.md](./current-state.md) and
   [widget-layout-schema-plan.md](./widget-layout-schema-plan.md).
 - 2026-06-12: WB-24 implemented the first Theia-inspired ViewHost lifecycle
   slice. The SDK now exposes optional host metadata and lifecycle hooks,
@@ -124,8 +124,7 @@ build`. Browser smoke verified dummy login, activity bar, explorer tree,
 
 ## WB-23 implementation plan
 
-Detailed steps, acceptance criteria, and trade-offs live in
-[next-slice-plan.md § Slice 1](./next-slice-plan.md#slice-1--wb-23-workbench-sample-host-p0).
+The historical slice plan was absorbed into [current-state.md](./current-state.md).
 Summary:
 
 1. Scaffold `examples/workbench-sample` (Vite + React 19, private package).

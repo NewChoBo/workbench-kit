@@ -23,8 +23,8 @@ This review maps **actual** `packages/` layout and import edges against
 `scripts/check-workbench-dependency-graph.mjs`. Findings cite source paths verified
 on branch `feature/theia-strengths-workbench` (2026-06-16).
 
-Related plans: [session-work-plan.md](./session-work-plan.md) Track D,
-[completion-plan.md](./completion-plan.md) Lane A, [jdw-architecture-analysis.md](./jdw-architecture-analysis.md).
+Related status: [current-state.md](./current-state.md),
+[jdw-architecture-analysis.md](./jdw-architecture-analysis.md).
 
 ---
 
@@ -400,8 +400,7 @@ JSON configuration lives under `./json-config`.
 | Resource                    | Path                                                 |
 | --------------------------- | ---------------------------------------------------- |
 | Dependency graph checker    | `scripts/check-workbench-dependency-graph.mjs`       |
-| Session plan (Track D)      | `docs/workbench/session-work-plan.md`                |
-| Completion plan (Lane A)    | `docs/workbench/completion-plan.md`                  |
+| Current state               | `docs/workbench/current-state.md`                    |
 | JDW architecture analysis   | `docs/workbench/jdw-architecture-analysis.md`        |
 | Workbench core architecture | `docs/architecture/workbench-core.md`                |
 | CSS render backend          | `packages/react/src/jdw/cssRenderBackend.tsx`        |

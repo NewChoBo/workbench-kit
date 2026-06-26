@@ -2,7 +2,7 @@
 
 > **Status:** Architecture note (updated 2026-06-25)
 >
-> **Related:** [widget-layout-schema-plan.md](./widget-layout-schema-plan.md), [strengths-inheritance.md](./strengths-inheritance.md), [json-widget-port-then-replace.md](./json-widget-port-then-replace.md), [next-slice-plan.md](./next-slice-plan.md)
+> **Related:** [current-state.md](./current-state.md), [widget-layout-schema-plan.md](./widget-layout-schema-plan.md), [strengths-inheritance.md](./strengths-inheritance.md), [json-widget-port-then-replace.md](./json-widget-port-then-replace.md)
 
 ## 1. Recommendation
 
@@ -90,7 +90,7 @@ Placement keys are **parent-type scoped**: `stripExternalPlacement` removes inco
 | Canvas drag / resize → JDW              | **Partial**            | Selected stack/grid drag, stack 8-way resize, canvas reparent, grid drag-slot reflow, grid resize span reflow, row/column linear resize, wrapper-child resize, and asset preview drop commit JDW patches                                                                                                                     |
 | Inspector placement reflow              | **Partial**            | Grid `columns` edits reflow direct child placement through JDW patches; broader inspector reflow remains                                                                                                                                                                                                                     |
 | Tree ↔ canvas/source selection sync     | **Partial**            | Outline selection, keyboard focus follow-up, ArrowLeft/Right tree navigation, and root drop edge handling drive selected canvas frame, full source range highlight, and semantic source problems; preview hover/focus drives transient canvas chrome; asset preview drop marker and drag/reparent ghost indicators are wired |
-| Preview zoom / pan                      | **Removed / deferred** | next-slice-plan code truth                                                                                                                                                                                                                                                                                                   |
+| Preview zoom / pan                      | **Removed / deferred** | host/editor-session state only if revived; not JDW persistence                                                                                                                                                                                                                                                               |
 
 Editor chrome explicitly lagged schema/layout work ([widget-layout-schema-plan.md](./widget-layout-schema-plan.md) Phase 4).
 
@@ -115,17 +115,17 @@ HTML tag names are a **render backend concern** (CSS div wrappers in `cssRenderB
 
 ## 7. Risks
 
-| Risk                             | Mitigation                                                                                                                        |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Dual-model drift**             | One SSoT: JDW string; ban shadow trees; avoid persisting `WorkbenchDocument` for widget files without adapter                     |
-| **Round-trip loss**              | All commits through `genericWidgetToJdwNode` + `normalizeWidgetForParent`; test grid/linear/stack reparent fixtures               |
-| **Schema bloat**                 | Keep Figma-only fields out of JDW; extend profile deliberately (kit `grid`, not ad-hoc canvas metadata)                           |
-| **Gesture vs constraint layout** | Map drag to parent-typed placement (grid slot, flex order, stack inset) — not free-form x/y unless JDW profile adds absolute mode |
-| **Lane contention**              | Lane B headless first; canvas UX after Lane A unless re-prioritized ([next-slice-plan.md](./next-slice-plan.md))                  |
+| Risk                             | Mitigation                                                                                                                                                        |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dual-model drift**             | One SSoT: JDW string; ban shadow trees; avoid persisting `WorkbenchDocument` for widget files without adapter                                                     |
+| **Round-trip loss**              | All commits through `genericWidgetToJdwNode` + `normalizeWidgetForParent`; test grid/linear/stack reparent fixtures                                               |
+| **Schema bloat**                 | Keep Figma-only fields out of JDW; extend profile deliberately (kit `grid`, not ad-hoc canvas metadata)                                                           |
+| **Gesture vs constraint layout** | Map drag to parent-typed placement (grid slot, flex order, stack inset) — not free-form x/y unless JDW profile adds absolute mode                                 |
+| **Lane contention**              | Lane A is closed; current roadmap priority is host-backed storage/install-state unless JDW zoom/pan is explicitly chosen ([current-state.md](./current-state.md)) |
 
 ## 8. Suggested Phased Approach (Lane B Tie-In)
 
-Aligned with [next-slice-plan.md](./next-slice-plan.md) Lane B (parallel, headless-first):
+Aligned with the current state direction ([current-state.md](./current-state.md)):
 
 | Phase              | Scope                                                                                                 | Exit                                                                                                                                                                                                                                    |
 | ------------------ | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -139,5 +139,5 @@ Aligned with [next-slice-plan.md](./next-slice-plan.md) Lane B (parallel, headle
 
 ## References
 
-- Missing doc: `jdw-architecture-analysis.md` was not found; this note supersedes that intent.
+- [jdw-architecture-analysis.md](./jdw-architecture-analysis.md)
 - Code: `packages/json-widget/src/jdw-node.ts`, `widget-normalize.ts`, `layout/`, `layout/layout-mapping.ts`, `packages/react/src/widget-tree/WidgetTreeLab.tsx`, `packages/react/src/jdw/cssRenderBackend.tsx`, `packages/react/src/layout/WorkbenchCanvas.tsx`

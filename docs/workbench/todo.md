@@ -131,13 +131,11 @@ primitive rather than hard-code the downstream concept.
 | 18    | WB-28, WB-29 | Editor and explorer behavior should build on lifecycle, factories, capabilities, and resources. |
 | 19    | WB-30, WB-31 | Preference scopes and devtools inspectors follow once the core runtime contracts are stable.    |
 
-## Recommended Next Slice
+## Current Direction
 
-**Master completion roadmap:** [completion-plan.md](./completion-plan.md) (Lane A phases, sessions, DoD).
-
-**Session work plan:** [session-work-plan.md](./session-work-plan.md) (S7–S12 immediate sessions, tracks, Korean 요약).
-
-**Historical slice detail:** [next-slice-plan.md](./next-slice-plan.md) (2026-06-14).
+Roadmap status, Lane A closeout, and the next recommended priority are tracked
+in [current-state.md](./current-state.md). This todo file is only a generic work
+queue; it is not the roadmap source of truth.
 
 | Order | Slice       | Item                                                          | Mode                                             |
 | ----- | ----------- | ------------------------------------------------------------- | ------------------------------------------------ |

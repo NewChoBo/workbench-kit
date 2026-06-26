@@ -6,8 +6,8 @@ Consumers remain reference-only until Phase 4 swap ([json-widget-port-then-repla
 > **Doc status (2026-06-14):** Several rows below describe a removed playground
 > lane (`JsonWidget/Playground`, `PreviewZoomToolbar`, `usePreviewViewport`).
 > Current editor chrome is `@workbench-kit/react/widget-tree` (`WidgetTreeLab`,
-> Storybook `JDW/WidgetTree/Lab`). See [next-slice-plan.md](./next-slice-plan.md)
-> for the code-truth table.
+> Storybook `JDW/WidgetTree/Lab`). See [current-state.md](./current-state.md)
+> for roadmap status.
 
 ## Current kit mapping (authoritative)
 
@@ -22,20 +22,20 @@ Consumers remain reference-only until Phase 4 swap ([json-widget-port-then-repla
 
 ## tile_paper (json-widget track)
 
-| Strength                                                     | Kit mapping                                                         | Status                                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------------- | ----------------------------------------------- |
-| Tree + inspector + Monaco sync                               | `WidgetTreeLab` + `WidgetSourceEditor` + `WidgetInspectorPanel`     | **Adopted**                                     |
-| DnD tree reorder + patch types                               | `WidgetTreeView` + `@workbench-kit/jdw` patch                       | **Adopted**                                     |
-| Canvas zoom/pan + preview toolbar                            | —                                                                   | **Deferred** (not in tree; see next-slice-plan) |
-| Monaco Ctrl+S save                                           | `JsonCodeEditorPane` → `JsonConfigWorkbench` / `WidgetSourceEditor` | **Adopted**                                     |
-| View toggle shortcuts (Ctrl+K V, Ctrl+Shift+V)               | `WidgetSourceEditor` (when Monaco mounted)                          | Partial                                         |
-| Problems panel + status bar (Monaco markers)                 | `JsonCodeEditorPane`                                                | **Adopted**                                     |
-| Parse error banner                                           | `WorkbenchParseError` on editor + preview                           | Adopted (prior)                                 |
-| Inspector sections for demo types                            | `WidgetInspectorPanel` + `WIDGET_TREE_DEMO_REGISTRY`                | Partial — demo registry types only              |
-| Full `WidgetPropertySections` (all builtins)                 | Registry-driven `WidgetInspectorPanel`                              | Partial — demo types only                       |
-| `createWidgetJsonSchema` (project/launchpad/tile schemas)    | `createJdwDocumentJsonSchema`                                       | Partial — document schema subset                |
-| Domain widget renderers (`EditorWidgetWrapper`, tile layers) | `JdwPreview` + CSS layout backend                                   | Partial — structural preview only               |
-| `ProjectConfigEditor` / launchpad schemas                    | —                                                                   | **Deferred** (product-specific)                 |
+| Strength                                                     | Kit mapping                                                         | Status                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------------- | -------------------------------------------------------- |
+| Tree + inspector + Monaco sync                               | `WidgetTreeLab` + `WidgetSourceEditor` + `WidgetInspectorPanel`     | **Adopted**                                              |
+| DnD tree reorder + patch types                               | `WidgetTreeView` + `@workbench-kit/jdw` patch                       | **Adopted**                                              |
+| Canvas zoom/pan + preview toolbar                            | —                                                                   | **Deferred** (host/editor-session state only if revived) |
+| Monaco Ctrl+S save                                           | `JsonCodeEditorPane` → `JsonConfigWorkbench` / `WidgetSourceEditor` | **Adopted**                                              |
+| View toggle shortcuts (Ctrl+K V, Ctrl+Shift+V)               | `WidgetSourceEditor` (when Monaco mounted)                          | Partial                                                  |
+| Problems panel + status bar (Monaco markers)                 | `JsonCodeEditorPane`                                                | **Adopted**                                              |
+| Parse error banner                                           | `WorkbenchParseError` on editor + preview                           | Adopted (prior)                                          |
+| Inspector sections for demo types                            | `WidgetInspectorPanel` + `WIDGET_TREE_DEMO_REGISTRY`                | Partial — demo registry types only                       |
+| Full `WidgetPropertySections` (all builtins)                 | Registry-driven `WidgetInspectorPanel`                              | Partial — demo types only                                |
+| `createWidgetJsonSchema` (project/launchpad/tile schemas)    | `createJdwDocumentJsonSchema`                                       | Partial — document schema subset                         |
+| Domain widget renderers (`EditorWidgetWrapper`, tile layers) | `JdwPreview` + CSS layout backend                                   | Partial — structural preview only                        |
+| `ProjectConfigEditor` / launchpad schemas                    | —                                                                   | **Deferred** (product-specific)                          |
 
 ### Historical rows (removed playground lane — do not implement from this table)
 

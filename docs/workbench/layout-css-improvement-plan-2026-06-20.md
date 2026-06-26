@@ -10,8 +10,7 @@ This document supersedes sidebar-only framing. Sidebar work continues as a
 Related:
 
 - [Workbench Change Guidelines](./workbench-change-guidelines.md)
-- [Project-Wide Review 2026-06-18](./project-wide-review-2026-06-18.md) (P2 scrollbar, P2 tokens)
-- [Recommended Work Items 2026-06-18](./recommended-work-items-2026-06-18.md) (P1 editor layout ownership)
+- [Current State](./current-state.md) (roadmap status and validation ladder)
 
 ---
 
@@ -37,8 +36,8 @@ Establish and enforce a **single layout + scroll contract** across:
 
 ### Non-goals
 
-- Full design-token layering (separate P2 track in project-wide review)
-- Editor layout ownership in `EditorService` (P1 — parallel, not blocked by CSS)
+- Full design-token layering (separate future track)
+- Editor layout ownership in `EditorService` (parallel, not blocked by CSS)
 - Secondary sidebar, theme marketplace, i18n
 - CSS-in-JS migration or Tailwind adoption
 
@@ -272,8 +271,8 @@ to this doc or an open improvement ticket.
 | Track              | Document                                                                                 | Scope                                                              |
 | ------------------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | **Sidebar wiring** | [sidebar-simplification-plan-2026-06-20.md](./sidebar-simplification-plan-2026-06-20.md) | Builtin views, render data, section stack, overlay footer decision |
-| **Editor layout**  | [recommended-work-items-2026-06-18.md](./recommended-work-items-2026-06-18.md)           | `EditorService` split/merge — parallel, not blocked                |
-| **Tokens / theme** | project-wide review P2                                                                   | Color/shape/density layering — out of scope here                   |
+| **Editor layout**  | [current-state.md](./current-state.md)                                                   | `EditorService` split/merge — parallel, not blocked                |
+| **Tokens / theme** | future design-token track                                                                | Color/shape/density layering — out of scope here                   |
 
 Sidebar Phase A/B-1 remains valid. Sidebar Phase B-2 (overlay footer) is a
 **case study** for Phase 1 scroll policy, not a standalone goal.
