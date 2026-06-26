@@ -21,8 +21,8 @@ were folded into this file and removed. Git history remains the archive.
   extension state. JDW polish is secondary unless the user explicitly chooses a
   JDW zoom/pan slice.
 - Workbench Kit stays generic. Product repositories inject host adapters and
-  own product policy, filesystem, SQLite, trust, marketplace, and runtime
-  effects.
+  own product policy, filesystem, user-data/workspace persistence, trust,
+  marketplace, and runtime effects.
 
 ## Active Documents
 
@@ -49,7 +49,7 @@ Required adapter semantics:
 | Values         | JSON-serializable values; adapter validates decode failure as missing/corrupt state                        |
 | Read failure   | Fall back to documented defaults and surface a recoverable diagnostic hook                                 |
 | Write failure  | Keep runtime state in memory, report a non-fatal persistence error, and avoid partially acknowledged saves |
-| Host ownership | Browser storage, user-data files, SQLite, cloud sync, and encryption are host responsibilities             |
+| Host ownership | Browser storage, user-data files, workspace files, cloud sync, and encryption are host responsibilities    |
 
 The first storage-backed domains are:
 
@@ -78,9 +78,11 @@ trust chains, integrity fingerprints, license/review UX, or runtime permission
 grant policy. Those stay in the host product.
 
 For `custom_launcher`, this means the Kit installed-extension model can be
-bridged to the existing product boundary, but plugin catalog/trust still stays
-with SQLite plus `.tilepaper-plugin-state.json` until the local trust model is
-stable.
+bridged to the product boundary, but plugin catalog/trust still stays in the
+host product. The current product direction is VS Code/Theia-like local plugin
+state: installed plugin folders and manifest scan are runtime inventory, while
+trust, integrity, compatibility, enablement, and workspace trust-ready state are
+host-owned JSON state.
 
 ## Custom Launcher Adoption Policy
 
