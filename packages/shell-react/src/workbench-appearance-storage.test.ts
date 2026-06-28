@@ -56,4 +56,35 @@ describe('workbench-appearance-storage', () => {
       readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage),
     ).toEqual(DEFAULT_WORKBENCH_APPEARANCE);
   });
+
+  it('round-trips a contributed (non-built-in) preset id', () => {
+    const storage = createMemoryStorage();
+    const settings = {
+      darkPreset: 'workbench-kit.samples.theme-alt.dark-blue',
+      lightPreset: 'skyblue' as const,
+      themePreference: 'dark' as const,
+    };
+
+    writePersistedWorkbenchAppearance(settings, DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage);
+
+    expect(
+      readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage),
+    ).toEqual(settings);
+  });
+
+  it('falls back to defaults when a preset id is an empty string', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(
+      DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
+      JSON.stringify({ darkPreset: '', lightPreset: '', themePreference: 'light' }),
+    );
+
+    expect(
+      readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage),
+    ).toEqual({
+      darkPreset: DEFAULT_WORKBENCH_APPEARANCE.darkPreset,
+      lightPreset: DEFAULT_WORKBENCH_APPEARANCE.lightPreset,
+      themePreference: 'light',
+    });
+  });
 });

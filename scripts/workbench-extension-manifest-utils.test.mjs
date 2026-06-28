@@ -195,4 +195,63 @@ describe('workbench extension manifest validation', () => {
 
     expect(violations).toEqual([]);
   });
+
+  it('requires theme contributions to declare a mode', () => {
+    const violations = validateWorkbenchExtensionManifests(
+      [
+        createManifestEntry(
+          createValidManifest({
+            contributes: {
+              themes: [
+                {
+                  id: 'workbench-kit.test.alt-theme',
+                  label: 'Alt Theme',
+                },
+              ],
+            },
+          }),
+        ),
+      ],
+      repoRoot,
+    );
+
+    expect(violations).toEqual([
+      expect.objectContaining({
+        location: 'extensions/builtin.test/workbench.extension.json#contributes.themes[0].mode',
+        rule: 'manifest-contributes',
+      }),
+    ]);
+  });
+
+  it('requires contributed theme tokenOverrides to cover the full token set', () => {
+    const violations = validateWorkbenchExtensionManifests(
+      [
+        createManifestEntry(
+          createValidManifest({
+            contributes: {
+              themes: [
+                {
+                  id: 'workbench-kit.test.alt-theme',
+                  label: 'Alt Theme',
+                  mode: 'dark',
+                  tokenOverrides: {
+                    '--color-bg': '#0a1628',
+                  },
+                },
+              ],
+            },
+          }),
+        ),
+      ],
+      repoRoot,
+    );
+
+    expect(violations).toEqual([
+      expect.objectContaining({
+        location:
+          'extensions/builtin.test/workbench.extension.json#contributes.themes[0].tokenOverrides',
+        rule: 'manifest-theme-token-overrides-incomplete',
+      }),
+    ]);
+  });
 });

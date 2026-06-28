@@ -54,8 +54,9 @@ const LIGHT_THEME_PRESET_IDS = new Set<string>(
 const DARK_THEME_PRESET_IDS = new Set<string>(DARK_THEME_PRESET_MANIFEST.map((entry) => entry.id));
 
 export interface WorkbenchThemePresetSelection {
-  lightPreset: LightThemePresetId;
-  darkPreset: DarkThemePresetId;
+  /** A built-in preset id, or a contributed theme id with a matching `mode`. */
+  lightPreset: string;
+  darkPreset: string;
 }
 
 export function isLightThemePresetId(
@@ -71,7 +72,7 @@ export function isDarkThemePresetId(value: string | null | undefined): value is 
 export function resolveActiveThemePreset(
   resolvedTheme: ResolvedWorkbenchTheme,
   selection: WorkbenchThemePresetSelection,
-): ThemePresetId {
+): string {
   return resolvedTheme === 'light' ? selection.lightPreset : selection.darkPreset;
 }
 
@@ -99,22 +100,28 @@ export function applyWorkbenchThemeAttributes(
 }
 
 export interface WorkbenchAppearanceSettings {
-  darkPreset: DarkThemePresetId;
-  lightPreset: LightThemePresetId;
+  darkPreset: string;
+  lightPreset: string;
   themePreference: WorkbenchColorSchemePreference;
 }
 
 /**
  * Applies color scheme preference and light/dark presets to a DOM root (typically `document.documentElement`).
+ * Returns the resolved attributes so callers can derive the active preset id without
+ * recomputing `resolveWorkbenchTheme` themselves.
  */
 export function applyWorkbenchAppearance(
   root: HTMLElement,
   settings: WorkbenchAppearanceSettings,
-): void {
-  applyWorkbenchThemeAttributes(root, {
+): WorkbenchThemeDocumentAttributes {
+  const attributes: WorkbenchThemeDocumentAttributes = {
     darkPreset: settings.darkPreset,
     lightPreset: settings.lightPreset,
     resolvedTheme: resolveWorkbenchTheme(settings.themePreference),
     themePreference: settings.themePreference,
-  });
+  };
+
+  applyWorkbenchThemeAttributes(root, attributes);
+
+  return attributes;
 }

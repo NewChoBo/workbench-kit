@@ -3,8 +3,6 @@ import {
   resolveActiveThemePreset,
   useResolvedWorkbenchTheme,
   WorkbenchThemeProvider,
-  type DarkThemePresetId,
-  type LightThemePresetId,
   type WorkbenchColorSchemePreference,
 } from '@workbench-kit/react/workbench';
 import { WorkbenchAuthGate } from '@workbench-kit/react/workbench/auth';
@@ -13,8 +11,8 @@ import { SampleAccountProvider, useSampleAuth } from './useSampleAuth.js';
 
 export interface SampleAuthShellProps {
   appearance: {
-    darkPreset: DarkThemePresetId;
-    lightPreset: LightThemePresetId;
+    darkPreset: string;
+    lightPreset: string;
     themePreference: WorkbenchColorSchemePreference;
   };
   children: ReactNode;

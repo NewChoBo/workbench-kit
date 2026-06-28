@@ -22,6 +22,16 @@ export interface SelectProps extends ComponentPropsWithRef<'select'> {
   onValueChange?: (value: string, event: ChangeEvent<HTMLSelectElement>) => void;
 }
 
+/**
+ * Portaling straight to `document.body` escapes the workbench root (`[data-theme-preset]`),
+ * which re-declares theme tokens locally and shadows whatever a contributed theme overrides
+ * on `document.documentElement`. Staying inside that root keeps the listbox in sync with the
+ * trigger it belongs to.
+ */
+function resolvePortalContainer(trigger: HTMLElement | null): HTMLElement {
+  return trigger?.closest<HTMLElement>('[data-theme-preset], [data-theme]') ?? document.body;
+}
+
 export function Select({
   className,
   controlWidth = 'default',
@@ -250,7 +260,7 @@ export function Select({
         </span>
       </button>
 
-      {listbox ? createPortal(listbox, document.body) : null}
+      {listbox ? createPortal(listbox, resolvePortalContainer(triggerRef.current)) : null}
 
       <select
         ref={nativeSelectRef}

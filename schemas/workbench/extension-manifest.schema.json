@@ -160,12 +160,39 @@
       "properties": {
         "id": { "type": "string", "minLength": 1 },
         "label": { "type": "string", "minLength": 1 },
+        "mode": {
+          "enum": ["dark", "light"],
+          "description": "Which preset dropdown (Light preset / Dark preset) this theme is offered under."
+        },
         "tokenOverrides": {
           "type": "object",
-          "additionalProperties": { "type": "string" }
+          "description": "Must override the full token set (see @workbench-kit/tokens/src/themes/**) since these apply as inline styles on the document root, outranking whatever light/dark preset is active. A partial set breaks contrast against the preset's untouched tokens.",
+          "additionalProperties": { "type": "string" },
+          "required": [
+            "--color-bg",
+            "--color-bg-75",
+            "--color-primary-side-bar-bg",
+            "--color-primary-side-bar-bg-75",
+            "--color-surface",
+            "--color-surface-hover",
+            "--color-surface-elevated",
+            "--color-border",
+            "--color-text",
+            "--color-text-muted",
+            "--color-text-subtle",
+            "--color-accent",
+            "--color-accent-hover",
+            "--color-accent-foreground",
+            "--color-focus-border",
+            "--color-danger",
+            "--color-danger-hover",
+            "--scrollbar-thumb",
+            "--scrollbar-thumb-hover",
+            "--scrollbar-thumb-active"
+          ]
         }
       },
-      "required": ["id", "label"],
+      "required": ["id", "label", "mode"],
       "additionalProperties": true
     },
     "viewContainerContribution": {

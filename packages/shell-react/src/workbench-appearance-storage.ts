@@ -1,10 +1,6 @@
 import {
   DEFAULT_DARK_THEME_PRESET,
   DEFAULT_LIGHT_THEME_PRESET,
-  isDarkThemePresetId,
-  isLightThemePresetId,
-  type DarkThemePresetId,
-  type LightThemePresetId,
   type WorkbenchAppearanceSettings,
   type WorkbenchColorSchemePreference,
 } from '@workbench-kit/react/workbench/themePresets';
@@ -73,22 +69,24 @@ function normalizeWorkbenchAppearance(value: unknown): WorkbenchAppearanceSettin
 
   const record = value as Record<string, unknown>;
   const themePreference = normalizeThemePreference(record.themePreference);
-  const lightPreset = isLightThemePresetId(
-    typeof record.lightPreset === 'string' ? record.lightPreset : undefined,
-  )
-    ? (record.lightPreset as LightThemePresetId)
-    : DEFAULT_WORKBENCH_APPEARANCE.lightPreset;
-  const darkPreset = isDarkThemePresetId(
-    typeof record.darkPreset === 'string' ? record.darkPreset : undefined,
-  )
-    ? (record.darkPreset as DarkThemePresetId)
-    : DEFAULT_WORKBENCH_APPEARANCE.darkPreset;
+  // Preset ids may belong to a contributed theme, which isn't known until extensions
+  // register, so we can only validate shape here; the appearance UI falls back to a
+  // default option if the persisted id no longer resolves to anything.
+  const lightPreset = normalizePresetId(
+    record.lightPreset,
+    DEFAULT_WORKBENCH_APPEARANCE.lightPreset,
+  );
+  const darkPreset = normalizePresetId(record.darkPreset, DEFAULT_WORKBENCH_APPEARANCE.darkPreset);
 
   return {
     darkPreset,
     lightPreset,
     themePreference,
   };
+}
+
+function normalizePresetId(value: unknown, fallback: string): string {
+  return typeof value === 'string' && value.length > 0 ? value : fallback;
 }
 
 function normalizeThemePreference(value: unknown): WorkbenchColorSchemePreference {

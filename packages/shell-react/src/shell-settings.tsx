@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Badge, Checkbox, Field, Select } from '@workbench-kit/react/primitives';
 import {
   applyWorkbenchAppearance,
   DARK_THEME_PRESET_OPTIONS,
   LIGHT_THEME_PRESET_OPTIONS,
   WORKBENCH_COLOR_SCHEME_OPTIONS,
-  type DarkThemePresetId,
-  type LightThemePresetId,
   type WorkbenchColorSchemePreference,
+  type WorkbenchThemePresetOption,
 } from '@workbench-kit/react/workbench';
 import {
   WorkbenchSettingsSection,
@@ -23,8 +22,6 @@ import type { PreferenceScope } from '@workbench-kit/workbench-config';
 import { useWorkbench } from './provider.js';
 
 const APPEARANCE_SETTINGS_CATEGORY_ID = 'workbench.appearance';
-const CONTRIBUTED_COLOR_THEME_PREFERENCE_KEY = 'workbench.appearance.contributedColorTheme';
-const NO_CONTRIBUTED_COLOR_THEME = '';
 
 export const SETTINGS_EXTENSION_ID = 'workbench-kit.builtin.settings';
 export const WORKBENCH_PREFERENCE_SCOPES = [
@@ -45,12 +42,12 @@ export interface WorkbenchLocaleOption {
 }
 
 interface WorkbenchAppearanceSettingsInput {
-  darkPreset?: DarkThemePresetId | undefined;
-  lightPreset?: LightThemePresetId | undefined;
+  darkPreset?: string | undefined;
+  lightPreset?: string | undefined;
   locale?: string | undefined;
   localeOptions?: readonly WorkbenchLocaleOption[] | undefined;
-  onDarkPresetChange?: ((preset: DarkThemePresetId) => void) | undefined;
-  onLightPresetChange?: ((preset: LightThemePresetId) => void) | undefined;
+  onDarkPresetChange?: ((preset: string) => void) | undefined;
+  onLightPresetChange?: ((preset: string) => void) | undefined;
   onLocaleChange?: ((locale: string) => void) | undefined;
   onThemeChange?: ((theme: string) => void) | undefined;
   theme?: string | undefined;
@@ -156,11 +153,6 @@ export function createSettingsCategories(
     : contributedCategories;
 }
 
-function readContributedColorThemePreference(preferenceService: PreferenceService): string {
-  const value = preferenceService.getEffectiveValue(CONTRIBUTED_COLOR_THEME_PREFERENCE_KEY);
-  return typeof value === 'string' ? value : NO_CONTRIBUTED_COLOR_THEME;
-}
-
 function formatPreferenceScopeLabel(scope: PreferenceScope): string {
   return WORKBENCH_PREFERENCE_SCOPES.find((candidate) => candidate.id === scope)?.label ?? scope;
 }
@@ -260,22 +252,29 @@ function AppearanceSettingsSection({
   localeOptions: readonly WorkbenchLocaleOption[];
   themeOptions: readonly WorkbenchThemeOption[];
 }) {
-  const { extensionRegistry, preferenceService } = useWorkbench();
+  const { extensionRegistry } = useWorkbench();
+  const containerRef = useRef<HTMLDivElement>(null);
   const previousThemeOverridesRef = useRef<Readonly<Record<string, string>> | undefined>(undefined);
   const usesAppearancePresets = lightPreset !== undefined && darkPreset !== undefined;
-  const contributedThemeOptions = useMemo(
-    () =>
-      extensionRegistry.themes.getThemes().map((contributedTheme) => ({
-        description: contributedTheme.tokenOverrides
-          ? 'Contributed theme with token overrides.'
-          : 'Contributed theme.',
-        id: contributedTheme.id,
-        label: contributedTheme.label,
-      })),
+  const lightPresetOptions = useMemo<readonly WorkbenchThemePresetOption[]>(
+    () => [
+      ...LIGHT_THEME_PRESET_OPTIONS,
+      ...extensionRegistry.themes
+        .getThemes()
+        .filter((contributedTheme) => contributedTheme.mode === 'light')
+        .map((contributedTheme) => ({ id: contributedTheme.id, label: contributedTheme.label })),
+    ],
     [extensionRegistry.themes],
   );
-  const [contributedColorThemeId, setContributedColorThemeId] = useState(() =>
-    readContributedColorThemePreference(preferenceService),
+  const darkPresetOptions = useMemo<readonly WorkbenchThemePresetOption[]>(
+    () => [
+      ...DARK_THEME_PRESET_OPTIONS,
+      ...extensionRegistry.themes
+        .getThemes()
+        .filter((contributedTheme) => contributedTheme.mode === 'dark')
+        .map((contributedTheme) => ({ id: contributedTheme.id, label: contributedTheme.label })),
+    ],
+    [extensionRegistry.themes],
   );
   const selectedTheme = themeOptions.find((option) => option.id === theme) ?? themeOptions[0];
   const selectedThemeId = selectedTheme?.id ?? '';
@@ -285,60 +284,56 @@ function AppearanceSettingsSection({
   const selectedColorSchemeId = (selectedColorScheme?.id ??
     'system') as WorkbenchColorSchemePreference;
   const selectedLightPreset =
-    LIGHT_THEME_PRESET_OPTIONS.find((option) => option.id === lightPreset) ??
-    LIGHT_THEME_PRESET_OPTIONS[0];
+    lightPresetOptions.find((option) => option.id === lightPreset) ?? lightPresetOptions[0];
   const selectedDarkPreset =
-    DARK_THEME_PRESET_OPTIONS.find((option) => option.id === darkPreset) ??
-    DARK_THEME_PRESET_OPTIONS[0];
+    darkPresetOptions.find((option) => option.id === darkPreset) ?? darkPresetOptions[0];
   const selectedLocale = localeOptions.find((option) => option.id === locale) ?? localeOptions[0];
   const selectedLocaleId = selectedLocale?.id ?? 'en';
-  const selectedContributedTheme =
-    contributedThemeOptions.find((option) => option.id === contributedColorThemeId) ??
-    contributedThemeOptions[0];
-  const selectedContributedThemeId = selectedContributedTheme?.id ?? NO_CONTRIBUTED_COLOR_THEME;
-
-  useEffect(() => {
-    const disposable = preferenceService.onDidChangePreference((event) => {
-      if (event.key !== CONTRIBUTED_COLOR_THEME_PREFERENCE_KEY) {
-        return;
-      }
-
-      setContributedColorThemeId(readContributedColorThemePreference(preferenceService));
-    });
-
-    return () => {
-      disposable.dispose();
-    };
-  }, [preferenceService]);
 
   useEffect(() => {
     if (typeof document === 'undefined') {
       return;
     }
 
+    let activeThemeId: string | undefined;
+
     if (usesAppearancePresets) {
-      applyWorkbenchAppearance(document.documentElement, {
+      const { resolvedTheme } = applyWorkbenchAppearance(document.documentElement, {
         darkPreset: selectedDarkPreset.id,
         lightPreset: selectedLightPreset.id,
         themePreference: selectedColorSchemeId,
       });
+      activeThemeId = resolvedTheme === 'light' ? selectedLightPreset.id : selectedDarkPreset.id;
+    } else {
+      activeThemeId = selectedThemeId;
     }
 
-    const contributedThemeId = usesAppearancePresets ? selectedContributedThemeId : selectedThemeId;
-    const contributedTheme =
-      contributedThemeId && contributedThemeId !== NO_CONTRIBUTED_COLOR_THEME
-        ? extensionRegistry.themes.getTheme(contributedThemeId)
-        : undefined;
-    applyThemeTokenOverrides(
-      document.documentElement,
-      contributedTheme?.tokenOverrides,
-      previousThemeOverridesRef.current,
+    const contributedTheme = activeThemeId
+      ? extensionRegistry.themes.getTheme(activeThemeId)
+      : undefined;
+
+    // The actual workbench root (e.g. `.ide-root`) re-declares `data-theme-preset` locally,
+    // which shadows inheritance from `documentElement` for everything rendered inside it.
+    // Apply the override there too, or it only ever reaches stray document.body portals.
+    const workbenchRoot = containerRef.current?.closest<HTMLElement>(
+      '[data-theme-preset], [data-theme]',
     );
+    const overrideTargets =
+      workbenchRoot && workbenchRoot !== document.documentElement
+        ? [document.documentElement, workbenchRoot]
+        : [document.documentElement];
+
+    for (const target of overrideTargets) {
+      applyThemeTokenOverrides(
+        target,
+        contributedTheme?.tokenOverrides,
+        previousThemeOverridesRef.current,
+      );
+    }
     previousThemeOverridesRef.current = contributedTheme?.tokenOverrides;
   }, [
     extensionRegistry.themes,
     selectedColorSchemeId,
-    selectedContributedThemeId,
     selectedDarkPreset.id,
     selectedLightPreset.id,
     selectedThemeId,
@@ -351,7 +346,7 @@ function AppearanceSettingsSection({
       title="Appearance"
       description="Configure how the workbench is presented."
     >
-      <div className="workbench-appearance-settings">
+      <div ref={containerRef} className="workbench-appearance-settings">
         {usesAppearancePresets ? (
           <>
             <Field
@@ -383,11 +378,9 @@ function AppearanceSettingsSection({
                 controlWidth="full"
                 disabled={!onLightPresetChange}
                 value={selectedLightPreset.id}
-                onValueChange={(nextPreset) =>
-                  onLightPresetChange?.(nextPreset as LightThemePresetId)
-                }
+                onValueChange={(nextPreset) => onLightPresetChange?.(nextPreset)}
               >
-                {LIGHT_THEME_PRESET_OPTIONS.map((option) => (
+                {lightPresetOptions.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
                   </option>
@@ -404,54 +397,15 @@ function AppearanceSettingsSection({
                 controlWidth="full"
                 disabled={!onDarkPresetChange}
                 value={selectedDarkPreset.id}
-                onValueChange={(nextPreset) =>
-                  onDarkPresetChange?.(nextPreset as DarkThemePresetId)
-                }
+                onValueChange={(nextPreset) => onDarkPresetChange?.(nextPreset)}
               >
-                {DARK_THEME_PRESET_OPTIONS.map((option) => (
+                {darkPresetOptions.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
                   </option>
                 ))}
               </Select>
             </Field>
-            {contributedThemeOptions.length > 0 ? (
-              <Field
-                className="workbench-appearance-settings__field"
-                label="Extension color theme"
-                description="Optional token overrides contributed by enabled theme extensions."
-              >
-                <Select
-                  aria-label="Extension color theme"
-                  controlWidth="full"
-                  value={selectedContributedThemeId}
-                  onValueChange={(nextThemeId) => {
-                    const normalizedThemeId =
-                      nextThemeId === NO_CONTRIBUTED_COLOR_THEME
-                        ? NO_CONTRIBUTED_COLOR_THEME
-                        : nextThemeId;
-                    preferenceService.setScopedValue(
-                      CONTRIBUTED_COLOR_THEME_PREFERENCE_KEY,
-                      'local',
-                      normalizedThemeId || undefined,
-                    );
-                    setContributedColorThemeId(normalizedThemeId);
-                  }}
-                >
-                  <option value={NO_CONTRIBUTED_COLOR_THEME}>None (presets only)</option>
-                  {contributedThemeOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
-                {selectedContributedTheme?.description ? (
-                  <p className="workbench-appearance-settings__description">
-                    {selectedContributedTheme.description}
-                  </p>
-                ) : null}
-              </Field>
-            ) : null}
           </>
         ) : themeOptions.length ? (
           <Field

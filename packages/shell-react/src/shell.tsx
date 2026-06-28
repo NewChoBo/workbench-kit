@@ -18,7 +18,6 @@ import {
 import type { WorkbenchSettingsCapability } from '@workbench-kit/workbench-core';
 import { WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS } from '@workbench-kit/platform';
 import { isPreferenceScope, type PreferenceScope } from '@workbench-kit/workbench-config';
-import type { DarkThemePresetId, LightThemePresetId } from '@workbench-kit/react/workbench';
 import {
   resolveActiveThemePreset,
   useResolvedWorkbenchTheme,
@@ -74,13 +73,13 @@ export interface WorkbenchShellProps {
   catalogUrl?: string | undefined;
   commandHost?: false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'>;
   compactStatus?: boolean;
-  darkPreset?: DarkThemePresetId | undefined;
+  darkPreset?: string | undefined;
   editorArea?: ReactNode;
   helpContent?: ReactNode;
   helpTitle?: ReactNode;
-  lightPreset?: LightThemePresetId | undefined;
-  onDarkPresetChange?: ((preset: DarkThemePresetId) => void) | undefined;
-  onLightPresetChange?: ((preset: LightThemePresetId) => void) | undefined;
+  lightPreset?: string | undefined;
+  onDarkPresetChange?: ((preset: string) => void) | undefined;
+  onLightPresetChange?: ((preset: string) => void) | undefined;
   onThemeChange?: ((theme: string) => void) | undefined;
   onLocaleChange?: ((locale: string) => void) | undefined;
   locale?: string | undefined;

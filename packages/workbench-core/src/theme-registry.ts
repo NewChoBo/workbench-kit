@@ -5,6 +5,36 @@ export interface WorkbenchThemeContribution extends ThemeContribution {
   readonly extensionId: string;
 }
 
+/**
+ * Every token a light/dark preset defines (see `@workbench-kit/tokens/src/themes/**`).
+ * Contributed theme `tokenOverrides` are applied as inline styles on the document root,
+ * which outrank the preset's attribute-selector rules. A partial override (e.g. only
+ * `--color-surface`) silently breaks contrast against the preset's untouched text/border
+ * tokens, so contributed themes must replace the full set rather than a subset.
+ */
+export const REQUIRED_THEME_TOKEN_KEYS = [
+  '--color-bg',
+  '--color-bg-75',
+  '--color-primary-side-bar-bg',
+  '--color-primary-side-bar-bg-75',
+  '--color-surface',
+  '--color-surface-hover',
+  '--color-surface-elevated',
+  '--color-border',
+  '--color-text',
+  '--color-text-muted',
+  '--color-text-subtle',
+  '--color-accent',
+  '--color-accent-hover',
+  '--color-accent-foreground',
+  '--color-focus-border',
+  '--color-danger',
+  '--color-danger-hover',
+  '--scrollbar-thumb',
+  '--scrollbar-thumb-hover',
+  '--scrollbar-thumb-active',
+] as const;
+
 export class ThemeRegistry implements Disposable {
   private readonly onDidRegisterThemeEmitter = new Emitter<WorkbenchThemeContribution>();
   private readonly themesById = new Map<string, WorkbenchThemeContribution>();
@@ -22,6 +52,24 @@ export class ThemeRegistry implements Disposable {
   registerTheme(theme: WorkbenchThemeContribution): Disposable {
     if (this.themesById.has(theme.id)) {
       throw new Error(`Theme "${theme.id}" is already registered.`);
+    }
+
+    if (theme.mode !== 'dark' && theme.mode !== 'light') {
+      throw new Error(`Theme "${theme.id}" must declare mode as "dark" or "light".`);
+    }
+
+    if (theme.tokenOverrides) {
+      const missingKeys = REQUIRED_THEME_TOKEN_KEYS.filter(
+        (key) => !Object.prototype.hasOwnProperty.call(theme.tokenOverrides!, key),
+      );
+
+      if (missingKeys.length > 0) {
+        throw new Error(
+          `Theme "${theme.id}" tokenOverrides is missing required token(s): ${missingKeys.join(', ')}. ` +
+            'Contributed themes override the document root with inline styles, so a partial set ' +
+            'breaks contrast against whatever light/dark preset is active; supply the full token set.',
+        );
+      }
     }
 
     this.themesById.set(theme.id, theme);

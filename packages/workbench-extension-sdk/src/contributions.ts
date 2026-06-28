@@ -102,9 +102,13 @@ export interface EditorDocumentViewContribution {
   when?: string | undefined;
 }
 
+export type ThemeContributionMode = 'dark' | 'light';
+
 export interface ThemeContribution {
   id: string;
   label: string;
+  /** Which preset dropdown (Light preset / Dark preset) this theme's tokenOverrides slot into. */
+  mode: ThemeContributionMode;
   tokenOverrides?: Record<string, string>;
 }
 

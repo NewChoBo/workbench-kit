@@ -10,6 +10,33 @@ const stringArrayFields = [
   'permissions',
 ];
 
+// Mirrors REQUIRED_THEME_TOKEN_KEYS in packages/workbench-core/src/theme-registry.ts.
+// Contributed theme tokenOverrides are applied as inline styles on the document root,
+// outranking the active light/dark preset's CSS rules, so a partial override silently
+// breaks contrast against whatever tokens the preset left untouched.
+const requiredThemeTokenKeys = [
+  '--color-bg',
+  '--color-bg-75',
+  '--color-primary-side-bar-bg',
+  '--color-primary-side-bar-bg-75',
+  '--color-surface',
+  '--color-surface-hover',
+  '--color-surface-elevated',
+  '--color-border',
+  '--color-text',
+  '--color-text-muted',
+  '--color-text-subtle',
+  '--color-accent',
+  '--color-accent-hover',
+  '--color-accent-foreground',
+  '--color-focus-border',
+  '--color-danger',
+  '--color-danger-hover',
+  '--scrollbar-thumb',
+  '--scrollbar-thumb-hover',
+  '--scrollbar-thumb-active',
+];
+
 export async function readWorkbenchExtensionManifestEntries(repoRoot) {
   const extensionsRoot = path.join(repoRoot, 'extensions');
   const directoryEntries = await readdir(extensionsRoot, { withFileTypes: true });
@@ -333,7 +360,9 @@ function validateContributes(entry, violations, repoRoot) {
   validateContributionArray(entry, contributes, 'themes', violations, repoRoot, (item) => [
     ['id', stringValue(item.id)],
     ['label', stringValue(item.label)],
+    ['mode', item.mode === 'dark' || item.mode === 'light'],
   ]);
+  validateThemeTokenOverrides(entry, contributes, violations, repoRoot);
   validateContributionArray(entry, contributes, 'localizations', violations, repoRoot, (item) => [
     ['locale', stringValue(item.locale)],
     ['label', stringValue(item.label)],
@@ -430,6 +459,50 @@ function validateContributionArrayMap(
       repoRoot,
       requiredFields,
     );
+  }
+}
+
+function validateThemeTokenOverrides(entry, contributes, violations, repoRoot) {
+  const themes = contributes.themes;
+  if (!Array.isArray(themes)) {
+    return;
+  }
+
+  for (const [index, theme] of themes.entries()) {
+    if (!isRecord(theme) || theme.tokenOverrides === undefined) {
+      continue;
+    }
+
+    if (!isRecord(theme.tokenOverrides)) {
+      violations.push({
+        location: fieldLocation(
+          entry.manifestPath,
+          `contributes.themes[${index}].tokenOverrides`,
+          repoRoot,
+        ),
+        message: 'contributes.themes[].tokenOverrides must be an object.',
+        rule: 'manifest-contributes',
+      });
+      continue;
+    }
+
+    const missingKeys = requiredThemeTokenKeys.filter(
+      (key) => !Object.hasOwn(theme.tokenOverrides, key),
+    );
+
+    if (missingKeys.length > 0) {
+      violations.push({
+        location: fieldLocation(
+          entry.manifestPath,
+          `contributes.themes[${index}].tokenOverrides`,
+          repoRoot,
+        ),
+        message: `contributes.themes[].tokenOverrides is missing required token(s): ${missingKeys.join(
+          ', ',
+        )}. Contributed themes override the document root with inline styles, so a partial set breaks contrast against whatever light/dark preset is active.`,
+        rule: 'manifest-theme-token-overrides-incomplete',
+      });
+    }
   }
 }
 

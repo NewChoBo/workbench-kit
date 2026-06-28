@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { ExtensionRegistry } from './extension-registry.js';
-import { ThemeRegistry, applyThemeTokenOverrides } from './theme-registry.js';
+import {
+  REQUIRED_THEME_TOKEN_KEYS,
+  ThemeRegistry,
+  applyThemeTokenOverrides,
+} from './theme-registry.js';
+
+function buildCompleteTokenOverrides(baseColor: string): Record<string, string> {
+  return Object.fromEntries(REQUIRED_THEME_TOKEN_KEYS.map((key) => [key, baseColor]));
+}
 
 describe('ThemeRegistry', () => {
   it('registers contributed themes from extensions', () => {
@@ -22,9 +30,8 @@ describe('ThemeRegistry', () => {
             {
               id: 'workbench-kit.samples.theme-alt.dark-blue',
               label: 'Dark Blue Alt',
-              tokenOverrides: {
-                '--color-bg': '#0a1628',
-              },
+              mode: 'dark',
+              tokenOverrides: buildCompleteTokenOverrides('#0a1628'),
             },
           ],
         },
@@ -38,6 +45,37 @@ describe('ThemeRegistry', () => {
         label: 'Dark Blue Alt',
       }),
     ]);
+  });
+
+  it('rejects contributed themes with a partial token set', () => {
+    const registry = new ThemeRegistry();
+
+    expect(() =>
+      registry.registerTheme({
+        extensionId: 'workbench-kit.samples.theme-alt',
+        id: 'workbench-kit.samples.theme-alt.dark-blue',
+        label: 'Dark Blue Alt',
+        mode: 'dark',
+        tokenOverrides: {
+          '--color-bg': '#0a1628',
+          '--color-surface': '#12243d',
+        },
+      }),
+    ).toThrow(/missing required token/);
+  });
+
+  it('rejects contributed themes without a valid mode', () => {
+    const registry = new ThemeRegistry();
+
+    expect(() =>
+      registry.registerTheme({
+        extensionId: 'workbench-kit.samples.theme-alt',
+        id: 'workbench-kit.samples.theme-alt.dark-blue',
+        label: 'Dark Blue Alt',
+        mode: 'sepia' as never,
+        tokenOverrides: buildCompleteTokenOverrides('#0a1628'),
+      }),
+    ).toThrow(/must declare mode/);
   });
 
   it('applies and clears token overrides on a target element', () => {
@@ -59,9 +97,8 @@ describe('ThemeRegistry', () => {
       extensionId: 'workbench-kit.samples.theme-alt',
       id: 'workbench-kit.samples.theme-alt.dark-blue',
       label: 'Dark Blue Alt',
-      tokenOverrides: {
-        '--color-bg': '#0a1628',
-      },
+      mode: 'dark',
+      tokenOverrides: buildCompleteTokenOverrides('#0a1628'),
     });
 
     const theme = registry.getTheme('workbench-kit.samples.theme-alt.dark-blue');
