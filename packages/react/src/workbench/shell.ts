@@ -13,3 +13,11 @@ export type {
 } from './StatusBar';
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';
+export {
+  WorkbenchDesktopTitleBar,
+  WorkbenchDesktopWindowControls,
+} from './WorkbenchDesktopTitleBar';
+export type {
+  WorkbenchDesktopTitleBarProps,
+  WorkbenchDesktopWindowControlsProps,
+} from './WorkbenchDesktopTitleBar';

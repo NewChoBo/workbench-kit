@@ -9,6 +9,7 @@
 @import './workbench/settings/structured-data-table-view.css';
 @import './workbench/settings/panel-region.css';
 @import './modal/modal.css';
+@import './workbench/workbench-desktop-titlebar.css';
 
 .ui-workbench-host-document,
 .ui-workbench-host,

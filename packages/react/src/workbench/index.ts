@@ -497,6 +497,14 @@ export {
 } from './settings';
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';
+export {
+  WorkbenchDesktopTitleBar,
+  WorkbenchDesktopWindowControls,
+} from './WorkbenchDesktopTitleBar';
+export type {
+  WorkbenchDesktopTitleBarProps,
+  WorkbenchDesktopWindowControlsProps,
+} from './WorkbenchDesktopTitleBar';
 export { WorkbenchStandaloneShell } from './WorkbenchStandaloneShell';
 export { WorkbenchCanvasShell } from './WorkbenchCanvasShell';
 export type {
