@@ -11,6 +11,7 @@
     ".": "./src/index.ts",
     "./modal": "./src/modal/Modal.tsx",
     "./overlay": "./src/overlay/ContextMenu.tsx",
+    "./brand": "./src/brand/index.ts",
     "./primitives": "./src/primitives/index.ts",
     "./primitives.css": "./src/primitives/styles.css",
     "./workbench/auth": "./src/workbench/auth/index.ts",
