@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { workbenchTreeIndentOffset } from './layoutHelpers';
@@ -45,6 +47,18 @@ describe('SideBarViewFrame stable slots', () => {
 
     expect(markup).toContain('ui-side-bar-view__body');
     expect(markup).not.toContain('ui-scroll-area--stable-gutter');
+  });
+
+  it('keeps the primary sidebar body on the no-gutter scrollbar policy', () => {
+    const scrollbarsCss = readFileSync(
+      join(process.cwd(), 'packages/react/src/scrollbars.css'),
+      'utf8',
+    ).replace(/\r\n/g, '\n');
+
+    expect(scrollbarsCss).toContain('.workbench-primary-side-bar .ui-side-bar-view__body');
+    expect(scrollbarsCss).toContain(
+      '.workbench-primary-side-bar .ui-side-bar-view__body::-webkit-scrollbar',
+    );
   });
 
   it('keeps overlay footer and spacer slots even before footer content is ready', () => {
