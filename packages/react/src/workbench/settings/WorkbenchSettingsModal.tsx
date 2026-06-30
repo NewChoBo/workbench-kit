@@ -193,6 +193,7 @@ export function WorkbenchSettingsModal({
             : emptyContent
         }
         contentClassName="workbench-settings-content"
+        contentScrollGutter="auto"
         nav={
           <WorkbenchSettingsNav
             activeCategoryId={selectedCategoryId}
@@ -203,6 +204,7 @@ export function WorkbenchSettingsModal({
         }
         navClassName="workbench-settings-sidebar"
         navProps={{ 'aria-label': 'Settings categories' }}
+        navScrollGutter="auto"
       />
     </Modal>
   );

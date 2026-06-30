@@ -22,6 +22,13 @@ describe('WorkbenchSettingsModal', () => {
     expect(markup).toContain('role="dialog"');
     expect(markup).toContain('ui-modal__titlebar-drag');
     expect(markup).toContain('aria-label="Maximize modal"');
+    expect(markup).toContain(
+      'ui-scroll-area ui-workbench-scrollbar ui-scroll-area--vertical ui-workbench-navigation-panel__nav-scroll',
+    );
+    expect(markup).toContain(
+      'ui-scroll-area ui-workbench-scrollbar ui-scroll-area--vertical ui-workbench-navigation-panel__content-scroll',
+    );
+    expect(markup).not.toContain('ui-scroll-area--stable-gutter');
     expect(markup).toContain('Appearance controls');
   });
 });
