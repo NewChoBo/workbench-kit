@@ -17,13 +17,15 @@ testGlobal.IS_REACT_ACT_ENVIRONMENT = true;
 function RuntimeUnmountProbe<TStatus extends string>({
   cancel,
   cancellableStatuses,
+  getStatus,
   status,
 }: {
   cancel: () => void;
   cancellableStatuses?: readonly TStatus[] | undefined;
+  getStatus?: (() => TStatus) | undefined;
   status: TStatus;
 }) {
-  useCancelRuntimeOnUnmount({ cancel, cancellableStatuses, status });
+  useCancelRuntimeOnUnmount({ cancel, cancellableStatuses, getStatus, status });
   return <output data-status={status} />;
 }
 
@@ -97,8 +99,38 @@ describe('useCancelRuntimeOnUnmount', () => {
     container.remove();
   });
 
+  it('reads the latest host status during unmount cleanup', async () => {
+    type HostStatus = 'idle' | 'waiting';
+    let currentStatus: HostStatus = 'idle';
+    let cancelCount = 0;
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <RuntimeUnmountProbe<HostStatus>
+          cancellableStatuses={['waiting']}
+          getStatus={() => currentStatus}
+          status="idle"
+          cancel={() => (cancelCount += 1)}
+        />,
+      );
+    });
+
+    currentStatus = 'waiting';
+
+    await act(async () => {
+      root.unmount();
+    });
+
+    expect(cancelCount).toBe(1);
+    container.remove();
+  });
+
   it('checks whether a status should cancel on unmount', () => {
     expect(shouldCancelRuntimeOnUnmount('running', ['running'])).toBe(true);
     expect(shouldCancelRuntimeOnUnmount('idle', ['running'])).toBe(false);
+    expect(shouldCancelRuntimeOnUnmount(undefined, ['running'])).toBe(false);
   });
 });

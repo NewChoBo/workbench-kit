@@ -7,13 +7,18 @@ export interface UseCancelRuntimeOnUnmountOptions<TStatus extends string = Runti
   cancel: () => void;
   cancellableStatuses?: readonly TStatus[] | undefined;
   enabled?: boolean | undefined;
-  status: TStatus;
+  getStatus?: (() => TStatus) | undefined;
+  status?: TStatus | undefined;
 }
 
 export function shouldCancelRuntimeOnUnmount(
-  status: string,
+  status: string | undefined,
   cancellableStatuses: readonly string[],
 ): boolean {
+  if (status === undefined) {
+    return false;
+  }
+
   return cancellableStatuses.includes(status);
 }
 
@@ -21,12 +26,14 @@ export function useCancelRuntimeOnUnmount<TStatus extends string = RuntimeStatus
   cancel,
   cancellableStatuses,
   enabled = true,
+  getStatus,
   status,
 }: UseCancelRuntimeOnUnmountOptions<TStatus>): void {
   const stateRef = useRef({
     cancel,
     cancellableStatuses: cancellableStatuses ?? DEFAULT_RUNTIME_UNMOUNT_CANCELLABLE_STATUSES,
     enabled,
+    getStatus,
     status,
   });
 
@@ -34,15 +41,17 @@ export function useCancelRuntimeOnUnmount<TStatus extends string = RuntimeStatus
     cancel,
     cancellableStatuses: cancellableStatuses ?? DEFAULT_RUNTIME_UNMOUNT_CANCELLABLE_STATUSES,
     enabled,
+    getStatus,
     status,
   };
 
   useEffect(() => {
     return () => {
       const current = stateRef.current;
+      const currentStatus = current.getStatus?.() ?? current.status;
       if (
         current.enabled &&
-        shouldCancelRuntimeOnUnmount(current.status, current.cancellableStatuses)
+        shouldCancelRuntimeOnUnmount(currentStatus, current.cancellableStatuses)
       ) {
         current.cancel();
       }
