@@ -1,4 +1,9 @@
 export { createMockWorkbenchRuntime } from './mockRuntime';
+export {
+  deriveRuntimeChatMessages,
+  reduceRuntimeChatMessages,
+  upsertRuntimeChatMessage,
+} from './chatMessages';
 export type {
   MockRuntimeResponsePlan,
   MockWorkbenchRuntime,
