@@ -78,6 +78,7 @@ export function SideBarViewFrame({
       ) : null}
       {headerAddon ? <div className="ui-side-bar-view__header-addon">{headerAddon}</div> : null}
       <PanelBody
+        gutter="auto"
         {...resolvedBodyProps}
         className={cx('ui-side-bar-view__body', bodyClassName, bodyPropsClassName)}
       >

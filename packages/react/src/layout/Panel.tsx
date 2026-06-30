@@ -1,6 +1,6 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { Button } from '../primitives/Button';
-import { ScrollArea } from '../primitives/ScrollArea';
+import { ScrollArea, type ScrollAreaProps } from '../primitives/ScrollArea';
 import { cx } from '../utils/cx';
 
 export type PanelProps = ComponentPropsWithRef<'div'>;
@@ -37,7 +37,7 @@ export function PanelHeader({
   );
 }
 
-export type PanelBodyProps = ComponentPropsWithRef<'div'>;
+export type PanelBodyProps = ScrollAreaProps;
 
 export function PanelBody({ className, ...props }: PanelBodyProps) {
   return (

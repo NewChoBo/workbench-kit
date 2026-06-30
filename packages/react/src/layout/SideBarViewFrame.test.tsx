@@ -36,6 +36,17 @@ describe('SideBarViewFrame stable slots', () => {
     expect(markup).toContain('data-empty="true"');
   });
 
+  it('does not reserve primary sidebar scrollbar gutter by default', () => {
+    const markup = renderToStaticMarkup(
+      <SideBarViewFrame title="Explorer">
+        <div>Short list</div>
+      </SideBarViewFrame>,
+    );
+
+    expect(markup).toContain('ui-side-bar-view__body');
+    expect(markup).not.toContain('ui-scroll-area--stable-gutter');
+  });
+
   it('keeps overlay footer and spacer slots even before footer content is ready', () => {
     const markup = renderToStaticMarkup(
       <SideBarViewFrame footerPlacement="overlay" title="Chat">
