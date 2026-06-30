@@ -11,6 +11,10 @@ import { SplitView } from './SplitView';
 describe('SplitView', () => {
   afterEach(() => {
     document.body.innerHTML = '';
+    document.documentElement.classList.remove(
+      'ui-workbench-split-view-resizing',
+      'ui-workbench-split-view-resizing--vertical',
+    );
   });
 
   it('previews pointer resizing without committing parent state until release', async () => {
@@ -64,6 +68,12 @@ describe('SplitView', () => {
     await act(async () => {
       separator.dispatchEvent(createPointerLikeEvent('pointerdown', 200, 0));
     });
+
+    expect(splitView.classList.contains('is-dragging')).toBe(true);
+    expect(document.documentElement.classList.contains('ui-workbench-split-view-resizing')).toBe(
+      true,
+    );
+
     await act(async () => {
       separator.dispatchEvent(createPointerLikeEvent('pointermove', 350, 0));
     });
@@ -78,10 +88,59 @@ describe('SplitView', () => {
     expect(onPrimarySizePercentChange).toHaveBeenCalledWith(35);
     expect(splitView.style.getPropertyValue('--ui-workbench-split-primary-size')).toBe('35%');
     expect(separator.getAttribute('aria-valuenow')).toBe('35');
+    expect(splitView.classList.contains('is-dragging')).toBe(false);
+    expect(document.documentElement.classList.contains('ui-workbench-split-view-resizing')).toBe(
+      false,
+    );
 
     await act(async () => {
       root.unmount();
     });
+  });
+
+  it('clears resize drag state when unmounted during a drag', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <SplitView
+          orientation="vertical"
+          primary={<aside>Primary</aside>}
+          primarySizePercent={20}
+          secondary={<main>Secondary</main>}
+        />,
+      );
+    });
+
+    const separator = container.querySelector('.ui-workbench-split-view__separator') as HTMLElement;
+    Object.defineProperty(separator, 'setPointerCapture', {
+      configurable: true,
+      value: vi.fn(),
+    });
+
+    await act(async () => {
+      separator.dispatchEvent(createPointerLikeEvent('pointerdown', 0, 200));
+    });
+
+    expect(document.documentElement.classList.contains('ui-workbench-split-view-resizing')).toBe(
+      true,
+    );
+    expect(
+      document.documentElement.classList.contains('ui-workbench-split-view-resizing--vertical'),
+    ).toBe(true);
+
+    await act(async () => {
+      root.unmount();
+    });
+
+    expect(document.documentElement.classList.contains('ui-workbench-split-view-resizing')).toBe(
+      false,
+    );
+    expect(
+      document.documentElement.classList.contains('ui-workbench-split-view-resizing--vertical'),
+    ).toBe(false);
   });
 });
 

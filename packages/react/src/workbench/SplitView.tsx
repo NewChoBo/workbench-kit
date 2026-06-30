@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -22,6 +23,9 @@ export interface SplitViewProps {
   primarySizePercent?: number;
   secondary: ReactNode;
 }
+
+const SPLIT_VIEW_RESIZING_CLASS = 'ui-workbench-split-view-resizing';
+const SPLIT_VIEW_VERTICAL_RESIZING_CLASS = 'ui-workbench-split-view-resizing--vertical';
 
 function requestFrame(callback: FrameRequestCallback): number {
   if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
@@ -94,6 +98,38 @@ export function SplitView({
     separator.setAttribute('aria-valuenow', String(Math.round(nextValue)));
   };
 
+  const setResizeClass = (isResizing: boolean) => {
+    containerRef.current?.classList.toggle('is-dragging', isResizing);
+
+    if (typeof document === 'undefined') return;
+
+    document.documentElement.classList.toggle(SPLIT_VIEW_RESIZING_CLASS, isResizing);
+    document.documentElement.classList.toggle(
+      SPLIT_VIEW_VERTICAL_RESIZING_CLASS,
+      isResizing && orientation === 'vertical',
+    );
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewFrameRef.current) {
+        cancelFrame(previewFrameRef.current);
+        previewFrameRef.current = 0;
+      }
+
+      const dragState = dragStateRef.current;
+      dragState?.separator.classList.remove('is-dragging');
+      containerRef.current?.classList.remove('is-dragging');
+      dragStateRef.current = null;
+
+      if (typeof document === 'undefined') return;
+      document.documentElement.classList.remove(
+        SPLIT_VIEW_RESIZING_CLASS,
+        SPLIT_VIEW_VERTICAL_RESIZING_CLASS,
+      );
+    };
+  }, []);
+
   const schedulePrimarySizePreview = (nextValue: number, separator: HTMLDivElement) => {
     const dragState = dragStateRef.current;
     if (!dragState) return;
@@ -141,6 +177,7 @@ export function SplitView({
 
     releasePointerCapture(dragState.separator, event.pointerId);
     dragState.separator.classList.remove('is-dragging');
+    setResizeClass(false);
     dragStateRef.current = null;
 
     if (options.commit) {
@@ -161,6 +198,7 @@ export function SplitView({
       separator: event.currentTarget,
     };
     event.currentTarget.classList.add('is-dragging');
+    setResizeClass(true);
   };
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {

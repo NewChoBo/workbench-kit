@@ -2447,6 +2447,23 @@
   flex-direction: column;
 }
 
+.ui-workbench-split-view.is-dragging .ui-workbench-split-view__primary,
+.ui-workbench-split-view.is-dragging .ui-workbench-split-view__secondary {
+  pointer-events: none;
+  user-select: none;
+}
+
+html.ui-workbench-split-view-resizing,
+html.ui-workbench-split-view-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+html.ui-workbench-split-view-resizing--vertical,
+html.ui-workbench-split-view-resizing--vertical * {
+  cursor: row-resize !important;
+}
+
 .ui-workbench-split-view__separator {
   cursor: col-resize;
   background: var(--color-border);
