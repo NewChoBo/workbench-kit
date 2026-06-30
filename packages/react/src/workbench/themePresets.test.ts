@@ -9,6 +9,7 @@ import {
   isDarkThemePresetId,
   isLightThemePresetId,
   resolveActiveThemePreset,
+  resolveWorkbenchThemeProviderAttributes,
   WORKBENCH_COLOR_SCHEME_OPTIONS,
 } from './themePresets';
 
@@ -50,6 +51,34 @@ describe('themePresets', () => {
       'light',
       'dark',
     ]);
+  });
+
+  it('resolves WorkbenchThemeProvider attributes from resolved theme and preset selection', () => {
+    expect(
+      resolveWorkbenchThemeProviderAttributes({
+        darkPreset: 'dark-plus',
+        lightPreset: 'light-plus',
+        resolvedTheme: 'dark',
+        themePreference: 'system',
+      }),
+    ).toEqual({
+      theme: 'dark',
+      themePreference: 'system',
+      themePreset: 'dark-plus',
+    });
+
+    expect(
+      resolveWorkbenchThemeProviderAttributes({
+        darkPreset: 'navy',
+        lightPreset: 'light-plus',
+        resolvedTheme: 'light',
+        themePreference: 'light',
+      }),
+    ).toEqual({
+      theme: 'light',
+      themePreference: 'light',
+      themePreset: 'light-plus',
+    });
   });
 
   it('applies appearance settings to a DOM root', () => {

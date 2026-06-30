@@ -95,15 +95,18 @@ export {
   LIGHT_THEME_PRESET_OPTIONS,
   LIGHT_THEME_PRESET_MANIFEST,
   resolveActiveThemePreset,
+  resolveWorkbenchThemeProviderAttributes,
   WORKBENCH_COLOR_SCHEME_OPTIONS,
 } from './themePresets';
 export type {
   DarkThemePresetId,
   LightThemePresetId,
+  ResolveWorkbenchThemeProviderAttributesInput,
   ThemePresetId,
   WorkbenchAppearanceSettings,
   WorkbenchColorSchemePreference,
   WorkbenchThemeDocumentAttributes,
+  WorkbenchThemeProviderAttributes,
   WorkbenchThemePresetOption,
   WorkbenchThemePresetManifestEntry,
   WorkbenchThemePresetSelection,

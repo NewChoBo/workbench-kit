@@ -81,6 +81,33 @@ export interface WorkbenchThemeDocumentAttributes extends WorkbenchThemePresetSe
   themePreference?: string | undefined;
 }
 
+export interface WorkbenchThemeProviderAttributes {
+  theme: ResolvedWorkbenchTheme;
+  themePreference?: string | undefined;
+  themePreset: string;
+}
+
+export interface ResolveWorkbenchThemeProviderAttributesInput extends WorkbenchThemePresetSelection {
+  resolvedTheme: ResolvedWorkbenchTheme;
+  themePreference?: string | undefined;
+}
+
+export function resolveWorkbenchThemeProviderAttributes({
+  darkPreset,
+  lightPreset,
+  resolvedTheme,
+  themePreference,
+}: ResolveWorkbenchThemeProviderAttributesInput): WorkbenchThemeProviderAttributes {
+  return {
+    theme: resolvedTheme,
+    themePreference,
+    themePreset: resolveActiveThemePreset(resolvedTheme, {
+      darkPreset,
+      lightPreset,
+    }),
+  };
+}
+
 /**
  * Applies resolved theme mode and active preset to a DOM root (typically `document.documentElement`).
  */
