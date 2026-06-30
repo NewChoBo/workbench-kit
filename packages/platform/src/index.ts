@@ -124,3 +124,16 @@ export {
   type WorkbenchViewEditorTabItem,
   type WorkbenchViewTabClosePolicy,
 } from './workbench-view-model.js';
+export {
+  areWorkbenchViewRouteSnapshotsEqual,
+  buildWorkbenchViewRouteSearch,
+  closeWorkbenchViewRoute,
+  normalizeWorkbenchViewRouteTabs,
+  openWorkbenchViewRoute,
+  resolveWorkbenchViewRouteSnapshot,
+  type BuildWorkbenchViewRouteSearchOptions,
+  type CloseWorkbenchViewRouteOptions,
+  type NormalizeWorkbenchViewRouteTabsOptions,
+  type ResolveWorkbenchViewRouteSnapshotOptions,
+  type WorkbenchViewRouteSnapshot,
+} from './workbench-view-route.js';
