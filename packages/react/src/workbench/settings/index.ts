@@ -125,10 +125,19 @@ export {
   createWorkbenchSchemaFormFieldFromSetting,
   createWorkbenchSchemaFormFieldsFromSettings,
 } from './extensionSettingsForm';
+export {
+  coerceWorkbenchSchemaFormSettingDefaultValue,
+  createWorkbenchSchemaFormFieldFromSettingSpec,
+  createWorkbenchSchemaFormFieldsFromSettingSpecs,
+} from './schemaFormSettingSpec';
 export type {
   WorkbenchExtensionSettingSpec,
   WorkbenchExtensionSettingValueType,
 } from './extensionSettingsForm';
+export type {
+  WorkbenchSchemaFormSettingSpec,
+  WorkbenchSchemaFormSettingValueType,
+} from './schemaFormSettingSpec';
 export type {
   WorkbenchSchemaFormCancelContext,
   WorkbenchSchemaFormCheckboxField,
