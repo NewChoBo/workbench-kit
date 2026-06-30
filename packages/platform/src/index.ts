@@ -71,9 +71,11 @@ export { ContextKeyService } from './context/context-key-service.js';
 export {
   createWorkbenchContextKeySnapshot,
   evaluateWorkbenchContextKeyWhenClause,
+  filterWorkbenchContributionsByWhenClause,
   isWorkbenchContextKeyValue,
   type WorkbenchContextKeySnapshot,
   type WorkbenchContextKeyValue,
+  type WorkbenchWhenClauseContributionLike,
 } from './context/context-keys.js';
 export { evaluateWhenClause } from './context/evaluate-when.js';
 export {
