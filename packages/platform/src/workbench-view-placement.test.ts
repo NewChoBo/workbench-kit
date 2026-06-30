@@ -1,6 +1,49 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildWorkbenchViewPlacementModel } from './workbench-view-placement.js';
+import {
+  buildWorkbenchViewPlacementModel,
+  resolveWorkbenchViewContainerRegistry,
+} from './workbench-view-placement.js';
+
+describe('resolveWorkbenchViewContainerRegistry', () => {
+  it('keeps base containers and accepts non-conflicting contributed containers', () => {
+    const registry = resolveWorkbenchViewContainerRegistry({
+      baseContainers: [{ id: 'providers', ownerKind: 'core' }],
+      contributedContainers: [{ id: 'secondary', ownerKind: 'plugin' }],
+    });
+
+    expect(registry.containers).toEqual([
+      { id: 'providers', ownerKind: 'core' },
+      { id: 'secondary', ownerKind: 'plugin' },
+    ]);
+    expect(registry.conflicts).toEqual([]);
+  });
+
+  it('reports contributed containers that collide with base or prior contributed ids', () => {
+    const registry = resolveWorkbenchViewContainerRegistry({
+      baseContainers: [{ id: 'providers' }],
+      contributedContainers: [
+        { id: 'providers', pluginId: 'tools' },
+        { id: 'custom-tools', pluginId: 'tools' },
+        { id: 'custom-tools', pluginId: 'tools-extra' },
+      ],
+      mapBaseContainer: (container) => ({ ...container, ownerKind: 'core' as const }),
+      mapContributedContainer: (container) => ({
+        ...container,
+        ownerKind: 'plugin' as const,
+      }),
+    });
+
+    expect(registry.containers).toEqual([
+      { id: 'custom-tools', ownerKind: 'plugin', pluginId: 'tools' },
+      { id: 'providers', ownerKind: 'core' },
+    ]);
+    expect(registry.conflicts.map((container) => [container.id, container.pluginId])).toEqual([
+      ['providers', 'tools'],
+      ['custom-tools', 'tools-extra'],
+    ]);
+  });
+});
 
 describe('buildWorkbenchViewPlacementModel', () => {
   it('splits placed and orphaned views against registered containers', () => {

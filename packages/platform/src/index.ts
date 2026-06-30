@@ -126,7 +126,10 @@ export {
 } from './workbench-view-model.js';
 export {
   buildWorkbenchViewPlacementModel,
+  resolveWorkbenchViewContainerRegistry,
   type BuildWorkbenchViewPlacementModelInput,
+  type ResolveWorkbenchViewContainerRegistryInput,
+  type WorkbenchViewContainerRegistry,
   type WorkbenchViewPlacementContainerLike,
   type WorkbenchViewPlacementModel,
   type WorkbenchViewPlacementViewLike,

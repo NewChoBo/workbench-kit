@@ -7,6 +7,34 @@ export interface WorkbenchViewPlacementViewLike {
   readonly id: string;
 }
 
+export interface ResolveWorkbenchViewContainerRegistryInput<
+  TBaseContainer extends WorkbenchViewPlacementContainerLike,
+  TContributedContainer extends WorkbenchViewPlacementContainerLike,
+  TResolvedBaseContainer extends WorkbenchViewPlacementContainerLike,
+  TResolvedContributedContainer extends WorkbenchViewPlacementContainerLike,
+> {
+  readonly baseContainers?: ReadonlyArray<TBaseContainer> | undefined;
+  readonly compareContainers?:
+    | ((
+        left: TResolvedBaseContainer | TResolvedContributedContainer,
+        right: TResolvedBaseContainer | TResolvedContributedContainer,
+      ) => number)
+    | undefined;
+  readonly contributedContainers: ReadonlyArray<TContributedContainer>;
+  readonly mapBaseContainer?: ((container: TBaseContainer) => TResolvedBaseContainer) | undefined;
+  readonly mapContributedContainer?:
+    | ((container: TContributedContainer) => TResolvedContributedContainer)
+    | undefined;
+}
+
+export interface WorkbenchViewContainerRegistry<
+  TContainer extends WorkbenchViewPlacementContainerLike,
+  TConflict extends WorkbenchViewPlacementContainerLike,
+> {
+  readonly conflicts: ReadonlyArray<TConflict>;
+  readonly containers: ReadonlyArray<TContainer>;
+}
+
 export interface BuildWorkbenchViewPlacementModelInput<
   TContainer extends WorkbenchViewPlacementContainerLike,
   TConflict extends WorkbenchViewPlacementContainerLike,
@@ -27,6 +55,58 @@ export interface WorkbenchViewPlacementModel<
   readonly containers: ReadonlyArray<TContainer>;
   readonly orphanedViews: ReadonlyArray<TView>;
   readonly views: ReadonlyArray<TView>;
+}
+
+export function resolveWorkbenchViewContainerRegistry<
+  TBaseContainer extends WorkbenchViewPlacementContainerLike,
+  TContributedContainer extends WorkbenchViewPlacementContainerLike,
+  TResolvedBaseContainer extends WorkbenchViewPlacementContainerLike = TBaseContainer,
+  TResolvedContributedContainer extends WorkbenchViewPlacementContainerLike = TContributedContainer,
+>({
+  baseContainers = [],
+  compareContainers = compareWorkbenchViewContainersById,
+  contributedContainers,
+  mapBaseContainer,
+  mapContributedContainer,
+}: ResolveWorkbenchViewContainerRegistryInput<
+  TBaseContainer,
+  TContributedContainer,
+  TResolvedBaseContainer,
+  TResolvedContributedContainer
+>): WorkbenchViewContainerRegistry<
+  TResolvedBaseContainer | TResolvedContributedContainer,
+  TContributedContainer
+> {
+  const reservedContainerIds = new Set(baseContainers.map((container) => container.id));
+  const contributedContainerIds = new Set<string>();
+  const conflicts: TContributedContainer[] = [];
+  const containers: Array<TResolvedBaseContainer | TResolvedContributedContainer> =
+    baseContainers.map((container) =>
+      mapBaseContainer === undefined
+        ? (container as unknown as TResolvedBaseContainer)
+        : mapBaseContainer(container),
+    );
+
+  for (const container of contributedContainers) {
+    if (reservedContainerIds.has(container.id) || contributedContainerIds.has(container.id)) {
+      conflicts.push(container);
+      continue;
+    }
+
+    contributedContainerIds.add(container.id);
+    containers.push(
+      mapContributedContainer === undefined
+        ? (container as unknown as TResolvedContributedContainer)
+        : mapContributedContainer(container),
+    );
+  }
+
+  containers.sort(compareContainers);
+
+  return {
+    conflicts,
+    containers,
+  };
 }
 
 export function buildWorkbenchViewPlacementModel<
@@ -58,4 +138,11 @@ export function buildWorkbenchViewPlacementModel<
 
 function matchesContainerId(candidateId: string, containerId: string | undefined): boolean {
   return containerId === undefined || candidateId === containerId;
+}
+
+function compareWorkbenchViewContainersById(
+  left: WorkbenchViewPlacementContainerLike,
+  right: WorkbenchViewPlacementContainerLike,
+): number {
+  return left.id.localeCompare(right.id);
 }
