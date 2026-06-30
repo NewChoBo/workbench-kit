@@ -242,12 +242,12 @@ export function resolveCommandMenuItems<TContext>({
     return [
       {
         commandId: command.id,
-        danger: resolveValue(entry.danger ?? command.danger, context),
+        danger: resolveCommandValue(entry.danger ?? command.danger, context),
         disabled: !isEnabled(command, entry, context, contextKeys),
-        icon: resolveValue(entry.icon ?? command.icon, context),
+        icon: resolveCommandValue(entry.icon ?? command.icon, context),
         id: entry.id ?? command.id,
         label: resolveCommandLabel(command, entry, context),
-        shortcut: resolveValue(entry.shortcut ?? command.shortcut, context),
+        shortcut: resolveCommandValue(entry.shortcut ?? command.shortcut, context),
         type: 'command',
       },
     ];
@@ -256,20 +256,27 @@ export function resolveCommandMenuItems<TContext>({
   return compactCommandMenuItems(items);
 }
 
-function resolveValue<TContext, TValue>(
+export function resolveCommandValue<TContext, TValue>(
   value: CommandValue<TContext, TValue>,
   context: TContext,
 ): TValue;
-function resolveValue<TContext, TValue>(
+export function resolveCommandValue<TContext, TValue>(
   value: CommandValue<TContext, TValue> | undefined,
   context: TContext,
 ): TValue | undefined;
-function resolveValue<TContext, TValue>(
+export function resolveCommandValue<TContext, TValue>(
   value: CommandValue<TContext, TValue> | undefined,
   context: TContext,
 ): TValue | undefined {
   if (typeof value !== 'function') return value;
   return (value as (context: TContext) => TValue)(context);
+}
+
+export function resolveCommandDefinitionLabel<TContext>(
+  command: Pick<CommandDefinition<TContext>, 'id' | 'label' | 'title'>,
+  context: TContext,
+): string {
+  return resolveCommandValue(command.label, context) ?? command.title ?? command.id;
 }
 
 function resolveWhenClause<TContext>(
@@ -326,6 +333,6 @@ function resolveCommandLabel<TContext>(
   entry: CommandMenuCommandEntry<TContext>,
   context: TContext,
 ): string {
-  const label = resolveValue(entry.label ?? command.label, context);
-  return label ?? command.title ?? command.id;
+  const label = resolveCommandValue(entry.label, context);
+  return label ?? resolveCommandDefinitionLabel(command, context);
 }
