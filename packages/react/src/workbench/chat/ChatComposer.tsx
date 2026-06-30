@@ -82,6 +82,13 @@ export const ChatComposer = forwardRef<HTMLTextAreaElement, ChatComposerProps>(
       });
     };
 
+    const handleCommandClick = () => {
+      onCommandClick?.();
+      window.requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+      });
+    };
+
     const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
       props.onKeyDown?.(event);
       if (event.defaultPrevented) return;
@@ -125,7 +132,7 @@ export const ChatComposer = forwardRef<HTMLTextAreaElement, ChatComposerProps>(
                     className="composer__tool-btn"
                     icon="terminal"
                     label={commandLabel}
-                    onClick={onCommandClick}
+                    onClick={handleCommandClick}
                   />
                 </>
               ) : null}
