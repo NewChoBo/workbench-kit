@@ -484,6 +484,8 @@ export {
 } from './settings';
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';
+export { WorkbenchViewSidebar } from './WorkbenchViewSidebar';
+export type { WorkbenchViewSidebarItem, WorkbenchViewSidebarProps } from './WorkbenchViewSidebar';
 export {
   WorkbenchDesktopTitleBar,
   WorkbenchDesktopWindowControls,

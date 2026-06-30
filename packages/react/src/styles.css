@@ -3452,6 +3452,28 @@
   outline-offset: -1px;
 }
 
+.ui-workbench-view-sidebar__item-content {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ui-workbench-view-sidebar__item-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  font-size: 14px;
+}
+
+.ui-workbench-view-sidebar__item-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ui-workbench-sidebar-section {
   flex-shrink: 0;
   padding: 0;

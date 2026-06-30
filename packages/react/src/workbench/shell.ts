@@ -22,6 +22,8 @@ export type {
   CreateWorkbenchShellActivityBarFromViewModelInput,
   WorkbenchShellActivityBarViewModelProps,
 } from './shellViewModel';
+export { WorkbenchViewSidebar } from './WorkbenchViewSidebar';
+export type { WorkbenchViewSidebarItem, WorkbenchViewSidebarProps } from './WorkbenchViewSidebar';
 export {
   WorkbenchDesktopTitleBar,
   WorkbenchDesktopWindowControls,
