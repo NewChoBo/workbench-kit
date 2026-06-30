@@ -81,6 +81,8 @@ export {
 } from './keyboard';
 export { resolveWorkbenchTheme, useResolvedWorkbenchTheme } from './theme';
 export type { ResolvedWorkbenchTheme } from './theme';
+export { useDeferredWorkbenchMount } from './useDeferredWorkbenchMount';
+export type { UseDeferredWorkbenchMountOptions } from './useDeferredWorkbenchMount';
 export {
   DEFAULT_WORKBENCH_HARD_RESET_CONFIRM_MESSAGE,
   DEFAULT_WORKBENCH_STORAGE_PREFIX,
