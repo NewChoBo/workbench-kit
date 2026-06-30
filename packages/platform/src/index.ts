@@ -114,3 +114,13 @@ export {
   type KeybindingMatch,
   type KeybindingResolveOptions,
 } from './keybindings/types.js';
+export {
+  buildWorkbenchViewActivityBarModel,
+  buildWorkbenchViewEditorTabs,
+  resolveWorkbenchViewTabClosable,
+  type WorkbenchViewActivityBarItem,
+  type WorkbenchViewActivityBarModel,
+  type WorkbenchViewContribution,
+  type WorkbenchViewEditorTabItem,
+  type WorkbenchViewTabClosePolicy,
+} from './workbench-view-model.js';
