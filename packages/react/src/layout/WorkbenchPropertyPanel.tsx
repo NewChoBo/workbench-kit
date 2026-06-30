@@ -391,6 +391,45 @@ export function WorkbenchPropertyGrid({
   );
 }
 
+export interface WorkbenchMetricGridItem {
+  id?: string | undefined;
+  label: ReactNode;
+  value: ReactNode;
+}
+
+export type WorkbenchMetricGridEntry = WorkbenchMetricGridItem | readonly [ReactNode, ReactNode];
+
+export interface WorkbenchMetricGridProps extends Omit<WorkbenchPropertyGridProps, 'children'> {
+  items: readonly WorkbenchMetricGridEntry[];
+}
+
+export function WorkbenchMetricGrid({
+  columns,
+  gap = 'md',
+  items,
+  ...props
+}: WorkbenchMetricGridProps) {
+  return (
+    <WorkbenchPropertyGrid columns={columns ?? (items.length > 3 ? 3 : 2)} gap={gap} {...props}>
+      {items.map((item, index) => {
+        const metric = isWorkbenchMetricGridTuple(item)
+          ? { key: index, label: item[0], value: item[1] }
+          : { key: item.id ?? index, label: item.label, value: item.value };
+
+        return (
+          <WorkbenchPropertyKeyValue key={metric.key} name={metric.label} value={metric.value} />
+        );
+      })}
+    </WorkbenchPropertyGrid>
+  );
+}
+
+function isWorkbenchMetricGridTuple(
+  item: WorkbenchMetricGridEntry,
+): item is readonly [ReactNode, ReactNode] {
+  return Array.isArray(item);
+}
+
 export interface WorkbenchPropertyInlineProps extends ComponentPropsWithRef<'div'> {
   justify?: 'start' | 'between';
 }

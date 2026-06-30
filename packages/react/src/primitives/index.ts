@@ -95,6 +95,7 @@ export type {
 export {
   WorkbenchParseError,
   WorkbenchPropertyHint,
+  WorkbenchMetricGrid,
   WorkbenchPropertyNumberRow,
   WorkbenchPropertyPanel,
   WorkbenchPropertyRow,
@@ -107,6 +108,9 @@ export type {
   WorkbenchPropertyNumberRowProps,
   WorkbenchPropertyPanelProps,
   WorkbenchPropertyRowProps,
+  WorkbenchMetricGridEntry,
+  WorkbenchMetricGridItem,
+  WorkbenchMetricGridProps,
   WorkbenchPropertySectionProps,
   WorkbenchPropertyStackProps,
   WorkbenchPropertyTextRowProps,
