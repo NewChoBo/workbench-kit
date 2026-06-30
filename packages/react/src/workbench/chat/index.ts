@@ -23,6 +23,12 @@ export type { ChatMessage, ChatMessageLayout, ChatMessageSource } from './types'
 export type { ChatCommandProposal, ChatCommandProposalStatus } from './types';
 export { useChatRuntimeState } from './useChatRuntimeState';
 export type { UseChatRuntimeStateInput, UseChatRuntimeStateResult } from './useChatRuntimeState';
+export {
+  DEFAULT_RUNTIME_UNMOUNT_CANCELLABLE_STATUSES,
+  shouldCancelRuntimeOnUnmount,
+  useCancelRuntimeOnUnmount,
+} from './useCancelRuntimeOnUnmount';
+export type { UseCancelRuntimeOnUnmountOptions } from './useCancelRuntimeOnUnmount';
 export { useSlashCommandSuggest } from './useSlashCommandSuggest';
 export type {
   UseSlashCommandSuggestOptions,

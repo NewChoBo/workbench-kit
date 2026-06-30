@@ -49,7 +49,10 @@ export {
   ChatHistoryMenu,
   ChatPanel,
   ChatRenameDialog,
+  DEFAULT_RUNTIME_UNMOUNT_CANCELLABLE_STATUSES,
   defaultWorkbenchChatConversationLabels,
+  shouldCancelRuntimeOnUnmount,
+  useCancelRuntimeOnUnmount,
 } from './chat';
 export type {
   ChatCommandProposal,
@@ -59,6 +62,7 @@ export type {
   ChatHistoryMenuProps,
   ChatPanelProps,
   ChatRenameDialogProps,
+  UseCancelRuntimeOnUnmountOptions,
   WorkbenchChatConversation,
   WorkbenchChatConversationLabels,
 } from './chat';
