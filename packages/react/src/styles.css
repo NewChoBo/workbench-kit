@@ -985,7 +985,7 @@
 
 .workbench-settings-section {
   max-width: 920px;
-  padding-top: 20px;
+  padding-top: 0;
 }
 
 .workbench-settings-section__title {
@@ -1608,7 +1608,7 @@
   gap: 2px;
   min-height: 0;
   overflow: auto;
-  padding: 28px 0 8px;
+  padding: 0 0 8px;
 }
 
 .ui-workbench-sectioned-panel__nav-link {
