@@ -8,10 +8,16 @@ import type {
 import type { EditorTab } from '../primitives/WorkbenchEditor';
 import type { ActivityBarItem } from './ActivityBar';
 import type { WorkbenchShellProps } from './WorkbenchShell';
+import type { WorkbenchViewSidebarItem, WorkbenchViewSidebarProps } from './WorkbenchViewSidebar';
 
 export type WorkbenchShellActivityBarViewModelProps = Omit<
   WorkbenchShellProps['activityBar'],
   'items' | 'secondaryItems'
+>;
+
+export type WorkbenchViewSidebarViewModelProps<TViewId extends string, TIcon = unknown> = Omit<
+  WorkbenchViewSidebarProps<TViewId, TIcon>,
+  'items'
 >;
 
 export interface CreateWorkbenchShellActivityBarFromViewModelInput<
@@ -38,6 +44,20 @@ export interface CreateWorkbenchEditorTabsFromViewModelInput<
   readonly resolveTitle?:
     | ((item: WorkbenchViewEditorTabItem<TViewId, TIcon>) => string | undefined)
     | undefined;
+}
+
+export interface CreateWorkbenchViewSidebarItemsFromViewModelInput<
+  TViewId extends string,
+  TIcon = unknown,
+> {
+  readonly model: WorkbenchViewActivityBarModel<TViewId, TIcon>;
+}
+
+export interface CreateWorkbenchViewSidebarFromViewModelInput<
+  TViewId extends string,
+  TIcon = unknown,
+> extends WorkbenchViewSidebarViewModelProps<TViewId, TIcon> {
+  readonly model: WorkbenchViewActivityBarModel<TViewId, TIcon>;
 }
 
 export function createWorkbenchShellActivityBarFromViewModel<
@@ -111,4 +131,32 @@ export function createWorkbenchEditorTabsFromViewModel<
       title,
     };
   });
+}
+
+export function createWorkbenchViewSidebarItemsFromViewModel<
+  TViewId extends string,
+  TIcon = unknown,
+>({
+  model,
+}: CreateWorkbenchViewSidebarItemsFromViewModelInput<TViewId, TIcon>): ReadonlyArray<
+  WorkbenchViewSidebarItem<TViewId, TIcon>
+> {
+  return [...model.sections.flatMap((section) => section), ...model.footerItems].map((item) => ({
+    icon: item.icon,
+    id: item.id,
+    label: item.label,
+  }));
+}
+
+export function createWorkbenchViewSidebarFromViewModel<TViewId extends string, TIcon = unknown>({
+  model,
+  ...sidebarProps
+}: CreateWorkbenchViewSidebarFromViewModelInput<TViewId, TIcon>): WorkbenchViewSidebarProps<
+  TViewId,
+  TIcon
+> {
+  return {
+    ...sidebarProps,
+    items: createWorkbenchViewSidebarItemsFromViewModel({ model }),
+  };
 }

@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   createWorkbenchEditorTabsFromViewModel,
   createWorkbenchShellActivityBarFromViewModel,
+  createWorkbenchViewSidebarFromViewModel,
+  createWorkbenchViewSidebarItemsFromViewModel,
 } from './shellViewModel';
 
 type TestViewId = 'explorer' | 'search' | 'settings';
@@ -124,5 +126,59 @@ describe('workbench shell view model adapters', () => {
         title: 'Search',
       },
     ]);
+  });
+
+  it('maps platform activity bar models to view sidebar items', () => {
+    expect(
+      createWorkbenchViewSidebarItemsFromViewModel<TestViewId, TestIcon>({
+        model: {
+          footerItems: [{ icon: 'codicon-gear', id: 'settings', label: 'Settings' }],
+          sections: [
+            [
+              { icon: 'codicon-files', id: 'explorer', label: 'Explorer' },
+              { icon: 'codicon-search', id: 'search', label: 'Search' },
+            ],
+          ],
+        },
+      }),
+    ).toEqual([
+      { icon: 'codicon-files', id: 'explorer', label: 'Explorer' },
+      { icon: 'codicon-search', id: 'search', label: 'Search' },
+      { icon: 'codicon-gear', id: 'settings', label: 'Settings' },
+    ]);
+  });
+
+  it('maps platform activity bar models to view sidebar props', () => {
+    const selected: TestViewId[] = [];
+    const sidebar = createWorkbenchViewSidebarFromViewModel<TestViewId, TestIcon>({
+      activeId: 'explorer',
+      'aria-label': 'Primary views',
+      itemDataAttributeName: 'data-view',
+      listProps: { 'aria-label': 'Views' },
+      model: {
+        footerItems: [{ icon: 'codicon-gear', id: 'settings', label: 'Settings' }],
+        sections: [[{ icon: 'codicon-files', id: 'explorer', label: 'Explorer' }]],
+      },
+      onSelect: (viewId) => selected.push(viewId),
+      renderIcon: (icon) => `icon:${icon}`,
+      title: 'Explorer',
+    });
+
+    expect(sidebar).toMatchObject({
+      activeId: 'explorer',
+      'aria-label': 'Primary views',
+      itemDataAttributeName: 'data-view',
+      items: [
+        { icon: 'codicon-files', id: 'explorer', label: 'Explorer' },
+        { icon: 'codicon-gear', id: 'settings', label: 'Settings' },
+      ],
+      listProps: { 'aria-label': 'Views' },
+      title: 'Explorer',
+    });
+
+    sidebar.onSelect?.('settings', sidebar.items[1]!);
+
+    expect(sidebar.renderIcon('codicon-files', sidebar.items[0]!)).toBe('icon:codicon-files');
+    expect(selected).toEqual(['settings']);
   });
 });

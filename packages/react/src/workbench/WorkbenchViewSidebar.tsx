@@ -21,6 +21,7 @@ export interface WorkbenchViewSidebarProps<TViewId extends string, TIcon = unkno
   SideBarViewFrameProps,
   'children' | 'onSelect'
 > {
+  readonly [key: `data-${string}`]: boolean | number | string | undefined;
   readonly activeId?: TViewId | undefined;
   readonly itemDataAttributeName?: string | undefined;
   readonly items: ReadonlyArray<WorkbenchViewSidebarItem<TViewId, TIcon>>;

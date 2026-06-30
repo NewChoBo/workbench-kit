@@ -16,11 +16,16 @@ export type { WorkbenchShellProps } from './WorkbenchShell';
 export {
   createWorkbenchEditorTabsFromViewModel,
   createWorkbenchShellActivityBarFromViewModel,
+  createWorkbenchViewSidebarFromViewModel,
+  createWorkbenchViewSidebarItemsFromViewModel,
 } from './shellViewModel';
 export type {
   CreateWorkbenchEditorTabsFromViewModelInput,
   CreateWorkbenchShellActivityBarFromViewModelInput,
+  CreateWorkbenchViewSidebarFromViewModelInput,
+  CreateWorkbenchViewSidebarItemsFromViewModelInput,
   WorkbenchShellActivityBarViewModelProps,
+  WorkbenchViewSidebarViewModelProps,
 } from './shellViewModel';
 export { WorkbenchViewEditor } from './WorkbenchViewEditor';
 export type {
