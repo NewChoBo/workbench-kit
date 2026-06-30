@@ -45,6 +45,11 @@ export type {
   WorkbenchDesktopTitleBarProps,
   WorkbenchDesktopWindowControlsProps,
 } from './WorkbenchDesktopTitleBar';
+export { useWorkbenchModalViewState } from './workbenchModalViewState';
+export type {
+  UseWorkbenchModalViewStateOptions,
+  WorkbenchModalViewState,
+} from './workbenchModalViewState';
 export { useWorkbenchViewRouteState } from './workbenchViewRouteState';
 export type {
   UseWorkbenchViewRouteStateOptions,
