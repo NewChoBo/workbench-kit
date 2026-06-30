@@ -484,6 +484,14 @@ export {
 } from './settings';
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';
+export { WorkbenchViewEditor } from './WorkbenchViewEditor';
+export type {
+  WorkbenchViewEditorDataAttributes,
+  WorkbenchViewEditorEmptyState,
+  WorkbenchViewEditorEmptyStateProps,
+  WorkbenchViewEditorEmptyStateSurfaceProps,
+  WorkbenchViewEditorProps,
+} from './WorkbenchViewEditor';
 export { WorkbenchViewSidebar } from './WorkbenchViewSidebar';
 export type { WorkbenchViewSidebarItem, WorkbenchViewSidebarProps } from './WorkbenchViewSidebar';
 export {
