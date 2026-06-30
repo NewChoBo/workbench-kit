@@ -110,24 +110,6 @@ export type {
 } from './themePresets';
 export { WorkbenchThemeProvider } from './WorkbenchThemeProvider';
 export type { WorkbenchThemeProviderProps } from './WorkbenchThemeProvider';
-export { WorkbenchStoryHost } from './story/WorkbenchStoryHost';
-export type { WorkbenchStoryHostProps } from './story/WorkbenchStoryHost';
-export { StoryEventLog, StorySidebarFrame } from './story/StorySidebarFrame';
-export type {
-  StoryEventLogProps,
-  StorySidebarFrameProps,
-  StorySidebarFrameVariant,
-} from './story/StorySidebarFrame';
-export {
-  StoryWorkbenchShellFrame,
-  WORKBENCH_STORY_SHELL_CLASS,
-} from './story/StoryWorkbenchShellFrame';
-export type {
-  StoryWorkbenchShellFrameProps,
-  StoryWorkbenchShellFrameVariant,
-} from './story/StoryWorkbenchShellFrame';
-export { ChatRuntimeHarness } from './story/ChatRuntimeHarness';
-export type { ChatRuntimeHarnessProps } from './story/ChatRuntimeHarness';
 export {
   WorkbenchShortcutCommandBridge,
   getWorkbenchShortcutCommandBindings,

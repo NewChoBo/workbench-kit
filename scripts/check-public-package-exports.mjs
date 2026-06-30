@@ -294,6 +294,19 @@ function validateReactPrivateStorySurfaces() {
       rule: 'react-story-files',
     });
   }
+
+  const workbenchIndexPath = path.join(reactPackage.directory, 'src/workbench/index.ts');
+  const workbenchIndex = fs.existsSync(workbenchIndexPath)
+    ? fs.readFileSync(workbenchIndexPath, 'utf8')
+    : '';
+
+  if (/from\s+['"]\.\/story\//u.test(workbenchIndex)) {
+    violations.push({
+      location: relativePath(workbenchIndexPath),
+      message: '@workbench-kit/react/workbench must not re-export Storybook-only helpers.',
+      rule: 'react-workbench-story-re-export',
+    });
+  }
 }
 
 function collectExportTargets(value) {
