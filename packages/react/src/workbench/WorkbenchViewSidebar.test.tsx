@@ -9,7 +9,7 @@ describe('WorkbenchViewSidebar', () => {
       <WorkbenchViewSidebar
         activeId="search"
         aria-label="Primary views"
-        className="workbench-primary-side-bar"
+        className="custom-sidebar"
         data-shell-sidebar="primary"
         itemDataAttributeName="data-view-id"
         items={[
@@ -25,6 +25,7 @@ describe('WorkbenchViewSidebar', () => {
 
     expect(markup).toContain('ui-workbench-view-sidebar');
     expect(markup).toContain('workbench-primary-side-bar');
+    expect(markup).toContain('custom-sidebar');
     expect(markup).toContain('data-shell-sidebar="primary"');
     expect(markup).toContain('aria-label="Primary views"');
     expect(markup).toContain('aria-label="Primary view list"');

@@ -45,7 +45,10 @@ export function WorkbenchViewSidebar<TViewId extends string, TIcon = unknown>({
   const { className: listClassName, fill = true, ...restListProps } = listProps ?? {};
 
   return (
-    <SideBarViewFrame className={cx('ui-workbench-view-sidebar', className)} {...frameProps}>
+    <SideBarViewFrame
+      className={cx('ui-workbench-view-sidebar', 'workbench-primary-side-bar', className)}
+      {...frameProps}
+    >
       <SideBarList
         className={cx('ui-workbench-view-sidebar__list', listClassName)}
         fill={fill}
