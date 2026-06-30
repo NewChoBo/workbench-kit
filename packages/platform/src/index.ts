@@ -125,6 +125,13 @@ export {
   type WorkbenchViewTabClosePolicy,
 } from './workbench-view-model.js';
 export {
+  buildWorkbenchViewPlacementModel,
+  type BuildWorkbenchViewPlacementModelInput,
+  type WorkbenchViewPlacementContainerLike,
+  type WorkbenchViewPlacementModel,
+  type WorkbenchViewPlacementViewLike,
+} from './workbench-view-placement.js';
+export {
   areWorkbenchViewRouteSnapshotsEqual,
   buildWorkbenchViewRouteSearch,
   closeWorkbenchViewRoute,
