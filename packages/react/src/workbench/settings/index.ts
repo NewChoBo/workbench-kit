@@ -130,10 +130,12 @@ export {
   createWorkbenchSchemaFormFieldFromSettingSpec,
   createWorkbenchSchemaFormFieldsFromSettingSpecs,
 } from './schemaFormSettingSpec';
+export { createWorkbenchSchemaFormSettingsCategory } from './schemaFormSettingsCategory';
 export type {
   WorkbenchExtensionSettingSpec,
   WorkbenchExtensionSettingValueType,
 } from './extensionSettingsForm';
+export type { WorkbenchSchemaFormSettingsCategoryInput } from './schemaFormSettingsCategory';
 export type {
   WorkbenchSchemaFormSettingSpec,
   WorkbenchSchemaFormSettingValueType,
