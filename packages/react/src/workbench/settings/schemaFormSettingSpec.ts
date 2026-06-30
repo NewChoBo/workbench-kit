@@ -24,10 +24,69 @@ export interface WorkbenchSchemaFormSettingSpec {
   readonly type: WorkbenchSchemaFormSettingValueType;
 }
 
+export interface WorkbenchSchemaFormSettingDefinitionLike {
+  readonly defaultValue?: unknown;
+  readonly enumValues?: readonly (boolean | number | string)[] | undefined;
+  readonly key: string;
+  readonly valueType: WorkbenchSchemaFormSettingValueType | 'enum';
+}
+
+export interface WorkbenchSchemaFormSettingDefinitionSpecOptions<
+  TDefinition extends WorkbenchSchemaFormSettingDefinitionLike,
+> {
+  readonly description?: ((definition: TDefinition) => ReactNode | undefined) | undefined;
+  readonly label?: ((definition: TDefinition) => ReactNode | undefined) | undefined;
+  readonly metadata?:
+    | ((definition: TDefinition) => Record<string, unknown> | undefined)
+    | undefined;
+  readonly options?:
+    | ((definition: TDefinition) => readonly WorkbenchSchemaFormOption[] | undefined)
+    | undefined;
+  readonly type?:
+    | ((definition: TDefinition) => WorkbenchSchemaFormSettingValueType | undefined)
+    | undefined;
+}
+
 export function createWorkbenchSchemaFormFieldsFromSettingSpecs(
   settings: readonly WorkbenchSchemaFormSettingSpec[],
 ): WorkbenchSchemaFormField[] {
   return settings.map((setting) => createWorkbenchSchemaFormFieldFromSettingSpec(setting));
+}
+
+export function createWorkbenchSchemaFormFieldsFromSettingDefinitions<
+  TDefinition extends WorkbenchSchemaFormSettingDefinitionLike,
+>(
+  definitions: readonly TDefinition[],
+  options: WorkbenchSchemaFormSettingDefinitionSpecOptions<TDefinition> = {},
+): WorkbenchSchemaFormField[] {
+  return createWorkbenchSchemaFormFieldsFromSettingSpecs(
+    definitions.map((definition) =>
+      createWorkbenchSchemaFormSettingSpecFromDefinition(definition, options),
+    ),
+  );
+}
+
+export function createWorkbenchSchemaFormSettingSpecFromDefinition<
+  TDefinition extends WorkbenchSchemaFormSettingDefinitionLike,
+>(
+  definition: TDefinition,
+  options: WorkbenchSchemaFormSettingDefinitionSpecOptions<TDefinition> = {},
+): WorkbenchSchemaFormSettingSpec {
+  const resolvedOptions = options.options?.(definition);
+
+  return {
+    default: definition.defaultValue,
+    description: options.description?.(definition),
+    enum:
+      resolvedOptions === undefined && definition.valueType === 'enum'
+        ? definition.enumValues
+        : undefined,
+    key: definition.key,
+    label: options.label?.(definition),
+    metadata: options.metadata?.(definition),
+    options: resolvedOptions,
+    type: options.type?.(definition) ?? toWorkbenchSchemaFormSettingValueType(definition.valueType),
+  };
 }
 
 export function createWorkbenchSchemaFormFieldFromSettingSpec(
@@ -62,6 +121,12 @@ export function createWorkbenchSchemaFormFieldFromSettingSpec(
     monospace: setting.type === 'array' || setting.type === 'object',
     type: 'text',
   };
+}
+
+function toWorkbenchSchemaFormSettingValueType(
+  valueType: WorkbenchSchemaFormSettingDefinitionLike['valueType'],
+): WorkbenchSchemaFormSettingValueType {
+  return valueType === 'enum' ? 'string' : valueType;
 }
 
 function createWorkbenchSchemaFormFieldBaseFromSettingSpec(

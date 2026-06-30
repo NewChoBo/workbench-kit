@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   coerceWorkbenchSchemaFormSettingDefaultValue,
+  createWorkbenchSchemaFormFieldsFromSettingDefinitions,
   createWorkbenchSchemaFormFieldFromSettingSpec,
   createWorkbenchSchemaFormFieldsFromSettingSpecs,
 } from './schemaFormSettingSpec';
@@ -71,5 +72,81 @@ describe('schema form setting spec adapter', () => {
         type: 'number',
       }),
     ).toBeUndefined();
+  });
+
+  it('maps registry-like setting definitions to schema form fields', () => {
+    expect(
+      createWorkbenchSchemaFormFieldsFromSettingDefinitions(
+        [
+          {
+            defaultValue: 'dark',
+            enumValues: ['dark', 'light'],
+            key: 'workbench.theme',
+            storageKey: 'ui.theme',
+            title: 'Theme',
+            valueType: 'enum',
+          },
+          {
+            defaultValue: true,
+            key: 'workbench.launchOnStartup',
+            storageKey: 'runtime.launchOnStartup',
+            title: 'Launch on startup',
+            valueType: 'boolean',
+          },
+        ],
+        {
+          label: (definition) => definition.title,
+          metadata: (definition) => ({ storageKey: definition.storageKey }),
+        },
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        defaultValue: 'dark',
+        id: 'workbench.theme',
+        label: 'Theme',
+        metadata: { storageKey: 'ui.theme' },
+        options: [
+          { label: 'dark', value: 'dark' },
+          { label: 'light', value: 'light' },
+        ],
+        type: 'select',
+      }),
+      expect.objectContaining({
+        defaultValue: true,
+        id: 'workbench.launchOnStartup',
+        label: 'Launch on startup',
+        metadata: { storageKey: 'runtime.launchOnStartup' },
+        type: 'checkbox',
+      }),
+    ]);
+  });
+
+  it('lets registry adapters override enum labels with schema form options', () => {
+    expect(
+      createWorkbenchSchemaFormFieldsFromSettingDefinitions(
+        [
+          {
+            defaultValue: 'system',
+            enumValues: ['system', 'dark'],
+            key: 'workbench.theme',
+            valueType: 'enum',
+          },
+        ],
+        {
+          options: () => [
+            { label: 'Follow system', value: 'system' },
+            { label: 'Dark', value: 'dark' },
+          ],
+        },
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        options: [
+          { label: 'Follow system', value: 'system' },
+          { label: 'Dark', value: 'dark' },
+        ],
+        type: 'select',
+      }),
+    ]);
   });
 });

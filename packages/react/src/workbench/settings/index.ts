@@ -127,7 +127,9 @@ export {
 } from './extensionSettingsForm';
 export {
   coerceWorkbenchSchemaFormSettingDefaultValue,
+  createWorkbenchSchemaFormFieldsFromSettingDefinitions,
   createWorkbenchSchemaFormFieldFromSettingSpec,
+  createWorkbenchSchemaFormSettingSpecFromDefinition,
   createWorkbenchSchemaFormFieldsFromSettingSpecs,
 } from './schemaFormSettingSpec';
 export { createWorkbenchSchemaFormSettingsCategory } from './schemaFormSettingsCategory';
@@ -137,6 +139,8 @@ export type {
 } from './extensionSettingsForm';
 export type { WorkbenchSchemaFormSettingsCategoryInput } from './schemaFormSettingsCategory';
 export type {
+  WorkbenchSchemaFormSettingDefinitionLike,
+  WorkbenchSchemaFormSettingDefinitionSpecOptions,
   WorkbenchSchemaFormSettingSpec,
   WorkbenchSchemaFormSettingValueType,
 } from './schemaFormSettingSpec';
