@@ -371,9 +371,11 @@ export function WorkbenchSectionedPanel({
           </div>
         }
         contentClassName={cx('ui-workbench-sectioned-panel__body', contentClassName)}
+        contentScrollGutter="auto"
         data-nav-collapsed={sectionNavIsCollapsed ? 'true' : undefined}
         data-readonly={readOnly ? 'true' : undefined}
         data-scroll-spy={scrollSpyEnabled ? 'true' : 'false'}
+        navScrollGutter="auto"
         nav={
           showSectionNav && !sectionNavIsCollapsed ? (
             <div className="ui-workbench-sectioned-panel__nav-shell">

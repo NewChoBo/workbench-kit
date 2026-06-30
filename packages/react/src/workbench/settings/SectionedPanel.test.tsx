@@ -26,6 +26,18 @@ describe('WorkbenchSectionedPanel', () => {
     expect(markup).toContain('ui-workbench-sectioned-panel');
     expect(markup).toContain('data-has-nav="true"');
     expect(markup).toContain('aria-label="Settings sections"');
+    expect(markup).toContain(
+      'ui-scroll-area ui-workbench-scrollbar ui-scroll-area--vertical ui-workbench-navigation-panel__nav-scroll',
+    );
+    expect(markup).not.toContain(
+      'ui-scroll-area ui-workbench-scrollbar ui-scroll-area--vertical ui-scroll-area--stable-gutter ui-workbench-navigation-panel__nav-scroll',
+    );
+    expect(markup).toContain(
+      'ui-scroll-area ui-workbench-scrollbar ui-scroll-area--vertical ui-workbench-navigation-panel__content-scroll',
+    );
+    expect(markup).not.toContain(
+      'ui-scroll-area ui-workbench-scrollbar ui-scroll-area--vertical ui-scroll-area--stable-gutter ui-workbench-navigation-panel__content-scroll',
+    );
     expect(markup).toContain('href="#general"');
     expect(markup).toContain('General settings');
     expect(markup).toContain('Advanced settings');

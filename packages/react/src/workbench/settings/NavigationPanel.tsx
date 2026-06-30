@@ -1,5 +1,5 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
-import { ScrollArea } from '../../primitives/ScrollArea';
+import { ScrollArea, type ScrollAreaGutter } from '../../primitives/ScrollArea';
 import { cx } from '../../utils/cx';
 
 export interface WorkbenchNavigationPanelProps extends Omit<
@@ -9,9 +9,11 @@ export interface WorkbenchNavigationPanelProps extends Omit<
   content: ReactNode;
   contentClassName?: string | undefined;
   contentProps?: Omit<ComponentPropsWithRef<'div'>, 'children' | 'className'> | undefined;
+  contentScrollGutter?: ScrollAreaGutter | undefined;
   nav?: ReactNode | undefined;
   navClassName?: string | undefined;
   navProps?: Omit<ComponentPropsWithRef<'nav'>, 'children' | 'className'> | undefined;
+  navScrollGutter?: ScrollAreaGutter | undefined;
 }
 
 export function WorkbenchNavigationPanel({
@@ -19,9 +21,11 @@ export function WorkbenchNavigationPanel({
   content,
   contentClassName,
   contentProps,
+  contentScrollGutter = 'stable',
   nav,
   navClassName,
   navProps,
+  navScrollGutter = 'stable',
   ...props
 }: WorkbenchNavigationPanelProps) {
   const hasNav = nav !== undefined && nav !== null && nav !== false;
@@ -36,7 +40,7 @@ export function WorkbenchNavigationPanel({
         <nav className={cx('ui-workbench-navigation-panel__nav', navClassName)} {...navProps}>
           <ScrollArea
             className="ui-workbench-navigation-panel__nav-scroll"
-            gutter="stable"
+            gutter={navScrollGutter}
             orientation="vertical"
           >
             {nav}
@@ -49,7 +53,7 @@ export function WorkbenchNavigationPanel({
       >
         <ScrollArea
           className="ui-workbench-navigation-panel__content-scroll"
-          gutter="stable"
+          gutter={contentScrollGutter}
           orientation="vertical"
         >
           {content}
