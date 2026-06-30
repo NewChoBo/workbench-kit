@@ -93,8 +93,31 @@ export type {
   PanelProps,
 } from '../layout/Panel';
 export {
+  WorkbenchBanner,
+  WorkbenchBannerIcon,
+  WorkbenchBannerMessage,
+  WorkbenchCenter,
+  WorkbenchPane,
+  WorkbenchPanelScroll,
+  WorkbenchPanelSurface,
+  WorkbenchRoot,
+} from '../layout/WorkbenchLayoutBase';
+export type {
+  WorkbenchBannerIconProps,
+  WorkbenchBannerMessageProps,
+  WorkbenchBannerProps,
+  WorkbenchCenterProps,
+  WorkbenchPaneProps,
+  WorkbenchPanelScrollProps,
+  WorkbenchPanelSurfaceProps,
+  WorkbenchRootProps,
+} from '../layout/WorkbenchLayoutBase';
+export {
   WorkbenchParseError,
+  WorkbenchPropertyCard,
+  WorkbenchPropertyGrid,
   WorkbenchPropertyHint,
+  WorkbenchPropertyKeyValue,
   WorkbenchMetricGrid,
   WorkbenchPropertyNumberRow,
   WorkbenchPropertyPanel,
@@ -105,6 +128,9 @@ export {
 } from '../layout/WorkbenchPropertyPanel';
 export type {
   WorkbenchParseErrorProps,
+  WorkbenchPropertyCardProps,
+  WorkbenchPropertyGridProps,
+  WorkbenchPropertyKeyValueProps,
   WorkbenchPropertyNumberRowProps,
   WorkbenchPropertyPanelProps,
   WorkbenchPropertyRowProps,
