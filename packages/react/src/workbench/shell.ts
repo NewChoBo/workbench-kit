@@ -14,6 +14,15 @@ export type {
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';
 export {
+  createWorkbenchEditorTabsFromViewModel,
+  createWorkbenchShellActivityBarFromViewModel,
+} from './shellViewModel';
+export type {
+  CreateWorkbenchEditorTabsFromViewModelInput,
+  CreateWorkbenchShellActivityBarFromViewModelInput,
+  WorkbenchShellActivityBarViewModelProps,
+} from './shellViewModel';
+export {
   WorkbenchDesktopTitleBar,
   WorkbenchDesktopWindowControls,
 } from './WorkbenchDesktopTitleBar';
