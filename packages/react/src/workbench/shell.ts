@@ -45,3 +45,10 @@ export type {
   WorkbenchDesktopTitleBarProps,
   WorkbenchDesktopWindowControlsProps,
 } from './WorkbenchDesktopTitleBar';
+export { useWorkbenchViewRouteState } from './workbenchViewRouteState';
+export type {
+  UseWorkbenchViewRouteStateOptions,
+  WorkbenchViewRouteBrowserWindow,
+  WorkbenchViewRouteCommitMode,
+  WorkbenchViewRouteState,
+} from './workbenchViewRouteState';
