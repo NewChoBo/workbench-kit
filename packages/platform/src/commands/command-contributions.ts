@@ -82,6 +82,12 @@ export interface CommandMenuItemsInput<TContext = void> {
   surface?: string;
 }
 
+export interface CommandMenuCommandItemInput<TContext = void>
+  extends Omit<CommandMenuItemsInput<TContext>, 'entries'> {
+  commandId: string;
+  entry?: Omit<CommandMenuCommandEntry<TContext>, 'commandId' | 'type'> | undefined;
+}
+
 export function createCommandRegistry<TContext>(
   commands: Iterable<CommandDefinition<TContext>>,
 ): CommandRegistry<TContext> {
@@ -254,6 +260,20 @@ export function resolveCommandMenuItems<TContext>({
   });
 
   return compactCommandMenuItems(items);
+}
+
+export function resolveCommandMenuCommandItem<TContext>({
+  commandId,
+  entry,
+  ...input
+}: CommandMenuCommandItemInput<TContext>): ResolvedCommandMenuCommandItem | undefined {
+  return resolveCommandMenuItems({
+    ...input,
+    entries: [commandMenuEntry<TContext>(commandId, entry)],
+  }).find(
+    (item): item is ResolvedCommandMenuCommandItem =>
+      item.type === 'command' && item.commandId === commandId,
+  );
 }
 
 export function resolveCommandValue<TContext, TValue>(

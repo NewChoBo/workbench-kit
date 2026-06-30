@@ -4,6 +4,7 @@ import { CommandRegistry } from './command-registry.js';
 import {
   canExecuteCommand,
   resolveCommandDefinitionLabel,
+  resolveCommandMenuCommandItem,
   resolveCommandMenuItems,
   resolveCommandValue,
 } from './command-contributions.js';
@@ -51,6 +52,53 @@ describe('resolveCommandMenuItems', () => {
         'feature.enabled': false,
       }),
     ).toBe(false);
+  });
+
+  it('resolves one command menu item without consumer-side list filtering', () => {
+    const registry = new CommandRegistry([
+      {
+        enablement: 'feature.enabled',
+        id: 'workbench.action.open',
+        label: (context: { target: string }) => `Open ${context.target}`,
+      },
+    ]);
+
+    expect(
+      resolveCommandMenuCommandItem({
+        commandId: 'workbench.action.open',
+        context: { target: 'Settings' },
+        contextKeys: { 'feature.enabled': true },
+        entry: { icon: 'gear', shortcut: 'Ctrl+,' },
+        registry,
+      }),
+    ).toEqual({
+      commandId: 'workbench.action.open',
+      disabled: false,
+      icon: 'gear',
+      id: 'workbench.action.open',
+      label: 'Open Settings',
+      shortcut: 'Ctrl+,',
+      type: 'command',
+    });
+  });
+
+  it('returns undefined for a hidden single command menu item', () => {
+    const registry = new CommandRegistry([
+      {
+        id: 'workbench.action.hidden',
+        label: 'Hidden',
+        when: 'feature.visible',
+      },
+    ]);
+
+    expect(
+      resolveCommandMenuCommandItem({
+        commandId: 'workbench.action.hidden',
+        context: undefined,
+        contextKeys: { 'feature.visible': false },
+        registry,
+      }),
+    ).toBeUndefined();
   });
 });
 
