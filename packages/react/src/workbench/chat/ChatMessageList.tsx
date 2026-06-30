@@ -1,12 +1,4 @@
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { SideBarScrollSpacer } from '../../layout/SideBarViewFrame';
 import { cx } from '../../utils/cx';
 import { ChatMessageItem, type ChatMessageItemProps } from './ChatMessageItem';
@@ -18,8 +10,7 @@ import {
   shouldShowPeerChatSenderLabel,
 } from './chatMessageMeta';
 import type { ChatMessage, ChatMessageLayout } from './types';
-
-const DEFAULT_LOAD_OLDER_ROOT_MARGIN = '160px 0px 0px 0px';
+import { useChatPrependPagination } from './useChatPrependPagination';
 
 export interface ChatMessageListProps {
   assistantLabel?: string;
@@ -50,126 +41,28 @@ export function ChatMessageList({
   userLabel,
   visibleMessagePageSize,
 }: ChatMessageListProps) {
-  const listRef = useRef<HTMLDivElement>(null);
-  const topSentinelRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const pendingPrependScrollRef = useRef<{
-    scrollHeight: number;
-    scrollTop: number;
-  } | null>(null);
   const emptyIconClass =
     messageLayout === 'peer' ? 'codicon-comment-discussion' : 'codicon-sparkle';
   const resolvedUserLabel = userLabel ?? (messageLayout === 'peer' ? 'Jay' : undefined);
-  const normalizedInitialVisibleMessageCount =
-    initialVisibleMessageCount !== undefined
-      ? Math.max(1, Math.floor(initialVisibleMessageCount))
-      : messages.length;
-  const normalizedVisibleMessagePageSize = Math.max(
-    1,
-    Math.floor(visibleMessagePageSize ?? normalizedInitialVisibleMessageCount),
-  );
-  const isPaginationEnabled =
-    initialVisibleMessageCount !== undefined &&
-    messages.length > normalizedInitialVisibleMessageCount;
-  const [pagination, setPagination] = useState({
-    key: paginationKey,
-    visibleMessageLimit: normalizedInitialVisibleMessageCount,
-  });
-  const visibleMessageLimit = isPaginationEnabled
-    ? pagination.key === paginationKey
-      ? pagination.visibleMessageLimit
-      : normalizedInitialVisibleMessageCount
-    : messages.length;
-  const displayedStartIndex = Math.max(0, messages.length - visibleMessageLimit);
-  const displayedMessages = messages.slice(displayedStartIndex);
-  const hiddenMessageCount = displayedStartIndex;
-  const hasOlderMessages = hiddenMessageCount > 0;
   const lastMessageId = messages.length > 0 ? (messages[messages.length - 1]?.id ?? '') : '';
-  const getScrollContainer = useCallback(
-    () => listRef.current?.closest<HTMLElement>('.ui-side-bar-view__body') ?? null,
-    [],
-  );
-  const loadOlderMessages = useCallback(() => {
-    if (!hasOlderMessages || pendingPrependScrollRef.current) return;
-
-    const scrollContainer = getScrollContainer();
-    if (scrollContainer) {
-      pendingPrependScrollRef.current = {
-        scrollHeight: scrollContainer.scrollHeight,
-        scrollTop: scrollContainer.scrollTop,
-      };
-    }
-
-    setPagination((currentPagination) => {
-      const currentLimit =
-        currentPagination.key === paginationKey
-          ? currentPagination.visibleMessageLimit
-          : normalizedInitialVisibleMessageCount;
-
-      return {
-        key: paginationKey,
-        visibleMessageLimit: Math.min(
-          messages.length,
-          currentLimit + normalizedVisibleMessagePageSize,
-        ),
-      };
-    });
-  }, [
-    getScrollContainer,
-    hasOlderMessages,
-    messages.length,
-    normalizedInitialVisibleMessageCount,
-    normalizedVisibleMessagePageSize,
+  const {
+    bottomRef,
+    displayedStartIndex,
+    hasOlderItems: hasOlderMessages,
+    hiddenItemCount: hiddenMessageCount,
+    isPaginationEnabled,
+    listRef,
+    loadOlderItems: loadOlderMessages,
+    topSentinelRef,
+  } = useChatPrependPagination({
+    initialVisibleItemCount: initialVisibleMessageCount,
+    isStreaming,
+    itemCount: messages.length,
+    lastItemId: lastMessageId,
     paginationKey,
-  ]);
-
-  useEffect(() => {
-    pendingPrependScrollRef.current = null;
-  }, [paginationKey]);
-
-  useEffect(() => {
-    if (!isPaginationEnabled || !hasOlderMessages) return undefined;
-
-    const scrollContainer = getScrollContainer();
-    const sentinel = topSentinelRef.current;
-    if (!scrollContainer || !sentinel || typeof IntersectionObserver === 'undefined') {
-      return undefined;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          loadOlderMessages();
-        }
-      },
-      {
-        root: scrollContainer,
-        rootMargin: DEFAULT_LOAD_OLDER_ROOT_MARGIN,
-        threshold: 0,
-      },
-    );
-
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [getScrollContainer, hasOlderMessages, isPaginationEnabled, loadOlderMessages]);
-
-  useLayoutEffect(() => {
-    const pendingPrependScroll = pendingPrependScrollRef.current;
-    if (pendingPrependScroll) {
-      const scrollContainer = getScrollContainer();
-      if (scrollContainer) {
-        scrollContainer.scrollTop =
-          scrollContainer.scrollHeight -
-          pendingPrependScroll.scrollHeight +
-          pendingPrependScroll.scrollTop;
-      }
-
-      pendingPrependScrollRef.current = null;
-      return;
-    }
-
-    bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
-  }, [displayedMessages.length, getScrollContainer, isStreaming, lastMessageId]);
+    visibleItemPageSize: visibleMessagePageSize,
+  });
+  const displayedMessages = messages.slice(displayedStartIndex);
 
   if (messages.length === 0) {
     return (

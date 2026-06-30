@@ -29,6 +29,11 @@ export {
   useCancelRuntimeOnUnmount,
 } from './useCancelRuntimeOnUnmount';
 export type { UseCancelRuntimeOnUnmountOptions } from './useCancelRuntimeOnUnmount';
+export { useChatPrependPagination } from './useChatPrependPagination';
+export type {
+  UseChatPrependPaginationOptions,
+  UseChatPrependPaginationResult,
+} from './useChatPrependPagination';
 export { useSlashCommandSuggest } from './useSlashCommandSuggest';
 export type {
   UseSlashCommandSuggestOptions,
