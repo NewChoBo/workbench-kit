@@ -23,6 +23,23 @@ export interface SplitViewProps {
   secondary: ReactNode;
 }
 
+function requestFrame(callback: FrameRequestCallback): number {
+  if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+    return window.requestAnimationFrame(callback);
+  }
+
+  return globalThis.setTimeout(() => callback(Date.now()), 0) as unknown as number;
+}
+
+function cancelFrame(id: number): void {
+  if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+    window.cancelAnimationFrame(id);
+    return;
+  }
+
+  globalThis.clearTimeout(id);
+}
+
 export function SplitView({
   className,
   defaultPrimarySizePercent = 40,
@@ -38,7 +55,12 @@ export function SplitView({
   const [uncontrolledPrimarySizePercent, setUncontrolledPrimarySizePercent] =
     useState(defaultPrimarySizePercent);
   const containerRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
+  const dragStateRef = useRef<{
+    nextPrimarySizePercent: number;
+    pointerId: number;
+    separator: HTMLDivElement;
+  } | null>(null);
+  const previewFrameRef = useRef(0);
   const isControlled = controlledPrimarySizePercent !== undefined;
 
   const clampPrimarySize = (value: number) =>
@@ -56,33 +78,108 @@ export function SplitView({
     onPrimarySizePercentChange?.(nextValue);
   };
 
-  const updatePrimarySize = (clientPosition: number) => {
-    if (!containerRef.current) return;
+  const resolvePrimarySize = (clientPosition: number) => {
+    if (!containerRef.current) return primarySizePercent;
+
     const rect = containerRef.current.getBoundingClientRect();
     const totalSize = orientation === 'vertical' ? rect.height : rect.width;
     const startPosition = orientation === 'vertical' ? rect.top : rect.left;
-    const pct = ((clientPosition - startPosition) / totalSize) * 100;
-    commitPrimarySize(pct);
+    if (totalSize <= 0) return primarySizePercent;
+
+    return clampPrimarySize(((clientPosition - startPosition) / totalSize) * 100);
+  };
+
+  const flushPrimarySizePreview = (nextValue: number, separator: HTMLDivElement) => {
+    containerRef.current?.style.setProperty('--ui-workbench-split-primary-size', `${nextValue}%`);
+    separator.setAttribute('aria-valuenow', String(Math.round(nextValue)));
+  };
+
+  const schedulePrimarySizePreview = (nextValue: number, separator: HTMLDivElement) => {
+    const dragState = dragStateRef.current;
+    if (!dragState) return;
+
+    dragState.nextPrimarySizePercent = nextValue;
+    if (previewFrameRef.current) return;
+
+    previewFrameRef.current = requestFrame(() => {
+      previewFrameRef.current = 0;
+      const currentDragState = dragStateRef.current;
+      if (!currentDragState) return;
+
+      flushPrimarySizePreview(currentDragState.nextPrimarySizePercent, separator);
+    });
+  };
+
+  const releasePointerCapture = (separator: HTMLDivElement, pointerId: number) => {
+    try {
+      if (separator.hasPointerCapture(pointerId)) {
+        separator.releasePointerCapture(pointerId);
+      }
+    } catch {
+      // Browsers can release pointer capture before React receives the final event.
+    }
+  };
+
+  const finishPointerDrag = (
+    event: PointerEvent<HTMLDivElement>,
+    options: { commit: boolean; resolveFromEvent?: boolean },
+  ) => {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+
+    const nextValue =
+      options.resolveFromEvent === false
+        ? dragState.nextPrimarySizePercent
+        : resolvePrimarySize(orientation === 'vertical' ? event.clientY : event.clientX);
+    dragState.nextPrimarySizePercent = nextValue;
+
+    if (previewFrameRef.current) {
+      cancelFrame(previewFrameRef.current);
+      previewFrameRef.current = 0;
+    }
+    flushPrimarySizePreview(nextValue, dragState.separator);
+
+    releasePointerCapture(dragState.separator, event.pointerId);
+    dragState.separator.classList.remove('is-dragging');
+    dragStateRef.current = null;
+
+    if (options.commit) {
+      commitPrimarySize(nextValue);
+    }
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragging.current = true;
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is best effort in browser-like test environments.
+    }
+    dragStateRef.current = {
+      nextPrimarySizePercent: primarySizePercent,
+      pointerId: event.pointerId,
+      separator: event.currentTarget,
+    };
     event.currentTarget.classList.add('is-dragging');
   };
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!dragging.current) return;
-    updatePrimarySize(orientation === 'vertical' ? event.clientY : event.clientX);
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+
+    event.preventDefault();
+    schedulePrimarySizePreview(
+      resolvePrimarySize(orientation === 'vertical' ? event.clientY : event.clientX),
+      event.currentTarget,
+    );
   };
 
   const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    dragging.current = false;
-    event.currentTarget.classList.remove('is-dragging');
+    finishPointerDrag(event, { commit: true });
+  };
+
+  const onPointerCancel = (event: PointerEvent<HTMLDivElement>) => {
+    finishPointerDrag(event, { commit: true, resolveFromEvent: false });
   };
 
   const onSeparatorKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -134,6 +231,7 @@ export function SplitView({
         role="separator"
         tabIndex={0}
         onKeyDown={onSeparatorKeyDown}
+        onPointerCancel={onPointerCancel}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

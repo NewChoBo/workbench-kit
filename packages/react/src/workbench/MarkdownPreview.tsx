@@ -17,21 +17,15 @@ export function WorkbenchMarkdownPreview({
       <Markdown
         remarkPlugins={workbenchMarkdownRemarkPlugins}
         components={{
-          a: ({ children, href, ...anchorProps }) => (
-            <a
-              href={href}
-              rel="noreferrer"
-              target={href?.startsWith('#') ? undefined : '_blank'}
-              {...anchorProps}
-            >
+          a: ({ children, href }) => (
+            <a href={href} rel="noreferrer" target={href?.startsWith('#') ? undefined : '_blank'}>
               {children}
             </a>
           ),
-          code: ({ className: codeClassName, ...codeProps }) => (
-            <code
-              className={cx('ui-workbench-markdown-preview__code', codeClassName)}
-              {...codeProps}
-            />
+          code: ({ children, className: codeClassName }) => (
+            <code className={cx('ui-workbench-markdown-preview__code', codeClassName)}>
+              {children}
+            </code>
           ),
           pre: ({ children }) => {
             const codeBlock = getMarkdownCodeBlock(children);

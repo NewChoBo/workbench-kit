@@ -313,4 +313,28 @@ describe('ChatMessageList', () => {
     expect(markup).toContain('Earlier day');
     expect(markup).toContain('Next day');
   });
+
+  it('renders only the recent message window when pagination is enabled', () => {
+    const messages: ChatMessage[] = [
+      { content: 'Old one', id: 'old-1', source: 'user' },
+      { content: 'Old two', id: 'old-2', source: 'assistant' },
+      { content: 'Recent one', id: 'recent-1', source: 'user' },
+      { content: 'Recent two', id: 'recent-2', source: 'assistant' },
+    ];
+
+    const markup = renderToStaticMarkup(
+      <ChatMessageList
+        initialVisibleMessageCount={2}
+        loadOlderLabel={(hiddenCount) => `Show ${hiddenCount} older`}
+        messages={messages}
+      />,
+    );
+
+    expect(markup).toContain('message-list__history-loader');
+    expect(markup).toContain('Show 2 older');
+    expect(markup).not.toContain('Old one');
+    expect(markup).not.toContain('Old two');
+    expect(markup).toContain('Recent one');
+    expect(markup).toContain('Recent two');
+  });
 });

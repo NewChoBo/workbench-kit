@@ -148,8 +148,8 @@ export function ChatMessageItem({
                 <Markdown
                   remarkPlugins={workbenchMarkdownRemarkPlugins}
                   components={{
-                    code: ({ className, ...props }) => (
-                      <code className={cx('ui-workbench-scrollbar', className)} {...props} />
+                    code: ({ children, className }) => (
+                      <code className={cx('ui-workbench-scrollbar', className)}>{children}</code>
                     ),
                   }}
                 >

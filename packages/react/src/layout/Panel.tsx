@@ -11,13 +11,28 @@ export function Panel({ className, ...props }: PanelProps) {
 
 export interface PanelHeaderProps extends ComponentPropsWithRef<'div'> {
   actions?: ReactNode;
+  reserveActionsSlot?: boolean;
 }
 
-export function PanelHeader({ actions, children, className, ...props }: PanelHeaderProps) {
+export function PanelHeader({
+  actions,
+  children,
+  className,
+  reserveActionsSlot = false,
+  ...props
+}: PanelHeaderProps) {
   return (
     <div className={cx('panel-header', className)} {...props}>
       <span className="ui-panel-header__title">{children}</span>
-      {actions ? <span className="ui-panel-header__actions">{actions}</span> : null}
+      {actions || reserveActionsSlot ? (
+        <span
+          aria-hidden={actions ? undefined : true}
+          className="ui-panel-header__actions"
+          data-empty={actions ? undefined : 'true'}
+        >
+          {actions}
+        </span>
+      ) : null}
     </div>
   );
 }

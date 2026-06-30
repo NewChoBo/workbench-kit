@@ -5043,6 +5043,43 @@
   gap: 0;
 }
 
+.message-list__history-loader,
+.message-list__top-sentinel {
+  min-height: 1px;
+}
+
+.message-list__history-loader {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 6px;
+}
+
+.message-list__load-older {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  max-width: 100%;
+  padding: 3px 8px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-subtle);
+  font-size: 11px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.message-list__load-older:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.message-list__load-older-count {
+  color: var(--color-text-muted);
+}
+
 .message-date-divider {
   display: flex;
   align-items: center;

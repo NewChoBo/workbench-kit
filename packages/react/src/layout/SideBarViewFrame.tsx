@@ -31,7 +31,9 @@ export function SideBarViewFrame({
   ...props
 }: SideBarViewFrameProps) {
   const { className: bodyPropsClassName, ...resolvedBodyProps } = bodyProps ?? {};
-  const hasFooter = Boolean(footer);
+  const hasFooter = footer !== undefined && footer !== null && footer !== false;
+  const hasOverlayFooterSlot = footerPlacement === 'overlay';
+  const shouldRenderFooterSlot = hasOverlayFooterSlot || hasFooter;
   const footerRef = useRef<HTMLDivElement>(null);
   const [footerHeight, setFooterHeight] = useState(0);
   const showHeader = Boolean(title || actions || headerAddon);
@@ -39,7 +41,7 @@ export function SideBarViewFrame({
   // Overlay footers float above scroll content; expose the measured height so spacers keep final rows reachable.
   useLayoutEffect(() => {
     const element = footerRef.current;
-    if (!element || footerPlacement !== 'overlay' || !hasFooter) {
+    if (!element || !hasOverlayFooterSlot) {
       setFooterHeight(0);
       return undefined;
     }
@@ -52,11 +54,15 @@ export function SideBarViewFrame({
     };
 
     updateFooterHeight();
+    if (typeof ResizeObserver === 'undefined') {
+      return undefined;
+    }
+
     const resizeObserver = new ResizeObserver(updateFooterHeight);
     resizeObserver.observe(element);
 
     return () => resizeObserver.disconnect();
-  }, [footerPlacement, hasFooter]);
+  }, [hasOverlayFooterSlot]);
 
   const panelStyle = {
     '--ui-side-bar-footer-height': `${footerHeight}px`,
@@ -66,7 +72,7 @@ export function SideBarViewFrame({
   return (
     <Panel className={cx('ui-side-bar-view', className)} style={panelStyle} {...props}>
       {showHeader ? (
-        <PanelHeader actions={actions} className="ui-side-bar-view__header">
+        <PanelHeader actions={actions} className="ui-side-bar-view__header" reserveActionsSlot>
           {title}
         </PanelHeader>
       ) : null}
@@ -76,16 +82,18 @@ export function SideBarViewFrame({
         className={cx('ui-side-bar-view__body', bodyClassName, bodyPropsClassName)}
       >
         {children}
-        {footerPlacement === 'overlay' && hasFooter ? <SideBarScrollSpacer /> : null}
+        {hasOverlayFooterSlot ? <SideBarScrollSpacer /> : null}
       </PanelBody>
-      {hasFooter ? (
+      {shouldRenderFooterSlot ? (
         <div
-          ref={footerPlacement === 'overlay' ? footerRef : undefined}
+          ref={hasOverlayFooterSlot ? footerRef : undefined}
           className={cx(
             'panel-footer',
             'ui-side-bar-view__footer',
-            footerPlacement === 'overlay' && 'ui-side-bar-view__footer--overlay',
+            hasOverlayFooterSlot && 'ui-side-bar-view__footer--overlay',
+            !hasFooter && 'ui-side-bar-view__footer--empty',
           )}
+          data-has-footer-content={hasFooter ? 'true' : 'false'}
         >
           {footer}
         </div>
