@@ -116,7 +116,7 @@
 
 .ui-workbench-sectioned-panel.ui-workbench-structured-data-schema-panel--fill
   .ui-workbench-structured-data-schema-panel__section:first-child {
-  padding-top: 0;
+  padding-top: 30px;
 }
 
 .ui-workbench-structured-data-schema-panel__section {
