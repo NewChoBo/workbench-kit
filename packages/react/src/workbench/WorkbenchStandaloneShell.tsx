@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useResolvedWorkbenchTheme } from './theme';
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { cxCodicon } from '../utils/codicon';
@@ -31,6 +31,7 @@ export interface WorkbenchStandaloneShellContext<
   commandContext: WorkbenchShellCommandContext<TActivityId>;
   isPrimarySidebarVisible: boolean;
   isSettingsOpen: boolean;
+  primarySidebarLifecycle: WorkbenchPrimarySidebarLifecycle<TActivityId>;
   primarySidebarSizePercent: number;
   theme: TTheme;
   showActivity: (activityId: TActivityId) => void;
@@ -45,6 +46,48 @@ export interface WorkbenchStandaloneShellContext<
   setSettingsScopeId: (settingsScopeId: string) => void;
   setSettingsSearchValue: (settingsSearchValue: string) => void;
 }
+
+export type WorkbenchPrimarySidebarLifecycleReason =
+  | 'activity-switch'
+  | 'initial'
+  | 'sidebar-hide'
+  | 'sidebar-show';
+
+export interface WorkbenchPrimarySidebarLifecycle<TActivityId extends string = string> {
+  activityId: TActivityId;
+  previousActivityId: TActivityId;
+  isVisible: boolean;
+  wasVisible: boolean;
+  reason: WorkbenchPrimarySidebarLifecycleReason;
+}
+
+export interface WorkbenchPrimarySidebarLifecycleCallbacks<TActivityId extends string = string> {
+  onDidChange?: (event: WorkbenchPrimarySidebarLifecycle<TActivityId>) => void;
+  onDidHide?: (event: WorkbenchPrimarySidebarLifecycle<TActivityId>) => void;
+  onDidShow?: (event: WorkbenchPrimarySidebarLifecycle<TActivityId>) => void;
+  onDidSwitchActivity?: (event: WorkbenchPrimarySidebarLifecycle<TActivityId>) => void;
+}
+
+export interface WorkbenchActivityLifecycleEvent<TActivityId extends string = string> {
+  activityId: TActivityId;
+  activeActivityId: TActivityId;
+  previousActivityId: TActivityId;
+  isVisible: boolean;
+  wasVisible: boolean;
+  reason: WorkbenchPrimarySidebarLifecycleReason;
+  primarySidebarLifecycle: WorkbenchPrimarySidebarLifecycle<TActivityId>;
+}
+
+export interface WorkbenchActivityLifecycleCallbacks<TActivityId extends string = string> {
+  onDidActivate?: (event: WorkbenchActivityLifecycleEvent<TActivityId>) => void;
+  onDidDeactivate?: (event: WorkbenchActivityLifecycleEvent<TActivityId>) => void;
+  onDidHide?: (event: WorkbenchActivityLifecycleEvent<TActivityId>) => void;
+  onDidShow?: (event: WorkbenchActivityLifecycleEvent<TActivityId>) => void;
+}
+
+export type WorkbenchActivityLifecycleCallbackMap<TActivityId extends string = string> = Partial<
+  Record<TActivityId, WorkbenchActivityLifecycleCallbacks<TActivityId>>
+>;
 
 /**
  * Props for the standalone workbench chrome host. Supply `bootstrap` plus render
@@ -63,6 +106,8 @@ export interface WorkbenchStandaloneShellProps<
   includeSettings?: boolean;
   maxPrimarySidebarSizePercent?: number;
   minPrimarySidebarSizePercent?: number;
+  activityLifecycleCallbacks?: WorkbenchActivityLifecycleCallbackMap<TActivityId>;
+  primarySidebarLifecycleCallbacks?: WorkbenchPrimarySidebarLifecycleCallbacks<TActivityId>;
   onActivityActivate?: (
     event: WorkbenchActivityChangeEvent<TActivityId>,
     context: WorkbenchStandaloneShellContext<TActivityId, TTheme>,
@@ -120,6 +165,8 @@ export function WorkbenchStandaloneShell<
   includeSettings = true,
   maxPrimarySidebarSizePercent,
   minPrimarySidebarSizePercent,
+  activityLifecycleCallbacks,
+  primarySidebarLifecycleCallbacks,
   onActivityActivate,
   onActivityBarContextMenu,
   onActivityBarItemActivate,
@@ -166,12 +213,118 @@ export function WorkbenchStandaloneShell<
     theme,
     activeActivityId,
   } = shell.state;
+  const primarySidebarLifecycleRef = useRef<WorkbenchPrimarySidebarLifecycle<TActivityId>>({
+    activityId: activeActivityId,
+    previousActivityId: activeActivityId,
+    isVisible: isPrimarySidebarVisible,
+    wasVisible: isPrimarySidebarVisible,
+    reason: 'initial',
+  });
   const resolvedTheme = useResolvedWorkbenchTheme(theme as WorkbenchTheme | 'system');
 
   const emitEvent = (event: WorkbenchStandaloneBootstrapEvent<TActivityId>) => {
     onEvent?.(event);
   };
+  const emitPrimarySidebarLifecycle = (
+    lifecycle: WorkbenchPrimarySidebarLifecycle<TActivityId>,
+  ) => {
+    primarySidebarLifecycleCallbacks?.onDidChange?.(lifecycle);
+
+    if (lifecycle.reason === 'activity-switch') {
+      primarySidebarLifecycleCallbacks?.onDidSwitchActivity?.(lifecycle);
+    }
+
+    if (!lifecycle.isVisible && lifecycle.wasVisible) {
+      primarySidebarLifecycleCallbacks?.onDidHide?.(lifecycle);
+    }
+
+    if (lifecycle.isVisible && !lifecycle.wasVisible) {
+      primarySidebarLifecycleCallbacks?.onDidShow?.(lifecycle);
+    }
+  };
+  const createActivityLifecycleEvent = (
+    lifecycle: WorkbenchPrimarySidebarLifecycle<TActivityId>,
+    activityId: TActivityId,
+    isVisible: boolean,
+    wasVisible: boolean,
+  ): WorkbenchActivityLifecycleEvent<TActivityId> => ({
+    activityId,
+    activeActivityId: lifecycle.activityId,
+    previousActivityId: lifecycle.previousActivityId,
+    isVisible,
+    wasVisible,
+    reason: lifecycle.reason,
+    primarySidebarLifecycle: lifecycle,
+  });
+  const emitActivityLifecycle = (lifecycle: WorkbenchPrimarySidebarLifecycle<TActivityId>) => {
+    if (lifecycle.reason === 'activity-switch') {
+      const previousCallbacks = activityLifecycleCallbacks?.[lifecycle.previousActivityId];
+      const nextCallbacks = activityLifecycleCallbacks?.[lifecycle.activityId];
+      const previousEvent = createActivityLifecycleEvent(
+        lifecycle,
+        lifecycle.previousActivityId,
+        false,
+        lifecycle.wasVisible,
+      );
+      const nextEvent = createActivityLifecycleEvent(
+        lifecycle,
+        lifecycle.activityId,
+        lifecycle.isVisible,
+        false,
+      );
+
+      previousCallbacks?.onDidDeactivate?.(previousEvent);
+      if (lifecycle.wasVisible) {
+        previousCallbacks?.onDidHide?.(previousEvent);
+      }
+
+      nextCallbacks?.onDidActivate?.(nextEvent);
+      if (lifecycle.isVisible) {
+        nextCallbacks?.onDidShow?.(nextEvent);
+      }
+      return;
+    }
+
+    const callbacks = activityLifecycleCallbacks?.[lifecycle.activityId];
+    if (!callbacks) return;
+
+    const event = createActivityLifecycleEvent(
+      lifecycle,
+      lifecycle.activityId,
+      lifecycle.isVisible,
+      lifecycle.wasVisible,
+    );
+
+    if (!lifecycle.isVisible && lifecycle.wasVisible) {
+      callbacks.onDidHide?.(event);
+    }
+
+    if (lifecycle.isVisible && !lifecycle.wasVisible) {
+      callbacks.onDidShow?.(event);
+    }
+  };
+  const setPrimarySidebarLifecycle = (
+    activityId: TActivityId,
+    isVisible: boolean,
+    reason: WorkbenchPrimarySidebarLifecycleReason,
+  ) => {
+    const lifecycle: WorkbenchPrimarySidebarLifecycle<TActivityId> = {
+      activityId,
+      previousActivityId: activeActivityId,
+      isVisible,
+      wasVisible: isPrimarySidebarVisible,
+      reason,
+    };
+    primarySidebarLifecycleRef.current = lifecycle;
+    emitPrimarySidebarLifecycle(lifecycle);
+    emitActivityLifecycle(lifecycle);
+  };
   const showActivity = (activityId: TActivityId) => {
+    setPrimarySidebarLifecycle(
+      activityId,
+      true,
+      activityId === activeActivityId ? 'sidebar-show' : 'activity-switch',
+    );
     shell.showActivity(activityId);
     emitEvent({ type: 'activity-change', payload: { nextActivityId: activityId } });
     onActivityActivate?.(
@@ -183,6 +336,18 @@ export function WorkbenchStandaloneShell<
     );
   };
   const activateActivity = (activityId: TActivityId) => {
+    const isCurrentActivity = activityId === activeActivityId;
+    const nextSidebarVisible = !(isCurrentActivity && isPrimarySidebarVisible);
+
+    setPrimarySidebarLifecycle(
+      activityId,
+      nextSidebarVisible,
+      nextSidebarVisible
+        ? isCurrentActivity
+          ? 'sidebar-show'
+          : 'activity-switch'
+        : 'sidebar-hide',
+    );
     shell.activateActivity(activityId);
     emitEvent({ type: 'activity-change', payload: { nextActivityId: activityId } });
     onActivityActivate?.(
@@ -204,19 +369,43 @@ export function WorkbenchStandaloneShell<
     commandContext: {
       isPrimarySidebarVisible,
       openSettings: shell.openSettings,
-      showActivity: shell.showActivity,
-      togglePrimarySidebar: shell.togglePrimarySidebar,
+      showActivity,
+      togglePrimarySidebar: () => {
+        const nextSidebarVisible = !isPrimarySidebarVisible;
+        setPrimarySidebarLifecycle(
+          activeActivityId,
+          nextSidebarVisible,
+          nextSidebarVisible ? 'sidebar-show' : 'sidebar-hide',
+        );
+        shell.togglePrimarySidebar();
+      },
     },
     isPrimarySidebarVisible,
     isSettingsOpen,
+    primarySidebarLifecycle: primarySidebarLifecycleRef.current,
     primarySidebarSizePercent,
     theme,
     showActivity,
     activateActivity,
     setTheme: shell.setTheme,
     setPrimarySidebarSizePercent: shell.setPrimarySidebarSizePercent,
-    setPrimarySidebarVisible: shell.setPrimarySidebarVisible,
-    togglePrimarySidebar: shell.togglePrimarySidebar,
+    setPrimarySidebarVisible: (isVisible) => {
+      setPrimarySidebarLifecycle(
+        activeActivityId,
+        isVisible,
+        isVisible ? 'sidebar-show' : 'sidebar-hide',
+      );
+      shell.setPrimarySidebarVisible(isVisible);
+    },
+    togglePrimarySidebar: () => {
+      const nextSidebarVisible = !isPrimarySidebarVisible;
+      setPrimarySidebarLifecycle(
+        activeActivityId,
+        nextSidebarVisible,
+        nextSidebarVisible ? 'sidebar-show' : 'sidebar-hide',
+      );
+      shell.togglePrimarySidebar();
+    },
     openSettings: shell.openSettings,
     closeSettings: shell.closeSettings,
     setSettingsCategoryId: shell.setSettingsCategoryId,
@@ -232,6 +421,8 @@ export function WorkbenchStandaloneShell<
       isPrimarySidebarVisible,
       isSettingsOpen,
       primarySidebarSizePercent,
+      activityLifecycleCallbacks,
+      primarySidebarLifecycleCallbacks,
       theme,
     ],
   );

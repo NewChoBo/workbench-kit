@@ -516,6 +516,12 @@ export type {
 export { WorkbenchStandaloneShell } from './WorkbenchStandaloneShell';
 export { WorkbenchCanvasShell } from './WorkbenchCanvasShell';
 export type {
+  WorkbenchActivityLifecycleCallbackMap,
+  WorkbenchActivityLifecycleCallbacks,
+  WorkbenchActivityLifecycleEvent,
+  WorkbenchPrimarySidebarLifecycle,
+  WorkbenchPrimarySidebarLifecycleCallbacks,
+  WorkbenchPrimarySidebarLifecycleReason,
   WorkbenchStandaloneShellContext,
   WorkbenchStandaloneShellProps,
 } from './WorkbenchStandaloneShell';
