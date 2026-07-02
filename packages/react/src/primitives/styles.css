@@ -1422,3 +1422,10 @@
   background: var(--color-surface);
   opacity: 0.62;
 }
+
+.ui-scroll-area-infinite-sentinel {
+  block-size: 1px;
+  flex-shrink: 0;
+  inline-size: 100%;
+  pointer-events: none;
+}

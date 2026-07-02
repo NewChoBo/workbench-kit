@@ -27,6 +27,15 @@ export function useScrollAreaInfiniteLoad({
 }: UseScrollAreaInfiniteLoadOptions): UseScrollAreaInfiniteLoadResult {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadMoreInFlightRef = useRef(false);
+  const onLoadMoreRef = useRef(onLoadMore);
+  const hasMoreRef = useRef(hasMore);
+  const isLoadingRef = useRef(isLoading);
+  const isLoadingMoreRef = useRef(isLoadingMore);
+
+  onLoadMoreRef.current = onLoadMore;
+  hasMoreRef.current = hasMore;
+  isLoadingRef.current = isLoading;
+  isLoadingMoreRef.current = isLoadingMore;
 
   useEffect(() => {
     if (!enabled || !hasMore || isLoading || isLoadingMore) {
@@ -48,15 +57,15 @@ export function useScrollAreaInfiniteLoad({
         if (
           !entry?.isIntersecting ||
           loadMoreInFlightRef.current ||
-          !hasMore ||
-          isLoading ||
-          isLoadingMore
+          !hasMoreRef.current ||
+          isLoadingRef.current ||
+          isLoadingMoreRef.current
         ) {
           return;
         }
 
         loadMoreInFlightRef.current = true;
-        void Promise.resolve(onLoadMore()).finally(() => {
+        void Promise.resolve(onLoadMoreRef.current()).finally(() => {
           loadMoreInFlightRef.current = false;
         });
       },
@@ -69,7 +78,7 @@ export function useScrollAreaInfiniteLoad({
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [enabled, hasMore, isLoading, isLoadingMore, onLoadMore, rootMargin, scrollAreaRef]);
+  }, [enabled, hasMore, isLoading, isLoadingMore, rootMargin, scrollAreaRef]);
 
   return { sentinelRef };
 }
