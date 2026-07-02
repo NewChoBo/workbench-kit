@@ -110,12 +110,7 @@ function dataTransfer(values: Record<string, string>, types = Object.keys(values
   } as Pick<DataTransfer, 'getData' | 'types'>;
 }
 
-function rectElement({
-  height = 20,
-  left = 0,
-  top = 0,
-  width = 100,
-}: Partial<DOMRect> = {}) {
+function rectElement({ height = 20, left = 0, top = 0, width = 100 }: Partial<DOMRect> = {}) {
   return {
     getBoundingClientRect: () =>
       ({

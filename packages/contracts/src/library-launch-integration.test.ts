@@ -46,6 +46,7 @@ describe('library launch integration', () => {
       launchTarget: folderAction!.target,
     });
     expect(folderMapping.execution.launchType).toBe('folder');
+    expect(folderMapping.canLaunch).toBe(false);
 
     const steamAction = providerActionToLaunchAction({ type: 'steam', appId: '480' });
     expect(steamAction).toEqual({ type: 'url', target: 'steam://run/480' });

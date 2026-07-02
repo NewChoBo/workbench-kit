@@ -12,7 +12,10 @@ export {
 } from './editor-tabs-dnd';
 export type { EditorTabDragPayload, EditorTabDropTarget } from './editor-tabs-dnd';
 export { useEditorTabsStripDnd } from './useEditorTabsStripDnd';
-export type { UseEditorTabsStripDndOptions, UseEditorTabsStripDndResult } from './useEditorTabsStripDnd';
+export type {
+  UseEditorTabsStripDndOptions,
+  UseEditorTabsStripDndResult,
+} from './useEditorTabsStripDnd';
 export {
   WorkbenchArtifactModeControls,
   WorkbenchArtifactPreview,

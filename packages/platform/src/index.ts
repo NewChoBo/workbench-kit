@@ -146,6 +146,7 @@ export {
   closeWorkbenchViewRoute,
   normalizeWorkbenchViewRouteTabs,
   openWorkbenchViewRoute,
+  switchWorkbenchViewRoute,
   resolveWorkbenchViewRouteSnapshot,
   type BuildWorkbenchViewRouteSearchOptions,
   type CloseWorkbenchViewRouteOptions,

@@ -22,9 +22,7 @@ export interface SidebarActionIconBarProps extends Omit<ComponentPropsWithRef<'d
   readonly overflowMenuLabel?: string | undefined;
 }
 
-function toContextMenuItems(
-  actions: readonly SidebarActionIconDescriptor[],
-): ContextMenuItem[] {
+function toContextMenuItems(actions: readonly SidebarActionIconDescriptor[]): ContextMenuItem[] {
   return actions.map((action) => ({
     disabled: action.disabled,
     icon: action.icon,

@@ -70,10 +70,7 @@ export function useEditorTabsStripDnd<TTab extends EditorTabLike>({
     (tabId: string, event: ReactDragEvent<HTMLElement>) => {
       draggedTabRef.current = { groupId, tabId };
       event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData(
-        EDITOR_TAB_DRAG_DATA_TYPE,
-        JSON.stringify({ groupId, tabId }),
-      );
+      event.dataTransfer.setData(EDITOR_TAB_DRAG_DATA_TYPE, JSON.stringify({ groupId, tabId }));
       onSelectTab?.(tabId);
     },
     [groupId, onSelectTab],

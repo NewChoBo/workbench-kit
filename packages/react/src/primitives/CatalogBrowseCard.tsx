@@ -2,6 +2,7 @@ import type { ComponentPropsWithRef, ReactNode } from 'react';
 
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
+import { useWorkbenchMediaImage } from '../utils/useWorkbenchMediaImage';
 
 export type CatalogBrowseCardVariant = 'cover' | 'row';
 
@@ -34,9 +35,9 @@ export function CatalogBrowseCard({
   variant = 'row',
   ...props
 }: CatalogBrowseCardProps) {
+  const media = useWorkbenchMediaImage(imageUrl);
   const hasDescription = description !== undefined && description !== null && description !== '';
   const hasMeta = meta !== undefined && meta !== null && meta !== '';
-  const hasImage = imageUrl !== null && imageUrl !== undefined && imageUrl !== '';
 
   return (
     <button
@@ -51,8 +52,13 @@ export function CatalogBrowseCard({
       {...props}
     >
       <span aria-hidden className="ui-catalog-browse-card__icon">
-        {hasImage ? (
-          <img alt={imageAlt ?? ''} className="ui-catalog-browse-card__image" src={imageUrl} />
+        {media.shouldShowImage ? (
+          <img
+            alt={imageAlt ?? ''}
+            className="ui-catalog-browse-card__image"
+            onError={media.onImageError}
+            src={media.imageSrc}
+          />
         ) : (
           <i className={cxCodicon(icon)} />
         )}

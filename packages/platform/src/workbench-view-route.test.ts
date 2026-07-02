@@ -6,6 +6,7 @@ import {
   closeWorkbenchViewRoute,
   openWorkbenchViewRoute,
   resolveWorkbenchViewRouteSnapshot,
+  switchWorkbenchViewRoute,
 } from './workbench-view-route';
 
 type TestViewId = 'help' | 'launchpad' | 'library' | 'settings';
@@ -107,5 +108,17 @@ describe('workbench view route helpers', () => {
         { activeViewId: 'library', openViewIds: ['library', 'settings'] },
       ),
     ).toBe(false);
+  });
+
+  it('switches active view without mutating open view tabs', () => {
+    expect(
+      switchWorkbenchViewRoute(
+        { activeViewId: 'library', openViewIds: ['library', 'launchpad'] },
+        'help',
+      ),
+    ).toEqual({
+      activeViewId: 'help',
+      openViewIds: ['library', 'launchpad'],
+    });
   });
 });

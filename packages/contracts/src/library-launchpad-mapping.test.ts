@@ -4,7 +4,9 @@ import {
   canMapLibraryItemToLaunchpadTile,
   createLaunchpadLibraryItemTileBinding,
   inferLaunchTypeFromTarget,
+  isPlayableLaunchTarget,
   resolveLaunchpadLibraryItemMapping,
+  resolveLibraryItemPlayExecution,
   normalizeLaunchTarget,
   type LaunchpadLibraryItemSummary,
   type LaunchpadLibraryItemBinding,
@@ -325,6 +327,31 @@ describe('library-launchpad-mapping', () => {
         itemId: 'steam:1001',
         providerId: 'steam',
       }),
+    ).toBe(false);
+  });
+
+  it('prefers steam protocol fallback targets over folder-only launch targets', () => {
+    const execution = resolveLibraryItemPlayExecution(
+      {
+        title: 'DemonHand',
+        launchTarget: 'E:\\SteamLibrary\\steamapps\\common\\DemonHand\\UnityCrashHandler64.exe',
+      },
+      ['steam://rungameid/3264850'],
+    );
+
+    expect(execution).toMatchObject({
+      launchType: 'url',
+      target: 'steam://rungameid/3264850',
+    });
+  });
+
+  it('treats folder launch targets as non-playable', () => {
+    expect(isPlayableLaunchTarget('C:\\Games\\Folder')).toBe(false);
+    expect(
+      resolveLaunchpadLibraryItemMapping({
+        title: 'Folder',
+        launchTarget: 'C:\\Games\\Folder',
+      }).canLaunch,
     ).toBe(false);
   });
 });

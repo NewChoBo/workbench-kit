@@ -5,6 +5,7 @@ import {
   closeWorkbenchViewRoute,
   openWorkbenchViewRoute,
   resolveWorkbenchViewRouteSnapshot,
+  switchWorkbenchViewRoute,
   type WorkbenchViewRouteSnapshot,
 } from '@workbench-kit/platform';
 
@@ -31,6 +32,7 @@ export interface WorkbenchViewRouteState<
 > extends WorkbenchViewRouteSnapshot<TViewId> {
   readonly closeView: (viewId: TViewId) => void;
   readonly openView: (viewId: TViewId) => void;
+  readonly switchView: (viewId: TViewId) => void;
 }
 
 export function useWorkbenchViewRouteState<TViewId extends string>({
@@ -124,11 +126,19 @@ export function useWorkbenchViewRouteState<TViewId extends string>({
     [commitSnapshot, defaultViewId, snapshot],
   );
 
+  const switchView = useCallback(
+    (viewId: TViewId): void => {
+      commitSnapshot(switchWorkbenchViewRoute(snapshot, viewId), 'replace');
+    },
+    [commitSnapshot, snapshot],
+  );
+
   return {
     activeViewId: snapshot.activeViewId,
     closeView,
     openView,
     openViewIds: snapshot.openViewIds,
+    switchView,
   };
 }
 

@@ -9196,6 +9196,33 @@ html.ui-workbench-split-view-resizing--vertical * {
   border-radius: var(--shell-radius-md, 6px);
 }
 
+.ui-record-media-hero--compact {
+  width: min(100%, 280px);
+  aspect-ratio: 3 / 4;
+  align-self: flex-start;
+}
+
+.ui-record-media-hero--background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border: none;
+  border-radius: 0;
+  opacity: 0.35;
+}
+
+.ui-record-media-hero--background .ui-record-media-hero__image {
+  object-fit: cover;
+  filter: blur(2px);
+}
+
+.ui-record-media-hero--background .ui-record-media-hero__fallback {
+  font-size: 64px;
+}
+
 .ui-record-media-hero__image {
   display: block;
   width: 100%;

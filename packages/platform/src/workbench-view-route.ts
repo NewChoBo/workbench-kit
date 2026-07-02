@@ -82,6 +82,20 @@ export function openWorkbenchViewRoute<TViewId extends string>(
   return openViewIds.includes(viewId) ? openViewIds : [...openViewIds, viewId];
 }
 
+export function switchWorkbenchViewRoute<TViewId extends string>(
+  snapshot: WorkbenchViewRouteSnapshot<TViewId>,
+  viewId: TViewId,
+): WorkbenchViewRouteSnapshot<TViewId> {
+  if (snapshot.activeViewId === viewId) {
+    return snapshot;
+  }
+
+  return {
+    activeViewId: viewId,
+    openViewIds: snapshot.openViewIds,
+  };
+}
+
 export function closeWorkbenchViewRoute<TViewId extends string>({
   defaultViewId,
   snapshot,

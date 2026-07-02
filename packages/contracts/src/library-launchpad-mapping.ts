@@ -142,7 +142,7 @@ export function resolveLaunchpadLibraryItemMapping(
   const target = normalizeLaunchTarget(item.launchTarget);
   const launchType = inferLaunchTypeFromTarget(target);
   return {
-    canLaunch: target !== null,
+    canLaunch: isPlayableLaunchTarget(target),
     execution: {
       arguments: [],
       launchType,
@@ -206,6 +206,42 @@ export function createLaunchpadLibraryItemTileBinding(
 
 export function canMapLibraryItemToLaunchpadTile(item: LaunchpadLibraryItemSummary): boolean {
   return resolveLaunchpadLibraryItemMapping(item).canLaunch;
+}
+
+export function isPlayableLaunchTarget(target: string | null | undefined): boolean {
+  const normalized = normalizeLaunchTarget(target);
+  if (normalized === null) {
+    return false;
+  }
+
+  const launchType = inferLaunchTypeFromTarget(normalized);
+  return launchType !== null && launchType !== 'folder';
+}
+
+export function resolveLibraryItemPlayExecution(
+  item: LaunchpadLibraryItemSummary,
+  fallbackTargets: readonly (string | null | undefined)[] = [],
+): LaunchpadLibraryExecution | null {
+  for (const candidate of [item.launchTarget, ...fallbackTargets]) {
+    const normalized = normalizeLaunchTarget(candidate);
+    if (normalized === null) {
+      continue;
+    }
+
+    const launchType = inferLaunchTypeFromTarget(normalized);
+    if (launchType === null || launchType === 'folder') {
+      continue;
+    }
+
+    return {
+      arguments: [],
+      launchType,
+      target: normalized,
+      workingDirectory: deriveLaunchWorkingDirectory(normalized, launchType),
+    };
+  }
+
+  return null;
 }
 
 function resolveLibraryItemTileSubtitle(item: LaunchpadLibraryItemSummary): string | null {

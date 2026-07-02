@@ -10,7 +10,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./modal": "./src/modal/Modal.tsx",
-    "./overlay": "./src/overlay/ContextMenu.tsx",
+    "./layout": "./src/layout/index.ts",
+    "./editor-tabs": "./src/workbench/editor-tabs/index.ts",
+    "./overlay": "./src/overlay/index.ts",
     "./brand": "./src/brand/index.ts",
     "./primitives": "./src/primitives/index.ts",
     "./primitives.css": "./src/primitives/styles.css",

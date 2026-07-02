@@ -57,3 +57,15 @@ export type {
   WorkbenchViewRouteCommitMode,
   WorkbenchViewRouteState,
 } from './workbenchViewRouteState';
+export {
+  initializeWorkbenchShellState,
+  useWorkbenchShellState,
+  workbenchShellStateReducer,
+  DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT,
+} from './shellState';
+export type {
+  UseWorkbenchShellStateResult,
+  WorkbenchShellAction,
+  WorkbenchShellInitialState,
+  WorkbenchShellState,
+} from './shellState';

@@ -2,6 +2,7 @@ import type { ComponentPropsWithRef } from 'react';
 
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
+import { useWorkbenchMediaImage } from '../utils/useWorkbenchMediaImage';
 
 export type WorkbenchThumbnailSize = 'sm' | 'md';
 
@@ -20,7 +21,7 @@ export function WorkbenchThumbnail({
   size = 'sm',
   ...props
 }: WorkbenchThumbnailProps) {
-  const hasImage = imageUrl !== null && imageUrl !== undefined && imageUrl !== '';
+  const media = useWorkbenchMediaImage(imageUrl);
 
   return (
     <span
@@ -29,8 +30,13 @@ export function WorkbenchThumbnail({
       data-size={size}
       {...props}
     >
-      {hasImage ? (
-        <img alt={alt ?? ''} className="ui-workbench-thumbnail__image" src={imageUrl} />
+      {media.shouldShowImage ? (
+        <img
+          alt={alt ?? ''}
+          className="ui-workbench-thumbnail__image"
+          onError={media.onImageError}
+          src={media.imageSrc}
+        />
       ) : (
         <i className={cx('ui-workbench-thumbnail__icon', cxCodicon(fallbackIcon))} />
       )}

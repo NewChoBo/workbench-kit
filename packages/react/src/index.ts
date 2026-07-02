@@ -546,7 +546,12 @@ export type {
   CatalogBrowseCardVariant,
 } from './primitives/CatalogBrowseCard';
 export { RecordMediaHero } from './primitives/RecordMediaHero';
-export type { RecordMediaHeroProps } from './primitives/RecordMediaHero';
+export type { RecordMediaHeroLayout, RecordMediaHeroProps } from './primitives/RecordMediaHero';
+export { LibraryDetailLayout } from './primitives/LibraryDetailLayout';
+export type {
+  LibraryDetailLayoutMode,
+  LibraryDetailLayoutProps,
+} from './primitives/LibraryDetailLayout';
 export { WorkbenchThumbnail } from './primitives/WorkbenchThumbnail';
 export type {
   WorkbenchThumbnailProps,
