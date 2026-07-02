@@ -66,7 +66,11 @@ export type {
 export { FileIcon, UI_FILE_ICON_CLASS } from './FileIcon';
 export type { FileIconProps } from './FileIcon';
 export { CatalogBrowseCard } from './CatalogBrowseCard';
-export type { CatalogBrowseCardProps } from './CatalogBrowseCard';
+export type { CatalogBrowseCardProps, CatalogBrowseCardVariant } from './CatalogBrowseCard';
+export { RecordMediaHero } from './RecordMediaHero';
+export type { RecordMediaHeroProps } from './RecordMediaHero';
+export { WorkbenchThumbnail } from './WorkbenchThumbnail';
+export type { WorkbenchThumbnailProps, WorkbenchThumbnailSize } from './WorkbenchThumbnail';
 export { ButtonGroup, EditorTabs, ResizablePanels, SegmentedControl } from './WorkbenchEditor';
 export type {
   ButtonGroupProps,

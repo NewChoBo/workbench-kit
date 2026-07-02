@@ -223,9 +223,7 @@ export type {
   SideBarViewFrameProps,
   SideBarRowProps,
 } from './layout/SideBarViewFrame';
-export {
-  SidebarActionIconBar,
-} from './layout/SidebarActionIconBar';
+export { SidebarActionIconBar } from './layout/SidebarActionIconBar';
 export type {
   SidebarActionIconBarProps,
   SidebarActionIconDescriptor,
@@ -543,7 +541,17 @@ export {
   SegmentedControl,
 } from './primitives/WorkbenchEditor';
 export { CatalogBrowseCard } from './primitives/CatalogBrowseCard';
-export type { CatalogBrowseCardProps } from './primitives/CatalogBrowseCard';
+export type {
+  CatalogBrowseCardProps,
+  CatalogBrowseCardVariant,
+} from './primitives/CatalogBrowseCard';
+export { RecordMediaHero } from './primitives/RecordMediaHero';
+export type { RecordMediaHeroProps } from './primitives/RecordMediaHero';
+export { WorkbenchThumbnail } from './primitives/WorkbenchThumbnail';
+export type {
+  WorkbenchThumbnailProps,
+  WorkbenchThumbnailSize,
+} from './primitives/WorkbenchThumbnail';
 export type {
   ButtonGroupProps,
   EditorTab,
@@ -590,10 +598,7 @@ export {
   resolveEditorTabDropTarget,
   resolveEditorTabStripDropTarget,
 } from './workbench/editor-tabs-dnd';
-export type {
-  EditorTabDragPayload,
-  EditorTabDropTarget,
-} from './workbench/editor-tabs-dnd';
+export type { EditorTabDragPayload, EditorTabDropTarget } from './workbench/editor-tabs-dnd';
 export { useEditorTabsStripDnd } from './workbench/useEditorTabsStripDnd';
 export type {
   UseEditorTabsStripDndOptions,
