@@ -21,6 +21,50 @@ export type {
   ExtensionManagementSidebarProps,
   ExtensionManagementPendingAction,
 } from './ExtensionManagementSidebar.js';
+export {
+  createIntegrationCommandAction,
+  type IntegrationCommandAction,
+} from './integration-command-action.js';
+export { IntegrationActionRow, IntegrationCommandButton } from './IntegrationCommandActions.js';
+export { IntegrationsShell } from './IntegrationsShell.js';
+export type { IntegrationsShellProps } from './IntegrationsShell.js';
+export {
+  IntegrationAccountRowEditor,
+  IntegrationAddListAction,
+  IntegrationBodyText,
+  IntegrationListEditorEmptyState,
+  IntegrationPathListEditor,
+  IntegrationSettingsSection,
+  IntegrationSinglePathEditor,
+} from './IntegrationSettingsSurface.js';
+export type {
+  IntegrationAccountRowEditorProps,
+  IntegrationAddListActionProps,
+  IntegrationBodyTextProps,
+  IntegrationListEditorEmptyStateProps,
+  IntegrationPathListEditorProps,
+  IntegrationSettingsSectionProps,
+  IntegrationSinglePathEditorProps,
+} from './IntegrationSettingsSurface.js';
+export {
+  WorkbenchDialogFrame,
+  type WorkbenchDialogBodyLayout,
+  type WorkbenchDialogFrameProps,
+  type WorkbenchDialogFrameSize,
+} from './WorkbenchDialogFrame.js';
+export {
+  useWorkbenchNotice,
+  useWorkbenchNoticeController,
+  WorkbenchNoticeProvider,
+  WorkbenchNoticeViewport,
+} from './WorkbenchNotice.js';
+export type {
+  ShowWorkbenchNoticeInput,
+  WorkbenchNoticeController,
+  WorkbenchNoticeItem,
+  WorkbenchNoticePosition,
+  WorkbenchNoticeTone,
+} from './WorkbenchNotice.js';
 export { KeybindingCaptureField } from './KeybindingCaptureField.js';
 export type { KeybindingCaptureFieldProps } from './KeybindingCaptureField.js';
 export { KeybindingManagementPanel } from './KeybindingManagementPanel.js';
