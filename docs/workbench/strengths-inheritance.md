@@ -144,6 +144,7 @@ only.
 | Source manager left-nav + right sectioned detail           | `SourceManagerSettings.stories` (`WorkbenchNavigationPanel` + `WorkbenchSectionedPanel`) | **Adopted (pattern)** |
 | Template card gallery                                      | `TemplateGallery.stories` (208px cards, category chip, skeleton/empty)                   | **Adopted (pattern)** |
 | Sectioned provider settings (Installation/Account/Library) | `WorkbenchSettingsSection` + inline auth notice via `HelpText`                           | **Adopted (pattern)** |
+| Scroll-area infinite catalog load                          | `useScrollAreaInfiniteLoad`, `ScrollAreaInfiniteSentinel`, `ScrollAreaInfiniteLoad.stories` | **Adopted**           |
 | Preview zoom/fit toolbar                                   | —                                                                                        | **Deferred**          |
 | Draft/explicit-save editor discipline                      | `JsonConfigWorkbench` Apply gating                                                       | Adopted (prior)       |
 
@@ -155,7 +156,7 @@ only.
 | Launchpad outline ↔ canvas ↔ inspector tri-sync      | Launchpad DTO + Phase 4 consumer           |
 | Layer stack reorder DnD + registry editors           | Launchpad-specific; playground subset only |
 | Settings theme/locale debounced auto-sync            | Host persistence API                       |
-| Library infinite scroll + count-bearing facet labels | Service/query integration in consumer      |
+| Count-bearing facet labels in library filters        | Service/query integration in consumer      |
 | Tile tilt/lift hover effects                         | Composition effect schema (product)        |
 | Keyboard shortcut tables per surface                 | Host command registry                      |
 

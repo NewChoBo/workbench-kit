@@ -1,4 +1,4 @@
-# Consumer Integration Backlog
+﻿# Consumer Integration Backlog
 
 **Status:** Active reference backlog  
 **Last updated:** 2026-07-03  
@@ -37,12 +37,12 @@ Landings below are merged in `workbench-kit` unless noted as **uncommitted WIP**
 | Epic launcher protocol mapping | `@workbench-kit/contracts`                                                           | `8518bad5`                                             | Launch URL contract for Epic Games (consumer execution path).                            |
 | Split / sidebar collapse fixes | `@workbench-kit/react` layout CSS                                                    | `a74ea77b`, `22510e6c`, `5a96a196`                     | Height fill when sidebars collapse.                                                      |
 | Library detail Storybook       | `examples/workbench-sample` `LibraryDetailLayout.stories.tsx`                        | `72fd856b` (kit stories) + sample story                | Banner/background demo wired in sample host.                                             |
+| Scroll-area infinite load hook | `@workbench-kit/react/primitives` `useScrollAreaInfiniteLoad`, `ScrollAreaInfiniteSentinel` | `220cc3b7` + follow-up                               | `IntersectionObserver` sentinel inside `ScrollArea`; Vitest coverage + Storybook catalog grid demo. |
 
 ### In progress (local WIP, not yet committed)
 
 | Item                           | Package / API                                                                              | Status                                                                                                                                            |
 | ------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Scroll-area infinite load hook | `@workbench-kit/react/primitives` `useScrollAreaInfiniteLoad`                              | Implemented and exported from primitives barrel; **no unit test file committed**; consumer catalog still uses explicit **Load more** button.      |
 | Platform window chrome         | `WorkbenchPlatformProvider`, `WorkbenchWindowChromeControls`, `workbenchPlatformChrome.ts` | Darwin traffic lights + Win32 caption buttons; wired into `WorkbenchThemeProvider`, `ModalTitlebar`, `WorkbenchDesktopTitleBar`; **uncommitted**. |
 
 ---
@@ -51,16 +51,7 @@ Landings below are merged in `workbench-kit` unless noted as **uncommitted WIP**
 
 Blocks library browse UX parity and reduces consumer shim surface.
 
-### 1. Publish scroll-area infinite load
-
-| Field                  | Detail                                                                                                                                      |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Description**        | Commit `useScrollAreaInfiniteLoad` with Vitest coverage. Hook uses `IntersectionObserver` rooted on `.ui-scroll-area` (or an explicit ref). |
-| **Consumer pain**      | Catalog grid/list uses manual **Load more**; Steam-style endless scroll needs shared observer lifecycle and in-flight guard.                |
-| **Suggested package**  | `@workbench-kit/react/primitives` — export hook + document sentinel placement inside `ScrollArea`.                                          |
-| **Storybook / sample** | Add `ScrollArea` + catalog grid story showing automatic pagination.                                                                         |
-
-### 2. Generic `LibraryCatalogBrowsePane`
+### 1. Generic `LibraryCatalogBrowsePane`
 
 | Field                  | Detail                                                                                                                                                                                                                                     |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -69,7 +60,7 @@ Blocks library browse UX parity and reduces consumer shim surface.
 | **Suggested package**  | `@workbench-kit/react/primitives` or `@workbench-kit/react/layout` — headless-ish props for items, `onOpenItem`, `onLoadMore`, `facetStrip?: ReactNode`.                                                                                   |
 | **Storybook / sample** | `workbench-sample` route: mock catalog with 100+ items and infinite scroll.                                                                                                                                                                |
 
-### 3. Steam-style `LibraryFacetFilterPanel`
+### 2. Steam-style `LibraryFacetFilterPanel`
 
 | Field                  | Detail                                                                                                                                                                                                             |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -78,7 +69,7 @@ Blocks library browse UX parity and reduces consumer shim surface.
 | **Suggested package**  | `@workbench-kit/react/primitives` `LibraryFacetFilterPanel` + optional `LibraryFacetFilterDialog` (overlay).                                                                                                       |
 | **Storybook / sample** | Story with provider/platform/genre sections; play test for toggle + chip removal.                                                                                                                                  |
 
-### 4. Remove consumer type shims for official exports
+### 3. Remove consumer type shims for official exports
 
 | Field                  | Detail                                                                                                                                                                                                      |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -87,7 +78,7 @@ Blocks library browse UX parity and reduces consumer shim surface.
 | **Suggested package**  | Kit: keep `check:public-exports` green. Consumer: delete shims and import from published subpaths once typing is stable.                                                                                    |
 | **Storybook / sample** | N/A — consumer migration task; document in consumer foundation plan.                                                                                                                                        |
 
-### 5. `exactOptionalPropertyTypes` compatibility for linked consumers
+### 4. `exactOptionalPropertyTypes` compatibility for linked consumers
 
 | Field                  | Detail                                                                                                                                                                                     |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
@@ -96,7 +87,7 @@ Blocks library browse UX parity and reduces consumer shim surface.
 | **Suggested package**  | `@workbench-kit/react` — audit exported props; prefer explicit optional fields or helper types (`                                                                                          | undefined` only where required). |
 | **Storybook / sample** | Add typecheck job variant with `exactOptionalPropertyTypes: true` in CI or consumer contract smoke.                                                                                        |
 
-### 6. Platform window chrome (finish and document)
+### 5. Platform window chrome (finish and document)
 
 | Field                  | Detail                                                                                                                                         |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
