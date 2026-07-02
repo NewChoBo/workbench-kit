@@ -67,6 +67,61 @@ describe('WorkbenchShell', () => {
     expect(markup).toContain('ui-workbench-split-view');
   });
 
+  it('keeps auxiliary SplitView mounted and collapses the secondary column when hidden', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchShell
+        activityBar={{ items: [{ id: 'explorer', icon: 'E', label: 'Explorer' }] }}
+        auxiliarySidebar={{
+          isVisible: false,
+          node: <aside>hidden auxiliary</aside>,
+        }}
+        secondaryArea={<main>editor only</main>}
+        statusSections={[]}
+      />,
+    );
+
+    expect(markup).toContain('ui-workbench-split-view');
+    expect(markup).toContain('ui-workbench-split-view--secondary-collapsed');
+    expect(markup).toContain('hidden auxiliary');
+    expect(markup).toContain('editor only');
+  });
+
+  it('keeps bottom panel SplitView mounted and collapses the panel when hidden', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchShell
+        activityBar={{ items: [{ id: 'explorer', icon: 'E', label: 'Explorer' }] }}
+        bottomPanel={{
+          isVisible: false,
+          node: <section>hidden panel</section>,
+        }}
+        secondaryArea={<main>editor only</main>}
+        statusSections={[]}
+      />,
+    );
+
+    expect(markup).toContain('ui-workbench-split-view--secondary-collapsed');
+    expect(markup).toContain('data-orientation="vertical"');
+    expect(markup).toContain('hidden panel');
+    expect(markup).toContain('editor only');
+  });
+
+  it('hides the activity bar with CSS while keeping it mounted', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchShell
+        activityBar={{
+          items: [{ id: 'explorer', icon: 'E', label: 'Explorer' }],
+          visible: false,
+        }}
+        secondaryArea={<main>secondary area</main>}
+        statusSections={[]}
+      />,
+    );
+
+    expect(markup).toContain('ui-workbench-activity-bar');
+    expect(markup).toContain('ui-workbench-activity-bar--hidden');
+    expect(markup).toContain('ide-body--activity-bar-hidden');
+  });
+
   it('keeps SplitView mounted and collapses the primary column when sidebar is hidden', () => {
     const markup = renderToStaticMarkup(
       <WorkbenchShell

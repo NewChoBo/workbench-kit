@@ -7,6 +7,8 @@ import { WorkbenchShell } from './WorkbenchShell';
 import { sidebarDevLogger } from './sidebarDevLogger';
 import {
   expectCollapsedPrimarySidebarShowsFullWidthSecondary,
+  expectCollapsedSecondarySplitShowsFullWidthPrimary,
+  expectCollapsedSecondaryVerticalSplitShowsFullHeightPrimary,
   expectExpandedPrimarySidebar,
 } from './story/shellStory';
 import { StoryWorkbenchShellFrame } from './story/StoryWorkbenchShellFrame';
@@ -155,4 +157,134 @@ export const SidebarToggle: Story = {
     await expect(canvas.getByText(/toggles: 2/)).toBeVisible();
   },
   tags: ['storybook-play-required'],
+};
+
+function RegionMountProbe({
+  label,
+  region,
+}: {
+  label: string;
+  region: 'auxiliary' | 'panel' | 'primary';
+}) {
+  const mountCountRef = useRef(0);
+
+  useEffect(() => {
+    mountCountRef.current += 1;
+  }, []);
+
+  const Tag = region === 'panel' ? 'section' : 'aside';
+
+  return (
+    <Tag
+      aria-label={label}
+      className={
+        region === 'auxiliary'
+          ? 'workbench-auxiliary-side-bar'
+          : region === 'panel'
+            ? 'workbench-bottom-panel'
+            : undefined
+      }
+      data-region-mount-count={mountCountRef.current}
+    >
+      {label}
+    </Tag>
+  );
+}
+
+function RegionPlaygroundShellDemo() {
+  const [primaryVisible, setPrimaryVisible] = useState(true);
+  const [auxiliaryVisible, setAuxiliaryVisible] = useState(false);
+  const [panelVisible, setPanelVisible] = useState(false);
+  const [activityBarVisible, setActivityBarVisible] = useState(true);
+
+  return (
+    <StoryWorkbenchShellFrame variant="editor">
+      <WorkbenchShell
+        activityBar={{
+          items: [{ active: primaryVisible, icon: 'E', id: 'explorer', label: 'Explorer' }],
+          visible: activityBarVisible,
+        }}
+        auxiliarySidebar={{
+          isVisible: auxiliaryVisible,
+          node: <RegionMountProbe label="Auxiliary sidebar probe" region="auxiliary" />,
+        }}
+        bottomPanel={{
+          isVisible: panelVisible,
+          node: <RegionMountProbe label="Panel probe" region="panel" />,
+        }}
+        primarySidebar={{
+          isVisible: primaryVisible,
+          node: <RegionMountProbe label="Primary sidebar probe" region="primary" />,
+          primarySizePercent: 22,
+        }}
+        rootClassName="ide-root"
+        rootStyle={{ height: '100%', minHeight: 0 }}
+        secondaryArea={
+          <main aria-label="Editor area" className="workbench-editor-area">
+            <p>Editor surface</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <button type="button" onClick={() => setPrimaryVisible((visible) => !visible)}>
+                Toggle primary
+              </button>
+              <button type="button" onClick={() => setAuxiliaryVisible((visible) => !visible)}>
+                Toggle auxiliary
+              </button>
+              <button type="button" onClick={() => setPanelVisible((visible) => !visible)}>
+                Toggle panel
+              </button>
+              <button type="button" onClick={() => setActivityBarVisible((visible) => !visible)}>
+                Toggle activity bar
+              </button>
+            </div>
+          </main>
+        }
+        statusSections={[]}
+      />
+    </StoryWorkbenchShellFrame>
+  );
+}
+
+export const RegionPlayground: Story = {
+  name: 'Region playground',
+  render: () => <RegionPlaygroundShellDemo />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(await canvas.findByLabelText('Primary sidebar probe')).toBeVisible();
+    await expect(canvas.getByLabelText('Editor area')).toBeVisible();
+    expect(canvasElement.querySelectorAll('.ui-workbench-split-view').length).toBe(3);
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Toggle auxiliary' }));
+    await waitFor(() => {
+      expect(canvas.getByLabelText('Auxiliary sidebar probe')).toBeVisible();
+    });
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Toggle auxiliary' }));
+    await waitFor(() => {
+      expectCollapsedSecondarySplitShowsFullWidthPrimary(canvasElement);
+      expect(canvas.getByLabelText('Auxiliary sidebar probe')).not.toBeVisible();
+    });
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Toggle panel' }));
+    await waitFor(() => {
+      expect(canvas.getByLabelText('Panel probe')).toBeVisible();
+    });
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Toggle panel' }));
+    await waitFor(() => {
+      expectCollapsedSecondaryVerticalSplitShowsFullHeightPrimary(canvasElement);
+      expect(canvas.getByLabelText('Panel probe')).not.toBeVisible();
+    });
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Toggle primary' }));
+    await waitFor(() => {
+      expectCollapsedPrimarySidebarShowsFullWidthSecondary(canvasElement);
+      expect(canvas.getByLabelText('Primary sidebar probe')).not.toBeVisible();
+    });
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Toggle activity bar' }));
+    await waitFor(() => {
+      expect(canvasElement.querySelector('.ui-workbench-activity-bar--hidden')).not.toBeNull();
+    });
+  },
 };

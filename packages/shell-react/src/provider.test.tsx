@@ -1106,15 +1106,33 @@ describe('WorkbenchProvider', () => {
     const primaryToggle = container.querySelector<HTMLButtonElement>(
       'button[aria-label="Toggle Primary Side Bar"]',
     );
+    const panelToggle = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Toggle Panel"]',
+    );
     const secondaryToggle = container.querySelector<HTMLButtonElement>(
       'button[aria-label="Toggle Secondary Side Bar"]',
     );
     expect(primaryToggle).not.toBeNull();
+    expect(panelToggle).not.toBeNull();
     expect(secondaryToggle).not.toBeNull();
     expect(primaryToggle?.getAttribute('aria-pressed')).toBe('true');
+    expect(panelToggle?.getAttribute('aria-pressed')).toBe('false');
     expect(secondaryToggle?.getAttribute('aria-pressed')).toBe('false');
-    expect(container.querySelector('.workbench-primary-side-bar')).not.toBeNull();
-    expect(container.querySelector('.workbench-auxiliary-side-bar')).toBeNull();
+
+    const primarySidebar = container.querySelector('.workbench-primary-side-bar');
+    const auxiliarySidebar = container.querySelector('.workbench-auxiliary-side-bar');
+    const bottomPanel = container.querySelector('.workbench-bottom-panel');
+    const auxiliarySplitView = auxiliarySidebar?.closest('.ui-workbench-split-view');
+    const bottomPanelSplitView = bottomPanel?.closest('.ui-workbench-split-view');
+    expect(primarySidebar).not.toBeNull();
+    expect(auxiliarySidebar).not.toBeNull();
+    expect(bottomPanel).not.toBeNull();
+    expect(
+      auxiliarySplitView?.classList.contains('ui-workbench-split-view--secondary-collapsed'),
+    ).toBe(true);
+    expect(
+      bottomPanelSplitView?.classList.contains('ui-workbench-split-view--secondary-collapsed'),
+    ).toBe(true);
 
     await act(async () => {
       primaryToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -1122,7 +1140,8 @@ describe('WorkbenchProvider', () => {
     await flushReactEffects();
 
     expect(primaryToggle?.getAttribute('aria-pressed')).toBe('false');
-    expect(container.querySelector('.workbench-primary-side-bar')).toBeNull();
+    expect(container.querySelector('.workbench-primary-side-bar')).not.toBeNull();
+    expect(primarySidebar?.closest('.ui-workbench-split-view--primary-collapsed')).not.toBeNull();
 
     await act(async () => {
       secondaryToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -1130,7 +1149,19 @@ describe('WorkbenchProvider', () => {
     await flushReactEffects();
 
     expect(secondaryToggle?.getAttribute('aria-pressed')).toBe('true');
-    expect(container.querySelector('.workbench-auxiliary-side-bar')).not.toBeNull();
+    expect(
+      auxiliarySplitView?.classList.contains('ui-workbench-split-view--secondary-collapsed'),
+    ).toBe(false);
+
+    await act(async () => {
+      panelToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    expect(panelToggle?.getAttribute('aria-pressed')).toBe('true');
+    expect(
+      bottomPanelSplitView?.classList.contains('ui-workbench-split-view--secondary-collapsed'),
+    ).toBe(false);
 
     await act(async () => {
       root.unmount();

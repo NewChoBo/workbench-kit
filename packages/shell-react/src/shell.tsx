@@ -298,6 +298,7 @@ export function WorkbenchShell({
       <WorkbenchShellTitleBar
         helpContent={helpContent}
         isAuxiliarySidebarVisible={layout.auxiliaryBar.visible}
+        isPanelVisible={layout.panel.visible}
         isPrimarySidebarVisible={layout.sideBar.visible}
         title={title}
         titleBarActions={titleBarActions}
@@ -305,6 +306,9 @@ export function WorkbenchShell({
         onHelpOpen={showHelpModal}
         onToggleAuxiliarySidebar={() => {
           layoutService.setAuxiliaryBarVisible(!layout.auxiliaryBar.visible);
+        }}
+        onTogglePanel={() => {
+          layoutService.setPanelVisible(!layout.panel.visible);
         }}
         onTogglePrimarySidebar={() => {
           layoutService.setSideBarVisible(!layout.sideBar.visible);
@@ -429,6 +433,7 @@ export function WorkbenchShell({
   return (
     <ReactWorkbenchShell
       activityBar={{
+        visible: layout.activityBar.visible,
         items: visibleActivityItems,
         reorderable: true,
         secondaryItems: secondaryActivityItems,
@@ -469,6 +474,10 @@ export function WorkbenchShell({
       auxiliarySidebar={{
         isVisible: layout.auxiliaryBar.visible,
         node: <aside aria-label="Secondary Side Bar" className="workbench-auxiliary-side-bar" />,
+      }}
+      bottomPanel={{
+        isVisible: layout.panel.visible,
+        node: <section aria-label="Panel" className="workbench-bottom-panel" />,
       }}
       rootClassName={rootClassName}
       secondaryArea={resolvedEditorArea}
@@ -541,22 +550,26 @@ export function WorkbenchShell({
 function WorkbenchShellTitleBar({
   helpContent,
   isAuxiliarySidebarVisible,
+  isPanelVisible,
   isPrimarySidebarVisible,
   title,
   titleBarActions,
   titleMeta,
   onHelpOpen,
   onToggleAuxiliarySidebar,
+  onTogglePanel,
   onTogglePrimarySidebar,
 }: {
   helpContent: ReactNode | undefined;
   isAuxiliarySidebarVisible: boolean;
+  isPanelVisible: boolean;
   isPrimarySidebarVisible: boolean;
   title: ReactNode;
   titleBarActions: ReactNode | undefined;
   titleMeta: ReactNode | undefined;
   onHelpOpen: () => void;
   onToggleAuxiliarySidebar: () => void;
+  onTogglePanel: () => void;
   onTogglePrimarySidebar: () => void;
 }) {
   return (
@@ -571,8 +584,10 @@ function WorkbenchShellTitleBar({
       <div className="workbench-shell-titlebar__actions">
         <WorkbenchShellTitleBarLayoutControls
           isAuxiliarySidebarVisible={isAuxiliarySidebarVisible}
+          isPanelVisible={isPanelVisible}
           isPrimarySidebarVisible={isPrimarySidebarVisible}
           onToggleAuxiliarySidebar={onToggleAuxiliarySidebar}
+          onTogglePanel={onTogglePanel}
           onTogglePrimarySidebar={onTogglePrimarySidebar}
         />
         {titleBarActions}
