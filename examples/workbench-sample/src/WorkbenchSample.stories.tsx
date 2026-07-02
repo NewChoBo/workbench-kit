@@ -6,6 +6,10 @@ import {
 } from '@workbench-kit/shell-react';
 
 import { expectVisibleChatBubbleText } from '../../../packages/react/src/workbench/story/chatStory';
+import {
+  expectCollapsedPrimarySidebarShowsFullWidthSecondary,
+  expectExpandedPrimarySidebar,
+} from '../../../packages/react/src/workbench/story/shellStory';
 import { App } from './App.js';
 import { SAMPLE_AUTH_SESSION_KEY, SAMPLE_AUTH_USERNAME } from './dummy-backend/index.js';
 import { createSampleInstalledExtensionsStorageKey } from './sample-installed-extension-storage.js';
@@ -347,9 +351,7 @@ export const SidebarToggle: Story = {
     const hideStartedAt = performance.now();
     await userEvent.click(canvas.getByTitle('Hide primary sidebar'));
     await waitFor(() => {
-      expect(
-        canvasElement.querySelector('.ui-workbench-split-view--primary-collapsed'),
-      ).not.toBeNull();
+      expectCollapsedPrimarySidebarShowsFullWidthSecondary(canvasElement);
     });
     const hideDurationMs = performance.now() - hideStartedAt;
 
@@ -364,7 +366,7 @@ export const SidebarToggle: Story = {
     });
     const showDurationMs = performance.now() - showStartedAt;
 
-    expect(canvasElement.querySelector('.ui-workbench-split-view--primary-collapsed')).toBeNull();
+    expectExpandedPrimarySidebar(canvasElement);
     expect(hideDurationMs).toBeLessThan(2_000);
     expect(showDurationMs).toBeLessThan(2_000);
   },

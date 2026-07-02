@@ -5,6 +5,10 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import '../styles.css';
 import { WorkbenchShell } from './WorkbenchShell';
 import { sidebarDevLogger } from './sidebarDevLogger';
+import {
+  expectCollapsedPrimarySidebarShowsFullWidthSecondary,
+  expectExpandedPrimarySidebar,
+} from './story/shellStory';
 import { StoryWorkbenchShellFrame } from './story/StoryWorkbenchShellFrame';
 
 const meta = {
@@ -127,9 +131,7 @@ export const SidebarToggle: Story = {
     const hideStartedAt = performance.now();
     await userEvent.click(canvas.getByRole('button', { name: 'Toggle sidebar' }));
     await waitFor(() => {
-      expect(
-        canvasElement.querySelector('.ui-workbench-split-view--primary-collapsed'),
-      ).not.toBeNull();
+      expectCollapsedPrimarySidebarShowsFullWidthSecondary(canvasElement);
     });
     const hideDurationMs = performance.now() - hideStartedAt;
     sidebarDevLogger.timeEnd('story-hide');
@@ -137,7 +139,7 @@ export const SidebarToggle: Story = {
 
     expect(canvasElement.querySelectorAll('.ui-workbench-split-view').length).toBe(1);
     expect(canvas.getByLabelText('Primary sidebar probe')).not.toBeVisible();
-    expect(canvas.getByLabelText('Editor area')).toBeVisible();
+    await expect(canvas.getByLabelText('Editor area')).toBeVisible();
 
     sidebarDevLogger.time('story-show');
     const showStartedAt = performance.now();
@@ -149,7 +151,7 @@ export const SidebarToggle: Story = {
     sidebarDevLogger.timeEnd('story-show');
     sidebarDevLogger.info('story show measured', { showDurationMs });
 
-    expect(canvasElement.querySelector('.ui-workbench-split-view--primary-collapsed')).toBeNull();
+    expectExpandedPrimarySidebar(canvasElement);
     await expect(canvas.getByText(/toggles: 2/)).toBeVisible();
   },
   tags: ['storybook-play-required'],

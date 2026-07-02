@@ -64,6 +64,20 @@ Hosts must not mutate shell state outside these methods.
 - `onStatusItemActivate` — status bar item clicks (theme toggle, sidebar toggle)
 - `onEvent` — low-level bootstrap events (`activity-change`, `status-message`)
 
+## Primary sidebar visibility
+
+Hide/show the primary sidebar by toggling visibility state (`isPrimarySidebarVisible`
+/ `togglePrimarySidebar`, or `layoutService.setSideBarVisible` in `shell-react`).
+Keep the shell `SplitView` mounted — do not conditionally unmount the primary
+sidebar node. `WorkbenchShell` adds `ui-workbench-split-view--primary-collapsed`
+when `primarySidebar.isVisible` is false so the secondary/editor column expands
+via CSS grid instead of disappearing.
+
+Storybook play tests in `WorkbenchShell.stories.tsx` and
+`examples/workbench-sample/src/WorkbenchSample.stories.tsx` (`Sidebar toggle`)
+assert this layout through shared helpers in
+`packages/react/src/workbench/story/shellStory.ts`.
+
 ## Command and context-key wiring
 
 Menu projection should use `resolveWorkbenchCommandMenuItems` from

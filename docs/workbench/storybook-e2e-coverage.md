@@ -70,7 +70,7 @@ See also `docs/conventions/storybook.md` for promotion criteria and scripts.
 ## Required Play Gate
 
 `pnpm test:storybook-play:required` runs stories tagged `storybook-play-required`.
-The current required gate has 30 plays: 7 sample integration flows, 7 small
+The current required gate has 32 plays: 8 sample integration flows, 8 small
 component-panel flows, and 16 JDW widget-tree authoring flows.
 
 ### Integration tier (sample app)
@@ -84,6 +84,7 @@ component-panel flows, and 16 JDW widget-tree authoring flows.
 | `Workbench Sample/Dev App` - Host install state     | Host-provided installed extension storage is account-scoped and activates a preinstalled catalog extension in the provider/devtools snapshot                     |
 | `Workbench Sample/Dev App` - Tester dev app journey | Dev-app integration path: startup editor state, search result open, command palette, chat, AI chat composer, settings, profile permission override, and sign-out |
 | `Workbench Sample/Dev App` - Basic permission scope | Basic account permission projection; only Explorer and Profile remain visible                                                                                    |
+| `Workbench Sample/Dev App` - Sidebar toggle         | Primary sidebar hide/show via status bar; collapsed grid keeps SplitView mounted and expands editor to full split width                                          |
 
 ### Component tier (package harness)
 
@@ -91,14 +92,15 @@ The current required component set keeps primitive/panel flows small and carries
 broader JDW authoring matrix while widget-tree editing is an active product
 surface:
 
-| Story                                                          | Container                            | Flow covered                                                                                                                              |
-| -------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `React/Primitives/Controls` - Form controls                    | Settings/form surface                | Controlled text, number, checkbox, select, textarea, button, and icon-button behavior                                                     |
-| `React/Primitives/Editor Chrome` - Tabs and mode controls      | Editor/main area                     | Editor tab selection, mode segmented control, close action, and new-tab action                                                            |
-| `React/Overlay/Dialog Actions` - Confirmation and context menu | Main-area trigger with fixed overlay | Confirm dialog cancel/confirm plus context-menu disabled and select behavior                                                              |
-| `React/Workbench/Chat Components` - Runtime controls           | Sidebar chat panel                   | Chat command proposal allow flow plus composer submit/reset                                                                               |
-| `React/Workbench/Workspace Search` - Search panel flow         | Sidebar search panel                 | Empty, result, Enter activation, clear, no-result, and refresh behavior                                                                   |
-| `JDW/WidgetTree/Lab` - Authoring flows                         | Widget-tree lab surface              | Validation, dirty/discard, outline selection/reorder, asset insert/drop, preview selection/chrome, grid/stack/linear/wrapper canvas edits |
+| Story                                                          | Container                                     | Flow covered                                                                                                                              |
+| -------------------------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `React/Primitives/Controls` - Form controls                    | Settings/form surface                         | Controlled text, number, checkbox, select, textarea, button, and icon-button behavior                                                     |
+| `React/Primitives/Editor Chrome` - Tabs and mode controls      | Editor/main area                              | Editor tab selection, mode segmented control, close action, and new-tab action                                                            |
+| `React/Overlay/Dialog Actions` - Confirmation and context menu | Main-area trigger with fixed overlay          | Confirm dialog cancel/confirm plus context-menu disabled and select behavior                                                              |
+| `React/Workbench/Chat Components` - Runtime controls           | Sidebar chat panel                            | Chat command proposal allow flow plus composer submit/reset                                                                               |
+| `React/Workbench/Workspace Search` - Search panel flow         | Sidebar search panel                          | Empty, result, Enter activation, clear, no-result, and refresh behavior                                                                   |
+| `React/Workbench/Shell` - Sidebar toggle                       | Editor/main area (`StoryWorkbenchShellFrame`) | Isolated `WorkbenchShell` collapse contract: primary stays mounted, secondary expands to full split width via `shellStory` helpers        |
+| `JDW/WidgetTree/Lab` - Authoring flows                         | Widget-tree lab surface                       | Validation, dirty/discard, outline selection/reorder, asset insert/drop, preview selection/chrome, grid/stack/linear/wrapper canvas edits |
 
 Add a required story only when it proves a stable, user-visible flow and can fail
 with an actionable product-level case name. Promote from `storybook-play-baseline`
