@@ -86,6 +86,7 @@ export type {
 export {
   FilterBar,
   FilterBarActiveChips,
+  FilterBarRow,
   FilterChip,
   HelpText,
   Panel,
@@ -96,6 +97,7 @@ export {
 export type {
   FilterBarActiveChipsProps,
   FilterBarProps,
+  FilterBarRowProps,
   FilterChipProps,
   HelpTextProps,
   PanelBodyProps,
