@@ -25,10 +25,9 @@ describe('context key contribution filters', () => {
 
   it('surfaces invalid contribution when clauses', () => {
     expect(() =>
-      filterWorkbenchContributionsByWhenClause(
-        [{ id: 'bad', when: 'feature.count >= 1' }],
-        { 'feature.count': 1 },
-      ),
+      filterWorkbenchContributionsByWhenClause([{ id: 'bad', when: 'feature.count >= 1' }], {
+        'feature.count': 1,
+      }),
     ).toThrow(WorkbenchWhenClauseSyntaxError);
   });
 });

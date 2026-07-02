@@ -113,6 +113,16 @@ export {
   registerWorkbenchUserCommands,
 } from './workbench-user-commands.js';
 export {
+  createWorkbenchHostThemeRegistration,
+  HOST_WORKBENCH_THEME_EXTENSION_ID,
+  registerHostWorkbenchThemes,
+  registerWorkbenchTheme,
+  REQUIRED_THEME_TOKEN_KEYS,
+  type RegisterWorkbenchThemeOptions,
+  type WorkbenchHostThemeMode,
+  type WorkbenchHostThemeRegistration,
+} from '@workbench-kit/workbench-core';
+export {
   useActiveEditorTab,
   useEditorDocumentViewProviders,
   useEditorHost,

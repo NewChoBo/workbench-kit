@@ -108,7 +108,7 @@ Phased rollout from prior theme analysis (T0–T4):
 | T3    | P3       | Monaco editor theme sync from active workbench theme                       |
 | T4    | P3       | Settings UI: theme picker wired to registry + persistence adapter          |
 
-- [ ] **P2** T0–T1: theme registry + host registration sample in Storybook integrated shell.
+- [x] **P2** T0–T1: theme registry + host registration sample in Storybook integrated shell.
 - [ ] **P2** T2: JSON import path with validation and fallback to built-in themes.
 - [ ] **P3** T3–T4: Monaco sync and settings persistence (depends on T1–T2).
 

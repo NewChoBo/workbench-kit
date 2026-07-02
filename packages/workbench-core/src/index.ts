@@ -153,9 +153,19 @@ export {
 } from './extension-install-plan.js';
 export {
   applyThemeTokenOverrides,
+  REQUIRED_THEME_TOKEN_KEYS,
   ThemeRegistry,
   type WorkbenchThemeContribution,
 } from './theme-registry.js';
+export {
+  createWorkbenchHostThemeRegistration,
+  HOST_WORKBENCH_THEME_EXTENSION_ID,
+  registerHostWorkbenchThemes,
+  registerWorkbenchTheme,
+  type RegisterWorkbenchThemeOptions,
+  type WorkbenchHostThemeMode,
+  type WorkbenchHostThemeRegistration,
+} from './register-workbench-theme.js';
 export {
   LocalizationRegistry,
   type WorkbenchLocalizationContribution,

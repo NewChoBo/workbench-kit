@@ -82,8 +82,10 @@ export interface CommandMenuItemsInput<TContext = void> {
   surface?: string;
 }
 
-export interface CommandMenuCommandItemInput<TContext = void>
-  extends Omit<CommandMenuItemsInput<TContext>, 'entries'> {
+export interface CommandMenuCommandItemInput<TContext = void> extends Omit<
+  CommandMenuItemsInput<TContext>,
+  'entries'
+> {
   commandId: string;
   entry?: Omit<CommandMenuCommandEntry<TContext>, 'commandId' | 'type'> | undefined;
 }

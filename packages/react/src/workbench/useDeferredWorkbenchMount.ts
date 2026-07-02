@@ -34,17 +34,20 @@ export function useDeferredWorkbenchMount({
         return;
       }
 
-      timeoutHandle = setTimeout(() => {
-        if (loadGenerationRef.current !== loadGeneration) {
-          return;
-        }
-
-        startTransition(() => {
-          if (loadGenerationRef.current === loadGeneration) {
-            setIsReady(true);
+      timeoutHandle = setTimeout(
+        () => {
+          if (loadGenerationRef.current !== loadGeneration) {
+            return;
           }
-        });
-      }, Math.max(0, delayMs));
+
+          startTransition(() => {
+            if (loadGenerationRef.current === loadGeneration) {
+              setIsReady(true);
+            }
+          });
+        },
+        Math.max(0, delayMs),
+      );
     };
 
     if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {

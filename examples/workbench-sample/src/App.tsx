@@ -40,6 +40,7 @@ import {
   workbenchUserCommands,
   workspaceInfo,
 } from './bootstrap.js';
+import { sampleHostThemes } from './host-themes.js';
 import {
   createSamplePaletteCommandRunner,
   SAMPLE_OPEN_PERMISSION_ROLE_SETTINGS_COMMAND_ID,
@@ -129,6 +130,7 @@ function SampleAuthenticatedWorkbench({
     <WorkbenchProvider
       contextKeyValues={contextKeyValues}
       extensionsConfig={resolvedExtensionsConfig}
+      hostThemes={sampleHostThemes}
       initialKeybindingOverrides={workbenchKeybindings}
       initialLayout={initialLayout}
       initialWorkspaceSettings={workbenchSettings}

@@ -18,6 +18,7 @@ import {
   mergeExtensionsConfigWithInstallState,
   PreferenceService,
   registerEditorSaveCommand,
+  registerHostWorkbenchThemes,
   resolveInstalledAvailableExtensions,
   resolveWorkbenchExtensions,
   SAMPLE_WORKBENCH_EXTENSIONS,
@@ -26,6 +27,7 @@ import {
   type EditorState,
   type EditorService,
   type PreferenceService as PreferenceServiceType,
+  type WorkbenchHostThemeRegistration,
   type WorkbenchStorageAdapter,
   type WorkbenchEditorSavePort,
   type WorkbenchExtensionDescription,
@@ -104,6 +106,7 @@ export interface WorkbenchProviderProps {
   extensionsConfig?: WorkbenchExtensionsConfig;
   editorStateStorage?: WorkbenchStorageAdapter;
   editorStateStorageKey?: string;
+  hostThemes?: readonly WorkbenchHostThemeRegistration[];
   initialKeybindingOverrides?: readonly WorkbenchKeybindingDefinition[];
   initialEditorState?: EditorState;
   initialLayout?: WorkbenchLayoutStateInput;
@@ -175,6 +178,7 @@ export function WorkbenchProvider({
   editorStateStorage,
   editorStateStorageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   extensionsConfig,
+  hostThemes = [],
   initialEditorState,
   initialKeybindingOverrides,
   initialLayout,
@@ -349,6 +353,7 @@ export function WorkbenchProvider({
     );
     const resolution = resolveWorkbenchExtensions(config, resolvedAvailableExtensions);
     const extensionDisposables = extensionRegistry.registerExtensions(resolution.enabledExtensions);
+    const hostThemeDisposables = registerHostWorkbenchThemes(extensionRegistry.themes, hostThemes);
     const editorServiceCapabilityDisposable = extensionRegistry.capabilityRegistry.register({
       id: WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
       get: () => editorService,
@@ -392,6 +397,7 @@ export function WorkbenchProvider({
         userCommandDisposables.dispose();
         editorServiceCapabilityDisposable.dispose();
         workspaceHostCapabilityDisposable?.dispose();
+        hostThemeDisposables.dispose();
         extensionDisposables.dispose();
         if (!workspaceHostCapabilityDisposable) {
           workspaceHostPort?.dispose?.();
@@ -418,6 +424,7 @@ export function WorkbenchProvider({
     documentViewProviders,
     hostAvailableExtensions,
     extensionsConfig,
+    hostThemes,
     includeDefaultDocumentViewProviders,
     initialWorkspaceSettings,
     installedExtensionsStorage,

@@ -34,10 +34,7 @@ export function evaluateWorkbenchContextKeyWhenClause(
 
 export function filterWorkbenchContributionsByWhenClause<
   TContribution extends WorkbenchWhenClauseContributionLike,
->(
-  contributions: ReadonlyArray<TContribution>,
-  contextKeys: object,
-): TContribution[] {
+>(contributions: ReadonlyArray<TContribution>, contextKeys: object): TContribution[] {
   const snapshot = createWorkbenchContextKeySnapshot(contextKeys);
   return contributions.filter((contribution) =>
     evaluateWorkbenchWhenClause(contribution.when, snapshot),

@@ -7,6 +7,10 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { parseWorkbenchLayoutConfig } from '@workbench-kit/workbench-config';
 import type { EditorState, WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
 import {
+  createWorkbenchHostThemeRegistration,
+  REQUIRED_THEME_TOKEN_KEYS,
+} from '@workbench-kit/workbench-core';
+import {
   createWorkbenchWorkspaceHostPort,
   type VirtualWorkspaceInitialState,
 } from '@workbench-kit/workspace';
@@ -172,6 +176,12 @@ function CommandTitleProbe({ commandId }: { commandId: string }) {
   return (
     <span>{workbench.extensionRegistry.commands.getCommand(commandId)?.title ?? 'missing'}</span>
   );
+}
+
+function HostThemeProbe({ themeId }: { themeId: string }) {
+  const workbench = useWorkbench();
+
+  return <span>{workbench.extensionRegistry.themes.getTheme(themeId)?.label ?? 'missing'}</span>;
 }
 
 function PreferenceValueProbe({
@@ -364,6 +374,26 @@ describe('WorkbenchProvider', () => {
     );
 
     expect(markup).toContain('<span>1</span>');
+  });
+
+  it('registers host themes from bootstrap props', () => {
+    const tokenOverrides = Object.fromEntries(
+      REQUIRED_THEME_TOKEN_KEYS.map((key) => [key, '#101820']),
+    );
+    const markup = renderToStaticMarkup(
+      <WorkbenchProvider
+        hostThemes={[
+          createWorkbenchHostThemeRegistration('workbench-kit.test.host.theme', tokenOverrides, {
+            label: 'Test Host Theme',
+            mode: 'dark',
+          }),
+        ]}
+      >
+        <HostThemeProbe themeId="workbench-kit.test.host.theme" />
+      </WorkbenchProvider>,
+    );
+
+    expect(markup).toContain('Test Host Theme');
   });
 
   it('loads installed extension records from an injected storage adapter', () => {

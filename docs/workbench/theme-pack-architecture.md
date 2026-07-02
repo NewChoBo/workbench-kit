@@ -181,18 +181,50 @@ validation, incomplete mappings, IP/licensing of community themes.
 
 ## Phased roadmap
 
-| Phase    | Deliverable                                        | Status                                  |
-| -------- | -------------------------------------------------- | --------------------------------------- |
-| **T0**   | Document `data-theme` + token mapping              | This doc + split CSS                    |
-| **T0.5** | Per-preset files + manifest registry               | Done                                    |
-| **T1**   | `registerWorkbenchTheme` wired in integrated shell | Backlog                                 |
-| **T2**   | VS Code `colors` JSON → CSS variables              | Backlog                                 |
-| **T3**   | Monaco theme sync from active preset               | Partial (`useMonacoWorkbenchThemeSync`) |
-| **T4**   | Settings UI + persistence via registry             | Appearance story + shell-settings       |
+| Phase    | Deliverable                                        | Status                                                  |
+| -------- | -------------------------------------------------- | ------------------------------------------------------- |
+| **T0**   | Document `data-theme` + token mapping              | This doc + split CSS                                    |
+| **T0.5** | Per-preset files + manifest registry               | Done                                                    |
+| **T1**   | `registerWorkbenchTheme` wired in integrated shell | Done (`WorkbenchProvider.hostThemes`, workbench-sample) |
+| **T2**   | VS Code `colors` JSON → CSS variables              | Backlog                                                 |
+| **T3**   | Monaco theme sync from active preset               | Partial (`useMonacoWorkbenchThemeSync`)                 |
+| **T4**   | Settings UI + persistence via registry             | Appearance story + shell-settings                       |
 
 Installable **extension themes** are feasible now for override-style packs (Channel A).
 Installable **full presets** are feasible via npm CSS packs (Channel B) today and JSON import
 (Channel C) after T2.
+
+## Host bootstrap API (T1)
+
+Hosts register override themes without an extension manifest:
+
+```ts
+import {
+  createWorkbenchHostThemeRegistration,
+  registerWorkbenchTheme,
+} from '@workbench-kit/workbench-core';
+import { WorkbenchProvider } from '@workbench-kit/shell-react';
+
+const hostThemes = [
+  createWorkbenchHostThemeRegistration('my-app.theme.forest', tokenOverrides, {
+    label: 'Forest',
+    mode: 'dark',
+  }),
+];
+
+// Option A — declarative bootstrap on WorkbenchProvider
+<WorkbenchProvider hostThemes={hostThemes}>...</WorkbenchProvider>;
+
+// Option B — imperative registration on an existing ThemeRegistry
+registerWorkbenchTheme(registry.themes, 'my-app.theme.forest', tokenOverrides, {
+  label: 'Forest',
+  mode: 'dark',
+});
+```
+
+`tokenOverrides` must include every key in `REQUIRED_THEME_TOKEN_KEYS`. Host themes use
+extension id `workbench-kit.host` and appear in Appearance settings alongside built-in presets
+and extension contributions. Reference: `examples/workbench-sample/src/host-themes.ts`.
 
 ## Migration from monolithic `theme-presets.css`
 
