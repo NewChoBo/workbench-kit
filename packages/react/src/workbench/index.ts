@@ -135,6 +135,18 @@ export type {
 } from './themePresets';
 export { WorkbenchThemeProvider } from './WorkbenchThemeProvider';
 export type { WorkbenchThemeProviderProps } from './WorkbenchThemeProvider';
+export { WorkbenchPlatformProvider, useWorkbenchHostPlatform } from './WorkbenchPlatformContext';
+export type { WorkbenchPlatformProviderProps } from './WorkbenchPlatformContext';
+export {
+  resolveWorkbenchHostPlatform,
+  resolveWorkbenchWindowChromeDataAttributes,
+} from './workbenchPlatformChrome';
+export type { WorkbenchHostPlatform, WorkbenchWindowChromeMode } from './workbenchPlatformChrome';
+export {
+  WorkbenchWindowChromeControls,
+  shouldUseDarwinPlatformChrome,
+} from './WorkbenchWindowChromeControls';
+export type { WorkbenchWindowChromeControlsProps } from './WorkbenchWindowChromeControls';
 export {
   WorkbenchShortcutCommandBridge,
   getWorkbenchShortcutCommandBindings,

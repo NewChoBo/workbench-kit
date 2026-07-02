@@ -10,6 +10,7 @@ import type { WorkbenchSettingsCategory, WorkbenchSettingsScope } from './types'
 
 export interface WorkbenchSettingsModalProps extends Pick<
   ModalProps,
+  | 'chrome'
   | 'className'
   | 'closeLabel'
   | 'footer'
@@ -63,6 +64,7 @@ export function WorkbenchSettingsModal({
   activeScopeId,
   bodyClassName,
   categories,
+  chrome = 'platform',
   className,
   closeLabel = 'Close settings',
   defaultActiveCategoryId,
@@ -136,6 +138,7 @@ export function WorkbenchSettingsModal({
 
   return (
     <Modal
+      chrome={chrome}
       className={cx('workbench-settings-modal', className)}
       bodyClassName={cx('workbench-settings-modal__body', bodyClassName)}
       closeLabel={closeLabel}

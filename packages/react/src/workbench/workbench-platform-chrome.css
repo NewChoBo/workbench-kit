@@ -1,0 +1,142 @@
+[data-workbench-platform='darwin'] {
+  --shell-window-chrome-radius: 10px;
+  --shell-window-chrome-titlebar-height: 38px;
+  --shell-window-chrome-control-gap: 8px;
+  --shell-window-chrome-traffic-light-size: 12px;
+}
+
+[data-workbench-platform='win32'],
+[data-workbench-platform='linux'] {
+  --shell-window-chrome-radius: var(--radius-sm);
+  --shell-window-chrome-titlebar-height: 34px;
+  --shell-window-chrome-control-gap: 2px;
+}
+
+[data-workbench-window-chrome='platform'].ui-modal:not([data-maximized='true']) {
+  border-radius: var(--shell-window-chrome-radius);
+}
+
+[data-workbench-platform='darwin']
+  [data-workbench-window-chrome='platform'].ui-modal:not([data-maximized='true']) {
+  overflow: hidden;
+}
+
+[data-workbench-window-chrome='platform'] .ui-modal__titlebar,
+[data-workbench-window-chrome='platform'] .ui-workbench-desktop-titlebar {
+  min-height: var(--shell-window-chrome-titlebar-height);
+  height: var(--shell-window-chrome-titlebar-height);
+}
+
+[data-workbench-platform='darwin'] [data-workbench-window-chrome='platform'] .ui-modal__titlebar {
+  padding: 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+[data-workbench-platform='darwin']
+  [data-workbench-window-chrome='platform']
+  .ui-modal__titlebar-drag {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 16px;
+}
+
+[data-workbench-platform='darwin'] [data-workbench-window-chrome='platform'] .ui-modal__title {
+  justify-content: center;
+  text-align: center;
+}
+
+.ui-workbench-window-chrome-controls--darwin {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--shell-window-chrome-control-gap, 8px);
+  padding: 0 12px;
+  -webkit-app-region: no-drag;
+}
+
+.ui-workbench-window-chrome-controls--darwin.ui-workbench-window-chrome-controls--modal {
+  align-self: stretch;
+}
+
+.ui-workbench-window-chrome-control--darwin {
+  width: var(--shell-window-chrome-traffic-light-size, 12px);
+  height: var(--shell-window-chrome-traffic-light-size, 12px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ui-workbench-window-chrome-control--darwin .ui-workbench-window-chrome-control__glyph {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.ui-workbench-window-chrome-control--close.ui-workbench-window-chrome-control--darwin {
+  background: #ff5f57;
+}
+
+.ui-workbench-window-chrome-control--minimize.ui-workbench-window-chrome-control--darwin {
+  background: #febc2e;
+}
+
+.ui-workbench-window-chrome-control--zoom.ui-workbench-window-chrome-control--darwin {
+  background: #28c840;
+}
+
+.ui-workbench-window-chrome-controls--darwin:hover .ui-workbench-window-chrome-control__glyph,
+.ui-workbench-window-chrome-controls--darwin:focus-within
+  .ui-workbench-window-chrome-control__glyph {
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ui-workbench-window-chrome-control--close.ui-workbench-window-chrome-control--darwin:hover
+  .ui-workbench-window-chrome-control__glyph::before,
+.ui-workbench-window-chrome-controls--darwin:focus-within
+  .ui-workbench-window-chrome-control--close
+  .ui-workbench-window-chrome-control__glyph::before {
+  content: '×';
+}
+
+.ui-workbench-window-chrome-control--minimize.ui-workbench-window-chrome-control--darwin:hover
+  .ui-workbench-window-chrome-control__glyph::before,
+.ui-workbench-window-chrome-controls--darwin:focus-within
+  .ui-workbench-window-chrome-control--minimize
+  .ui-workbench-window-chrome-control__glyph::before {
+  content: '−';
+}
+
+.ui-workbench-window-chrome-control--zoom.ui-workbench-window-chrome-control--darwin:hover
+  .ui-workbench-window-chrome-control__glyph::before,
+.ui-workbench-window-chrome-controls--darwin:focus-within
+  .ui-workbench-window-chrome-control--zoom
+  .ui-workbench-window-chrome-control__glyph::before {
+  content: '+';
+}
+
+[data-workbench-platform='darwin']
+  [data-workbench-window-chrome='platform']
+  .ui-workbench-desktop-titlebar {
+  gap: 0;
+}
+
+[data-workbench-platform='darwin']
+  [data-workbench-window-chrome='platform']
+  .ui-workbench-desktop-titlebar__leading {
+  padding-left: 0;
+}
+
+[data-workbench-platform='darwin']
+  [data-workbench-window-chrome='platform']
+  .ui-workbench-desktop-titlebar__trailing
+  .ui-workbench-window-chrome-controls--darwin {
+  display: none;
+}

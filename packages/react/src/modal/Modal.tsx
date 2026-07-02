@@ -9,6 +9,10 @@ import { cx } from '../utils/cx';
 import { ModalResizeHandles } from './ModalResizeHandles';
 import { ModalTitlebar } from './ModalTitlebar';
 import { useModalWindowFrame } from './useModalWindowFrame';
+import {
+  resolveWorkbenchWindowChromeDataAttributes,
+  type WorkbenchWindowChromeMode,
+} from '../workbench/workbenchPlatformChrome';
 
 export type { ModalBounds, ModalPosition, ModalSize } from './modalTypes';
 
@@ -16,6 +20,7 @@ export type ModalBodyLayout = 'block' | 'stack';
 export type ModalBodyPadding = 'none' | 'md' | 'lg';
 
 export interface ModalProps {
+  chrome?: WorkbenchWindowChromeMode | undefined;
   title: ReactNode;
   titleSuffix?: ReactNode | undefined;
   children: ReactNode;
@@ -118,6 +123,7 @@ function ModalFrame({
 }
 
 export function Modal({
+  chrome = 'platform',
   title,
   titleSuffix,
   children,
@@ -140,6 +146,7 @@ export function Modal({
   restoreLabel,
 }: ModalProps) {
   const modalClassName = cx('ui-modal', className);
+  const chromeAttributes = resolveWorkbenchWindowChromeDataAttributes(chrome);
   const generatedLabelId = useId();
   const resolvedLabelledBy = labelledBy ?? generatedLabelId;
 
@@ -171,6 +178,7 @@ export function Modal({
         dataAttrs={{
           'data-maximized': maximized ? 'true' : undefined,
           'data-ready': isPositioned ? undefined : 'false',
+          ...(chromeAttributes ?? {}),
         }}
         footer={footer}
         frameRef={(node) => {
@@ -182,6 +190,7 @@ export function Modal({
         style={windowStyle}
         titlebar={
           <ModalTitlebar
+            chrome={chrome}
             closeLabel={closeLabel}
             labelledBy={resolvedLabelledBy}
             maximized={maximized}

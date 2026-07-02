@@ -15,11 +15,13 @@ describe('WorkbenchThemeProvider', () => {
   it('applies the active theme to the provider root', () => {
     expect(
       renderToStaticMarkup(
-        <WorkbenchThemeProvider className="ui-workbench-host-root" theme="light">
+        <WorkbenchThemeProvider className="ui-workbench-host-root" platform="darwin" theme="light">
           <main>Workbench</main>
         </WorkbenchThemeProvider>,
       ),
-    ).toContain('class="ui-workbench-host-root" data-theme="light"');
+    ).toContain(
+      'class="ui-workbench-host-root" data-theme="light" data-workbench-platform="darwin"',
+    );
   });
 
   it('optionally syncs the document element theme and restores the previous value', async () => {

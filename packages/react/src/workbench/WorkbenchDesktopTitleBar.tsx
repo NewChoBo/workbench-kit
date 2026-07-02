@@ -1,5 +1,14 @@
 import type { ReactNode } from 'react';
 import { cx } from '../utils/cx';
+import { useWorkbenchHostPlatform } from './WorkbenchPlatformContext';
+import {
+  shouldUseDarwinPlatformChrome,
+  WorkbenchWindowChromeControls,
+} from './WorkbenchWindowChromeControls';
+import {
+  resolveWorkbenchWindowChromeDataAttributes,
+  type WorkbenchWindowChromeMode,
+} from './workbenchPlatformChrome';
 
 export interface WorkbenchDesktopWindowControlsProps {
   closeLabel?: string | undefined;
@@ -27,50 +36,26 @@ export function WorkbenchDesktopWindowControls({
   onToggleMaximized,
   restoreLabel = 'Restore window',
 }: WorkbenchDesktopWindowControlsProps) {
-  const maximizeTitle = isMaximized ? restoreLabel : maximizeLabel;
-
   return (
-    <div className="ui-workbench-desktop-titlebar__controls">
-      <button
-        aria-label={minimizeLabel}
-        className="ui-workbench-desktop-titlebar__control"
-        title={minimizeLabel}
-        type="button"
-        onClick={onMinimize}
-      >
-        <i aria-hidden="true" className="codicon codicon-chrome-minimize" />
-      </button>
-      <button
-        aria-label={maximizeTitle}
-        className="ui-workbench-desktop-titlebar__control"
-        title={maximizeTitle}
-        type="button"
-        onClick={onToggleMaximized}
-      >
-        <i
-          aria-hidden="true"
-          className={cx(
-            'codicon',
-            isMaximized ? 'codicon-chrome-restore' : 'codicon-chrome-maximize',
-          )}
-        />
-      </button>
-      <button
-        aria-label={closeLabel}
-        className="ui-workbench-desktop-titlebar__control ui-workbench-desktop-titlebar__control--close"
-        title={closeLabel}
-        type="button"
-        onClick={onClose}
-      >
-        <i aria-hidden="true" className="codicon codicon-chrome-close" />
-      </button>
-    </div>
+    <WorkbenchWindowChromeControls
+      chrome="generic"
+      closeLabel={closeLabel}
+      isMaximized={isMaximized}
+      maximizeLabel={maximizeLabel}
+      minimizeLabel={minimizeLabel}
+      restoreLabel={restoreLabel}
+      surface="desktop-titlebar"
+      onClose={onClose}
+      onMinimize={onMinimize}
+      onToggleMaximized={onToggleMaximized}
+    />
   );
 }
 
 export interface WorkbenchDesktopTitleBarProps {
   /** Optional center area, e.g. a command-menu trigger. Omit to leave it empty. */
   centerSlot?: ReactNode | undefined;
+  chrome?: WorkbenchWindowChromeMode | undefined;
   className?: string | undefined;
   leading?: ReactNode | undefined;
   trailing?: ReactNode | undefined;
@@ -86,20 +71,43 @@ export interface WorkbenchDesktopTitleBarProps {
  */
 export function WorkbenchDesktopTitleBar({
   centerSlot,
+  chrome = 'platform',
   className,
   leading,
   trailing,
   windowControls,
 }: WorkbenchDesktopTitleBarProps) {
+  const platform = useWorkbenchHostPlatform();
+  const useDarwinChrome = shouldUseDarwinPlatformChrome(chrome, platform);
+  const chromeAttributes = resolveWorkbenchWindowChromeDataAttributes(chrome);
+
+  const controls = windowControls ? (
+    <WorkbenchWindowChromeControls
+      chrome={chrome}
+      closeLabel={windowControls.closeLabel}
+      isMaximized={windowControls.isMaximized}
+      maximizeLabel={windowControls.maximizeLabel}
+      minimizeLabel={windowControls.minimizeLabel}
+      restoreLabel={windowControls.restoreLabel}
+      surface="desktop-titlebar"
+      onClose={windowControls.onClose}
+      onMinimize={windowControls.onMinimize}
+      onToggleMaximized={windowControls.onToggleMaximized}
+    />
+  ) : null;
+
   return (
-    <div className={cx('ui-workbench-desktop-titlebar', className)}>
-      <div className="ui-workbench-desktop-titlebar__leading">{leading}</div>
+    <div className={cx('ui-workbench-desktop-titlebar', className)} {...(chromeAttributes ?? {})}>
+      <div className="ui-workbench-desktop-titlebar__leading">
+        {useDarwinChrome ? controls : null}
+        {leading}
+      </div>
       {centerSlot ? (
         <div className="ui-workbench-desktop-titlebar__center">{centerSlot}</div>
       ) : null}
       <div className="ui-workbench-desktop-titlebar__trailing">
         {trailing}
-        {windowControls ? <WorkbenchDesktopWindowControls {...windowControls} /> : null}
+        {!useDarwinChrome ? controls : null}
       </div>
     </div>
   );

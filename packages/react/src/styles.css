@@ -10,6 +10,7 @@
 @import './workbench/settings/panel-region.css';
 @import './modal/modal.css';
 @import './workbench/workbench-desktop-titlebar.css';
+@import './workbench/workbench-platform-chrome.css';
 
 .ui-workbench-host-document,
 .ui-workbench-host,

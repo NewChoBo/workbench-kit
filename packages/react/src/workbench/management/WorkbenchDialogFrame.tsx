@@ -1,5 +1,6 @@
 import type { FormEventHandler, ReactNode } from 'react';
 import { Modal, type ModalBodyLayout, type ModalBodyPadding } from '../../modal/Modal';
+import type { WorkbenchWindowChromeMode } from '../workbenchPlatformChrome';
 
 export type WorkbenchDialogBodyLayout = 'column-fill' | 'default' | 'padded-fill';
 export type WorkbenchDialogFrameSize =
@@ -12,6 +13,7 @@ export type WorkbenchDialogFrameSize =
 export interface WorkbenchDialogFrameProps {
   ariaLabel: string;
   bodyLayout?: WorkbenchDialogBodyLayout;
+  chrome?: WorkbenchWindowChromeMode;
   children: ReactNode;
   closeLabel: string;
   dataAttributes?: Record<string, string>;
@@ -28,6 +30,7 @@ export interface WorkbenchDialogFrameProps {
 export function WorkbenchDialogFrame({
   ariaLabel,
   bodyLayout = 'default',
+  chrome = 'platform',
   children,
   closeLabel,
   dataAttributes,
@@ -50,6 +53,7 @@ export function WorkbenchDialogFrame({
         bodyLayout={layout.bodyLayout}
         bodyPadding={layout.bodyPadding}
         bodyScroll={layout.bodyScroll}
+        chrome={chrome}
         className="workbench-dialog-frame"
         closeLabel={closeLabel}
         defaultHeight={size.defaultHeight}

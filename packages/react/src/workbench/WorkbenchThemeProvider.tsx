@@ -1,10 +1,17 @@
 import { useEffect, type ComponentPropsWithoutRef, type ReactNode } from 'react';
 
+import { WorkbenchPlatformProvider } from './WorkbenchPlatformContext';
+import {
+  resolveWorkbenchHostPlatform,
+  type WorkbenchHostPlatform,
+} from './workbenchPlatformChrome';
+
 export interface WorkbenchThemeProviderProps extends Omit<
   ComponentPropsWithoutRef<'div'>,
   'children'
 > {
   children: ReactNode;
+  platform?: WorkbenchHostPlatform | undefined;
   syncDocumentElement?: boolean | undefined;
   theme?: string | undefined;
   themePreset?: string | undefined;
@@ -13,12 +20,15 @@ export interface WorkbenchThemeProviderProps extends Omit<
 
 export function WorkbenchThemeProvider({
   children,
+  platform,
   syncDocumentElement = false,
   theme,
   themePreset,
   themePreference,
   ...props
 }: WorkbenchThemeProviderProps) {
+  const resolvedPlatform = resolveWorkbenchHostPlatform(platform ?? null);
+
   useEffect(() => {
     if (!syncDocumentElement || theme === undefined || typeof document === 'undefined') {
       return undefined;
@@ -28,6 +38,7 @@ export function WorkbenchThemeProvider({
     const previousTheme = rootElement.dataset.theme;
     const previousThemePreset = rootElement.dataset.themePreset;
     const previousThemePreference = rootElement.dataset.themePreference;
+    const previousPlatform = rootElement.dataset.workbenchPlatform;
 
     rootElement.dataset.theme = theme;
 
@@ -42,6 +53,8 @@ export function WorkbenchThemeProvider({
     } else {
       rootElement.dataset.themePreference = themePreference;
     }
+
+    rootElement.dataset.workbenchPlatform = resolvedPlatform;
 
     return () => {
       if (previousTheme === undefined) {
@@ -61,17 +74,26 @@ export function WorkbenchThemeProvider({
       } else {
         rootElement.dataset.themePreference = previousThemePreference;
       }
+
+      if (previousPlatform === undefined) {
+        delete rootElement.dataset.workbenchPlatform;
+      } else {
+        rootElement.dataset.workbenchPlatform = previousPlatform;
+      }
     };
-  }, [syncDocumentElement, theme, themePreset, themePreference]);
+  }, [resolvedPlatform, syncDocumentElement, theme, themePreset, themePreference]);
 
   return (
-    <div
-      {...props}
-      data-theme={theme}
-      data-theme-preset={themePreset}
-      data-theme-preference={themePreference}
-    >
-      {children}
-    </div>
+    <WorkbenchPlatformProvider platform={resolvedPlatform}>
+      <div
+        {...props}
+        data-theme={theme}
+        data-theme-preset={themePreset}
+        data-theme-preference={themePreference}
+        data-workbench-platform={resolvedPlatform}
+      >
+        {children}
+      </div>
+    </WorkbenchPlatformProvider>
   );
 }
