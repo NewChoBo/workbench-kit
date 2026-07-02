@@ -20,10 +20,10 @@ design from product-only shortcuts.
 
 | Phase | Name                  | Scope                                                                                                                                | Consumer action                                           |
 | ----- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| 1     | **Reference**         | Reference consumers own tree/editor UX and launchpad preview bridge patterns | Keep local stacks; feed parity tests and extraction notes |
+| 1     | **Reference**         | Reference consumers own tree/editor UX and launchpad preview bridge patterns                                                         | Keep local stacks; feed parity tests and extraction notes |
 | 2     | **Port to kit**       | Extract product-neutral primitives into `@workbench-kit/jdw`, `@workbench-kit/react/widget-tree`, `@workbench-kit/react/json-config` | No consumer migration; reference-only                     |
 | 3     | **Complete kit**      | Kit milestone: Storybook baselines, public APIs, play gates, docs                                                                    | Consumers still on local stacks; validate kit readiness   |
-| 4     | **Swap in consumers** | Point host apps at kit packages; delete duplicated chrome                                                         | Product-specific adapters only                            |
+| 4     | **Swap in consumers** | Point host apps at kit packages; delete duplicated chrome                                                                            | Product-specific adapters only                            |
 
 ```text
 reference consumer implementations
@@ -42,12 +42,12 @@ reference consumer implementations
 
 Source references — **do not copy wholesale**; extract contracts and reusable chrome only.
 
-| Source (reference)                                     | Kit target                                                    | Patterns to port                                                                  |
-| ------------------------------------------------------ | ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Reference `json-widget-tree` stack                     | `@workbench-kit/jdw` (+ layout helpers where product-neutral) | `parseJsonWidgetData`, registry contract, tree layout math, typed widget shapes   |
-| Reference `json-widget-editor` chrome                  | `@workbench-kit/react/widget-tree` (editor chrome)            | Monaco ↔ tree ↔ properties ↔ preview sync, selection model, dirty baseline        |
-| Reference consumer config screens                        | `@workbench-kit/react/json-config` (`JsonConfigWorkbench`)    | Code / preview / split modes, schema vs widget auto-preview, save/discard toolbar |
-| Reference launchpad preview bridge                       | `@workbench-kit/react/jdw` (`JdwPreview`)                     | Preview validation bridge, registry mock render                                   |
+| Source (reference)                    | Kit target                                                    | Patterns to port                                                                  |
+| ------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Reference `json-widget-tree` stack    | `@workbench-kit/jdw` (+ layout helpers where product-neutral) | `parseJsonWidgetData`, registry contract, tree layout math, typed widget shapes   |
+| Reference `json-widget-editor` chrome | `@workbench-kit/react/widget-tree` (editor chrome)            | Monaco ↔ tree ↔ properties ↔ preview sync, selection model, dirty baseline        |
+| Reference consumer config screens     | `@workbench-kit/react/json-config` (`JsonConfigWorkbench`)    | Code / preview / split modes, schema vs widget auto-preview, save/discard toolbar |
+| Reference launchpad preview bridge    | `@workbench-kit/react/jdw` (`JdwPreview`)                     | Preview validation bridge, registry mock render                                   |
 
 See also: [json-widget-mvp.md](./json-widget-mvp.md), [json-config-workbench.md](./json-config-workbench.md).
 

@@ -12,7 +12,7 @@ See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-
 
 | Phase       | Kit action                                                                                                                   | Consumer action                                  |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| 1 Reference | Study reference tree/editor UX and launchpad preview bridge patterns | Keep local stacks                                |
+| 1 Reference | Study reference tree/editor UX and launchpad preview bridge patterns                                                         | Keep local stacks                                |
 | 2 Port      | Extract neutral primitives into `@workbench-kit/jdw`, `@workbench-kit/react/widget-tree`, `@workbench-kit/react/json-config` | Reference-only                                   |
 | 3 Complete  | Storybook baselines, public APIs, play gates, docs                                                                           | Validate kit readiness                           |
 | 4 Swap      | —                                                                                                                            | Point consumers at kit; delete duplicated chrome |

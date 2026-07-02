@@ -79,7 +79,7 @@ pnpm typecheck
 | `@workbench-kit/react/jdw` `JdwPreview`              | Done                                                                   |
 | `StructuredArtifactEditor` (workspace file + drafts) | Done — use when editing workspace files with `WorkspaceDraftsProvider` |
 | `JsonConfigWorkbench` (controlled JSON config)       | **This MVP**                                                           |
-| Reference `json-widget-editor` migration               | Deferred — keep local until consumers adopt kit primitive              |
+| Reference `json-widget-editor` migration             | Deferred — keep local until consumers adopt kit primitive              |
 
 ## Consumer adoption sketch
 

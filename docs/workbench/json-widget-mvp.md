@@ -4,10 +4,10 @@ Status: **MVP complete** for framework-neutral parse/registry primitives.
 
 ## Scope
 
-| Track                         | MVP deliverable                                                                          | Status |
-| ----------------------------- | ---------------------------------------------------------------------------------------- | ------ |
-| `@workbench-kit/jdw`          | dist build, unit tests, JDW validation + Storybook fixtures                              | Done   |
-| `@workbench-kit/contracts`    | provider action → launchpad mapping integration test                                     | Done   |
+| Track                      | MVP deliverable                                             | Status |
+| -------------------------- | ----------------------------------------------------------- | ------ |
+| `@workbench-kit/jdw`       | dist build, unit tests, JDW validation + Storybook fixtures | Done   |
+| `@workbench-kit/contracts` | provider action → launchpad mapping integration test        | Done   |
 
 ## Package surface
 

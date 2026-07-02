@@ -142,7 +142,7 @@ only.
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------- |
 | Library active filter chip bar + Clear all                 | `FilterChip`, `FilterBarActiveChips`, `FilterBar.stories`, `LibraryCatalog` enhancement  | **Adopted**           |
 | Source manager left-nav + right sectioned detail           | `SourceManagerSettings.stories` (`WorkbenchNavigationPanel` + `WorkbenchSectionedPanel`) | **Adopted (pattern)** |
-| Template card gallery                                    | `TemplateGallery.stories` (208px cards, category chip, skeleton/empty)                   | **Adopted (pattern)** |
+| Template card gallery                                      | `TemplateGallery.stories` (208px cards, category chip, skeleton/empty)                   | **Adopted (pattern)** |
 | Sectioned provider settings (Installation/Account/Library) | `WorkbenchSettingsSection` + inline auth notice via `HelpText`                           | **Adopted (pattern)** |
 | Preview zoom/fit toolbar                                   | —                                                                                        | **Deferred**          |
 | Draft/explicit-save editor discipline                      | `JsonConfigWorkbench` Apply gating                                                       | Adopted (prior)       |
