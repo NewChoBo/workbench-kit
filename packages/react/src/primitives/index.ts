@@ -71,6 +71,11 @@ export { RecordMediaHero } from './RecordMediaHero';
 export type { RecordMediaHeroLayout, RecordMediaHeroProps } from './RecordMediaHero';
 export { LibraryDetailLayout } from './LibraryDetailLayout';
 export type { LibraryDetailLayoutMode, LibraryDetailLayoutProps } from './LibraryDetailLayout';
+export { useScrollAreaInfiniteLoad } from './useScrollAreaInfiniteLoad';
+export type {
+  UseScrollAreaInfiniteLoadOptions,
+  UseScrollAreaInfiniteLoadResult,
+} from './useScrollAreaInfiniteLoad';
 export { WorkbenchThumbnail } from './WorkbenchThumbnail';
 export type { WorkbenchThumbnailProps, WorkbenchThumbnailSize } from './WorkbenchThumbnail';
 export { ButtonGroup, EditorTabs, ResizablePanels, SegmentedControl } from './WorkbenchEditor';
