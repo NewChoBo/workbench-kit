@@ -26,5 +26,8 @@ export type {
 } from './WorkbenchSidebarActions';
 export { WorkbenchEditorFrame } from './WorkbenchLayoutBase';
 export type { WorkbenchEditorFrameProps } from './WorkbenchLayoutBase';
-export { WorkbenchPropertyInline } from './WorkbenchPropertyPanel';
-export type { WorkbenchPropertyInlineProps } from './WorkbenchPropertyPanel';
+export { WorkbenchSidebarSectionStack } from './WorkbenchSidebarSectionStack';
+export type {
+  WorkbenchSidebarSectionStackItem,
+  WorkbenchSidebarSectionStackProps,
+} from './WorkbenchSidebarSectionStack';
