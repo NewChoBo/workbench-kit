@@ -80,6 +80,8 @@ pnpm validate
 pnpm validate:ui
 pnpm validate:ui:full
 pnpm dev
+pnpm dev:storybook
+pnpm dev:all
 pnpm storybook
 pnpm test:storybook-play
 pnpm test:storybook-play:required
@@ -97,9 +99,10 @@ closeout.
 
 ## Workbench Sample Pages
 
-For local development, `pnpm dev` starts the workbench sample on
-`http://127.0.0.1:65173/` and Storybook on a separate internal port while exposing
-it through the sample server at `http://127.0.0.1:65173/storybook/`.
+For local development, `pnpm dev` starts only the workbench sample on
+`http://127.0.0.1:65173/`. Use `pnpm dev:storybook` for Storybook on
+`http://127.0.0.1:61009/`, or `pnpm dev:all` to run both together with Storybook
+proxied from `http://127.0.0.1:65173/storybook/`.
 
 The `Deploy Workbench Sample` workflow builds `examples/workbench-sample` and
 deploys the Vite output to GitHub Pages. Configure repository Pages settings to

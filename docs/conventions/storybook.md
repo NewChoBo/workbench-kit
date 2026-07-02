@@ -1,7 +1,7 @@
 # Storybook Direction
 
 Storybook is the required UI regression gate for the sample app that runs through
-`pnpm dev`. Keep the Storybook surface narrow, deterministic, and detailed enough
+`pnpm dev:storybook` or `pnpm dev:all`. Keep the Storybook surface narrow, deterministic, and detailed enough
 to replace browser E2E smoke for the flows it explicitly covers.
 
 ## Current Shape
@@ -149,8 +149,8 @@ typecheck and unit tests first, then use Storybook for the visible behavior.
 
 Workbench stories should validate realistic product-like UI flows while keeping
 the reusable behavior in package modules. Integration stories render the sample
-host directly, so ambiguous host behavior should be checked against `pnpm dev`
-before adding or changing a story.
+host directly, so ambiguous host behavior should be checked against `pnpm dev` or
+`pnpm dev:all` before adding or changing a story.
 
 - Integration stories may set up sample `sessionStorage` and local storage only
   to reach a deterministic sample-host state.

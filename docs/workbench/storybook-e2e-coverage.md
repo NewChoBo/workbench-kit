@@ -129,8 +129,10 @@ component and integration tiers without a tier-specific reason.
 
 | Script                              | Scope                                                                           |
 | ----------------------------------- | ------------------------------------------------------------------------------- |
-| `pnpm dev`                          | Workbench sample on `127.0.0.1:65173` plus Storybook proxied from `/storybook/` |
-| `pnpm storybook`                    | Local Storybook dev server on `127.0.0.1:61009`                                 |
+| `pnpm dev`                          | Workbench sample only on `127.0.0.1:65173`                                      |
+| `pnpm dev:storybook`                | Storybook only on `127.0.0.1:61009`                                              |
+| `pnpm dev:all`                      | Workbench sample plus Storybook proxied from `/storybook/`                       |
+| `pnpm storybook`                    | Local Storybook dev server on `127.0.0.1:61009` (alias-style entry)              |
 | `pnpm storybook:components`         | Local Storybook opened on the first component case                              |
 | `pnpm storybook:sample`             | Local Storybook opened on the sample journey case                               |
 | `pnpm build:storybook`              | Static Storybook build                                                          |
@@ -141,11 +143,12 @@ component and integration tiers without a tier-specific reason.
 `scripts/test-storybook-play.mjs` starts Storybook on port `61009` when needed, then
 invokes `test-storybook` with `--includeTags=storybook-play-required`.
 
-`pnpm dev` runs the workbench sample and Storybook together. The sample stays at
-`http://127.0.0.1:65173/`; Storybook remains a separate dev server internally but
-is reachable through the sample server at `http://127.0.0.1:65173/storybook/`.
-Use `WORKBENCH_SAMPLE_PORT`, `STORYBOOK_PORT`, and `STORYBOOK_BASE_PATH` to move
-those defaults.
+`pnpm dev` runs only the workbench sample at `http://127.0.0.1:65173/`.
+`pnpm dev:storybook` runs Storybook alone at `http://127.0.0.1:61009/`.
+`pnpm dev:all` runs both together; Storybook remains a separate dev server
+internally but is reachable through the sample server at
+`http://127.0.0.1:65173/storybook/`. Use `WORKBENCH_SAMPLE_PORT`,
+`STORYBOOK_PORT`, and `STORYBOOK_BASE_PATH` to move those defaults.
 
 ## Scope Rules
 

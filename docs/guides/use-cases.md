@@ -50,9 +50,10 @@ pnpm dev
 ```
 
 Opens `http://127.0.0.1:65173` with activity bar, explorer, editor area, status
-bar, and library showcase surfaces. Storybook is also reachable through the same
-sample server at `http://127.0.0.1:65173/storybook/`. Use `pnpm workbench-sample`
-when you only need the sample app.
+bar, and library showcase surfaces. Use `pnpm dev:storybook` for Storybook on
+`http://127.0.0.1:61009/`, or `pnpm dev:all` when Storybook should also be
+proxied from `http://127.0.0.1:65173/storybook/`. Use `pnpm workbench-sample`
+for the package-scoped sample runner.
 
 **Default auth:** in-memory dummy backend — sign in with `tester` / `tester`. No separate server process is required.
 

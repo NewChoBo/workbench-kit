@@ -21,17 +21,30 @@ when extension sources change. The committed generated file is enough for normal
 
 ## Run
 
-Use the combined dev context when Storybook should be available from the same
-sample URL:
+Start the sample app:
 
 ```powershell
 pnpm dev
 ```
 
-This starts the sample at `http://127.0.0.1:65173/` and exposes Storybook through
-`http://127.0.0.1:65173/storybook/`.
+This starts only the sample at `http://127.0.0.1:65173/`.
 
-For the focused sample-only runner:
+For Storybook:
+
+```powershell
+pnpm dev:storybook
+```
+
+Opens Storybook at `http://127.0.0.1:61009/`. To run the sample and Storybook
+together with Storybook proxied from the sample URL, use:
+
+```powershell
+pnpm dev:all
+```
+
+Then Storybook is also reachable at `http://127.0.0.1:65173/storybook/`.
+
+For the package-scoped sample runner:
 
 ```powershell
 pnpm workbench-sample

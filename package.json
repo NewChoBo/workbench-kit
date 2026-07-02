@@ -10,6 +10,8 @@
     "build:workbench-extensions": "node scripts/bundle-workbench-extensions.mjs",
     "build:workspace": "node scripts/build-workspace-packages.mjs",
     "dev": "node scripts/dev-workbench.mjs",
+    "dev:storybook": "node scripts/dev-workbench.mjs storybook",
+    "dev:all": "node scripts/dev-workbench.mjs all",
     "dev:sample": "pnpm workbench-sample",
     "format": "pnpm exec prettier . --write",
     "format:check": "pnpm exec prettier . --check",

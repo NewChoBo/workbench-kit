@@ -18,8 +18,9 @@ Repository: `NewChoBo/workbench-kit` (pnpm monorepo, `@workbench-kit/*` packages
 
 ## Storybook
 
-- Storybook currently validates the `examples/workbench-sample` app behind
-  `pnpm dev` plus a small curated package-story tier; do not reintroduce
+- Storybook currently validates the `examples/workbench-sample` app (via
+  `pnpm dev:storybook` or `pnpm dev:all`) plus a small curated package-story
+  tier; do not reintroduce
   package-wide story galleries without an explicit owner and required
   verification path.
 - Component stories must choose the shared story frame that matches production

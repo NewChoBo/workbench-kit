@@ -12,33 +12,52 @@ const storybookPort = process.env.STORYBOOK_PORT || '61009';
 const storybookBasePath = process.env.STORYBOOK_BASE_PATH || '/storybook/';
 const sampleUrl = `http://${host}:${samplePort}/`;
 const storybookDirectUrl = `http://${host}:${storybookPort}/`;
+const mode = process.argv[2] ?? 'sample';
 
 function localBin(name) {
   return path.join(binRoot, isWindows ? `${name}.CMD` : name);
 }
 
-const processes = [
-  {
+function createSampleProcess({ withStorybookProxy = false } = {}) {
+  const env = {};
+
+  if (withStorybookProxy) {
+    env.WORKBENCH_SAMPLE_STORYBOOK_PROXY_TARGET = `http://${host}:${storybookPort}`;
+  }
+
+  return {
     name: 'workbench sample',
     command: localBin('vite'),
     args: ['--host', host, '--port', samplePort, '--strictPort'],
     cwd: sampleRoot,
-    env: {
-      WORKBENCH_SAMPLE_STORYBOOK_PROXY_TARGET: `http://${host}:${storybookPort}`,
-    },
+    env,
     url: sampleUrl,
+  };
+}
+
+const storybookProcess = {
+  name: 'storybook',
+  command: localBin('storybook'),
+  args: ['dev', '--port', storybookPort, '--host', host, '--no-open'],
+  cwd: repoRoot,
+  env: {
+    STORYBOOK_BASE_PATH: storybookBasePath,
   },
-  {
-    name: 'storybook',
-    command: localBin('storybook'),
-    args: ['dev', '--port', storybookPort, '--host', host, '--no-open'],
-    cwd: repoRoot,
-    env: {
-      STORYBOOK_BASE_PATH: storybookBasePath,
-    },
-    url: storybookDirectUrl,
-  },
-];
+  url: storybookDirectUrl,
+};
+
+const processesByMode = {
+  sample: [createSampleProcess()],
+  storybook: [storybookProcess],
+  all: [createSampleProcess({ withStorybookProxy: true }), storybookProcess],
+};
+
+const processes = processesByMode[mode];
+
+if (!processes) {
+  console.error(`Unknown dev mode: ${mode}. Use sample, storybook, or all.`);
+  process.exit(1);
+}
 
 const children = new Set();
 let stopping = false;
@@ -104,7 +123,14 @@ function startProcess(processInfo) {
   });
 }
 
-console.log('Starting Workbench Kit dev servers:');
+const modeLabel =
+  mode === 'all'
+    ? 'workbench sample + storybook'
+    : mode === 'storybook'
+      ? 'storybook'
+      : 'workbench sample';
+
+console.log(`Starting Workbench Kit dev (${modeLabel}):`);
 for (const processInfo of processes) {
   console.log(`- ${processInfo.name}: ${processInfo.url}`);
   startProcess(processInfo);
