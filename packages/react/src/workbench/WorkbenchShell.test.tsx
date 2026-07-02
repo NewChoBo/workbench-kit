@@ -82,6 +82,7 @@ describe('WorkbenchShell', () => {
 
     expect(markup).toContain('ui-workbench-split-view');
     expect(markup).toContain('ui-workbench-split-view--primary-collapsed');
+    expect(markup).toContain('ui-workbench-split-view__secondary');
     expect(markup).toContain('secondary only');
     expect(markup).toContain('hidden sidebar');
     expect(markup).toContain('ui-workbench-status-bar');

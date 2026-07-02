@@ -2426,7 +2426,7 @@
 
 .ui-workbench-split-view {
   display: grid;
-  grid-template-columns: var(--ui-workbench-split-primary-size, 40%) 1px 1fr;
+  grid-template-columns: var(--ui-workbench-split-primary-size, 40%) 1px minmax(0, 1fr);
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -2434,19 +2434,29 @@
 }
 
 .ui-workbench-split-view--primary-collapsed {
-  grid-template-columns: 0fr 0 1fr !important;
+  grid-template-columns: minmax(0, 1fr) !important;
 }
 
 .ui-workbench-split-view--primary-collapsed .ui-workbench-split-view__primary {
-  min-width: 0;
-  overflow: hidden;
-  visibility: hidden;
+  display: none;
   pointer-events: none;
 }
 
 .ui-workbench-split-view--primary-collapsed .ui-workbench-split-view__separator {
   display: none;
   pointer-events: none;
+}
+
+.ui-workbench-split-view--primary-collapsed .ui-workbench-split-view__secondary {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.ui-workbench-split-view--primary-collapsed[data-orientation='vertical'] {
+  grid-template-columns: none !important;
+  grid-template-rows: minmax(0, 1fr) !important;
 }
 
 .ui-workbench-split-view[data-orientation='vertical'] {
