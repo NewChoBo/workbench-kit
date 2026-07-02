@@ -31,3 +31,5 @@ export type {
   WorkbenchSidebarSectionStackItem,
   WorkbenchSidebarSectionStackProps,
 } from './WorkbenchSidebarSectionStack';
+export { WorkbenchPropertyInline } from './WorkbenchPropertyPanel';
+export type { WorkbenchPropertyInlineProps } from './WorkbenchPropertyPanel';
