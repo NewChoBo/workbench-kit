@@ -224,6 +224,13 @@ export type {
   SideBarRowProps,
 } from './layout/SideBarViewFrame';
 export {
+  SidebarActionIconBar,
+} from './layout/SidebarActionIconBar';
+export type {
+  SidebarActionIconBarProps,
+  SidebarActionIconDescriptor,
+} from './layout/SidebarActionIconBar';
+export {
   WorkbenchActionList,
   WorkbenchActionListItem,
   WorkbenchSidebarSection,
@@ -535,6 +542,8 @@ export {
   ResizablePanels,
   SegmentedControl,
 } from './primitives/WorkbenchEditor';
+export { CatalogBrowseCard } from './primitives/CatalogBrowseCard';
+export type { CatalogBrowseCardProps } from './primitives/CatalogBrowseCard';
 export type {
   ButtonGroupProps,
   EditorTab,
@@ -571,3 +580,22 @@ export type {
 } from './workbench/workspace/WorkspaceDraftsContext';
 export { StructuredArtifactEditor } from './workbench/StructuredArtifactEditor';
 export type { StructuredArtifactEditorProps } from './workbench/StructuredArtifactEditor';
+export {
+  EDITOR_TAB_DRAG_DATA_TYPE,
+  getEditorTabDropPosition,
+  isEditorTabMoveNoop,
+  isEditorTabsScrollerEventTarget,
+  normalizeEditorTabReorderIndex,
+  readEditorTabDragPayload,
+  resolveEditorTabDropTarget,
+  resolveEditorTabStripDropTarget,
+} from './workbench/editor-tabs-dnd';
+export type {
+  EditorTabDragPayload,
+  EditorTabDropTarget,
+} from './workbench/editor-tabs-dnd';
+export { useEditorTabsStripDnd } from './workbench/useEditorTabsStripDnd';
+export type {
+  UseEditorTabsStripDndOptions,
+  UseEditorTabsStripDndResult,
+} from './workbench/useEditorTabsStripDnd';

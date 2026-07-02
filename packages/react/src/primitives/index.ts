@@ -65,6 +65,8 @@ export type {
 } from './WorkbenchChrome';
 export { FileIcon, UI_FILE_ICON_CLASS } from './FileIcon';
 export type { FileIconProps } from './FileIcon';
+export { CatalogBrowseCard } from './CatalogBrowseCard';
+export type { CatalogBrowseCardProps } from './CatalogBrowseCard';
 export { ButtonGroup, EditorTabs, ResizablePanels, SegmentedControl } from './WorkbenchEditor';
 export type {
   ButtonGroupProps,

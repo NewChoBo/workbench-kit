@@ -1,6 +1,19 @@
 export { ActivityBar } from './ActivityBar';
 export type { ActivityBarItem, ActivityBarProps } from './ActivityBar';
 export {
+  EDITOR_TAB_DRAG_DATA_TYPE,
+  getEditorTabDropPosition,
+  isEditorTabMoveNoop,
+  isEditorTabsScrollerEventTarget,
+  normalizeEditorTabReorderIndex,
+  readEditorTabDragPayload,
+  resolveEditorTabDropTarget,
+  resolveEditorTabStripDropTarget,
+} from './editor-tabs-dnd';
+export type { EditorTabDragPayload, EditorTabDropTarget } from './editor-tabs-dnd';
+export { useEditorTabsStripDnd } from './useEditorTabsStripDnd';
+export type { UseEditorTabsStripDndOptions, UseEditorTabsStripDndResult } from './useEditorTabsStripDnd';
+export {
   WorkbenchArtifactModeControls,
   WorkbenchArtifactPreview,
   WorkbenchArtifactShell,
