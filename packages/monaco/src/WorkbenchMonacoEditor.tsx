@@ -64,7 +64,12 @@ export function WorkbenchMonacoEditor({
   className,
   height = '100%',
   language,
-  loading = <div className="workspace-editor__loading">Loading editor...</div>,
+  loading = (
+    <div className="ui-panel-loading ui-panel-centered-state" role="status" aria-live="polite">
+      <i aria-hidden className="codicon codicon-loading codicon-modifier-spin" />
+      <span>Loading editor...</span>
+    </div>
+  ),
   onChange,
   onMount,
   options,

@@ -490,6 +490,8 @@ export { Checkbox } from './primitives/Checkbox';
 export type { CheckboxProps } from './primitives/Checkbox';
 export { EmptyState } from './primitives/EmptyState';
 export type { EmptyStateProps } from './primitives/EmptyState';
+export { PanelLoading } from './primitives/PanelLoading';
+export type { PanelLoadingProps } from './primitives/PanelLoading';
 export { Field } from './primitives/Field';
 export type { FieldProps } from './primitives/Field';
 export { IconButton } from './primitives/IconButton';

@@ -7,7 +7,7 @@ export interface ViewEmptyStateProps extends ComponentPropsWithRef<'p'> {
 
 export function ViewEmptyState({ children, className, ...props }: ViewEmptyStateProps) {
   return (
-    <p className={cx('ui-view-empty-state', className)} {...props}>
+    <p className={cx('ui-view-empty-state', 'ui-panel-centered-state', className)} {...props}>
       {children}
     </p>
   );

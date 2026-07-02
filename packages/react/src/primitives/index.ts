@@ -8,6 +8,8 @@ export { Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
 export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
+export { PanelLoading } from './PanelLoading';
+export type { PanelLoadingProps } from './PanelLoading';
 export { Field } from './Field';
 export type { FieldProps } from './Field';
 export { IconButton } from './IconButton';

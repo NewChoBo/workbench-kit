@@ -66,7 +66,7 @@ export function ChatMessageList({
 
   if (messages.length === 0) {
     return (
-      <div className="message-empty">
+      <div className={cx('message-empty', 'ui-panel-centered-state')}>
         <i className={cx('codicon', emptyIconClass)} />
         <span>{emptyLabel}</span>
       </div>

@@ -2839,6 +2839,29 @@ html.ui-workbench-split-view-resizing--vertical * {
   font-size: var(--font-size-sm);
 }
 
+/* Sole empty/loading content should sit in the panel viewport center, not top-left. */
+.ui-side-bar-view__body:has(> .ui-panel-centered-state:only-child),
+.ui-panel-body:has(> .ui-panel-centered-state:only-child) {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-side-bar-view__body > .ui-panel-centered-state:only-child,
+.ui-panel-body > .ui-panel-centered-state:only-child {
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
+.ui-side-bar-view__body > .ui-view-empty-state:only-child,
+.ui-panel-body > .ui-view-empty-state:only-child,
+.ui-side-bar-view__body > .ui-panel-loading:only-child,
+.ui-panel-body > .ui-panel-loading:only-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
 .workbench-explorer-view,
 .workbench-commands-view,
 .workbench-search-view,
@@ -5148,7 +5171,7 @@ html.ui-workbench-split-view-resizing--vertical * {
 
 .message-empty {
   flex: 1;
-  min-height: 180px;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -5156,6 +5179,7 @@ html.ui-workbench-split-view-resizing--vertical * {
   gap: 8px;
   color: var(--color-text-subtle);
   font-size: var(--font-size-sm);
+  text-align: center;
 }
 
 .message-empty .codicon {
@@ -6174,13 +6198,21 @@ html.ui-workbench-split-view-resizing--vertical * {
   color: var(--color-text-subtle);
 }
 
-.workspace-editor__loading {
-  height: 100%;
+.ui-panel-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-subtle);
+  gap: 8px;
+  min-height: 100%;
+  padding: 24px var(--ui-side-bar-inline-padding, 8px);
+  color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.ui-panel-loading .codicon {
+  color: var(--color-accent);
+  font-size: 16px;
 }
 
 .ui-empty-state {
@@ -6198,6 +6230,14 @@ html.ui-workbench-split-view-resizing--vertical * {
 .ui-empty-state--compact {
   height: auto;
   min-height: 160px;
+}
+
+/* Sidebar panels: compact empty states (search, commands) fill body and stay centered. */
+.ui-side-bar-view__body > .ui-empty-state.ui-empty-state--compact:only-child,
+.ui-panel-body > .ui-empty-state.ui-empty-state--compact:only-child {
+  flex: 1 1 auto;
+  min-height: 100%;
+  height: auto;
 }
 
 .ui-empty-state .codicon {
