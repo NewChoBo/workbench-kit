@@ -8,10 +8,10 @@ const binRoot = path.join(repoRoot, 'node_modules', '.bin');
 const sampleRoot = path.join(repoRoot, 'examples', 'workbench-sample');
 const host = process.env.WORKBENCH_DEV_HOST || '127.0.0.1';
 const samplePort = process.env.WORKBENCH_SAMPLE_PORT || '5173';
-const storybookPort = process.env.STORYBOOK_PORT || '6010';
+const storybookPort = process.env.STORYBOOK_PORT || '25175';
 const storybookBasePath = process.env.STORYBOOK_BASE_PATH || '/storybook/';
 const sampleUrl = `http://${host}:${samplePort}/`;
-const storybookUrl = new URL(storybookBasePath, sampleUrl).toString();
+const storybookDirectUrl = `http://${host}:${storybookPort}/`;
 
 function localBin(name) {
   return path.join(binRoot, isWindows ? `${name}.CMD` : name);
@@ -36,7 +36,7 @@ const processes = [
     env: {
       STORYBOOK_BASE_PATH: storybookBasePath,
     },
-    url: storybookUrl,
+    url: storybookDirectUrl,
   },
 ];
 
