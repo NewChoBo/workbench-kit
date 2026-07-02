@@ -28,8 +28,8 @@ sample URL:
 pnpm dev
 ```
 
-This starts the sample at `http://127.0.0.1:5173/` and exposes Storybook through
-`http://127.0.0.1:5173/storybook/`.
+This starts the sample at `http://127.0.0.1:65173/` and exposes Storybook through
+`http://127.0.0.1:65173/storybook/`.
 
 For the focused sample-only runner:
 
@@ -37,7 +37,7 @@ For the focused sample-only runner:
 pnpm workbench-sample
 ```
 
-Opens `http://127.0.0.1:5173` with activity bar, explorer sidebar, status bar, and a
+Opens `http://127.0.0.1:65173` with activity bar, explorer sidebar, status bar, and a
 library showcase surface that can open package notes, runtime editor targets, JDW,
 schema, and settings-related workbench slices.
 

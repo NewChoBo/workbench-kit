@@ -49,9 +49,9 @@ pnpm build:workbench-extensions
 pnpm dev
 ```
 
-Opens `http://127.0.0.1:5173` with activity bar, explorer, editor area, status
+Opens `http://127.0.0.1:65173` with activity bar, explorer, editor area, status
 bar, and library showcase surfaces. Storybook is also reachable through the same
-sample server at `http://127.0.0.1:5173/storybook/`. Use `pnpm workbench-sample`
+sample server at `http://127.0.0.1:65173/storybook/`. Use `pnpm workbench-sample`
 when you only need the sample app.
 
 **Default auth:** in-memory dummy backend — sign in with `tester` / `tester`. No separate server process is required.

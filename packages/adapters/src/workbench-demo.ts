@@ -163,7 +163,7 @@ Import shared styles once, then compose the workbench primitives in your app she
   "name": "@example/workbench-app",
   "private": true,
   "scripts": {
-    "storybook": "storybook dev --port 6010"
+    "storybook": "storybook dev --port 61009"
   }
 }
 `,

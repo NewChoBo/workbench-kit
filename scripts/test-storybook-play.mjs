@@ -9,7 +9,7 @@ const required = process.argv.includes('--required');
 const runAll = process.argv.includes('--all-stories');
 const baselineTag = 'storybook-play-baseline';
 const requiredTag = 'storybook-play-required';
-const storybookPort = process.env.STORYBOOK_PLAY_PORT || '6010';
+const storybookPort = process.env.STORYBOOK_PLAY_PORT || '61009';
 const storybookUrl = process.env.TARGET_URL || `http://127.0.0.1:${storybookPort}/`;
 const pnpmCommand = 'pnpm';
 

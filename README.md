@@ -98,8 +98,8 @@ closeout.
 ## Workbench Sample Pages
 
 For local development, `pnpm dev` starts the workbench sample on
-`http://127.0.0.1:5173/` and Storybook on a separate internal port while exposing
-it through the sample server at `http://127.0.0.1:5173/storybook/`.
+`http://127.0.0.1:65173/` and Storybook on a separate internal port while exposing
+it through the sample server at `http://127.0.0.1:65173/storybook/`.
 
 The `Deploy Workbench Sample` workflow builds `examples/workbench-sample` and
 deploys the Vite output to GitHub Pages. Configure repository Pages settings to

@@ -114,5 +114,5 @@ function resolveOrigin(baseUrl: string): string {
     return window.location.origin;
   }
 
-  return baseUrl.startsWith('http') ? baseUrl : 'http://127.0.0.1:5173';
+  return baseUrl.startsWith('http') ? baseUrl : 'http://127.0.0.1:65173';
 }

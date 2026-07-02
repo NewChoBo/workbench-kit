@@ -103,10 +103,10 @@ Use these root scripts:
 
 ```json
 {
-  "storybook": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open",
-  "storybook:components": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=react-primitives-controls--form-controls&viewMode=story",
-  "storybook:sample": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=workbench-sample-dev-app--tester-dev-app-journey&viewMode=story",
-  "storybook:chat": "pnpm exec storybook dev --port 6010 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=react-workbench-chat-components--sample-peer-chat-example&viewMode=story",
+  "storybook": "pnpm exec storybook dev --port 61009 --host 127.0.0.1 --no-open",
+  "storybook:components": "pnpm exec storybook dev --port 61009 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=react-primitives-controls--form-controls&viewMode=story",
+  "storybook:sample": "pnpm exec storybook dev --port 61009 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=workbench-sample-dev-app--tester-dev-app-journey&viewMode=story",
+  "storybook:chat": "pnpm exec storybook dev --port 61009 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=react-workbench-chat-components--sample-peer-chat-example&viewMode=story",
   "build:storybook": "pnpm exec storybook build",
   "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",
   "test:storybook-play:required": "pnpm exec node ./scripts/test-storybook-play.mjs --required",
