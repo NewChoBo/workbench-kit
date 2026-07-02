@@ -25,8 +25,8 @@
   padding: 0 8px;
   color: var(--vscode-sideBarTitle-foreground, var(--color-text));
   background: var(--vscode-sideBar-background, var(--color-bg));
-  border-bottom: 1px solid var(--vscode-panel-border, var(--color-border));
-  font-size: var(--font-size-xs);
+  border-bottom: var(--shell-border-width) solid var(--vscode-panel-border, var(--color-border));
+  font-size: var(--shell-font-size-panel-title);
   font-weight: 700;
   text-transform: uppercase;
 }

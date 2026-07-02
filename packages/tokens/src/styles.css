@@ -99,8 +99,31 @@
 :root {
   --radius-sm: 6px;
   --radius-md: 12px;
+  --font-size-xs: 0.75rem;
   --font-size-sm: 0.8125rem;
   --font-size-base: 0.875rem;
+  --font-size-lg: 1rem;
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Shell semantic typography */
+  --shell-font-size-panel-title: var(--font-size-xs);
+  --shell-font-size-body: var(--font-size-base);
+  --shell-font-size-caption: var(--font-size-xs);
+  --shell-font-size-icon: 14px;
+
+  /* Shell shape */
+  --shell-radius-panel: var(--radius-sm);
+  --shell-radius-control: var(--radius-sm);
+  --shell-radius-input: var(--radius-sm);
+  --shell-border-width: 1px;
+
+  /* Shell spacing */
+  --shell-spacing-inline: 8px;
+  --shell-spacing-block: 4px;
+  --shell-spacing-side-bar-inline: 6px;
+  --shell-spacing-side-bar-block: 4px;
+  --panel-header-height: var(--workbench-header-height);
   --control-height-xxs: 22px;
   --control-height-xs: 24px;
   --control-height-sm: 26px;

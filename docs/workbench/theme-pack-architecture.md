@@ -76,6 +76,34 @@ Each preset overrides the workbench chrome palette subset:
 
 File icons and control metrics stay in `styles.css`; presets only swap semantic colors.
 
+## Shell chrome tokens
+
+Non-color shell metrics live in `@workbench-kit/tokens/styles.css` under `:root`. Presets do
+not override these; hosts may set CSS variables on a root element when needed.
+
+| Token                                 | Role                                                          |
+| ------------------------------------- | ------------------------------------------------------------- |
+| `--font-size-xs` … `--font-size-lg`   | Typography scale                                              |
+| `--font-family`, `--font-family-mono` | Shell font stacks                                             |
+| `--shell-font-size-panel-title`       | Panel / sidebar section headers                               |
+| `--shell-font-size-body`              | Default shell body copy                                       |
+| `--shell-font-size-caption`           | Secondary labels, chips                                       |
+| `--shell-font-size-icon`              | Inline sidebar / list icons                                   |
+| `--radius-sm`, `--radius-md`          | Base corner radius scale                                      |
+| `--shell-radius-panel`                | Panel surfaces                                                |
+| `--shell-radius-control`              | Buttons, chips                                                |
+| `--shell-radius-input`                | Inputs, selects                                               |
+| `--shell-border-width`                | Standard 1px chrome borders                                   |
+| `--shell-spacing-inline`              | Default horizontal padding                                    |
+| `--shell-spacing-block`               | Default vertical gap                                          |
+| `--shell-spacing-side-bar-inline`     | Primary sidebar horizontal padding                            |
+| `--shell-spacing-side-bar-block`      | Primary sidebar row block padding                             |
+| `--panel-header-height`               | Panel header row height (aliases `--workbench-header-height`) |
+| `--workbench-*`, `--control-*`        | Component-specific shell dimensions                           |
+
+`@workbench-kit/react` maps region tokens (for example `--ui-side-bar-inline-padding`) to these
+shell aliases where possible.
+
 ## Built-in preset catalog
 
 ### Shipped today
