@@ -1,7 +1,7 @@
 # JSON Widget — Port-Then-Replace Policy
 
-Operational guide for JSON widget authoring migration. Consumers (`tile_paper`,
-`custom_launcher`) stay **reference-only** until the kit milestone closes (Phase 3).
+Operational guide for JSON widget authoring migration. Reference consumer
+implementations stay **reference-only** until the kit milestone closes (Phase 3).
 No consumer swap until Phase 4.
 
 See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-widget-port-then-replace-strategy),
@@ -12,7 +12,7 @@ See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-
 
 | Phase       | Kit action                                                                                                                   | Consumer action                                  |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| 1 Reference | Study tile_paper tree/editor + launcher preview bridge                                                                       | Keep local stacks                                |
+| 1 Reference | Study reference tree/editor UX and launchpad preview bridge patterns | Keep local stacks                                |
 | 2 Port      | Extract neutral primitives into `@workbench-kit/jdw`, `@workbench-kit/react/widget-tree`, `@workbench-kit/react/json-config` | Reference-only                                   |
 | 3 Complete  | Storybook baselines, public APIs, play gates, docs                                                                           | Validate kit readiness                           |
 | 4 Swap      | —                                                                                                                            | Point consumers at kit; delete duplicated chrome |
@@ -21,16 +21,16 @@ See also: [future-capabilities.md § JSON Widget](./future-capabilities.md#json-
 
 ### Stays in reference repos until Phase 4
 
-- tile_paper domain widget types and tile-specific layout chrome
+- Consumer domain widget types and product-specific layout chrome
 - Product routes, storage keys, and authoring persistence
-- custom_launcher launchpad shell merge (`#workbench-ui` wholesale replacement)
+- Host workbench shell merge (wholesale replacement of product-local UI)
 
 ### Ports to `@workbench-kit/jdw`
 
 - `parseJsonWidgetData` and registry contract
 - Neutral widget shape validation and error models
 - Headless editor sync (`editor-sync`, `path`, `selection`, `widget-tree`, `widget-patch`, `widget-child-ops`)
-- Layout helpers that do not depend on tile_paper domain types (`layout/grid`, `layout/stack`, `layout/linear`)
+- Layout helpers that do not depend on consumer domain types (`layout/grid`, `layout/stack`, `layout/linear`)
 
 ### Ports to `@workbench-kit/react/widget-tree`
 
@@ -91,8 +91,8 @@ longer in the tree. Do not treat checked items below as runnable acceptance test
 
 ### Open (Phase 4+)
 
-- [ ] P4 consumer swap runbook execution in tile_paper / custom_launcher
-- [ ] P4 tile_paper domain types (full property sections, registry wrapper pattern)
+- [ ] P4 consumer swap runbook execution in host applications
+- [ ] P4 consumer domain types (full property sections, registry wrapper pattern)
 - [ ] P4 full `createWidgetJsonSchema` parity (tile-ref, spacer, dataSource, multi-schema)
 - [ ] Preview zoom/pan toolbar — **deferred** ([widget-layout-schema-plan.md](./widget-layout-schema-plan.md) §2; not in tree as of 2026-06-14)
 

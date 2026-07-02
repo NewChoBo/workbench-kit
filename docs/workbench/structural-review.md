@@ -286,7 +286,7 @@ tab-local state into extension host factory creation.
 
 | Model                   | Package     | Scheme / use                                     |
 | ----------------------- | ----------- | ------------------------------------------------ |
-| `ResourceUri` (generic) | `contracts` | Cross-domain (`tilepaper-*`, etc.)               |
+| `ResourceUri` (generic) | `contracts` | Cross-domain (`authoring-source:*`, etc.)          |
 | `WorkspaceResourceUri`  | `workspace` | `workspace://file/...`, `workspace://folder/...` |
 
 Lane A editor/explorer should bind **`WorkspaceResourceUri` only** for virtual workspace files.

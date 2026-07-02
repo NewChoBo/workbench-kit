@@ -196,9 +196,9 @@ install state, build output, and dev server.
 Recommended layout:
 
 ```text
-<workspace-root>\newchobo-ui-package
-<workspace-root>\newchobo-ui-package-worktrees\chatting-ui
-<workspace-root>\newchobo-ui-package-worktrees\storybook-baseline
+<workspace-root>\workbench-kit
+<workspace-root>\workbench-kit-worktrees\chatting-ui
+<workspace-root>\workbench-kit-worktrees\storybook-baseline
 ```
 
 Create worktrees:
@@ -206,14 +206,14 @@ Create worktrees:
 ```powershell
 git switch main
 git pull --ff-only
-git worktree add ..\newchobo-ui-package-worktrees\chatting-ui -b feature/codex/chatting-ui main
-git worktree add ..\newchobo-ui-package-worktrees\storybook-baseline -b chore/storybook/react-vite-baseline main
+git worktree add ..\workbench-kit-worktrees\chatting-ui -b feature/codex/chatting-ui main
+git worktree add ..\workbench-kit-worktrees\storybook-baseline -b chore/storybook/react-vite-baseline main
 ```
 
 Run install, dev servers, and validation inside each worktree independently.
 
 ```powershell
-Set-Location ..\newchobo-ui-package-worktrees\chatting-ui
+Set-Location ..\workbench-kit-worktrees\chatting-ui
 pnpm install
 pnpm validate
 ```
@@ -232,7 +232,7 @@ Merge order:
 git switch main
 git merge --ff-only feature/codex/chatting-ui
 pnpm validate
-git worktree remove ..\newchobo-ui-package-worktrees\chatting-ui
+git worktree remove ..\workbench-kit-worktrees\chatting-ui
 git branch -d feature/codex/chatting-ui
 ```
 

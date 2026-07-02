@@ -77,17 +77,17 @@ It does not own a product plugin catalog, marketplace trust, local publisher
 trust chains, integrity fingerprints, license/review UX, or runtime permission
 grant policy. Those stay in the host product.
 
-For `custom_launcher`, this means the Kit installed-extension model can be
-bridged to the product boundary, but plugin catalog/trust still stays in the
-host product. The current product direction is VS Code/Theia-like local plugin
-state: installed plugin folders and manifest scan are runtime inventory, while
-trust, integrity, compatibility, enablement, and workspace trust-ready state are
-host-owned JSON state.
+In host products, the Kit installed-extension model can be bridged to the product
+boundary, but plugin catalog/trust still stays in the host application. The
+recommended direction is VS Code/Theia-like local plugin state: installed plugin
+folders and manifest scan are runtime inventory, while trust, integrity,
+compatibility, enablement, and workspace trust-ready state are host-owned JSON
+state.
 
-## Custom Launcher Adoption Policy
+## Consumer Adoption Policy
 
-`custom_launcher` is the keeper product repo. Workbench Kit adoption there is
-not "add another UI stack"; it is a standardization and source-reduction path:
+Workbench Kit adoption in host applications is not "add another UI stack"; it is
+a standardization and source-reduction path:
 
 - direct feature imports from `@workbench-kit/react` should stay behind thin
   product adapters

@@ -33,6 +33,7 @@ Repository: `NewChoBo/workbench-kit` (pnpm monorepo, `@workbench-kit/*` packages
 ## Change discipline
 
 - Minimize scope; match existing patterns in touched packages.
+- Commit messages: English Conventional Commits per `docs/conventions/git-workflow.md` and `docs/conventions/language-policy.md`.
 - Do not commit or push unless the user asks.
 - Do not force-push `main` / `master`.
 
@@ -49,6 +50,6 @@ Key facts agents often get wrong:
 
 ## Docs index
 
-- Conventions: `docs/conventions/`
+- Conventions: `docs/conventions/` (including `public-reference-policy.md`)
 - Architecture: `docs/architecture/`
 - Workbench notes: `docs/workbench/`

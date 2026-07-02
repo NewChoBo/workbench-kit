@@ -14,7 +14,7 @@ Status: **MVP** — kit primitive for JSON-based settings and configuration scre
 | Right (preview) | `JdwPreview` or empty preview state  | Read-only live preview                     |
 | Toolbar         | Save / Discard (optional)            | Controlled dirty state via `baselineValue` |
 
-Consumers (tile_paper, custom_launcher) can adopt this without migrating full `json-widget-editor` chrome yet.
+Host applications can adopt this without migrating full `json-widget-editor` chrome yet.
 
 ## Package surface
 
@@ -45,7 +45,7 @@ mode focuses the read-only preview only.
 
 ## Storybook
 
-From `newchobo-ui-package`:
+From the monorepo root:
 
 ```bash
 pnpm storybook
@@ -79,7 +79,7 @@ pnpm typecheck
 | `@workbench-kit/react/jdw` `JdwPreview`              | Done                                                                   |
 | `StructuredArtifactEditor` (workspace file + drafts) | Done — use when editing workspace files with `WorkspaceDraftsProvider` |
 | `JsonConfigWorkbench` (controlled JSON config)       | **This MVP**                                                           |
-| tile_paper `json-widget-editor` migration            | Deferred — keep local until consumers adopt kit primitive              |
+| Reference `json-widget-editor` migration               | Deferred — keep local until consumers adopt kit primitive              |
 
 ## Consumer adoption sketch
 

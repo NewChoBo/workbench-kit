@@ -45,7 +45,7 @@ Establish a **JSON-first foundation** aligned with **JDW wire format**, implemen
 ## 2. Non-goals (this plan)
 
 - Full playground parity with removed `JsonWidget/Playground` (DnD canvas, zoom toolbar, etc.)
-- tile_paper domain widget types (`tile`, `dataSource`, tile-ref, …)
+- consumer domain widget types (`tile`, `dataSource`, tile-ref, …)
 - Consumer swap (Phase 4 of port-then-replace)
 - Visual asset thumbnails / marketplace UX
 - Persistence, versioning migrations beyond `$schema` version pins

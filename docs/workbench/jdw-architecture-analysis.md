@@ -201,7 +201,7 @@ Evidence:
 
 - Single layout result tree feeds preview, future canvas overlays, and export.
 - Testable without React in `@workbench-kit/jdw`.
-- Design-tool preview (absolute rects) matches tile_paper/canvas direction in docs.
+- Design-tool preview (absolute rects) matches the canvas authoring direction in workbench planning docs.
 
 ### Risks
 

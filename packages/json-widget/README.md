@@ -21,9 +21,11 @@ pnpm storybook
 
 Open **JDW/Fixtures** and **JDW/Preview** under `@workbench-kit/react/jdw` for render and parse-error demos. See `docs/workbench/json-widget-mvp.md` for validation commands.
 
-## Reference implementation
+## Extending in consumer apps
 
-See `@tilepaper/json-widget-tree` in the TilePaper monorepo for a full widget type system, layout math, and built-in widget definitions wired to this boundary.
+Host applications can layer domain-specific widget types, layout math, and built-in
+widget definitions on top of this boundary. Keep product-specific shapes and
+renderers in the consumer repository.
 
 ## Usage
 

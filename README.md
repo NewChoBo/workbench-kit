@@ -156,6 +156,7 @@ Task-oriented guides and API indexes for integrators and extension authors:
 - [Development Harness](./docs/conventions/development-harness.md)
 - [Lint & Format](./docs/conventions/lint-format.md)
 - [Language Policy](./docs/conventions/language-policy.md)
+- [Public Reference Policy](./docs/conventions/public-reference-policy.md)
 - [Package Manager Policy](./docs/conventions/package-manager.md)
 - [Public API Governance](./docs/conventions/public-api-governance.md)
 - [npm Release & CI/CD](./docs/conventions/npm-release.md)

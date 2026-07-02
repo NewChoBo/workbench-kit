@@ -59,6 +59,20 @@ Common failure modes to avoid:
 
 Follow [`docs/conventions/git-workflow.md`](docs/conventions/git-workflow.md). Do not commit, push, or tag unless the user explicitly requests it.
 
+**Commit messages are English-only.** Use Conventional Commits (`feat`, `fix`, `docs`, …) with an English title and body. Full format and examples: [`docs/conventions/language-policy.md`](docs/conventions/language-policy.md) and the **Commit Message** section in `git-workflow.md`.
+
+Consumer applications may define their own commit language policy. This repository keeps English commits for public npm history and contributor consistency.
+
+This repository does not ship a commit-msg helper script; write messages manually from the docs above.
+
+## Public reference policy
+
+Public docs and rules must not name commercial, proprietary, or internal sibling
+projects. Use neutral capability language and keep VS Code / OSS design
+references where they explain kit conventions.
+
+Full policy: [`docs/conventions/public-reference-policy.md`](docs/conventions/public-reference-policy.md).
+
 ## Cursor rules
 
 | Rule                                   | Scope                                                |

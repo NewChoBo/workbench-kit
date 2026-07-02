@@ -38,3 +38,12 @@ Validation: pnpm validate passed.
 
 Do not rewrite old commits only to change language. Apply this policy to new
 commits and docs from this point forward.
+
+## Consumer applications
+
+Host applications that depend on Workbench Kit may define their own commit
+language policy. This repository keeps English commits for public npm history
+and contributor consistency.
+
+This repository does not provide a commit-msg helper script; authors follow the
+documented format manually.

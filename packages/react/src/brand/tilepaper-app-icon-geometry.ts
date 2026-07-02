@@ -1,4 +1,4 @@
-/** Shared TilePaper app icon layout (1024 canvas, Material-style root surface). */
+/** Shared workbench app icon layout (1024 canvas, Material-style root surface). */
 export const TILEPAPER_ICON_CANVAS_SIZE = 1024;
 
 const REFERENCE_TILE_SIZE = 314;

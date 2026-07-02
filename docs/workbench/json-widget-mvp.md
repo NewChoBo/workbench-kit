@@ -7,7 +7,6 @@ Status: **MVP complete** for framework-neutral parse/registry primitives.
 | Track                         | MVP deliverable                                                                          | Status |
 | ----------------------------- | ---------------------------------------------------------------------------------------- | ------ |
 | `@workbench-kit/jdw`          | dist build, unit tests, JDW validation + Storybook fixtures                              | Done   |
-| `@tilepaper/json-widget-tree` | delegates parse/registry to workbench-kit; keeps TilePaper widget types + layout locally | Done   |
 | `@workbench-kit/contracts`    | provider action → launchpad mapping integration test                                     | Done   |
 
 ## Package surface
@@ -20,7 +19,7 @@ React renderers, editors, and domain-specific widget shapes remain in product re
 
 ## Storybook
 
-From `newchobo-ui-package`:
+From the monorepo root:
 
 ```bash
 pnpm storybook
@@ -55,12 +54,6 @@ pnpm test
 pnpm check:launch-boundary
 ```
 
-TilePaper parity:
-
-```bash
-pnpm --filter @tilepaper/json-widget-tree test
-```
-
 ## Phase 3+ (not in MVP)
 
 - **Foundation plan (active):** [widget-layout-schema-plan.md](./widget-layout-schema-plan.md) — JDW v7 wire format,
@@ -77,10 +70,3 @@ pnpm --filter @tilepaper/json-widget-tree test
 - `JdwPreview` — parse widget JSON via `@workbench-kit/jdw`, optional registry mock render
 - Storybook: **JDW/Preview** (`RegisteredWidget`, `ParseError`) with baseline play tests
 - Unit tests: `packages/react/src/jdw/JdwPreview.test.tsx`
-
-### `custom_launcher` launchpad bridge
-
-- `packages/launchpad-source/src/launchpad-source-widget-bridge.ts`
-  - `parseLaunchpadWidgetPreviewJson` / `validateLaunchpadWidgetPreviewJson`
-  - `evaluateLaunchpadSourcePreviewStub` — launchpad source validation + optional embedded `payload.widget` preview scan
-- Unit tests: `tests/unit/launchpad/source/launchpad-source-widget-bridge.test.ts`
