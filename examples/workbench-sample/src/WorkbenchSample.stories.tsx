@@ -357,7 +357,9 @@ export const SidebarToggle: Story = {
 
     expect(canvasElement.querySelectorAll('.ui-workbench-split-view').length).toBeGreaterThan(0);
     expect(canvas.getByLabelText('Workspace Explorer')).not.toBeVisible();
-    await expect(canvas.getByLabelText('Sample editor workspace')).toBeVisible();
+    await waitFor(() => {
+      expect(canvas.getByLabelText('Sample editor workspace')).toBeVisible();
+    });
 
     const showStartedAt = performance.now();
     await userEvent.click(canvas.getByTitle('Show primary sidebar'));

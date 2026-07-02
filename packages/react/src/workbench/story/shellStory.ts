@@ -25,8 +25,12 @@ export function expectCollapsedPrimarySidebarShowsFullWidthSecondary(root: HTMLE
   const splitRect = (splitView as Element).getBoundingClientRect();
   const secondaryRect = (secondary as Element).getBoundingClientRect();
   expect(secondaryRect.width).toBeGreaterThan(0);
+  expect(secondaryRect.height).toBeGreaterThan(0);
   expect(Math.abs(secondaryRect.width - splitRect.width)).toBeLessThanOrEqual(
     FULL_WIDTH_TOLERANCE_PX,
+  );
+  expect(Math.abs(secondaryRect.height - splitRect.height)).toBeLessThanOrEqual(
+    FULL_HEIGHT_TOLERANCE_PX,
   );
 }
 
