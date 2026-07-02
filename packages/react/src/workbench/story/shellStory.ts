@@ -15,8 +15,8 @@ export function expectCollapsedPrimarySidebarShowsFullWidthSecondary(root: HTMLE
   const splitView = root.querySelector(`.${PRIMARY_SIDEBAR_COLLAPSED_CLASS}`);
   expect(splitView).not.toBeNull();
 
-  const primary = splitView?.querySelector('.ui-workbench-split-view__primary');
-  const secondary = splitView?.querySelector('.ui-workbench-split-view__secondary');
+  const primary = splitView?.querySelector(':scope > .ui-workbench-split-view__primary');
+  const secondary = splitView?.querySelector(':scope > .ui-workbench-split-view__secondary');
   expect(primary).not.toBeNull();
   expect(secondary).not.toBeNull();
 
@@ -40,8 +40,8 @@ export function expectExpandedPrimarySidebar(root: HTMLElement) {
   const splitView = root.querySelector('.ui-workbench-split-view');
   expect(splitView).not.toBeNull();
 
-  const primary = splitView?.querySelector('.ui-workbench-split-view__primary');
-  const secondary = splitView?.querySelector('.ui-workbench-split-view__secondary');
+  const primary = splitView?.querySelector(':scope > .ui-workbench-split-view__primary');
+  const secondary = splitView?.querySelector(':scope > .ui-workbench-split-view__secondary');
   expect(primary).not.toBeNull();
   expect(secondary).not.toBeNull();
   expect(window.getComputedStyle(primary as Element).display).not.toBe('none');
@@ -55,8 +55,8 @@ export function expectCollapsedSecondarySplitShowsFullWidthPrimary(root: HTMLEle
   const splitView = root.querySelector(`.${SECONDARY_SIDEBAR_COLLAPSED_CLASS}`);
   expect(splitView).not.toBeNull();
 
-  const primary = splitView?.querySelector('.ui-workbench-split-view__primary');
-  const secondary = splitView?.querySelector('.ui-workbench-split-view__secondary');
+  const primary = splitView?.querySelector(':scope > .ui-workbench-split-view__primary');
+  const secondary = splitView?.querySelector(':scope > .ui-workbench-split-view__secondary');
   expect(primary).not.toBeNull();
   expect(secondary).not.toBeNull();
 
@@ -76,8 +76,8 @@ export function expectCollapsedSecondaryVerticalSplitShowsFullHeightPrimary(root
   );
   expect(splitView).not.toBeNull();
 
-  const primary = splitView?.querySelector('.ui-workbench-split-view__primary');
-  const secondary = splitView?.querySelector('.ui-workbench-split-view__secondary');
+  const primary = splitView?.querySelector(':scope > .ui-workbench-split-view__primary');
+  const secondary = splitView?.querySelector(':scope > .ui-workbench-split-view__secondary');
   expect(primary).not.toBeNull();
   expect(secondary).not.toBeNull();
 
