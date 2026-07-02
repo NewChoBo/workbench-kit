@@ -138,27 +138,27 @@ only.
 
 ### Adopted (this milestone)
 
-| Strength                                                   | Kit mapping                                                                              | Status                |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------- |
-| Library active filter chip bar + Clear all                 | `FilterChip`, `FilterBarActiveChips`, `FilterBar.stories`, `LibraryCatalog` enhancement  | **Adopted**           |
-| Source manager left-nav + right sectioned detail           | `SourceManagerSettings.stories` (`WorkbenchNavigationPanel` + `WorkbenchSectionedPanel`) | **Adopted (pattern)** |
-| Template card gallery                                      | `TemplateGallery.stories` (208px cards, category chip, skeleton/empty)                   | **Adopted (pattern)** |
-| Sectioned provider settings (Installation/Account/Library) | `WorkbenchSettingsSection` + inline auth notice via `HelpText`                           | **Adopted (pattern)** |
+| Strength                                                   | Kit mapping                                                                                 | Status                |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------- |
+| Library active filter chip bar + Clear all                 | `FilterChip`, `FilterBarActiveChips`, `FilterBar.stories`, `LibraryCatalog` enhancement     | **Adopted**           |
+| Source manager left-nav + right sectioned detail           | `SourceManagerSettings.stories` (`WorkbenchNavigationPanel` + `WorkbenchSectionedPanel`)    | **Adopted (pattern)** |
+| Template card gallery                                      | `TemplateGallery.stories` (208px cards, category chip, skeleton/empty)                      | **Adopted (pattern)** |
+| Sectioned provider settings (Installation/Account/Library) | `WorkbenchSettingsSection` + inline auth notice via `HelpText`                              | **Adopted (pattern)** |
 | Scroll-area infinite catalog load                          | `useScrollAreaInfiniteLoad`, `ScrollAreaInfiniteSentinel`, `ScrollAreaInfiniteLoad.stories` | **Adopted**           |
-| Preview zoom/fit toolbar                                   | —                                                                                        | **Deferred**          |
-| Draft/explicit-save editor discipline                      | `JsonConfigWorkbench` Apply gating                                                       | Adopted (prior)       |
+| Preview zoom/fit toolbar                                   | —                                                                                           | **Deferred**          |
+| Draft/explicit-save editor discipline                      | `JsonConfigWorkbench` Apply gating                                                          | Adopted (prior)       |
 
 ### Deferred
 
-| Strength                                             | Reason                                     |
-| ---------------------------------------------------- | ------------------------------------------ |
-| Full Activity Bar route tree + URL restore           | Product shell navigation frame             |
-| Launchpad outline ↔ canvas ↔ inspector tri-sync      | Launchpad DTO + Phase 4 consumer           |
-| Layer stack reorder DnD + registry editors           | Launchpad-specific; playground subset only |
-| Settings theme/locale debounced auto-sync            | Host persistence API                       |
-| Count-bearing facet labels in library filters        | Service/query integration in consumer      |
-| Tile tilt/lift hover effects                         | Composition effect schema (product)        |
-| Keyboard shortcut tables per surface                 | Host command registry                      |
+| Strength                                        | Reason                                     |
+| ----------------------------------------------- | ------------------------------------------ |
+| Full Activity Bar route tree + URL restore      | Product shell navigation frame             |
+| Launchpad outline ↔ canvas ↔ inspector tri-sync | Launchpad DTO + Phase 4 consumer           |
+| Layer stack reorder DnD + registry editors      | Launchpad-specific; playground subset only |
+| Settings theme/locale debounced auto-sync       | Host persistence API                       |
+| Count-bearing facet labels in library filters   | Service/query integration in consumer      |
+| Tile tilt/lift hover effects                    | Composition effect schema (product)        |
+| Keyboard shortcut tables per surface            | Host command registry                      |
 
 ### NOT inherited
 

@@ -68,7 +68,7 @@ function InfiniteCatalogHarness() {
   });
 
   return (
-    <StoryWorkbenchShellFrame title="Catalog browse" variant="editor">
+    <StoryWorkbenchShellFrame variant="editor">
       <div style={{ display: 'grid', gap: 8, height: '100%', minHeight: 0 }}>
         <div aria-live="polite" style={{ color: 'var(--color-text-muted)', fontSize: 12 }}>
           Showing {visibleItems.length} of {items.length}
