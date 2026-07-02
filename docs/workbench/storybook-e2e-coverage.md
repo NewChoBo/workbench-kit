@@ -127,18 +127,18 @@ component and integration tiers without a tier-specific reason.
 
 ## Scripts
 
-| Script                              | Scope                                                                           |
-| ----------------------------------- | ------------------------------------------------------------------------------- |
-| `pnpm dev`                          | Workbench sample only on `127.0.0.1:65173`                                      |
-| `pnpm dev:storybook`                | Storybook only on `127.0.0.1:61009`                                              |
-| `pnpm dev:all`                      | Workbench sample plus Storybook proxied from `/storybook/`                       |
-| `pnpm storybook`                    | Local Storybook dev server on `127.0.0.1:61009` (alias-style entry)              |
-| `pnpm storybook:components`         | Local Storybook opened on the first component case                              |
-| `pnpm storybook:sample`             | Local Storybook opened on the sample journey case                               |
-| `pnpm build:storybook`              | Static Storybook build                                                          |
-| `pnpm test:storybook-play:required` | Required play stories only                                                      |
-| `pnpm validate:ui`                  | `build:storybook` + `test:storybook-play:required`                              |
-| `pnpm validate:full`                | Static/unit gates plus Storybook UI validation                                  |
+| Script                              | Scope                                                               |
+| ----------------------------------- | ------------------------------------------------------------------- |
+| `pnpm dev`                          | Workbench sample only on `127.0.0.1:65173`                          |
+| `pnpm dev:storybook`                | Storybook only on `127.0.0.1:61009`                                 |
+| `pnpm dev:all`                      | Workbench sample plus Storybook proxied from `/storybook/`          |
+| `pnpm storybook`                    | Local Storybook dev server on `127.0.0.1:61009` (alias-style entry) |
+| `pnpm storybook:components`         | Local Storybook opened on the first component case                  |
+| `pnpm storybook:sample`             | Local Storybook opened on the sample journey case                   |
+| `pnpm build:storybook`              | Static Storybook build                                              |
+| `pnpm test:storybook-play:required` | Required play stories only                                          |
+| `pnpm validate:ui`                  | `build:storybook` + `test:storybook-play:required`                  |
+| `pnpm validate:full`                | Static/unit gates plus Storybook UI validation                      |
 
 `scripts/test-storybook-play.mjs` starts Storybook on port `61009` when needed, then
 invokes `test-storybook` with `--includeTags=storybook-play-required`.
