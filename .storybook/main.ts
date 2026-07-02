@@ -25,6 +25,7 @@ const config: StorybookConfig = {
     '../packages/react/src/primitives/EditorChrome.stories.@(ts|tsx)',
     '../packages/react/src/modal/OverlayDialogs.stories.@(ts|tsx)',
     '../packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)',
+    '../packages/react/src/workbench/WorkbenchShell.stories.@(ts|tsx)',
     '../packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)',
     '../packages/react/src/widget-tree/WidgetTreeLab.stories.@(ts|tsx)',
   ],

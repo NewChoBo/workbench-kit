@@ -331,6 +331,46 @@ export const BasicPermissionScope: Story = {
   tags: ['storybook-play-required'],
 };
 
+export const SidebarToggle: Story = {
+  name: 'Sidebar toggle',
+  render: () => {
+    resetSampleHostStorage('tester');
+    return <App />;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitForWorkbenchReady(canvas);
+    await expect(canvas.getByLabelText('Workspace Explorer')).toBeVisible();
+    expect(canvasElement.querySelectorAll('.ui-workbench-split-view').length).toBeGreaterThan(0);
+
+    const hideStartedAt = performance.now();
+    await userEvent.click(canvas.getByTitle('Hide primary sidebar'));
+    await waitFor(() => {
+      expect(
+        canvasElement.querySelector('.ui-workbench-split-view--primary-collapsed'),
+      ).not.toBeNull();
+    });
+    const hideDurationMs = performance.now() - hideStartedAt;
+
+    expect(canvasElement.querySelectorAll('.ui-workbench-split-view').length).toBeGreaterThan(0);
+    expect(canvas.getByLabelText('Workspace Explorer')).not.toBeVisible();
+    await expect(canvas.getByLabelText('Sample editor workspace')).toBeVisible();
+
+    const showStartedAt = performance.now();
+    await userEvent.click(canvas.getByTitle('Show primary sidebar'));
+    await waitFor(() => {
+      expect(canvas.getByLabelText('Workspace Explorer')).toBeVisible();
+    });
+    const showDurationMs = performance.now() - showStartedAt;
+
+    expect(canvasElement.querySelector('.ui-workbench-split-view--primary-collapsed')).toBeNull();
+    expect(hideDurationMs).toBeLessThan(2_000);
+    expect(showDurationMs).toBeLessThan(2_000);
+  },
+  tags: ['storybook-play-required'],
+};
+
 function resetSampleHostStorage(account: SampleAccount) {
   if (typeof window === 'undefined') {
     return;

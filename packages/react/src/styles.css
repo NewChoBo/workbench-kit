@@ -2433,6 +2433,22 @@
   overflow: hidden;
 }
 
+.ui-workbench-split-view--primary-collapsed {
+  grid-template-columns: 0fr 0 1fr !important;
+}
+
+.ui-workbench-split-view--primary-collapsed .ui-workbench-split-view__primary {
+  min-width: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ui-workbench-split-view--primary-collapsed .ui-workbench-split-view__separator {
+  display: none;
+  pointer-events: none;
+}
+
 .ui-workbench-split-view[data-orientation='vertical'] {
   grid-template-columns: none;
   grid-template-rows: var(--ui-workbench-split-primary-size, 40%) 1px 1fr;

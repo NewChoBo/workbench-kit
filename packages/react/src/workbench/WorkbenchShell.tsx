@@ -1,6 +1,8 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, type CSSProperties, type ReactNode } from 'react';
+import { cx } from '../utils/cx';
 import { ActivityBar, type ActivityBarProps, type ActivityBarItem } from './ActivityBar';
 import { SplitView } from './SplitView';
+import { sidebarDevLogger } from './sidebarDevLogger';
 import { StatusBar, type StatusBarItemModel, type StatusBarSectionModel } from './StatusBar';
 import { DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT } from './shellState';
 import { suppressNativeBrowserContextMenu } from './workbenchContextMenu';
@@ -59,6 +61,18 @@ export function WorkbenchShell({
       ? (primarySidebar.primarySizePercent ?? DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT)
       : undefined;
 
+  const isPrimarySidebarCollapsed = primarySidebar !== undefined && !primarySidebar.isVisible;
+
+  useEffect(() => {
+    if (primarySidebar === undefined) {
+      return;
+    }
+
+    sidebarDevLogger.info('primary sidebar visibility', {
+      isVisible: primarySidebar.isVisible,
+    });
+  }, [primarySidebar?.isVisible]);
+
   const centerArea = auxiliarySidebar?.isVisible ? (
     <SplitView
       className={auxiliarySidebar.className}
@@ -72,15 +86,18 @@ export function WorkbenchShell({
     secondaryArea
   );
 
-  const body = primarySidebar?.isVisible ? (
+  const body = primarySidebar ? (
     <SplitView
-      className={primarySidebar?.className}
+      className={cx(
+        primarySidebar.className,
+        isPrimarySidebarCollapsed && 'ui-workbench-split-view--primary-collapsed',
+      )}
       defaultPrimarySizePercent={
-        primarySidebar?.primarySizePercent ?? DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT
+        primarySidebar.primarySizePercent ?? DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT
       }
-      minPrimarySizePercent={primarySidebar?.minPrimarySizePercent}
-      maxPrimarySizePercent={primarySidebar?.maxPrimarySizePercent}
-      onPrimarySizePercentChange={primarySidebar?.onSizePercentChange}
+      minPrimarySizePercent={primarySidebar.minPrimarySizePercent}
+      maxPrimarySizePercent={primarySidebar.maxPrimarySizePercent}
+      onPrimarySizePercentChange={primarySidebar.onSizePercentChange}
       primary={primarySidebar.node}
       primarySizePercent={primarySidebarSizePercent}
       secondary={centerArea}

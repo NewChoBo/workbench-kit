@@ -67,7 +67,7 @@ describe('WorkbenchShell', () => {
     expect(markup).toContain('ui-workbench-split-view');
   });
 
-  it('renders secondary area directly when primary sidebar is hidden', () => {
+  it('keeps SplitView mounted and collapses the primary column when sidebar is hidden', () => {
     const markup = renderToStaticMarkup(
       <WorkbenchShell
         activityBar={{ items: [{ id: 'explorer', icon: 'E', label: 'Explorer' }] }}
@@ -80,9 +80,10 @@ describe('WorkbenchShell', () => {
       />,
     );
 
-    expect(markup).not.toContain('ui-workbench-split-view');
+    expect(markup).toContain('ui-workbench-split-view');
+    expect(markup).toContain('ui-workbench-split-view--primary-collapsed');
     expect(markup).toContain('secondary only');
-    expect(markup).not.toContain('hidden sidebar');
+    expect(markup).toContain('hidden sidebar');
     expect(markup).toContain('ui-workbench-status-bar');
   });
 
