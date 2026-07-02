@@ -170,8 +170,10 @@ export {
   createLaunchpadLibraryItemTileBinding,
   deriveLaunchWorkingDirectory,
   inferLaunchTypeFromTarget,
+  isPlayableLaunchTarget,
   normalizeLaunchTarget,
   resolveLaunchpadLibraryItemMapping,
+  resolveLibraryItemPlayExecution,
 } from './library-launchpad-mapping';
 export type { ExternalUrlPolicy } from './external-url';
 export { EXTERNAL_URL_PROTOCOLS, normalizeExternalUrlTarget } from './external-url';
@@ -262,6 +264,8 @@ export type {
 export type {
   MappedLaunchAction,
   ProviderCommandAction,
+  ProviderEpicAction,
+  ProviderEpicActionMode,
   ProviderExecAction,
   ProviderFolderAction,
   ProviderLaunchActionKind,
@@ -272,6 +276,7 @@ export type {
   ProviderUrlAction,
 } from './provider-library-mapping';
 export {
+  createEpicStoreUrl,
   providerActionIcon,
   providerActionToLaunchAction,
   providerActionTypeLabel,
