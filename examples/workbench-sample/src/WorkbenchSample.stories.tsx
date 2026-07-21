@@ -427,7 +427,7 @@ async function expectSampleFileVisible(canvas: StoryCanvas, fileName: string) {
 
 /**
  * Primary + secondary activity labels for the tester Owner role.
- * Includes Field Remap (samples.schema-mapper, order 36) after JDW Lab.
+ * Includes Field Remap (samples.field-remap, order 36) after JDW Lab.
  */
 const TESTER_ACTIVITY_LABELS = [
   'Explorer',

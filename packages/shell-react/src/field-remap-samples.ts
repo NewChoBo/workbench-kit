@@ -1,4 +1,4 @@
-import type { MappingEdge } from '@workbench-kit/schema-mapper';
+import type { MappingEdge } from '@workbench-kit/field-remap';
 
 /**
  * Field-remap demo scenarios (table / JSON shaped).

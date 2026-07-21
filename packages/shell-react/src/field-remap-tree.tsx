@@ -1,6 +1,6 @@
 import { useMemo, useState, type JSX } from 'react';
 import { Badge, Button } from '@workbench-kit/react/primitives';
-import type { MappingEdge, SourceField, TargetSlot } from '@workbench-kit/schema-mapper';
+import type { MappingEdge, SourceField, TargetSlot } from '@workbench-kit/field-remap';
 
 type TreeSide = 'source' | 'target';
 

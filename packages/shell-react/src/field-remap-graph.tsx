@@ -9,7 +9,7 @@ import {
   type TargetSlot,
   type ValueTransformDefinition,
   type ValueTransformRegistry,
-} from '@workbench-kit/schema-mapper';
+} from '@workbench-kit/field-remap';
 
 interface KeyRow {
   readonly id: string;

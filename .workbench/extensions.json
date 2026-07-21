@@ -9,7 +9,7 @@
     "workbench-kit.builtin.workspace",
     "workbench-kit.samples.hello-world",
     "workbench-kit.samples.jdw",
-    "workbench-kit.samples.schema-mapper",
+    "workbench-kit.samples.field-remap",
     "workbench-kit.samples.theme-alt"
   ],
   "enabled": [
@@ -25,7 +25,7 @@
     "workbench-kit.builtin.workspace",
     "workbench-kit.samples.hello-world",
     "workbench-kit.samples.jdw",
-    "workbench-kit.samples.schema-mapper",
+    "workbench-kit.samples.field-remap",
     "workbench-kit.samples.theme-alt"
   ]
 }

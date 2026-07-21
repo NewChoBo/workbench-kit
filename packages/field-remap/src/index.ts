@@ -1,7 +1,7 @@
 export type {
   FieldDataType,
   MappingEdge,
-  SchemaMappingDocument,
+  FieldRemapDocument,
   SourceField,
   TargetSlot,
   TransformContext,
@@ -27,16 +27,16 @@ export {
 } from './domain/document/mappingEdge.js';
 
 export {
-  createSchemaMappingDocument,
-  deserializeSchemaMappingDocument,
-  InvalidSchemaMappingDocumentError,
-  migrateSchemaMappingDocument,
-  normalizeSchemaMappingDocument,
-  parseSchemaMappingDocument,
-  SCHEMA_MAPPING_DOCUMENT_VERSION,
-  serializeSchemaMappingDocument,
-  UnsupportedSchemaMappingDocumentVersionError,
-} from './domain/document/schemaMappingDocument.js';
+  createFieldRemapDocument,
+  deserializeFieldRemapDocument,
+  InvalidFieldRemapDocumentError,
+  migrateFieldRemapDocument,
+  normalizeFieldRemapDocument,
+  parseFieldRemapDocument,
+  FIELD_REMAP_DOCUMENT_VERSION,
+  serializeFieldRemapDocument,
+  UnsupportedFieldRemapDocumentVersionError,
+} from './domain/document/fieldRemapDocument.js';
 
 export {
   applyStringTemplate,

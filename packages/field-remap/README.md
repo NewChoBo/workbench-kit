@@ -1,4 +1,4 @@
-# `@workbench-kit/schema-mapper`
+# `@workbench-kit/field-remap`
 
 Field remap **runtime**: reshape structure A into structure B with mapping edges and `convertToShape`.
 
@@ -10,7 +10,7 @@ for leaf-only hosts.
 ## Install
 
 ```powershell
-pnpm add @workbench-kit/schema-mapper@prototype
+pnpm add @workbench-kit/field-remap@prototype
 ```
 
 ## Capabilities
@@ -40,7 +40,7 @@ import {
   defineDataShape,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
-} from '@workbench-kit/schema-mapper';
+} from '@workbench-kit/field-remap';
 
 const structureA = {
   user_name: 'Ada',
@@ -103,7 +103,7 @@ Hosts may `registry.register()` additional transforms (the sample registers `exp
 
 ```text
 src/
-  domain/document/  edges + SchemaMappingDocument
+  domain/document/  edges + FieldRemapDocument
   domain/shapes/    DataShape, ConversionDefinition, convertToShape
   domain/ingest/    plain object → fields / slots
   domain/mapping/   path helpers, list context, conflicts

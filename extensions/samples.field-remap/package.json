@@ -1,5 +1,5 @@
 {
-  "name": "@workbench-kit/extension-samples-schema-mapper",
+  "name": "@workbench-kit/extension-samples-field-remap",
   "version": "0.0.0",
   "private": true,
   "type": "module",

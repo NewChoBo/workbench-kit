@@ -231,7 +231,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/workbench-extension-sdk
 
-  extensions/samples.schema-mapper:
+  extensions/samples.field-remap:
     dependencies:
       '@workbench-kit/workbench-extension-sdk':
         specifier: workspace:*
@@ -365,7 +365,7 @@ importers:
         specifier: workspace:*
         version: link:../contracts
 
-  packages/schema-mapper: {}
+  packages/field-remap: {}
 
   packages/services:
     dependencies:
@@ -387,9 +387,9 @@ importers:
       '@workbench-kit/react':
         specifier: workspace:*
         version: link:../react
-      '@workbench-kit/schema-mapper':
+      '@workbench-kit/field-remap':
         specifier: workspace:*
-        version: link:../schema-mapper
+        version: link:../field-remap
       '@workbench-kit/tokens':
         specifier: workspace:*
         version: link:../tokens

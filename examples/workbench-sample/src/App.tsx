@@ -470,7 +470,7 @@ function SampleHelpContent() {
           <li>
             Open the <strong>Field Remap</strong> activity, then choose <strong>A → B</strong> for a
             minimal rename from structure A into structure B (
-            <code>@workbench-kit/schema-mapper</code>).
+            <code>@workbench-kit/field-remap</code>).
           </li>
           <li>Toggle the color scheme from the status bar to review theme persistence.</li>
           <li>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createValueTransformRegistry } from '@workbench-kit/schema-mapper';
+import { createValueTransformRegistry } from '@workbench-kit/field-remap';
 import { JSONATA_TRANSFORM_ID, jsonataValueTransform } from './jsonata-transform.js';
 
 describe('jsonataValueTransform', () => {

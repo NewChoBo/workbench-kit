@@ -82,7 +82,7 @@ export {
   SAMPLE_JDW_LAB_VIEW_RENDER_KIND,
   type SampleJdwLabViewRenderData,
 } from './jdw-lab-view-data.js';
-export { SampleSchemaMapperDemo, type SampleSchemaMapperDemoProps } from './schema-mapper-demo.js';
+export { SampleFieldRemapDemo, type SampleFieldRemapDemoProps } from './field-remap-demo.js';
 export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap-panel.js';
 export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './field-remap-flow.js';
 export {
@@ -94,21 +94,21 @@ export {
   type FieldRemapSampleId,
 } from './field-remap-samples.js';
 export {
-  SampleSchemaMapperView,
-  buildSchemaMapperEditorUri,
-  parseSchemaMapperEditorSampleId,
-  type SampleSchemaMapperViewProps,
-} from './schema-mapper-view.js';
+  SampleFieldRemapView,
+  buildFieldRemapEditorUri,
+  parseFieldRemapEditorSampleId,
+  type SampleFieldRemapViewProps,
+} from './field-remap-view.js';
 export {
-  isSampleSchemaMapperViewRenderData,
-  SAMPLE_SCHEMA_MAPPER_VIEW_RENDER_KIND,
-  type SampleSchemaMapperViewRenderData,
-} from './schema-mapper-view-data.js';
+  isSampleFieldRemapViewRenderData,
+  SAMPLE_FIELD_REMAP_VIEW_RENDER_KIND,
+  type SampleFieldRemapViewRenderData,
+} from './field-remap-view-data.js';
 export {
-  SchemaMapperEditorSurface,
-  type SchemaMapperEditorSurfaceId,
-  type SchemaMapperEditorSurfaceProps,
-} from './schema-mapper-editor-surface.js';
+  FieldRemapEditorSurface,
+  type FieldRemapEditorSurfaceId,
+  type FieldRemapEditorSurfaceProps,
+} from './field-remap-editor-surface.js';
 export {
   WorkbenchShell,
   type WorkbenchLocaleOption,

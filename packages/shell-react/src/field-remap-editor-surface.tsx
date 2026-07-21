@@ -1,36 +1,36 @@
 import type { JSX } from 'react';
 import { ScrollArea } from '@workbench-kit/react/primitives';
 
-import { SampleSchemaMapperDemo } from './schema-mapper-demo.js';
+import { SampleFieldRemapDemo } from './field-remap-demo.js';
 import { resolveFieldRemapSampleId } from './field-remap-samples.js';
-import './schema-mapper-view.css';
+import './field-remap-view.css';
 
-export type SchemaMapperEditorSurfaceId = string;
+export type FieldRemapEditorSurfaceId = string;
 
-export interface SchemaMapperEditorSurfaceProps {
+export interface FieldRemapEditorSurfaceProps {
   readonly resourceUri: string;
-  readonly surfaceId: SchemaMapperEditorSurfaceId;
+  readonly surfaceId: FieldRemapEditorSurfaceId;
   readonly tabId: string;
 }
 
-export function SchemaMapperEditorSurface({
+export function FieldRemapEditorSurface({
   resourceUri,
   surfaceId,
   tabId,
-}: SchemaMapperEditorSurfaceProps): JSX.Element {
+}: FieldRemapEditorSurfaceProps): JSX.Element {
   const sampleId = resolveFieldRemapSampleId(surfaceId);
 
   return (
     <ScrollArea
       aria-label={`${sampleId} field remap`}
-      className="workbench-schema-mapper-editor-surface"
+      className="workbench-field-remap-editor-surface"
       data-editor-host-id={tabId}
       data-resource-uri={resourceUri}
       data-sample-id={sampleId}
-      data-testid="schema-mapper-editor-surface"
+      data-testid="field-remap-editor-surface"
       orientation="vertical"
     >
-      <SampleSchemaMapperDemo sampleId={sampleId} />
+      <SampleFieldRemapDemo sampleId={sampleId} />
     </ScrollArea>
   );
 }

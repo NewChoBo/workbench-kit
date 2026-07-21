@@ -1,12 +1,12 @@
-.workbench-schema-mapper-view {
+.workbench-field-remap-view {
   height: 100%;
 }
 
-.workbench-schema-mapper-view__list {
+.workbench-field-remap-view__list {
   padding: 0.5rem;
 }
 
-.workbench-schema-mapper-editor-surface {
+.workbench-field-remap-editor-surface {
   box-sizing: border-box;
   flex: 1 1 auto;
   align-self: stretch;

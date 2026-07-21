@@ -42,11 +42,11 @@
       "icon": "layout"
     },
     {
-      "id": "workbench-kit.samples.schema-mapper",
+      "id": "workbench-kit.samples.field-remap",
       "displayName": "Field Remap",
-      "description": "Minimal A → B field remap sample for @workbench-kit/schema-mapper.",
+      "description": "Minimal A → B field remap sample for @workbench-kit/field-remap.",
       "category": "utility",
-      "manifestUrl": "workbench-kit.samples.schema-mapper",
+      "manifestUrl": "workbench-kit.samples.field-remap",
       "icon": "type-hierarchy"
     }
   ]

@@ -1,4 +1,4 @@
-import type { MappingEdge } from '@workbench-kit/schema-mapper';
+import type { MappingEdge } from '@workbench-kit/field-remap';
 import type { FieldItemInput, Mapping } from 'react-table-mapping';
 
 /** One column: field name (static string cell). */

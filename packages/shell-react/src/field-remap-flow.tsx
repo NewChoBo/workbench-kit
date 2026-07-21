@@ -22,7 +22,7 @@ import {
   type SourceField,
   type TargetSlot,
   type ValueTransformRegistry,
-} from '@workbench-kit/schema-mapper';
+} from '@workbench-kit/field-remap';
 
 import {
   connectionToMappingEdge,

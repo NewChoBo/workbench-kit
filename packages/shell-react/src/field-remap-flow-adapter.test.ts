@@ -4,7 +4,7 @@ import {
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
   type MappingEdge,
-} from '@workbench-kit/schema-mapper';
+} from '@workbench-kit/field-remap';
 
 import {
   connectionToMappingEdge,

@@ -80,7 +80,7 @@ export function attachShapeIdToSourceFields(
 }
 
 /**
- * Merge source shapes into one tree for `SchemaMapper` / convert:
+ * Merge source shapes into one tree for `FieldRemap` / convert:
  * each shape becomes a non-mappable group whose children carry `shapeId`.
  */
 export function mergeSourceShapes(shapes: readonly DataShape[]): SourceField[] {

@@ -10,7 +10,7 @@ import {
   withConversionEdges,
   type MappingEdge,
   type ValueTransformRegistry,
-} from '@workbench-kit/schema-mapper';
+} from '@workbench-kit/field-remap';
 
 import { FieldRemapFlowMapper } from './field-remap-flow.js';
 import {
@@ -19,7 +19,7 @@ import {
   type FieldRemapSampleId,
 } from './field-remap-samples.js';
 import { jsonataValueTransform } from './jsonata-transform.js';
-import './schema-mapper-view.css';
+import './field-remap-view.css';
 
 export interface FieldRemapPanelProps {
   /** Catalog sample id, or a full sample definition. */
@@ -122,7 +122,7 @@ export function FieldRemapPanel({
   return (
     <div
       className={['workbench-field-remap-demo', className].filter(Boolean).join(' ')}
-      data-testid="schema-mapper-demo"
+      data-testid="field-remap-demo"
       data-sample-id={sample.id}
     >
       <header className="workbench-field-remap-demo__header">
