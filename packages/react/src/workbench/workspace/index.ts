@@ -16,6 +16,8 @@ export type {
   WorkspaceEditorPanelRenderEditorContext,
   WorkspaceEditorPanelRenderTabActions,
   WorkspaceEditorPanelRenderTabActionsContext,
+  WorkspaceEditorPanelSaveShortcutContext,
+  WorkspaceEditorPanelSaveShortcutMode,
 } from './WorkspaceEditorPanel';
 export {
   WORKSPACE_EXPLORER_DRAG_DATA_TYPE,
