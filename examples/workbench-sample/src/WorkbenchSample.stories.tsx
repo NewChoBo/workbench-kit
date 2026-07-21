@@ -91,17 +91,7 @@ export const LoginSubmitFlow: Story = {
     await waitForWorkbenchReady(canvas);
     await expect(canvas.getByLabelText('Sample editor workspace')).toBeVisible();
     await expect(canvas.getByRole('button', { name: 'Open example' })).toBeVisible();
-    expect(getActivityLabels(canvas)).toEqual([
-      'Explorer',
-      'Search',
-      'JDW Lab',
-      'Commands',
-      'Chat',
-      'AI Chat',
-      'Extensions',
-      'Profile',
-      'Settings',
-    ]);
+    expectTesterActivityLabels(canvas);
   },
   tags: ['storybook-play-required'],
 };
@@ -122,17 +112,7 @@ export const TesterWorkbench: Story = {
     await expect(canvas.getByLabelText('Status bar')).toHaveTextContent('Workbench Kit');
     await expect(canvas.getByRole('button', { name: 'Open example' })).toBeVisible();
 
-    expect(getActivityLabels(canvas)).toEqual([
-      'Explorer',
-      'Search',
-      'JDW Lab',
-      'Commands',
-      'Chat',
-      'AI Chat',
-      'Extensions',
-      'Profile',
-      'Settings',
-    ]);
+    expectTesterActivityLabels(canvas);
   },
   tags: ['storybook-play-required'],
 };
@@ -247,7 +227,10 @@ export const TesterDevAppJourney: Story = {
     await userEvent.keyboard('{Control>}p{/Control}');
     const commandPalette = await canvas.findByRole('dialog', { name: /Command Palette/ });
     await expect(commandPalette).toBeVisible();
-    await userEvent.type(within(commandPalette).getByLabelText('Search commands'), 'Open README');
+    const commandSearch = within(commandPalette).getByLabelText('Search commands');
+    // Palette search uses pointer-events:none; drive input via focus + keyboard.
+    commandSearch.focus();
+    await userEvent.keyboard('Open README');
     await userEvent.keyboard('{Enter}');
     await expectEditorTabVisible(canvas, 'README.md');
 
@@ -302,17 +285,7 @@ export const TesterDevAppJourney: Story = {
     });
     await selectPermissionRole(profileDialog, 'Owner');
     await waitFor(() => {
-      expect(getActivityLabels(canvas)).toEqual([
-        'Explorer',
-        'Search',
-        'JDW Lab',
-        'Commands',
-        'Chat',
-        'AI Chat',
-        'Extensions',
-        'Profile',
-        'Settings',
-      ]);
+      expectTesterActivityLabels(canvas);
     });
     await userEvent.click(within(profileDialog).getByRole('button', { name: 'Sign out' }));
     await waitForLoginGate(canvas);
@@ -452,12 +425,34 @@ async function expectSampleFileVisible(canvas: StoryCanvas, fileName: string) {
   });
 }
 
+/**
+ * Primary + secondary activity labels for the tester Owner role.
+ * Includes Field Remap (samples.schema-mapper, order 36) after JDW Lab.
+ */
+const TESTER_ACTIVITY_LABELS = [
+  'Explorer',
+  'Search',
+  'JDW Lab',
+  'Commands',
+  'Chat',
+  'AI Chat',
+  'Extensions',
+  'Field Remap',
+  'Profile',
+  'Settings',
+] as const;
+
 function getActivityLabels(canvas: StoryCanvas): string[] {
   const activityBar = canvas.getByRole('navigation', { name: 'Activity bar' });
   return within(activityBar)
     .getAllByRole('button')
     .map((button) => button.getAttribute('aria-label'))
     .filter((label): label is string => Boolean(label));
+}
+
+function expectTesterActivityLabels(canvas: StoryCanvas) {
+  const labels = getActivityLabels(canvas);
+  expect(labels, `activity labels: ${JSON.stringify(labels)}`).toEqual([...TESTER_ACTIVITY_LABELS]);
 }
 
 async function selectPermissionRole(scope: HTMLElement, optionName: string) {
