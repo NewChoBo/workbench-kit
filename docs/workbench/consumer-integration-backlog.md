@@ -221,17 +221,30 @@ this shape under `apps/desktop-runtime/features/window-manager/main-window-*`.
 | **Suggested package**  | Release process — see [npm-release.md](../conventions/npm-release.md).                           |
 | **Storybook / sample** | Consumer CI change; kit publishes all `NPM_PUBLISH_ORDER` packages together.                     |
 
+### 18. VS Code-compatible explorer focus / selection
+
+| Field                  | Detail                                                                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**        | Converge workspace explorer action context on VS Code-like focus vs selection rules (multi-select respected when focus is inside selection; otherwise focus). |
+| **Consumer pain**      | Kit interim `paths` (files) + folder `focusedPath` forces host shims; delete/rename/move disagree with VS Code muscle memory.                                 |
+| **Suggested package**  | `@workbench-kit/workspace` / `@workbench-kit/react/workbench/workspace` helpers first; DTO migration only with notes.                                         |
+| **Storybook / sample** | Fixtures for focus-outside-selection, folder multi-select, rename/create selection — see [explorer-selection-policy.md](./explorer-selection-policy.md).      |
+
+**Near-term:** Keep interim invariants consistent (no folder path in file `paths`).  
+**Next extract:** `resolveExplorerActionPaths(focus, selection, { respectMultiSelection })`  
+aligned with VS Code explorer `getContext` behavior, then teach controller defaults to use it.
+
 ---
 
 ## Summary counts
 
-| Priority              | Count | Focus                                                                                 |
-| --------------------- | ----- | ------------------------------------------------------------------------------------- |
-| Completed (merged)    | 13    | Tokens, library detail, media, DnD, sidebar actions, integrations, exports, dev ports |
-| In progress (WIP)     | 2     | Infinite scroll hook, platform chrome                                                 |
-| High priority pending | 6     | Catalog pane, facet panel, shims, strict types, chrome finish                         |
-| Medium priority       | 6     | Category tree, facet strip, compact detail, gallery, samples, DnD consolidation       |
-| Long-term             | 5     | Host context, theme packs, electron shell, collections, published CI                  |
+| Priority              | Count | Focus                                                                                         |
+| --------------------- | ----- | --------------------------------------------------------------------------------------------- |
+| Completed (merged)    | 13    | Tokens, library detail, media, DnD, sidebar actions, integrations, exports, dev ports         |
+| In progress (WIP)     | 2     | Infinite scroll hook, platform chrome                                                         |
+| High priority pending | 6     | Catalog pane, facet panel, shims, strict types, chrome finish                                 |
+| Medium priority       | 6     | Category tree, facet strip, compact detail, gallery, samples, DnD consolidation               |
+| Long-term             | 6     | Host context, theme packs, electron shell, collections, published CI, VS Code explorer select |
 
 ---
 
