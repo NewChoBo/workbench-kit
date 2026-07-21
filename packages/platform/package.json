@@ -10,6 +10,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./node": "./src/node/index.ts",
+    "./atomic-write": "./src/node/atomic-write.ts",
+    "./resize-rect": "./src/window/resize-rect.ts",
+    "./tray-close-policy": "./src/window/tray-close-policy.ts",
     "./versioned-browser-state": "./src/versioned-browser-state.ts"
   },
   "dependencies": {

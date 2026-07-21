@@ -80,6 +80,8 @@ export function usePointerPassthroughRegion(options: UsePointerPassthroughRegion
       if (frame !== 0) {
         window.cancelAnimationFrame(frame);
       }
+      // Do not leave the host window stuck in click-through after unmount.
+      void portRef.current.setPointerPassthrough(false);
     };
   }, [enabled, rootRef]);
 }

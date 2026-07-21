@@ -17,21 +17,26 @@ Related: [Consumer Integration Backlog](./consumer-integration-backlog.md) ·
 
 Use official subpath exports from `@workbench-kit/react`. Do not import from `packages/react/src/...` in consuming apps.
 
-| Subpath                                     | Purpose                                                                |
-| ------------------------------------------- | ---------------------------------------------------------------------- |
-| `@workbench-kit/react`                      | Root barrel — includes typed drag MIME helpers (`createTypedDragMime`) |
-| `@workbench-kit/react/primitives`           | Controls, editor chrome, library layout, scroll, property grids        |
-| `@workbench-kit/react/layout`               | Sidebar frames, editor frame, section stacks                           |
-| `@workbench-kit/react/editor-tabs`          | Tab strip drag-and-drop helpers                                        |
-| `@workbench-kit/react/overlay`              | Context menus; anchored overlay panel positioning helper               |
-| `@workbench-kit/react/modal`                | Low-level modal frame (prefer management wrapper when applicable)      |
-| `@workbench-kit/react/workbench/shell`      | Activity bar, shell layout, view editor, title bar                     |
-| `@workbench-kit/react/workbench/chat`       | Chat panel, composer, message list/item, conversation bar              |
-| `@workbench-kit/react/workbench/management` | Dialog frames, integrations shell, notices                             |
-| `@workbench-kit/react/workbench/workspace`  | Workspace explorer, editor panel, selection helpers                    |
-| `@workbench-kit/workspace`                  | Pure path/selection/virtual-workspace helpers (no React)               |
-| `@workbench-kit/react/brand`                | Product icon mark                                                      |
-| `@workbench-kit/contracts`                  | Cross-host DTOs and authoring workbench state                          |
+| Subpath                                           | Purpose                                                                |
+| ------------------------------------------------- | ---------------------------------------------------------------------- |
+| `@workbench-kit/react`                            | Root barrel — includes typed drag MIME helpers (`createTypedDragMime`) |
+| `@workbench-kit/react/drag-mime`                  | Leaf — `createTypedDragMime` / `createStringDragMime`                  |
+| `@workbench-kit/react/primitives`                 | Controls, editor chrome, library layout, scroll, property grids        |
+| `@workbench-kit/platform/versioned-browser-state` | Leaf — `createVersionedBrowserStateAdapter`                            |
+| `@workbench-kit/platform/resize-rect`             | Leaf — `resizeRect`                                                    |
+| `@workbench-kit/platform/tray-close-policy`       | Leaf — tray hide/quit helpers                                          |
+| `@workbench-kit/platform/atomic-write`            | Leaf — Node `atomicWriteText`                                          |
+| `@workbench-kit/react/layout`                     | Sidebar frames, editor frame, section stacks                           |
+| `@workbench-kit/react/editor-tabs`                | Tab strip drag-and-drop helpers                                        |
+| `@workbench-kit/react/overlay`                    | Context menus; anchored overlay panel positioning helper               |
+| `@workbench-kit/react/modal`                      | Low-level modal frame (prefer management wrapper when applicable)      |
+| `@workbench-kit/react/workbench/shell`            | Activity bar, shell layout, view editor, title bar                     |
+| `@workbench-kit/react/workbench/chat`             | Chat panel, composer, message list/item, conversation bar              |
+| `@workbench-kit/react/workbench/management`       | Dialog frames, integrations shell, notices                             |
+| `@workbench-kit/react/workbench/workspace`        | Workspace explorer, editor panel, selection helpers                    |
+| `@workbench-kit/workspace`                        | Pure path/selection/virtual-workspace helpers (no React)               |
+| `@workbench-kit/react/brand`                      | Product icon mark                                                      |
+| `@workbench-kit/contracts`                        | Cross-host DTOs and authoring workbench state                          |
 
 Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workbench-kit/react/primitives.css`).
 
