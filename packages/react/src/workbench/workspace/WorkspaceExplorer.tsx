@@ -102,6 +102,7 @@ export interface WorkspaceExplorerProps {
   onInlineEditCancel?: (edit: WorkspaceExplorerInlineEditState) => void;
   onInlineEditCommit?: (meta: WorkspaceExplorerInlineEditCommitMeta) => void;
   onInlineEditValueChange?: (value: string, edit: WorkspaceExplorerInlineEditState) => void;
+  onBackgroundContextMenu?: (event: MouseEvent<HTMLUListElement>) => void;
   onItemContextMenu?: (
     event: MouseEvent<HTMLButtonElement>,
     node: WorkspaceTreeNode,
@@ -116,6 +117,7 @@ export interface WorkspaceExplorerProps {
   ) => void;
   onToggleFolder: (path: string) => void;
   focusedPath?: string | undefined;
+  renderItemActions?: (node: WorkspaceTreeNode, meta: WorkspaceExplorerItemActionMeta) => ReactNode;
   selectedPaths?: Iterable<string>;
   selectionAnchorPath?: string;
 }
@@ -131,6 +133,7 @@ export function WorkspaceExplorer({
   inlineEdit,
   nodes,
   onActivateFile,
+  onBackgroundContextMenu,
   onInlineEditCancel,
   onInlineEditCommit,
   onInlineEditValueChange,
@@ -140,6 +143,7 @@ export function WorkspaceExplorer({
   onRequestRename,
   onSelectionChange,
   onToggleFolder,
+  renderItemActions,
   selectedPaths = [],
   selectionAnchorPath,
 }: WorkspaceExplorerProps) {
@@ -269,6 +273,8 @@ export function WorkspaceExplorer({
   };
 
   const handleItemContextMenu = (event: MouseEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
+    // Keep item menus from bubbling to the list background handler.
+    event.stopPropagation();
     const meta = getItemActionMeta(node);
 
     if (node.type === 'file' && !meta.selected) {
@@ -502,6 +508,9 @@ export function WorkspaceExplorer({
       fill
       aria-label="Workspace files"
       dropTarget={dropTargetPath === ''}
+      onContextMenu={(event) => {
+        onBackgroundContextMenu?.(event);
+      }}
       onDragLeave={(event) => handleDropTargetDragLeave(event, '')}
       onDragOver={(event) => handleDropTargetDragOver(event, '')}
       onDrop={(event) => handleDrop(event, '')}
@@ -532,6 +541,13 @@ export function WorkspaceExplorer({
           <Fragment key={node.path}>
             <SideBarListItem
               active={activePath === node.path}
+              after={
+                renderItemActions ? (
+                  <span className="ui-workspace-explorer-item-actions">
+                    {renderItemActions(node, getItemActionMeta(node))}
+                  </span>
+                ) : undefined
+              }
               data-workspace-path={node.path}
               depth={depth}
               draggable={Boolean(onRequestMove)}

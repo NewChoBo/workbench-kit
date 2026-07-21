@@ -332,6 +332,47 @@ describe('ChatMessageItem', () => {
     expect(markup).toContain('message__after');
     expect(markup).toContain('attachment-chip');
   });
+
+  it('renders assistant contentMode plain without markdown wrappers', () => {
+    const message: ChatMessage = {
+      content: '**plain** assistant text',
+      contentMode: 'plain',
+      id: 'assistant-plain',
+      source: 'assistant',
+    };
+
+    const markup = renderToStaticMarkup(<ChatMessageItem message={message} />);
+
+    expect(markup).toContain('**plain** assistant text');
+    expect(markup).not.toContain('md-content');
+    expect(markup).not.toContain('<strong>');
+  });
+
+  it('applies tone classes from message.tone', () => {
+    const errorMarkup = renderToStaticMarkup(
+      <ChatMessageItem
+        message={{
+          content: 'Something failed',
+          id: 'tone-error',
+          source: 'assistant',
+          tone: 'error',
+        }}
+      />,
+    );
+    expect(errorMarkup).toContain('message--tone-error');
+
+    const warningMarkup = renderToStaticMarkup(
+      <ChatMessageItem
+        message={{
+          content: 'Check this',
+          id: 'tone-warning',
+          source: 'user',
+          tone: 'warning',
+        }}
+      />,
+    );
+    expect(warningMarkup).toContain('message--tone-warning');
+  });
 });
 
 describe('ChatMessageList', () => {
@@ -383,5 +424,17 @@ describe('ChatMessageList', () => {
     expect(markup).not.toContain('Old two');
     expect(markup).toContain('Recent one');
     expect(markup).toContain('Recent two');
+  });
+
+  it('renders messageListAddon after messages', () => {
+    const markup = renderToStaticMarkup(
+      <ChatMessageList
+        messageListAddon={<div data-testid="list-addon">addon</div>}
+        messages={[{ content: 'Hello', id: 'm1', source: 'user' }]}
+      />,
+    );
+
+    expect(markup).toContain('data-testid="list-addon"');
+    expect(markup.indexOf('Hello')).toBeLessThan(markup.indexOf('list-addon'));
   });
 });

@@ -96,6 +96,12 @@ export const RuntimeControls: Story = {
   tags: ['storybook-play-required'],
 };
 
+/** Host gaps: file-drop overlay (`onFilesDrop`) and message `tone` / `contentMode`. */
+export const HostGapsDropAndTone: Story = {
+  name: 'Host gaps — drop and tone',
+  render: () => <HostGapsDropAndToneHarness />,
+};
+
 function SamplePeerChatExampleHarness() {
   return (
     <section aria-label="Sample peer chat example" className="ui-story-sidebar-surface">
@@ -191,6 +197,56 @@ function AssistantChatHarness() {
         />
 
         <StoryEventLog aria-label="Chat component event log" compact>
+          {status}
+        </StoryEventLog>
+      </StorySidebarFrame>
+    </section>
+  );
+}
+
+const hostGapToneMessages: ChatMessage[] = [
+  {
+    content: 'Plain assistant note (contentMode: plain).',
+    contentMode: 'plain',
+    id: 'plain-1',
+    source: 'assistant',
+  },
+  {
+    content: 'Warning: review before applying.',
+    id: 'warn-1',
+    source: 'assistant',
+    tone: 'warning',
+  },
+  {
+    content: 'Error: the last command failed.',
+    id: 'err-1',
+    source: 'assistant',
+    tone: 'error',
+  },
+];
+
+function HostGapsDropAndToneHarness() {
+  const [status, setStatus] = useState('Drop files onto the panel to attach.');
+
+  return (
+    <section aria-label="Host gaps drop and tone story" className="ui-story-sidebar-surface">
+      <StorySidebarFrame variant="chat">
+        <ChatPanel
+          emptyLabel="Drop files or send a message"
+          filesDropLabel="Drop files to attach"
+          messages={hostGapToneMessages}
+          placeholder="Message the workspace"
+          title="Chat"
+          value=""
+          onFilesDrop={(files) =>
+            setStatus(
+              `Dropped ${files.length} file(s): ${files.map((file) => file.name).join(', ')}`,
+            )
+          }
+          onSubmit={() => undefined}
+          onValueChange={() => undefined}
+        />
+        <StoryEventLog aria-label="Host gaps event log" compact>
           {status}
         </StoryEventLog>
       </StorySidebarFrame>

@@ -5,7 +5,9 @@ import {
   applyWorkspaceExplorerMutationResult,
   createWorkspaceExplorerInlineEditDraft,
   createWorkspaceExplorerRenameDraft,
+  DEFAULT_WORKSPACE_EXPLORER_MUTATION_DENIED_MESSAGE,
   isWorkspaceExplorerCreatePathAvailable,
+  resolveWorkspaceExplorerMutationDeniedMessage,
   validateWorkspaceExplorerInlineEditName,
   workspaceExplorerParentPaths,
 } from './workspaceExplorerController';
@@ -28,6 +30,18 @@ describe('workspaceExplorerController', () => {
     expect(validateWorkspaceExplorerInlineEditName('bad/name')).toBe(
       'Use a simple file or folder name.',
     );
+    expect(validateWorkspaceExplorerInlineEditName('bad/name', 'Invalid name')).toBe(
+      'Invalid name',
+    );
+  });
+
+  it('resolves canMutatePath denial messages', () => {
+    expect(resolveWorkspaceExplorerMutationDeniedMessage(undefined)).toBeUndefined();
+    expect(resolveWorkspaceExplorerMutationDeniedMessage(true)).toBeUndefined();
+    expect(resolveWorkspaceExplorerMutationDeniedMessage(false)).toBe(
+      DEFAULT_WORKSPACE_EXPLORER_MUTATION_DENIED_MESSAGE,
+    );
+    expect(resolveWorkspaceExplorerMutationDeniedMessage('Read-only path')).toBe('Read-only path');
   });
 
   it('creates inline edit drafts', () => {

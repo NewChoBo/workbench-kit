@@ -326,6 +326,80 @@ export function getWorkspaceEntryMovePlan({
   };
 }
 
+/**
+ * Pure folder-move applicator for hosts that manage workspace state outside the
+ * reducer. Returns the unchanged `state` when the move is invalid.
+ */
+export function applyWorkspaceFolderMove(
+  state: VirtualWorkspaceState,
+  sourcePathInput: string,
+  targetFolderPathInput: string,
+): VirtualWorkspaceState {
+  const sourcePath = normalizeWorkspacePath(sourcePathInput);
+  const targetFolderPath = normalizeWorkspacePath(targetFolderPathInput);
+  if (
+    !sourcePath ||
+    !folderPathSet(state.files, state.folders).has(sourcePath) ||
+    parentPathOf(sourcePath) === targetFolderPath ||
+    (targetFolderPath && isUnderPath(targetFolderPath, sourcePath))
+  ) {
+    return state;
+  }
+
+  if (targetFolderPath && !folderPathSet(state.files, state.folders).has(targetFolderPath)) {
+    return state;
+  }
+
+  const destinationPath = joinWorkspacePath(targetFolderPath, fileNameOfPath(sourcePath));
+  if (!destinationPath || destinationPath === sourcePath) return state;
+
+  const filesOutsideSource = state.files.filter((file) => !isUnderPath(file.path, sourcePath));
+  const foldersOutsideSource = state.folders.filter((folder) => !isUnderPath(folder, sourcePath));
+  if (hasPathConflict(filesOutsideSource, foldersOutsideSource, destinationPath)) return state;
+
+  const movePath = (currentPath: string) =>
+    currentPath === sourcePath
+      ? destinationPath
+      : `${destinationPath}/${currentPath.slice(sourcePath.length + 1)}`;
+  const files = state.files.map((file) =>
+    isUnderPath(file.path, sourcePath)
+      ? {
+          ...file,
+          path: movePath(file.path),
+          updatedAt: nowIso(),
+        }
+      : file,
+  );
+  const folders = materializeFolders(files, [
+    ...foldersOutsideSource,
+    ...state.folders.filter((folder) => isUnderPath(folder, sourcePath)).map(movePath),
+    destinationPath,
+  ]);
+  const openPaths = state.openPaths.map((openFilePath) =>
+    isUnderPath(openFilePath, sourcePath) ? movePath(openFilePath) : openFilePath,
+  );
+  const selectedPath =
+    state.selectedPath && isUnderPath(state.selectedPath, sourcePath)
+      ? movePath(state.selectedPath)
+      : state.selectedPath;
+  const expandedPaths = new Set(
+    [...state.expandedPaths]
+      .map((expandedPath) =>
+        isUnderPath(expandedPath, sourcePath) ? movePath(expandedPath) : expandedPath,
+      )
+      .concat(parentPathsOf(destinationPath), destinationPath),
+  );
+
+  return {
+    ...state,
+    expandedPaths: pruneExpandedPaths(expandedPaths, files, folders),
+    files,
+    folders,
+    openPaths,
+    selectedPath,
+  };
+}
+
 export function initializeVirtualWorkspaceState({
   expandedPaths = [],
   files = [],
@@ -649,69 +723,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'move-folder') {
-    const sourcePath = normalizeWorkspacePath(action.sourcePath);
-    const targetFolderPath = normalizeWorkspacePath(action.targetFolderPath);
-    if (
-      !sourcePath ||
-      !folderPathSet(state.files, state.folders).has(sourcePath) ||
-      parentPathOf(sourcePath) === targetFolderPath ||
-      (targetFolderPath && isUnderPath(targetFolderPath, sourcePath))
-    ) {
-      return state;
-    }
-
-    if (targetFolderPath && !folderPathSet(state.files, state.folders).has(targetFolderPath)) {
-      return state;
-    }
-
-    const destinationPath = joinWorkspacePath(targetFolderPath, fileNameOfPath(sourcePath));
-    if (!destinationPath || destinationPath === sourcePath) return state;
-
-    const filesOutsideSource = state.files.filter((file) => !isUnderPath(file.path, sourcePath));
-    const foldersOutsideSource = state.folders.filter((folder) => !isUnderPath(folder, sourcePath));
-    if (hasPathConflict(filesOutsideSource, foldersOutsideSource, destinationPath)) return state;
-
-    const movePath = (currentPath: string) =>
-      currentPath === sourcePath
-        ? destinationPath
-        : `${destinationPath}/${currentPath.slice(sourcePath.length + 1)}`;
-    const files = state.files.map((file) =>
-      isUnderPath(file.path, sourcePath)
-        ? {
-            ...file,
-            path: movePath(file.path),
-            updatedAt: nowIso(),
-          }
-        : file,
-    );
-    const folders = materializeFolders(files, [
-      ...foldersOutsideSource,
-      ...state.folders.filter((folder) => isUnderPath(folder, sourcePath)).map(movePath),
-      destinationPath,
-    ]);
-    const openPaths = state.openPaths.map((openFilePath) =>
-      isUnderPath(openFilePath, sourcePath) ? movePath(openFilePath) : openFilePath,
-    );
-    const selectedPath =
-      state.selectedPath && isUnderPath(state.selectedPath, sourcePath)
-        ? movePath(state.selectedPath)
-        : state.selectedPath;
-    const expandedPaths = new Set(
-      [...state.expandedPaths]
-        .map((expandedPath) =>
-          isUnderPath(expandedPath, sourcePath) ? movePath(expandedPath) : expandedPath,
-        )
-        .concat(parentPathsOf(destinationPath), destinationPath),
-    );
-
-    return {
-      ...state,
-      expandedPaths: pruneExpandedPaths(expandedPaths, files, folders),
-      files,
-      folders,
-      openPaths,
-      selectedPath,
-    };
+    return applyWorkspaceFolderMove(state, action.sourcePath, action.targetFolderPath);
   }
 
   if (action.type === 'move-file') {

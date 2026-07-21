@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyWorkspaceFolderMove,
   getAvailableWorkspaceEntryName,
   getWorkspaceEntryMovePlan,
   getWorkspaceFileMovePlan,
@@ -165,6 +166,25 @@ describe('virtual workspace model', () => {
     expect(state.openPaths).toEqual(['docs/components/Button.tsx']);
     expect(state.selectedPath).toBe('docs/components/Button.tsx');
     expect([...state.expandedPaths].sort()).toEqual(['docs', 'docs/components', 'src']);
+  });
+
+  it('applies folder moves through applyWorkspaceFolderMove', () => {
+    const initial = initializeVirtualWorkspaceState({
+      expandedPaths: ['src', 'src/components'],
+      files: [{ content: 'button', path: 'src/components/Button.tsx' }],
+      folders: ['docs', 'src/components'],
+      openPaths: ['src/components/Button.tsx'],
+      selectedPath: 'src/components/Button.tsx',
+    });
+    const state = applyWorkspaceFolderMove(initial, 'src/components', 'docs');
+
+    expect(state.files[0]?.path).toBe('docs/components/Button.tsx');
+    expect(state.folders).toEqual(['docs', 'docs/components', 'src']);
+    expect(state.openPaths).toEqual(['docs/components/Button.tsx']);
+    expect(state.selectedPath).toBe('docs/components/Button.tsx');
+
+    const blocked = applyWorkspaceFolderMove(initial, 'src/components', 'src/components/nested');
+    expect(blocked).toBe(initial);
   });
 
   it('preserves source folders when moving the last file out', () => {
