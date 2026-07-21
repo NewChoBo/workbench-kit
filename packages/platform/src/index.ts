@@ -230,6 +230,12 @@ export {
   type WindowResidencyMode,
 } from './window/apply-window-residency.js';
 export {
+  bindSecondaryWindowBoundsPersistence,
+  type BindSecondaryWindowBoundsPersistenceOptions,
+  type SecondaryWindowBoundsHandlers,
+  type SecondaryWindowBoundsPersistenceHandle,
+} from './window/bind-secondary-window-bounds-persistence.js';
+export {
   bindWindowBoundsPersistence,
   type WindowBoundsPersistenceHandle,
 } from './window/bind-window-bounds-persistence.js';

@@ -201,6 +201,9 @@ helpers under `packages/platform/src/window/`:
 - `bindWindowBoundsPersistence(window, save, debounceMs?)` — narrow window surface
   (`getBounds` / `getNormalBounds` / `isMaximized` / move·resize·maximize·close), debounce
   writes; when maximized, persist `getNormalBounds()` plus `isMaximized: true`
+- `bindSecondaryWindowBoundsPersistence({ subscribe, readBounds, persist, debounceMs? })` —
+  bounds-only binder for secondary/overlay windows (no maximize policy); host adapts
+  moved/resized/closed events via `subscribe`, with debounced persist + flush-on-close
 
 **Implemented geometry helpers** (`@workbench-kit/platform`, Electron/React-free):
 
