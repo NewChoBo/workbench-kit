@@ -18,6 +18,7 @@ packages/react/src/modal/OverlayDialogs.stories.@(ts|tsx)
 packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)
 packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)
 packages/react/src/layout/sidebar/SideBarViewTabStrip.stories.@(ts|tsx)
+packages/react/src/layout/WorkbenchPropertyOverrideLabel.stories.@(ts|tsx)
 packages/react/src/layout/panel/TemplateGallery.stories.@(ts|tsx)
 packages/react/src/widget-tree/WidgetTreeLab.stories.@(ts|tsx)
 packages/jdw-editor/src/**/*.stories.@(ts|tsx)
@@ -98,6 +99,7 @@ surface:
 | Story                                                              | Container                                     | Flow covered                                                                                                                                                                                                              |
 | ------------------------------------------------------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `React/Primitives/Controls` - Form controls                        | Settings/form surface                         | Controlled text, number, checkbox, select, textarea, button, and icon-button behavior                                                                                                                                     |
+| `React/Workbench/Property Override Label` - Override states        | Settings/form surface                         | Custom vs Default badge chrome and Reset action composed into `Field` labels                                                                                                                                              |
 | `React/Primitives/Editor Chrome` - Tabs and mode controls          | Editor/main area                              | Editor tab selection, mode segmented control, close action, and new-tab action                                                                                                                                            |
 | `React/Overlay/Dialog Actions` - Confirmation and context menu     | Main-area trigger with fixed overlay          | Confirm dialog cancel/confirm plus context-menu disabled and select behavior; asserts `data-has-icons` / `data-has-shortcuts`                                                                                             |
 | `React/Overlay/Dialog Actions` - Context menu column layouts       | Main-area trigger with fixed overlay          | Label-only, icon-only, and icon+shortcut menus set the matching `data-has-*` layout flags                                                                                                                                 |

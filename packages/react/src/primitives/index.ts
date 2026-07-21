@@ -247,6 +247,8 @@ export type {
   WorkbenchPropertyStackProps,
   WorkbenchPropertyTextRowProps,
 } from '../layout/WorkbenchPropertyPanel';
+export { WorkbenchPropertyOverrideLabel } from '../layout/WorkbenchPropertyOverrideLabel';
+export type { WorkbenchPropertyOverrideLabelProps } from '../layout/WorkbenchPropertyOverrideLabel';
 export { WorkbenchPropertySearch } from '../layout/WorkbenchPropertySearch';
 export type { WorkbenchPropertySearchProps } from '../layout/WorkbenchPropertySearch';
 export {

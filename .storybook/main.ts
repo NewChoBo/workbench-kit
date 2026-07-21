@@ -30,6 +30,7 @@ const config: StorybookConfig = {
     '../packages/react/src/workbench/IntegratedShell.stories.@(ts|tsx)',
     '../packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)',
     '../packages/react/src/layout/sidebar/SideBarViewTabStrip.stories.@(ts|tsx)',
+    '../packages/react/src/layout/WorkbenchPropertyOverrideLabel.stories.@(ts|tsx)',
     '../packages/react/src/widget-tree/WidgetTreeLab.stories.@(ts|tsx)',
     '../packages/jdw-editor/src/**/*.stories.@(ts|tsx)',
   ],
