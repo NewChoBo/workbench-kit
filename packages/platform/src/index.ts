@@ -194,3 +194,27 @@ export {
   type ResolveWorkbenchViewRouteSnapshotOptions,
   type WorkbenchViewRouteSnapshot,
 } from './workbench-view-route.js';
+
+export {
+  bindWindowBoundsPersistence,
+  type WindowBoundsPersistenceHandle,
+} from './window/bind-window-bounds-persistence.js';
+export {
+  WINDOW_BOUNDS_MIN_HEIGHT,
+  WINDOW_BOUNDS_MIN_WIDTH,
+  clampWindowBoundsToDisplays,
+} from './window/clamp-window-bounds-to-displays.js';
+export {
+  DEFAULT_WINDOW_OPEN_HEIGHT,
+  DEFAULT_WINDOW_OPEN_WIDTH,
+  createDefaultWindowOpenBounds,
+  resolveWindowOpenLayout,
+  type ResolveWindowOpenLayoutInput,
+  type ResolvedWindowOpenLayout,
+} from './window/resolve-window-open-layout.js';
+export type {
+  DisplayWorkArea,
+  PersistableWindow,
+  RectLike,
+  RememberedWindowState,
+} from './window/types.js';
