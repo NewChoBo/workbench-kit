@@ -7,6 +7,27 @@ alwaysApply: true
 
 Repository: `NewChoBo/workbench-kit` (pnpm monorepo, `@workbench-kit/*` packages).
 
+## Public package boundary (mandatory)
+
+This repo is a **public open-source npm package**. Never introduce internal
+company knowledge: sibling repository names, private host/product codenames,
+private monorepo paths, customer identifiers, or host-specific “context dumps.”
+
+Never commit or hardcode secrets anywhere in the tree:
+
+- Not only `.env` / key files — also **source, comments, docs, stories,
+  samples, Cursor rules, and commit/PR text**
+- No real API keys, tokens, passwords, private keys, npm/`_authToken`, or
+  cloud credentials as string literals (including “temporary” debug values)
+- Use `process.env` / host secret storage; docs may use obvious placeholders
+  only (`YOUR_API_KEY`, `<token>`, `changeme`)
+
+- Prefer neutral capability language (`integrating host`, `consumer app`).
+- Applies to source, docs, `AGENTS.md`, Cursor rules/hooks, commits, and PRs.
+- Run `pnpm check:public-references` and `pnpm check:secrets` before
+  commit/push (also in `pnpm validate:static`).
+- Full policy: `docs/conventions/public-reference-policy.md`.
+
 ## Tooling
 
 - Use **pnpm** only (`npm install` is blocked).
@@ -14,6 +35,8 @@ Repository: `NewChoBo/workbench-kit` (pnpm monorepo, `@workbench-kit/*` packages
 - Validation lanes: `pnpm validate:static`, `pnpm validate:fast`,
   `pnpm validate:ui`, `pnpm validate`.
 - Public API changes: `pnpm check:public-exports`.
+- Public reference denylist: `pnpm check:public-references`.
+- Secret / credential scan: `pnpm check:secrets`.
 - JDW profile/schema changes: `pnpm check:jdw-schemas`.
 
 ## Storybook
@@ -51,6 +74,7 @@ Key facts agents often get wrong:
 
 ## Docs index
 
-- Conventions: `docs/conventions/` (including `public-reference-policy.md`)
+- Conventions: `docs/conventions/` (especially `public-reference-policy.md`)
 - Architecture: `docs/architecture/`
 - Workbench notes: `docs/workbench/`
+- Cursor git gate: `.cursor/hooks.json` → public-references + secrets checks
