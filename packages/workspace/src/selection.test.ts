@@ -5,6 +5,7 @@ import {
   getWorkspaceSelectionActionPaths,
   normalizeWorkspaceSelectionPaths,
   pruneWorkspaceSelection,
+  resolveExplorerActionPaths,
   resolveWorkspaceCreateParentPath,
   updateWorkspaceSelection,
 } from './selection';
@@ -85,6 +86,45 @@ describe('workspace selection helpers', () => {
         targetPath: 'src/Card.tsx',
       }),
     ).toEqual(['src/Card.tsx']);
+  });
+
+  it('resolves VS Code-like action paths from focus and selection', () => {
+    expect(
+      resolveExplorerActionPaths({
+        selection: {
+          focusedPath: 'src/Button.tsx',
+          paths: ['src/App.tsx', 'src/Button.tsx'],
+        },
+      }),
+    ).toEqual(['src/App.tsx', 'src/Button.tsx']);
+
+    expect(
+      resolveExplorerActionPaths({
+        selection: {
+          focusedPath: 'src/Card.tsx',
+          paths: ['src/App.tsx', 'src/Button.tsx'],
+        },
+      }),
+    ).toEqual(['src/Card.tsx']);
+
+    expect(
+      resolveExplorerActionPaths({
+        selection: {
+          focusedPath: 'src/components',
+          paths: [],
+        },
+      }),
+    ).toEqual(['src/components']);
+
+    expect(
+      resolveExplorerActionPaths({
+        respectMultiSelection: false,
+        selection: {
+          focusedPath: 'src/Button.tsx',
+          paths: ['src/App.tsx', 'src/Button.tsx'],
+        },
+      }),
+    ).toEqual(['src/Button.tsx']);
   });
 
   it('replaces selection with a range from the current anchor', () => {

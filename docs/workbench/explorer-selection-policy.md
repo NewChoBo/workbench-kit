@@ -70,8 +70,9 @@ act on:
 ### Migration principles
 
 1. **Do not** big-bang replace the DTO in one PR. Prefer additive helpers
-   (`resolveExplorerActionPaths(focus, selection, { respectMultiSelection })`)
-   and Storybook/unit fixtures that mirror VS Code cases.
+   (`resolveExplorerActionPaths` in `@workbench-kit/workspace`) and
+   Storybook/unit fixtures that mirror VS Code cases. The helper is available;
+   controller defaults should adopt it incrementally.
 2. **Do** make each bugfix a step toward the table above (e.g. folder rename
    focusing without polluting file `paths` was interim consistency; later,
    folders may belong in selection explicitly).

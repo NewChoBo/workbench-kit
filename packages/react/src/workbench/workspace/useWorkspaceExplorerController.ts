@@ -3,6 +3,7 @@ import {
   joinWorkspacePath,
   parentPathOf,
   pruneWorkspaceSelection,
+  resolveExplorerActionPaths,
   type WorkspaceSelectionState,
   type WorkspaceTreeNode,
 } from '@workbench-kit/workspace';
@@ -333,7 +334,11 @@ export function useWorkspaceExplorerController({
         return;
       }
 
-      const paths = meta.node.type === 'folder' ? [meta.node.path] : meta.actionPaths;
+      // VS Code-like: multi-select only when the command target is inside it.
+      const paths = resolveExplorerActionPaths({
+        selection: meta.selection,
+        targetPath: meta.node.path,
+      });
       void port.deleteEntries({
         kind: meta.node.type,
         paths,

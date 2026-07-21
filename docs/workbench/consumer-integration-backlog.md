@@ -231,8 +231,9 @@ this shape under `apps/desktop-runtime/features/window-manager/main-window-*`.
 | **Storybook / sample** | Fixtures for focus-outside-selection, folder multi-select, rename/create selection — see [explorer-selection-policy.md](./explorer-selection-policy.md).      |
 
 **Near-term:** Keep interim invariants consistent (no folder path in file `paths`).  
-**Next extract:** `resolveExplorerActionPaths(focus, selection, { respectMultiSelection })`  
-aligned with VS Code explorer `getContext` behavior, then teach controller defaults to use it.
+**Extracted:** `resolveExplorerActionPaths` in `@workbench-kit/workspace` (VS Code
+`getContext`-style). Default delete path uses it; rename/move/expanded-path remap
+still adopt incrementally.
 
 ---
 
