@@ -58,6 +58,15 @@ Never commit or hardcode secrets anywhere in the tree:
 - Storybook changes should follow `docs/conventions/storybook.md` and update
   `docs/workbench/storybook-e2e-coverage.md` when required flows change.
 
+## GitHub issues
+
+- Filing/updating issues: follow `docs/conventions/github-issues.md` and use
+  `.github/ISSUE_TEMPLATE/*` (blank issues disabled).
+- Prefer **Consumer extract** for host-proven promotions. Thin wishlist issues
+  are not acceptable — include API sketch, behavior contract, non-goals,
+  acceptance criteria, and verification plan.
+- Issue/PR text is public: same public-reference rules as docs/commits.
+
 ## Change discipline
 
 - Minimize scope; match existing patterns in touched packages.
@@ -79,7 +88,7 @@ Key facts agents often get wrong:
 ## Docs index
 
 - Agent layout: `docs/conventions/agent-guidance.md`
-- Conventions: `docs/conventions/` (especially `public-reference-policy.md`)
+- Conventions: `docs/conventions/` (especially `public-reference-policy.md`, `github-issues.md`)
 - Architecture: `docs/architecture/`
 - Workbench notes: `docs/workbench/`
 - Cursor git gate: `.cursor/hooks.json` → `check:commit-safety`
