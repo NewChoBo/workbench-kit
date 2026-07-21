@@ -18,6 +18,7 @@ packages/react/src/modal/OverlayDialogs.stories.@(ts|tsx)
 packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)
 packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)
 packages/react/src/layout/sidebar/SideBarViewTabStrip.stories.@(ts|tsx)
+packages/react/src/layout/WorkbenchPropertyOverrideLabel.stories.@(ts|tsx)
 packages/react/src/layout/panel/TemplateGallery.stories.@(ts|tsx)
 packages/react/src/widget-tree/WidgetTreeLab.stories.@(ts|tsx)
 packages/jdw-editor/src/**/*.stories.@(ts|tsx)
@@ -98,6 +99,7 @@ surface:
 | Story                                                              | Container                                     | Flow covered                                                                                                                                                                                                              |
 | ------------------------------------------------------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `React/Primitives/Controls` - Form controls                        | Settings/form surface                         | Controlled text, number, checkbox, select, textarea, button, and icon-button behavior                                                                                                                                     |
+| `React/Workbench/Property Override Label` - Override states        | Settings/form surface                         | Custom vs Default badge chrome and Reset action composed into `Field` labels                                                                                                                                              |
 | `React/Primitives/Editor Chrome` - Tabs and mode controls          | Editor/main area                              | Editor tab selection, mode segmented control, close action, and new-tab action                                                                                                                                            |
 | `React/Overlay/Dialog Actions` - Confirmation and context menu     | Main-area trigger with fixed overlay          | Confirm dialog cancel/confirm plus context-menu disabled and select behavior; asserts `data-has-icons` / `data-has-shortcuts`                                                                                             |
 | `React/Overlay/Dialog Actions` - Context menu column layouts       | Main-area trigger with fixed overlay          | Label-only, icon-only, and icon+shortcut menus set the matching `data-has-*` layout flags                                                                                                                                 |
@@ -120,15 +122,15 @@ after repeated green runs.
 After the shared harness refactor and `StandaloneShell` removal, watch these overlaps
 when both component and integration tiers are present:
 
-| Concern                   | Component / panel                    | Integration                                          | Verdict                                                                                                        |
-| ------------------------- | ------------------------------------ | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Settings appearance       | `AppearanceSettings`                 | Journey settings + any sample-shell settings story   | **Review** — keep component for schema/combobox contract; integration proves modal open from activity bar only |
-| Extensions list           | `ExtensionManagementSidebar`         | Sample extensions view or journey                    | **Review** — avoid duplicate install/list assertions; pick one required path                                   |
-| Permission projection     | Profile / role controls (component)  | `Basic permission scope`, journey profile override   | **Justified split** — sign-in role vs runtime override vs activity-bar projection                              |
-| Search                    | `WorkspaceSearchPanel` (panel flows) | Journey search open                                  | **Justified split** — panel API vs activity wiring                                                             |
-| Chat / AI                 | `ChatPanel` runtime flows            | Journey chat + AI composer                           | **Justified split** — transport/runtime vs sidebar navigation                                                  |
-| Authenticated shell smoke | `Integrated Shell` (baseline)        | `Tester workbench` / sample authenticated story      | **Justified split** — sample is required smoke; Integrated Shell stays baseline for pixel sidebar settings     |
-| Full-shell harness        | —                                    | Second sample-shell file mirroring `WorkbenchSample` | **Remove** — max one integration file per host (`App.tsx`)                                                     |
+| Concern                   | Component / panel                         | Integration                                          | Verdict                                                                                                        |
+| ------------------------- | ----------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Settings appearance       | `AppearanceSettings`                      | Journey settings + any sample-shell settings story   | **Review** — keep component for schema/combobox contract; integration proves modal open from activity bar only |
+| Extensions list           | `ExtensionManagementSidebar`              | Sample extensions view or journey                    | **Review** — avoid duplicate install/list assertions; pick one required path                                   |
+| Permission projection     | Profile / role controls (component)       | `Basic permission scope`, journey profile override   | **Justified split** — sign-in role vs runtime override vs activity-bar projection                              |
+| Search                    | `WorkspaceSearchPanel` (panel flows)      | Journey search open                                  | **Justified split** — panel API vs activity wiring                                                             |
+| Chat / AI                 | `ChatPanel` runtime + host-gaps drop/tone | Journey chat + AI composer                           | **Justified split** — transport/runtime vs sidebar navigation; host-gaps stays component-tier                  |
+| Authenticated shell smoke | `Integrated Shell` (baseline)             | `Tester workbench` / sample authenticated story      | **Justified split** — sample is required smoke; Integrated Shell stays baseline for pixel sidebar settings     |
+| Full-shell harness        | —                                         | Second sample-shell file mirroring `WorkbenchSample` | **Remove** — max one integration file per host (`App.tsx`)                                                     |
 
 No new excess was introduced by the harness refactor itself. The main risk is
 re-adding parallel full-shell stories or requiring the same UI assertion at both

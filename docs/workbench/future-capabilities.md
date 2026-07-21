@@ -86,6 +86,12 @@ Do **not** start these while Phases 1–3 are open:
 
 ## i18n (P1)
 
+**Decision (2026-07-21, #34 Option A — react-i18next only):** Kit does **not** ship a
+JSON language-pack core (flatten/merge/`{name}` format/`t()` bridge). Hosts that already
+use VS Code–style JSON packs adapt those tables into i18next resources. Pack-core
+extraction is **not planned** (wontfix). Follow-up work stays on namespace layout,
+prop-label + optional `t()` injection, and command-title resolution at menu projection.
+
 - [ ] **P1** Adopt `react-i18next` in host apps (Storybook demos and integrating products) with a shared
       namespace layout (`workbench.*`, `commands.*`, `settings.*`).
 - [ ] **P1** Define kit-level i18n override pattern: prop labels + optional `t()` hook injection

@@ -24,8 +24,15 @@ export interface WorkspaceExplorerMutationResult {
   readonly paths?: readonly string[] | undefined;
 }
 
+export type WorkspaceExplorerMutationAction = 'create' | 'rename' | 'delete' | 'move';
+
 export interface WorkspaceExplorerControllerPort {
   readonly snapshot: WorkspaceExplorerWorkspaceSnapshot;
+  /**
+   * Optional host guard before create/rename/delete/move. Return `false` or a
+   * reason string to deny the mutation; `true` allows it.
+   */
+  canMutatePath?(path: string, action: WorkspaceExplorerMutationAction): boolean | string;
   createFile(input: {
     name: string;
     parentPath: string;
@@ -46,6 +53,26 @@ export interface WorkspaceExplorerControllerPort {
     path: string;
   }): WorkspaceExplorerMutationResult | void | Promise<WorkspaceExplorerMutationResult | void>;
   reportError?(message: string): void;
+}
+
+export const DEFAULT_WORKSPACE_EXPLORER_MUTATION_DENIED_MESSAGE = 'This action is not allowed.';
+
+/**
+ * Normalize `canMutatePath` results. Returns an error message when denied, else
+ * `undefined` when allowed (including when the guard is omitted).
+ */
+export function resolveWorkspaceExplorerMutationDeniedMessage(
+  result: boolean | string | undefined,
+): string | undefined {
+  if (result === undefined || result === true) {
+    return undefined;
+  }
+
+  if (typeof result === 'string') {
+    return result;
+  }
+
+  return DEFAULT_WORKSPACE_EXPLORER_MUTATION_DENIED_MESSAGE;
 }
 
 export function workspaceExplorerParentPaths(path: string): string[] {
@@ -70,9 +97,31 @@ export function applyWorkspaceExplorerMutationResult(
   });
 }
 
-export function validateWorkspaceExplorerInlineEditName(name: string): string | undefined {
+/**
+ * Folder clicks keep `paths` empty (file multi-select list). After renaming a
+ * folder without a host `mapRenameSelection`, focus the folder the same way.
+ */
+export function applyWorkspaceExplorerFolderFocus(
+  folderPath: string,
+  setSelection: (selection: WorkspaceSelectionState) => void,
+): void {
+  if (!folderPath) {
+    return;
+  }
+
+  setSelection({
+    anchorPath: undefined,
+    focusedPath: folderPath,
+    paths: [],
+  });
+}
+
+export function validateWorkspaceExplorerInlineEditName(
+  name: string,
+  invalidNameMessage = 'Use a simple file or folder name.',
+): string | undefined {
   if (!isSimpleWorkspaceName(name)) {
-    return 'Use a simple file or folder name.';
+    return invalidNameMessage;
   }
 
   return undefined;

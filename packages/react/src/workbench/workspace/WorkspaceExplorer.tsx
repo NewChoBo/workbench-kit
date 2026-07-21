@@ -102,6 +102,7 @@ export interface WorkspaceExplorerProps {
   onInlineEditCancel?: (edit: WorkspaceExplorerInlineEditState) => void;
   onInlineEditCommit?: (meta: WorkspaceExplorerInlineEditCommitMeta) => void;
   onInlineEditValueChange?: (value: string, edit: WorkspaceExplorerInlineEditState) => void;
+  onBackgroundContextMenu?: (event: MouseEvent<HTMLUListElement>) => void;
   onItemContextMenu?: (
     event: MouseEvent<HTMLButtonElement>,
     node: WorkspaceTreeNode,
@@ -116,6 +117,7 @@ export interface WorkspaceExplorerProps {
   ) => void;
   onToggleFolder: (path: string) => void;
   focusedPath?: string | undefined;
+  renderItemActions?: (node: WorkspaceTreeNode, meta: WorkspaceExplorerItemActionMeta) => ReactNode;
   selectedPaths?: Iterable<string>;
   selectionAnchorPath?: string;
 }
@@ -131,6 +133,7 @@ export function WorkspaceExplorer({
   inlineEdit,
   nodes,
   onActivateFile,
+  onBackgroundContextMenu,
   onInlineEditCancel,
   onInlineEditCommit,
   onInlineEditValueChange,
@@ -140,12 +143,14 @@ export function WorkspaceExplorer({
   onRequestRename,
   onSelectionChange,
   onToggleFolder,
+  renderItemActions,
   selectedPaths = [],
   selectionAnchorPath,
 }: WorkspaceExplorerProps) {
   const sectionBaseDepth = useSidebarSectionBaseDepth();
   const draggedPathsRef = useRef<string[]>([]);
   const inlineEditInputRef = useRef<HTMLInputElement>(null);
+  const inlineEditCommitStartedRef = useRef(false);
   const [dropTargetPath, setDropTargetPath] = useState<string | null>(null);
   const visibleNodes = useMemo(
     () => flattenWorkspaceTree({ expandedPaths, filterQuery, nodes }),
@@ -176,12 +181,20 @@ export function WorkspaceExplorer({
     : undefined;
 
   useEffect(() => {
+    inlineEditCommitStartedRef.current = false;
     const input = inlineEditInputRef.current;
     if (!input) return;
 
     input.focus();
     input.select();
   }, [inlineEditKey]);
+
+  useEffect(() => {
+    // Validation failures keep the same draft id; allow Enter/blur retry after an error.
+    if (inlineEdit?.error) {
+      inlineEditCommitStartedRef.current = false;
+    }
+  }, [inlineEdit?.error]);
 
   const selectFile = (event: MouseEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
     const mode = resolveSelectionMode(event);
@@ -260,6 +273,8 @@ export function WorkspaceExplorer({
   };
 
   const handleItemContextMenu = (event: MouseEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
+    // Keep item menus from bubbling to the list background handler.
+    event.stopPropagation();
     const meta = getItemActionMeta(node);
 
     if (node.type === 'file' && !meta.selected) {
@@ -419,8 +434,10 @@ export function WorkspaceExplorer({
   };
 
   const commitInlineEdit = () => {
-    if (!inlineEdit) return;
+    if (!inlineEdit || inlineEditCommitStartedRef.current) return;
 
+    // Enter commits then blurs the same input; commit only once per draft.
+    inlineEditCommitStartedRef.current = true;
     onInlineEditCommit?.({
       edit: inlineEdit,
       value: inlineEdit.value.trim(),
@@ -491,6 +508,9 @@ export function WorkspaceExplorer({
       fill
       aria-label="Workspace files"
       dropTarget={dropTargetPath === ''}
+      onContextMenu={(event) => {
+        onBackgroundContextMenu?.(event);
+      }}
       onDragLeave={(event) => handleDropTargetDragLeave(event, '')}
       onDragOver={(event) => handleDropTargetDragOver(event, '')}
       onDrop={(event) => handleDrop(event, '')}
@@ -521,6 +541,13 @@ export function WorkspaceExplorer({
           <Fragment key={node.path}>
             <SideBarListItem
               active={activePath === node.path}
+              after={
+                renderItemActions ? (
+                  <span className="ui-workspace-explorer-item-actions">
+                    {renderItemActions(node, getItemActionMeta(node))}
+                  </span>
+                ) : undefined
+              }
               data-workspace-path={node.path}
               depth={depth}
               draggable={Boolean(onRequestMove)}

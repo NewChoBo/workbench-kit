@@ -178,12 +178,35 @@ export { ConfirmDialog } from './modal/ConfirmDialog';
 export type { ConfirmDialogProps } from './modal/ConfirmDialog';
 export { ContextMenu } from './overlay/ContextMenu';
 export type { ContextMenuItem, ContextMenuProps } from './overlay/ContextMenu';
+export { measureAnchoredOverlayPanel } from './overlay/measureAnchoredOverlayPanel';
+export type {
+  AnchoredOverlayPanelRect,
+  AnchoredOverlayPlacement,
+  MeasureAnchoredOverlayPanelOptions,
+} from './overlay/measureAnchoredOverlayPanel';
+export { useAnchoredOverlayPanel } from './overlay/useAnchoredOverlayPanel';
+export type {
+  UseAnchoredOverlayPanelOptions,
+  UseAnchoredOverlayPanelResult,
+} from './overlay/useAnchoredOverlayPanel';
 export { useContextMenuState } from './overlay/useContextMenuState';
 export type {
   ContextMenuPointerEvent,
   ContextMenuPointerState,
   UseContextMenuStateResult,
 } from './overlay/useContextMenuState';
+export {
+  createPointerPassthroughController,
+  isPointerOverHitRegion,
+} from './overlay/pointerPassthroughRegion';
+export type {
+  PointerOverHitRegionOptions,
+  PointerPassthroughController,
+  PointerPassthroughControllerOptions,
+  PointerPassthroughPort,
+} from './overlay/pointerPassthroughRegion';
+export { usePointerPassthroughRegion } from './overlay/usePointerPassthroughRegion';
+export type { UsePointerPassthroughRegionOptions } from './overlay/usePointerPassthroughRegion';
 export {
   getWorkbenchStatusDescriptor,
   getWorkbenchStatusLabel,
@@ -374,6 +397,7 @@ export {
   WorkbenchPropertyKeyValue,
   WorkbenchMetricGrid,
   WorkbenchPropertyNumberRow,
+  WorkbenchPropertyOverrideLabel,
   WorkbenchPropertyPanel,
   WorkbenchPropertyRangeRow,
   WorkbenchPropertyRow,
@@ -495,6 +519,7 @@ export type {
   WorkbenchMetricGridItem,
   WorkbenchMetricGridProps,
   WorkbenchPropertyNumberRowProps,
+  WorkbenchPropertyOverrideLabelProps,
   WorkbenchPropertyFieldFilterInput,
   WorkbenchPropertyFieldFilterResult,
   WorkbenchPropertyFieldManifestEntry,
@@ -661,6 +686,8 @@ export type {
 } from './workbench/workspace/WorkspaceDraftsContext';
 export { StructuredArtifactEditor } from './workbench/StructuredArtifactEditor';
 export type { StructuredArtifactEditorProps } from './workbench/StructuredArtifactEditor';
+export { createStringDragMime, createTypedDragMime } from './utils/dragMime';
+export type { TypedDragMime, TypedDragMimeOptions } from './utils/dragMime';
 export {
   EDITOR_TAB_DRAG_DATA_TYPE,
   getEditorTabDropPosition,

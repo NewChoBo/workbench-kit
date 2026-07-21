@@ -5,10 +5,27 @@ import { workbenchMarkdownRemarkPlugins } from '../markdownRemarkPlugins';
 import { ChatCommandProposalCard } from './ChatCommandProposalCard';
 import { ChatMessageCollapsible } from './ChatMessageCollapsible';
 import { ChatMessageTime, resolveChatMessageTimestamp } from './chatMessageMeta';
-import type { ChatCommandProposal, ChatMessage, ChatMessageLayout } from './types';
+import type {
+  ChatCommandProposal,
+  ChatMessage,
+  ChatMessageContentMode,
+  ChatMessageLayout,
+  ChatMessageTone,
+} from './types';
 
 export interface ChatMessageItemProps {
+  /**
+   * Rendered after the bubble (and before command proposals). Use for
+   * attachments or host chrome that should stay outside the collapsible surface.
+   */
+  afterMessage?: ReactNode | undefined;
   assistantLabel?: string;
+  /** Overrides `message.contentMode` when set. */
+  contentMode?: ChatMessageContentMode | undefined;
+  /**
+   * Forwarded into `ChatMessageCollapsible` in-bubble footer (progress, actions).
+   */
+  footer?: ReactNode | undefined;
   isStreaming?: boolean;
   layout?: ChatMessageLayout;
   message: ChatMessage;
@@ -17,6 +34,8 @@ export interface ChatMessageItemProps {
   showSenderLabel?: boolean;
   /** When true, keeps the inline timestamp visible without hover. */
   showTimestamp?: boolean;
+  /** Overrides `message.tone` when set. */
+  tone?: ChatMessageTone | undefined;
   userLabel?: string;
 }
 
@@ -59,8 +78,119 @@ function MessageBubbleLine({
   );
 }
 
+function ChatMessageCommandProposals({
+  message,
+  onCommandProposalAllow,
+  onCommandProposalDeny,
+}: {
+  message: ChatMessage;
+  onCommandProposalAllow?: ChatMessageItemProps['onCommandProposalAllow'];
+  onCommandProposalDeny?: ChatMessageItemProps['onCommandProposalDeny'];
+}) {
+  if (!message.commandProposals?.length) {
+    return null;
+  }
+
+  return (
+    <div className="message__command-proposals">
+      {message.commandProposals.map((proposal) => (
+        <ChatCommandProposalCard
+          key={proposal.id}
+          proposal={proposal}
+          onAllow={
+            onCommandProposalAllow
+              ? (currentProposal) => onCommandProposalAllow(message.id, currentProposal)
+              : undefined
+          }
+          onDeny={
+            onCommandProposalDeny
+              ? (currentProposal) => onCommandProposalDeny(message.id, currentProposal)
+              : undefined
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
+function ChatMessageAfterSlot({ children }: { children: ReactNode | undefined }) {
+  if (!children) {
+    return null;
+  }
+
+  return <div className="message__after">{children}</div>;
+}
+
+function resolveChatMessageContentMode(
+  message: ChatMessage,
+  layout: ChatMessageLayout,
+  contentModeOverride?: ChatMessageContentMode,
+): ChatMessageContentMode {
+  const explicit = contentModeOverride ?? message.contentMode;
+  if (explicit) {
+    return explicit;
+  }
+
+  // Default: assistant layout + non-user source → markdown; otherwise plain.
+  if (layout === 'assistant' && message.source !== 'user') {
+    return 'markdown';
+  }
+
+  return 'plain';
+}
+
+function resolveChatMessageToneClass(
+  tone: ChatMessageTone | undefined,
+): string | false | undefined {
+  if (tone === 'error') {
+    return 'message--tone-error';
+  }
+  if (tone === 'warning') {
+    return 'message--tone-warning';
+  }
+  return undefined;
+}
+
+function ChatMessageBody({
+  content,
+  contentMode,
+  isStreaming,
+}: {
+  content: string;
+  contentMode: ChatMessageContentMode;
+  isStreaming: boolean;
+}) {
+  if (contentMode === 'markdown') {
+    return (
+      <div className="md-content">
+        <Markdown
+          remarkPlugins={workbenchMarkdownRemarkPlugins}
+          components={{
+            code: ({ children, className }) => (
+              <code className={cx('ui-workbench-scrollbar', className)}>{children}</code>
+            ),
+          }}
+        >
+          {content}
+        </Markdown>
+        {isStreaming ? <span aria-hidden="true" className="message__cursor" /> : null}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {content}
+      {isStreaming ? <span aria-hidden="true" className="message__cursor" /> : null}
+    </>
+  );
+}
+
 export function ChatMessageItem({
+  afterMessage,
   assistantLabel = 'Assistant',
+  contentMode: contentModeProp,
+  footer,
   isStreaming = false,
   layout = 'assistant',
   message,
@@ -68,10 +198,20 @@ export function ChatMessageItem({
   onCommandProposalDeny,
   showSenderLabel = true,
   showTimestamp = false,
+  tone: toneProp,
   userLabel,
 }: ChatMessageItemProps) {
   const timestamp = renderMessageTimestamp(message, showTimestamp);
   const bubbleAlign = message.source === 'user' ? 'end' : 'start';
+  const contentMode = resolveChatMessageContentMode(message, layout, contentModeProp);
+  const toneClass = resolveChatMessageToneClass(toneProp ?? message.tone);
+  const body = (
+    <ChatMessageBody
+      content={message.content}
+      contentMode={contentMode}
+      isStreaming={isStreaming}
+    />
+  );
 
   if (message.source === 'user') {
     const displayUserLabel =
@@ -84,6 +224,7 @@ export function ChatMessageItem({
           'message--user',
           layout === 'peer' && 'message--user-peer',
           layout === 'peer' && !showSenderLabel && 'message--continued',
+          toneClass,
         )}
       >
         <div className="message__row">
@@ -94,12 +235,14 @@ export function ChatMessageItem({
             <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
               <ChatMessageCollapsible
                 content={message.content}
+                footer={footer}
                 isStreaming={isStreaming}
                 surfaceClassName="message__bubble"
               >
-                {message.content}
+                {body}
               </ChatMessageCollapsible>
             </MessageBubbleLine>
+            <ChatMessageAfterSlot>{afterMessage}</ChatMessageAfterSlot>
           </div>
         </div>
       </div>
@@ -110,19 +253,33 @@ export function ChatMessageItem({
     const peerLabel = showSenderLabel ? (message.label ?? assistantLabel) : undefined;
 
     return (
-      <div className={cx('message', 'message--peer', !showSenderLabel && 'message--continued')}>
+      <div
+        className={cx(
+          'message',
+          'message--peer',
+          !showSenderLabel && 'message--continued',
+          toneClass,
+        )}
+      >
         <div className="message__row">
           <div className="message__main">
             {peerLabel ? <div className="message__peer-label">{peerLabel}</div> : null}
             <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
               <ChatMessageCollapsible
                 content={message.content}
+                footer={footer}
                 isStreaming={isStreaming}
                 surfaceClassName="message__bubble message__bubble--peer"
               >
-                {message.content}
+                {body}
               </ChatMessageCollapsible>
             </MessageBubbleLine>
+            <ChatMessageAfterSlot>{afterMessage}</ChatMessageAfterSlot>
+            <ChatMessageCommandProposals
+              message={message}
+              onCommandProposalAllow={onCommandProposalAllow}
+              onCommandProposalDeny={onCommandProposalDeny}
+            />
           </div>
         </div>
       </div>
@@ -130,7 +287,7 @@ export function ChatMessageItem({
   }
 
   return (
-    <div className="message message--assistant">
+    <div className={cx('message', 'message--assistant', toneClass)}>
       <div className="message__row">
         <div className="message__main">
           <div className="message__label message__label--assistant">
@@ -141,44 +298,19 @@ export function ChatMessageItem({
             <ChatMessageCollapsible
               className="message__assistant-collapsible"
               content={message.content}
+              footer={footer}
               isStreaming={isStreaming}
               surfaceClassName="message__collapsible-surface--assistant"
             >
-              <div className="md-content">
-                <Markdown
-                  remarkPlugins={workbenchMarkdownRemarkPlugins}
-                  components={{
-                    code: ({ children, className }) => (
-                      <code className={cx('ui-workbench-scrollbar', className)}>{children}</code>
-                    ),
-                  }}
-                >
-                  {message.content}
-                </Markdown>
-                {isStreaming ? <span aria-hidden="true" className="message__cursor" /> : null}
-              </div>
+              {body}
             </ChatMessageCollapsible>
           </MessageBubbleLine>
-          {message.commandProposals?.length ? (
-            <div className="message__command-proposals">
-              {message.commandProposals.map((proposal) => (
-                <ChatCommandProposalCard
-                  key={proposal.id}
-                  proposal={proposal}
-                  onAllow={
-                    onCommandProposalAllow
-                      ? (currentProposal) => onCommandProposalAllow(message.id, currentProposal)
-                      : undefined
-                  }
-                  onDeny={
-                    onCommandProposalDeny
-                      ? (currentProposal) => onCommandProposalDeny(message.id, currentProposal)
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-          ) : null}
+          <ChatMessageAfterSlot>{afterMessage}</ChatMessageAfterSlot>
+          <ChatMessageCommandProposals
+            message={message}
+            onCommandProposalAllow={onCommandProposalAllow}
+            onCommandProposalDeny={onCommandProposalDeny}
+          />
         </div>
       </div>
     </div>

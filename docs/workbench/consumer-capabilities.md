@@ -1,12 +1,15 @@
 # Consumer Capabilities Reference
 
 **Status:** Active consumer contract  
-**Last updated:** 2026-07-05  
-**Audience:** Host applications that compose `@workbench-kit/react` (Content Hub, VS Code webviews, sample host)
+**Last updated:** 2026-07-21  
+**Audience:** Host applications that compose `@workbench-kit/react` (browser, desktop, VS Code webviews, sample host)
 
 This document is the **integration contract** for reusable workbench UI. It inventories primitives and shell surfaces that a reference desktop consumer actually wires today. It is not a Storybook catalog — use Storybook and `examples/workbench-sample` for visual exploration.
 
-Related: [Consumer Integration Backlog](./consumer-integration-backlog.md) · [API Reference](../guides/api-reference.md) · [Workbench Change Guidelines](./workbench-change-guidelines.md)
+Related: [Consumer Integration Backlog](./consumer-integration-backlog.md) ·
+[Explorer Selection Policy](./explorer-selection-policy.md) ·
+[API Reference](../guides/api-reference.md) ·
+[Workbench Change Guidelines](./workbench-change-guidelines.md)
 
 ---
 
@@ -14,18 +17,21 @@ Related: [Consumer Integration Backlog](./consumer-integration-backlog.md) · [A
 
 Use official subpath exports from `@workbench-kit/react`. Do not import from `packages/react/src/...` in consuming apps.
 
-| Subpath                                     | Purpose                                                           |
-| ------------------------------------------- | ----------------------------------------------------------------- |
-| `@workbench-kit/react/primitives`           | Controls, editor chrome, library layout, scroll, property grids   |
-| `@workbench-kit/react/layout`               | Sidebar frames, editor frame, section stacks                      |
-| `@workbench-kit/react/editor-tabs`          | Tab strip drag-and-drop helpers                                   |
-| `@workbench-kit/react/overlay`              | Context menus                                                     |
-| `@workbench-kit/react/modal`                | Low-level modal frame (prefer management wrapper when applicable) |
-| `@workbench-kit/react/workbench/shell`      | Activity bar, shell layout, view editor, title bar                |
-| `@workbench-kit/react/workbench/management` | Dialog frames, integrations shell, notices                        |
-| `@workbench-kit/react/workbench/workspace`  | Workspace explorer                                                |
-| `@workbench-kit/react/brand`                | Product icon mark                                                 |
-| `@workbench-kit/contracts`                  | Cross-host DTOs and authoring workbench state                     |
+| Subpath                                     | Purpose                                                                |
+| ------------------------------------------- | ---------------------------------------------------------------------- |
+| `@workbench-kit/react`                      | Root barrel — includes typed drag MIME helpers (`createTypedDragMime`) |
+| `@workbench-kit/react/primitives`           | Controls, editor chrome, library layout, scroll, property grids        |
+| `@workbench-kit/react/layout`               | Sidebar frames, editor frame, section stacks                           |
+| `@workbench-kit/react/editor-tabs`          | Tab strip drag-and-drop helpers                                        |
+| `@workbench-kit/react/overlay`              | Context menus; anchored overlay panel positioning helper               |
+| `@workbench-kit/react/modal`                | Low-level modal frame (prefer management wrapper when applicable)      |
+| `@workbench-kit/react/workbench/shell`      | Activity bar, shell layout, view editor, title bar                     |
+| `@workbench-kit/react/workbench/chat`       | Chat panel, composer, message list/item, conversation bar              |
+| `@workbench-kit/react/workbench/management` | Dialog frames, integrations shell, notices                             |
+| `@workbench-kit/react/workbench/workspace`  | Workspace explorer, editor panel, selection helpers                    |
+| `@workbench-kit/workspace`                  | Pure path/selection/virtual-workspace helpers (no React)               |
+| `@workbench-kit/react/brand`                | Product icon mark                                                      |
+| `@workbench-kit/contracts`                  | Cross-host DTOs and authoring workbench state                          |
 
 Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workbench-kit/react/primitives.css`).
 
@@ -69,11 +75,12 @@ Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workb
 
 **Key props:**
 
-| Surface                    | Props                                                                                                |
-| -------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `WorkbenchThemeProvider`   | `platform` (`darwin` \| `win32` \| `linux`) — sets host platform context + `data-workbench-platform` |
-| `WorkbenchDesktopTitleBar` | `chrome` (`platform` default \| `generic`), `leading` / `centerSlot` / `trailing`, `windowControls`  |
-| `windowControls`           | Host callbacks only: `onMinimize`, `onToggleMaximized`, `onClose`, `isMaximized`, optional labels    |
+| Surface                    | Props                                                                                                           |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `WorkbenchThemeProvider`   | `platform` (`darwin` \| `win32` \| `linux`) — sets host platform context + `data-workbench-platform`            |
+| `WorkbenchDesktopTitleBar` | `chrome` (`platform` default \| `generic`), `leading` / `centerSlot` / `trailing`, `windowControls`             |
+| `windowControls`           | Host callbacks only: `onMinimize`, `onToggleMaximized`, `onClose`, `isMaximized`, optional labels               |
+| Title-bar layout toggles   | `WorkbenchShellTitleBarLayoutControls`: omit `onTogglePanel` / `onToggleAuxiliarySidebar` to hide those buttons |
 
 **I/O contract:** Kit owns chrome markup and darwin/win32 placement. Hosts supply Electron (or similar) IPC callbacks and optional i18n labels — do not fork titlebar markup in the renderer.
 
@@ -90,6 +97,8 @@ Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workb
 **Key props:** `activityBarPosition` on `WorkbenchShell` (`left` default, `top` for a horizontal strip below the title bar). Footer/utility icons stay at the trailing edge (bottom when vertical, right when horizontal).
 
 **Sidebar view placement DnD:** `ActivityBar` and `SidebarActionIconBar` share the placement drag payload (`WORKBENCH_SIDEBAR_VIEW_PLACEMENT_DRAG_DATA_TYPE`). Hosts move a view container between sidebar slots with `onSidebarViewPlacementDrop` plus optional `acceptSidebarViewPlacementDrop` (defaults to cross-bar drops only so local reorder keeps working). Shell-level drop targets can use `useWorkbenchSidebarViewPlacementDropZone` from `@workbench-kit/react/workbench/shell`.
+
+**Typed drag MIME helpers:** For host-owned custom MIME payloads (catalog ids, content refs), use `createTypedDragMime` / `createStringDragMime` from `@workbench-kit/react` or `@workbench-kit/react/workbench`. Hosts supply the MIME string and codecs; kit owns write/read/has guards, optional `text/plain` fallback, and default `effectAllowed: 'copyMove'`. Plaintext alone never satisfies `has()` — do not treat fallback text as authoritative for privileged drops without host checks.
 
 **Section model:** `buildWorkbenchViewActivityBarModel({ sectionIds: ['core'], footerSectionIds: ['utility'] })` maps contributions to top vs bottom slots.
 
@@ -263,6 +272,28 @@ is active.
 **When not to use:** Free-text DOM label scraping, or catalog browse search
 (`CatalogBrowsePane` / `FilterBar` on item lists).
 
+### `WorkbenchPropertyOverrideLabel`
+
+**Purpose:** Sparse-override inspector label chrome — Custom vs Default badge plus an
+optional compact Reset action. Compose into `Field label={...}` or property rows.
+
+| Prop                 | Role                                                               |
+| -------------------- | ------------------------------------------------------------------ |
+| `label`              | Field title (`ReactNode`)                                          |
+| `overridden`         | Host-computed override state — drives badge + Reset visibility     |
+| `onReset?`           | Host handler; Reset renders only when `overridden` and this is set |
+| `customBadgeLabel?`  | Default `"Custom"`                                                 |
+| `defaultBadgeLabel?` | Default `"Default"`                                                |
+| `resetLabel?`        | Default `"Reset"`                                                  |
+
+**I/O contract:** Host owns which fields are overridden and what Reset writes. Kit owns
+layout, badge variants (`accent` / `muted`), and the compact Reset button.
+
+**When to use:** Settings / property inspectors with sparse overrides on top of defaults.
+
+**When not to use:** Domain merge/clear algorithms, locale tables, or baking override into
+`WorkbenchProperty*Row` APIs.
+
 ---
 
 ## Catalog browse
@@ -328,15 +359,15 @@ open that dialog from the cascade menu while keeping primary field menus.
 title row with Clear (always mounted; `clearDisabled` when idle), and a body slot
 for facet sections. Product-neutral companion to `CatalogBrowsePane`.
 
-| Prop / type       | Role                                                               |
-| ----------------- | ------------------------------------------------------------------ |
-| `title`           | Host copy for the overlay heading                                  |
-| `titleId`         | `aria-labelledby` target id                                        |
-| `clearLabel`      | Accessible label for Clear                                         |
-| `onClear`         | Host clears selection                                              |
-| `clearDisabled`   | Keep Clear sized/mounted but inert (avoids header height jump)     |
-| `children`        | Usually `LibraryFacetFilterPanel` (or host-authored section lists) |
-| Portal / position | Host owns `createPortal`, fixed coords, and dismiss behavior       |
+| Prop / type       | Role                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `title`           | Host copy for the overlay heading                                                                                         |
+| `titleId`         | `aria-labelledby` target id                                                                                               |
+| `clearLabel`      | Accessible label for Clear                                                                                                |
+| `onClear`         | Host clears selection                                                                                                     |
+| `clearDisabled`   | Keep Clear sized/mounted but inert (avoids header height jump)                                                            |
+| `children`        | Usually `LibraryFacetFilterPanel` (or host-authored section lists)                                                        |
+| Portal / position | Prefer `useAnchoredOverlayPanel` for portal root, fixed coords, dismiss, and remeasure; host may still own these manually |
 
 **When to use:** Anchored filter popover / flyout next to browse chrome.
 
@@ -430,11 +461,51 @@ themselves as fill (clip); only named scroll owners may overflow.
 
 ---
 
-### `WorkspaceExplorer`
+### `WorkspaceExplorer` / `WorkspaceExplorerPanel`
 
-**Purpose:** File tree with expand/collapse, selection, optional context menu integration.
+**Purpose:** File tree with expand/collapse, selection, optional context menu and toolbar.
 
-**When to use:** Launchpad / workspace file navigation.
+**Key props / ports:**
+
+| Surface / API                     | Detail                                                                                       |
+| --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `WorkspaceExplorerPanel` toolbar  | `toolbarLeading` / `toolbarTrailing` / `toolbarStatus` plus optional New file/folder/refresh |
+| `onBackgroundContextMenu`         | Empty-tree / background context menu (item menus keep `onItemContextMenu`)                   |
+| `renderItemActions`               | Per-row trailing actions (folder hover new-file/folder/delete, etc.)                         |
+| `canMutatePath` (controller port) | Guard create/rename/delete/move (`boolean` or error `string`)                                |
+| `inlineEditMessages` (controller) | Override invalid-name / already-exists / failure copy for i18n                               |
+| `resolveExplorerActionPaths`      | `@workbench-kit/workspace` — VS Code-like focus vs selection for command targets             |
+| `applyWorkspaceFolderMove`        | Pure folder-move apply helper for external stores                                            |
+
+**When to use:** Workspace file navigation in a sidebar host.
+
+**When not to use:** Product-specific library browsers — use catalog primitives.
+
+**Selection policy:** See [explorer-selection-policy.md](./explorer-selection-policy.md).
+
+---
+
+### `ChatPanel` / `ChatMessageItem` · `@workbench-kit/react/workbench/chat`
+
+**Purpose:** Sidebar chat surface (message list + composer) and message chrome.
+
+**Key props:**
+
+| Surface                 | Props                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| `ChatPanel`             | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `messageListAddon`, composer/runtime props |
+| `ChatMessageItem`       | `footer`, `afterMessage`, plus message `tone` / `contentMode`                                    |
+| `ChatMessage`           | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                |
+| `ChatPhasedRunProgress` | Product-neutral phase id/label/status/detail list with expand/collapse and optional actions      |
+
+**Defaults:** Assistant layout messages render Markdown unless `contentMode: 'plain'`. User/peer default to plain. File drop is ignored while `disabled` or `isRunning`.
+Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage` (or a hybrid timeline slot); hosts own phase ids and copy.
+
+**When to use:** Host chat sidebars that should delete local message/composer chrome forks.
+
+**When not to use:** Full product chat products that own the entire timeline — use slots (`renderMessageList`, `afterMessage`) rather than forking kit BEM.
+
+**Storybook:** `React/Workbench/Chat Components` → host-gaps drop/tone story.
 
 ---
 
@@ -459,6 +530,23 @@ themselves as fill (clip); only named scroll owners may overflow.
 **When to use:** Sidebar lists, catalog cards, overflow icon bars that only need coordinates + target identity. Sample reference: `IntegratedShellDemo` and Storybook `React/Overlay/Dialog Actions` → Context menu pointer state.
 
 **When not to use:** Building domain menu items, or deciding whether right-click changes selection — keep those in the host.
+
+---
+
+### `measureAnchoredOverlayPanel` / `useAnchoredOverlayPanel`
+
+**Purpose:** Host-neutral helper for panel-sized overlays anchored to a trigger:
+side/below/above placement with viewport clamping, Escape + outside dismiss,
+remeasure on resize/scroll (does not close on those events), and portal root via
+the same `resolvePortalContainer` heuristic as SearchableMultiSelect. Nested
+portaled SMS listboxes stay inside the dismiss boundary
+(`isSearchableMultiSelectPortalTarget`).
+
+**When to use:** Pair with `CatalogFilterOverlay` (or a similar panel shell) for
+toolbar/filter flyouts. Storybook: `React/Overlay/Anchored Overlay Panel`.
+
+**When not to use:** Select/SMS listbox positioning (`measureOverlayPosition`) or
+context menus that should dismiss on scroll/resize (`useFixedOverlayDismiss`).
 
 ---
 

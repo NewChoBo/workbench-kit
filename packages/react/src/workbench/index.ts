@@ -1,5 +1,7 @@
 export { ActivityBar } from './ActivityBar';
 export type { ActivityBarItem, ActivityBarProps } from './ActivityBar';
+export { createStringDragMime, createTypedDragMime } from '../utils/dragMime';
+export type { TypedDragMime, TypedDragMimeOptions } from '../utils/dragMime';
 export {
   EDITOR_TAB_DRAG_DATA_TYPE,
   getEditorTabDropPosition,
@@ -64,6 +66,7 @@ export {
   ChatConversationBar,
   ChatHistoryMenu,
   ChatPanel,
+  ChatPhasedRunProgress,
   ChatRenameDialog,
   DEFAULT_RUNTIME_UNMOUNT_CANCELLABLE_STATUSES,
   defaultWorkbenchChatConversationLabels,
@@ -77,7 +80,11 @@ export type {
   ChatConversationBarProps,
   ChatHistoryMenuProps,
   ChatPanelProps,
+  ChatPhasedRunProgressAction,
+  ChatPhasedRunProgressProps,
   ChatRenameDialogProps,
+  ChatRunPhase,
+  ChatRunPhaseStatus,
   UseCancelRuntimeOnUnmountOptions,
   WorkbenchChatConversation,
   WorkbenchChatConversationLabels,

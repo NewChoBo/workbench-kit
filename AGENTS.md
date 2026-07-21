@@ -23,7 +23,12 @@ Workbench Kit is a **library**; host applications consume published or linked pa
 
 1. Read surrounding code and match existing naming, exports, and validation lanes.
 2. Keep diffs focused — no drive-by refactors.
-3. Run the smallest validation lane that covers your change (`typecheck`, `lint`, `check:public-exports`, etc.).
+3. Run the smallest validation lane that covers your change (`typecheck`, `lint`,
+   `check:public-exports`, `validate:static` / `validate:fast`, etc.).
+4. For UI, prefer the active tool’s browser/preview (Cursor browser MCP, IDE
+   preview, Storybook UI, `pnpm dev`). **Do not treat Playwright /
+   `pnpm validate:ui` as mandatory** for routine agent work—use it when CI
+   parity or required Storybook play coverage is explicitly requested.
 
 ## Project layout
 
@@ -41,7 +46,7 @@ Full detail: [`docs/conventions/npm-release.md`](docs/conventions/npm-release.md
 | ----------------------- | --------------------------------------------------------------------- |
 | Public publish set      | `NPM_PUBLISH_ORDER` in `scripts/npm-publish-config.mjs` (13 packages) |
 | CI publish set          | Same as `NPM_PUBLISH_ORDER` — do not maintain a smaller allowlist     |
-| Private (never publish) | `monaco`, `workbench-core`, `shell-react`                             |
+| Private (never publish) | `monaco`, `workbench-core`, `shell-react`, `electron-shell`           |
 | First release           | Local: `pnpm publish:packages:local`                                  |
 | Updates                 | Push tag `v<version>` → `publish.yml` (npm OIDC trusted publishing)   |
 | Consumer install tag    | `@prototype` (CI does not move `latest`)                              |
@@ -54,6 +59,15 @@ Common failure modes to avoid:
 - Using `NPM_TOKEN` in CI publish (breaks OIDC)
 - Leaving `_authToken` in npmrc during batch publish (401 mid-run)
 - Publishing `react` without sibling packages at the same version on npm
+
+## GitHub issues
+
+When filing or updating issues, follow
+[`docs/conventions/github-issues.md`](docs/conventions/github-issues.md).
+Use `.github/ISSUE_TEMPLATE/*` (blank issues disabled). Prefer the **Consumer
+extract** template for promoting host-proven patterns. Issue bodies must meet
+the full quality bar (API sketch, behavior contract, non-goals, acceptance,
+verification) and stay product-neutral per public-reference policy.
 
 ## Git
 
@@ -84,16 +98,35 @@ storage and gitignored local files only. Docs may use obvious placeholders
 Use neutral terms (`integrating host`, `consumer app`, capability names). Keep
 VS Code / OSS design references when they explain kit conventions.
 
-- Policy: [`docs/conventions/public-reference-policy.md`](docs/conventions/public-reference-policy.md)
-- Checkers: `pnpm check:public-references`, `pnpm check:secrets` (in `validate:static`)
-- Cursor hooks gate agent `git commit` / `git push` when either checker fails
+### Before every commit (mandatory, all agents)
 
-## Cursor rules and hooks
+Run this **yourself** before any `git commit` / `git push` — including Codex,
+Claude Code, Cursor, and humans. Do not rely on editor-specific hooks alone.
+
+```powershell
+pnpm check:commit-safety
+```
+
+That runs `check:public-references` (internal/sibling names) and `check:secrets`
+(credential-looking material). Both are also part of `pnpm validate:static`.
+
+- Policy: [`docs/conventions/public-reference-policy.md`](docs/conventions/public-reference-policy.md)
+- Cursor additionally gates shell `git commit` / `git push` via
+  `.cursor/hooks/gate-git-publish-safety.mjs` — treat that as a backstop, not
+  the only control
+
+## Agent tooling notes
+
+Layout and ownership: [`docs/conventions/agent-guidance.md`](docs/conventions/agent-guidance.md).
 
 | Path                                   | Scope                                                 |
 | -------------------------------------- | ----------------------------------------------------- |
-| `.cursor/rules/workbench-kit-core.mdc` | Always applied                                        |
+| `AGENTS.md` (this file)                | Cross-tool source of truth for agent defaults         |
+| `CLAUDE.md`                            | Claude Code entry; imports this file via `@AGENTS.md` |
+| `.cursor/rules/workbench-kit-core.mdc` | Cursor always-applied mirror of critical defaults     |
 | `.cursor/rules/npm-release.mdc`        | Publish scripts, workflows, package publish metadata  |
-| `.cursor/hooks.json`                   | Gate agent `git commit` / `git push` (refs + secrets) |
+| `.cursor/hooks.json`                   | Cursor-only shell gate for commit/push safety checks  |
 
 When conventions and code disagree, update code **and** docs/rules together.
+Do not duplicate long policy into `CLAUDE.md` or Cursor rules—edit this file or
+`docs/conventions/` instead.

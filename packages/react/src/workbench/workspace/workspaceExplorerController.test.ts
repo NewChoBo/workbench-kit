@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  applyWorkspaceExplorerFolderFocus,
   applyWorkspaceExplorerMutationResult,
   createWorkspaceExplorerInlineEditDraft,
   createWorkspaceExplorerRenameDraft,
+  DEFAULT_WORKSPACE_EXPLORER_MUTATION_DENIED_MESSAGE,
   isWorkspaceExplorerCreatePathAvailable,
+  resolveWorkspaceExplorerMutationDeniedMessage,
   validateWorkspaceExplorerInlineEditName,
   workspaceExplorerParentPaths,
 } from './workspaceExplorerController';
@@ -27,6 +30,18 @@ describe('workspaceExplorerController', () => {
     expect(validateWorkspaceExplorerInlineEditName('bad/name')).toBe(
       'Use a simple file or folder name.',
     );
+    expect(validateWorkspaceExplorerInlineEditName('bad/name', 'Invalid name')).toBe(
+      'Invalid name',
+    );
+  });
+
+  it('resolves canMutatePath denial messages', () => {
+    expect(resolveWorkspaceExplorerMutationDeniedMessage(undefined)).toBeUndefined();
+    expect(resolveWorkspaceExplorerMutationDeniedMessage(true)).toBeUndefined();
+    expect(resolveWorkspaceExplorerMutationDeniedMessage(false)).toBe(
+      DEFAULT_WORKSPACE_EXPLORER_MUTATION_DENIED_MESSAGE,
+    );
+    expect(resolveWorkspaceExplorerMutationDeniedMessage('Read-only path')).toBe('Read-only path');
   });
 
   it('creates inline edit drafts', () => {
@@ -59,6 +74,28 @@ describe('workspaceExplorerController', () => {
       anchorPath: 'src/Button.tsx',
       focusedPath: 'src/Button.tsx',
       paths: ['src/App.tsx', 'src/Button.tsx'],
+    });
+  });
+
+  it('focuses a renamed folder without treating it as a file selection path', () => {
+    let selection: {
+      anchorPath?: string;
+      focusedPath?: string;
+      paths: string[];
+    } = {
+      anchorPath: 'src/App.tsx',
+      focusedPath: 'src/App.tsx',
+      paths: ['src/App.tsx'],
+    };
+
+    applyWorkspaceExplorerFolderFocus('src/components', (next) => {
+      selection = next;
+    });
+
+    expect(selection).toEqual({
+      anchorPath: undefined,
+      focusedPath: 'src/components',
+      paths: [],
     });
   });
 });

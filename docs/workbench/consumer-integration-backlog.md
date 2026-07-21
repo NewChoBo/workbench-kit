@@ -183,25 +183,95 @@ sentinel options before passing. Full multi-section dialog landed as §2
 
 ### 15. Electron host shell package
 
-| Field                  | Detail                                                                                                                                                                |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Description**        | Optional `@workbench-kit/electron-shell` (or sample-only module): frameless window, IPC titlebar, tray, multi-window restore — without pulling Electron into `react`. |
-| **Consumer pain**      | Each Electron consumer reimplements titlebar IPC and restore policy.                                                                                                  |
-| **Suggested package**  | New app-layer package or documented sample in `examples/` only until API stabilizes.                                                                                  |
-| **Storybook / sample** | N/A in browser Storybook; electron sample app when scope is explicit.                                                                                                 |
+| Field                  | Detail                                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**        | Optional `@workbench-kit/electron-shell`: frameless window, IPC titlebar, tray, multi-window restore — without pulling Electron into `react`. |
+| **Consumer pain**      | Each Electron consumer reimplements titlebar IPC and restore policy.                                                                          |
+| **Suggested package**  | `packages/electron-shell` (**private preview**, not in `NPM_PUBLISH_ORDER` until the API stabilizes).                                         |
+| **Storybook / sample** | N/A in browser Storybook; electron sample app when scope is explicit.                                                                         |
 
-**Remember window state contract (extract later):** Host owns storage path and the
-user preference that gates restore. Kit should expose Electron-free helpers only:
+**Bootstrap status:** Package exists as private preview. Implemented helpers:
 
-- `RememberedWindowState { bounds: { x, y, width, height }, isMaximized: boolean }`
-- `resolveWindowOpenLayout(saved, displays, defaults, { remember })` — clamp off-screen;
-  when `remember` is false, return defaults without clearing saved state
-- `bindWindowBoundsPersistence(window, save)` — narrow window surface
+- `requireOwnedWindowForSender(sender, resolveOwnedWindow)` — reject IPC from senders
+  not bound to a host-owned window (`UntrustedIpcSenderError`); no `electron` import in
+  the public helper (hosts adapt `WebContents` / registry).
+- `openAllowlistedExternalLink({ linkId, allowlist, openExternal })` — opaque link id →
+  host allowlist URL → injected open; unknown ids rejected.
+- `registerWindowControlIpc` / `createWindowControlsBridge` — frameless minimize /
+  toggle-maximize / close / isMaximized (+ maximized-changed push); hosts inject channel
+  names and owned-window resolution.
+- `createEncryptedSecretVault` — OS-backed cipher port + opaque secret ids; fails closed
+  when encryption is unavailable (compose persistence with platform/node atomic write).
+- `registerRootConfinedAssetProtocol` / `cacheAllowlistedHttpsAsset` — privileged scheme
+  serving only root-confined cache bytes; hosts inject scheme, hash/TTL/size policy, HTTPS fetch,
+  and `resolveInsideRoot` (typically `@workbench-kit/platform/node`).
+- `resolveWallpaperCropRect` + `createWin32WallpaperPathResolver` — spanned wallpaper crop
+  math and injectable win32 path resolution (other platforms return null until host provides one).
+
+**Remember window state contract (implemented API):** Host owns storage path and the
+user preference that gates restore. `@workbench-kit/platform` exposes Electron-free
+helpers under `packages/platform/src/window/`:
+
+- Types: `RememberedWindowState`, `RectLike`, `DisplayWorkArea`, `PersistableWindow`
+- `resolveWindowOpenLayout({ saved, displays, defaults?, remember })` — clamp off-screen;
+  when `remember` is false or `saved` is null, return defaults without clearing saved state
+- `clampWindowBoundsToDisplays(bounds, displays)` — min size, fit work areas, off-screen recovery
+- `bindWindowBoundsPersistence(window, save, debounceMs?)` — narrow window surface
   (`getBounds` / `getNormalBounds` / `isMaximized` / move·resize·maximize·close), debounce
   writes; when maximized, persist `getNormalBounds()` plus `isMaximized: true`
+- `bindSecondaryWindowBoundsPersistence({ subscribe, readBounds, persist, debounceMs? })` —
+  bounds-only binder for secondary/overlay windows (no maximize policy); host adapts
+  moved/resized/closed events via `subscribe`, with debounced persist + flush-on-close
 
-Do not pull Electron into `@workbench-kit/react`. Consumer TilePaper currently implements
-this shape under `apps/desktop-runtime/features/window-manager/main-window-*`.
+**Implemented geometry helpers** (`@workbench-kit/platform`, Electron/React-free):
+
+- Shared `RectLike` (`packages/platform/src/window/types.ts`) for absolute rectangles
+- `resizeRect` — 8-edge/corner resize with optional min width/height clamp
+- `resolvePlacementToBounds` / `normalizeBoundsToPlacement` — work-area–relative
+  placement in pixels or percentages; zero/negative work areas throw
+- Compose with remembered open-layout / clamp helpers above
+
+Do not pull Electron into `@workbench-kit/react`. Optional thin Electron adapter /
+`@workbench-kit/electron-shell` wrapping these helpers remains a separate §15 follow-up.
+
+**JSON document / JSONL persistence ports (implemented API):** Hosts own concrete
+`kind` strings, `schemaVersion` numbers, migration approval, and backup retention.
+`@workbench-kit/platform` exposes browser-safe ports + memory adapters; Node
+filesystem implementations live on `@workbench-kit/platform/node` only:
+
+- Types: `JsonDocumentStore`, `JsonLinesStore`, `VersionedEnvelope`, `StorageDiagnostic`
+- Memory: `createMemoryJsonDocumentStore`, `createMemoryJsonLinesStore` (tests / tiny ephemeral hosts)
+- Node: `createNodeJsonDocumentStore`, `createNodeJsonLinesStore`, `quarantineFileUnderRoot`
+  (atomic write + path-under-root; corrupt files move under `recovery/quarantine`;
+  diagnostics expose `relativeKey` / quarantine keys — never absolute paths)
+- JSONL v1 corruption policy: quarantine the whole file and resume empty
+
+Prefer memory or Node document stores for structured persistence. `localStorage`
+adapters remain appropriate only for small JSON documents in browser hosts.
+
+**Allowlisted HTTPS fetch (implemented API):** Hosts inject hostname allowlists.
+`createAllowlistedHttpsFetch({ allowedHosts, fetch? })` rejects non-`https:` URLs and
+non-allowlisted hostnames; kit does not ship concrete API host catalogs.
+
+**Tray-aware close / quit policy (implemented API):** Hosts own tray icons, menus, and
+preference UI. `@workbench-kit/platform` exposes pure decision helpers (no Electron imports):
+
+- `shouldHideOnClose({ trayEnabled })` — hide instead of destroy when tray mode is on
+- `shouldQuitWhenAllWindowsClosed({ platform, trayEnabled })` — darwin keeps the app alive
+  without windows; win32/linux quit when tray is off; tray enabled never auto-quits
+
+**Secondary-window residency applicator (implemented API):** Hosts own BrowserWindow
+construction and which residency mode is active. `@workbench-kit/platform` applies a
+narrow injected surface (`setAlwaysOnTop` / `setFocusable` / `setIgnoreMouseEvents` / optional
+`blur`) for modes `normal` | `always-on-top` | `click-through`. For click-through,
+`forwardPointerWhenIgnoring` defaults to `true` (win32 forward option). Pair with renderer
+hit-region pointer passthrough in `@workbench-kit/react` for selective interaction.
+
+**Hit-region pointer passthrough (implemented API):** Hosts inject selector lists and a
+`PointerPassthroughPort` (usually IPC → ignore-mouse-events). `@workbench-kit/react`
+exposes `usePointerPassthroughRegion` / `createPointerPassthroughController` with
+rAF-coalesced pointermove hit-testing. No product selectors ship in the kit. Pair with
+platform `applyWindowResidency(..., 'click-through')` on the main-process side.
 
 ### 16. Collection / dynamic collection save UI
 
@@ -221,17 +291,31 @@ this shape under `apps/desktop-runtime/features/window-manager/main-window-*`.
 | **Suggested package**  | Release process — see [npm-release.md](../conventions/npm-release.md).                           |
 | **Storybook / sample** | Consumer CI change; kit publishes all `NPM_PUBLISH_ORDER` packages together.                     |
 
+### 18. VS Code-compatible explorer focus / selection
+
+| Field                  | Detail                                                                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**        | Converge workspace explorer action context on VS Code-like focus vs selection rules (multi-select respected when focus is inside selection; otherwise focus). |
+| **Consumer pain**      | Kit interim `paths` (files) + folder `focusedPath` forces host shims; delete/rename/move disagree with VS Code muscle memory.                                 |
+| **Suggested package**  | `@workbench-kit/workspace` / `@workbench-kit/react/workbench/workspace` helpers first; DTO migration only with notes.                                         |
+| **Storybook / sample** | Fixtures for focus-outside-selection, folder multi-select, rename/create selection — see [explorer-selection-policy.md](./explorer-selection-policy.md).      |
+
+**Near-term:** Keep interim invariants consistent (no folder path in file `paths`).  
+**Extracted:** `resolveExplorerActionPaths` in `@workbench-kit/workspace` (VS Code
+`getContext`-style). Default delete path uses it; rename/move/expanded-path remap
+still adopt incrementally.
+
 ---
 
 ## Summary counts
 
-| Priority              | Count | Focus                                                                                 |
-| --------------------- | ----- | ------------------------------------------------------------------------------------- |
-| Completed (merged)    | 13    | Tokens, library detail, media, DnD, sidebar actions, integrations, exports, dev ports |
-| In progress (WIP)     | 2     | Infinite scroll hook, platform chrome                                                 |
-| High priority pending | 6     | Catalog pane, facet panel, shims, strict types, chrome finish                         |
-| Medium priority       | 6     | Category tree, facet strip, compact detail, gallery, samples, DnD consolidation       |
-| Long-term             | 5     | Host context, theme packs, electron shell, collections, published CI                  |
+| Priority              | Count | Focus                                                                                         |
+| --------------------- | ----- | --------------------------------------------------------------------------------------------- |
+| Completed (merged)    | 13    | Tokens, library detail, media, DnD, sidebar actions, integrations, exports, dev ports         |
+| In progress (WIP)     | 2     | Infinite scroll hook, platform chrome                                                         |
+| High priority pending | 6     | Catalog pane, facet panel, shims, strict types, chrome finish                                 |
+| Medium priority       | 6     | Category tree, facet strip, compact detail, gallery, samples, DnD consolidation               |
+| Long-term             | 6     | Host context, theme packs, electron shell, collections, published CI, VS Code explorer select |
 
 ---
 

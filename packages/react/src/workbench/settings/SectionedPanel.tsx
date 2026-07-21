@@ -113,7 +113,7 @@ export function WorkbenchSectionedPanel({
     <div className="ui-workbench-sectioned-panel-root">
       <WorkbenchNavigationPanel
         className={cx('ui-workbench-sectioned-panel', className)}
-        contentScrollbars="hidden"
+        contentScrollbars="overlay"
         content={items.map((item) => (
           <Fragment key={item.anchorId}>{item.render()}</Fragment>
         ))}

@@ -1,0 +1,153 @@
+name: Feature / API addition
+description: New kit capability, primitive, or public API. Requires package target, API sketch, and verification plan.
+title: 'feat(<package>): '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Follow [docs/conventions/github-issues.md](https://github.com/NewChoBo/workbench-kit/blob/staging/docs/conventions/github-issues.md).
+        Use **capability language** only ([public-reference-policy](https://github.com/NewChoBo/workbench-kit/blob/staging/docs/conventions/public-reference-policy.md)).
+        Do not name private hosts, sibling repos, or product codenames.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences. What ships when this is done?
+      placeholder: Add an anchored overlay panel hook that hosts can reuse with CatalogFilterOverlay.
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / consumer pain
+      description: What breaks or gets duplicated today without this? Be concrete.
+      placeholder: |
+        Hosts reimplement portal mount + measure + Escape dismiss for every filter flyout.
+        Select listbox positioning exists, but panel-grade overlays do not.
+    validations:
+      required: true
+
+  - type: textarea
+    id: goals
+    attributes:
+      label: Goals
+      description: Bullet list of in-scope outcomes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: Explicit out-of-scope items (domain schemas, product copy, Electron in react, etc.).
+    validations:
+      required: true
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Suggested package / export surface
+      options:
+        - '@workbench-kit/react (primitives)'
+        - '@workbench-kit/react/overlay'
+        - '@workbench-kit/react/layout'
+        - '@workbench-kit/react/workbench'
+        - '@workbench-kit/platform'
+        - '@workbench-kit/contracts'
+        - '@workbench-kit/tokens'
+        - New package (describe in API sketch)
+        - Docs / conventions only
+        - Unsure — needs triage
+    validations:
+      required: true
+
+  - type: textarea
+    id: api_sketch
+    attributes:
+      label: Proposed API sketch
+      description: Types, function names, props, and ownership boundaries. Pseudocode is fine.
+      render: typescript
+      placeholder: |
+        export function useAnchoredOverlayPanel(options: {
+          triggerRef: RefObject<HTMLElement | null>;
+          open: boolean;
+          onOpenChange: (open: boolean) => void;
+          preferredPlacement?: 'side' | 'below' | 'auto';
+        }): { style: CSSProperties; portalRoot: HTMLElement; panelProps: ... }
+    validations:
+      required: true
+
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Behavior contract
+      description: Algorithms, edge cases, defaults, error handling, a11y, persistence rules.
+    validations:
+      required: true
+
+  - type: textarea
+    id: kit_today
+    attributes:
+      label: Existing kit surfaces
+      description: What already exists that this should reuse, extend, or avoid duplicating? Link files under packages/.
+      placeholder: |
+        - CatalogFilterOverlay — presentational shell only; hosts own positioning
+        - measureOverlayPosition (select / searchable-multi-select) — listbox-sized, not panel-grade
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checkbox list. Must be verifiable without private host access.
+      placeholder: |
+        - [ ] Unit tests for clamp / remember-off defaults
+        - [ ] Storybook story on the correct surface frame
+        - [ ] Public export + check:public-exports green
+        - [ ] No Electron import in @workbench-kit/react
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification plan
+      description: Which validate lane / Storybook / unit tests prove this?
+      placeholder: |
+        - pnpm --filter @workbench-kit/react test
+        - pnpm validate:fast
+        - Storybook: React/Overlay/Anchored Panel
+    validations:
+      required: true
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Effort estimate
+      options:
+        - S (≤1 day)
+        - M (2–3 days)
+        - L (≥1 week)
+        - Unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: depends
+    attributes:
+      label: Dependencies / blockers
+      description: Issue numbers, design decisions, or docs that must land first.
+      placeholder: Blocked on #34 i18n direction; or None.
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Kit docs, backlog sections, related PRs/issues. No private repo paths.
+      placeholder: |
+        - docs/workbench/consumer-integration-backlog.md §12b
+        - packages/react/src/primitives/catalog-filter-overlay/

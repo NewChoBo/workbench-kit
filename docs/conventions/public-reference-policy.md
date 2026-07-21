@@ -10,7 +10,7 @@ to publish and clone without exposing private company knowledge.
 This policy applies to:
 
 - Source and tests under `packages/`, `extensions/`, `examples/`, `scripts/`
-- Human docs under `docs/`, `README.md`, `AGENTS.md`
+- Human docs under `docs/`, `README.md`, `AGENTS.md`, `CLAUDE.md`
 - Agent instructions under `.cursor/rules/`, `.cursor/hooks/`, and similar
 - Commit messages and PR titles/bodies for this repository
 - Storybook copy and sample-host UI strings
@@ -85,13 +85,15 @@ commit/push.
 ## Enforcement
 
 ```powershell
-pnpm check:public-references
-pnpm check:secrets
+pnpm check:commit-safety
 ```
 
-Both run in `pnpm validate:static` (and therefore `validate:fast` / `validate`).
-Cursor project hooks block agent `git commit` / `git push` when either fails
-(`.cursor/hooks/gate-git-publish-safety.mjs`).
+(`check:public-references` + `check:secrets`. Also inside `pnpm validate:static`.)
+
+**Required before every commit** for all agents and humans. Cursor shell hooks
+are an extra backstop (`.cursor/hooks/gate-git-publish-safety.mjs`); Codex,
+Claude Code, and plain git do not get that hook, so they must run
+`check:commit-safety` explicitly.
 
 Internal-name denylist tokens live only in
 `scripts/check-public-references.mjs`. Secret heuristics live in

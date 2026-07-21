@@ -6,6 +6,7 @@
 @import './property-hint.css';
 @import './property-inline.css';
 @import './property-key-value.css';
+@import './property-override-label.css';
 @import './property-panel.css';
 @import './property-row.css';
 @import './property-search.css';

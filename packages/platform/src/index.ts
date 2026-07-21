@@ -21,6 +21,16 @@ export {
   type BrowserStorageKind,
   type ClearBrowserStorageByPrefixesOptions,
 } from './browser-storage.js';
+export {
+  createAllowlistedHttpsFetch,
+  type CreateAllowlistedHttpsFetchOptions,
+} from './create-allowlisted-https-fetch.js';
+export {
+  createVersionedBrowserStateAdapter,
+  type BrowserKeyValueStorage,
+  type VersionedBrowserStateAdapter,
+  type VersionedBrowserStateAdapterOptions,
+} from './versioned-browser-state.js';
 export { CommandRegistry } from './commands/command-registry.js';
 export {
   assertNoCommandDefinitionConflicts,
@@ -194,3 +204,74 @@ export {
   type ResolveWorkbenchViewRouteSnapshotOptions,
   type WorkbenchViewRouteSnapshot,
 } from './workbench-view-route.js';
+export {
+  createMemoryJsonDocumentStore,
+  parseVersionedEnvelope,
+  type MemoryJsonDocumentStoreOptions,
+} from './storage/memory-json-document-store.js';
+export {
+  createMemoryJsonLinesStore,
+  type MemoryJsonLinesStoreOptions,
+} from './storage/memory-json-lines-store.js';
+export type {
+  JsonDocumentMigration,
+  JsonDocumentReadResult,
+  JsonDocumentStore,
+  JsonLinesReadResult,
+  JsonLinesStore,
+  StorageDiagnostic,
+  StorageDiagnosticCode,
+  VersionedEnvelope,
+} from './storage/types.js';
+export {
+  applyWindowResidency,
+  type ApplyWindowResidencyOptions,
+  type ResidencyWindowSurface,
+  type WindowResidencyMode,
+} from './window/apply-window-residency.js';
+export {
+  bindSecondaryWindowBoundsPersistence,
+  type BindSecondaryWindowBoundsPersistenceOptions,
+  type SecondaryWindowBoundsHandlers,
+  type SecondaryWindowBoundsPersistenceHandle,
+} from './window/bind-secondary-window-bounds-persistence.js';
+export {
+  bindWindowBoundsPersistence,
+  type WindowBoundsPersistenceHandle,
+} from './window/bind-window-bounds-persistence.js';
+export {
+  WINDOW_BOUNDS_MIN_HEIGHT,
+  WINDOW_BOUNDS_MIN_WIDTH,
+  clampWindowBoundsToDisplays,
+} from './window/clamp-window-bounds-to-displays.js';
+export {
+  DEFAULT_WINDOW_OPEN_HEIGHT,
+  DEFAULT_WINDOW_OPEN_WIDTH,
+  createDefaultWindowOpenBounds,
+  resolveWindowOpenLayout,
+  type ResolveWindowOpenLayoutInput,
+  type ResolvedWindowOpenLayout,
+} from './window/resolve-window-open-layout.js';
+export { resizeRect } from './window/resize-rect.js';
+export {
+  shouldHideOnClose,
+  shouldQuitWhenAllWindowsClosed,
+  type ShouldHideOnCloseInput,
+  type ShouldQuitWhenAllWindowsClosedInput,
+  type TrayClosePlatformId,
+} from './window/tray-close-policy.js';
+export {
+  assertPositiveWorkArea,
+  normalizeBoundsToPlacement,
+  resolvePlacementToBounds,
+} from './window/work-area-placement.js';
+export type {
+  DisplayWorkArea,
+  PersistableWindow,
+  RectLike,
+  RememberedWindowState,
+  ResizeEdge,
+  ResizeRectOptions,
+  SizeUnit,
+  WorkAreaPlacement,
+} from './window/types.js';

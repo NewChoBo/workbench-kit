@@ -1,0 +1,124 @@
+name: Consumer extract (promote into kit)
+description: Promote a proven host-side pattern into @workbench-kit. Requires behavior contract, kit gap analysis, and hard non-goals.
+title: 'feat(<package>): '
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when a **desktop/webview consumer already ships** a reusable pattern and kit should own the generic slice.
+        Read [github-issues.md](https://github.com/NewChoBo/workbench-kit/blob/staging/docs/conventions/github-issues.md) § Consumer extracts.
+        **Never** paste private repo paths, product codenames, or host MIME/preference key literals that identify a private product. Describe algorithms and ownership instead.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What generic capability moves into the kit?
+    validations:
+      required: true
+
+  - type: textarea
+    id: capability
+    attributes:
+      label: Capability statement (product-neutral)
+      description: One paragraph a stranger can understand without knowing any host app.
+    validations:
+      required: true
+
+  - type: textarea
+    id: kit_gap
+    attributes:
+      label: Kit gap today
+      description: Exact APIs/files that almost cover this, and what is missing. Link packages/ paths.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reference_behavior
+    attributes:
+      label: Reference behavior (algorithmic)
+      description: |
+        Describe the proven host algorithm without naming the product.
+        Include constants, placement rules, debounce, reject rules, MIME factory shape, etc.
+      placeholder: |
+        Prefer side panel when trigger.left < 42% of viewport AND spaceRight >= panelWidth.
+        Else align panel right edge to trigger right; flip above when spaceBelow < 12 and spaceAbove is larger.
+        Dismiss on Escape and outside pointerdown, but keep open when target is inside portaled searchable-multi-select listbox.
+    validations:
+      required: true
+
+  - type: textarea
+    id: promote
+    attributes:
+      label: Promote into kit
+      description: Concrete modules/helpers/components to extract.
+    validations:
+      required: true
+
+  - type: textarea
+    id: host_keeps
+    attributes:
+      label: Host keeps forever
+      description: Domain schemas, product copy, preference keys, BrowserWindow construction, provider DTOs, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: api_sketch
+    attributes:
+      label: Proposed public API
+      render: typescript
+    validations:
+      required: true
+
+  - type: textarea
+    id: package_home
+    attributes:
+      label: Package home + import rules
+      description: Where it lives; what it must NOT import (Electron in react, React in platform, etc.).
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Unit tests for edge cases listed above
+        - [ ] Storybook / sample host demo (or N/A with rationale)
+        - [ ] Public export + docs note
+        - [ ] Consumer can delete local duplicate after bump (tracked separately in host)
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification plan
+    validations:
+      required: true
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Effort estimate
+      options:
+        - S (≤1 day)
+        - M (2–3 days)
+        - L (≥1 week)
+        - Unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: depends
+    attributes:
+      label: Dependencies / related issues
+      placeholder: Depends on #30; related backlog §15a
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks / open questions
+      description: Dual-stack risk, breaking export surface, a11y, SSR, etc.

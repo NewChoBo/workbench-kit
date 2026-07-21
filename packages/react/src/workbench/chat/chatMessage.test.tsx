@@ -285,6 +285,94 @@ describe('ChatMessageItem', () => {
     expect(peerMarkup).toContain('message__bubble-line--start');
     expect(peerMarkup).toContain('message__time--pinned');
   });
+
+  it('renders command proposal cards in peer layout', () => {
+    const message: ChatMessage = {
+      content: 'I can run that for you.',
+      commandProposals: [
+        {
+          commandId: 'workbench.openSettings',
+          id: 'proposal-1',
+          label: 'Open Settings',
+          policy: 'approval-required',
+          status: 'pending',
+        },
+      ],
+      id: 'peer-proposal-1',
+      label: 'Alex',
+      source: 'assistant',
+    };
+
+    const markup = renderToStaticMarkup(
+      <ChatMessageItem assistantLabel="Alex" layout="peer" message={message} />,
+    );
+
+    expect(markup).toContain('message--peer');
+    expect(markup).toContain('message__command-proposals');
+    expect(markup).toContain('Open Settings');
+  });
+
+  it('forwards footer into the bubble and afterMessage outside it', () => {
+    const message: ChatMessage = {
+      content: 'Working on it',
+      id: 'assistant-slots',
+      source: 'assistant',
+    };
+
+    const markup = renderToStaticMarkup(
+      <ChatMessageItem
+        afterMessage={<span>attachment-chip</span>}
+        footer={<span>progress-footer</span>}
+        message={message}
+      />,
+    );
+
+    expect(markup).toContain('message__bubble-footer');
+    expect(markup).toContain('progress-footer');
+    expect(markup).toContain('message__after');
+    expect(markup).toContain('attachment-chip');
+  });
+
+  it('renders assistant contentMode plain without markdown wrappers', () => {
+    const message: ChatMessage = {
+      content: '**plain** assistant text',
+      contentMode: 'plain',
+      id: 'assistant-plain',
+      source: 'assistant',
+    };
+
+    const markup = renderToStaticMarkup(<ChatMessageItem message={message} />);
+
+    expect(markup).toContain('**plain** assistant text');
+    expect(markup).not.toContain('md-content');
+    expect(markup).not.toContain('<strong>');
+  });
+
+  it('applies tone classes from message.tone', () => {
+    const errorMarkup = renderToStaticMarkup(
+      <ChatMessageItem
+        message={{
+          content: 'Something failed',
+          id: 'tone-error',
+          source: 'assistant',
+          tone: 'error',
+        }}
+      />,
+    );
+    expect(errorMarkup).toContain('message--tone-error');
+
+    const warningMarkup = renderToStaticMarkup(
+      <ChatMessageItem
+        message={{
+          content: 'Check this',
+          id: 'tone-warning',
+          source: 'user',
+          tone: 'warning',
+        }}
+      />,
+    );
+    expect(warningMarkup).toContain('message--tone-warning');
+  });
 });
 
 describe('ChatMessageList', () => {
@@ -336,5 +424,17 @@ describe('ChatMessageList', () => {
     expect(markup).not.toContain('Old two');
     expect(markup).toContain('Recent one');
     expect(markup).toContain('Recent two');
+  });
+
+  it('renders messageListAddon after messages', () => {
+    const markup = renderToStaticMarkup(
+      <ChatMessageList
+        messageListAddon={<div data-testid="list-addon">addon</div>}
+        messages={[{ content: 'Hello', id: 'm1', source: 'user' }]}
+      />,
+    );
+
+    expect(markup).toContain('data-testid="list-addon"');
+    expect(markup.indexOf('Hello')).toBeLessThan(markup.indexOf('list-addon'));
   });
 });

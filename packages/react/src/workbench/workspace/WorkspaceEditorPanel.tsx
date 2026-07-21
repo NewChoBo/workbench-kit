@@ -63,6 +63,21 @@ export type WorkspaceEditorPanelCanSaveFile = (
   file: WorkspaceFile,
 ) => boolean;
 
+/**
+ * Panel-level Ctrl/Cmd+S behavior.
+ * - `panel` (default): panel handles the shortcut
+ * - `editor`: when `renderEditor` is set, panel does not bind Ctrl/Cmd+S (host owns save)
+ * - `off`: never bind panel Ctrl/Cmd+S
+ */
+export type WorkspaceEditorPanelSaveShortcutMode = 'panel' | 'editor' | 'off';
+
+export interface WorkspaceEditorPanelSaveShortcutContext {
+  content: string;
+  path: string;
+  /** Persist via the panel draft save path (respects `canSaveFile`). */
+  save: () => void;
+}
+
 export interface WorkspaceEditorPanelProps {
   canSaveFile?: WorkspaceEditorPanelCanSaveFile | undefined;
   emptyLabel?: string;
@@ -77,10 +92,16 @@ export interface WorkspaceEditorPanelProps {
     content: string,
     previousUpdatedAt?: string,
   ) => SaveResult | Promise<SaveResult | undefined> | undefined;
+  /**
+   * Called instead of the default panel save when Ctrl/Cmd+S fires and the panel
+   * still owns the binding. Call `save()` to persist, or skip to take ownership.
+   */
+  onSaveShortcut?: ((context: WorkspaceEditorPanelSaveShortcutContext) => void) | undefined;
   onSelectedPathChange: (path: string) => void;
   openPaths: string[];
   renderEditor?: WorkspaceEditorPanelRenderEditor | undefined;
   renderTabActions?: WorkspaceEditorPanelRenderTabActions | undefined;
+  saveShortcutMode?: WorkspaceEditorPanelSaveShortcutMode | undefined;
   selectedPath?: string;
   theme?: WorkspaceEditorTheme;
 }
@@ -95,10 +116,12 @@ export function WorkspaceEditorPanel({
   onCopyPath,
   onDeletePath,
   onSaveFile,
+  onSaveShortcut,
   onSelectedPathChange,
   openPaths,
   renderEditor,
   renderTabActions,
+  saveShortcutMode = 'panel',
   selectedPath,
   theme,
 }: WorkspaceEditorPanelProps) {
@@ -232,7 +255,24 @@ export function WorkspaceEditorPanel({
               if (!selectedFile) return;
               if (event.key.toLowerCase() !== 's' || (!event.ctrlKey && !event.metaKey)) return;
 
+              const effectiveMode =
+                saveShortcutMode === 'editor' && renderEditor ? 'off' : saveShortcutMode;
+              if (effectiveMode === 'off') {
+                return;
+              }
+
               event.preventDefault();
+              if (onSaveShortcut) {
+                onSaveShortcut({
+                  content: selectedContent,
+                  path: selectedFile.path,
+                  save: () => {
+                    saveFile(selectedFile.path, selectedContent);
+                  },
+                });
+                return;
+              }
+
               saveFile(selectedFile.path, selectedContent);
             }}
           >

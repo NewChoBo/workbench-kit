@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Issue writing guide
+    url: https://github.com/NewChoBo/workbench-kit/blob/staging/docs/conventions/github-issues.md
+    about: Required detail level, public-reference rules, and acceptance checklist before opening an issue.
+  - name: Consumer integration backlog
+    url: https://github.com/NewChoBo/workbench-kit/blob/staging/docs/workbench/consumer-integration-backlog.md
+    about: Product-neutral backlog of kit gaps found while integrating desktop consumers.

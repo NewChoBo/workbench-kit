@@ -50,16 +50,16 @@ surface first, then rewire the story to consume that surface.
 
 Packages should keep runtime assumptions explicit:
 
-| Surface                    | Runtime policy                                                                |
-| -------------------------- | ----------------------------------------------------------------------------- |
-| `@workbench-kit/tokens`    | Browser-safe CSS and token metadata.                                          |
-| `@workbench-kit/platform`  | Framework-neutral and browser-safe command/context primitives.                |
-| `@workbench-kit/contracts` | Framework-neutral data contracts without browser or Node side effects.        |
-| `@workbench-kit/workspace` | Framework-neutral workspace data helpers without host I/O ownership.          |
-| `@workbench-kit/runtime`   | Runtime event contracts and mock runtime utilities without UI ownership.      |
-| `@workbench-kit/react`     | Browser/React UI entrypoints; no direct Node, filesystem, or host API calls.  |
-| `@workbench-kit/services`  | Service orchestration over explicit adapters and contracts.                   |
-| `@workbench-kit/adapters`  | Adapter helpers that isolate story/test transport wiring from core contracts. |
+| Surface                    | Runtime policy                                                                                                                                                                |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@workbench-kit/tokens`    | Browser-safe CSS and token metadata.                                                                                                                                          |
+| `@workbench-kit/platform`  | Framework-neutral and browser-safe command/context primitives. Node-only fs helpers live on `@workbench-kit/platform/node` and must not be re-exported from the package root. |
+| `@workbench-kit/contracts` | Framework-neutral data contracts without browser or Node side effects.                                                                                                        |
+| `@workbench-kit/workspace` | Framework-neutral workspace data helpers without host I/O ownership.                                                                                                          |
+| `@workbench-kit/runtime`   | Runtime event contracts and mock runtime utilities without UI ownership.                                                                                                      |
+| `@workbench-kit/react`     | Browser/React UI entrypoints; no direct Node, filesystem, or host API calls.                                                                                                  |
+| `@workbench-kit/services`  | Service orchestration over explicit adapters and contracts.                                                                                                                   |
+| `@workbench-kit/adapters`  | Adapter helpers that isolate story/test transport wiring from core contracts.                                                                                                 |
 
 Browser-safe packages must not import Node-only modules, extension globals, or
 host APIs. Host behavior should stay behind explicit adapter entrypoints.

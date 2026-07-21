@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { SideBarViewFrame, SidebarToolbar, WorkbenchSidebarSection } from '../../layout/sidebar';
 import { IconButton } from '../../primitives/icon-button';
 import { cx } from '../../utils/cx';
@@ -12,6 +13,9 @@ export interface WorkspaceExplorerPanelProps extends WorkspaceExplorerProps {
   refreshLabel?: string;
   sectionTitle?: string;
   title?: string;
+  toolbarLeading?: ReactNode;
+  toolbarStatus?: ReactNode;
+  toolbarTrailing?: ReactNode;
 }
 
 export function WorkspaceExplorerPanel({
@@ -23,15 +27,21 @@ export function WorkspaceExplorerPanel({
   refreshLabel = 'Refresh Explorer',
   sectionTitle = 'Workspace',
   title = 'Explorer',
+  toolbarLeading,
+  toolbarStatus,
+  toolbarTrailing,
   ...explorerProps
 }: WorkspaceExplorerPanelProps) {
+  const hasDefaultActions = Boolean(onNewFile || onNewFolder || onRefresh);
+  const hasToolbarSlots = Boolean(toolbarLeading || toolbarTrailing || toolbarStatus);
   const headerActions =
-    onNewFile || onNewFolder || onRefresh ? (
+    hasDefaultActions || hasToolbarSlots ? (
       <SidebarToolbar
         aria-label="Explorer actions"
         className="ui-explorer-action-bar"
         role="toolbar"
       >
+        {toolbarLeading}
         {onNewFile ? (
           <IconButton compact icon="codicon-new-file" label="New file" onClick={onNewFile} />
         ) : null}
@@ -40,6 +50,10 @@ export function WorkspaceExplorerPanel({
         ) : null}
         {onRefresh ? (
           <IconButton compact icon="codicon-refresh" label={refreshLabel} onClick={onRefresh} />
+        ) : null}
+        {toolbarTrailing}
+        {toolbarStatus ? (
+          <span className="ui-explorer-action-bar__status">{toolbarStatus}</span>
         ) : null}
       </SidebarToolbar>
     ) : undefined;

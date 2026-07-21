@@ -37,8 +37,10 @@ export {
   getWorkspaceSelectionRange,
   normalizeWorkspaceSelectionPaths,
   pruneWorkspaceSelection,
+  resolveExplorerActionPaths,
   resolveWorkspaceCreateParentPath,
   updateWorkspaceSelection,
+  type ResolveExplorerActionPathsInput,
   type UpdateWorkspaceSelectionInput,
   type WorkspaceSelectionActionPathsInput,
   type WorkspaceSelectionMode,
@@ -84,6 +86,7 @@ export {
   type VirtualFileOrigin,
 } from './virtual-file-adapter';
 export {
+  applyWorkspaceFolderMove,
   getAvailableWorkspaceEntryName,
   getWorkspaceFileMovePlan,
   getWorkspaceEntryMovePlan,

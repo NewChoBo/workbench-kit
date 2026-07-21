@@ -25,6 +25,7 @@ are not kept as active documents. Their conclusions are folded into
 | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | [**Consumer Capabilities**](./consumer-capabilities.md)               | **Host contract:** primitives/shell exports, key props, when to use vs not, VS Code analogues. |
 | [**Consumer Integration Backlog**](./consumer-integration-backlog.md) | Kit gaps found during consumer adoption; prioritization for shared primitives.                 |
+| [**Explorer Selection Policy**](./explorer-selection-policy.md)       | Interim selection model + north star toward VS Code focus/selection rules.                     |
 
 ## Supporting References
 

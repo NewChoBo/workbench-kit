@@ -24,7 +24,11 @@ export interface CatalogFilterOverlayProps extends Omit<
 /**
  * Presentational filter overlay shell: elevated surface, fixed-height header
  * (title + Clear), and a body slot for facet sections.
- * Hosts own portal mounting, positioning, and product copy.
+ * Hosts own portal mounting, positioning, and product copy — prefer
+ * `useAnchoredOverlayPanel` / `measureAnchoredOverlayPanel` from
+ * `@workbench-kit/react/overlay` for trigger-relative placement, dismiss,
+ * remeasure, and portal root (keeps nested SearchableMultiSelect listboxes
+ * inside the dismiss boundary).
  */
 export function CatalogFilterOverlay({
   children,
