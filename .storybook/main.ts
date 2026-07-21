@@ -25,6 +25,8 @@ const config: StorybookConfig = {
     '../packages/react/src/primitives/workbench-editor/EditorChrome.stories.@(ts|tsx)',
     '../packages/react/src/primitives/scroll-area-infinite-load/ScrollAreaInfiniteLoad.stories.@(ts|tsx)',
     '../packages/react/src/modal/OverlayDialogs.stories.@(ts|tsx)',
+    '../packages/react/src/overlay/AnchoredOverlayPanel.stories.@(ts|tsx)',
+
     '../packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)',
     '../packages/react/src/workbench/WorkbenchShell.stories.@(ts|tsx)',
     '../packages/react/src/workbench/IntegratedShell.stories.@(ts|tsx)',

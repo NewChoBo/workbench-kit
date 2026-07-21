@@ -23,15 +23,15 @@ Use official subpath exports from `@workbench-kit/react`. Do not import from `pa
 | `@workbench-kit/react/primitives`           | Controls, editor chrome, library layout, scroll, property grids        |
 | `@workbench-kit/react/layout`               | Sidebar frames, editor frame, section stacks                           |
 | `@workbench-kit/react/editor-tabs`          | Tab strip drag-and-drop helpers                                        |
-| `@workbench-kit/react/overlay`              | Context menus                                                      |
-| `@workbench-kit/react/modal`                | Low-level modal frame (prefer management wrapper when applicable)  |
-| `@workbench-kit/react/workbench/shell`      | Activity bar, shell layout, view editor, title bar                 |
-| `@workbench-kit/react/workbench/chat`       | Chat panel, composer, message list/item, conversation bar          |
-| `@workbench-kit/react/workbench/management` | Dialog frames, integrations shell, notices                         |
-| `@workbench-kit/react/workbench/workspace`  | Workspace explorer, editor panel, selection helpers                |
-| `@workbench-kit/workspace`                  | Pure path/selection/virtual-workspace helpers (no React)           |
-| `@workbench-kit/react/brand`                | Product icon mark                                                  |
-| `@workbench-kit/contracts`                  | Cross-host DTOs and authoring workbench state                      |
+| `@workbench-kit/react/overlay`              | Context menus; anchored overlay panel positioning helper               |
+| `@workbench-kit/react/modal`                | Low-level modal frame (prefer management wrapper when applicable)      |
+| `@workbench-kit/react/workbench/shell`      | Activity bar, shell layout, view editor, title bar                     |
+| `@workbench-kit/react/workbench/chat`       | Chat panel, composer, message list/item, conversation bar              |
+| `@workbench-kit/react/workbench/management` | Dialog frames, integrations shell, notices                             |
+| `@workbench-kit/react/workbench/workspace`  | Workspace explorer, editor panel, selection helpers                    |
+| `@workbench-kit/workspace`                  | Pure path/selection/virtual-workspace helpers (no React)               |
+| `@workbench-kit/react/brand`                | Product icon mark                                                      |
+| `@workbench-kit/contracts`                  | Cross-host DTOs and authoring workbench state                          |
 
 Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workbench-kit/react/primitives.css`).
 
@@ -367,7 +367,7 @@ for facet sections. Product-neutral companion to `CatalogBrowsePane`.
 | `onClear`         | Host clears selection                                              |
 | `clearDisabled`   | Keep Clear sized/mounted but inert (avoids header height jump)     |
 | `children`        | Usually `LibraryFacetFilterPanel` (or host-authored section lists) |
-| Portal / position | Host owns `createPortal`, fixed coords, and dismiss behavior       |
+| Portal / position | Prefer `useAnchoredOverlayPanel` for portal root, fixed coords, dismiss, and remeasure; host may still own these manually |
 
 **When to use:** Anchored filter popover / flyout next to browse chrome.
 
@@ -528,6 +528,23 @@ themselves as fill (clip); only named scroll owners may overflow.
 **When to use:** Sidebar lists, catalog cards, overflow icon bars that only need coordinates + target identity. Sample reference: `IntegratedShellDemo` and Storybook `React/Overlay/Dialog Actions` → Context menu pointer state.
 
 **When not to use:** Building domain menu items, or deciding whether right-click changes selection — keep those in the host.
+
+---
+
+### `measureAnchoredOverlayPanel` / `useAnchoredOverlayPanel`
+
+**Purpose:** Host-neutral helper for panel-sized overlays anchored to a trigger:
+side/below/above placement with viewport clamping, Escape + outside dismiss,
+remeasure on resize/scroll (does not close on those events), and portal root via
+the same `resolvePortalContainer` heuristic as SearchableMultiSelect. Nested
+portaled SMS listboxes stay inside the dismiss boundary
+(`isSearchableMultiSelectPortalTarget`).
+
+**When to use:** Pair with `CatalogFilterOverlay` (or a similar panel shell) for
+toolbar/filter flyouts. Storybook: `React/Overlay/Anchored Overlay Panel`.
+
+**When not to use:** Select/SMS listbox positioning (`measureOverlayPosition`) or
+context menus that should dismiss on scroll/resize (`useFixedOverlayDismiss`).
 
 ---
 

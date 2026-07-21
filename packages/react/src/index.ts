@@ -178,6 +178,17 @@ export { ConfirmDialog } from './modal/ConfirmDialog';
 export type { ConfirmDialogProps } from './modal/ConfirmDialog';
 export { ContextMenu } from './overlay/ContextMenu';
 export type { ContextMenuItem, ContextMenuProps } from './overlay/ContextMenu';
+export { measureAnchoredOverlayPanel } from './overlay/measureAnchoredOverlayPanel';
+export type {
+  AnchoredOverlayPanelRect,
+  AnchoredOverlayPlacement,
+  MeasureAnchoredOverlayPanelOptions,
+} from './overlay/measureAnchoredOverlayPanel';
+export { useAnchoredOverlayPanel } from './overlay/useAnchoredOverlayPanel';
+export type {
+  UseAnchoredOverlayPanelOptions,
+  UseAnchoredOverlayPanelResult,
+} from './overlay/useAnchoredOverlayPanel';
 export { useContextMenuState } from './overlay/useContextMenuState';
 export type {
   ContextMenuPointerEvent,
