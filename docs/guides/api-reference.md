@@ -182,13 +182,15 @@ Architecture: [Workbench Config](../architecture/workbench-config.md).
 
 ## Validation commands
 
-| Command                          | Checks                                                                  |
-| -------------------------------- | ----------------------------------------------------------------------- |
-| `pnpm check:public-exports`      | Export map consistency                                                  |
-| `pnpm check:extension-manifests` | Extension manifest shape and graph                                      |
-| `pnpm typecheck`                 | TypeScript across workspace                                             |
-| `pnpm validate:static`           | Typecheck, lint, format, extension manifests, exports, dependency graph |
-| `pnpm validate`                  | Static checks plus Storybook-related validation                         |
+| Command                          | Checks                                                                   |
+| -------------------------------- | ------------------------------------------------------------------------ |
+| `pnpm check:public-exports`      | Export map consistency                                                   |
+| `pnpm check:extension-manifests` | Extension manifest shape and graph                                       |
+| `pnpm typecheck`                 | TypeScript across workspace                                              |
+| `pnpm validate:static`           | Typecheck, lint, format, manifests, exports, graph, public refs, secrets |
+| `pnpm check:public-references`   | Fail on denylisted internal / sibling product names in tracked sources   |
+| `pnpm check:secrets`             | Fail on credential-looking material (keys, tokens, private key files)    |
+| `pnpm validate`                  | Static checks plus Storybook-related validation                          |
 
 ---
 
