@@ -19,3 +19,6 @@ minimumReleaseAgeExclude:
 
 overrides:
   axios: 1.16.1
+  # Keep Storybook test-runner on the same Playwright revision CI installs.
+  playwright: 1.61.1
+  playwright-core: 1.61.1
