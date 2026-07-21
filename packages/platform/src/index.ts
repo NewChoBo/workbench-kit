@@ -218,9 +218,19 @@ export {
   type ResolveWindowOpenLayoutInput,
   type ResolvedWindowOpenLayout,
 } from './window/resolve-window-open-layout.js';
+export { resizeRect } from './window/resize-rect.js';
+export {
+  assertPositiveWorkArea,
+  normalizeBoundsToPlacement,
+  resolvePlacementToBounds,
+} from './window/work-area-placement.js';
 export type {
   DisplayWorkArea,
   PersistableWindow,
   RectLike,
   RememberedWindowState,
+  ResizeEdge,
+  ResizeRectOptions,
+  SizeUnit,
+  WorkAreaPlacement,
 } from './window/types.js';
