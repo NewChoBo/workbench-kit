@@ -202,6 +202,14 @@ helpers under `packages/platform/src/window/`:
   (`getBounds` / `getNormalBounds` / `isMaximized` / move·resize·maximize·close), debounce
   writes; when maximized, persist `getNormalBounds()` plus `isMaximized: true`
 
+**Implemented geometry helpers** (`@workbench-kit/platform`, Electron/React-free):
+
+- Shared `RectLike` (`packages/platform/src/window/types.ts`) for absolute rectangles
+- `resizeRect` — 8-edge/corner resize with optional min width/height clamp
+- `resolvePlacementToBounds` / `normalizeBoundsToPlacement` — work-area–relative
+  placement in pixels or percentages; zero/negative work areas throw
+- Compose with remembered open-layout / clamp helpers above
+
 Do not pull Electron into `@workbench-kit/react`. Optional thin Electron adapter /
 `@workbench-kit/electron-shell` wrapping these helpers remains a separate §15 follow-up.
 

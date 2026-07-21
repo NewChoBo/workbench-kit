@@ -1,4 +1,4 @@
-/** Axis-aligned rectangle in screen coordinates. */
+/** Axis-aligned rectangle in absolute coordinates (screen or work-area space). */
 export interface RectLike {
   x: number;
   y: number;
@@ -34,4 +34,35 @@ export interface PersistableWindow {
     event: 'close' | 'closed' | 'maximize' | 'move' | 'resize' | 'unmaximize',
     listener: () => void,
   ): void;
+}
+
+export type ResizeEdge =
+  | 'left'
+  | 'right'
+  | 'top'
+  | 'bottom'
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right';
+
+export interface ResizeRectOptions {
+  minWidth?: number;
+  minHeight?: number;
+}
+
+/** Unit for work-area–relative placement offsets and sizes. */
+export type SizeUnit = 'pixels' | 'percentage';
+
+/**
+ * Placement relative to a display work area.
+ * When `unit` is `percentage`, `x`/`y`/`width`/`height` are percentages of the
+ * work area (0–100), not fractions.
+ */
+export interface WorkAreaPlacement {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  unit: SizeUnit;
 }
