@@ -220,6 +220,12 @@ export type {
   VersionedEnvelope,
 } from './storage/types.js';
 export {
+  applyWindowResidency,
+  type ApplyWindowResidencyOptions,
+  type ResidencyWindowSurface,
+  type WindowResidencyMode,
+} from './window/apply-window-residency.js';
+export {
   bindWindowBoundsPersistence,
   type WindowBoundsPersistenceHandle,
 } from './window/bind-window-bounds-persistence.js';
