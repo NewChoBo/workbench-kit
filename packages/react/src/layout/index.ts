@@ -124,6 +124,8 @@ export type {
 } from './fillScrollContract';
 export { WorkbenchPropertyInline } from './WorkbenchPropertyPanel';
 export type { WorkbenchPropertyInlineProps } from './WorkbenchPropertyPanel';
+export { WorkbenchPropertyOverrideLabel } from './WorkbenchPropertyOverrideLabel';
+export type { WorkbenchPropertyOverrideLabelProps } from './WorkbenchPropertyOverrideLabel';
 export { WorkbenchPropertySearch } from './WorkbenchPropertySearch';
 export type { WorkbenchPropertySearchProps } from './WorkbenchPropertySearch';
 export {

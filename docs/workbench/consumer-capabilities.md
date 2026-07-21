@@ -269,6 +269,28 @@ is active.
 **When not to use:** Free-text DOM label scraping, or catalog browse search
 (`CatalogBrowsePane` / `FilterBar` on item lists).
 
+### `WorkbenchPropertyOverrideLabel`
+
+**Purpose:** Sparse-override inspector label chrome — Custom vs Default badge plus an
+optional compact Reset action. Compose into `Field label={...}` or property rows.
+
+| Prop                 | Role                                                                 |
+| -------------------- | -------------------------------------------------------------------- |
+| `label`              | Field title (`ReactNode`)                                            |
+| `overridden`         | Host-computed override state — drives badge + Reset visibility       |
+| `onReset?`           | Host handler; Reset renders only when `overridden` and this is set   |
+| `customBadgeLabel?`  | Default `"Custom"`                                                   |
+| `defaultBadgeLabel?` | Default `"Default"`                                                  |
+| `resetLabel?`        | Default `"Reset"`                                                    |
+
+**I/O contract:** Host owns which fields are overridden and what Reset writes. Kit owns
+layout, badge variants (`accent` / `muted`), and the compact Reset button.
+
+**When to use:** Settings / property inspectors with sparse overrides on top of defaults.
+
+**When not to use:** Domain merge/clear algorithms, locale tables, or baking override into
+`WorkbenchProperty*Row` APIs.
+
 ---
 
 ## Catalog browse
