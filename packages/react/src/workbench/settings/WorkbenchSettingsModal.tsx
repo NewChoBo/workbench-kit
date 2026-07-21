@@ -1,25 +1,56 @@
-import { useId, useState, type FormEventHandler, type ReactNode } from 'react';
+import { useId, useMemo, useState, type FormEventHandler, type ReactNode } from 'react';
 import { Modal } from '../../modal/Modal';
 import type { ModalProps } from '../../modal/Modal';
-import { TextInput } from '../../primitives/TextInput';
+import { Button } from '../../primitives/button';
+import { ClearableTextInput } from '../../primitives/clearable-text-input';
 import { cx } from '../../utils/cx';
 import { WorkbenchNavigationPanel } from './NavigationPanel';
+import {
+  WorkbenchSettingsCommitProvider,
+  type WorkbenchSettingsCommitMode,
+  type WorkbenchSettingsPreferenceChange,
+} from './settingsCommit';
 import { WorkbenchSettingsNav } from './WorkbenchSettingsNav';
 import type { WorkbenchSettingsCategory, WorkbenchSettingsScope } from './types';
 
+export type { WorkbenchSettingsCommitMode, WorkbenchSettingsPreferenceChange };
+
 export interface WorkbenchSettingsModalProps extends Pick<
   ModalProps,
-  'className' | 'closeLabel' | 'footer' | 'labelledBy' | 'onClose' | 'title' | 'titleSuffix'
+  | 'chrome'
+  | 'className'
+  | 'closeLabel'
+  | 'footer'
+  | 'labelledBy'
+  | 'minHeight'
+  | 'minWidth'
+  | 'onClose'
+  | 'title'
+  | 'titleSuffix'
 > {
   categories: WorkbenchSettingsCategory[];
   activeCategoryId?: string;
   activeScopeId?: string;
   bodyClassName?: string;
+  /**
+   * How preference edits are committed.
+   *
+   * - `explicit` (default): keep the host-provided footer (typically Apply/Cancel) and `onSubmit`.
+   * - `immediate`: omit the footer and rely on per-field commits via `onPreferenceChange`
+   *   (or {@link useWorkbenchSettingsCommit} inside category content).
+   */
+  commitMode?: WorkbenchSettingsCommitMode;
   defaultActiveCategoryId?: string;
   defaultActiveScopeId?: string;
   defaultSearchValue?: string;
   emptyContent?: ReactNode;
   onActiveCategoryIdChange?: (categoryId: string) => void;
+  /**
+   * Called when category content commits a preference while `commitMode` is `immediate`.
+   * {@link WorkbenchSchemaForm} wires this automatically; custom fields should call
+   * {@link useWorkbenchSettingsCommit}.
+   */
+  onPreferenceChange?: (change: WorkbenchSettingsPreferenceChange) => void;
   onScopeChange?: (scopeId: string) => void;
   onSearchValueChange?: (value: string) => void;
   onSubmit?: FormEventHandler<HTMLFormElement>;
@@ -54,16 +85,21 @@ export function WorkbenchSettingsModal({
   activeScopeId,
   bodyClassName,
   categories,
+  chrome = 'platform',
   className,
   closeLabel = 'Close settings',
+  commitMode = 'explicit',
   defaultActiveCategoryId,
   defaultActiveScopeId,
   defaultSearchValue = '',
   emptyContent = null,
   footer,
   labelledBy,
+  minHeight,
+  minWidth,
   onActiveCategoryIdChange,
   onClose,
+  onPreferenceChange,
   onScopeChange,
   onSearchValueChange,
   onSubmit,
@@ -92,6 +128,18 @@ export function WorkbenchSettingsModal({
   const selectedScopeId =
     activeScopeId ?? uncontrolledScopeId ?? firstEnabledScope(scopes)?.id ?? '';
   const resolvedSearchValue = searchValue ?? uncontrolledSearchValue;
+  const isImmediateCommit = commitMode === 'immediate';
+  const resolvedFooter = isImmediateCommit ? undefined : footer;
+  const resolvedOnSubmit = isImmediateCommit ? undefined : onSubmit;
+  const commitContext = useMemo(
+    () => ({
+      categoryId: selectedCategoryId,
+      commitMode,
+      onPreferenceChange,
+      scopeId: selectedScopeId,
+    }),
+    [commitMode, onPreferenceChange, selectedCategoryId, selectedScopeId],
+  );
 
   const handleSelectCategory = (categoryId: string) => {
     const category = categories.find((candidate) => candidate.id === categoryId);
@@ -125,73 +173,79 @@ export function WorkbenchSettingsModal({
 
   return (
     <Modal
+      chrome={chrome}
       className={cx('workbench-settings-modal', className)}
       bodyClassName={cx('workbench-settings-modal__body', bodyClassName)}
       closeLabel={closeLabel}
-      footer={footer}
+      footer={resolvedFooter}
       labelledBy={titleId}
-      maximizable
-      movable
+      minHeight={minHeight}
+      minWidth={minWidth}
       title={title}
       titleSuffix={titleSuffix}
       onClose={onClose}
-      onSubmit={onSubmit}
+      onSubmit={resolvedOnSubmit}
     >
-      {showSearch ? (
-        <div className="workbench-settings-search">
-          <TextInput
-            aria-label={searchPlaceholder}
-            controlWidth="full"
-            placeholder={searchPlaceholder}
-            value={resolvedSearchValue}
-            onChange={(event) => handleSearchChange(event.currentTarget.value)}
-          />
-        </div>
-      ) : null}
+      <WorkbenchSettingsCommitProvider value={commitContext}>
+        {showSearch ? (
+          <div className="workbench-settings-search">
+            <ClearableTextInput
+              aria-label={searchPlaceholder}
+              clearLabel="Clear settings search"
+              controlWidth="full"
+              placeholder={searchPlaceholder}
+              value={resolvedSearchValue}
+              onClear={() => handleSearchChange('')}
+              onChange={(event) => handleSearchChange(event.currentTarget.value)}
+            />
+          </div>
+        ) : null}
 
-      {scopes?.length ? (
-        <div className="workbench-settings-tabs" aria-label="Settings scope">
-          {scopes.map((scope) => {
-            const isActive = scope.id === selectedScopeId;
+        {scopes?.length ? (
+          <div className="workbench-settings-tabs" aria-label="Settings scope">
+            {scopes.map((scope) => {
+              const isActive = scope.id === selectedScopeId;
 
-            return (
-              <button
-                key={scope.id}
-                type="button"
-                className={cx(
-                  'workbench-settings-tab',
-                  isActive && 'workbench-settings-tab--active',
-                )}
-                disabled={scope.disabled}
-                title={scope.title}
-                onClick={() => handleSelectScope(scope.id)}
-              >
-                {scope.label}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+              return (
+                <Button
+                  key={scope.id}
+                  className={cx(
+                    'workbench-settings-tab',
+                    isActive && 'workbench-settings-tab--active',
+                  )}
+                  disabled={scope.disabled}
+                  title={scope.title}
+                  onClick={() => handleSelectScope(scope.id)}
+                >
+                  {scope.label}
+                </Button>
+              );
+            })}
+          </div>
+        ) : null}
 
-      <WorkbenchNavigationPanel
-        className="workbench-settings-layout"
-        content={
-          selectedCategory
-            ? (renderCategory?.(selectedCategory) ?? selectedCategory.content ?? emptyContent)
-            : emptyContent
-        }
-        contentClassName="workbench-settings-content ui-workbench-scrollbar ui-scroll-area--stable-gutter"
-        nav={
-          <WorkbenchSettingsNav
-            activeCategoryId={selectedCategoryId}
-            categories={categories}
-            renderContainer={false}
-            onSelectCategory={handleSelectCategory}
-          />
-        }
-        navClassName="workbench-settings-sidebar ui-workbench-scrollbar"
-        navProps={{ 'aria-label': 'Settings categories' }}
-      />
+        <WorkbenchNavigationPanel
+          className="workbench-settings-layout"
+          content={
+            selectedCategory
+              ? (renderCategory?.(selectedCategory) ?? selectedCategory.content ?? emptyContent)
+              : emptyContent
+          }
+          contentClassName="workbench-settings-content"
+          contentScrollGutter="auto"
+          nav={
+            <WorkbenchSettingsNav
+              activeCategoryId={selectedCategoryId}
+              categories={categories}
+              renderContainer={false}
+              onSelectCategory={handleSelectCategory}
+            />
+          }
+          navClassName="workbench-settings-sidebar"
+          navProps={{ 'aria-label': 'Settings categories' }}
+          navScrollGutter="auto"
+        />
+      </WorkbenchSettingsCommitProvider>
     </Modal>
   );
 }

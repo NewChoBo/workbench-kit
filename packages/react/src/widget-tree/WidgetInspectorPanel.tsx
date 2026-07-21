@@ -1,3 +1,4 @@
+import type { Ref } from 'react';
 import type {
   WidgetInspectorField,
   WidgetInspectorSection,
@@ -5,8 +6,8 @@ import type {
 } from '@workbench-kit/contracts';
 import type { GenericWidget, WidgetPath } from '@workbench-kit/jdw';
 
-import { Badge } from '../primitives/Badge';
-import { Button } from '../primitives/Button';
+import { Badge } from '../primitives/badge';
+import { Button } from '../primitives/button';
 import {
   WorkbenchPropertyCheckboxRow,
   WorkbenchPropertyColorRow,
@@ -24,6 +25,7 @@ export interface WidgetInspectorPanelProps {
   readonly path: WidgetPath | null;
   readonly parentWidget?: GenericWidget | null | undefined;
   readonly widgetRegistry?: WidgetRegistryContract<unknown> | undefined;
+  readonly panelRef?: Ref<HTMLDivElement> | undefined;
   readonly readOnly?: boolean | undefined;
   readonly onPatch?: ((next: GenericWidget) => void) | undefined;
   readonly onRemove?: (() => void) | undefined;
@@ -33,6 +35,7 @@ export function WidgetInspectorPanel({
   widget,
   path,
   parentWidget = null,
+  panelRef,
   widgetRegistry,
   readOnly = false,
   onPatch,
@@ -43,7 +46,10 @@ export function WidgetInspectorPanel({
   const showPlacement =
     widget &&
     parentType &&
-    (parentType === 'grid' || parentType === 'row' || parentType === 'column');
+    (parentType === 'grid' ||
+      parentType === 'row' ||
+      parentType === 'column' ||
+      parentType === 'stack');
 
   const updateProp = (prop: string, value: unknown) => {
     if (!widget || !path || !onPatch || readOnly) return;
@@ -54,6 +60,8 @@ export function WidgetInspectorPanel({
     <WorkbenchPropertyPanel
       className="widget-tree-inspector"
       data-testid="widget-tree-inspector-panel"
+      ref={panelRef}
+      tabIndex={-1}
     >
       {!widget ? (
         <WorkbenchPropertyHint>Select a node in the outline.</WorkbenchPropertyHint>
@@ -150,6 +158,37 @@ function PlacementSection({
     );
   }
 
+  if (parentType === 'stack') {
+    return (
+      <WorkbenchPropertySection title="Stack placement">
+        <WorkbenchPropertyNumberRow
+          label="Left"
+          disabled={readOnly}
+          value={typeof values.left === 'number' ? values.left : undefined}
+          onValueChange={(next) => onValueChange('left', next)}
+        />
+        <WorkbenchPropertyNumberRow
+          label="Top"
+          disabled={readOnly}
+          value={typeof values.top === 'number' ? values.top : undefined}
+          onValueChange={(next) => onValueChange('top', next)}
+        />
+        <WorkbenchPropertyNumberRow
+          label="Right"
+          disabled={readOnly}
+          value={typeof values.right === 'number' ? values.right : undefined}
+          onValueChange={(next) => onValueChange('right', next)}
+        />
+        <WorkbenchPropertyNumberRow
+          label="Bottom"
+          disabled={readOnly}
+          value={typeof values.bottom === 'number' ? values.bottom : undefined}
+          onValueChange={(next) => onValueChange('bottom', next)}
+        />
+      </WorkbenchPropertySection>
+    );
+  }
+
   return (
     <WorkbenchPropertySection title="Flex placement">
       <WorkbenchPropertyNumberRow
@@ -159,6 +198,17 @@ function PlacementSection({
         step={0.1}
         value={typeof values.flex === 'number' ? values.flex : undefined}
         onValueChange={(next) => onValueChange('flex', next)}
+      />
+      <WorkbenchPropertySelectRow
+        label="Fit"
+        disabled={readOnly}
+        options={[
+          { label: 'Auto', value: '' },
+          { label: 'Tight', value: 'tight' },
+          { label: 'Loose', value: 'loose' },
+        ]}
+        value={typeof values.flexFit === 'string' ? values.flexFit : ''}
+        onValueChange={(next) => onValueChange('flexFit', next.length > 0 ? next : undefined)}
       />
       <WorkbenchPropertySelectRow
         label="Align"

@@ -1,0 +1,15 @@
+.ui-clearable-text-input {
+  position: relative;
+  min-width: 0;
+}
+
+.ui-clearable-text-input__input {
+  padding-right: 30px;
+}
+
+.ui-clearable-text-input__clear {
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  transform: translateY(-50%);
+}

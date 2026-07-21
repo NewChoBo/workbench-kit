@@ -1,0 +1,22 @@
+.ui-workbench-canvas-guide-line {
+  position: absolute;
+  background: var(--vscode-focusBorder, var(--color-focus-border));
+}
+
+.ui-workbench-canvas-guide-line[data-source='object'] {
+  background: var(--ui-workbench-canvas-guide-object, #ef4444);
+}
+
+.ui-workbench-canvas-guide-line[data-axis='x'] {
+  left: var(--ui-workbench-canvas-guide-line-position, 0);
+  top: var(--ui-workbench-canvas-guide-line-start, 0);
+  width: 1px;
+  height: var(--ui-workbench-canvas-guide-line-length, 1px);
+}
+
+.ui-workbench-canvas-guide-line[data-axis='y'] {
+  left: var(--ui-workbench-canvas-guide-line-start, 0);
+  top: var(--ui-workbench-canvas-guide-line-position, 0);
+  width: var(--ui-workbench-canvas-guide-line-length, 1px);
+  height: 1px;
+}

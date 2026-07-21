@@ -1,0 +1,17 @@
+.workbench-primary-sidebar .ui-workspace-explorer-panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.workbench-primary-sidebar .ui-workspace-explorer-panel .ui-workbench-sidebar-section__header {
+  flex-shrink: 0;
+}
+
+.workbench-primary-sidebar .ui-workspace-explorer-panel .ui-sidebar-list-item {
+  min-height: 22px;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 22px;
+}

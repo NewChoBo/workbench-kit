@@ -170,8 +170,10 @@ export {
   createLaunchpadLibraryItemTileBinding,
   deriveLaunchWorkingDirectory,
   inferLaunchTypeFromTarget,
+  isPlayableLaunchTarget,
   normalizeLaunchTarget,
   resolveLaunchpadLibraryItemMapping,
+  resolveLibraryItemPlayExecution,
 } from './library-launchpad-mapping';
 export type { ExternalUrlPolicy } from './external-url';
 export { EXTERNAL_URL_PROTOCOLS, normalizeExternalUrlTarget } from './external-url';
@@ -193,7 +195,6 @@ export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from '.
 export type {
   WidgetRendererComponent,
   WidgetRendererEvent,
-  WidgetRendererEventLike,
   WidgetRendererEventKind,
   WidgetRendererProps,
   WidgetRendererRect,
@@ -244,10 +245,15 @@ export type {
   WidgetInspectorField,
   WidgetInspectorSection,
   WidgetJsonSchema,
+  WidgetHostTag,
+  WidgetMeasureConstraints,
+  WidgetMeasureFunction,
+  WidgetMeasureResult,
   WidgetRegistryContract,
   WidgetTypeDefinition,
   WidgetTypeShape,
 } from './widget-registry-contract';
+export { WIDGET_HOST_TAGS, isWidgetHostTag } from './widget-registry-contract';
 export type {
   WidgetAssetCatalogContract,
   WidgetPlacementAsset,
@@ -258,6 +264,8 @@ export type {
 export type {
   MappedLaunchAction,
   ProviderCommandAction,
+  ProviderEpicAction,
+  ProviderEpicActionMode,
   ProviderExecAction,
   ProviderFolderAction,
   ProviderLaunchActionKind,
@@ -268,7 +276,30 @@ export type {
   ProviderUrlAction,
 } from './provider-library-mapping';
 export {
+  createEpicStoreUrl,
   providerActionIcon,
   providerActionToLaunchAction,
   providerActionTypeLabel,
 } from './provider-library-mapping';
+export type {
+  SampleHostBackendAuthStatus,
+  SampleHostBackendClient,
+  SampleHostBackendErrorBody,
+  SampleHostBackendErrorCode,
+  SampleHostBackendLinkedAccount,
+  SampleHostBackendLinkedAccountStatus,
+  SampleHostBackendProfile,
+  SampleHostBackendSession,
+  SampleHostBackendSessionQuery,
+  SampleHostBackendSignInRequest,
+} from './sample-host-backend-api';
+export {
+  SampleHostBackendApiError,
+  SampleHostBackendRoutes,
+  SAMPLE_HOST_BACKEND_API_PREFIX,
+  SAMPLE_HOST_BACKEND_API_VERSION,
+  createSampleHostBackendErrorBody,
+  isSampleHostBackendApiError,
+  isSampleHostBackendErrorBody,
+  parseSampleHostBackendSession,
+} from './sample-host-backend-api';

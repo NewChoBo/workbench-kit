@@ -58,6 +58,7 @@ describe('authoring-workbench-state', () => {
   it('builds launchpad summaries from host-neutral resource projection input', () => {
     expect(
       buildLaunchpadAuthoringWorkbenchSummaryFromResource({
+        documentId: 'main',
         id: 'main',
         issues: [
           {
@@ -74,6 +75,7 @@ describe('authoring-workbench-state', () => {
         tiles: createLaunchpadTileSummaries(1),
       }),
     ).toEqual({
+      documentId: 'main',
       issueCount: 2,
       issues: ['warning: missing-target', '$.tiles[0]: Tile definition is required.'],
       name: 'Main',

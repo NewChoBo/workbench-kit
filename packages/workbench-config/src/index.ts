@@ -1,3 +1,5 @@
+import { WorkbenchConfigValidationError } from './validation-error.js';
+
 export const WORKBENCH_KIT_WORKBENCH_CONFIG_VERSION = '0.0.0' as const;
 
 export const WORKBENCH_CONFIG_DIR = '.workbench' as const;
@@ -6,6 +8,7 @@ export type WorkbenchConfigFileName =
   | 'workspace.json'
   | 'settings.json'
   | 'keybindings.json'
+  | 'user-commands.json'
   | 'extensions.json'
   | 'extensions.lock.json'
   | 'layout.default.json'
@@ -18,6 +21,11 @@ export interface WorkbenchExtensionsConfig {
 
 export interface WorkbenchLayoutConfig {
   readonly activityBar: {
+    readonly hiddenItemIds?: readonly string[];
+    readonly itemOrder?: readonly string[];
+    readonly visible: boolean;
+  };
+  readonly auxiliaryBar: {
     readonly visible: boolean;
   };
   readonly panel: {
@@ -25,12 +33,14 @@ export interface WorkbenchLayoutConfig {
   };
   readonly sideBar: {
     readonly activeViewContainer?: string;
+    readonly sizePercent?: number;
     readonly visible: boolean;
   };
 }
 
 export type WorkbenchLayoutConfigInput = Partial<{
   activityBar: Partial<WorkbenchLayoutConfig['activityBar']>;
+  auxiliaryBar: Partial<WorkbenchLayoutConfig['auxiliaryBar']>;
   panel: Partial<WorkbenchLayoutConfig['panel']>;
   sideBar: Partial<WorkbenchLayoutConfig['sideBar']>;
 }>;
@@ -38,6 +48,9 @@ export type WorkbenchLayoutConfigInput = Partial<{
 export const DEFAULT_WORKBENCH_LAYOUT_CONFIG: WorkbenchLayoutConfig = {
   activityBar: {
     visible: true,
+  },
+  auxiliaryBar: {
+    visible: false,
   },
   panel: {
     visible: false,
@@ -47,19 +60,14 @@ export const DEFAULT_WORKBENCH_LAYOUT_CONFIG: WorkbenchLayoutConfig = {
   },
 };
 
-export class WorkbenchConfigValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'WorkbenchConfigValidationError';
-  }
-}
+export { WorkbenchConfigValidationError };
 
 export function parseWorkbenchExtensionsConfig(input: unknown): WorkbenchExtensionsConfig {
   const record = assertRecord(input, 'extensions config');
 
   return {
-    enabled: readOptionalStringArray(record, 'enabled'),
-    recommendations: readOptionalStringArray(record, 'recommendations'),
+    enabled: readOptionalStringArrayFromExtensionsConfig(record, 'enabled'),
+    recommendations: readOptionalStringArrayFromExtensionsConfig(record, 'recommendations'),
   };
 }
 
@@ -77,22 +85,41 @@ export function parseWorkbenchExtensionsConfigJson(jsonText: string): WorkbenchE
 
 export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfig {
   const record = assertRecord(input, 'layout config');
-  assertKnownKeys(record, ['activityBar', 'panel', 'sideBar'], 'layout config');
+  assertKnownKeys(record, ['activityBar', 'auxiliaryBar', 'panel', 'sideBar'], 'layout config');
 
   const activityBar = readOptionalRecord(record, 'activityBar');
+  const auxiliaryBar = readOptionalRecord(record, 'auxiliaryBar');
   const panel = readOptionalRecord(record, 'panel');
   const sideBar = readOptionalRecord(record, 'sideBar');
 
-  assertKnownKeys(activityBar, ['visible'], 'layout config activityBar');
+  assertKnownKeys(
+    activityBar,
+    ['hiddenItemIds', 'itemOrder', 'visible'],
+    'layout config activityBar',
+  );
+  assertKnownKeys(auxiliaryBar, ['visible'], 'layout config auxiliaryBar');
   assertKnownKeys(panel, ['visible'], 'layout config panel');
-  assertKnownKeys(sideBar, ['activeViewContainer', 'visible'], 'layout config sideBar');
+  assertKnownKeys(
+    sideBar,
+    ['activeViewContainer', 'sizePercent', 'visible'],
+    'layout config sideBar',
+  );
 
   return {
     activityBar: {
+      hiddenItemIds: readOptionalStringArray(activityBar, 'hiddenItemIds'),
+      itemOrder: readOptionalStringArray(activityBar, 'itemOrder'),
       visible: readOptionalBoolean(
         activityBar,
         'visible',
         DEFAULT_WORKBENCH_LAYOUT_CONFIG.activityBar.visible,
+      ),
+    },
+    auxiliaryBar: {
+      visible: readOptionalBoolean(
+        auxiliaryBar,
+        'visible',
+        DEFAULT_WORKBENCH_LAYOUT_CONFIG.auxiliaryBar.visible,
       ),
     },
     panel: {
@@ -100,6 +127,7 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
     },
     sideBar: {
       ...readOptionalLayoutId(sideBar, 'activeViewContainer'),
+      ...readOptionalSizePercent(sideBar, 'sizePercent'),
       visible: readOptionalBoolean(
         sideBar,
         'visible',
@@ -120,6 +148,38 @@ export function parseWorkbenchLayoutConfigJson(jsonText: string): WorkbenchLayou
     throw new WorkbenchConfigValidationError('Expected layout config to be valid JSON.');
   }
 }
+
+export {
+  parseWorkbenchKeybindingsConfig,
+  parseWorkbenchKeybindingsConfigJson,
+  type WorkbenchKeybindingDefinition,
+} from './keybindings-config.js';
+export {
+  parseWorkbenchSettingsConfig,
+  parseWorkbenchSettingsConfigJson,
+  type WorkbenchSettingsConfig,
+} from './settings-config.js';
+export {
+  createEmptyPreferenceValuesByScope,
+  FUTURE_PREFERENCE_SCOPES,
+  isPreferenceScope,
+  mergePreferenceValuesByScope,
+  mergeScopedPreferences,
+  PREFERENCE_SCOPE_MERGE_ORDER,
+  type FuturePreferenceScope,
+  type PreferenceScope,
+  type PreferenceValuesByScope,
+  type ScopedPreferenceLayer,
+} from './preference-scopes.js';
+export {
+  parseWorkbenchUserCommandsConfig,
+  parseWorkbenchUserCommandsConfigJson,
+  type WorkbenchUserCommandAction,
+  type WorkbenchUserCommandDefinition,
+  type WorkbenchUserCommandExecuteAction,
+  type WorkbenchUserCommandSequenceAction,
+  type WorkbenchUserCommandsConfig,
+} from './user-commands-config.js';
 
 function assertRecord(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -143,6 +203,22 @@ function readOptionalRecord(record: Record<string, unknown>, key: string): Recor
 }
 
 function readOptionalStringArray(
+  record: Record<string, unknown>,
+  key: string,
+): readonly string[] | undefined {
+  const value = record[key];
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
+    throw new WorkbenchConfigValidationError(`Expected "${key}" to be an array of strings.`);
+  }
+
+  return [...new Set(value.map((item) => item.trim()).filter(Boolean))];
+}
+
+function readOptionalStringArrayFromExtensionsConfig(
   record: Record<string, unknown>,
   key: keyof WorkbenchExtensionsConfig,
 ): readonly string[] {
@@ -191,6 +267,28 @@ function readOptionalLayoutId(
   return {
     activeViewContainer: value,
   };
+}
+
+function readOptionalSizePercent(
+  record: Record<string, unknown>,
+  key: string,
+): { readonly sizePercent?: number } {
+  const value = record[key];
+  if (value === undefined) {
+    return {};
+  }
+
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new WorkbenchConfigValidationError(`Expected "${key}" to be a finite number.`);
+  }
+
+  return {
+    sizePercent: clampLayoutSizePercent(value),
+  };
+}
+
+function clampLayoutSizePercent(value: number): number {
+  return Math.min(90, Math.max(10, value));
 }
 
 function assertKnownKeys(record: Record<string, unknown>, keys: readonly string[], label: string) {

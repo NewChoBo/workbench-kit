@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Button } from '../primitives/Button';
+import { Button } from '../primitives/button';
 import { cx } from '../utils/cx';
 import { Modal } from './Modal';
 

@@ -11,6 +11,24 @@ Framework-neutral primitives for JSON-based widget layout composition.
 
 React renderers, editors, and domain-specific widget shapes stay in product repos for now.
 
+## Authoring source of truth
+
+For renderable `*.jdw.json` resources, `WidgetDocument` is the canonical
+authoring model: its source is parsed to a `GenericWidget`, and user edits commit
+as `WidgetPatch` operations before formatting back to JDW JSON. Code, tree,
+form, inspector, and canvas views must share that document path instead of
+maintaining parallel editable hierarchies.
+
+Screen Spec is a template/scaffold input that compiles one way into a JDW widget
+document. It is not a second authoring source of truth, and compiled JDW edits
+are not synchronized back to it. `title` and `description` belong to host
+resource metadata; `frameWidth` and `layout` constraints belong to preview
+metadata. Only the Screen Spec `root` becomes JDW runtime widget JSON.
+
+See
+[`docs/workbench/jdw-file-type-standard.md`](../../docs/workbench/jdw-file-type-standard.md)
+for the canonical file and editor policy.
+
 ## Storybook
 
 From the monorepo root:
@@ -21,9 +39,11 @@ pnpm storybook
 
 Open **JDW/Fixtures** and **JDW/Preview** under `@workbench-kit/react/jdw` for render and parse-error demos. See `docs/workbench/json-widget-mvp.md` for validation commands.
 
-## Reference implementation
+## Extending in consumer apps
 
-See `@tilepaper/json-widget-tree` in the TilePaper monorepo for a full widget type system, layout math, and built-in widget definitions wired to this boundary.
+Host applications can layer domain-specific widget types, layout math, and built-in
+widget definitions on top of this boundary. Keep product-specific shapes and
+renderers in the consumer repository.
 
 ## Usage
 

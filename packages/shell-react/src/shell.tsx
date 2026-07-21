@@ -1,0 +1,649 @@
+import { useCallback, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react';
+import { Modal } from '@workbench-kit/react/modal';
+import { TilepaperAppIcon } from '@workbench-kit/react';
+import { Badge, Button, IconButton } from '@workbench-kit/react/primitives';
+import {
+  WorkbenchSettingsModal,
+  type WorkbenchSettingsCategory,
+} from '@workbench-kit/react/workbench/settings';
+import {
+  WorkbenchShell as ReactWorkbenchShell,
+  type StatusBarItemModel,
+  type StatusBarSectionModel,
+} from '@workbench-kit/react/workbench/shell';
+import {
+  WORKBENCH_SETTINGS_CAPABILITY_ID,
+  filterActivitiesByWhenClause,
+} from '@workbench-kit/workbench-core';
+import type { WorkbenchSettingsCapability } from '@workbench-kit/workbench-core';
+import { WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS } from '@workbench-kit/platform';
+import { isPreferenceScope, type PreferenceScope } from '@workbench-kit/workbench-config';
+import {
+  resolveActiveThemePreset,
+  DEFAULT_SHELL_PRESET,
+  useResolvedWorkbenchTheme,
+} from '@workbench-kit/react/workbench';
+
+import { EditorArea } from './editor-area.js';
+import { BUILTIN_COMMANDS_VIEW_CONTAINER_ID } from './commands-view-data.js';
+import { BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID } from './extensions-view-data.js';
+import {
+  filterActivityBarItems,
+  sortActivityBarItems,
+} from '@workbench-kit/react/workbench/activityBarOrder';
+import { useWorkbench } from './provider.js';
+import { WorkbenchCommandHost, type WorkbenchCommandHostProps } from './workbench-command-host.js';
+import {
+  MANAGE_ACCOUNTS_COMMAND_ID,
+  MANAGE_COMMANDS_COMMAND_ID,
+  MANAGE_EXTENSIONS_COMMAND_ID,
+  MANAGE_KEYBINDINGS_COMMAND_ID,
+  WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
+  WORKBENCH_COMMANDS_SETTINGS_CATEGORY_ID,
+  WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID,
+} from './management-settings-ids.js';
+import { createWorkbenchManagementPaletteCommands } from './management-palette-commands.js';
+import {
+  WorkbenchAccountManagementSettings,
+  WorkbenchCommandManagementSettings,
+  WorkbenchKeybindingManagementSettings,
+  type WorkbenchAccountManagementInput,
+} from './management-settings.js';
+import { mergeWorkbenchCommandDescriptors } from './workbench-command-palette.js';
+import {
+  createWorkbenchSecondaryActivityItems,
+  getWorkbenchSecondaryActivityRoute,
+} from './shell-secondary-actions.js';
+import { SETTINGS_EXTENSION_ID, WORKBENCH_PREFERENCE_SCOPES } from './shell-settings-constants.js';
+import { createSettingsCategories, type WorkbenchThemeOption } from './shell-settings.js';
+import {
+  createDefaultWorkbenchStatusSections,
+  createWorkbenchShellActivityItems,
+} from './shell-model.js';
+import { renderDefaultPrimarySidebar } from './shell-view-host.js';
+import { WorkbenchShellTitleBarLayoutControls } from './shell-titlebar-layout-controls.js';
+import { WorkbenchProfileModal, type WorkbenchProfileInput } from './workbench-profile-modal.js';
+import { useContextKeyRevision } from './use-context-key-revision.js';
+export type { WorkbenchLocaleOption, WorkbenchThemeOption } from './shell-settings.js';
+
+/** Virtual width used to bridge layout `sizePercent` into pixel SplitView units. */
+const SHELL_REACT_SIDEBAR_LAYOUT_REFERENCE_WIDTH_PX = 1200;
+const SHELL_REACT_PRIMARY_SIDEBAR_MIN_PX = 200;
+const SHELL_REACT_PRIMARY_SIDEBAR_MAX_PX = 480;
+
+function clampShellReactPrimarySidebarSizePx(sizePx: number): number {
+  if (!Number.isFinite(sizePx)) {
+    return SHELL_REACT_PRIMARY_SIDEBAR_MIN_PX;
+  }
+  return Math.min(
+    SHELL_REACT_PRIMARY_SIDEBAR_MAX_PX,
+    Math.max(SHELL_REACT_PRIMARY_SIDEBAR_MIN_PX, Math.round(sizePx)),
+  );
+}
+
+function shellReactPrimarySidebarSizePxFromPercent(sizePercent: number | undefined): number {
+  const percent = Number.isFinite(sizePercent) ? (sizePercent as number) : 20;
+  return clampShellReactPrimarySidebarSizePx(
+    (percent / 100) * SHELL_REACT_SIDEBAR_LAYOUT_REFERENCE_WIDTH_PX,
+  );
+}
+
+export interface WorkbenchShellProps {
+  accountManagement?: WorkbenchAccountManagementInput | undefined;
+  additionalSettingsCategories?: readonly WorkbenchSettingsCategory[] | undefined;
+  catalogUrl?: string | undefined;
+  commandHost?: false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'>;
+  compactStatus?: boolean;
+  darkPreset?: string | undefined;
+  editorArea?: ReactNode;
+  helpContent?: ReactNode;
+  helpTitle?: ReactNode;
+  lightPreset?: string | undefined;
+  onDarkPresetChange?: ((preset: string) => void) | undefined;
+  onLightPresetChange?: ((preset: string) => void) | undefined;
+  onShellPresetChange?: ((preset: string) => void) | undefined;
+  onThemeChange?: ((theme: string) => void) | undefined;
+  onLocaleChange?: ((locale: string) => void) | undefined;
+  locale?: string | undefined;
+  onStatusItemActivate?: (item: StatusBarItemModel) => void;
+  primarySidebar?: ReactNode;
+  profile?: WorkbenchProfileInput | undefined;
+  profileExtraContent?: ReactNode;
+  rootClassName?: string;
+  shellPreset?: string | undefined;
+  statusSections?: StatusBarSectionModel[];
+  theme?: string;
+  themeOptions?: readonly WorkbenchThemeOption[] | undefined;
+  title?: ReactNode;
+  titleBar?: ReactNode;
+  titleBarActions?: ReactNode;
+  titleMeta?: ReactNode;
+}
+
+const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
+
+export function WorkbenchShell({
+  accountManagement,
+  additionalSettingsCategories,
+  catalogUrl = '/extension-catalog.json',
+  commandHost,
+  compactStatus = true,
+  darkPreset,
+  editorArea,
+  helpContent,
+  helpTitle = 'Workbench Help',
+  lightPreset,
+  locale = 'en',
+  onDarkPresetChange,
+  onLightPresetChange,
+  onLocaleChange,
+  onShellPresetChange,
+  onThemeChange,
+  onStatusItemActivate,
+  primarySidebar,
+  profile,
+  profileExtraContent,
+  rootClassName,
+  shellPreset = DEFAULT_SHELL_PRESET,
+  statusSections,
+  theme,
+  themeOptions,
+  title = 'Workbench',
+  titleBar,
+  titleBarActions,
+  titleMeta,
+}: WorkbenchShellProps) {
+  const resolvedEditorArea = editorArea ?? <EditorArea />;
+  const resolvedWorkbenchTheme = useResolvedWorkbenchTheme(theme ?? 'system');
+  const activeThemePreset =
+    lightPreset !== undefined && darkPreset !== undefined
+      ? resolveActiveThemePreset(resolvedWorkbenchTheme, { darkPreset, lightPreset })
+      : undefined;
+  const {
+    contextKeyService,
+    executeCommand,
+    extensionRegistry,
+    layoutService,
+    missingExtensionIds,
+    preferenceService,
+  } = useWorkbench();
+  const contextKeyRevision = useContextKeyRevision(contextKeyService);
+  const forceRender = useForceRender();
+  const [preferenceRevision, bumpPreferenceRevision] = useReducer((count: number) => count + 1, 0);
+  const [isHelpOpen, setHelpOpen] = useState(false);
+  const [isProfileOpen, setProfileOpen] = useState(false);
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSearchValue, setSettingsSearchValue] = useState('');
+  const [settingsCategoryId, setSettingsCategoryId] = useState<string | undefined>();
+  const [settingsScopeId, setSettingsScopeId] = useState<PreferenceScope>('workspace');
+  const showSettingsModal = useCallback((categoryId?: string) => {
+    setHelpOpen(false);
+    setProfileOpen(false);
+    setSettingsCategoryId(categoryId);
+    setSettingsOpen(true);
+  }, []);
+  const settingsCapability = useMemo<WorkbenchSettingsCapability>(
+    () => ({
+      openSettings: showSettingsModal,
+    }),
+    [showSettingsModal],
+  );
+  const layout = layoutService.getState();
+  const resolvedStatusSections = useMemo(
+    () =>
+      statusSections ??
+      createDefaultWorkbenchStatusSections({
+        dependencyDiagnostics: extensionRegistry.getDependencyDiagnostics(),
+        extensionCount: extensionRegistry.getExtensions().length,
+        missingExtensionIds,
+        profile,
+      }),
+    [extensionRegistry, missingExtensionIds, profile, statusSections],
+  );
+  const activeViewContainerId = layout.sideBar.activeViewContainer;
+  const visibleActivities = useMemo(
+    () =>
+      filterActivitiesByWhenClause(
+        extensionRegistry.activities.getActivities(),
+        contextKeyService.createSnapshot(),
+      ),
+    [contextKeyRevision, contextKeyService, extensionRegistry],
+  );
+  const activityItems = sortActivityBarItems(
+    createWorkbenchShellActivityItems({
+      activeViewContainerId,
+      activities: visibleActivities,
+      viewContainers: extensionRegistry.views.getViewContainers(),
+      views: extensionRegistry.views.getViews(),
+    }),
+    layout.activityBar.itemOrder,
+  );
+  const visibleActivityItems = filterActivityBarItems(
+    activityItems,
+    layout.activityBar.hiddenItemIds,
+  );
+  const canOpenSettingsValue = contextKeyService.get(
+    WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS,
+  );
+  const secondaryActivityItems = createWorkbenchSecondaryActivityItems({
+    hasProfile: profile !== undefined,
+    isProfileOpen,
+    isSettingsOpen,
+    showSettings: canOpenSettingsValue !== false,
+  });
+
+  useEffect(() => {
+    if (visibleActivityItems.length === 0) {
+      return;
+    }
+
+    const visibleActivityIds = new Set(visibleActivityItems.map((item) => item.id));
+    if (activeViewContainerId !== undefined && !visibleActivityIds.has(activeViewContainerId)) {
+      layoutService.setActiveViewContainer(visibleActivityItems[0]?.id);
+    }
+  }, [activeViewContainerId, layoutService, visibleActivityItems]);
+  const settingsCategories = useMemo(() => {
+    const managementCategories: WorkbenchSettingsCategory[] = [];
+
+    if (commandHost !== false) {
+      managementCategories.push({
+        content: <WorkbenchCommandManagementSettings />,
+        id: WORKBENCH_COMMANDS_SETTINGS_CATEGORY_ID,
+        label: 'Commands',
+        title: 'Command management',
+      });
+      managementCategories.push({
+        content: <WorkbenchKeybindingManagementSettings />,
+        id: WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID,
+        label: 'Keyboard Shortcuts',
+        title: 'Keyboard shortcut management',
+      });
+    }
+
+    if (accountManagement) {
+      managementCategories.push({
+        content: <WorkbenchAccountManagementSettings accountManagement={accountManagement} />,
+        id: WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID,
+        label: 'Linked Accounts',
+        title: 'Linked account management',
+      });
+    }
+
+    return [
+      ...managementCategories,
+      ...(additionalSettingsCategories ?? []),
+      ...createSettingsCategories(extensionRegistry, {
+        activeScope: settingsScopeId,
+        darkPreset,
+        lightPreset,
+        locale,
+        onDarkPresetChange,
+        onLightPresetChange,
+        onLocaleChange,
+        onShellPresetChange,
+        onThemeChange,
+        preferenceService,
+        shellPreset,
+        theme,
+        themeOptions,
+      }),
+    ];
+  }, [
+    accountManagement,
+    additionalSettingsCategories,
+    commandHost,
+    darkPreset,
+    extensionRegistry,
+    lightPreset,
+    locale,
+    onDarkPresetChange,
+    onLightPresetChange,
+    onLocaleChange,
+    onShellPresetChange,
+    onThemeChange,
+    preferenceService,
+    preferenceRevision,
+    settingsScopeId,
+    shellPreset,
+    theme,
+    themeOptions,
+  ]);
+  const defaultSettingsCategoryId =
+    settingsCategories.find((category) => category.id === SETTINGS_EXTENSION_ID)?.id ??
+    settingsCategories[0]?.id;
+  const settingsContributionCount = extensionRegistry.configurations.getConfigurations().length;
+  const showHelpModal = useCallback(() => {
+    setSettingsOpen(false);
+    setProfileOpen(false);
+    setHelpOpen(true);
+  }, []);
+  const showProfileModal = useCallback(() => {
+    setSettingsOpen(false);
+    setHelpOpen(false);
+    setProfileOpen(true);
+  }, []);
+  const resolvedTitleBar =
+    titleBar === undefined ? (
+      <WorkbenchShellTitleBar
+        helpContent={helpContent}
+        isAuxiliarySidebarVisible={layout.auxiliaryBar.visible}
+        isPanelVisible={layout.panel.visible}
+        isPrimarySidebarVisible={layout.sideBar.visible}
+        title={title}
+        titleBarActions={titleBarActions}
+        titleMeta={titleMeta}
+        onHelpOpen={showHelpModal}
+        onToggleAuxiliarySidebar={() => {
+          layoutService.setAuxiliaryBarVisible(!layout.auxiliaryBar.visible);
+        }}
+        onTogglePanel={() => {
+          layoutService.setPanelVisible(!layout.panel.visible);
+        }}
+        onTogglePrimarySidebar={() => {
+          layoutService.setSideBarVisible(!layout.sideBar.visible);
+        }}
+      />
+    ) : (
+      titleBar
+    );
+
+  useEffect(() => {
+    const layoutDisposable = layoutService.onDidChangeLayout(forceRender);
+    const viewProviderDisposable = extensionRegistry.views.onDidRegisterViewProvider(forceRender);
+    const preferenceDisposable = preferenceService.onDidChangePreference(bumpPreferenceRevision);
+
+    return () => {
+      layoutDisposable.dispose();
+      viewProviderDisposable.dispose();
+      preferenceDisposable.dispose();
+    };
+  }, [extensionRegistry, forceRender, layoutService, preferenceService]);
+
+  useEffect(() => {
+    if (!activeViewContainerId) {
+      return;
+    }
+
+    for (const view of extensionRegistry.views.getViews(activeViewContainerId)) {
+      void extensionRegistry.activateView(view.id).then(forceRender);
+    }
+  }, [activeViewContainerId, extensionRegistry, forceRender]);
+
+  useEffect(() => {
+    if (extensionRegistry.capabilityRegistry.has(WORKBENCH_SETTINGS_CAPABILITY_ID)) {
+      return undefined;
+    }
+
+    const disposable = extensionRegistry.capabilityRegistry.register({
+      id: WORKBENCH_SETTINGS_CAPABILITY_ID,
+      get: () => settingsCapability,
+    });
+
+    return () => {
+      disposable.dispose();
+    };
+  }, [extensionRegistry, settingsCapability]);
+
+  const openSettings = (categoryId?: string) => {
+    showSettingsModal(categoryId);
+    if (
+      categoryId === undefined &&
+      extensionRegistry.commands.hasCommand(OPEN_SETTINGS_COMMAND_ID)
+    ) {
+      void executeCommand(OPEN_SETTINGS_COMMAND_ID).catch(() => undefined);
+    }
+  };
+
+  const resolvedCommandHost = useMemo(():
+    false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'> => {
+    if (commandHost === false) {
+      return false;
+    }
+
+    const hostProps = commandHost ?? {};
+    const additionalCommands = mergeWorkbenchCommandDescriptors(
+      [...createWorkbenchManagementPaletteCommands()],
+      [...(hostProps.additionalCommands ?? [])],
+    );
+
+    return {
+      ...hostProps,
+      additionalCommands,
+      onRunCommand: (command, context) => {
+        if (command.id === MANAGE_COMMANDS_COMMAND_ID) {
+          layoutService.setActiveViewContainer(BUILTIN_COMMANDS_VIEW_CONTAINER_ID);
+          layoutService.setSideBarVisible(true);
+          return true;
+        }
+
+        if (command.id === MANAGE_KEYBINDINGS_COMMAND_ID) {
+          openSettings(WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID);
+          return true;
+        }
+
+        if (command.id === MANAGE_EXTENSIONS_COMMAND_ID) {
+          layoutService.setActiveViewContainer(BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID);
+          layoutService.setSideBarVisible(true);
+          return true;
+        }
+
+        if (command.id === MANAGE_ACCOUNTS_COMMAND_ID) {
+          openSettings(WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID);
+          return true;
+        }
+
+        return hostProps.onRunCommand?.(command, context) ?? false;
+      },
+    };
+  }, [commandHost, layoutService]);
+
+  const handleStatusItemActivate = useCallback(
+    (item: StatusBarItemModel) => {
+      if (item.id === 'workbench.account') {
+        if (profile) {
+          showProfileModal();
+          return;
+        }
+
+        if (accountManagement) {
+          openSettings(WORKBENCH_ACCOUNTS_SETTINGS_CATEGORY_ID);
+          return;
+        }
+
+        return;
+      }
+
+      onStatusItemActivate?.(item);
+    },
+    [accountManagement, onStatusItemActivate, profile, showProfileModal],
+  );
+
+  return (
+    <ReactWorkbenchShell
+      activityBar={{
+        visible: layout.activityBar.visible,
+        items: visibleActivityItems,
+        reorderable: true,
+        secondaryItems: secondaryActivityItems,
+        onItemActivate: (item) => {
+          const secondaryActivityRoute = getWorkbenchSecondaryActivityRoute(item.id);
+          if (secondaryActivityRoute === 'profile') {
+            showProfileModal();
+            return;
+          }
+
+          if (secondaryActivityRoute === 'settings') {
+            openSettings();
+            return;
+          }
+
+          layoutService.focusSideBarViewContainer(item.id);
+        },
+        onItemsReorder: (itemIds) => {
+          const preservedItemIds =
+            layout.activityBar.itemOrder?.filter((itemId) => !itemIds.includes(itemId)) ?? [];
+          layoutService.setActivityBarItemOrder([...itemIds, ...preservedItemIds]);
+        },
+      }}
+      compactStatus={compactStatus}
+      onStatusItemActivate={handleStatusItemActivate}
+      primarySidebar={{
+        isVisible: layout.sideBar.visible,
+        // Provider layout still stores sideBar.sizePercent; convert at the shell boundary
+        // until workbench-core persists pixel widths directly.
+        maxPrimarySizePx: SHELL_REACT_PRIMARY_SIDEBAR_MAX_PX,
+        minPrimarySizePx: SHELL_REACT_PRIMARY_SIDEBAR_MIN_PX,
+        node:
+          primarySidebar ??
+          renderDefaultPrimarySidebar(extensionRegistry, activeViewContainerId, catalogUrl),
+        onSizePxChange: (sizePx) => {
+          layoutService.setSideBarSizePercent(
+            (clampShellReactPrimarySidebarSizePx(sizePx) /
+              SHELL_REACT_SIDEBAR_LAYOUT_REFERENCE_WIDTH_PX) *
+              100,
+          );
+        },
+        primarySizePx: shellReactPrimarySidebarSizePxFromPercent(layout.sideBar.sizePercent),
+      }}
+      auxiliarySidebar={{
+        isVisible: layout.auxiliaryBar.visible,
+        node: <aside aria-label="Secondary Side Bar" className="workbench-auxiliary-side-bar" />,
+      }}
+      bottomPanel={{
+        isVisible: layout.panel.visible,
+        node: <section aria-label="Panel" className="workbench-bottom-panel" />,
+      }}
+      rootClassName={rootClassName}
+      secondaryArea={resolvedEditorArea}
+      statusSections={resolvedStatusSections}
+      titleBar={resolvedTitleBar}
+      theme={resolvedWorkbenchTheme}
+      themePreset={activeThemePreset}
+      shellPreset={shellPreset}
+      overlays={
+        <>
+          {commandHost !== false ? (
+            <WorkbenchCommandHost
+              {...(resolvedCommandHost === false ? {} : resolvedCommandHost)}
+              onOpenSettings={() => openSettings()}
+            />
+          ) : null}
+          {isSettingsOpen ? (
+            <WorkbenchSettingsModal
+              activeCategoryId={settingsCategoryId}
+              activeScopeId={settingsScopeId}
+              categories={settingsCategories}
+              defaultActiveCategoryId={defaultSettingsCategoryId}
+              defaultActiveScopeId="workspace"
+              footer={<Button onClick={() => setSettingsOpen(false)}>Close</Button>}
+              scopes={[...WORKBENCH_PREFERENCE_SCOPES]}
+              searchValue={settingsSearchValue}
+              title="Settings"
+              titleSuffix={
+                <Badge variant="muted">
+                  {settingsContributionCount === 1
+                    ? '1 contribution'
+                    : `${settingsContributionCount} contributions`}
+                </Badge>
+              }
+              onActiveCategoryIdChange={setSettingsCategoryId}
+              onClose={() => setSettingsOpen(false)}
+              onScopeChange={(scopeId) => {
+                if (isPreferenceScope(scopeId)) {
+                  setSettingsScopeId(scopeId);
+                }
+              }}
+              onSearchValueChange={setSettingsSearchValue}
+            />
+          ) : null}
+          {isProfileOpen && profile ? (
+            <WorkbenchProfileModal
+              extraContent={profileExtraContent}
+              profile={profile}
+              onClose={() => setProfileOpen(false)}
+            />
+          ) : null}
+          {isHelpOpen && helpContent ? (
+            <Modal
+              bodyPadding="lg"
+              bodyScroll="auto"
+              className="workbench-help-modal"
+              closeLabel="Close help"
+              footer={<Button onClick={() => setHelpOpen(false)}>Close</Button>}
+              title={helpTitle}
+              onClose={() => setHelpOpen(false)}
+            >
+              {helpContent}
+            </Modal>
+          ) : null}
+        </>
+      }
+    />
+  );
+}
+
+function WorkbenchShellTitleBar({
+  helpContent,
+  isAuxiliarySidebarVisible,
+  isPanelVisible,
+  isPrimarySidebarVisible,
+  title,
+  titleBarActions,
+  titleMeta,
+  onHelpOpen,
+  onToggleAuxiliarySidebar,
+  onTogglePanel,
+  onTogglePrimarySidebar,
+}: {
+  helpContent: ReactNode | undefined;
+  isAuxiliarySidebarVisible: boolean;
+  isPanelVisible: boolean;
+  isPrimarySidebarVisible: boolean;
+  title: ReactNode;
+  titleBarActions: ReactNode | undefined;
+  titleMeta: ReactNode | undefined;
+  onHelpOpen: () => void;
+  onToggleAuxiliarySidebar: () => void;
+  onTogglePanel: () => void;
+  onTogglePrimarySidebar: () => void;
+}) {
+  return (
+    <>
+      <div className="workbench-shell-titlebar__identity">
+        <span aria-hidden className="workbench-shell-titlebar__app-icon">
+          <TilepaperAppIcon compact />
+        </span>
+        <span className="workbench-shell-titlebar__title">{title}</span>
+        {titleMeta ? <span className="workbench-shell-titlebar__meta">{titleMeta}</span> : null}
+      </div>
+      <div className="workbench-shell-titlebar__actions">
+        <WorkbenchShellTitleBarLayoutControls
+          isAuxiliarySidebarVisible={isAuxiliarySidebarVisible}
+          isPanelVisible={isPanelVisible}
+          isPrimarySidebarVisible={isPrimarySidebarVisible}
+          onToggleAuxiliarySidebar={onToggleAuxiliarySidebar}
+          onTogglePanel={onTogglePanel}
+          onTogglePrimarySidebar={onTogglePrimarySidebar}
+        />
+        {titleBarActions}
+        {helpContent ? (
+          <IconButton
+            className="workbench-shell-titlebar__action"
+            compact
+            icon="question"
+            label="Help"
+            onClick={onHelpOpen}
+          />
+        ) : null}
+      </div>
+    </>
+  );
+}
+
+function useForceRender() {
+  const [, forceRender] = useReducer((count: number) => count + 1, 0);
+
+  return useCallback(() => {
+    forceRender();
+  }, []);
+}

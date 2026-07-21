@@ -1,0 +1,40 @@
+<svg fill="none" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="root-elevation" x="-12%" y="-8%" width="124%" height="128%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#020617" flood-opacity="0.42" />
+    </filter>
+    <linearGradient id="bg" x1="512" x2="512" y1="72" y2="952" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0A1020" />
+      <stop offset="1" stop-color="#121C33" />
+    </linearGradient>
+    <linearGradient id="panel" x1="512" x2="512" y1="70" y2="954" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1A2C4D" />
+      <stop offset="0.42" stop-color="#162844" />
+      <stop offset="1" stop-color="#111D35" />
+    </linearGradient>
+    <linearGradient id="blue" x1="117" x2="410" y1="120" y2="426" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5D88FF" />
+      <stop offset="1" stop-color="#3158D6" />
+    </linearGradient>
+    <linearGradient id="paper" x1="614" x2="907" y1="120" y2="426" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF9EE" />
+      <stop offset="1" stop-color="#DDD9D1" />
+    </linearGradient>
+    <linearGradient id="teal" x1="117" x2="410" y1="598" y2="904" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2FD6C1" />
+      <stop offset="1" stop-color="#149685" />
+    </linearGradient>
+    <linearGradient id="violet" x1="614" x2="907" y1="598" y2="904" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8A67FF" />
+      <stop offset="1" stop-color="#5D3AC8" />
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="116" fill="url(#bg)" />
+  <rect x="52" y="52" width="920" height="920" rx="116" fill="url(#panel)" filter="url(#root-elevation)" />
+  <rect x="92" y="92" width="400" height="400" rx="116" fill="url(#blue)" />
+  <rect x="92" y="532" width="400" height="400" rx="116" fill="url(#teal)" />
+  <rect x="532" y="532" width="400" height="400" rx="116" fill="url(#violet)" />
+  <rect x="532" y="92" width="400" height="400" rx="116" fill="url(#paper)" />
+  <path d="M809 92H813C879 92 932 145 932 209V213L809 92Z" fill="white" fill-opacity="0.92" />
+  <path d="M788 92H809L932 209V236L788 92Z" fill="#C9C3B7" fill-opacity="0.74" />
+</svg>

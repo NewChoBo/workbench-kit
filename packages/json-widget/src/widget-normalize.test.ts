@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   assignGridSlot,
+  ensureGridChildPlacements,
   normalizeWidgetForParent,
   normalizeWidgetForPlacementPolicy,
+  normalizeWidgetSubtree,
+  reflowGridChildren,
   resolvePlacementPolicy,
   stripExternalPlacement,
 } from './widget-normalize.js';
@@ -39,6 +42,81 @@ describe('widget normalize', () => {
       col: 1,
       row: 0,
     });
+  });
+
+  it('fills missing grid col/row at rest without moving placed siblings', () => {
+    const grid: GenericWidget = {
+      type: 'grid',
+      columns: 2,
+      children: [
+        { type: 'text', text: 'Placed', col: 1, row: 0 },
+        { type: 'text', text: 'Missing' },
+        { type: 'text', text: 'Also missing' },
+      ],
+    };
+
+    const ensured = ensureGridChildPlacements(grid);
+    expect(ensured.children).toEqual([
+      { type: 'text', text: 'Placed', col: 1, row: 0 },
+      { type: 'text', text: 'Missing', col: 0, row: 0 },
+      { type: 'text', text: 'Also missing', col: 0, row: 1 },
+    ]);
+  });
+
+  it('normalizes nested grids so every child has col/row at rest', () => {
+    const root: GenericWidget = {
+      type: 'column',
+      children: [
+        {
+          type: 'grid',
+          columns: 2,
+          children: [
+            { type: 'text', text: 'A' },
+            { type: 'text', text: 'B' },
+          ],
+        },
+      ],
+    };
+
+    const normalized = normalizeWidgetSubtree(root);
+    expect(getWidgetChildren(getWidgetChildren(normalized)[0]!)).toEqual([
+      { type: 'text', text: 'A', col: 0, row: 0 },
+      { type: 'text', text: 'B', col: 1, row: 0 },
+    ]);
+  });
+
+  it('reflows grid children by array order after column count changes', () => {
+    const grid: GenericWidget = {
+      type: 'grid',
+      columns: 1,
+      children: [
+        { type: 'text', text: 'A', col: 0, row: 0 },
+        { type: 'text', text: 'B', col: 1, row: 0 },
+        { type: 'text', text: 'C', col: 0, row: 1 },
+      ],
+    };
+
+    expect(reflowGridChildren(grid).children).toEqual([
+      { type: 'text', text: 'A', col: 0, row: 0 },
+      { type: 'text', text: 'B', col: 0, row: 1 },
+      { type: 'text', text: 'C', col: 0, row: 2 },
+    ]);
+  });
+
+  it('keeps grid spans inside the reflowed column count', () => {
+    const grid: GenericWidget = {
+      type: 'grid',
+      columns: 2,
+      children: [
+        { type: 'text', text: 'Wide', col: 0, row: 0, colSpan: 3 },
+        { type: 'text', text: 'Next', col: 3, row: 0 },
+      ],
+    };
+
+    expect(reflowGridChildren(grid).children).toEqual([
+      { type: 'text', text: 'Wide', col: 0, row: 0, colSpan: 2 },
+      { type: 'text', text: 'Next', col: 0, row: 1 },
+    ]);
   });
 
   it('preserves template internals while placing the root into a grid', () => {

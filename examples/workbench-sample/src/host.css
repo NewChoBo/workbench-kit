@@ -6,6 +6,18 @@ body,
   margin: 0;
 }
 
+html {
+  min-height: 100%;
+}
+
+body.ui-workbench-host {
+  min-height: 100%;
+}
+
+#root.ui-workbench-host-root {
+  min-height: 100%;
+}
+
 .workbench-sample-editor-frame {
   display: flex;
   flex-direction: column;
@@ -65,4 +77,36 @@ body,
 .workbench-sample-help code {
   color: var(--vscode-textPreformat-foreground, var(--color-text));
   font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+}
+
+.workbench-sample-permission-role-profile__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.workbench-sample-permission-role-profile__header h3 {
+  margin: 0;
+}
+
+.workbench-sample-permission-role-profile__summary,
+.workbench-sample-permission-role-profile__hint {
+  margin: 0;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: var(--font-size-sm, 0.875rem);
+  line-height: 1.5;
+}
+
+.workbench-sample-permission-role-settings,
+.workbench-sample-permission-role-profile {
+  display: grid;
+  gap: 12px;
+}
+
+.workbench-sample-permission-role-settings__hint {
+  margin: 0;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: var(--font-size-sm, 0.875rem);
+  line-height: 1.5;
 }

@@ -1,0 +1,580 @@
+# Consumer Capabilities Reference
+
+**Status:** Active consumer contract  
+**Last updated:** 2026-07-05  
+**Audience:** Host applications that compose `@workbench-kit/react` (Content Hub, VS Code webviews, sample host)
+
+This document is the **integration contract** for reusable workbench UI. It inventories primitives and shell surfaces that a reference desktop consumer actually wires today. It is not a Storybook catalog — use Storybook and `examples/workbench-sample` for visual exploration.
+
+Related: [Consumer Integration Backlog](./consumer-integration-backlog.md) · [API Reference](../guides/api-reference.md) · [Workbench Change Guidelines](./workbench-change-guidelines.md)
+
+---
+
+## How to import
+
+Use official subpath exports from `@workbench-kit/react`. Do not import from `packages/react/src/...` in consuming apps.
+
+| Subpath                                     | Purpose                                                           |
+| ------------------------------------------- | ----------------------------------------------------------------- |
+| `@workbench-kit/react/primitives`           | Controls, editor chrome, library layout, scroll, property grids   |
+| `@workbench-kit/react/layout`               | Sidebar frames, editor frame, section stacks                      |
+| `@workbench-kit/react/editor-tabs`          | Tab strip drag-and-drop helpers                                   |
+| `@workbench-kit/react/overlay`              | Context menus                                                     |
+| `@workbench-kit/react/modal`                | Low-level modal frame (prefer management wrapper when applicable) |
+| `@workbench-kit/react/workbench/shell`      | Activity bar, shell layout, view editor, title bar                |
+| `@workbench-kit/react/workbench/management` | Dialog frames, integrations shell, notices                        |
+| `@workbench-kit/react/workbench/workspace`  | Workspace explorer                                                |
+| `@workbench-kit/react/brand`                | Product icon mark                                                 |
+| `@workbench-kit/contracts`                  | Cross-host DTOs and authoring workbench state                     |
+
+Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workbench-kit/react/primitives.css`).
+
+---
+
+## Shell and editor chrome
+
+### `WorkbenchShell`
+
+**Purpose:** Top-level workbench grid: activity bar, primary sidebar slot, editor region, optional status bar and overlays.
+
+**Key props:** `activityBar`, `activityBarPosition` (`left` \| `top`), `sidebar`, `editor`, `overlays`, `statusBar`, layout/collapse callbacks (see `WorkbenchShellProps`).
+
+**When to use:** Any host that needs VS Code–shaped shell layout.
+
+**When not to use:** Single-panel dialogs or embedded property sheets — use `WorkbenchEditorFrame` or `Modal` instead.
+
+**VS Code analogue:** `Workbench` grid with `ActivityBar`, `SideBarPart`, `EditorPart`.
+
+**Consumer pattern:** Host passes React nodes for sidebar/editor; keeps routing and IPC outside the kit.
+
+---
+
+### `WorkbenchViewEditor`
+
+**Purpose:** Editor region frame with optional tab strip slot and scrollable body.
+
+**Key props:** `tabs` (usually `EditorTabs`), `children` or `emptyState`, `bodyProps`, `data-*` attributes for host telemetry.
+
+**When to use:** Primary editor area below the unified tab bar.
+
+**When not to use:** Modal bodies — use `WorkbenchEditorFrame` inside `WorkbenchDialogFrame`.
+
+**VS Code analogue:** `EditorGroupView` + editor pane container.
+
+---
+
+### `WorkbenchDesktopTitleBar` / `WorkbenchWindowChromeControls` / `useWorkbenchModalViewState`
+
+**Purpose:** Frameless window title bar, platform-aware caption controls, and modal view routing (e.g. settings opened from activity bar).
+
+**Key props:**
+
+| Surface                    | Props                                                                                                |
+| -------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `WorkbenchThemeProvider`   | `platform` (`darwin` \| `win32` \| `linux`) — sets host platform context + `data-workbench-platform` |
+| `WorkbenchDesktopTitleBar` | `chrome` (`platform` default \| `generic`), `leading` / `centerSlot` / `trailing`, `windowControls`  |
+| `windowControls`           | Host callbacks only: `onMinimize`, `onToggleMaximized`, `onClose`, `isMaximized`, optional labels    |
+
+**I/O contract:** Kit owns chrome markup and darwin/win32 placement. Hosts supply Electron (or similar) IPC callbacks and optional i18n labels — do not fork titlebar markup in the renderer.
+
+**Maximized modals:** Pass `overlays` into `WorkbenchShell`. Modals render inside `.ide-workbench-overlays` (below the title bar, above the workbench body) and maximize to `100%` of that surface — no viewport `calc()` or title bar z-index overrides.
+
+**VS Code analogue:** Custom title bar + command-driven view switching.
+
+---
+
+### `ActivityBar`, `WorkbenchViewSidebar`, `createWorkbenchShellActivityBarFromViewModel`
+
+**Purpose:** Left or top activity bar icons and per-view sidebar chrome.
+
+**Key props:** `activityBarPosition` on `WorkbenchShell` (`left` default, `top` for a horizontal strip below the title bar). Footer/utility icons stay at the trailing edge (bottom when vertical, right when horizontal).
+
+**Sidebar view placement DnD:** `ActivityBar` and `SidebarActionIconBar` share the placement drag payload (`WORKBENCH_SIDEBAR_VIEW_PLACEMENT_DRAG_DATA_TYPE`). Hosts move a view container between sidebar slots with `onSidebarViewPlacementDrop` plus optional `acceptSidebarViewPlacementDrop` (defaults to cross-bar drops only so local reorder keeps working). Shell-level drop targets can use `useWorkbenchSidebarViewPlacementDropZone` from `@workbench-kit/react/workbench/shell`.
+
+**Section model:** `buildWorkbenchViewActivityBarModel({ sectionIds: ['core'], footerSectionIds: ['utility'] })` maps contributions to top vs bottom slots.
+
+| Section   | Slot                   | Typical role                                       | Presentation                                                                |
+| --------- | ---------------------- | -------------------------------------------------- | --------------------------------------------------------------------------- |
+| `core`    | Top (`items`)          | Primary view containers (sidebar + editor routing) | Host `navigate()` → primary sidebar                                         |
+| `utility` | Bottom (`footerItems`) | Global chrome (settings, profile, help entry)      | Host decides: modal (`useWorkbenchModalViewState`), sidebar nav, or overlay |
+
+Utility placement does **not** imply modal-only — host routing chooses the surface.
+
+**When not to use:** In-pane toolbars — use `Toolbar` or `SidebarActionIconBar`.
+
+---
+
+## Monaco editor (private preview)
+
+### `WorkbenchMonacoEditor` · `@workbench-kit/monaco`
+
+**Purpose:** VS Code–aligned Monaco surface with workbench theme sync, JSON/TS diagnostics helpers, and read-only mode.
+
+**Key props:** `language`, `value`, `readOnly`, `theme` (`light` \| `dark`), `path` (model identity), `options`, `onMount`.
+
+**When to use:** Read-only JSON inspectors (Admin Data detail), editable workspace JSON tabs (`WorkspaceEditor`), widget source panes.
+
+**When not to use:** Short metadata labels — prefer `WorkbenchPropertyKeyValue`. Host must configure `MonacoEnvironment.getWorker` once at app entry (see `examples/workbench-sample/src/main.tsx`).
+
+**Consumer pattern:** Host adapter configures workers; tilepaper-ui/feature panes import `@workbench-kit/monaco` only — no direct `monaco-editor` imports in renderer business logic.
+
+---
+
+## Editor tabs and tab actions
+
+### `EditorTabs`
+
+**Purpose:** Horizontal editor tab strip with selection, close, preview/dirty indicators, optional DnD hooks.
+
+**Key props:**
+
+| Prop                  | Role                                                                                                             |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `tabs`                | `EditorTab[]` — `id`, `label`, `icon` / `iconImageUrl`, `closable`, `pinned`, `dirty`, `preview`, `dropPosition` |
+| `activeId`            | Selected tab id                                                                                                  |
+| `onSelect`, `onClose` | Tab lifecycle                                                                                                    |
+| `addons`              | **Right-aligned action slot** — primary place for item-scoped actions when the active tab represents that item   |
+| `onTabContextMenu`    | Host builds `ContextMenu` items                                                                                  |
+| DnD event props       | Usually wired via `useEditorTabsStripDnd`                                                                        |
+
+**When to use:** Any multi-document editor group.
+
+**When not to use:** Sidebar list selection — use `List` / `SideBarList`.
+
+**Do not duplicate:** A second horizontal button row inside the active editor body when actions belong to the active tab. Prefer `addons`.
+
+**VS Code analogue:** `EditorTabsControl` + editor group toolbar (`addons` ≈ editor title actions / run controls).
+
+---
+
+### `WorkbenchEditorTabs`, `useWorkbenchEditorTabContextMenu`
+
+**Purpose:** Editor tab strip with a built-in Close / Close others / Close all context menu for
+`WorkbenchStandaloneShell` hosts that own tab state without pin, split, or delete actions.
+
+**Import:** `@workbench-kit/react/editor-tabs` or `@workbench-kit/react/workbench/shell`
+
+**Key props / options:** Same as `EditorTabs`, plus optional `onCloseAll` / `onCloseOthers`.
+Defaults call `onClose` for every closable tab (`closable !== false`).
+
+**When to use:** Standalone secondary-area tab bars that need the standard close menu with
+minimal host glue.
+
+**When not to use:** Full editor hosts that need pin / split / copy path / delete — use
+`EditorTabs` + `createWorkbenchEditorTabMenuEntries` (or `shell-react` editor area).
+
+**VS Code analogue:** Editor tab context menu close actions only.
+
+---
+
+### `ButtonGroup`, `Button`
+
+**Purpose:** Compact grouped actions inside `EditorTabs.addons` or inline forms.
+
+**Key props:** `Button`: `variant` (`primary` \| `default` \| `danger`), `secondary`, `icon`. `ButtonGroup`: `ariaLabel`, `role="toolbar"`.
+
+---
+
+### `useEditorTabsStripDnd`, `normalizeEditorTabReorderIndex`
+
+**Purpose:** Shared tab reorder within one editor group (`groupId`, `tabs`, `onMoveTab`, `onSelectTab`).
+
+**When not to use:** Cross-group editor splits — host must add drop targets separately.
+
+**VS Code analogue:** Tab drag service within a group.
+
+---
+
+## Library detail
+
+### `LibraryDetailLayout`
+
+**Purpose:** Record detail shell: hero band (background / banner / compact), optional top `toolbar`, in-hero `actions`, scrollable body via `ScrollArea`.
+
+**Key props:**
+
+| Prop / slot                                           | Role                                                                                   |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `mode`                                                | `background` \| `banner` \| `compact`                                                  |
+| `title`, `summary`                                    | Identity row (title + badges)                                                          |
+| `backgroundImageUrl`, `coverImageUrl`, `logoImageUrl` | Hero media                                                                             |
+| `description`                                         | Inline under hero (banner/compact)                                                     |
+| `actions`                                             | Buttons in hero band when no shared editor chrome exists                               |
+| `toolbar`                                             | Optional row above hero (navigation) — avoid if editor tab bar already owns navigation |
+| `children`                                            | Scrollable metadata sections                                                           |
+
+**When to use:** Game/library record detail, metadata-heavy inspector panes.
+
+**When not to use:** Catalog grid/list browse — use catalog primitives below.
+
+**VS Code analogue:** Custom editor / webview with hero header + scrollable inspector (not built-in; pattern matches extension preview pages).
+
+---
+
+### `RecordMediaHero`, `WorkbenchMediaSlot`, `WorkbenchThumbnail`
+
+**Purpose:** Stable-aspect media with codicon fallback on load failure.
+
+| Component            | Use                                                             |
+| -------------------- | --------------------------------------------------------------- |
+| `RecordMediaHero`    | Hero band / cover (`layout`: `background`, `banner`, `compact`) |
+| `WorkbenchMediaSlot` | Generic image slot (posters, tab icons)                         |
+| `WorkbenchThumbnail` | Sized thumbnails (`size`: `library`, `icon`, etc.)              |
+
+**When not to use:** Arbitrary `<img>` without fallback policy — breaks library UX consistency.
+
+---
+
+### `WorkbenchPropertySection`, `WorkbenchPropertyGrid`, `WorkbenchMetricGrid`, `WorkbenchPropertyKeyValue`
+
+**Purpose:** Inspector-style labeled sections and key/value grids.
+
+**Key props:** Section: `title`, optional `actions`, optional `collapsible` / `collapsed` /
+`defaultCollapsed` / `onCollapsedChange` (disclosure chevron when collapsible), optional
+`level` (`category` | `group`) for inspector hierarchy. Grid: `columns`, `gap`. KeyValue:
+`name`, `value`.
+
+**When to use:** About, stats, metadata, secondary `<details>` blocks in library detail;
+collapsible category sections in authoring inspectors.
+
+**When not to use:** Settings forms with validation — prefer `Field` / `SchemaForm` in `@workbench-kit/react/workbench/settings`.
+
+**VS Code analogue:** Properties view / settings tree sections.
+
+### `WorkbenchPropertySearch` + `filterWorkbenchPropertyFields`
+
+**Purpose:** Declared-first inspector search — filter property fields by a host-owned
+manifest (field id + resolved label + optional `sectionId` / keywords). No DOM scrape.
+
+| API                                                | Role                                                                       |
+| -------------------------------------------------- | -------------------------------------------------------------------------- |
+| `WorkbenchPropertyFieldManifestEntry`              | `{ id, label, sectionId?, keywords? }`                                     |
+| `filterWorkbenchPropertyFields({ fields, query })` | Token match → `{ fields, fieldIds, sectionIds }`                           |
+| `isWorkbenchPropertySearchActive(query)`           | True when query is non-whitespace                                          |
+| `WorkbenchPropertySearch`                          | Sticky FilterBar + ClearableTextInput chrome (default “Search properties”) |
+
+**I/O contract:** Host owns which fields exist (product registry) and resolves labels
+(i18n). Kit owns search chrome + pure filter. Hide sections whose `sectionId` is absent
+from `sectionIds` after filter; show an empty state when `fieldIds` is empty and search
+is active.
+
+**When to use:** Authoring inspectors / Details panes with a declared field list.
+
+**When not to use:** Free-text DOM label scraping, or catalog browse search
+(`CatalogBrowsePane` / `FilterBar` on item lists).
+
+---
+
+## Catalog browse
+
+### `CatalogBrowsePane`
+
+**Purpose:** Product-neutral catalog browse frame — search toolbar, optional
+facet slot, sort + grid/list view mode, feedback states, `ScrollArea` body, and
+infinite-load footer.
+
+| Prop / slot                         | Role                                                                                   |
+| ----------------------------------- | -------------------------------------------------------------------------------------- |
+| `items`                             | `CatalogBrowseItem[]` — kit presentational rows for default grid/list render           |
+| `facetStrip`                        | `ReactNode` slot — `CatalogBrowseFacetChips`, `LibraryFacetFilterStrip`, or host chips |
+| `renderGridItem` / `renderListItem` | Override default tiles/rows for product cards                                          |
+| `viewMode` + `onViewModeChange`     | `grid` \| `list` via `SegmentedControl`                                                |
+| `hasMore` / `onLoadMore`            | Wired through `useScrollAreaInfiniteLoad`                                              |
+
+**`CatalogBrowseItem` fields:** `id`, `label`, optional `description` / `imageUrl` /
+`imageAlt` / `meta`. Hosts map their domain summary onto this shape; keep provider
+identity and merge models in the host — do not put them on the kit type.
+
+**Composition helpers (same package):**
+
+| Helper                     | Role                                                                                         |
+| -------------------------- | -------------------------------------------------------------------------------------------- |
+| `filterCatalogBrowseItems` | Client-side text filter over `label` / `meta` / `description` after host maps domain → items |
+| `CatalogBrowseFacetChips`  | Single-select All + option chips for `facetStrip` (simple type/category filters)             |
+
+Typical host flow: map domain → `CatalogBrowseItem[]` → optional domain facet →
+`filterCatalogBrowseItems(items, searchQuery)` → pass into `CatalogBrowsePane`.
+
+**When to use:** Main editor catalog browse surfaces that share FilterBar + scroll layout.
+
+**When not to use:** Sidebar-only compact lists — compose `FilterBar` + `List` locally, or keep a host sidebar pane. Domain models stay in the host.
+
+### `LibraryFacetFilterStrip`
+
+**Purpose:** Compact facet filter control for catalog toolbars — filter icon trigger,
+cascade field menus, clear-all, and show more/less for secondary fields.
+
+| Prop / type          | Role                                                                       |
+| -------------------- | -------------------------------------------------------------------------- |
+| `primaryFields`      | Visible field descriptors (`LibraryFacetField`: `id`, `kind`, `options[]`) |
+| `secondaryFields`    | Extra fields revealed when `expanded`                                      |
+| `selectedValues`     | `Record<fieldId, string[]>` selection map                                  |
+| `activeChips`        | Host-computed chip labels for tooltip / clear affordance                   |
+| `onToggleFacetValue` | `(fieldId, value, kind) => void` — host owns filter state / query mapping  |
+| `resolveFieldLabel`  | Host i18n for field titles                                                 |
+
+**When to use:** Inline facet trigger in `CatalogBrowsePane.facetStrip` (or equivalent FilterBar slot).
+
+**When not to use:** Full multi-section filter dialog — use `LibraryFacetFilterPanel` /
+`LibraryFacetFilterDialog`. Hosts must map domain DTOs to `LibraryFacetField` and omit
+sentinel/empty options before passing. Optional `onOpenMoreFilters` + `moreFiltersLabel`
+open that dialog from the cascade menu while keeping primary field menus.
+
+**VS Code analogue:** Extensions view filter / category menus (not 1:1).
+
+### `CatalogFilterOverlay`
+
+**Purpose:** Presentational filter overlay shell — elevated surface, fixed-height
+title row with Clear (always mounted; `clearDisabled` when idle), and a body slot
+for facet sections. Product-neutral companion to `CatalogBrowsePane`.
+
+| Prop / type       | Role                                                               |
+| ----------------- | ------------------------------------------------------------------ |
+| `title`           | Host copy for the overlay heading                                  |
+| `titleId`         | `aria-labelledby` target id                                        |
+| `clearLabel`      | Accessible label for Clear                                         |
+| `onClear`         | Host clears selection                                              |
+| `clearDisabled`   | Keep Clear sized/mounted but inert (avoids header height jump)     |
+| `children`        | Usually `LibraryFacetFilterPanel` (or host-authored section lists) |
+| Portal / position | Host owns `createPortal`, fixed coords, and dismiss behavior       |
+
+**When to use:** Anchored filter popover / flyout next to browse chrome.
+
+**When not to use:** Full modal dialog — use `LibraryFacetFilterDialog`. Keep dense
+product-specific multi-section chrome in the host; this shell stays structural only.
+
+### `LibraryFacetFilterPanel` / `LibraryFacetFilterDialog`
+
+**Purpose:** Multi-section facet editing surface — grouped options per field, visible
+active chips with dismiss, clear-all. Complements the cascade strip.
+
+| Prop / type           | Role                                                                      |
+| --------------------- | ------------------------------------------------------------------------- |
+| `sections`            | `LibraryFacetSection[]` (`id` + `fields[]`) — host orders / groups fields |
+| `selectedValues`      | Same map as strip                                                         |
+| `showActiveChips`     | Default `true`; set `false` to hide chip strip (host owns Clear chrome)   |
+| `activeChips`         | Optional chip row when `showActiveChips` (dismiss via `onRemoveChip`)     |
+| `onToggleFacetValue`  | Same live toggle signature as strip                                       |
+| `resolveFieldLabel`   | Host i18n for field titles                                                |
+| `resolveSectionLabel` | Optional host i18n for section titles                                     |
+| Dialog chrome         | `LibraryFacetFilterDialog` wraps panel in `WorkbenchDialogFrame`          |
+
+**When to use:** Modal “More filters” editing; denser metadata field lists than cascade menus.
+Pair with `CatalogFilterOverlay` for anchored flyouts (`showActiveChips={false}`).
+
+**When not to use:** Toolbar-only quick filters — prefer `LibraryFacetFilterStrip`.
+
+### Building blocks still used directly
+
+| Primitive                                                               | Role                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `FilterBar`, `FilterBarRow`                                             | Search + filter toolbars                                                                                                                                                                                     |
+| `ClearableTextInput`                                                    | Search field                                                                                                                                                                                                 |
+| `SegmentedControl`                                                      | Grid/list view toggle                                                                                                                                                                                        |
+| `Select`                                                                | Sort control                                                                                                                                                                                                 |
+| `ScrollArea`, `useScrollAreaInfiniteLoad`, `ScrollAreaInfiniteSentinel` | Catalog scroll + infinite load                                                                                                                                                                               |
+| `List`, `ListItem`, `ListEmptyState`                                    | List mode rows                                                                                                                                                                                               |
+| `CatalogBrowseCard`                                                     | Kit-owned grid tile (`variant`: `cover` \| `row`; optional `media` / `mediaOverlay` / `trailing` actions) — consumer injects product media; trailing keeps secondary controls outside the primary hit target |
+| `IconButton`, `Toolbar`                                                 | Refresh and compact actions                                                                                                                                                                                  |
+| `EmptyState`, `Badge`                                                   | Empty, loading, status chips                                                                                                                                                                                 |
+
+**VS Code analogue:** Extensions view list + filter; not 1:1 with dense media library grids.
+
+---
+
+## Sidebar
+
+### `SideBarViewFrame`, `WorkbenchSidebarSection`, `WorkbenchSidebarSectionStack`
+
+**Purpose:** Primary sidebar panel frame and collapsible sections.
+
+**Scroll ownership:** `SideBarViewFrame` body is `PanelBody` (`ScrollArea`). Explorer-style sidebars scroll on the body surface (see `WorkspaceExplorerPanel` + `WorkbenchSidebarSection`). For fixed header + scrolling list, keep the body as a flex slot and put `ScrollArea` on the list region only — do not clip the body with `overflow: hidden` without that inner scroll chain.
+
+**Section list nesting:** By default (`nestListItems`, default `true`), `SideBarListItem` depth under a `WorkbenchSidebarSection` is offset by +1 so rows read as children of the section header. Relative `depth` still stacks on top of that base. Set `nestListItems={false}` only when a consumer must own the full indent plane. Non-list content can read the base via `useSidebarSectionBaseDepth()` (Explorer inline rename uses this).
+
+**VS Code analogue:** `PaneComposite` + view sections.
+
+---
+
+### Fill / scroll layout contract (`WorkbenchFill`, `WorkbenchFillChain`, `WorkbenchScrollRegion`)
+
+**Purpose:** Keep editor-in-pane hosts from scrolling the document. Flex parents mark
+themselves as fill (clip); only named scroll owners may overflow.
+
+| Export                                                         | Role                                                                                                                |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `WORKBENCH_FILL_SCROLL_ROLE_ATTR` (`data-ui-fill-scroll-role`) | Stable DOM marker (`fill` \| `scroll`) for tests and layout probes                                                  |
+| `workbenchFillScrollRoleProps(role)`                           | Spread helper for host-owned elements                                                                               |
+| `resolveWorkbenchFillScrollRole(owner, registry)`              | Resolve role from host `fillOwners` / `scrollOwners` id lists                                                       |
+| `WorkbenchFill`                                                | Flex fill slot that clips (`overflow: hidden`); column; last child fills remaining space                            |
+| `WorkbenchFillChain`                                           | Fill root; descendant `[data-ui-fill-scroll-role]` nodes inherit clip/scroll overflow; same last-child fill default |
+| `WorkbenchScrollRegion`                                        | Named scroll owner (`overflow: auto`)                                                                               |
+
+**When to use:** Design/editor panes hosted inside `WorkbenchViewEditor` (or similar) that must fill the pane without growing page scroll.
+
+**When not to use:** Sidebar body scroll — prefer `SideBarViewFrame` / `ScrollArea` as above. Do not put product owner id vocabularies into the kit; hosts keep those registries.
+
+**Import:** `@workbench-kit/react/layout` (also re-exported from `@workbench-kit/react` and `./primitives`).
+
+**VS Code analogue:** Editor group / pane flex clip chain (no workbench-level document scroll).
+
+---
+
+### `SidebarActionIconBar`
+
+**Purpose:** Dense icon actions with overflow menu (`actions`, `overflowActions`, `overflowMenuLabel`).
+
+**When to use:** Source manager, refresh, open related views in sidebar header.
+
+**When not to use:** Full text toolbar — use `Toolbar` + `Button`.
+
+---
+
+### `WorkspaceExplorer`
+
+**Purpose:** File tree with expand/collapse, selection, optional context menu integration.
+
+**When to use:** Launchpad / workspace file navigation.
+
+---
+
+## Overlays and management
+
+### `ContextMenu`
+
+**Purpose:** Fixed-position menu (`items`, `x`, `y`, `onClose`). Items: label, icon, shortcut, `onSelect`, separators. Icon and shortcut columns are opt-in: when no item provides `icon` / `shortcut`, those columns are omitted (`data-has-icons` / `data-has-shortcuts`) so empty grid tracks do not add side padding. Selecting an item calls `onSelect` then `onClose`. Dismiss also runs on outside pointer down, Escape, scroll, and resize (`useFixedOverlayDismiss`). Coordinates are viewport (`clientX` / `clientY`).
+
+**When to use:** Tab context menu, catalog item menu, facet overflow.
+
+**When not to use:** Persistent filter panels — use `LibraryFacetFilterStrip` for toolbar cascade menus, or `LibraryFacetFilterPanel` / dialog for a full dialog. Hosts that hand-build `.ui-context-menu` markup (facet strip, chat history) must set `data-has-icons` / `data-has-shortcuts` themselves; those attributes are an internal layout contract, not a public props API.
+
+**VS Code analogue:** `Menu` / context menu service.
+
+---
+
+### `useContextMenuState`
+
+**Purpose:** Generic pointer-state helper for opening a `ContextMenu` (`target`, `x`, `y`). `open(event, target)` prevents default and stops propagation; `openAt` anchors from a button rect or other coordinates; `close` clears state. `target` may be an id string or a small payload object (for example `{ ariaLabel, items }` in sample hosts).
+
+**When to use:** Sidebar lists, catalog cards, overflow icon bars that only need coordinates + target identity. Sample reference: `IntegratedShellDemo` and Storybook `React/Overlay/Dialog Actions` → Context menu pointer state.
+
+**When not to use:** Building domain menu items, or deciding whether right-click changes selection — keep those in the host.
+
+---
+
+### `Modal` (low-level)
+
+**Purpose:** Draggable/resizable dialog with title bar, body layouts, optional footer.
+
+**Prefer:** `WorkbenchDialogFrame` for management-sized dialogs with preset dimensions.
+
+---
+
+### `WorkbenchDialogFrame`
+
+**Purpose:** Management dialog wrapper over `Modal` with preset sizes.
+
+**Key props:** `frameSize` (`source-manager`, `wide`, `asset-library`, …), `bodyLayout` (`column-fill`, `padded-fill`), `title`, `onClose`, `dataAttributes`.
+
+**When to use:** Source manager, provider settings, large configuration dialogs.
+
+**VS Code analogue:** Modal editor / multi-step dialog (simplified).
+
+---
+
+### `LibraryCatalogPickerDialog`
+
+**Purpose:** Asset/catalog picker shell — `WorkbenchDialogFrame` + searchable cover
+grid + optional `headerActions` slot for host install/import controls.
+
+| Prop / slot       | Role                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| `items`           | Neutral `{ id, label, meta?, imageUrl? }` rows for default `CatalogBrowseCard` covers |
+| `onPick`          | Single-select activation (primary pointer / double-click) — host closes and applies   |
+| `headerActions`   | `ReactNode` slot above the grid (install image, refresh, …)                           |
+| `labels`          | Host i18n for search / empty / loading / no-matches                                   |
+| `renderItemMedia` | Optional cover media override when `imageUrl` is not enough                           |
+| `frameSize`       | Defaults to `asset-library`; body defaults to `column-fill`                           |
+
+**When to use:** Modal pickers that choose one catalog/asset id and leave persistence to the host.
+
+**When not to use:** Full editor catalog browse (sort / view mode / infinite load) — use
+`CatalogBrowsePane`. Do not put asset storage or install IPC inside the kit.
+
+**Import:** `@workbench-kit/react/workbench/management`
+
+---
+
+### `IntegrationsShell`
+
+**Purpose:** Split sidebar + detail editor for provider/integration management.
+
+**Key props:** `sidebar`, `sourceTitle`, `sourceDescription`, `children` (detail body).
+
+**When to use:** Provider manager content inside `WorkbenchDialogFrame`.
+
+---
+
+### `WorkbenchNoticeProvider`, `useWorkbenchNotice`, `WorkbenchNoticeViewport`
+
+**Purpose:** Toast/notice stack for management surfaces.
+
+**Host rule:** Wrap dialog host once; show feedback via `showNotice`, not ad hoc DOM.
+
+---
+
+## Settings patterns (reference)
+
+Content Hub settings modal uses kit theme provider and settings sections from `@workbench-kit/react/workbench/settings` (not duplicated here). For schema-driven forms see [schema-form-field-widgets.md](./schema-form-field-widgets.md).
+
+**VS Code analogue:** Settings editor / preferences UI.
+
+---
+
+## Controls reference (short)
+
+| Component    | Purpose                                                         | VS Code analogue              |
+| ------------ | --------------------------------------------------------------- | ----------------------------- |
+| `Toolbar`    | Horizontal action container (`ui-toolbar`)                      | Toolbar widget                |
+| `IconButton` | Icon-only control with `label` for a11y                         | Toolbar action                |
+| `ScrollArea` | Themed scroll container (`orientation`, `scrollbars`, `gutter`) | Scrollable editor pane        |
+| `EmptyState` | Centered empty/loading message with codicon                     | Empty editor / welcome        |
+| `Badge`      | Status chip (`variant`: accent, muted, danger)                  | Badge in lists                |
+| `FileIcon`   | Themed file-type codicon                                        | ThemeIcon + file associations |
+
+---
+
+## Host integration rules
+
+TilePaper Content Hub maps these rules to a host-specific index:
+[`custom_launcher/docs/developer/conventions/workbench-kit-capabilities.md`](../../../../custom_launcher/docs/developer/conventions/workbench-kit-capabilities.md)
+(UI/UX ownership section).
+
+1. **Shell chrome belongs to the kit** — activity bar, editor tabs, dialog frames, property sections, scroll areas.
+2. **Tab-scoped actions → `EditorTabs.addons`** — not a duplicate row in the detail pane.
+3. **Hero-scoped actions → `LibraryDetailLayout.actions`** — only when there is no shared tab bar.
+4. **Domain logic stays in the host** — DTO mapping, IPC, provider APIs, i18n strings passed as props.
+5. **Product-specific visual tuning** — CSS variables (`--shell-*`) and `data-*` hooks, not forked layout markup.
+6. **Extend the kit before copying** — if a second consumer needs the same browse frame, add a primitive (see backlog) instead of a third copy in the host.
+
+---
+
+## Gaps (kit backlog, not host workarounds)
+
+| Gap                          | Host impact                   | Tracking   |
+| ---------------------------- | ----------------------------- | ---------- |
+| Consumer type shims          | Local type declaration drift  | Backlog §3 |
+| `exactOptionalPropertyTypes` | Split tsconfig for linked kit | Backlog §4 |
+
+---
+
+## Verification
+
+After changing exports or props consumed by hosts:
+
+```powershell
+pnpm check:public-exports
+pnpm validate:static
+```
+
+Storybook demos for library detail: `examples/workbench-sample` (`LibraryDetailLayout` stories).

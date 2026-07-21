@@ -1,0 +1,21 @@
+.workbench-jdw-lab-view {
+  height: 100%;
+  min-height: 0;
+}
+
+.workbench-jdw-lab-view__list {
+  padding-block: 4px;
+}
+
+.workbench-jdw-lab-view .ui-workbench-action-list-item__description {
+  font-family: var(
+    --monaco-monospace-font,
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace
+  );
+  font-size: 11px;
+  opacity: 0.85;
+}

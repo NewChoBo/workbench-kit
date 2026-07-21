@@ -1,0 +1,59 @@
+/* Chip styles (also co-located on Chip for HMR); keep here so filter-bar
+   consumers that use ui-filter-chip classes without importing Chip still style. */
+@import '../../primitives/chip/chip.css';
+
+.ui-filter-bar,
+.ui-workbench-filter-bar {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ui-filter-bar__row {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.ui-filter-bar__row[data-columns='search-action'] {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ui-filter-bar__active-chips {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ui-filter-bar__chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ui-filter-bar__clear-all {
+  --ui-button-height: auto;
+  --ui-button-min-height: 0;
+  --ui-button-padding: 0;
+  --ui-button-border: 0;
+  --ui-button-background: transparent;
+  --ui-button-color: var(--vscode-textLink-foreground, var(--color-accent));
+  --ui-button-font-size: var(--font-size-xs);
+  --ui-button-font-weight: 400;
+  --ui-button-hover-color: var(--vscode-textLink-foreground, var(--color-accent));
+  --ui-button-hover-background: transparent;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--vscode-textLink-foreground, var(--color-accent));
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+.ui-filter-bar__clear-all:hover {
+  text-decoration: underline;
+}

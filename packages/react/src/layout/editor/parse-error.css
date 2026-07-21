@@ -1,0 +1,9 @@
+.ui-workbench-parse-error {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  color: var(--vscode-errorForeground, var(--color-error));
+  background: color-mix(in srgb, var(--color-error) 12%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--color-error) 28%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  font-size: var(--font-size-xs);
+}

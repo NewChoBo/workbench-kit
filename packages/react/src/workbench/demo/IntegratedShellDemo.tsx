@@ -6,6 +6,7 @@ import {
   createIntegratedShellChatRuntimeResponse,
   createWorkspaceFileRepository,
   integratedShellDefaultSelectionByActivity,
+  integratedShellInitialChattingMessages,
   integratedShellInitialRuntimeMessages,
   integratedShellWorkspaceFiles,
   integratedShellWorkspaceFolders,
@@ -20,13 +21,11 @@ import {
   type WorkspacePatchEvent,
 } from '@workbench-kit/contracts';
 import { WorkspacePatchService, WorkspaceSaveService } from '@workbench-kit/services';
-import { SideBarHeaderControl, SideBarViewFrame } from '../../layout/SideBarViewFrame';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
-import { Badge } from '../../primitives/Badge';
-import { Button } from '../../primitives/Button';
-import { IconButton } from '../../primitives/IconButton';
-import { TextInput } from '../../primitives/TextInput';
+import { useContextMenuState } from '../../overlay/useContextMenuState';
+import { Badge } from '../../primitives/badge';
+import { Button } from '../../primitives/button';
 import { ChatPanel, type ChatMessage } from '../chat';
 import {
   commandMenuItemsToContextMenuItems,
@@ -39,10 +38,12 @@ import { WorkbenchStandaloneShell } from '../WorkbenchStandaloneShell';
 import type { WorkbenchStandaloneShellContext } from '../WorkbenchStandaloneShell';
 import {
   WorkspaceEditorPanel,
+  WorkspaceExplorerPanel,
+  resolveWorkspaceCreateParentPath,
   type WorkspaceEditorTheme,
-  WorkspaceExplorer,
   WorkspaceSearchPanel,
   fileNameOfPath,
+  formatWorkspacePathDisplay,
   useVirtualWorkspace,
   type WorkspaceTreeNode,
 } from '../workspace';
@@ -77,11 +78,9 @@ export interface IntegratedShellDemoProps {
   initialTheme?: WorkspaceEditorTheme;
 }
 
-interface DemoContextMenuState {
+interface DemoContextMenuTarget {
   ariaLabel: string;
   items: ContextMenuItem[];
-  x: number;
-  y: number;
 }
 
 function runtimeMessagesToChatMessages(
@@ -89,6 +88,7 @@ function runtimeMessagesToChatMessages(
 ): ChatMessage[] {
   return messages.map((message) => ({
     content: message.content,
+    createdAt: message.createdAt,
     id: message.id,
     label: message.label,
     source: message.source,
@@ -102,9 +102,18 @@ export function IntegratedShellDemo({
   initialTheme = 'dark',
 }: IntegratedShellDemoProps = {}) {
   const [chatDraft, setChatDraft] = useState('');
+  const [chattingDraft, setChattingDraft] = useState('');
+  const [chattingMessages, setChattingMessages] = useState<ChatMessage[]>(() =>
+    integratedShellInitialChattingMessages.map((message) => ({
+      content: message.content,
+      createdAt: message.createdAt,
+      id: message.id,
+      label: message.label,
+      source: message.source,
+    })),
+  );
   const [compactRows, setCompactRows] = useState(initialCompactRows);
-  const [contextMenu, setContextMenu] = useState<DemoContextMenuState | null>(null);
-  const [filterQuery, setFilterQuery] = useState('');
+  const contextMenu = useContextMenuState<DemoContextMenuTarget>();
   const [lastCommandLabel, setLastCommandLabel] = useState(
     `Command contribution policy: ${integratedShellCommandPolicy}`,
   );
@@ -131,7 +140,7 @@ export function IntegratedShellDemo({
       'src/App.tsx',
       'src/components/Button.tsx',
       'src/workbench/Shell.tsx',
-      'src/widgets/home.widget.json',
+      'src/widgets/home.jdw.json',
     ],
     searchQuery: initialSearchQuery,
     selectedPath: integratedShellDefaultSelectionByActivity.explorer,
@@ -144,6 +153,7 @@ export function IntegratedShellDemo({
     deleteFile: deleteWorkspaceFile,
     expandedPaths,
     files,
+    folders,
     moveFile: moveWorkspaceFile,
     openFile,
     openPaths,
@@ -181,6 +191,11 @@ export function IntegratedShellDemo({
     onNotify: setLastCommandLabel,
     workspace,
   });
+
+  const explorerCreateParentPath = useMemo(
+    () => resolveWorkspaceCreateParentPath(explorerSelection.focusedPath, folders),
+    [explorerSelection.focusedPath, folders],
+  );
 
   const openFileRef = useRef(openFile);
   useEffect(() => {
@@ -284,8 +299,7 @@ export function IntegratedShellDemo({
     items: ContextMenuItem[],
     ariaLabel: string,
   ) => {
-    event.preventDefault();
-    setContextMenu({ ariaLabel, items, x: event.clientX, y: event.clientY });
+    contextMenu.open(event, { ariaLabel, items });
   };
 
   const activateSearchResult = (result: (typeof filteredSearchResults)[number]) => {
@@ -347,8 +361,8 @@ export function IntegratedShellDemo({
     shellContext: WorkbenchStandaloneShellContext<IntegratedShellActivityId, WorkspaceEditorTheme>,
     overrides: Partial<IntegratedShellCommandContext> = {},
   ): IntegratedShellCommandContext => ({
-    createWorkspaceFile: () => startWorkspaceCreate('create-file'),
-    createWorkspaceFolder: () => startWorkspaceCreate('create-folder'),
+    createWorkspaceFile: () => startWorkspaceCreate('create-file', explorerCreateParentPath),
+    createWorkspaceFolder: () => startWorkspaceCreate('create-folder', explorerCreateParentPath),
     deleteWorkspaceTarget: () => undefined,
     fileActionPaths: [],
     isPrimarySidebarVisible: shellContext.isPrimarySidebarVisible,
@@ -518,12 +532,10 @@ export function IntegratedShellDemo({
   const renderPrimarySidebar = (
     shellContext: WorkbenchStandaloneShellContext<IntegratedShellActivityId, WorkspaceEditorTheme>,
   ) => {
-    const activeActivity = integratedShellActivities[shellContext.activityId];
-
     return (
       <aside
         aria-label="Primary sidebar"
-        className="workbench-primary-side-bar"
+        className="workbench-primary-sidebar"
         style={{ borderRight: '1px solid var(--color-border)' }}
         onContextMenu={(event) => {
           const target = event.target as HTMLElement;
@@ -538,7 +550,7 @@ export function IntegratedShellDemo({
           );
         }}
       >
-        {shellContext.activityId === 'chat' ? (
+        {shellContext.activityId === 'aiChat' ? (
           <ChatPanel
             assistantLabel="Assistant"
             disabled={runtimeStatus === 'error'}
@@ -547,15 +559,44 @@ export function IntegratedShellDemo({
             messages={runtimeMessages}
             placeholder="Ask about this workspace"
             showTools
-            title="Chat"
+            title="AI Chat"
             value={chatDraft}
             onCancel={() => chatService.cancel()}
             onSubmit={(message) => {
               setChatDraft('');
               void chatService.sendMessage(message);
-              setLastCommandLabel('Chat draft sent');
+              setLastCommandLabel('AI chat draft sent');
             }}
             onValueChange={setChatDraft}
+          />
+        ) : shellContext.activityId === 'chatting' ? (
+          <ChatPanel
+            assistantLabel="Alex"
+            emptyLabel="Direct messages and team channels will appear here."
+            messageLayout="peer"
+            messages={chattingMessages}
+            placeholder="Message your team"
+            title="Chat"
+            userLabel="Jay"
+            value={chattingDraft}
+            onSubmit={(message) => {
+              if (!message) {
+                return;
+              }
+
+              setChattingDraft('');
+              setChattingMessages((current) => [
+                ...current,
+                {
+                  id: `chatting-user-${Date.now()}`,
+                  source: 'user',
+                  content: message,
+                  createdAt: new Date().toISOString(),
+                },
+              ]);
+              setLastCommandLabel('Chat message sent');
+            }}
+            onValueChange={setChattingDraft}
           />
         ) : shellContext.activityId === 'search' ? (
           <WorkspaceSearchPanel
@@ -580,68 +621,37 @@ export function IntegratedShellDemo({
             }
           />
         ) : (
-          <SideBarViewFrame
-            title={activeActivity.label}
-            actions={
-              shellContext.activityId === 'explorer' ? (
-                <>
-                  <IconButton
-                    icon="codicon-new-file"
-                    label="New file"
-                    onClick={() => startWorkspaceCreate('create-file')}
-                  />
-                  <IconButton
-                    icon="codicon-new-folder"
-                    label="New folder"
-                    onClick={() => startWorkspaceCreate('create-folder')}
-                  />
-                  <IconButton icon="codicon-refresh" label="Refresh" />
-                </>
-              ) : (
-                <IconButton icon="codicon-refresh" label="Refresh" />
+          <WorkspaceExplorerPanel
+            activePath={selectedPath}
+            expandedPaths={expandedPaths}
+            focusedPath={explorerSelection.focusedPath}
+            inlineEdit={explorerInlineEdit}
+            nodes={workspaceTree}
+            selectedPaths={explorerSelection.paths}
+            selectionAnchorPath={explorerSelection.anchorPath}
+            onActivateFile={activateFile}
+            onNewFile={() => startWorkspaceCreate('create-file', explorerCreateParentPath)}
+            onNewFolder={() => startWorkspaceCreate('create-folder', explorerCreateParentPath)}
+            onRefresh={() => setLastCommandLabel('Explorer refreshed')}
+            onInlineEditCancel={() => {
+              setExplorerInlineEdit(undefined);
+              setLastCommandLabel('Inline edit canceled');
+            }}
+            onInlineEditCommit={handleExplorerInlineEditCommit}
+            onInlineEditValueChange={handleExplorerInlineEditValueChange}
+            onItemContextMenu={(event, node, meta) =>
+              openContextMenu(
+                event,
+                createWorkspaceMenuItems(shellContext, node, meta.actionPaths),
+                'Workspace item menu',
               )
             }
-            headerAddon={
-              <SideBarHeaderControl>
-                <TextInput
-                  aria-label={`Filter ${activeActivity.label}`}
-                  controlWidth="full"
-                  placeholder="Filter"
-                  value={filterQuery}
-                  onChange={(event) => setFilterQuery(event.currentTarget.value)}
-                />
-              </SideBarHeaderControl>
-            }
-          >
-            <WorkspaceExplorer
-              activePath={selectedPath}
-              expandedPaths={expandedPaths}
-              filterQuery={filterQuery}
-              inlineEdit={explorerInlineEdit}
-              nodes={workspaceTree}
-              selectedPaths={explorerSelection.paths}
-              selectionAnchorPath={explorerSelection.anchorPath}
-              onActivateFile={activateFile}
-              onInlineEditCancel={() => {
-                setExplorerInlineEdit(undefined);
-                setLastCommandLabel('Inline edit canceled');
-              }}
-              onInlineEditCommit={handleExplorerInlineEditCommit}
-              onInlineEditValueChange={handleExplorerInlineEditValueChange}
-              onItemContextMenu={(event, node, meta) =>
-                openContextMenu(
-                  event,
-                  createWorkspaceMenuItems(shellContext, node, meta.actionPaths),
-                  'Workspace item menu',
-                )
-              }
-              onRequestDelete={handleExplorerRequestDelete}
-              onRequestMove={handleExplorerRequestMove}
-              onRequestRename={handleExplorerRequestRename}
-              onSelectionChange={handleExplorerSelectionChange}
-              onToggleFolder={toggleFolder}
-            />
-          </SideBarViewFrame>
+            onRequestDelete={handleExplorerRequestDelete}
+            onRequestMove={handleExplorerRequestMove}
+            onRequestRename={handleExplorerRequestRename}
+            onSelectionChange={handleExplorerSelectionChange}
+            onToggleFolder={toggleFolder}
+          />
         )}
       </aside>
     );
@@ -651,13 +661,13 @@ export function IntegratedShellDemo({
     shellContext: WorkbenchStandaloneShellContext<IntegratedShellActivityId, WorkspaceEditorTheme>,
   ) => (
     <>
-      {contextMenu ? (
+      {contextMenu.state ? (
         <ContextMenu
-          ariaLabel={contextMenu.ariaLabel}
-          items={contextMenu.items}
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onClose={() => setContextMenu(null)}
+          ariaLabel={contextMenu.state.target.ariaLabel}
+          items={contextMenu.state.target.items}
+          x={contextMenu.state.x}
+          y={contextMenu.state.y}
+          onClose={contextMenu.close}
         />
       ) : null}
       {pendingDelete ? (
@@ -666,7 +676,7 @@ export function IntegratedShellDemo({
           detail={
             <div className="workbench-delete-targets ui-workbench-scrollbar">
               {pendingDelete.paths.map((path) => (
-                <code key={path}>{path}</code>
+                <code key={path}>{formatWorkspacePathDisplay(path)}</code>
               ))}
             </div>
           }
@@ -746,7 +756,7 @@ export function IntegratedShellDemo({
               searchQuery,
               searchResultCount: filteredSearchResults.length,
               settingsSearchValue,
-              sideBarSizePercent: shellContext.primarySidebarSizePercent,
+              sideBarSizePx: shellContext.primarySidebarSizePx,
               onClearSearch: () => {
                 setSearchQuery('');
                 setLastCommandLabel('Search cleared from settings');
@@ -755,7 +765,7 @@ export function IntegratedShellDemo({
               onCompactRowsChange: setCompactRows,
               onSearchQueryChange: setSearchQuery,
               onSettingsSearchValueChange: setSettingsSearchValue,
-              onSideBarSizePercentChange: shellContext.setPrimarySidebarSizePercent,
+              onSideBarSizePxChange: shellContext.setPrimarySidebarSizePx,
             })
           }
         />
@@ -775,8 +785,8 @@ export function IntegratedShellDemo({
           runtimeStatus,
         })
       }
-      minPrimarySidebarSizePercent={16}
-      maxPrimarySidebarSizePercent={40}
+      minPrimarySidebarSizePx={200}
+      maxPrimarySidebarSizePx={480}
       onActivityActivate={({ nextActivityId }, shellContext) => {
         const hidSidebar =
           nextActivityId === shellContext.activityId && shellContext.isPrimarySidebarVisible;

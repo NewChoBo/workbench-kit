@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { ExtensionRegistry, type WorkbenchExtensionDescription } from './index.js';
+import {
+  collectExtensionDependencyDiagnostics,
+  ExtensionRegistry,
+  type WorkbenchExtensionDescription,
+} from './index.js';
 
 const helloWorldExtension: WorkbenchExtensionDescription = {
   manifest: {
@@ -84,6 +88,30 @@ describe('ExtensionRegistry', () => {
     expect(registry.isActive('workbench-kit.samples.hello-world')).toBe(true);
   });
 
+  it('emits extension lifecycle events when extensions activate and deactivate', async () => {
+    const registry = new ExtensionRegistry();
+    const events: string[] = [];
+    const activateDisposable = registry.onDidActivateExtension((event) => {
+      events.push(`activate:${event.extensionId}`);
+    });
+    const deactivateDisposable = registry.onDidDeactivateExtension((event) => {
+      events.push(`deactivate:${event.extensionId}`);
+    });
+
+    registry.registerExtension(helloWorldExtension);
+
+    await registry.activateCommand('workbench-kit.samples.hello-world.sayHello');
+    await registry.deactivateExtension('workbench-kit.samples.hello-world');
+
+    expect(events).toEqual([
+      'activate:workbench-kit.samples.hello-world',
+      'deactivate:workbench-kit.samples.hello-world',
+    ]);
+
+    activateDisposable.dispose();
+    deactivateDisposable.dispose();
+  });
+
   it('executes command handlers registered during activation', async () => {
     const registry = new ExtensionRegistry();
     registry.registerExtension({
@@ -155,6 +183,66 @@ describe('ExtensionRegistry', () => {
     await registry.deactivateExtension('workbench-kit.builtin.explorer');
 
     expect(registry.views.getViewProvider('workbench-kit.builtin.explorer.tree')).toBeUndefined();
+  });
+
+  it('registers editor document view providers during extension activation', async () => {
+    const registry = new ExtensionRegistry();
+    registry.registerExtension({
+      manifest: {
+        schemaVersion: 1,
+        id: 'workbench-kit.samples.document-view',
+        name: 'samples-document-view',
+        displayName: 'Document View',
+        version: '0.0.0',
+        publisher: 'workbench-kit',
+        engines: {
+          workbench: '^0.0.0',
+          extensionApi: '^0.0.0',
+        },
+        activationEvents: ['onStartup'],
+        contributes: {
+          documentViews: [
+            {
+              filenamePatterns: ['*.preview.json'],
+              id: 'workbench-kit.samples.document-view.preview',
+              kind: 'preview',
+              label: 'Preview',
+            },
+          ],
+        },
+      },
+      module: {
+        activate: (context) => {
+          context.editorDocumentViews.registerProvider({
+            filenamePatterns: ['*.preview.json'],
+            id: 'workbench-kit.samples.document-view.preview',
+            kind: 'preview',
+            label: 'Preview',
+            render: ({ document }) => `Preview ${document.path}`,
+          });
+        },
+      },
+    });
+
+    expect(registry.editorDocumentViews.getProviders()).toHaveLength(0);
+
+    await registry.activateStartup();
+
+    expect(registry.editorDocumentViews.getProviders()).toHaveLength(1);
+    expect(
+      registry.editorDocumentViews.getProviders()[0]?.render({
+        document: {
+          content: '{}',
+          path: 'sample.preview.json',
+          resourceUri: 'workspace://file/sample.preview.json',
+        },
+        onContentChange: () => undefined,
+      }),
+    ).toBe('Preview sample.preview.json');
+
+    await registry.deactivateExtension('workbench-kit.samples.document-view');
+
+    expect(registry.editorDocumentViews.getProviders()).toHaveLength(0);
   });
 
   it('shares concurrent extension activation for the same activation event', async () => {
@@ -428,12 +516,140 @@ describe('ExtensionRegistry', () => {
     expect(registry.getExtensions()).toEqual([]);
   });
 
-  it('resolves host-seeded capabilities through getCapability', async () => {
-    const registry = new ExtensionRegistry({
-      capabilities: {
-        'workbench.auth': { id: 'host-auth' },
+  it('reports extension dependency diagnostics without blocking registration', () => {
+    const registry = new ExtensionRegistry();
+    registry.registerExtensions([
+      {
+        manifest: {
+          schemaVersion: 1,
+          id: 'workbench-kit.accounts',
+          name: 'accounts',
+          displayName: 'Accounts',
+          version: '0.0.0',
+          publisher: 'workbench-kit',
+          engines: {
+            workbench: '^0.0.0',
+            extensionApi: '^0.0.0',
+          },
+          activationEvents: ['onStartup'],
+          capabilities: {
+            requires: ['workbench.auth'],
+          },
+          extensionOptionalDependencies: ['workbench-kit.optional-theme'],
+        },
       },
-    });
+      {
+        manifest: {
+          schemaVersion: 1,
+          id: 'workbench-kit.orphan-command',
+          name: 'orphan-command',
+          displayName: 'Orphan Command',
+          version: '0.0.0',
+          publisher: 'workbench-kit',
+          engines: {
+            workbench: '^0.0.0',
+            extensionApi: '^0.0.0',
+          },
+          activationEvents: [],
+          contributes: {
+            commands: [
+              {
+                command: 'workbench-kit.orphan-command.run',
+                title: 'Run Orphan Command',
+              },
+            ],
+          },
+        },
+      },
+    ]);
+
+    expect(
+      registry
+        .getDependencyDiagnostics()
+        .map(({ capabilityId, commandId, dependencyId, kind, severity }) => ({
+          capabilityId,
+          commandId,
+          dependencyId,
+          kind,
+          severity,
+        })),
+    ).toEqual([
+      {
+        capabilityId: undefined,
+        commandId: undefined,
+        dependencyId: 'workbench-kit.optional-theme',
+        kind: 'missing-optional-extension-dependency',
+        severity: 'warning',
+      },
+      {
+        capabilityId: 'workbench.auth',
+        commandId: undefined,
+        dependencyId: undefined,
+        kind: 'missing-capability',
+        severity: 'error',
+      },
+      {
+        capabilityId: undefined,
+        commandId: 'workbench-kit.orphan-command.run',
+        dependencyId: undefined,
+        kind: 'command-activation-missing',
+        severity: 'warning',
+      },
+    ]);
+  });
+
+  it('accepts required capabilities satisfied by the host or an extension provider', () => {
+    expect(
+      collectExtensionDependencyDiagnostics(
+        [
+          {
+            manifest: {
+              schemaVersion: 1,
+              id: 'workbench-kit.consumer',
+              name: 'consumer',
+              displayName: 'Consumer',
+              version: '0.0.0',
+              publisher: 'workbench-kit',
+              engines: {
+                workbench: '^0.0.0',
+                extensionApi: '^0.0.0',
+              },
+              activationEvents: [],
+              capabilities: {
+                requires: ['workbench.auth', 'workbench.workspace'],
+              },
+            },
+          },
+          {
+            manifest: {
+              schemaVersion: 1,
+              id: 'workbench-kit.workspace-provider',
+              name: 'workspace-provider',
+              displayName: 'Workspace Provider',
+              version: '0.0.0',
+              publisher: 'workbench-kit',
+              engines: {
+                workbench: '^0.0.0',
+                extensionApi: '^0.0.0',
+              },
+              activationEvents: ['onStartup'],
+              capabilities: {
+                provides: ['workbench.workspace'],
+              },
+            },
+          },
+        ],
+        {
+          hasCapability: (capabilityId) => capabilityId === 'workbench.auth',
+        },
+      ),
+    ).toEqual([]);
+  });
+
+  it('resolves host-registered capabilities through getCapability', async () => {
+    const registry = new ExtensionRegistry();
+    registry.capabilityRegistry.registerValue('workbench.auth', { id: 'host-auth' });
+
     registry.registerExtension({
       ...helloWorldExtension,
       manifest: {

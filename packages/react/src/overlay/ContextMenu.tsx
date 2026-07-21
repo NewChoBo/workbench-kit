@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { Button } from '../primitives/button';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
+import { useClampedFixedOverlayPosition } from './useClampedFixedOverlayPosition';
+import { useFixedOverlayDismiss } from './useFixedOverlayDismiss';
 
 export type ContextMenuItem =
   | {
@@ -31,6 +34,16 @@ function itemKey(item: ContextMenuItem, index: number): string {
   return item.id ?? `${item.type ?? 'item'}-${index}`;
 }
 
+function menuHasIcons(items: ContextMenuItem[]): boolean {
+  return items.some((item) => item.type !== 'separator' && Boolean(item.icon));
+}
+
+function menuHasShortcuts(items: ContextMenuItem[]): boolean {
+  return items.some(
+    (item) => item.type !== 'separator' && item.shortcut != null && item.shortcut !== '',
+  );
+}
+
 export function ContextMenu({
   ariaLabel = 'Context menu',
   className,
@@ -40,40 +53,13 @@ export function ContextMenu({
   onClose,
 }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x, y });
+  const position = useClampedFixedOverlayPosition(ref, { x, y }, items.length);
+  const hasIcons = menuHasIcons(items);
+  const hasShortcuts = menuHasShortcuts(items);
+
+  useFixedOverlayDismiss({ containerRef: ref, onClose });
 
   useEffect(() => {
-    setPosition({ x, y });
-  }, [x, y]);
-
-  useEffect(() => {
-    const menu = ref.current;
-    if (!menu || typeof window === 'undefined') return;
-
-    const frame = window.requestAnimationFrame(() => {
-      const rect = menu.getBoundingClientRect();
-      setPosition({
-        x: Math.max(4, Math.min(x, window.innerWidth - rect.width - 4)),
-        y: Math.max(4, Math.min(y, window.innerHeight - rect.height - 4)),
-      });
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [items.length, x, y]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-      }
-    };
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (ref.current?.contains(event.target as Node)) return;
-      onClose();
-    };
-
     const handleContextMenu = (event: MouseEvent) => {
       if (ref.current?.contains(event.target as Node)) {
         event.preventDefault();
@@ -82,19 +68,8 @@ export function ContextMenu({
       onClose();
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('pointerdown', handlePointerDown, true);
     window.addEventListener('contextmenu', handleContextMenu, true);
-    window.addEventListener('resize', onClose);
-    window.addEventListener('scroll', onClose, true);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('pointerdown', handlePointerDown, true);
-      window.removeEventListener('contextmenu', handleContextMenu, true);
-      window.removeEventListener('resize', onClose);
-      window.removeEventListener('scroll', onClose, true);
-    };
+    return () => window.removeEventListener('contextmenu', handleContextMenu, true);
   }, [onClose]);
 
   useEffect(() => {
@@ -108,6 +83,8 @@ export function ContextMenu({
       ref={ref}
       aria-label={ariaLabel}
       className={cx('ui-context-menu', className)}
+      data-has-icons={hasIcons ? 'true' : 'false'}
+      data-has-shortcuts={hasShortcuts ? 'true' : 'false'}
       role="menu"
       style={{
         left: position.x,
@@ -119,26 +96,27 @@ export function ContextMenu({
         item.type === 'separator' ? (
           <div key={itemKey(item, index)} className="ui-context-menu__separator" role="separator" />
         ) : (
-          <button
+          <Button
             key={itemKey(item, index)}
             className="ui-context-menu__item"
             data-danger={item.danger ? 'true' : undefined}
             disabled={item.disabled}
             role="menuitem"
-            type="button"
             onClick={() => {
               item.onSelect();
               onClose();
             }}
           >
-            <span className="ui-context-menu__icon">
-              {item.icon ? <i className={cxCodicon(item.icon)} /> : null}
-            </span>
+            {hasIcons ? (
+              <span className="ui-context-menu__icon" aria-hidden="true">
+                {item.icon ? <i className={cxCodicon(item.icon)} /> : null}
+              </span>
+            ) : null}
             <span className="ui-context-menu__label">{item.label}</span>
             {item.shortcut ? (
               <span className="ui-context-menu__shortcut">{item.shortcut}</span>
             ) : null}
-          </button>
+          </Button>
         ),
       )}
     </div>

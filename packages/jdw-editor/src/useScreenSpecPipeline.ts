@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   compileScreenSpecToJson,
   type JdwScreenSpec,
@@ -38,51 +38,45 @@ function compileSpec(spec: JdwScreenSpec): { json: string; error: string | null 
   }
 }
 
-export function useScreenSpecPipeline(initialSpec: JdwScreenSpec): UseScreenSpecPipelineResult {
-  const initial = useMemo(() => {
-    const compiled = compileSpec(initialSpec);
-    return {
-      spec: initialSpec,
-      json: compiled.json,
-      compileError: compiled.error,
-      layoutConstraints: layoutConstraintsFromSpec(initialSpec),
-    };
-  }, [initialSpec]);
+function createPipelineState(spec: JdwScreenSpec): ScreenSpecPipelineState {
+  const compiled = compileSpec(spec);
+  return {
+    spec,
+    json: compiled.json,
+    compileError: compiled.error,
+    layoutConstraints: layoutConstraintsFromSpec(spec),
+  };
+}
 
-  const [spec, setSpecState] = useState(initial.spec);
-  const [json, setJsonState] = useState(initial.json);
-  const [compileError, setCompileError] = useState<string | null>(initial.compileError);
-  const [layoutConstraints, setLayoutConstraints] = useState(initial.layoutConstraints);
+/**
+ * Owns Screen Spec → compiled JDW JSON. Compiles once per `setSpec`/`resetSpec`.
+ * `initialSpec` is mount-only; external document reloads must call `resetSpec`.
+ */
+export function useScreenSpecPipeline(initialSpec: JdwScreenSpec): UseScreenSpecPipelineResult {
+  const [state, setState] = useState(() => createPipelineState(initialSpec));
 
   const setSpec = useCallback((nextSpec: JdwScreenSpec) => {
     const compiled = compileSpec(nextSpec);
-    setSpecState(nextSpec);
-    setLayoutConstraints(layoutConstraintsFromSpec(nextSpec));
-    setCompileError(compiled.error);
-    if (compiled.error === null) {
-      setJsonState(compiled.json);
-    }
+    setState((prev) => ({
+      spec: nextSpec,
+      layoutConstraints: layoutConstraintsFromSpec(nextSpec),
+      compileError: compiled.error,
+      json: compiled.error === null ? compiled.json : prev.json,
+    }));
   }, []);
 
-  const resetSpec = useCallback(
-    (nextSpec: JdwScreenSpec) => {
-      setSpec(nextSpec);
-    },
-    [setSpec],
-  );
-
   const setJson = useCallback((nextJson: string) => {
-    setJsonState(nextJson);
-    setCompileError(null);
+    setState((prev) => ({
+      ...prev,
+      json: nextJson,
+      compileError: null,
+    }));
   }, []);
 
   return {
-    spec,
-    json,
-    compileError,
-    layoutConstraints,
+    ...state,
     setSpec,
     setJson,
-    resetSpec,
+    resetSpec: setSpec,
   };
 }

@@ -1,0 +1,5 @@
+.ui-workbench-divider {
+  height: 1px;
+  margin: 6px 0;
+  background: var(--vscode-panel-border, var(--color-border));
+}

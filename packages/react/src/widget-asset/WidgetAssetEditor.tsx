@@ -11,7 +11,8 @@ import {
   type WorkspaceAssetFileRef,
 } from '@workbench-kit/jdw';
 
-import { JdwPreview } from '../jdw/JdwPreview.js';
+import { JdwPreviewViewport } from '../jdw/JdwPreviewViewport.js';
+import { WorkbenchLabeledPane } from '../layout/panel';
 import { WidgetAssetSourceEditor } from './WidgetAssetSourceEditor.js';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import { WorkbenchPropertyHint, WorkbenchPropertyPanel } from '../layout/WorkbenchPropertyPanel';
@@ -128,12 +129,13 @@ export function WidgetAssetEditor({
             />
           </section>
         ) : null}
-        <section aria-label="Asset preview" className="widget-asset-editor__preview">
-          <header className="widget-asset-editor__preview-header">Placement preview</header>
-          <div className="widget-asset-editor__preview-body">
-            <JdwPreview json={previewJson} registry={registry} />
-          </div>
-        </section>
+        <WorkbenchLabeledPane
+          aria-label="Asset preview"
+          className="widget-asset-editor__preview"
+          title="Placement preview"
+        >
+          <JdwPreviewViewport json={previewJson} registry={registry} />
+        </WorkbenchLabeledPane>
       </div>
     </div>
   );

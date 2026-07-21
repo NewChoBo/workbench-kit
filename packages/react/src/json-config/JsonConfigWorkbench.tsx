@@ -2,11 +2,11 @@ import { useMemo, useState, type ReactNode } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import { parseJsonWidgetData } from '@workbench-kit/jdw';
 
-import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
-import { EmptyState } from '../primitives/EmptyState';
-import { Button } from '../primitives/Button';
-import { IconButton } from '../primitives/IconButton';
-import { Toolbar } from '../primitives/Toolbar';
+import { Panel, PanelBody, PanelHeader } from '../layout/panel';
+import { EmptyState } from '../primitives/empty-state';
+import { Button } from '../primitives/button';
+import { IconButton } from '../primitives/icon-button';
+import { Toolbar } from '../primitives/toolbar';
 import { JsonCodeEditorPane, JsonConfigValidationBanner } from '../jdw/JsonCodeEditorPane.js';
 import { JdwPreview } from '../jdw/JdwPreview.js';
 import { SplitView } from '../workbench/SplitView';
@@ -18,15 +18,14 @@ import { createJsonConfigEditorState } from './json-config-editor-state.js';
 
 export type JsonConfigPreviewKind = 'auto' | 'none' | 'schema' | 'widget';
 export type JsonConfigWorkbenchMode = 'code' | 'form' | 'preview';
-type JsonConfigWorkbenchModeInput = JsonConfigWorkbenchMode | 'split';
 
 export interface JsonConfigWorkbenchProps {
   activePattern?: string | undefined;
   baselineValue?: string | undefined;
-  defaultMode?: JsonConfigWorkbenchModeInput | undefined;
+  defaultMode?: JsonConfigWorkbenchMode | undefined;
   emptyPreviewLabel?: ReactNode | undefined;
   headerActions?: ReactNode | undefined;
-  mode?: JsonConfigWorkbenchModeInput | undefined;
+  mode?: JsonConfigWorkbenchMode | undefined;
   onChange: (value: string) => void;
   onApply?: (() => void) | undefined;
   onDiscard?: (() => void) | undefined;
@@ -94,8 +93,7 @@ export function JsonConfigWorkbench({
   widgetRegistry,
 }: JsonConfigWorkbenchProps) {
   const formAvailable = schema !== null && schema !== undefined;
-  const [uncontrolledMode, setUncontrolledMode] =
-    useState<JsonConfigWorkbenchModeInput>(defaultMode);
+  const [uncontrolledMode, setUncontrolledMode] = useState<JsonConfigWorkbenchMode>(defaultMode);
   const resolvedMode = normalizeJsonConfigWorkbenchMode(mode ?? uncontrolledMode, formAvailable);
 
   const setMode = (nextMode: JsonConfigWorkbenchMode) => {
@@ -266,15 +264,14 @@ export function JsonConfigWorkbench({
 }
 
 function normalizeJsonConfigWorkbenchMode(
-  mode: JsonConfigWorkbenchModeInput,
+  mode: JsonConfigWorkbenchMode,
   formAvailable: boolean,
 ): JsonConfigWorkbenchMode {
-  const normalized = mode === 'split' ? 'code' : mode;
-  if (normalized === 'form' && !formAvailable) {
+  if (mode === 'form' && !formAvailable) {
     return 'code';
   }
 
-  return normalized;
+  return mode;
 }
 
 function JsonConfigModeControls({

@@ -1,4 +1,5 @@
 import { useEffect, useReducer } from 'react';
+import { reduceRuntimeChatMessages } from '@workbench-kit/runtime';
 import type {
   RuntimeChatMessage,
   RuntimeStatus,
@@ -15,23 +16,10 @@ function chatRuntimeReducer(
   state: ChatRuntimeState,
   action: WorkbenchRuntimeEvent,
 ): ChatRuntimeState {
-  if (action.type === 'message') {
-    const exists = state.messages.some((m) => m.id === action.message.id);
+  if (action.type === 'message' || action.type === 'message-delta') {
     return {
       ...state,
-      messages: exists
-        ? state.messages.map((m) => (m.id === action.message.id ? action.message : m))
-        : [...state.messages, action.message],
-    };
-  }
-
-  if (action.type === 'message-delta') {
-    const exists = state.messages.some((m) => m.id === action.message.id);
-    return {
-      ...state,
-      messages: exists
-        ? state.messages.map((m) => (m.id === action.message.id ? action.message : m))
-        : [...state.messages, action.message],
+      messages: reduceRuntimeChatMessages(state.messages, action),
     };
   }
 

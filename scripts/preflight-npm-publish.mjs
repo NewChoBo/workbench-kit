@@ -4,6 +4,9 @@ import { execFileSync } from 'node:child_process';
 import {
   NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
+  buildNpmPublishArgs,
+  clearNpmRegistryAuth,
+  npmViewExists,
   packageDirectoryNameForPackageName,
   requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
@@ -22,32 +25,32 @@ console.log('[preflight-npm] Skipping npm whoami because OIDC auth is resolved a
 
 resetDirectory(packDir);
 
-const probePackage = NPM_PUBLISH_ORDER[0];
-const probeDir = packageDirFor(probePackage);
-const probeJson = readJson(path.join(probeDir, 'package.json'));
-const probeSpec = `${probeJson.name}@${probeJson.version}`;
-const tarball = packPackage(probePackage);
-
-const args = [
-  'publish',
-  tarball,
-  '--access',
-  'public',
-  '--tag',
-  distTag,
-  '--registry',
-  NPM_REGISTRY,
-  '--dry-run',
-];
-
-console.log(`[preflight-npm] Dry-run publish probe for ${probeSpec}...`);
-try {
-  run('npm', args, { stdio: 'inherit' });
-} catch {
-  throw publishPermissionError(probeJson.name);
+const probePackages = NPM_PUBLISH_ORDER.filter((packageName) => npmViewExists(packageName));
+if (probePackages.length === 0) {
+  probePackages.push(NPM_PUBLISH_ORDER[0]);
 }
 
-console.log('[preflight-npm] Publish auth preflight passed.');
+for (const probePackage of probePackages) {
+  clearNpmRegistryAuth();
+
+  const probeDir = packageDirFor(probePackage);
+  const probeJson = readJson(path.join(probeDir, 'package.json'));
+  const probeSpec = `${probeJson.name}@${probeJson.version}`;
+  const tarball = packPackage(probePackage);
+
+  const args = buildNpmPublishArgs({ tarball, distTag, dryRun: true });
+
+  console.log(`[preflight-npm] Dry-run publish probe for ${probeSpec}...`);
+  try {
+    run('npm', args, { stdio: 'inherit' });
+  } catch {
+    throw publishPermissionError(probeJson.name);
+  }
+}
+
+console.log(
+  `[preflight-npm] Dry-run passed for ${probePackages.length} package(s). Real publish still requires per-package OIDC auth.`,
+);
 
 function publishPermissionError(packageName) {
   return new Error(
@@ -55,6 +58,8 @@ function publishPermissionError(packageName) {
       `npm publish preflight failed for ${packageName}.`,
       'Auth mode: trusted-publisher (github-actions-trusted-publisher)',
       '- Trusted publisher may be missing or mismatched for NewChoBo/workbench-kit / publish.yml.',
+      '- If Environment is set on npm, publish.yml must use the same GitHub environment name (or clear Environment on npm).',
+      '- New packages such as @workbench-kit/base need trusted publisher registration before first publish.',
       '- Confirm npm org @workbench-kit grants publish access to the trusted publisher owner account.',
       'Common causes for npm E404/E401 on scoped publish:',
       '- The @workbench-kit npm organization exists but trusted publishing is not configured for this repo/workflow.',
@@ -93,6 +98,8 @@ function readJson(filePath) {
 }
 
 function run(command, args, options = {}) {
+  clearNpmRegistryAuth();
+
   if (process.platform === 'win32') {
     return execFileSync(
       process.env.ComSpec || 'cmd.exe',

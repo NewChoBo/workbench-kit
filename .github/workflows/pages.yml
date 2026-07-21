@@ -56,6 +56,16 @@ jobs:
           WORKBENCH_SAMPLE_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
         run: pnpm --filter workbench-sample build
 
+      - name: Build Storybook for Pages
+        env:
+          STORYBOOK_BASE_PATH: ${{ steps.pages.outputs.base_path }}/storybook/
+        run: pnpm build:storybook
+
+      - name: Copy Storybook into sample dist
+        run: |
+          mkdir -p examples/workbench-sample/dist/storybook
+          cp -r storybook-static/. examples/workbench-sample/dist/storybook/
+
       - name: Disable Jekyll processing
         run: touch examples/workbench-sample/dist/.nojekyll
 

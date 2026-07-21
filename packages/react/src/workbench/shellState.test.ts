@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT,
+  DEFAULT_PRIMARY_SIDEBAR_SIZE_PX,
   initializeWorkbenchShellState,
+  MAX_PRIMARY_SIDEBAR_SIZE_PX,
   workbenchShellStateReducer,
   type WorkbenchShellAction,
   type WorkbenchShellInitialState,
@@ -21,20 +22,20 @@ function reduceShellState(
 }
 
 describe('workbench shell state', () => {
-  it('uses a compact VS Code-like primary sidebar default', () => {
+  it('uses a compact VS Code-like primary sidebar default in pixels', () => {
     const state = initializeWorkbenchShellState<TestActivityId, TestTheme>({
       activeActivityId: 'explorer',
       theme: 'dark',
     });
 
-    expect(DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT).toBe(20);
-    expect(state.primarySidebarSizePercent).toBe(DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT);
+    expect(DEFAULT_PRIMARY_SIDEBAR_SIZE_PX).toBe(260);
+    expect(state.primarySidebarSizePx).toBe(DEFAULT_PRIMARY_SIDEBAR_SIZE_PX);
   });
 
   it('initializes layout, settings, and theme state with clamped sidebar size', () => {
     const state = initializeWorkbenchShellState<TestActivityId, TestTheme>({
       activeActivityId: 'explorer',
-      primarySidebarSizePercent: 120,
+      primarySidebarSizePx: 1200,
       settingsCategoryId: 'appearance',
       settingsScopeId: 'user',
       settingsSearchValue: 'theme',
@@ -45,7 +46,7 @@ describe('workbench shell state', () => {
       activeActivityId: 'explorer',
       isPrimarySidebarVisible: true,
       isSettingsOpen: false,
-      primarySidebarSizePercent: 90,
+      primarySidebarSizePx: MAX_PRIMARY_SIDEBAR_SIZE_PX,
       settingsCategoryId: 'appearance',
       settingsScopeId: 'user',
       settingsSearchValue: 'theme',
@@ -84,8 +85,8 @@ describe('workbench shell state', () => {
         { settingsCategoryId: 'workspace', type: 'set-settings-category' },
         { settingsScopeId: 'workspace', type: 'set-settings-scope' },
         { settingsSearchValue: 'search', type: 'set-settings-search' },
-        { percent: Number.NaN, type: 'set-primary-sidebar-size' },
-        { percent: 32, type: 'set-primary-sidebar-size' },
+        { sizePx: Number.NaN, type: 'set-primary-sidebar-size' },
+        { sizePx: 320, type: 'set-primary-sidebar-size' },
         { theme: 'light', type: 'set-theme' },
         { type: 'toggle-primary-sidebar' },
       ],
@@ -95,7 +96,7 @@ describe('workbench shell state', () => {
       activeActivityId: 'explorer',
       isPrimarySidebarVisible: false,
       isSettingsOpen: true,
-      primarySidebarSizePercent: 32,
+      primarySidebarSizePx: 320,
       settingsCategoryId: 'workspace',
       settingsScopeId: 'workspace',
       settingsSearchValue: 'search',

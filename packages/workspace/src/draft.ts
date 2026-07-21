@@ -31,6 +31,11 @@ export interface DiscardWorkspaceFileDraftInput {
   file: WorkspaceFile;
 }
 
+export interface GetWorkspaceFileDraftInput {
+  drafts: WorkspaceFileDraftMap;
+  path: string;
+}
+
 export function createWorkspaceFileDraft(content: string): WorkspaceFileDraft {
   return {
     content,
@@ -55,6 +60,25 @@ export function resolveWorkspaceFileDraft({
 
 export function isWorkspaceFileDraftDirty(file: WorkspaceFile, draft?: WorkspaceFileDraft) {
   return resolveWorkspaceFileDraft({ draft, file }).content !== file.content;
+}
+
+export function getWorkspaceFileDraft({
+  drafts,
+  path,
+}: GetWorkspaceFileDraftInput): WorkspaceFileDraft | undefined {
+  const normalizedPath = normalizeWorkspacePath(path);
+  return normalizedPath ? drafts[normalizedPath] : undefined;
+}
+
+export function getWorkspaceDirtyDraftPaths(drafts: WorkspaceFileDraftMap): readonly string[] {
+  return Object.entries(drafts)
+    .filter(([, draft]) => draft.content !== draft.savedContent)
+    .map(([path]) => path)
+    .sort((left, right) => left.localeCompare(right));
+}
+
+export function hasWorkspaceDirtyDrafts(drafts: WorkspaceFileDraftMap): boolean {
+  return getWorkspaceDirtyDraftPaths(drafts).length > 0;
 }
 
 export function updateWorkspaceFileDraft({

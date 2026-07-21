@@ -1,0 +1,290 @@
+.ui-sidebar-view__body > .ui-empty-state.ui-empty-state--compact:only-child,
+.ui-panel-body > .ui-empty-state.ui-empty-state--compact:only-child {
+  flex: 1 1 auto;
+  min-height: 100%;
+  height: auto;
+}
+
+.workbench-commands-sidebar > .ui-sidebar-view__body > .workbench-commands-sidebar__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.workbench-commands-sidebar .ui-sidebar-view__footer--overlay {
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.workbench-extensions-sidebar .ui-sidebar-view__footer--overlay {
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.ui-sidebar-view__body--dock-sections.ui-scroll-area--both {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Docked section layouts own scroll inside the sidebar body; default views use PanelBody scroll. */
+.ui-sidebar-view__body--dock-sections .workbench-commands-sidebar__list,
+.ui-sidebar-view__body--dock-sections .ui-workbench-sidebar-section-stack__expanded,
+.ui-sidebar-view__body--dock-sections .ui-workbench-sidebar-section__content:not([hidden]) {
+  overflow: auto;
+}
+
+.ui-sidebar-view .panel-header {
+  box-sizing: border-box;
+  height: var(--panel-header-height, var(--workbench-header-height));
+  min-height: var(--workbench-header-height);
+  border-bottom: 0;
+  padding: 0 var(--ui-sidebar-inline-padding);
+}
+
+.ui-sidebar-view {
+  --ui-sidebar-footer-gap: var(--shell-spacing-block);
+  --ui-sidebar-footer-height: 0px;
+  --ui-sidebar-inline-padding: var(--shell-spacing-side-bar-inline);
+  --ui-sidebar-row-block-padding: var(--shell-spacing-side-bar-block);
+  --ui-sidebar-tree-indent-step: 10px;
+}
+
+.ui-sidebar-view__header-addon {
+  flex-shrink: 0;
+  background: var(--panel-bg, var(--color-bg));
+}
+
+.ui-sidebar-header-control {
+  flex-shrink: 0;
+  padding: 0 var(--ui-sidebar-inline-padding) 6px;
+}
+
+.ui-sidebar-view__body {
+  flex: 1;
+  min-height: 0;
+}
+
+.ui-sidebar-view__footer--overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: transparent;
+  pointer-events: none;
+}
+
+.ui-sidebar-view__footer--overlay > * {
+  pointer-events: auto;
+}
+
+.ui-sidebar-scroll-spacer {
+  flex-shrink: 0;
+  height: calc(var(--ui-sidebar-footer-height) + var(--ui-sidebar-footer-gap));
+  pointer-events: none;
+}
+
+.ui-sidebar-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-sidebar-list--fill {
+  min-height: 100%;
+}
+
+.ui-sidebar-list--drop-target {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+/*
+ * SideBarListItem renders `after` as a sibling of the row button inside this
+ * entry. Match SideBarRow: primary content grows left, trailing actions stay
+ * on the same horizontal row.
+ */
+.ui-sidebar-list-entry {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.ui-sidebar-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.ui-sidebar-list-item {
+  --depth: 0;
+  --ui-sidebar-tree-indent-offset: calc(
+    var(--ui-sidebar-inline-padding, 8px) +
+      (var(--depth) * var(--ui-sidebar-tree-indent-step, 14px))
+  );
+  width: 100%;
+  min-width: 0;
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 var(--ui-sidebar-inline-padding, 8px) 0 var(--ui-sidebar-tree-indent-offset);
+  border: 0;
+  border-radius: 0;
+  color: var(--color-text-muted);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ui-sidebar-list-item:hover,
+.ui-sidebar-row:hover,
+.ui-sidebar-list-entry:hover {
+  background: var(--color-surface-hover);
+}
+
+.ui-sidebar-row .ui-sidebar-list-item,
+.ui-sidebar-list-entry .ui-sidebar-list-item {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ui-sidebar-row .ui-sidebar-list-item:hover,
+.ui-sidebar-list-entry .ui-sidebar-list-item:hover {
+  background: transparent;
+}
+
+.ui-sidebar-list-item--active {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.ui-sidebar-list-item--selected {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+}
+
+.ui-sidebar-list-item--selected:hover {
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.ui-sidebar-list-item--active.ui-sidebar-list-item--selected {
+  background: color-mix(in srgb, var(--color-accent) 28%, var(--color-surface-hover));
+}
+
+.ui-sidebar-list-item--drop-target,
+.ui-sidebar-list-item--drop-target:hover {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+/*
+ * `after` renders as a sibling of the row button inside the entry. Paint
+ * selection / active / drop chrome on the entry so trailing slots share the
+ * highlight instead of leaving a partial strip beside the button.
+ */
+.ui-sidebar-list-entry:has(> .ui-sidebar-list-item--active) {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.ui-sidebar-list-entry:has(> .ui-sidebar-list-item--selected) {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+}
+
+.ui-sidebar-list-entry:has(> .ui-sidebar-list-item--selected):hover {
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.ui-sidebar-list-entry:has(> .ui-sidebar-list-item--active.ui-sidebar-list-item--selected) {
+  background: color-mix(in srgb, var(--color-accent) 28%, var(--color-surface-hover));
+}
+
+.ui-sidebar-list-entry:has(> .ui-sidebar-list-item--drop-target) {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.ui-sidebar-list-entry:has(
+    > .ui-sidebar-list-item--active,
+    > .ui-sidebar-list-item--selected,
+    > .ui-sidebar-list-item--drop-target
+  )
+  > .ui-sidebar-list-item {
+  background: transparent;
+  outline: none;
+}
+
+.ui-sidebar-inline-edit {
+  --depth: 0;
+  --ui-sidebar-tree-indent-offset: calc(
+    var(--ui-sidebar-inline-padding, 8px) +
+      (var(--depth) * var(--ui-sidebar-tree-indent-step, 14px))
+  );
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px var(--ui-sidebar-inline-padding, 8px) 2px var(--ui-sidebar-tree-indent-offset);
+}
+
+.ui-sidebar-inline-edit__input {
+  --ui-input-width: 100%;
+  --ui-input-min-width: 0;
+  --ui-input-height: var(--workbench-inline-edit-height);
+  --ui-input-padding: 0 6px;
+  --ui-input-border: 1px solid var(--color-accent);
+  --ui-input-border-radius: 2px;
+  --ui-input-color: var(--color-text);
+  --ui-input-background: var(--color-surface);
+  --ui-input-font-family: inherit;
+  --ui-input-font-size: inherit;
+  --ui-input-line-height: normal;
+  --ui-input-focus-border-color: var(--color-accent);
+  width: 100%;
+  min-width: 0;
+  height: var(--workbench-inline-edit-height);
+  padding: 0 6px;
+  border: 1px solid var(--color-accent);
+  border-radius: 2px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  font: inherit;
+  outline: none;
+}
+
+.ui-sidebar-inline-edit__error {
+  --depth: 0;
+  --ui-sidebar-tree-indent-offset: calc(
+    var(--ui-sidebar-inline-padding, 8px) +
+      (var(--depth) * var(--ui-sidebar-tree-indent-step, 14px))
+  );
+  padding: 1px var(--ui-sidebar-inline-padding, 8px) 4px
+    calc(var(--ui-sidebar-tree-indent-offset) + 19px);
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+  line-height: 1.35;
+}
+
+.ui-sidebar-list-item--stacked {
+  min-height: 54px;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 4px;
+}

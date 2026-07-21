@@ -1,48 +1,38 @@
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-import { SegmentedControl } from '../primitives/WorkbenchEditor.js';
-import { cx } from '../utils/cx.js';
-
+/** @deprecated Side panel no longer switches tabs; all panes stay visible. */
 export type WidgetTreeSidePanelTab = 'outline' | 'assets' | 'properties';
+/** @deprecated Side panel no longer switches detail tabs. */
+export type WidgetTreeSidePanelDetailTab = Exclude<WidgetTreeSidePanelTab, 'outline'>;
 
 export interface WidgetTreeSidePanelProps {
   readonly outline: ReactNode;
-  readonly assets: ReactNode;
   readonly properties: ReactNode;
-  readonly defaultTab?: WidgetTreeSidePanelTab | undefined;
 }
 
-export function WidgetTreeSidePanel({
-  outline,
-  assets,
-  properties,
-  defaultTab = 'outline',
-}: WidgetTreeSidePanelProps) {
-  const [tab, setTab] = useState<WidgetTreeSidePanelTab>(defaultTab);
-
+/** Right authoring sidebar: widget tree (top) + properties (bottom). */
+export function WidgetTreeSidePanel({ outline, properties }: WidgetTreeSidePanelProps) {
   return (
-    <section className="widget-tree-side-panel" data-testid="widget-tree-side-panel">
-      <header className="widget-tree-side-panel__header">
-        <SegmentedControl
-          ariaLabel="Widget side panel"
-          options={[
-            { label: 'Outline', value: 'outline' },
-            { label: 'Assets', value: 'assets' },
-            { label: 'Props', value: 'properties' },
-          ]}
-          value={tab}
-          onChange={setTab}
-        />
-      </header>
+    <section
+      aria-label="Widget tree side panel"
+      className="widget-tree-side-panel"
+      data-testid="widget-tree-side-panel"
+    >
       <div
-        className={cx(
-          'widget-tree-side-panel__body',
-          tab === 'outline' && 'widget-tree-side-panel__body--outline',
-          tab === 'assets' && 'widget-tree-side-panel__body--assets',
-          tab === 'properties' && 'widget-tree-side-panel__body--properties',
-        )}
+        aria-label="Widget outline"
+        className="widget-tree-side-panel__outline"
+        data-testid="widget-tree-side-panel-outline"
+        role="region"
       >
-        {tab === 'outline' ? outline : tab === 'assets' ? assets : properties}
+        {outline}
+      </div>
+      <div
+        aria-label="Widget properties"
+        className="widget-tree-side-panel__properties"
+        data-testid="widget-tree-side-panel-properties"
+        role="region"
+      >
+        {properties}
       </div>
     </section>
   );

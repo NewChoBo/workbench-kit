@@ -1,23 +1,26 @@
 import type { RuntimeStatus } from '@workbench-kit/runtime';
 
-export type IntegratedShellActivityId = 'explorer' | 'search' | 'chat';
+export type IntegratedShellActivityId = 'explorer' | 'search' | 'chatting' | 'aiChat';
 
 export const integratedShellActivityOrder: IntegratedShellActivityId[] = [
   'explorer',
   'search',
-  'chat',
+  'chatting',
+  'aiChat',
 ];
 
 export const integratedShellActivityLabels: Record<IntegratedShellActivityId, string> = {
   explorer: 'Explorer',
   search: 'Search',
-  chat: 'Chat',
+  chatting: 'Chat',
+  aiChat: 'AI Chat',
 };
 
 const integratedShellActivityIcons: Record<IntegratedShellActivityId, string> = {
   explorer: 'codicon-files',
   search: 'codicon-search',
-  chat: 'codicon-comment-discussion',
+  chatting: 'codicon-comment-discussion',
+  aiChat: 'codicon-sparkle',
 };
 
 export const integratedShellCommandActivities = integratedShellActivityOrder.map((id) => ({
@@ -27,15 +30,15 @@ export const integratedShellCommandActivities = integratedShellActivityOrder.map
 }));
 
 export function isIntegratedShellActivityId(id: string): id is IntegratedShellActivityId {
-  return id === 'explorer' || id === 'search' || id === 'chat';
+  return id === 'explorer' || id === 'search' || id === 'chatting' || id === 'aiChat';
 }
 
 export interface IntegratedShellBootstrapInitialState {
   activeActivityId: IntegratedShellActivityId;
   isPrimarySidebarVisible: boolean;
-  primarySidebarSizePercent: number;
-  primarySidebarMinPercent: number;
-  primarySidebarMaxPercent: number;
+  primarySidebarSizePx: number;
+  primarySidebarMinPx: number;
+  primarySidebarMaxPx: number;
   settingsCategoryId: string;
   settingsScopeId: string;
   theme: 'dark' | 'light';
@@ -47,9 +50,9 @@ export function createIntegratedShellBootstrapInitialState(
   return {
     activeActivityId: 'explorer',
     isPrimarySidebarVisible: true,
-    primarySidebarSizePercent: 20,
-    primarySidebarMinPercent: 16,
-    primarySidebarMaxPercent: 40,
+    primarySidebarSizePx: 260,
+    primarySidebarMinPx: 200,
+    primarySidebarMaxPx: 480,
     settingsCategoryId: 'appearance',
     settingsScopeId: 'user',
     theme: 'dark',

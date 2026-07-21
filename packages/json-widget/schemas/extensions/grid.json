@@ -16,9 +16,24 @@
       "type": "object",
       "required": ["columns"],
       "properties": {
-        "columns": { "type": "number", "minimum": 1 },
-        "gap": { "type": "number", "minimum": 0 },
-        "padding": { "type": "number", "minimum": 0 },
+        "columns": {
+          "oneOf": [
+            { "type": "number", "minimum": 1 },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        },
+        "gap": {
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        },
+        "padding": {
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        },
         "background": { "type": "string" },
         "children": {
           "type": "array",

@@ -1,0 +1,69 @@
+.ui-workbench-thumbnail {
+  --ui-workbench-thumbnail-width: 46px;
+  --ui-workbench-thumbnail-height: 28px;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-workbench-thumbnail-width);
+  height: var(--ui-workbench-thumbnail-height);
+  min-width: var(--ui-workbench-thumbnail-width);
+  max-width: var(--ui-workbench-thumbnail-width);
+  min-height: var(--ui-workbench-thumbnail-height);
+  max-height: var(--ui-workbench-thumbnail-height);
+  overflow: hidden;
+  background: var(--shell-color-surface-sunken, var(--vscode-editor-background, var(--color-bg)));
+  border: 1px solid
+    var(--shell-color-border-subtle, var(--vscode-panel-border, var(--color-border)));
+  border-radius: var(--shell-radius-sm, 4px);
+}
+
+.ui-workbench-thumbnail[data-size='md'] {
+  --ui-workbench-thumbnail-width: 64px;
+  --ui-workbench-thumbnail-height: 36px;
+}
+
+.ui-workbench-thumbnail[data-size='library'] {
+  --ui-workbench-thumbnail-width: var(--shell-library-capsule-list-width, 116px);
+  --ui-workbench-thumbnail-height: var(--shell-library-capsule-list-height, 43px);
+}
+
+.ui-workbench-thumbnail[data-size='icon'] {
+  --ui-workbench-thumbnail-width: 20px;
+  --ui-workbench-thumbnail-height: 20px;
+  background: var(--ui-workbench-thumbnail-icon-background, transparent);
+  border: var(--ui-workbench-thumbnail-icon-border-width, 0) solid
+    var(--ui-workbench-thumbnail-icon-border-color, transparent);
+  border-radius: var(--shell-radius-xs, 2px);
+}
+
+.ui-workbench-thumbnail .ui-workbench-media-slot__placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.ui-workbench-thumbnail__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ui-workbench-thumbnail__icon {
+  color: var(--shell-color-text-muted, var(--vscode-icon-foreground, var(--color-icon)));
+  font-size: 14px;
+}
+
+.ui-workbench-thumbnail[data-size='md'] .ui-workbench-thumbnail__icon {
+  font-size: 18px;
+}
+
+.ui-workbench-thumbnail[data-size='library'] .ui-workbench-thumbnail__icon {
+  font-size: 22px;
+}
+
+.ui-workbench-thumbnail[data-size='icon'] .ui-workbench-thumbnail__icon {
+  font-size: 16px;
+}

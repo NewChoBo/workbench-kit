@@ -1,0 +1,161 @@
+import '../../primitives/panel-surface/panel-surface.css';
+import './filter-bar.css';
+import './preview-pane.css';
+import './workbench-labeled-pane.css';
+import type { ComponentPropsWithRef, ReactNode } from 'react';
+import { Button } from '../../primitives/button';
+import { ScrollArea, type ScrollAreaProps } from '../../primitives/scroll-area';
+import { cx } from '../../utils/cx';
+
+export type PanelProps = ComponentPropsWithRef<'div'>;
+
+export function Panel({ className, ...props }: PanelProps) {
+  return <div className={cx('ide-panel', className)} {...props} />;
+}
+
+export interface PanelHeaderProps extends ComponentPropsWithRef<'div'> {
+  actions?: ReactNode;
+  reserveActionsSlot?: boolean;
+}
+
+export function PanelHeader({
+  actions,
+  children,
+  className,
+  reserveActionsSlot = false,
+  ...props
+}: PanelHeaderProps) {
+  return (
+    <div className={cx('panel-header', className)} {...props}>
+      <span className="ui-panel-header__title">{children}</span>
+      {actions || reserveActionsSlot ? (
+        <span
+          aria-hidden={actions ? undefined : true}
+          className="ui-panel-header__actions"
+          data-empty={actions ? undefined : 'true'}
+        >
+          {actions}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+export type PanelBodyProps = ScrollAreaProps;
+
+export function PanelBody({ className, ...props }: PanelBodyProps) {
+  return (
+    <ScrollArea
+      className={cx('panel-body', 'ui-panel-body', className)}
+      orientation="both"
+      {...props}
+    />
+  );
+}
+
+export type PanelFooterProps = ComponentPropsWithRef<'div'>;
+
+export function PanelFooter({ className, ...props }: PanelFooterProps) {
+  return <div className={cx('ui-panel-footer', className)} {...props} />;
+}
+
+export type FilterBarProps = ComponentPropsWithRef<'div'>;
+
+export function FilterBar({ className, ...props }: FilterBarProps) {
+  return <div className={cx('ui-filter-bar', className)} {...props} />;
+}
+
+export type FilterBarRowProps = ComponentPropsWithRef<'div'>;
+
+export function FilterBarRow({ className, ...props }: FilterBarRowProps) {
+  return <div className={cx('ui-filter-bar__row', className)} {...props} />;
+}
+
+/** @deprecated Use `Chip` / `ChipProps` from `@workbench-kit/react` primitives. */
+export { FilterChip, type FilterChipProps } from '../../primitives/chip';
+
+export interface FilterBarActiveChipsProps extends ComponentPropsWithRef<'div'> {
+  clearAllLabel?: string | undefined;
+  onClearAll?: (() => void) | undefined;
+}
+
+export function FilterBarActiveChips({
+  children,
+  className,
+  clearAllLabel = 'Clear all',
+  onClearAll,
+  ...props
+}: FilterBarActiveChipsProps) {
+  return (
+    <FilterBarRow className={cx('ui-filter-bar__active-chips', className)} {...props}>
+      <div className="ui-filter-bar__chip-list" role="list">
+        {children}
+      </div>
+      {onClearAll ? (
+        <Button className="ui-filter-bar__clear-all" onClick={onClearAll}>
+          {clearAllLabel}
+        </Button>
+      ) : null}
+    </FilterBarRow>
+  );
+}
+
+export interface HelpTextProps extends ComponentPropsWithRef<'div'> {
+  tone?: 'error' | 'normal';
+}
+
+export function HelpText({ className, tone = 'normal', ...props }: HelpTextProps) {
+  return (
+    <div
+      className={cx('ui-help-text', tone === 'error' && 'ui-help-text--error', className)}
+      {...props}
+    />
+  );
+}
+
+export type PreviewPaneProps = ComponentPropsWithRef<'div'>;
+
+export function PreviewPane({ className, ...props }: PreviewPaneProps) {
+  return <div className={cx('ui-preview-pane', className)} {...props} />;
+}
+
+export type PreviewPaneContentProps = ComponentPropsWithRef<'div'>;
+
+export function PreviewPaneContent({ className, ...props }: PreviewPaneContentProps) {
+  return <div className={cx('ui-preview-pane__content', className)} {...props} />;
+}
+
+export type PreviewPaneViewportProps = ComponentPropsWithRef<'div'>;
+
+export function PreviewPaneViewport({ className, ...props }: PreviewPaneViewportProps) {
+  return <div className={cx('ui-preview-pane__viewport', className)} {...props} />;
+}
+
+export type PreviewPaneDetailsProps = ComponentPropsWithRef<'div'>;
+
+export function PreviewPaneDetails({ className, ...props }: PreviewPaneDetailsProps) {
+  return <div className={cx('ui-preview-pane__details', className)} {...props} />;
+}
+
+export type PreviewPaneTitleProps = ComponentPropsWithRef<'div'>;
+
+export function PreviewPaneTitle({ className, ...props }: PreviewPaneTitleProps) {
+  return <div className={cx('ui-preview-pane__title', className)} {...props} />;
+}
+
+export interface PreviewPaneTextProps extends ComponentPropsWithRef<'div'> {
+  tone?: 'error' | 'normal';
+}
+
+export function PreviewPaneText({ className, tone = 'normal', ...props }: PreviewPaneTextProps) {
+  return (
+    <div
+      className={cx(
+        'ui-preview-pane__text',
+        tone === 'error' && 'ui-preview-pane__text--error',
+        className,
+      )}
+      {...props}
+    />
+  );
+}

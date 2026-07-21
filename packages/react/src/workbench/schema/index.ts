@@ -45,4 +45,3 @@ export {
   initializeWorkbenchDocumentPatchHistory,
 } from './workbenchDocumentPatch';
 export { createPatchFromWorkbenchDocumentAction } from './workbenchDocumentActions';
-export type { WorkbenchDocument as JsonWorkbenchDocument } from './workbenchDocument';

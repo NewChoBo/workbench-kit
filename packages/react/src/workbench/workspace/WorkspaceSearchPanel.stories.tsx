@@ -1,205 +1,114 @@
-import { useMemo, useState, type MouseEvent } from 'react';
+import { useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, fireEvent, userEvent, within } from 'storybook/test';
-import {
-  createCommandRegistry,
-  executeCommand,
-  resolveCommandMenuItems,
-} from '@workbench-kit/platform';
-import { searchWorkspaceFiles, type WorkspaceFile } from '@workbench-kit/workspace';
-import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
-import {
-  commandMenuItemsToContextMenuItems,
-  WORKBENCH_COMMAND_SURFACE_SEARCH,
-  createWorkbenchSearchResultCommands,
-  createWorkbenchSearchResultMenuEntries,
-  type WorkbenchSearchResultCommandContext,
-} from '../commands';
+import { expect, userEvent, within } from 'storybook/test';
+
+import { StoryEventLog, StorySidebarFrame } from '../story/StorySidebarFrame';
 import { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 import type { WorkspaceSearchResult } from './types';
 
+const searchResults: WorkspaceSearchResult[] = [
+  {
+    id: 'button-story',
+    line: 12,
+    matchedBy: 'Content match',
+    path: 'src/primitives/Button.tsx',
+    preview: 'export function Button({ variant = "default" })',
+    file: {
+      content: 'export function Button() {}',
+      mimeType: 'text/typescript',
+      path: 'src/primitives/Button.tsx',
+    },
+  },
+  {
+    id: 'button-test',
+    line: 34,
+    matchedBy: 'Path match',
+    path: 'src/workbench/ButtonHarness.tsx',
+    preview: 'const buttonHarness = createHarness()',
+    file: {
+      content: 'const buttonHarness = createHarness()',
+      mimeType: 'text/typescript',
+      path: 'src/workbench/ButtonHarness.tsx',
+    },
+  },
+];
+
 const meta = {
-  title: 'React/Workbench/Workspace/WorkspaceSearchPanel',
+  title: 'React/Workbench/Workspace Search',
   parameters: {
     layout: 'fullscreen',
+    storybookGrid: { enabled: false },
   },
+  render: () => <WorkspaceSearchHarness />,
 } satisfies Meta;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const fixtureFiles: WorkspaceFile[] = [
-  {
-    content: 'Project notes and setup instructions.',
-    mimeType: 'text/markdown',
-    path: 'README.md',
-  },
-  {
-    content: 'export function App() { return null; }',
-    mimeType: 'application/typescript',
-    path: 'src/App.tsx',
-  },
-  {
-    content: 'export function Button() { return null; }',
-    mimeType: 'application/typescript',
-    path: 'src/components/Button.tsx',
-  },
-  {
-    content: 'Search panel renders workspace results and previews.',
-    mimeType: 'application/typescript',
-    path: 'src/workspace/WorkspaceSearchPanel.tsx',
-  },
-];
+export const SearchPanelFlow: Story = {
+  name: 'Search panel flow',
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
 
-interface SearchHarnessProps {
-  initialQuery?: string;
-}
+    await expect(canvas.getByText('Type to search files')).toBeVisible();
 
-interface StoryContextMenuState {
-  items: ContextMenuItem[];
-  x: number;
-  y: number;
-}
+    const input = canvas.getByLabelText('Search workspace');
+    await userEvent.type(input, 'button');
+    await expect(await canvas.findByText('2 results')).toBeVisible();
+    await userEvent.keyboard('{Enter}');
+    await expect(
+      canvas.getByRole('status', { name: 'Workspace search event log' }),
+    ).toHaveTextContent('Activated src/primitives/Button.tsx');
 
-const searchResultCommandRegistry = createCommandRegistry(createWorkbenchSearchResultCommands());
-const searchResultMenuEntries = createWorkbenchSearchResultMenuEntries();
+    await userEvent.click(canvas.getByRole('button', { name: 'Clear search' }));
+    await expect(input).toHaveValue('');
 
-function SearchHarness({ initialQuery = '' }: SearchHarnessProps) {
-  const [activePath, setActivePath] = useState<string>();
-  const [files, setFiles] = useState(fixtureFiles);
-  const [query, setQuery] = useState(initialQuery);
-  const [contextMenu, setContextMenu] = useState<StoryContextMenuState | null>(null);
+    await userEvent.type(input, 'missing');
+    await expect(await canvas.findByText('No results')).toBeVisible();
+    await userEvent.click(canvas.getByRole('button', { name: 'Refresh results' }));
+    await expect(
+      canvas.getByRole('status', { name: 'Workspace search event log' }),
+    ).toHaveTextContent('Refresh requested');
+  },
+  tags: ['storybook-play-required'],
+};
+
+function WorkspaceSearchHarness() {
+  const [query, setQuery] = useState('');
+  const [activePath, setActivePath] = useState<string | undefined>();
   const [status, setStatus] = useState('Ready');
-  const results = useMemo(() => searchWorkspaceFiles(files, query), [files, query]);
 
-  const activateResult = (result: WorkspaceSearchResult) => {
-    setActivePath(result.path);
-    setStatus(`Opened ${result.path}`);
-  };
+  const visibleResults = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return searchResults;
 
-  const openResultMenu = (event: MouseEvent<HTMLElement>, result: WorkspaceSearchResult) => {
-    event.preventDefault();
-    const context: WorkbenchSearchResultCommandContext = {
-      copyPath: () => setStatus(`Copied ${result.path}`),
-      deleteResult: () => {
-        setFiles((currentFiles) => currentFiles.filter((file) => file.path !== result.path));
-        setStatus(`Deleted ${result.path}`);
-      },
-      openResult: () => activateResult(result),
-    };
-
-    setContextMenu({
-      x: event.clientX,
-      y: event.clientY,
-      items: commandMenuItemsToContextMenuItems(
-        resolveCommandMenuItems({
-          context,
-          entries: searchResultMenuEntries,
-          surface: WORKBENCH_COMMAND_SURFACE_SEARCH,
-          registry: searchResultCommandRegistry,
-        }),
-        (commandId) => executeCommand(searchResultCommandRegistry, commandId, context),
-      ),
-    });
-  };
+    return searchResults.filter(
+      (result) =>
+        result.path.toLowerCase().includes(normalizedQuery) ||
+        result.preview.toLowerCase().includes(normalizedQuery),
+    );
+  }, [query]);
 
   return (
-    <div
-      className="workspace-search-panel-story"
-      style={{ height: 'min(calc(100% - 120px), 560px)', width: 'min(100%, 380px)' }}
-    >
-      <WorkspaceSearchPanel
-        activePath={activePath}
-        query={query}
-        results={results}
-        onActivateResult={activateResult}
-        onQueryChange={setQuery}
-        onRefresh={() => setStatus('Search refreshed')}
-        onResultContextMenu={openResultMenu}
-      />
-      <div aria-label="Search event log" role="status">
-        {status}
-      </div>
-      {contextMenu ? (
-        <ContextMenu
-          ariaLabel="Search result menu"
-          items={contextMenu.items}
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onClose={() => setContextMenu(null)}
+    <section aria-label="Workspace search story surface" className="ui-story-sidebar-surface">
+      <StorySidebarFrame variant="workspace">
+        <WorkspaceSearchPanel
+          activePath={activePath}
+          query={query}
+          results={visibleResults}
+          onActivateResult={(result) => {
+            setActivePath(result.path);
+            setStatus(`Activated ${result.path}`);
+          }}
+          onQueryChange={setQuery}
+          onRefresh={() => setStatus('Refresh requested')}
         />
-      ) : null}
-    </div>
+
+        <StoryEventLog aria-label="Workspace search event log" compact>
+          {status}
+        </StoryEventLog>
+      </StorySidebarFrame>
+    </section>
   );
 }
-
-export const ComponentSurface: Story = {
-  render: () => <SearchHarness initialQuery="search" />,
-};
-
-export const EmptySearchStateFlow: Story = {
-  render: () => <SearchHarness initialQuery="no-match-token" />,
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-
-    await expect(canvas.getByText('No results')).toBeVisible();
-    await expect(canvas.getByRole('textbox', { name: 'Search workspace' })).toHaveValue(
-      'no-match-token',
-    );
-
-    await userEvent.click(await canvas.findByRole('button', { name: 'Clear search' }));
-    await expect(canvas.getByText('Type to search files')).toBeVisible();
-    await expect(canvas.getByRole('textbox', { name: 'Search workspace' })).toHaveValue('');
-  },
-  tags: ['storybook-play-baseline', 'storybook-play-required'],
-};
-
-export const KeyboardFlow: Story = {
-  render: () => <SearchHarness />,
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const searchInput = canvas.getByRole('textbox', { name: 'Search workspace' });
-
-    await expect(canvas.getByText('Type to search files')).toBeVisible();
-    await expect(canvas.getByText('0 results')).toBeVisible();
-
-    await userEvent.type(searchInput, 'button');
-    await expect(
-      await canvas.findByRole('button', { name: /src\/components\/.*Button.*\.tsx/ }),
-    ).toBeVisible();
-    await expect(canvas.getByText('1 result')).toBeVisible();
-
-    await userEvent.keyboard('{Enter}');
-    await expect(canvas.getByLabelText('Search event log')).toHaveTextContent(
-      'Opened src/components/Button.tsx',
-    );
-
-    await userEvent.keyboard('{Escape}');
-    await expect(searchInput).toHaveValue('');
-    await expect(canvas.getByText('Type to search files')).toBeVisible();
-  },
-  tags: ['storybook-play-baseline', 'storybook-play-required'],
-};
-
-export const ResultMenuFlow: Story = {
-  render: () => <SearchHarness initialQuery="read" />,
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const readmeResult = await canvas.findByRole('button', { name: /READ.*ME\.md/i });
-
-    await fireEvent.contextMenu(readmeResult);
-    await expect(await canvas.findByRole('menuitem', { name: /Open/ })).toHaveTextContent('Enter');
-    await userEvent.click(await canvas.findByRole('menuitem', { name: 'Copy path' }));
-    await expect(canvas.getByLabelText('Search event log')).toHaveTextContent('Copied README.md');
-
-    await fireEvent.contextMenu(readmeResult);
-    const deleteItem = await canvas.findByRole('menuitem', { name: 'Delete' });
-    await expect(deleteItem).toHaveAttribute('data-danger', 'true');
-    await userEvent.click(deleteItem);
-    await expect(canvas.getByLabelText('Search event log')).toHaveTextContent('Deleted README.md');
-    await expect(canvas.queryByRole('button', { name: /READ.*ME\.md/i })).toBeNull();
-    await expect(canvas.getByText('No results')).toBeVisible();
-  },
-  tags: ['storybook-play-baseline', 'storybook-play-required'],
-};

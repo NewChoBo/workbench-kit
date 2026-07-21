@@ -1,0 +1,8 @@
+.ui-workbench-fullscreen-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+}

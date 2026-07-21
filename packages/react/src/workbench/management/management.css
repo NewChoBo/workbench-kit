@@ -1,0 +1,4 @@
+/* workbench/management feature styles — Plan A import hub */
+@import './library-catalog-picker-dialog.css';
+@import './library-facet-filter-dialog.css';
+@import './management-panel.css';

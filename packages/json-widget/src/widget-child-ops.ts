@@ -5,8 +5,8 @@ import { getWidgetChildAtSegment, getWidgetChildren } from './widget-tree.js';
 
 export type ArrayChildWidget = GenericWidget;
 
-const GRID_PLACEMENT_KEYS = ['colSpan', 'rowSpan'] as const;
-const LINEAR_PLACEMENT_KEYS = ['flex', 'align'] as const;
+const GRID_PLACEMENT_KEYS = ['col', 'row', 'colSpan', 'rowSpan'] as const;
+const LINEAR_PLACEMENT_KEYS = ['flex', 'flexFit', 'align'] as const;
 const STACK_PLACEMENT_KEYS = ['left', 'top', 'right', 'bottom'] as const;
 
 function isFiniteNumber(value: unknown): value is number {
@@ -17,14 +17,16 @@ function isGridChild(child: GenericWidget): child is GenericWidget & { col: numb
   return isFiniteNumber(child.col) && isFiniteNumber(child.row);
 }
 
-function copyOptionalPlacement<T extends GenericWidget, K extends keyof T>(
-  source: T,
+function preserveMissingPlacement(
+  source: GenericWidget,
   target: GenericWidget,
-  keys: readonly K[],
+  keys: readonly string[],
 ): GenericWidget {
-  const placement: Partial<Pick<T, K>> = {};
+  const placement: Record<string, unknown> = {};
 
   for (const key of keys) {
+    if (target[key] !== undefined) continue;
+
     const value = source[key];
     if (value !== undefined) {
       placement[key] = value;
@@ -42,6 +44,17 @@ function removeAtIndex<T>(items: readonly T[], index: number): T[] {
   return [...items.slice(0, index), ...items.slice(index + 1)];
 }
 
+function isSingleChildContainerType(type: string): boolean {
+  return (
+    type === 'box' ||
+    type === 'container' ||
+    type === 'padding' ||
+    type === 'align' ||
+    type === 'center' ||
+    type === 'sized_box'
+  );
+}
+
 function containerKind(
   widget: GenericWidget,
 ): 'grid' | 'linear' | 'stack' | 'array' | 'box' | null {
@@ -53,11 +66,8 @@ function containerKind(
       return 'linear';
     case 'stack':
       return 'stack';
-    case 'list-view':
-      return 'array';
-    case 'box':
-      return 'box';
     default:
+      if (isSingleChildContainerType(widget.type)) return 'box';
       if (isGenericWidget(widget.child)) return 'box';
       if (Array.isArray(widget.children)) return 'array';
       return null;
@@ -85,11 +95,7 @@ export function replaceArrayChild(
 
   switch (containerKind(parent)) {
     case 'grid': {
-      const replacement = {
-        ...copyOptionalPlacement(current, next, GRID_PLACEMENT_KEYS),
-        col: current.col,
-        row: current.row,
-      };
+      const replacement = preserveMissingPlacement(current, next, GRID_PLACEMENT_KEYS);
       return {
         ...parent,
         children: getWidgetChildren(parent).map((child, childIndex) =>
@@ -98,7 +104,7 @@ export function replaceArrayChild(
       };
     }
     case 'linear': {
-      const replacement = copyOptionalPlacement(current, next, LINEAR_PLACEMENT_KEYS);
+      const replacement = preserveMissingPlacement(current, next, LINEAR_PLACEMENT_KEYS);
       return {
         ...parent,
         children: getWidgetChildren(parent).map((child, childIndex) =>
@@ -107,7 +113,7 @@ export function replaceArrayChild(
       };
     }
     case 'stack': {
-      const replacement = copyOptionalPlacement(current, next, STACK_PLACEMENT_KEYS);
+      const replacement = preserveMissingPlacement(current, next, STACK_PLACEMENT_KEYS);
       return {
         ...parent,
         children: getWidgetChildren(parent).map((child, childIndex) =>
@@ -167,6 +173,10 @@ export function insertArrayChild(
         ...parent,
         children: insertAtIndex(getWidgetChildren(parent), targetIndex, child),
       };
+    }
+    case 'box': {
+      if (index !== 0 || isGenericWidget(parent.child)) return null;
+      return { ...parent, child };
     }
     default:
       return null;

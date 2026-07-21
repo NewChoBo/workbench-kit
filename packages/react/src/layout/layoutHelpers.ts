@@ -13,8 +13,10 @@ export function toLineLengthValue(start: number | string, end: number | string) 
   return `max(1px, calc(${toLengthValue(end)} - ${toLengthValue(start)}))`;
 }
 
-export const DEFAULT_WORKBENCH_TREE_BASE_INDENT = 8;
-export const DEFAULT_WORKBENCH_TREE_INDENT_SIZE = 14;
+export const DEFAULT_WORKBENCH_TREE_BASE_INDENT = 4;
+export const DEFAULT_WORKBENCH_TREE_INDENT_SIZE = 10;
+export const VS_CODE_TREE_BASE_INDENT = 8;
+export const VS_CODE_TREE_INDENT_SIZE = 8;
 
 export function workbenchTreeIndentOffset(
   depth: number,

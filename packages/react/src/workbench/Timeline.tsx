@@ -1,16 +1,11 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
-import { EmptyState } from '../primitives/EmptyState';
+import { EmptyState } from '../primitives/empty-state';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import { getWorkbenchStatusLabel, isWorkbenchStatusBusy, type WorkbenchStatus } from './status';
 
 export type WorkbenchTimelineEventKind =
-  | 'message'
-  | 'operation-call'
-  | 'operation-result'
-  | 'file-write'
-  | 'progress'
-  | 'error';
+  'message' | 'operation-call' | 'operation-result' | 'file-write' | 'progress' | 'error';
 
 export type WorkbenchTimelineMessageSource = 'assistant' | 'system' | 'user' | (string & {});
 export type WorkbenchTimelineVariant = 'compact' | 'expanded';

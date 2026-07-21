@@ -24,6 +24,27 @@ describe('WorkbenchMarkdownPreview', () => {
     expect(markup).toContain('<blockquote>');
   });
 
+  it('renders GFM tables and task lists via remark-gfm', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchMarkdownPreview
+        source={[
+          '| Column | Value |',
+          '| ------ | ----- |',
+          '| Status | Ready |',
+          '',
+          '- [x] Done',
+          '- [ ] Todo',
+        ].join('\n')}
+      />,
+    );
+
+    expect(markup).toContain('<table>');
+    expect(markup).toContain('<th>Column</th>');
+    expect(markup).toContain('<td>Ready</td>');
+    expect(markup).toContain('type="checkbox"');
+    expect(markup).toContain('checked=""');
+  });
+
   it('renders mermaid code fences as diagram previews', () => {
     const markup = renderToStaticMarkup(
       <WorkbenchMarkdownPreview

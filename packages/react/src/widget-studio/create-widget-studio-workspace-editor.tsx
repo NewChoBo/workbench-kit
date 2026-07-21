@@ -16,8 +16,7 @@ export interface WidgetStudioRenderContext extends WorkspaceEditorPanelRenderEdi
 export interface CreateWidgetStudioWorkspaceEditorOptions {
   readonly registry?: WidgetRegistryContract<unknown> | undefined;
   readonly resolveAssetCatalog?:
-    | ((files: readonly WorkspaceFile[]) => WidgetAssetCatalogContract)
-    | undefined;
+    ((files: readonly WorkspaceFile[]) => WidgetAssetCatalogContract) | undefined;
 }
 
 export function createWidgetStudioWorkspaceEditorRenderer(

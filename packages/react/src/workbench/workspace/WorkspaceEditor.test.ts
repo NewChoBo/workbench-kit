@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { JDW_DOCUMENT_MIME } from '../../jdw/document';
+import { JDW_WIDGET_DOCUMENT_MIME } from '../../jdw/document';
 import {
   JDW_NODE_SCHEMA_URI,
   JDW_WIDGET_DOCUMENT_SCHEMA_URI,
@@ -20,7 +20,7 @@ describe('WorkspaceEditor', () => {
   it('registers JDW document schemas in canonical and workspace-relative forms', () => {
     const schemas = getWorkspaceEditorJsonDiagnosticsSchemas({
       content: '{}',
-      mimeType: JDW_DOCUMENT_MIME,
+      mimeType: JDW_WIDGET_DOCUMENT_MIME,
       path: 'jdw/workbench-sample.jdw.json',
     });
 
@@ -34,6 +34,24 @@ describe('WorkspaceEditor', () => {
       'workspace://file/jdw/workbench-sample.jdw.json',
       'jdw/workbench-sample.jdw.json',
     ]);
+  });
+
+  it('loads the recursive static JDW node schema for workspace diagnostics', () => {
+    const schemas = getWorkspaceEditorJsonDiagnosticsSchemas({
+      content: '{}',
+      mimeType: JDW_WIDGET_DOCUMENT_MIME,
+      path: 'jdw/workbench-sample.jdw.json',
+    });
+    const nodeSchema = schemas[0]?.schema as
+      | {
+          definitions?: Record<string, unknown>;
+        }
+      | undefined;
+
+    expect(nodeSchema?.definitions?.JdwNode).toBeDefined();
+    expect(nodeSchema?.definitions?.StackJdwNode).toBeDefined();
+    expect(nodeSchema?.definitions?.ImageJdwNode).toBeDefined();
+    expect(nodeSchema?.definitions?.ButtonJdwNode).toBeDefined();
   });
 
   it('does not override diagnostics for unrelated JSON files', () => {

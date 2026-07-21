@@ -8,9 +8,10 @@ import { isSaveSuccess, type SaveResult } from '@workbench-kit/contracts';
 import { useWorkspaceDrafts } from './WorkspaceDraftsContext';
 import { ConfirmDialog } from '../../modal/ConfirmDialog';
 import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
-import { EmptyState } from '../../primitives/EmptyState';
-import { IconButton } from '../../primitives/IconButton';
-import { Panel, PanelBody } from '../../layout/Panel';
+import { Button } from '../../primitives/button';
+import { EmptyState } from '../../primitives/empty-state';
+import { IconButton } from '../../primitives/icon-button';
+import { Panel, PanelBody } from '../../layout/panel';
 import {
   WORKBENCH_COMMAND_SURFACE_EDITOR,
   commandMenuItemsToContextMenuItems,
@@ -56,7 +57,14 @@ export type WorkspaceEditorPanelRenderTabActions = (
   context: WorkspaceEditorPanelRenderTabActionsContext,
 ) => ReactNode;
 
+export type WorkspaceEditorPanelCanSaveFile = (
+  path: string,
+  content: string,
+  file: WorkspaceFile,
+) => boolean;
+
 export interface WorkspaceEditorPanelProps {
+  canSaveFile?: WorkspaceEditorPanelCanSaveFile | undefined;
   emptyLabel?: string;
   files: WorkspaceFile[];
   onCloseAll?: () => void;
@@ -78,6 +86,7 @@ export interface WorkspaceEditorPanelProps {
 }
 
 export function WorkspaceEditorPanel({
+  canSaveFile,
   emptyLabel = 'Open a file from Explorer or Search.',
   files,
   onCloseAll,
@@ -118,7 +127,10 @@ export function WorkspaceEditorPanel({
   };
 
   const saveFile = (path: string, content: string) => {
-    Promise.resolve(onSaveFile?.(path, content, filesByPath.get(path)?.updatedAt))
+    const file = filesByPath.get(path);
+    if (!file || canSaveFile?.(path, content, file) === false) return;
+
+    Promise.resolve(onSaveFile?.(path, content, file.updatedAt))
       .then((result) => {
         if (!result || isSaveSuccess(result)) {
           saveDraftContext(path, content);
@@ -144,6 +156,7 @@ export function WorkspaceEditorPanel({
   ): WorkbenchEditorCommandContext => {
     const filePath = file?.path;
     const content = file ? getDraft(file.path, file.content) : '';
+    const saveAllowed = filePath && file ? canSaveFile?.(filePath, content, file) !== false : false;
 
     return {
       canCloseAll: Boolean(onCloseAll),
@@ -152,7 +165,10 @@ export function WorkspaceEditorPanel({
       canCopyPath: Boolean(onCopyPath),
       canDeletePath: Boolean(onDeletePath),
       canDiscardFile: Boolean(filePath),
-      canSaveFile: Boolean(filePath),
+      canSaveFile: saveAllowed,
+      canSplitDown: false,
+      canSplitRight: false,
+      canTogglePinned: false,
       closeAll: () => onCloseAll?.(),
       closeOthers: () => {
         if (filePath) onCloseOthers?.(filePath);
@@ -173,9 +189,13 @@ export function WorkspaceEditorPanel({
       hasMultipleOpenFiles: openFiles.length > 1,
       hasOpenFiles: openFiles.length > 0,
       hasUnsavedChanges: Boolean(file && isDirty(file.path, file.content)),
+      isPinned: false,
       saveFile: () => {
         if (filePath) saveFile(filePath, content);
       },
+      splitDown: () => undefined,
+      splitRight: () => undefined,
+      togglePinned: () => undefined,
     };
   };
 
@@ -234,11 +254,10 @@ export function WorkspaceEditorPanel({
                       title={file.path}
                       onContextMenu={(event) => handleTabContextMenu(event, file.path)}
                     >
-                      <button
+                      <Button
                         aria-selected={isActive}
                         className="workspace-editor__tab-button"
                         role="tab"
-                        type="button"
                         onClick={() => onSelectedPathChange(file.path)}
                       >
                         <WorkspaceFileIcon mimeType={file.mimeType} path={file.path} />
@@ -246,7 +265,7 @@ export function WorkspaceEditorPanel({
                         {isDirtyValue ? (
                           <span className="workspace-editor__dirty" aria-label="Unsaved changes" />
                         ) : null}
-                      </button>
+                      </Button>
                       <IconButton
                         className="workspace-editor__tab-close"
                         icon="codicon-close"

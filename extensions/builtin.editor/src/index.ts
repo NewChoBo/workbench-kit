@@ -1,11 +1,19 @@
 import type { ExtensionContext } from '@workbench-kit/workbench-extension-sdk';
 
+import { MissingResourceEditorHost } from './missing-resource-editor-host.js';
+import { isWorkspaceFileResourceUri } from './resource-uri.js';
 import { TextEditorHost } from './text-editor-host.js';
 
 export const EXTENSION_ID = 'workbench-kit.builtin.editor' as const;
 export const TEXT_EDITOR_ID = 'workbench-kit.builtin.editor.text' as const;
 export const TEXT_EDITOR_HOST_FACTORY_ID = 'workbench-kit.builtin.editor.textHost' as const;
 
+export {
+  MISSING_RESOURCE_EDITOR_HOST_RENDER_KIND,
+  MissingResourceEditorHost,
+  isMissingResourceEditorHostRenderData,
+  type MissingResourceEditorHostRenderData,
+} from './missing-resource-editor-host.js';
 export {
   TEXT_EDITOR_HOST_RENDER_KIND,
   TextEditorHost,
@@ -17,7 +25,7 @@ export function activate(context: ExtensionContext): void {
   context.editorResolvers.registerResolver({
     id: 'workspace-file',
     priority: 10,
-    canResolve: ({ resourceUri }) => resourceUri.startsWith('workspace://file/'),
+    canResolve: ({ resourceUri }) => isWorkspaceFileResourceUri(resourceUri),
     resolve: () => TEXT_EDITOR_ID,
   });
 
@@ -25,14 +33,14 @@ export function activate(context: ExtensionContext): void {
     id: TEXT_EDITOR_HOST_FACTORY_ID,
     priority: 10,
     canCreate: ({ editorId }) => editorId === TEXT_EDITOR_ID,
-    create: ({ resource, resourceUri, tabId }) => {
-      if (!resourceUri) {
-        throw new Error('Text editor host requires a resource URI.');
+    create: ({ resource, resourceMissing, resourceUri }) => {
+      if (resourceMissing) {
+        return new MissingResourceEditorHost({ resourceUri });
       }
 
       const initialContent = readWorkspaceFileContent(resource);
       const mimeType = readWorkspaceFileMimeType(resource);
-      return new TextEditorHost({ initialContent, mimeType, resourceUri, tabId });
+      return new TextEditorHost({ initialContent, mimeType, resourceUri });
     },
   });
 }

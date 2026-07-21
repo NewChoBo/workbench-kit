@@ -50,4 +50,30 @@ describe('resolveWidgetStudioAssetCatalog', () => {
 
     expect(catalog.asset('content.heading')?.label).toBe('Custom Heading');
   });
+
+  it('includes workspace JDW documents in the palette and excludes the active file', () => {
+    const catalog = resolveWidgetStudioAssetCatalog(
+      [
+        {
+          path: 'jdw/parts/header/header.jdw.json',
+          content: JSON.stringify({
+            type: 'text',
+            args: { text: 'Header' },
+          }),
+        },
+        {
+          path: 'jdw/composed/home.jdw.json',
+          content: JSON.stringify({
+            type: 'column',
+            args: { children: [] },
+          }),
+        },
+      ],
+      { excludeDocumentPaths: ['jdw/composed/home.jdw.json'] },
+    );
+
+    expect(catalog.asset('jdw-doc:jdw/parts/header/header.jdw.json')?.category).toBe('parts');
+    expect(catalog.asset('jdw-doc:jdw/composed/home.jdw.json')).toBeUndefined();
+    expect(catalog.asset('content.heading')?.label).toBe('Heading');
+  });
 });

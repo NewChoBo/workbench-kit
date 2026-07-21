@@ -1,0 +1,10 @@
+.ui-workbench-fullscreen-pill {
+  min-height: 24px;
+  padding: 0 9px;
+  color: rgba(248, 250, 252, 0.88);
+  background: rgba(28, 29, 25, 0.68);
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 24px;
+}

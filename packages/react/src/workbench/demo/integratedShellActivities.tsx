@@ -18,7 +18,8 @@ export interface IntegratedShellActivity {
 const integratedShellActivityIcons: Record<IntegratedShellActivityId, ReactNode> = {
   explorer: <i className="codicon codicon-files" />,
   search: <i className="codicon codicon-search" />,
-  chat: <i className="codicon codicon-comment-discussion" />,
+  chatting: <i className="codicon codicon-comment-discussion" />,
+  aiChat: <i className="codicon codicon-sparkle" />,
 };
 
 export const integratedShellActivityOrder = adapterActivityOrder;

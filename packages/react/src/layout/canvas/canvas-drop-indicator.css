@@ -1,0 +1,16 @@
+.ui-workbench-canvas-drop-indicator {
+  box-sizing: border-box;
+  position: absolute;
+  left: var(--ui-workbench-canvas-drop-indicator-x, 0);
+  top: var(--ui-workbench-canvas-drop-indicator-y, 0);
+  z-index: var(--ui-workbench-canvas-drop-indicator-z-index, 1);
+  width: var(--ui-workbench-canvas-drop-indicator-width, auto);
+  height: var(--ui-workbench-canvas-drop-indicator-height, auto);
+  background: color-mix(
+    in srgb,
+    var(--vscode-focusBorder, var(--color-focus-border)) 8%,
+    transparent
+  );
+  border: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  pointer-events: none;
+}

@@ -1,0 +1,20 @@
+.ui-badge {
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  color: #fff;
+  background: var(--color-accent);
+}
+
+.ui-badge[data-variant='muted'] {
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.ui-badge[data-variant='danger'] {
+  color: #fff;
+  background: var(--color-danger);
+}

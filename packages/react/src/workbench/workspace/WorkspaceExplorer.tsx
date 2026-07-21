@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import {
+  createEmptyWorkspaceSelection,
   getWorkspaceSelectionActionPaths,
   normalizeWorkspaceSelectionPaths,
   parentPathOf,
@@ -17,8 +18,10 @@ import {
   type WorkspaceSelectionMode,
   type WorkspaceSelectionState,
 } from '@workbench-kit/workspace';
-import { SideBarList, SideBarListItem, sideBarTreeDepthStyle } from '../../layout/SideBarViewFrame';
+import { SideBarList, SideBarListItem, useSidebarSectionBaseDepth } from '../../layout/sidebar';
+import { TextInput } from '../../primitives/text-input';
 import { cxCodicon } from '../../utils/codicon';
+import { explorerTreeDepthStyle } from './explorer-tree-style';
 import { flattenWorkspaceTree } from './tree';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceTreeNode } from './types';
@@ -26,11 +29,14 @@ import type { WorkspaceTreeNode } from './types';
 export const WORKSPACE_EXPLORER_DRAG_DATA_TYPE = 'application/x-newchobo-ui-workspace-paths';
 export const WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE = `${WORKSPACE_EXPLORER_DRAG_DATA_TYPE}.metadata`;
 
+export type WorkspaceExplorerSelectionChangeReason =
+  'clear' | 'click' | 'context-menu' | 'drag-start' | 'folder-click';
+
 export interface WorkspaceExplorerSelectionChangeMeta {
-  event: DragEvent<HTMLButtonElement> | MouseEvent<HTMLButtonElement>;
-  mode: WorkspaceSelectionMode;
-  node: WorkspaceTreeNode;
-  reason: 'click' | 'context-menu' | 'drag-start';
+  event?: DragEvent<HTMLButtonElement> | MouseEvent<HTMLButtonElement>;
+  mode?: WorkspaceSelectionMode;
+  node?: WorkspaceTreeNode;
+  reason: WorkspaceExplorerSelectionChangeReason;
 }
 
 export interface WorkspaceExplorerItemActionMeta {
@@ -67,10 +73,7 @@ export interface WorkspaceExplorerMoveRequestMeta {
 }
 
 export type WorkspaceExplorerInlineEditKind =
-  | 'create-file'
-  | 'create-folder'
-  | 'rename-file'
-  | 'rename-folder';
+  'create-file' | 'create-folder' | 'rename-file' | 'rename-folder';
 
 export interface WorkspaceExplorerInlineEditState {
   error?: ReactNode;
@@ -112,6 +115,7 @@ export interface WorkspaceExplorerProps {
     meta: WorkspaceExplorerSelectionChangeMeta,
   ) => void;
   onToggleFolder: (path: string) => void;
+  focusedPath?: string | undefined;
   selectedPaths?: Iterable<string>;
   selectionAnchorPath?: string;
 }
@@ -123,6 +127,7 @@ export function WorkspaceExplorer({
   dragMetadataFactory,
   expandedPaths,
   filterQuery = '',
+  focusedPath,
   inlineEdit,
   nodes,
   onActivateFile,
@@ -138,6 +143,7 @@ export function WorkspaceExplorer({
   selectedPaths = [],
   selectionAnchorPath,
 }: WorkspaceExplorerProps) {
+  const sectionBaseDepth = useSidebarSectionBaseDepth();
   const draggedPathsRef = useRef<string[]>([]);
   const inlineEditInputRef = useRef<HTMLInputElement>(null);
   const [dropTargetPath, setDropTargetPath] = useState<string | null>(null);
@@ -179,17 +185,20 @@ export function WorkspaceExplorer({
 
   const selectFile = (event: MouseEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
     const mode = resolveSelectionMode(event);
+    const nextSelection = onSelectionChange
+      ? {
+          ...updateWorkspaceSelection({
+            mode,
+            orderedPaths: visibleFilePaths,
+            selection: currentSelection,
+            targetPath: node.path,
+          }),
+          focusedPath: node.path,
+        }
+      : currentSelection;
 
     if (onSelectionChange) {
-      onSelectionChange(
-        updateWorkspaceSelection({
-          mode,
-          orderedPaths: visibleFilePaths,
-          selection: currentSelection,
-          targetPath: node.path,
-        }),
-        { event, mode, node, reason: 'click' },
-      );
+      onSelectionChange(nextSelection, { event, mode, node, reason: 'click' });
     }
 
     if (mode === 'single' || !onSelectionChange) {
@@ -197,15 +206,48 @@ export function WorkspaceExplorer({
     }
   };
 
+  const selectFolder = (event: MouseEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
+    onSelectionChange?.(
+      {
+        anchorPath: undefined,
+        focusedPath: node.path,
+        paths: [],
+      },
+      { event, mode: 'single', node, reason: 'folder-click' },
+    );
+    onToggleFolder(node.path);
+  };
+
+  const clearSelection = () => {
+    onSelectionChange?.(createEmptyWorkspaceSelection(), { reason: 'clear' });
+  };
+
   const getItemActionMeta = (node: WorkspaceTreeNode): WorkspaceExplorerItemActionMeta => {
-    const selected = node.type === 'file' && selectedPathSet.has(node.path);
-    const selection =
-      node.type === 'file' && !selected
-        ? {
-            anchorPath: node.path,
-            paths: [node.path],
-          }
-        : currentSelection;
+    if (node.type === 'folder') {
+      const selection = {
+        anchorPath: undefined,
+        focusedPath: node.path,
+        paths: [] as string[],
+      };
+
+      return {
+        actionPaths: [node.path],
+        selected: focusedPath === node.path,
+        selection,
+      };
+    }
+
+    const selected = selectedPathSet.has(node.path);
+    const selection = !selected
+      ? {
+          anchorPath: node.path,
+          focusedPath: node.path,
+          paths: [node.path],
+        }
+      : {
+          ...currentSelection,
+          focusedPath: node.path,
+        };
 
     return {
       actionPaths: getWorkspaceSelectionActionPaths({
@@ -221,12 +263,34 @@ export function WorkspaceExplorer({
     const meta = getItemActionMeta(node);
 
     if (node.type === 'file' && !meta.selected) {
-      onSelectionChange?.(meta.selection, {
-        event,
-        mode: 'single',
-        node,
-        reason: 'context-menu',
-      });
+      onSelectionChange?.(
+        {
+          ...meta.selection,
+          focusedPath: node.path,
+        },
+        {
+          event,
+          mode: 'single',
+          node,
+          reason: 'context-menu',
+        },
+      );
+    }
+
+    if (node.type === 'folder') {
+      onSelectionChange?.(
+        {
+          anchorPath: undefined,
+          focusedPath: node.path,
+          paths: [],
+        },
+        {
+          event,
+          mode: 'single',
+          node,
+          reason: 'context-menu',
+        },
+      );
     }
 
     onItemContextMenu?.(event, node, meta);
@@ -238,7 +302,7 @@ export function WorkspaceExplorer({
     const meta = getItemActionMeta(node);
 
     if (event.key === 'Delete') {
-      if (node.type === 'file' && meta.actionPaths.length === 0) return;
+      if (meta.actionPaths.length === 0) return;
 
       event.preventDefault();
       onRequestDelete?.({ ...meta, event, node });
@@ -393,27 +457,28 @@ export function WorkspaceExplorer({
   }) => {
     if (!inlineEdit) return null;
 
-    const depthStyle = sideBarTreeDepthStyle(depth);
+    const depthStyle = explorerTreeDepthStyle(sectionBaseDepth + depth);
 
     return (
-      <li key={key} className="ui-side-bar-list-entry">
-        <div className="ui-side-bar-inline-edit" style={depthStyle}>
+      <li key={key} className="ui-sidebar-list-entry">
+        <div className="ui-sidebar-inline-edit" style={depthStyle}>
           <span className="workbench-tree-prefix">
             <span className="workbench-tree-spacer" />
             <WorkspaceFileIcon directory={directory} mimeType={mimeType} path={path} />
           </span>
-          <input
+          <TextInput
             ref={inlineEditInputRef}
             aria-label="Workspace item name"
-            className="ui-side-bar-inline-edit__input"
+            className="ui-sidebar-inline-edit__input"
+            controlWidth="full"
             value={inlineEdit.value}
             onBlur={commitInlineEdit}
-            onChange={(event) => onInlineEditValueChange?.(event.currentTarget.value, inlineEdit)}
+            onValueChange={(value) => onInlineEditValueChange?.(value, inlineEdit)}
             onKeyDown={handleInlineEditKeyDown}
           />
         </div>
         {inlineEdit.error ? (
-          <div className="ui-side-bar-inline-edit__error" style={depthStyle}>
+          <div className="ui-sidebar-inline-edit__error" style={depthStyle}>
             {inlineEdit.error}
           </div>
         ) : null}
@@ -429,19 +494,17 @@ export function WorkspaceExplorer({
       onDragLeave={(event) => handleDropTargetDragLeave(event, '')}
       onDragOver={(event) => handleDropTargetDragOver(event, '')}
       onDrop={(event) => handleDrop(event, '')}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          clearSelection();
+        }
+      }}
     >
-      {inlineEdit?.kind.startsWith('create') && !inlineEdit.parentPath
-        ? renderInlineEdit({
-            depth: 0,
-            directory: inlineEdit.kind === 'create-folder',
-            key: `inline-edit:${inlineEditKey}`,
-            path: inlineEdit.value,
-          })
-        : null}
       {visibleNodes.map(({ depth, node }) => {
         const isFolder = node.type === 'folder';
         const expanded = expandedPaths.has(node.path) || Boolean(filterQuery.trim());
-        const selected = node.type === 'file' && selectedPathSet.has(node.path);
+        const isFocused = focusedPath === node.path;
+        const selected = isFocused || (node.type === 'file' && selectedPathSet.has(node.path));
         const dropTarget = isFolder && dropTargetPath === node.path;
         const editingRename =
           inlineEdit?.kind.startsWith('rename') && inlineEdit.path === node.path;
@@ -465,7 +528,7 @@ export function WorkspaceExplorer({
               selected={selected}
               onClick={(event) => {
                 if (isFolder) {
-                  onToggleFolder(node.path);
+                  selectFolder(event, node);
                   return;
                 }
                 selectFile(event, node);
@@ -516,6 +579,14 @@ export function WorkspaceExplorer({
           </Fragment>
         );
       })}
+      {inlineEdit?.kind.startsWith('create') && !inlineEdit.parentPath
+        ? renderInlineEdit({
+            depth: 0,
+            directory: inlineEdit.kind === 'create-folder',
+            key: `inline-edit:${inlineEditKey}`,
+            path: inlineEdit.value,
+          })
+        : null}
       {visibleNodes.length === 0 ? <SideBarListItem disabled>No files</SideBarListItem> : null}
     </SideBarList>
   );

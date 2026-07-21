@@ -14,7 +14,7 @@ workbench-kit/
 │   ├── tokens/                    # Design tokens (no React)
 │   ├── react/                     # React primitives and lightweight workbench chrome
 │   ├── workbench-core/            # Registries, layout service, extension registry
-│   ├── workbench-react/           # React workbench shell (ActivityBar, panels, palette)
+│   ├── shell-react/           # React workbench shell (ActivityBar, panels, palette)
 │   ├── workbench-extension-sdk/   # Stable extension contribution types and helpers
 │   ├── workbench-config/          # `.workbench` config loading and validation
 │   ├── monaco/                    # Optional Monaco editor integration placeholder
@@ -27,11 +27,18 @@ workbench-kit/
 │   └── jdw-editor/                # Screen spec editor
 ├── extensions/
 │   ├── builtin.accounts/
-│   ├── builtin.workspace/
+│   ├── builtin.chat/
+│   ├── builtin.commands/
+│   ├── builtin.editor/
 │   ├── builtin.explorer/
-│   ├── builtin.settings/
 │   ├── builtin.keybindings/
-│   └── samples.hello-world/
+│   ├── builtin.search/
+│   ├── builtin.settings/
+│   ├── builtin.workspace/
+│   ├── samples.hello-world/
+│   ├── samples.theme-alt/
+│   ├── samples.locale-ko/
+│   └── samples.json-preview/
 ├── schemas/
 │   └── workbench/                 # JSON Schema for workspace and extension manifests
 ├── examples/
@@ -53,7 +60,7 @@ Platform services and interfaces: command/keybinding/context abstractions, confi
 
 ### `packages/tokens`
 
-CSS variables, theme tokens, and design-system constants. No React dependency. Consumed by `react` and optionally by `workbench-react` for shell theming.
+CSS variables, theme tokens, and design-system constants. No React dependency. Consumed by `react` and optionally by `shell-react` for shell theming.
 
 ### `packages/react`
 
@@ -63,7 +70,7 @@ React primitives (buttons, inputs, layout helpers) and existing lightweight work
 
 Framework-neutral workbench engine: registries, layout state, extension registry, activation orchestration. Depends on `base`, `platform`, `workbench-extension-sdk`, and `workbench-config` as appropriate. No React.
 
-### `packages/workbench-react`
+### `packages/shell-react`
 
 React workbench shell: `WorkbenchProvider`, `WorkbenchShell`, side bars, editor area, command palette, account menu entry points. Depends on `react`, `workbench-core`, `platform`, and `tokens`.
 
@@ -79,11 +86,37 @@ Load, merge, and validate `.workbench` workspace files using schemas under `sche
 
 Optional placeholder for Monaco editor bundling and workbench editor integration. Not required for Phase 0.
 
+### Removed legacy compatibility packages
+
+`packages/core`, `packages/vscode-host`, `packages/vscode-extension`, and
+`packages/workbench-vscode-adapter` have been removed. New shell work must use
+`platform`, `workbench-core`, `shell-react`, and `workbench-extension-sdk`
+instead of recreating legacy compatibility paths.
+
 ## Extensions
 
 Built-in extensions live under `extensions/builtin.*` and ship as repository-local, build-time bundled artifacts. They contribute commands, views, menus, settings, and activities through `workbench.extension.json` and the extension SDK.
 
 Sample extensions under `extensions/samples.*` demonstrate minimal contribution patterns without production functionality.
+
+### Extension taxonomy (MVP)
+
+| Category  | Sample extension       | Contribution surface        |
+| --------- | ---------------------- | --------------------------- |
+| `theme`   | `samples.theme-alt`    | `contributes.themes`        |
+| `locale`  | `samples.locale-ko`    | `contributes.localizations` |
+| `editor`  | `samples.json-preview` | `contributes.editors`       |
+| `utility` | `samples.hello-world`  | `contributes.commands`      |
+
+### Extension install path
+
+1. Static catalog JSON (for example `examples/workbench-sample/public/extension-catalog.json`)
+2. Browse/install UI (`ExtensionManagementPanel` in Settings)
+3. Browser persistence key `workbench-kit/.workbench/installed-extensions`
+4. `WorkbenchProvider` resolves bundled extensions against install state
+5. Contributed themes/localizations merge into `ThemeRegistry` / `LocalizationRegistry`
+
+See [Extension Install](./extension-install.md) for catalog schema and pipeline details.
 
 ## Schemas
 
@@ -91,7 +124,11 @@ Sample extensions under `extensions/samples.*` demonstrate minimal contribution 
 
 ## Examples
 
-`examples/workbench-sample` (planned) will demonstrate assembling `workbench-react` with built-in extensions and a `.workbench` directory. Not implemented in Phase 0.
+`examples/workbench-sample` is the frontend-only integration host. It assembles
+`shell-react` with bundled built-in extensions, reads `.workbench`
+configuration, mounts a virtual workspace/editor flow, and uses the in-browser
+dummy backend for fixed auth/profile responses without requiring a separate
+server process.
 
 ## Domain Packages (unchanged by shell migration)
 
@@ -105,11 +142,16 @@ Sample extensions under `extensions/samples.*` demonstrate minimal contribution 
 | `json-widget` (`jdw`) | JDW parse, layout, screen-spec, widget documents              |
 | `jdw-editor`          | Screen spec editor UI                                         |
 
+`workspace` keeps public reducer/action APIs in `virtualWorkspace.ts`; reusable
+normalization, conflict, selection, and expansion helpers live in
+`virtualWorkspaceModel.ts` so explorer/search/editor changes do not all collide
+in the reducer file.
+
 These stay **outside** the extension host; React modules (`jdw`, `widget-tree`, etc.) consume them from `@workbench-kit/react` exports until a future optional split.
 
 ## Migration Stance
 
-Bulk replacement is allowed for in-repo shell wiring. `@workbench-kit/platform` owns the former core command/context surface; `react/workbench` orchestration moves to `workbench-react` and built-in extensions. Details: [Migration Strategy](./migration-strategy.md).
+Bulk replacement is allowed for in-repo shell wiring. `@workbench-kit/platform` owns the former core command/context surface; `react/workbench` orchestration moves to `shell-react` and built-in extensions. Details: [Migration Strategy](./migration-strategy.md).
 
 ## Related Documents
 
@@ -120,7 +162,7 @@ Bulk replacement is allowed for in-repo shell wiring. `@workbench-kit/platform` 
 - [Contribution Contracts](./contribution-contracts.md)
 - [Capability Model](./capability-model.md)
 - [Workbench Core](./workbench-core.md)
-- [Workbench React](./workbench-react.md)
+- [Shell React](./shell-react.md)
 - [Extension System](./extension-system.md)
 - [Workbench Config](./workbench-config.md)
 - [Security Boundary](./security-boundary.md)

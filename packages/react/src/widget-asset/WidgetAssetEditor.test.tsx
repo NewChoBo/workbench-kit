@@ -6,14 +6,10 @@ import { formatWidgetAssetContent, formatWidgetAssetManifest } from '@workbench-
 import { WidgetAssetEditor } from './WidgetAssetEditor.js';
 import { WIDGET_TREE_DEMO_REGISTRY } from '../widget-tree/demo-registry.js';
 
-vi.mock('@monaco-editor/react', () => ({
-  default: () => <div data-testid="monaco-editor">Mocked Monaco Editor</div>,
-  loader: {
-    config: vi.fn(),
-  },
-}));
-
-vi.mock('monaco-editor', () => ({}));
+vi.mock('@workbench-kit/monaco', async () => {
+  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
+  return createWorkbenchMonacoMockModule();
+});
 
 const packagePath = 'src/widgets/assets/heading';
 const manifest = formatWidgetAssetManifest({

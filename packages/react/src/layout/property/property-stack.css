@@ -1,0 +1,11 @@
+.ui-workbench-property-stack[data-gap='xs'] {
+  gap: 4px;
+}
+
+.ui-workbench-property-stack[data-gap='sm'] {
+  gap: 8px;
+}
+
+.ui-workbench-property-stack[data-gap='lg'] {
+  gap: 12px;
+}

@@ -1,0 +1,41 @@
+.ui-workbench-fullscreen-hero {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 280px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px clamp(18px, 7vw, 86px) 18px;
+}
+
+.ui-workbench-fullscreen-hero__meta {
+  margin-bottom: 10px;
+  color: rgba(226, 232, 240, 0.78);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.ui-workbench-fullscreen-hero__title {
+  max-width: 920px;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #f8fafc;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.ui-workbench-fullscreen-hero__action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.ui-workbench-fullscreen-hero__status {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

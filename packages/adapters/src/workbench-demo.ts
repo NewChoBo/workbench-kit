@@ -81,8 +81,8 @@ export function Panel({ children, title, ...props }: PanelProps) {
 `,
   },
   {
-    path: 'src/widgets/home.widget.json',
-    mimeType: 'application/vnd.workbench-kit.widget+json',
+    path: 'src/widgets/home.jdw.json',
+    mimeType: 'application/vnd.workbench-kit.jdw+json',
     updatedAt: '2026-06-02T09:28:00.000Z',
     source: 'user',
     content: `{
@@ -163,7 +163,7 @@ Import shared styles once, then compose the workbench primitives in your app she
   "name": "@example/workbench-app",
   "private": true,
   "scripts": {
-    "storybook": "storybook dev --port 6010"
+    "storybook": "storybook dev --port 61009"
   }
 }
 `,
@@ -178,7 +178,7 @@ Import shared styles once, then compose the workbench primitives in your app she
   --workspace-accent: #4aa8ff;
 }
 
-.workspace-file-icon {
+.ui-file-icon {
   color: var(--workspace-accent);
 }
 `,
@@ -200,27 +200,54 @@ export const integratedShellInitialRuntimeMessages: RuntimeChatMessage[] = [
   {
     id: 'm1',
     source: 'user',
+    createdAt: '2026-06-18T09:12:00.000Z',
     content:
-      'Check whether the workbench shell covers explorer, search, chat, settings, and status surfaces.',
+      'Check whether the workbench shell covers explorer, search, chatting, AI chat, settings, and status surfaces.',
   },
   {
     id: 'm2',
     source: 'assistant',
+    createdAt: '2026-06-18T09:12:18.000Z',
     content:
       'The integrated story now keeps those surfaces in one stateful shell with public mock data.',
   },
   {
     id: 'm3',
     source: 'assistant',
+    createdAt: '2026-06-18T09:12:42.000Z',
     content:
       'Search results, file icons, and the editor preview are driven by the same virtual workspace.',
+  },
+];
+
+export const integratedShellInitialChattingMessages: RuntimeChatMessage[] = [
+  {
+    id: 'c1',
+    source: 'assistant',
+    label: 'Alex',
+    createdAt: '2026-06-18T10:05:00.000Z',
+    content: 'Can you review the widget tree changes before we merge?',
+  },
+  {
+    id: 'c2',
+    source: 'user',
+    createdAt: '2026-06-18T10:06:14.000Z',
+    content: 'Sure — I will check after the CI run finishes.',
+  },
+  {
+    id: 'c3',
+    source: 'assistant',
+    label: 'Alex',
+    createdAt: '2026-06-18T10:07:02.000Z',
+    content: 'Thanks. Ping me in #workbench when the preview is ready.',
   },
 ];
 
 export const integratedShellDefaultSelectionByActivity = {
   explorer: 'src/App.tsx',
   search: 'src/components/Button.tsx',
-  chat: 'src/App.tsx',
+  chatting: 'src/App.tsx',
+  aiChat: 'src/App.tsx',
 } as const;
 
 export function createIntegratedShellChatRuntimeResponse(message: RuntimeChatMessage) {

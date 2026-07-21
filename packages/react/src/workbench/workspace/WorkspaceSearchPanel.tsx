@@ -1,15 +1,17 @@
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
-import { SideBarHeaderControl, SideBarViewFrame } from '../../layout/SideBarViewFrame';
-import { Badge } from '../../primitives/Badge';
-import { EmptyState } from '../../primitives/EmptyState';
-import { IconButton } from '../../primitives/IconButton';
-import { TextInput } from '../../primitives/TextInput';
-import { Toolbar } from '../../primitives/Toolbar';
+import { SideBarHeaderControl, SideBarViewFrame, SidebarToolbar } from '../../layout/sidebar';
+import { Badge } from '../../primitives/badge';
+import { ClearableTextInput } from '../../primitives/clearable-text-input';
+import { EmptyState } from '../../primitives/empty-state';
+import { IconButton } from '../../primitives/icon-button';
+import { cx } from '../../utils/cx';
 import { WorkspaceSearchResults } from './WorkspaceSearchResults';
 import type { WorkspaceSearchResult } from './types';
 
 export interface WorkspaceSearchPanelProps {
   activePath?: string;
+  'aria-label'?: string | undefined;
+  className?: string | undefined;
   compactRows?: boolean;
   emptyQueryLabel?: ReactNode;
   noResultsLabel?: ReactNode;
@@ -26,6 +28,8 @@ export interface WorkspaceSearchPanelProps {
 
 export function WorkspaceSearchPanel({
   activePath,
+  'aria-label': ariaLabel = 'Workspace Search',
+  className,
   compactRows,
   emptyQueryLabel = 'Type to search files',
   noResultsLabel = 'No results',
@@ -55,36 +59,35 @@ export function WorkspaceSearchPanel({
     if (event.key === 'Escape' && query) {
       event.preventDefault();
       onQueryChange('');
+      return;
     }
   };
 
   return (
     <SideBarViewFrame
+      aria-label={ariaLabel}
+      className={cx('ui-workspace-search-panel', className)}
       title={title}
       actions={
-        <Toolbar>
+        <SidebarToolbar>
           <Badge variant="muted">{resultLabel}</Badge>
           {onRefresh ? (
             <IconButton icon="codicon-refresh" label="Refresh results" onClick={onRefresh} />
           ) : null}
-        </Toolbar>
+        </SidebarToolbar>
       }
       headerAddon={
         <SideBarHeaderControl>
           <div className="workbench-search-control">
-            <TextInput
+            <ClearableTextInput
               aria-label={searchLabel}
+              clearLabel="Clear search"
               controlWidth="full"
               placeholder={placeholder}
               value={query}
+              onClear={() => onQueryChange('')}
               onChange={(event) => onQueryChange(event.currentTarget.value)}
               onKeyDown={handleQueryKeyDown}
-            />
-            <IconButton
-              disabled={!query}
-              icon="codicon-close"
-              label="Clear search"
-              onClick={() => onQueryChange('')}
             />
           </div>
         </SideBarHeaderControl>

@@ -1,0 +1,110 @@
+.ui-chip,
+.ui-filter-chip {
+  --ui-chip-border-radius: var(--radius-sm, 6px);
+  --ui-button-display: inline-flex;
+  --ui-button-align-items: center;
+  --ui-button-gap: 0.25rem;
+  --ui-button-max-width: 100%;
+  --ui-button-height: var(--workbench-filter-chip-height, 1.375rem);
+  --ui-button-min-height: var(--workbench-filter-chip-height, 1.375rem);
+  --ui-button-padding: 0 0.5rem;
+  --ui-button-border: 1px solid
+    var(--vscode-widget-border, var(--color-border-subtle, var(--color-border)));
+  --ui-button-border-radius: var(--ui-chip-border-radius);
+  --ui-button-color: var(--vscode-foreground, var(--color-text));
+  --ui-button-background: color-mix(
+    in srgb,
+    var(--vscode-badge-background, var(--color-surface-secondary, var(--color-surface))) 78%,
+    transparent
+  );
+  --ui-button-font-size: var(--font-size-xs, 0.75rem);
+  --ui-button-font-weight: 500;
+  --ui-button-line-height: 1;
+  --ui-button-hover-background: color-mix(
+    in srgb,
+    var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.08)) 70%,
+    var(--vscode-badge-background, var(--color-surface-secondary, var(--color-surface)))
+  );
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  height: var(--workbench-filter-chip-height, 1.375rem);
+  padding: 0 0.5rem;
+  border: 1px solid var(--vscode-widget-border, var(--color-border-subtle, var(--color-border)));
+  border-radius: var(--ui-chip-border-radius);
+  background: color-mix(
+    in srgb,
+    var(--vscode-badge-background, var(--color-surface-secondary, var(--color-surface))) 78%,
+    transparent
+  );
+  color: var(--vscode-foreground, var(--color-text));
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ui-chip__label,
+.ui-filter-chip__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-chip__count,
+.ui-filter-chip__count {
+  flex: 0 0 auto;
+  opacity: 0.72;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-chip__dismiss,
+.ui-filter-chip__dismiss {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-inline-start: 0.125rem;
+  opacity: 0.72;
+}
+
+.ui-chip__dismiss .codicon,
+.ui-filter-chip__dismiss .codicon {
+  font-size: 0.75rem;
+}
+
+.ui-chip:hover .ui-chip__dismiss,
+.ui-chip:hover .ui-filter-chip__dismiss,
+.ui-filter-chip:hover .ui-chip__dismiss,
+.ui-filter-chip:hover .ui-filter-chip__dismiss {
+  opacity: 1;
+}
+
+.ui-chip:focus-visible,
+.ui-filter-chip:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--color-accent));
+  outline-offset: 1px;
+}
+
+.ui-chip--selected,
+.ui-filter-chip--selected {
+  --ui-button-color: var(--color-text);
+  --ui-button-background: color-mix(
+    in srgb,
+    var(--color-accent, #3794ff) 14%,
+    var(--color-surface)
+  );
+  --ui-button-border: 1px solid
+    color-mix(in srgb, var(--color-accent, #3794ff) 40%, var(--color-border));
+  --ui-button-font-weight: 600;
+  --ui-button-hover-background: color-mix(
+    in srgb,
+    var(--color-accent, #3794ff) 18%,
+    var(--color-surface)
+  );
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent, #3794ff) 14%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-accent, #3794ff) 40%, var(--color-border));
+  font-weight: 600;
+}

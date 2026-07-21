@@ -1,0 +1,105 @@
+.ui-number-input {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: top;
+}
+
+.ui-number-input[data-width='default'] {
+  width: var(--ui-input-width, 320px);
+}
+
+.ui-number-input[data-width='wide'] {
+  width: 420px;
+}
+
+.ui-number-input[data-width='full'] {
+  display: flex;
+  width: 100%;
+}
+
+.ui-number-input__field {
+  width: 100%;
+  /* room for themed steppers */
+  padding-right: 22px;
+}
+
+.ui-number-input__field::-webkit-outer-spin-button,
+.ui-number-input__field::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.ui-number-input__field[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.ui-number-input__spinners {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: 18px;
+  overflow: hidden;
+  border-left: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  border-radius: 0 var(--ui-input-border-radius, var(--radius-sm))
+    var(--ui-input-border-radius, var(--radius-sm)) 0;
+  background: var(--color-surface-raised, var(--color-surface));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 80ms ease;
+}
+
+.ui-number-input:hover:not([data-disabled='true']) .ui-number-input__spinners,
+.ui-number-input:focus-within:not([data-disabled='true']) .ui-number-input__spinners {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ui-number-input__step {
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--color-text-muted, var(--color-text-secondary));
+  background: transparent;
+  cursor: pointer;
+}
+
+.ui-number-input__step + .ui-number-input__step {
+  border-top: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+}
+
+.ui-number-input__step:hover:not(:disabled) {
+  color: var(--color-text);
+  background: var(--color-list-hoverBackground, rgba(255, 255, 255, 0.06));
+}
+
+.ui-number-input__step:active:not(:disabled) {
+  background: var(--color-list-activeSelectionBackground, rgba(255, 255, 255, 0.1));
+}
+
+.ui-number-input__step:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.ui-number-input__step:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.ui-number-input__step .codicon {
+  font-size: 10px;
+  line-height: 1;
+}

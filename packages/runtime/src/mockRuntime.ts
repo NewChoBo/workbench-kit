@@ -23,9 +23,7 @@ export interface MockWorkbenchRuntimeOptions {
   initialStatus?: RuntimeStatus;
   now?: () => string;
   response?:
-    | false
-    | MockRuntimeResponsePlan
-    | ((message: RuntimeChatMessage) => MockRuntimeResponsePlan);
+    false | MockRuntimeResponsePlan | ((message: RuntimeChatMessage) => MockRuntimeResponsePlan);
 }
 
 export interface MockWorkbenchRuntime {

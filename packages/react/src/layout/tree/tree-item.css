@@ -1,0 +1,93 @@
+.ui-workbench-tree-item {
+  box-sizing: border-box;
+  position: relative;
+  display: grid;
+  grid-template-columns: 14px 16px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
+  height: var(--ui-workbench-tree-row-height);
+  min-width: 0;
+  padding: 0 8px 0 var(--ui-workbench-tree-indent-offset, 8px);
+  color: var(--vscode-sideBar-foreground, var(--color-text));
+  background: transparent;
+  outline: none;
+  user-select: none;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ui-workbench-tree-item:hover,
+.ui-workbench-tree-item:focus-visible {
+  color: var(--vscode-list-hoverForeground, var(--color-text));
+  background: var(--vscode-list-hoverBackground, var(--color-surface-hover));
+}
+
+.ui-workbench-tree-item:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -1px;
+}
+
+.ui-workbench-tree-item[data-selected='true'] {
+  color: var(--vscode-list-activeSelectionForeground, #fff);
+  background: var(--vscode-list-activeSelectionBackground, var(--color-accent));
+}
+
+.ui-workbench-tree-item[data-interaction='draggable'] {
+  cursor: grab;
+}
+
+.ui-workbench-tree-item[data-interaction='dragging'] {
+  opacity: 0;
+  cursor: grabbing;
+}
+
+.ui-workbench-tree-item__control,
+.ui-workbench-tree-item__icon,
+.ui-workbench-tree-item__meta,
+.ui-workbench-tree-item__actions {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.ui-workbench-tree-item__control,
+.ui-workbench-tree-item__icon {
+  justify-content: center;
+  color: var(--vscode-icon-foreground, var(--color-icon));
+}
+
+.ui-workbench-tree-item__label,
+.ui-workbench-tree-item__meta {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-workbench-tree-item__label {
+  color: inherit;
+}
+
+.ui-workbench-tree-item__meta {
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: 10px;
+}
+
+.ui-workbench-tree-item[data-selected='true'] .ui-workbench-tree-item__meta {
+  color: inherit;
+  opacity: 0.78;
+}
+
+.ui-workbench-tree-item__actions {
+  justify-content: flex-end;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.ui-workbench-tree-item:hover .ui-workbench-tree-action,
+.ui-workbench-tree-item:focus-within .ui-workbench-tree-action,
+.ui-workbench-tree-item[data-selected='true'] .ui-workbench-tree-action,
+.ui-workbench-tree-action[data-visible='true'] {
+  opacity: 1;
+  pointer-events: auto;
+}

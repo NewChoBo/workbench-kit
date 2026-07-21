@@ -1,0 +1,5 @@
+/* layout/sidebar feature styles */
+@import './sidebar-view.css';
+@import './sidebar-chrome.css';
+@import './sidebar-section-stack.css';
+@import './sidebar-section.css';

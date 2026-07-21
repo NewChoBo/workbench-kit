@@ -30,7 +30,7 @@ change while the first consuming apps harden the model.
 ## Private preview packages
 
 - `@workbench-kit/workbench-core`: framework-neutral extension registry, layout, and host orchestration
-- `@workbench-kit/workbench-react`: React provider and shell assembly over `workbench-core`
+- `@workbench-kit/shell-react`: React provider and shell assembly over `workbench-core`
 - `@workbench-kit/monaco`: future optional Monaco integration
 
 ## Headless packages
@@ -79,6 +79,9 @@ pnpm validate:fast
 pnpm validate
 pnpm validate:ui
 pnpm validate:ui:full
+pnpm dev
+pnpm dev:storybook
+pnpm dev:all
 pnpm storybook
 pnpm test:storybook-play
 pnpm test:storybook-play:required
@@ -95,6 +98,11 @@ affect rendered Storybook surfaces, and `validate:full` for Lane or release
 closeout.
 
 ## Workbench Sample Pages
+
+For local development, `pnpm dev` starts only the workbench sample on
+`http://127.0.0.1:65173/`. Use `pnpm dev:storybook` for Storybook on
+`http://127.0.0.1:61009/`, or `pnpm dev:all` to run both together with Storybook
+proxied from `http://127.0.0.1:65173/storybook/`.
 
 The `Deploy Workbench Sample` workflow builds `examples/workbench-sample` and
 deploys the Vite output to GitHub Pages. Configure repository Pages settings to
@@ -115,7 +123,8 @@ base path.
 
 Packages are published from GitHub Actions through npm trusted publishing. The
 release workflow is `.github/workflows/publish.yml` and publishes with the
-`prototype` dist tag by default.
+`prototype` dist tag by default. See [npm Release & CI/CD](./docs/conventions/npm-release.md)
+for the full release checklist, OIDC rules, and common failure modes.
 
 Trusted publisher settings must be configured on npm for each public package:
 
@@ -130,8 +139,19 @@ The workflow runs on published GitHub releases and pushed tags matching
 as `v0.0.1-prototype.0` or `workbench-kit-v0.0.1-prototype.0`.
 
 The current publish pipeline excludes private-preview shell packages. The full
-`workbench-core` / `workbench-react` shell stack remains private preview until
+`workbench-core` / `shell-react` shell stack remains private preview until
 bundled extension modules are packaged as public-safe artifacts.
+
+## Documentation
+
+Task-oriented guides and API indexes for integrators and extension authors:
+
+- [Guides](./docs/guides/README.md) — start here for use cases and how-to flows
+- [Use Case Scenarios](./docs/guides/use-cases.md) — install packages, run sample, develop extensions, command lifecycle
+- [Extension Development](./docs/guides/extension-development.md) — manifest, activation, bundle pipeline
+- [API Reference](./docs/guides/api-reference.md) — OpenAPI, contracts, public package exports
+- [Architecture](./docs/architecture/README.md) — workbench layers, extension system, migration
+- [Workbench Notes](./docs/workbench/README.md) — planning notes and sample host backend API
 
 ## Conventions
 
@@ -139,10 +159,8 @@ bundled extension modules are packaged as public-safe artifacts.
 - [Development Harness](./docs/conventions/development-harness.md)
 - [Lint & Format](./docs/conventions/lint-format.md)
 - [Language Policy](./docs/conventions/language-policy.md)
+- [Public Reference Policy](./docs/conventions/public-reference-policy.md)
 - [Package Manager Policy](./docs/conventions/package-manager.md)
 - [Public API Governance](./docs/conventions/public-api-governance.md)
+- [npm Release & CI/CD](./docs/conventions/npm-release.md)
 - [Storybook Direction](./docs/conventions/storybook.md)
-
-## Workbench Notes
-
-- [Workbench Notes](./docs/workbench/README.md)

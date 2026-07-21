@@ -15,6 +15,7 @@ import {
   createWorkbenchEditorCommands,
   createWorkbenchEditorTabListMenuEntries,
   createWorkbenchEditorTabMenuEntries,
+  createWorkbenchStandaloneEditorTabMenuEntries,
   createWorkbenchSearchResultCommands,
   createWorkbenchSearchResultMenuEntries,
   createWorkbenchShellCommands,
@@ -61,6 +62,9 @@ function createEditorContext(
     canDeletePath: true,
     canDiscardFile: true,
     canSaveFile: true,
+    canSplitDown: true,
+    canSplitRight: true,
+    canTogglePinned: true,
     closeAll: () => undefined,
     closeOthers: () => undefined,
     closePath: () => undefined,
@@ -71,7 +75,11 @@ function createEditorContext(
     hasMultipleOpenFiles: true,
     hasOpenFiles: true,
     hasUnsavedChanges: true,
+    isPinned: true,
     saveFile: () => undefined,
+    splitDown: () => undefined,
+    splitRight: () => undefined,
+    togglePinned: () => undefined,
     ...overrides,
   };
 }
@@ -305,6 +313,10 @@ describe('workbench editor command presets', () => {
     });
 
     expect(items.map((item) => item.type === 'command' && item.label)).toEqual([
+      'Unpin',
+      'Split Right',
+      'Split Down',
+      false,
       'Copy path',
       false,
       'Close',
@@ -314,6 +326,10 @@ describe('workbench editor command presets', () => {
       'Delete',
     ]);
     expect(items.map((item) => item.type === 'command' && item.disabled)).toEqual([
+      false,
+      false,
+      false,
+      false,
       false,
       false,
       false,
@@ -337,6 +353,58 @@ describe('workbench editor command presets', () => {
       WORKBENCH_COMMAND_SURFACE_EDITOR,
       WORKBENCH_COMMAND_SURFACE_EDITOR,
       WORKBENCH_COMMAND_SURFACE_EDITOR,
+      WORKBENCH_COMMAND_SURFACE_EDITOR,
+      WORKBENCH_COMMAND_SURFACE_EDITOR,
+      WORKBENCH_COMMAND_SURFACE_EDITOR,
+    ]);
+  });
+
+  it('hides tab layout commands when the editor host does not support them', () => {
+    const registry = createCommandRegistry(createWorkbenchEditorCommands());
+    const items = resolveCommandMenuItems({
+      context: createEditorContext({
+        canSplitDown: false,
+        canSplitRight: false,
+        canTogglePinned: false,
+      }),
+      entries: createWorkbenchEditorTabMenuEntries(),
+      registry,
+    });
+
+    expect(items.map((item) => item.type === 'command' && item.label)).toEqual([
+      'Copy path',
+      false,
+      'Close',
+      'Close others',
+      'Close all',
+      false,
+      'Delete',
+    ]);
+  });
+
+  it('creates standalone tab menu entries for close actions only', () => {
+    const registry = createCommandRegistry(createWorkbenchEditorCommands());
+    const items = resolveCommandMenuItems({
+      context: createEditorContext({
+        canCloseAll: true,
+        canCloseOthers: true,
+        canClosePath: false,
+        hasMultipleOpenFiles: true,
+        hasOpenFiles: true,
+      }),
+      entries: createWorkbenchStandaloneEditorTabMenuEntries(),
+      registry,
+    });
+
+    expect(items.map((item) => item.type === 'command' && item.label)).toEqual([
+      'Close',
+      'Close others',
+      'Close all',
+    ]);
+    expect(items.map((item) => item.type === 'command' && item.disabled)).toEqual([
+      true,
+      false,
+      false,
     ]);
   });
 
@@ -373,12 +441,18 @@ describe('workbench editor command presets', () => {
       deletePath: () => calls.push('delete'),
       discardFile: () => calls.push('discard'),
       saveFile: () => calls.push('save'),
+      splitDown: () => calls.push('splitDown'),
+      splitRight: () => calls.push('splitRight'),
+      togglePinned: () => calls.push('togglePinned'),
     });
 
     [
       'editor.save',
       'editor.discardChanges',
       'editor.copyPath',
+      'editor.togglePinned',
+      'editor.splitRight',
+      'editor.splitDown',
       'editor.close',
       'editor.closeOthers',
       'editor.closeAll',
@@ -389,6 +463,9 @@ describe('workbench editor command presets', () => {
       'save',
       'discard',
       'copy',
+      'togglePinned',
+      'splitRight',
+      'splitDown',
       'close',
       'closeOthers',
       'closeAll',

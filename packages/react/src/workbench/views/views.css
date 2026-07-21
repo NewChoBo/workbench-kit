@@ -1,0 +1,12 @@
+/* workbench/views feature styles — co-located import hub */
+@import './action-list.css';
+@import './artifact-preview.css';
+@import './command-inspector.css';
+@import './command-list.css';
+@import './commands-sidebar.css';
+@import './extensions-sidebar.css';
+@import './multi-provider-explorer.css';
+@import './search.css';
+@import './timeline.css';
+@import './view-hosts.css';
+@import './view-sidebar.css';

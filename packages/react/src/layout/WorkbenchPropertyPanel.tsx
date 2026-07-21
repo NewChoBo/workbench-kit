@@ -1,13 +1,14 @@
-import type { ComponentPropsWithRef, ReactNode } from 'react';
-import { Button } from '../primitives/Button';
-import type { ButtonProps } from '../primitives/Button';
-import { Checkbox } from '../primitives/Checkbox';
-import { Field } from '../primitives/Field';
-import type { FieldProps } from '../primitives/Field';
-import { NumberInput } from '../primitives/NumberInput';
-import { Select } from '../primitives/Select';
-import { TextInput } from '../primitives/TextInput';
-import type { ControlWidth } from '../primitives/TextInput';
+import { useId, useState, type ComponentPropsWithRef, type ReactNode } from 'react';
+import { Button } from '../primitives/button';
+import type { ButtonProps } from '../primitives/button';
+import { Checkbox } from '../primitives/checkbox';
+import { Field } from '../primitives/field';
+import type { FieldProps } from '../primitives/field';
+import { NumberInput } from '../primitives/number-input';
+import { Select } from '../primitives/select';
+import { TextInput } from '../primitives/text-input';
+import type { ControlWidth } from '../primitives/text-input';
+import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 
 export type WorkbenchPropertyRowProps = FieldProps;
@@ -28,17 +29,22 @@ export interface WorkbenchPropertyTextRowProps extends Omit<WorkbenchPropertyRow
 export function WorkbenchPropertyTextRow({
   controlWidth = 'full',
   disabled,
+  htmlFor,
   onValueChange,
   placeholder,
   readOnly,
   value,
   ...props
 }: WorkbenchPropertyTextRowProps) {
+  const generatedId = useId();
+  const inputId = htmlFor ?? generatedId;
+
   return (
-    <WorkbenchPropertyRow {...props}>
+    <WorkbenchPropertyRow htmlFor={inputId} {...props}>
       <TextInput
         controlWidth={controlWidth}
         disabled={disabled}
+        id={inputId}
         placeholder={placeholder}
         readOnly={readOnly}
         value={value}
@@ -64,6 +70,7 @@ export interface WorkbenchPropertyNumberRowProps extends Omit<
 export function WorkbenchPropertyNumberRow({
   controlWidth = 'full',
   disabled,
+  htmlFor,
   max,
   min,
   onValueChange,
@@ -71,11 +78,15 @@ export function WorkbenchPropertyNumberRow({
   value,
   ...props
 }: WorkbenchPropertyNumberRowProps) {
+  const generatedId = useId();
+  const inputId = htmlFor ?? generatedId;
+
   return (
-    <WorkbenchPropertyRow {...props}>
+    <WorkbenchPropertyRow htmlFor={inputId} {...props}>
       <NumberInput
         controlWidth={controlWidth}
         disabled={disabled}
+        id={inputId}
         max={max}
         min={min}
         step={step}
@@ -179,16 +190,21 @@ export interface WorkbenchPropertySelectRowProps<TValue extends string = string>
 export function WorkbenchPropertySelectRow<TValue extends string = string>({
   controlWidth = 'full',
   disabled,
+  htmlFor,
   onValueChange,
   options,
   value,
   ...props
 }: WorkbenchPropertySelectRowProps<TValue>) {
+  const generatedId = useId();
+  const inputId = htmlFor ?? generatedId;
+
   return (
-    <WorkbenchPropertyRow {...props}>
+    <WorkbenchPropertyRow htmlFor={inputId} {...props}>
       <Select
         controlWidth={controlWidth}
         disabled={disabled}
+        id={inputId}
         value={value ?? options[0]?.value ?? ''}
         onValueChange={(next) => onValueChange(next as TValue)}
       >
@@ -287,6 +303,7 @@ export function WorkbenchPropertyCheckboxRow({
 }
 
 export interface WorkbenchPropertyPanelProps extends ComponentPropsWithRef<'div'> {
+  children?: ReactNode;
   empty?: boolean;
 }
 
@@ -313,12 +330,27 @@ export function WorkbenchSectionTitle({ className, ...props }: WorkbenchSectionT
   return <div className={cx('ui-workbench-section-title', className)} {...props} />;
 }
 
+export type WorkbenchPropertySectionLevel = 'category' | 'group';
+
 export interface WorkbenchPropertySectionProps extends Omit<
   ComponentPropsWithRef<'section'>,
   'title'
 > {
   actions?: ReactNode;
   bodyClassName?: string;
+  children?: ReactNode;
+  /** When true, the header becomes a disclosure control with a chevron. */
+  collapsible?: boolean;
+  /** Controlled collapsed state. Use with `onCollapsedChange`. */
+  collapsed?: boolean;
+  /** Uncontrolled initial collapsed state when `collapsed` is omitted. */
+  defaultCollapsed?: boolean;
+  /**
+   * Visual hierarchy for inspector categories vs nested groups.
+   * `category` is the default caps-style section; `group` is quieter.
+   */
+  level?: WorkbenchPropertySectionLevel;
+  onCollapsedChange?: (collapsed: boolean) => void;
   title?: ReactNode;
 }
 
@@ -327,23 +359,88 @@ export function WorkbenchPropertySection({
   bodyClassName,
   children,
   className,
+  collapsible = false,
+  collapsed,
+  defaultCollapsed = false,
+  id,
+  level = 'category',
+  onCollapsedChange,
   title,
   ...props
 }: WorkbenchPropertySectionProps) {
+  const generatedId = useId();
+  const sectionId = id ?? generatedId;
+  const headingId = `${sectionId}-heading`;
+  const contentId = `${sectionId}-content`;
+  const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(defaultCollapsed);
+  const resolvedCollapsed = collapsed ?? uncontrolledCollapsed;
+  const showHeader = Boolean(title || actions || collapsible);
+
+  const handleToggle = () => {
+    if (!collapsible) {
+      return;
+    }
+
+    const nextCollapsed = !resolvedCollapsed;
+    if (collapsed === undefined) {
+      setUncontrolledCollapsed(nextCollapsed);
+    }
+    onCollapsedChange?.(nextCollapsed);
+  };
+
   return (
-    <section className={cx('ui-workbench-property-section', className)} {...props}>
-      {title || actions ? (
+    <section
+      id={id}
+      aria-labelledby={title ? headingId : undefined}
+      className={cx(
+        'ui-workbench-property-section',
+        collapsible && 'ui-workbench-property-section--collapsible',
+        resolvedCollapsed && 'ui-workbench-property-section--collapsed',
+        className,
+      )}
+      data-level={level}
+      {...props}
+    >
+      {showHeader ? (
         <div className="ui-workbench-property-section__header">
-          {title ? <WorkbenchSectionTitle>{title}</WorkbenchSectionTitle> : null}
+          {collapsible && title ? (
+            <button
+              aria-controls={contentId}
+              aria-expanded={!resolvedCollapsed}
+              className="ui-workbench-property-section__toggle"
+              type="button"
+              onClick={handleToggle}
+            >
+              <i
+                aria-hidden="true"
+                className={cxCodicon(
+                  resolvedCollapsed ? 'chevron-right' : 'chevron-down',
+                  'ui-workbench-property-section__chevron',
+                )}
+              />
+              <span id={headingId} className="ui-workbench-section-title">
+                {title}
+              </span>
+            </button>
+          ) : title ? (
+            <WorkbenchSectionTitle id={headingId}>{title}</WorkbenchSectionTitle>
+          ) : null}
           {actions ? <div className="ui-workbench-property-section__actions">{actions}</div> : null}
         </div>
       ) : null}
-      <div className={cx('ui-workbench-property-section__body', bodyClassName)}>{children}</div>
+      <div
+        id={collapsible ? contentId : undefined}
+        className={cx('ui-workbench-property-section__body', bodyClassName)}
+        hidden={collapsible ? resolvedCollapsed : undefined}
+      >
+        {children}
+      </div>
     </section>
   );
 }
 
 export interface WorkbenchPropertyStackProps extends ComponentPropsWithRef<'div'> {
+  children?: ReactNode;
   gap?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
@@ -374,6 +471,45 @@ export function WorkbenchPropertyGrid({
       {...props}
     />
   );
+}
+
+export interface WorkbenchMetricGridItem {
+  id?: string | undefined;
+  label: ReactNode;
+  value: ReactNode;
+}
+
+export type WorkbenchMetricGridEntry = WorkbenchMetricGridItem | readonly [ReactNode, ReactNode];
+
+export interface WorkbenchMetricGridProps extends Omit<WorkbenchPropertyGridProps, 'children'> {
+  items: readonly WorkbenchMetricGridEntry[];
+}
+
+export function WorkbenchMetricGrid({
+  columns,
+  gap = 'md',
+  items,
+  ...props
+}: WorkbenchMetricGridProps) {
+  return (
+    <WorkbenchPropertyGrid columns={columns ?? (items.length > 3 ? 3 : 2)} gap={gap} {...props}>
+      {items.map((item, index) => {
+        const metric = isWorkbenchMetricGridTuple(item)
+          ? { key: index, label: item[0], value: item[1] }
+          : { key: item.id ?? index, label: item.label, value: item.value };
+
+        return (
+          <WorkbenchPropertyKeyValue key={metric.key} name={metric.label} value={metric.value} />
+        );
+      })}
+    </WorkbenchPropertyGrid>
+  );
+}
+
+function isWorkbenchMetricGridTuple(
+  item: WorkbenchMetricGridEntry,
+): item is readonly [ReactNode, ReactNode] {
+  return Array.isArray(item);
 }
 
 export interface WorkbenchPropertyInlineProps extends ComponentPropsWithRef<'div'> {

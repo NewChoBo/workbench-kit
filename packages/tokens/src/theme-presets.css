@@ -1,0 +1,10 @@
+/* Built-in color theme presets — one file per preset under themes/. */
+
+@import './themes/light/skyblue.css';
+@import './themes/light/orange.css';
+@import './themes/light/light-plus.css';
+@import './themes/dark/navy.css';
+@import './themes/dark/purple.css';
+@import './themes/dark/modern.css';
+@import './themes/dark/dark-plus.css';
+@import './themes/dark/hc-black.css';

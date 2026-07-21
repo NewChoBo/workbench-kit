@@ -1,6 +1,8 @@
 export {
+  WORKSPACE_PATH_DISPLAY_SEPARATOR,
   extensionOfPath,
   fileNameOfPath,
+  formatWorkspacePathDisplay,
   isSimpleWorkspaceName,
   joinWorkspacePath,
   normalizeWorkspacePath,

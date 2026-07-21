@@ -1,0 +1,8 @@
+.ui-workbench-property-card {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 8px;
+  background: var(--vscode-editor-background, var(--color-bg));
+  border: 1px solid var(--vscode-input-border, var(--color-border));
+  border-radius: 4px;
+}

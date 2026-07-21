@@ -1,0 +1,13 @@
+.ui-workbench-tree-drag-overlay {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--ui-workbench-tree-row-height, 22px);
+  padding: 0 8px;
+  color: var(--vscode-sideBar-foreground, var(--color-text));
+  background: var(--vscode-list-hoverBackground, var(--color-surface-hover));
+  border: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  font: var(--font-size-sm) var(--vscode-font-family, var(--font-family, system-ui, sans-serif));
+  opacity: 0.95;
+}

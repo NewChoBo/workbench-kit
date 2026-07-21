@@ -1,0 +1,77 @@
+.ide-panel {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--panel-bg, var(--color-bg));
+}
+
+/* Shared panel chrome — single source for PanelHeader and panel surfaces. */
+.panel-header {
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: var(--panel-header-height, var(--workbench-header-height));
+  padding: 0 16px;
+  color: var(--color-text-muted);
+  background: var(--panel-bg, var(--color-bg));
+  border-bottom: var(--shell-border-width) solid var(--color-border);
+  font-size: var(--shell-font-size-panel-title);
+}
+
+.ui-panel-header__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-panel-header__actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+}
+
+.panel-body,
+.ui-panel-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ui-panel-footer,
+.ui-workbench-panel-footer {
+  flex: 0 0 auto;
+  padding: 8px;
+  border-top: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
+.ui-filter-bar,
+.ui-workbench-filter-bar {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
+.ui-help-text,
+.ui-workbench-help-text {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: var(--font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-help-text--error,
+.ui-workbench-help-text--error {
+  color: var(--vscode-errorForeground, var(--color-error));
+}

@@ -1,0 +1,10 @@
+.ui-button-group {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.workbench-extensions-sidebar__controls .ui-button-group {
+  display: flex;
+  width: 100%;
+}

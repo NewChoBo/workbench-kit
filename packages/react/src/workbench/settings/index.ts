@@ -4,6 +4,7 @@ export { WorkbenchNavigationPanel } from './NavigationPanel';
 export type { WorkbenchNavigationPanelProps } from './NavigationPanel';
 export { WorkbenchSectionedPanel } from './SectionedPanel';
 export type { WorkbenchSectionedPanelItem, WorkbenchSectionedPanelProps } from './SectionedPanel';
+export type { WorkbenchSectionedPanelScrollSpyAxis } from './sectionedPanelScrollSpy';
 export { WorkbenchStructuredDataSchemaPanel } from './StructuredDataSchemaPanel';
 export type {
   WorkbenchStructuredDataSchemaPanelClassNames,
@@ -29,6 +30,7 @@ export {
   WorkbenchStructuredDataTextArrayInput,
   appendWorkbenchStructuredDataSchemaTableRow,
   asWorkbenchStructuredDataRecord,
+  buildWorkbenchStructuredDataSchemaSelectOptions,
   booleanWorkbenchStructuredDataSchemaFieldValue,
   coerceWorkbenchStructuredDataFormFieldValue,
   coerceWorkbenchStructuredDataSchemaFieldValue,
@@ -64,14 +66,18 @@ export {
   getWorkbenchStructuredDataSchemaTablePath,
   getWorkbenchStructuredDataSchemaTableRowKey,
   getWorkbenchStructuredDataSchemaTableRows,
+  hasWorkbenchStructuredDataSchemaSelectOptions,
+  isWorkbenchStructuredDataSchemaColorField,
   getWorkbenchStructuredDataValue,
   isWorkbenchStructuredDataFormSubmittable,
   normalizeWorkbenchStructuredDataFormData,
   removeWorkbenchStructuredDataSchemaTableRow,
   setWorkbenchStructuredDataPathOrRootValue,
   setWorkbenchStructuredDataValue,
+  shouldUseWorkbenchStructuredDataSchemaRadioControl,
   slugWorkbenchStructuredDataSchemaAnchor,
   stringifyWorkbenchStructuredDataSchemaFieldValue,
+  validateWorkbenchStructuredDataSchemaFieldValue,
 } from './StructuredDataForm';
 export type {
   WorkbenchStructuredDataFieldType,
@@ -116,6 +122,29 @@ export {
   isWorkbenchSchemaFormSubmittable,
   normalizeWorkbenchSchemaFormValues,
 } from './SchemaForm';
+export {
+  createWorkbenchSchemaFormFieldFromSetting,
+  createWorkbenchSchemaFormFieldsFromSettings,
+} from './extensionSettingsForm';
+export {
+  coerceWorkbenchSchemaFormSettingDefaultValue,
+  createWorkbenchSchemaFormFieldsFromSettingDefinitions,
+  createWorkbenchSchemaFormFieldFromSettingSpec,
+  createWorkbenchSchemaFormSettingSpecFromDefinition,
+  createWorkbenchSchemaFormFieldsFromSettingSpecs,
+} from './schemaFormSettingSpec';
+export { createWorkbenchSchemaFormSettingsCategory } from './schemaFormSettingsCategory';
+export type {
+  WorkbenchExtensionSettingSpec,
+  WorkbenchExtensionSettingValueType,
+} from './extensionSettingsForm';
+export type { WorkbenchSchemaFormSettingsCategoryInput } from './schemaFormSettingsCategory';
+export type {
+  WorkbenchSchemaFormSettingDefinitionLike,
+  WorkbenchSchemaFormSettingDefinitionSpecOptions,
+  WorkbenchSchemaFormSettingSpec,
+  WorkbenchSchemaFormSettingValueType,
+} from './schemaFormSettingSpec';
 export type {
   WorkbenchSchemaFormCancelContext,
   WorkbenchSchemaFormCheckboxField,
@@ -134,7 +163,13 @@ export type {
   WorkbenchSchemaFormValues,
 } from './SchemaForm';
 export { WorkbenchSettingsModal } from './WorkbenchSettingsModal';
-export type { WorkbenchSettingsModalProps } from './WorkbenchSettingsModal';
+export type {
+  WorkbenchSettingsCommitMode,
+  WorkbenchSettingsModalProps,
+  WorkbenchSettingsPreferenceChange,
+} from './WorkbenchSettingsModal';
+export { useWorkbenchSettingsCommit } from './settingsCommit';
+export type { WorkbenchSettingsCommitContextValue } from './settingsCommit';
 export { WorkbenchSettingsNav } from './WorkbenchSettingsNav';
 export type { WorkbenchSettingsNavProps } from './WorkbenchSettingsNav';
 export { WorkbenchSettingsSection } from './WorkbenchSettingsSection';

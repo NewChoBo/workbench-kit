@@ -1,10 +1,26 @@
 export type WidgetPathSegment =
-  | { readonly kind: 'children'; readonly index: number }
-  | { readonly kind: 'child' };
+  { readonly kind: 'children'; readonly index: number } | { readonly kind: 'child' };
 
 export type WidgetPath = readonly WidgetPathSegment[];
 
 export const ROOT_WIDGET_PATH: WidgetPath = [];
+
+export interface WidgetSourceRange {
+  readonly startLineNumber: number;
+  readonly startColumn: number;
+  readonly endLineNumber: number;
+  readonly endColumn: number;
+}
+
+type JsonTokenType =
+  'key' | 'value' | 'openBrace' | 'closeBrace' | 'openBracket' | 'closeBracket' | 'colon' | 'comma';
+
+interface JsonToken {
+  readonly type: JsonTokenType;
+  readonly value: string;
+  readonly pos: number;
+  readonly length: number;
+}
 
 export function appendChildrenPath(path: WidgetPath, index: number): WidgetPath {
   return [...path, { kind: 'children', index }];
@@ -50,67 +66,96 @@ export function parseWidgetPathKey(key: string): WidgetPath {
   return path;
 }
 
-export function findLineAndColumnForPath(
-  jsonText: string,
-  path: WidgetPath,
-): { readonly line: number; readonly column: number } {
-  if (path.length === 0) {
-    return { line: 1, column: 1 };
+function getNextJsonToken(jsonText: string, start: number): JsonToken | null {
+  let i = start;
+  while (i < jsonText.length && /\s/.test(jsonText[i]!)) {
+    i++;
   }
+  if (i >= jsonText.length) return null;
 
-  const getNextToken = (
-    start: number,
-  ): {
-    readonly type:
-      | 'key'
-      | 'value'
-      | 'openBrace'
-      | 'closeBrace'
-      | 'openBracket'
-      | 'closeBracket'
-      | 'colon'
-      | 'comma';
-    readonly value: string;
-    readonly pos: number;
-    readonly length: number;
-  } | null => {
-    let i = start;
-    while (i < jsonText.length && /\s/.test(jsonText[i]!)) {
-      i++;
-    }
-    if (i >= jsonText.length) return null;
+  const char = jsonText[i]!;
+  if (char === '{') return { type: 'openBrace', value: '{', pos: i, length: 1 };
+  if (char === '}') return { type: 'closeBrace', value: '}', pos: i, length: 1 };
+  if (char === '[') return { type: 'openBracket', value: '[', pos: i, length: 1 };
+  if (char === ']') return { type: 'closeBracket', value: ']', pos: i, length: 1 };
+  if (char === ':') return { type: 'colon', value: ':', pos: i, length: 1 };
+  if (char === ',') return { type: 'comma', value: ',', pos: i, length: 1 };
 
-    const char = jsonText[i]!;
-    if (char === '{') return { type: 'openBrace', value: '{', pos: i, length: 1 };
-    if (char === '}') return { type: 'closeBrace', value: '}', pos: i, length: 1 };
-    if (char === '[') return { type: 'openBracket', value: '[', pos: i, length: 1 };
-    if (char === ']') return { type: 'closeBracket', value: ']', pos: i, length: 1 };
-    if (char === ':') return { type: 'colon', value: ':', pos: i, length: 1 };
-    if (char === ',') return { type: 'comma', value: ',', pos: i, length: 1 };
-
-    if (char === '"') {
-      let val = '';
-      let j = i + 1;
-      while (j < jsonText.length && jsonText[j] !== '"') {
-        if (jsonText[j] === '\\') {
-          val += jsonText[j];
-          j++;
-        }
-        val += jsonText[j]!;
-        j++;
-      }
-      const tokenLength = j < jsonText.length ? j - i + 1 : j - i;
-      return { type: 'key', value: val, pos: i, length: tokenLength };
-    }
-
+  if (char === '"') {
     let val = '';
-    let j = i;
-    while (j < jsonText.length && /[a-zA-Z0-9.-]/.test(jsonText[j]!)) {
-      val += jsonText[j]!;
+    let j = i + 1;
+    while (j < jsonText.length) {
+      const current = jsonText[j]!;
+      if (current === '"') break;
+
+      if (current === '\\' && j + 1 < jsonText.length) {
+        val += current + jsonText[j + 1]!;
+        j += 2;
+        continue;
+      }
+
+      val += current;
       j++;
     }
-    return { type: 'value', value: val, pos: i, length: j - i };
+    const tokenLength = j < jsonText.length ? j - i + 1 : j - i;
+    return { type: 'key', value: val, pos: i, length: tokenLength };
+  }
+
+  let val = '';
+  let j = i;
+  while (j < jsonText.length && /[a-zA-Z0-9.-]/.test(jsonText[j]!)) {
+    val += jsonText[j]!;
+    j++;
+  }
+  if (j === i) {
+    return { type: 'value', value: char, pos: i, length: 1 };
+  }
+
+  return { type: 'value', value: val, pos: i, length: j - i };
+}
+
+function offsetToLineColumn(
+  jsonText: string,
+  offset: number,
+): { readonly line: number; readonly column: number } {
+  const textBefore = jsonText.substring(0, offset);
+  const lines = textBefore.split('\n');
+  return {
+    line: lines.length,
+    column: lines[lines.length - 1]!.length + 1,
   };
+}
+
+function findMatchingObjectEndOffset(jsonText: string, startOffset: number): number | null {
+  const startToken = getNextJsonToken(jsonText, startOffset);
+  if (!startToken || startToken.type !== 'openBrace') return null;
+
+  let currentPos = startToken.pos;
+  let braceLevel = 0;
+  while (currentPos < jsonText.length) {
+    const token = getNextJsonToken(jsonText, currentPos);
+    if (!token) break;
+
+    if (token.type === 'openBrace') {
+      braceLevel++;
+    } else if (token.type === 'closeBrace') {
+      braceLevel--;
+      if (braceLevel === 0) {
+        return token.pos + token.length;
+      }
+    }
+
+    currentPos = token.pos + token.length;
+  }
+
+  return null;
+}
+
+function findObjectStartOffsetForPath(jsonText: string, path: WidgetPath): number | null {
+  if (path.length === 0) {
+    const token = getNextJsonToken(jsonText, 0);
+    return token?.type === 'openBrace' ? token.pos : null;
+  }
 
   let currentPos = 0;
   for (const entry of path) {
@@ -119,25 +164,45 @@ export function findLineAndColumnForPath(
     let braceLevel = 0;
     let bracketLevel = 0;
     let foundKeyPos = -1;
+    let argsBraceLevel: number | null = null;
+    let pendingArgsObject = false;
 
     while (true) {
-      const token = getNextToken(currentPos);
+      const token = getNextJsonToken(jsonText, currentPos);
       if (!token) break;
 
       if (token.type === 'openBrace') {
         braceLevel++;
+        if (pendingArgsObject) {
+          argsBraceLevel = braceLevel;
+          pendingArgsObject = false;
+        }
       } else if (token.type === 'closeBrace') {
+        if (argsBraceLevel === braceLevel) {
+          argsBraceLevel = null;
+        }
         braceLevel--;
         if (braceLevel < 0) break;
       } else if (token.type === 'openBracket') {
         bracketLevel++;
       } else if (token.type === 'closeBracket') {
         bracketLevel--;
-      } else if (token.type === 'key' && braceLevel === 1 && bracketLevel === 0) {
+      } else if (token.type === 'key' && bracketLevel === 0) {
+        const isDirectWidgetKey = braceLevel === 1;
+        const isJdwArgsKey = argsBraceLevel !== null && braceLevel === argsBraceLevel;
+
+        if (isDirectWidgetKey && token.value === 'args') {
+          pendingArgsObject = true;
+        }
+
+        if (!isDirectWidgetKey && !isJdwArgsKey) {
+          currentPos = token.pos + token.length;
+          continue;
+        }
+
         if (token.value === targetKey) {
           foundKeyPos = token.pos;
-          const nextColonPos = token.pos + token.length;
-          const nextColon = getNextToken(nextColonPos);
+          const nextColon = getNextJsonToken(jsonText, token.pos + token.length);
           if (nextColon && nextColon.type === 'colon') {
             currentPos = nextColon.pos + nextColon.length;
           }
@@ -149,12 +214,12 @@ export function findLineAndColumnForPath(
     }
 
     if (foundKeyPos === -1) {
-      return { line: 1, column: 1 };
+      return null;
     }
 
     if (entry.kind === 'children') {
-      const nextBracket = getNextToken(currentPos);
-      if (!nextBracket || nextBracket.type !== 'openBracket') return { line: 1, column: 1 };
+      const nextBracket = getNextJsonToken(jsonText, currentPos);
+      if (!nextBracket || nextBracket.type !== 'openBracket') return null;
 
       currentPos = nextBracket.pos + nextBracket.length;
       let currentIndex = 0;
@@ -163,15 +228,13 @@ export function findLineAndColumnForPath(
       let foundObjPos = -1;
 
       while (true) {
-        const token = getNextToken(currentPos);
+        const token = getNextJsonToken(jsonText, currentPos);
         if (!token) break;
 
         if (token.type === 'openBrace') {
-          if (arrayBraceLevel === 0 && arrayBracketLevel === 0) {
-            if (currentIndex === entry.index) {
-              foundObjPos = token.pos;
-              break;
-            }
+          if (arrayBraceLevel === 0 && arrayBracketLevel === 0 && currentIndex === entry.index) {
+            foundObjPos = token.pos;
+            break;
           }
           arrayBraceLevel++;
         } else if (token.type === 'closeBrace') {
@@ -189,20 +252,48 @@ export function findLineAndColumnForPath(
         currentPos = token.pos + token.length;
       }
 
-      if (foundObjPos === -1) return { line: 1, column: 1 };
+      if (foundObjPos === -1) return null;
       currentPos = foundObjPos;
     } else if (entry.kind === 'child') {
-      const nextBrace = getNextToken(currentPos);
-      if (!nextBrace || nextBrace.type !== 'openBrace') return { line: 1, column: 1 };
+      const nextBrace = getNextJsonToken(jsonText, currentPos);
+      if (!nextBrace || nextBrace.type !== 'openBrace') return null;
       currentPos = nextBrace.pos;
     }
   }
 
-  const textBefore = jsonText.substring(0, currentPos);
-  const lines = textBefore.split('\n');
+  return currentPos;
+}
+
+export function findSourceRangeForPath(
+  jsonText: string,
+  path: WidgetPath,
+): WidgetSourceRange | null {
+  const startOffset = findObjectStartOffsetForPath(jsonText, path);
+  if (startOffset === null) return null;
+
+  const endOffset = findMatchingObjectEndOffset(jsonText, startOffset);
+  if (endOffset === null) return null;
+
+  const start = offsetToLineColumn(jsonText, startOffset);
+  const end = offsetToLineColumn(jsonText, endOffset);
   return {
-    line: lines.length,
-    column: lines[lines.length - 1]!.length + 1,
+    startLineNumber: start.line,
+    startColumn: start.column,
+    endLineNumber: end.line,
+    endColumn: end.column,
+  };
+}
+
+export function findLineAndColumnForPath(
+  jsonText: string,
+  path: WidgetPath,
+): { readonly line: number; readonly column: number } {
+  const range = findSourceRangeForPath(jsonText, path);
+  if (!range) return { line: 1, column: 1 };
+
+  return {
+    line: range.startLineNumber,
+    column: range.startColumn,
   };
 }
 
@@ -220,60 +311,6 @@ export function findPathForLineAndColumn(
   }
   targetOffset += targetColumn - 1;
 
-  const getNextToken = (
-    start: number,
-  ): {
-    readonly type:
-      | 'key'
-      | 'value'
-      | 'openBrace'
-      | 'closeBrace'
-      | 'openBracket'
-      | 'closeBracket'
-      | 'colon'
-      | 'comma';
-    readonly value: string;
-    readonly pos: number;
-    readonly length: number;
-  } | null => {
-    let i = start;
-    while (i < jsonText.length && /\s/.test(jsonText[i]!)) {
-      i++;
-    }
-    if (i >= jsonText.length) return null;
-
-    const char = jsonText[i]!;
-    if (char === '{') return { type: 'openBrace', value: '{', pos: i, length: 1 };
-    if (char === '}') return { type: 'closeBrace', value: '}', pos: i, length: 1 };
-    if (char === '[') return { type: 'openBracket', value: '[', pos: i, length: 1 };
-    if (char === ']') return { type: 'closeBracket', value: ']', pos: i, length: 1 };
-    if (char === ':') return { type: 'colon', value: ':', pos: i, length: 1 };
-    if (char === ',') return { type: 'comma', value: ',', pos: i, length: 1 };
-
-    if (char === '"') {
-      let val = '';
-      let j = i + 1;
-      while (j < jsonText.length && jsonText[j] !== '"') {
-        if (jsonText[j] === '\\') {
-          val += jsonText[j];
-          j++;
-        }
-        val += jsonText[j]!;
-        j++;
-      }
-      const tokenLength = j < jsonText.length ? j - i + 1 : j - i;
-      return { type: 'key', value: val, pos: i, length: tokenLength };
-    }
-
-    let val = '';
-    let j = i;
-    while (j < jsonText.length && /[a-zA-Z0-9.-]/.test(jsonText[j]!)) {
-      val += jsonText[j]!;
-      j++;
-    }
-    return { type: 'value', value: val, pos: i, length: j - i };
-  };
-
   interface StackEntry {
     readonly type: 'object' | 'array';
     readonly path: readonly WidgetPathSegment[];
@@ -287,7 +324,7 @@ export function findPathForLineAndColumn(
   let lastFoundPath: readonly WidgetPathSegment[] | null = null;
 
   while (currentPos < jsonText.length) {
-    const token = getNextToken(currentPos);
+    const token = getNextJsonToken(jsonText, currentPos);
     if (!token) break;
 
     if (token.pos > targetOffset) {

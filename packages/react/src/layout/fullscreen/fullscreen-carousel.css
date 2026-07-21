@@ -1,0 +1,20 @@
+.ui-workbench-fullscreen-carousel {
+  display: grid;
+  flex: 0 0 auto;
+  align-items: center;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 12px;
+  min-height: 234px;
+  padding: 8px clamp(12px, 4vw, 48px) 30px;
+}
+
+.ui-workbench-fullscreen-carousel__viewport {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  gap: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 12px 4px;
+  scroll-snap-type: x proximity;
+}

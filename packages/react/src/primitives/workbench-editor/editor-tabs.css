@@ -1,0 +1,201 @@
+.ui-editor-tabs {
+  box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 35px;
+  overflow: hidden;
+  background: var(--vscode-editorGroupHeader-tabsBackground, var(--color-editor-tab-strip-bg));
+  border-bottom: 1px solid var(--vscode-editorGroupHeader-border, var(--color-border));
+}
+
+.ui-editor-tabs__scroller {
+  display: flex;
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.ui-editor-tabs__tab {
+  --ui-editor-tabs-active-border: var(
+    --vscode-tab-activeBorderTop,
+    var(--vscode-focusBorder, var(--color-focus-border, var(--color-accent)))
+  );
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 96px;
+  max-width: 240px;
+  min-height: 35px;
+  padding: 0 8px 0 10px;
+  color: var(--vscode-tab-inactiveForeground, var(--color-text-muted));
+  background: var(--vscode-tab-inactiveBackground, var(--color-editor-tab-inactive-bg));
+  border-right: 1px solid
+    color-mix(in srgb, var(--vscode-tab-border, var(--color-border)) 88%, transparent);
+  font: inherit;
+  font-size: var(--font-size-sm, 13px);
+  line-height: 20px;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.ui-editor-tabs__tab::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  content: '';
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.ui-editor-tabs__tab:hover {
+  color: var(--vscode-tab-hoverForeground, var(--vscode-tab-activeForeground, var(--color-text)));
+  background: var(--vscode-tab-hoverBackground, var(--color-surface-hover));
+}
+
+.ui-editor-tabs__tab:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -1px;
+}
+
+.ui-editor-tabs__tab--active {
+  color: var(--vscode-tab-activeForeground, var(--color-text));
+  background: var(--vscode-tab-activeBackground, var(--color-editor-tab-active-bg));
+  margin-bottom: -1px;
+  border-bottom: 1px solid var(--vscode-editor-background, var(--color-editor-tab-active-bg));
+  font-weight: 500;
+  z-index: 1;
+}
+
+.ui-editor-tabs__tab--active::before {
+  background: var(--ui-editor-tabs-active-border);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ui-editor-tabs-active-border) 28%, transparent);
+}
+
+.ui-editor-tabs__tab--preview .ui-editor-tabs__label {
+  font-style: italic;
+  opacity: 0.92;
+}
+
+.ui-editor-tabs__tab[data-drop-position]::after {
+  position: absolute;
+  inset-block: 4px;
+  z-index: 1;
+  width: 2px;
+  content: '';
+  background: var(--vscode-focusBorder, var(--color-focus-border));
+  border-radius: 1px;
+}
+
+.ui-editor-tabs__tab[data-drop-position='before']::after {
+  left: 0;
+}
+
+.ui-editor-tabs__tab[data-drop-position='after']::after {
+  right: 0;
+}
+
+.ui-editor-tabs__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-editor-tabs__icon-slot {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--vscode-foreground, var(--color-text)) 8%, transparent);
+}
+
+.ui-editor-tabs__file-icon {
+  flex: 0 0 auto;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.92;
+  transition: opacity 120ms ease;
+}
+
+.ui-editor-tabs__image-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ui-editor-tabs__file-icon:not([data-file-kind]) {
+  color: var(--vscode-icon-foreground, var(--color-icon));
+}
+
+.ui-editor-tabs__tab--active .ui-editor-tabs__file-icon,
+.ui-editor-tabs__tab:hover .ui-editor-tabs__file-icon {
+  opacity: 1;
+}
+
+.ui-editor-tabs__status-icon {
+  flex: 0 0 auto;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: 14px;
+  opacity: 0.82;
+}
+
+.ui-editor-tabs__tab--active .ui-editor-tabs__status-icon {
+  color: var(--vscode-tab-activeForeground, var(--color-text));
+  opacity: 0.9;
+}
+
+.ui-editor-tabs__dirty {
+  flex: 0 0 auto;
+  width: 14px;
+  color: var(--ui-editor-tabs-active-border);
+  font-size: 16px;
+  line-height: 1;
+  text-align: center;
+}
+
+.ui-editor-tabs__close {
+  flex: 0 0 auto;
+  margin-left: 0;
+  color: var(--vscode-tab-inactiveForeground, var(--color-text-muted));
+  background: transparent;
+  opacity: 0.74;
+}
+
+.ui-editor-tabs__tab:not(:hover):not(:focus-within):not(.ui-editor-tabs__tab--active)
+  .ui-editor-tabs__close {
+  opacity: 0;
+}
+
+.ui-editor-tabs__tab--active .ui-editor-tabs__close,
+.ui-editor-tabs__close:hover,
+.ui-editor-tabs__close:focus-visible {
+  color: var(--vscode-tab-activeForeground, var(--color-text));
+  opacity: 1;
+}
+
+.ui-editor-tabs__new {
+  align-self: center;
+  flex: 0 0 auto;
+  margin: 0 5px;
+  color: var(--vscode-icon-foreground, var(--color-icon));
+}
+
+.ui-editor-tabs__addons {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+}

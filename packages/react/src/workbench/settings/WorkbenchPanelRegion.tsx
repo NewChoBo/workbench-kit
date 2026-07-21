@@ -1,5 +1,5 @@
 import type { ComponentPropsWithRef, ElementType, ReactNode } from 'react';
-import { ScrollArea } from '../../primitives/ScrollArea';
+import { ScrollArea } from '../../primitives/scroll-area';
 import { cx } from '../../utils/cx';
 
 type WorkbenchPanelRegionLayout = 'fill' | 'scroll';

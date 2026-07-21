@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.builtin.chat",
+  "name": "builtin-chat",
+  "displayName": "Chat",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": [
+    "onView:workbench-kit.builtin.chat.chatting",
+    "onView:workbench-kit.builtin.chat.aiChat"
+  ],
+  "contributes": {
+    "viewContainers": {
+      "activitybar": [
+        {
+          "id": "chatting",
+          "title": "Chat",
+          "icon": "comment-discussion",
+          "order": 30
+        },
+        {
+          "id": "aiChat",
+          "title": "AI Chat",
+          "icon": "sparkle",
+          "order": 40
+        }
+      ]
+    },
+    "activities": [
+      {
+        "id": "workbench-kit.builtin.chat.chatting.activity",
+        "viewContainerId": "chatting",
+        "icon": "comment-discussion",
+        "title": "Chat",
+        "order": 30,
+        "when": "workbench.permissions.canUseChat"
+      },
+      {
+        "id": "workbench-kit.builtin.chat.aiChat.activity",
+        "viewContainerId": "aiChat",
+        "icon": "sparkle",
+        "title": "AI Chat",
+        "order": 40,
+        "when": "workbench.permissions.canUseChat"
+      }
+    ],
+    "views": {
+      "chatting": [
+        {
+          "id": "workbench-kit.builtin.chat.chatting",
+          "name": "Chat"
+        }
+      ],
+      "aiChat": [
+        {
+          "id": "workbench-kit.builtin.chat.aiChat",
+          "name": "AI Chat"
+        }
+      ]
+    }
+  }
+}

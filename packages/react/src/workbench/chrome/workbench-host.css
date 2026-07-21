@@ -1,0 +1,85 @@
+.ui-workbench-host-document,
+.ui-workbench-host,
+.ui-workbench-host-root {
+  width: 100%;
+  height: 100%;
+}
+
+.ui-workbench-host {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  color: var(--vscode-foreground, var(--color-text));
+  background: var(--vscode-editor-background, var(--color-bg));
+  font-family: var(--vscode-font-family, var(--font-family, system-ui, sans-serif));
+  font-size: var(--vscode-font-size, var(--font-size-base));
+}
+
+.ui-workbench-host-root {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 100%;
+}
+
+.ui-workbench-host-root .ide-root {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ide-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-size: var(--font-size-base);
+  user-select: none;
+}
+
+.ide-root
+  :where(
+    input,
+    textarea,
+    select,
+    .message__bubble,
+    .md-content,
+    .workspace-editor__monaco,
+    .workspace-editor__monaco *
+  ) {
+  user-select: text;
+}
+
+.ide-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.ide-workbench-surface {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+ * Keep the host inert: popovers/modals opt in via their own surfaces
+ * (e.g. .ui-modal-overlay fills the layer). Enabling pointer-events on the
+ * host whenever it is non-empty turns empty space into a full-workbench
+ * click shield and breaks focus for portaled filter/search inputs.
+ */
+.ide-workbench-overlays {
+  position: absolute;
+  inset: 0;
+  z-index: var(--ui-modal-z-index, 200);
+  pointer-events: none;
+}
+
+.workbench-modal-portal-host {
+  display: contents;
+}

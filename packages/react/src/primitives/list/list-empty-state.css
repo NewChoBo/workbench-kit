@@ -1,0 +1,10 @@
+.ui-list-empty-state {
+  padding: 8px 12px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  word-break: break-word;
+}
+
+.ui-list-empty-state--error {
+  color: var(--color-error);
+}

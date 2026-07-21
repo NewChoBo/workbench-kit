@@ -1,0 +1,14 @@
+.ui-workbench-canvas-selection-marquee {
+  position: absolute;
+  left: var(--ui-workbench-canvas-selection-marquee-x, 0);
+  top: var(--ui-workbench-canvas-selection-marquee-y, 0);
+  width: var(--ui-workbench-canvas-selection-marquee-width, auto);
+  height: var(--ui-workbench-canvas-selection-marquee-height, auto);
+  background: color-mix(
+    in srgb,
+    var(--vscode-focusBorder, var(--color-focus-border)) 12%,
+    transparent
+  );
+  border: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  pointer-events: none;
+}

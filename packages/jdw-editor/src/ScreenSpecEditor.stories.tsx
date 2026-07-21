@@ -1,84 +1,28 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
-import { screenColumn, screenText, type JdwScreenSpec } from '@workbench-kit/jdw';
+import { expect, within } from 'storybook/test';
 
-import { JdwPreview } from '@workbench-kit/react/jdw/preview';
-import { JDW_SAMPLE_SCREENS } from '@workbench-kit/react/jdw/samples';
-
-import { ScreenSpecEditor } from './ScreenSpecEditor.js';
-import { useScreenSpecPipeline } from './useScreenSpecPipeline.js';
-
-function ScreenSpecEditorHarness({ sampleId = 'user-profile' }: { readonly sampleId?: string }) {
-  const sample =
-    JDW_SAMPLE_SCREENS.find((entry) => entry.id === sampleId) ?? JDW_SAMPLE_SCREENS[0]!;
-  const pipeline = useScreenSpecPipeline(sample);
-
-  return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: 16,
-        minHeight: 520,
-      }}
-    >
-      <ScreenSpecEditor value={pipeline.spec} onChange={pipeline.setSpec} />
-      <JdwPreview json={pipeline.json} layoutConstraints={pipeline.layoutConstraints} />
-    </div>
-  );
-}
-
-function PlaygroundHarness() {
-  const [spec, setSpec] = useState<JdwScreenSpec>(() => ({
-    id: 'playground',
-    title: 'Playground',
-    description: 'Standalone screen spec editor',
-    frameWidth: 360,
-    layout: { maxWidth: 360, maxHeight: 200 },
-    root: screenColumn(
-      [screenText('Editable headline', { fontSize: 20 }), screenText('Supporting copy')],
-      { gap: 8, padding: 16 },
-    ),
-  }));
-  const pipeline = useScreenSpecPipeline(spec);
-
-  return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: 16,
-        minHeight: 520,
-      }}
-    >
-      <ScreenSpecEditor
-        value={pipeline.spec}
-        onChange={(nextSpec) => {
-          setSpec(nextSpec);
-          pipeline.setSpec(nextSpec);
-        }}
-      />
-      <JdwPreview json={pipeline.json} layoutConstraints={pipeline.layoutConstraints} />
-    </div>
-  );
-}
+import { JdwSampleScreenExplorer } from './JdwSampleScreenExplorer.js';
 
 const meta = {
-  title: 'JDW/ScreenSpecEditor',
+  title: 'JDW/WidgetTree/Template Scaffold',
+  component: JdwSampleScreenExplorer,
   parameters: {
-    layout: 'padded',
-    backgrounds: { default: 'dark' },
+    layout: 'fullscreen',
   },
-} satisfies Meta;
+} satisfies Meta<typeof JdwSampleScreenExplorer>;
 
 export default meta;
 
-type Story = StoryObj;
+type Story = StoryObj<typeof meta>;
 
-export const UserProfileSample: Story = {
-  render: () => <ScreenSpecEditorHarness sampleId="user-profile" />,
-};
-
-export const Playground: Story = {
-  render: () => <PlaygroundHarness />,
+export const CompileThenAuthor: Story = {
+  name: 'Compile then author',
+  tags: ['storybook-play-baseline'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByTestId('jdw-sample-screen-select')).toBeInTheDocument();
+    await expect(canvas.getByTestId('widget-tree-lab')).toBeInTheDocument();
+    await expect(canvas.getByTestId('widget-asset-screen-spec.text')).toBeInTheDocument();
+    await expect(canvas.queryByTestId('screen-spec-editor')).not.toBeInTheDocument();
+  },
 };

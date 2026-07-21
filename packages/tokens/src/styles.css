@@ -1,3 +1,7 @@
+@import './file-icons.css';
+@import './theme-presets.css';
+@import './shell-presets.css';
+
 :root,
 [data-theme='dark'] {
   --color-bg: #0d1117;
@@ -15,6 +19,9 @@
   --color-accent-hover: #388bfd;
   --color-accent-foreground: #ffffff;
   --color-focus-border: #2f81f7;
+  --color-input-bg: var(--color-surface-elevated);
+  --color-input-border: var(--color-border);
+  --color-input-text: var(--color-text);
   --color-danger: #da3633;
   --color-danger-hover: #f85149;
   --file-icon-archive: #a9b4c0;
@@ -59,6 +66,9 @@
   --color-accent-hover: #0860ca;
   --color-accent-foreground: #ffffff;
   --color-focus-border: #0969da;
+  --color-input-bg: var(--color-surface-elevated);
+  --color-input-border: var(--color-border);
+  --color-input-text: var(--color-text);
   --color-danger: #cf222e;
   --color-danger-hover: #a40e26;
   --file-icon-archive: #57606a;
@@ -88,13 +98,48 @@
 }
 
 :root {
-  --radius-sm: 6px;
-  --radius-md: 12px;
+  --font-size-xs: 0.75rem;
   --font-size-sm: 0.8125rem;
   --font-size-base: 0.875rem;
-  --workbench-header-height: 35px;
+  --font-size-lg: 1rem;
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --panel-header-height: var(--workbench-header-height);
+  --control-padding-x-sm: 8px;
+  --control-padding-x-md: 10px;
+  --control-padding-x-lg: 12px;
+  --ui-button-height-default: var(--control-height-sm);
+  --ui-button-height-compact: var(--control-height-xs);
+  --ui-button-padding-x: var(--control-padding-x-md);
+  --ui-button-padding-x-compact: var(--control-padding-x-sm);
+  --ui-icon-button-size-default: var(--control-height-sm);
+  --ui-icon-button-size-compact: var(--control-height-xxs);
+  --ui-input-height-default: var(--control-height-sm);
+  --ui-input-padding-x: var(--control-padding-x-sm);
+  --ui-checkbox-size-default: 16px;
+  --ui-checkbox-border-radius: 2px;
+  --workbench-filter-chip-height: var(--control-height-xxs);
+  --workbench-context-menu-item-height: var(--control-height-sm);
+  --workbench-inline-edit-height: var(--control-height-xxs);
+  --workbench-command-palette-close-size: var(--control-height-md);
+  --workbench-command-palette-input-height: var(--control-height-xl);
+  --workbench-composer-tool-button-size: var(--control-height-sm);
+  --workbench-composer-send-button-size: var(--control-height-md);
+  --workbench-login-input-height: var(--control-height-xl);
+  --workbench-login-button-height: var(--control-height-lg);
   --shadow-md: 0 8px 24px rgb(0 0 0 / 20%);
   --shadow-lg: 0 12px 32px rgb(0 0 0 / 24%);
+
+  /* Editor tab strip — VS Code: strip = inactive tab bg; active tab = editor surface */
+  --color-editor-tab-strip-bg: var(--color-surface);
+  --color-editor-tab-inactive-bg: var(--color-surface);
+  --color-editor-tab-active-bg: var(--color-bg);
+  --vscode-editorGroupHeader-tabsBackground: var(--color-editor-tab-strip-bg);
+  --vscode-editorGroupHeader-border: var(--color-border);
+  --vscode-tab-inactiveBackground: var(--color-editor-tab-inactive-bg);
+  --vscode-tab-activeBackground: var(--color-editor-tab-active-bg);
+  --vscode-editor-background: var(--color-editor-tab-active-bg);
 }
 
 :root,

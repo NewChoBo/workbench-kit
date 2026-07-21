@@ -1,10 +1,11 @@
 # Workbench Sample Host
 
 Frontend-only integration host for Workbench Kit. It composes
-`@workbench-kit/workbench-react`, `@workbench-kit/react`,
+`@workbench-kit/shell-react`, `@workbench-kit/react`,
 `@workbench-kit/workspace`, `@workbench-kit/jdw`, and
-`@workbench-kit/workbench-config` with bundled built-in extensions and reads
-shareable configuration from the repository `.workbench/` directory.
+`@workbench-kit/workbench-config` with bundled built-in extensions, reads
+shareable configuration from the repository `.workbench/` directory, and uses an
+in-browser dummy backend for fixed auth/profile responses.
 
 ## Prerequisites
 
@@ -20,13 +21,58 @@ when extension sources change. The committed generated file is enough for normal
 
 ## Run
 
+Start the sample app:
+
+```powershell
+pnpm dev
+```
+
+This starts only the sample at `http://127.0.0.1:65173/`.
+
+For Storybook:
+
+```powershell
+pnpm dev:storybook
+```
+
+Opens Storybook at `http://127.0.0.1:61009/`. To run the sample and Storybook
+together with Storybook proxied from the sample URL, use:
+
+```powershell
+pnpm dev:all
+```
+
+Then Storybook is also reachable at `http://127.0.0.1:65173/storybook/`.
+
+For the package-scoped sample runner:
+
 ```powershell
 pnpm workbench-sample
 ```
 
-Opens `http://127.0.0.1:5173` with activity bar, explorer sidebar, status bar, and a
-library showcase surface that can open package notes, runtime editor targets, JDW,
-schema, and settings-related workbench slices.
+Opens `http://127.0.0.1:65173` with activity bar, explorer sidebar, status bar, and a
+library showcase surface that can open package notes, runtime editor targets, JDW
+(`jdw/<sample>/*.jdw.json` fixtures for JSON → draw, including `parts/` +
+`composed/` document refs), schema, and settings-related workbench
+slices.
+
+No separate backend process is required by default. The sample auth flow uses a
+dummy backend client (`src/dummy-backend/`) that implements the
+[Sample Host Backend API](../../docs/workbench/sample-host-backend-api.md).
+
+| Endpoint-like action | Route                                    | Fixed behavior (in-memory mode)       |
+| -------------------- | ---------------------------------------- | ------------------------------------- |
+| Session check        | `GET /api/sample-host/v1/auth/session`   | Restores session from browser storage |
+| Login                | `POST /api/sample-host/v1/auth/sign-in`  | Accepts `tester` / `tester`           |
+| Logout               | `POST /api/sample-host/v1/auth/sign-out` | Clears sample session                 |
+| Linked accounts      | Included in authenticated session body   | Fixed GitHub and npm records          |
+
+Optional HTTP mode:
+
+```env
+VITE_SAMPLE_HOST_BACKEND_TRANSPORT=http
+VITE_SAMPLE_HOST_BACKEND_BASE_URL=http://127.0.0.1:8787
+```
 
 ## Validate
 
@@ -46,23 +92,31 @@ pnpm validate
 
 ## Showcase Coverage
 
-| Library                           | Surface in the sample                                      |
-| --------------------------------- | ---------------------------------------------------------- |
-| `@workbench-kit/workbench-react`  | Provider, shell, editor area, status sections              |
-| `@workbench-kit/react`            | Button, Badge, ScrollArea, workbench and JDW React UI      |
-| `@workbench-kit/workspace`        | Virtual workspace host port and explorer/editor state      |
-| `@workbench-kit/jdw`              | Schema imports and `.jdw.json` code/form/preview workflow  |
-| `@workbench-kit/workbench-config` | `.workbench` extension/layout/workspace config parsing     |
-| Built-in extension SDK contracts  | Command, contribution, and settings capability integration |
+| Library                               | Surface in the sample                                                                                          |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `@workbench-kit/shell-react`          | Provider, shell, editor area, status sections                                                                  |
+| `@workbench-kit/react`                | Workbench UI and Widget Tree design/code authoring for compiled JDW documents                                  |
+| `@workbench-kit/workspace`            | Virtual workspace host port and explorer/editor state                                                          |
+| `@workbench-kit/jdw`                  | Schema imports, Screen Spec template compilation, and JDW asset catalog                                        |
+| `@workbench-kit/workbench-config`     | `.workbench` extension/layout/workspace config parsing                                                         |
+| `@workbench-kit/schema-mapper`        | Activity bar **Field Remap** → **A → B**, **T_EVENT → T_SLOT**, etc. (object ports, date/time, convertToShape) |
+| Built-in extension SDK contracts      | Command, contribution, and settings capability integration                                                     |
+| `workbench-kit.samples.jdw`           | Activity bar **JDW Lab** sidebar entry                                                                         |
+| `workbench-kit.samples.schema-mapper` | Sidebar catalog of nested JSON and table-style T_A → T_B remap samples                                         |
 
 ## Scope
 
 This sample stays focused on the standalone workbench host and current library
 integration points. It surfaces editor tabs, workspace initialization, JDW
-code/form/preview behavior, schema documents, settings contributions, package
-showcase notes, and light/dark theme switching in one screen. For integrated
-workspace/chat/editor flows, use Storybook `Integrated Shell`
-(`@workbench-kit/react/workbench/demo`).
+Widget Tree design/code entry points, compiled template documents, schema documents, settings
+contributions, package showcase notes, and light/dark theme switching in one
+screen. For integrated workspace/chat/editor flows, use Storybook
+`React/Workbench/Shell` → `Integrated Shell` (`@workbench-kit/react/workbench/demo`).
+Primary sidebar chrome uses pixel widths; the sample host still persists layout
+percent and maps to pixels at the shell boundary.
 
-See [next-slice-plan.md](../../docs/workbench/next-slice-plan.md) for follow-up slices
-(WB-26 CapabilityRegistry, WB-25 host factories).
+See [Sample Host Backend API](../../docs/workbench/sample-host-backend-api.md)
+for the dummy backend contract,
+[Use Case Scenarios](../../docs/guides/use-cases.md) for integration flows, and
+[Workbench Current State](../../docs/workbench/current-state.md) for the current
+workbench roadmap.

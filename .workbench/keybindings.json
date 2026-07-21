@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "command": "workbench-kit.shell.keybindings.manage",
+    "key": "ctrl+alt+k"
+  },
+  {
+    "command": "workbench-kit.user.open-readme",
+    "key": "ctrl+shift+r"
+  }
+]

@@ -7,8 +7,9 @@
 .ui-workbench-panel-region--scroll {
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  padding: 18px 16px 28px;
+  gap: var(--workbench-panel-section-gap);
+  padding: var(--workbench-panel-padding-block-start) var(--workbench-panel-padding-inline)
+    var(--workbench-panel-padding-block-end);
 }
 
 .ui-workbench-panel-region--fill {

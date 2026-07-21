@@ -1,0 +1,43 @@
+.ui-workbench-property-search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-sizing: border-box;
+  margin: 0 0 12px;
+  padding: 8px 16px;
+  background: var(--vscode-sideBar-background, var(--color-surface));
+  border-bottom: 1px solid var(--vscode-sideBarSectionHeader-border, var(--color-border));
+}
+
+/* WorkbenchPropertySearch composes FilterBar — reset FilterBar chrome so we do not
+   stack a second border/padding that can paint past pane dividers. */
+.ui-filter-bar.ui-workbench-property-search {
+  margin: 0 0 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--vscode-sideBarSectionHeader-border, var(--color-border));
+}
+
+/*
+ * Full-bleed sticky search without negative margins (those escaped bordered panes
+ * and made the search divider look like it pierced Stage | Details splits).
+ */
+.ui-workbench-property-panel:has(> .ui-workbench-property-search) {
+  padding-top: 0;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.ui-workbench-property-panel:has(> .ui-workbench-property-search)
+  > :not(.ui-workbench-property-search) {
+  padding-right: 16px;
+  padding-left: 16px;
+}
+
+.ui-workbench-property-panel:has(> .ui-workbench-property-search)
+  > :last-child:not(.ui-workbench-property-search) {
+  padding-bottom: 16px;
+}
+
+.ui-workbench-property-panel--empty .ui-workbench-property-search {
+  display: none;
+}

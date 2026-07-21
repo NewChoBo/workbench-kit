@@ -2,6 +2,9 @@ export type {
   WidgetInspectorField,
   WidgetInspectorSection,
   WidgetJsonSchema,
+  WidgetMeasureConstraints,
+  WidgetMeasureFunction,
+  WidgetMeasureResult,
   WidgetRegistryContract,
   WidgetTypeDefinition,
   WidgetTypeShape,
@@ -9,7 +12,7 @@ export type {
 
 export { WidgetRegistry, createWidgetRegistry, type WidgetDefinition } from './widget-registry.js';
 
-export type { WidgetPath, WidgetPathSegment } from './path.js';
+export type { WidgetPath, WidgetPathSegment, WidgetSourceRange } from './path.js';
 
 export {
   ROOT_WIDGET_PATH,
@@ -17,6 +20,7 @@ export {
   appendChildrenPath,
   findLineAndColumnForPath,
   findPathForLineAndColumn,
+  findSourceRangeForPath,
   parseWidgetPathKey,
   widgetPathEquals,
   widgetPathKey,
@@ -72,20 +76,65 @@ export {
   layoutWidget,
   type LayoutConstraints,
   type LayoutNodeResult,
+  type LayoutWidgetOptions,
 } from './layout/layout-widget.js';
+
+export {
+  estimateWrappedTextSize,
+  type EstimateWrappedTextSizeInput,
+  type EstimatedTextSize,
+} from './layout/text-metrics.js';
+
+export type {
+  LayoutHitTestResult,
+  LayoutPoint,
+  WidgetDragMappingOptions,
+  WidgetReparentMappingOptions,
+  WidgetResizeHandlePosition,
+  WidgetResizeMappingOptions,
+} from './layout/layout-mapping.js';
+
+export {
+  createWidgetDragPatch,
+  createWidgetReparentPatch,
+  createWidgetResizePatch,
+  findLayoutNodeByPath,
+  hitTestLayoutTree,
+} from './layout/layout-mapping.js';
 
 export type { WidgetPatch } from './widget-patch.js';
 
 export { applyWidgetPatch } from './widget-patch.js';
 
-export type { JsonWidgetNode, ParsedJsonWidgetData } from './jdw-node.js';
+export type {
+  JsonWidgetInvalidation,
+  JsonWidgetListenBinding,
+  JsonWidgetNode,
+  JsonWidgetValueMap,
+  ParsedJsonWidgetData,
+} from './jdw-node.js';
 
 export {
+  collectJsonWidgetChangedValuePaths,
+  collectJsonWidgetInvalidations,
+  collectJsonWidgetListenBindings,
+  collectJsonWidgetValueDependencies,
   formatJsonWidgetData,
   genericWidgetToJdwNode,
+  isJsonWidgetDynamicValueExpression,
   jdwNodeToGenericWidget,
   parseJsonWidgetData,
+  resolveJsonWidgetValues,
 } from './jdw-node.js';
+
+export type {
+  JsonWidgetValueWarehouse,
+  JsonWidgetValueWarehouseFlushEvent,
+  JsonWidgetValueWarehouseListener,
+  JsonWidgetValueWarehouseOptions,
+} from './json-widget-value-warehouse.js';
+
+export { createJsonWidgetValueWarehouse } from './json-widget-value-warehouse.js';
 
 export type { WidgetDocument } from './document.js';
 
@@ -105,8 +154,18 @@ export {
   WORKBENCH_JDW_BUILTIN_TYPES,
   WORKBENCH_KIT_EXTENSION_TYPES,
   WORKBENCH_JDW_KNOWN_TYPES,
+  WORKBENCH_JDW_TYPE_SUPPORT,
+  getWorkbenchJdwTypeSupport,
+  listWorkbenchJdwTypesBySupportLevel,
   type WorkbenchJdwKnownType,
+  type WorkbenchJdwSupportLevel,
+  type WorkbenchJdwTypeCategory,
+  type WorkbenchJdwTypeSupport,
 } from './jdw-profile.js';
+export {
+  WORKBENCH_JDW_KNOWN_TYPE_FIXTURES,
+  wrapWorkbenchJdwKnownTypeFixture,
+} from './known-type-fixtures.js';
 export {
   validateJsonWidgetData,
   validateJsonWidgetNode,
@@ -114,7 +173,14 @@ export {
   type ValidateJsonWidgetDataOptions,
   type ValidationIssue,
 } from './validate-json-widget-data.js';
-export { validateWidgetAssetPackage, type ValidatedWidgetAsset } from './validate-widget-asset.js';
+export {
+  validateWidgetAssetPackage,
+  WIDGET_ASSET_LEAF_CONTENT_TYPES,
+  WIDGET_ASSET_CONTAINER_CONTENT_TYPES,
+  type ValidatedWidgetAsset,
+  type WidgetAssetLeafContentType,
+  type WidgetAssetContainerContentType,
+} from './validate-widget-asset.js';
 export {
   WIDGET_ASSET_MANIFEST_FILENAME,
   WIDGET_ASSET_CONTENT_FILENAME,
@@ -139,12 +205,20 @@ export {
   createWidgetAssetCatalog,
   materializeWidgetPlacementAsset,
   mergeWidgetAssetCatalogs,
+  type MaterializeWidgetPlacementAssetOptions,
 } from './widget-placement-asset.js';
 export {
+  mergeWidgetAssetInputs,
+  resolveWidgetAssetContent,
+  type ResolvedWidgetAssetContent,
+} from './widget-asset-inputs.js';
+export {
   assignGridSlot,
+  ensureGridChildPlacements,
   normalizeWidgetForParent,
   normalizeWidgetForPlacementPolicy,
   normalizeWidgetSubtree,
+  reflowGridChildren,
   resolvePlacementPolicy,
   stripExternalPlacement,
   type NormalizeWidgetOptions,
@@ -166,6 +240,11 @@ export {
   screenText,
 } from './screen-spec/builders.js';
 export {
+  createScreenSpecPaletteAssetCatalog,
+  SCREEN_SPEC_PALETTE_ASSETS,
+  type ScreenSpecPaletteWidgetAsset,
+} from './screen-spec/assets.js';
+export {
   compileScreenNode,
   compileScreenSpecToJdwNode,
   compileScreenSpecToJson,
@@ -177,22 +256,51 @@ export {
   type ParsedScreenSpec,
 } from './screen-spec/parse.js';
 export {
+  createDefaultScreenNode,
+  formatScreenSpecJson,
   getScreenNodeAt,
+  insertScreenNodeAt,
+  isScreenContainerNode,
   listScreenSpecOutline,
+  removeScreenNodeAt,
+  resolveScreenInsertParentPath,
+  screenNodePathToWidgetPath,
   updateScreenNodeAt,
   updateScreenSpecMetadata,
+  widgetPathToScreenNodePath,
+  type InsertScreenNodeResult,
+  type RemoveScreenNodeResult,
   type ScreenNodePath,
+  type ScreenPaletteKind,
   type ScreenSpecOutlineEntry,
 } from './screen-spec/tree.js';
 
 export type {
+  CreateWidgetAssetCatalogFromJdwDocumentsOptions,
   CreateWidgetAssetDocumentOptions,
   WidgetAssetDocument,
   WorkspaceAssetFileRef,
 } from './widget-asset-file.js';
 export {
   EMPTY_WIDGET_ASSET_DOCUMENT,
+  createWidgetAssetCatalogFromJdwDocuments,
   createWidgetAssetCatalogFromWorkspaceFiles,
   createWidgetAssetDocument,
+  isJdwWorkspaceDocumentPath,
   normalizeWidgetPlacementAsset,
 } from './widget-asset-file.js';
+
+export type {
+  ExpandJsonWidgetDocumentRefsOptions,
+  ExpandJsonWidgetDocumentRefsResult,
+  JsonWidgetDocumentRefIssue,
+  JsonWidgetDocumentRefIssueCode,
+} from './widget-document-ref.js';
+export {
+  expandJsonWidgetDocumentRefs,
+  expandJsonWidgetDocumentRefsFromSource,
+  isCircularJsonWidgetDocumentRefIssue,
+  isJsonWidgetRefNode,
+  joinJsonWidgetDocumentPath,
+  normalizeJsonWidgetDocumentPath,
+} from './widget-document-ref.js';

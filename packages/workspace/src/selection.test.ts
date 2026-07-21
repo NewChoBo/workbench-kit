@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createEmptyWorkspaceSelection,
   getWorkspaceSelectionRange,
   getWorkspaceSelectionActionPaths,
   normalizeWorkspaceSelectionPaths,
   pruneWorkspaceSelection,
+  resolveWorkspaceCreateParentPath,
   updateWorkspaceSelection,
 } from './selection';
 
@@ -26,6 +28,7 @@ describe('workspace selection helpers', () => {
       }),
     ).toEqual({
       anchorPath: 'src/App.tsx',
+      focusedPath: 'src/App.tsx',
       paths: ['src/App.tsx'],
     });
   });
@@ -112,17 +115,33 @@ describe('workspace selection helpers', () => {
     });
   });
 
-  it('prunes deleted paths and recovers the anchor', () => {
+  it('resolves create parent paths from focused folders and files', () => {
+    expect(resolveWorkspaceCreateParentPath('src/components', ['src', 'src/components'])).toEqual(
+      'src/components',
+    );
+    expect(resolveWorkspaceCreateParentPath('src/App.tsx', ['src', 'src/components'])).toEqual(
+      'src',
+    );
+    expect(resolveWorkspaceCreateParentPath(undefined, ['src'])).toEqual('');
+  });
+
+  it('clears explorer focus with an empty selection helper', () => {
+    expect(createEmptyWorkspaceSelection()).toEqual({ paths: [] });
+  });
+
+  it('prunes deleted paths and recovers the anchor and focus', () => {
     expect(
       pruneWorkspaceSelection(
         {
           anchorPath: 'src/Card.tsx',
+          focusedPath: 'src/Card.tsx',
           paths: ['README.md', 'src/Card.tsx', 'missing.ts'],
         },
         ['README.md', 'src/App.tsx'],
       ),
     ).toEqual({
       anchorPath: 'README.md',
+      focusedPath: 'README.md',
       paths: ['README.md'],
     });
   });
