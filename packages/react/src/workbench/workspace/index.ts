@@ -150,16 +150,20 @@ export { useWorkspaceExplorerController } from './useWorkspaceExplorerController
 export type {
   UseWorkspaceExplorerControllerOptions,
   WorkspaceExplorerController,
+  WorkspaceExplorerInlineEditMessages,
 } from './useWorkspaceExplorerController';
 export {
   applyWorkspaceExplorerFolderFocus,
   applyWorkspaceExplorerMutationResult,
   createWorkspaceExplorerInlineEditDraft,
   createWorkspaceExplorerRenameDraft,
+  DEFAULT_WORKSPACE_EXPLORER_MUTATION_DENIED_MESSAGE,
+  resolveWorkspaceExplorerMutationDeniedMessage,
   workspaceExplorerParentPaths,
 } from './workspaceExplorerController';
 export type {
   WorkspaceExplorerControllerPort,
+  WorkspaceExplorerMutationAction,
   WorkspaceExplorerMutationResult,
   WorkspaceExplorerWorkspaceSnapshot,
 } from './workspaceExplorerController';

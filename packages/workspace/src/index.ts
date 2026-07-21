@@ -86,6 +86,7 @@ export {
   type VirtualFileOrigin,
 } from './virtual-file-adapter';
 export {
+  applyWorkspaceFolderMove,
   getAvailableWorkspaceEntryName,
   getWorkspaceFileMovePlan,
   getWorkspaceEntryMovePlan,

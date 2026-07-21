@@ -23,16 +23,26 @@ import {
   createWorkspaceExplorerRenameDraft,
   isWorkspaceExplorerCreatePathAvailable,
   isWorkspaceExplorerRenamePathAvailable,
+  resolveWorkspaceExplorerMutationDeniedMessage,
   validateWorkspaceExplorerInlineEditName,
   workspaceExplorerParentPaths,
   type WorkspaceExplorerControllerPort,
+  type WorkspaceExplorerMutationAction,
 } from './workspaceExplorerController';
+
+export interface WorkspaceExplorerInlineEditMessages {
+  alreadyExists?: (name: string) => string;
+  createFailed?: string;
+  invalidName?: string;
+  renameFailed?: string;
+}
 
 export interface UseWorkspaceExplorerControllerOptions {
   activePath?: string | undefined;
   expandedPaths?: Set<string> | undefined;
   initialExpandedPaths?: Iterable<string> | undefined;
   initialSelection?: WorkspaceSelectionState | undefined;
+  inlineEditMessages?: WorkspaceExplorerInlineEditMessages | undefined;
   mapRenameSelection?: (
     selection: WorkspaceSelectionState,
     input: { destinationPath: string; kind: 'file' | 'folder'; sourcePath: string },
@@ -76,11 +86,17 @@ export interface WorkspaceExplorerController {
   startRename: (node: WorkspaceTreeNode, actionPaths?: readonly string[]) => void;
 }
 
+const DEFAULT_ALREADY_EXISTS = (name: string) => `${name} already exists.`;
+const DEFAULT_CREATE_FAILED = 'Could not create the workspace item.';
+const DEFAULT_INVALID_NAME = 'Use a simple file or folder name.';
+const DEFAULT_RENAME_FAILED = 'Could not rename the workspace item.';
+
 export function useWorkspaceExplorerController({
   activePath,
   expandedPaths: expandedPathsProp,
   initialExpandedPaths,
   initialSelection,
+  inlineEditMessages,
   mapRenameSelection,
   onRequestDelete,
   onSelectionChange,
@@ -98,6 +114,11 @@ export function useWorkspaceExplorerController({
   const [selection, setSelection] = useState<WorkspaceSelectionState>(
     initialSelection ?? { paths: [] },
   );
+
+  const invalidNameMessage = inlineEditMessages?.invalidName ?? DEFAULT_INVALID_NAME;
+  const alreadyExistsMessage = inlineEditMessages?.alreadyExists ?? DEFAULT_ALREADY_EXISTS;
+  const createFailedMessage = inlineEditMessages?.createFailed ?? DEFAULT_CREATE_FAILED;
+  const renameFailedMessage = inlineEditMessages?.renameFailed ?? DEFAULT_RENAME_FAILED;
 
   /** Host/API draft replacement — always opens the commit gate for the next attempt. */
   const setInlineEdit = useCallback((edit: WorkspaceExplorerInlineEditState | undefined) => {
@@ -182,25 +203,44 @@ export function useWorkspaceExplorerController({
     [port],
   );
 
+  const mutationDeniedMessage = useCallback(
+    (path: string, action: WorkspaceExplorerMutationAction): string | undefined =>
+      resolveWorkspaceExplorerMutationDeniedMessage(port.canMutatePath?.(path, action)),
+    [port],
+  );
+
   const startCreate = useCallback(
     (
       kind: Extract<WorkspaceExplorerInlineEditKind, 'create-file' | 'create-folder'>,
       parentPath = '',
     ) => {
+      const denied = mutationDeniedMessage(parentPath, 'create');
+      if (denied) {
+        port.reportError?.(denied);
+        return;
+      }
+
       if (parentPath) {
         revealFolder(parentPath);
       }
 
       setInlineEdit(createWorkspaceExplorerInlineEditDraft(snapshot, kind, parentPath));
     },
-    [revealFolder, setInlineEdit, snapshot],
+    [mutationDeniedMessage, port, revealFolder, setInlineEdit, snapshot],
   );
 
   const startRename = useCallback(
     (node: WorkspaceTreeNode, actionPaths: readonly string[] = [node.path]) => {
+      const targetPath = actionPaths[0] ?? node.path;
+      const denied = mutationDeniedMessage(targetPath, 'rename');
+      if (denied) {
+        port.reportError?.(denied);
+        return;
+      }
+
       setInlineEdit(createWorkspaceExplorerRenameDraft(node, actionPaths));
     },
-    [setInlineEdit],
+    [mutationDeniedMessage, port, setInlineEdit],
   );
 
   const handleInlineEditCommit = useCallback(
@@ -213,7 +253,7 @@ export function useWorkspaceExplorerController({
 
       void (async () => {
         const name = value.trim();
-        const nameError = validateWorkspaceExplorerInlineEditName(name);
+        const nameError = validateWorkspaceExplorerInlineEditName(name, invalidNameMessage);
         if (nameError) {
           reportInlineEditError(edit, nameError);
           return;
@@ -221,8 +261,14 @@ export function useWorkspaceExplorerController({
 
         if (edit.kind === 'create-file' || edit.kind === 'create-folder') {
           const parentPath = edit.parentPath ?? '';
+          const createDenied = mutationDeniedMessage(parentPath, 'create');
+          if (createDenied) {
+            reportInlineEditError(edit, createDenied);
+            return;
+          }
+
           if (!isWorkspaceExplorerCreatePathAvailable(snapshot, parentPath, name)) {
-            reportInlineEditError(edit, `${name} already exists.`);
+            reportInlineEditError(edit, alreadyExistsMessage(name));
             return;
           }
 
@@ -239,16 +285,21 @@ export function useWorkspaceExplorerController({
             }
             applyWorkspaceExplorerMutationResult(result, setSelection);
           } catch (error) {
-            const message =
-              error instanceof Error ? error.message : 'Could not create the workspace item.';
+            const message = error instanceof Error ? error.message : createFailedMessage;
             reportInlineEditError(edit, message);
           }
           return;
         }
 
         const sourcePath = edit.path ?? '';
+        const renameDenied = mutationDeniedMessage(sourcePath, 'rename');
+        if (renameDenied) {
+          reportInlineEditError(edit, renameDenied);
+          return;
+        }
+
         if (!isWorkspaceExplorerRenamePathAvailable(snapshot, sourcePath, name)) {
-          reportInlineEditError(edit, `${name} already exists.`);
+          reportInlineEditError(edit, alreadyExistsMessage(name));
           return;
         }
 
@@ -284,13 +335,23 @@ export function useWorkspaceExplorerController({
 
           applyWorkspaceExplorerMutationResult(result, setSelection);
         } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'Could not rename the workspace item.';
+          const message = error instanceof Error ? error.message : renameFailedMessage;
           reportInlineEditError(edit, message);
         }
       })();
     },
-    [clearInlineEdit, mapRenameSelection, port, reportInlineEditError, snapshot],
+    [
+      alreadyExistsMessage,
+      clearInlineEdit,
+      createFailedMessage,
+      invalidNameMessage,
+      mapRenameSelection,
+      mutationDeniedMessage,
+      port,
+      renameFailedMessage,
+      reportInlineEditError,
+      snapshot,
+    ],
   );
 
   const handleInlineEditValueChange = useCallback(
@@ -339,18 +400,35 @@ export function useWorkspaceExplorerController({
         selection: meta.selection,
         targetPath: meta.node.path,
       });
+
+      for (const path of paths) {
+        const denied = mutationDeniedMessage(path, 'delete');
+        if (denied) {
+          port.reportError?.(denied);
+          return;
+        }
+      }
+
       void port.deleteEntries({
         kind: meta.node.type,
         paths,
       });
     },
-    [onRequestDelete, port],
+    [mutationDeniedMessage, onRequestDelete, port],
   );
 
   const handleRequestMove = useCallback(
     (meta: WorkspaceExplorerMoveRequestMeta) => {
       if (!port.moveEntries) {
         return;
+      }
+
+      for (const path of meta.sourcePaths) {
+        const denied = mutationDeniedMessage(path, 'move');
+        if (denied) {
+          port.reportError?.(denied);
+          return;
+        }
       }
 
       void (async () => {
@@ -361,7 +439,7 @@ export function useWorkspaceExplorerController({
         applyWorkspaceExplorerMutationResult(result, setSelection);
       })();
     },
-    [port],
+    [mutationDeniedMessage, port],
   );
 
   const handleRequestRename = useCallback(

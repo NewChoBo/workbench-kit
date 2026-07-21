@@ -19,6 +19,11 @@ export interface ChatMessageListProps {
   isStreaming?: boolean;
   loadOlderLabel?: ReactNode | ((hiddenMessageCount: number) => ReactNode);
   messageLayout?: ChatMessageLayout;
+  /**
+   * Host slot rendered inside the message list area after messages, or as a
+   * sibling before the empty state when there are no messages.
+   */
+  messageListAddon?: ReactNode | undefined;
   messages: ChatMessage[];
   onCommandProposalAllow?: ChatMessageItemProps['onCommandProposalAllow'];
   onCommandProposalDeny?: ChatMessageItemProps['onCommandProposalDeny'];
@@ -34,6 +39,7 @@ export function ChatMessageList({
   isStreaming = false,
   loadOlderLabel = 'Show older messages',
   messageLayout = 'assistant',
+  messageListAddon,
   messages,
   onCommandProposalAllow,
   onCommandProposalDeny,
@@ -66,10 +72,13 @@ export function ChatMessageList({
 
   if (messages.length === 0) {
     return (
-      <div className={cx('message-empty', 'ui-panel-centered-state')}>
-        <i className={cx('codicon', emptyIconClass)} />
-        <span>{emptyLabel}</span>
-      </div>
+      <>
+        {messageListAddon}
+        <div className={cx('message-empty', 'ui-panel-centered-state')}>
+          <i className={cx('codicon', emptyIconClass)} />
+          <span>{emptyLabel}</span>
+        </div>
+      </>
     );
   }
 
@@ -118,6 +127,7 @@ export function ChatMessageList({
           </Fragment>
         );
       })}
+      {messageListAddon}
       <SideBarScrollSpacer ref={bottomRef} />
     </div>
   );

@@ -4,10 +4,10 @@ import type { JSX } from 'react';
 import { IconButton } from '../primitives/icon-button';
 
 export interface WorkbenchShellTitleBarLayoutControlsProps {
-  readonly isAuxiliarySidebarVisible: boolean;
+  readonly isAuxiliarySidebarVisible?: boolean | undefined;
   readonly isPanelVisible?: boolean | undefined;
   readonly isPrimarySidebarVisible: boolean;
-  readonly onToggleAuxiliarySidebar: () => void;
+  readonly onToggleAuxiliarySidebar?: (() => void) | undefined;
   readonly onTogglePanel?: (() => void) | undefined;
   readonly onTogglePrimarySidebar: () => void;
   readonly panelHideLabel?: string | undefined;
@@ -23,7 +23,7 @@ function joinClasses(...classNames: Array<string | false | null | undefined>): s
 }
 
 export function WorkbenchShellTitleBarLayoutControls({
-  isAuxiliarySidebarVisible,
+  isAuxiliarySidebarVisible = false,
   isPanelVisible = false,
   isPrimarySidebarVisible,
   onToggleAuxiliarySidebar,
@@ -62,17 +62,19 @@ export function WorkbenchShellTitleBarLayoutControls({
           onClick={onTogglePanel}
         />
       ) : null}
-      <IconButton
-        aria-pressed={isAuxiliarySidebarVisible}
-        className={joinClasses(
-          'workbench-shell-titlebar__layout-control',
-          isAuxiliarySidebarVisible && 'workbench-shell-titlebar__layout-control--active',
-        )}
-        compact
-        icon="codicon-layout-sidebar-right"
-        label={isAuxiliarySidebarVisible ? secondarySidebarHideLabel : secondarySidebarShowLabel}
-        onClick={onToggleAuxiliarySidebar}
-      />
+      {onToggleAuxiliarySidebar ? (
+        <IconButton
+          aria-pressed={isAuxiliarySidebarVisible}
+          className={joinClasses(
+            'workbench-shell-titlebar__layout-control',
+            isAuxiliarySidebarVisible && 'workbench-shell-titlebar__layout-control--active',
+          )}
+          compact
+          icon="codicon-layout-sidebar-right"
+          label={isAuxiliarySidebarVisible ? secondarySidebarHideLabel : secondarySidebarShowLabel}
+          onClick={onToggleAuxiliarySidebar}
+        />
+      ) : null}
     </div>
   );
 }
