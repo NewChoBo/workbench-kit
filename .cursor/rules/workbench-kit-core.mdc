@@ -83,7 +83,8 @@ Key facts agents often get wrong:
 1. CI publishes **all** `NPM_PUBLISH_ORDER` packages, not a manual allowlist subset.
 2. `npm view @workbench-kit/react version` shows **`latest`**, not `@prototype`.
 3. Partial CI publish breaks installs — re-run workflow after fixing OIDC; exact-version skip is safe.
-4. First npm release of a package is **local**; CI is for updates only (`updates-only` skips packages not on npm yet).
+4. npm releases (including first publish of a package) go through `publish.yml` OIDC;
+   local `publish:packages:local` is fallback only.
 
 ## Docs index
 
