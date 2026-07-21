@@ -1,0 +1,23 @@
+.ui-workbench-canvas-item-badge {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  z-index: 110;
+  padding: 2px 4px;
+  color: var(--vscode-badge-foreground, #fff);
+  background: var(--vscode-badge-background, var(--color-accent));
+  border-radius: 3px;
+  font-family: var(--vscode-font-family, var(--font-family, system-ui, sans-serif));
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.ui-workbench-canvas-item-badge[data-selected='false'] {
+  background: color-mix(in srgb, var(--vscode-badge-background, var(--color-accent)) 58%, #000);
+}
+
+.ui-workbench-canvas-item-badge[data-selected='true'] {
+  background: var(--ui-workbench-canvas-selection-color, #0d99ff);
+}

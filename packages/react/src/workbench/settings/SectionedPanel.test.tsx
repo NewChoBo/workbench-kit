@@ -26,6 +26,15 @@ describe('WorkbenchSectionedPanel', () => {
     expect(markup).toContain('ui-workbench-sectioned-panel');
     expect(markup).toContain('data-has-nav="true"');
     expect(markup).toContain('aria-label="Settings sections"');
+    expect(markup).toContain(
+      'ui-scroll-area ui-workbench-scrollbar ui-scroll-area--vertical ui-workbench-navigation-panel__nav-scroll',
+    );
+    expect(markup).not.toContain(
+      'ui-scroll-area ui-workbench-scrollbar ui-scroll-area--vertical ui-scroll-area--stable-gutter ui-workbench-navigation-panel__nav-scroll',
+    );
+    expect(markup).toContain(
+      'ui-scroll-area ui-workbench-scrollbar ui-scroll-area--vertical ui-workbench-scrollbar--hidden ui-workbench-navigation-panel__content-scroll ui-workbench-sectioned-panel__scroll',
+    );
     expect(markup).toContain('href="#general"');
     expect(markup).toContain('General settings');
     expect(markup).toContain('Advanced settings');
@@ -49,5 +58,29 @@ describe('WorkbenchSectionedPanel', () => {
     expect(markup).toContain('data-readonly="true"');
     expect(markup).not.toContain('ui-workbench-sectioned-panel__nav');
     expect(markup).toContain('Only section');
+  });
+
+  it('renders vertical collapse affordances when section nav is collapsible', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchSectionedPanel
+        ariaLabel="Settings sections"
+        items={[
+          {
+            anchorId: 'general',
+            render: () => <section id="general">General settings</section>,
+            title: 'General',
+          },
+          {
+            anchorId: 'advanced',
+            render: () => <section id="advanced">Advanced settings</section>,
+            title: 'Advanced',
+          },
+        ]}
+        sectionNavCollapsible
+      />,
+    );
+
+    expect(markup).toContain('codicon-chevron-left');
+    expect(markup).toContain('ui-workbench-sectioned-panel__nav-footer');
   });
 });

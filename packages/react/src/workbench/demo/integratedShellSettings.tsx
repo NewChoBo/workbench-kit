@@ -1,15 +1,15 @@
-import { Badge } from '../../primitives/Badge';
-import { Button } from '../../primitives/Button';
-import { Checkbox } from '../../primitives/Checkbox';
-import { Field } from '../../primitives/Field';
-import { Select } from '../../primitives/Select';
-import { TextInput } from '../../primitives/TextInput';
+import { Badge } from '../../primitives/badge';
+import { Button } from '../../primitives/button';
+import { Checkbox } from '../../primitives/checkbox';
+import { Field } from '../../primitives/field';
+import { Select } from '../../primitives/select';
+import { TextInput } from '../../primitives/text-input';
 import { WorkbenchSettingsSection } from '../settings';
 import type { WorkspaceEditorTheme } from '../workspace';
 
-function clampStoryPercent(value: number, fallback: number) {
+function clampStorySidebarPx(value: number, fallback: number) {
   if (!Number.isFinite(value)) return fallback;
-  return Math.min(90, Math.max(10, value));
+  return Math.min(480, Math.max(200, value));
 }
 
 export function renderIntegratedShellSettingsCategory({
@@ -20,13 +20,13 @@ export function renderIntegratedShellSettingsCategory({
   searchQuery,
   searchResultCount,
   settingsSearchValue,
-  sideBarSizePercent,
+  sideBarSizePx,
   onClearSearch,
   onColorThemeChange,
   onCompactRowsChange,
   onSearchQueryChange,
   onSettingsSearchValueChange,
-  onSideBarSizePercentChange,
+  onSideBarSizePxChange,
 }: {
   categoryId: string;
   colorTheme: WorkspaceEditorTheme;
@@ -35,13 +35,13 @@ export function renderIntegratedShellSettingsCategory({
   searchQuery: string;
   searchResultCount: number;
   settingsSearchValue: string;
-  sideBarSizePercent: number;
+  sideBarSizePx: number;
   onClearSearch: () => void;
   onColorThemeChange: (theme: WorkspaceEditorTheme) => void;
   onCompactRowsChange: (compactRows: boolean) => void;
   onSearchQueryChange: (query: string) => void;
   onSettingsSearchValueChange: (query: string) => void;
-  onSideBarSizePercentChange: (sizePercent: number) => void;
+  onSideBarSizePxChange: (sizePx: number) => void;
 }) {
   if (categoryId === 'workbench') {
     return (
@@ -63,21 +63,23 @@ export function renderIntegratedShellSettingsCategory({
         <Field inline label="Compact rows">
           <Checkbox
             checked={compactRows}
-            label="Use compact explorer, search, and chat rows"
+            label="Use compact explorer, search, chatting, and AI chat rows"
             onChange={(event) => onCompactRowsChange(event.currentTarget.checked)}
           />
         </Field>
         <Field
+          htmlFor="integrated-shell-primary-sidebar-width"
           label="Primary sidebar width"
-          description="Sets the current sidebar split percentage."
+          description="Sets the current sidebar width in pixels."
         >
           <TextInput
             controlWidth="full"
+            id="integrated-shell-primary-sidebar-width"
             type="number"
-            value={Math.round(sideBarSizePercent)}
+            value={Math.round(sideBarSizePx)}
             onChange={(event) =>
-              onSideBarSizePercentChange(
-                clampStoryPercent(event.currentTarget.valueAsNumber, sideBarSizePercent),
+              onSideBarSizePxChange(
+                clampStorySidebarPx(event.currentTarget.valueAsNumber, sideBarSizePx),
               )
             }
           />

@@ -1,4 +1,4 @@
-import { IconButton } from '../primitives/IconButton';
+import { IconButton } from '../primitives/icon-button';
 import { cx } from '../utils/cx';
 import type { WidgetAssetViewMode } from './widget-asset-mode.js';
 

@@ -1,0 +1,245 @@
+.ui-workbench-activity-bar {
+  flex-shrink: 0;
+  width: var(--workbench-activity-bar-item-size, 48px);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  gap: 0;
+  user-select: none;
+}
+
+.ui-workbench-activity-bar--hidden {
+  display: none;
+  pointer-events: none;
+}
+
+.ide-body--activity-bar-hidden .ui-workbench-activity-bar {
+  display: none;
+  pointer-events: none;
+}
+
+.workbench-bottom-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--vscode-panel-background, var(--color-surface));
+  border-top: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
+.ui-workbench-activity-bar__item {
+  --ui-button-width: var(--workbench-activity-bar-item-size);
+  --ui-button-min-width: 0;
+  --ui-button-height: var(--workbench-activity-bar-item-size);
+  --ui-button-min-height: 0;
+  --ui-button-display: flex;
+  --ui-button-align-items: center;
+  --ui-button-justify-content: center;
+  --ui-button-padding: 0;
+  --ui-button-border: none;
+  --ui-button-border-radius: var(--radius-sm);
+  --ui-button-color: var(--color-text-subtle);
+  --ui-button-background: transparent;
+  --ui-button-font-family: inherit;
+  --ui-button-font-size: 0;
+  --ui-button-hover-color: var(--color-text-muted);
+  --ui-button-hover-background: transparent;
+  position: relative;
+  width: var(--workbench-activity-bar-item-size);
+  height: var(--workbench-activity-bar-item-size);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-subtle);
+  background: transparent;
+  font-family: inherit;
+  font-size: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.1s;
+}
+
+.ui-workbench-activity-bar__item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: transparent;
+}
+
+.ui-workbench-activity-bar__item::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  transition: background 0.1s;
+}
+
+.ui-workbench-activity-bar__icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-workbench-activity-bar__icon .codicon[class*='codicon-'] {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  line-height: 32px;
+}
+
+.ui-workbench-activity-bar__item:hover {
+  color: var(--color-text-muted);
+}
+
+.ui-workbench-activity-bar__item:hover::before {
+  background: var(--color-surface-hover);
+}
+
+.ui-workbench-activity-bar__item--active {
+  --ui-button-color: var(--vscode-activityBar-activeForeground, var(--color-text));
+  --ui-button-hover-color: var(--vscode-activityBar-activeForeground, var(--color-text));
+  color: var(--vscode-activityBar-activeForeground, var(--color-text));
+}
+
+.ui-workbench-activity-bar__item--active::after {
+  background: var(
+    --vscode-activityBar-activeBorder,
+    var(--color-focus-border, var(--color-accent))
+  );
+}
+
+.ui-workbench-activity-bar__item--active::before {
+  background: color-mix(
+    in srgb,
+    var(--vscode-activityBar-activeBorder, var(--color-focus-border, var(--color-accent))) 16%,
+    var(--color-surface-hover)
+  );
+}
+
+.ui-workbench-activity-bar__item:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -4px;
+}
+
+.ui-workbench-activity-bar__item--reorderable {
+  cursor: grab;
+}
+
+.ui-workbench-activity-bar__item--reorderable:active {
+  cursor: grabbing;
+}
+
+.ui-workbench-activity-bar__item--dragging {
+  opacity: 0.45;
+}
+
+.ui-workbench-activity-bar__item-host {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+.ui-workbench-activity-bar__item-host--reorderable {
+  cursor: grab;
+}
+
+.ui-workbench-activity-bar__item-host--reorderable:active {
+  cursor: grabbing;
+}
+
+.ui-workbench-activity-bar__item-host--dragging {
+  opacity: 0.45;
+}
+
+.ui-workbench-activity-bar__drop-indicator {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  z-index: 2;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--vscode-focusBorder, var(--color-focus-border, var(--color-accent, #2f81f7)));
+  pointer-events: none;
+}
+
+.ui-workbench-activity-bar__drop-indicator--before {
+  top: 0;
+  transform: translateY(-50%);
+}
+
+.ui-workbench-activity-bar__drop-indicator--after {
+  bottom: 0;
+  transform: translateY(50%);
+}
+
+.ui-workbench-activity-bar__spacer {
+  flex: 1;
+}
+
+.ui-workbench-activity-bar--horizontal {
+  width: 100%;
+  height: var(--workbench-activity-bar-item-size, 48px);
+  flex-direction: row;
+  align-items: stretch;
+  border-right: none;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ui-workbench-activity-bar--horizontal .ui-workbench-activity-bar__item::after {
+  top: auto;
+  right: 12px;
+  bottom: 0;
+  left: 12px;
+  width: auto;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+}
+
+.ui-workbench-activity-bar--horizontal .ui-workbench-activity-bar__drop-indicator {
+  top: 10px;
+  bottom: 10px;
+  left: auto;
+  right: auto;
+  width: 2px;
+  height: auto;
+}
+
+.ui-workbench-activity-bar--horizontal .ui-workbench-activity-bar__drop-indicator--before {
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  transform: translateX(-50%);
+}
+
+.ui-workbench-activity-bar--horizontal .ui-workbench-activity-bar__drop-indicator--after {
+  right: 0;
+  left: auto;
+  top: 10px;
+  bottom: 10px;
+  transform: translateX(50%);
+}
+
+.ide-root--activity-bar-top .ui-workbench-activity-bar--hidden {
+  display: none;
+  pointer-events: none;
+}
+
+.ide-body--activity-bar-top {
+  flex: 1;
+  min-height: 0;
+}

@@ -1,21 +1,22 @@
-import { DisposableStore, isDisposable, toDisposable, type Disposable } from '@workbench-kit/base';
+import {
+  DisposableStore,
+  Emitter,
+  isDisposable,
+  toDisposable,
+  type Disposable,
+} from '@workbench-kit/base';
 import {
   CommandRegistry,
   CommandNoHandlerError,
   CommandNotFoundError,
   KeybindingRegistry,
-  type CommandDefinition,
   type CommandServiceHandler,
-  type KeybindingDefinition,
 } from '@workbench-kit/platform';
 import type {
   ActivateFunction,
-  ConfigurationContribution,
   DeactivateFunction,
+  ExtensionFeatureSpec,
   ExtensionContext,
-  MenuContribution,
-  ViewContainerContribution,
-  ViewContribution,
   WorkbenchExtensionManifest,
 } from '@workbench-kit/workbench-extension-sdk';
 
@@ -25,15 +26,8 @@ import {
   EditorRegistry,
   MenuRegistry,
   ViewRegistry,
-  type WorkbenchViewContainerContribution,
-  type WorkbenchViewContribution,
 } from './registries.js';
-import {
-  createCapabilityRegistry,
-  toCapabilityMap,
-  type CapabilityProvider,
-  type CapabilityRegistry,
-} from './capability-registry.js';
+import { CapabilityRegistry, type CapabilityProvider } from './capability-registry.js';
 import {
   createEditorHostFactoryRegistry,
   createViewHostFactoryRegistry,
@@ -44,6 +38,21 @@ import {
   createEditorResolverRegistry,
   type EditorResolverRegistry,
 } from './editor-resolver-registry.js';
+import {
+  createEditorDocumentViewProviderRegistry,
+  type EditorDocumentViewProviderRegistry,
+} from './editor-document-view-registry.js';
+import { LocalizationRegistry } from './localization-registry.js';
+import { ThemeRegistry } from './theme-registry.js';
+import { createExtensionFeatureSpecs } from './extension-feature-spec.js';
+import {
+  normalizeConfiguration,
+  normalizeMenuContributions,
+  normalizeViewContainers,
+  normalizeViews,
+  toCommandDefinition,
+  toKeybindingDefinition,
+} from './extension-contribution-normalizers.js';
 
 export interface WorkbenchExtensionModule {
   activate?: ActivateFunction;
@@ -58,15 +67,17 @@ export interface WorkbenchExtensionDescription {
 
 export interface ExtensionRegistryOptions {
   activities?: ActivityRegistry;
-  capabilities?: ReadonlyMap<string, unknown> | Record<string, unknown>;
   capabilityRegistry?: CapabilityRegistry;
   commands?: CommandRegistry;
   configurations?: ConfigurationRegistry;
+  editorDocumentViews?: EditorDocumentViewProviderRegistry;
   editorHostFactories?: EditorHostFactoryRegistry;
   editorResolvers?: EditorResolverRegistry;
   editors?: EditorRegistry;
   keybindings?: KeybindingRegistry;
+  localizations?: LocalizationRegistry;
   menus?: MenuRegistry;
+  themes?: ThemeRegistry;
   viewHostFactories?: ViewHostFactoryRegistry;
   views?: ViewRegistry;
 }
@@ -74,6 +85,36 @@ export interface ExtensionRegistryOptions {
 export interface ActivatedExtension {
   readonly extensionId: string;
   readonly subscriptions: DisposableStore;
+}
+
+export interface ExtensionLifecycleEvent {
+  readonly extensionId: string;
+}
+
+export interface ExtensionFeatureInspection {
+  readonly diagnostics: readonly ExtensionDependencyDiagnostic[];
+  readonly feature: ExtensionFeatureSpec;
+}
+
+export type ExtensionDependencyDiagnosticSeverity = 'error' | 'warning';
+
+export type ExtensionDependencyDiagnosticKind =
+  | 'command-activation-missing'
+  | 'duplicate-capability-provider'
+  | 'host-capability-provider-conflict'
+  | 'missing-capability'
+  | 'missing-extension-dependency'
+  | 'missing-optional-extension-dependency';
+
+export interface ExtensionDependencyDiagnostic {
+  readonly capabilityId?: string | undefined;
+  readonly commandId?: string | undefined;
+  readonly dependencyId?: string | undefined;
+  readonly extensionId: string;
+  readonly kind: ExtensionDependencyDiagnosticKind;
+  readonly message: string;
+  readonly providerExtensionIds?: readonly string[] | undefined;
+  readonly severity: ExtensionDependencyDiagnosticSeverity;
 }
 
 interface RegisteredExtension {
@@ -92,34 +133,39 @@ export class ExtensionRegistry implements Disposable {
   readonly capabilityRegistry: CapabilityRegistry;
   readonly commands: CommandRegistry;
   readonly configurations: ConfigurationRegistry;
+  readonly editorDocumentViews: EditorDocumentViewProviderRegistry;
   readonly editorHostFactories: EditorHostFactoryRegistry;
   readonly editorResolvers: EditorResolverRegistry;
   readonly editors: EditorRegistry;
   readonly keybindings: KeybindingRegistry;
+  readonly localizations: LocalizationRegistry;
   readonly menus: MenuRegistry;
+  readonly themes: ThemeRegistry;
   readonly viewHostFactories: ViewHostFactoryRegistry;
   readonly views: ViewRegistry;
 
+  private readonly onDidActivateExtensionEmitter = new Emitter<ExtensionLifecycleEvent>();
+  private readonly onDidDeactivateExtensionEmitter = new Emitter<ExtensionLifecycleEvent>();
   private readonly activeExtensions = new Map<string, ActiveExtension>();
   private readonly activatingExtensions = new Map<string, Promise<ActivatedExtension>>();
   private readonly extensions = new Map<string, RegisteredExtension>();
+
+  readonly onDidActivateExtension = this.onDidActivateExtensionEmitter.event;
+  readonly onDidDeactivateExtension = this.onDidDeactivateExtensionEmitter.event;
 
   constructor(options: ExtensionRegistryOptions = {}) {
     this.activities = options.activities ?? new ActivityRegistry();
     this.commands = options.commands ?? new CommandRegistry();
     this.configurations = options.configurations ?? new ConfigurationRegistry();
     this.keybindings = options.keybindings ?? new KeybindingRegistry();
+    this.localizations = options.localizations ?? new LocalizationRegistry();
     this.menus = options.menus ?? new MenuRegistry();
+    this.themes = options.themes ?? new ThemeRegistry();
     this.views = options.views ?? new ViewRegistry();
-    if (options.capabilityRegistry) {
-      this.capabilityRegistry = options.capabilityRegistry;
-      if (options.capabilities !== undefined) {
-        this.capabilityRegistry.registerStatic(toCapabilityMap(options.capabilities));
-      }
-    } else {
-      this.capabilityRegistry = createCapabilityRegistry(options.capabilities);
-    }
+    this.capabilityRegistry = options.capabilityRegistry ?? new CapabilityRegistry();
 
+    this.editorDocumentViews =
+      options.editorDocumentViews ?? createEditorDocumentViewProviderRegistry();
     this.viewHostFactories = options.viewHostFactories ?? createViewHostFactoryRegistry();
     this.editorHostFactories = options.editorHostFactories ?? createEditorHostFactoryRegistry();
     this.editorResolvers = options.editorResolvers ?? createEditorResolverRegistry();
@@ -139,6 +185,24 @@ export class ExtensionRegistry implements Disposable {
 
   getExtensions(): readonly WorkbenchExtensionDescription[] {
     return [...this.extensions.values()].map((entry) => entry.description);
+  }
+
+  getFeatureSpecs(): readonly ExtensionFeatureSpec[] {
+    return createExtensionFeatureSpecs(this.getExtensions());
+  }
+
+  getFeatureInspections(): readonly ExtensionFeatureInspection[] {
+    const diagnostics = this.getDependencyDiagnostics();
+    return this.getFeatureSpecs().map((feature) => ({
+      diagnostics: diagnostics.filter((diagnostic) => diagnostic.extensionId === feature.id),
+      feature,
+    }));
+  }
+
+  getDependencyDiagnostics(): readonly ExtensionDependencyDiagnostic[] {
+    return collectExtensionDependencyDiagnostics(this.getExtensions(), {
+      hasCapability: (capabilityId) => this.capabilityRegistry.has(capabilityId),
+    });
   }
 
   isActive(extensionId: string): boolean {
@@ -276,6 +340,7 @@ export class ExtensionRegistry implements Disposable {
         extensionId,
         subscriptions,
       });
+      this.onDidActivateExtensionEmitter.fire({ extensionId });
 
       return {
         extensionId,
@@ -296,6 +361,7 @@ export class ExtensionRegistry implements Disposable {
     this.activeExtensions.delete(extensionId);
     await active.deactivate?.();
     active.subscriptions.dispose();
+    this.onDidDeactivateExtensionEmitter.fire({ extensionId });
   }
 
   async deactivateAll(): Promise<void> {
@@ -314,13 +380,18 @@ export class ExtensionRegistry implements Disposable {
     this.commands.dispose();
     this.configurations.dispose();
     this.keybindings.dispose();
+    this.localizations.dispose();
     this.menus.dispose();
+    this.themes.dispose();
     this.views.dispose();
     this.editors.dispose();
+    this.editorDocumentViews.dispose();
     this.viewHostFactories.dispose();
     this.editorHostFactories.dispose();
     this.editorResolvers.dispose();
     this.capabilityRegistry.dispose();
+    this.onDidActivateExtensionEmitter.dispose();
+    this.onDidDeactivateExtensionEmitter.dispose();
   }
 
   private assertDependencyGraph(): void {
@@ -368,6 +439,10 @@ export class ExtensionRegistry implements Disposable {
       commands: {
         registerCommand: (commandId, handler) =>
           subscriptions.add(this.registerCommandHandler(commandId, handler)),
+      },
+      editorDocumentViews: {
+        registerProvider: (provider) =>
+          subscriptions.add(this.editorDocumentViews.registerProvider(provider)),
       },
       editorHostFactories: {
         registerFactory: (factory) => subscriptions.add(this.editorHostFactories.register(factory)),
@@ -464,109 +539,138 @@ export class ExtensionRegistry implements Disposable {
         ),
       );
     }
-  }
-}
 
-function toCommandDefinition(command: {
-  category?: string;
-  command: string;
-  enablement?: string;
-  icon?: string;
-  title: string;
-}): CommandDefinition {
-  return {
-    category: command.category,
-    enablement: command.enablement,
-    icon: command.icon,
-    id: command.command,
-    title: command.title,
-  };
-}
-
-function toKeybindingDefinition(keybinding: {
-  args?: readonly unknown[];
-  command: string;
-  key: string;
-  when?: string;
-}): KeybindingDefinition {
-  return {
-    args: keybinding.args,
-    command: keybinding.command,
-    key: keybinding.key,
-    when: keybinding.when,
-  };
-}
-
-function normalizeConfiguration(configuration: unknown): ConfigurationContribution {
-  if (!isRecord(configuration) || !isRecord(configuration.properties)) {
-    return { properties: {} };
-  }
-
-  return configuration as unknown as ConfigurationContribution;
-}
-
-function normalizeMenuContributions(value: unknown): MenuContribution[] {
-  if (value === undefined) {
-    return [];
-  }
-
-  if (Array.isArray(value)) {
-    return value as MenuContribution[];
-  }
-
-  if (!isRecord(value)) {
-    return [];
-  }
-
-  return Object.entries(value).flatMap(([menu, entries]) => {
-    if (!Array.isArray(entries)) {
-      return [];
+    for (const theme of contributes.themes ?? []) {
+      disposables.add(
+        this.themes.registerTheme({
+          ...theme,
+          extensionId: description.manifest.id,
+        }),
+      );
     }
 
-    return entries.map((entry) => ({ ...(entry as object), menu }) as MenuContribution);
-  });
+    for (const localization of contributes.localizations ?? []) {
+      disposables.add(
+        this.localizations.registerLocalization({
+          ...localization,
+          extensionId: description.manifest.id,
+        }),
+      );
+    }
+  }
 }
 
-function normalizeViewContainers(value: unknown): WorkbenchViewContainerContribution[] {
-  if (!isRecord(value)) {
-    return [];
-  }
+export function collectExtensionDependencyDiagnostics(
+  descriptions: readonly WorkbenchExtensionDescription[],
+  options: {
+    hasCapability?: ((capabilityId: string) => boolean) | undefined;
+  } = {},
+): ExtensionDependencyDiagnostic[] {
+  const diagnostics: ExtensionDependencyDiagnostic[] = [];
+  const extensionIds = new Set(descriptions.map((description) => description.manifest.id));
+  const capabilityProviders = collectCapabilityProviders(descriptions);
 
-  return Object.entries(value).flatMap(([location, containers]) => {
-    if (!Array.isArray(containers)) {
-      return [];
+  for (const [capabilityId, providerExtensionIds] of capabilityProviders) {
+    if (providerExtensionIds.length > 1) {
+      diagnostics.push({
+        capabilityId,
+        extensionId: providerExtensionIds[0] ?? 'unknown',
+        kind: 'duplicate-capability-provider',
+        message: `Capability "${capabilityId}" is provided by multiple extensions: ${providerExtensionIds
+          .map((extensionId) => `"${extensionId}"`)
+          .join(', ')}.`,
+        providerExtensionIds,
+        severity: 'error',
+      });
     }
 
-    return containers.map(
-      (container) =>
-        ({
-          ...(container as ViewContainerContribution),
-          location,
-        }) satisfies WorkbenchViewContainerContribution,
-    );
-  });
-}
-
-function normalizeViews(value: unknown): WorkbenchViewContribution[] {
-  if (!isRecord(value)) {
-    return [];
+    if (options.hasCapability?.(capabilityId)) {
+      diagnostics.push({
+        capabilityId,
+        extensionId: providerExtensionIds[0] ?? 'unknown',
+        kind: 'host-capability-provider-conflict',
+        message: `Capability "${capabilityId}" is already provided by the host.`,
+        providerExtensionIds,
+        severity: 'error',
+      });
+    }
   }
 
-  return Object.entries(value).flatMap(([containerId, views]) => {
-    if (!Array.isArray(views)) {
-      return [];
+  for (const description of descriptions) {
+    const { manifest } = description;
+
+    for (const dependencyId of manifest.extensionDependencies ?? []) {
+      if (!extensionIds.has(dependencyId)) {
+        diagnostics.push({
+          dependencyId,
+          extensionId: manifest.id,
+          kind: 'missing-extension-dependency',
+          message: `Extension "${manifest.id}" depends on missing extension "${dependencyId}".`,
+          severity: 'error',
+        });
+      }
     }
 
-    return views.map((view) => {
-      const partialView = view as Partial<ViewContribution>;
-      return {
-        ...partialView,
-        containerId: partialView.containerId ?? containerId,
-      } as WorkbenchViewContribution;
-    });
-  });
+    for (const dependencyId of manifest.extensionOptionalDependencies ?? []) {
+      if (!extensionIds.has(dependencyId)) {
+        diagnostics.push({
+          dependencyId,
+          extensionId: manifest.id,
+          kind: 'missing-optional-extension-dependency',
+          message: `Extension "${manifest.id}" optionally depends on unavailable extension "${dependencyId}".`,
+          severity: 'warning',
+        });
+      }
+    }
+
+    for (const capabilityId of manifest.capabilities?.requires ?? []) {
+      const providerExtensionIds =
+        capabilityProviders
+          .get(capabilityId)
+          ?.filter((extensionId) => extensionId !== manifest.id) ?? [];
+      if (!options.hasCapability?.(capabilityId) && providerExtensionIds.length === 0) {
+        diagnostics.push({
+          capabilityId,
+          extensionId: manifest.id,
+          kind: 'missing-capability',
+          message: `Extension "${manifest.id}" requires missing capability "${capabilityId}".`,
+          severity: 'error',
+        });
+      }
+    }
+
+    for (const command of manifest.contributes?.commands ?? []) {
+      const commandActivationEvent = `onCommand:${command.command}`;
+      if (
+        !manifest.activationEvents.includes('onStartup') &&
+        !manifest.activationEvents.includes(commandActivationEvent)
+      ) {
+        diagnostics.push({
+          commandId: command.command,
+          extensionId: manifest.id,
+          kind: 'command-activation-missing',
+          message: `Command "${command.command}" is contributed by "${manifest.id}" without "${commandActivationEvent}" or "onStartup" activation.`,
+          severity: 'warning',
+        });
+      }
+    }
+  }
+
+  return diagnostics;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+function collectCapabilityProviders(
+  descriptions: readonly WorkbenchExtensionDescription[],
+): Map<string, string[]> {
+  const providers = new Map<string, string[]>();
+
+  for (const { manifest } of descriptions) {
+    for (const capabilityId of manifest.capabilities?.provides ?? []) {
+      const extensionIds = providers.get(capabilityId) ?? [];
+      extensionIds.push(manifest.id);
+      providers.set(capabilityId, extensionIds);
+    }
+  }
+
+  return providers;
 }

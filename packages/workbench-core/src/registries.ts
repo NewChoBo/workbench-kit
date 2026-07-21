@@ -26,23 +26,65 @@ export interface WorkbenchConfigurationContribution {
   configuration: ConfigurationContribution;
 }
 
+interface MenuContributionRecord {
+  readonly item: MenuContribution;
+  readonly sequence: number;
+}
+
+function orderMenuContributionRecords(
+  records: readonly MenuContributionRecord[],
+): readonly MenuContribution[] {
+  const groupOrder = new Map<string, number>();
+  records.forEach((record) => {
+    const group = record.item.group ?? '';
+    if (!groupOrder.has(group)) {
+      groupOrder.set(group, groupOrder.size);
+    }
+  });
+
+  return [...records]
+    .sort((left, right) => {
+      const leftGroupOrder = groupOrder.get(left.item.group ?? '') ?? 0;
+      const rightGroupOrder = groupOrder.get(right.item.group ?? '') ?? 0;
+      if (leftGroupOrder !== rightGroupOrder) {
+        return leftGroupOrder - rightGroupOrder;
+      }
+
+      const leftOrder = left.item.order ?? 0;
+      const rightOrder = right.item.order ?? 0;
+      if (leftOrder !== rightOrder) {
+        return leftOrder - rightOrder;
+      }
+
+      return left.sequence - right.sequence;
+    })
+    .map((record) => record.item);
+}
+
 export class MenuRegistry implements Disposable {
-  private readonly itemsByMenu = new Map<string, MenuContribution[]>();
+  private readonly itemsByMenu = new Map<string, MenuContributionRecord[]>();
   private readonly onDidRegisterMenuItemEmitter = new Emitter<MenuContribution>();
+  private menuItemSequence = 0;
 
   readonly onDidRegisterMenuItem = this.onDidRegisterMenuItemEmitter.event;
 
   getMenuItems(menu?: string): readonly MenuContribution[] {
     if (menu !== undefined) {
-      return [...(this.itemsByMenu.get(menu) ?? [])];
+      return orderMenuContributionRecords(this.itemsByMenu.get(menu) ?? []);
     }
 
-    return [...this.itemsByMenu.values()].flat();
+    return [...this.itemsByMenu.values()].flat().map((record) => record.item);
   }
 
   registerMenuItem(item: MenuContribution): Disposable {
+    const record: MenuContributionRecord = {
+      item,
+      sequence: this.menuItemSequence,
+    };
+    this.menuItemSequence += 1;
+
     const items = this.itemsByMenu.get(item.menu) ?? [];
-    items.push(item);
+    items.push(record);
     this.itemsByMenu.set(item.menu, items);
     this.onDidRegisterMenuItemEmitter.fire(item);
 
@@ -50,7 +92,7 @@ export class MenuRegistry implements Disposable {
       const currentItems = this.itemsByMenu.get(item.menu);
       if (!currentItems) return;
 
-      const index = currentItems.indexOf(item);
+      const index = currentItems.indexOf(record);
       if (index >= 0) {
         currentItems.splice(index, 1);
       }
@@ -63,6 +105,7 @@ export class MenuRegistry implements Disposable {
 
   dispose(): void {
     this.itemsByMenu.clear();
+    this.menuItemSequence = 0;
     this.onDidRegisterMenuItemEmitter.dispose();
   }
 }

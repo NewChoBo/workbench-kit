@@ -1,0 +1,54 @@
+.ui-workbench-canvas-item-frame {
+  box-sizing: border-box;
+  position: absolute;
+  left: var(--ui-workbench-canvas-item-x, 0);
+  top: var(--ui-workbench-canvas-item-y, 0);
+  z-index: var(--ui-workbench-canvas-item-z-index, 0);
+  width: var(--ui-workbench-canvas-item-width, auto);
+  height: var(--ui-workbench-canvas-item-height, auto);
+  overflow: var(--ui-workbench-canvas-item-overflow, visible);
+  opacity: var(--ui-workbench-canvas-item-opacity, 1);
+  transform: var(--ui-workbench-canvas-item-transform, none);
+  transform-origin: center center;
+  touch-action: var(--ui-workbench-canvas-item-touch-action, auto);
+  outline: none;
+  transition: all 0.15s ease;
+  cursor: var(--ui-workbench-canvas-item-cursor, auto);
+}
+
+.ui-workbench-canvas-item-frame[data-interactive='true'] {
+  cursor: var(--ui-workbench-canvas-item-cursor, grab);
+}
+
+.ui-workbench-canvas-item-frame[data-selected='true'] {
+  z-index: var(--ui-workbench-canvas-item-z-index, 100);
+  outline: 1px solid var(--ui-workbench-canvas-selection-color, #0d99ff);
+  outline-offset: 0;
+  box-shadow: 0 0 0 1px var(--ui-workbench-canvas-selection-color, #0d99ff);
+}
+
+.ui-workbench-canvas-item-frame[data-focused='true'][data-selected='false'] {
+  z-index: var(--ui-workbench-canvas-item-z-index, 95);
+  outline: 1px solid var(--ui-workbench-canvas-selection-color, #0d99ff);
+  outline-offset: 0;
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--ui-workbench-canvas-selection-color, #0d99ff) 32%, transparent);
+}
+
+.ui-workbench-canvas-item-frame[data-focused='true'][data-selected='true'] {
+  box-shadow:
+    0 0 0 1px var(--ui-workbench-canvas-selection-color, #0d99ff),
+    0 0 0 3px
+      color-mix(in srgb, var(--ui-workbench-canvas-selection-color, #0d99ff) 32%, transparent);
+}
+
+.ui-workbench-canvas-item-frame[data-hovered='true'][data-selected='false'] {
+  z-index: var(--ui-workbench-canvas-item-z-index, 90);
+  outline: 1px dashed
+    color-mix(in srgb, var(--ui-workbench-canvas-selection-color, #0d99ff) 72%, transparent);
+  outline-offset: 0;
+}
+
+.ui-workbench-canvas-item-frame[data-transient='true'] {
+  transition: none;
+}

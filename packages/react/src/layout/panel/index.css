@@ -1,0 +1,7 @@
+/* layout/panel feature styles */
+@import './filter-bar.css';
+@import './preview-pane.css';
+@import './workbench-labeled-pane.css';
+@import './workbench-authoring-shell.css';
+@import './workbench-sidebar-stack.css';
+@import './template-gallery.css';

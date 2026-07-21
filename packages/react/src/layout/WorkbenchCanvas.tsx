@@ -5,12 +5,13 @@ import type {
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from 'react';
-import { Button } from '../primitives/Button';
+import { Button } from '../primitives/button';
 import { cx } from '../utils/cx';
 import { toAngleValue, toLineLengthValue, toLengthValue } from './layoutHelpers';
 
 export interface WorkbenchCanvasItemFrameProps extends ComponentPropsWithRef<'div'> {
   cursor?: CSSProperties['cursor'] | undefined;
+  focused?: boolean | undefined;
   height: number | string;
   hovered?: boolean | undefined;
   interactive?: boolean | undefined;
@@ -32,6 +33,7 @@ export const WorkbenchCanvasItemFrame = forwardRef<HTMLDivElement, WorkbenchCanv
     {
       className,
       cursor,
+      focused = false,
       height,
       hovered = false,
       interactive = false,
@@ -75,6 +77,7 @@ export const WorkbenchCanvasItemFrame = forwardRef<HTMLDivElement, WorkbenchCanv
         ref={ref}
         aria-selected={selected}
         className={cx('ui-workbench-canvas-item-frame', className)}
+        data-focused={focused ? 'true' : 'false'}
         data-hovered={hovered ? 'true' : 'false'}
         data-interactive={interactive ? 'true' : 'false'}
         data-selected={selected ? 'true' : 'false'}
@@ -86,7 +89,9 @@ export const WorkbenchCanvasItemFrame = forwardRef<HTMLDivElement, WorkbenchCanv
   },
 );
 
-export type WorkbenchCanvasPaneSurfaceProps = ComponentPropsWithRef<'div'>;
+export interface WorkbenchCanvasPaneSurfaceProps extends ComponentPropsWithRef<'div'> {
+  children?: ReactNode;
+}
 
 export const WorkbenchCanvasPaneSurface = forwardRef<
   HTMLDivElement,
@@ -151,6 +156,7 @@ export function WorkbenchCanvasFrameSurface({
 }
 
 export interface WorkbenchCanvasViewportProps extends ComponentPropsWithRef<'div'> {
+  children?: ReactNode;
   grid?: boolean | undefined;
   gridSize?: number | string | undefined;
   height: number | string;
@@ -499,6 +505,29 @@ interface WorkbenchCanvasFrameHandleDrag {
   startY: number;
 }
 
+function trySetPointerCapture(element: HTMLElement, pointerId: number): void {
+  if (typeof element.setPointerCapture !== 'function') return;
+
+  try {
+    element.setPointerCapture(pointerId);
+  } catch {
+    // Synthetic pointer events in Storybook/jsdom may not register an active pointer.
+  }
+}
+
+function tryReleasePointerCapture(element: HTMLElement | null, pointerId: number): void {
+  if (!element || typeof element.releasePointerCapture !== 'function') return;
+
+  try {
+    if (typeof element.hasPointerCapture === 'function' && !element.hasPointerCapture(pointerId)) {
+      return;
+    }
+    element.releasePointerCapture(pointerId);
+  } catch {
+    // Ignore stale synthetic pointer captures.
+  }
+}
+
 export interface WorkbenchCanvasFrameHandleProps extends Omit<
   ComponentPropsWithRef<'div'>,
   | 'children'
@@ -549,12 +578,12 @@ export function WorkbenchCanvasFrameHandle({
     if (!element) return;
 
     if (stopPropagation) event.stopPropagation();
-    element.setPointerCapture(event.pointerId);
     dragRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
     };
+    trySetPointerCapture(element, event.pointerId);
     onDragStart?.(event);
   };
 
@@ -570,7 +599,7 @@ export function WorkbenchCanvasFrameHandle({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
 
-    handleRef.current?.releasePointerCapture(event.pointerId);
+    tryReleasePointerCapture(handleRef.current, event.pointerId);
     dragRef.current = null;
     const dx = event.clientX - drag.startX;
     const dy = event.clientY - drag.startY;
@@ -586,7 +615,7 @@ export function WorkbenchCanvasFrameHandle({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
 
-    handleRef.current?.releasePointerCapture(event.pointerId);
+    tryReleasePointerCapture(handleRef.current, event.pointerId);
     dragRef.current = null;
     onDragCancel?.(event);
   };
@@ -629,7 +658,12 @@ export interface WorkbenchCanvasResizeHandleProps extends Omit<
   'children'
 > {
   label?: string | undefined;
+  onResizeCancel?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onResizeEnd?: (dx: number, dy: number, event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onResizeMove?: (dx: number, dy: number, event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onResizeStart?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   position?: WorkbenchCanvasResizeHandlePosition | undefined;
+  stopPropagation?: boolean;
 }
 
 export type WorkbenchCanvasResizeHandlePosition = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
@@ -637,15 +671,82 @@ export type WorkbenchCanvasResizeHandlePosition = 'n' | 'ne' | 'e' | 'se' | 's' 
 export function WorkbenchCanvasResizeHandle({
   className,
   label = 'Resize',
+  onPointerCancel,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onResizeCancel,
+  onResizeEnd,
+  onResizeMove,
+  onResizeStart,
   position = 'se',
+  stopPropagation = true,
   type = 'button',
   ...props
 }: WorkbenchCanvasResizeHandleProps) {
+  const handleRef = useRef<HTMLButtonElement>(null);
+  const dragRef = useRef<WorkbenchCanvasFrameHandleDrag | null>(null);
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    onPointerDown?.(event);
+    if (event.defaultPrevented || event.button !== 0) return;
+
+    const element = handleRef.current;
+    if (!element) return;
+
+    if (stopPropagation) event.stopPropagation();
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+    };
+    trySetPointerCapture(element, event.pointerId);
+    onResizeStart?.(event);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    onPointerMove?.(event);
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    onResizeMove?.(event.clientX - drag.startX, event.clientY - drag.startY, event);
+  };
+
+  const handlePointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    onPointerUp?.(event);
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    tryReleasePointerCapture(handleRef.current, event.pointerId);
+    dragRef.current = null;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (dx !== 0 || dy !== 0) {
+      onResizeEnd?.(dx, dy, event);
+    } else {
+      onResizeCancel?.(event);
+    }
+  };
+
+  const handlePointerCancel = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    onPointerCancel?.(event);
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    tryReleasePointerCapture(handleRef.current, event.pointerId);
+    dragRef.current = null;
+    onResizeCancel?.(event);
+  };
+
   return (
     <button
+      ref={handleRef}
       aria-label={label}
       className={cx('ui-workbench-canvas-resize-handle', className)}
       data-position={position}
+      onPointerCancel={handlePointerCancel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
       title={label}
       type={type}
       {...props}
@@ -785,12 +886,18 @@ export function WorkbenchPreviewCanvas({
 }: WorkbenchPreviewCanvasProps) {
   const {
     className: viewportClassName,
+    ref: interactionRef,
     style: viewportStyle,
     ...restViewportProps
   } = viewportProps ?? {};
 
   return (
-    <div className={cx('ui-workbench-preview-canvas', className)} {...props}>
+    <div
+      className={cx('ui-workbench-preview-canvas', className)}
+      data-panning={isPanning ? 'true' : 'false'}
+      {...props}
+      ref={interactionRef}
+    >
       {onResetView ? (
         <Button
           compact

@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://workbench-kit.dev/schemas/builtins/center.json",
+  "title": "CenterWidget",
+  "type": "object",
+  "required": ["type", "args"],
+  "properties": {
+    "type": { "const": "center" },
+    "id": { "type": "string" },
+    "listen": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "args": {
+      "type": "object",
+      "properties": {
+        "child": { "$ref": "../jdw-node.jdw.schema.json" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

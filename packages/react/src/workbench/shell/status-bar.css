@@ -1,0 +1,141 @@
+.ui-workbench-status-bar {
+  flex-shrink: 0;
+  min-height: var(--workbench-statusbar-height);
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 0 8px;
+  color: var(--color-statusbar-text, var(--color-text));
+  background: var(--color-statusbar-bg, var(--color-surface));
+  border-top: 1px solid var(--color-statusbar-border, var(--color-border));
+  font-size: 12px;
+  user-select: none;
+}
+
+.ui-workbench-status-bar--compact {
+  min-height: var(--workbench-statusbar-height-compact, var(--workbench-statusbar-height));
+}
+
+.ui-workbench-status-bar__section {
+  min-width: 0;
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.ui-workbench-status-bar__section--end {
+  margin-left: auto;
+}
+
+.ui-workbench-status-bar__item {
+  --ui-button-min-width: 0;
+  --ui-button-min-height: inherit;
+  --ui-button-height: auto;
+  --ui-button-display: inline-flex;
+  --ui-button-align-items: center;
+  --ui-button-gap: 5px;
+  --ui-button-padding: 0 8px;
+  --ui-button-border: 0;
+  --ui-button-border-radius: 0;
+  --ui-button-color: var(--color-text-muted);
+  --ui-button-background: transparent;
+  --ui-button-font-family: inherit;
+  --ui-button-font-size: inherit;
+  --ui-button-font-weight: 400;
+  --ui-button-hover-color: var(--color-text);
+  --ui-button-hover-background: var(--color-surface-hover);
+  --ui-button-disabled-color: var(--color-text-subtle);
+  --ui-button-disabled-background: transparent;
+  min-width: 0;
+  min-height: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  color: var(--color-text-muted);
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.ui-workbench-status-bar__item:hover,
+.ui-workbench-status-bar__item:focus-visible,
+.ui-workbench-status-bar__item--active {
+  --ui-button-color: var(--color-text);
+  --ui-button-background: var(--color-surface-hover);
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.ui-workbench-status-bar__item:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.ui-workbench-status-bar__item:disabled {
+  color: var(--color-text-subtle);
+  background: transparent;
+  cursor: default;
+}
+
+.ui-workbench-status-bar__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-workbench-status-bar__icon .codicon {
+  font-size: 13px;
+}
+
+.ui-workbench-status-bar__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-workbench-status-bar__status {
+  width: 12px;
+  min-width: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-workbench-status-bar__status-dot {
+  width: 6px;
+  height: 6px;
+  display: inline-block;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-text-subtle) 45%, transparent);
+}
+
+.ui-workbench-status-bar__item[data-status='running'] .ui-workbench-status-bar__status-dot {
+  background: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.ui-workbench-status-bar__item[data-status='completed'] .ui-workbench-status-bar__status-dot {
+  background: #5fbf72;
+}
+
+.ui-workbench-status-bar__item[data-status='failed'] .ui-workbench-status-bar__status-dot {
+  background: var(--color-danger);
+}
+
+.ui-workbench-status-bar__item[data-status='warning'] .ui-workbench-status-bar__status-dot {
+  background: var(--color-warning);
+}
+
+.ui-workbench-status-bar__item[data-status='waiting'] .ui-workbench-status-bar__status-dot {
+  background: #d6aa37;
+}
+
+.ui-workbench-status-bar__item[data-status='cancelled'] .ui-workbench-status-bar__status-dot,
+.ui-workbench-status-bar__item[data-status='disabled'] .ui-workbench-status-bar__status-dot,
+.ui-workbench-status-bar__item[data-status='unavailable'] .ui-workbench-status-bar__status-dot {
+  background: color-mix(in srgb, var(--color-text-subtle) 36%, transparent);
+}

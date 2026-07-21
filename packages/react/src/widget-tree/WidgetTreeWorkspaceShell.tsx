@@ -3,8 +3,9 @@ import {
   integratedShellWorkspaceFiles,
   integratedShellWorkspaceFolders,
 } from '@workbench-kit/adapters';
+import { validateJsonWidgetData } from '@workbench-kit/jdw';
 
-import { SideBarViewFrame } from '../layout/SideBarViewFrame.js';
+import { SideBarViewFrame } from '../layout/sidebar';
 import { WorkbenchShell } from '../workbench/WorkbenchShell.js';
 import type { StatusBarSectionModel } from '../workbench/StatusBar.js';
 import {
@@ -17,8 +18,9 @@ import {
 } from '../workbench/workspace/index.js';
 import { createWidgetStudioWorkspaceEditorRenderer } from '../widget-studio/create-widget-studio-workspace-editor.js';
 import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';
+import { isWidgetTreeDocument } from './widget-tree-document.js';
 
-const JDW_WORKSPACE_DEFAULT_WIDGET_PATH = 'src/widgets/home.widget.json';
+const JDW_WORKSPACE_DEFAULT_WIDGET_PATH = 'src/widgets/home.jdw.json';
 
 function withJdwWelcomeDocument(files: readonly WorkspaceFile[]): WorkspaceFile[] {
   return files.map((file) =>
@@ -35,6 +37,19 @@ const statusSections: StatusBarSectionModel[] = [
   },
 ];
 
+const registeredWidgetTypes = WIDGET_TREE_DEMO_REGISTRY.definitions().map(
+  (definition) => definition.type,
+);
+
+export function canSaveWidgetTreeWorkspaceFile(file: WorkspaceFile, content: string): boolean {
+  if (!isWidgetTreeDocument(file)) return true;
+
+  return validateJsonWidgetData(content, {
+    registeredTypes: registeredWidgetTypes,
+    strictKnownTypes: true,
+  }).valid;
+}
+
 export interface WidgetTreeWorkspaceShellProps {
   readonly initialSelectedPath?: string | undefined;
   readonly initialTheme?: WorkspaceEditorTheme | undefined;
@@ -45,7 +60,7 @@ export function WidgetTreeWorkspaceShell({
   initialTheme = 'dark',
 }: WidgetTreeWorkspaceShellProps = {}) {
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const [sidebarSizePercent, setSidebarSizePercent] = useState(20);
+  const [sidebarSizePx, setSidebarSizePx] = useState(260);
 
   const workspaceFiles = useMemo(() => withJdwWelcomeDocument(integratedShellWorkspaceFiles), []);
 
@@ -99,10 +114,10 @@ export function WidgetTreeWorkspaceShell({
           primarySidebar={{
             className: 'ui-workbench-story-shell-split',
             isVisible: sidebarVisible,
-            maxPrimarySizePercent: 36,
-            minPrimarySizePercent: 16,
+            maxPrimarySizePx: 480,
+            minPrimarySizePx: 200,
             node: (
-              <aside aria-label="Explorer sidebar" className="workbench-primary-side-bar">
+              <aside aria-label="Explorer sidebar" className="workbench-primary-sidebar">
                 <SideBarViewFrame title="Explorer">
                   <WorkspaceExplorer
                     activePath={selectedPath}
@@ -114,14 +129,17 @@ export function WidgetTreeWorkspaceShell({
                 </SideBarViewFrame>
               </aside>
             ),
-            onSizePercentChange: setSidebarSizePercent,
-            primarySizePercent: sidebarSizePercent,
+            onSizePxChange: setSidebarSizePx,
+            primarySizePx: sidebarSizePx,
           }}
           rootClassName="ide-root jdw-workspace-shell"
           rootStyle={{ height: '100%', minHeight: 0 }}
           secondaryArea={
             <main className="workbench-editor-area jdw-workspace-shell__editor">
               <WorkspaceEditorPanel
+                canSaveFile={(_path, content, file) =>
+                  canSaveWidgetTreeWorkspaceFile(file, content)
+                }
                 files={files}
                 openPaths={openPaths}
                 renderEditor={(context) =>

@@ -10,6 +10,7 @@ export {
 export type { WorkspaceEditorProps, WorkspaceEditorTheme } from './WorkspaceEditor';
 export { WorkspaceEditorPanel } from './WorkspaceEditorPanel';
 export type {
+  WorkspaceEditorPanelCanSaveFile,
   WorkspaceEditorPanelProps,
   WorkspaceEditorPanelRenderEditor,
   WorkspaceEditorPanelRenderEditorContext,
@@ -33,48 +34,31 @@ export type {
   WorkspaceExplorerMoveRequestMeta,
   WorkspaceExplorerProps,
   WorkspaceExplorerSelectionChangeMeta,
+  WorkspaceExplorerSelectionChangeReason,
 } from './WorkspaceExplorer';
-export { WorkspaceFileIcon, codiconForFileKind, fileIconKindForPath } from './WorkspaceFileIcon';
-export type { WorkspaceFileIconKind, WorkspaceFileIconProps } from './WorkspaceFileIcon';
+export { WorkspaceFileIcon } from './WorkspaceFileIcon';
+export type { WorkspaceFileIconProps } from './WorkspaceFileIcon';
+export { WorkspacePathLabel } from './WorkspacePathLabel';
+export type { WorkspacePathLabelProps } from './WorkspacePathLabel';
+export { FILE_ICON_KINDS, codiconForFileKind, fileIconKindForPath } from '../../icons/file-icon';
+export type { FileIconKind } from '../../icons/file-icon';
 export { WorkspaceHighlightedText } from './WorkspaceHighlightedText';
 export type { WorkspaceHighlightedTextProps } from './WorkspaceHighlightedText';
-export {
-  WorkbenchMultiProviderExplorer,
-  collectWorkbenchExplorerEntryRefs,
-  countWorkbenchExplorerEntries,
-  flattenWorkbenchExplorerProviders,
-  getWorkbenchExplorerEntryContext,
-  getWorkbenchExplorerEntryKey,
-  getWorkbenchExplorerProviderEntryCount,
-  isWorkbenchExplorerActionDisabled,
-  isWorkbenchExplorerEntryDisabled,
-  isWorkbenchExplorerEntrySelectable,
-  isWorkbenchExplorerProviderDisabled,
-  normalizeWorkbenchExplorerEntryKeys,
-} from './MultiProviderExplorer';
-export type {
-  WorkbenchExplorerActionDescriptor,
-  WorkbenchExplorerEntryContext,
-  WorkbenchExplorerEntryContextInput,
-  WorkbenchExplorerEntryDescriptor,
-  WorkbenchExplorerEntryKind,
-  WorkbenchExplorerEntryRef,
-  WorkbenchExplorerEntrySelectContext,
-  WorkbenchExplorerEntryToggleContext,
-  WorkbenchExplorerFlattenedEntry,
-  WorkbenchExplorerProviderActionContext,
-  WorkbenchExplorerProviderCollapseContext,
-  WorkbenchExplorerProviderDescriptor,
-  WorkbenchExplorerProviderKind,
-  WorkbenchMultiProviderExplorerProps,
-} from './MultiProviderExplorer';
 export { WorkspaceSearchPanel } from './WorkspaceSearchPanel';
 export type { WorkspaceSearchPanelProps } from './WorkspaceSearchPanel';
+export { WorkspaceExplorerPanel } from './WorkspaceExplorerPanel';
+export type { WorkspaceExplorerPanelProps } from './WorkspaceExplorerPanel';
+export {
+  buildWorkspaceExplorerNodes,
+  resolveWorkspaceExplorerSectionTitle,
+} from './build-workspace-explorer-nodes.js';
 export { WorkspaceSearchResults } from './WorkspaceSearchResults';
 export type { WorkspaceSearchResultsProps } from './WorkspaceSearchResults';
 export {
+  WORKSPACE_PATH_DISPLAY_SEPARATOR,
   extensionOfPath,
   fileNameOfPath,
+  formatWorkspacePathDisplay,
   isSimpleWorkspaceName,
   joinWorkspacePath,
   normalizeWorkspacePath,
@@ -98,10 +82,12 @@ export {
 } from '@workbench-kit/workspace';
 export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
 export {
+  createEmptyWorkspaceSelection,
   getWorkspaceSelectionActionPaths,
   getWorkspaceSelectionRange,
   normalizeWorkspaceSelectionPaths,
   pruneWorkspaceSelection,
+  resolveWorkspaceCreateParentPath,
   updateWorkspaceSelection,
   type UpdateWorkspaceSelectionInput,
   type WorkspaceSelectionActionPathsInput,
@@ -148,9 +134,27 @@ export type {
 export {
   WorkspaceDraftsContext,
   WorkspaceDraftsProvider,
+  useWorkspaceDraftController,
   useWorkspaceDrafts,
 } from './WorkspaceDraftsContext';
 export type {
   WorkspaceDraftsContextValue,
   WorkspaceDraftsProviderProps,
 } from './WorkspaceDraftsContext';
+export { createVirtualWorkspaceExplorerPort } from './createVirtualWorkspaceExplorerPort';
+export { useWorkspaceExplorerController } from './useWorkspaceExplorerController';
+export type {
+  UseWorkspaceExplorerControllerOptions,
+  WorkspaceExplorerController,
+} from './useWorkspaceExplorerController';
+export {
+  applyWorkspaceExplorerMutationResult,
+  createWorkspaceExplorerInlineEditDraft,
+  createWorkspaceExplorerRenameDraft,
+  workspaceExplorerParentPaths,
+} from './workspaceExplorerController';
+export type {
+  WorkspaceExplorerControllerPort,
+  WorkspaceExplorerMutationResult,
+  WorkspaceExplorerWorkspaceSnapshot,
+} from './workspaceExplorerController';

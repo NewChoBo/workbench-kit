@@ -1,0 +1,37 @@
+.workbench-explorer-view,
+.workbench-commands-view,
+.workbench-search-view,
+.workbench-chat-view,
+.workbench-primary-sidebar .ui-sidebar-view,
+.shell-react-primary-sidebar {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.shell-react-primary-sidebar > section {
+  /* section is semantic only; view host frame carries sidebar flex sizing */
+  display: contents;
+}
+
+.shell-react-primary-sidebar [data-view-host-id] {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.workbench-chat-view .chat-sidebar-view {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.workbench-primary-sidebar
+  .ui-workbench-sidebar-section__header:hover
+  .ui-workbench-sidebar-section__meta,
+.workbench-primary-sidebar
+  .ui-workbench-sidebar-section__header:focus-within
+  .ui-workbench-sidebar-section__meta {
+  opacity: 1;
+}

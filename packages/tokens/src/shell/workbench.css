@@ -1,0 +1,29 @@
+/*
+ * Compact workbench shell metrics (radius, spacing, chrome heights).
+ *
+ * Color tokens stay on data-theme-preset; this preset only adjusts chrome density.
+ */
+
+[data-shell-preset='workbench'] {
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --shell-radius-control: 4px;
+  --shell-radius-input: 4px;
+  --shell-radius-panel: 6px;
+  --shell-radius-tab: 6px;
+  --shell-border-width: 1px;
+  --shell-spacing-inline: 8px;
+  --shell-spacing-block: 4px;
+  --shell-spacing-side-bar-inline: 6px;
+  --shell-spacing-side-bar-block: 4px;
+  --workbench-header-height: 32px;
+  --workbench-statusbar-height: 22px;
+  --workbench-statusbar-height-compact: 22px;
+  --workbench-settings-tab-height: 32px;
+  --workbench-panel-padding-block-start: 18px;
+  --workbench-panel-padding-block-end: 28px;
+  --workbench-panel-section-gap: 20px;
+  --workbench-settings-nav-padding-block: 14px;
+  --control-height-lg: 32px;
+  --control-height-md: 28px;
+}

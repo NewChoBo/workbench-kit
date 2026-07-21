@@ -71,14 +71,16 @@ export const JDW_SAMPLE_SCREENS: readonly JdwSampleScreenDefinition[] = [
             { gap: 4, col: 3, row: 0 },
           ),
         ]),
-        screenRow(
-          [
-            screenExpanded(screenPanel('Traffic trend', '#1e2127')),
-            screenExpanded(screenPanel('Top channels', '#1e2127')),
-          ],
-          {
-            gap: 12,
-          },
+        screenExpanded(
+          screenRow(
+            [
+              screenExpanded(screenPanel('Traffic trend', '#1e2127')),
+              screenExpanded(screenPanel('Top channels', '#1e2127')),
+            ],
+            {
+              gap: 12,
+            },
+          ),
         ),
       ],
       { gap: 16, padding: 20, background: '#13151a' },

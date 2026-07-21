@@ -1,0 +1,29 @@
+.ui-workbench-property-key-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 3px 8px;
+  background: var(--vscode-editor-background, var(--color-bg));
+  border: 1px solid var(--vscode-input-border, var(--color-border));
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.ui-workbench-property-key-value__name {
+  flex: 0 0 80px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-workbench-property-key-value__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--vscode-foreground, var(--color-text));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

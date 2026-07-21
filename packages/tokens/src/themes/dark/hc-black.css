@@ -1,0 +1,24 @@
+/* VS Code High Contrast Black — editor.background, contrastBorder, focusBorder */
+
+[data-theme='dark'][data-theme-preset='hc-black'] {
+  --color-bg: #000000;
+  --color-bg-75: rgba(0, 0, 0, 0.75);
+  --color-primary-side-bar-bg: #000000;
+  --color-primary-side-bar-bg-75: rgba(0, 0, 0, 0.75);
+  --color-surface: #000000;
+  --color-surface-hover: #1a1a1a;
+  --color-surface-elevated: #0c0c0c;
+  --color-border: #6fc3df;
+  --color-text: #ffffff;
+  --color-text-muted: #ffffff;
+  --color-text-subtle: #cccccc;
+  --color-accent: #0f4a85;
+  --color-accent-hover: #1a5a9e;
+  --color-accent-foreground: #ffffff;
+  --color-focus-border: #f38518;
+  --color-danger: #f48771;
+  --color-danger-hover: #ff9b85;
+  --scrollbar-thumb: #ffffff66;
+  --scrollbar-thumb-hover: #ffffff88;
+  --scrollbar-thumb-active: #ffffffaa;
+}

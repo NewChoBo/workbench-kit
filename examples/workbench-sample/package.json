@@ -10,20 +10,24 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@workbench-kit/contracts": "workspace:*",
     "@workbench-kit/jdw": "workspace:*",
+    "@workbench-kit/monaco": "workspace:*",
+    "@workbench-kit/platform": "workspace:*",
     "@workbench-kit/react": "workspace:*",
+    "@workbench-kit/shell-react": "workspace:*",
     "@workbench-kit/workbench-config": "workspace:*",
-    "@workbench-kit/workbench-react": "workspace:*",
+    "@workbench-kit/workbench-core": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "^5.9.3",
     "vite": "^6.0.0"
   },
-  "description": "Frontend-only Workbench Kit integration showcase with bundled built-in extensions."
+  "description": "Frontend-only Workbench Kit integration showcase with an in-browser dummy backend and bundled built-in extensions."
 }

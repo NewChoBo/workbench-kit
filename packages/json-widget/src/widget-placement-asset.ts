@@ -1,5 +1,7 @@
 import type { WidgetAssetCatalogContract, WidgetPlacementAsset } from '@workbench-kit/contracts';
 
+import type { JsonWidgetValueMap } from './jdw-node.js';
+import { resolveWidgetAssetContent } from './widget-asset-inputs.js';
 import { normalizeWidgetForPlacementPolicy, resolvePlacementPolicy } from './widget-normalize.js';
 import type { GenericWidget } from './widget-tree.js';
 
@@ -7,11 +9,33 @@ function cloneWidget(widget: WidgetPlacementAsset['content']): GenericWidget {
   return JSON.parse(JSON.stringify(widget)) as GenericWidget;
 }
 
+export interface MaterializeWidgetPlacementAssetOptions {
+  /** Values applied against asset `schema.json` defaults and `${path}` content expressions. */
+  readonly inputs?: JsonWidgetValueMap | undefined;
+}
+
 export function materializeWidgetPlacementAsset(
   asset: WidgetPlacementAsset,
   parent?: GenericWidget | null,
+  options: MaterializeWidgetPlacementAssetOptions = {},
 ): GenericWidget {
-  const widget = cloneWidget(asset.content);
+  let widget: GenericWidget;
+
+  if (options.inputs !== undefined) {
+    const resolved = resolveWidgetAssetContent(asset, options.inputs);
+    if (!resolved.valid || resolved.widget === null) {
+      const detail = resolved.issues.map((issue) => issue.message).join(' ');
+      throw new Error(
+        detail.length > 0
+          ? `Failed to resolve widget asset inputs: ${detail}`
+          : 'Failed to resolve widget asset inputs.',
+      );
+    }
+    widget = resolved.widget;
+  } else {
+    widget = cloneWidget(asset.content);
+  }
+
   if (!parent) {
     return widget;
   }

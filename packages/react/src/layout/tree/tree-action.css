@@ -1,0 +1,20 @@
+.ui-workbench-tree-action.ui-icon-button {
+  width: 18px;
+  height: 18px;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ui-workbench-tree-action.ui-icon-button .codicon {
+  font-size: 12px;
+}
+
+.ui-workbench-tree-action[data-tone='warning'][data-active='true'] {
+  color: var(--vscode-editorWarning-foreground, var(--color-warning));
+}
+
+.ui-workbench-tree-action[data-tone='muted'],
+.ui-workbench-tree-action[data-active='false'] {
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+}

@@ -1,6 +1,17 @@
 import type { JsonWidgetNode } from './jdw-node.js';
-import { parseJsonWidgetData } from './jdw-node.js';
+import { isJsonWidgetDynamicValueExpression, parseJsonWidgetData } from './jdw-node.js';
 import { WORKBENCH_JDW_KNOWN_TYPES } from './jdw-profile.js';
+
+const MAIN_AXIS_ALIGNMENT_VALUES = [
+  'start',
+  'center',
+  'end',
+  'spaceBetween',
+  'spaceAround',
+  'spaceEvenly',
+] as const;
+const CROSS_AXIS_ALIGNMENT_VALUES = ['stretch', 'start', 'center', 'end'] as const;
+const FLEX_FIT_VALUES = ['tight', 'loose'] as const;
 
 export interface ValidationIssue {
   readonly path: string;
@@ -38,6 +49,10 @@ function readNumber(value: unknown, path: string, issues: ValidationIssue[], lab
     return;
   }
 
+  if (isJsonWidgetDynamicValueExpression(value)) {
+    return;
+  }
+
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     issues.push({ path, message: `${label} must be a finite number.` });
   }
@@ -51,6 +66,10 @@ function readMinNumber(
   minimum: number,
 ): void {
   if (value === undefined) {
+    return;
+  }
+
+  if (isJsonWidgetDynamicValueExpression(value)) {
     return;
   }
 
@@ -71,6 +90,86 @@ function readString(value: unknown, path: string, issues: ValidationIssue[], lab
 
   if (typeof value !== 'string') {
     issues.push({ path, message: `${label} must be a string.` });
+  }
+}
+
+function readRequiredString(
+  value: unknown,
+  path: string,
+  issues: ValidationIssue[],
+  label: string,
+): string | undefined {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    issues.push({ path, message: `${label} is required.` });
+    return undefined;
+  }
+
+  return value;
+}
+
+function readBoolean(value: unknown, path: string, issues: ValidationIssue[], label: string): void {
+  if (value === undefined) {
+    return;
+  }
+
+  if (isJsonWidgetDynamicValueExpression(value)) {
+    return;
+  }
+
+  if (typeof value !== 'boolean') {
+    issues.push({ path, message: `${label} must be a boolean.` });
+  }
+}
+
+function readStringEnum(
+  value: unknown,
+  path: string,
+  issues: ValidationIssue[],
+  label: string,
+  values: readonly string[],
+): void {
+  if (value === undefined) {
+    return;
+  }
+
+  if (isJsonWidgetDynamicValueExpression(value)) {
+    return;
+  }
+
+  if (typeof value !== 'string') {
+    issues.push({ path, message: `${label} must be a string.` });
+    return;
+  }
+
+  if (!values.includes(value)) {
+    issues.push({
+      path,
+      message: `${label} must be one of: ${values.join(', ')}.`,
+    });
+  }
+}
+
+function isAllowedStaticImageSource(value: string): boolean {
+  const source = value.trim();
+  if (source.length === 0 || source.startsWith('//')) return false;
+
+  const schemeMatch = /^[A-Za-z][A-Za-z0-9+.-]*:/.exec(source);
+  if (!schemeMatch) return true;
+
+  const scheme = schemeMatch[0].slice(0, -1).toLowerCase();
+  return scheme === 'http' || scheme === 'https' || scheme === 'workspace' || scheme === 'asset';
+}
+
+function readImageSource(value: unknown, path: string, issues: ValidationIssue[]): void {
+  const source = readRequiredString(value, path, issues, 'src');
+  if (source === undefined) return;
+
+  if (!isAllowedStaticImageSource(source)) {
+    issues.push({
+      path,
+      message:
+        'src must be a relative path, absolute path, http(s), workspace://, or asset:// URL.',
+    });
   }
 }
 
@@ -116,6 +215,18 @@ function isKnownType(type: string, options: ValidateJsonWidgetDataOptions): bool
   return options.registeredTypes?.includes(type) ?? false;
 }
 
+function validateLinearChildPlacement(
+  child: JsonWidgetNode,
+  path: string,
+  issues: ValidationIssue[],
+): void {
+  readMinNumber(child.args.width, `${path}.width`, issues, 'width', 0);
+  readMinNumber(child.args.height, `${path}.height`, issues, 'height', 0);
+  readMinNumber(child.args.flex, `${path}.flex`, issues, 'flex', 0);
+  readStringEnum(child.args.flexFit, `${path}.flexFit`, issues, 'flexFit', FLEX_FIT_VALUES);
+  readStringEnum(child.args.align, `${path}.align`, issues, 'align', CROSS_AXIS_ALIGNMENT_VALUES);
+}
+
 export function validateJsonWidgetNode(
   value: unknown,
   path: string,
@@ -150,24 +261,47 @@ export function validateJsonWidgetNode(
       readMinNumber(node.args.gap, `${argsPath}.gap`, issues, 'gap', 0);
       readMinNumber(node.args.padding, `${argsPath}.padding`, issues, 'padding', 0);
       readString(node.args.background, `${argsPath}.background`, issues, 'background');
-      readString(
+      readStringEnum(
         node.args.mainAxisAlignment,
         `${argsPath}.mainAxisAlignment`,
         issues,
         'mainAxisAlignment',
+        MAIN_AXIS_ALIGNMENT_VALUES,
       );
-      readString(
+      readStringEnum(
         node.args.crossAxisAlignment,
         `${argsPath}.crossAxisAlignment`,
         issues,
         'crossAxisAlignment',
+        CROSS_AXIS_ALIGNMENT_VALUES,
       );
       validateChildNodes(node.args.children, `${argsPath}.children`, issues, options);
+
+      if (Array.isArray(node.args.children)) {
+        node.args.children.forEach((child, index) => {
+          if (!isJdwNode(child)) {
+            return;
+          }
+
+          validateLinearChildPlacement(child, `${argsPath}.children[${index}].args`, issues);
+        });
+      }
       break;
     }
     case 'expanded':
     case 'flexible': {
       readMinNumber(node.args.flex, `${argsPath}.flex`, issues, 'flex', 0);
+      if (
+        node.type === 'flexible' &&
+        node.args.fit !== undefined &&
+        !isJsonWidgetDynamicValueExpression(node.args.fit) &&
+        !(FLEX_FIT_VALUES as readonly unknown[]).includes(node.args.fit)
+      ) {
+        issues.push({
+          path: `${argsPath}.fit`,
+          message: 'fit must be "tight" or "loose".',
+        });
+      }
       validateSingleChild(node.args.child, `${argsPath}.child`, issues, options);
       break;
     }
@@ -188,14 +322,91 @@ export function validateJsonWidgetNode(
           }
 
           const childArgsPath = `${argsPath}.children[${index}].args`;
-          readNumber(child.args.col, `${childArgsPath}.col`, issues, 'col');
-          readNumber(child.args.row, `${childArgsPath}.row`, issues, 'row');
+          if (child.args.col === undefined) {
+            issues.push({
+              path: `${childArgsPath}.col`,
+              message: 'col is required for grid children at rest.',
+            });
+          } else {
+            readMinNumber(child.args.col, `${childArgsPath}.col`, issues, 'col', 0);
+          }
+          if (child.args.row === undefined) {
+            issues.push({
+              path: `${childArgsPath}.row`,
+              message: 'row is required for grid children at rest.',
+            });
+          } else {
+            readMinNumber(child.args.row, `${childArgsPath}.row`, issues, 'row', 0);
+          }
           readMinNumber(child.args.colSpan, `${childArgsPath}.colSpan`, issues, 'colSpan', 1);
           readMinNumber(child.args.rowSpan, `${childArgsPath}.rowSpan`, issues, 'rowSpan', 1);
         });
       }
       break;
     }
+    case 'stack': {
+      readString(node.args.background, `${argsPath}.background`, issues, 'background');
+      validateChildNodes(node.args.children, `${argsPath}.children`, issues, options);
+
+      if (Array.isArray(node.args.children)) {
+        node.args.children.forEach((child, index) => {
+          if (!isJdwNode(child)) {
+            return;
+          }
+
+          const childArgsPath = `${argsPath}.children[${index}].args`;
+          readNumber(child.args.left, `${childArgsPath}.left`, issues, 'left');
+          readNumber(child.args.top, `${childArgsPath}.top`, issues, 'top');
+          readNumber(child.args.right, `${childArgsPath}.right`, issues, 'right');
+          readNumber(child.args.bottom, `${childArgsPath}.bottom`, issues, 'bottom');
+        });
+      }
+      break;
+    }
+    case 'box':
+    case 'container': {
+      readMinNumber(node.args.width, `${argsPath}.width`, issues, 'width', 0);
+      readMinNumber(node.args.height, `${argsPath}.height`, issues, 'height', 0);
+      readMinNumber(node.args.padding, `${argsPath}.padding`, issues, 'padding', 0);
+      readString(node.args.background, `${argsPath}.background`, issues, 'background');
+      break;
+    }
+    case 'padding': {
+      readMinNumber(node.args.padding, `${argsPath}.padding`, issues, 'padding', 0);
+      break;
+    }
+    case 'align': {
+      readString(node.args.alignment, `${argsPath}.alignment`, issues, 'alignment');
+      break;
+    }
+    case 'sized_box': {
+      readMinNumber(node.args.width, `${argsPath}.width`, issues, 'width', 0);
+      readMinNumber(node.args.height, `${argsPath}.height`, issues, 'height', 0);
+      break;
+    }
+    case 'image': {
+      readImageSource(node.args.src, `${argsPath}.src`, issues);
+      readString(node.args.alt, `${argsPath}.alt`, issues, 'alt');
+      readString(node.args.fit, `${argsPath}.fit`, issues, 'fit');
+      readMinNumber(node.args.width, `${argsPath}.width`, issues, 'width', 0);
+      readMinNumber(node.args.height, `${argsPath}.height`, issues, 'height', 0);
+      break;
+    }
+    case 'icon': {
+      readRequiredString(node.args.name, `${argsPath}.name`, issues, 'name');
+      readString(node.args.color, `${argsPath}.color`, issues, 'color');
+      readMinNumber(node.args.size, `${argsPath}.size`, issues, 'size', 1);
+      break;
+    }
+    case 'button': {
+      readRequiredString(node.args.label, `${argsPath}.label`, issues, 'label');
+      readString(node.args.variant, `${argsPath}.variant`, issues, 'variant');
+      readString(node.args.color, `${argsPath}.color`, issues, 'color');
+      readString(node.args.background, `${argsPath}.background`, issues, 'background');
+      readBoolean(node.args.disabled, `${argsPath}.disabled`, issues, 'disabled');
+      break;
+    }
+    case 'center':
     default:
       break;
   }
@@ -210,6 +421,7 @@ export function validateJsonWidgetNode(
     node.type !== 'row' &&
     node.type !== 'column' &&
     node.type !== 'grid' &&
+    node.type !== 'stack' &&
     'children' in node.args &&
     node.args.children !== undefined
   ) {

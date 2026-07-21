@@ -10,7 +10,7 @@ const publishPackageNames = new Set(NPM_PUBLISH_ORDER);
 const privatePreviewPackageNames = new Set([
   '@workbench-kit/monaco',
   '@workbench-kit/workbench-core',
-  '@workbench-kit/workbench-react',
+  '@workbench-kit/shell-react',
 ]);
 const requiredSrcExclusions = [
   '!src/**/*.test.ts',
@@ -66,7 +66,7 @@ for (const workspacePackage of workspacePackages) {
   }
 }
 
-validateReactPrivateDemoBoundary();
+validateReactPrivateStorySurfaces();
 
 if (violations.length > 0) {
   console.error('Public package export check failed.');
@@ -253,7 +253,7 @@ function validateLegacyEntryPoints(workspacePackage, fields) {
   }
 }
 
-function validateReactPrivateDemoBoundary() {
+function validateReactPrivateStorySurfaces() {
   const reactPackage = packageByName.get('@workbench-kit/react');
   if (!reactPackage) {
     return;
@@ -276,6 +276,35 @@ function validateReactPrivateDemoBoundary() {
       location: `${location}#files`,
       message: '@workbench-kit/react must exclude private workbench demo helpers.',
       rule: 'react-demo-files',
+    });
+  }
+
+  if (exportPaths.some((exportPath) => exportPath.startsWith('./workbench/story'))) {
+    violations.push({
+      location: `${location}#exports`,
+      message: '@workbench-kit/react must not export Storybook-only workbench helpers.',
+      rule: 'react-story-export',
+    });
+  }
+
+  if (!packageJson.files?.includes('!src/workbench/story')) {
+    violations.push({
+      location: `${location}#files`,
+      message: '@workbench-kit/react must exclude Storybook-only workbench helpers.',
+      rule: 'react-story-files',
+    });
+  }
+
+  const workbenchIndexPath = path.join(reactPackage.directory, 'src/workbench/index.ts');
+  const workbenchIndex = fs.existsSync(workbenchIndexPath)
+    ? fs.readFileSync(workbenchIndexPath, 'utf8')
+    : '';
+
+  if (/from\s+['"]\.\/story\//u.test(workbenchIndex)) {
+    violations.push({
+      location: relativePath(workbenchIndexPath),
+      message: '@workbench-kit/react/workbench must not re-export Storybook-only helpers.',
+      rule: 'react-workbench-story-re-export',
     });
   }
 }

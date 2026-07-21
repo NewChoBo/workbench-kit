@@ -1,3 +1,63 @@
+/*
+ * Themed scrollbars:
+ * - Theme host (`[data-theme]` / WorkbenchThemeProvider) owns the default look.
+ * - Call sites use `overflow: auto` or `ScrollArea` — no class-name soup required.
+ * - `.ui-workbench-scrollbar` remains an explicit opt-in for out-of-theme hosts/portals.
+ * - Visibility modifiers (`--hidden`, primary sidebar) stay as exceptions.
+ */
+
+[data-theme],
+[data-theme-preset],
+.ui-workbench-host-root {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+
+/*
+ * Chromium often leaves overflow boxes at scrollbar-width:auto even though the
+ * property is inherited — force inherit under the theme host.
+ */
+[data-theme] :where(*),
+[data-theme-preset] :where(*),
+.ui-workbench-host-root :where(*) {
+  scrollbar-color: inherit;
+  scrollbar-width: inherit;
+}
+
+/* WebKit painting must target the scrollport; :where(*) survives CSS minify better than bare * */
+:is([data-theme], [data-theme-preset], .ui-workbench-host-root) :where(*)::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+:is([data-theme], [data-theme-preset], .ui-workbench-host-root)
+  :where(*)::-webkit-scrollbar-button {
+  display: none;
+}
+
+:is([data-theme], [data-theme-preset], .ui-workbench-host-root) :where(*)::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+:is([data-theme], [data-theme-preset], .ui-workbench-host-root) :where(*)::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border: var(--scrollbar-thumb-inset) solid transparent;
+  border-radius: calc(var(--scrollbar-size) / 2);
+  background-clip: content-box;
+}
+
+:is([data-theme], [data-theme-preset], .ui-workbench-host-root)
+  :where(*)::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  background-clip: content-box;
+}
+
+:is([data-theme], [data-theme-preset], .ui-workbench-host-root)
+  :where(*)::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-active);
+  background-clip: content-box;
+}
+
 .ui-scroll-area {
   min-width: 0;
   min-height: 0;
@@ -21,6 +81,7 @@
   scrollbar-gutter: stable;
 }
 
+/* Explicit opt-in (ScrollArea, out-of-theme hosts) — same tokens as theme host */
 .ui-workbench-scrollbar {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   scrollbar-width: thin;
@@ -57,13 +118,27 @@
 }
 
 .ui-workbench-scrollbar--hidden,
-.workbench-primary-side-bar .panel-body {
+.workbench-primary-sidebar .ui-sidebar-view__body,
+.workbench-primary-sidebar .ui-workbench-sidebar-section__content {
+  scrollbar-gutter: auto;
+  scrollbar-width: none;
+}
+
+/*
+ * Overlay scrollports hide the *native* classic bar (gutter 0, no hover width
+ * toggle). `ScrollArea scrollbars="overlay"` paints an absolute rail/thumb in
+ * `scroll-area-overlay.css`. Do not reintroduce ::-webkit-scrollbar width
+ * 0↔N or scrollbar-width none↔thin on hover — that reflows Library filters.
+ */
+.ui-workbench-scrollbar--overlay {
   scrollbar-gutter: auto;
   scrollbar-width: none;
 }
 
 .ui-workbench-scrollbar--hidden::-webkit-scrollbar,
-.workbench-primary-side-bar .panel-body::-webkit-scrollbar {
+.ui-workbench-scrollbar--overlay::-webkit-scrollbar,
+.workbench-primary-sidebar .ui-sidebar-view__body::-webkit-scrollbar,
+.workbench-primary-sidebar .ui-workbench-sidebar-section__content::-webkit-scrollbar {
   width: 0;
   height: 0;
 }

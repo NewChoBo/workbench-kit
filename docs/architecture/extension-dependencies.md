@@ -67,9 +67,21 @@ The manifest check currently enforces:
 - Missing hard dependency and hard dependency cycle failures.
 - Repository-local extension packages remain private ESM packages that depend on
   `@workbench-kit/workbench-extension-sdk`.
+- Runtime dependency diagnostics for missing optional dependencies, missing
+  capabilities, duplicate capability providers, host/provider capability
+  conflicts, and contributed commands without `onCommand:` or `onStartup`
+  activation.
 
 `ExtensionRegistry.registerExtensions()` repeats the hard dependency graph check
 at runtime and activation recursively activates hard dependencies first.
+`ExtensionRegistry.getDependencyDiagnostics()` exposes non-blocking diagnostics
+for management surfaces and plugin-store style review.
+`createExtensionInstallPlan()` reuses the same dependency/capability diagnostics
+before install state is written, and adds install-specific blocking diagnostics
+for missing catalog targets, missing catalog install sources, missing
+extension-pack members, and dependency cycles. Non-blocked plans are applied
+with `applyExtensionInstallPlanToRecords()` so dependency enable/install actions
+are committed as one local install-state update.
 
 ## Resolution Algorithm
 
@@ -80,9 +92,11 @@ at runtime and activation recursively activates hard dependencies first.
 3. **Build directed graph** from `extensionDependencies`.
 4. **Detect cycles**; fail with cycle path in error message.
 5. **Activate hard dependencies first** when a dependent extension activates.
-6. **Future:** validate npm semver ranges, resolve optional dependencies,
-   connect `capabilities.requires` to `capabilities.provides`, and apply
-   `extensions.lock.json` to pin exact versions and content hashes.
+6. **Diagnose** optional dependencies, capability requirements/provider
+   conflicts, and command activation gaps for management surfaces.
+7. **Future:** validate npm semver ranges, optionally promote selected
+   diagnostics to fail-fast policy, and apply `extensions.lock.json` to pin
+   exact versions and content hashes.
 
 ## Semver Validation
 
@@ -115,5 +129,7 @@ Reproducible team workspaces depend on committing the lockfile; local-only exten
 ## Related Documents
 
 - [Extension System](./extension-system.md)
+- [Extension Development Guide](../guides/extension-development.md)
+- [Use Case Scenarios — dependency model](../guides/use-cases.md#scenario-6--extension-dependency-model)
 - [Workbench Config](./workbench-config.md)
 - [Security Boundary](./security-boundary.md)

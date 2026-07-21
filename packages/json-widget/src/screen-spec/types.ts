@@ -75,11 +75,23 @@ export type ScreenNode =
   | ScreenGridNode
   | ScreenStackNode;
 
+/**
+ * Template/scaffold input that compiles one way into a JDW widget document.
+ *
+ * A Screen Spec is not a parallel authoring source of truth. After compilation,
+ * consumers should author the resulting `WidgetDocument` / `GenericWidget`
+ * through `WidgetPatch`; compiled JDW changes are not synchronized back here.
+ */
 export interface JdwScreenSpec {
   readonly id: string;
+  /** Host resource metadata. Not emitted into JDW runtime widget JSON. */
   readonly title: string;
+  /** Host resource metadata. Not emitted into JDW runtime widget JSON. */
   readonly description: string;
+  /** Preview metadata. Not emitted into JDW runtime widget JSON. */
   readonly frameWidth: number;
+  /** Preview constraints. Not emitted into JDW runtime widget JSON. */
   readonly layout: ScreenLayoutFrame;
+  /** The only Screen Spec field compiled into the JDW runtime widget tree. */
   readonly root: ScreenNode;
 }

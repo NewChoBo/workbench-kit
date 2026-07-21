@@ -1,0 +1,69 @@
+/*
+ * Overlay ScrollArea: native bar stays hidden (gutter 0). An absolute rail/thumb
+ * paints over content on hover/focus-within without changing scrollport width.
+ */
+.ui-scroll-area--overlay-host {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Host must not become the scrollport — orientation overflow stays on the viewport. */
+.ui-scroll-area--overlay-host.ui-scroll-area--both,
+.ui-scroll-area--overlay-host.ui-scroll-area--horizontal,
+.ui-scroll-area--overlay-host.ui-scroll-area--vertical {
+  overflow: hidden;
+}
+
+.ui-scroll-area__viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ui-scroll-area__overlay-rail {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.ui-scroll-area--overlay-host:hover .ui-scroll-area__overlay-rail,
+.ui-scroll-area--overlay-host:focus-within .ui-scroll-area__overlay-rail {
+  opacity: 1;
+}
+
+.ui-scroll-area__overlay-rail--vertical {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--scrollbar-size);
+}
+
+.ui-scroll-area__overlay-rail--horizontal {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--scrollbar-size);
+}
+
+.ui-scroll-area__overlay-thumb {
+  box-sizing: border-box;
+  border: var(--scrollbar-thumb-inset) solid transparent;
+  border-radius: calc(var(--scrollbar-size) / 2);
+  background: var(--scrollbar-thumb);
+  background-clip: content-box;
+  will-change: transform;
+}
+
+.ui-scroll-area__overlay-rail--vertical .ui-scroll-area__overlay-thumb {
+  width: 100%;
+}
+
+.ui-scroll-area__overlay-rail--horizontal .ui-scroll-area__overlay-thumb {
+  height: 100%;
+}

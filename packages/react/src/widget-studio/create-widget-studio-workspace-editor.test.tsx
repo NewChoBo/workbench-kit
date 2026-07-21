@@ -5,14 +5,10 @@ import { createWidgetStudioWorkspaceEditorRenderer } from './create-widget-studi
 import { WIDGET_TREE_DEMO_REGISTRY } from '../widget-tree/demo-registry.js';
 import { WIDGET_TREE_WELCOME_DOCUMENT } from '../widget-tree/demo-registry.js';
 
-vi.mock('@monaco-editor/react', () => ({
-  default: () => <div data-testid="monaco-editor">Mocked Monaco Editor</div>,
-  loader: {
-    config: vi.fn(),
-  },
-}));
-
-vi.mock('monaco-editor', () => ({}));
+vi.mock('@workbench-kit/monaco', async () => {
+  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
+  return createWorkbenchMonacoMockModule();
+});
 
 describe('createWidgetStudioWorkspaceEditorRenderer', () => {
   const renderer = createWidgetStudioWorkspaceEditorRenderer({
@@ -24,8 +20,8 @@ describe('createWidgetStudioWorkspaceEditorRenderer', () => {
       renderer({
         content: WIDGET_TREE_WELCOME_DOCUMENT,
         file: {
-          path: 'src/widgets/home.widget.json',
-          mimeType: 'application/vnd.workbench-kit.widget+json',
+          path: 'src/widgets/home.jdw.json',
+          mimeType: 'application/vnd.workbench-kit.jdw+json',
           content: WIDGET_TREE_WELCOME_DOCUMENT,
         },
         isDirty: false,

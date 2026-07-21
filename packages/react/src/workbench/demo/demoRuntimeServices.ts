@@ -31,14 +31,11 @@ export interface DemoRuntimeServicesOptions<TContext = void> {
     | ((patch: WorkspacePatchEvent, result: WorkspacePatchApplyResult) => void | Promise<void>)
     | undefined;
   readonly createChatService?:
-    | ((options: WorkbenchChatServiceOptions) => WorkbenchChatService)
-    | undefined;
+    ((options: WorkbenchChatServiceOptions) => WorkbenchChatService) | undefined;
   readonly createPatchService?:
-    | ((options: WorkspacePatchServiceOptions) => WorkspacePatchService)
-    | undefined;
+    ((options: WorkspacePatchServiceOptions) => WorkspacePatchService) | undefined;
   readonly createSaveService?:
-    | ((options: WorkspaceSaveServiceOptions) => WorkspaceSaveService)
-    | undefined;
+    ((options: WorkspaceSaveServiceOptions) => WorkspaceSaveService) | undefined;
 }
 
 export interface DemoRuntimeServices {

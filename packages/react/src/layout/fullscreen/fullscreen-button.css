@@ -1,0 +1,44 @@
+.ui-workbench-fullscreen-button {
+  box-sizing: border-box;
+  min-width: 84px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px;
+  color: #f8fafc;
+  background: rgba(28, 29, 25, 0.68);
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ui-workbench-fullscreen-button:hover,
+.ui-workbench-fullscreen-button:focus-visible {
+  background: rgba(51, 55, 48, 0.74);
+}
+
+.ui-workbench-fullscreen-button:focus-visible {
+  outline: 2px solid var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: 2px;
+}
+
+.ui-workbench-fullscreen-button[data-prominent='true'] {
+  min-width: 148px;
+  height: 46px;
+  gap: 9px;
+  padding: 0 20px;
+  color: #052e16;
+  background: #22c55e;
+  border-color: rgba(255, 255, 255, 0.2);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.ui-workbench-fullscreen-button[data-prominent='true']:hover,
+.ui-workbench-fullscreen-button[data-prominent='true']:focus-visible {
+  background: #4ade80;
+}

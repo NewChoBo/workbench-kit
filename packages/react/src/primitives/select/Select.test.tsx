@@ -22,7 +22,7 @@ describe('Select', () => {
   });
 
   it('re-exports from primitives entry without import cycle', async () => {
-    const entry = await import('../Select');
+    const entry = await import('..');
     const module = await import('./index');
 
     expect(entry.Select).toBe(module.Select);

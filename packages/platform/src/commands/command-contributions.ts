@@ -33,8 +33,7 @@ export interface CommandMenuCommandEntry<TContext = void> {
 }
 
 export type CommandMenuEntry<TContext = void> =
-  | CommandMenuCommandEntry<TContext>
-  | CommandMenuSeparatorEntry;
+  CommandMenuCommandEntry<TContext> | CommandMenuSeparatorEntry;
 
 export interface CommandContribution<TContext = void> {
   commands: CommandDefinition<TContext>[];
@@ -80,6 +79,14 @@ export interface CommandMenuItemsInput<TContext = void> {
   entries: CommandMenuEntry<TContext>[];
   registry: CommandRegistry<TContext>;
   surface?: string;
+}
+
+export interface CommandMenuCommandItemInput<TContext = void> extends Omit<
+  CommandMenuItemsInput<TContext>,
+  'entries'
+> {
+  commandId: string;
+  entry?: Omit<CommandMenuCommandEntry<TContext>, 'commandId' | 'type'> | undefined;
 }
 
 export function createCommandRegistry<TContext>(
@@ -186,7 +193,7 @@ export function canExecuteCommand<TContext>(
   return Boolean(
     command?.run &&
     isVisible(command, undefined, context, contextKeys) &&
-    isEnabled(command, undefined, context),
+    isEnabled(command, undefined, context, contextKeys),
   );
 }
 
@@ -242,12 +249,12 @@ export function resolveCommandMenuItems<TContext>({
     return [
       {
         commandId: command.id,
-        danger: resolveValue(entry.danger ?? command.danger, context),
-        disabled: !isEnabled(command, entry, context),
-        icon: resolveValue(entry.icon ?? command.icon, context),
+        danger: resolveCommandValue(entry.danger ?? command.danger, context),
+        disabled: !isEnabled(command, entry, context, contextKeys),
+        icon: resolveCommandValue(entry.icon ?? command.icon, context),
         id: entry.id ?? command.id,
         label: resolveCommandLabel(command, entry, context),
-        shortcut: resolveValue(entry.shortcut ?? command.shortcut, context),
+        shortcut: resolveCommandValue(entry.shortcut ?? command.shortcut, context),
         type: 'command',
       },
     ];
@@ -256,20 +263,41 @@ export function resolveCommandMenuItems<TContext>({
   return compactCommandMenuItems(items);
 }
 
-function resolveValue<TContext, TValue>(
+export function resolveCommandMenuCommandItem<TContext>({
+  commandId,
+  entry,
+  ...input
+}: CommandMenuCommandItemInput<TContext>): ResolvedCommandMenuCommandItem | undefined {
+  return resolveCommandMenuItems({
+    ...input,
+    entries: [commandMenuEntry<TContext>(commandId, entry)],
+  }).find(
+    (item): item is ResolvedCommandMenuCommandItem =>
+      item.type === 'command' && item.commandId === commandId,
+  );
+}
+
+export function resolveCommandValue<TContext, TValue>(
   value: CommandValue<TContext, TValue>,
   context: TContext,
 ): TValue;
-function resolveValue<TContext, TValue>(
+export function resolveCommandValue<TContext, TValue>(
   value: CommandValue<TContext, TValue> | undefined,
   context: TContext,
 ): TValue | undefined;
-function resolveValue<TContext, TValue>(
+export function resolveCommandValue<TContext, TValue>(
   value: CommandValue<TContext, TValue> | undefined,
   context: TContext,
 ): TValue | undefined {
   if (typeof value !== 'function') return value;
   return (value as (context: TContext) => TValue)(context);
+}
+
+export function resolveCommandDefinitionLabel<TContext>(
+  command: Pick<CommandDefinition<TContext>, 'id' | 'label' | 'title'>,
+  context: TContext,
+): string {
+  return resolveCommandValue(command.label, context) ?? command.title ?? command.id;
 }
 
 function resolveWhenClause<TContext>(
@@ -303,8 +331,13 @@ function isEnabled<TContext>(
   command: CommandDefinition<TContext>,
   entry: CommandMenuCommandEntry<TContext> | undefined,
   context: TContext,
+  contextKeys: object | undefined,
 ) {
-  return command.isEnabled?.(context) !== false && entry?.isEnabled?.(context) !== false;
+  return (
+    resolveWhenClause(command.enablement, context, contextKeys) &&
+    command.isEnabled?.(context) !== false &&
+    entry?.isEnabled?.(context) !== false
+  );
 }
 
 function matchesSurface<TContext>(
@@ -321,6 +354,6 @@ function resolveCommandLabel<TContext>(
   entry: CommandMenuCommandEntry<TContext>,
   context: TContext,
 ): string {
-  const label = resolveValue(entry.label ?? command.label, context);
-  return label ?? command.title ?? command.id;
+  const label = resolveCommandValue(entry.label, context);
+  return label ?? resolveCommandDefinitionLabel(command, context);
 }

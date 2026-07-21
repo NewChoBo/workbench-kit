@@ -2,7 +2,7 @@
 
 `WorkbenchStandaloneShell` is the primary React entry for composing a VS Code–style
 workbench without product-specific runtime wiring. Host apps (Storybook demos,
-dev-agent, tile_paper) supply bootstrap data and render callbacks; the shell owns
+integrating host apps) supply bootstrap data and render callbacks; the shell owns
 chrome layout, activity routing, settings modal visibility, and theme state.
 
 ## Responsibilities
@@ -41,12 +41,52 @@ Fixture defaults for the integrated Storybook host live in
 `WorkbenchStandaloneShellContext` is the stable public surface for host wiring:
 
 - **Activity**: `activityId`, `showActivity`, `activateActivity`
-- **Chrome**: `isPrimarySidebarVisible`, `togglePrimarySidebar`, `primarySidebarSizePercent`, `setPrimarySidebarSizePercent`
+- **Chrome**: `isPrimarySidebarVisible`, `togglePrimarySidebar`, `primarySidebarSizePx`, `setPrimarySidebarSizePx`
 - **Theme**: `theme`, `setTheme`
-- **Settings**: `isSettingsOpen`, `openSettings`, `closeSettings`, `setSettingsCategoryId`, `setSettingsScopeId`, `setSettingsSearchValue`
+- **Settings**: `isSettingsOpen`, `openSettings`, `closeSettings`, `setSettingsCategoryId`, `setSettingsScopeId`, `setSettingsSearchValue`. Host-owned settings overlays may pass `commitMode="immediate"` on `WorkbenchSettingsModal` for VS Code–style apply-on-change (no Apply/Cancel footer; edits via `onPreferenceChange` / `useWorkbenchSettingsCommit`). Default remains `explicit`.
 - **Commands**: `commandContext` (`WorkbenchShellCommandContext`) for shell-level menu entries
 
 Hosts must not mutate shell state outside these methods.
+
+## React context for render slots
+
+`WorkbenchStandaloneShell` wraps the chrome tree in a React context provider so
+sidebar, editor, overlay, and title-bar slots share one `context` instance without
+each host mounting its own provider.
+
+```ts
+import { useWorkbenchStandaloneShellContext } from '@workbench-kit/react/workbench';
+
+function SettingsOverlay() {
+  const shell = useWorkbenchStandaloneShellContext<MyActivityId, MyTheme>();
+  return shell.isSettingsOpen ? <MySettingsModal onClose={shell.closeSettings} /> : null;
+}
+```
+
+Prefer this hook over threading `context` through props when a slot subtree needs
+shell commands from a deep child.
+
+## Shell state sync
+
+Use `onShellStateChange` for persistence, analytics, or logging instead of
+duplicating `useEffect` blocks in `renderPrimarySidebar` and `renderOverlays`:
+
+```ts
+<WorkbenchStandaloneShell
+  onShellStateChange={(change) => {
+    if (change.primarySidebarVisibilityChanged) {
+      persistSidebarVisibility(change.next.isPrimarySidebarVisible);
+    }
+  }}
+/>
+```
+
+`change.kind` is one of `initial`, `activity`, `sidebar-visibility`, `sidebar-size`,
+`settings`, or `theme`. `change.previous` is `null` only for the initial callback.
+
+Optional `renderShellHost={(context, shell) => <HostInstrumentation>{shell}</HostInstrumentation>}`
+wraps the default shell element once so hosts can add domain providers without
+splitting instrumentation across render slots.
 
 ## Required render props
 
@@ -64,6 +104,20 @@ Hosts must not mutate shell state outside these methods.
 - `onStatusItemActivate` — status bar item clicks (theme toggle, sidebar toggle)
 - `onEvent` — low-level bootstrap events (`activity-change`, `status-message`)
 
+## Primary sidebar visibility
+
+Hide/show the primary sidebar by toggling visibility state (`isPrimarySidebarVisible`
+/ `togglePrimarySidebar`, or `layoutService.setSideBarVisible` in `shell-react`).
+Keep the shell `SplitView` mounted — do not conditionally unmount the primary
+sidebar node. `WorkbenchShell` adds `ui-workbench-split-view--primary-collapsed`
+when `primarySidebar.isVisible` is false so the secondary/editor column expands
+via CSS grid instead of disappearing.
+
+Storybook play tests in `WorkbenchShell.stories.tsx` and
+`examples/workbench-sample/src/WorkbenchSample.stories.tsx` (`Sidebar toggle`)
+assert this layout through shared helpers in
+`packages/react/src/workbench/story/shellStory.ts`.
+
 ## Command and context-key wiring
 
 Menu projection should use `resolveWorkbenchCommandMenuItems` from
@@ -75,8 +129,21 @@ Integrated shell demo builds context keys via `createIntegratedShellContextKeys`
 
 ## Reference implementations
 
-- **Storybook**: `IntegratedShellDemo` → `React/Workbench/Shell → Integrated Shell`
+- **Storybook**: `IntegratedShellDemo` → `React/Workbench/Shell` → `Integrated Shell`
+  (baseline play; pixel sidebar width via Workbench settings)
+- **Icon inspector tabs**: `SideBarViewTabStrip` story `Inspector icon tabs` for secondary
+  sidebar panes that switch by icon rather than text `TabbedPanels`
 - **Orchestration boundary**: demo module owns workspace/runtime wiring; adapters own fixtures
+
+## Editor tab close menu
+
+`WorkbenchStandaloneShell` does not own editor tabs. For secondary-area tab strips, prefer
+`WorkbenchEditorTabs` (or `useWorkbenchEditorTabContextMenu` with `EditorTabs`) from
+`@workbench-kit/react/editor-tabs` / `@workbench-kit/react/workbench/shell`.
+
+That surface wires Close / Close others / Close all through the shared editor command presets
+and respects `closable: false` (Close disabled; skipped by Close others / Close all). Hosts only
+supply `tabs`, `onSelect`, and `onClose`.
 
 ## Non-goals (host responsibility)
 

@@ -1,0 +1,56 @@
+.ui-library-catalog-picker-dialog {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--shell-spacing-inline-md, 12px);
+  min-height: 0;
+  min-width: 0;
+  padding: var(--shell-spacing-panel-md, 12px);
+}
+
+.ui-library-catalog-picker-dialog__actions {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: var(--shell-spacing-inline-sm, 8px);
+}
+
+.ui-library-catalog-picker-dialog__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--shell-spacing-inline-sm, 8px);
+  min-height: 0;
+  min-width: 0;
+}
+
+.ui-library-catalog-picker-dialog__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ui-library-catalog-picker-dialog__grid {
+  display: grid;
+  gap: var(--shell-spacing-inline-sm, 8px);
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  padding-bottom: var(--shell-spacing-panel-sm, 8px);
+}
+
+/* Dense cover tiles for picker density (smaller than full catalog browse covers). */
+.ui-library-catalog-picker-dialog__card.ui-catalog-browse-card--cover {
+  min-height: 0;
+}
+
+.ui-library-catalog-picker-dialog__card.ui-catalog-browse-card--cover
+  .ui-catalog-browse-card__icon {
+  height: 72px;
+  font-size: var(--shell-font-size-title, 1.125rem);
+}
+
+.ui-library-catalog-picker-dialog__card .ui-catalog-browse-card__media-custom img,
+.ui-library-catalog-picker-dialog__card .ui-catalog-browse-card__image {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}

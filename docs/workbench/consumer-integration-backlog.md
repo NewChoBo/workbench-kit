@@ -1,0 +1,242 @@
+﻿# Consumer Integration Backlog
+
+**Status:** Active reference backlog  
+**Last updated:** 2026-07-12  
+**Source:** Workbench Kit adoption work driven by a desktop launcher consumer (library browse, ContentHub shell, provider integrations).
+
+## Purpose
+
+This document tracks Workbench Kit features and improvements identified while integrating a reference desktop consumer. Items are product-neutral: they describe reusable kit surfaces, not consumer-specific domain logic.
+
+Use this backlog when:
+
+- Prioritizing `@workbench-kit/react` primitives ahead of consumer-local UI.
+- Deciding whether a consumer adapter (`tilepaper-ui`, renderer host) should stay local or move into the kit.
+- Planning Storybook / `workbench-sample` coverage for library and shell flows.
+
+Related kit docs: [consumer-capabilities.md](./consumer-capabilities.md), [current-state.md](./current-state.md), [future-capabilities.md](./future-capabilities.md), [layout-css-improvement-plan-2026-06-20.md](./layout-css-improvement-plan-2026-06-20.md).
+
+---
+
+## Completed in session
+
+Landings below are merged in `workbench-kit` unless noted as **uncommitted WIP** in the working tree.
+
+| Item                             | Package / API                                                                                                               | Commit (when merged)                                   | Notes                                                                                                                   |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Shell chrome design tokens       | `@workbench-kit/tokens` (`--shell-*` spacing, typography, radius)                                                           | `fd0f0ab8`                                             | Consumed by react layout and catalog/detail CSS.                                                                        |
+| Library detail layout shell      | `@workbench-kit/react` `LibraryDetailLayout`, `RecordMediaHero`                                                             | `72fd856b`                                             | Modes: `banner`, `background`, `compact`; detail hero tokens in `primitives/styles.css`.                                |
+| Media placeholder policy         | `useWorkbenchMediaImage`, `CatalogBrowseCard`, `WorkbenchThumbnail`                                                         | `e8575c5b`, `72fd856b`                                 | Codicon fallback on missing/error URLs; stable aspect boxes.                                                            |
+| Editor tab strip DnD hook        | `@workbench-kit/react/editor-tabs` `useEditorTabsStripDnd`                                                                  | `4914824e`                                             | Deduped consumer-local tab reorder logic.                                                                               |
+| Standalone editor tab close menu | `@workbench-kit/react/editor-tabs` `WorkbenchEditorTabs` / `useWorkbenchEditorTabContextMenu`                               | `0e55ad07`                                             | Close / Close others / Close all for host-owned standalone tabs; respects `closable: false`.                            |
+| `FilterBarRow` export            | `@workbench-kit/react/primitives`, `@workbench-kit/react/layout`                                                            | `490ea1e7`                                             | Filter strip rows available from primitives barrel.                                                                     |
+| Compact sidebar action bar       | `@workbench-kit/react/layout` `SidebarActionIconBar`                                                                        | `4914824e`                                             | Overflow menu for dense primary sidebar chrome.                                                                         |
+| Catalog browse card primitive    | `@workbench-kit/react/primitives` `CatalogBrowseCard`                                                                       | `e8575c5b` + media/trailing slots                      | Grid `cover` / `row`; optional `media` / `mediaOverlay` / `trailing` for dense previews, badges, and secondary actions. |
+| Catalog browse search helpers    | `filterCatalogBrowseItems`, `CatalogBrowseFacetChips`                                                                       | compose with `CatalogBrowsePane`                       | Client text match + simple All/option chip facet for `facetStrip`.                                                      |
+| Catalog browse pane              | `@workbench-kit/react/primitives` `CatalogBrowsePane`                                                                       | (this change)                                          | Search/sort/view-mode frame + facet slot + grid/list + infinite scroll; item render overrides.                          |
+| Library facet filter strip       | `@workbench-kit/react/primitives` `LibraryFacetFilterStrip`                                                                 | (this change)                                          | Cascade filter menus for `facetStrip`; generic field descriptors + selected map; no domain DTOs.                        |
+| Library facet filter panel       | `@workbench-kit/react/primitives` `LibraryFacetFilterPanel` + `workbench/management` `LibraryFacetFilterDialog`             | (this change)                                          | Multi-section panel + dialog; active chips; same field/value I/O as strip; optional More filters.                       |
+| Library catalog picker dialog    | `@workbench-kit/react/workbench/management` `LibraryCatalogPickerDialog`                                                    | (this change)                                          | DialogFrame + searchable cover grid + `headerActions`; host owns items/install/persistence.                             |
+| Declared-first inspector search  | `@workbench-kit/react` `WorkbenchPropertySearch` + `filterWorkbenchPropertyFields`                                          | (this change)                                          | Manifest `{id,label,sectionId?,keywords?}` + query → field/section ids; sticky search chrome.                           |
+| Fill/scroll layout contract      | `@workbench-kit/react/layout` `WorkbenchFill` / `WorkbenchFillChain` / `WorkbenchScrollRegion` + `data-ui-fill-scroll-role` | `a401a43b`                                             | Editor-in-pane fill chain + scroll owner roles; hosts keep product owner id lists.                                      |
+| Platform window chrome           | `@workbench-kit/react` `WorkbenchPlatformProvider`, `WorkbenchWindowChromeControls`, `WorkbenchDesktopTitleBar`             | `ec305dce` + follow-up                                 | Darwin traffic lights + Win32 caption buttons; host passes IPC callbacks only.                                          |
+| Integration management shell     | `@workbench-kit/react/workbench/management` `IntegrationsShell` and related surfaces                                        | `a01116a1`                                             | Provider/settings framing for integrations UI.                                                                          |
+| Official subpath exports         | `@workbench-kit/react` `./layout`, `./editor-tabs`, `./overlay`                                                             | `1fc6d99d`+ (exports in `packages/react/package.json`) | Reduces need for deep imports; consumer may still use local type shims until removed.                                   |
+| Dev host port split              | Root `pnpm dev` (sample `65173`), `pnpm dev:storybook` (`61009`), `pnpm dev:all`                                            | `adb6d9ae`, `ba83b4c9`                                 | `scripts/dev-workbench.mjs` modes: `sample`, `storybook`, `all`.                                                        |
+| Epic launcher protocol mapping   | `@workbench-kit/contracts`                                                                                                  | `8518bad5`                                             | Launch URL contract for Epic Games (consumer execution path).                                                           |
+| Split / sidebar collapse fixes   | `@workbench-kit/react` layout CSS                                                                                           | `a74ea77b`, `22510e6c`, `5a96a196`                     | Height fill when sidebars collapse.                                                                                     |
+| Library detail Storybook         | `examples/workbench-sample` `LibraryDetailLayout.stories.tsx`                                                               | `72fd856b` (kit stories) + sample story                | Banner/background demo wired in sample host.                                                                            |
+| Scroll-area infinite load hook   | `@workbench-kit/react/primitives` `useScrollAreaInfiniteLoad`, `ScrollAreaInfiniteSentinel`                                 | `220cc3b7` + follow-up                                 | `IntersectionObserver` sentinel inside `ScrollArea`; Vitest coverage + Storybook catalog grid demo.                     |
+
+### In progress (local WIP, not yet committed)
+
+_None._
+
+---
+
+## High priority pending
+
+Blocks library browse UX parity and reduces consumer shim surface.
+
+### 1. Generic `CatalogBrowsePane` — landed
+
+Shipped as `@workbench-kit/react` / `./primitives` `CatalogBrowsePane`
+(search toolbar, `facetStrip` slot, sort + view mode, feedback states, grid/list
+body, infinite scroll). Remaining consumer work: keep product cards via
+`renderGridItem` / `renderListItem`. Facet strip landed separately (§8).
+
+### 2. Multi-section `LibraryFacetFilterPanel` — landed
+
+Shipped as `@workbench-kit/react/primitives` `LibraryFacetFilterPanel` and
+`@workbench-kit/react/workbench/management` `LibraryFacetFilterDialog`
+(multi-section fields, active chip row + dismiss, clear-all, live toggle I/O).
+`LibraryFacetFilterStrip` may pass `onOpenMoreFilters` / `moreFiltersLabel` so
+cascade menus stay primary-only and open the fuller dialog for the rest.
+
+### 3. Remove consumer type shims for official exports
+
+| Field                  | Detail                                                                                                                                                                                                      |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**        | Consumer `shared/types/workbench-kit/react-*.d.ts` and `tsconfig` path overrides exist because linked package typing was brittle. Kit now exports `./layout`, `./editor-tabs`, `./overlay`, `./modal`, etc. |
+| **Consumer pain**      | Duplicate declaration files drift from kit source; new exports require shim updates.                                                                                                                        |
+| **Suggested package**  | Kit: keep `check:public-exports` green. Consumer: delete shims and import from published subpaths once typing is stable.                                                                                    |
+| **Storybook / sample** | N/A — consumer migration task; document in consumer foundation plan.                                                                                                                                        |
+
+### 4. `exactOptionalPropertyTypes` compatibility for linked consumers
+
+| Field | Detail |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
+| **Description** | Consumer enables `exactOptionalPropertyTypes`; kit props often use `prop?: T \| undefined`. Consumer currently uses `tsconfig.workbench-linked.json` with the flag disabled for kit paths. |
+| **Consumer pain** | Type errors on otherwise valid kit usage; forces split tsconfig or `as` casts at boundaries. |
+| **Suggested package** | `@workbench-kit/react` — audit exported props; prefer explicit optional fields or helper types (`                                                                                          | undefined` only where required). |
+| **Storybook / sample** | Add typecheck job variant with `exactOptionalPropertyTypes: true` in CI or consumer contract smoke. |
+
+### 5. Platform window chrome — landed
+
+Shipped as `@workbench-kit/react` `WorkbenchPlatformProvider` /
+`WorkbenchWindowChromeControls` / `WorkbenchDesktopTitleBar` (`chrome="platform"`)
+plus `workbench-platform-chrome.css`. Hosts pass minimize / maximize / close
+callbacks only; Electron main stays host-owned. Storybook:
+`React/Workbench/Platform Chrome` (darwin + win32).
+
+---
+
+## Medium priority
+
+Generic components to extract from consumer adapters; improves reuse without blocking MVP browse.
+
+### 7. Collapsible category tree (sidebar)
+
+| Field                  | Detail                                                                                                                                    |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**        | Sidebar tree with expand/collapse, depth indentation, optional action icons — for library categories, collections, or provider groupings. |
+| **Consumer pain**      | Library sidebar category UI is stubbed; hosts hand-roll tree markup on `SideBarList` / `Collapsible`.                                     |
+| **Suggested package**  | `@workbench-kit/react/layout` — extend `SideBarViewFrame` tree helpers (`sideBarTreeDepthStyle`) into `SideBarTree` / `SideBarTreeItem`.  |
+| **Storybook / sample** | Sidebar panel story with nested categories and selection.                                                                                 |
+
+### 8. Facet filter strip (inline, non-modal) — landed
+
+Shipped as `@workbench-kit/react` / `./primitives` `LibraryFacetFilterStrip`
+(cascade field menus for toolbar `facetStrip`, generic `LibraryFacetField` +
+`selectedValues`, clear-all / show more-less). Hosts map domain DTOs and filter
+sentinel options before passing. Full multi-section dialog landed as §2
+(`LibraryFacetFilterPanel` / `LibraryFacetFilterDialog`); strip
+`onOpenMoreFilters` opens that dialog while keeping primary cascade menus.
+
+### 9. `LibraryDetailLayout` compact mode in sidebar
+
+| Field                  | Detail                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| **Description**        | `compact` mode for sidebar item preview (small cover + one-line meta).       |
+| **Consumer pain**      | Sidebar preview still uses catalog list rows instead of detail preview slot. |
+| **Suggested package**  | `@workbench-kit/react/primitives` `LibraryDetailLayout` `mode="compact"`.    |
+| **Storybook / sample** | Sidebar + detail split story (Playnite/Steam reference pattern).             |
+
+### 10. Media gallery region (deferred detail slot)
+
+| Field                  | Detail                                                                                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Description**        | Optional `mediaGallery` slot on detail layout for screenshots/trailers carousel.                         |
+| **Consumer pain**      | Detail DTO has no gallery yet; layout contract should reserve region before consumer wires Steam assets. |
+| **Suggested package**  | `@workbench-kit/react/primitives` `LibraryDetailLayout` children region or named slot.                   |
+| **Storybook / sample** | Placeholder gallery with static images.                                                                  |
+
+### 11. Workbench-sample integration demos
+
+| Field                  | Detail                                                                                                                                              |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**        | Sample host demos beyond `LibraryDetailLayout`: catalog browse, facet filter dialog, platform chrome, integrations shell with mock providers.       |
+| **Consumer pain**      | Consumer dogfoods unfinished APIs; regressions found late in Electron shell.                                                                        |
+| **Suggested package**  | `examples/workbench-sample` routes + Storybook entries; update [storybook-e2e-coverage.md](./storybook-e2e-coverage.md) when flows become required. |
+| **Storybook / sample** | Primary deliverable for this item.                                                                                                                  |
+
+### 12. Consolidate editor-area DnD surface
+
+| Field                  | Detail                                                                                                                                                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**        | Tab strip DnD lives in `@workbench-kit/react`; `shell-react` `editor-area-dnd.ts` re-exports react helpers and keeps shell-only group drop helpers. Evaluate moving remaining helpers to react or a shared `@workbench-kit/workbench-dnd` module. |
+| **Consumer pain**      | Consumers importing from `shell-react` vs `react/editor-tabs` see split ownership.                                                                                                                                                                |
+| **Suggested package**  | `@workbench-kit/react/workbench` or `workbench-core` for pure drop-side math; `shell-react` imports only.                                                                                                                                         |
+| **Storybook / sample** | Existing editor tab stories + shell editor-area plays.                                                                                                                                                                                            |
+
+---
+
+## Long-term
+
+### 13. `WorkbenchHostContext` (platform + host ports)
+
+| Field                  | Detail                                                                                                                                                                                                    |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**        | Extend platform context with optional host ports: desktop bridge base URL, dev server ports, feature flags, native window controls callbacks. Distinct from `WorkbenchPlatformProvider` (OS chrome only). |
+| **Consumer pain**      | Electron preload bridge, VS Code webview, and browser sample each wire ports differently with ad hoc props.                                                                                               |
+| **Suggested package**  | `@workbench-kit/react/workbench` context + `@workbench-kit/contracts` DTOs for bridge metadata.                                                                                                           |
+| **Storybook / sample** | Sample host injects mock bridge; document in [sample-host-backend-api.md](./sample-host-backend-api.md).                                                                                                  |
+
+### 14. Theme pack / per-surface token overrides
+
+| Field                  | Detail                                                                                                                                                           |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**        | User-selectable detail hero sizing (`--shell-detail-hero-cover-width`, band height), catalog density, sidebar compactness via theme preset or CSS variable pack. |
+| **Consumer pain**      | Product maps app settings to kit presets manually; detail hero tokens are fixed defaults.                                                                        |
+| **Suggested package**  | `@workbench-kit/tokens` + `WorkbenchThemeProvider` attribute API — see [theme-pack-architecture.md](./theme-pack-architecture.md).                               |
+| **Storybook / sample** | Theme switcher story toggling detail/catalog density.                                                                                                            |
+
+### 15. Electron host shell package
+
+| Field                  | Detail                                                                                                                                                                |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**        | Optional `@workbench-kit/electron-shell` (or sample-only module): frameless window, IPC titlebar, tray, multi-window restore — without pulling Electron into `react`. |
+| **Consumer pain**      | Each Electron consumer reimplements titlebar IPC and restore policy.                                                                                                  |
+| **Suggested package**  | New app-layer package or documented sample in `examples/` only until API stabilizes.                                                                                  |
+| **Storybook / sample** | N/A in browser Storybook; electron sample app when scope is explicit.                                                                                                 |
+
+**Remember window state contract (extract later):** Host owns storage path and the
+user preference that gates restore. Kit should expose Electron-free helpers only:
+
+- `RememberedWindowState { bounds: { x, y, width, height }, isMaximized: boolean }`
+- `resolveWindowOpenLayout(saved, displays, defaults, { remember })` — clamp off-screen;
+  when `remember` is false, return defaults without clearing saved state
+- `bindWindowBoundsPersistence(window, save)` — narrow window surface
+  (`getBounds` / `getNormalBounds` / `isMaximized` / move·resize·maximize·close), debounce
+  writes; when maximized, persist `getNormalBounds()` plus `isMaximized: true`
+
+Do not pull Electron into `@workbench-kit/react`. Consumer TilePaper currently implements
+this shape under `apps/desktop-runtime/features/window-manager/main-window-*`.
+
+### 16. Collection / dynamic collection save UI
+
+| Field                  | Detail                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Description**        | Generic save-collection dialog, rule builder UI, and pinned collection chips for library views.      |
+| **Consumer pain**      | Domain-specific collection model lives in consumer; no shared save UX.                               |
+| **Suggested package**  | Defer until collection contract is extracted to `@workbench-kit/contracts` or consumer-neutral core. |
+| **Storybook / sample** | Deferred — track in [future-capabilities.md](./future-capabilities.md) when contract exists.         |
+
+### 17. Published `@prototype` consumer CI
+
+| Field                  | Detail                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------ |
+| **Description**        | Consumer CI consumes published `@workbench-kit/*@prototype` instead of sibling `file:` checkout. |
+| **Consumer pain**      | Local-only path aliases and shim files mask publish gaps.                                        |
+| **Suggested package**  | Release process — see [npm-release.md](../conventions/npm-release.md).                           |
+| **Storybook / sample** | Consumer CI change; kit publishes all `NPM_PUBLISH_ORDER` packages together.                     |
+
+---
+
+## Summary counts
+
+| Priority              | Count | Focus                                                                                 |
+| --------------------- | ----- | ------------------------------------------------------------------------------------- |
+| Completed (merged)    | 13    | Tokens, library detail, media, DnD, sidebar actions, integrations, exports, dev ports |
+| In progress (WIP)     | 2     | Infinite scroll hook, platform chrome                                                 |
+| High priority pending | 6     | Catalog pane, facet panel, shims, strict types, chrome finish                         |
+| Medium priority       | 6     | Category tree, facet strip, compact detail, gallery, samples, DnD consolidation       |
+| Long-term             | 5     | Host context, theme packs, electron shell, collections, published CI                  |
+
+---
+
+## Maintenance
+
+- When an item ships, move it to **Completed** with commit hash and remove duplicate entries from [todo.md](./todo.md) or [future-capabilities.md](./future-capabilities.md).
+- New consumer-driven gaps: add a row with consumer pain stated generically (no product trademark in public kit docs per [public-reference-policy.md](../conventions/public-reference-policy.md)).
+- Verify kit status against `packages/react/src` before marking **Done** — uncommitted files are not release truth.

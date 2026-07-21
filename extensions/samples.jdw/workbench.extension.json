@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.samples.jdw",
+  "name": "samples-jdw",
+  "displayName": "JDW Lab",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onView:workbench-kit.samples.jdw.panel"],
+  "contributes": {
+    "viewContainers": {
+      "activitybar": [
+        {
+          "id": "jdwLab",
+          "title": "JDW Lab",
+          "icon": "layout",
+          "order": 35
+        }
+      ]
+    },
+    "activities": [
+      {
+        "id": "workbench-kit.samples.jdw.activity",
+        "viewContainerId": "jdwLab",
+        "icon": "layout",
+        "title": "JDW Lab",
+        "order": 35
+      }
+    ],
+    "views": {
+      "jdwLab": [
+        {
+          "id": "workbench-kit.samples.jdw.panel",
+          "name": "JDW Lab"
+        }
+      ]
+    }
+  }
+}

@@ -113,10 +113,20 @@ export function compileScreenNode(node: ScreenNode): JsonWidgetNode {
   }
 }
 
+/**
+ * Compiles a Screen Spec scaffold into a new JDW runtime widget tree.
+ *
+ * This boundary is intentionally one-way: only `spec.root` is compiled.
+ * Host resource metadata (`title`, `description`) and preview metadata
+ * (`frameWidth`, `layout`) remain outside the runtime widget JSON. Subsequent
+ * authoring should use the resulting JDW `WidgetDocument`, not parallel edits
+ * to this Screen Spec.
+ */
 export function compileScreenSpecToJdwNode(spec: JdwScreenSpec): JsonWidgetNode {
   return compileScreenNode(spec.root);
 }
 
+/** Formats the one-way Screen Spec scaffold compilation as JDW JSON. */
 export function compileScreenSpecToJson(spec: JdwScreenSpec): string {
   return formatJsonWidgetData(compileScreenSpecToJdwNode(spec));
 }

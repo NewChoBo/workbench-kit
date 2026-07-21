@@ -1,0 +1,84 @@
+.ui-catalog-browse {
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Keep toolbar chrome light — FilterBar already supplies the divider. */
+.ui-catalog-browse > .ui-filter-bar {
+  background: transparent;
+}
+
+.ui-catalog-browse__toolbar {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  background: transparent;
+}
+
+.ui-catalog-browse__toolbar[data-ui-catalog-browse-has-sort='true'] {
+  grid-template-columns: minmax(0, 1fr) minmax(140px, auto) auto auto;
+}
+
+.ui-catalog-browse__toolbar[data-ui-catalog-browse-toolbar-filter='true'] {
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+}
+
+.ui-catalog-browse__toolbar[data-ui-catalog-browse-toolbar-filter='true'][data-ui-catalog-browse-has-sort='true'] {
+  grid-template-columns: minmax(0, 1fr) auto minmax(140px, auto) auto auto;
+}
+
+.ui-catalog-browse__search {
+  min-width: 0;
+}
+
+.ui-catalog-browse__search > .ui-clearable-text-input,
+.ui-catalog-browse__search .ui-input[data-width='full'] {
+  width: 100%;
+}
+
+.ui-catalog-browse [data-ui-catalog-browse-sort='true'] {
+  width: var(--ui-catalog-browse-sort-width, 180px);
+  min-width: 140px;
+  max-width: 100%;
+}
+
+.ui-catalog-browse__sort > .ui-select {
+  width: 100%;
+}
+
+.ui-catalog-browse__grid,
+.ui-catalog-browse__list {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ui-catalog-browse__grid {
+  align-content: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(164px, 1fr));
+  padding: 12px 8px 20px;
+}
+
+.ui-catalog-browse__grid [data-ui-catalog-browse-sentinel='true'],
+.ui-catalog-browse__grid [data-ui-catalog-browse-loading-more='true'] {
+  grid-column: 1 / -1;
+}
+
+.ui-catalog-browse__list .ui-list-item--media {
+  /* Match WorkbenchThumbnail size="library" so cover art cannot spill into text. */
+  --ui-list-item-media-leading-size: var(--shell-library-capsule-list-width, 116px);
+  min-height: calc(var(--shell-library-capsule-list-height, 43px) + 10px);
+}
+
+.ui-catalog-browse__list .ui-list-item--media .ui-list-item__content {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ui-catalog-browse__list .ui-list-item--media .ui-list-item__label,
+.ui-catalog-browse__list .ui-list-item--media .ui-list-item__description,
+.ui-catalog-browse__list .ui-list-item--media .ui-list-item__meta {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

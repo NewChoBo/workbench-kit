@@ -1,0 +1,13 @@
+{
+  "name": "@workbench-kit/extension-builtin-search",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workbench-kit/workbench-extension-sdk": "workspace:*"
+  },
+  "description": "Built-in search extension that contributes the workspace search activity bar view."
+}

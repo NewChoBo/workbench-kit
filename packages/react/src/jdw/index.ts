@@ -1,7 +1,12 @@
-export { JdwPreview, type JdwPreviewProps } from './JdwPreview.js';
+export { getJdwPreviewInvalidations, JdwPreview, type JdwPreviewProps } from './JdwPreview.js';
 export {
-  JDW_DOCUMENT_FILE_EXTENSION,
-  JDW_DOCUMENT_MIME,
+  JdwPreviewViewport,
+  resolveContainerLayoutConstraints,
+  resolveJdwPreviewFrameSize,
+  type JdwPreviewViewportFit,
+  type JdwPreviewViewportProps,
+} from './JdwPreviewViewport.js';
+export {
   JDW_SCHEMA_DOCUMENT_FILE_EXTENSION,
   JDW_SCHEMA_DOCUMENT_MIME,
   JDW_WIDGET_DOCUMENT_FILE_EXTENSION,
@@ -20,6 +25,7 @@ export {
   JsonConfigValidationBanner,
   type JsonCodeEditorPaneProps,
   type JsonConfigValidationBannerProps,
+  type JsonEditorProblem,
 } from './JsonCodeEditorPane.js';
 export { renderJdw, renderJdwNode, useRenderJdw, type RenderJdwOptions } from './renderJdw.js';
 export {
@@ -28,7 +34,6 @@ export {
   type CssRenderBackendOptions,
 } from './cssRenderBackend.js';
 export { BUILTIN_JDW_REGISTRY, createBuiltinJdwRegistry } from './createBuiltinJdwRegistry.js';
-export { renderBuiltinWidgetNode } from './builtins/renderBuiltinWidgetNode.js';
 export {
   formatJdwSampleScreenJson,
   formatJdwSampleScreenSpec,

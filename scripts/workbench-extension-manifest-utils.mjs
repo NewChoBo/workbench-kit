@@ -10,6 +10,33 @@ const stringArrayFields = [
   'permissions',
 ];
 
+// Mirrors REQUIRED_THEME_TOKEN_KEYS in packages/workbench-core/src/theme-registry.ts.
+// Contributed theme tokenOverrides are applied as inline styles on the document root,
+// outranking the active light/dark preset's CSS rules, so a partial override silently
+// breaks contrast against whatever tokens the preset left untouched.
+const requiredThemeTokenKeys = [
+  '--color-bg',
+  '--color-bg-75',
+  '--color-primary-side-bar-bg',
+  '--color-primary-side-bar-bg-75',
+  '--color-surface',
+  '--color-surface-hover',
+  '--color-surface-elevated',
+  '--color-border',
+  '--color-text',
+  '--color-text-muted',
+  '--color-text-subtle',
+  '--color-accent',
+  '--color-accent-hover',
+  '--color-accent-foreground',
+  '--color-focus-border',
+  '--color-danger',
+  '--color-danger-hover',
+  '--scrollbar-thumb',
+  '--scrollbar-thumb-hover',
+  '--scrollbar-thumb-active',
+];
+
 export async function readWorkbenchExtensionManifestEntries(repoRoot) {
   const extensionsRoot = path.join(repoRoot, 'extensions');
   const directoryEntries = await readdir(extensionsRoot, { withFileTypes: true });
@@ -150,6 +177,7 @@ function validateManifestShape(entry, violations, repoRoot) {
   }
 
   validateCapabilities(entry, violations, repoRoot);
+  validateContributes(entry, violations, repoRoot);
 }
 
 function validateExtensionPackage(entry, violations, repoRoot) {
@@ -287,6 +315,307 @@ function validateCapabilities(entry, violations, repoRoot) {
         });
       }
       seen.add(item);
+    }
+  }
+}
+
+function validateContributes(entry, violations, repoRoot) {
+  const { contributes } = entry.manifest;
+  if (contributes === undefined) {
+    return;
+  }
+
+  if (!isRecord(contributes)) {
+    violations.push({
+      location: fieldLocation(entry.manifestPath, 'contributes', repoRoot),
+      message: 'contributes must be an object.',
+      rule: 'manifest-contributes',
+    });
+    return;
+  }
+
+  validateContributionArray(entry, contributes, 'commands', violations, repoRoot, (item) => [
+    ['command', stringValue(item.command)],
+    ['title', stringValue(item.title)],
+  ]);
+  validateContributionArray(entry, contributes, 'keybindings', violations, repoRoot, (item) => [
+    ['command', stringValue(item.command)],
+    ['key', stringValue(item.key)],
+  ]);
+  validateContributionArray(entry, contributes, 'activities', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['viewContainerId', stringValue(item.viewContainerId)],
+    ['icon', stringValue(item.icon)],
+    ['title', stringValue(item.title)],
+  ]);
+  validateContributionArray(entry, contributes, 'editors', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['label', stringValue(item.label)],
+  ]);
+  validateContributionArray(entry, contributes, 'documentViews', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['kind', item.kind === 'form' || item.kind === 'preview'],
+    ['label', stringValue(item.label)],
+  ]);
+  validateContributionArray(entry, contributes, 'themes', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['label', stringValue(item.label)],
+    ['mode', item.mode === 'dark' || item.mode === 'light'],
+  ]);
+  validateThemeTokenOverrides(entry, contributes, violations, repoRoot);
+  validateContributionArray(entry, contributes, 'localizations', violations, repoRoot, (item) => [
+    ['locale', stringValue(item.locale)],
+    ['label', stringValue(item.label)],
+    ['translations', isRecord(item.translations)],
+  ]);
+  validateConfigurationContribution(entry, contributes.configuration, violations, repoRoot);
+  validateMenuContributions(entry, contributes, violations, repoRoot);
+  validateContributionArrayMap(
+    entry,
+    contributes,
+    'viewContainers',
+    violations,
+    repoRoot,
+    (item) => [
+      ['id', stringValue(item.id)],
+      ['title', stringValue(item.title)],
+    ],
+  );
+  validateContributionArrayMap(entry, contributes, 'views', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['name', stringValue(item.name)],
+  ]);
+}
+
+function validateContributionArray(
+  entry,
+  contributes,
+  field,
+  violations,
+  repoRoot,
+  requiredFields,
+) {
+  const value = contributes[field];
+  if (value === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(value)) {
+    violations.push({
+      location: fieldLocation(entry.manifestPath, `contributes.${field}`, repoRoot),
+      message: `contributes.${field} must be an array.`,
+      rule: 'manifest-contributes',
+    });
+    return;
+  }
+
+  validateContributionItems(
+    entry,
+    `contributes.${field}`,
+    value,
+    violations,
+    repoRoot,
+    requiredFields,
+  );
+}
+
+function validateContributionArrayMap(
+  entry,
+  contributes,
+  field,
+  violations,
+  repoRoot,
+  requiredFields,
+) {
+  const value = contributes[field];
+  if (value === undefined) {
+    return;
+  }
+
+  if (!isRecord(value)) {
+    violations.push({
+      location: fieldLocation(entry.manifestPath, `contributes.${field}`, repoRoot),
+      message: `contributes.${field} must be an object whose values are contribution arrays.`,
+      rule: 'manifest-contributes',
+    });
+    return;
+  }
+
+  for (const [surface, items] of Object.entries(value)) {
+    if (!Array.isArray(items)) {
+      violations.push({
+        location: fieldLocation(entry.manifestPath, `contributes.${field}.${surface}`, repoRoot),
+        message: `contributes.${field}.${surface} must be an array.`,
+        rule: 'manifest-contributes',
+      });
+      continue;
+    }
+
+    validateContributionItems(
+      entry,
+      `contributes.${field}.${surface}`,
+      items,
+      violations,
+      repoRoot,
+      requiredFields,
+    );
+  }
+}
+
+function validateThemeTokenOverrides(entry, contributes, violations, repoRoot) {
+  const themes = contributes.themes;
+  if (!Array.isArray(themes)) {
+    return;
+  }
+
+  for (const [index, theme] of themes.entries()) {
+    if (!isRecord(theme) || theme.tokenOverrides === undefined) {
+      continue;
+    }
+
+    if (!isRecord(theme.tokenOverrides)) {
+      violations.push({
+        location: fieldLocation(
+          entry.manifestPath,
+          `contributes.themes[${index}].tokenOverrides`,
+          repoRoot,
+        ),
+        message: 'contributes.themes[].tokenOverrides must be an object.',
+        rule: 'manifest-contributes',
+      });
+      continue;
+    }
+
+    const missingKeys = requiredThemeTokenKeys.filter(
+      (key) => !Object.hasOwn(theme.tokenOverrides, key),
+    );
+
+    if (missingKeys.length > 0) {
+      violations.push({
+        location: fieldLocation(
+          entry.manifestPath,
+          `contributes.themes[${index}].tokenOverrides`,
+          repoRoot,
+        ),
+        message: `contributes.themes[].tokenOverrides is missing required token(s): ${missingKeys.join(
+          ', ',
+        )}. Contributed themes override the document root with inline styles, so a partial set breaks contrast against whatever light/dark preset is active.`,
+        rule: 'manifest-theme-token-overrides-incomplete',
+      });
+    }
+  }
+}
+
+function validateMenuContributions(entry, contributes, violations, repoRoot) {
+  const value = contributes.menus;
+  if (value === undefined) {
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    validateContributionItems(entry, 'contributes.menus', value, violations, repoRoot, (item) => [
+      ['menu', stringValue(item.menu)],
+      ['command', stringValue(item.command)],
+    ]);
+    return;
+  }
+
+  if (!isRecord(value)) {
+    violations.push({
+      location: fieldLocation(entry.manifestPath, 'contributes.menus', repoRoot),
+      message:
+        'contributes.menus must be an array or an object whose values are contribution arrays.',
+      rule: 'manifest-contributes',
+    });
+    return;
+  }
+
+  for (const [surface, items] of Object.entries(value)) {
+    if (!Array.isArray(items)) {
+      violations.push({
+        location: fieldLocation(entry.manifestPath, `contributes.menus.${surface}`, repoRoot),
+        message: `contributes.menus.${surface} must be an array.`,
+        rule: 'manifest-contributes',
+      });
+      continue;
+    }
+
+    validateContributionItems(
+      entry,
+      `contributes.menus.${surface}`,
+      items,
+      violations,
+      repoRoot,
+      (item) => [['command', stringValue(item.command)]],
+    );
+  }
+}
+
+function validateContributionItems(entry, field, items, violations, repoRoot, requiredFields) {
+  for (const [index, value] of items.entries()) {
+    if (!isRecord(value)) {
+      violations.push({
+        location: fieldLocation(entry.manifestPath, `${field}[${index}]`, repoRoot),
+        message: `${field} entries must be objects.`,
+        rule: 'manifest-contributes',
+      });
+      continue;
+    }
+
+    for (const [requiredField, valid] of requiredFields(value)) {
+      if (!valid) {
+        violations.push({
+          location: fieldLocation(
+            entry.manifestPath,
+            `${field}[${index}].${requiredField}`,
+            repoRoot,
+          ),
+          message: `${field} entries must declare ${requiredField}.`,
+          rule: 'manifest-contributes',
+        });
+      }
+    }
+  }
+}
+
+function validateConfigurationContribution(entry, configuration, violations, repoRoot) {
+  if (configuration === undefined) {
+    return;
+  }
+
+  if (!isRecord(configuration) || !isRecord(configuration.properties)) {
+    violations.push({
+      location: fieldLocation(entry.manifestPath, 'contributes.configuration.properties', repoRoot),
+      message: 'contributes.configuration must include a properties object.',
+      rule: 'manifest-contributes',
+    });
+    return;
+  }
+
+  for (const [key, property] of Object.entries(configuration.properties)) {
+    if (!isRecord(property)) {
+      violations.push({
+        location: fieldLocation(
+          entry.manifestPath,
+          `contributes.configuration.properties.${key}`,
+          repoRoot,
+        ),
+        message: `Configuration property "${key}" must be an object.`,
+        rule: 'manifest-contributes',
+      });
+      continue;
+    }
+
+    if (!['array', 'boolean', 'number', 'object', 'string'].includes(property.type)) {
+      violations.push({
+        location: fieldLocation(
+          entry.manifestPath,
+          `contributes.configuration.properties.${key}.type`,
+          repoRoot,
+        ),
+        message: `Configuration property "${key}" must declare a supported type.`,
+        rule: 'manifest-contributes',
+      });
     }
   }
 }

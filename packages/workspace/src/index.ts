@@ -1,6 +1,8 @@
 export {
+  WORKSPACE_PATH_DISPLAY_SEPARATOR,
   extensionOfPath,
   fileNameOfPath,
+  formatWorkspacePathDisplay,
   isSimpleWorkspaceName,
   joinWorkspacePath,
   normalizeWorkspacePath,
@@ -12,12 +14,16 @@ export {
   createWorkspaceFileDraft,
   discardWorkspaceDraft,
   discardWorkspaceFileDraft,
+  getWorkspaceDirtyDraftPaths,
+  getWorkspaceFileDraft,
+  hasWorkspaceDirtyDrafts,
   isWorkspaceFileDraftDirty,
   resolveWorkspaceFileDraft,
   saveWorkspaceFileDraft,
   updateWorkspaceFileDraft,
   type DiscardWorkspaceDraftInput,
   type DiscardWorkspaceFileDraftInput,
+  type GetWorkspaceFileDraftInput,
   type ResolveWorkspaceFileDraftInput,
   type SaveWorkspaceFileDraftInput,
   type UpdateWorkspaceFileDraftInput,
@@ -26,10 +32,12 @@ export {
 } from './draft';
 export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
 export {
+  createEmptyWorkspaceSelection,
   getWorkspaceSelectionActionPaths,
   getWorkspaceSelectionRange,
   normalizeWorkspaceSelectionPaths,
   pruneWorkspaceSelection,
+  resolveWorkspaceCreateParentPath,
   updateWorkspaceSelection,
   type UpdateWorkspaceSelectionInput,
   type WorkspaceSelectionActionPathsInput,
@@ -63,6 +71,18 @@ export {
   type WorkspaceResourceUri,
 } from './resource-uri';
 export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
+export {
+  mapVirtualFileLikeListToWorkspaceFiles,
+  mapVirtualFileLikeRecordToWorkspaceFiles,
+  mapVirtualFileLikeToWorkspaceFile,
+  mapVirtualFileOriginToSource,
+  mapWorkspaceFileToVirtualFile,
+  mapWorkspaceSourceToVirtualFileOrigin,
+  type MapWorkspaceFileToVirtualFileOptions,
+  type MappedVirtualFile,
+  type VirtualFileLike,
+  type VirtualFileOrigin,
+} from './virtual-file-adapter';
 export {
   getAvailableWorkspaceEntryName,
   getWorkspaceFileMovePlan,

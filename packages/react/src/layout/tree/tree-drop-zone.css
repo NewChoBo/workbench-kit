@@ -1,0 +1,13 @@
+.ui-workbench-tree-drop-zone {
+  box-sizing: border-box;
+  margin-left: var(--ui-workbench-tree-indent-offset, 8px);
+  outline-offset: -2px;
+}
+
+.ui-workbench-tree-drop-zone[data-empty='true'] {
+  min-height: var(--ui-workbench-tree-row-height);
+}
+
+.ui-workbench-tree-drop-zone[data-highlighted='true'] {
+  outline: 2px solid var(--vscode-focusBorder, var(--color-focus-border));
+}

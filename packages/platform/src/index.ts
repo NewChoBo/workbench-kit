@@ -15,6 +15,12 @@ export {
   type WorkbenchSecretStorageNamespace,
   type WorkbenchSecretStorageService,
 } from './auth/types.js';
+export {
+  clearBrowserStorageByPrefixes,
+  collectStorageKeysByPrefix,
+  type BrowserStorageKind,
+  type ClearBrowserStorageByPrefixesOptions,
+} from './browser-storage.js';
 export { CommandRegistry } from './commands/command-registry.js';
 export {
   assertNoCommandDefinitionConflicts,
@@ -29,11 +35,15 @@ export {
   executeCommand,
   findCommandDefinitionConflicts,
   mergeCommandContributions,
+  resolveCommandDefinitionLabel,
+  resolveCommandMenuCommandItem,
   resolveCommandMenuItems,
+  resolveCommandValue,
   type CommandConflictPolicy,
   type CommandContribution,
   type CommandContributionInput,
   type CommandDefinitionConflict,
+  type CommandMenuCommandItemInput,
   type CommandMenuCommandEntry,
   type CommandMenuEntry,
   type CommandMenuItem,
@@ -61,9 +71,11 @@ export { ContextKeyService } from './context/context-key-service.js';
 export {
   createWorkbenchContextKeySnapshot,
   evaluateWorkbenchContextKeyWhenClause,
+  filterWorkbenchContributionsByWhenClause,
   isWorkbenchContextKeyValue,
   type WorkbenchContextKeySnapshot,
   type WorkbenchContextKeyValue,
+  type WorkbenchWhenClauseContributionLike,
 } from './context/context-keys.js';
 export { evaluateWhenClause } from './context/evaluate-when.js';
 export {
@@ -75,10 +87,110 @@ export {
   type ContextKeyChangeEvent,
   type ContextKeyValue,
 } from './context/context-key-value.js';
+export {
+  WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_MANAGE_COMMANDS,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_MANAGE_EXTENSIONS,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_USE_CHAT,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_USE_SEARCH,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_ROLE,
+  WORKBENCH_PERMISSION_CONTEXT_KEY_TIER,
+  createWorkbenchPermissionContextKeys,
+  resolveWorkbenchPermissionCapabilities,
+  type WorkbenchPermissionCapabilities,
+  type WorkbenchPermissionContextInput,
+  type WorkbenchPermissionRole,
+} from './context/permission-context-keys.js';
 
 export { KeybindingRegistry } from './keybindings/keybinding-registry.js';
+export {
+  buildKeybindingManagementEntries,
+  filterKeybindingManagementEntries,
+  findKeybindingConflict,
+  type KeybindingManagementCommandInput,
+  type KeybindingManagementEntry,
+} from './keybindings/build-keybinding-management-entries.js';
+export { formatKeybindingLabel } from './keybindings/format-keybinding-label.js';
+export {
+  getEffectiveKeybindingForCommand,
+  resolveKeybindingWithOverrides,
+} from './keybindings/resolve-keybinding-with-overrides.js';
 export {
   type KeybindingDefinition,
   type KeybindingMatch,
   type KeybindingResolveOptions,
 } from './keybindings/types.js';
+export {
+  buildWorkbenchViewActivityBarModel,
+  buildWorkbenchViewEditorTabs,
+  resolveWorkbenchViewTabClosable,
+  type WorkbenchViewActivityBarItem,
+  type WorkbenchViewActivityBarModel,
+  type WorkbenchViewActivityBarPlacement,
+  type WorkbenchViewContribution,
+  type WorkbenchViewEditorTabItem,
+  type WorkbenchViewTabClosePolicy,
+} from './workbench-view-model.js';
+export {
+  buildWorkbenchViewPlacementModel,
+  resolveWorkbenchViewContainerRegistry,
+  type BuildWorkbenchViewPlacementModelInput,
+  type ResolveWorkbenchViewContainerRegistryInput,
+  type WorkbenchViewContainerRegistry,
+  type WorkbenchViewPlacementContainerLike,
+  type WorkbenchViewPlacementModel,
+  type WorkbenchViewPlacementViewLike,
+} from './workbench-view-placement.js';
+export {
+  listWorkbenchSidebarSlotViewIds,
+  oppositeWorkbenchSidebarSlot,
+  coerceWorkbenchSidebarSlotViewId,
+  resolveWorkbenchSidebarActivityViewId,
+  resolveWorkbenchSidebarSlotActiveViewId,
+  resolveWorkbenchSidebarSlotContent,
+  resolveWorkbenchSidebarSlotViewIdAfterMove,
+  shouldShowWorkbenchSidebarSlotActionBar,
+  type ResolveWorkbenchSidebarSlotActiveViewIdInput,
+  type ResolveWorkbenchSidebarSlotContentInput,
+  type ResolveWorkbenchSidebarSlotViewIdAfterMoveInput,
+  type ResolveWorkbenchSidebarSlotViewIdAfterMoveResult,
+  type WorkbenchSidebarSlotContent,
+  type WorkbenchSidebarSlotId,
+  type WorkbenchSidebarSlotViewContent,
+} from './workbench-sidebar-slot.js';
+export {
+  moveWorkbenchSidebarSlotViewOrder,
+  normalizeWorkbenchSidebarSlotViewOrder,
+  sortWorkbenchSidebarSlotViewIds,
+  type MoveWorkbenchSidebarSlotViewOrderInput,
+  type WorkbenchSidebarSlotViewOrders,
+} from './workbench-sidebar-slot-view-order.js';
+export {
+  applyWorkbenchActivityBarPlacementHints,
+  filterWorkbenchActivityBarItemsByPrimarySlot,
+  resolveWorkbenchActivityBarItemTitle,
+  type WorkbenchActivityBarItemLike,
+} from './workbench-activity-bar-placement.js';
+export {
+  createWorkbenchShellNavigate,
+  resolveWorkbenchShellViewFocus,
+  resolveWorkbenchSidebarSlotDisplayedViewId,
+  type CreateWorkbenchShellNavigateInput,
+  type ResolveWorkbenchSidebarSlotDisplayedViewIdInput,
+  type WorkbenchShellNavigateModalTarget,
+  type WorkbenchShellNavigateSlotRouter,
+} from './workbench-shell-navigate.js';
+export {
+  areWorkbenchViewRouteSnapshotsEqual,
+  buildWorkbenchViewRouteSearch,
+  closeWorkbenchViewRoute,
+  normalizeWorkbenchViewRouteTabs,
+  openWorkbenchViewRoute,
+  switchWorkbenchViewRoute,
+  resolveWorkbenchViewRouteSnapshot,
+  type BuildWorkbenchViewRouteSearchOptions,
+  type CloseWorkbenchViewRouteOptions,
+  type NormalizeWorkbenchViewRouteTabsOptions,
+  type ResolveWorkbenchViewRouteSnapshotOptions,
+  type WorkbenchViewRouteSnapshot,
+} from './workbench-view-route.js';

@@ -1,0 +1,42 @@
+.ide-panel {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--panel-bg, var(--color-bg));
+}
+
+.workbench-editor-area,
+.workbench-primary-sidebar {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.workbench-auxiliary-side-bar {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-primary-side-bar-bg);
+  border-left: 1px solid var(--color-border);
+}
+
+.workbench-editor-area {
+  --panel-bg: var(--color-bg);
+  --panel-bg-75: var(--color-bg-75);
+  background: var(--panel-bg);
+}
+
+.workbench-primary-sidebar {
+  --panel-bg: var(--color-primary-side-bar-bg);
+  --panel-bg-75: var(--color-primary-side-bar-bg-75);
+  background: var(--panel-bg);
+}

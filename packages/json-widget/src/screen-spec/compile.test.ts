@@ -42,6 +42,10 @@ describe('compileScreenSpecToJson', () => {
     expect(parsed.parseError).toBeNull();
     expect(validateJsonWidgetData(json).valid).toBe(true);
     expect(json).toContain('"type": "expanded"');
+    expect(json).not.toContain('"title"');
+    expect(json).not.toContain('"description"');
+    expect(json).not.toContain('"frameWidth"');
+    expect(json).not.toContain('"layout"');
   });
 
   it('preserves grid placement on compiled children', () => {

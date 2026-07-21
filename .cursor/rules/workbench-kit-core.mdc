@@ -11,12 +11,30 @@ Repository: `NewChoBo/workbench-kit` (pnpm monorepo, `@workbench-kit/*` packages
 
 - Use **pnpm** only (`npm install` is blocked).
 - UI copy in English; structure for i18n later.
-- Validation lanes: `pnpm validate:static`, `pnpm validate:fast`, `pnpm validate`.
+- Validation lanes: `pnpm validate:static`, `pnpm validate:fast`,
+  `pnpm validate:ui`, `pnpm validate`.
 - Public API changes: `pnpm check:public-exports`.
+- JDW profile/schema changes: `pnpm check:jdw-schemas`.
+
+## Storybook
+
+- Storybook currently validates the `examples/workbench-sample` app (via
+  `pnpm dev:storybook` or `pnpm dev:all`) plus a small curated package-story
+  tier; do not reintroduce
+  package-wide story galleries without an explicit owner and required
+  verification path.
+- Component stories must choose the shared story frame that matches production
+  placement before adding interactions: sidebar panel, editor/main area,
+  settings/form surface, or overlay trigger surface.
+- Storybook changes should follow `docs/conventions/storybook.md` and update
+  `docs/workbench/storybook-e2e-coverage.md` when required flows change.
+- Run `pnpm validate:ui` for Storybook config, stories, sample-host flows, or
+  curated component flows that are intended to replace browser E2E smoke.
 
 ## Change discipline
 
 - Minimize scope; match existing patterns in touched packages.
+- Commit messages: English Conventional Commits per `docs/conventions/git-workflow.md` and `docs/conventions/language-policy.md`.
 - Do not commit or push unless the user asks.
 - Do not force-push `main` / `master`.
 
@@ -33,6 +51,6 @@ Key facts agents often get wrong:
 
 ## Docs index
 
-- Conventions: `docs/conventions/`
+- Conventions: `docs/conventions/` (including `public-reference-policy.md`)
 - Architecture: `docs/architecture/`
 - Workbench notes: `docs/workbench/`

@@ -1,0 +1,157 @@
+.ui-workbench-section-tab-panel {
+  --ui-workbench-section-tab-panel-content-padding-inline: var(--workbench-panel-padding-inline);
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.ui-workbench-section-tab-panel__bar {
+  position: relative;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.ui-workbench-section-tab-panel__tabs-scroll {
+  overflow: hidden;
+  min-width: 0;
+}
+
+.ui-workbench-section-tab-panel__tabs {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: flex-end;
+  width: 100%;
+  gap: 0;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  scrollbar-width: none;
+}
+
+.ui-workbench-section-tab-panel__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.ui-workbench-section-tab-panel__tab {
+  flex: 0 0 auto;
+  align-self: stretch;
+  min-height: 28px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: var(--shell-radius-tab, var(--radius-sm)) var(--shell-radius-tab, var(--radius-sm))
+    0 0;
+  margin-bottom: -1px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.35;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ui-workbench-section-tab-panel[data-equal-width-tabs='true'] .ui-workbench-section-tab-panel__tab {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ui-workbench-section-tab-panel__tab:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.ui-workbench-section-tab-panel__tab[data-active='true'] {
+  color: var(--color-text);
+  background: var(--color-editor-bg, var(--color-bg));
+  border-bottom-color: var(--color-accent);
+  font-weight: 600;
+}
+
+.ui-workbench-section-tab-panel__tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.ui-workbench-section-tab-panel__tab span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-workbench-section-tab-panel__tab em {
+  flex: 0 0 auto;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+  font-style: normal;
+}
+
+.ui-workbench-section-tab-panel__tab[data-active='true'] em {
+  color: var(--color-accent);
+}
+
+.ui-workbench-section-tab-panel__bar::before,
+.ui-workbench-section-tab-panel__bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ui-workbench-section-tab-panel__bar::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    var(--color-surface, var(--color-bg)) 0%,
+    color-mix(in srgb, var(--color-surface, var(--color-bg)) 72%, transparent) 55%,
+    transparent 100%
+  );
+}
+
+.ui-workbench-section-tab-panel__bar::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    var(--color-surface, var(--color-bg)) 0%,
+    color-mix(in srgb, var(--color-surface, var(--color-bg)) 72%, transparent) 55%,
+    transparent 100%
+  );
+}
+
+.ui-workbench-section-tab-panel[data-tab-scroll-at-start='false']:hover
+  .ui-workbench-section-tab-panel__bar::before,
+.ui-workbench-section-tab-panel[data-tab-scroll-at-start='false']:focus-within
+  .ui-workbench-section-tab-panel__bar::before,
+.ui-workbench-section-tab-panel[data-tab-scroll-at-end='false']:hover
+  .ui-workbench-section-tab-panel__bar::after,
+.ui-workbench-section-tab-panel[data-tab-scroll-at-end='false']:focus-within
+  .ui-workbench-section-tab-panel__bar::after {
+  opacity: 1;
+}
+
+.ui-workbench-section-tab-panel__scroll {
+  min-height: 0;
+  height: 100%;
+  /* Padding lives on the viewport so the absolute overlay rail can sit on the edge. */
+  padding-inline: 0;
+}
+
+.ui-workbench-section-tab-panel__scroll > .ui-scroll-area__viewport {
+  overscroll-behavior: contain;
+  padding-inline: var(--ui-workbench-section-tab-panel-content-padding-inline);
+}

@@ -1,5 +1,25 @@
 export { Modal } from './modal/Modal';
-export type { ModalProps } from './modal/Modal';
+export type { ModalBodyLayout, ModalBodyPadding, ModalProps } from './modal/Modal';
+export { TilepaperAppIcon } from './brand/TilepaperAppIcon';
+export type { TilepaperAppIconProps } from './brand/TilepaperAppIcon';
+export {
+  WorkbenchIcon,
+  WorkbenchIconProvider,
+  isWorkbenchIconDescriptor,
+  normalizeWorkbenchIconDescriptor,
+  useWorkbenchIconResolver,
+  workbenchIconDescriptorToCodiconName,
+} from './icons';
+export type {
+  WorkbenchCodiconDescriptor,
+  WorkbenchIconDescriptor,
+  WorkbenchIconInput,
+  WorkbenchIconNodeDescriptor,
+  WorkbenchIconProps,
+  WorkbenchIconProviderProps,
+  WorkbenchIconRenderProps,
+  WorkbenchIconResolver,
+} from './icons';
 export { commandMenuItemsToContextMenuItems } from './workbench/commands';
 export {
   WorkbenchArtifactModeControls,
@@ -120,6 +140,20 @@ export type {
   WorkbenchSignUpViewProps,
 } from './workbench/auth';
 export {
+  WorkbenchBootstrapGate,
+  WorkbenchBootstrapView,
+  useWorkbenchBootstrap,
+} from './workbench/bootstrap';
+export type {
+  WorkbenchBootstrapController,
+  WorkbenchBootstrapGateProps,
+  WorkbenchBootstrapRunStatus,
+  WorkbenchBootstrapTaskDefinition,
+  WorkbenchBootstrapTaskStatus,
+  WorkbenchBootstrapTaskViewModel,
+  WorkbenchBootstrapViewProps,
+} from './workbench/bootstrap';
+export {
   WorkbenchTimeline,
   WorkbenchTimelineItem,
   formatWorkbenchTimelineMetadataValue,
@@ -144,6 +178,12 @@ export { ConfirmDialog } from './modal/ConfirmDialog';
 export type { ConfirmDialogProps } from './modal/ConfirmDialog';
 export { ContextMenu } from './overlay/ContextMenu';
 export type { ContextMenuItem, ContextMenuProps } from './overlay/ContextMenu';
+export { useContextMenuState } from './overlay/useContextMenuState';
+export type {
+  ContextMenuPointerEvent,
+  ContextMenuPointerState,
+  UseContextMenuStateResult,
+} from './overlay/useContextMenuState';
 export {
   getWorkbenchStatusDescriptor,
   getWorkbenchStatusLabel,
@@ -175,7 +215,15 @@ export {
   PreviewPaneText,
   PreviewPaneTitle,
   PreviewPaneViewport,
-} from './layout/Panel';
+} from './layout/panel';
+export {
+  WorkbenchAuthoringShell,
+  WorkbenchLabeledPane,
+  WorkbenchPlainTextSource,
+  WorkbenchSurfaceMeta,
+  WorkbenchSurfaceToolbar,
+  WorkbenchSidebarStack,
+} from './layout/panel';
 export type {
   FilterBarActiveChipsProps,
   FilterBarRowProps,
@@ -192,35 +240,54 @@ export type {
   PreviewPaneTextProps,
   PreviewPaneTitleProps,
   PreviewPaneViewportProps,
-} from './layout/Panel';
+  WorkbenchAuthoringShellProps,
+  WorkbenchLabeledPaneChrome,
+  WorkbenchLabeledPaneProps,
+  WorkbenchLabeledPaneTone,
+  WorkbenchPlainTextSourceProps,
+  WorkbenchSurfaceMetaProps,
+  WorkbenchSurfaceToolbarProps,
+  WorkbenchSidebarStackProps,
+} from './layout/panel';
 export {
   SideBarHeaderControl,
   SideBarList,
   SideBarListItem,
   SideBarViewFrame,
   SideBarRow,
-  SideBarScrollSpacer,
-} from './layout/SideBarViewFrame';
+  SidebarActionIconBar,
+  SideBarViewTabStrip,
+  WorkbenchActionList,
+  WorkbenchActionListItem,
+  WorkbenchActionSidebar,
+  WorkbenchSidebarSection,
+  WorkbenchSidebarSectionHeader,
+  WorkbenchSidebarSectionStack,
+  useSidebarSectionBaseDepth,
+} from './layout/sidebar';
 export type {
   SideBarHeaderControlProps,
   SideBarListItemProps,
   SideBarListProps,
   SideBarViewFrameProps,
   SideBarRowProps,
-  SideBarScrollSpacerProps,
-} from './layout/SideBarViewFrame';
-export {
-  WorkbenchActionList,
-  WorkbenchActionListItem,
-  WorkbenchSidebarSection,
-} from './layout/WorkbenchSidebarActions';
-export type {
+  SidebarActionIconBarProps,
+  SidebarActionIconDescriptor,
+  SideBarViewTabDescriptor,
+  SideBarViewTabStripProps,
   WorkbenchActionItem,
   WorkbenchActionListItemProps,
   WorkbenchActionListProps,
+  WorkbenchActionSidebarItem,
+  WorkbenchActionSidebarProps,
   WorkbenchActionStatus,
+  WorkbenchSidebarSectionHeaderProps,
   WorkbenchSidebarSectionProps,
-} from './layout/WorkbenchSidebarActions';
+  WorkbenchSidebarSectionStackItem,
+  WorkbenchSidebarSectionStackProps,
+} from './layout/sidebar';
+export { WorkbenchMediaPreviewViewport } from './layout/WorkbenchMediaPreviewViewport';
+export type { WorkbenchMediaPreviewViewportProps } from './layout/WorkbenchMediaPreviewViewport';
 export {
   WorkbenchBanner,
   WorkbenchBannerIcon,
@@ -257,6 +324,7 @@ export {
   WorkbenchEditorFrame,
   WorkbenchEditorViewport,
   WorkbenchFill,
+  WorkbenchFillChain,
   WorkbenchFloatingMenu,
   WorkbenchFloatingMenuItem,
   WorkbenchFullscreenBackdrop,
@@ -304,18 +372,23 @@ export {
   WorkbenchPropertyHint,
   WorkbenchPropertyInline,
   WorkbenchPropertyKeyValue,
+  WorkbenchMetricGrid,
   WorkbenchPropertyNumberRow,
   WorkbenchPropertyPanel,
   WorkbenchPropertyRangeRow,
   WorkbenchPropertyRow,
+  WorkbenchPropertySearch,
   WorkbenchPropertySection,
   WorkbenchPropertySelectActionRow,
   WorkbenchPropertySelectRow,
   WorkbenchPropertyStack,
   WorkbenchPropertyTextRow,
   WorkbenchPropertyToggleButton,
+  filterWorkbenchPropertyFields,
+  isWorkbenchPropertySearchActive,
   WorkbenchRenderSurface,
   WorkbenchRoot,
+  WorkbenchScrollRegion,
   WorkbenchSectionTitle,
   WorkbenchTemplateGlyph,
   WorkbenchTree,
@@ -365,6 +438,7 @@ export type {
   WorkbenchEditorBottomPanelTitleProps,
   WorkbenchEditorFrameProps,
   WorkbenchEditorViewportProps,
+  WorkbenchFillChainProps,
   WorkbenchFillProps,
   WorkbenchFloatingMenuAlign,
   WorkbenchFloatingMenuItemProps,
@@ -417,10 +491,18 @@ export type {
   WorkbenchPropertyHintProps,
   WorkbenchPropertyInlineProps,
   WorkbenchPropertyKeyValueProps,
+  WorkbenchMetricGridEntry,
+  WorkbenchMetricGridItem,
+  WorkbenchMetricGridProps,
   WorkbenchPropertyNumberRowProps,
+  WorkbenchPropertyFieldFilterInput,
+  WorkbenchPropertyFieldFilterResult,
+  WorkbenchPropertyFieldManifestEntry,
   WorkbenchPropertyPanelProps,
   WorkbenchPropertyRangeRowProps,
   WorkbenchPropertyRowProps,
+  WorkbenchPropertySearchProps,
+  WorkbenchPropertySectionLevel,
   WorkbenchPropertySectionProps,
   WorkbenchPropertySelectOption,
   WorkbenchPropertySelectActionRowProps,
@@ -430,6 +512,7 @@ export type {
   WorkbenchPropertyToggleButtonProps,
   WorkbenchRenderSurfaceProps,
   WorkbenchRootProps,
+  WorkbenchScrollRegionProps,
   WorkbenchSectionTitleProps,
   WorkbenchTemplateGlyphIcon,
   WorkbenchTemplateGlyphProps,
@@ -443,6 +526,18 @@ export type {
   WorkbenchTreeProps,
 } from './layout/WorkbenchLayout';
 export {
+  WORKBENCH_FILL_SCROLL_ROLE_ATTR,
+  isWorkbenchFillOwner,
+  isWorkbenchScrollOwner,
+  resolveWorkbenchFillScrollRole,
+  workbenchFillScrollRoleProps,
+} from './layout/fillScrollContract';
+export type {
+  WorkbenchFillScrollOwnerRegistry,
+  WorkbenchFillScrollRole,
+  WorkbenchFillScrollRoleProps,
+} from './layout/fillScrollContract';
+export {
   StatusBar as WorkbenchStatusBar,
   StatusBarItem as WorkbenchStatusBarItem,
   StatusBarSection as WorkbenchStatusBarSection,
@@ -455,59 +550,81 @@ export type {
   StatusBarSectionModel as WorkbenchStatusBarSectionModel,
   StatusBarSectionProps as WorkbenchStatusBarSectionProps,
 } from './workbench/StatusBar';
-export { AbsoluteBox } from './primitives/AbsoluteBox';
-export type { AbsoluteBoxProps, WorkbenchRect } from './primitives/AbsoluteBox';
-export { Badge } from './primitives/Badge';
-export type { BadgeProps } from './primitives/Badge';
-export { Button } from './primitives/Button';
-export type { ButtonProps } from './primitives/Button';
-export { Checkbox } from './primitives/Checkbox';
-export type { CheckboxProps } from './primitives/Checkbox';
-export { EmptyState } from './primitives/EmptyState';
-export type { EmptyStateProps } from './primitives/EmptyState';
-export { Field } from './primitives/Field';
-export type { FieldProps } from './primitives/Field';
-export { IconButton } from './primitives/IconButton';
-export type { IconButtonProps } from './primitives/IconButton';
-export { List, ListEmptyState, ListItem, ListItemActionButton } from './primitives/List';
+export { AbsoluteBox } from './primitives';
+export type { AbsoluteBoxProps, WorkbenchRect } from './primitives';
+export { Badge } from './primitives';
+export type { BadgeProps } from './primitives';
+export { Button } from './primitives';
+export type { ButtonProps } from './primitives';
+export { Checkbox } from './primitives';
+export type { CheckboxProps } from './primitives';
+export { Chip } from './primitives';
+export type { ChipProps } from './primitives';
+export { EmptyState } from './primitives';
+export type { EmptyStateProps } from './primitives';
+export { PanelLoading } from './primitives';
+export type { PanelLoadingProps } from './primitives';
+export { Field } from './primitives';
+export type { FieldProps } from './primitives';
+export { IconButton } from './primitives';
+export type { IconButtonProps } from './primitives';
+export { List, ListEmptyState, ListItem, ListItemActionButton } from './primitives';
 export type {
   ListEmptyStateProps,
   ListItemActionButtonProps,
   ListItemProps,
   ListProps,
-} from './primitives/List';
-export { NumberInput } from './primitives/NumberInput';
-export type { NumberInputProps } from './primitives/NumberInput';
-export { StatusBar, StatusBarLabel, StatusBarSection } from './primitives/StatusBar';
-export type {
-  StatusBarLabelProps,
-  StatusBarProps,
-  StatusBarSectionAlign,
-  StatusBarSectionProps,
-  StatusBarSeverity,
-} from './primitives/StatusBar';
+} from './primitives';
+export { NumberInput } from './primitives';
+export type { NumberInputProps } from './primitives';
+export { SearchableMultiSelect } from './primitives';
+export type { SearchableMultiSelectOption, SearchableMultiSelectProps } from './primitives';
 export {
-  ActivityBar,
-  Collapsible,
-  SideBar,
-  TabbedPanels,
-  WorkbenchShell,
-} from './primitives/WorkbenchChrome';
+  SEARCHABLE_MULTI_SELECT_LISTBOX_ATTR,
+  isSearchableMultiSelectPortalTarget,
+} from './primitives';
+export { TabbedPanels } from './primitives';
+export type { TabbedPanelItem, TabbedPanelsProps } from './primitives';
+export { ButtonGroup, EditorTabs, ResizablePanels, SegmentedControl } from './primitives';
+export { CatalogBrowseCard } from './primitives';
+export type { CatalogBrowseCardProps, CatalogBrowseCardVariant } from './primitives';
+export { RecordMediaHero } from './primitives';
+export type { RecordMediaHeroLayout, RecordMediaHeroProps } from './primitives';
+export { CatalogBrowseFacetChips, CatalogBrowsePane } from './primitives';
 export type {
-  ActivityBarProps,
-  ActivityItem,
-  CollapsibleProps,
-  SideBarProps,
-  TabbedPanelItem,
-  TabbedPanelsProps,
-  WorkbenchShellProps,
-} from './primitives/WorkbenchChrome';
-export {
-  ButtonGroup,
-  EditorTabs,
-  ResizablePanels,
-  SegmentedControl,
-} from './primitives/WorkbenchEditor';
+  CatalogBrowseFacetChipsProps,
+  CatalogBrowseFacetOption,
+  CatalogBrowseItem,
+  CatalogBrowseItemRenderState,
+  CatalogBrowsePaneProps,
+  CatalogBrowseViewMode,
+} from './primitives';
+export { filterCatalogBrowseItems, matchCatalogBrowseItem } from './primitives';
+export { LibraryFacetFilterStrip } from './primitives';
+export type {
+  LibraryFacetActiveChip,
+  LibraryFacetField,
+  LibraryFacetFieldKind,
+  LibraryFacetFieldOption,
+  LibraryFacetFieldPresentation,
+  LibraryFacetFilterStripProps,
+} from './primitives';
+export { LibraryFacetFilterPanel } from './primitives';
+export type {
+  LibraryFacetFilterPanelLabels,
+  LibraryFacetFilterPanelProps,
+  LibraryFacetSection,
+} from './primitives';
+export { CatalogFilterOverlay } from './primitives';
+export type { CatalogFilterOverlayProps } from './primitives';
+export { LibraryDetailLayout } from './primitives';
+export type { LibraryDetailLayoutMode, LibraryDetailLayoutProps } from './primitives';
+export { WorkbenchMediaPlaceholder } from './primitives';
+export type { WorkbenchMediaPlaceholderProps } from './primitives';
+export { WorkbenchMediaSlot } from './primitives';
+export type { WorkbenchMediaSlotProps } from './primitives';
+export { WorkbenchThumbnail } from './primitives';
+export type { WorkbenchThumbnailProps, WorkbenchThumbnailSize } from './primitives';
 export type {
   ButtonGroupProps,
   EditorTab,
@@ -516,25 +633,26 @@ export type {
   ResizablePanelsProps,
   SegmentedControlOption,
   SegmentedControlProps,
-} from './primitives/WorkbenchEditor';
-export { Select } from './primitives/Select';
-export type { SelectProps } from './primitives/Select';
-export { ScrollArea } from './primitives/ScrollArea';
+} from './primitives';
+export { Select } from './primitives';
+export type { SelectProps } from './primitives';
+export { ScrollArea } from './primitives';
 export type {
   ScrollAreaGutter,
   ScrollAreaOrientation,
   ScrollAreaProps,
   ScrollAreaScrollbarVisibility,
-} from './primitives/ScrollArea';
-export { TextInput } from './primitives/TextInput';
-export type { ControlWidth, TextInputProps } from './primitives/TextInput';
-export { TextArea } from './primitives/TextArea';
-export type { TextAreaProps } from './primitives/TextArea';
-export { Toolbar } from './primitives/Toolbar';
-export type { ToolbarProps } from './primitives/Toolbar';
+} from './primitives';
+export { TextInput } from './primitives';
+export type { ControlWidth, TextInputProps } from './primitives';
+export { TextArea } from './primitives';
+export type { TextAreaProps } from './primitives';
+export { Toolbar } from './primitives';
+export type { ToolbarProps } from './primitives';
 export {
   WorkspaceDraftsContext,
   WorkspaceDraftsProvider,
+  useWorkspaceDraftController,
   useWorkspaceDrafts,
 } from './workbench/workspace/WorkspaceDraftsContext';
 export type {
@@ -543,3 +661,47 @@ export type {
 } from './workbench/workspace/WorkspaceDraftsContext';
 export { StructuredArtifactEditor } from './workbench/StructuredArtifactEditor';
 export type { StructuredArtifactEditorProps } from './workbench/StructuredArtifactEditor';
+export {
+  EDITOR_TAB_DRAG_DATA_TYPE,
+  getEditorTabDropPosition,
+  isEditorTabMoveNoop,
+  isEditorTabsScrollerEventTarget,
+  normalizeEditorTabReorderIndex,
+  readEditorTabDragPayload,
+  resolveEditorTabDropTarget,
+  resolveEditorTabStripDropTarget,
+} from './workbench/editor-tabs-dnd';
+export type { EditorTabDragPayload, EditorTabDropTarget } from './workbench/editor-tabs-dnd';
+export { useEditorTabsStripDnd } from './workbench/useEditorTabsStripDnd';
+export type {
+  UseEditorTabsStripDndOptions,
+  UseEditorTabsStripDndResult,
+} from './workbench/useEditorTabsStripDnd';
+export { WorkbenchEditorTabs } from './workbench/WorkbenchEditorTabs';
+export type { WorkbenchEditorTabsProps } from './workbench/WorkbenchEditorTabs';
+export {
+  createWorkbenchStandaloneEditorTabCommandContext,
+  createWorkbenchStandaloneEditorTabContextMenuItems,
+  isWorkbenchEditorTabClosable,
+} from './workbench/editorTabContextMenu';
+export type {
+  CreateWorkbenchStandaloneEditorTabCommandContextInput,
+  WorkbenchStandaloneEditorTabLike,
+} from './workbench/editorTabContextMenu';
+export { useWorkbenchEditorTabContextMenu } from './workbench/useWorkbenchEditorTabContextMenu';
+export type {
+  UseWorkbenchEditorTabContextMenuOptions,
+  UseWorkbenchEditorTabContextMenuResult,
+} from './workbench/useWorkbenchEditorTabContextMenu';
+export {
+  clampPreviewViewportZoom,
+  computePreviewViewportFitScale,
+  computeZoomPanTowardPoint,
+  usePreviewViewport,
+} from './layout/usePreviewViewport';
+export type {
+  PreviewViewportPoint,
+  PreviewViewportSize,
+  UsePreviewViewportOptions,
+  UsePreviewViewportResult,
+} from './layout/usePreviewViewport';

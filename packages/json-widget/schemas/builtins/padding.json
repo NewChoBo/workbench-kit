@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://workbench-kit.dev/schemas/builtins/padding.json",
+  "title": "PaddingWidget",
+  "type": "object",
+  "required": ["type", "args"],
+  "properties": {
+    "type": { "const": "padding" },
+    "id": { "type": "string" },
+    "listen": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "args": {
+      "type": "object",
+      "properties": {
+        "padding": {
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        },
+        "child": { "$ref": "../jdw-node.jdw.schema.json" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

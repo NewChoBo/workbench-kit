@@ -1,0 +1,98 @@
+/*
+ * Attached segmented toggle — shares Button chrome tokens.
+ * Outer border lives on the group; items use dividers only (no double borders).
+ */
+.ui-segmented-control.ui-button-group {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  overflow: hidden;
+  border: var(--ui-button-border, 1px solid var(--color-border));
+  border-radius: var(--ui-button-border-radius, var(--radius-sm));
+  background: var(--ui-button-background, var(--color-surface));
+}
+
+.ui-segmented-control__item {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-button-gap, 6px);
+  height: var(--ui-button-height, var(--ui-button-height-default));
+  min-height: var(--ui-button-height, var(--ui-button-height-default));
+  padding: var(--ui-button-padding, 0 var(--ui-button-padding-x));
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  border-right: var(--ui-button-border, 1px solid var(--color-border));
+  color: var(--ui-button-color, var(--color-text));
+  background: transparent;
+  font-family: var(--ui-button-font-family, inherit);
+  font-size: var(--ui-button-font-size, var(--font-size-sm));
+  font-weight: var(--ui-button-font-weight, 400);
+  line-height: var(--ui-button-line-height, 1.2);
+  cursor: var(--ui-button-cursor, pointer);
+}
+
+.ui-segmented-control__item:last-child {
+  border-right: none;
+}
+
+.ui-segmented-control__item:hover {
+  color: var(--ui-button-hover-color, var(--ui-button-color, var(--color-text)));
+  background: var(--ui-button-hover-background, var(--color-surface-hover));
+}
+
+.ui-segmented-control__item:focus-visible {
+  outline: 1px solid var(--color-focus-border);
+  outline-offset: -1px;
+  z-index: 1;
+}
+
+.ui-segmented-control__item:disabled,
+.ui-segmented-control__item:disabled:hover {
+  color: var(--ui-button-disabled-color, var(--color-text-subtle));
+  background: transparent;
+  cursor: var(--ui-button-disabled-cursor, default);
+}
+
+.ui-segmented-control__item--selected,
+.ui-segmented-control__item--selected:hover {
+  color: var(
+    --ui-segmented-control-selected-color,
+    var(--vscode-list-activeSelectionForeground, var(--color-text))
+  );
+  background: var(
+    --ui-segmented-control-selected-background,
+    var(
+      --vscode-list-activeSelectionBackground,
+      var(--color-surface-elevated, var(--color-surface-hover))
+    )
+  );
+}
+
+.ui-segmented-control--compact .ui-segmented-control__item {
+  height: var(--ui-button-height-compact);
+  min-height: var(--ui-button-height-compact);
+  padding: 0 var(--ui-button-padding-x-compact);
+}
+
+/* Icon-only segments: keep glyph centered without text padding bias. */
+.ui-segmented-control__item .codicon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.workbench-extensions-sidebar__controls .ui-segmented-control.ui-button-group {
+  display: flex;
+  width: 100%;
+}
+
+.workbench-extensions-sidebar__controls .ui-segmented-control__item {
+  flex: 1 1 0;
+  min-width: 0;
+}

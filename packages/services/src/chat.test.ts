@@ -99,14 +99,14 @@ describe('WorkbenchChatService', () => {
     expect(events[2]?.type).toBe('workspace-patch');
   });
 
-  it('trims message before transport send and supports cancellation', async () => {
+  it('preserves message whitespace for transport send and supports cancellation', async () => {
     const transport = new MockChatTransport();
     const service = new WorkbenchChatService({ transport });
 
     await service.sendMessage('  hello world  ');
     service.cancel();
 
-    expect(transport.messages).toEqual(['hello world']);
+    expect(transport.messages).toEqual(['  hello world  ']);
     expect(transport.cancelled).toBe(true);
     expect(service.getSnapshot().status).toBe('cancelled');
   });

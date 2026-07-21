@@ -131,6 +131,7 @@ export function parsePublishMode(argv = process.argv, env = process.env) {
 export const NPM_PUBLISH_ORDER = [
   '@workbench-kit/base',
   '@workbench-kit/contracts',
+  '@workbench-kit/logging',
   '@workbench-kit/platform',
   '@workbench-kit/workbench-extension-sdk',
   '@workbench-kit/workbench-config',
@@ -142,10 +143,11 @@ export const NPM_PUBLISH_ORDER = [
   '@workbench-kit/services',
   '@workbench-kit/react',
   '@workbench-kit/jdw-editor',
+  '@workbench-kit/schema-mapper',
 ];
 
 // All public publish packages are CI targets. Private preview shells
-// (monaco, workbench-core, workbench-react) stay out of NPM_PUBLISH_ORDER.
+// (monaco, workbench-core, shell-react) stay out of NPM_PUBLISH_ORDER.
 // First release of a package still uses publish-packages-local.mjs; CI updates-only
 // skips packages that are not on npm yet.
 export const NPM_CI_PUBLISH_PACKAGES = new Set(NPM_PUBLISH_ORDER);

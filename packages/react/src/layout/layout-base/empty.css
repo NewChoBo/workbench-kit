@@ -1,0 +1,12 @@
+.ui-workbench-empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: var(--font-size-sm);
+  text-align: center;
+}

@@ -59,8 +59,11 @@ with `parseWorkbenchLayoutConfig` / `parseWorkbenchLayoutConfigJson`. The public
 layout contract currently covers:
 
 - `activityBar.visible`
+- `activityBar.itemOrder`
+- `activityBar.hiddenItemIds`
 - `sideBar.visible`
 - `sideBar.activeViewContainer`
+- `sideBar.sizePercent`
 - `panel.visible`
 
 Unknown layout fields are rejected so committed defaults do not accidentally

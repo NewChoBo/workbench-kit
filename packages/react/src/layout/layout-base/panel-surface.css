@@ -1,0 +1,14 @@
+.ui-workbench-panel-surface {
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  background: var(--vscode-sideBar-background, var(--color-surface));
+}
+
+.ui-workbench-panel-surface--border-left {
+  border-left: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
+.ui-workbench-panel-surface--border-right {
+  border-right: 1px solid var(--vscode-sideBar-border, var(--color-border));
+}

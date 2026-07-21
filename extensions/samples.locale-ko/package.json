@@ -1,0 +1,13 @@
+{
+  "name": "@workbench-kit/extension-samples-locale-ko",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workbench-kit/workbench-extension-sdk": "workspace:*"
+  },
+  "description": "Sample Korean locale pack for workbench labels."
+}

@@ -1,0 +1,15 @@
+.ui-workbench-canvas-drag-preview-frame {
+  box-sizing: border-box;
+  position: absolute;
+  left: var(--ui-workbench-canvas-drag-preview-frame-x, 0);
+  top: var(--ui-workbench-canvas-drag-preview-frame-y, 0);
+  z-index: var(--ui-workbench-canvas-drag-preview-frame-z-index, 1000);
+  width: var(--ui-workbench-canvas-drag-preview-frame-width, auto);
+  height: var(--ui-workbench-canvas-drag-preview-frame-height, auto);
+  overflow: hidden;
+  border: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  opacity: var(--ui-workbench-canvas-drag-preview-frame-opacity, 0.82);
+  pointer-events: none;
+  transform: var(--ui-workbench-canvas-drag-preview-frame-transform, none);
+  transform-origin: center center;
+}

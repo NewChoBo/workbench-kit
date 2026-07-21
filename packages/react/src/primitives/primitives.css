@@ -1,0 +1,36 @@
+/* Primitives component styles — co-located per component folder.
+ * Leaf files are imported from owning TSX for HMR; this hub keeps CSS-only bundles working. */
+@import './badge/badge.css';
+@import './button/button.css';
+@import './chip/chip.css';
+@import './catalog-browse-card/catalog-browse-card.css';
+@import './checkbox/checkbox.css';
+@import './clearable-text-input/clearable-text-input.css';
+@import './empty-state/empty-state.css';
+@import './field/field.css';
+@import './icon-button/icon-button.css';
+@import './catalog-browse-pane/catalog-browse-pane.css';
+@import './catalog-filter-overlay/catalog-filter-overlay.css';
+@import './library-detail-layout/library-detail-layout.css';
+@import './library-facet-filter-strip/library-facet-filter-strip.css';
+@import './library-facet-filter-panel/library-facet-filter-panel.css';
+@import './list/list-empty-state.css';
+@import './list/list-item.css';
+@import './list/list.css';
+@import './number-input/number-input.css';
+@import './panel-loading/panel-loading.css';
+@import './panel-surface/panel-surface.css';
+@import './record-media-hero/record-media-hero.css';
+@import './scroll-area-infinite-load/scroll-area-infinite-sentinel.css';
+@import './select/select.app.css';
+@import './select/select.css';
+@import './searchable-multi-select/searchable-multi-select.css';
+@import './text-input/input.css';
+@import './visually-hidden/visually-hidden.css';
+@import './tabbed-panels/tabbed-panels.css';
+@import './workbench-editor/button-group.css';
+@import './workbench-editor/editor-tabs.css';
+@import './workbench-editor/resizable-panels.css';
+@import './workbench-editor/segmented-control.css';
+@import './workbench-media-slot/media-slot.css';
+@import './workbench-thumbnail/thumbnail.css';

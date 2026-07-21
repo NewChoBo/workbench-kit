@@ -72,9 +72,9 @@ export interface WorkbenchShellContract<TActivityId extends string = string> {
 export interface WorkbenchStandaloneEntryState<TActivityId extends string = string> {
   activeActivityId: TActivityId;
   isPrimarySidebarVisible: boolean;
-  primarySidebarSizePercent: number;
-  primarySidebarMinPercent?: number;
-  primarySidebarMaxPercent?: number;
+  primarySidebarSizePx: number;
+  primarySidebarMinPx?: number;
+  primarySidebarMaxPx?: number;
   theme: WorkbenchTheme;
   isSettingsOpen?: boolean;
   settingsCategoryId?: string;
@@ -86,12 +86,12 @@ export interface WorkbenchStandaloneEntryState<TActivityId extends string = stri
 
 export interface WorkbenchStandaloneBootstrap<TActivityId extends string = string> {
   contract: WorkbenchShellContract<TActivityId>;
-  initialFiles: readonly WorkspaceFile[];
-  workspace: WorkbenchWorkspaceController;
-  chat: WorkbenchChatController;
-  patch: WorkbenchPatchController;
-  save: WorkbenchSaveController;
-  status: WorkbenchStatusController;
+  initialFiles?: readonly WorkspaceFile[];
+  workspace?: WorkbenchWorkspaceController;
+  chat?: WorkbenchChatController;
+  patch?: WorkbenchPatchController;
+  save?: WorkbenchSaveController;
+  status?: WorkbenchStatusController;
   initialState?: Partial<WorkbenchStandaloneEntryState<TActivityId>>;
 }
 

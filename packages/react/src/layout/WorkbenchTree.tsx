@@ -1,12 +1,13 @@
 import { forwardRef } from 'react';
 import type { ComponentPropsWithRef, CSSProperties, ReactNode } from 'react';
-import { IconButton } from '../primitives/IconButton';
-import type { IconButtonProps } from '../primitives/IconButton';
+import { IconButton } from '../primitives/icon-button';
+import type { IconButtonProps } from '../primitives/icon-button';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
 import { toLengthValue, workbenchTreeIndentOffset } from './layoutHelpers';
 
 export interface WorkbenchTreeProps extends ComponentPropsWithRef<'div'> {
+  children?: ReactNode;
   indentSize?: number | string;
   rowHeight?: number | string;
 }
@@ -38,6 +39,7 @@ export type WorkbenchTreeInteraction = 'default' | 'draggable' | 'dragging';
 
 export interface WorkbenchTreeItemProps extends ComponentPropsWithRef<'div'> {
   actions?: ReactNode;
+  children?: ReactNode;
   control?: ReactNode;
   depth?: number;
   icon?: ReactNode;
@@ -185,6 +187,7 @@ export function WorkbenchTreeActionButton({
 }
 
 export interface WorkbenchTreeDropLineProps extends ComponentPropsWithRef<'div'> {
+  children?: ReactNode;
   position: 'above' | 'below';
 }
 
@@ -204,6 +207,7 @@ export function WorkbenchTreeDropLine({
 }
 
 export interface WorkbenchTreeDropZoneProps extends ComponentPropsWithRef<'div'> {
+  children?: ReactNode;
   depth?: number;
   empty?: boolean;
   highlighted?: boolean;
@@ -235,6 +239,7 @@ export const WorkbenchTreeDropZone = forwardRef<HTMLDivElement, WorkbenchTreeDro
 );
 
 export interface WorkbenchTreeDragOverlayProps extends ComponentPropsWithRef<'div'> {
+  children?: ReactNode;
   rowHeight?: number | string;
 }
 
@@ -261,6 +266,7 @@ export function WorkbenchTreeDragOverlay({
 }
 
 export interface WorkbenchDragPreviewProps extends ComponentPropsWithRef<'div'> {
+  children?: ReactNode;
   maxWidth?: number | string;
   offset?: number | string;
   x: number | string;
@@ -293,14 +299,7 @@ export function WorkbenchDragPreview({
 }
 
 export type WorkbenchTemplateGlyphIcon =
-  | 'badge'
-  | 'color'
-  | 'flex'
-  | 'frame'
-  | 'grid'
-  | 'image'
-  | 'list'
-  | 'text';
+  'badge' | 'color' | 'flex' | 'frame' | 'grid' | 'image' | 'list' | 'text';
 
 export interface WorkbenchTemplateGlyphProps extends ComponentPropsWithRef<'span'> {
   accent: string;

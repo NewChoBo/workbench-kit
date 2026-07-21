@@ -1,0 +1,5 @@
+/* workbench/shell feature styles */
+@import './activity-bar.css';
+@import './confirmation-flow.css';
+@import './split-view.css';
+@import './status-bar.css';

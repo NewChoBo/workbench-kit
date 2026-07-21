@@ -1,0 +1,131 @@
+.ui-template-gallery {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  min-height: 0;
+  padding: 20px;
+}
+
+.ui-template-gallery__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ui-template-gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(208px, 1fr));
+  gap: 12px;
+  align-content: start;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ui-template-gallery__footer {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+}
+
+.ui-template-gallery-card {
+  box-sizing: border-box;
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  min-height: 208px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-template-gallery-card:hover,
+.ui-template-gallery-card:focus-visible {
+  background: var(--color-surface);
+  outline: 1px solid var(--vscode-focusBorder, var(--color-accent));
+  outline-offset: 1px;
+}
+
+.ui-template-gallery-card__preview {
+  display: grid;
+  place-items: center;
+  height: 96px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  font-size: 28px;
+}
+
+.ui-template-gallery-card__body {
+  display: grid;
+  gap: 4px;
+}
+
+.ui-template-gallery-card__eyebrow {
+  color: var(--color-text-subtle);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.ui-template-gallery-card__title {
+  font-size: var(--font-size-sm);
+}
+
+.ui-template-gallery-card__description {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+  line-height: 1.45;
+}
+
+.ui-template-gallery-card--skeleton {
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 0%,
+    var(--color-surface-hover) 50%,
+    var(--color-surface) 100%
+  );
+  background-size: 200% 100%;
+  animation: ui-template-gallery-skeleton 1.2s ease-in-out infinite;
+}
+
+@keyframes ui-template-gallery-skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.ui-source-manager-nav-item {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 28px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-source-manager-nav-item[data-active='true'] {
+  background: var(--color-surface-hover);
+}
+
+.ui-source-manager-nav-item:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--color-accent));
+  outline-offset: 1px;
+}

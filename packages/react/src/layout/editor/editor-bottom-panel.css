@@ -1,0 +1,44 @@
+.ui-workbench-editor-bottom-panel {
+  box-sizing: border-box;
+  z-index: 10;
+  display: flex;
+  flex: 0 0 var(--ui-workbench-editor-bottom-panel-height, 120px);
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--vscode-panel-background, var(--color-surface));
+  border-top: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
+.ui-workbench-editor-bottom-panel__header {
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  min-height: 26px;
+  padding: 0 6px 0 10px;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  background: var(--vscode-sideBar-background, var(--color-surface));
+  border-bottom: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
+.ui-workbench-editor-bottom-panel__title {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ui-workbench-editor-bottom-panel__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}

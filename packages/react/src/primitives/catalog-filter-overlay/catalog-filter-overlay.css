@@ -1,0 +1,65 @@
+.ui-catalog-filter-overlay {
+  --ui-catalog-filter-overlay-pad-x: 0.75rem;
+  /* Cap at 4px: baseline --radius-sm can be 6px. */
+  --ui-catalog-filter-overlay-radius: min(4px, var(--shell-radius-control, 4px));
+  z-index: 80;
+  display: flex;
+  min-width: 20rem;
+  max-width: min(23.75rem, calc(100vw - 1rem));
+  flex-direction: column;
+  /* Opt in when portaled into a pointer-events:none host (workbench overlays). */
+  pointer-events: auto;
+  overflow: hidden;
+  border: 1px solid var(--vscode-widget-border, var(--color-border-default, var(--color-border)));
+  border-radius: var(--ui-catalog-filter-overlay-radius);
+  background: var(
+    --vscode-menu-background,
+    var(--color-surface-elevated, var(--color-surface-secondary, #2d2d2d))
+  );
+  /* Explicit fallbacks: overlay is often portaled outside [data-theme]. */
+  color: var(--vscode-foreground, var(--color-text-primary, var(--color-text, #cccccc)));
+  box-shadow:
+    0 0.125rem 0.25rem rgb(0 0 0 / 12%),
+    0 0.75rem 1.75rem rgb(0 0 0 / 22%);
+}
+
+.ui-catalog-filter-overlay__header {
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  /* Compact IconButton + vertical padding — stable whether Clear is enabled. */
+  min-height: calc(var(--ui-icon-button-size-compact, 1.5rem) + 1rem);
+  padding: 0.5rem var(--ui-catalog-filter-overlay-pad-x);
+  border-bottom: 1px solid
+    var(--vscode-widget-border, var(--color-border-subtle, var(--color-border)));
+}
+
+.ui-catalog-filter-overlay__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--vscode-foreground, var(--color-text-primary, var(--color-text)));
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-catalog-filter-overlay__clear {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}
+
+.ui-catalog-filter-overlay__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}

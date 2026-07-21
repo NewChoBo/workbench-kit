@@ -4,6 +4,7 @@ import {
   DEFAULT_WORKBENCH_LAYOUT_CONFIG,
   parseWorkbenchExtensionsConfig,
   parseWorkbenchExtensionsConfigJson,
+  parseWorkbenchKeybindingsConfig,
   parseWorkbenchLayoutConfig,
   parseWorkbenchLayoutConfigJson,
   WorkbenchConfigValidationError,
@@ -66,6 +67,9 @@ describe('parseWorkbenchLayoutConfig', () => {
       activityBar: {
         visible: true,
       },
+      auxiliaryBar: {
+        visible: false,
+      },
       panel: {
         visible: false,
       },
@@ -107,6 +111,44 @@ describe('parseWorkbenchLayoutConfig', () => {
     ).toThrow('Unexpected layout config sideBar field "lastFocusedFile".');
   });
 
+  it('parses sidebar size percent', () => {
+    expect(
+      parseWorkbenchLayoutConfig({
+        sideBar: {
+          sizePercent: 28,
+          visible: true,
+        },
+      }).sideBar,
+    ).toEqual({
+      sizePercent: 28,
+      visible: true,
+    });
+    expect(
+      parseWorkbenchLayoutConfig({
+        sideBar: {
+          sizePercent: 120,
+          visible: true,
+        },
+      }).sideBar.sizePercent,
+    ).toBe(90);
+  });
+
+  it('parses activity bar item order', () => {
+    expect(
+      parseWorkbenchLayoutConfig({
+        activityBar: {
+          hiddenItemIds: ['aiChat', 'chatting', 'aiChat'],
+          itemOrder: ['explorer', 'search', 'explorer', 'commands'],
+          visible: true,
+        },
+      }).activityBar,
+    ).toEqual({
+      hiddenItemIds: ['aiChat', 'chatting'],
+      itemOrder: ['explorer', 'search', 'commands'],
+      visible: true,
+    });
+  });
+
   it('parses layout config from JSON text', () => {
     expect(
       parseWorkbenchLayoutConfigJson(`{
@@ -119,6 +161,9 @@ describe('parseWorkbenchLayoutConfig', () => {
       activityBar: {
         visible: true,
       },
+      auxiliaryBar: {
+        visible: false,
+      },
       panel: {
         visible: false,
       },
@@ -127,5 +172,25 @@ describe('parseWorkbenchLayoutConfig', () => {
         visible: false,
       },
     });
+  });
+});
+
+describe('parseWorkbenchKeybindingsConfig', () => {
+  it('parses keybinding override entries', () => {
+    expect(
+      parseWorkbenchKeybindingsConfig([
+        { command: 'editor.save', key: 'ctrl+shift+s' },
+        { command: 'workbench.open', key: 'ctrl+o', when: 'editorFocus' },
+      ]),
+    ).toEqual([
+      { command: 'editor.save', key: 'ctrl+shift+s' },
+      { command: 'workbench.open', key: 'ctrl+o', when: 'editorFocus' },
+    ]);
+  });
+
+  it('rejects malformed keybinding entries', () => {
+    expect(() => parseWorkbenchKeybindingsConfig([{ command: 'editor.save' }])).toThrow(
+      WorkbenchConfigValidationError,
+    );
   });
 });

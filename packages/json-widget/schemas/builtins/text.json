@@ -18,7 +18,12 @@
         "text": { "type": "string" },
         "color": { "type": "string" },
         "background": { "type": "string" },
-        "fontSize": { "type": "number", "minimum": 1 }
+        "fontSize": {
+          "oneOf": [
+            { "type": "number", "minimum": 1 },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        }
       },
       "additionalProperties": true
     }

@@ -1,0 +1,91 @@
+.ui-workbench-floating-menu {
+  position: absolute;
+  z-index: var(--ui-floating-menu-z-index, 120);
+  display: grid;
+  min-width: var(--ui-workbench-floating-menu-width, 180px);
+  max-width: min(320px, calc(100% - 16px));
+  gap: 2px;
+  padding: 4px;
+  color: var(--vscode-menu-foreground, var(--color-text));
+  background: var(--vscode-menu-background, var(--color-surface));
+  border: 1px solid var(--vscode-menu-border, var(--color-border));
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.ui-workbench-floating-menu[data-placement='top'] {
+  bottom: var(--ui-workbench-floating-menu-offset, 28px);
+}
+
+.ui-workbench-floating-menu[data-placement='bottom'] {
+  top: var(--ui-workbench-floating-menu-offset, 28px);
+}
+
+.ui-workbench-floating-menu[data-align='start'] {
+  left: var(--ui-workbench-floating-menu-inset, 8px);
+}
+
+.ui-workbench-floating-menu[data-align='end'] {
+  right: var(--ui-workbench-floating-menu-inset, 8px);
+}
+
+.ui-workbench-floating-menu__item {
+  box-sizing: border-box;
+  display: grid;
+  min-height: 26px;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  color: var(--vscode-menu-foreground, var(--color-text-muted));
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ui-workbench-floating-menu__item:hover,
+.ui-workbench-floating-menu__item:focus-visible {
+  color: var(--vscode-menu-selectionForeground, var(--color-text));
+  background: var(--vscode-menu-selectionBackground, var(--color-surface-hover));
+  outline: none;
+}
+
+.ui-workbench-floating-menu__item:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--color-focus-border));
+  outline-offset: -1px;
+}
+
+.ui-workbench-floating-menu__item[data-selected='true'] {
+  color: var(--vscode-list-activeSelectionForeground, var(--color-text));
+  background: var(--vscode-list-activeSelectionBackground, var(--color-surface-hover));
+  font-weight: 600;
+}
+
+.ui-workbench-floating-menu__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.ui-workbench-floating-menu__icon .codicon {
+  font-size: 14px;
+}
+
+.ui-workbench-floating-menu__label,
+.ui-workbench-floating-menu__meta {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-workbench-floating-menu__meta {
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: 11px;
+  font-weight: 400;
+}

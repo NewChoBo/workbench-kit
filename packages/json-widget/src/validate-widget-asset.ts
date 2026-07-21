@@ -6,6 +6,24 @@ import {
   type ValidationIssue,
 } from './validate-json-widget-data.js';
 
+/** Content root types allowed for `kind: "leaf"` assets (profile leaf widgets). */
+export const WIDGET_ASSET_LEAF_CONTENT_TYPES = ['text', 'image', 'icon', 'button'] as const;
+
+/** Content root types allowed for `kind: "container"` assets (profile layout roots). */
+export const WIDGET_ASSET_CONTAINER_CONTENT_TYPES = [
+  'row',
+  'column',
+  'grid',
+  'stack',
+  'box',
+] as const;
+
+export type WidgetAssetLeafContentType = (typeof WIDGET_ASSET_LEAF_CONTENT_TYPES)[number];
+export type WidgetAssetContainerContentType = (typeof WIDGET_ASSET_CONTAINER_CONTENT_TYPES)[number];
+
+const LEAF_CONTENT_TYPE_SET = new Set<string>(WIDGET_ASSET_LEAF_CONTENT_TYPES);
+const CONTAINER_CONTENT_TYPE_SET = new Set<string>(WIDGET_ASSET_CONTAINER_CONTENT_TYPES);
+
 export interface ValidatedWidgetAsset {
   readonly valid: boolean;
   readonly issues: readonly ValidationIssue[];
@@ -43,24 +61,22 @@ export function validateWidgetAssetPackage(
   if (
     asset.kind === 'container' &&
     contentParsed.value !== null &&
-    contentParsed.value.type !== 'row' &&
-    contentParsed.value.type !== 'column' &&
-    contentParsed.value.type !== 'grid'
+    !CONTAINER_CONTENT_TYPE_SET.has(contentParsed.value.type)
   ) {
     issues.push({
       path: 'kind',
-      message: 'Container assets should use a layout type (row, column, or grid) in content.',
+      message: `Container assets should use a layout type (${WIDGET_ASSET_CONTAINER_CONTENT_TYPES.join(', ')}) in content.`,
     });
   }
 
   if (
     asset.kind === 'leaf' &&
     contentParsed.value !== null &&
-    contentParsed.value.type !== 'text'
+    !LEAF_CONTENT_TYPE_SET.has(contentParsed.value.type)
   ) {
     issues.push({
       path: 'kind',
-      message: 'Leaf assets should use a leaf widget type (text) in content.',
+      message: `Leaf assets should use a leaf widget type (${WIDGET_ASSET_LEAF_CONTENT_TYPES.join(', ')}) in content.`,
     });
   }
 

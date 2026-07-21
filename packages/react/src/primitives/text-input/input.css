@@ -1,0 +1,54 @@
+.ui-input {
+  height: var(--ui-input-height, var(--ui-input-height-default));
+  padding: var(--ui-input-padding, 0 var(--ui-input-padding-x));
+}
+
+.ui-textarea {
+  min-height: var(--ui-textarea-min-height, 80px);
+  max-height: var(--ui-textarea-max-height, none);
+  display: var(--ui-textarea-display, initial);
+  margin: var(--ui-textarea-margin, 0);
+  padding: var(--ui-textarea-padding, 8px);
+  overflow-y: var(--ui-textarea-overflow-y, auto);
+  line-height: var(--ui-input-line-height, 1.5);
+  resize: var(--ui-textarea-resize, vertical);
+}
+
+.ui-input[data-width='wide'],
+.ui-textarea[data-width='wide'] {
+  width: 420px;
+}
+
+.ui-input[data-width='full'],
+.ui-textarea[data-width='full'] {
+  width: 100%;
+}
+
+.ui-input[type='range'] {
+  padding: 0;
+  background: transparent;
+  border-color: transparent;
+  accent-color: var(--color-accent);
+}
+
+.ui-input[type='range']:focus {
+  border-color: transparent;
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.ui-input--monospace {
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+}
+
+/* Prefer NumberInput themed steppers; hide native spinners on raw type=number too. */
+.ui-input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.ui-input[type='number']::-webkit-outer-spin-button,
+.ui-input[type='number']::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}

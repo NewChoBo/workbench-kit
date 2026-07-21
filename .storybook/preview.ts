@@ -58,57 +58,41 @@ const preview: Preview = {
       );
     },
   ],
+
   parameters: {
     options: {
       storySort: {
-        order: [
-          'Introduction',
-          ['JsonConfig', ['Workbench']],
-          ['JsonWidget', ['WidgetTree', ['Lab', 'Workbench'], 'Preview']],
-          [
-            'React',
-            [
-              'Primitives',
-              'Layout',
-              'Overlays',
-              [
-                'Workbench',
-                [
-                  'Shell',
-                  'Workspace',
-                  'Settings',
-                  'Chat',
-                  'Commands',
-                  'Catalog',
-                  'Flows',
-                  'Auth',
-                  'Verification',
-                ],
-              ],
-            ],
-          ],
-        ],
+        order: ['Workbench Sample', 'React'],
         method: 'alphabetical',
         locales: 'en-US',
       },
     },
     layout: 'fullscreen',
     backgrounds: {
-      default: 'workbench',
-      values: [
-        { name: 'workbench', value: '#0d1117' },
-        { name: 'surface', value: '#161b22' },
-        { name: 'light', value: '#ffffff' },
-      ],
+      options: {
+        workbench: { name: 'workbench', value: '#0d1117' },
+        surface: { name: 'surface', value: '#161b22' },
+        light: { name: 'light', value: '#ffffff' },
+      },
     },
     viewport: {
-      viewports: monitorViewports,
-      defaultViewport: 'monitor-1366x768',
+      options: monitorViewports,
     },
     storybookGrid: {
       enabled: true,
       size: 16,
       color: 'rgba(255,255,255,0.12)',
+    },
+  },
+
+  initialGlobals: {
+    viewport: {
+      value: 'monitor-1366x768',
+      isRotated: false,
+    },
+
+    backgrounds: {
+      value: 'workbench',
     },
   },
 };

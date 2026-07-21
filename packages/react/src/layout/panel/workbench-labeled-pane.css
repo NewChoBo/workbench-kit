@@ -1,0 +1,69 @@
+.ui-workbench-labeled-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.ui-workbench-labeled-pane--flat {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.ui-workbench-labeled-pane--card {
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  background: var(--color-editor-background, rgba(0, 0, 0, 0.15));
+}
+
+.ui-workbench-labeled-pane--card.ui-workbench-labeled-pane--muted {
+  background: var(--color-surface-raised, var(--color-editor-background, rgba(0, 0, 0, 0.15)));
+}
+
+.ui-workbench-labeled-pane__header {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
+  color: var(--color-text-muted, var(--color-text-secondary));
+  font-size: var(--font-size-xs, 11px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--color-sideBar-background, transparent);
+}
+
+.ui-workbench-labeled-pane__body {
+  /* Flex child of the pane chrome — definite height for % children (preview/source). */
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  /* Do not flex-stretch children: that collapses scrollHeight and steals overflow
+     into nested unthemed overflow:auto panels. Content sizes naturally; this
+     ScrollArea (ui-scroll-area + ui-workbench-scrollbar) owns scrolling. */
+}
+
+/* Nested inspectors defer scroll to the pane body ScrollArea. */
+.ui-workbench-labeled-pane__body .ui-workbench-property-panel,
+.ui-workbench-labeled-pane__body .widget-tree-inspector {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+/* Fill surfaces (preview viewport, plain-text source) still resolve % height. */
+.ui-workbench-labeled-pane__body > .ui-jdw-preview-viewport-host,
+.ui-workbench-labeled-pane__body > .ui-workbench-plain-text-source {
+  display: block;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 100%;
+}
+
+.ui-workbench-labeled-pane--card .ui-workbench-labeled-pane__body {
+  padding: 12px;
+}

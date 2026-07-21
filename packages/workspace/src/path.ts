@@ -2,8 +2,14 @@ export function normalizeWorkspacePath(path: string) {
   return path.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+/g, '/').replace(/\/$/, '');
 }
 
+export const WORKSPACE_PATH_DISPLAY_SEPARATOR = ' > ';
+
 export function workspacePathSegments(path: string) {
   return normalizeWorkspacePath(path).split('/').filter(Boolean);
+}
+
+export function formatWorkspacePathDisplay(path: string) {
+  return workspacePathSegments(path).join(WORKSPACE_PATH_DISPLAY_SEPARATOR);
 }
 
 export function joinWorkspacePath(parentPath: string, name: string) {
