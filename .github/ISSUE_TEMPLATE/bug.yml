@@ -1,0 +1,80 @@
+name: Bug report
+description: Incorrect behavior in a published or linked @workbench-kit package. Requires repro steps and expected vs actual.
+title: 'fix(<package>): '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Follow [docs/conventions/github-issues.md](https://github.com/NewChoBo/workbench-kit/blob/staging/docs/conventions/github-issues.md).
+        Prefer a minimal repro in `examples/workbench-sample` or Storybook over a private host app.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken in one or two sentences?
+    validations:
+      required: true
+
+  - type: input
+    id: package_version
+    attributes:
+      label: Package(s) and version / dist-tag
+      description: 'e.g. @workbench-kit/react@0.x.x or a commit SHA / local checkout note'
+      placeholder: '@workbench-kit/react@prototype / commit abc1234'
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: Minimal steps. Prefer Storybook story id or sample route.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include console errors, screenshots, or DOM notes when relevant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, browser/Electron, Node, pnpm versions as relevant.
+      placeholder: |
+        - OS: Windows 11
+        - Browser: Chromium (Storybook)
+        - Node: 22.x / pnpm 9.x
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria (fix)
+      description: How do we know it is fixed?
+      placeholder: |
+        - [ ] Repro story no longer fails
+        - [ ] Regression unit/Storybook test added
+        - [ ] validate:fast green
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Suspected root cause, related issues, workarounds.

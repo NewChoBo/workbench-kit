@@ -60,6 +60,15 @@ Common failure modes to avoid:
 - Leaving `_authToken` in npmrc during batch publish (401 mid-run)
 - Publishing `react` without sibling packages at the same version on npm
 
+## GitHub issues
+
+When filing or updating issues, follow
+[`docs/conventions/github-issues.md`](docs/conventions/github-issues.md).
+Use `.github/ISSUE_TEMPLATE/*` (blank issues disabled). Prefer the **Consumer
+extract** template for promoting host-proven patterns. Issue bodies must meet
+the full quality bar (API sketch, behavior contract, non-goals, acceptance,
+verification) and stay product-neutral per public-reference policy.
+
 ## Git
 
 Follow [`docs/conventions/git-workflow.md`](docs/conventions/git-workflow.md). Do not commit, push, or tag unless the user explicitly requests it.
