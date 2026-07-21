@@ -1,12 +1,15 @@
 # Consumer Capabilities Reference
 
 **Status:** Active consumer contract  
-**Last updated:** 2026-07-05  
-**Audience:** Host applications that compose `@workbench-kit/react` (Content Hub, VS Code webviews, sample host)
+**Last updated:** 2026-07-21  
+**Audience:** Host applications that compose `@workbench-kit/react` (browser, desktop, VS Code webviews, sample host)
 
 This document is the **integration contract** for reusable workbench UI. It inventories primitives and shell surfaces that a reference desktop consumer actually wires today. It is not a Storybook catalog — use Storybook and `examples/workbench-sample` for visual exploration.
 
-Related: [Consumer Integration Backlog](./consumer-integration-backlog.md) · [API Reference](../guides/api-reference.md) · [Workbench Change Guidelines](./workbench-change-guidelines.md)
+Related: [Consumer Integration Backlog](./consumer-integration-backlog.md) ·
+[Explorer Selection Policy](./explorer-selection-policy.md) ·
+[API Reference](../guides/api-reference.md) ·
+[Workbench Change Guidelines](./workbench-change-guidelines.md)
 
 ---
 
@@ -22,8 +25,10 @@ Use official subpath exports from `@workbench-kit/react`. Do not import from `pa
 | `@workbench-kit/react/overlay`              | Context menus                                                     |
 | `@workbench-kit/react/modal`                | Low-level modal frame (prefer management wrapper when applicable) |
 | `@workbench-kit/react/workbench/shell`      | Activity bar, shell layout, view editor, title bar                |
+| `@workbench-kit/react/workbench/chat`       | Chat panel, composer, message list/item, conversation bar         |
 | `@workbench-kit/react/workbench/management` | Dialog frames, integrations shell, notices                        |
-| `@workbench-kit/react/workbench/workspace`  | Workspace explorer                                                |
+| `@workbench-kit/react/workbench/workspace`  | Workspace explorer, editor panel, selection helpers               |
+| `@workbench-kit/workspace`                  | Pure path/selection/virtual-workspace helpers (no React)          |
 | `@workbench-kit/react/brand`                | Product icon mark                                                 |
 | `@workbench-kit/contracts`                  | Cross-host DTOs and authoring workbench state                     |
 
@@ -69,11 +74,12 @@ Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workb
 
 **Key props:**
 
-| Surface                    | Props                                                                                                |
-| -------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `WorkbenchThemeProvider`   | `platform` (`darwin` \| `win32` \| `linux`) — sets host platform context + `data-workbench-platform` |
-| `WorkbenchDesktopTitleBar` | `chrome` (`platform` default \| `generic`), `leading` / `centerSlot` / `trailing`, `windowControls`  |
-| `windowControls`           | Host callbacks only: `onMinimize`, `onToggleMaximized`, `onClose`, `isMaximized`, optional labels    |
+| Surface                    | Props                                                                                                           |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `WorkbenchThemeProvider`   | `platform` (`darwin` \| `win32` \| `linux`) — sets host platform context + `data-workbench-platform`            |
+| `WorkbenchDesktopTitleBar` | `chrome` (`platform` default \| `generic`), `leading` / `centerSlot` / `trailing`, `windowControls`             |
+| `windowControls`           | Host callbacks only: `onMinimize`, `onToggleMaximized`, `onClose`, `isMaximized`, optional labels               |
+| Title-bar layout toggles   | `WorkbenchShellTitleBarLayoutControls`: omit `onTogglePanel` / `onToggleAuxiliarySidebar` to hide those buttons |
 
 **I/O contract:** Kit owns chrome markup and darwin/win32 placement. Hosts supply Electron (or similar) IPC callbacks and optional i18n labels — do not fork titlebar markup in the renderer.
 
@@ -430,11 +436,49 @@ themselves as fill (clip); only named scroll owners may overflow.
 
 ---
 
-### `WorkspaceExplorer`
+### `WorkspaceExplorer` / `WorkspaceExplorerPanel`
 
-**Purpose:** File tree with expand/collapse, selection, optional context menu integration.
+**Purpose:** File tree with expand/collapse, selection, optional context menu and toolbar.
 
-**When to use:** Launchpad / workspace file navigation.
+**Key props / ports:**
+
+| Surface / API                     | Detail                                                                                       |
+| --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `WorkspaceExplorerPanel` toolbar  | `toolbarLeading` / `toolbarTrailing` / `toolbarStatus` plus optional New file/folder/refresh |
+| `onBackgroundContextMenu`         | Empty-tree / background context menu (item menus keep `onItemContextMenu`)                   |
+| `renderItemActions`               | Per-row trailing actions (folder hover new-file/folder/delete, etc.)                         |
+| `canMutatePath` (controller port) | Guard create/rename/delete/move (`boolean` or error `string`)                                |
+| `inlineEditMessages` (controller) | Override invalid-name / already-exists / failure copy for i18n                               |
+| `resolveExplorerActionPaths`      | `@workbench-kit/workspace` — VS Code-like focus vs selection for command targets             |
+| `applyWorkspaceFolderMove`        | Pure folder-move apply helper for external stores                                            |
+
+**When to use:** Workspace file navigation in a sidebar host.
+
+**When not to use:** Product-specific library browsers — use catalog primitives.
+
+**Selection policy:** See [explorer-selection-policy.md](./explorer-selection-policy.md).
+
+---
+
+### `ChatPanel` / `ChatMessageItem` · `@workbench-kit/react/workbench/chat`
+
+**Purpose:** Sidebar chat surface (message list + composer) and message chrome.
+
+**Key props:**
+
+| Surface           | Props                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------ |
+| `ChatPanel`       | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `messageListAddon`, composer/runtime props |
+| `ChatMessageItem` | `footer`, `afterMessage`, plus message `tone` / `contentMode`                                    |
+| `ChatMessage`     | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                |
+
+**Defaults:** Assistant layout messages render Markdown unless `contentMode: 'plain'`. User/peer default to plain. File drop is ignored while `disabled` or `isRunning`.
+
+**When to use:** Host chat sidebars that should delete local message/composer chrome forks.
+
+**When not to use:** Full product chat products that own the entire timeline — use slots (`renderMessageList`, `afterMessage`) rather than forking kit BEM.
+
+**Storybook:** `React/Workbench/Chat Components` → host-gaps drop/tone story.
 
 ---
 
