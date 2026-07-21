@@ -113,10 +113,13 @@ Platform auth boundary (long-term): [Account and Authentication](../architecture
 
 ## `@workbench-kit/platform`
 
-Headless command and keybinding primitives usable without React.
+Headless command and keybinding primitives usable without React. The package root
+stays browser-safe. Node-only atomic write and path-under-root helpers are
+exported from `@workbench-kit/platform/node`.
 
 ```typescript
 import { CommandRegistry } from '@workbench-kit/platform';
+import { atomicWriteText, resolvePathUnderRoot } from '@workbench-kit/platform/node';
 ```
 
 Storybook reference: **Headless/Platform Commands** story (command registry and when-clause visibility).
