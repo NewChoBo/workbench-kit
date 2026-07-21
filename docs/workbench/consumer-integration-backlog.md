@@ -200,8 +200,23 @@ user preference that gates restore. Kit should expose Electron-free helpers only
   (`getBounds` / `getNormalBounds` / `isMaximized` / move·resize·maximize·close), debounce
   writes; when maximized, persist `getNormalBounds()` plus `isMaximized: true`
 
-Do not pull Electron into `@workbench-kit/react`. Consumer TilePaper currently implements
-this shape under `apps/desktop-runtime/features/window-manager/main-window-*`.
+Do not pull Electron into `@workbench-kit/react`. Optional thin Electron adapter /
+`@workbench-kit/electron-shell` wrapping these helpers remains a separate §15 follow-up.
+
+**JSON document / JSONL persistence ports (implemented API):** Hosts own concrete
+`kind` strings, `schemaVersion` numbers, migration approval, and backup retention.
+`@workbench-kit/platform` exposes browser-safe ports + memory adapters; Node
+filesystem implementations live on `@workbench-kit/platform/node` only:
+
+- Types: `JsonDocumentStore`, `JsonLinesStore`, `VersionedEnvelope`, `StorageDiagnostic`
+- Memory: `createMemoryJsonDocumentStore`, `createMemoryJsonLinesStore` (tests / tiny ephemeral hosts)
+- Node: `createNodeJsonDocumentStore`, `createNodeJsonLinesStore`, `quarantineFileUnderRoot`
+  (atomic write + path-under-root; corrupt files move under `recovery/quarantine`;
+  diagnostics expose `relativeKey` / quarantine keys — never absolute paths)
+- JSONL v1 corruption policy: quarantine the whole file and resume empty
+
+Prefer memory or Node document stores for structured persistence. `localStorage`
+adapters remain appropriate only for small JSON documents in browser hosts.
 
 ### 16. Collection / dynamic collection save UI
 
