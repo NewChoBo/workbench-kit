@@ -92,17 +92,17 @@ pnpm validate
 
 ## Showcase Coverage
 
-| Library                               | Surface in the sample                                                                                          |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `@workbench-kit/shell-react`          | Provider, shell, editor area, status sections                                                                  |
-| `@workbench-kit/react`                | Workbench UI and Widget Tree design/code authoring for compiled JDW documents                                  |
-| `@workbench-kit/workspace`            | Virtual workspace host port and explorer/editor state                                                          |
-| `@workbench-kit/jdw`                  | Schema imports, Screen Spec template compilation, and JDW asset catalog                                        |
-| `@workbench-kit/workbench-config`     | `.workbench` extension/layout/workspace config parsing                                                         |
-| `@workbench-kit/schema-mapper`        | Activity bar **Field Remap** → **A → B**, **T_EVENT → T_SLOT**, etc. (object ports, date/time, convertToShape) |
-| Built-in extension SDK contracts      | Command, contribution, and settings capability integration                                                     |
-| `workbench-kit.samples.jdw`           | Activity bar **JDW Lab** sidebar entry                                                                         |
-| `workbench-kit.samples.schema-mapper` | Sidebar catalog of nested JSON and table-style T_A → T_B remap samples                                         |
+| Library                             | Surface in the sample                                                                                          |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `@workbench-kit/shell-react`        | Provider, shell, editor area, status sections                                                                  |
+| `@workbench-kit/react`              | Workbench UI and Widget Tree design/code authoring for compiled JDW documents                                  |
+| `@workbench-kit/workspace`          | Virtual workspace host port and explorer/editor state                                                          |
+| `@workbench-kit/jdw`                | Schema imports, Screen Spec template compilation, and JDW asset catalog                                        |
+| `@workbench-kit/workbench-config`   | `.workbench` extension/layout/workspace config parsing                                                         |
+| `@workbench-kit/field-remap`        | Activity bar **Field Remap** → **A → B**, **T_EVENT → T_SLOT**, etc. (object ports, date/time, convertToShape) |
+| Built-in extension SDK contracts    | Command, contribution, and settings capability integration                                                     |
+| `workbench-kit.samples.jdw`         | Activity bar **JDW Lab** sidebar entry                                                                         |
+| `workbench-kit.samples.field-remap` | Sidebar catalog of nested JSON and table-style T_A → T_B remap samples                                         |
 
 ## Scope
 

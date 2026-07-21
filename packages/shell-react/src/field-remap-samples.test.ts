@@ -6,7 +6,7 @@ import {
   defineDataShape,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
-} from '@workbench-kit/schema-mapper';
+} from '@workbench-kit/field-remap';
 
 import { FIELD_REMAP_SAMPLES, getFieldRemapSample } from './field-remap-samples.js';
 

@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { SchemaMapperDemo } from './SchemaMapperDemo';
+import { FieldRemapDemo } from './FieldRemapDemo';
 
 const meta = {
   title: 'Workbench Sample/Field Remap',
-  component: SchemaMapperDemo,
+  component: FieldRemapDemo,
   parameters: {
     layout: 'padded',
     docs: {
@@ -20,7 +20,7 @@ const meta = {
       options: ['nested-ab', 't-user-contact', 't-event-time', 't-emp-dept', 't-product-catalog'],
     },
   },
-} satisfies Meta<typeof SchemaMapperDemo>;
+} satisfies Meta<typeof FieldRemapDemo>;
 
 export default meta;
 

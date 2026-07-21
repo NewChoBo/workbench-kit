@@ -143,7 +143,7 @@ export const NPM_PUBLISH_ORDER = [
   '@workbench-kit/services',
   '@workbench-kit/react',
   '@workbench-kit/jdw-editor',
-  '@workbench-kit/schema-mapper',
+  '@workbench-kit/field-remap',
 ];
 
 // All public publish packages are CI targets. Private preview shells

@@ -1,5 +1,5 @@
 {
-  "name": "@workbench-kit/schema-mapper",
+  "name": "@workbench-kit/field-remap",
   "version": "0.0.1-prototype.0",
   "private": false,
   "type": "module",
@@ -26,6 +26,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NewChoBo/workbench-kit.git",
-    "directory": "packages/schema-mapper"
+    "directory": "packages/field-remap"
   }
 }

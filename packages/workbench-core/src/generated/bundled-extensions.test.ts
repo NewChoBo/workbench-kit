@@ -22,11 +22,11 @@ describe('bundled workbench extensions', () => {
     ]);
 
     expect(SAMPLE_WORKBENCH_EXTENSIONS.map(({ manifest }) => manifest.id)).toEqual([
+      'workbench-kit.samples.field-remap',
       'workbench-kit.samples.hello-world',
       'workbench-kit.samples.jdw',
       'workbench-kit.samples.json-preview',
       'workbench-kit.samples.locale-ko',
-      'workbench-kit.samples.schema-mapper',
       'workbench-kit.samples.theme-alt',
     ]);
 

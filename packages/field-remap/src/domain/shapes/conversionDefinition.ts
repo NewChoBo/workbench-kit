@@ -1,8 +1,8 @@
 import {
-  createSchemaMappingDocument,
-  normalizeSchemaMappingDocument,
-} from '../document/schemaMappingDocument.js';
-import type { MappingEdge, SchemaMappingDocument } from '../types.js';
+  createFieldRemapDocument,
+  normalizeFieldRemapDocument,
+} from '../document/fieldRemapDocument.js';
+import type { MappingEdge, FieldRemapDocument } from '../types.js';
 
 /**
  * Managed conversion between one or more source shapes and a target shape.
@@ -14,7 +14,7 @@ export interface ConversionDefinition {
   /** One or more managed source shape ids (multi-input). */
   readonly sourceShapeIds: readonly string[];
   readonly targetShapeId: string;
-  readonly document: SchemaMappingDocument;
+  readonly document: FieldRemapDocument;
 }
 
 export interface ConversionRegistry {
@@ -28,7 +28,7 @@ export interface DefineConversionInput {
   readonly label?: string;
   readonly sourceShapeIds: readonly string[];
   readonly targetShapeId: string;
-  readonly document?: SchemaMappingDocument;
+  readonly document?: FieldRemapDocument;
   readonly edges?: readonly MappingEdge[];
 }
 
@@ -47,8 +47,8 @@ export function defineConversion(input: DefineConversionInput): ConversionDefini
   }
 
   const document = input.document
-    ? normalizeSchemaMappingDocument(input.document)
-    : createSchemaMappingDocument(input.edges ?? []);
+    ? normalizeFieldRemapDocument(input.document)
+    : createFieldRemapDocument(input.edges ?? []);
 
   return {
     id,
@@ -90,6 +90,6 @@ export function withConversionEdges(
 ): ConversionDefinition {
   return {
     ...conversion,
-    document: createSchemaMappingDocument(edges),
+    document: createFieldRemapDocument(edges),
   };
 }

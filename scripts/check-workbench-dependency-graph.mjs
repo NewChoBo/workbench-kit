@@ -20,7 +20,7 @@ const packageRules = toRuleMap({
   '@workbench-kit/shell-react': [
     '@workbench-kit/platform',
     '@workbench-kit/react',
-    '@workbench-kit/schema-mapper',
+    '@workbench-kit/field-remap',
     '@workbench-kit/tokens',
     '@workbench-kit/workbench-config',
     '@workbench-kit/workbench-core',
@@ -39,7 +39,7 @@ const packageRules = toRuleMap({
   ],
   '@workbench-kit/jdw': ['@workbench-kit/contracts'],
   '@workbench-kit/jdw-editor': ['@workbench-kit/jdw', '@workbench-kit/react'],
-  '@workbench-kit/schema-mapper': [],
+  '@workbench-kit/field-remap': [],
   '@workbench-kit/react': [
     '@workbench-kit/adapters',
     '@workbench-kit/contracts',

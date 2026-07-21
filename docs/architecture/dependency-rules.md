@@ -4,26 +4,26 @@ Dependency direction enforces a VS Code–like layering: UI-independent core at 
 
 ## Allowed Dependencies
 
-| Package                      | May depend on                                                                                                                   |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `base`                       | _(nothing in-repo)_                                                                                                             |
-| `platform`                   | `base`                                                                                                                          |
-| `tokens`                     | _(no React; optional dev-only tooling)_                                                                                         |
-| `react`                      | `tokens`, `platform`, domain packages used by presentational surfaces; workspace-only demos use local helpers over services     |
-| `workbench-extension-sdk`    | `base`, `platform` (types and minimal utilities only)                                                                           |
-| `workbench-config`           | `base`, `platform`, schemas (as data)                                                                                           |
-| `workbench-core`             | `base`, `platform`, `workbench-extension-sdk`, `workbench-config`                                                               |
-| `shell-react`                | `react`, `workbench-core`, `workbench-config`, `platform`, `tokens`, `workspace`; may host sample surfaces with `schema-mapper` |
-| `monaco`                     | `base`, `platform` (optional); may peer `react` for editor UI                                                                   |
-| Built-in / sample extensions | `workbench-extension-sdk`                                                                                                       |
-| `contracts`                  | _(nothing in-repo required; keep acyclic)_                                                                                      |
-| `services`                   | `contracts`                                                                                                                     |
-| `adapters`                   | `contracts`, `runtime`, `workspace`, optionally `jdw`                                                                           |
-| `runtime`                    | `contracts`                                                                                                                     |
-| `workspace`                  | _(minimal / none)_                                                                                                              |
-| `jdw` (`json-widget`)        | `contracts` (if needed)                                                                                                         |
-| `jdw-editor`                 | `jdw`, `react` (peer); owns ScreenSpec editor UI and JDW sample explorer                                                        |
-| `schema-mapper`              | _(nothing in-repo)_ — field remap runtime (`convertToShape`, edges, ValueTransform registry)                                    |
+| Package                      | May depend on                                                                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `base`                       | _(nothing in-repo)_                                                                                                           |
+| `platform`                   | `base`                                                                                                                        |
+| `tokens`                     | _(no React; optional dev-only tooling)_                                                                                       |
+| `react`                      | `tokens`, `platform`, domain packages used by presentational surfaces; workspace-only demos use local helpers over services   |
+| `workbench-extension-sdk`    | `base`, `platform` (types and minimal utilities only)                                                                         |
+| `workbench-config`           | `base`, `platform`, schemas (as data)                                                                                         |
+| `workbench-core`             | `base`, `platform`, `workbench-extension-sdk`, `workbench-config`                                                             |
+| `shell-react`                | `react`, `workbench-core`, `workbench-config`, `platform`, `tokens`, `workspace`; may host sample surfaces with `field-remap` |
+| `monaco`                     | `base`, `platform` (optional); may peer `react` for editor UI                                                                 |
+| Built-in / sample extensions | `workbench-extension-sdk`                                                                                                     |
+| `contracts`                  | _(nothing in-repo required; keep acyclic)_                                                                                    |
+| `services`                   | `contracts`                                                                                                                   |
+| `adapters`                   | `contracts`, `runtime`, `workspace`, optionally `jdw`                                                                         |
+| `runtime`                    | `contracts`                                                                                                                   |
+| `workspace`                  | _(minimal / none)_                                                                                                            |
+| `jdw` (`json-widget`)        | `contracts` (if needed)                                                                                                       |
+| `jdw-editor`                 | `jdw`, `react` (peer); owns ScreenSpec editor UI and JDW sample explorer                                                      |
+| `field-remap`                | _(nothing in-repo)_ — field remap runtime (`convertToShape`, edges, ValueTransform registry)                                  |
 
 ### Extension Boundary
 

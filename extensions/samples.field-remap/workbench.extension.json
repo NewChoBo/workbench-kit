@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "id": "workbench-kit.samples.schema-mapper",
-  "name": "samples-schema-mapper",
+  "id": "workbench-kit.samples.field-remap",
+  "name": "samples-field-remap",
   "displayName": "Field Remap",
   "version": "0.0.0",
   "publisher": "workbench-kit",
@@ -9,12 +9,12 @@
     "workbench": "^0.0.0",
     "extensionApi": "^0.0.0"
   },
-  "activationEvents": ["onView:workbench-kit.samples.schema-mapper.panel"],
+  "activationEvents": ["onView:workbench-kit.samples.field-remap.panel"],
   "contributes": {
     "viewContainers": {
       "activitybar": [
         {
-          "id": "schemaMapper",
+          "id": "fieldRemap",
           "title": "Field Remap",
           "icon": "type-hierarchy",
           "order": 36
@@ -23,24 +23,24 @@
     },
     "activities": [
       {
-        "id": "workbench-kit.samples.schema-mapper.activity",
-        "viewContainerId": "schemaMapper",
+        "id": "workbench-kit.samples.field-remap.activity",
+        "viewContainerId": "fieldRemap",
         "icon": "type-hierarchy",
         "title": "Field Remap",
         "order": 36
       }
     ],
     "views": {
-      "schemaMapper": [
+      "fieldRemap": [
         {
-          "id": "workbench-kit.samples.schema-mapper.panel",
+          "id": "workbench-kit.samples.field-remap.panel",
           "name": "Field Remap"
         }
       ]
     },
     "editors": [
       {
-        "id": "workbench-kit.samples.schema-mapper.editor",
+        "id": "workbench-kit.samples.field-remap.editor",
         "label": "Field Remap",
         "icon": "type-hierarchy"
       }

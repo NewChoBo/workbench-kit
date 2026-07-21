@@ -2,9 +2,9 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { createRoot, type Root } from 'react-dom/client';
 import { act } from 'react';
-import { SampleSchemaMapperDemo } from './schema-mapper-demo.js';
+import { SampleFieldRemapDemo } from './field-remap-demo.js';
 
-describe('SampleSchemaMapperDemo', () => {
+describe('SampleFieldRemapDemo', () => {
   let container: HTMLDivElement | undefined;
   let root: Root | undefined;
 
@@ -32,7 +32,7 @@ describe('SampleSchemaMapperDemo', () => {
     root = createRoot(container);
 
     await act(async () => {
-      root!.render(<SampleSchemaMapperDemo sampleId="nested-ab" />);
+      root!.render(<SampleFieldRemapDemo sampleId="nested-ab" />);
     });
 
     const result = container.querySelector('[data-testid="field-remap-result"]');
@@ -51,7 +51,7 @@ describe('SampleSchemaMapperDemo', () => {
     root = createRoot(container);
 
     await act(async () => {
-      root!.render(<SampleSchemaMapperDemo sampleId="t-event-time" />);
+      root!.render(<SampleFieldRemapDemo sampleId="t-event-time" />);
     });
 
     const output = JSON.parse(

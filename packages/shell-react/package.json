@@ -15,7 +15,7 @@
     "@radix-ui/react-slot": "^1.3.0",
     "@workbench-kit/platform": "workspace:*",
     "@workbench-kit/react": "workspace:*",
-    "@workbench-kit/schema-mapper": "workspace:*",
+    "@workbench-kit/field-remap": "workspace:*",
     "@workbench-kit/tokens": "workspace:*",
     "@workbench-kit/workbench-config": "workspace:*",
     "@workbench-kit/workbench-core": "workspace:*",

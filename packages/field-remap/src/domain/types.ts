@@ -1,5 +1,5 @@
 /**
- * Shared field / slot / edge types for schema mapping UIs.
+ * Shared field / slot / edge types for field-remap UIs.
  */
 
 export type FieldDataType =
@@ -118,7 +118,7 @@ export interface MappingEdge {
  * Minimal JSON-serializable mapping document for host persistence.
  * Hosts own schema trees; this document stores the binding graph only.
  */
-export interface SchemaMappingDocument {
+export interface FieldRemapDocument {
   readonly version: 1;
   readonly edges: readonly MappingEdge[];
 }

@@ -1,5 +1,5 @@
 import jsonata from 'jsonata';
-import type { ValueTransformDefinition } from '@workbench-kit/schema-mapper';
+import type { ValueTransformDefinition } from '@workbench-kit/field-remap';
 
 /** Host-registered JSONata expression transform (Stedi-style advanced mapping). */
 export const JSONATA_TRANSFORM_ID = 'expr:jsonata' as const;

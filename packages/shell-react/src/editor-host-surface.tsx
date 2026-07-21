@@ -25,7 +25,7 @@ import {
   type EditorDocumentViewProvider,
 } from './editor-view-providers.js';
 import { mimeTypeForResource, pathForResource } from './editor-resource.js';
-import { SchemaMapperEditorSurface } from './schema-mapper-editor-surface.js';
+import { FieldRemapEditorSurface } from './field-remap-editor-surface.js';
 import {
   editorViewModeToPaneVisibility,
   getVisibleEditorPaneKinds,
@@ -108,9 +108,9 @@ export function EditorHostSurface({
     );
   }
 
-  if (isSchemaMapperEditorRenderPayload(rendered)) {
+  if (isFieldRemapEditorRenderPayload(rendered)) {
     return (
-      <SchemaMapperEditorSurface
+      <FieldRemapEditorSurface
         resourceUri={rendered.resourceUri}
         surfaceId={rendered.surfaceId}
         tabId={activeTab.id}
@@ -519,22 +519,20 @@ function isCommandInspectorEditorRenderPayload(
   );
 }
 
-interface SchemaMapperEditorRenderPayload {
-  readonly kind: 'workbench-kit.samples.schema-mapper/editor';
+interface FieldRemapEditorRenderPayload {
+  readonly kind: 'workbench-kit.samples.field-remap/editor';
   readonly resourceUri: string;
   readonly surfaceId: string;
 }
 
-function isSchemaMapperEditorRenderPayload(
-  value: unknown,
-): value is SchemaMapperEditorRenderPayload {
+function isFieldRemapEditorRenderPayload(value: unknown): value is FieldRemapEditorRenderPayload {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
 
-  const candidate = value as Partial<SchemaMapperEditorRenderPayload>;
+  const candidate = value as Partial<FieldRemapEditorRenderPayload>;
   return (
-    candidate.kind === 'workbench-kit.samples.schema-mapper/editor' &&
+    candidate.kind === 'workbench-kit.samples.field-remap/editor' &&
     typeof candidate.resourceUri === 'string' &&
     typeof candidate.surfaceId === 'string' &&
     candidate.surfaceId.length > 0

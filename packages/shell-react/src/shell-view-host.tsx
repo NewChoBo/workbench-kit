@@ -16,8 +16,8 @@ import { BuiltinExtensionsView } from './extensions-view.js';
 import { isBuiltinExtensionsViewRenderData } from './extensions-view-data.js';
 import { SampleJdwLabView } from './jdw-lab-view.js';
 import { isSampleJdwLabViewRenderData } from './jdw-lab-view-data.js';
-import { SampleSchemaMapperView } from './schema-mapper-view.js';
-import { isSampleSchemaMapperViewRenderData } from './schema-mapper-view-data.js';
+import { SampleFieldRemapView } from './field-remap-view.js';
+import { isSampleFieldRemapViewRenderData } from './field-remap-view-data.js';
 import { BuiltinSearchView } from './search-view.js';
 import { isBuiltinSearchViewRenderData } from './search-view-data.js';
 
@@ -191,8 +191,8 @@ export function toWorkbenchViewHostReactNode(
     );
   }
 
-  if (isSampleSchemaMapperViewRenderData(value)) {
-    return <SampleSchemaMapperView />;
+  if (isSampleFieldRemapViewRenderData(value)) {
+    return <SampleFieldRemapView />;
   }
 
   return toReactNode(value, fallback);
