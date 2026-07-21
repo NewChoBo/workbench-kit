@@ -285,6 +285,32 @@ describe('ChatMessageItem', () => {
     expect(peerMarkup).toContain('message__bubble-line--start');
     expect(peerMarkup).toContain('message__time--pinned');
   });
+
+  it('renders command proposal cards in peer layout', () => {
+    const message: ChatMessage = {
+      content: 'I can run that for you.',
+      commandProposals: [
+        {
+          commandId: 'workbench.openSettings',
+          id: 'proposal-1',
+          label: 'Open Settings',
+          policy: 'approval-required',
+          status: 'pending',
+        },
+      ],
+      id: 'peer-proposal-1',
+      label: 'Alex',
+      source: 'assistant',
+    };
+
+    const markup = renderToStaticMarkup(
+      <ChatMessageItem assistantLabel="Alex" layout="peer" message={message} />,
+    );
+
+    expect(markup).toContain('message--peer');
+    expect(markup).toContain('message__command-proposals');
+    expect(markup).toContain('Open Settings');
+  });
 });
 
 describe('ChatMessageList', () => {
