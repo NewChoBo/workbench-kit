@@ -59,6 +59,41 @@ function MessageBubbleLine({
   );
 }
 
+function ChatMessageCommandProposals({
+  message,
+  onCommandProposalAllow,
+  onCommandProposalDeny,
+}: {
+  message: ChatMessage;
+  onCommandProposalAllow?: ChatMessageItemProps['onCommandProposalAllow'];
+  onCommandProposalDeny?: ChatMessageItemProps['onCommandProposalDeny'];
+}) {
+  if (!message.commandProposals?.length) {
+    return null;
+  }
+
+  return (
+    <div className="message__command-proposals">
+      {message.commandProposals.map((proposal) => (
+        <ChatCommandProposalCard
+          key={proposal.id}
+          proposal={proposal}
+          onAllow={
+            onCommandProposalAllow
+              ? (currentProposal) => onCommandProposalAllow(message.id, currentProposal)
+              : undefined
+          }
+          onDeny={
+            onCommandProposalDeny
+              ? (currentProposal) => onCommandProposalDeny(message.id, currentProposal)
+              : undefined
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
 export function ChatMessageItem({
   assistantLabel = 'Assistant',
   isStreaming = false,
@@ -123,6 +158,11 @@ export function ChatMessageItem({
                 {message.content}
               </ChatMessageCollapsible>
             </MessageBubbleLine>
+            <ChatMessageCommandProposals
+              message={message}
+              onCommandProposalAllow={onCommandProposalAllow}
+              onCommandProposalDeny={onCommandProposalDeny}
+            />
           </div>
         </div>
       </div>
@@ -159,26 +199,11 @@ export function ChatMessageItem({
               </div>
             </ChatMessageCollapsible>
           </MessageBubbleLine>
-          {message.commandProposals?.length ? (
-            <div className="message__command-proposals">
-              {message.commandProposals.map((proposal) => (
-                <ChatCommandProposalCard
-                  key={proposal.id}
-                  proposal={proposal}
-                  onAllow={
-                    onCommandProposalAllow
-                      ? (currentProposal) => onCommandProposalAllow(message.id, currentProposal)
-                      : undefined
-                  }
-                  onDeny={
-                    onCommandProposalDeny
-                      ? (currentProposal) => onCommandProposalDeny(message.id, currentProposal)
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-          ) : null}
+          <ChatMessageCommandProposals
+            message={message}
+            onCommandProposalAllow={onCommandProposalAllow}
+            onCommandProposalDeny={onCommandProposalDeny}
+          />
         </div>
       </div>
     </div>
