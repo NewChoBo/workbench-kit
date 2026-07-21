@@ -228,6 +228,10 @@ filesystem implementations live on `@workbench-kit/platform/node` only:
 Prefer memory or Node document stores for structured persistence. `localStorage`
 adapters remain appropriate only for small JSON documents in browser hosts.
 
+**Allowlisted HTTPS fetch (implemented API):** Hosts inject hostname allowlists.
+`createAllowlistedHttpsFetch({ allowedHosts, fetch? })` rejects non-`https:` URLs and
+non-allowlisted hostnames; kit does not ship concrete API host catalogs.
+
 **Tray-aware close / quit policy (implemented API):** Hosts own tray icons, menus, and
 preference UI. `@workbench-kit/platform` exposes pure decision helpers (no Electron imports):
 
