@@ -92,11 +92,22 @@ export function useWorkspaceExplorerController({
     () => new Set(initialExpandedPaths),
   );
   const expandedPaths = expandedPathsProp ?? internalExpandedPaths;
-  const [inlineEdit, setInlineEdit] = useState<WorkspaceExplorerInlineEditState | undefined>();
+  const [inlineEdit, setInlineEditState] = useState<WorkspaceExplorerInlineEditState | undefined>();
   const inlineEditCommitInFlightRef = useRef(false);
   const [selection, setSelection] = useState<WorkspaceSelectionState>(
     initialSelection ?? { paths: [] },
   );
+
+  /** Host/API draft replacement — always opens the commit gate for the next attempt. */
+  const setInlineEdit = useCallback((edit: WorkspaceExplorerInlineEditState | undefined) => {
+    inlineEditCommitInFlightRef.current = false;
+    setInlineEditState(edit);
+  }, []);
+
+  const clearInlineEdit = useCallback(() => {
+    inlineEditCommitInFlightRef.current = false;
+    setInlineEditState(undefined);
+  }, []);
 
   const availableFilePathKey = snapshot.files.map((file) => file.path).join('\u0000');
   const availableFolderPathKey = snapshot.folders.join('\u0000');
@@ -162,7 +173,9 @@ export function useWorkspaceExplorerController({
 
   const reportInlineEditError = useCallback(
     (edit: WorkspaceExplorerInlineEditState, error: string) => {
-      setInlineEdit({ ...edit, error });
+      // Keep the same draft id; open the gate so Enter/blur can retry after the error.
+      inlineEditCommitInFlightRef.current = false;
+      setInlineEditState({ ...edit, error });
       port.reportError?.(error);
     },
     [port],
@@ -177,18 +190,16 @@ export function useWorkspaceExplorerController({
         revealFolder(parentPath);
       }
 
-      inlineEditCommitInFlightRef.current = false;
       setInlineEdit(createWorkspaceExplorerInlineEditDraft(snapshot, kind, parentPath));
     },
-    [revealFolder, snapshot],
+    [revealFolder, setInlineEdit, snapshot],
   );
 
   const startRename = useCallback(
     (node: WorkspaceTreeNode, actionPaths: readonly string[] = [node.path]) => {
-      inlineEditCommitInFlightRef.current = false;
       setInlineEdit(createWorkspaceExplorerRenameDraft(node, actionPaths));
     },
-    [],
+    [setInlineEdit],
   );
 
   const handleInlineEditCommit = useCallback(
@@ -200,15 +211,10 @@ export function useWorkspaceExplorerController({
       inlineEditCommitInFlightRef.current = true;
 
       void (async () => {
-        const releaseCommitGate = () => {
-          inlineEditCommitInFlightRef.current = false;
-        };
-
         const name = value.trim();
         const nameError = validateWorkspaceExplorerInlineEditName(name);
         if (nameError) {
           reportInlineEditError(edit, nameError);
-          releaseCommitGate();
           return;
         }
 
@@ -216,7 +222,6 @@ export function useWorkspaceExplorerController({
           const parentPath = edit.parentPath ?? '';
           if (!isWorkspaceExplorerCreatePathAvailable(snapshot, parentPath, name)) {
             reportInlineEditError(edit, `${name} already exists.`);
-            releaseCommitGate();
             return;
           }
 
@@ -225,11 +230,17 @@ export function useWorkspaceExplorerController({
               edit.kind === 'create-file'
                 ? await port.createFile({ name, parentPath })
                 : await port.createFolder({ name, parentPath });
-            setInlineEdit(undefined);
+            clearInlineEdit();
+            if (edit.kind === 'create-folder') {
+              const folderPath = result?.path ?? joinWorkspacePath(parentPath, name);
+              applyWorkspaceExplorerFolderFocus(folderPath, setSelection);
+              return;
+            }
             applyWorkspaceExplorerMutationResult(result, setSelection);
           } catch (error) {
-            releaseCommitGate();
-            throw error;
+            const message =
+              error instanceof Error ? error.message : 'Could not create the workspace item.';
+            reportInlineEditError(edit, message);
           }
           return;
         }
@@ -237,13 +248,12 @@ export function useWorkspaceExplorerController({
         const sourcePath = edit.path ?? '';
         if (!isWorkspaceExplorerRenamePathAvailable(snapshot, sourcePath, name)) {
           reportInlineEditError(edit, `${name} already exists.`);
-          releaseCommitGate();
           return;
         }
 
         const destinationPath = joinWorkspacePath(parentPathOf(sourcePath), name);
         if (sourcePath === destinationPath) {
-          setInlineEdit(undefined);
+          clearInlineEdit();
           return;
         }
 
@@ -254,7 +264,7 @@ export function useWorkspaceExplorerController({
             name,
             path: sourcePath,
           });
-          setInlineEdit(undefined);
+          clearInlineEdit();
           if (mapRenameSelection) {
             setSelection((currentSelection) =>
               mapRenameSelection(currentSelection, {
@@ -273,17 +283,18 @@ export function useWorkspaceExplorerController({
 
           applyWorkspaceExplorerMutationResult(result, setSelection);
         } catch (error) {
-          releaseCommitGate();
-          throw error;
+          const message =
+            error instanceof Error ? error.message : 'Could not rename the workspace item.';
+          reportInlineEditError(edit, message);
         }
       })();
     },
-    [mapRenameSelection, port, reportInlineEditError, snapshot],
+    [clearInlineEdit, mapRenameSelection, port, reportInlineEditError, snapshot],
   );
 
   const handleInlineEditValueChange = useCallback(
     (value: string, edit: WorkspaceExplorerInlineEditState) => {
-      setInlineEdit({ ...edit, error: undefined, value });
+      setInlineEditState({ ...edit, error: undefined, value });
     },
     [],
   );
@@ -364,10 +375,7 @@ export function useWorkspaceExplorerController({
   );
 
   return {
-    cancelInlineEdit: () => {
-      inlineEditCommitInFlightRef.current = false;
-      setInlineEdit(undefined);
-    },
+    cancelInlineEdit: clearInlineEdit,
     expandedPaths,
     handleActivateFile,
     handleInlineEditCommit,
