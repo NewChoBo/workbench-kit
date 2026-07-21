@@ -42,6 +42,21 @@ export interface WorkspaceSelectionActionPathsInput {
   targetPath: string;
 }
 
+export interface ResolveExplorerActionPathsInput {
+  selection: WorkspaceSelectionState;
+  /**
+   * Explicit command target (for example a context-menu node). Defaults to
+   * `selection.focusedPath`.
+   */
+  targetPath?: string | undefined;
+  /**
+   * When true (default), multi-selection is used only if the focus/target is
+   * inside that selection — matching VS Code explorer `getContext` behavior.
+   * When false, always return the focus/target alone (or selection if no focus).
+   */
+  respectMultiSelection?: boolean | undefined;
+}
+
 export function normalizeWorkspaceSelectionPaths(paths: Iterable<string>) {
   const selectedPaths: string[] = [];
   const seenPaths = new Set<string>();
@@ -57,17 +72,53 @@ export function normalizeWorkspaceSelectionPaths(paths: Iterable<string>) {
   return selectedPaths;
 }
 
+/**
+ * Resolve which explorer paths a command should act on.
+ *
+ * VS Code-compatible rule when `respectMultiSelection` is true:
+ * - If focus/target is inside the current selection → return that selection
+ * - Otherwise → return the focus/target alone
+ *
+ * Interim kit note: folder clicks often use `paths: []` with `focusedPath` set;
+ * those resolve to `[focusedPath]` unless a host puts the folder into `paths`.
+ */
+export function resolveExplorerActionPaths({
+  selection,
+  targetPath,
+  respectMultiSelection = true,
+}: ResolveExplorerActionPathsInput): string[] {
+  const selectedPaths = normalizeWorkspaceSelectionPaths(selection.paths);
+  const focusPath = normalizeWorkspacePath(targetPath ?? selection.focusedPath ?? '');
+
+  if (!respectMultiSelection) {
+    if (focusPath) {
+      return [focusPath];
+    }
+    return selectedPaths;
+  }
+
+  if (!focusPath) {
+    return selectedPaths;
+  }
+
+  if (selectedPaths.includes(focusPath)) {
+    return selectedPaths;
+  }
+
+  return [focusPath];
+}
+
 export function getWorkspaceSelectionActionPaths({
   selectedPaths,
   targetPath,
 }: WorkspaceSelectionActionPathsInput) {
-  const normalizedSelectedPaths = normalizeWorkspaceSelectionPaths(selectedPaths);
-  const normalizedTargetPath = normalizeWorkspacePath(targetPath);
-  if (!normalizedTargetPath) return normalizedSelectedPaths;
-
-  return normalizedSelectedPaths.includes(normalizedTargetPath)
-    ? normalizedSelectedPaths
-    : [normalizedTargetPath];
+  return resolveExplorerActionPaths({
+    selection: {
+      focusedPath: targetPath,
+      paths: normalizeWorkspaceSelectionPaths(selectedPaths),
+    },
+    targetPath,
+  });
 }
 
 export function pruneWorkspaceSelection(
