@@ -284,10 +284,13 @@ optional compact Reset action. Compose into `Field label={...}` or property rows
 | `onReset?`           | Host handler; Reset renders only when `overridden` and this is set |
 | `customBadgeLabel?`  | Default `"Custom"`                                                 |
 | `defaultBadgeLabel?` | Default `"Default"`                                                |
-| `resetLabel?`        | Default `"Reset"`                                                  |
+| `resetLabel?`        | Default `"Reset"` — icon `aria-label` / text button children       |
+| `resetAppearance?`   | `"icon"` (default) or `"text"`                                     |
+| `resetIcon?`         | Icon Reset glyph; default `codicon-discard`                        |
 
 **I/O contract:** Host owns which fields are overridden and what Reset writes. Kit owns
-layout, badge variants (`accent` / `muted`), and the compact Reset button.
+layout, badge variants (`accent` / `muted`), and the compact Reset control (`IconButton`
+by default; optional text `Button`).
 
 **When to use:** Settings / property inspectors with sparse overrides on top of defaults.
 
