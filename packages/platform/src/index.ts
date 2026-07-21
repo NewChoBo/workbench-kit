@@ -21,6 +21,12 @@ export {
   type BrowserStorageKind,
   type ClearBrowserStorageByPrefixesOptions,
 } from './browser-storage.js';
+export {
+  createVersionedBrowserStateAdapter,
+  type BrowserKeyValueStorage,
+  type VersionedBrowserStateAdapter,
+  type VersionedBrowserStateAdapterOptions,
+} from './versioned-browser-state.js';
 export { CommandRegistry } from './commands/command-registry.js';
 export {
   assertNoCommandDefinitionConflicts,
