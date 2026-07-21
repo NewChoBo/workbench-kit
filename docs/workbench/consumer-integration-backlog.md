@@ -190,11 +190,16 @@ sentinel options before passing. Full multi-section dialog landed as §2
 | **Suggested package**  | `packages/electron-shell` (**private preview**, not in `NPM_PUBLISH_ORDER` until the API stabilizes).                                         |
 | **Storybook / sample** | N/A in browser Storybook; electron sample app when scope is explicit.                                                                         |
 
-**Bootstrap status:** Package exists as private preview. First helper:
+**Bootstrap status:** Package exists as private preview. Implemented helpers:
 
 - `requireOwnedWindowForSender(sender, resolveOwnedWindow)` — reject IPC from senders
   not bound to a host-owned window (`UntrustedIpcSenderError`); no `electron` import in
   the public helper (hosts adapt `WebContents` / registry).
+- `openAllowlistedExternalLink({ linkId, allowlist, openExternal })` — opaque link id →
+  host allowlist URL → injected open; unknown ids rejected.
+- `registerWindowControlIpc` / `createWindowControlsBridge` — frameless minimize /
+  toggle-maximize / close / isMaximized (+ maximized-changed push); hosts inject channel
+  names and owned-window resolution.
 
 **Remember window state contract (implemented API):** Host owns storage path and the
 user preference that gates restore. `@workbench-kit/platform` exposes Electron-free
