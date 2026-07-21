@@ -190,18 +190,20 @@ sentinel options before passing. Full multi-section dialog landed as §2
 | **Suggested package**  | New app-layer package or documented sample in `examples/` only until API stabilizes.                                                                                  |
 | **Storybook / sample** | N/A in browser Storybook; electron sample app when scope is explicit.                                                                                                 |
 
-**Remember window state contract (extract later):** Host owns storage path and the
-user preference that gates restore. Kit should expose Electron-free helpers only:
+**Remember window state contract (implemented API):** Host owns storage path and the
+user preference that gates restore. `@workbench-kit/platform` exposes Electron-free
+helpers under `packages/platform/src/window/`:
 
-- `RememberedWindowState { bounds: { x, y, width, height }, isMaximized: boolean }`
-- `resolveWindowOpenLayout(saved, displays, defaults, { remember })` — clamp off-screen;
-  when `remember` is false, return defaults without clearing saved state
-- `bindWindowBoundsPersistence(window, save)` — narrow window surface
+- Types: `RememberedWindowState`, `RectLike`, `DisplayWorkArea`, `PersistableWindow`
+- `resolveWindowOpenLayout({ saved, displays, defaults?, remember })` — clamp off-screen;
+  when `remember` is false or `saved` is null, return defaults without clearing saved state
+- `clampWindowBoundsToDisplays(bounds, displays)` — min size, fit work areas, off-screen recovery
+- `bindWindowBoundsPersistence(window, save, debounceMs?)` — narrow window surface
   (`getBounds` / `getNormalBounds` / `isMaximized` / move·resize·maximize·close), debounce
   writes; when maximized, persist `getNormalBounds()` plus `isMaximized: true`
 
-Do not pull Electron into `@workbench-kit/react`. Consumer TilePaper currently implements
-this shape under `apps/desktop-runtime/features/window-manager/main-window-*`.
+Do not pull Electron into `@workbench-kit/react`. Optional thin Electron adapter /
+`@workbench-kit/electron-shell` wrapping these helpers remains a separate §15 follow-up.
 
 ### 16. Collection / dynamic collection save UI
 
