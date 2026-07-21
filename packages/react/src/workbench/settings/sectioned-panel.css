@@ -99,6 +99,11 @@
 .ui-workbench-sectioned-panel__scroll {
   min-height: 0;
   height: 100%;
+  /* Padding lives on the viewport so the absolute overlay rail can sit on the edge. */
+  padding-left: 0;
+}
+
+.ui-workbench-sectioned-panel__scroll > .ui-scroll-area__viewport {
   overscroll-behavior: contain;
   padding-left: var(--ui-workbench-sectioned-panel-content-padding-left);
 }

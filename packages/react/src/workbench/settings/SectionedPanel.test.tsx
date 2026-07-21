@@ -32,9 +32,12 @@ describe('WorkbenchSectionedPanel', () => {
     expect(markup).not.toContain(
       'ui-scroll-area ui-workbench-scrollbar ui-scroll-area--vertical ui-scroll-area--stable-gutter ui-workbench-navigation-panel__nav-scroll',
     );
+    expect(markup).toContain('ui-scroll-area--overlay-host');
+    expect(markup).toContain('ui-scroll-area__viewport');
     expect(markup).toContain(
-      'ui-scroll-area ui-workbench-scrollbar ui-scroll-area--vertical ui-workbench-scrollbar--hidden ui-workbench-navigation-panel__content-scroll ui-workbench-sectioned-panel__scroll',
+      'ui-workbench-navigation-panel__content-scroll ui-workbench-sectioned-panel__scroll',
     );
+    expect(markup).not.toContain('ui-workbench-scrollbar--hidden');
     expect(markup).toContain('href="#general"');
     expect(markup).toContain('General settings');
     expect(markup).toContain('Advanced settings');

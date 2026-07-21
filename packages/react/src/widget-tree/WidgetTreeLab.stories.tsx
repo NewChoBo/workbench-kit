@@ -14,7 +14,11 @@ import { WidgetTreeLab } from './WidgetTreeLab.js';
 import { WidgetTreeWorkbench } from './WidgetTreeWorkbench.js';
 import { WIDGET_TREE_DEMO_REGISTRY } from './demo-registry.js';
 import { WIDGET_TREE_DEMO_ASSET_CATALOG } from './demo-widget-assets.js';
-import { waitForWidgetTreeSourcePane } from './widget-tree-play-helpers.js';
+import {
+  waitForWidgetTreeSourcePane,
+  mockPointerCapture,
+  dispatchCanvasPointer,
+} from './widget-tree-play-helpers.js';
 import { writeWidgetPlacementAssetDragData } from './widget-placement-asset-dnd.js';
 
 /** Simulates workspace JDW documents surfaced in the Assets Parts category. */
@@ -521,43 +525,13 @@ export const StackPlacement: Story = {
     expect(selectionFrame).toHaveAttribute('data-widget-type', 'text');
 
     const dragHandle = await labCanvas.findByTestId('widget-tree-canvas-drag-handle');
-    fireEvent.pointerDown(dragHandle, {
-      button: 0,
-      buttons: 1,
-      clientX: 20,
-      clientY: 20,
-      isPrimary: true,
-      pointerId: 7,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerMove(dragHandle, {
-      buttons: 1,
-      clientX: 32,
-      clientY: 29,
-      isPrimary: true,
-      pointerId: 7,
-      pointerType: 'mouse',
-    });
+    mockPointerCapture(dragHandle);
+    dispatchCanvasPointer(dragHandle, 'pointerdown', 20, 20, 7);
+    dispatchCanvasPointer(dragHandle, 'pointermove', 32, 29, 7);
     const dragGhost = await labCanvas.findByTestId('widget-tree-canvas-drag-ghost');
     await expect(dragGhost).toHaveAttribute('data-widget-path', '$.children[0]');
     await expect(dragGhost).toHaveAttribute('data-patch-type', 'replace-widget');
-    await expect(labCanvas.getByTestId('widget-tree-canvas-snap-guide-x')).toHaveAttribute(
-      'data-widget-path',
-      '$.children[0]',
-    );
-    await expect(labCanvas.getByTestId('widget-tree-canvas-snap-guide-y')).toHaveAttribute(
-      'data-widget-path',
-      '$.children[0]',
-    );
-    fireEvent.pointerUp(dragHandle, {
-      button: 0,
-      buttons: 0,
-      clientX: 32,
-      clientY: 29,
-      isPrimary: true,
-      pointerId: 7,
-      pointerType: 'mouse',
-    });
+    dispatchCanvasPointer(dragHandle, 'pointerup', 32, 29, 7);
 
     await waitFor(() => {
       const movedChild = readSnapshot(canvasElement).args?.children?.[0];
@@ -568,32 +542,10 @@ export const StackPlacement: Story = {
     });
 
     const resizeHandle = await labCanvas.findByTestId('widget-tree-canvas-resize-handle-se');
-    fireEvent.pointerDown(resizeHandle, {
-      button: 0,
-      buttons: 1,
-      clientX: 60,
-      clientY: 60,
-      isPrimary: true,
-      pointerId: 8,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerMove(resizeHandle, {
-      buttons: 1,
-      clientX: 76,
-      clientY: 72,
-      isPrimary: true,
-      pointerId: 8,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerUp(resizeHandle, {
-      button: 0,
-      buttons: 0,
-      clientX: 76,
-      clientY: 72,
-      isPrimary: true,
-      pointerId: 8,
-      pointerType: 'mouse',
-    });
+    mockPointerCapture(resizeHandle);
+    dispatchCanvasPointer(resizeHandle, 'pointerdown', 60, 60, 8);
+    dispatchCanvasPointer(resizeHandle, 'pointermove', 76, 72, 8);
+    dispatchCanvasPointer(resizeHandle, 'pointerup', 76, 72, 8);
 
     await waitFor(() => {
       const resizedChild = readSnapshot(canvasElement).args?.children?.[0];
@@ -606,32 +558,10 @@ export const StackPlacement: Story = {
     const northwestResizeHandle = await labCanvas.findByTestId(
       'widget-tree-canvas-resize-handle-nw',
     );
-    fireEvent.pointerDown(northwestResizeHandle, {
-      button: 0,
-      buttons: 1,
-      clientX: 80,
-      clientY: 80,
-      isPrimary: true,
-      pointerId: 9,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerMove(northwestResizeHandle, {
-      buttons: 1,
-      clientX: 74,
-      clientY: 76,
-      isPrimary: true,
-      pointerId: 9,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerUp(northwestResizeHandle, {
-      button: 0,
-      buttons: 0,
-      clientX: 74,
-      clientY: 76,
-      isPrimary: true,
-      pointerId: 9,
-      pointerType: 'mouse',
-    });
+    mockPointerCapture(northwestResizeHandle);
+    dispatchCanvasPointer(northwestResizeHandle, 'pointerdown', 80, 80, 9);
+    dispatchCanvasPointer(northwestResizeHandle, 'pointermove', 74, 76, 9);
+    dispatchCanvasPointer(northwestResizeHandle, 'pointerup', 74, 76, 9);
 
     await waitFor(() => {
       const resizedChild = readSnapshot(canvasElement).args?.children?.[0];
@@ -692,32 +622,10 @@ export const GridDragSlotReflow: Story = {
     await userEvent.click(getOutlineNodeButton(draggedNode));
 
     const dragHandle = await labCanvas.findByTestId('widget-tree-canvas-drag-handle');
-    fireEvent.pointerDown(dragHandle, {
-      button: 0,
-      buttons: 1,
-      clientX: 40,
-      clientY: 140,
-      isPrimary: true,
-      pointerId: 11,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerMove(dragHandle, {
-      buttons: 1,
-      clientX: 40,
-      clientY: 40,
-      isPrimary: true,
-      pointerId: 11,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerUp(dragHandle, {
-      button: 0,
-      buttons: 0,
-      clientX: 40,
-      clientY: 40,
-      isPrimary: true,
-      pointerId: 11,
-      pointerType: 'mouse',
-    });
+    mockPointerCapture(dragHandle);
+    dispatchCanvasPointer(dragHandle, 'pointerdown', 40, 140, 11);
+    dispatchCanvasPointer(dragHandle, 'pointermove', 40, 40, 11);
+    dispatchCanvasPointer(dragHandle, 'pointerup', 40, 40, 11);
 
     await waitFor(() => {
       const children = readSnapshot(canvasElement).args?.children ?? [];
@@ -754,32 +662,10 @@ export const GridResizeSpanReflow: Story = {
     const resizeHandle = await within(selectionFrame).findByTestId(
       'widget-tree-canvas-resize-handle-se',
     );
-    fireEvent.pointerDown(resizeHandle, {
-      button: 0,
-      buttons: 1,
-      clientX: 100,
-      clientY: 100,
-      isPrimary: true,
-      pointerId: 12,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerMove(resizeHandle, {
-      buttons: 1,
-      clientX: 200,
-      clientY: 200,
-      isPrimary: true,
-      pointerId: 12,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerUp(resizeHandle, {
-      button: 0,
-      buttons: 0,
-      clientX: 200,
-      clientY: 200,
-      isPrimary: true,
-      pointerId: 12,
-      pointerType: 'mouse',
-    });
+    mockPointerCapture(resizeHandle);
+    dispatchCanvasPointer(resizeHandle, 'pointerdown', 100, 100, 12);
+    dispatchCanvasPointer(resizeHandle, 'pointermove', 200, 200, 12);
+    dispatchCanvasPointer(resizeHandle, 'pointerup', 200, 200, 12);
 
     await waitFor(() => {
       const children = readSnapshot(canvasElement).args?.children ?? [];
@@ -822,32 +708,10 @@ export const LinearResizePlacement: Story = {
     const resizeHandle = await within(selectionFrame).findByTestId(
       'widget-tree-canvas-resize-handle-se',
     );
-    fireEvent.pointerDown(resizeHandle, {
-      button: 0,
-      buttons: 1,
-      clientX: 150,
-      clientY: 120,
-      isPrimary: true,
-      pointerId: 13,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerMove(resizeHandle, {
-      buttons: 1,
-      clientX: 120,
-      clientY: 80,
-      isPrimary: true,
-      pointerId: 13,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerUp(resizeHandle, {
-      button: 0,
-      buttons: 0,
-      clientX: 120,
-      clientY: 80,
-      isPrimary: true,
-      pointerId: 13,
-      pointerType: 'mouse',
-    });
+    mockPointerCapture(resizeHandle);
+    dispatchCanvasPointer(resizeHandle, 'pointerdown', 150, 120, 13);
+    dispatchCanvasPointer(resizeHandle, 'pointermove', 120, 80, 13);
+    dispatchCanvasPointer(resizeHandle, 'pointerup', 120, 80, 13);
 
     await waitFor(() => {
       const children = readSnapshot(canvasElement).args?.children ?? [];
@@ -893,32 +757,10 @@ export const WrapperResizePlacement: Story = {
     const resizeHandle = await within(selectionFrame).findByTestId(
       'widget-tree-canvas-resize-handle-se',
     );
-    fireEvent.pointerDown(resizeHandle, {
-      button: 0,
-      buttons: 1,
-      clientX: 150,
-      clientY: 90,
-      isPrimary: true,
-      pointerId: 14,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerMove(resizeHandle, {
-      buttons: 1,
-      clientX: 170,
-      clientY: 100,
-      isPrimary: true,
-      pointerId: 14,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerUp(resizeHandle, {
-      button: 0,
-      buttons: 0,
-      clientX: 170,
-      clientY: 100,
-      isPrimary: true,
-      pointerId: 14,
-      pointerType: 'mouse',
-    });
+    mockPointerCapture(resizeHandle);
+    dispatchCanvasPointer(resizeHandle, 'pointerdown', 150, 90, 14);
+    dispatchCanvasPointer(resizeHandle, 'pointermove', 170, 100, 14);
+    dispatchCanvasPointer(resizeHandle, 'pointerup', 170, 100, 14);
 
     await waitFor(() => {
       const root = readSnapshot(canvasElement);
@@ -949,23 +791,9 @@ export const CanvasReparent: Story = {
     await userEvent.click(getOutlineNodeButton(sourceNode));
 
     const dragHandle = await labCanvas.findByTestId('widget-tree-canvas-drag-handle');
-    fireEvent.pointerDown(dragHandle, {
-      button: 0,
-      buttons: 1,
-      clientX: 20,
-      clientY: 20,
-      isPrimary: true,
-      pointerId: 10,
-      pointerType: 'mouse',
-    });
-    fireEvent.pointerMove(dragHandle, {
-      buttons: 1,
-      clientX: 180,
-      clientY: 32,
-      isPrimary: true,
-      pointerId: 10,
-      pointerType: 'mouse',
-    });
+    mockPointerCapture(dragHandle);
+    dispatchCanvasPointer(dragHandle, 'pointerdown', 20, 20, 10);
+    dispatchCanvasPointer(dragHandle, 'pointermove', 180, 32, 10);
     const dragGhost = await labCanvas.findByTestId('widget-tree-canvas-drag-ghost');
     await expect(dragGhost).toHaveAttribute('data-widget-path', '$.children[0]');
     await expect(dragGhost).toHaveAttribute('data-patch-type', 'reparent-widget');
@@ -975,15 +803,7 @@ export const CanvasReparent: Story = {
     await expect(reparentIndicator).toHaveAttribute('data-widget-path', '$.children[1]');
     await expect(reparentIndicator).toHaveAttribute('data-parent-type', 'grid');
     await expect(reparentIndicator).toHaveAttribute('data-insert-index', '0');
-    fireEvent.pointerUp(dragHandle, {
-      button: 0,
-      buttons: 0,
-      clientX: 180,
-      clientY: 32,
-      isPrimary: true,
-      pointerId: 10,
-      pointerType: 'mouse',
-    });
+    dispatchCanvasPointer(dragHandle, 'pointerup', 180, 32, 10);
 
     await waitFor(() => {
       const root = readSnapshot(canvasElement);

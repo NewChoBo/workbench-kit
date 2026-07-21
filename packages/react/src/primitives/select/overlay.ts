@@ -63,12 +63,11 @@ function resolveListboxMaxHeight(idealHeight: number, available: number): number
 }
 
 export function overlayListboxStyle(position: OverlayPosition): CSSProperties {
-  const isCompact = position.maxHeight < LISTBOX_MAX_HEIGHT;
   const base: CSSProperties = {
     left: position.left,
     width: position.width,
     maxHeight: position.maxHeight,
-    overflowY: isCompact ? 'hidden' : 'auto',
+    overflowY: 'auto',
   };
 
   if (position.placement === 'bottom') {
