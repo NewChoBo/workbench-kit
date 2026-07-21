@@ -67,6 +67,7 @@ export function ChatConversationBar({
             aria-haspopup="menu"
             aria-label={labels.historyTitle(activeTitle)}
             className="chat-conversation-bar__pill"
+            title={activeTitle}
             onClick={() => {
               if (pillRef.current) openMenu('history', pillRef.current);
             }}
