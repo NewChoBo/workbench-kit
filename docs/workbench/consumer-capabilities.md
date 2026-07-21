@@ -17,20 +17,21 @@ Related: [Consumer Integration Backlog](./consumer-integration-backlog.md) ·
 
 Use official subpath exports from `@workbench-kit/react`. Do not import from `packages/react/src/...` in consuming apps.
 
-| Subpath                                     | Purpose                                                           |
-| ------------------------------------------- | ----------------------------------------------------------------- |
-| `@workbench-kit/react/primitives`           | Controls, editor chrome, library layout, scroll, property grids   |
-| `@workbench-kit/react/layout`               | Sidebar frames, editor frame, section stacks                      |
-| `@workbench-kit/react/editor-tabs`          | Tab strip drag-and-drop helpers                                   |
-| `@workbench-kit/react/overlay`              | Context menus                                                     |
-| `@workbench-kit/react/modal`                | Low-level modal frame (prefer management wrapper when applicable) |
-| `@workbench-kit/react/workbench/shell`      | Activity bar, shell layout, view editor, title bar                |
-| `@workbench-kit/react/workbench/chat`       | Chat panel, composer, message list/item, conversation bar         |
-| `@workbench-kit/react/workbench/management` | Dialog frames, integrations shell, notices                        |
-| `@workbench-kit/react/workbench/workspace`  | Workspace explorer, editor panel, selection helpers               |
-| `@workbench-kit/workspace`                  | Pure path/selection/virtual-workspace helpers (no React)          |
-| `@workbench-kit/react/brand`                | Product icon mark                                                 |
-| `@workbench-kit/contracts`                  | Cross-host DTOs and authoring workbench state                     |
+| Subpath                                     | Purpose                                                                |
+| ------------------------------------------- | ---------------------------------------------------------------------- |
+| `@workbench-kit/react`                      | Root barrel — includes typed drag MIME helpers (`createTypedDragMime`) |
+| `@workbench-kit/react/primitives`           | Controls, editor chrome, library layout, scroll, property grids        |
+| `@workbench-kit/react/layout`               | Sidebar frames, editor frame, section stacks                           |
+| `@workbench-kit/react/editor-tabs`          | Tab strip drag-and-drop helpers                                        |
+| `@workbench-kit/react/overlay`              | Context menus                                                      |
+| `@workbench-kit/react/modal`                | Low-level modal frame (prefer management wrapper when applicable)  |
+| `@workbench-kit/react/workbench/shell`      | Activity bar, shell layout, view editor, title bar                 |
+| `@workbench-kit/react/workbench/chat`       | Chat panel, composer, message list/item, conversation bar          |
+| `@workbench-kit/react/workbench/management` | Dialog frames, integrations shell, notices                         |
+| `@workbench-kit/react/workbench/workspace`  | Workspace explorer, editor panel, selection helpers                |
+| `@workbench-kit/workspace`                  | Pure path/selection/virtual-workspace helpers (no React)           |
+| `@workbench-kit/react/brand`                | Product icon mark                                                  |
+| `@workbench-kit/contracts`                  | Cross-host DTOs and authoring workbench state                      |
 
 Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workbench-kit/react/primitives.css`).
 
@@ -96,6 +97,8 @@ Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workb
 **Key props:** `activityBarPosition` on `WorkbenchShell` (`left` default, `top` for a horizontal strip below the title bar). Footer/utility icons stay at the trailing edge (bottom when vertical, right when horizontal).
 
 **Sidebar view placement DnD:** `ActivityBar` and `SidebarActionIconBar` share the placement drag payload (`WORKBENCH_SIDEBAR_VIEW_PLACEMENT_DRAG_DATA_TYPE`). Hosts move a view container between sidebar slots with `onSidebarViewPlacementDrop` plus optional `acceptSidebarViewPlacementDrop` (defaults to cross-bar drops only so local reorder keeps working). Shell-level drop targets can use `useWorkbenchSidebarViewPlacementDropZone` from `@workbench-kit/react/workbench/shell`.
+
+**Typed drag MIME helpers:** For host-owned custom MIME payloads (catalog ids, content refs), use `createTypedDragMime` / `createStringDragMime` from `@workbench-kit/react` or `@workbench-kit/react/workbench`. Hosts supply the MIME string and codecs; kit owns write/read/has guards, optional `text/plain` fallback, and default `effectAllowed: 'copyMove'`. Plaintext alone never satisfies `has()` — do not treat fallback text as authoritative for privileged drops without host checks.
 
 **Section model:** `buildWorkbenchViewActivityBarModel({ sectionIds: ['core'], footerSectionIds: ['utility'] })` maps contributions to top vs bottom slots.
 
