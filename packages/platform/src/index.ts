@@ -22,6 +22,10 @@ export {
   type ClearBrowserStorageByPrefixesOptions,
 } from './browser-storage.js';
 export {
+  createAllowlistedHttpsFetch,
+  type CreateAllowlistedHttpsFetchOptions,
+} from './create-allowlisted-https-fetch.js';
+export {
   createVersionedBrowserStateAdapter,
   type BrowserKeyValueStorage,
   type VersionedBrowserStateAdapter,
