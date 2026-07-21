@@ -2,6 +2,11 @@ import { Emitter, type Disposable } from '@workbench-kit/base';
 
 export interface WorkbenchLayoutState {
   readonly activityBar: {
+    readonly hiddenItemIds?: readonly string[];
+    readonly itemOrder?: readonly string[];
+    readonly visible: boolean;
+  };
+  readonly auxiliaryBar: {
     readonly visible: boolean;
   };
   readonly panel: {
@@ -9,12 +14,14 @@ export interface WorkbenchLayoutState {
   };
   readonly sideBar: {
     readonly activeViewContainer?: string;
+    readonly sizePercent?: number;
     readonly visible: boolean;
   };
 }
 
 export type WorkbenchLayoutStateInput = Partial<{
   activityBar: Partial<WorkbenchLayoutState['activityBar']>;
+  auxiliaryBar: Partial<WorkbenchLayoutState['auxiliaryBar']>;
   panel: Partial<WorkbenchLayoutState['panel']>;
   sideBar: Partial<WorkbenchLayoutState['sideBar']>;
 }>;
@@ -27,6 +34,9 @@ export interface WorkbenchLayoutChangeEvent {
 export const DEFAULT_WORKBENCH_LAYOUT_STATE: WorkbenchLayoutState = {
   activityBar: {
     visible: true,
+  },
+  auxiliaryBar: {
+    visible: false,
   },
   panel: {
     visible: false,
@@ -63,6 +73,38 @@ export class LayoutService implements Disposable {
     });
   }
 
+  focusSideBarViewContainer(viewContainerId: string): void {
+    const { sideBar } = this.state;
+
+    if (sideBar.activeViewContainer === viewContainerId && sideBar.visible) {
+      this.setSideBarVisible(false);
+      return;
+    }
+
+    this.update({
+      sideBar: {
+        activeViewContainer: viewContainerId,
+        visible: true,
+      },
+    });
+  }
+
+  setActivityBarItemOrder(itemOrder: readonly string[]): void {
+    this.update({
+      activityBar: {
+        itemOrder: normalizeActivityBarItemIds(itemOrder),
+      },
+    });
+  }
+
+  setActivityBarHiddenItemIds(hiddenItemIds: readonly string[]): void {
+    this.update({
+      activityBar: {
+        hiddenItemIds: normalizeActivityBarItemIds(hiddenItemIds),
+      },
+    });
+  }
+
   setActivityBarVisible(visible: boolean): void {
     this.update({
       activityBar: {
@@ -79,10 +121,26 @@ export class LayoutService implements Disposable {
     });
   }
 
+  setAuxiliaryBarVisible(visible: boolean): void {
+    this.update({
+      auxiliaryBar: {
+        visible,
+      },
+    });
+  }
+
   setSideBarVisible(visible: boolean): void {
     this.update({
       sideBar: {
         visible,
+      },
+    });
+  }
+
+  setSideBarSizePercent(sizePercent: number): void {
+    this.update({
+      sideBar: {
+        sizePercent: clampSideBarSizePercent(sizePercent),
       },
     });
   }
@@ -115,7 +173,15 @@ export function createWorkbenchLayoutState(
 ): WorkbenchLayoutState {
   return {
     activityBar: {
+      hiddenItemIds: readOptionalStringArray(
+        input.activityBar?.hiddenItemIds,
+        base.activityBar.hiddenItemIds,
+      ),
+      itemOrder: readOptionalStringArray(input.activityBar?.itemOrder, base.activityBar.itemOrder),
       visible: readBoolean(input.activityBar?.visible, base.activityBar.visible),
+    },
+    auxiliaryBar: {
+      visible: readBoolean(input.auxiliaryBar?.visible, base.auxiliaryBar.visible),
     },
     panel: {
       visible: readBoolean(input.panel?.visible, base.panel.visible),
@@ -125,6 +191,7 @@ export function createWorkbenchLayoutState(
         input.sideBar?.activeViewContainer,
         base.sideBar.activeViewContainer,
       ),
+      sizePercent: readOptionalSizePercent(input.sideBar?.sizePercent, base.sideBar.sizePercent),
       visible: readBoolean(input.sideBar?.visible, base.sideBar.visible),
     },
   };
@@ -138,15 +205,63 @@ function readBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
 
+function readOptionalSizePercent(value: unknown, fallback: number | undefined): number | undefined {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return clampSideBarSizePercent(value);
+}
+
+function clampSideBarSizePercent(value: number): number {
+  return Math.min(90, Math.max(10, value));
+}
+
 function readOptionalString(value: unknown, fallback: string | undefined): string | undefined {
   return typeof value === 'string' && value.trim().length > 0 ? value : fallback;
+}
+
+function readOptionalStringArray(
+  value: unknown,
+  fallback: readonly string[] | undefined,
+): readonly string[] | undefined {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+    return fallback;
+  }
+
+  return normalizeActivityBarItemIds(value);
+}
+
+function normalizeActivityBarItemIds(itemIds: readonly string[]): readonly string[] {
+  return [...new Set(itemIds.map((item) => item.trim()).filter(Boolean))];
 }
 
 function isSameLayoutState(left: WorkbenchLayoutState, right: WorkbenchLayoutState): boolean {
   return (
     left.activityBar.visible === right.activityBar.visible &&
+    areSameStringArrays(left.activityBar.hiddenItemIds, right.activityBar.hiddenItemIds) &&
+    areSameStringArrays(left.activityBar.itemOrder, right.activityBar.itemOrder) &&
+    left.auxiliaryBar.visible === right.auxiliaryBar.visible &&
     left.panel.visible === right.panel.visible &&
     left.sideBar.activeViewContainer === right.sideBar.activeViewContainer &&
+    left.sideBar.sizePercent === right.sideBar.sizePercent &&
     left.sideBar.visible === right.sideBar.visible
   );
+}
+
+function areSameStringArrays(
+  left: readonly string[] | undefined,
+  right: readonly string[] | undefined,
+): boolean {
+  if (!left && !right) return true;
+  if (!left || !right || left.length !== right.length) return false;
+  return left.every((value, index) => value === right[index]);
 }

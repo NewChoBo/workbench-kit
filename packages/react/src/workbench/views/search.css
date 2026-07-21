@@ -1,0 +1,10 @@
+.workbench-search-control {
+  min-width: 0;
+}
+
+.workbench-search-mark {
+  padding: 0 1px;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-accent) 34%, transparent);
+  border-radius: 2px;
+}

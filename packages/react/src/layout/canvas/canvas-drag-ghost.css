@@ -1,0 +1,21 @@
+.ui-workbench-canvas-drag-ghost {
+  position: fixed;
+  left: var(--ui-workbench-canvas-drag-ghost-x, 0);
+  top: var(--ui-workbench-canvas-drag-ghost-y, 0);
+  z-index: var(--ui-workbench-canvas-drag-ghost-z-index, 2000);
+  width: var(--ui-workbench-canvas-drag-ghost-width, auto);
+  height: var(--ui-workbench-canvas-drag-ghost-height, auto);
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  opacity: var(--ui-workbench-canvas-drag-ghost-opacity, 0.82);
+  pointer-events: none;
+  transform: scale(var(--ui-workbench-canvas-drag-ghost-scale, 1.06));
+  transform-origin: center center;
+}
+
+.ui-workbench-canvas-drag-ghost__content {
+  width: var(--ui-workbench-canvas-drag-ghost-content-width, auto);
+  height: var(--ui-workbench-canvas-drag-ghost-content-height, auto);
+  transform: scale(var(--ui-workbench-canvas-drag-ghost-content-scale, 1));
+  transform-origin: 0 0;
+}

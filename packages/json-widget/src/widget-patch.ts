@@ -12,6 +12,13 @@ import {
 import type { ArrayChildWidget } from './widget-child-ops.js';
 import type { WidgetPath } from './path.js';
 
+/**
+ * Canonical edit protocol for a `GenericWidget` authoring tree.
+ *
+ * Authoring views should dispatch these operations against the shared JDW
+ * document projection so code and visual edits cannot drift into separate
+ * sources of truth.
+ */
 export type WidgetPatch =
   | {
       readonly type: 'replace-widget';

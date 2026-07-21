@@ -1,0 +1,10 @@
+.ui-workbench-property-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ui-workbench-property-inline[data-justify='between'] {
+  justify-content: space-between;
+}

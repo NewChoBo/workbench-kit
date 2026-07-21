@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   extensionOfPath,
   fileNameOfPath,
+  formatWorkspacePathDisplay,
   isSimpleWorkspaceName,
   joinWorkspacePath,
   normalizeWorkspacePath,
@@ -28,6 +29,14 @@ describe('workspace path helpers', () => {
     expect(parentPathOf('src/components/Button.tsx')).toBe('src/components');
     expect(parentPathsOf('src/components/Button.tsx')).toEqual(['src', 'src/components']);
     expect(extensionOfPath('src/components/Button.TSX')).toBe('tsx');
+  });
+
+  it('formats workspace paths for breadcrumb-style display', () => {
+    expect(formatWorkspacePathDisplay('src/components/Button.tsx')).toBe(
+      'src > components > Button.tsx',
+    );
+    expect(formatWorkspacePathDisplay('README.md')).toBe('README.md');
+    expect(formatWorkspacePathDisplay('\\packages\\react\\src')).toBe('packages > react > src');
   });
 
   it('accepts only simple workspace names', () => {

@@ -1,0 +1,5 @@
+/* workbench/workspace feature styles — co-located import hub */
+@import './json-config-workbench.css';
+@import './monaco-panel.css';
+@import './workspace-editor.css';
+@import './workspace-explorer-panel.css';

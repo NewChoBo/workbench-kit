@@ -1,14 +1,47 @@
+export { ChatMessageCollapsible, CHAT_MESSAGE_COLLAPSE_MAX_LINES } from './ChatMessageCollapsible';
+export type { ChatMessageCollapsibleProps } from './ChatMessageCollapsible';
+export { ChatCommandProposalCard } from './ChatCommandProposalCard';
+export type { ChatCommandProposalCardProps } from './ChatCommandProposalCard';
 export { ChatComposer } from './ChatComposer';
 export type { ChatComposerProps } from './ChatComposer';
+export { ChatConversationBar } from './ChatConversationBar';
+export type { ChatConversationBarProps } from './ChatConversationBar';
+export { ChatHistoryMenu } from './ChatHistoryMenu';
+export type { ChatHistoryMenuProps } from './ChatHistoryMenu';
 export { ChatMessageItem } from './ChatMessageItem';
 export type { ChatMessageItemProps } from './ChatMessageItem';
 export { ChatMessageList } from './ChatMessageList';
 export type { ChatMessageListProps } from './ChatMessageList';
 export { ChatPanel } from './ChatPanel';
 export type { ChatPanelProps } from './ChatPanel';
-export type { ChatMessage, ChatMessageSource } from './types';
+export { ChatRenameDialog } from './ChatRenameDialog';
+export type { ChatRenameDialogProps } from './ChatRenameDialog';
+export { defaultWorkbenchChatConversationLabels } from './chatConversation';
+export type {
+  WorkbenchChatConversation,
+  WorkbenchChatConversationLabels,
+} from './chatConversation';
+export type { ChatMessage, ChatMessageLayout, ChatMessageSource } from './types';
+export type { ChatCommandProposal, ChatCommandProposalStatus } from './types';
 export { useChatRuntimeState } from './useChatRuntimeState';
 export type { UseChatRuntimeStateInput, UseChatRuntimeStateResult } from './useChatRuntimeState';
+export {
+  DEFAULT_RUNTIME_UNMOUNT_CANCELLABLE_STATUSES,
+  shouldCancelRuntimeOnUnmount,
+  useCancelRuntimeOnUnmount,
+} from './useCancelRuntimeOnUnmount';
+export type { UseCancelRuntimeOnUnmountOptions } from './useCancelRuntimeOnUnmount';
+export { useChatPrependPagination } from './useChatPrependPagination';
+export type {
+  UseChatPrependPaginationOptions,
+  UseChatPrependPaginationResult,
+} from './useChatPrependPagination';
+export {
+  isWorkbenchChatScrollContainerAtBottom,
+  resolveWorkbenchChatScrollContainer,
+  WORKBENCH_CHAT_LOAD_OLDER_ROOT_MARGIN,
+  WORKBENCH_CHAT_SCROLL_BOTTOM_THRESHOLD,
+} from './chatScroll';
 export { useSlashCommandSuggest } from './useSlashCommandSuggest';
 export type {
   UseSlashCommandSuggestOptions,

@@ -62,8 +62,11 @@ git switch -c feature/codex/chatting-ui
 3. Commit by logical unit.
 4. Write a body for each non-trivial commit.
 5. Run the validation lane selected for the changed surface.
-6. Confirm that no private knowledge or internal sample data entered public source.
-7. Merge by policy:
+6. Review related docs and update stale status tables, sample READMEs, architecture
+   notes, or plans in the same logical commit when behavior or public contracts
+   changed.
+7. Confirm that no private knowledge or internal sample data entered public source.
+8. Merge by policy:
    - single-topic work can merge directly to `main`;
    - grouped work should merge through `staging` first.
 
@@ -193,9 +196,9 @@ install state, build output, and dev server.
 Recommended layout:
 
 ```text
-<workspace-root>\newchobo-ui-package
-<workspace-root>\newchobo-ui-package-worktrees\chatting-ui
-<workspace-root>\newchobo-ui-package-worktrees\storybook-baseline
+<workspace-root>\workbench-kit
+<workspace-root>\workbench-kit-worktrees\chatting-ui
+<workspace-root>\workbench-kit-worktrees\storybook-baseline
 ```
 
 Create worktrees:
@@ -203,14 +206,14 @@ Create worktrees:
 ```powershell
 git switch main
 git pull --ff-only
-git worktree add ..\newchobo-ui-package-worktrees\chatting-ui -b feature/codex/chatting-ui main
-git worktree add ..\newchobo-ui-package-worktrees\storybook-baseline -b chore/storybook/react-vite-baseline main
+git worktree add ..\workbench-kit-worktrees\chatting-ui -b feature/codex/chatting-ui main
+git worktree add ..\workbench-kit-worktrees\storybook-baseline -b chore/storybook/react-vite-baseline main
 ```
 
 Run install, dev servers, and validation inside each worktree independently.
 
 ```powershell
-Set-Location ..\newchobo-ui-package-worktrees\chatting-ui
+Set-Location ..\workbench-kit-worktrees\chatting-ui
 pnpm install
 pnpm validate
 ```
@@ -229,13 +232,13 @@ Merge order:
 git switch main
 git merge --ff-only feature/codex/chatting-ui
 pnpm validate
-git worktree remove ..\newchobo-ui-package-worktrees\chatting-ui
+git worktree remove ..\workbench-kit-worktrees\chatting-ui
 git branch -d feature/codex/chatting-ui
 ```
 
 Use separate dev server ports for simultaneous worktrees. For example, keep the
-main Storybook server on `6010` and run another worktree with
-`storybook dev --port 6011`.
+main Storybook server on `61009` and run another worktree with
+`storybook dev --port 61010`.
 
 ## Commit Message
 
@@ -256,6 +259,9 @@ Validation: <commands and results>
 - A commit without a body is allowed only for an obvious one-line change.
 - UI changes should mention rendering, accessibility, or browser smoke results.
 - Public-boundary changes should mention private-info search or manual review.
+- Non-doc code changes should either include related documentation updates or
+  state that no docs changed because no public behavior, status table, plan, or
+  sample guidance was affected.
 
 Example:
 

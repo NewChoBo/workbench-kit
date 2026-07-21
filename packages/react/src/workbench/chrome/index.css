@@ -1,0 +1,6 @@
+/* workbench/chrome feature styles */
+@import './workbench-desktop-titlebar.css';
+@import './workbench-host.css';
+@import './workbench-layout-regions.css';
+@import './workbench-platform-chrome.css';
+@import './workbench-shell-titlebar.css';

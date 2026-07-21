@@ -49,10 +49,7 @@ export interface WorkbenchShortcutCommandRunInput<
 }
 
 export type WorkbenchShortcutCommandMissReason =
-  | 'disabled'
-  | 'missing'
-  | 'missing-handler'
-  | 'no-match';
+  'disabled' | 'missing' | 'missing-handler' | 'no-match';
 
 export type WorkbenchShortcutCommandRunResult =
   | {

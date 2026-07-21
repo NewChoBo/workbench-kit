@@ -4,9 +4,9 @@ import { WorkspaceEditor, type WorkspaceEditorTheme } from './workspace/Workspac
 import { WorkbenchStructuredDataSchemaPanelEmbed } from './settings/StructuredDataSchemaPanelEmbed';
 import { type WorkbenchStructuredDataSchemaDocument } from './settings/StructuredDataForm';
 import { type WorkbenchArtifactMode, WorkbenchArtifactModeControls } from './ArtifactShell';
-import { Button } from '../primitives/Button';
-import { Panel, PanelBody, PanelHeader } from '../layout/Panel';
-import { Toolbar } from '../primitives/Toolbar';
+import { Button } from '../primitives/button';
+import { Panel, PanelBody, PanelHeader } from '../layout/panel';
+import { Toolbar } from '../primitives/toolbar';
 import { SplitView } from './SplitView';
 import { type WorkspaceFile } from './workspace/types';
 import { fileNameOfPath } from './workspace/path';

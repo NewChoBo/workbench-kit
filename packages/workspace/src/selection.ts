@@ -1,10 +1,33 @@
-import { normalizeWorkspacePath } from './path';
+import { normalizeWorkspacePath, parentPathOf } from './path';
 
 export type WorkspaceSelectionMode = 'range' | 'single' | 'toggle' | 'toggle-range';
 
 export interface WorkspaceSelectionState {
   anchorPath?: string;
+  /** Primary explorer focus for create/reveal actions. May be a file or folder path. */
+  focusedPath?: string;
   paths: string[];
+}
+
+export function createEmptyWorkspaceSelection(): WorkspaceSelectionState {
+  return { paths: [] };
+}
+
+export function resolveWorkspaceCreateParentPath(
+  focusedPath: string | undefined,
+  folderPaths: Iterable<string>,
+): string {
+  const normalizedFocusedPath = focusedPath ? normalizeWorkspacePath(focusedPath) : '';
+  if (!normalizedFocusedPath) {
+    return '';
+  }
+
+  const folderPathSet = new Set(normalizeWorkspaceSelectionPaths(folderPaths));
+  if (folderPathSet.has(normalizedFocusedPath)) {
+    return normalizedFocusedPath;
+  }
+
+  return parentPathOf(normalizedFocusedPath);
 }
 
 export interface UpdateWorkspaceSelectionInput {
@@ -49,19 +72,30 @@ export function getWorkspaceSelectionActionPaths({
 
 export function pruneWorkspaceSelection(
   selection: WorkspaceSelectionState,
-  availablePaths: Iterable<string>,
+  availableFilePaths: Iterable<string>,
+  availableFolderPaths: Iterable<string> = [],
 ): WorkspaceSelectionState {
-  const availablePathSet = new Set(normalizeWorkspaceSelectionPaths(availablePaths));
+  const availablePathSet = new Set([
+    ...normalizeWorkspaceSelectionPaths(availableFilePaths),
+    ...normalizeWorkspaceSelectionPaths(availableFolderPaths),
+  ]);
   const paths = normalizeWorkspaceSelectionPaths(selection.paths).filter((path) =>
     availablePathSet.has(path),
   );
   const anchorPath = selection.anchorPath
     ? normalizeWorkspacePath(selection.anchorPath)
     : undefined;
+  const focusedPath = selection.focusedPath
+    ? normalizeWorkspacePath(selection.focusedPath)
+    : undefined;
 
   return {
     anchorPath:
       anchorPath && availablePathSet.has(anchorPath) ? anchorPath : paths[paths.length - 1],
+    focusedPath:
+      focusedPath && availablePathSet.has(focusedPath)
+        ? focusedPath
+        : (paths[paths.length - 1] ?? undefined),
     paths,
   };
 }
@@ -106,6 +140,7 @@ export function updateWorkspaceSelection({
   if (mode === 'single') {
     return {
       anchorPath: target,
+      focusedPath: target,
       paths: [target],
     };
   }

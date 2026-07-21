@@ -1,0 +1,31 @@
+[data-ui-library-facet-menu-trigger-active='true'] {
+  --ui-icon-button-background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  --ui-icon-button-border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+  color: var(--color-text);
+}
+
+[data-ui-library-facet-menu='true']
+  .ui-context-menu__item[data-ui-library-facet-field-open='true'] {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+[data-ui-library-facet-menu='true']:has([data-ui-library-facet-field-open='true'])
+  .ui-context-menu__item[data-ui-library-facet-field]:not(
+    [data-ui-library-facet-field-open='true']
+  ):hover {
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+[data-ui-library-facet-menu='true'],
+[data-ui-library-facet-submenu] {
+  max-height: min(360px, 60vh);
+  overflow: auto;
+  position: fixed;
+  z-index: var(--ui-context-menu-z-index, 260);
+}
+
+[data-ui-library-facet-submenu] {
+  min-width: 200px;
+}

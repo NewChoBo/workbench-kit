@@ -1,0 +1,37 @@
+{
+  "name": "@workbench-kit/shell-react",
+  "version": "0.0.1-prototype.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run --config vitest.config.ts src",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@radix-ui/react-select": "^2.3.4",
+    "@radix-ui/react-slot": "^1.3.0",
+    "@workbench-kit/platform": "workspace:*",
+    "@workbench-kit/react": "workspace:*",
+    "@workbench-kit/schema-mapper": "workspace:*",
+    "@workbench-kit/tokens": "workspace:*",
+    "@workbench-kit/workbench-config": "workspace:*",
+    "@workbench-kit/workbench-core": "workspace:*",
+    "@workbench-kit/workspace": "workspace:*",
+    "@xyflow/react": "^12.11.2",
+    "jsonata": "^1.8.7",
+    "react-table-mapping": "^1.0.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "description": "React shell and host assembly for Workbench Kit.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/shell-react"
+  }
+}

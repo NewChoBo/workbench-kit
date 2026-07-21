@@ -1,0 +1,36 @@
+/* Fill/scroll ownership utilities for editor-in-pane hosts.
+ * Prefer WorkbenchFill / WorkbenchScrollRegion / WorkbenchFillChain.
+ * Attribute rules under .ui-workbench-fill-chain clip descendants that only
+ * stamp data-ui-fill-scroll-role without kit layout classes.
+ * Child stretch defaults live on `.ui-workbench-fill` (last child fills).
+ */
+
+.ui-workbench-fill-chain {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-workbench-fill-chain [data-ui-fill-scroll-role='fill'] {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-workbench-fill-chain [data-ui-fill-scroll-role='scroll'] {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ui-workbench-scroll-region {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}

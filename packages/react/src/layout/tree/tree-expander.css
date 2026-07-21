@@ -1,0 +1,23 @@
+.ui-workbench-tree-expander {
+  width: 14px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ui-workbench-tree-expander[data-visible='false'] {
+  opacity: 0;
+  pointer-events: none;
+  cursor: default;
+}
+
+.ui-workbench-tree-expander .codicon {
+  font-size: 12px;
+}

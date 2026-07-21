@@ -4,7 +4,10 @@
   "private": false,
   "type": "module",
   "exports": {
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./theme-presets.css": "./src/theme-presets.css",
+    "./shell-presets.css": "./src/shell-presets.css",
+    "./file-icons.css": "./src/file-icons.css"
   },
   "files": [
     "src",

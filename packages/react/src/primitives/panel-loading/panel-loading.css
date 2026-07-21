@@ -1,0 +1,16 @@
+.ui-panel-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 100%;
+  padding: 24px var(--ui-sidebar-inline-padding, 8px);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.ui-panel-loading .codicon {
+  color: var(--color-accent);
+  font-size: 16px;
+}

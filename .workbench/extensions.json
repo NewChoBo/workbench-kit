@@ -1,15 +1,31 @@
 {
   "recommendations": [
     "workbench-kit.builtin.explorer",
+    "workbench-kit.builtin.search",
+    "workbench-kit.builtin.chat",
+    "workbench-kit.builtin.commands",
+    "workbench-kit.builtin.extensions",
     "workbench-kit.builtin.settings",
-    "workbench-kit.builtin.workspace"
+    "workbench-kit.builtin.workspace",
+    "workbench-kit.samples.hello-world",
+    "workbench-kit.samples.jdw",
+    "workbench-kit.samples.schema-mapper",
+    "workbench-kit.samples.theme-alt"
   ],
   "enabled": [
     "workbench-kit.builtin.accounts",
+    "workbench-kit.builtin.chat",
+    "workbench-kit.builtin.commands",
     "workbench-kit.builtin.editor",
+    "workbench-kit.builtin.extensions",
     "workbench-kit.builtin.explorer",
+    "workbench-kit.builtin.search",
     "workbench-kit.builtin.keybindings",
     "workbench-kit.builtin.settings",
-    "workbench-kit.builtin.workspace"
+    "workbench-kit.builtin.workspace",
+    "workbench-kit.samples.hello-world",
+    "workbench-kit.samples.jdw",
+    "workbench-kit.samples.schema-mapper",
+    "workbench-kit.samples.theme-alt"
   ]
 }

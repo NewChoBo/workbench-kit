@@ -4,6 +4,9 @@
   --ui-select-trigger-height: 28px;
   --ui-select-trigger-radius: var(--radius-sm);
   --ui-select-option-height: 28px;
-  --ui-select-option-padding: 5px 10px;
-  --ui-select-option-radius: calc(var(--radius-sm) - 2px);
+  --ui-select-option-line-height: 20px;
+  --ui-select-option-padding: 4px 8px;
+  --ui-select-option-gap: 6px;
+  --ui-select-option-check-size: 16px;
+  --ui-select-option-radius: 0;
 }

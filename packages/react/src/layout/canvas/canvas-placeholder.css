@@ -1,0 +1,21 @@
+.ui-workbench-canvas-placeholder {
+  box-sizing: border-box;
+  display: flex;
+  width: var(--ui-workbench-canvas-placeholder-width, 100%);
+  height: var(--ui-workbench-canvas-placeholder-height, 100%);
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4px;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  border: 1px dashed var(--vscode-panel-border, var(--color-border));
+  font-size: var(--font-size-xs);
+  line-height: 1.35;
+  text-align: center;
+}
+
+.ui-workbench-canvas-placeholder[data-positioned='true'] {
+  position: absolute;
+  left: var(--ui-workbench-canvas-placeholder-x, 0);
+  top: var(--ui-workbench-canvas-placeholder-y, 0);
+}

@@ -1,0 +1,17 @@
+.ui-workbench-tree-drop-line {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  height: 2px;
+  pointer-events: none;
+  background: var(--vscode-focusBorder, var(--color-focus-border));
+}
+
+.ui-workbench-tree-drop-line[data-position='above'] {
+  top: 0;
+}
+
+.ui-workbench-tree-drop-line[data-position='below'] {
+  bottom: 0;
+}

@@ -6,6 +6,14 @@ import {
 } from './jdw-node.js';
 import type { GenericWidget } from './widget-tree.js';
 
+/**
+ * Canonical authoring snapshot for a JDW widget resource.
+ *
+ * `source` is the persisted JDW JSON and `root` is its parsed editable
+ * `GenericWidget` projection. Authoring surfaces should share this document
+ * path and commit changes with `WidgetPatch`; they must not treat a Screen Spec
+ * as a parallel editable source of truth.
+ */
 export interface WidgetDocument {
   readonly source: string;
   readonly parseError: string | null;

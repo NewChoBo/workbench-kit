@@ -1,21 +1,24 @@
 export * from './structuredDataSchema';
 
 import { useId, useMemo, useState, type FormEvent, type ReactNode } from 'react';
-import { Button } from '../../primitives/Button';
-import { Checkbox } from '../../primitives/Checkbox';
-import { EmptyState } from '../../primitives/EmptyState';
+import { Button } from '../../primitives/button';
+import { Checkbox } from '../../primitives/checkbox';
+import { EmptyState } from '../../primitives/empty-state';
 import { WorkbenchStructuredDataTableView } from './StructuredDataTableView';
-import { Field } from '../../primitives/Field';
-import { IconButton } from '../../primitives/IconButton';
-import { Select } from '../../primitives/Select';
-import { TextArea } from '../../primitives/TextArea';
-import { TextInput } from '../../primitives/TextInput';
+import { Field } from '../../primitives/field';
+import { IconButton } from '../../primitives/icon-button';
+import { Select } from '../../primitives/select';
+import { TextArea } from '../../primitives/text-area';
+import { TextInput } from '../../primitives/text-input';
+import { SegmentedControl } from '../../primitives/workbench-editor';
+import { WorkbenchColorInput } from '../../layout/WorkbenchPropertyPanel';
 import { cx } from '../../utils/cx';
 import { WorkbenchSectionedPanel } from './SectionedPanel';
 import {
   coerceWorkbenchStructuredDataFormFieldValue,
   coerceWorkbenchStructuredDataSchemaFieldValue,
   booleanWorkbenchStructuredDataSchemaFieldValue,
+  buildWorkbenchStructuredDataSchemaSelectOptions,
   formatWorkbenchStructuredDataSchemaLabel,
   getWorkbenchStructuredDataFormErrors,
   getWorkbenchStructuredDataSchemaFieldControl,
@@ -354,17 +357,35 @@ export function WorkbenchStructuredDataSchemaFieldInput({
   checkboxClassName,
   className,
   definition,
+  fieldErrorId,
   fieldPath,
+  invalid = false,
+  onBlur,
   onValueChange,
   readOnly = false,
   removeTextArrayLabel,
   textareaClassName,
   textArrayClassName,
+  validationMessage,
   value,
 }: WorkbenchStructuredDataSchemaFieldInputProps) {
   const control = getWorkbenchStructuredDataSchemaFieldControl(definition);
   const label = definition?.title ?? formatWorkbenchStructuredDataSchemaLabel(fieldPath);
   const stringValue = stringifyWorkbenchStructuredDataSchemaFieldValue(value, definition);
+  const controlClassName = cx(
+    className,
+    invalid && 'ui-workbench-structured-data-schema-field-input--invalid',
+  );
+  const describedBy = fieldErrorId && validationMessage ? fieldErrorId : fieldErrorId || undefined;
+  const min = definition?.minimum ?? definition?.min;
+  const max = definition?.maximum ?? definition?.max;
+  const selectOptions = buildWorkbenchStructuredDataSchemaSelectOptions(definition);
+
+  const emitValueChange = (nextValue: unknown) => {
+    if (!readOnly) {
+      onValueChange?.(nextValue);
+    }
+  };
 
   if (definition?.type === 'array' && definition.items?.type === 'string') {
     return (
@@ -381,23 +402,56 @@ export function WorkbenchStructuredDataSchemaFieldInput({
     );
   }
 
+  if (control === 'color') {
+    return (
+      <WorkbenchColorInput
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
+        className={controlClassName}
+        disabled={readOnly}
+        fallbackValue="#000000"
+        value={stringValue || '#000000'}
+        onValueChange={(nextValue) => emitValueChange(nextValue)}
+      />
+    );
+  }
+
+  if (control === 'radio') {
+    return (
+      <SegmentedControl
+        ariaLabel={label}
+        options={selectOptions.map((option) => ({
+          label: option.label,
+          value: option.value,
+        }))}
+        value={stringValue}
+        onChange={(nextValue) =>
+          emitValueChange(coerceWorkbenchStructuredDataSchemaFieldValue(nextValue, definition))
+        }
+      />
+    );
+  }
+
   if (control === 'select') {
     return (
       <Select
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
         aria-label={label}
-        className={className}
+        className={controlClassName}
         controlWidth="full"
         disabled={readOnly}
         value={stringValue}
+        onBlur={onBlur}
         onChange={(event) =>
-          onValueChange?.(
+          emitValueChange(
             coerceWorkbenchStructuredDataSchemaFieldValue(event.currentTarget.value, definition),
           )
         }
       >
-        {(definition?.enum ?? []).map((option) => (
-          <option key={String(option)} value={String(option)}>
-            {String(option)}
+        {selectOptions.map((option) => (
+          <option key={option.value} disabled={option.disabled} value={option.value}>
+            {option.label}
           </option>
         ))}
       </Select>
@@ -407,8 +461,10 @@ export function WorkbenchStructuredDataSchemaFieldInput({
   if (control === 'textarea') {
     return (
       <TextArea
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
         aria-label={label}
-        className={cx(className, textareaClassName)}
+        className={cx(controlClassName, textareaClassName)}
         controlWidth="full"
         monospace={definition?.type === 'array' || definition?.type === 'object'}
         placeholder={definition?.ui?.placeholder}
@@ -416,12 +472,11 @@ export function WorkbenchStructuredDataSchemaFieldInput({
         resize="vertical"
         rows={definition?.ui?.rows ?? (definition?.type === 'array' ? 3 : 4)}
         value={stringValue}
+        onBlur={onBlur}
         onChange={(event) => {
-          if (!readOnly) {
-            onValueChange?.(
-              coerceWorkbenchStructuredDataSchemaFieldValue(event.currentTarget.value, definition),
-            );
-          }
+          emitValueChange(
+            coerceWorkbenchStructuredDataSchemaFieldValue(event.currentTarget.value, definition),
+          );
         }}
       />
     );
@@ -439,21 +494,46 @@ export function WorkbenchStructuredDataSchemaFieldInput({
     );
   }
 
-  return (
-    <TextInput
-      aria-label={label}
-      className={className}
-      controlWidth="full"
-      placeholder={definition?.ui?.placeholder}
-      readOnly={readOnly}
-      type={control === 'date' || control === 'number' ? control : 'text'}
-      value={stringValue}
-      onChange={(event) => {
-        if (!readOnly) {
-          onValueChange?.(
+  if (control === 'date') {
+    return (
+      <TextInput
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
+        aria-label={label}
+        className={controlClassName}
+        controlWidth="full"
+        placeholder={definition?.ui?.placeholder}
+        readOnly={readOnly}
+        type="date"
+        value={stringValue}
+        onBlur={onBlur}
+        onChange={(event) => {
+          emitValueChange(
             coerceWorkbenchStructuredDataSchemaFieldValue(event.currentTarget.value, definition),
           );
-        }
+        }}
+      />
+    );
+  }
+
+  return (
+    <TextInput
+      aria-describedby={describedBy}
+      aria-invalid={invalid || undefined}
+      aria-label={label}
+      className={controlClassName}
+      controlWidth="full"
+      max={control === 'number' ? max : undefined}
+      min={control === 'number' ? min : undefined}
+      placeholder={definition?.ui?.placeholder}
+      readOnly={readOnly}
+      type={control === 'number' ? control : 'text'}
+      value={stringValue}
+      onBlur={onBlur}
+      onChange={(event) => {
+        emitValueChange(
+          coerceWorkbenchStructuredDataSchemaFieldValue(event.currentTarget.value, definition),
+        );
       }}
     />
   );

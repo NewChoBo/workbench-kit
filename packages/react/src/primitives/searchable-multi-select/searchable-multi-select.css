@@ -1,0 +1,129 @@
+.ui-searchable-multi-select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--shell-spacing-inline-sm, 8px);
+  min-width: 0;
+  position: relative;
+}
+
+.ui-searchable-multi-select__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.ui-searchable-multi-select__chip {
+  max-width: 100%;
+}
+
+.ui-searchable-multi-select__control {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  position: relative;
+}
+
+.ui-searchable-multi-select__input {
+  --ui-input-height: 1.625rem;
+  font-size: var(--shell-font-size-meta, 0.75rem);
+}
+
+.ui-searchable-multi-select__list {
+  position: fixed;
+  z-index: 10050;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0.25rem;
+  /* Opt in when portaled into a pointer-events:none host. */
+  pointer-events: auto;
+  overflow: auto;
+  border: 1px solid
+    var(--vscode-widget-border, var(--color-border-subtle, var(--color-border, #454545)));
+  border-radius: var(--shell-radius-control, 4px);
+  /*
+   * Portaled to body / overlays — do not rely on `color: inherit` from the
+   * document (often black on dark dropdown surfaces outside [data-theme]).
+   */
+  color: var(--vscode-foreground, var(--color-text-primary, var(--color-text, #cccccc)));
+  background: var(
+    --vscode-dropdown-background,
+    var(--color-surface, var(--vscode-editor-background, #1e1e1e))
+  );
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+  list-style: none;
+}
+
+.ui-searchable-multi-select__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--shell-spacing-inline-sm, 8px);
+  min-height: 1.625rem;
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: var(--shell-radius-control, 4px);
+  color: var(--vscode-foreground, var(--color-text-primary, var(--color-text, #cccccc)));
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.ui-searchable-multi-select__option:hover,
+.ui-searchable-multi-select__option[data-highlighted='true'] {
+  background: var(
+    --color-list-hover,
+    var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.06))
+  );
+}
+
+.ui-searchable-multi-select__option[data-selected='true'] {
+  background: var(
+    --vscode-list-activeSelectionBackground,
+    var(--color-list-active, rgba(0, 127, 212, 0.28))
+  );
+}
+
+.ui-searchable-multi-select__option:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ui-searchable-multi-select__option-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--shell-font-size-meta, 0.75rem);
+  line-height: 1.25;
+}
+
+.ui-searchable-multi-select__option-count {
+  flex: 0 0 auto;
+  color: var(--color-text-muted, var(--vscode-descriptionForeground, #9d9d9d));
+  font-size: var(--shell-font-size-meta, 0.6875rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-searchable-multi-select__option-check {
+  flex: 0 0 auto;
+  width: 0.875rem;
+  color: var(--vscode-list-activeSelectionForeground, var(--color-text, #cccccc));
+  font-size: 0.75rem;
+}
+
+.ui-searchable-multi-select__empty {
+  margin: 0;
+  padding: 0.5rem;
+  color: var(--color-text-muted, var(--vscode-descriptionForeground, #9d9d9d));
+  font-size: var(--shell-font-size-meta, 0.75rem);
+  line-height: 1.35;
+}

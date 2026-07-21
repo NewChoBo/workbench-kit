@@ -1,0 +1,14 @@
+.ui-workbench-property-toggle.ui-button {
+  height: 24px;
+  min-height: 0;
+  padding: 0 8px;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  background: var(--vscode-input-background, var(--color-surface));
+  border-color: var(--vscode-input-border, var(--color-border));
+  font-size: 10px;
+}
+
+.ui-workbench-property-toggle.ui-button[data-active='true'] {
+  color: var(--vscode-button-foreground, var(--color-bg));
+  background: var(--vscode-button-background, var(--color-accent));
+}

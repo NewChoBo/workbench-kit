@@ -1,0 +1,235 @@
+.workspace-panel__body {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+
+.workspace-editor {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.workspace-editor > .widget-tree-workbench {
+  flex: 1;
+  min-height: 0;
+}
+
+.workspace-editor__tabbar {
+  height: var(--workbench-header-height);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.workspace-editor__tabs {
+  height: 100%;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.workspace-editor__tab {
+  position: relative;
+  width: 180px;
+  min-width: 120px;
+  max-width: 240px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  color: var(--vscode-tab-inactiveForeground, var(--color-text-muted));
+  background: var(--vscode-tab-inactiveBackground, var(--color-surface));
+  border-right: 1px solid
+    color-mix(in srgb, var(--vscode-tab-border, var(--color-border)) 88%, transparent);
+  font-size: var(--font-size-sm);
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.workspace-editor__tab::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  content: '';
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.workspace-editor__tab:hover {
+  color: var(--vscode-tab-hoverForeground, var(--vscode-tab-activeForeground, var(--color-text)));
+  background: var(--vscode-tab-hoverBackground, var(--color-surface-hover));
+}
+
+.workspace-editor__tab--active,
+.workspace-editor__tab--active:hover {
+  color: var(--vscode-tab-activeForeground, var(--color-text));
+  background: var(--vscode-tab-activeBackground, var(--panel-bg, var(--color-bg)));
+  margin-bottom: -1px;
+  border-bottom: 1px solid var(--vscode-editor-background, var(--panel-bg, var(--color-bg)));
+  font-weight: 500;
+  z-index: 1;
+}
+
+.workspace-editor__tab--active::before {
+  background: var(
+    --vscode-tab-activeBorderTop,
+    var(--vscode-focusBorder, var(--color-focus-border, var(--color-accent)))
+  );
+  box-shadow: 0 0 10px
+    color-mix(in srgb, var(--vscode-tab-activeBorderTop, var(--color-accent)) 28%, transparent);
+}
+
+.workspace-editor__tab-button {
+  --ui-button-height: 100%;
+  --ui-button-min-height: 0;
+  --ui-button-min-width: 0;
+  --ui-button-flex: 1;
+  --ui-button-display: flex;
+  --ui-button-align-items: center;
+  --ui-button-justify-content: flex-start;
+  --ui-button-gap: 8px;
+  --ui-button-padding: 0 6px 0 12px;
+  --ui-button-border: 0;
+  --ui-button-border-radius: 0;
+  --ui-button-color: inherit;
+  --ui-button-background: transparent;
+  --ui-button-font-family: inherit;
+  --ui-button-font-size: inherit;
+  --ui-button-font-weight: 400;
+  --ui-button-text-align: left;
+  --ui-button-hover-color: inherit;
+  --ui-button-hover-background: transparent;
+  height: 100%;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px 0 12px;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workspace-editor__tab-close.ui-icon-button {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  margin-right: 4px;
+  opacity: 0;
+}
+
+.workspace-editor__tab:hover .workspace-editor__tab-close,
+.workspace-editor__tab:focus-within .workspace-editor__tab-close,
+.workspace-editor__tab--active .workspace-editor__tab-close {
+  opacity: 1;
+}
+
+.workspace-editor__tab-close.ui-icon-button .codicon {
+  font-size: 14px;
+}
+
+.workspace-editor__path {
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-editor__dirty {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+}
+
+.workspace-editor__tab-actions {
+  margin-left: auto;
+  padding: 0 8px;
+}
+
+.workspace-editor__tab-actions:empty {
+  display: none;
+}
+
+.workspace-editor__file-bar {
+  min-height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  color: var(--color-text-muted);
+  background: var(--panel-bg, var(--color-bg));
+  font-size: 12px;
+}
+
+.workspace-editor__file-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-path-label {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-subtle);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-path-label__segment {
+  display: inline;
+}
+
+.workspace-path-label__separator {
+  margin: 0 5px;
+  color: var(--color-text-subtle);
+  opacity: 0.45;
+}
+
+.workspace-path-label__crumb {
+  color: var(--color-text-subtle);
+}
+
+.workspace-path-label__leaf {
+  color: var(--color-text-muted);
+}
+
+.workspace-editor__file-meta {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--color-text-subtle);
+}
+
+.ui-panel-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 100%;
+  padding: 24px var(--ui-sidebar-inline-padding, 8px);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.ui-panel-loading .codicon {
+  color: var(--color-accent);
+  font-size: 16px;
+}

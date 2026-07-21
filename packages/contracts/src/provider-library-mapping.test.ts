@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createEpicStoreUrl,
   providerActionIcon,
   providerActionToLaunchAction,
   providerActionTypeLabel,
@@ -9,6 +10,7 @@ import {
 describe('provider-library-mapping', () => {
   it('labels provider action kinds for display', () => {
     expect(providerActionTypeLabel({ type: 'steam' })).toBe('Steam');
+    expect(providerActionTypeLabel({ type: 'epic' })).toBe('Epic Games');
     expect(providerActionTypeLabel({ type: 'url' })).toBe('URL');
     expect(providerActionTypeLabel({ type: 'exec' })).toBe('App');
     expect(providerActionTypeLabel({ type: 'folder' })).toBe('Folder');
@@ -18,6 +20,7 @@ describe('provider-library-mapping', () => {
 
   it('maps provider action kinds to icon names', () => {
     expect(providerActionIcon({ type: 'steam' })).toBe('play');
+    expect(providerActionIcon({ type: 'epic' })).toBe('play');
     expect(providerActionIcon({ type: 'url' })).toBe('link');
     expect(providerActionIcon({ type: 'exec' })).toBe('window');
     expect(providerActionIcon({ type: 'folder' })).toBe('folder');
@@ -46,6 +49,29 @@ describe('provider-library-mapping', () => {
       target: 'steam://run/480',
       type: 'url',
     });
+    expect(
+      providerActionToLaunchAction({
+        type: 'epic',
+        appName: 'Fortnite',
+        catalogItemId: '4fe75bbc5a674f4f9b356b5c90567da5',
+        catalogNamespace: 'fn',
+      }),
+    ).toEqual({
+      target:
+        'com.epicgames.launcher://apps/fn%3A4fe75bbc5a674f4f9b356b5c90567da5%3AFortnite?action=launch&silent=true',
+      type: 'url',
+    });
+    expect(providerActionToLaunchAction({ type: 'epic', appName: 'Stellula' })).toEqual({
+      target: 'com.epicgames.launcher://apps/Stellula?action=launch&silent=true',
+      type: 'url',
+    });
+  });
+
+  it('builds Epic store URLs from app names', () => {
+    expect(createEpicStoreUrl({ appName: 'Fortnite' })).toBe(
+      'https://store.epicgames.com/en-US/p/fortnite',
+    );
+    expect(createEpicStoreUrl({ appName: '  ' })).toBeNull();
   });
 
   it('copies exec action fields without sharing mutable references', () => {

@@ -1,31 +1,29 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@monaco-editor/react', () => ({
-  default: () => <div data-testid="monaco-editor">Mocked Monaco Editor</div>,
-  loader: {
-    config: vi.fn(),
-  },
-}));
-
-vi.mock('monaco-editor', () => ({}));
+vi.mock('@workbench-kit/monaco', async () => {
+  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
+  return createWorkbenchMonacoMockModule();
+});
 
 import { WidgetTreeWorkbench } from './WidgetTreeWorkbench.js';
 import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';
 import { isWidgetTreeDocument } from './widget-tree-document.js';
-import { JDW_DOCUMENT_MIME } from '../jdw/document.js';
+import { JDW_WIDGET_DOCUMENT_MIME } from '../jdw/document.js';
 
 describe('isWidgetTreeDocument', () => {
-  it('matches widget mime type plus .widget.json and .jdw.json paths', () => {
+  it('matches canonical JDW mime type and .jdw.json paths', () => {
     expect(
       isWidgetTreeDocument({
-        path: 'src/widgets/home.widget.json',
-        mimeType: 'application/vnd.workbench-kit.widget+json',
+        path: 'src/widgets/home.jdw.json',
+        mimeType: JDW_WIDGET_DOCUMENT_MIME,
       }),
     ).toBe(true);
-    expect(isWidgetTreeDocument({ path: 'layout.widget.json' })).toBe(true);
+    expect(isWidgetTreeDocument({ path: 'layout.widget.json' })).toBe(false);
     expect(isWidgetTreeDocument({ path: 'jdw/home.jdw.json' })).toBe(true);
-    expect(isWidgetTreeDocument({ path: 'jdw/home.json', mimeType: JDW_DOCUMENT_MIME })).toBe(true);
+    expect(
+      isWidgetTreeDocument({ path: 'jdw/home.json', mimeType: JDW_WIDGET_DOCUMENT_MIME }),
+    ).toBe(true);
     expect(isWidgetTreeDocument({ path: 'package.json' })).toBe(false);
   });
 });
@@ -35,7 +33,7 @@ describe('WidgetTreeWorkbench', () => {
     const markup = renderToStaticMarkup(
       <WidgetTreeWorkbench
         dirty
-        path="src/widgets/home.widget.json"
+        path="src/widgets/home.jdw.json"
         registry={WIDGET_TREE_DEMO_REGISTRY}
         value={WIDGET_TREE_WELCOME_DOCUMENT}
         onChange={() => undefined}
@@ -51,5 +49,71 @@ describe('WidgetTreeWorkbench', () => {
     expect(markup).toContain('label="Code"');
     expect(markup).toContain('Save');
     expect(markup).toContain('Discard');
+  });
+
+  it('disables save and shows validation status for invalid JDW', () => {
+    const markup = renderToStaticMarkup(
+      <WidgetTreeWorkbench
+        dirty
+        path="src/widgets/invalid.jdw.json"
+        registry={WIDGET_TREE_DEMO_REGISTRY}
+        value={JSON.stringify({
+          type: 'grid',
+          args: { children: [] },
+        })}
+        onChange={() => undefined}
+        onSave={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('data-testid="json-config-validation-banner"');
+    expect(markup).toContain('data-validation="invalid"');
+    expect(markup).toContain('disabled=""');
+    expect(markup).toContain('columns is required');
+  });
+
+  it('keeps save enabled for unresolved exact dynamic scalar expressions', () => {
+    const markup = renderToStaticMarkup(
+      <WidgetTreeWorkbench
+        dirty
+        path="src/widgets/dynamic.jdw.json"
+        registry={WIDGET_TREE_DEMO_REGISTRY}
+        value={JSON.stringify({
+          type: 'column',
+          listen: ['spacing'],
+          args: {
+            gap: '${spacing}',
+            children: [{ type: 'text', args: { text: 'Dynamic', fontSize: '${fontSize}' } }],
+          },
+        })}
+        onChange={() => undefined}
+        onSave={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('data-testid="json-config-validation-banner"');
+    expect(markup).toContain('data-validation="valid"');
+    expect(markup).toMatch(/<button[^>]*data-variant="primary"[^>]*>Save<\/button>/);
+  });
+
+  it('renders Apply when onApply is provided for a dirty valid document', () => {
+    const onApply = vi.fn();
+    const markup = renderToStaticMarkup(
+      <WidgetTreeWorkbench
+        baselineValue={WIDGET_TREE_WELCOME_DOCUMENT}
+        path="src/widgets/home.jdw.json"
+        registry={WIDGET_TREE_DEMO_REGISTRY}
+        value={JSON.stringify({
+          type: 'text',
+          args: { text: 'Updated' },
+        })}
+        onApply={onApply}
+        onChange={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('data-testid="widget-tree-workbench-apply"');
+    expect(markup).toContain('Apply');
+    expect(markup).toContain('data-can-apply="true"');
   });
 });

@@ -106,6 +106,12 @@ export function parseScreenSpecJson(source: string): ParsedScreenSpec {
   }
 }
 
+/**
+ * Parses and compiles a Screen Spec template/scaffold in one direction.
+ *
+ * The returned `json` is the new JDW authoring source; this API does not
+ * establish bidirectional synchronization with the input Screen Spec.
+ */
 export function compileScreenSpecText(source: string): CompiledScreenSpecText {
   const parsed = parseScreenSpecJson(source);
   if (parsed.error !== null || parsed.value === null) {

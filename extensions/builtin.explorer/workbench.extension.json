@@ -102,7 +102,8 @@
         {
           "id": "explorer",
           "title": "Explorer",
-          "icon": "files"
+          "icon": "files",
+          "order": 10
         }
       ]
     },
@@ -111,7 +112,8 @@
         "id": "workbench-kit.builtin.explorer.activity",
         "viewContainerId": "explorer",
         "icon": "files",
-        "title": "Explorer"
+        "title": "Explorer",
+        "order": 10
       }
     ],
     "views": {

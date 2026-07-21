@@ -1,12 +1,37 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import path from 'node:path';
 
+function getStorybookBasePath(value: string | undefined): string {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return '/';
+  }
+
+  if (trimmed === './' || /^https?:\/\//.test(trimmed)) {
+    return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+  }
+
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`;
+}
+
+const storybookBasePath = getStorybookBasePath(process.env.STORYBOOK_BASE_PATH);
+
 const config: StorybookConfig = {
   stories: [
-    '../stories/**/*.stories.@(ts|tsx)',
-    '../packages/react/src/**/*.stories.@(ts|tsx)',
+    '../examples/workbench-sample/src/**/*.stories.@(ts|tsx)',
+    '../packages/react/src/primitives/stories/Controls.stories.@(ts|tsx)',
+    '../packages/react/src/primitives/workbench-editor/EditorChrome.stories.@(ts|tsx)',
+    '../packages/react/src/primitives/scroll-area-infinite-load/ScrollAreaInfiniteLoad.stories.@(ts|tsx)',
+    '../packages/react/src/modal/OverlayDialogs.stories.@(ts|tsx)',
+    '../packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)',
+    '../packages/react/src/workbench/WorkbenchShell.stories.@(ts|tsx)',
+    '../packages/react/src/workbench/IntegratedShell.stories.@(ts|tsx)',
+    '../packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)',
+    '../packages/react/src/layout/sidebar/SideBarViewTabStrip.stories.@(ts|tsx)',
+    '../packages/react/src/widget-tree/WidgetTreeLab.stories.@(ts|tsx)',
     '../packages/jdw-editor/src/**/*.stories.@(ts|tsx)',
-    '../packages/workbench-react/src/**/*.stories.@(ts|tsx)',
   ],
   addons: ['@storybook/addon-docs'],
   framework: {
@@ -17,6 +42,8 @@ const config: StorybookConfig = {
     disableTelemetry: true,
   },
   async viteFinal(config) {
+    config.base = storybookBasePath;
+
     config.resolve ??= {};
     config.resolve.dedupe = Array.from(
       new Set([...(config.resolve.dedupe ?? []), 'react', 'react-dom']),

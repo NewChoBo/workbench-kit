@@ -4,11 +4,7 @@ export type LibraryItemKind = 'app' | 'command' | 'folder' | 'game' | 'other' | 
 export type LibrarySourceKind = 'embedded-json' | 'json-file' | 'json-url';
 export type LibrarySortMode = 'installed' | 'provider' | 'title';
 export type LibraryManifestErrorCode =
-  | 'invalid-item'
-  | 'invalid-manifest'
-  | 'invalid-json'
-  | 'invalid-source'
-  | 'missing-manifest';
+  'invalid-item' | 'invalid-manifest' | 'invalid-json' | 'invalid-source' | 'missing-manifest';
 
 export interface ServiceLibraryFailure {
   code: LibraryManifestErrorCode;

@@ -3,81 +3,65 @@ import type { EditorHost } from '@workbench-kit/workbench-extension-sdk';
 
 import type { EditorHostFactoryRegistry } from './host-factory-registry.js';
 import type { EditorResolverRegistry } from './editor-resolver-registry.js';
+import {
+  createEditorLayoutForInsertedGroup,
+  normalizeEditorSplitPrimarySizePercent,
+  reconcileEditorLayoutWithGroups,
+  updateEditorSplitLayout,
+} from './editor-layout.js';
+import {
+  DEFAULT_EDITOR_GROUP_ID,
+  clampEditorTabInsertIndex,
+  cloneEditorState,
+  createEditorTabId,
+  createInitialEditorState,
+  getMaxEditorGroupSequence,
+  getMaxEditorTabSequence,
+  insertEditorTabAt,
+  insertGroupAfter,
+  insertGroupBefore,
+  insertGroupRelativeToAnchor,
+  isSameEditorState,
+  normalizeEditorTabInsertIndex,
+  replaceGroup,
+  replacePreviewTabIfNeeded,
+} from './editor-state.js';
+import type {
+  EditorGroupState,
+  EditorState,
+  EditorTabState,
+  MoveEditorOptions,
+  OpenEditorOptions,
+  SetEditorSplitDirectionOptions,
+  SetEditorSplitPrimarySizeOptions,
+  SplitEditorOptions,
+} from './editor-state.js';
 
-export interface EditorTabState {
-  readonly dirty: boolean;
-  readonly editorId: string;
-  readonly icon?: string;
-  readonly id: string;
-  readonly pinned: boolean;
-  readonly preview: boolean;
-  readonly resourceUri: string;
-  readonly title?: string;
-}
-
-export interface EditorGroupState {
-  readonly activeTabId?: string;
-  readonly id: string;
-  readonly tabs: readonly EditorTabState[];
-}
-
-export type EditorLayoutDirection = 'horizontal' | 'vertical';
-
-export interface EditorGroupLayoutNode {
-  readonly groupId: string;
-  readonly type: 'group';
-}
-
-export interface EditorSplitLayoutNode {
-  readonly children: readonly EditorLayoutNode[];
-  readonly direction: EditorLayoutDirection;
-  readonly type: 'split';
-}
-
-export type EditorLayoutNode = EditorGroupLayoutNode | EditorSplitLayoutNode;
-
-export interface EditorState {
-  readonly activeGroupId?: string;
-  readonly groups: readonly EditorGroupState[];
-  readonly layout: EditorLayoutNode;
-}
-
-export interface OpenEditorOptions {
-  readonly dirty?: boolean | undefined;
-  readonly editorId?: string | undefined;
-  readonly groupId?: string | undefined;
-  readonly icon?: string | undefined;
-  readonly pinned?: boolean | undefined;
-  readonly preview?: boolean | undefined;
-  readonly resourceUri: string;
-  readonly title?: string | undefined;
-}
-
-export interface SplitEditorOptions {
-  readonly afterGroupId?: string | undefined;
-  readonly beforeGroupId?: string | undefined;
-  readonly groupId?: string | undefined;
-  readonly tabId?: string | undefined;
-}
-
-export interface MoveEditorOptions {
-  readonly afterGroupId?: string | undefined;
-  readonly beforeGroupId?: string | undefined;
-  readonly groupId?: string | undefined;
-  readonly tabId?: string | undefined;
-  readonly targetIndex?: number | undefined;
-}
+export { DEFAULT_EDITOR_GROUP_ID } from './editor-state.js';
+export type {
+  EditorGroupLayoutNode,
+  EditorGroupState,
+  EditorLayoutDirection,
+  EditorLayoutNode,
+  EditorSplitLayoutNode,
+  EditorState,
+  EditorTabState,
+  MoveEditorOptions,
+  OpenEditorOptions,
+  SetEditorSplitDirectionOptions,
+  SetEditorSplitPrimarySizeOptions,
+  SplitEditorOptions,
+} from './editor-state.js';
 
 export interface EditorChangeEvent {
   readonly previousState: EditorState;
   readonly state: EditorState;
 }
 
-export const DEFAULT_EDITOR_GROUP_ID = 'workbench.editor.group.main' as const;
-
 export interface EditorServiceOptions {
   readonly editorHostFactories: EditorHostFactoryRegistry;
   readonly editorResolvers?: EditorResolverRegistry | undefined;
+  readonly initialState?: EditorState | undefined;
   readonly resolveEditorResource?: ((resourceUri: string) => unknown) | undefined;
 }
 
@@ -97,7 +81,9 @@ export class EditorService implements Disposable {
     this.editorHostFactories = options.editorHostFactories;
     this.editorResolvers = options.editorResolvers;
     this.resolveEditorResource = options.resolveEditorResource;
-    this.state = createDefaultEditorState();
+    this.state = createInitialEditorState(options.initialState);
+    this.groupSequence = getMaxEditorGroupSequence(this.state.groups);
+    this.tabSequence = getMaxEditorTabSequence(this.state.groups);
   }
 
   getState(): EditorState {
@@ -174,9 +160,18 @@ export class EditorService implements Disposable {
         ? insertGroupBefore(this.state.groups, anchorGroupId, nextTargetGroup)
         : insertGroupAfter(this.state.groups, anchorGroupId, nextTargetGroup);
 
+    const nextLayout = targetGroup
+      ? undefined
+      : createEditorLayoutForInsertedGroup(this.state.layout, nextGroups, {
+          anchorGroupId,
+          before: Boolean(options.beforeGroupId),
+          direction: options.direction,
+          groupId: targetGroupId,
+        });
     this.setState({
       activeGroupId: targetGroupId,
       groups: nextGroups,
+      ...(nextLayout ? { layout: nextLayout } : {}),
     });
 
     const targetHost = this.createEditorHost(nextTab.id);
@@ -269,12 +264,46 @@ export class EditorService implements Disposable {
       });
     }
 
+    const nextLayout = targetGroup
+      ? undefined
+      : createEditorLayoutForInsertedGroup(this.state.layout, nextGroups, {
+          anchorGroupId: options.beforeGroupId ?? options.afterGroupId ?? sourceLocation.group.id,
+          before: Boolean(options.beforeGroupId),
+          direction: options.direction,
+          groupId: targetGroupId,
+        });
     this.setState({
       activeGroupId: targetGroupId,
       groups: nextGroups,
+      ...(nextLayout ? { layout: nextLayout } : {}),
     });
 
     return sourceLocation.tab;
+  }
+
+  setEditorSplitDirection(options: SetEditorSplitDirectionOptions): void {
+    const nextLayout = updateEditorSplitLayout(this.state.layout, options.path, (layout) => ({
+      ...layout,
+      direction: options.direction,
+    }));
+    if (!nextLayout) {
+      return;
+    }
+
+    this.setState({ layout: nextLayout });
+  }
+
+  setEditorSplitPrimarySize(options: SetEditorSplitPrimarySizeOptions): void {
+    const primarySizePercent = normalizeEditorSplitPrimarySizePercent(options.primarySizePercent);
+    const nextLayout = updateEditorSplitLayout(this.state.layout, options.path, (layout) => ({
+      ...layout,
+      primarySizePercent,
+    }));
+    if (!nextLayout) {
+      return;
+    }
+
+    this.setState({ layout: nextLayout });
   }
 
   closeEditor(tabId: string): void {
@@ -411,6 +440,39 @@ export class EditorService implements Disposable {
     return undefined;
   }
 
+  reconcileWorkspaceFileTabs(isWorkspaceFileAvailable: (resourceUri: string) => boolean): void {
+    let changed = false;
+    const nextGroups = this.state.groups.map((group) => ({
+      ...group,
+      tabs: group.tabs.map((tab) => {
+        if (!isWorkspaceFileResourceUri(tab.resourceUri)) {
+          if (!tab.resourceMissing) {
+            return tab;
+          }
+
+          changed = true;
+          this.disposeEditorHost(tab.id);
+          return clearResourceMissing(tab);
+        }
+
+        const missing = !isWorkspaceFileAvailable(tab.resourceUri);
+        if (Boolean(tab.resourceMissing) === missing) {
+          return tab;
+        }
+
+        changed = true;
+        this.disposeEditorHost(tab.id);
+        return missing ? markResourceMissing(tab) : clearResourceMissing(tab);
+      }),
+    }));
+
+    if (!changed) {
+      return;
+    }
+
+    this.setState({ groups: nextGroups });
+  }
+
   getActiveTab(): EditorTabState | undefined {
     const activeGroup = this.getActiveGroup();
     if (!activeGroup?.activeTabId) {
@@ -438,8 +500,8 @@ export class EditorService implements Disposable {
     const host = this.editorHostFactories.createEditorHost({
       editorId: location.tab.editorId,
       resource: this.resolveEditorResource?.(location.tab.resourceUri),
+      resourceMissing: location.tab.resourceMissing,
       resourceUri: location.tab.resourceUri,
-      tabId: location.tab.id,
     });
     if (!host) {
       return undefined;
@@ -543,7 +605,9 @@ export class EditorService implements Disposable {
       groups,
       layout:
         nextPartial.layout ??
-        (nextPartial.groups ? createEditorLayoutFromGroups(groups) : this.state.layout),
+        (nextPartial.groups
+          ? reconcileEditorLayoutWithGroups(this.state.layout, groups, this.state.groups)
+          : this.state.layout),
     };
 
     const previousState = this.state;
@@ -561,194 +625,6 @@ export class EditorService implements Disposable {
 
 export function createEditorService(options: EditorServiceOptions): EditorService {
   return new EditorService(options);
-}
-
-function createDefaultEditorState(): EditorState {
-  const groups: EditorGroupState[] = [
-    {
-      activeTabId: undefined,
-      id: DEFAULT_EDITOR_GROUP_ID,
-      tabs: [],
-    },
-  ];
-
-  return {
-    activeGroupId: DEFAULT_EDITOR_GROUP_ID,
-    groups,
-    layout: createEditorLayoutFromGroups(groups),
-  };
-}
-
-function cloneEditorState(state: EditorState): EditorState {
-  return {
-    activeGroupId: state.activeGroupId,
-    groups: state.groups.map((group) => ({
-      activeTabId: group.activeTabId,
-      id: group.id,
-      tabs: [...group.tabs],
-    })),
-    layout: cloneEditorLayout(state.layout),
-  };
-}
-
-function createEditorLayoutFromGroups(groups: readonly EditorGroupState[]): EditorLayoutNode {
-  const groupNodes = groups.map<EditorGroupLayoutNode>((group) => ({
-    groupId: group.id,
-    type: 'group',
-  }));
-
-  if (groupNodes.length <= 1) {
-    return groupNodes[0] ?? { groupId: DEFAULT_EDITOR_GROUP_ID, type: 'group' };
-  }
-
-  return {
-    children: groupNodes,
-    direction: 'horizontal',
-    type: 'split',
-  };
-}
-
-function cloneEditorLayout(layout: EditorLayoutNode): EditorLayoutNode {
-  if (layout.type === 'group') {
-    return { ...layout };
-  }
-
-  return {
-    ...layout,
-    children: layout.children.map(cloneEditorLayout),
-  };
-}
-
-function createEditorTabId(sequence: number): string {
-  return `workbench.editor.tab.${sequence}`;
-}
-
-function replaceGroup(
-  groups: readonly EditorGroupState[],
-  nextGroup: EditorGroupState,
-): EditorGroupState[] {
-  const index = groups.findIndex((group) => group.id === nextGroup.id);
-  if (index < 0) {
-    return [...groups, nextGroup];
-  }
-
-  const copy = [...groups];
-  copy[index] = nextGroup;
-  return copy;
-}
-
-function insertGroupAfter(
-  groups: readonly EditorGroupState[],
-  anchorGroupId: string,
-  nextGroup: EditorGroupState,
-): EditorGroupState[] {
-  const anchorIndex = groups.findIndex((group) => group.id === anchorGroupId);
-  if (anchorIndex < 0) {
-    return [...groups, nextGroup];
-  }
-
-  const copy = [...groups];
-  copy.splice(anchorIndex + 1, 0, nextGroup);
-  return copy;
-}
-
-function insertGroupBefore(
-  groups: readonly EditorGroupState[],
-  anchorGroupId: string,
-  nextGroup: EditorGroupState,
-): EditorGroupState[] {
-  const anchorIndex = groups.findIndex((group) => group.id === anchorGroupId);
-  if (anchorIndex < 0) {
-    return [nextGroup, ...groups];
-  }
-
-  const copy = [...groups];
-  copy.splice(anchorIndex, 0, nextGroup);
-  return copy;
-}
-
-function insertGroupRelativeToAnchor({
-  anchorGroupId,
-  before,
-  groups,
-  nextGroup,
-  originalGroups,
-}: {
-  anchorGroupId: string;
-  before: boolean;
-  groups: readonly EditorGroupState[];
-  nextGroup: EditorGroupState;
-  originalGroups: readonly EditorGroupState[];
-}): EditorGroupState[] {
-  const anchorIndex = groups.findIndex((group) => group.id === anchorGroupId);
-  if (anchorIndex >= 0) {
-    return before
-      ? insertGroupBefore(groups, anchorGroupId, nextGroup)
-      : insertGroupAfter(groups, anchorGroupId, nextGroup);
-  }
-
-  const originalAnchorIndex = originalGroups.findIndex((group) => group.id === anchorGroupId);
-  if (originalAnchorIndex < 0) {
-    return before ? [nextGroup, ...groups] : [...groups, nextGroup];
-  }
-
-  const retainedGroupIds = new Set(groups.map((group) => group.id));
-  const insertionIndex = originalGroups
-    .slice(0, originalAnchorIndex)
-    .filter((group) => retainedGroupIds.has(group.id)).length;
-  const copy = [...groups];
-  copy.splice(insertionIndex, 0, nextGroup);
-  return copy;
-}
-
-function clampEditorTabInsertIndex(index: number | undefined, tabCount: number): number {
-  if (index === undefined || !Number.isFinite(index)) {
-    return tabCount;
-  }
-
-  return Math.min(Math.max(Math.trunc(index), 0), tabCount);
-}
-
-function normalizeEditorTabInsertIndex({
-  index,
-  sourceIndex,
-  tabCount,
-}: {
-  index: number | undefined;
-  sourceIndex: number;
-  tabCount: number;
-}): number {
-  const clampedIndex = clampEditorTabInsertIndex(index, tabCount);
-  return clampedIndex > sourceIndex ? clampedIndex - 1 : clampedIndex;
-}
-
-function insertEditorTabAt(
-  tabs: readonly EditorTabState[],
-  index: number,
-  tab: EditorTabState,
-): EditorTabState[] {
-  const nextTabs = [...tabs];
-  nextTabs.splice(clampEditorTabInsertIndex(index, nextTabs.length), 0, tab);
-  return nextTabs;
-}
-
-function replacePreviewTabIfNeeded(
-  tabs: readonly EditorTabState[],
-  nextTab: EditorTabState,
-  preview: boolean,
-): EditorTabState[] {
-  if (!preview) {
-    return [...tabs, nextTab];
-  }
-
-  const previewTabIndex = tabs.findIndex((tab) => tab.preview && !tab.pinned);
-  if (previewTabIndex < 0) {
-    return [...tabs, nextTab];
-  }
-
-  const copy = [...tabs];
-  copy[previewTabIndex] = nextTab;
-  return copy;
 }
 
 interface StatefulEditorHost extends EditorHost {
@@ -774,68 +650,23 @@ function copyEditorHostState(
   (targetHost as StatefulEditorHost).setDirty?.(dirty);
 }
 
-function isSameEditorState(left: EditorState, right: EditorState): boolean {
-  if (
-    left.activeGroupId !== right.activeGroupId ||
-    left.groups.length !== right.groups.length ||
-    !isSameEditorLayout(left.layout, right.layout)
-  ) {
-    return false;
-  }
-
-  return left.groups.every((group, index) => {
-    const other = right.groups[index];
-    if (!other) {
-      return false;
-    }
-
-    if (group.id !== other.id || group.activeTabId !== other.activeTabId) {
-      return false;
-    }
-
-    if (group.tabs.length !== other.tabs.length) {
-      return false;
-    }
-
-    return group.tabs.every((tab, tabIndex) => {
-      const otherTab = other.tabs[tabIndex];
-      if (!otherTab) {
-        return false;
-      }
-
-      return (
-        tab.id === otherTab.id &&
-        tab.editorId === otherTab.editorId &&
-        tab.resourceUri === otherTab.resourceUri &&
-        tab.title === otherTab.title &&
-        tab.icon === otherTab.icon &&
-        tab.dirty === otherTab.dirty &&
-        tab.preview === otherTab.preview &&
-        tab.pinned === otherTab.pinned
-      );
-    });
-  });
+function isWorkspaceFileResourceUri(resourceUri: string): boolean {
+  return resourceUri.startsWith('workspace://file/');
 }
 
-function isSameEditorLayout(left: EditorLayoutNode, right: EditorLayoutNode): boolean {
-  if (left.type !== right.type) {
-    return false;
+function markResourceMissing(tab: EditorTabState): EditorTabState {
+  return {
+    ...tab,
+    dirty: false,
+    resourceMissing: true,
+  };
+}
+
+function clearResourceMissing(tab: EditorTabState): EditorTabState {
+  if (!tab.resourceMissing) {
+    return tab;
   }
 
-  if (left.type === 'group' && right.type === 'group') {
-    return left.groupId === right.groupId;
-  }
-
-  if (left.type === 'split' && right.type === 'split') {
-    return (
-      left.direction === right.direction &&
-      left.children.length === right.children.length &&
-      left.children.every((child, index) => {
-        const otherChild = right.children[index];
-        return otherChild ? isSameEditorLayout(child, otherChild) : false;
-      })
-    );
-  }
-
-  return false;
+  const { resourceMissing: _resourceMissing, ...rest } = tab;
+  return rest;
 }

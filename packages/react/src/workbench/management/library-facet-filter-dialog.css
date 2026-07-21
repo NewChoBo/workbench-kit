@@ -1,0 +1,8 @@
+.ui-library-facet-filter-dialog {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  padding: var(--shell-spacing-panel-md, 12px);
+}

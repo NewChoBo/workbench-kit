@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@workbench-kit/workspace": "workspace:*",
     "@workbench-kit/workbench-extension-sdk": "workspace:*"
   },
   "description": "Built-in text editor contribution with workspace file resolver and editor host factory."

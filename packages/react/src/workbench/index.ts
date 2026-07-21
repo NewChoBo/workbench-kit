@@ -1,6 +1,22 @@
 export { ActivityBar } from './ActivityBar';
 export type { ActivityBarItem, ActivityBarProps } from './ActivityBar';
 export {
+  EDITOR_TAB_DRAG_DATA_TYPE,
+  getEditorTabDropPosition,
+  isEditorTabMoveNoop,
+  isEditorTabsScrollerEventTarget,
+  normalizeEditorTabReorderIndex,
+  readEditorTabDragPayload,
+  resolveEditorTabDropTarget,
+  resolveEditorTabStripDropTarget,
+} from './editor-tabs-dnd';
+export type { EditorTabDragPayload, EditorTabDropTarget } from './editor-tabs-dnd';
+export { useEditorTabsStripDnd } from './useEditorTabsStripDnd';
+export type {
+  UseEditorTabsStripDndOptions,
+  UseEditorTabsStripDndResult,
+} from './useEditorTabsStripDnd';
+export {
   WorkbenchArtifactModeControls,
   WorkbenchArtifactPreview,
   WorkbenchArtifactShell,
@@ -34,12 +50,38 @@ export {
   filterWorkbenchCommands,
   getNextWorkbenchCommandIndex,
   getWorkbenchCommandExecutionLabel,
+  getWorkbenchCommandExecutionPolicyLabel,
   getWorkbenchCommandStatusLabel,
   groupWorkbenchCommands,
+  isWorkbenchCommandExecutionPolicy,
   isWorkbenchCommandRunnable,
+  resolveWorkbenchCommandExecutionPolicy,
 } from './CommandPalette';
 export { WorkbenchMarkdownPreview } from './MarkdownPreview';
 export type { WorkbenchMarkdownPreviewProps } from './MarkdownPreview';
+export {
+  ChatCommandProposalCard,
+  ChatConversationBar,
+  ChatHistoryMenu,
+  ChatPanel,
+  ChatRenameDialog,
+  DEFAULT_RUNTIME_UNMOUNT_CANCELLABLE_STATUSES,
+  defaultWorkbenchChatConversationLabels,
+  shouldCancelRuntimeOnUnmount,
+  useCancelRuntimeOnUnmount,
+} from './chat';
+export type {
+  ChatCommandProposal,
+  ChatCommandProposalCardProps,
+  ChatCommandProposalStatus,
+  ChatConversationBarProps,
+  ChatHistoryMenuProps,
+  ChatPanelProps,
+  ChatRenameDialogProps,
+  UseCancelRuntimeOnUnmountOptions,
+  WorkbenchChatConversation,
+  WorkbenchChatConversationLabels,
+} from './chat';
 export { getSlashCommandQuery, isSlashCommandInput, parseSlashCommand } from './chat/slashCommand';
 export { useSlashCommandSuggest } from './chat/useSlashCommandSuggest';
 export type {
@@ -55,6 +97,74 @@ export {
 } from './keyboard';
 export { resolveWorkbenchTheme, useResolvedWorkbenchTheme } from './theme';
 export type { ResolvedWorkbenchTheme } from './theme';
+export { useDeferredWorkbenchMount } from './useDeferredWorkbenchMount';
+export type { UseDeferredWorkbenchMountOptions } from './useDeferredWorkbenchMount';
+export {
+  DEFAULT_WORKBENCH_HARD_RESET_CONFIRM_MESSAGE,
+  DEFAULT_WORKBENCH_STORAGE_PREFIX,
+  performWorkbenchHardReset,
+} from './hardReset';
+export type { WorkbenchHardResetOptions } from './hardReset';
+export {
+  applyWorkbenchAppearance,
+  applyWorkbenchThemeAttributes,
+  applyWorkbenchThemeProviderAttributes,
+  DARK_THEME_PRESET_OPTIONS,
+  DARK_THEME_PRESET_MANIFEST,
+  DEFAULT_DARK_THEME_PRESET,
+  DEFAULT_LIGHT_THEME_PRESET,
+  isDarkThemePresetId,
+  isLightThemePresetId,
+  LIGHT_THEME_PRESET_OPTIONS,
+  LIGHT_THEME_PRESET_MANIFEST,
+  resolveActiveThemePreset,
+  resolveWorkbenchThemeProviderAttributes,
+  WORKBENCH_COLOR_SCHEME_OPTIONS,
+} from './themePresets';
+export {
+  WORKBENCH_APPEARANCE_FIELD_DESCRIPTIONS,
+  WORKBENCH_APPEARANCE_FIELD_LABELS,
+} from './appearanceLabels';
+export type {
+  DarkThemePresetId,
+  LightThemePresetId,
+  ResolveWorkbenchThemeProviderAttributesInput,
+  ThemePresetId,
+  WorkbenchAppearanceSettings,
+  WorkbenchColorSchemePreference,
+  WorkbenchThemeDocumentAttributes,
+  WorkbenchThemeProviderAttributes,
+  WorkbenchThemePresetOption,
+  WorkbenchThemePresetManifestEntry,
+  WorkbenchThemePresetSelection,
+} from './themePresets';
+export {
+  applyWorkbenchShellAttributes,
+  DEFAULT_SHELL_PRESET,
+  isShellPresetId,
+  SHELL_PRESET_MANIFEST,
+  SHELL_PRESET_OPTIONS,
+} from './shellPresets';
+export type {
+  ShellPresetId,
+  WorkbenchShellPresetManifestEntry,
+  WorkbenchShellPresetOption,
+} from './shellPresets';
+export { WorkbenchThemeProvider } from './WorkbenchThemeProvider';
+export type { WorkbenchThemeProviderProps } from './WorkbenchThemeProvider';
+export { useWorkbenchAppearanceDocumentSync } from './useWorkbenchAppearanceDocumentSync';
+export { WorkbenchPlatformProvider, useWorkbenchHostPlatform } from './WorkbenchPlatformContext';
+export type { WorkbenchPlatformProviderProps } from './WorkbenchPlatformContext';
+export {
+  resolveWorkbenchHostPlatform,
+  resolveWorkbenchWindowChromeDataAttributes,
+} from './workbenchPlatformChrome';
+export type { WorkbenchHostPlatform, WorkbenchWindowChromeMode } from './workbenchPlatformChrome';
+export {
+  WorkbenchWindowChromeControls,
+  shouldUseDarwinPlatformChrome,
+} from './WorkbenchWindowChromeControls';
+export type { WorkbenchWindowChromeControlsProps } from './WorkbenchWindowChromeControls';
 export {
   WorkbenchShortcutCommandBridge,
   getWorkbenchShortcutCommandBindings,
@@ -68,6 +178,7 @@ export type {
   WorkbenchCommandDescriptor,
   WorkbenchCommandDescriptorOverrides,
   WorkbenchCommandExecution,
+  WorkbenchCommandExecutionPolicy,
   WorkbenchCommandFeedback,
   WorkbenchCommandFilterInput,
   WorkbenchCommandGroup,
@@ -84,6 +195,7 @@ export type {
   WorkbenchCommandStatus,
   WorkbenchCommandSuggestProps,
 } from './CommandPalette';
+export type { ResolveWorkbenchCommandExecutionPolicyInput } from './CommandPalette';
 export type {
   UseWorkbenchShortcutCommandsOptions,
   WorkbenchShortcutCommandBinding,
@@ -136,6 +248,16 @@ export type {
   WorkbenchSignUpSubmitContext,
   WorkbenchSignUpViewProps,
 } from './auth';
+export { WorkbenchBootstrapGate, WorkbenchBootstrapView, useWorkbenchBootstrap } from './bootstrap';
+export type {
+  WorkbenchBootstrapController,
+  WorkbenchBootstrapGateProps,
+  WorkbenchBootstrapRunStatus,
+  WorkbenchBootstrapTaskDefinition,
+  WorkbenchBootstrapTaskStatus,
+  WorkbenchBootstrapTaskViewModel,
+  WorkbenchBootstrapViewProps,
+} from './bootstrap';
 export {
   WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
@@ -144,6 +266,9 @@ export {
   WORKBENCH_EDITOR_DELETE_COMMAND_ID,
   WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
   WORKBENCH_EDITOR_SAVE_COMMAND_ID,
+  WORKBENCH_EDITOR_SPLIT_DOWN_COMMAND_ID,
+  WORKBENCH_EDITOR_SPLIT_RIGHT_COMMAND_ID,
+  WORKBENCH_EDITOR_TOGGLE_PINNED_COMMAND_ID,
   WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
   WORKBENCH_COMMAND_SURFACE_EDITOR,
   WORKBENCH_COMMAND_SURFACE_SEARCH,
@@ -164,6 +289,7 @@ export {
   createWorkbenchEditorCommands,
   createWorkbenchEditorTabListMenuEntries,
   createWorkbenchEditorTabMenuEntries,
+  createWorkbenchStandaloneEditorTabMenuEntries,
   createWorkbenchSearchResultCommands,
   createWorkbenchSearchResultMenuEntries,
   createWorkbenchShellCommands,
@@ -206,7 +332,7 @@ export {
 } from './status';
 export type { WorkbenchStatus, WorkbenchStatusDescriptor, WorkbenchStatusVariant } from './status';
 export { SplitView } from './SplitView';
-export type { SplitViewProps } from './SplitView';
+export type { SplitViewLayoutMode, SplitViewProps } from './SplitView';
 export { StatusBar, StatusBarItem, StatusBarSection } from './StatusBar';
 export type {
   StatusBarItemModel,
@@ -251,12 +377,47 @@ export {
   WorkbenchStructuredDataTextArrayInput,
   buildWorkbenchStructuredDataTableFromRecords,
   formatWorkbenchStructuredDataTableCell,
+  useWorkbenchSettingsCommit,
 } from './settings';
+export {
+  AccountManagementPanel,
+  CommandManagementPanel,
+  ExtensionManagementPanel,
+  ExtensionManagementSidebar,
+  KeybindingManagementPanel,
+  ManagementPanelEmptyState,
+  ManagementPanelFrame,
+  ManagementPanelRunState,
+  ManagementPanelSummary,
+  ManagementPanelToolbar,
+  buildCommandManagementGroups,
+  countCommandManagementEntries,
+  filterCommandManagementGroups,
+  useManagementPanelQuery,
+} from './management';
+export type {
+  AccountManagementEntry,
+  AccountManagementEntryStatus,
+  AccountManagementPanelProps,
+  CommandManagementEntry,
+  CommandManagementEntryStatus,
+  CommandManagementGroup,
+  CommandManagementPanelProps,
+  CommandManagementRunState,
+  ExtensionCatalogBrowseEntry,
+  ExtensionManagementEntry,
+  ExtensionManagementPanelProps,
+  ExtensionManagementSidebarProps,
+  KeybindingManagementPanelProps,
+  ManagementPanelFrameProps,
+  ManagementPanelToolbarProps,
+} from './management';
 export type {
   WorkbenchPanelRegionProps,
   WorkbenchNavigationPanelProps,
   WorkbenchSectionedPanelItem,
   WorkbenchSectionedPanelProps,
+  WorkbenchSectionedPanelScrollSpyAxis,
   WorkbenchSchemaFormCancelContext,
   WorkbenchSchemaFormCheckboxField,
   WorkbenchSchemaFormErrors,
@@ -269,11 +430,17 @@ export type {
   WorkbenchSchemaFormOption,
   WorkbenchSchemaFormProps,
   WorkbenchSchemaFormSelectField,
+  WorkbenchSchemaFormSettingSpec,
+  WorkbenchSchemaFormSettingValueType,
+  WorkbenchSchemaFormSettingsCategoryInput,
   WorkbenchSchemaFormSubmitContext,
   WorkbenchSchemaFormTextField,
   WorkbenchSchemaFormValues,
   WorkbenchSettingsCategory,
+  WorkbenchSettingsCommitContextValue,
+  WorkbenchSettingsCommitMode,
   WorkbenchSettingsModalProps,
+  WorkbenchSettingsPreferenceChange,
   WorkbenchSettingsScope,
   WorkbenchStructuredDataFieldType,
   WorkbenchStructuredDataFieldValue,
@@ -320,13 +487,18 @@ export {
   appendWorkbenchStructuredDataSchemaTableRow,
   asWorkbenchStructuredDataRecord,
   booleanWorkbenchStructuredDataSchemaFieldValue,
+  buildWorkbenchStructuredDataSchemaSelectOptions,
   coerceWorkbenchStructuredDataFormFieldValue,
   coerceWorkbenchStructuredDataSchemaFieldValue,
   coerceWorkbenchSchemaFormFieldValue,
+  coerceWorkbenchSchemaFormSettingDefaultValue,
   createWorkbenchStructuredDataSchemaDocumentEmptyRow,
   createWorkbenchStructuredDataSchemaEmptyRow,
   createWorkbenchStructuredDataSchemaDocumentSampleData,
   createWorkbenchStructuredDataSchemaFallbackSection,
+  createWorkbenchSchemaFormFieldFromSettingSpec,
+  createWorkbenchSchemaFormFieldsFromSettingSpecs,
+  createWorkbenchSchemaFormSettingsCategory,
   formatWorkbenchStructuredDataSchemaValue,
   formatWorkbenchStructuredDataSchemaLabel,
   getWorkbenchStructuredDataFormErrors,
@@ -355,6 +527,8 @@ export {
   getWorkbenchStructuredDataSchemaTablePath,
   getWorkbenchStructuredDataSchemaTableRowKey,
   getWorkbenchStructuredDataSchemaTableRows,
+  hasWorkbenchStructuredDataSchemaSelectOptions,
+  isWorkbenchStructuredDataSchemaColorField,
   getWorkbenchStructuredDataValue,
   getWorkbenchSchemaFormErrors,
   getWorkbenchSchemaFormFieldDefaultValue,
@@ -366,17 +540,69 @@ export {
   removeWorkbenchStructuredDataSchemaTableRow,
   setWorkbenchStructuredDataPathOrRootValue,
   setWorkbenchStructuredDataValue,
+  shouldUseWorkbenchStructuredDataSchemaRadioControl,
   slugWorkbenchStructuredDataSchemaAnchor,
   stringifyWorkbenchStructuredDataSchemaFieldValue,
+  validateWorkbenchStructuredDataSchemaFieldValue,
 } from './settings';
 export { WorkbenchShell } from './WorkbenchShell';
 export type { WorkbenchShellProps } from './WorkbenchShell';
+export { WorkbenchViewEditor } from './WorkbenchViewEditor';
+export type {
+  WorkbenchViewEditorDataAttributes,
+  WorkbenchViewEditorEmptyState,
+  WorkbenchViewEditorEmptyStateProps,
+  WorkbenchViewEditorEmptyStateSurfaceProps,
+  WorkbenchViewEditorProps,
+} from './WorkbenchViewEditor';
+export { WorkbenchEditorTabs } from './WorkbenchEditorTabs';
+export type { WorkbenchEditorTabsProps } from './WorkbenchEditorTabs';
+export {
+  createWorkbenchStandaloneEditorTabCommandContext,
+  createWorkbenchStandaloneEditorTabContextMenuItems,
+  isWorkbenchEditorTabClosable,
+} from './editorTabContextMenu';
+export type {
+  CreateWorkbenchStandaloneEditorTabCommandContextInput,
+  WorkbenchStandaloneEditorTabLike,
+} from './editorTabContextMenu';
+export { useWorkbenchEditorTabContextMenu } from './useWorkbenchEditorTabContextMenu';
+export type {
+  UseWorkbenchEditorTabContextMenuOptions,
+  UseWorkbenchEditorTabContextMenuResult,
+} from './useWorkbenchEditorTabContextMenu';
+export { WorkbenchViewSidebar } from './WorkbenchViewSidebar';
+export type { WorkbenchViewSidebarItem, WorkbenchViewSidebarProps } from './WorkbenchViewSidebar';
+export {
+  WorkbenchDesktopTitleBar,
+  WorkbenchDesktopWindowControls,
+} from './WorkbenchDesktopTitleBar';
+export type {
+  WorkbenchDesktopTitleBarProps,
+  WorkbenchDesktopWindowControlsProps,
+} from './WorkbenchDesktopTitleBar';
 export { WorkbenchStandaloneShell } from './WorkbenchStandaloneShell';
 export { WorkbenchCanvasShell } from './WorkbenchCanvasShell';
 export type {
+  WorkbenchActivityLifecycleCallbackMap,
+  WorkbenchActivityLifecycleCallbacks,
+  WorkbenchActivityLifecycleEvent,
+  WorkbenchPrimarySidebarLifecycle,
+  WorkbenchPrimarySidebarLifecycleCallbacks,
+  WorkbenchPrimarySidebarLifecycleReason,
   WorkbenchStandaloneShellContext,
   WorkbenchStandaloneShellProps,
 } from './WorkbenchStandaloneShell';
+export {
+  createWorkbenchStandaloneShellStateSnapshot,
+  useWorkbenchStandaloneShellContext,
+} from './workbenchStandaloneShellReactContext';
+export type {
+  WorkbenchStandaloneShellStateChange,
+  WorkbenchStandaloneShellStateChangeKind,
+  WorkbenchStandaloneShellStateSnapshot,
+} from './workbenchStandaloneShellReactContext';
+export { useWorkbenchStandaloneShellStateSync } from './useWorkbenchStandaloneShellStateSync';
 export type { WorkbenchCanvasShellProps } from './WorkbenchCanvasShell';
 export type {
   WorkbenchActivityChangeEvent,
@@ -396,7 +622,6 @@ export type {
 export { StructuredArtifactEditor } from './StructuredArtifactEditor';
 export type { StructuredArtifactEditorProps } from './StructuredArtifactEditor';
 export type {
-  JsonWorkbenchDocument,
   WorkbenchDocument,
   WorkbenchDocumentAdapter,
   WorkbenchDocumentMeta,

@@ -1,0 +1,59 @@
+import type { ReactNode } from 'react';
+import {
+  resolveActiveThemePreset,
+  useResolvedWorkbenchTheme,
+  WorkbenchThemeProvider,
+  type WorkbenchAppearanceSettings,
+} from '@workbench-kit/react/workbench';
+import { WorkbenchAuthGate } from '@workbench-kit/react/workbench/auth';
+
+import { SampleAccountProvider, useSampleAuth } from './useSampleAuth.js';
+
+export interface SampleAuthShellProps {
+  appearance: WorkbenchAppearanceSettings;
+  children: ReactNode;
+}
+
+export function SampleAuthShell({ appearance, children }: SampleAuthShellProps) {
+  const auth = useSampleAuth();
+  const resolvedTheme = useResolvedWorkbenchTheme(appearance.themePreference);
+  const activePreset = resolveActiveThemePreset(resolvedTheme, appearance);
+
+  return (
+    <WorkbenchThemeProvider
+      className="ui-workbench-host-root"
+      syncDocumentElement
+      theme={resolvedTheme}
+      themePreset={activePreset}
+      themePreference={appearance.themePreference}
+      shellPreset={appearance.shellPreset}
+    >
+      <SampleAccountProvider value={auth}>
+        <WorkbenchAuthGate
+          authStatus={auth.status}
+          loadingLabel="Checking sample session..."
+          loginViewProps={{
+            busy: auth.busy,
+            busyLabel: 'Signing in...',
+            defaultIdentifier: '',
+            error: auth.error,
+            footerBrand: 'Workbench Kit Sample',
+            identifierLabel: 'Username',
+            identifierPlaceholder: 'tester or basic',
+            loginLabel: 'Sign in to Workbench Sample',
+            passwordLabel: 'Password',
+            passwordPlaceholder: 'Enter password',
+            productName: 'Workbench Sample',
+            requireCredentials: true,
+            statusLabel:
+              'Administrator: tester/tester. Basic: basic/basic (Explorer and Chat activity items only).',
+            submitLabel: 'Sign in',
+            onSubmit: auth.signIn,
+          }}
+        >
+          {children}
+        </WorkbenchAuthGate>
+      </SampleAccountProvider>
+    </WorkbenchThemeProvider>
+  );
+}

@@ -1,5 +1,6 @@
 import type { WidgetAssetCatalogContract, WidgetPlacementAsset } from '@workbench-kit/contracts';
 
+import { jdwNodeToGenericWidget, parseJsonWidgetData, type JsonWidgetNode } from './jdw-node.js';
 import {
   discoverWidgetAssetPackages,
   formatWidgetAssetManifest,
@@ -11,6 +12,7 @@ import {
   resolveWidgetAssetPackageFiles,
 } from './widget-asset-package.js';
 import { createWidgetAssetCatalog } from './widget-placement-asset.js';
+import type { GenericWidget } from './widget-tree.js';
 
 export interface WidgetAssetDocument {
   readonly source: string;
@@ -27,6 +29,13 @@ export interface CreateWidgetAssetDocumentOptions {
   readonly path?: string;
   readonly workspaceFiles?: readonly WorkspaceAssetFileRef[];
 }
+
+export interface CreateWidgetAssetCatalogFromJdwDocumentsOptions {
+  /** Skip these workspace paths (typically the document currently being edited). */
+  readonly excludePaths?: readonly string[] | undefined;
+}
+
+const JDW_DOCUMENT_EXTENSION = '.jdw.json';
 
 function formatJsonParseError(source: string): string | null {
   const normalized = source.trim();
@@ -121,6 +130,94 @@ export function createWidgetAssetCatalogFromWorkspaceFiles(
     }
 
     assets.push(parsed.value);
+  }
+
+  return createWidgetAssetCatalog(assets);
+}
+
+export function isJdwWorkspaceDocumentPath(path: string): boolean {
+  const normalized = path.replace(/\\/g, '/').toLowerCase();
+  return normalized.endsWith(JDW_DOCUMENT_EXTENSION) && !normalized.endsWith('.jdw.schema.json');
+}
+
+function jdwDocumentLabel(path: string): string {
+  const normalized = path.replace(/\\/g, '/');
+  const base = normalized.slice(normalized.lastIndexOf('/') + 1);
+  return base.endsWith(JDW_DOCUMENT_EXTENSION)
+    ? base.slice(0, -JDW_DOCUMENT_EXTENSION.length)
+    : base;
+}
+
+function jdwDocumentCategory(path: string): string {
+  const normalized = path.replace(/\\/g, '/').toLowerCase();
+  if (normalized.includes('/parts/')) {
+    return 'parts';
+  }
+  if (normalized.includes('/composed/')) {
+    return 'composed';
+  }
+  return 'documents';
+}
+
+function inferDocumentAssetKind(widget: GenericWidget): 'leaf' | 'container' | 'template' {
+  if (Array.isArray(widget.children) || widget.child !== undefined) {
+    return 'template';
+  }
+  return 'leaf';
+}
+
+function stripSchemaField(node: JsonWidgetNode): JsonWidgetNode {
+  if (!('$schema' in node.args)) {
+    return node;
+  }
+  const { $schema: _schema, ...args } = node.args;
+  return { ...node, args };
+}
+
+/**
+ * Build a palette catalog from workspace `*.jdw.json` documents so authors can
+ * browse and place other JDW files (for example `jdw/parts/*`) like coding imports.
+ */
+export function createWidgetAssetCatalogFromJdwDocuments(
+  files: readonly WorkspaceAssetFileRef[],
+  options: CreateWidgetAssetCatalogFromJdwDocumentsOptions = {},
+): WidgetAssetCatalogContract {
+  const excluded = new Set((options.excludePaths ?? []).map((path) => path.replace(/\\/g, '/')));
+  const assets: WidgetPlacementAsset[] = [];
+
+  for (const file of files) {
+    const path = file.path.replace(/\\/g, '/');
+    if (!isJdwWorkspaceDocumentPath(path) || excluded.has(path)) {
+      continue;
+    }
+
+    // Authored ref sources are for Code review; prefer drawable documents in the palette.
+    if (path.toLowerCase().endsWith('.refs.jdw.json')) {
+      continue;
+    }
+
+    const parsed = parseJsonWidgetData(file.content);
+    if (parsed.parseError !== null || parsed.value === null) {
+      continue;
+    }
+
+    // Skip pure ref roots — they are not drawable until expanded.
+    if (parsed.value.type === 'ref') {
+      continue;
+    }
+
+    const content = jdwNodeToGenericWidget(stripSchemaField(parsed.value));
+    assets.push({
+      id: `jdw-doc:${path}`,
+      label: jdwDocumentLabel(path),
+      description: `Workspace JDW · ${path}`,
+      category: jdwDocumentCategory(path),
+      kind: inferDocumentAssetKind(content),
+      placementPolicy: 'preserve-internal-layout',
+      icon: 'codicon-file',
+      packagePath: path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : path,
+      content,
+    });
   }
 
   return createWidgetAssetCatalog(assets);

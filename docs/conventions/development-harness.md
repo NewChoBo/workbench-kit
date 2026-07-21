@@ -11,14 +11,29 @@ lockfile updates.
 
 ## Validation Lanes
 
-| Changed surface                      | Minimum validation                             | Extended validation            |
-| ------------------------------------ | ---------------------------------------------- | ------------------------------ |
-| Workspace, package exports, lockfile | `pnpm validate`                                | Public-boundary search         |
-| `packages/tokens` CSS variables      | `pnpm validate`                                | Storybook visual check         |
-| `packages/react` primitives          | `pnpm --filter @workbench-kit/react typecheck` | `pnpm validate`, browser smoke |
-| Storybook config or stories          | `pnpm build:storybook`                         | Browser smoke                  |
-| Lint/format config                   | `pnpm lint && pnpm format:check`               | `pnpm validate`                |
-| README and conventions               | Manual docs review                             | Public-boundary search         |
+| Changed surface                         | Minimum validation                             | Extended validation                          |
+| --------------------------------------- | ---------------------------------------------- | -------------------------------------------- |
+| Workspace, package exports, lockfile    | `pnpm validate`                                | Public-boundary search                       |
+| `packages/tokens` CSS variables         | `pnpm validate`                                | Storybook visual check                       |
+| `packages/react` primitives             | `pnpm --filter @workbench-kit/react typecheck` | `pnpm validate`, browser smoke               |
+| `examples/workbench-sample` UI behavior | `pnpm --filter workbench-sample typecheck`     | `pnpm validate:ui`                           |
+| Storybook config or stories             | `pnpm validate:ui`                             | `pnpm validate:full`                         |
+| Lint/format config                      | `pnpm lint && pnpm format:check`               | `pnpm validate`                              |
+| README and conventions                  | Manual docs review                             | `pnpm exec prettier --check <touched-files>` |
+
+## Changed-Package Matrix (inner loop)
+
+Use package-scoped commands during frequent iteration. Reserve `pnpm validate:fast`
+for cross-package slices and `pnpm validate` / `pnpm validate:full` for merge or
+release closeout.
+
+| Package / area                                             | Typecheck                                  | Focused tests                                                                  |
+| ---------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| `@workbench-kit/base`, `platform`                          | `pnpm typecheck:foundation`                | `pnpm exec vitest run packages/base packages/platform`                         |
+| `@workbench-kit/workbench-core`, `shell-react`, extensions | `pnpm typecheck:workbench`                 | `pnpm exec vitest run packages/workbench-core packages/shell-react extensions` |
+| `@workbench-kit/jdw`, `react`, `jdw-editor`                | `pnpm typecheck:jdw`                       | `pnpm test:widget-tree` or targeted `vitest run packages/react/src/...`        |
+| `examples/workbench-sample`                                | `pnpm --filter workbench-sample typecheck` | `pnpm --filter workbench-sample build`                                         |
+| Public exports / publish metadata                          | `pnpm check:public-exports`                | `pnpm publish:packages:local:dry-run`                                          |
 
 ## UI Smoke
 
@@ -28,7 +43,15 @@ For UI changes, verify the result in a real browser whenever practical.
 - Do text, inputs, and buttons stay inside their parent containers?
 - Do dialogs, menus, and form controls have accessible names?
 - Do basic interactions such as click, check, select, and close work?
-- Do Storybook fixtures avoid private product knowledge and internal sample data?
+- For Storybook integration stories, does the flow render the `pnpm dev` sample
+  app path and assert visible behavior through required play tests?
+- For Storybook component stories, is the story limited to a focused public
+  component contract rather than a duplicate shell or broad gallery?
+- For Storybook component stories, does the container match production placement
+  such as sidebar panel, editor/main area, settings/form surface, or overlay
+  trigger surface?
+- Do Storybook scenarios use only sample-owned data and avoid private runtime
+  details, real server addresses, and external product names?
 
 ## Reporting
 

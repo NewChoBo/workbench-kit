@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://workbench-kit.dev/schemas/builtins/icon.json",
+  "title": "IconWidget",
+  "type": "object",
+  "required": ["type", "args"],
+  "properties": {
+    "type": { "const": "icon" },
+    "id": { "type": "string" },
+    "listen": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "args": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "color": { "type": "string" },
+        "size": {
+          "oneOf": [
+            { "type": "number", "minimum": 1 },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

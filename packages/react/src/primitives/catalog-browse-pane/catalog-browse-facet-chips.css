@@ -1,0 +1,8 @@
+.ui-catalog-browse-facet-chips {
+  align-items: center;
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-width: 0;
+}

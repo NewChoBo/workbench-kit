@@ -47,7 +47,7 @@ describe('validateWidgetAssetPackage', () => {
     expect(result.issues.some((issue) => issue.path.includes('columns'))).toBe(true);
   });
 
-  it('flags leaf assets that do not use text content', () => {
+  it('flags leaf assets that do not use a leaf content type', () => {
     const result = validateWidgetAssetPackage({
       packagePath: 'src/widgets/assets/bad-leaf',
       manifestSource: formatWidgetAssetManifest({
@@ -61,5 +61,41 @@ describe('validateWidgetAssetPackage', () => {
 
     expect(result.valid).toBe(false);
     expect(result.issues.some((issue) => issue.path === 'kind')).toBe(true);
+  });
+
+  it('accepts image leaf assets', () => {
+    const result = validateWidgetAssetPackage({
+      packagePath: 'src/widgets/assets/photo',
+      manifestSource: formatWidgetAssetManifest({
+        id: 'content.photo',
+        label: 'Photo',
+        category: 'content',
+        kind: 'leaf',
+      }),
+      contentSource: formatWidgetAssetContent({
+        type: 'image',
+        src: 'https://example.com/photo.png',
+      }),
+    });
+
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts stack container assets', () => {
+    const result = validateWidgetAssetPackage({
+      packagePath: 'src/widgets/assets/overlay',
+      manifestSource: formatWidgetAssetManifest({
+        id: 'layout.overlay',
+        label: 'Overlay',
+        category: 'layout',
+        kind: 'container',
+      }),
+      contentSource: formatWidgetAssetContent({
+        type: 'stack',
+        children: [{ type: 'text', text: 'Overlay' }],
+      }),
+    });
+
+    expect(result.valid).toBe(true);
   });
 });

@@ -1,0 +1,7 @@
+.ui-workbench-editor-viewport {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}

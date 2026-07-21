@@ -1,0 +1,17 @@
+.ui-workbench-canvas-guide-block {
+  position: absolute;
+  left: var(--ui-workbench-canvas-guide-block-x, 0);
+  top: var(--ui-workbench-canvas-guide-block-y, 0);
+  z-index: var(--ui-workbench-canvas-guide-block-z-index, 5);
+  width: var(--ui-workbench-canvas-guide-block-width, auto);
+  height: var(--ui-workbench-canvas-guide-block-height, auto);
+  pointer-events: none;
+}
+
+.ui-workbench-canvas-guide-block[data-tone='padding'] {
+  background: var(--ui-workbench-canvas-guide-padding, rgba(255, 82, 130, 0.18));
+}
+
+.ui-workbench-canvas-guide-block[data-tone='gap'] {
+  background: var(--ui-workbench-canvas-guide-gap, rgba(100, 180, 255, 0.18));
+}

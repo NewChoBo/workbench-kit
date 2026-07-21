@@ -24,7 +24,7 @@
   "peerDependencies": {
     "react": "^19.0.0"
   },
-  "description": "React editor UI for JDW screen specs and live compile preview pipelines.",
+  "description": "JDW template-to-WidgetTreeLab sample flow with deprecated Screen Spec compatibility editors.",
   "publishConfig": {
     "access": "public",
     "tag": "prototype",

@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
+import './shell/confirmation-flow.css';
 import { Modal } from '../modal/Modal';
-import { Button } from '../primitives/Button';
+import { Button } from '../primitives/button';
 import { cx } from '../utils/cx';
 import {
   getWorkbenchStatusLabel,
@@ -12,10 +13,7 @@ import {
 export type WorkbenchConfirmationVariant = 'default' | 'danger';
 
 export type WorkbenchConfirmationSideEffect =
-  | 'external-write'
-  | 'none'
-  | 'workspace-write'
-  | (string & {});
+  'external-write' | 'none' | 'workspace-write' | (string & {});
 
 export type WorkbenchConfirmationReason = 'cancel' | 'close' | 'confirm';
 

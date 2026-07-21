@@ -1,3 +1,5 @@
+import './select.css';
+import './select.app.css';
 import {
   useCallback,
   useEffect,
@@ -10,7 +12,7 @@ import {
   type KeyboardEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import type { ControlWidth } from '../TextInput';
+import type { ControlWidth } from '../text-input/TextInput';
 import { cxCodicon } from '../../utils/codicon';
 import { cx } from '../../utils/cx';
 import { getEnabledOptionIndex, parseOptions } from './options';
@@ -20,6 +22,19 @@ import type { OverlayPosition, ParsedOption } from './types';
 export interface SelectProps extends ComponentPropsWithRef<'select'> {
   controlWidth?: ControlWidth;
   onValueChange?: (value: string, event: ChangeEvent<HTMLSelectElement>) => void;
+}
+
+/**
+ * Portaling straight to `document.body` escapes the workbench root (`[data-theme-preset]`),
+ * which re-declares theme tokens locally and shadows whatever a contributed theme overrides
+ * on `document.documentElement`. Prefer themed hosts / overlay roots when present.
+ */
+function resolvePortalContainer(trigger: HTMLElement | null): HTMLElement {
+  return (
+    trigger?.closest<HTMLElement>(
+      '[data-theme-preset], [data-theme], .ui-workbench-host-root, .ide-workbench-overlays',
+    ) ?? document.body
+  );
 }
 
 export function Select({
@@ -216,7 +231,10 @@ export function Select({
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => selectOption(option)}
             >
-              {option.label}
+              <span className="ui-select__option-check" aria-hidden="true">
+                {isSelected ? <i className={cxCodicon('check')} /> : null}
+              </span>
+              <span className="ui-select__option-label">{option.label}</span>
             </li>
           );
         })}
@@ -247,7 +265,7 @@ export function Select({
         </span>
       </button>
 
-      {listbox ? createPortal(listbox, document.body) : null}
+      {listbox ? createPortal(listbox, resolvePortalContainer(triggerRef.current)) : null}
 
       <select
         ref={nativeSelectRef}

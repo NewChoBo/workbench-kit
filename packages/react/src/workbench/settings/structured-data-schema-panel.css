@@ -104,19 +104,19 @@
   gap: 6px;
 }
 
-.ui-workbench-sectioned-panel.ui-workbench-structured-data-schema-panel--fill {
+.ui-workbench-structured-data-schema-panel--fill {
   min-height: 0;
   height: 100%;
 }
 
 .ui-workbench-sectioned-panel.ui-workbench-structured-data-schema-panel--fill
   .ui-workbench-sectioned-panel__nav-links {
-  padding-top: 12px;
+  padding-top: 0;
 }
 
-.ui-workbench-sectioned-panel.ui-workbench-structured-data-schema-panel--fill
+.ui-workbench-structured-data-schema-panel--fill
   .ui-workbench-structured-data-schema-panel__section:first-child {
-  padding-top: 12px;
+  padding-top: 30px;
 }
 
 .ui-workbench-structured-data-schema-panel__section {
@@ -126,13 +126,15 @@
   scroll-margin-top: 12px;
 }
 
-.ui-workbench-sectioned-panel__scroll
+.ui-workbench-structured-data-schema-panel
+  :is(.ui-workbench-section-tab-panel__scroll, .ui-workbench-sectioned-panel__scroll)
   .ui-workbench-structured-data-schema-panel__section
   + .ui-workbench-structured-data-schema-panel__section {
   border-top: 1px solid var(--color-border);
 }
 
-.ui-workbench-sectioned-panel__scroll
+.ui-workbench-structured-data-schema-panel
+  :is(.ui-workbench-section-tab-panel__scroll, .ui-workbench-sectioned-panel__scroll)
   .ui-workbench-structured-data-schema-panel__section:last-child {
   padding-bottom: 16px;
 }
@@ -229,20 +231,18 @@
   line-height: 1.45;
 }
 
-.ui-workbench-sectioned-panel.ui-workbench-structured-data-schema-panel[data-readonly='true']
+.ui-workbench-structured-data-schema-panel[data-readonly='true']
   :is(.ui-input, .ui-select, .ui-textarea),
-.ui-workbench-sectioned-panel.ui-workbench-structured-data-schema-panel
+.ui-workbench-structured-data-schema-panel
   :is(.ui-input:disabled, .ui-select:disabled, .ui-textarea:disabled),
-.ui-workbench-sectioned-panel.ui-workbench-structured-data-schema-panel
-  :is(.ui-input[readonly], .ui-textarea[readonly]) {
+.ui-workbench-structured-data-schema-panel :is(.ui-input[readonly], .ui-textarea[readonly]) {
   color: var(--color-text-muted);
   background: var(--color-surface);
 }
 
-.ui-workbench-sectioned-panel.ui-workbench-structured-data-schema-panel[data-readonly='true']
+.ui-workbench-structured-data-schema-panel[data-readonly='true']
   :is(.ui-input, .ui-select, .ui-textarea):focus,
-.ui-workbench-sectioned-panel.ui-workbench-structured-data-schema-panel
-  :is(.ui-input[readonly], .ui-textarea[readonly]):focus {
+.ui-workbench-structured-data-schema-panel :is(.ui-input[readonly], .ui-textarea[readonly]):focus {
   border-color: var(--color-border);
   outline: none;
 }
@@ -269,13 +269,12 @@
   display: grid;
   grid-auto-columns: minmax(124px, 1fr);
   grid-auto-flow: column;
-  align-items: start;
-  border-bottom: 1px solid var(--color-border);
+  align-items: stretch;
   color: var(--color-text-muted);
   font-size: 12px;
 }
 
-.ui-workbench-structured-data-schema-panel__table-row:last-child {
+.ui-workbench-structured-data-schema-panel__table-row:last-child > span {
   border-bottom: 0;
 }
 
@@ -286,19 +285,25 @@
   color: var(--color-text);
   background: var(--color-surface);
   font-weight: 600;
-  box-shadow: 0 1px 0 var(--color-border);
 }
 
 .ui-workbench-structured-data-schema-panel__table-row--head > span {
+  min-height: 36px;
+  align-content: center;
   color: var(--color-text-subtle);
 }
 
 .ui-workbench-structured-data-schema-panel__table-row > span {
+  box-sizing: border-box;
   min-width: 0;
-  display: flex;
-  align-items: center;
+  min-height: 44px;
+  display: grid;
+  align-content: start;
+  gap: 5px;
   padding: 8px;
   border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
 }
 
 .ui-workbench-structured-data-schema-panel__table-row > span:last-child {
@@ -308,8 +313,17 @@
 .ui-workbench-structured-data-schema-panel__table-row
   > span
   :is(.ui-input, .ui-select, .ui-textarea) {
+  width: 100%;
   min-height: 26px;
   font-size: 12px;
+}
+
+.ui-workbench-structured-data-schema-panel__table-row
+  > span
+  :is(.ui-workbench-structured-data-form__error, .ui-workbench-structured-data-form__warning) {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .ui-workbench-structured-data-schema-panel__table-actions {

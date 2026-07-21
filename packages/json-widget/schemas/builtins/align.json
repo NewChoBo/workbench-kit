@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://workbench-kit.dev/schemas/builtins/align.json",
+  "title": "AlignWidget",
+  "type": "object",
+  "required": ["type", "args"],
+  "properties": {
+    "type": { "const": "align" },
+    "id": { "type": "string" },
+    "listen": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "args": {
+      "type": "object",
+      "properties": {
+        "alignment": { "type": "string" },
+        "child": { "$ref": "../jdw-node.jdw.schema.json" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

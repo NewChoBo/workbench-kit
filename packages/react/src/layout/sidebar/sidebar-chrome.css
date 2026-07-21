@@ -1,0 +1,95 @@
+.ui-sidebar-toolbar {
+  min-width: 0;
+}
+
+.ui-sidebar-action-icon-bar {
+  flex-shrink: 0;
+  gap: var(--shell-spacing-inline-xs, 2px);
+}
+
+.ui-sidebar-view-tab-strip.ui-sidebar-action-icon-bar,
+.ui-sidebar-view-tab-strip .ui-sidebar-toolbar {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.ui-sidebar-action-icon-bar__item {
+  display: inline-flex;
+}
+
+.ui-sidebar-action-icon-bar__item-host {
+  position: relative;
+  display: inline-flex;
+}
+
+.ui-sidebar-action-icon-bar__item-host--reorderable {
+  cursor: grab;
+}
+
+.ui-sidebar-action-icon-bar__item-host--reorderable:active {
+  cursor: grabbing;
+}
+
+.ui-sidebar-action-icon-bar__item-host--dragging {
+  opacity: 0.45;
+}
+
+.ui-sidebar-action-icon-bar__button {
+  position: relative;
+}
+
+.ui-sidebar-action-icon-bar__drop-indicator {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  z-index: 2;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--vscode-focusBorder, var(--color-focus-border, var(--color-accent, #2f81f7)));
+  pointer-events: none;
+}
+
+.ui-sidebar-action-icon-bar__drop-indicator--before {
+  left: 0;
+  transform: translateX(-50%);
+}
+
+.ui-sidebar-action-icon-bar__drop-indicator--after {
+  right: 0;
+  transform: translateX(50%);
+}
+
+.ui-sidebar-action-icon-bar__button--active.ui-icon-button {
+  color: var(--shell-color-text, var(--color-text));
+  background: var(--shell-color-list-active, var(--color-list-active, rgba(255, 255, 255, 0.08)));
+}
+
+.ui-view-empty-state {
+  margin: 0;
+  padding: 12px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Sole empty/loading content should sit in the panel viewport center, not top-left. */
+.ui-sidebar-view__body:has(> .ui-panel-centered-state:only-child),
+.ui-panel-body:has(> .ui-panel-centered-state:only-child) {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-sidebar-view__body > .ui-panel-centered-state:only-child,
+.ui-panel-body > .ui-panel-centered-state:only-child {
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
+.ui-sidebar-view__body > .ui-view-empty-state:only-child,
+.ui-panel-body > .ui-view-empty-state:only-child,
+.ui-sidebar-view__body > .ui-panel-loading:only-child,
+.ui-panel-body > .ui-panel-loading:only-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}

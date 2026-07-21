@@ -16,6 +16,7 @@ describe('workbench status model', () => {
     expect(getWorkbenchStatusLabel('running')).toBe('Running');
     expect(getWorkbenchStatusLabel('completed')).toBe('Completed');
     expect(getWorkbenchStatusLabel('failed')).toBe('Failed');
+    expect(getWorkbenchStatusLabel('warning')).toBe('Warning');
     expect(getWorkbenchStatusLabel('waiting')).toBe('Waiting');
     expect(getWorkbenchStatusLabel('cancelled')).toBe('Cancelled');
     expect(getWorkbenchStatusLabel('disabled')).toBe('Disabled');
@@ -24,6 +25,7 @@ describe('workbench status model', () => {
     expect(getWorkbenchStatusVariant('running')).toBe('accent');
     expect(getWorkbenchStatusVariant('completed')).toBe('success');
     expect(getWorkbenchStatusVariant('failed')).toBe('danger');
+    expect(getWorkbenchStatusVariant('warning')).toBe('warning');
     expect(getWorkbenchStatusVariant('waiting')).toBe('warning');
     expect(getWorkbenchStatusVariant('unavailable')).toBe('muted');
   });
@@ -57,6 +59,7 @@ describe('workbench status model', () => {
     expect(workbenchStatusFromLifecycleStatus('idle')).toBe('idle');
     expect(workbenchStatusFromLifecycleStatus('running')).toBe('running');
     expect(workbenchStatusFromLifecycleStatus('cancelled')).toBe('cancelled');
+    expect(workbenchStatusFromLifecycleStatus('warning')).toBe('warning');
     expect(workbenchStatusFromLifecycleStatus('pending')).toBe('waiting');
     expect(workbenchStatusFromLifecycleStatus('success')).toBe('completed');
     expect(workbenchStatusFromLifecycleStatus('done')).toBe('completed');

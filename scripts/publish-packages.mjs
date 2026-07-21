@@ -4,17 +4,28 @@ import { execFileSync } from 'node:child_process';
 import {
   NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
+  buildNpmPublishArgs,
+  clearNpmRegistryAuth,
+  isTrustedPublisherAvailable,
+  npmViewExists,
   packageDirectoryNameForPackageName,
+  parsePublishMode,
   requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
 
 const root = process.cwd();
-const dryRun = process.argv.includes('--dry-run') || process.env.DRY_RUN === 'true';
+const { dryRun, updatesOnly } = parsePublishMode();
 const distTag = process.env.NPM_DIST_TAG || 'prototype';
 const registry = NPM_REGISTRY;
 const packDir = path.join(root, '.npm-pack');
 
 requireTrustedPublisherAuth('publish');
+
+if (updatesOnly) {
+  console.log(
+    '[publish] CI updates-only mode: publish NPM_PUBLISH_ORDER packages that already exist on npm.',
+  );
+}
 
 const publishOrder = NPM_PUBLISH_ORDER;
 
@@ -30,16 +41,45 @@ for (const packageName of publishOrder) {
     continue;
   }
 
-  const tarball = packPackage(pkg.name);
-  const args = ['publish', tarball, '--access', 'public', '--tag', distTag, '--registry', registry];
-  if (dryRun) {
-    args.push('--dry-run');
+  if (updatesOnly && !npmViewExists(pkg.name)) {
+    console.log(
+      `skip ${spec}: package not on npm yet (publish locally with publish-packages-local.mjs)`,
+    );
+    continue;
   }
+
+  const tarball = packPackage(pkg.name);
+  const args = buildNpmPublishArgs({ tarball, distTag, dryRun });
 
   console.log(
     `${dryRun ? 'dry-run publish' : 'publish'} ${spec} with tag ${distTag} via trusted publishing`,
   );
-  run('npm', args, { stdio: 'inherit' });
+  try {
+    publishWithTrustedAuth(args);
+  } catch (error) {
+    throw publishFailureError(pkg.name, error);
+  }
+}
+
+function publishWithTrustedAuth(args) {
+  const maxAttempts = isTrustedPublisherAvailable() ? 2 : 1;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    clearNpmRegistryAuth();
+
+    try {
+      run('npm', args, { stdio: 'inherit' });
+      return;
+    } catch (error) {
+      if (attempt >= maxAttempts) {
+        throw error;
+      }
+
+      console.warn(
+        `[publish] npm publish failed (attempt ${attempt}/${maxAttempts}); clearing auth and retrying OIDC...`,
+      );
+    }
+  }
 }
 
 function packageDirFor(packageName) {
@@ -57,14 +97,21 @@ function packPackage(packageName) {
 }
 
 function isPublished(spec) {
-  try {
-    run('npm', ['view', spec, 'version', '--registry', registry], {
-      stdio: 'ignore',
-    });
-    return true;
-  } catch {
-    return false;
-  }
+  return npmViewExists(spec, registry);
+}
+
+function publishFailureError(packageName, error) {
+  return new Error(
+    [
+      `npm publish failed for ${packageName}.`,
+      'Trusted publishing checklist:',
+      '- npm Trusted Publisher: NewChoBo / workbench-kit / publish.yml (Environment blank).',
+      '- First release of a package must use: node scripts/publish-packages-local.mjs',
+      '- After local first publish, register npm Trusted Publisher for NewChoBo/workbench-kit.',
+      error instanceof Error ? error.message : String(error),
+    ].join('\n'),
+    { cause: error },
+  );
 }
 
 function resetDirectory(target) {
@@ -82,6 +129,8 @@ function readJson(filePath) {
 }
 
 function run(command, args, options = {}) {
+  clearNpmRegistryAuth();
+
   if (process.platform === 'win32') {
     return execFileSync(
       process.env.ComSpec || 'cmd.exe',

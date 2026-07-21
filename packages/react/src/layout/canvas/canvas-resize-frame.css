@@ -1,0 +1,9 @@
+.ui-workbench-canvas-resize-frame {
+  position: absolute;
+  left: var(--ui-workbench-canvas-resize-frame-x, 0);
+  top: var(--ui-workbench-canvas-resize-frame-y, 0);
+  z-index: var(--ui-workbench-canvas-resize-frame-z-index, 2);
+  width: var(--ui-workbench-canvas-resize-frame-width, auto);
+  height: var(--ui-workbench-canvas-resize-frame-height, auto);
+  pointer-events: none;
+}

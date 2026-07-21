@@ -1,0 +1,10 @@
+/* Layout feature styles — grouped by TSX owner area */
+@import './panel/index.css';
+@import './sidebar/index.css';
+@import './tree/index.css';
+@import './canvas/index.css';
+@import './property/index.css';
+@import './editor/index.css';
+@import './fullscreen/index.css';
+@import './layout-base/index.css';
+@import './media/index.css';

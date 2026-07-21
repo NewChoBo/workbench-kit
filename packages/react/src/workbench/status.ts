@@ -3,18 +3,14 @@ export type WorkbenchStatus =
   | 'running'
   | 'completed'
   | 'failed'
+  | 'warning'
   | 'waiting'
   | 'cancelled'
   | 'disabled'
   | 'unavailable';
 
 export type WorkbenchStatusVariant =
-  | 'accent'
-  | 'danger'
-  | 'muted'
-  | 'neutral'
-  | 'success'
-  | 'warning';
+  'accent' | 'danger' | 'muted' | 'neutral' | 'success' | 'warning';
 
 export interface WorkbenchStatusDescriptor {
   busy: boolean;
@@ -57,6 +53,14 @@ const workbenchStatusDescriptors: Record<WorkbenchStatus, WorkbenchStatusDescrip
     status: 'failed',
     unavailable: false,
     variant: 'danger',
+  },
+  warning: {
+    busy: false,
+    disabled: false,
+    label: 'Warning',
+    status: 'warning',
+    unavailable: false,
+    variant: 'warning',
   },
   idle: {
     busy: false,

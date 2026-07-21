@@ -1,0 +1,25 @@
+.ui-workbench-sidebar-section-stack {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ui-workbench-sidebar-section-stack__expanded {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ui-workbench-sidebar-section-stack__collapsed {
+  flex-shrink: 0;
+}
+
+.ui-workbench-sidebar-section-stack__collapsed .ui-workbench-sidebar-section--collapsed-dock {
+  padding: 0;
+}
+
+.ui-workbench-sidebar-section-stack__collapsed
+  .ui-workbench-sidebar-section--collapsed-dock
+  + .ui-workbench-sidebar-section--collapsed-dock {
+  padding-top: 0;
+}

@@ -1,4 +1,4 @@
-import type * as Monaco from 'monaco-editor';
+import type { WorkbenchMonaco } from '@workbench-kit/monaco';
 import jdwNodeSchemaJson from '@workbench-kit/jdw/schemas/jdw-node.jdw.schema.json';
 import widgetDocumentSchemaJson from '@workbench-kit/jdw/schemas/widget-document.v1.jdw.schema.json';
 import { formatWorkspaceResourceUri, type WorkspaceFile } from '@workbench-kit/workspace';
@@ -62,7 +62,7 @@ export function getWorkspaceEditorJsonDiagnosticsSchemas(
 }
 
 export function configureWorkspaceEditorJsonDiagnostics(
-  monacoInstance: typeof Monaco,
+  monacoInstance: WorkbenchMonaco,
   file: WorkspaceFile,
 ): void {
   const schemas = getWorkspaceEditorJsonDiagnosticsSchemas(file);

@@ -1,9 +1,5 @@
 export type ServiceFailureCode =
-  | 'invalid-path'
-  | 'not-found'
-  | 'path-conflict'
-  | 'stale-update'
-  | 'unknown';
+  'invalid-path' | 'not-found' | 'path-conflict' | 'stale-update' | 'unknown';
 
 export interface ServiceFailure {
   code: ServiceFailureCode;

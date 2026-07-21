@@ -1,11 +1,6 @@
 export type PluginEnablementState = 'disabled' | 'enabled';
 export type PluginLifecycleState =
-  | 'disabled'
-  | 'failed'
-  | 'installed'
-  | 'installing'
-  | 'uninstalled'
-  | 'updating';
+  'disabled' | 'failed' | 'installed' | 'installing' | 'uninstalled' | 'updating';
 export type PluginValue<TContext, TValue> = TValue | ((context: TContext) => TValue);
 export type PluginPredicate<TContext> = (context: TContext) => boolean;
 export type PluginLifecycleFailureCode =
@@ -61,8 +56,7 @@ export interface PluginMenuCommandEntry<TContext = void> {
 }
 
 export type PluginMenuEntry<TContext = void> =
-  | PluginMenuSeparatorEntry
-  | PluginMenuCommandEntry<TContext>;
+  PluginMenuSeparatorEntry | PluginMenuCommandEntry<TContext>;
 
 export interface PluginCommandContribution<TContext = void> {
   commands: readonly PluginCommandDefinition<TContext>[];

@@ -1,8 +1,9 @@
 # Widget Layout, Schema, and Render Foundation Plan
 
-> **Status:** Planning (2026-06-10, revised)  
-> **Branch context:** `feature/widget-with-schema` — widget studio shell, canonical `*.jdw.json` documents, legacy `*.widget.json` compatibility, asset packages (`manifest.json` + `content.json`)
-> **Priority:** Schema + JSON model + layout/render engine **before** editor UX expansion.  
+> **Status:** Planning (2026-06-10, revised 2026-06-25)
+>
+> **Branch context:** `feature/widget-with-schema` — widget studio shell, canonical `*.jdw.json` documents, asset packages (`manifest.json` + `content.json`)
+> **Priority:** Schema + JSON model + layout/render engine **before** editor UX expansion.
 > **Wire format decision (locked):** [json_dynamic_widget](https://pub.dev/documentation/json_dynamic_widget/latest/) **v7 envelope** is the **only** on-disk widget node format. No flat `type`+props dual-read. Early-stage codebase migrates in place.
 
 Companion docs:
@@ -21,12 +22,12 @@ External references (wire format + patterns, not runtime import):
 
 ## 1. Goal
 
-Establish a **JSON-first foundation** aligned with **JDW wire format**, implemented as **json_dynamic_widget for React** (TypeScript registry + recursive render; **no Dart/Flutter runtime in the kit**):
+Establish a **JSON-first foundation** aligned with **JDW wire format**, implemented as a **self-owned React JDW pipeline** (TypeScript registry + headless layout + CSS render backend; **no Dart/Flutter runtime in the kit**):
 
-1. **Widget documents** (`*.jdw.json`; legacy `*.widget.json` read compatibility) — root `JsonWidgetNode` tree in JDW v7 envelope.
+1. **Widget documents** (`*.jdw.json`) — root `JsonWidgetNode` tree in JDW v7 envelope.
 2. **Widget assets** (directory packages) — `manifest.json` catalog metadata + `content.json` JDW subtree.
 3. **Layout engine** — headless measure/layout for registered layout types (`row`, `column`, `expanded`, kit `grid`, …).
-4. **Render pipeline** — `parse → validate → renderJsonWidget` (React); layout rects optional for canvas mode.
+4. **Render pipeline** — `parse → validate → layoutWidget → renderJdwWithLayout` (React); layout rects are the primary preview/canvas geometry source.
 
 **Editor chrome** (`WidgetTreeLab`, palette, inspector, DnD) is explicitly **out of scope** until Phases 1–3 below are stable and covered by headless tests + Storybook fixture renders.
 
@@ -44,7 +45,7 @@ Establish a **JSON-first foundation** aligned with **JDW wire format**, implemen
 ## 2. Non-goals (this plan)
 
 - Full playground parity with removed `JsonWidget/Playground` (DnD canvas, zoom toolbar, etc.)
-- tile_paper domain widget types (`tile`, `dataSource`, tile-ref, …)
+- consumer domain widget types (`tile`, `dataSource`, tile-ref, …)
 - Consumer swap (Phase 4 of port-then-replace)
 - Visual asset thumbnails / marketplace UX
 - Persistence, versioning migrations beyond `$schema` version pins
@@ -66,7 +67,7 @@ Every widget node on disk uses this envelope ([JDW v7](https://github.com/peiffe
 
 - `child` and `children` live **inside `args`** (not at the top level).
 - Explicit `null` in `args` is stripped at parse time (JDW behavior); use sentinels only when a builder requires them.
-- `${variable}` expressions in `args` are **Phase 4**; parser may preserve strings unchanged until then.
+- `${variable}` expressions in `args` have first-pass static support through explicit render/preview `values`; exact scalar expressions are schema-allowed, and headless dependency/listen binding analysis feeds source editor warnings plus value-diff preview invalidation candidates, while runtime scheduling remains **Phase 4**.
 
 ### 3.1 Document example
 
@@ -109,7 +110,7 @@ Every widget node on disk uses this envelope ([JDW v7](https://github.com/peiffe
 }
 ```
 
-A `*.jdw.json` file is either a single root node object as above, or `{ "root": <node> }` if we need document-level metadata later (TBD; prefer single root node in v1). Existing `*.widget.json` fixtures are legacy compatibility inputs, not the preferred authoring extension.
+A `*.jdw.json` file is either a single root node object as above, or `{ "root": <node> }` if we need document-level metadata later (TBD; prefer single root node in v1). `*.widget.json` fixtures are not supported in the current authoring path.
 
 ### 3.2 Layout mental model (JDW types)
 
@@ -225,24 +226,22 @@ Asset files are validated in **two passes**:
 1. Against `widget-asset.v1` (metadata + `content` present).
 2. `content` subtree against registered type schemas (same as document nodes).
 
-> **Doc alignment (2026-06-14):** Package names in §5–§8 below mix **proposed**
-> targets with current tree names. For what exists today, see
-> [next-slice-plan.md § Code truth](./next-slice-plan.md#code-truth-snapshot).
-> Current preview: `@workbench-kit/react/jdw` (`JdwPreview`). Current editor:
-> `@workbench-kit/react/widget-tree` (`WidgetTreeLab`). There is no
-> `@workbench-kit/react/json-widget` export.
+> **Doc alignment (2026-06-24):** The active React JDW surface is
+> `@workbench-kit/react/jdw` (`JdwPreview`, `renderJdw`, `renderJdwWithLayout`) and
+> `@workbench-kit/react/widget-tree` (`WidgetTreeLab`). Removed/proposed paths such as
+> `@workbench-kit/react/json-widget`, `@workbench-kit/react/json-dynamic-widget`, and
+> `JsonWidgetPreview` are not current targets.
 
 ## 5. Package boundaries
 
-| Package                                    | Responsibility                                                                                                         |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `@workbench-kit/contracts`                 | `JsonWidgetNode` shape; component/asset catalog contracts; `placementPolicy`; MIME constants                           |
-| `@workbench-kit/jdw`                       | `parseJsonWidgetData`; validate; patch ops on **normalized internal tree**; layout engine; component parse (`content`) |
-| `@workbench-kit/react/jdw`                 | **Current** — `JdwPreview`, CSS layout render backend                                                                  |
-| `@workbench-kit/react/widget-tree`         | **Current** — `WidgetTreeLab`, inspector, source editor; patch UI targets JDW nodes                                    |
-| `@workbench-kit/react/json-dynamic-widget` | **Proposed** — `JsonWidgetRegistry`; `renderJsonWidget`; builtin React builders; `createDefaultRegistry()`             |
-| `@workbench-kit/react/json-widget`         | **Removed** — was a thin preview export; use `jdw` or `widget-tree`                                                    |
-| `@workbench-kit/adapters`                  | Demo fixtures rewritten to JDW v7 + plugin_components assets                                                           |
+| Package                            | Responsibility                                                                                                         |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `@workbench-kit/contracts`         | `JsonWidgetNode` shape; component/asset catalog contracts; `placementPolicy`; MIME constants                           |
+| `@workbench-kit/jdw`               | `parseJsonWidgetData`; validate; patch ops on **normalized internal tree**; layout engine; component parse (`content`) |
+| `@workbench-kit/react/jdw`         | **Current** — `JdwPreview`, `renderJdw`, builtin leaf registry, CSS layout render backend                              |
+| `@workbench-kit/react/widget-tree` | **Current** — `WidgetTreeLab`, inspector, source editor; patch UI targets JDW nodes                                    |
+| `@workbench-kit/react/json-widget` | **Removed** — was a thin preview export; use `jdw` or `widget-tree`                                                    |
+| `@workbench-kit/adapters`          | Demo fixtures rewritten to JDW v7 + plugin_components assets                                                           |
 
 Kit stays domain-neutral per [kit-design-principles.md](./kit-design-principles.md). No launchpad/tile/Steam vocabulary in schema or layout code.
 
@@ -302,13 +301,13 @@ function layoutWidget(
 
 ### 7.2 Implementation phases inside layout
 
-| Step | Scope                                                | Existing code                                      |
-| ---- | ---------------------------------------------------- | -------------------------------------------------- |
-| L1   | `row` / `column` flex + gap + padding + child `flex` | Extend `layout/linear.ts`                          |
-| L2   | `mainAxisAlignment` / `crossAxisAlignment` on parent | New                                                |
-| L3   | `grid` cell rects                                    | `layout/grid.ts` — integrate under `layoutWidget`  |
-| L4   | `stack` absolute rects                               | `layout/stack.ts` — integrate under `layoutWidget` |
-| L5   | Leaf intrinsic sizing hooks via registry             | New optional `measure` capability on definitions   |
+| Step | Scope                                                                 | Existing code                                      |
+| ---- | --------------------------------------------------------------------- | -------------------------------------------------- |
+| L1   | `row` / `column` flex + gap + padding + child `flex` / `flexible.fit` | Extend `layout/linear.ts`                          |
+| L2   | `mainAxisAlignment` / `crossAxisAlignment` on parent                  | New                                                |
+| L3   | `grid` cell rects                                                     | `layout/grid.ts` — integrate under `layoutWidget`  |
+| L4   | `stack` absolute rects                                                | `layout/stack.ts` — integrate under `layoutWidget` |
+| L5   | Leaf intrinsic sizing hooks via registry                              | `WidgetTypeDefinition.measure` for static leaves   |
 
 ### 7.3 Principle
 
@@ -319,18 +318,19 @@ function layoutWidget(
 ```text
 source string
   → parseJsonWidgetData (JDW envelope)
-  → validateJsonWidgetData (per-type schemas + registry)
-  → renderJsonWidget(node, { registry, values? })   ← recursive React builders
-       └─ optional: layoutWidget + CanvasRenderBackend for design surface
+  → validateJsonWidgetData / validateJsonWidgetNode (per-type schemas + registry)
+  → resolveJsonWidgetValues(node, values?)
+  → layoutWidget(genericWidget)
+  → renderJdwWithLayout(node, { registry, values? })   ← Strategy A preview backend
 ```
 
-| Component                 | Owner                                      | Notes                                   |
-| ------------------------- | ------------------------------------------ | --------------------------------------- |
-| `JdwPreview`              | `@workbench-kit/react/jdw` (**current**)   | Parse + optional registry render        |
-| `renderJsonWidget`        | `@workbench-kit/react/json-dynamic-widget` | **Proposed** — JDW `data.build()` equiv |
-| `JsonWidgetPreview`       | —                                          | **Removed** — use `JdwPreview`          |
-| Builtin registry builders | `@workbench-kit/react/json-dynamic-widget` | Replaces ad-hoc demo render helpers     |
-| Asset preview             | `@workbench-kit/react/widget-asset`        | Render `content` via `renderJsonWidget` |
+| Component                 | Owner                                    | Notes                                   |
+| ------------------------- | ---------------------------------------- | --------------------------------------- |
+| `JdwPreview`              | `@workbench-kit/react/jdw` (**current**) | Parse + optional registry render        |
+| `renderJdw`               | `@workbench-kit/react/jdw`               | Parse → validate → layout-backed render |
+| `renderJdwWithLayout`     | `@workbench-kit/react/jdw`               | JDW node → headless rects → CSS backend |
+| Builtin registry builders | `@workbench-kit/react/jdw`               | Leaf-only static builders               |
+| Asset preview             | `@workbench-kit/react/widget-asset`      | Render `content` via `JdwPreview`       |
 
 ## 9. JSON Schema deliverables
 
@@ -342,12 +342,13 @@ source string
 
 ### 9.1 Document schema additions (vs today)
 
-Current `widget-json-schema.ts` defines container types but **not**:
+Current `widget-json-schema.ts` now defines root JDW placement hints and parent-scoped child item schemas for the built-in layout containers:
 
-- Child placement properties (`flex`, `align`, `col`, `row`, `colSpan`, `rowSpan`, stack insets)
-- Parent alignment (`mainAxisAlignment`, `crossAxisAlignment`)
-- Distinct `children.items` per parent type (linear vs grid vs stack)
-- `box` / `stack` / `list-view` core definitions (headless code supports; schema does not)
+- Root schema `JdwPlacementArgs` covers child placement properties (`width`, `height`, `flex`, `flexFit`, `align`, `col`, `row`, `colSpan`, `rowSpan`, stack insets)
+- Parent alignment (`mainAxisAlignment`, `crossAxisAlignment`) is enum-backed in root and row/column per-type schemas
+- Row/column `children.items` use `JdwLinearChildNode`; grid uses `JdwGridChildNode`; stack uses `JdwStackChildNode`
+- `validateJsonWidgetData` now validates linear child placement, grid placement minimums, and parent alignment enums
+- Remaining gap: any future `list-view` core definition or deeper single-child wrapper schema specialization
 
 ### 9.2 Asset schema (new)
 
@@ -370,10 +371,13 @@ Current `widget-json-schema.ts` defines container types but **not**:
 
 - [x] Vendored or referenced schemas for `row`, `column`, `text`, `expanded` under `packages/json-widget/schemas/`
 - [x] Kit extension schema `grid.json`
+- [x] Per-type schemas for current profile builtins/extensions: `flexible`, `stack`, wrappers, static leaves, `box`, and `button`
+- [x] Root JDW schema exposes parent-scoped placement args and row/column alignment enums
+- [x] `pnpm check:jdw-schemas` guards profile/schema drift in `validate:static`
 - [x] `widget-asset-manifest.v1.jdw.schema.json` + package `content.json`
 - [x] `validateJsonWidgetData` + asset two-pass tests
-- [x] `@workbench-kit/react/json-dynamic-widget`: `JsonWidgetRegistry`, `renderJsonWidget`, builtins (`row`, `column`, `text`, `expanded`)
-- [x] `JsonWidgetPreview` uses `renderJsonWidget`
+- [x] `@workbench-kit/react/jdw`: builtin registry, `renderJdw`, `renderJdwWithLayout`, and `JdwPreview`
+- [x] `JdwPreview` uses the Strategy A layout backend
 - [x] Storybook: **JDW/Fixtures** with JDW JSON files only
 
 **Editor UX may lag** until Phase 4; fixtures and preview must work first.
@@ -393,19 +397,34 @@ Current `widget-json-schema.ts` defines container types but **not**:
 
 **Exit criteria:**
 
-- [x] `layoutWidget` implements row/column (L1–L2)
+- [x] `layoutWidget` implements row/column (L1–L2), including `expanded`/`flexible` fit metadata
 - [x] Grid/stack integrated (L3–L4) with rect snapshot tests
-- [ ] `CssRenderBackend` applies `layoutWidget` rects in preview
-- [ ] `JsonWidgetPreview` uses pipeline (parse → validate → layout → render)
+- [x] Registry `measure` hooks feed intrinsic static leaf sizes into linear and wrapper layout (L5 partial)
+- [x] `CssRenderBackend` applies `layoutWidget` rects in preview
+- [x] `JdwPreview` / `renderJdw` use pipeline (parse → validate → layout → render)
 - [x] Storybook story: **JDW/Layout** — layout rect fixtures
 
 ### Phase 4 — Editor integration (deferred)
 
 **Exit criteria:**
 
-- [ ] `WidgetTreeLab` insert path uses `materializeWidgetAsset` + normalize
-- [ ] Inspector edits trigger validate + optional reflow (e.g. grid `columns` change)
-- [ ] DnD reparent uses normalize on commit
+- [x] `WidgetTreeLab` insert path uses `materializeWidgetPlacementAsset` + normalize for click insert and outline asset drop
+- [x] Headless preview/canvas mapping base: layout hit-test → `WidgetPath`, stack/grid drag → `WidgetPatch`
+- [x] React preview/canvas first wire-in: `WidgetTreeLab` wraps `JdwPreview` in `WorkbenchPreviewCanvas` and commits selected stack/grid drag through `WidgetPatch`
+- [x] Stack 8-way resize mapping: canvas resize handles commit edge-preserving placement updates through `WidgetPatch`
+- [x] Grid `columns` inspector edit reflows direct child `col`/`row` placement through `WidgetPatch`
+- [x] Canvas drag reparent maps selected-frame drops into other containers through `reparent-widget`
+- [x] Grid drag-slot collision reflows direct child placement without duplicate occupied cells
+- [x] Grid resize span reflow maps selected resize handles to `colSpan`/`rowSpan` and reflows occupied cells
+- [x] Row/column linear resize maps selected resize handles to fixed width/height/align through parent-scoped patches
+- [x] Wrapper/single-child resize maps selected wrapper child handles to fixed width/height patches
+- [x] B1 placement schema parity maps layout placement args into root schema and semantic validation
+- [x] B1 per-parent `children.items` specialization maps row/column, grid, and stack children to parent-specific child node definitions
+- [x] Asset-to-preview drop resolves nearest valid canvas container and inserts through normalized materialization
+- [x] Asset preview drop marker shows parent type, insert index, next path, and row/column/grid append target before commit
+- [x] Preview hover chrome maps rendered JDW nodes back to transient canvas frames without JSON mutation
+- [x] Preview focus chrome maps focused JDW preview nodes back to canvas frames and keyboard selection without JSON mutation
+- [ ] Broader inspector edits trigger optional reflow beyond grid columns
 - [ ] Promote layout fixture stories to `storybook-play-required` when stable
 
 ## 11. Testing strategy
@@ -422,15 +441,15 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 
 ## 12. Current codebase snapshot
 
-| Area                                                          | Exists                                                  | Gap                                                  |
-| ------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------- |
-| `*.jdw.json` / legacy `*.widget.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer`             | —                                                    |
-| Asset parse                                                   | `parseWidgetAssetPackage`, `validateWidgetAssetPackage` | `schema.json` substitution deferred                  |
-| Document parse                                                | `createWidgetDocument` / `parseJsonWidgetData`          | Semantic placement validation partial                |
-| Patch / tree ops                                              | `applyWidgetPatch` + `normalizeWidgetForParent`         | DnD reparent polish deferred                         |
-| Layout                                                        | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts`     | Preview pipeline integration pending                 |
-| Preview                                                       | `renderJsonWidget`, `JsonWidgetPreview`                 | Layout engine not wired into preview yet             |
-| Template assets                                               | Builtin + custom packages                               | Editor insert uses `materializeWidgetPlacementAsset` |
+| Area                                 | Exists                                                                               | Gap                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------ | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `*.jdw.json` / asset package routing | `createWidgetStudioWorkspaceEditorRenderer`                                          | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Asset parse                          | `parseWidgetAssetPackage`, `validateWidgetAssetPackage`, `resolveWidgetAssetContent` | Lightweight `schema.json` defaults/required + `${}` substitution (JD-2); full AJV deferred                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Document parse                       | `createWidgetDocument` / `parseJsonWidgetData`                                       | Semantic placement validation and parent-specific schema items cover linear/grid/stack placement                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Patch / tree ops                     | `applyWidgetPatch` + `normalizeWidgetForParent`                                      | Outline reorder/reparent and asset drop are wired; headless stack/grid drag + stack 8-way resize + canvas reparent + grid drag-slot collision reflow + grid resize span reflow + row/column linear resize + wrapper-child resize mapping exists; selected React preview/canvas stack/grid drag, stack resize, grid columns reflow, canvas reparent, grid drag-slot reflow, grid resize span reflow, row/column linear resize, wrapper-child resize, asset preview drop, and asset preview drop marker are wired |
+| Layout                               | `layoutWidget` + `grid.ts`, `linear.ts`, `stack.ts`, `estimateWrappedTextSize`       | Registry `measure` wraps text against maxWidth (JD-3); DOM/canvas host metrics still optional later                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Preview                              | `renderJdw`, `JdwPreview`, CSS layout backend                                        | Canvas preview selection, hover chrome, and focus chrome are wired; `listen` invalidation candidates are value-diff driven; scheduler deferred                                                                                                                                                                                                                                                                                                                                                                  |
+| Template assets                      | Builtin + custom packages                                                            | Editor click insert, outline drop, and preview canvas drop use `materializeWidgetPlacementAsset`                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 ## 13. Resolved and open decisions
 
@@ -445,25 +464,43 @@ Keep tests **framework-neutral** in `json-widget`; React tests only for render b
 
 ### Open
 
-| #   | Question                                        | Proposal                                            |
-| --- | ----------------------------------------------- | --------------------------------------------------- |
-| D1  | Grid child `col`/`row` required at rest?        | Normalize on insert/save; validator warns           |
-| D2  | `$schema` URL host                              | `https://workbench-kit.dev/schemas/...` placeholder |
-| D3  | `list-view` / `box` in v1 builtins              | Registry-only unless needed for parity tests        |
-| D4  | Grid columns change reflow                      | Phase 2 `reflowGridChildren`                        |
-| D5  | Document wrapper `{ "root": node }` vs raw node | **Raw root node** for v1                            |
-| D6  | `${var}` / `listen` timeline                    | Phase 4 after static render stable                  |
+| #   | Question                                        | Proposal                                                                                                                                                                            |
+| --- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Grid child `col`/`row` required at rest?        | **Resolved:** validator requires `col`/`row`; `ensureGridChildPlacements` / `normalizeWidgetSubtree` fill missing slots without moving placed siblings                              |
+| D2  | `$schema` URL host                              | `https://workbench-kit.dev/schemas/...` placeholder                                                                                                                                 |
+| D3  | `list-view` / `box` in v1 builtins              | Registry-only unless needed for parity tests                                                                                                                                        |
+| D4  | Grid columns / slot occupancy reflow            | Implemented for direct child order reflow through `reflowGridChildren`; grid drag-slot collision and grid resize span reflow landed; broader occupancy policy remains future polish |
+| D5  | Document wrapper `{ "root": node }` vs raw node | **Raw root node** for v1                                                                                                                                                            |
+| D6  | `${var}` / `listen` timeline                    | `${var}` static values, dependency analysis, editor warnings, and value-diff preview invalidation candidates started; scheduler remains Phase 4                                     |
 
 ## 14. Suggested first PR slice
 
 1. Phase 0: migrate adapter + demo fixtures to JDW v7 JSON.
 2. `parseJsonWidgetData` + tests (envelope, `args.children`, reject flat top-level `children`).
-3. `packages/react/src/json-dynamic-widget/` skeleton: registry + `renderJsonWidget` + `column`/`text` builtins.
-4. `JsonWidgetPreview` → `renderJsonWidget`.
+3. `packages/react/src/jdw/` builtin registry + `renderJdw` + layout-backed preview.
+4. `JdwPreview` → `renderJdwWithLayout`.
 
 ## 15. Changelog
 
-| Date       | Change                                                                                                       |
-| ---------- | ------------------------------------------------------------------------------------------------------------ |
-| 2026-06-10 | Initial plan — dual schema, layout engine first, asset template model                                        |
-| 2026-06-10 | **Locked JDW v7 wire format**; React json-dynamic-widget target; plugin_components assets; Phase 0 migration |
+| Date       | Change                                                                                                                                                                                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-06-25 | Added asset preview drop marker: `WidgetTreeCanvasPreview` now exposes parent type, insert index, next widget path, and row/column/grid append marker before the drop commits JSON                                                                                       |
+| 2026-06-25 | Added B1 per-parent schema specialization: row/column, grid, and stack `children.items` now point at parent-specific child node definitions so Monaco/schema hints stop exposing every placement arg globally                                                            |
+| 2026-06-25 | Added preview focus chrome: rendered JDW preview nodes are keyboard focusable, show transient canvas frames, and route Enter/Space through preview selection without changing document JSON                                                                              |
+| 2026-06-25 | Added preview hover chrome: rendered JDW preview nodes now map back to transient canvas frames without changing selection or document JSON, with React component and required Storybook coverage                                                                         |
+| 2026-06-25 | Added asset-to-preview drop: palette assets dropped on `WidgetTreeCanvasPreview` resolve the nearest valid layout container and insert through the normalized `materializeWidgetPlacementAsset` path with React and required Storybook coverage                          |
+| 2026-06-25 | Added wrapper/single-child resize: selected wrapper child handles commit fixed width/height patches through `WidgetPatch`, with document serialization, React component, and required Storybook coverage                                                                 |
+| 2026-06-25 | Added B1 placement schema parity: root JDW schema now exposes parent-scoped placement args, row/column alignment enums, and validator checks for linear/grid/stack placement values                                                                                      |
+| 2026-06-25 | Added row/column linear resize: selected row/column child resize handles commit parent-scoped fixed width/height/align patches while preserving siblings, with headless, React, and required Storybook coverage                                                          |
+| 2026-06-25 | Added grid resize span reflow: selected grid resize handles commit `colSpan`/`rowSpan` through layout mapping and repack occupied sibling cells with required Storybook coverage                                                                                         |
+| 2026-06-25 | Added grid drag-slot collision reflow: dragging a grid child into an occupied cell replaces the parent grid with non-overlapping direct child `col`/`row` placement and required Storybook coverage                                                                      |
+| 2026-06-25 | Added canvas reparent for selected-frame drags: layout hit-test maps drops into other containers as `reparent-widget`, and `WidgetTreeLab` preserves selection after normalized JDW patch commits                                                                        |
+| 2026-06-25 | Added grid columns reflow for inspector edits: `reflowGridChildren` repacks direct grid children by array order and `WidgetTreeLab` commits it through JDW patches with required Storybook coverage                                                                      |
+| 2026-06-25 | Added stack 8-way resize handle mapping in React canvas; selected stack resize now updates JDW placement edges through `WidgetPatch` with headless all-direction coverage and Storybook required coverage                                                                |
+| 2026-06-25 | Added stack southeast resize mapping and React canvas resize handle commit path; selected stack resize now updates JDW `right`/`bottom` placement through `WidgetPatch` with Storybook required coverage                                                                 |
+| 2026-06-25 | Added React preview/canvas authoring for `WidgetTreeLab`: selected layout frames, stack/grid drag commits, resize/reparent/grid reflow, asset preview drop markers, and drag/reparent live indicators now route through JDW patches and overlay-only preview state       |
+| 2026-06-25 | Added headless layout mapping contract for preview/canvas authoring: layout hit-test to `WidgetPath`, stack/grid drag deltas to `WidgetPatch`, with React canvas wire-in deferred                                                                                        |
+| 2026-06-24 | Added outline asset drag/drop path that materializes palette assets through the same normalized insert pipeline as click placement                                                                                                                                       |
+| 2026-06-23 | Expanded JDW profile schemas, added static schema drift check, implemented `flexible.fit`, added registry measurement hooks, and started explicit `${var}` value resolution/schema allowance plus dependency analysis/editor warnings/value-diff invalidation candidates |
+| 2026-06-10 | Initial plan — dual schema, layout engine first, asset template model                                                                                                                                                                                                    |
+| 2026-06-10 | **Locked JDW v7 wire format**; React JDW target; plugin_components assets; Phase 0 migration                                                                                                                                                                             |

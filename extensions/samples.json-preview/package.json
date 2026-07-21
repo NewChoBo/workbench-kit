@@ -1,0 +1,13 @@
+{
+  "name": "@workbench-kit/extension-samples-json-preview",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@workbench-kit/workbench-extension-sdk": "workspace:*"
+  },
+  "description": "Sample editor extension that routes JSON files to preview mode."
+}

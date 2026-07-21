@@ -1,0 +1,11 @@
+.ui-workbench-canvas-resize-preview {
+  box-sizing: border-box;
+  position: fixed;
+  left: var(--ui-workbench-canvas-resize-preview-x, 0);
+  top: var(--ui-workbench-canvas-resize-preview-y, 0);
+  z-index: var(--ui-workbench-canvas-resize-preview-z-index, 2000);
+  width: var(--ui-workbench-canvas-resize-preview-width, auto);
+  height: var(--ui-workbench-canvas-resize-preview-height, auto);
+  border: 1px dashed var(--vscode-focusBorder, var(--color-focus-border));
+  pointer-events: none;
+}

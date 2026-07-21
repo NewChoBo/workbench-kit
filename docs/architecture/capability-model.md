@@ -24,7 +24,7 @@ Manifest fields are defined in [Extension Dependencies](./extension-dependencies
 | `workbench.auth`          | `WorkbenchAuthProvider`                                  | Host / `builtin.accounts`  |
 | `workbench.editor`        | `EditorResolver` (planned)                               | Host + optional `monaco`   |
 | `workbench.configuration` | `ConfigurationService` (planned)                         | Host + `workbench-config`  |
-| `workbench.views`         | `ViewHost` from `@workbench-kit/workbench-extension-sdk` | `workbench-react`          |
+| `workbench.views`         | `ViewHost` from `@workbench-kit/workbench-extension-sdk` | `shell-react`              |
 
 New capability IDs require an architecture doc update and SDK type export.
 
@@ -42,9 +42,12 @@ has(id): boolean
 
 Resolution order:
 
-1. Host-seeded providers (`ExtensionRegistry` `capabilities` option or shared `CapabilityRegistry`)
-2. Providers registered during extension `activate()` via `context.capabilities.registerProvider`
-3. Extension `capabilities.provides` is manifest metadata only today; runtime registration still uses `registerProvider`
+1. Host providers registered on `ExtensionRegistry.capabilityRegistry` before
+   extension activation
+2. Providers registered during extension `activate()` via
+   `context.capabilities.registerProvider`
+3. Extension `capabilities.provides` is manifest metadata only today; runtime
+   registration still uses `registerProvider`
 
 `ExtensionRegistry.capabilityRegistry` is public so hosts can register built-in providers before extension activation.
 
@@ -74,7 +77,7 @@ Prefer:
 Avoid:
 
 - Extension A importing extension B package directly
-- Extension A importing `workbench-react` internals
+- Extension A importing `shell-react` internals
 
 ## Bulk Migration Impact
 

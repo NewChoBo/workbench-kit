@@ -1,0 +1,18 @@
+.ui-workbench-fill {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+ * Kit default: the trailing child fills remaining space.
+ * Earlier siblings (toolbars, banners, meta) keep intrinsic size.
+ */
+.ui-workbench-fill > *:last-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}

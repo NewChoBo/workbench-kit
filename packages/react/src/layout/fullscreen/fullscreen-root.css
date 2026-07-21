@@ -1,0 +1,11 @@
+.ui-workbench-fullscreen-root {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--vscode-foreground, #f8fafc);
+  background: var(--vscode-editor-background, #111312);
+  font-family: var(--vscode-font-family, var(--font-family, system-ui, sans-serif));
+  outline: none;
+}

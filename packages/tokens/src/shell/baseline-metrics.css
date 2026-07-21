@@ -1,0 +1,55 @@
+/*
+ * Baseline shell metrics for :root and the explicit `default` layout preset.
+ * Other presets in shell/*.css override subsets; do not duplicate this block there.
+ */
+:root,
+[data-shell-preset='default'] {
+  --radius-sm: 6px;
+  --radius-md: 12px;
+
+  --shell-font-size-panel-title: var(--font-size-xs);
+  --shell-font-size-body: var(--font-size-base);
+  --shell-font-size-caption: var(--font-size-xs);
+  --shell-font-size-icon: 14px;
+
+  --shell-radius-panel: var(--radius-sm);
+  --shell-radius-control: var(--radius-sm);
+  --shell-radius-input: var(--radius-sm);
+  --shell-radius-tab: var(--radius-sm);
+  --shell-border-width: 1px;
+
+  --shell-spacing-inline: 8px;
+  --shell-spacing-block: 4px;
+  --shell-spacing-side-bar-inline: 6px;
+  --shell-spacing-side-bar-block: 4px;
+
+  --control-height-xxs: 22px;
+  --control-height-xs: 24px;
+  --control-height-sm: 26px;
+  --control-height-md: 28px;
+  --control-height-lg: 32px;
+  --control-height-xl: 36px;
+  --control-height-2xl: 40px;
+
+  --workbench-header-height: 35px;
+  --workbench-statusbar-height: 24px;
+  --workbench-statusbar-height-compact: 22px;
+  --workbench-settings-tab-height: 34px;
+  --workbench-activity-bar-item-size: 48px;
+
+  /* Panel body spacing — settings content, panel-region scroll, structured forms */
+  --workbench-panel-padding-inline: 24px;
+  --workbench-panel-padding-block-start: 20px;
+  --workbench-panel-padding-block-end: 32px;
+  --workbench-panel-padding-inline-compact: 16px;
+  --workbench-panel-section-gap: 22px;
+
+  --workbench-settings-nav-padding-block: 14px;
+  --workbench-settings-content-padding-inline: var(--workbench-panel-padding-inline);
+  --workbench-settings-content-padding-block-start: var(--workbench-panel-padding-block-start);
+  --workbench-settings-content-padding-block-end: var(--workbench-panel-padding-block-end);
+  --workbench-settings-search-padding-block-start: 14px;
+  --workbench-settings-search-padding-inline: var(--workbench-panel-padding-inline);
+  --workbench-settings-search-padding-block-end: 8px;
+  --workbench-settings-tabs-padding-inline: var(--workbench-panel-padding-inline);
+}

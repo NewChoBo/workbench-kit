@@ -7,7 +7,7 @@ export interface WorkbenchShellInitialState<
   activeActivityId: TActivityId;
   isPrimarySidebarVisible?: boolean;
   isSettingsOpen?: boolean;
-  primarySidebarSizePercent?: number;
+  primarySidebarSizePx?: number;
   settingsCategoryId?: string;
   settingsScopeId?: string;
   settingsSearchValue?: string;
@@ -21,7 +21,7 @@ export interface WorkbenchShellState<
   activeActivityId: TActivityId;
   isPrimarySidebarVisible: boolean;
   isSettingsOpen: boolean;
-  primarySidebarSizePercent: number;
+  primarySidebarSizePx: number;
   settingsCategoryId: string;
   settingsScopeId: string;
   settingsSearchValue: string;
@@ -35,7 +35,7 @@ export type WorkbenchShellAction<
   | { activityId: TActivityId; type: 'activate-activity' }
   | { activityId: TActivityId; type: 'show-activity' }
   | { isOpen: boolean; type: 'set-settings-open' }
-  | { percent: number; type: 'set-primary-sidebar-size' }
+  | { sizePx: number; type: 'set-primary-sidebar-size' }
   | { settingsCategoryId: string; type: 'set-settings-category' }
   | { settingsScopeId: string; type: 'set-settings-scope' }
   | { settingsSearchValue: string; type: 'set-settings-search' }
@@ -53,7 +53,7 @@ export interface UseWorkbenchShellStateResult<
   closeSettings: () => void;
   dispatch: (action: WorkbenchShellAction<TActivityId, TTheme>) => void;
   openSettings: () => void;
-  setPrimarySidebarSizePercent: (percent: number) => void;
+  setPrimarySidebarSizePx: (sizePx: number) => void;
   setPrimarySidebarVisible: (isVisible: boolean) => void;
   setSettingsCategoryId: (settingsCategoryId: string) => void;
   setSettingsOpen: (isOpen: boolean) => void;
@@ -65,23 +65,20 @@ export interface UseWorkbenchShellStateResult<
   togglePrimarySidebar: () => void;
 }
 
-export const DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT = 20;
-const MIN_PRIMARY_SIDEBAR_SIZE_PERCENT = 10;
-const MAX_PRIMARY_SIDEBAR_SIZE_PERCENT = 90;
+export const DEFAULT_PRIMARY_SIDEBAR_SIZE_PX = 260;
+export const MIN_PRIMARY_SIDEBAR_SIZE_PX = 200;
+export const MAX_PRIMARY_SIDEBAR_SIZE_PX = 480;
 
-function clampPrimarySidebarSizePercent(percent: number, fallback: number) {
-  if (!Number.isFinite(percent)) return fallback;
-  return Math.min(
-    MAX_PRIMARY_SIDEBAR_SIZE_PERCENT,
-    Math.max(MIN_PRIMARY_SIDEBAR_SIZE_PERCENT, percent),
-  );
+function clampPrimarySidebarSizePx(sizePx: number, fallback: number) {
+  if (!Number.isFinite(sizePx)) return fallback;
+  return Math.min(MAX_PRIMARY_SIDEBAR_SIZE_PX, Math.max(MIN_PRIMARY_SIDEBAR_SIZE_PX, sizePx));
 }
 
 export function initializeWorkbenchShellState<TActivityId extends string, TTheme extends string>({
   activeActivityId,
   isPrimarySidebarVisible = true,
   isSettingsOpen = false,
-  primarySidebarSizePercent = DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT,
+  primarySidebarSizePx = DEFAULT_PRIMARY_SIDEBAR_SIZE_PX,
   settingsCategoryId = '',
   settingsScopeId = '',
   settingsSearchValue = '',
@@ -91,9 +88,9 @@ export function initializeWorkbenchShellState<TActivityId extends string, TTheme
     activeActivityId,
     isPrimarySidebarVisible,
     isSettingsOpen,
-    primarySidebarSizePercent: clampPrimarySidebarSizePercent(
-      primarySidebarSizePercent,
-      DEFAULT_PRIMARY_SIDEBAR_SIZE_PERCENT,
+    primarySidebarSizePx: clampPrimarySidebarSizePx(
+      primarySidebarSizePx,
+      DEFAULT_PRIMARY_SIDEBAR_SIZE_PX,
     ),
     settingsCategoryId,
     settingsScopeId,
@@ -136,10 +133,7 @@ export function workbenchShellStateReducer<TActivityId extends string, TTheme ex
   if (action.type === 'set-primary-sidebar-size') {
     return {
       ...state,
-      primarySidebarSizePercent: clampPrimarySidebarSizePercent(
-        action.percent,
-        state.primarySidebarSizePercent,
-      ),
+      primarySidebarSizePx: clampPrimarySidebarSizePx(action.sizePx, state.primarySidebarSizePx),
     };
   }
 
@@ -184,8 +178,7 @@ export function useWorkbenchShellState<TActivityId extends string, TTheme extend
     closeSettings: () => dispatch({ type: 'close-settings' }),
     dispatch,
     openSettings: () => dispatch({ type: 'open-settings' }),
-    setPrimarySidebarSizePercent: (percent) =>
-      dispatch({ percent, type: 'set-primary-sidebar-size' }),
+    setPrimarySidebarSizePx: (sizePx) => dispatch({ sizePx, type: 'set-primary-sidebar-size' }),
     setPrimarySidebarVisible: (isVisible) =>
       dispatch({ isVisible, type: 'set-primary-sidebar-visible' }),
     setSettingsCategoryId: (settingsCategoryId) =>

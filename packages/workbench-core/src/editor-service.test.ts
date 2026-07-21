@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { createEditorHostFactoryRegistry } from './host-factory-registry.js';
 import { createEditorResolverRegistry } from './editor-resolver-registry.js';
-import { createEditorService, DEFAULT_EDITOR_GROUP_ID } from './editor-service.js';
+import {
+  createEditorService,
+  DEFAULT_EDITOR_GROUP_ID,
+  type EditorState,
+} from './editor-service.js';
 
 describe('EditorResolverRegistry', () => {
   it('resolves editor ids by priority', () => {
@@ -232,6 +236,208 @@ describe('EditorService', () => {
       direction: 'horizontal',
       type: 'split',
     });
+
+    const verticalSplit = service.splitEditor({
+      afterGroupId: nextState.groups[2]?.id,
+      direction: 'vertical',
+      tabId: opened.id,
+    });
+    const verticalState = service.getState();
+
+    expect(verticalSplit).toBeDefined();
+    expect(verticalState.groups).toHaveLength(4);
+    expect(verticalState.layout).toEqual({
+      children: [
+        { groupId: verticalState.groups[0]?.id, type: 'group' },
+        { groupId: verticalState.groups[1]?.id, type: 'group' },
+        {
+          children: [
+            { groupId: verticalState.groups[2]?.id, type: 'group' },
+            { groupId: verticalState.groups[3]?.id, type: 'group' },
+          ],
+          direction: 'vertical',
+          type: 'split',
+        },
+      ],
+      direction: 'horizontal',
+      type: 'split',
+    });
+  });
+
+  it('preserves nested split intent when splitting with a different direction', () => {
+    const editorHostFactories = createEditorHostFactoryRegistry();
+    const editorResolvers = createEditorResolverRegistry();
+    editorResolvers.register({
+      id: 'workspace-file',
+      resolve: () => 'workbench.editor.text',
+    });
+
+    const service = createEditorService({
+      editorHostFactories,
+      editorResolvers,
+    });
+
+    const opened = service.openEditor({
+      pinned: true,
+      resourceUri: 'workspace://file/src/app.ts',
+      title: 'app.ts',
+    });
+    const splitDown = service.splitEditor({
+      direction: 'vertical',
+      tabId: opened.id,
+    });
+    const splitDownState = service.getState();
+    const lowerGroupId = splitDownState.groups[1]?.id;
+
+    expect(splitDown).toBeDefined();
+    expect(splitDownState.layout).toEqual({
+      children: splitDownState.groups.map((group) => ({ groupId: group.id, type: 'group' })),
+      direction: 'vertical',
+      type: 'split',
+    });
+
+    const splitRight = service.splitEditor({
+      afterGroupId: lowerGroupId,
+      direction: 'horizontal',
+      tabId: opened.id,
+    });
+    const nestedState = service.getState();
+
+    expect(splitRight).toBeDefined();
+    expect(nestedState.groups).toHaveLength(3);
+    expect(nestedState.layout).toEqual({
+      children: [
+        { groupId: nestedState.groups[0]?.id, type: 'group' },
+        {
+          children: [
+            { groupId: nestedState.groups[1]?.id, type: 'group' },
+            { groupId: nestedState.groups[2]?.id, type: 'group' },
+          ],
+          direction: 'horizontal',
+          type: 'split',
+        },
+      ],
+      direction: 'vertical',
+      type: 'split',
+    });
+  });
+
+  it('preserves service-owned layout when existing target groups receive direction hints', () => {
+    const editorHostFactories = createEditorHostFactoryRegistry();
+    const createServiceWithNestedLayout = () =>
+      createEditorService({
+        editorHostFactories,
+        initialState: {
+          activeGroupId: 'workbench.editor.group.main',
+          groups: [
+            {
+              activeTabId: 'workbench.editor.tab.1',
+              id: 'workbench.editor.group.main',
+              tabs: [
+                {
+                  dirty: false,
+                  editorId: 'workbench.editor.text',
+                  id: 'workbench.editor.tab.1',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/app.ts',
+                  title: 'app.ts',
+                },
+              ],
+            },
+            {
+              activeTabId: 'workbench.editor.tab.2',
+              id: 'workbench.editor.group.1',
+              tabs: [
+                {
+                  dirty: false,
+                  editorId: 'workbench.editor.text',
+                  id: 'workbench.editor.tab.2',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/details.ts',
+                  title: 'details.ts',
+                },
+              ],
+            },
+            {
+              activeTabId: 'workbench.editor.tab.3',
+              id: 'workbench.editor.group.2',
+              tabs: [
+                {
+                  dirty: false,
+                  editorId: 'workbench.editor.text',
+                  id: 'workbench.editor.tab.3',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/preview.ts',
+                  title: 'preview.ts',
+                },
+              ],
+            },
+          ],
+          layout: {
+            children: [
+              { groupId: 'workbench.editor.group.main', type: 'group' },
+              {
+                children: [
+                  { groupId: 'workbench.editor.group.1', type: 'group' },
+                  { groupId: 'workbench.editor.group.2', type: 'group' },
+                ],
+                direction: 'vertical',
+                primarySizePercent: 40,
+                type: 'split',
+              },
+            ],
+            direction: 'horizontal',
+            primarySizePercent: 60,
+            type: 'split',
+          },
+        } satisfies EditorState,
+      });
+
+    const splitService = createServiceWithNestedLayout();
+    const originalLayout = splitService.getState().layout;
+    const split = splitService.splitEditor({
+      direction: 'vertical',
+      groupId: 'workbench.editor.group.2',
+      tabId: 'workbench.editor.tab.1',
+    });
+    const splitState = splitService.getState();
+
+    expect(split?.id).toBe('workbench.editor.tab.4');
+    expect(splitState.layout).toEqual(originalLayout);
+    expect(splitState.groups[2]?.tabs.map((tab) => tab.id)).toEqual([
+      'workbench.editor.tab.3',
+      split?.id,
+    ]);
+
+    const moveService = createServiceWithNestedLayout();
+    const moved = moveService.moveEditor({
+      direction: 'vertical',
+      groupId: 'workbench.editor.group.2',
+      tabId: 'workbench.editor.tab.2',
+    });
+    const movedState = moveService.getState();
+
+    expect(moved?.id).toBe('workbench.editor.tab.2');
+    expect(movedState.groups.map((group) => group.id)).toEqual([
+      'workbench.editor.group.main',
+      'workbench.editor.group.2',
+    ]);
+    expect(movedState.groups[1]?.tabs.map((tab) => tab.id)).toEqual([
+      'workbench.editor.tab.3',
+      'workbench.editor.tab.2',
+    ]);
+    expect(movedState.layout).toEqual({
+      children: [
+        { groupId: 'workbench.editor.group.main', type: 'group' },
+        { groupId: 'workbench.editor.group.2', type: 'group' },
+      ],
+      direction: 'horizontal',
+      primarySizePercent: 60,
+      type: 'split',
+    });
   });
 
   it('moves editor tabs between groups without duplicating hosts', () => {
@@ -274,12 +480,12 @@ describe('EditorService', () => {
       title: 'README.md',
     });
     const firstHost = service.createEditorHost(first.id) as
-      | { render(): unknown; setContent(nextContent: string): void }
-      | undefined;
+      { render(): unknown; setContent(nextContent: string): void } | undefined;
     firstHost?.setContent('moved content');
 
     const moved = service.moveEditor({
       afterGroupId: DEFAULT_EDITOR_GROUP_ID,
+      direction: 'vertical',
       tabId: first.id,
     });
     const splitState = service.getState();
@@ -290,6 +496,11 @@ describe('EditorService', () => {
     expect(splitState.groups[0]?.tabs.map((tab) => tab.id)).toEqual([second.id]);
     expect(targetGroup?.tabs.map((tab) => tab.id)).toEqual([first.id]);
     expect(splitState.activeGroupId).toBe(targetGroup?.id);
+    expect(splitState.layout).toEqual({
+      children: splitState.groups.map((group) => ({ groupId: group.id, type: 'group' })),
+      direction: 'vertical',
+      type: 'split',
+    });
     expect(service.createEditorHost(first.id)).toBe(firstHost);
     expect(service.createEditorHost(first.id)?.render()).toBe('moved content');
 
@@ -311,6 +522,212 @@ describe('EditorService', () => {
       type: 'group',
     });
     expect(service.createEditorHost(first.id)).toBe(firstHost);
+  });
+
+  it('stores editor split direction and primary size in the service layout', () => {
+    const editorHostFactories = createEditorHostFactoryRegistry();
+    const editorResolvers = createEditorResolverRegistry();
+    editorResolvers.register({
+      id: 'workspace-file',
+      resolve: () => 'workbench.editor.text',
+    });
+
+    const service = createEditorService({
+      editorHostFactories,
+      editorResolvers,
+    });
+
+    const first = service.openEditor({
+      pinned: true,
+      resourceUri: 'workspace://file/src/app.ts',
+      title: 'app.ts',
+    });
+    const split = service.splitEditor();
+
+    expect(split).toBeDefined();
+
+    service.setEditorSplitPrimarySize({
+      path: [],
+      primarySizePercent: 64.5,
+    });
+    service.setEditorSplitDirection({
+      direction: 'vertical',
+      path: [],
+    });
+
+    const resizedState = service.getState();
+    expect(resizedState.layout).toEqual({
+      children: resizedState.groups.map((group) => ({ groupId: group.id, type: 'group' })),
+      direction: 'vertical',
+      primarySizePercent: 64.5,
+      type: 'split',
+    });
+
+    service.setActiveEditor(first.id);
+    service.setDirty(first.id, true);
+
+    const updatedState = service.getState();
+    expect(updatedState.layout).toEqual({
+      children: updatedState.groups.map((group) => ({ groupId: group.id, type: 'group' })),
+      direction: 'vertical',
+      primarySizePercent: 64.5,
+      type: 'split',
+    });
+
+    const secondSplit = service.splitEditor({
+      afterGroupId: updatedState.groups[1]?.id,
+      tabId: first.id,
+    });
+    const expandedState = service.getState();
+
+    expect(secondSplit).toBeDefined();
+    expect(expandedState.groups).toHaveLength(3);
+    expect(expandedState.layout).toEqual({
+      children: expandedState.groups.map((group) => ({ groupId: group.id, type: 'group' })),
+      direction: 'vertical',
+      primarySizePercent: 64.5,
+      type: 'split',
+    });
+
+    service.setEditorSplitPrimarySize({
+      path: [],
+      primarySizePercent: Number.POSITIVE_INFINITY,
+    });
+
+    expect(service.getState().layout).toEqual({
+      children: expandedState.groups.map((group) => ({ groupId: group.id, type: 'group' })),
+      direction: 'vertical',
+      primarySizePercent: 50,
+      type: 'split',
+    });
+  });
+
+  it('restores editor state and continues group/tab sequences without collisions', () => {
+    const editorHostFactories = createEditorHostFactoryRegistry();
+    const editorResolvers = createEditorResolverRegistry();
+    editorResolvers.register({
+      id: 'workspace-file',
+      resolve: () => 'workbench.editor.text',
+    });
+
+    const service = createEditorService({
+      editorHostFactories,
+      editorResolvers,
+      initialState: {
+        activeGroupId: 'workbench.editor.group.7',
+        groups: [
+          {
+            activeTabId: 'workbench.editor.tab.5',
+            id: 'workbench.editor.group.main',
+            tabs: [
+              {
+                dirty: false,
+                editorId: 'workbench.editor.text',
+                id: 'workbench.editor.tab.5',
+                pinned: true,
+                preview: false,
+                resourceUri: 'workspace://file/src/app.ts',
+                title: 'app.ts',
+              },
+            ],
+          },
+          {
+            activeTabId: 'workbench.editor.tab.9',
+            id: 'workbench.editor.group.7',
+            tabs: [
+              {
+                dirty: false,
+                editorId: 'workbench.editor.text',
+                id: 'workbench.editor.tab.9',
+                pinned: true,
+                preview: false,
+                resourceUri: 'workspace://file/README.md',
+                title: 'README.md',
+              },
+            ],
+          },
+        ],
+        layout: {
+          children: [
+            { groupId: 'workbench.editor.group.main', type: 'group' },
+            {
+              children: [
+                { groupId: 'workbench.editor.group.7', type: 'group' },
+                { groupId: 'stale-group', type: 'group' },
+              ],
+              direction: 'horizontal',
+              type: 'split',
+            },
+          ],
+          direction: 'vertical',
+          primarySizePercent: 62,
+          type: 'split',
+        },
+      },
+    });
+
+    expect(service.getState()).toEqual({
+      activeGroupId: 'workbench.editor.group.7',
+      groups: [
+        {
+          activeTabId: 'workbench.editor.tab.5',
+          id: 'workbench.editor.group.main',
+          tabs: [
+            {
+              dirty: false,
+              editorId: 'workbench.editor.text',
+              id: 'workbench.editor.tab.5',
+              pinned: true,
+              preview: false,
+              resourceUri: 'workspace://file/src/app.ts',
+              title: 'app.ts',
+            },
+          ],
+        },
+        {
+          activeTabId: 'workbench.editor.tab.9',
+          id: 'workbench.editor.group.7',
+          tabs: [
+            {
+              dirty: false,
+              editorId: 'workbench.editor.text',
+              id: 'workbench.editor.tab.9',
+              pinned: true,
+              preview: false,
+              resourceUri: 'workspace://file/README.md',
+              title: 'README.md',
+            },
+          ],
+        },
+      ],
+      layout: {
+        children: [
+          { groupId: 'workbench.editor.group.main', type: 'group' },
+          { groupId: 'workbench.editor.group.7', type: 'group' },
+        ],
+        direction: 'vertical',
+        primarySizePercent: 62,
+        type: 'split',
+      },
+    });
+
+    const nextTab = service.openEditor({
+      editorId: 'workbench.editor.text',
+      resourceUri: 'workspace://file/src/next.ts',
+      title: 'next.ts',
+    });
+
+    expect(nextTab.id).toBe('workbench.editor.tab.10');
+
+    const split = service.splitEditor({
+      direction: 'horizontal',
+      tabId: nextTab.id,
+    });
+
+    expect(split?.id).toBe('workbench.editor.tab.11');
+    expect(service.getState().groups.some((group) => group.id === 'workbench.editor.group.8')).toBe(
+      true,
+    );
   });
 
   it('reorders editor tabs within the same group', () => {
@@ -377,5 +794,53 @@ describe('EditorService', () => {
       second.id,
       third.id,
     ]);
+  });
+
+  it('marks workspace file tabs missing when resources are unavailable', () => {
+    const editorHostFactories = createEditorHostFactoryRegistry();
+    editorHostFactories.register({
+      id: 'text-editor-host',
+      create: ({ resourceUri }) => ({
+        dispose() {},
+        render: () => resourceUri ?? 'missing-resource',
+        title: 'Text Editor',
+      }),
+    });
+
+    const editorResolvers = createEditorResolverRegistry();
+    editorResolvers.register({
+      id: 'workspace-file',
+      resolve: () => 'workbench.editor.text',
+    });
+
+    const service = createEditorService({
+      editorHostFactories,
+      editorResolvers,
+    });
+
+    const opened = service.openEditor({
+      dirty: true,
+      resourceUri: 'workspace://file/src/app.ts',
+      title: 'app.ts',
+    });
+
+    service.createEditorHost(opened.id);
+    service.reconcileWorkspaceFileTabs(() => false);
+
+    expect(service.getState().groups[0]?.tabs[0]).toMatchObject({
+      dirty: false,
+      id: opened.id,
+      resourceMissing: true,
+    });
+
+    service.reconcileWorkspaceFileTabs(
+      (resourceUri) => resourceUri === 'workspace://file/src/app.ts',
+    );
+
+    expect(service.getState().groups[0]?.tabs[0]).toMatchObject({
+      dirty: false,
+      id: opened.id,
+    });
+    expect(service.getState().groups[0]?.tabs[0]).not.toHaveProperty('resourceMissing');
   });
 });

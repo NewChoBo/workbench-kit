@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://workbench-kit.dev/schemas/builtins/flexible.json",
+  "title": "FlexibleWidget",
+  "type": "object",
+  "required": ["type", "args"],
+  "properties": {
+    "type": { "const": "flexible" },
+    "id": { "type": "string" },
+    "listen": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "args": {
+      "type": "object",
+      "required": ["child"],
+      "properties": {
+        "flex": {
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        },
+        "fit": {
+          "oneOf": [
+            { "type": "string", "enum": ["tight", "loose"] },
+            { "type": "string", "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$" }
+          ]
+        },
+        "child": { "$ref": "../jdw-node.jdw.schema.json" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

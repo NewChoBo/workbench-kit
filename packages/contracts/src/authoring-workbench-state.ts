@@ -18,6 +18,7 @@ export interface BuildLaunchpadAuthoringWorkbenchStateFromFilesInput {
 }
 
 export interface BuildLaunchpadAuthoringWorkbenchSummaryInput {
+  readonly documentId?: string | undefined;
   readonly issueCount: number;
   readonly issues: readonly string[];
   readonly layerCount?: number | undefined;
@@ -38,6 +39,7 @@ export interface TilePaperAuthoringIssueInput {
 }
 
 export interface BuildLaunchpadAuthoringWorkbenchSummaryFromResourceInput {
+  readonly documentId?: string | undefined;
   readonly id: string;
   readonly issues: readonly TilePaperAuthoringIssueInput[];
   readonly layerCount?: number | undefined;
@@ -77,6 +79,7 @@ export interface TilePaperLaunchpadAuthoringTileSummary {
 }
 
 export interface TilePaperLaunchpadAuthoringSummary {
+  readonly documentId?: string | undefined;
   readonly issueCount: number;
   readonly issues: readonly string[];
   readonly layerCount?: number | undefined;
@@ -290,6 +293,7 @@ export function buildLibraryAuthoringWorkbenchEntrySummaryFromResource({
 }
 
 export function buildLaunchpadAuthoringWorkbenchSummary({
+  documentId,
   issueCount,
   issues,
   layerCount,
@@ -302,6 +306,7 @@ export function buildLaunchpadAuthoringWorkbenchSummary({
   valid,
 }: BuildLaunchpadAuthoringWorkbenchSummaryInput): TilePaperLaunchpadAuthoringSummary {
   return {
+    ...(documentId === undefined ? {} : { documentId }),
     issueCount,
     issues,
     ...(layerCount === undefined ? {} : { layerCount }),
@@ -330,6 +335,7 @@ export function buildLaunchpadAuthoringWorkbenchTileSummaryFromResource({
 }
 
 export function buildLaunchpadAuthoringWorkbenchSummaryFromResource({
+  documentId,
   id,
   issues,
   layerCount,
@@ -342,6 +348,7 @@ export function buildLaunchpadAuthoringWorkbenchSummaryFromResource({
   valid,
 }: BuildLaunchpadAuthoringWorkbenchSummaryFromResourceInput): BuildLaunchpadAuthoringWorkbenchSummaryInput {
   return buildLaunchpadAuthoringWorkbenchSummary({
+    ...(documentId === undefined ? {} : { documentId }),
     issueCount: issues.length,
     issues: issues.map(formatTilePaperAuthoringIssue),
     ...(layerCount === undefined ? {} : { layerCount }),

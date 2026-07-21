@@ -1,0 +1,18 @@
+.ui-workbench-canvas-viewport {
+  position: relative;
+  width: var(--ui-workbench-canvas-viewport-width, auto);
+  height: var(--ui-workbench-canvas-viewport-height, auto);
+  overflow: hidden;
+  background-color: var(--vscode-editor-background, var(--color-bg));
+  user-select: none;
+}
+
+.ui-workbench-canvas-viewport[data-grid='true'] {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--ui-workbench-canvas-grid-dot, rgba(255, 255, 255, 0.08)) 1px,
+    transparent 0
+  );
+  background-size: var(--ui-workbench-canvas-viewport-grid-size, 20px)
+    var(--ui-workbench-canvas-viewport-grid-size, 20px);
+}

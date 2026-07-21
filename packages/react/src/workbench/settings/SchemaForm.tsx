@@ -6,13 +6,14 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react';
-import { Button } from '../../primitives/Button';
-import { Checkbox } from '../../primitives/Checkbox';
-import { EmptyState } from '../../primitives/EmptyState';
-import { Field } from '../../primitives/Field';
-import { Select } from '../../primitives/Select';
-import { TextInput } from '../../primitives/TextInput';
+import { Button } from '../../primitives/button';
+import { Checkbox } from '../../primitives/checkbox';
+import { EmptyState } from '../../primitives/empty-state';
+import { Field } from '../../primitives/field';
+import { Select } from '../../primitives/select';
+import { TextInput } from '../../primitives/text-input';
 import { cx } from '../../utils/cx';
+import { useWorkbenchSettingsCommit } from './settingsCommit';
 
 export type WorkbenchSchemaFormFieldType = 'checkbox' | 'number' | 'select' | 'text';
 
@@ -231,6 +232,9 @@ export function WorkbenchSchemaForm({
   values,
   ...props
 }: WorkbenchSchemaFormProps) {
+  const settingsCommit = useWorkbenchSettingsCommit();
+  const isImmediateSettingsCommit = settingsCommit?.commitMode === 'immediate';
+  const resolvedShowActions = isImmediateSettingsCommit ? false : showActions;
   const generatedId = useId().replace(/:/g, '');
   const [uncontrolledValues, setUncontrolledValues] = useState(() =>
     normalizeWorkbenchSchemaFormValues(fields, defaultValues),
@@ -273,6 +277,15 @@ export function WorkbenchSchemaForm({
 
     onFieldChange?.(context);
     onValuesChange?.(nextValues, context);
+
+    if (isImmediateSettingsCommit) {
+      settingsCommit?.onPreferenceChange?.({
+        categoryId: settingsCommit.categoryId,
+        key: field.id,
+        scopeId: settingsCommit.scopeId || undefined,
+        value: nextValues[field.id],
+      });
+    }
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -330,7 +343,7 @@ export function WorkbenchSchemaForm({
           })}
         </div>
       )}
-      {showActions ? (
+      {resolvedShowActions ? (
         <div className="ui-workbench-schema-form__actions">
           <Button disabled={disabled} onClick={() => onCancel?.({ values: resolvedValues })}>
             {cancelLabel}

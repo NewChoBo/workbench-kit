@@ -1,7 +1,8 @@
 import type { ComponentPropsWithRef, CSSProperties, ReactNode } from 'react';
-import { ScrollArea } from '../primitives/ScrollArea';
+import { ScrollArea } from '../primitives/scroll-area';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
+import { workbenchFillScrollRoleProps } from './fillScrollContract';
 import { toLengthValue } from './layoutHelpers';
 
 export type WorkbenchRootProps = ComponentPropsWithRef<'div'>;
@@ -12,8 +13,48 @@ export function WorkbenchRoot({ className, ...props }: WorkbenchRootProps) {
 
 export type WorkbenchFillProps = ComponentPropsWithRef<'div'>;
 
+/**
+ * Flex fill slot that clips overflow (`data-ui-fill-scroll-role="fill"`).
+ * Column by default; the last direct child stretches to fill remaining space.
+ */
 export function WorkbenchFill({ className, ...props }: WorkbenchFillProps) {
-  return <div className={cx('ui-workbench-fill', className)} {...props} />;
+  return (
+    <div
+      className={cx('ui-workbench-fill', className)}
+      {...props}
+      {...workbenchFillScrollRoleProps('fill')}
+    />
+  );
+}
+
+export type WorkbenchFillChainProps = ComponentPropsWithRef<'div'>;
+
+/**
+ * Root of an editor-in-pane fill chain. Descendant nodes that stamp
+ * `data-ui-fill-scroll-role` inherit clip/scroll overflow rules.
+ * Same last-child fill default as `WorkbenchFill` (toolbar + body stacks).
+ */
+export function WorkbenchFillChain({ className, ...props }: WorkbenchFillChainProps) {
+  return (
+    <div
+      className={cx('ui-workbench-fill', 'ui-workbench-fill-chain', className)}
+      {...props}
+      {...workbenchFillScrollRoleProps('fill')}
+    />
+  );
+}
+
+export type WorkbenchScrollRegionProps = ComponentPropsWithRef<'div'>;
+
+/** Named scroll owner inside a fill chain (`data-ui-fill-scroll-role="scroll"`). */
+export function WorkbenchScrollRegion({ className, ...props }: WorkbenchScrollRegionProps) {
+  return (
+    <div
+      className={cx('ui-workbench-scroll-region', className)}
+      {...props}
+      {...workbenchFillScrollRoleProps('scroll')}
+    />
+  );
 }
 
 export type WorkbenchCenterProps = ComponentPropsWithRef<'main'>;

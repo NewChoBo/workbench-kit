@@ -6,7 +6,7 @@ import { computeStackChildRect } from './layout/stack.js';
 import { formatJsonWidgetData, parseJsonWidgetData } from './jdw-node.js';
 import { createWidgetRegistry } from './widget-registry.js';
 
-describe('workbench-kit json-widget tile_paper parity patterns', () => {
+describe('workbench-kit json-widget reference parity patterns', () => {
   it('matches canonical JDW parse and format behavior for representative widgets', () => {
     const samples = ['{"type":"text","args":{"text":"Hello"}}', '   ', 'null', '[]', '{'] as const;
 

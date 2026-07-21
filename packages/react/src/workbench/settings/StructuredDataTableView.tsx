@@ -1,6 +1,6 @@
 import type { ComponentPropsWithRef, ReactNode } from 'react';
-import { EmptyState } from '../../primitives/EmptyState';
-import { ScrollArea } from '../../primitives/ScrollArea';
+import { EmptyState } from '../../primitives/empty-state';
+import { ScrollArea } from '../../primitives/scroll-area';
 import { cx } from '../../utils/cx';
 import {
   getWorkbenchStructuredDataValue,

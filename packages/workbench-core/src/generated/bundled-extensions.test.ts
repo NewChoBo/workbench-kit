@@ -10,15 +10,24 @@ describe('bundled workbench extensions', () => {
   it('exports built-in and sample extension manifests', () => {
     expect(BUILTIN_WORKBENCH_EXTENSIONS.map(({ manifest }) => manifest.id)).toEqual([
       'workbench-kit.builtin.accounts',
+      'workbench-kit.builtin.chat',
+      'workbench-kit.builtin.commands',
       'workbench-kit.builtin.editor',
       'workbench-kit.builtin.explorer',
+      'workbench-kit.builtin.extensions',
       'workbench-kit.builtin.keybindings',
+      'workbench-kit.builtin.search',
       'workbench-kit.builtin.settings',
       'workbench-kit.builtin.workspace',
     ]);
 
     expect(SAMPLE_WORKBENCH_EXTENSIONS.map(({ manifest }) => manifest.id)).toEqual([
       'workbench-kit.samples.hello-world',
+      'workbench-kit.samples.jdw',
+      'workbench-kit.samples.json-preview',
+      'workbench-kit.samples.locale-ko',
+      'workbench-kit.samples.schema-mapper',
+      'workbench-kit.samples.theme-alt',
     ]);
 
     expect(
@@ -48,6 +57,29 @@ describe('bundled workbench extensions', () => {
     expect(registry.views.getView('workbench-kit.builtin.explorer.tree')).toMatchObject({
       containerId: 'explorer',
       name: 'Explorer',
+    });
+    expect(registry.views.getView('workbench-kit.builtin.chat.chatting')).toMatchObject({
+      containerId: 'chatting',
+      name: 'Chat',
+    });
+    expect(registry.views.getView('workbench-kit.builtin.chat.aiChat')).toMatchObject({
+      containerId: 'aiChat',
+      name: 'AI Chat',
+    });
+    expect(registry.views.getView('workbench-kit.builtin.search.panel')).toMatchObject({
+      containerId: 'search',
+      name: 'Search',
+    });
+    expect(registry.views.getView('workbench-kit.builtin.commands.panel')).toMatchObject({
+      containerId: 'commands',
+      name: 'Commands',
+    });
+    expect(registry.views.getView('workbench-kit.builtin.extensions.panel')).toMatchObject({
+      containerId: 'extensions',
+      name: 'Extensions',
+    });
+    expect(registry.commands.getCommand('workbench-kit.builtin.commands.refresh')).toMatchObject({
+      title: 'Refresh Command Registry',
     });
     expect(registry.editors.getEditor('workbench-kit.builtin.editor.text')).toMatchObject({
       label: 'Text Editor',
