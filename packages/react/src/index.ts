@@ -520,6 +520,7 @@ export type {
   WorkbenchMetricGridProps,
   WorkbenchPropertyNumberRowProps,
   WorkbenchPropertyOverrideLabelProps,
+  WorkbenchPropertyOverrideResetAppearance,
   WorkbenchPropertyFieldFilterInput,
   WorkbenchPropertyFieldFilterResult,
   WorkbenchPropertyFieldManifestEntry,

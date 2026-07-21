@@ -19,7 +19,7 @@ describe('WorkbenchPropertyOverrideLabel', () => {
     expect(markup).toContain('Custom');
     expect(markup).toContain('data-ui-workbench-property-override-badge="custom"');
     expect(markup).not.toContain('Default');
-    expect(markup).not.toContain('Reset');
+    expect(markup).not.toContain('data-ui-workbench-property-override-reset');
   });
 
   it('shows muted Default badge when not overridden', () => {
@@ -32,7 +32,7 @@ describe('WorkbenchPropertyOverrideLabel', () => {
     expect(markup).toContain('data-ui-workbench-property-override-badge="default"');
     expect(markup).toContain('data-variant="muted"');
     expect(markup).not.toContain('Custom');
-    expect(markup).not.toContain('Reset');
+    expect(markup).not.toContain('data-ui-workbench-property-override-reset');
   });
 
   it('hides Reset when overridden but onReset is omitted', () => {
@@ -41,7 +41,6 @@ describe('WorkbenchPropertyOverrideLabel', () => {
     );
 
     expect(markup).toContain('Custom');
-    expect(markup).not.toContain('Reset');
     expect(markup).not.toContain('data-ui-workbench-property-override-reset');
   });
 
@@ -51,10 +50,10 @@ describe('WorkbenchPropertyOverrideLabel', () => {
     );
 
     expect(markup).toContain('Default');
-    expect(markup).not.toContain('Reset');
+    expect(markup).not.toContain('data-ui-workbench-property-override-reset');
   });
 
-  it('renders Reset and calls onReset once per click when overridden', async () => {
+  it('renders icon Reset by default and calls onReset once per click when overridden', async () => {
     const onReset = vi.fn();
     const container = document.createElement('div');
     document.body.append(container);
@@ -68,7 +67,10 @@ describe('WorkbenchPropertyOverrideLabel', () => {
       '[data-ui-workbench-property-override-reset="true"]',
     );
     expect(resetButton).not.toBeNull();
-    expect(resetButton?.textContent).toBe('Reset');
+    expect(resetButton?.getAttribute('aria-label')).toBe('Reset');
+    expect(resetButton?.getAttribute('data-ui-workbench-property-override-reset-appearance')).toBe(
+      'icon',
+    );
 
     await act(async () => {
       resetButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -80,6 +82,20 @@ describe('WorkbenchPropertyOverrideLabel', () => {
       root.unmount();
     });
     container.remove();
+  });
+
+  it('renders text Reset when resetAppearance is text', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchPropertyOverrideLabel
+        label="Opacity"
+        overridden
+        resetAppearance="text"
+        onReset={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('data-ui-workbench-property-override-reset-appearance="text"');
+    expect(markup).toContain('>Reset</button>');
   });
 
   it('accepts host-provided badge and reset labels', () => {
@@ -95,8 +111,8 @@ describe('WorkbenchPropertyOverrideLabel', () => {
     );
 
     expect(markup).toContain('Override');
-    expect(markup).toContain('Clear');
+    expect(markup).toContain('aria-label="Clear"');
     expect(markup).not.toContain('Custom');
-    expect(markup).not.toContain('Reset');
+    expect(markup).not.toContain('aria-label="Reset"');
   });
 });

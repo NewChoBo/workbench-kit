@@ -29,10 +29,18 @@ export const OverrideStates: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByText('Default')).toBeInTheDocument();
-    await expect(canvas.getByText('Custom')).toBeInTheDocument();
-    await expect(canvas.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
+    await expect(canvas.getAllByText('Custom').length).toBeGreaterThanOrEqual(1);
+    const iconReset = canvas.getByRole('button', { name: 'Reset to default' });
+    await expect(iconReset).toHaveAttribute(
+      'data-ui-workbench-property-override-reset-appearance',
+      'icon',
+    );
+    await expect(canvas.getByRole('button', { name: 'Reset' })).toHaveAttribute(
+      'data-ui-workbench-property-override-reset-appearance',
+      'text',
+    );
 
-    await userEvent.click(canvas.getByRole('button', { name: 'Reset' }));
+    await userEvent.click(iconReset);
     await expect(canvas.getByRole('status', { name: 'Override event log' })).toHaveTextContent(
       'Timezone reset',
     );
@@ -60,6 +68,7 @@ function PropertyOverrideLabelHarness() {
             <WorkbenchPropertyOverrideLabel
               label="Timezone"
               overridden={timezoneOverridden}
+              resetLabel="Reset to default"
               onReset={() => {
                 setTimezone('UTC');
                 setTimezoneOverridden(false);
@@ -82,6 +91,29 @@ function PropertyOverrideLabelHarness() {
             <option value="Asia/Seoul">Asia/Seoul</option>
             <option value="America/New_York">America/New_York</option>
           </Select>
+        </Field>
+
+        <Field
+          description="Optional text Reset when the action label should stay visible."
+          htmlFor="story-override-scale"
+          label={
+            <WorkbenchPropertyOverrideLabel
+              label="Scale"
+              overridden
+              resetAppearance="text"
+              resetLabel="Reset"
+              onReset={() => {
+                setStatus('Scale reset');
+              }}
+            />
+          }
+        >
+          <TextInput
+            controlWidth="full"
+            id="story-override-scale"
+            value="1.0"
+            onValueChange={() => undefined}
+          />
         </Field>
 
         <Field
