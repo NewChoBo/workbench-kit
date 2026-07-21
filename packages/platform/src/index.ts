@@ -238,6 +238,13 @@ export {
 } from './window/resolve-window-open-layout.js';
 export { resizeRect } from './window/resize-rect.js';
 export {
+  shouldHideOnClose,
+  shouldQuitWhenAllWindowsClosed,
+  type ShouldHideOnCloseInput,
+  type ShouldQuitWhenAllWindowsClosedInput,
+  type TrayClosePlatformId,
+} from './window/tray-close-policy.js';
+export {
   assertPositiveWorkArea,
   normalizeBoundsToPlacement,
   resolvePlacementToBounds,
