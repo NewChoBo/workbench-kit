@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   joinWorkspacePath,
   parentPathOf,
@@ -92,6 +92,7 @@ export function useWorkspaceExplorerController({
   );
   const expandedPaths = expandedPathsProp ?? internalExpandedPaths;
   const [inlineEdit, setInlineEdit] = useState<WorkspaceExplorerInlineEditState | undefined>();
+  const inlineEditCommitInFlightRef = useRef(false);
   const [selection, setSelection] = useState<WorkspaceSelectionState>(
     initialSelection ?? { paths: [] },
   );
@@ -175,6 +176,7 @@ export function useWorkspaceExplorerController({
         revealFolder(parentPath);
       }
 
+      inlineEditCommitInFlightRef.current = false;
       setInlineEdit(createWorkspaceExplorerInlineEditDraft(snapshot, kind, parentPath));
     },
     [revealFolder, snapshot],
@@ -182,6 +184,7 @@ export function useWorkspaceExplorerController({
 
   const startRename = useCallback(
     (node: WorkspaceTreeNode, actionPaths: readonly string[] = [node.path]) => {
+      inlineEditCommitInFlightRef.current = false;
       setInlineEdit(createWorkspaceExplorerRenameDraft(node, actionPaths));
     },
     [],
@@ -189,11 +192,22 @@ export function useWorkspaceExplorerController({
 
   const handleInlineEditCommit = useCallback(
     ({ edit, value }: WorkspaceExplorerInlineEditCommitMeta) => {
+      // Enter commits then blurs the same input; ignore the duplicate blur commit.
+      if (inlineEditCommitInFlightRef.current) {
+        return;
+      }
+      inlineEditCommitInFlightRef.current = true;
+
       void (async () => {
+        const releaseCommitGate = () => {
+          inlineEditCommitInFlightRef.current = false;
+        };
+
         const name = value.trim();
         const nameError = validateWorkspaceExplorerInlineEditName(name);
         if (nameError) {
           reportInlineEditError(edit, nameError);
+          releaseCommitGate();
           return;
         }
 
@@ -201,21 +215,28 @@ export function useWorkspaceExplorerController({
           const parentPath = edit.parentPath ?? '';
           if (!isWorkspaceExplorerCreatePathAvailable(snapshot, parentPath, name)) {
             reportInlineEditError(edit, `${name} already exists.`);
+            releaseCommitGate();
             return;
           }
 
-          const result =
-            edit.kind === 'create-file'
-              ? await port.createFile({ name, parentPath })
-              : await port.createFolder({ name, parentPath });
-          setInlineEdit(undefined);
-          applyWorkspaceExplorerMutationResult(result, setSelection);
+          try {
+            const result =
+              edit.kind === 'create-file'
+                ? await port.createFile({ name, parentPath })
+                : await port.createFolder({ name, parentPath });
+            setInlineEdit(undefined);
+            applyWorkspaceExplorerMutationResult(result, setSelection);
+          } catch (error) {
+            releaseCommitGate();
+            throw error;
+          }
           return;
         }
 
         const sourcePath = edit.path ?? '';
         if (!isWorkspaceExplorerRenamePathAvailable(snapshot, sourcePath, name)) {
           reportInlineEditError(edit, `${name} already exists.`);
+          releaseCommitGate();
           return;
         }
 
@@ -226,24 +247,29 @@ export function useWorkspaceExplorerController({
         }
 
         const renameKind = edit.kind === 'rename-folder' ? 'folder' : 'file';
-        const result = await port.renameEntry({
-          kind: renameKind,
-          name,
-          path: sourcePath,
-        });
-        setInlineEdit(undefined);
-        if (mapRenameSelection) {
-          setSelection((currentSelection) =>
-            mapRenameSelection(currentSelection, {
-              destinationPath,
-              kind: renameKind,
-              sourcePath,
-            }),
-          );
-          return;
-        }
+        try {
+          const result = await port.renameEntry({
+            kind: renameKind,
+            name,
+            path: sourcePath,
+          });
+          setInlineEdit(undefined);
+          if (mapRenameSelection) {
+            setSelection((currentSelection) =>
+              mapRenameSelection(currentSelection, {
+                destinationPath,
+                kind: renameKind,
+                sourcePath,
+              }),
+            );
+            return;
+          }
 
-        applyWorkspaceExplorerMutationResult(result, setSelection);
+          applyWorkspaceExplorerMutationResult(result, setSelection);
+        } catch (error) {
+          releaseCommitGate();
+          throw error;
+        }
       })();
     },
     [mapRenameSelection, port, reportInlineEditError, snapshot],
@@ -332,7 +358,10 @@ export function useWorkspaceExplorerController({
   );
 
   return {
-    cancelInlineEdit: () => setInlineEdit(undefined),
+    cancelInlineEdit: () => {
+      inlineEditCommitInFlightRef.current = false;
+      setInlineEdit(undefined);
+    },
     expandedPaths,
     handleActivateFile,
     handleInlineEditCommit,
