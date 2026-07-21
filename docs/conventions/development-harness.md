@@ -11,15 +11,15 @@ lockfile updates.
 
 ## Validation Lanes
 
-| Changed surface                         | Minimum validation                             | Extended validation                          |
-| --------------------------------------- | ---------------------------------------------- | -------------------------------------------- |
-| Workspace, package exports, lockfile    | `pnpm validate`                                | Public-boundary search                       |
-| `packages/tokens` CSS variables         | `pnpm validate`                                | Storybook visual check                       |
-| `packages/react` primitives             | `pnpm --filter @workbench-kit/react typecheck` | `pnpm validate`, browser smoke               |
-| `examples/workbench-sample` UI behavior | `pnpm --filter workbench-sample typecheck`     | `pnpm validate:ui`                           |
-| Storybook config or stories             | `pnpm validate:ui`                             | `pnpm validate:full`                         |
-| Lint/format config                      | `pnpm lint && pnpm format:check`               | `pnpm validate`                              |
-| README and conventions                  | Manual docs review                             | `pnpm exec prettier --check <touched-files>` |
+| Changed surface                         | Minimum validation                                                 | Extended validation                          |
+| --------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
+| Workspace, package exports, lockfile    | `pnpm validate`                                                    | Public-boundary search                       |
+| `packages/tokens` CSS variables         | `pnpm validate`                                                    | Storybook visual check                       |
+| `packages/react` primitives             | `pnpm --filter @workbench-kit/react typecheck`                     | `pnpm validate`, browser smoke               |
+| `examples/workbench-sample` UI behavior | `pnpm --filter workbench-sample typecheck` + browser/preview smoke | `pnpm validate:ui` (optional CI parity)      |
+| Storybook config or stories             | `pnpm build:storybook` and/or interactive Storybook UI             | `pnpm validate:ui` / `pnpm validate:full`    |
+| Lint/format config                      | `pnpm lint && pnpm format:check`                                   | `pnpm validate`                              |
+| README and conventions                  | Manual docs review                                                 | `pnpm exec prettier --check <touched-files>` |
 
 ## Changed-Package Matrix (inner loop)
 
@@ -37,14 +37,18 @@ release closeout.
 
 ## UI Smoke
 
-For UI changes, verify the result in a real browser whenever practical.
+For UI changes, verify the result in a real browser or tool preview whenever
+practical. Playwright-driven `pnpm validate:ui` is **optional** for day-to-day
+agent and local work; prefer Cursor browser MCP, IDE simple browser, Storybook
+UI, or the sample host (`pnpm dev` / `pnpm dev:storybook`). Keep `validate:ui`
+available for CI parity and when explicitly requested.
 
 - Do the main components render?
 - Do text, inputs, and buttons stay inside their parent containers?
 - Do dialogs, menus, and form controls have accessible names?
 - Do basic interactions such as click, check, select, and close work?
 - For Storybook integration stories, does the flow render the `pnpm dev` sample
-  app path and assert visible behavior through required play tests?
+  app path and show the expected visible behavior?
 - For Storybook component stories, is the story limited to a focused public
   component contract rather than a duplicate shell or broad gallery?
 - For Storybook component stories, does the container match production placement

@@ -34,6 +34,7 @@
     "check:launch-boundary": "node ./scripts/check-launch-boundary.mjs",
     "check:public-references": "node ./scripts/check-public-references.mjs",
     "check:secrets": "node ./scripts/check-secrets.mjs",
+    "check:commit-safety": "pnpm check:public-references && pnpm check:secrets",
     "check:workspace-isolation": "node ./scripts/check-workspace-isolation.mjs",
     "check:jdw-schemas": "node ./scripts/check-jdw-schemas.mjs",
     "typecheck": "pnpm --filter \"@workbench-kit/*\" --if-present typecheck",

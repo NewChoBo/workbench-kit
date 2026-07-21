@@ -24,20 +24,26 @@ Never commit or hardcode secrets anywhere in the tree:
 
 - Prefer neutral capability language (`integrating host`, `consumer app`).
 - Applies to source, docs, `AGENTS.md`, Cursor rules/hooks, commits, and PRs.
-- Run `pnpm check:public-references` and `pnpm check:secrets` before
-  commit/push (also in `pnpm validate:static`).
+- **Before every commit/push:** run `pnpm check:commit-safety` yourself
+  (public-references + secrets). Do not skip this even if a Cursor hook exists.
+- Also covered by `pnpm validate:static`.
 - Full policy: `docs/conventions/public-reference-policy.md`.
+- Cross-tool defaults: `AGENTS.md` (SoT). Claude Code: `CLAUDE.md` → `@AGENTS.md`.
+  Layout: `docs/conventions/agent-guidance.md`.
 
 ## Tooling
 
 - Use **pnpm** only (`npm install` is blocked).
 - UI copy in English; structure for i18n later.
-- Validation lanes: `pnpm validate:static`, `pnpm validate:fast`,
-  `pnpm validate:ui`, `pnpm validate`.
+- Default agent validation: `pnpm validate:static` or `pnpm validate:fast`
+  (plus `pnpm check:commit-safety` before commit).
 - Public API changes: `pnpm check:public-exports`.
-- Public reference denylist: `pnpm check:public-references`.
-- Secret / credential scan: `pnpm check:secrets`.
+- Commit safety (refs + secrets): `pnpm check:commit-safety`.
 - JDW profile/schema changes: `pnpm check:jdw-schemas`.
+- Playwright / `pnpm validate:ui` is **not** required for routine agent
+  verification. Prefer the active tool’s browser or preview (Cursor browser
+  MCP, IDE simple browser, Storybook UI, sample `pnpm dev`). Use
+  `validate:ui` when CI parity or required play coverage is explicitly needed.
 
 ## Storybook
 
@@ -51,8 +57,6 @@ Never commit or hardcode secrets anywhere in the tree:
   settings/form surface, or overlay trigger surface.
 - Storybook changes should follow `docs/conventions/storybook.md` and update
   `docs/workbench/storybook-e2e-coverage.md` when required flows change.
-- Run `pnpm validate:ui` for Storybook config, stories, sample-host flows, or
-  curated component flows that are intended to replace browser E2E smoke.
 
 ## Change discipline
 
@@ -74,7 +78,8 @@ Key facts agents often get wrong:
 
 ## Docs index
 
+- Agent layout: `docs/conventions/agent-guidance.md`
 - Conventions: `docs/conventions/` (especially `public-reference-policy.md`)
 - Architecture: `docs/architecture/`
 - Workbench notes: `docs/workbench/`
-- Cursor git gate: `.cursor/hooks.json` → public-references + secrets checks
+- Cursor git gate: `.cursor/hooks.json` → `check:commit-safety`

@@ -8,8 +8,13 @@ responsibilities separate. TypeScript safety is covered by both `tsc` and
 
 - ESLint: TypeScript/TSX static analysis
 - typescript-eslint: TypeScript parser and recommended rule set
-- Prettier: TS, TSX, CSS, JSON, and Markdown formatting
+- Prettier: TS, TSX, CSS, JSON, Markdown, and Cursor rule (`.mdc` as Markdown)
+  formatting
 - eslint-config-prettier: prevents formatting-rule conflicts between ESLint and Prettier
+
+Unknown extensions are **not** formatted unless listed in `.prettierrc.json`
+`overrides` (for example `*.mdc` → `parser: "markdown"`). Prefer an explicit
+parser over relying on Prettier skipping the file during `pnpm format:check`.
 
 Do not use TSLint. TSLint is deprecated, and TypeScript linting should use
 `typescript-eslint`.
