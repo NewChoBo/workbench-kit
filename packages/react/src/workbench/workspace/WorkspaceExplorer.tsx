@@ -146,6 +146,7 @@ export function WorkspaceExplorer({
   const sectionBaseDepth = useSidebarSectionBaseDepth();
   const draggedPathsRef = useRef<string[]>([]);
   const inlineEditInputRef = useRef<HTMLInputElement>(null);
+  const inlineEditCommitStartedRef = useRef(false);
   const [dropTargetPath, setDropTargetPath] = useState<string | null>(null);
   const visibleNodes = useMemo(
     () => flattenWorkspaceTree({ expandedPaths, filterQuery, nodes }),
@@ -176,12 +177,20 @@ export function WorkspaceExplorer({
     : undefined;
 
   useEffect(() => {
+    inlineEditCommitStartedRef.current = false;
     const input = inlineEditInputRef.current;
     if (!input) return;
 
     input.focus();
     input.select();
   }, [inlineEditKey]);
+
+  useEffect(() => {
+    // Validation failures keep the same draft id; allow Enter/blur retry after an error.
+    if (inlineEdit?.error) {
+      inlineEditCommitStartedRef.current = false;
+    }
+  }, [inlineEdit?.error]);
 
   const selectFile = (event: MouseEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
     const mode = resolveSelectionMode(event);
@@ -419,8 +428,10 @@ export function WorkspaceExplorer({
   };
 
   const commitInlineEdit = () => {
-    if (!inlineEdit) return;
+    if (!inlineEdit || inlineEditCommitStartedRef.current) return;
 
+    // Enter commits then blurs the same input; commit only once per draft.
+    inlineEditCommitStartedRef.current = true;
     onInlineEditCommit?.({
       edit: inlineEdit,
       value: inlineEdit.value.trim(),
