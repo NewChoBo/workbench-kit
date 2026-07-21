@@ -65,19 +65,35 @@ Consumer applications may define their own commit language policy. This reposito
 
 This repository does not ship a commit-msg helper script; write messages manually from the docs above.
 
-## Public reference policy
+## Public package boundary (mandatory)
 
-Public docs and rules must not name commercial, proprietary, or internal sibling
-projects. Use neutral capability language and keep VS Code / OSS design
-references where they explain kit conventions.
+This repository is a **public npm package**. Do **not** put internal company
+knowledge, sibling-repo names, private host codenames, private clone paths, or
+customer-specific identifiers into:
 
-Full policy: [`docs/conventions/public-reference-policy.md`](docs/conventions/public-reference-policy.md).
+- source, comments, tests, stories, or samples
+- `docs/`, `README.md`, `AGENTS.md`, or `.cursor/` rules and hooks
+- commit messages or PR text
 
-## Cursor rules
+Also **never commit or hardcode secrets** in source, comments, docs, stories,
+samples, or rules: API keys, tokens, passwords, private keys, real `.env`
+files, npm/`_authToken`, or cloud credentials. Use `process.env` / host secret
+storage and gitignored local files only. Docs may use obvious placeholders
+(`YOUR_API_KEY`, `<token>`), never real values—even “for debugging.”
 
-| Rule                                   | Scope                                                |
-| -------------------------------------- | ---------------------------------------------------- |
-| `.cursor/rules/workbench-kit-core.mdc` | Always applied                                       |
-| `.cursor/rules/npm-release.mdc`        | Publish scripts, workflows, package publish metadata |
+Use neutral terms (`integrating host`, `consumer app`, capability names). Keep
+VS Code / OSS design references when they explain kit conventions.
+
+- Policy: [`docs/conventions/public-reference-policy.md`](docs/conventions/public-reference-policy.md)
+- Checkers: `pnpm check:public-references`, `pnpm check:secrets` (in `validate:static`)
+- Cursor hooks gate agent `git commit` / `git push` when either checker fails
+
+## Cursor rules and hooks
+
+| Path                                   | Scope                                                 |
+| -------------------------------------- | ----------------------------------------------------- |
+| `.cursor/rules/workbench-kit-core.mdc` | Always applied                                        |
+| `.cursor/rules/npm-release.mdc`        | Publish scripts, workflows, package publish metadata  |
+| `.cursor/hooks.json`                   | Gate agent `git commit` / `git push` (refs + secrets) |
 
 When conventions and code disagree, update code **and** docs/rules together.

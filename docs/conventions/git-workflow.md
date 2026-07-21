@@ -13,6 +13,8 @@ public boundary before merging.
 - Run `pnpm validate` before merging into it.
 - Confirm that public source does not contain private product names, customer
   names, server addresses, credentials, or private repository paths.
+- Run `pnpm check:public-references` and `pnpm check:secrets` (included in
+  `pnpm validate:static`).
 
 ### staging
 
@@ -65,7 +67,8 @@ git switch -c feature/codex/chatting-ui
 6. Review related docs and update stale status tables, sample READMEs, architecture
    notes, or plans in the same logical commit when behavior or public contracts
    changed.
-7. Confirm that no private knowledge or internal sample data entered public source.
+7. Confirm that no private knowledge, credentials, or secret files entered
+   public source (`pnpm check:public-references`, `pnpm check:secrets`).
 8. Merge by policy:
    - single-topic work can merge directly to `main`;
    - grouped work should merge through `staging` first.
