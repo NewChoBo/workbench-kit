@@ -200,7 +200,25 @@ export {
   type ResolveWorkbenchViewRouteSnapshotOptions,
   type WorkbenchViewRouteSnapshot,
 } from './workbench-view-route.js';
-
+export {
+  createMemoryJsonDocumentStore,
+  parseVersionedEnvelope,
+  type MemoryJsonDocumentStoreOptions,
+} from './storage/memory-json-document-store.js';
+export {
+  createMemoryJsonLinesStore,
+  type MemoryJsonLinesStoreOptions,
+} from './storage/memory-json-lines-store.js';
+export type {
+  JsonDocumentMigration,
+  JsonDocumentReadResult,
+  JsonDocumentStore,
+  JsonLinesReadResult,
+  JsonLinesStore,
+  StorageDiagnostic,
+  StorageDiagnosticCode,
+  VersionedEnvelope,
+} from './storage/types.js';
 export {
   bindWindowBoundsPersistence,
   type WindowBoundsPersistenceHandle,
