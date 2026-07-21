@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  applyWorkspaceExplorerFolderFocus,
   applyWorkspaceExplorerMutationResult,
   createWorkspaceExplorerInlineEditDraft,
   createWorkspaceExplorerRenameDraft,
@@ -59,6 +60,28 @@ describe('workspaceExplorerController', () => {
       anchorPath: 'src/Button.tsx',
       focusedPath: 'src/Button.tsx',
       paths: ['src/App.tsx', 'src/Button.tsx'],
+    });
+  });
+
+  it('focuses a renamed folder without treating it as a file selection path', () => {
+    let selection: {
+      anchorPath?: string;
+      focusedPath?: string;
+      paths: string[];
+    } = {
+      anchorPath: 'src/App.tsx',
+      focusedPath: 'src/App.tsx',
+      paths: ['src/App.tsx'],
+    };
+
+    applyWorkspaceExplorerFolderFocus('src/components', (next) => {
+      selection = next;
+    });
+
+    expect(selection).toEqual({
+      anchorPath: undefined,
+      focusedPath: 'src/components',
+      paths: [],
     });
   });
 });

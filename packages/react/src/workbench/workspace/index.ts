@@ -148,6 +148,7 @@ export type {
   WorkspaceExplorerController,
 } from './useWorkspaceExplorerController';
 export {
+  applyWorkspaceExplorerFolderFocus,
   applyWorkspaceExplorerMutationResult,
   createWorkspaceExplorerInlineEditDraft,
   createWorkspaceExplorerRenameDraft,
