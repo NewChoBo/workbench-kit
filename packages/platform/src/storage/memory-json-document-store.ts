@@ -19,9 +19,7 @@ function isVersionedEnvelope(value: unknown): value is VersionedEnvelope<unknown
   }
   const record = value as Record<string, unknown>;
   return (
-    typeof record.kind === 'string' &&
-    typeof record.schemaVersion === 'number' &&
-    'data' in record
+    typeof record.kind === 'string' && typeof record.schemaVersion === 'number' && 'data' in record
   );
 }
 

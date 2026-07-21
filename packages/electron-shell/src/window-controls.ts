@@ -53,10 +53,7 @@ export interface WindowControlsBridge {
 export interface CreateWindowControlsBridgeOptions {
   readonly channels: WindowControlIpcChannels;
   readonly invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
-  readonly subscribe: (
-    channel: string,
-    listener: (...args: unknown[]) => void,
-  ) => () => void;
+  readonly subscribe: (channel: string, listener: (...args: unknown[]) => void) => () => void;
 }
 
 /** Pure helper: next maximized state after a toggle. */

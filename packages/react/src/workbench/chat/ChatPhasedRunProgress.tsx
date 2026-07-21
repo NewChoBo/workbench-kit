@@ -11,12 +11,7 @@ import {
 
 /** Product-neutral phase lifecycle for run-progress UIs. */
 export type ChatRunPhaseStatus =
-  | 'pending'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'skipped'
-  | 'cancelled';
+  'pending' | 'running' | 'completed' | 'failed' | 'skipped' | 'cancelled';
 
 export interface ChatRunPhase {
   readonly id: string;
@@ -34,9 +29,7 @@ export interface ChatPhasedRunProgressAction {
   readonly variant?: 'default' | 'primary' | 'danger';
 }
 
-function toBadgeVariant(
-  variant: WorkbenchStatusVariant,
-): 'accent' | 'muted' | 'danger' {
+function toBadgeVariant(variant: WorkbenchStatusVariant): 'accent' | 'muted' | 'danger' {
   if (variant === 'danger' || variant === 'warning') {
     return 'danger';
   }
@@ -93,7 +86,10 @@ function summarizePhases(phases: readonly ChatRunPhase[]): {
   if (phases.some((phase) => phase.status === 'cancelled')) {
     return { label: 'Cancelled', status: 'cancelled' };
   }
-  if (phases.length > 0 && phases.every((phase) => phase.status === 'completed' || phase.status === 'skipped')) {
+  if (
+    phases.length > 0 &&
+    phases.every((phase) => phase.status === 'completed' || phase.status === 'skipped')
+  ) {
     return { label: 'Completed', status: 'completed' };
   }
   return { label: 'Pending', status: 'pending' };

@@ -42,12 +42,7 @@ export function createAllowlistedHttpsFetch(
   const baseFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
 
   const allowlistedFetch: typeof globalThis.fetch = (input, init) => {
-    const url =
-      typeof input === 'string'
-        ? input
-        : input instanceof URL
-          ? input.href
-          : input.url;
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
 
     try {
       assertAllowedHttpsUrl(url, allowedHosts);

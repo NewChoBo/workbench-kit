@@ -5,22 +5,14 @@ export const WINDOW_BOUNDS_MIN_WIDTH = 200;
 export const WINDOW_BOUNDS_MIN_HEIGHT = 100;
 
 function rectsIntersect(a: RectLike, b: RectLike): boolean {
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
-  );
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
 function centerOf(rect: RectLike): { x: number; y: number } {
   return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
 }
 
-function distanceSquared(
-  a: { x: number; y: number },
-  b: { x: number; y: number },
-): number {
+function distanceSquared(a: { x: number; y: number }, b: { x: number; y: number }): number {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
   return dx * dx + dy * dy;
@@ -91,9 +83,7 @@ export function clampWindowBoundsToDisplays(
     height: Math.min(sized.height, maxWorkHeight),
   };
 
-  const intersectsAny = displays.some((display) =>
-    rectsIntersect(fitted, display.workArea),
-  );
+  const intersectsAny = displays.some((display) => rectsIntersect(fitted, display.workArea));
 
   if (intersectsAny) {
     return clampToWorkArea(fitted, pickTargetDisplay(fitted, displays).workArea);

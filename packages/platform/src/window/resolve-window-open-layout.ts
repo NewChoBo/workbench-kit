@@ -25,9 +25,7 @@ function resolvePrimaryWorkArea(displays: readonly DisplayWorkArea[]): RectLike 
 }
 
 /** Center a default-sized window on the primary display work area. */
-export function createDefaultWindowOpenBounds(
-  displays: readonly DisplayWorkArea[],
-): RectLike {
+export function createDefaultWindowOpenBounds(displays: readonly DisplayWorkArea[]): RectLike {
   const workArea = resolvePrimaryWorkArea(displays);
   if (!workArea) {
     return {

@@ -91,11 +91,7 @@ export function createNodeJsonDocumentStore<T>(
         }
         return {
           value: null,
-          diagnostic: createDiagnostic(
-            'io_error',
-            'Failed to read document.',
-            options.relativeKey,
-          ),
+          diagnostic: createDiagnostic('io_error', 'Failed to read document.', options.relativeKey),
         };
       }
 
@@ -176,5 +172,8 @@ export function resolveDocumentPathUnderRoot(rootPath: string, relativeKey: stri
 }
 
 export function toRootRelativeKey(rootPath: string, absolutePath: string): string {
-  return path.relative(path.resolve(rootPath), path.resolve(absolutePath)).split(path.sep).join('/');
+  return path
+    .relative(path.resolve(rootPath), path.resolve(absolutePath))
+    .split(path.sep)
+    .join('/');
 }

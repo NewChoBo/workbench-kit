@@ -37,14 +37,7 @@ export interface PersistableWindow {
 }
 
 export type ResizeEdge =
-  | 'left'
-  | 'right'
-  | 'top'
-  | 'bottom'
-  | 'top-left'
-  | 'top-right'
-  | 'bottom-left'
-  | 'bottom-right';
+  'left' | 'right' | 'top' | 'bottom' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
 export interface ResizeRectOptions {
   minWidth?: number;

@@ -37,7 +37,7 @@ export async function quarantineFileUnderRoot(
   const quarantineDir = resolvePathUnderRoot(root, ...quarantineRelativeDir.split('/'));
   await mkdir(quarantineDir, { recursive: true });
 
-  const timestamp = (options.now ?? (() => new Date))().toISOString().replace(/[:.]/g, '-');
+  const timestamp = (options.now ?? (() => new Date()))().toISOString().replace(/[:.]/g, '-');
   const id = (options.createId ?? randomUUID)();
   const basename = path.basename(sourcePath);
   const quarantineName = `${basename}.${timestamp}.${id}.quarantine`;

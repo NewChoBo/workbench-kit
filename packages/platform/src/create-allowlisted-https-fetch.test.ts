@@ -13,7 +13,7 @@ describe('createAllowlistedHttpsFetch', () => {
     await fetch('https://api.example.com/v1/items');
 
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(fetchImpl.mock.calls[0]?.[0]).toBe('https://api.example.com/v1/items');
+    expect(fetchImpl).toHaveBeenCalledWith('https://api.example.com/v1/items', undefined);
   });
 
   it('rejects http URLs', async () => {

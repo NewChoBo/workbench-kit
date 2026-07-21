@@ -27,9 +27,7 @@ function createDiagnostic(
  * Node filesystem JSONL store.
  * Corruption policy (v1): quarantine the whole file and resume empty.
  */
-export function createNodeJsonLinesStore<T>(
-  options: NodeJsonLinesStoreOptions,
-): JsonLinesStore<T> {
+export function createNodeJsonLinesStore<T>(options: NodeJsonLinesStoreOptions): JsonLinesStore<T> {
   const relativeParts = splitRelativeKey(options.relativeKey);
   const filePath = resolvePathUnderRoot(options.rootPath, ...relativeParts);
 

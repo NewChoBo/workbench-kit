@@ -47,11 +47,7 @@ describe('WorkbenchPropertyOverrideLabel', () => {
 
   it('hides Reset when onReset is provided but not overridden', () => {
     const markup = renderToStaticMarkup(
-      <WorkbenchPropertyOverrideLabel
-        label="Theme"
-        overridden={false}
-        onReset={() => undefined}
-      />,
+      <WorkbenchPropertyOverrideLabel label="Theme" overridden={false} onReset={() => undefined} />,
     );
 
     expect(markup).toContain('Default');
@@ -65,9 +61,7 @@ describe('WorkbenchPropertyOverrideLabel', () => {
     const root = createRoot(container);
 
     await act(async () => {
-      root.render(
-        <WorkbenchPropertyOverrideLabel label="Opacity" overridden onReset={onReset} />,
-      );
+      root.render(<WorkbenchPropertyOverrideLabel label="Opacity" overridden onReset={onReset} />);
     });
 
     const resetButton = container.querySelector(

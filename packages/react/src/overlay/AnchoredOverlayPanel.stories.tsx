@@ -122,9 +122,7 @@ export const CatalogFilterWithNestedSelect: Story = {
     await expect(dialog).toBeVisible();
     // Nested SMS listbox consumes the first Escape (defaultPrevented).
     await userEvent.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(within(document.body).queryByRole('listbox')).toBeNull(),
-    );
+    await waitFor(() => expect(within(document.body).queryByRole('listbox')).toBeNull());
     await expect(dialog).toBeVisible();
 
     await userEvent.keyboard('{Escape}');

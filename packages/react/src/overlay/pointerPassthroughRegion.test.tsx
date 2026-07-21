@@ -170,11 +170,7 @@ describe('usePointerPassthroughRegion', () => {
     const cancelSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
 
     const { container, root } = mount(
-      <HookHarness
-        enabled
-        port={{ setPointerPassthrough }}
-        hitSelectors={['[data-hit]']}
-      />,
+      <HookHarness enabled port={{ setPointerPassthrough }} hitSelectors={['[data-hit]']} />,
     );
 
     const outside = container.querySelector('span');

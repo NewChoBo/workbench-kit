@@ -26,13 +26,7 @@ export interface UsePointerPassthroughRegionOptions {
  * - Pair with platform residency applicator for the main-process half
  */
 export function usePointerPassthroughRegion(options: UsePointerPassthroughRegionOptions): void {
-  const {
-    enabled,
-    port,
-    hitSelectors,
-    controlSelectors,
-    rootRef,
-  } = options;
+  const { enabled, port, hitSelectors, controlSelectors, rootRef } = options;
 
   const portRef = useRef(port);
   portRef.current = port;

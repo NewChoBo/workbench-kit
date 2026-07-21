@@ -3,13 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindWindowBoundsPersistence } from './bind-window-bounds-persistence.js';
 import type { PersistableWindow, RectLike, RememberedWindowState } from './types.js';
 
-type WindowEvent =
-  | 'close'
-  | 'closed'
-  | 'maximize'
-  | 'move'
-  | 'resize'
-  | 'unmaximize';
+type WindowEvent = 'close' | 'closed' | 'maximize' | 'move' | 'resize' | 'unmaximize';
 
 function createFakeWindow(initial: {
   bounds: RectLike;
@@ -74,9 +68,13 @@ describe('bindWindowBoundsPersistence', () => {
     });
     const saves: RememberedWindowState[] = [];
 
-    bindWindowBoundsPersistence(window, (state) => {
-      saves.push(state);
-    }, 300);
+    bindWindowBoundsPersistence(
+      window,
+      (state) => {
+        saves.push(state);
+      },
+      300,
+    );
 
     window.emit('move');
     window.emit('resize');
@@ -98,9 +96,13 @@ describe('bindWindowBoundsPersistence', () => {
     });
     const saves: RememberedWindowState[] = [];
 
-    bindWindowBoundsPersistence(window, (state) => {
-      saves.push(state);
-    }, 100);
+    bindWindowBoundsPersistence(
+      window,
+      (state) => {
+        saves.push(state);
+      },
+      100,
+    );
 
     window.setBounds({ x: 50, y: 70, width: 920, height: 620 });
     window.emit('move');
@@ -120,9 +122,13 @@ describe('bindWindowBoundsPersistence', () => {
     });
     const saves: RememberedWindowState[] = [];
 
-    bindWindowBoundsPersistence(window, (state) => {
-      saves.push(state);
-    }, 500);
+    bindWindowBoundsPersistence(
+      window,
+      (state) => {
+        saves.push(state);
+      },
+      500,
+    );
 
     window.setBounds({ x: 30, y: 40, width: 820, height: 520 });
     window.emit('resize');

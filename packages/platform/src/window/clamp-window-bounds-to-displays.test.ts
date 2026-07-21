@@ -19,10 +19,7 @@ const secondary: DisplayWorkArea = {
 describe('clampWindowBoundsToDisplays', () => {
   it('enforces a reasonable minimum size', () => {
     expect(
-      clampWindowBoundsToDisplays(
-        { x: 100, y: 80, width: 40, height: 20 },
-        [primary],
-      ),
+      clampWindowBoundsToDisplays({ x: 100, y: 80, width: 40, height: 20 }, [primary]),
     ).toEqual({
       x: 100,
       y: 80,
@@ -33,10 +30,7 @@ describe('clampWindowBoundsToDisplays', () => {
 
   it('fits oversized bounds into the target work area', () => {
     expect(
-      clampWindowBoundsToDisplays(
-        { x: 10, y: 10, width: 5000, height: 4000 },
-        [primary],
-      ),
+      clampWindowBoundsToDisplays({ x: 10, y: 10, width: 5000, height: 4000 }, [primary]),
     ).toEqual({
       x: 0,
       y: 0,
@@ -47,10 +41,10 @@ describe('clampWindowBoundsToDisplays', () => {
 
   it('recovers off-screen bounds onto the primary work area', () => {
     expect(
-      clampWindowBoundsToDisplays(
-        { x: -8000, y: -6000, width: 1200, height: 800 },
-        [primary, secondary],
-      ),
+      clampWindowBoundsToDisplays({ x: -8000, y: -6000, width: 1200, height: 800 }, [
+        primary,
+        secondary,
+      ]),
     ).toEqual({
       x: 0,
       y: 0,
@@ -61,10 +55,10 @@ describe('clampWindowBoundsToDisplays', () => {
 
   it('keeps bounds on a secondary display when they already intersect it', () => {
     expect(
-      clampWindowBoundsToDisplays(
-        { x: 2100, y: 40, width: 800, height: 600 },
-        [primary, secondary],
-      ),
+      clampWindowBoundsToDisplays({ x: 2100, y: 40, width: 800, height: 600 }, [
+        primary,
+        secondary,
+      ]),
     ).toEqual({
       x: 2100,
       y: 40,

@@ -39,7 +39,10 @@ export interface UseAnchoredOverlayPanelResult {
   };
 }
 
-function assignRef<T>(ref: RefObject<T | null> | RefCallback<T> | null | undefined, value: T | null): void {
+function assignRef<T>(
+  ref: RefObject<T | null> | RefCallback<T> | null | undefined,
+  value: T | null,
+): void {
   if (typeof ref === 'function') {
     ref(value);
     return;

@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  createWin32WallpaperPathResolver,
-  resolveWallpaperCropRect,
-} from './wallpaper-crop.js';
+import { createWin32WallpaperPathResolver, resolveWallpaperCropRect } from './wallpaper-crop.js';
 
 describe('resolveWallpaperCropRect', () => {
   it('maps a monitor into image space for a spanned desktop', () => {

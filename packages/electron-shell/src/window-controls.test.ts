@@ -26,10 +26,7 @@ describe('nextMaximizedState', () => {
 
 describe('registerWindowControlIpc', () => {
   it('wires minimize / toggle / close / isMaximized against an owned window', () => {
-    const handlers = new Map<
-      string,
-      (event: { sender: unknown }, ...args: unknown[]) => unknown
-    >();
+    const handlers = new Map<string, (event: { sender: unknown }, ...args: unknown[]) => unknown>();
     const ipcMain = {
       handle: (
         channel: string,
@@ -92,10 +89,7 @@ describe('registerWindowControlIpc', () => {
   });
 
   it('rejects untrusted senders', () => {
-    const handlers = new Map<
-      string,
-      (event: { sender: unknown }, ...args: unknown[]) => unknown
-    >();
+    const handlers = new Map<string, (event: { sender: unknown }, ...args: unknown[]) => unknown>();
     registerWindowControlIpc({
       ipcMain: {
         handle: (channel, listener) => {

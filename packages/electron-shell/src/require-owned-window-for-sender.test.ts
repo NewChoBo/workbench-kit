@@ -28,9 +28,7 @@ describe('requireOwnedWindowForSender', () => {
   it('throws UntrustedIpcSenderError for an unknown sender', () => {
     const sender = { id: 99 };
 
-    expect(() =>
-      requireOwnedWindowForSender(sender, () => null),
-    ).toThrow(UntrustedIpcSenderError);
+    expect(() => requireOwnedWindowForSender(sender, () => null)).toThrow(UntrustedIpcSenderError);
 
     try {
       requireOwnedWindowForSender(sender, () => null);

@@ -23,33 +23,48 @@ describe('resizeRect', () => {
   );
 
   it('clamps width when shrinking from the right', () => {
-    expect(
-      resizeRect(start, 'right', -280, 0, { minWidth: 50, minHeight: 40 }),
-    ).toEqual({ x: 100, y: 200, width: 50, height: 150 });
+    expect(resizeRect(start, 'right', -280, 0, { minWidth: 50, minHeight: 40 })).toEqual({
+      x: 100,
+      y: 200,
+      width: 50,
+      height: 150,
+    });
   });
 
   it('clamps width and anchors the right edge when shrinking from the left', () => {
-    expect(
-      resizeRect(start, 'left', 280, 0, { minWidth: 50, minHeight: 40 }),
-    ).toEqual({ x: 350, y: 200, width: 50, height: 150 });
+    expect(resizeRect(start, 'left', 280, 0, { minWidth: 50, minHeight: 40 })).toEqual({
+      x: 350,
+      y: 200,
+      width: 50,
+      height: 150,
+    });
   });
 
   it('clamps height when shrinking from the bottom', () => {
-    expect(
-      resizeRect(start, 'bottom', 0, -140, { minWidth: 50, minHeight: 40 }),
-    ).toEqual({ x: 100, y: 200, width: 300, height: 40 });
+    expect(resizeRect(start, 'bottom', 0, -140, { minWidth: 50, minHeight: 40 })).toEqual({
+      x: 100,
+      y: 200,
+      width: 300,
+      height: 40,
+    });
   });
 
   it('clamps height and anchors the bottom edge when shrinking from the top', () => {
-    expect(
-      resizeRect(start, 'top', 0, 140, { minWidth: 50, minHeight: 40 }),
-    ).toEqual({ x: 100, y: 310, width: 300, height: 40 });
+    expect(resizeRect(start, 'top', 0, 140, { minWidth: 50, minHeight: 40 })).toEqual({
+      x: 100,
+      y: 310,
+      width: 300,
+      height: 40,
+    });
   });
 
   it('clamps both axes on a corner resize', () => {
-    expect(
-      resizeRect(start, 'top-left', 290, 140, { minWidth: 50, minHeight: 40 }),
-    ).toEqual({ x: 350, y: 310, width: 50, height: 40 });
+    expect(resizeRect(start, 'top-left', 290, 140, { minWidth: 50, minHeight: 40 })).toEqual({
+      x: 350,
+      y: 310,
+      width: 50,
+      height: 40,
+    });
   });
 
   it('defaults minimum size to zero when options are omitted', () => {

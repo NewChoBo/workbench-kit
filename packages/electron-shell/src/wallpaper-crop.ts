@@ -72,10 +72,7 @@ export function createWin32WallpaperPathResolver(options: {
 }): WallpaperPathResolver {
   return {
     async resolveWallpaperPath(): Promise<string | null> {
-      const value = await options.readRegistryString(
-        'HKCU\\Control Panel\\Desktop',
-        'WallPaper',
-      );
+      const value = await options.readRegistryString('HKCU\\Control Panel\\Desktop', 'WallPaper');
       if (value === null) {
         return null;
       }

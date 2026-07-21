@@ -80,10 +80,7 @@ describe('applyWindowResidency', () => {
     const setFocusable = vi.fn();
     const setIgnoreMouseEvents = vi.fn();
 
-    applyWindowResidency(
-      { setAlwaysOnTop, setFocusable, setIgnoreMouseEvents },
-      'click-through',
-    );
+    applyWindowResidency({ setAlwaysOnTop, setFocusable, setIgnoreMouseEvents }, 'click-through');
 
     expect(setIgnoreMouseEvents).toHaveBeenCalledWith(true, { forward: true });
   });

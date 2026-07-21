@@ -183,8 +183,8 @@ sentinel options before passing. Full multi-section dialog landed as §2
 
 ### 15. Electron host shell package
 
-| Field                  | Detail                                                                                                                                                                |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Field                  | Detail                                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description**        | Optional `@workbench-kit/electron-shell`: frameless window, IPC titlebar, tray, multi-window restore — without pulling Electron into `react`. |
 | **Consumer pain**      | Each Electron consumer reimplements titlebar IPC and restore policy.                                                                          |
 | **Suggested package**  | `packages/electron-shell` (**private preview**, not in `NPM_PUBLISH_ORDER` until the API stabilizes).                                         |

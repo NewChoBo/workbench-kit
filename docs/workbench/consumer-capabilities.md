@@ -277,14 +277,14 @@ is active.
 **Purpose:** Sparse-override inspector label chrome — Custom vs Default badge plus an
 optional compact Reset action. Compose into `Field label={...}` or property rows.
 
-| Prop                 | Role                                                                 |
-| -------------------- | -------------------------------------------------------------------- |
-| `label`              | Field title (`ReactNode`)                                            |
-| `overridden`         | Host-computed override state — drives badge + Reset visibility       |
-| `onReset?`           | Host handler; Reset renders only when `overridden` and this is set   |
-| `customBadgeLabel?`  | Default `"Custom"`                                                   |
-| `defaultBadgeLabel?` | Default `"Default"`                                                  |
-| `resetLabel?`        | Default `"Reset"`                                                    |
+| Prop                 | Role                                                               |
+| -------------------- | ------------------------------------------------------------------ |
+| `label`              | Field title (`ReactNode`)                                          |
+| `overridden`         | Host-computed override state — drives badge + Reset visibility     |
+| `onReset?`           | Host handler; Reset renders only when `overridden` and this is set |
+| `customBadgeLabel?`  | Default `"Custom"`                                                 |
+| `defaultBadgeLabel?` | Default `"Default"`                                                |
+| `resetLabel?`        | Default `"Reset"`                                                  |
 
 **I/O contract:** Host owns which fields are overridden and what Reset writes. Kit owns
 layout, badge variants (`accent` / `muted`), and the compact Reset button.
@@ -359,14 +359,14 @@ open that dialog from the cascade menu while keeping primary field menus.
 title row with Clear (always mounted; `clearDisabled` when idle), and a body slot
 for facet sections. Product-neutral companion to `CatalogBrowsePane`.
 
-| Prop / type       | Role                                                               |
-| ----------------- | ------------------------------------------------------------------ |
-| `title`           | Host copy for the overlay heading                                  |
-| `titleId`         | `aria-labelledby` target id                                        |
-| `clearLabel`      | Accessible label for Clear                                         |
-| `onClear`         | Host clears selection                                              |
-| `clearDisabled`   | Keep Clear sized/mounted but inert (avoids header height jump)     |
-| `children`        | Usually `LibraryFacetFilterPanel` (or host-authored section lists) |
+| Prop / type       | Role                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `title`           | Host copy for the overlay heading                                                                                         |
+| `titleId`         | `aria-labelledby` target id                                                                                               |
+| `clearLabel`      | Accessible label for Clear                                                                                                |
+| `onClear`         | Host clears selection                                                                                                     |
+| `clearDisabled`   | Keep Clear sized/mounted but inert (avoids header height jump)                                                            |
+| `children`        | Usually `LibraryFacetFilterPanel` (or host-authored section lists)                                                        |
 | Portal / position | Prefer `useAnchoredOverlayPanel` for portal root, fixed coords, dismiss, and remeasure; host may still own these manually |
 
 **When to use:** Anchored filter popover / flyout next to browse chrome.
@@ -491,8 +491,8 @@ themselves as fill (clip); only named scroll owners may overflow.
 
 **Key props:**
 
-| Surface           | Props                                                                                            |
-| ----------------- | ------------------------------------------------------------------------------------------------ |
+| Surface                 | Props                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
 | `ChatPanel`             | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `messageListAddon`, composer/runtime props |
 | `ChatMessageItem`       | `footer`, `afterMessage`, plus message `tone` / `contentMode`                                    |
 | `ChatMessage`           | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                |

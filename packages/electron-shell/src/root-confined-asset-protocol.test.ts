@@ -56,10 +56,8 @@ describe('root-confined asset protocol helpers', () => {
 
     expect(meta.relativePath).toBe('objects/abc123.bin');
 
-    let handled: { data: Uint8Array; mimeType: string } | undefined;
     let handler:
-      | ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>)
-      | undefined;
+      ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>) | undefined;
 
     registerRootConfinedAssetProtocol({
       scheme: 'wk-asset',
@@ -76,7 +74,7 @@ describe('root-confined asset protocol helpers', () => {
       },
     });
 
-    handled = await handler!({ url: 'wk-asset://abc123' });
+    const handled = await handler!({ url: 'wk-asset://abc123' });
     expect(handled.mimeType).toBe('image/png');
     expect(new TextDecoder().decode(handled.data)).toBe('image-bytes');
   });
@@ -123,8 +121,7 @@ describe('root-confined asset protocol helpers', () => {
     cache.bytes.set('objects/old.bin', new Uint8Array([9]));
 
     let handler:
-      | ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>)
-      | undefined;
+      ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>) | undefined;
     registerRootConfinedAssetProtocol({
       scheme: 'wk-asset',
       cacheRoot: '/cache',
