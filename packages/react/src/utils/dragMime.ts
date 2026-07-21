@@ -76,8 +76,10 @@ export function createStringDragMime(options: {
 }): TypedDragMime<string> {
   return createTypedDragMime({
     mimeType: options.mimeType,
-    textPlainFallback: options.textPlainFallback,
-    effectAllowed: options.effectAllowed,
+    // Pass concrete defaults so linked consumers with
+    // `exactOptionalPropertyTypes` can typecheck the source file.
+    textPlainFallback: options.textPlainFallback ?? false,
+    effectAllowed: options.effectAllowed ?? 'copyMove',
     serialize: (value) => value,
     deserialize: (raw) => {
       const trimmed = raw.trim();

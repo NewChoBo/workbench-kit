@@ -9,7 +9,8 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./node": "./src/node/index.ts"
+    "./node": "./src/node/index.ts",
+    "./versioned-browser-state": "./src/versioned-browser-state.ts"
   },
   "dependencies": {
     "@workbench-kit/base": "workspace:*"

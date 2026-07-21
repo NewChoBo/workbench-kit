@@ -9,6 +9,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./drag-mime": "./src/utils/dragMime.ts",
     "./modal": "./src/modal/Modal.tsx",
     "./layout": "./src/layout/index.ts",
     "./editor-tabs": "./src/workbench/editor-tabs/index.ts",
