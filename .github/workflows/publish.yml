@@ -75,7 +75,11 @@ jobs:
       - name: Preflight npm publish auth
         run: node scripts/preflight-npm-publish.mjs
 
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Validate
+        # validate includes Storybook play; browsers must match root Playwright.
         run: pnpm validate
 
       - name: Guard branch publish
