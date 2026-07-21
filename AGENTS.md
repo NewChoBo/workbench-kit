@@ -23,7 +23,12 @@ Workbench Kit is a **library**; host applications consume published or linked pa
 
 1. Read surrounding code and match existing naming, exports, and validation lanes.
 2. Keep diffs focused — no drive-by refactors.
-3. Run the smallest validation lane that covers your change (`typecheck`, `lint`, `check:public-exports`, etc.).
+3. Run the smallest validation lane that covers your change (`typecheck`, `lint`,
+   `check:public-exports`, `validate:static` / `validate:fast`, etc.).
+4. For UI, prefer the active tool’s browser/preview (Cursor browser MCP, IDE
+   preview, Storybook UI, `pnpm dev`). **Do not treat Playwright /
+   `pnpm validate:ui` as mandatory** for routine agent work—use it when CI
+   parity or required Storybook play coverage is explicitly requested.
 
 ## Project layout
 
@@ -84,16 +89,30 @@ storage and gitignored local files only. Docs may use obvious placeholders
 Use neutral terms (`integrating host`, `consumer app`, capability names). Keep
 VS Code / OSS design references when they explain kit conventions.
 
+### Before every commit (mandatory, all agents)
+
+Run this **yourself** before any `git commit` / `git push` — including Codex,
+Claude Code, Cursor, and humans. Do not rely on editor-specific hooks alone.
+
+```powershell
+pnpm check:commit-safety
+```
+
+That runs `check:public-references` (internal/sibling names) and `check:secrets`
+(credential-looking material). Both are also part of `pnpm validate:static`.
+
 - Policy: [`docs/conventions/public-reference-policy.md`](docs/conventions/public-reference-policy.md)
-- Checkers: `pnpm check:public-references`, `pnpm check:secrets` (in `validate:static`)
-- Cursor hooks gate agent `git commit` / `git push` when either checker fails
+- Cursor additionally gates shell `git commit` / `git push` via
+  `.cursor/hooks/gate-git-publish-safety.mjs` — treat that as a backstop, not
+  the only control
 
-## Cursor rules and hooks
+## Agent tooling notes
 
-| Path                                   | Scope                                                 |
-| -------------------------------------- | ----------------------------------------------------- |
-| `.cursor/rules/workbench-kit-core.mdc` | Always applied                                        |
-| `.cursor/rules/npm-release.mdc`        | Publish scripts, workflows, package publish metadata  |
-| `.cursor/hooks.json`                   | Gate agent `git commit` / `git push` (refs + secrets) |
+| Path                                   | Scope                                                |
+| -------------------------------------- | ---------------------------------------------------- |
+| `AGENTS.md` (this file)                | Cross-tool source of truth for agent defaults        |
+| `.cursor/rules/workbench-kit-core.mdc` | Cursor always-applied mirror of critical defaults    |
+| `.cursor/rules/npm-release.mdc`        | Publish scripts, workflows, package publish metadata |
+| `.cursor/hooks.json`                   | Cursor-only shell gate for commit/push safety checks |
 
 When conventions and code disagree, update code **and** docs/rules together.
