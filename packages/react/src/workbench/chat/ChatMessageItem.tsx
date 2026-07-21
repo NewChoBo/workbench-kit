@@ -8,7 +8,16 @@ import { ChatMessageTime, resolveChatMessageTimestamp } from './chatMessageMeta'
 import type { ChatCommandProposal, ChatMessage, ChatMessageLayout } from './types';
 
 export interface ChatMessageItemProps {
+  /**
+   * Rendered after the bubble (and before command proposals). Use for
+   * attachments or host chrome that should stay outside the collapsible surface.
+   */
+  afterMessage?: ReactNode | undefined;
   assistantLabel?: string;
+  /**
+   * Forwarded into `ChatMessageCollapsible` in-bubble footer (progress, actions).
+   */
+  footer?: ReactNode | undefined;
   isStreaming?: boolean;
   layout?: ChatMessageLayout;
   message: ChatMessage;
@@ -94,8 +103,18 @@ function ChatMessageCommandProposals({
   );
 }
 
+function ChatMessageAfterSlot({ children }: { children: ReactNode | undefined }) {
+  if (!children) {
+    return null;
+  }
+
+  return <div className="message__after">{children}</div>;
+}
+
 export function ChatMessageItem({
+  afterMessage,
   assistantLabel = 'Assistant',
+  footer,
   isStreaming = false,
   layout = 'assistant',
   message,
@@ -129,12 +148,14 @@ export function ChatMessageItem({
             <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
               <ChatMessageCollapsible
                 content={message.content}
+                footer={footer}
                 isStreaming={isStreaming}
                 surfaceClassName="message__bubble"
               >
                 {message.content}
               </ChatMessageCollapsible>
             </MessageBubbleLine>
+            <ChatMessageAfterSlot>{afterMessage}</ChatMessageAfterSlot>
           </div>
         </div>
       </div>
@@ -152,12 +173,14 @@ export function ChatMessageItem({
             <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
               <ChatMessageCollapsible
                 content={message.content}
+                footer={footer}
                 isStreaming={isStreaming}
                 surfaceClassName="message__bubble message__bubble--peer"
               >
                 {message.content}
               </ChatMessageCollapsible>
             </MessageBubbleLine>
+            <ChatMessageAfterSlot>{afterMessage}</ChatMessageAfterSlot>
             <ChatMessageCommandProposals
               message={message}
               onCommandProposalAllow={onCommandProposalAllow}
@@ -181,6 +204,7 @@ export function ChatMessageItem({
             <ChatMessageCollapsible
               className="message__assistant-collapsible"
               content={message.content}
+              footer={footer}
               isStreaming={isStreaming}
               surfaceClassName="message__collapsible-surface--assistant"
             >
@@ -199,6 +223,7 @@ export function ChatMessageItem({
               </div>
             </ChatMessageCollapsible>
           </MessageBubbleLine>
+          <ChatMessageAfterSlot>{afterMessage}</ChatMessageAfterSlot>
           <ChatMessageCommandProposals
             message={message}
             onCommandProposalAllow={onCommandProposalAllow}
