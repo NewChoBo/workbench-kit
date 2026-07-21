@@ -242,6 +242,12 @@ narrow injected surface (`setAlwaysOnTop` / `setFocusable` / `setIgnoreMouseEven
 `forwardPointerWhenIgnoring` defaults to `true` (win32 forward option). Pair with renderer
 hit-region pointer passthrough in `@workbench-kit/react` for selective interaction.
 
+**Hit-region pointer passthrough (implemented API):** Hosts inject selector lists and a
+`PointerPassthroughPort` (usually IPC → ignore-mouse-events). `@workbench-kit/react`
+exposes `usePointerPassthroughRegion` / `createPointerPassthroughController` with
+rAF-coalesced pointermove hit-testing. No product selectors ship in the kit. Pair with
+platform `applyWindowResidency(..., 'click-through')` on the main-process side.
+
 ### 16. Collection / dynamic collection save UI
 
 | Field                  | Detail                                                                                               |

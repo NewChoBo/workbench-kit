@@ -17,3 +17,15 @@ export type {
   ContextMenuPointerState,
   UseContextMenuStateResult,
 } from './useContextMenuState';
+export {
+  createPointerPassthroughController,
+  isPointerOverHitRegion,
+} from './pointerPassthroughRegion';
+export type {
+  PointerOverHitRegionOptions,
+  PointerPassthroughController,
+  PointerPassthroughControllerOptions,
+  PointerPassthroughPort,
+} from './pointerPassthroughRegion';
+export { usePointerPassthroughRegion } from './usePointerPassthroughRegion';
+export type { UsePointerPassthroughRegionOptions } from './usePointerPassthroughRegion';

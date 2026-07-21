@@ -196,6 +196,18 @@ export type {
   UseContextMenuStateResult,
 } from './overlay/useContextMenuState';
 export {
+  createPointerPassthroughController,
+  isPointerOverHitRegion,
+} from './overlay/pointerPassthroughRegion';
+export type {
+  PointerOverHitRegionOptions,
+  PointerPassthroughController,
+  PointerPassthroughControllerOptions,
+  PointerPassthroughPort,
+} from './overlay/pointerPassthroughRegion';
+export { usePointerPassthroughRegion } from './overlay/usePointerPassthroughRegion';
+export type { UsePointerPassthroughRegionOptions } from './overlay/usePointerPassthroughRegion';
+export {
   getWorkbenchStatusDescriptor,
   getWorkbenchStatusLabel,
   getWorkbenchStatusVariant,
