@@ -70,6 +70,25 @@ export function applyWorkspaceExplorerMutationResult(
   });
 }
 
+/**
+ * Folder clicks keep `paths` empty (file multi-select list). After renaming a
+ * folder without a host `mapRenameSelection`, focus the folder the same way.
+ */
+export function applyWorkspaceExplorerFolderFocus(
+  folderPath: string,
+  setSelection: (selection: WorkspaceSelectionState) => void,
+): void {
+  if (!folderPath) {
+    return;
+  }
+
+  setSelection({
+    anchorPath: undefined,
+    focusedPath: folderPath,
+    paths: [],
+  });
+}
+
 export function validateWorkspaceExplorerInlineEditName(name: string): string | undefined {
   if (!isSimpleWorkspaceName(name)) {
     return 'Use a simple file or folder name.';

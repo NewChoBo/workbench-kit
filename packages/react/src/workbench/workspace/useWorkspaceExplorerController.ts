@@ -16,6 +16,7 @@ import type {
   WorkspaceExplorerSelectionChangeMeta,
 } from './WorkspaceExplorer';
 import {
+  applyWorkspaceExplorerFolderFocus,
   applyWorkspaceExplorerMutationResult,
   createWorkspaceExplorerInlineEditDraft,
   createWorkspaceExplorerRenameDraft,
@@ -262,6 +263,11 @@ export function useWorkspaceExplorerController({
                 sourcePath,
               }),
             );
+            return;
+          }
+
+          if (renameKind === 'folder') {
+            applyWorkspaceExplorerFolderFocus(result?.path ?? destinationPath, setSelection);
             return;
           }
 
