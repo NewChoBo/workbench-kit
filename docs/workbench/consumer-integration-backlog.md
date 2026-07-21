@@ -228,6 +228,13 @@ filesystem implementations live on `@workbench-kit/platform/node` only:
 Prefer memory or Node document stores for structured persistence. `localStorage`
 adapters remain appropriate only for small JSON documents in browser hosts.
 
+**Tray-aware close / quit policy (implemented API):** Hosts own tray icons, menus, and
+preference UI. `@workbench-kit/platform` exposes pure decision helpers (no Electron imports):
+
+- `shouldHideOnClose({ trayEnabled })` — hide instead of destroy when tray mode is on
+- `shouldQuitWhenAllWindowsClosed({ platform, trayEnabled })` — darwin keeps the app alive
+  without windows; win32/linux quit when tray is off; tray enabled never auto-quits
+
 ### 16. Collection / dynamic collection save UI
 
 | Field                  | Detail                                                                                               |
