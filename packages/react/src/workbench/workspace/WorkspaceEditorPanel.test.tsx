@@ -92,6 +92,77 @@ describe('WorkspaceEditorPanel', () => {
     });
     container.remove();
   });
+
+  it('skips panel Ctrl/Cmd+S when saveShortcutMode is editor with renderEditor', async () => {
+    const saved: string[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkspaceDraftsProvider>
+          <WorkspaceEditorPanel
+            files={[{ path: 'notes.md', content: 'draft' }]}
+            openPaths={['notes.md']}
+            renderEditor={({ content }) => <output aria-label="editor content">{content}</output>}
+            saveShortcutMode="editor"
+            selectedPath="notes.md"
+            onSaveFile={(_path, content) => {
+              saved.push(content);
+              return undefined;
+            }}
+            onSelectedPathChange={() => undefined}
+          />
+        </WorkspaceDraftsProvider>,
+      );
+    });
+
+    await pressSave(container);
+    expect(saved).toEqual([]);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('lets onSaveShortcut own panel Ctrl/Cmd+S without calling save', async () => {
+    const saved: string[] = [];
+    const intercepted: string[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkspaceDraftsProvider>
+          <WorkspaceEditorPanel
+            files={[{ path: 'notes.md', content: 'draft' }]}
+            openPaths={['notes.md']}
+            selectedPath="notes.md"
+            onSaveFile={(_path, content) => {
+              saved.push(content);
+              return undefined;
+            }}
+            onSaveShortcut={({ content }) => {
+              intercepted.push(content);
+            }}
+            onSelectedPathChange={() => undefined}
+          />
+        </WorkspaceDraftsProvider>,
+      );
+    });
+
+    await pressSave(container);
+    expect(intercepted).toEqual(['draft']);
+    expect(saved).toEqual([]);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
 });
 
 async function click(container: HTMLElement, label: string): Promise<void> {
