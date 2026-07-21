@@ -200,6 +200,13 @@ sentinel options before passing. Full multi-section dialog landed as §2
 - `registerWindowControlIpc` / `createWindowControlsBridge` — frameless minimize /
   toggle-maximize / close / isMaximized (+ maximized-changed push); hosts inject channel
   names and owned-window resolution.
+- `createEncryptedSecretVault` — OS-backed cipher port + opaque secret ids; fails closed
+  when encryption is unavailable (compose persistence with platform/node atomic write).
+- `registerRootConfinedAssetProtocol` / `cacheAllowlistedHttpsAsset` — privileged scheme
+  serving only root-confined cache bytes; hosts inject scheme, hash/TTL/size policy, HTTPS fetch,
+  and `resolveInsideRoot` (typically `@workbench-kit/platform/node`).
+- `resolveWallpaperCropRect` + `createWin32WallpaperPathResolver` — spanned wallpaper crop
+  math and injectable win32 path resolution (other platforms return null until host provides one).
 
 **Remember window state contract (implemented API):** Host owns storage path and the
 user preference that gates restore. `@workbench-kit/platform` exposes Electron-free
