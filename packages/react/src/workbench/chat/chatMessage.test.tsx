@@ -311,6 +311,27 @@ describe('ChatMessageItem', () => {
     expect(markup).toContain('message__command-proposals');
     expect(markup).toContain('Open Settings');
   });
+
+  it('forwards footer into the bubble and afterMessage outside it', () => {
+    const message: ChatMessage = {
+      content: 'Working on it',
+      id: 'assistant-slots',
+      source: 'assistant',
+    };
+
+    const markup = renderToStaticMarkup(
+      <ChatMessageItem
+        afterMessage={<span>attachment-chip</span>}
+        footer={<span>progress-footer</span>}
+        message={message}
+      />,
+    );
+
+    expect(markup).toContain('message__bubble-footer');
+    expect(markup).toContain('progress-footer');
+    expect(markup).toContain('message__after');
+    expect(markup).toContain('attachment-chip');
+  });
 });
 
 describe('ChatMessageList', () => {
