@@ -5,6 +5,10 @@ Storybook validates both isolated workbench components and the sample app behind
 integration stories prove host wiring. Guard against excess — duplicate full shells,
 orphan plays, and unbounded required growth — using the balance rules below.
 
+**Sample-as-SUT direction** (scenarios/fixtures, Storybook vs Playwright): see
+[Sample Host Test Architecture](./sample-host-test-architecture.md). That doc is the
+target shape; this page remains the coverage inventory and gate rules.
+
 ## Current Story Source
 
 Storybook discovers stories from the paths configured in `.storybook/main.ts`.
@@ -12,17 +16,23 @@ Today that is:
 
 ```text
 examples/workbench-sample/src/**/*.stories.@(ts|tsx)
-packages/react/src/primitives/Controls.stories.@(ts|tsx)
-packages/react/src/primitives/EditorChrome.stories.@(ts|tsx)
+packages/react/src/primitives/stories/Controls.stories.@(ts|tsx)
+packages/react/src/primitives/workbench-editor/EditorChrome.stories.@(ts|tsx)
+packages/react/src/primitives/scroll-area-infinite-load/ScrollAreaInfiniteLoad.stories.@(ts|tsx)
 packages/react/src/modal/OverlayDialogs.stories.@(ts|tsx)
+packages/react/src/overlay/AnchoredOverlayPanel.stories.@(ts|tsx)
 packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)
+packages/react/src/workbench/WorkbenchShell.stories.@(ts|tsx)
+packages/react/src/workbench/IntegratedShell.stories.@(ts|tsx)
 packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)
 packages/react/src/layout/sidebar/SideBarViewTabStrip.stories.@(ts|tsx)
 packages/react/src/layout/WorkbenchPropertyOverrideLabel.stories.@(ts|tsx)
-packages/react/src/layout/panel/TemplateGallery.stories.@(ts|tsx)
 packages/react/src/widget-tree/WidgetTreeLab.stories.@(ts|tsx)
 packages/jdw-editor/src/**/*.stories.@(ts|tsx)
 ```
+
+Authoritative globs live in `.storybook/main.ts`; update that file and this list
+together.
 
 The canonical integration story file is:
 

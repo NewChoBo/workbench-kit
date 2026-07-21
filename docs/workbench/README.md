@@ -33,6 +33,8 @@ are not kept as active documents. Their conclusions are folded into
 | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | [**Command Core Alignment Plan 2026-06-20**](./command-core-alignment-plan-2026-06-20.md)   | Command architecture and single execution path.                        |
 | [**Sample Host Backend API**](./sample-host-backend-api.md)                                 | Dummy backend routes/DTOs and migration shape for real hosts.          |
+| [**Sample Host Test Architecture**](./sample-host-test-architecture.md)                     | Sample-as-SUT direction: scenarios/fixtures, Storybook vs Playwright.  |
+| [**Storybook E2E Coverage**](./storybook-e2e-coverage.md)                                   | Required/baseline play gates and True E2E-only boundaries.             |
 | [**Layout & CSS Improvement Plan 2026-06-20**](./layout-css-improvement-plan-2026-06-20.md) | Layout/scroll/CSS contracts and active cleanup phases.                 |
 | [**Sidebar Simplification Plan 2026-06-20**](./sidebar-simplification-plan-2026-06-20.md)   | Primary sidebar builtin view and section-stack sub-track.              |
 | [**Structural Review**](./structural-review.md)                                             | Package/layer analysis and boundary risks.                             |

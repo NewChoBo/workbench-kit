@@ -82,6 +82,11 @@ pnpm --filter workbench-sample build
 pnpm validate
 ```
 
+UI regression for this host is primarily **Storybook play** against the same
+`App` used by `pnpm dev` (`WorkbenchSample.stories.tsx`). Direction for splitting
+scenarios/fixtures so sample sources stay easy to assemble for tests:
+[Sample Host Test Architecture](../../docs/workbench/sample-host-test-architecture.md).
+
 ## Configuration
 
 | File                             | Usage in sample host                            |
@@ -117,6 +122,8 @@ percent and maps to pixels at the shell boundary.
 
 See [Sample Host Backend API](../../docs/workbench/sample-host-backend-api.md)
 for the dummy backend contract,
+[Sample Host Test Architecture](../../docs/workbench/sample-host-test-architecture.md)
+for sample-as-SUT / Storybook vs Playwright direction,
 [Use Case Scenarios](../../docs/guides/use-cases.md) for integration flows, and
 [Workbench Current State](../../docs/workbench/current-state.md) for the current
 workbench roadmap.

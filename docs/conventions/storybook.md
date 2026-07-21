@@ -4,6 +4,10 @@ Storybook is the required UI regression gate for the sample app that runs throug
 `pnpm dev:storybook` or `pnpm dev:all`. Keep the Storybook surface narrow, deterministic, and detailed enough
 to replace browser E2E smoke for the flows it explicitly covers.
 
+For the longer-term **sample-as-SUT** layout (shared scenarios/fixtures,
+Storybook vs thin Playwright), see
+[Sample Host Test Architecture](../workbench/sample-host-test-architecture.md).
+
 ## Current Shape
 
 - Keep a root `.storybook` directory.
@@ -80,6 +84,16 @@ First-pass component required set:
 5. `React/Overlay/Dialog Actions` - Context menu pointer state (`useContextMenuState` right-click open)
 6. `React/Workbench/Chat Components` - Sample peer chat example, peer interaction, and assistant runtime controls
 7. `React/Workbench/Workspace Search` - Search panel flow in a sidebar search panel
+
+## Sample host as SUT
+
+- Integration stories should import sample modules (today `App`), not a second
+  full-shell fixture.
+- Prefer growing coverage by extracting **scenarios and fixtures** inside
+  `examples/workbench-sample` over adding deep parallel Storybook harnesses.
+- Playwright (or similar) is optional and should hit the running sample only for
+  [True E2E-only](../workbench/storybook-e2e-coverage.md#true-e2e-only-flows)
+  gaps — not as a duplicate of `storybook-play-required`.
 
 ## E2E Replacement Criteria
 
