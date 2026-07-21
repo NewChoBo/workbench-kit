@@ -1,0 +1,19 @@
+{
+  "name": "@workbench-kit/electron-shell",
+  "version": "0.0.1-prototype.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run src",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "description": "Private-preview Electron main-process helpers for Workbench Kit hosts. Not published to npm until the API stabilizes.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NewChoBo/workbench-kit.git",
+    "directory": "packages/electron-shell"
+  }
+}

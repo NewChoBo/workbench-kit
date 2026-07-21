@@ -15,6 +15,7 @@ rules reflect issues found while standing up trusted publishing in June 2026.
 - `@workbench-kit/monaco`
 - `@workbench-kit/workbench-core`
 - `@workbench-kit/shell-react`
+- `@workbench-kit/electron-shell`
 
 Adding a new public package requires:
 
