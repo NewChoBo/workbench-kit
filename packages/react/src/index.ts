@@ -664,6 +664,11 @@ export type {
 export { StructuredArtifactEditor } from './workbench/StructuredArtifactEditor';
 export type { StructuredArtifactEditorProps } from './workbench/StructuredArtifactEditor';
 export {
+  createStringDragMime,
+  createTypedDragMime,
+} from './utils/dragMime';
+export type { TypedDragMime, TypedDragMimeOptions } from './utils/dragMime';
+export {
   EDITOR_TAB_DRAG_DATA_TYPE,
   getEditorTabDropPosition,
   isEditorTabMoveNoop,
