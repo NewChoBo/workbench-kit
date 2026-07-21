@@ -28,7 +28,8 @@ Never commit or hardcode secrets anywhere in the tree:
   (public-references + secrets). Do not skip this even if a Cursor hook exists.
 - Also covered by `pnpm validate:static`.
 - Full policy: `docs/conventions/public-reference-policy.md`.
-- Cross-tool defaults live in `AGENTS.md` (source of truth for non-Cursor agents).
+- Cross-tool defaults: `AGENTS.md` (SoT). Claude Code: `CLAUDE.md` → `@AGENTS.md`.
+  Layout: `docs/conventions/agent-guidance.md`.
 
 ## Tooling
 
@@ -77,7 +78,8 @@ Key facts agents often get wrong:
 
 ## Docs index
 
+- Agent layout: `docs/conventions/agent-guidance.md`
 - Conventions: `docs/conventions/` (especially `public-reference-policy.md`)
 - Architecture: `docs/architecture/`
 - Workbench notes: `docs/workbench/`
-- Cursor git gate: `.cursor/hooks.json` → public-references + secrets checks
+- Cursor git gate: `.cursor/hooks.json` → `check:commit-safety`

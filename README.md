@@ -155,6 +155,7 @@ Task-oriented guides and API indexes for integrators and extension authors:
 
 ## Conventions
 
+- [Agent Guidance](./docs/conventions/agent-guidance.md)
 - [Git Workflow](./docs/conventions/git-workflow.md)
 - [Development Harness](./docs/conventions/development-harness.md)
 - [Lint & Format](./docs/conventions/lint-format.md)

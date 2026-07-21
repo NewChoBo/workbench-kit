@@ -10,7 +10,7 @@ to publish and clone without exposing private company knowledge.
 This policy applies to:
 
 - Source and tests under `packages/`, `extensions/`, `examples/`, `scripts/`
-- Human docs under `docs/`, `README.md`, `AGENTS.md`
+- Human docs under `docs/`, `README.md`, `AGENTS.md`, `CLAUDE.md`
 - Agent instructions under `.cursor/rules/`, `.cursor/hooks/`, and similar
 - Commit messages and PR titles/bodies for this repository
 - Storybook copy and sample-host UI strings

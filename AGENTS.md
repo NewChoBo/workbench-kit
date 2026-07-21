@@ -108,11 +108,16 @@ That runs `check:public-references` (internal/sibling names) and `check:secrets`
 
 ## Agent tooling notes
 
-| Path                                   | Scope                                                |
-| -------------------------------------- | ---------------------------------------------------- |
-| `AGENTS.md` (this file)                | Cross-tool source of truth for agent defaults        |
-| `.cursor/rules/workbench-kit-core.mdc` | Cursor always-applied mirror of critical defaults    |
-| `.cursor/rules/npm-release.mdc`        | Publish scripts, workflows, package publish metadata |
-| `.cursor/hooks.json`                   | Cursor-only shell gate for commit/push safety checks |
+Layout and ownership: [`docs/conventions/agent-guidance.md`](docs/conventions/agent-guidance.md).
+
+| Path                                   | Scope                                                 |
+| -------------------------------------- | ----------------------------------------------------- |
+| `AGENTS.md` (this file)                | Cross-tool source of truth for agent defaults         |
+| `CLAUDE.md`                            | Claude Code entry; imports this file via `@AGENTS.md` |
+| `.cursor/rules/workbench-kit-core.mdc` | Cursor always-applied mirror of critical defaults     |
+| `.cursor/rules/npm-release.mdc`        | Publish scripts, workflows, package publish metadata  |
+| `.cursor/hooks.json`                   | Cursor-only shell gate for commit/push safety checks  |
 
 When conventions and code disagree, update code **and** docs/rules together.
+Do not duplicate long policy into `CLAUDE.md` or Cursor rules—edit this file or
+`docs/conventions/` instead.
