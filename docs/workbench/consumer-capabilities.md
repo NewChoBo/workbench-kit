@@ -493,11 +493,13 @@ themselves as fill (clip); only named scroll owners may overflow.
 
 | Surface           | Props                                                                                            |
 | ----------------- | ------------------------------------------------------------------------------------------------ |
-| `ChatPanel`       | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `messageListAddon`, composer/runtime props |
-| `ChatMessageItem` | `footer`, `afterMessage`, plus message `tone` / `contentMode`                                    |
-| `ChatMessage`     | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                |
+| `ChatPanel`             | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `messageListAddon`, composer/runtime props |
+| `ChatMessageItem`       | `footer`, `afterMessage`, plus message `tone` / `contentMode`                                    |
+| `ChatMessage`           | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                |
+| `ChatPhasedRunProgress` | Product-neutral phase id/label/status/detail list with expand/collapse and optional actions      |
 
 **Defaults:** Assistant layout messages render Markdown unless `contentMode: 'plain'`. User/peer default to plain. File drop is ignored while `disabled` or `isRunning`.
+Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage` (or a hybrid timeline slot); hosts own phase ids and copy.
 
 **When to use:** Host chat sidebars that should delete local message/composer chrome forks.
 

@@ -2,6 +2,13 @@ export { ChatMessageCollapsible, CHAT_MESSAGE_COLLAPSE_MAX_LINES } from './ChatM
 export type { ChatMessageCollapsibleProps } from './ChatMessageCollapsible';
 export { ChatCommandProposalCard } from './ChatCommandProposalCard';
 export type { ChatCommandProposalCardProps } from './ChatCommandProposalCard';
+export { ChatPhasedRunProgress } from './ChatPhasedRunProgress';
+export type {
+  ChatPhasedRunProgressAction,
+  ChatPhasedRunProgressProps,
+  ChatRunPhase,
+  ChatRunPhaseStatus,
+} from './ChatPhasedRunProgress';
 export { ChatComposer } from './ChatComposer';
 export type { ChatComposerProps } from './ChatComposer';
 export { ChatConversationBar } from './ChatConversationBar';
