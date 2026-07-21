@@ -185,10 +185,16 @@ sentinel options before passing. Full multi-section dialog landed as §2
 
 | Field                  | Detail                                                                                                                                                                |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Description**        | Optional `@workbench-kit/electron-shell` (or sample-only module): frameless window, IPC titlebar, tray, multi-window restore — without pulling Electron into `react`. |
-| **Consumer pain**      | Each Electron consumer reimplements titlebar IPC and restore policy.                                                                                                  |
-| **Suggested package**  | New app-layer package or documented sample in `examples/` only until API stabilizes.                                                                                  |
-| **Storybook / sample** | N/A in browser Storybook; electron sample app when scope is explicit.                                                                                                 |
+| **Description**        | Optional `@workbench-kit/electron-shell`: frameless window, IPC titlebar, tray, multi-window restore — without pulling Electron into `react`. |
+| **Consumer pain**      | Each Electron consumer reimplements titlebar IPC and restore policy.                                                                          |
+| **Suggested package**  | `packages/electron-shell` (**private preview**, not in `NPM_PUBLISH_ORDER` until the API stabilizes).                                         |
+| **Storybook / sample** | N/A in browser Storybook; electron sample app when scope is explicit.                                                                         |
+
+**Bootstrap status:** Package exists as private preview. First helper:
+
+- `requireOwnedWindowForSender(sender, resolveOwnedWindow)` — reject IPC from senders
+  not bound to a host-owned window (`UntrustedIpcSenderError`); no `electron` import in
+  the public helper (hosts adapt `WebContents` / registry).
 
 **Remember window state contract (implemented API):** Host owns storage path and the
 user preference that gates restore. `@workbench-kit/platform` exposes Electron-free

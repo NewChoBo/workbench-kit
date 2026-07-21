@@ -11,6 +11,7 @@ const privatePreviewPackageNames = new Set([
   '@workbench-kit/monaco',
   '@workbench-kit/workbench-core',
   '@workbench-kit/shell-react',
+  '@workbench-kit/electron-shell',
 ]);
 const requiredSrcExclusions = [
   '!src/**/*.test.ts',

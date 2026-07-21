@@ -27,6 +27,7 @@ const packageRules = toRuleMap({
     '@workbench-kit/workspace',
   ],
   '@workbench-kit/monaco': ['@workbench-kit/base', '@workbench-kit/platform'],
+  '@workbench-kit/electron-shell': [],
   '@workbench-kit/contracts': [],
   '@workbench-kit/runtime': ['@workbench-kit/contracts'],
   '@workbench-kit/workspace': [],
