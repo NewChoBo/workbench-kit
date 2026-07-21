@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import { Badge } from '../../primitives/badge';
 import { Button } from '../../primitives/button';
 import { Checkbox } from '../../primitives/checkbox';
@@ -10,6 +12,43 @@ import type { WorkspaceEditorTheme } from '../workspace';
 function clampStorySidebarPx(value: number, fallback: number) {
   if (!Number.isFinite(value)) return fallback;
   return Math.min(480, Math.max(200, value));
+}
+
+/** Draft text so digit-by-digit typing is not clamped mid-entry (e.g. "3" → 200 → "320" → 480). */
+function PrimarySidebarWidthInput({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (sizePx: number) => void;
+}) {
+  const [draft, setDraft] = useState(() => String(Math.round(value)));
+
+  useEffect(() => {
+    setDraft(String(Math.round(value)));
+  }, [value]);
+
+  return (
+    <TextInput
+      controlWidth="full"
+      id="integrated-shell-primary-sidebar-width"
+      type="number"
+      value={draft}
+      onChange={(event) => {
+        const nextDraft = event.currentTarget.value;
+        setDraft(nextDraft);
+        const next = event.currentTarget.valueAsNumber;
+        if (Number.isFinite(next) && next >= 200 && next <= 480) {
+          onChange(next);
+        }
+      }}
+      onBlur={() => {
+        const clamped = clampStorySidebarPx(Number(draft), value);
+        setDraft(String(clamped));
+        onChange(clamped);
+      }}
+    />
+  );
 }
 
 export function renderIntegratedShellSettingsCategory({
@@ -72,17 +111,7 @@ export function renderIntegratedShellSettingsCategory({
           label="Primary sidebar width"
           description="Sets the current sidebar width in pixels."
         >
-          <TextInput
-            controlWidth="full"
-            id="integrated-shell-primary-sidebar-width"
-            type="number"
-            value={Math.round(sideBarSizePx)}
-            onChange={(event) =>
-              onSideBarSizePxChange(
-                clampStorySidebarPx(event.currentTarget.valueAsNumber, sideBarSizePx),
-              )
-            }
-          />
+          <PrimarySidebarWidthInput value={sideBarSizePx} onChange={onSideBarSizePxChange} />
         </Field>
       </WorkbenchSettingsSection>
     );

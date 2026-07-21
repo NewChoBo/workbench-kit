@@ -38,7 +38,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NPM_DIST_TAG: ${{ inputs.npm_tag || 'prototype' }}
-      NPM_PUBLISH_UPDATES_ONLY: 'true'
+      # Publish every NPM_PUBLISH_ORDER package missing the exact version, including
+      # first releases (Trusted Publisher / OIDC). Local publish remains a fallback.
+      NPM_PUBLISH_UPDATES_ONLY: 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

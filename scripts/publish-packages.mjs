@@ -43,7 +43,7 @@ for (const packageName of publishOrder) {
 
   if (updatesOnly && !npmViewExists(pkg.name)) {
     console.log(
-      `skip ${spec}: package not on npm yet (publish locally with publish-packages-local.mjs)`,
+      `skip ${spec}: package not on npm yet (enable CI first-publish by setting NPM_PUBLISH_UPDATES_ONLY=false)`,
     );
     continue;
   }
@@ -106,8 +106,8 @@ function publishFailureError(packageName, error) {
       `npm publish failed for ${packageName}.`,
       'Trusted publishing checklist:',
       '- npm Trusted Publisher: NewChoBo / workbench-kit / publish.yml (Environment blank).',
-      '- First release of a package must use: node scripts/publish-packages-local.mjs',
-      '- After local first publish, register npm Trusted Publisher for NewChoBo/workbench-kit.',
+      '- First releases also go through publish.yml (OIDC); local publish-packages-local.mjs is fallback only.',
+      '- Ensure the package (or org policy) allows this repository as Trusted Publisher.',
       error instanceof Error ? error.message : String(error),
     ].join('\n'),
     { cause: error },

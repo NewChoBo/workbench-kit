@@ -148,6 +148,6 @@ export const NPM_PUBLISH_ORDER = [
 
 // All public publish packages are CI targets. Private preview shells
 // (monaco, workbench-core, shell-react, electron-shell) stay out of NPM_PUBLISH_ORDER.
-// First release of a package still uses publish-packages-local.mjs; CI updates-only
-// skips packages that are not on npm yet.
+// publish.yml publishes missing exact versions via OIDC, including first releases.
+// publish-packages-local.mjs remains a fallback when Trusted Publisher is unavailable.
 export const NPM_CI_PUBLISH_PACKAGES = new Set(NPM_PUBLISH_ORDER);

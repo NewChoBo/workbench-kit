@@ -22,24 +22,27 @@ Adding a new public package requires:
 1. Public `package.json` with `publishConfig` (`access: public`, `tag: prototype`, `provenance: true`)
 2. Entry in `NPM_PUBLISH_ORDER` in dependency-safe order
 3. Pass `pnpm check:public-exports`
-4. First release locally, then CI for updates
+4. npm **Trusted Publisher** for `NewChoBo/workbench-kit` / `publish.yml` (org policy or per package)
+5. Push a version tag so CI publishes (including first releases)
 
 Directory mapping: `@workbench-kit/jdw` lives in `packages/json-widget` (`PACKAGE_DIRECTORY_BY_NAME`).
 
 ## Release Paths
 
-### Routine version updates (CI)
+### Routine releases and first releases (CI)
 
 1. Merge changes to `main`
 2. Push tag `v<version>` or `workbench-kit-v<version>` (must match root `package.json` after sync)
 3. GitHub Actions workflow `.github/workflows/publish.yml` runs:
    - `sync-version-from-tag.mjs` — sets **all** package versions from the tag
    - build + `pnpm validate`
-   - `publish-packages.mjs` — trusted publishing (OIDC)
+   - `publish-packages.mjs` — trusted publishing (OIDC), including packages not yet on npm
 
 Skip logic publishes only when `@scope/name@<exact-version>` is **not** yet on npm. An older `@prototype` version (for example `.1.3`) does **not** block publishing `.1.4`.
 
-### First release of a new public package (local)
+### Local fallback (optional)
+
+Use local publish only when Trusted Publisher / OIDC is unavailable:
 
 ```powershell
 npm login
@@ -48,8 +51,6 @@ pnpm publish:packages:local
 ```
 
 Local publish uses `--provenance=false`. Do **not** run `publish-packages-local.mjs` in GitHub Actions.
-
-After the first local release, ensure npm **Trusted Publisher** is configured, then use CI for all later versions.
 
 ## Dist Tags
 
@@ -121,7 +122,7 @@ Script changes under `scripts/` must pass `pnpm format:check`.
 
 - [ ] Root and all package versions match after `sync-version-from-tag`
 - [ ] Tag name matches `v${version}` or `workbench-kit-v${version}`
-- [ ] All packages in `NPM_PUBLISH_ORDER` either exist on npm (CI update) or have a local first-release plan
+- [ ] All packages in `NPM_PUBLISH_ORDER` have Trusted Publisher (or org policy) so CI can publish first releases
 - [ ] Inter-package dependency versions in built tarballs match the release version
 - [ ] Trusted Publisher configured on npm for `NewChoBo/workbench-kit` / `publish.yml`
 - [ ] Confirm `@prototype` dist-tags after CI, not `npm view … version` (`latest`)

@@ -15,12 +15,12 @@ Read `docs/conventions/npm-release.md` before changing publish scripts or releas
 - Do not add private-preview shells (`monaco`, `workbench-core`, `shell-react`, `electron-shell`) to publish order.
 - `@workbench-kit/jdw` → directory `packages/json-widget`.
 
-## Two release paths
+## Release path
 
-| Case                 | Command / trigger                                                      |
-| -------------------- | ---------------------------------------------------------------------- |
-| First release on npm | `publish-packages-local.mjs` (local `npm login`, `--provenance=false`) |
-| Version updates      | Tag `v*` / `workbench-kit-v*` → `publish.yml` (OIDC only)              |
+| Case                            | Command / trigger                                         |
+| ------------------------------- | --------------------------------------------------------- |
+| First release and version bumps | Tag `v*` / `workbench-kit-v*` → `publish.yml` (OIDC only) |
+| Fallback (no Trusted Publisher) | `publish-packages-local.mjs` (local `npm login`)          |
 
 ## OIDC — do not regress
 

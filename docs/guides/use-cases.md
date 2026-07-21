@@ -244,7 +244,8 @@ git push origin v0.0.1-prototype.1
 
 CI workflow `.github/workflows/publish.yml` publishes all packages in `NPM_PUBLISH_ORDER`.
 
-First release of a new public package is **local only**: `pnpm publish:packages:local`.
+First releases and updates both go through `publish.yml` (OIDC Trusted Publisher).
+Local `pnpm publish:packages:local` is fallback only.
 
 See [npm Release & CI/CD](../conventions/npm-release.md).
 
