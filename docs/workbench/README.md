@@ -5,7 +5,7 @@ status and roadmap decisions live in [current-state.md](./current-state.md).
 Canonical package structure and migration status live under
 [`docs/architecture`](../architecture/README.md).
 
-**Task-oriented guides:** [Guides](../guides/README.md) · [Use Case Scenarios](../guides/use-cases.md) · [Extension Development](../guides/extension-development.md) · [API Reference](../guides/api-reference.md)
+**Task-oriented guides:** [Guides](../guides/README.md) · [Getting Started](../guides/getting-started.md) · [Component Map](../guides/component-map.md) · [Sample Screens](../guides/sample-screens.md) · [Use Case Scenarios](../guides/use-cases.md) · [Extension Development](../guides/extension-development.md) · [API Reference](../guides/api-reference.md)
 
 Historical execution plans, dated audits, closeout notes, and delegation notes
 are not kept as active documents. Their conclusions are folded into

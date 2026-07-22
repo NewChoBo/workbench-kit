@@ -120,10 +120,18 @@ screen. For integrated workspace/chat/editor flows, use Storybook
 Primary sidebar chrome uses pixel widths; the sample host still persists layout
 percent and maps to pixels at the shell boundary.
 
+## Consumer docs
+
+| Guide | Use when |
+| ----- | -------- |
+| [Getting Started](../../docs/guides/getting-started.md) | Install `@prototype` and compose a minimal shell |
+| [Component Map](../../docs/guides/component-map.md) | Map a surface to import / Storybook / sample |
+| [Sample Screens](../../docs/guides/sample-screens.md) | Copy screen recipes (auth, chat, library, JDW, …) |
+| [Use Case Scenarios](../../docs/guides/use-cases.md) | End-to-end host and extension flows |
+
 See [Sample Host Backend API](../../docs/workbench/sample-host-backend-api.md)
 for the dummy backend contract,
 [Sample Host Test Architecture](../../docs/workbench/sample-host-test-architecture.md)
-for sample-as-SUT / Storybook vs Playwright direction,
-[Use Case Scenarios](../../docs/guides/use-cases.md) for integration flows, and
+for sample-as-SUT / Storybook vs Playwright direction, and
 [Workbench Current State](../../docs/workbench/current-state.md) for the current
 workbench roadmap.

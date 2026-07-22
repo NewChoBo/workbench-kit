@@ -8,6 +8,9 @@ This document is the **integration contract** for reusable workbench UI. It inve
 
 Related: [Consumer Integration Backlog](./consumer-integration-backlog.md) ·
 [Explorer Selection Policy](./explorer-selection-policy.md) ·
+[Getting Started](../guides/getting-started.md) ·
+[Component Map](../guides/component-map.md) ·
+[Sample Screens](../guides/sample-screens.md) ·
 [API Reference](../guides/api-reference.md) ·
 [Workbench Change Guidelines](./workbench-change-guidelines.md)
 

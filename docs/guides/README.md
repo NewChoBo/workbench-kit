@@ -6,6 +6,9 @@ Task-oriented documentation for consuming Workbench Kit packages, developing ext
 
 | Guide                                               | Audience                       | Purpose                                                                    |
 | --------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------- |
+| [Getting Started](./getting-started.md)             | App authors                    | Install `@prototype`, CSS, minimal `WorkbenchShell`                        |
+| [Component Map](./component-map.md)                 | App authors                    | Surface → import → Storybook / sample index                                |
+| [Sample Screens](./sample-screens.md)               | App authors                    | Example screen recipes (auth, shell, chat, library, JDW, …)                |
 | [Use Case Scenarios](./use-cases.md)                | App authors, extension authors | End-to-end flows: install, run sample, build extensions, command lifecycle |
 | [Extension Development](./extension-development.md) | Extension authors              | Manifest shape, activation, built-in vs sample, bundle pipeline            |
 | [API Reference](./api-reference.md)                 | App and backend authors        | OpenAPI, contracts, public package exports                                 |
@@ -23,6 +26,7 @@ These guides focus on **how to use** the workbench. Deeper design notes live und
 
 Planning and reference APIs that complement the guides:
 
+- [Consumer Capabilities](../workbench/consumer-capabilities.md) — prop-level integration contract for `@workbench-kit/react`
 - [Sample Host Backend API](../workbench/sample-host-backend-api.md) — dummy auth backend contract for the sample host
 - [Plugin Manifest Guide](../workbench/plugin-manifest-guide.md) — experimental plugin descriptor shape (contracts layer)
 
@@ -30,6 +34,11 @@ Planning and reference APIs that complement the guides:
 
 | Path                                                                      | Role                                             |
 | ------------------------------------------------------------------------- | ------------------------------------------------ |
+| [`packages/react/README.md`](../../packages/react/README.md)              | npm-facing React package entry                   |
+| [`packages/shell-react/README.md`](../../packages/shell-react/README.md)  | Provider + shell host assembly                   |
+| [`packages/platform/README.md`](../../packages/platform/README.md)        | Commands, keybindings, auth contracts            |
+| [`packages/workspace/README.md`](../../packages/workspace/README.md)      | Path / tree / draft / selection helpers          |
+| [`packages/contracts/README.md`](../../packages/contracts/README.md)      | Shared TS contracts + OpenAPI                    |
 | [`extensions/`](../../extensions/README.md)                               | Built-in and sample extension packages           |
 | [`examples/workbench-sample/`](../../examples/workbench-sample/README.md) | Standalone integration host                      |
 | [`.workbench/`](../../.workbench/)                                        | Workspace extension enablement and layout config |

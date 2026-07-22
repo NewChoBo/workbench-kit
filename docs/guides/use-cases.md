@@ -35,6 +35,8 @@ See [npm Release & CI/CD](../conventions/npm-release.md) for publish tags and re
 
 **Public API rule:** Import through each package `exports` map only. See [Public API Governance](../conventions/public-api-governance.md) and [API Reference](./api-reference.md).
 
+For a first shell composition (CSS + `WorkbenchShell`), prefer [Getting Started](./getting-started.md).
+
 ---
 
 ## Scenario 2 — Run workbench-sample locally
