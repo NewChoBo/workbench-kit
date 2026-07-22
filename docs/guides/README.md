@@ -35,6 +35,10 @@ Planning and reference APIs that complement the guides:
 | Path                                                                      | Role                                             |
 | ------------------------------------------------------------------------- | ------------------------------------------------ |
 | [`packages/react/README.md`](../../packages/react/README.md)              | npm-facing React package entry                   |
+| [`packages/shell-react/README.md`](../../packages/shell-react/README.md)  | Provider + shell host assembly                   |
+| [`packages/platform/README.md`](../../packages/platform/README.md)        | Commands, keybindings, auth contracts            |
+| [`packages/workspace/README.md`](../../packages/workspace/README.md)      | Path / tree / draft / selection helpers          |
+| [`packages/contracts/README.md`](../../packages/contracts/README.md)      | Shared TS contracts + OpenAPI                    |
 | [`extensions/`](../../extensions/README.md)                               | Built-in and sample extension packages           |
 | [`examples/workbench-sample/`](../../examples/workbench-sample/README.md) | Standalone integration host                      |
 | [`.workbench/`](../../.workbench/)                                        | Workspace extension enablement and layout config |
