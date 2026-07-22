@@ -65,4 +65,17 @@ describe('WorkbenchMarkdownPreview', () => {
     expect(markup).toContain('Preview');
     expect(markup).toContain('Done');
   });
+
+  it('strips dangerous HTML from untrusted markdown', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchMarkdownPreview
+        source={'Hello <script>alert(1)</script><img src=x onerror="alert(1)" /> world'}
+      />,
+    );
+
+    expect(markup).not.toContain('<script');
+    expect(markup).not.toContain('onerror');
+    expect(markup).toContain('Hello');
+    expect(markup).toContain('world');
+  });
 });

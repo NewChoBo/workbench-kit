@@ -87,7 +87,7 @@ const conversion = defineConversion({
   ],
 });
 
-const { output } = convertToShape({
+const { output } = await convertToShape({
   conversion,
   shapes,
   inputs: { a: structureA },
@@ -97,7 +97,8 @@ const { output } = convertToShape({
 ```
 
 Hosts may `registry.register()` additional transforms (the sample registers `expr:jsonata` via
-[jsonata](https://jsonata.org/)).
+[jsonata](https://jsonata.org/)). `convertToShape` / `applyTransformChain` are async so Promise-returning
+host transforms (JSONata 2.x) resolve correctly.
 
 ## Layout
 

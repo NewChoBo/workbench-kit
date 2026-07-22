@@ -83,11 +83,11 @@ Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workb
 
 **Key props:**
 
-| Surface                    | Props                                                                                                           |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `WorkbenchThemeProvider`   | `platform` (`darwin` \| `win32` \| `linux`) — sets host platform context + `data-workbench-platform`            |
-| `WorkbenchDesktopTitleBar` | `chrome` (`platform` default \| `generic`), `leading` / `centerSlot` / `trailing`, `windowControls`             |
-| `windowControls`           | Host callbacks only: `onMinimize`, `onToggleMaximized`, `onClose`, `isMaximized`, optional labels               |
+| Surface                    | Props                                                                                                                                                                                                                                           |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WorkbenchThemeProvider`   | `platform` (`darwin` \| `win32` \| `linux`) — sets host platform context + `data-workbench-platform`                                                                                                                                            |
+| `WorkbenchDesktopTitleBar` | `chrome` (`platform` default \| `generic`), `leading` / `centerSlot` / `trailing`, `windowControls`                                                                                                                                             |
+| `windowControls`           | Host callbacks only: `onMinimize`, `onToggleMaximized`, `onClose`, `isMaximized`, optional labels                                                                                                                                               |
 | Title-bar layout toggles   | `WorkbenchShellTitleBarLayoutControls`: omit `onTogglePanel` / `onToggleAuxiliarySidebar` to hide those buttons. `WorkbenchShell` (`@workbench-kit/shell-react`): `showPanelLayoutToggle` / `showAuxiliarySidebarLayoutToggle` (default `true`) |
 
 **I/O contract:** Kit owns chrome markup and darwin/win32 placement. Hosts supply Electron (or similar) IPC callbacks and optional i18n labels — do not fork titlebar markup in the renderer.
@@ -502,15 +502,15 @@ themselves as fill (clip); only named scroll owners may overflow.
 
 **Key props:**
 
-| Surface                 | Props                                                                                            |
-| ----------------------- | ------------------------------------------------------------------------------------------------ |
-| `ChatPanel`             | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `renderComposer`, `messageListAddon`, composer/runtime props |
-| `ChatMessageItem`       | `footer`, `attachments` (in-bubble), `afterMessage` (outside), `labelIcon` (`ReactNode \| false`), plus `tone` / `contentMode` |
-| `ChatMessage`           | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                |
-| `ChatPhasedRunProgress` | Phase list + optional `labels` (expand/collapse, summary, status badges) for host i18n           |
+| Surface                 | Props                                                                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ChatPanel`             | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `renderComposer`, `messageListAddon`, composer/runtime props                                           |
+| `ChatMessageItem`       | `footer`, `attachments` (in-bubble), `afterMessage` (outside), `labelIcon` (`ReactNode \| false`), plus `tone` / `contentMode`                               |
+| `ChatMessage`           | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                                                                            |
+| `ChatPhasedRunProgress` | Phase list + optional `labels` (expand/collapse, summary, status badges) for host i18n                                                                       |
 | `ChatConversationBar`   | Density tokens: `--workbench-chat-conversation-pill-min-width` (default `7.5rem`), `--workbench-chat-conversation-session-pill-min-width` (default `5.5rem`) |
 
-**Defaults:** Assistant layout messages render Markdown unless `contentMode: 'plain'`. User/peer default to plain. File drop is ignored while `disabled` or `isRunning`.
+**Defaults:** Assistant layout messages render Markdown unless `contentMode: 'plain'`. User/peer default to plain. Markdown uses `remark-gfm` plus `rehype-sanitize` (scripts/event handlers/dangerous URLs stripped). Hosts that need unsanitized HTML should render outside kit chat/preview surfaces. File drop is ignored while `disabled` or `isRunning`.
 Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage` (or a hybrid timeline slot); hosts own phase ids and copy.
 
 **When to use:** Host chat sidebars that should delete local message/composer chrome forks.

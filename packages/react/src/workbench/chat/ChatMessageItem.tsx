@@ -1,7 +1,10 @@
 import Markdown from 'react-markdown';
 import type { ReactNode } from 'react';
 import { cx } from '../../utils/cx';
-import { workbenchMarkdownRemarkPlugins } from '../markdownRemarkPlugins';
+import {
+  workbenchMarkdownRemarkPlugins,
+  workbenchMarkdownRehypePlugins,
+} from '../markdownRemarkPlugins';
 import { ChatCommandProposalCard } from './ChatCommandProposalCard';
 import { ChatMessageCollapsible } from './ChatMessageCollapsible';
 import { ChatMessageTime, resolveChatMessageTimestamp } from './chatMessageMeta';
@@ -196,6 +199,7 @@ function ChatMessageBody({
       <div className="md-content">
         <Markdown
           remarkPlugins={workbenchMarkdownRemarkPlugins}
+          rehypePlugins={workbenchMarkdownRehypePlugins}
           components={{
             code: ({ children, className }) => (
               <code className={cx('ui-workbench-scrollbar', className)}>{children}</code>

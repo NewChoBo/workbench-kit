@@ -10,7 +10,7 @@ import {
 
 import { FIELD_REMAP_SAMPLES, getFieldRemapSample } from './field-remap-samples.js';
 
-function convertSample(sampleId: string) {
+async function convertSample(sampleId: string) {
   const sample = getFieldRemapSample(sampleId);
   const sources = sourceFieldsFromPlainObject(sample.source, {
     idPrefix: sample.sourceIdPrefix,
@@ -18,7 +18,7 @@ function convertSample(sampleId: string) {
   const targets = targetSlotsFromPlainObject(sample.targetShape, {
     idPrefix: sample.targetIdPrefix,
   });
-  return convertToShape({
+  return await convertToShape({
     conversion: defineConversion({
       id: sample.id,
       sourceShapeIds: [sample.sourceIdPrefix],
@@ -45,7 +45,7 @@ function convertSample(sampleId: string) {
 }
 
 describe('FIELD_REMAP_SAMPLES', () => {
-  it('lists five catalog entries', () => {
+  it('lists five catalog entries', async () => {
     expect(FIELD_REMAP_SAMPLES.map((sample) => sample.id)).toEqual([
       'nested-ab',
       't-user-contact',
@@ -55,8 +55,8 @@ describe('FIELD_REMAP_SAMPLES', () => {
     ]);
   });
 
-  it('maps nested-ab with object port and formats', () => {
-    const { output } = convertSample('nested-ab');
+  it('maps nested-ab with object port and formats', async () => {
+    const { output } = await convertSample('nested-ab');
     expect(output).toMatchObject({
       name: 'Ada Lovelace',
       title: 'ADA LOVELACE',
@@ -65,8 +65,8 @@ describe('FIELD_REMAP_SAMPLES', () => {
     });
   });
 
-  it('builds fullName from NAME object template', () => {
-    const { output } = convertSample('t-user-contact');
+  it('builds fullName from NAME object template', async () => {
+    const { output } = await convertSample('t-user-contact');
     expect(output).toEqual({
       id: 1001,
       fullName: 'Ada Lovelace',
@@ -75,8 +75,8 @@ describe('FIELD_REMAP_SAMPLES', () => {
     });
   });
 
-  it('reformats, combines, and splits date/time', () => {
-    const { output } = convertSample('t-event-time');
+  it('reformats, combines, and splits date/time', async () => {
+    const { output } = await convertSample('t-event-time');
     expect(output).toEqual({
       eventId: 'EV-7',
       displayDate: '2026.07.20',
@@ -86,8 +86,8 @@ describe('FIELD_REMAP_SAMPLES', () => {
     });
   });
 
-  it('flattens T_EMP → T_EMP_ROW', () => {
-    const { output } = convertSample('t-emp-dept');
+  it('flattens T_EMP → T_EMP_ROW', async () => {
+    const { output } = await convertSample('t-emp-dept');
     expect(output).toEqual({
       empNo: 'E-42',
       empName: 'Grace Hopper',
@@ -96,8 +96,8 @@ describe('FIELD_REMAP_SAMPLES', () => {
     });
   });
 
-  it('maps T_PRODUCT tags via itemEdges', () => {
-    const { output } = convertSample('t-product-catalog');
+  it('maps T_PRODUCT tags via itemEdges', async () => {
+    const { output } = await convertSample('t-product-catalog');
     expect(output).toMatchObject({
       productId: 'P-9',
       name: 'Analytical Engine',

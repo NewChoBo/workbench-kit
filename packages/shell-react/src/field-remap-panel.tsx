@@ -1,4 +1,4 @@
-import { useMemo, useState, type JSX } from 'react';
+import { useEffect, useMemo, useState, type JSX } from 'react';
 import {
   convertToShape,
   createBuiltinValueTransformRegistry,
@@ -28,6 +28,11 @@ export interface FieldRemapPanelProps {
   readonly transforms?: ValueTransformRegistry | undefined;
   readonly className?: string | undefined;
 }
+
+type FieldRemapPreviewResult = {
+  readonly output: Record<string, unknown>;
+  readonly error?: string;
+};
 
 function resolveSample(sample: FieldRemapPanelProps['sample']): FieldRemapSampleDefinition {
   if (!sample) {
@@ -61,6 +66,7 @@ export function FieldRemapPanel({
   }, [transformsProp]);
 
   const [edges, setEdges] = useState<readonly MappingEdge[]>(() => [...sample.edges]);
+  const [result, setResult] = useState<FieldRemapPreviewResult>({ output: {} });
 
   const sourceFields = useMemo(
     () => sourceFieldsFromPlainObject(sample.source, { idPrefix: sample.sourceIdPrefix }),
@@ -94,7 +100,8 @@ export function FieldRemapPanel({
     [edges, sourceFields, targetSlots],
   );
 
-  const result = useMemo(() => {
+  useEffect(() => {
+    let cancelled = false;
     const conversion = withConversionEdges(
       defineConversion({
         id: `${sample.sourceIdPrefix}→${sample.targetIdPrefix}`,
@@ -104,19 +111,30 @@ export function FieldRemapPanel({
       }),
       edges,
     );
-    try {
-      return convertToShape({
-        conversion,
-        shapes,
-        inputs: { [sample.sourceIdPrefix]: sample.source },
-        transforms: registry,
+
+    void convertToShape({
+      conversion,
+      shapes,
+      inputs: { [sample.sourceIdPrefix]: sample.source },
+      transforms: registry,
+    })
+      .then((next) => {
+        if (!cancelled) {
+          setResult({ output: next.output });
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setResult({
+            output: {},
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       });
-    } catch (error) {
-      return {
-        output: {} as Record<string, unknown>,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
+
+    return () => {
+      cancelled = true;
+    };
   }, [edges, registry, sample, shapes]);
 
   return (
@@ -152,7 +170,7 @@ export function FieldRemapPanel({
         </p>
       ) : null}
 
-      {'error' in result && result.error ? (
+      {result.error ? (
         <p className="workbench-field-remap-demo__error" role="alert">
           {result.error}
         </p>
@@ -165,9 +183,7 @@ export function FieldRemapPanel({
         </section>
         <section className="workbench-field-remap-demo__pane" aria-labelledby="field-remap-target">
           <h3 id="field-remap-target">{sample.targetLabel}</h3>
-          <pre data-testid="field-remap-result">
-            {JSON.stringify('output' in result ? result.output : {}, null, 2)}
-          </pre>
+          <pre data-testid="field-remap-result">{JSON.stringify(result.output, null, 2)}</pre>
         </section>
       </div>
     </div>

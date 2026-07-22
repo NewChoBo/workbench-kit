@@ -9,9 +9,9 @@ import { resolveMappedValue } from './resolveMappedValue.js';
 describe('resolveMappedValue', () => {
   const registry = createBuiltinValueTransformRegistry();
 
-  it('passes values through identity / omitted transforms', () => {
+  it('passes values through identity / omitted transforms', async () => {
     expect(
-      resolveMappedValue(
+      await resolveMappedValue(
         {
           id: 'e1',
           sourceFieldId: 'a.x',
@@ -24,7 +24,7 @@ describe('resolveMappedValue', () => {
     ).toBe('hello');
 
     expect(
-      resolveMappedValue(
+      await resolveMappedValue(
         {
           id: 'e2',
           sourceFieldId: 'a.x',
@@ -37,7 +37,7 @@ describe('resolveMappedValue', () => {
     ).toBe(22.5);
   });
 
-  it('applies a host-registered transform chain', () => {
+  it('applies a host-registered transform chain', async () => {
     const custom = createValueTransformRegistry([
       ...registry.list(),
       {
@@ -50,7 +50,7 @@ describe('resolveMappedValue', () => {
     ]);
 
     expect(
-      resolveMappedValue(
+      await resolveMappedValue(
         {
           id: 'e3',
           sourceFieldId: 'a.name',

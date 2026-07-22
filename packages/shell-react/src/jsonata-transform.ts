@@ -18,7 +18,7 @@ export const jsonataValueTransform: ValueTransformDefinition = {
       kind: 'string',
     },
   ],
-  apply: (value, context) => {
+  apply: async (value, context) => {
     const expression =
       typeof context.options?.expression === 'string' ? context.options.expression.trim() : '';
     if (!expression) {
@@ -26,9 +26,8 @@ export const jsonataValueTransform: ValueTransformDefinition = {
     }
     try {
       const compiled = jsonata(expression);
-      // jsonata@1.x evaluate is synchronous (2.x returns a Promise).
-      const result = compiled.evaluate(value) as unknown;
-      return result;
+      // jsonata@2.x evaluate returns a Promise (1.x was synchronous).
+      return await compiled.evaluate(value);
     } catch {
       return value;
     }
