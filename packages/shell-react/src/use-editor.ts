@@ -38,14 +38,11 @@ export function useActiveEditorTab(): EditorTabState | undefined {
 
 export function useEditorHost(tabId?: string): EditorHost | undefined {
   const editorService = useEditorService();
-  const { waitForExtensionStartup } = useWorkbench();
+  const { extensionRegistry, waitForExtensionStartup } = useWorkbench();
   const editorState = useEditorState();
   const forceRender = useForceRender();
   const activeGroup = editorState.groups.find((group) => group.id === editorState.activeGroupId);
   const resolvedTabId = tabId ?? activeGroup?.activeTabId;
-  const resolvedTab = resolvedTabId
-    ? editorState.groups.flatMap((group) => group.tabs).find((tab) => tab.id === resolvedTabId)
-    : undefined;
 
   useEffect(() => {
     const disposable = editorService.onDidChangeEditors(forceRender);
@@ -68,13 +65,23 @@ export function useEditorHost(tabId?: string): EditorHost | undefined {
     };
   }, [forceRender, waitForExtensionStartup]);
 
-  return useMemo(() => {
-    if (!resolvedTabId) {
-      return undefined;
-    }
+  useEffect(() => {
+    // Late onView / onCommand activations register editor host factories after the
+    // first paint that restores persisted tabs. Retry host creation when they land.
+    const disposable = extensionRegistry.onDidActivateExtension(forceRender);
+    return () => {
+      disposable.dispose();
+    };
+  }, [extensionRegistry, forceRender]);
 
-    return editorService.createEditorHost(resolvedTabId);
-  }, [editorService, resolvedTab?.resourceMissing, resolvedTab?.resourceUri, resolvedTabId]);
+  if (!resolvedTabId) {
+    return undefined;
+  }
+
+  // Do not memoize createEditorHost — a failed lookup before factory registration
+  // must be retried after extension activation / startup re-renders.
+  // EditorService already caches successful hosts per tab id.
+  return editorService.createEditorHost(resolvedTabId);
 }
 
 export function useEditorDocumentViewProviders(
