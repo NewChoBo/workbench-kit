@@ -7,6 +7,7 @@ import {
   expectExpandedPrimarySidebar,
 } from '../../../packages/react/src/workbench/story/shellStory';
 import { App } from './App.js';
+import { createSampleHost } from './createSampleHost.js';
 import { createSampleInstalledExtensionsStorageKey } from './sample-installed-extension-storage.js';
 import {
   expectEditorTabVisible,
@@ -53,7 +54,7 @@ export const LoginGate: Story = {
   name: 'Login gate',
   render: () => {
     applyLoginGateScenario();
-    return <App />;
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -79,7 +80,7 @@ export const LoginSubmitFlow: Story = {
   name: 'Login submit flow',
   render: () => {
     applyLoginSubmitScenario();
-    return <App />;
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -114,7 +115,7 @@ export const TesterWorkbench: Story = {
   name: 'Tester workbench',
   render: () => {
     applyTesterWorkbenchScenario();
-    return <App />;
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -134,7 +135,7 @@ export const DevtoolsInspectors: Story = {
   name: 'Devtools inspectors',
   render: () => {
     applyDevtoolsInspectorsScenario();
-    return <App devtools />;
+    return createSampleHost({ devtools: true });
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -179,7 +180,7 @@ export const HostInstallState: Story = {
   name: 'Host install state',
   render: () => {
     applyHostInstallStateScenario();
-    return <App devtools />;
+    return createSampleHost({ devtools: true });
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -200,7 +201,7 @@ export const TesterDevAppJourney: Story = {
   name: 'Tester dev app journey',
   render: () => {
     applyTesterDevAppJourneyScenario();
-    return <App />;
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -300,7 +301,7 @@ export const BasicPermissionScope: Story = {
   name: 'Basic permission scope',
   render: () => {
     applyBasicPermissionScopeScenario();
-    return <App />;
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -318,7 +319,7 @@ export const SidebarToggle: Story = {
   name: 'Sidebar toggle',
   render: () => {
     applySidebarToggleScenario();
-    return <App />;
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -355,7 +356,7 @@ export const FieldRemapEditorSmoke: Story = {
   name: 'Field Remap editor smoke',
   render: () => {
     applyFieldRemapEditorScenario();
-    return <App />;
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

@@ -79,6 +79,11 @@ const WORKBENCH_SETTINGS_CAPABILITY_ID = 'workbench.settings';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 
+/**
+ * Sample workbench shell (auth → provider → startup gate → shell).
+ * Prefer {@link createSampleHost} from `main.tsx` and Storybook so both share
+ * one assembly path; keep exporting `App` for CSF `component` typing.
+ */
 export interface AppProps {
   readonly devtools?: boolean | undefined;
 }

@@ -40,9 +40,9 @@ The canonical integration story file is:
 examples/workbench-sample/src/WorkbenchSample.stories.tsx
 ```
 
-That file renders `examples/workbench-sample/src/App.tsx` directly and imports the
-sample host CSS, so integration stories follow the dev sample bootstrap instead of a
-separate story-only workbench harness.
+That file calls `createSampleHost` (same assembly as `main.tsx`) after applying
+named scenarios, and imports the sample host CSS, so integration stories follow
+the dev sample bootstrap instead of a separate story-only workbench harness.
 
 Component stories live beside their package modules only when they are explicitly
 listed in `.storybook/main.ts`. Do not use broad package globs and do not add a
@@ -144,7 +144,7 @@ when both component and integration tiers are present:
 | Search                    | `WorkspaceSearchPanel` (panel flows)      | Journey search open                                  | **Justified split** — panel API vs activity wiring                                                             |
 | Chat / AI                 | `ChatPanel` runtime + host-gaps drop/tone | Journey chat + AI composer                           | **Justified split** — transport/runtime vs sidebar navigation; host-gaps stays component-tier                  |
 | Authenticated shell smoke | `Integrated Shell` (baseline)             | `Tester workbench` / sample authenticated story      | **Justified split** — sample is required smoke; Integrated Shell stays baseline for pixel sidebar settings     |
-| Full-shell harness        | —                                         | Second sample-shell file mirroring `WorkbenchSample` | **Remove** — max one integration file per host (`App.tsx`)                                                     |
+| Full-shell harness        | —                                         | Second sample-shell file mirroring `WorkbenchSample` | **Remove** — max one integration path per host (`createSampleHost`)                                            |
 
 No new excess was introduced by the harness refactor itself. The main risk is
 re-adding parallel full-shell stories or requiring the same UI assertion at both
