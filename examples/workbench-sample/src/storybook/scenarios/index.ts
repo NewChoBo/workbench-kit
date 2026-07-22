@@ -57,3 +57,13 @@ export function applyFieldRemapEditorScenario(): void {
 export function applyExtensionsInstalledListScenario(): void {
   applyHostInstallStateScenario();
 }
+
+/** Settings → Appearance category fields (color scheme / theme presets). */
+export function applySettingsAppearanceScenario(): void {
+  resetSampleHostStorage('tester');
+}
+
+/** Commands activity → command management sidebar. */
+export function applyCommandsActivityScenario(): void {
+  resetSampleHostStorage('tester');
+}

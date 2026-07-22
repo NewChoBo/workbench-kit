@@ -29,6 +29,8 @@ import {
   applyTesterWorkbenchScenario,
   applyFieldRemapEditorScenario,
   applyExtensionsInstalledListScenario,
+  applySettingsAppearanceScenario,
+  applyCommandsActivityScenario,
 } from './storybook/scenarios/index.js';
 import './host.css';
 
@@ -402,5 +404,46 @@ export const ExtensionsInstalledList: Story = {
         selector: '.workbench-extensions-sidebar__title',
       }),
     ).toBeVisible();
+  },
+};
+
+export const SettingsAppearanceSmoke: Story = {
+  name: 'Settings appearance smoke',
+  render: () => {
+    applySettingsAppearanceScenario();
+    return createSampleHost();
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitForWorkbenchReady(canvas);
+    await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
+
+    const settingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    await expect(settingsDialog).toBeVisible();
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Appearance' }));
+    await expect(
+      within(settingsDialog).getByRole('combobox', { name: 'Color scheme' }),
+    ).toBeVisible();
+    await expect(
+      within(settingsDialog).getByRole('heading', { name: 'Appearance' }),
+    ).toBeVisible();
+  },
+};
+
+export const CommandsActivitySmoke: Story = {
+  name: 'Commands activity smoke',
+  render: () => {
+    applyCommandsActivityScenario();
+    return createSampleHost();
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitForWorkbenchReady(canvas);
+    const activityBar = canvas.getByRole('navigation', { name: 'Activity bar' });
+    await userEvent.click(within(activityBar).getByRole('button', { name: 'Commands' }));
+
+    await expect(await canvas.findByLabelText('Filter commands')).toBeVisible();
   },
 };

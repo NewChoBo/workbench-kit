@@ -5,6 +5,7 @@ import {
   workbenchMarkdownRemarkPlugins,
   workbenchMarkdownRehypePlugins,
 } from '../markdownRemarkPlugins';
+import { sanitizeMarkdownHref } from '../sanitizeMarkdownHref';
 import { ChatCommandProposalCard } from './ChatCommandProposalCard';
 import { ChatMessageCollapsible } from './ChatMessageCollapsible';
 import { ChatMessageTime, resolveChatMessageTimestamp } from './chatMessageMeta';
@@ -201,6 +202,21 @@ function ChatMessageBody({
           remarkPlugins={workbenchMarkdownRemarkPlugins}
           rehypePlugins={workbenchMarkdownRehypePlugins}
           components={{
+            a: ({ children, href }) => {
+              const safeHref = sanitizeMarkdownHref(href);
+              if (!safeHref) {
+                return <span>{children}</span>;
+              }
+              return (
+                <a
+                  href={safeHref}
+                  rel="noreferrer"
+                  target={safeHref.startsWith('#') ? undefined : '_blank'}
+                >
+                  {children}
+                </a>
+              );
+            },
             code: ({ children, className }) => (
               <code className={cx('ui-workbench-scrollbar', className)}>{children}</code>
             ),

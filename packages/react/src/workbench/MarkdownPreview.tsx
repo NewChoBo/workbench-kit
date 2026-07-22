@@ -5,6 +5,7 @@ import {
   workbenchMarkdownRemarkPlugins,
   workbenchMarkdownRehypePlugins,
 } from './markdownRemarkPlugins';
+import { sanitizeMarkdownHref } from './sanitizeMarkdownHref';
 
 export interface WorkbenchMarkdownPreviewProps extends ComponentPropsWithoutRef<'article'> {
   source: string;
@@ -21,11 +22,21 @@ export function WorkbenchMarkdownPreview({
         remarkPlugins={workbenchMarkdownRemarkPlugins}
         rehypePlugins={workbenchMarkdownRehypePlugins}
         components={{
-          a: ({ children, href }) => (
-            <a href={href} rel="noreferrer" target={href?.startsWith('#') ? undefined : '_blank'}>
-              {children}
-            </a>
-          ),
+          a: ({ children, href }) => {
+            const safeHref = sanitizeMarkdownHref(href);
+            if (!safeHref) {
+              return <span>{children}</span>;
+            }
+            return (
+              <a
+                href={safeHref}
+                rel="noreferrer"
+                target={safeHref.startsWith('#') ? undefined : '_blank'}
+              >
+                {children}
+              </a>
+            );
+          },
           code: ({ children, className: codeClassName }) => (
             <code className={cx('ui-workbench-markdown-preview__code', codeClassName)}>
               {children}

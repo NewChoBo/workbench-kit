@@ -84,7 +84,7 @@ See also `docs/conventions/storybook.md` for promotion criteria and scripts.
 ## Required Play Gate
 
 `pnpm test:storybook-play:required` runs stories tagged `storybook-play-required`.
-The current required gate has 35 plays: 10 sample integration flows, 9 small
+The current required gate has 37 plays: 12 sample integration flows, 9 small
 component-panel flows, and 16 JDW widget-tree authoring flows.
 
 ### Integration tier (sample app)
@@ -101,6 +101,8 @@ component-panel flows, and 16 JDW widget-tree authoring flows.
 | `Workbench Sample/Dev App` - Sidebar toggle            | Primary sidebar hide/show via status bar; collapsed grid keeps SplitView mounted and expands editor to full split width                                          |
 | `Workbench Sample/Dev App` - Field Remap editor smoke  | Open Field Remap activity, select nested A→B sample, assert non-empty remap editor surface / result JSON                                                         |
 | `Workbench Sample/Dev App` - Extensions installed list | Activity → Extensions → Installed tab shows seeded `JSON Preview` (host storage wiring; no Install/reload)                                                       |
+| `Workbench Sample/Dev App` - Settings appearance smoke | Settings → Appearance category shows Color scheme combobox (appearance presets wired into settings modal)                                                       |
+| `Workbench Sample/Dev App` - Commands activity smoke   | Activity → Commands shows command management sidebar filter (distinct from Ctrl+P palette)                                                                      |
 
 ### Component tier (package harness)
 
@@ -139,8 +141,9 @@ when both component and integration tiers are present:
 
 | Concern                   | Component / panel                         | Integration                                          | Verdict                                                                                                    |
 | ------------------------- | ----------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Settings appearance       | `AppearanceSettings` (unit)               | Journey settings open only                           | **Justified split** — schema/combobox stays unit; integration proves modal open from activity bar only     |
+| Settings appearance       | `AppearanceSettings` (unit)               | Journey settings open + Appearance smoke             | **Justified split** — schema/combobox stays unit; Appearance smoke proves category content; journey covers Linked Accounts / Permissions |
 | Extensions list           | `ExtensionManagementSidebar` (Vitest)     | Sample extensions Installed list play                | **Justified split** — unit covers list chrome; sample proves activity + seeded install storage             |
+| Commands management       | `CommandManagementSidebar` (Vitest)       | Sample Commands activity smoke                       | **Justified split** — unit covers filter/run chrome; sample proves activity bar → sidebar wiring           |
 | Permission projection     | Profile / role controls (component)       | `Basic permission scope`, journey profile override   | **Justified split** — sign-in role vs runtime override vs activity-bar projection                          |
 | Search                    | `WorkspaceSearchPanel` (panel flows)      | Journey search open                                  | **Justified split** — panel API vs activity wiring                                                         |
 | Chat / AI                 | `ChatPanel` runtime + host-gaps drop/tone | Journey chat + AI composer                           | **Justified split** — transport/runtime vs sidebar navigation; host-gaps stays component-tier              |
