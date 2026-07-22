@@ -53,9 +53,7 @@ const packageRules = toRuleMap({
   ],
 });
 
-const allowedPrivateRuntimeDependencies = new Map([
-  ['@workbench-kit/react', new Set(['@workbench-kit/monaco'])],
-]);
+const allowedPrivateRuntimeDependencies = new Map();
 
 const extensionAllowedDependencies = new Set([
   '@workbench-kit/base',

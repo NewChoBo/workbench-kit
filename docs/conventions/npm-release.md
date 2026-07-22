@@ -7,15 +7,11 @@ rules reflect issues found while standing up trusted publishing in June 2026.
 
 | List                                                    | Purpose                                               |
 | ------------------------------------------------------- | ----------------------------------------------------- |
-| `NPM_PUBLISH_ORDER` in `scripts/npm-publish-config.mjs` | All **public** packages and publish order (13 today)  |
+| `NPM_PUBLISH_ORDER` in `scripts/npm-publish-config.mjs` | All **public** packages and publish order (19 today)  |
 | `NPM_CI_PUBLISH_PACKAGES`                               | Must stay aligned with `NPM_PUBLISH_ORDER` (same set) |
 
-**Do not publish** (private preview, not in `NPM_PUBLISH_ORDER`):
-
-- `@workbench-kit/monaco`
-- `@workbench-kit/workbench-core`
-- `@workbench-kit/shell-react`
-- `@workbench-kit/electron-shell`
+All `packages/*` workspace packages publish under `@prototype`. Repository-local
+`extensions/*` packages stay private and are not published.
 
 Adding a new public package requires:
 
@@ -105,7 +101,7 @@ If CI fails mid-batch:
 
 1. Fix the auth or trusted-publisher issue
 2. Re-run the failed workflow — already-published exact versions are skipped
-3. Verify all 13 `@prototype` tags match the release version
+3. Verify all `NPM_PUBLISH_ORDER` `@prototype` tags match the release version
 
 ## Validation Before Release
 

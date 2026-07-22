@@ -135,19 +135,22 @@ export const NPM_PUBLISH_ORDER = [
   '@workbench-kit/platform',
   '@workbench-kit/workbench-extension-sdk',
   '@workbench-kit/workbench-config',
+  '@workbench-kit/workbench-core',
   '@workbench-kit/jdw',
   '@workbench-kit/runtime',
   '@workbench-kit/tokens',
   '@workbench-kit/workspace',
+  '@workbench-kit/monaco',
   '@workbench-kit/adapters',
   '@workbench-kit/services',
   '@workbench-kit/react',
   '@workbench-kit/jdw-editor',
   '@workbench-kit/field-remap',
+  '@workbench-kit/shell-react',
+  '@workbench-kit/electron-shell',
 ];
 
-// All public publish packages are CI targets. Private preview shells
-// (monaco, workbench-core, shell-react, electron-shell) stay out of NPM_PUBLISH_ORDER.
+// All public publish packages are CI targets.
 // publish.yml publishes missing exact versions via OIDC, including first releases.
 // publish-packages-local.mjs remains a fallback when Trusted Publisher is unavailable.
 export const NPM_CI_PUBLISH_PACKAGES = new Set(NPM_PUBLISH_ORDER);
