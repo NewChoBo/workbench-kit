@@ -18,7 +18,10 @@ minimumReleaseAgeExclude:
   - storybook@10.4.3
 
 overrides:
-  axios: 1.16.1
+  # Clear GHSA-gcfj-64vw-6mp9 under @storybook/test-runner → wait-on.
+  axios: '>=1.18.0'
+  # Clear DOMPurify advisories under monaco-editor (0.56 still ships 3.4.8).
+  dompurify: '>=3.4.12'
   # Keep Storybook test-runner on the same Playwright revision CI installs.
   playwright: 1.61.1
   playwright-core: 1.61.1

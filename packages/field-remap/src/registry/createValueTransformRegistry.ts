@@ -44,14 +44,15 @@ export function createValueTransformRegistry(
 /**
  * Apply an ordered transform chain (empty = identity / unchanged).
  * Optional `optionSteps[i]` merges over `context.options` for step `i` only.
+ * Awaits Promise-returning host transforms (e.g. JSONata 2.x).
  */
-export function applyTransformChain(
+export async function applyTransformChain(
   registry: ValueTransformRegistry,
   transformIds: readonly string[],
   value: unknown,
   context: TransformContext = {},
   optionSteps?: readonly (Readonly<Record<string, unknown>> | undefined)[],
-): unknown {
+): Promise<unknown> {
   let current = value;
   const ids = transformIds.slice(0, MAX_TRANSFORM_CHAIN);
   for (let index = 0; index < ids.length; index += 1) {
@@ -66,7 +67,7 @@ export function applyTransformChain(
             },
           }
         : context;
-    current = registry.apply(ids[index]!, current, stepContext);
+    current = await registry.apply(ids[index]!, current, stepContext);
   }
   return current;
 }

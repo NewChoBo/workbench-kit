@@ -33,12 +33,12 @@ export function findSourceField(
  * Per-step options (`transformOptionSteps` / `itemTransformOptionSteps`) win when
  * present; otherwise shared `transformOptions` / `itemTransformOptions` apply to all steps.
  */
-export function resolveMappedValue(
+export async function resolveMappedValue(
   edge: MappingEdge,
   sourceValue: unknown,
   registry: ValueTransformRegistry,
   context: TransformContext = {},
-): unknown {
+): Promise<unknown> {
   let current = edge.itemSourcePath
     ? projectCollectionItems(sourceValue, edge.itemSourcePath)
     : sourceValue;
@@ -51,27 +51,27 @@ export function resolveMappedValue(
   );
 
   if (itemChain.length > 0 && Array.isArray(current)) {
-    current = current.map((item) =>
-      applyTransformChain(registry, itemChain, item, context, itemSteps),
+    current = await Promise.all(
+      current.map((item) => applyTransformChain(registry, itemChain, item, context, itemSteps)),
     );
   }
 
   const chain = edgeTransformIds(edge);
   if (chain.length === 0) {
     const identity = registry.get(BUILTIN_TRANSFORM_IDS.identity);
-    return identity ? identity.apply(current, context) : current;
+    return identity ? await identity.apply(current, context) : current;
   }
 
   const valueSteps = resolveOptionSteps(chain, edge.transformOptionSteps, edge.transformOptions);
   return applyTransformChain(registry, chain, current, context, valueSteps);
 }
 
-export function resolveEdgePreview(
+export async function resolveEdgePreview(
   edge: MappingEdge,
   sources: readonly SourceField[],
   registry: ValueTransformRegistry,
   context: TransformContext = {},
-): unknown {
+): Promise<unknown> {
   const field = findSourceField(sources, edge.sourceFieldId);
   const sample =
     context.sampleValue !== undefined ? context.sampleValue : (field?.sampleValue ?? context.now);
@@ -82,15 +82,17 @@ export function resolveEdgePreview(
 }
 
 /** Resolve every edge into `{ targetSlotId, value }` for live preview panels. */
-export function resolveAllEdgePreviews(
+export async function resolveAllEdgePreviews(
   edges: readonly MappingEdge[],
   sources: readonly SourceField[],
   registry: ValueTransformRegistry,
   context: TransformContext = {},
-): ReadonlyArray<{ edgeId: string; targetSlotId: string; value: unknown }> {
-  return edges.map((edge) => ({
-    edgeId: edge.id,
-    targetSlotId: edge.targetSlotId,
-    value: resolveEdgePreview(edge, sources, registry, context),
-  }));
+): Promise<ReadonlyArray<{ edgeId: string; targetSlotId: string; value: unknown }>> {
+  return Promise.all(
+    edges.map(async (edge) => ({
+      edgeId: edge.id,
+      targetSlotId: edge.targetSlotId,
+      value: await resolveEdgePreview(edge, sources, registry, context),
+    })),
+  );
 }

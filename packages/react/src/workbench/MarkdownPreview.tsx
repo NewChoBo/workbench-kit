@@ -1,7 +1,10 @@
 import Markdown from 'react-markdown';
 import { Children, isValidElement, type ComponentPropsWithoutRef, type ReactNode } from 'react';
 import { cx } from '../utils/cx';
-import { workbenchMarkdownRemarkPlugins } from './markdownRemarkPlugins';
+import {
+  workbenchMarkdownRemarkPlugins,
+  workbenchMarkdownRehypePlugins,
+} from './markdownRemarkPlugins';
 
 export interface WorkbenchMarkdownPreviewProps extends ComponentPropsWithoutRef<'article'> {
   source: string;
@@ -16,6 +19,7 @@ export function WorkbenchMarkdownPreview({
     <article className={cx('ui-workbench-markdown-preview', className)} {...props}>
       <Markdown
         remarkPlugins={workbenchMarkdownRemarkPlugins}
+        rehypePlugins={workbenchMarkdownRehypePlugins}
         components={{
           a: ({ children, href }) => (
             <a href={href} rel="noreferrer" target={href?.startsWith('#') ? undefined : '_blank'}>

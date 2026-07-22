@@ -62,6 +62,10 @@ export {
 export { WorkbenchMarkdownPreview } from './MarkdownPreview';
 export type { WorkbenchMarkdownPreviewProps } from './MarkdownPreview';
 export {
+  workbenchMarkdownRemarkPlugins,
+  workbenchMarkdownRehypePlugins,
+} from './markdownRemarkPlugins';
+export {
   ChatCommandProposalCard,
   ChatConversationBar,
   ChatHistoryMenu,

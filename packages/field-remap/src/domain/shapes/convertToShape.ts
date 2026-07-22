@@ -112,8 +112,9 @@ function readFieldValue(field: SourceField, inputs: Readonly<Record<string, unkn
  *
  * This is the host runtime entry point — not `sourceShape.convert(target, data)`.
  * Multiple source shapes are supported via `inputs[shapeId]`.
+ * Awaits Promise-returning host transforms (e.g. JSONata 2.x).
  */
-export function convertToShape(input: ConvertToShapeInput): ConvertToShapeResult {
+export async function convertToShape(input: ConvertToShapeInput): Promise<ConvertToShapeResult> {
   const sourceShapes: DataShape[] = [];
   for (const shapeId of input.conversion.sourceShapeIds) {
     const shape = resolveShape(input.shapes, shapeId);
@@ -155,7 +156,7 @@ export function convertToShape(input: ConvertToShapeInput): ConvertToShapeResult
     const sourceValue = readFieldValue(sourceField, input.inputs);
     const value =
       edge.itemEdges && edge.itemEdges.length > 0
-        ? convertArrayWithItemEdges({
+        ? await convertArrayWithItemEdges({
             items: sourceValue,
             itemEdges: edge.itemEdges,
             sources,
@@ -163,7 +164,7 @@ export function convertToShape(input: ConvertToShapeInput): ConvertToShapeResult
             transforms: input.transforms,
             context: input.context,
           })
-        : resolveMappedValue(edge, sourceValue, input.transforms, {
+        : await resolveMappedValue(edge, sourceValue, input.transforms, {
             ...input.context,
             sampleValue: sourceValue,
             record: isPlainObject(sourceValue)

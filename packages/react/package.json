@@ -69,7 +69,8 @@
     "@workbench-kit/services": "workspace:*",
     "@workbench-kit/tokens": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "rehype-sanitize": "^6.0.0"
   },
   "peerDependencies": {
     "react": "^19.0.0",
