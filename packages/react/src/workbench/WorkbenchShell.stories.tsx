@@ -350,4 +350,5 @@ export const RegionPlayground: Story = {
       expect(canvasElement.querySelector('.ui-workbench-activity-bar--hidden')).not.toBeNull();
     });
   },
+  tags: ['storybook-play-baseline'],
 };

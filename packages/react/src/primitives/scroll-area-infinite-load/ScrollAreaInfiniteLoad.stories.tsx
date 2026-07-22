@@ -33,6 +33,7 @@ export const CatalogGrid: Story = {
     await expect(canvas.getAllByRole('button', { name: /Catalog item/ })).toHaveLength(PAGE_SIZE);
     await expect(canvas.getByText(`Showing ${PAGE_SIZE} of ${TOTAL_ITEMS}`)).toBeInTheDocument();
   },
+  tags: ['storybook-play-baseline'],
 };
 
 function InfiniteCatalogHarness() {

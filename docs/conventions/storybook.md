@@ -129,7 +129,10 @@ Use these root scripts:
   "build:storybook": "pnpm exec storybook build",
   "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",
   "test:storybook-play:required": "pnpm exec node ./scripts/test-storybook-play.mjs --required",
+  "test:storybook-play:sample": "pnpm exec node ./scripts/test-storybook-play.mjs --sample",
+  "check:storybook-play-tags": "node ./scripts/check-storybook-play-tags.mjs",
   "validate:ui": "pnpm build:storybook && pnpm test:storybook-play:required",
+  "validate:ui:sample": "pnpm build:storybook && pnpm test:storybook-play:sample",
   "validate:ui:full": "pnpm build:storybook && pnpm test:storybook-play:required",
   "validate": "pnpm validate:fast && pnpm validate:ui",
   "validate:full": "pnpm validate:fast && pnpm validate:ui:full"
@@ -138,25 +141,31 @@ Use these root scripts:
 
 `pnpm validate` includes `build:storybook` and required Storybook interaction playback
 (`test:storybook-play:required`) so Storybook drift and key UI regressions are caught with the
-rest of the package gate. `pnpm validate:fast` skips Storybook work for
-day-to-day code checks, while `pnpm validate:ui` runs the Storybook build plus required play tests.
-
-`validate:full` matches `validate` today (fast checks + Storybook build + required play tests).
+rest of the package gate. `pnpm validate:fast` skips Storybook playback but still runs
+`check:storybook-play-tags` via `validate:static`. `pnpm validate:ui:sample` is the
+faster sample-host-only play gate after a Storybook build.
 
 ## Interaction Tests
 
-Interaction tests use two tags:
+Interaction tests use these tags:
 
 - `storybook-play-baseline`: broader coverage executed by `pnpm test:storybook-play`
 - `storybook-play-required`: CI gate executed by `pnpm test:storybook-play:required`
-  and `pnpm validate:full`
+  and `pnpm validate:ui`
+- `storybook-play-sample`: sample-host integration subset (also required); run with
+  `pnpm test:storybook-play:sample` / `pnpm validate:ui:sample`
+
+`pnpm check:storybook-play-tags` (part of `validate:static`) fails when a story
+defines `play` without a required/baseline tag, or when `storybook-play-sample`
+is used without `storybook-play-required`.
 
 Promote a baseline story to required only after it is stable across repeated runs.
 See [Story scope balance](../workbench/storybook-e2e-coverage.md#story-scope-balance)
 before expanding the curated gate beyond the current sample plus component set.
 
 The default `test:storybook-play` runner executes stories tagged with
-`storybook-play-baseline`; pass `--required` to run only `storybook-play-required` stories.
+`storybook-play-baseline`; pass `--required` for the release gate, or `--sample`
+for the sample-host subset only.
 
 Do not add a required story just because a component changed. Add or extend a
 required story when the change affects either a stable sample-host workflow or a

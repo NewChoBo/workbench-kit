@@ -79,12 +79,18 @@ VITE_SAMPLE_HOST_BACKEND_BASE_URL=http://127.0.0.1:8787
 ```powershell
 pnpm --filter workbench-sample typecheck
 pnpm --filter workbench-sample build
-pnpm validate
+pnpm check:storybook-play-tags
+pnpm validate:ui:sample
 ```
 
+`validate:ui:sample` builds Storybook and runs only sample-host plays tagged
+`storybook-play-sample`. Full UI gate remains `pnpm validate:ui`
+(`storybook-play-required`).
+
 UI regression for this host is primarily **Storybook play** against the same
-`App` used by `pnpm dev` (`WorkbenchSample.stories.tsx`). Direction for splitting
-scenarios/fixtures so sample sources stay easy to assemble for tests:
+`App` used by `pnpm dev` (`WorkbenchSample.stories.tsx`), seeded through
+`src/storybook/scenarios/`. Direction for splitting scenarios/fixtures so sample
+sources stay easy to assemble for tests:
 [Sample Host Test Architecture](../../docs/workbench/sample-host-test-architecture.md).
 
 ## Configuration
@@ -122,12 +128,12 @@ percent and maps to pixels at the shell boundary.
 
 ## Consumer docs
 
-| Guide | Use when |
-| ----- | -------- |
-| [Getting Started](../../docs/guides/getting-started.md) | Install `@prototype` and compose a minimal shell |
-| [Component Map](../../docs/guides/component-map.md) | Map a surface to import / Storybook / sample |
-| [Sample Screens](../../docs/guides/sample-screens.md) | Copy screen recipes (auth, chat, library, JDW, …) |
-| [Use Case Scenarios](../../docs/guides/use-cases.md) | End-to-end host and extension flows |
+| Guide                                                   | Use when                                          |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| [Getting Started](../../docs/guides/getting-started.md) | Install `@prototype` and compose a minimal shell  |
+| [Component Map](../../docs/guides/component-map.md)     | Map a surface to import / Storybook / sample      |
+| [Sample Screens](../../docs/guides/sample-screens.md)   | Copy screen recipes (auth, chat, library, JDW, …) |
+| [Use Case Scenarios](../../docs/guides/use-cases.md)    | End-to-end host and extension flows               |
 
 See [Sample Host Backend API](../../docs/workbench/sample-host-backend-api.md)
 for the dummy backend contract,

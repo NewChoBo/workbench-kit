@@ -4,9 +4,11 @@ Direction for using `examples/workbench-sample` as the **system under test (SUT)
 for UI regression, instead of growing a second full-shell harness or a
 package-wide Storybook gallery.
 
-Status: **documented target**. Current code still centers on a monolithic
-`App.tsx` plus `WorkbenchSample.stories.tsx` that imports `App` directly. Do not
-treat the folder layout below as already implemented.
+Status: **Must in progress / partially landed.** Seed helpers and named scenarios
+live under `examples/workbench-sample/src/storybook/` (`fixtures/`, `scenarios/`,
+`play/`). `WorkbenchSample.stories.tsx` still owns CSF entries and play
+assertions, but applies scenarios instead of inlined storage seeds. Physical
+`app/` / `stories/` moves remain **Later**.
 
 Priority below is the implementation contract: do **Must** before expanding
 Storybook or adding Playwright. **Later** / **Won't** exist so the target tree
@@ -44,16 +46,19 @@ Related:
 
 ## Current shape (as of this doc)
 
-| Piece                                           | Role today                                                                  |
-| ----------------------------------------------- | --------------------------------------------------------------------------- |
-| `examples/workbench-sample/src/App.tsx`         | Full host assembly (bootstrap, auth, shell, extensions)                     |
-| `examples/workbench-sample/src/main.tsx`        | Vite entry; renders `<App />`                                               |
-| `WorkbenchSample.stories.tsx`                   | Imports `App`; seeds `sessionStorage` / local keys per story; required play |
-| Curated package stories in `.storybook/main.ts` | Component-tier contracts not owned by the sample journey                    |
+| Piece                                           | Role today                                                     |
+| ----------------------------------------------- | -------------------------------------------------------------- |
+| `examples/workbench-sample/src/App.tsx`         | Full host assembly (bootstrap, auth, shell, extensions)        |
+| `examples/workbench-sample/src/main.tsx`        | Vite entry; renders `<App />`                                  |
+| `WorkbenchSample.stories.tsx`                   | Thin CSF; applies named scenarios; required + sample play tags |
+| `src/storybook/fixtures/sampleHostStorage.ts`   | Storage reset / installed-extension seed                       |
+| `src/storybook/scenarios/`                      | Named seeds (login, tester, permission, install state, …)      |
+| `src/storybook/play/sampleHostAssertions.ts`    | Shared wait / activity / tab helpers for plays                 |
+| Curated package stories in `.storybook/main.ts` | Component-tier contracts not owned by the sample journey       |
 
 Integration stories already import sample JSX (`App`) rather than copying a
-shell. The gap is **scenario/fixture extraction** and a clearer boundary between
-host wiring and scenario seed.
+shell. Remaining gap: split `App` into `createSampleHost` + shell (**Should**),
+then optional physical `app/` / `stories/` moves (**Later**).
 
 ## Target layout
 
@@ -134,13 +139,12 @@ scale.
 
 ### Must (do first)
 
-1. Extract storage reset/seed helpers from `WorkbenchSample.stories.tsx` into
-   shared modules (name them `fixtures/` or keep flat under `src/` — structure
-   secondary to **one import path** for stories and future `main`).
-2. Wrap those seeds as named **scenarios** (e.g. tester workbench, basic
-   permission, login gate) and point existing required plays at them **without
-   changing assertions**.
-3. Keep `pnpm test:storybook-play:required` green after every extraction step.
+1. ~~Extract storage reset/seed helpers from `WorkbenchSample.stories.tsx` into
+   shared modules~~ — landed under `src/storybook/fixtures/`.
+2. ~~Wrap those seeds as named **scenarios** and point existing required plays at
+   them **without changing assertions**~~ — landed under `src/storybook/scenarios/`.
+3. Keep `pnpm test:storybook-play:required` (and `pnpm test:storybook-play:sample`)
+   green after every extraction step.
 
 ### Should (next)
 
@@ -150,6 +154,8 @@ scale.
 2. Add new sample coverage as **new scenarios + plays**, not new full-shell
    stories or package galleries.
 3. Prefer scenario growth over deepening component-tier required tags.
+4. Move shared play assertions further into scenario-owned helpers only when
+   assertion text stabilizes across multiple stories.
 
 ### Later (optional cleanup)
 
