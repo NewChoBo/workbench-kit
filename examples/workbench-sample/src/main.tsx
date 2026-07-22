@@ -1,14 +1,14 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import cssWorkerUrl from 'monaco-editor/esm/vs/language/css/css.worker?worker&url';
-import htmlWorkerUrl from 'monaco-editor/esm/vs/language/html/html.worker?worker&url';
-import jsonWorkerUrl from 'monaco-editor/esm/vs/language/json/json.worker?worker&url';
-import tsWorkerUrl from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker&url';
-import editorWorkerUrl from 'monaco-editor/esm/vs/editor/editor.worker?worker&url';
+import cssWorkerUrl from 'monaco-editor/language/css/css.worker?worker&url';
+import htmlWorkerUrl from 'monaco-editor/language/html/html.worker?worker&url';
+import jsonWorkerUrl from 'monaco-editor/language/json/json.worker?worker&url';
+import tsWorkerUrl from 'monaco-editor/language/typescript/ts.worker?worker&url';
+import editorWorkerUrl from 'monaco-editor/editor/editor.worker?worker&url';
 
 import '@workbench-kit/react/styles.css';
 
-import { App } from './App.js';
+import { createSampleHost } from './createSampleHost.js';
 import './host.css';
 
 const monacoEnvironmentGlobal = globalThis as typeof globalThis & {
@@ -30,11 +30,7 @@ if (!rootElement) {
   throw new Error('Sample host root element #root was not found.');
 }
 
-createRoot(rootElement).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+createRoot(rootElement).render(<StrictMode>{createSampleHost()}</StrictMode>);
 
 function getMonacoWorkerUrl(label: string): string {
   if (label === 'json') return jsonWorkerUrl;

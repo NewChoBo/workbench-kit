@@ -4,11 +4,10 @@ Direction for using `examples/workbench-sample` as the **system under test (SUT)
 for UI regression, instead of growing a second full-shell harness or a
 package-wide Storybook gallery.
 
-Status: **Must in progress / partially landed.** Seed helpers and named scenarios
+Status: **Must landed; Should partially landed.** Seed helpers and named scenarios
 live under `examples/workbench-sample/src/storybook/` (`fixtures/`, `scenarios/`,
-`play/`). `WorkbenchSample.stories.tsx` still owns CSF entries and play
-assertions, but applies scenarios instead of inlined storage seeds. Physical
-`app/` / `stories/` moves remain **Later**.
+`play/`). `main.tsx` and `WorkbenchSample.stories.tsx` share host assembly via
+`createSampleHost`. Physical `app/` / `stories/` moves remain **Later**.
 
 Priority below is the implementation contract: do **Must** before expanding
 Storybook or adding Playwright. **Later** / **Won't** exist so the target tree
@@ -24,8 +23,8 @@ Related:
 ## Goals
 
 1. **One host path.** `pnpm dev` and Storybook integration stories exercise the
-   same sample composition (`App` / future `SampleApp`), not a story-only shell
-   copy.
+   same sample composition via `createSampleHost` → `App` shell, not a
+   story-only shell copy.
 2. **Scenarios as data.** Login, tester workbench, permission scope, field-remap
    demos, and similar flows are **named scenarios** (seed + options), not forked
    JSX trees.
@@ -46,19 +45,19 @@ Related:
 
 ## Current shape (as of this doc)
 
-| Piece                                           | Role today                                                     |
-| ----------------------------------------------- | -------------------------------------------------------------- |
-| `examples/workbench-sample/src/App.tsx`         | Full host assembly (bootstrap, auth, shell, extensions)        |
-| `examples/workbench-sample/src/main.tsx`        | Vite entry; renders `<App />`                                  |
-| `WorkbenchSample.stories.tsx`                   | Thin CSF; applies named scenarios; required + sample play tags |
-| `src/storybook/fixtures/sampleHostStorage.ts`   | Storage reset / installed-extension seed                       |
-| `src/storybook/scenarios/`                      | Named seeds (login, tester, permission, install state, …)      |
-| `src/storybook/play/sampleHostAssertions.ts`    | Shared wait / activity / tab helpers for plays                 |
-| Curated package stories in `.storybook/main.ts` | Component-tier contracts not owned by the sample journey       |
+| Piece                                                | Role today                                                     |
+| ---------------------------------------------------- | -------------------------------------------------------------- |
+| `examples/workbench-sample/src/createSampleHost.tsx` | Shared factory for `main` + Storybook (`devtools` option)      |
+| `examples/workbench-sample/src/App.tsx`              | Shell composition (bootstrap, auth, provider, extensions)      |
+| `examples/workbench-sample/src/main.tsx`             | Vite entry; renders `createSampleHost()`                       |
+| `WorkbenchSample.stories.tsx`                        | Thin CSF; applies named scenarios; required + sample play tags |
+| `src/storybook/fixtures/sampleHostStorage.ts`        | Storage reset / installed-extension seed                       |
+| `src/storybook/scenarios/`                           | Named seeds (login, tester, permission, install state, …)      |
+| `src/storybook/play/sampleHostAssertions.ts`         | Shared wait / activity / tab helpers for plays                 |
+| Curated package stories in `.storybook/main.ts`      | Component-tier contracts not owned by the sample journey       |
 
-Integration stories already import sample JSX (`App`) rather than copying a
-shell. Remaining gap: split `App` into `createSampleHost` + shell (**Should**),
-then optional physical `app/` / `stories/` moves (**Later**).
+Integration stories call `createSampleHost` after scenario seeds (same path as
+`pnpm dev`). Optional physical `app/` / `stories/` moves remain **Later**.
 
 ## Target layout
 
@@ -148,9 +147,10 @@ scale.
 
 ### Should (next)
 
-1. Split host wiring from `App.tsx` into a thin `createSampleHost` (or
+1. ~~Split host wiring from `App.tsx` into a thin `createSampleHost` (or
    equivalent) + presentational shell so `main` and Storybook apply the same
-   assembly.
+   assembly~~ — landed as `createSampleHost.tsx` (+ `App` shell); physical
+   `app/` move remains Later.
 2. Add new sample coverage as **new scenarios + plays**, not new full-shell
    stories or package galleries.
 3. Prefer scenario growth over deepening component-tier required tags.
@@ -179,8 +179,8 @@ Align with **Must → Should → Later**:
 1. **Must:** Extract seed helpers; no story behavior change.
 2. **Must:** Introduce scenario wrappers; rewire existing
    `WorkbenchSample` plays.
-3. **Should:** Split `App.tsx` into host factory + shell; keep `main` and
-   stories on the same path.
+3. ~~**Should:** Split `App.tsx` into host factory + shell; keep `main` and
+   stories on the same path~~ — landed (`createSampleHost`).
 4. **Later:** Move files into the target tree only after imports/play tags stay
    stable.
 5. **Later:** Add at most one True E2E browser slice if a real gap appears.
