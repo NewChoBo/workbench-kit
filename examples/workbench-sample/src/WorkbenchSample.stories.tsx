@@ -1,9 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+﻿import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import {
-  DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
-  DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
-} from '@workbench-kit/shell-react';
 
 import { expectVisibleChatBubbleText } from '../../../packages/react/src/workbench/story/chatStory';
 import {
@@ -11,12 +7,27 @@ import {
   expectExpandedPrimarySidebar,
 } from '../../../packages/react/src/workbench/story/shellStory';
 import { App } from './App.js';
-import { SAMPLE_AUTH_SESSION_KEY, SAMPLE_AUTH_USERNAME } from './dummy-backend/index.js';
 import { createSampleInstalledExtensionsStorageKey } from './sample-installed-extension-storage.js';
-import { SAMPLE_PERMISSION_ROLE_STORAGE_KEY } from './sample-permission-role-storage.js';
+import {
+  expectEditorTabVisible,
+  expectSampleFileVisible,
+  expectTesterActivityLabels,
+  getActivityLabels,
+  selectPermissionRole,
+  waitForLoginGate,
+  waitForWorkbenchReady,
+} from './storybook/play/sampleHostAssertions.js';
+import {
+  applyBasicPermissionScopeScenario,
+  applyDevtoolsInspectorsScenario,
+  applyHostInstallStateScenario,
+  applyLoginGateScenario,
+  applyLoginSubmitScenario,
+  applySidebarToggleScenario,
+  applyTesterDevAppJourneyScenario,
+  applyTesterWorkbenchScenario,
+} from './storybook/scenarios/index.js';
 import './host.css';
-
-type SampleAccount = 'none' | 'tester' | 'basic';
 
 const meta = {
   title: 'Workbench Sample/Dev App',
@@ -29,17 +40,18 @@ const meta = {
       timeout: 60_000,
     },
   },
+  /** Sample integration plays: required CI gate + sample-only filter tag. */
+  tags: ['storybook-play-required', 'storybook-play-sample'],
 } satisfies Meta<typeof App>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
-type StoryCanvas = ReturnType<typeof within>;
 
 export const LoginGate: Story = {
   name: 'Login gate',
   render: () => {
-    resetSampleHostStorage('none');
+    applyLoginGateScenario();
     return <App />;
   },
   play: async ({ canvasElement }) => {
@@ -57,13 +69,12 @@ export const LoginGate: Story = {
     await expect(canvas.getByRole('button', { name: 'Sign in' })).toBeVisible();
     await expect(canvas.getByText(/Administrator: tester\/tester/)).toBeVisible();
   },
-  tags: ['storybook-play-required'],
 };
 
 export const LoginSubmitFlow: Story = {
   name: 'Login submit flow',
   render: () => {
-    resetSampleHostStorage('none');
+    applyLoginSubmitScenario();
     return <App />;
   },
   play: async ({ canvasElement }) => {
@@ -93,13 +104,12 @@ export const LoginSubmitFlow: Story = {
     await expect(canvas.getByRole('button', { name: 'Open example' })).toBeVisible();
     expectTesterActivityLabels(canvas);
   },
-  tags: ['storybook-play-required'],
 };
 
 export const TesterWorkbench: Story = {
   name: 'Tester workbench',
   render: () => {
-    resetSampleHostStorage('tester');
+    applyTesterWorkbenchScenario();
     return <App />;
   },
   play: async ({ canvasElement }) => {
@@ -114,13 +124,12 @@ export const TesterWorkbench: Story = {
 
     expectTesterActivityLabels(canvas);
   },
-  tags: ['storybook-play-required'],
 };
 
 export const DevtoolsInspectors: Story = {
   name: 'Devtools inspectors',
   render: () => {
-    resetSampleHostStorage('tester');
+    applyDevtoolsInspectorsScenario();
     return <App devtools />;
   },
   play: async ({ canvasElement }) => {
@@ -160,20 +169,12 @@ export const DevtoolsInspectors: Story = {
     await expect(devtools).toHaveTextContent('workbench-kit.builtin.settings');
     await expect(devtools).toHaveTextContent('workbench.settings');
   },
-  tags: ['storybook-play-required'],
 };
 
 export const HostInstallState: Story = {
   name: 'Host install state',
   render: () => {
-    resetSampleHostStorage('tester');
-    seedSampleInstalledExtension('tester', {
-      category: 'editor',
-      enabled: true,
-      id: 'workbench-kit.samples.json-preview',
-      installedAt: '2026-06-25T00:00:00.000Z',
-      manifestUrl: 'workbench-kit.samples.json-preview',
-    });
+    applyHostInstallStateScenario();
     return <App devtools />;
   },
   play: async ({ canvasElement }) => {
@@ -189,13 +190,12 @@ export const HostInstallState: Story = {
       window.localStorage.getItem(createSampleInstalledExtensionsStorageKey('tester')),
     ).toContain('workbench-kit.samples.json-preview');
   },
-  tags: ['storybook-play-required'],
 };
 
 export const TesterDevAppJourney: Story = {
   name: 'Tester dev app journey',
   render: () => {
-    resetSampleHostStorage('tester');
+    applyTesterDevAppJourneyScenario();
     return <App />;
   },
   play: async ({ canvasElement }) => {
@@ -290,13 +290,12 @@ export const TesterDevAppJourney: Story = {
     await userEvent.click(within(profileDialog).getByRole('button', { name: 'Sign out' }));
     await waitForLoginGate(canvas);
   },
-  tags: ['storybook-play-required'],
 };
 
 export const BasicPermissionScope: Story = {
   name: 'Basic permission scope',
   render: () => {
-    resetSampleHostStorage('basic');
+    applyBasicPermissionScopeScenario();
     return <App />;
   },
   play: async ({ canvasElement }) => {
@@ -309,13 +308,12 @@ export const BasicPermissionScope: Story = {
     await expect(canvas.queryByRole('button', { name: 'Search' })).toBeNull();
     await expect(canvas.queryByRole('button', { name: 'Settings' })).toBeNull();
   },
-  tags: ['storybook-play-required'],
 };
 
 export const SidebarToggle: Story = {
   name: 'Sidebar toggle',
   render: () => {
-    resetSampleHostStorage('tester');
+    applySidebarToggleScenario();
     return <App />;
   },
   play: async ({ canvasElement }) => {
@@ -347,122 +345,4 @@ export const SidebarToggle: Story = {
     expect(hideDurationMs).toBeLessThan(2_000);
     expect(showDurationMs).toBeLessThan(2_000);
   },
-  tags: ['storybook-play-required'],
 };
-
-function resetSampleHostStorage(account: SampleAccount) {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.localStorage.removeItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY);
-  window.localStorage.removeItem(DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY);
-  window.localStorage.removeItem(SAMPLE_PERMISSION_ROLE_STORAGE_KEY);
-  for (const storageAccount of ['anonymous', 'tester', 'basic']) {
-    window.localStorage.removeItem(createSampleInstalledExtensionsStorageKey(storageAccount));
-  }
-
-  if (account === 'none') {
-    window.sessionStorage.removeItem(SAMPLE_AUTH_SESSION_KEY);
-    return;
-  }
-
-  window.sessionStorage.setItem(
-    SAMPLE_AUTH_SESSION_KEY,
-    account === 'tester' ? SAMPLE_AUTH_USERNAME : 'basic',
-  );
-}
-
-function seedSampleInstalledExtension(
-  account: Exclude<SampleAccount, 'none'>,
-  record: {
-    readonly category: string;
-    readonly enabled: boolean;
-    readonly id: string;
-    readonly installedAt: string;
-    readonly manifestUrl: string;
-  },
-) {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.localStorage.setItem(
-    createSampleInstalledExtensionsStorageKey(account),
-    JSON.stringify([record], null, 2),
-  );
-}
-
-async function waitForLoginGate(canvas: StoryCanvas) {
-  await canvas.findByLabelText('Username', {}, { timeout: 60_000 });
-  await canvas.findByLabelText('Password', {}, { timeout: 30_000 });
-  await waitFor(() => {
-    expect(canvas.queryByText('Checking sample session...')).toBeNull();
-  });
-}
-
-async function waitForWorkbenchReady(canvas: StoryCanvas) {
-  await canvas.findByRole('navigation', { name: 'Activity bar' }, { timeout: 60_000 });
-  await canvas.findByLabelText('Workspace Explorer', {}, { timeout: 30_000 });
-  await waitFor(() => {
-    expect(canvas.queryByText(/Checking sample session|Preparing workbench/)).toBeNull();
-  });
-}
-
-async function expectEditorTabVisible(canvas: StoryCanvas, fileName: string) {
-  await expect(
-    await canvas.findByRole('tab', { name: new RegExp(escapeRegExp(fileName)) }),
-  ).toBeVisible();
-}
-
-async function expectSampleFileVisible(canvas: StoryCanvas, fileName: string) {
-  await waitFor(() => {
-    const fileLabels = canvas.getAllByText(fileName);
-    expect(fileLabels.length).toBeGreaterThanOrEqual(1);
-    for (const fileLabel of fileLabels) {
-      expect(fileLabel).toBeVisible();
-    }
-  });
-}
-
-/**
- * Primary + secondary activity labels for the tester Owner role.
- * Includes Field Remap (samples.field-remap, order 36) after JDW Lab.
- */
-const TESTER_ACTIVITY_LABELS = [
-  'Explorer',
-  'Search',
-  'JDW Lab',
-  'Commands',
-  'Chat',
-  'AI Chat',
-  'Extensions',
-  'Field Remap',
-  'Profile',
-  'Settings',
-] as const;
-
-function getActivityLabels(canvas: StoryCanvas): string[] {
-  const activityBar = canvas.getByRole('navigation', { name: 'Activity bar' });
-  return within(activityBar)
-    .getAllByRole('button')
-    .map((button) => button.getAttribute('aria-label'))
-    .filter((label): label is string => Boolean(label));
-}
-
-function expectTesterActivityLabels(canvas: StoryCanvas) {
-  const labels = getActivityLabels(canvas);
-  expect(labels, `activity labels: ${JSON.stringify(labels)}`).toEqual([...TESTER_ACTIVITY_LABELS]);
-}
-
-async function selectPermissionRole(scope: HTMLElement, optionName: string) {
-  const roleSelect = within(scope).getByRole('combobox', { name: 'Permission role (demo)' });
-
-  await userEvent.click(roleSelect);
-  await userEvent.click(await within(document.body).findByRole('option', { name: optionName }));
-  await expect(roleSelect).toHaveTextContent(optionName);
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}

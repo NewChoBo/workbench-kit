@@ -157,12 +157,20 @@ component and integration tiers without a tier-specific reason.
 | `pnpm storybook:components`         | Local Storybook opened on the first component case                  |
 | `pnpm storybook:sample`             | Local Storybook opened on the sample journey case                   |
 | `pnpm build:storybook`              | Static Storybook build                                              |
+| `pnpm check:storybook-play-tags`    | Static orphan-play / sample-tag discipline gate                     |
 | `pnpm test:storybook-play:required` | Required play stories only                                          |
+| `pnpm test:storybook-play:sample`   | Sample-host play subset (`storybook-play-sample`)                   |
 | `pnpm validate:ui`                  | `build:storybook` + `test:storybook-play:required`                  |
+| `pnpm validate:ui:sample`           | `build:storybook` + `test:storybook-play:sample`                    |
 | `pnpm validate:full`                | Static/unit gates plus Storybook UI validation                      |
 
 `scripts/test-storybook-play.mjs` starts Storybook on port `61009` when needed, then
-invokes `test-storybook` with `--includeTags=storybook-play-required`.
+invokes `test-storybook` with `--includeTags` for the selected gate
+(`storybook-play-required`, `storybook-play-sample`, or `storybook-play-baseline`).
+
+Sample integration stories live in `WorkbenchSample.stories.tsx` and seed via
+`examples/workbench-sample/src/storybook/scenarios/` (see
+[Sample Host Test Architecture](./sample-host-test-architecture.md)).
 
 `pnpm dev` runs only the workbench sample at `http://127.0.0.1:65173/`.
 `pnpm dev:storybook` runs Storybook alone at `http://127.0.0.1:61009/`.
