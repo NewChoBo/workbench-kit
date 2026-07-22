@@ -508,6 +508,7 @@ themselves as fill (clip); only named scroll owners may overflow.
 | `ChatMessageItem`       | `footer`, `attachments` (in-bubble), `afterMessage` (outside), `labelIcon` (`ReactNode \| false`), plus `tone` / `contentMode` |
 | `ChatMessage`           | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                |
 | `ChatPhasedRunProgress` | Phase list + optional `labels` (expand/collapse, summary, status badges) for host i18n           |
+| `ChatConversationBar`   | Density tokens: `--workbench-chat-conversation-pill-min-width` (default `7.5rem`), `--workbench-chat-conversation-session-pill-min-width` (default `5.5rem`) |
 
 **Defaults:** Assistant layout messages render Markdown unless `contentMode: 'plain'`. User/peer default to plain. File drop is ignored while `disabled` or `isRunning`.
 Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage` (or a hybrid timeline slot); hosts own phase ids and copy.
