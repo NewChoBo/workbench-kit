@@ -26,6 +26,7 @@ import {
   applySidebarToggleScenario,
   applyTesterDevAppJourneyScenario,
   applyTesterWorkbenchScenario,
+  applyFieldRemapEditorScenario,
 } from './storybook/scenarios/index.js';
 import './host.css';
 
@@ -57,7 +58,10 @@ export const LoginGate: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(await canvas.findByText('Workbench Sample')).toBeVisible();
+    // Wait for session bootstrap to settle before asserting — avoids test-runner
+    // navigation retries when the gate remounts during "Checking sample session...".
+    await waitForLoginGate(canvas);
+    await expect(canvas.getByText('Workbench Sample')).toBeVisible();
     await expect(canvas.getByLabelText('Username')).toHaveAttribute(
       'placeholder',
       'tester or basic',
@@ -344,5 +348,32 @@ export const SidebarToggle: Story = {
     expectExpandedPrimarySidebar(canvasElement);
     expect(hideDurationMs).toBeLessThan(2_000);
     expect(showDurationMs).toBeLessThan(2_000);
+  },
+};
+
+export const FieldRemapEditorSmoke: Story = {
+  name: 'Field Remap editor smoke',
+  render: () => {
+    applyFieldRemapEditorScenario();
+    return <App />;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitForWorkbenchReady(canvas);
+    await userEvent.click(canvas.getByRole('button', { name: 'Field Remap' }));
+
+    const sampleList = await canvas.findByLabelText('Field remap samples');
+    await expect(sampleList).toBeVisible();
+    await userEvent.click(canvas.getByTestId('field-remap-open-nested-ab'));
+
+    await expectEditorTabVisible(canvas, 'A → B');
+    await waitFor(() => {
+      expect(canvas.getByTestId('field-remap-editor-surface')).toBeVisible();
+    });
+    await expect(canvas.getByTestId('field-remap-demo')).toBeVisible();
+    await expect(canvas.getByRole('heading', { level: 2, name: 'A → B' })).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-result')).not.toHaveTextContent(/^$/);
+    await expect(canvas.getByTestId('field-remap-result')).toHaveTextContent('Ada Lovelace');
   },
 };
