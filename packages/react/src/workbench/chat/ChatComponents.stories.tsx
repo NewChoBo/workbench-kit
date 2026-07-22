@@ -9,7 +9,7 @@ import {
   samplePeerChatIntroMessage,
   samplePeerChatThread,
 } from '../story/chatStory';
-import { ChatMessageItem, ChatPanel, type ChatMessage } from './index';
+import { ChatMessageItem, ChatPanel, ChatPhasedRunProgress, type ChatMessage } from './index';
 
 const initialAssistantMessages: ChatMessage[] = [
   {
@@ -100,12 +100,75 @@ export const RuntimeControls: Story = {
 export const HostGapsDropAndTone: Story = {
   name: 'Host gaps — drop and tone',
   render: () => <HostGapsDropAndToneHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText('Plain assistant note (contentMode: plain).')).toBeVisible();
+    await expect(canvas.getByText('Warning: review before applying.')).toBeVisible();
+    await expect(canvas.getByText('Error: the last command failed.')).toBeVisible();
+
+    const warningMessage = canvas.getByText('Warning: review before applying.').closest('.message');
+    const errorMessage = canvas.getByText('Error: the last command failed.').closest('.message');
+    expect(warningMessage?.querySelector('.codicon-warning')).not.toBeNull();
+    expect(errorMessage?.querySelector('.codicon-error')).not.toBeNull();
+    expect(warningMessage?.querySelector('.codicon-sparkle')).toBeNull();
+    expect(errorMessage?.querySelector('.codicon-sparkle')).toBeNull();
+  },
+  tags: ['storybook-play-baseline'],
 };
 
 /** Host gaps: `renderComposer` wrap + in-bubble `attachments` on `ChatMessageItem`. */
 export const ComposerAndAttachments: Story = {
   name: 'Host gaps — composer and attachments',
   render: () => <ComposerAndAttachmentsHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByText('Host wrap around kit composer')).toBeVisible();
+    await expect(canvas.getByPlaceholderText('Message the workspace')).toBeVisible();
+    await expect(canvas.getByText('brief.pdf')).toBeVisible();
+    await expect(canvas.getByText('notes.txt')).toBeVisible();
+    await expect(canvas.getByText('diff.patch')).toBeVisible();
+
+    const briefChip = canvas.getByText('brief.pdf');
+    expect(briefChip.closest('.message__attachments')).not.toBeNull();
+    expect(briefChip.closest('.message__after')).toBeNull();
+  },
+  tags: ['storybook-play-baseline'],
+};
+
+/** Host gaps: `ChatPhasedRunProgress` overridable chrome labels. */
+export const PhasedRunProgressLabels: Story = {
+  name: 'Host gaps — phased run labels',
+  render: () => (
+    <section aria-label="Phased run labels story" className="ui-story-sidebar-surface">
+      <StorySidebarFrame variant="chat">
+        <ChatPhasedRunProgress
+          defaultExpanded
+          labels={{
+            collapse: '접기',
+            expand: '펼치기',
+            getStatusLabel: (status) => `status:${status}`,
+            summaryStatus: (status) => `summary:${status}`,
+          }}
+          phases={[
+            { id: 'plan', label: 'Plan', status: 'completed' },
+            { id: 'apply', label: 'Apply', status: 'running' },
+          ]}
+          title="Pipeline"
+        />
+      </StorySidebarFrame>
+    </section>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText('Pipeline')).toBeVisible();
+    await expect(canvas.getByText('summary:running')).toBeVisible();
+    await expect(canvas.getByText('접기')).toBeVisible();
+    await expect(canvas.getByText('status:completed')).toBeVisible();
+    await expect(canvas.getByText('status:running')).toBeVisible();
+  },
+  tags: ['storybook-play-baseline'],
 };
 
 function SamplePeerChatExampleHarness() {

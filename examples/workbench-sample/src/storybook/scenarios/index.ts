@@ -48,3 +48,7 @@ export function applyBasicPermissionScopeScenario(): void {
 export function applySidebarToggleScenario(): void {
   resetSampleHostStorage('tester');
 }
+
+export function applyFieldRemapEditorScenario(): void {
+  resetSampleHostStorage('tester');
+}

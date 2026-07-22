@@ -84,21 +84,22 @@ See also `docs/conventions/storybook.md` for promotion criteria and scripts.
 ## Required Play Gate
 
 `pnpm test:storybook-play:required` runs stories tagged `storybook-play-required`.
-The current required gate has 33 plays: 8 sample integration flows, 9 small
+The current required gate has 34 plays: 9 sample integration flows, 9 small
 component-panel flows, and 16 JDW widget-tree authoring flows.
 
 ### Integration tier (sample app)
 
-| Story                                               | Flow covered                                                                                                                                                     |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Workbench Sample/Dev App` - Login gate             | Unauthenticated sample login screen and dummy credentials copy                                                                                                   |
-| `Workbench Sample/Dev App` - Login submit flow      | Dummy backend sign-in failure, error display, successful tester sign-in, and shell handoff                                                                       |
-| `Workbench Sample/Dev App` - Tester workbench       | Authenticated administrator workbench shell, explorer, status bar, and activity bar                                                                              |
-| `Workbench Sample/Dev App` - Devtools inspectors    | Storybook-only devtools shell opt-in; command, transaction, layout, editor, capability, and active extension snapshots                                           |
-| `Workbench Sample/Dev App` - Host install state     | Host-provided installed extension storage is account-scoped and activates a preinstalled catalog extension in the provider/devtools snapshot                     |
-| `Workbench Sample/Dev App` - Tester dev app journey | Dev-app integration path: startup editor state, search result open, command palette, chat, AI chat composer, settings, profile permission override, and sign-out |
-| `Workbench Sample/Dev App` - Basic permission scope | Basic account permission projection; only Explorer and Profile remain visible                                                                                    |
-| `Workbench Sample/Dev App` - Sidebar toggle         | Primary sidebar hide/show via status bar; collapsed grid keeps SplitView mounted and expands editor to full split width                                          |
+| Story                                                 | Flow covered                                                                                                                                                     |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Workbench Sample/Dev App` - Login gate               | Unauthenticated sample login screen and dummy credentials copy                                                                                                   |
+| `Workbench Sample/Dev App` - Login submit flow        | Dummy backend sign-in failure, error display, successful tester sign-in, and shell handoff                                                                       |
+| `Workbench Sample/Dev App` - Tester workbench         | Authenticated administrator workbench shell, explorer, status bar, and activity bar                                                                              |
+| `Workbench Sample/Dev App` - Devtools inspectors      | Storybook-only devtools shell opt-in; command, transaction, layout, editor, capability, and active extension snapshots                                           |
+| `Workbench Sample/Dev App` - Host install state       | Host-provided installed extension storage is account-scoped and activates a preinstalled catalog extension in the provider/devtools snapshot                     |
+| `Workbench Sample/Dev App` - Tester dev app journey   | Dev-app integration path: startup editor state, search result open, command palette, chat, AI chat composer, settings, profile permission override, and sign-out |
+| `Workbench Sample/Dev App` - Basic permission scope   | Basic account permission projection; only Explorer and Profile remain visible                                                                                    |
+| `Workbench Sample/Dev App` - Sidebar toggle           | Primary sidebar hide/show via status bar; collapsed grid keeps SplitView mounted and expands editor to full split width                                          |
+| `Workbench Sample/Dev App` - Field Remap editor smoke | Open Field Remap activity, select nested A→B sample, assert non-empty remap editor surface / result JSON                                                         |
 
 ### Component tier (package harness)
 
@@ -115,6 +116,9 @@ surface:
 | `React/Overlay/Dialog Actions` - Context menu column layouts       | Main-area trigger with fixed overlay          | Label-only, icon-only, and icon+shortcut menus set the matching `data-has-*` layout flags                                                                                                                                 |
 | `React/Overlay/Dialog Actions` - Context menu pointer state        | Main-area trigger with fixed overlay          | `useContextMenuState` opens a menu from right-click coordinates and closes after select                                                                                                                                   |
 | `React/Workbench/Chat Components` - Runtime controls               | Sidebar chat panel                            | Chat command proposal allow flow plus composer submit/reset                                                                                                                                                               |
+| `React/Workbench/Chat Components` - Host gaps drop/tone            | Sidebar chat panel                            | Baseline: tone warning/error label icons + plain contentMode                                                                                                                                                              |
+| `React/Workbench/Chat Components` - Composer and attachments       | Sidebar chat panel                            | Baseline: `renderComposer` wrap + in-bubble `attachments`                                                                                                                                                                 |
+| `React/Workbench/Chat Components` - Phased run labels              | Sidebar chat panel                            | Baseline: `ChatPhasedRunProgress` overridable chrome labels                                                                                                                                                               |
 | `React/Workbench/Workspace Search` - Search panel flow             | Sidebar search panel                          | Empty, result, Enter activation, clear, no-result, and refresh behavior                                                                                                                                                   |
 | `React/Layout/Side Bar View Tab Strip` - Tab selection and reorder | Sidebar panel (`StorySidebarFrame`)           | Secondary slot tab active state, click selection, and horizontal DnD reorder via `SideBarViewTabStrip`                                                                                                                    |
 | `React/Layout/Side Bar View Tab Strip` - Inspector icon tabs       | Sidebar panel (`StorySidebarFrame`)           | Icon `SideBarViewTabStrip` inside `SideBarViewFrame` for secondary inspector panes (Window / Content)                                                                                                                     |
