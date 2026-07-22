@@ -9,7 +9,11 @@ describe('chat conversation bar CSS contract', () => {
   it('keeps a readable min-width floor for title and session pills', () => {
     const css = readFileSync(cssPath, 'utf8');
 
-    expect(css).toMatch(/\.chat-conversation-bar__pill-wrap\s*\{[^}]*min-width:\s*7\.5rem/s);
-    expect(css).toMatch(/\.chat-conversation-bar__pill--session\s*\{[^}]*min-width:\s*5\.5rem/s);
+    expect(css).toMatch(
+      /\.chat-conversation-bar__pill-wrap\s*\{[^}]*min-width:\s*var\(--workbench-chat-conversation-pill-min-width,\s*7\.5rem\)/s,
+    );
+    expect(css).toMatch(
+      /\.chat-conversation-bar__pill--session\s*\{[^}]*min-width:\s*var\(--workbench-chat-conversation-session-pill-min-width,\s*5\.5rem\)/s,
+    );
   });
 });

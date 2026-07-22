@@ -65,7 +65,7 @@
 .chat-conversation-bar__pill-wrap {
   position: relative;
   flex: 1 1 auto;
-  min-width: 7.5rem;
+  min-width: var(--workbench-chat-conversation-pill-min-width, 7.5rem);
   max-width: min(160px, 100%);
   overflow: visible;
   z-index: 1;
@@ -78,7 +78,7 @@
 .chat-conversation-bar__pill--session {
   flex: 0 1 auto;
   flex-shrink: 1;
-  min-width: 5.5rem;
+  min-width: var(--workbench-chat-conversation-session-pill-min-width, 5.5rem);
   max-width: min(108px, 100%);
   color: var(--color-text-subtle);
 }
