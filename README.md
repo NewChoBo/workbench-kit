@@ -146,10 +146,15 @@ dist-tag, including `monaco`, `workbench-core`, `shell-react`, and
 
 Task-oriented guides and API indexes for integrators and extension authors:
 
-- [Guides](./docs/guides/README.md) — start here for use cases and how-to flows
+- [Guides](./docs/guides/README.md) — start here for how-to flows
+- [Getting Started](./docs/guides/getting-started.md) — install `@prototype`, CSS, minimal shell
+- [Component Map](./docs/guides/component-map.md) — surfaces → Storybook / sample
+- [Sample Screens](./docs/guides/sample-screens.md) — example screen recipes
 - [Use Case Scenarios](./docs/guides/use-cases.md) — install packages, run sample, develop extensions, command lifecycle
 - [Extension Development](./docs/guides/extension-development.md) — manifest, activation, bundle pipeline
 - [API Reference](./docs/guides/api-reference.md) — OpenAPI, contracts, public package exports
+- [Consumer Capabilities](./docs/workbench/consumer-capabilities.md) — React integration contract
+- [`@workbench-kit/react` README](./packages/react/README.md) — npm package entry
 - [Architecture](./docs/architecture/README.md) — workbench layers, extension system, migration
 - [Workbench Notes](./docs/workbench/README.md) — planning notes and sample host backend API
 
