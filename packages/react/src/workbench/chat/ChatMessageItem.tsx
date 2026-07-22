@@ -27,6 +27,11 @@ export interface ChatMessageItemProps {
    */
   footer?: ReactNode | undefined;
   isStreaming?: boolean;
+  /**
+   * Assistant-layout label icon. Defaults to sparkle; error/warning tones use
+   * status icons. Pass a custom node to override, or `false` to hide.
+   */
+  labelIcon?: ReactNode | false | undefined;
   layout?: ChatMessageLayout;
   message: ChatMessage;
   onCommandProposalAllow?: ((messageId: string, proposal: ChatCommandProposal) => void) | undefined;
@@ -151,6 +156,25 @@ function resolveChatMessageToneClass(
   return undefined;
 }
 
+function resolveAssistantLabelIcon(
+  labelIcon: ReactNode | false | undefined,
+  tone: ChatMessageTone | undefined,
+): ReactNode | null {
+  if (labelIcon === false) {
+    return null;
+  }
+  if (labelIcon !== undefined) {
+    return labelIcon;
+  }
+  if (tone === 'error') {
+    return <i className="codicon codicon-error message__label-icon" />;
+  }
+  if (tone === 'warning') {
+    return <i className="codicon codicon-warning message__label-icon" />;
+  }
+  return <i className="codicon codicon-sparkle message__label-icon" />;
+}
+
 function ChatMessageBody({
   content,
   contentMode,
@@ -192,6 +216,7 @@ export function ChatMessageItem({
   contentMode: contentModeProp,
   footer,
   isStreaming = false,
+  labelIcon,
   layout = 'assistant',
   message,
   onCommandProposalAllow,
@@ -204,7 +229,9 @@ export function ChatMessageItem({
   const timestamp = renderMessageTimestamp(message, showTimestamp);
   const bubbleAlign = message.source === 'user' ? 'end' : 'start';
   const contentMode = resolveChatMessageContentMode(message, layout, contentModeProp);
-  const toneClass = resolveChatMessageToneClass(toneProp ?? message.tone);
+  const resolvedTone = toneProp ?? message.tone;
+  const toneClass = resolveChatMessageToneClass(resolvedTone);
+  const assistantLabelIcon = resolveAssistantLabelIcon(labelIcon, resolvedTone);
   const body = (
     <ChatMessageBody
       content={message.content}
@@ -291,7 +318,7 @@ export function ChatMessageItem({
       <div className="message__row">
         <div className="message__main">
           <div className="message__label message__label--assistant">
-            <i className="codicon codicon-sparkle message__label-icon" />
+            {assistantLabelIcon}
             {message.label ?? assistantLabel}
           </div>
           <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>

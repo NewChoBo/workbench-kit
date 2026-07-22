@@ -29,6 +29,20 @@ export interface ChatPhasedRunProgressAction {
   readonly variant?: 'default' | 'primary' | 'danger';
 }
 
+/**
+ * Overridable chrome strings for locale-aware hosts. Unset keys keep English defaults.
+ */
+export interface ChatPhasedRunProgressLabels {
+  readonly expand?: string;
+  readonly collapse?: string;
+  readonly noPhases?: string;
+  readonly phasesComplete?: (completed: number, total: number) => string;
+  /** Summary badge label for the aggregate run status. */
+  readonly summaryStatus?: (status: ChatRunPhaseStatus) => string;
+  /** Per-phase status badge label (also used when `summaryStatus` is omitted). */
+  readonly getStatusLabel?: (status: ChatRunPhaseStatus) => string;
+}
+
 function toBadgeVariant(variant: WorkbenchStatusVariant): 'accent' | 'muted' | 'danger' {
   if (variant === 'danger' || variant === 'warning') {
     return 'danger';
@@ -50,6 +64,8 @@ export interface ChatPhasedRunProgressProps {
   /** Extra footer content (host-owned). */
   readonly footer?: ReactNode;
   readonly className?: string;
+  /** Locale-aware chrome labels; defaults preserve English copy. */
+  readonly labels?: ChatPhasedRunProgressLabels;
 }
 
 function mapPhaseStatusToWorkbenchStatus(status: ChatRunPhaseStatus): WorkbenchStatus {
@@ -73,26 +89,73 @@ function mapPhaseStatusToWorkbenchStatus(status: ChatRunPhaseStatus): WorkbenchS
   }
 }
 
-function summarizePhases(phases: readonly ChatRunPhase[]): {
+const DEFAULT_SUMMARY_STATUS_LABELS: Record<ChatRunPhaseStatus, string> = {
+  pending: 'Pending',
+  running: 'Running',
+  completed: 'Completed',
+  failed: 'Failed',
+  skipped: 'Idle',
+  cancelled: 'Cancelled',
+};
+
+function resolveStatusLabel(
+  status: ChatRunPhaseStatus,
+  labels: ChatPhasedRunProgressLabels | undefined,
+  prefer: 'summary' | 'phase' = 'summary',
+): string {
+  const primary =
+    prefer === 'summary'
+      ? (labels?.summaryStatus?.(status) ?? labels?.getStatusLabel?.(status))
+      : (labels?.getStatusLabel?.(status) ?? labels?.summaryStatus?.(status));
+  if (primary) {
+    return primary;
+  }
+  if (status === 'skipped') {
+    return getWorkbenchStatusDescriptor(mapPhaseStatusToWorkbenchStatus(status)).label;
+  }
+  return (
+    DEFAULT_SUMMARY_STATUS_LABELS[status] ??
+    getWorkbenchStatusDescriptor(mapPhaseStatusToWorkbenchStatus(status)).label
+  );
+}
+
+function summarizePhases(
+  phases: readonly ChatRunPhase[],
+  labels: ChatPhasedRunProgressLabels | undefined,
+): {
   label: string;
   status: ChatRunPhaseStatus;
 } {
   if (phases.some((phase) => phase.status === 'failed')) {
-    return { label: 'Failed', status: 'failed' };
+    return { label: resolveStatusLabel('failed', labels, 'summary'), status: 'failed' };
   }
   if (phases.some((phase) => phase.status === 'running')) {
-    return { label: 'Running', status: 'running' };
+    return { label: resolveStatusLabel('running', labels, 'summary'), status: 'running' };
   }
   if (phases.some((phase) => phase.status === 'cancelled')) {
-    return { label: 'Cancelled', status: 'cancelled' };
+    return { label: resolveStatusLabel('cancelled', labels, 'summary'), status: 'cancelled' };
   }
   if (
     phases.length > 0 &&
     phases.every((phase) => phase.status === 'completed' || phase.status === 'skipped')
   ) {
-    return { label: 'Completed', status: 'completed' };
+    return { label: resolveStatusLabel('completed', labels, 'summary'), status: 'completed' };
   }
-  return { label: 'Pending', status: 'pending' };
+  return { label: resolveStatusLabel('pending', labels, 'summary'), status: 'pending' };
+}
+
+function resolvePhaseBadgeLabel(
+  status: ChatRunPhaseStatus,
+  labels: ChatPhasedRunProgressLabels | undefined,
+): string {
+  if (labels?.getStatusLabel) {
+    return labels.getStatusLabel(status);
+  }
+  // Pending maps to workbench "waiting" / "Waiting"; keep summary vocabulary ("Pending").
+  if (status === 'pending') {
+    return resolveStatusLabel('pending', labels, 'summary');
+  }
+  return getWorkbenchStatusDescriptor(mapPhaseStatusToWorkbenchStatus(status)).label;
 }
 
 /**
@@ -108,14 +171,24 @@ export function ChatPhasedRunProgress({
   actions,
   footer,
   className,
+  labels,
 }: ChatPhasedRunProgressProps) {
   const panelId = useId();
   const [uncontrolledExpanded, setUncontrolledExpanded] = useState(defaultExpanded);
   const isExpanded = expanded ?? uncontrolledExpanded;
-  const summary = summarizePhases(phases);
+  const summary = summarizePhases(phases, labels);
   const summaryDescriptor = getWorkbenchStatusDescriptor(
     mapPhaseStatusToWorkbenchStatus(summary.status),
   );
+  const expandLabel = labels?.expand ?? 'Expand';
+  const collapseLabel = labels?.collapse ?? 'Collapse';
+  const noPhasesLabel = labels?.noPhases ?? 'No phases';
+  const completedCount = phases.filter(
+    (phase) => phase.status === 'completed' || phase.status === 'skipped',
+  ).length;
+  const phasesCompleteLabel =
+    labels?.phasesComplete?.(completedCount, phases.length) ??
+    `${completedCount}/${phases.length} phases complete`;
 
   const setExpanded = (next: boolean) => {
     if (expanded === undefined) {
@@ -143,7 +216,7 @@ export function ChatPhasedRunProgress({
           aria-controls={panelId}
           onClick={() => setExpanded(!isExpanded)}
         >
-          {isExpanded ? 'Collapse' : 'Expand'}
+          {isExpanded ? collapseLabel : expandLabel}
         </Button>
       </header>
 
@@ -162,7 +235,9 @@ export function ChatPhasedRunProgress({
               >
                 <div className="chat-phased-run-progress__phase-main">
                   <span className="chat-phased-run-progress__phase-label">{phase.label}</span>
-                  <Badge variant={toBadgeVariant(descriptor.variant)}>{descriptor.label}</Badge>
+                  <Badge variant={toBadgeVariant(descriptor.variant)}>
+                    {resolvePhaseBadgeLabel(phase.status, labels)}
+                  </Badge>
                 </div>
                 {phase.detail ? (
                   <p className="chat-phased-run-progress__phase-detail">{phase.detail}</p>
@@ -173,9 +248,7 @@ export function ChatPhasedRunProgress({
         </ol>
       ) : (
         <p className="chat-phased-run-progress__summary" id={panelId}>
-          {phases.length === 0
-            ? 'No phases'
-            : `${phases.filter((phase) => phase.status === 'completed' || phase.status === 'skipped').length}/${phases.length} phases complete`}
+          {phases.length === 0 ? noPhasesLabel : phasesCompleteLabel}
         </p>
       )}
 

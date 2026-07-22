@@ -118,6 +118,17 @@ export interface WorkbenchShellProps {
   titleBar?: ReactNode;
   titleBarActions?: ReactNode;
   titleMeta?: ReactNode;
+  /**
+   * When using the default title bar, show the bottom-panel layout toggle.
+   * Defaults to `true`. Pass `false` for primary-sidebar-only hosts.
+   * Custom `titleBar` nodes are unaffected — omit panel callbacks there instead.
+   */
+  showPanelLayoutToggle?: boolean;
+  /**
+   * When using the default title bar, show the auxiliary sidebar layout toggle.
+   * Defaults to `true`. Pass `false` for primary-sidebar-only hosts.
+   */
+  showAuxiliarySidebarLayoutToggle?: boolean;
 }
 
 const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
@@ -152,6 +163,8 @@ export function WorkbenchShell({
   titleBar,
   titleBarActions,
   titleMeta,
+  showPanelLayoutToggle = true,
+  showAuxiliarySidebarLayoutToggle = true,
 }: WorkbenchShellProps) {
   const resolvedEditorArea = editorArea ?? <EditorArea />;
   const resolvedWorkbenchTheme = useResolvedWorkbenchTheme(theme ?? 'system');
@@ -329,6 +342,8 @@ export function WorkbenchShell({
         isAuxiliarySidebarVisible={layout.auxiliaryBar.visible}
         isPanelVisible={layout.panel.visible}
         isPrimarySidebarVisible={layout.sideBar.visible}
+        showAuxiliarySidebarLayoutToggle={showAuxiliarySidebarLayoutToggle}
+        showPanelLayoutToggle={showPanelLayoutToggle}
         title={title}
         titleBarActions={titleBarActions}
         titleMeta={titleMeta}
@@ -587,6 +602,8 @@ function WorkbenchShellTitleBar({
   isAuxiliarySidebarVisible,
   isPanelVisible,
   isPrimarySidebarVisible,
+  showAuxiliarySidebarLayoutToggle,
+  showPanelLayoutToggle,
   title,
   titleBarActions,
   titleMeta,
@@ -599,6 +616,8 @@ function WorkbenchShellTitleBar({
   isAuxiliarySidebarVisible: boolean;
   isPanelVisible: boolean;
   isPrimarySidebarVisible: boolean;
+  showAuxiliarySidebarLayoutToggle: boolean;
+  showPanelLayoutToggle: boolean;
   title: ReactNode;
   titleBarActions: ReactNode | undefined;
   titleMeta: ReactNode | undefined;
@@ -621,8 +640,10 @@ function WorkbenchShellTitleBar({
           isAuxiliarySidebarVisible={isAuxiliarySidebarVisible}
           isPanelVisible={isPanelVisible}
           isPrimarySidebarVisible={isPrimarySidebarVisible}
-          onToggleAuxiliarySidebar={onToggleAuxiliarySidebar}
-          onTogglePanel={onTogglePanel}
+          onToggleAuxiliarySidebar={
+            showAuxiliarySidebarLayoutToggle ? onToggleAuxiliarySidebar : undefined
+          }
+          onTogglePanel={showPanelLayoutToggle ? onTogglePanel : undefined}
           onTogglePrimarySidebar={onTogglePrimarySidebar}
         />
         {titleBarActions}

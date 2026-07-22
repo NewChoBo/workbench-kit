@@ -81,6 +81,7 @@ export type {
   ChatHistoryMenuProps,
   ChatPanelProps,
   ChatPhasedRunProgressAction,
+  ChatPhasedRunProgressLabels,
   ChatPhasedRunProgressProps,
   ChatRenameDialogProps,
   ChatRunPhase,

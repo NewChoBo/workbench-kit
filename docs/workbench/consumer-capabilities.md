@@ -88,7 +88,7 @@ Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workb
 | `WorkbenchThemeProvider`   | `platform` (`darwin` \| `win32` \| `linux`) — sets host platform context + `data-workbench-platform`            |
 | `WorkbenchDesktopTitleBar` | `chrome` (`platform` default \| `generic`), `leading` / `centerSlot` / `trailing`, `windowControls`             |
 | `windowControls`           | Host callbacks only: `onMinimize`, `onToggleMaximized`, `onClose`, `isMaximized`, optional labels               |
-| Title-bar layout toggles   | `WorkbenchShellTitleBarLayoutControls`: omit `onTogglePanel` / `onToggleAuxiliarySidebar` to hide those buttons |
+| Title-bar layout toggles   | `WorkbenchShellTitleBarLayoutControls`: omit `onTogglePanel` / `onToggleAuxiliarySidebar` to hide those buttons. `WorkbenchShell` (`@workbench-kit/shell-react`): `showPanelLayoutToggle` / `showAuxiliarySidebarLayoutToggle` (default `true`) |
 
 **I/O contract:** Kit owns chrome markup and darwin/win32 placement. Hosts supply Electron (or similar) IPC callbacks and optional i18n labels — do not fork titlebar markup in the renderer.
 
@@ -505,9 +505,9 @@ themselves as fill (clip); only named scroll owners may overflow.
 | Surface                 | Props                                                                                            |
 | ----------------------- | ------------------------------------------------------------------------------------------------ |
 | `ChatPanel`             | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `messageListAddon`, composer/runtime props |
-| `ChatMessageItem`       | `footer`, `afterMessage`, plus message `tone` / `contentMode`                                    |
+| `ChatMessageItem`       | `footer`, `afterMessage`, `labelIcon` (`ReactNode \| false`), plus message `tone` / `contentMode` |
 | `ChatMessage`           | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                |
-| `ChatPhasedRunProgress` | Product-neutral phase id/label/status/detail list with expand/collapse and optional actions      |
+| `ChatPhasedRunProgress` | Phase list + optional `labels` (expand/collapse, summary, status badges) for host i18n           |
 
 **Defaults:** Assistant layout messages render Markdown unless `contentMode: 'plain'`. User/peer default to plain. File drop is ignored while `disabled` or `isRunning`.
 Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage` (or a hybrid timeline slot); hosts own phase ids and copy.
