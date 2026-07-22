@@ -96,13 +96,13 @@ imports.
 
 ### M5 — Publish alignment
 
-**Status:** Done for public-ready packages and in-repo hardening. `base`, `platform`, `workbench-extension-sdk`, and `workbench-config` are aligned for the publish pipeline. `workbench-core` and `shell-react` remain private preview because the current shell modules are repo-local artifacts, not yet package-safe public artifacts. `pnpm check:public-exports` guards publish-order membership, private-preview exclusions, package export targets, package file exclusions, and publish metadata.
+**Status:** Done for publish pipeline alignment. All `packages/*` (including `workbench-core`, `shell-react`, `monaco`, and `electron-shell`) publish under `@prototype`. `pnpm check:public-exports` guards publish-order membership, package export targets, package file exclusions, and publish metadata. Repository-local `extensions/*` stay private.
 
 | Step | Action                                                                                                         |
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Add public-ready `base`, `platform`, `workbench-extension-sdk`, `workbench-config` to `NPM_PUBLISH_ORDER`      |
 | 2    | Keep removed legacy `core` paths out of publish order and target graph                                         |
-| 3    | Update README package list and private-preview shell package notes                                             |
+| 3    | Update README package list and publish-scope notes                                                             |
 | 4    | Add `check:dependency-graph` and wire it into `pnpm validate` as the dependency-cruiser equivalent for this M5 |
 | 5    | Keep removed VS Code bridge and adapter paths out of the current package graph                                 |
 | 6    | Add `check:public-exports` and wire it into `pnpm validate` for package export/publish metadata hardening      |

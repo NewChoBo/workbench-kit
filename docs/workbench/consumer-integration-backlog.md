@@ -187,10 +187,10 @@ sentinel options before passing. Full multi-section dialog landed as §2
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description**        | Optional `@workbench-kit/electron-shell`: frameless window, IPC titlebar, tray, multi-window restore — without pulling Electron into `react`. |
 | **Consumer pain**      | Each Electron consumer reimplements titlebar IPC and restore policy.                                                                          |
-| **Suggested package**  | `packages/electron-shell` (**private preview**, not in `NPM_PUBLISH_ORDER` until the API stabilizes).                                         |
+| **Suggested package**  | `packages/electron-shell` (published under `@prototype` via `NPM_PUBLISH_ORDER`).                                                             |
 | **Storybook / sample** | N/A in browser Storybook; electron sample app when scope is explicit.                                                                         |
 
-**Bootstrap status:** Package exists as private preview. Implemented helpers:
+**Bootstrap status:** Package is published under `@prototype`. Implemented helpers:
 
 - `requireOwnedWindowForSender(sender, resolveOwnedWindow)` — reject IPC from senders
   not bound to a host-owned window (`UntrustedIpcSenderError`); no `electron` import in

@@ -32,7 +32,7 @@ Workbench Kit is a **library**; host applications consume published or linked pa
 
 ## Project layout
 
-- `packages/*` — publishable and private-preview packages (`@workbench-kit/*`)
+- `packages/*` — publishable `@workbench-kit/*` packages (all on npm via `NPM_PUBLISH_ORDER`)
 - `scripts/` — build, validation, and release automation
 - `.github/workflows/` — CI including `publish.yml` (npm) and Pages deploy
 - `docs/conventions/` — human-readable policies
@@ -44,9 +44,9 @@ Full detail: [`docs/conventions/npm-release.md`](docs/conventions/npm-release.md
 
 | Topic                   | Rule                                                                  |
 | ----------------------- | --------------------------------------------------------------------- |
-| Public publish set      | `NPM_PUBLISH_ORDER` in `scripts/npm-publish-config.mjs` (13 packages) |
+| Public publish set      | `NPM_PUBLISH_ORDER` in `scripts/npm-publish-config.mjs` (19 packages) |
 | CI publish set          | Same as `NPM_PUBLISH_ORDER` — do not maintain a smaller allowlist     |
-| Private (never publish) | `monaco`, `workbench-core`, `shell-react`, `electron-shell`           |
+| Not published           | `extensions/*` (repo-local only)                                      |
 | First release / updates | Push tag `v<version>` → `publish.yml` (npm OIDC trusted publishing)   |
 | Local fallback          | `pnpm publish:packages:local` only when Trusted Publisher unavailable |
 | Consumer install tag    | `@prototype` (CI does not move `latest`)                              |

@@ -7,12 +7,8 @@ import { NPM_PUBLISH_ORDER, packageDirectoryNameForPackageName } from './npm-pub
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packagesRoot = path.join(repoRoot, 'packages');
 const publishPackageNames = new Set(NPM_PUBLISH_ORDER);
-const privatePreviewPackageNames = new Set([
-  '@workbench-kit/monaco',
-  '@workbench-kit/workbench-core',
-  '@workbench-kit/shell-react',
-  '@workbench-kit/electron-shell',
-]);
+/** packages/* must not stay private; repo-local extensions/ remain private separately. */
+const privatePreviewPackageNames = new Set();
 const requiredSrcExclusions = [
   '!src/**/*.test.ts',
   '!src/**/*.test.tsx',

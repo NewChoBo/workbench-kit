@@ -118,7 +118,7 @@ Utility placement does **not** imply modal-only — host routing chooses the sur
 
 ---
 
-## Monaco editor (private preview)
+## Monaco editor
 
 ### `WorkbenchMonacoEditor` · `@workbench-kit/monaco`
 

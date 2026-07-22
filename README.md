@@ -138,9 +138,9 @@ The workflow runs on published GitHub releases and pushed tags matching
 `v*` or `workbench-kit-v*`. The tag must match the root package version, such
 as `v0.0.1-prototype.0` or `workbench-kit-v0.0.1-prototype.0`.
 
-The current publish pipeline excludes private-preview shell packages. The full
-`workbench-core` / `shell-react` shell stack remains private preview until
-bundled extension modules are packaged as public-safe artifacts.
+All `packages/*` publish through `NPM_PUBLISH_ORDER` under the `@prototype`
+dist-tag, including `monaco`, `workbench-core`, `shell-react`, and
+`electron-shell`. Repository-local `extensions/*` packages are not published.
 
 ## Documentation
 
