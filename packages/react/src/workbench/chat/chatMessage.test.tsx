@@ -333,6 +333,28 @@ describe('ChatMessageItem', () => {
     expect(markup).toContain('attachment-chip');
   });
 
+  it('renders in-bubble attachments inside the bubble surface', () => {
+    const userMarkup = renderToStaticMarkup(
+      <ChatMessageItem
+        attachments={<span className="file-chip">notes.txt</span>}
+        message={{ content: '', id: 'user-file-only', source: 'user' }}
+      />,
+    );
+    expect(userMarkup).toContain('message__attachments');
+    expect(userMarkup).toContain('notes.txt');
+    expect(userMarkup).toContain('message__bubble');
+    expect(userMarkup).not.toContain('message__after');
+
+    const assistantMarkup = renderToStaticMarkup(
+      <ChatMessageItem
+        attachments={<span className="file-chip">report.pdf</span>}
+        message={{ content: 'Here is the file', id: 'assistant-file', source: 'assistant' }}
+      />,
+    );
+    expect(assistantMarkup).toContain('message__attachments');
+    expect(assistantMarkup).toContain('report.pdf');
+  });
+
   it('renders assistant contentMode plain without markdown wrappers', () => {
     const message: ChatMessage = {
       content: '**plain** assistant text',

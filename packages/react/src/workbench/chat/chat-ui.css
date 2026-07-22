@@ -379,6 +379,14 @@
   margin-top: 2px;
 }
 
+.message__attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  max-width: 100%;
+}
+
 .message__after {
   display: flex;
   flex-wrap: wrap;

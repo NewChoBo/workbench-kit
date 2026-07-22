@@ -5,6 +5,8 @@ import { cx } from '../../utils/cx';
 export const CHAT_MESSAGE_COLLAPSE_MAX_LINES = 8;
 
 export interface ChatMessageCollapsibleProps {
+  /** In-bubble region after message body (file chips, etc.). */
+  attachments?: ReactNode | undefined;
   children: ReactNode;
   className?: string;
   content: string;
@@ -26,6 +28,7 @@ function measureChatMessageNeedsCollapse(body: HTMLElement, maxLines: number): b
 }
 
 export function ChatMessageCollapsible({
+  attachments,
   children,
   className,
   content,
@@ -99,6 +102,7 @@ export function ChatMessageCollapsible({
         >
           {children}
         </div>
+        {attachments ? <div className="message__attachments">{attachments}</div> : null}
         {needsCollapse && !isStreaming ? (
           <Button
             aria-expanded={expanded}

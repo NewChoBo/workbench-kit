@@ -34,6 +34,11 @@ export interface ChatPanelProps
    * hybrid timelines around the kit list.
    */
   renderMessageList?: ((defaultList: ReactNode) => ReactNode) | undefined;
+  /**
+   * Wrap or replace the default `<ChatComposer />` while keeping panel chrome
+   * and file-drop overlay behavior.
+   */
+  renderComposer?: ((defaultComposer: ReactNode) => ReactNode) | undefined;
   title?: string;
 }
 
@@ -53,6 +58,7 @@ export function ChatPanel({
   filesDropLabel = 'Drop files to attach',
   headerAddon,
   onFilesDrop,
+  renderComposer,
   renderMessageList,
   title = 'Chat',
   value,
@@ -125,6 +131,25 @@ export function ChatPanel({
     ? renderMessageList(defaultMessageList)
     : defaultMessageList;
 
+  const defaultComposer = (
+    <ChatComposer
+      ref={composerRef}
+      commandLabel={commandLabel}
+      commandSuggestPopover={commandSuggestPopover}
+      disabled={disabled}
+      isRunning={isRunning}
+      placeholder={placeholder}
+      showTools={showTools}
+      value={value}
+      onCancel={onCancel}
+      onCommandClick={onCommandClick}
+      onKeyDown={onKeyDown}
+      onSubmit={onSubmit}
+      onValueChange={onValueChange}
+    />
+  );
+  const composer = renderComposer ? renderComposer(defaultComposer) : defaultComposer;
+
   return (
     <div
       className={cx('chat-panel-drop-target', isFileDragActive && 'chat-panel-drop-target--active')}
@@ -135,23 +160,7 @@ export function ChatPanel({
     >
       <SideBarViewFrame
         className={cx('chat-sidebar-view', className)}
-        footer={
-          <ChatComposer
-            ref={composerRef}
-            commandLabel={commandLabel}
-            commandSuggestPopover={commandSuggestPopover}
-            disabled={disabled}
-            isRunning={isRunning}
-            placeholder={placeholder}
-            showTools={showTools}
-            value={value}
-            onCancel={onCancel}
-            onCommandClick={onCommandClick}
-            onKeyDown={onKeyDown}
-            onSubmit={onSubmit}
-            onValueChange={onValueChange}
-          />
-        }
+        footer={composer}
         footerPlacement="overlay"
         headerAddon={headerAddon}
         title={title}

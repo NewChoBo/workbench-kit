@@ -16,9 +16,16 @@ import type {
 export interface ChatMessageItemProps {
   /**
    * Rendered after the bubble (and before command proposals). Use for
-   * attachments or host chrome that should stay outside the collapsible surface.
+   * host chrome that should stay outside the collapsible surface.
+   * Prefer `attachments` for in-bubble file chips.
    */
   afterMessage?: ReactNode | undefined;
+  /**
+   * In-bubble attachment region (file chips, etc.). Renders inside the bubble
+   * surface after the message body. Prefer this over `afterMessage` when chips
+   * must stay end-aligned with user bubbles.
+   */
+  attachments?: ReactNode | undefined;
   assistantLabel?: string;
   /** Overrides `message.contentMode` when set. */
   contentMode?: ChatMessageContentMode | undefined;
@@ -212,6 +219,7 @@ function ChatMessageBody({
 
 export function ChatMessageItem({
   afterMessage,
+  attachments,
   assistantLabel = 'Assistant',
   contentMode: contentModeProp,
   footer,
@@ -261,6 +269,7 @@ export function ChatMessageItem({
             ) : null}
             <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
               <ChatMessageCollapsible
+                attachments={attachments}
                 content={message.content}
                 footer={footer}
                 isStreaming={isStreaming}
@@ -293,6 +302,7 @@ export function ChatMessageItem({
             {peerLabel ? <div className="message__peer-label">{peerLabel}</div> : null}
             <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
               <ChatMessageCollapsible
+                attachments={attachments}
                 content={message.content}
                 footer={footer}
                 isStreaming={isStreaming}
@@ -323,6 +333,7 @@ export function ChatMessageItem({
           </div>
           <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
             <ChatMessageCollapsible
+              attachments={attachments}
               className="message__assistant-collapsible"
               content={message.content}
               footer={footer}
