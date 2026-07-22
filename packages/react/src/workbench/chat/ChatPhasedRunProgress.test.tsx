@@ -97,4 +97,36 @@ describe('ChatPhasedRunProgress', () => {
       root.unmount();
     });
   });
+
+  it('applies overridable chrome labels', () => {
+    const { container, root } = mount(
+      <ChatPhasedRunProgress
+        defaultExpanded
+        phases={samplePhases}
+        labels={{
+          collapse: '접기',
+          expand: '펼치기',
+          phasesComplete: (completed, total) => `${completed} of ${total} done`,
+          getStatusLabel: (status) => `status:${status}`,
+          summaryStatus: (status) => `summary:${status}`,
+        }}
+      />,
+    );
+
+    expect(container.textContent).toContain('summary:running');
+    expect(container.textContent).toContain('접기');
+    expect(container.textContent).toContain('status:completed');
+    expect(container.textContent).toContain('status:running');
+
+    act(() => {
+      const toggle = container.querySelector('button[aria-expanded="true"]') as HTMLButtonElement;
+      toggle.click();
+    });
+    expect(container.textContent).toContain('펼치기');
+    expect(container.textContent).toContain('1 of 3 done');
+
+    act(() => {
+      root.unmount();
+    });
+  });
 });

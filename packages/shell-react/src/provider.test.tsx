@@ -1177,6 +1177,50 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 
+  it('hides unused panel and auxiliary title-bar layout toggles when disabled', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+        >
+          <TestWorkbenchShell
+            editorArea={<main>Editor Area</main>}
+            showAuxiliarySidebarLayoutToggle={false}
+            showPanelLayoutToggle={false}
+            title="Primary Only"
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    const primaryToggle = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Hide Primary Side Bar"], button[aria-label="Show Primary Side Bar"]',
+    );
+    const panelToggle = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Show Panel"], button[aria-label="Hide Panel"]',
+    );
+    const secondaryToggle = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Show Secondary Side Bar"], button[aria-label="Hide Secondary Side Bar"]',
+    );
+    expect(primaryToggle).not.toBeNull();
+    expect(panelToggle).toBeNull();
+    expect(secondaryToggle).toBeNull();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('renders the built-in explorer from the virtual workspace and opens files', async () => {
     const workspaceHostPort = createWorkbenchWorkspaceHostPort();
     const initialState = {
