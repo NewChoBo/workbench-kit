@@ -84,22 +84,23 @@ See also `docs/conventions/storybook.md` for promotion criteria and scripts.
 ## Required Play Gate
 
 `pnpm test:storybook-play:required` runs stories tagged `storybook-play-required`.
-The current required gate has 34 plays: 9 sample integration flows, 9 small
+The current required gate has 35 plays: 10 sample integration flows, 9 small
 component-panel flows, and 16 JDW widget-tree authoring flows.
 
 ### Integration tier (sample app)
 
-| Story                                                 | Flow covered                                                                                                                                                     |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Workbench Sample/Dev App` - Login gate               | Unauthenticated sample login screen and dummy credentials copy                                                                                                   |
-| `Workbench Sample/Dev App` - Login submit flow        | Dummy backend sign-in failure, error display, successful tester sign-in, and shell handoff                                                                       |
-| `Workbench Sample/Dev App` - Tester workbench         | Authenticated administrator workbench shell, explorer, status bar, and activity bar                                                                              |
-| `Workbench Sample/Dev App` - Devtools inspectors      | Storybook-only devtools shell opt-in; command, transaction, layout, editor, capability, and active extension snapshots                                           |
-| `Workbench Sample/Dev App` - Host install state       | Host-provided installed extension storage is account-scoped and activates a preinstalled catalog extension in the provider/devtools snapshot                     |
-| `Workbench Sample/Dev App` - Tester dev app journey   | Dev-app integration path: startup editor state, search result open, command palette, chat, AI chat composer, settings, profile permission override, and sign-out |
-| `Workbench Sample/Dev App` - Basic permission scope   | Basic account permission projection; only Explorer and Profile remain visible                                                                                    |
-| `Workbench Sample/Dev App` - Sidebar toggle           | Primary sidebar hide/show via status bar; collapsed grid keeps SplitView mounted and expands editor to full split width                                          |
-| `Workbench Sample/Dev App` - Field Remap editor smoke | Open Field Remap activity, select nested A→B sample, assert non-empty remap editor surface / result JSON                                                         |
+| Story                                                  | Flow covered                                                                                                                                                     |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Workbench Sample/Dev App` - Login gate                | Unauthenticated sample login screen and dummy credentials copy                                                                                                   |
+| `Workbench Sample/Dev App` - Login submit flow         | Dummy backend sign-in failure, error display, successful tester sign-in, and shell handoff                                                                       |
+| `Workbench Sample/Dev App` - Tester workbench          | Authenticated administrator workbench shell, explorer, status bar, and activity bar                                                                              |
+| `Workbench Sample/Dev App` - Devtools inspectors       | Storybook-only devtools shell opt-in; command, transaction, layout, editor, capability, and active extension snapshots                                           |
+| `Workbench Sample/Dev App` - Host install state        | Host-provided installed extension storage is account-scoped and activates a preinstalled catalog extension in the provider/devtools snapshot                     |
+| `Workbench Sample/Dev App` - Tester dev app journey    | Dev-app integration path: startup editor state, search result open, command palette, chat, AI chat composer, settings, profile permission override, and sign-out |
+| `Workbench Sample/Dev App` - Basic permission scope    | Basic account permission projection; only Explorer and Profile remain visible                                                                                    |
+| `Workbench Sample/Dev App` - Sidebar toggle            | Primary sidebar hide/show via status bar; collapsed grid keeps SplitView mounted and expands editor to full split width                                          |
+| `Workbench Sample/Dev App` - Field Remap editor smoke  | Open Field Remap activity, select nested A→B sample, assert non-empty remap editor surface / result JSON                                                         |
+| `Workbench Sample/Dev App` - Extensions installed list | Activity → Extensions → Installed tab shows seeded `JSON Preview` (host storage wiring; no Install/reload)                                                       |
 
 ### Component tier (package harness)
 
@@ -136,15 +137,15 @@ after repeated green runs.
 After the shared harness refactor and `StandaloneShell` removal, watch these overlaps
 when both component and integration tiers are present:
 
-| Concern                   | Component / panel                         | Integration                                          | Verdict                                                                                                        |
-| ------------------------- | ----------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Settings appearance       | `AppearanceSettings`                      | Journey settings + any sample-shell settings story   | **Review** — keep component for schema/combobox contract; integration proves modal open from activity bar only |
-| Extensions list           | `ExtensionManagementSidebar`              | Sample extensions view or journey                    | **Review** — avoid duplicate install/list assertions; pick one required path                                   |
-| Permission projection     | Profile / role controls (component)       | `Basic permission scope`, journey profile override   | **Justified split** — sign-in role vs runtime override vs activity-bar projection                              |
-| Search                    | `WorkspaceSearchPanel` (panel flows)      | Journey search open                                  | **Justified split** — panel API vs activity wiring                                                             |
-| Chat / AI                 | `ChatPanel` runtime + host-gaps drop/tone | Journey chat + AI composer                           | **Justified split** — transport/runtime vs sidebar navigation; host-gaps stays component-tier                  |
-| Authenticated shell smoke | `Integrated Shell` (baseline)             | `Tester workbench` / sample authenticated story      | **Justified split** — sample is required smoke; Integrated Shell stays baseline for pixel sidebar settings     |
-| Full-shell harness        | —                                         | Second sample-shell file mirroring `WorkbenchSample` | **Remove** — max one integration path per host (`createSampleHost`)                                            |
+| Concern                   | Component / panel                         | Integration                                          | Verdict                                                                                                    |
+| ------------------------- | ----------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Settings appearance       | `AppearanceSettings` (unit)               | Journey settings open only                           | **Justified split** — schema/combobox stays unit; integration proves modal open from activity bar only     |
+| Extensions list           | `ExtensionManagementSidebar` (Vitest)     | Sample extensions Installed list play                | **Justified split** — unit covers list chrome; sample proves activity + seeded install storage             |
+| Permission projection     | Profile / role controls (component)       | `Basic permission scope`, journey profile override   | **Justified split** — sign-in role vs runtime override vs activity-bar projection                          |
+| Search                    | `WorkspaceSearchPanel` (panel flows)      | Journey search open                                  | **Justified split** — panel API vs activity wiring                                                         |
+| Chat / AI                 | `ChatPanel` runtime + host-gaps drop/tone | Journey chat + AI composer                           | **Justified split** — transport/runtime vs sidebar navigation; host-gaps stays component-tier              |
+| Authenticated shell smoke | `Integrated Shell` (baseline)             | `Tester workbench` / sample authenticated story      | **Justified split** — sample is required smoke; Integrated Shell stays baseline for pixel sidebar settings |
+| Full-shell harness        | —                                         | Second sample-shell file mirroring `WorkbenchSample` | **Remove** — max one integration path per host (`createSampleHost`)                                        |
 
 No new excess was introduced by the harness refactor itself. The main risk is
 re-adding parallel full-shell stories or requiring the same UI assertion at both

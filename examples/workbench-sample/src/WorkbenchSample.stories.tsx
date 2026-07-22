@@ -28,6 +28,7 @@ import {
   applyTesterDevAppJourneyScenario,
   applyTesterWorkbenchScenario,
   applyFieldRemapEditorScenario,
+  applyExtensionsInstalledListScenario,
 } from './storybook/scenarios/index.js';
 import './host.css';
 
@@ -376,5 +377,30 @@ export const FieldRemapEditorSmoke: Story = {
     await expect(canvas.getByRole('heading', { level: 2, name: 'A → B' })).toBeVisible();
     await expect(canvas.getByTestId('field-remap-result')).not.toHaveTextContent(/^$/);
     await expect(canvas.getByTestId('field-remap-result')).toHaveTextContent('Ada Lovelace');
+  },
+};
+
+export const ExtensionsInstalledList: Story = {
+  name: 'Extensions installed list',
+  render: () => {
+    applyExtensionsInstalledListScenario();
+    return createSampleHost();
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitForWorkbenchReady(canvas);
+    await userEvent.click(canvas.getByRole('button', { name: 'Extensions' }));
+
+    const listSwitcher = await canvas.findByLabelText('Extension lists');
+    await userEvent.click(within(listSwitcher).getByRole('button', { name: 'Installed' }));
+
+    const installedList = await canvas.findByLabelText('Installed extensions');
+    await expect(installedList).toBeVisible();
+    await expect(
+      within(installedList).getByText('JSON Preview', {
+        selector: '.workbench-extensions-sidebar__title',
+      }),
+    ).toBeVisible();
   },
 };

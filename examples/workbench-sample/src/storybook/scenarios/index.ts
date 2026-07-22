@@ -52,3 +52,8 @@ export function applySidebarToggleScenario(): void {
 export function applyFieldRemapEditorScenario(): void {
   resetSampleHostStorage('tester');
 }
+
+/** Seeded install record → Extensions activity Installed tab (no install click / reload). */
+export function applyExtensionsInstalledListScenario(): void {
+  applyHostInstallStateScenario();
+}
