@@ -9,7 +9,7 @@ import {
   samplePeerChatIntroMessage,
   samplePeerChatThread,
 } from '../story/chatStory';
-import { ChatPanel, type ChatMessage } from './index';
+import { ChatMessageItem, ChatPanel, type ChatMessage } from './index';
 
 const initialAssistantMessages: ChatMessage[] = [
   {
@@ -100,6 +100,12 @@ export const RuntimeControls: Story = {
 export const HostGapsDropAndTone: Story = {
   name: 'Host gaps — drop and tone',
   render: () => <HostGapsDropAndToneHarness />,
+};
+
+/** Host gaps: `renderComposer` wrap + in-bubble `attachments` on `ChatMessageItem`. */
+export const ComposerAndAttachments: Story = {
+  name: 'Host gaps — composer and attachments',
+  render: () => <ComposerAndAttachmentsHarness />,
 };
 
 function SamplePeerChatExampleHarness() {
@@ -247,6 +253,58 @@ function HostGapsDropAndToneHarness() {
           onValueChange={() => undefined}
         />
         <StoryEventLog aria-label="Host gaps event log" compact>
+          {status}
+        </StoryEventLog>
+      </StorySidebarFrame>
+    </section>
+  );
+}
+
+function ComposerAndAttachmentsHarness() {
+  const [status, setStatus] = useState('Custom composer wraps the kit default.');
+
+  return (
+    <section
+      aria-label="Host gaps composer and attachments story"
+      className="ui-story-sidebar-surface"
+    >
+      <StorySidebarFrame variant="chat">
+        <ChatPanel
+          emptyLabel="Hybrid composer demo"
+          messages={[]}
+          placeholder="Message the workspace"
+          renderComposer={(defaultComposer) => (
+            <div className="chat-story-composer-wrap">
+              <div className="chat-story-composer-hint">Host wrap around kit composer</div>
+              {defaultComposer}
+            </div>
+          )}
+          renderMessageList={() => (
+            <div className="message-list">
+              <ChatMessageItem
+                attachments={<span className="file-chip">brief.pdf</span>}
+                message={{ content: 'Please review the brief.', id: 'u1', source: 'user' }}
+              />
+              <ChatMessageItem
+                attachments={<span className="file-chip">notes.txt</span>}
+                message={{ content: '', id: 'u2', source: 'user' }}
+              />
+              <ChatMessageItem
+                attachments={<span className="file-chip">diff.patch</span>}
+                message={{
+                  content: 'Attached the patch for review.',
+                  id: 'a1',
+                  source: 'assistant',
+                }}
+              />
+            </div>
+          )}
+          title="Chat"
+          value=""
+          onSubmit={() => setStatus('Submit via kit composer')}
+          onValueChange={() => undefined}
+        />
+        <StoryEventLog aria-label="Composer attachments event log" compact>
           {status}
         </StoryEventLog>
       </StorySidebarFrame>

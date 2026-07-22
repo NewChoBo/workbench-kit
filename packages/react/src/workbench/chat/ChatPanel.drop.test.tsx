@@ -130,4 +130,27 @@ describe('ChatPanel file drop', () => {
 
     expect(onFilesDrop).not.toHaveBeenCalled();
   });
+
+  it('allows hosts to wrap or replace the default composer', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <ChatPanel
+          messages={[]}
+          renderComposer={(defaultComposer) => (
+            <div data-testid="host-composer-wrap">{defaultComposer}</div>
+          )}
+          value=""
+          onSubmit={() => undefined}
+          onValueChange={() => undefined}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="host-composer-wrap"]')).not.toBeNull();
+    expect(container.querySelector('.composer')).not.toBeNull();
+  });
 });

@@ -504,8 +504,8 @@ themselves as fill (clip); only named scroll owners may overflow.
 
 | Surface                 | Props                                                                                            |
 | ----------------------- | ------------------------------------------------------------------------------------------------ |
-| `ChatPanel`             | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `messageListAddon`, composer/runtime props |
-| `ChatMessageItem`       | `footer`, `afterMessage`, `labelIcon` (`ReactNode \| false`), plus message `tone` / `contentMode` |
+| `ChatPanel`             | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `renderComposer`, `messageListAddon`, composer/runtime props |
+| `ChatMessageItem`       | `footer`, `attachments` (in-bubble), `afterMessage` (outside), `labelIcon` (`ReactNode \| false`), plus `tone` / `contentMode` |
 | `ChatMessage`           | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                |
 | `ChatPhasedRunProgress` | Phase list + optional `labels` (expand/collapse, summary, status badges) for host i18n           |
 
