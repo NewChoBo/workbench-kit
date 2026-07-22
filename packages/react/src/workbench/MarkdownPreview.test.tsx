@@ -78,4 +78,15 @@ describe('WorkbenchMarkdownPreview', () => {
     expect(markup).toContain('Hello');
     expect(markup).toContain('world');
   });
+
+  it('does not emit javascript: hrefs for markdown links', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchMarkdownPreview source={'[click](javascript:alert(1)) and [ok](https://example.com)'} />,
+    );
+
+    expect(markup).not.toContain('javascript:');
+    expect(markup).toContain('href="https://example.com"');
+    expect(markup).toContain('click');
+    expect(markup).toContain('ok');
+  });
 });
