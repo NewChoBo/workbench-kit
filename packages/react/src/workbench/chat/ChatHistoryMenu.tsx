@@ -15,7 +15,7 @@ import { buildChatHistoryRowMenuItems } from './chatHistoryRowMenuItems';
 export interface ChatHistoryMenuProps {
   activeConversationId: string;
   conversations: readonly WorkbenchChatConversation[];
-  labels?: Partial<WorkbenchChatConversationLabels> | undefined;
+  labels?: Partial<WorkbenchChatConversationLabels>;
   x: number;
   y: number;
   onActivate: (conversationId: string) => void;

@@ -6,7 +6,7 @@ export const CHAT_MESSAGE_COLLAPSE_MAX_LINES = 8;
 
 export interface ChatMessageCollapsibleProps {
   /** In-bubble region after message body (file chips, etc.). */
-  attachments?: ReactNode | undefined;
+  attachments?: ReactNode;
   children: ReactNode;
   className?: string;
   content: string;

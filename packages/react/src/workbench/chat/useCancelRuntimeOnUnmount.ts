@@ -5,10 +5,10 @@ export const DEFAULT_RUNTIME_UNMOUNT_CANCELLABLE_STATUSES = ['running'] as const
 
 export interface UseCancelRuntimeOnUnmountOptions<TStatus extends string = RuntimeStatus> {
   cancel: () => void;
-  cancellableStatuses?: readonly TStatus[] | undefined;
-  enabled?: boolean | undefined;
-  getStatus?: (() => TStatus) | undefined;
-  status?: TStatus | undefined;
+  cancellableStatuses?: readonly TStatus[];
+  enabled?: boolean;
+  getStatus?: (() => TStatus);
+  status?: TStatus;
 }
 
 export function shouldCancelRuntimeOnUnmount(

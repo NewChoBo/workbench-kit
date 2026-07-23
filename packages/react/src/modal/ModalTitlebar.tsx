@@ -11,18 +11,18 @@ import {
 } from '../workbench/chrome/workbenchPlatformChrome';
 
 export interface ModalTitlebarProps {
-  chrome?: WorkbenchWindowChromeMode | undefined;
-  closeLabel?: string | undefined;
+  chrome?: WorkbenchWindowChromeMode;
+  closeLabel?: string;
   labelledBy: string;
   maximized: boolean;
-  maximizeLabel?: string | undefined;
+  maximizeLabel?: string;
   onClose: () => void;
   onDoubleClick: () => void;
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onToggleMaximized: () => void;
-  restoreLabel?: string | undefined;
+  restoreLabel?: string;
   title: ReactNode;
-  titleSuffix?: ReactNode | undefined;
+  titleSuffix?: ReactNode;
 }
 
 export function ModalTitlebar({

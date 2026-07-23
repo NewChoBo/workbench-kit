@@ -26,15 +26,15 @@ export type WorkbenchViewEditorEmptyStateSurfaceProps = Omit<
 export interface WorkbenchViewEditorEmptyState {
   readonly children: ReactNode;
   readonly icon: EmptyStateProps['icon'];
-  readonly props?: WorkbenchViewEditorEmptyStateProps | undefined;
-  readonly surfaceProps?: WorkbenchViewEditorEmptyStateSurfaceProps | undefined;
+  readonly props?: WorkbenchViewEditorEmptyStateProps;
+  readonly surfaceProps?: WorkbenchViewEditorEmptyStateSurfaceProps;
 }
 
 export interface WorkbenchViewEditorProps extends Omit<WorkbenchEditorFrameProps, 'children'> {
-  readonly bodyProps?: Omit<WorkbenchEditorBodyProps, 'children'> | undefined;
+  readonly bodyProps?: Omit<WorkbenchEditorBodyProps, 'children'>;
   readonly children?: ReactNode;
-  readonly emptyState?: WorkbenchViewEditorEmptyState | undefined;
-  readonly tabs?: ReactNode | undefined;
+  readonly emptyState?: WorkbenchViewEditorEmptyState;
+  readonly tabs?: ReactNode;
 }
 
 export function WorkbenchViewEditor({

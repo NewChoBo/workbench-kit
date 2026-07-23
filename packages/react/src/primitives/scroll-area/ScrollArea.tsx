@@ -19,11 +19,11 @@ export type ScrollAreaOrientation = 'both' | 'horizontal' | 'vertical';
 export type ScrollAreaScrollbarVisibility = 'auto' | 'hidden' | 'overlay';
 
 export interface ScrollAreaProps extends Omit<ComponentPropsWithRef<'div'>, 'children'> {
-  as?: ElementType | undefined;
-  children?: ReactNode | undefined;
-  gutter?: ScrollAreaGutter | undefined;
-  orientation?: ScrollAreaOrientation | undefined;
-  scrollbars?: ScrollAreaScrollbarVisibility | undefined;
+  as?: ElementType;
+  children?: ReactNode;
+  gutter?: ScrollAreaGutter;
+  orientation?: ScrollAreaOrientation;
+  scrollbars?: ScrollAreaScrollbarVisibility;
 }
 
 type OverlayThumb = {

@@ -3,7 +3,7 @@ import type { ChangeEvent, ComponentPropsWithRef, ReactNode } from 'react';
 import { cx } from '../../utils/cx';
 
 export interface CheckboxProps extends Omit<ComponentPropsWithRef<'input'>, 'type'> {
-  label?: ReactNode | undefined;
+  label?: ReactNode;
   onCheckedChange?: (checked: boolean, event: ChangeEvent<HTMLInputElement>) => void;
 }
 

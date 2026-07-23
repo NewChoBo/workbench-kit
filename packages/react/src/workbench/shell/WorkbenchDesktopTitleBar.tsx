@@ -13,15 +13,15 @@ import {
 
 export interface WorkbenchDesktopWindowControlsProps {
   /** Defaults to `platform` so standalone controls match `WorkbenchDesktopTitleBar`. */
-  chrome?: WorkbenchWindowChromeMode | undefined;
-  closeLabel?: string | undefined;
+  chrome?: WorkbenchWindowChromeMode;
+  closeLabel?: string;
   isMaximized: boolean;
-  maximizeLabel?: string | undefined;
-  minimizeLabel?: string | undefined;
+  maximizeLabel?: string;
+  minimizeLabel?: string;
   onClose: () => void;
   onMinimize: () => void;
   onToggleMaximized: () => void;
-  restoreLabel?: string | undefined;
+  restoreLabel?: string;
 }
 
 /**
@@ -59,20 +59,20 @@ export function WorkbenchDesktopWindowControls({
 
 export interface WorkbenchDesktopTitleBarProps {
   /** Optional center area, e.g. a command-menu trigger. Omit to leave it empty. */
-  centerSlot?: ReactNode | undefined;
+  centerSlot?: ReactNode;
   /**
    * `platform` (default): darwin traffic lights / win32 caption buttons via host platform context.
    * `generic`: maximize + close only (modal-like), no OS-specific placement.
    */
-  chrome?: WorkbenchWindowChromeMode | undefined;
-  className?: string | undefined;
-  leading?: ReactNode | undefined;
-  trailing?: ReactNode | undefined;
+  chrome?: WorkbenchWindowChromeMode;
+  className?: string;
+  leading?: ReactNode;
+  trailing?: ReactNode;
   /**
    * Host-supplied window actions (Electron IPC callbacks). Omit on platforms that keep a native frame.
    * Kit owns chrome markup; the host owns minimize / maximize / close side effects only.
    */
-  windowControls?: WorkbenchDesktopWindowControlsProps | undefined;
+  windowControls?: WorkbenchDesktopWindowControlsProps;
 }
 
 /**

@@ -3,13 +3,13 @@ import { useEffect, useRef, type RefObject } from 'react';
 const DEFAULT_ROOT_MARGIN = '0px 0px 120px 0px';
 
 export interface UseScrollAreaInfiniteLoadOptions {
-  enabled?: boolean | undefined;
+  enabled?: boolean;
   hasMore: boolean;
-  isLoading?: boolean | undefined;
-  isLoadingMore?: boolean | undefined;
+  isLoading?: boolean;
+  isLoadingMore?: boolean;
   onLoadMore: () => void | Promise<void>;
-  rootMargin?: string | undefined;
-  scrollAreaRef?: RefObject<HTMLElement | null> | undefined;
+  rootMargin?: string;
+  scrollAreaRef?: RefObject<HTMLElement | null>;
 }
 
 export interface UseScrollAreaInfiniteLoadResult {

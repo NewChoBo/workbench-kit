@@ -26,7 +26,7 @@ export type LibraryFacetFieldKind = 'single-select' | 'multi-select';
 export type LibraryFacetFieldPresentation = 'checklist' | 'searchable-multi';
 
 export interface LibraryFacetFieldOption {
-  readonly count?: number | undefined;
+  readonly count?: number;
   readonly label: string;
   readonly value: string;
 }
@@ -43,7 +43,7 @@ export interface LibraryFacetField {
    * Panel presentation hint. When omitted, long multi-select lists use
    * `searchable-multi` and short lists use `checklist`.
    */
-  readonly presentation?: LibraryFacetFieldPresentation | undefined;
+  readonly presentation?: LibraryFacetFieldPresentation;
 }
 
 export interface LibraryFacetActiveChip {
@@ -61,9 +61,9 @@ export interface LibraryFacetFilterStripProps {
    * When set with `onOpenMoreFilters`, replaces cascade show-more/less with a
    * menu item that opens the fuller facet panel/dialog.
    */
-  readonly moreFiltersLabel?: string | undefined;
+  readonly moreFiltersLabel?: string;
   readonly onClearAll: () => void;
-  readonly onOpenMoreFilters?: (() => void) | undefined;
+  readonly onOpenMoreFilters?: (() => void);
   readonly onShowLess: () => void;
   readonly onShowMore: () => void;
   readonly onToggleFacetValue: (

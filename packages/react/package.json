@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "pnpm exec vitest run --config ../../vitest.config.ts src/widget-tree",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck:exact-optional": "tsc -p typecheck-exact-optional/tsconfig.emit.json && tsc -p typecheck-exact-optional/tsconfig.json --noEmit"
   },
   "exports": {
     ".": "./src/index.ts",

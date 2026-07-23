@@ -106,7 +106,7 @@ function sortByOrderPriority<T extends { order?: number }>(values: readonly T[])
 }
 
 export interface StatusBarSectionProps extends ComponentPropsWithRef<'div'> {
-  align?: StatusBarSectionAlign | undefined;
+  align?: StatusBarSectionAlign;
 }
 
 export function StatusBarSection({ align = 'start', className, ...props }: StatusBarSectionProps) {
@@ -123,9 +123,9 @@ export function StatusBarSection({ align = 'start', className, ...props }: Statu
 }
 
 export interface StatusBarItemProps extends ComponentPropsWithRef<'button'> {
-  active?: boolean | undefined;
-  icon?: ReactNode | string | undefined;
-  status?: WorkbenchStatus | undefined;
+  active?: boolean;
+  icon?: ReactNode | string;
+  status?: WorkbenchStatus;
 }
 
 function resolveStatusBarIcon(icon: ReactNode | string | undefined) {

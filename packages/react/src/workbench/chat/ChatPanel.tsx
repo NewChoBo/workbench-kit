@@ -22,23 +22,23 @@ export interface ChatPanelProps
       | 'showTools'
       | 'value'
     > {
-  className?: string | undefined;
-  composerRef?: Ref<HTMLTextAreaElement> | undefined;
+  className?: string;
+  composerRef?: Ref<HTMLTextAreaElement>;
   /** Label shown on the file-drop overlay. Defaults to "Drop files to attach". */
-  filesDropLabel?: string | undefined;
-  headerAddon?: ReactNode | undefined;
+  filesDropLabel?: string;
+  headerAddon?: ReactNode;
   /** Called when files are dropped onto the panel (disabled while `disabled` or `isRunning`). */
-  onFilesDrop?: ((files: File[]) => void) | undefined;
+  onFilesDrop?: ((files: File[]) => void);
   /**
    * Wrap or replace the default `<ChatMessageList />` so hosts can inject
    * hybrid timelines around the kit list.
    */
-  renderMessageList?: ((defaultList: ReactNode) => ReactNode) | undefined;
+  renderMessageList?: ((defaultList: ReactNode) => ReactNode);
   /**
    * Wrap or replace the default `<ChatComposer />` while keeping panel chrome
    * and file-drop overlay behavior.
    */
-  renderComposer?: ((defaultComposer: ReactNode) => ReactNode) | undefined;
+  renderComposer?: ((defaultComposer: ReactNode) => ReactNode);
   title?: string;
 }
 

@@ -9,12 +9,12 @@ export interface WorkbenchRect {
 }
 
 export interface AbsoluteBoxProps {
-  background?: string | undefined;
+  background?: string;
   children?: ReactNode;
-  className?: string | undefined;
-  overflow?: CSSProperties['overflow'] | undefined;
+  className?: string;
+  overflow?: CSSProperties['overflow'];
   rect: WorkbenchRect;
-  style?: CSSProperties | undefined;
+  style?: CSSProperties;
 }
 
 export function AbsoluteBox({

@@ -10,7 +10,7 @@ import { defaultWorkbenchChatConversationLabels } from './chatConversation';
 
 export interface ChatRenameDialogProps {
   conversation: WorkbenchChatConversation;
-  labels?: Partial<WorkbenchChatConversationLabels> | undefined;
+  labels?: Partial<WorkbenchChatConversationLabels>;
   onCancel: () => void;
   onRename: (title: string) => void;
 }

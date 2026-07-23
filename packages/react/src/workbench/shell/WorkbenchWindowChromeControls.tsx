@@ -8,17 +8,17 @@ import type {
 } from '../chrome/workbenchPlatformChrome';
 
 export interface WorkbenchWindowChromeControlsProps {
-  chrome?: WorkbenchWindowChromeMode | undefined;
-  closeLabel?: string | undefined;
-  isMaximized?: boolean | undefined;
-  maximizeLabel?: string | undefined;
-  minimizeLabel?: string | undefined;
+  chrome?: WorkbenchWindowChromeMode;
+  closeLabel?: string;
+  isMaximized?: boolean;
+  maximizeLabel?: string;
+  minimizeLabel?: string;
   onClose: () => void;
-  onMinimize?: (() => void) | undefined;
-  onToggleMaximized?: (() => void) | undefined;
-  restoreLabel?: string | undefined;
-  showMaximize?: boolean | undefined;
-  showMinimize?: boolean | undefined;
+  onMinimize?: (() => void);
+  onToggleMaximized?: (() => void);
+  restoreLabel?: string;
+  showMaximize?: boolean;
+  showMinimize?: boolean;
   surface: 'desktop-titlebar' | 'modal';
 }
 
@@ -91,8 +91,8 @@ interface SharedControlProps {
   maximizeLabel: string;
   minimizeLabel: string;
   onClose: () => void;
-  onMinimize?: (() => void) | undefined;
-  onToggleMaximized?: (() => void) | undefined;
+  onMinimize?: (() => void);
+  onToggleMaximized?: (() => void);
   restoreLabel: string;
   showMaximize: boolean;
   showMinimize: boolean;

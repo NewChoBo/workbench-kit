@@ -9,12 +9,12 @@ import { WorkbenchMediaSlot } from '../workbench-media-slot';
 export type RecordMediaHeroLayout = 'banner' | 'compact' | 'background';
 
 export interface RecordMediaHeroProps extends ComponentPropsWithRef<'div'> {
-  alt?: string | undefined;
-  fallbackIcon?: string | undefined;
-  imageUrl?: string | null | undefined;
-  layout?: RecordMediaHeroLayout | undefined;
-  logoUrl?: string | null | undefined;
-  maxWidth?: number | string | undefined;
+  alt?: string;
+  fallbackIcon?: string;
+  imageUrl?: string | null;
+  layout?: RecordMediaHeroLayout;
+  logoUrl?: string | null;
+  maxWidth?: number | string;
 }
 
 function resolveMaxWidth(maxWidth: number | string | undefined): CSSProperties['maxWidth'] {

@@ -20,18 +20,18 @@ export interface ActivityBarItem {
 }
 
 export interface ActivityBarProps extends Omit<ComponentPropsWithoutRef<'nav'>, 'children'> {
-  acceptSidebarViewPlacementDrop?: ((viewId: string) => boolean) | undefined;
+  acceptSidebarViewPlacementDrop?: ((viewId: string) => boolean);
   itemDataAttributeName?: string;
   items: ActivityBarItem[];
   onItemActivate?: (item: ActivityBarItem) => void;
   onItemsReorder?: (itemIds: string[]) => void;
-  onSidebarViewPlacementDrop?: ((viewId: string) => void) | undefined;
-  orientation?: ActivityBarOrientation | undefined;
+  onSidebarViewPlacementDrop?: ((viewId: string) => void);
+  orientation?: ActivityBarOrientation;
   reorderable?: boolean;
   secondaryItems?: ActivityBarItem[];
-  sidebarViewPlacementDropZoneId?: string | undefined;
+  sidebarViewPlacementDropZoneId?: string;
   /** Enables cross-slot placement drag without reordering within the bar. */
-  placementDraggable?: boolean | undefined;
+  placementDraggable?: boolean;
 }
 
 /** @deprecated Use WORKBENCH_SIDEBAR_VIEW_PLACEMENT_DRAG_DATA_TYPE */

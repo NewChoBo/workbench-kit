@@ -4,8 +4,8 @@ import { cxCodicon } from '../../utils/codicon';
 import { cx } from '../../utils/cx';
 
 export interface WorkbenchMediaPlaceholderProps extends ComponentPropsWithRef<'span'> {
-  icon?: string | undefined;
-  iconClassName?: string | undefined;
+  icon?: string;
+  iconClassName?: string;
 }
 
 /**

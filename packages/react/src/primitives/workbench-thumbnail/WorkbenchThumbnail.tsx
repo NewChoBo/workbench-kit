@@ -7,10 +7,10 @@ import { WorkbenchMediaSlot } from '../workbench-media-slot';
 export type WorkbenchThumbnailSize = 'sm' | 'md' | 'library' | 'icon';
 
 export interface WorkbenchThumbnailProps extends Omit<ComponentPropsWithRef<'span'>, 'children'> {
-  alt?: string | undefined;
-  fallbackIcon?: string | undefined;
-  imageUrl?: string | null | undefined;
-  size?: WorkbenchThumbnailSize | undefined;
+  alt?: string;
+  fallbackIcon?: string;
+  imageUrl?: string | null;
+  size?: WorkbenchThumbnailSize;
 }
 
 export function WorkbenchThumbnail({

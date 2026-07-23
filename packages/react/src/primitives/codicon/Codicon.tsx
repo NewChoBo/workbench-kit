@@ -4,7 +4,7 @@ import { cxCodicon } from '../../utils/codicon';
 export interface CodiconProps extends Omit<ComponentPropsWithRef<'i'>, 'children'> {
   icon: string;
   /** When set, exposes the icon to assistive tech instead of aria-hidden. */
-  label?: string | undefined;
+  label?: string;
 }
 
 /** VS Code codicon glyph (`codicon` font). Requires `@vscode/codicons` CSS in the app entry. Prefer `WorkbenchIcon` for new code. */
