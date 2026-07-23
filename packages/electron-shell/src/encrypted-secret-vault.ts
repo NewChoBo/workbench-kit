@@ -30,6 +30,8 @@ interface VaultDocument {
   readonly secrets: Record<string, string>;
 }
 
+type VaultMutation = (document: VaultDocument) => VaultDocument | null;
+
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
@@ -94,8 +96,14 @@ export function createEncryptedSecretVault(
     await writeVault(serializeVault(document));
   };
 
-  const enqueueMutation = (mutation: () => Promise<void>): Promise<void> => {
-    const result = mutationQueue.then(mutation);
+  const mutateVault = (mutation: VaultMutation): Promise<void> => {
+    const result = mutationQueue.then(async () => {
+      const document = await load();
+      const nextDocument = mutation(document);
+      if (nextDocument !== null) {
+        await save(nextDocument);
+      }
+    });
     mutationQueue = result.catch(() => undefined);
     return result;
   };
@@ -111,25 +119,23 @@ export function createEncryptedSecretVault(
     },
 
     async setSecret(id: string, value: string): Promise<void> {
-      await enqueueMutation(async () => {
-        const document = await load();
-        const nextSecrets = {
+      await mutateVault((document) => ({
+        version: 1,
+        secrets: {
           ...document.secrets,
           [id]: toBase64(cipher.encryptString(value)),
-        };
-        await save({ version: 1, secrets: nextSecrets });
-      });
+        },
+      }));
     },
 
     async deleteSecret(id: string): Promise<void> {
-      await enqueueMutation(async () => {
-        const document = await load();
+      await mutateVault((document) => {
         if (!(id in document.secrets)) {
-          return;
+          return null;
         }
         const nextSecrets = { ...document.secrets };
         delete nextSecrets[id];
-        await save({ version: 1, secrets: nextSecrets });
+        return { version: 1, secrets: nextSecrets };
       });
     },
   };
