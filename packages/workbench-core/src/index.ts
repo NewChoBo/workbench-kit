@@ -142,6 +142,16 @@ export {
   type InstalledExtensionCategory,
   type InstalledExtensionRecord,
 } from './extension/install-state.js';
+export {
+  DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
+  createExtensionInstallPermissionFingerprint,
+  isExtensionInstallTrusted,
+  loadExtensionInstallTrustRecords,
+  recordExtensionInstallTrust,
+  revokeExtensionInstallTrust,
+  saveExtensionInstallTrustRecords,
+  type ExtensionInstallTrustRecord,
+} from './extension/install-trust.js';
 export type {
   WorkbenchRemovableStorageAdapter,
   WorkbenchStorageAdapter,

@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   DEFAULT_EXTENSION_CATALOG_TRUST_POLICY,
+  DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   ExtensionInstallApprovalRequiredError,
   applyExtensionInstallPlanToRecords,
   assertExtensionCatalogUrlAllowed,
+  loadExtensionInstallTrustRecords,
   loadInstalledExtensions,
   parseExtensionCatalog,
+  recordExtensionInstallTrust,
+  saveExtensionInstallTrustRecords,
   saveInstalledExtensions,
   toggleInstalledExtensionEnabled,
   type ExtensionCatalogEntry,
   type ExtensionCatalogTrustPolicy,
+  type ExtensionInstallTrustRecord,
   type InstalledExtensionRecord,
 } from '@workbench-kit/workbench-core';
 import type {
@@ -33,6 +38,8 @@ export interface UseExtensionManagementModelOptions {
   catalogUrl?: string | undefined;
   installedExtensionsStorage?: WorkbenchStorageAdapter | undefined;
   installedExtensionsStorageKey?: string | undefined;
+  installTrustStorage?: WorkbenchStorageAdapter | undefined;
+  installTrustStorageKey?: string | undefined;
 }
 
 export function useExtensionManagementModel({
@@ -40,6 +47,8 @@ export function useExtensionManagementModel({
   catalogUrl = '/extension-catalog.json',
   installedExtensionsStorage,
   installedExtensionsStorageKey,
+  installTrustStorage,
+  installTrustStorageKey = DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
 }: UseExtensionManagementModelOptions = {}) {
   const workbench = useWorkbench();
   const { extensionRegistry } = workbench;
@@ -49,6 +58,7 @@ export function useExtensionManagementModel({
     installedExtensionsStorageKey ??
     workbench.installedExtensionsStorageKey ??
     DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY;
+  const resolvedInstallTrustStorage = installTrustStorage ?? resolvedInstalledExtensionsStorage;
   const [catalogEntries, setCatalogEntries] = useState<readonly ExtensionCatalogEntry[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(Boolean(catalogUrl));
   const [catalogError, setCatalogError] = useState<string | undefined>();
@@ -62,6 +72,9 @@ export function useExtensionManagementModel({
         resolvedInstalledExtensionsStorage,
       ),
   );
+  const [installTrustRecords, setInstallTrustRecords] = useState<
+    readonly ExtensionInstallTrustRecord[]
+  >(() => loadExtensionInstallTrustRecords(installTrustStorageKey, resolvedInstallTrustStorage));
 
   useEffect(() => {
     setInstalledRecords(
@@ -71,6 +84,12 @@ export function useExtensionManagementModel({
       ),
     );
   }, [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey]);
+
+  useEffect(() => {
+    setInstallTrustRecords(
+      loadExtensionInstallTrustRecords(installTrustStorageKey, resolvedInstallTrustStorage),
+    );
+  }, [installTrustStorageKey, resolvedInstallTrustStorage]);
 
   useEffect(() => {
     if (!catalogUrl) {
@@ -198,13 +217,25 @@ export function useExtensionManagementModel({
     [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey],
   );
 
+  const rememberInstallTrust = useCallback(
+    (entry: ExtensionCatalogBrowseEntry) => {
+      const permissions = entry.installPlan?.permissions ?? [];
+      const next = recordExtensionInstallTrust(entry.id, permissions, installTrustRecords);
+      saveExtensionInstallTrustRecords(next, installTrustStorageKey, resolvedInstallTrustStorage);
+      setInstallTrustRecords(next);
+    },
+    [installTrustRecords, installTrustStorageKey, resolvedInstallTrustStorage],
+  );
+
   return {
     browseEntries,
     catalogError,
     catalogLoading,
     installCatalogEntry,
     installedEntries,
+    installTrustRecords,
     pendingAction,
+    rememberInstallTrust,
     toggleInstalledEntry,
   };
 }

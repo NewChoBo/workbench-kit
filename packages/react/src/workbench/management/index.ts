@@ -116,6 +116,7 @@ export {
   extensionInstallRequiresApproval,
   formatExtensionInstallApprovalMessage,
   resolveExtensionInstallOptions,
+  type ResolveExtensionInstallOptionsInput,
 } from './extension-install-approval.js';
 export type {
   AccountManagementEntry,

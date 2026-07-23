@@ -78,4 +78,49 @@ describe('extension install approval helpers', () => {
     ).toEqual({});
     expect(confirm).not.toHaveBeenCalled();
   });
+
+  it('skips confirm when isTrusted is true', () => {
+    const privileged = entry({
+      displayName: 'Privileged Pack',
+      id: 'pack',
+      installPlan: {
+        blocked: false,
+        permissions: ['workspace.write'],
+        requiresApproval: true,
+      },
+    });
+    const confirm = vi.fn(() => false);
+    const rememberTrust = vi.fn();
+
+    expect(
+      resolveExtensionInstallOptions(privileged, {
+        confirm,
+        isTrusted: true,
+        rememberTrust,
+      }),
+    ).toEqual({ approved: true });
+    expect(confirm).not.toHaveBeenCalled();
+    expect(rememberTrust).not.toHaveBeenCalled();
+  });
+
+  it('persists trust after an explicit confirm', () => {
+    const privileged = entry({
+      displayName: 'Privileged Pack',
+      id: 'pack',
+      installPlan: {
+        blocked: false,
+        permissions: ['workspace.write'],
+        requiresApproval: true,
+      },
+    });
+    const rememberTrust = vi.fn();
+
+    expect(
+      resolveExtensionInstallOptions(privileged, {
+        confirm: () => true,
+        rememberTrust,
+      }),
+    ).toEqual({ approved: true });
+    expect(rememberTrust).toHaveBeenCalledWith(privileged);
+  });
 });
