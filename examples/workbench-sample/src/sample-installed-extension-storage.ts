@@ -1,5 +1,6 @@
 import {
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  createBrowserWorkbenchStorage,
   type WorkbenchStorageAdapter,
 } from '@workbench-kit/workbench-core';
 
@@ -19,10 +20,7 @@ export function createSampleInstalledExtensionsStorageKey(accountId: string | un
   ].join('/');
 }
 
+/** User-scoped install records via browser localStorage (not for secrets). */
 export function getSampleInstalledExtensionsStorage(): WorkbenchStorageAdapter | undefined {
-  try {
-    return globalThis.localStorage;
-  } catch {
-    return undefined;
-  }
+  return createBrowserWorkbenchStorage({ kind: 'local' });
 }

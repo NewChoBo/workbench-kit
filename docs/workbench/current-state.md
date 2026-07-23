@@ -49,15 +49,18 @@ active architecture, but they must link back here for roadmap/status decisions.
 
 ## Host-Backed Storage Contract
 
-Workbench Kit should expose a small host storage adapter contract, for example
-`WorkbenchStorageAdapter`, instead of shipping a Node file-store implementation.
+SoT: `@workbench-kit/workbench-core` exports `WorkbenchStorageAdapter` (sync
+get/set), `WorkbenchRemovableStorageAdapter`, `WorkbenchStorageScope`, plus
+reference factories `createMemoryWorkbenchStorage` /
+`createBrowserWorkbenchStorage`. See
+[Extension Install — Host storage](../architecture/extension-install.md).
 
 Required adapter semantics:
 
 | Concern        | Policy                                                                                                     |
 | -------------- | ---------------------------------------------------------------------------------------------------------- |
 | Key shape      | Kit-owned feature prefix plus stable key name, versioned when the value shape changes                      |
-| Scope          | Explicit scope per read/write: default, workspace, user, local, resource, or secret-capable future scope   |
+| Scope          | Host maps feature keys to `user` / `workspace` / `session` backing stores; `secret` uses SecretStorage/vault, not this adapter |
 | Values         | JSON-serializable values; adapter validates decode failure as missing/corrupt state                        |
 | Read failure   | Fall back to documented defaults and surface a recoverable diagnostic hook                                 |
 | Write failure  | Keep runtime state in memory, report a non-fatal persistence error, and avoid partially acknowledged saves |
@@ -124,9 +127,7 @@ visible shell behavior changes.
 
 ## Open Decisions
 
-- Exact `WorkbenchStorageAdapter` TypeScript shape and diagnostic callback
-  naming.
-- Which storage scopes are implemented first versus reserved: user, workspace,
-  local, resource, secret.
+- Diagnostic callback naming for read/write persistence failures (adapter shape
+  and scope table are documented; callbacks remain host-owned).
 - Whether installed-extension state lives in workbench config, a dedicated
   extension-state module, or a host-provided capability.

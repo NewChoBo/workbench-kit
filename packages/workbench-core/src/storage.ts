@@ -1,3 +1,30 @@
+/**
+ * Host-backed key/value storage port used by install state, layout, prefs, and
+ * similar kit persistence. Synchronous by design for current call sites.
+ *
+ * ## Scopes (semantic — not a method argument)
+ *
+ * Hosts choose which backing store matches each kit feature key. Suggested
+ * mapping:
+ *
+ * | Scope       | Typical backing                         | Kit examples                          |
+ * | ----------- | --------------------------------------- | ------------------------------------- |
+ * | `user`      | durable profile / app userData          | layout, keybindings, appearance       |
+ * | `workspace` | workspace-root or workspace-id store    | workspace-scoped prefs (host-owned)   |
+ * | `session`   | process memory or `sessionStorage`      | ephemeral UI state                    |
+ * | `secret`    | **not** this adapter — use secrets API  | tokens → `createMemorySecretStorage` / vault |
+ *
+ * Preference merge scopes (`default` / `user` / `workspace` in preference docs)
+ * are a separate concern from this host storage adapter.
+ *
+ * Do not put tokens or credentials in a `WorkbenchStorageAdapter` backed by
+ * `localStorage` / `sessionStorage`. Use
+ * `@workbench-kit/platform` `createMemorySecretStorage` or Electron
+ * `createEncryptedSecretVault`.
+ */
+
+export type WorkbenchStorageScope = 'user' | 'workspace' | 'session' | 'secret';
+
 export interface WorkbenchStorageReader {
   getItem(key: string): string | null;
 }
@@ -10,6 +37,18 @@ export interface WorkbenchStorageRemover {
   removeItem(key: string): void;
 }
 
+/** Sync get/set port. DOM `Storage` is structurally compatible. */
 export type WorkbenchStorageAdapter = WorkbenchStorageReader & WorkbenchStorageWriter;
 
+/** Sync get/set/remove port for hosts that support deletion. */
 export type WorkbenchRemovableStorageAdapter = WorkbenchStorageAdapter & WorkbenchStorageRemover;
+
+/**
+ * Future / host-owned async shape. Kit call sites today require sync adapters;
+ * do not pass async-only stores into current APIs.
+ */
+export interface WorkbenchAsyncStorageAdapter {
+  getItem(key: string): string | null | Promise<string | null>;
+  setItem(key: string, value: string): void | Promise<void>;
+  removeItem?(key: string): void | Promise<void>;
+}
