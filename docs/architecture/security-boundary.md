@@ -71,6 +71,26 @@ VM sandbox — hosts should keep timeout budgets tight for untrusted expressions
 
 Opening a workspace should not execute untrusted code without user consent (future UX). `.workbench/extensions.json` recommending an extension does not auto-download binaries.
 
+## Sample host CSP
+
+`examples/workbench-sample` applies a documented Content-Security-Policy baseline
+(`csp-policy.ts`) via Vite response headers and an injected HTML meta tag. See
+the sample README for allowed exceptions (Monaco workers, Vite HMR, loopback
+dummy backend).
+
+## Electron host checklist
+
+When composing `@workbench-kit/electron-shell` (or a host-owned Electron shell):
+
+- Prefer `contextIsolation: true`, `nodeIntegration: false`, and a typed preload
+  bridge (see maturity tracker #138)
+- Do not enable privileged protocol CORS unless the host opts in explicitly
+- Serve renderer assets under a CSP at least as tight as the sample baseline;
+  drop `'unsafe-eval'` when Monaco workers are fully isolated
+- Keep secrets in the encrypted vault / `SecretStorage` path — never in
+  `localStorage` / `sessionStorage`
+- Open external URLs only through an allowlisted opener helper
+
 ## Reporting
 
 Security issues in public packages should be reported through the repository's security policy (to be published on GitHub). Do not file public issues containing real secrets.

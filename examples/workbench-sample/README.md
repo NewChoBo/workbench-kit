@@ -74,6 +74,21 @@ VITE_SAMPLE_HOST_BACKEND_TRANSPORT=http
 VITE_SAMPLE_HOST_BACKEND_BASE_URL=http://127.0.0.1:8787
 ```
 
+## Content Security Policy
+
+The sample ships a fail-closed CSP baseline (`csp-policy.ts`) applied as:
+
+- Vite `server` / `preview` `Content-Security-Policy` response headers
+- A matching `<meta http-equiv="Content-Security-Policy">` via `transformIndexHtml`
+
+It allows Monaco module workers (`worker-src 'self' blob:`), Vite HMR websockets
+(`connect-src … ws:` / `wss:`), and the optional loopback dummy backend on port
+`8787`. `'unsafe-inline'` / `'unsafe-eval'` remain for Vite + Monaco; production
+hosts should tighten further.
+
+Storybook (`pnpm dev:storybook`) uses Storybook's own tooling CSP and is not
+governed by this sample policy.
+
 ## Validate
 
 ```powershell
