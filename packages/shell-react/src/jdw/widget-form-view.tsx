@@ -4,7 +4,10 @@ import { WidgetTreeLab } from '@workbench-kit/react/widget-tree';
 import { BUILTIN_JDW_REGISTRY } from '@workbench-kit/react/jdw';
 
 import { useWorkbench } from '../shell/provider.js';
-import { isWorkspaceResourceService, useWorkspaceResourceState } from '../workbench/workspace-view-state.js';
+import {
+  isWorkspaceResourceService,
+  useWorkspaceResourceState,
+} from '../workbench/workspace-view-state.js';
 
 export interface JdwWidgetFormViewProps {
   readonly path: string;

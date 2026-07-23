@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { isSafeObjectPath, requireObjectPathParts, UnsafeObjectPathError } from './objectPathSafety.js';
+import {
+  isSafeObjectPath,
+  requireObjectPathParts,
+  UnsafeObjectPathError,
+} from './objectPathSafety.js';
 
 describe('objectPathSafety', () => {
   it('accepts identifier and dotted paths', () => {

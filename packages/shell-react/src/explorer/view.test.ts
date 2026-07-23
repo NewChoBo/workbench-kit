@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  isBuiltinExplorerViewRenderData,
-  resolveExplorerRevealPath,
-} from './view-data.js';
+import { isBuiltinExplorerViewRenderData, resolveExplorerRevealPath } from './view-data.js';
 
 describe('explorer-view', () => {
   it('recognizes builtin explorer view render payloads', () => {

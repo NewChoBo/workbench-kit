@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createEditorHostFactoryRegistry } from '../host/factory-registry.js';
 import { createEditorResolverRegistry } from './resolver-registry.js';
-import {
-  createEditorService,
-  DEFAULT_EDITOR_GROUP_ID,
-  type EditorState,
-} from './service.js';
+import { createEditorService, DEFAULT_EDITOR_GROUP_ID, type EditorState } from './service.js';
 
 describe('EditorResolverRegistry', () => {
   it('resolves editor ids by priority', () => {

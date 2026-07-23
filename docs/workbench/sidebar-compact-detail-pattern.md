@@ -83,7 +83,7 @@ Gesture defaults:
 | Sidebar      | `CommandManagementSidebar` — `onInspectCommand`, double-click       |
 | Shell wiring | `packages/shell-react/src/commands/view.tsx`                        |
 | Editor host  | `extensions/builtin.commands/src/command-inspector-editor-host.ts`  |
-| Surface      | `packages/shell-react/src/commands/inspector-surface.tsx`            |
+| Surface      | `packages/shell-react/src/commands/inspector-surface.tsx`           |
 
 **Before:** sidebar list only; rich metadata visible in Settings → Commands panel.
 

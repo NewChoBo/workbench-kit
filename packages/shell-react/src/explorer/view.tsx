@@ -31,7 +31,10 @@ import {
 import { useWorkbench } from '../shell/provider.js';
 import { useActiveWorkspacePath } from './use-active-workspace-path.js';
 import { useActiveEditorTab } from '../editor/use-editor.js';
-import { isWorkspaceResourceService, useWorkspaceResourceState } from '../workbench/workspace-view-state.js';
+import {
+  isWorkspaceResourceService,
+  useWorkspaceResourceState,
+} from '../workbench/workspace-view-state.js';
 
 export type { BuiltinExplorerViewRenderData };
 export {

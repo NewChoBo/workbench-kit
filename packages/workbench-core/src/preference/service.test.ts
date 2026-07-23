@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  collectConfigurationContributionDefaults,
-  PreferenceService,
-} from './service.js';
+import { collectConfigurationContributionDefaults, PreferenceService } from './service.js';
 
 describe('PreferenceService', () => {
   it('merges default, workspace, and local values for effective reads', () => {

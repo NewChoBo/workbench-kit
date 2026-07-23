@@ -365,9 +365,9 @@ Phase C-*  only when A/B stable
 
 | Resource                        | Path                                                                 |
 | ------------------------------- | -------------------------------------------------------------------- |
-| Shell wiring                    | `packages/shell-react/src/shell/shell.tsx`                                 |
+| Shell wiring                    | `packages/shell-react/src/shell/shell.tsx`                           |
 | Sidebar frame                   | `packages/react/src/layout/sidebar/SideBarViewFrame.tsx`             |
 | Section stack                   | `packages/react/src/layout/sidebar/WorkbenchSidebarSectionStack.tsx` |
 | Primary sidebar CSS             | `packages/react/src/styles.css` (~L2267+)                            |
-| Layout service (sidebar toggle) | `packages/workbench-core/src/layout/service.ts`                       |
+| Layout service (sidebar toggle) | `packages/workbench-core/src/layout/service.ts`                      |
 | Sample host                     | `examples/workbench-sample/`                                         |

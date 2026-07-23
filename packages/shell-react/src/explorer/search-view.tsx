@@ -11,7 +11,10 @@ import {
   isBuiltinSearchViewRenderData,
   type BuiltinSearchViewRenderData,
 } from './search-view-data.js';
-import { isWorkspaceResourceService, useWorkspaceResourceState } from '../workbench/workspace-view-state.js';
+import {
+  isWorkspaceResourceService,
+  useWorkspaceResourceState,
+} from '../workbench/workspace-view-state.js';
 
 export type { BuiltinSearchViewRenderData };
 export { BUILTIN_SEARCH_VIEW_RENDER_KIND, isBuiltinSearchViewRenderData };

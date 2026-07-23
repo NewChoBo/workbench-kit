@@ -1,6 +1,10 @@
 import type { WidgetPlacementAsset, WidgetPlacementAssetKind } from '@workbench-kit/contracts';
 
-import { genericWidgetToJdwNode, jdwNodeToGenericWidget, type JsonWidgetNode } from '../jdw/node.js';
+import {
+  genericWidgetToJdwNode,
+  jdwNodeToGenericWidget,
+  type JsonWidgetNode,
+} from '../jdw/node.js';
 import type { GenericWidget } from './tree.js';
 import type { WorkspaceAssetFileRef } from './asset-file.js';
 import { normalizeWidgetPlacementAsset } from './asset-file.js';

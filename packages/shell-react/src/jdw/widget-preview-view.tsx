@@ -3,7 +3,10 @@ import { JdwPreviewViewport } from '@workbench-kit/react/jdw/preview-viewport';
 import { BUILTIN_JDW_REGISTRY } from '@workbench-kit/react/jdw';
 
 import { useWorkbench } from '../shell/provider.js';
-import { isWorkspaceResourceService, useWorkspaceResourceState } from '../workbench/workspace-view-state.js';
+import {
+  isWorkspaceResourceService,
+  useWorkspaceResourceState,
+} from '../workbench/workspace-view-state.js';
 
 export interface JdwWidgetPreviewViewProps {
   readonly path: string;

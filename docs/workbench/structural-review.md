@@ -240,9 +240,9 @@ sequenceDiagram
 | Component          | Status | Evidence                                        |
 | ------------------ | ------ | ----------------------------------------------- |
 | `EditorService`    | Done   | `packages/workbench-core/src/editor/service.ts` |
-| `useEditor*` hooks | Done   | `packages/shell-react/src/editor/use-editor.ts`        |
+| `useEditor*` hooks | Done   | `packages/shell-react/src/editor/use-editor.ts` |
 | Tab strip UI       | Done   | `packages/shell-react/src/editor/area.tsx`      |
-| Shell wiring       | Done   | `packages/shell-react/src/shell/shell.tsx`            |
+| Shell wiring       | Done   | `packages/shell-react/src/shell/shell.tsx`      |
 | Sample host        | Done   | `examples/workbench-sample/src/bootstrap.ts`    |
 
 WB-28 editor shell scope is complete: `EditorArea` consumes `EditorService`,
@@ -407,7 +407,7 @@ JSON configuration lives under `./json-config`.
 | Builtin registry            | `packages/react/src/jdw/createBuiltinJdwRegistry.ts` |
 | Extension registry          | `packages/workbench-core/src/extension/registry.ts`  |
 | Editor service              | `packages/workbench-core/src/editor/service.ts`      |
-| Workbench shell             | `packages/shell-react/src/shell/shell.tsx`                 |
+| Workbench shell             | `packages/shell-react/src/shell/shell.tsx`           |
 | Resource transactions       | `packages/workspace/src/resource-transaction.ts`     |
 
 ---

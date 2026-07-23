@@ -43,13 +43,11 @@ function createProtocolCapture(): {
   protocol: PrivilegedProtocolApi;
   getPrivileges: () => Record<string, boolean> | undefined;
   getHandler: () =>
-    | ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>)
-    | undefined;
+    ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>) | undefined;
 } {
   let registeredPrivileges: Record<string, boolean> | undefined;
   let handler:
-    | ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>)
-    | undefined;
+    ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>) | undefined;
 
   return {
     protocol: {

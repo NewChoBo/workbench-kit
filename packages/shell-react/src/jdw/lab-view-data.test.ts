@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  isSampleJdwLabViewRenderData,
-  SAMPLE_JDW_LAB_VIEW_RENDER_KIND,
-} from './lab-view-data.js';
+import { isSampleJdwLabViewRenderData, SAMPLE_JDW_LAB_VIEW_RENDER_KIND } from './lab-view-data.js';
 
 describe('isSampleJdwLabViewRenderData', () => {
   it('accepts the canonical JDW template and widget-tree paths', () => {

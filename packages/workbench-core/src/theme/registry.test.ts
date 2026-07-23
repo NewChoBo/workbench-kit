@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ExtensionRegistry } from '../extension/registry.js';
-import {
-  REQUIRED_THEME_TOKEN_KEYS,
-  ThemeRegistry,
-  applyThemeTokenOverrides,
-} from './registry.js';
+import { REQUIRED_THEME_TOKEN_KEYS, ThemeRegistry, applyThemeTokenOverrides } from './registry.js';
 
 function buildCompleteTokenOverrides(baseColor: string): Record<string, string> {
   return Object.fromEntries(REQUIRED_THEME_TOKEN_KEYS.map((key) => [key, baseColor]));

@@ -417,7 +417,9 @@ export function initializeVirtualWorkspaceState({
   const normalizedFolders = materializeFolders(normalizedFiles, folders);
   const filesByPath = fileMap(normalizedFiles);
   const normalizedOpenPaths = pruneOpenPaths(openPaths, normalizedFiles);
-  const normalizedSelectedPath = selectedPath ? softNormalizeWorkspacePath(selectedPath) : undefined;
+  const normalizedSelectedPath = selectedPath
+    ? softNormalizeWorkspacePath(selectedPath)
+    : undefined;
   const resolvedSelectedPath =
     normalizedSelectedPath && filesByPath.has(normalizedSelectedPath)
       ? normalizedSelectedPath

@@ -20,10 +20,7 @@ import {
 } from '@workbench-kit/workbench-core';
 
 import { CommandInspectorSurface } from '../commands/inspector-surface.js';
-import {
-  resolveEditorDocumentViews,
-  type EditorDocumentViewProvider,
-} from './view-providers.js';
+import { resolveEditorDocumentViews, type EditorDocumentViewProvider } from './view-providers.js';
 import { mimeTypeForResource, pathForResource } from './resource.js';
 import { FieldRemapEditorSurface } from '../field-remap/editor-surface.js';
 import {

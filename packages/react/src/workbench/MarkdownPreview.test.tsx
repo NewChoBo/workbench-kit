@@ -81,7 +81,9 @@ describe('WorkbenchMarkdownPreview', () => {
 
   it('does not emit javascript: hrefs for markdown links', () => {
     const markup = renderToStaticMarkup(
-      <WorkbenchMarkdownPreview source={'[click](javascript:alert(1)) and [ok](https://example.com)'} />,
+      <WorkbenchMarkdownPreview
+        source={'[click](javascript:alert(1)) and [ok](https://example.com)'}
+      />,
     );
 
     expect(markup).not.toContain('javascript:');
