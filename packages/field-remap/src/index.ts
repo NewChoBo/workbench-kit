@@ -38,14 +38,13 @@ export {
   UnsupportedFieldRemapDocumentVersionError,
 } from './domain/document/fieldRemapDocument.js';
 
+export { isSafeObjectPath, UnsafeObjectPathError } from './domain/mapping/objectPathSafety.js';
 export {
   applyStringTemplate,
   isPlainObject,
-  isSafeObjectPath,
   listArrayItemProjectionOptions,
   projectCollectionItems,
   readObjectPath,
-  UnsafeObjectPathError,
   writeObjectPath,
 } from './domain/mapping/pathUtils.js';
 export type { ArrayItemProjectionOption } from './domain/mapping/pathUtils.js';

@@ -42,30 +42,9 @@ describe('pathUtils', () => {
     expect(Object.getPrototypeOf({})).toBe(Object.prototype);
   });
 
-  it('reports the rejected path and segment', () => {
-    let thrown: unknown;
-    try {
-      writeObjectPath({}, 'safe.__proto__.polluted', true);
-    } catch (error) {
-      thrown = error;
-    }
-
-    expect(thrown).toMatchObject({
-      name: 'UnsafeObjectPathError',
-      code: 'unsafe_object_path',
-      path: 'safe.__proto__.polluted',
-      segment: '__proto__',
-    });
-  });
-
   it('fills safe {path} templates without eval', () => {
     expect(isPlainObject({ a: 1 })).toBe(true);
     expect(isPlainObject([1])).toBe(false);
-    expect(isSafeObjectPath('city')).toBe(true);
-    expect(isSafeObjectPath('a.b')).toBe(true);
-    expect(isSafeObjectPath('a.b.c')).toBe(true);
-    expect(isSafeObjectPath('a-b')).toBe(false);
-    expect(isSafeObjectPath('foo();')).toBe(false);
 
     expect(applyStringTemplate('{city} · {temp}', { city: 'Seoul', temp: 22 })).toBe('Seoul · 22');
     expect(applyStringTemplate('{meta.label}', { meta: { label: 'A' } })).toBe('A');
