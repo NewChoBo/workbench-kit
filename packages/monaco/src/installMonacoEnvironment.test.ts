@@ -56,7 +56,11 @@ describe('installMonacoEnvironment', () => {
       json: () => new FakeWorker() as unknown as Worker,
     });
 
-    const env = (globalThis as { MonacoEnvironment?: { getWorker?: Function } }).MonacoEnvironment;
+    const env = (
+      globalThis as {
+        MonacoEnvironment?: { getWorker?: (workerId: string, label: string) => Worker };
+      }
+    ).MonacoEnvironment;
     expect(env?.getWorker?.('', 'json')).toBeInstanceOf(FakeWorker);
     expect(env?.getWorker?.('', 'unknown')).toBeInstanceOf(FakeWorker);
   });
