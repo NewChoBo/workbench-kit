@@ -8,7 +8,7 @@ import {
   type WorkspacePatchWriteFile,
   normalizeServiceFailureMessage,
 } from '@workbench-kit/contracts';
-import { normalizeServiceWorkspacePath } from './path';
+import { normalizeServiceWorkspacePath } from '../shared/path';
 
 let patchRequestCounter = 0;
 

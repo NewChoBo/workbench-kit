@@ -8,7 +8,7 @@ import {
   type WorkspacePatchApplyResult,
   isSaveSuccess,
 } from '@workbench-kit/contracts';
-import { WorkbenchChatService, WorkspacePatchService, WorkspaceSaveService } from './index';
+import { WorkbenchChatService, WorkspacePatchService, WorkspaceSaveService } from '../index';
 
 class InMemoryWorkspaceFileRepository implements WorkspaceFileRepository {
   private files = new Map<string, WorkspaceFile>();

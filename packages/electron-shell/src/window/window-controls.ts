@@ -1,4 +1,4 @@
-import { requireOwnedWindowForSender } from './require-owned-window-for-sender.js';
+import { requireOwnedWindowForSender } from '../security/require-owned-window-for-sender.js';
 
 export interface WindowControlSurface {
   minimize(): void;

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { UntrustedIpcSenderError } from './require-owned-window-for-sender.js';
+import { UntrustedIpcSenderError } from '../security/require-owned-window-for-sender.js';
 import {
   createWindowControlsBridge,
   nextMaximizedState,

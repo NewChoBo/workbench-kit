@@ -4,7 +4,7 @@ import type { WorkspaceFile } from '@workbench-kit/workspace';
 import {
   widgetStudioBuiltinAssetFiles,
   widgetStudioCustomAssetExampleFiles,
-} from './widget-studio-assets.js';
+} from '../widget-studio/widget-studio-assets.js';
 
 export const integratedShellWorkspaceFolders = [
   'src',
@@ -194,7 +194,7 @@ export const integratedShellWorkspaceFiles: WorkspaceFile[] = [
 export {
   widgetStudioBuiltinAssetFiles,
   widgetStudioCustomAssetExampleFiles,
-} from './widget-studio-assets.js';
+} from '../widget-studio/widget-studio-assets.js';
 
 export const integratedShellInitialRuntimeMessages: RuntimeChatMessage[] = [
   {

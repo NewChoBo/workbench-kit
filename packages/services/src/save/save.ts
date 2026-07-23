@@ -7,7 +7,7 @@ import {
   type WorkspaceFile,
   type WorkspaceFileRepository,
 } from '@workbench-kit/contracts';
-import { normalizeServiceWorkspacePath } from './path';
+import { normalizeServiceWorkspacePath } from '../shared/path';
 
 let saveRequestCounter = 0;
 
