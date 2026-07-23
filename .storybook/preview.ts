@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/react-vite';
 import { createElement } from 'react';
+import { installMonacoEnvironment } from '@workbench-kit/monaco';
 import cssWorker from 'monaco-editor/language/css/css.worker?worker';
 import htmlWorker from 'monaco-editor/language/html/html.worker?worker';
 import jsonWorker from 'monaco-editor/language/json/json.worker?worker';
@@ -14,16 +15,13 @@ if (typeof document !== 'undefined') {
 }
 
 if (typeof window !== 'undefined') {
-  window.MonacoEnvironment = {
-    getWorker(_workerId, label) {
-      if (label === 'json') return new jsonWorker();
-      if (label === 'css' || label === 'scss' || label === 'less') return new cssWorker();
-      if (label === 'html' || label === 'handlebars' || label === 'razor') return new htmlWorker();
-      if (label === 'typescript' || label === 'javascript') return new tsWorker();
-
-      return new editorWorker();
-    },
-  };
+  installMonacoEnvironment({
+    css: () => new cssWorker(),
+    editor: () => new editorWorker(),
+    html: () => new htmlWorker(),
+    json: () => new jsonWorker(),
+    typescript: () => new tsWorker(),
+  });
 }
 
 const preview: Preview = {
