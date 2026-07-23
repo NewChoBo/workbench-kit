@@ -31,8 +31,12 @@ function objectPathParts(path: string): string[] {
     .filter((part) => part.length > 0);
 }
 
-function assertSafeObjectPathSegments(path: string, parts: readonly string[]): void {
-  const unsafeSegment = parts.find((part) => UNSAFE_OBJECT_PATH_SEGMENTS.has(part));
+function findUnsafeObjectPathSegment(parts: readonly string[]): string | undefined {
+  return parts.find((part) => UNSAFE_OBJECT_PATH_SEGMENTS.has(part));
+}
+
+function assertNoUnsafeObjectPathSegments(path: string, parts: readonly string[]): void {
+  const unsafeSegment = findUnsafeObjectPathSegment(parts);
   if (unsafeSegment) {
     throw new UnsafeObjectPathError(path, unsafeSegment);
   }
@@ -46,7 +50,7 @@ export function isSafeObjectPath(path: string): boolean {
   const trimmed = path.trim();
   return (
     SAFE_PATH_RE.test(trimmed) &&
-    !objectPathParts(trimmed).some((part) => UNSAFE_OBJECT_PATH_SEGMENTS.has(part))
+    findUnsafeObjectPathSegment(objectPathParts(trimmed)) === undefined
   );
 }
 
@@ -82,7 +86,7 @@ export function readObjectPath(value: unknown, path: string): unknown {
   if (parts.length === 0) {
     return value;
   }
-  assertSafeObjectPathSegments(path, parts);
+  assertNoUnsafeObjectPathSegments(path, parts);
 
   let current: unknown = value;
   for (const part of parts) {
@@ -107,7 +111,7 @@ export function writeObjectPath(
   if (parts.length === 0) {
     return isPlainObject(root) ? { ...root } : {};
   }
-  assertSafeObjectPathSegments(path, parts);
+  assertNoUnsafeObjectPathSegments(path, parts);
 
   const result: Record<string, unknown> = isPlainObject(root) ? { ...root } : {};
   let cursor: Record<string, unknown> = result;
