@@ -26,13 +26,18 @@ See [Account Auth](./account-auth.md) and [Workbench Config](./workbench-config.
 
 ## Extension Permission Model
 
-Extensions declare `permissions` in the manifest. The host:
+Extensions declare `permissions` and `capabilities.requires` in the manifest. The host:
 
-- Denies undisclosed privileged API calls
+- Denies undisclosed privileged API calls via runtime helpers
+  `assertPermission(ctx, permission)` and `requireCapability(ctx, capabilityId)`
+  from `@workbench-kit/workbench-core` (exact string match against the activation
+  context; fail closed with `ExtensionPermissionDeniedError` /
+  `ExtensionCapabilityRequiredError`)
 - Scopes secret storage keys by extension id
 - Audits permission denials in development builds
 
 Built-in extensions receive only permissions required for their feature.
+Privileged host APIs should call these helpers before granting access.
 
 ## External Extension Execution Risks
 

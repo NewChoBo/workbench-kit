@@ -453,6 +453,8 @@ export class ExtensionRegistry implements Disposable {
       extensionId: description.manifest.id,
       extensionPath: description.extensionPath ?? '',
       getCapability: <T>(capabilityId: string) => this.capabilityRegistry.get<T>(capabilityId),
+      permissions: [...(description.manifest.permissions ?? [])],
+      requiredCapabilities: [...(description.manifest.capabilities?.requires ?? [])],
       subscriptions,
       viewHostFactories: {
         registerFactory: (factory) => subscriptions.add(this.viewHostFactories.register(factory)),

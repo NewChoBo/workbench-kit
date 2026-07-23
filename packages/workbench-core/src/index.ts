@@ -120,6 +120,14 @@ export {
   type ExtensionCatalogTrustPolicy,
 } from './extension/catalog-trust.js';
 export {
+  ExtensionCapabilityRequiredError,
+  ExtensionPermissionDeniedError,
+  assertPermission,
+  requireCapability,
+  type CapabilityRequireContext,
+  type PermissionAssertContext,
+} from './extension/permissions.js';
+export {
   computeWorkbenchExtensionManifestIntegrity,
   verifyWorkbenchExtensionsAgainstLock,
   type ExtensionIntegrityDiagnostic,
