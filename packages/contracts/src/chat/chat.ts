@@ -1,5 +1,5 @@
-import type { WorkspacePatchEvent } from './patch';
-import type { ServiceListener } from './result';
+import type { WorkspacePatchEvent } from '../patch/patch';
+import type { ServiceListener } from '../result/result';
 
 export type ChatMessageSource = 'assistant' | 'user';
 export type ChatSessionStatus = 'cancelled' | 'error' | 'idle' | 'running';

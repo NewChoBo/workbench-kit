@@ -14,7 +14,7 @@ import {
   createTilePaperAuthoringResourceUri,
   parseTilePaperAuthoringResourceUri,
   resolveTilePaperAuthoringResourceId,
-} from './authoring-workbench-state';
+} from './workbench-state';
 
 describe('authoring-workbench-state', () => {
   it('projects host-neutral launchpad summaries into reusable authoring state', () => {

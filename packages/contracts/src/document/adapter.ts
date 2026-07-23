@@ -1,4 +1,4 @@
-import type { WorkspaceFile } from './save';
+import type { WorkspaceFile } from '../save/save';
 import type {
   WorkbenchDocument,
   WorkbenchDocumentContainerNode,

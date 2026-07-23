@@ -1,5 +1,5 @@
-import type { ServiceFailure, ServiceFailureCode } from './result';
-import type { ServiceResultEnvelope } from './result';
+import type { ServiceFailure, ServiceFailureCode } from '../result/result';
+import type { ServiceResultEnvelope } from '../result/result';
 
 export type WorkspaceFileSource = 'assistant' | 'user';
 

@@ -1,6 +1,6 @@
-import type { ChatMessageSource } from './chat';
-import type { WorkspaceFile } from './save';
-import type { ServiceFailure, ServiceFailureCode, ServiceResultEnvelope } from './result';
+import type { ChatMessageSource } from '../chat/chat';
+import type { WorkspaceFile } from '../save/save';
+import type { ServiceFailure, ServiceFailureCode, ServiceResultEnvelope } from '../result/result';
 
 export type WorkspacePatchSource = ChatMessageSource;
 

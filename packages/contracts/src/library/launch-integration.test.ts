@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveLaunchpadLibraryItemMapping } from './library-launchpad-mapping';
-import { providerActionToLaunchAction } from './provider-library-mapping';
+import { resolveLaunchpadLibraryItemMapping } from './launchpad-mapping';
+import { providerActionToLaunchAction } from './provider-mapping';
 
 describe('library launch integration', () => {
   it('maps provider exec actions into launchpad library execution payloads', () => {

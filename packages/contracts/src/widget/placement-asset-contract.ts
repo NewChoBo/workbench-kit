@@ -1,4 +1,4 @@
-import type { WidgetTypeShape } from './widget-registry-contract.js';
+import type { WidgetTypeShape } from './registry-contract';
 
 export type WidgetPlacementAssetCategory = 'content' | 'layout' | 'template' | (string & {});
 

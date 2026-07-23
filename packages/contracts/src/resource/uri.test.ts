@@ -5,7 +5,7 @@ import {
   createResourceIdentityKey,
   isSameResourceUri,
   normalizeResourceUri,
-} from './resource-uri';
+} from './uri';
 
 describe('resource URI contracts', () => {
   it('normalizes generic resource URIs and rejects values without a scheme', () => {

@@ -1,4 +1,4 @@
-import type { ServiceResultEnvelope } from './result';
+import type { ServiceResultEnvelope } from '../result/result';
 
 export type LibraryItemKind = 'app' | 'command' | 'folder' | 'game' | 'other' | 'tile' | 'url';
 export type LibrarySourceKind = 'embedded-json' | 'json-file' | 'json-url';

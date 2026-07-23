@@ -6,7 +6,7 @@ import {
   isSampleHostBackendApiError,
   isSampleHostBackendErrorBody,
   parseSampleHostBackendSession,
-} from './sample-host-backend-api';
+} from './backend-api';
 
 describe('sample-host-backend-api', () => {
   it('parses authenticated sessions', () => {

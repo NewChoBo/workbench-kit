@@ -14,7 +14,7 @@ import {
   type LibrarySource,
   type LibrarySortMode,
   type LibrarySourceKind,
-} from './index';
+} from '../index';
 
 describe('library contracts', () => {
   const manifestSource: LibrarySource = {

@@ -5,7 +5,7 @@ import {
   providerActionIcon,
   providerActionToLaunchAction,
   providerActionTypeLabel,
-} from './provider-library-mapping';
+} from './provider-mapping';
 
 describe('provider-library-mapping', () => {
   it('labels provider action kinds for display', () => {

@@ -10,7 +10,7 @@ import {
   type PluginLifecycleResult,
   type PluginLifecycleSuccess,
   type PluginSource,
-} from './index';
+} from '../index';
 
 describe('plugin lifecycle contracts', () => {
   const source: PluginSource = {

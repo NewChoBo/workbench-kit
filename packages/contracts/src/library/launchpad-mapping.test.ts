@@ -10,7 +10,7 @@ import {
   normalizeLaunchTarget,
   type LaunchpadLibraryItemSummary,
   type LaunchpadLibraryItemBinding,
-} from './library-launchpad-mapping';
+} from './launchpad-mapping';
 
 describe('library-launchpad-mapping', () => {
   it('normalizes launch targets by trimming whitespace and nulling empty values', () => {
