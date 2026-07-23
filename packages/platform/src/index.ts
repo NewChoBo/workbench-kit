@@ -15,6 +15,7 @@ export {
   type WorkbenchSecretStorageNamespace,
   type WorkbenchSecretStorageService,
 } from './auth/types.js';
+export { createMemorySecretStorage } from './auth/memory-secret-storage.js';
 export {
   clearBrowserStorageByPrefixes,
   collectStorageKeysByPrefix,

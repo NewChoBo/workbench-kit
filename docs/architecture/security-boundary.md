@@ -19,7 +19,7 @@ Documentation and samples use neutral placeholders (`example.com`, `your-provide
 | ------------ | ------------------------------------------------------- |
 | `.workbench` | No secrets; validated at load time                      |
 | Git          | Never commit `.env`, keys, or `secrets.*`               |
-| Runtime      | Tokens only via `SecretStorageService` or backend vault |
+| Runtime      | Tokens only via `WorkbenchSecretStorageService` (`createMemorySecretStorage` reference) or host/Electron vault |
 | Logs         | Redact authorization headers and tokens                 |
 
 See [Account Auth](./account-auth.md) and [Workbench Config](./workbench-config.md).

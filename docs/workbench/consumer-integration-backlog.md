@@ -244,7 +244,8 @@ Do not pull Electron into `@workbench-kit/react`. Optional thin Electron adapter
 filesystem implementations live on `@workbench-kit/platform/node` only:
 
 - Types: `JsonDocumentStore`, `JsonLinesStore`, `VersionedEnvelope`, `StorageDiagnostic`
-- Memory: `createMemoryJsonDocumentStore`, `createMemoryJsonLinesStore` (tests / tiny ephemeral hosts)
+- Memory: `createMemoryJsonDocumentStore`, `createMemoryJsonLinesStore`,
+  `createMemorySecretStorage` (tests / tiny ephemeral hosts; secrets stay off web storage)
 - Node: `createNodeJsonDocumentStore`, `createNodeJsonLinesStore`, `quarantineFileUnderRoot`
   (atomic write + path-under-root; corrupt files move under `recovery/quarantine`;
   diagnostics expose `relativeKey` / quarantine keys — never absolute paths)

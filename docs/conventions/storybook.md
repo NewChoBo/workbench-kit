@@ -101,8 +101,9 @@ A Storybook flow can replace a browser E2E smoke only when it satisfies all of
 these conditions:
 
 1. It renders the sample app path used by `pnpm dev`, not a story-only shell copy.
-2. It sets only deterministic sample `sessionStorage` or local storage needed to
-   reach the scenario.
+2. It sets only deterministic sample storage needed to reach the scenario
+   (auth seeds use in-memory SecretStorage; layout/role seeds may use local
+   storage).
 3. It drives the UI through `@storybook/test` user interactions such as click,
    typing, keyboard shortcuts, and combobox option selection.
 4. It asserts user-visible outcomes through ARIA roles, labels, text, status

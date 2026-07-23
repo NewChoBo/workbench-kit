@@ -20,6 +20,12 @@ Orchestrates sign-in, sign-out, and session refresh flows via registered `AuthPr
 
 ### SecretStorageService
 
+Reference in-memory adapter: `createMemorySecretStorage()` from
+`@workbench-kit/platform` (process memory only; never writes web storage).
+Electron hosts can back durable secrets with
+`createEncryptedSecretVault` from `@workbench-kit/electron-shell` and adapt into
+`WorkbenchSecretStorageService`.
+
 Encrypted or OS-backed secret storage for tokens and API keys. Keys are namespaced by extension id and purpose. Extensions access secrets only with declared `permissions`.
 
 ## Capability IDs

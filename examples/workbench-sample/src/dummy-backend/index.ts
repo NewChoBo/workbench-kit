@@ -40,12 +40,20 @@ function readConfiguredBaseUrl(): string | undefined {
 
 export { createHttpSampleHostBackendClient } from './http-client.js';
 export {
+  SAMPLE_AUTH_BASIC_USERNAME,
+  SAMPLE_AUTH_EXTENSION_ID,
+  SAMPLE_AUTH_LEGACY_SESSION_STORAGE_KEY,
   SAMPLE_AUTH_SESSION_KEY,
   SAMPLE_AUTH_USERNAME,
   SAMPLE_HOST_BACKEND_NAME,
+  clearSampleAuthSession,
   createInMemorySampleHostBackendClient,
   createSampleMockLinkedAccounts,
   createSampleMockProfile,
+  getSampleAuthSecretStorage,
+  readSampleAuthSession,
+  resetSampleAuthSecretStorage,
+  writeSampleAuthSession,
   type SampleAuthCredentials,
   type SampleAuthSession,
   type SampleLinkedAccount,
