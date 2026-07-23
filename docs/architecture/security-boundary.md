@@ -59,6 +59,14 @@ Running arbitrary third-party extension code introduces:
 
 External marketplace execution remains out of scope until these controls exist.
 
+## Expression transforms (Field Remap)
+
+Host-registered `expr:jsonata` evaluations are **bounded** by default in
+`@workbench-kit/shell-react` (`timeoutMs`, `maxExpressionLength`, fail-closed
+`onError: 'throw'`). `convertToShape` accepts an optional `AbortSignal` so stale
+async previews cancel between edges/steps. Residual risk: JSONata is not a full
+VM sandbox — hosts should keep timeout budgets tight for untrusted expressions.
+
 ## Workspace Trust
 
 Opening a workspace should not execute untrusted code without user consent (future UX). `.workbench/extensions.json` recommending an extension does not auto-download binaries.

@@ -101,7 +101,7 @@ export function FieldRemapPanel({
   );
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     const conversion = withConversionEdges(
       defineConversion({
         id: `${sample.sourceIdPrefix}→${sample.targetIdPrefix}`,
@@ -117,23 +117,25 @@ export function FieldRemapPanel({
       shapes,
       inputs: { [sample.sourceIdPrefix]: sample.source },
       transforms: registry,
+      signal: controller.signal,
     })
       .then((next) => {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setResult({ output: next.output });
         }
       })
       .catch((error: unknown) => {
-        if (!cancelled) {
-          setResult({
-            output: {},
-            error: error instanceof Error ? error.message : String(error),
-          });
+        if (controller.signal.aborted) {
+          return;
         }
+        setResult({
+          output: {},
+          error: error instanceof Error ? error.message : String(error),
+        });
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [edges, registry, sample, shapes]);
 
