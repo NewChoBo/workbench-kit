@@ -322,11 +322,11 @@ gantt
 | Resource               | Path                                                    |
 | ---------------------- | ------------------------------------------------------- |
 | JDW package index      | `packages/json-widget/src/index.ts`                     |
-| JDW node parse/convert | `packages/json-widget/src/jdw-node.ts`                  |
-| Validation             | `packages/json-widget/src/validate-json-widget-data.ts` |
+| JDW node parse/convert | `packages/json-widget/src/jdw/node.ts`                  |
+| Validation             | `packages/json-widget/src/validate/json-widget-data.ts` |
 | Layout engine          | `packages/json-widget/src/layout/layout-widget.ts`      |
-| Widget registry        | `packages/json-widget/src/widget-registry.ts`           |
-| JDW profile            | `packages/json-widget/src/jdw-profile.ts`               |
+| Widget registry        | `packages/json-widget/src/widget/registry.ts`           |
+| JDW profile            | `packages/json-widget/src/jdw/profile.ts`               |
 | Screen spec compile    | `packages/json-widget/src/screen-spec/compile.ts`       |
 | Registry contract      | `packages/contracts/src/widget-registry-contract.ts`    |
 | CSS render backend     | `packages/react/src/jdw/cssRenderBackend.tsx`           |
