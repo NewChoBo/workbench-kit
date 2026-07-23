@@ -1,27 +1,13 @@
 import type { Preview } from '@storybook/react-vite';
 import { createElement } from 'react';
-import { installMonacoEnvironment } from '@workbench-kit/monaco';
-import cssWorker from 'monaco-editor/language/css/css.worker?worker';
-import htmlWorker from 'monaco-editor/language/html/html.worker?worker';
-import jsonWorker from 'monaco-editor/language/json/json.worker?worker';
-import tsWorker from 'monaco-editor/language/typescript/ts.worker?worker';
-import editorWorker from 'monaco-editor/editor/editor.worker?worker';
+// Side-effect first: install workers without importing the monaco barrel (Editor/loader).
+import './preview-monaco-environment';
 import '../packages/react/src/styles.css';
 import './preview.css';
 import monitorViewports from './monitor-viewports';
 
 if (typeof document !== 'undefined') {
   document.documentElement.dataset.theme = 'dark';
-}
-
-if (typeof window !== 'undefined') {
-  installMonacoEnvironment({
-    css: () => new cssWorker(),
-    editor: () => new editorWorker(),
-    html: () => new htmlWorker(),
-    json: () => new jsonWorker(),
-    typescript: () => new tsWorker(),
-  });
 }
 
 const preview: Preview = {
