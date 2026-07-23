@@ -1,5 +1,6 @@
 export {
   WORKSPACE_PATH_DISPLAY_SEPARATOR,
+  WorkspacePathError,
   extensionOfPath,
   fileNameOfPath,
   formatWorkspacePathDisplay,
@@ -8,6 +9,7 @@ export {
   normalizeWorkspacePath,
   parentPathOf,
   parentPathsOf,
+  tryNormalizeWorkspacePath,
   workspacePathSegments,
 } from './path';
 export {

@@ -1,5 +1,70 @@
-export function normalizeWorkspacePath(path: string) {
-  return path.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+/g, '/').replace(/\/$/, '');
+export class WorkspacePathError extends Error {
+  readonly code = 'WORKSPACE_PATH_INVALID' as const;
+
+  constructor(
+    message: string,
+    readonly path: string,
+  ) {
+    super(message);
+    this.name = 'WorkspacePathError';
+  }
+}
+
+/**
+ * Normalize a workspace-relative virtual path.
+ * Rejects traversal (`..` / `.`), Windows drive letters, and UNC forms.
+ * Leading `/` or `\` is stripped (virtual paths stay relative). Hosts that map
+ * virtual paths to disk must still confine filesystem roots.
+ */
+export function normalizeWorkspacePath(path: string): string {
+  if (!path) {
+    return '';
+  }
+
+  const slashNormalized = path.replace(/\\/g, '/');
+
+  if (slashNormalized.startsWith('//')) {
+    throw new WorkspacePathError(
+      'Workspace path must be relative (UNC paths are not allowed).',
+      path,
+    );
+  }
+
+  if (/^[A-Za-z]:/.test(slashNormalized)) {
+    throw new WorkspacePathError(
+      'Workspace path must be relative (drive-letter paths are not allowed).',
+      path,
+    );
+  }
+
+  const collapsed = slashNormalized.replace(/^\/+/, '').replace(/\/+/g, '/').replace(/\/$/, '');
+  if (!collapsed) {
+    return '';
+  }
+
+  const segments = collapsed.split('/');
+  for (const segment of segments) {
+    if (!segment || segment === '.' || segment === '..') {
+      throw new WorkspacePathError(
+        'Workspace path must not contain empty, ".", or ".." segments.',
+        path,
+      );
+    }
+  }
+
+  return collapsed;
+}
+
+/** Normalize when valid; return undefined for traversal/drive/UNC/invalid forms. */
+export function tryNormalizeWorkspacePath(path: string): string | undefined {
+  try {
+    return normalizeWorkspacePath(path);
+  } catch (error) {
+    if (error instanceof WorkspacePathError) {
+      return undefined;
+    }
+    throw error;
+  }
 }
 
 export const WORKSPACE_PATH_DISPLAY_SEPARATOR = ' > ';

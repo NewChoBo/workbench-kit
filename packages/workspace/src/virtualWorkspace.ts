@@ -2,10 +2,15 @@ import {
   fileNameOfPath,
   isSimpleWorkspaceName,
   joinWorkspacePath,
-  normalizeWorkspacePath,
   parentPathOf,
   parentPathsOf,
+  tryNormalizeWorkspacePath,
 } from './path';
+
+/** Soft-fail path gate for reducer actions (invalid → empty → no-op). */
+function normalizeWorkspacePath(path: string): string {
+  return tryNormalizeWorkspacePath(path) ?? '';
+}
 import type { WorkspaceFile, WorkspaceFileSource } from './types';
 import {
   expandParents,
@@ -628,7 +633,7 @@ export function virtualWorkspaceReducer(
   if (action.type === 'rename-file') {
     const path = normalizeWorkspacePath(action.path);
     const name = action.name.trim();
-    if (!isSimpleWorkspaceName(name)) return state;
+    if (!path || !isSimpleWorkspaceName(name)) return state;
 
     const sourceFile = fileMap(state.files).get(path);
     if (!sourceFile) return state;

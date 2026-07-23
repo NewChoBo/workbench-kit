@@ -1,11 +1,11 @@
-import { normalizeWorkspacePath, parentPathOf, parentPathsOf } from './path';
+import { parentPathOf, parentPathsOf, tryNormalizeWorkspacePath } from './path';
 import type { WorkspaceFile } from './types';
 
 export function normalizeFiles(files: WorkspaceFile[]) {
   const filesByPath = new Map<string, WorkspaceFile>();
 
   files.forEach((file) => {
-    const path = normalizeWorkspacePath(file.path);
+    const path = tryNormalizeWorkspacePath(file.path);
     if (!path) return;
     filesByPath.set(path, { ...file, path });
   });
@@ -14,17 +14,22 @@ export function normalizeFiles(files: WorkspaceFile[]) {
 }
 
 export function normalizeFolders(folders: string[]) {
-  return [...new Set(folders.map(normalizeWorkspacePath).filter(Boolean))].sort((left, right) =>
-    left.localeCompare(right),
-  );
+  return [
+    ...new Set(
+      folders.map(tryNormalizeWorkspacePath).filter((path): path is string => Boolean(path)),
+    ),
+  ].sort((left, right) => left.localeCompare(right));
 }
 
 export function materializeFolders(files: WorkspaceFile[], folders: string[]) {
-  const folderPaths = folders.flatMap((folder) => [
-    ...parentPathsOf(folder),
-    normalizeWorkspacePath(folder),
-  ]);
-  const fileParentPaths = files.flatMap((file) => parentPathsOf(file.path));
+  const folderPaths = folders.flatMap((folder) => {
+    const normalized = tryNormalizeWorkspacePath(folder);
+    return normalized ? [...parentPathsOf(normalized), normalized] : [];
+  });
+  const fileParentPaths = files.flatMap((file) => {
+    const normalized = tryNormalizeWorkspacePath(file.path);
+    return normalized ? parentPathsOf(normalized) : [];
+  });
   return normalizeFolders([...folderPaths, ...fileParentPaths]);
 }
 
@@ -41,7 +46,7 @@ export function folderPathSet(files: WorkspaceFile[], folders: string[]) {
   const paths = new Set<string>();
 
   folders.forEach((folder) => {
-    const path = normalizeWorkspacePath(folder);
+    const path = tryNormalizeWorkspacePath(folder);
     if (!path) return;
     parentPathsOf(path).forEach((parentPath) => paths.add(parentPath));
     paths.add(path);
@@ -73,7 +78,9 @@ export function hasPathConflict(files: WorkspaceFile[], folders: string[], path:
 
 export function pruneOpenPaths(openPaths: string[], files: WorkspaceFile[]) {
   const filesByPath = fileMap(files);
-  return openPaths.map(normalizeWorkspacePath).filter((path) => filesByPath.has(path));
+  return openPaths
+    .map(tryNormalizeWorkspacePath)
+    .filter((path): path is string => path != null && path.length > 0 && filesByPath.has(path));
 }
 
 export function openPath(openPaths: string[], path: string) {

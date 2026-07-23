@@ -31,7 +31,8 @@ export function parseWorkspaceResourceUri(uri: string): WorkspaceResourceUri | n
       return null;
     }
 
-    const path = normalizeWorkspacePath(url.pathname);
+    // URL pathname always has a leading "/"; workspace paths are relative.
+    const path = normalizeWorkspacePath(url.pathname.replace(/^\/+/, ''));
     if (kind === 'file' && !path) {
       return null;
     }

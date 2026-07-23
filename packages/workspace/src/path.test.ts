@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  WorkspacePathError,
   extensionOfPath,
   fileNameOfPath,
   formatWorkspacePathDisplay,
@@ -8,6 +9,7 @@ import {
   normalizeWorkspacePath,
   parentPathOf,
   parentPathsOf,
+  tryNormalizeWorkspacePath,
   workspacePathSegments,
 } from './path';
 
@@ -21,6 +23,18 @@ describe('workspace path helpers', () => {
       'components',
       'Button.tsx',
     ]);
+  });
+
+  it('rejects traversal, drive letters, and UNC forms', () => {
+    expect(() => normalizeWorkspacePath('a/../b')).toThrow(WorkspacePathError);
+    expect(() => normalizeWorkspacePath('../secret')).toThrow(WorkspacePathError);
+    expect(() => normalizeWorkspacePath('src/./Button.tsx')).toThrow(WorkspacePathError);
+    expect(() => normalizeWorkspacePath('C:/Windows/System32')).toThrow(WorkspacePathError);
+    expect(() => normalizeWorkspacePath('D:\\data\\file.txt')).toThrow(WorkspacePathError);
+    expect(() => normalizeWorkspacePath('//server/share/file')).toThrow(WorkspacePathError);
+    expect(tryNormalizeWorkspacePath('../escape')).toBeUndefined();
+    expect(tryNormalizeWorkspacePath('src/ok.ts')).toBe('src/ok.ts');
+    expect(tryNormalizeWorkspacePath('/src/ok.ts')).toBe('src/ok.ts');
   });
 
   it('derives path parts without leaking root separators', () => {

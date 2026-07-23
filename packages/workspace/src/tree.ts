@@ -1,4 +1,4 @@
-import { fileNameOfPath, normalizeWorkspacePath, workspacePathSegments } from './path';
+import { fileNameOfPath, tryNormalizeWorkspacePath, workspacePathSegments } from './path';
 import type { VisibleWorkspaceNode, WorkspaceFile, WorkspaceTreeNode } from './types';
 
 function sortWorkspaceNodes(nodes: WorkspaceTreeNode[]) {
@@ -15,7 +15,8 @@ export function buildWorkspaceTree(folders: string[], files: WorkspaceFile[]): W
   const nodeByPath = new Map<string, WorkspaceTreeNode>();
 
   const ensureFolder = (folderPath: string) => {
-    const normalizedPath = normalizeWorkspacePath(folderPath);
+    const normalizedPath = tryNormalizeWorkspacePath(folderPath);
+    if (!normalizedPath) return undefined;
     const existingNode = nodeByPath.get(normalizedPath);
     if (existingNode) return existingNode;
 
@@ -30,7 +31,7 @@ export function buildWorkspaceTree(folders: string[], files: WorkspaceFile[]): W
 
     const parentPath = segments.slice(0, -1).join('/');
     if (parentPath) {
-      ensureFolder(parentPath).children.push(node);
+      ensureFolder(parentPath)?.children.push(node);
     } else {
       roots.push(node);
     }
@@ -38,10 +39,13 @@ export function buildWorkspaceTree(folders: string[], files: WorkspaceFile[]): W
     return node;
   };
 
-  folders.forEach(ensureFolder);
+  folders.forEach((folder) => {
+    ensureFolder(folder);
+  });
 
   files.forEach((file) => {
-    const normalizedPath = normalizeWorkspacePath(file.path);
+    const normalizedPath = tryNormalizeWorkspacePath(file.path);
+    if (!normalizedPath) return;
     const segments = workspacePathSegments(normalizedPath);
     const parentPath = segments.slice(0, -1).join('/');
     const node: WorkspaceTreeNode = {
@@ -53,7 +57,7 @@ export function buildWorkspaceTree(folders: string[], files: WorkspaceFile[]): W
     };
 
     if (parentPath) {
-      ensureFolder(parentPath).children.push(node);
+      ensureFolder(parentPath)?.children.push(node);
     } else {
       roots.push(node);
     }
