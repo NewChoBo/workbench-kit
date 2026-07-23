@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const profilePath = path.join(repoRoot, 'packages/json-widget/src/jdw-profile.ts');
+const profilePath = path.join(repoRoot, 'packages/json-widget/src/jdw/profile.ts');
 const schemaRoot = path.join(repoRoot, 'packages/json-widget/schemas');
 const rootSchemaPath = path.join(schemaRoot, 'jdw-node.jdw.schema.json');
 

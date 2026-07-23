@@ -1,0 +1,201 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  createJdwDocumentJsonSchema,
+  createWidgetJsonSchema,
+  DEMO_WIDGET_JSON_SCHEMA,
+} from './json-schema.js';
+
+describe('createWidgetJsonSchema', () => {
+  it('includes core widget definitions', () => {
+    const schema = createWidgetJsonSchema() as {
+      definitions?: { Widget?: { oneOf?: unknown[] } };
+    };
+
+    expect(schema.definitions?.Widget?.oneOf?.length).toBeGreaterThanOrEqual(4);
+    expect(DEMO_WIDGET_JSON_SCHEMA).toBeDefined();
+  });
+
+  it('merges custom registry schema definitions', () => {
+    const schema = createWidgetJsonSchema([
+      {
+        type: 'demo:card',
+        build: 'card',
+        schema: {
+          type: 'object',
+          required: ['title'],
+          properties: {
+            title: { type: 'string' },
+          },
+        },
+      },
+    ]) as { definitions?: Record<string, unknown> };
+
+    expect(schema.definitions?.CustomWidget_demo_card).toBeDefined();
+  });
+
+  it('allows JDW documents to declare their schema URI', () => {
+    const schema = createJdwDocumentJsonSchema() as {
+      definitions?: {
+        CustomJdwNode?: { properties?: Record<string, unknown> };
+      };
+    };
+
+    expect(schema.definitions?.CustomJdwNode?.properties?.$schema).toEqual({
+      type: 'string',
+      minLength: 1,
+    });
+  });
+
+  it('describes recursive JDW node definitions for static authoring', () => {
+    const schema = createJdwDocumentJsonSchema() as {
+      definitions?: {
+        JdwNode?: { oneOf?: unknown[] };
+        JdwDynamicValue?: unknown;
+        TextJdwNode?: {
+          properties?: { args?: { properties?: { fontSize?: unknown } } };
+        };
+        FlexibleJdwNode?: {
+          properties?: { args?: { properties?: { fit?: unknown } } };
+        };
+        StackJdwNode?: unknown;
+        ImageJdwNode?: unknown;
+        ButtonJdwNode?: unknown;
+      };
+    };
+
+    expect(schema.definitions?.JdwNode?.oneOf?.length).toBeGreaterThanOrEqual(16);
+    expect(schema.definitions?.JdwDynamicValue).toMatchObject({
+      type: 'string',
+      pattern: '^\\$\\{[A-Za-z0-9_.-]+\\}$',
+    });
+    expect(schema.definitions?.StackJdwNode).toBeDefined();
+    expect(schema.definitions?.ImageJdwNode).toBeDefined();
+    expect(schema.definitions?.ButtonJdwNode).toBeDefined();
+    expect(schema.definitions?.TextJdwNode?.properties?.args?.properties?.fontSize).toEqual({
+      oneOf: [{ type: 'number', minimum: 1 }, { $ref: '#/definitions/JdwDynamicValue' }],
+    });
+    expect(schema.definitions?.FlexibleJdwNode?.properties?.args?.properties?.fit).toEqual({
+      oneOf: [
+        { type: 'string', enum: ['tight', 'loose'] },
+        { $ref: '#/definitions/JdwDynamicValue' },
+      ],
+    });
+  });
+
+  it('describes JDW placement args for schema-backed authoring hints', () => {
+    const schema = createJdwDocumentJsonSchema() as {
+      definitions?: {
+        JdwPlacementArgs?: {
+          properties?: Record<string, unknown>;
+        };
+        JdwLinearChildPlacementArgs?: {
+          properties?: Record<string, unknown>;
+        };
+        JdwGridChildPlacementArgs?: {
+          properties?: Record<string, unknown>;
+          required?: readonly string[];
+        };
+        JdwStackChildPlacementArgs?: {
+          properties?: Record<string, unknown>;
+        };
+        TextJdwNode?: {
+          properties?: { args?: { allOf?: unknown[] } };
+        };
+        RowJdwNode?: {
+          properties?: {
+            args?: {
+              properties?: {
+                children?: { items?: unknown };
+                mainAxisAlignment?: unknown;
+              };
+            };
+          };
+        };
+        ColumnJdwNode?: {
+          properties?: { args?: { properties?: { children?: { items?: unknown } } } };
+        };
+        GridJdwNode?: {
+          properties?: { args?: { properties?: { children?: { items?: unknown } } } };
+        };
+        StackJdwNode?: {
+          properties?: { args?: { properties?: { children?: { items?: unknown } } } };
+        };
+      };
+    };
+    const placementArgs = schema.definitions?.JdwPlacementArgs?.properties ?? {};
+    const linearPlacementArgs = schema.definitions?.JdwLinearChildPlacementArgs?.properties ?? {};
+    const gridPlacementArgs = schema.definitions?.JdwGridChildPlacementArgs?.properties ?? {};
+    const stackPlacementArgs = schema.definitions?.JdwStackChildPlacementArgs?.properties ?? {};
+    const textArgs = schema.definitions?.TextJdwNode?.properties?.args;
+    const rowArgs = schema.definitions?.RowJdwNode?.properties?.args?.properties ?? {};
+
+    expect(textArgs?.allOf).toBeUndefined();
+    expect(rowArgs.children?.items).toEqual({ $ref: '#/definitions/JdwLinearChildNode' });
+    expect(
+      schema.definitions?.ColumnJdwNode?.properties?.args?.properties?.children?.items,
+    ).toEqual({ $ref: '#/definitions/JdwLinearChildNode' });
+    expect(schema.definitions?.GridJdwNode?.properties?.args?.properties?.children?.items).toEqual({
+      $ref: '#/definitions/JdwGridChildNode',
+    });
+    expect(schema.definitions?.StackJdwNode?.properties?.args?.properties?.children?.items).toEqual(
+      { $ref: '#/definitions/JdwStackChildNode' },
+    );
+    expect(placementArgs.width).toEqual({
+      oneOf: [{ type: 'number', minimum: 0 }, { $ref: '#/definitions/JdwDynamicValue' }],
+    });
+    expect(placementArgs.flexFit).toEqual({
+      oneOf: [
+        { type: 'string', enum: ['tight', 'loose'] },
+        { $ref: '#/definitions/JdwDynamicValue' },
+      ],
+    });
+    expect(placementArgs.align).toEqual({
+      oneOf: [
+        { type: 'string', enum: ['stretch', 'start', 'center', 'end'] },
+        { $ref: '#/definitions/JdwDynamicValue' },
+      ],
+    });
+    expect(placementArgs.colSpan).toEqual({
+      oneOf: [{ type: 'number', minimum: 1 }, { $ref: '#/definitions/JdwDynamicValue' }],
+    });
+    expect(placementArgs.left).toEqual({
+      oneOf: [{ type: 'number' }, { $ref: '#/definitions/JdwDynamicValue' }],
+    });
+    expect(linearPlacementArgs).toMatchObject({
+      align: placementArgs.align,
+      flex: placementArgs.flex,
+      flexFit: placementArgs.flexFit,
+      height: placementArgs.height,
+      width: placementArgs.width,
+    });
+    expect(linearPlacementArgs.col).toBeUndefined();
+    expect(linearPlacementArgs.left).toBeUndefined();
+    expect(gridPlacementArgs).toMatchObject({
+      col: placementArgs.col,
+      colSpan: placementArgs.colSpan,
+      row: placementArgs.row,
+      rowSpan: placementArgs.rowSpan,
+    });
+    expect(schema.definitions?.JdwGridChildPlacementArgs?.required).toEqual(['col', 'row']);
+    expect(gridPlacementArgs.flex).toBeUndefined();
+    expect(gridPlacementArgs.left).toBeUndefined();
+    expect(stackPlacementArgs).toMatchObject({
+      bottom: placementArgs.bottom,
+      left: placementArgs.left,
+      right: placementArgs.right,
+      top: placementArgs.top,
+    });
+    expect(stackPlacementArgs.col).toBeUndefined();
+    expect(stackPlacementArgs.flex).toBeUndefined();
+    expect(rowArgs.mainAxisAlignment).toEqual({
+      oneOf: [
+        {
+          type: 'string',
+          enum: ['start', 'center', 'end', 'spaceBetween', 'spaceAround', 'spaceEvenly'],
+        },
+        { $ref: '#/definitions/JdwDynamicValue' },
+      ],
+    });
+  });
+});

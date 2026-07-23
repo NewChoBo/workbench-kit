@@ -431,7 +431,7 @@ Current `widget-json-schema.ts` now defines root JDW placement hints and parent-
 
 | Layer                   | Command / location                                                  |
 | ----------------------- | ------------------------------------------------------------------- |
-| Schema + validate       | `packages/json-widget/src/validate-*.test.ts`                       |
+| Schema + validate       | `packages/json-widget/src/validate/*.test.ts`                       |
 | Materialize + normalize | `packages/json-widget/src/widget-materialize.test.ts`               |
 | Layout rects            | `packages/json-widget/src/layout/*.test.ts`                         |
 | Render smoke            | Storybook **WidgetLayout/Fixtures**                                 |

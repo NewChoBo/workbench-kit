@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseJsonWidgetData } from '../jdw-node.js';
-import { validateJsonWidgetData } from '../validate-json-widget-data.js';
+import { parseJsonWidgetData } from '../jdw/node.js';
+import { validateJsonWidgetData } from '../validate/json-widget-data.js';
 import {
   screenColumn,
   screenExpanded,

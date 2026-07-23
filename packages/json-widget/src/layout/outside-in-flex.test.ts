@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createWidgetDocument } from '../document.js';
+import { createWidgetDocument } from '../document/document.js';
 import { compileScreenSpecToJson } from '../screen-spec/compile.js';
 import {
   screenColumn,

@@ -10,9 +10,9 @@ export type {
   WidgetTypeShape,
 } from '@workbench-kit/contracts';
 
-export { WidgetRegistry, createWidgetRegistry, type WidgetDefinition } from './widget-registry.js';
+export { WidgetRegistry, createWidgetRegistry, type WidgetDefinition } from './widget/registry.js';
 
-export type { WidgetPath, WidgetPathSegment, WidgetSourceRange } from './path.js';
+export type { WidgetPath, WidgetPathSegment, WidgetSourceRange } from './document/path.js';
 
 export {
   ROOT_WIDGET_PATH,
@@ -24,18 +24,18 @@ export {
   parseWidgetPathKey,
   widgetPathEquals,
   widgetPathKey,
-} from './path.js';
+} from './document/path.js';
 
-export type { WidgetSelectionState } from './selection.js';
+export type { WidgetSelectionState } from './document/selection.js';
 
 export {
   emptyWidgetSelection,
   firstSelectedWidgetPath,
   isWidgetPathSelected,
   selectWidgetPath,
-} from './selection.js';
+} from './document/selection.js';
 
-export type { GenericWidget, WidgetNode, WidgetTreeEditResult } from './widget-tree.js';
+export type { GenericWidget, WidgetNode, WidgetTreeEditResult } from './widget/tree.js';
 
 export {
   collectWidgetNodes,
@@ -50,11 +50,11 @@ export {
   reparentWidgetAtPath,
   setBoxChildAtPath,
   updateWidgetAtPath,
-} from './widget-tree.js';
+} from './widget/tree.js';
 
-export type { ArrayChildWidget } from './widget-child-ops.js';
+export type { ArrayChildWidget } from './widget/child-ops.js';
 
-export { collectAllContainerKeys, isContainerWidget } from './widget-child-ops.js';
+export { collectAllContainerKeys, isContainerWidget } from './widget/child-ops.js';
 
 export type {
   GridChildPlacement,
@@ -102,9 +102,9 @@ export {
   hitTestLayoutTree,
 } from './layout/layout-mapping.js';
 
-export type { WidgetPatch } from './widget-patch.js';
+export type { WidgetPatch } from './widget/patch.js';
 
-export { applyWidgetPatch } from './widget-patch.js';
+export { applyWidgetPatch } from './widget/patch.js';
 
 export type {
   JsonWidgetInvalidation,
@@ -112,7 +112,7 @@ export type {
   JsonWidgetNode,
   JsonWidgetValueMap,
   ParsedJsonWidgetData,
-} from './jdw-node.js';
+} from './jdw/node.js';
 
 export {
   collectJsonWidgetChangedValuePaths,
@@ -125,30 +125,30 @@ export {
   jdwNodeToGenericWidget,
   parseJsonWidgetData,
   resolveJsonWidgetValues,
-} from './jdw-node.js';
+} from './jdw/node.js';
 
 export type {
   JsonWidgetValueWarehouse,
   JsonWidgetValueWarehouseFlushEvent,
   JsonWidgetValueWarehouseListener,
   JsonWidgetValueWarehouseOptions,
-} from './json-widget-value-warehouse.js';
+} from './document/value-warehouse.js';
 
-export { createJsonWidgetValueWarehouse } from './json-widget-value-warehouse.js';
+export { createJsonWidgetValueWarehouse } from './document/value-warehouse.js';
 
-export type { WidgetDocument } from './document.js';
+export type { WidgetDocument } from './document/document.js';
 
 export {
   createWidgetDocument,
   EMPTY_WIDGET_DOCUMENT,
   formatWidgetDocumentJson,
-} from './document.js';
+} from './document/document.js';
 
 export {
   createJdwDocumentJsonSchema,
   createWidgetJsonSchema,
   DEMO_WIDGET_JSON_SCHEMA,
-} from './widget-json-schema.js';
+} from './widget/json-schema.js';
 export {
   WORKBENCH_JDW_PROFILE,
   WORKBENCH_JDW_BUILTIN_TYPES,
@@ -161,18 +161,18 @@ export {
   type WorkbenchJdwSupportLevel,
   type WorkbenchJdwTypeCategory,
   type WorkbenchJdwTypeSupport,
-} from './jdw-profile.js';
+} from './jdw/profile.js';
 export {
   WORKBENCH_JDW_KNOWN_TYPE_FIXTURES,
   wrapWorkbenchJdwKnownTypeFixture,
-} from './known-type-fixtures.js';
+} from './known/type-fixtures.js';
 export {
   validateJsonWidgetData,
   validateJsonWidgetNode,
   type ValidatedJsonWidgetData,
   type ValidateJsonWidgetDataOptions,
   type ValidationIssue,
-} from './validate-json-widget-data.js';
+} from './validate/json-widget-data.js';
 export {
   validateWidgetAssetPackage,
   WIDGET_ASSET_LEAF_CONTENT_TYPES,
@@ -180,7 +180,7 @@ export {
   type ValidatedWidgetAsset,
   type WidgetAssetLeafContentType,
   type WidgetAssetContainerContentType,
-} from './validate-widget-asset.js';
+} from './validate/widget-asset.js';
 export {
   WIDGET_ASSET_MANIFEST_FILENAME,
   WIDGET_ASSET_CONTENT_FILENAME,
@@ -199,19 +199,19 @@ export {
   resolveWidgetAssetPackageFiles,
   type ParsedWidgetAssetPackage,
   type WidgetAssetPackageFiles,
-} from './widget-asset-package.js';
-export { applyWidgetDocumentPatch } from './apply-widget-document-patch.js';
+} from './widget/asset-package.js';
+export { applyWidgetDocumentPatch } from './widget/apply-document-patch.js';
 export {
   createWidgetAssetCatalog,
   materializeWidgetPlacementAsset,
   mergeWidgetAssetCatalogs,
   type MaterializeWidgetPlacementAssetOptions,
-} from './widget-placement-asset.js';
+} from './widget/placement-asset.js';
 export {
   mergeWidgetAssetInputs,
   resolveWidgetAssetContent,
   type ResolvedWidgetAssetContent,
-} from './widget-asset-inputs.js';
+} from './widget/asset-inputs.js';
 export {
   assignGridSlot,
   ensureGridChildPlacements,
@@ -222,7 +222,7 @@ export {
   resolvePlacementPolicy,
   stripExternalPlacement,
   type NormalizeWidgetOptions,
-} from './widget-normalize.js';
+} from './widget/normalize.js';
 
 export type {
   JdwScreenSpec,
@@ -280,7 +280,7 @@ export type {
   CreateWidgetAssetDocumentOptions,
   WidgetAssetDocument,
   WorkspaceAssetFileRef,
-} from './widget-asset-file.js';
+} from './widget/asset-file.js';
 export {
   EMPTY_WIDGET_ASSET_DOCUMENT,
   createWidgetAssetCatalogFromJdwDocuments,
@@ -288,14 +288,14 @@ export {
   createWidgetAssetDocument,
   isJdwWorkspaceDocumentPath,
   normalizeWidgetPlacementAsset,
-} from './widget-asset-file.js';
+} from './widget/asset-file.js';
 
 export type {
   ExpandJsonWidgetDocumentRefsOptions,
   ExpandJsonWidgetDocumentRefsResult,
   JsonWidgetDocumentRefIssue,
   JsonWidgetDocumentRefIssueCode,
-} from './widget-document-ref.js';
+} from './widget/document-ref.js';
 export {
   expandJsonWidgetDocumentRefs,
   expandJsonWidgetDocumentRefsFromSource,
@@ -303,4 +303,4 @@ export {
   isJsonWidgetRefNode,
   joinJsonWidgetDocumentPath,
   normalizeJsonWidgetDocumentPath,
-} from './widget-document-ref.js';
+} from './widget/document-ref.js';
