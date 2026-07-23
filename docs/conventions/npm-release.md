@@ -28,7 +28,10 @@ Directory mapping: `@workbench-kit/jdw` lives in `packages/json-widget` (`PACKAG
 ### Routine releases and first releases (CI)
 
 1. Merge changes to `main`
-2. Push tag `v<version>` or `workbench-kit-v<version>` (must match root `package.json` after sync)
+2. Push tag `v<version>` or `workbench-kit-v<version>` (must match root `package.json` after sync).
+   Prefer `git tag` + `git push origin <tag>` (or `gh release create`, which also pushes a tag).
+   `publish.yml` listens to **tag push only** — not a separate `release` event — so one tag
+   produces one publish run.
 3. GitHub Actions workflow `.github/workflows/publish.yml` runs:
    - `sync-version-from-tag.mjs` — sets **all** package versions from the tag
    - build + `pnpm validate`
