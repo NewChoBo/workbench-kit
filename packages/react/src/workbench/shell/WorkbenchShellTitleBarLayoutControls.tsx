@@ -7,8 +7,8 @@ export interface WorkbenchShellTitleBarLayoutControlsProps {
   readonly isAuxiliarySidebarVisible?: boolean;
   readonly isPanelVisible?: boolean;
   readonly isPrimarySidebarVisible: boolean;
-  readonly onToggleAuxiliarySidebar?: (() => void);
-  readonly onTogglePanel?: (() => void);
+  readonly onToggleAuxiliarySidebar?: () => void;
+  readonly onTogglePanel?: () => void;
   readonly onTogglePrimarySidebar: () => void;
   readonly panelHideLabel?: string;
   readonly panelShowLabel?: string;

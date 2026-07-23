@@ -68,7 +68,7 @@ export interface CatalogBrowsePaneProps extends Omit<ComponentPropsWithRef<'div'
   readonly onOpenItem: (itemId: string) => void;
   readonly onRefresh?: (() => void) | null;
   readonly onSearchQueryChange: (query: string) => void;
-  readonly onSortChange?: ((sort: string) => void);
+  readonly onSortChange?: (sort: string) => void;
   readonly onViewModeChange: (viewMode: CatalogBrowseViewMode) => void;
   readonly refreshLabel?: string | null;
   readonly renderGridItem?:

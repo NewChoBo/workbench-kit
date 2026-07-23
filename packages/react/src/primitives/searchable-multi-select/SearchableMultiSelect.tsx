@@ -38,7 +38,7 @@ export interface SearchableMultiSelectProps {
   /** Shown when the query matches no options. Default: "No matching options". */
   readonly emptyMessage?: string;
   /** Aria label for dismissible selected chips. Default: "Remove {label}". */
-  readonly getRemoveChipAriaLabel?: ((optionLabel: string) => string);
+  readonly getRemoveChipAriaLabel?: (optionLabel: string) => string;
   readonly onValueToggle: (value: string) => void;
   readonly options: ReadonlyArray<SearchableMultiSelectOption>;
   /** Search input placeholder. Default: "Search". */

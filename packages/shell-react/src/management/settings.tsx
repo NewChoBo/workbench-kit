@@ -59,7 +59,11 @@ export function WorkbenchExtensionManagementSettings({
 
   const isInstallTrusted = useCallback(
     (entry: (typeof browseEntries)[number]) =>
-      isExtensionInstallTrusted(entry.id, entry.installPlan?.permissions ?? [], installTrustRecords),
+      isExtensionInstallTrusted(
+        entry.id,
+        entry.installPlan?.permissions ?? [],
+        installTrustRecords,
+      ),
     [installTrustRecords],
   );
 

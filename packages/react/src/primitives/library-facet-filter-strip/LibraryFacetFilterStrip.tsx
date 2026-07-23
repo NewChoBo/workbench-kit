@@ -63,7 +63,7 @@ export interface LibraryFacetFilterStripProps {
    */
   readonly moreFiltersLabel?: string;
   readonly onClearAll: () => void;
-  readonly onOpenMoreFilters?: (() => void);
+  readonly onOpenMoreFilters?: () => void;
   readonly onShowLess: () => void;
   readonly onShowMore: () => void;
   readonly onToggleFacetValue: (

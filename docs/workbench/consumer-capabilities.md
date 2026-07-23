@@ -661,9 +661,9 @@ TilePaper Content Hub maps these rules to a host-specific index:
 
 ## Gaps (kit backlog, not host workarounds)
 
-| Gap                          | Host impact                   | Tracking   |
-| ---------------------------- | ----------------------------- | ---------- |
-| Consumer type shims          | Local type declaration drift  | Backlog §3 |
+| Gap                          | Host impact                                                                                                     | Tracking   |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------- |
+| Consumer type shims          | Local type declaration drift                                                                                    | Backlog §3 |
 | `exactOptionalPropertyTypes` | Partial kit cleanup + `pnpm typecheck:react-exact-optional`; linked-source graphs may still need split tsconfig | Backlog §4 |
 
 ---

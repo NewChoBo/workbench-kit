@@ -275,7 +275,7 @@ export interface WorkbenchArtifactShellProps extends Omit<
   defaultMode?: WorkbenchArtifactMode;
   emptyLabel?: ReactNode;
   mode?: WorkbenchArtifactMode;
-  onModeChange?: ((mode: WorkbenchArtifactMode) => void);
+  onModeChange?: (mode: WorkbenchArtifactMode) => void;
   previewLabel?: string;
   previewRenderers?: readonly WorkbenchPreviewRenderer[];
   renderCode?: WorkbenchArtifactShellRenderCode;

@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createBrowserWorkbenchStorage,
-  createMemoryWorkbenchStorage,
-} from './storage-adapters.js';
+import { createBrowserWorkbenchStorage, createMemoryWorkbenchStorage } from './storage-adapters.js';
 
 describe('workbench storage adapters', () => {
   it('stores values in memory without touching web storage', () => {

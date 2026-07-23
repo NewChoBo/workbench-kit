@@ -60,12 +60,12 @@ No separate backend process is required by default. The sample auth flow uses a
 dummy backend client (`src/dummy-backend/`) that implements the
 [Sample Host Backend API](../../docs/workbench/sample-host-backend-api.md).
 
-| Endpoint-like action | Route                                    | Fixed behavior (in-memory mode)                         |
-| -------------------- | ---------------------------------------- | ------------------------------------------------------- |
-| Session check        | `GET /api/sample-host/v1/auth/session`   | Restores session from in-memory SecretStorage           |
-| Login                | `POST /api/sample-host/v1/auth/sign-in`  | Accepts `tester` / `tester`                             |
-| Logout               | `POST /api/sample-host/v1/auth/sign-out` | Clears sample session                                   |
-| Linked accounts      | Included in authenticated session body   | Fixed GitHub and npm records                            |
+| Endpoint-like action | Route                                    | Fixed behavior (in-memory mode)               |
+| -------------------- | ---------------------------------------- | --------------------------------------------- |
+| Session check        | `GET /api/sample-host/v1/auth/session`   | Restores session from in-memory SecretStorage |
+| Login                | `POST /api/sample-host/v1/auth/sign-in`  | Accepts `tester` / `tester`                   |
+| Logout               | `POST /api/sample-host/v1/auth/sign-out` | Clears sample session                         |
+| Linked accounts      | Included in authenticated session body   | Fixed GitHub and npm records                  |
 
 Demo auth sessions use `createMemorySecretStorage()` (process memory). They are
 **not** written to `sessionStorage` / `localStorage`. A full page reload clears

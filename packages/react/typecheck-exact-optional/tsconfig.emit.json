@@ -9,5 +9,10 @@
     "tsBuildInfoFile": "./.tmp-types/.tsbuildinfo"
   },
   "include": ["../src/**/*.ts", "../src/**/*.tsx"],
-  "exclude": ["../src/**/*.test.ts", "../src/**/*.test.tsx", "../src/**/*.stories.ts", "../src/**/*.stories.tsx"]
+  "exclude": [
+    "../src/**/*.test.ts",
+    "../src/**/*.test.tsx",
+    "../src/**/*.stories.ts",
+    "../src/**/*.stories.tsx"
+  ]
 }

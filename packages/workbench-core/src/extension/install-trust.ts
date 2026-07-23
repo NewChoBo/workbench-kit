@@ -131,4 +131,3 @@ function normalizeTrustRecord(value: unknown): ExtensionInstallTrustRecord | und
     trustedAt: record.trustedAt,
   };
 }
-

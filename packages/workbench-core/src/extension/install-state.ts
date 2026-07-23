@@ -245,4 +245,3 @@ function normalizeInstalledExtensionRecord(value: unknown): InstalledExtensionRe
     manifestUrl: record.manifestUrl,
   };
 }
-

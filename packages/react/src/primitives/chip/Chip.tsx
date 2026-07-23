@@ -6,7 +6,7 @@ import { cx } from '../../utils/cx';
 export interface ChipProps extends Omit<ComponentPropsWithRef<'button'>, 'children'> {
   count?: number;
   label: ReactNode;
-  onDismiss?: (() => void);
+  onDismiss?: () => void;
 }
 
 /**

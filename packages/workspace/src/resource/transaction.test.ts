@@ -5,10 +5,7 @@ import {
   parseWorkspaceResourceUri,
   workspaceResourceUriForFile,
 } from './uri.js';
-import {
-  createWorkspaceResourceSnapshot,
-  snapshotMatchesWorkspaceState,
-} from './snapshot.js';
+import { createWorkspaceResourceSnapshot, snapshotMatchesWorkspaceState } from './snapshot.js';
 import {
   virtualWorkspaceActionToResourceMutation,
   workspaceResourceMutationToAction,

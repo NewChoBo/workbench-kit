@@ -1,7 +1,4 @@
-import type {
-  WorkbenchSecretStorageNamespace,
-  WorkbenchSecretStorageService,
-} from './types.js';
+import type { WorkbenchSecretStorageNamespace, WorkbenchSecretStorageService } from './types.js';
 
 /**
  * In-memory {@link WorkbenchSecretStorageService} for tests and ephemeral hosts.

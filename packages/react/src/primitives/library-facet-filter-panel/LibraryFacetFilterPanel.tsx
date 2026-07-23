@@ -64,15 +64,15 @@ export interface LibraryFacetFilterPanelProps {
   readonly description?: string;
   readonly labels: LibraryFacetFilterPanelLabels;
   /** Required when `showActiveChips` is true (chip strip Clear). Host may own Clear otherwise. */
-  readonly onClearAll?: (() => void);
-  readonly onRemoveChip?: ((chipId: string) => void);
+  readonly onClearAll?: () => void;
+  readonly onRemoveChip?: (chipId: string) => void;
   readonly onToggleFacetValue: (
     fieldId: string,
     value: string,
     kind: LibraryFacetFieldKind,
   ) => void;
   readonly resolveFieldLabel: (fieldId: string) => string;
-  readonly resolveSectionLabel?: ((sectionId: string) => string);
+  readonly resolveSectionLabel?: (sectionId: string) => string;
   readonly sections: ReadonlyArray<LibraryFacetSection>;
   readonly selectedValues: Readonly<Record<string, readonly string[]>>;
   /**

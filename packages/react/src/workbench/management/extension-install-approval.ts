@@ -42,10 +42,9 @@ export interface ResolveExtensionInstallOptionsInput {
  */
 export function resolveExtensionInstallOptions(
   entry: ExtensionCatalogBrowseEntry,
-  confirmOrOptions:
-    | ((message: string) => boolean)
-    | ResolveExtensionInstallOptionsInput = (message) =>
-    typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false,
+  confirmOrOptions: ((message: string) => boolean) | ResolveExtensionInstallOptionsInput = (
+    message,
+  ) => (typeof globalThis.confirm === 'function' ? globalThis.confirm(message) : false),
 ): ExtensionInstallOptions | undefined {
   if (!extensionInstallRequiresApproval(entry)) {
     return {};
