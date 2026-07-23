@@ -4,6 +4,14 @@ export type { WorkbenchMonaco } from './monaco-loader.js';
 
 export { Editor, loader, monaco } from './monaco-loader.js';
 export {
+  createMonacoWorker,
+  installMonacoEnvironment,
+  resolveMonacoWorkerSource,
+  type InstallMonacoEnvironmentOptions,
+  type MonacoEnvironmentWorkers,
+  type MonacoWorkerSource,
+} from './installMonacoEnvironment.js';
+export {
   MONACO_DARK_THEME_ID,
   MONACO_LIGHT_THEME_ID,
   buildMonacoThemeColors,

@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { installMonacoEnvironment } from '@workbench-kit/monaco';
 import cssWorkerUrl from 'monaco-editor/language/css/css.worker?worker&url';
 import htmlWorkerUrl from 'monaco-editor/language/html/html.worker?worker&url';
 import jsonWorkerUrl from 'monaco-editor/language/json/json.worker?worker&url';
@@ -11,19 +12,13 @@ import '@workbench-kit/react/styles.css';
 import { createSampleHost } from './createSampleHost.js';
 import './host.css';
 
-const monacoEnvironmentGlobal = globalThis as typeof globalThis & {
-  MonacoEnvironment?: {
-    getWorker?: (_moduleId: string, label: string) => Worker;
-  };
-};
-
-monacoEnvironmentGlobal.MonacoEnvironment = {
-  ...monacoEnvironmentGlobal.MonacoEnvironment,
-  getWorker: (_moduleId: string, label: string) => {
-    const workerUrl = getMonacoWorkerUrl(label);
-    return new Worker(workerUrl, { name: `monaco-${label}-worker`, type: 'module' });
-  },
-};
+installMonacoEnvironment({
+  css: cssWorkerUrl,
+  editor: editorWorkerUrl,
+  html: htmlWorkerUrl,
+  json: jsonWorkerUrl,
+  typescript: tsWorkerUrl,
+});
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -31,12 +26,3 @@ if (!rootElement) {
 }
 
 createRoot(rootElement).render(<StrictMode>{createSampleHost()}</StrictMode>);
-
-function getMonacoWorkerUrl(label: string): string {
-  if (label === 'json') return jsonWorkerUrl;
-  if (label === 'css' || label === 'scss' || label === 'less') return cssWorkerUrl;
-  if (label === 'html' || label === 'handlebars' || label === 'razor') return htmlWorkerUrl;
-  if (label === 'typescript' || label === 'javascript') return tsWorkerUrl;
-
-  return editorWorkerUrl;
-}
