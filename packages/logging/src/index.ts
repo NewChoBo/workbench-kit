@@ -1,7 +1,4 @@
-export {
-  createConsoleWorkbenchLogSink,
-  createWorkbenchLogger,
-} from './createWorkbenchLogger';
+export { createConsoleWorkbenchLogSink, createWorkbenchLogger } from './createWorkbenchLogger';
 export type {
   WorkbenchLogEvent,
   WorkbenchLogger,

@@ -24,8 +24,8 @@ export interface NumberInputProps extends Omit<
    */
   nullable?: boolean;
   /** Fired when a nullable field is cleared. */
-  onEmptyValue?: (() => void);
-  onValueChange?: ((value: number, event: ChangeEvent<HTMLInputElement>) => void);
+  onEmptyValue?: () => void;
+  onValueChange?: (value: number, event: ChangeEvent<HTMLInputElement>) => void;
   value?: number;
 }
 

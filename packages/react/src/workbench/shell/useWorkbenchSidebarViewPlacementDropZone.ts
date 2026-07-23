@@ -20,7 +20,7 @@ export type WorkbenchSidebarViewPlacementDropZoneProps = HTMLAttributes<HTMLElem
 };
 
 export interface UseWorkbenchSidebarViewPlacementDropZoneOptions {
-  readonly acceptViewForDrop?: ((viewId: string) => boolean);
+  readonly acceptViewForDrop?: (viewId: string) => boolean;
   readonly onDropView: (viewId: string) => void;
   readonly zoneId?: string;
 }

@@ -35,9 +35,7 @@ export class ExtensionCapabilityRequiredError extends Error {
   readonly capabilityId: string;
 
   constructor(extensionId: string, capabilityId: string) {
-    super(
-      `Extension "${extensionId}" did not declare required capability "${capabilityId}".`,
-    );
+    super(`Extension "${extensionId}" did not declare required capability "${capabilityId}".`);
     this.name = 'ExtensionCapabilityRequiredError';
     this.extensionId = extensionId;
     this.capabilityId = capabilityId;

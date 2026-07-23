@@ -14,8 +14,8 @@ export interface WorkbenchWindowChromeControlsProps {
   maximizeLabel?: string;
   minimizeLabel?: string;
   onClose: () => void;
-  onMinimize?: (() => void);
-  onToggleMaximized?: (() => void);
+  onMinimize?: () => void;
+  onToggleMaximized?: () => void;
   restoreLabel?: string;
   showMaximize?: boolean;
   showMinimize?: boolean;
@@ -91,8 +91,8 @@ interface SharedControlProps {
   maximizeLabel: string;
   minimizeLabel: string;
   onClose: () => void;
-  onMinimize?: (() => void);
-  onToggleMaximized?: (() => void);
+  onMinimize?: () => void;
+  onToggleMaximized?: () => void;
   restoreLabel: string;
   showMaximize: boolean;
   showMinimize: boolean;

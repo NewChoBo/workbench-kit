@@ -57,14 +57,14 @@ reference factories `createMemoryWorkbenchStorage` /
 
 Required adapter semantics:
 
-| Concern        | Policy                                                                                                     |
-| -------------- | ---------------------------------------------------------------------------------------------------------- |
-| Key shape      | Kit-owned feature prefix plus stable key name, versioned when the value shape changes                      |
+| Concern        | Policy                                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Key shape      | Kit-owned feature prefix plus stable key name, versioned when the value shape changes                                          |
 | Scope          | Host maps feature keys to `user` / `workspace` / `session` backing stores; `secret` uses SecretStorage/vault, not this adapter |
-| Values         | JSON-serializable values; adapter validates decode failure as missing/corrupt state                        |
-| Read failure   | Fall back to documented defaults and surface a recoverable diagnostic hook                                 |
-| Write failure  | Keep runtime state in memory, report a non-fatal persistence error, and avoid partially acknowledged saves |
-| Host ownership | Browser storage, user-data files, workspace files, cloud sync, and encryption are host responsibilities    |
+| Values         | JSON-serializable values; adapter validates decode failure as missing/corrupt state                                            |
+| Read failure   | Fall back to documented defaults and surface a recoverable diagnostic hook                                                     |
+| Write failure  | Keep runtime state in memory, report a non-fatal persistence error, and avoid partially acknowledged saves                     |
+| Host ownership | Browser storage, user-data files, workspace files, cloud sync, and encryption are host responsibilities                        |
 
 The first storage-backed domains are:
 

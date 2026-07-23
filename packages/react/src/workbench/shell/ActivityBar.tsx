@@ -20,12 +20,12 @@ export interface ActivityBarItem {
 }
 
 export interface ActivityBarProps extends Omit<ComponentPropsWithoutRef<'nav'>, 'children'> {
-  acceptSidebarViewPlacementDrop?: ((viewId: string) => boolean);
+  acceptSidebarViewPlacementDrop?: (viewId: string) => boolean;
   itemDataAttributeName?: string;
   items: ActivityBarItem[];
   onItemActivate?: (item: ActivityBarItem) => void;
   onItemsReorder?: (itemIds: string[]) => void;
-  onSidebarViewPlacementDrop?: ((viewId: string) => void);
+  onSidebarViewPlacementDrop?: (viewId: string) => void;
   orientation?: ActivityBarOrientation;
   reorderable?: boolean;
   secondaryItems?: ActivityBarItem[];

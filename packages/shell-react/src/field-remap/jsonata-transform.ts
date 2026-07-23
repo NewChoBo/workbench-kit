@@ -31,8 +31,7 @@ export function createJsonataValueTransform(
   options: CreateJsonataValueTransformOptions = {},
 ): ValueTransformDefinition {
   const timeoutMs = options.timeoutMs ?? DEFAULT_JSONATA_TIMEOUT_MS;
-  const maxExpressionLength =
-    options.maxExpressionLength ?? DEFAULT_JSONATA_MAX_EXPRESSION_LENGTH;
+  const maxExpressionLength = options.maxExpressionLength ?? DEFAULT_JSONATA_MAX_EXPRESSION_LENGTH;
   const onError = options.onError ?? 'throw';
 
   return {

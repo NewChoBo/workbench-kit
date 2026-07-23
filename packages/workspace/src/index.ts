@@ -32,7 +32,12 @@ export {
   type WorkspaceFileDraft,
   type WorkspaceFileDraftMap,
 } from './draft/draft';
-export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search/search';
+export {
+  compactText,
+  createContentPreview,
+  highlightText,
+  searchWorkspaceFiles,
+} from './search/search';
 export {
   createEmptyWorkspaceSelection,
   getWorkspaceSelectionActionPaths,

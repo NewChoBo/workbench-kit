@@ -174,9 +174,7 @@ function migrateLegacySampleAuthSession(): void {
     .forExtension(SAMPLE_AUTH_EXTENSION_ID)
     .get(SAMPLE_AUTH_SESSION_KEY);
   if (!current) {
-    sampleAuthSecrets
-      .forExtension(SAMPLE_AUTH_EXTENSION_ID)
-      .set(SAMPLE_AUTH_SESSION_KEY, legacy);
+    sampleAuthSecrets.forExtension(SAMPLE_AUTH_EXTENSION_ID).set(SAMPLE_AUTH_SESSION_KEY, legacy);
   }
   clearLegacySampleAuthSessionStorage();
 }

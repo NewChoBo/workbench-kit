@@ -132,4 +132,3 @@ export function resolvePersistedWorkbenchLayout(
 
   return createWorkbenchLayoutState(persisted, createWorkbenchLayoutState(baseLayout ?? {}));
 }
-

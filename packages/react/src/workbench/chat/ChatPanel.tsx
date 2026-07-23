@@ -28,17 +28,17 @@ export interface ChatPanelProps
   filesDropLabel?: string;
   headerAddon?: ReactNode;
   /** Called when files are dropped onto the panel (disabled while `disabled` or `isRunning`). */
-  onFilesDrop?: ((files: File[]) => void);
+  onFilesDrop?: (files: File[]) => void;
   /**
    * Wrap or replace the default `<ChatMessageList />` so hosts can inject
    * hybrid timelines around the kit list.
    */
-  renderMessageList?: ((defaultList: ReactNode) => ReactNode);
+  renderMessageList?: (defaultList: ReactNode) => ReactNode;
   /**
    * Wrap or replace the default `<ChatComposer />` while keeping panel chrome
    * and file-drop overlay behavior.
    */
-  renderComposer?: ((defaultComposer: ReactNode) => ReactNode);
+  renderComposer?: (defaultComposer: ReactNode) => ReactNode;
   title?: string;
 }
 

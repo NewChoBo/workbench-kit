@@ -45,8 +45,8 @@ export interface ChatMessageItemProps {
   labelIcon?: ReactNode | false;
   layout?: ChatMessageLayout;
   message: ChatMessage;
-  onCommandProposalAllow?: ((messageId: string, proposal: ChatCommandProposal) => void);
-  onCommandProposalDeny?: ((messageId: string, proposal: ChatCommandProposal) => void);
+  onCommandProposalAllow?: (messageId: string, proposal: ChatCommandProposal) => void;
+  onCommandProposalDeny?: (messageId: string, proposal: ChatCommandProposal) => void;
   showSenderLabel?: boolean;
   /** When true, keeps the inline timestamp visible without hover. */
   showTimestamp?: boolean;

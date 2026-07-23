@@ -12,7 +12,12 @@ export type {
   ChatEventDispatcher,
   ChatEventServiceListener,
 } from './chat/chat';
-export { AbstractChatTransport, isChatStatusEvent, isDeltaEvent, isMessageEvent } from './chat/chat';
+export {
+  AbstractChatTransport,
+  isChatStatusEvent,
+  isDeltaEvent,
+  isMessageEvent,
+} from './chat/chat';
 
 export type {
   WorkspacePatchApplyFailure,
@@ -120,7 +125,11 @@ export type {
   PluginPredicate,
   PluginValue,
 } from './plugin/plugin';
-export { isPluginEnabled, isPluginLifecycleFailure, isPluginLifecycleSuccess } from './plugin/plugin';
+export {
+  isPluginEnabled,
+  isPluginLifecycleFailure,
+  isPluginLifecycleSuccess,
+} from './plugin/plugin';
 export type {
   LibraryItemDescriptor,
   LibraryDragPayload,

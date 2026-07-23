@@ -105,4 +105,3 @@ function normalizeThemePreference(value: unknown): WorkbenchColorSchemePreferenc
 
   return DEFAULT_WORKBENCH_APPEARANCE.themePreference;
 }
-

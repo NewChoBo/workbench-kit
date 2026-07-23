@@ -7,7 +7,7 @@ export interface UseCancelRuntimeOnUnmountOptions<TStatus extends string = Runti
   cancel: () => void;
   cancellableStatuses?: readonly TStatus[];
   enabled?: boolean;
-  getStatus?: (() => TStatus);
+  getStatus?: () => TStatus;
   status?: TStatus;
 }
 

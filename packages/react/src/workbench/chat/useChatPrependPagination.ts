@@ -9,7 +9,7 @@ import {
 
 export interface UseChatPrependPaginationOptions {
   autoScrollBottomThreshold?: number;
-  getScrollContainer?: ((listElement: HTMLDivElement | null) => HTMLElement | null);
+  getScrollContainer?: (listElement: HTMLDivElement | null) => HTMLElement | null;
   initialVisibleItemCount?: number;
   isStreaming?: boolean;
   itemCount: number;

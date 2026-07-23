@@ -84,13 +84,13 @@ cascade menus stay primary-only and open the fuller dialog for the rest.
 
 ### 4. `exactOptionalPropertyTypes` compatibility for linked consumers — partial
 
-| Field | Detail |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Status** | Partial — high-traffic props cleaned; consumer fixture landed (`pnpm typecheck:react-exact-optional`). |
-| **Description** | Consumer enables `exactOptionalPropertyTypes`; remaining kit areas may still use `prop?: T \| undefined` or fail when typechecking linked source implementation graphs. |
-| **Consumer pain** | Type errors on otherwise valid kit usage; forces split tsconfig or `as` casts at boundaries for uncleaned surfaces. |
-| **Suggested package** | `@workbench-kit/react` — continue audit beyond primitives/modal/shell/chat (settings/schema, editors, workspace). |
-| **Storybook / sample** | Fixture: `packages/react/typecheck-exact-optional` (emit `.d.ts` + eOPT smoke). Convention: `docs/conventions/public-api-governance.md`. |
+| Field                  | Detail                                                                                                                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Status**             | Partial — high-traffic props cleaned; consumer fixture landed (`pnpm typecheck:react-exact-optional`).                                                                  |
+| **Description**        | Consumer enables `exactOptionalPropertyTypes`; remaining kit areas may still use `prop?: T \| undefined` or fail when typechecking linked source implementation graphs. |
+| **Consumer pain**      | Type errors on otherwise valid kit usage; forces split tsconfig or `as` casts at boundaries for uncleaned surfaces.                                                     |
+| **Suggested package**  | `@workbench-kit/react` — continue audit beyond primitives/modal/shell/chat (settings/schema, editors, workspace).                                                       |
+| **Storybook / sample** | Fixture: `packages/react/typecheck-exact-optional` (emit `.d.ts` + eOPT smoke). Convention: `docs/conventions/public-api-governance.md`.                                |
 
 ### 5. Platform window chrome — landed
 
