@@ -102,7 +102,7 @@ Same `ui-workbench-shell` block appears twice in the repo CSS graph.
 | File                                       | Rule                                                                      |
 | ------------------------------------------ | ------------------------------------------------------------------------- |
 | `packages/react/src/styles.css`            | `.workbench-editor-area { flex:1; min-height:0; overflow:hidden }`        |
-| `packages/shell-react/src/editor-area.css` | `.workbench-editor-area { height:100%; … }`                               |
+| `packages/shell-react/src/editor/area.css` | `.workbench-editor-area { height:100%; … }`                               |
 | `examples/workbench-sample/src/host.css`   | `.workbench-sample-editor-frame > .workbench-editor-area { height:auto }` |
 
 Monaco host repeats `height:100%` + `min-height:0` inside `editor-area.css`.

@@ -81,9 +81,9 @@ Gesture defaults:
 | URI helpers  | `packages/react/src/workbench/management/command-inspector-uri.ts`  |
 | Detail UI    | `packages/react/src/workbench/management/CommandInspectorPanel.tsx` |
 | Sidebar      | `CommandManagementSidebar` — `onInspectCommand`, double-click       |
-| Shell wiring | `packages/shell-react/src/commands-view.tsx`                        |
+| Shell wiring | `packages/shell-react/src/commands/view.tsx`                        |
 | Editor host  | `extensions/builtin.commands/src/command-inspector-editor-host.ts`  |
-| Surface      | `packages/shell-react/src/command-inspector-surface.tsx`            |
+| Surface      | `packages/shell-react/src/commands/inspector-surface.tsx`            |
 
 **Before:** sidebar list only; rich metadata visible in Settings → Commands panel.
 
@@ -127,4 +127,4 @@ padding aligned to new tokens.
 - `docs/workbench/sidebar-simplification-plan-2026-06-20.md`
 - `docs/workbench/command-core-alignment-plan-2026-06-20.md`
 - `extensions/builtin.editor` — text / missing-resource editor hosts
-- `packages/shell-react/src/editor-host-surface.tsx`
+- `packages/shell-react/src/editor/host-surface.tsx`

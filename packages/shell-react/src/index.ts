@@ -6,7 +6,7 @@ export {
   type WorkbenchContextValue,
   type WorkbenchStorageAdapter,
   type WorkbenchWorkspaceHostPort,
-} from './provider.js';
+} from './shell/provider.js';
 export {
   WorkbenchDevtoolsPanel,
   WorkbenchDevtoolsShell,
@@ -19,26 +19,26 @@ export {
   isWorkbenchEditorStatePersistenceAvailable,
   readPersistedEditorState,
   writePersistedEditorState,
-} from './editor-state-storage.js';
+} from './editor/state-storage.js';
 export {
   DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
   isWorkbenchKeybindingPersistenceAvailable,
   readPersistedKeybindingOverrides,
   writePersistedKeybindingOverrides,
-} from './keybinding-overrides-storage.js';
+} from './management/keybinding-overrides-storage.js';
 export {
   DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
   isWorkbenchLocalPreferencePersistenceAvailable,
   readPersistedLocalPreferences,
   writePersistedLocalPreferences,
-} from './preference-settings-storage.js';
+} from './management/preference-settings-storage.js';
 export {
   DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   isWorkbenchLayoutPersistenceAvailable,
   readPersistedWorkbenchLayout,
   resolvePersistedWorkbenchLayout,
   writePersistedWorkbenchLayout,
-} from './workbench-layout-storage.js';
+} from './workbench/layout-storage.js';
 export {
   DEFAULT_WORKBENCH_APPEARANCE,
   DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
@@ -46,17 +46,17 @@ export {
   readPersistedWorkbenchAppearance,
   writePersistedWorkbenchAppearance,
   type WorkbenchAppearanceSettings,
-} from './workbench-appearance-storage.js';
+} from './workbench/appearance-storage.js';
 export {
   usePersistedWorkbenchAppearance,
   type UsePersistedWorkbenchAppearanceOptions,
-} from './use-persisted-workbench-appearance.js';
+} from './workbench/use-persisted-appearance.js';
 export {
   createWorkspaceResourceStatusItems,
   mergeWorkbenchStatusSections,
   type WorkspaceResourceStatusItemsInput,
-} from './workbench-status-sections.js';
-export { EditorArea, type EditorAreaProps, type EditorViewMode } from './editor-area.js';
+} from './workbench/status-sections.js';
+export { EditorArea, type EditorAreaProps, type EditorViewMode } from './editor/area.js';
 export {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
   EditorDocumentViewProviderRegistry,
@@ -73,18 +73,18 @@ export {
   type EditorDocumentViewProvider,
   type EditorDocumentViewRenderContext,
   type ResolvedEditorDocumentViews,
-} from './editor-view-providers.js';
-export { SampleJdwLabView, type SampleJdwLabViewProps } from './jdw-lab-view.js';
-export { JdwWidgetFormView, type JdwWidgetFormViewProps } from './jdw-widget-form-view.js';
-export { JdwWidgetPreviewView, type JdwWidgetPreviewViewProps } from './jdw-widget-preview-view.js';
+} from './editor/view-providers.js';
+export { SampleJdwLabView, type SampleJdwLabViewProps } from './jdw/lab-view.js';
+export { JdwWidgetFormView, type JdwWidgetFormViewProps } from './jdw/widget-form-view.js';
+export { JdwWidgetPreviewView, type JdwWidgetPreviewViewProps } from './jdw/widget-preview-view.js';
 export {
   isSampleJdwLabViewRenderData,
   SAMPLE_JDW_LAB_VIEW_RENDER_KIND,
   type SampleJdwLabViewRenderData,
-} from './jdw-lab-view-data.js';
-export { SampleFieldRemapDemo, type SampleFieldRemapDemoProps } from './field-remap-demo.js';
-export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap-panel.js';
-export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './field-remap-flow.js';
+} from './jdw/lab-view-data.js';
+export { SampleFieldRemapDemo, type SampleFieldRemapDemoProps } from './field-remap/demo.js';
+export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap/panel.js';
+export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './field-remap/flow.js';
 export {
   FIELD_REMAP_SAMPLES,
   getFieldRemapSample,
@@ -92,29 +92,29 @@ export {
   resolveFieldRemapSampleId,
   type FieldRemapSampleDefinition,
   type FieldRemapSampleId,
-} from './field-remap-samples.js';
+} from './field-remap/samples.js';
 export {
   SampleFieldRemapView,
   buildFieldRemapEditorUri,
   parseFieldRemapEditorSampleId,
   type SampleFieldRemapViewProps,
-} from './field-remap-view.js';
+} from './field-remap/view.js';
 export {
   isSampleFieldRemapViewRenderData,
   SAMPLE_FIELD_REMAP_VIEW_RENDER_KIND,
   type SampleFieldRemapViewRenderData,
-} from './field-remap-view-data.js';
+} from './field-remap/view-data.js';
 export {
   FieldRemapEditorSurface,
   type FieldRemapEditorSurfaceId,
   type FieldRemapEditorSurfaceProps,
-} from './field-remap-editor-surface.js';
+} from './field-remap/editor-surface.js';
 export {
   WorkbenchShell,
   type WorkbenchLocaleOption,
   type WorkbenchShellProps,
   type WorkbenchThemeOption,
-} from './shell.js';
+} from './shell/shell.js';
 export {
   getWorkbenchCommandPaletteShortcutLabel,
   getWorkbenchQuickAccessShortcutLabel,
@@ -125,27 +125,27 @@ export {
   matchesWorkbenchQuickAccessShortcut,
   mergeWorkbenchCommandDescriptors,
   resolveShellCommandActivities,
-} from './workbench-command-palette.js';
-export { WorkbenchCommandHost, type WorkbenchCommandHostProps } from './workbench-command-host.js';
-export { WorkbenchStartupGate, type WorkbenchStartupGateProps } from './workbench-startup-gate.js';
+} from './workbench/command-palette.js';
+export { WorkbenchCommandHost, type WorkbenchCommandHostProps } from './workbench/command-host.js';
+export { WorkbenchStartupGate, type WorkbenchStartupGateProps } from './workbench/startup-gate.js';
 export {
   normalizeKeybindingKeyFromEvent,
   resolveExtensionKeybindingCommand,
-} from './workbench-keybinding-bridge.js';
+} from './workbench/keybinding-bridge.js';
 export {
   parseWorkbenchChatCommandInput,
   type WorkbenchChatCommandInputParseResult,
-} from './chat-command-input.js';
+} from './chat/command-input.js';
 export {
   useWorkbenchChatCommandSurface,
   type WorkbenchChatCommandRunResult,
   type WorkbenchChatCommandSurfaceOptions,
-} from './chat-command-surface.js';
-export { useWorkbenchCommandDescriptors } from './use-workbench-command-descriptors.js';
+} from './chat/command-surface.js';
+export { useWorkbenchCommandDescriptors } from './commands/use-command-descriptors.js';
 export {
   executeWorkbenchUserCommandAction,
   registerWorkbenchUserCommands,
-} from './workbench-user-commands.js';
+} from './workbench/user-commands.js';
 export {
   createWorkbenchHostThemeRegistration,
   HOST_WORKBENCH_THEME_EXTENSION_ID,
@@ -162,8 +162,8 @@ export {
   useEditorHost,
   useEditorService,
   useEditorState,
-} from './use-editor.js';
-export { isWorkspaceResourceService, useWorkspaceResourceState } from './workspace-view-state.js';
+} from './editor/use-editor.js';
+export { isWorkspaceResourceService, useWorkspaceResourceState } from './workbench/workspace-view-state.js';
 export {
   MANAGE_ACCOUNTS_COMMAND_ID,
   MANAGE_COMMANDS_COMMAND_ID,
@@ -173,15 +173,15 @@ export {
   WORKBENCH_COMMANDS_SETTINGS_CATEGORY_ID,
   WORKBENCH_EXTENSIONS_SETTINGS_CATEGORY_ID,
   WORKBENCH_KEYBINDINGS_SETTINGS_CATEGORY_ID,
-} from './management-settings-ids.js';
-export { createWorkbenchManagementPaletteCommands } from './management-palette-commands.js';
+} from './management/settings-ids.js';
+export { createWorkbenchManagementPaletteCommands } from './management/palette-commands.js';
 export {
   WorkbenchAccountManagementSettings,
   WorkbenchCommandManagementSettings,
   WorkbenchExtensionManagementSettings,
   WorkbenchKeybindingManagementSettings,
   type WorkbenchAccountManagementInput,
-} from './management-settings.js';
+} from './management/settings.js';
 export {
   WORKBENCH_PROFILE_ACTIVITY_ITEM_ID,
   WORKBENCH_ACCOUNT_ACTIVITY_ITEM_ID,
@@ -190,10 +190,10 @@ export {
   getWorkbenchSecondaryActivityRoute,
   type WorkbenchSecondaryActivityItemsInput,
   type WorkbenchSecondaryActivityRoute,
-} from './shell-secondary-actions.js';
+} from './shell/secondary-actions.js';
 export {
   WorkbenchProfileModal,
   type WorkbenchProfileDetail,
   type WorkbenchProfileInput,
   type WorkbenchProfileModalProps,
-} from './workbench-profile-modal.js';
+} from './workbench/profile-modal.js';

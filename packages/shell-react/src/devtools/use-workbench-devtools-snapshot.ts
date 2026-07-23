@@ -4,7 +4,7 @@ import {
   collectWorkbenchDevtoolsSnapshot,
   type WorkbenchDevtoolsSnapshot,
 } from './workbench-devtools-snapshot.js';
-import { useWorkbench } from '../provider.js';
+import { useWorkbench } from '../shell/provider.js';
 import type { WorkbenchWorkspaceHostPort as WorkspaceHostPort } from '@workbench-kit/workspace';
 
 export function useWorkbenchDevtoolsSnapshot(): WorkbenchDevtoolsSnapshot {
