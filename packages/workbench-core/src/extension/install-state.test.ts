@@ -129,6 +129,31 @@ describe('extension-install-state', () => {
     ]);
   });
 
+  it('refuses install/enable actions outside the enterprise allowlist', () => {
+    const installSources = [
+      {
+        category: 'utility',
+        id: 'blocked-ext',
+        manifestUrl: 'blocked-ext',
+      },
+    ];
+    const plan = createExtensionInstallPlan({
+      availableExtensions: [extension('blocked-ext')],
+      installSources,
+      installedRecords: [],
+      targetExtensionId: 'blocked-ext',
+    });
+
+    expect(() =>
+      applyExtensionInstallPlanToRecords({
+        allowlistPolicy: { allowedExtensionIds: ['other.ext'] },
+        currentRecords: [],
+        installSources,
+        plan,
+      }),
+    ).toThrow(/not on the host enterprise allowlist/i);
+  });
+
   it('refuses plans that require approval until approved is true', () => {
     const installSources = [
       {

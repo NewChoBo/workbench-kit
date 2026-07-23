@@ -128,6 +128,12 @@ export {
   type PermissionAssertContext,
 } from './extension/permissions.js';
 export {
+  ExtensionNotAllowlistedError,
+  assertExtensionAllowlisted,
+  isExtensionAllowlisted,
+  type ExtensionEnterpriseAllowlistPolicy,
+} from './extension/enterprise-allowlist.js';
+export {
   computeWorkbenchExtensionManifestIntegrity,
   verifyWorkbenchExtensionsAgainstLock,
   type ExtensionIntegrityDiagnostic,

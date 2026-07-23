@@ -160,6 +160,14 @@ In `fail-closed` mode, enabled extensions missing from the lock or with a
 version/integrity mismatch are not registered. This is the kit analogue of
 Marketplace/Open VSX package integrity for the bundled-only MVP.
 
+## Enterprise extension allowlist
+
+Hosts may pass an opt-in `ExtensionEnterpriseAllowlistPolicy` into
+`applyExtensionInstallPlanToRecords`. When `allowedExtensionIds` is set
+(including `[]` = deny all), install/enable actions for other ids throw
+`ExtensionNotAllowlistedError`. Omitting `allowedExtensionIds` leaves the
+policy inactive so existing hosts stay open by default.
+
 ## Durable install trust
 
 Permissioned installs may persist consent so repeat installs with the same

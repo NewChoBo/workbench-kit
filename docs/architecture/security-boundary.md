@@ -52,6 +52,10 @@ Running arbitrary third-party extension code introduces:
 - **No runtime npm install initially** — extensions ship as pre-built bundles known at compile time
 - **Catalog URL allowlist** — `assertExtensionCatalogUrlAllowed` / `ExtensionCatalogTrustPolicy`
   (default: relative catalogs only; absolute origins require host allowlist).
+- **Enterprise extension id allowlist** — opt-in
+  `ExtensionEnterpriseAllowlistPolicy` / `assertExtensionAllowlisted`; when
+  `allowedExtensionIds` is set, `applyExtensionInstallPlanToRecords` refuses
+  non-listed install/enable actions.
 - **Install approval gate** — `applyExtensionInstallPlanToRecords` refuses
   `requiresApproval && !approved`
 - **Extensions lock integrity** — `verifyWorkbenchExtensionsAgainstLock` checks

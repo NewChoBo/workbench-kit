@@ -3,6 +3,10 @@ import type {
   WorkbenchStorageReader,
   WorkbenchStorageWriter,
 } from '../storage.js';
+import {
+  assertExtensionAllowlisted,
+  type ExtensionEnterpriseAllowlistPolicy,
+} from './enterprise-allowlist.js';
 
 export const DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY =
   'workbench-kit/.workbench/installed-extensions' as const;
@@ -20,6 +24,12 @@ export interface InstalledExtensionRecord {
 export interface ApplyExtensionInstallPlanToRecordsInput {
   /** Required when `plan.requiresApproval` is true; otherwise install is refused. */
   readonly approved?: boolean | undefined;
+  /**
+   * Optional enterprise id allowlist. When `allowedExtensionIds` is set, every
+   * install/enable action (and the plan target) must pass
+   * {@link assertExtensionAllowlisted}.
+   */
+  readonly allowlistPolicy?: ExtensionEnterpriseAllowlistPolicy | undefined;
   readonly currentRecords: readonly InstalledExtensionRecord[];
   readonly installSources: readonly ExtensionInstallPlanRecordSource[];
   readonly installedAt?: string | undefined;
@@ -127,6 +137,7 @@ export function installExtensionRecord(
 
 export function applyExtensionInstallPlanToRecords({
   approved = false,
+  allowlistPolicy,
   currentRecords,
   installSources,
   installedAt = new Date().toISOString(),
@@ -138,6 +149,15 @@ export function applyExtensionInstallPlanToRecords({
 
   if (plan.requiresApproval && !approved) {
     throw new ExtensionInstallApprovalRequiredError();
+  }
+
+  if (allowlistPolicy?.allowedExtensionIds !== undefined) {
+    for (const action of plan.actions) {
+      if (action.kind === 'already-enabled') {
+        continue;
+      }
+      assertExtensionAllowlisted(action.extensionId, allowlistPolicy);
+    }
   }
 
   const nextById = new Map(currentRecords.map((record) => [record.id, record]));
