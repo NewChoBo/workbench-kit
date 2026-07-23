@@ -9,12 +9,12 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./library": "./src/library.ts",
-    "./runtime": "./src/runtime.ts",
-    "./workspace": "./src/workspace.ts",
-    "./workbench-demo": "./src/workbench-demo.ts",
-    "./workbench-demo-config": "./src/workbench-demo-config.ts",
-    "./persistence": "./src/persistence.ts"
+    "./library": "./src/library/library.ts",
+    "./runtime": "./src/runtime/runtime.ts",
+    "./workspace": "./src/workspace/workspace.ts",
+    "./workbench-demo": "./src/demo/workbench-demo.ts",
+    "./workbench-demo-config": "./src/demo/workbench-demo-config.ts",
+    "./persistence": "./src/persistence/persistence.ts"
   },
   "files": [
     "src",

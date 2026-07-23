@@ -19,29 +19,29 @@ Screen recipes: [Sample Screens](./sample-screens.md).
 | **Contract**  | Section in Consumer Capabilities                                         |
 
 Stories that exist on disk but are **not** listed in `.storybook/main.ts` are
-marked *source only* — open the file under `packages/react/src/` for reference;
+marked _source only_ — open the file under `packages/react/src/` for reference;
 do not expect them in the Storybook sidebar until owners register them.
 
 ## Shell and chrome
 
-| Surface              | Import                                 | Storybook                              | Sample | Contract |
-| -------------------- | -------------------------------------- | -------------------------------------- | ------ | -------- |
-| WorkbenchShell       | `@workbench-kit/react/workbench/shell` | React/Workbench/Shell                  | Yes    | Shell    |
-| Activity bar / views | `@workbench-kit/react/workbench/shell` | React/Workbench/Shell                  | Yes    | Shell    |
-| Desktop title bar    | `@workbench-kit/react/workbench`       | *source only* (Platform Chrome)        | Host   | Shell    |
-| Editor tabs strip    | `@workbench-kit/react/editor-tabs`     | React/Primitives/Editor Chrome         | Yes    | Editor   |
-| Side bar tab strip   | `@workbench-kit/react/layout`          | React/Layout/Side Bar View Tab Strip   | Yes    | Layout   |
+| Surface              | Import                                 | Storybook                            | Sample | Contract |
+| -------------------- | -------------------------------------- | ------------------------------------ | ------ | -------- |
+| WorkbenchShell       | `@workbench-kit/react/workbench/shell` | React/Workbench/Shell                | Yes    | Shell    |
+| Activity bar / views | `@workbench-kit/react/workbench/shell` | React/Workbench/Shell                | Yes    | Shell    |
+| Desktop title bar    | `@workbench-kit/react/workbench`       | _source only_ (Platform Chrome)      | Host   | Shell    |
+| Editor tabs strip    | `@workbench-kit/react/editor-tabs`     | React/Primitives/Editor Chrome       | Yes    | Editor   |
+| Side bar tab strip   | `@workbench-kit/react/layout`          | React/Layout/Side Bar View Tab Strip | Yes    | Layout   |
 
 ## Primitives and forms
 
-| Surface                 | Import                            | Storybook                                      | Sample                                       | Contract   |
-| ----------------------- | --------------------------------- | ---------------------------------------------- | -------------------------------------------- | ---------- |
-| Controls (Button, …)    | `@workbench-kit/react/primitives` | React/Primitives/Controls                      | —                                            | Primitives |
-| Editor chrome           | `@workbench-kit/react/primitives` | React/Primitives/Editor Chrome                 | Yes                                          | Editor     |
-| Scroll infinite load    | `@workbench-kit/react/primitives` | React/Primitives/Scroll Area Infinite Load     | —                                            | Primitives |
-| Property override label | `@workbench-kit/react/layout`     | React/Workbench/Property Override Label        | —                                            | Properties |
-| Library detail layout   | `@workbench-kit/react/primitives` | *source only*                                  | Story: Workbench Sample/Library Detail       | Library    |
-| Catalog browse / facets | `@workbench-kit/react/primitives` | *source only*                                  | Showcase                                     | Library    |
+| Surface                 | Import                            | Storybook                                  | Sample                                 | Contract   |
+| ----------------------- | --------------------------------- | ------------------------------------------ | -------------------------------------- | ---------- |
+| Controls (Button, …)    | `@workbench-kit/react/primitives` | React/Primitives/Controls                  | —                                      | Primitives |
+| Editor chrome           | `@workbench-kit/react/primitives` | React/Primitives/Editor Chrome             | Yes                                    | Editor     |
+| Scroll infinite load    | `@workbench-kit/react/primitives` | React/Primitives/Scroll Area Infinite Load | —                                      | Primitives |
+| Property override label | `@workbench-kit/react/layout`     | React/Workbench/Property Override Label    | —                                      | Properties |
+| Library detail layout   | `@workbench-kit/react/primitives` | _source only_                              | Story: Workbench Sample/Library Detail | Library    |
+| Catalog browse / facets | `@workbench-kit/react/primitives` | _source only_                              | Showcase                               | Library    |
 
 ## Workspace and search
 
@@ -58,21 +58,21 @@ do not expect them in the Storybook sidebar until owners register them.
 | Chat panel / messages  | `@workbench-kit/react/workbench/chat`       | React/Workbench/Chat Components      | Yes      | Chat       |
 | Overlay dialogs        | `@workbench-kit/react/modal`                | React/Overlay/Dialog Actions         | —        | Modal      |
 | Anchored overlay panel | `@workbench-kit/react/overlay`              | React/Overlay/Anchored Overlay Panel | —        | Overlay    |
-| Dialog / management    | `@workbench-kit/react/workbench/management` | *source only* (picker dialogs)       | Showcase | Management |
+| Dialog / management    | `@workbench-kit/react/workbench/management` | _source only_ (picker dialogs)       | Showcase | Management |
 
 ## JDW / widget tree
 
-| Surface         | Import                             | Storybook               | Sample | Notes                        |
-| --------------- | ---------------------------------- | ----------------------- | ------ | ---------------------------- |
-| Widget tree lab | `@workbench-kit/react/widget-tree` | JDW/WidgetTree/Lab      | Yes    | Authoring / preview lab      |
-| JDW preview     | `@workbench-kit/react/jdw`         | via sample / jdw-editor | Yes    | Engine: `@workbench-kit/jdw` |
-| Template scaffold | `@workbench-kit/jdw-editor`      | jdw-editor stories      | —      | Screen-spec editor package   |
+| Surface           | Import                             | Storybook               | Sample | Notes                        |
+| ----------------- | ---------------------------------- | ----------------------- | ------ | ---------------------------- |
+| Widget tree lab   | `@workbench-kit/react/widget-tree` | JDW/WidgetTree/Lab      | Yes    | Authoring / preview lab      |
+| JDW preview       | `@workbench-kit/react/jdw`         | via sample / jdw-editor | Yes    | Engine: `@workbench-kit/jdw` |
+| Template scaffold | `@workbench-kit/jdw-editor`        | jdw-editor stories      | —      | Screen-spec editor package   |
 
 ## Field remap
 
-| Surface     | Import / package                                    | Storybook                      | Sample |
-| ----------- | --------------------------------------------------- | ------------------------------ | ------ |
-| Field Remap | `@workbench-kit/field-remap` + sample extension     | Workbench Sample/Field Remap   | Yes    |
+| Surface     | Import / package                                | Storybook                    | Sample |
+| ----------- | ----------------------------------------------- | ---------------------------- | ------ |
+| Field Remap | `@workbench-kit/field-remap` + sample extension | Workbench Sample/Field Remap | Yes    |
 
 ## Visual verification commands
 

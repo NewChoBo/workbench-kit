@@ -8,7 +8,7 @@ import {
   isWorkbenchStatusBusy,
   isWorkbenchStatusDisabled,
   type WorkbenchStatus,
-} from '../../workbench/status';
+} from '../../workbench/shell/status';
 import {
   SideBarList,
   SideBarListItem,

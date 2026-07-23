@@ -1,8 +1,8 @@
 import type { WidgetAssetCatalogContract, WidgetPlacementAsset } from '@workbench-kit/contracts';
 
-import { jdwNodeToGenericWidget } from '../jdw-node.js';
-import { createWidgetAssetCatalog } from '../widget-placement-asset.js';
-import type { GenericWidget } from '../widget-tree.js';
+import { jdwNodeToGenericWidget } from '../jdw/node.js';
+import { createWidgetAssetCatalog } from '../widget/placement-asset.js';
+import type { GenericWidget } from '../widget/tree.js';
 import { createDefaultScreenNode, type ScreenPaletteKind } from './tree.js';
 import { compileScreenNode } from './compile.js';
 

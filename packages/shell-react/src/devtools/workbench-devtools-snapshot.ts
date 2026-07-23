@@ -11,7 +11,7 @@ import type {
   WorkspaceResourceTransaction,
 } from '@workbench-kit/workspace';
 
-import type { WorkbenchWorkspaceHostPort } from '../provider.js';
+import type { WorkbenchWorkspaceHostPort } from '../shell/provider.js';
 
 export interface WorkbenchDevtoolsSnapshot {
   readonly activeExtensions: readonly { readonly extensionId: string }[];

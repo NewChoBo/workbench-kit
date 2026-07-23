@@ -425,9 +425,7 @@ export const SettingsAppearanceSmoke: Story = {
     await expect(
       within(settingsDialog).getByRole('combobox', { name: 'Color scheme' }),
     ).toBeVisible();
-    await expect(
-      within(settingsDialog).getByRole('heading', { name: 'Appearance' }),
-    ).toBeVisible();
+    await expect(within(settingsDialog).getByRole('heading', { name: 'Appearance' })).toBeVisible();
   },
 };
 

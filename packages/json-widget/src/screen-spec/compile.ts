@@ -1,4 +1,4 @@
-import { formatJsonWidgetData, type JsonWidgetNode } from '../jdw-node.js';
+import { formatJsonWidgetData, type JsonWidgetNode } from '../jdw/node.js';
 import type {
   JdwScreenSpec,
   ScreenExpandedNode,

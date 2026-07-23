@@ -201,10 +201,14 @@ sentinel options before passing. Full multi-section dialog landed as §2
   toggle-maximize / close / isMaximized (+ maximized-changed push); hosts inject channel
   names and owned-window resolution.
 - `createEncryptedSecretVault` — OS-backed cipher port + opaque secret ids; fails closed
-  when encryption is unavailable (compose persistence with platform/node atomic write).
+  when encryption is unavailable and serializes mutations within one vault instance
+  (compose persistence with platform/node atomic write; hosts coordinate shared files
+  across instances or processes).
 - `registerRootConfinedAssetProtocol` / `cacheAllowlistedHttpsAsset` — privileged scheme
   serving only root-confined cache bytes; hosts inject scheme, hash/TTL/size policy, HTTPS fetch,
-  and `resolveInsideRoot` (typically `@workbench-kit/platform/node`).
+  and `resolveInsideRoot` (typically `@workbench-kit/platform/node`). Migration:
+  `registerRootConfinedAssetProtocol` now disables privileged protocol CORS by default; hosts
+  relying on the previous default must pass `corsEnabled: true` after reviewing origin policy.
 - `resolveWallpaperCropRect` + `createWin32WallpaperPathResolver` — spanned wallpaper crop
   math and injectable win32 path resolution (other platforms return null until host provides one).
 

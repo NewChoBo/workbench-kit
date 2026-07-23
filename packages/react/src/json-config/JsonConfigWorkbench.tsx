@@ -9,7 +9,7 @@ import { IconButton } from '../primitives/icon-button';
 import { Toolbar } from '../primitives/toolbar';
 import { JsonCodeEditorPane, JsonConfigValidationBanner } from '../jdw/JsonCodeEditorPane.js';
 import { JdwPreview } from '../jdw/JdwPreview.js';
-import { SplitView } from '../workbench/SplitView';
+import { SplitView } from '../workbench/shell/SplitView';
 import { WorkbenchStructuredDataSchemaPanel } from '../workbench/settings/StructuredDataSchemaPanel';
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
 import { type WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor';

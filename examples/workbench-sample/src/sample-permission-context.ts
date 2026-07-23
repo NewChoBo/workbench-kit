@@ -26,6 +26,18 @@ const DEVELOPER_ROLE_EXTENSION_IDS = [
   'workbench-kit.builtin.search',
 ] as const;
 
+/**
+ * Host-owned demo enables for the sample app. These are not
+ * `.workbench/extensions.json` recommendations — recommendations must not
+ * auto-enable packages (VS Code / Theia practice).
+ */
+const SAMPLE_DEMO_EXTENSION_IDS = [
+  'workbench-kit.samples.hello-world',
+  'workbench-kit.samples.jdw',
+  'workbench-kit.samples.field-remap',
+  'workbench-kit.samples.theme-alt',
+] as const;
+
 const MAINTAINER_ROLE_EXTENSION_IDS = [
   ...DEVELOPER_ROLE_EXTENSION_IDS,
   'workbench-kit.builtin.commands',
@@ -34,7 +46,10 @@ const MAINTAINER_ROLE_EXTENSION_IDS = [
   'workbench-kit.samples.theme-alt',
 ] as const;
 
-const OWNER_ROLE_EXTENSION_IDS = extensionsConfig.enabled;
+const OWNER_ROLE_EXTENSION_IDS = [
+  ...extensionsConfig.enabled,
+  ...SAMPLE_DEMO_EXTENSION_IDS,
+] as const;
 
 function resolveEnabledExtensionsForRole(role: WorkbenchPermissionRole): readonly string[] {
   switch (role) {
@@ -80,14 +95,11 @@ export function resolveSampleExtensionsConfig(
   roleOverride?: SamplePermissionRoleOverride,
 ): WorkbenchExtensionsConfig {
   const effectiveRole = resolveSampleEffectiveRole(accountId, roleOverride);
-  const enabled = new Set<string>(resolveEnabledExtensionsForRole(effectiveRole));
-
-  if (enabled.size === extensionsConfig.enabled.length) {
-    return extensionsConfig;
-  }
 
   return {
     ...extensionsConfig,
-    enabled: extensionsConfig.enabled.filter((extensionId) => enabled.has(extensionId)),
+    // Role policy owns enablement. Sample demo IDs may be enabled for owner even
+    // when they only appear under recommendations in `.workbench/extensions.json`.
+    enabled: [...resolveEnabledExtensionsForRole(effectiveRole)],
   };
 }

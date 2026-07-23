@@ -108,7 +108,7 @@ WorkbenchShell
 
 **Tasks**
 
-1. Add `packages/shell-react/src/use-active-workspace-path.ts`:
+1. Add `packages/shell-react/src/explorer/use-active-workspace-path.ts`:
    - Input: `activeTab?.resourceUri`
    - Output: `string | undefined` (file path only)
 2. Replace duplicated `useMemo` in:
@@ -178,7 +178,7 @@ pnpm exec vitest run src/layout src/workbench/workspace src/workbench/management
 
 **Tasks**
 
-1. Create `packages/shell-react/src/explorer-context-menu.ts`:
+1. Create `packages/shell-react/src/explorer/context-menu.ts`:
    - Export `createExplorerItemContextMenuItems(...)` (move from `explorer-view.tsx`)
    - Keep command registry + menu entries module-local or co-located
 2. `explorer-view.tsx` imports helper; retains `ContextMenu` state only
@@ -365,9 +365,9 @@ Phase C-*  only when A/B stable
 
 | Resource                        | Path                                                                 |
 | ------------------------------- | -------------------------------------------------------------------- |
-| Shell wiring                    | `packages/shell-react/src/shell.tsx`                                 |
+| Shell wiring                    | `packages/shell-react/src/shell/shell.tsx`                           |
 | Sidebar frame                   | `packages/react/src/layout/sidebar/SideBarViewFrame.tsx`             |
 | Section stack                   | `packages/react/src/layout/sidebar/WorkbenchSidebarSectionStack.tsx` |
 | Primary sidebar CSS             | `packages/react/src/styles.css` (~L2267+)                            |
-| Layout service (sidebar toggle) | `packages/workbench-core/src/layout-service.ts`                      |
+| Layout service (sidebar toggle) | `packages/workbench-core/src/layout/service.ts`                      |
 | Sample host                     | `examples/workbench-sample/`                                         |

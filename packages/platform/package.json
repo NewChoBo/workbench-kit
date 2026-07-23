@@ -13,7 +13,7 @@
     "./atomic-write": "./src/node/atomic-write.ts",
     "./resize-rect": "./src/window/resize-rect.ts",
     "./tray-close-policy": "./src/window/tray-close-policy.ts",
-    "./versioned-browser-state": "./src/versioned-browser-state.ts"
+    "./versioned-browser-state": "./src/storage/versioned-browser-state.ts"
   },
   "dependencies": {
     "@workbench-kit/base": "workspace:*"

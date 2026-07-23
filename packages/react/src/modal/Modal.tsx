@@ -12,7 +12,7 @@ import { useModalWindowFrame } from './useModalWindowFrame';
 import {
   resolveWorkbenchWindowChromeDataAttributes,
   type WorkbenchWindowChromeMode,
-} from '../workbench/workbenchPlatformChrome';
+} from '../workbench/chrome/workbenchPlatformChrome';
 
 export type { ModalBounds, ModalPosition, ModalSize } from './modalTypes';
 

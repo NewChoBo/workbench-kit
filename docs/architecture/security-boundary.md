@@ -42,12 +42,19 @@ Running arbitrary third-party extension code introduces:
 - Unauthorized filesystem and network access
 - Token exfiltration from secret storage if over-permissioned
 
-### Mitigations (planned)
+### Mitigations
 
 - **No runtime npm install initially** — extensions ship as pre-built bundles known at compile time
-- **Build-time bundled artifacts** — CI produces signed or hashed extension packages
-- **Integrity checks** — `extensions.lock.json` stores content hashes; host verifies before load
-- **Permission allowlists** — default-deny for network and secrets
+- **Catalog URL allowlist** — `assertExtensionCatalogUrlAllowed` / `ExtensionCatalogTrustPolicy`
+  (default: relative catalogs only; absolute origins require host allowlist).
+- **Install approval gate** — `applyExtensionInstallPlanToRecords` refuses
+  `requiresApproval && !approved`
+- **Extensions lock integrity** — `verifyWorkbenchExtensionsAgainstLock` checks
+  `.workbench/extensions.lock.json` version + manifest digest before registration
+  (`extensionIntegrityMode`: `off` | `warn` | `fail-closed`)
+- **Build-time bundled artifacts** — `bundle-workbench-extensions.mjs` regenerates the lockfile
+- **Recommend ≠ enable** — recommendations must not auto-activate extensions
+- **Permission allowlists** — default-deny for network and secrets (planned)
 - **No eval / dynamic import from remote URLs**
 
 External marketplace execution remains out of scope until these controls exist.

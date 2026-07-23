@@ -5,7 +5,7 @@ import {
   getNextWorkbenchCommandIndex,
   isWorkbenchCommandRunnable,
   type WorkbenchCommandDescriptor,
-} from '../CommandPalette';
+} from '../commands/CommandPalette';
 import { getSlashCommandQuery, isSlashCommandInput } from './slashCommand';
 
 type SlashCommandSuggestKeyboardEvent = Pick<

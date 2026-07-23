@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { UnsafeObjectPathError } from './objectPathSafety.js';
 import {
   applyStringTemplate,
   isPlainObject,
-  isSafeObjectPath,
   listArrayItemProjectionOptions,
   projectCollectionItems,
   readObjectPath,
@@ -24,14 +24,17 @@ describe('pathUtils', () => {
     expect(writeObjectPath(null, 'a.b', 1)).toEqual({ a: { b: 1 } });
   });
 
+  it('rejects dangerous object path segments on read and write', () => {
+    expect(() => readObjectPath({}, '__proto__.polluted')).toThrow(UnsafeObjectPathError);
+    expect(() => writeObjectPath({}, 'constructor.prototype.polluted', true)).toThrow(
+      UnsafeObjectPathError,
+    );
+    expect(Object.prototype).not.toHaveProperty('polluted');
+  });
+
   it('fills safe {path} templates without eval', () => {
     expect(isPlainObject({ a: 1 })).toBe(true);
     expect(isPlainObject([1])).toBe(false);
-    expect(isSafeObjectPath('city')).toBe(true);
-    expect(isSafeObjectPath('a.b')).toBe(true);
-    expect(isSafeObjectPath('a.b.c')).toBe(true);
-    expect(isSafeObjectPath('a-b')).toBe(false);
-    expect(isSafeObjectPath('foo();')).toBe(false);
 
     expect(applyStringTemplate('{city} · {temp}', { city: 'Seoul', temp: 22 })).toBe('Seoul · 22');
     expect(applyStringTemplate('{meta.label}', { meta: { label: 'A' } })).toBe('A');

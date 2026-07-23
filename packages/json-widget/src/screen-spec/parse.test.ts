@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { validateJsonWidgetData } from '../validate-json-widget-data.js';
+import { validateJsonWidgetData } from '../validate/json-widget-data.js';
 import { screenText } from './builders.js';
 import { compileScreenSpecText, parseScreenSpecJson } from './parse.js';
 import type { JdwScreenSpec } from './types.js';

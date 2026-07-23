@@ -1,14 +1,14 @@
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 
-import { useWorkbenchHostPlatform } from '../workbench/WorkbenchPlatformContext';
+import { useWorkbenchHostPlatform } from '../workbench/chrome/WorkbenchPlatformContext';
 import {
   shouldUseDarwinPlatformChrome,
   WorkbenchWindowChromeControls,
-} from '../workbench/WorkbenchWindowChromeControls';
+} from '../workbench/shell/WorkbenchWindowChromeControls';
 import {
   resolveWorkbenchWindowChromeDataAttributes,
   type WorkbenchWindowChromeMode,
-} from '../workbench/workbenchPlatformChrome';
+} from '../workbench/chrome/workbenchPlatformChrome';
 
 export interface ModalTitlebarProps {
   chrome?: WorkbenchWindowChromeMode | undefined;

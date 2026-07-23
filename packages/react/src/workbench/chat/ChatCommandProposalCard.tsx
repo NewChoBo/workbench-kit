@@ -1,8 +1,8 @@
 import { Badge } from '../../primitives/badge';
 import { Button } from '../../primitives/button';
 import { cx } from '../../utils/cx';
-import { getWorkbenchCommandExecutionPolicyLabel } from '../command-execution-policy';
-import type { WorkbenchCommandExecutionPolicy } from '../command-model';
+import { getWorkbenchCommandExecutionPolicyLabel } from '../commands/command-execution-policy';
+import type { WorkbenchCommandExecutionPolicy } from '../commands/command-model';
 import type { ChatCommandProposal, ChatCommandProposalStatus } from './types';
 
 export interface ChatCommandProposalCardProps {

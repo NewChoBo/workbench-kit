@@ -15,7 +15,7 @@ import {
   createWorkbenchWorkspaceTargetMenuEntries,
   type WorkbenchShellCommandContext,
   type WorkbenchWorkspaceCommandContext,
-} from '../commands';
+} from '../commands/commands';
 import {
   integratedShellCommandActivities,
   type IntegratedShellActivityId,

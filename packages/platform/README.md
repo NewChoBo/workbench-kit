@@ -15,11 +15,7 @@ pnpm add @workbench-kit/platform@prototype
 ## Main entry
 
 ```ts
-import {
-  CommandRegistry,
-  ContextKeyService,
-  KeybindingService,
-} from '@workbench-kit/platform';
+import { CommandRegistry, ContextKeyService, KeybindingService } from '@workbench-kit/platform';
 ```
 
 Useful browser helpers also export from the package root (for example
@@ -33,12 +29,12 @@ import { atomicWriteText } from '@workbench-kit/platform/node';
 
 Other Node/window helpers:
 
-| Subpath | Role |
-| ------- | ---- |
-| `@workbench-kit/platform/node` | Node persistence helpers |
-| `@workbench-kit/platform/atomic-write` | Atomic file write |
-| `@workbench-kit/platform/resize-rect` | Window resize math |
-| `@workbench-kit/platform/tray-close-policy` | Tray close policy helpers |
+| Subpath                                           | Role                            |
+| ------------------------------------------------- | ------------------------------- |
+| `@workbench-kit/platform/node`                    | Node persistence helpers        |
+| `@workbench-kit/platform/atomic-write`            | Atomic file write               |
+| `@workbench-kit/platform/resize-rect`             | Window resize math              |
+| `@workbench-kit/platform/tray-close-policy`       | Tray close policy helpers       |
 | `@workbench-kit/platform/versioned-browser-state` | Versioned browser state adapter |
 
 ## Related docs

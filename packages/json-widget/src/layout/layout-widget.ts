@@ -1,6 +1,6 @@
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 
-import { getWidgetChildren, type GenericWidget } from '../widget-tree.js';
+import { getWidgetChildren, type GenericWidget } from '../widget/tree.js';
 import { computeGridChildRect } from './grid.js';
 import { computeLinearChildRects } from './linear.js';
 import { computeStackChildRect } from './stack.js';

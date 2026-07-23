@@ -19,6 +19,16 @@ export interface WorkbenchExtensionsConfig {
   recommendations: readonly string[];
 }
 
+export interface WorkbenchExtensionsLockEntry {
+  readonly integrity?: string | undefined;
+  readonly version: string;
+}
+
+export interface WorkbenchExtensionsLock {
+  readonly extensions: Readonly<Record<string, WorkbenchExtensionsLockEntry>>;
+  readonly lockfileVersion: number;
+}
+
 export interface WorkbenchLayoutConfig {
   readonly activityBar: {
     readonly hiddenItemIds?: readonly string[];
@@ -80,6 +90,57 @@ export function parseWorkbenchExtensionsConfigJson(jsonText: string): WorkbenchE
     }
 
     throw new WorkbenchConfigValidationError('Expected extensions config to be valid JSON.');
+  }
+}
+
+export function parseWorkbenchExtensionsLock(input: unknown): WorkbenchExtensionsLock {
+  const record = assertRecord(input, 'extensions lock');
+  const lockfileVersion = record.lockfileVersion;
+  if (
+    typeof lockfileVersion !== 'number' ||
+    !Number.isInteger(lockfileVersion) ||
+    lockfileVersion < 1
+  ) {
+    throw new WorkbenchConfigValidationError(
+      'Expected extensions lock "lockfileVersion" to be a positive integer.',
+    );
+  }
+
+  const extensionsRecord = assertRecord(record.extensions ?? {}, 'extensions lock extensions');
+  const extensions: Record<string, WorkbenchExtensionsLockEntry> = {};
+  for (const [extensionId, rawEntry] of Object.entries(extensionsRecord)) {
+    const entry = assertRecord(rawEntry, `extensions lock entry "${extensionId}"`);
+    if (typeof entry.version !== 'string' || entry.version.trim().length === 0) {
+      throw new WorkbenchConfigValidationError(
+        `Expected extensions lock entry "${extensionId}" to include a non-empty version.`,
+      );
+    }
+    if (entry.integrity !== undefined && typeof entry.integrity !== 'string') {
+      throw new WorkbenchConfigValidationError(
+        `Expected extensions lock entry "${extensionId}" integrity to be a string.`,
+      );
+    }
+    extensions[extensionId] = {
+      integrity: typeof entry.integrity === 'string' ? entry.integrity : undefined,
+      version: entry.version.trim(),
+    };
+  }
+
+  return {
+    extensions,
+    lockfileVersion,
+  };
+}
+
+export function parseWorkbenchExtensionsLockJson(jsonText: string): WorkbenchExtensionsLock {
+  try {
+    return parseWorkbenchExtensionsLock(JSON.parse(jsonText) as unknown);
+  } catch (error) {
+    if (error instanceof WorkbenchConfigValidationError) {
+      throw error;
+    }
+
+    throw new WorkbenchConfigValidationError('Expected extensions lock to be valid JSON.');
   }
 }
 

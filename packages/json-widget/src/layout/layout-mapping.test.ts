@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { appendBoxChildPath, appendChildrenPath, ROOT_WIDGET_PATH } from '../path.js';
-import { applyWidgetPatch } from '../widget-patch.js';
-import type { GenericWidget } from '../widget-tree.js';
+import { appendBoxChildPath, appendChildrenPath, ROOT_WIDGET_PATH } from '../document/path.js';
+import { applyWidgetPatch } from '../widget/patch.js';
+import type { GenericWidget } from '../widget/tree.js';
 import {
   createWidgetDragPatch,
   createWidgetReparentPatch,

@@ -3,18 +3,13 @@
  * Supports simple dotted paths (`name`, `meta.label`) on plain objects.
  */
 
-/** Identifier or dotted path: `city`, `a.b` (no expressions / eval). */
-const SAFE_PATH_RE = /^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$/;
+import { isSafeObjectPath, requireObjectPathParts } from './objectPathSafety.js';
 
 /** Placeholder matcher: `{city}`, `{a.b}` — rejects expressions / spaces. */
 const TEMPLATE_PLACEHOLDER_RE = /\{([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\}/g;
 
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-export function isSafeObjectPath(path: string): boolean {
-  return SAFE_PATH_RE.test(path.trim());
 }
 
 /**
@@ -45,10 +40,7 @@ export function applyStringTemplate(
 }
 
 export function readObjectPath(value: unknown, path: string): unknown {
-  const parts = path
-    .split('.')
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
+  const parts = requireObjectPathParts(path);
   if (parts.length === 0) {
     return value;
   }
@@ -72,10 +64,7 @@ export function writeObjectPath(
   path: string,
   value: unknown,
 ): Record<string, unknown> {
-  const parts = path
-    .split('.')
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
+  const parts = requireObjectPathParts(path);
   if (parts.length === 0) {
     return isPlainObject(root) ? { ...root } : {};
   }

@@ -1,4 +1,4 @@
-import type { WorkbenchExtensionDescription } from '../extension-registry.js';
+import type { WorkbenchExtensionDescription } from '../extension/registry.js';
 import * as builtinAccountsModule from '../../../../extensions/builtin.accounts/src/index.ts';
 import * as builtinChatModule from '../../../../extensions/builtin.chat/src/index.ts';
 import * as builtinCommandsModule from '../../../../extensions/builtin.commands/src/index.ts';

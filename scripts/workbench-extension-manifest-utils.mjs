@@ -10,7 +10,7 @@ const stringArrayFields = [
   'permissions',
 ];
 
-// Mirrors REQUIRED_THEME_TOKEN_KEYS in packages/workbench-core/src/theme-registry.ts.
+// Mirrors REQUIRED_THEME_TOKEN_KEYS in packages/workbench-core/src/theme/registry.ts.
 // Contributed theme tokenOverrides are applied as inline styles on the document root,
 // outranking the active light/dark preset's CSS rules, so a partial override silently
 // breaks contrast against whatever tokens the preset left untouched.

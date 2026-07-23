@@ -1,0 +1,93 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  DEFAULT_WORKBENCH_APPEARANCE,
+  DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
+  readPersistedWorkbenchAppearance,
+  writePersistedWorkbenchAppearance,
+} from './appearance-storage.js';
+
+function createMemoryStorage(): Storage {
+  const values = new Map<string, string>();
+
+  return {
+    get length() {
+      return values.size;
+    },
+    clear() {
+      values.clear();
+    },
+    getItem(key: string) {
+      return values.get(key) ?? null;
+    },
+    key(index: number) {
+      return [...values.keys()][index] ?? null;
+    },
+    removeItem(key: string) {
+      values.delete(key);
+    },
+    setItem(key: string, value: string) {
+      values.set(key, value);
+    },
+  };
+}
+
+describe('workbench-appearance-storage', () => {
+  it('round-trips appearance settings through storage', () => {
+    const storage = createMemoryStorage();
+    const settings = {
+      darkPreset: 'modern' as const,
+      lightPreset: 'light-plus' as const,
+      shellPreset: 'airy' as const,
+      themePreference: 'dark' as const,
+    };
+
+    writePersistedWorkbenchAppearance(settings, DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage);
+
+    expect(
+      readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage),
+    ).toEqual(settings);
+  });
+
+  it('falls back to defaults for invalid payloads', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, '{not-json');
+
+    expect(
+      readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage),
+    ).toEqual(DEFAULT_WORKBENCH_APPEARANCE);
+  });
+
+  it('round-trips a contributed (non-built-in) preset id', () => {
+    const storage = createMemoryStorage();
+    const settings = {
+      darkPreset: 'workbench-kit.samples.theme-alt.dark-blue',
+      lightPreset: 'skyblue' as const,
+      shellPreset: 'workbench' as const,
+      themePreference: 'dark' as const,
+    };
+
+    writePersistedWorkbenchAppearance(settings, DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage);
+
+    expect(
+      readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage),
+    ).toEqual(settings);
+  });
+
+  it('falls back to defaults when a preset id is an empty string', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(
+      DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
+      JSON.stringify({ darkPreset: '', lightPreset: '', themePreference: 'light' }),
+    );
+
+    expect(
+      readPersistedWorkbenchAppearance(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY, storage),
+    ).toEqual({
+      darkPreset: DEFAULT_WORKBENCH_APPEARANCE.darkPreset,
+      lightPreset: DEFAULT_WORKBENCH_APPEARANCE.lightPreset,
+      shellPreset: DEFAULT_WORKBENCH_APPEARANCE.shellPreset,
+      themePreference: 'light',
+    });
+  });
+});

@@ -1,8 +1,8 @@
-import { appendBoxChildPath, appendChildrenPath, widgetPathEquals } from '../path.js';
-import type { WidgetPath } from '../path.js';
-import type { WidgetPatch } from '../widget-patch.js';
-import { getWidgetAtPath, getWidgetChildren } from '../widget-tree.js';
-import type { GenericWidget } from '../widget-tree.js';
+import { appendBoxChildPath, appendChildrenPath, widgetPathEquals } from '../document/path.js';
+import type { WidgetPath } from '../document/path.js';
+import type { WidgetPatch } from '../widget/patch.js';
+import { getWidgetAtPath, getWidgetChildren } from '../widget/tree.js';
+import type { GenericWidget } from '../widget/tree.js';
 import type { LayoutNodeResult } from './layout-widget.js';
 import type { Rect } from './types.js';
 

@@ -4,8 +4,8 @@ import { cx } from '../../utils/cx';
 import {
   workbenchMarkdownRemarkPlugins,
   workbenchMarkdownRehypePlugins,
-} from '../markdownRemarkPlugins';
-import { sanitizeMarkdownHref } from '../sanitizeMarkdownHref';
+} from '../markdown/markdownRemarkPlugins';
+import { sanitizeMarkdownHref } from '../markdown/sanitizeMarkdownHref';
 import { ChatCommandProposalCard } from './ChatCommandProposalCard';
 import { ChatMessageCollapsible } from './ChatMessageCollapsible';
 import { ChatMessageTime, resolveChatMessageTimestamp } from './chatMessageMeta';

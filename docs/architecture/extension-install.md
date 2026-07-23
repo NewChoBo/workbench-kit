@@ -45,6 +45,9 @@ Parsing is handled by `parseExtensionCatalog()` in `@workbench-kit/workbench-cor
 
 1. Host serves a catalog JSON file (for example `examples/workbench-sample/public/extension-catalog.json`).
 2. Browse UI loads the catalog via `fetch()` or receives entries through props.
+   Before fetch, `assertExtensionCatalogUrlAllowed()` applies the host
+   `ExtensionCatalogTrustPolicy` (default: relative/path-only catalogs allowed;
+   absolute remote origins denied until listed in `allowedOrigins`).
 3. `createExtensionInstallPlan()` builds the pre-install review plan:
    dependency order, install/enable/already-enabled actions, extension-pack
    members, catalog install-source availability, required approval,
@@ -108,10 +111,13 @@ Helpers live in `@workbench-kit/workbench-core`:
 
 - `loadInstalledExtensions()`
 - `saveInstalledExtensions()`
-- `installExtensionRecord()`
-- `applyExtensionInstallPlanToRecords()`
+- `installExtensionRecord()` — **privileged** host/test upsert; bypasses plan and
+  approval. Marketplace installs must use `applyExtensionInstallPlanToRecords()`.
+- `applyExtensionInstallPlanToRecords()` — refuse when
+  `requiresApproval && !approved` (`ExtensionInstallApprovalRequiredError`)
 - `toggleInstalledExtensionEnabled()`
 - `createExtensionInstallPlan()`
+- `assertExtensionCatalogUrlAllowed()` / `ExtensionCatalogTrustPolicy`
 - `WorkbenchStorageReader`, `WorkbenchStorageWriter`, and
   `WorkbenchStorageAdapter`
 
@@ -136,6 +142,30 @@ Browser hosts can keep using `localStorage` implicitly. Desktop or embedded
 hosts can pass a file-backed or user-data-backed adapter through
 `WorkbenchProvider.installedExtensionsStorage` and the extension management
 model options.
+
+## Extensions lock / integrity
+
+`pnpm build:workbench-extensions` regenerates `.workbench/extensions.lock.json`
+with each bundled extension `version` and `integrity` (`sha256:` of the
+canonical manifest JSON). Hosts may pass the lock into `WorkbenchProvider`:
+
+```ts
+<WorkbenchProvider
+  extensionsLock={parseWorkbenchExtensionsLock(lockJson)}
+  extensionIntegrityMode="fail-closed" // or "warn" | "off" (default)
+/>
+```
+
+In `fail-closed` mode, enabled extensions missing from the lock or with a
+version/integrity mismatch are not registered. This is the kit analogue of
+Marketplace/Open VSX package integrity for the bundled-only MVP.
+
+## Recommend ≠ enable
+
+`.workbench/extensions.json` `recommendations` must not be treated as an
+enable list. Only `enabled` (plus install records / host role policy) activates
+extensions. The sample host may enable demo samples through host-owned role
+policy without listing them under `enabled` in the shared config file.
 
 ## MVP constraints
 
