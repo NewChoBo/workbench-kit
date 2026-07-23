@@ -176,6 +176,80 @@ describe('Modal', () => {
       root.unmount();
     });
   });
+
+  it('traps Tab focus, closes on Escape, and restores focus on unmount', async () => {
+    let closed = false;
+    const opener = document.createElement('button');
+    opener.textContent = 'Open';
+    document.body.append(opener);
+    opener.focus();
+    expect(document.activeElement).toBe(opener);
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <Modal
+          title="Focus"
+          onClose={() => {
+            closed = true;
+          }}
+        >
+          <button type="button">First</button>
+          <button type="button">Last</button>
+        </Modal>,
+      );
+    });
+
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        window.requestAnimationFrame(() => resolve());
+      });
+    });
+
+    const dialog = container.querySelector('[role="dialog"]') as HTMLElement | null;
+    const buttons = Array.from(container.querySelectorAll('button'));
+    const first = buttons[0] as HTMLButtonElement;
+    const last = buttons[buttons.length - 1] as HTMLButtonElement;
+    expect(dialog).not.toBeNull();
+    expect(first.getAttribute('aria-label')).toBe('Maximize modal');
+    expect(document.activeElement).toBe(first);
+
+    last.focus();
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }),
+      );
+    });
+    expect(document.activeElement).toBe(first);
+
+    first.focus();
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Tab',
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    expect(document.activeElement).toBe(last);
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+    });
+    expect(closed).toBe(true);
+
+    await act(async () => {
+      root.unmount();
+    });
+    expect(document.activeElement).toBe(opener);
+  });
 });
 
 function createPointerLikeEvent(
