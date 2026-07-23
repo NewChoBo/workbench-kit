@@ -44,6 +44,8 @@ export interface RegisterRootConfinedAssetProtocolOptions extends PathRootHelper
   readonly protocol: PrivilegedProtocolApi;
   readonly cache: AssetCacheStore;
   readonly policy: AssetCachePolicy;
+  /** Enable CORS for the privileged scheme only when the host explicitly requires it. */
+  readonly corsEnabled?: boolean;
   readonly now?: () => number;
 }
 
@@ -103,7 +105,15 @@ export async function cacheAllowlistedHttpsAsset(
 export function registerRootConfinedAssetProtocol(
   options: RegisterRootConfinedAssetProtocolOptions,
 ): void {
-  const { scheme, cacheRoot, protocol, cache, policy, resolveInsideRoot } = options;
+  const {
+    scheme,
+    cacheRoot,
+    protocol,
+    cache,
+    policy,
+    resolveInsideRoot,
+    corsEnabled = false,
+  } = options;
   const now = options.now ?? Date.now;
 
   protocol.registerSchemesAsPrivileged?.([
@@ -113,7 +123,7 @@ export function registerRootConfinedAssetProtocol(
         standard: true,
         secure: true,
         supportFetchAPI: true,
-        corsEnabled: true,
+        corsEnabled,
         stream: true,
       },
     },

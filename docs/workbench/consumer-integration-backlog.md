@@ -206,7 +206,9 @@ sentinel options before passing. Full multi-section dialog landed as §2
   across instances or processes).
 - `registerRootConfinedAssetProtocol` / `cacheAllowlistedHttpsAsset` — privileged scheme
   serving only root-confined cache bytes; hosts inject scheme, hash/TTL/size policy, HTTPS fetch,
-  and `resolveInsideRoot` (typically `@workbench-kit/platform/node`).
+  and `resolveInsideRoot` (typically `@workbench-kit/platform/node`). Migration:
+  `registerRootConfinedAssetProtocol` now disables privileged protocol CORS by default; hosts
+  relying on the previous default must pass `corsEnabled: true` after reviewing origin policy.
 - `resolveWallpaperCropRect` + `createWin32WallpaperPathResolver` — spanned wallpaper crop
   math and injectable win32 path resolution (other platforms return null until host provides one).
 

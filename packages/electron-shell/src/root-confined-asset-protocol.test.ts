@@ -58,6 +58,7 @@ describe('root-confined asset protocol helpers', () => {
 
     let handler:
       ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>) | undefined;
+    let registeredPrivileges: Record<string, boolean> | undefined;
 
     registerRootConfinedAssetProtocol({
       scheme: 'wk-asset',
@@ -67,7 +68,9 @@ describe('root-confined asset protocol helpers', () => {
       resolveInsideRoot,
       now: () => 1_500,
       protocol: {
-        registerSchemesAsPrivileged: () => undefined,
+        registerSchemesAsPrivileged: (schemes) => {
+          registeredPrivileges = schemes[0]?.privileges;
+        },
         handle: (_scheme, next) => {
           handler = next;
         },
@@ -77,6 +80,28 @@ describe('root-confined asset protocol helpers', () => {
     const handled = await handler!({ url: 'wk-asset://abc123' });
     expect(handled.mimeType).toBe('image/png');
     expect(new TextDecoder().decode(handled.data)).toBe('image-bytes');
+    expect(registeredPrivileges?.corsEnabled).toBe(false);
+  });
+
+  it('enables privileged protocol CORS only by explicit opt-in', () => {
+    let registeredPrivileges: Record<string, boolean> | undefined;
+
+    registerRootConfinedAssetProtocol({
+      scheme: 'wk-asset',
+      cacheRoot: '/cache',
+      cache: createMemoryCache(),
+      policy: { ttlMs: 60_000, maxBytes: 1024 },
+      resolveInsideRoot,
+      corsEnabled: true,
+      protocol: {
+        registerSchemesAsPrivileged: (schemes) => {
+          registeredPrivileges = schemes[0]?.privileges;
+        },
+        handle: () => undefined,
+      },
+    });
+
+    expect(registeredPrivileges?.corsEnabled).toBe(true);
   });
 
   it('rejects oversized assets, path escapes, and expired cache entries', async () => {
