@@ -28,8 +28,8 @@ const config: StorybookConfig = {
     '../packages/react/src/overlay/AnchoredOverlayPanel.stories.@(ts|tsx)',
 
     '../packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)',
-    '../packages/react/src/workbench/WorkbenchShell.stories.@(ts|tsx)',
-    '../packages/react/src/workbench/IntegratedShell.stories.@(ts|tsx)',
+    '../packages/react/src/workbench/shell/WorkbenchShell.stories.@(ts|tsx)',
+    '../packages/react/src/workbench/shell/IntegratedShell.stories.@(ts|tsx)',
     '../packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)',
     '../packages/react/src/layout/sidebar/SideBarViewTabStrip.stories.@(ts|tsx)',
     '../packages/react/src/layout/WorkbenchPropertyOverrideLabel.stories.@(ts|tsx)',

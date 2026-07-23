@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { PanelHeader } from '../../layout/panel';
 import { WorkbenchEditorFrame, WorkbenchPanelScroll } from '../../layout/WorkbenchLayoutBase';
 import { WorkbenchPropertyHint } from '../../layout/WorkbenchPropertyPanel';
-import { SplitView } from '../SplitView';
+import { SplitView } from '../shell/SplitView';
 
 export interface IntegrationsShellProps {
   children: ReactNode;

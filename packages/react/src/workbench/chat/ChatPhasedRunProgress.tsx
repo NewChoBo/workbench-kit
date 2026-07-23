@@ -7,7 +7,7 @@ import {
   getWorkbenchStatusDescriptor,
   type WorkbenchStatus,
   type WorkbenchStatusVariant,
-} from '../status';
+} from '../shell/status';
 
 /** Product-neutral phase lifecycle for run-progress UIs. */
 export type ChatRunPhaseStatus =

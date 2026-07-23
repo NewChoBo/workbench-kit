@@ -1,22 +1,22 @@
-export { normalizeEditorTabReorderIndex } from '../editor-tabs-dnd';
+export { normalizeEditorTabReorderIndex } from '../editor/editor-tabs-dnd';
 export {
   createWorkbenchStandaloneEditorTabCommandContext,
   createWorkbenchStandaloneEditorTabContextMenuItems,
   isWorkbenchEditorTabClosable,
-} from '../editorTabContextMenu';
+} from '../editor/editorTabContextMenu';
 export type {
   CreateWorkbenchStandaloneEditorTabCommandContextInput,
   WorkbenchStandaloneEditorTabLike,
-} from '../editorTabContextMenu';
-export { useEditorTabsStripDnd } from '../useEditorTabsStripDnd';
+} from '../editor/editorTabContextMenu';
+export { useEditorTabsStripDnd } from '../editor/useEditorTabsStripDnd';
 export type {
   UseEditorTabsStripDndOptions,
   UseEditorTabsStripDndResult,
-} from '../useEditorTabsStripDnd';
-export { useWorkbenchEditorTabContextMenu } from '../useWorkbenchEditorTabContextMenu';
+} from '../editor/useEditorTabsStripDnd';
+export { useWorkbenchEditorTabContextMenu } from '../editor/useWorkbenchEditorTabContextMenu';
 export type {
   UseWorkbenchEditorTabContextMenuOptions,
   UseWorkbenchEditorTabContextMenuResult,
-} from '../useWorkbenchEditorTabContextMenu';
-export { WorkbenchEditorTabs } from '../WorkbenchEditorTabs';
-export type { WorkbenchEditorTabsProps } from '../WorkbenchEditorTabs';
+} from '../editor/useWorkbenchEditorTabContextMenu';
+export { WorkbenchEditorTabs } from '../editor/WorkbenchEditorTabs';
+export type { WorkbenchEditorTabsProps } from '../editor/WorkbenchEditorTabs';

@@ -20,7 +20,7 @@ export type {
   WorkbenchIconRenderProps,
   WorkbenchIconResolver,
 } from './icons';
-export { commandMenuItemsToContextMenuItems } from './workbench/commands';
+export { commandMenuItemsToContextMenuItems } from './workbench/commands/commands';
 export {
   WorkbenchArtifactModeControls,
   WorkbenchArtifactPreview,
@@ -31,7 +31,7 @@ export {
   getWorkbenchPreviewRenderer,
   getWorkbenchPreviewRendererMatch,
   selectWorkbenchPreviewRenderer,
-} from './workbench/ArtifactShell';
+} from './workbench/shell/ArtifactShell';
 export type {
   WorkbenchArtifactDescriptor,
   WorkbenchArtifactMode,
@@ -44,7 +44,7 @@ export type {
   WorkbenchPreviewRendererContext,
   WorkbenchPreviewRendererMatch,
   WorkbenchPreviewRendererMatchReason,
-} from './workbench/ArtifactShell';
+} from './workbench/shell/ArtifactShell';
 export {
   WorkbenchCommandGroupShell,
   WorkbenchCommandList,
@@ -58,7 +58,7 @@ export {
   getWorkbenchCommandStatusLabel,
   groupWorkbenchCommands,
   isWorkbenchCommandRunnable,
-} from './workbench/CommandPalette';
+} from './workbench/commands/CommandPalette';
 export {
   WorkbenchShortcutCommandBridge,
   getWorkbenchShortcutCommandBindings,
@@ -66,7 +66,7 @@ export {
   matchesWorkbenchShortcut,
   runWorkbenchShortcutCommand,
   useWorkbenchShortcutCommands,
-} from './workbench/ShortcutCommandBridge';
+} from './workbench/commands/ShortcutCommandBridge';
 export type {
   WorkbenchCommandDescriptor,
   WorkbenchCommandDescriptorOverrides,
@@ -86,7 +86,7 @@ export type {
   WorkbenchCommandSideEffect,
   WorkbenchCommandStatus,
   WorkbenchCommandSuggestProps,
-} from './workbench/CommandPalette';
+} from './workbench/commands/CommandPalette';
 export type {
   UseWorkbenchShortcutCommandsOptions,
   WorkbenchShortcutCommandBinding,
@@ -98,7 +98,7 @@ export type {
   WorkbenchShortcutEventLike,
   WorkbenchShortcutMatchInput,
   WorkbenchShortcutPlatform,
-} from './workbench/ShortcutCommandBridge';
+} from './workbench/commands/ShortcutCommandBridge';
 export {
   WorkbenchConfirmationFlow,
   getWorkbenchConfirmationButtonVariant,
@@ -107,7 +107,7 @@ export {
   getWorkbenchConfirmationStatus,
   getWorkbenchConfirmationVariant,
   isWorkbenchConfirmationActionDisabled,
-} from './workbench/ConfirmationFlow';
+} from './workbench/commands/ConfirmationFlow';
 export type {
   WorkbenchConfirmationAction,
   WorkbenchConfirmationCancelContext,
@@ -118,7 +118,7 @@ export type {
   WorkbenchConfirmationReason,
   WorkbenchConfirmationSideEffect,
   WorkbenchConfirmationVariant,
-} from './workbench/ConfirmationFlow';
+} from './workbench/commands/ConfirmationFlow';
 export {
   WorkbenchAuthGate,
   WorkbenchLoginBrandMark,
@@ -161,7 +161,7 @@ export {
   getWorkbenchTimelineEventLabel,
   getWorkbenchTimelineEventStatus,
   getWorkbenchTimelineMetadataEntries,
-} from './workbench/Timeline';
+} from './workbench/shell/Timeline';
 export type {
   WorkbenchTimelineEvent,
   WorkbenchTimelineEventKind,
@@ -173,7 +173,7 @@ export type {
   WorkbenchTimelineRenderMetadata,
   WorkbenchTimelineRenderPayload,
   WorkbenchTimelineVariant,
-} from './workbench/Timeline';
+} from './workbench/shell/Timeline';
 export { ConfirmDialog } from './modal/ConfirmDialog';
 export type { ConfirmDialogProps } from './modal/ConfirmDialog';
 export { ContextMenu } from './overlay/ContextMenu';
@@ -216,12 +216,12 @@ export {
   isWorkbenchStatusDisabled,
   isWorkbenchStatusUnavailable,
   workbenchStatusFromLifecycleStatus,
-} from './workbench/status';
+} from './workbench/shell/status';
 export type {
   WorkbenchStatus,
   WorkbenchStatusDescriptor,
   WorkbenchStatusVariant,
-} from './workbench/status';
+} from './workbench/shell/status';
 export {
   FilterBar,
   FilterBarActiveChips,
@@ -567,7 +567,7 @@ export {
   StatusBar as WorkbenchStatusBar,
   StatusBarItem as WorkbenchStatusBarItem,
   StatusBarSection as WorkbenchStatusBarSection,
-} from './workbench/StatusBar';
+} from './workbench/shell/StatusBar';
 export type {
   StatusBarItemModel as WorkbenchStatusBarItemModel,
   StatusBarItemProps as WorkbenchStatusBarItemProps,
@@ -575,7 +575,7 @@ export type {
   StatusBarSectionAlign as WorkbenchStatusBarSectionAlign,
   StatusBarSectionModel as WorkbenchStatusBarSectionModel,
   StatusBarSectionProps as WorkbenchStatusBarSectionProps,
-} from './workbench/StatusBar';
+} from './workbench/shell/StatusBar';
 export { AbsoluteBox } from './primitives';
 export type { AbsoluteBoxProps, WorkbenchRect } from './primitives';
 export { Badge } from './primitives';
@@ -685,8 +685,8 @@ export type {
   WorkspaceDraftsContextValue,
   WorkspaceDraftsProviderProps,
 } from './workbench/workspace/WorkspaceDraftsContext';
-export { StructuredArtifactEditor } from './workbench/StructuredArtifactEditor';
-export type { StructuredArtifactEditorProps } from './workbench/StructuredArtifactEditor';
+export { StructuredArtifactEditor } from './workbench/shell/StructuredArtifactEditor';
+export type { StructuredArtifactEditorProps } from './workbench/shell/StructuredArtifactEditor';
 export { createStringDragMime, createTypedDragMime } from './utils/dragMime';
 export type { TypedDragMime, TypedDragMimeOptions } from './utils/dragMime';
 export {
@@ -698,29 +698,29 @@ export {
   readEditorTabDragPayload,
   resolveEditorTabDropTarget,
   resolveEditorTabStripDropTarget,
-} from './workbench/editor-tabs-dnd';
-export type { EditorTabDragPayload, EditorTabDropTarget } from './workbench/editor-tabs-dnd';
-export { useEditorTabsStripDnd } from './workbench/useEditorTabsStripDnd';
+} from './workbench/editor/editor-tabs-dnd';
+export type { EditorTabDragPayload, EditorTabDropTarget } from './workbench/editor/editor-tabs-dnd';
+export { useEditorTabsStripDnd } from './workbench/editor/useEditorTabsStripDnd';
 export type {
   UseEditorTabsStripDndOptions,
   UseEditorTabsStripDndResult,
-} from './workbench/useEditorTabsStripDnd';
-export { WorkbenchEditorTabs } from './workbench/WorkbenchEditorTabs';
-export type { WorkbenchEditorTabsProps } from './workbench/WorkbenchEditorTabs';
+} from './workbench/editor/useEditorTabsStripDnd';
+export { WorkbenchEditorTabs } from './workbench/editor/WorkbenchEditorTabs';
+export type { WorkbenchEditorTabsProps } from './workbench/editor/WorkbenchEditorTabs';
 export {
   createWorkbenchStandaloneEditorTabCommandContext,
   createWorkbenchStandaloneEditorTabContextMenuItems,
   isWorkbenchEditorTabClosable,
-} from './workbench/editorTabContextMenu';
+} from './workbench/editor/editorTabContextMenu';
 export type {
   CreateWorkbenchStandaloneEditorTabCommandContextInput,
   WorkbenchStandaloneEditorTabLike,
-} from './workbench/editorTabContextMenu';
-export { useWorkbenchEditorTabContextMenu } from './workbench/useWorkbenchEditorTabContextMenu';
+} from './workbench/editor/editorTabContextMenu';
+export { useWorkbenchEditorTabContextMenu } from './workbench/editor/useWorkbenchEditorTabContextMenu';
 export type {
   UseWorkbenchEditorTabContextMenuOptions,
   UseWorkbenchEditorTabContextMenuResult,
-} from './workbench/useWorkbenchEditorTabContextMenu';
+} from './workbench/editor/useWorkbenchEditorTabContextMenu';
 export {
   clampPreviewViewportZoom,
   computePreviewViewportFitScale,

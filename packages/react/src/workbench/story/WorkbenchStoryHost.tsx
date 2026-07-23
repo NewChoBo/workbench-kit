@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { WorkbenchThemeProvider } from '../WorkbenchThemeProvider';
+import { WorkbenchThemeProvider } from '../theme/WorkbenchThemeProvider';
 
 export interface WorkbenchStoryHostProps {
   children: ReactNode;

@@ -6,8 +6,8 @@ import {
 import { validateJsonWidgetData } from '@workbench-kit/jdw';
 
 import { SideBarViewFrame } from '../layout/sidebar';
-import { WorkbenchShell } from '../workbench/WorkbenchShell.js';
-import type { StatusBarSectionModel } from '../workbench/StatusBar.js';
+import { WorkbenchShell } from '../workbench/shell/WorkbenchShell.js';
+import type { StatusBarSectionModel } from '../workbench/shell/StatusBar.js';
 import {
   useVirtualWorkspace,
   WorkspaceDraftsProvider,

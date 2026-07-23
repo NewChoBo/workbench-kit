@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import type { ActivityBarItem } from '../ActivityBar';
+import type { ActivityBarItem } from '../shell/ActivityBar';
 
 export type ActivityBarStoryCaseId =
   | 'aiChat'

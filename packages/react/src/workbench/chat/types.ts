@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import type { WorkbenchCommandExecutionPolicy } from '../command-model';
+import type { WorkbenchCommandExecutionPolicy } from '../commands/command-model';
 
 export type ChatMessageSource = 'assistant' | 'user';
 

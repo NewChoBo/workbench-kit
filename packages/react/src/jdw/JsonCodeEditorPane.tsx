@@ -20,7 +20,7 @@ import {
   StatusBar as WorkbenchStatusBar,
   StatusBarItem as WorkbenchStatusBarItem,
   StatusBarSection as WorkbenchStatusBarSection,
-} from '../workbench/StatusBar';
+} from '../workbench/shell/StatusBar';
 import { WorkspaceEditor, type WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor';
 import type { WorkspaceFile } from '../workbench/workspace/types';
 

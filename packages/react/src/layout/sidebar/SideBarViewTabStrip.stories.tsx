@@ -3,8 +3,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, within } from 'storybook/test';
 
 import '../../styles.css';
-import { ActivityBar } from '../../workbench/ActivityBar';
-import { writeWorkbenchSidebarViewPlacementDrag } from '../../workbench/sidebarViewPlacementDnd';
+import { ActivityBar } from '../../workbench/shell/ActivityBar';
+import { writeWorkbenchSidebarViewPlacementDrag } from '../../workbench/shell/sidebarViewPlacementDnd';
 import { StoryEventLog, StorySidebarFrame } from '../../workbench/story/StorySidebarFrame';
 import { SideBarViewFrame } from './SideBarViewFrame';
 import { SideBarViewTabStrip, type SideBarViewTabDescriptor } from './SideBarViewTabStrip';

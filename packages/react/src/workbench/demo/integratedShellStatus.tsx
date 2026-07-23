@@ -1,6 +1,6 @@
 import { runtimeStatusLabel } from '@workbench-kit/adapters/workbench-demo-config';
 import type { RuntimeStatus } from '@workbench-kit/runtime';
-import type { StatusBarSectionModel } from '../StatusBar';
+import type { StatusBarSectionModel } from '../shell/StatusBar';
 import type { WorkspaceEditorTheme } from '../workspace';
 
 export function getIntegratedStatusSections({

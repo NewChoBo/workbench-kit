@@ -34,7 +34,7 @@ Do not rely on deep source imports from consuming applications:
 
 ```ts
 // Not public API.
-import { WorkbenchShell } from '@workbench-kit/react/src/workbench/WorkbenchShell';
+import { WorkbenchShell } from '@workbench-kit/react/src/workbench/shell/WorkbenchShell';
 ```
 
 If a consumer needs a symbol that is only reachable through `src`, either add it

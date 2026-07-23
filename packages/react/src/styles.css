@@ -5,7 +5,7 @@
 @import './workbench/settings/settings.css';
 @import './layout/layout.css';
 @import './overlay/overlay.css';
-@import './workbench/workbench-chrome.css';
+@import './workbench/chrome/workbench-chrome.css';
 @import './workbench/auth/auth.css';
 @import './workbench/management/management.css';
 @import './workbench/views/views.css';
