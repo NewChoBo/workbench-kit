@@ -51,7 +51,10 @@ export function clearNpmRegistryAuth() {
       const lower = line.toLowerCase();
       return !lower.includes('_authtoken') && !lower.trim().startsWith('always-auth');
     });
-    fs.writeFileSync(configPath, filtered.filter(Boolean).join('\n'));
+    fs.writeFileSync(
+      configPath,
+      filtered.filter(Boolean).join('\n') + (filtered.length ? '\n' : ''),
+    );
   }
 
   delete process.env.NODE_AUTH_TOKEN;
@@ -91,7 +94,15 @@ function npmUserConfigPaths() {
   if (process.env.HOME) {
     paths.push(`${process.env.HOME}/.npmrc`);
   }
-  return paths;
+  if (process.env.GITHUB_WORKSPACE) {
+    paths.push(`${process.env.GITHUB_WORKSPACE}/.npmrc`);
+  }
+  paths.push(pathJoinCwdNpmrc());
+  return [...new Set(paths)];
+}
+
+function pathJoinCwdNpmrc() {
+  return `${process.cwd()}/.npmrc`;
 }
 
 export function npmViewExists(specOrName, registry = NPM_REGISTRY) {

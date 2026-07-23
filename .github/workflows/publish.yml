@@ -1,8 +1,9 @@
 name: Publish Workbench Kit
 
+# Tag push only — do not also listen for `release` published.
+# `gh release create` pushes a tag and would otherwise start two full runs
+# (same concurrency group, cancel-in-progress false → long queue + Playwright reinstall).
 on:
-  release:
-    types: [published]
   push:
     tags:
       - 'v*'
@@ -30,17 +31,20 @@ permissions:
 
 concurrency:
   group: publish-workbench-kit-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   publish:
     name: Publish packages to npm
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     env:
       NPM_DIST_TAG: ${{ inputs.npm_tag || 'prototype' }}
       # Publish every NPM_PUBLISH_ORDER package missing the exact version, including
       # first releases (Trusted Publisher / OIDC). Local publish remains a fallback.
       NPM_PUBLISH_UPDATES_ONLY: 'false'
+      # Keep Chromium downloads out of the job workspace noise.
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,8 +67,11 @@ jobs:
 
       - name: Prepare npm for trusted publishing
         run: |
-          npm install -g npm@11
-          for rc in "${NPM_CONFIG_USERCONFIG:-}" "$HOME/.npmrc"; do
+          # npm 11.5.1+ required for OIDC trusted publishing; pin recent CLI
+          # (mid-batch ENEEDAUTH has been fixed by upgrading npm in the wild).
+          npm install -g npm@11.6.2
+          npm --version
+          for rc in "${NPM_CONFIG_USERCONFIG:-}" "$HOME/.npmrc" "$GITHUB_WORKSPACE/.npmrc"; do
             if [ -n "$rc" ] && [ -f "$rc" ]; then
               sed -i '/_authToken/d;/always-auth/d' "$rc" || true
             fi
@@ -77,11 +84,24 @@ jobs:
       - name: Preflight npm publish auth
         run: node scripts/preflight-npm-publish.mjs
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'package.json') }}
+
       - name: Install Playwright browser
-        run: pnpm exec playwright install --with-deps chromium
+        timeout-minutes: 10
+        run: |
+          # Chromium only — Storybook play does not need Firefox/WebKit.
+          # `--with-deps` apt installs can hang on busy runners; install browser
+          # first, then deps, so a cache hit skips the long download.
+          pnpm exec playwright install chromium
+          pnpm exec playwright install-deps chromium
 
       - name: Validate
         # validate includes Storybook play; browsers must match root Playwright.
+        # Not related to @workbench-kit/electron-shell (npm package only).
         run: pnpm validate
 
       - name: Guard branch publish
@@ -97,7 +117,7 @@ jobs:
           node scripts/publish-packages.mjs --dry-run
 
       - name: Publish
-        if: github.event_name == 'release' || github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'publish')
+        if: github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'publish')
         run: |
           unset NODE_AUTH_TOKEN NPM_TOKEN || true
           node scripts/publish-packages.mjs
