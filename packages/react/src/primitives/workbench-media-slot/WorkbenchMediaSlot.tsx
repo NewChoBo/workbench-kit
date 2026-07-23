@@ -6,20 +6,20 @@ import { useWorkbenchMediaImage } from '../../utils/useWorkbenchMediaImage';
 import { WorkbenchMediaPlaceholder } from './WorkbenchMediaPlaceholder';
 
 export interface WorkbenchMediaSlotProps extends Omit<ComponentPropsWithRef<'span'>, 'children'> {
-  alt?: string | undefined;
-  as?: 'div' | 'span' | undefined;
-  fallback?: ReactNode | undefined;
-  fallbackClassName?: string | undefined;
-  fallbackIcon?: string | undefined;
+  alt?: string;
+  as?: 'div' | 'span';
+  fallback?: ReactNode;
+  fallbackClassName?: string;
+  fallbackIcon?: string;
   /** Stretch to fill the parent box (hero/cover surfaces). */
-  fill?: boolean | undefined;
-  imageClassName?: string | undefined;
-  imageUrl?: string | null | undefined;
+  fill?: boolean;
+  imageClassName?: string;
+  imageUrl?: string | null;
   /**
    * Native image loading hint. Defaults to `lazy` for list/thumbnail surfaces.
    * Pass `eager` for above-the-fold heroes and detail identity art.
    */
-  loading?: 'eager' | 'lazy' | undefined;
+  loading?: 'eager' | 'lazy';
 }
 
 export function WorkbenchMediaSlot({

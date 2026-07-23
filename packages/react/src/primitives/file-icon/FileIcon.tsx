@@ -6,7 +6,7 @@ export const UI_FILE_ICON_CLASS = 'ui-file-icon';
 
 export interface FileIconProps extends Omit<ComponentPropsWithRef<'i'>, 'children'> {
   icon: string;
-  kind?: FileIconKind | undefined;
+  kind?: FileIconKind;
 }
 
 export function FileIcon({ className, icon, kind, ...props }: FileIconProps) {

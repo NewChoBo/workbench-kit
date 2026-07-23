@@ -10,11 +10,11 @@ import {
 import { cx } from '../../utils/cx';
 
 export interface WorkbenchViewSidebarItem<TViewId extends string, TIcon = unknown> {
-  readonly disabled?: boolean | undefined;
+  readonly disabled?: boolean;
   readonly icon: TIcon;
   readonly id: TViewId;
   readonly label: string;
-  readonly title?: string | undefined;
+  readonly title?: string;
 }
 
 export interface WorkbenchViewSidebarProps<TViewId extends string, TIcon = unknown> extends Omit<
@@ -22,10 +22,10 @@ export interface WorkbenchViewSidebarProps<TViewId extends string, TIcon = unkno
   'children' | 'onSelect'
 > {
   readonly [key: `data-${string}`]: boolean | number | string | undefined;
-  readonly activeId?: TViewId | undefined;
-  readonly itemDataAttributeName?: string | undefined;
+  readonly activeId?: TViewId;
+  readonly itemDataAttributeName?: string;
   readonly items: ReadonlyArray<WorkbenchViewSidebarItem<TViewId, TIcon>>;
-  readonly listProps?: Omit<SideBarListProps, 'children'> | undefined;
+  readonly listProps?: Omit<SideBarListProps, 'children'>;
   readonly onSelect?:
     ((viewId: TViewId, item: WorkbenchViewSidebarItem<TViewId, TIcon>) => void) | undefined;
   readonly renderIcon: (icon: TIcon, item: WorkbenchViewSidebarItem<TViewId, TIcon>) => ReactNode;

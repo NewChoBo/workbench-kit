@@ -11,16 +11,16 @@ export type WorkbenchTimelineMessageSource = 'assistant' | 'system' | 'user' | (
 export type WorkbenchTimelineVariant = 'compact' | 'expanded';
 
 export interface WorkbenchTimelineEvent {
-  content?: ReactNode | undefined;
-  description?: ReactNode | undefined;
+  content?: ReactNode;
+  description?: ReactNode;
   id: string;
   kind: WorkbenchTimelineEventKind;
-  metadata?: Record<string, unknown> | undefined;
+  metadata?: Record<string, unknown>;
   payload?: unknown;
-  source?: WorkbenchTimelineMessageSource | undefined;
-  status?: WorkbenchStatus | undefined;
-  timestamp?: ReactNode | undefined;
-  title?: ReactNode | undefined;
+  source?: WorkbenchTimelineMessageSource;
+  status?: WorkbenchStatus;
+  timestamp?: ReactNode;
+  title?: ReactNode;
 }
 
 export interface WorkbenchTimelineRenderContext {
@@ -172,10 +172,10 @@ export interface WorkbenchTimelineItemProps extends Omit<
   'children'
 > {
   event: WorkbenchTimelineEvent;
-  index?: number | undefined;
-  renderMetadata?: WorkbenchTimelineRenderMetadata | undefined;
-  renderPayload?: WorkbenchTimelineRenderPayload | undefined;
-  variant?: WorkbenchTimelineVariant | undefined;
+  index?: number;
+  renderMetadata?: WorkbenchTimelineRenderMetadata;
+  renderPayload?: WorkbenchTimelineRenderPayload;
+  variant?: WorkbenchTimelineVariant;
 }
 
 export function WorkbenchTimelineItem({
@@ -245,11 +245,11 @@ export function WorkbenchTimelineItem({
 }
 
 export interface WorkbenchTimelineProps extends Omit<ComponentPropsWithRef<'div'>, 'children'> {
-  emptyLabel?: ReactNode | undefined;
+  emptyLabel?: ReactNode;
   events: readonly WorkbenchTimelineEvent[];
-  renderMetadata?: WorkbenchTimelineRenderMetadata | undefined;
-  renderPayload?: WorkbenchTimelineRenderPayload | undefined;
-  variant?: WorkbenchTimelineVariant | undefined;
+  renderMetadata?: WorkbenchTimelineRenderMetadata;
+  renderPayload?: WorkbenchTimelineRenderPayload;
+  variant?: WorkbenchTimelineVariant;
 }
 
 export function WorkbenchTimeline({

@@ -24,50 +24,50 @@ export type ModalBodyLayout = 'block' | 'stack';
 export type ModalBodyPadding = 'none' | 'md' | 'lg';
 
 export interface ModalProps {
-  chrome?: WorkbenchWindowChromeMode | undefined;
+  chrome?: WorkbenchWindowChromeMode;
   title: ReactNode;
-  titleSuffix?: ReactNode | undefined;
+  titleSuffix?: ReactNode;
   children: ReactNode;
-  footer?: ReactNode | undefined;
-  className?: string | undefined;
-  bodyClassName?: string | undefined;
-  bodyLayout?: ModalBodyLayout | undefined;
-  bodyPadding?: ModalBodyPadding | undefined;
-  bodyScroll?: 'auto' | 'hidden' | undefined;
+  footer?: ReactNode;
+  className?: string;
+  bodyClassName?: string;
+  bodyLayout?: ModalBodyLayout;
+  bodyPadding?: ModalBodyPadding;
+  bodyScroll?: 'auto' | 'hidden';
   /** When true (default), Escape calls `onClose`. */
-  closeOnEscape?: boolean | undefined;
-  closeLabel?: string | undefined;
-  defaultHeight?: number | undefined;
-  defaultMaximized?: boolean | undefined;
-  defaultWidth?: number | undefined;
+  closeOnEscape?: boolean;
+  closeLabel?: string;
+  defaultHeight?: number;
+  defaultMaximized?: boolean;
+  defaultWidth?: number;
   /** Optional element to focus when the modal mounts (must be inside the dialog). */
-  initialFocusRef?: RefObject<HTMLElement | null> | undefined;
-  labelledBy?: string | undefined;
-  maximizeLabel?: string | undefined;
-  minHeight?: number | undefined;
-  minWidth?: number | undefined;
+  initialFocusRef?: RefObject<HTMLElement | null>;
+  labelledBy?: string;
+  maximizeLabel?: string;
+  minHeight?: number;
+  minWidth?: number;
   onClose: () => void;
-  onSubmit?: FormEventHandler<HTMLFormElement> | undefined;
+  onSubmit?: FormEventHandler<HTMLFormElement>;
   /** When true (default), restore focus to the previously focused element on unmount. */
-  restoreFocusOnClose?: boolean | undefined;
-  restoreLabel?: string | undefined;
+  restoreFocusOnClose?: boolean;
+  restoreLabel?: string;
 }
 
 interface ModalFrameProps {
-  bodyClassName?: string | undefined;
+  bodyClassName?: string;
   bodyLayout: ModalBodyLayout;
   bodyPadding: ModalBodyPadding;
   bodyScroll: 'auto' | 'hidden';
   children: ReactNode;
   dataAttrs: Record<string, string | undefined>;
-  footer?: ReactNode | undefined;
+  footer?: ReactNode;
   frameRef: (node: HTMLDivElement | HTMLFormElement | null) => void;
   modalClassName: string;
   resolvedLabelledBy: string;
-  resizeHandles?: ReactNode | undefined;
-  style?: CSSProperties | undefined;
+  resizeHandles?: ReactNode;
+  style?: CSSProperties;
   titlebar: ReactNode;
-  onSubmit?: FormEventHandler<HTMLFormElement> | undefined;
+  onSubmit?: FormEventHandler<HTMLFormElement>;
 }
 
 function ModalFrame({

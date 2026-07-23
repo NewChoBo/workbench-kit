@@ -38,7 +38,7 @@ export interface LibraryFacetSection {
    * Uncontrolled initial collapsed state when `collapsibleSections` is true.
    * When omitted, sections start expanded.
    */
-  readonly defaultCollapsed?: boolean | undefined;
+  readonly defaultCollapsed?: boolean;
   readonly fields: ReadonlyArray<LibraryFacetField>;
   readonly id: string;
 }
@@ -46,33 +46,33 @@ export interface LibraryFacetSection {
 export interface LibraryFacetFilterPanelLabels {
   readonly clearAll: string;
   readonly clearChipAria: (chipLabel: string) => string;
-  readonly empty?: string | undefined;
+  readonly empty?: string;
   /** Aria/placeholder for searchable facet input. Default: "Search options". */
-  readonly filterOptions?: string | undefined;
+  readonly filterOptions?: string;
   /** Shown when option filter matches nothing. Default: "No matching options". */
-  readonly noMatchingOptions?: string | undefined;
+  readonly noMatchingOptions?: string;
 }
 
 export interface LibraryFacetFilterPanelProps {
-  readonly activeChips?: ReadonlyArray<LibraryFacetActiveChip> | undefined;
-  readonly className?: string | undefined;
+  readonly activeChips?: ReadonlyArray<LibraryFacetActiveChip>;
+  readonly className?: string;
   /**
    * When true, section headers toggle collapse.
    * Default false — keeps all sections expanded.
    */
-  readonly collapsibleSections?: boolean | undefined;
-  readonly description?: string | undefined;
+  readonly collapsibleSections?: boolean;
+  readonly description?: string;
   readonly labels: LibraryFacetFilterPanelLabels;
   /** Required when `showActiveChips` is true (chip strip Clear). Host may own Clear otherwise. */
-  readonly onClearAll?: (() => void) | undefined;
-  readonly onRemoveChip?: ((chipId: string) => void) | undefined;
+  readonly onClearAll?: (() => void);
+  readonly onRemoveChip?: ((chipId: string) => void);
   readonly onToggleFacetValue: (
     fieldId: string,
     value: string,
     kind: LibraryFacetFieldKind,
   ) => void;
   readonly resolveFieldLabel: (fieldId: string) => string;
-  readonly resolveSectionLabel?: ((sectionId: string) => string) | undefined;
+  readonly resolveSectionLabel?: ((sectionId: string) => string);
   readonly sections: ReadonlyArray<LibraryFacetSection>;
   readonly selectedValues: Readonly<Record<string, readonly string[]>>;
   /**
@@ -80,7 +80,7 @@ export interface LibraryFacetFilterPanelProps {
    * selection). Hosts should place Clear in their own header chrome.
    * Default true for backward compatibility.
    */
-  readonly showActiveChips?: boolean | undefined;
+  readonly showActiveChips?: boolean;
 }
 
 function sectionHasSelection(

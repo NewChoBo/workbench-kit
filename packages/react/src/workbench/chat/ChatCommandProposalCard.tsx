@@ -6,8 +6,8 @@ import type { WorkbenchCommandExecutionPolicy } from '../commands/command-model'
 import type { ChatCommandProposal, ChatCommandProposalStatus } from './types';
 
 export interface ChatCommandProposalCardProps {
-  onAllow?: ((proposal: ChatCommandProposal) => void) | undefined;
-  onDeny?: ((proposal: ChatCommandProposal) => void) | undefined;
+  onAllow?: ((proposal: ChatCommandProposal) => void);
+  onDeny?: ((proposal: ChatCommandProposal) => void);
   proposal: ChatCommandProposal;
 }
 

@@ -8,23 +8,23 @@ import {
 } from './chatScroll';
 
 export interface UseChatPrependPaginationOptions {
-  autoScrollBottomThreshold?: number | undefined;
-  getScrollContainer?: ((listElement: HTMLDivElement | null) => HTMLElement | null) | undefined;
-  initialVisibleItemCount?: number | undefined;
-  isStreaming?: boolean | undefined;
+  autoScrollBottomThreshold?: number;
+  getScrollContainer?: ((listElement: HTMLDivElement | null) => HTMLElement | null);
+  initialVisibleItemCount?: number;
+  isStreaming?: boolean;
   itemCount: number;
-  lastItemId?: string | undefined;
+  lastItemId?: string;
   /** Content revision for the trailing item (e.g. streaming chunk updates). */
-  lastItemRevision?: string | undefined;
-  paginationKey?: string | undefined;
-  rootMargin?: string | undefined;
+  lastItemRevision?: string;
+  paginationKey?: string;
+  rootMargin?: string;
   /**
    * - `true` (default): always scroll to the latest message
    * - `'auto'`: scroll only when the container is already near the bottom
    * - `false`: never auto-scroll
    */
-  stickToBottom?: boolean | 'auto' | undefined;
-  visibleItemPageSize?: number | undefined;
+  stickToBottom?: boolean | 'auto';
+  visibleItemPageSize?: number;
 }
 
 export interface UseChatPrependPaginationResult {

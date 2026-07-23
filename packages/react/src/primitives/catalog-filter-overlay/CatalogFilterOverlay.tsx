@@ -13,10 +13,10 @@ export interface CatalogFilterOverlayProps extends Omit<
    * When true, Clear stays mounted and sized but is not actionable.
    * Keeps the title row height stable across selection changes.
    */
-  readonly clearDisabled?: boolean | undefined;
+  readonly clearDisabled?: boolean;
   readonly clearLabel: string;
   readonly onClear: () => void;
-  readonly ref?: Ref<HTMLDivElement> | undefined;
+  readonly ref?: Ref<HTMLDivElement>;
   readonly title: ReactNode;
   readonly titleId: string;
 }

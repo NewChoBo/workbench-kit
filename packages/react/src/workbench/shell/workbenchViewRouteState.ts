@@ -20,11 +20,11 @@ export interface WorkbenchViewRouteBrowserWindow {
 
 export interface UseWorkbenchViewRouteStateOptions<TViewId extends string> {
   readonly defaultViewId: TViewId;
-  readonly discardedParams?: ReadonlyArray<string> | undefined;
+  readonly discardedParams?: ReadonlyArray<string>;
   readonly isViewId: (value: string | null) => value is TViewId;
-  readonly routeWindow?: WorkbenchViewRouteBrowserWindow | undefined;
-  readonly tabsParam?: string | undefined;
-  readonly viewParam?: string | undefined;
+  readonly routeWindow?: WorkbenchViewRouteBrowserWindow;
+  readonly tabsParam?: string;
+  readonly viewParam?: string;
 }
 
 export interface WorkbenchViewRouteState<

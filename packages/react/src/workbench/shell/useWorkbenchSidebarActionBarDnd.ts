@@ -22,7 +22,7 @@ export interface WorkbenchSidebarActionBarDropTarget {
 
 export interface UseWorkbenchSidebarActionBarDndOptions {
   readonly itemIds: readonly string[];
-  readonly onReorder?: ((itemIds: string[]) => void) | undefined;
+  readonly onReorder?: ((itemIds: string[]) => void);
   readonly orientation?: ActivityBarOrientation;
   readonly placementDraggable?: boolean;
   readonly reorderable?: boolean;

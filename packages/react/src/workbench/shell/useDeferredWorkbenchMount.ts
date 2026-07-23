@@ -1,9 +1,9 @@
 import { startTransition, useEffect, useRef, useState } from 'react';
 
 export interface UseDeferredWorkbenchMountOptions {
-  readonly delayMs?: number | undefined;
-  readonly disabled?: boolean | undefined;
-  readonly initialReady?: boolean | undefined;
+  readonly delayMs?: number;
+  readonly disabled?: boolean;
+  readonly initialReady?: boolean;
 }
 
 export function useDeferredWorkbenchMount({

@@ -42,7 +42,7 @@ export interface SplitViewProps {
   onPrimarySizePxPreviewChange?: (primarySizePx: number) => void;
   onSecondarySizePxChange?: (secondarySizePx: number) => void;
   onSecondarySizePxPreviewChange?: (secondarySizePx: number) => void;
-  orientation?: SplitViewOrientation | undefined;
+  orientation?: SplitViewOrientation;
   primary: ReactNode;
   primarySizePercent?: number;
   primarySizePx?: number;

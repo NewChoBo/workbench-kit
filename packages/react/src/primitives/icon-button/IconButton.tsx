@@ -7,7 +7,7 @@ import { cx } from '../../utils/cx';
 type IconButtonVariant = 'default' | 'danger';
 
 export interface IconButtonProps extends Omit<ComponentPropsWithRef<'button'>, 'children'> {
-  compact?: boolean | undefined;
+  compact?: boolean;
   icon: WorkbenchIconInput;
   label: string;
   variant?: IconButtonVariant;

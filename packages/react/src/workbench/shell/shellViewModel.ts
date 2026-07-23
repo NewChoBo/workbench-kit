@@ -24,8 +24,8 @@ export interface CreateWorkbenchShellActivityBarFromViewModelInput<
   TViewId extends string,
   TIcon = unknown,
 > {
-  readonly activeId?: TViewId | undefined;
-  readonly activityBarProps?: WorkbenchShellActivityBarViewModelProps | undefined;
+  readonly activeId?: TViewId;
+  readonly activityBarProps?: WorkbenchShellActivityBarViewModelProps;
   readonly model: WorkbenchViewActivityBarModel<TViewId, TIcon>;
   readonly onSelect?:
     ((viewId: TViewId, item: WorkbenchViewActivityBarItem<TViewId, TIcon>) => void) | undefined;

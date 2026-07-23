@@ -13,13 +13,13 @@ export interface LibraryDetailLayoutProps extends Omit<
   'children' | 'title'
 > {
   readonly actions?: ReactNode;
-  readonly backgroundImageUrl?: string | null | undefined;
+  readonly backgroundImageUrl?: string | null;
   readonly children?: ReactNode;
-  readonly coverAlt?: string | undefined;
-  readonly coverImageUrl?: string | null | undefined;
+  readonly coverAlt?: string;
+  readonly coverImageUrl?: string | null;
   readonly description?: ReactNode;
-  readonly logoImageUrl?: string | null | undefined;
-  readonly mode?: LibraryDetailLayoutMode | undefined;
+  readonly logoImageUrl?: string | null;
+  readonly mode?: LibraryDetailLayoutMode;
   readonly summary?: ReactNode;
   readonly title: ReactNode;
   readonly toolbar?: ReactNode;

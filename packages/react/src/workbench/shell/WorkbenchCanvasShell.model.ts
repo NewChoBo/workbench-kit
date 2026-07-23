@@ -1,10 +1,10 @@
 import type { WorkbenchDocumentNode, WorkbenchNodeLayout } from '../schema';
 
 export interface WorkbenchCanvasLayoutInput {
-  readonly height?: string | undefined;
-  readonly width?: string | undefined;
-  readonly x?: string | undefined;
-  readonly y?: string | undefined;
+  readonly height?: string;
+  readonly width?: string;
+  readonly x?: string;
+  readonly y?: string;
 }
 
 export function getWorkbenchCanvasNodeChildren(node: WorkbenchDocumentNode): readonly string[] {

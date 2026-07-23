@@ -32,11 +32,11 @@ function listFocusable(container: HTMLElement): HTMLElement[] {
 }
 
 export interface UseModalFocusTrapOptions {
-  readonly closeOnEscape?: boolean | undefined;
+  readonly closeOnEscape?: boolean;
   readonly containerRef: RefObject<HTMLElement | null>;
-  readonly initialFocusRef?: RefObject<HTMLElement | null> | undefined;
+  readonly initialFocusRef?: RefObject<HTMLElement | null>;
   readonly onClose: () => void;
-  readonly restoreFocusOnClose?: boolean | undefined;
+  readonly restoreFocusOnClose?: boolean;
 }
 
 /**

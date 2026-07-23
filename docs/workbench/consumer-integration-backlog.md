@@ -82,14 +82,15 @@ cascade menus stay primary-only and open the fuller dialog for the rest.
 | **Suggested package**  | Kit: keep `check:public-exports` green. Consumer: delete shims and import from published subpaths once typing is stable.                                                                                    |
 | **Storybook / sample** | N/A — consumer migration task; document in consumer foundation plan.                                                                                                                                        |
 
-### 4. `exactOptionalPropertyTypes` compatibility for linked consumers
+### 4. `exactOptionalPropertyTypes` compatibility for linked consumers — partial
 
 | Field | Detail |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
-| **Description** | Consumer enables `exactOptionalPropertyTypes`; kit props often use `prop?: T \| undefined`. Consumer currently uses `tsconfig.workbench-linked.json` with the flag disabled for kit paths. |
-| **Consumer pain** | Type errors on otherwise valid kit usage; forces split tsconfig or `as` casts at boundaries. |
-| **Suggested package** | `@workbench-kit/react` — audit exported props; prefer explicit optional fields or helper types (`                                                                                          | undefined` only where required). |
-| **Storybook / sample** | Add typecheck job variant with `exactOptionalPropertyTypes: true` in CI or consumer contract smoke. |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Status** | Partial — high-traffic props cleaned; consumer fixture landed (`pnpm typecheck:react-exact-optional`). |
+| **Description** | Consumer enables `exactOptionalPropertyTypes`; remaining kit areas may still use `prop?: T \| undefined` or fail when typechecking linked source implementation graphs. |
+| **Consumer pain** | Type errors on otherwise valid kit usage; forces split tsconfig or `as` casts at boundaries for uncleaned surfaces. |
+| **Suggested package** | `@workbench-kit/react` — continue audit beyond primitives/modal/shell/chat (settings/schema, editors, workspace). |
+| **Storybook / sample** | Fixture: `packages/react/typecheck-exact-optional` (emit `.d.ts` + eOPT smoke). Convention: `docs/conventions/public-api-governance.md`. |
 
 ### 5. Platform window chrome — landed
 

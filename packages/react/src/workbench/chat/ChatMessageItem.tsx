@@ -23,35 +23,35 @@ export interface ChatMessageItemProps {
    * host chrome that should stay outside the collapsible surface.
    * Prefer `attachments` for in-bubble file chips.
    */
-  afterMessage?: ReactNode | undefined;
+  afterMessage?: ReactNode;
   /**
    * In-bubble attachment region (file chips, etc.). Renders inside the bubble
    * surface after the message body. Prefer this over `afterMessage` when chips
    * must stay end-aligned with user bubbles.
    */
-  attachments?: ReactNode | undefined;
+  attachments?: ReactNode;
   assistantLabel?: string;
   /** Overrides `message.contentMode` when set. */
-  contentMode?: ChatMessageContentMode | undefined;
+  contentMode?: ChatMessageContentMode;
   /**
    * Forwarded into `ChatMessageCollapsible` in-bubble footer (progress, actions).
    */
-  footer?: ReactNode | undefined;
+  footer?: ReactNode;
   isStreaming?: boolean;
   /**
    * Assistant-layout label icon. Defaults to sparkle; error/warning tones use
    * status icons. Pass a custom node to override, or `false` to hide.
    */
-  labelIcon?: ReactNode | false | undefined;
+  labelIcon?: ReactNode | false;
   layout?: ChatMessageLayout;
   message: ChatMessage;
-  onCommandProposalAllow?: ((messageId: string, proposal: ChatCommandProposal) => void) | undefined;
-  onCommandProposalDeny?: ((messageId: string, proposal: ChatCommandProposal) => void) | undefined;
+  onCommandProposalAllow?: ((messageId: string, proposal: ChatCommandProposal) => void);
+  onCommandProposalDeny?: ((messageId: string, proposal: ChatCommandProposal) => void);
   showSenderLabel?: boolean;
   /** When true, keeps the inline timestamp visible without hover. */
   showTimestamp?: boolean;
   /** Overrides `message.tone` when set. */
-  tone?: ChatMessageTone | undefined;
+  tone?: ChatMessageTone;
   userLabel?: string;
 }
 

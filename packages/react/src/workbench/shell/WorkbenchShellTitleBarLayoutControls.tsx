@@ -4,18 +4,18 @@ import type { JSX } from 'react';
 import { IconButton } from '../../primitives/icon-button';
 
 export interface WorkbenchShellTitleBarLayoutControlsProps {
-  readonly isAuxiliarySidebarVisible?: boolean | undefined;
-  readonly isPanelVisible?: boolean | undefined;
+  readonly isAuxiliarySidebarVisible?: boolean;
+  readonly isPanelVisible?: boolean;
   readonly isPrimarySidebarVisible: boolean;
-  readonly onToggleAuxiliarySidebar?: (() => void) | undefined;
-  readonly onTogglePanel?: (() => void) | undefined;
+  readonly onToggleAuxiliarySidebar?: (() => void);
+  readonly onTogglePanel?: (() => void);
   readonly onTogglePrimarySidebar: () => void;
-  readonly panelHideLabel?: string | undefined;
-  readonly panelShowLabel?: string | undefined;
-  readonly primarySidebarHideLabel?: string | undefined;
-  readonly primarySidebarShowLabel?: string | undefined;
-  readonly secondarySidebarHideLabel?: string | undefined;
-  readonly secondarySidebarShowLabel?: string | undefined;
+  readonly panelHideLabel?: string;
+  readonly panelShowLabel?: string;
+  readonly primarySidebarHideLabel?: string;
+  readonly primarySidebarShowLabel?: string;
+  readonly secondarySidebarHideLabel?: string;
+  readonly secondarySidebarShowLabel?: string;
 }
 
 function joinClasses(...classNames: Array<string | false | null | undefined>): string {

@@ -15,7 +15,7 @@ export interface WorkbenchShellProps {
     items: ActivityBarItem[];
     visible?: boolean;
   };
-  activityBarPosition?: WorkbenchShellActivityBarPosition | undefined;
+  activityBarPosition?: WorkbenchShellActivityBarPosition;
   auxiliarySidebar?: {
     isVisible: boolean;
     node: ReactNode;
