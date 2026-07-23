@@ -68,11 +68,12 @@ export function configureWorkspaceEditorJsonDiagnostics(
   const schemas = getWorkspaceEditorJsonDiagnosticsSchemas(file);
   if (schemas.length === 0) return;
 
-  const jsonDefaults = (
-    monacoInstance.languages.json as unknown as {
-      jsonDefaults?: { setDiagnosticsOptions: (options: unknown) => void };
-    }
-  ).jsonDefaults;
+  const jsonLanguage = monacoInstance.languages.json as unknown as
+    | {
+        jsonDefaults?: { setDiagnosticsOptions: (options: unknown) => void };
+      }
+    | undefined;
+  const jsonDefaults = jsonLanguage?.jsonDefaults;
   if (!jsonDefaults) return;
 
   jsonDefaults.setDiagnosticsOptions({

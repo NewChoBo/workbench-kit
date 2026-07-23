@@ -63,6 +63,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@monaco-editor/react": "^4.7.0",
+    "@workbench-kit/monaco": "workspace:*",
     "@storybook/addon-docs": "^10.5.2",
     "@storybook/react-vite": "^10.5.2",
     "@storybook/test-runner": "^0.24.4",
