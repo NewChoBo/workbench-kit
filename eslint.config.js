@@ -12,6 +12,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/node_modules/**',
       '**/storybook-static/**',
+      '**/typecheck-exact-optional/.tmp-types/**',
       '*.tsbuildinfo',
       'pnpm-lock.yaml',
     ],
