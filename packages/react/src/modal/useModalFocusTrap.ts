@@ -34,6 +34,8 @@ function listFocusable(container: HTMLElement): HTMLElement[] {
 export interface UseModalFocusTrapOptions {
   readonly closeOnEscape?: boolean;
   readonly containerRef: RefObject<HTMLElement | null>;
+  /** When false, skip trap/restore (for dialogs that stay mounted while closed). Default true. */
+  readonly enabled?: boolean;
   readonly initialFocusRef?: RefObject<HTMLElement | null>;
   readonly onClose: () => void;
   readonly restoreFocusOnClose?: boolean;
@@ -46,11 +48,16 @@ export interface UseModalFocusTrapOptions {
 export function useModalFocusTrap({
   closeOnEscape = true,
   containerRef,
+  enabled = true,
   initialFocusRef,
   onClose,
   restoreFocusOnClose = true,
 }: UseModalFocusTrapOptions): void {
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     const previousFocus =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
@@ -131,5 +138,5 @@ export function useModalFocusTrap({
         previousFocus.focus();
       }
     };
-  }, [closeOnEscape, containerRef, initialFocusRef, onClose, restoreFocusOnClose]);
+  }, [closeOnEscape, containerRef, enabled, initialFocusRef, onClose, restoreFocusOnClose]);
 }

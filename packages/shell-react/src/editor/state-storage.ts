@@ -1,21 +1,18 @@
-import type {
-  EditorGroupState,
-  EditorLayoutDirection,
-  EditorLayoutNode,
-  EditorState,
-  EditorTabState,
-  WorkbenchStorageReader,
-  WorkbenchStorageWriter,
+import {
+  createBrowserWorkbenchStorage,
+  type EditorGroupState,
+  type EditorLayoutDirection,
+  type EditorLayoutNode,
+  type EditorState,
+  type EditorTabState,
+  type WorkbenchStorageReader,
+  type WorkbenchStorageWriter,
 } from '@workbench-kit/workbench-core';
 
 export const DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY = 'workbench-kit/.workbench/editors';
 
 export function isWorkbenchEditorStatePersistenceAvailable(): boolean {
-  try {
-    return typeof globalThis.localStorage !== 'undefined';
-  } catch {
-    return false;
-  }
+  return createBrowserWorkbenchStorage({ kind: 'local' }) !== undefined;
 }
 
 export function editorStateToStorageValue(state: EditorState): EditorState {
@@ -43,7 +40,7 @@ export function readPersistedEditorState(
   storageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
 ): EditorState | undefined {
-  const resolvedStorage = storage ?? getBrowserLocalStorage();
+  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
   if (!resolvedStorage) return undefined;
 
   try {
@@ -61,7 +58,7 @@ export function writePersistedEditorState(
   storageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   storage?: WorkbenchStorageWriter,
 ): void {
-  const resolvedStorage = storage ?? getBrowserLocalStorage();
+  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
   if (!resolvedStorage) return;
 
   try {
@@ -184,10 +181,3 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function getBrowserLocalStorage(): (WorkbenchStorageReader & WorkbenchStorageWriter) | undefined {
-  if (!isWorkbenchEditorStatePersistenceAvailable()) {
-    return undefined;
-  }
-
-  return globalThis.localStorage;
-}

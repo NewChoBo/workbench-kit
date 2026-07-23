@@ -1,3 +1,4 @@
+import { createBrowserWorkbenchStorage } from '../storage-adapters.js';
 import type {
   WorkbenchStorageAdapter,
   WorkbenchStorageReader,
@@ -72,7 +73,7 @@ export function loadInstalledExtensions(
   storageKey: string = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
 ): InstalledExtensionRecord[] {
-  const resolvedStorage = storage ?? getBrowserLocalStorage();
+  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
   if (!resolvedStorage) {
     return [];
   }
@@ -102,7 +103,7 @@ export function saveInstalledExtensions(
   storageKey: string = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   storage?: WorkbenchStorageWriter,
 ): void {
-  const resolvedStorage = storage ?? getBrowserLocalStorage();
+  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
   if (!resolvedStorage) {
     return;
   }
@@ -245,10 +246,3 @@ function normalizeInstalledExtensionRecord(value: unknown): InstalledExtensionRe
   };
 }
 
-function getBrowserLocalStorage(): WorkbenchStorageAdapter | undefined {
-  try {
-    return globalThis.localStorage;
-  } catch {
-    return undefined;
-  }
-}

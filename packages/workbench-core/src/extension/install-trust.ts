@@ -1,8 +1,5 @@
-import type {
-  WorkbenchStorageAdapter,
-  WorkbenchStorageReader,
-  WorkbenchStorageWriter,
-} from '../storage.js';
+import { createBrowserWorkbenchStorage } from '../storage-adapters.js';
+import type { WorkbenchStorageReader, WorkbenchStorageWriter } from '../storage.js';
 
 export const DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY =
   'workbench-kit/.workbench/extension-install-trust' as const;
@@ -73,7 +70,7 @@ export function loadExtensionInstallTrustRecords(
   storageKey: string = DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
 ): ExtensionInstallTrustRecord[] {
-  const resolvedStorage = storage ?? getBrowserLocalStorage();
+  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
   if (!resolvedStorage) {
     return [];
   }
@@ -103,7 +100,7 @@ export function saveExtensionInstallTrustRecords(
   storageKey: string = DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
   storage?: WorkbenchStorageWriter,
 ): void {
-  const resolvedStorage = storage ?? getBrowserLocalStorage();
+  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
   if (!resolvedStorage) {
     return;
   }
@@ -135,13 +132,3 @@ function normalizeTrustRecord(value: unknown): ExtensionInstallTrustRecord | und
   };
 }
 
-function getBrowserLocalStorage(): WorkbenchStorageAdapter | undefined {
-  try {
-    if (typeof globalThis.localStorage === 'undefined') {
-      return undefined;
-    }
-    return globalThis.localStorage;
-  } catch {
-    return undefined;
-  }
-}
