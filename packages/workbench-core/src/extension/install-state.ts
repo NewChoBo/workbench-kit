@@ -100,6 +100,15 @@ export function saveInstalledExtensions(
   resolvedStorage.setItem(storageKey, JSON.stringify(records, null, 2));
 }
 
+/**
+ * Privileged host/test helper: upserts an install record without an install plan
+ * or approval gate.
+ *
+ * Marketplace and management UI installs must use
+ * {@link applyExtensionInstallPlanToRecords} (with `approved` when the plan
+ * requires approval). Prefer that path unless the host intentionally seeds or
+ * migrates install state outside the catalog review flow.
+ */
 export function installExtensionRecord(
   record: Omit<InstalledExtensionRecord, 'installedAt'> & { installedAt?: string },
   storageKey: string = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,

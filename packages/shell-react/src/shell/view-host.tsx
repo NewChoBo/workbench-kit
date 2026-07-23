@@ -1,5 +1,6 @@
 import { isValidElement, useEffect, useMemo, useRef, type FocusEvent, type ReactNode } from 'react';
 import type {
+  ExtensionCatalogTrustPolicy,
   ExtensionRegistry,
   ViewHost,
   ViewHostFactoryRegistry,
@@ -25,6 +26,7 @@ export function renderDefaultPrimarySidebar(
   extensionRegistry: Pick<ExtensionRegistry, 'viewHostFactories' | 'views'>,
   activeViewContainerId: string | undefined,
   catalogUrl?: string | undefined,
+  catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined,
 ) {
   const views = activeViewContainerId
     ? extensionRegistry.views.getViews(activeViewContainerId)
@@ -41,6 +43,7 @@ export function renderDefaultPrimarySidebar(
       {views.map((view) => (
         <section key={view.id} data-view-id={view.id}>
           <WorkbenchViewHost
+            catalogTrustPolicy={catalogTrustPolicy}
             catalogUrl={catalogUrl}
             fallback={view.name}
             provider={extensionRegistry.views.getViewProvider(view.id)}
@@ -54,12 +57,14 @@ export function renderDefaultPrimarySidebar(
 }
 
 export function WorkbenchViewHost({
+  catalogTrustPolicy,
   catalogUrl,
   fallback,
   provider,
   viewHostFactories,
   viewId,
 }: {
+  catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
   catalogUrl?: string | undefined;
   fallback: ReactNode;
   provider: ViewProvider | undefined;
@@ -118,7 +123,7 @@ export function WorkbenchViewHost({
       onBlur={(event) => notifyViewHostBlur(host, event)}
       onFocus={(event) => notifyViewHostFocus(host, event)}
     >
-      {toWorkbenchViewHostReactNode(host.render(), fallback, { catalogUrl })}
+      {toWorkbenchViewHostReactNode(host.render(), fallback, { catalogTrustPolicy, catalogUrl })}
     </div>
   );
 }
@@ -160,7 +165,10 @@ export function toReactNode(value: unknown, fallback: ReactNode): ReactNode {
 export function toWorkbenchViewHostReactNode(
   value: unknown,
   fallback: ReactNode,
-  options: { catalogUrl?: string | undefined } = {},
+  options: {
+    catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
+    catalogUrl?: string | undefined;
+  } = {},
 ): ReactNode {
   if (isBuiltinExplorerViewRenderData(value)) {
     return <BuiltinExplorerView />;
@@ -179,7 +187,12 @@ export function toWorkbenchViewHostReactNode(
   }
 
   if (isBuiltinExtensionsViewRenderData(value)) {
-    return <BuiltinExtensionsView catalogUrl={options.catalogUrl} />;
+    return (
+      <BuiltinExtensionsView
+        catalogTrustPolicy={options.catalogTrustPolicy}
+        catalogUrl={options.catalogUrl}
+      />
+    );
   }
 
   if (isSampleJdwLabViewRenderData(value)) {

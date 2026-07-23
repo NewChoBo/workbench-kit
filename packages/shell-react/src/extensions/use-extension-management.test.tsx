@@ -154,6 +154,38 @@ describe('useExtensionManagementModel', () => {
       root.unmount();
     });
   });
+
+  it('refuses absolute catalog URLs that are not allowlisted before fetch', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    let currentModel: ExtensionManagementModel | undefined;
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider workspaceHostPort={authCapabilityHostPort}>
+            <ExtensionManagementProbe
+              catalogUrl="https://cdn.example.com/extension-catalog.json"
+              onChange={(model) => {
+                currentModel = model;
+              }}
+            />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    await waitForModel(() => currentModel?.catalogLoading === false);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(currentModel?.catalogError).toMatch(/not allowlisted/i);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
 });
 
 async function waitForModel(predicate: () => boolean | undefined): Promise<void> {

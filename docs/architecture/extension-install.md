@@ -45,6 +45,9 @@ Parsing is handled by `parseExtensionCatalog()` in `@workbench-kit/workbench-cor
 
 1. Host serves a catalog JSON file (for example `examples/workbench-sample/public/extension-catalog.json`).
 2. Browse UI loads the catalog via `fetch()` or receives entries through props.
+   Before fetch, `assertExtensionCatalogUrlAllowed()` applies the host
+   `ExtensionCatalogTrustPolicy` (default: relative/path-only catalogs allowed;
+   absolute remote origins denied until listed in `allowedOrigins`).
 3. `createExtensionInstallPlan()` builds the pre-install review plan:
    dependency order, install/enable/already-enabled actions, extension-pack
    members, catalog install-source availability, required approval,
@@ -108,10 +111,13 @@ Helpers live in `@workbench-kit/workbench-core`:
 
 - `loadInstalledExtensions()`
 - `saveInstalledExtensions()`
-- `installExtensionRecord()`
-- `applyExtensionInstallPlanToRecords()`
+- `installExtensionRecord()` — **privileged** host/test upsert; bypasses plan and
+  approval. Marketplace installs must use `applyExtensionInstallPlanToRecords()`.
+- `applyExtensionInstallPlanToRecords()` — refuse when
+  `requiresApproval && !approved` (`ExtensionInstallApprovalRequiredError`)
 - `toggleInstalledExtensionEnabled()`
 - `createExtensionInstallPlan()`
+- `assertExtensionCatalogUrlAllowed()` / `ExtensionCatalogTrustPolicy`
 - `WorkbenchStorageReader`, `WorkbenchStorageWriter`, and
   `WorkbenchStorageAdapter`
 

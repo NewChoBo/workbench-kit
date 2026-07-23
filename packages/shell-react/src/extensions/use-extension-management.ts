@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  DEFAULT_EXTENSION_CATALOG_TRUST_POLICY,
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  ExtensionInstallApprovalRequiredError,
   applyExtensionInstallPlanToRecords,
+  assertExtensionCatalogUrlAllowed,
   loadInstalledExtensions,
   parseExtensionCatalog,
   saveInstalledExtensions,
   toggleInstalledExtensionEnabled,
   type ExtensionCatalogEntry,
+  type ExtensionCatalogTrustPolicy,
   type InstalledExtensionRecord,
 } from '@workbench-kit/workbench-core';
 import type {
@@ -25,12 +29,14 @@ import {
 import { useWorkbench, type WorkbenchStorageAdapter } from '../shell/provider.js';
 
 export interface UseExtensionManagementModelOptions {
+  catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
   catalogUrl?: string | undefined;
   installedExtensionsStorage?: WorkbenchStorageAdapter | undefined;
   installedExtensionsStorageKey?: string | undefined;
 }
 
 export function useExtensionManagementModel({
+  catalogTrustPolicy = DEFAULT_EXTENSION_CATALOG_TRUST_POLICY,
   catalogUrl = '/extension-catalog.json',
   installedExtensionsStorage,
   installedExtensionsStorageKey,
@@ -78,7 +84,11 @@ export function useExtensionManagementModel({
     setCatalogLoading(true);
     setCatalogError(undefined);
 
-    void fetch(catalogUrl)
+    void Promise.resolve()
+      .then(() => {
+        assertExtensionCatalogUrlAllowed(catalogUrl, catalogTrustPolicy);
+        return fetch(catalogUrl);
+      })
       .then(async (response) => {
         if (!response.ok) {
           throw new Error(`Catalog request failed with status ${response.status}.`);
@@ -106,7 +116,7 @@ export function useExtensionManagementModel({
     return () => {
       cancelled = true;
     };
-  }, [catalogUrl]);
+  }, [catalogTrustPolicy, catalogUrl]);
 
   const installedEntries = useMemo<readonly ExtensionManagementEntry[]>(() => {
     return createExtensionManagementEntries({ extensionRegistry, installedRecords });
@@ -132,9 +142,9 @@ export function useExtensionManagementModel({
         return;
       }
 
-      // UI confirm supplies `approved`; core apply path also throws if missing.
+      // Align with core hard gate: unapproved privileged installs must not persist.
       if (plan.requiresApproval && options?.approved !== true) {
-        return;
+        throw new ExtensionInstallApprovalRequiredError();
       }
 
       const next = applyExtensionInstallPlanToRecords({

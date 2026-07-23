@@ -114,6 +114,12 @@ export {
   type ExtensionCatalogEntry,
 } from './extension/catalog.js';
 export {
+  DEFAULT_EXTENSION_CATALOG_TRUST_POLICY,
+  ExtensionCatalogUrlNotAllowedError,
+  assertExtensionCatalogUrlAllowed,
+  type ExtensionCatalogTrustPolicy,
+} from './extension/catalog-trust.js';
+export {
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   ExtensionInstallApprovalRequiredError,
   applyExtensionInstallPlanToRecords,

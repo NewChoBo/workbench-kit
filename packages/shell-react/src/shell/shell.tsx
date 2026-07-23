@@ -15,7 +15,10 @@ import {
   WORKBENCH_SETTINGS_CAPABILITY_ID,
   filterActivitiesByWhenClause,
 } from '@workbench-kit/workbench-core';
-import type { WorkbenchSettingsCapability } from '@workbench-kit/workbench-core';
+import type {
+  ExtensionCatalogTrustPolicy,
+  WorkbenchSettingsCapability,
+} from '@workbench-kit/workbench-core';
 import { WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS } from '@workbench-kit/platform';
 import { isPreferenceScope, type PreferenceScope } from '@workbench-kit/workbench-config';
 import {
@@ -91,6 +94,7 @@ function shellReactPrimarySidebarSizePxFromPercent(sizePercent: number | undefin
 export interface WorkbenchShellProps {
   accountManagement?: WorkbenchAccountManagementInput | undefined;
   additionalSettingsCategories?: readonly WorkbenchSettingsCategory[] | undefined;
+  catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
   catalogUrl?: string | undefined;
   commandHost?: false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'>;
   compactStatus?: boolean;
@@ -136,6 +140,7 @@ const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
 export function WorkbenchShell({
   accountManagement,
   additionalSettingsCategories,
+  catalogTrustPolicy,
   catalogUrl = '/extension-catalog.json',
   commandHost,
   compactStatus = true,
@@ -510,7 +515,12 @@ export function WorkbenchShell({
         minPrimarySizePx: SHELL_REACT_PRIMARY_SIDEBAR_MIN_PX,
         node:
           primarySidebar ??
-          renderDefaultPrimarySidebar(extensionRegistry, activeViewContainerId, catalogUrl),
+          renderDefaultPrimarySidebar(
+            extensionRegistry,
+            activeViewContainerId,
+            catalogUrl,
+            catalogTrustPolicy,
+          ),
         onSizePxChange: (sizePx) => {
           layoutService.setSideBarSizePercent(
             (clampShellReactPrimarySidebarSizePx(sizePx) /

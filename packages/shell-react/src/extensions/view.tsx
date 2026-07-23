@@ -1,4 +1,5 @@
 import { ExtensionManagementSidebar } from '@workbench-kit/react/workbench/management';
+import type { ExtensionCatalogTrustPolicy } from '@workbench-kit/workbench-core';
 
 import {
   BUILTIN_EXTENSIONS_VIEW_RENDER_KIND,
@@ -11,7 +12,13 @@ import { useWorkbench } from '../shell/provider.js';
 export type { BuiltinExtensionsViewRenderData };
 export { BUILTIN_EXTENSIONS_VIEW_RENDER_KIND, isBuiltinExtensionsViewRenderData };
 
-export function BuiltinExtensionsView({ catalogUrl }: { catalogUrl?: string | undefined }) {
+export function BuiltinExtensionsView({
+  catalogTrustPolicy,
+  catalogUrl,
+}: {
+  catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
+  catalogUrl?: string | undefined;
+}) {
   const { missingExtensionIds } = useWorkbench();
   const {
     browseEntries,
@@ -21,7 +28,7 @@ export function BuiltinExtensionsView({ catalogUrl }: { catalogUrl?: string | un
     installedEntries,
     pendingAction,
     toggleInstalledEntry,
-  } = useExtensionManagementModel({ catalogUrl });
+  } = useExtensionManagementModel({ catalogTrustPolicy, catalogUrl });
 
   return (
     <ExtensionManagementSidebar

@@ -4,6 +4,7 @@ import {
   ExtensionManagementPanel,
   type AccountManagementEntry,
 } from '@workbench-kit/react/workbench/management';
+import type { ExtensionCatalogTrustPolicy } from '@workbench-kit/workbench-core';
 
 import { useCommandManagementModel } from './use-command-management.js';
 import { useExtensionManagementModel } from '../extensions/use-extension-management.js';
@@ -35,8 +36,10 @@ export function WorkbenchCommandManagementSettings() {
 }
 
 export function WorkbenchExtensionManagementSettings({
+  catalogTrustPolicy,
   catalogUrl,
 }: {
+  catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
   catalogUrl?: string | undefined;
 }) {
   const {
@@ -46,7 +49,7 @@ export function WorkbenchExtensionManagementSettings({
     installCatalogEntry,
     installedEntries,
     toggleInstalledEntry,
-  } = useExtensionManagementModel({ catalogUrl });
+  } = useExtensionManagementModel({ catalogTrustPolicy, catalogUrl });
 
   return (
     <ExtensionManagementPanel
