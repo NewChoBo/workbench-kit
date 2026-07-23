@@ -1,5 +1,5 @@
 export class WorkspacePathError extends Error {
-  readonly code = 'WORKSPACE_PATH_INVALID' as const;
+  readonly code = 'workspace_path_invalid' as const;
 
   constructor(
     message: string,

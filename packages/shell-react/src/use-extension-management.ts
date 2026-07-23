@@ -132,12 +132,13 @@ export function useExtensionManagementModel({
         return;
       }
 
+      // UI confirm supplies `approved`; core apply path also throws if missing.
       if (plan.requiresApproval && options?.approved !== true) {
         return;
       }
 
       const next = applyExtensionInstallPlanToRecords({
-        approved: options?.approved === true || !plan.requiresApproval,
+        approved: options?.approved === true,
         currentRecords: installedRecords,
         installSources: installContext.installSources,
         plan,

@@ -6,11 +6,6 @@ import {
   parentPathsOf,
   tryNormalizeWorkspacePath,
 } from './path';
-
-/** Soft-fail path gate for reducer actions (invalid → empty → no-op). */
-function normalizeWorkspacePath(path: string): string {
-  return tryNormalizeWorkspacePath(path) ?? '';
-}
 import type { WorkspaceFile, WorkspaceFileSource } from './types';
 import {
   expandParents,
@@ -27,6 +22,11 @@ import {
   pruneOpenPaths,
   selectedAfterRemoving,
 } from './virtualWorkspaceModel';
+
+/** Soft-fail path gate for reducer actions (invalid → empty → no-op). */
+function softNormalizeWorkspacePath(path: string): string {
+  return tryNormalizeWorkspacePath(path) ?? '';
+}
 
 export interface CreateWorkspaceFileInput {
   content?: string;
@@ -134,10 +134,10 @@ export function isWorkspaceEntryPathAvailable({
   folders = [],
   path,
 }: WorkspaceEntryPathAvailabilityInput) {
-  const normalizedPath = normalizeWorkspacePath(path);
+  const normalizedPath = softNormalizeWorkspacePath(path);
   if (!normalizedPath) return false;
 
-  const ignoredPaths = [...excludedPaths].map(normalizeWorkspacePath).filter(Boolean);
+  const ignoredPaths = [...excludedPaths].map(softNormalizeWorkspacePath).filter(Boolean);
   const isIgnoredPath = (currentPath: string) =>
     ignoredPaths.some((ignoredPath) => isUnderPath(currentPath, ignoredPath));
 
@@ -154,7 +154,7 @@ export function getAvailableWorkspaceEntryName({
   parentPath = '',
   preferredName,
 }: WorkspaceEntryNameSuggestionInput) {
-  const normalizedParentPath = normalizeWorkspacePath(parentPath);
+  const normalizedParentPath = softNormalizeWorkspacePath(parentPath);
   const trimmedName = preferredName.trim();
   if (!isSimpleWorkspaceName(trimmedName)) return trimmedName;
 
@@ -187,8 +187,8 @@ export function getWorkspaceFileMovePlan({
 }: WorkspaceFileMovePlanInput): WorkspaceFileMovePlan {
   const normalizedFiles = normalizeFiles(files);
   const normalizedFolders = normalizeFolders(folders);
-  const targetPath = normalizeWorkspacePath(targetFolderPath);
-  const sourcePathSet = new Set([...sourcePaths].map(normalizeWorkspacePath).filter(Boolean));
+  const targetPath = softNormalizeWorkspacePath(targetFolderPath);
+  const sourcePathSet = new Set([...sourcePaths].map(softNormalizeWorkspacePath).filter(Boolean));
   const blockedPaths = new Set<string>();
   const moves: WorkspaceFileMove[] = [];
   const filesByPath = fileMap(normalizedFiles);
@@ -240,8 +240,8 @@ export function getWorkspaceEntryMovePlan({
 }: WorkspaceEntryMovePlanInput): WorkspaceEntryMovePlan {
   const normalizedFiles = normalizeFiles(files);
   const normalizedFolders = normalizeFolders(folders);
-  const targetPath = normalizeWorkspacePath(targetFolderPath);
-  const sourcePathSet = new Set([...sourcePaths].map(normalizeWorkspacePath).filter(Boolean));
+  const targetPath = softNormalizeWorkspacePath(targetFolderPath);
+  const sourcePathSet = new Set([...sourcePaths].map(softNormalizeWorkspacePath).filter(Boolean));
   const blockedPaths = new Set<string>();
   const moves: WorkspaceEntryMove[] = [];
   const filesByPath = fileMap(normalizedFiles);
@@ -340,8 +340,8 @@ export function applyWorkspaceFolderMove(
   sourcePathInput: string,
   targetFolderPathInput: string,
 ): VirtualWorkspaceState {
-  const sourcePath = normalizeWorkspacePath(sourcePathInput);
-  const targetFolderPath = normalizeWorkspacePath(targetFolderPathInput);
+  const sourcePath = softNormalizeWorkspacePath(sourcePathInput);
+  const targetFolderPath = softNormalizeWorkspacePath(targetFolderPathInput);
   if (
     !sourcePath ||
     !folderPathSet(state.files, state.folders).has(sourcePath) ||
@@ -417,7 +417,7 @@ export function initializeVirtualWorkspaceState({
   const normalizedFolders = materializeFolders(normalizedFiles, folders);
   const filesByPath = fileMap(normalizedFiles);
   const normalizedOpenPaths = pruneOpenPaths(openPaths, normalizedFiles);
-  const normalizedSelectedPath = selectedPath ? normalizeWorkspacePath(selectedPath) : undefined;
+  const normalizedSelectedPath = selectedPath ? softNormalizeWorkspacePath(selectedPath) : undefined;
   const resolvedSelectedPath =
     normalizedSelectedPath && filesByPath.has(normalizedSelectedPath)
       ? normalizedSelectedPath
@@ -428,7 +428,7 @@ export function initializeVirtualWorkspaceState({
 
   return {
     expandedPaths: pruneExpandedPaths(
-      new Set([...expandedPaths].map(normalizeWorkspacePath).filter(Boolean)),
+      new Set([...expandedPaths].map(softNormalizeWorkspacePath).filter(Boolean)),
       normalizedFiles,
       normalizedFolders,
     ),
@@ -453,7 +453,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'toggle-folder') {
-    const path = normalizeWorkspacePath(action.path);
+    const path = softNormalizeWorkspacePath(action.path);
     if (!path) return state;
 
     const expandedPaths = new Set(state.expandedPaths);
@@ -467,7 +467,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'open-file') {
-    const path = normalizeWorkspacePath(action.path);
+    const path = softNormalizeWorkspacePath(action.path);
     if (!fileMap(state.files).has(path)) return state;
 
     return {
@@ -479,7 +479,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'close-path') {
-    const path = normalizeWorkspacePath(action.path);
+    const path = softNormalizeWorkspacePath(action.path);
     const openPaths = state.openPaths.filter((openFilePath) => openFilePath !== path);
     const deletedPaths = new Set([path]);
 
@@ -497,7 +497,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'close-others') {
-    const path = normalizeWorkspacePath(action.path);
+    const path = softNormalizeWorkspacePath(action.path);
     if (!fileMap(state.files).has(path)) return state;
 
     return {
@@ -516,7 +516,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'save-file') {
-    const path = normalizeWorkspacePath(action.path);
+    const path = softNormalizeWorkspacePath(action.path);
     const files = state.files.map((file) =>
       file.path === path
         ? {
@@ -532,7 +532,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'create-file') {
-    const path = normalizeWorkspacePath(action.file.path);
+    const path = softNormalizeWorkspacePath(action.file.path);
     if (!path || hasPathConflict(state.files, state.folders, path)) return state;
 
     const files = [
@@ -558,7 +558,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'create-folder') {
-    const path = normalizeWorkspacePath(action.path);
+    const path = softNormalizeWorkspacePath(action.path);
     if (!path || hasPathConflict(state.files, state.folders, path)) return state;
 
     const folders = materializeFolders(state.files, [...state.folders, path]);
@@ -573,7 +573,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'delete-file') {
-    const path = normalizeWorkspacePath(action.path);
+    const path = softNormalizeWorkspacePath(action.path);
     if (!fileMap(state.files).has(path)) return state;
 
     const files = state.files.filter((file) => file.path !== path);
@@ -598,7 +598,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'delete-folder') {
-    const path = normalizeWorkspacePath(action.path);
+    const path = softNormalizeWorkspacePath(action.path);
     if (!path || !folderPathSet(state.files, state.folders).has(path)) return state;
 
     const deletedPaths = new Set(
@@ -631,7 +631,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'rename-file') {
-    const path = normalizeWorkspacePath(action.path);
+    const path = softNormalizeWorkspacePath(action.path);
     const name = action.name.trim();
     if (!path || !isSimpleWorkspaceName(name)) return state;
 
@@ -667,7 +667,7 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'rename-folder') {
-    const path = normalizeWorkspacePath(action.path);
+    const path = softNormalizeWorkspacePath(action.path);
     const name = action.name.trim();
     if (
       !path ||
@@ -732,8 +732,8 @@ export function virtualWorkspaceReducer(
   }
 
   if (action.type === 'move-file') {
-    const sourcePath = normalizeWorkspacePath(action.sourcePath);
-    const targetFolderPath = normalizeWorkspacePath(action.targetFolderPath);
+    const sourcePath = softNormalizeWorkspacePath(action.sourcePath);
+    const targetFolderPath = softNormalizeWorkspacePath(action.targetFolderPath);
     const sourceFile = fileMap(state.files).get(sourcePath);
     if (!sourceFile) return state;
     if (targetFolderPath && !folderPathSet(state.files, state.folders).has(targetFolderPath)) {

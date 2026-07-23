@@ -27,7 +27,7 @@ export interface ApplyExtensionInstallPlanToRecordsInput {
 }
 
 export class ExtensionInstallApprovalRequiredError extends Error {
-  readonly code = 'EXTENSION_INSTALL_APPROVAL_REQUIRED' as const;
+  readonly code = 'extension_install_approval_required' as const;
 
   constructor(message = 'Extension install requires explicit approval.') {
     super(message);
