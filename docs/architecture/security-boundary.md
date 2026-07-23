@@ -46,12 +46,14 @@ Running arbitrary third-party extension code introduces:
 
 - **No runtime npm install initially** — extensions ship as pre-built bundles known at compile time
 - **Catalog URL allowlist** — `assertExtensionCatalogUrlAllowed` / `ExtensionCatalogTrustPolicy`
-  (default: relative catalogs only; absolute origins require host allowlist). Hash/lock
-  verification remains planned (`extensions.lock.json`).
+  (default: relative catalogs only; absolute origins require host allowlist).
 - **Install approval gate** — `applyExtensionInstallPlanToRecords` refuses
   `requiresApproval && !approved`
-- **Build-time bundled artifacts** — CI produces signed or hashed extension packages (planned)
-- **Integrity checks** — `extensions.lock.json` stores content hashes; host verifies before load (planned)
+- **Extensions lock integrity** — `verifyWorkbenchExtensionsAgainstLock` checks
+  `.workbench/extensions.lock.json` version + manifest digest before registration
+  (`extensionIntegrityMode`: `off` | `warn` | `fail-closed`)
+- **Build-time bundled artifacts** — `bundle-workbench-extensions.mjs` regenerates the lockfile
+- **Recommend ≠ enable** — recommendations must not auto-activate extensions
 - **Permission allowlists** — default-deny for network and secrets (planned)
 - **No eval / dynamic import from remote URLs**
 

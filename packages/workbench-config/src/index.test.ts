@@ -4,6 +4,7 @@ import {
   DEFAULT_WORKBENCH_LAYOUT_CONFIG,
   parseWorkbenchExtensionsConfig,
   parseWorkbenchExtensionsConfigJson,
+  parseWorkbenchExtensionsLock,
   parseWorkbenchKeybindingsConfig,
   parseWorkbenchLayoutConfig,
   parseWorkbenchLayoutConfigJson,
@@ -45,6 +46,36 @@ describe('parseWorkbenchExtensionsConfig', () => {
       enabled: ['workbench-kit.builtin.settings'],
       recommendations: [],
     });
+  });
+});
+
+describe('parseWorkbenchExtensionsLock', () => {
+  it('parses version and optional integrity entries', () => {
+    expect(
+      parseWorkbenchExtensionsLock({
+        extensions: {
+          'workbench-kit.builtin.explorer': {
+            integrity: 'sha256:abc',
+            version: '0.0.0',
+          },
+        },
+        lockfileVersion: 1,
+      }),
+    ).toEqual({
+      extensions: {
+        'workbench-kit.builtin.explorer': {
+          integrity: 'sha256:abc',
+          version: '0.0.0',
+        },
+      },
+      lockfileVersion: 1,
+    });
+  });
+
+  it('rejects invalid lockfile versions', () => {
+    expect(() => parseWorkbenchExtensionsLock({ lockfileVersion: 0, extensions: {} })).toThrow(
+      WorkbenchConfigValidationError,
+    );
   });
 });
 

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +19,7 @@ const outputPath = path.join(
   'generated',
   'bundled-extensions.ts',
 );
+const lockPath = path.join(repoRoot, '.workbench', 'extensions.lock.json');
 
 const extensionGroups = [
   {
@@ -75,6 +77,25 @@ const content = [
 
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, await formatTypeScript(`${content.trimEnd()}\n`));
+
+const lockExtensions = Object.fromEntries(
+  groups
+    .flatMap(({ extensions }) => extensions)
+    .map(({ manifest }) => [
+      manifest.id,
+      {
+        integrity: `sha256:${createHash('sha256').update(stableStringify(manifest)).digest('hex')}`,
+        version: manifest.version,
+      },
+    ])
+    .sort(([left], [right]) => left.localeCompare(right)),
+);
+
+await mkdir(path.dirname(lockPath), { recursive: true });
+await writeFile(
+  lockPath,
+  `${JSON.stringify({ lockfileVersion: 1, extensions: lockExtensions }, null, 2)}\n`,
+);
 
 async function readExtensionGroup(prefix) {
   const groupDirectories = extensionDirectories.filter((directory) => directory.startsWith(prefix));
@@ -135,4 +156,24 @@ async function formatTypeScript(content) {
   } catch {
     return content;
   }
+}
+
+function stableStringify(value) {
+  return JSON.stringify(sortValue(value));
+}
+
+function sortValue(value) {
+  if (Array.isArray(value)) {
+    return value.map((entry) => sortValue(entry));
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    const sorted = {};
+    for (const key of Object.keys(value).sort((left, right) => left.localeCompare(right))) {
+      sorted[key] = sortValue(value[key]);
+    }
+    return sorted;
+  }
+
+  return value;
 }

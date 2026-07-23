@@ -120,6 +120,14 @@ export {
   type ExtensionCatalogTrustPolicy,
 } from './extension/catalog-trust.js';
 export {
+  computeWorkbenchExtensionManifestIntegrity,
+  verifyWorkbenchExtensionsAgainstLock,
+  type ExtensionIntegrityDiagnostic,
+  type ExtensionIntegrityDiagnosticCode,
+  type ExtensionIntegrityMode,
+  type VerifyWorkbenchExtensionsAgainstLockResult,
+} from './extension/integrity.js';
+export {
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   ExtensionInstallApprovalRequiredError,
   applyExtensionInstallPlanToRecords,

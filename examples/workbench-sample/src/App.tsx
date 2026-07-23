@@ -38,6 +38,7 @@ const SAMPLE_AVAILABLE_EXTENSIONS = [
 
 import {
   extensionsConfig,
+  extensionsLock,
   initialLayout,
   initialWorkspace,
   SAMPLE_BUTTON_PATH,
@@ -146,7 +147,9 @@ function SampleAuthenticatedWorkbench({
       availableExtensions={SAMPLE_AVAILABLE_EXTENSIONS}
       contextKeyValues={contextKeyValues}
       documentViewProviders={sampleScreenTemplateDocumentViewProviders}
+      extensionIntegrityMode="fail-closed"
       extensionsConfig={resolvedExtensionsConfig}
+      extensionsLock={extensionsLock}
       hostThemes={sampleHostThemes}
       initialKeybindingOverrides={workbenchKeybindings}
       initialLayout={initialLayout}

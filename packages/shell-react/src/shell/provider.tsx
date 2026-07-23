@@ -24,8 +24,10 @@ import {
   SAMPLE_WORKBENCH_EXTENSIONS,
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
+  verifyWorkbenchExtensionsAgainstLock,
   type EditorState,
   type EditorService,
+  type ExtensionIntegrityMode,
   type PreferenceService as PreferenceServiceType,
   type WorkbenchHostThemeRegistration,
   type WorkbenchStorageAdapter,
@@ -40,6 +42,7 @@ import {
 } from '@workbench-kit/platform';
 import type {
   WorkbenchExtensionsConfig,
+  WorkbenchExtensionsLock,
   WorkbenchKeybindingDefinition,
   WorkbenchSettingsConfig,
   WorkbenchUserCommandDefinition,
@@ -103,6 +106,16 @@ export interface WorkbenchProviderProps {
   children: ReactNode;
   contextKeyValues?: Readonly<Record<string, ContextKeyValue>> | undefined;
   documentViewProviders?: readonly EditorDocumentViewProvider[] | undefined;
+  /**
+   * When set with `extensionIntegrityMode` other than `off`, enabled extensions
+   * are checked against the lock before registration.
+   */
+  extensionsLock?: WorkbenchExtensionsLock | undefined;
+  /**
+   * Lock verification mode. Default `off` preserves existing hosts.
+   * Sample hosts may opt into `fail-closed`.
+   */
+  extensionIntegrityMode?: ExtensionIntegrityMode | undefined;
   extensionsConfig?: WorkbenchExtensionsConfig;
   editorStateStorage?: WorkbenchStorageAdapter;
   editorStateStorageKey?: string;
@@ -176,7 +189,9 @@ export function WorkbenchProvider({
   documentViewProviders,
   editorStateStorage,
   editorStateStorageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
+  extensionIntegrityMode = 'off',
   extensionsConfig,
+  extensionsLock,
   hostThemes = [],
   initialEditorState,
   initialKeybindingOverrides,
@@ -351,7 +366,17 @@ export function WorkbenchProvider({
       installedRecords,
     );
     const resolution = resolveWorkbenchExtensions(config, resolvedAvailableExtensions);
-    const extensionDisposables = extensionRegistry.registerExtensions(resolution.enabledExtensions);
+    const integrity = verifyWorkbenchExtensionsAgainstLock(
+      resolution.enabledExtensions,
+      extensionsLock,
+      extensionIntegrityMode,
+    );
+    if (integrity.diagnostics.length > 0 && typeof console !== 'undefined') {
+      for (const diagnostic of integrity.diagnostics) {
+        console.warn(`[workbench-kit] ${diagnostic.message}`);
+      }
+    }
+    const extensionDisposables = extensionRegistry.registerExtensions(integrity.accepted);
     const hostThemeDisposables = registerHostWorkbenchThemes(extensionRegistry.themes, hostThemes);
     const editorServiceCapabilityDisposable = extensionRegistry.capabilityRegistry.register({
       id: WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
@@ -413,7 +438,10 @@ export function WorkbenchProvider({
       editorService,
       extensionRegistry,
       layoutService,
-      missingExtensionIds: resolution.missingExtensionIds,
+      missingExtensionIds: [
+        ...resolution.missingExtensionIds,
+        ...integrity.rejected.map((extension) => extension.manifest.id),
+      ],
       preferenceService,
       waitForExtensionStartup: () => ensureStartupActivation().then(() => undefined),
       workspaceHostPort,
@@ -421,6 +449,8 @@ export function WorkbenchProvider({
   }, [
     availableExtensions,
     documentViewProviders,
+    extensionIntegrityMode,
+    extensionsLock,
     hostAvailableExtensions,
     extensionsConfig,
     hostThemes,

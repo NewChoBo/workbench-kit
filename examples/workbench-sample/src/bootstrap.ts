@@ -9,6 +9,7 @@ import { formatJdwSampleScreenJson, JDW_SAMPLE_SCREENS } from '@workbench-kit/re
 import type { VirtualWorkspaceInitialState } from '@workbench-kit/workspace';
 import {
   parseWorkbenchExtensionsConfig,
+  parseWorkbenchExtensionsLock,
   parseWorkbenchKeybindingsConfig,
   parseWorkbenchLayoutConfig,
   parseWorkbenchSettingsConfig,
@@ -19,6 +20,7 @@ import {
 } from '@workbench-kit/workbench-config';
 
 import extensionsJson from '../../../.workbench/extensions.json';
+import extensionsLockJson from '../../../.workbench/extensions.lock.json';
 import keybindingsJson from '../../../.workbench/keybindings.json';
 import layoutJson from '../../../.workbench/layout.default.json';
 import settingsJson from '../../../.workbench/settings.json';
@@ -76,6 +78,7 @@ const JDW_SAMPLE_DOCUMENT_SCHEMA_REF = '../../schemas/widget-document.v1.jdw.sch
 export const workbenchSettings: WorkbenchSettingsConfig =
   parseWorkbenchSettingsConfig(settingsJson);
 export const extensionsConfig = parseWorkbenchExtensionsConfig(extensionsJson);
+export const extensionsLock = parseWorkbenchExtensionsLock(extensionsLockJson);
 export const workbenchKeybindings: readonly WorkbenchKeybindingDefinition[] =
   parseWorkbenchKeybindingsConfig(keybindingsJson);
 export const workbenchUserCommands: readonly WorkbenchUserCommandDefinition[] =
