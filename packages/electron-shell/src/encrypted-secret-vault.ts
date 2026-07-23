@@ -74,12 +74,15 @@ function assertEncryptionAvailable(cipher: SafeStorageCipher): void {
 /**
  * Opaque secret vault using an injected OS-backed cipher.
  * Fails closed when encryption is unavailable (no plaintext fallback).
+ * Serializes mutations within this vault instance to prevent lost read-modify-write updates.
+ * Hosts must coordinate separate instances or processes that share the same persistence target.
  * Hosts own persistence via readVault/writeVault (compose with platform/node atomic write).
  */
 export function createEncryptedSecretVault(
   options: CreateEncryptedSecretVaultOptions,
 ): EncryptedSecretVault {
   const { cipher, readVault, writeVault } = options;
+  let mutationQueue: Promise<void> = Promise.resolve();
 
   const load = async (): Promise<VaultDocument> => {
     assertEncryptionAvailable(cipher);
@@ -89,6 +92,12 @@ export function createEncryptedSecretVault(
   const save = async (document: VaultDocument): Promise<void> => {
     assertEncryptionAvailable(cipher);
     await writeVault(serializeVault(document));
+  };
+
+  const enqueueMutation = (mutation: () => Promise<void>): Promise<void> => {
+    const result = mutationQueue.then(mutation);
+    mutationQueue = result.catch(() => undefined);
+    return result;
   };
 
   return {
@@ -102,22 +111,26 @@ export function createEncryptedSecretVault(
     },
 
     async setSecret(id: string, value: string): Promise<void> {
-      const document = await load();
-      const nextSecrets = {
-        ...document.secrets,
-        [id]: toBase64(cipher.encryptString(value)),
-      };
-      await save({ version: 1, secrets: nextSecrets });
+      await enqueueMutation(async () => {
+        const document = await load();
+        const nextSecrets = {
+          ...document.secrets,
+          [id]: toBase64(cipher.encryptString(value)),
+        };
+        await save({ version: 1, secrets: nextSecrets });
+      });
     },
 
     async deleteSecret(id: string): Promise<void> {
-      const document = await load();
-      if (!(id in document.secrets)) {
-        return;
-      }
-      const nextSecrets = { ...document.secrets };
-      delete nextSecrets[id];
-      await save({ version: 1, secrets: nextSecrets });
+      await enqueueMutation(async () => {
+        const document = await load();
+        if (!(id in document.secrets)) {
+          return;
+        }
+        const nextSecrets = { ...document.secrets };
+        delete nextSecrets[id];
+        await save({ version: 1, secrets: nextSecrets });
+      });
     },
   };
 }

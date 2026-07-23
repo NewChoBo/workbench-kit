@@ -22,6 +22,14 @@ function createFakeCipher(available: boolean): SafeStorageCipher {
   };
 }
 
+function createDeferred() {
+  let resolve!: () => void;
+  const promise = new Promise<void>((next) => {
+    resolve = next;
+  });
+  return { promise, resolve };
+}
+
 describe('createEncryptedSecretVault', () => {
   it('round-trips secrets when encryption is available', async () => {
     let stored: Uint8Array | null = null;
@@ -38,6 +46,60 @@ describe('createEncryptedSecretVault', () => {
     await expect(vault.getSecret('token')).resolves.toBe('secret-value');
     await vault.deleteSecret('token');
     await expect(vault.getSecret('token')).resolves.toBeNull();
+  });
+
+  it('serializes concurrent read-modify-write mutations', async () => {
+    let stored: Uint8Array | null = null;
+    let readCount = 0;
+    const firstReadStarted = createDeferred();
+    const releaseFirstRead = createDeferred();
+    const vault = createEncryptedSecretVault({
+      cipher: createFakeCipher(true),
+      readVault: async () => {
+        const snapshot = stored?.slice() ?? null;
+        readCount += 1;
+        if (readCount === 1) {
+          firstReadStarted.resolve();
+          await releaseFirstRead.promise;
+        }
+        return snapshot;
+      },
+      writeVault: async (bytes) => {
+        stored = bytes;
+      },
+    });
+
+    const firstMutation = vault.setSecret('first', 'one');
+    await firstReadStarted.promise;
+    const secondMutation = vault.setSecret('second', 'two');
+    await Promise.resolve();
+
+    expect(readCount).toBe(1);
+    releaseFirstRead.resolve();
+    await Promise.all([firstMutation, secondMutation]);
+
+    await expect(vault.getSecret('first')).resolves.toBe('one');
+    await expect(vault.getSecret('second')).resolves.toBe('two');
+  });
+
+  it('continues processing mutations after a write failure', async () => {
+    let stored: Uint8Array | null = null;
+    let failNextWrite = true;
+    const vault = createEncryptedSecretVault({
+      cipher: createFakeCipher(true),
+      readVault: async () => stored,
+      writeVault: async (bytes) => {
+        if (failNextWrite) {
+          failNextWrite = false;
+          throw new Error('write failed');
+        }
+        stored = bytes;
+      },
+    });
+
+    await expect(vault.setSecret('first', 'one')).rejects.toThrow('write failed');
+    await expect(vault.setSecret('second', 'two')).resolves.toBeUndefined();
+    await expect(vault.getSecret('second')).resolves.toBe('two');
   });
 
   it('fails closed when encryption is unavailable', async () => {
