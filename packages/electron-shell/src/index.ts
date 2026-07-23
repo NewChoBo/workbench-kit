@@ -4,19 +4,19 @@ export {
   type CreateEncryptedSecretVaultOptions,
   type EncryptedSecretVault,
   type SafeStorageCipher,
-} from './encrypted-secret-vault.js';
+} from './secrets/encrypted-secret-vault.js';
 export {
   InvalidExternalLinkUrlError,
   openAllowlistedExternalLink,
   UnknownExternalLinkIdError,
   type ExternalLinkAllowlist,
   type OpenAllowlistedExternalLinkInput,
-} from './open-allowlisted-external-link.js';
+} from './security/open-allowlisted-external-link.js';
 export {
   requireOwnedWindowForSender,
   UntrustedIpcSenderError,
   type IpcSenderLike,
-} from './require-owned-window-for-sender.js';
+} from './security/require-owned-window-for-sender.js';
 export {
   cacheAllowlistedHttpsAsset,
   registerRootConfinedAssetProtocol,
@@ -27,14 +27,14 @@ export {
   type PathRootHelpers,
   type PrivilegedProtocolApi,
   type RegisterRootConfinedAssetProtocolOptions,
-} from './root-confined-asset-protocol.js';
+} from './assets/root-confined-asset-protocol.js';
 export {
   createWin32WallpaperPathResolver,
   resolveWallpaperCropRect,
   type RectLike,
   type SizeLike,
   type WallpaperPathResolver,
-} from './wallpaper-crop.js';
+} from './wallpaper/wallpaper-crop.js';
 export {
   createWindowControlsBridge,
   nextMaximizedState,
@@ -46,4 +46,4 @@ export {
   type WindowControlSurface,
   type WindowControlWebContents,
   type WindowControlsBridge,
-} from './window-controls.js';
+} from './window/window-controls.js';

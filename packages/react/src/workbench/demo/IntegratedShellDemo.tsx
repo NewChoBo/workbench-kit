@@ -32,10 +32,10 @@ import {
   resolveWorkbenchCommandMenuItems,
   WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
   WORKBENCH_COMMAND_SURFACE_WORKSPACE,
-} from '../commands';
+} from '../commands/commands';
 import { WorkbenchSettingsModal } from '../settings';
-import { WorkbenchStandaloneShell } from '../WorkbenchStandaloneShell';
-import type { WorkbenchStandaloneShellContext } from '../WorkbenchStandaloneShell';
+import { WorkbenchStandaloneShell } from '../shell/WorkbenchStandaloneShell';
+import type { WorkbenchStandaloneShellContext } from '../shell/WorkbenchStandaloneShell';
 import {
   WorkspaceEditorPanel,
   WorkspaceExplorerPanel,

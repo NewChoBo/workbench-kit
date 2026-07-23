@@ -6,10 +6,10 @@ import { cx } from '../../utils/cx';
 type ButtonVariant = 'default' | 'primary' | 'danger';
 
 export interface ButtonProps extends ComponentPropsWithRef<'button'> {
-  block?: boolean | undefined;
-  compact?: boolean | undefined;
-  icon?: string | undefined;
-  secondary?: boolean | undefined;
+  block?: boolean;
+  compact?: boolean;
+  icon?: string;
+  secondary?: boolean;
   variant?: ButtonVariant;
 }
 

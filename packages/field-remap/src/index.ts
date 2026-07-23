@@ -38,10 +38,10 @@ export {
   UnsupportedFieldRemapDocumentVersionError,
 } from './domain/document/fieldRemapDocument.js';
 
+export { isSafeObjectPath, UnsafeObjectPathError } from './domain/mapping/objectPathSafety.js';
 export {
   applyStringTemplate,
   isPlainObject,
-  isSafeObjectPath,
   listArrayItemProjectionOptions,
   projectCollectionItems,
   readObjectPath,
@@ -111,6 +111,8 @@ export type {
   ConvertToShapeResult,
   ConvertToShapeSlotResult,
 } from './domain/shapes/convertToShape.js';
+
+export { createAbortError, isAbortError, throwIfAborted } from './domain/abort.js';
 
 export { sourceFieldsFromPlainObject } from './domain/ingest/sourceFieldsFromPlainObject.js';
 export type { SourceFieldsFromPlainObjectOptions } from './domain/ingest/sourceFieldsFromPlainObject.js';

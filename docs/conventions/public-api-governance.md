@@ -34,7 +34,7 @@ Do not rely on deep source imports from consuming applications:
 
 ```ts
 // Not public API.
-import { WorkbenchShell } from '@workbench-kit/react/src/workbench/WorkbenchShell';
+import { WorkbenchShell } from '@workbench-kit/react/src/workbench/shell/WorkbenchShell';
 ```
 
 If a consumer needs a symbol that is only reachable through `src`, either add it
@@ -64,6 +64,36 @@ Packages should keep runtime assumptions explicit:
 Browser-safe packages must not import Node-only modules, extension globals, or
 host APIs. Host behavior should stay behind explicit adapter entrypoints.
 
+## Optional props and `exactOptionalPropertyTypes`
+
+Public React prop types should prefer omitted optionals over explicit
+`undefined` unions:
+
+```ts
+// Preferred
+readonly title?: string;
+
+// Avoid on new public props unless a call site must pass explicit undefined
+readonly title?: string | undefined;
+```
+
+Consumers with `exactOptionalPropertyTypes` should omit the prop (or
+conditionally spread) instead of passing `prop={maybeUndefined}`.
+
+High-traffic `@workbench-kit/react` surfaces (primitives, modal, workbench
+shell, chat) follow this convention. A consumer-style fixture guards the
+contract:
+
+```powershell
+pnpm typecheck:react-exact-optional
+```
+
+That script emits declaration files, then typechecks
+`packages/react/typecheck-exact-optional/smoke.tsx` with
+`exactOptionalPropertyTypes` enabled. Follow-up waves should continue stripping
+`| undefined` from remaining public props (settings/schema, editors, workspace)
+and keep the fixture green.
+
 ## Public API Change Checklist
 
 Before committing a public API change:
@@ -72,10 +102,11 @@ Before committing a public API change:
 2. Re-export the public symbol from the smallest relevant `index.ts`.
 3. Keep private helpers, fixtures, stories, and tests out of public entrypoints.
 4. Confirm the symbol name and props/types avoid product-specific language.
-5. Run the minimum validation lane for the changed package.
-6. Run `pnpm check:public-exports` when package `exports`, `files`, or publish metadata changes.
-7. Note public API changes and validation in the commit body.
-8. Add or update at least one contract test that proves external consumers can import the symbol from the package root.
+5. Prefer `prop?: T` (not `prop?: T | undefined`) for new optional public props.
+6. Run the minimum validation lane for the changed package.
+7. Run `pnpm check:public-exports` when package `exports`, `files`, or publish metadata changes.
+8. Note public API changes and validation in the commit body.
+9. Add or update at least one contract test that proves external consumers can import the symbol from the package root.
 
 ## Validation
 
@@ -83,6 +114,7 @@ For public API changes, run:
 
 ```powershell
 pnpm check:public-exports
+pnpm typecheck:react-exact-optional
 pnpm validate
 ```
 

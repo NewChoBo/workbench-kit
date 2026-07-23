@@ -6,6 +6,7 @@ storybook-static/
 .pnpm-store/
 .npm-pack/
 tmp/
+packages/react/typecheck-exact-optional/.tmp-types/
 debug-storybook.log
 
 # Secrets / local env (never commit real credentials)

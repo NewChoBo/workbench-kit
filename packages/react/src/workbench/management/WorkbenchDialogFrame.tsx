@@ -1,7 +1,7 @@
 import type { FormEventHandler, ReactNode } from 'react';
 import { Modal, type ModalBodyLayout, type ModalBodyPadding } from '../../modal/Modal';
-import type { WorkbenchWindowChromeMode } from '../workbenchPlatformChrome';
-import { WorkbenchModalPortal } from '../WorkbenchModalPortal';
+import type { WorkbenchWindowChromeMode } from '../chrome/workbenchPlatformChrome';
+import { WorkbenchModalPortal } from '../chrome/WorkbenchModalPortal';
 
 export type WorkbenchDialogBodyLayout = 'column-fill' | 'default' | 'padded-fill';
 export type WorkbenchDialogFrameSize =

@@ -1,4 +1,0 @@
-/* Reserved for JDW editor surfaces that still need package-local chrome.
- * Screen Spec shell layout now uses WorkbenchFill / SplitView / LabeledPane /
- * SidebarStack — prefer those over new BEM here.
- */

@@ -1,3 +1,4 @@
+import { throwIfAborted } from '../abort.js';
 import { edgeTransformIds } from '../document/mappingEdge.js';
 import { applyTransformChain } from '../../registry/createValueTransformRegistry.js';
 import { BUILTIN_TRANSFORM_IDS } from '../../registry/builtinTransforms.js';
@@ -33,61 +34,65 @@ function itemRelativePath(
  * Convert each object in a source array through list-context `itemEdges`.
  * Child field paths are treated as item-relative (ingest array children).
  */
-export function convertArrayWithItemEdges(input: {
+export async function convertArrayWithItemEdges(input: {
   readonly items: unknown;
   readonly itemEdges: readonly MappingEdge[];
   readonly sources: readonly SourceField[];
   readonly targets: readonly TargetSlot[];
   readonly transforms: ValueTransformRegistry;
   readonly context?: TransformContext;
-}): unknown[] {
+}): Promise<unknown[]> {
   if (!Array.isArray(input.items)) {
     return [];
   }
 
   const targetLeaves = flattenTargetSlots(input.targets);
 
-  return input.items.map((rawItem) => {
-    const item = isPlainObject(rawItem) ? rawItem : {};
-    let outItem: Record<string, unknown> = {};
+  return Promise.all(
+    input.items.map(async (rawItem) => {
+      const item = isPlainObject(rawItem) ? rawItem : {};
+      let outItem: Record<string, unknown> = {};
 
-    for (const edge of input.itemEdges) {
-      const sourceField = findSourceField(input.sources, edge.sourceFieldId);
-      const targetSlot =
-        findTargetSlot(input.targets, edge.targetSlotId) ??
-        targetLeaves.find((slot) => slot.id === edge.targetSlotId);
-      if (!sourceField || !targetSlot) {
-        continue;
+      for (const edge of input.itemEdges) {
+        throwIfAborted(input.context?.signal);
+
+        const sourceField = findSourceField(input.sources, edge.sourceFieldId);
+        const targetSlot =
+          findTargetSlot(input.targets, edge.targetSlotId) ??
+          targetLeaves.find((slot) => slot.id === edge.targetSlotId);
+        if (!sourceField || !targetSlot) {
+          continue;
+        }
+
+        const sourcePath = itemRelativePath(sourceField);
+        const sourceValue = sourcePath ? readObjectPath(item, sourcePath) : undefined;
+
+        const chain = edgeTransformIds(edge);
+        let value: unknown;
+        if (chain.length === 0) {
+          const identity = input.transforms.get(BUILTIN_TRANSFORM_IDS.identity);
+          value = identity
+            ? await identity.apply(sourceValue, { ...input.context, sampleValue: sourceValue })
+            : sourceValue;
+        } else {
+          const steps = resolveOptionSteps(chain, edge.transformOptionSteps, edge.transformOptions);
+          value = await applyTransformChain(
+            input.transforms,
+            chain,
+            sourceValue,
+            { ...input.context, sampleValue: sourceValue },
+            steps,
+          );
+        }
+
+        const targetPath = itemRelativePath(targetSlot);
+        if (!targetPath) {
+          continue;
+        }
+        outItem = writeObjectPath(outItem, targetPath, value);
       }
 
-      const sourcePath = itemRelativePath(sourceField);
-      const sourceValue = sourcePath ? readObjectPath(item, sourcePath) : undefined;
-
-      const chain = edgeTransformIds(edge);
-      let value: unknown;
-      if (chain.length === 0) {
-        const identity = input.transforms.get(BUILTIN_TRANSFORM_IDS.identity);
-        value = identity
-          ? identity.apply(sourceValue, { ...input.context, sampleValue: sourceValue })
-          : sourceValue;
-      } else {
-        const steps = resolveOptionSteps(chain, edge.transformOptionSteps, edge.transformOptions);
-        value = applyTransformChain(
-          input.transforms,
-          chain,
-          sourceValue,
-          { ...input.context, sampleValue: sourceValue },
-          steps,
-        );
-      }
-
-      const targetPath = itemRelativePath(targetSlot);
-      if (!targetPath) {
-        continue;
-      }
-      outItem = writeObjectPath(outItem, targetPath, value);
-    }
-
-    return outItem;
-  });
+      return outItem;
+    }),
+  );
 }

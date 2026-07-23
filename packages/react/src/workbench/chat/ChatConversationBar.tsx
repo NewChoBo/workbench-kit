@@ -12,14 +12,14 @@ import { defaultWorkbenchChatConversationLabels } from './chatConversation';
 export interface ChatConversationBarProps {
   activeConversationId: string;
   conversations: readonly WorkbenchChatConversation[];
-  labels?: Partial<WorkbenchChatConversationLabels> | undefined;
-  moreMenuItems?: readonly ContextMenuItem[] | undefined;
+  labels?: Partial<WorkbenchChatConversationLabels>;
+  moreMenuItems?: readonly ContextMenuItem[];
   onActivate: (conversationId: string) => void;
   onCreate: () => void;
   onDelete: (conversationId: string) => void;
   onRename: (conversationId: string, title: string) => void;
   /** Optional slot for a second pill next to the active conversation control. */
-  secondaryPill?: ReactNode | undefined;
+  secondaryPill?: ReactNode;
 }
 
 export function ChatConversationBar({

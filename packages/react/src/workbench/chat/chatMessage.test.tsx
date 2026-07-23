@@ -333,6 +333,28 @@ describe('ChatMessageItem', () => {
     expect(markup).toContain('attachment-chip');
   });
 
+  it('renders in-bubble attachments inside the bubble surface', () => {
+    const userMarkup = renderToStaticMarkup(
+      <ChatMessageItem
+        attachments={<span className="file-chip">notes.txt</span>}
+        message={{ content: '', id: 'user-file-only', source: 'user' }}
+      />,
+    );
+    expect(userMarkup).toContain('message__attachments');
+    expect(userMarkup).toContain('notes.txt');
+    expect(userMarkup).toContain('message__bubble');
+    expect(userMarkup).not.toContain('message__after');
+
+    const assistantMarkup = renderToStaticMarkup(
+      <ChatMessageItem
+        attachments={<span className="file-chip">report.pdf</span>}
+        message={{ content: 'Here is the file', id: 'assistant-file', source: 'assistant' }}
+      />,
+    );
+    expect(assistantMarkup).toContain('message__attachments');
+    expect(assistantMarkup).toContain('report.pdf');
+  });
+
   it('renders assistant contentMode plain without markdown wrappers', () => {
     const message: ChatMessage = {
       content: '**plain** assistant text',
@@ -360,6 +382,8 @@ describe('ChatMessageItem', () => {
       />,
     );
     expect(errorMarkup).toContain('message--tone-error');
+    expect(errorMarkup).toContain('codicon-error');
+    expect(errorMarkup).not.toContain('codicon-sparkle');
 
     const warningMarkup = renderToStaticMarkup(
       <ChatMessageItem
@@ -372,6 +396,26 @@ describe('ChatMessageItem', () => {
       />,
     );
     expect(warningMarkup).toContain('message--tone-warning');
+  });
+
+  it('supports custom and hidden assistant label icons', () => {
+    const custom = renderToStaticMarkup(
+      <ChatMessageItem
+        labelIcon={<i className="codicon codicon-bell message__label-icon" />}
+        message={{ content: 'Ping', id: 'icon-custom', source: 'assistant' }}
+      />,
+    );
+    expect(custom).toContain('codicon-bell');
+    expect(custom).not.toContain('codicon-sparkle');
+
+    const hidden = renderToStaticMarkup(
+      <ChatMessageItem
+        labelIcon={false}
+        message={{ content: 'No icon', id: 'icon-hidden', source: 'assistant' }}
+      />,
+    );
+    expect(hidden).not.toContain('message__label-icon');
+    expect(hidden).toContain('No icon');
   });
 });
 

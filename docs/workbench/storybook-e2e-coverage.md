@@ -5,6 +5,10 @@ Storybook validates both isolated workbench components and the sample app behind
 integration stories prove host wiring. Guard against excess — duplicate full shells,
 orphan plays, and unbounded required growth — using the balance rules below.
 
+**Sample-as-SUT direction** (scenarios/fixtures, Storybook vs Playwright): see
+[Sample Host Test Architecture](./sample-host-test-architecture.md). That doc is the
+target shape; this page remains the coverage inventory and gate rules.
+
 ## Current Story Source
 
 Storybook discovers stories from the paths configured in `.storybook/main.ts`.
@@ -12,17 +16,23 @@ Today that is:
 
 ```text
 examples/workbench-sample/src/**/*.stories.@(ts|tsx)
-packages/react/src/primitives/Controls.stories.@(ts|tsx)
-packages/react/src/primitives/EditorChrome.stories.@(ts|tsx)
+packages/react/src/primitives/stories/Controls.stories.@(ts|tsx)
+packages/react/src/primitives/workbench-editor/EditorChrome.stories.@(ts|tsx)
+packages/react/src/primitives/scroll-area-infinite-load/ScrollAreaInfiniteLoad.stories.@(ts|tsx)
 packages/react/src/modal/OverlayDialogs.stories.@(ts|tsx)
+packages/react/src/overlay/AnchoredOverlayPanel.stories.@(ts|tsx)
 packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)
+packages/react/src/workbench/shell/WorkbenchShell.stories.@(ts|tsx)
+packages/react/src/workbench/shell/IntegratedShell.stories.@(ts|tsx)
 packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)
 packages/react/src/layout/sidebar/SideBarViewTabStrip.stories.@(ts|tsx)
 packages/react/src/layout/WorkbenchPropertyOverrideLabel.stories.@(ts|tsx)
-packages/react/src/layout/panel/TemplateGallery.stories.@(ts|tsx)
 packages/react/src/widget-tree/WidgetTreeLab.stories.@(ts|tsx)
 packages/jdw-editor/src/**/*.stories.@(ts|tsx)
 ```
+
+Authoritative globs live in `.storybook/main.ts`; update that file and this list
+together.
 
 The canonical integration story file is:
 
@@ -30,9 +40,9 @@ The canonical integration story file is:
 examples/workbench-sample/src/WorkbenchSample.stories.tsx
 ```
 
-That file renders `examples/workbench-sample/src/App.tsx` directly and imports the
-sample host CSS, so integration stories follow the dev sample bootstrap instead of a
-separate story-only workbench harness.
+That file calls `createSampleHost` (same assembly as `main.tsx`) after applying
+named scenarios, and imports the sample host CSS, so integration stories follow
+the dev sample bootstrap instead of a separate story-only workbench harness.
 
 Component stories live beside their package modules only when they are explicitly
 listed in `.storybook/main.ts`. Do not use broad package globs and do not add a
@@ -74,21 +84,25 @@ See also `docs/conventions/storybook.md` for promotion criteria and scripts.
 ## Required Play Gate
 
 `pnpm test:storybook-play:required` runs stories tagged `storybook-play-required`.
-The current required gate has 33 plays: 8 sample integration flows, 9 small
+The current required gate has 37 plays: 12 sample integration flows, 9 small
 component-panel flows, and 16 JDW widget-tree authoring flows.
 
 ### Integration tier (sample app)
 
-| Story                                               | Flow covered                                                                                                                                                     |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Workbench Sample/Dev App` - Login gate             | Unauthenticated sample login screen and dummy credentials copy                                                                                                   |
-| `Workbench Sample/Dev App` - Login submit flow      | Dummy backend sign-in failure, error display, successful tester sign-in, and shell handoff                                                                       |
-| `Workbench Sample/Dev App` - Tester workbench       | Authenticated administrator workbench shell, explorer, status bar, and activity bar                                                                              |
-| `Workbench Sample/Dev App` - Devtools inspectors    | Storybook-only devtools shell opt-in; command, transaction, layout, editor, capability, and active extension snapshots                                           |
-| `Workbench Sample/Dev App` - Host install state     | Host-provided installed extension storage is account-scoped and activates a preinstalled catalog extension in the provider/devtools snapshot                     |
-| `Workbench Sample/Dev App` - Tester dev app journey | Dev-app integration path: startup editor state, search result open, command palette, chat, AI chat composer, settings, profile permission override, and sign-out |
-| `Workbench Sample/Dev App` - Basic permission scope | Basic account permission projection; only Explorer and Profile remain visible                                                                                    |
-| `Workbench Sample/Dev App` - Sidebar toggle         | Primary sidebar hide/show via status bar; collapsed grid keeps SplitView mounted and expands editor to full split width                                          |
+| Story                                                  | Flow covered                                                                                                                                                     |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Workbench Sample/Dev App` - Login gate                | Unauthenticated sample login screen and dummy credentials copy                                                                                                   |
+| `Workbench Sample/Dev App` - Login submit flow         | Dummy backend sign-in failure, error display, successful tester sign-in, and shell handoff                                                                       |
+| `Workbench Sample/Dev App` - Tester workbench          | Authenticated administrator workbench shell, explorer, status bar, and activity bar                                                                              |
+| `Workbench Sample/Dev App` - Devtools inspectors       | Storybook-only devtools shell opt-in; command, transaction, layout, editor, capability, and active extension snapshots                                           |
+| `Workbench Sample/Dev App` - Host install state        | Host-provided installed extension storage is account-scoped and activates a preinstalled catalog extension in the provider/devtools snapshot                     |
+| `Workbench Sample/Dev App` - Tester dev app journey    | Dev-app integration path: startup editor state, search result open, command palette, chat, AI chat composer, settings, profile permission override, and sign-out |
+| `Workbench Sample/Dev App` - Basic permission scope    | Basic account permission projection; only Explorer and Profile remain visible                                                                                    |
+| `Workbench Sample/Dev App` - Sidebar toggle            | Primary sidebar hide/show via status bar; collapsed grid keeps SplitView mounted and expands editor to full split width                                          |
+| `Workbench Sample/Dev App` - Field Remap editor smoke  | Open Field Remap activity, select nested A→B sample, assert non-empty remap editor surface / result JSON                                                         |
+| `Workbench Sample/Dev App` - Extensions installed list | Activity → Extensions → Installed tab shows seeded `JSON Preview` (host storage wiring; no Install/reload)                                                       |
+| `Workbench Sample/Dev App` - Settings appearance smoke | Settings → Appearance category shows Color scheme combobox (appearance presets wired into settings modal)                                                        |
+| `Workbench Sample/Dev App` - Commands activity smoke   | Activity → Commands shows command management sidebar filter (distinct from Ctrl+P palette)                                                                       |
 
 ### Component tier (package harness)
 
@@ -105,6 +119,9 @@ surface:
 | `React/Overlay/Dialog Actions` - Context menu column layouts       | Main-area trigger with fixed overlay          | Label-only, icon-only, and icon+shortcut menus set the matching `data-has-*` layout flags                                                                                                                                 |
 | `React/Overlay/Dialog Actions` - Context menu pointer state        | Main-area trigger with fixed overlay          | `useContextMenuState` opens a menu from right-click coordinates and closes after select                                                                                                                                   |
 | `React/Workbench/Chat Components` - Runtime controls               | Sidebar chat panel                            | Chat command proposal allow flow plus composer submit/reset                                                                                                                                                               |
+| `React/Workbench/Chat Components` - Host gaps drop/tone            | Sidebar chat panel                            | Baseline: tone warning/error label icons + plain contentMode                                                                                                                                                              |
+| `React/Workbench/Chat Components` - Composer and attachments       | Sidebar chat panel                            | Baseline: `renderComposer` wrap + in-bubble `attachments`                                                                                                                                                                 |
+| `React/Workbench/Chat Components` - Phased run labels              | Sidebar chat panel                            | Baseline: `ChatPhasedRunProgress` overridable chrome labels                                                                                                                                                               |
 | `React/Workbench/Workspace Search` - Search panel flow             | Sidebar search panel                          | Empty, result, Enter activation, clear, no-result, and refresh behavior                                                                                                                                                   |
 | `React/Layout/Side Bar View Tab Strip` - Tab selection and reorder | Sidebar panel (`StorySidebarFrame`)           | Secondary slot tab active state, click selection, and horizontal DnD reorder via `SideBarViewTabStrip`                                                                                                                    |
 | `React/Layout/Side Bar View Tab Strip` - Inspector icon tabs       | Sidebar panel (`StorySidebarFrame`)           | Icon `SideBarViewTabStrip` inside `SideBarViewFrame` for secondary inspector panes (Window / Content)                                                                                                                     |
@@ -122,15 +139,16 @@ after repeated green runs.
 After the shared harness refactor and `StandaloneShell` removal, watch these overlaps
 when both component and integration tiers are present:
 
-| Concern                   | Component / panel                         | Integration                                          | Verdict                                                                                                        |
-| ------------------------- | ----------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Settings appearance       | `AppearanceSettings`                      | Journey settings + any sample-shell settings story   | **Review** — keep component for schema/combobox contract; integration proves modal open from activity bar only |
-| Extensions list           | `ExtensionManagementSidebar`              | Sample extensions view or journey                    | **Review** — avoid duplicate install/list assertions; pick one required path                                   |
-| Permission projection     | Profile / role controls (component)       | `Basic permission scope`, journey profile override   | **Justified split** — sign-in role vs runtime override vs activity-bar projection                              |
-| Search                    | `WorkspaceSearchPanel` (panel flows)      | Journey search open                                  | **Justified split** — panel API vs activity wiring                                                             |
-| Chat / AI                 | `ChatPanel` runtime + host-gaps drop/tone | Journey chat + AI composer                           | **Justified split** — transport/runtime vs sidebar navigation; host-gaps stays component-tier                  |
-| Authenticated shell smoke | `Integrated Shell` (baseline)             | `Tester workbench` / sample authenticated story      | **Justified split** — sample is required smoke; Integrated Shell stays baseline for pixel sidebar settings     |
-| Full-shell harness        | —                                         | Second sample-shell file mirroring `WorkbenchSample` | **Remove** — max one integration file per host (`App.tsx`)                                                     |
+| Concern                   | Component / panel                         | Integration                                          | Verdict                                                                                                                                  |
+| ------------------------- | ----------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Settings appearance       | `AppearanceSettings` (unit)               | Journey settings open + Appearance smoke             | **Justified split** — schema/combobox stays unit; Appearance smoke proves category content; journey covers Linked Accounts / Permissions |
+| Extensions list           | `ExtensionManagementSidebar` (Vitest)     | Sample extensions Installed list play                | **Justified split** — unit covers list chrome; sample proves activity + seeded install storage                                           |
+| Commands management       | `CommandManagementSidebar` (Vitest)       | Sample Commands activity smoke                       | **Justified split** — unit covers filter/run chrome; sample proves activity bar → sidebar wiring                                         |
+| Permission projection     | Profile / role controls (component)       | `Basic permission scope`, journey profile override   | **Justified split** — sign-in role vs runtime override vs activity-bar projection                                                        |
+| Search                    | `WorkspaceSearchPanel` (panel flows)      | Journey search open                                  | **Justified split** — panel API vs activity wiring                                                                                       |
+| Chat / AI                 | `ChatPanel` runtime + host-gaps drop/tone | Journey chat + AI composer                           | **Justified split** — transport/runtime vs sidebar navigation; host-gaps stays component-tier                                            |
+| Authenticated shell smoke | `Integrated Shell` (baseline)             | `Tester workbench` / sample authenticated story      | **Justified split** — sample is required smoke; Integrated Shell stays baseline for pixel sidebar settings                               |
+| Full-shell harness        | —                                         | Second sample-shell file mirroring `WorkbenchSample` | **Remove** — max one integration path per host (`createSampleHost`)                                                                      |
 
 No new excess was introduced by the harness refactor itself. The main risk is
 re-adding parallel full-shell stories or requiring the same UI assertion at both
@@ -147,12 +165,20 @@ component and integration tiers without a tier-specific reason.
 | `pnpm storybook:components`         | Local Storybook opened on the first component case                  |
 | `pnpm storybook:sample`             | Local Storybook opened on the sample journey case                   |
 | `pnpm build:storybook`              | Static Storybook build                                              |
+| `pnpm check:storybook-play-tags`    | Static orphan-play / sample-tag discipline gate                     |
 | `pnpm test:storybook-play:required` | Required play stories only                                          |
+| `pnpm test:storybook-play:sample`   | Sample-host play subset (`storybook-play-sample`)                   |
 | `pnpm validate:ui`                  | `build:storybook` + `test:storybook-play:required`                  |
+| `pnpm validate:ui:sample`           | `build:storybook` + `test:storybook-play:sample`                    |
 | `pnpm validate:full`                | Static/unit gates plus Storybook UI validation                      |
 
 `scripts/test-storybook-play.mjs` starts Storybook on port `61009` when needed, then
-invokes `test-storybook` with `--includeTags=storybook-play-required`.
+invokes `test-storybook` with `--includeTags` for the selected gate
+(`storybook-play-required`, `storybook-play-sample`, or `storybook-play-baseline`).
+
+Sample integration stories live in `WorkbenchSample.stories.tsx` and seed via
+`examples/workbench-sample/src/storybook/scenarios/` (see
+[Sample Host Test Architecture](./sample-host-test-architecture.md)).
 
 `pnpm dev` runs only the workbench sample at `http://127.0.0.1:65173/`.
 `pnpm dev:storybook` runs Storybook alone at `http://127.0.0.1:61009/`.

@@ -1,28 +1,28 @@
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 
-import { useWorkbenchHostPlatform } from '../workbench/WorkbenchPlatformContext';
+import { useWorkbenchHostPlatform } from '../workbench/chrome/WorkbenchPlatformContext';
 import {
   shouldUseDarwinPlatformChrome,
   WorkbenchWindowChromeControls,
-} from '../workbench/WorkbenchWindowChromeControls';
+} from '../workbench/shell/WorkbenchWindowChromeControls';
 import {
   resolveWorkbenchWindowChromeDataAttributes,
   type WorkbenchWindowChromeMode,
-} from '../workbench/workbenchPlatformChrome';
+} from '../workbench/chrome/workbenchPlatformChrome';
 
 export interface ModalTitlebarProps {
-  chrome?: WorkbenchWindowChromeMode | undefined;
-  closeLabel?: string | undefined;
+  chrome?: WorkbenchWindowChromeMode;
+  closeLabel?: string;
   labelledBy: string;
   maximized: boolean;
-  maximizeLabel?: string | undefined;
+  maximizeLabel?: string;
   onClose: () => void;
   onDoubleClick: () => void;
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onToggleMaximized: () => void;
-  restoreLabel?: string | undefined;
+  restoreLabel?: string;
   title: ReactNode;
-  titleSuffix?: ReactNode | undefined;
+  titleSuffix?: ReactNode;
 }
 
 export function ModalTitlebar({

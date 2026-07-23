@@ -5,6 +5,7 @@ export type { ChatCommandProposalCardProps } from './ChatCommandProposalCard';
 export { ChatPhasedRunProgress } from './ChatPhasedRunProgress';
 export type {
   ChatPhasedRunProgressAction,
+  ChatPhasedRunProgressLabels,
   ChatPhasedRunProgressProps,
   ChatRunPhase,
   ChatRunPhaseStatus,

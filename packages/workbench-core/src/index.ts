@@ -32,16 +32,16 @@ export {
   BUILTIN_WORKBENCH_EXTENSIONS,
   SAMPLE_WORKBENCH_EXTENSIONS,
 } from './generated/bundled-extensions.js';
-export { CapabilityRegistry, type CapabilityProvider } from './capability-registry.js';
+export { CapabilityRegistry, type CapabilityProvider } from './capability/registry.js';
 export {
   createEditorDocumentViewProviderRegistry,
   EditorDocumentViewProviderRegistry,
   type CreateEditorDocumentViewProviderRegistryOptions,
-} from './editor-document-view-registry.js';
+} from './editor/document-view-registry.js';
 export {
   createEditorResolverRegistry,
   EditorResolverRegistry,
-} from './editor-resolver-registry.js';
+} from './editor/resolver-registry.js';
 export {
   createEditorGroupDropMoveOptions,
   resolveEditorGroupDropSide,
@@ -50,7 +50,7 @@ export {
   type EditorDropRect,
   type EditorGroupDropSide,
   type ResolveEditorGroupDropSideOptions,
-} from './editor-layout.js';
+} from './editor/layout.js';
 export {
   createEditorService,
   DEFAULT_EDITOR_GROUP_ID,
@@ -67,21 +67,21 @@ export {
   type SetEditorSplitDirectionOptions,
   type SetEditorSplitPrimarySizeOptions,
   type SplitEditorOptions,
-} from './editor-service.js';
+} from './editor/service.js';
 export {
   EDITOR_SAVE_COMMAND_ID,
   registerEditorSaveCommand,
   saveActiveEditor,
   type SaveActiveEditorInput,
   type SaveActiveEditorResult,
-} from './editor-save.js';
+} from './editor/save.js';
 export {
   createDefaultViewHostFactory,
   createEditorHostFactoryRegistry,
   createViewHostFactoryRegistry,
   EditorHostFactoryRegistry,
   ViewHostFactoryRegistry,
-} from './host-factory-registry.js';
+} from './host/factory-registry.js';
 export {
   collectExtensionDependencyDiagnostics,
   ExtensionRegistry,
@@ -94,12 +94,12 @@ export {
   type ExtensionRegistryOptions,
   type WorkbenchExtensionDescription,
   type WorkbenchExtensionModule,
-} from './extension-registry.js';
+} from './extension/registry.js';
 export {
   createExtensionFeatureSpec,
   createExtensionFeatureSpecs,
   type WorkbenchExtensionFeatureDescription,
-} from './extension-feature-spec.js';
+} from './extension/feature-spec.js';
 export type {
   ExtensionCommandFeatureSpec,
   ExtensionFeatureSpec,
@@ -112,9 +112,38 @@ export {
   type ExtensionCatalog,
   type ExtensionCatalogCategory,
   type ExtensionCatalogEntry,
-} from './extension-catalog.js';
+} from './extension/catalog.js';
+export {
+  DEFAULT_EXTENSION_CATALOG_TRUST_POLICY,
+  ExtensionCatalogUrlNotAllowedError,
+  assertExtensionCatalogUrlAllowed,
+  type ExtensionCatalogTrustPolicy,
+} from './extension/catalog-trust.js';
+export {
+  ExtensionCapabilityRequiredError,
+  ExtensionPermissionDeniedError,
+  assertPermission,
+  requireCapability,
+  type CapabilityRequireContext,
+  type PermissionAssertContext,
+} from './extension/permissions.js';
+export {
+  ExtensionNotAllowlistedError,
+  assertExtensionAllowlisted,
+  isExtensionAllowlisted,
+  type ExtensionEnterpriseAllowlistPolicy,
+} from './extension/enterprise-allowlist.js';
+export {
+  computeWorkbenchExtensionManifestIntegrity,
+  verifyWorkbenchExtensionsAgainstLock,
+  type ExtensionIntegrityDiagnostic,
+  type ExtensionIntegrityDiagnosticCode,
+  type ExtensionIntegrityMode,
+  type VerifyWorkbenchExtensionsAgainstLockResult,
+} from './extension/integrity.js';
 export {
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  ExtensionInstallApprovalRequiredError,
   applyExtensionInstallPlanToRecords,
   getInstalledExtensionRecord,
   installExtensionRecord,
@@ -126,19 +155,37 @@ export {
   type ExtensionInstallPlanRecordSource,
   type InstalledExtensionCategory,
   type InstalledExtensionRecord,
-} from './extension-install-state.js';
+} from './extension/install-state.js';
+export {
+  DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
+  createExtensionInstallPermissionFingerprint,
+  isExtensionInstallTrusted,
+  loadExtensionInstallTrustRecords,
+  recordExtensionInstallTrust,
+  revokeExtensionInstallTrust,
+  saveExtensionInstallTrustRecords,
+  type ExtensionInstallTrustRecord,
+} from './extension/install-trust.js';
 export type {
+  WorkbenchAsyncStorageAdapter,
   WorkbenchRemovableStorageAdapter,
   WorkbenchStorageAdapter,
   WorkbenchStorageReader,
   WorkbenchStorageRemover,
+  WorkbenchStorageScope,
   WorkbenchStorageWriter,
 } from './storage.js';
+export {
+  createBrowserWorkbenchStorage,
+  createMemoryWorkbenchStorage,
+  type BrowserWorkbenchStorageKind,
+  type CreateBrowserWorkbenchStorageOptions,
+} from './storage-adapters.js';
 export {
   mergeExtensionsConfigWithInstallState,
   resolveBundledExtensionByManifestUrl,
   resolveInstalledAvailableExtensions,
-} from './extension-install-resolution.js';
+} from './extension/install-resolution.js';
 export {
   createExtensionInstallPlan,
   type CreateExtensionInstallPlanInput,
@@ -150,13 +197,14 @@ export {
   type ExtensionInstallPlanDiagnosticKind,
   type ExtensionInstallPlanInstallSource,
   type ExtensionInstallPlanReason,
-} from './extension-install-plan.js';
+} from './extension/install-plan.js';
 export {
   applyThemeTokenOverrides,
   REQUIRED_THEME_TOKEN_KEYS,
   ThemeRegistry,
   type WorkbenchThemeContribution,
-} from './theme-registry.js';
+} from './theme/registry.js';
+export { sanitizeThemeTokenValue } from './theme/sanitize-token-value.js';
 export {
   createWorkbenchHostThemeRegistration,
   HOST_WORKBENCH_THEME_EXTENSION_ID,
@@ -165,15 +213,15 @@ export {
   type RegisterWorkbenchThemeOptions,
   type WorkbenchHostThemeMode,
   type WorkbenchHostThemeRegistration,
-} from './register-workbench-theme.js';
+} from './theme/register-host-theme.js';
 export {
   LocalizationRegistry,
   type WorkbenchLocalizationContribution,
-} from './localization-registry.js';
+} from './localization/registry.js';
 export {
   resolveWorkbenchExtensions,
   type WorkbenchExtensionResolution,
-} from './extension-resolution.js';
+} from './extension/resolution.js';
 export {
   createWorkbenchLayoutState,
   DEFAULT_WORKBENCH_LAYOUT_STATE,
@@ -181,12 +229,12 @@ export {
   type WorkbenchLayoutChangeEvent,
   type WorkbenchLayoutState,
   type WorkbenchLayoutStateInput,
-} from './layout-service.js';
+} from './layout/service.js';
 export {
   resolveWorkbenchMenuContributions,
   type ResolvedWorkbenchMenuContributionItem,
   type ResolveWorkbenchMenuContributionsInput,
-} from './menu-contribution-resolution.js';
+} from './contributions/menu-resolution.js';
 export {
   collectConfigurationContributionDefaults,
   collectConfigurationDefaults,
@@ -194,8 +242,8 @@ export {
   type PreferenceChangeEvent,
   type PreferenceInspection,
   type PreferenceServiceOptions,
-} from './preference-service.js';
-export { filterActivitiesByWhenClause } from './activity-contribution-resolution.js';
+} from './preference/service.js';
+export { filterActivitiesByWhenClause } from './contributions/activity-resolution.js';
 export {
   ActivityRegistry,
   ConfigurationRegistry,
@@ -207,4 +255,4 @@ export {
   type WorkbenchEditorContribution,
   type WorkbenchViewContainerContribution,
   type WorkbenchViewContribution,
-} from './registries.js';
+} from './contributions/registries.js';

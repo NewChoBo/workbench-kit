@@ -25,24 +25,24 @@ import {
 } from './overlay';
 
 export interface SearchableMultiSelectOption {
-  readonly count?: number | undefined;
-  readonly disabled?: boolean | undefined;
+  readonly count?: number;
+  readonly disabled?: boolean;
   readonly label: string;
   readonly value: string;
 }
 
 export interface SearchableMultiSelectProps {
   readonly 'aria-label'?: string | undefined;
-  readonly className?: string | undefined;
-  readonly disabled?: boolean | undefined;
+  readonly className?: string;
+  readonly disabled?: boolean;
   /** Shown when the query matches no options. Default: "No matching options". */
-  readonly emptyMessage?: string | undefined;
+  readonly emptyMessage?: string;
   /** Aria label for dismissible selected chips. Default: "Remove {label}". */
-  readonly getRemoveChipAriaLabel?: ((optionLabel: string) => string) | undefined;
+  readonly getRemoveChipAriaLabel?: (optionLabel: string) => string;
   readonly onValueToggle: (value: string) => void;
   readonly options: ReadonlyArray<SearchableMultiSelectOption>;
   /** Search input placeholder. Default: "Search". */
-  readonly searchPlaceholder?: string | undefined;
+  readonly searchPlaceholder?: string;
   readonly selectedValues: readonly string[];
 }
 

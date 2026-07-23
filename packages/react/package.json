@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "pnpm exec vitest run --config ../../vitest.config.ts src/widget-tree",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck:exact-optional": "tsc -p typecheck-exact-optional/tsconfig.emit.json && tsc -p typecheck-exact-optional/tsconfig.json --noEmit"
   },
   "exports": {
     ".": "./src/index.ts",
@@ -24,17 +25,17 @@
     "./workbench/management": "./src/workbench/management/index.ts",
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",
-    "./workbench/activityBarOrder": "./src/workbench/activityBarOrder.ts",
-    "./workbench/markdown-preview": "./src/workbench/MarkdownPreview.tsx",
-    "./workbench/shell": "./src/workbench/shell.ts",
-    "./workbench/theme-provider": "./src/workbench/WorkbenchThemeProvider.tsx",
-    "./workbench/themePresets": "./src/workbench/themePresets.ts",
-    "./workbench/split-view": "./src/workbench/SplitView.tsx",
+    "./workbench/activityBarOrder": "./src/workbench/shell/activityBarOrder.ts",
+    "./workbench/markdown-preview": "./src/workbench/markdown/MarkdownPreview.tsx",
+    "./workbench/shell": "./src/workbench/shell/shell.ts",
+    "./workbench/theme-provider": "./src/workbench/theme/WorkbenchThemeProvider.tsx",
+    "./workbench/themePresets": "./src/workbench/theme/themePresets.ts",
+    "./workbench/split-view": "./src/workbench/shell/SplitView.tsx",
     "./workbench/workspace": "./src/workbench/workspace/index.ts",
     "./workbench/workspace/editor": "./src/workbench/workspace/WorkspaceEditor.tsx",
     "./workbench/workspace/explorer": "./src/workbench/workspace/WorkspaceExplorer.tsx",
     "./workbench/workspace/file-icon": "./src/icons/file-icon.ts",
-    "./workbench/commands": "./src/workbench/commands.ts",
+    "./workbench/commands": "./src/workbench/commands/commands.ts",
     "./jdw": "./src/jdw/index.ts",
     "./jdw/document": "./src/jdw/document.ts",
     "./jdw/parse": "./src/jdw/parse.ts",
@@ -69,7 +70,8 @@
     "@workbench-kit/services": "workspace:*",
     "@workbench-kit/tokens": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "rehype-sanitize": "^6.0.0"
   },
   "peerDependencies": {
     "react": "^19.0.0",

@@ -112,6 +112,12 @@ export {
   extensionCategoryIconTone,
   formatExtensionCategoryLabel,
 } from './extension-category-display.js';
+export {
+  extensionInstallRequiresApproval,
+  formatExtensionInstallApprovalMessage,
+  resolveExtensionInstallOptions,
+  type ResolveExtensionInstallOptionsInput,
+} from './extension-install-approval.js';
 export type {
   AccountManagementEntry,
   AccountManagementEntryStatus,
@@ -122,6 +128,7 @@ export type {
   CommandManagementPanelProps,
   CommandManagementRunState,
   ExtensionCatalogBrowseEntry,
+  ExtensionInstallOptions,
   ExtensionManagementDiagnosticSummary,
   ExtensionManagementEntry,
   ExtensionManagementFeatureItem,

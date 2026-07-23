@@ -22,6 +22,13 @@ function moveFile(fromRel, toRel) {
   return true;
 }
 
+/**
+ * Feature hub (`index.css`) must list leaf styles only.
+ * Aggregator barrels (e.g. workbench-chrome.css) import the hub and must be excluded
+ * or re-running this script creates a circular @import.
+ */
+const FEATURE_HUB_EXCLUDED = new Set(['index.css', 'workbench-chrome.css']);
+
 /** @param {string} dirRel */
 function writeFeatureHub(dirRel) {
   const hubFileName = 'index.css';
@@ -30,7 +37,7 @@ function writeFeatureHub(dirRel) {
 
   const imports = fs
     .readdirSync(dir)
-    .filter((name) => name.endsWith('.css') && name !== hubFileName)
+    .filter((name) => name.endsWith('.css') && !FEATURE_HUB_EXCLUDED.has(name))
     .sort()
     .map((name) => `@import './${name}';`);
 
@@ -147,8 +154,8 @@ const moves = [
   ['workbench/media-preview-viewport.css', 'layout/media/media-preview-viewport.css'],
 
   // primitives media components
-  ['workbench/media-slot.css', 'primitives/media-slot.css'],
-  ['workbench/thumbnail.css', 'primitives/thumbnail.css'],
+  ['workbench/media-slot.css', 'primitives/workbench-media-slot/media-slot.css'],
+  ['workbench/thumbnail.css', 'primitives/workbench-thumbnail/thumbnail.css'],
 
   // layout panel chrome
   ['layout/panel-chrome.css', 'layout/panel/panel-chrome.css'],
@@ -221,17 +228,32 @@ fs.writeFileSync(
   `/* Layout feature styles — grouped by TSX owner area */\n${layoutHubImports.join('\n')}\n`,
 );
 
+// Barrel lives under workbench/chrome/; siblings are ../shell and ../command-palette.
+const chromeBarrelDir = path.join(reactSrc, 'workbench/chrome');
 const workbenchChromeImports = [
-  './shell/index.css',
-  './chrome/index.css',
-  './command-palette/command-palette.css',
+  '../shell/index.css',
+  './index.css',
+  '../command-palette/command-palette.css',
 ]
-  .filter((rel) => fs.existsSync(path.join(reactSrc, 'workbench', rel.replace('./', ''))))
+  .filter((rel) => fs.existsSync(path.resolve(chromeBarrelDir, rel)))
   .map((rel) => `@import '${rel}';`);
 
+if (workbenchChromeImports.length !== 3) {
+  throw new Error(
+    `workbench-chrome.css barrel incomplete (${workbenchChromeImports.length}/3 imports resolved).`,
+  );
+}
+
 fs.writeFileSync(
-  path.join(reactSrc, 'workbench/workbench-chrome.css'),
+  path.join(chromeBarrelDir, 'workbench-chrome.css'),
   `/* Workbench shell and platform chrome */\n${workbenchChromeImports.join('\n')}\n`,
 );
+
+// Remove stale pre-colocate barrel if present (would diverge from styles.css).
+const staleChromeBarrel = path.join(reactSrc, 'workbench/workbench-chrome.css');
+if (fs.existsSync(staleChromeBarrel)) {
+  fs.unlinkSync(staleChromeBarrel);
+  console.log('Removed stale workbench/workbench-chrome.css');
+}
 
 console.log(`Reorganized ${moved} CSS files into feature directories.`);

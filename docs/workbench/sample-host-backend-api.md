@@ -13,10 +13,12 @@ implement the same routes and JSON payloads later without changing the UI layer.
 | In-browser reference implementation     | `examples/workbench-sample/src/dummy-backend/`                   |
 | Sample UI wiring                        | `useSampleAuth.ts`, `SampleAuthShell.tsx`                        |
 
-Platform auth services (`WorkbenchAuthProvider`, `SecretStorageService`) remain
-the long-term architecture boundary — see
+Platform auth contracts (`WorkbenchAuthProvider`, `WorkbenchSecretStorageService`)
+remain the long-term architecture boundary — see
 [Account and Authentication](../architecture/account-auth.md). This API is the
 **sample host integration surface**, not a replacement for platform auth.
+The in-memory transport stores the demo session account id via
+`createMemorySecretStorage()` (not `sessionStorage` / `localStorage`).
 
 See also [API Reference](../guides/api-reference.md) for the OpenAPI index and contract entrypoints.
 
@@ -29,7 +31,7 @@ SampleAuthShell
   └─ useSampleAuth()
        └─ createSampleHostBackendClient()
             ├─ transport=in-memory (default)
-            │    └─ sessionStorage token + fixed profile/linked-account payloads
+            │    └─ memory SecretStorage session + fixed profile/linked-account payloads
             └─ transport=http (optional)
                  └─ fetch() against /api/sample-host/v1/*
 ```
@@ -38,7 +40,11 @@ SampleAuthShell
 
 - No separate server process
 - Simulated latency (350–450 ms) to mimic network round-trips
-- Session token stored in `sessionStorage` under `workbench-sample.auth.session`
+- Demo session account id stored in process-memory
+  `WorkbenchSecretStorageService` (`createMemorySecretStorage`, extension id
+  `workbench-kit.sample-host`) — **not** browser web storage. Full page reload
+  clears the in-memory session (sign in again). Durable hosts should use
+  `createEncryptedSecretVault` or a host-backed SecretStorage adapter.
 - Demo credentials: `tester` / `tester`
 - Fixed linked-account records (GitHub, npm)
 

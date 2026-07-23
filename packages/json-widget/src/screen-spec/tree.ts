@@ -1,5 +1,5 @@
-import type { WidgetPath } from '../path.js';
-import { appendChildrenPath, ROOT_WIDGET_PATH } from '../path.js';
+import type { WidgetPath } from '../document/path.js';
+import { appendChildrenPath, ROOT_WIDGET_PATH } from '../document/path.js';
 import {
   screenColumn,
   screenGrid,

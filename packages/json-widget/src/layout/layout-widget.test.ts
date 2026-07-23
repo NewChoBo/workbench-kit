@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { GenericWidget } from '../widget-tree.js';
-import { createWidgetRegistry } from '../widget-registry.js';
+import type { GenericWidget } from '../widget/tree.js';
+import { createWidgetRegistry } from '../widget/registry.js';
 import { layoutWidget } from './layout-widget.js';
 
 describe('layoutWidget', () => {

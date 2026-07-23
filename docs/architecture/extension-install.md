@@ -45,6 +45,9 @@ Parsing is handled by `parseExtensionCatalog()` in `@workbench-kit/workbench-cor
 
 1. Host serves a catalog JSON file (for example `examples/workbench-sample/public/extension-catalog.json`).
 2. Browse UI loads the catalog via `fetch()` or receives entries through props.
+   Before fetch, `assertExtensionCatalogUrlAllowed()` applies the host
+   `ExtensionCatalogTrustPolicy` (default: relative/path-only catalogs allowed;
+   absolute remote origins denied until listed in `allowedOrigins`).
 3. `createExtensionInstallPlan()` builds the pre-install review plan:
    dependency order, install/enable/already-enabled actions, extension-pack
    members, catalog install-source availability, required approval,
@@ -108,34 +111,89 @@ Helpers live in `@workbench-kit/workbench-core`:
 
 - `loadInstalledExtensions()`
 - `saveInstalledExtensions()`
-- `installExtensionRecord()`
-- `applyExtensionInstallPlanToRecords()`
+- `installExtensionRecord()` — **privileged** host/test upsert; bypasses plan and
+  approval. Marketplace installs must use `applyExtensionInstallPlanToRecords()`.
+- `applyExtensionInstallPlanToRecords()` — refuse when
+  `requiresApproval && !approved` (`ExtensionInstallApprovalRequiredError`)
 - `toggleInstalledExtensionEnabled()`
 - `createExtensionInstallPlan()`
+- `assertExtensionCatalogUrlAllowed()` / `ExtensionCatalogTrustPolicy`
 - `WorkbenchStorageReader`, `WorkbenchStorageWriter`, and
   `WorkbenchStorageAdapter`
 
 ## Host storage contract
 
-Install-state persistence accepts a small synchronous storage port instead of a
-DOM `Storage` object:
+Install-state persistence accepts a small **synchronous** storage port instead of
+a DOM `Storage` object (`WorkbenchStorageAdapter` in
+`@workbench-kit/workbench-core`):
 
 ```typescript
-interface WorkbenchStorageReader {
-  getItem(key: string): string | null;
-}
-
-interface WorkbenchStorageWriter {
-  setItem(key: string, value: string): void;
-}
-
 type WorkbenchStorageAdapter = WorkbenchStorageReader & WorkbenchStorageWriter;
+// optional deletion:
+type WorkbenchRemovableStorageAdapter = WorkbenchStorageAdapter & WorkbenchStorageRemover;
 ```
+
+Reference factories:
+
+- `createMemoryWorkbenchStorage()` — process memory (tests / ephemeral hosts)
+- `createBrowserWorkbenchStorage({ kind: 'local' | 'session' })` — wraps web storage
+
+Semantic scopes (`WorkbenchStorageScope`: `user` | `workspace` | `session` |
+`secret`) guide which backing store a host should use for a feature key. The
+`secret` scope must **not** use this adapter with web storage — use
+`createMemorySecretStorage()` or Electron `createEncryptedSecretVault`.
 
 Browser hosts can keep using `localStorage` implicitly. Desktop or embedded
 hosts can pass a file-backed or user-data-backed adapter through
 `WorkbenchProvider.installedExtensionsStorage` and the extension management
 model options.
+
+## Extensions lock / integrity
+
+`pnpm build:workbench-extensions` regenerates `.workbench/extensions.lock.json`
+with each bundled extension `version` and `integrity` (`sha256:` of the
+canonical manifest JSON). Hosts may pass the lock into `WorkbenchProvider`:
+
+```ts
+<WorkbenchProvider
+  extensionsLock={parseWorkbenchExtensionsLock(lockJson)}
+  extensionIntegrityMode="fail-closed" // or "warn" | "off" (default)
+/>
+```
+
+In `fail-closed` mode, enabled extensions missing from the lock or with a
+version/integrity mismatch are not registered. This is the kit analogue of
+Marketplace/Open VSX package integrity for the bundled-only MVP.
+
+## Enterprise extension allowlist
+
+Hosts may pass an opt-in `ExtensionEnterpriseAllowlistPolicy` into
+`applyExtensionInstallPlanToRecords`. When `allowedExtensionIds` is set
+(including `[]` = deny all), install/enable actions for other ids throw
+`ExtensionNotAllowlistedError`. Omitting `allowedExtensionIds` leaves the
+policy inactive so existing hosts stay open by default.
+
+## Durable install trust
+
+Permissioned installs may persist consent so repeat installs with the same
+permission fingerprint skip the confirm prompt (VS Code publisher-trust style,
+keyed by extension id + permissions rather than publisher):
+
+- Storage key: `workbench-kit/.workbench/extension-install-trust`
+- Core helpers: `loadExtensionInstallTrustRecords`, `recordExtensionInstallTrust`,
+  `isExtensionInstallTrusted`, `revokeExtensionInstallTrust`
+- React: `resolveExtensionInstallOptions(entry, { isTrusted, rememberTrust })`
+- shell-react management model wires storage and passes `isInstallTrusted`
+
+If the plan later requests additional permissions, the fingerprint changes and
+the user is prompted again.
+
+## Recommend ≠ enable
+
+`.workbench/extensions.json` `recommendations` must not be treated as an
+enable list. Only `enabled` (plus install records / host role policy) activates
+extensions. The sample host may enable demo samples through host-owned role
+policy without listing them under `enabled` in the shared config file.
 
 ## MVP constraints
 

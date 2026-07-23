@@ -231,18 +231,18 @@ sequenceDiagram
 
 **Verified paths:**
 
-- `packages/shell-react/src/provider.tsx` — creates registry, resolves extensions, `activateStartup()` on mount.
-- `packages/workbench-core/src/extension-registry.ts` — `registerContributions` at register time; lazy `activateExtension` on events.
-- `packages/shell-react/src/shell.tsx` — `activateView` when sidebar container changes; view hosts via `ViewHostFactoryRegistry`.
+- `packages/shell-react/src/shell/provider.tsx` — creates registry, resolves extensions, `activateStartup()` on mount.
+- `packages/workbench-core/src/extension/registry.ts` — `registerContributions` at register time; lazy `activateExtension` on events.
+- `packages/shell-react/src/shell/shell.tsx` — `activateView` when sidebar container changes; view hosts via `ViewHostFactoryRegistry`.
 
 ### 4.3 Finding: EditorService and shell editor flow (WB-28)
 
 | Component          | Status | Evidence                                        |
 | ------------------ | ------ | ----------------------------------------------- |
-| `EditorService`    | Done   | `packages/workbench-core/src/editor-service.ts` |
-| `useEditor*` hooks | Done   | `packages/shell-react/src/use-editor.ts`        |
-| Tab strip UI       | Done   | `packages/shell-react/src/editor-area.tsx`      |
-| Shell wiring       | Done   | `packages/shell-react/src/shell.tsx`            |
+| `EditorService`    | Done   | `packages/workbench-core/src/editor/service.ts` |
+| `useEditor*` hooks | Done   | `packages/shell-react/src/editor/use-editor.ts` |
+| Tab strip UI       | Done   | `packages/shell-react/src/editor/area.tsx`      |
+| Shell wiring       | Done   | `packages/shell-react/src/shell/shell.tsx`      |
 | Sample host        | Done   | `examples/workbench-sample/src/bootstrap.ts`    |
 
 WB-28 editor shell scope is complete: `EditorArea` consumes `EditorService`,
@@ -293,7 +293,7 @@ Lane A editor/explorer should bind **`WorkspaceResourceUri` only** for virtual w
 
 2026-06-25 D3 cleanup: `extensions/builtin.editor` now resolves workspace files
 and derives editor labels through `@workbench-kit/workspace` URI parser helpers.
-`packages/shell-react/src/editor-resource.ts` also uses the workspace parser
+`packages/shell-react/src/editor/resource.ts` also uses the workspace parser
 helper. `workbench-core` still keeps boundary-local URI predicates because the
 dependency graph intentionally forbids a core -> workspace edge.
 
@@ -405,9 +405,9 @@ JSON configuration lives under `./json-config`.
 | Workbench core architecture | `docs/architecture/workbench-core.md`                |
 | CSS render backend          | `packages/react/src/jdw/cssRenderBackend.tsx`        |
 | Builtin registry            | `packages/react/src/jdw/createBuiltinJdwRegistry.ts` |
-| Extension registry          | `packages/workbench-core/src/extension-registry.ts`  |
-| Editor service              | `packages/workbench-core/src/editor-service.ts`      |
-| Workbench shell             | `packages/shell-react/src/shell.tsx`                 |
+| Extension registry          | `packages/workbench-core/src/extension/registry.ts`  |
+| Editor service              | `packages/workbench-core/src/editor/service.ts`      |
+| Workbench shell             | `packages/shell-react/src/shell/shell.tsx`           |
 | Resource transactions       | `packages/workspace/src/resource-transaction.ts`     |
 
 ---

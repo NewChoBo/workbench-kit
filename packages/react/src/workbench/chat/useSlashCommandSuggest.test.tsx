@@ -3,7 +3,7 @@
 import { act, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { describe, expect, it } from 'vitest';
-import type { WorkbenchCommandDescriptor } from '../CommandPalette';
+import type { WorkbenchCommandDescriptor } from '../commands/CommandPalette';
 import { useSlashCommandSuggest } from './useSlashCommandSuggest';
 
 const commands: WorkbenchCommandDescriptor[] = [

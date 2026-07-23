@@ -17,16 +17,16 @@ export interface NumberInputProps extends Omit<
   TextInputProps,
   'defaultValue' | 'onValueChange' | 'type' | 'value'
 > {
-  defaultValue?: number | undefined;
+  defaultValue?: number;
   /**
    * When true, `undefined` renders as an empty field. Clearing the input calls
    * `onEmptyValue` (preferred) instead of `onValueChange`.
    */
-  nullable?: boolean | undefined;
+  nullable?: boolean;
   /** Fired when a nullable field is cleared. */
-  onEmptyValue?: (() => void) | undefined;
-  onValueChange?: ((value: number, event: ChangeEvent<HTMLInputElement>) => void) | undefined;
-  value?: number | undefined;
+  onEmptyValue?: () => void;
+  onValueChange?: (value: number, event: ChangeEvent<HTMLInputElement>) => void;
+  value?: number;
 }
 
 function resolveStep(step: TextInputProps['step']): number {

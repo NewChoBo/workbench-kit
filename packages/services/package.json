@@ -8,10 +8,10 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./save": "./src/save.ts",
-    "./chat": "./src/chat.ts",
-    "./patch": "./src/patch.ts",
-    "./library": "./src/library.ts"
+    "./save": "./src/save/save.ts",
+    "./chat": "./src/chat/chat.ts",
+    "./patch": "./src/patch/patch.ts",
+    "./library": "./src/library/library.ts"
   },
   "files": [
     "src",

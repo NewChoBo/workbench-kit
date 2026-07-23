@@ -33,12 +33,12 @@ export type CatalogBrowseViewMode = 'grid' | 'list';
  * Hosts with richer cards should pass `renderGridItem` / `renderListItem`.
  */
 export interface CatalogBrowseItem {
-  readonly description?: string | null | undefined;
+  readonly description?: string | null;
   readonly id: string;
-  readonly imageAlt?: string | undefined;
-  readonly imageUrl?: string | null | undefined;
+  readonly imageAlt?: string;
+  readonly imageUrl?: string | null;
   readonly label: string;
-  readonly meta?: string | null | undefined;
+  readonly meta?: string | null;
 }
 
 export interface CatalogBrowseItemRenderState {
@@ -48,17 +48,17 @@ export interface CatalogBrowseItemRenderState {
 export interface CatalogBrowsePaneProps extends Omit<ComponentPropsWithRef<'div'>, 'children'> {
   readonly clearSearchLabel: string;
   readonly emptyMessage: string;
-  readonly errorMessage?: string | null | undefined;
+  readonly errorMessage?: string | null;
   /** Slot between search and sort/view controls (facet trigger, chips, etc.). */
   readonly facetStrip?: ReactNode;
-  readonly gridAriaLabel?: string | undefined;
+  readonly gridAriaLabel?: string;
   /** Visual label for the grid view-mode segment (string or icon node). */
   readonly gridLabel?: ReactNode;
   readonly hasMore: boolean;
   readonly isLoading: boolean;
   readonly isLoadingMore: boolean;
   readonly items: ReadonlyArray<CatalogBrowseItem>;
-  readonly listAriaLabel?: string | undefined;
+  readonly listAriaLabel?: string;
   /** Visual label for the list view-mode segment (string or icon node). */
   readonly listLabel?: ReactNode;
   readonly loadingMessage: string;
@@ -66,11 +66,11 @@ export interface CatalogBrowsePaneProps extends Omit<ComponentPropsWithRef<'div'
     ((itemId: string, itemLabel: string, event: ReactMouseEvent<HTMLElement>) => void) | undefined;
   readonly onLoadMore: () => void;
   readonly onOpenItem: (itemId: string) => void;
-  readonly onRefresh?: (() => void) | null | undefined;
+  readonly onRefresh?: (() => void) | null;
   readonly onSearchQueryChange: (query: string) => void;
-  readonly onSortChange?: ((sort: string) => void) | undefined;
+  readonly onSortChange?: (sort: string) => void;
   readonly onViewModeChange: (viewMode: CatalogBrowseViewMode) => void;
-  readonly refreshLabel?: string | null | undefined;
+  readonly refreshLabel?: string | null;
   readonly renderGridItem?:
     ((item: CatalogBrowseItem, state: CatalogBrowseItemRenderState) => ReactNode) | undefined;
   readonly renderListItem?:
@@ -78,14 +78,14 @@ export interface CatalogBrowsePaneProps extends Omit<ComponentPropsWithRef<'div'
   readonly searchAriaLabel: string;
   readonly searchPlaceholder: string;
   readonly searchQuery: string;
-  readonly selectedItemId?: string | null | undefined;
-  readonly sort?: string | undefined;
-  readonly sortAriaLabel?: string | undefined;
-  readonly sortOptions?: ReadonlyArray<{ label: string; value: string }> | undefined;
+  readonly selectedItemId?: string | null;
+  readonly sort?: string;
+  readonly sortAriaLabel?: string;
+  readonly sortOptions?: ReadonlyArray<{ label: string; value: string }>;
   /** Extra trailing controls after built-in sort / view mode (before refresh). */
   readonly toolbarTrailing?: ReactNode;
   readonly viewMode: CatalogBrowseViewMode;
-  readonly viewModeAriaLabel?: string | undefined;
+  readonly viewModeAriaLabel?: string;
 }
 
 export function CatalogBrowsePane({

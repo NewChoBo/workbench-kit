@@ -28,7 +28,7 @@
     "@workbench-kit/workbench-core": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
     "@xyflow/react": "^12.11.2",
-    "jsonata": "^1.8.7",
+    "jsonata": "^2.2.0",
     "react-table-mapping": "^1.0.3"
   },
   "peerDependencies": {

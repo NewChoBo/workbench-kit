@@ -19,7 +19,7 @@ import {
   createWorkbenchEditorTabListMenuEntries,
   createWorkbenchEditorTabMenuEntries,
   type WorkbenchEditorCommandContext,
-} from '../commands';
+} from '../commands/commands';
 import { fileNameOfPath } from './path';
 import { WorkspaceEditor, type WorkspaceEditorTheme } from './WorkspaceEditor';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';

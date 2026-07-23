@@ -1,4 +1,0 @@
-/* Workbench shell and platform chrome */
-@import './shell/index.css';
-@import './chrome/index.css';
-@import './command-palette/command-palette.css';

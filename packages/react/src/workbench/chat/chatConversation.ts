@@ -4,9 +4,9 @@ export interface WorkbenchChatConversation {
   id: string;
   title: string;
   /** Short secondary line shown in history menu rows. */
-  metaSummary?: string | undefined;
+  metaSummary?: string;
   /** Tooltip content for the active conversation pill. */
-  metaTooltip?: ReactNode | undefined;
+  metaTooltip?: ReactNode;
 }
 
 export interface WorkbenchChatConversationLabels {

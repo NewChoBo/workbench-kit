@@ -1,9 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
+﻿import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import {
-  DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
-  DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
-} from '@workbench-kit/shell-react';
 
 import { expectVisibleChatBubbleText } from '../../../packages/react/src/workbench/story/chatStory';
 import {
@@ -11,12 +7,32 @@ import {
   expectExpandedPrimarySidebar,
 } from '../../../packages/react/src/workbench/story/shellStory';
 import { App } from './App.js';
-import { SAMPLE_AUTH_SESSION_KEY, SAMPLE_AUTH_USERNAME } from './dummy-backend/index.js';
+import { createSampleHost } from './createSampleHost.js';
 import { createSampleInstalledExtensionsStorageKey } from './sample-installed-extension-storage.js';
-import { SAMPLE_PERMISSION_ROLE_STORAGE_KEY } from './sample-permission-role-storage.js';
+import {
+  expectEditorTabVisible,
+  expectSampleFileVisible,
+  expectTesterActivityLabels,
+  getActivityLabels,
+  selectPermissionRole,
+  waitForLoginGate,
+  waitForWorkbenchReady,
+} from './storybook/play/sampleHostAssertions.js';
+import {
+  applyBasicPermissionScopeScenario,
+  applyDevtoolsInspectorsScenario,
+  applyHostInstallStateScenario,
+  applyLoginGateScenario,
+  applyLoginSubmitScenario,
+  applySidebarToggleScenario,
+  applyTesterDevAppJourneyScenario,
+  applyTesterWorkbenchScenario,
+  applyFieldRemapEditorScenario,
+  applyExtensionsInstalledListScenario,
+  applySettingsAppearanceScenario,
+  applyCommandsActivityScenario,
+} from './storybook/scenarios/index.js';
 import './host.css';
-
-type SampleAccount = 'none' | 'tester' | 'basic';
 
 const meta = {
   title: 'Workbench Sample/Dev App',
@@ -29,23 +45,27 @@ const meta = {
       timeout: 60_000,
     },
   },
+  /** Sample integration plays: required CI gate + sample-only filter tag. */
+  tags: ['storybook-play-required', 'storybook-play-sample'],
 } satisfies Meta<typeof App>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
-type StoryCanvas = ReturnType<typeof within>;
 
 export const LoginGate: Story = {
   name: 'Login gate',
   render: () => {
-    resetSampleHostStorage('none');
-    return <App />;
+    applyLoginGateScenario();
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(await canvas.findByText('Workbench Sample')).toBeVisible();
+    // Wait for session bootstrap to settle before asserting — avoids test-runner
+    // navigation retries when the gate remounts during "Checking sample session...".
+    await waitForLoginGate(canvas);
+    await expect(canvas.getByText('Workbench Sample')).toBeVisible();
     await expect(canvas.getByLabelText('Username')).toHaveAttribute(
       'placeholder',
       'tester or basic',
@@ -57,14 +77,13 @@ export const LoginGate: Story = {
     await expect(canvas.getByRole('button', { name: 'Sign in' })).toBeVisible();
     await expect(canvas.getByText(/Administrator: tester\/tester/)).toBeVisible();
   },
-  tags: ['storybook-play-required'],
 };
 
 export const LoginSubmitFlow: Story = {
   name: 'Login submit flow',
   render: () => {
-    resetSampleHostStorage('none');
-    return <App />;
+    applyLoginSubmitScenario();
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -93,14 +112,13 @@ export const LoginSubmitFlow: Story = {
     await expect(canvas.getByRole('button', { name: 'Open example' })).toBeVisible();
     expectTesterActivityLabels(canvas);
   },
-  tags: ['storybook-play-required'],
 };
 
 export const TesterWorkbench: Story = {
   name: 'Tester workbench',
   render: () => {
-    resetSampleHostStorage('tester');
-    return <App />;
+    applyTesterWorkbenchScenario();
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -114,14 +132,13 @@ export const TesterWorkbench: Story = {
 
     expectTesterActivityLabels(canvas);
   },
-  tags: ['storybook-play-required'],
 };
 
 export const DevtoolsInspectors: Story = {
   name: 'Devtools inspectors',
   render: () => {
-    resetSampleHostStorage('tester');
-    return <App devtools />;
+    applyDevtoolsInspectorsScenario();
+    return createSampleHost({ devtools: true });
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -160,21 +177,13 @@ export const DevtoolsInspectors: Story = {
     await expect(devtools).toHaveTextContent('workbench-kit.builtin.settings');
     await expect(devtools).toHaveTextContent('workbench.settings');
   },
-  tags: ['storybook-play-required'],
 };
 
 export const HostInstallState: Story = {
   name: 'Host install state',
   render: () => {
-    resetSampleHostStorage('tester');
-    seedSampleInstalledExtension('tester', {
-      category: 'editor',
-      enabled: true,
-      id: 'workbench-kit.samples.json-preview',
-      installedAt: '2026-06-25T00:00:00.000Z',
-      manifestUrl: 'workbench-kit.samples.json-preview',
-    });
-    return <App devtools />;
+    applyHostInstallStateScenario();
+    return createSampleHost({ devtools: true });
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -189,14 +198,13 @@ export const HostInstallState: Story = {
       window.localStorage.getItem(createSampleInstalledExtensionsStorageKey('tester')),
     ).toContain('workbench-kit.samples.json-preview');
   },
-  tags: ['storybook-play-required'],
 };
 
 export const TesterDevAppJourney: Story = {
   name: 'Tester dev app journey',
   render: () => {
-    resetSampleHostStorage('tester');
-    return <App />;
+    applyTesterDevAppJourneyScenario();
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -290,14 +298,13 @@ export const TesterDevAppJourney: Story = {
     await userEvent.click(within(profileDialog).getByRole('button', { name: 'Sign out' }));
     await waitForLoginGate(canvas);
   },
-  tags: ['storybook-play-required'],
 };
 
 export const BasicPermissionScope: Story = {
   name: 'Basic permission scope',
   render: () => {
-    resetSampleHostStorage('basic');
-    return <App />;
+    applyBasicPermissionScopeScenario();
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -309,14 +316,13 @@ export const BasicPermissionScope: Story = {
     await expect(canvas.queryByRole('button', { name: 'Search' })).toBeNull();
     await expect(canvas.queryByRole('button', { name: 'Settings' })).toBeNull();
   },
-  tags: ['storybook-play-required'],
 };
 
 export const SidebarToggle: Story = {
   name: 'Sidebar toggle',
   render: () => {
-    resetSampleHostStorage('tester');
-    return <App />;
+    applySidebarToggleScenario();
+    return createSampleHost();
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -347,122 +353,95 @@ export const SidebarToggle: Story = {
     expect(hideDurationMs).toBeLessThan(2_000);
     expect(showDurationMs).toBeLessThan(2_000);
   },
-  tags: ['storybook-play-required'],
 };
 
-function resetSampleHostStorage(account: SampleAccount) {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.localStorage.removeItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY);
-  window.localStorage.removeItem(DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY);
-  window.localStorage.removeItem(SAMPLE_PERMISSION_ROLE_STORAGE_KEY);
-  for (const storageAccount of ['anonymous', 'tester', 'basic']) {
-    window.localStorage.removeItem(createSampleInstalledExtensionsStorageKey(storageAccount));
-  }
-
-  if (account === 'none') {
-    window.sessionStorage.removeItem(SAMPLE_AUTH_SESSION_KEY);
-    return;
-  }
-
-  window.sessionStorage.setItem(
-    SAMPLE_AUTH_SESSION_KEY,
-    account === 'tester' ? SAMPLE_AUTH_USERNAME : 'basic',
-  );
-}
-
-function seedSampleInstalledExtension(
-  account: Exclude<SampleAccount, 'none'>,
-  record: {
-    readonly category: string;
-    readonly enabled: boolean;
-    readonly id: string;
-    readonly installedAt: string;
-    readonly manifestUrl: string;
+export const FieldRemapEditorSmoke: Story = {
+  name: 'Field Remap editor smoke',
+  render: () => {
+    applyFieldRemapEditorScenario();
+    return createSampleHost();
   },
-) {
-  if (typeof window === 'undefined') {
-    return;
-  }
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
 
-  window.localStorage.setItem(
-    createSampleInstalledExtensionsStorageKey(account),
-    JSON.stringify([record], null, 2),
-  );
-}
+    await waitForWorkbenchReady(canvas);
+    await userEvent.click(canvas.getByRole('button', { name: 'Field Remap' }));
 
-async function waitForLoginGate(canvas: StoryCanvas) {
-  await canvas.findByLabelText('Username', {}, { timeout: 60_000 });
-  await canvas.findByLabelText('Password', {}, { timeout: 30_000 });
-  await waitFor(() => {
-    expect(canvas.queryByText('Checking sample session...')).toBeNull();
-  });
-}
+    const sampleList = await canvas.findByLabelText('Field remap samples');
+    await expect(sampleList).toBeVisible();
+    await userEvent.click(canvas.getByTestId('field-remap-open-nested-ab'));
 
-async function waitForWorkbenchReady(canvas: StoryCanvas) {
-  await canvas.findByRole('navigation', { name: 'Activity bar' }, { timeout: 60_000 });
-  await canvas.findByLabelText('Workspace Explorer', {}, { timeout: 30_000 });
-  await waitFor(() => {
-    expect(canvas.queryByText(/Checking sample session|Preparing workbench/)).toBeNull();
-  });
-}
+    await expectEditorTabVisible(canvas, 'A → B');
+    await waitFor(() => {
+      expect(canvas.getByTestId('field-remap-editor-surface')).toBeVisible();
+    });
+    await expect(canvas.getByTestId('field-remap-demo')).toBeVisible();
+    await expect(canvas.getByRole('heading', { level: 2, name: 'A → B' })).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-result')).not.toHaveTextContent(/^$/);
+    await expect(canvas.getByTestId('field-remap-result')).toHaveTextContent('Ada Lovelace');
+  },
+};
 
-async function expectEditorTabVisible(canvas: StoryCanvas, fileName: string) {
-  await expect(
-    await canvas.findByRole('tab', { name: new RegExp(escapeRegExp(fileName)) }),
-  ).toBeVisible();
-}
+export const ExtensionsInstalledList: Story = {
+  name: 'Extensions installed list',
+  render: () => {
+    applyExtensionsInstalledListScenario();
+    return createSampleHost();
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
 
-async function expectSampleFileVisible(canvas: StoryCanvas, fileName: string) {
-  await waitFor(() => {
-    const fileLabels = canvas.getAllByText(fileName);
-    expect(fileLabels.length).toBeGreaterThanOrEqual(1);
-    for (const fileLabel of fileLabels) {
-      expect(fileLabel).toBeVisible();
-    }
-  });
-}
+    await waitForWorkbenchReady(canvas);
+    await userEvent.click(canvas.getByRole('button', { name: 'Extensions' }));
 
-/**
- * Primary + secondary activity labels for the tester Owner role.
- * Includes Field Remap (samples.field-remap, order 36) after JDW Lab.
- */
-const TESTER_ACTIVITY_LABELS = [
-  'Explorer',
-  'Search',
-  'JDW Lab',
-  'Commands',
-  'Chat',
-  'AI Chat',
-  'Extensions',
-  'Field Remap',
-  'Profile',
-  'Settings',
-] as const;
+    const listSwitcher = await canvas.findByLabelText('Extension lists');
+    await userEvent.click(within(listSwitcher).getByRole('button', { name: 'Installed' }));
 
-function getActivityLabels(canvas: StoryCanvas): string[] {
-  const activityBar = canvas.getByRole('navigation', { name: 'Activity bar' });
-  return within(activityBar)
-    .getAllByRole('button')
-    .map((button) => button.getAttribute('aria-label'))
-    .filter((label): label is string => Boolean(label));
-}
+    const installedList = await canvas.findByLabelText('Installed extensions');
+    await expect(installedList).toBeVisible();
+    await expect(
+      within(installedList).getByText('JSON Preview', {
+        selector: '.workbench-extensions-sidebar__title',
+      }),
+    ).toBeVisible();
+  },
+};
 
-function expectTesterActivityLabels(canvas: StoryCanvas) {
-  const labels = getActivityLabels(canvas);
-  expect(labels, `activity labels: ${JSON.stringify(labels)}`).toEqual([...TESTER_ACTIVITY_LABELS]);
-}
+export const SettingsAppearanceSmoke: Story = {
+  name: 'Settings appearance smoke',
+  render: () => {
+    applySettingsAppearanceScenario();
+    return createSampleHost();
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
 
-async function selectPermissionRole(scope: HTMLElement, optionName: string) {
-  const roleSelect = within(scope).getByRole('combobox', { name: 'Permission role (demo)' });
+    await waitForWorkbenchReady(canvas);
+    await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
 
-  await userEvent.click(roleSelect);
-  await userEvent.click(await within(document.body).findByRole('option', { name: optionName }));
-  await expect(roleSelect).toHaveTextContent(optionName);
-}
+    const settingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    await expect(settingsDialog).toBeVisible();
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Appearance' }));
+    await expect(
+      within(settingsDialog).getByRole('combobox', { name: 'Color scheme' }),
+    ).toBeVisible();
+    await expect(within(settingsDialog).getByRole('heading', { name: 'Appearance' })).toBeVisible();
+  },
+};
 
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+export const CommandsActivitySmoke: Story = {
+  name: 'Commands activity smoke',
+  render: () => {
+    applyCommandsActivityScenario();
+    return createSampleHost();
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitForWorkbenchReady(canvas);
+    const activityBar = canvas.getByRole('navigation', { name: 'Activity bar' });
+    await userEvent.click(within(activityBar).getByRole('button', { name: 'Commands' }));
+
+    await expect(await canvas.findByLabelText('Filter commands')).toBeVisible();
+  },
+};

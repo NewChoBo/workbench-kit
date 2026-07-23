@@ -22,18 +22,23 @@ export interface ChatPanelProps
       | 'showTools'
       | 'value'
     > {
-  className?: string | undefined;
-  composerRef?: Ref<HTMLTextAreaElement> | undefined;
+  className?: string;
+  composerRef?: Ref<HTMLTextAreaElement>;
   /** Label shown on the file-drop overlay. Defaults to "Drop files to attach". */
-  filesDropLabel?: string | undefined;
-  headerAddon?: ReactNode | undefined;
+  filesDropLabel?: string;
+  headerAddon?: ReactNode;
   /** Called when files are dropped onto the panel (disabled while `disabled` or `isRunning`). */
-  onFilesDrop?: ((files: File[]) => void) | undefined;
+  onFilesDrop?: (files: File[]) => void;
   /**
    * Wrap or replace the default `<ChatMessageList />` so hosts can inject
    * hybrid timelines around the kit list.
    */
-  renderMessageList?: ((defaultList: ReactNode) => ReactNode) | undefined;
+  renderMessageList?: (defaultList: ReactNode) => ReactNode;
+  /**
+   * Wrap or replace the default `<ChatComposer />` while keeping panel chrome
+   * and file-drop overlay behavior.
+   */
+  renderComposer?: (defaultComposer: ReactNode) => ReactNode;
   title?: string;
 }
 
@@ -53,6 +58,7 @@ export function ChatPanel({
   filesDropLabel = 'Drop files to attach',
   headerAddon,
   onFilesDrop,
+  renderComposer,
   renderMessageList,
   title = 'Chat',
   value,
@@ -125,6 +131,25 @@ export function ChatPanel({
     ? renderMessageList(defaultMessageList)
     : defaultMessageList;
 
+  const defaultComposer = (
+    <ChatComposer
+      ref={composerRef}
+      commandLabel={commandLabel}
+      commandSuggestPopover={commandSuggestPopover}
+      disabled={disabled}
+      isRunning={isRunning}
+      placeholder={placeholder}
+      showTools={showTools}
+      value={value}
+      onCancel={onCancel}
+      onCommandClick={onCommandClick}
+      onKeyDown={onKeyDown}
+      onSubmit={onSubmit}
+      onValueChange={onValueChange}
+    />
+  );
+  const composer = renderComposer ? renderComposer(defaultComposer) : defaultComposer;
+
   return (
     <div
       className={cx('chat-panel-drop-target', isFileDragActive && 'chat-panel-drop-target--active')}
@@ -135,23 +160,7 @@ export function ChatPanel({
     >
       <SideBarViewFrame
         className={cx('chat-sidebar-view', className)}
-        footer={
-          <ChatComposer
-            ref={composerRef}
-            commandLabel={commandLabel}
-            commandSuggestPopover={commandSuggestPopover}
-            disabled={disabled}
-            isRunning={isRunning}
-            placeholder={placeholder}
-            showTools={showTools}
-            value={value}
-            onCancel={onCancel}
-            onCommandClick={onCommandClick}
-            onKeyDown={onKeyDown}
-            onSubmit={onSubmit}
-            onValueChange={onValueChange}
-          />
-        }
+        footer={composer}
         footerPlacement="overlay"
         headerAddon={headerAddon}
         title={title}

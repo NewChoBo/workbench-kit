@@ -134,6 +134,11 @@ export interface TransformContext {
    */
   readonly record?: Readonly<Record<string, unknown>>;
   readonly options?: Readonly<Record<string, unknown>>;
+  /**
+   * Optional cancellation signal. `applyTransformChain` / `convertToShape` check
+   * between steps and reject with `AbortError` when aborted.
+   */
+  readonly signal?: AbortSignal;
 }
 
 /** Declares a host-editable option consumed via `context.options[key]`. */
@@ -157,7 +162,11 @@ export interface ValueTransformDefinition {
   readonly category?: string;
   readonly inputTypes?: readonly FieldDataType[];
   readonly outputType?: FieldDataType;
-  readonly apply: (value: unknown, context: TransformContext) => unknown;
+  /**
+   * May return a Promise (e.g. host JSONata 2.x). Prefer `applyTransformChain` /
+   * `convertToShape`, which always await transform results.
+   */
+  readonly apply: (value: unknown, context: TransformContext) => unknown | PromiseLike<unknown>;
   /** Optional picker label that includes a live format sample. */
   readonly formatSampleLabel?: (context: TransformContext) => string;
   /**
@@ -177,6 +186,6 @@ export interface ValueTransformListFilter {
 export interface ValueTransformRegistry {
   list(filter?: ValueTransformListFilter): ValueTransformDefinition[];
   get(id: string): ValueTransformDefinition | undefined;
-  apply(id: string, value: unknown, context?: TransformContext): unknown;
+  apply(id: string, value: unknown, context?: TransformContext): unknown | PromiseLike<unknown>;
   register(definition: ValueTransformDefinition): void;
 }

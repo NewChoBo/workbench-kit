@@ -11,8 +11,13 @@ export type {
   ChatServiceSnapshot,
   ChatEventDispatcher,
   ChatEventServiceListener,
-} from './chat';
-export { AbstractChatTransport, isChatStatusEvent, isDeltaEvent, isMessageEvent } from './chat';
+} from './chat/chat';
+export {
+  AbstractChatTransport,
+  isChatStatusEvent,
+  isDeltaEvent,
+  isMessageEvent,
+} from './chat/chat';
 
 export type {
   WorkspacePatchApplyFailure,
@@ -26,13 +31,13 @@ export type {
   WorkspacePatchWriteFile,
   WorkspacePatchApplier,
   WorkspacePatchConflictCode,
-} from './patch';
+} from './patch/patch';
 export {
   AbstractPatchApplier,
   isPatchSuccess,
   isWorkspacePatchDeleteFile,
   isWorkspacePatchWriteFile,
-} from './patch';
+} from './patch/patch';
 
 export type {
   WorkbenchDocument,
@@ -65,26 +70,26 @@ export type {
   WorkbenchVisualStyle,
   WorkspaceToWorkbenchDocumentOptions,
   WorkbenchToWorkspaceConversionOptions,
-} from './workbench-document';
+} from './document/workbench-document';
 export {
   buildWorkspaceDocumentLookup,
   documentNodesToWorkspaceFiles,
   workspaceFilesToDocument,
-} from './workbench-document-adapter';
-export { createPatchFromWorkbenchDocumentAction } from './workbench-document-actions';
+} from './document/adapter';
+export { createPatchFromWorkbenchDocumentAction } from './document/actions';
 export {
   applyWorkbenchDocumentPatch,
   assertWorkbenchDocument,
   deserializeWorkbenchDocumentPatch,
   initializeWorkbenchDocumentPatchHistory,
   isWorkbenchDocumentSupported,
-} from './workbench-document-patch';
+} from './document/patch';
 export type {
   WorkbenchDocumentPatchError,
   WorkbenchDocumentPatchHistory,
   WorkbenchDocumentPatchHistoryState,
   WorkbenchDocumentPatchResult,
-} from './workbench-document-patch';
+} from './document/patch';
 
 export type {
   SaveConflictCode,
@@ -98,7 +103,7 @@ export type {
   WorkspaceFileRepository,
   WorkspaceFileSource,
   SaveSuccess,
-} from './save';
+} from './save/save';
 export type {
   InstalledPlugin,
   PluginCommandContribution,
@@ -119,8 +124,12 @@ export type {
   PluginMenuSeparatorEntry,
   PluginPredicate,
   PluginValue,
-} from './plugin';
-export { isPluginEnabled, isPluginLifecycleFailure, isPluginLifecycleSuccess } from './plugin';
+} from './plugin/plugin';
+export {
+  isPluginEnabled,
+  isPluginLifecycleFailure,
+  isPluginLifecycleSuccess,
+} from './plugin/plugin';
 export type {
   LibraryItemDescriptor,
   LibraryDragPayload,
@@ -138,7 +147,7 @@ export type {
   LibrarySortMode,
   ServiceLibraryFailure,
   ServiceLibrarySuccess,
-} from './library';
+} from './library/library';
 export {
   LIBRARY_DRAG_DATA_TYPE,
   LIBRARY_DRAG_IDS_DATA_TYPE,
@@ -147,14 +156,14 @@ export {
   parseLibraryDragPayload,
   parseLibraryManifest,
   parseLibraryManifestText,
-} from './library';
+} from './library/library';
 export {
   createLibraryItemIdentity,
   DEFAULT_LIBRARY_ITEM_FALLBACK_SOURCE_ID,
   normalizeLibraryItemProviderSource,
   resolveLibraryItemProviderId,
   resolveLibraryItemSourceId,
-} from './library';
+} from './library/library';
 export type {
   LaunchTarget,
   LaunchpadDataBindingSyncMode,
@@ -164,7 +173,7 @@ export type {
   LaunchpadLibraryItemMapping,
   LaunchpadLibraryItemSummary,
   LaunchpadLibraryReferencePayload,
-} from './library-launchpad-mapping';
+} from './library/launchpad-mapping';
 export {
   canMapLibraryItemToLaunchpadTile,
   createLaunchpadLibraryItemTileBinding,
@@ -174,24 +183,24 @@ export {
   normalizeLaunchTarget,
   resolveLaunchpadLibraryItemMapping,
   resolveLibraryItemPlayExecution,
-} from './library-launchpad-mapping';
-export type { ExternalUrlPolicy } from './external-url';
-export { EXTERNAL_URL_PROTOCOLS, normalizeExternalUrlTarget } from './external-url';
-export type { ResourceIdentity, ResourceIdentityKey, ResourceUri } from './resource-uri';
+} from './library/launchpad-mapping';
+export type { ExternalUrlPolicy } from './url/external-url';
+export { EXTERNAL_URL_PROTOCOLS, normalizeExternalUrlTarget } from './url/external-url';
+export type { ResourceIdentity, ResourceIdentityKey, ResourceUri } from './resource/uri';
 export {
   createResourceIdentity,
   createResourceIdentityKey,
   isSameResourceUri,
   normalizeResourceUri,
-} from './resource-uri';
+} from './resource/uri';
 export type {
   ServiceFailure,
   ServiceFailureCode,
   ServiceListener,
   ServiceResultEnvelope,
-} from './result';
-export { normalizeServiceFailureMessage } from './result';
-export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from './save';
+} from './result/result';
+export { normalizeServiceFailureMessage } from './result/result';
+export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from './save/save';
 export type {
   WidgetRendererComponent,
   WidgetRendererEvent,
@@ -199,12 +208,12 @@ export type {
   WidgetRendererProps,
   WidgetRendererRect,
   WidgetRendererShape,
-} from './widget-renderer-contract';
+} from './widget/renderer-contract';
 export {
   isWidgetRendererEvent,
   isWidgetRendererEventKind,
   normalizeWidgetRendererEvent,
-} from './widget-renderer-contract';
+} from './widget/renderer-contract';
 export type {
   TilePaperAuthoringResourceKind,
   TilePaperAuthoringResourceReference,
@@ -225,7 +234,7 @@ export type {
   BuildLibraryAuthoringWorkbenchFileSummaryInput,
   BuildLibraryAuthoringWorkbenchFileSummaryFromResourceInput,
   BuildLibraryAuthoringWorkbenchStateFromFilesInput,
-} from './authoring-workbench-state';
+} from './authoring/workbench-state';
 export {
   buildLaunchpadAuthoringWorkbenchState,
   buildLaunchpadAuthoringWorkbenchStateFromFiles,
@@ -240,7 +249,7 @@ export {
   buildLaunchpadAuthoringWorkbenchSummary,
   buildLaunchpadAuthoringWorkbenchTileSummaryFromResource,
   buildLaunchpadAuthoringWorkbenchSummaryFromResource,
-} from './authoring-workbench-state';
+} from './authoring/workbench-state';
 export type {
   WidgetInspectorField,
   WidgetInspectorSection,
@@ -252,15 +261,15 @@ export type {
   WidgetRegistryContract,
   WidgetTypeDefinition,
   WidgetTypeShape,
-} from './widget-registry-contract';
-export { WIDGET_HOST_TAGS, isWidgetHostTag } from './widget-registry-contract';
+} from './widget/registry-contract';
+export { WIDGET_HOST_TAGS, isWidgetHostTag } from './widget/registry-contract';
 export type {
   WidgetAssetCatalogContract,
   WidgetPlacementAsset,
   WidgetPlacementAssetCategory,
   WidgetPlacementAssetKind,
   WidgetPlacementPolicy,
-} from './widget-placement-asset-contract';
+} from './widget/placement-asset-contract';
 export type {
   MappedLaunchAction,
   ProviderCommandAction,
@@ -274,13 +283,13 @@ export type {
   ProviderSteamAction,
   ProviderSteamActionMode,
   ProviderUrlAction,
-} from './provider-library-mapping';
+} from './library/provider-mapping';
 export {
   createEpicStoreUrl,
   providerActionIcon,
   providerActionToLaunchAction,
   providerActionTypeLabel,
-} from './provider-library-mapping';
+} from './library/provider-mapping';
 export type {
   SampleHostBackendAuthStatus,
   SampleHostBackendClient,
@@ -292,7 +301,7 @@ export type {
   SampleHostBackendSession,
   SampleHostBackendSessionQuery,
   SampleHostBackendSignInRequest,
-} from './sample-host-backend-api';
+} from './sample-host/backend-api';
 export {
   SampleHostBackendApiError,
   SampleHostBackendRoutes,
@@ -302,4 +311,4 @@ export {
   isSampleHostBackendApiError,
   isSampleHostBackendErrorBody,
   parseSampleHostBackendSession,
-} from './sample-host-backend-api';
+} from './sample-host/backend-api';

@@ -10,7 +10,9 @@
     "workbench-kit.samples.hello-world",
     "workbench-kit.samples.jdw",
     "workbench-kit.samples.field-remap",
-    "workbench-kit.samples.theme-alt"
+    "workbench-kit.samples.theme-alt",
+    "workbench-kit.samples.json-preview",
+    "workbench-kit.samples.locale-ko"
   ],
   "enabled": [
     "workbench-kit.builtin.accounts",
@@ -22,10 +24,6 @@
     "workbench-kit.builtin.search",
     "workbench-kit.builtin.keybindings",
     "workbench-kit.builtin.settings",
-    "workbench-kit.builtin.workspace",
-    "workbench-kit.samples.hello-world",
-    "workbench-kit.samples.jdw",
-    "workbench-kit.samples.field-remap",
-    "workbench-kit.samples.theme-alt"
+    "workbench-kit.builtin.workspace"
   ]
 }

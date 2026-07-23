@@ -130,4 +130,5 @@ export const CatalogFilterWithNestedSelect: Story = {
       expect(within(document.body).queryByRole('dialog', { name: 'Filters' })).toBeNull(),
     );
   },
+  tags: ['storybook-play-baseline'],
 };

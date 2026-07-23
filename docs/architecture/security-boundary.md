@@ -15,24 +15,29 @@ Documentation and samples use neutral placeholders (`example.com`, `your-provide
 
 ## Secret Handling
 
-| Layer        | Rule                                                    |
-| ------------ | ------------------------------------------------------- |
-| `.workbench` | No secrets; validated at load time                      |
-| Git          | Never commit `.env`, keys, or `secrets.*`               |
-| Runtime      | Tokens only via `SecretStorageService` or backend vault |
-| Logs         | Redact authorization headers and tokens                 |
+| Layer        | Rule                                                                                                           |
+| ------------ | -------------------------------------------------------------------------------------------------------------- |
+| `.workbench` | No secrets; validated at load time                                                                             |
+| Git          | Never commit `.env`, keys, or `secrets.*`                                                                      |
+| Runtime      | Tokens only via `WorkbenchSecretStorageService` (`createMemorySecretStorage` reference) or host/Electron vault |
+| Logs         | Redact authorization headers and tokens                                                                        |
 
 See [Account Auth](./account-auth.md) and [Workbench Config](./workbench-config.md).
 
 ## Extension Permission Model
 
-Extensions declare `permissions` in the manifest. The host:
+Extensions declare `permissions` and `capabilities.requires` in the manifest. The host:
 
-- Denies undisclosed privileged API calls
+- Denies undisclosed privileged API calls via runtime helpers
+  `assertPermission(ctx, permission)` and `requireCapability(ctx, capabilityId)`
+  from `@workbench-kit/workbench-core` (exact string match against the activation
+  context; fail closed with `ExtensionPermissionDeniedError` /
+  `ExtensionCapabilityRequiredError`)
 - Scopes secret storage keys by extension id
 - Audits permission denials in development builds
 
 Built-in extensions receive only permissions required for their feature.
+Privileged host APIs should call these helpers before granting access.
 
 ## External Extension Execution Risks
 
@@ -42,19 +47,58 @@ Running arbitrary third-party extension code introduces:
 - Unauthorized filesystem and network access
 - Token exfiltration from secret storage if over-permissioned
 
-### Mitigations (planned)
+### Mitigations
 
 - **No runtime npm install initially** — extensions ship as pre-built bundles known at compile time
-- **Build-time bundled artifacts** — CI produces signed or hashed extension packages
-- **Integrity checks** — `extensions.lock.json` stores content hashes; host verifies before load
-- **Permission allowlists** — default-deny for network and secrets
+- **Catalog URL allowlist** — `assertExtensionCatalogUrlAllowed` / `ExtensionCatalogTrustPolicy`
+  (default: relative catalogs only; absolute origins require host allowlist).
+- **Enterprise extension id allowlist** — opt-in
+  `ExtensionEnterpriseAllowlistPolicy` / `assertExtensionAllowlisted`; when
+  `allowedExtensionIds` is set, `applyExtensionInstallPlanToRecords` refuses
+  non-listed install/enable actions.
+- **Install approval gate** — `applyExtensionInstallPlanToRecords` refuses
+  `requiresApproval && !approved`
+- **Extensions lock integrity** — `verifyWorkbenchExtensionsAgainstLock` checks
+  `.workbench/extensions.lock.json` version + manifest digest before registration
+  (`extensionIntegrityMode`: `off` | `warn` | `fail-closed`)
+- **Build-time bundled artifacts** — `bundle-workbench-extensions.mjs` regenerates the lockfile
+- **Recommend ≠ enable** — recommendations must not auto-activate extensions
+- **Permission allowlists** — default-deny for network and secrets (planned)
 - **No eval / dynamic import from remote URLs**
 
 External marketplace execution remains out of scope until these controls exist.
 
+## Expression transforms (Field Remap)
+
+Host-registered `expr:jsonata` evaluations are **bounded** by default in
+`@workbench-kit/shell-react` (`timeoutMs`, `maxExpressionLength`, fail-closed
+`onError: 'throw'`). `convertToShape` accepts an optional `AbortSignal` so stale
+async previews cancel between edges/steps. Residual risk: JSONata is not a full
+VM sandbox — hosts should keep timeout budgets tight for untrusted expressions.
+
 ## Workspace Trust
 
 Opening a workspace should not execute untrusted code without user consent (future UX). `.workbench/extensions.json` recommending an extension does not auto-download binaries.
+
+## Sample host CSP
+
+`examples/workbench-sample` applies a documented Content-Security-Policy baseline
+(`csp-policy.ts`) via Vite response headers and an injected HTML meta tag. See
+the sample README for allowed exceptions (Monaco workers, Vite HMR, loopback
+dummy backend).
+
+## Electron host checklist
+
+When composing `@workbench-kit/electron-shell` (or a host-owned Electron shell):
+
+- Prefer `contextIsolation: true`, `nodeIntegration: false`, and a typed preload
+  bridge (see maturity tracker #138)
+- Do not enable privileged protocol CORS unless the host opts in explicitly
+- Serve renderer assets under a CSP at least as tight as the sample baseline;
+  drop `'unsafe-eval'` when Monaco workers are fully isolated
+- Keep secrets in the encrypted vault / `SecretStorage` path — never in
+  `localStorage` / `sessionStorage`
+- Open external URLs only through an allowlisted opener helper
 
 ## Reporting
 

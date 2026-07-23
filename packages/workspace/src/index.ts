@@ -1,5 +1,6 @@
 export {
   WORKSPACE_PATH_DISPLAY_SEPARATOR,
+  WorkspacePathError,
   extensionOfPath,
   fileNameOfPath,
   formatWorkspacePathDisplay,
@@ -8,8 +9,9 @@ export {
   normalizeWorkspacePath,
   parentPathOf,
   parentPathsOf,
+  tryNormalizeWorkspacePath,
   workspacePathSegments,
-} from './path';
+} from './path/path';
 export {
   createWorkspaceFileDraft,
   discardWorkspaceDraft,
@@ -29,8 +31,13 @@ export {
   type UpdateWorkspaceFileDraftInput,
   type WorkspaceFileDraft,
   type WorkspaceFileDraftMap,
-} from './draft';
-export { compactText, createContentPreview, highlightText, searchWorkspaceFiles } from './search';
+} from './draft/draft';
+export {
+  compactText,
+  createContentPreview,
+  highlightText,
+  searchWorkspaceFiles,
+} from './search/search';
 export {
   createEmptyWorkspaceSelection,
   getWorkspaceSelectionActionPaths,
@@ -45,23 +52,23 @@ export {
   type WorkspaceSelectionActionPathsInput,
   type WorkspaceSelectionMode,
   type WorkspaceSelectionState,
-} from './selection';
+} from './selection/selection';
 export {
   virtualWorkspaceActionToResourceMutation,
   workspaceResourceMutationToAction,
   type WorkspaceResourceMutation,
-} from './resource-mutation';
+} from './resource/mutation';
 export {
   createWorkspaceResourceSnapshot,
   snapshotMatchesWorkspaceState,
   type WorkspaceResourceSnapshot,
-} from './resource-snapshot';
+} from './resource/snapshot';
 export {
   applyWorkspaceResourceMutation,
   applyWorkspaceResourceTransaction,
   createWorkspaceResourceTransaction,
   type WorkspaceResourceTransaction,
-} from './resource-transaction';
+} from './resource/transaction';
 export {
   WORKSPACE_RESOURCE_SCHEME,
   formatWorkspaceResourceUri,
@@ -71,8 +78,8 @@ export {
   workspaceResourceUriForFolder,
   type WorkspaceResourceKind,
   type WorkspaceResourceUri,
-} from './resource-uri';
-export { buildWorkspaceTree, flattenWorkspaceTree } from './tree';
+} from './resource/uri';
+export { buildWorkspaceTree, flattenWorkspaceTree } from './tree/tree';
 export {
   mapVirtualFileLikeListToWorkspaceFiles,
   mapVirtualFileLikeRecordToWorkspaceFiles,
@@ -84,7 +91,7 @@ export {
   type MappedVirtualFile,
   type VirtualFileLike,
   type VirtualFileOrigin,
-} from './virtual-file-adapter';
+} from './virtual/file-adapter';
 export {
   applyWorkspaceFolderMove,
   getAvailableWorkspaceEntryName,
@@ -107,7 +114,7 @@ export {
   type WorkspaceFileMovePlan,
   type WorkspaceFileMovePlanInput,
   type WriteWorkspaceFileInput,
-} from './virtualWorkspace';
+} from './virtual/workspace';
 export type {
   VisibleWorkspaceNode,
   WorkspaceFile,
@@ -117,7 +124,7 @@ export type {
   WorkspaceSearchMatchKind,
   WorkspaceSearchResult,
   WorkspaceTreeNode,
-} from './types';
+} from './data/types';
 export {
   asWorkbenchStructuredDataRecord,
   cloneWorkbenchStructuredDataContainer,
@@ -130,7 +137,7 @@ export {
   setWorkbenchStructuredDataValue,
   type WorkbenchStructuredDataPath,
   type WorkbenchStructuredDataRecord,
-} from './structuredPath';
+} from './data/structured-path';
 export {
   WORKBENCH_WORKSPACE_CAPABILITY_ID,
   WorkspaceResourceService,
@@ -141,4 +148,4 @@ export {
   type WorkbenchWorkspaceHostPort,
   type WorkspaceChangeEvent,
   type WorkspaceResourceServiceOptions,
-} from './workbench-workspace-host';
+} from './host/workbench-workspace-host';

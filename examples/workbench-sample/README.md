@@ -60,12 +60,18 @@ No separate backend process is required by default. The sample auth flow uses a
 dummy backend client (`src/dummy-backend/`) that implements the
 [Sample Host Backend API](../../docs/workbench/sample-host-backend-api.md).
 
-| Endpoint-like action | Route                                    | Fixed behavior (in-memory mode)       |
-| -------------------- | ---------------------------------------- | ------------------------------------- |
-| Session check        | `GET /api/sample-host/v1/auth/session`   | Restores session from browser storage |
-| Login                | `POST /api/sample-host/v1/auth/sign-in`  | Accepts `tester` / `tester`           |
-| Logout               | `POST /api/sample-host/v1/auth/sign-out` | Clears sample session                 |
-| Linked accounts      | Included in authenticated session body   | Fixed GitHub and npm records          |
+| Endpoint-like action | Route                                    | Fixed behavior (in-memory mode)               |
+| -------------------- | ---------------------------------------- | --------------------------------------------- |
+| Session check        | `GET /api/sample-host/v1/auth/session`   | Restores session from in-memory SecretStorage |
+| Login                | `POST /api/sample-host/v1/auth/sign-in`  | Accepts `tester` / `tester`                   |
+| Logout               | `POST /api/sample-host/v1/auth/sign-out` | Clears sample session                         |
+| Linked accounts      | Included in authenticated session body   | Fixed GitHub and npm records                  |
+
+Demo auth sessions use `createMemorySecretStorage()` (process memory). They are
+**not** written to `sessionStorage` / `localStorage`. A full page reload clears
+the session — that is intentional for the sample. Production hosts should use a
+host-backed `WorkbenchSecretStorageService` or Electron
+`createEncryptedSecretVault`.
 
 Optional HTTP mode:
 
@@ -74,13 +80,39 @@ VITE_SAMPLE_HOST_BACKEND_TRANSPORT=http
 VITE_SAMPLE_HOST_BACKEND_BASE_URL=http://127.0.0.1:8787
 ```
 
+## Content Security Policy
+
+The sample ships a fail-closed CSP baseline (`csp-policy.ts`) applied as:
+
+- Vite `server` / `preview` `Content-Security-Policy` response headers
+- A matching `<meta http-equiv="Content-Security-Policy">` via `transformIndexHtml`
+
+It allows Monaco module workers (`worker-src 'self' blob:`), Vite HMR websockets
+(`connect-src … ws:` / `wss:`), and the optional loopback dummy backend on port
+`8787`. `'unsafe-inline'` / `'unsafe-eval'` remain for Vite + Monaco; production
+hosts should tighten further.
+
+Storybook (`pnpm dev:storybook`) uses Storybook's own tooling CSP and is not
+governed by this sample policy.
+
 ## Validate
 
 ```powershell
 pnpm --filter workbench-sample typecheck
 pnpm --filter workbench-sample build
-pnpm validate
+pnpm check:storybook-play-tags
+pnpm validate:ui:sample
 ```
+
+`validate:ui:sample` builds Storybook and runs only sample-host plays tagged
+`storybook-play-sample`. Full UI gate remains `pnpm validate:ui`
+(`storybook-play-required`).
+
+UI regression for this host is primarily **Storybook play** against the same
+`App` used by `pnpm dev` (`WorkbenchSample.stories.tsx`), seeded through
+`src/storybook/scenarios/`. Direction for splitting scenarios/fixtures so sample
+sources stay easy to assemble for tests:
+[Sample Host Test Architecture](../../docs/workbench/sample-host-test-architecture.md).
 
 ## Configuration
 
@@ -115,8 +147,18 @@ screen. For integrated workspace/chat/editor flows, use Storybook
 Primary sidebar chrome uses pixel widths; the sample host still persists layout
 percent and maps to pixels at the shell boundary.
 
+## Consumer docs
+
+| Guide                                                   | Use when                                          |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| [Getting Started](../../docs/guides/getting-started.md) | Install `@prototype` and compose a minimal shell  |
+| [Component Map](../../docs/guides/component-map.md)     | Map a surface to import / Storybook / sample      |
+| [Sample Screens](../../docs/guides/sample-screens.md)   | Copy screen recipes (auth, chat, library, JDW, …) |
+| [Use Case Scenarios](../../docs/guides/use-cases.md)    | End-to-end host and extension flows               |
+
 See [Sample Host Backend API](../../docs/workbench/sample-host-backend-api.md)
 for the dummy backend contract,
-[Use Case Scenarios](../../docs/guides/use-cases.md) for integration flows, and
+[Sample Host Test Architecture](../../docs/workbench/sample-host-test-architecture.md)
+for sample-as-SUT / Storybook vs Playwright direction, and
 [Workbench Current State](../../docs/workbench/current-state.md) for the current
 workbench roadmap.

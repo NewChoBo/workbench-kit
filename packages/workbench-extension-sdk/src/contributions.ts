@@ -281,6 +281,16 @@ export interface ExtensionContext {
   readonly editorResolvers: ExtensionEditorResolverRegistry;
   readonly extensionId: string;
   readonly extensionPath: string;
+  /**
+   * Manifest-declared `permissions` (empty when omitted). Used by
+   * `assertPermission` in `@workbench-kit/workbench-core`.
+   */
+  readonly permissions: readonly string[];
+  /**
+   * Manifest `capabilities.requires` (empty when omitted). Used by
+   * `requireCapability` in `@workbench-kit/workbench-core`.
+   */
+  readonly requiredCapabilities: readonly string[];
   readonly subscriptions: { add(disposable: Disposable): void };
   readonly viewHostFactories: ExtensionViewHostFactoryRegistry;
   readonly views: ExtensionViewRegistry;

@@ -6,16 +6,18 @@ import { setTimeout as sleep } from 'node:timers/promises';
 const runnerName = '@storybook/test-runner';
 const runnerPath = path.join(process.cwd(), 'node_modules', runnerName, 'package.json');
 const required = process.argv.includes('--required');
+const runSample = process.argv.includes('--sample');
 const runAll = process.argv.includes('--all-stories');
 const baselineTag = 'storybook-play-baseline';
 const requiredTag = 'storybook-play-required';
+const sampleTag = 'storybook-play-sample';
 const storybookPort = process.env.STORYBOOK_PLAY_PORT || '61009';
 const storybookUrl = process.env.TARGET_URL || `http://127.0.0.1:${storybookPort}/`;
 const pnpmCommand = 'pnpm';
 
 function logSkip(reason) {
   console.log(`[storybook-play] Skipped: ${reason}`);
-  if (required) process.exit(1);
+  if (required || runSample) process.exit(1);
   process.exit(0);
 }
 
@@ -116,7 +118,7 @@ try {
   }
 }
 
-const baselineMode = required || !runAll;
+const baselineMode = required || runSample || !runAll;
 const runArgs = [
   '--ci',
   '--maxWorkers=1',
@@ -127,7 +129,7 @@ const runArgs = [
 ];
 
 if (baselineMode) {
-  const includeTag = required ? requiredTag : baselineTag;
+  const includeTag = runSample ? sampleTag : required ? requiredTag : baselineTag;
   runArgs.push(`--includeTags=${includeTag}`);
 }
 

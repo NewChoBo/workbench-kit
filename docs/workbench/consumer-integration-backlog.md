@@ -82,14 +82,15 @@ cascade menus stay primary-only and open the fuller dialog for the rest.
 | **Suggested package**  | Kit: keep `check:public-exports` green. Consumer: delete shims and import from published subpaths once typing is stable.                                                                                    |
 | **Storybook / sample** | N/A — consumer migration task; document in consumer foundation plan.                                                                                                                                        |
 
-### 4. `exactOptionalPropertyTypes` compatibility for linked consumers
+### 4. `exactOptionalPropertyTypes` compatibility for linked consumers — partial
 
-| Field | Detail |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
-| **Description** | Consumer enables `exactOptionalPropertyTypes`; kit props often use `prop?: T \| undefined`. Consumer currently uses `tsconfig.workbench-linked.json` with the flag disabled for kit paths. |
-| **Consumer pain** | Type errors on otherwise valid kit usage; forces split tsconfig or `as` casts at boundaries. |
-| **Suggested package** | `@workbench-kit/react` — audit exported props; prefer explicit optional fields or helper types (`                                                                                          | undefined` only where required). |
-| **Storybook / sample** | Add typecheck job variant with `exactOptionalPropertyTypes: true` in CI or consumer contract smoke. |
+| Field                  | Detail                                                                                                                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Status**             | Partial — high-traffic props cleaned; consumer fixture landed (`pnpm typecheck:react-exact-optional`).                                                                  |
+| **Description**        | Consumer enables `exactOptionalPropertyTypes`; remaining kit areas may still use `prop?: T \| undefined` or fail when typechecking linked source implementation graphs. |
+| **Consumer pain**      | Type errors on otherwise valid kit usage; forces split tsconfig or `as` casts at boundaries for uncleaned surfaces.                                                     |
+| **Suggested package**  | `@workbench-kit/react` — continue audit beyond primitives/modal/shell/chat (settings/schema, editors, workspace).                                                       |
+| **Storybook / sample** | Fixture: `packages/react/typecheck-exact-optional` (emit `.d.ts` + eOPT smoke). Convention: `docs/conventions/public-api-governance.md`.                                |
 
 ### 5. Platform window chrome — landed
 
@@ -201,10 +202,14 @@ sentinel options before passing. Full multi-section dialog landed as §2
   toggle-maximize / close / isMaximized (+ maximized-changed push); hosts inject channel
   names and owned-window resolution.
 - `createEncryptedSecretVault` — OS-backed cipher port + opaque secret ids; fails closed
-  when encryption is unavailable (compose persistence with platform/node atomic write).
+  when encryption is unavailable and serializes mutations within one vault instance
+  (compose persistence with platform/node atomic write; hosts coordinate shared files
+  across instances or processes).
 - `registerRootConfinedAssetProtocol` / `cacheAllowlistedHttpsAsset` — privileged scheme
   serving only root-confined cache bytes; hosts inject scheme, hash/TTL/size policy, HTTPS fetch,
-  and `resolveInsideRoot` (typically `@workbench-kit/platform/node`).
+  and `resolveInsideRoot` (typically `@workbench-kit/platform/node`). Migration:
+  `registerRootConfinedAssetProtocol` now disables privileged protocol CORS by default; hosts
+  relying on the previous default must pass `corsEnabled: true` after reviewing origin policy.
 - `resolveWallpaperCropRect` + `createWin32WallpaperPathResolver` — spanned wallpaper crop
   math and injectable win32 path resolution (other platforms return null until host provides one).
 
@@ -240,7 +245,8 @@ Do not pull Electron into `@workbench-kit/react`. Optional thin Electron adapter
 filesystem implementations live on `@workbench-kit/platform/node` only:
 
 - Types: `JsonDocumentStore`, `JsonLinesStore`, `VersionedEnvelope`, `StorageDiagnostic`
-- Memory: `createMemoryJsonDocumentStore`, `createMemoryJsonLinesStore` (tests / tiny ephemeral hosts)
+- Memory: `createMemoryJsonDocumentStore`, `createMemoryJsonLinesStore`,
+  `createMemorySecretStorage` (tests / tiny ephemeral hosts; secrets stay off web storage)
 - Node: `createNodeJsonDocumentStore`, `createNodeJsonLinesStore`, `quarantineFileUnderRoot`
   (atomic write + path-under-root; corrupt files move under `recovery/quarantine`;
   diagnostics expose `relativeKey` / quarantine keys — never absolute paths)

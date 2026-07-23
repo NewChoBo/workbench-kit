@@ -159,10 +159,10 @@ function targetForRoot(root) {
       return 'layout/media/media-preview-viewport.css';
     }
     if (slug === 'media-slot') {
-      return 'primitives/media-slot.css';
+      return 'primitives/workbench-media-slot/media-slot.css';
     }
     if (slug === 'thumbnail') {
-      return 'primitives/thumbnail.css';
+      return 'primitives/workbench-thumbnail/thumbnail.css';
     }
     if (slug === 'command-palette' || slug === 'command-palette-overlay') {
       return 'workbench/command-palette/command-palette.css';
@@ -351,18 +351,31 @@ function writeImportHubs() {
     );
   }
 
+  const chromeBarrelDir = path.join(reactSrc, 'workbench/chrome');
   const workbenchChromeImports = [
-    './shell/index.css',
-    './chrome/index.css',
-    './command-palette/command-palette.css',
+    '../shell/index.css',
+    './index.css',
+    '../command-palette/command-palette.css',
   ]
-    .filter((rel) => fs.existsSync(path.join(reactSrc, 'workbench', rel.replace('./', ''))))
+    .filter((rel) => fs.existsSync(path.resolve(chromeBarrelDir, rel)))
     .map((rel) => `@import '${rel}';`);
 
+  if (workbenchChromeImports.length !== 3) {
+    throw new Error(
+      `workbench-chrome.css barrel incomplete (${workbenchChromeImports.length}/3 imports resolved).`,
+    );
+  }
+
+  fs.mkdirSync(chromeBarrelDir, { recursive: true });
   fs.writeFileSync(
-    path.join(reactSrc, 'workbench/workbench-chrome.css'),
+    path.join(chromeBarrelDir, 'workbench-chrome.css'),
     `/* Workbench shell and platform chrome */\n${workbenchChromeImports.join('\n')}\n`,
   );
+
+  const staleChromeBarrel = path.join(reactSrc, 'workbench/workbench-chrome.css');
+  if (fs.existsSync(staleChromeBarrel)) {
+    fs.unlinkSync(staleChromeBarrel);
+  }
 
   const stylesPath = path.join(reactSrc, 'styles.css');
   const seen = new Set();
@@ -376,7 +389,7 @@ function writeImportHubs() {
           line,
           "@import './layout/layout.css';",
           "@import './overlay/overlay.css';",
-          "@import './workbench/workbench-chrome.css';",
+          "@import './workbench/chrome/workbench-chrome.css';",
         ];
       }
       return [line];

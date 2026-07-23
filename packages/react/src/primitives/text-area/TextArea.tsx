@@ -7,7 +7,7 @@ type ControlWidth = 'default' | 'wide' | 'full';
 export interface TextAreaProps extends ComponentPropsWithRef<'textarea'> {
   controlWidth?: ControlWidth;
   monospace?: boolean;
-  resize?: CSSProperties['resize'] | undefined;
+  resize?: CSSProperties['resize'];
 }
 
 export function TextArea({

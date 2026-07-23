@@ -15,22 +15,23 @@ export {
   type WorkbenchSecretStorageNamespace,
   type WorkbenchSecretStorageService,
 } from './auth/types.js';
+export { createMemorySecretStorage } from './auth/memory-secret-storage.js';
 export {
   clearBrowserStorageByPrefixes,
   collectStorageKeysByPrefix,
   type BrowserStorageKind,
   type ClearBrowserStorageByPrefixesOptions,
-} from './browser-storage.js';
+} from './storage/browser-storage.js';
 export {
   createAllowlistedHttpsFetch,
   type CreateAllowlistedHttpsFetchOptions,
-} from './create-allowlisted-https-fetch.js';
+} from './network/create-allowlisted-https-fetch.js';
 export {
   createVersionedBrowserStateAdapter,
   type BrowserKeyValueStorage,
   type VersionedBrowserStateAdapter,
   type VersionedBrowserStateAdapterOptions,
-} from './versioned-browser-state.js';
+} from './storage/versioned-browser-state.js';
 export { CommandRegistry } from './commands/command-registry.js';
 export {
   assertNoCommandDefinitionConflicts,
@@ -140,7 +141,7 @@ export {
   type WorkbenchViewContribution,
   type WorkbenchViewEditorTabItem,
   type WorkbenchViewTabClosePolicy,
-} from './workbench-view-model.js';
+} from './view/workbench-view-model.js';
 export {
   buildWorkbenchViewPlacementModel,
   resolveWorkbenchViewContainerRegistry,
@@ -150,7 +151,7 @@ export {
   type WorkbenchViewPlacementContainerLike,
   type WorkbenchViewPlacementModel,
   type WorkbenchViewPlacementViewLike,
-} from './workbench-view-placement.js';
+} from './view/workbench-view-placement.js';
 export {
   listWorkbenchSidebarSlotViewIds,
   oppositeWorkbenchSidebarSlot,
@@ -167,20 +168,20 @@ export {
   type WorkbenchSidebarSlotContent,
   type WorkbenchSidebarSlotId,
   type WorkbenchSidebarSlotViewContent,
-} from './workbench-sidebar-slot.js';
+} from './view/workbench-sidebar-slot.js';
 export {
   moveWorkbenchSidebarSlotViewOrder,
   normalizeWorkbenchSidebarSlotViewOrder,
   sortWorkbenchSidebarSlotViewIds,
   type MoveWorkbenchSidebarSlotViewOrderInput,
   type WorkbenchSidebarSlotViewOrders,
-} from './workbench-sidebar-slot-view-order.js';
+} from './view/workbench-sidebar-slot-view-order.js';
 export {
   applyWorkbenchActivityBarPlacementHints,
   filterWorkbenchActivityBarItemsByPrimarySlot,
   resolveWorkbenchActivityBarItemTitle,
   type WorkbenchActivityBarItemLike,
-} from './workbench-activity-bar-placement.js';
+} from './view/workbench-activity-bar-placement.js';
 export {
   createWorkbenchShellNavigate,
   resolveWorkbenchShellViewFocus,
@@ -189,7 +190,7 @@ export {
   type ResolveWorkbenchSidebarSlotDisplayedViewIdInput,
   type WorkbenchShellNavigateModalTarget,
   type WorkbenchShellNavigateSlotRouter,
-} from './workbench-shell-navigate.js';
+} from './view/workbench-shell-navigate.js';
 export {
   areWorkbenchViewRouteSnapshotsEqual,
   buildWorkbenchViewRouteSearch,
@@ -203,7 +204,7 @@ export {
   type NormalizeWorkbenchViewRouteTabsOptions,
   type ResolveWorkbenchViewRouteSnapshotOptions,
   type WorkbenchViewRouteSnapshot,
-} from './workbench-view-route.js';
+} from './view/workbench-view-route.js';
 export {
   createMemoryJsonDocumentStore,
   parseVersionedEnvelope,

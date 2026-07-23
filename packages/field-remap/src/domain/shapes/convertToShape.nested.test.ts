@@ -38,7 +38,7 @@ describe('convertToShape nested + list context', () => {
     }),
   ];
 
-  it('maps nested object leaves via dotted paths', () => {
+  it('maps nested object leaves via dotted paths', async () => {
     const conversion = defineConversion({
       id: 'nested',
       sourceShapeIds: ['a'],
@@ -62,7 +62,7 @@ describe('convertToShape nested + list context', () => {
       ],
     });
 
-    const { output } = convertToShape({
+    const { output } = await convertToShape({
       conversion,
       shapes,
       inputs: { a: STRUCTURE_A },
@@ -75,7 +75,7 @@ describe('convertToShape nested + list context', () => {
     });
   });
 
-  it('projects array items with itemSourcePath then joins', () => {
+  it('projects array items with itemSourcePath then joins', async () => {
     const conversion = defineConversion({
       id: 'project',
       sourceShapeIds: ['a'],
@@ -92,7 +92,7 @@ describe('convertToShape nested + list context', () => {
       ],
     });
 
-    const { output } = convertToShape({
+    const { output } = await convertToShape({
       conversion,
       shapes,
       inputs: { a: STRUCTURE_A },
@@ -102,7 +102,7 @@ describe('convertToShape nested + list context', () => {
     expect(output).toEqual({ tagNames: 'math | computing' });
   });
 
-  it('converts array-of-object → array-of-object via itemEdges (list context)', () => {
+  it('converts array-of-object → array-of-object via itemEdges (list context)', async () => {
     const conversion = defineConversion({
       id: 'list',
       sourceShapeIds: ['a'],
@@ -128,7 +128,7 @@ describe('convertToShape nested + list context', () => {
       ],
     });
 
-    const { output } = convertToShape({
+    const { output } = await convertToShape({
       conversion,
       shapes,
       inputs: { a: STRUCTURE_A },
@@ -143,7 +143,7 @@ describe('convertToShape nested + list context', () => {
     });
   });
 
-  it('applies string format transform chains', () => {
+  it('applies string format transform chains', async () => {
     const padded = {
       user_name: '  Ada Lovelace  ',
       tags: STRUCTURE_A.tags,
@@ -178,7 +178,7 @@ describe('convertToShape nested + list context', () => {
       ],
     });
 
-    const { output } = convertToShape({
+    const { output } = await convertToShape({
       conversion,
       shapes: shapesWithPad,
       inputs: { a: padded },
@@ -191,7 +191,7 @@ describe('convertToShape nested + list context', () => {
     });
   });
 
-  it('passes whole arrays with identity', () => {
+  it('passes whole arrays with identity', async () => {
     const conversion = defineConversion({
       id: 'whole',
       sourceShapeIds: ['a'],
@@ -205,7 +205,7 @@ describe('convertToShape nested + list context', () => {
       ],
     });
 
-    const { output } = convertToShape({
+    const { output } = await convertToShape({
       conversion,
       shapes,
       inputs: { a: STRUCTURE_A },

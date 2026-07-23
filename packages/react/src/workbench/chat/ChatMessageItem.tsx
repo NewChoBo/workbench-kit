@@ -1,7 +1,11 @@
 import Markdown from 'react-markdown';
 import type { ReactNode } from 'react';
 import { cx } from '../../utils/cx';
-import { workbenchMarkdownRemarkPlugins } from '../markdownRemarkPlugins';
+import {
+  workbenchMarkdownRemarkPlugins,
+  workbenchMarkdownRehypePlugins,
+} from '../markdown/markdownRemarkPlugins';
+import { sanitizeMarkdownHref } from '../markdown/sanitizeMarkdownHref';
 import { ChatCommandProposalCard } from './ChatCommandProposalCard';
 import { ChatMessageCollapsible } from './ChatMessageCollapsible';
 import { ChatMessageTime, resolveChatMessageTimestamp } from './chatMessageMeta';
@@ -16,26 +20,38 @@ import type {
 export interface ChatMessageItemProps {
   /**
    * Rendered after the bubble (and before command proposals). Use for
-   * attachments or host chrome that should stay outside the collapsible surface.
+   * host chrome that should stay outside the collapsible surface.
+   * Prefer `attachments` for in-bubble file chips.
    */
-  afterMessage?: ReactNode | undefined;
+  afterMessage?: ReactNode;
+  /**
+   * In-bubble attachment region (file chips, etc.). Renders inside the bubble
+   * surface after the message body. Prefer this over `afterMessage` when chips
+   * must stay end-aligned with user bubbles.
+   */
+  attachments?: ReactNode;
   assistantLabel?: string;
   /** Overrides `message.contentMode` when set. */
-  contentMode?: ChatMessageContentMode | undefined;
+  contentMode?: ChatMessageContentMode;
   /**
    * Forwarded into `ChatMessageCollapsible` in-bubble footer (progress, actions).
    */
-  footer?: ReactNode | undefined;
+  footer?: ReactNode;
   isStreaming?: boolean;
+  /**
+   * Assistant-layout label icon. Defaults to sparkle; error/warning tones use
+   * status icons. Pass a custom node to override, or `false` to hide.
+   */
+  labelIcon?: ReactNode | false;
   layout?: ChatMessageLayout;
   message: ChatMessage;
-  onCommandProposalAllow?: ((messageId: string, proposal: ChatCommandProposal) => void) | undefined;
-  onCommandProposalDeny?: ((messageId: string, proposal: ChatCommandProposal) => void) | undefined;
+  onCommandProposalAllow?: (messageId: string, proposal: ChatCommandProposal) => void;
+  onCommandProposalDeny?: (messageId: string, proposal: ChatCommandProposal) => void;
   showSenderLabel?: boolean;
   /** When true, keeps the inline timestamp visible without hover. */
   showTimestamp?: boolean;
   /** Overrides `message.tone` when set. */
-  tone?: ChatMessageTone | undefined;
+  tone?: ChatMessageTone;
   userLabel?: string;
 }
 
@@ -151,6 +167,25 @@ function resolveChatMessageToneClass(
   return undefined;
 }
 
+function resolveAssistantLabelIcon(
+  labelIcon: ReactNode | false | undefined,
+  tone: ChatMessageTone | undefined,
+): ReactNode | null {
+  if (labelIcon === false) {
+    return null;
+  }
+  if (labelIcon !== undefined) {
+    return labelIcon;
+  }
+  if (tone === 'error') {
+    return <i className="codicon codicon-error message__label-icon" />;
+  }
+  if (tone === 'warning') {
+    return <i className="codicon codicon-warning message__label-icon" />;
+  }
+  return <i className="codicon codicon-sparkle message__label-icon" />;
+}
+
 function ChatMessageBody({
   content,
   contentMode,
@@ -165,7 +200,23 @@ function ChatMessageBody({
       <div className="md-content">
         <Markdown
           remarkPlugins={workbenchMarkdownRemarkPlugins}
+          rehypePlugins={workbenchMarkdownRehypePlugins}
           components={{
+            a: ({ children, href }) => {
+              const safeHref = sanitizeMarkdownHref(href);
+              if (!safeHref) {
+                return <span>{children}</span>;
+              }
+              return (
+                <a
+                  href={safeHref}
+                  rel="noreferrer"
+                  target={safeHref.startsWith('#') ? undefined : '_blank'}
+                >
+                  {children}
+                </a>
+              );
+            },
             code: ({ children, className }) => (
               <code className={cx('ui-workbench-scrollbar', className)}>{children}</code>
             ),
@@ -188,10 +239,12 @@ function ChatMessageBody({
 
 export function ChatMessageItem({
   afterMessage,
+  attachments,
   assistantLabel = 'Assistant',
   contentMode: contentModeProp,
   footer,
   isStreaming = false,
+  labelIcon,
   layout = 'assistant',
   message,
   onCommandProposalAllow,
@@ -204,7 +257,9 @@ export function ChatMessageItem({
   const timestamp = renderMessageTimestamp(message, showTimestamp);
   const bubbleAlign = message.source === 'user' ? 'end' : 'start';
   const contentMode = resolveChatMessageContentMode(message, layout, contentModeProp);
-  const toneClass = resolveChatMessageToneClass(toneProp ?? message.tone);
+  const resolvedTone = toneProp ?? message.tone;
+  const toneClass = resolveChatMessageToneClass(resolvedTone);
+  const assistantLabelIcon = resolveAssistantLabelIcon(labelIcon, resolvedTone);
   const body = (
     <ChatMessageBody
       content={message.content}
@@ -234,6 +289,7 @@ export function ChatMessageItem({
             ) : null}
             <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
               <ChatMessageCollapsible
+                attachments={attachments}
                 content={message.content}
                 footer={footer}
                 isStreaming={isStreaming}
@@ -266,6 +322,7 @@ export function ChatMessageItem({
             {peerLabel ? <div className="message__peer-label">{peerLabel}</div> : null}
             <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
               <ChatMessageCollapsible
+                attachments={attachments}
                 content={message.content}
                 footer={footer}
                 isStreaming={isStreaming}
@@ -291,11 +348,12 @@ export function ChatMessageItem({
       <div className="message__row">
         <div className="message__main">
           <div className="message__label message__label--assistant">
-            <i className="codicon codicon-sparkle message__label-icon" />
+            {assistantLabelIcon}
             {message.label ?? assistantLabel}
           </div>
           <MessageBubbleLine align={bubbleAlign} timestamp={timestamp}>
             <ChatMessageCollapsible
+              attachments={attachments}
               className="message__assistant-collapsible"
               content={message.content}
               footer={footer}

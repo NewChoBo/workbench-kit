@@ -8,6 +8,9 @@ This document is the **integration contract** for reusable workbench UI. It inve
 
 Related: [Consumer Integration Backlog](./consumer-integration-backlog.md) ·
 [Explorer Selection Policy](./explorer-selection-policy.md) ·
+[Getting Started](../guides/getting-started.md) ·
+[Component Map](../guides/component-map.md) ·
+[Sample Screens](../guides/sample-screens.md) ·
 [API Reference](../guides/api-reference.md) ·
 [Workbench Change Guidelines](./workbench-change-guidelines.md)
 
@@ -80,12 +83,12 @@ Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workb
 
 **Key props:**
 
-| Surface                    | Props                                                                                                           |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `WorkbenchThemeProvider`   | `platform` (`darwin` \| `win32` \| `linux`) — sets host platform context + `data-workbench-platform`            |
-| `WorkbenchDesktopTitleBar` | `chrome` (`platform` default \| `generic`), `leading` / `centerSlot` / `trailing`, `windowControls`             |
-| `windowControls`           | Host callbacks only: `onMinimize`, `onToggleMaximized`, `onClose`, `isMaximized`, optional labels               |
-| Title-bar layout toggles   | `WorkbenchShellTitleBarLayoutControls`: omit `onTogglePanel` / `onToggleAuxiliarySidebar` to hide those buttons |
+| Surface                    | Props                                                                                                                                                                                                                                           |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WorkbenchThemeProvider`   | `platform` (`darwin` \| `win32` \| `linux`) — sets host platform context + `data-workbench-platform`                                                                                                                                            |
+| `WorkbenchDesktopTitleBar` | `chrome` (`platform` default \| `generic`), `leading` / `centerSlot` / `trailing`, `windowControls`                                                                                                                                             |
+| `windowControls`           | Host callbacks only: `onMinimize`, `onToggleMaximized`, `onClose`, `isMaximized`, optional labels                                                                                                                                               |
+| Title-bar layout toggles   | `WorkbenchShellTitleBarLayoutControls`: omit `onTogglePanel` / `onToggleAuxiliarySidebar` to hide those buttons. `WorkbenchShell` (`@workbench-kit/shell-react`): `showPanelLayoutToggle` / `showAuxiliarySidebarLayoutToggle` (default `true`) |
 
 **I/O contract:** Kit owns chrome markup and darwin/win32 placement. Hosts supply Electron (or similar) IPC callbacks and optional i18n labels — do not fork titlebar markup in the renderer.
 
@@ -499,14 +502,15 @@ themselves as fill (clip); only named scroll owners may overflow.
 
 **Key props:**
 
-| Surface                 | Props                                                                                            |
-| ----------------------- | ------------------------------------------------------------------------------------------------ |
-| `ChatPanel`             | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `messageListAddon`, composer/runtime props |
-| `ChatMessageItem`       | `footer`, `afterMessage`, plus message `tone` / `contentMode`                                    |
-| `ChatMessage`           | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                |
-| `ChatPhasedRunProgress` | Product-neutral phase id/label/status/detail list with expand/collapse and optional actions      |
+| Surface                 | Props                                                                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ChatPanel`             | `onFilesDrop`, `filesDropLabel`, `renderMessageList`, `renderComposer`, `messageListAddon`, composer/runtime props                                           |
+| `ChatMessageItem`       | `footer`, `attachments` (in-bubble), `afterMessage` (outside), `labelIcon` (`ReactNode \| false`), plus `tone` / `contentMode`                               |
+| `ChatMessage`           | `tone?: 'default' \| 'error' \| 'warning'`, `contentMode?: 'plain' \| 'markdown'`                                                                            |
+| `ChatPhasedRunProgress` | Phase list + optional `labels` (expand/collapse, summary, status badges) for host i18n                                                                       |
+| `ChatConversationBar`   | Density tokens: `--workbench-chat-conversation-pill-min-width` (default `7.5rem`), `--workbench-chat-conversation-session-pill-min-width` (default `5.5rem`) |
 
-**Defaults:** Assistant layout messages render Markdown unless `contentMode: 'plain'`. User/peer default to plain. File drop is ignored while `disabled` or `isRunning`.
+**Defaults:** Assistant layout messages render Markdown unless `contentMode: 'plain'`. User/peer default to plain. Markdown uses `remark-gfm` plus `rehype-sanitize`, and shared anchor rendering allows only HTTP(S), `mailto:`, relative, and same-document hash links. Disallowed schemes render as non-navigable text. Hosts that need unsanitized HTML should render outside kit chat/preview surfaces. File drop is ignored while `disabled` or `isRunning`.
 Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage` (or a hybrid timeline slot); hosts own phase ids and copy.
 
 **When to use:** Host chat sidebars that should delete local message/composer chrome forks.
@@ -657,10 +661,10 @@ TilePaper Content Hub maps these rules to a host-specific index:
 
 ## Gaps (kit backlog, not host workarounds)
 
-| Gap                          | Host impact                   | Tracking   |
-| ---------------------------- | ----------------------------- | ---------- |
-| Consumer type shims          | Local type declaration drift  | Backlog §3 |
-| `exactOptionalPropertyTypes` | Split tsconfig for linked kit | Backlog §4 |
+| Gap                          | Host impact                                                                                                     | Tracking   |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------- |
+| Consumer type shims          | Local type declaration drift                                                                                    | Backlog §3 |
+| `exactOptionalPropertyTypes` | Partial kit cleanup + `pnpm typecheck:react-exact-optional`; linked-source graphs may still need split tsconfig | Backlog §4 |
 
 ---
 

@@ -9,8 +9,8 @@ import { useModalResize } from './useModalResize';
 
 export interface UseModalWindowFrameOptions {
   defaultMaximized: boolean;
-  defaultHeight?: number | undefined;
-  defaultWidth?: number | undefined;
+  defaultHeight?: number;
+  defaultWidth?: number;
   minHeight: number;
   minWidth: number;
 }

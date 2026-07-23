@@ -2,30 +2,67 @@
   "lockfileVersion": 1,
   "extensions": {
     "workbench-kit.builtin.accounts": {
+      "integrity": "sha256:da211081040176bb971788750b1c70ee7b7a3bf6a222d439b3efbdcf4827f03f",
       "version": "0.0.0"
     },
     "workbench-kit.builtin.chat": {
+      "integrity": "sha256:52cd49cc9ef7af9415aa2494bef964ca2cbe2a4dc54018bebbf87192847f395e",
       "version": "0.0.0"
     },
     "workbench-kit.builtin.commands": {
+      "integrity": "sha256:ce8d48cc71a172122ac96b298472392be03a05aefda7e244c46d9d2c678ed6ba",
       "version": "0.0.0"
     },
     "workbench-kit.builtin.editor": {
+      "integrity": "sha256:3b3fbaf30203311f0e768a130f1b278d54542820d50bf8cceb76a4d5b7b3264a",
       "version": "0.0.0"
     },
     "workbench-kit.builtin.explorer": {
+      "integrity": "sha256:a3038f3dc464afbccf9bdb99158eff9e53413b80676a77d50ae5dbbb642d271b",
+      "version": "0.0.0"
+    },
+    "workbench-kit.builtin.extensions": {
+      "integrity": "sha256:9d36d93395164f2cc12b5cd255353b7e2420d1afd93d71ce6e0f206578840899",
       "version": "0.0.0"
     },
     "workbench-kit.builtin.keybindings": {
+      "integrity": "sha256:d966520607cde14887dce4e11a7319b4815b0ec9ead0e564e3765084830cfaab",
       "version": "0.0.0"
     },
     "workbench-kit.builtin.search": {
+      "integrity": "sha256:f2d259d2d663a9416831f97ba9ae0fb7ec3882c93daa0c5fd350f50dbf2270e5",
       "version": "0.0.0"
     },
     "workbench-kit.builtin.settings": {
+      "integrity": "sha256:5dd5c44219e99cd9be173f12e6cf4b1900bb2c8cc7189a7caa92dd56452763e8",
       "version": "0.0.0"
     },
     "workbench-kit.builtin.workspace": {
+      "integrity": "sha256:073c63d2470f57d3ab9acc3d8feb8b2ea8155c98b700baf5aeddb276dece5c12",
+      "version": "0.0.0"
+    },
+    "workbench-kit.samples.field-remap": {
+      "integrity": "sha256:40566e1e6205694cc8c91a0c35e5bcbc4835481afd6d9c07147b89150a5d6368",
+      "version": "0.0.0"
+    },
+    "workbench-kit.samples.hello-world": {
+      "integrity": "sha256:95e54c5420c74352fc3b4d63c94d2fde549e5eaa035079643f4c65d1f2579f4e",
+      "version": "0.0.0"
+    },
+    "workbench-kit.samples.jdw": {
+      "integrity": "sha256:94af53f141c8e6bf750a4d61b02c2e53ad281932772dff486294881f5dbc5a6e",
+      "version": "0.0.0"
+    },
+    "workbench-kit.samples.json-preview": {
+      "integrity": "sha256:273e1cee0aec9fec6f4a66059295c5b626206a5775279bd358a22257bee4fde0",
+      "version": "0.0.0"
+    },
+    "workbench-kit.samples.locale-ko": {
+      "integrity": "sha256:7a99318ae8d133be9d1f74620f8897b89ac6af19406aaec14a791c1c3af712df",
+      "version": "0.0.0"
+    },
+    "workbench-kit.samples.theme-alt": {
+      "integrity": "sha256:a56767633cc9ef652fe730abc903bea9edf362f24204633c1936b886c14142ce",
       "version": "0.0.0"
     }
   }

@@ -38,6 +38,7 @@ const SAMPLE_AVAILABLE_EXTENSIONS = [
 
 import {
   extensionsConfig,
+  extensionsLock,
   initialLayout,
   initialWorkspace,
   SAMPLE_BUTTON_PATH,
@@ -79,6 +80,11 @@ const WORKBENCH_SETTINGS_CAPABILITY_ID = 'workbench.settings';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 
+/**
+ * Sample workbench shell (auth → provider → startup gate → shell).
+ * Prefer {@link createSampleHost} from `main.tsx` and Storybook so both share
+ * one assembly path; keep exporting `App` for CSF `component` typing.
+ */
 export interface AppProps {
   readonly devtools?: boolean | undefined;
 }
@@ -141,7 +147,9 @@ function SampleAuthenticatedWorkbench({
       availableExtensions={SAMPLE_AVAILABLE_EXTENSIONS}
       contextKeyValues={contextKeyValues}
       documentViewProviders={sampleScreenTemplateDocumentViewProviders}
+      extensionIntegrityMode="fail-closed"
       extensionsConfig={resolvedExtensionsConfig}
+      extensionsLock={extensionsLock}
       hostThemes={sampleHostThemes}
       initialKeybindingOverrides={workbenchKeybindings}
       initialLayout={initialLayout}

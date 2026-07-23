@@ -23,7 +23,7 @@ export interface ChatMessageListProps {
    * Host slot rendered inside the message list area after messages, or as a
    * sibling before the empty state when there are no messages.
    */
-  messageListAddon?: ReactNode | undefined;
+  messageListAddon?: ReactNode;
   messages: ChatMessage[];
   onCommandProposalAllow?: ChatMessageItemProps['onCommandProposalAllow'];
   onCommandProposalDeny?: ChatMessageItemProps['onCommandProposalDeny'];

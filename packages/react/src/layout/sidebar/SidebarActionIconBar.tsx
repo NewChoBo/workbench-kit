@@ -12,14 +12,14 @@ import { IconButton } from '../../primitives/icon-button';
 
 import { cx } from '../../utils/cx';
 
-import { type ActivityBarOrientation } from '../../workbench/activityBarOrder';
+import { type ActivityBarOrientation } from '../../workbench/shell/activityBarOrder';
 
 import {
   mergeWorkbenchSidebarViewPlacementDropZoneProps,
   useWorkbenchSidebarViewPlacementDropZone,
-} from '../../workbench/useWorkbenchSidebarViewPlacementDropZone';
+} from '../../workbench/shell/useWorkbenchSidebarViewPlacementDropZone';
 
-import { useWorkbenchSidebarActionBarDnd } from '../../workbench/useWorkbenchSidebarActionBarDnd';
+import { useWorkbenchSidebarActionBarDnd } from '../../workbench/shell/useWorkbenchSidebarActionBarDnd';
 
 import { SidebarToolbar } from './SidebarToolbar';
 

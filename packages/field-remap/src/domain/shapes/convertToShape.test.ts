@@ -7,7 +7,7 @@ import { convertToShape } from './convertToShape.js';
 import { defineDataShape } from './dataShape.js';
 
 describe('convertToShape', () => {
-  it('renames fields from structure A into structure B', () => {
+  it('renames fields from structure A into structure B', async () => {
     const structureA = {
       user_name: 'Ada Lovelace',
       user_email: 'ada@example.com',
@@ -55,7 +55,7 @@ describe('convertToShape', () => {
       ],
     });
 
-    const { output } = convertToShape({
+    const { output } = await convertToShape({
       conversion,
       shapes,
       inputs: { a: structureA },

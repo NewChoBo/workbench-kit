@@ -11,9 +11,9 @@ export interface CatalogBrowseCardProps extends Omit<
   'children' | 'title'
 > {
   description?: ReactNode;
-  icon?: string | undefined;
-  imageAlt?: string | undefined;
-  imageUrl?: string | null | undefined;
+  icon?: string;
+  imageAlt?: string;
+  imageUrl?: string | null;
   label: ReactNode;
   /**
    * Custom media content for the icon/cover region. When set, replaces the
@@ -23,15 +23,15 @@ export interface CatalogBrowseCardProps extends Omit<
   /** Overlay content inside the media region (badges, status chips, etc.). */
   mediaOverlay?: ReactNode;
   meta?: ReactNode;
-  selected?: boolean | undefined;
+  selected?: boolean;
   /**
    * Secondary actions outside the primary hit target (for example Assign).
    * When set, the root becomes a non-button container and click/drag handlers
    * apply to the main control only.
    */
   trailing?: ReactNode;
-  tooltip?: string | undefined;
-  variant?: CatalogBrowseCardVariant | undefined;
+  tooltip?: string;
+  variant?: CatalogBrowseCardVariant;
 }
 
 export function CatalogBrowseCard({

@@ -1,5 +1,5 @@
-export { ActivityBar } from './ActivityBar';
-export type { ActivityBarItem, ActivityBarProps } from './ActivityBar';
+export { ActivityBar } from './shell/ActivityBar';
+export type { ActivityBarItem, ActivityBarProps } from './shell/ActivityBar';
 export { createStringDragMime, createTypedDragMime } from '../utils/dragMime';
 export type { TypedDragMime, TypedDragMimeOptions } from '../utils/dragMime';
 export {
@@ -11,13 +11,13 @@ export {
   readEditorTabDragPayload,
   resolveEditorTabDropTarget,
   resolveEditorTabStripDropTarget,
-} from './editor-tabs-dnd';
-export type { EditorTabDragPayload, EditorTabDropTarget } from './editor-tabs-dnd';
-export { useEditorTabsStripDnd } from './useEditorTabsStripDnd';
+} from './editor/editor-tabs-dnd';
+export type { EditorTabDragPayload, EditorTabDropTarget } from './editor/editor-tabs-dnd';
+export { useEditorTabsStripDnd } from './editor/useEditorTabsStripDnd';
 export type {
   UseEditorTabsStripDndOptions,
   UseEditorTabsStripDndResult,
-} from './useEditorTabsStripDnd';
+} from './editor/useEditorTabsStripDnd';
 export {
   WorkbenchArtifactModeControls,
   WorkbenchArtifactPreview,
@@ -28,7 +28,7 @@ export {
   getWorkbenchPreviewRenderer,
   getWorkbenchPreviewRendererMatch,
   selectWorkbenchPreviewRenderer,
-} from './ArtifactShell';
+} from './shell/ArtifactShell';
 export type {
   WorkbenchArtifactDescriptor,
   WorkbenchArtifactMode,
@@ -41,7 +41,7 @@ export type {
   WorkbenchPreviewRendererContext,
   WorkbenchPreviewRendererMatch,
   WorkbenchPreviewRendererMatchReason,
-} from './ArtifactShell';
+} from './shell/ArtifactShell';
 export {
   WorkbenchCommandGroupShell,
   WorkbenchCommandList,
@@ -58,9 +58,14 @@ export {
   isWorkbenchCommandExecutionPolicy,
   isWorkbenchCommandRunnable,
   resolveWorkbenchCommandExecutionPolicy,
-} from './CommandPalette';
-export { WorkbenchMarkdownPreview } from './MarkdownPreview';
-export type { WorkbenchMarkdownPreviewProps } from './MarkdownPreview';
+} from './commands/CommandPalette';
+export { WorkbenchMarkdownPreview } from './markdown/MarkdownPreview';
+export type { WorkbenchMarkdownPreviewProps } from './markdown/MarkdownPreview';
+export { sanitizeMarkdownHref } from './markdown/sanitizeMarkdownHref';
+export {
+  workbenchMarkdownRemarkPlugins,
+  workbenchMarkdownRehypePlugins,
+} from './markdown/markdownRemarkPlugins';
 export {
   ChatCommandProposalCard,
   ChatConversationBar,
@@ -81,6 +86,7 @@ export type {
   ChatHistoryMenuProps,
   ChatPanelProps,
   ChatPhasedRunProgressAction,
+  ChatPhasedRunProgressLabels,
   ChatPhasedRunProgressProps,
   ChatRenameDialogProps,
   ChatRunPhase,
@@ -101,17 +107,17 @@ export {
   isWorkbenchSaveShortcutEvent,
   useWorkbenchNativeContextMenuGuard,
   useWorkbenchNativeSaveGuard,
-} from './keyboard';
-export { resolveWorkbenchTheme, useResolvedWorkbenchTheme } from './theme';
-export type { ResolvedWorkbenchTheme } from './theme';
-export { useDeferredWorkbenchMount } from './useDeferredWorkbenchMount';
-export type { UseDeferredWorkbenchMountOptions } from './useDeferredWorkbenchMount';
+} from './commands/keyboard';
+export { resolveWorkbenchTheme, useResolvedWorkbenchTheme } from './theme/theme';
+export type { ResolvedWorkbenchTheme } from './theme/theme';
+export { useDeferredWorkbenchMount } from './shell/useDeferredWorkbenchMount';
+export type { UseDeferredWorkbenchMountOptions } from './shell/useDeferredWorkbenchMount';
 export {
   DEFAULT_WORKBENCH_HARD_RESET_CONFIRM_MESSAGE,
   DEFAULT_WORKBENCH_STORAGE_PREFIX,
   performWorkbenchHardReset,
-} from './hardReset';
-export type { WorkbenchHardResetOptions } from './hardReset';
+} from './shell/hardReset';
+export type { WorkbenchHardResetOptions } from './shell/hardReset';
 export {
   applyWorkbenchAppearance,
   applyWorkbenchThemeAttributes,
@@ -127,11 +133,11 @@ export {
   resolveActiveThemePreset,
   resolveWorkbenchThemeProviderAttributes,
   WORKBENCH_COLOR_SCHEME_OPTIONS,
-} from './themePresets';
+} from './theme/themePresets';
 export {
   WORKBENCH_APPEARANCE_FIELD_DESCRIPTIONS,
   WORKBENCH_APPEARANCE_FIELD_LABELS,
-} from './appearanceLabels';
+} from './shell/appearanceLabels';
 export type {
   DarkThemePresetId,
   LightThemePresetId,
@@ -144,34 +150,40 @@ export type {
   WorkbenchThemePresetOption,
   WorkbenchThemePresetManifestEntry,
   WorkbenchThemePresetSelection,
-} from './themePresets';
+} from './theme/themePresets';
 export {
   applyWorkbenchShellAttributes,
   DEFAULT_SHELL_PRESET,
   isShellPresetId,
   SHELL_PRESET_MANIFEST,
   SHELL_PRESET_OPTIONS,
-} from './shellPresets';
+} from './shell/shellPresets';
 export type {
   ShellPresetId,
   WorkbenchShellPresetManifestEntry,
   WorkbenchShellPresetOption,
-} from './shellPresets';
-export { WorkbenchThemeProvider } from './WorkbenchThemeProvider';
-export type { WorkbenchThemeProviderProps } from './WorkbenchThemeProvider';
-export { useWorkbenchAppearanceDocumentSync } from './useWorkbenchAppearanceDocumentSync';
-export { WorkbenchPlatformProvider, useWorkbenchHostPlatform } from './WorkbenchPlatformContext';
-export type { WorkbenchPlatformProviderProps } from './WorkbenchPlatformContext';
+} from './shell/shellPresets';
+export { WorkbenchThemeProvider } from './theme/WorkbenchThemeProvider';
+export type { WorkbenchThemeProviderProps } from './theme/WorkbenchThemeProvider';
+export { useWorkbenchAppearanceDocumentSync } from './shell/useWorkbenchAppearanceDocumentSync';
+export {
+  WorkbenchPlatformProvider,
+  useWorkbenchHostPlatform,
+} from './chrome/WorkbenchPlatformContext';
+export type { WorkbenchPlatformProviderProps } from './chrome/WorkbenchPlatformContext';
 export {
   resolveWorkbenchHostPlatform,
   resolveWorkbenchWindowChromeDataAttributes,
-} from './workbenchPlatformChrome';
-export type { WorkbenchHostPlatform, WorkbenchWindowChromeMode } from './workbenchPlatformChrome';
+} from './chrome/workbenchPlatformChrome';
+export type {
+  WorkbenchHostPlatform,
+  WorkbenchWindowChromeMode,
+} from './chrome/workbenchPlatformChrome';
 export {
   WorkbenchWindowChromeControls,
   shouldUseDarwinPlatformChrome,
-} from './WorkbenchWindowChromeControls';
-export type { WorkbenchWindowChromeControlsProps } from './WorkbenchWindowChromeControls';
+} from './shell/WorkbenchWindowChromeControls';
+export type { WorkbenchWindowChromeControlsProps } from './shell/WorkbenchWindowChromeControls';
 export {
   WorkbenchShortcutCommandBridge,
   getWorkbenchShortcutCommandBindings,
@@ -179,7 +191,7 @@ export {
   matchesWorkbenchShortcut,
   runWorkbenchShortcutCommand,
   useWorkbenchShortcutCommands,
-} from './ShortcutCommandBridge';
+} from './commands/ShortcutCommandBridge';
 export type { SlashCommandParseResult } from './chat/slashCommand';
 export type {
   WorkbenchCommandDescriptor,
@@ -201,8 +213,8 @@ export type {
   WorkbenchCommandSideEffect,
   WorkbenchCommandStatus,
   WorkbenchCommandSuggestProps,
-} from './CommandPalette';
-export type { ResolveWorkbenchCommandExecutionPolicyInput } from './CommandPalette';
+} from './commands/CommandPalette';
+export type { ResolveWorkbenchCommandExecutionPolicyInput } from './commands/CommandPalette';
 export type {
   UseWorkbenchShortcutCommandsOptions,
   WorkbenchShortcutCommandBinding,
@@ -214,7 +226,7 @@ export type {
   WorkbenchShortcutEventLike,
   WorkbenchShortcutMatchInput,
   WorkbenchShortcutPlatform,
-} from './ShortcutCommandBridge';
+} from './commands/ShortcutCommandBridge';
 export {
   WorkbenchConfirmationFlow,
   getWorkbenchConfirmationButtonVariant,
@@ -223,7 +235,7 @@ export {
   getWorkbenchConfirmationStatus,
   getWorkbenchConfirmationVariant,
   isWorkbenchConfirmationActionDisabled,
-} from './ConfirmationFlow';
+} from './commands/ConfirmationFlow';
 export type {
   WorkbenchConfirmationAction,
   WorkbenchConfirmationCancelContext,
@@ -234,7 +246,7 @@ export type {
   WorkbenchConfirmationReason,
   WorkbenchConfirmationSideEffect,
   WorkbenchConfirmationVariant,
-} from './ConfirmationFlow';
+} from './commands/ConfirmationFlow';
 export {
   WorkbenchAuthGate,
   WorkbenchLoginBrandMark,
@@ -306,7 +318,7 @@ export {
   createWorkbenchWorkspaceFolderMenuEntries,
   createWorkbenchWorkspaceTargetMenuEntries,
   getWorkbenchShowActivityCommandId,
-} from './commands';
+} from './commands/commands';
 export type {
   WorkbenchEditorCommandContext,
   WorkbenchSearchResultCommandContext,
@@ -315,18 +327,18 @@ export type {
   WorkbenchShellCommandPresetOptions,
   WorkbenchCommandSurface,
   WorkbenchWorkspaceCommandContext,
-} from './commands';
+} from './commands/commands';
 export {
   initializeWorkbenchShellState,
   useWorkbenchShellState,
   workbenchShellStateReducer,
-} from './shellState';
+} from './shell/shellState';
 export type {
   UseWorkbenchShellStateResult,
   WorkbenchShellAction,
   WorkbenchShellInitialState,
   WorkbenchShellState,
-} from './shellState';
+} from './shell/shellState';
 export {
   getWorkbenchStatusDescriptor,
   getWorkbenchStatusLabel,
@@ -336,11 +348,15 @@ export {
   isWorkbenchStatusDisabled,
   isWorkbenchStatusUnavailable,
   workbenchStatusFromLifecycleStatus,
-} from './status';
-export type { WorkbenchStatus, WorkbenchStatusDescriptor, WorkbenchStatusVariant } from './status';
-export { SplitView } from './SplitView';
-export type { SplitViewLayoutMode, SplitViewProps } from './SplitView';
-export { StatusBar, StatusBarItem, StatusBarSection } from './StatusBar';
+} from './shell/status';
+export type {
+  WorkbenchStatus,
+  WorkbenchStatusDescriptor,
+  WorkbenchStatusVariant,
+} from './shell/status';
+export { SplitView } from './shell/SplitView';
+export type { SplitViewLayoutMode, SplitViewProps } from './shell/SplitView';
+export { StatusBar, StatusBarItem, StatusBarSection } from './shell/StatusBar';
 export type {
   StatusBarItemModel,
   StatusBarItemProps,
@@ -348,7 +364,7 @@ export type {
   StatusBarSectionAlign,
   StatusBarSectionModel,
   StatusBarSectionProps,
-} from './StatusBar';
+} from './shell/StatusBar';
 export {
   WorkbenchTimeline,
   WorkbenchTimelineItem,
@@ -357,7 +373,7 @@ export {
   getWorkbenchTimelineEventLabel,
   getWorkbenchTimelineEventStatus,
   getWorkbenchTimelineMetadataEntries,
-} from './Timeline';
+} from './shell/Timeline';
 export type {
   WorkbenchTimelineEvent,
   WorkbenchTimelineEventKind,
@@ -369,7 +385,7 @@ export type {
   WorkbenchTimelineRenderMetadata,
   WorkbenchTimelineRenderPayload,
   WorkbenchTimelineVariant,
-} from './Timeline';
+} from './shell/Timeline';
 export {
   WorkbenchPanelRegion,
   WorkbenchNavigationPanel,
@@ -552,44 +568,47 @@ export {
   stringifyWorkbenchStructuredDataSchemaFieldValue,
   validateWorkbenchStructuredDataSchemaFieldValue,
 } from './settings';
-export { WorkbenchShell } from './WorkbenchShell';
-export type { WorkbenchShellProps } from './WorkbenchShell';
-export { WorkbenchViewEditor } from './WorkbenchViewEditor';
+export { WorkbenchShell } from './shell/WorkbenchShell';
+export type { WorkbenchShellProps } from './shell/WorkbenchShell';
+export { WorkbenchViewEditor } from './shell/WorkbenchViewEditor';
 export type {
   WorkbenchViewEditorDataAttributes,
   WorkbenchViewEditorEmptyState,
   WorkbenchViewEditorEmptyStateProps,
   WorkbenchViewEditorEmptyStateSurfaceProps,
   WorkbenchViewEditorProps,
-} from './WorkbenchViewEditor';
-export { WorkbenchEditorTabs } from './WorkbenchEditorTabs';
-export type { WorkbenchEditorTabsProps } from './WorkbenchEditorTabs';
+} from './shell/WorkbenchViewEditor';
+export { WorkbenchEditorTabs } from './editor/WorkbenchEditorTabs';
+export type { WorkbenchEditorTabsProps } from './editor/WorkbenchEditorTabs';
 export {
   createWorkbenchStandaloneEditorTabCommandContext,
   createWorkbenchStandaloneEditorTabContextMenuItems,
   isWorkbenchEditorTabClosable,
-} from './editorTabContextMenu';
+} from './editor/editorTabContextMenu';
 export type {
   CreateWorkbenchStandaloneEditorTabCommandContextInput,
   WorkbenchStandaloneEditorTabLike,
-} from './editorTabContextMenu';
-export { useWorkbenchEditorTabContextMenu } from './useWorkbenchEditorTabContextMenu';
+} from './editor/editorTabContextMenu';
+export { useWorkbenchEditorTabContextMenu } from './editor/useWorkbenchEditorTabContextMenu';
 export type {
   UseWorkbenchEditorTabContextMenuOptions,
   UseWorkbenchEditorTabContextMenuResult,
-} from './useWorkbenchEditorTabContextMenu';
-export { WorkbenchViewSidebar } from './WorkbenchViewSidebar';
-export type { WorkbenchViewSidebarItem, WorkbenchViewSidebarProps } from './WorkbenchViewSidebar';
+} from './editor/useWorkbenchEditorTabContextMenu';
+export { WorkbenchViewSidebar } from './shell/WorkbenchViewSidebar';
+export type {
+  WorkbenchViewSidebarItem,
+  WorkbenchViewSidebarProps,
+} from './shell/WorkbenchViewSidebar';
 export {
   WorkbenchDesktopTitleBar,
   WorkbenchDesktopWindowControls,
-} from './WorkbenchDesktopTitleBar';
+} from './shell/WorkbenchDesktopTitleBar';
 export type {
   WorkbenchDesktopTitleBarProps,
   WorkbenchDesktopWindowControlsProps,
-} from './WorkbenchDesktopTitleBar';
-export { WorkbenchStandaloneShell } from './WorkbenchStandaloneShell';
-export { WorkbenchCanvasShell } from './WorkbenchCanvasShell';
+} from './shell/WorkbenchDesktopTitleBar';
+export { WorkbenchStandaloneShell } from './shell/WorkbenchStandaloneShell';
+export { WorkbenchCanvasShell } from './shell/WorkbenchCanvasShell';
 export type {
   WorkbenchActivityLifecycleCallbackMap,
   WorkbenchActivityLifecycleCallbacks,
@@ -599,18 +618,18 @@ export type {
   WorkbenchPrimarySidebarLifecycleReason,
   WorkbenchStandaloneShellContext,
   WorkbenchStandaloneShellProps,
-} from './WorkbenchStandaloneShell';
+} from './shell/WorkbenchStandaloneShell';
 export {
   createWorkbenchStandaloneShellStateSnapshot,
   useWorkbenchStandaloneShellContext,
-} from './workbenchStandaloneShellReactContext';
+} from './shell/workbenchStandaloneShellReactContext';
 export type {
   WorkbenchStandaloneShellStateChange,
   WorkbenchStandaloneShellStateChangeKind,
   WorkbenchStandaloneShellStateSnapshot,
-} from './workbenchStandaloneShellReactContext';
-export { useWorkbenchStandaloneShellStateSync } from './useWorkbenchStandaloneShellStateSync';
-export type { WorkbenchCanvasShellProps } from './WorkbenchCanvasShell';
+} from './shell/workbenchStandaloneShellReactContext';
+export { useWorkbenchStandaloneShellStateSync } from './shell/useWorkbenchStandaloneShellStateSync';
+export type { WorkbenchCanvasShellProps } from './shell/WorkbenchCanvasShell';
 export type {
   WorkbenchActivityChangeEvent,
   WorkbenchActivityDescriptor,
@@ -625,9 +644,9 @@ export type {
   WorkbenchStatusController,
   WorkbenchTheme,
   WorkbenchWorkspaceController,
-} from './standalone';
-export { StructuredArtifactEditor } from './StructuredArtifactEditor';
-export type { StructuredArtifactEditorProps } from './StructuredArtifactEditor';
+} from './shell/standalone';
+export { StructuredArtifactEditor } from './shell/StructuredArtifactEditor';
+export type { StructuredArtifactEditorProps } from './shell/StructuredArtifactEditor';
 export type {
   WorkbenchDocument,
   WorkbenchDocumentAdapter,

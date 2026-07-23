@@ -5,7 +5,7 @@ installable theme distribution in workbench-kit.
 
 **Related:** [future-capabilities.md § Custom themes](./future-capabilities.md#custom-themes-p2)
 (T0–T4), `@workbench-kit/tokens`, `@workbench-kit/react/workbench/themePresets`,
-`extensions/samples.theme-alt/`, `packages/workbench-core/src/theme-registry.ts`.
+`extensions/samples.theme-alt/`, `packages/workbench-core/src/theme/registry.ts`.
 
 ## Current contract
 

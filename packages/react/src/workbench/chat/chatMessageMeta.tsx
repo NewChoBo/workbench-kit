@@ -118,8 +118,8 @@ export function toChatMessageTimeDateTime(value: ChatMessageTimestampInput): str
 export function getPeerChatSenderKey(
   message: ChatMessage,
   options: {
-    assistantLabel?: string | undefined;
-    userLabel?: string | undefined;
+    assistantLabel?: string;
+    userLabel?: string;
   } = {},
 ): string {
   if (message.source === 'user') {
@@ -133,8 +133,8 @@ export function shouldShowPeerChatSenderLabel(
   messages: readonly ChatMessage[],
   index: number,
   options: {
-    assistantLabel?: string | undefined;
-    userLabel?: string | undefined;
+    assistantLabel?: string;
+    userLabel?: string;
   } = {},
 ): boolean {
   const message = messages[index];

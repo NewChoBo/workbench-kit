@@ -18,6 +18,8 @@ Breaking SDK changes require major `extensionApi` bump and migration notes.
 interface ExtensionContext {
   readonly extensionId: string;
   readonly extensionPath: string;
+  readonly permissions: readonly string[];
+  readonly requiredCapabilities: readonly string[];
   readonly subscriptions: DisposableStore;
   readonly capabilities: ExtensionCapabilityRegistry;
   readonly viewHostFactories: ExtensionViewHostFactoryRegistry;
