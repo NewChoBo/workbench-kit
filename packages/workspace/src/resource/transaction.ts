@@ -1,6 +1,6 @@
-import { workspaceResourceMutationToAction } from './resource-mutation.js';
-import type { WorkspaceResourceMutation } from './resource-mutation.js';
-import { virtualWorkspaceReducer, type VirtualWorkspaceState } from './virtualWorkspace.js';
+import { workspaceResourceMutationToAction } from './mutation.js';
+import type { WorkspaceResourceMutation } from './mutation.js';
+import { virtualWorkspaceReducer, type VirtualWorkspaceState } from '../virtual/workspace.js';
 
 export interface WorkspaceResourceTransaction {
   readonly id: string;

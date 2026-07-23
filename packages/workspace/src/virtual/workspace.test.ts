@@ -9,7 +9,7 @@ import {
   virtualWorkspaceReducer,
   type VirtualWorkspaceAction,
   type VirtualWorkspaceInitialState,
-} from './virtualWorkspace';
+} from './workspace';
 
 function reduceWorkspace(
   initialState: VirtualWorkspaceInitialState,

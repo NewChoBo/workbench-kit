@@ -1,5 +1,5 @@
-import { normalizeWorkspacePath } from './path';
-import type { WorkspaceFile } from './types';
+import { normalizeWorkspacePath } from '../path/path';
+import type { WorkspaceFile } from '../data/types';
 
 export interface WorkspaceFileDraft {
   content: string;

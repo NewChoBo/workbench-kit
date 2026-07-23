@@ -5,8 +5,8 @@ import {
   parentPathOf,
   parentPathsOf,
   tryNormalizeWorkspacePath,
-} from './path';
-import type { WorkspaceFile, WorkspaceFileSource } from './types';
+} from '../path/path';
+import type { WorkspaceFile, WorkspaceFileSource } from '../data/types';
 import {
   expandParents,
   fileMap,
@@ -21,7 +21,7 @@ import {
   pruneExpandedPaths,
   pruneOpenPaths,
   selectedAfterRemoving,
-} from './virtualWorkspaceModel';
+} from './workspace-model';
 
 /** Soft-fail path gate for reducer actions (invalid → empty → no-op). */
 function softNormalizeWorkspacePath(path: string): string {

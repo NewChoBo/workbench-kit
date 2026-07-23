@@ -1,5 +1,5 @@
-import { normalizeWorkspacePath } from './path';
-import type { WorkspaceFile, WorkspaceFileSource } from './types';
+import { normalizeWorkspacePath } from '../path/path';
+import type { WorkspaceFile, WorkspaceFileSource } from '../data/types';
 
 /**
  * Consumer-side virtual file provenance on host virtual file records

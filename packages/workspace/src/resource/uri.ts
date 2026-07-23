@@ -1,5 +1,5 @@
-import { normalizeWorkspacePath } from './path.js';
-import type { WorkspaceFile } from './types.js';
+import { normalizeWorkspacePath } from '../path/path.js';
+import type { WorkspaceFile } from '../data/types.js';
 
 export const WORKSPACE_RESOURCE_SCHEME = 'workspace' as const;
 

@@ -5,7 +5,7 @@ import {
   mapVirtualFileOriginToSource,
   mapWorkspaceFileToVirtualFile,
   mapWorkspaceSourceToVirtualFileOrigin,
-} from './virtual-file-adapter';
+} from './file-adapter';
 
 describe('virtual file adapter', () => {
   it('maps virtual file origin to workspace source', () => {

@@ -1,4 +1,4 @@
-import { normalizeWorkspacePath, parentPathOf } from './path';
+import { normalizeWorkspacePath, parentPathOf } from '../path/path';
 
 export type WorkspaceSelectionMode = 'range' | 'single' | 'toggle' | 'toggle-range';
 

@@ -3,7 +3,7 @@ import type {
   VirtualWorkspaceAction,
   VirtualWorkspaceInitialState,
   WriteWorkspaceFileInput,
-} from './virtualWorkspace.js';
+} from '../virtual/workspace.js';
 
 export type WorkspaceResourceMutation =
   | { type: 'initialize-workspace'; state: VirtualWorkspaceInitialState }

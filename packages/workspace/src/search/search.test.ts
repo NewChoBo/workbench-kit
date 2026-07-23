@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createContentPreview, highlightText, searchWorkspaceFiles } from './search';
-import type { WorkspaceFile } from './types';
+import type { WorkspaceFile } from '../data/types';
 
 const files: WorkspaceFile[] = [
   {

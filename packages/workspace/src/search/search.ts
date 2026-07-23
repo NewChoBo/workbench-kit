@@ -1,4 +1,4 @@
-import type { WorkspaceFile, WorkspaceHighlightPart, WorkspaceSearchResult } from './types';
+import type { WorkspaceFile, WorkspaceHighlightPart, WorkspaceSearchResult } from '../data/types';
 
 export function compactText(text: string) {
   return text.replace(/\s+/g, ' ').trim();

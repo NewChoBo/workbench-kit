@@ -1,5 +1,5 @@
-import { fileNameOfPath, tryNormalizeWorkspacePath, workspacePathSegments } from './path';
-import type { VisibleWorkspaceNode, WorkspaceFile, WorkspaceTreeNode } from './types';
+import { fileNameOfPath, tryNormalizeWorkspacePath, workspacePathSegments } from '../path/path';
+import type { VisibleWorkspaceNode, WorkspaceFile, WorkspaceTreeNode } from '../data/types';
 
 function sortWorkspaceNodes(nodes: WorkspaceTreeNode[]) {
   nodes.sort((left, right) => {

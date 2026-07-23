@@ -11,7 +11,7 @@ import {
   updateWorkspaceFileDraft,
   type WorkspaceFileDraftMap,
 } from './draft';
-import type { WorkspaceFile } from './types';
+import type { WorkspaceFile } from '../data/types';
 
 const file: WorkspaceFile = {
   content: 'saved',

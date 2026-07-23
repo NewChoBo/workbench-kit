@@ -1,21 +1,21 @@
 import {
   createWorkspaceResourceSnapshot,
   type WorkspaceResourceSnapshot,
-} from './resource-snapshot.js';
-import { parseWorkspaceResourceUri } from './resource-uri.js';
+} from '../resource/snapshot.js';
+import { parseWorkspaceResourceUri } from '../resource/uri.js';
 import {
   applyWorkspaceResourceTransaction,
   createWorkspaceResourceTransaction,
   type WorkspaceResourceTransaction,
-} from './resource-transaction.js';
-import type { WorkspaceResourceMutation } from './resource-mutation.js';
-import type { WorkspaceFile } from './types.js';
+} from '../resource/transaction.js';
+import type { WorkspaceResourceMutation } from '../resource/mutation.js';
+import type { WorkspaceFile } from '../data/types.js';
 import {
   initializeVirtualWorkspaceState,
   type VirtualWorkspaceInitialState,
   type VirtualWorkspaceState,
   type WriteWorkspaceFileInput,
-} from './virtualWorkspace.js';
+} from '../virtual/workspace.js';
 
 export const WORKBENCH_WORKSPACE_CAPABILITY_ID = 'workbench.workspace' as const;
 

@@ -1,5 +1,5 @@
-import type { WorkspaceFile } from './types.js';
-import type { VirtualWorkspaceState } from './virtualWorkspace.js';
+import type { WorkspaceFile } from '../data/types.js';
+import type { VirtualWorkspaceState } from '../virtual/workspace.js';
 
 export interface WorkspaceResourceSnapshot {
   readonly files: readonly WorkspaceFile[];

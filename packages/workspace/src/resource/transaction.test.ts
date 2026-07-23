@@ -4,24 +4,24 @@ import {
   formatWorkspaceResourceUri,
   parseWorkspaceResourceUri,
   workspaceResourceUriForFile,
-} from './resource-uri.js';
+} from './uri.js';
 import {
   createWorkspaceResourceSnapshot,
   snapshotMatchesWorkspaceState,
-} from './resource-snapshot.js';
+} from './snapshot.js';
 import {
   virtualWorkspaceActionToResourceMutation,
   workspaceResourceMutationToAction,
-} from './resource-mutation.js';
+} from './mutation.js';
 import {
   applyWorkspaceResourceTransaction,
   createWorkspaceResourceTransaction,
-} from './resource-transaction.js';
+} from './transaction.js';
 import {
   initializeVirtualWorkspaceState,
   virtualWorkspaceReducer,
   type VirtualWorkspaceAction,
-} from './virtualWorkspace.js';
+} from '../virtual/workspace.js';
 
 function reduceWorkspace(actions: VirtualWorkspaceAction[]) {
   return actions.reduce(

@@ -1,5 +1,5 @@
-import { parentPathOf, parentPathsOf, tryNormalizeWorkspacePath } from './path';
-import type { WorkspaceFile } from './types';
+import { parentPathOf, parentPathsOf, tryNormalizeWorkspacePath } from '../path/path';
+import type { WorkspaceFile } from '../data/types';
 
 export function normalizeFiles(files: WorkspaceFile[]) {
   const filesByPath = new Map<string, WorkspaceFile>();
