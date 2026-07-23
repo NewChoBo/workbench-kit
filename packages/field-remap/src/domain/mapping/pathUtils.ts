@@ -42,6 +42,15 @@ function assertNoUnsafeObjectPathSegments(path: string, parts: readonly string[]
   }
 }
 
+/** Parse dotted path segments and reject unsafe segments when any parts exist. */
+function requireObjectPathParts(path: string): string[] {
+  const parts = objectPathParts(path);
+  if (parts.length > 0) {
+    assertNoUnsafeObjectPathSegments(path, parts);
+  }
+  return parts;
+}
+
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -82,11 +91,10 @@ export function applyStringTemplate(
 }
 
 export function readObjectPath(value: unknown, path: string): unknown {
-  const parts = objectPathParts(path);
+  const parts = requireObjectPathParts(path);
   if (parts.length === 0) {
     return value;
   }
-  assertNoUnsafeObjectPathSegments(path, parts);
 
   let current: unknown = value;
   for (const part of parts) {
@@ -107,11 +115,10 @@ export function writeObjectPath(
   path: string,
   value: unknown,
 ): Record<string, unknown> {
-  const parts = objectPathParts(path);
+  const parts = requireObjectPathParts(path);
   if (parts.length === 0) {
     return isPlainObject(root) ? { ...root } : {};
   }
-  assertNoUnsafeObjectPathSegments(path, parts);
 
   const result: Record<string, unknown> = isPlainObject(root) ? { ...root } : {};
   let cursor: Record<string, unknown> = result;
