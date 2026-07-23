@@ -38,6 +38,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^5.2.0
         version: 5.2.0(vite@6.4.3(@types/node@26.1.1))
+      '@workbench-kit/monaco':
+        specifier: workspace:*
+        version: link:packages/monaco
       eslint:
         specifier: ^10.7.0
         version: 10.7.0

@@ -245,11 +245,12 @@ export function JsonCodeEditorPane({
   const configureJsonSchema = (monaco: WorkbenchMonaco, path: string) => {
     if (!jsonSchema) return;
 
-    const jsonDefaults = (
-      monaco.languages.json as unknown as {
-        jsonDefaults?: { setDiagnosticsOptions: (options: unknown) => void };
-      }
-    ).jsonDefaults;
+    const jsonLanguage = monaco.languages.json as unknown as
+      | {
+          jsonDefaults?: { setDiagnosticsOptions: (options: unknown) => void };
+        }
+      | undefined;
+    const jsonDefaults = jsonLanguage?.jsonDefaults;
     if (!jsonDefaults) return;
 
     jsonDefaults.setDiagnosticsOptions({
