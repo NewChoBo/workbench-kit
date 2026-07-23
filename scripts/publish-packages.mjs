@@ -59,10 +59,16 @@ for (const packageName of publishOrder) {
   } catch (error) {
     throw publishFailureError(pkg.name, error);
   }
+
+  // Brief pause between packages — long OIDC + provenance batches have hit
+  // intermittent ENEEDAUTH mid-run even when Trusted Publisher is configured.
+  if (!dryRun) {
+    sleepMs(1500);
+  }
 }
 
 function publishWithTrustedAuth(args) {
-  const maxAttempts = isTrustedPublisherAvailable() ? 2 : 1;
+  const maxAttempts = isTrustedPublisherAvailable() ? 5 : 1;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     clearNpmRegistryAuth();
@@ -75,9 +81,23 @@ function publishWithTrustedAuth(args) {
         throw error;
       }
 
+      const backoffMs = attempt * 3000;
       console.warn(
-        `[publish] npm publish failed (attempt ${attempt}/${maxAttempts}); clearing auth and retrying OIDC...`,
+        `[publish] npm publish failed (attempt ${attempt}/${maxAttempts}); clearing auth and retrying OIDC in ${backoffMs}ms...`,
       );
+      sleepMs(backoffMs);
+    }
+  }
+}
+
+function sleepMs(ms) {
+  const seconds = Math.max(1, Math.ceil(ms / 1000));
+  try {
+    execFileSync('sleep', [String(seconds)], { stdio: 'ignore' });
+  } catch {
+    const end = Date.now() + ms;
+    while (Date.now() < end) {
+      /* busy-wait fallback when `sleep` is unavailable */
     }
   }
 }

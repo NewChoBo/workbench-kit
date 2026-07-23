@@ -25,9 +25,18 @@ console.log('[preflight-npm] Skipping npm whoami because OIDC auth is resolved a
 
 resetDirectory(packDir);
 
-const probePackages = NPM_PUBLISH_ORDER.filter((packageName) => npmViewExists(packageName));
-if (probePackages.length === 0) {
+// Probe a small sample only. Dry-running every NPM_PUBLISH_ORDER package burns
+// several minutes of OIDC round-trips and does not prove real publish will succeed.
+const existing = NPM_PUBLISH_ORDER.filter((packageName) => npmViewExists(packageName));
+const probePackages = [];
+if (existing.length === 0) {
   probePackages.push(NPM_PUBLISH_ORDER[0]);
+} else {
+  probePackages.push(existing[0]);
+  const last = existing[existing.length - 1];
+  if (last !== probePackages[0]) {
+    probePackages.push(last);
+  }
 }
 
 for (const probePackage of probePackages) {
