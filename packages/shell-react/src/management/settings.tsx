@@ -1,10 +1,14 @@
+import { useCallback } from 'react';
 import {
   AccountManagementPanel,
   CommandManagementPanel,
   ExtensionManagementPanel,
   type AccountManagementEntry,
 } from '@workbench-kit/react/workbench/management';
-import type { ExtensionCatalogTrustPolicy } from '@workbench-kit/workbench-core';
+import {
+  isExtensionInstallTrusted,
+  type ExtensionCatalogTrustPolicy,
+} from '@workbench-kit/workbench-core';
 
 import { useCommandManagementModel } from './use-command-management.js';
 import { useExtensionManagementModel } from '../extensions/use-extension-management.js';
@@ -48,8 +52,16 @@ export function WorkbenchExtensionManagementSettings({
     catalogLoading,
     installCatalogEntry,
     installedEntries,
+    installTrustRecords,
+    rememberInstallTrust,
     toggleInstalledEntry,
   } = useExtensionManagementModel({ catalogTrustPolicy, catalogUrl });
+
+  const isInstallTrusted = useCallback(
+    (entry: (typeof browseEntries)[number]) =>
+      isExtensionInstallTrusted(entry.id, entry.installPlan?.permissions ?? [], installTrustRecords),
+    [installTrustRecords],
+  );
 
   return (
     <ExtensionManagementPanel
@@ -57,7 +69,9 @@ export function WorkbenchExtensionManagementSettings({
       catalogError={catalogError}
       catalogLoading={catalogLoading}
       installedEntries={installedEntries}
+      isInstallTrusted={isInstallTrusted}
       onInstall={installCatalogEntry}
+      onRememberInstallTrust={rememberInstallTrust}
       onToggleEnabled={toggleInstalledEntry}
     />
   );

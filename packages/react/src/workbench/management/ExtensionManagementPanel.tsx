@@ -41,7 +41,9 @@ export function ExtensionManagementPanel({
   catalogLoading = false,
   className,
   installedEntries,
+  isInstallTrusted,
   onInstall,
+  onRememberInstallTrust,
   onToggleEnabled,
 }: ExtensionManagementPanelProps) {
   const [activeTab, setActiveTab] = useState<'installed' | 'browse'>(
@@ -104,12 +106,14 @@ export function ExtensionManagementPanel({
                 emptyLabel="No catalog extensions match the current filter."
                 entries={filteredBrowse}
                 groups={browseGroups}
+                isInstallTrusted={isInstallTrusted}
                 query={browseQuery}
                 showGroups={showBrowseGroups}
                 summary={`${filteredBrowse.length} of ${browseEntries.length} in catalog`}
                 onCategoryChange={setCategoryFilter}
                 onInstall={onInstall}
                 onQueryChange={setBrowseQuery}
+                onRememberInstallTrust={onRememberInstallTrust}
               />
             ),
           },
@@ -274,9 +278,11 @@ function BrowseExtensionsTab({
   emptyLabel,
   entries,
   groups,
+  isInstallTrusted,
   onCategoryChange,
   onInstall,
   onQueryChange,
+  onRememberInstallTrust,
   query,
   showGroups,
   summary,
@@ -287,9 +293,11 @@ function BrowseExtensionsTab({
   emptyLabel: string;
   entries: readonly ExtensionCatalogBrowseEntry[];
   groups: ReadonlyArray<{ category: string; entries: readonly ExtensionCatalogBrowseEntry[] }>;
+  isInstallTrusted?: ExtensionManagementPanelProps['isInstallTrusted'];
   onCategoryChange: (category: BrowseCategoryFilter) => void;
   onInstall?: ExtensionManagementPanelProps['onInstall'];
   onQueryChange: (query: string) => void;
+  onRememberInstallTrust?: ExtensionManagementPanelProps['onRememberInstallTrust'];
   query: string;
   showGroups: boolean;
   summary: string;
@@ -336,7 +344,9 @@ function BrowseExtensionsTab({
                   <li key={entry.id}>
                     <ExtensionCatalogCard
                       entry={entry}
+                      isInstallTrusted={isInstallTrusted}
                       onInstall={onInstall}
+                      onRememberInstallTrust={onRememberInstallTrust}
                       showCategory={false}
                     />
                   </li>
@@ -350,7 +360,13 @@ function BrowseExtensionsTab({
         <ManagementCardList>
           {flatEntries.map((entry) => (
             <li key={entry.id}>
-              <ExtensionCatalogCard entry={entry} onInstall={onInstall} showCategory />
+              <ExtensionCatalogCard
+                entry={entry}
+                isInstallTrusted={isInstallTrusted}
+                onInstall={onInstall}
+                onRememberInstallTrust={onRememberInstallTrust}
+                showCategory
+              />
             </li>
           ))}
         </ManagementCardList>
@@ -361,11 +377,15 @@ function BrowseExtensionsTab({
 
 function ExtensionCatalogCard({
   entry,
+  isInstallTrusted,
   onInstall,
+  onRememberInstallTrust,
   showCategory,
 }: {
   entry: ExtensionCatalogBrowseEntry;
+  isInstallTrusted?: ExtensionManagementPanelProps['isInstallTrusted'];
   onInstall?: ExtensionManagementPanelProps['onInstall'];
+  onRememberInstallTrust?: ExtensionManagementPanelProps['onRememberInstallTrust'];
   showCategory: boolean;
 }) {
   return (
@@ -381,7 +401,10 @@ function ExtensionCatalogCard({
           variant={entry.installed ? 'default' : 'primary'}
           onClick={() => {
             if (!onInstall) return;
-            const options = resolveExtensionInstallOptions(entry);
+            const options = resolveExtensionInstallOptions(entry, {
+              isTrusted: isInstallTrusted,
+              rememberTrust: onRememberInstallTrust,
+            });
             if (!options) return;
             onInstall(entry, options);
           }}

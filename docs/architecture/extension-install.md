@@ -160,6 +160,21 @@ In `fail-closed` mode, enabled extensions missing from the lock or with a
 version/integrity mismatch are not registered. This is the kit analogue of
 Marketplace/Open VSX package integrity for the bundled-only MVP.
 
+## Durable install trust
+
+Permissioned installs may persist consent so repeat installs with the same
+permission fingerprint skip the confirm prompt (VS Code publisher-trust style,
+keyed by extension id + permissions rather than publisher):
+
+- Storage key: `workbench-kit/.workbench/extension-install-trust`
+- Core helpers: `loadExtensionInstallTrustRecords`, `recordExtensionInstallTrust`,
+  `isExtensionInstallTrusted`, `revokeExtensionInstallTrust`
+- React: `resolveExtensionInstallOptions(entry, { isTrusted, rememberTrust })`
+- shell-react management model wires storage and passes `isInstallTrusted`
+
+If the plan later requests additional permissions, the fingerprint changes and
+the user is prompted again.
+
 ## Recommend ≠ enable
 
 `.workbench/extensions.json` `recommendations` must not be treated as an

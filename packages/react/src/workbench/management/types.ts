@@ -129,4 +129,11 @@ export interface ExtensionManagementPanelProps {
   onInstall?:
     ((entry: ExtensionCatalogBrowseEntry, options?: ExtensionInstallOptions) => void) | undefined;
   onToggleEnabled?: ((entry: ExtensionManagementEntry, enabled: boolean) => void) | undefined;
+  /**
+   * Host-owned durable trust check. When true for an entry, the install confirm
+   * prompt is skipped and `{ approved: true }` is used.
+   */
+  isInstallTrusted?: ((entry: ExtensionCatalogBrowseEntry) => boolean) | undefined;
+  /** Persist trust after the user confirms a permissioned install. */
+  onRememberInstallTrust?: ((entry: ExtensionCatalogBrowseEntry) => void) | undefined;
 }

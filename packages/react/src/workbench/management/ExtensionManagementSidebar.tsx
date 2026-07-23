@@ -58,8 +58,10 @@ export function ExtensionManagementSidebar({
   emptyInstalledLabel = 'No installed extensions match the filter.',
   emptyMarketplaceLabel = 'No marketplace extensions match the filter.',
   installedEntries,
+  isInstallTrusted,
   missingExtensionIds = [],
   onInstall,
+  onRememberInstallTrust,
   onToggleEnabled,
   pendingAction,
 }: ExtensionManagementSidebarProps) {
@@ -154,8 +156,10 @@ export function ExtensionManagementSidebar({
           catalogLoading={catalogLoading}
           emptyLabel={emptyMarketplaceLabel}
           entries={filteredBrowse}
+          isInstallTrusted={isInstallTrusted}
           pendingAction={pendingAction}
           onInstall={onInstall}
+          onRememberInstallTrust={onRememberInstallTrust}
         />
       ) : (
         <InstalledExtensionList
@@ -258,14 +262,18 @@ function MarketplaceExtensionList({
   catalogLoading,
   emptyLabel,
   entries,
+  isInstallTrusted,
   onInstall,
+  onRememberInstallTrust,
   pendingAction,
 }: {
   catalogError?: string | undefined;
   catalogLoading?: boolean | undefined;
   emptyLabel: string;
   entries: readonly ExtensionCatalogBrowseEntry[];
+  isInstallTrusted?: ExtensionManagementPanelProps['isInstallTrusted'];
   onInstall?: ExtensionManagementPanelProps['onInstall'];
+  onRememberInstallTrust?: ExtensionManagementPanelProps['onRememberInstallTrust'];
   pendingAction?: ExtensionManagementPendingAction | undefined;
 }) {
   if (catalogLoading) {
@@ -321,7 +329,10 @@ function MarketplaceExtensionList({
                 variant={entry.installed ? 'default' : 'primary'}
                 onClick={() => {
                   if (!onInstall) return;
-                  const options = resolveExtensionInstallOptions(entry);
+                  const options = resolveExtensionInstallOptions(entry, {
+                    isTrusted: isInstallTrusted,
+                    rememberTrust: onRememberInstallTrust,
+                  });
                   if (!options) return;
                   onInstall(entry, options);
                 }}

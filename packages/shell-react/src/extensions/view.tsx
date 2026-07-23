@@ -1,5 +1,9 @@
+import { useCallback } from 'react';
 import { ExtensionManagementSidebar } from '@workbench-kit/react/workbench/management';
-import type { ExtensionCatalogTrustPolicy } from '@workbench-kit/workbench-core';
+import {
+  isExtensionInstallTrusted,
+  type ExtensionCatalogTrustPolicy,
+} from '@workbench-kit/workbench-core';
 
 import {
   BUILTIN_EXTENSIONS_VIEW_RENDER_KIND,
@@ -26,9 +30,17 @@ export function BuiltinExtensionsView({
     catalogLoading,
     installCatalogEntry,
     installedEntries,
+    installTrustRecords,
     pendingAction,
+    rememberInstallTrust,
     toggleInstalledEntry,
   } = useExtensionManagementModel({ catalogTrustPolicy, catalogUrl });
+
+  const isInstallTrusted = useCallback(
+    (entry: (typeof browseEntries)[number]) =>
+      isExtensionInstallTrusted(entry.id, entry.installPlan?.permissions ?? [], installTrustRecords),
+    [installTrustRecords],
+  );
 
   return (
     <ExtensionManagementSidebar
@@ -36,9 +48,11 @@ export function BuiltinExtensionsView({
       catalogError={catalogError}
       catalogLoading={catalogLoading}
       installedEntries={installedEntries}
+      isInstallTrusted={isInstallTrusted}
       missingExtensionIds={missingExtensionIds}
       pendingAction={pendingAction}
       onInstall={installCatalogEntry}
+      onRememberInstallTrust={rememberInstallTrust}
       onToggleEnabled={toggleInstalledEntry}
     />
   );
