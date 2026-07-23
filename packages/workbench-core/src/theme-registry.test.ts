@@ -108,4 +108,29 @@ describe('ThemeRegistry', () => {
     applyThemeTokenOverrides(target, undefined, theme?.tokenOverrides);
     expect(style.has('--color-bg')).toBe(false);
   });
+
+  it('does not apply unsafe tokenOverride CSS values', () => {
+    const style = new Map<string, string>();
+    const target = {
+      style: {
+        getPropertyValue: (key: string) => style.get(key) ?? '',
+        removeProperty: (key: string) => {
+          style.delete(key);
+        },
+        setProperty: (key: string, value: string) => {
+          style.set(key, value);
+        },
+      },
+    } as unknown as HTMLElement;
+
+    applyThemeTokenOverrides(target, {
+      '--color-bg': '#0a1628',
+      '--color-accent': 'url(javascript:alert(1))',
+      '--color-danger': 'expression(alert(1))',
+    });
+
+    expect(style.get('--color-bg')).toBe('#0a1628');
+    expect(style.has('--color-accent')).toBe(false);
+    expect(style.has('--color-danger')).toBe(false);
+  });
 });

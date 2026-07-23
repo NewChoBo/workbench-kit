@@ -1,6 +1,8 @@
 import { Emitter, toDisposable, type Disposable } from '@workbench-kit/base';
 import type { ThemeContribution } from '@workbench-kit/workbench-extension-sdk';
 
+import { sanitizeThemeTokenValue } from './sanitize-theme-token-value.js';
+
 export interface WorkbenchThemeContribution extends ThemeContribution {
   readonly extensionId: string;
 }
@@ -105,6 +107,10 @@ export function applyThemeTokenOverrides(
   }
 
   for (const [key, value] of Object.entries(tokenOverrides)) {
-    target.style.setProperty(key, value);
+    const sanitized = sanitizeThemeTokenValue(value);
+    if (sanitized == null) {
+      continue;
+    }
+    target.style.setProperty(key, sanitized);
   }
 }

@@ -115,6 +115,7 @@ export {
 } from './extension-catalog.js';
 export {
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  ExtensionInstallApprovalRequiredError,
   applyExtensionInstallPlanToRecords,
   getInstalledExtensionRecord,
   installExtensionRecord,
@@ -157,6 +158,7 @@ export {
   ThemeRegistry,
   type WorkbenchThemeContribution,
 } from './theme-registry.js';
+export { sanitizeThemeTokenValue } from './sanitize-theme-token-value.js';
 export {
   createWorkbenchHostThemeRegistration,
   HOST_WORKBENCH_THEME_EXTENSION_ID,
