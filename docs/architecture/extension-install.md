@@ -123,20 +123,25 @@ Helpers live in `@workbench-kit/workbench-core`:
 
 ## Host storage contract
 
-Install-state persistence accepts a small synchronous storage port instead of a
-DOM `Storage` object:
+Install-state persistence accepts a small **synchronous** storage port instead of
+a DOM `Storage` object (`WorkbenchStorageAdapter` in
+`@workbench-kit/workbench-core`):
 
 ```typescript
-interface WorkbenchStorageReader {
-  getItem(key: string): string | null;
-}
-
-interface WorkbenchStorageWriter {
-  setItem(key: string, value: string): void;
-}
-
 type WorkbenchStorageAdapter = WorkbenchStorageReader & WorkbenchStorageWriter;
+// optional deletion:
+type WorkbenchRemovableStorageAdapter = WorkbenchStorageAdapter & WorkbenchStorageRemover;
 ```
+
+Reference factories:
+
+- `createMemoryWorkbenchStorage()` — process memory (tests / ephemeral hosts)
+- `createBrowserWorkbenchStorage({ kind: 'local' | 'session' })` — wraps web storage
+
+Semantic scopes (`WorkbenchStorageScope`: `user` | `workspace` | `session` |
+`secret`) guide which backing store a host should use for a feature key. The
+`secret` scope must **not** use this adapter with web storage — use
+`createMemorySecretStorage()` or Electron `createEncryptedSecretVault`.
 
 Browser hosts can keep using `localStorage` implicitly. Desktop or embedded
 hosts can pass a file-backed or user-data-backed adapter through
