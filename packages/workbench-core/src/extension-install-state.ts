@@ -18,10 +18,21 @@ export interface InstalledExtensionRecord {
 }
 
 export interface ApplyExtensionInstallPlanToRecordsInput {
+  /** Required when `plan.requiresApproval` is true; otherwise install is refused. */
+  readonly approved?: boolean | undefined;
   readonly currentRecords: readonly InstalledExtensionRecord[];
   readonly installSources: readonly ExtensionInstallPlanRecordSource[];
   readonly installedAt?: string | undefined;
   readonly plan: ExtensionInstallPlanRecordPlan;
+}
+
+export class ExtensionInstallApprovalRequiredError extends Error {
+  readonly code = 'EXTENSION_INSTALL_APPROVAL_REQUIRED' as const;
+
+  constructor(message = 'Extension install requires explicit approval.') {
+    super(message);
+    this.name = 'ExtensionInstallApprovalRequiredError';
+  }
 }
 
 export interface ExtensionInstallPlanRecordSource {
@@ -36,6 +47,7 @@ interface ExtensionInstallPlanRecordPlan {
     readonly kind: 'already-enabled' | 'enable' | 'install';
   }[];
   readonly blocked: boolean;
+  readonly requiresApproval?: boolean | undefined;
 }
 
 export function isInstalledExtensionPersistenceAvailable(): boolean {
@@ -105,6 +117,7 @@ export function installExtensionRecord(
 }
 
 export function applyExtensionInstallPlanToRecords({
+  approved = false,
   currentRecords,
   installSources,
   installedAt = new Date().toISOString(),
@@ -112,6 +125,10 @@ export function applyExtensionInstallPlanToRecords({
 }: ApplyExtensionInstallPlanToRecordsInput): InstalledExtensionRecord[] {
   if (plan.blocked) {
     return [...currentRecords];
+  }
+
+  if (plan.requiresApproval && !approved) {
+    throw new ExtensionInstallApprovalRequiredError();
   }
 
   const nextById = new Map(currentRecords.map((record) => [record.id, record]));

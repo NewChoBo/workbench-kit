@@ -11,6 +11,7 @@ import {
 } from '@workbench-kit/workbench-core';
 import type {
   ExtensionCatalogBrowseEntry,
+  ExtensionInstallOptions,
   ExtensionManagementEntry,
   ExtensionManagementPendingAction,
 } from '@workbench-kit/react/workbench/management';
@@ -120,7 +121,7 @@ export function useExtensionManagementModel({
   }, [catalogEntries, extensionRegistry, installedRecords]);
 
   const installCatalogEntry = useCallback(
-    (entry: ExtensionCatalogBrowseEntry) => {
+    (entry: ExtensionCatalogBrowseEntry, options?: ExtensionInstallOptions) => {
       const installContext = createExtensionInstallPlanningContext({
         catalogEntries,
         extensionRegistry,
@@ -131,7 +132,12 @@ export function useExtensionManagementModel({
         return;
       }
 
+      if (plan.requiresApproval && options?.approved !== true) {
+        return;
+      }
+
       const next = applyExtensionInstallPlanToRecords({
+        approved: options?.approved === true || !plan.requiresApproval,
         currentRecords: installedRecords,
         installSources: installContext.installSources,
         plan,

@@ -17,6 +17,7 @@ import {
   extensionCategoryIconTone,
   formatExtensionCategoryLabel,
 } from './extension-category-display.js';
+import { resolveExtensionInstallOptions } from './extension-install-approval.js';
 import { ManagementFilterChips } from './ManagementFilterChips.js';
 import type {
   ExtensionCatalogBrowseEntry,
@@ -318,7 +319,12 @@ function MarketplaceExtensionList({
                 }
                 type="button"
                 variant={entry.installed ? 'default' : 'primary'}
-                onClick={() => onInstall?.(entry)}
+                onClick={() => {
+                  if (!onInstall) return;
+                  const options = resolveExtensionInstallOptions(entry);
+                  if (!options) return;
+                  onInstall(entry, options);
+                }}
               >
                 {entry.installed
                   ? 'Installed'

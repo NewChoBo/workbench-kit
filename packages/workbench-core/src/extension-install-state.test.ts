@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  ExtensionInstallApprovalRequiredError,
   applyExtensionInstallPlanToRecords,
   installExtensionRecord,
   loadInstalledExtensions,
@@ -124,6 +125,55 @@ describe('extension-install-state', () => {
         id: 'target',
         installedAt,
         manifestUrl: 'target',
+      },
+    ]);
+  });
+
+  it('refuses plans that require approval until approved is true', () => {
+    const installSources = [
+      {
+        category: 'utility',
+        id: 'privileged',
+        manifestUrl: 'privileged',
+      },
+    ];
+    const plan = createExtensionInstallPlan({
+      availableExtensions: [
+        extension('privileged', {
+          permissions: ['workspace.write'],
+        }),
+      ],
+      installSources,
+      installedRecords: [],
+      targetExtensionId: 'privileged',
+    });
+
+    expect(plan.requiresApproval).toBe(true);
+    expect(plan.blocked).toBe(false);
+
+    expect(() =>
+      applyExtensionInstallPlanToRecords({
+        currentRecords: [],
+        installSources,
+        plan,
+      }),
+    ).toThrow(ExtensionInstallApprovalRequiredError);
+
+    expect(
+      applyExtensionInstallPlanToRecords({
+        approved: true,
+        currentRecords: [],
+        installSources,
+        installedAt: '2026-06-21T00:00:00.000Z',
+        plan,
+      }),
+    ).toEqual([
+      {
+        category: 'utility',
+        enabled: true,
+        id: 'privileged',
+        installedAt: '2026-06-21T00:00:00.000Z',
+        manifestUrl: 'privileged',
       },
     ]);
   });

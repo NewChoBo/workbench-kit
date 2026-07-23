@@ -115,12 +115,18 @@ export interface ExtensionCatalogBrowseEntry {
   readonly manifestUrl: string;
 }
 
+export interface ExtensionInstallOptions {
+  /** Required when the install plan sets `requiresApproval`. */
+  readonly approved?: boolean | undefined;
+}
+
 export interface ExtensionManagementPanelProps {
   browseEntries: readonly ExtensionCatalogBrowseEntry[];
   catalogError?: string | undefined;
   catalogLoading?: boolean | undefined;
   className?: string | undefined;
   installedEntries: readonly ExtensionManagementEntry[];
-  onInstall?: ((entry: ExtensionCatalogBrowseEntry) => void) | undefined;
+  onInstall?:
+    ((entry: ExtensionCatalogBrowseEntry, options?: ExtensionInstallOptions) => void) | undefined;
   onToggleEnabled?: ((entry: ExtensionManagementEntry, enabled: boolean) => void) | undefined;
 }

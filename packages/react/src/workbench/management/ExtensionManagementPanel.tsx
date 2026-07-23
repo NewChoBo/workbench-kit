@@ -7,6 +7,7 @@ import {
   extensionCategoryIconTone,
   formatExtensionCategoryLabel,
 } from './extension-category-display.js';
+import { resolveExtensionInstallOptions } from './extension-install-approval.js';
 import { ManagementFilterChips } from './ManagementFilterChips.js';
 import { ManagementCard, ManagementCardList } from './ManagementCard.js';
 import { ManagementGroup, ManagementGroups } from './ManagementGroup.js';
@@ -378,7 +379,12 @@ function ExtensionCatalogCard({
           }
           type="button"
           variant={entry.installed ? 'default' : 'primary'}
-          onClick={() => onInstall?.(entry)}
+          onClick={() => {
+            if (!onInstall) return;
+            const options = resolveExtensionInstallOptions(entry);
+            if (!options) return;
+            onInstall(entry, options);
+          }}
         >
           {entry.installed ? 'Installed' : entry.installPlan?.blocked ? 'Blocked' : 'Install'}
         </Button>

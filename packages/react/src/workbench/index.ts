@@ -61,6 +61,7 @@ export {
 } from './CommandPalette';
 export { WorkbenchMarkdownPreview } from './MarkdownPreview';
 export type { WorkbenchMarkdownPreviewProps } from './MarkdownPreview';
+export { sanitizeMarkdownHref } from './sanitizeMarkdownHref';
 export {
   workbenchMarkdownRemarkPlugins,
   workbenchMarkdownRehypePlugins,
