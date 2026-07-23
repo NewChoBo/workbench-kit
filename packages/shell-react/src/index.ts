@@ -86,6 +86,16 @@ export { SampleFieldRemapDemo, type SampleFieldRemapDemoProps } from './field-re
 export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap/panel.js';
 export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './field-remap/flow.js';
 export {
+  DEFAULT_JSONATA_MAX_EXPRESSION_LENGTH,
+  DEFAULT_JSONATA_TIMEOUT_MS,
+  JSONATA_TRANSFORM_ID,
+  JsonataTransformTimeoutError,
+  createJsonataValueTransform,
+  jsonataValueTransform,
+  type CreateJsonataValueTransformOptions,
+  type JsonataTransformErrorPolicy,
+} from './field-remap/jsonata-transform.js';
+export {
   FIELD_REMAP_SAMPLES,
   getFieldRemapSample,
   isFieldRemapSampleId,

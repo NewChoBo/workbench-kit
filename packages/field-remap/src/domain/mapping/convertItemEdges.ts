@@ -1,3 +1,4 @@
+import { throwIfAborted } from '../abort.js';
 import { edgeTransformIds } from '../document/mappingEdge.js';
 import { applyTransformChain } from '../../registry/createValueTransformRegistry.js';
 import { BUILTIN_TRANSFORM_IDS } from '../../registry/builtinTransforms.js';
@@ -53,6 +54,8 @@ export async function convertArrayWithItemEdges(input: {
       let outItem: Record<string, unknown> = {};
 
       for (const edge of input.itemEdges) {
+        throwIfAborted(input.context?.signal);
+
         const sourceField = findSourceField(input.sources, edge.sourceFieldId);
         const targetSlot =
           findTargetSlot(input.targets, edge.targetSlotId) ??

@@ -134,6 +134,11 @@ export interface TransformContext {
    */
   readonly record?: Readonly<Record<string, unknown>>;
   readonly options?: Readonly<Record<string, unknown>>;
+  /**
+   * Optional cancellation signal. `applyTransformChain` / `convertToShape` check
+   * between steps and reject with `AbortError` when aborted.
+   */
+  readonly signal?: AbortSignal;
 }
 
 /** Declares a host-editable option consumed via `context.options[key]`. */

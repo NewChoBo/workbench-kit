@@ -112,6 +112,8 @@ export type {
   ConvertToShapeSlotResult,
 } from './domain/shapes/convertToShape.js';
 
+export { createAbortError, isAbortError, throwIfAborted } from './domain/abort.js';
+
 export { sourceFieldsFromPlainObject } from './domain/ingest/sourceFieldsFromPlainObject.js';
 export type { SourceFieldsFromPlainObjectOptions } from './domain/ingest/sourceFieldsFromPlainObject.js';
 

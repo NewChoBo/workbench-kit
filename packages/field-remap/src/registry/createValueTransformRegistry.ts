@@ -1,3 +1,4 @@
+import { throwIfAborted } from '../domain/abort.js';
 import { canonicalizeTransformId, MAX_TRANSFORM_CHAIN } from '../domain/constants.js';
 import type {
   FieldDataType,
@@ -56,6 +57,7 @@ export async function applyTransformChain(
   let current = value;
   const ids = transformIds.slice(0, MAX_TRANSFORM_CHAIN);
   for (let index = 0; index < ids.length; index += 1) {
+    throwIfAborted(context.signal);
     const stepOptions = optionSteps?.[index];
     const stepContext =
       stepOptions && Object.keys(stepOptions).length > 0

@@ -100,6 +100,15 @@ Hosts may `registry.register()` additional transforms (the sample registers `exp
 [jsonata](https://jsonata.org/)). `convertToShape` / `applyTransformChain` are async so Promise-returning
 host transforms (JSONata 2.x) resolve correctly.
 
+### Cancellation
+
+Pass `signal` on `convertToShape` (or `TransformContext.signal`) to cancel stale previews.
+Aborted runs reject with `AbortError` and stop further edges / chain steps. The shell Field Remap
+panel wires an `AbortController` to effect cleanup.
+
+Host JSONata transforms in `@workbench-kit/shell-react` are bounded by default (`timeoutMs`,
+`maxExpressionLength`, `onError: 'throw'`). Use `createJsonataValueTransform()` to override.
+
 ## Layout
 
 ```text

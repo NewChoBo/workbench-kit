@@ -1,3 +1,4 @@
+import { throwIfAborted } from '../abort.js';
 import type { ConversionDefinition } from './conversionDefinition.js';
 import {
   mergeSourceShapes,
@@ -27,6 +28,12 @@ export interface ConvertToShapeInput {
   readonly inputs: Readonly<Record<string, unknown>>;
   readonly transforms: ValueTransformRegistry;
   readonly context?: TransformContext;
+  /**
+   * Optional cancellation. Merged into transform context as `signal` (wins over
+   * `context.signal` when both are set). Aborted conversions reject with `AbortError`
+   * and do not apply further edges.
+   */
+  readonly signal?: AbortSignal;
 }
 
 export interface ConvertToShapeSlotResult {
@@ -115,6 +122,14 @@ function readFieldValue(field: SourceField, inputs: Readonly<Record<string, unkn
  * Awaits Promise-returning host transforms (e.g. JSONata 2.x).
  */
 export async function convertToShape(input: ConvertToShapeInput): Promise<ConvertToShapeResult> {
+  const signal = input.signal ?? input.context?.signal;
+  const context: TransformContext = {
+    ...input.context,
+    ...(signal ? { signal } : {}),
+  };
+
+  throwIfAborted(signal);
+
   const sourceShapes: DataShape[] = [];
   for (const shapeId of input.conversion.sourceShapeIds) {
     const shape = resolveShape(input.shapes, shapeId);
@@ -142,6 +157,8 @@ export async function convertToShape(input: ConvertToShapeInput): Promise<Conver
   const slots: ConvertToShapeSlotResult[] = [];
 
   for (const edge of input.conversion.document.edges) {
+    throwIfAborted(signal);
+
     const sourceField = findSourceField(sources, edge.sourceFieldId);
     if (!sourceField) {
       continue;
@@ -162,15 +179,15 @@ export async function convertToShape(input: ConvertToShapeInput): Promise<Conver
             sources,
             targets,
             transforms: input.transforms,
-            context: input.context,
+            context,
           })
         : await resolveMappedValue(edge, sourceValue, input.transforms, {
-            ...input.context,
+            ...context,
             sampleValue: sourceValue,
             record: isPlainObject(sourceValue)
               ? sourceValue
-              : isPlainObject(input.context?.record)
-                ? input.context.record
+              : isPlainObject(context.record)
+                ? context.record
                 : undefined,
           });
 
