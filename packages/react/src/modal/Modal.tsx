@@ -1,13 +1,17 @@
 import {
+  useCallback,
   useId,
+  useRef,
   type CSSProperties,
   type FormEventHandler,
   type MouseEvent,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import { cx } from '../utils/cx';
 import { ModalResizeHandles } from './ModalResizeHandles';
 import { ModalTitlebar } from './ModalTitlebar';
+import { useModalFocusTrap } from './useModalFocusTrap';
 import { useModalWindowFrame } from './useModalWindowFrame';
 import {
   resolveWorkbenchWindowChromeDataAttributes,
@@ -30,16 +34,22 @@ export interface ModalProps {
   bodyLayout?: ModalBodyLayout | undefined;
   bodyPadding?: ModalBodyPadding | undefined;
   bodyScroll?: 'auto' | 'hidden' | undefined;
+  /** When true (default), Escape calls `onClose`. */
+  closeOnEscape?: boolean | undefined;
   closeLabel?: string | undefined;
   defaultHeight?: number | undefined;
   defaultMaximized?: boolean | undefined;
   defaultWidth?: number | undefined;
+  /** Optional element to focus when the modal mounts (must be inside the dialog). */
+  initialFocusRef?: RefObject<HTMLElement | null> | undefined;
   labelledBy?: string | undefined;
   maximizeLabel?: string | undefined;
   minHeight?: number | undefined;
   minWidth?: number | undefined;
   onClose: () => void;
   onSubmit?: FormEventHandler<HTMLFormElement> | undefined;
+  /** When true (default), restore focus to the previously focused element on unmount. */
+  restoreFocusOnClose?: boolean | undefined;
   restoreLabel?: string | undefined;
 }
 
@@ -133,22 +143,26 @@ export function Modal({
   bodyLayout = 'block',
   bodyPadding = 'none',
   bodyScroll = 'hidden',
+  closeOnEscape = true,
   closeLabel,
   defaultHeight,
   defaultMaximized = false,
   defaultWidth,
+  initialFocusRef,
   labelledBy,
   maximizeLabel,
   minHeight = 200,
   minWidth = 320,
   onClose,
   onSubmit,
+  restoreFocusOnClose = true,
   restoreLabel,
 }: ModalProps) {
   const modalClassName = cx('ui-modal', className);
   const chromeAttributes = resolveWorkbenchWindowChromeDataAttributes(chrome);
   const generatedLabelId = useId();
   const resolvedLabelledBy = labelledBy ?? generatedLabelId;
+  const dialogRef = useRef<HTMLElement | null>(null);
 
   const {
     assignFrameRef,
@@ -167,6 +181,22 @@ export function Modal({
     minWidth,
   });
 
+  const setFrameRef = useCallback(
+    (node: HTMLDivElement | HTMLFormElement | null) => {
+      dialogRef.current = node;
+      assignFrameRef(node);
+    },
+    [assignFrameRef],
+  );
+
+  useModalFocusTrap({
+    closeOnEscape,
+    containerRef: dialogRef,
+    initialFocusRef,
+    onClose,
+    restoreFocusOnClose,
+  });
+
   const isPositioned = bounds !== null || maximized;
 
   return (
@@ -183,7 +213,7 @@ export function Modal({
           ...(chromeAttributes ?? {}),
         }}
         footer={footer}
-        frameRef={assignFrameRef}
+        frameRef={setFrameRef}
         modalClassName={modalClassName}
         resolvedLabelledBy={resolvedLabelledBy}
         resizeHandles={maximized ? null : <ModalResizeHandles onResizeStart={handleResizeStart} />}
