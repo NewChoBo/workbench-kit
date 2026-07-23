@@ -62,6 +62,16 @@ function cacheKeyFromProtocolUrl(requestUrl: string): string {
   return decodeURIComponent(url.pathname.replace(/^\//, ''));
 }
 
+function createPrivilegedSchemePrivileges(corsEnabled: boolean): Record<string, boolean> {
+  return {
+    standard: true,
+    secure: true,
+    supportFetchAPI: true,
+    corsEnabled,
+    stream: true,
+  };
+}
+
 /**
  * Populate the root-confined cache from an allowlisted HTTPS response.
  * Hosts own which URLs are fetched and how hash/TTL/size policy is chosen.
@@ -119,13 +129,7 @@ export function registerRootConfinedAssetProtocol(
   protocol.registerSchemesAsPrivileged?.([
     {
       scheme,
-      privileges: {
-        standard: true,
-        secure: true,
-        supportFetchAPI: true,
-        corsEnabled,
-        stream: true,
-      },
+      privileges: createPrivilegedSchemePrivileges(corsEnabled),
     },
   ]);
 

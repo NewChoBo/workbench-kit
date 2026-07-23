@@ -5,6 +5,7 @@ import {
   registerRootConfinedAssetProtocol,
   type AssetCacheStore,
   type CachedAssetMeta,
+  type PrivilegedProtocolApi,
 } from './root-confined-asset-protocol.js';
 
 function createMemoryCache(): AssetCacheStore & {
@@ -38,6 +39,32 @@ function resolveInsideRoot(root: string, relativePath: string): string {
   return `${root.replace(/\\/g, '/')}/${relativePath}`;
 }
 
+function createProtocolCapture(): {
+  protocol: PrivilegedProtocolApi;
+  getPrivileges: () => Record<string, boolean> | undefined;
+  getHandler: () =>
+    | ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>)
+    | undefined;
+} {
+  let registeredPrivileges: Record<string, boolean> | undefined;
+  let handler:
+    | ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>)
+    | undefined;
+
+  return {
+    protocol: {
+      registerSchemesAsPrivileged: (schemes) => {
+        registeredPrivileges = schemes[0]?.privileges;
+      },
+      handle: (_scheme, next) => {
+        handler = next;
+      },
+    },
+    getPrivileges: () => registeredPrivileges,
+    getHandler: () => handler,
+  };
+}
+
 describe('root-confined asset protocol helpers', () => {
   it('caches an HTTPS asset and serves it by protocol key', async () => {
     const cache = createMemoryCache();
@@ -56,10 +83,7 @@ describe('root-confined asset protocol helpers', () => {
 
     expect(meta.relativePath).toBe('objects/abc123.bin');
 
-    let handler:
-      ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>) | undefined;
-    let registeredPrivileges: Record<string, boolean> | undefined;
-
+    const capture = createProtocolCapture();
     registerRootConfinedAssetProtocol({
       scheme: 'wk-asset',
       cacheRoot: '/cache',
@@ -67,24 +91,17 @@ describe('root-confined asset protocol helpers', () => {
       policy: { ttlMs: 60_000, maxBytes: 1024 },
       resolveInsideRoot,
       now: () => 1_500,
-      protocol: {
-        registerSchemesAsPrivileged: (schemes) => {
-          registeredPrivileges = schemes[0]?.privileges;
-        },
-        handle: (_scheme, next) => {
-          handler = next;
-        },
-      },
+      protocol: capture.protocol,
     });
 
-    const handled = await handler!({ url: 'wk-asset://abc123' });
+    const handled = await capture.getHandler()!({ url: 'wk-asset://abc123' });
     expect(handled.mimeType).toBe('image/png');
     expect(new TextDecoder().decode(handled.data)).toBe('image-bytes');
-    expect(registeredPrivileges?.corsEnabled).toBe(false);
+    expect(capture.getPrivileges()?.corsEnabled).toBe(false);
   });
 
   it('enables privileged protocol CORS only by explicit opt-in', () => {
-    let registeredPrivileges: Record<string, boolean> | undefined;
+    const capture = createProtocolCapture();
 
     registerRootConfinedAssetProtocol({
       scheme: 'wk-asset',
@@ -93,15 +110,10 @@ describe('root-confined asset protocol helpers', () => {
       policy: { ttlMs: 60_000, maxBytes: 1024 },
       resolveInsideRoot,
       corsEnabled: true,
-      protocol: {
-        registerSchemesAsPrivileged: (schemes) => {
-          registeredPrivileges = schemes[0]?.privileges;
-        },
-        handle: () => undefined,
-      },
+      protocol: capture.protocol,
     });
 
-    expect(registeredPrivileges?.corsEnabled).toBe(true);
+    expect(capture.getPrivileges()?.corsEnabled).toBe(true);
   });
 
   it('rejects oversized assets, path escapes, and expired cache entries', async () => {
@@ -145,8 +157,7 @@ describe('root-confined asset protocol helpers', () => {
     });
     cache.bytes.set('objects/old.bin', new Uint8Array([9]));
 
-    let handler:
-      ((request: { url: string }) => Promise<{ data: Uint8Array; mimeType: string }>) | undefined;
+    const capture = createProtocolCapture();
     registerRootConfinedAssetProtocol({
       scheme: 'wk-asset',
       cacheRoot: '/cache',
@@ -154,13 +165,9 @@ describe('root-confined asset protocol helpers', () => {
       policy: { ttlMs: 10, maxBytes: 1024 },
       resolveInsideRoot,
       now: () => 1_000,
-      protocol: {
-        handle: (_scheme, next) => {
-          handler = next;
-        },
-      },
+      protocol: capture.protocol,
     });
 
-    await expect(handler!({ url: 'wk-asset://old' })).rejects.toThrow(/expired/i);
+    await expect(capture.getHandler()!({ url: 'wk-asset://old' })).rejects.toThrow(/expired/i);
   });
 });
