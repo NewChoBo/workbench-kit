@@ -75,10 +75,8 @@ function assertEncryptionAvailable(cipher: SafeStorageCipher): void {
 
 /**
  * Opaque secret vault using an injected OS-backed cipher.
- * Fails closed when encryption is unavailable (no plaintext fallback).
- * Serializes mutations within this vault instance to prevent lost read-modify-write updates.
- * Hosts must coordinate separate instances or processes that share the same persistence target.
- * Hosts own persistence via readVault/writeVault (compose with platform/node atomic write).
+ * Fails closed when encryption is unavailable; serializes mutations per vault instance.
+ * Hosts own persistence (and multi-instance coordination) via readVault/writeVault.
  */
 export function createEncryptedSecretVault(
   options: CreateEncryptedSecretVaultOptions,

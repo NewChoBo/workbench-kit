@@ -32,18 +32,12 @@ function findUnsafeObjectPathSegment(parts: readonly string[]): string | undefin
   return parts.find((part) => UNSAFE_OBJECT_PATH_SEGMENTS.has(part));
 }
 
-function assertNoUnsafeObjectPathSegments(path: string, parts: readonly string[]): void {
-  const unsafeSegment = findUnsafeObjectPathSegment(parts);
-  if (unsafeSegment) {
-    throw new UnsafeObjectPathError(path, unsafeSegment);
-  }
-}
-
 /** Parse dotted path segments and reject unsafe segments when any parts exist. */
 export function requireObjectPathParts(path: string): string[] {
   const parts = objectPathParts(path);
-  if (parts.length > 0) {
-    assertNoUnsafeObjectPathSegments(path, parts);
+  const unsafeSegment = findUnsafeObjectPathSegment(parts);
+  if (unsafeSegment) {
+    throw new UnsafeObjectPathError(path, unsafeSegment);
   }
   return parts;
 }

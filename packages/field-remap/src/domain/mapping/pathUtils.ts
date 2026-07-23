@@ -5,8 +5,6 @@
 
 import { isSafeObjectPath, requireObjectPathParts } from './objectPathSafety.js';
 
-export { isSafeObjectPath, UnsafeObjectPathError } from './objectPathSafety.js';
-
 /** Placeholder matcher: `{city}`, `{a.b}` — rejects expressions / spaces. */
 const TEMPLATE_PLACEHOLDER_RE = /\{([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\}/g;
 

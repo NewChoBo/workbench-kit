@@ -35,37 +35,26 @@ function createMemoryVault(options?: {
   readonly available?: boolean;
   readonly readVault?: () => Promise<Uint8Array | null>;
   readonly writeVault?: (bytes: Uint8Array) => Promise<void>;
-}): {
-  vault: EncryptedSecretVault;
-  getStored: () => Uint8Array | null;
-  writeVault: ReturnType<typeof vi.fn<(bytes: Uint8Array) => Promise<void>>>;
-} {
+}): EncryptedSecretVault {
   let stored: Uint8Array | null = null;
-  const writeVault =
-    options?.writeVault ??
-    vi.fn(async (bytes: Uint8Array) => {
-      stored = bytes;
-    });
-  const readVault =
-    options?.readVault ??
-    (async () => {
-      return stored?.slice() ?? null;
-    });
-
-  return {
-    vault: createEncryptedSecretVault({
-      cipher: createFakeCipher(options?.available ?? true),
-      readVault,
-      writeVault,
-    }),
-    getStored: () => stored,
-    writeVault: writeVault as ReturnType<typeof vi.fn<(bytes: Uint8Array) => Promise<void>>>,
-  };
+  return createEncryptedSecretVault({
+    cipher: createFakeCipher(options?.available ?? true),
+    readVault:
+      options?.readVault ??
+      (async () => {
+        return stored?.slice() ?? null;
+      }),
+    writeVault:
+      options?.writeVault ??
+      (async (bytes) => {
+        stored = bytes;
+      }),
+  });
 }
 
 describe('createEncryptedSecretVault', () => {
   it('round-trips secrets when encryption is available', async () => {
-    const { vault } = createMemoryVault();
+    const vault = createMemoryVault();
 
     await expect(vault.getSecret('token')).resolves.toBeNull();
     await vault.setSecret('token', 'secret-value');
@@ -79,7 +68,7 @@ describe('createEncryptedSecretVault', () => {
     let readCount = 0;
     const firstReadStarted = createDeferred();
     const releaseFirstRead = createDeferred();
-    const { vault } = createMemoryVault({
+    const vault = createMemoryVault({
       readVault: async () => {
         const snapshot = stored?.slice() ?? null;
         readCount += 1;
@@ -108,7 +97,7 @@ describe('createEncryptedSecretVault', () => {
   });
 
   it('applies mixed mutations in invocation order', async () => {
-    const { vault } = createMemoryVault();
+    const vault = createMemoryVault();
 
     await vault.setSecret('token', 'initial');
     await Promise.all([vault.setSecret('token', 'updated'), vault.deleteSecret('token')]);
@@ -121,7 +110,7 @@ describe('createEncryptedSecretVault', () => {
   it('continues processing mutations after a write failure', async () => {
     let stored: Uint8Array | null = null;
     let failNextWrite = true;
-    const { vault } = createMemoryVault({
+    const vault = createMemoryVault({
       readVault: async () => stored,
       writeVault: async (bytes) => {
         if (failNextWrite) {
@@ -139,7 +128,7 @@ describe('createEncryptedSecretVault', () => {
 
   it('fails closed when encryption is unavailable', async () => {
     const writeVault = vi.fn(async () => undefined);
-    const { vault } = createMemoryVault({
+    const vault = createMemoryVault({
       available: false,
       readVault: async () => null,
       writeVault,
