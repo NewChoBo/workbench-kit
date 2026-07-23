@@ -43,4 +43,54 @@ describe('WorkbenchCommandPalette interactions', () => {
     });
     container.remove();
   });
+
+  it('reuses modal focus trap for Escape dismiss and restore-focus', async () => {
+    let closed = false;
+    const opener = document.createElement('button');
+    opener.textContent = 'Open palette';
+    document.body.append(opener);
+    opener.focus();
+
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchCommandPalette
+          commands={commands}
+          open={true}
+          onClose={() => {
+            closed = true;
+          }}
+        />,
+      );
+    });
+
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        window.requestAnimationFrame(() => resolve());
+      });
+    });
+
+    const input = container.querySelector(
+      '.ui-workbench-command-palette__input',
+    ) as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+    expect(document.activeElement).toBe(input);
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+    });
+    expect(closed).toBe(true);
+
+    await act(async () => {
+      root.unmount();
+    });
+    expect(document.activeElement).toBe(opener);
+    container.remove();
+    opener.remove();
+  });
 });

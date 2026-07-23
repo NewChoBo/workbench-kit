@@ -9,6 +9,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
+import { useModalFocusTrap } from '../../modal/useModalFocusTrap';
 import { IconButton } from '../../primitives/icon-button';
 import { TextInput } from '../../primitives/text-input';
 import { cx } from '../../utils/cx';
@@ -130,8 +131,8 @@ export function WorkbenchCommandPalette({
 }: WorkbenchCommandPaletteProps) {
   const titleId = useId();
   const listId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
   const [uncontrolledActiveCommandId, setUncontrolledActiveCommandId] = useState<string>();
   const [resolvedQuery, setResolvedQuery] = useControllableCommandQuery({
     defaultQuery,
@@ -164,15 +165,13 @@ export function WorkbenchCommandPalette({
     [activeCommandId, onActiveCommandChange],
   );
 
-  const restoreFocus = useCallback(() => {
-    if (!restoreFocusOnClose) return;
-    previousFocusRef.current?.focus();
-  }, [restoreFocusOnClose]);
-
-  const closePalette = useCallback(() => {
-    restoreFocus();
-    onClose();
-  }, [onClose, restoreFocus]);
+  useModalFocusTrap({
+    enabled: open,
+    containerRef: dialogRef,
+    initialFocusRef: inputRef,
+    onClose,
+    restoreFocusOnClose,
+  });
 
   const runCommand = useCallback(
     (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => {
@@ -181,18 +180,6 @@ export function WorkbenchCommandPalette({
     },
     [onRunCommand],
   );
-
-  useEffect(() => {
-    if (!open) return;
-
-    previousFocusRef.current = document.activeElement as HTMLElement | null;
-    const frame = window.requestAnimationFrame(() => inputRef.current?.focus());
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      restoreFocus();
-    };
-  }, [open, restoreFocus]);
 
   useEffect(() => {
     if (!open) return;
@@ -207,12 +194,6 @@ export function WorkbenchCommandPalette({
 
   const handlePaletteKeyDown = useCallback(
     (event: WorkbenchCommandPaletteKeyEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closePalette();
-        return;
-      }
-
       if (
         event.key !== 'ArrowDown' &&
         event.key !== 'ArrowUp' &&
@@ -275,15 +256,7 @@ export function WorkbenchCommandPalette({
         updateActiveCommand(filteredCommands[nextIndex]?.id);
       }
     },
-    [
-      activeCommand,
-      activeIndex,
-      closePalette,
-      commandQuery,
-      filteredCommands,
-      runCommand,
-      updateActiveCommand,
-    ],
+    [activeCommand, activeIndex, commandQuery, filteredCommands, runCommand, updateActiveCommand],
   );
 
   useEffect(() => {
@@ -308,13 +281,14 @@ export function WorkbenchCommandPalette({
   if (!open) return null;
 
   return (
-    <div className="ui-workbench-command-palette-overlay" onClick={closePalette}>
+    <div className="ui-workbench-command-palette-overlay" onClick={onClose}>
       <div
         aria-labelledby={titleId}
         aria-modal="true"
         className={cx('ui-workbench-command-palette', className)}
         role="dialog"
         {...props}
+        ref={dialogRef}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="ui-workbench-command-palette__header">
@@ -325,7 +299,7 @@ export function WorkbenchCommandPalette({
             className="ui-workbench-command-palette__close"
             icon="codicon-close"
             label={closeLabel}
-            onClick={closePalette}
+            onClick={onClose}
           />
         </div>
         <div className="ui-workbench-command-palette__search">
