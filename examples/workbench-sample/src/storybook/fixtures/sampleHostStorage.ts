@@ -3,7 +3,14 @@ import {
   DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
 } from '@workbench-kit/shell-react';
 
-import { SAMPLE_AUTH_SESSION_KEY, SAMPLE_AUTH_USERNAME } from '../../dummy-backend/index.js';
+import {
+  SAMPLE_AUTH_BASIC_USERNAME,
+  SAMPLE_AUTH_LEGACY_SESSION_STORAGE_KEY,
+  SAMPLE_AUTH_USERNAME,
+  clearSampleAuthSession,
+  resetSampleAuthSecretStorage,
+  writeSampleAuthSession,
+} from '../../dummy-backend/index.js';
 import { createSampleInstalledExtensionsStorageKey } from '../../sample-installed-extension-storage.js';
 import { SAMPLE_PERMISSION_ROLE_STORAGE_KEY } from '../../sample-permission-role-storage.js';
 
@@ -20,6 +27,9 @@ export interface SampleInstalledExtensionSeed {
 /**
  * Deterministic storage reset for sample-host Storybook / future Playwright seeds.
  * Safe to call from story `render` (browser) only — no-ops when `window` is missing.
+ *
+ * Auth session seeds use in-memory {@link resetSampleAuthSecretStorage} /
+ * {@link writeSampleAuthSession}, not `sessionStorage`.
  */
 export function resetSampleHostStorage(account: SampleStoryAccount): void {
   if (typeof window === 'undefined') {
@@ -32,16 +42,16 @@ export function resetSampleHostStorage(account: SampleStoryAccount): void {
   for (const storageAccount of ['anonymous', 'tester', 'basic']) {
     window.localStorage.removeItem(createSampleInstalledExtensionsStorageKey(storageAccount));
   }
+  window.sessionStorage.removeItem(SAMPLE_AUTH_LEGACY_SESSION_STORAGE_KEY);
+
+  resetSampleAuthSecretStorage();
 
   if (account === 'none') {
-    window.sessionStorage.removeItem(SAMPLE_AUTH_SESSION_KEY);
+    clearSampleAuthSession();
     return;
   }
 
-  window.sessionStorage.setItem(
-    SAMPLE_AUTH_SESSION_KEY,
-    account === 'tester' ? SAMPLE_AUTH_USERNAME : 'basic',
-  );
+  writeSampleAuthSession(account === 'tester' ? SAMPLE_AUTH_USERNAME : SAMPLE_AUTH_BASIC_USERNAME);
 }
 
 export function seedSampleInstalledExtension(

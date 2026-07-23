@@ -9,11 +9,20 @@ import {
   type SampleHostBackendSession,
   type SampleHostBackendSignInRequest,
 } from '@workbench-kit/contracts';
+import {
+  createMemorySecretStorage,
+  type WorkbenchSecretStorageService,
+} from '@workbench-kit/platform';
 
 export const SAMPLE_HOST_BACKEND_NAME = 'Sample Dummy Backend' as const;
 export const SAMPLE_AUTH_USERNAME = 'tester' as const;
 export const SAMPLE_AUTH_BASIC_USERNAME = 'basic' as const;
-export const SAMPLE_AUTH_SESSION_KEY = 'workbench-sample.auth.session' as const;
+/** Extension id used to namespace sample auth secrets. */
+export const SAMPLE_AUTH_EXTENSION_ID = 'workbench-kit.sample-host' as const;
+/** Secret key for the demo session account id (not a browser storage key). */
+export const SAMPLE_AUTH_SESSION_KEY = 'auth.sessionAccountId' as const;
+/** @deprecated Legacy sessionStorage key; cleared on migrate/read. */
+export const SAMPLE_AUTH_LEGACY_SESSION_STORAGE_KEY = 'workbench-sample.auth.session' as const;
 
 const SAMPLE_HOST_BACKEND_SESSION_LATENCY_MS = 350;
 const SAMPLE_HOST_BACKEND_SIGN_IN_LATENCY_MS = 450;
@@ -23,6 +32,18 @@ export type SampleProfile = SampleHostBackendProfile;
 export type SampleLinkedAccount = SampleHostBackendLinkedAccount;
 export type SampleAuthSession = SampleHostBackendSession;
 export type SampleAuthCredentials = Pick<SampleHostBackendSignInRequest, 'identifier' | 'password'>;
+
+let sampleAuthSecrets: WorkbenchSecretStorageService = createMemorySecretStorage();
+
+/** Replace the in-memory secret store (Storybook / test seeds). */
+export function resetSampleAuthSecretStorage(): WorkbenchSecretStorageService {
+  sampleAuthSecrets = createMemorySecretStorage();
+  return sampleAuthSecrets;
+}
+
+export function getSampleAuthSecretStorage(): WorkbenchSecretStorageService {
+  return sampleAuthSecrets;
+}
 
 export function createSampleMockProfile(
   workspaceLabel: string,
@@ -117,11 +138,11 @@ export function validateSampleLogin(identifier: string, password: string): boole
 }
 
 export function readSampleAuthSession(): string | undefined {
-  if (typeof sessionStorage === 'undefined') {
-    return undefined;
-  }
+  migrateLegacySampleAuthSession();
 
-  const value = sessionStorage.getItem(SAMPLE_AUTH_SESSION_KEY);
+  const value = sampleAuthSecrets
+    .forExtension(SAMPLE_AUTH_EXTENSION_ID)
+    .get(SAMPLE_AUTH_SESSION_KEY);
   if (value === SAMPLE_AUTH_USERNAME || value === SAMPLE_AUTH_BASIC_USERNAME) {
     return value;
   }
@@ -130,19 +151,41 @@ export function readSampleAuthSession(): string | undefined {
 }
 
 export function writeSampleAuthSession(accountId: string): void {
-  if (typeof sessionStorage === 'undefined') {
-    return;
-  }
-
-  sessionStorage.setItem(SAMPLE_AUTH_SESSION_KEY, accountId);
+  sampleAuthSecrets.forExtension(SAMPLE_AUTH_EXTENSION_ID).set(SAMPLE_AUTH_SESSION_KEY, accountId);
+  clearLegacySampleAuthSessionStorage();
 }
 
 export function clearSampleAuthSession(): void {
+  sampleAuthSecrets.forExtension(SAMPLE_AUTH_EXTENSION_ID).delete(SAMPLE_AUTH_SESSION_KEY);
+  clearLegacySampleAuthSessionStorage();
+}
+
+function migrateLegacySampleAuthSession(): void {
   if (typeof sessionStorage === 'undefined') {
     return;
   }
 
-  sessionStorage.removeItem(SAMPLE_AUTH_SESSION_KEY);
+  const legacy = sessionStorage.getItem(SAMPLE_AUTH_LEGACY_SESSION_STORAGE_KEY);
+  if (legacy !== SAMPLE_AUTH_USERNAME && legacy !== SAMPLE_AUTH_BASIC_USERNAME) {
+    return;
+  }
+
+  const current = sampleAuthSecrets
+    .forExtension(SAMPLE_AUTH_EXTENSION_ID)
+    .get(SAMPLE_AUTH_SESSION_KEY);
+  if (!current) {
+    sampleAuthSecrets
+      .forExtension(SAMPLE_AUTH_EXTENSION_ID)
+      .set(SAMPLE_AUTH_SESSION_KEY, legacy);
+  }
+  clearLegacySampleAuthSessionStorage();
+}
+
+function clearLegacySampleAuthSessionStorage(): void {
+  if (typeof sessionStorage === 'undefined') {
+    return;
+  }
+  sessionStorage.removeItem(SAMPLE_AUTH_LEGACY_SESSION_STORAGE_KEY);
 }
 
 function createSampleAuthenticatedSession(
