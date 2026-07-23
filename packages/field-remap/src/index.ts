@@ -45,6 +45,7 @@ export {
   listArrayItemProjectionOptions,
   projectCollectionItems,
   readObjectPath,
+  UnsafeObjectPathError,
   writeObjectPath,
 } from './domain/mapping/pathUtils.js';
 export type { ArrayItemProjectionOption } from './domain/mapping/pathUtils.js';

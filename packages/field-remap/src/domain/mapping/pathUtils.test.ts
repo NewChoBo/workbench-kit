@@ -6,6 +6,7 @@ import {
   listArrayItemProjectionOptions,
   projectCollectionItems,
   readObjectPath,
+  UnsafeObjectPathError,
   writeObjectPath,
 } from './pathUtils.js';
 
@@ -22,6 +23,23 @@ describe('pathUtils', () => {
     expect(next).toEqual({ display: { timeText: 'old', condition: 'Clear' } });
     expect(root).toEqual({ display: { timeText: 'old' } });
     expect(writeObjectPath(null, 'a.b', 1)).toEqual({ a: { b: 1 } });
+  });
+
+  it('rejects dangerous object path segments on read and write', () => {
+    const unsafePaths = [
+      '__proto__.polluted',
+      'constructor.prototype.polluted',
+      'safe.prototype.value',
+    ];
+
+    for (const path of unsafePaths) {
+      expect(isSafeObjectPath(path)).toBe(false);
+      expect(() => readObjectPath({}, path)).toThrow(UnsafeObjectPathError);
+      expect(() => writeObjectPath({}, path, true)).toThrow(UnsafeObjectPathError);
+    }
+
+    expect(Object.prototype).not.toHaveProperty('polluted');
+    expect(Object.getPrototypeOf({})).toBe(Object.prototype);
   });
 
   it('fills safe {path} templates without eval', () => {

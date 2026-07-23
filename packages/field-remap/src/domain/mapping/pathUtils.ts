@@ -6,15 +6,48 @@
 /** Identifier or dotted path: `city`, `a.b` (no expressions / eval). */
 const SAFE_PATH_RE = /^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$/;
 
+const UNSAFE_OBJECT_PATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
+
 /** Placeholder matcher: `{city}`, `{a.b}` — rejects expressions / spaces. */
 const TEMPLATE_PLACEHOLDER_RE = /\{([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\}/g;
+
+export class UnsafeObjectPathError extends Error {
+  readonly code = 'unsafe_object_path' as const;
+  readonly path: string;
+  readonly segment: string;
+
+  constructor(path: string, segment: string) {
+    super(`Object path "${path}" contains unsafe segment "${segment}".`);
+    this.name = 'UnsafeObjectPathError';
+    this.path = path;
+    this.segment = segment;
+  }
+}
+
+function objectPathParts(path: string): string[] {
+  return path
+    .split('.')
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+}
+
+function assertSafeObjectPathSegments(path: string, parts: readonly string[]): void {
+  const unsafeSegment = parts.find((part) => UNSAFE_OBJECT_PATH_SEGMENTS.has(part));
+  if (unsafeSegment) {
+    throw new UnsafeObjectPathError(path, unsafeSegment);
+  }
+}
 
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 export function isSafeObjectPath(path: string): boolean {
-  return SAFE_PATH_RE.test(path.trim());
+  const trimmed = path.trim();
+  return (
+    SAFE_PATH_RE.test(trimmed) &&
+    !objectPathParts(trimmed).some((part) => UNSAFE_OBJECT_PATH_SEGMENTS.has(part))
+  );
 }
 
 /**
@@ -45,13 +78,11 @@ export function applyStringTemplate(
 }
 
 export function readObjectPath(value: unknown, path: string): unknown {
-  const parts = path
-    .split('.')
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
+  const parts = objectPathParts(path);
   if (parts.length === 0) {
     return value;
   }
+  assertSafeObjectPathSegments(path, parts);
 
   let current: unknown = value;
   for (const part of parts) {
@@ -72,13 +103,11 @@ export function writeObjectPath(
   path: string,
   value: unknown,
 ): Record<string, unknown> {
-  const parts = path
-    .split('.')
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
+  const parts = objectPathParts(path);
   if (parts.length === 0) {
     return isPlainObject(root) ? { ...root } : {};
   }
+  assertSafeObjectPathSegments(path, parts);
 
   const result: Record<string, unknown> = isPlainObject(root) ? { ...root } : {};
   let cursor: Record<string, unknown> = result;
