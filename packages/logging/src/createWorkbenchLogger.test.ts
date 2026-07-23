@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createWorkbenchLogger } from './createWorkbenchLogger';
+import { createWorkbenchLogger, type WorkbenchLogEvent } from './createWorkbenchLogger';
 import { isNetworkTransportError, normalizeErrorMessage } from './normalizeErrorMessage';
 
 describe('createWorkbenchLogger', () => {
@@ -20,6 +20,56 @@ describe('createWorkbenchLogger', () => {
 
     expect(debug).not.toHaveBeenCalled();
     debug.mockRestore();
+  });
+
+  it('forwards filtered events to custom sinks', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const events: WorkbenchLogEvent[] = [];
+
+    createWorkbenchLogger('telemetry', {
+      enabled: true,
+      minLevel: 'info',
+      sinks: [
+        {
+          write(event) {
+            events.push(event);
+          },
+        },
+      ],
+    }).info('ping', { ok: true });
+
+    expect(info).toHaveBeenCalledOnce();
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      data: { ok: true },
+      label: '[workbench-kit:telemetry]',
+      level: 'info',
+      message: 'ping',
+      scope: 'telemetry',
+    });
+    info.mockRestore();
+  });
+
+  it('isolates sink errors from callers', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+
+    expect(() =>
+      createWorkbenchLogger('resilient', {
+        consoleSink: false,
+        enabled: true,
+        minLevel: 'info',
+        sinks: [
+          {
+            write() {
+              throw new Error('sink failed');
+            },
+          },
+        ],
+      }).info('still ok'),
+    ).not.toThrow();
+
+    expect(info).not.toHaveBeenCalled();
+    info.mockRestore();
   });
 });
 
