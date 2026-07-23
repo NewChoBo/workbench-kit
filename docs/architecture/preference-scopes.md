@@ -12,6 +12,10 @@ Workbench Kit v1 preference layers follow a fixed merge order inspired by VS Cod
 
 Merge rule: **workspace overrides default; local overrides workspace** for the same key.
 
+These preference merge scopes are **not** the same as host
+`WorkbenchStorageScope` (`user` / `workspace` / `session` / `secret`) on
+`WorkbenchStorageAdapter` — see [Extension Install — Host storage](./extension-install.md).
+
 Implementation:
 
 - `@workbench-kit/workbench-config` — `PreferenceScope`, `mergeScopedPreferences`, `mergePreferenceValuesByScope`
