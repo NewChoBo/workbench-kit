@@ -149,7 +149,7 @@ If `type` / `intent` are missing on an implement-like request, automation
 Machine-readable marker (HTML comment) on automation posts:
 
 ```html
-<!-- automation:cursor-issue-handler status=<started|skipped|needs-human|pr-open|done|failed|info> issue=<N> pr=<url-optional> source=<comment|cron> -->
+<!-- automation:cursor-issue-handler status=<started|skipped|needs-human|pr-open|done|failed|info> issue=<N> pr=<url-optional> source=<comment|cron|idle-refactor|structural-refactor> -->
 ```
 
 ### Human / consumer how-to
