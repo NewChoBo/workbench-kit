@@ -8,10 +8,7 @@ import {
   targetSlotsFromPlainObject,
 } from '@workbench-kit/field-remap';
 
-import {
-  FieldRemapFlowMapper,
-  type FieldRemapFlowActions,
-} from './flow.js';
+import { FieldRemapFlowMapper, type FieldRemapFlowActions } from './flow.js';
 import { getFieldRemapSample } from './samples.js';
 
 describe('FieldRemapFlowMapper host chrome', () => {
@@ -96,7 +93,12 @@ describe('FieldRemapFlowMapper host chrome', () => {
 
     await act(async () => {
       pane!.dispatchEvent(
-        new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 12, clientY: 18 }),
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 12,
+          clientY: 18,
+        }),
       );
     });
 

@@ -1,4 +1,5 @@
 export type {
+  ClassRef,
   CombineMappingOperator,
   FieldDataType,
   MappingEdge,
@@ -133,6 +134,17 @@ export {
   setSourceFieldDataType,
   setTargetSlotDataType,
 } from './domain/shapes/shapeEdit.js';
+
+export {
+  projectShapes,
+  projectSourceFields,
+  projectTargetSlots,
+} from './domain/shapes/projectShapes.js';
+export type {
+  ProjectShapesInput,
+  ProjectShapesOptions,
+  ProjectShapesResult,
+} from './domain/shapes/projectShapes.js';
 
 export {
   createConversionRegistry,

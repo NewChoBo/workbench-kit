@@ -120,4 +120,17 @@ describe('FieldRemapPanel', () => {
     // Host-updated transform chain is reflected in preview without remount.
     expect(output.name).toBe('ADA LOVELACE');
   });
+
+  it('renders browse I/O chrome when ioChrome is browse', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(<FieldRemapPanel sample="nested-ab" ioChrome="browse" />);
+    });
+
+    expect(container.querySelector('[data-testid="field-remap-io-browse"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="field-remap-shapes"]')).toBeNull();
+  });
 });

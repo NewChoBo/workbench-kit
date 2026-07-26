@@ -116,6 +116,12 @@ export {
   type ConvertNoteEditorProps,
 } from './field-remap/convert-note-editor.js';
 export {
+  FieldRemapIoClassBrowse,
+  resolveFieldRemapIoChrome,
+  type FieldRemapIoChrome,
+  type FieldRemapIoClassBrowseProps,
+} from './field-remap/io-class-browse.js';
+export {
   FieldRemapShapeIoEditor,
   ingestSourceShape,
   ingestTargetShape,

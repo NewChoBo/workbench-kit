@@ -63,10 +63,13 @@ a lighter mapping detail rail (chain overview, palette, list context).
 `FieldRemapDocument` (v1) stores **edges only**. Hosts own input/output shapes
 (`SourceField[]` / `TargetSlot[]`, or `defineDataShape` + ingest helpers) and pass
 them into `convertToShape` / the shell `FieldRemapPanel` / `FieldRemapFlowMapper`.
-Changing a shape should drop or warn on edges whose field/slot ids disappear —
-use `pruneMappingEdgesForShapes` after ingest. The shell panel’s shape IO editor
-(paste JSON → ingest + `FieldDataType` selects) is an in-memory host aid; it does
-not extend the persisted document.
+Optional `classRef` / `hidden` on fields and slots are additive; use
+`projectShapes` / `projectSourceFields` / `projectTargetSlots` with
+`includeHidden` (default omit hidden) before wiring Flow columns, and
+`pruneMappingEdgesForShapes` after ingest when ids disappear. The shell panel’s
+shape IO editor (paste JSON → ingest + `FieldDataType` selects) is an in-memory
+host aid; browse-first hosts can set `ioChrome="browse"` /
+`FieldRemapIoClassBrowse` instead. Neither path extends the persisted document.
 
 ### Host embed (shell UI)
 
