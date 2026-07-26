@@ -16,6 +16,12 @@ export { FieldRemapDetailPanel, type FieldRemapDetailPanelProps } from './detail
 export { FieldRemapConvertPalette, type FieldRemapConvertPaletteProps } from './convert-palette.js';
 export { ConvertNoteEditor, type ConvertNoteEditorProps } from './convert-note-editor.js';
 export {
+  FieldRemapIoClassBrowse,
+  resolveFieldRemapIoChrome,
+  type FieldRemapIoChrome,
+  type FieldRemapIoClassBrowseProps,
+} from './io-class-browse.js';
+export {
   FieldRemapShapeIoEditor,
   ingestSourceShape,
   ingestTargetShape,

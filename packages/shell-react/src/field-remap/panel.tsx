@@ -7,6 +7,8 @@ import {
   defineDataShape,
   findParentChildMappingConflicts,
   normalizeMappingOperators,
+  projectSourceFields,
+  projectTargetSlots,
   pruneMappingEdgesForShapes,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
@@ -19,6 +21,11 @@ import {
 } from '@workbench-kit/field-remap';
 
 import { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './flow.js';
+import {
+  FieldRemapIoClassBrowse,
+  resolveFieldRemapIoChrome,
+  type FieldRemapIoChrome,
+} from './io-class-browse.js';
 import {
   getFieldRemapSample,
   type FieldRemapSampleDefinition,
@@ -37,8 +44,23 @@ export interface FieldRemapPanelProps {
   readonly sample?: FieldRemapSampleId | FieldRemapSampleDefinition | undefined;
   /** Optional host-owned transform registry (defaults to builtins + JSONata). */
   readonly transforms?: ValueTransformRegistry | undefined;
-  /** When true (default), show paste-JSON / type editors for host-owned shapes. */
+  /**
+   * When true (default), show paste-JSON / type editors for host-owned shapes.
+   * Prefer {@link FieldRemapPanelProps.ioChrome} for browse-first hosts; when
+   * `ioChrome` is omitted, `true` → `edit` and `false` → `none`.
+   */
   readonly editableShapes?: boolean | undefined;
+  /**
+   * I/O chrome mode. `browse` = read-only class/field tree; `edit` = shape IO editor;
+   * `none` = hide I/O chrome. Defaults from `editableShapes` when omitted.
+   */
+  readonly ioChrome?: FieldRemapIoChrome | undefined;
+  /**
+   * When `false` (default), Flow columns omit `hidden` fields/slots.
+   * Browse chrome respects the same flag (show Hidden badges when true).
+   */
+  readonly includeHidden?: boolean | undefined;
+  readonly onIncludeHiddenChange?: ((next: boolean) => void) | undefined;
   readonly className?: string | undefined;
   /**
    * Controlled mapping edges. When provided, the host is the source of truth;
@@ -96,6 +118,9 @@ export function FieldRemapPanel({
   sample: sampleProp,
   transforms: transformsProp,
   editableShapes = true,
+  ioChrome: ioChromeProp,
+  includeHidden: includeHiddenProp,
+  onIncludeHiddenChange,
   className,
   edges: edgesProp,
   onEdgesChange,
@@ -113,6 +138,16 @@ export function FieldRemapPanel({
   onEdgeContextMenu,
   flowActionsRef,
 }: FieldRemapPanelProps): JSX.Element {
+  const ioChrome = resolveFieldRemapIoChrome(ioChromeProp, editableShapes);
+  const [uncontrolledIncludeHidden, setUncontrolledIncludeHidden] = useState(false);
+  const includeHiddenControlled = includeHiddenProp !== undefined;
+  const includeHidden = includeHiddenControlled ? includeHiddenProp : uncontrolledIncludeHidden;
+  const setIncludeHidden = (next: boolean) => {
+    if (!includeHiddenControlled) {
+      setUncontrolledIncludeHidden(next);
+    }
+    onIncludeHiddenChange?.(next);
+  };
   const sample = resolveSample(sampleProp);
   const registry = useMemo(() => {
     if (transformsProp) {
@@ -166,6 +201,28 @@ export function FieldRemapPanel({
   const sourceFields = sourcesControlled ? sourcesProp : uncontrolledSources;
   const targetSlots = targetsControlled ? targetsProp : uncontrolledTargets;
   const sourceSample = sourceSampleControlled ? sourceSampleProp : uncontrolledSourceSample;
+
+  const flowSources = useMemo(
+    () => projectSourceFields(sourceFields, { includeHidden }),
+    [includeHidden, sourceFields],
+  );
+  const flowTargets = useMemo(
+    () => projectTargetSlots(targetSlots, { includeHidden }),
+    [includeHidden, targetSlots],
+  );
+  const flowEdges = useMemo(
+    () => pruneMappingEdgesForShapes(edges, flowSources, flowTargets),
+    [edges, flowSources, flowTargets],
+  );
+  const commitFlowEdges = (next: readonly MappingEdge[]) => {
+    if (includeHidden) {
+      commitEdges(next);
+      return;
+    }
+    const visibleIds = new Set(flowEdges.map((edge) => edge.id));
+    const preserved = edges.filter((edge) => !visibleIds.has(edge.id));
+    commitEdges([...preserved, ...next]);
+  };
 
   const commitEdges = (next: readonly MappingEdge[]) => {
     if (!edgesControlled) {
@@ -304,7 +361,7 @@ export function FieldRemapPanel({
         <p className="workbench-field-remap-demo__intro">{sample.description}</p>
       </header>
 
-      {editableShapes ? (
+      {ioChrome === 'edit' ? (
         <div className="workbench-field-remap-demo__shapes" data-testid="field-remap-shapes">
           <FieldRemapShapeIoEditor
             role="source"
@@ -329,12 +386,35 @@ export function FieldRemapPanel({
         </div>
       ) : null}
 
+      {ioChrome === 'browse' ? (
+        <div
+          className="workbench-field-remap-demo__shapes"
+          data-testid="field-remap-io-browse-wrap"
+        >
+          <label className="workbench-field-remap-io-browse__toggle">
+            <input
+              checked={includeHidden}
+              onChange={(event) => setIncludeHidden(event.target.checked)}
+              type="checkbox"
+            />
+            Show hidden fields
+          </label>
+          <FieldRemapIoClassBrowse
+            includeHidden={includeHidden}
+            sources={sourceFields}
+            sourcesTitle={sample.sourceLabel}
+            targets={targetSlots}
+            targetsTitle={sample.targetLabel}
+          />
+        </div>
+      ) : null}
+
       <FieldRemapFlowMapper
-        sources={sourceFields}
-        targets={targetSlots}
-        edges={edges}
+        sources={flowSources}
+        targets={flowTargets}
+        edges={flowEdges}
         transforms={registry}
-        onEdgesChange={commitEdges}
+        onEdgesChange={commitFlowEdges}
         operators={operators}
         onOperatorsChange={commitOperators}
         sourceTitle={sample.sourceLabel}

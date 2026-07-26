@@ -20,6 +20,15 @@ export type FieldDataType =
   | 'array'
   | 'unknown';
 
+/**
+ * Stable class identity for a port/field whose nested `children` describe that class.
+ * Hosts own the class registry vocabulary; kit only carries the ref for browse / Flow.
+ */
+export type ClassRef = {
+  readonly id: string;
+  readonly version: number;
+};
+
 export interface SourceField {
   readonly id: string;
   readonly label: string;
@@ -34,6 +43,13 @@ export interface SourceField {
   /** Optional sample used by live preview / transform labels. */
   readonly sampleValue?: unknown;
   readonly group?: string;
+  /** When set with nested `children`, marks a class-typed object shape. */
+  readonly classRef?: ClassRef;
+  /**
+   * When `true`, omit from default Flow / mapper projections unless
+   * `projectShapes({ includeHidden: true })` (or browse with show-hidden).
+   */
+  readonly hidden?: boolean;
   readonly children?: readonly SourceField[];
 }
 
@@ -48,6 +64,13 @@ export interface TargetSlot {
   readonly dataType?: FieldDataType;
   readonly required?: boolean;
   readonly description?: string;
+  /** When set with nested `children`, marks a class-typed object shape. */
+  readonly classRef?: ClassRef;
+  /**
+   * When `true`, omit from default Flow / mapper projections unless
+   * `projectShapes({ includeHidden: true })` (or browse with show-hidden).
+   */
+  readonly hidden?: boolean;
   /** Nested slot groups (expand/collapse in the mapper tree). */
   readonly children?: readonly TargetSlot[];
 }

@@ -655,6 +655,10 @@ sample extension packaging.
 - Input/output shapes may be host-owned; `FieldRemapDocument` v1 stores edges only (v2 adds
   optional `operators[]`). The shell `FieldRemapShapeIoEditor` / panel shape IO path pastes
   JSON → ingest and edits `FieldDataType`; call `pruneMappingEdgesForShapes` when ids disappear.
+  Optional `classRef` / `hidden` on `SourceField` / `TargetSlot` plus `projectShapes` /
+  `projectSourceFields` / `projectTargetSlots` (`includeHidden`, default omit hidden) support
+  browse-first hosts. Panel `ioChrome: 'browse' | 'edit' | 'none'` (defaults from
+  `editableShapes`) and `FieldRemapIoClassBrowse` render read-only class/field trees.
 - Supported Flow connects: source↔target ports, source→xf / xf→target splice, and cross-edge
   xf→xf append/merge. Live connects are gated by `arePortsCompatible` (permissive on
   missing/`unknown`, strict on known mismatch).
@@ -672,10 +676,11 @@ sample extension packaging.
 
 **Key APIs:** `convertToShape`, `convertMappedInputs`, `createBuiltinValueTransformRegistry`,
 `arePortsCompatible`, `areFieldTypesCompatible`, `pruneMappingEdgesForShapes`,
-`FieldRemapPanel` (controlled `edges` / `onEdgesChange`), `FieldRemapFlowMapper`,
-`FieldRemapFlowActions` (`flowActionsRef.fitView`), `FieldRemapConvertPalette`,
-`FieldRemapDetailPanel`, `ConvertNoteEditor`, `FieldRemapShapeIoEditor`,
-`TransformOptionsEditor`.
+`projectShapes` / `projectSourceFields` / `projectTargetSlots`, `ClassRef`,
+`FieldRemapPanel` (controlled `edges` / `onEdgesChange`, `ioChrome`, `includeHidden`),
+`FieldRemapFlowMapper`, `FieldRemapFlowActions` (`flowActionsRef.fitView`),
+`FieldRemapConvertPalette`, `FieldRemapDetailPanel`, `ConvertNoteEditor`,
+`FieldRemapIoClassBrowse`, `FieldRemapShapeIoEditor`, `TransformOptionsEditor`.
 
 **Flow host chrome:** `showMinimap` (omit MiniMap when false), pane/node/edge context-menu
 callbacks with selection payload (host owns menu UI), and `flowActionsRef.fitView` so hosts

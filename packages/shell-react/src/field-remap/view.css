@@ -1261,3 +1261,107 @@
 .workbench-field-remap-shape-io__type select {
   min-width: 7rem;
 }
+
+.workbench-field-remap-io-browse {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (max-width: 800px) {
+  .workbench-field-remap-io-browse {
+    grid-template-columns: 1fr;
+  }
+}
+
+.workbench-field-remap-io-browse__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+}
+
+.workbench-field-remap-io-browse__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.workbench-field-remap-io-browse__section-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.workbench-field-remap-io-browse__port {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--vscode-widget-border, var(--color-border, #3c3c3c));
+  border-radius: 4px;
+}
+
+.workbench-field-remap-io-browse__port-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  align-items: baseline;
+}
+
+.workbench-field-remap-io-browse__port-id {
+  font-weight: 600;
+}
+
+.workbench-field-remap-io-browse__port-meta {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.workbench-field-remap-io-browse__fields {
+  margin: 0;
+  padding-left: 1rem;
+  list-style: disc;
+}
+
+.workbench-field-remap-io-browse__fields .workbench-field-remap-io-browse__fields {
+  margin-top: 0.25rem;
+}
+
+.workbench-field-remap-io-browse__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+}
+
+.workbench-field-remap-io-browse__path {
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.workbench-field-remap-io-browse__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.workbench-field-remap-io-browse__badge {
+  padding: 0.05rem 0.35rem;
+  border-radius: 3px;
+  background: var(--vscode-badge-background, rgba(127, 127, 127, 0.25));
+  color: var(--vscode-badge-foreground, inherit);
+}
+
+.workbench-field-remap-io-browse__empty {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}

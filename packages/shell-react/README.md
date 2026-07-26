@@ -63,11 +63,11 @@ for Flow-only embeds and custom bundler setups. The full barrel
 `FieldRemapFlowMapper` (and `FieldRemapPanel` pass-through) accept optional chrome
 hooks so hosts avoid CSS/DOM workarounds:
 
-| Prop | Behavior |
-| --- | --- |
-| `showMinimap` | Default `true`. When `false`, MiniMap is not mounted. |
-| `onPaneContextMenu` / `onNodeContextMenu` / `onEdgeContextMenu` | Native event + selection payload; host owns menu UI. |
-| `flowActionsRef` | `{ fitView(options?) }` using the same defaults as Controls fit-view. |
+| Prop                                                            | Behavior                                                              |
+| --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `showMinimap`                                                   | Default `true`. When `false`, MiniMap is not mounted.                 |
+| `onPaneContextMenu` / `onNodeContextMenu` / `onEdgeContextMenu` | Native event + selection payload; host owns menu UI.                  |
+| `flowActionsRef`                                                | `{ fitView(options?) }` using the same defaults as Controls fit-view. |
 
 ```tsx
 const flowActionsRef = useRef<FieldRemapFlowActions | null>(null);
