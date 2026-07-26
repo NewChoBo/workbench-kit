@@ -1,11 +1,21 @@
-import type { MappingEdge } from '@workbench-kit/field-remap';
+import type {
+  MappingEdge,
+  MappingOperator,
+  SourceField,
+  TargetSlot,
+} from '@workbench-kit/field-remap';
 
 /**
  * Field-remap demo scenarios (table / JSON shaped).
  * Runtime stays MappingEdge + convertToShape; UI binds via FieldRemapPanel.
  */
 export type FieldRemapSampleId =
-  'nested-ab' | 't-user-contact' | 't-event-time' | 't-emp-dept' | 't-product-catalog';
+  | 'nested-ab'
+  | 't-user-contact'
+  | 't-event-time'
+  | 't-emp-dept'
+  | 't-product-catalog'
+  | 'nm-combine-split';
 
 export interface FieldRemapSampleDefinition {
   readonly id: FieldRemapSampleId;
@@ -18,6 +28,7 @@ export interface FieldRemapSampleDefinition {
   readonly sourceIdPrefix: string;
   readonly targetIdPrefix: string;
   readonly edges: readonly MappingEdge[];
+  readonly operators?: readonly MappingOperator[];
 }
 
 /** Alias kept so older URIs still open a known sample. */
@@ -30,7 +41,8 @@ export const FIELD_REMAP_SAMPLES: readonly FieldRemapSampleDefinition[] = [
   {
     id: 'nested-ab',
     title: 'A → B',
-    description: 'Object port (profile→location), array itemEdges, and string fan-out',
+    description:
+      'Schema columns A/B with port wires: trim/upper convert chain, leaf location map, array reduce, and itemEdges',
     sourceLabel: 'A',
     targetLabel: 'B',
     sourceIdPrefix: 'a',
@@ -38,7 +50,7 @@ export const FIELD_REMAP_SAMPLES: readonly FieldRemapSampleDefinition[] = [
     source: {
       user_name: '  Ada Lovelace  ',
       profile: {
-        city: 'London',
+        city: '  London  ',
         country: 'UK',
       },
       tags: [
@@ -71,10 +83,16 @@ export const FIELD_REMAP_SAMPLES: readonly FieldRemapSampleDefinition[] = [
         transformIds: ['string:trim', 'string:upper'],
       },
       {
-        // Whole object → object (not leaf-by-leaf).
-        id: 'e-location',
-        sourceFieldId: 'a.profile',
-        targetSlotId: 'b.location',
+        // Leaf convert chain (source → trim → upper → target), as in the BINDINGS topology.
+        id: 'e-city',
+        sourceFieldId: 'a.profile.city',
+        targetSlotId: 'b.location.city',
+        transformIds: ['string:trim', 'string:upper'],
+      },
+      {
+        id: 'e-country',
+        sourceFieldId: 'a.profile.country',
+        targetSlotId: 'b.location.country',
       },
       {
         id: 'e-tags',
@@ -324,6 +342,41 @@ export const FIELD_REMAP_SAMPLES: readonly FieldRemapSampleDefinition[] = [
       },
     ],
   },
+  {
+    id: 'nm-combine-split',
+    title: 'n→m combine / split',
+    description:
+      'Document v2 operators: fan-in combine (first+last → nameBag) and fan-out split (address → city/zip)',
+    sourceLabel: 'A',
+    targetLabel: 'B',
+    sourceIdPrefix: 'a',
+    targetIdPrefix: 'b',
+    source: {
+      first: 'Ada',
+      last: 'Lovelace',
+      address: { city: 'London', zip: 'E1' },
+    },
+    targetShape: {
+      nameBag: { first: '', last: '' },
+      city: '',
+      zip: '',
+    },
+    edges: [],
+    operators: [
+      {
+        kind: 'combine',
+        id: 'op-name',
+        inputFieldIds: ['a.first', 'a.last'],
+        outputSlotId: 'b.nameBag',
+      },
+      {
+        kind: 'split',
+        id: 'op-address',
+        inputFieldId: 'a.address',
+        outputSlotIds: ['b.city', 'b.zip'],
+      },
+    ],
+  },
 ];
 
 const SAMPLE_BY_ID = new Map(FIELD_REMAP_SAMPLES.map((sample) => [sample.id, sample]));
@@ -349,4 +402,106 @@ export function resolveFieldRemapSampleId(value: string | undefined): FieldRemap
 export function getFieldRemapSample(sampleId: string | undefined): FieldRemapSampleDefinition {
   const id = resolveFieldRemapSampleId(sampleId);
   return SAMPLE_BY_ID.get(id) ?? FIELD_REMAP_SAMPLES[0]!;
+}
+
+/**
+ * Controlled shapes for browse-chrome demos: nested `classRef` + one `hidden` leaf.
+ * Pair with {@link getFieldRemapSample}(`nested-ab`) edges / sample JSON.
+ */
+export function getFieldRemapBrowseDemoShapes(): {
+  readonly sources: readonly SourceField[];
+  readonly targets: readonly TargetSlot[];
+} {
+  return {
+    sources: [
+      {
+        id: 'a',
+        label: 'A',
+        path: '',
+        dataType: 'object',
+        children: [
+          {
+            id: 'a.user_name',
+            label: 'user_name',
+            path: 'user_name',
+            dataType: 'string',
+            sampleValue: '  Ada Lovelace  ',
+          },
+          {
+            id: 'a.profile',
+            label: 'profile',
+            path: 'profile',
+            dataType: 'object',
+            classRef: { id: 'PersonProfile', version: 1 },
+            children: [
+              {
+                id: 'a.profile.city',
+                label: 'city',
+                path: 'profile.city',
+                dataType: 'string',
+                sampleValue: '  London  ',
+              },
+              {
+                id: 'a.profile.country',
+                label: 'country',
+                path: 'profile.country',
+                dataType: 'string',
+                sampleValue: 'UK',
+              },
+              {
+                id: 'a.profile.internal_id',
+                label: 'internal_id',
+                path: 'profile.internal_id',
+                dataType: 'string',
+                hidden: true,
+                sampleValue: 'secret-row',
+              },
+            ],
+          },
+          {
+            id: 'a.tags',
+            label: 'tags',
+            path: 'tags',
+            dataType: 'array',
+          },
+        ],
+      },
+    ],
+    targets: [
+      {
+        id: 'b',
+        label: 'B',
+        path: '',
+        dataType: 'object',
+        children: [
+          { id: 'b.name', label: 'name', path: 'name', dataType: 'string' },
+          { id: 'b.title', label: 'title', path: 'title', dataType: 'string' },
+          {
+            id: 'b.location',
+            label: 'location',
+            path: 'location',
+            dataType: 'object',
+            classRef: { id: 'GeoLocation', version: 2 },
+            children: [
+              { id: 'b.location.city', label: 'city', path: 'location.city', dataType: 'string' },
+              {
+                id: 'b.location.country',
+                label: 'country',
+                path: 'location.country',
+                dataType: 'string',
+              },
+            ],
+          },
+          {
+            id: 'b.labels',
+            label: 'labels',
+            path: 'labels',
+            dataType: 'array',
+          },
+          { id: 'b.firstTag', label: 'firstTag', path: 'firstTag', dataType: 'string' },
+          { id: 'b.tagLine', label: 'tagLine', path: 'tagLine', dataType: 'string' },
+        ],
+      },
+    ],
+  };
 }

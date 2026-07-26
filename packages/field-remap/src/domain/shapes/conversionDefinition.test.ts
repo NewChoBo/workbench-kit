@@ -24,7 +24,7 @@ describe('conversionDefinition', () => {
     expect(conversion.id).toBe('order+customer→invoice');
     expect(conversion.label).toBe('Invoice projection');
     expect(conversion.sourceShapeIds).toEqual(['order', 'customer']);
-    expect(conversion.document.version).toBe(1);
+    expect(conversion.document.version).toBe(2);
     expect(conversion.document.edges).toHaveLength(1);
   });
 

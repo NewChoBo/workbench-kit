@@ -20,6 +20,15 @@ export type FieldDataType =
   | 'array'
   | 'unknown';
 
+/**
+ * Stable class identity for a port/field whose nested `children` describe that class.
+ * Hosts own the class registry vocabulary; kit only carries the ref for browse / Flow.
+ */
+export type ClassRef = {
+  readonly id: string;
+  readonly version: number;
+};
+
 export interface SourceField {
   readonly id: string;
   readonly label: string;
@@ -34,6 +43,13 @@ export interface SourceField {
   /** Optional sample used by live preview / transform labels. */
   readonly sampleValue?: unknown;
   readonly group?: string;
+  /** When set with nested `children`, marks a class-typed object shape. */
+  readonly classRef?: ClassRef;
+  /**
+   * When `true`, omit from default Flow / mapper projections unless
+   * `projectShapes({ includeHidden: true })` (or browse with show-hidden).
+   */
+  readonly hidden?: boolean;
   readonly children?: readonly SourceField[];
 }
 
@@ -48,6 +64,13 @@ export interface TargetSlot {
   readonly dataType?: FieldDataType;
   readonly required?: boolean;
   readonly description?: string;
+  /** When set with nested `children`, marks a class-typed object shape. */
+  readonly classRef?: ClassRef;
+  /**
+   * When `true`, omit from default Flow / mapper projections unless
+   * `projectShapes({ includeHidden: true })` (or browse with show-hidden).
+   */
+  readonly hidden?: boolean;
   /** Nested slot groups (expand/collapse in the mapper tree). */
   readonly children?: readonly TargetSlot[];
 }
@@ -114,15 +137,43 @@ export interface MappingEdge {
   readonly itemEdges?: readonly MappingEdge[];
 }
 
-/**
- * Minimal JSON-serializable mapping document for host persistence.
- * Hosts own schema trees; this document stores the binding graph only.
- */
-export interface FieldRemapDocument {
-  readonly version: 1;
-  readonly edges: readonly MappingEdge[];
+/** Fan-in: multiple source fields → one target slot. */
+export interface CombineMappingOperator {
+  readonly kind: 'combine';
+  readonly id: string;
+  readonly inputFieldIds: readonly string[];
+  readonly outputSlotId: string;
+  /** Optional chain applied to the combined object bag (max 3 via registry). */
+  readonly transformIds?: readonly string[];
 }
 
+/** Fan-out: one source field → multiple target slots. */
+export interface SplitMappingOperator {
+  readonly kind: 'split';
+  readonly id: string;
+  readonly inputFieldId: string;
+  readonly outputSlotIds: readonly string[];
+  /** Optional chain applied to the source value before splitting an object. */
+  readonly transformIds?: readonly string[];
+}
+
+export type MappingOperator = CombineMappingOperator | SplitMappingOperator;
+
+/**
+ * Minimal JSON-serializable mapping document for host persistence.
+ * Hosts own schema trees; this document stores the binding graph (and optional
+ * n→m operators from document v2 onward).
+ */
+export interface FieldRemapDocument {
+  /** `1` = edges-only; `2` = edges + optional `operators[]`. */
+  readonly version: 1 | 2;
+  readonly edges: readonly MappingEdge[];
+  /**
+   * Optional n→m combine/split operators (document v2).
+   * Omitted / empty on v1 documents and on v2 hosts that only use 1→1 edges.
+   */
+  readonly operators?: readonly MappingOperator[];
+}
 export interface TransformContext {
   readonly locale?: string;
   /** Reference instant for time/date presets; defaults to `new Date()`. */

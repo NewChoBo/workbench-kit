@@ -80,17 +80,17 @@ extensions. The generated bundle includes both manifest data and the entry
 module, so `.workbench/extensions.json` controls which built-ins are registered
 and activatable.
 
-| Extension             | Current role                                                                  |
-| --------------------- | ----------------------------------------------------------------------------- |
-| `builtin.accounts`    | Account command/menu/config/capability metadata and profile entry points      |
-| `builtin.chat`        | Chat and AI Chat activity containers, sidebar views, and slash command input  |
-| `builtin.commands`    | Commands activity/sidebar, focus/refresh commands, and view-title menu action |
-| `builtin.editor`      | Text editor contribution resolved by the editor service and React shell       |
-| `builtin.explorer`    | Explorer activity, tree view provider, file commands, and view title actions  |
-| `builtin.keybindings` | Default keybinding contributions such as `ctrl+s` for `editor.save`           |
-| `builtin.search`      | Search activity container and sidebar view                                    |
-| `builtin.settings`    | Settings command, palette entry, and settings configuration contribution      |
-| `builtin.workspace`   | Workspace info command and workspace display-name configuration               |
+| Extension             | Current role                                                                      |
+| --------------------- | --------------------------------------------------------------------------------- |
+| `builtin.accounts`    | Account command/menu/config/capability metadata and profile entry points          |
+| `builtin.chat`        | Chat and AI Chat activity containers, sidebar views, and slash command input      |
+| `builtin.commands`    | Commands activity/sidebar, focus/refresh commands, and view-title menu action     |
+| `builtin.editor`      | Text editor plus Markdown preview document view (marker → shell render)           |
+| `builtin.explorer`    | Explorer activity/tree; requires `workbench.workspace` (`workspace.read`/`write`) |
+| `builtin.keybindings` | Default keybinding contributions such as `ctrl+s` for `editor.save`               |
+| `builtin.search`      | Search activity container and sidebar view                                        |
+| `builtin.settings`    | Settings command, palette entry, and settings configuration contribution          |
+| `builtin.workspace`   | Workspace info command; requires `workbench.workspace` (`workspace.read`)         |
 
 The root `.workbench/extensions.json` currently enables all repository built-ins
 above for the sample host and keeps the most visible workbench features in
@@ -99,6 +99,17 @@ above for the sample host and keeps the most visible workbench features in
 ## Sample Extensions
 
 `extensions/samples.hello-world` demonstrates minimal activation and a single command contribution without production logic.
+
+`extensions/builtin.editor` contributes the text editor host **and** Markdown
+preview document view for `*.md` / `*.mdx`. That preview used to live as a shell
+default; it is extension-owned so disabling the built-in removes the surface.
+Shell maps the extension render marker to `WorkbenchMarkdownPreview`.
+
+`extensions/samples.jdw` contributes JDW Lab sidebar **and** editor document
+form/preview providers for `*.jdw.json`. Those document views used to live as
+shell defaults; they are extension-owned so disabling the sample removes the
+surfaces. Shell maps the extension render markers to `JdwWidgetFormView` /
+`JdwWidgetPreviewView`.
 
 ## Deactivation
 

@@ -56,7 +56,9 @@ Parsing is handled by `parseExtensionCatalog()` in `@workbench-kit/workbench-cor
    after the host accepts a non-blocked plan, so dependency enable/install
    actions are applied as one state update.
 5. `WorkbenchProvider` reads install state and filters bundled extensions through
-   `resolveInstalledAvailableExtensions()`.
+   `resolveInstalledAvailableExtensions()`. Built-ins stay available; sample /
+   installed packages need an enabled install record **or** an id already listed
+   in host `extensionsConfig.enabled` / `.workbench/extensions.json`.
 6. Enabled extension ids are merged into the effective
    `.workbench/extensions.json` config through
    `mergeExtensionsConfigWithInstallState()`.

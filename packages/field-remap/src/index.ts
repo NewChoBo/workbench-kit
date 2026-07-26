@@ -1,8 +1,12 @@
 export type {
+  ClassRef,
+  CombineMappingOperator,
   FieldDataType,
   MappingEdge,
+  MappingOperator,
   FieldRemapDocument,
   SourceField,
+  SplitMappingOperator,
   TargetSlot,
   TransformContext,
   TransformOptionField,
@@ -34,20 +38,35 @@ export {
   normalizeFieldRemapDocument,
   parseFieldRemapDocument,
   FIELD_REMAP_DOCUMENT_VERSION,
+  FIELD_REMAP_DOCUMENT_V1_VERSION,
   serializeFieldRemapDocument,
   UnsupportedFieldRemapDocumentVersionError,
 } from './domain/document/fieldRemapDocument.js';
+export type { CreateFieldRemapDocumentOptions } from './domain/document/fieldRemapDocument.js';
 
-export { isSafeObjectPath, UnsafeObjectPathError } from './domain/mapping/objectPathSafety.js';
+export {
+  InvalidObjectPathError,
+  isSafeObjectPath,
+  objectPathHasWildcard,
+  parseObjectPath,
+  UnsafeObjectPathError,
+} from './domain/mapping/objectPathSafety.js';
+export type { ObjectPathSegment } from './domain/mapping/objectPathSafety.js';
 export {
   applyStringTemplate,
+  DEFAULT_MAX_PATH_WILDCARD_EXPANSION,
   isPlainObject,
   listArrayItemProjectionOptions,
+  PathExpansionLimitError,
   projectCollectionItems,
+  projectObjectPath,
   readObjectPath,
   writeObjectPath,
 } from './domain/mapping/pathUtils.js';
-export type { ArrayItemProjectionOption } from './domain/mapping/pathUtils.js';
+export type {
+  ArrayItemProjectionOption,
+  ProjectObjectPathOptions,
+} from './domain/mapping/pathUtils.js';
 
 export {
   formatDateParts,
@@ -60,6 +79,18 @@ export type { DateParts } from './domain/mapping/dateFormat.js';
 export { convertArrayWithItemEdges } from './domain/mapping/convertItemEdges.js';
 export { findParentChildMappingConflicts } from './domain/mapping/mappingConflicts.js';
 export type { MappingConflict } from './domain/mapping/mappingConflicts.js';
+
+export {
+  MAX_MAPPING_FAN_IN,
+  MAX_MAPPING_FAN_OUT,
+  MappingOperatorError,
+  applyMappingOperators,
+  normalizeMappingOperators,
+} from './domain/mapping/mappingOperators.js';
+export type {
+  ApplyMappingOperatorsInput,
+  ApplyMappingOperatorsResult,
+} from './domain/mapping/mappingOperators.js';
 
 export {
   collectOptionFields,
@@ -95,6 +126,27 @@ export {
 export type { DataShape, DataShapeRegistry, DataShapeRole } from './domain/shapes/dataShape.js';
 
 export {
+  FIELD_DATA_TYPES,
+  collectSourceFieldIds,
+  collectTargetSlotIds,
+  isFieldDataType,
+  pruneMappingEdgesForShapes,
+  setSourceFieldDataType,
+  setTargetSlotDataType,
+} from './domain/shapes/shapeEdit.js';
+
+export {
+  projectShapes,
+  projectSourceFields,
+  projectTargetSlots,
+} from './domain/shapes/projectShapes.js';
+export type {
+  ProjectShapesInput,
+  ProjectShapesOptions,
+  ProjectShapesResult,
+} from './domain/shapes/projectShapes.js';
+
+export {
   createConversionRegistry,
   defineConversion,
   withConversionEdges,
@@ -112,6 +164,9 @@ export type {
   ConvertToShapeSlotResult,
 } from './domain/shapes/convertToShape.js';
 
+export { convertMappedInputs } from './domain/shapes/convertMappedInputs.js';
+export type { ConvertMappedInputsInput } from './domain/shapes/convertMappedInputs.js';
+
 export { createAbortError, isAbortError, throwIfAborted } from './domain/abort.js';
 
 export { sourceFieldsFromPlainObject } from './domain/ingest/sourceFieldsFromPlainObject.js';
@@ -122,10 +177,13 @@ export type { TargetSlotsFromPlainObjectOptions } from './domain/ingest/targetSl
 
 export {
   applyTransformChain,
+  areFieldTypesCompatible,
+  arePortsCompatible,
   createValueTransformRegistry,
   isTransformChainCompatible,
   isTransformCompatible,
 } from './registry/createValueTransformRegistry.js';
+export type { ArePortsCompatibleInput } from './registry/createValueTransformRegistry.js';
 
 export {
   ARRAY_REDUCE_TRANSFORM_IDS,

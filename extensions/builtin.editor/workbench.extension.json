@@ -11,6 +11,16 @@
   },
   "activationEvents": ["onStartup"],
   "contributes": {
+    "documentViews": [
+      {
+        "id": "workbench-kit.builtin.editor.markdown-preview",
+        "kind": "preview",
+        "label": "Preview",
+        "priority": 5,
+        "filenamePatterns": ["*.md", "*.mdx"],
+        "mimeTypes": ["text/markdown"]
+      }
+    ],
     "editors": [
       {
         "id": "workbench-kit.builtin.editor.text",

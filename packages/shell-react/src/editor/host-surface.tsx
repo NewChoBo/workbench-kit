@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { IconButton, ScrollArea } from '@workbench-kit/react/primitives';
+import { WorkbenchMarkdownPreview } from '@workbench-kit/react/workbench/markdown-preview';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/workspace/editor';
 import {
@@ -21,8 +22,15 @@ import {
 
 import { CommandInspectorSurface } from '../commands/inspector-surface.js';
 import { resolveEditorDocumentViews, type EditorDocumentViewProvider } from './view-providers.js';
+import { isBuiltinEditorMarkdownPreviewRenderData } from './markdown-document-view-data.js';
 import { mimeTypeForResource, pathForResource } from './resource.js';
 import { FieldRemapEditorSurface } from '../field-remap/editor-surface.js';
+import {
+  isSampleJdwWidgetFormRenderData,
+  isSampleJdwWidgetPreviewRenderData,
+} from '../jdw/document-view-data.js';
+import { JdwWidgetFormView } from '../jdw/widget-form-view.js';
+import { JdwWidgetPreviewView } from '../jdw/widget-preview-view.js';
 import {
   editorViewModeToPaneVisibility,
   getVisibleEditorPaneKinds,
@@ -185,6 +193,7 @@ function TextEditorSurface({
   const { executeCommand, workspaceHostPort } = useWorkbench();
   const [content, setContent] = useState(initialContent);
   const previousResourceUriRef = useRef<string | undefined>(undefined);
+  const appliedLateFormDefaultRef = useRef(false);
   const splitSizesRef = useRef<Record<string, number>>({});
   const editorDocument = useMemo(
     () => ({
@@ -218,6 +227,7 @@ function TextEditorSurface({
     previousResourceUriRef.current = resourceUri;
 
     if (resourceChanged) {
+      appliedLateFormDefaultRef.current = false;
       setContent(initialContent);
       setPanePreference(
         resolveDefaultEditorPaneVisibility(defaultViewModeForResource?.(resourceUri), {
@@ -228,7 +238,33 @@ function TextEditorSurface({
     }
 
     setContent((current) => (current === initialContent ? current : initialContent));
-  }, [defaultViewModeForResource, formEligible, initialContent, resourceUri]);
+
+    // Document-view providers may register after onStartup activate. Promote the
+    // default form pane once — do not fight later user toggles back to Code.
+    if (
+      !appliedLateFormDefaultRef.current &&
+      formEligible &&
+      defaultViewModeForResource?.(resourceUri) === undefined &&
+      panePreference.code &&
+      !panePreference.form &&
+      !panePreference.preview
+    ) {
+      appliedLateFormDefaultRef.current = true;
+      setPanePreference(
+        resolveDefaultEditorPaneVisibility(undefined, {
+          formEligible: true,
+        }),
+      );
+    }
+  }, [
+    defaultViewModeForResource,
+    formEligible,
+    initialContent,
+    panePreference.code,
+    panePreference.form,
+    panePreference.preview,
+    resourceUri,
+  ]);
 
   useEffect(() => {
     onModeToolbarVisibleChange(modeToolbarVisible);
@@ -291,6 +327,14 @@ function TextEditorSurface({
     </div>
   );
 
+  const previewRendered = previewProvider?.render({
+    document: editorDocument,
+    onContentChange: handleChange,
+  });
+  const formRendered = formProvider?.render({
+    document: editorDocument,
+    onContentChange: handleChange,
+  });
   const previewPane = previewProvider ? (
     <ScrollArea
       aria-label="Preview"
@@ -298,14 +342,30 @@ function TextEditorSurface({
       className="workbench-editor-area__preview-pane"
       orientation="vertical"
     >
-      {toReactNode(
-        previewProvider.render({ document: editorDocument, onContentChange: handleChange }),
+      {isSampleJdwWidgetPreviewRenderData(previewRendered) ? (
+        <JdwWidgetPreviewView
+          className="workbench-editor-area__jdw-preview-viewport"
+          content={content}
+          path={editorDocument.path}
+        />
+      ) : isBuiltinEditorMarkdownPreviewRenderData(previewRendered) ? (
+        <WorkbenchMarkdownPreview source={content} />
+      ) : (
+        toReactNode(previewRendered)
       )}
     </ScrollArea>
   ) : null;
-  const formPane = formProvider
-    ? toReactNode(formProvider.render({ document: editorDocument, onContentChange: handleChange }))
-    : null;
+  const formPane = formProvider ? (
+    isSampleJdwWidgetFormRenderData(formRendered) ? (
+      <JdwWidgetFormView
+        content={content}
+        path={editorDocument.path}
+        onContentChange={handleChange}
+      />
+    ) : (
+      toReactNode(formRendered)
+    )
+  ) : null;
   const paneByKind: Record<EditorPaneKind, ReactNode | null> = {
     code: sourcePane,
     form: formPane,

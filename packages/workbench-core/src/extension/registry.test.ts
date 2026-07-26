@@ -648,6 +648,28 @@ describe('ExtensionRegistry', () => {
 
   it('resolves host-registered capabilities through getCapability', async () => {
     const registry = new ExtensionRegistry();
+    registry.capabilityRegistry.registerValue('workbench.test.capability', { id: 'host-test' });
+
+    registry.registerExtension({
+      ...helloWorldExtension,
+      manifest: {
+        ...helloWorldExtension.manifest,
+        activationEvents: ['onStartup'],
+      },
+      module: {
+        activate: (context) => {
+          expect(context.getCapability<{ id: string }>('workbench.test.capability')).toEqual({
+            id: 'host-test',
+          });
+        },
+      },
+    });
+
+    await registry.activateStartup();
+  });
+
+  it('denies sensitive getCapability without manifest permission and requires', async () => {
+    const registry = new ExtensionRegistry();
     registry.capabilityRegistry.registerValue('workbench.auth', { id: 'host-auth' });
 
     registry.registerExtension({
@@ -658,8 +680,78 @@ describe('ExtensionRegistry', () => {
       },
       module: {
         activate: (context) => {
+          expect(() => context.getCapability('workbench.auth')).toThrow(
+            /did not declare required capability/,
+          );
+        },
+      },
+    });
+
+    await registry.activateStartup();
+  });
+
+  it('allows workbench.auth getCapability when requires and permission are declared', async () => {
+    const registry = new ExtensionRegistry();
+    registry.capabilityRegistry.registerValue('workbench.auth', { id: 'host-auth' });
+
+    registry.registerExtension({
+      ...helloWorldExtension,
+      manifest: {
+        ...helloWorldExtension.manifest,
+        activationEvents: ['onStartup'],
+        capabilities: { requires: ['workbench.auth'] },
+        permissions: ['account.read'],
+      },
+      module: {
+        activate: (context) => {
           expect(context.getCapability<{ id: string }>('workbench.auth')).toEqual({
             id: 'host-auth',
+          });
+        },
+      },
+    });
+
+    await registry.activateStartup();
+  });
+
+  it('denies workbench.workspace getCapability without manifest permission and requires', async () => {
+    const registry = new ExtensionRegistry();
+    registry.capabilityRegistry.registerValue('workbench.workspace', { ready: true });
+
+    registry.registerExtension({
+      ...helloWorldExtension,
+      manifest: {
+        ...helloWorldExtension.manifest,
+        activationEvents: ['onStartup'],
+      },
+      module: {
+        activate: (context) => {
+          expect(() => context.getCapability('workbench.workspace')).toThrow(
+            /did not declare required capability/,
+          );
+        },
+      },
+    });
+
+    await registry.activateStartup();
+  });
+
+  it('allows workbench.workspace getCapability when requires and permission are declared', async () => {
+    const registry = new ExtensionRegistry();
+    registry.capabilityRegistry.registerValue('workbench.workspace', { ready: true });
+
+    registry.registerExtension({
+      ...helloWorldExtension,
+      manifest: {
+        ...helloWorldExtension.manifest,
+        activationEvents: ['onStartup'],
+        capabilities: { requires: ['workbench.workspace'] },
+        permissions: ['workspace.read'],
+      },
+      module: {
+        activate: (context) => {
+          expect(context.getCapability<{ ready: boolean }>('workbench.workspace')).toEqual({
+            ready: true,
           });
         },
       },

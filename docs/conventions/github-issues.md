@@ -1,7 +1,7 @@
 # GitHub Issues
 
 **Status:** Required for new issues  
-**Last updated:** 2026-07-21
+**Last updated:** 2026-07-26
 
 Workbench Kit is a public npm repository. Issues are the primary backlog for
 independent kit work. Prefer GitHub issues over informal notes when the work
@@ -10,6 +10,13 @@ must be completed inside this repo without private-host context.
 Templates live under [`.github/ISSUE_TEMPLATE/`](../../.github/ISSUE_TEMPLATE/).
 Blank issues are disabled — pick a template.
 
+This repo also uses an **IssueOps** automation lane (Cursor Automations): labels
+and comments are the control plane for triage, Q&A, clarification, and
+optional implementation. Humans and consumer libraries should follow the
+[Comment protocol](#comment-protocol-issueops) below so agents can route safely.
+Executable automation instructions (paste into Cursor):
+[issueops-autohandler-instructions.md](./issueops-autohandler-instructions.md).
+
 ## Which template?
 
 | Template                   | Use when                                                            |
@@ -17,6 +24,11 @@ Blank issues are disabled — pick a template.
 | **Feature / API addition** | Net-new kit capability designed in-kit                              |
 | **Bug report**             | Incorrect behavior in kit packages / Storybook / sample             |
 | **Consumer extract**       | A host already proved a pattern; promote the generic slice into kit |
+
+Security reports: do **not** file exploit detail in a public issue. Prefer a
+[GitHub Security Advisory](https://docs.github.com/en/code-security/security-advisories)
+(or maintainer private channel). Public threads may use `type: security` only
+to request private follow-up — never paste PoCs or secrets.
 
 ## Required quality bar
 
@@ -73,6 +85,109 @@ docs(<scope>): short docs phrase
 Scopes (examples): `react`, `overlay`, `platform`, `workbench`, `tokens`,
 `contracts`, `i18n`, `storybook`.
 
+## Comment protocol (IssueOps)
+
+Comments are the shared coordination surface between maintainers, Cursor
+automations, parent/child issues, and **external consumer libraries** that file
+or discuss work here. Automations may answer simple questions, ask reverse
+questions when the request is ambiguous, or implement when explicitly asked.
+
+### Request envelope
+
+For non-trivial comments (and whenever you want automation to act), start with:
+
+```text
+type: feat | fix | security | question | docs | extract
+intent: implement | discuss | clarify
+```
+
+Optional — request a coding run:
+
+```text
+run agent
+```
+
+| `type`     | Meaning                          | Maps to template / lane      |
+| ---------- | -------------------------------- | ---------------------------- |
+| `feat`     | Feature / API addition           | Feature                      |
+| `fix`      | Bug                              | Bug report                   |
+| `security` | Vulnerability / sensitive report | Private advisory (see above) |
+| `question` | Usage / API / “where is X”       | Q&A only (no PR by default)  |
+| `docs`     | Documentation                    | Docs change or guidance      |
+| `extract`  | Promote host-proven pattern      | Consumer extract             |
+
+| `intent`    | Meaning                                      |
+| ----------- | -------------------------------------------- |
+| `implement` | Want a code/docs change in this repo         |
+| `discuss`   | Design talk; no implementation yet           |
+| `clarify`   | Answering agent questions or asking for info |
+
+If `type` / `intent` are missing on an implement-like request, automation
+**must not guess** — it posts a structured reverse-question comment and waits.
+
+### Modes (what automation does)
+
+| Mode                    | When                                                                                    | Mutates code?                                      |
+| ----------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| **Q&A**                 | `question`, or `intent: clarify` / `discuss` without `run agent`                        | No — comment only                                  |
+| **Clarify**             | Ambiguous / thin quality bar                                                            | No — reverse questions + `status:needs-human`      |
+| **Implement**           | `run agent`, or `status:queued` + cron, or clear `intent: implement` with enough detail | Yes — branch/PR into `develop`                     |
+| **Idle refactor**       | Hourly cron when no `status:queued` work; small internal tidy-ups only                  | Yes — one small PR; may auto-merge if Checks green |
+| **Structural refactor** | Weekly cron (Mon 09:00 Asia/Seoul); bolder cross-package / architecture work            | Yes — PR **never** auto-merged; human review       |
+| **Security**            | `type: security`                                                                        | No public PoC / no drive-by fix                    |
+
+### Status labels
+
+| Label                | Meaning                                         |
+| -------------------- | ----------------------------------------------- |
+| `status:queued`      | Eligible for hourly automation pickup           |
+| `status:in-progress` | Claimed; do not double-start                    |
+| `status:pr-open`     | PR opened (issue stays open until humans close) |
+| `status:needs-human` | Blocked on answers / judgment                   |
+| `status:skipped`     | Intentionally not implemented                   |
+
+Machine-readable marker (HTML comment) on automation posts:
+
+```html
+<!-- automation:cursor-issue-handler status=<started|skipped|needs-human|pr-open|done|failed|info> issue=<N> pr=<url-optional> source=<comment|cron> -->
+```
+
+### Human / consumer how-to
+
+1. File with the correct **issue template** when opening a new issue.
+2. On an existing issue, use the **request envelope** (`type` / `intent`).
+3. Simple questions → `type: question` (automation may answer from public kit sources).
+4. Want code → fill the quality bar, then comment `run agent` **or** add
+   `status:queued` for scheduled pickup.
+5. When automation asks reverse questions, reply on the same issue
+   (`intent: clarify`). Re-comment `run agent` when ready to implement.
+6. Link parent/child/related issues with `#N` so automation can read dependencies.
+
+### Reverse questions (automation)
+
+When the request is ambiguous, automation should:
+
+1. Not implement or invent APIs.
+2. Set `status:needs-human`.
+3. Post **one** structured English checklist (type, intent, package home,
+   acceptance, repro for fixes, etc.).
+4. Stop until a human replies.
+
+### Loop and cost notes
+
+- Prefer bot/App identity for automation comments so platform filters avoid
+  self-triggers; still ignore marker comments in prompts.
+- Ordinary discussion without `run agent` should stay in Q&A / Clarify — not
+  full implement runs.
+- Hourly backlog drain prefers `status:queued` first. If the queue is empty,
+  automation may run a single **idle refactor** (small internal tidy-up only;
+  no public API breaks).
+- Weekly (Monday 09:00 Asia/Seoul): **structural refactor** — one bolder
+  architecture-oriented PR, always left for human review (never auto-merged).
+  Details:
+  [issueops-autohandler-instructions.md](./issueops-autohandler-instructions.md).
+  Decline unwanted PRs by closing them.
+
 ## Acceptance criteria tips
 
 Good:
@@ -115,6 +230,10 @@ the flow becomes a required UI gate.
 | React UI                      | unit + Storybook story; `pnpm validate:ui` only when required coverage changes |
 | Docs / templates only         | `pnpm check:public-references` (via `validate:static`)                         |
 
+Automation implement runs must pass `pnpm check:commit-safety` and the lane
+above before merge into `develop`. Merge only when GitHub Checks are green.
+Never push `main` from automation.
+
 ## Triage checklist (maintainers)
 
 - [ ] Template fields filled; no private host names
@@ -122,6 +241,7 @@ the flow becomes a required UI gate.
 - [ ] Non-goals prevent domain leakage
 - [ ] Acceptance criteria are testable in this repo alone
 - [ ] Labels: `enhancement` / `bug` (+ optional milestone)
+- [ ] IssueOps status labels when using automation (`status:*`)
 - [ ] Related backlog section linked when applicable
       (`docs/workbench/consumer-integration-backlog.md`)
 
@@ -134,3 +254,5 @@ When an agent files or updates issues:
 3. Link kit source paths that already exist.
 4. Never write private sibling repo names into issue bodies.
 5. After creating thin issues, immediately edit them to the quality bar above.
+6. Follow the [Comment protocol](#comment-protocol-issueops) for automation
+   coordination; use reverse questions instead of guessing.

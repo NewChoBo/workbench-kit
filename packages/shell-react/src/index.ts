@@ -64,6 +64,7 @@ export {
   JDW_WIDGET_FORM_PROVIDER_ID,
   JSON_FORM_PROVIDER,
   JSON_FORM_PROVIDER_ID,
+  MARKDOWN_PREVIEW_PROVIDER_ID,
   createEditorDocumentViewProviderRegistry,
   resolveEditorDocumentViewProvider,
   resolveEditorDocumentViews,
@@ -74,6 +75,11 @@ export {
   type EditorDocumentViewRenderContext,
   type ResolvedEditorDocumentViews,
 } from './editor/view-providers.js';
+export {
+  BUILTIN_EDITOR_MARKDOWN_PREVIEW_RENDER_KIND,
+  isBuiltinEditorMarkdownPreviewRenderData,
+  type BuiltinEditorMarkdownPreviewRenderData,
+} from './editor/markdown-document-view-data.js';
 export { SampleJdwLabView, type SampleJdwLabViewProps } from './jdw/lab-view.js';
 export { JdwWidgetFormView, type JdwWidgetFormViewProps } from './jdw/widget-form-view.js';
 export { JdwWidgetPreviewView, type JdwWidgetPreviewViewProps } from './jdw/widget-preview-view.js';
@@ -82,9 +88,85 @@ export {
   SAMPLE_JDW_LAB_VIEW_RENDER_KIND,
   type SampleJdwLabViewRenderData,
 } from './jdw/lab-view-data.js';
+export {
+  isSampleJdwWidgetFormRenderData,
+  isSampleJdwWidgetPreviewRenderData,
+  SAMPLE_JDW_WIDGET_FORM_RENDER_KIND,
+  SAMPLE_JDW_WIDGET_PREVIEW_RENDER_KIND,
+  type SampleJdwWidgetFormRenderData,
+  type SampleJdwWidgetPreviewRenderData,
+} from './jdw/document-view-data.js';
 export { SampleFieldRemapDemo, type SampleFieldRemapDemoProps } from './field-remap/demo.js';
 export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap/panel.js';
-export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './field-remap/flow.js';
+export {
+  FieldRemapFlowMapper,
+  type FieldRemapFlowActions,
+  type FieldRemapFlowMapperProps,
+} from './field-remap/flow.js';
+export {
+  defaultFieldRemapChromeLabels,
+  fieldRemapChromeLabelKeys,
+  resolveFieldRemapChromeLabels,
+  type FieldRemapChromeLabels,
+  type FieldRemapTranslate,
+} from './field-remap/chrome-labels.js';
+export {
+  FieldRemapDetailPanel,
+  type FieldRemapDetailPanelProps,
+} from './field-remap/detail-panel.js';
+export {
+  FieldRemapConvertPalette,
+  type FieldRemapConvertPaletteProps,
+} from './field-remap/convert-palette.js';
+export {
+  ConvertNoteEditor,
+  type ConvertNoteEditorProps,
+} from './field-remap/convert-note-editor.js';
+export {
+  FieldRemapIoClassBrowse,
+  resolveFieldRemapIoChrome,
+  type FieldRemapIoChrome,
+  type FieldRemapIoClassBrowseProps,
+} from './field-remap/io-class-browse.js';
+export {
+  FieldRemapShapeIoEditor,
+  ingestSourceShape,
+  ingestTargetShape,
+  type FieldRemapShapeIoEditorProps,
+  type FieldRemapShapeRole,
+} from './field-remap/shape-io-editor.js';
+export {
+  TransformOptionsEditor,
+  type TransformOptionsEditorProps,
+} from './field-remap/transform-options-editor.js';
+export {
+  addTransformStepToEdge,
+  bindDraftSource,
+  bindDraftTarget,
+  bindOperatorInput,
+  bindOperatorOutput,
+  canEditListContext,
+  createCombineOperator,
+  createDraftTransform,
+  createSplitOperator,
+  edgePortTypes,
+  enableListContextOnEdge,
+  finalizeDraftTransform,
+  listCompatibleTransforms,
+  removeItemEdgeFromParent,
+  removeMappingOperator,
+  removeOperatorInput,
+  removeOperatorOutput,
+  removeTransformStepFromEdge,
+  replaceTransformStepOptionsOnEdge,
+  setItemEdgesOnEdge,
+  setTransformStepIdOnEdge,
+  updateMappingEdge,
+  updateMappingOperator,
+  upsertItemEdgeOnParent,
+  type FieldRemapDraftTransform,
+  type FieldRemapSelection,
+} from './field-remap/flow-ops.js';
 export {
   DEFAULT_JSONATA_MAX_EXPRESSION_LENGTH,
   DEFAULT_JSONATA_TIMEOUT_MS,

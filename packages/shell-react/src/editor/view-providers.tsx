@@ -7,7 +7,6 @@ import {
 } from '@workbench-kit/react/jdw/document';
 import { parseJsonWidgetData } from '@workbench-kit/react/jdw/parse';
 import { ScrollArea, Select, TextInput } from '@workbench-kit/react/primitives';
-import { WorkbenchMarkdownPreview } from '@workbench-kit/react/workbench/markdown-preview';
 import {
   createEditorDocumentViewProviderRegistry as createCoreEditorDocumentViewProviderRegistry,
   EditorDocumentViewProviderRegistry,
@@ -20,8 +19,6 @@ import type {
   EditorDocumentViewRenderContext,
 } from '@workbench-kit/workbench-core';
 
-import { JdwWidgetFormView } from '../jdw/widget-form-view.js';
-import { JdwWidgetPreviewView } from '../jdw/widget-preview-view.js';
 import { replaceJsonValueAtPath, type JsonFormPath } from '../jdw/json-form-source-patch.js';
 
 type JsonPath = JsonFormPath;
@@ -40,9 +37,13 @@ export interface ResolvedEditorDocumentViews {
 }
 
 export const JSON_FORM_PROVIDER_ID = 'workbench-kit.editor.form.json' as const;
-export const JDW_WIDGET_FORM_PROVIDER_ID = 'workbench-kit.editor.form.jdw-widget' as const;
-export const JDW_PREVIEW_PROVIDER_ID = 'workbench-kit.editor.preview.jdw' as const;
-export const MARKDOWN_PREVIEW_PROVIDER_ID = 'workbench-kit.editor.preview.markdown' as const;
+/** @deprecated Prefer `workbench-kit.samples.jdw.widget-form` from samples.jdw. */
+export const JDW_WIDGET_FORM_PROVIDER_ID = 'workbench-kit.samples.jdw.widget-form' as const;
+/** @deprecated Prefer `workbench-kit.samples.jdw.widget-preview` from samples.jdw. */
+export const JDW_PREVIEW_PROVIDER_ID = 'workbench-kit.samples.jdw.widget-preview' as const;
+/** @deprecated Prefer `workbench-kit.builtin.editor.markdown-preview` from builtin.editor. */
+export const MARKDOWN_PREVIEW_PROVIDER_ID =
+  'workbench-kit.builtin.editor.markdown-preview' as const;
 
 /**
  * Opt-in shallow top-level JSON object form.
@@ -64,54 +65,12 @@ export const JSON_FORM_PROVIDER: EditorDocumentViewProvider = {
   ),
 };
 
-const JDW_WIDGET_FORM_PROVIDER: EditorDocumentViewProvider = {
-  id: JDW_WIDGET_FORM_PROVIDER_ID,
-  kind: 'form',
-  label: 'Form',
-  priority: 20,
-  matches: (document) =>
-    !isJdwSchemaDocument(document) &&
-    (isJdwDocument(document) || isJdwWidgetJson(document.content)),
-  render: ({ document, onContentChange }) => (
-    <JdwWidgetFormView
-      content={document.content}
-      path={document.path}
-      onContentChange={onContentChange}
-    />
-  ),
-};
-
-const JDW_PREVIEW_PROVIDER: EditorDocumentViewProvider = {
-  id: JDW_PREVIEW_PROVIDER_ID,
-  kind: 'preview',
-  label: 'Preview',
-  priority: 10,
-  matches: (document) =>
-    !isJdwSchemaDocument(document) &&
-    (isJdwDocument(document) || isJdwWidgetJson(document.content)),
-  render: ({ document }) => (
-    <JdwWidgetPreviewView
-      className="workbench-editor-area__jdw-preview-viewport"
-      content={document.content}
-      path={document.path}
-    />
-  ),
-};
-
-const MARKDOWN_PREVIEW_PROVIDER: EditorDocumentViewProvider = {
-  id: MARKDOWN_PREVIEW_PROVIDER_ID,
-  kind: 'preview',
-  label: 'Preview',
-  priority: 5,
-  matches: isMarkdownDocument,
-  render: ({ document }) => <WorkbenchMarkdownPreview source={document.content} />,
-};
-
-export const DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS: readonly EditorDocumentViewProvider[] = [
-  JDW_WIDGET_FORM_PROVIDER,
-  JDW_PREVIEW_PROVIDER,
-  MARKDOWN_PREVIEW_PROVIDER,
-];
+/**
+ * Host defaults intentionally omit document views that extensions own:
+ * - Markdown preview → `workbench-kit.builtin.editor`
+ * - JDW form/preview → `workbench-kit.samples.jdw`
+ */
+export const DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS: readonly EditorDocumentViewProvider[] = [];
 
 export interface CreateEditorDocumentViewProviderRegistryOptions extends CoreCreateEditorDocumentViewProviderRegistryOptions {
   readonly includeDefaultProviders?: boolean | undefined;
@@ -454,13 +413,6 @@ function isJsonLikeDocument(document: EditorDocumentContext): boolean {
 
 function isJdwDocument(document: EditorDocumentContext): boolean {
   return document.mimeType === JDW_WIDGET_DOCUMENT_MIME || isJdwDocumentPath(document.path);
-}
-
-function isMarkdownDocument(document: EditorDocumentContext): boolean {
-  const mimeType = document.mimeType?.toLowerCase();
-  const path = document.path.toLowerCase();
-
-  return path.endsWith('.md') || path.endsWith('.mdx') || mimeType === 'text/markdown';
 }
 
 function parseJsonObject(content: string): Record<string, unknown> | null {

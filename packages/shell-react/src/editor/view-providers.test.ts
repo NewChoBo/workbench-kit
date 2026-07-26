@@ -6,11 +6,8 @@ import {
 
 import {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
-  JDW_PREVIEW_PROVIDER_ID,
-  JDW_WIDGET_FORM_PROVIDER_ID,
   JSON_FORM_PROVIDER,
   JSON_FORM_PROVIDER_ID,
-  MARKDOWN_PREVIEW_PROVIDER_ID,
   createEditorDocumentViewProviderRegistry,
   resolveEditorDocumentViews,
   type EditorDocumentContext,
@@ -54,7 +51,7 @@ describe('resolveEditorDocumentViews', () => {
     expect(resolved.previewProvider).toBeUndefined();
   });
 
-  it('resolves JDW preview from .jdw.json extension even before content parses', () => {
+  it('does not ship JDW form/preview in host defaults (samples.jdw contributes them)', () => {
     const resolved = resolveEditorDocumentViews(
       createDocument({
         content: '{',
@@ -63,11 +60,11 @@ describe('resolveEditorDocumentViews', () => {
       }),
     );
 
-    expect(resolved.formProvider?.id).toBe(JDW_WIDGET_FORM_PROVIDER_ID);
-    expect(resolved.previewProvider?.id).toBe(JDW_PREVIEW_PROVIDER_ID);
+    expect(resolved.formProvider).toBeUndefined();
+    expect(resolved.previewProvider).toBeUndefined();
   });
 
-  it('resolves Markdown preview without JSON form mode', () => {
+  it('does not ship Markdown preview in host defaults (builtin.editor contributes it)', () => {
     const resolved = resolveEditorDocumentViews(
       createDocument({
         content: '# Notes\n\n```mermaid\ngraph TD\n  A[Start] --> B[Preview]\n```',
@@ -77,7 +74,7 @@ describe('resolveEditorDocumentViews', () => {
     );
 
     expect(resolved.formProvider).toBeUndefined();
-    expect(resolved.previewProvider?.id).toBe(MARKDOWN_PREVIEW_PROVIDER_ID);
+    expect(resolved.previewProvider).toBeUndefined();
   });
 
   it('keeps plain JSON code-only by default (no blanket form provider)', () => {
@@ -166,7 +163,7 @@ describe('resolveEditorDocumentViews', () => {
 });
 
 describe('EditorDocumentViewProviderRegistry', () => {
-  it('registers default and host-provided document view providers', () => {
+  it('registers host-provided document view providers without shell defaults', () => {
     const customPreviewProvider: EditorDocumentViewProvider = {
       id: 'custom.preview',
       kind: 'preview',
@@ -178,12 +175,8 @@ describe('EditorDocumentViewProviderRegistry', () => {
       providers: [customPreviewProvider],
     });
 
-    expect(registry.getProviders().map((provider) => provider.id)).toEqual([
-      JDW_WIDGET_FORM_PROVIDER_ID,
-      JDW_PREVIEW_PROVIDER_ID,
-      MARKDOWN_PREVIEW_PROVIDER_ID,
-      'custom.preview',
-    ]);
+    expect(registry.getProviders().map((provider) => provider.id)).toEqual(['custom.preview']);
+    expect(DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS).toEqual([]);
 
     registry.dispose();
   });

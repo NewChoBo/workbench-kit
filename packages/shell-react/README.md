@@ -33,6 +33,63 @@ layout-only chrome without host services, start from
 `@workbench-kit/react/workbench/shell` — see
 [Getting Started](../../docs/guides/getting-started.md).
 
+## Field Remap embed (slim subpath)
+
+Hosts that only need the Field Remap mapper UI can import the slim subpath instead
+of the full shell barrel (avoids pulling workbench shell / extension-host surfaces
+into the consumer import graph):
+
+```ts
+import {
+  FieldRemapPanel,
+  FieldRemapFlowMapper,
+  createJsonataValueTransform,
+} from '@workbench-kit/shell-react/field-remap';
+import '@workbench-kit/shell-react/field-remap/view.css';
+
+// Uncontrolled demo:
+// <FieldRemapPanel sample="nested-ab" />
+
+// Controlled (host-persisted edges):
+// <FieldRemapPanel edges={edges} onEdgesChange={setEdges} sources={…} targets={…} sourceSample={…} />
+```
+
+`FieldRemapFlowMapper` side-imports the same CSS; the explicit CSS export remains
+for Flow-only embeds and custom bundler setups. The full barrel
+`import { FieldRemapPanel } from '@workbench-kit/shell-react'` stays supported.
+
+### Flow host chrome hooks
+
+`FieldRemapFlowMapper` (and `FieldRemapPanel` pass-through) accept optional chrome
+hooks so hosts avoid CSS/DOM workarounds:
+
+| Prop                                                            | Behavior                                                              |
+| --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `showMinimap`                                                   | Default `true`. When `false`, MiniMap is not mounted.                 |
+| `onPaneContextMenu` / `onNodeContextMenu` / `onEdgeContextMenu` | Native event + selection payload; host owns menu UI.                  |
+| `flowActionsRef`                                                | `{ fitView(options?) }` using the same defaults as Controls fit-view. |
+| `labels` / `t`                                                  | Override edge-list / Convert palette chrome (e.g. “Field maps”).      |
+| `ioChrome` (Panel)                                              | `'browse' \| 'edit' \| 'none'` — prefer browse for inspect-only I/O.  |
+
+```tsx
+const flowActionsRef = useRef<FieldRemapFlowActions | null>(null);
+
+<FieldRemapFlowMapper
+  sources={sources}
+  targets={targets}
+  edges={edges}
+  transforms={registry}
+  onEdgesChange={setEdges}
+  showMinimap={false}
+  labels={{ bindingsTitle: 'Field maps' }}
+  flowActionsRef={flowActionsRef}
+  onPaneContextMenu={(event, { selection }) => {
+    event.preventDefault();
+    // host ContextMenu…
+  }}
+/>;
+```
+
 ## Related docs
 
 - [Component Map](../../docs/guides/component-map.md)

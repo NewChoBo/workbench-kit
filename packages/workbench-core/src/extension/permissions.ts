@@ -6,6 +6,11 @@
  * expanded in v1.
  */
 
+import {
+  WORKBENCH_AUTH_CAPABILITY_ID,
+  WORKBENCH_SECRETS_CAPABILITY_ID,
+} from '@workbench-kit/platform';
+
 export interface PermissionAssertContext {
   readonly extensionId: string;
   readonly permissions: readonly string[];
@@ -15,6 +20,20 @@ export interface CapabilityRequireContext {
   readonly extensionId: string;
   readonly requiredCapabilities: readonly string[];
 }
+
+/**
+ * Sensitive host capabilities that `ExtensionContext.getCapability` refuses
+ * unless the extension both declares `capabilities.requires` and lists the
+ * matching permission. Unlisted capability ids stay unrestricted (v1).
+ */
+export const CAPABILITY_ACCESS_REQUIREMENTS: Readonly<
+  Record<string, { readonly permission: string }>
+> = {
+  [WORKBENCH_AUTH_CAPABILITY_ID]: { permission: 'account.read' },
+  [WORKBENCH_SECRETS_CAPABILITY_ID]: { permission: 'secrets.read' },
+  // Stable id from `@workbench-kit/workspace` (`WORKBENCH_WORKSPACE_CAPABILITY_ID`).
+  'workbench.workspace': { permission: 'workspace.read' },
+};
 
 export class ExtensionPermissionDeniedError extends Error {
   readonly code = 'extension_permission_denied' as const;
@@ -62,4 +81,26 @@ export function requireCapability(ctx: CapabilityRequireContext, capabilityId: s
   if (!ctx.requiredCapabilities.includes(required)) {
     throw new ExtensionCapabilityRequiredError(ctx.extensionId, required);
   }
+}
+
+/**
+ * Enforce declare-and-permission rules for sensitive capabilities before
+ * returning a provider from `getCapability`.
+ */
+export function assertCapabilityAccess(
+  ctx: PermissionAssertContext & CapabilityRequireContext,
+  capabilityId: string,
+): void {
+  const required = capabilityId.trim();
+  if (!required) {
+    throw new Error('assertCapabilityAccess requires a non-empty capability id.');
+  }
+
+  const access = CAPABILITY_ACCESS_REQUIREMENTS[required];
+  if (!access) {
+    return;
+  }
+
+  requireCapability(ctx, required);
+  assertPermission(ctx, access.permission);
 }
