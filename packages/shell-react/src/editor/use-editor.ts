@@ -87,7 +87,8 @@ export function useEditorHost(tabId?: string): EditorHost | undefined {
 export function useEditorDocumentViewProviders(
   localProviders?: readonly EditorDocumentViewProvider[] | undefined,
 ): readonly EditorDocumentViewProvider[] {
-  const { editorDocumentViewProviders } = useWorkbench();
+  const { editorDocumentViewProviders, extensionRegistry, waitForExtensionStartup } =
+    useWorkbench();
   const forceRender = useForceRender();
 
   useEffect(() => {
@@ -96,6 +97,29 @@ export function useEditorDocumentViewProviders(
       disposable.dispose();
     };
   }, [editorDocumentViewProviders, forceRender]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // Document view providers often register during onStartup activate().
+    // Re-render after startup so Form/Preview panes are not stuck code-only.
+    void waitForExtensionStartup().then(() => {
+      if (!cancelled) {
+        forceRender();
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [forceRender, waitForExtensionStartup]);
+
+  useEffect(() => {
+    const disposable = extensionRegistry.onDidActivateExtension(forceRender);
+    return () => {
+      disposable.dispose();
+    };
+  }, [extensionRegistry, forceRender]);
 
   const registryProviders = editorDocumentViewProviders.getProviders();
 

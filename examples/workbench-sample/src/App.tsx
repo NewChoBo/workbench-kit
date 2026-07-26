@@ -50,7 +50,6 @@ import {
   workbenchUserCommands,
   workspaceInfo,
 } from './bootstrap.js';
-import { sampleScreenTemplateDocumentViewProviders } from './sample-jdw-document-views.js';
 import { sampleHostThemes } from './host-themes.js';
 import {
   createSamplePaletteCommandRunner,
@@ -146,7 +145,6 @@ function SampleAuthenticatedWorkbench({
     <WorkbenchProvider
       availableExtensions={SAMPLE_AVAILABLE_EXTENSIONS}
       contextKeyValues={contextKeyValues}
-      documentViewProviders={sampleScreenTemplateDocumentViewProviders}
       extensionIntegrityMode="fail-closed"
       extensionsConfig={resolvedExtensionsConfig}
       extensionsLock={extensionsLock}

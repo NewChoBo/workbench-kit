@@ -1100,7 +1100,7 @@ describe('EditorArea', () => {
       root.render(
         <WorkbenchProvider
           extensionsConfig={{
-            enabled: ['workbench-kit.builtin.editor'],
+            enabled: ['workbench-kit.builtin.editor', 'workbench-kit.samples.jdw'],
             recommendations: [],
           }}
           workspaceHostPort={{
@@ -1742,7 +1742,7 @@ describe('EditorArea', () => {
       root.render(
         <WorkbenchProvider
           extensionsConfig={{
-            enabled: ['workbench-kit.builtin.editor'],
+            enabled: ['workbench-kit.builtin.editor', 'workbench-kit.samples.jdw'],
             recommendations: [],
           }}
           workspaceHostPort={{
@@ -1877,7 +1877,7 @@ describe('EditorArea', () => {
       root.render(
         <WorkbenchProvider
           extensionsConfig={{
-            enabled: ['workbench-kit.builtin.editor'],
+            enabled: ['workbench-kit.builtin.editor', 'workbench-kit.samples.jdw'],
             recommendations: [],
           }}
           workspaceHostPort={{
@@ -1962,7 +1962,7 @@ describe('EditorArea', () => {
       root.render(
         <WorkbenchProvider
           extensionsConfig={{
-            enabled: ['workbench-kit.builtin.editor'],
+            enabled: ['workbench-kit.builtin.editor', 'workbench-kit.samples.jdw'],
             recommendations: [],
           }}
           workspaceHostPort={{
@@ -2046,13 +2046,15 @@ async function flushReactEffects(): Promise<void> {
 }
 
 async function waitForSelector(container: HTMLElement, selector: string): Promise<void> {
-  for (let index = 0; index < 10; index += 1) {
+  for (let index = 0; index < 40; index += 1) {
     if (container.querySelector(selector)) {
       return;
     }
 
     await flushReactEffects();
   }
+
+  throw new Error(`Timed out waiting for selector: ${selector}`);
 }
 
 function findTabByLabel(container: ParentNode | null, label: string): HTMLElement | null {

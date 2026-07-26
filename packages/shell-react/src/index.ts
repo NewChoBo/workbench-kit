@@ -64,6 +64,7 @@ export {
   JDW_WIDGET_FORM_PROVIDER_ID,
   JSON_FORM_PROVIDER,
   JSON_FORM_PROVIDER_ID,
+  MARKDOWN_PREVIEW_PROVIDER_ID,
   createEditorDocumentViewProviderRegistry,
   resolveEditorDocumentViewProvider,
   resolveEditorDocumentViews,
@@ -74,6 +75,11 @@ export {
   type EditorDocumentViewRenderContext,
   type ResolvedEditorDocumentViews,
 } from './editor/view-providers.js';
+export {
+  BUILTIN_EDITOR_MARKDOWN_PREVIEW_RENDER_KIND,
+  isBuiltinEditorMarkdownPreviewRenderData,
+  type BuiltinEditorMarkdownPreviewRenderData,
+} from './editor/markdown-document-view-data.js';
 export { SampleJdwLabView, type SampleJdwLabViewProps } from './jdw/lab-view.js';
 export { JdwWidgetFormView, type JdwWidgetFormViewProps } from './jdw/widget-form-view.js';
 export { JdwWidgetPreviewView, type JdwWidgetPreviewViewProps } from './jdw/widget-preview-view.js';
@@ -82,6 +88,14 @@ export {
   SAMPLE_JDW_LAB_VIEW_RENDER_KIND,
   type SampleJdwLabViewRenderData,
 } from './jdw/lab-view-data.js';
+export {
+  isSampleJdwWidgetFormRenderData,
+  isSampleJdwWidgetPreviewRenderData,
+  SAMPLE_JDW_WIDGET_FORM_RENDER_KIND,
+  SAMPLE_JDW_WIDGET_PREVIEW_RENDER_KIND,
+  type SampleJdwWidgetFormRenderData,
+  type SampleJdwWidgetPreviewRenderData,
+} from './jdw/document-view-data.js';
 export { SampleFieldRemapDemo, type SampleFieldRemapDemoProps } from './field-remap/demo.js';
 export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap/panel.js';
 export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './field-remap/flow.js';
