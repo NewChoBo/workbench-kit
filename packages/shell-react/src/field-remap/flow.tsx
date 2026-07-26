@@ -70,6 +70,7 @@ import {
   type FieldRemapDraftTransform,
   type FieldRemapSelection,
 } from './flow-ops.js';
+import './view.css';
 
 function TypeBadge({ dataType }: { readonly dataType?: string }): JSX.Element | null {
   if (dataType !== 'object' && dataType !== 'array') {

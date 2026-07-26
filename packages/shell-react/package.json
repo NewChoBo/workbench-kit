@@ -8,7 +8,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./field-remap": "./src/field-remap/index.ts",
+    "./field-remap/view.css": "./src/field-remap/view.css"
   },
   "files": [
     "src",
