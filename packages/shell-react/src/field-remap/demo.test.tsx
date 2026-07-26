@@ -40,7 +40,7 @@ describe('SampleFieldRemapDemo', () => {
     const output = JSON.parse(result!.textContent ?? '{}');
 
     expect(output.name).toBe('Ada Lovelace');
-    expect(output.location).toEqual({ city: 'London', country: 'UK' });
+    expect(output.location).toEqual({ city: 'LONDON', country: 'UK' });
     expect(container.querySelector('[data-sample-id="nested-ab"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="field-remap-flow"]')).toBeTruthy();
   });

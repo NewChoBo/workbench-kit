@@ -30,7 +30,8 @@ export const FIELD_REMAP_SAMPLES: readonly FieldRemapSampleDefinition[] = [
   {
     id: 'nested-ab',
     title: 'A → B',
-    description: 'Object port (profile→location), array itemEdges, and string fan-out',
+    description:
+      'Schema columns A/B with port wires: trim/upper convert chain, leaf location map, array reduce, and itemEdges',
     sourceLabel: 'A',
     targetLabel: 'B',
     sourceIdPrefix: 'a',
@@ -38,7 +39,7 @@ export const FIELD_REMAP_SAMPLES: readonly FieldRemapSampleDefinition[] = [
     source: {
       user_name: '  Ada Lovelace  ',
       profile: {
-        city: 'London',
+        city: '  London  ',
         country: 'UK',
       },
       tags: [
@@ -71,10 +72,16 @@ export const FIELD_REMAP_SAMPLES: readonly FieldRemapSampleDefinition[] = [
         transformIds: ['string:trim', 'string:upper'],
       },
       {
-        // Whole object → object (not leaf-by-leaf).
-        id: 'e-location',
-        sourceFieldId: 'a.profile',
-        targetSlotId: 'b.location',
+        // Leaf convert chain (source → trim → upper → target), as in the BINDINGS topology.
+        id: 'e-city',
+        sourceFieldId: 'a.profile.city',
+        targetSlotId: 'b.location.city',
+        transformIds: ['string:trim', 'string:upper'],
+      },
+      {
+        id: 'e-country',
+        sourceFieldId: 'a.profile.country',
+        targetSlotId: 'b.location.country',
       },
       {
         id: 'e-tags',

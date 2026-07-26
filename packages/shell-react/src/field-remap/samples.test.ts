@@ -55,13 +55,18 @@ describe('FIELD_REMAP_SAMPLES', () => {
     ]);
   });
 
-  it('maps nested-ab with object port and formats', async () => {
+  it('maps nested-ab with convert chains, leaf location, and array reduces', async () => {
     const { output } = await convertSample('nested-ab');
     expect(output).toMatchObject({
       name: 'Ada Lovelace',
       title: 'ADA LOVELACE',
-      location: { city: 'London', country: 'UK' },
+      location: { city: 'LONDON', country: 'UK' },
+      firstTag: 'math',
       tagLine: 'math · computing',
+      labels: [
+        { title: 'math', order: 1 },
+        { title: 'computing', order: 2 },
+      ],
     });
   });
 

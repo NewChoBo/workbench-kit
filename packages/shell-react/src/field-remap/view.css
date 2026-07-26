@@ -428,8 +428,9 @@
 
 .workbench-field-remap-flow-node__header {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.5rem;
+  gap: 0.35rem 0.5rem;
   padding: 0.15rem 0.45rem 0.35rem;
   border-bottom: 1px solid var(--vscode-panel-border, var(--color-border));
   margin-bottom: 0.2rem;
@@ -437,6 +438,10 @@
 
 .workbench-field-remap-flow-node__header strong {
   font-size: 0.85rem;
+}
+
+.workbench-field-remap-flow-node__header .workbench-field-remap-flow-node__hint {
+  margin-left: auto;
 }
 
 .workbench-field-remap-flow-node__title {

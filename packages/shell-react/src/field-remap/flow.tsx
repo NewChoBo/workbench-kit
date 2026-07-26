@@ -64,9 +64,15 @@ function TypeBadge({ dataType }: { readonly dataType?: string }): JSX.Element | 
 
 function SourceObjectNode({ data }: NodeProps<Node<FieldRemapSourceObjectNodeData>>): JSX.Element {
   return (
-    <div className="workbench-field-remap-flow-node workbench-field-remap-flow-node--object workbench-field-remap-flow-node--source">
+    <div
+      className="workbench-field-remap-flow-node workbench-field-remap-flow-node--object workbench-field-remap-flow-node--source"
+      data-testid="field-remap-source-schema"
+    >
       <div className="workbench-field-remap-flow-node__header">
         <strong>{data.title}</strong>
+        <span className="workbench-field-remap-flow-node__hint">
+          {data.schemaRole ?? 'Source schema'}
+        </span>
       </div>
       <ul className="workbench-field-remap-flow-node__ports">
         {data.ports.map((port) => (
@@ -90,9 +96,15 @@ function SourceObjectNode({ data }: NodeProps<Node<FieldRemapSourceObjectNodeDat
 
 function TargetObjectNode({ data }: NodeProps<Node<FieldRemapTargetObjectNodeData>>): JSX.Element {
   return (
-    <div className="workbench-field-remap-flow-node workbench-field-remap-flow-node--object workbench-field-remap-flow-node--target">
+    <div
+      className="workbench-field-remap-flow-node workbench-field-remap-flow-node--object workbench-field-remap-flow-node--target"
+      data-testid="field-remap-target-schema"
+    >
       <div className="workbench-field-remap-flow-node__header">
         <strong>{data.title}</strong>
+        <span className="workbench-field-remap-flow-node__hint">
+          {data.schemaRole ?? 'Target schema'}
+        </span>
       </div>
       <ul className="workbench-field-remap-flow-node__ports">
         {data.ports.map((port) => (
@@ -486,16 +498,17 @@ function FieldRemapFlowCanvas({
       onKeyDown={onKeyDown}
     >
       <p className="workbench-field-remap-mapper__hint" data-testid="field-remap-hint">
-        Drag a left field to a right field. Select a transform node (or binding) to edit step id
-        and options. Use the transform palette to add a chosen step, or place a draft then wire
-        ports. Alt-click removes a step. Escape clears selection and draft nodes.
+        Wire source schema fields (left) to target schema fields (right). Optional convert nodes
+        in the middle (`string:trim`, `array:join`, …) sit on the binding — place a draft then
+        wire ports, or drag through an existing convert node. Select a step to edit options.
+        Alt-click removes a step. Escape clears selection and unfinished drafts.
       </p>
 
       <div className="workbench-field-remap-flow__place" data-testid="field-remap-place-palette">
         <label>
-          <span>Place transform</span>
+          <span>Place convert</span>
           <select
-            aria-label="Transform to place"
+            aria-label="Convert step to place"
             value={placeTransformId}
             onChange={(event) => setPlaceTransformId(event.target.value)}
           >

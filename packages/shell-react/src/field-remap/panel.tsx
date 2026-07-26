@@ -56,7 +56,7 @@ function resolveSample(sample: FieldRemapPanelProps['sample']): FieldRemapSample
 
 /**
  * Self-contained field-remap workbench panel:
- * XYFlow mapper + convertToShape preview for one A→B (or T_A→T_B) sample.
+ * schema columns A/B + optional convert wires (XYFlow) and `convertToShape` preview.
  *
  * Remount with `key={sampleId}` when switching catalog entries so edge state resets.
  * Shapes stay host-owned: the panel edits in-memory samples; `FieldRemapDocument` remains edges-only.

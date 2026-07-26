@@ -10,6 +10,7 @@ import {
   applyFieldRemapFlowConnection,
   connectionToMappingEdge,
   draftTransformNodeId,
+  isSchemaColumnFieldId,
   isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
   operatorNodeId,
@@ -25,12 +26,12 @@ describe('field-remap-flow-adapter', () => {
     { idPrefix: 'a' },
   );
   const targets = targetSlotsFromPlainObject(
-    { name: '', title: '', firstTag: '' },
+    { name: '', title: '', firstTag: '', labels: [{ title: '' }] },
     { idPrefix: 'b' },
   );
   const transforms = createBuiltinValueTransformRegistry();
 
-  it('builds one multi-port source and target object with handle-linked edges', () => {
+  it('builds one multi-port source and target schema with handle-linked edges', () => {
     const edges: MappingEdge[] = [
       {
         id: 'e-title',
@@ -64,6 +65,26 @@ describe('field-remap-flow-adapter', () => {
     expect(
       targetNode?.data.kind === 'target-object' && targetNode.data.ports.length,
     ).toBeGreaterThan(1);
+    expect(sourceNode?.data.kind === 'source-object' && sourceNode.data.schemaRole).toBe(
+      'Source schema',
+    );
+    expect(targetNode?.data.kind === 'target-object' && targetNode.data.schemaRole).toBe(
+      'Target schema',
+    );
+
+    const sourcePortIds =
+      sourceNode?.data.kind === 'source-object'
+        ? sourceNode.data.ports.map((port) => port.fieldId)
+        : [];
+    const targetPortIds =
+      targetNode?.data.kind === 'target-object'
+        ? targetNode.data.ports.map((port) => port.fieldId)
+        : [];
+    expect(sourcePortIds).toContain('a.tags');
+    expect(sourcePortIds.some((id) => id.includes('.item.'))).toBe(false);
+    expect(targetPortIds).toContain('b.labels');
+    expect(targetPortIds.some((id) => id.includes('.item.'))).toBe(false);
+    expect(isSchemaColumnFieldId('a.tags.item.name')).toBe(false);
 
     expect(graph.nodes.some((node) => node.id === transformNodeId('e-title', 0))).toBe(true);
     expect(graph.nodes.some((node) => node.id === transformNodeId('e-title', 1))).toBe(true);

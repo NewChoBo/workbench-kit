@@ -32,12 +32,16 @@ export type FieldRemapPort = {
 export type FieldRemapSourceObjectNodeData = {
   kind: 'source-object';
   title: string;
+  /** Short role label under the schema title (e.g. "Source schema"). */
+  schemaRole?: string;
   ports: FieldRemapPort[];
 } & Record<string, unknown>;
 
 export type FieldRemapTargetObjectNodeData = {
   kind: 'target-object';
   title: string;
+  /** Short role label under the schema title (e.g. "Target schema"). */
+  schemaRole?: string;
   ports: FieldRemapPort[];
 } & Record<string, unknown>;
 
@@ -178,17 +182,28 @@ function fieldLabel(field: SourceField | TargetSlot): string {
   return field.path ?? field.label;
 }
 
-function toPorts(fields: readonly (SourceField | TargetSlot)[]): FieldRemapPort[] {
-  return fields.map((field) => ({
-    fieldId: field.id,
-    label: fieldLabel(field),
-    dataType: field.dataType,
-  }));
+/**
+ * Array item-schema fields (`*.item.*`) belong in list-context editors, not the
+ * main A/B schema columns (BINDINGS-style topology).
+ */
+export function isSchemaColumnFieldId(fieldId: string): boolean {
+  return !fieldId.includes('.item.');
+}
+
+function toSchemaColumnPorts(fields: readonly (SourceField | TargetSlot)[]): FieldRemapPort[] {
+  return fields
+    .filter((field) => isSchemaColumnFieldId(field.id))
+    .map((field) => ({
+      fieldId: field.id,
+      label: fieldLabel(field),
+      dataType: field.dataType,
+    }));
 }
 
 /**
  * Build React Flow nodes/edges from kit shapes + MappingEdge[].
- * Layout: one multi-port source object, transform chain, one multi-port target object.
+ * Layout: one multi-port source schema, optional convert (xf) nodes, one multi-port
+ * target schema — wires are MappingEdge segments (document stays edges-only).
  */
 export function mappingToFlowGraph(input: {
   readonly sources: readonly SourceField[];
@@ -207,8 +222,8 @@ export function mappingToFlowGraph(input: {
   /** Document v2 n→m operators (display / multi-port Flow nodes). */
   readonly operators?: readonly MappingOperator[];
 }): { nodes: Node<FieldRemapFlowNodeData>[]; edges: Edge<FieldRemapFlowEdgeData>[] } {
-  const sourcePorts = toPorts(flattenSourceFields(input.sources));
-  const targetPorts = toPorts(flattenTargetSlots(input.targets));
+  const sourcePorts = toSchemaColumnPorts(flattenSourceFields(input.sources));
+  const targetPorts = toSchemaColumnPorts(flattenTargetSlots(input.targets));
 
   const nodes: Node<FieldRemapFlowNodeData>[] = [
     {
@@ -217,7 +232,8 @@ export function mappingToFlowGraph(input: {
       position: { x: SOURCE_X, y: 24 },
       data: {
         kind: 'source-object',
-        title: input.sourceTitle?.trim() || 'Source',
+        title: input.sourceTitle?.trim() || 'A',
+        schemaRole: 'Source schema',
         ports: sourcePorts,
       },
       draggable: true,
@@ -228,7 +244,8 @@ export function mappingToFlowGraph(input: {
       position: { x: TARGET_X, y: 24 },
       data: {
         kind: 'target-object',
-        title: input.targetTitle?.trim() || 'Target',
+        title: input.targetTitle?.trim() || 'B',
+        schemaRole: 'Target schema',
         ports: targetPorts,
       },
       draggable: true,
