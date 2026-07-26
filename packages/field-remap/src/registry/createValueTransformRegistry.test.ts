@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { BUILTIN_TRANSFORM_IDS, createBuiltinValueTransformRegistry } from './builtinTransforms.js';
 import {
+  areFieldTypesCompatible,
+  arePortsCompatible,
   createValueTransformRegistry,
   isTransformChainCompatible,
   isTransformCompatible,
@@ -98,5 +100,92 @@ describe('createValueTransformRegistry', () => {
     expect(isTransformCompatible(registry.get('n2s')!, 'number', 'string')).toBe(true);
     expect(isTransformChainCompatible(registry, ['n2s', 'upper'], 'number', 'string')).toBe(true);
     expect(isTransformChainCompatible(registry, ['upper', 'n2s'], 'number', 'string')).toBe(false);
+  });
+});
+
+describe('areFieldTypesCompatible / arePortsCompatible', () => {
+  const registry = createValueTransformRegistry([
+    {
+      id: 'n2s',
+      label: 'Number to string',
+      inputTypes: ['number'],
+      outputType: 'string',
+      apply: (value) => String(value),
+    },
+    {
+      id: 'upper',
+      label: 'Uppercase',
+      inputTypes: ['string'],
+      outputType: 'string',
+      apply: (value) => String(value).toUpperCase(),
+    },
+  ]);
+
+  it('treats missing and unknown types as permissive for identity links', () => {
+    expect(areFieldTypesCompatible(undefined, 'string')).toBe(true);
+    expect(areFieldTypesCompatible('number', undefined)).toBe(true);
+    expect(areFieldTypesCompatible('unknown', 'string')).toBe(true);
+    expect(areFieldTypesCompatible('string', 'unknown')).toBe(true);
+    expect(areFieldTypesCompatible('string', 'string')).toBe(true);
+    expect(areFieldTypesCompatible('string', 'number')).toBe(false);
+    expect(areFieldTypesCompatible('object', 'array')).toBe(false);
+  });
+
+  it('uses identity type match when transformIds is empty or omitted', () => {
+    expect(
+      arePortsCompatible({ sourceType: 'string', targetType: 'string' }),
+    ).toBe(true);
+    expect(
+      arePortsCompatible({
+        sourceType: 'string',
+        targetType: 'number',
+        transformIds: [],
+      }),
+    ).toBe(false);
+    expect(
+      arePortsCompatible({
+        sourceType: 'number',
+        targetType: 'string',
+        transformIds: [],
+        registry,
+      }),
+    ).toBe(false);
+  });
+
+  it('delegates non-empty chains to isTransformChainCompatible', () => {
+    expect(
+      arePortsCompatible({
+        sourceType: 'number',
+        targetType: 'string',
+        transformIds: ['n2s'],
+        registry,
+      }),
+    ).toBe(true);
+    expect(
+      arePortsCompatible({
+        sourceType: 'number',
+        targetType: 'string',
+        transformIds: ['n2s', 'upper'],
+        registry,
+      }),
+    ).toBe(true);
+    expect(
+      arePortsCompatible({
+        sourceType: 'number',
+        targetType: 'string',
+        transformIds: ['upper'],
+        registry,
+      }),
+    ).toBe(false);
+  });
+
+  it('rejects non-empty chains when registry is missing', () => {
+    expect(
+      arePortsCompatible({
+        sourceType: 'number',
+        targetType: 'string',
+        transformIds: ['n2s'],
+      }),
+    ).toBe(false);
   });
 });

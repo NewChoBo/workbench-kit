@@ -30,6 +30,76 @@ Middle “graph nodes” in the sample UI are just `MappingEdge.transformIds` st
 (plus optional `transformOptionSteps`), not a separate document type. The workbench
 sample renders them with `@xyflow/react` (source out → transform → target in).
 
+### Shape ownership
+
+`FieldRemapDocument` (v1) stores **edges only**. Hosts own input/output shapes
+(`SourceField[]` / `TargetSlot[]`, or `defineDataShape` + ingest helpers) and pass
+them into `convertToShape` / the shell `FieldRemapPanel` / `FieldRemapFlowMapper`.
+Changing a shape should drop or warn on edges whose field/slot ids disappear.
+
+### Host embed (shell UI)
+
+Published packages already include the runtime and host-embeddable UI (no monorepo
+checkout required once your pin includes a release that contains these exports):
+
+```powershell
+pnpm add @workbench-kit/field-remap@prototype @workbench-kit/shell-react@prototype
+```
+
+```ts
+import {
+  convertToShape,
+  createBuiltinValueTransformRegistry,
+  defineConversion,
+  defineDataShape,
+  sourceFieldsFromPlainObject,
+  targetSlotsFromPlainObject,
+} from '@workbench-kit/field-remap';
+import {
+  FieldRemapFlowMapper,
+  FieldRemapPanel,
+  createJsonataValueTransform,
+} from '@workbench-kit/shell-react';
+
+// Quick demo surface (catalog sample + preview):
+// <FieldRemapPanel sample="nested-ab" />
+
+// Or host-owned shapes + edges:
+const transforms = createBuiltinValueTransformRegistry();
+transforms.register(createJsonataValueTransform());
+// <FieldRemapFlowMapper sources={…} targets={…} edges={…} transforms={transforms} onEdgesChange={…} />
+```
+
+Place-then-wire free graphs are **not** the document model — add transforms via the
+palette / `+ node` onto an existing binding (`transformIds` chain, max 3). List
+context uses `itemEdges` on array→array bindings.
+
+### Port compatibility
+
+Use `areFieldTypesCompatible` for identity (direct) links and `arePortsCompatible` when a
+`transformIds` chain may mediate the link. Empty / omitted chains are identity matches;
+non-empty chains require a `ValueTransformRegistry` and reuse `isTransformChainCompatible`.
+Missing or `unknown` `FieldDataType` values stay permissive (same default as transform helpers).
+
+```ts
+import {
+  areFieldTypesCompatible,
+  arePortsCompatible,
+  createBuiltinValueTransformRegistry,
+} from '@workbench-kit/field-remap';
+
+areFieldTypesCompatible('string', 'string'); // true
+areFieldTypesCompatible('string', 'number'); // false
+
+const transforms = createBuiltinValueTransformRegistry();
+arePortsCompatible({
+  sourceType: 'array',
+  targetType: 'string',
+  transformIds: ['array:join'],
+  registry: transforms,
+}); // true
+```
+
 ## Quick start
 
 ```ts

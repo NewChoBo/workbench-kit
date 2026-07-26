@@ -122,10 +122,13 @@ export type { TargetSlotsFromPlainObjectOptions } from './domain/ingest/targetSl
 
 export {
   applyTransformChain,
+  areFieldTypesCompatible,
+  arePortsCompatible,
   createValueTransformRegistry,
   isTransformChainCompatible,
   isTransformCompatible,
 } from './registry/createValueTransformRegistry.js';
+export type { ArePortsCompatibleInput } from './registry/createValueTransformRegistry.js';
 
 export {
   ARRAY_REDUCE_TRANSFORM_IDS,

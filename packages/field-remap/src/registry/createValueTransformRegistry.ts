@@ -162,6 +162,7 @@ export function isTransformCompatible(
 /**
  * Whether an ordered transform chain can sit between source and target types.
  * Each step must accept the previous output type (or the original source for step 0).
+ * Empty chains always return true — use {@link arePortsCompatible} for identity type match.
  */
 export function isTransformChainCompatible(
   registry: ValueTransformRegistry,
@@ -192,6 +193,48 @@ export function isTransformChainCompatible(
   }
 
   return true;
+}
+
+/**
+ * Identity (direct) port type match.
+ * Missing or `unknown` types are permissive — same default as transform helpers.
+ */
+export function areFieldTypesCompatible(
+  source: FieldDataType | undefined,
+  target: FieldDataType | undefined,
+): boolean {
+  if (!source || source === 'unknown' || !target || target === 'unknown') {
+    return true;
+  }
+  return source === target;
+}
+
+export type ArePortsCompatibleInput = {
+  readonly sourceType?: FieldDataType;
+  readonly targetType?: FieldDataType;
+  readonly transformIds?: readonly string[];
+  readonly registry?: ValueTransformRegistry;
+};
+
+/**
+ * Whether two field/slot ports may connect under `FieldDataType` rules.
+ * Empty / omitted `transformIds` ≡ identity match via {@link areFieldTypesCompatible}.
+ * Non-empty chains require `registry` and use {@link isTransformChainCompatible}.
+ */
+export function arePortsCompatible(input: ArePortsCompatibleInput): boolean {
+  const chain = input.transformIds ?? [];
+  if (chain.length === 0) {
+    return areFieldTypesCompatible(input.sourceType, input.targetType);
+  }
+  if (!input.registry) {
+    return false;
+  }
+  return isTransformChainCompatible(
+    input.registry,
+    chain,
+    input.sourceType,
+    input.targetType,
+  );
 }
 
 export type { TransformContext };
