@@ -1,11 +1,13 @@
 import {
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useState,
   type JSX,
   type KeyboardEvent,
   type MouseEvent,
+  type Ref,
 } from 'react';
 import {
   Background,
@@ -17,6 +19,7 @@ import {
   ReactFlowProvider,
   useEdgesState,
   useNodesState,
+  useReactFlow,
   type Connection,
   type Edge,
   type Node,
@@ -274,6 +277,38 @@ const nodeTypes = {
   fieldRemapSplitOperator: SplitOperatorNode,
 };
 
+/** Imperative Flow chrome actions for integrating hosts (fit-view without Controls DOM). */
+export interface FieldRemapFlowActions {
+  fitView: (options?: { padding?: number; maxZoom?: number }) => void;
+}
+
+const DEFAULT_FIT_VIEW_OPTIONS = { padding: 0.12, maxZoom: 1.15 } as const;
+
+/**
+ * Bridges imperative fit-view to hosts without subscribing the whole canvas
+ * to the React Flow store (avoids update loops with controlled nodes).
+ */
+function FieldRemapFlowActionsBridge({
+  flowActionsRef,
+}: {
+  readonly flowActionsRef?: Ref<FieldRemapFlowActions | null> | undefined;
+}): null {
+  const { fitView } = useReactFlow();
+  useImperativeHandle(
+    flowActionsRef,
+    () => ({
+      fitView: (options) => {
+        void fitView({
+          padding: options?.padding ?? DEFAULT_FIT_VIEW_OPTIONS.padding,
+          maxZoom: options?.maxZoom ?? DEFAULT_FIT_VIEW_OPTIONS.maxZoom,
+        });
+      },
+    }),
+    [fitView],
+  );
+  return null;
+}
+
 export interface FieldRemapFlowMapperProps {
   readonly sources: readonly SourceField[];
   readonly targets: readonly TargetSlot[];
@@ -287,6 +322,31 @@ export interface FieldRemapFlowMapperProps {
   readonly targetTitle?: string | undefined;
   readonly selection?: FieldRemapSelection | undefined;
   readonly onSelectionChange?: ((next: FieldRemapSelection) => void) | undefined;
+  /**
+   * When false, MiniMap is not mounted (not CSS-hidden). Defaults to true for
+   * backward compatibility with existing samples.
+   */
+  readonly showMinimap?: boolean | undefined;
+  /** Pane context menu; host owns menu UI. Receives current Field Remap selection. */
+  readonly onPaneContextMenu?:
+    | ((event: MouseEvent | globalThis.MouseEvent, ctx: { selection: FieldRemapSelection }) => void)
+    | undefined;
+  /** Node context menu; host owns menu UI. */
+  readonly onNodeContextMenu?:
+    | ((
+        event: MouseEvent | globalThis.MouseEvent,
+        ctx: { nodeId: string; selection: FieldRemapSelection },
+      ) => void)
+    | undefined;
+  /** Edge context menu; host owns menu UI. */
+  readonly onEdgeContextMenu?:
+    | ((
+        event: MouseEvent | globalThis.MouseEvent,
+        ctx: { edgeId: string; selection: FieldRemapSelection },
+      ) => void)
+    | undefined;
+  /** Imperative fit-view (same defaults as Controls fit-view). */
+  readonly flowActionsRef?: Ref<FieldRemapFlowActions | null> | undefined;
 }
 
 function FieldRemapFlowCanvas({
@@ -301,6 +361,11 @@ function FieldRemapFlowCanvas({
   targetTitle,
   selection: selectionProp,
   onSelectionChange: onSelectionChangeProp,
+  showMinimap = true,
+  onPaneContextMenu,
+  onNodeContextMenu,
+  onEdgeContextMenu,
+  flowActionsRef,
 }: FieldRemapFlowMapperProps): JSX.Element {
   const [internalSelection, setInternalSelection] = useState<FieldRemapSelection>(null);
   const selection = selectionProp !== undefined ? selectionProp : internalSelection;
@@ -582,10 +647,32 @@ function FieldRemapFlowCanvas({
     [setSelection],
   );
 
+  const handlePaneContextMenu = useCallback(
+    (event: MouseEvent | globalThis.MouseEvent) => {
+      onPaneContextMenu?.(event, { selection });
+    },
+    [onPaneContextMenu, selection],
+  );
+
+  const handleNodeContextMenu = useCallback(
+    (event: MouseEvent, node: Node) => {
+      onNodeContextMenu?.(event, { nodeId: node.id, selection });
+    },
+    [onNodeContextMenu, selection],
+  );
+
+  const handleEdgeContextMenu = useCallback(
+    (event: MouseEvent, edge: Edge) => {
+      onEdgeContextMenu?.(event, { edgeId: edge.id, selection });
+    },
+    [onEdgeContextMenu, selection],
+  );
+
   return (
     <div
       className="workbench-field-remap-flow"
       data-testid="field-remap-mapper"
+      data-minimap={showMinimap ? 'on' : 'off'}
       onKeyDown={onKeyDown}
     >
       <p className="workbench-field-remap-mapper__hint" data-testid="field-remap-hint">
@@ -646,30 +733,36 @@ function FieldRemapFlowCanvas({
             onConnect={onConnect}
             onEdgesDelete={onEdgesDelete}
             onNodeClick={onNodeClick}
+            onPaneContextMenu={onPaneContextMenu ? handlePaneContextMenu : undefined}
+            onNodeContextMenu={onNodeContextMenu ? handleNodeContextMenu : undefined}
+            onEdgeContextMenu={onEdgeContextMenu ? handleEdgeContextMenu : undefined}
             isValidConnection={isValidConnection}
             fitView
-            fitViewOptions={{ padding: 0.12, maxZoom: 1.15 }}
+            fitViewOptions={DEFAULT_FIT_VIEW_OPTIONS}
             proOptions={{ hideAttribution: true }}
           >
+            <FieldRemapFlowActionsBridge flowActionsRef={flowActionsRef} />
             <Background gap={16} color="var(--xy-background-pattern-color)" />
-            <Controls showInteractive={false} />
-            <MiniMap
-              pannable
-              zoomable
-              bgColor="var(--xy-minimap-background-color)"
-              maskColor="var(--xy-minimap-mask-background-color)"
-              nodeColor={(node) => {
-                const kind = (node.data as FieldRemapFlowNodeData | undefined)?.kind;
-                if (kind === 'source-object') {
-                  return 'var(--vscode-charts-blue, #3794ff)';
-                }
-                if (kind === 'target-object') {
-                  return 'var(--vscode-charts-green, #89d185)';
-                }
-                return 'var(--vscode-focusBorder, var(--color-accent, #3794ff))';
-              }}
-              nodeStrokeColor="var(--xy-minimap-node-stroke-color)"
-            />
+            <Controls showInteractive={false} fitViewOptions={DEFAULT_FIT_VIEW_OPTIONS} />
+            {showMinimap ? (
+              <MiniMap
+                pannable
+                zoomable
+                bgColor="var(--xy-minimap-background-color)"
+                maskColor="var(--xy-minimap-mask-background-color)"
+                nodeColor={(node) => {
+                  const kind = (node.data as FieldRemapFlowNodeData | undefined)?.kind;
+                  if (kind === 'source-object') {
+                    return 'var(--vscode-charts-blue, #3794ff)';
+                  }
+                  if (kind === 'target-object') {
+                    return 'var(--vscode-charts-green, #89d185)';
+                  }
+                  return 'var(--vscode-focusBorder, var(--color-accent, #3794ff))';
+                }}
+                nodeStrokeColor="var(--xy-minimap-node-stroke-color)"
+              />
+            ) : null}
           </ReactFlow>
         </div>
 

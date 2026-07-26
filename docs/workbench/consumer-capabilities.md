@@ -673,8 +673,13 @@ sample extension packaging.
 **Key APIs:** `convertToShape`, `convertMappedInputs`, `createBuiltinValueTransformRegistry`,
 `arePortsCompatible`, `areFieldTypesCompatible`, `pruneMappingEdgesForShapes`,
 `FieldRemapPanel` (controlled `edges` / `onEdgesChange`), `FieldRemapFlowMapper`,
-`FieldRemapConvertPalette`, `FieldRemapDetailPanel`, `ConvertNoteEditor`,
-`FieldRemapShapeIoEditor`, `TransformOptionsEditor`.
+`FieldRemapFlowActions` (`flowActionsRef.fitView`), `FieldRemapConvertPalette`,
+`FieldRemapDetailPanel`, `ConvertNoteEditor`, `FieldRemapShapeIoEditor`,
+`TransformOptionsEditor`.
+
+**Flow host chrome:** `showMinimap` (omit MiniMap when false), pane/node/edge context-menu
+callbacks with selection payload (host owns menu UI), and `flowActionsRef.fitView` so hosts
+do not query Controls DOM. Panel forwards the same props.
 
 **Embed recipe:** import `@workbench-kit/shell-react/field-remap` (+ optional
 `…/field-remap/view.css`). Persist `MappingEdge[]` via controlled panel props; evaluate with

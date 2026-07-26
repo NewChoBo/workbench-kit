@@ -18,7 +18,7 @@ import {
   type ValueTransformRegistry,
 } from '@workbench-kit/field-remap';
 
-import { FieldRemapFlowMapper } from './flow.js';
+import { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './flow.js';
 import {
   getFieldRemapSample,
   type FieldRemapSampleDefinition,
@@ -59,6 +59,12 @@ export interface FieldRemapPanelProps {
   readonly sourceSample?: unknown;
   /** Optional target shape sample JSON (shape editor seed; preview uses edges). */
   readonly targetShape?: unknown;
+  /** Forwarded to {@link FieldRemapFlowMapper} (default true). */
+  readonly showMinimap?: boolean | undefined;
+  readonly onPaneContextMenu?: FieldRemapFlowMapperProps['onPaneContextMenu'];
+  readonly onNodeContextMenu?: FieldRemapFlowMapperProps['onNodeContextMenu'];
+  readonly onEdgeContextMenu?: FieldRemapFlowMapperProps['onEdgeContextMenu'];
+  readonly flowActionsRef?: FieldRemapFlowMapperProps['flowActionsRef'];
 }
 
 type FieldRemapPreviewResult = {
@@ -101,6 +107,11 @@ export function FieldRemapPanel({
   onTargetsChange,
   sourceSample: sourceSampleProp,
   targetShape: targetShapeProp,
+  showMinimap,
+  onPaneContextMenu,
+  onNodeContextMenu,
+  onEdgeContextMenu,
+  flowActionsRef,
 }: FieldRemapPanelProps): JSX.Element {
   const sample = resolveSample(sampleProp);
   const registry = useMemo(() => {
@@ -328,6 +339,11 @@ export function FieldRemapPanel({
         onOperatorsChange={commitOperators}
         sourceTitle={sample.sourceLabel}
         targetTitle={sample.targetLabel}
+        showMinimap={showMinimap}
+        onPaneContextMenu={onPaneContextMenu}
+        onNodeContextMenu={onNodeContextMenu}
+        onEdgeContextMenu={onEdgeContextMenu}
+        flowActionsRef={flowActionsRef}
       />
 
       {conflicts.length > 0 ? (
