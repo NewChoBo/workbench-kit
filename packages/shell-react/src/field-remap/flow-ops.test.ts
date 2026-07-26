@@ -10,10 +10,15 @@ import {
   addTransformStepToEdge,
   bindDraftSource,
   bindDraftTarget,
+  bindOperatorInput,
+  bindOperatorOutput,
   canEditListContext,
+  createCombineOperator,
   createDraftTransform,
+  createSplitOperator,
   finalizeDraftTransform,
   listCompatibleTransforms,
+  removeMappingOperator,
   setTransformStepIdOnEdge,
   upsertItemEdgeOnParent,
 } from './flow-ops.js';
@@ -157,5 +162,22 @@ describe('field-remap flow-ops', () => {
         existing: [],
       }),
     ).toBeNull();
+  });
+
+  it('authors combine/split operators with create/wire/delete helpers', () => {
+    const combine = bindOperatorOutput(
+      bindOperatorInput(bindOperatorInput(createCombineOperator(), 'a.user_name'), 'a.tags'),
+      'b.name',
+    );
+    expect(combine).toMatchObject({
+      kind: 'combine',
+      inputFieldIds: ['a.user_name', 'a.tags'],
+      outputSlotId: 'b.name',
+    });
+    const split = bindOperatorOutput(
+      bindOperatorOutput(bindOperatorInput(createSplitOperator(), 'a.tags'), 'b.name'),
+      'b.labels',
+    );
+    expect(removeMappingOperator([combine, split], combine.id)).toEqual([split]);
   });
 });

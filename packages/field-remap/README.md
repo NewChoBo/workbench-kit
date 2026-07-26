@@ -125,8 +125,9 @@ optional `operators[]` list for fan-in / fan-out. Call `applyMappingOperators` w
 `combine` / `split` operators (limits: `MAX_MAPPING_FAN_IN` / `MAX_MAPPING_FAN_OUT`
 = 8). Hosts may merge the result with `convertToShape` output.
 `migrateFieldRemapDocument` / `parseFieldRemapDocument` accept v1 and v2 and always
-emit the current version. Shell Flow renders combine/split as read-only multi-port
-nodes when hosts pass `operators` into `FieldRemapFlowMapper`.
+emit the current version. Shell Flow renders combine/split as multi-port nodes and
+supports authoring (create / wire ports / delete) when hosts pass `operators` +
+`onOperatorsChange` into `FieldRemapFlowMapper` (sample `nm-combine-split`).
 
 ```ts
 import { applyMappingOperators, createBuiltinValueTransformRegistry } from '@workbench-kit/field-remap';
