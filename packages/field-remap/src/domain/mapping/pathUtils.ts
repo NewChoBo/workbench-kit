@@ -1,12 +1,36 @@
 /**
  * Lightweight path helpers for collection item projection and safe templates.
- * Supports simple dotted paths (`name`, `meta.label`) on plain objects.
+ * Supports dotted paths (`name`, `meta.label`), indexes (`items[0].name`),
+ * and wildcard projection (`items[*].name`).
  */
 
-import { isSafeObjectPath, requireObjectPathParts } from './objectPathSafety.js';
+import {
+  InvalidObjectPathError,
+  isSafeObjectPath,
+  objectPathHasWildcard,
+  parseObjectPath,
+  type ObjectPathSegment,
+  UnsafeObjectPathError,
+} from './objectPathSafety.js';
 
-/** Placeholder matcher: `{city}`, `{a.b}` — rejects expressions / spaces. */
+/** Default cap for `[*]` expansion to avoid resource exhaustion. */
+export const DEFAULT_MAX_PATH_WILDCARD_EXPANSION = 1_000;
+
+/** Placeholder matcher: `{city}`, `{a.b}` — rejects expressions / spaces / brackets. */
 const TEMPLATE_PLACEHOLDER_RE = /\{([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\}/g;
+
+export class PathExpansionLimitError extends Error {
+  readonly code = 'path_expansion_limit' as const;
+  readonly path: string;
+  readonly limit: number;
+
+  constructor(path: string, limit: number) {
+    super(`Object path "${path}" exceeded wildcard expansion limit (${limit}).`);
+    this.name = 'PathExpansionLimitError';
+    this.path = path;
+    this.limit = limit;
+  }
+}
 
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -15,13 +39,14 @@ export function isPlainObject(value: unknown): value is Record<string, unknown> 
 /**
  * Fill `{path}` placeholders from a plain object using safe dotted paths only.
  * Unknown / unsafe placeholders become empty strings. No JS eval.
+ * Index/wildcard placeholders are not supported (left unchanged / empty).
  */
 export function applyStringTemplate(
   template: string,
   record: Readonly<Record<string, unknown>> | null | undefined,
 ): string {
   return template.replace(TEMPLATE_PLACEHOLDER_RE, (_match, path: string) => {
-    if (!record || !isSafeObjectPath(path)) {
+    if (!record || !isSafeObjectPath(path) || objectPathHasWildcard(path)) {
       return '';
     }
     const resolved = readObjectPath(record, path);
@@ -39,24 +64,116 @@ export function applyStringTemplate(
   });
 }
 
+function readProperty(current: unknown, name: string): unknown {
+  if (current === null || current === undefined || typeof current !== 'object') {
+    return undefined;
+  }
+  return (current as Record<string, unknown>)[name];
+}
+
+function readSegment(current: unknown, segment: ObjectPathSegment): unknown {
+  const container = readProperty(current, segment.name);
+  if (segment.kind === 'property') {
+    return container;
+  }
+  if (segment.kind === 'index') {
+    if (!Array.isArray(container)) {
+      return undefined;
+    }
+    return container[segment.index];
+  }
+  // Wildcard is not a single-value read.
+  throw new InvalidObjectPathError(
+    segment.name,
+    'wildcard segments require projectObjectPath',
+  );
+}
+
+/**
+ * Read a single value at `path`. Supports property and numeric index segments.
+ * Wildcard (`[*]`) paths throw {@link InvalidObjectPathError} — use
+ * {@link projectObjectPath} instead.
+ */
 export function readObjectPath(value: unknown, path: string): unknown {
-  const parts = requireObjectPathParts(path);
-  if (parts.length === 0) {
+  const segments = parseObjectPath(path);
+  if (segments.length === 0) {
     return value;
+  }
+  if (segments.some((segment) => segment.kind === 'wildcard')) {
+    throw new InvalidObjectPathError(path, 'wildcard segments require projectObjectPath');
   }
 
   let current: unknown = value;
-  for (const part of parts) {
-    if (current === null || current === undefined || typeof current !== 'object') {
+  for (const segment of segments) {
+    current = readSegment(current, segment);
+    if (current === undefined) {
       return undefined;
     }
-    current = (current as Record<string, unknown>)[part];
   }
   return current;
 }
 
+export interface ProjectObjectPathOptions {
+  /** Max values produced by all `[*]` expansions combined (default 1000). */
+  readonly maxExpansion?: number;
+}
+
 /**
- * Write `value` at a dotted path, creating plain-object parents as needed.
+ * Project values through a path that may include `[*]` wildcards and indexes.
+ * Non-array containers under a wildcard / missing paths fail closed (`[]` for
+ * a leading wildcard miss; `undefined` leaves when a non-wildcard branch misses).
+ */
+export function projectObjectPath(
+  value: unknown,
+  path: string,
+  options: ProjectObjectPathOptions = {},
+): unknown {
+  const segments = parseObjectPath(path);
+  if (segments.length === 0) {
+    return value;
+  }
+  const maxExpansion = Math.max(1, options.maxExpansion ?? DEFAULT_MAX_PATH_WILDCARD_EXPANSION);
+
+  const walk = (current: unknown, index: number, expansionCount: { n: number }): unknown => {
+    if (index >= segments.length) {
+      expansionCount.n += 1;
+      if (expansionCount.n > maxExpansion) {
+        throw new PathExpansionLimitError(path, maxExpansion);
+      }
+      return current;
+    }
+
+    const segment = segments[index]!;
+    const container = readProperty(current, segment.name);
+
+    if (segment.kind === 'property') {
+      if (container === undefined) {
+        return undefined;
+      }
+      return walk(container, index + 1, expansionCount);
+    }
+
+    if (segment.kind === 'index') {
+      if (!Array.isArray(container)) {
+        return undefined;
+      }
+      return walk(container[segment.index], index + 1, expansionCount);
+    }
+
+    // wildcard
+    if (!Array.isArray(container)) {
+      return [];
+    }
+    return container.map((item) => walk(item, index + 1, expansionCount));
+  };
+
+  return walk(value, 0, { n: 0 });
+}
+
+/**
+ * Write `value` at a dotted / indexed path, creating plain-object parents as needed.
+ * Index segments grow arrays with `undefined` holes when needed.
+ * Wildcard paths throw {@link InvalidObjectPathError}.
  * Returns a new root object (does not mutate `root`).
  */
 export function writeObjectPath(
@@ -64,34 +181,74 @@ export function writeObjectPath(
   path: string,
   value: unknown,
 ): Record<string, unknown> {
-  const parts = requireObjectPathParts(path);
-  if (parts.length === 0) {
+  const segments = parseObjectPath(path);
+  if (segments.length === 0) {
     return isPlainObject(root) ? { ...root } : {};
   }
-
-  const result: Record<string, unknown> = isPlainObject(root) ? { ...root } : {};
-  let cursor: Record<string, unknown> = result;
-
-  for (let index = 0; index < parts.length - 1; index += 1) {
-    const part = parts[index]!;
-    const existing = cursor[part];
-    const nextChild: Record<string, unknown> = isPlainObject(existing) ? { ...existing } : {};
-    cursor[part] = nextChild;
-    cursor = nextChild;
+  if (segments.some((segment) => segment.kind === 'wildcard')) {
+    throw new InvalidObjectPathError(path, 'wildcard segments cannot be written');
   }
 
-  cursor[parts[parts.length - 1]!] = value;
-  return result;
+  const writeInto = (current: unknown, segmentIndex: number): unknown => {
+    const segment = segments[segmentIndex]!;
+    const isLast = segmentIndex === segments.length - 1;
+    const asObject: Record<string, unknown> = isPlainObject(current) ? { ...current } : {};
+
+    if (segment.kind === 'property') {
+      if (isLast) {
+        asObject[segment.name] = value;
+        return asObject;
+      }
+      asObject[segment.name] = writeInto(asObject[segment.name], segmentIndex + 1);
+      return asObject;
+    }
+
+    // index: object[name][index]...
+    const existingArr = asObject[segment.name];
+    const nextArr = Array.isArray(existingArr) ? [...existingArr] : [];
+    if (isLast) {
+      nextArr[segment.index] = value;
+      asObject[segment.name] = nextArr;
+      return asObject;
+    }
+    nextArr[segment.index] = writeInto(nextArr[segment.index], segmentIndex + 1);
+    asObject[segment.name] = nextArr;
+    return asObject;
+  };
+
+  const nextRoot = writeInto(root, 0);
+  return isPlainObject(nextRoot) ? nextRoot : {};
 }
 
 /**
  * Project each array element through `itemSourcePath`.
+ * When `itemSourcePath` includes indexes / wildcards, uses {@link projectObjectPath}
+ * per element (or on the array when the path starts with a collection key).
  * Non-arrays are returned unchanged (callers decide whether that is valid).
  */
 export function projectCollectionItems(value: unknown, itemSourcePath: string): unknown {
   const path = itemSourcePath.trim();
   if (!path || !Array.isArray(value)) {
     return value;
+  }
+  if (objectPathHasWildcard(path) || path.includes('[')) {
+    // Per-item relative paths (`name`, `meta.label`, `tags[0]`) — map each element.
+    return value.map((item) => {
+      try {
+        return objectPathHasWildcard(path)
+          ? projectObjectPath(item, path)
+          : readObjectPath(item, path);
+      } catch (error) {
+        if (
+          error instanceof UnsafeObjectPathError ||
+          error instanceof InvalidObjectPathError ||
+          error instanceof PathExpansionLimitError
+        ) {
+          return undefined;
+        }
+        throw error;
+      }
+    });
   }
   return value.map((item) => readObjectPath(item, path));
 }

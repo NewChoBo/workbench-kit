@@ -38,16 +38,29 @@ export {
   UnsupportedFieldRemapDocumentVersionError,
 } from './domain/document/fieldRemapDocument.js';
 
-export { isSafeObjectPath, UnsafeObjectPathError } from './domain/mapping/objectPathSafety.js';
+export {
+  InvalidObjectPathError,
+  isSafeObjectPath,
+  objectPathHasWildcard,
+  parseObjectPath,
+  UnsafeObjectPathError,
+} from './domain/mapping/objectPathSafety.js';
+export type { ObjectPathSegment } from './domain/mapping/objectPathSafety.js';
 export {
   applyStringTemplate,
+  DEFAULT_MAX_PATH_WILDCARD_EXPANSION,
   isPlainObject,
   listArrayItemProjectionOptions,
+  PathExpansionLimitError,
   projectCollectionItems,
+  projectObjectPath,
   readObjectPath,
   writeObjectPath,
 } from './domain/mapping/pathUtils.js';
-export type { ArrayItemProjectionOption } from './domain/mapping/pathUtils.js';
+export type {
+  ArrayItemProjectionOption,
+  ProjectObjectPathOptions,
+} from './domain/mapping/pathUtils.js';
 
 export {
   formatDateParts,

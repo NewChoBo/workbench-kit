@@ -24,7 +24,20 @@ pnpm add @workbench-kit/field-remap@prototype
 | Array → scalar reduce                     | Yes (`array:first`, `array:join`)                                    |
 | String format chain                       | Yes (`string:trim` / `upper` / `lower` / `prefix` / `suffix`, max 3) |
 | Array&lt;object&gt; → Array&lt;object&gt; | Yes (`itemEdges` list context)                                       |
-| Index / wildcard paths                    | No (P2)                                                              |
+| Index / wildcard paths                    | Yes (`items[0].name`, `items[*].name` via `projectObjectPath`)       |
+
+### Path grammar
+
+Safe object paths are dotted identifiers with optional index / wildcard brackets:
+
+| Form | Example | API |
+| ---- | ------- | --- |
+| Property | `meta.label` | `readObjectPath` / `writeObjectPath` |
+| Index | `items[0].name` | `readObjectPath` / `writeObjectPath` |
+| Wildcard | `items[*].name` | `projectObjectPath` only (`readObjectPath` fails closed) |
+
+Wildcard expansion is capped by `DEFAULT_MAX_PATH_WILDCARD_EXPANSION` (1000) or
+`projectObjectPath(..., { maxExpansion })`. This is not a JSONPath engine.
 
 Middle “graph nodes” in the sample UI are just `MappingEdge.transformIds` steps
 (plus optional `transformOptionSteps`), not a separate document type. The workbench
