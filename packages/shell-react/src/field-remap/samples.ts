@@ -1,11 +1,16 @@
-import type { MappingEdge } from '@workbench-kit/field-remap';
+import type { MappingEdge, MappingOperator } from '@workbench-kit/field-remap';
 
 /**
  * Field-remap demo scenarios (table / JSON shaped).
  * Runtime stays MappingEdge + convertToShape; UI binds via FieldRemapPanel.
  */
 export type FieldRemapSampleId =
-  'nested-ab' | 't-user-contact' | 't-event-time' | 't-emp-dept' | 't-product-catalog';
+  | 'nested-ab'
+  | 't-user-contact'
+  | 't-event-time'
+  | 't-emp-dept'
+  | 't-product-catalog'
+  | 'nm-combine-split';
 
 export interface FieldRemapSampleDefinition {
   readonly id: FieldRemapSampleId;
@@ -18,6 +23,7 @@ export interface FieldRemapSampleDefinition {
   readonly sourceIdPrefix: string;
   readonly targetIdPrefix: string;
   readonly edges: readonly MappingEdge[];
+  readonly operators?: readonly MappingOperator[];
 }
 
 /** Alias kept so older URIs still open a known sample. */
@@ -328,6 +334,41 @@ export const FIELD_REMAP_SAMPLES: readonly FieldRemapSampleDefinition[] = [
         itemSourcePath: 'TAG_NM',
         transformIds: ['array:join'],
         transformOptionSteps: [{ separator: ' / ' }],
+      },
+    ],
+  },
+  {
+    id: 'nm-combine-split',
+    title: 'n→m combine / split',
+    description:
+      'Document v2 operators: fan-in combine (first+last → nameBag) and fan-out split (address → city/zip)',
+    sourceLabel: 'A',
+    targetLabel: 'B',
+    sourceIdPrefix: 'a',
+    targetIdPrefix: 'b',
+    source: {
+      first: 'Ada',
+      last: 'Lovelace',
+      address: { city: 'London', zip: 'E1' },
+    },
+    targetShape: {
+      nameBag: { first: '', last: '' },
+      city: '',
+      zip: '',
+    },
+    edges: [],
+    operators: [
+      {
+        kind: 'combine',
+        id: 'op-name',
+        inputFieldIds: ['a.first', 'a.last'],
+        outputSlotId: 'b.nameBag',
+      },
+      {
+        kind: 'split',
+        id: 'op-address',
+        inputFieldId: 'a.address',
+        outputSlotIds: ['b.city', 'b.zip'],
       },
     ],
   },

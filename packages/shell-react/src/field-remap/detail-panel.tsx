@@ -4,7 +4,10 @@ import {
   MAX_TRANSFORM_CHAIN,
   findSourceField,
   findTargetSlot,
+  flattenSourceFields,
+  flattenTargetSlots,
   type MappingEdge,
+  type MappingOperator,
   type SourceField,
   type TargetSlot,
   type ValueTransformRegistry,
@@ -13,13 +16,20 @@ import {
 import { ConvertNoteEditor } from './convert-note-editor.js';
 import {
   addTransformStepToEdge,
+  bindOperatorInput,
+  bindOperatorOutput,
   canEditListContext,
   edgePortTypes,
   enableListContextOnEdge,
   listCompatibleTransforms,
   removeItemEdgeFromParent,
+  removeMappingOperator,
+  removeOperatorInput,
+  removeOperatorOutput,
   removeTransformStepFromEdge,
+  updateMappingOperator,
   upsertItemEdgeOnParent,
+  type FieldRemapDraftTransform,
   type FieldRemapSelection,
 } from './flow-ops.js';
 
@@ -31,6 +41,10 @@ export interface FieldRemapDetailPanelProps {
   readonly transforms: ValueTransformRegistry;
   readonly onEdgesChange: (edges: readonly MappingEdge[]) => void;
   readonly onSelectionChange: (next: FieldRemapSelection) => void;
+  readonly drafts?: readonly FieldRemapDraftTransform[] | undefined;
+  readonly onDiscardDraft?: ((localId: string) => void) | undefined;
+  readonly operators?: readonly MappingOperator[] | undefined;
+  readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
 }
 
 function fieldLabel(
@@ -59,18 +73,312 @@ export function FieldRemapDetailPanel({
   transforms,
   onEdgesChange,
   onSelectionChange,
+  drafts = [],
+  onDiscardDraft,
+  operators = [],
+  onOperatorsChange,
 }: FieldRemapDetailPanelProps): JSX.Element | null {
   const edge = useMemo(() => {
-    if (!selection) {
+    if (!selection || (selection.kind !== 'edge' && selection.kind !== 'transformStep')) {
       return undefined;
     }
     return edges.find((item) => item.id === selection.edgeId);
   }, [edges, selection]);
 
+  const draft = useMemo(() => {
+    if (!selection || selection.kind !== 'draft') {
+      return undefined;
+    }
+    return drafts.find((item) => item.localId === selection.localId);
+  }, [drafts, selection]);
+
+  const operator = useMemo(() => {
+    if (!selection || selection.kind !== 'operator') {
+      return undefined;
+    }
+    return operators.find((item) => item.id === selection.operatorId);
+  }, [operators, selection]);
+
   const [pendingItemSourceId, setPendingItemSourceId] = useState<string | null>(null);
   const [paletteId, setPaletteId] = useState<string>('');
+  const [pendingOperatorFieldId, setPendingOperatorFieldId] = useState('');
+  const [pendingOperatorSlotId, setPendingOperatorSlotId] = useState('');
+  const flatSources = useMemo(() => flattenSourceFields(sources), [sources]);
+  const flatTargets = useMemo(() => flattenTargetSlots(targets), [targets]);
 
-  if (!selection || !edge) {
+  if (!selection) {
+    return (
+      <aside
+        className="workbench-field-remap-detail workbench-field-remap-detail--empty"
+        data-testid="field-remap-detail"
+        aria-label="Binding details"
+      >
+        <h4>Start with a convert</h4>
+        <p data-testid="field-remap-detail-empty-hint">
+          Use the Convert palette to place a convert, then wire source → draft → target. Or select
+          an existing binding / convert note on the canvas.
+        </p>
+      </aside>
+    );
+  }
+
+  if (selection.kind === 'draft') {
+    const definition = draft ? transforms.get(draft.transformId) : undefined;
+    return (
+      <aside
+        className="workbench-field-remap-detail workbench-field-remap-detail--draft"
+        data-testid="field-remap-detail"
+        aria-label="Draft convert"
+      >
+        <div className="workbench-field-remap-detail__header">
+          <div>
+            <h4>Draft convert</h4>
+            <code data-testid="field-remap-detail-draft-id">
+              {definition?.label ?? draft?.transformId ?? selection.localId}
+            </code>
+          </div>
+          <Button
+            compact
+            type="button"
+            data-testid="field-remap-detail-discard-draft"
+            onClick={() => {
+              onDiscardDraft?.(selection.localId);
+              onSelectionChange(null);
+            }}
+          >
+            Discard
+          </Button>
+        </div>
+        <p className="workbench-field-remap-detail__muted">
+          Wire source then target ports. When both bind, the convert note editor opens.
+        </p>
+        <dl className="workbench-field-remap-detail__draft-ports" data-testid="field-remap-detail-draft-ports">
+          <div>
+            <dt>Source</dt>
+            <dd>
+              <code>{draft?.sourceFieldId ?? 'Unwired'}</code>
+            </dd>
+          </div>
+          <div>
+            <dt>Target</dt>
+            <dd>
+              <code>{draft?.targetSlotId ?? 'Unwired'}</code>
+            </dd>
+          </div>
+        </dl>
+      </aside>
+    );
+  }
+
+  if (selection.kind === 'operator') {
+    if (!operator || !onOperatorsChange) {
+      return (
+        <aside className="workbench-field-remap-detail" data-testid="field-remap-detail">
+          <h4>Operator</h4>
+          <code data-testid="field-remap-detail-operator-id">{selection.operatorId}</code>
+          <p className="workbench-field-remap-detail__muted">
+            Host must wire onOperatorsChange for authoring.
+          </p>
+        </aside>
+      );
+    }
+    return (
+      <aside
+        className="workbench-field-remap-detail workbench-field-remap-detail--operator"
+        data-testid="field-remap-detail"
+        aria-label="Operator details"
+      >
+        <div className="workbench-field-remap-detail__header">
+          <div>
+            <h4>{operator.kind === 'combine' ? 'Combine (n→1)' : 'Split (1→n)'}</h4>
+            <code data-testid="field-remap-detail-operator-id">{operator.id}</code>
+          </div>
+          <Button
+            compact
+            type="button"
+            data-testid="field-remap-detail-delete-operator"
+            onClick={() => {
+              onOperatorsChange(removeMappingOperator(operators, operator.id));
+              onSelectionChange(null);
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+        {operator.kind === 'combine' ? (
+          <section className="workbench-field-remap-detail__section">
+            <h5>Inputs</h5>
+            <ul className="workbench-field-remap-detail__item-edges">
+              {operator.inputFieldIds.map((fieldId) => (
+                <li key={fieldId}>
+                  <code>{fieldLabel(fieldId, sources, targets)}</code>
+                  <Button
+                    compact
+                    type="button"
+                    onClick={() =>
+                      onOperatorsChange(
+                        updateMappingOperator(operators, operator.id, (current) =>
+                          removeOperatorInput(current, fieldId),
+                        ),
+                      )
+                    }
+                  >
+                    Remove
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <div className="workbench-field-remap-detail__field">
+              <label>
+                <span>Add input</span>
+                <select
+                  data-testid="field-remap-operator-add-input"
+                  value={pendingOperatorFieldId}
+                  onChange={(event) => setPendingOperatorFieldId(event.target.value)}
+                >
+                  <option value="">Select…</option>
+                  {flatSources.map((field) => (
+                    <option key={field.id} value={field.id}>
+                      {field.path ?? field.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button
+                compact
+                type="button"
+                data-testid="field-remap-operator-bind-input"
+                disabled={!pendingOperatorFieldId}
+                onClick={() => {
+                  if (!pendingOperatorFieldId) return;
+                  onOperatorsChange(
+                    updateMappingOperator(operators, operator.id, (current) =>
+                      bindOperatorInput(current, pendingOperatorFieldId),
+                    ),
+                  );
+                  setPendingOperatorFieldId('');
+                }}
+              >
+                Add
+              </Button>
+            </div>
+            <div className="workbench-field-remap-detail__field">
+              <label>
+                <span>Output slot</span>
+                <select
+                  data-testid="field-remap-operator-output"
+                  value={operator.outputSlotId}
+                  onChange={(event) => {
+                    const slotId = event.target.value;
+                    onOperatorsChange(
+                      updateMappingOperator(operators, operator.id, (current) =>
+                        slotId
+                          ? bindOperatorOutput(current, slotId)
+                          : removeOperatorOutput(current, operator.outputSlotId),
+                      ),
+                    );
+                  }}
+                >
+                  <option value="">Unwired…</option>
+                  {flatTargets.map((slot) => (
+                    <option key={slot.id} value={slot.id}>
+                      {slot.path ?? slot.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </section>
+        ) : (
+          <section className="workbench-field-remap-detail__section">
+            <div className="workbench-field-remap-detail__field">
+              <label>
+                <span>Input field</span>
+                <select
+                  data-testid="field-remap-operator-input"
+                  value={operator.inputFieldId}
+                  onChange={(event) => {
+                    const fieldId = event.target.value;
+                    onOperatorsChange(
+                      updateMappingOperator(operators, operator.id, (current) =>
+                        fieldId
+                          ? bindOperatorInput(current, fieldId)
+                          : removeOperatorInput(current, operator.inputFieldId),
+                      ),
+                    );
+                  }}
+                >
+                  <option value="">Unwired…</option>
+                  {flatSources.map((field) => (
+                    <option key={field.id} value={field.id}>
+                      {field.path ?? field.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <h5>Outputs</h5>
+            <ul className="workbench-field-remap-detail__item-edges">
+              {operator.outputSlotIds.map((slotId) => (
+                <li key={slotId}>
+                  <code>{fieldLabel(slotId, sources, targets)}</code>
+                  <Button
+                    compact
+                    type="button"
+                    onClick={() =>
+                      onOperatorsChange(
+                        updateMappingOperator(operators, operator.id, (current) =>
+                          removeOperatorOutput(current, slotId),
+                        ),
+                      )
+                    }
+                  >
+                    Remove
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <div className="workbench-field-remap-detail__field">
+              <label>
+                <span>Add output</span>
+                <select
+                  data-testid="field-remap-operator-add-output"
+                  value={pendingOperatorSlotId}
+                  onChange={(event) => setPendingOperatorSlotId(event.target.value)}
+                >
+                  <option value="">Select…</option>
+                  {flatTargets.map((slot) => (
+                    <option key={slot.id} value={slot.id}>
+                      {slot.path ?? slot.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button
+                compact
+                type="button"
+                data-testid="field-remap-operator-bind-output"
+                disabled={!pendingOperatorSlotId}
+                onClick={() => {
+                  if (!pendingOperatorSlotId) return;
+                  onOperatorsChange(
+                    updateMappingOperator(operators, operator.id, (current) =>
+                      bindOperatorOutput(current, pendingOperatorSlotId),
+                    ),
+                  );
+                  setPendingOperatorSlotId('');
+                }}
+              >
+                Add
+              </Button>
+            </div>
+          </section>
+        )}
+      </aside>
+    );
+  }
+
+  if (!edge) {
     return (
       <aside
         className="workbench-field-remap-detail workbench-field-remap-detail--empty"

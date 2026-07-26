@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import {
+  applyMappingOperators,
   convertToShape,
   createBuiltinValueTransformRegistry,
   defineConversion,
   defineDataShape,
   findParentChildMappingConflicts,
+  normalizeMappingOperators,
   pruneMappingEdgesForShapes,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
   withConversionEdges,
   type MappingEdge,
+  type MappingOperator,
   type SourceField,
   type TargetSlot,
   type ValueTransformRegistry,
@@ -78,9 +81,12 @@ export function FieldRemapPanel({
   }, [transformsProp]);
 
   const [edges, setEdges] = useState<readonly MappingEdge[]>(() => [...sample.edges]);
+  const [operators, setOperators] = useState<readonly MappingOperator[]>(
+    () => [...(sample.operators ?? [])],
+  );
   const [result, setResult] = useState<FieldRemapPreviewResult>({ output: {} });
   const [sourceSample, setSourceSample] = useState<unknown>(() => sample.source);
-  const [targetSample, setTargetSample] = useState<unknown>(() => sample.targetShape);
+  const [, setTargetSample] = useState<unknown>(() => sample.targetShape);
   const [sourceJson, setSourceJson] = useState(() => JSON.stringify(sample.source, null, 2));
   const [targetJson, setTargetJson] = useState(() =>
     JSON.stringify(sample.targetShape, null, 2),
@@ -134,9 +140,26 @@ export function FieldRemapPanel({
       transforms: registry,
       signal: controller.signal,
     })
-      .then((next) => {
-        if (!controller.signal.aborted) {
+      .then(async (next) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+        const normalizedOps = normalizeMappingOperators(operators);
+        if (!normalizedOps?.length) {
           setResult({ output: next.output });
+          return;
+        }
+        const merged = await applyMappingOperators({
+          operators: normalizedOps,
+          sources: sourceFields,
+          targets: targetSlots,
+          inputs: { [sample.sourceIdPrefix]: sourceSample },
+          transforms: registry,
+          output: next.output,
+          signal: controller.signal,
+        });
+        if (!controller.signal.aborted) {
+          setResult({ output: merged.output });
         }
       })
       .catch((error: unknown) => {
@@ -152,7 +175,7 @@ export function FieldRemapPanel({
     return () => {
       controller.abort();
     };
-  }, [edges, registry, sample, shapes, sourceSample]);
+  }, [edges, operators, registry, sample, shapes, sourceFields, sourceSample, targetSlots]);
 
   const applySourceShape = (parsed: unknown) => {
     const ingested = ingestSourceShape(parsed, sample.sourceIdPrefix);
@@ -212,6 +235,8 @@ export function FieldRemapPanel({
         edges={edges}
         transforms={registry}
         onEdgesChange={setEdges}
+        operators={operators}
+        onOperatorsChange={setOperators}
         sourceTitle={sample.sourceLabel}
         targetTitle={sample.targetLabel}
       />

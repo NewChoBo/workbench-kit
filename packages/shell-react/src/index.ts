@@ -101,6 +101,10 @@ export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap/panel.
 export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './field-remap/flow.js';
 export { FieldRemapDetailPanel, type FieldRemapDetailPanelProps } from './field-remap/detail-panel.js';
 export {
+  FieldRemapConvertPalette,
+  type FieldRemapConvertPaletteProps,
+} from './field-remap/convert-palette.js';
+export {
   ConvertNoteEditor,
   type ConvertNoteEditorProps,
 } from './field-remap/convert-note-editor.js';
@@ -119,18 +123,26 @@ export {
   addTransformStepToEdge,
   bindDraftSource,
   bindDraftTarget,
+  bindOperatorInput,
+  bindOperatorOutput,
   canEditListContext,
+  createCombineOperator,
   createDraftTransform,
+  createSplitOperator,
   edgePortTypes,
   enableListContextOnEdge,
   finalizeDraftTransform,
   listCompatibleTransforms,
   removeItemEdgeFromParent,
+  removeMappingOperator,
+  removeOperatorInput,
+  removeOperatorOutput,
   removeTransformStepFromEdge,
   replaceTransformStepOptionsOnEdge,
   setItemEdgesOnEdge,
   setTransformStepIdOnEdge,
   updateMappingEdge,
+  updateMappingOperator,
   upsertItemEdgeOnParent,
   type FieldRemapDraftTransform,
   type FieldRemapSelection,

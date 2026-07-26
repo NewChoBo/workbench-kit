@@ -491,16 +491,45 @@ function FieldRemapFlowCanvas({
         return;
       }
       onEdgesChange(edges.filter((edge) => !mappingIds.has(edge.id)));
-      if (selection && mappingIds.has(selection.edgeId)) {
+      if (
+        selection &&
+        (selection.kind === 'edge' || selection.kind === 'transformStep') &&
+        mappingIds.has(selection.edgeId)
+      ) {
         setSelection(null);
       }
     },
     [edges, onEdgesChange, selection, setSelection],
   );
 
+  const placeDraft = useCallback(
+    (transformId: string) => {
+      const draft = createDraftTransform(transformId);
+      setDrafts((current) => [...current, draft]);
+      setSelection({ kind: 'draft', localId: draft.localId });
+      setPlaceTransformId(transformId);
+    },
+    [setSelection],
+  );
+
   const onNodeClick = useCallback(
     (event: MouseEvent, node: Node) => {
       const data = node.data as FieldRemapFlowNodeData;
+      if (data.kind === 'draft-transform') {
+        setSelection({ kind: 'draft', localId: data.localId });
+        return;
+      }
+      if (data.kind === 'combine-operator' || data.kind === 'split-operator') {
+        if (event.altKey && onOperatorsChange) {
+          onOperatorsChange(removeMappingOperator(operators, data.operatorId));
+          if (selection?.kind === 'operator' && selection.operatorId === data.operatorId) {
+            setSelection(null);
+          }
+          return;
+        }
+        setSelection({ kind: 'operator', operatorId: data.operatorId });
+        return;
+      }
       if (data.kind !== 'transform') {
         return;
       }
