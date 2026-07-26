@@ -3,6 +3,7 @@ import {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
   type JSX,
   type KeyboardEvent,
@@ -440,10 +441,31 @@ function FieldRemapFlowCanvas({
   const [nodes, setNodes, onNodesChange] = useNodesState(nodesWithSelection);
   const [flowEdges, setFlowEdges, onFlowEdgesChange] = useEdgesState(graph.edges);
 
+  // Sync controlled graph by topology/selection signature only. Depending on
+  // `nodesWithSelection` (new array each paint) re-enters xyflow StoreUpdater and
+  // can hit "Maximum update depth exceeded" in embed hosts with tight flex layouts.
+  const graphSyncKey = useMemo(
+    () =>
+      [
+        ...graph.nodes.map((node) => node.id),
+        ...graph.edges.map(
+          (edge) =>
+            `${edge.id}:${edge.source}:${edge.target}:${edge.sourceHandle ?? ''}:${edge.targetHandle ?? ''}`,
+        ),
+        selection ? JSON.stringify(selection) : '',
+        ...drafts.map((draft) => draft.localId),
+      ].join('|'),
+    [drafts, graph.edges, graph.nodes, selection],
+  );
+  const nodesWithSelectionRef = useRef(nodesWithSelection);
+  const graphEdgesRef = useRef(graph.edges);
+  nodesWithSelectionRef.current = nodesWithSelection;
+  graphEdgesRef.current = graph.edges;
+
   useEffect(() => {
-    setNodes(nodesWithSelection);
-    setFlowEdges(graph.edges);
-  }, [graph.edges, nodesWithSelection, setNodes, setFlowEdges]);
+    setNodes(nodesWithSelectionRef.current);
+    setFlowEdges(graphEdgesRef.current);
+  }, [graphSyncKey, setFlowEdges, setNodes]);
 
   const connectionContext = useMemo(
     () => ({ sources, targets, edges, transforms, drafts, operators }),
