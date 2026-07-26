@@ -13,6 +13,8 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/storybook-static/**',
       '**/typecheck-exact-optional/.tmp-types/**',
+      // Playwright browsers land under `.cache/` in publish CI (`PLAYWRIGHT_BROWSERS_PATH`).
+      '**/.cache/**',
       '*.tsbuildinfo',
       'pnpm-lock.yaml',
     ],
