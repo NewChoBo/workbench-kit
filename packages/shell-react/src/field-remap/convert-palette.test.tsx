@@ -43,7 +43,9 @@ describe('FieldRemapConvertPalette', () => {
     });
     expect(container.querySelector('[data-testid="field-remap-convert-palette"]')).toBeTruthy();
     act(() => {
-      container!.querySelector<HTMLButtonElement>('[data-testid="field-remap-place-draft"]')?.click();
+      container!
+        .querySelector<HTMLButtonElement>('[data-testid="field-remap-place-draft"]')
+        ?.click();
     });
     expect(onPlaceDraft).toHaveBeenCalledWith('string:trim');
   });

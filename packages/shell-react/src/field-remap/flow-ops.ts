@@ -149,12 +149,7 @@ export function addTransformStepToEdge(
   }
   const nextIds = [...current, transformId];
   if (
-    !isTransformChainCompatible(
-      context.registry,
-      nextIds,
-      context.sourceType,
-      context.targetType,
-    )
+    !isTransformChainCompatible(context.registry, nextIds, context.sourceType, context.targetType)
   ) {
     return null;
   }
@@ -186,21 +181,14 @@ export function setTransformStepIdOnEdge(
   const nextIds = [...current];
   nextIds[stepIndex] = transformId;
   if (
-    !isTransformChainCompatible(
-      context.registry,
-      nextIds,
-      context.sourceType,
-      context.targetType,
-    )
+    !isTransformChainCompatible(context.registry, nextIds, context.sourceType, context.targetType)
   ) {
     return null;
   }
 
   const resolvedSteps = resizeOptionSteps(edge.transformOptionSteps, nextIds.length) ?? [];
   const migrated = migrateStepOptions(resolvedSteps[stepIndex], transformId, context.registry);
-  const nextSteps = resolvedSteps.map((step, index) =>
-    index === stepIndex ? migrated : step,
-  );
+  const nextSteps = resolvedSteps.map((step, index) => (index === stepIndex ? migrated : step));
 
   return {
     ...edge,
@@ -209,10 +197,7 @@ export function setTransformStepIdOnEdge(
   };
 }
 
-export function removeTransformStepFromEdge(
-  edge: MappingEdge,
-  stepIndex: number,
-): MappingEdge {
+export function removeTransformStepFromEdge(edge: MappingEdge, stepIndex: number): MappingEdge {
   const current = [...(edge.transformIds ?? [])];
   if (stepIndex < 0 || stepIndex >= current.length) {
     return edge;
@@ -282,13 +267,11 @@ export function canEditListContext(
   }
   const source = findSourceField(sources, edge.sourceFieldId);
   const target = findTargetSlot(targets, edge.targetSlotId);
-  const sourceOk = !source?.dataType || source.dataType === 'array' || source.dataType === 'unknown';
-  const targetOk = !target?.dataType || target.dataType === 'array' || target.dataType === 'unknown';
-  return (
-    sourceOk &&
-    targetOk &&
-    Boolean(source?.children?.length && target?.children?.length)
-  );
+  const sourceOk =
+    !source?.dataType || source.dataType === 'array' || source.dataType === 'unknown';
+  const targetOk =
+    !target?.dataType || target.dataType === 'array' || target.dataType === 'unknown';
+  return sourceOk && targetOk && Boolean(source?.children?.length && target?.children?.length);
 }
 
 export function enableListContextOnEdge(edge: MappingEdge): MappingEdge {
@@ -305,19 +288,13 @@ export function setItemEdgesOnEdge(
   return { ...edge, itemEdges: [...itemEdges] };
 }
 
-export function upsertItemEdgeOnParent(
-  edge: MappingEdge,
-  itemEdge: MappingEdge,
-): MappingEdge {
+export function upsertItemEdgeOnParent(edge: MappingEdge, itemEdge: MappingEdge): MappingEdge {
   const current = edge.itemEdges ?? [];
   const withoutTarget = current.filter((child) => child.targetSlotId !== itemEdge.targetSlotId);
   return { ...edge, itemEdges: [...withoutTarget, itemEdge] };
 }
 
-export function removeItemEdgeFromParent(
-  edge: MappingEdge,
-  itemEdgeId: string,
-): MappingEdge {
+export function removeItemEdgeFromParent(edge: MappingEdge, itemEdgeId: string): MappingEdge {
   return {
     ...edge,
     itemEdges: (edge.itemEdges ?? []).filter((child) => child.id !== itemEdgeId),

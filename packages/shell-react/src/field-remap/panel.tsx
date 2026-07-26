@@ -81,16 +81,14 @@ export function FieldRemapPanel({
   }, [transformsProp]);
 
   const [edges, setEdges] = useState<readonly MappingEdge[]>(() => [...sample.edges]);
-  const [operators, setOperators] = useState<readonly MappingOperator[]>(
-    () => [...(sample.operators ?? [])],
-  );
+  const [operators, setOperators] = useState<readonly MappingOperator[]>(() => [
+    ...(sample.operators ?? []),
+  ]);
   const [result, setResult] = useState<FieldRemapPreviewResult>({ output: {} });
   const [sourceSample, setSourceSample] = useState<unknown>(() => sample.source);
   const [, setTargetSample] = useState<unknown>(() => sample.targetShape);
   const [sourceJson, setSourceJson] = useState(() => JSON.stringify(sample.source, null, 2));
-  const [targetJson, setTargetJson] = useState(() =>
-    JSON.stringify(sample.targetShape, null, 2),
-  );
+  const [targetJson, setTargetJson] = useState(() => JSON.stringify(sample.targetShape, null, 2));
   const [sourceFields, setSourceFields] = useState<readonly SourceField[]>(() =>
     sourceFieldsFromPlainObject(sample.source, { idPrefix: sample.sourceIdPrefix }),
   );

@@ -633,11 +633,11 @@ grid + optional `headerActions` slot for host install/import controls.
 (B), wired by port DnD. Convert nodes are `MappingEdge.transformIds` steps (not a free graph).
 Shapes stay host-owned; the persisted document is edges (+ optional v2 `operators[]`).
 
-| Layer | Package / surface | Role |
-| ----- | ----------------- | ---- |
-| Runtime | `@workbench-kit/field-remap` | Edges, shapes, builtins, `convertToShape`, port helpers (`arePortsCompatible`) |
-| Shell UI | `@workbench-kit/shell-react` (`FieldRemapPanel`, `FieldRemapFlowMapper`, samples) | Sample mapper surfaces for demos and host spikes |
-| Extension | `extensions/samples.field-remap` | Sample activity / editor host wiring (repo-local) |
+| Layer     | Package / surface                                                                 | Role                                                                           |
+| --------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Runtime   | `@workbench-kit/field-remap`                                                      | Edges, shapes, builtins, `convertToShape`, port helpers (`arePortsCompatible`) |
+| Shell UI  | `@workbench-kit/shell-react` (`FieldRemapPanel`, `FieldRemapFlowMapper`, samples) | Sample mapper surfaces for demos and host spikes                               |
+| Extension | `extensions/samples.field-remap`                                                  | Sample activity / editor host wiring (repo-local)                              |
 
 **When to use:** Hosts that need A→B field mapping with optional transform chains, list
 context (`itemEdges`), and preview conversion.
@@ -647,6 +647,7 @@ deep JSON Schema structural validation; production mapper chrome that must not d
 sample extension packaging.
 
 **Model notes:**
+
 - Canvas layout is two schema columns plus middle convert (`xf:*`) nodes. Array item-schema
   ports (`*.item.*`) stay out of the main columns; edit them via list-context `itemEdges`.
 - Canvas “convert nodes” are `transformIds` steps on an edge, not a separate document type.

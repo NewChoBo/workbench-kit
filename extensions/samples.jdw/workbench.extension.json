@@ -9,10 +9,7 @@
     "workbench": "^0.0.0",
     "extensionApi": "^0.0.0"
   },
-  "activationEvents": [
-    "onStartup",
-    "onView:workbench-kit.samples.jdw.panel"
-  ],
+  "activationEvents": ["onStartup", "onView:workbench-kit.samples.jdw.panel"],
   "contributes": {
     "documentViews": [
       {

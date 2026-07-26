@@ -18,9 +18,7 @@ export const FIELD_DATA_TYPES = [
 ] as const satisfies readonly FieldDataType[];
 
 export function isFieldDataType(value: unknown): value is FieldDataType {
-  return (
-    typeof value === 'string' && (FIELD_DATA_TYPES as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (FIELD_DATA_TYPES as readonly string[]).includes(value);
 }
 
 export function collectSourceFieldIds(fields: readonly SourceField[]): ReadonlySet<string> {

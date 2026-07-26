@@ -58,7 +58,11 @@ export function FieldRemapConvertPalette({
         </Button>
       </div>
 
-      <ul className="workbench-field-remap-convert-palette__list" role="listbox" aria-label="Converts">
+      <ul
+        className="workbench-field-remap-convert-palette__list"
+        role="listbox"
+        aria-label="Converts"
+      >
         {catalog.map((definition) => {
           const selected = definition.id === selectedTransformId;
           return (
@@ -103,7 +107,12 @@ export function FieldRemapConvertPalette({
               </Button>
             ) : null}
             {onAddSplit ? (
-              <Button compact type="button" data-testid="field-remap-add-split" onClick={onAddSplit}>
+              <Button
+                compact
+                type="button"
+                data-testid="field-remap-add-split"
+                onClick={onAddSplit}
+              >
                 Add split
               </Button>
             ) : null}

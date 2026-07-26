@@ -57,9 +57,9 @@ describe('shapeEdit', () => {
   });
 
   it('patches nested field and slot data types', () => {
-    expect(setSourceFieldDataType(sources, 'a.user.name', 'number')[0]?.children?.[0]?.dataType).toBe(
-      'number',
-    );
+    expect(
+      setSourceFieldDataType(sources, 'a.user.name', 'number')[0]?.children?.[0]?.dataType,
+    ).toBe('number');
     expect(setTargetSlotDataType(targets, 'b.labels', 'object')[1]?.dataType).toBe('object');
   });
 });

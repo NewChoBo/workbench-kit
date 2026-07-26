@@ -100,9 +100,7 @@ describe('TransformOptionsEditor', () => {
       // React root delegation listens to focusout for onBlur.
       textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
     });
-    expect(container!.querySelector('[role="alert"]')?.textContent ?? '').toContain(
-      'Invalid JSON',
-    );
+    expect(container!.querySelector('[role="alert"]')?.textContent ?? '').toContain('Invalid JSON');
     expect(onChange).not.toHaveBeenCalled();
 
     act(() => {

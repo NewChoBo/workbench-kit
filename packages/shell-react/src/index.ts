@@ -99,7 +99,10 @@ export {
 export { SampleFieldRemapDemo, type SampleFieldRemapDemoProps } from './field-remap/demo.js';
 export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap/panel.js';
 export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './field-remap/flow.js';
-export { FieldRemapDetailPanel, type FieldRemapDetailPanelProps } from './field-remap/detail-panel.js';
+export {
+  FieldRemapDetailPanel,
+  type FieldRemapDetailPanelProps,
+} from './field-remap/detail-panel.js';
 export {
   FieldRemapConvertPalette,
   type FieldRemapConvertPaletteProps,

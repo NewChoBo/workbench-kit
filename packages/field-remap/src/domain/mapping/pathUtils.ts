@@ -83,10 +83,7 @@ function readSegment(current: unknown, segment: ObjectPathSegment): unknown {
     return container[segment.index];
   }
   // Wildcard is not a single-value read.
-  throw new InvalidObjectPathError(
-    segment.name,
-    'wildcard segments require projectObjectPath',
-  );
+  throw new InvalidObjectPathError(segment.name, 'wildcard segments require projectObjectPath');
 }
 
 /**

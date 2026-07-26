@@ -98,15 +98,15 @@ describe('FieldRemapDocument', () => {
     expect(() => parseFieldRemapDocument({ version: 3, edges: [] })).toThrow(
       UnsupportedFieldRemapDocumentVersionError,
     );
-    expect(() =>
-      normalizeFieldRemapDocument({ version: 3 as 2, edges: [] }),
-    ).toThrow(UnsupportedFieldRemapDocumentVersionError);
+    expect(() => normalizeFieldRemapDocument({ version: 3 as 2, edges: [] })).toThrow(
+      UnsupportedFieldRemapDocumentVersionError,
+    );
     expect(() => parseFieldRemapDocument({ version: 1, edges: null })).toThrow(
       InvalidFieldRemapDocumentError,
     );
-    expect(() =>
-      parseFieldRemapDocument({ version: 2, edges: [], operators: {} }),
-    ).toThrow(InvalidFieldRemapDocumentError);
+    expect(() => parseFieldRemapDocument({ version: 2, edges: [], operators: {} })).toThrow(
+      InvalidFieldRemapDocumentError,
+    );
     expect(() => deserializeFieldRemapDocument('{')).toThrow(InvalidFieldRemapDocumentError);
   });
 

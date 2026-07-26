@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useState, type JSX, type KeyboardEvent, type MouseEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type JSX,
+  type KeyboardEvent,
+  type MouseEvent,
+} from 'react';
 import {
   Background,
   Controls,
@@ -332,8 +340,7 @@ function FieldRemapFlowCanvas({
           };
         }
         if (node.data.kind === 'draft-transform') {
-          const selected =
-            selection?.kind === 'draft' && selection.localId === node.data.localId;
+          const selected = selection?.kind === 'draft' && selection.localId === node.data.localId;
           return { ...node, selected };
         }
         if (node.data.kind === 'combine-operator' || node.data.kind === 'split-operator') {
@@ -388,7 +395,9 @@ function FieldRemapFlowCanvas({
           existing: edges,
         });
         if (finalized) {
-          const withoutTarget = edges.filter((edge) => edge.targetSlotId !== finalized.targetSlotId);
+          const withoutTarget = edges.filter(
+            (edge) => edge.targetSlotId !== finalized.targetSlotId,
+          );
           onEdgesChange([...withoutTarget, finalized]);
           setDrafts(drafts.filter((item) => item.localId !== draft.localId));
           setSelection({
@@ -417,7 +426,9 @@ function FieldRemapFlowCanvas({
           existing: edges,
         });
         if (finalized) {
-          const withoutTarget = edges.filter((edge) => edge.targetSlotId !== finalized.targetSlotId);
+          const withoutTarget = edges.filter(
+            (edge) => edge.targetSlotId !== finalized.targetSlotId,
+          );
           onEdgesChange([...withoutTarget, finalized]);
           setDrafts(drafts.filter((item) => item.localId !== draft.localId));
           setSelection({

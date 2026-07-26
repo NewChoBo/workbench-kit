@@ -229,12 +229,7 @@ export function arePortsCompatible(input: ArePortsCompatibleInput): boolean {
   if (!input.registry) {
     return false;
   }
-  return isTransformChainCompatible(
-    input.registry,
-    chain,
-    input.sourceType,
-    input.targetType,
-  );
+  return isTransformChainCompatible(input.registry, chain, input.sourceType, input.targetType);
 }
 
 export type { TransformContext };

@@ -80,12 +80,12 @@ extensions. The generated bundle includes both manifest data and the entry
 module, so `.workbench/extensions.json` controls which built-ins are registered
 and activatable.
 
-| Extension             | Current role                                                                  |
-| --------------------- | ----------------------------------------------------------------------------- |
-| `builtin.accounts`    | Account command/menu/config/capability metadata and profile entry points      |
-| `builtin.chat`        | Chat and AI Chat activity containers, sidebar views, and slash command input  |
-| `builtin.commands`    | Commands activity/sidebar, focus/refresh commands, and view-title menu action |
-| `builtin.editor`      | Text editor plus Markdown preview document view (marker → shell render)       |
+| Extension             | Current role                                                                      |
+| --------------------- | --------------------------------------------------------------------------------- |
+| `builtin.accounts`    | Account command/menu/config/capability metadata and profile entry points          |
+| `builtin.chat`        | Chat and AI Chat activity containers, sidebar views, and slash command input      |
+| `builtin.commands`    | Commands activity/sidebar, focus/refresh commands, and view-title menu action     |
+| `builtin.editor`      | Text editor plus Markdown preview document view (marker → shell render)           |
 | `builtin.explorer`    | Explorer activity/tree; requires `workbench.workspace` (`workspace.read`/`write`) |
 | `builtin.keybindings` | Default keybinding contributions such as `ctrl+s` for `editor.save`               |
 | `builtin.search`      | Search activity container and sidebar view                                        |

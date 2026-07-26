@@ -86,12 +86,12 @@ Related: [Getting Started](./getting-started.md) · [Component Map](./component-
 
 ## Field Remap editor
 
-| Field            | Detail                                                                                          |
-| ---------------- | ----------------------------------------------------------------------------------------------- |
+| Field            | Detail                                                                                                                                                                                                          |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **What you see** | Schema columns A/B + optional middle convert notes, wired by port DnD (`nested-ab` default). Select a convert note to open the dedicated Convert editor side rail; select a binding for lighter mapping detail. |
-| **Sample / SB**  | Workbench Sample/Field Remap                                                                    |
-| **Kit pieces**   | `@workbench-kit/field-remap` + `@workbench-kit/shell-react` Flow panel + sample extension host |
-| **Host keeps**   | Persistence of mappings (`FieldRemapDocument`), schema sources (host-owned shapes)              |
+| **Sample / SB**  | Workbench Sample/Field Remap                                                                                                                                                                                    |
+| **Kit pieces**   | `@workbench-kit/field-remap` + `@workbench-kit/shell-react` Flow panel + sample extension host                                                                                                                  |
+| **Host keeps**   | Persistence of mappings (`FieldRemapDocument`), schema sources (host-owned shapes)                                                                                                                              |
 
 ## JDW / widget tree
 

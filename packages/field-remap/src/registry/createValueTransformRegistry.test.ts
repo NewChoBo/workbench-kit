@@ -132,9 +132,7 @@ describe('areFieldTypesCompatible / arePortsCompatible', () => {
   });
 
   it('uses identity type match when transformIds is empty or omitted', () => {
-    expect(
-      arePortsCompatible({ sourceType: 'string', targetType: 'string' }),
-    ).toBe(true);
+    expect(arePortsCompatible({ sourceType: 'string', targetType: 'string' })).toBe(true);
     expect(
       arePortsCompatible({
         sourceType: 'string',

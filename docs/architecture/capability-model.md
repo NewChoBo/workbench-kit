@@ -15,17 +15,17 @@ Manifest fields are defined in [Extension Dependencies](./extension-dependencies
 
 ## Standard Capability IDs (initial set)
 
-| ID                        | Provider interface                                       | Default provider             |
-| ------------------------- | -------------------------------------------------------- | ---------------------------- |
-| `workbench.commands`      | _(built into platform)_                                  | Host                         |
-| `workbench.contextKeys`   | _(built into platform)_                                  | Host                         |
+| ID                        | Provider interface                                       | Default provider                  |
+| ------------------------- | -------------------------------------------------------- | --------------------------------- |
+| `workbench.commands`      | _(built into platform)_                                  | Host                              |
+| `workbench.contextKeys`   | _(built into platform)_                                  | Host                              |
 | `workbench.workspace`     | `WorkspaceResourceService`                               | Host / `@workbench-kit/workspace` |
-| `workbench.filesystem`    | `FileSystemProvider` (planned lower-level FS)            | Host / `builtin.workspace`   |
-| `workbench.secrets`       | `WorkbenchSecretStorageService`                          | Host                         |
-| `workbench.auth`          | `WorkbenchAuthProvider`                                  | Host / `builtin.accounts`    |
-| `workbench.editor`        | `EditorResolver` (planned)                               | Host + optional `monaco`     |
-| `workbench.configuration` | `ConfigurationService` (planned)                         | Host + `workbench-config`    |
-| `workbench.views`         | `ViewHost` from `@workbench-kit/workbench-extension-sdk` | `shell-react`                |
+| `workbench.filesystem`    | `FileSystemProvider` (planned lower-level FS)            | Host / `builtin.workspace`        |
+| `workbench.secrets`       | `WorkbenchSecretStorageService`                          | Host                              |
+| `workbench.auth`          | `WorkbenchAuthProvider`                                  | Host / `builtin.accounts`         |
+| `workbench.editor`        | `EditorResolver` (planned)                               | Host + optional `monaco`          |
+| `workbench.configuration` | `ConfigurationService` (planned)                         | Host + `workbench-config`         |
+| `workbench.views`         | `ViewHost` from `@workbench-kit/workbench-extension-sdk` | `shell-react`                     |
 
 New capability IDs require an architecture doc update and SDK type export.
 
@@ -58,13 +58,13 @@ Resolution order:
 
 Sensitive capabilities require manifest `permissions`:
 
-| Capability             | Typical permission                      |
-| ---------------------- | --------------------------------------- |
-| `workbench.secrets`    | `secrets.read`, `secrets.write`         |
-| `workbench.auth`       | `account.read`                          |
-| `workbench.workspace`  | `workspace.read`, `workspace.write`     |
+| Capability             | Typical permission                              |
+| ---------------------- | ----------------------------------------------- |
+| `workbench.secrets`    | `secrets.read`, `secrets.write`                 |
+| `workbench.auth`       | `account.read`                                  |
+| `workbench.workspace`  | `workspace.read`, `workspace.write`             |
 | `workbench.filesystem` | `filesystem.read`, `filesystem.write` (planned) |
-| Network (future)       | `network`                               |
+| Network (future)       | `network`                                       |
 
 `ExtensionContext.getCapability` enforces declare-and-permission for a small
 sensitive set via `assertCapabilityAccess` in `@workbench-kit/workbench-core`:

@@ -47,10 +47,7 @@ export function ConvertNoteEditor({
   const chain = edge.transformIds ?? [];
   const transformId = chain[stepIndex];
 
-  const portTypes = useMemo(
-    () => edgePortTypes(edge, sources, targets),
-    [edge, sources, targets],
-  );
+  const portTypes = useMemo(() => edgePortTypes(edge, sources, targets), [edge, sources, targets]);
 
   const optionFields = useMemo(
     () => optionFieldsForStep(transforms, transformId),

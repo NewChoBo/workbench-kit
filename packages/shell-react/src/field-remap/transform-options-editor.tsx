@@ -246,7 +246,9 @@ export function TransformOptionsEditor({
                 data-testid={testId}
                 disabled={disabled}
                 aria-label={field.label}
-                value={typeof current === 'string' ? current : current == null ? '' : String(current)}
+                value={
+                  typeof current === 'string' ? current : current == null ? '' : String(current)
+                }
                 onChange={(event) => setKey(field.key, event.target.value)}
               />
             ) : null}
@@ -288,7 +290,9 @@ export function TransformOptionsEditor({
                 value={current}
                 disabled={disabled}
                 testId={testId}
-                onChange={(next) => setKey(field.key, Object.keys(next).length > 0 ? next : undefined)}
+                onChange={(next) =>
+                  setKey(field.key, Object.keys(next).length > 0 ? next : undefined)
+                }
               />
             ) : null}
             {field.kind === 'json' ? (

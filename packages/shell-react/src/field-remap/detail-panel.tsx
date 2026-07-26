@@ -152,7 +152,10 @@ export function FieldRemapDetailPanel({
         <p className="workbench-field-remap-detail__muted">
           Wire source then target ports. When both bind, the convert note editor opens.
         </p>
-        <dl className="workbench-field-remap-detail__draft-ports" data-testid="field-remap-detail-draft-ports">
+        <dl
+          className="workbench-field-remap-detail__draft-ports"
+          data-testid="field-remap-detail-draft-ports"
+        >
           <div>
             <dt>Source</dt>
             <dd>
@@ -419,9 +422,7 @@ export function FieldRemapDetailPanel({
 
   const defaultPaletteId = appendCatalog[0]?.id ?? '';
   const effectivePaletteId =
-    paletteId && appendCatalog.some((item) => item.id === paletteId)
-      ? paletteId
-      : defaultPaletteId;
+    paletteId && appendCatalog.some((item) => item.id === paletteId) ? paletteId : defaultPaletteId;
 
   const listContextEnabled = canEditListContext(edge, sources, targets);
   const sourceField = findSourceField(sources, edge.sourceFieldId);

@@ -93,14 +93,7 @@ export type FieldRemapFlowEdgeData = {
   draftLocalId?: string;
   operatorId?: string;
   segment:
-    | 'in'
-    | 'mid'
-    | 'out'
-    | 'direct'
-    | 'draft-in'
-    | 'draft-out'
-    | 'operator-in'
-    | 'operator-out';
+    'in' | 'mid' | 'out' | 'direct' | 'draft-in' | 'draft-out' | 'operator-in' | 'operator-out';
 } & Record<string, unknown>;
 
 export const SOURCE_OBJECT_NODE_ID = 'obj:source' as const;
@@ -377,8 +370,7 @@ export function mappingToFlowGraph(input: {
     }
   });
 
-  const operatorBaseY =
-    40 + (input.edges.length + (input.drafts?.length ?? 0)) * TRANSFORM_ROW_GAP;
+  const operatorBaseY = 40 + (input.edges.length + (input.drafts?.length ?? 0)) * TRANSFORM_ROW_GAP;
 
   (input.operators ?? []).forEach((operator, operatorIndex) => {
     const nodeId = operatorNodeId(operator.id);

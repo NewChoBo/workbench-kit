@@ -4,7 +4,11 @@
  * {@link applyMappingOperators} explicitly without persisting.
  */
 
-import { canonicalizeTransformId, IDENTITY_TRANSFORM_ID, MAX_TRANSFORM_CHAIN } from '../constants.js';
+import {
+  canonicalizeTransformId,
+  IDENTITY_TRANSFORM_ID,
+  MAX_TRANSFORM_CHAIN,
+} from '../constants.js';
 import { throwIfAborted } from '../abort.js';
 import type {
   CombineMappingOperator,
@@ -54,7 +58,11 @@ export class MappingOperatorError extends Error {
   }
 }
 
-function leafKey(field: { readonly path?: string; readonly label: string; readonly id: string }): string {
+function leafKey(field: {
+  readonly path?: string;
+  readonly label: string;
+  readonly id: string;
+}): string {
   const path = field.path?.trim();
   if (path) {
     const parts = path.split('.').filter(Boolean);

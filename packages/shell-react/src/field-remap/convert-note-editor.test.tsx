@@ -22,10 +22,7 @@ describe('ConvertNoteEditor', () => {
   let container: HTMLDivElement | undefined;
   let root: Root | undefined;
 
-  const sources = sourceFieldsFromPlainObject(
-    { user_name: 'Ada' },
-    { idPrefix: 'a' },
-  );
+  const sources = sourceFieldsFromPlainObject({ user_name: 'Ada' }, { idPrefix: 'a' });
   const targets = targetSlotsFromPlainObject({ name: '' }, { idPrefix: 'b' });
   const transforms = createBuiltinValueTransformRegistry();
   transforms.register(jsonataValueTransform);
@@ -83,7 +80,9 @@ describe('ConvertNoteEditor', () => {
       select.value = 'string:trim';
       select.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    let nextEdges = onEdgesChange.mock.calls[onEdgesChange.mock.calls.length - 1]?.[0] as MappingEdge[];
+    let nextEdges = onEdgesChange.mock.calls[
+      onEdgesChange.mock.calls.length - 1
+    ]?.[0] as MappingEdge[];
     expect(nextEdges[0]?.transformIds).toEqual(['string:trim']);
 
     const input = container!.querySelector(
@@ -154,9 +153,11 @@ describe('ConvertNoteEditor', () => {
     );
 
     act(() => {
-      (container!.querySelector(
-        '[data-testid="field-remap-convert-note-back"]',
-      ) as HTMLButtonElement).click();
+      (
+        container!.querySelector(
+          '[data-testid="field-remap-convert-note-back"]',
+        ) as HTMLButtonElement
+      ).click();
     });
     expect(onSelectionChange).toHaveBeenCalledWith({ kind: 'edge', edgeId: 'e-name' });
   });

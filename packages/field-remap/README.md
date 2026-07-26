@@ -42,10 +42,10 @@ pnpm add @workbench-kit/field-remap@prototype
 
 Safe object paths are dotted identifiers with optional index / wildcard brackets:
 
-| Form | Example | API |
-| ---- | ------- | --- |
-| Property | `meta.label` | `readObjectPath` / `writeObjectPath` |
-| Index | `items[0].name` | `readObjectPath` / `writeObjectPath` |
+| Form     | Example         | API                                                      |
+| -------- | --------------- | -------------------------------------------------------- |
+| Property | `meta.label`    | `readObjectPath` / `writeObjectPath`                     |
+| Index    | `items[0].name` | `readObjectPath` / `writeObjectPath`                     |
 | Wildcard | `items[*].name` | `projectObjectPath` only (`readObjectPath` fails closed) |
 
 Wildcard expansion is capped by `DEFAULT_MAX_PATH_WILDCARD_EXPANSION` (1000) or
@@ -110,13 +110,13 @@ uses `itemEdges` on array→array bindings.
 
 **Persisted `xf:*` connect matrix** (shell Flow adapter; no silent no-ops):
 
-| Drag | Effect |
-| --- | --- |
-| source port → target port | upsert `MappingEdge` |
-| source port → `xf:edge:step` | rebind source; keep transforms from that step (splice prefix) |
+| Drag                         | Effect                                                           |
+| ---------------------------- | ---------------------------------------------------------------- |
+| source port → target port    | upsert `MappingEdge`                                             |
+| source port → `xf:edge:step` | rebind source; keep transforms from that step (splice prefix)    |
 | `xf:edge:step` → target port | rebind target; keep transforms through that step (splice suffix) |
-| `xf:A:i` → `xf:B:j` (A≠B) | merge chains (append A prefix + B suffix); remove donor edge A |
-| same-edge `xf`↔`xf` | rejected (mid segments already exist) |
+| `xf:A:i` → `xf:B:j` (A≠B)    | merge chains (append A prefix + B suffix); remove donor edge A   |
+| same-edge `xf`↔`xf`          | rejected (mid segments already exist)                            |
 
 ### n→m operators (combine / split)
 
@@ -130,7 +130,10 @@ supports authoring (create / wire ports / delete) when hosts pass `operators` +
 `onOperatorsChange` into `FieldRemapFlowMapper` (sample `nm-combine-split`).
 
 ```ts
-import { applyMappingOperators, createBuiltinValueTransformRegistry } from '@workbench-kit/field-remap';
+import {
+  applyMappingOperators,
+  createBuiltinValueTransformRegistry,
+} from '@workbench-kit/field-remap';
 
 const { output } = await applyMappingOperators({
   operators: [

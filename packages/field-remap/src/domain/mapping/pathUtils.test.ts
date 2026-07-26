@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  InvalidObjectPathError,
-  UnsafeObjectPathError,
-} from './objectPathSafety.js';
+import { InvalidObjectPathError, UnsafeObjectPathError } from './objectPathSafety.js';
 import {
   applyStringTemplate,
   DEFAULT_MAX_PATH_WILDCARD_EXPANSION,
@@ -23,9 +20,7 @@ describe('pathUtils', () => {
   });
 
   it('reads numeric index segments', () => {
-    expect(
-      readObjectPath({ items: [{ name: 'a' }, { name: 'b' }] }, 'items[1].name'),
-    ).toBe('b');
+    expect(readObjectPath({ items: [{ name: 'a' }, { name: 'b' }] }, 'items[1].name')).toBe('b');
     expect(readObjectPath({ items: ['x', 'y'] }, 'items[0]')).toBe('x');
     expect(readObjectPath({ items: [] }, 'items[0]')).toBeUndefined();
   });
@@ -64,9 +59,9 @@ describe('pathUtils', () => {
 
   it('enforces wildcard expansion limits', () => {
     const items = Array.from({ length: 5 }, (_, index) => ({ name: `n${index}` }));
-    expect(() =>
-      projectObjectPath({ items }, 'items[*].name', { maxExpansion: 3 }),
-    ).toThrow(PathExpansionLimitError);
+    expect(() => projectObjectPath({ items }, 'items[*].name', { maxExpansion: 3 })).toThrow(
+      PathExpansionLimitError,
+    );
     expect(DEFAULT_MAX_PATH_WILDCARD_EXPANSION).toBe(1_000);
   });
 
@@ -117,7 +112,10 @@ describe('pathUtils', () => {
     expect(projectCollectionItems(['a', 'b'], 'name')).toEqual([undefined, undefined]);
     expect(projectCollectionItems({ not: 'array' }, 'name')).toEqual({ not: 'array' });
     expect(
-      projectCollectionItems([{ tags: [{ id: 1 }, { id: 2 }] }, { tags: [{ id: 3 }] }], 'tags[*].id'),
+      projectCollectionItems(
+        [{ tags: [{ id: 1 }, { id: 2 }] }, { tags: [{ id: 3 }] }],
+        'tags[*].id',
+      ),
     ).toEqual([[1, 2], [3]]);
   });
 

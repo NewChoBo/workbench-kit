@@ -41,9 +41,7 @@ export class InvalidObjectPathError extends Error {
 
   constructor(path: string, reason?: string) {
     super(
-      reason
-        ? `Object path "${path}" is invalid: ${reason}`
-        : `Object path "${path}" is invalid.`,
+      reason ? `Object path "${path}" is invalid: ${reason}` : `Object path "${path}" is invalid.`,
     );
     this.name = 'InvalidObjectPathError';
     this.path = path;

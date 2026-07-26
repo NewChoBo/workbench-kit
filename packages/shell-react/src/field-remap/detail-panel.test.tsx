@@ -128,9 +128,9 @@ describe('FieldRemapDetailPanel', () => {
     );
 
     act(() => {
-      (container!.querySelector(
-        '[data-testid="field-remap-detail-step-0"]',
-      ) as HTMLButtonElement).click();
+      (
+        container!.querySelector('[data-testid="field-remap-detail-step-0"]') as HTMLButtonElement
+      ).click();
     });
     expect(onSelectionChange).toHaveBeenCalledWith({
       kind: 'transformStep',
@@ -170,7 +170,9 @@ describe('FieldRemapDetailPanel', () => {
       select.value = 'string:upper';
       select.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    const nextEdges = onEdgesChange.mock.calls[onEdgesChange.mock.calls.length - 1]?.[0] as MappingEdge[];
+    const nextEdges = onEdgesChange.mock.calls[
+      onEdgesChange.mock.calls.length - 1
+    ]?.[0] as MappingEdge[];
     expect(nextEdges[0]?.transformIds).toEqual(['string:upper']);
   });
 
@@ -209,7 +211,9 @@ describe('FieldRemapDetailPanel', () => {
       add.click();
     });
 
-    const nextEdges = onEdgesChange.mock.calls[onEdgesChange.mock.calls.length - 1]?.[0] as MappingEdge[];
+    const nextEdges = onEdgesChange.mock.calls[
+      onEdgesChange.mock.calls.length - 1
+    ]?.[0] as MappingEdge[];
     expect(nextEdges[0]?.transformIds).toEqual(['expr:jsonata']);
     expect(onSelectionChange).toHaveBeenCalledWith({
       kind: 'transformStep',
@@ -258,7 +262,9 @@ describe('FieldRemapDetailPanel', () => {
       targetSelect.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
-    const nextEdges = onEdgesChange.mock.calls[onEdgesChange.mock.calls.length - 1]?.[0] as MappingEdge[];
+    const nextEdges = onEdgesChange.mock.calls[
+      onEdgesChange.mock.calls.length - 1
+    ]?.[0] as MappingEdge[];
     expect(nextEdges[0]?.itemEdges).toHaveLength(1);
     expect(nextEdges[0]?.itemEdges?.[0]?.sourceFieldId).toBe('a.tags.item.name');
     expect(nextEdges[0]?.itemEdges?.[0]?.targetSlotId).toBe('b.labels.item.title');
@@ -297,7 +303,9 @@ describe('FieldRemapDetailPanel', () => {
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    const nextEdges = onEdgesChange.mock.calls[onEdgesChange.mock.calls.length - 1]?.[0] as MappingEdge[];
+    const nextEdges = onEdgesChange.mock.calls[
+      onEdgesChange.mock.calls.length - 1
+    ]?.[0] as MappingEdge[];
     expect(nextEdges[0]?.transformOptionSteps?.[0]).toEqual({
       expression: '$uppercase($)',
     });

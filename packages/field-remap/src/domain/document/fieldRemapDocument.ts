@@ -8,8 +8,7 @@ export const FIELD_REMAP_DOCUMENT_VERSION = 2 as const;
 export const FIELD_REMAP_DOCUMENT_V1_VERSION = 1 as const;
 
 type SupportedDocumentVersion =
-  | typeof FIELD_REMAP_DOCUMENT_VERSION
-  | typeof FIELD_REMAP_DOCUMENT_V1_VERSION;
+  typeof FIELD_REMAP_DOCUMENT_VERSION | typeof FIELD_REMAP_DOCUMENT_V1_VERSION;
 
 /** Thrown when parse/deserialize sees a document `version` other than a supported constant. */
 export class UnsupportedFieldRemapDocumentVersionError extends Error {
