@@ -79,6 +79,7 @@ pnpm add @workbench-kit/field-remap@prototype @workbench-kit/shell-react@prototy
 
 ```ts
 import {
+  convertMappedInputs,
   convertToShape,
   createBuiltinValueTransformRegistry,
   defineConversion,
@@ -90,16 +91,27 @@ import {
   FieldRemapFlowMapper,
   FieldRemapPanel,
   createJsonataValueTransform,
-} from '@workbench-kit/shell-react';
+} from '@workbench-kit/shell-react/field-remap';
+import '@workbench-kit/shell-react/field-remap/view.css';
 
 // Quick demo surface (catalog sample + preview):
 // <FieldRemapPanel sample="nested-ab" />
 
-// Or host-owned shapes + edges:
+// Controlled panel (host persists edges):
+// <FieldRemapPanel edges={edges} onEdgesChange={setEdges} sources={…} targets={…} sourceSample={…} />
+
+// Or host-owned shapes + Flow-only embed:
 const transforms = createBuiltinValueTransformRegistry();
 transforms.register(createJsonataValueTransform());
 // <FieldRemapFlowMapper sources={…} targets={…} edges={…} transforms={transforms} onEdgesChange={…} />
+
+// Evaluate transform-bearing edges without a FieldRemapDocument:
+// await convertMappedInputs({ sources, targets, edges, inputs: { source: bag }, transforms })
 ```
+
+Prefer `convertMappedInputs` when the host catalog stores `MappingEdge[]` (+ optional
+`operators[]`) separately from kit document JSON. Prefer `convertToShape` when you already
+build `defineConversion` / `defineDataShape` registries yourself.
 
 Place-then-wire uses **ephemeral draft nodes** in the shell Flow UI: place a
 transform, wire source then target (or the reverse), and the draft finalizes into

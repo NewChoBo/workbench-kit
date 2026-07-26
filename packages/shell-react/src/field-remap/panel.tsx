@@ -33,13 +33,32 @@ import {
 import './view.css';
 
 export interface FieldRemapPanelProps {
-  /** Catalog sample id, or a full sample definition. */
+  /** Catalog sample id, or a full sample definition. Defaults to `nested-ab` labels/ids. */
   readonly sample?: FieldRemapSampleId | FieldRemapSampleDefinition | undefined;
   /** Optional host-owned transform registry (defaults to builtins + JSONata). */
   readonly transforms?: ValueTransformRegistry | undefined;
   /** When true (default), show paste-JSON / type editors for host-owned shapes. */
   readonly editableShapes?: boolean | undefined;
   readonly className?: string | undefined;
+  /**
+   * Controlled mapping edges. When provided, the host is the source of truth;
+   * pair with `onEdgesChange` for connect/disconnect/transform edits.
+   */
+  readonly edges?: readonly MappingEdge[] | undefined;
+  readonly onEdgesChange?: ((edges: readonly MappingEdge[]) => void) | undefined;
+  /** Optional controlled n→m operators (document v2). */
+  readonly operators?: readonly MappingOperator[] | undefined;
+  readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
+  /** Controlled source field tree (host-owned shapes). */
+  readonly sources?: readonly SourceField[] | undefined;
+  readonly onSourcesChange?: ((fields: readonly SourceField[]) => void) | undefined;
+  /** Controlled target slot tree (host-owned shapes). */
+  readonly targets?: readonly TargetSlot[] | undefined;
+  readonly onTargetsChange?: ((slots: readonly TargetSlot[]) => void) | undefined;
+  /** Preview input bag for the primary source shape. */
+  readonly sourceSample?: unknown;
+  /** Optional target shape sample JSON (shape editor seed; preview uses edges). */
+  readonly targetShape?: unknown;
 }
 
 type FieldRemapPreviewResult = {
@@ -61,14 +80,27 @@ function resolveSample(sample: FieldRemapPanelProps['sample']): FieldRemapSample
  * Self-contained field-remap workbench panel:
  * schema columns A/B + optional convert wires (XYFlow) and `convertToShape` preview.
  *
- * Remount with `key={sampleId}` when switching catalog entries so edge state resets.
- * Shapes stay host-owned: the panel edits in-memory samples; `FieldRemapDocument` remains edges-only.
+ * Uncontrolled: pass `sample=` (Storybook / demos). Remount with `key={sampleId}` when
+ * switching catalog entries so edge state resets.
+ *
+ * Controlled: pass `edges` + `onEdgesChange` (and optionally shapes / operators) so an
+ * integrating host can persist bindings without forking panel state.
  */
 export function FieldRemapPanel({
   sample: sampleProp,
   transforms: transformsProp,
   editableShapes = true,
   className,
+  edges: edgesProp,
+  onEdgesChange,
+  operators: operatorsProp,
+  onOperatorsChange,
+  sources: sourcesProp,
+  onSourcesChange,
+  targets: targetsProp,
+  onTargetsChange,
+  sourceSample: sourceSampleProp,
+  targetShape: targetShapeProp,
 }: FieldRemapPanelProps): JSX.Element {
   const sample = resolveSample(sampleProp);
   const registry = useMemo(() => {
@@ -80,21 +112,77 @@ export function FieldRemapPanel({
     return next;
   }, [transformsProp]);
 
-  const [edges, setEdges] = useState<readonly MappingEdge[]>(() => [...sample.edges]);
-  const [operators, setOperators] = useState<readonly MappingOperator[]>(() => [
-    ...(sample.operators ?? []),
+  const edgesControlled = edgesProp !== undefined;
+  const operatorsControlled = operatorsProp !== undefined;
+  const sourcesControlled = sourcesProp !== undefined;
+  const targetsControlled = targetsProp !== undefined;
+  const sourceSampleControlled = sourceSampleProp !== undefined;
+
+  const [uncontrolledEdges, setUncontrolledEdges] = useState<readonly MappingEdge[]>(() => [
+    ...(edgesProp ?? sample.edges),
   ]);
+  const [uncontrolledOperators, setUncontrolledOperators] = useState<readonly MappingOperator[]>(
+    () => [...(operatorsProp ?? sample.operators ?? [])],
+  );
   const [result, setResult] = useState<FieldRemapPreviewResult>({ output: {} });
-  const [sourceSample, setSourceSample] = useState<unknown>(() => sample.source);
-  const [, setTargetSample] = useState<unknown>(() => sample.targetShape);
-  const [sourceJson, setSourceJson] = useState(() => JSON.stringify(sample.source, null, 2));
-  const [targetJson, setTargetJson] = useState(() => JSON.stringify(sample.targetShape, null, 2));
-  const [sourceFields, setSourceFields] = useState<readonly SourceField[]>(() =>
-    sourceFieldsFromPlainObject(sample.source, { idPrefix: sample.sourceIdPrefix }),
+  const [uncontrolledSourceSample, setUncontrolledSourceSample] = useState<unknown>(
+    () => sourceSampleProp ?? sample.source,
   );
-  const [targetSlots, setTargetSlots] = useState<readonly TargetSlot[]>(() =>
-    targetSlotsFromPlainObject(sample.targetShape, { idPrefix: sample.targetIdPrefix }),
+  const [, setTargetSample] = useState<unknown>(() => targetShapeProp ?? sample.targetShape);
+  const [sourceJson, setSourceJson] = useState(() =>
+    JSON.stringify(sourceSampleProp ?? sample.source, null, 2),
   );
+  const [targetJson, setTargetJson] = useState(() =>
+    JSON.stringify(targetShapeProp ?? sample.targetShape, null, 2),
+  );
+  const [uncontrolledSources, setUncontrolledSources] = useState<readonly SourceField[]>(() =>
+    sourcesProp
+      ? [...sourcesProp]
+      : sourceFieldsFromPlainObject(sourceSampleProp ?? sample.source, {
+          idPrefix: sample.sourceIdPrefix,
+        }),
+  );
+  const [uncontrolledTargets, setUncontrolledTargets] = useState<readonly TargetSlot[]>(() =>
+    targetsProp
+      ? [...targetsProp]
+      : targetSlotsFromPlainObject(targetShapeProp ?? sample.targetShape, {
+          idPrefix: sample.targetIdPrefix,
+        }),
+  );
+
+  const edges = edgesControlled ? edgesProp : uncontrolledEdges;
+  const operators = operatorsControlled ? operatorsProp : uncontrolledOperators;
+  const sourceFields = sourcesControlled ? sourcesProp : uncontrolledSources;
+  const targetSlots = targetsControlled ? targetsProp : uncontrolledTargets;
+  const sourceSample = sourceSampleControlled ? sourceSampleProp : uncontrolledSourceSample;
+
+  const commitEdges = (next: readonly MappingEdge[]) => {
+    if (!edgesControlled) {
+      setUncontrolledEdges(next);
+    }
+    onEdgesChange?.(next);
+  };
+
+  const commitOperators = (next: readonly MappingOperator[]) => {
+    if (!operatorsControlled) {
+      setUncontrolledOperators(next);
+    }
+    onOperatorsChange?.(next);
+  };
+
+  const commitSources = (next: readonly SourceField[]) => {
+    if (!sourcesControlled) {
+      setUncontrolledSources(next);
+    }
+    onSourcesChange?.(next);
+  };
+
+  const commitTargets = (next: readonly TargetSlot[]) => {
+    if (!targetsControlled) {
+      setUncontrolledTargets(next);
+    }
+    onTargetsChange?.(next);
+  };
 
   const shapes = useMemo(
     () => [
@@ -177,18 +265,20 @@ export function FieldRemapPanel({
 
   const applySourceShape = (parsed: unknown) => {
     const ingested = ingestSourceShape(parsed, sample.sourceIdPrefix);
-    setSourceSample(parsed);
+    if (!sourceSampleControlled) {
+      setUncontrolledSourceSample(parsed);
+    }
     setSourceJson(ingested.sampleJson);
-    setSourceFields(ingested.fields);
-    setEdges((current) => pruneMappingEdgesForShapes(current, ingested.fields, targetSlots));
+    commitSources(ingested.fields);
+    commitEdges(pruneMappingEdgesForShapes(edges, ingested.fields, targetSlots));
   };
 
   const applyTargetShape = (parsed: unknown) => {
     const ingested = ingestTargetShape(parsed, sample.targetIdPrefix);
     setTargetSample(parsed);
     setTargetJson(ingested.sampleJson);
-    setTargetSlots(ingested.fields);
-    setEdges((current) => pruneMappingEdgesForShapes(current, sourceFields, ingested.fields));
+    commitTargets(ingested.fields);
+    commitEdges(pruneMappingEdgesForShapes(edges, sourceFields, ingested.fields));
   };
 
   return (
@@ -196,6 +286,7 @@ export function FieldRemapPanel({
       className={['workbench-field-remap-demo', className].filter(Boolean).join(' ')}
       data-testid="field-remap-demo"
       data-sample-id={sample.id}
+      data-edges-mode={edgesControlled ? 'controlled' : 'uncontrolled'}
     >
       <header className="workbench-field-remap-demo__header">
         <h2 className="workbench-field-remap-demo__title">{sample.title}</h2>
@@ -212,7 +303,7 @@ export function FieldRemapPanel({
             fields={sourceFields}
             onSampleJsonChange={setSourceJson}
             onApplySample={applySourceShape}
-            onFieldsChange={(next) => setSourceFields(next as readonly SourceField[])}
+            onFieldsChange={(next) => commitSources(next as readonly SourceField[])}
           />
           <FieldRemapShapeIoEditor
             role="target"
@@ -222,7 +313,7 @@ export function FieldRemapPanel({
             fields={targetSlots}
             onSampleJsonChange={setTargetJson}
             onApplySample={applyTargetShape}
-            onFieldsChange={(next) => setTargetSlots(next as readonly TargetSlot[])}
+            onFieldsChange={(next) => commitTargets(next as readonly TargetSlot[])}
           />
         </div>
       ) : null}
@@ -232,9 +323,9 @@ export function FieldRemapPanel({
         targets={targetSlots}
         edges={edges}
         transforms={registry}
-        onEdgesChange={setEdges}
+        onEdgesChange={commitEdges}
         operators={operators}
-        onOperatorsChange={setOperators}
+        onOperatorsChange={commitOperators}
         sourceTitle={sample.sourceLabel}
         targetTitle={sample.targetLabel}
       />

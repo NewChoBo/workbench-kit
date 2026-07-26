@@ -37,6 +37,7 @@ type Story = StoryObj<typeof meta>;
 export const NestedAB: Story = {
   name: 'A → B',
   args: { sampleId: 'nested-ab' },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('field-remap-convert-palette')).toBeVisible();
@@ -74,6 +75,7 @@ export const ProductCatalog: Story = {
 export const CombineSplit: Story = {
   name: 'n→m combine / split',
   args: { sampleId: 'nm-combine-split' },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('field-remap-convert-palette')).toBeVisible();
