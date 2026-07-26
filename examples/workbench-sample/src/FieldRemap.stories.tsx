@@ -27,6 +27,8 @@ const meta = {
         'nm-combine-split',
       ],
     },
+    showMinimap: { control: 'boolean' },
+    showHostChromeDemo: { control: 'boolean' },
   },
 } satisfies Meta<typeof FieldRemapDemo>;
 
@@ -49,6 +51,26 @@ export const NestedAB: Story = {
     await userEvent.click(canvas.getByTestId('field-remap-palette-item-string:upper'));
     await userEvent.click(canvas.getByTestId('field-remap-place-draft'));
     await expect(canvas.getByTestId('field-remap-detail-draft-id')).toBeVisible();
+  },
+};
+
+export const HostChromeHooks: Story = {
+  name: 'Host chrome (minimap / fitView)',
+  args: {
+    sampleId: 'nested-ab',
+    showHostChromeDemo: true,
+    showMinimap: true,
+  },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByTestId('field-remap-host-chrome')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-minimap', 'on');
+    await userEvent.click(canvas.getByTestId('field-remap-toggle-minimap'));
+    await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-minimap', 'off');
+    await expect(canvasElement.querySelector('.react-flow__minimap')).toBeNull();
+    await userEvent.click(canvas.getByTestId('field-remap-fit-view'));
+    await expect(canvas.getByTestId('field-remap-fit-view')).toBeVisible();
   },
 };
 

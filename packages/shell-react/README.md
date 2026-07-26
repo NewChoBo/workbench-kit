@@ -58,6 +58,35 @@ import '@workbench-kit/shell-react/field-remap/view.css';
 for Flow-only embeds and custom bundler setups. The full barrel
 `import { FieldRemapPanel } from '@workbench-kit/shell-react'` stays supported.
 
+### Flow host chrome hooks
+
+`FieldRemapFlowMapper` (and `FieldRemapPanel` pass-through) accept optional chrome
+hooks so hosts avoid CSS/DOM workarounds:
+
+| Prop | Behavior |
+| --- | --- |
+| `showMinimap` | Default `true`. When `false`, MiniMap is not mounted. |
+| `onPaneContextMenu` / `onNodeContextMenu` / `onEdgeContextMenu` | Native event + selection payload; host owns menu UI. |
+| `flowActionsRef` | `{ fitView(options?) }` using the same defaults as Controls fit-view. |
+
+```tsx
+const flowActionsRef = useRef<FieldRemapFlowActions | null>(null);
+
+<FieldRemapFlowMapper
+  sources={sources}
+  targets={targets}
+  edges={edges}
+  transforms={registry}
+  onEdgesChange={setEdges}
+  showMinimap={false}
+  flowActionsRef={flowActionsRef}
+  onPaneContextMenu={(event, { selection }) => {
+    event.preventDefault();
+    // host ContextMenu…
+  }}
+/>;
+```
+
 ## Related docs
 
 - [Component Map](../../docs/guides/component-map.md)

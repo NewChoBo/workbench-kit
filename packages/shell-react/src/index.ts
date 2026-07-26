@@ -98,7 +98,11 @@ export {
 } from './jdw/document-view-data.js';
 export { SampleFieldRemapDemo, type SampleFieldRemapDemoProps } from './field-remap/demo.js';
 export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap/panel.js';
-export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './field-remap/flow.js';
+export {
+  FieldRemapFlowMapper,
+  type FieldRemapFlowActions,
+  type FieldRemapFlowMapperProps,
+} from './field-remap/flow.js';
 export {
   FieldRemapDetailPanel,
   type FieldRemapDetailPanelProps,

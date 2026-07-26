@@ -7,7 +7,11 @@
  */
 
 export { FieldRemapPanel, type FieldRemapPanelProps } from './panel.js';
-export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './flow.js';
+export {
+  FieldRemapFlowMapper,
+  type FieldRemapFlowActions,
+  type FieldRemapFlowMapperProps,
+} from './flow.js';
 export { FieldRemapDetailPanel, type FieldRemapDetailPanelProps } from './detail-panel.js';
 export { FieldRemapConvertPalette, type FieldRemapConvertPaletteProps } from './convert-palette.js';
 export { ConvertNoteEditor, type ConvertNoteEditorProps } from './convert-note-editor.js';
