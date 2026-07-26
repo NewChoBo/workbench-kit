@@ -633,11 +633,11 @@ grid + optional `headerActions` slot for host install/import controls.
 (B), wired by port DnD. Convert nodes are `MappingEdge.transformIds` steps (not a free graph).
 Shapes stay host-owned; the persisted document is edges (+ optional v2 `operators[]`).
 
-| Layer     | Package / surface                                                                 | Role                                                                           |
-| --------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Runtime   | `@workbench-kit/field-remap`                                                      | Edges, shapes, builtins, `convertToShape`, port helpers (`arePortsCompatible`) |
-| Shell UI  | `@workbench-kit/shell-react` (`FieldRemapPanel`, `FieldRemapFlowMapper`, samples) | Sample mapper surfaces for demos and host spikes                               |
-| Extension | `extensions/samples.field-remap`                                                  | Sample activity / editor host wiring (repo-local)                              |
+| Layer     | Package / surface                                      | Role                                                                                                   |
+| --------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Runtime   | `@workbench-kit/field-remap`                           | Edges, shapes, builtins, `convertToShape` / `convertMappedInputs`, port helpers (`arePortsCompatible`) |
+| Shell UI  | `@workbench-kit/shell-react/field-remap` (also barrel) | Embeddable mapper (`FieldRemapPanel` controlled/uncontrolled, Flow, Convert UI)                        |
+| Extension | `extensions/samples.field-remap`                       | Sample activity / editor host wiring (repo-local)                                                      |
 
 **When to use:** Hosts that need A→B field mapping with optional transform chains, list
 context (`itemEdges`), and preview conversion.
@@ -670,10 +670,15 @@ sample extension packaging.
 - Graph/Tree mappers in shell-react are sample-oriented; prefer the panel/flow surfaces for
   new host integration.
 
-**Key APIs:** `convertToShape`, `createBuiltinValueTransformRegistry`, `arePortsCompatible`,
-`areFieldTypesCompatible`, `pruneMappingEdgesForShapes`, `FieldRemapPanel`,
-`FieldRemapFlowMapper`, `FieldRemapConvertPalette`, `FieldRemapDetailPanel`, `ConvertNoteEditor`,
+**Key APIs:** `convertToShape`, `convertMappedInputs`, `createBuiltinValueTransformRegistry`,
+`arePortsCompatible`, `areFieldTypesCompatible`, `pruneMappingEdgesForShapes`,
+`FieldRemapPanel` (controlled `edges` / `onEdgesChange`), `FieldRemapFlowMapper`,
+`FieldRemapConvertPalette`, `FieldRemapDetailPanel`, `ConvertNoteEditor`,
 `FieldRemapShapeIoEditor`, `TransformOptionsEditor`.
+
+**Embed recipe:** import `@workbench-kit/shell-react/field-remap` (+ optional
+`…/field-remap/view.css`). Persist `MappingEdge[]` via controlled panel props; evaluate with
+`convertMappedInputs` (or `convertToShape` when you already own conversion/shape registries).
 
 **Related:** [Field Remap README](../../packages/field-remap/README.md) ·
 [Sample screens](../guides/sample-screens.md#field-remap-editor) ·
