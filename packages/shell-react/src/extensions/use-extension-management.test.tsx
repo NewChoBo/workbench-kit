@@ -93,6 +93,9 @@ describe('useExtensionManagementModel', () => {
       root.render(
         <StrictMode>
           <WorkbenchProvider
+            // Keep samples available for planning, but do not pre-enable them or
+            // install becomes an already-enabled no-op with no storage write.
+            extensionsConfig={{ enabled: [], recommendations: [] }}
             installedExtensionsStorage={storage}
             installedExtensionsStorageKey={storageKey}
             workspaceHostPort={authCapabilityHostPort}
@@ -114,9 +117,13 @@ describe('useExtensionManagementModel', () => {
     );
     expect(jsonPreview).toBeDefined();
     expect(jsonPreview?.installPlan).toMatchObject({ blocked: false });
+    expect(jsonPreview?.installPlan?.installExtensionIds).toContain(
+      'workbench-kit.samples.json-preview',
+    );
 
     await act(async () => {
-      currentModel?.installCatalogEntry(jsonPreview!);
+      // Sample catalog entries may declare permissions → requiresApproval.
+      currentModel?.installCatalogEntry(jsonPreview!, { approved: true });
     });
 
     expect(JSON.parse(storage.getItem(storageKey) ?? '[]')).toMatchObject([
