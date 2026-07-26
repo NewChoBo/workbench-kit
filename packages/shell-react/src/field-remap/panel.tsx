@@ -5,10 +5,13 @@ import {
   defineConversion,
   defineDataShape,
   findParentChildMappingConflicts,
+  pruneMappingEdgesForShapes,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
   withConversionEdges,
   type MappingEdge,
+  type SourceField,
+  type TargetSlot,
   type ValueTransformRegistry,
 } from '@workbench-kit/field-remap';
 
@@ -19,6 +22,11 @@ import {
   type FieldRemapSampleId,
 } from './samples.js';
 import { jsonataValueTransform } from './jsonata-transform.js';
+import {
+  FieldRemapShapeIoEditor,
+  ingestSourceShape,
+  ingestTargetShape,
+} from './shape-io-editor.js';
 import './view.css';
 
 export interface FieldRemapPanelProps {
@@ -26,6 +34,8 @@ export interface FieldRemapPanelProps {
   readonly sample?: FieldRemapSampleId | FieldRemapSampleDefinition | undefined;
   /** Optional host-owned transform registry (defaults to builtins + JSONata). */
   readonly transforms?: ValueTransformRegistry | undefined;
+  /** When true (default), show paste-JSON / type editors for host-owned shapes. */
+  readonly editableShapes?: boolean | undefined;
   readonly className?: string | undefined;
 }
 
@@ -49,10 +59,12 @@ function resolveSample(sample: FieldRemapPanelProps['sample']): FieldRemapSample
  * XYFlow mapper + convertToShape preview for one A→B (or T_A→T_B) sample.
  *
  * Remount with `key={sampleId}` when switching catalog entries so edge state resets.
+ * Shapes stay host-owned: the panel edits in-memory samples; `FieldRemapDocument` remains edges-only.
  */
 export function FieldRemapPanel({
   sample: sampleProp,
   transforms: transformsProp,
+  editableShapes = true,
   className,
 }: FieldRemapPanelProps): JSX.Element {
   const sample = resolveSample(sampleProp);
@@ -67,14 +79,17 @@ export function FieldRemapPanel({
 
   const [edges, setEdges] = useState<readonly MappingEdge[]>(() => [...sample.edges]);
   const [result, setResult] = useState<FieldRemapPreviewResult>({ output: {} });
-
-  const sourceFields = useMemo(
-    () => sourceFieldsFromPlainObject(sample.source, { idPrefix: sample.sourceIdPrefix }),
-    [sample],
+  const [sourceSample, setSourceSample] = useState<unknown>(() => sample.source);
+  const [targetSample, setTargetSample] = useState<unknown>(() => sample.targetShape);
+  const [sourceJson, setSourceJson] = useState(() => JSON.stringify(sample.source, null, 2));
+  const [targetJson, setTargetJson] = useState(() =>
+    JSON.stringify(sample.targetShape, null, 2),
   );
-  const targetSlots = useMemo(
-    () => targetSlotsFromPlainObject(sample.targetShape, { idPrefix: sample.targetIdPrefix }),
-    [sample],
+  const [sourceFields, setSourceFields] = useState<readonly SourceField[]>(() =>
+    sourceFieldsFromPlainObject(sample.source, { idPrefix: sample.sourceIdPrefix }),
+  );
+  const [targetSlots, setTargetSlots] = useState<readonly TargetSlot[]>(() =>
+    targetSlotsFromPlainObject(sample.targetShape, { idPrefix: sample.targetIdPrefix }),
   );
 
   const shapes = useMemo(
@@ -115,7 +130,7 @@ export function FieldRemapPanel({
     void convertToShape({
       conversion,
       shapes,
-      inputs: { [sample.sourceIdPrefix]: sample.source },
+      inputs: { [sample.sourceIdPrefix]: sourceSample },
       transforms: registry,
       signal: controller.signal,
     })
@@ -137,7 +152,23 @@ export function FieldRemapPanel({
     return () => {
       controller.abort();
     };
-  }, [edges, registry, sample, shapes]);
+  }, [edges, registry, sample, shapes, sourceSample]);
+
+  const applySourceShape = (parsed: unknown) => {
+    const ingested = ingestSourceShape(parsed, sample.sourceIdPrefix);
+    setSourceSample(parsed);
+    setSourceJson(ingested.sampleJson);
+    setSourceFields(ingested.fields);
+    setEdges((current) => pruneMappingEdgesForShapes(current, ingested.fields, targetSlots));
+  };
+
+  const applyTargetShape = (parsed: unknown) => {
+    const ingested = ingestTargetShape(parsed, sample.targetIdPrefix);
+    setTargetSample(parsed);
+    setTargetJson(ingested.sampleJson);
+    setTargetSlots(ingested.fields);
+    setEdges((current) => pruneMappingEdgesForShapes(current, sourceFields, ingested.fields));
+  };
 
   return (
     <div
@@ -149,6 +180,31 @@ export function FieldRemapPanel({
         <h2 className="workbench-field-remap-demo__title">{sample.title}</h2>
         <p className="workbench-field-remap-demo__intro">{sample.description}</p>
       </header>
+
+      {editableShapes ? (
+        <div className="workbench-field-remap-demo__shapes" data-testid="field-remap-shapes">
+          <FieldRemapShapeIoEditor
+            role="source"
+            title={sample.sourceLabel}
+            idPrefix={sample.sourceIdPrefix}
+            sampleJson={sourceJson}
+            fields={sourceFields}
+            onSampleJsonChange={setSourceJson}
+            onApplySample={applySourceShape}
+            onFieldsChange={(next) => setSourceFields(next as readonly SourceField[])}
+          />
+          <FieldRemapShapeIoEditor
+            role="target"
+            title={sample.targetLabel}
+            idPrefix={sample.targetIdPrefix}
+            sampleJson={targetJson}
+            fields={targetSlots}
+            onSampleJsonChange={setTargetJson}
+            onApplySample={applyTargetShape}
+            onFieldsChange={(next) => setTargetSlots(next as readonly TargetSlot[])}
+          />
+        </div>
+      ) : null}
 
       <FieldRemapFlowMapper
         sources={sourceFields}
@@ -181,7 +237,7 @@ export function FieldRemapPanel({
       <div className="workbench-field-remap-demo__panes">
         <section className="workbench-field-remap-demo__pane" aria-labelledby="field-remap-source">
           <h3 id="field-remap-source">{sample.sourceLabel}</h3>
-          <pre data-testid="field-remap-input">{JSON.stringify(sample.source, null, 2)}</pre>
+          <pre data-testid="field-remap-input">{JSON.stringify(sourceSample, null, 2)}</pre>
         </section>
         <section className="workbench-field-remap-demo__pane" aria-labelledby="field-remap-target">
           <h3 id="field-remap-target">{sample.targetLabel}</h3>

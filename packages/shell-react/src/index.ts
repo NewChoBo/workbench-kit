@@ -101,6 +101,13 @@ export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap/panel.
 export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './field-remap/flow.js';
 export { FieldRemapDetailPanel, type FieldRemapDetailPanelProps } from './field-remap/detail-panel.js';
 export {
+  FieldRemapShapeIoEditor,
+  ingestSourceShape,
+  ingestTargetShape,
+  type FieldRemapShapeIoEditorProps,
+  type FieldRemapShapeRole,
+} from './field-remap/shape-io-editor.js';
+export {
   TransformOptionsEditor,
   type TransformOptionsEditorProps,
 } from './field-remap/transform-options-editor.js';

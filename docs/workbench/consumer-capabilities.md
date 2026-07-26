@@ -645,6 +645,8 @@ sample extension packaging.
 **Model notes:**
 - Canvas “transform nodes” are `transformIds` steps on an edge, not a separate document type.
 - Input/output shapes may be host-owned; `FieldRemapDocument` v1 stores edges only.
+  The shell `FieldRemapShapeIoEditor` / panel shape IO path pastes JSON → ingest and
+  edits `FieldDataType`; call `pruneMappingEdgesForShapes` when ids disappear.
 - Direct canvas connects today are source-object port → target-object port only; xf splice
   wiring is tracked separately. Live connects are gated by `arePortsCompatible`
   (permissive on missing/`unknown`, strict on known mismatch; existing target
@@ -656,7 +658,8 @@ sample extension packaging.
   new host integration.
 
 **Key APIs:** `convertToShape`, `createBuiltinValueTransformRegistry`, `arePortsCompatible`,
-`areFieldTypesCompatible`, `FieldRemapPanel`, `FieldRemapFlowMapper`, `FieldRemapDetailPanel`,
+`areFieldTypesCompatible`, `pruneMappingEdgesForShapes`, `FieldRemapPanel`,
+`FieldRemapFlowMapper`, `FieldRemapDetailPanel`, `FieldRemapShapeIoEditor`,
 `TransformOptionsEditor`.
 
 **Related:** [Field Remap README](../../packages/field-remap/README.md) ·

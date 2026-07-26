@@ -108,6 +108,16 @@ export {
 export type { DataShape, DataShapeRegistry, DataShapeRole } from './domain/shapes/dataShape.js';
 
 export {
+  FIELD_DATA_TYPES,
+  collectSourceFieldIds,
+  collectTargetSlotIds,
+  isFieldDataType,
+  pruneMappingEdgesForShapes,
+  setSourceFieldDataType,
+  setTargetSlotDataType,
+} from './domain/shapes/shapeEdit.js';
+
+export {
   createConversionRegistry,
   defineConversion,
   withConversionEdges,

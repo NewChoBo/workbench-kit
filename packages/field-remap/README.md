@@ -48,7 +48,10 @@ sample renders them with `@xyflow/react` (source out → transform → target in
 `FieldRemapDocument` (v1) stores **edges only**. Hosts own input/output shapes
 (`SourceField[]` / `TargetSlot[]`, or `defineDataShape` + ingest helpers) and pass
 them into `convertToShape` / the shell `FieldRemapPanel` / `FieldRemapFlowMapper`.
-Changing a shape should drop or warn on edges whose field/slot ids disappear.
+Changing a shape should drop or warn on edges whose field/slot ids disappear —
+use `pruneMappingEdgesForShapes` after ingest. The shell panel’s shape IO editor
+(paste JSON → ingest + `FieldDataType` selects) is an in-memory host aid; it does
+not extend the persisted document.
 
 ### Host embed (shell UI)
 
