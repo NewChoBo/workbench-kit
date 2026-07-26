@@ -2,10 +2,21 @@
 
 Field remap **runtime**: reshape structure A into structure B with mapping edges and `convertToShape`.
 
-This package does **not** ship a mapping UI. Hosts adapt a tree or table UI into `MappingEdge[]`
-and call `convertToShape`. The workbench sample (**Field Remap → A → B**) demonstrates a nested
-tree mapper with list context; flat OSS adapters (for example `react-table-mapping`) remain useful
-for leaf-only hosts.
+## Interaction model (host UI)
+
+The intended mapper mental model — matching the shell Flow sample — is:
+
+1. **Source schema (A)** and **target schema (B)** as multi-port columns (fields with types /
+   nested paths). Hosts own these shapes; they are not stored in `FieldRemapDocument`.
+2. **Optional convert steps** in the middle (`string:trim`, `string:upper`, `array:first`,
+   `array:join`, …) when a binding needs transforms.
+3. **Port-to-port wires (DnD)** from source → [converters] → target. Each wire is a
+   `MappingEdge` (`transformIds` = convert chain). There is no free-form graph document.
+
+This package does **not** ship a mapping UI. Hosts adapt a Flow / tree / table UI into
+`MappingEdge[]` and call `convertToShape`. The workbench sample (**Field Remap → A → B**)
+demonstrates the schema-column + convert-wire topology with list context; flat OSS adapters
+(for example `react-table-mapping`) remain useful for leaf-only hosts.
 
 ## Install
 
@@ -25,7 +36,7 @@ pnpm add @workbench-kit/field-remap@prototype
 | String format chain                       | Yes (`string:trim` / `upper` / `lower` / `prefix` / `suffix`, max 3) |
 | Array&lt;object&gt; → Array&lt;object&gt; | Yes (`itemEdges` list context)                                       |
 | Index / wildcard paths                    | Yes (`items[0].name`, `items[*].name` via `projectObjectPath`)       |
-| n→m combine / split operators             | Yes (runtime `applyMappingOperators`; not in document v1 yet)        |
+| n→m combine / split operators             | Yes (`applyMappingOperators`; document v2 `operators[]`)             |
 
 ### Path grammar
 
@@ -40,9 +51,9 @@ Safe object paths are dotted identifiers with optional index / wildcard brackets
 Wildcard expansion is capped by `DEFAULT_MAX_PATH_WILDCARD_EXPANSION` (1000) or
 `projectObjectPath(..., { maxExpansion })`. This is not a JSONPath engine.
 
-Middle “graph nodes” in the sample UI are just `MappingEdge.transformIds` steps
+Middle convert nodes in the sample UI are just `MappingEdge.transformIds` steps
 (plus optional `transformOptionSteps`), not a separate document type. The workbench
-sample renders them with `@xyflow/react` (source out → transform → target in).
+sample renders them with `@xyflow/react` (source schema → convert → target schema).
 
 ### Shape ownership
 
