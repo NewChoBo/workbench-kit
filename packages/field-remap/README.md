@@ -106,11 +106,12 @@ uses `itemEdges` on array→array bindings.
 
 ### n→m operators (combine / split)
 
-`FieldRemapDocument` v1 remains **edges-only** (1→1 bindings). For fan-in / fan-out,
-call `applyMappingOperators` with `combine` / `split` operators (limits:
-`MAX_MAPPING_FAN_IN` / `MAX_MAPPING_FAN_OUT` = 8). Hosts may merge the result with
-`convertToShape` output. A future document v2 may persist an `operators[]` list;
-UI multi-port Flow nodes follow once hosts adopt the runtime contract.
+`FieldRemapDocument` **v1** is edges-only (1→1 bindings). **v2** (current) adds an
+optional `operators[]` list for fan-in / fan-out. Call `applyMappingOperators` with
+`combine` / `split` operators (limits: `MAX_MAPPING_FAN_IN` / `MAX_MAPPING_FAN_OUT`
+= 8). Hosts may merge the result with `convertToShape` output.
+`migrateFieldRemapDocument` / `parseFieldRemapDocument` accept v1 and v2 and always
+emit the current version.
 
 ```ts
 import { applyMappingOperators, createBuiltinValueTransformRegistry } from '@workbench-kit/field-remap';

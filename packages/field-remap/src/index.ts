@@ -1,8 +1,11 @@
 export type {
+  CombineMappingOperator,
   FieldDataType,
   MappingEdge,
+  MappingOperator,
   FieldRemapDocument,
   SourceField,
+  SplitMappingOperator,
   TargetSlot,
   TransformContext,
   TransformOptionField,
@@ -34,9 +37,11 @@ export {
   normalizeFieldRemapDocument,
   parseFieldRemapDocument,
   FIELD_REMAP_DOCUMENT_VERSION,
+  FIELD_REMAP_DOCUMENT_V1_VERSION,
   serializeFieldRemapDocument,
   UnsupportedFieldRemapDocumentVersionError,
 } from './domain/document/fieldRemapDocument.js';
+export type { CreateFieldRemapDocumentOptions } from './domain/document/fieldRemapDocument.js';
 
 export {
   InvalidObjectPathError,
@@ -79,13 +84,11 @@ export {
   MAX_MAPPING_FAN_OUT,
   MappingOperatorError,
   applyMappingOperators,
+  normalizeMappingOperators,
 } from './domain/mapping/mappingOperators.js';
 export type {
   ApplyMappingOperatorsInput,
   ApplyMappingOperatorsResult,
-  CombineMappingOperator,
-  MappingOperator,
-  SplitMappingOperator,
 } from './domain/mapping/mappingOperators.js';
 
 export {

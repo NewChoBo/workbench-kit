@@ -1,11 +1,16 @@
 /**
- * Minimal n→m operators (combine / split) evaluated beside v1 MappingEdge[].
- * Document v2 may persist these; v1 hosts call {@link applyMappingOperators} explicitly.
+ * Minimal n→m operators (combine / split) evaluated beside MappingEdge[].
+ * Document v2 may persist these via `operators[]`; hosts may also call
+ * {@link applyMappingOperators} explicitly without persisting.
  */
 
+import { canonicalizeTransformId, IDENTITY_TRANSFORM_ID, MAX_TRANSFORM_CHAIN } from '../constants.js';
 import { throwIfAborted } from '../abort.js';
 import type {
+  CombineMappingOperator,
+  MappingOperator,
   SourceField,
+  SplitMappingOperator,
   TargetSlot,
   TransformContext,
   ValueTransformRegistry,
@@ -19,25 +24,7 @@ export const MAX_MAPPING_FAN_IN = 8;
 /** Max outputs on a split operator. */
 export const MAX_MAPPING_FAN_OUT = 8;
 
-export type CombineMappingOperator = {
-  readonly kind: 'combine';
-  readonly id: string;
-  readonly inputFieldIds: readonly string[];
-  readonly outputSlotId: string;
-  /** Optional chain applied to the combined object bag (max 3 via registry). */
-  readonly transformIds?: readonly string[];
-};
-
-export type SplitMappingOperator = {
-  readonly kind: 'split';
-  readonly id: string;
-  readonly inputFieldId: string;
-  readonly outputSlotIds: readonly string[];
-  /** Optional chain applied to the source value before splitting an object. */
-  readonly transformIds?: readonly string[];
-};
-
-export type MappingOperator = CombineMappingOperator | SplitMappingOperator;
+export type { CombineMappingOperator, MappingOperator, SplitMappingOperator };
 
 export type ApplyMappingOperatorsInput = {
   readonly operators: readonly MappingOperator[];
@@ -116,6 +103,16 @@ function readFieldValue(field: SourceField, inputs: Readonly<Record<string, unkn
   return field.sampleValue;
 }
 
+function sanitizeOperatorTransformIds(ids: readonly string[] | undefined): string[] | undefined {
+  const cleaned = ids
+    ?.map((id) => canonicalizeTransformId(id))
+    .filter((id) => id.length > 0 && id !== IDENTITY_TRANSFORM_ID);
+  if (!cleaned || cleaned.length === 0) {
+    return undefined;
+  }
+  return cleaned.slice(0, MAX_TRANSFORM_CHAIN);
+}
+
 function validateCombine(operator: CombineMappingOperator): void {
   if (operator.inputFieldIds.length < 2) {
     throw new MappingOperatorError(operator.id, 'combine requires at least 2 inputFieldIds.');
@@ -138,6 +135,72 @@ function validateSplit(operator: SplitMappingOperator): void {
       `split fan-out exceeds MAX_MAPPING_FAN_OUT (${MAX_MAPPING_FAN_OUT}).`,
     );
   }
+}
+
+/**
+ * Normalize persisted / host-supplied operators for document v2.
+ * Drops malformed entries; clamps fan-in/out and transform chains.
+ */
+export function normalizeMappingOperators(
+  operators: readonly MappingOperator[] | undefined,
+): MappingOperator[] | undefined {
+  if (!operators || operators.length === 0) {
+    return undefined;
+  }
+
+  const next: MappingOperator[] = [];
+  for (const operator of operators) {
+    if (!operator || typeof operator !== 'object') {
+      continue;
+    }
+    const id = typeof operator.id === 'string' ? operator.id.trim() : '';
+    if (!id) {
+      continue;
+    }
+
+    if (operator.kind === 'combine') {
+      const inputFieldIds = (operator.inputFieldIds ?? [])
+        .map((fieldId) => (typeof fieldId === 'string' ? fieldId.trim() : ''))
+        .filter(Boolean)
+        .slice(0, MAX_MAPPING_FAN_IN);
+      const outputSlotId =
+        typeof operator.outputSlotId === 'string' ? operator.outputSlotId.trim() : '';
+      if (inputFieldIds.length < 2 || !outputSlotId) {
+        continue;
+      }
+      const combineTransforms = sanitizeOperatorTransformIds(operator.transformIds);
+      next.push({
+        kind: 'combine',
+        id,
+        inputFieldIds,
+        outputSlotId,
+        ...(combineTransforms ? { transformIds: combineTransforms } : {}),
+      });
+      continue;
+    }
+
+    if (operator.kind === 'split') {
+      const inputFieldId =
+        typeof operator.inputFieldId === 'string' ? operator.inputFieldId.trim() : '';
+      const outputSlotIds = (operator.outputSlotIds ?? [])
+        .map((slotId) => (typeof slotId === 'string' ? slotId.trim() : ''))
+        .filter(Boolean)
+        .slice(0, MAX_MAPPING_FAN_OUT);
+      if (!inputFieldId || outputSlotIds.length < 2) {
+        continue;
+      }
+      const splitTransforms = sanitizeOperatorTransformIds(operator.transformIds);
+      next.push({
+        kind: 'split',
+        id,
+        inputFieldId,
+        outputSlotIds,
+        ...(splitTransforms ? { transformIds: splitTransforms } : {}),
+      });
+    }
+  }
+
+  return next.length > 0 ? next : undefined;
 }
 
 /**

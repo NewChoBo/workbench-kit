@@ -4,6 +4,7 @@ import {
   applyMappingOperators,
   MappingOperatorError,
   MAX_MAPPING_FAN_IN,
+  normalizeMappingOperators,
 } from './mappingOperators.js';
 import type { SourceField, TargetSlot } from '../types.js';
 
@@ -75,5 +76,31 @@ describe('mappingOperators', () => {
         transforms,
       }),
     ).rejects.toBeInstanceOf(MappingOperatorError);
+  });
+
+  it('normalizes persisted operators and drops malformed entries', () => {
+    expect(
+      normalizeMappingOperators([
+        {
+          kind: 'combine',
+          id: 'c1',
+          inputFieldIds: ['a.date', 'a.time'],
+          outputSlotId: 'b.startsAt',
+        },
+        {
+          kind: 'split',
+          id: 's-bad',
+          inputFieldId: 'a.when',
+          outputSlotIds: ['b.date'],
+        },
+      ]),
+    ).toEqual([
+      {
+        kind: 'combine',
+        id: 'c1',
+        inputFieldIds: ['a.date', 'a.time'],
+        outputSlotId: 'b.startsAt',
+      },
+    ]);
   });
 });
