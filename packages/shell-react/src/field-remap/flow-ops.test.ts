@@ -8,7 +8,11 @@ import {
 
 import {
   addTransformStepToEdge,
+  bindDraftSource,
+  bindDraftTarget,
   canEditListContext,
+  createDraftTransform,
+  finalizeDraftTransform,
   listCompatibleTransforms,
   setTransformStepIdOnEdge,
   upsertItemEdgeOnParent,
@@ -131,5 +135,27 @@ describe('field-remap flow-ops', () => {
     });
     expect(replaced.itemEdges).toHaveLength(1);
     expect(replaced.itemEdges?.[0]?.sourceFieldId).toBe('a.tags.item.rank');
+  });
+
+  it('finalizes place-then-wire drafts when both ports are bound', () => {
+    const draft = createDraftTransform('string:trim');
+    expect(finalizeDraftTransform(draft, { registry, sources, targets, existing: [] })).toBeNull();
+
+    const wired = bindDraftTarget(bindDraftSource(draft, 'a.user_name'), 'b.name');
+    const edge = finalizeDraftTransform(wired, { registry, sources, targets, existing: [] });
+    expect(edge).toMatchObject({
+      sourceFieldId: 'a.user_name',
+      targetSlotId: 'b.name',
+      transformIds: ['string:trim'],
+    });
+
+    expect(
+      finalizeDraftTransform(bindDraftTarget(bindDraftSource(draft, 'a.tags'), 'b.name'), {
+        registry,
+        sources,
+        targets,
+        existing: [],
+      }),
+    ).toBeNull();
   });
 });

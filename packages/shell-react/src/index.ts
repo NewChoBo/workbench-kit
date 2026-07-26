@@ -113,9 +113,13 @@ export {
 } from './field-remap/transform-options-editor.js';
 export {
   addTransformStepToEdge,
+  bindDraftSource,
+  bindDraftTarget,
   canEditListContext,
+  createDraftTransform,
   edgePortTypes,
   enableListContextOnEdge,
+  finalizeDraftTransform,
   listCompatibleTransforms,
   removeItemEdgeFromParent,
   removeTransformStepFromEdge,
@@ -124,6 +128,7 @@ export {
   setTransformStepIdOnEdge,
   updateMappingEdge,
   upsertItemEdgeOnParent,
+  type FieldRemapDraftTransform,
   type FieldRemapSelection,
 } from './field-remap/flow-ops.js';
 export {

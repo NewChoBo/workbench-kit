@@ -29,6 +29,8 @@ import {
   connectionToMappingEdge,
   isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
+  parseDraftTransformNodeId,
+  type FieldRemapDraftTransformNodeData,
   type FieldRemapFlowEdgeData,
   type FieldRemapFlowNodeData,
   type FieldRemapSourceObjectNodeData,
@@ -37,11 +39,16 @@ import {
 } from './flow-adapter.js';
 import {
   addTransformStepToEdge,
+  bindDraftSource,
+  bindDraftTarget,
   canEditListContext,
+  createDraftTransform,
   edgePortTypes,
   enableListContextOnEdge,
+  finalizeDraftTransform,
   listCompatibleTransforms,
   removeTransformStepFromEdge,
+  type FieldRemapDraftTransform,
   type FieldRemapSelection,
 } from './flow-ops.js';
 
@@ -123,10 +130,30 @@ function TransformNode({ data }: NodeProps<Node<FieldRemapTransformNodeData>>): 
   );
 }
 
+function DraftTransformNode({
+  data,
+}: NodeProps<Node<FieldRemapDraftTransformNodeData>>): JSX.Element {
+  return (
+    <div
+      className="workbench-field-remap-flow-node workbench-field-remap-flow-node--transform workbench-field-remap-flow-node--draft"
+      data-testid={`field-remap-draft-${data.localId}`}
+    >
+      <Handle type="target" position={Position.Left} id="in" />
+      <div className="workbench-field-remap-flow-node__title">
+        <strong>{data.label}</strong>
+        <Badge variant="muted">draft</Badge>
+      </div>
+      <code className="workbench-field-remap-flow-node__id">{data.transformId}</code>
+      <Handle type="source" position={Position.Right} id="out" />
+    </div>
+  );
+}
+
 const nodeTypes = {
   fieldRemapSourceObject: SourceObjectNode,
   fieldRemapTargetObject: TargetObjectNode,
   fieldRemapTransform: TransformNode,
+  fieldRemapDraftTransform: DraftTransformNode,
 };
 
 export interface FieldRemapFlowMapperProps {
@@ -155,6 +182,13 @@ function FieldRemapFlowCanvas({
   const [internalSelection, setInternalSelection] = useState<FieldRemapSelection>(null);
   const selection = selectionProp !== undefined ? selectionProp : internalSelection;
   const setSelection = onSelectionChangeProp ?? setInternalSelection;
+  const [drafts, setDrafts] = useState<readonly FieldRemapDraftTransform[]>([]);
+  const [placeTransformId, setPlaceTransformId] = useState('');
+
+  const placeCatalog = useMemo(
+    () => transforms.list().filter((definition) => definition.id !== 'identity'),
+    [transforms],
+  );
 
   const graph = useMemo(
     () =>
@@ -165,8 +199,9 @@ function FieldRemapFlowCanvas({
         transforms,
         sourceTitle,
         targetTitle,
+        drafts,
       }),
-    [sources, targets, edges, transforms, sourceTitle, targetTitle],
+    [sources, targets, edges, transforms, sourceTitle, targetTitle, drafts],
   );
 
   const nodesWithSelection = useMemo(
@@ -197,8 +232,8 @@ function FieldRemapFlowCanvas({
   }, [graph.edges, nodesWithSelection, setNodes, setFlowEdges]);
 
   const connectionContext = useMemo(
-    () => ({ sources, targets, edges, transforms }),
-    [sources, targets, edges, transforms],
+    () => ({ sources, targets, edges, transforms, drafts }),
+    [sources, targets, edges, transforms, drafts],
   );
 
   const isValidConnection = useCallback(
@@ -215,6 +250,55 @@ function FieldRemapFlowCanvas({
       if (!isValidFieldRemapFlowConnection(connection, connectionContext)) {
         return;
       }
+
+      const draftAsTarget = parseDraftTransformNodeId(connection.target);
+      if (draftAsTarget && connection.sourceHandle) {
+        const draft = drafts.find((item) => item.localId === draftAsTarget);
+        if (!draft) {
+          return;
+        }
+        const bound = bindDraftSource(draft, connection.sourceHandle);
+        const finalized = finalizeDraftTransform(bound, {
+          registry: transforms,
+          sources,
+          targets,
+          existing: edges,
+        });
+        if (finalized) {
+          const withoutTarget = edges.filter((edge) => edge.targetSlotId !== finalized.targetSlotId);
+          onEdgesChange([...withoutTarget, finalized]);
+          setDrafts(drafts.filter((item) => item.localId !== draft.localId));
+          setSelection({ kind: 'edge', edgeId: finalized.id });
+          return;
+        }
+        setDrafts(drafts.map((item) => (item.localId === draft.localId ? bound : item)));
+        return;
+      }
+
+      const draftAsSource = parseDraftTransformNodeId(connection.source);
+      if (draftAsSource && connection.targetHandle) {
+        const draft = drafts.find((item) => item.localId === draftAsSource);
+        if (!draft) {
+          return;
+        }
+        const bound = bindDraftTarget(draft, connection.targetHandle);
+        const finalized = finalizeDraftTransform(bound, {
+          registry: transforms,
+          sources,
+          targets,
+          existing: edges,
+        });
+        if (finalized) {
+          const withoutTarget = edges.filter((edge) => edge.targetSlotId !== finalized.targetSlotId);
+          onEdgesChange([...withoutTarget, finalized]);
+          setDrafts(drafts.filter((item) => item.localId !== draft.localId));
+          setSelection({ kind: 'edge', edgeId: finalized.id });
+          return;
+        }
+        setDrafts(drafts.map((item) => (item.localId === draft.localId ? bound : item)));
+        return;
+      }
+
       const next = connectionToMappingEdge({
         sourceNodeId: connection.source,
         targetNodeId: connection.target,
@@ -229,7 +313,7 @@ function FieldRemapFlowCanvas({
       onEdgesChange([...withoutTarget, next]);
       setSelection({ kind: 'edge', edgeId: next.id });
     },
-    [connectionContext, edges, onEdgesChange, setSelection],
+    [connectionContext, drafts, edges, onEdgesChange, setSelection, sources, targets, transforms],
   );
 
   const onEdgesDelete = useCallback(
@@ -290,6 +374,7 @@ function FieldRemapFlowCanvas({
     (event: KeyboardEvent<HTMLDivElement>) => {
       if (event.key === 'Escape') {
         setSelection(null);
+        setDrafts([]);
       }
     },
     [setSelection],
@@ -303,9 +388,41 @@ function FieldRemapFlowCanvas({
     >
       <p className="workbench-field-remap-mapper__hint" data-testid="field-remap-hint">
         Drag a left field to a right field. Select a transform node (or binding) to edit step id
-        and options. Use the transform palette to add a chosen step. Alt-click removes a step.
-        Escape clears selection.
+        and options. Use the transform palette to add a chosen step, or place a draft then wire
+        ports. Alt-click removes a step. Escape clears selection and draft nodes.
       </p>
+
+      <div className="workbench-field-remap-flow__place" data-testid="field-remap-place-palette">
+        <label>
+          <span>Place transform</span>
+          <select
+            aria-label="Transform to place"
+            value={placeTransformId}
+            onChange={(event) => setPlaceTransformId(event.target.value)}
+          >
+            <option value="">Select…</option>
+            {placeCatalog.map((definition) => (
+              <option key={definition.id} value={definition.id}>
+                {definition.label} ({definition.id})
+              </option>
+            ))}
+          </select>
+        </label>
+        <Button
+          compact
+          type="button"
+          data-testid="field-remap-place-draft"
+          disabled={!placeTransformId}
+          onClick={() => {
+            if (!placeTransformId) {
+              return;
+            }
+            setDrafts((current) => [...current, createDraftTransform(placeTransformId)]);
+          }}
+        >
+          Place draft
+        </Button>
+      </div>
 
       <div className="workbench-field-remap-flow__workspace">
         <div className="workbench-field-remap-flow__canvas" data-testid="field-remap-flow">

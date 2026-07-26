@@ -8,6 +8,7 @@ import {
 
 import {
   connectionToMappingEdge,
+  draftTransformNodeId,
   isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
   SOURCE_OBJECT_NODE_ID,
@@ -247,5 +248,44 @@ describe('field-remap-flow-adapter', () => {
         { ...baseContext, edges: withArrayJoin },
       ),
     ).toBe(false);
+  });
+
+  it('allows source/target wiring through draft transform nodes', () => {
+    const drafts = [{ localId: 'd1', transformId: 'string:trim' }];
+    const draftId = draftTransformNodeId('d1');
+    const context = { sources, targets, edges: [] as MappingEdge[], transforms, drafts };
+
+    const graph = mappingToFlowGraph({
+      sources,
+      targets,
+      edges: [],
+      transforms,
+      drafts,
+    });
+    expect(graph.nodes.some((node) => node.id === draftId)).toBe(true);
+
+    expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: draftId,
+          sourceHandle: 'a.user_name',
+        },
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: draftId,
+          target: TARGET_OBJECT_NODE_ID,
+          targetHandle: 'b.name',
+        },
+        {
+          ...context,
+          drafts: [{ localId: 'd1', transformId: 'string:trim', sourceFieldId: 'a.user_name' }],
+        },
+      ),
+    ).toBe(true);
   });
 });

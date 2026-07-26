@@ -87,9 +87,12 @@ transforms.register(createJsonataValueTransform());
 // <FieldRemapFlowMapper sources={…} targets={…} edges={…} transforms={transforms} onEdgesChange={…} />
 ```
 
-Place-then-wire free graphs are **not** the document model — add transforms via the
-palette / `+ node` onto an existing binding (`transformIds` chain, max 3). List
-context uses `itemEdges` on array→array bindings.
+Place-then-wire uses **ephemeral draft nodes** in the shell Flow UI: place a
+transform, wire source then target (or the reverse), and the draft finalizes into
+a `MappingEdge` with `transformIds: [id]`. Escape discards unfinished drafts.
+The persisted document stays edges-only — no free graph. You can also add steps
+via the detail palette / `+ node` onto an existing binding (max 3). List context
+uses `itemEdges` on array→array bindings.
 
 ### n→m operators (combine / split)
 

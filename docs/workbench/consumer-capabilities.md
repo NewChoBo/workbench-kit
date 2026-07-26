@@ -644,6 +644,7 @@ sample extension packaging.
 
 **Model notes:**
 - Canvas “transform nodes” are `transformIds` steps on an edge, not a separate document type.
+  Place-then-wire drafts are ephemeral UI state until both ports finalize an edge.
 - Input/output shapes may be host-owned; `FieldRemapDocument` v1 stores edges only.
   The shell `FieldRemapShapeIoEditor` / panel shape IO path pastes JSON → ingest and
   edits `FieldDataType`; call `pruneMappingEdgesForShapes` when ids disappear.

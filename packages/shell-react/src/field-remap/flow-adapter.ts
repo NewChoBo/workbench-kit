@@ -11,7 +11,11 @@ import {
   type ValueTransformRegistry,
 } from '@workbench-kit/field-remap';
 
-export type FieldRemapFlowNodeKind = 'source-object' | 'target-object' | 'transform';
+export type FieldRemapFlowNodeKind =
+  | 'source-object'
+  | 'target-object'
+  | 'transform'
+  | 'draft-transform';
 
 export type FieldRemapPort = {
   fieldId: string;
@@ -42,16 +46,30 @@ export type FieldRemapTransformNodeData = {
   selected?: boolean;
 } & Record<string, unknown>;
 
+export type FieldRemapDraftTransformNodeData = {
+  kind: 'draft-transform';
+  localId: string;
+  transformId: string;
+  label: string;
+  sourceFieldId?: string;
+  targetSlotId?: string;
+} & Record<string, unknown>;
+
 export type FieldRemapFlowNodeData =
-  FieldRemapSourceObjectNodeData | FieldRemapTargetObjectNodeData | FieldRemapTransformNodeData;
+  | FieldRemapSourceObjectNodeData
+  | FieldRemapTargetObjectNodeData
+  | FieldRemapTransformNodeData
+  | FieldRemapDraftTransformNodeData;
 
 export type FieldRemapFlowEdgeData = {
-  mappingEdgeId: string;
-  segment: 'in' | 'mid' | 'out' | 'direct';
+  mappingEdgeId?: string;
+  draftLocalId?: string;
+  segment: 'in' | 'mid' | 'out' | 'direct' | 'draft-in' | 'draft-out';
 } & Record<string, unknown>;
 
 export const SOURCE_OBJECT_NODE_ID = 'obj:source' as const;
 export const TARGET_OBJECT_NODE_ID = 'obj:target' as const;
+export const DRAFT_NODE_PREFIX = 'draft:' as const;
 
 const SOURCE_X = 24;
 const TRANSFORM_X = 320;
@@ -73,6 +91,17 @@ export function portHandleId(fieldOrSlotId: string): string {
 
 export function transformNodeId(mappingEdgeId: string, stepIndex: number): string {
   return `xf:${mappingEdgeId}:${stepIndex}`;
+}
+
+export function draftTransformNodeId(localId: string): string {
+  return `${DRAFT_NODE_PREFIX}${localId}`;
+}
+
+export function parseDraftTransformNodeId(nodeId: string): string | undefined {
+  if (!nodeId.startsWith(DRAFT_NODE_PREFIX)) {
+    return undefined;
+  }
+  return nodeId.slice(DRAFT_NODE_PREFIX.length);
 }
 
 function fieldLabel(field: SourceField | TargetSlot): string {
@@ -98,6 +127,13 @@ export function mappingToFlowGraph(input: {
   readonly transforms: ValueTransformRegistry;
   readonly sourceTitle?: string;
   readonly targetTitle?: string;
+  /** Ephemeral place-then-wire drafts (not persisted). */
+  readonly drafts?: readonly {
+    readonly localId: string;
+    readonly transformId: string;
+    readonly sourceFieldId?: string;
+    readonly targetSlotId?: string;
+  }[];
 }): { nodes: Node<FieldRemapFlowNodeData>[]; edges: Edge<FieldRemapFlowEdgeData>[] } {
   const sourcePorts = toPorts(flattenSourceFields(input.sources));
   const targetPorts = toPorts(flattenTargetSlots(input.targets));
@@ -199,6 +235,51 @@ export function mappingToFlowGraph(input: {
     });
   });
 
+  (input.drafts ?? []).forEach((draft, draftIndex) => {
+    const definition = input.transforms.get(draft.transformId);
+    const nodeId = draftTransformNodeId(draft.localId);
+    nodes.push({
+      id: nodeId,
+      type: 'fieldRemapDraftTransform',
+      position: {
+        x: TRANSFORM_X,
+        y: 40 + (input.edges.length + draftIndex) * TRANSFORM_ROW_GAP,
+      },
+      data: {
+        kind: 'draft-transform',
+        localId: draft.localId,
+        transformId: draft.transformId,
+        label: definition?.label ?? draft.transformId,
+        sourceFieldId: draft.sourceFieldId,
+        targetSlotId: draft.targetSlotId,
+      },
+      draggable: true,
+    });
+
+    if (draft.sourceFieldId) {
+      flowEdges.push({
+        id: `fe:draft:${draft.localId}:in`,
+        source: SOURCE_OBJECT_NODE_ID,
+        sourceHandle: portHandleId(draft.sourceFieldId),
+        target: nodeId,
+        targetHandle: 'in',
+        type: 'smoothstep',
+        data: { draftLocalId: draft.localId, segment: 'draft-in' },
+      });
+    }
+    if (draft.targetSlotId) {
+      flowEdges.push({
+        id: `fe:draft:${draft.localId}:out`,
+        source: nodeId,
+        sourceHandle: 'out',
+        target: TARGET_OBJECT_NODE_ID,
+        targetHandle: portHandleId(draft.targetSlotId),
+        type: 'smoothstep',
+        data: { draftLocalId: draft.localId, segment: 'draft-out' },
+      });
+    }
+  });
+
   return { nodes, edges: flowEdges };
 }
 
@@ -247,11 +328,11 @@ function resolveConnectionPortIds(connection: {
  * Supported connect matrix for state-changing canvas drags:
  * - source-object port → target-object port (creates / replaces a `MappingEdge`)
  * - legacy `src:*` → `tgt:*` single-field node ids (tests / older graphs)
+ * - source-object port → `draft:*` (bind draft input)
+ * - `draft:*` → target-object port (bind draft output; finalize when both ends set)
  *
- * Transform (`xf:*`) endpoints are rendered for existing `transformIds` chains
- * but are **not** valid connect targets until splice/append wiring lands.
- * Advertising xf endpoints in `isValidConnection` without materializing state
- * caused silent no-ops.
+ * Persisted transform (`xf:*`) endpoints remain invalid connect targets until
+ * splice/append wiring lands (avoids silent no-ops).
  *
  * When `context` is provided, topology-ok connects are further gated by
  * {@link arePortsCompatible}: missing/`unknown` types stay permissive; known
@@ -265,12 +346,59 @@ export function isValidFieldRemapFlowConnection(
     readonly sourceHandle?: string | null;
     readonly targetHandle?: string | null;
   },
-  context?: IsValidFieldRemapFlowConnectionContext,
+  context?: IsValidFieldRemapFlowConnectionContext & {
+    readonly drafts?: readonly {
+      readonly localId: string;
+      readonly transformId: string;
+      readonly sourceFieldId?: string;
+      readonly targetSlotId?: string;
+    }[];
+  },
 ): boolean {
   const source = connection.source;
   const target = connection.target;
   if (!source || !target) {
     return false;
+  }
+
+  const draftTargetId = parseDraftTransformNodeId(target);
+  const draftSourceId = parseDraftTransformNodeId(source);
+
+  if (source === SOURCE_OBJECT_NODE_ID && draftTargetId && connection.sourceHandle) {
+    if (!context) {
+      return true;
+    }
+    const draft = context.drafts?.find((item) => item.localId === draftTargetId);
+    if (!draft) {
+      return false;
+    }
+    const sourceField = findSourceField(context.sources, connection.sourceHandle);
+    return arePortsCompatible({
+      sourceType: sourceField?.dataType,
+      targetType: 'unknown',
+      transformIds: [draft.transformId],
+      registry: context.transforms,
+    });
+  }
+
+  if (draftSourceId && target === TARGET_OBJECT_NODE_ID && connection.targetHandle) {
+    if (!context) {
+      return true;
+    }
+    const draft = context.drafts?.find((item) => item.localId === draftSourceId);
+    if (!draft) {
+      return false;
+    }
+    const sourceType = draft.sourceFieldId
+      ? findSourceField(context.sources, draft.sourceFieldId)?.dataType
+      : undefined;
+    const targetSlot = findTargetSlot(context.targets, connection.targetHandle);
+    return arePortsCompatible({
+      sourceType,
+      targetType: targetSlot?.dataType,
+      transformIds: [draft.transformId],
+      registry: context.transforms,
+    });
   }
 
   let topologyOk = false;

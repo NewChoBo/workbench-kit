@@ -1,5 +1,6 @@
 import {
   MAX_TRANSFORM_CHAIN,
+  arePortsCompatible,
   findSourceField,
   findTargetSlot,
   isTransformChainCompatible,
@@ -20,6 +21,78 @@ export type FieldRemapSelection =
   | { readonly kind: 'edge'; readonly edgeId: string }
   | { readonly kind: 'transformStep'; readonly edgeId: string; readonly stepIndex: number }
   | null;
+
+/**
+ * Ephemeral place-then-wire transform. Not part of `FieldRemapDocument` until
+ * both ports are bound and {@link finalizeDraftTransform} succeeds.
+ */
+export type FieldRemapDraftTransform = {
+  readonly localId: string;
+  readonly transformId: string;
+  readonly sourceFieldId?: string;
+  readonly targetSlotId?: string;
+};
+
+let draftSequence = 0;
+
+export function createDraftTransform(transformId: string): FieldRemapDraftTransform {
+  draftSequence += 1;
+  return {
+    localId: `d${draftSequence}-${Date.now()}`,
+    transformId,
+  };
+}
+
+export function bindDraftSource(
+  draft: FieldRemapDraftTransform,
+  sourceFieldId: string,
+): FieldRemapDraftTransform {
+  return { ...draft, sourceFieldId };
+}
+
+export function bindDraftTarget(
+  draft: FieldRemapDraftTransform,
+  targetSlotId: string,
+): FieldRemapDraftTransform {
+  return { ...draft, targetSlotId };
+}
+
+/**
+ * Materialize a fully wired draft into a MappingEdge (single-step chain).
+ * Returns null when ports are missing or the chain is type-incompatible.
+ */
+export function finalizeDraftTransform(
+  draft: FieldRemapDraftTransform,
+  context: {
+    readonly registry: ValueTransformRegistry;
+    readonly sources: readonly SourceField[];
+    readonly targets: readonly TargetSlot[];
+    readonly existing: readonly MappingEdge[];
+  },
+): MappingEdge | null {
+  if (!draft.sourceFieldId || !draft.targetSlotId) {
+    return null;
+  }
+  const sourceType = findSourceField(context.sources, draft.sourceFieldId)?.dataType;
+  const targetType = findTargetSlot(context.targets, draft.targetSlotId)?.dataType;
+  if (
+    !arePortsCompatible({
+      sourceType,
+      targetType,
+      transformIds: [draft.transformId],
+      registry: context.registry,
+    })
+  ) {
+    return null;
+  }
+  const existing = context.existing.find((edge) => edge.targetSlotId === draft.targetSlotId);
+  return {
+    id: existing?.id ?? `e-${draft.sourceFieldId}-${draft.targetSlotId}-${Date.now()}`,
+    sourceFieldId: draft.sourceFieldId,
+    targetSlotId: draft.targetSlotId,
+    transformIds: [draft.transformId],
+  };
+}
 
 export function updateMappingEdge(
   edges: readonly MappingEdge[],
