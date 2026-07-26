@@ -106,6 +106,7 @@ export type FieldRemapFlowEdgeData = {
 export const SOURCE_OBJECT_NODE_ID = 'obj:source' as const;
 export const TARGET_OBJECT_NODE_ID = 'obj:target' as const;
 export const DRAFT_NODE_PREFIX = 'draft:' as const;
+export const OPERATOR_NODE_PREFIX = 'op:' as const;
 
 const SOURCE_X = 24;
 const TRANSFORM_X = 320;
@@ -134,7 +135,7 @@ export function draftTransformNodeId(localId: string): string {
 }
 
 export function operatorNodeId(operatorId: string): string {
-  return `op:${operatorId}`;
+  return `${OPERATOR_NODE_PREFIX}${operatorId}`;
 }
 
 export function parseDraftTransformNodeId(nodeId: string): string | undefined {
@@ -142,6 +143,13 @@ export function parseDraftTransformNodeId(nodeId: string): string | undefined {
     return undefined;
   }
   return nodeId.slice(DRAFT_NODE_PREFIX.length);
+}
+
+export function parseOperatorNodeId(nodeId: string): string | undefined {
+  if (!nodeId.startsWith(OPERATOR_NODE_PREFIX)) {
+    return undefined;
+  }
+  return nodeId.slice(OPERATOR_NODE_PREFIX.length);
 }
 
 /** Parse a persisted transform node id (`xf:<edgeId>:<stepIndex>`). */
@@ -401,15 +409,17 @@ export function mappingToFlowGraph(input: {
           data: { operatorId: operator.id, segment: 'operator-in' },
         });
       }
-      flowEdges.push({
-        id: `fe:op:${operator.id}:out`,
-        source: nodeId,
-        sourceHandle: 'out',
-        target: TARGET_OBJECT_NODE_ID,
-        targetHandle: portHandleId(operator.outputSlotId),
-        type: 'smoothstep',
-        data: { operatorId: operator.id, segment: 'operator-out' },
-      });
+      if (operator.outputSlotId) {
+        flowEdges.push({
+          id: `fe:op:${operator.id}:out`,
+          source: nodeId,
+          sourceHandle: 'out',
+          target: TARGET_OBJECT_NODE_ID,
+          targetHandle: portHandleId(operator.outputSlotId),
+          type: 'smoothstep',
+          data: { operatorId: operator.id, segment: 'operator-out' },
+        });
+      }
       return;
     }
 
@@ -426,15 +436,17 @@ export function mappingToFlowGraph(input: {
       },
       draggable: true,
     });
-    flowEdges.push({
-      id: `fe:op:${operator.id}:in`,
-      source: SOURCE_OBJECT_NODE_ID,
-      sourceHandle: portHandleId(operator.inputFieldId),
-      target: nodeId,
-      targetHandle: 'in',
-      type: 'smoothstep',
-      data: { operatorId: operator.id, segment: 'operator-in' },
-    });
+    if (operator.inputFieldId) {
+      flowEdges.push({
+        id: `fe:op:${operator.id}:in`,
+        source: SOURCE_OBJECT_NODE_ID,
+        sourceHandle: portHandleId(operator.inputFieldId),
+        target: nodeId,
+        targetHandle: 'in',
+        type: 'smoothstep',
+        data: { operatorId: operator.id, segment: 'operator-in' },
+      });
+    }
     for (const slotId of operator.outputSlotIds) {
       flowEdges.push({
         id: `fe:op:${operator.id}:out:${slotId}`,
