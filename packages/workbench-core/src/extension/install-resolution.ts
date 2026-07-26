@@ -9,14 +9,25 @@ const SAMPLE_EXTENSION_ID_PREFIX = 'workbench-kit.samples.' as const;
 export function resolveInstalledAvailableExtensions(
   bundledExtensions: readonly WorkbenchExtensionDescription[],
   installedRecords: readonly InstalledExtensionRecord[],
+  /**
+   * Extension ids already enabled via `.workbench/extensions.json` (or host
+   * `extensionsConfig`). Config-enabled samples stay available without a
+   * separate install record — required once sample features are extension-owned.
+   */
+  configEnabledIds: readonly string[] = [],
 ): readonly WorkbenchExtensionDescription[] {
   const enabledInstalledIds = new Set(
     installedRecords.filter((record) => record.enabled).map((record) => record.id),
   );
+  const configEnabledIdsSet = new Set(configEnabledIds);
 
   return bundledExtensions.filter((extension) => {
     const extensionId = extension.manifest.id;
     if (extensionId.startsWith(BUILTIN_EXTENSION_ID_PREFIX)) {
+      return true;
+    }
+
+    if (configEnabledIdsSet.has(extensionId)) {
       return true;
     }
 
