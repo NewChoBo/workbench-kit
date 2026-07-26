@@ -2,6 +2,8 @@ import { useMemo, type JSX } from 'react';
 import { Button } from '@workbench-kit/react/primitives';
 import type { ValueTransformRegistry } from '@workbench-kit/field-remap';
 
+import { defaultFieldRemapChromeLabels, type FieldRemapChromeLabels } from './chrome-labels.js';
+
 export interface FieldRemapConvertPaletteProps {
   readonly transforms: ValueTransformRegistry;
   readonly selectedTransformId: string;
@@ -9,6 +11,8 @@ export interface FieldRemapConvertPaletteProps {
   readonly onPlaceDraft: (transformId: string) => void;
   readonly onAddCombine?: (() => void) | undefined;
   readonly onAddSplit?: (() => void) | undefined;
+  /** Resolved chrome labels (defaults when omitted). */
+  readonly chromeLabels?: FieldRemapChromeLabels | undefined;
 }
 
 /**
@@ -22,6 +26,7 @@ export function FieldRemapConvertPalette({
   onPlaceDraft,
   onAddCombine,
   onAddSplit,
+  chromeLabels = defaultFieldRemapChromeLabels,
 }: FieldRemapConvertPaletteProps): JSX.Element {
   const catalog = useMemo(
     () => transforms.list().filter((definition) => definition.id !== 'identity'),
@@ -32,14 +37,11 @@ export function FieldRemapConvertPalette({
     <aside
       className="workbench-field-remap-convert-palette"
       data-testid="field-remap-convert-palette"
-      aria-label="Convert palette"
+      aria-label={chromeLabels.convertPaletteAriaLabel}
     >
       <header className="workbench-field-remap-convert-palette__header">
-        <h3>Convert palette</h3>
-        <p>
-          Place a convert first, then wire source → draft → target. Drafts stay off the document
-          until both ports bind.
-        </p>
+        <h3>{chromeLabels.convertPaletteTitle}</h3>
+        <p>{chromeLabels.convertPaletteDescription}</p>
       </header>
 
       <div className="workbench-field-remap-convert-palette__place">
@@ -54,14 +56,14 @@ export function FieldRemapConvertPalette({
             onPlaceDraft(selectedTransformId);
           }}
         >
-          Place convert
+          {chromeLabels.placeConvert}
         </Button>
       </div>
 
       <ul
         className="workbench-field-remap-convert-palette__list"
         role="listbox"
-        aria-label="Converts"
+        aria-label={chromeLabels.convertsListAriaLabel}
       >
         {catalog.map((definition) => {
           const selected = definition.id === selectedTransformId;
@@ -93,8 +95,8 @@ export function FieldRemapConvertPalette({
           className="workbench-field-remap-convert-palette__operators"
           data-testid="field-remap-operator-palette"
         >
-          <h4>n→m operators</h4>
-          <p>Create combine (n→1) or split (1→n), then wire ports or edit in the side rail.</p>
+          <h4>{chromeLabels.operatorsTitle}</h4>
+          <p>{chromeLabels.operatorsDescription}</p>
           <div className="workbench-field-remap-convert-palette__operator-actions">
             {onAddCombine ? (
               <Button

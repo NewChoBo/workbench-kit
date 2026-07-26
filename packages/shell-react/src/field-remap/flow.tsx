@@ -37,6 +37,11 @@ import {
 } from '@workbench-kit/field-remap';
 
 import { FieldRemapConvertPalette } from './convert-palette.js';
+import {
+  resolveFieldRemapChromeLabels,
+  type FieldRemapChromeLabels,
+  type FieldRemapTranslate,
+} from './chrome-labels.js';
 import { FieldRemapDetailPanel } from './detail-panel.js';
 import {
   applyFieldRemapFlowConnection,
@@ -347,6 +352,13 @@ export interface FieldRemapFlowMapperProps {
     | undefined;
   /** Imperative fit-view (same defaults as Controls fit-view). */
   readonly flowActionsRef?: Ref<FieldRemapFlowActions | null> | undefined;
+  /**
+   * Override high-visibility chrome strings (edge-list heading, Convert palette).
+   * Prefer this over CSS text hacks when the host product noun is not “Bindings”.
+   */
+  readonly labels?: Partial<FieldRemapChromeLabels> | undefined;
+  /** Optional `t(key, fallback)` injection; `labels` wins when both are set. */
+  readonly t?: FieldRemapTranslate | undefined;
 }
 
 function FieldRemapFlowCanvas({
@@ -366,7 +378,13 @@ function FieldRemapFlowCanvas({
   onNodeContextMenu,
   onEdgeContextMenu,
   flowActionsRef,
+  labels: labelOverrides,
+  t,
 }: FieldRemapFlowMapperProps): JSX.Element {
+  const chromeLabels = useMemo(
+    () => resolveFieldRemapChromeLabels(labelOverrides, t),
+    [labelOverrides, t],
+  );
   const [internalSelection, setInternalSelection] = useState<FieldRemapSelection>(null);
   const selection = selectionProp !== undefined ? selectionProp : internalSelection;
   const setSelection = onSelectionChangeProp ?? setInternalSelection;
@@ -703,6 +721,7 @@ function FieldRemapFlowCanvas({
           selectedTransformId={placeTransformId}
           onSelectedTransformIdChange={setPlaceTransformId}
           onPlaceDraft={placeDraft}
+          chromeLabels={chromeLabels}
           onAddCombine={
             onOperatorsChange
               ? () => {
@@ -784,7 +803,7 @@ function FieldRemapFlowCanvas({
       </div>
 
       <div className="workbench-field-remap-flow__bindings" data-testid="field-remap-edges">
-        <h4>Bindings</h4>
+        <h4>{chromeLabels.bindingsTitle}</h4>
         <ul>
           {edges.map((edge) => {
             const portTypes = edgePortTypes(edge, sources, targets);

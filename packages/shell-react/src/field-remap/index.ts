@@ -12,6 +12,13 @@ export {
   type FieldRemapFlowActions,
   type FieldRemapFlowMapperProps,
 } from './flow.js';
+export {
+  defaultFieldRemapChromeLabels,
+  fieldRemapChromeLabelKeys,
+  resolveFieldRemapChromeLabels,
+  type FieldRemapChromeLabels,
+  type FieldRemapTranslate,
+} from './chrome-labels.js';
 export { FieldRemapDetailPanel, type FieldRemapDetailPanelProps } from './detail-panel.js';
 export { FieldRemapConvertPalette, type FieldRemapConvertPaletteProps } from './convert-palette.js';
 export { ConvertNoteEditor, type ConvertNoteEditorProps } from './convert-note-editor.js';
@@ -72,6 +79,7 @@ export {
 } from './flow-ops.js';
 export {
   FIELD_REMAP_SAMPLES,
+  getFieldRemapBrowseDemoShapes,
   getFieldRemapSample,
   isFieldRemapSampleId,
   resolveFieldRemapSampleId,

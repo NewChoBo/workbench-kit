@@ -87,6 +87,9 @@ export interface FieldRemapPanelProps {
   readonly onNodeContextMenu?: FieldRemapFlowMapperProps['onNodeContextMenu'];
   readonly onEdgeContextMenu?: FieldRemapFlowMapperProps['onEdgeContextMenu'];
   readonly flowActionsRef?: FieldRemapFlowMapperProps['flowActionsRef'];
+  /** Forwarded to {@link FieldRemapFlowMapper} chrome label / `t()` injection. */
+  readonly labels?: FieldRemapFlowMapperProps['labels'];
+  readonly t?: FieldRemapFlowMapperProps['t'];
 }
 
 type FieldRemapPreviewResult = {
@@ -137,6 +140,8 @@ export function FieldRemapPanel({
   onNodeContextMenu,
   onEdgeContextMenu,
   flowActionsRef,
+  labels,
+  t,
 }: FieldRemapPanelProps): JSX.Element {
   const ioChrome = resolveFieldRemapIoChrome(ioChromeProp, editableShapes);
   const [uncontrolledIncludeHidden, setUncontrolledIncludeHidden] = useState(false);
@@ -424,6 +429,8 @@ export function FieldRemapPanel({
         onNodeContextMenu={onNodeContextMenu}
         onEdgeContextMenu={onEdgeContextMenu}
         flowActionsRef={flowActionsRef}
+        labels={labels}
+        t={t}
       />
 
       {conflicts.length > 0 ? (

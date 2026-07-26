@@ -29,6 +29,11 @@ const meta = {
     },
     showMinimap: { control: 'boolean' },
     showHostChromeDemo: { control: 'boolean' },
+    ioChrome: {
+      control: 'select',
+      options: ['browse', 'edit', 'none'],
+    },
+    browseSeedShapes: { control: 'boolean' },
   },
 } satisfies Meta<typeof FieldRemapDemo>;
 
@@ -71,6 +76,30 @@ export const HostChromeHooks: Story = {
     await expect(canvasElement.querySelector('.react-flow__minimap')).toBeNull();
     await userEvent.click(canvas.getByTestId('field-remap-fit-view'));
     await expect(canvas.getByTestId('field-remap-fit-view')).toBeVisible();
+  },
+};
+
+export const IoBrowseChrome: Story = {
+  name: 'I/O browse (classRef / hidden)',
+  args: {
+    sampleId: 'nested-ab',
+    ioChrome: 'browse',
+    browseSeedShapes: true,
+    labels: { bindingsTitle: 'Field maps' },
+  },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByTestId('field-remap-io-browse')).toBeVisible();
+    await expect(canvas.getByText('PersonProfile@1')).toBeVisible();
+    await expect(canvas.queryByText('internal_id')).toBeNull();
+    await userEvent.click(canvas.getByLabelText('Show hidden fields'));
+    await expect(canvas.getByText('internal_id')).toBeVisible();
+    await expect(canvas.getByText('Hidden')).toBeVisible();
+    const bindingsHeading = canvasElement.querySelector(
+      '.workbench-field-remap-flow__bindings > h4',
+    );
+    await expect(bindingsHeading).toHaveTextContent('Field maps');
   },
 };
 

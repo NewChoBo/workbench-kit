@@ -68,6 +68,8 @@ hooks so hosts avoid CSS/DOM workarounds:
 | `showMinimap`                                                   | Default `true`. When `false`, MiniMap is not mounted.                 |
 | `onPaneContextMenu` / `onNodeContextMenu` / `onEdgeContextMenu` | Native event + selection payload; host owns menu UI.                  |
 | `flowActionsRef`                                                | `{ fitView(options?) }` using the same defaults as Controls fit-view. |
+| `labels` / `t`                                                  | Override edge-list / Convert palette chrome (e.g. “Field maps”).      |
+| `ioChrome` (Panel)                                              | `'browse' \| 'edit' \| 'none'` — prefer browse for inspect-only I/O.  |
 
 ```tsx
 const flowActionsRef = useRef<FieldRemapFlowActions | null>(null);
@@ -79,6 +81,7 @@ const flowActionsRef = useRef<FieldRemapFlowActions | null>(null);
   transforms={registry}
   onEdgesChange={setEdges}
   showMinimap={false}
+  labels={{ bindingsTitle: 'Field maps' }}
   flowActionsRef={flowActionsRef}
   onPaneContextMenu={(event, { selection }) => {
     event.preventDefault();
