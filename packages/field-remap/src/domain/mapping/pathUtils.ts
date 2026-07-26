@@ -203,7 +203,10 @@ export function writeObjectPath(
       return asObject;
     }
 
-    // index: object[name][index]...
+    // index: object[name][index]... (wildcards rejected above)
+    if (segment.kind !== 'index') {
+      return asObject;
+    }
     const existingArr = asObject[segment.name];
     const nextArr = Array.isArray(existingArr) ? [...existingArr] : [];
     if (isLast) {
