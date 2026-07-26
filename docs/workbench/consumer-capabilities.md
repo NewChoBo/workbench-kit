@@ -657,15 +657,17 @@ sample extension packaging.
 - Supported Flow connects: source↔target ports, source→xf / xf→target splice, and cross-edge
   xf→xf append/merge. Live connects are gated by `arePortsCompatible` (permissive on
   missing/`unknown`, strict on known mismatch).
-- Flow detail panel: select a binding / convert step to change step id, edit `optionFields`
-  via `TransformOptionsEditor`, add a chosen convert from the palette, and edit list-context
-  `itemEdges` for array→array bindings.
+- Flow side rail is selection-gated:
+  - **Binding detail** (`edge` selection): light mapping chrome — convert-chain overview,
+    add-convert palette, list-context `itemEdges`. Does **not** embed heavy convert options.
+  - **Convert note editor** (`transformStep` / `xf:*` selection): dedicated `ConvertNoteEditor`
+    surface (registry id + `TransformOptionsEditor` options). Distinct from binding chrome.
 - Graph/Tree mappers in shell-react are sample-oriented; prefer the panel/flow surfaces for
   new host integration.
 
 **Key APIs:** `convertToShape`, `createBuiltinValueTransformRegistry`, `arePortsCompatible`,
 `areFieldTypesCompatible`, `pruneMappingEdgesForShapes`, `FieldRemapPanel`,
-`FieldRemapFlowMapper`, `FieldRemapDetailPanel`, `FieldRemapShapeIoEditor`,
+`FieldRemapFlowMapper`, `FieldRemapDetailPanel`, `ConvertNoteEditor`, `FieldRemapShapeIoEditor`,
 `TransformOptionsEditor`.
 
 **Related:** [Field Remap README](../../packages/field-remap/README.md) ·

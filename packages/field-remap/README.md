@@ -54,6 +54,9 @@ Wildcard expansion is capped by `DEFAULT_MAX_PATH_WILDCARD_EXPANSION` (1000) or
 Middle convert nodes in the sample UI are just `MappingEdge.transformIds` steps
 (plus optional `transformOptionSteps`), not a separate document type. The workbench
 sample renders them with `@xyflow/react` (source schema → convert → target schema).
+Selecting a convert note opens a dedicated **Convert note editor** side surface
+(`ConvertNoteEditor` in `@workbench-kit/shell-react`); binding/edge selection keeps
+a lighter mapping detail rail (chain overview, palette, list context).
 
 ### Shape ownership
 
