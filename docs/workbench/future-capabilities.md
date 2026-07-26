@@ -94,9 +94,10 @@ prop-label + optional `t()` injection, and command-title resolution at menu proj
 
 - [ ] **P1** Adopt `react-i18next` in host apps (Storybook demos and integrating products) with a shared
       namespace layout (`workbench.*`, `commands.*`, `settings.*`).
-- [ ] **P1** Define kit-level i18n override pattern: prop labels + optional `t()` hook injection
-      on shell primitives (`ActivityBar`, `StatusBar`, settings sections) without hard-coded
-      English in package defaults.
+- [x] **P1** (partial, #126 Field Remap slice) Define kit-level i18n override pattern: prop labels +
+      optional `t()` hook injection — landed on Field Remap Flow / Panel chrome
+      (`labels` / `resolveFieldRemapChromeLabels`). Broader shell primitives (`ActivityBar`,
+      `StatusBar`, settings) still open.
 - [ ] **P1** Unify host-app KO/EN strings through one translation catalog; remove duplicate
       inline labels in shell bridge and feature modules.
 - [ ] **P2** Command registry single source: command `title`/`category` keys resolved through

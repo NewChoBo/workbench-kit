@@ -1,9 +1,15 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
 import { Button } from '@workbench-kit/react/primitives';
 
+import type { FieldRemapChromeLabels, FieldRemapTranslate } from './chrome-labels.js';
 import type { FieldRemapFlowActions } from './flow.js';
+import type { FieldRemapIoChrome } from './io-class-browse.js';
 import { FieldRemapPanel } from './panel.js';
-import { getFieldRemapSample, type FieldRemapSampleId } from './samples.js';
+import {
+  getFieldRemapBrowseDemoShapes,
+  getFieldRemapSample,
+  type FieldRemapSampleId,
+} from './samples.js';
 
 export interface SampleFieldRemapDemoProps {
   readonly sampleId?: FieldRemapSampleId | string | undefined;
@@ -11,6 +17,12 @@ export interface SampleFieldRemapDemoProps {
   readonly showMinimap?: boolean | undefined;
   /** When true, show host-chrome demo controls (minimap toggle + fit view). */
   readonly showHostChromeDemo?: boolean | undefined;
+  /** Prefer `browse` for I/O class/field inspection demos. */
+  readonly ioChrome?: FieldRemapIoChrome | undefined;
+  /** When true with `ioChrome: 'browse'`, seed classRef + hidden leaf shapes. */
+  readonly browseSeedShapes?: boolean | undefined;
+  readonly labels?: Partial<FieldRemapChromeLabels> | undefined;
+  readonly t?: FieldRemapTranslate | undefined;
 }
 
 /**
@@ -20,8 +32,13 @@ export function SampleFieldRemapDemo({
   sampleId = 'nested-ab',
   showMinimap: showMinimapProp,
   showHostChromeDemo = false,
+  ioChrome,
+  browseSeedShapes = false,
+  labels,
+  t,
 }: SampleFieldRemapDemoProps = {}): JSX.Element {
   const sample = getFieldRemapSample(sampleId);
+  const browseShapes = browseSeedShapes ? getFieldRemapBrowseDemoShapes() : null;
   const flowActionsRef = useRef<FieldRemapFlowActions | null>(null);
   const [showMinimap, setShowMinimap] = useState(showMinimapProp ?? true);
   const [lastPaneMenu, setLastPaneMenu] = useState<string | null>(null);
@@ -64,9 +81,15 @@ export function SampleFieldRemapDemo({
         </div>
       ) : null}
       <FieldRemapPanel
-        key={sample.id}
+        key={`${sample.id}:${ioChrome ?? 'default'}:${browseSeedShapes ? 'seed' : 'plain'}`}
         sample={sample}
         showMinimap={showMinimap}
+        ioChrome={ioChrome}
+        editableShapes={ioChrome === 'browse' ? false : undefined}
+        sources={browseShapes?.sources}
+        targets={browseShapes?.targets}
+        labels={labels}
+        t={t}
         flowActionsRef={showHostChromeDemo ? flowActionsRef : undefined}
         onPaneContextMenu={
           showHostChromeDemo

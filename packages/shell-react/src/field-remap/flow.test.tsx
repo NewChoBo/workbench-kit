@@ -113,4 +113,11 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(flowActionsRef.current?.fitView).toEqual(expect.any(Function));
     expect(() => flowActionsRef.current?.fitView({ padding: 0.2 })).not.toThrow();
   });
+
+  it('renders host label override for the edge-list heading', async () => {
+    await renderMapper({ labels: { bindingsTitle: 'Field maps' } });
+
+    const heading = container!.querySelector('.workbench-field-remap-flow__bindings > h4');
+    expect(heading?.textContent).toBe('Field maps');
+  });
 });

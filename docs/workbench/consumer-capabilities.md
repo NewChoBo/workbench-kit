@@ -684,11 +684,14 @@ sample extension packaging.
 
 **Flow host chrome:** `showMinimap` (omit MiniMap when false), pane/node/edge context-menu
 callbacks with selection payload (host owns menu UI), and `flowActionsRef.fitView` so hosts
-do not query Controls DOM. Panel forwards the same props.
+do not query Controls DOM. Panel forwards the same props. Chrome nouns (`Bindings`, Convert
+palette copy) accept `labels` / optional `t(key, fallback)` on Flow and Panel — hosts can
+override to “Field maps” / “Mappings” without CSS text hacks (`resolveFieldRemapChromeLabels`).
 
 **Embed recipe:** import `@workbench-kit/shell-react/field-remap` (+ optional
 `…/field-remap/view.css`). Persist `MappingEdge[]` via controlled panel props; evaluate with
 `convertMappedInputs` (or `convertToShape` when you already own conversion/shape registries).
+Browse-first Storybook: `Workbench Sample/Field Remap` → **I/O browse (classRef / hidden)**.
 
 **Related:** [Field Remap README](../../packages/field-remap/README.md) ·
 [Sample screens](../guides/sample-screens.md#field-remap-editor) ·

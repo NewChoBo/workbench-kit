@@ -104,6 +104,13 @@ export {
   type FieldRemapFlowMapperProps,
 } from './field-remap/flow.js';
 export {
+  defaultFieldRemapChromeLabels,
+  fieldRemapChromeLabelKeys,
+  resolveFieldRemapChromeLabels,
+  type FieldRemapChromeLabels,
+  type FieldRemapTranslate,
+} from './field-remap/chrome-labels.js';
+export {
   FieldRemapDetailPanel,
   type FieldRemapDetailPanelProps,
 } from './field-remap/detail-panel.js';
