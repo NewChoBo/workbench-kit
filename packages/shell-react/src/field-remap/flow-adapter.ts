@@ -1,10 +1,12 @@
 import type { Edge, Node } from '@xyflow/react';
 import {
+  MAX_TRANSFORM_CHAIN,
   arePortsCompatible,
   findSourceField,
   findTargetSlot,
   flattenSourceFields,
   flattenTargetSlots,
+  resizeOptionSteps,
   type MappingEdge,
   type SourceField,
   type TargetSlot,
@@ -102,6 +104,40 @@ export function parseDraftTransformNodeId(nodeId: string): string | undefined {
     return undefined;
   }
   return nodeId.slice(DRAFT_NODE_PREFIX.length);
+}
+
+/** Parse a persisted transform node id (`xf:<edgeId>:<stepIndex>`). */
+export function parseTransformNodeId(
+  nodeId: string,
+): { mappingEdgeId: string; stepIndex: number } | undefined {
+  if (!nodeId.startsWith('xf:')) {
+    return undefined;
+  }
+  const rest = nodeId.slice('xf:'.length);
+  const lastColon = rest.lastIndexOf(':');
+  if (lastColon <= 0) {
+    return undefined;
+  }
+  const mappingEdgeId = rest.slice(0, lastColon);
+  const stepIndex = Number(rest.slice(lastColon + 1));
+  if (!mappingEdgeId || !Number.isInteger(stepIndex) || stepIndex < 0) {
+    return undefined;
+  }
+  return { mappingEdgeId, stepIndex };
+}
+
+function sliceEdgeTransformChain(
+  edge: MappingEdge,
+  fromInclusive: number,
+  toExclusive: number,
+): Pick<MappingEdge, 'transformIds' | 'transformOptionSteps'> {
+  const current = edge.transformIds ?? [];
+  const ids = current.slice(fromInclusive, toExclusive);
+  const steps = edge.transformOptionSteps?.slice(fromInclusive, toExclusive);
+  return {
+    transformIds: ids.length > 0 ? ids : undefined,
+    transformOptionSteps: resizeOptionSteps(steps, ids.length),
+  };
 }
 
 function fieldLabel(field: SourceField | TargetSlot): string {
@@ -330,9 +366,11 @@ function resolveConnectionPortIds(connection: {
  * - legacy `src:*` → `tgt:*` single-field node ids (tests / older graphs)
  * - source-object port → `draft:*` (bind draft input)
  * - `draft:*` → target-object port (bind draft output; finalize when both ends set)
+ * - source-object port → `xf:*` `in` (rebind source; splice off earlier steps)
+ * - `xf:*` `out` → target-object port (rebind target; splice off later steps)
+ * - `xf:*` `out` → `xf:*` `in` on a different edge (append / merge chains)
  *
- * Persisted transform (`xf:*`) endpoints remain invalid connect targets until
- * splice/append wiring lands (avoids silent no-ops).
+ * Invalid topologies are rejected here so `onConnect` never silently no-ops.
  *
  * When `context` is provided, topology-ok connects are further gated by
  * {@link arePortsCompatible}: missing/`unknown` types stay permissive; known
@@ -401,6 +439,87 @@ export function isValidFieldRemapFlowConnection(
     });
   }
 
+  const xfTarget = parseTransformNodeId(target);
+  const xfSource = parseTransformNodeId(source);
+
+  if (source === SOURCE_OBJECT_NODE_ID && xfTarget && connection.sourceHandle) {
+    if (!context) {
+      return true;
+    }
+    const edge = context.edges.find((item) => item.id === xfTarget.mappingEdgeId);
+    if (!edge) {
+      return false;
+    }
+    const chain = edge.transformIds ?? [];
+    if (xfTarget.stepIndex >= chain.length) {
+      return false;
+    }
+    const sourceField = findSourceField(context.sources, connection.sourceHandle);
+    const targetSlot = findTargetSlot(context.targets, edge.targetSlotId);
+    return arePortsCompatible({
+      sourceType: sourceField?.dataType,
+      targetType: targetSlot?.dataType,
+      transformIds: chain.slice(xfTarget.stepIndex),
+      registry: context.transforms,
+    });
+  }
+
+  if (xfSource && target === TARGET_OBJECT_NODE_ID && connection.targetHandle) {
+    if (!context) {
+      return true;
+    }
+    const edge = context.edges.find((item) => item.id === xfSource.mappingEdgeId);
+    if (!edge) {
+      return false;
+    }
+    const chain = edge.transformIds ?? [];
+    if (xfSource.stepIndex >= chain.length) {
+      return false;
+    }
+    const sourceField = findSourceField(context.sources, edge.sourceFieldId);
+    const targetSlot = findTargetSlot(context.targets, connection.targetHandle);
+    return arePortsCompatible({
+      sourceType: sourceField?.dataType,
+      targetType: targetSlot?.dataType,
+      transformIds: chain.slice(0, xfSource.stepIndex + 1),
+      registry: context.transforms,
+    });
+  }
+
+  if (xfSource && xfTarget) {
+    if (xfSource.mappingEdgeId === xfTarget.mappingEdgeId) {
+      return false;
+    }
+    if (!context) {
+      return true;
+    }
+    const edgeA = context.edges.find((item) => item.id === xfSource.mappingEdgeId);
+    const edgeB = context.edges.find((item) => item.id === xfTarget.mappingEdgeId);
+    if (!edgeA || !edgeB) {
+      return false;
+    }
+    const chainA = edgeA.transformIds ?? [];
+    const chainB = edgeB.transformIds ?? [];
+    if (xfSource.stepIndex >= chainA.length || xfTarget.stepIndex >= chainB.length) {
+      return false;
+    }
+    const merged = [
+      ...chainA.slice(0, xfSource.stepIndex + 1),
+      ...chainB.slice(xfTarget.stepIndex),
+    ];
+    if (merged.length === 0 || merged.length > MAX_TRANSFORM_CHAIN) {
+      return false;
+    }
+    const sourceField = findSourceField(context.sources, edgeA.sourceFieldId);
+    const targetSlot = findTargetSlot(context.targets, edgeB.targetSlotId);
+    return arePortsCompatible({
+      sourceType: sourceField?.dataType,
+      targetType: targetSlot?.dataType,
+      transformIds: merged,
+      registry: context.transforms,
+    });
+  }
+
   let topologyOk = false;
   if (source === SOURCE_OBJECT_NODE_ID && target === TARGET_OBJECT_NODE_ID) {
     topologyOk = Boolean(connection.sourceHandle && connection.targetHandle);
@@ -433,6 +552,13 @@ export function isValidFieldRemapFlowConnection(
     registry: context.transforms,
   });
 }
+
+/** Result of a persisted (non-draft) Flow connect that updates mapping edges. */
+export type FieldRemapFlowConnectResult = {
+  readonly edge: MappingEdge;
+  /** Donor edge removed when appending / merging two xf chains. */
+  readonly removeEdgeIds?: readonly string[];
+};
 
 /** Parse React Flow connection (object ports or legacy) into a kit MappingEdge. */
 export function connectionToMappingEdge(input: {
@@ -474,4 +600,103 @@ export function connectionToMappingEdge(input: {
     ...(existing?.itemSourcePath ? { itemSourcePath: existing.itemSourcePath } : {}),
     ...(existing?.itemEdges ? { itemEdges: existing.itemEdges } : {}),
   };
+}
+
+/**
+ * Materialize a persisted Flow connection into an edge upsert (and optional removals).
+ * Covers object↔object, source→xf splice, xf→target splice, and xf→xf append/merge.
+ * Draft binds stay in the Flow host (`onConnect`).
+ */
+export function applyFieldRemapFlowConnection(input: {
+  readonly sourceNodeId: string;
+  readonly targetNodeId: string;
+  readonly sourceHandle?: string | null;
+  readonly targetHandle?: string | null;
+  readonly existing: readonly MappingEdge[];
+}): FieldRemapFlowConnectResult | null {
+  const xfTarget = parseTransformNodeId(input.targetNodeId);
+  const xfSource = parseTransformNodeId(input.sourceNodeId);
+
+  if (input.sourceNodeId === SOURCE_OBJECT_NODE_ID && xfTarget && input.sourceHandle) {
+    const edge = input.existing.find((item) => item.id === xfTarget.mappingEdgeId);
+    if (!edge) {
+      return null;
+    }
+    const chain = edge.transformIds ?? [];
+    if (xfTarget.stepIndex >= chain.length) {
+      return null;
+    }
+    const sliced = sliceEdgeTransformChain(edge, xfTarget.stepIndex, chain.length);
+    return {
+      edge: {
+        ...edge,
+        sourceFieldId: input.sourceHandle,
+        ...sliced,
+      },
+    };
+  }
+
+  if (xfSource && input.targetNodeId === TARGET_OBJECT_NODE_ID && input.targetHandle) {
+    const edge = input.existing.find((item) => item.id === xfSource.mappingEdgeId);
+    if (!edge) {
+      return null;
+    }
+    const chain = edge.transformIds ?? [];
+    if (xfSource.stepIndex >= chain.length) {
+      return null;
+    }
+    const sliced = sliceEdgeTransformChain(edge, 0, xfSource.stepIndex + 1);
+    return {
+      edge: {
+        ...edge,
+        targetSlotId: input.targetHandle,
+        ...sliced,
+      },
+    };
+  }
+
+  if (xfSource && xfTarget) {
+    if (xfSource.mappingEdgeId === xfTarget.mappingEdgeId) {
+      return null;
+    }
+    const edgeA = input.existing.find((item) => item.id === xfSource.mappingEdgeId);
+    const edgeB = input.existing.find((item) => item.id === xfTarget.mappingEdgeId);
+    if (!edgeA || !edgeB) {
+      return null;
+    }
+    const chainA = edgeA.transformIds ?? [];
+    const chainB = edgeB.transformIds ?? [];
+    if (xfSource.stepIndex >= chainA.length || xfTarget.stepIndex >= chainB.length) {
+      return null;
+    }
+    const prefix = sliceEdgeTransformChain(edgeA, 0, xfSource.stepIndex + 1);
+    const suffix = sliceEdgeTransformChain(edgeB, xfTarget.stepIndex, chainB.length);
+    const mergedIds = [...(prefix.transformIds ?? []), ...(suffix.transformIds ?? [])];
+    if (mergedIds.length === 0 || mergedIds.length > MAX_TRANSFORM_CHAIN) {
+      return null;
+    }
+    const mergedSteps = [
+      ...(prefix.transformOptionSteps ?? Array.from({ length: prefix.transformIds?.length ?? 0 })),
+      ...(suffix.transformOptionSteps ?? Array.from({ length: suffix.transformIds?.length ?? 0 })),
+    ];
+    return {
+      edge: {
+        ...edgeB,
+        sourceFieldId: edgeA.sourceFieldId,
+        targetSlotId: edgeB.targetSlotId,
+        transformIds: mergedIds,
+        transformOptionSteps: resizeOptionSteps(mergedSteps, mergedIds.length),
+        // Drop list-context from a merge; hosts re-enable via the detail panel.
+        itemSourcePath: undefined,
+        itemEdges: undefined,
+        itemTransformIds: undefined,
+        itemTransformOptionSteps: undefined,
+        itemTransformOptions: undefined,
+      },
+      removeEdgeIds: [edgeA.id],
+    };
+  }
+
+  const edge = connectionToMappingEdge(input);
+  return edge ? { edge } : null;
 }

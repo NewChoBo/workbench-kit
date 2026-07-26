@@ -94,6 +94,16 @@ The persisted document stays edges-only — no free graph. You can also add step
 via the detail palette / `+ node` onto an existing binding (max 3). List context
 uses `itemEdges` on array→array bindings.
 
+**Persisted `xf:*` connect matrix** (shell Flow adapter; no silent no-ops):
+
+| Drag | Effect |
+| --- | --- |
+| source port → target port | upsert `MappingEdge` |
+| source port → `xf:edge:step` | rebind source; keep transforms from that step (splice prefix) |
+| `xf:edge:step` → target port | rebind target; keep transforms through that step (splice suffix) |
+| `xf:A:i` → `xf:B:j` (A≠B) | merge chains (append A prefix + B suffix); remove donor edge A |
+| same-edge `xf`↔`xf` | rejected (mid segments already exist) |
+
 ### n→m operators (combine / split)
 
 `FieldRemapDocument` v1 remains **edges-only** (1→1 bindings). For fan-in / fan-out,

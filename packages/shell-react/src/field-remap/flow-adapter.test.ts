@@ -7,10 +7,12 @@ import {
 } from '@workbench-kit/field-remap';
 
 import {
+  applyFieldRemapFlowConnection,
   connectionToMappingEdge,
   draftTransformNodeId,
   isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
+  parseTransformNodeId,
   SOURCE_OBJECT_NODE_ID,
   TARGET_OBJECT_NODE_ID,
   transformNodeId,
@@ -88,7 +90,7 @@ describe('field-remap-flow-adapter', () => {
     expect(edge?.targetSlotId).toBe('b.name');
   });
 
-  it('allows only object↔object connects that connectionToMappingEdge can materialize', () => {
+  it('allows object↔object connects and rejects incomplete handles', () => {
     expect(
       isValidFieldRemapFlowConnection({
         source: SOURCE_OBJECT_NODE_ID,
@@ -107,34 +109,143 @@ describe('field-remap-flow-adapter', () => {
       }),
     ).toBe(false);
 
-    const xf = transformNodeId('e-title', 0);
+    expect(parseTransformNodeId(transformNodeId('e-title', 1))).toEqual({
+      mappingEdgeId: 'e-title',
+      stepIndex: 1,
+    });
+  });
+
+  it('splices / appends persisted xf connects into MappingEdge updates', () => {
+    const edges: MappingEdge[] = [
+      {
+        id: 'e-title',
+        sourceFieldId: 'a.user_name',
+        targetSlotId: 'b.title',
+        transformIds: ['string:trim', 'string:upper'],
+      },
+      {
+        id: 'e-name',
+        sourceFieldId: 'a.user_name',
+        targetSlotId: 'b.name',
+        transformIds: ['string:lower'],
+      },
+    ];
+    const context = { sources, targets, edges, transforms };
+    const xf0 = transformNodeId('e-title', 0);
+    const xf1 = transformNodeId('e-title', 1);
+    const xfName = transformNodeId('e-name', 0);
+
     expect(
-      isValidFieldRemapFlowConnection({
-        source: SOURCE_OBJECT_NODE_ID,
-        target: xf,
+      isValidFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: xf1,
+          sourceHandle: 'a.user_name',
+        },
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      applyFieldRemapFlowConnection({
+        sourceNodeId: SOURCE_OBJECT_NODE_ID,
+        targetNodeId: xf1,
         sourceHandle: 'a.user_name',
+        existing: edges,
       }),
-    ).toBe(false);
+    ).toEqual({
+      edge: {
+        id: 'e-title',
+        sourceFieldId: 'a.user_name',
+        targetSlotId: 'b.title',
+        transformIds: ['string:upper'],
+        transformOptionSteps: undefined,
+      },
+    });
+
     expect(
-      isValidFieldRemapFlowConnection({
-        source: xf,
-        target: TARGET_OBJECT_NODE_ID,
-        targetHandle: 'b.name',
-      }),
-    ).toBe(false);
+      isValidFieldRemapFlowConnection(
+        {
+          source: xf0,
+          target: TARGET_OBJECT_NODE_ID,
+          targetHandle: 'b.firstTag',
+        },
+        context,
+      ),
+    ).toBe(true);
     expect(
-      isValidFieldRemapFlowConnection({
-        source: xf,
-        target: transformNodeId('e-title', 1),
+      applyFieldRemapFlowConnection({
+        sourceNodeId: xf0,
+        targetNodeId: TARGET_OBJECT_NODE_ID,
+        targetHandle: 'b.firstTag',
+        existing: edges,
       }),
+    ).toEqual({
+      edge: {
+        id: 'e-title',
+        sourceFieldId: 'a.user_name',
+        targetSlotId: 'b.firstTag',
+        transformIds: ['string:trim'],
+        transformOptionSteps: undefined,
+      },
+    });
+
+    // Same-edge xf↔xf stays blocked (already materialized as mid segments).
+    expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: xf0,
+          target: xf1,
+        },
+        context,
+      ),
     ).toBe(false);
 
     expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: xf1,
+          target: xfName,
+        },
+        context,
+      ),
+    ).toBe(true);
+    expect(
+      applyFieldRemapFlowConnection({
+        sourceNodeId: xf1,
+        targetNodeId: xfName,
+        existing: edges,
+      }),
+    ).toEqual({
+      edge: {
+        id: 'e-name',
+        sourceFieldId: 'a.user_name',
+        targetSlotId: 'b.name',
+        transformIds: ['string:trim', 'string:upper', 'string:lower'],
+        transformOptionSteps: undefined,
+        itemSourcePath: undefined,
+        itemEdges: undefined,
+        itemTransformIds: undefined,
+        itemTransformOptionSteps: undefined,
+        itemTransformOptions: undefined,
+      },
+      removeEdgeIds: ['e-title'],
+    });
+
+    // Object→xf without an existing edge still cannot materialize a new chain.
+    expect(
       connectionToMappingEdge({
         sourceNodeId: SOURCE_OBJECT_NODE_ID,
-        targetNodeId: xf,
+        targetNodeId: xf0,
         sourceHandle: 'a.user_name',
         targetHandle: 'in',
+        existing: [],
+      }),
+    ).toBeNull();
+    expect(
+      applyFieldRemapFlowConnection({
+        sourceNodeId: SOURCE_OBJECT_NODE_ID,
+        targetNodeId: xf0,
+        sourceHandle: 'a.user_name',
         existing: [],
       }),
     ).toBeNull();

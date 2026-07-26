@@ -26,7 +26,7 @@ import {
 
 import { FieldRemapDetailPanel } from './detail-panel.js';
 import {
-  connectionToMappingEdge,
+  applyFieldRemapFlowConnection,
   isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
   parseDraftTransformNodeId,
@@ -299,19 +299,25 @@ function FieldRemapFlowCanvas({
         return;
       }
 
-      const next = connectionToMappingEdge({
+      const result = applyFieldRemapFlowConnection({
         sourceNodeId: connection.source,
         targetNodeId: connection.target,
         sourceHandle: connection.sourceHandle,
         targetHandle: connection.targetHandle,
         existing: edges,
       });
-      if (!next) {
+      if (!result) {
         return;
       }
-      const withoutTarget = edges.filter((edge) => edge.targetSlotId !== next.targetSlotId);
-      onEdgesChange([...withoutTarget, next]);
-      setSelection({ kind: 'edge', edgeId: next.id });
+      const removeIds = new Set(result.removeEdgeIds ?? []);
+      const withoutTarget = edges.filter(
+        (edge) =>
+          edge.targetSlotId !== result.edge.targetSlotId &&
+          edge.id !== result.edge.id &&
+          !removeIds.has(edge.id),
+      );
+      onEdgesChange([...withoutTarget, result.edge]);
+      setSelection({ kind: 'edge', edgeId: result.edge.id });
     },
     [connectionContext, drafts, edges, onEdgesChange, setSelection, sources, targets, transforms],
   );
