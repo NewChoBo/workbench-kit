@@ -1,4 +1,6 @@
 import {
+  MAX_MAPPING_FAN_IN,
+  MAX_MAPPING_FAN_OUT,
   MAX_TRANSFORM_CHAIN,
   arePortsCompatible,
   findSourceField,
@@ -8,9 +10,12 @@ import {
   patchOptionStep,
   resizeOptionSteps,
   sanitizeOptionRecord,
+  type CombineMappingOperator,
   type FieldDataType,
   type MappingEdge,
+  type MappingOperator,
   type SourceField,
+  type SplitMappingOperator,
   type TargetSlot,
   type ValueTransformDefinition,
   type ValueTransformRegistry,
@@ -20,6 +25,8 @@ import {
 export type FieldRemapSelection =
   | { readonly kind: 'edge'; readonly edgeId: string }
   | { readonly kind: 'transformStep'; readonly edgeId: string; readonly stepIndex: number }
+  | { readonly kind: 'draft'; readonly localId: string }
+  | { readonly kind: 'operator'; readonly operatorId: string }
   | null;
 
 /**
@@ -362,5 +369,97 @@ export function edgePortTypes(
   return {
     sourceType: findSourceField(sources, edge.sourceFieldId)?.dataType,
     targetType: findTargetSlot(targets, edge.targetSlotId)?.dataType,
+  };
+}
+
+let operatorSequence = 0;
+
+export function createCombineOperator(seed?: {
+  readonly inputFieldIds?: readonly string[];
+  readonly outputSlotId?: string;
+}): CombineMappingOperator {
+  operatorSequence += 1;
+  return {
+    kind: 'combine',
+    id: `op-combine-${operatorSequence}-${Date.now()}`,
+    inputFieldIds: [...(seed?.inputFieldIds ?? [])].slice(0, MAX_MAPPING_FAN_IN),
+    outputSlotId: seed?.outputSlotId ?? '',
+  };
+}
+
+export function createSplitOperator(seed?: {
+  readonly inputFieldId?: string;
+  readonly outputSlotIds?: readonly string[];
+}): SplitMappingOperator {
+  operatorSequence += 1;
+  return {
+    kind: 'split',
+    id: `op-split-${operatorSequence}-${Date.now()}`,
+    inputFieldId: seed?.inputFieldId ?? '',
+    outputSlotIds: [...(seed?.outputSlotIds ?? [])].slice(0, MAX_MAPPING_FAN_OUT),
+  };
+}
+
+export function updateMappingOperator(
+  operators: readonly MappingOperator[],
+  operatorId: string,
+  updater: (operator: MappingOperator) => MappingOperator,
+): MappingOperator[] {
+  return operators.map((operator) => (operator.id === operatorId ? updater(operator) : operator));
+}
+
+export function removeMappingOperator(
+  operators: readonly MappingOperator[],
+  operatorId: string,
+): MappingOperator[] {
+  return operators.filter((operator) => operator.id !== operatorId);
+}
+
+export function bindOperatorInput(operator: MappingOperator, fieldId: string): MappingOperator {
+  if (operator.kind === 'combine') {
+    if (
+      operator.inputFieldIds.includes(fieldId) ||
+      operator.inputFieldIds.length >= MAX_MAPPING_FAN_IN
+    ) {
+      return operator;
+    }
+    return { ...operator, inputFieldIds: [...operator.inputFieldIds, fieldId] };
+  }
+  return { ...operator, inputFieldId: fieldId };
+}
+
+export function bindOperatorOutput(operator: MappingOperator, slotId: string): MappingOperator {
+  if (operator.kind === 'combine') {
+    return { ...operator, outputSlotId: slotId };
+  }
+  if (
+    operator.outputSlotIds.includes(slotId) ||
+    operator.outputSlotIds.length >= MAX_MAPPING_FAN_OUT
+  ) {
+    return operator;
+  }
+  return { ...operator, outputSlotIds: [...operator.outputSlotIds, slotId] };
+}
+
+export function removeOperatorInput(operator: MappingOperator, fieldId: string): MappingOperator {
+  if (operator.kind === 'combine') {
+    return {
+      ...operator,
+      inputFieldIds: operator.inputFieldIds.filter((id) => id !== fieldId),
+    };
+  }
+  if (operator.inputFieldId === fieldId) {
+    return { ...operator, inputFieldId: '' };
+  }
+  return operator;
+}
+
+export function removeOperatorOutput(operator: MappingOperator, slotId: string): MappingOperator {
+  if (operator.kind === 'combine') {
+    return operator.outputSlotId === slotId ? { ...operator, outputSlotId: '' } : operator;
+  }
+  return {
+    ...operator,
+    outputSlotIds: operator.outputSlotIds.filter((id) => id !== slotId),
   };
 }
