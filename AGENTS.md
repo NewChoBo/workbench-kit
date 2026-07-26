@@ -94,6 +94,7 @@ intent: implement | discuss | clarify
 | `type: security`          | No public PoC / no drive-by fix — advisory / private channel                     |
 | Parent/child links        | Read linked `#N` issues; summarize dependencies in the comment                   |
 | Idle hours (automation)   | If queue empty, cron may open one small internal refactor PR — see IssueOps docs |
+| Weekly structural (auto)  | Monday lane may open one bolder architecture PR; **humans merge** — never auto   |
 
 Status labels: `status:queued` · `in-progress` · `pr-open` · `needs-human` ·
 `skipped`. Automation posts use the HTML marker documented in

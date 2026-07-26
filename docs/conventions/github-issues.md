@@ -127,13 +127,14 @@ If `type` / `intent` are missing on an implement-like request, automation
 
 ### Modes (what automation does)
 
-| Mode              | When                                                                                    | Mutates code?                                    |
-| ----------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| **Q&A**           | `question`, or `intent: clarify` / `discuss` without `run agent`                        | No — comment only                                |
-| **Clarify**       | Ambiguous / thin quality bar                                                            | No — reverse questions + `status:needs-human`    |
-| **Implement**     | `run agent`, or `status:queued` + cron, or clear `intent: implement` with enough detail | Yes — branch/PR into `develop`                   |
-| **Idle refactor** | Hourly cron when no `status:queued` work; small internal tidy-ups only                  | Yes — one small PR; see autohandler instructions |
-| **Security**      | `type: security`                                                                        | No public PoC / no drive-by fix                  |
+| Mode                    | When                                                                                    | Mutates code?                                      |
+| ----------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| **Q&A**                 | `question`, or `intent: clarify` / `discuss` without `run agent`                        | No — comment only                                  |
+| **Clarify**             | Ambiguous / thin quality bar                                                            | No — reverse questions + `status:needs-human`      |
+| **Implement**           | `run agent`, or `status:queued` + cron, or clear `intent: implement` with enough detail | Yes — branch/PR into `develop`                     |
+| **Idle refactor**       | Hourly cron when no `status:queued` work; small internal tidy-ups only                  | Yes — one small PR; may auto-merge if Checks green |
+| **Structural refactor** | Weekly cron (Mon 09:00 Asia/Seoul); bolder cross-package / architecture work            | Yes — PR **never** auto-merged; human review       |
+| **Security**            | `type: security`                                                                        | No public PoC / no drive-by fix                    |
 
 ### Status labels
 
@@ -180,9 +181,12 @@ When the request is ambiguous, automation should:
   full implement runs.
 - Hourly backlog drain prefers `status:queued` first. If the queue is empty,
   automation may run a single **idle refactor** (small internal tidy-up only;
-  no public API breaks). Details:
+  no public API breaks).
+- Weekly (Monday 09:00 Asia/Seoul): **structural refactor** — one bolder
+  architecture-oriented PR, always left for human review (never auto-merged).
+  Details:
   [issueops-autohandler-instructions.md](./issueops-autohandler-instructions.md).
-  Decline unwanted idle PRs by closing them.
+  Decline unwanted PRs by closing them.
 
 ## Acceptance criteria tips
 
