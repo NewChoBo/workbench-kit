@@ -8,6 +8,7 @@ import {
 
 import {
   connectionToMappingEdge,
+  isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
   SOURCE_OBJECT_NODE_ID,
   TARGET_OBJECT_NODE_ID,
@@ -84,5 +85,167 @@ describe('field-remap-flow-adapter', () => {
     });
     expect(edge?.sourceFieldId).toBe('a.user_name');
     expect(edge?.targetSlotId).toBe('b.name');
+  });
+
+  it('allows only object↔object connects that connectionToMappingEdge can materialize', () => {
+    expect(
+      isValidFieldRemapFlowConnection({
+        source: SOURCE_OBJECT_NODE_ID,
+        target: TARGET_OBJECT_NODE_ID,
+        sourceHandle: 'a.user_name',
+        targetHandle: 'b.name',
+      }),
+    ).toBe(true);
+
+    expect(
+      isValidFieldRemapFlowConnection({
+        source: SOURCE_OBJECT_NODE_ID,
+        target: TARGET_OBJECT_NODE_ID,
+        sourceHandle: 'a.user_name',
+        targetHandle: null,
+      }),
+    ).toBe(false);
+
+    const xf = transformNodeId('e-title', 0);
+    expect(
+      isValidFieldRemapFlowConnection({
+        source: SOURCE_OBJECT_NODE_ID,
+        target: xf,
+        sourceHandle: 'a.user_name',
+      }),
+    ).toBe(false);
+    expect(
+      isValidFieldRemapFlowConnection({
+        source: xf,
+        target: TARGET_OBJECT_NODE_ID,
+        targetHandle: 'b.name',
+      }),
+    ).toBe(false);
+    expect(
+      isValidFieldRemapFlowConnection({
+        source: xf,
+        target: transformNodeId('e-title', 1),
+      }),
+    ).toBe(false);
+
+    expect(
+      connectionToMappingEdge({
+        sourceNodeId: SOURCE_OBJECT_NODE_ID,
+        targetNodeId: xf,
+        sourceHandle: 'a.user_name',
+        targetHandle: 'in',
+        existing: [],
+      }),
+    ).toBeNull();
+  });
+
+  it('gates object↔object connects by FieldDataType via arePortsCompatible', () => {
+    const typedSources = [
+      { id: 'src.name', label: 'name', dataType: 'string' as const },
+      { id: 'src.tags', label: 'tags', dataType: 'array' as const },
+      { id: 'src.mystery', label: 'mystery', dataType: 'unknown' as const },
+      { id: 'src.loose', label: 'loose' },
+    ];
+    const typedTargets = [
+      { id: 'tgt.name', label: 'name', dataType: 'string' as const },
+      { id: 'tgt.count', label: 'count', dataType: 'number' as const },
+      { id: 'tgt.maybe', label: 'maybe', dataType: 'unknown' as const },
+    ];
+    const baseContext = {
+      sources: typedSources,
+      targets: typedTargets,
+      edges: [] as MappingEdge[],
+      transforms,
+    };
+
+    expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.name',
+          targetHandle: 'tgt.name',
+        },
+        baseContext,
+      ),
+    ).toBe(true);
+
+    expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.name',
+          targetHandle: 'tgt.count',
+        },
+        baseContext,
+      ),
+    ).toBe(false);
+
+    expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.mystery',
+          targetHandle: 'tgt.count',
+        },
+        baseContext,
+      ),
+    ).toBe(true);
+    expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.name',
+          targetHandle: 'tgt.maybe',
+        },
+        baseContext,
+      ),
+    ).toBe(true);
+    expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.loose',
+          targetHandle: 'tgt.count',
+        },
+        baseContext,
+      ),
+    ).toBe(true);
+
+    // Replacing a binding keeps the target's existing transformIds for the type gate.
+    const withArrayJoin: MappingEdge[] = [
+      {
+        id: 'e-tags',
+        sourceFieldId: 'src.tags',
+        targetSlotId: 'tgt.name',
+        transformIds: ['array:join'],
+      },
+    ];
+    expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.tags',
+          targetHandle: 'tgt.name',
+        },
+        { ...baseContext, edges: withArrayJoin },
+      ),
+    ).toBe(true);
+    expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.name',
+          targetHandle: 'tgt.name',
+        },
+        { ...baseContext, edges: withArrayJoin },
+      ),
+    ).toBe(false);
   });
 });

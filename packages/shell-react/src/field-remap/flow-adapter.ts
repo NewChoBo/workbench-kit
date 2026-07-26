@@ -1,5 +1,8 @@
 import type { Edge, Node } from '@xyflow/react';
 import {
+  arePortsCompatible,
+  findSourceField,
+  findTargetSlot,
   flattenSourceFields,
   flattenTargetSlots,
   type MappingEdge,
@@ -35,6 +38,8 @@ export type FieldRemapTransformNodeData = {
   stepIndex: number;
   transformId: string;
   label: string;
+  /** Set by the Flow host when this step is selected in the detail panel. */
+  selected?: boolean;
 } & Record<string, unknown>;
 
 export type FieldRemapFlowNodeData =
@@ -195,6 +200,110 @@ export function mappingToFlowGraph(input: {
   });
 
   return { nodes, edges: flowEdges };
+}
+
+/**
+ * Optional field/slot lookup for type-gated connects.
+ * When omitted, only the topology allowlist is applied (tests / callers without shapes).
+ */
+export type IsValidFieldRemapFlowConnectionContext = {
+  readonly sources: readonly SourceField[];
+  readonly targets: readonly TargetSlot[];
+  readonly edges: readonly MappingEdge[];
+  readonly transforms: ValueTransformRegistry;
+};
+
+function resolveConnectionPortIds(connection: {
+  readonly source: string | null | undefined;
+  readonly target: string | null | undefined;
+  readonly sourceHandle?: string | null;
+  readonly targetHandle?: string | null;
+}): { sourceFieldId?: string; targetSlotId?: string } {
+  const source = connection.source;
+  const target = connection.target;
+  if (!source || !target) {
+    return {};
+  }
+
+  let sourceFieldId: string | undefined;
+  let targetSlotId: string | undefined;
+
+  if (source === SOURCE_OBJECT_NODE_ID && connection.sourceHandle) {
+    sourceFieldId = connection.sourceHandle;
+  } else if (source.startsWith('src:')) {
+    sourceFieldId = source.slice('src:'.length);
+  }
+
+  if (target === TARGET_OBJECT_NODE_ID && connection.targetHandle) {
+    targetSlotId = connection.targetHandle;
+  } else if (target.startsWith('tgt:')) {
+    targetSlotId = target.slice('tgt:'.length);
+  }
+
+  return { sourceFieldId, targetSlotId };
+}
+
+/**
+ * Supported connect matrix for state-changing canvas drags:
+ * - source-object port → target-object port (creates / replaces a `MappingEdge`)
+ * - legacy `src:*` → `tgt:*` single-field node ids (tests / older graphs)
+ *
+ * Transform (`xf:*`) endpoints are rendered for existing `transformIds` chains
+ * but are **not** valid connect targets until splice/append wiring lands.
+ * Advertising xf endpoints in `isValidConnection` without materializing state
+ * caused silent no-ops.
+ *
+ * When `context` is provided, topology-ok connects are further gated by
+ * {@link arePortsCompatible}: missing/`unknown` types stay permissive; known
+ * mismatches (including transform-mediated chains on an existing target edge)
+ * are rejected.
+ */
+export function isValidFieldRemapFlowConnection(
+  connection: {
+    readonly source: string | null | undefined;
+    readonly target: string | null | undefined;
+    readonly sourceHandle?: string | null;
+    readonly targetHandle?: string | null;
+  },
+  context?: IsValidFieldRemapFlowConnectionContext,
+): boolean {
+  const source = connection.source;
+  const target = connection.target;
+  if (!source || !target) {
+    return false;
+  }
+
+  let topologyOk = false;
+  if (source === SOURCE_OBJECT_NODE_ID && target === TARGET_OBJECT_NODE_ID) {
+    topologyOk = Boolean(connection.sourceHandle && connection.targetHandle);
+  } else if (source.startsWith('src:') && target.startsWith('tgt:')) {
+    // Legacy single-field node ids (older graphs / tests).
+    topologyOk = true;
+  }
+
+  if (!topologyOk) {
+    return false;
+  }
+
+  if (!context) {
+    return true;
+  }
+
+  const { sourceFieldId, targetSlotId } = resolveConnectionPortIds(connection);
+  if (!sourceFieldId || !targetSlotId) {
+    return false;
+  }
+
+  const sourceField = findSourceField(context.sources, sourceFieldId);
+  const targetSlot = findTargetSlot(context.targets, targetSlotId);
+  const existing = context.edges.find((edge) => edge.targetSlotId === targetSlotId);
+
+  return arePortsCompatible({
+    sourceType: sourceField?.dataType,
+    targetType: targetSlot?.dataType,
+    transformIds: existing?.transformIds,
+    registry: context.transforms,
+  });
 }
 
 /** Parse React Flow connection (object ports or legacy) into a kit MappingEdge. */
