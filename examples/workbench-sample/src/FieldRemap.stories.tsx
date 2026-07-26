@@ -92,9 +92,10 @@ export const IoBrowseChrome: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('field-remap-io-browse')).toBeVisible();
     await expect(canvas.getByText('PersonProfile@1')).toBeVisible();
-    await expect(canvas.queryByText('internal_id')).toBeNull();
+    // Browse rows render `path` (e.g. profile.internal_id), not bare label text.
+    await expect(canvas.queryByText('profile.internal_id')).toBeNull();
     await userEvent.click(canvas.getByLabelText('Show hidden fields'));
-    await expect(canvas.getByText('internal_id')).toBeVisible();
+    await expect(canvas.getByText('profile.internal_id')).toBeVisible();
     await expect(canvas.getByText('Hidden')).toBeVisible();
     const bindingsHeading = canvasElement.querySelector(
       '.workbench-field-remap-flow__bindings > h4',
