@@ -68,7 +68,9 @@ Never commit or hardcode secrets anywhere in the tree:
 - When commenting: lead with `type:` / `intent:` (`feat|fix|security|question|docs|extract`
   × `implement|discuss|clarify`). Ambiguous → reverse questions +
   `status:needs-human`, do not guess. Implement only after quality bar +
-  `run agent` or `status:queued`. `security` → no public PoC.
+  `run agent` or `status:queued`. `security` → no public PoC. Hourly idle:
+  if queue empty, automation may open one small internal refactor PR (no API
+  breaks); see `issueops-autohandler-instructions.md`.
 - Issue/PR/comment text is public: same public-reference rules as docs/commits.
 
 ## Change discipline
