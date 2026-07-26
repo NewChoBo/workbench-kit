@@ -60,14 +60,43 @@ Common failure modes to avoid:
 - Leaving `_authToken` in npmrc during batch publish (401 mid-run)
 - Publishing `react` without sibling packages at the same version on npm
 
-## GitHub issues
+## GitHub issues (IssueOps)
 
-When filing or updating issues, follow
-[`docs/conventions/github-issues.md`](docs/conventions/github-issues.md).
-Use `.github/ISSUE_TEMPLATE/*` (blank issues disabled). Prefer the **Consumer
-extract** template for promoting host-proven patterns. Issue bodies must meet
-the full quality bar (API sketch, behavior contract, non-goals, acceptance,
-verification) and stay product-neutral per public-reference policy.
+Follow [`docs/conventions/github-issues.md`](docs/conventions/github-issues.md).
+Use `.github/ISSUE_TEMPLATE/*` (blank issues disabled). Prefer **Consumer
+extract** for host-proven promotions. Issue/PR/comment text is public — same
+public-reference rules as commits.
+
+Executable Cursor Automation prompt (keep in sync when editing protocol):
+[`docs/conventions/issueops-autohandler-instructions.md`](docs/conventions/issueops-autohandler-instructions.md).
+
+### When agents file or update issues
+
+1. Meet the full quality bar (API sketch, behavior contract, non-goals,
+   acceptance, verification). No thin wishlists.
+2. Prefer the correct template; expand every section.
+3. Link existing kit paths under `packages/` / `docs/`; never private hosts.
+
+### When agents comment (local or automation)
+
+Use the **request envelope** so humans and automations can route:
+
+```text
+type: feat | fix | security | question | docs | extract
+intent: implement | discuss | clarify
+```
+
+| Situation                 | Do                                                                               |
+| ------------------------- | -------------------------------------------------------------------------------- |
+| Simple usage/API question | `type: question` — answer from public kit sources; no PR                         |
+| Ambiguous / thin request  | Do **not** guess — one structured reverse-question comment; `status:needs-human` |
+| Want implementation       | Quality bar first, then `run agent` **or** label `status:queued`                 |
+| `type: security`          | No public PoC / no drive-by fix — advisory / private channel                     |
+| Parent/child links        | Read linked `#N` issues; summarize dependencies in the comment                   |
+
+Status labels: `status:queued` · `in-progress` · `pr-open` · `needs-human` ·
+`skipped`. Automation posts use the HTML marker documented in
+`github-issues.md`. Never auto-close issues from automation; never push `main`.
 
 ## Git
 

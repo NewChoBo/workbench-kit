@@ -58,14 +58,18 @@ Never commit or hardcode secrets anywhere in the tree:
 - Storybook changes should follow `docs/conventions/storybook.md` and update
   `docs/workbench/storybook-e2e-coverage.md` when required flows change.
 
-## GitHub issues
+## GitHub issues (IssueOps)
 
-- Filing/updating issues: follow `docs/conventions/github-issues.md` and use
-  `.github/ISSUE_TEMPLATE/*` (blank issues disabled).
-- Prefer **Consumer extract** for host-proven promotions. Thin wishlist issues
-  are not acceptable — include API sketch, behavior contract, non-goals,
-  acceptance criteria, and verification plan.
-- Issue/PR text is public: same public-reference rules as docs/commits.
+- Follow `docs/conventions/github-issues.md` (comment protocol + status labels).
+  Automation prompt SoT: `docs/conventions/issueops-autohandler-instructions.md`.
+- Templates: `.github/ISSUE_TEMPLATE/*` (blank issues disabled). Prefer
+  **Consumer extract** for host-proven promotions. Thin wishlists are not
+  acceptable — API sketch, behavior contract, non-goals, acceptance, verification.
+- When commenting: lead with `type:` / `intent:` (`feat|fix|security|question|docs|extract`
+  × `implement|discuss|clarify`). Ambiguous → reverse questions +
+  `status:needs-human`, do not guess. Implement only after quality bar +
+  `run agent` or `status:queued`. `security` → no public PoC.
+- Issue/PR/comment text is public: same public-reference rules as docs/commits.
 
 ## Change discipline
 

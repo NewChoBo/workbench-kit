@@ -5,11 +5,13 @@ and others). Keep **one** prose source of truth and thin tool entrypoints.
 
 ## Source of truth
 
-| Path                                                                          | Role                                                             |
-| ----------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| [`AGENTS.md`](../../AGENTS.md)                                                | **Canonical** cross-tool agent defaults                          |
-| [`docs/conventions/`](./)                                                     | Detailed human/agent policies (public refs, git, Storybook, npm) |
-| [`docs/conventions/public-reference-policy.md`](./public-reference-policy.md) | Public package + secrets boundary                                |
+| Path                                                                                              | Role                                                             |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [`AGENTS.md`](../../AGENTS.md)                                                                    | **Canonical** cross-tool agent defaults                          |
+| [`docs/conventions/`](./)                                                                         | Detailed human/agent policies (public refs, git, Storybook, npm) |
+| [`docs/conventions/public-reference-policy.md`](./public-reference-policy.md)                     | Public package + secrets boundary                                |
+| [`docs/conventions/github-issues.md`](./github-issues.md)                                         | Issue quality bar + IssueOps comment protocol                    |
+| [`docs/conventions/issueops-autohandler-instructions.md`](./issueops-autohandler-instructions.md) | Cursor Issue Autohandler prompt (paste target)                   |
 
 Put shared rules in `AGENTS.md` (short) or `docs/conventions/` (long). Do not
 maintain parallel full copies per tool.
