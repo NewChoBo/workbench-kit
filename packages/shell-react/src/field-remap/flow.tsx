@@ -498,10 +498,11 @@ function FieldRemapFlowCanvas({
       onKeyDown={onKeyDown}
     >
       <p className="workbench-field-remap-mapper__hint" data-testid="field-remap-hint">
-        Wire source schema fields (left) to target schema fields (right). Optional convert nodes
+        Wire source schema fields (left) to target schema fields (right). Optional convert notes
         in the middle (`string:trim`, `array:join`, …) sit on the binding — place a draft then
-        wire ports, or drag through an existing convert node. Select a step to edit options.
-        Alt-click removes a step. Escape clears selection and unfinished drafts.
+        wire ports, or drag through an existing convert node. Select a convert note to open the
+        Convert editor (registry id + options); select a wire/binding for lighter mapping detail.
+        Alt-click removes a convert step. Escape clears selection and unfinished drafts.
       </p>
 
       <div className="workbench-field-remap-flow__place" data-testid="field-remap-place-palette">
@@ -536,7 +537,14 @@ function FieldRemapFlowCanvas({
         </Button>
       </div>
 
-      <div className="workbench-field-remap-flow__workspace">
+      <div
+        className={
+          selection?.kind === 'transformStep'
+            ? 'workbench-field-remap-flow__workspace workbench-field-remap-flow__workspace--convert'
+            : 'workbench-field-remap-flow__workspace'
+        }
+        data-surface={selection?.kind === 'transformStep' ? 'convert-note' : 'binding'}
+      >
         <div className="workbench-field-remap-flow__canvas" data-testid="field-remap-flow">
           <ReactFlow
             nodes={nodes}
@@ -691,8 +699,8 @@ function FieldRemapFlowCanvas({
 }
 
 /**
- * React Flow mapper: multi-port source object → transforms → multi-port target object.
- * Includes a selection-driven detail panel (step id, options, list context).
+ * React Flow mapper: multi-port source object → convert notes → multi-port target object.
+ * Selection gates the side rail: binding detail vs dedicated Convert note editor.
  */
 export function FieldRemapFlowMapper(props: FieldRemapFlowMapperProps): JSX.Element {
   return (

@@ -57,7 +57,89 @@ describe('FieldRemapDetailPanel', () => {
     });
   };
 
-  it('edits transform step id from selection', () => {
+  it('gates convert note editor to transformStep selection only', () => {
+    const edges: MappingEdge[] = [
+      {
+        id: 'e-name',
+        sourceFieldId: 'a.user_name',
+        targetSlotId: 'b.name',
+        transformIds: ['string:trim'],
+      },
+    ];
+
+    mount(
+      <FieldRemapDetailPanel
+        selection={{ kind: 'edge', edgeId: 'e-name' }}
+        edges={edges}
+        sources={sources}
+        targets={targets}
+        transforms={transforms}
+        onEdgesChange={() => undefined}
+        onSelectionChange={() => undefined}
+      />,
+    );
+
+    expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
+    expect(container!.querySelector('[data-testid="field-remap-convert-note"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-step-settings"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-step-id"]')).toBeNull();
+
+    act(() => {
+      root!.render(
+        <FieldRemapDetailPanel
+          selection={{ kind: 'transformStep', edgeId: 'e-name', stepIndex: 0 }}
+          edges={edges}
+          sources={sources}
+          targets={targets}
+          transforms={transforms}
+          onEdgesChange={() => undefined}
+          onSelectionChange={() => undefined}
+        />,
+      );
+    });
+
+    expect(container!.querySelector('[data-testid="field-remap-convert-note"]')).toBeTruthy();
+    expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-list-context"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-transform-palette"]')).toBeNull();
+  });
+
+  it('opens convert note editor from binding chain step', () => {
+    const edges: MappingEdge[] = [
+      {
+        id: 'e-name',
+        sourceFieldId: 'a.user_name',
+        targetSlotId: 'b.name',
+        transformIds: ['string:trim'],
+      },
+    ];
+    const onSelectionChange = vi.fn();
+
+    mount(
+      <FieldRemapDetailPanel
+        selection={{ kind: 'edge', edgeId: 'e-name' }}
+        edges={edges}
+        sources={sources}
+        targets={targets}
+        transforms={transforms}
+        onEdgesChange={() => undefined}
+        onSelectionChange={onSelectionChange}
+      />,
+    );
+
+    act(() => {
+      (container!.querySelector(
+        '[data-testid="field-remap-detail-step-0"]',
+      ) as HTMLButtonElement).click();
+    });
+    expect(onSelectionChange).toHaveBeenCalledWith({
+      kind: 'transformStep',
+      edgeId: 'e-name',
+      stepIndex: 0,
+    });
+  });
+
+  it('edits transform step id from convert note surface', () => {
     const edges: MappingEdge[] = [
       {
         id: 'e-name',
@@ -92,7 +174,7 @@ describe('FieldRemapDetailPanel', () => {
     expect(nextEdges[0]?.transformIds).toEqual(['string:upper']);
   });
 
-  it('adds a chosen transform from the palette', () => {
+  it('adds a chosen convert from the binding palette', () => {
     const edges: MappingEdge[] = [
       {
         id: 'e-name',
@@ -182,7 +264,7 @@ describe('FieldRemapDetailPanel', () => {
     expect(nextEdges[0]?.itemEdges?.[0]?.targetSlotId).toBe('b.labels.item.title');
   });
 
-  it('lets users edit JSONata expression option', () => {
+  it('lets users edit JSONata expression option on convert surface', () => {
     const edges: MappingEdge[] = [
       {
         id: 'e-name',

@@ -4,14 +4,13 @@ import {
   MAX_TRANSFORM_CHAIN,
   findSourceField,
   findTargetSlot,
-  optionFieldsForStep,
-  resolveOptionSteps,
   type MappingEdge,
   type SourceField,
   type TargetSlot,
   type ValueTransformRegistry,
 } from '@workbench-kit/field-remap';
 
+import { ConvertNoteEditor } from './convert-note-editor.js';
 import {
   addTransformStepToEdge,
   canEditListContext,
@@ -20,12 +19,9 @@ import {
   listCompatibleTransforms,
   removeItemEdgeFromParent,
   removeTransformStepFromEdge,
-  replaceTransformStepOptionsOnEdge,
-  setTransformStepIdOnEdge,
   upsertItemEdgeOnParent,
   type FieldRemapSelection,
 } from './flow-ops.js';
-import { TransformOptionsEditor } from './transform-options-editor.js';
 
 export interface FieldRemapDetailPanelProps {
   readonly selection: FieldRemapSelection;
@@ -51,8 +47,9 @@ function fieldLabel(
 }
 
 /**
- * Selection-driven settings surface for Flow: transform id picker, options editor,
- * and list-context (`itemEdges`) authoring.
+ * Selection-driven side rail for Flow:
+ * - edge / empty → light binding detail (chain overview, palette, list context)
+ * - transformStep → dedicated {@link ConvertNoteEditor} surface
  */
 export function FieldRemapDetailPanel({
   selection,
@@ -70,9 +67,6 @@ export function FieldRemapDetailPanel({
     return edges.find((item) => item.id === selection.edgeId);
   }, [edges, selection]);
 
-  const stepIndex =
-    selection?.kind === 'transformStep' ? selection.stepIndex : undefined;
-
   const [pendingItemSourceId, setPendingItemSourceId] = useState<string | null>(null);
   const [paletteId, setPaletteId] = useState<string>('');
 
@@ -83,36 +77,28 @@ export function FieldRemapDetailPanel({
         data-testid="field-remap-detail"
         aria-label="Binding details"
       >
-        <p>Select a binding or transform step to edit details.</p>
+        <p>Select a binding for mapping details, or a convert node to open the convert editor.</p>
       </aside>
+    );
+  }
+
+  if (selection.kind === 'transformStep') {
+    return (
+      <ConvertNoteEditor
+        edge={edge}
+        stepIndex={selection.stepIndex}
+        sources={sources}
+        targets={targets}
+        transforms={transforms}
+        edges={edges}
+        onEdgesChange={onEdgesChange}
+        onSelectionChange={onSelectionChange}
+      />
     );
   }
 
   const portTypes = edgePortTypes(edge, sources, targets);
   const chain = edge.transformIds ?? [];
-  const activeStepIndex =
-    stepIndex !== undefined && stepIndex >= 0 && stepIndex < chain.length ? stepIndex : undefined;
-  const activeTransformId =
-    activeStepIndex !== undefined ? chain[activeStepIndex] : undefined;
-  const optionFields = optionFieldsForStep(transforms, activeTransformId);
-  const optionValue =
-    activeStepIndex !== undefined
-      ? (resolveOptionSteps(chain, edge.transformOptionSteps, edge.transformOptions)[
-          activeStepIndex
-        ] ?? {})
-      : {};
-
-  const replaceCatalog =
-    activeStepIndex !== undefined
-      ? listCompatibleTransforms({
-          registry: transforms,
-          edge,
-          stepIndex: activeStepIndex,
-          sourceType: portTypes.sourceType,
-          targetType: portTypes.targetType,
-          mode: 'replace',
-        })
-      : [];
 
   const appendCatalog = listCompatibleTransforms({
     registry: transforms,
@@ -165,24 +151,22 @@ export function FieldRemapDetailPanel({
         </Button>
       </div>
 
-      <section className="workbench-field-remap-detail__section" aria-labelledby="field-remap-detail-chain">
-        <h5 id="field-remap-detail-chain">Transform chain</h5>
+      <section
+        className="workbench-field-remap-detail__section"
+        aria-labelledby="field-remap-detail-chain"
+      >
+        <h5 id="field-remap-detail-chain">Convert chain</h5>
         {chain.length === 0 ? (
-          <p className="workbench-field-remap-detail__muted">Direct (identity)</p>
+          <p className="workbench-field-remap-detail__muted">Direct (no convert)</p>
         ) : (
           <ol className="workbench-field-remap-detail__steps">
             {chain.map((transformId, index) => {
               const definition = transforms.get(transformId);
-              const selected = activeStepIndex === index;
               return (
                 <li key={`${edge.id}-${index}-${transformId}`}>
                   <button
                     type="button"
-                    className={
-                      selected
-                        ? 'workbench-field-remap-detail__step is-selected'
-                        : 'workbench-field-remap-detail__step'
-                    }
+                    className="workbench-field-remap-detail__step"
                     data-testid={`field-remap-detail-step-${index}`}
                     onClick={() =>
                       onSelectionChange({
@@ -194,25 +178,16 @@ export function FieldRemapDetailPanel({
                   >
                     <strong>{definition?.label ?? transformId}</strong>
                     <code>{transformId}</code>
+                    <span className="workbench-field-remap-detail__step-hint">Edit convert</span>
                   </button>
                   <Button
                     compact
                     type="button"
-                    aria-label={`Remove step ${index + 1}`}
+                    aria-label={`Remove convert step ${index + 1}`}
                     data-testid={`field-remap-detail-remove-step-${index}`}
                     onClick={() => {
                       const next = removeTransformStepFromEdge(edge, index);
                       applyEdge(next);
-                      const nextLen = next.transformIds?.length ?? 0;
-                      if (nextLen === 0) {
-                        onSelectionChange({ kind: 'edge', edgeId: edge.id });
-                      } else if (activeStepIndex !== undefined) {
-                        onSelectionChange({
-                          kind: 'transformStep',
-                          edgeId: edge.id,
-                          stepIndex: Math.min(activeStepIndex, nextLen - 1),
-                        });
-                      }
                     }}
                   >
                     ×
@@ -229,16 +204,16 @@ export function FieldRemapDetailPanel({
             data-testid="field-remap-transform-palette"
           >
             <label>
-              <span>Add transform</span>
+              <span>Add convert</span>
               <select
-                aria-label="Transform palette"
+                aria-label="Convert palette"
                 data-testid="field-remap-palette-select"
                 value={effectivePaletteId}
                 disabled={appendCatalog.length === 0}
                 onChange={(event) => setPaletteId(event.target.value)}
               >
                 {appendCatalog.length === 0 ? (
-                  <option value="">No compatible transforms</option>
+                  <option value="">No compatible converts</option>
                 ) : null}
                 {appendCatalog.map((item) => (
                   <option key={item.id} value={item.id}>
@@ -274,48 +249,6 @@ export function FieldRemapDetailPanel({
           </div>
         ) : null}
       </section>
-
-      {activeStepIndex !== undefined && activeTransformId ? (
-        <section
-          className="workbench-field-remap-detail__section"
-          aria-labelledby="field-remap-detail-step-settings"
-          data-testid="field-remap-step-settings"
-        >
-          <h5 id="field-remap-detail-step-settings">Step settings</h5>
-          <label className="workbench-field-remap-detail__field">
-            <span>Transform</span>
-            <select
-              aria-label="Transform step id"
-              data-testid="field-remap-step-id"
-              value={activeTransformId}
-              onChange={(event) => {
-                const next = setTransformStepIdOnEdge(edge, activeStepIndex, event.target.value, {
-                  registry: transforms,
-                  sourceType: portTypes.sourceType,
-                  targetType: portTypes.targetType,
-                });
-                applyEdge(next);
-              }}
-            >
-              {!replaceCatalog.some((item) => item.id === activeTransformId) ? (
-                <option value={activeTransformId}>{activeTransformId}</option>
-              ) : null}
-              {replaceCatalog.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <TransformOptionsEditor
-            fields={optionFields}
-            value={optionValue}
-            onChange={(nextOptions) => {
-              applyEdge(replaceTransformStepOptionsOnEdge(edge, activeStepIndex, nextOptions));
-            }}
-          />
-        </section>
-      ) : null}
 
       {listContextEnabled ? (
         <section
