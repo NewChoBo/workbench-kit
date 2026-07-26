@@ -8,6 +8,7 @@ import {
   flattenTargetSlots,
   resizeOptionSteps,
   type MappingEdge,
+  type MappingOperator,
   type SourceField,
   type TargetSlot,
   type ValueTransformRegistry,
@@ -17,7 +18,9 @@ export type FieldRemapFlowNodeKind =
   | 'source-object'
   | 'target-object'
   | 'transform'
-  | 'draft-transform';
+  | 'draft-transform'
+  | 'combine-operator'
+  | 'split-operator';
 
 export type FieldRemapPort = {
   fieldId: string;
@@ -57,16 +60,43 @@ export type FieldRemapDraftTransformNodeData = {
   targetSlotId?: string;
 } & Record<string, unknown>;
 
+export type FieldRemapCombineOperatorNodeData = {
+  kind: 'combine-operator';
+  operatorId: string;
+  label: string;
+  inputFieldIds: readonly string[];
+  outputSlotId: string;
+} & Record<string, unknown>;
+
+export type FieldRemapSplitOperatorNodeData = {
+  kind: 'split-operator';
+  operatorId: string;
+  label: string;
+  inputFieldId: string;
+  outputSlotIds: readonly string[];
+} & Record<string, unknown>;
+
 export type FieldRemapFlowNodeData =
   | FieldRemapSourceObjectNodeData
   | FieldRemapTargetObjectNodeData
   | FieldRemapTransformNodeData
-  | FieldRemapDraftTransformNodeData;
+  | FieldRemapDraftTransformNodeData
+  | FieldRemapCombineOperatorNodeData
+  | FieldRemapSplitOperatorNodeData;
 
 export type FieldRemapFlowEdgeData = {
   mappingEdgeId?: string;
   draftLocalId?: string;
-  segment: 'in' | 'mid' | 'out' | 'direct' | 'draft-in' | 'draft-out';
+  operatorId?: string;
+  segment:
+    | 'in'
+    | 'mid'
+    | 'out'
+    | 'direct'
+    | 'draft-in'
+    | 'draft-out'
+    | 'operator-in'
+    | 'operator-out';
 } & Record<string, unknown>;
 
 export const SOURCE_OBJECT_NODE_ID = 'obj:source' as const;
@@ -97,6 +127,10 @@ export function transformNodeId(mappingEdgeId: string, stepIndex: number): strin
 
 export function draftTransformNodeId(localId: string): string {
   return `${DRAFT_NODE_PREFIX}${localId}`;
+}
+
+export function operatorNodeId(operatorId: string): string {
+  return `op:${operatorId}`;
 }
 
 export function parseDraftTransformNodeId(nodeId: string): string | undefined {
@@ -170,6 +204,8 @@ export function mappingToFlowGraph(input: {
     readonly sourceFieldId?: string;
     readonly targetSlotId?: string;
   }[];
+  /** Document v2 n→m operators (display / multi-port Flow nodes). */
+  readonly operators?: readonly MappingOperator[];
 }): { nodes: Node<FieldRemapFlowNodeData>[]; edges: Edge<FieldRemapFlowEdgeData>[] } {
   const sourcePorts = toPorts(flattenSourceFields(input.sources));
   const targetPorts = toPorts(flattenTargetSlots(input.targets));
@@ -312,6 +348,85 @@ export function mappingToFlowGraph(input: {
         targetHandle: portHandleId(draft.targetSlotId),
         type: 'smoothstep',
         data: { draftLocalId: draft.localId, segment: 'draft-out' },
+      });
+    }
+  });
+
+  const operatorBaseY =
+    40 + (input.edges.length + (input.drafts?.length ?? 0)) * TRANSFORM_ROW_GAP;
+
+  (input.operators ?? []).forEach((operator, operatorIndex) => {
+    const nodeId = operatorNodeId(operator.id);
+    const y = operatorBaseY + operatorIndex * TRANSFORM_ROW_GAP;
+
+    if (operator.kind === 'combine') {
+      nodes.push({
+        id: nodeId,
+        type: 'fieldRemapCombineOperator',
+        position: { x: TRANSFORM_X, y },
+        data: {
+          kind: 'combine-operator',
+          operatorId: operator.id,
+          label: 'Combine',
+          inputFieldIds: operator.inputFieldIds,
+          outputSlotId: operator.outputSlotId,
+        },
+        draggable: true,
+      });
+      for (const fieldId of operator.inputFieldIds) {
+        flowEdges.push({
+          id: `fe:op:${operator.id}:in:${fieldId}`,
+          source: SOURCE_OBJECT_NODE_ID,
+          sourceHandle: portHandleId(fieldId),
+          target: nodeId,
+          targetHandle: portHandleId(fieldId),
+          type: 'smoothstep',
+          data: { operatorId: operator.id, segment: 'operator-in' },
+        });
+      }
+      flowEdges.push({
+        id: `fe:op:${operator.id}:out`,
+        source: nodeId,
+        sourceHandle: 'out',
+        target: TARGET_OBJECT_NODE_ID,
+        targetHandle: portHandleId(operator.outputSlotId),
+        type: 'smoothstep',
+        data: { operatorId: operator.id, segment: 'operator-out' },
+      });
+      return;
+    }
+
+    nodes.push({
+      id: nodeId,
+      type: 'fieldRemapSplitOperator',
+      position: { x: TRANSFORM_X, y },
+      data: {
+        kind: 'split-operator',
+        operatorId: operator.id,
+        label: 'Split',
+        inputFieldId: operator.inputFieldId,
+        outputSlotIds: operator.outputSlotIds,
+      },
+      draggable: true,
+    });
+    flowEdges.push({
+      id: `fe:op:${operator.id}:in`,
+      source: SOURCE_OBJECT_NODE_ID,
+      sourceHandle: portHandleId(operator.inputFieldId),
+      target: nodeId,
+      targetHandle: 'in',
+      type: 'smoothstep',
+      data: { operatorId: operator.id, segment: 'operator-in' },
+    });
+    for (const slotId of operator.outputSlotIds) {
+      flowEdges.push({
+        id: `fe:op:${operator.id}:out:${slotId}`,
+        source: nodeId,
+        sourceHandle: portHandleId(slotId),
+        target: TARGET_OBJECT_NODE_ID,
+        targetHandle: portHandleId(slotId),
+        type: 'smoothstep',
+        data: { operatorId: operator.id, segment: 'operator-out' },
       });
     }
   });

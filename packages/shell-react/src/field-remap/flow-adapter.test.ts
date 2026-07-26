@@ -12,6 +12,7 @@ import {
   draftTransformNodeId,
   isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
+  operatorNodeId,
   parseTransformNodeId,
   SOURCE_OBJECT_NODE_ID,
   TARGET_OBJECT_NODE_ID,
@@ -359,6 +360,50 @@ describe('field-remap-flow-adapter', () => {
         { ...baseContext, edges: withArrayJoin },
       ),
     ).toBe(false);
+  });
+
+  it('renders multi-port combine/split operator nodes from document operators', () => {
+    const graph = mappingToFlowGraph({
+      sources,
+      targets,
+      edges: [],
+      transforms,
+      operators: [
+        {
+          kind: 'combine',
+          id: 'c1',
+          inputFieldIds: ['a.user_name', 'a.tags'],
+          outputSlotId: 'b.title',
+        },
+        {
+          kind: 'split',
+          id: 's1',
+          inputFieldId: 'a.tags',
+          outputSlotIds: ['b.name', 'b.firstTag'],
+        },
+      ],
+    });
+
+    const combineId = operatorNodeId('c1');
+    const splitId = operatorNodeId('s1');
+    expect(graph.nodes.some((node) => node.id === combineId)).toBe(true);
+    expect(graph.nodes.some((node) => node.id === splitId)).toBe(true);
+    expect(
+      graph.edges.some(
+        (edge) =>
+          edge.source === SOURCE_OBJECT_NODE_ID &&
+          edge.target === combineId &&
+          edge.sourceHandle === 'a.user_name',
+      ),
+    ).toBe(true);
+    expect(
+      graph.edges.some(
+        (edge) =>
+          edge.source === splitId &&
+          edge.target === TARGET_OBJECT_NODE_ID &&
+          edge.targetHandle === 'b.firstTag',
+      ),
+    ).toBe(true);
   });
 
   it('allows source/target wiring through draft transform nodes', () => {

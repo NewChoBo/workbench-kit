@@ -933,6 +933,30 @@
   gap: 0.35rem;
 }
 
+.workbench-field-remap-flow-node--operator {
+  min-width: 11rem;
+  border-color: var(--vscode-charts-orange, #d18616);
+}
+
+.workbench-field-remap-flow-node--operator .workbench-field-remap-flow-node__title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.workbench-field-remap-flow-node--operator .workbench-field-remap-flow-node__port--out,
+.workbench-field-remap-flow-node--operator .workbench-field-remap-flow-node__port--in {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.workbench-field-remap-flow-node--operator .workbench-field-remap-flow-node__port--out {
+  justify-content: flex-end;
+}
+
 .workbench-field-remap-demo__shapes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -19,6 +19,7 @@ import { Badge, Button } from '@workbench-kit/react/primitives';
 import {
   MAX_TRANSFORM_CHAIN,
   type MappingEdge,
+  type MappingOperator,
   type SourceField,
   type TargetSlot,
   type ValueTransformRegistry,
@@ -30,10 +31,12 @@ import {
   isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
   parseDraftTransformNodeId,
+  type FieldRemapCombineOperatorNodeData,
   type FieldRemapDraftTransformNodeData,
   type FieldRemapFlowEdgeData,
   type FieldRemapFlowNodeData,
   type FieldRemapSourceObjectNodeData,
+  type FieldRemapSplitOperatorNodeData,
   type FieldRemapTargetObjectNodeData,
   type FieldRemapTransformNodeData,
 } from './flow-adapter.js';
@@ -149,11 +152,97 @@ function DraftTransformNode({
   );
 }
 
+function CombineOperatorNode({
+  data,
+}: NodeProps<Node<FieldRemapCombineOperatorNodeData>>): JSX.Element {
+  return (
+    <div
+      className="workbench-field-remap-flow-node workbench-field-remap-flow-node--operator workbench-field-remap-flow-node--combine"
+      data-testid={`field-remap-op-${data.operatorId}`}
+    >
+      <div className="workbench-field-remap-flow-node__title">
+        <strong>{data.label}</strong>
+        <Badge variant="muted">n→1</Badge>
+      </div>
+      <ul className="workbench-field-remap-flow-node__ports">
+        {data.inputFieldIds.map((fieldId) => (
+          <li key={fieldId} className="workbench-field-remap-flow-node__port">
+            <Handle
+              type="target"
+              position={Position.Left}
+              id={fieldId}
+              className="workbench-field-remap-flow-node__handle"
+            />
+            <span className="workbench-field-remap-flow-node__port-label">
+              <code>{fieldId}</code>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="workbench-field-remap-flow-node__port workbench-field-remap-flow-node__port--out">
+        <span className="workbench-field-remap-flow-node__port-label">
+          <code>{data.outputSlotId}</code>
+        </span>
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="out"
+          className="workbench-field-remap-flow-node__handle"
+        />
+      </div>
+    </div>
+  );
+}
+
+function SplitOperatorNode({
+  data,
+}: NodeProps<Node<FieldRemapSplitOperatorNodeData>>): JSX.Element {
+  return (
+    <div
+      className="workbench-field-remap-flow-node workbench-field-remap-flow-node--operator workbench-field-remap-flow-node--split"
+      data-testid={`field-remap-op-${data.operatorId}`}
+    >
+      <div className="workbench-field-remap-flow-node__title">
+        <strong>{data.label}</strong>
+        <Badge variant="muted">1→n</Badge>
+      </div>
+      <div className="workbench-field-remap-flow-node__port workbench-field-remap-flow-node__port--in">
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="in"
+          className="workbench-field-remap-flow-node__handle"
+        />
+        <span className="workbench-field-remap-flow-node__port-label">
+          <code>{data.inputFieldId}</code>
+        </span>
+      </div>
+      <ul className="workbench-field-remap-flow-node__ports">
+        {data.outputSlotIds.map((slotId) => (
+          <li key={slotId} className="workbench-field-remap-flow-node__port">
+            <span className="workbench-field-remap-flow-node__port-label">
+              <code>{slotId}</code>
+            </span>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id={slotId}
+              className="workbench-field-remap-flow-node__handle"
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 const nodeTypes = {
   fieldRemapSourceObject: SourceObjectNode,
   fieldRemapTargetObject: TargetObjectNode,
   fieldRemapTransform: TransformNode,
   fieldRemapDraftTransform: DraftTransformNode,
+  fieldRemapCombineOperator: CombineOperatorNode,
+  fieldRemapSplitOperator: SplitOperatorNode,
 };
 
 export interface FieldRemapFlowMapperProps {
@@ -162,6 +251,8 @@ export interface FieldRemapFlowMapperProps {
   readonly edges: readonly MappingEdge[];
   readonly transforms: ValueTransformRegistry;
   readonly onEdgesChange: (edges: readonly MappingEdge[]) => void;
+  /** Document v2 n→m operators (read-only multi-port Flow display). */
+  readonly operators?: readonly MappingOperator[] | undefined;
   readonly sourceTitle?: string | undefined;
   readonly targetTitle?: string | undefined;
   readonly selection?: FieldRemapSelection | undefined;
@@ -174,6 +265,7 @@ function FieldRemapFlowCanvas({
   edges,
   transforms,
   onEdgesChange,
+  operators,
   sourceTitle,
   targetTitle,
   selection: selectionProp,
@@ -197,11 +289,12 @@ function FieldRemapFlowCanvas({
         targets,
         edges,
         transforms,
+        operators,
         sourceTitle,
         targetTitle,
         drafts,
       }),
-    [sources, targets, edges, transforms, sourceTitle, targetTitle, drafts],
+    [sources, targets, edges, transforms, operators, sourceTitle, targetTitle, drafts],
   );
 
   const nodesWithSelection = useMemo(
