@@ -85,6 +85,26 @@ export {
 export { SampleFieldRemapDemo, type SampleFieldRemapDemoProps } from './field-remap/demo.js';
 export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap/panel.js';
 export { FieldRemapFlowMapper, type FieldRemapFlowMapperProps } from './field-remap/flow.js';
+export { FieldRemapDetailPanel, type FieldRemapDetailPanelProps } from './field-remap/detail-panel.js';
+export {
+  TransformOptionsEditor,
+  type TransformOptionsEditorProps,
+} from './field-remap/transform-options-editor.js';
+export {
+  addTransformStepToEdge,
+  canEditListContext,
+  edgePortTypes,
+  enableListContextOnEdge,
+  listCompatibleTransforms,
+  removeItemEdgeFromParent,
+  removeTransformStepFromEdge,
+  replaceTransformStepOptionsOnEdge,
+  setItemEdgesOnEdge,
+  setTransformStepIdOnEdge,
+  updateMappingEdge,
+  upsertItemEdgeOnParent,
+  type FieldRemapSelection,
+} from './field-remap/flow-ops.js';
 export {
   DEFAULT_JSONATA_MAX_EXPRESSION_LENGTH,
   DEFAULT_JSONATA_TIMEOUT_MS,

@@ -1,7 +1,7 @@
 # Consumer Capabilities Reference
 
 **Status:** Active consumer contract  
-**Last updated:** 2026-07-21  
+**Last updated:** 2026-07-26  
 **Audience:** Host applications that compose `@workbench-kit/react` (browser, desktop, VS Code webviews, sample host)
 
 This document is the **integration contract** for reusable workbench UI. It inventories primitives and shell surfaces that a reference desktop consumer actually wires today. It is not a Storybook catalog — use Storybook and `examples/workbench-sample` for visual exploration.
@@ -620,6 +620,49 @@ grid + optional `headerActions` slot for host install/import controls.
 **Purpose:** Toast/notice stack for management surfaces.
 
 **Host rule:** Wrap dialog host once; show feedback via `showNotice`, not ad hoc DOM.
+
+---
+
+## Field Remap / Schema Mapper
+
+**Purpose:** Reshape a source structure into a target structure with `MappingEdge[]` and
+`convertToShape`. Runtime lives in `@workbench-kit/field-remap`; sample UI lives in
+`@workbench-kit/shell-react` plus `extensions/samples.field-remap`.
+
+| Layer | Package / surface | Role |
+| ----- | ----------------- | ---- |
+| Runtime | `@workbench-kit/field-remap` | Edges, shapes, builtins, `convertToShape`, port helpers (`arePortsCompatible`) |
+| Shell UI | `@workbench-kit/shell-react` (`FieldRemapPanel`, `FieldRemapFlowMapper`, samples) | Sample mapper surfaces for demos and host spikes |
+| Extension | `extensions/samples.field-remap` | Sample activity / editor host wiring (repo-local) |
+
+**When to use:** Hosts that need A→B field mapping with optional transform chains, list
+context (`itemEdges`), and preview conversion.
+
+**When not to use:** Free-form node graphs that diverge from `MappingEdge` + `transformIds`;
+deep JSON Schema structural validation; production mapper chrome that must not depend on
+sample extension packaging.
+
+**Model notes:**
+- Canvas “transform nodes” are `transformIds` steps on an edge, not a separate document type.
+- Input/output shapes may be host-owned; `FieldRemapDocument` v1 stores edges only.
+- Direct canvas connects today are source-object port → target-object port only; xf splice
+  wiring is tracked separately. Live connects are gated by `arePortsCompatible`
+  (permissive on missing/`unknown`, strict on known mismatch; existing target
+  `transformIds` participate when replacing a binding).
+- Flow detail panel: select a binding / transform step to change step id, edit
+  `optionFields` via `TransformOptionsEditor`, add a chosen transform from the palette,
+  and edit list-context `itemEdges` for array→array bindings.
+- Graph/Tree mappers in shell-react are sample-oriented; prefer the panel/flow surfaces for
+  new host integration.
+
+**Key APIs:** `convertToShape`, `createBuiltinValueTransformRegistry`, `arePortsCompatible`,
+`areFieldTypesCompatible`, `FieldRemapPanel`, `FieldRemapFlowMapper`, `FieldRemapDetailPanel`,
+`TransformOptionsEditor`.
+
+**Related:** [Field Remap README](../../packages/field-remap/README.md) ·
+[Sample screens](../guides/sample-screens.md#field-remap-editor) ·
+[Storybook e2e coverage](./storybook-e2e-coverage.md) ·
+[Component map](../guides/component-map.md#field-remap)
 
 ---
 
