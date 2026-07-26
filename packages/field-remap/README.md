@@ -25,6 +25,7 @@ pnpm add @workbench-kit/field-remap@prototype
 | String format chain                       | Yes (`string:trim` / `upper` / `lower` / `prefix` / `suffix`, max 3) |
 | Array&lt;object&gt; → Array&lt;object&gt; | Yes (`itemEdges` list context)                                       |
 | Index / wildcard paths                    | Yes (`items[0].name`, `items[*].name` via `projectObjectPath`)       |
+| n→m combine / split operators             | Yes (runtime `applyMappingOperators`; not in document v1 yet)        |
 
 ### Path grammar
 
@@ -89,6 +90,34 @@ transforms.register(createJsonataValueTransform());
 Place-then-wire free graphs are **not** the document model — add transforms via the
 palette / `+ node` onto an existing binding (`transformIds` chain, max 3). List
 context uses `itemEdges` on array→array bindings.
+
+### n→m operators (combine / split)
+
+`FieldRemapDocument` v1 remains **edges-only** (1→1 bindings). For fan-in / fan-out,
+call `applyMappingOperators` with `combine` / `split` operators (limits:
+`MAX_MAPPING_FAN_IN` / `MAX_MAPPING_FAN_OUT` = 8). Hosts may merge the result with
+`convertToShape` output. A future document v2 may persist an `operators[]` list;
+UI multi-port Flow nodes follow once hosts adopt the runtime contract.
+
+```ts
+import { applyMappingOperators, createBuiltinValueTransformRegistry } from '@workbench-kit/field-remap';
+
+const { output } = await applyMappingOperators({
+  operators: [
+    {
+      kind: 'combine',
+      id: 'c1',
+      inputFieldIds: ['a.date', 'a.time'],
+      outputSlotId: 'b.startsAt',
+      transformIds: ['datetime:combine'],
+    },
+  ],
+  sources,
+  targets,
+  inputs: { a: { date: '2026-07-20', time: '14:30:00' } },
+  transforms: createBuiltinValueTransformRegistry(),
+});
+```
 
 ### Port compatibility
 

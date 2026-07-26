@@ -75,6 +75,20 @@ export { findParentChildMappingConflicts } from './domain/mapping/mappingConflic
 export type { MappingConflict } from './domain/mapping/mappingConflicts.js';
 
 export {
+  MAX_MAPPING_FAN_IN,
+  MAX_MAPPING_FAN_OUT,
+  MappingOperatorError,
+  applyMappingOperators,
+} from './domain/mapping/mappingOperators.js';
+export type {
+  ApplyMappingOperatorsInput,
+  ApplyMappingOperatorsResult,
+  CombineMappingOperator,
+  MappingOperator,
+  SplitMappingOperator,
+} from './domain/mapping/mappingOperators.js';
+
+export {
   collectOptionFields,
   contextWithEdgeOptions,
   mergeOptionSteps,
