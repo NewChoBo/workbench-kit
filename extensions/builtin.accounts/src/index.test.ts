@@ -31,13 +31,21 @@ describe('builtin accounts extension', () => {
           return { dispose() {} };
         },
       },
+      editorDocumentViews: {
+        registerProvider: () => ({ dispose() {} }),
+      },
       editorHostFactories: {
         registerFactory: () => ({ dispose() {} }),
+      },
+      editorResolvers: {
+        registerResolver: () => ({ dispose() {} }),
       },
       extensionId: 'workbench-kit.builtin.accounts',
       extensionPath: 'extensions/builtin.accounts',
       getCapability: <T>(capabilityId: string) =>
         (capabilityId === WORKBENCH_AUTH_CAPABILITY_ID ? authProvider : undefined) as T | undefined,
+      permissions: ['account.read'],
+      requiredCapabilities: [WORKBENCH_AUTH_CAPABILITY_ID],
       subscriptions: {
         add() {},
       },

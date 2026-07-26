@@ -14,12 +14,12 @@ activation handlers.
 | `builtin.accounts`    | Account status command, account menu entry, account capability lookup, and account configuration.   |
 | `builtin.chat`        | Chat and AI Chat activities, sidebar views, and slash command execution through workbench commands. |
 | `builtin.commands`    | Commands activity, registry sidebar, focus/refresh commands, and view title refresh action.         |
-| `builtin.editor`      | Built-in text editor contribution resolved by the editor service and rendered by the React shell.   |
-| `builtin.explorer`    | Explorer activity, explorer view provider, refresh command, and view title menu action.             |
+| `builtin.editor`      | Built-in text editor contribution, Markdown preview document view, and React shell host rendering.  |
+| `builtin.explorer`    | Explorer activity/view; declares `workbench.workspace` + `workspace.read`/`write`.                  |
 | `builtin.keybindings` | Default workbench keybindings such as `ctrl+s` for `editor.save`.                                   |
 | `builtin.search`      | Search activity container and sidebar view provider.                                                |
 | `builtin.settings`    | Open settings command, command palette entry, and settings configuration for modal settings hosts.  |
-| `builtin.workspace`   | Workspace info command and workspace display-name configuration.                                    |
+| `builtin.workspace`   | Workspace info command; declares `workbench.workspace` + `workspace.read`.                          |
 | `builtin.extensions`  | Extensions activity, marketplace sidebar, and extension management commands.                        |
 
 ## Samples
@@ -28,6 +28,7 @@ activation handlers.
 | ---------------------- | ------------------------------------------------------------------------- |
 | `samples.hello-world`  | Minimal command activation sample (`Hello World` command in the palette). |
 | `samples.json-preview` | JSON document preview editor contribution sample.                         |
+| `samples.jdw`          | JDW Lab activity plus `*.jdw.json` form/preview document view providers.  |
 | `samples.locale-ko`    | Korean display-language localization contribution sample.                 |
 | `samples.theme-alt`    | Alternate dark color theme (`Dark Blue Alt`) for Settings → Appearance.   |
 

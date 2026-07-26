@@ -2,10 +2,21 @@
 
 Field remap **runtime**: reshape structure A into structure B with mapping edges and `convertToShape`.
 
-This package does **not** ship a mapping UI. Hosts adapt a tree or table UI into `MappingEdge[]`
-and call `convertToShape`. The workbench sample (**Field Remap → A → B**) demonstrates a nested
-tree mapper with list context; flat OSS adapters (for example `react-table-mapping`) remain useful
-for leaf-only hosts.
+## Interaction model (host UI)
+
+The intended mapper mental model — matching the shell Flow sample — is:
+
+1. **Source schema (A)** and **target schema (B)** as multi-port columns (fields with types /
+   nested paths). Hosts own these shapes; they are not stored in `FieldRemapDocument`.
+2. **Optional convert steps** in the middle (`string:trim`, `string:upper`, `array:first`,
+   `array:join`, …) when a binding needs transforms.
+3. **Port-to-port wires (DnD)** from source → [converters] → target. Each wire is a
+   `MappingEdge` (`transformIds` = convert chain). There is no free-form graph document.
+
+This package does **not** ship a mapping UI. Hosts adapt a Flow / tree / table UI into
+`MappingEdge[]` and call `convertToShape`. The workbench sample (**Field Remap → A → B**)
+demonstrates the schema-column + convert-wire topology with list context; flat OSS adapters
+(for example `react-table-mapping`) remain useful for leaf-only hosts.
 
 ## Install
 
@@ -24,11 +35,148 @@ pnpm add @workbench-kit/field-remap@prototype
 | Array → scalar reduce                     | Yes (`array:first`, `array:join`)                                    |
 | String format chain                       | Yes (`string:trim` / `upper` / `lower` / `prefix` / `suffix`, max 3) |
 | Array&lt;object&gt; → Array&lt;object&gt; | Yes (`itemEdges` list context)                                       |
-| Index / wildcard paths                    | No (P2)                                                              |
+| Index / wildcard paths                    | Yes (`items[0].name`, `items[*].name` via `projectObjectPath`)       |
+| n→m combine / split operators             | Yes (`applyMappingOperators`; document v2 `operators[]`)             |
 
-Middle “graph nodes” in the sample UI are just `MappingEdge.transformIds` steps
+### Path grammar
+
+Safe object paths are dotted identifiers with optional index / wildcard brackets:
+
+| Form     | Example         | API                                                      |
+| -------- | --------------- | -------------------------------------------------------- |
+| Property | `meta.label`    | `readObjectPath` / `writeObjectPath`                     |
+| Index    | `items[0].name` | `readObjectPath` / `writeObjectPath`                     |
+| Wildcard | `items[*].name` | `projectObjectPath` only (`readObjectPath` fails closed) |
+
+Wildcard expansion is capped by `DEFAULT_MAX_PATH_WILDCARD_EXPANSION` (1000) or
+`projectObjectPath(..., { maxExpansion })`. This is not a JSONPath engine.
+
+Middle convert nodes in the sample UI are just `MappingEdge.transformIds` steps
 (plus optional `transformOptionSteps`), not a separate document type. The workbench
-sample renders them with `@xyflow/react` (source out → transform → target in).
+sample renders them with `@xyflow/react` (source schema → convert → target schema).
+Selecting a convert note opens a dedicated **Convert note editor** side surface
+(`ConvertNoteEditor` in `@workbench-kit/shell-react`); binding/edge selection keeps
+a lighter mapping detail rail (chain overview, palette, list context).
+
+### Shape ownership
+
+`FieldRemapDocument` (v1) stores **edges only**. Hosts own input/output shapes
+(`SourceField[]` / `TargetSlot[]`, or `defineDataShape` + ingest helpers) and pass
+them into `convertToShape` / the shell `FieldRemapPanel` / `FieldRemapFlowMapper`.
+Changing a shape should drop or warn on edges whose field/slot ids disappear —
+use `pruneMappingEdgesForShapes` after ingest. The shell panel’s shape IO editor
+(paste JSON → ingest + `FieldDataType` selects) is an in-memory host aid; it does
+not extend the persisted document.
+
+### Host embed (shell UI)
+
+Published packages already include the runtime and host-embeddable UI (no monorepo
+checkout required once your pin includes a release that contains these exports):
+
+```powershell
+pnpm add @workbench-kit/field-remap@prototype @workbench-kit/shell-react@prototype
+```
+
+```ts
+import {
+  convertToShape,
+  createBuiltinValueTransformRegistry,
+  defineConversion,
+  defineDataShape,
+  sourceFieldsFromPlainObject,
+  targetSlotsFromPlainObject,
+} from '@workbench-kit/field-remap';
+import {
+  FieldRemapFlowMapper,
+  FieldRemapPanel,
+  createJsonataValueTransform,
+} from '@workbench-kit/shell-react';
+
+// Quick demo surface (catalog sample + preview):
+// <FieldRemapPanel sample="nested-ab" />
+
+// Or host-owned shapes + edges:
+const transforms = createBuiltinValueTransformRegistry();
+transforms.register(createJsonataValueTransform());
+// <FieldRemapFlowMapper sources={…} targets={…} edges={…} transforms={transforms} onEdgesChange={…} />
+```
+
+Place-then-wire uses **ephemeral draft nodes** in the shell Flow UI: place a
+transform, wire source then target (or the reverse), and the draft finalizes into
+a `MappingEdge` with `transformIds: [id]`. Escape discards unfinished drafts.
+The persisted document stays edges-only — no free graph. You can also add steps
+via the detail palette / `+ node` onto an existing binding (max 3). List context
+uses `itemEdges` on array→array bindings.
+
+**Persisted `xf:*` connect matrix** (shell Flow adapter; no silent no-ops):
+
+| Drag                         | Effect                                                           |
+| ---------------------------- | ---------------------------------------------------------------- |
+| source port → target port    | upsert `MappingEdge`                                             |
+| source port → `xf:edge:step` | rebind source; keep transforms from that step (splice prefix)    |
+| `xf:edge:step` → target port | rebind target; keep transforms through that step (splice suffix) |
+| `xf:A:i` → `xf:B:j` (A≠B)    | merge chains (append A prefix + B suffix); remove donor edge A   |
+| same-edge `xf`↔`xf`          | rejected (mid segments already exist)                            |
+
+### n→m operators (combine / split)
+
+`FieldRemapDocument` **v1** is edges-only (1→1 bindings). **v2** (current) adds an
+optional `operators[]` list for fan-in / fan-out. Call `applyMappingOperators` with
+`combine` / `split` operators (limits: `MAX_MAPPING_FAN_IN` / `MAX_MAPPING_FAN_OUT`
+= 8). Hosts may merge the result with `convertToShape` output.
+`migrateFieldRemapDocument` / `parseFieldRemapDocument` accept v1 and v2 and always
+emit the current version. Shell Flow renders combine/split as multi-port nodes and
+supports authoring (create / wire ports / delete) when hosts pass `operators` +
+`onOperatorsChange` into `FieldRemapFlowMapper` (sample `nm-combine-split`).
+
+```ts
+import {
+  applyMappingOperators,
+  createBuiltinValueTransformRegistry,
+} from '@workbench-kit/field-remap';
+
+const { output } = await applyMappingOperators({
+  operators: [
+    {
+      kind: 'combine',
+      id: 'c1',
+      inputFieldIds: ['a.date', 'a.time'],
+      outputSlotId: 'b.startsAt',
+      transformIds: ['datetime:combine'],
+    },
+  ],
+  sources,
+  targets,
+  inputs: { a: { date: '2026-07-20', time: '14:30:00' } },
+  transforms: createBuiltinValueTransformRegistry(),
+});
+```
+
+### Port compatibility
+
+Use `areFieldTypesCompatible` for identity (direct) links and `arePortsCompatible` when a
+`transformIds` chain may mediate the link. Empty / omitted chains are identity matches;
+non-empty chains require a `ValueTransformRegistry` and reuse `isTransformChainCompatible`.
+Missing or `unknown` `FieldDataType` values stay permissive (same default as transform helpers).
+
+```ts
+import {
+  areFieldTypesCompatible,
+  arePortsCompatible,
+  createBuiltinValueTransformRegistry,
+} from '@workbench-kit/field-remap';
+
+areFieldTypesCompatible('string', 'string'); // true
+areFieldTypesCompatible('string', 'number'); // false
+
+const transforms = createBuiltinValueTransformRegistry();
+arePortsCompatible({
+  sourceType: 'array',
+  targetType: 'string',
+  transformIds: ['array:join'],
+  registry: transforms,
+}); // true
+```
 
 ## Quick start
 

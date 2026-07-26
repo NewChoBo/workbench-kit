@@ -23,6 +23,10 @@
     "onCommand:workspace.rename",
     "onCommand:workspace.delete"
   ],
+  "capabilities": {
+    "requires": ["workbench.workspace"]
+  },
+  "permissions": ["workspace.read", "workspace.write"],
   "contributes": {
     "commands": [
       {

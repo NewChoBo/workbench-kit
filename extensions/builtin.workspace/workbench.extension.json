@@ -10,6 +10,10 @@
     "extensionApi": "^0.0.0"
   },
   "activationEvents": ["onStartup"],
+  "capabilities": {
+    "requires": ["workbench.workspace"]
+  },
+  "permissions": ["workspace.read"],
   "contributes": {
     "commands": [
       {

@@ -353,18 +353,21 @@ export function WorkbenchProvider({
       installedExtensionsStorageKey,
       installedExtensionsStorage,
     );
+    const baseExtensionsConfig =
+      extensionsConfig ??
+      ({
+        enabled: hostAvailableExtensions.map(({ manifest }) => manifest.id),
+        recommendations: [],
+      } satisfies WorkbenchExtensionsConfig);
     const resolvedAvailableExtensions =
       availableExtensions === undefined
-        ? resolveInstalledAvailableExtensions(hostAvailableExtensions, installedRecords)
+        ? resolveInstalledAvailableExtensions(
+            hostAvailableExtensions,
+            installedRecords,
+            baseExtensionsConfig.enabled,
+          )
         : hostAvailableExtensions;
-    const config = mergeExtensionsConfigWithInstallState(
-      extensionsConfig ??
-        ({
-          enabled: resolvedAvailableExtensions.map(({ manifest }) => manifest.id),
-          recommendations: [],
-        } satisfies WorkbenchExtensionsConfig),
-      installedRecords,
-    );
+    const config = mergeExtensionsConfigWithInstallState(baseExtensionsConfig, installedRecords);
     const resolution = resolveWorkbenchExtensions(config, resolvedAvailableExtensions);
     const integrity = verifyWorkbenchExtensionsAgainstLock(
       resolution.enabledExtensions,

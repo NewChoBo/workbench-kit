@@ -44,6 +44,7 @@ import {
 } from '../editor/document-view-registry.js';
 import { LocalizationRegistry } from '../localization/registry.js';
 import { ThemeRegistry } from '../theme/registry.js';
+import { assertCapabilityAccess } from './permissions.js';
 import { createExtensionFeatureSpecs } from './feature-spec.js';
 import {
   normalizeConfiguration,
@@ -452,7 +453,19 @@ export class ExtensionRegistry implements Disposable {
       },
       extensionId: description.manifest.id,
       extensionPath: description.extensionPath ?? '',
-      getCapability: <T>(capabilityId: string) => this.capabilityRegistry.get<T>(capabilityId),
+      getCapability: <T>(capabilityId: string) => {
+        const permissions = [...(description.manifest.permissions ?? [])];
+        const requiredCapabilities = [...(description.manifest.capabilities?.requires ?? [])];
+        assertCapabilityAccess(
+          {
+            extensionId: description.manifest.id,
+            permissions,
+            requiredCapabilities,
+          },
+          capabilityId,
+        );
+        return this.capabilityRegistry.get<T>(capabilityId);
+      },
       permissions: [...(description.manifest.permissions ?? [])],
       requiredCapabilities: [...(description.manifest.capabilities?.requires ?? [])],
       subscriptions,

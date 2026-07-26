@@ -1,16 +1,23 @@
 import { normalizeMappingEdges } from './mappingEdge.js';
-import type { MappingEdge, FieldRemapDocument } from '../types.js';
+import { normalizeMappingOperators } from '../mapping/mappingOperators.js';
+import type { MappingEdge, MappingOperator, FieldRemapDocument } from '../types.js';
 
-export const FIELD_REMAP_DOCUMENT_VERSION = 1 as const;
+/** Current persistence version (edges + optional `operators[]`). */
+export const FIELD_REMAP_DOCUMENT_VERSION = 2 as const;
+/** Legacy edges-only documents. */
+export const FIELD_REMAP_DOCUMENT_V1_VERSION = 1 as const;
 
-/** Thrown when parse/deserialize sees a document `version` other than the supported constant. */
+type SupportedDocumentVersion =
+  typeof FIELD_REMAP_DOCUMENT_VERSION | typeof FIELD_REMAP_DOCUMENT_V1_VERSION;
+
+/** Thrown when parse/deserialize sees a document `version` other than a supported constant. */
 export class UnsupportedFieldRemapDocumentVersionError extends Error {
   readonly version: unknown;
   readonly expectedVersion: typeof FIELD_REMAP_DOCUMENT_VERSION;
 
   constructor(version: unknown) {
     super(
-      `Unsupported field remap document version ${String(version)}; expected ${FIELD_REMAP_DOCUMENT_VERSION}.`,
+      `Unsupported field remap document version ${String(version)}; expected ${FIELD_REMAP_DOCUMENT_V1_VERSION} or ${FIELD_REMAP_DOCUMENT_VERSION}.`,
     );
     this.name = 'UnsupportedFieldRemapDocumentVersionError';
     this.version = version;
@@ -26,41 +33,58 @@ export class InvalidFieldRemapDocumentError extends Error {
   }
 }
 
+export type CreateFieldRemapDocumentOptions = {
+  readonly operators?: readonly MappingOperator[];
+};
+
 /** Build a versioned, normalized mapping document for host persistence. */
-export function createFieldRemapDocument(edges: readonly MappingEdge[]): FieldRemapDocument {
+export function createFieldRemapDocument(
+  edges: readonly MappingEdge[],
+  options?: CreateFieldRemapDocumentOptions,
+): FieldRemapDocument {
+  const operators = normalizeMappingOperators(options?.operators);
   return {
     version: FIELD_REMAP_DOCUMENT_VERSION,
     edges: normalizeMappingEdges(edges),
+    ...(operators ? { operators } : {}),
   };
 }
 
-/** Normalize edges (including legacy transform id aliases) on a persisted document. */
+function isSupportedVersion(version: unknown): version is SupportedDocumentVersion {
+  return version === FIELD_REMAP_DOCUMENT_V1_VERSION || version === FIELD_REMAP_DOCUMENT_VERSION;
+}
+
+/** Normalize edges / operators on a persisted document; always emits the current version. */
 export function normalizeFieldRemapDocument(document: FieldRemapDocument): FieldRemapDocument {
-  if (document.version !== FIELD_REMAP_DOCUMENT_VERSION) {
+  if (!isSupportedVersion(document.version)) {
     throw new UnsupportedFieldRemapDocumentVersionError(document.version);
   }
+  const operators = normalizeMappingOperators(document.operators);
   return {
     version: FIELD_REMAP_DOCUMENT_VERSION,
     edges: normalizeMappingEdges(document.edges),
+    ...(operators ? { operators } : {}),
   };
 }
 
 /**
  * Stable JSON serialization for persistence / clipboard.
- * Always emits the current document version with normalized edges.
+ * Always emits the current document version with normalized edges / operators.
  */
 export function serializeFieldRemapDocument(
   document: FieldRemapDocument | readonly MappingEdge[],
 ): string {
   const doc = Array.isArray(document)
     ? createFieldRemapDocument(document)
-    : createFieldRemapDocument((document as FieldRemapDocument).edges);
+    : createFieldRemapDocument((document as FieldRemapDocument).edges, {
+        operators: (document as FieldRemapDocument).operators,
+      });
   return JSON.stringify(doc);
 }
 
 /**
  * Parse an unknown JSON value into a normalized `FieldRemapDocument`.
- * Rejects unsupported versions and malformed shapes with typed errors.
+ * Accepts v1 (edges-only) and v2 (optional operators); always returns current version.
  */
 export function parseFieldRemapDocument(input: unknown): FieldRemapDocument {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
@@ -73,16 +97,26 @@ export function parseFieldRemapDocument(input: unknown): FieldRemapDocument {
   if (!('version' in record)) {
     throw new InvalidFieldRemapDocumentError('Field remap document is missing version.');
   }
-  if (record.version !== FIELD_REMAP_DOCUMENT_VERSION) {
+  if (!isSupportedVersion(record.version)) {
     throw new UnsupportedFieldRemapDocumentVersionError(record.version);
   }
   if (!Array.isArray(record.edges)) {
     throw new InvalidFieldRemapDocumentError('Field remap document edges must be an array.');
   }
+  if (
+    record.operators !== undefined &&
+    record.operators !== null &&
+    !Array.isArray(record.operators)
+  ) {
+    throw new InvalidFieldRemapDocumentError(
+      'Field remap document operators must be an array when present.',
+    );
+  }
 
   return normalizeFieldRemapDocument({
-    version: FIELD_REMAP_DOCUMENT_VERSION,
+    version: record.version,
     edges: record.edges as MappingEdge[],
+    operators: record.operators as MappingOperator[] | undefined,
   });
 }
 
@@ -104,8 +138,8 @@ export function deserializeFieldRemapDocument(json: string): FieldRemapDocument 
  * Hosts should call this (or `parseFieldRemapDocument`) at load time so future
  * document versions can be rewritten here without changing call sites.
  *
- * **v1:** passthrough normalize (legacy transform id aliases rewritten).
- * Future versions: add `case` branches that rewrite into v1 shape, then normalize.
+ * **v1:** edges-only → current version (operators omitted).
+ * **v2:** normalize edges + operators.
  */
 export function migrateFieldRemapDocument(input: unknown): FieldRemapDocument {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
@@ -120,9 +154,9 @@ export function migrateFieldRemapDocument(input: unknown): FieldRemapDocument {
   }
 
   switch (record.version) {
+    case FIELD_REMAP_DOCUMENT_V1_VERSION:
     case FIELD_REMAP_DOCUMENT_VERSION:
       return parseFieldRemapDocument(input);
-    // Future: case 2: return parseFieldRemapDocument(migrateV2ToV1(record));
     default:
       throw new UnsupportedFieldRemapDocumentVersionError(record.version);
   }

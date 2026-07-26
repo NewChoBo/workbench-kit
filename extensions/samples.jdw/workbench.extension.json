@@ -9,8 +9,26 @@
     "workbench": "^0.0.0",
     "extensionApi": "^0.0.0"
   },
-  "activationEvents": ["onView:workbench-kit.samples.jdw.panel"],
+  "activationEvents": ["onStartup", "onView:workbench-kit.samples.jdw.panel"],
   "contributes": {
+    "documentViews": [
+      {
+        "id": "workbench-kit.samples.jdw.widget-form",
+        "kind": "form",
+        "label": "Form",
+        "priority": 20,
+        "filenamePatterns": ["*.jdw.json", "*.jdw"],
+        "mimeTypes": ["application/vnd.workbench-kit.jdw+json"]
+      },
+      {
+        "id": "workbench-kit.samples.jdw.widget-preview",
+        "kind": "preview",
+        "label": "Preview",
+        "priority": 10,
+        "filenamePatterns": ["*.jdw.json", "*.jdw"],
+        "mimeTypes": ["application/vnd.workbench-kit.jdw+json"]
+      }
+    ],
     "viewContainers": {
       "activitybar": [
         {

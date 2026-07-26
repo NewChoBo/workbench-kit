@@ -120,8 +120,10 @@ export {
   type ExtensionCatalogTrustPolicy,
 } from './extension/catalog-trust.js';
 export {
+  CAPABILITY_ACCESS_REQUIREMENTS,
   ExtensionCapabilityRequiredError,
   ExtensionPermissionDeniedError,
+  assertCapabilityAccess,
   assertPermission,
   requireCapability,
   type CapabilityRequireContext,

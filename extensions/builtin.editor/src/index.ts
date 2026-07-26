@@ -7,6 +7,14 @@ import { TextEditorHost } from './text-editor-host.js';
 export const EXTENSION_ID = 'workbench-kit.builtin.editor' as const;
 export const TEXT_EDITOR_ID = 'workbench-kit.builtin.editor.text' as const;
 export const TEXT_EDITOR_HOST_FACTORY_ID = 'workbench-kit.builtin.editor.textHost' as const;
+export const MARKDOWN_PREVIEW_PROVIDER_ID =
+  'workbench-kit.builtin.editor.markdown-preview' as const;
+export const MARKDOWN_PREVIEW_RENDER_KIND =
+  'workbench-kit.builtin.editor.markdown-preview' as const;
+
+export interface BuiltinEditorMarkdownPreviewRenderData {
+  readonly kind: typeof MARKDOWN_PREVIEW_RENDER_KIND;
+}
 
 export {
   MISSING_RESOURCE_EDITOR_HOST_RENDER_KIND,
@@ -21,7 +29,30 @@ export {
   type TextEditorHostRenderData,
 } from './text-editor-host.js';
 
+function isMarkdownDocument(path: string, mimeType: string | undefined): boolean {
+  const normalizedPath = path.replace(/\\/g, '/').toLowerCase();
+  const normalizedMime = mimeType?.toLowerCase();
+  return (
+    normalizedPath.endsWith('.md') ||
+    normalizedPath.endsWith('.mdx') ||
+    normalizedMime === 'text/markdown'
+  );
+}
+
 export function activate(context: ExtensionContext): void {
+  context.editorDocumentViews.registerProvider({
+    id: MARKDOWN_PREVIEW_PROVIDER_ID,
+    kind: 'preview',
+    label: 'Preview',
+    priority: 5,
+    filenamePatterns: ['*.md', '*.mdx'],
+    mimeTypes: ['text/markdown'],
+    matches: (document) => isMarkdownDocument(document.path, document.mimeType),
+    render: (): BuiltinEditorMarkdownPreviewRenderData => ({
+      kind: MARKDOWN_PREVIEW_RENDER_KIND,
+    }),
+  });
+
   context.editorResolvers.registerResolver({
     id: 'workspace-file',
     priority: 10,

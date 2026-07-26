@@ -14,11 +14,11 @@
       "version": "0.0.0"
     },
     "workbench-kit.builtin.editor": {
-      "integrity": "sha256:3b3fbaf30203311f0e768a130f1b278d54542820d50bf8cceb76a4d5b7b3264a",
+      "integrity": "sha256:3ab3d440259bdd6fcd3298fe9b077afc87407b55dcf705bbd763cff7790eaf84",
       "version": "0.0.0"
     },
     "workbench-kit.builtin.explorer": {
-      "integrity": "sha256:a3038f3dc464afbccf9bdb99158eff9e53413b80676a77d50ae5dbbb642d271b",
+      "integrity": "sha256:d86f7a023a74b1dc5bc6ec1558a455a0de34734e1ce0ba5a32fd254e6f9f2151",
       "version": "0.0.0"
     },
     "workbench-kit.builtin.extensions": {
@@ -38,7 +38,7 @@
       "version": "0.0.0"
     },
     "workbench-kit.builtin.workspace": {
-      "integrity": "sha256:073c63d2470f57d3ab9acc3d8feb8b2ea8155c98b700baf5aeddb276dece5c12",
+      "integrity": "sha256:30b943af94efb752fcdd471d8721bf5d8bdcfef6fb48028dea4720d467d64d08",
       "version": "0.0.0"
     },
     "workbench-kit.samples.field-remap": {
@@ -50,7 +50,7 @@
       "version": "0.0.0"
     },
     "workbench-kit.samples.jdw": {
-      "integrity": "sha256:94af53f141c8e6bf750a4d61b02c2e53ad281932772dff486294881f5dbc5a6e",
+      "integrity": "sha256:c392fe786deec4af8e853bbf7563dd96c90da73cb7470233767eb72b960842f6",
       "version": "0.0.0"
     },
     "workbench-kit.samples.json-preview": {

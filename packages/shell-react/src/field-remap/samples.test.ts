@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyMappingOperators,
   convertToShape,
   createBuiltinValueTransformRegistry,
   defineConversion,
   defineDataShape,
+  normalizeMappingOperators,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
 } from '@workbench-kit/field-remap';
@@ -18,7 +20,8 @@ async function convertSample(sampleId: string) {
   const targets = targetSlotsFromPlainObject(sample.targetShape, {
     idPrefix: sample.targetIdPrefix,
   });
-  return await convertToShape({
+  const transforms = createBuiltinValueTransformRegistry();
+  const shaped = await convertToShape({
     conversion: defineConversion({
       id: sample.id,
       sourceShapeIds: [sample.sourceIdPrefix],
@@ -40,28 +43,46 @@ async function convertSample(sampleId: string) {
       }),
     ],
     inputs: { [sample.sourceIdPrefix]: sample.source },
-    transforms: createBuiltinValueTransformRegistry(),
+    transforms,
+  });
+  const operators = normalizeMappingOperators(sample.operators);
+  if (!operators?.length) {
+    return shaped;
+  }
+  return await applyMappingOperators({
+    operators,
+    sources,
+    targets,
+    inputs: { [sample.sourceIdPrefix]: sample.source },
+    transforms,
+    output: shaped.output,
   });
 }
 
 describe('FIELD_REMAP_SAMPLES', () => {
-  it('lists five catalog entries', async () => {
+  it('lists catalog entries including n→m operators', async () => {
     expect(FIELD_REMAP_SAMPLES.map((sample) => sample.id)).toEqual([
       'nested-ab',
       't-user-contact',
       't-event-time',
       't-emp-dept',
       't-product-catalog',
+      'nm-combine-split',
     ]);
   });
 
-  it('maps nested-ab with object port and formats', async () => {
+  it('maps nested-ab with convert chains, leaf location, and array reduces', async () => {
     const { output } = await convertSample('nested-ab');
     expect(output).toMatchObject({
       name: 'Ada Lovelace',
       title: 'ADA LOVELACE',
-      location: { city: 'London', country: 'UK' },
+      location: { city: 'LONDON', country: 'UK' },
+      firstTag: 'math',
       tagLine: 'math · computing',
+      labels: [
+        { title: 'math', order: 1 },
+        { title: 'computing', order: 2 },
+      ],
     });
   });
 
@@ -106,6 +127,15 @@ describe('FIELD_REMAP_SAMPLES', () => {
         { code: 'HIST', title: 'history' },
         { code: 'COMP', title: 'computing' },
       ],
+    });
+  });
+
+  it('applies document v2 combine and split operators', async () => {
+    const { output } = await convertSample('nm-combine-split');
+    expect(output).toEqual({
+      nameBag: { first: 'Ada', last: 'Lovelace' },
+      city: 'London',
+      zip: 'E1',
     });
   });
 });

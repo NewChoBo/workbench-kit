@@ -1,14 +1,20 @@
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import {
+  applyMappingOperators,
   convertToShape,
   createBuiltinValueTransformRegistry,
   defineConversion,
   defineDataShape,
   findParentChildMappingConflicts,
+  normalizeMappingOperators,
+  pruneMappingEdgesForShapes,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
   withConversionEdges,
   type MappingEdge,
+  type MappingOperator,
+  type SourceField,
+  type TargetSlot,
   type ValueTransformRegistry,
 } from '@workbench-kit/field-remap';
 
@@ -19,6 +25,11 @@ import {
   type FieldRemapSampleId,
 } from './samples.js';
 import { jsonataValueTransform } from './jsonata-transform.js';
+import {
+  FieldRemapShapeIoEditor,
+  ingestSourceShape,
+  ingestTargetShape,
+} from './shape-io-editor.js';
 import './view.css';
 
 export interface FieldRemapPanelProps {
@@ -26,6 +37,8 @@ export interface FieldRemapPanelProps {
   readonly sample?: FieldRemapSampleId | FieldRemapSampleDefinition | undefined;
   /** Optional host-owned transform registry (defaults to builtins + JSONata). */
   readonly transforms?: ValueTransformRegistry | undefined;
+  /** When true (default), show paste-JSON / type editors for host-owned shapes. */
+  readonly editableShapes?: boolean | undefined;
   readonly className?: string | undefined;
 }
 
@@ -46,13 +59,15 @@ function resolveSample(sample: FieldRemapPanelProps['sample']): FieldRemapSample
 
 /**
  * Self-contained field-remap workbench panel:
- * XYFlow mapper + convertToShape preview for one A→B (or T_A→T_B) sample.
+ * schema columns A/B + optional convert wires (XYFlow) and `convertToShape` preview.
  *
  * Remount with `key={sampleId}` when switching catalog entries so edge state resets.
+ * Shapes stay host-owned: the panel edits in-memory samples; `FieldRemapDocument` remains edges-only.
  */
 export function FieldRemapPanel({
   sample: sampleProp,
   transforms: transformsProp,
+  editableShapes = true,
   className,
 }: FieldRemapPanelProps): JSX.Element {
   const sample = resolveSample(sampleProp);
@@ -66,15 +81,19 @@ export function FieldRemapPanel({
   }, [transformsProp]);
 
   const [edges, setEdges] = useState<readonly MappingEdge[]>(() => [...sample.edges]);
+  const [operators, setOperators] = useState<readonly MappingOperator[]>(() => [
+    ...(sample.operators ?? []),
+  ]);
   const [result, setResult] = useState<FieldRemapPreviewResult>({ output: {} });
-
-  const sourceFields = useMemo(
-    () => sourceFieldsFromPlainObject(sample.source, { idPrefix: sample.sourceIdPrefix }),
-    [sample],
+  const [sourceSample, setSourceSample] = useState<unknown>(() => sample.source);
+  const [, setTargetSample] = useState<unknown>(() => sample.targetShape);
+  const [sourceJson, setSourceJson] = useState(() => JSON.stringify(sample.source, null, 2));
+  const [targetJson, setTargetJson] = useState(() => JSON.stringify(sample.targetShape, null, 2));
+  const [sourceFields, setSourceFields] = useState<readonly SourceField[]>(() =>
+    sourceFieldsFromPlainObject(sample.source, { idPrefix: sample.sourceIdPrefix }),
   );
-  const targetSlots = useMemo(
-    () => targetSlotsFromPlainObject(sample.targetShape, { idPrefix: sample.targetIdPrefix }),
-    [sample],
+  const [targetSlots, setTargetSlots] = useState<readonly TargetSlot[]>(() =>
+    targetSlotsFromPlainObject(sample.targetShape, { idPrefix: sample.targetIdPrefix }),
   );
 
   const shapes = useMemo(
@@ -115,13 +134,30 @@ export function FieldRemapPanel({
     void convertToShape({
       conversion,
       shapes,
-      inputs: { [sample.sourceIdPrefix]: sample.source },
+      inputs: { [sample.sourceIdPrefix]: sourceSample },
       transforms: registry,
       signal: controller.signal,
     })
-      .then((next) => {
-        if (!controller.signal.aborted) {
+      .then(async (next) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+        const normalizedOps = normalizeMappingOperators(operators);
+        if (!normalizedOps?.length) {
           setResult({ output: next.output });
+          return;
+        }
+        const merged = await applyMappingOperators({
+          operators: normalizedOps,
+          sources: sourceFields,
+          targets: targetSlots,
+          inputs: { [sample.sourceIdPrefix]: sourceSample },
+          transforms: registry,
+          output: next.output,
+          signal: controller.signal,
+        });
+        if (!controller.signal.aborted) {
+          setResult({ output: merged.output });
         }
       })
       .catch((error: unknown) => {
@@ -137,7 +173,23 @@ export function FieldRemapPanel({
     return () => {
       controller.abort();
     };
-  }, [edges, registry, sample, shapes]);
+  }, [edges, operators, registry, sample, shapes, sourceFields, sourceSample, targetSlots]);
+
+  const applySourceShape = (parsed: unknown) => {
+    const ingested = ingestSourceShape(parsed, sample.sourceIdPrefix);
+    setSourceSample(parsed);
+    setSourceJson(ingested.sampleJson);
+    setSourceFields(ingested.fields);
+    setEdges((current) => pruneMappingEdgesForShapes(current, ingested.fields, targetSlots));
+  };
+
+  const applyTargetShape = (parsed: unknown) => {
+    const ingested = ingestTargetShape(parsed, sample.targetIdPrefix);
+    setTargetSample(parsed);
+    setTargetJson(ingested.sampleJson);
+    setTargetSlots(ingested.fields);
+    setEdges((current) => pruneMappingEdgesForShapes(current, sourceFields, ingested.fields));
+  };
 
   return (
     <div
@@ -150,12 +202,39 @@ export function FieldRemapPanel({
         <p className="workbench-field-remap-demo__intro">{sample.description}</p>
       </header>
 
+      {editableShapes ? (
+        <div className="workbench-field-remap-demo__shapes" data-testid="field-remap-shapes">
+          <FieldRemapShapeIoEditor
+            role="source"
+            title={sample.sourceLabel}
+            idPrefix={sample.sourceIdPrefix}
+            sampleJson={sourceJson}
+            fields={sourceFields}
+            onSampleJsonChange={setSourceJson}
+            onApplySample={applySourceShape}
+            onFieldsChange={(next) => setSourceFields(next as readonly SourceField[])}
+          />
+          <FieldRemapShapeIoEditor
+            role="target"
+            title={sample.targetLabel}
+            idPrefix={sample.targetIdPrefix}
+            sampleJson={targetJson}
+            fields={targetSlots}
+            onSampleJsonChange={setTargetJson}
+            onApplySample={applyTargetShape}
+            onFieldsChange={(next) => setTargetSlots(next as readonly TargetSlot[])}
+          />
+        </div>
+      ) : null}
+
       <FieldRemapFlowMapper
         sources={sourceFields}
         targets={targetSlots}
         edges={edges}
         transforms={registry}
         onEdgesChange={setEdges}
+        operators={operators}
+        onOperatorsChange={setOperators}
         sourceTitle={sample.sourceLabel}
         targetTitle={sample.targetLabel}
       />
@@ -181,7 +260,7 @@ export function FieldRemapPanel({
       <div className="workbench-field-remap-demo__panes">
         <section className="workbench-field-remap-demo__pane" aria-labelledby="field-remap-source">
           <h3 id="field-remap-source">{sample.sourceLabel}</h3>
-          <pre data-testid="field-remap-input">{JSON.stringify(sample.source, null, 2)}</pre>
+          <pre data-testid="field-remap-input">{JSON.stringify(sourceSample, null, 2)}</pre>
         </section>
         <section className="workbench-field-remap-demo__pane" aria-labelledby="field-remap-target">
           <h3 id="field-remap-target">{sample.targetLabel}</h3>

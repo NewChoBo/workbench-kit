@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, within } from 'storybook/test';
 
 import { FieldRemapDemo } from './FieldRemapDemo';
 
@@ -10,14 +11,21 @@ const meta = {
     docs: {
       description: {
         component:
-          'Field remap panel: object ports, date/time combine·split, templates. Sample app: **Field Remap** activity.',
+          'Field remap panel: convert palette place-then-wire, schema A/B ports, n→m operators. Sample app: **Field Remap** activity.',
       },
     },
   },
   argTypes: {
     sampleId: {
       control: 'select',
-      options: ['nested-ab', 't-user-contact', 't-event-time', 't-emp-dept', 't-product-catalog'],
+      options: [
+        'nested-ab',
+        't-user-contact',
+        't-event-time',
+        't-emp-dept',
+        't-product-catalog',
+        'nm-combine-split',
+      ],
     },
   },
 } satisfies Meta<typeof FieldRemapDemo>;
@@ -29,6 +37,18 @@ type Story = StoryObj<typeof meta>;
 export const NestedAB: Story = {
   name: 'A → B',
   args: { sampleId: 'nested-ab' },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByTestId('field-remap-convert-palette')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-place-draft')).toBeVisible();
+    await userEvent.click(canvas.getByTestId('field-remap-select-edge-e-name'));
+    const step = await canvas.findByTestId('field-remap-detail-step-0');
+    await userEvent.click(step);
+    await expect(canvas.getByTestId('field-remap-convert-note')).toBeVisible();
+    await userEvent.click(canvas.getByTestId('field-remap-palette-item-string:upper'));
+    await userEvent.click(canvas.getByTestId('field-remap-place-draft'));
+    await expect(canvas.getByTestId('field-remap-detail-draft-id')).toBeVisible();
+  },
 };
 
 export const UserContact: Story = {
@@ -49,4 +69,16 @@ export const EmpDept: Story = {
 export const ProductCatalog: Story = {
   name: 'T_PRODUCT → T_CATALOG_ITEM',
   args: { sampleId: 't-product-catalog' },
+};
+
+export const CombineSplit: Story = {
+  name: 'n→m combine / split',
+  args: { sampleId: 'nm-combine-split' },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByTestId('field-remap-convert-palette')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-add-combine')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-op-op-name')).toBeVisible();
+    await expect(await canvas.findByTestId('field-remap-result')).toHaveTextContent('Ada');
+  },
 };

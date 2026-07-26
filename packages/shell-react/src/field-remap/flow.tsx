@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, type JSX, type MouseEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type JSX,
+  type KeyboardEvent,
+  type MouseEvent,
+} from 'react';
 import {
   Background,
   Controls,
@@ -19,22 +27,49 @@ import { Badge, Button } from '@workbench-kit/react/primitives';
 import {
   MAX_TRANSFORM_CHAIN,
   type MappingEdge,
+  type MappingOperator,
   type SourceField,
   type TargetSlot,
   type ValueTransformRegistry,
 } from '@workbench-kit/field-remap';
 
+import { FieldRemapConvertPalette } from './convert-palette.js';
+import { FieldRemapDetailPanel } from './detail-panel.js';
 import {
-  connectionToMappingEdge,
+  applyFieldRemapFlowConnection,
+  isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
-  SOURCE_OBJECT_NODE_ID,
-  TARGET_OBJECT_NODE_ID,
+  parseDraftTransformNodeId,
+  parseOperatorNodeId,
+  type FieldRemapCombineOperatorNodeData,
+  type FieldRemapDraftTransformNodeData,
   type FieldRemapFlowEdgeData,
   type FieldRemapFlowNodeData,
   type FieldRemapSourceObjectNodeData,
+  type FieldRemapSplitOperatorNodeData,
   type FieldRemapTargetObjectNodeData,
   type FieldRemapTransformNodeData,
 } from './flow-adapter.js';
+import {
+  addTransformStepToEdge,
+  bindDraftSource,
+  bindDraftTarget,
+  bindOperatorInput,
+  bindOperatorOutput,
+  canEditListContext,
+  createCombineOperator,
+  createDraftTransform,
+  createSplitOperator,
+  edgePortTypes,
+  enableListContextOnEdge,
+  finalizeDraftTransform,
+  listCompatibleTransforms,
+  removeMappingOperator,
+  removeTransformStepFromEdge,
+  updateMappingOperator,
+  type FieldRemapDraftTransform,
+  type FieldRemapSelection,
+} from './flow-ops.js';
 
 function TypeBadge({ dataType }: { readonly dataType?: string }): JSX.Element | null {
   if (dataType !== 'object' && dataType !== 'array') {
@@ -45,9 +80,15 @@ function TypeBadge({ dataType }: { readonly dataType?: string }): JSX.Element | 
 
 function SourceObjectNode({ data }: NodeProps<Node<FieldRemapSourceObjectNodeData>>): JSX.Element {
   return (
-    <div className="workbench-field-remap-flow-node workbench-field-remap-flow-node--object workbench-field-remap-flow-node--source">
+    <div
+      className="workbench-field-remap-flow-node workbench-field-remap-flow-node--object workbench-field-remap-flow-node--source"
+      data-testid="field-remap-source-schema"
+    >
       <div className="workbench-field-remap-flow-node__header">
         <strong>{data.title}</strong>
+        <span className="workbench-field-remap-flow-node__hint">
+          {data.schemaRole ?? 'Source schema'}
+        </span>
       </div>
       <ul className="workbench-field-remap-flow-node__ports">
         {data.ports.map((port) => (
@@ -71,9 +112,15 @@ function SourceObjectNode({ data }: NodeProps<Node<FieldRemapSourceObjectNodeDat
 
 function TargetObjectNode({ data }: NodeProps<Node<FieldRemapTargetObjectNodeData>>): JSX.Element {
   return (
-    <div className="workbench-field-remap-flow-node workbench-field-remap-flow-node--object workbench-field-remap-flow-node--target">
+    <div
+      className="workbench-field-remap-flow-node workbench-field-remap-flow-node--object workbench-field-remap-flow-node--target"
+      data-testid="field-remap-target-schema"
+    >
       <div className="workbench-field-remap-flow-node__header">
         <strong>{data.title}</strong>
+        <span className="workbench-field-remap-flow-node__hint">
+          {data.schemaRole ?? 'Target schema'}
+        </span>
       </div>
       <ul className="workbench-field-remap-flow-node__ports">
         {data.ports.map((port) => (
@@ -97,7 +144,13 @@ function TargetObjectNode({ data }: NodeProps<Node<FieldRemapTargetObjectNodeDat
 
 function TransformNode({ data }: NodeProps<Node<FieldRemapTransformNodeData>>): JSX.Element {
   return (
-    <div className="workbench-field-remap-flow-node workbench-field-remap-flow-node--transform">
+    <div
+      className={
+        data.selected
+          ? 'workbench-field-remap-flow-node workbench-field-remap-flow-node--transform is-selected'
+          : 'workbench-field-remap-flow-node workbench-field-remap-flow-node--transform'
+      }
+    >
       <Handle type="target" position={Position.Left} id="in" />
       <div className="workbench-field-remap-flow-node__title">
         <strong>{data.label}</strong>
@@ -108,10 +161,116 @@ function TransformNode({ data }: NodeProps<Node<FieldRemapTransformNodeData>>): 
   );
 }
 
+function DraftTransformNode({
+  data,
+}: NodeProps<Node<FieldRemapDraftTransformNodeData>>): JSX.Element {
+  return (
+    <div
+      className="workbench-field-remap-flow-node workbench-field-remap-flow-node--transform workbench-field-remap-flow-node--draft"
+      data-testid={`field-remap-draft-${data.localId}`}
+    >
+      <Handle type="target" position={Position.Left} id="in" />
+      <div className="workbench-field-remap-flow-node__title">
+        <strong>{data.label}</strong>
+        <Badge variant="muted">draft</Badge>
+      </div>
+      <code className="workbench-field-remap-flow-node__id">{data.transformId}</code>
+      <Handle type="source" position={Position.Right} id="out" />
+    </div>
+  );
+}
+
+function CombineOperatorNode({
+  data,
+}: NodeProps<Node<FieldRemapCombineOperatorNodeData>>): JSX.Element {
+  return (
+    <div
+      className="workbench-field-remap-flow-node workbench-field-remap-flow-node--operator workbench-field-remap-flow-node--combine"
+      data-testid={`field-remap-op-${data.operatorId}`}
+    >
+      <div className="workbench-field-remap-flow-node__title">
+        <strong>{data.label}</strong>
+        <Badge variant="muted">n→1</Badge>
+      </div>
+      <ul className="workbench-field-remap-flow-node__ports">
+        {data.inputFieldIds.map((fieldId) => (
+          <li key={fieldId} className="workbench-field-remap-flow-node__port">
+            <Handle
+              type="target"
+              position={Position.Left}
+              id={fieldId}
+              className="workbench-field-remap-flow-node__handle"
+            />
+            <span className="workbench-field-remap-flow-node__port-label">
+              <code>{fieldId}</code>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="workbench-field-remap-flow-node__port workbench-field-remap-flow-node__port--out">
+        <span className="workbench-field-remap-flow-node__port-label">
+          <code>{data.outputSlotId}</code>
+        </span>
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="out"
+          className="workbench-field-remap-flow-node__handle"
+        />
+      </div>
+    </div>
+  );
+}
+
+function SplitOperatorNode({
+  data,
+}: NodeProps<Node<FieldRemapSplitOperatorNodeData>>): JSX.Element {
+  return (
+    <div
+      className="workbench-field-remap-flow-node workbench-field-remap-flow-node--operator workbench-field-remap-flow-node--split"
+      data-testid={`field-remap-op-${data.operatorId}`}
+    >
+      <div className="workbench-field-remap-flow-node__title">
+        <strong>{data.label}</strong>
+        <Badge variant="muted">1→n</Badge>
+      </div>
+      <div className="workbench-field-remap-flow-node__port workbench-field-remap-flow-node__port--in">
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="in"
+          className="workbench-field-remap-flow-node__handle"
+        />
+        <span className="workbench-field-remap-flow-node__port-label">
+          <code>{data.inputFieldId}</code>
+        </span>
+      </div>
+      <ul className="workbench-field-remap-flow-node__ports">
+        {data.outputSlotIds.map((slotId) => (
+          <li key={slotId} className="workbench-field-remap-flow-node__port">
+            <span className="workbench-field-remap-flow-node__port-label">
+              <code>{slotId}</code>
+            </span>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id={slotId}
+              className="workbench-field-remap-flow-node__handle"
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 const nodeTypes = {
   fieldRemapSourceObject: SourceObjectNode,
   fieldRemapTargetObject: TargetObjectNode,
   fieldRemapTransform: TransformNode,
+  fieldRemapDraftTransform: DraftTransformNode,
+  fieldRemapCombineOperator: CombineOperatorNode,
+  fieldRemapSplitOperator: SplitOperatorNode,
 };
 
 export interface FieldRemapFlowMapperProps {
@@ -120,8 +279,13 @@ export interface FieldRemapFlowMapperProps {
   readonly edges: readonly MappingEdge[];
   readonly transforms: ValueTransformRegistry;
   readonly onEdgesChange: (edges: readonly MappingEdge[]) => void;
+  /** Document v2 n→m operators (display + authoring when onOperatorsChange is set). */
+  readonly operators?: readonly MappingOperator[] | undefined;
+  readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
   readonly sourceTitle?: string | undefined;
   readonly targetTitle?: string | undefined;
+  readonly selection?: FieldRemapSelection | undefined;
+  readonly onSelectionChange?: ((next: FieldRemapSelection) => void) | undefined;
 }
 
 function FieldRemapFlowCanvas({
@@ -130,9 +294,22 @@ function FieldRemapFlowCanvas({
   edges,
   transforms,
   onEdgesChange,
+  operators = [],
+  onOperatorsChange,
   sourceTitle,
   targetTitle,
+  selection: selectionProp,
+  onSelectionChange: onSelectionChangeProp,
 }: FieldRemapFlowMapperProps): JSX.Element {
+  const [internalSelection, setInternalSelection] = useState<FieldRemapSelection>(null);
+  const selection = selectionProp !== undefined ? selectionProp : internalSelection;
+  const setSelection = onSelectionChangeProp ?? setInternalSelection;
+  const [drafts, setDrafts] = useState<readonly FieldRemapDraftTransform[]>([]);
+  const [placeTransformId, setPlaceTransformId] = useState(() => {
+    const first = transforms.list().find((definition) => definition.id !== 'identity');
+    return first?.id ?? '';
+  });
+
   const graph = useMemo(
     () =>
       mappingToFlowGraph({
@@ -140,69 +317,175 @@ function FieldRemapFlowCanvas({
         targets,
         edges,
         transforms,
+        operators,
         sourceTitle,
         targetTitle,
+        drafts,
       }),
-    [sources, targets, edges, transforms, sourceTitle, targetTitle],
+    [sources, targets, edges, transforms, operators, sourceTitle, targetTitle, drafts],
   );
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
+  const nodesWithSelection = useMemo(
+    () =>
+      graph.nodes.map((node) => {
+        if (node.data.kind === 'transform') {
+          const selected =
+            selection?.kind === 'transformStep' &&
+            selection.edgeId === node.data.mappingEdgeId &&
+            selection.stepIndex === node.data.stepIndex;
+          return {
+            ...node,
+            data: { ...node.data, selected },
+            selected,
+          };
+        }
+        if (node.data.kind === 'draft-transform') {
+          const selected = selection?.kind === 'draft' && selection.localId === node.data.localId;
+          return { ...node, selected };
+        }
+        if (node.data.kind === 'combine-operator' || node.data.kind === 'split-operator') {
+          const selected =
+            selection?.kind === 'operator' && selection.operatorId === node.data.operatorId;
+          return { ...node, selected };
+        }
+        return node;
+      }),
+    [graph.nodes, selection],
+  );
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(nodesWithSelection);
   const [flowEdges, setFlowEdges, onFlowEdgesChange] = useEdgesState(graph.edges);
 
   useEffect(() => {
-    setNodes(graph.nodes);
+    setNodes(nodesWithSelection);
     setFlowEdges(graph.edges);
-  }, [graph, setNodes, setFlowEdges]);
+  }, [graph.edges, nodesWithSelection, setNodes, setFlowEdges]);
 
-  const catalog = useMemo(
-    () => transforms.list().filter((item) => item.id !== 'identity'),
-    [transforms],
+  const connectionContext = useMemo(
+    () => ({ sources, targets, edges, transforms, drafts, operators }),
+    [sources, targets, edges, transforms, drafts, operators],
   );
 
-  const isValidConnection = useCallback((connection: Connection | Edge) => {
-    const source = connection.source;
-    const target = connection.target;
-    if (!source || !target) {
-      return false;
-    }
-    // Object port → object port (fan-out from one source field to many targets).
-    if (source === SOURCE_OBJECT_NODE_ID && target === TARGET_OBJECT_NODE_ID) {
-      return Boolean(connection.sourceHandle && connection.targetHandle);
-    }
-    // Object port → transform in
-    if (source === SOURCE_OBJECT_NODE_ID && target.startsWith('xf:')) {
-      return Boolean(connection.sourceHandle);
-    }
-    // Transform out → object port
-    if (source.startsWith('xf:') && target === TARGET_OBJECT_NODE_ID) {
-      return Boolean(connection.targetHandle);
-    }
-    // Transform chain mid-links
-    if (source.startsWith('xf:') && target.startsWith('xf:')) {
-      return true;
-    }
-    return false;
-  }, []);
+  const isValidConnection = useCallback(
+    (connection: Connection | Edge) =>
+      isValidFieldRemapFlowConnection(connection, connectionContext),
+    [connectionContext],
+  );
 
   const onConnect = useCallback(
     (connection: Connection) => {
       if (!connection.source || !connection.target) {
         return;
       }
-      const next = connectionToMappingEdge({
+      if (!isValidFieldRemapFlowConnection(connection, connectionContext)) {
+        return;
+      }
+
+      const draftAsTarget = parseDraftTransformNodeId(connection.target);
+      if (draftAsTarget && connection.sourceHandle) {
+        const draft = drafts.find((item) => item.localId === draftAsTarget);
+        if (!draft) {
+          return;
+        }
+        const bound = bindDraftSource(draft, connection.sourceHandle);
+        const finalized = finalizeDraftTransform(bound, {
+          registry: transforms,
+          sources,
+          targets,
+          existing: edges,
+        });
+        if (finalized) {
+          const withoutTarget = edges.filter(
+            (edge) => edge.targetSlotId !== finalized.targetSlotId,
+          );
+          onEdgesChange([...withoutTarget, finalized]);
+          setDrafts(drafts.filter((item) => item.localId !== draft.localId));
+          setSelection({
+            kind: 'transformStep',
+            edgeId: finalized.id,
+            stepIndex: 0,
+          });
+          return;
+        }
+        setDrafts(drafts.map((item) => (item.localId === draft.localId ? bound : item)));
+        setSelection({ kind: 'draft', localId: draft.localId });
+        return;
+      }
+
+      const draftAsSource = parseDraftTransformNodeId(connection.source);
+      if (draftAsSource && connection.targetHandle) {
+        const draft = drafts.find((item) => item.localId === draftAsSource);
+        if (!draft) {
+          return;
+        }
+        const bound = bindDraftTarget(draft, connection.targetHandle);
+        const finalized = finalizeDraftTransform(bound, {
+          registry: transforms,
+          sources,
+          targets,
+          existing: edges,
+        });
+        if (finalized) {
+          const withoutTarget = edges.filter(
+            (edge) => edge.targetSlotId !== finalized.targetSlotId,
+          );
+          onEdgesChange([...withoutTarget, finalized]);
+          setDrafts(drafts.filter((item) => item.localId !== draft.localId));
+          setSelection({
+            kind: 'transformStep',
+            edgeId: finalized.id,
+            stepIndex: 0,
+          });
+          return;
+        }
+        setDrafts(drafts.map((item) => (item.localId === draft.localId ? bound : item)));
+        setSelection({ kind: 'draft', localId: draft.localId });
+        return;
+      }
+
+      const operatorAsTarget = parseOperatorNodeId(connection.target);
+      if (operatorAsTarget && connection.sourceHandle && onOperatorsChange) {
+        onOperatorsChange(
+          updateMappingOperator(operators, operatorAsTarget, (operator) =>
+            bindOperatorInput(operator, connection.sourceHandle!),
+          ),
+        );
+        setSelection({ kind: 'operator', operatorId: operatorAsTarget });
+        return;
+      }
+
+      const operatorAsSource = parseOperatorNodeId(connection.source);
+      if (operatorAsSource && connection.targetHandle && onOperatorsChange) {
+        onOperatorsChange(
+          updateMappingOperator(operators, operatorAsSource, (operator) =>
+            bindOperatorOutput(operator, connection.targetHandle!),
+          ),
+        );
+        setSelection({ kind: 'operator', operatorId: operatorAsSource });
+        return;
+      }
+
+      const result = applyFieldRemapFlowConnection({
         sourceNodeId: connection.source,
         targetNodeId: connection.target,
         sourceHandle: connection.sourceHandle,
         targetHandle: connection.targetHandle,
         existing: edges,
       });
-      if (!next) {
+      if (!result) {
         return;
       }
-      const withoutTarget = edges.filter((edge) => edge.targetSlotId !== next.targetSlotId);
-      onEdgesChange([...withoutTarget, next]);
+      const removeIds = new Set(result.removeEdgeIds ?? []);
+      const withoutTarget = edges.filter(
+        (edge) =>
+          edge.targetSlotId !== result.edge.targetSlotId &&
+          edge.id !== result.edge.id &&
+          !removeIds.has(edge.id),
+      );
+      onEdgesChange([...withoutTarget, result.edge]);
+      setSelection({ kind: 'edge', edgeId: result.edge.id });
     },
-    [edges, onEdgesChange],
+    [connectionContext, drafts, edges, onEdgesChange, setSelection, sources, targets, transforms],
   );
 
   const onEdgesDelete = useCallback(
@@ -219,138 +502,298 @@ function FieldRemapFlowCanvas({
         return;
       }
       onEdgesChange(edges.filter((edge) => !mappingIds.has(edge.id)));
+      if (
+        selection &&
+        (selection.kind === 'edge' || selection.kind === 'transformStep') &&
+        mappingIds.has(selection.edgeId)
+      ) {
+        setSelection(null);
+      }
     },
-    [edges, onEdgesChange],
+    [edges, onEdgesChange, selection, setSelection],
   );
 
-  const addTransform = (mappingEdgeId: string, transformId: string) => {
-    onEdgesChange(
-      edges.map((edge) => {
-        if (edge.id !== mappingEdgeId) {
-          return edge;
-        }
-        const current = edge.transformIds ?? [];
-        if (current.length >= MAX_TRANSFORM_CHAIN) {
-          return edge;
-        }
-        return { ...edge, transformIds: [...current, transformId] };
-      }),
-    );
-  };
-
-  const removeTransformStep = (mappingEdgeId: string, stepIndex: number) => {
-    onEdgesChange(
-      edges.map((edge) => {
-        if (edge.id !== mappingEdgeId) {
-          return edge;
-        }
-        const next = [...(edge.transformIds ?? [])];
-        next.splice(stepIndex, 1);
-        const optionSteps = edge.transformOptionSteps ? [...edge.transformOptionSteps] : undefined;
-        if (optionSteps) {
-          optionSteps.splice(stepIndex, 1);
-        }
-        return {
-          ...edge,
-          transformIds: next.length > 0 ? next : undefined,
-          transformOptionSteps: optionSteps && optionSteps.length > 0 ? optionSteps : undefined,
-        };
-      }),
-    );
-  };
+  const placeDraft = useCallback(
+    (transformId: string) => {
+      const draft = createDraftTransform(transformId);
+      setDrafts((current) => [...current, draft]);
+      setSelection({ kind: 'draft', localId: draft.localId });
+      setPlaceTransformId(transformId);
+    },
+    [setSelection],
+  );
 
   const onNodeClick = useCallback(
-    (_event: MouseEvent, node: Node) => {
+    (event: MouseEvent, node: Node) => {
       const data = node.data as FieldRemapFlowNodeData;
+      if (data.kind === 'draft-transform') {
+        setSelection({ kind: 'draft', localId: data.localId });
+        return;
+      }
+      if (data.kind === 'combine-operator' || data.kind === 'split-operator') {
+        if (event.altKey && onOperatorsChange) {
+          onOperatorsChange(removeMappingOperator(operators, data.operatorId));
+          if (selection?.kind === 'operator' && selection.operatorId === data.operatorId) {
+            setSelection(null);
+          }
+          return;
+        }
+        setSelection({ kind: 'operator', operatorId: data.operatorId });
+        return;
+      }
       if (data.kind !== 'transform') {
         return;
       }
-      if (_event.altKey) {
-        removeTransformStep(data.mappingEdgeId, data.stepIndex);
+      if (event.altKey) {
+        const edge = edges.find((item) => item.id === data.mappingEdgeId);
+        if (!edge) {
+          return;
+        }
+        const next = removeTransformStepFromEdge(edge, data.stepIndex);
+        onEdgesChange(edges.map((item) => (item.id === edge.id ? next : item)));
+        setSelection(
+          (next.transformIds?.length ?? 0) > 0
+            ? {
+                kind: 'transformStep',
+                edgeId: edge.id,
+                stepIndex: Math.min(data.stepIndex, (next.transformIds?.length ?? 1) - 1),
+              }
+            : { kind: 'edge', edgeId: edge.id },
+        );
+        return;
       }
+      setSelection({
+        kind: 'transformStep',
+        edgeId: data.mappingEdgeId,
+        stepIndex: data.stepIndex,
+      });
     },
-    [edges, onEdgesChange],
+    [edges, onEdgesChange, setSelection],
   );
 
-  const defaultTransformId = catalog[0]?.id ?? 'string:trim';
+  const onKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === 'Escape') {
+        setSelection(null);
+        setDrafts([]);
+      }
+    },
+    [setSelection],
+  );
 
   return (
-    <div className="workbench-field-remap-flow" data-testid="field-remap-mapper">
+    <div
+      className="workbench-field-remap-flow"
+      data-testid="field-remap-mapper"
+      onKeyDown={onKeyDown}
+    >
       <p className="workbench-field-remap-mapper__hint" data-testid="field-remap-hint">
-        Each object/table is one node with field ports. Drag a left field to a right field (one
-        source can fan out to many targets). Middle nodes are transforms (Alt-click to remove).
+        Convert-first: pick a convert in the palette, place it, then wire source → draft → target.
+        Select a convert note for the Convert editor; select a binding for lighter mapping detail.
+        Use n→m actions to author combine/split. Alt-click removes a convert step or operator.
+        Escape clears selection and unfinished drafts.
       </p>
 
-      <div className="workbench-field-remap-flow__canvas" data-testid="field-remap-flow">
-        <ReactFlow
-          nodes={nodes}
-          edges={flowEdges}
-          nodeTypes={nodeTypes}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onFlowEdgesChange}
-          onConnect={onConnect}
-          onEdgesDelete={onEdgesDelete}
-          onNodeClick={onNodeClick}
-          isValidConnection={isValidConnection}
-          fitView
-          fitViewOptions={{ padding: 0.12, maxZoom: 1.15 }}
-          proOptions={{ hideAttribution: true }}
-        >
-          <Background gap={16} color="var(--xy-background-pattern-color)" />
-          <Controls showInteractive={false} />
-          <MiniMap
-            pannable
-            zoomable
-            bgColor="var(--xy-minimap-background-color)"
-            maskColor="var(--xy-minimap-mask-background-color)"
-            nodeColor={(node) => {
-              const kind = (node.data as FieldRemapFlowNodeData | undefined)?.kind;
-              if (kind === 'source-object') {
-                return 'var(--vscode-charts-blue, #3794ff)';
-              }
-              if (kind === 'target-object') {
-                return 'var(--vscode-charts-green, #89d185)';
-              }
-              return 'var(--vscode-focusBorder, var(--color-accent, #3794ff))';
-            }}
-            nodeStrokeColor="var(--xy-minimap-node-stroke-color)"
-          />
-        </ReactFlow>
+      <div
+        className={
+          selection?.kind === 'transformStep'
+            ? 'workbench-field-remap-flow__workspace workbench-field-remap-flow__workspace--convert'
+            : 'workbench-field-remap-flow__workspace'
+        }
+        data-surface={
+          selection?.kind === 'transformStep'
+            ? 'convert-note'
+            : selection?.kind === 'draft'
+              ? 'draft-convert'
+              : selection?.kind === 'operator'
+                ? 'operator'
+                : 'binding'
+        }
+      >
+        <FieldRemapConvertPalette
+          transforms={transforms}
+          selectedTransformId={placeTransformId}
+          onSelectedTransformIdChange={setPlaceTransformId}
+          onPlaceDraft={placeDraft}
+          onAddCombine={
+            onOperatorsChange
+              ? () => {
+                  const next = createCombineOperator();
+                  onOperatorsChange([...operators, next]);
+                  setSelection({ kind: 'operator', operatorId: next.id });
+                }
+              : undefined
+          }
+          onAddSplit={
+            onOperatorsChange
+              ? () => {
+                  const next = createSplitOperator();
+                  onOperatorsChange([...operators, next]);
+                  setSelection({ kind: 'operator', operatorId: next.id });
+                }
+              : undefined
+          }
+        />
+
+        <div className="workbench-field-remap-flow__canvas" data-testid="field-remap-flow">
+          <ReactFlow
+            nodes={nodes}
+            edges={flowEdges}
+            nodeTypes={nodeTypes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onFlowEdgesChange}
+            onConnect={onConnect}
+            onEdgesDelete={onEdgesDelete}
+            onNodeClick={onNodeClick}
+            isValidConnection={isValidConnection}
+            fitView
+            fitViewOptions={{ padding: 0.12, maxZoom: 1.15 }}
+            proOptions={{ hideAttribution: true }}
+          >
+            <Background gap={16} color="var(--xy-background-pattern-color)" />
+            <Controls showInteractive={false} />
+            <MiniMap
+              pannable
+              zoomable
+              bgColor="var(--xy-minimap-background-color)"
+              maskColor="var(--xy-minimap-mask-background-color)"
+              nodeColor={(node) => {
+                const kind = (node.data as FieldRemapFlowNodeData | undefined)?.kind;
+                if (kind === 'source-object') {
+                  return 'var(--vscode-charts-blue, #3794ff)';
+                }
+                if (kind === 'target-object') {
+                  return 'var(--vscode-charts-green, #89d185)';
+                }
+                return 'var(--vscode-focusBorder, var(--color-accent, #3794ff))';
+              }}
+              nodeStrokeColor="var(--xy-minimap-node-stroke-color)"
+            />
+          </ReactFlow>
+        </div>
+
+        <FieldRemapDetailPanel
+          selection={selection}
+          edges={edges}
+          sources={sources}
+          targets={targets}
+          transforms={transforms}
+          onEdgesChange={onEdgesChange}
+          onSelectionChange={setSelection}
+          drafts={drafts}
+          onDiscardDraft={(localId) => {
+            setDrafts((current) => current.filter((item) => item.localId !== localId));
+          }}
+          operators={operators}
+          onOperatorsChange={onOperatorsChange}
+        />
       </div>
 
       <div className="workbench-field-remap-flow__bindings" data-testid="field-remap-edges">
         <h4>Bindings</h4>
         <ul>
-          {edges.map((edge) => (
-            <li key={edge.id} data-testid={`field-remap-lane-${edge.id}`}>
-              <code>
-                {edge.sourceFieldId} →{' '}
-                {(edge.transformIds ?? []).length > 0
-                  ? `${(edge.transformIds ?? []).join(' → ')} → `
-                  : ''}
-                {edge.targetSlotId}
-              </code>
-              <span className="workbench-field-remap-mapper__edge-actions">
-                {(edge.transformIds?.length ?? 0) < MAX_TRANSFORM_CHAIN ? (
+          {edges.map((edge) => {
+            const portTypes = edgePortTypes(edge, sources, targets);
+            const appendCatalog = listCompatibleTransforms({
+              registry: transforms,
+              edge,
+              stepIndex: edge.transformIds?.length ?? 0,
+              sourceType: portTypes.sourceType,
+              targetType: portTypes.targetType,
+              mode: 'append',
+            });
+            const defaultAddId = appendCatalog[0]?.id;
+            const listContext = canEditListContext(edge, sources, targets);
+            const selected =
+              (selection?.kind === 'edge' || selection?.kind === 'transformStep') &&
+              selection.edgeId === edge.id;
+
+            return (
+              <li
+                key={edge.id}
+                className={selected ? 'is-selected' : undefined}
+                data-testid={`field-remap-lane-${edge.id}`}
+              >
+                <button
+                  type="button"
+                  className="workbench-field-remap-flow__binding-select"
+                  data-testid={`field-remap-select-edge-${edge.id}`}
+                  onClick={() => setSelection({ kind: 'edge', edgeId: edge.id })}
+                >
+                  <code>
+                    {edge.sourceFieldId} →{' '}
+                    {(edge.transformIds ?? []).length > 0
+                      ? `${(edge.transformIds ?? []).join(' → ')} → `
+                      : ''}
+                    {edge.targetSlotId}
+                    {edge.itemEdges ? ` · ${edge.itemEdges.length} item fields` : ''}
+                  </code>
+                </button>
+                <span className="workbench-field-remap-mapper__edge-actions">
+                  {(edge.transformIds?.length ?? 0) < MAX_TRANSFORM_CHAIN && defaultAddId ? (
+                    <Button
+                      compact
+                      type="button"
+                      data-testid={`field-remap-add-node-${edge.id}`}
+                      onClick={() => {
+                        const next = addTransformStepToEdge(edge, defaultAddId, {
+                          registry: transforms,
+                          sourceType: portTypes.sourceType,
+                          targetType: portTypes.targetType,
+                        });
+                        if (!next) {
+                          return;
+                        }
+                        onEdgesChange(edges.map((item) => (item.id === edge.id ? next : item)));
+                        setSelection({
+                          kind: 'transformStep',
+                          edgeId: edge.id,
+                          stepIndex: (next.transformIds?.length ?? 1) - 1,
+                        });
+                      }}
+                    >
+                      + node
+                    </Button>
+                  ) : null}
+                  {listContext ? (
+                    <Button
+                      compact
+                      type="button"
+                      data-testid={`field-remap-edit-items-${edge.id}`}
+                      onClick={() => {
+                        if (!edge.itemEdges) {
+                          onEdgesChange(
+                            edges.map((item) =>
+                              item.id === edge.id ? enableListContextOnEdge(item) : item,
+                            ),
+                          );
+                        }
+                        setSelection({ kind: 'edge', edgeId: edge.id });
+                      }}
+                    >
+                      Edit items
+                    </Button>
+                  ) : null}
                   <Button
                     compact
                     type="button"
-                    data-testid={`field-remap-add-node-${edge.id}`}
-                    onClick={() => addTransform(edge.id, defaultTransformId)}
+                    onClick={() => {
+                      onEdgesChange(edges.filter((item) => item.id !== edge.id));
+                      if (
+                        selection &&
+                        (selection.kind === 'edge' || selection.kind === 'transformStep') &&
+                        selection.edgeId === edge.id
+                      ) {
+                        setSelection(null);
+                      }
+                    }}
                   >
-                    + node
+                    Remove
                   </Button>
-                ) : null}
-                <Button
-                  compact
-                  type="button"
-                  onClick={() => onEdgesChange(edges.filter((item) => item.id !== edge.id))}
-                >
-                  Remove
-                </Button>
-              </span>
-            </li>
-          ))}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>
@@ -358,7 +801,8 @@ function FieldRemapFlowCanvas({
 }
 
 /**
- * React Flow mapper: multi-port source object → transforms → multi-port target object.
+ * React Flow mapper: multi-port source object → convert notes → multi-port target object.
+ * Selection gates the side rail: binding detail vs dedicated Convert note editor.
  */
 export function FieldRemapFlowMapper(props: FieldRemapFlowMapperProps): JSX.Element {
   return (

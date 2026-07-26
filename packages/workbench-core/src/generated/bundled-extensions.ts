@@ -222,6 +222,16 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
       },
       activationEvents: ['onStartup'],
       contributes: {
+        documentViews: [
+          {
+            id: 'workbench-kit.builtin.editor.markdown-preview',
+            kind: 'preview',
+            label: 'Preview',
+            priority: 5,
+            filenamePatterns: ['*.md', '*.mdx'],
+            mimeTypes: ['text/markdown'],
+          },
+        ],
         editors: [
           {
             id: 'workbench-kit.builtin.editor.text',
@@ -260,6 +270,10 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
         'onCommand:workspace.rename',
         'onCommand:workspace.delete',
       ],
+      capabilities: {
+        requires: ['workbench.workspace'],
+      },
+      permissions: ['workspace.read', 'workspace.write'],
       contributes: {
         commands: [
           {
@@ -553,6 +567,10 @@ export const BUILTIN_WORKBENCH_EXTENSIONS = [
         extensionApi: '^0.0.0',
       },
       activationEvents: ['onStartup'],
+      capabilities: {
+        requires: ['workbench.workspace'],
+      },
+      permissions: ['workspace.read'],
       contributes: {
         commands: [
           {
@@ -670,8 +688,26 @@ export const SAMPLE_WORKBENCH_EXTENSIONS = [
         workbench: '^0.0.0',
         extensionApi: '^0.0.0',
       },
-      activationEvents: ['onView:workbench-kit.samples.jdw.panel'],
+      activationEvents: ['onStartup', 'onView:workbench-kit.samples.jdw.panel'],
       contributes: {
+        documentViews: [
+          {
+            id: 'workbench-kit.samples.jdw.widget-form',
+            kind: 'form',
+            label: 'Form',
+            priority: 20,
+            filenamePatterns: ['*.jdw.json', '*.jdw'],
+            mimeTypes: ['application/vnd.workbench-kit.jdw+json'],
+          },
+          {
+            id: 'workbench-kit.samples.jdw.widget-preview',
+            kind: 'preview',
+            label: 'Preview',
+            priority: 10,
+            filenamePatterns: ['*.jdw.json', '*.jdw'],
+            mimeTypes: ['application/vnd.workbench-kit.jdw+json'],
+          },
+        ],
         viewContainers: {
           activitybar: [
             {

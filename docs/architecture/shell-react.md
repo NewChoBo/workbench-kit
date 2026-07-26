@@ -88,14 +88,16 @@ hosts can bridge the same state through a host-owned `state.json` or user data
 store.
 
 `WorkbenchProvider` also uses the `EditorDocumentViewProviderRegistry` owned by
-`ExtensionRegistry` for text editor surfaces. Built-in JSON form, JDW preview,
-and Markdown preview providers are registered by default. Hosts can contribute
-additional form/preview providers through `documentViewProviders`, and activated
-extensions can register runtime providers through
+`ExtensionRegistry` for text editor surfaces. Shell defaults intentionally omit
+document views owned by extensions: Markdown preview comes from
+`builtin.editor`, and JDW form/preview come from `samples.jdw`. Hosts can still
+contribute additional form/preview providers through `documentViewProviders`, and
+activated extensions register runtime providers through
 `context.editorDocumentViews.registerProvider(...)` for manifest-declared
-`contributes.documentViews`. `EditorArea` can still accept local `viewProviders`
-for surface-specific overrides, but the provider registry is the canonical shell
-source.
+`contributes.documentViews`. Extension `render` markers are mapped to React
+surfaces in `EditorHostSurface` (for example `WorkbenchMarkdownPreview`).
+`EditorArea` can still accept local `viewProviders` for surface-specific
+overrides, but the provider registry is the canonical shell source.
 
 ### BottomPanel
 
