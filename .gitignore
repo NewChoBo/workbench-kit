@@ -5,6 +5,7 @@ storybook-static/
 .turbo/
 .pnpm-store/
 .npm-pack/
+.cache/
 tmp/
 packages/react/typecheck-exact-optional/.tmp-types/
 debug-storybook.log
