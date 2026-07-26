@@ -25,12 +25,14 @@ import {
   type ValueTransformRegistry,
 } from '@workbench-kit/field-remap';
 
+import { FieldRemapConvertPalette } from './convert-palette.js';
 import { FieldRemapDetailPanel } from './detail-panel.js';
 import {
   applyFieldRemapFlowConnection,
   isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
   parseDraftTransformNodeId,
+  parseOperatorNodeId,
   type FieldRemapCombineOperatorNodeData,
   type FieldRemapDraftTransformNodeData,
   type FieldRemapFlowEdgeData,
@@ -44,13 +46,19 @@ import {
   addTransformStepToEdge,
   bindDraftSource,
   bindDraftTarget,
+  bindOperatorInput,
+  bindOperatorOutput,
   canEditListContext,
+  createCombineOperator,
   createDraftTransform,
+  createSplitOperator,
   edgePortTypes,
   enableListContextOnEdge,
   finalizeDraftTransform,
   listCompatibleTransforms,
+  removeMappingOperator,
   removeTransformStepFromEdge,
+  updateMappingOperator,
   type FieldRemapDraftTransform,
   type FieldRemapSelection,
 } from './flow-ops.js';
@@ -263,8 +271,9 @@ export interface FieldRemapFlowMapperProps {
   readonly edges: readonly MappingEdge[];
   readonly transforms: ValueTransformRegistry;
   readonly onEdgesChange: (edges: readonly MappingEdge[]) => void;
-  /** Document v2 n→m operators (read-only multi-port Flow display). */
+  /** Document v2 n→m operators (display + authoring when onOperatorsChange is set). */
   readonly operators?: readonly MappingOperator[] | undefined;
+  readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
   readonly sourceTitle?: string | undefined;
   readonly targetTitle?: string | undefined;
   readonly selection?: FieldRemapSelection | undefined;
@@ -277,7 +286,8 @@ function FieldRemapFlowCanvas({
   edges,
   transforms,
   onEdgesChange,
-  operators,
+  operators = [],
+  onOperatorsChange,
   sourceTitle,
   targetTitle,
   selection: selectionProp,
@@ -287,12 +297,10 @@ function FieldRemapFlowCanvas({
   const selection = selectionProp !== undefined ? selectionProp : internalSelection;
   const setSelection = onSelectionChangeProp ?? setInternalSelection;
   const [drafts, setDrafts] = useState<readonly FieldRemapDraftTransform[]>([]);
-  const [placeTransformId, setPlaceTransformId] = useState('');
-
-  const placeCatalog = useMemo(
-    () => transforms.list().filter((definition) => definition.id !== 'identity'),
-    [transforms],
-  );
+  const [placeTransformId, setPlaceTransformId] = useState(() => {
+    const first = transforms.list().find((definition) => definition.id !== 'identity');
+    return first?.id ?? '';
+  });
 
   const graph = useMemo(
     () =>
@@ -312,18 +320,28 @@ function FieldRemapFlowCanvas({
   const nodesWithSelection = useMemo(
     () =>
       graph.nodes.map((node) => {
-        if (node.data.kind !== 'transform') {
-          return node;
+        if (node.data.kind === 'transform') {
+          const selected =
+            selection?.kind === 'transformStep' &&
+            selection.edgeId === node.data.mappingEdgeId &&
+            selection.stepIndex === node.data.stepIndex;
+          return {
+            ...node,
+            data: { ...node.data, selected },
+            selected,
+          };
         }
-        const selected =
-          selection?.kind === 'transformStep' &&
-          selection.edgeId === node.data.mappingEdgeId &&
-          selection.stepIndex === node.data.stepIndex;
-        return {
-          ...node,
-          data: { ...node.data, selected },
-          selected,
-        };
+        if (node.data.kind === 'draft-transform') {
+          const selected =
+            selection?.kind === 'draft' && selection.localId === node.data.localId;
+          return { ...node, selected };
+        }
+        if (node.data.kind === 'combine-operator' || node.data.kind === 'split-operator') {
+          const selected =
+            selection?.kind === 'operator' && selection.operatorId === node.data.operatorId;
+          return { ...node, selected };
+        }
+        return node;
       }),
     [graph.nodes, selection],
   );
@@ -337,8 +355,8 @@ function FieldRemapFlowCanvas({
   }, [graph.edges, nodesWithSelection, setNodes, setFlowEdges]);
 
   const connectionContext = useMemo(
-    () => ({ sources, targets, edges, transforms, drafts }),
-    [sources, targets, edges, transforms, drafts],
+    () => ({ sources, targets, edges, transforms, drafts, operators }),
+    [sources, targets, edges, transforms, drafts, operators],
   );
 
   const isValidConnection = useCallback(
@@ -373,10 +391,15 @@ function FieldRemapFlowCanvas({
           const withoutTarget = edges.filter((edge) => edge.targetSlotId !== finalized.targetSlotId);
           onEdgesChange([...withoutTarget, finalized]);
           setDrafts(drafts.filter((item) => item.localId !== draft.localId));
-          setSelection({ kind: 'edge', edgeId: finalized.id });
+          setSelection({
+            kind: 'transformStep',
+            edgeId: finalized.id,
+            stepIndex: 0,
+          });
           return;
         }
         setDrafts(drafts.map((item) => (item.localId === draft.localId ? bound : item)));
+        setSelection({ kind: 'draft', localId: draft.localId });
         return;
       }
 
@@ -397,10 +420,37 @@ function FieldRemapFlowCanvas({
           const withoutTarget = edges.filter((edge) => edge.targetSlotId !== finalized.targetSlotId);
           onEdgesChange([...withoutTarget, finalized]);
           setDrafts(drafts.filter((item) => item.localId !== draft.localId));
-          setSelection({ kind: 'edge', edgeId: finalized.id });
+          setSelection({
+            kind: 'transformStep',
+            edgeId: finalized.id,
+            stepIndex: 0,
+          });
           return;
         }
         setDrafts(drafts.map((item) => (item.localId === draft.localId ? bound : item)));
+        setSelection({ kind: 'draft', localId: draft.localId });
+        return;
+      }
+
+      const operatorAsTarget = parseOperatorNodeId(connection.target);
+      if (operatorAsTarget && connection.sourceHandle && onOperatorsChange) {
+        onOperatorsChange(
+          updateMappingOperator(operators, operatorAsTarget, (operator) =>
+            bindOperatorInput(operator, connection.sourceHandle!),
+          ),
+        );
+        setSelection({ kind: 'operator', operatorId: operatorAsTarget });
+        return;
+      }
+
+      const operatorAsSource = parseOperatorNodeId(connection.source);
+      if (operatorAsSource && connection.targetHandle && onOperatorsChange) {
+        onOperatorsChange(
+          updateMappingOperator(operators, operatorAsSource, (operator) =>
+            bindOperatorOutput(operator, connection.targetHandle!),
+          ),
+        );
+        setSelection({ kind: 'operator', operatorId: operatorAsSource });
         return;
       }
 
@@ -498,44 +548,11 @@ function FieldRemapFlowCanvas({
       onKeyDown={onKeyDown}
     >
       <p className="workbench-field-remap-mapper__hint" data-testid="field-remap-hint">
-        Wire source schema fields (left) to target schema fields (right). Optional convert notes
-        in the middle (`string:trim`, `array:join`, …) sit on the binding — place a draft then
-        wire ports, or drag through an existing convert node. Select a convert note to open the
-        Convert editor (registry id + options); select a wire/binding for lighter mapping detail.
-        Alt-click removes a convert step. Escape clears selection and unfinished drafts.
+        Convert-first: pick a convert in the palette, place it, then wire source → draft → target.
+        Select a convert note for the Convert editor; select a binding for lighter mapping detail.
+        Use n→m actions to author combine/split. Alt-click removes a convert step or operator.
+        Escape clears selection and unfinished drafts.
       </p>
-
-      <div className="workbench-field-remap-flow__place" data-testid="field-remap-place-palette">
-        <label>
-          <span>Place convert</span>
-          <select
-            aria-label="Convert step to place"
-            value={placeTransformId}
-            onChange={(event) => setPlaceTransformId(event.target.value)}
-          >
-            <option value="">Select…</option>
-            {placeCatalog.map((definition) => (
-              <option key={definition.id} value={definition.id}>
-                {definition.label} ({definition.id})
-              </option>
-            ))}
-          </select>
-        </label>
-        <Button
-          compact
-          type="button"
-          data-testid="field-remap-place-draft"
-          disabled={!placeTransformId}
-          onClick={() => {
-            if (!placeTransformId) {
-              return;
-            }
-            setDrafts((current) => [...current, createDraftTransform(placeTransformId)]);
-          }}
-        >
-          Place draft
-        </Button>
-      </div>
 
       <div
         className={
@@ -543,8 +560,41 @@ function FieldRemapFlowCanvas({
             ? 'workbench-field-remap-flow__workspace workbench-field-remap-flow__workspace--convert'
             : 'workbench-field-remap-flow__workspace'
         }
-        data-surface={selection?.kind === 'transformStep' ? 'convert-note' : 'binding'}
+        data-surface={
+          selection?.kind === 'transformStep'
+            ? 'convert-note'
+            : selection?.kind === 'draft'
+              ? 'draft-convert'
+              : selection?.kind === 'operator'
+                ? 'operator'
+                : 'binding'
+        }
       >
+        <FieldRemapConvertPalette
+          transforms={transforms}
+          selectedTransformId={placeTransformId}
+          onSelectedTransformIdChange={setPlaceTransformId}
+          onPlaceDraft={placeDraft}
+          onAddCombine={
+            onOperatorsChange
+              ? () => {
+                  const next = createCombineOperator();
+                  onOperatorsChange([...operators, next]);
+                  setSelection({ kind: 'operator', operatorId: next.id });
+                }
+              : undefined
+          }
+          onAddSplit={
+            onOperatorsChange
+              ? () => {
+                  const next = createSplitOperator();
+                  onOperatorsChange([...operators, next]);
+                  setSelection({ kind: 'operator', operatorId: next.id });
+                }
+              : undefined
+          }
+        />
+
         <div className="workbench-field-remap-flow__canvas" data-testid="field-remap-flow">
           <ReactFlow
             nodes={nodes}
@@ -590,6 +640,12 @@ function FieldRemapFlowCanvas({
           transforms={transforms}
           onEdgesChange={onEdgesChange}
           onSelectionChange={setSelection}
+          drafts={drafts}
+          onDiscardDraft={(localId) => {
+            setDrafts((current) => current.filter((item) => item.localId !== localId));
+          }}
+          operators={operators}
+          onOperatorsChange={onOperatorsChange}
         />
       </div>
 
@@ -608,7 +664,9 @@ function FieldRemapFlowCanvas({
             });
             const defaultAddId = appendCatalog[0]?.id;
             const listContext = canEditListContext(edge, sources, targets);
-            const selected = selection?.edgeId === edge.id;
+            const selected =
+              (selection?.kind === 'edge' || selection?.kind === 'transformStep') &&
+              selection.edgeId === edge.id;
 
             return (
               <li
@@ -681,7 +739,11 @@ function FieldRemapFlowCanvas({
                     type="button"
                     onClick={() => {
                       onEdgesChange(edges.filter((item) => item.id !== edge.id));
-                      if (selection?.edgeId === edge.id) {
+                      if (
+                        selection &&
+                        (selection.kind === 'edge' || selection.kind === 'transformStep') &&
+                        selection.edgeId === edge.id
+                      ) {
                         setSelection(null);
                       }
                     }}
