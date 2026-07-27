@@ -1,3 +1,4 @@
+import { isObjectRecord } from '../is-object-record.js';
 import type { JsonWidgetNode } from '../jdw/node.js';
 import { isJsonWidgetDynamicValueExpression, parseJsonWidgetData } from '../jdw/node.js';
 import { WORKBENCH_JDW_KNOWN_TYPES } from '../jdw/profile.js';
@@ -29,10 +30,6 @@ export interface ValidatedJsonWidgetData {
   readonly value: JsonWidgetNode | null;
   readonly issues: readonly ValidationIssue[];
   readonly valid: boolean;
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function isJdwNode(value: unknown): value is JsonWidgetNode {

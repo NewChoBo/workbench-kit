@@ -1,5 +1,6 @@
 import type { WidgetPlacementAsset, WidgetPlacementAssetKind } from '@workbench-kit/contracts';
 
+import { isObjectRecord } from '../is-object-record.js';
 import {
   genericWidgetToJdwNode,
   jdwNodeToGenericWidget,
@@ -24,10 +25,6 @@ export interface WidgetAssetPackageFiles {
 export interface ParsedWidgetAssetPackage {
   readonly value: WidgetPlacementAsset | null;
   readonly parseError: string | null;
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function readOptionalString(record: Record<string, unknown>, key: string): string | undefined {

@@ -1,5 +1,6 @@
 import type { WidgetPlacementAsset } from '@workbench-kit/contracts';
 
+import { isObjectRecord } from '../is-object-record.js';
 import {
   genericWidgetToJdwNode,
   jdwNodeToGenericWidget,
@@ -8,10 +9,6 @@ import {
 } from '../jdw/node.js';
 import type { ValidationIssue } from '../validate/json-widget-data.js';
 import type { GenericWidget } from './tree.js';
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
 
 function readSchemaDefaults(schema: Record<string, unknown> | undefined): JsonWidgetValueMap {
   if (!schema || !isObjectRecord(schema.properties)) {

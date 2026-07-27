@@ -1,3 +1,4 @@
+import { isObjectRecord } from '../is-object-record.js';
 import { compileScreenSpecToJson } from './compile.js';
 import type { JdwScreenSpec, ScreenNode } from './types.js';
 
@@ -13,10 +14,6 @@ export interface CompiledScreenSpecText {
 }
 
 const SCREEN_NODE_KINDS = new Set(['text', 'panel', 'expanded', 'row', 'column', 'grid', 'stack']);
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
 
 function parseError(error: unknown): string {
   if (error instanceof SyntaxError) {
