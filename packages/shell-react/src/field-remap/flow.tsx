@@ -12,6 +12,7 @@ import {
 } from 'react';
 import {
   Background,
+  ControlButton,
   Controls,
   Handle,
   MiniMap,
@@ -333,6 +334,22 @@ export interface FieldRemapFlowMapperProps {
    * backward compatibility with existing samples.
    */
   readonly showMinimap?: boolean | undefined;
+  /**
+   * When set, Flow Controls (+/−/fit) include a MiniMap toggle button in the same
+   * panel. Hosts should prefer this over a separate toolbar control.
+   */
+  readonly onShowMinimapChange?: ((show: boolean) => void) | undefined;
+  /**
+   * When false (default), hosts should project shapes with hidden fields omitted
+   * before passing `sources` / `targets`. Flow itself does not filter — this flag
+   * drives the Controls toggle pressed state only.
+   */
+  readonly includeHidden?: boolean | undefined;
+  /**
+   * When set, Flow Controls include a hidden-fields toggle next to zoom / MiniMap.
+   * Pair with host (or Panel) shape projection on `includeHidden`.
+   */
+  readonly onIncludeHiddenChange?: ((includeHidden: boolean) => void) | undefined;
   /** Pane context menu; host owns menu UI. Receives current Field Remap selection. */
   readonly onPaneContextMenu?:
     | ((event: MouseEvent | globalThis.MouseEvent, ctx: { selection: FieldRemapSelection }) => void)
@@ -375,6 +392,9 @@ function FieldRemapFlowCanvas({
   selection: selectionProp,
   onSelectionChange: onSelectionChangeProp,
   showMinimap = true,
+  onShowMinimapChange,
+  includeHidden = false,
+  onIncludeHiddenChange,
   onPaneContextMenu,
   onNodeContextMenu,
   onEdgeContextMenu,
@@ -713,6 +733,7 @@ function FieldRemapFlowCanvas({
       className="workbench-field-remap-flow"
       data-testid="field-remap-mapper"
       data-minimap={showMinimap ? 'on' : 'off'}
+      data-hidden-fields={includeHidden ? 'on' : 'off'}
       onKeyDown={onKeyDown}
     >
       <p className="workbench-field-remap-mapper__hint" data-testid="field-remap-hint">
@@ -784,7 +805,91 @@ function FieldRemapFlowCanvas({
           >
             <FieldRemapFlowActionsBridge flowActionsRef={flowActionsRef} />
             <Background gap={16} color="var(--xy-background-pattern-color)" />
-            <Controls showInteractive={false} fitViewOptions={DEFAULT_FIT_VIEW_OPTIONS} />
+            <Controls showInteractive={false} fitViewOptions={DEFAULT_FIT_VIEW_OPTIONS}>
+              {onShowMinimapChange ? (
+                <ControlButton
+                  aria-label={showMinimap ? chromeLabels.hideMinimap : chromeLabels.showMinimap}
+                  className={
+                    showMinimap
+                      ? 'workbench-field-remap-flow__minimap-toggle is-active'
+                      : 'workbench-field-remap-flow__minimap-toggle'
+                  }
+                  title={showMinimap ? chromeLabels.hideMinimap : chromeLabels.showMinimap}
+                  onClick={() => {
+                    onShowMinimapChange(!showMinimap);
+                  }}
+                >
+                  <svg
+                    aria-hidden="true"
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z" />
+                    <path d="M9 4v13.5" />
+                    <path d="M15 6.5V20" />
+                  </svg>
+                </ControlButton>
+              ) : null}
+              {onIncludeHiddenChange ? (
+                <ControlButton
+                  aria-label={
+                    includeHidden ? chromeLabels.hideHiddenFields : chromeLabels.showHiddenFields
+                  }
+                  aria-pressed={includeHidden}
+                  className={
+                    includeHidden
+                      ? 'workbench-field-remap-flow__hidden-toggle is-active'
+                      : 'workbench-field-remap-flow__hidden-toggle'
+                  }
+                  title={
+                    includeHidden ? chromeLabels.hideHiddenFields : chromeLabels.showHiddenFields
+                  }
+                  onClick={() => {
+                    onIncludeHiddenChange(!includeHidden);
+                  }}
+                >
+                  {includeHidden ? (
+                    <svg
+                      aria-hidden="true"
+                      fill="none"
+                      height="16"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.75"
+                      viewBox="0 0 24 24"
+                      width="16"
+                    >
+                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  ) : (
+                    <svg
+                      aria-hidden="true"
+                      fill="none"
+                      height="16"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.75"
+                      viewBox="0 0 24 24"
+                      width="16"
+                    >
+                      <path d="M3 3l18 18" />
+                      <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2" />
+                      <path d="M9.9 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17.4 17.4 0 0 1-3.2 4.4" />
+                      <path d="M6.1 6.1C3.9 7.7 2 12 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.2-.9" />
+                    </svg>
+                  )}
+                </ControlButton>
+              ) : null}
+            </Controls>
             {showMinimap ? (
               <MiniMap
                 pannable

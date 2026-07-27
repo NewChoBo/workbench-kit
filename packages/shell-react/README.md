@@ -63,13 +63,15 @@ for Flow-only embeds and custom bundler setups. The full barrel
 `FieldRemapFlowMapper` (and `FieldRemapPanel` pass-through) accept optional chrome
 hooks so hosts avoid CSS/DOM workarounds:
 
-| Prop                                                            | Behavior                                                              |
-| --------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `showMinimap`                                                   | Default `true`. When `false`, MiniMap is not mounted.                 |
-| `onPaneContextMenu` / `onNodeContextMenu` / `onEdgeContextMenu` | Native event + selection payload; host owns menu UI.                  |
-| `flowActionsRef`                                                | `{ fitView(options?) }` using the same defaults as Controls fit-view. |
-| `labels` / `t`                                                  | Override edge-list / Convert palette chrome (e.g. “Field maps”).      |
-| `ioChrome` (Panel)                                              | `'browse' \| 'edit' \| 'none'` — prefer browse for inspect-only I/O.  |
+| Prop                                                            | Behavior                                                                                              |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `showMinimap`                                                   | Default `true`. When `false`, MiniMap is not mounted.                                                 |
+| `onShowMinimapChange`                                           | When set, adds a MiniMap toggle inside Flow Controls (+/−/fit).                                       |
+| `includeHidden` / `onIncludeHiddenChange`                       | When callback set, adds a hidden-fields toggle in the same Controls. Host/Panel still project shapes. |
+| `onPaneContextMenu` / `onNodeContextMenu` / `onEdgeContextMenu` | Native event + selection payload; host owns menu UI.                                                  |
+| `flowActionsRef`                                                | `{ fitView(options?) }` using the same defaults as Controls fit-view.                                 |
+| `labels` / `t`                                                  | Override edge-list / Convert palette chrome (e.g. “Field maps”).                                      |
+| `ioChrome` (Panel)                                              | `'browse' \| 'edit' \| 'none'` — prefer browse for inspect-only I/O.                                  |
 
 ```tsx
 const flowActionsRef = useRef<FieldRemapFlowActions | null>(null);

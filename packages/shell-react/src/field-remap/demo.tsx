@@ -60,14 +60,6 @@ export function SampleFieldRemapDemo({
           <Button
             compact
             type="button"
-            data-testid="field-remap-toggle-minimap"
-            onClick={() => setShowMinimap((current) => !current)}
-          >
-            {showMinimap ? 'Hide MiniMap' : 'Show MiniMap'}
-          </Button>
-          <Button
-            compact
-            type="button"
             data-testid="field-remap-fit-view"
             onClick={() => flowActionsRef.current?.fitView()}
           >
@@ -84,6 +76,7 @@ export function SampleFieldRemapDemo({
         key={`${sample.id}:${ioChrome ?? 'default'}:${browseSeedShapes ? 'seed' : 'plain'}`}
         sample={sample}
         showMinimap={showMinimap}
+        onShowMinimapChange={setShowMinimap}
         ioChrome={ioChrome}
         editableShapes={ioChrome === 'browse' ? false : undefined}
         sources={browseShapes?.sources}

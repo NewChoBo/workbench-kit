@@ -21,6 +21,10 @@ export interface FieldRemapChromeLabels {
   readonly placeConvert: string;
   readonly operatorsTitle: string;
   readonly operatorsDescription: string;
+  readonly showMinimap: string;
+  readonly hideMinimap: string;
+  readonly showHiddenFields: string;
+  readonly hideHiddenFields: string;
 }
 
 export const defaultFieldRemapChromeLabels: FieldRemapChromeLabels = {
@@ -34,6 +38,10 @@ export const defaultFieldRemapChromeLabels: FieldRemapChromeLabels = {
   operatorsTitle: 'n→m operators',
   operatorsDescription:
     'Create combine (n→1) or split (1→n), then wire ports or edit in the side rail.',
+  showMinimap: 'Show minimap',
+  hideMinimap: 'Hide minimap',
+  showHiddenFields: 'Show hidden fields',
+  hideHiddenFields: 'Hide hidden fields',
 };
 
 /** Stable capability ids for optional `t()` injection (not free prose). */
@@ -46,6 +54,10 @@ export const fieldRemapChromeLabelKeys = {
   placeConvert: 'fieldRemap.placeConvert',
   operatorsTitle: 'fieldRemap.operatorsTitle',
   operatorsDescription: 'fieldRemap.operatorsDescription',
+  showMinimap: 'fieldRemap.showMinimap',
+  hideMinimap: 'fieldRemap.hideMinimap',
+  showHiddenFields: 'fieldRemap.showHiddenFields',
+  hideHiddenFields: 'fieldRemap.hideHiddenFields',
 } as const satisfies Record<keyof FieldRemapChromeLabels, string>;
 
 export function resolveFieldRemapChromeLabels(
@@ -70,5 +82,9 @@ export function resolveFieldRemapChromeLabels(
     placeConvert: resolve('placeConvert'),
     operatorsTitle: resolve('operatorsTitle'),
     operatorsDescription: resolve('operatorsDescription'),
+    showMinimap: resolve('showMinimap'),
+    hideMinimap: resolve('hideMinimap'),
+    showHiddenFields: resolve('showHiddenFields'),
+    hideHiddenFields: resolve('hideHiddenFields'),
   };
 }

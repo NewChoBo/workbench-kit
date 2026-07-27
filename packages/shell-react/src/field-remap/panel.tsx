@@ -83,6 +83,8 @@ export interface FieldRemapPanelProps {
   readonly targetShape?: unknown;
   /** Forwarded to {@link FieldRemapFlowMapper} (default true). */
   readonly showMinimap?: boolean | undefined;
+  /** Forwarded to {@link FieldRemapFlowMapper} Controls MiniMap toggle. */
+  readonly onShowMinimapChange?: FieldRemapFlowMapperProps['onShowMinimapChange'];
   readonly onPaneContextMenu?: FieldRemapFlowMapperProps['onPaneContextMenu'];
   readonly onNodeContextMenu?: FieldRemapFlowMapperProps['onNodeContextMenu'];
   readonly onEdgeContextMenu?: FieldRemapFlowMapperProps['onEdgeContextMenu'];
@@ -136,6 +138,7 @@ export function FieldRemapPanel({
   sourceSample: sourceSampleProp,
   targetShape: targetShapeProp,
   showMinimap,
+  onShowMinimapChange,
   onPaneContextMenu,
   onNodeContextMenu,
   onEdgeContextMenu,
@@ -396,14 +399,6 @@ export function FieldRemapPanel({
           className="workbench-field-remap-demo__shapes"
           data-testid="field-remap-io-browse-wrap"
         >
-          <label className="workbench-field-remap-io-browse__toggle">
-            <input
-              checked={includeHidden}
-              onChange={(event) => setIncludeHidden(event.target.checked)}
-              type="checkbox"
-            />
-            Show hidden fields
-          </label>
           <FieldRemapIoClassBrowse
             includeHidden={includeHidden}
             sources={sourceFields}
@@ -425,6 +420,9 @@ export function FieldRemapPanel({
         sourceTitle={sample.sourceLabel}
         targetTitle={sample.targetLabel}
         showMinimap={showMinimap}
+        onShowMinimapChange={onShowMinimapChange}
+        includeHidden={includeHidden}
+        onIncludeHiddenChange={setIncludeHidden}
         onPaneContextMenu={onPaneContextMenu}
         onNodeContextMenu={onNodeContextMenu}
         onEdgeContextMenu={onEdgeContextMenu}

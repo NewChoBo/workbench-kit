@@ -120,4 +120,39 @@ describe('FieldRemapFlowMapper host chrome', () => {
     const heading = container!.querySelector('.workbench-field-remap-flow__bindings > h4');
     expect(heading?.textContent).toBe('Field maps');
   });
+
+  it('includes a Controls MiniMap toggle when onShowMinimapChange is set', async () => {
+    const onShowMinimapChange = vi.fn();
+    await renderMapper({ showMinimap: false, onShowMinimapChange });
+
+    const toggle = container!.querySelector(
+      '.workbench-field-remap-flow__minimap-toggle',
+    ) as HTMLButtonElement | null;
+    expect(toggle).toBeTruthy();
+
+    await act(async () => {
+      toggle!.click();
+    });
+
+    expect(onShowMinimapChange).toHaveBeenCalledWith(true);
+  });
+
+  it('includes a Controls hidden-fields toggle when onIncludeHiddenChange is set', async () => {
+    const onIncludeHiddenChange = vi.fn();
+    await renderMapper({ includeHidden: false, onIncludeHiddenChange });
+
+    const mapper = container!.querySelector('[data-testid="field-remap-mapper"]');
+    expect(mapper?.getAttribute('data-hidden-fields')).toBe('off');
+
+    const toggle = container!.querySelector(
+      '.workbench-field-remap-flow__hidden-toggle',
+    ) as HTMLButtonElement | null;
+    expect(toggle).toBeTruthy();
+
+    await act(async () => {
+      toggle!.click();
+    });
+
+    expect(onIncludeHiddenChange).toHaveBeenCalledWith(true);
+  });
 });

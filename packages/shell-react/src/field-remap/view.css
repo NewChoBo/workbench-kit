@@ -483,6 +483,23 @@
   max-height: 12px;
 }
 
+.workbench-field-remap-flow__canvas
+  .react-flow__controls-button.workbench-field-remap-flow__minimap-toggle
+  svg,
+.workbench-field-remap-flow__canvas
+  .react-flow__controls-button.workbench-field-remap-flow__hidden-toggle
+  svg {
+  fill: none;
+  stroke: currentColor;
+}
+
+.workbench-field-remap-flow__canvas
+  .react-flow__controls-button.workbench-field-remap-flow__minimap-toggle.is-active,
+.workbench-field-remap-flow__canvas
+  .react-flow__controls-button.workbench-field-remap-flow__hidden-toggle.is-active {
+  color: var(--vscode-focusBorder, var(--color-accent, #3794ff));
+}
+
 .workbench-field-remap-flow__canvas .react-flow__minimap {
   margin: 0.5rem;
   border: 1px solid var(--vscode-panel-border, var(--color-border));
