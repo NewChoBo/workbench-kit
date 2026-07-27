@@ -1,5 +1,6 @@
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 
+import { clampNumber } from '../widget/number-utils.js';
 import { getWidgetChildren, type GenericWidget } from '../widget/tree.js';
 import { isGenericWidget } from '../widget/type-guards.js';
 import { computeGridChildRect } from './grid.js';
@@ -39,10 +40,6 @@ export const DEFAULT_LAYOUT_CONSTRAINTS: LayoutConstraints = {
 
 function readNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-function clampNumber(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }
 
 function constraintsToRect(constraints: LayoutConstraints): Rect {

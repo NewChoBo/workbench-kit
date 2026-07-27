@@ -1,5 +1,6 @@
 import type { WidgetPlacementAssetKind, WidgetPlacementPolicy } from '@workbench-kit/contracts';
 
+import { readPositiveInteger } from './number-utils.js';
 import { getWidgetChildren, type GenericWidget } from './tree.js';
 import { isFiniteNumber, isGenericWidget } from './type-guards.js';
 
@@ -22,11 +23,6 @@ function omitKeys(widget: GenericWidget, keys: readonly string[]): GenericWidget
 
 function hasGridPlacement(widget: GenericWidget): boolean {
   return isFiniteNumber(widget.col) && isFiniteNumber(widget.row);
-}
-
-function readPositiveInteger(value: unknown): number | null {
-  if (!isFiniteNumber(value) || value < 1) return null;
-  return Math.floor(value);
 }
 
 export function stripExternalPlacement(widget: GenericWidget, parentType: string): GenericWidget {
