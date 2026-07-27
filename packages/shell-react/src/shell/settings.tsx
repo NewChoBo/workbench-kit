@@ -23,6 +23,7 @@ import {
 } from '@workbench-kit/workbench-core';
 import type { PreferenceScope } from '@workbench-kit/workbench-config';
 
+import { isRecord } from '../is-record.js';
 import { useWorkbench } from './provider.js';
 import { WORKBENCH_PREFERENCE_SCOPES } from './settings-constants.js';
 
@@ -592,8 +593,4 @@ function titleFromExtensionId(extensionId: string): string {
 
 function slugId(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
