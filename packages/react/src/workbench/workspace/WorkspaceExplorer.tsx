@@ -23,6 +23,10 @@ import { TextInput } from '../../primitives/text-input';
 import { cxCodicon } from '../../utils/codicon';
 import { explorerTreeDepthStyle } from './explorer-tree-style';
 import { flattenWorkspaceTree } from './tree';
+import {
+  resolveWorkspaceExplorerHorizontalNavigationAction,
+  resolveWorkspaceExplorerNavigationPath,
+} from './workspaceExplorerKeyboard.js';
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceTreeNode } from './types';
 
@@ -30,7 +34,7 @@ export const WORKSPACE_EXPLORER_DRAG_DATA_TYPE = 'application/x-newchobo-ui-work
 export const WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE = `${WORKSPACE_EXPLORER_DRAG_DATA_TYPE}.metadata`;
 
 export type WorkspaceExplorerSelectionChangeReason =
-  'clear' | 'click' | 'context-menu' | 'drag-start' | 'folder-click';
+  'clear' | 'click' | 'context-menu' | 'drag-start' | 'folder-click' | 'keyboard';
 
 export interface WorkspaceExplorerSelectionChangeMeta {
   event?: DragEvent<HTMLButtonElement> | MouseEvent<HTMLButtonElement>;
@@ -91,6 +95,8 @@ export interface WorkspaceExplorerInlineEditCommitMeta {
 
 export interface WorkspaceExplorerProps {
   activePath?: string;
+  /** Accessible name for the `role="tree"` list. Defaults to "Workspace files". */
+  ariaLabel?: string;
   dragDataType?: string;
   dragMetadataDataType?: string;
   dragMetadataFactory?: WorkspaceExplorerDragMetadataFactory;
@@ -120,10 +126,16 @@ export interface WorkspaceExplorerProps {
   renderItemActions?: (node: WorkspaceTreeNode, meta: WorkspaceExplorerItemActionMeta) => ReactNode;
   selectedPaths?: Iterable<string>;
   selectionAnchorPath?: string;
+  /**
+   * When true (default), Arrow/Home/End focus updates also emit selection
+   * (file → single `paths`; folder → `{ focusedPath, paths: [] }`).
+   */
+  selectionFollowsFocus?: boolean;
 }
 
 export function WorkspaceExplorer({
   activePath,
+  ariaLabel = 'Workspace files',
   dragDataType = WORKSPACE_EXPLORER_DRAG_DATA_TYPE,
   dragMetadataDataType = WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE,
   dragMetadataFactory,
@@ -146,6 +158,7 @@ export function WorkspaceExplorer({
   renderItemActions,
   selectedPaths = [],
   selectionAnchorPath,
+  selectionFollowsFocus = true,
 }: WorkspaceExplorerProps) {
   const sectionBaseDepth = useSidebarSectionBaseDepth();
   const draggedPathsRef = useRef<string[]>([]);
@@ -311,7 +324,85 @@ export function WorkspaceExplorer({
     onItemContextMenu?.(event, node, meta);
   };
 
+  const focusPath = (path: string, node: WorkspaceTreeNode | undefined) => {
+    if (!onSelectionChange || !selectionFollowsFocus) {
+      if (onSelectionChange) {
+        onSelectionChange(
+          {
+            ...currentSelection,
+            focusedPath: path,
+            paths: node?.type === 'folder' ? [] : currentSelection.paths,
+          },
+          { mode: 'single', node, reason: 'keyboard' },
+        );
+      }
+      return;
+    }
+
+    if (node?.type === 'folder') {
+      onSelectionChange(
+        { ...currentSelection, focusedPath: path, paths: [] },
+        { mode: 'single', node, reason: 'keyboard' },
+      );
+      return;
+    }
+
+    onSelectionChange(
+      {
+        ...updateWorkspaceSelection({
+          mode: 'single',
+          orderedPaths: visibleFilePaths,
+          selection: currentSelection,
+          targetPath: path,
+        }),
+        focusedPath: path,
+      },
+      { mode: 'single', node, reason: 'keyboard' },
+    );
+  };
+
   const handleItemKeyDown = (event: KeyboardEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
+    if (
+      event.key === 'ArrowDown' ||
+      event.key === 'ArrowUp' ||
+      event.key === 'Home' ||
+      event.key === 'End'
+    ) {
+      const nextPath = resolveWorkspaceExplorerNavigationPath(
+        visibleNodes,
+        focusedPath ?? node.path,
+        event.key,
+      );
+      if (!nextPath || nextPath === (focusedPath ?? node.path)) {
+        return;
+      }
+      event.preventDefault();
+      const nextNode = visibleNodes.find((row) => row.node.path === nextPath)?.node;
+      focusPath(nextPath, nextNode);
+      return;
+    }
+
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      const action = resolveWorkspaceExplorerHorizontalNavigationAction(
+        visibleNodes,
+        focusedPath ?? node.path,
+        expandedPaths,
+        event.key,
+        { filterActive: Boolean(filterQuery.trim()) },
+      );
+      if (!action) {
+        return;
+      }
+      event.preventDefault();
+      if (action.type === 'toggle') {
+        onToggleFolder(action.path);
+        return;
+      }
+      const nextNode = visibleNodes.find((row) => row.node.path === action.path)?.node;
+      focusPath(action.path, nextNode);
+      return;
+    }
+
     if (event.key !== 'Delete' && event.key !== 'F2') return;
 
     const meta = getItemActionMeta(node);
@@ -506,8 +597,10 @@ export function WorkspaceExplorer({
   return (
     <SideBarList
       fill
-      aria-label="Workspace files"
+      aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Delete F2"
+      aria-label={ariaLabel}
       dropTarget={dropTargetPath === ''}
+      role="tree"
       onContextMenu={(event) => {
         onBackgroundContextMenu?.(event);
       }}
@@ -520,7 +613,7 @@ export function WorkspaceExplorer({
         }
       }}
     >
-      {visibleNodes.map(({ depth, node }) => {
+      {visibleNodes.map(({ depth, node }, index) => {
         const isFolder = node.type === 'folder';
         const expanded = expandedPaths.has(node.path) || Boolean(filterQuery.trim());
         const isFocused = focusedPath === node.path;
@@ -528,6 +621,7 @@ export function WorkspaceExplorer({
         const dropTarget = isFolder && dropTargetPath === node.path;
         const editingRename =
           inlineEdit?.kind.startsWith('rename') && inlineEdit.path === node.path;
+        const tabIndex = isFocused || (!focusedPath && index === 0) ? 0 : -1;
 
         return editingRename ? (
           renderInlineEdit({
@@ -553,6 +647,13 @@ export function WorkspaceExplorer({
               draggable={Boolean(onRequestMove)}
               dropTarget={dropTarget}
               selected={selected}
+              tabIndex={tabIndex}
+              wrapperProps={{
+                role: 'treeitem',
+                'aria-level': depth + 1,
+                'aria-selected': selected,
+                ...(isFolder ? { 'aria-expanded': expanded } : {}),
+              }}
               onClick={(event) => {
                 if (isFolder) {
                   selectFolder(event, node);

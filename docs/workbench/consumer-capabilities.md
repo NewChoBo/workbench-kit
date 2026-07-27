@@ -485,6 +485,7 @@ themselves as fill (clip); only named scroll owners may overflow.
 | `WorkspaceExplorerPanel` toolbar  | `toolbarLeading` / `toolbarTrailing` / `toolbarStatus` plus optional New file/folder/refresh |
 | `onBackgroundContextMenu`         | Empty-tree / background context menu (item menus keep `onItemContextMenu`)                   |
 | `renderItemActions`               | Per-row trailing actions (folder hover new-file/folder/delete, etc.)                         |
+| ARIA tree keyboard                | `role="tree"` / `treeitem`; Arrow/Home/End; `selectionFollowsFocus` (default true)           |
 | `canMutatePath` (controller port) | Guard create/rename/delete/move (`boolean` or error `string`)                                |
 | `inlineEditMessages` (controller) | Override invalid-name / already-exists / failure copy for i18n                               |
 | `resolveExplorerActionPaths`      | `@workbench-kit/workspace` — VS Code-like focus vs selection for command targets             |
@@ -494,7 +495,7 @@ themselves as fill (clip); only named scroll owners may overflow.
 
 **When not to use:** Product-specific library browsers — use catalog primitives.
 
-**Selection policy:** See [explorer-selection-policy.md](./explorer-selection-policy.md).
+**Selection / keyboard policy:** See [explorer-selection-policy.md](./explorer-selection-policy.md).
 
 ---
 
