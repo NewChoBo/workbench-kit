@@ -75,6 +75,13 @@ export type {
   WorkbenchNoticePosition,
   WorkbenchNoticeTone,
 } from './WorkbenchNotice.js';
+export { createWorkbenchNotify } from './createWorkbenchNotify.js';
+export type {
+  WorkbenchNotificationAction,
+  WorkbenchNotify,
+  WorkbenchNotifyOptions,
+} from './createWorkbenchNotify.js';
+export { useWorkbenchNotify } from './useWorkbenchNotify.js';
 export { KeybindingCaptureField } from './KeybindingCaptureField.js';
 export type { KeybindingCaptureFieldProps } from './KeybindingCaptureField.js';
 export { KeybindingManagementPanel } from './KeybindingManagementPanel.js';
