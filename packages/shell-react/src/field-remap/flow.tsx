@@ -814,6 +814,7 @@ function FieldRemapFlowCanvas({
                       ? 'workbench-field-remap-flow__minimap-toggle is-active'
                       : 'workbench-field-remap-flow__minimap-toggle'
                   }
+                  data-testid="field-remap-toggle-minimap"
                   title={showMinimap ? chromeLabels.hideMinimap : chromeLabels.showMinimap}
                   onClick={() => {
                     onShowMinimapChange(!showMinimap);
@@ -847,6 +848,7 @@ function FieldRemapFlowCanvas({
                       ? 'workbench-field-remap-flow__hidden-toggle is-active'
                       : 'workbench-field-remap-flow__hidden-toggle'
                   }
+                  data-testid="field-remap-toggle-hidden-fields"
                   title={
                     includeHidden ? chromeLabels.hideHiddenFields : chromeLabels.showHiddenFields
                   }

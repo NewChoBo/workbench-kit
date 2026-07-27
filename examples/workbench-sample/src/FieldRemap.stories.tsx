@@ -71,7 +71,8 @@ export const HostChromeHooks: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('field-remap-host-chrome')).toBeVisible();
     await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-minimap', 'on');
-    await userEvent.click(canvas.getByTestId('field-remap-toggle-minimap'));
+    // MiniMap toggle lives in Flow Controls (not host chrome) when onShowMinimapChange is set.
+    await userEvent.click(await canvas.findByTestId('field-remap-toggle-minimap'));
     await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-minimap', 'off');
     await expect(canvasElement.querySelector('.react-flow__minimap')).toBeNull();
     await userEvent.click(canvas.getByTestId('field-remap-fit-view'));
