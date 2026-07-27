@@ -1,3 +1,5 @@
+import { isSchemeUrlTarget } from '../url/scheme-url-target';
+
 export type LaunchTarget = 'url' | 'app' | 'file' | 'folder' | null;
 export type LaunchpadDataBindingSyncMode = 'snapshot' | 'live';
 
@@ -281,13 +283,6 @@ function createLaunchpadArtworkBinding(item: {
     preferredAssetId: null,
     remoteUrl: null,
   };
-}
-
-function isSchemeUrlTarget(target: string): boolean {
-  if (/^[a-zA-Z]:[\\/]/.test(target)) {
-    return false;
-  }
-  return /^[a-z][a-z0-9+.-]*:/i.test(target);
 }
 
 function looksLikeFilePath(target: string): boolean {
