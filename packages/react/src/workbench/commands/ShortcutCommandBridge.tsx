@@ -5,6 +5,7 @@ import {
   type CommandRegistry,
   type CommandValue,
 } from '@workbench-kit/platform';
+import { normalizeKeyToken } from '../../utils/normalizeKeyToken';
 
 export type WorkbenchShortcutPlatform = 'linux' | 'mac' | 'unknown' | 'windows';
 
@@ -103,19 +104,6 @@ function getDefaultShortcutPlatform(): WorkbenchShortcutPlatform {
   if (platform.includes('win')) return 'windows';
   if (platform.includes('linux')) return 'linux';
   return 'unknown';
-}
-
-function normalizeKeyToken(token: string) {
-  const key = token.trim().toLowerCase();
-  if (key === 'del') return 'delete';
-  if (key === 'esc') return 'escape';
-  if (key === 'return') return 'enter';
-  if (key === 'spacebar' || key === 'space') return 'space';
-  if (key === 'arrowup' || key === 'up') return 'arrowup';
-  if (key === 'arrowdown' || key === 'down') return 'arrowdown';
-  if (key === 'arrowleft' || key === 'left') return 'arrowleft';
-  if (key === 'arrowright' || key === 'right') return 'arrowright';
-  return key;
 }
 
 function normalizeEventKey(key: string) {
