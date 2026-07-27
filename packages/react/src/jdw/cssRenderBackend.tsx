@@ -22,6 +22,7 @@ import {
   type WidgetPath,
 } from '@workbench-kit/jdw';
 
+import { readNumber } from '../utils/readNumber';
 import { renderBuiltinWidgetLeaf } from './builtins/renderBuiltinWidgetLeaf.js';
 import { BUILTIN_JDW_REGISTRY } from './createBuiltinJdwRegistry.js';
 export interface CssRenderBackendOptions {
@@ -44,10 +45,6 @@ const LAYOUT_CONTAINER_TYPES = new Set([
   'center',
   'sized_box',
 ]);
-
-function readNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
 
 function renderFromRegistry(
   registry: WidgetRegistryContract<unknown>,

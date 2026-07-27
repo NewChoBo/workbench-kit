@@ -26,6 +26,7 @@ import {
   type WidgetResizeHandlePosition,
 } from '@workbench-kit/jdw';
 
+import { readNumber } from '../utils/readNumber';
 import {
   WorkbenchCanvasFrameHandle,
   WorkbenchCanvasItemFrame,
@@ -219,10 +220,6 @@ function eventPointInLayout(
 function readPositiveInteger(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) return null;
   return Math.floor(value);
-}
-
-function readNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 function appendLineRect(rect: Rect, axis: 'x' | 'y', children: readonly LayoutNodeResult[]): Rect {
