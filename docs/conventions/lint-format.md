@@ -32,7 +32,10 @@ pnpm format:check
 pnpm format
 ```
 
-`pnpm validate` runs typecheck, lint, format check, and sample build together.
+`pnpm validate` runs `validate:fast` (static checks + unit tests) then
+`validate:ui` (Storybook build + required play tests). Use
+`pnpm validate:static` for typecheck, lint, format check, and the other static
+gates without unit tests or Storybook.
 
 ## Rules
 
