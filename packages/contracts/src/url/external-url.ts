@@ -1,3 +1,5 @@
+import { isSchemeUrlTarget } from './scheme-url-target';
+
 const EXTERNAL_URL_PROTOCOLS: Record<ExternalUrlPolicy, ReadonlySet<string>> = {
   'system-launch': new Set(['http:', 'https:', 'steam:']),
   'web-navigation': new Set(['http:', 'https:']),
@@ -43,11 +45,4 @@ export function normalizeExternalUrlTarget(
   }
 
   return parsedTarget.toString();
-}
-
-function isSchemeUrlTarget(target: string): boolean {
-  if (/^[a-zA-Z]:[\\/]/.test(target)) {
-    return false;
-  }
-  return /^[a-z][a-z0-9+.-]*:/i.test(target);
 }
