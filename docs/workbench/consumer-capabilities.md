@@ -527,6 +527,8 @@ Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage`
 
 **Purpose:** Fixed-position menu (`items`, `x`, `y`, `onClose`). Items: label, icon, shortcut, `onSelect`, separators. Icon and shortcut columns are opt-in: when no item provides `icon` / `shortcut`, those columns are omitted (`data-has-icons` / `data-has-shortcuts`) so empty grid tracks do not add side padding. Selecting an item calls `onSelect` then `onClose`. Dismiss also runs on outside pointer down, Escape, scroll, and resize (`useFixedOverlayDismiss`). Coordinates are viewport (`clientX` / `clientY`).
 
+**Keyboard / a11y:** `role="menu"` / `menuitem` with a WAI-ARIA menu model — ArrowUp/ArrowDown and Home/End move highlight (skipping disabled items and separators), Enter/Space activate, Escape closes. Highlight stays in sync with pointer hover (`data-highlighted`); roving `tabIndex` keeps only the highlighted enabled item at `0`. Nested submenus are out of scope for this surface.
+
 **When to use:** Tab context menu, catalog item menu, facet overflow.
 
 **When not to use:** Persistent filter panels — use `LibraryFacetFilterStrip` for toolbar cascade menus, or `LibraryFacetFilterPanel` / dialog for a full dialog. Hosts that hand-build `.ui-context-menu` markup (facet strip, chat history) must set `data-has-icons` / `data-has-shortcuts` themselves; those attributes are an internal layout contract, not a public props API.
