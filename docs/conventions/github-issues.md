@@ -205,7 +205,7 @@ Bad:
 ```markdown
 - [ ] Works in our app
 - [ ] Looks good
-- [ ] Port the TilePaper helper
+- [ ] Port the host helper
 ```
 
 ## Storybook / sample expectations

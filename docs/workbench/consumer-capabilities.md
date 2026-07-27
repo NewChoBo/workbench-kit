@@ -1,7 +1,7 @@
 # Consumer Capabilities Reference
 
 **Status:** Active consumer contract  
-**Last updated:** 2026-07-26  
+**Last updated:** 2026-07-27  
 **Audience:** Host applications that compose `@workbench-kit/react` (browser, desktop, VS Code webviews, sample host)
 
 This document is the **integration contract** for reusable workbench UI. It inventories primitives and shell surfaces that a reference desktop consumer actually wires today. It is not a Storybook catalog — use Storybook and `examples/workbench-sample` for visual exploration.
@@ -702,7 +702,10 @@ Browse-first Storybook: `Workbench Sample/Field Remap` → **I/O browse (classRe
 
 ## Settings patterns (reference)
 
-Content Hub settings modal uses kit theme provider and settings sections from `@workbench-kit/react/workbench/settings` (not duplicated here). For schema-driven forms see [schema-form-field-widgets.md](./schema-form-field-widgets.md).
+Integrating hosts typically compose settings modals from the kit theme provider
+and settings sections in `@workbench-kit/react/workbench/settings` (not
+duplicated here). For schema-driven forms see
+[schema-form-field-widgets.md](./schema-form-field-widgets.md).
 
 **VS Code analogue:** Settings editor / preferences UI.
 
@@ -723,9 +726,9 @@ Content Hub settings modal uses kit theme provider and settings sections from `@
 
 ## Host integration rules
 
-TilePaper Content Hub maps these rules to a host-specific index:
-[`custom_launcher/docs/developer/conventions/workbench-kit-capabilities.md`](../../../../custom_launcher/docs/developer/conventions/workbench-kit-capabilities.md)
-(UI/UX ownership section).
+Keep host-specific UI/UX ownership notes in the integrating host’s private
+tracker. This public inventory only records the kit-side ownership rules below
+(see also [public-reference-policy.md](../conventions/public-reference-policy.md)).
 
 1. **Shell chrome belongs to the kit** — activity bar, editor tabs, dialog frames, property sections, scroll areas.
 2. **Tab-scoped actions → `EditorTabs.addons`** — not a duplicate row in the detail pane.
