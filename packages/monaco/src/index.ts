@@ -14,15 +14,28 @@ export {
 export {
   MONACO_DARK_THEME_ID,
   MONACO_LIGHT_THEME_ID,
+  buildDefaultMonacoTokenRules,
   buildMonacoThemeColors,
   defineMonacoWorkbenchTheme,
+  defineOrUpdateWorkbenchMonacoTheme,
+  getWorkbenchMonacoTokenRules,
   getWorkbenchThemeAppearanceSignature,
+  mergeMonacoTokenRules,
+  monacoRulesFromTokenColors,
   monacoThemeForWorkspaceTheme,
   readWorkbenchThemeColors,
   resolveMonacoThemeRoot,
+  setWorkbenchMonacoTokenRules,
+  toMonacoTokenColor,
   withAlpha,
+  buildWorkbenchMonacoThemeInput,
+  type DefineMonacoWorkbenchThemeOptions,
+  type MonacoTokenRule,
   type MonacoWorkbenchResolvedTheme,
+  type MonacoWorkbenchThemeBase,
+  type WorkbenchMonacoThemeInput,
   type WorkbenchThemeCssColors,
+  type WorkbenchTokenColorSetting,
 } from './monacoWorkbenchTheme.js';
 export { useMonacoWorkbenchThemeSync } from './useMonacoWorkbenchThemeSync.js';
 export { configureWorkspaceEditorTypeScriptDiagnostics } from './workspaceTypeScriptDiagnostics.js';
