@@ -1,6 +1,7 @@
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 
 import { getWidgetChildren, type GenericWidget } from '../widget/tree.js';
+import { isGenericWidget } from '../widget/type-guards.js';
 import { computeGridChildRect } from './grid.js';
 import { computeLinearChildRects } from './linear.js';
 import { computeStackChildRect } from './stack.js';
@@ -42,15 +43,6 @@ function readNumber(value: unknown): number | undefined {
 
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
-}
-
-function isGenericWidget(value: unknown): value is GenericWidget {
-  return (
-    value !== null &&
-    !Array.isArray(value) &&
-    typeof value === 'object' &&
-    typeof (value as GenericWidget).type === 'string'
-  );
 }
 
 function constraintsToRect(constraints: LayoutConstraints): Rect {

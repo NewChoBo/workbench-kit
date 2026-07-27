@@ -10,6 +10,7 @@ import {
   replaceArrayChild,
   reorderArrayChild,
 } from './child-ops.js';
+import { isGenericWidget, isSingleChildContainerType } from './type-guards.js';
 
 /**
  * Editable authoring projection of a JDW runtime widget node.
@@ -30,26 +31,6 @@ export interface WidgetNode {
 export interface WidgetTreeEditResult {
   readonly root: GenericWidget;
   readonly changed: boolean;
-}
-
-function isGenericWidget(value: unknown): value is GenericWidget {
-  return (
-    value !== null &&
-    !Array.isArray(value) &&
-    typeof value === 'object' &&
-    typeof (value as WidgetTypeShape).type === 'string'
-  );
-}
-
-function isSingleChildContainerType(type: string): boolean {
-  return (
-    type === 'box' ||
-    type === 'container' ||
-    type === 'padding' ||
-    type === 'align' ||
-    type === 'center' ||
-    type === 'sized_box'
-  );
 }
 
 export function getWidgetChildren(widget: GenericWidget): readonly GenericWidget[] {

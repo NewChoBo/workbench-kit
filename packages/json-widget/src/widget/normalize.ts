@@ -1,6 +1,7 @@
 import type { WidgetPlacementAssetKind, WidgetPlacementPolicy } from '@workbench-kit/contracts';
 
 import { getWidgetChildren, type GenericWidget } from './tree.js';
+import { isFiniteNumber, isGenericWidget } from './type-guards.js';
 
 const GRID_PLACEMENT_KEYS = ['col', 'row', 'colSpan', 'rowSpan'] as const;
 const LINEAR_PLACEMENT_KEYS = ['flex', 'flexFit', 'align'] as const;
@@ -9,10 +10,6 @@ const STACK_PLACEMENT_KEYS = ['left', 'top', 'right', 'bottom'] as const;
 export interface NormalizeWidgetOptions {
   /** When true, only the root node is adjusted for the parent; children are left unchanged. */
   readonly preserveInternalLayout?: boolean | undefined;
-}
-
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value);
 }
 
 function omitKeys(widget: GenericWidget, keys: readonly string[]): GenericWidget {
@@ -30,15 +27,6 @@ function hasGridPlacement(widget: GenericWidget): boolean {
 function readPositiveInteger(value: unknown): number | null {
   if (!isFiniteNumber(value) || value < 1) return null;
   return Math.floor(value);
-}
-
-function isGenericWidget(value: unknown): value is GenericWidget {
-  return (
-    value !== null &&
-    !Array.isArray(value) &&
-    typeof value === 'object' &&
-    typeof (value as GenericWidget).type === 'string'
-  );
 }
 
 export function stripExternalPlacement(widget: GenericWidget, parentType: string): GenericWidget {
