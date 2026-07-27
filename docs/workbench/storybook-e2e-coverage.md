@@ -26,6 +26,7 @@ packages/react/src/workbench/shell/WorkbenchShell.stories.@(ts|tsx)
 packages/react/src/workbench/shell/IntegratedShell.stories.@(ts|tsx)
 packages/react/src/workbench/workspace/WorkspaceSearchPanel.stories.@(ts|tsx)
 packages/react/src/layout/sidebar/SideBarViewTabStrip.stories.@(ts|tsx)
+packages/react/src/layout/sidebar/SideBarTree.stories.@(ts|tsx)
 packages/react/src/layout/WorkbenchPropertyOverrideLabel.stories.@(ts|tsx)
 packages/react/src/widget-tree/WidgetTreeLab.stories.@(ts|tsx)
 packages/jdw-editor/src/**/*.stories.@(ts|tsx)
@@ -126,6 +127,7 @@ surface:
 | `React/Workbench/Workspace Search` - Search panel flow             | Sidebar search panel                          | Empty, result, Enter activation, clear, no-result, and refresh behavior                                                                                                                                                   |
 | `React/Layout/Side Bar View Tab Strip` - Tab selection and reorder | Sidebar panel (`StorySidebarFrame`)           | Secondary slot tab active state, click selection, and horizontal DnD reorder via `SideBarViewTabStrip`                                                                                                                    |
 | `React/Layout/Side Bar View Tab Strip` - Inspector icon tabs       | Sidebar panel (`StorySidebarFrame`)           | Icon `SideBarViewTabStrip` inside `SideBarViewFrame` for secondary inspector panes (Window / Content)                                                                                                                     |
+| `React/Layout/Side Bar Tree` - Expand and select                   | Sidebar panel (`StorySidebarFrame`)           | Controlled `SideBarTree` expand + single selection inside `SideBarViewFrame`                                                                                                                                              |
 | `React/Workbench/Shell` - Sidebar toggle                           | Editor/main area (`StoryWorkbenchShellFrame`) | Isolated `WorkbenchShell` collapse contract: primary stays mounted, secondary expands to full split width via `shellStory` helpers                                                                                        |
 | `React/Workbench/Shell` - Primary sidebar pixel resize             | Editor/main area (`StoryWorkbenchShellFrame`) | Pixel `SplitView` keyboard resize updates `aria-valuenow` and controlled `primarySizePx`                                                                                                                                  |
 | `JDW/WidgetTree/Lab` - Authoring flows                             | Widget-tree lab surface                       | Design sidebars (Assets \| Preview \| Tree+Props), validation, dirty/discard, outline selection/reorder, asset insert/drop, Parts document asset insert, preview selection/chrome, grid/stack/linear/wrapper canvas edits |

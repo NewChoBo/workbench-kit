@@ -17,6 +17,19 @@ export type {
   SideBarScrollSpacerProps,
   SideBarViewFrameProps,
 } from './SideBarViewFrame';
+export {
+  SideBarTree,
+  flattenVisibleSideBarTreeItems,
+  isSideBarTreeBranch,
+  selectSideBarTreeIds,
+  toggleSideBarTreeId,
+} from './SideBarTree';
+export type {
+  SideBarTreeItem,
+  SideBarTreeProps,
+  SideBarTreeSelectionMode,
+  SideBarTreeVisibleNode,
+} from './SideBarTree';
 export { SidebarActionIconBar } from './SidebarActionIconBar';
 export { SidebarSlotChrome } from './SidebarSlotChrome';
 export type { SidebarSlotChromeProps } from './SidebarSlotChrome';
