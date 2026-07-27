@@ -19,6 +19,7 @@ import type {
   EditorDocumentViewRenderContext,
 } from '@workbench-kit/workbench-core';
 
+import { isRecord } from '../is-record.js';
 import { replaceJsonValueAtPath, type JsonFormPath } from '../jdw/json-form-source-patch.js';
 
 type JsonPath = JsonFormPath;
@@ -280,7 +281,7 @@ function JsonValueFormField({
     );
   }
 
-  if (isJsonRecord(value)) {
+  if (isRecord(value)) {
     const entries = Object.entries(value);
 
     return (
@@ -433,10 +434,6 @@ function parseJsonObject(content: string): Record<string, unknown> | null {
   }
 }
 
-function isJsonRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 function isJdwWidgetJson(content: string): boolean {
   const parsed = parseJsonWidgetData(content);
   return parsed.value !== null;
@@ -482,7 +479,7 @@ function getJsonPathValue(value: unknown, path: JsonPath): unknown {
       continue;
     }
 
-    if (isJsonRecord(cursor) && typeof segment === 'string') {
+    if (isRecord(cursor) && typeof segment === 'string') {
       cursor = cursor[segment];
       continue;
     }
