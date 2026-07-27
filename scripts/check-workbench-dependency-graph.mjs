@@ -59,6 +59,7 @@ const extensionAllowedDependencies = new Set([
   '@workbench-kit/base',
   '@workbench-kit/platform',
   '@workbench-kit/react',
+  '@workbench-kit/workbench-core',
   '@workbench-kit/workbench-extension-sdk',
   '@workbench-kit/workspace',
 ]);

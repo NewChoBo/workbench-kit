@@ -219,6 +219,9 @@ importers:
 
   extensions/samples.hello-world:
     dependencies:
+      '@workbench-kit/workbench-core':
+        specifier: workspace:*
+        version: link:../../packages/workbench-core
       '@workbench-kit/workbench-extension-sdk':
         specifier: workspace:*
         version: link:../../packages/workbench-extension-sdk

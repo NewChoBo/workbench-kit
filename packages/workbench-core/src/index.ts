@@ -96,6 +96,10 @@ export {
   type WorkbenchExtensionModule,
 } from './extension/registry.js';
 export {
+  withActivatedExtension,
+  type ActivatedExtensionTestContext,
+} from './extension/with-activated-extension.js';
+export {
   createExtensionFeatureSpec,
   createExtensionFeatureSpecs,
   type WorkbenchExtensionFeatureDescription,
