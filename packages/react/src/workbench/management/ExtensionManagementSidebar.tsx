@@ -18,10 +18,7 @@ import {
   formatExtensionCategoryLabel,
 } from './extension-category-display.js';
 import { resolveExtensionInstallOptions } from './extension-install-approval.js';
-import {
-  filterBrowseEntries,
-  filterInstalledEntries,
-} from './extension-management-filters.js';
+import { filterBrowseEntries, filterInstalledEntries } from './extension-management-filters.js';
 import { ManagementFilterChips } from './ManagementFilterChips.js';
 import type {
   ExtensionCatalogBrowseEntry,
@@ -477,4 +474,3 @@ function formatFeatureBadge(label: string, count: number) {
 
   return `${label} ${count}`;
 }
-

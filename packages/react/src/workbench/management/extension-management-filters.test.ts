@@ -4,7 +4,8 @@ import { filterBrowseEntries, filterInstalledEntries } from './extension-managem
 import type { ExtensionCatalogBrowseEntry, ExtensionManagementEntry } from './types.js';
 
 function createInstalled(
-  overrides: Partial<ExtensionManagementEntry> & Pick<ExtensionManagementEntry, 'id' | 'displayName'>,
+  overrides: Partial<ExtensionManagementEntry> &
+    Pick<ExtensionManagementEntry, 'id' | 'displayName'>,
 ): ExtensionManagementEntry {
   return {
     category: 'feature',

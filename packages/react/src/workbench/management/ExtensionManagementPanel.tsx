@@ -8,10 +8,7 @@ import {
   formatExtensionCategoryLabel,
 } from './extension-category-display.js';
 import { resolveExtensionInstallOptions } from './extension-install-approval.js';
-import {
-  filterBrowseEntries,
-  filterInstalledEntries,
-} from './extension-management-filters.js';
+import { filterBrowseEntries, filterInstalledEntries } from './extension-management-filters.js';
 import { ManagementFilterChips } from './ManagementFilterChips.js';
 import { ManagementCard, ManagementCardList } from './ManagementCard.js';
 import { ManagementGroup, ManagementGroups } from './ManagementGroup.js';
@@ -495,4 +492,3 @@ function groupBrowseEntries(entries: readonly ExtensionCatalogBrowseEntry[]) {
     })
     .map(([category, categoryEntries]) => ({ category, entries: categoryEntries }));
 }
-
