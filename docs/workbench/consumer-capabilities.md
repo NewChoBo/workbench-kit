@@ -206,16 +206,18 @@ minimal host glue.
 
 ### `LibraryDetailLayout`
 
-**Purpose:** Record detail shell: hero band (background / banner / compact), optional top `toolbar`, in-hero `actions`, scrollable body via `ScrollArea`.
+**Purpose:** Record detail shell: hero band (`background` / `banner` / `compact` / `hero-cover`), optional top `toolbar`, in-hero `actions`, scrollable body via `ScrollArea`.
 
 **Key props:**
 
 | Prop / slot                                           | Role                                                                                   |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `mode`                                                | `background` \| `banner` \| `compact`                                                  |
+| `mode`                                                | `background` \| `banner` \| `compact` \| `hero-cover`                                  |
 | `title`, `summary`                                    | Identity row (title + badges)                                                          |
 | `backgroundImageUrl`, `coverImageUrl`, `logoImageUrl` | Hero media                                                                             |
-| `description`                                         | Inline under hero (banner/compact)                                                     |
+| `heroImageUrl`                                        | Wide band for `hero-cover` (falls back to atmosphere-from-cover when absent/identical) |
+| `attribution`                                         | Optional footer under the identity row (`hero-cover`)                                  |
+| `description`                                         | Inline under hero (banner/compact/hero-cover)                                          |
 | `actions`                                             | Buttons in hero band when no shared editor chrome exists                               |
 | `toolbar`                                             | Optional row above hero (navigation) — avoid if editor tab bar already owns navigation |
 | `children`                                            | Scrollable metadata sections                                                           |
@@ -619,9 +621,22 @@ grid + optional `headerActions` slot for host install/import controls.
 
 ### `WorkbenchNoticeProvider`, `useWorkbenchNotice`, `WorkbenchNoticeViewport`
 
-**Purpose:** Toast/notice stack for management surfaces.
+**Purpose:** Toast/notice stack for management surfaces (aria-live viewport, queue, dismiss,
+auto-dismiss).
 
 **Host rule:** Wrap dialog host once; show feedback via `showNotice`, not ad hoc DOM.
+
+### `createWorkbenchNotify` / `useWorkbenchNotify`
+
+**Purpose:** NotificationService-shaped facade (`notify.info` / `notify.error` / `success` /
+`warning`, optional action buttons that invoke once then dismiss) over the notice controller.
+Does not replace modal confirms.
+
+```ts
+const notify = useWorkbenchNotify();
+notify.info('Installed', { actions: [{ label: 'Open', onAction: open }] });
+notify.error('Save failed');
+```
 
 ---
 

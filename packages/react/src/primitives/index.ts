@@ -110,6 +110,11 @@ export type {
   LibraryDetailLayoutMode,
   LibraryDetailLayoutProps,
 } from './library-detail-layout/LibraryDetailLayout';
+export { resolveLibraryDetailHeroCoverMedia } from './library-detail-layout/resolve-hero-cover-media.js';
+export type {
+  ResolveLibraryDetailHeroCoverMediaInput,
+  ResolvedLibraryDetailHeroCoverMedia,
+} from './library-detail-layout/resolve-hero-cover-media.js';
 export { ScrollAreaInfiniteSentinel } from './scroll-area-infinite-load/ScrollAreaInfiniteSentinel';
 export type { ScrollAreaInfiniteSentinelProps } from './scroll-area-infinite-load/ScrollAreaInfiniteSentinel';
 export { useScrollAreaInfiniteLoad } from './scroll-area-infinite-load/useScrollAreaInfiniteLoad';

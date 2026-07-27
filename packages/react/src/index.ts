@@ -643,8 +643,13 @@ export type {
 } from './primitives';
 export { CatalogFilterOverlay } from './primitives';
 export type { CatalogFilterOverlayProps } from './primitives';
-export { LibraryDetailLayout } from './primitives';
-export type { LibraryDetailLayoutMode, LibraryDetailLayoutProps } from './primitives';
+export { LibraryDetailLayout, resolveLibraryDetailHeroCoverMedia } from './primitives';
+export type {
+  LibraryDetailLayoutMode,
+  LibraryDetailLayoutProps,
+  ResolveLibraryDetailHeroCoverMediaInput,
+  ResolvedLibraryDetailHeroCoverMedia,
+} from './primitives';
 export { WorkbenchMediaPlaceholder } from './primitives';
 export type { WorkbenchMediaPlaceholderProps } from './primitives';
 export { WorkbenchMediaSlot } from './primitives';

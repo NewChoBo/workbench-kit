@@ -15,6 +15,8 @@ export interface RecordMediaHeroProps extends ComponentPropsWithRef<'div'> {
   layout?: RecordMediaHeroLayout;
   logoUrl?: string | null;
   maxWidth?: number | string;
+  /** Forwarded when the primary hero/cover image fails to load. */
+  onImageError?: () => void;
 }
 
 function resolveMaxWidth(maxWidth: number | string | undefined): CSSProperties['maxWidth'] {
@@ -33,6 +35,7 @@ export function RecordMediaHero({
   layout = 'banner',
   logoUrl = null,
   maxWidth,
+  onImageError,
   style,
   ...props
 }: RecordMediaHeroProps) {
@@ -66,6 +69,7 @@ export function RecordMediaHero({
         imageClassName="ui-record-media-hero__image"
         imageUrl={imageUrl}
         loading="eager"
+        onImageError={onImageError}
       />
       {logoMedia.shouldShowImage ? (
         <img

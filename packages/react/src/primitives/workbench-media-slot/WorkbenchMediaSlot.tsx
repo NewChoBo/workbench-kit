@@ -20,6 +20,8 @@ export interface WorkbenchMediaSlotProps extends Omit<ComponentPropsWithRef<'spa
    * Pass `eager` for above-the-fold heroes and detail identity art.
    */
   loading?: 'eager' | 'lazy';
+  /** Optional host callback after the slot marks the current URL as failed. */
+  onImageError?: () => void;
 }
 
 export function WorkbenchMediaSlot({
@@ -33,6 +35,7 @@ export function WorkbenchMediaSlot({
   imageClassName,
   imageUrl = null,
   loading = 'lazy',
+  onImageError,
   ...props
 }: WorkbenchMediaSlotProps) {
   const media = useWorkbenchMediaImage(imageUrl);
@@ -47,7 +50,10 @@ export function WorkbenchMediaSlot({
           alt={alt ?? ''}
           className={cx('ui-workbench-media-slot__image', imageClassName)}
           loading={loading}
-          onError={media.onImageError}
+          onError={() => {
+            media.onImageError();
+            onImageError?.();
+          }}
           src={media.imageSrc}
         />
       ) : (
