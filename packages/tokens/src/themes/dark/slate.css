@@ -1,0 +1,23 @@
+/*
+ * Slate — brand pack that swaps chrome via primitive aliases only.
+ * Semantic / flat / shell layers inherit from alias-layers.css.
+ */
+[data-theme='dark'][data-theme-preset='slate'] {
+  --primitive-neutral-950: #0b1220;
+  --primitive-neutral-900: #121a29;
+  --primitive-neutral-850: #182233;
+  --primitive-neutral-800: #243044;
+  --primitive-neutral-700: #3a465c;
+  --primitive-neutral-500: #8b97ab;
+  --primitive-neutral-400: #aeb8c8;
+  --primitive-neutral-100: #e8eef7;
+  --primitive-accent-500: #14b8a6;
+  --primitive-accent-400: #2dd4bf;
+  --primitive-accent-fg: #042f2e;
+  --primitive-danger-500: #f87171;
+  --primitive-danger-400: #fca5a5;
+
+  --scrollbar-thumb: color-mix(in srgb, var(--primitive-neutral-700) 40%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--primitive-neutral-500) 55%, transparent);
+  --scrollbar-thumb-active: color-mix(in srgb, var(--primitive-neutral-400) 70%, transparent);
+}

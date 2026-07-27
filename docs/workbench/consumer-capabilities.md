@@ -125,9 +125,20 @@ Utility placement does **not** imply modal-only — host routing chooses the sur
 
 ### `WorkbenchMonacoEditor` · `@workbench-kit/monaco`
 
-**Purpose:** VS Code–aligned Monaco surface with workbench theme sync, JSON/TS diagnostics helpers, and read-only mode.
+**Purpose:** VS Code–aligned Monaco surface with workbench theme sync (chrome colors **and**
+syntax `tokenColors` rules), JSON/TS diagnostics helpers, and read-only mode.
 
 **Key props:** `language`, `value`, `readOnly`, `theme` (`light` \| `dark`), `path` (model identity), `options`, `onMount`.
+
+**Theme sync:**
+
+- `useMonacoWorkbenchThemeSync` / `defineMonacoWorkbenchTheme` re-apply chrome colors and
+  default syntax rules when `data-theme` / `data-theme-preset` change (no remount required).
+- Hosts may register richer rules via `setWorkbenchMonacoTokenRules` or call
+  `defineOrUpdateWorkbenchMonacoTheme(themeId, { base, colors, rules })`.
+- `monacoRulesFromTokenColors` maps a VS Code–compatible `tokenColors` subset to Monaco rules.
+- **Host responsibility:** TextMate / grammar packs stay host-owned. The kit themes Monaco’s
+  built-in tokenizers; hosts that load custom grammars must supply matching token rules.
 
 **When to use:** Read-only JSON inspectors (Admin Data detail), editable workspace JSON tabs (`WorkspaceEditor`), widget source panes.
 
@@ -437,6 +448,29 @@ Pair with `CatalogFilterOverlay` for anchored flyouts (`showActiveChips={false}`
 **Section list nesting:** By default (`nestListItems`, default `true`), `SideBarListItem` depth under a `WorkbenchSidebarSection` is offset by +1 so rows read as children of the section header. Relative `depth` still stacks on top of that base. Set `nestListItems={false}` only when a consumer must own the full indent plane. Non-list content can read the base via `useSidebarSectionBaseDepth()` (Explorer inline rename uses this).
 
 **VS Code analogue:** `PaneComposite` + view sections.
+
+---
+
+### `SideBarTree`
+
+**Purpose:** Controlled expand/collapse + selection tree for library / provider sidebars,
+built on `SideBarList` / `SideBarListItem`.
+
+**Import:** `@workbench-kit/react/layout` (also re-exported from `@workbench-kit/react`)
+
+**Key props:** `items`, controlled `expandedIds` / `selectedIds`, `onExpandedIdsChange` /
+`onSelectedIdsChange`, optional `selectionMode` (`single` | `multi`), `keyboardNavigation`
+(default `true`).
+
+**Leaf vs branch:** Items with a `children` array (even empty) are branches; items without
+`children` are leaves. Hosts own the id sets.
+
+**When not to use:** Full workspace file explorer with rename/DnD — use `WorkspaceExplorer`.
+Low-level row chrome without tree state — use `SideBarListItem` / `WorkbenchTreeItem`.
+
+**Non-goals (v1):** Virtualization, DnD reorder.
+
+**VS Code analogue:** TreeView / collapsible category trees.
 
 ---
 

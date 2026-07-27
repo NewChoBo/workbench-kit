@@ -1,0 +1,141 @@
+/*
+ * Token alias layers (primitive → semantic → component).
+ *
+ * Ownership:
+ * - Primitive (`--primitive-*`): raw brand/palette values. Brand packs should
+ *   override this layer only when possible.
+ * - Semantic (`--color-bg-canvas`, `--color-bg-sidebar`, …): chrome meaning.
+ *   Prefer these for new CSS; keep stable across density packs.
+ * - Flat legacy (`--color-bg`, `--color-primary-side-bar-bg`, …): aliases of
+ *   semantic tokens for backward compatibility with existing chrome CSS.
+ * - Component / shell (`--shell-editor-bg`, `--shell-activity-bg`, …): region
+ *   roles that point at semantic tokens. Density packs may override spacing
+ *   metrics (`--shell-spacing-*`) without touching color primitives.
+ *
+ * Existing class names continue to read flat `--color-*` vars.
+ */
+
+:root,
+[data-theme='dark'] {
+  /* Primitive — dark baseline */
+  --primitive-neutral-950: #0d1117;
+  --primitive-neutral-900: #111720;
+  --primitive-neutral-850: #161b22;
+  --primitive-neutral-800: #21262d;
+  --primitive-neutral-700: #30363d;
+  --primitive-neutral-500: #7d8590;
+  --primitive-neutral-400: #a9b4c0;
+  --primitive-neutral-100: #f0f6fc;
+  --primitive-accent-500: #2f81f7;
+  --primitive-accent-400: #388bfd;
+  --primitive-accent-fg: #ffffff;
+  --primitive-danger-500: #da3633;
+  --primitive-danger-400: #f85149;
+
+  /* Semantic */
+  --color-bg-canvas: var(--primitive-neutral-950);
+  --color-bg-sidebar: var(--primitive-neutral-900);
+  --color-bg-surface: var(--primitive-neutral-850);
+  --color-bg-surface-hover: var(--primitive-neutral-800);
+  --color-bg-elevated: var(--primitive-neutral-800);
+  --color-fg-default: var(--primitive-neutral-100);
+  --color-fg-muted: var(--primitive-neutral-400);
+  --color-fg-subtle: var(--primitive-neutral-500);
+  --color-border-default: var(--primitive-neutral-700);
+  --color-accent-default: var(--primitive-accent-500);
+  --color-accent-hover-default: var(--primitive-accent-400);
+  --color-accent-on: var(--primitive-accent-fg);
+  --color-danger-default: var(--primitive-danger-500);
+  --color-danger-hover-default: var(--primitive-danger-400);
+
+  /* Flat legacy (backward-compatible) */
+  --color-bg: var(--color-bg-canvas);
+  --color-bg-75: color-mix(in srgb, var(--color-bg-canvas) 75%, transparent);
+  --color-primary-side-bar-bg: var(--color-bg-sidebar);
+  --color-primary-side-bar-bg-75: color-mix(in srgb, var(--color-bg-sidebar) 75%, transparent);
+  --color-surface: var(--color-bg-surface);
+  --color-surface-hover: var(--color-bg-surface-hover);
+  --color-surface-elevated: var(--color-bg-elevated);
+  --color-border: var(--color-border-default);
+  --color-text: var(--color-fg-default);
+  --color-text-muted: var(--color-fg-muted);
+  --color-text-subtle: var(--color-fg-subtle);
+  --color-accent: var(--color-accent-default);
+  --color-accent-hover: var(--color-accent-hover-default);
+  --color-accent-foreground: var(--color-accent-on);
+  --color-focus-border: var(--color-accent-default);
+  --color-input-bg: var(--color-bg-elevated);
+  --color-input-border: var(--color-border-default);
+  --color-input-text: var(--color-fg-default);
+  --color-danger: var(--color-danger-default);
+  --color-danger-hover: var(--color-danger-hover-default);
+
+  /* Component / shell chrome */
+  --shell-editor-bg: var(--color-bg-canvas);
+  --shell-activity-bg: var(--color-bg-sidebar);
+  --shell-sidebar-bg: var(--color-bg-sidebar);
+  --shell-panel-bg: var(--color-bg-surface);
+  --shell-status-bg: var(--color-bg-sidebar);
+}
+
+[data-theme='light'] {
+  /* Primitive — light baseline */
+  --primitive-neutral-950: #ffffff;
+  --primitive-neutral-900: #f6f8fa;
+  --primitive-neutral-850: #f6f8fa;
+  --primitive-neutral-800: #eaeef2;
+  --primitive-neutral-700: #d0d7de;
+  --primitive-neutral-500: #6e7781;
+  --primitive-neutral-400: #57606a;
+  --primitive-neutral-100: #1f2328;
+  --primitive-accent-500: #0969da;
+  --primitive-accent-400: #0860ca;
+  --primitive-accent-fg: #ffffff;
+  --primitive-danger-500: #cf222e;
+  --primitive-danger-400: #a40e26;
+
+  /* Semantic */
+  --color-bg-canvas: var(--primitive-neutral-950);
+  --color-bg-sidebar: var(--primitive-neutral-900);
+  --color-bg-surface: var(--primitive-neutral-850);
+  --color-bg-surface-hover: var(--primitive-neutral-800);
+  --color-bg-elevated: var(--primitive-neutral-950);
+  --color-fg-default: var(--primitive-neutral-100);
+  --color-fg-muted: var(--primitive-neutral-400);
+  --color-fg-subtle: var(--primitive-neutral-500);
+  --color-border-default: var(--primitive-neutral-700);
+  --color-accent-default: var(--primitive-accent-500);
+  --color-accent-hover-default: var(--primitive-accent-400);
+  --color-accent-on: var(--primitive-accent-fg);
+  --color-danger-default: var(--primitive-danger-500);
+  --color-danger-hover-default: var(--primitive-danger-400);
+
+  /* Flat legacy (backward-compatible) */
+  --color-bg: var(--color-bg-canvas);
+  --color-bg-75: color-mix(in srgb, var(--color-bg-canvas) 75%, transparent);
+  --color-primary-side-bar-bg: var(--color-bg-sidebar);
+  --color-primary-side-bar-bg-75: color-mix(in srgb, var(--color-bg-sidebar) 75%, transparent);
+  --color-surface: var(--color-bg-surface);
+  --color-surface-hover: var(--color-bg-surface-hover);
+  --color-surface-elevated: var(--color-bg-elevated);
+  --color-border: var(--color-border-default);
+  --color-text: var(--color-fg-default);
+  --color-text-muted: var(--color-fg-muted);
+  --color-text-subtle: var(--color-fg-subtle);
+  --color-accent: var(--color-accent-default);
+  --color-accent-hover: var(--color-accent-hover-default);
+  --color-accent-foreground: var(--color-accent-on);
+  --color-focus-border: var(--color-accent-default);
+  --color-input-bg: var(--color-bg-elevated);
+  --color-input-border: var(--color-border-default);
+  --color-input-text: var(--color-fg-default);
+  --color-danger: var(--color-danger-default);
+  --color-danger-hover: var(--color-danger-hover-default);
+
+  /* Component / shell chrome */
+  --shell-editor-bg: var(--color-bg-canvas);
+  --shell-activity-bg: var(--color-bg-sidebar);
+  --shell-sidebar-bg: var(--color-bg-sidebar);
+  --shell-panel-bg: var(--color-bg-surface);
+  --shell-status-bg: var(--color-bg-sidebar);
+}

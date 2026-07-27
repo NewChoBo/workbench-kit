@@ -1,29 +1,10 @@
+@import './alias-layers.css';
 @import './file-icons.css';
 @import './theme-presets.css';
 @import './shell-presets.css';
 
 :root,
 [data-theme='dark'] {
-  --color-bg: #0d1117;
-  --color-bg-75: rgba(13, 17, 23, 0.75);
-  --color-primary-side-bar-bg: #111720;
-  --color-primary-side-bar-bg-75: rgba(17, 23, 32, 0.75);
-  --color-surface: #161b22;
-  --color-surface-hover: #21262d;
-  --color-surface-elevated: #21262d;
-  --color-border: #30363d;
-  --color-text: #f0f6fc;
-  --color-text-muted: #a9b4c0;
-  --color-text-subtle: #7d8590;
-  --color-accent: #2f81f7;
-  --color-accent-hover: #388bfd;
-  --color-accent-foreground: #ffffff;
-  --color-focus-border: #2f81f7;
-  --color-input-bg: var(--color-surface-elevated);
-  --color-input-border: var(--color-border);
-  --color-input-text: var(--color-text);
-  --color-danger: #da3633;
-  --color-danger-hover: #f85149;
   --file-icon-archive: #a9b4c0;
   --file-icon-config: #a5d6ff;
   --file-icon-css: #ce9178;
@@ -51,26 +32,6 @@
 }
 
 [data-theme='light'] {
-  --color-bg: #ffffff;
-  --color-bg-75: rgba(255, 255, 255, 0.75);
-  --color-primary-side-bar-bg: #f6f8fa;
-  --color-primary-side-bar-bg-75: rgba(246, 248, 250, 0.75);
-  --color-surface: #f6f8fa;
-  --color-surface-hover: #eaeef2;
-  --color-surface-elevated: #ffffff;
-  --color-border: #d0d7de;
-  --color-text: #1f2328;
-  --color-text-muted: #57606a;
-  --color-text-subtle: #6e7781;
-  --color-accent: #0969da;
-  --color-accent-hover: #0860ca;
-  --color-accent-foreground: #ffffff;
-  --color-focus-border: #0969da;
-  --color-input-bg: var(--color-surface-elevated);
-  --color-input-border: var(--color-border);
-  --color-input-text: var(--color-text);
-  --color-danger: #cf222e;
-  --color-danger-hover: #a40e26;
   --file-icon-archive: #57606a;
   --file-icon-config: #0969da;
   --file-icon-css: #bc4c00;

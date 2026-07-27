@@ -42,6 +42,7 @@ describe('themePresets', () => {
     expect(isDarkThemePresetId('modern')).toBe(true);
     expect(isDarkThemePresetId('dark-plus')).toBe(true);
     expect(isDarkThemePresetId('hc-black')).toBe(true);
+    expect(isDarkThemePresetId('slate')).toBe(true);
     expect(isDarkThemePresetId('orange')).toBe(false);
   });
 
