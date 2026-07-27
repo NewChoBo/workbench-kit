@@ -1,3 +1,4 @@
+import { assertKnownKeys, assertRecord } from './parse-helpers.js';
 import { WorkbenchConfigValidationError } from './validation-error.js';
 
 export const WORKBENCH_KIT_WORKBENCH_CONFIG_VERSION = '0.0.0' as const;
@@ -242,14 +243,6 @@ export {
   type WorkbenchUserCommandsConfig,
 } from './user-commands-config.js';
 
-function assertRecord(value: unknown, label: string): Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    throw new WorkbenchConfigValidationError(`Expected ${label} to be an object.`);
-  }
-
-  return value as Record<string, unknown>;
-}
-
 function readOptionalRecord(record: Record<string, unknown>, key: string): Record<string, unknown> {
   const value = record[key];
   if (value === undefined) {
@@ -350,12 +343,4 @@ function readOptionalSizePercent(
 
 function clampLayoutSizePercent(value: number): number {
   return Math.min(90, Math.max(10, value));
-}
-
-function assertKnownKeys(record: Record<string, unknown>, keys: readonly string[], label: string) {
-  const knownKeys = new Set(keys);
-  const unknownKeys = Object.keys(record).filter((key) => !knownKeys.has(key));
-  if (unknownKeys.length > 0) {
-    throw new WorkbenchConfigValidationError(`Unexpected ${label} field "${unknownKeys[0]}".`);
-  }
 }
