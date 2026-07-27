@@ -10,6 +10,7 @@ import {
   type GenericWidget,
 } from '@workbench-kit/jdw';
 
+import { readNumber } from '../utils/readNumber';
 import { renderBuiltinWidgetLeaf } from './builtins/renderBuiltinWidgetLeaf.js';
 
 const LAYOUT_INSPECTOR = [
@@ -71,10 +72,6 @@ const BUTTON_VARIANT_OPTIONS = [
 
 function build(widget: WidgetTypeShape) {
   return renderBuiltinWidgetLeaf(widget as GenericWidget);
-}
-
-function readNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 function readString(value: unknown): string | undefined {
