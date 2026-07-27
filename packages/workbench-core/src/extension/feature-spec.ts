@@ -11,6 +11,8 @@ import type {
   WorkbenchExtensionManifest,
 } from '@workbench-kit/workbench-extension-sdk';
 
+import { isRecord } from './is-record.js';
+
 export interface WorkbenchExtensionFeatureDescription {
   readonly extensionPath?: string | undefined;
   readonly manifest: WorkbenchExtensionManifest;
@@ -139,8 +141,4 @@ function normalizeViewFeatureSpecs(value: unknown): ExtensionViewFeatureSpec[] {
       };
     });
   });
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
