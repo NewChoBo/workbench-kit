@@ -2,16 +2,13 @@ import type { WidgetPath, WidgetPathSegment } from '../document/path.js';
 import { appendBoxChildPath, appendChildrenPath, widgetPathKey } from '../document/path.js';
 import type { GenericWidget } from './tree.js';
 import { getWidgetChildAtSegment, getWidgetChildren } from './tree.js';
+import { isFiniteNumber, isGenericWidget, isSingleChildContainerType } from './type-guards.js';
 
 export type ArrayChildWidget = GenericWidget;
 
 const GRID_PLACEMENT_KEYS = ['col', 'row', 'colSpan', 'rowSpan'] as const;
 const LINEAR_PLACEMENT_KEYS = ['flex', 'flexFit', 'align'] as const;
 const STACK_PLACEMENT_KEYS = ['left', 'top', 'right', 'bottom'] as const;
-
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value);
-}
 
 function isGridChild(child: GenericWidget): child is GenericWidget & { col: number; row: number } {
   return isFiniteNumber(child.col) && isFiniteNumber(child.row);
@@ -42,17 +39,6 @@ function insertAtIndex<T>(items: readonly T[], index: number, item: T): T[] {
 
 function removeAtIndex<T>(items: readonly T[], index: number): T[] {
   return [...items.slice(0, index), ...items.slice(index + 1)];
-}
-
-function isSingleChildContainerType(type: string): boolean {
-  return (
-    type === 'box' ||
-    type === 'container' ||
-    type === 'padding' ||
-    type === 'align' ||
-    type === 'center' ||
-    type === 'sized_box'
-  );
 }
 
 function containerKind(
@@ -252,13 +238,4 @@ export function collectAllContainerKeys(
   }
 
   return keys;
-}
-
-function isGenericWidget(value: unknown): value is GenericWidget {
-  return (
-    value !== null &&
-    !Array.isArray(value) &&
-    typeof value === 'object' &&
-    typeof (value as GenericWidget).type === 'string'
-  );
 }

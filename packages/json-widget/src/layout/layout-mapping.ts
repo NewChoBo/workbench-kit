@@ -3,6 +3,7 @@ import type { WidgetPath } from '../document/path.js';
 import type { WidgetPatch } from '../widget/patch.js';
 import { getWidgetAtPath, getWidgetChildren } from '../widget/tree.js';
 import type { GenericWidget } from '../widget/tree.js';
+import { isFiniteNumber, isSingleChildContainerType } from '../widget/type-guards.js';
 import type { LayoutNodeResult } from './layout-widget.js';
 import type { Rect } from './types.js';
 
@@ -43,10 +44,6 @@ export interface WidgetReparentMappingOptions {
   readonly layout: LayoutNodeResult;
   readonly path: WidgetPath;
   readonly root: GenericWidget;
-}
-
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value);
 }
 
 function containsPoint(rect: Rect, point: LayoutPoint): boolean {
@@ -125,17 +122,6 @@ function pathStartsWith(path: WidgetPath, prefix: WidgetPath): boolean {
     if (segment.kind === 'child') return true;
     return candidate.kind === 'children' && candidate.index === segment.index;
   });
-}
-
-function isSingleChildContainerType(type: string): boolean {
-  return (
-    type === 'box' ||
-    type === 'container' ||
-    type === 'padding' ||
-    type === 'align' ||
-    type === 'center' ||
-    type === 'sized_box'
-  );
 }
 
 function canReceiveReparentedChild(widget: GenericWidget): boolean {
