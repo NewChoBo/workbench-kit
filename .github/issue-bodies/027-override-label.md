@@ -4,7 +4,7 @@ Add optional **property / field label chrome** for sparse-override inspectors: a
 
 **Template:** Consumer extract  
 **Effort:** S  
-**Guide:** [docs/conventions/github-issues.md](../blob/staging/docs/conventions/github-issues.md)
+**Guide:** [docs/conventions/github-issues.md](../blob/main/docs/conventions/github-issues.md)
 
 ---
 

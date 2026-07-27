@@ -6,8 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Follow [docs/conventions/github-issues.md](https://github.com/NewChoBo/workbench-kit/blob/staging/docs/conventions/github-issues.md).
-        Use **capability language** only ([public-reference-policy](https://github.com/NewChoBo/workbench-kit/blob/staging/docs/conventions/public-reference-policy.md)).
+        Follow [docs/conventions/github-issues.md](https://github.com/NewChoBo/workbench-kit/blob/main/docs/conventions/github-issues.md).
+        Use **capability language** only ([public-reference-policy](https://github.com/NewChoBo/workbench-kit/blob/main/docs/conventions/public-reference-policy.md)).
         Do not name private hosts, sibling repos, or product codenames.
 
   - type: textarea

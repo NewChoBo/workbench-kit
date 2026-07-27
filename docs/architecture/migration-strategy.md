@@ -123,7 +123,7 @@ imports.
 | Two when-clause engines                                    | M1 merges to one implementation                                                          |
 | `WorkbenchShell` name collision (`react` vs `shell-react`) | `shell-react` exports `WorkbenchProvider`; `react` keeps presentational `WorkbenchShell` |
 | Extension build pipeline missing                           | M2 adds `scripts/bundle-extensions.mjs` (planned)                                        |
-| Storybook regressions                                      | M3 gate: `test:storybook-play:required` on staging                                       |
+| Storybook regressions                                      | M3 gate: `test:storybook-play:required` on develop                                       |
 
 ## Validation Gates (per milestone)
 

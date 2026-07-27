@@ -2,7 +2,7 @@
 
 This plan captures how Workbench Kit should absorb useful Eclipse Theia
 patterns without becoming a Theia fork, VS Code clone, or backend-first IDE.
-The branch for this work starts from `staging` as
+The branch for this work starts from `develop` as
 `feature/theia-strengths-workbench`.
 
 ## Direction

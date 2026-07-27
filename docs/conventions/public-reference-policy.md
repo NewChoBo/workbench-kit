@@ -103,7 +103,7 @@ Legacy consumer-branded protocol or sample identifiers that remain in published
 kit APIs are **separate rename debt**—do not add new private host names while
 that cleanup is pending.
 
-Before merge to `staging` or `main`, confirm:
+Before merge to `develop` or `main`, confirm:
 
 1. `pnpm check:public-references` and `pnpm check:secrets` pass
 2. Commit messages and PR text do not name private hosts or sibling repos

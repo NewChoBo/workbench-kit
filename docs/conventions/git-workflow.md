@@ -1,29 +1,30 @@
 # Git Workflow
 
-Keep `main` as a validated baseline. Do product work on short-lived branches,
-preserve logical commits, and verify both the selected validation lane and the
-public boundary before merging.
+Keep `main` as a validated, releasable baseline. Integrate daily work on
+`develop`, use short-lived topic branches, preserve logical commits, and verify
+the selected validation lane plus the public boundary before merging.
 
 ## Branches
 
 ### main
 
-- Keep it releasable.
+- Keep it releasable (publish / tag source of truth).
 - Do not use it for experiments.
-- Run `pnpm validate` before merging into it.
+- Promote from `develop` after validation (see Merge flow).
 - Confirm that public source does not contain private product names, customer
   names, server addresses, credentials, or private repository paths.
 - Run `pnpm check:commit-safety` before every commit (included in
   `pnpm validate:static` as `check:public-references` + `check:secrets`).
 
-### staging
+### develop
 
-- Use as an integration buffer before `main`.
-- Merge feature branches here when you need grouped validation or a release
-  milestone boundary.
-- Run the selected validation lane before merging `staging` into `main`.
-- Keep only validated and coherent integration commits on `staging`.
-- Use lowercase branch name exactly: `staging`.
+- Daily integration target. Feature / fix / docs PRs land here first.
+- Keep it green: run the selected validation lane before merge.
+- Promote to `main` when ready to release or keep `main` current.
+- Use lowercase branch name exactly: `develop`.
+
+There is **no** long-lived `staging` branch. Grouped validation happens on
+`develop` (or a short-lived integration branch that merges into `develop`).
 
 ### Working Branches
 
@@ -54,12 +55,12 @@ actor.
 ## Work Loop
 
 ```powershell
-git switch main
+git switch develop
 git pull --ff-only
 git switch -c feature/codex/chatting-ui
 ```
 
-1. Create a working branch.
+1. Create a working branch from `develop`.
 2. Keep the changed surface narrow.
 3. Commit by logical unit.
 4. Write a body for each non-trivial commit.
@@ -69,22 +70,23 @@ git switch -c feature/codex/chatting-ui
    changed.
 7. Confirm that no private knowledge, credentials, or secret files entered
    public source (`pnpm check:commit-safety`).
-8. Merge by policy:
-   - single-topic work can merge directly to `main`;
-   - grouped work should merge through `staging` first.
+8. Open a PR into `develop` (or merge locally per policy below).
+9. After `develop` is validated, promote to `main` when releasing or syncing
+   the release line.
 
 ```powershell
-git switch main
+git switch develop
 git merge --ff-only feature/codex/chatting-ui
 git branch -d feature/codex/chatting-ui
 ```
 
 ```powershell
-git switch staging
-git merge --ff-only feature/codex/chatting-ui
+# Promote develop → main (single commit tip: prefer FF; otherwise --no-ff)
 git switch main
-git merge --no-ff staging
-git branch -d feature/codex/chatting-ui
+git pull --ff-only
+git merge --ff-only develop   # or: git merge --no-ff develop
+pnpm validate:static          # or the lane required for the promote
+git push origin main
 ```
 
 If a branch has too many experiment, fixup, or revert commits, clean it up
@@ -103,11 +105,11 @@ Use `git merge --ff-only` when:
 
 - The branch is short-lived and has one topic.
 - The branch commits are meaningful logical units.
-- The branch has not diverged from `main` at merge time.
+- The branch has not diverged from the integration tip (`develop` or `main`).
 - You are building an initial local baseline without a pull request.
 
 ```powershell
-git switch main
+git switch develop
 git merge --ff-only feature/codex/chatting-ui
 ```
 
@@ -132,62 +134,45 @@ of these is true:
 - You need to record that multiple independent sub-workstreams were integrated.
 - A release, milestone, or external pull request makes the merge event itself
   worth recording.
-- A planned merge from `staging` into `main` where preserving the milestone
-  boundary is a deliverable signal.
+- A planned `develop` → `main` promote where preserving the boundary is a
+  deliverable signal.
 
 When using a merge commit, pass `--no-ff` and explain why fast-forward was not
 used in the merge commit body.
 
 ```powershell
 git switch main
-git merge --no-ff feature/codex/chatting-ui
+git merge --no-ff develop
 ```
 
 Summary: fast-forward is the default, squash cleans up noisy branches, and merge
 commits are reserved for integration events worth preserving.
 
-## Staging Merge Pattern
+## Grouped landing on develop
 
-Use `staging` when multiple feature branches should land together.
+When several topic branches should validate together before `main`:
 
 ```text
-1. Ensure `staging` is aligned with `main` (`git switch staging; git pull --ff-only`).
-2. Merge topic branches into `staging`.
-3. Validate the combined state on `staging`.
-4. Merge `staging` into `main` with `--no-ff` to preserve the integration commit.
+1. Ensure develop is up to date (`git switch develop; git pull --ff-only`).
+2. Merge topic branches into develop (FF when possible).
+3. Validate the combined state on develop.
+4. Promote develop → main (FF or --no-ff as needed).
 ```
 
 ```powershell
-git switch staging
+git switch develop
 git pull --ff-only
 git merge --ff-only feature/codex/chat-service-hardening
 git merge --ff-only feature/codex/save-service-tests
-git merge --ff-only feature/codex/patch-service-edge-cases
-pnpm validate
+pnpm validate:static
 ```
 
 ```powershell
 git switch main
-git merge --no-ff staging
-pnpm validate
-git tag -a milestone/2026-06-03 -m "chore: merge staging milestone"
-```
-
-For branches in `staging` that must keep internal structure, use `--no-ff` at
-that specific merge.
-
-```powershell
-git switch staging
-git merge --no-ff feature/codex/plugin-runtime
-```
-
-> If `staging` does not exist yet, create it once from `main`:
-
-```powershell
-git switch main
-git pull --ff-only
-git switch -c staging
-git push -u origin staging
+git merge --ff-only develop
+pnpm validate:static
+git tag -a v0.0.2-prototype.x.y.z -m "Release …"
+git push origin main --follow-tags
 ```
 
 ## Parallel Workspaces
@@ -207,10 +192,10 @@ Recommended layout:
 Create worktrees:
 
 ```powershell
-git switch main
+git switch develop
 git pull --ff-only
-git worktree add ..\workbench-kit-worktrees\chatting-ui -b feature/codex/chatting-ui main
-git worktree add ..\workbench-kit-worktrees\storybook-baseline -b chore/storybook/react-vite-baseline main
+git worktree add ..\workbench-kit-worktrees\chatting-ui -b feature/codex/chatting-ui develop
+git worktree add ..\workbench-kit-worktrees\storybook-baseline -b chore/storybook/react-vite-baseline develop
 ```
 
 Run install, dev servers, and validation inside each worktree independently.
@@ -218,23 +203,24 @@ Run install, dev servers, and validation inside each worktree independently.
 ```powershell
 Set-Location ..\workbench-kit-worktrees\chatting-ui
 pnpm install
-pnpm validate
+pnpm validate:static
 ```
 
 Merge order:
 
 1. Commit work in each worktree.
 2. Run the selected validation lane in each worktree.
-3. Return to the main workspace and select the branch to merge first.
+3. Return to the main workspace and merge into `develop` first.
 4. Try `git merge --ff-only <branch>`.
 5. If it fails, rebase or resolve conflicts in the branch worktree.
-6. After merging, run `pnpm validate` again in the main workspace.
+6. After merging, run validation again on `develop`.
 7. Remove the merged worktree and delete the branch.
+8. Promote `develop` → `main` when ready.
 
 ```powershell
-git switch main
+git switch develop
 git merge --ff-only feature/codex/chatting-ui
-pnpm validate
+pnpm validate:static
 git worktree remove ..\workbench-kit-worktrees\chatting-ui
 git branch -d feature/codex/chatting-ui
 ```

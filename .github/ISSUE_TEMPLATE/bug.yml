@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Follow [docs/conventions/github-issues.md](https://github.com/NewChoBo/workbench-kit/blob/staging/docs/conventions/github-issues.md).
+        Follow [docs/conventions/github-issues.md](https://github.com/NewChoBo/workbench-kit/blob/main/docs/conventions/github-issues.md).
         Prefer a minimal repro in `examples/workbench-sample` or Storybook over a private host app.
 
   - type: textarea

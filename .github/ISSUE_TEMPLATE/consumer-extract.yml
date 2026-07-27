@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Use this when a **desktop/webview consumer already ships** a reusable pattern and kit should own the generic slice.
-        Read [github-issues.md](https://github.com/NewChoBo/workbench-kit/blob/staging/docs/conventions/github-issues.md) § Consumer extracts.
+        Read [github-issues.md](https://github.com/NewChoBo/workbench-kit/blob/main/docs/conventions/github-issues.md) § Consumer extracts.
         **Never** paste private repo paths, product codenames, or host MIME/preference key literals that identify a private product. Describe algorithms and ownership instead.
 
   - type: textarea
