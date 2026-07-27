@@ -23,6 +23,10 @@ const forbiddenPatterns = [
     regex: /vue3[-_]?chatbot/i,
   },
   {
+    name: 'internal-sibling-repo-custom-launcher',
+    regex: /\bcustom[_-]?launcher\b/i,
+  },
+  {
     name: 'internal-host-dev-agent',
     regex: /\bdev[-_]?agent\b/i,
   },

@@ -11,7 +11,8 @@ Companion docs:
 - [json-widget-mvp.md](./json-widget-mvp.md) — Phase 1 parse/registry MVP
 - [json-widget-port-then-replace.md](./json-widget-port-then-replace.md) — port boundaries and editor sync contract
 - [jdw-file-type-standard.md](./jdw-file-type-standard.md) — canonical JDW document/schema extensions and MIME types
-- [kit-design-principles.md](./kit-design-principles.md) — neutral kit vocabulary and extensibility rules
+- [public-reference-policy.md](../conventions/public-reference-policy.md) — neutral kit vocabulary (no private host/product names)
+- [workbench-change-guidelines.md](./workbench-change-guidelines.md) — ownership and extensibility rules before adding surfaces
 - [strengths-inheritance.md](./strengths-inheritance.md) — Flutter UX reference (docs only; no Flutter runtime)
 
 External references (wire format + patterns, not runtime import):
@@ -243,7 +244,10 @@ Asset files are validated in **two passes**:
 | `@workbench-kit/react/json-widget` | **Removed** — was a thin preview export; use `jdw` or `widget-tree`                                                    |
 | `@workbench-kit/adapters`          | Demo fixtures rewritten to JDW v7 + plugin_components assets                                                           |
 
-Kit stays domain-neutral per [kit-design-principles.md](./kit-design-principles.md). No launchpad/tile/Steam vocabulary in schema or layout code.
+Kit stays domain-neutral per
+[public-reference-policy.md](../conventions/public-reference-policy.md). Prefer
+generic widget/layout vocabulary in schema and layout code; keep host product
+terms out of this layer.
 
 ## 6. Placement and materialization
 
