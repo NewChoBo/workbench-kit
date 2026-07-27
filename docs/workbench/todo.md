@@ -41,7 +41,7 @@ For downstream extraction policy, see the Consumer extract quality bar in
 | React entry | `@workbench-kit/react`                                                                                          |
 | Existing UI | `SideBarViewFrame`, `SideBarList`, `SideBarListItem`, `Badge`, `Button`, `ConfirmDialog`                        |
 | Workbench   | `WorkbenchShell`, workbench chat, settings, sectioned panels, workspace explorer, editor, search, command model |
-| Validation  | `pnpm validate` covers typecheck, lint, tests, format check, and Storybook build                                |
+| Validation  | Prefer `pnpm validate:fast` (static + unit tests); `pnpm validate` adds Storybook UI (`validate:ui`)            |
 
 ## Non-Goals
 
