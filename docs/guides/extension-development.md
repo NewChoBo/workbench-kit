@@ -222,14 +222,14 @@ import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-cor
 import * as helloWorld from './index.js';
 
 const description: WorkbenchExtensionDescription = {
-  manifest: { /* workbench.extension.json fields */ },
+  manifest: {/* workbench.extension.json fields */},
   module: helloWorld,
 };
 
 await withActivatedExtension(description, async ({ registry }) => {
-  await expect(
-    registry.executeCommand('workbench-kit.samples.hello-world.sayHello'),
-  ).resolves.toBe('Hello from Workbench Kit');
+  await expect(registry.executeCommand('workbench-kit.samples.hello-world.sayHello')).resolves.toBe(
+    'Hello from Workbench Kit',
+  );
 });
 ```
 

@@ -20,6 +20,25 @@ import '@workbench-kit/tokens/file-icons.css';
 
 React package styles assume these variables are available through `packages/react/src/styles.css`.
 
+## Editor colors JSON → CSS variables
+
+Map a documented subset of VS Code-compatible theme `colors` keys to kit variables
+(pure helper; does not touch the DOM):
+
+```ts
+import { cssVariablesFromEditorColors } from '@workbench-kit/tokens';
+
+const vars = cssVariablesFromEditorColors({
+  'editor.background': '#1e1e1e',
+  'sideBar.background': '#252526',
+  'button.background': '#0e639c',
+});
+// → { '--color-bg': '#1e1e1e', '--color-primary-side-bar-bg': '#252526', ... }
+```
+
+Unknown keys are ignored (optional `onUnknownKey`). Invalid color strings are skipped.
+See `EDITOR_COLOR_TO_KIT_TOKEN` and [theme-pack-architecture.md](../../docs/workbench/theme-pack-architecture.md).
+
 ## Checklist
 
 When adding or changing tokens:

@@ -233,7 +233,7 @@ runtime without dynamic `import()` or link injection.
 
 **Best for:** first-party and third-party preset packs (`@acme/workbench-theme-dracula`).
 
-### Channel C — JSON import (VS Code theme schema subset) — **T2 (planned)**
+### Channel C — JSON import (VS Code theme schema subset) — **T2 (mapper shipped)**
 
 VS Code theme JSON shape (simplified):
 
@@ -250,9 +250,11 @@ VS Code theme JSON shape (simplified):
 }
 ```
 
-Workbench-kit would map `colors.*` → `--color-*` via a fixed lookup table; `tokenColors` feed
-Monaco (T3), not shell chrome. **Pros:** reuse existing VS Code theme files. **Cons:** subset
-validation, incomplete mappings, IP/licensing of community themes.
+`@workbench-kit/tokens` exports `cssVariablesFromEditorColors` / `EDITOR_COLOR_TO_KIT_TOKEN`
+to map the documented `colors.*` subset → `--color-*` (see the chrome token table above).
+Hosts apply the returned record (for example via `hostThemes` token overrides). `tokenColors`
+still feed Monaco (T3), not shell chrome. **Pros:** reuse existing VS Code theme files.
+**Cons:** subset validation, incomplete mappings, IP/licensing of community themes.
 
 **Best for:** user-imported themes, migration from VS Code favorites.
 
