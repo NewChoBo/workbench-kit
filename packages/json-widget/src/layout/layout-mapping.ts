@@ -3,6 +3,7 @@ import type { WidgetPath } from '../document/path.js';
 import type { WidgetPatch } from '../widget/patch.js';
 import { getWidgetAtPath, getWidgetChildren } from '../widget/tree.js';
 import type { GenericWidget } from '../widget/tree.js';
+import { clampNumber, readPositiveInteger } from '../widget/number-utils.js';
 import { isFiniteNumber, isSingleChildContainerType } from '../widget/type-guards.js';
 import type { LayoutNodeResult } from './layout-widget.js';
 import type { Rect } from './types.js';
@@ -103,15 +104,6 @@ export function findLayoutNodeByPath(
   }
 
   return null;
-}
-
-function clampNumber(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
-function readPositiveInteger(value: unknown): number | null {
-  if (!isFiniteNumber(value) || value < 1) return null;
-  return Math.floor(value);
 }
 
 function pathStartsWith(path: WidgetPath, prefix: WidgetPath): boolean {
