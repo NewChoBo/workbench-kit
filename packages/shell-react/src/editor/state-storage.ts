@@ -9,6 +9,8 @@ import {
   type WorkbenchStorageWriter,
 } from '@workbench-kit/workbench-core';
 
+import { isRecord } from '../is-record.js';
+
 export const DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY = 'workbench-kit/.workbench/editors';
 
 export function isWorkbenchEditorStatePersistenceAvailable(): boolean {
@@ -175,8 +177,4 @@ function cloneEditorLayoutForStorage(layout: EditorLayoutNode): EditorLayoutNode
     ...layout,
     children: layout.children.map(cloneEditorLayoutForStorage),
   };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
