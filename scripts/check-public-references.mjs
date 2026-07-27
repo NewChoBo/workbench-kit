@@ -23,6 +23,10 @@ const forbiddenPatterns = [
     regex: /vue3[-_]?chatbot/i,
   },
   {
+    name: 'internal-sibling-repo-custom-launcher',
+    regex: /\bcustom[_-]?launcher\b/i,
+  },
+  {
     name: 'internal-host-dev-agent',
     regex: /\bdev[-_]?agent\b/i,
   },
@@ -42,6 +46,7 @@ const forbiddenPatterns = [
 
 const skippedDirectoryNames = new Set([
   '.git',
+  '.claude', // local agent settings (often gitignored); not a publish surface
   'node_modules',
   'dist',
   'out',

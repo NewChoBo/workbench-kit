@@ -8,7 +8,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./preload": "./src/preload/index.ts"
   },
   "files": [
     "src",
@@ -17,7 +18,7 @@
     "!src/**/*.stories.ts",
     "!src/**/*.stories.tsx"
   ],
-  "description": "Electron main-process helpers for Workbench Kit hosts (window controls, asset protocol, secret vault).",
+  "description": "Electron main-process helpers for Workbench Kit hosts (window controls, asset protocol, secret vault) plus a typed preload scaffold.",
   "publishConfig": {
     "access": "public",
     "tag": "prototype",

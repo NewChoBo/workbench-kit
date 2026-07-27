@@ -28,6 +28,13 @@ export function WorkbenchMonacoEditor({
 export const useMonacoWorkbenchThemeSync = () => undefined;
 export const prepareMonacoWorkbenchEditor = () => undefined;
 export const defineMonacoWorkbenchTheme = () => undefined;
+export const defineOrUpdateWorkbenchMonacoTheme = () => undefined;
+export const setWorkbenchMonacoTokenRules = () => undefined;
+export const getWorkbenchMonacoTokenRules = () => undefined;
+export const buildDefaultMonacoTokenRules = () => [];
+export const monacoRulesFromTokenColors = () => [];
+export const mergeMonacoTokenRules = (...groups: unknown[]) => groups.flat();
+export const toMonacoTokenColor = (color: string) => color;
 export const configureWorkspaceEditorTypeScriptDiagnostics = () => undefined;
 export const monacoThemeForWorkspaceTheme = (theme: string) =>
   theme === 'light' ? MONACO_LIGHT_THEME_ID : MONACO_DARK_THEME_ID;

@@ -56,4 +56,24 @@ describe('WorkspaceExplorer', () => {
 
     expect(markup).not.toContain('ui-workspace-explorer-item-actions');
   });
+
+  it('exposes ARIA tree roles and expanded state on folder rows', () => {
+    const markup = renderToStaticMarkup(
+      <WorkspaceExplorer
+        expandedPaths={new Set(['src'])}
+        focusedPath="src"
+        nodes={sampleNodes}
+        onActivateFile={() => undefined}
+        onToggleFolder={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('role="tree"');
+    expect(markup).toContain('role="treeitem"');
+    expect(markup).toContain('aria-expanded="true"');
+    expect(markup).toContain('aria-level="1"');
+    expect(markup).toContain(
+      'aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Delete F2"',
+    );
+  });
 });

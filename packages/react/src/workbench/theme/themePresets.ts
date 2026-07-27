@@ -20,6 +20,7 @@ export const DARK_THEME_PRESET_MANIFEST = [
   { id: 'modern', label: 'Modern Dark' },
   { id: 'dark-plus', label: 'Dark+' },
   { id: 'hc-black', label: 'High Contrast Black' },
+  { id: 'slate', label: 'Slate (alias pack)' },
 ] as const satisfies readonly WorkbenchThemePresetManifestEntry[];
 
 export type LightThemePresetId = (typeof LIGHT_THEME_PRESET_MANIFEST)[number]['id'];

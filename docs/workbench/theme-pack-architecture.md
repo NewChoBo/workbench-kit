@@ -20,7 +20,8 @@ wrapper). Terminology follows VS Code Settings › Appearance where a mapping ex
 | `data-theme-preset`     | color preset id               | Active **Color Theme** for resolved scheme               |
 | `data-shell-preset`     | layout preset id              | **Workbench Layout** metrics (orthogonal to Color Theme) |
 
-Base tokens live in `@workbench-kit/tokens/styles.css`. Color preset overrides load via
+Base tokens live in `@workbench-kit/tokens/styles.css` (imports `alias-layers.css` for
+primitive → semantic → flat → shell color aliases). Color preset overrides load via
 `theme-presets.css`; layout preset overrides load via `shell-presets.css`.
 
 TypeScript registries:
@@ -61,6 +62,7 @@ docs use VS Code-aligned labels.
 ```text
 packages/tokens/src/
   styles.css                 # base :root + [data-theme] tokens, imports presets
+  alias-layers.css           # primitive → semantic → flat → shell color aliases
   theme-presets.css          # index: @import all color preset files
   shell-presets.css          # index: @import all layout preset files
   themes/
@@ -74,6 +76,7 @@ packages/tokens/src/
       modern.css
       dark-plus.css        # VS Code Default Dark+
       hc-black.css         # VS Code High Contrast Black
+      slate.css            # brand pack via --primitive-* only
   shell/
     baseline-metrics.css   # :root + data-shell-preset='default'
     workbench.css          # compact layout
@@ -133,7 +136,20 @@ Each preset overrides the workbench chrome palette subset:
 | `--scrollbar-thumb*`          | derived from border/surface        |
 
 File icons and control metric defaults stay in `styles.css`; **color** presets only swap
-semantic colors.
+semantic colors (or primitives for alias-first packs like `slate`).
+
+## Alias layers (primitive → semantic → component)
+
+| Layer             | Examples                                                         | Who overrides                     |
+| ----------------- | ---------------------------------------------------------------- | --------------------------------- |
+| Primitive         | `--primitive-neutral-950`, `--primitive-accent-500`              | Brand packs (preferred)           |
+| Semantic          | `--color-bg-canvas`, `--color-bg-sidebar`, `--color-fg-default`  | Rare; keep meaning stable         |
+| Flat legacy       | `--color-bg`, `--color-primary-side-bar-bg`, …                   | Existing presets / hosts (compat) |
+| Component / shell | `--shell-editor-bg`, `--shell-activity-bg`, `--shell-sidebar-bg` | Region roles → semantic           |
+
+Flat legacy vars remain the primary consumption surface for existing chrome CSS. New CSS may
+use semantic or `--shell-*` aliases. Density packs continue to swap `--shell-spacing-*` /
+radius metrics without rewriting color primitives.
 
 ## CSS variable surface (Color Theme)
 
@@ -176,6 +192,7 @@ shell aliases where possible.
 | `modern`     | Modern Dark         | dark   | Neutral gray (VS Code–adjacent) |
 | `dark-plus`  | Dark+               | dark   | VS Code Default Dark+           |
 | `hc-black`   | High Contrast Black | dark   | VS Code HC Black                |
+| `slate`      | Slate (alias pack)  | dark   | Overrides `--primitive-*` only  |
 
 ### VS Code–inspired backlog (not yet implemented)
 
@@ -192,7 +209,9 @@ Candidates for a follow-up pack; map the same CSS variables from theme JSON `col
 | `hc-light`        | High Contrast Light | light  | White bg, thick `#000000` borders         |
 | `abyss`           | Abyss               | dark   | Deep blue `#000c18`, cyan accent          |
 
-Monaco syntax themes (T3) are separate from chrome presets; only shared token names overlap.
+Monaco syntax themes (T3) sync with chrome via `useMonacoWorkbenchThemeSync`: default
+rules derive from CSS tokens; hosts may inject VS Code–style `tokenColors` for richer
+scopes. Grammar packs remain host-owned.
 
 ## Installable themes — feasibility
 
@@ -215,7 +234,7 @@ Monaco syntax themes (T3) are separate from chrome presets; only shared token na
 `ThemeRegistry` + `applyThemeTokenOverrides()` apply `tokenOverrides` as inline CSS variables on
 the host element. **Pros:** dynamic registration, no CSS bundle rebuild, matches extension
 packaging. **Cons:** overrides only (no full selector graph), no `data-theme-preset` switching
-unless the host wires it, Monaco sync still manual (T3).
+unless the host wires it, Monaco sync still needs host `tokenColors` for grammar packs (T3 defaults cover built-in tokenizers).
 
 **Best for:** small delta themes, extension marketplace packs, A/B experiments.
 
@@ -233,7 +252,7 @@ runtime without dynamic `import()` or link injection.
 
 **Best for:** first-party and third-party preset packs (`@acme/workbench-theme-dracula`).
 
-### Channel C — JSON import (VS Code theme schema subset) — **T2 (planned)**
+### Channel C — JSON import (VS Code theme schema subset) — **T2 (mapper shipped)**
 
 VS Code theme JSON shape (simplified):
 
@@ -250,9 +269,13 @@ VS Code theme JSON shape (simplified):
 }
 ```
 
-Workbench-kit would map `colors.*` → `--color-*` via a fixed lookup table; `tokenColors` feed
-Monaco (T3), not shell chrome. **Pros:** reuse existing VS Code theme files. **Cons:** subset
-validation, incomplete mappings, IP/licensing of community themes.
+`@workbench-kit/tokens` exports `cssVariablesFromEditorColors` / `EDITOR_COLOR_TO_KIT_TOKEN`
+to map the documented `colors.*` subset → `--color-*` (see the chrome token table above).
+Hosts apply the returned record (for example via `hostThemes` token overrides). `tokenColors`
+feed Monaco via `@workbench-kit/monaco` (`monacoRulesFromTokenColors` →
+`setWorkbenchMonacoTokenRules` / `defineOrUpdateWorkbenchMonacoTheme`), not shell chrome.
+**Pros:** reuse existing VS Code theme files.
+**Cons:** subset validation, incomplete mappings, IP/licensing of community themes.
 
 **Best for:** user-imported themes, migration from VS Code favorites.
 
@@ -272,8 +295,8 @@ validation, incomplete mappings, IP/licensing of community themes.
 | **T0**   | Document `data-theme` + token mapping              | This doc + split CSS                                    |
 | **T0.5** | Per-preset files + manifest registry               | Done (color + layout)                                   |
 | **T1**   | `registerWorkbenchTheme` wired in integrated shell | Done (`WorkbenchProvider.hostThemes`, workbench-sample) |
-| **T2**   | VS Code `colors` JSON → CSS variables              | Backlog                                                 |
-| **T3**   | Monaco theme sync from active preset               | Partial (`useMonacoWorkbenchThemeSync`)                 |
+| **T2**   | VS Code `colors` JSON → CSS variables              | Done (`cssVariablesFromEditorColors`)                   |
+| **T3**   | Monaco theme sync from active preset               | Done (chrome + default/host tokenColors rules)          |
 | **T4**   | Settings UI + persistence via registry             | Appearance story + shell-settings                       |
 
 Installable **extension themes** are feasible now for override-style packs (Channel A).

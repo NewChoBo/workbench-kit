@@ -2,3 +2,31 @@
 @import './library-catalog-picker-dialog.css';
 @import './library-facet-filter-dialog.css';
 @import './management-panel.css';
+
+.ui-workbench-notify-message {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.ui-workbench-notify-message__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ui-workbench-notify-message__action {
+  margin: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border, currentColor);
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ui-workbench-notify-message__action:hover {
+  background: var(--color-surface-hover, rgba(255, 255, 255, 0.08));
+}

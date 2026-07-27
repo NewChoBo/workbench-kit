@@ -1,4 +1,5 @@
 import type { WidgetPath } from '../document/path.js';
+import { isObjectRecord } from '../is-object-record.js';
 import type { GenericWidget } from '../widget/tree.js';
 
 export interface JsonWidgetNode {
@@ -38,10 +39,6 @@ const CONTAINER_CHILDREN_ARG = 'children';
 const SINGLE_CHILD_ARG = 'child';
 const EXACT_VARIABLE_PATTERN = /^\$\{([A-Za-z0-9_.-]+)\}$/;
 const TEMPLATE_VARIABLE_PATTERN = /\$\{([A-Za-z0-9_.-]+)\}/g;
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
 
 export function isJsonWidgetDynamicValueExpression(value: unknown): value is string {
   return typeof value === 'string' && EXACT_VARIABLE_PATTERN.test(value);

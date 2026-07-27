@@ -1,3 +1,4 @@
+import { isObjectRecord } from '../is-object-record.js';
 import {
   formatJsonWidgetData,
   parseJsonWidgetData,
@@ -36,10 +37,6 @@ export interface ExpandJsonWidgetDocumentRefsResult {
 }
 
 const DEFAULT_MAX_DEPTH = 8;
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
 
 export function isJsonWidgetRefNode(node: JsonWidgetNode): boolean {
   return node.type === 'ref' && typeof node.args.path === 'string' && node.args.path.length > 0;

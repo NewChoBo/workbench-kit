@@ -23,6 +23,9 @@ Never commit or hardcode secrets anywhere in the tree:
   only (`YOUR_API_KEY`, `<token>`, `changeme`)
 
 - Prefer neutral capability language (`integrating host`, `consumer app`).
+- Hosts should **release-then-consume**: land generic work here, publish
+  `@prototype`, then bump pins in the integrating host (see `AGENTS.md`
+  workspace isolation and `docs/workbench/current-state.md`).
 - Applies to source, docs, `AGENTS.md`, Cursor rules/hooks, commits, and PRs.
 - **Before every commit/push:** run `pnpm check:commit-safety` yourself
   (public-references + secrets). Do not skip this even if a Cursor hook exists.

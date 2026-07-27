@@ -1,7 +1,7 @@
 # Consumer Capabilities Reference
 
 **Status:** Active consumer contract  
-**Last updated:** 2026-07-26  
+**Last updated:** 2026-07-27  
 **Audience:** Host applications that compose `@workbench-kit/react` (browser, desktop, VS Code webviews, sample host)
 
 This document is the **integration contract** for reusable workbench UI. It inventories primitives and shell surfaces that a reference desktop consumer actually wires today. It is not a Storybook catalog — use Storybook and `examples/workbench-sample` for visual exploration.
@@ -125,9 +125,20 @@ Utility placement does **not** imply modal-only — host routing chooses the sur
 
 ### `WorkbenchMonacoEditor` · `@workbench-kit/monaco`
 
-**Purpose:** VS Code–aligned Monaco surface with workbench theme sync, JSON/TS diagnostics helpers, and read-only mode.
+**Purpose:** VS Code–aligned Monaco surface with workbench theme sync (chrome colors **and**
+syntax `tokenColors` rules), JSON/TS diagnostics helpers, and read-only mode.
 
 **Key props:** `language`, `value`, `readOnly`, `theme` (`light` \| `dark`), `path` (model identity), `options`, `onMount`.
+
+**Theme sync:**
+
+- `useMonacoWorkbenchThemeSync` / `defineMonacoWorkbenchTheme` re-apply chrome colors and
+  default syntax rules when `data-theme` / `data-theme-preset` change (no remount required).
+- Hosts may register richer rules via `setWorkbenchMonacoTokenRules` or call
+  `defineOrUpdateWorkbenchMonacoTheme(themeId, { base, colors, rules })`.
+- `monacoRulesFromTokenColors` maps a VS Code–compatible `tokenColors` subset to Monaco rules.
+- **Host responsibility:** TextMate / grammar packs stay host-owned. The kit themes Monaco’s
+  built-in tokenizers; hosts that load custom grammars must supply matching token rules.
 
 **When to use:** Read-only JSON inspectors (Admin Data detail), editable workspace JSON tabs (`WorkspaceEditor`), widget source panes.
 
@@ -206,16 +217,18 @@ minimal host glue.
 
 ### `LibraryDetailLayout`
 
-**Purpose:** Record detail shell: hero band (background / banner / compact), optional top `toolbar`, in-hero `actions`, scrollable body via `ScrollArea`.
+**Purpose:** Record detail shell: hero band (`background` / `banner` / `compact` / `hero-cover`), optional top `toolbar`, in-hero `actions`, scrollable body via `ScrollArea`.
 
 **Key props:**
 
 | Prop / slot                                           | Role                                                                                   |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `mode`                                                | `background` \| `banner` \| `compact`                                                  |
+| `mode`                                                | `background` \| `banner` \| `compact` \| `hero-cover`                                  |
 | `title`, `summary`                                    | Identity row (title + badges)                                                          |
 | `backgroundImageUrl`, `coverImageUrl`, `logoImageUrl` | Hero media                                                                             |
-| `description`                                         | Inline under hero (banner/compact)                                                     |
+| `heroImageUrl`                                        | Wide band for `hero-cover` (falls back to atmosphere-from-cover when absent/identical) |
+| `attribution`                                         | Optional footer under the identity row (`hero-cover`)                                  |
+| `description`                                         | Inline under hero (banner/compact/hero-cover)                                          |
 | `actions`                                             | Buttons in hero band when no shared editor chrome exists                               |
 | `toolbar`                                             | Optional row above hero (navigation) — avoid if editor tab bar already owns navigation |
 | `children`                                            | Scrollable metadata sections                                                           |
@@ -438,6 +451,29 @@ Pair with `CatalogFilterOverlay` for anchored flyouts (`showActiveChips={false}`
 
 ---
 
+### `SideBarTree`
+
+**Purpose:** Controlled expand/collapse + selection tree for library / provider sidebars,
+built on `SideBarList` / `SideBarListItem`.
+
+**Import:** `@workbench-kit/react/layout` (also re-exported from `@workbench-kit/react`)
+
+**Key props:** `items`, controlled `expandedIds` / `selectedIds`, `onExpandedIdsChange` /
+`onSelectedIdsChange`, optional `selectionMode` (`single` | `multi`), `keyboardNavigation`
+(default `true`).
+
+**Leaf vs branch:** Items with a `children` array (even empty) are branches; items without
+`children` are leaves. Hosts own the id sets.
+
+**When not to use:** Full workspace file explorer with rename/DnD — use `WorkspaceExplorer`.
+Low-level row chrome without tree state — use `SideBarListItem` / `WorkbenchTreeItem`.
+
+**Non-goals (v1):** Virtualization, DnD reorder.
+
+**VS Code analogue:** TreeView / collapsible category trees.
+
+---
+
 ### Fill / scroll layout contract (`WorkbenchFill`, `WorkbenchFillChain`, `WorkbenchScrollRegion`)
 
 **Purpose:** Keep editor-in-pane hosts from scrolling the document. Flex parents mark
@@ -483,6 +519,7 @@ themselves as fill (clip); only named scroll owners may overflow.
 | `WorkspaceExplorerPanel` toolbar  | `toolbarLeading` / `toolbarTrailing` / `toolbarStatus` plus optional New file/folder/refresh |
 | `onBackgroundContextMenu`         | Empty-tree / background context menu (item menus keep `onItemContextMenu`)                   |
 | `renderItemActions`               | Per-row trailing actions (folder hover new-file/folder/delete, etc.)                         |
+| ARIA tree keyboard                | `role="tree"` / `treeitem`; Arrow/Home/End; `selectionFollowsFocus` (default true)           |
 | `canMutatePath` (controller port) | Guard create/rename/delete/move (`boolean` or error `string`)                                |
 | `inlineEditMessages` (controller) | Override invalid-name / already-exists / failure copy for i18n                               |
 | `resolveExplorerActionPaths`      | `@workbench-kit/workspace` — VS Code-like focus vs selection for command targets             |
@@ -492,7 +529,7 @@ themselves as fill (clip); only named scroll owners may overflow.
 
 **When not to use:** Product-specific library browsers — use catalog primitives.
 
-**Selection policy:** See [explorer-selection-policy.md](./explorer-selection-policy.md).
+**Selection / keyboard policy:** See [explorer-selection-policy.md](./explorer-selection-policy.md).
 
 ---
 
@@ -526,6 +563,8 @@ Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage`
 ### `ContextMenu`
 
 **Purpose:** Fixed-position menu (`items`, `x`, `y`, `onClose`). Items: label, icon, shortcut, `onSelect`, separators. Icon and shortcut columns are opt-in: when no item provides `icon` / `shortcut`, those columns are omitted (`data-has-icons` / `data-has-shortcuts`) so empty grid tracks do not add side padding. Selecting an item calls `onSelect` then `onClose`. Dismiss also runs on outside pointer down, Escape, scroll, and resize (`useFixedOverlayDismiss`). Coordinates are viewport (`clientX` / `clientY`).
+
+**Keyboard / a11y:** `role="menu"` / `menuitem` with a WAI-ARIA menu model — ArrowUp/ArrowDown and Home/End move highlight (skipping disabled items and separators), Enter/Space activate, Escape closes. Highlight stays in sync with pointer hover (`data-highlighted`); roving `tabIndex` keeps only the highlighted enabled item at `0`. Nested submenus are out of scope for this surface.
 
 **When to use:** Tab context menu, catalog item menu, facet overflow.
 
@@ -617,9 +656,22 @@ grid + optional `headerActions` slot for host install/import controls.
 
 ### `WorkbenchNoticeProvider`, `useWorkbenchNotice`, `WorkbenchNoticeViewport`
 
-**Purpose:** Toast/notice stack for management surfaces.
+**Purpose:** Toast/notice stack for management surfaces (aria-live viewport, queue, dismiss,
+auto-dismiss).
 
 **Host rule:** Wrap dialog host once; show feedback via `showNotice`, not ad hoc DOM.
+
+### `createWorkbenchNotify` / `useWorkbenchNotify`
+
+**Purpose:** NotificationService-shaped facade (`notify.info` / `notify.error` / `success` /
+`warning`, optional action buttons that invoke once then dismiss) over the notice controller.
+Does not replace modal confirms.
+
+```ts
+const notify = useWorkbenchNotify();
+notify.info('Installed', { actions: [{ label: 'Open', onAction: open }] });
+notify.error('Save failed');
+```
 
 ---
 
@@ -702,7 +754,10 @@ Browse-first Storybook: `Workbench Sample/Field Remap` → **I/O browse (classRe
 
 ## Settings patterns (reference)
 
-Content Hub settings modal uses kit theme provider and settings sections from `@workbench-kit/react/workbench/settings` (not duplicated here). For schema-driven forms see [schema-form-field-widgets.md](./schema-form-field-widgets.md).
+Integrating hosts typically compose settings modals from the kit theme provider
+and settings sections in `@workbench-kit/react/workbench/settings` (not
+duplicated here). For schema-driven forms see
+[schema-form-field-widgets.md](./schema-form-field-widgets.md).
 
 **VS Code analogue:** Settings editor / preferences UI.
 
@@ -723,9 +778,9 @@ Content Hub settings modal uses kit theme provider and settings sections from `@
 
 ## Host integration rules
 
-TilePaper Content Hub maps these rules to a host-specific index:
-[`custom_launcher/docs/developer/conventions/workbench-kit-capabilities.md`](../../../../custom_launcher/docs/developer/conventions/workbench-kit-capabilities.md)
-(UI/UX ownership section).
+Keep host-specific UI/UX ownership notes in the integrating host’s private
+tracker. This public inventory only records the kit-side ownership rules below
+(see also [public-reference-policy.md](../conventions/public-reference-policy.md)).
 
 1. **Shell chrome belongs to the kit** — activity bar, editor tabs, dialog frames, property sections, scroll areas.
 2. **Tab-scoped actions → `EditorTabs.addons`** — not a duplicate row in the detail pane.

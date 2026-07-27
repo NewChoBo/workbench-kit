@@ -104,6 +104,10 @@ state.
 Workbench Kit adoption in host applications is not "add another UI stack"; it is
 a standardization and source-reduction path:
 
+- **Release then consume** — land generic workbench/UI work in this repository,
+  publish `@prototype`, then integrating hosts bump version pins and thin
+  adapters. Hosts should not commit baselines that require unreleased kit APIs
+  (temporary local `link:` is an exception for validation only).
 - direct feature imports from `@workbench-kit/react` should stay behind thin
   product adapters
 - existing local UI code is deleted only when a Kit adapter fully replaces the
@@ -112,6 +116,8 @@ a standardization and source-reduction path:
   accepted local gaps until Kit has equivalent primitives
 - plugin marketplace growth waits behind packaged local plugin trust,
   integrity, and compatibility
+
+Publish path: [npm-release.md](../conventions/npm-release.md) (tag → `publish.yml`).
 
 ## Validation Ladder
 

@@ -21,6 +21,28 @@ import { CommandRegistry, ContextKeyService, KeybindingService } from '@workbenc
 Useful browser helpers also export from the package root (for example
 `createVersionedBrowserStateAdapter`, `clearBrowserStorageByPrefixes`).
 
+## Secondary-window residency
+
+Hosts inject a narrow window surface (no Electron types in the kit API). Prefer
+orthogonal policy for new code:
+
+```ts
+import { applyWindowResidencyPolicy } from '@workbench-kit/platform';
+
+applyWindowResidencyPolicy(windowSurface, {
+  zOrder: 'top', // 'top' | 'default' | 'back' (back ≈ focusable=false + blur)
+  pointerPassthrough: 'transparent', // 'off' | 'all' | 'transparent' | 'controls'
+  dynamicPointerPassthrough: hitRegionsActive,
+  positionMode: editingPosition,
+  forwardPointerWhenIgnoring: true,
+});
+```
+
+Pair dynamic `transparent` / `controls` with renderer hit-region passthrough
+(`usePointerPassthroughRegion` in `@workbench-kit/react`). Coarse
+`applyWindowResidency(..., 'normal' | 'always-on-top' | 'click-through')` remains
+for back-compat.
+
 ## Node helpers
 
 ```ts

@@ -29,8 +29,9 @@ stays generic and Storybook-driven. Application-specific workflows, artifact
 schemas, tool names, service endpoints, and private configuration should remain
 outside this repository.
 
-For downstream extraction policy, see
-[`downstream-extraction-strategy.md`](./downstream-extraction-strategy.md).
+For downstream extraction policy, see the Consumer extract quality bar in
+[github-issues.md](../conventions/github-issues.md) and the active backlog in
+[consumer-integration-backlog.md](./consumer-integration-backlog.md).
 
 ## Repository Context
 
@@ -40,7 +41,7 @@ For downstream extraction policy, see
 | React entry | `@workbench-kit/react`                                                                                          |
 | Existing UI | `SideBarViewFrame`, `SideBarList`, `SideBarListItem`, `Badge`, `Button`, `ConfirmDialog`                        |
 | Workbench   | `WorkbenchShell`, workbench chat, settings, sectioned panels, workspace explorer, editor, search, command model |
-| Validation  | `pnpm validate` covers typecheck, lint, tests, format check, and Storybook build                                |
+| Validation  | Prefer `pnpm validate:fast` (static + unit tests); `pnpm validate` adds Storybook UI (`validate:ui`)            |
 
 ## Non-Goals
 

@@ -92,7 +92,9 @@ dummy backend).
 When composing `@workbench-kit/electron-shell` (or a host-owned Electron shell):
 
 - Prefer `contextIsolation: true`, `nodeIntegration: false`, and a typed preload
-  bridge (see maturity tracker #138)
+  bridge via `@workbench-kit/electron-shell/preload`
+  (`createWorkbenchKitPreloadApi` + `exposeWorkbenchKitPreload`; never expose
+  raw `ipcRenderer`)
 - Do not enable privileged protocol CORS unless the host opts in explicitly
 - Serve renderer assets under a CSP at least as tight as the sample baseline;
   drop `'unsafe-eval'` when Monaco workers are fully isolated

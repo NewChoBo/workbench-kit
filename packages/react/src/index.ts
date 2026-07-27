@@ -276,6 +276,7 @@ export {
   SideBarHeaderControl,
   SideBarList,
   SideBarListItem,
+  SideBarTree,
   SideBarViewFrame,
   SideBarRow,
   SidebarActionIconBar,
@@ -286,12 +287,20 @@ export {
   WorkbenchSidebarSection,
   WorkbenchSidebarSectionHeader,
   WorkbenchSidebarSectionStack,
+  flattenVisibleSideBarTreeItems,
+  isSideBarTreeBranch,
+  selectSideBarTreeIds,
+  toggleSideBarTreeId,
   useSidebarSectionBaseDepth,
 } from './layout/sidebar';
 export type {
   SideBarHeaderControlProps,
   SideBarListItemProps,
   SideBarListProps,
+  SideBarTreeItem,
+  SideBarTreeProps,
+  SideBarTreeSelectionMode,
+  SideBarTreeVisibleNode,
   SideBarViewFrameProps,
   SideBarRowProps,
   SidebarActionIconBarProps,
@@ -643,8 +652,13 @@ export type {
 } from './primitives';
 export { CatalogFilterOverlay } from './primitives';
 export type { CatalogFilterOverlayProps } from './primitives';
-export { LibraryDetailLayout } from './primitives';
-export type { LibraryDetailLayoutMode, LibraryDetailLayoutProps } from './primitives';
+export { LibraryDetailLayout, resolveLibraryDetailHeroCoverMedia } from './primitives';
+export type {
+  LibraryDetailLayoutMode,
+  LibraryDetailLayoutProps,
+  ResolveLibraryDetailHeroCoverMediaInput,
+  ResolvedLibraryDetailHeroCoverMedia,
+} from './primitives';
 export { WorkbenchMediaPlaceholder } from './primitives';
 export type { WorkbenchMediaPlaceholderProps } from './primitives';
 export { WorkbenchMediaSlot } from './primitives';

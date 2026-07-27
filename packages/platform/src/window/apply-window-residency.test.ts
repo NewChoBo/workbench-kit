@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { applyWindowResidency, type ResidencyWindowSurface } from './apply-window-residency.js';
+import {
+  applyWindowResidency,
+  applyWindowResidencyPolicy,
+  type ResidencyWindowSurface,
+} from './apply-window-residency.js';
 
 function createFakeWindow(): ResidencyWindowSurface & {
   calls: {
@@ -83,5 +87,89 @@ describe('applyWindowResidency', () => {
     applyWindowResidency({ setAlwaysOnTop, setFocusable, setIgnoreMouseEvents }, 'click-through');
 
     expect(setIgnoreMouseEvents).toHaveBeenCalledWith(true, { forward: true });
+  });
+});
+
+describe('applyWindowResidencyPolicy', () => {
+  it('applies top z-order with pointer off', () => {
+    const windowSurface = createFakeWindow();
+    applyWindowResidencyPolicy(windowSurface, {
+      zOrder: 'top',
+      pointerPassthrough: 'off',
+      alwaysOnTopLevel: 'floating',
+    });
+
+    expect(windowSurface.calls.setAlwaysOnTop).toEqual([[true, 'floating']]);
+    expect(windowSurface.calls.setFocusable).toEqual([[true]]);
+    expect(windowSurface.calls.setIgnoreMouseEvents).toEqual([[false]]);
+    expect(windowSurface.calls.blur).toBe(0);
+  });
+
+  it('applies back z-order approximation with blur and no always-on-top', () => {
+    const windowSurface = createFakeWindow();
+    applyWindowResidencyPolicy(windowSurface, {
+      zOrder: 'back',
+      pointerPassthrough: 'off',
+    });
+
+    expect(windowSurface.calls.setAlwaysOnTop).toEqual([[false]]);
+    expect(windowSurface.calls.setFocusable).toEqual([[false]]);
+    expect(windowSurface.calls.blur).toBe(1);
+    expect(windowSurface.calls.setIgnoreMouseEvents).toEqual([[false]]);
+  });
+
+  it('demotes back to default while positionMode is active', () => {
+    const windowSurface = createFakeWindow();
+    applyWindowResidencyPolicy(windowSurface, {
+      zOrder: 'back',
+      pointerPassthrough: 'all',
+      positionMode: true,
+    });
+
+    expect(windowSurface.calls.setAlwaysOnTop).toEqual([[false]]);
+    expect(windowSurface.calls.setFocusable).toEqual([[true]]);
+    expect(windowSurface.calls.blur).toBe(0);
+    expect(windowSurface.calls.setIgnoreMouseEvents).toEqual([[false]]);
+  });
+
+  it('ignores mouse for pointer all unless positionMode', () => {
+    const windowSurface = createFakeWindow();
+    applyWindowResidencyPolicy(windowSurface, {
+      zOrder: 'default',
+      pointerPassthrough: 'all',
+      forwardPointerWhenIgnoring: true,
+    });
+
+    expect(windowSurface.calls.setIgnoreMouseEvents).toEqual([[true, { forward: true }]]);
+  });
+
+  it('gates transparent/controls ignore on dynamicPointerPassthrough', () => {
+    const idle = createFakeWindow();
+    applyWindowResidencyPolicy(idle, {
+      zOrder: 'top',
+      pointerPassthrough: 'transparent',
+      dynamicPointerPassthrough: false,
+    });
+    expect(idle.calls.setIgnoreMouseEvents).toEqual([[false]]);
+
+    const active = createFakeWindow();
+    applyWindowResidencyPolicy(active, {
+      zOrder: 'top',
+      pointerPassthrough: 'controls',
+      dynamicPointerPassthrough: true,
+      forwardPointerWhenIgnoring: false,
+    });
+    expect(active.calls.setIgnoreMouseEvents).toEqual([[true]]);
+  });
+
+  it('omits forward options when forwardPointerWhenIgnoring is false', () => {
+    const windowSurface = createFakeWindow();
+    applyWindowResidencyPolicy(windowSurface, {
+      zOrder: 'default',
+      pointerPassthrough: 'all',
+      forwardPointerWhenIgnoring: false,
+    });
+
+    expect(windowSurface.calls.setIgnoreMouseEvents).toEqual([[true]]);
   });
 });

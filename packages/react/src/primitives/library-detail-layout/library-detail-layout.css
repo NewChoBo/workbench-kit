@@ -4,6 +4,11 @@
   --shell-library-capsule-list-height: 43px;
   --shell-detail-hero-cover-width: 231px;
   --shell-detail-hero-cover-height: calc(var(--shell-detail-hero-cover-width, 231px) * 43 / 116);
+  --shell-detail-portrait-cover-width: 120px;
+  --shell-detail-portrait-cover-height: 160px;
+  --shell-detail-atmosphere-blur: 18px;
+  --shell-detail-atmosphere-scale: 1.12;
+  --shell-detail-atmosphere-opacity: 0.55;
   --shell-library-detail-logo-size: 56px;
   --shell-library-detail-thumb-width: var(--shell-library-capsule-list-width, 116px);
   --shell-library-detail-thumb-height: var(--shell-library-capsule-list-height, 43px);
@@ -166,4 +171,56 @@
   );
   aspect-ratio: var(--shell-library-capsule-aspect, 116 / 43);
   flex: 0 0 auto;
+}
+
+.ui-library-detail-layout__hero-cover {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+
+.ui-library-detail-layout__hero-cover .ui-library-detail-layout__band {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.ui-library-detail-layout__band-media--atmosphere .ui-record-media-hero__image,
+.ui-library-detail-layout__band-media[data-atmosphere='true'] .ui-record-media-hero__image {
+  opacity: var(--shell-detail-atmosphere-opacity, 0.55);
+  filter: blur(var(--shell-detail-atmosphere-blur, 18px));
+  transform: scale(var(--shell-detail-atmosphere-scale, 1.12));
+  object-fit: cover;
+}
+
+.ui-library-detail-layout__hero-cover-body {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  margin-top: -48px;
+  padding: 0 16px 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.ui-library-detail-layout__portrait-cover.ui-record-media-hero--compact {
+  box-sizing: border-box;
+  width: var(--shell-detail-portrait-cover-width, 120px);
+  min-width: var(--shell-detail-portrait-cover-width, 120px);
+  max-width: var(--shell-detail-portrait-cover-width, 120px);
+  height: var(--shell-detail-portrait-cover-height, 160px);
+  min-height: var(--shell-detail-portrait-cover-height, 160px);
+  max-height: var(--shell-detail-portrait-cover-height, 160px);
+  aspect-ratio: auto;
+  flex: 0 0 auto;
+  border: 1px solid
+    var(--shell-color-border-subtle, var(--color-border-subtle, rgba(255, 255, 255, 0.12)));
+  border-radius: var(--shell-radius-sm, 4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+.ui-library-detail-layout__attribution {
+  color: var(--shell-color-text-subtle, var(--color-text-subtle, var(--color-text-muted)));
+  font-size: var(--shell-font-size-caption, 0.75rem);
+  line-height: 1.4;
 }

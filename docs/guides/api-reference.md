@@ -193,7 +193,8 @@ Architecture: [Workbench Config](../architecture/workbench-config.md).
 | `pnpm validate:static`           | Typecheck, lint, format, manifests, exports, graph, public refs, secrets |
 | `pnpm check:public-references`   | Fail on denylisted internal / sibling product names in tracked sources   |
 | `pnpm check:secrets`             | Fail on credential-looking material (keys, tokens, private key files)    |
-| `pnpm validate`                  | Static checks plus Storybook-related validation                          |
+| `pnpm validate:fast`             | `validate:static` plus unit tests                                        |
+| `pnpm validate`                  | `validate:fast` plus Storybook UI validation (`validate:ui`)             |
 
 ---
 

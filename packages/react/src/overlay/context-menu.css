@@ -72,7 +72,8 @@
 }
 
 .ui-context-menu__item:hover,
-.ui-context-menu__item:focus-visible {
+.ui-context-menu__item:focus-visible,
+.ui-context-menu__item[data-highlighted='true'] {
   color: var(--color-text);
   background: var(--color-surface-hover);
   outline: none;
@@ -92,7 +93,8 @@
 }
 
 .ui-context-menu__item[data-danger='true']:hover,
-.ui-context-menu__item[data-danger='true']:focus-visible {
+.ui-context-menu__item[data-danger='true']:focus-visible,
+.ui-context-menu__item[data-danger='true'][data-highlighted='true'] {
   color: #fff;
   background: var(--color-danger);
 }

@@ -20,6 +20,21 @@ When a change could go either “kit-simple” or “VS Code-like”, prefer the
 rule **if** it can be expressed without Electron/host product details and without
 breaking the published selection DTO without a migration note.
 
+## Keyboard / ARIA tree contract
+
+`WorkspaceExplorer` renders a WAI-ARIA tree (`role="tree"` / `treeitem`):
+
+| Key                              | Behavior                                                                                  |
+| -------------------------------- | ----------------------------------------------------------------------------------------- |
+| ArrowUp / ArrowDown / Home / End | Move focus among **visible** rows (collapsed descendants are skipped)                     |
+| ArrowRight                       | Collapsed folder → expand (`onToggleFolder`); expanded folder → focus first visible child |
+| ArrowLeft                        | Expanded folder → collapse; otherwise focus parent if visible                             |
+| Delete / F2                      | Existing delete / rename actions                                                          |
+
+Default `selectionFollowsFocus` is `true`: vertical/horizontal focus moves also emit
+selection (file → single `paths`; folder → `{ focusedPath, paths: [] }`). Set
+`selectionFollowsFocus={false}` when the host wants focus-only moves.
+
 ## Interim kit model (current source of truth)
 
 Workbench Kit today splits explorer chrome state:

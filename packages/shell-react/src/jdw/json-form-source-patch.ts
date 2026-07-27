@@ -1,3 +1,5 @@
+import { isRecord } from '../is-record.js';
+
 export type JsonFormPath = readonly (string | number)[];
 
 export interface JsonTextRange {
@@ -49,7 +51,7 @@ function updateJsonPathValue(value: unknown, path: JsonFormPath, nextValue: unkn
     return nextArray;
   }
 
-  if (isJsonRecord(value) && typeof head === 'string') {
+  if (isRecord(value) && typeof head === 'string') {
     return {
       ...value,
       [head]: updateJsonPathValue(value[head], tail, nextValue),
@@ -57,10 +59,6 @@ function updateJsonPathValue(value: unknown, path: JsonFormPath, nextValue: unkn
   }
 
   return value;
-}
-
-function isJsonRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function findJsonValueRangeAtPath(source: string, path: JsonFormPath): JsonTextRange | null {

@@ -13,11 +13,19 @@ Package manager is **pnpm** only. Root scripts delegate tooling through pnpm.
 
 ## Workspace isolation (consumer apps)
 
-Workbench Kit is a **library**; host applications consume published or linked packages. A **consumer monorepo must not include this repository’s `packages/*` in its own `pnpm-workspace.yaml`** — that merges installs and can symlink React, `@types/react`, and peers from the host into this repo’s `node_modules`.
+Workbench Kit is a **library**. Integrating hosts consume **published**
+`@workbench-kit/*@prototype` versions as the mainstream path. A **consumer
+monorepo must not include this repository’s `packages/*` in its own
+`pnpm-workspace.yaml`** — that merges installs and can symlink React,
+`@types/react`, and peers from the host into this repo’s `node_modules`.
 
 - Run `pnpm install` only from the **workbench-kit repository root** when working on this repo.
-- Host apps should depend on `@workbench-kit/*` via `link:` / `file:` / published npm versions, not by absorbing packages into the host workspace.
+- Host apps should depend on registry pins (`@prototype`), not by absorbing packages into the host workspace. Temporary `link:` / `file:` is host-local exception only and must not be the committed baseline.
 - `pnpm check:workspace-isolation` fails when any `node_modules` symlink resolves outside this repository.
+
+**Release-then-consume:** implement generic workbench/UI gaps in this repo, publish via
+tag → `publish.yml`, then hosts bump pins. Do not expect hosts to ship product commits that
+require unreleased kit APIs.
 
 ## Before you change code
 

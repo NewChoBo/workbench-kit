@@ -210,6 +210,34 @@ Optional lockfile `.workbench/extensions.lock.json` pins resolved versions for r
 
 ---
 
+## Unit-testing activation (in-memory harness)
+
+Use `withActivatedExtension` from `@workbench-kit/workbench-core` to register and
+activate an extension against a fresh `ExtensionRegistry` without booting the
+shell:
+
+```ts
+import { withActivatedExtension } from '@workbench-kit/workbench-core';
+import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
+import * as helloWorld from './index.js';
+
+const description: WorkbenchExtensionDescription = {
+  manifest: {/* workbench.extension.json fields */},
+  module: helloWorld,
+};
+
+await withActivatedExtension(description, async ({ registry }) => {
+  await expect(registry.executeCommand('workbench-kit.samples.hello-world.sayHello')).resolves.toBe(
+    'Hello from Workbench Kit',
+  );
+});
+```
+
+Each call isolates registries. Activation errors propagate to the test runner;
+cleanup always deactivates and disposes.
+
+See `extensions/samples.hello-world/src/index.test.ts` for a complete sample.
+
 ## Build and validate
 
 After changing extension sources or manifests:

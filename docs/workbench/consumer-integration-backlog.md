@@ -267,11 +267,15 @@ preference UI. `@workbench-kit/platform` exposes pure decision helpers (no Elect
   without windows; win32/linux quit when tray is off; tray enabled never auto-quits
 
 **Secondary-window residency applicator (implemented API):** Hosts own BrowserWindow
-construction and which residency mode is active. `@workbench-kit/platform` applies a
+construction and which residency policy is active. `@workbench-kit/platform` applies a
 narrow injected surface (`setAlwaysOnTop` / `setFocusable` / `setIgnoreMouseEvents` / optional
-`blur`) for modes `normal` | `always-on-top` | `click-through`. For click-through,
-`forwardPointerWhenIgnoring` defaults to `true` (win32 forward option). Pair with renderer
-hit-region pointer passthrough in `@workbench-kit/react` for selective interaction.
+`blur`) via `applyWindowResidencyPolicy` with orthogonal `zOrder`
+(`top` | `default` | `back`) and `pointerPassthrough`
+(`off` | `all` | `transparent` | `controls`), plus `positionMode` /
+`dynamicPointerPassthrough`. Coarse `applyWindowResidency` modes
+`normal` | `always-on-top` | `click-through` remain for back-compat
+(`forwardPointerWhenIgnoring` defaults to `true` for click-through). Pair dynamic
+pointer policies with renderer hit-region passthrough in `@workbench-kit/react`.
 
 **Hit-region pointer passthrough (implemented API):** Hosts inject selector lists and a
 `PointerPassthroughPort` (usually IPC → ignore-mouse-events). `@workbench-kit/react`
