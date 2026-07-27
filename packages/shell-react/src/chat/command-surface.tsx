@@ -6,6 +6,7 @@ import {
   type WorkbenchCommandDescriptor,
 } from '@workbench-kit/react/workbench';
 
+import { getCommandErrorMessage } from './command-error-message.js';
 import { parseWorkbenchChatCommandInput } from './command-input.js';
 import { useWorkbench } from '../shell/provider.js';
 import { useWorkbenchCommandDescriptors } from '../commands/use-command-descriptors.js';
@@ -144,12 +145,4 @@ export function useWorkbenchChatCommandSurface({
     onKeyDown: handleKeyDown,
     runInputAsCommand,
   };
-}
-
-function getCommandErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return String(error);
 }
