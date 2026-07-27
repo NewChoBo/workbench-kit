@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type { WorkbenchMonaco } from './monaco-loader.js';
 import {
   buildDefaultMonacoTokenRules,
   buildMonacoThemeColors,
@@ -104,7 +105,7 @@ describe('monacoWorkbenchTheme', () => {
 
   it('defineOrUpdateWorkbenchMonacoTheme forwards base, colors, and rules to defineTheme', () => {
     const defineTheme = vi.fn();
-    const monacoInstance = { editor: { defineTheme } } as unknown as typeof import('monaco-editor');
+    const monacoInstance = { editor: { defineTheme } } as unknown as WorkbenchMonaco;
 
     defineOrUpdateWorkbenchMonacoTheme(monacoInstance, 'workbench-kit-dark', {
       base: 'vs-dark',
@@ -134,7 +135,7 @@ describe('monacoWorkbenchTheme', () => {
     expect(input.rules?.find((rule) => rule.token === 'keyword')?.foreground).toBe('0284c7');
 
     const defineTheme = vi.fn();
-    const monacoInstance = { editor: { defineTheme } } as unknown as typeof import('monaco-editor');
+    const monacoInstance = { editor: { defineTheme } } as unknown as WorkbenchMonaco;
     defineOrUpdateWorkbenchMonacoTheme(monacoInstance, 'workbench-kit-light', input);
     // No DOM → defineMonacoWorkbenchTheme is a safe no-op in node tests.
     defineMonacoWorkbenchTheme(monacoInstance, 'light');
