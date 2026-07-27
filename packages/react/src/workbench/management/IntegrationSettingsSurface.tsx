@@ -7,6 +7,7 @@ import {
   WorkbenchPropertySection,
   WorkbenchPropertyStack,
 } from '../../primitives/index';
+import { cx } from '../../utils/cx';
 
 type IntegrationSettingsDensity = 'compact' | 'default';
 type IntegrationSettingsInset = 'default' | 'flush';
@@ -206,7 +207,7 @@ export function IntegrationAccountRowEditor({
 export function IntegrationBodyText({ children, size = 'default' }: IntegrationBodyTextProps) {
   return (
     <WorkbenchPropertyHint
-      className={joinClasses('block', size === 'compact' ? 'text-xs' : undefined)}
+      className={cx('block', size === 'compact' ? 'text-xs' : undefined)}
       data-size={size}
     >
       {children}
@@ -283,8 +284,4 @@ function IntegrationEditorDescription({ children }: { children?: ReactNode }) {
 
 function hasRenderableNode(node: ReactNode | undefined): boolean {
   return node !== undefined && node !== null && node !== false;
-}
-
-function joinClasses(...classes: Array<string | undefined>): string {
-  return classes.filter(Boolean).join(' ');
 }

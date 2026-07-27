@@ -2,6 +2,7 @@ import '../chrome/workbench-shell-titlebar.css';
 import type { JSX } from 'react';
 
 import { IconButton } from '../../primitives/icon-button';
+import { cx } from '../../utils/cx';
 
 export interface WorkbenchShellTitleBarLayoutControlsProps {
   readonly isAuxiliarySidebarVisible?: boolean;
@@ -16,10 +17,6 @@ export interface WorkbenchShellTitleBarLayoutControlsProps {
   readonly primarySidebarShowLabel?: string;
   readonly secondarySidebarHideLabel?: string;
   readonly secondarySidebarShowLabel?: string;
-}
-
-function joinClasses(...classNames: Array<string | false | null | undefined>): string {
-  return classNames.filter(Boolean).join(' ');
 }
 
 export function WorkbenchShellTitleBarLayoutControls({
@@ -40,7 +37,7 @@ export function WorkbenchShellTitleBarLayoutControls({
     <div className="workbench-shell-titlebar__layout-controls">
       <IconButton
         aria-pressed={isPrimarySidebarVisible}
-        className={joinClasses(
+        className={cx(
           'workbench-shell-titlebar__layout-control',
           isPrimarySidebarVisible && 'workbench-shell-titlebar__layout-control--active',
         )}
@@ -52,7 +49,7 @@ export function WorkbenchShellTitleBarLayoutControls({
       {onTogglePanel ? (
         <IconButton
           aria-pressed={isPanelVisible}
-          className={joinClasses(
+          className={cx(
             'workbench-shell-titlebar__layout-control',
             isPanelVisible && 'workbench-shell-titlebar__layout-control--active',
           )}
@@ -65,7 +62,7 @@ export function WorkbenchShellTitleBarLayoutControls({
       {onToggleAuxiliarySidebar ? (
         <IconButton
           aria-pressed={isAuxiliarySidebarVisible}
-          className={joinClasses(
+          className={cx(
             'workbench-shell-titlebar__layout-control',
             isAuxiliarySidebarVisible && 'workbench-shell-titlebar__layout-control--active',
           )}

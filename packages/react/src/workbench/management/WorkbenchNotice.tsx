@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { IconButton, WorkbenchBanner, WorkbenchBannerMessage } from '../../primitives/index';
+import { cx } from '../../utils/cx';
 
 export type WorkbenchNoticeTone = 'error' | 'info' | 'success' | 'warning';
 export type WorkbenchNoticePosition = 'bottom-center' | 'bottom-right';
@@ -187,7 +188,7 @@ export function useWorkbenchNotice(): WorkbenchNoticeController {
 }
 
 function resolveNoticeViewportClassName(position: WorkbenchNoticePosition): string {
-  return joinClasses(
+  return cx(
     'pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col gap-2 px-4',
     position === 'bottom-center' ? 'items-center' : 'items-end',
   );
@@ -204,8 +205,4 @@ function resolveNoticeBannerStyle(tone: WorkbenchNoticeTone): CSSProperties {
     maxWidth: 'min(520px, calc(100vw - 32px))',
     minWidth: 'min(420px, calc(100vw - 32px))',
   };
-}
-
-function joinClasses(...classes: Array<string | undefined>): string {
-  return classes.filter(Boolean).join(' ');
 }
