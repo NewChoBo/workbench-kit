@@ -96,10 +96,15 @@ Key facts agents often get wrong:
 4. npm releases (including first publish of a package) go through `publish.yml` OIDC;
    local `publish:packages:local` is fallback only.
 
+## UI chrome
+
+Prefer shared primitives, `IconButton` for toolbars, theme tokens for color, no
+decorative wrappers — `docs/conventions/ui-design-principles.md`.
+
 ## Docs index
 
 - Agent layout: `docs/conventions/agent-guidance.md`
-- Conventions: `docs/conventions/` (especially `public-reference-policy.md`, `github-issues.md`)
+- Conventions: `docs/conventions/` (especially `public-reference-policy.md`, `github-issues.md`, `ui-design-principles.md`)
 - Architecture: `docs/architecture/`
 - Workbench notes: `docs/workbench/`
 - Cursor git gate: `.cursor/hooks.json` → `check:commit-safety`

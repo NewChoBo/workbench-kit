@@ -154,6 +154,13 @@ That runs `check:public-references` (internal/sibling names) and `check:secrets`
   `.cursor/hooks/gate-git-publish-safety.mjs` — treat that as a backstop, not
   the only control
 
+## UI chrome (short)
+
+Prefer shared kit primitives; toolbar/chrome actions use `IconButton` (with a11y
+label) over text buttons; all colors via theme tokens; avoid decorative wrapper
+cards / nested frames. Full rules:
+[`docs/conventions/ui-design-principles.md`](docs/conventions/ui-design-principles.md).
+
 ## Agent tooling notes
 
 Layout and ownership: [`docs/conventions/agent-guidance.md`](docs/conventions/agent-guidance.md).
