@@ -70,6 +70,7 @@ type Story = StoryObj<typeof meta>;
 
 export const ExpandAndSelect: Story = {
   name: 'Expand and select',
+  tags: ['storybook-play-baseline'],
   render: () => <SideBarTreeHarness />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
