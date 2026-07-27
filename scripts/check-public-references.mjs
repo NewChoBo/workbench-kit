@@ -46,6 +46,7 @@ const forbiddenPatterns = [
 
 const skippedDirectoryNames = new Set([
   '.git',
+  '.claude', // local agent settings (often gitignored); not a publish surface
   'node_modules',
   'dist',
   'out',
