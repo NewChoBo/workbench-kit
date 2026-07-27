@@ -1,3 +1,4 @@
+import { clampNumber } from '../utils/clamp';
 import type { ModalBounds, ModalPosition, ModalSize } from './modalTypes';
 import type { ModalContainerBounds } from './modalContainer';
 import { readWindowViewportBounds } from './modalContainer';
@@ -17,9 +18,9 @@ export function clampModalDragPosition(
   }
 
   const maxX = Math.max(0, viewport.width - size.width);
-  const x = clamp(nextPosition.x, 0, maxX);
+  const x = clampNumber(nextPosition.x, 0, maxX);
   const maxY = size.height >= viewport.height ? 0 : Math.max(0, viewport.height - size.height);
-  const y = clamp(nextPosition.y, 0, maxY);
+  const y = clampNumber(nextPosition.y, 0, maxY);
 
   return { x, y };
 }
@@ -29,8 +30,4 @@ export function clampModalBoundsPosition(
   viewport: ModalContainerBounds = readWindowViewportBounds(),
 ): ModalBounds {
   return { ...bounds, ...clampModalDragPosition(bounds, bounds, viewport) };
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }

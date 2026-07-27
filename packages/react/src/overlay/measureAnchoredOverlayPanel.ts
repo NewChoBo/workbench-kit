@@ -1,3 +1,5 @@
+import { clampNumber } from '../utils/clamp';
+
 export type AnchoredOverlayPlacement = 'side' | 'below' | 'above';
 
 export interface MeasureAnchoredOverlayPanelOptions {
@@ -25,10 +27,6 @@ const DEFAULT_SIDE_PREFER_TRIGGER_LEFT_RATIO = 0.42;
 const SIDE_MIN_VISIBLE_HEIGHT_PX = 240;
 /** Prefer below when at least this many pixels are available under the trigger. */
 const BELOW_MIN_SPACE_PX = 12;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 /**
  * Measure a panel-sized overlay anchored to a trigger element.
@@ -65,7 +63,7 @@ export function measureAnchoredOverlayPanel(
 
   if (preferSide) {
     const minVisibleHeight = Math.min(SIDE_MIN_VISIBLE_HEIGHT_PX, maxHeight);
-    const top = clamp(
+    const top = clampNumber(
       triggerRect.top,
       viewportPaddingPx,
       viewportHeight - viewportPaddingPx - minVisibleHeight,
@@ -80,7 +78,7 @@ export function measureAnchoredOverlayPanel(
   }
 
   // Align the panel's right edge toward the trigger's right, then clamp.
-  const left = clamp(
+  const left = clampNumber(
     triggerRect.right - width,
     viewportPaddingPx,
     viewportWidth - viewportPaddingPx - width,
