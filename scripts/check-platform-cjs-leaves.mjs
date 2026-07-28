@@ -10,6 +10,13 @@ const platformDir = path.join(repoRoot, 'packages', 'platform');
 
 function run(command, args, options = {}) {
   if (process.platform === 'win32') {
+    // Absolute node (or other) paths with spaces break under `cmd /s /c` because
+    // `/s` strips the first/last quote of the command string. Invoke those
+    // directly; keep the cmd shim for PATH-resolved tools (pnpm/npm/tar).
+    if (path.isAbsolute(command)) {
+      return execFileSync(command, args, options);
+    }
+
     return execFileSync(
       process.env.ComSpec || 'cmd.exe',
       ['/d', '/s', '/c', [command, ...args].map(quoteCmdArg).join(' ')],
