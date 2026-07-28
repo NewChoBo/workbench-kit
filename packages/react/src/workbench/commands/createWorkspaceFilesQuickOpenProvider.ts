@@ -68,7 +68,7 @@ export function createWorkspaceFilesQuickOpenProvider(
       for (const path of options.recentPaths) {
         const item = byPath.get(path);
         if (item) {
-          recentItems.push({ ...item, detail: item.detail ?? 'Recent' });
+          recentItems.push({ ...item, detail: 'Recent' });
         }
       }
 
