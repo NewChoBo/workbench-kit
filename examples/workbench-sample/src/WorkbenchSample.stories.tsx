@@ -240,9 +240,9 @@ export const TesterDevAppJourney: Story = {
     quickOpenSearch.focus();
     await userEvent.keyboard('README');
     await waitFor(() => {
-      expect(within(quickOpen).getByRole('listbox', { name: 'Quick Open results' })).toHaveTextContent(
-        'README.md',
-      );
+      expect(
+        within(quickOpen).getByRole('listbox', { name: 'Quick Open results' }),
+      ).toHaveTextContent('README.md');
     });
     await userEvent.keyboard('{Enter}');
     await expectEditorTabVisible(canvas, 'README.md');

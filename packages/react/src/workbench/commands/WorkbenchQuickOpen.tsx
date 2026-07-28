@@ -396,11 +396,7 @@ export function WorkbenchQuickOpen({
   );
 }
 
-export type {
-  QuickOpenItem,
-  QuickOpenProvider,
-  QuickOpenSelectContext,
-} from './quick-open-model';
+export type { QuickOpenItem, QuickOpenProvider, QuickOpenSelectContext } from './quick-open-model';
 export {
   DEFAULT_QUICK_OPEN_SEARCH_DEBOUNCE_MS,
   getNextQuickOpenItemIndex,

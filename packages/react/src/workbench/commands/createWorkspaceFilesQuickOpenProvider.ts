@@ -22,11 +22,7 @@ function resolveFiles(
   return typeof files === 'function' ? files() : files;
 }
 
-function toQuickOpenItem(
-  path: string,
-  matchedBy?: string,
-  preview?: string,
-): QuickOpenItem {
+function toQuickOpenItem(path: string, matchedBy?: string, preview?: string): QuickOpenItem {
   const segments = path.split('/');
   const label = segments[segments.length - 1] || path;
   const parent = segments.length > 1 ? segments.slice(0, -1).join('/') : undefined;

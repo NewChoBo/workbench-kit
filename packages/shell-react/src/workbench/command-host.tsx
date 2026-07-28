@@ -28,10 +28,7 @@ import {
   resolveShellCommandActivities,
 } from './command-palette.js';
 import { resolveExtensionKeybindingCommand } from './keybinding-bridge.js';
-import {
-  isWorkspaceResourceService,
-  useWorkspaceResourceState,
-} from './workspace-view-state.js';
+import { isWorkspaceResourceService, useWorkspaceResourceState } from './workspace-view-state.js';
 
 const WORKSPACE_OPEN_COMMAND_ID = 'workspace.open' as const;
 
@@ -58,10 +55,7 @@ export interface WorkbenchCommandHostProps {
    * Called when a Quick Open item is selected. Return `true` to skip the default
    * `workspace.open` path for file items.
    */
-  onOpenQuickOpenItem?: (
-    item: QuickOpenItem,
-    context: QuickOpenSelectContext,
-  ) => boolean | void;
+  onOpenQuickOpenItem?: (item: QuickOpenItem, context: QuickOpenSelectContext) => boolean | void;
   onRunCommand?: (
     command: WorkbenchCommandDescriptor,
     context: WorkbenchCommandRunContext,
@@ -103,8 +97,13 @@ export function WorkbenchCommandHost({
   quickOpenRecentPaths,
   quickOpenTitle = 'Quick Open',
 }: WorkbenchCommandHostProps) {
-  const { executeCommand, extensionRegistry, keybindingOverrides, layoutService, workspaceHostPort } =
-    useWorkbench();
+  const {
+    executeCommand,
+    extensionRegistry,
+    keybindingOverrides,
+    layoutService,
+    workspaceHostPort,
+  } = useWorkbench();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState('');
   const [quickOpenOpen, setQuickOpenOpen] = useState(false);
