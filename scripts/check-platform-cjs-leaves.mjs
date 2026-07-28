@@ -47,11 +47,7 @@ try {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
   });
-  const tarballName = packOutput
-    .trim()
-    .split(/\r?\n/u)
-    .filter(Boolean)
-    .at(-1);
+  const tarballName = packOutput.trim().split(/\r?\n/u).filter(Boolean).at(-1);
   if (!tarballName) {
     throw new Error('npm pack did not print a tarball name.');
   }
@@ -81,7 +77,7 @@ try {
       "const os = require('node:os');",
       "const path = require('node:path');",
       "const { atomicWriteText } = require('@workbench-kit/platform/atomic-write');",
-      "const {",
+      'const {',
       '  shouldHideOnClose,',
       '  shouldQuitWhenAllWindowsClosed,',
       "} = require('@workbench-kit/platform/tray-close-policy');",
@@ -107,7 +103,7 @@ try {
       "  const filePath = path.join(dir, 'nested', 'doc.txt');",
       "  await atomicWriteText(filePath, 'hello-cjs');",
       "  assert.equal(fs.readFileSync(filePath, 'utf8'), 'hello-cjs');",
-      "  fs.rmSync(dir, { recursive: true, force: true });",
+      '  fs.rmSync(dir, { recursive: true, force: true });',
       "  console.log('[check-platform-cjs-leaves] require() smoke passed.');",
       '})().catch((error) => {',
       '  console.error(error);',
