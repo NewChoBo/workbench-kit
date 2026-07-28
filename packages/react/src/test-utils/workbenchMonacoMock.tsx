@@ -9,14 +9,34 @@ export interface MockWorkbenchMonacoEditorProps {
   value?: string;
 }
 
+export interface MockWorkbenchMonacoDiffEditorProps {
+  language?: string;
+  modified?: string;
+  onModifiedChange?: (value: string) => void;
+  original?: string;
+  readOnly?: boolean;
+  theme?: string;
+}
+
 export function createWorkbenchMonacoMockModule(
   renderEditor?: (props: MockWorkbenchMonacoEditorProps) => ReactNode,
 ) {
   const defaultRender = ({ value }: MockWorkbenchMonacoEditorProps) =>
     createElement('div', { 'data-testid': 'monaco-editor' }, value ?? 'Mocked Monaco Editor');
 
+  const defaultDiffRender = ({ modified, original }: MockWorkbenchMonacoDiffEditorProps) =>
+    createElement(
+      'div',
+      { 'data-testid': 'monaco-diff-editor' },
+      original ?? '',
+      '\n---\n',
+      modified ?? '',
+    );
+
   return {
     WorkbenchMonacoEditor: renderEditor ?? defaultRender,
+    WorkbenchMonacoDiffEditor: defaultDiffRender,
+    DiffEditor: defaultDiffRender,
     useMonacoWorkbenchThemeSync: () => undefined,
     prepareMonacoWorkbenchEditor: () => undefined,
     monacoThemeForWorkspaceTheme: (theme: string) =>
