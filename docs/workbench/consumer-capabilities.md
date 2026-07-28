@@ -144,7 +144,27 @@ syntax `tokenColors` rules), JSON/TS diagnostics helpers, and read-only mode.
 
 **When not to use:** Short metadata labels — prefer `WorkbenchPropertyKeyValue`. Host must configure `MonacoEnvironment.getWorker` once at app entry (see `examples/workbench-sample/src/main.tsx`).
 
-**Consumer pattern:** Host adapter configures workers; tilepaper-ui/feature panes import `@workbench-kit/monaco` only — no direct `monaco-editor` imports in renderer business logic.
+**Consumer pattern:** Host adapter configures workers; feature panes import `@workbench-kit/monaco` only — no direct `monaco-editor` imports in renderer business logic.
+
+### `WorkbenchMonacoDiffEditor` · `@workbench-kit/monaco`
+
+**Purpose:** Side-by-side DiffEditor wrapper aligned with `WorkbenchMonacoEditor` theming and
+layout defaults for review/patch flows.
+
+**Key props:** `original`, `modified`, `language`, `readOnly`, `theme` (`light` \| `dark`),
+`onModifiedChange`, `originalModelPath` / `modifiedModelPath`, `options`, `onMount`.
+
+**Behavior:**
+
+- Reuses `prepareMonacoWorkbenchEditor` / workbench theme ids (same sync path as the single editor).
+- Original pane stays non-editable by default; `readOnly` locks the modified pane.
+- Models dispose with the DiffEditor unmount (`keepCurrent*Model` defaults remain false).
+
+**When to use:** Host save/patch/review surfaces that previously imported raw Monaco DiffEditor.
+
+**When not to use:** Full SCM UI (blame, staging) or multi-diff review tabs — those stay host-owned.
+
+**Story:** `Workbench Sample/Monaco Diff Editor` - Review / patch (editor/main frame).
 
 ---
 
