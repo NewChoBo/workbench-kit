@@ -245,9 +245,10 @@ export const TesterDevAppJourney: Story = {
     // Empty-query results already include README.md — wait until the filtered
     // option is active, not merely present in the listbox text.
     await waitFor(() => {
-      expect(
-        within(quickOpen).getByRole('option', { name: /README\.md/ }),
-      ).toHaveAttribute('aria-selected', 'true');
+      expect(within(quickOpen).getByRole('option', { name: /README\.md/ })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
     });
     await userEvent.keyboard('{Enter}');
     await expectEditorTabVisible(canvas, 'README.md');
