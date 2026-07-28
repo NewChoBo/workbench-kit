@@ -39,9 +39,7 @@ vi.mock('./monaco-loader.js', () => ({
 }));
 
 vi.mock('./WorkbenchMonacoEditor.js', async () => {
-  const actual = await vi.importActual<typeof import('./WorkbenchMonacoEditor.js')>(
-    './WorkbenchMonacoEditor.js',
-  );
+  const actual = (await vi.importActual('./WorkbenchMonacoEditor.js')) as Record<string, unknown>;
   return {
     ...actual,
     prepareMonacoWorkbenchEditor: prepareMonacoWorkbenchEditorMock,
