@@ -24,10 +24,7 @@ export function createWorkbenchMonacoMockModule(
   const defaultRender = ({ value }: MockWorkbenchMonacoEditorProps) =>
     createElement('div', { 'data-testid': 'monaco-editor' }, value ?? 'Mocked Monaco Editor');
 
-  const defaultDiffRender = ({
-    modified,
-    original,
-  }: MockWorkbenchMonacoDiffEditorProps) =>
+  const defaultDiffRender = ({ modified, original }: MockWorkbenchMonacoDiffEditorProps) =>
     createElement(
       'div',
       { 'data-testid': 'monaco-diff-editor' },

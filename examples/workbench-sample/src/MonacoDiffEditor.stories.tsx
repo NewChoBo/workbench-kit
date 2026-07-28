@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import {
-  WorkbenchMonacoDiffEditor,
-  useMonacoWorkbenchThemeSync,
-} from '@workbench-kit/monaco';
+import { WorkbenchMonacoDiffEditor, useMonacoWorkbenchThemeSync } from '@workbench-kit/monaco';
 
 import { StoryWorkbenchShellFrame } from '../../../packages/react/src/workbench/story/StoryWorkbenchShellFrame';
 
