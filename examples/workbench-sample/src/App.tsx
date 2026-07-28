@@ -207,6 +207,11 @@ function SampleWorkbenchHost({
   const [locale, setLocale] = useState('en');
   const resolvedTheme = useResolvedWorkbenchTheme(appearance.themePreference);
   const editorTheme: WorkspaceEditorTheme = resolvedTheme;
+  const translateShellChrome = useCallback(
+    (key: string, fallback: string) =>
+      extensionRegistry.localizations.translate(locale, key, fallback),
+    [extensionRegistry.localizations, locale],
+  );
 
   useEffect(() => {
     const disposable = layoutService.onDidChangeLayout(({ state }) => {
@@ -360,6 +365,7 @@ function SampleWorkbenchHost({
       helpContent={<SampleHelpContent />}
       lightPreset={appearance.lightPreset}
       locale={locale}
+      t={translateShellChrome}
       shellPreset={appearance.shellPreset}
       onDarkPresetChange={(nextPreset) => {
         handleAppearancePatch({ darkPreset: nextPreset });

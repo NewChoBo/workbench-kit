@@ -25,6 +25,14 @@ import { resolveExtensionKeybindingCommand } from './keybinding-bridge.js';
 
 export interface WorkbenchCommandHostProps {
   additionalCommands?: readonly WorkbenchCommandDescriptor[];
+  /** Override command palette close control label (default English). */
+  commandPaletteCloseLabel?: string | undefined;
+  /** Override command palette empty-state copy (default English). */
+  commandPaletteEmptyLabel?: string | undefined;
+  /** Override command palette search placeholder (default English). */
+  commandPalettePlaceholder?: string | undefined;
+  /** Override command palette dialog title (default English). */
+  commandPaletteTitle?: string | undefined;
   enableCommandPalette?: boolean;
   enableExtensionKeybindings?: boolean;
   enableShortcutBridge?: boolean;
@@ -37,6 +45,10 @@ export interface WorkbenchCommandHostProps {
 
 export function WorkbenchCommandHost({
   additionalCommands = [],
+  commandPaletteCloseLabel = 'Close command palette',
+  commandPaletteEmptyLabel = 'No commands match your search',
+  commandPalettePlaceholder = 'Search commands',
+  commandPaletteTitle = 'Command Palette',
   enableCommandPalette = true,
   enableExtensionKeybindings = true,
   enableShortcutBridge = true,
@@ -228,11 +240,13 @@ export function WorkbenchCommandHost({
       ) : null}
       {enableCommandPalette ? (
         <WorkbenchCommandPalette
+          closeLabel={commandPaletteCloseLabel}
           commands={paletteCommands}
+          emptyLabel={commandPaletteEmptyLabel}
           open={paletteOpen}
-          placeholder="Search commands"
+          placeholder={commandPalettePlaceholder}
           query={paletteQuery}
-          title="Command Palette"
+          title={commandPaletteTitle}
           onClose={closePalette}
           onQueryChange={setPaletteQuery}
           onRunCommand={runPaletteCommand}

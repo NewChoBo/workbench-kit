@@ -29,6 +29,8 @@ export interface WorkbenchShellProps {
     style?: CSSProperties;
   };
   compactStatus?: boolean;
+  /** Accessible name for the status bar region (default “Status bar”). */
+  statusBarAriaLabel?: string;
   onStatusItemActivate?: (item: StatusBarItemModel) => void;
   primarySidebar?: {
     isVisible: boolean;
@@ -58,6 +60,7 @@ export function WorkbenchShell({
   auxiliarySidebar,
   bottomPanel,
   compactStatus = true,
+  statusBarAriaLabel,
   onStatusItemActivate,
   overlays,
   primarySidebar,
@@ -178,6 +181,7 @@ export function WorkbenchShell({
             {body}
           </div>
           <StatusBar
+            aria-label={statusBarAriaLabel}
             compact={compactStatus}
             sections={statusSections}
             onItemActivate={onStatusItemActivate}
