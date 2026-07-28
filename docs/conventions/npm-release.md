@@ -108,17 +108,32 @@ If CI fails mid-batch:
 
 ## Validation Before Release
 
-Publish workflow runs `pnpm validate`. Before tagging locally, prefer:
+**Mandatory:** do **not** create or push a release tag until validation has
+passed on the **exact commit tip** you will tag (usually `main` after promote).
+
+Publish workflow runs `pnpm validate` (`validate:fast` + `validate:ui`, including
+required Storybook play). Local agents must run the same gate before tagging so
+failed play / format / export checks do not burn a tag push:
 
 ```powershell
-pnpm validate:static
-pnpm publish:packages:dry-run   # requires OIDC; use workflow_dispatch dry-run in CI
+pnpm validate
 ```
 
-Script changes under `scripts/` must pass `pnpm format:check`.
+If UI play is unavailable in the environment, say so and stop — do not tag on
+`validate:fast` alone for a release that will hit `publish.yml`.
+
+Optional extra (OIDC / auth):
+
+```powershell
+pnpm publish:packages:dry-run   # or workflow_dispatch dry-run in CI
+```
+
+Script changes under `scripts/` must pass `pnpm format:check` (covered by
+`validate`).
 
 ## Tag & Version Checklist
 
+- [ ] `pnpm validate` passed on the commit that will receive the tag
 - [ ] Root and all package versions match after `sync-version-from-tag`
 - [ ] Tag name matches `v${version}` or `workbench-kit-v${version}`
 - [ ] All packages in `NPM_PUBLISH_ORDER` have Trusted Publisher (or org policy) so CI can publish first releases

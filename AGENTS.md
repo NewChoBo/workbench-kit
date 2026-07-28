@@ -50,15 +50,20 @@ require unreleased kit APIs.
 
 Full detail: [`docs/conventions/npm-release.md`](docs/conventions/npm-release.md)
 
-| Topic                   | Rule                                                                  |
-| ----------------------- | --------------------------------------------------------------------- |
-| Public publish set      | `NPM_PUBLISH_ORDER` in `scripts/npm-publish-config.mjs` (19 packages) |
-| CI publish set          | Same as `NPM_PUBLISH_ORDER` — do not maintain a smaller allowlist     |
-| Not published           | `extensions/*` (repo-local only)                                      |
-| First release / updates | Push tag `v<version>` → `publish.yml` (npm OIDC trusted publishing)   |
-| Local fallback          | `pnpm publish:packages:local` only when Trusted Publisher unavailable |
-| Consumer install tag    | `@prototype` (CI does not move `latest`)                              |
-| Auth                    | OIDC only in CI; clear npmrc tokens between publishes                 |
+| Topic                   | Rule                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| Public publish set      | `NPM_PUBLISH_ORDER` in `scripts/npm-publish-config.mjs` (19 packages)         |
+| CI publish set          | Same as `NPM_PUBLISH_ORDER` — do not maintain a smaller allowlist             |
+| Not published           | `extensions/*` (repo-local only)                                              |
+| First release / updates | **`pnpm validate` on tip →** push tag `v<version>` → `publish.yml` (npm OIDC) |
+| Local fallback          | `pnpm publish:packages:local` only when Trusted Publisher unavailable         |
+| Consumer install tag    | `@prototype` (CI does not move `latest`)                                      |
+| Auth                    | OIDC only in CI; clear npmrc tokens between publishes                         |
+
+**Never tag without validation.** `publish.yml` runs full `pnpm validate`
+(including Storybook play). Agents must run `pnpm validate` on the release tip
+before `git tag` / `git push origin <tag>`. See
+[`docs/conventions/npm-release.md`](docs/conventions/npm-release.md).
 
 Common failure modes to avoid:
 

@@ -22,6 +22,10 @@ Read `docs/conventions/npm-release.md` before changing publish scripts or releas
 | First release and version bumps | Tag `v*` / `workbench-kit-v*` → `publish.yml` (OIDC only) |
 | Fallback (no Trusted Publisher) | `publish-packages-local.mjs` (local `npm login`)          |
 
+**Before every release tag:** run `pnpm validate` on the exact commit tip to tag
+(same gate as `publish.yml`). Do not tag after `validate:fast` / `validate:static`
+alone. Details: `docs/conventions/npm-release.md`.
+
 ## OIDC — do not regress
 
 - No `NPM_TOKEN` / `NODE_AUTH_TOKEN` in CI publish paths.

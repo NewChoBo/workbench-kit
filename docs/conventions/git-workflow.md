@@ -85,8 +85,9 @@ git branch -d feature/codex/chatting-ui
 git switch main
 git pull --ff-only
 git merge --ff-only develop   # or: git merge --no-ff develop
-pnpm validate:static          # or the lane required for the promote
+pnpm validate                 # required before any release tag on this tip
 git push origin main
+# Only after validate passes: git tag -a v… && git push origin <tag>
 ```
 
 If a branch has too many experiment, fixup, or revert commits, clean it up

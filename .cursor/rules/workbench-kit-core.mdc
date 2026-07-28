@@ -88,6 +88,9 @@ Never commit or hardcode secrets anywhere in the tree:
 
 When touching publish/release surfaces, follow `docs/conventions/npm-release.md` and rule `npm-release`.
 
+**Before tagging:** always run `pnpm validate` on the tip to tag. Never push a
+`v*` / `workbench-kit-v*` tag on `validate:fast` alone.
+
 Key facts agents often get wrong:
 
 1. CI publishes **all** `NPM_PUBLISH_ORDER` packages, not a manual allowlist subset.
