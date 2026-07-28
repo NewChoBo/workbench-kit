@@ -15,7 +15,7 @@ status entries from `workbench-core` registries.
 | Layer         | Responsibility                                                                                  |
 | ------------- | ----------------------------------------------------------------------------------------------- |
 | `react`       | Low-level primitives (`Button`, `SplitView`, `ActivityBar` chrome pieces), styling via `tokens` |
-| `shell-react` | Full workbench layout, registry wiring, extension view hosting, command palette                 |
+| `shell-react` | Full workbench layout, registry wiring, extension view hosting, command palette, Quick Open     |
 
 `shell-react` **consumes** `react` primitives; it does not fork or duplicate them. Existing exports under `@workbench-kit/react` remain stable for non-workbench consumers.
 

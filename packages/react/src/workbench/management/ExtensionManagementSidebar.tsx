@@ -18,6 +18,7 @@ import {
   formatExtensionCategoryLabel,
 } from './extension-category-display.js';
 import { resolveExtensionInstallOptions } from './extension-install-approval.js';
+import { filterBrowseEntries, filterInstalledEntries } from './extension-management-filters.js';
 import { ManagementFilterChips } from './ManagementFilterChips.js';
 import type {
   ExtensionCatalogBrowseEntry,
@@ -472,38 +473,4 @@ function formatFeatureBadge(label: string, count: number) {
   }
 
   return `${label} ${count}`;
-}
-
-function filterInstalledEntries(entries: readonly ExtensionManagementEntry[], query: string) {
-  const normalized = query.trim().toLowerCase();
-  if (!normalized) {
-    return entries;
-  }
-
-  return entries.filter((entry) =>
-    [entry.displayName, entry.id, entry.category, entry.description ?? '']
-      .join(' ')
-      .toLowerCase()
-      .includes(normalized),
-  );
-}
-
-function filterBrowseEntries(
-  entries: readonly ExtensionCatalogBrowseEntry[],
-  query: string,
-  category?: string,
-) {
-  const normalized = query.trim().toLowerCase();
-  return entries.filter((entry) => {
-    if (category && entry.category !== category) {
-      return false;
-    }
-    if (!normalized) {
-      return true;
-    }
-    return [entry.displayName, entry.id, entry.category, entry.description]
-      .join(' ')
-      .toLowerCase()
-      .includes(normalized);
-  });
 }

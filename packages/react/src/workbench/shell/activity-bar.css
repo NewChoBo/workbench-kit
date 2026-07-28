@@ -32,6 +32,53 @@
   border-top: 1px solid var(--vscode-panel-border, var(--color-border));
 }
 
+.workbench-bottom-panel__header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: stretch;
+  gap: 0;
+  min-height: 28px;
+  border-bottom: 1px solid var(--vscode-panel-border, var(--color-border));
+  background: var(--vscode-panel-background, var(--color-surface));
+}
+
+.workbench-bottom-panel__tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.workbench-bottom-panel__tab:hover {
+  color: var(--color-text);
+}
+
+.workbench-bottom-panel__tab--active {
+  color: var(--color-text);
+  box-shadow: inset 0 -2px 0 var(--color-accent, var(--color-primary));
+}
+
+.workbench-bottom-panel__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 12px;
+}
+
+.workbench-bottom-panel__view {
+  min-height: 0;
+}
+
+.workbench-bottom-panel__empty {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
 .ui-workbench-activity-bar__item {
   --ui-button-width: var(--workbench-activity-bar-item-size);
   --ui-button-min-width: 0;

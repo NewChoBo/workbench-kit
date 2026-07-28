@@ -59,6 +59,15 @@ export {
   isWorkbenchCommandRunnable,
   resolveWorkbenchCommandExecutionPolicy,
 } from './commands/CommandPalette';
+export {
+  DEFAULT_QUICK_OPEN_SEARCH_DEBOUNCE_MS,
+  WORKSPACE_FILES_QUICK_OPEN_PROVIDER_ID,
+  WorkbenchQuickOpen,
+  createWorkspaceFilesQuickOpenProvider,
+  getNextQuickOpenItemIndex,
+  isQuickOpenItemSelectable,
+  resolveQuickOpenItemPath,
+} from './commands/WorkbenchQuickOpen';
 export { WorkbenchMarkdownPreview } from './markdown/MarkdownPreview';
 export type { WorkbenchMarkdownPreviewProps } from './markdown/MarkdownPreview';
 export { sanitizeMarkdownHref } from './markdown/sanitizeMarkdownHref';
@@ -215,6 +224,13 @@ export type {
   WorkbenchCommandSuggestProps,
 } from './commands/CommandPalette';
 export type { ResolveWorkbenchCommandExecutionPolicyInput } from './commands/CommandPalette';
+export type {
+  CreateWorkspaceFilesQuickOpenProviderOptions,
+  QuickOpenItem,
+  QuickOpenProvider,
+  QuickOpenSelectContext,
+  WorkbenchQuickOpenProps,
+} from './commands/WorkbenchQuickOpen';
 export type {
   UseWorkbenchShortcutCommandsOptions,
   WorkbenchShortcutCommandBinding,

@@ -144,7 +144,27 @@ syntax `tokenColors` rules), JSON/TS diagnostics helpers, and read-only mode.
 
 **When not to use:** Short metadata labels — prefer `WorkbenchPropertyKeyValue`. Host must configure `MonacoEnvironment.getWorker` once at app entry (see `examples/workbench-sample/src/main.tsx`).
 
-**Consumer pattern:** Host adapter configures workers; tilepaper-ui/feature panes import `@workbench-kit/monaco` only — no direct `monaco-editor` imports in renderer business logic.
+**Consumer pattern:** Host adapter configures workers; feature panes import `@workbench-kit/monaco` only — no direct `monaco-editor` imports in renderer business logic.
+
+### `WorkbenchMonacoDiffEditor` · `@workbench-kit/monaco`
+
+**Purpose:** Side-by-side DiffEditor wrapper aligned with `WorkbenchMonacoEditor` theming and
+layout defaults for review/patch flows.
+
+**Key props:** `original`, `modified`, `language`, `readOnly`, `theme` (`light` \| `dark`),
+`onModifiedChange`, `originalModelPath` / `modifiedModelPath`, `options`, `onMount`.
+
+**Behavior:**
+
+- Reuses `prepareMonacoWorkbenchEditor` / workbench theme ids (same sync path as the single editor).
+- Original pane stays non-editable by default; `readOnly` locks the modified pane.
+- Models dispose with the DiffEditor unmount (`keepCurrent*Model` defaults remain false).
+
+**When to use:** Host save/patch/review surfaces that previously imported raw Monaco DiffEditor.
+
+**When not to use:** Full SCM UI (blame, staging) or multi-diff review tabs — those stay host-owned.
+
+**Story:** `Workbench Sample/Monaco Diff Editor` - Review / patch (editor/main frame).
 
 ---
 
@@ -739,6 +759,35 @@ callbacks with selection payload (host owns menu UI), and `flowActionsRef.fitVie
 do not query Controls DOM. Panel forwards the same props. Chrome nouns (`Bindings`, Convert
 palette copy) accept `labels` / optional `t(key, fallback)` on Flow and Panel — hosts can
 override to “Field maps” / “Mappings” without CSS text hacks (`resolveFieldRemapChromeLabels`).
+
+---
+
+## Shell chrome label / `t()` injection (#126)
+
+Kit does **not** ship locale packs. Hosts inject chrome copy via:
+
+| Surface                  | API                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| `WorkbenchShell`         | `labels?: Partial<WorkbenchShellChromeLabels>` and/or `t?: WorkbenchTranslate` |
+| Field Remap Flow / Panel | `labels` / `t` (`FieldRemapChromeLabels` / `FieldRemapTranslate`)              |
+
+**Resolution order** (per string): `labels[key]` → `t(capabilityId, EnglishDefault)` → English default.
+
+Stable shell keys (see `workbenchShellChromeLabelKeys`): `shell.activityBar`, `shell.statusBar`,
+`shell.profile`, `shell.profileTitle`, `shell.settings`, `commandPalette.title`,
+`commandPalette.placeholder`, `commandPalette.close`, `commandPalette.empty`,
+`quickOpen.title`, `quickOpen.placeholder`, `quickOpen.close`, `quickOpen.empty`.
+
+```tsx
+<WorkbenchShell
+  locale={locale}
+  t={(key, fallback) => registry.localizations.translate(locale, key, fallback)}
+  // or labels={{ settingsLabel: '설정', commandPaletteTitle: '명령 팔레트' }}
+/>
+```
+
+Sample: `examples/workbench-sample` wires `t` from the active locale; KO strings live in
+`extensions/samples.locale-ko`. Missing `t` keeps English defaults.
 
 **Embed recipe:** import `@workbench-kit/shell-react/field-remap` (+ optional
 `…/field-remap/view.css`). Persist `MappingEdge[]` via controlled panel props; evaluate with

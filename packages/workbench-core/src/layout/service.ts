@@ -10,6 +10,8 @@ export interface WorkbenchLayoutState {
     readonly visible: boolean;
   };
   readonly panel: {
+    readonly activeViewContainer?: string;
+    readonly sizePercent?: number;
     readonly visible: boolean;
   };
   readonly sideBar: {
@@ -121,6 +123,22 @@ export class LayoutService implements Disposable {
     });
   }
 
+  setActivePanelViewContainer(activeViewContainer: string | undefined): void {
+    this.update({
+      panel: {
+        activeViewContainer,
+      },
+    });
+  }
+
+  setPanelSizePercent(sizePercent: number): void {
+    this.update({
+      panel: {
+        sizePercent: clampSideBarSizePercent(sizePercent),
+      },
+    });
+  }
+
   setAuxiliaryBarVisible(visible: boolean): void {
     this.update({
       auxiliaryBar: {
@@ -184,6 +202,11 @@ export function createWorkbenchLayoutState(
       visible: readBoolean(input.auxiliaryBar?.visible, base.auxiliaryBar.visible),
     },
     panel: {
+      activeViewContainer: readOptionalString(
+        input.panel?.activeViewContainer,
+        base.panel.activeViewContainer,
+      ),
+      sizePercent: readOptionalSizePercent(input.panel?.sizePercent, base.panel.sizePercent),
       visible: readBoolean(input.panel?.visible, base.panel.visible),
     },
     sideBar: {
@@ -250,6 +273,8 @@ function isSameLayoutState(left: WorkbenchLayoutState, right: WorkbenchLayoutSta
     areSameStringArrays(left.activityBar.hiddenItemIds, right.activityBar.hiddenItemIds) &&
     areSameStringArrays(left.activityBar.itemOrder, right.activityBar.itemOrder) &&
     left.auxiliaryBar.visible === right.auxiliaryBar.visible &&
+    left.panel.activeViewContainer === right.panel.activeViewContainer &&
+    left.panel.sizePercent === right.panel.sizePercent &&
     left.panel.visible === right.panel.visible &&
     left.sideBar.activeViewContainer === right.sideBar.activeViewContainer &&
     left.sideBar.sizePercent === right.sideBar.sizePercent &&

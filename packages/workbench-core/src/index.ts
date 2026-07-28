@@ -255,10 +255,12 @@ export {
   ConfigurationRegistry,
   EditorRegistry,
   MenuRegistry,
+  StatusBarRegistry,
   ViewRegistry,
   type WorkbenchActivityContribution,
   type WorkbenchConfigurationContribution,
   type WorkbenchEditorContribution,
+  type WorkbenchStatusBarContribution,
   type WorkbenchViewContainerContribution,
   type WorkbenchViewContribution,
 } from './contributions/registries.js';

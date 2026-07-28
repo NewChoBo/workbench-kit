@@ -135,6 +135,7 @@ function isWorkbenchStructuredDataFormEmptyValue(value: WorkbenchStructuredDataF
   return value === '' || value === false;
 }
 
-function isRenderableWorkbenchStructuredDataFormError(error: ReactNode) {
+/** True when a form field error should render (non-empty ReactNode). */
+export function isRenderableWorkbenchStructuredDataFormError(error: ReactNode) {
   return error !== undefined && error !== null && error !== false && error !== '';
 }

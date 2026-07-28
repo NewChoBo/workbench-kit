@@ -7,6 +7,7 @@ import {
 } from '@workbench-kit/react/workbench';
 import type { ChatCommandProposal, ChatMessage } from '@workbench-kit/react/workbench/chat';
 
+import { getCommandErrorMessage } from './command-error-message.js';
 import { type WorkbenchChatCommandRunResult } from './command-surface.js';
 import { useWorkbench } from '../shell/provider.js';
 
@@ -22,14 +23,6 @@ export interface UseWorkbenchChatCommandProposalsOptions {
   commands: readonly WorkbenchCommandDescriptor[];
   onCommandResult?: ((result: WorkbenchChatCommandRunResult) => void) | undefined;
   policyInput?: ResolveWorkbenchCommandExecutionPolicyInput | undefined;
-}
-
-function getCommandErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return String(error);
 }
 
 function createProposalId(commandId: string) {

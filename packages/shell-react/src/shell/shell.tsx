@@ -35,6 +35,11 @@ import {
   sortActivityBarItems,
 } from '@workbench-kit/react/workbench/activityBarOrder';
 import { useWorkbench } from './provider.js';
+import {
+  resolveWorkbenchShellChromeLabels,
+  type WorkbenchShellChromeLabels,
+  type WorkbenchTranslate,
+} from './chrome-labels.js';
 import { WorkbenchCommandHost, type WorkbenchCommandHostProps } from '../workbench/command-host.js';
 import {
   MANAGE_ACCOUNTS_COMMAND_ID,
@@ -60,10 +65,12 @@ import {
 import { SETTINGS_EXTENSION_ID, WORKBENCH_PREFERENCE_SCOPES } from './settings-constants.js';
 import { createSettingsCategories, type WorkbenchThemeOption } from './settings.js';
 import {
+  createContributedWorkbenchStatusSections,
   createDefaultWorkbenchStatusSections,
   createWorkbenchShellActivityItems,
 } from './model.js';
-import { renderDefaultPrimarySidebar } from './view-host.js';
+import { mergeWorkbenchStatusSections } from '../workbench/status-sections.js';
+import { renderDefaultBottomPanel, renderDefaultPrimarySidebar } from './view-host.js';
 import { WorkbenchShellTitleBarLayoutControls } from './titlebar-layout-controls.js';
 import { WorkbenchProfileModal, type WorkbenchProfileInput } from '../workbench/profile-modal.js';
 import { useContextKeyRevision } from '../commands/use-context-key-revision.js';
@@ -102,6 +109,11 @@ export interface WorkbenchShellProps {
   editorArea?: ReactNode;
   helpContent?: ReactNode;
   helpTitle?: ReactNode;
+  /**
+   * Partial chrome label overrides for ActivityBar / StatusBar / secondary items /
+   * command palette. Wins over `t` when both are set for the same key.
+   */
+  labels?: Partial<WorkbenchShellChromeLabels> | undefined;
   lightPreset?: string | undefined;
   onDarkPresetChange?: ((preset: string) => void) | undefined;
   onLightPresetChange?: ((preset: string) => void) | undefined;
@@ -116,6 +128,11 @@ export interface WorkbenchShellProps {
   rootClassName?: string;
   shellPreset?: string | undefined;
   statusSections?: StatusBarSectionModel[];
+  /**
+   * Optional `t(key, fallback)` injection for shell chrome strings.
+   * Missing `t` keeps English defaults from `resolveWorkbenchShellChromeLabels`.
+   */
+  t?: WorkbenchTranslate | undefined;
   theme?: string;
   themeOptions?: readonly WorkbenchThemeOption[] | undefined;
   title?: ReactNode;
@@ -148,6 +165,7 @@ export function WorkbenchShell({
   editorArea,
   helpContent,
   helpTitle = 'Workbench Help',
+  labels: labelOverrides,
   lightPreset,
   locale = 'en',
   onDarkPresetChange,
@@ -162,6 +180,7 @@ export function WorkbenchShell({
   rootClassName,
   shellPreset = DEFAULT_SHELL_PRESET,
   statusSections,
+  t,
   theme,
   themeOptions,
   title = 'Workbench',
@@ -210,15 +229,20 @@ export function WorkbenchShell({
   const resolvedStatusSections = useMemo(
     () =>
       statusSections ??
-      createDefaultWorkbenchStatusSections({
-        dependencyDiagnostics: extensionRegistry.getDependencyDiagnostics(),
-        extensionCount: extensionRegistry.getExtensions().length,
-        missingExtensionIds,
-        profile,
-      }),
+      mergeWorkbenchStatusSections(
+        createDefaultWorkbenchStatusSections({
+          dependencyDiagnostics: extensionRegistry.getDependencyDiagnostics(),
+          extensionCount: extensionRegistry.getExtensions().length,
+          missingExtensionIds,
+          profile,
+        }),
+        createContributedWorkbenchStatusSections(extensionRegistry.statusBar.getStatusBarItems()),
+      ),
     [extensionRegistry, missingExtensionIds, profile, statusSections],
   );
   const activeViewContainerId = layout.sideBar.activeViewContainer;
+  const activePanelViewContainerId = layout.panel.activeViewContainer;
+  const panelViewContainers = extensionRegistry.views.getViewContainers('panel');
   const visibleActivities = useMemo(
     () =>
       filterActivitiesByWhenClause(
@@ -231,7 +255,7 @@ export function WorkbenchShell({
     createWorkbenchShellActivityItems({
       activeViewContainerId,
       activities: visibleActivities,
-      viewContainers: extensionRegistry.views.getViewContainers(),
+      viewContainers: extensionRegistry.views.getViewContainers('activitybar'),
       views: extensionRegistry.views.getViews(),
     }),
     layout.activityBar.itemOrder,
@@ -243,11 +267,18 @@ export function WorkbenchShell({
   const canOpenSettingsValue = contextKeyService.get(
     WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS,
   );
+  const chromeLabels = useMemo(
+    () => resolveWorkbenchShellChromeLabels(labelOverrides, t),
+    [labelOverrides, t],
+  );
   const secondaryActivityItems = createWorkbenchSecondaryActivityItems({
     hasProfile: profile !== undefined,
     isProfileOpen,
     isSettingsOpen,
     showSettings: canOpenSettingsValue !== false,
+    profileLabel: chromeLabels.profileLabel,
+    profileTitle: chromeLabels.profileTitle,
+    settingsLabel: chromeLabels.settingsLabel,
   });
 
   useEffect(() => {
@@ -260,6 +291,20 @@ export function WorkbenchShell({
       layoutService.setActiveViewContainer(visibleActivityItems[0]?.id);
     }
   }, [activeViewContainerId, layoutService, visibleActivityItems]);
+
+  useEffect(() => {
+    if (panelViewContainers.length === 0) {
+      return;
+    }
+
+    const panelContainerIds = new Set(panelViewContainers.map((container) => container.id));
+    if (
+      activePanelViewContainerId === undefined ||
+      !panelContainerIds.has(activePanelViewContainerId)
+    ) {
+      layoutService.setActivePanelViewContainer(panelViewContainers[0]?.id);
+    }
+  }, [activePanelViewContainerId, layoutService, panelViewContainers]);
   const settingsCategories = useMemo(() => {
     const managementCategories: WorkbenchSettingsCategory[] = [];
 
@@ -390,6 +435,16 @@ export function WorkbenchShell({
   }, [activeViewContainerId, extensionRegistry, forceRender]);
 
   useEffect(() => {
+    if (!activePanelViewContainerId) {
+      return;
+    }
+
+    for (const view of extensionRegistry.views.getViews(activePanelViewContainerId)) {
+      void extensionRegistry.activateView(view.id).then(forceRender);
+    }
+  }, [activePanelViewContainerId, extensionRegistry, forceRender]);
+
+  useEffect(() => {
     if (extensionRegistry.capabilityRegistry.has(WORKBENCH_SETTINGS_CAPABILITY_ID)) {
       return undefined;
     }
@@ -429,6 +484,17 @@ export function WorkbenchShell({
     return {
       ...hostProps,
       additionalCommands,
+      commandPaletteCloseLabel:
+        hostProps.commandPaletteCloseLabel ?? chromeLabels.commandPaletteCloseLabel,
+      commandPaletteEmptyLabel:
+        hostProps.commandPaletteEmptyLabel ?? chromeLabels.commandPaletteEmptyLabel,
+      commandPalettePlaceholder:
+        hostProps.commandPalettePlaceholder ?? chromeLabels.commandPalettePlaceholder,
+      commandPaletteTitle: hostProps.commandPaletteTitle ?? chromeLabels.commandPaletteTitle,
+      quickOpenCloseLabel: hostProps.quickOpenCloseLabel ?? chromeLabels.quickOpenCloseLabel,
+      quickOpenEmptyLabel: hostProps.quickOpenEmptyLabel ?? chromeLabels.quickOpenEmptyLabel,
+      quickOpenPlaceholder: hostProps.quickOpenPlaceholder ?? chromeLabels.quickOpenPlaceholder,
+      quickOpenTitle: hostProps.quickOpenTitle ?? chromeLabels.quickOpenTitle,
       onRunCommand: (command, context) => {
         if (command.id === MANAGE_COMMANDS_COMMAND_ID) {
           layoutService.setActiveViewContainer(BUILTIN_COMMANDS_VIEW_CONTAINER_ID);
@@ -455,7 +521,7 @@ export function WorkbenchShell({
         return hostProps.onRunCommand?.(command, context) ?? false;
       },
     };
-  }, [commandHost, layoutService]);
+  }, [chromeLabels, commandHost, layoutService]);
 
   const handleStatusItemActivate = useCallback(
     (item: StatusBarItemModel) => {
@@ -473,14 +539,28 @@ export function WorkbenchShell({
         return;
       }
 
+      const contributed = extensionRegistry.statusBar.getStatusBarItem(item.id);
+      if (contributed?.command) {
+        void executeCommand(contributed.command).catch(() => undefined);
+        return;
+      }
+
       onStatusItemActivate?.(item);
     },
-    [accountManagement, onStatusItemActivate, profile, showProfileModal],
+    [
+      accountManagement,
+      executeCommand,
+      extensionRegistry,
+      onStatusItemActivate,
+      profile,
+      showProfileModal,
+    ],
   );
 
   return (
     <ReactWorkbenchShell
       activityBar={{
+        'aria-label': chromeLabels.activityBarAriaLabel,
         visible: layout.activityBar.visible,
         items: visibleActivityItems,
         reorderable: true,
@@ -506,6 +586,7 @@ export function WorkbenchShell({
         },
       }}
       compactStatus={compactStatus}
+      statusBarAriaLabel={chromeLabels.statusBarAriaLabel}
       onStatusItemActivate={handleStatusItemActivate}
       primarySidebar={{
         isVisible: layout.sideBar.visible,
@@ -536,7 +617,20 @@ export function WorkbenchShell({
       }}
       bottomPanel={{
         isVisible: layout.panel.visible,
-        node: <section aria-label="Panel" className="workbench-bottom-panel" />,
+        node: renderDefaultBottomPanel(extensionRegistry, activePanelViewContainerId, {
+          catalogTrustPolicy,
+          catalogUrl,
+          onActiveViewContainerChange: (viewContainerId) => {
+            layoutService.setActivePanelViewContainer(viewContainerId);
+            if (!layout.panel.visible) {
+              layoutService.setPanelVisible(true);
+            }
+          },
+        }),
+        onSizePercentChange: (sizePercent) => {
+          layoutService.setPanelSizePercent(sizePercent);
+        },
+        sizePercent: layout.panel.sizePercent,
       }}
       rootClassName={rootClassName}
       secondaryArea={resolvedEditorArea}
@@ -563,7 +657,7 @@ export function WorkbenchShell({
               footer={<Button onClick={() => setSettingsOpen(false)}>Close</Button>}
               scopes={[...WORKBENCH_PREFERENCE_SCOPES]}
               searchValue={settingsSearchValue}
-              title="Settings"
+              title={chromeLabels.settingsLabel}
               titleSuffix={
                 <Badge variant="muted">
                   {settingsContributionCount === 1

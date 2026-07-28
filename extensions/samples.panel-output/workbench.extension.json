@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.samples.panel-output",
+  "name": "samples-panel-output",
+  "displayName": "Panel Output Sample",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": ["onStartup", "onView:workbench-kit.samples.panel-output.view"],
+  "contributes": {
+    "viewContainers": {
+      "panel": [
+        {
+          "id": "panelOutput",
+          "title": "Output",
+          "icon": "output",
+          "order": 10
+        }
+      ]
+    },
+    "views": {
+      "panelOutput": [
+        {
+          "id": "workbench-kit.samples.panel-output.view",
+          "name": "Output"
+        }
+      ]
+    }
+  }
+}

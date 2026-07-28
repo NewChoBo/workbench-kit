@@ -58,7 +58,15 @@
       "version": "0.0.0"
     },
     "workbench-kit.samples.locale-ko": {
-      "integrity": "sha256:7a99318ae8d133be9d1f74620f8897b89ac6af19406aaec14a791c1c3af712df",
+      "integrity": "sha256:4b7f515eacf2cc9ffa8c0b99ad2037cf02c31c1ffe9ab6a96d5018c65bd1b4bc",
+      "version": "0.0.0"
+    },
+    "workbench-kit.samples.panel-output": {
+      "integrity": "sha256:8360318773bae4eee7d631a198fddb21e26bf632c479e145cd2bfea81a60cd5d",
+      "version": "0.0.0"
+    },
+    "workbench-kit.samples.status-bar": {
+      "integrity": "sha256:055b93ec5ea85c448c317bebfd97302dc30c721d0943ca18920f2157d685c269",
       "version": "0.0.0"
     },
     "workbench-kit.samples.theme-alt": {

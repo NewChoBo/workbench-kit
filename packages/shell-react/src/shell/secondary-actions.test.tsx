@@ -72,4 +72,20 @@ describe('shell secondary activity actions', () => {
     );
     expect(getWorkbenchSecondaryActivityRoute('workbench-kit.builtin.explorer')).toBeUndefined();
   });
+
+  it('applies host chrome label overrides for Profile and Settings', () => {
+    expect(
+      createWorkbenchSecondaryActivityItems({
+        hasProfile: true,
+        isProfileOpen: false,
+        isSettingsOpen: false,
+        profileLabel: '프로필',
+        profileTitle: '프로필 열기',
+        settingsLabel: '설정',
+      }).map((item) => [item.id, item.label, item.title]),
+    ).toEqual([
+      [WORKBENCH_PROFILE_ACTIVITY_ITEM_ID, '프로필', '프로필 열기'],
+      [WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID, '설정', undefined],
+    ]);
+  });
 });

@@ -37,6 +37,7 @@ import {
   type WorkbenchStructuredDataSchemaFieldInputProps,
   type WorkbenchStructuredDataTextArrayInputProps,
 } from './structuredDataSchema';
+import { isRenderableWorkbenchStructuredDataFormError } from './structuredDataFormModel';
 
 export function WorkbenchStructuredDataForm({
   ariaLabel,
@@ -154,10 +155,6 @@ export function WorkbenchStructuredDataForm({
       ) : null}
     </form>
   );
-}
-
-function isRenderableWorkbenchStructuredDataFormError(error: ReactNode) {
-  return error !== undefined && error !== null && error !== false && error !== '';
 }
 
 function StructuredDataSection({

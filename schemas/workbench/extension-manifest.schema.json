@@ -195,6 +195,29 @@
       "required": ["id", "label", "mode"],
       "additionalProperties": true
     },
+    "panelContribution": {
+      "type": "object",
+      "description": "Convenience alias normalized into viewContainers.panel + views.",
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "viewId": { "type": "string", "minLength": 1 }
+      },
+      "required": ["id", "title", "viewId"],
+      "additionalProperties": true
+    },
+    "statusBarContribution": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "alignment": { "enum": ["left", "right"] },
+        "priority": { "type": "number" },
+        "text": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 }
+      },
+      "required": ["id", "alignment", "text"],
+      "additionalProperties": true
+    },
     "viewContainerContribution": {
       "type": "object",
       "properties": {
@@ -281,6 +304,14 @@
               }
             }
           ]
+        },
+        "panels": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/panelContribution" }
+        },
+        "statusBar": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/statusBarContribution" }
         },
         "themes": {
           "type": "array",

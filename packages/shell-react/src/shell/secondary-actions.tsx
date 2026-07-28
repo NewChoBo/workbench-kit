@@ -11,6 +11,10 @@ export interface WorkbenchSecondaryActivityItemsInput {
   isProfileOpen: boolean;
   isSettingsOpen: boolean;
   showSettings?: boolean | undefined;
+  /** Resolved chrome labels (defaults match English kit copy). */
+  profileLabel?: string | undefined;
+  profileTitle?: string | undefined;
+  settingsLabel?: string | undefined;
 }
 
 export function createWorkbenchSecondaryActivityItems({
@@ -18,6 +22,9 @@ export function createWorkbenchSecondaryActivityItems({
   isProfileOpen,
   isSettingsOpen,
   showSettings = true,
+  profileLabel = 'Profile',
+  profileTitle = 'Open profile',
+  settingsLabel = 'Settings',
 }: WorkbenchSecondaryActivityItemsInput): ActivityBarItem[] {
   return [
     ...(hasProfile
@@ -26,8 +33,8 @@ export function createWorkbenchSecondaryActivityItems({
             active: isProfileOpen,
             icon: <i aria-hidden="true" className="codicon codicon-account" />,
             id: WORKBENCH_PROFILE_ACTIVITY_ITEM_ID,
-            label: 'Profile',
-            title: 'Open profile',
+            label: profileLabel,
+            title: profileTitle,
           },
         ]
       : []),
@@ -37,7 +44,7 @@ export function createWorkbenchSecondaryActivityItems({
             active: isSettingsOpen,
             icon: <i aria-hidden="true" className="codicon codicon-settings-gear" />,
             id: WORKBENCH_SETTINGS_ACTIVITY_ITEM_ID,
-            label: 'Settings',
+            label: settingsLabel,
           },
         ]
       : []),

@@ -1,26 +1,15 @@
 import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { JsonLinesReadResult, JsonLinesStore, StorageDiagnostic } from '../storage/types.js';
+import type { JsonLinesReadResult, JsonLinesStore } from '../storage/types.js';
 import { quarantineFileUnderRoot } from './quarantine.js';
 import { resolvePathUnderRoot } from './path-under-root.js';
+import { createDiagnostic, splitRelativeKey } from './storage-helpers.js';
 
 export interface NodeJsonLinesStoreOptions {
   readonly rootPath: string;
   /** Root-relative JSONL key, e.g. `logs/scans.jsonl`. */
   readonly relativeKey: string;
-}
-
-function splitRelativeKey(relativeKey: string): string[] {
-  return relativeKey.split(/[/\\]+/).filter(Boolean);
-}
-
-function createDiagnostic(
-  code: StorageDiagnostic['code'],
-  message: string,
-  relativeKey: string,
-): StorageDiagnostic {
-  return { code, message, relativeKey };
 }
 
 /**

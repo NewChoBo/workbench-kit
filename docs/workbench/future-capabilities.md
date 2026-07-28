@@ -94,10 +94,11 @@ prop-label + optional `t()` injection, and command-title resolution at menu proj
 
 - [ ] **P1** Adopt `react-i18next` in host apps (Storybook demos and integrating products) with a shared
       namespace layout (`workbench.*`, `commands.*`, `settings.*`).
-- [x] **P1** (partial, #126 Field Remap slice) Define kit-level i18n override pattern: prop labels +
-      optional `t()` hook injection — landed on Field Remap Flow / Panel chrome
-      (`labels` / `resolveFieldRemapChromeLabels`). Broader shell primitives (`ActivityBar`,
-      `StatusBar`, settings) still open.
+- [x] **P1** (#126) Define kit-level i18n override pattern: prop labels + optional `t()` hook
+      injection — Field Remap Flow / Panel chrome (`labels` / `resolveFieldRemapChromeLabels`)
+      and WorkbenchShell chrome (`labels` / `t` / `resolveWorkbenchShellChromeLabels` for
+      ActivityBar / StatusBar aria, Profile/Settings secondary items, command palette).
+      Settings modal body / every extension activity title remain host/contribution-owned.
 - [ ] **P1** Unify host-app KO/EN strings through one translation catalog; remove duplicate
       inline labels in shell bridge and feature modules.
 - [ ] **P2** Command registry single source: command `title`/`category` keys resolved through
@@ -125,10 +126,14 @@ Low priority — defer until standalone shell and host bootstrap are stable in p
 
 - [x] **P3** Secondary sidebar region (primary Activity Bar + secondary tab strip, placement DnD).
       Platform slot policy and React layout primitives landed; see `SideBarViewTabStrip` dual-slot story.
-- [ ] **P3** Panel regions (bottom terminal/output) with resize and visibility commands.
-- [x] **P3** Layout persistence adapter MVP for sidebar width, panel visibility, and
-      activity visibility/order via `WorkbenchProvider` host storage adapters.
-      Panel height persistence remains tied to the future panel sizing model.
+- [x] **P3** Panel regions (bottom output host) with contribution views, resize, and
+      visibility commands. Hosts `viewContainers.panel` via shell-react
+      `renderDefaultBottomPanel`; sample: `samples.panel-output`. `#128`
+      `contributes.panels` / `statusBar` schema aliases landed (sample:
+      `samples.status-bar`). Terminal emulator remains separate.
+- [x] **P3** Layout persistence adapter MVP for sidebar width, panel visibility/height,
+      active panel view container, and activity visibility/order via
+      `WorkbenchProvider` host storage adapters.
 
 ## Playground & sandbox (P1–P3)
 

@@ -107,6 +107,25 @@ describe('WorkbenchShell', () => {
     expect(markup).toContain('editor only');
   });
 
+  it('applies controlled bottom panel size percent to the vertical split', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchShell
+        activityBar={{ items: [{ id: 'explorer', icon: 'E', label: 'Explorer' }] }}
+        bottomPanel={{
+          isVisible: true,
+          node: <section>panel body</section>,
+          onSizePercentChange: () => {},
+          sizePercent: 35,
+        }}
+        secondaryArea={<main>editor only</main>}
+        statusSections={[]}
+      />,
+    );
+
+    expect(markup).toContain('panel body');
+    expect(markup).toContain('--ui-workbench-split-primary-size:65%');
+  });
+
   it('renders a top activity bar above the workbench body', () => {
     const markup = renderToStaticMarkup(
       <WorkbenchShell

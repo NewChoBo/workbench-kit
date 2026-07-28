@@ -8,6 +8,15 @@ export interface MockWorkbenchMonacoEditorProps {
   value?: string;
 }
 
+export interface MockWorkbenchMonacoDiffEditorProps {
+  language?: string;
+  modified?: string;
+  onModifiedChange?: (value: string) => void;
+  original?: string;
+  readOnly?: boolean;
+  theme?: string;
+}
+
 export function WorkbenchMonacoEditor({
   language,
   onChange,
@@ -23,6 +32,37 @@ export function WorkbenchMonacoEditor({
     value: value ?? '',
     onChange: (event: ChangeEvent<HTMLTextAreaElement>) => onChange?.(event.currentTarget.value),
   });
+}
+
+export function WorkbenchMonacoDiffEditor({
+  language,
+  modified,
+  onModifiedChange,
+  original,
+  readOnly = false,
+  theme = 'dark',
+}: MockWorkbenchMonacoDiffEditorProps) {
+  return createElement(
+    'div',
+    {
+      'data-language': language,
+      'data-readonly': readOnly ? 'true' : 'false',
+      'data-theme': monacoThemeForWorkspaceTheme(theme),
+      'data-testid': 'monaco-diff-editor',
+    },
+    createElement('textarea', {
+      'data-side': 'original',
+      readOnly: true,
+      value: original ?? '',
+    }),
+    createElement('textarea', {
+      'data-side': 'modified',
+      readOnly,
+      value: modified ?? '',
+      onChange: (event: ChangeEvent<HTMLTextAreaElement>) =>
+        onModifiedChange?.(event.currentTarget.value),
+    }),
+  );
 }
 
 export const useMonacoWorkbenchThemeSync = () => undefined;
@@ -58,6 +98,7 @@ export const monaco = {
 };
 
 export const Editor = WorkbenchMonacoEditor;
+export const DiffEditor = WorkbenchMonacoDiffEditor;
 export const loader = { config: () => undefined };
 
 export function createWorkbenchMonacoMockModule(
@@ -68,6 +109,8 @@ export function createWorkbenchMonacoMockModule(
 
   return {
     WorkbenchMonacoEditor: renderEditor ?? defaultRender,
+    WorkbenchMonacoDiffEditor,
+    DiffEditor: WorkbenchMonacoDiffEditor,
     useMonacoWorkbenchThemeSync: () => undefined,
     prepareMonacoWorkbenchEditor: () => undefined,
     monacoThemeForWorkspaceTheme: (theme: string) => theme,

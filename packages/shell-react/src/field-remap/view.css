@@ -331,7 +331,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+  box-sizing: border-box;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
   padding: 0.75rem;
   border: 1px solid var(--vscode-panel-border, var(--color-border));
   border-radius: 0.375rem;
@@ -354,14 +358,21 @@
   color: var(--vscode-descriptionForeground, var(--color-text-muted));
 }
 
+.workbench-field-remap-convert-palette__header,
+.workbench-field-remap-convert-palette__place,
+.workbench-field-remap-convert-palette__operators {
+  flex: 0 0 auto;
+}
+
 .workbench-field-remap-convert-palette__list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 0.35rem;
-  max-height: min(22rem, 45vh);
+  min-height: 0;
   overflow: auto;
 }
 

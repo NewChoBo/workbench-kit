@@ -251,6 +251,43 @@ interface ActivityContribution {
 }
 ```
 
+## Panel Contributions
+
+`contributes.panels` is a convenience alias for a bottom-panel view container plus
+one view. At load time the host expands each entry into `viewContainers.panel`
+and `views` (same registries as the explicit map form). Prefer the alias for
+single-view panels; use `viewContainers` / `views` when a container needs multiple
+views or icons/order metadata.
+
+```ts
+interface PanelContribution {
+  id: string;
+  title: string;
+  viewId: string;
+}
+```
+
+Runtime view hosts still register through
+`context.views.registerViewProvider(...)` (see sample
+`workbench-kit.samples.status-bar`).
+
+## Status Bar Contributions
+
+```ts
+interface StatusBarContribution {
+  id: string;
+  alignment: 'left' | 'right';
+  priority?: number;
+  text: string;
+  command?: string;
+}
+```
+
+`shell-react` merges contributed items into the default status sections
+(`left` → `align: 'start'`, `right` → `align: 'end'`, higher `priority` first).
+Activating an item with `command` runs that command through the extension
+registry.
+
 ## Contribution Merge Rules
 
 | Point         | Conflict policy                                                                       |
@@ -277,11 +314,11 @@ Recommended command ID prefix: `<publisher>.<extension>.<name>`.
 ## Feature Spec Read Model
 
 `ExtensionFeatureSpec` is the normalized, UI-facing shape for a manifest. It
-keeps `commands`, `settings`, `views`, `viewContainers`, `menus`, `keybindings`,
-`documentViews`, `activities`, `capabilities`, `permissions`, and dependency
-fields in flat collections so command palette, chat slash commands, extension
-management, document view selection, and settings form adapters can read the
-same metadata.
+keeps `commands`, `settings`, `views`, `viewContainers`, `panels`, `statusBar`,
+`menus`, `keybindings`, `documentViews`, `activities`, `capabilities`,
+`permissions`, and dependency fields in flat collections so command palette,
+chat slash commands, extension management, document view selection, and settings
+form adapters can read the same metadata.
 
 The model is not an execution API. Commands still execute through the platform
 `CommandRegistry` / `ExtensionRegistry.executeCommand()` path, and providers are

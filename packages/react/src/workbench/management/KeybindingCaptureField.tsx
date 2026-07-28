@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { formatKeybindingLabel } from '@workbench-kit/platform';
 import { Button } from '../../primitives/button';
 import { cx } from '../../utils/cx';
+import { normalizeKeyToken } from '../../utils/normalizeKeyToken';
 
 export interface KeybindingCaptureFieldProps {
   ariaLabel?: string | undefined;
@@ -130,13 +131,4 @@ function normalizeKeybindingKeyFromEvent(
 
   parts.push(normalizeKeyToken(event.key));
   return parts.join('+');
-}
-
-function normalizeKeyToken(token: string): string {
-  const key = token.trim().toLowerCase();
-  if (key === 'del') return 'delete';
-  if (key === 'esc') return 'escape';
-  if (key === 'return') return 'enter';
-  if (key === 'spacebar' || key === 'space') return 'space';
-  return key.length === 1 ? key : key;
 }

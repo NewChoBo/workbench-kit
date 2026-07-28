@@ -10,6 +10,7 @@ and others). Keep **one** prose source of truth and thin tool entrypoints.
 | [`AGENTS.md`](../../AGENTS.md)                                                                    | **Canonical** cross-tool agent defaults                          |
 | [`docs/conventions/`](./)                                                                         | Detailed human/agent policies (public refs, git, Storybook, npm) |
 | [`docs/conventions/public-reference-policy.md`](./public-reference-policy.md)                     | Public package + secrets boundary                                |
+| [`docs/conventions/ui-design-principles.md`](./ui-design-principles.md)                           | Shared primitives, IconButton chrome, theme colors, flat layout  |
 | [`docs/conventions/github-issues.md`](./github-issues.md)                                         | Issue quality bar + IssueOps comment protocol                    |
 | [`docs/conventions/issueops-autohandler-instructions.md`](./issueops-autohandler-instructions.md) | Cursor Issue Autohandler prompt (paste target)                   |
 

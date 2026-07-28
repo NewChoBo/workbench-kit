@@ -24,13 +24,15 @@ activation handlers.
 
 ## Samples
 
-| Extension              | Runtime role                                                              |
-| ---------------------- | ------------------------------------------------------------------------- |
-| `samples.hello-world`  | Minimal command activation sample (`Hello World` command in the palette). |
-| `samples.json-preview` | JSON document preview editor contribution sample.                         |
-| `samples.jdw`          | JDW Lab activity plus `*.jdw.json` form/preview document view providers.  |
-| `samples.locale-ko`    | Korean display-language localization contribution sample.                 |
-| `samples.theme-alt`    | Alternate dark color theme (`Dark Blue Alt`) for Settings → Appearance.   |
+| Extension              | Runtime role                                                                 |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| `samples.hello-world`  | Minimal command activation sample (`Hello World` command in the palette).    |
+| `samples.json-preview` | JSON document preview editor contribution sample.                            |
+| `samples.jdw`          | JDW Lab activity plus `*.jdw.json` form/preview document view providers.     |
+| `samples.locale-ko`    | Korean display-language localization contribution sample.                    |
+| `samples.panel-output` | Bottom-panel Output view via `viewContainers.panel` for the shell host.      |
+| `samples.status-bar`   | `contributes.panels` alias + `contributes.statusBar` items for shell chrome. |
+| `samples.theme-alt`    | Alternate dark color theme (`Dark Blue Alt`) for Settings → Appearance.      |
 
 ## Rules
 

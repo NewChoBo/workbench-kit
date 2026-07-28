@@ -233,14 +233,24 @@ export const TesterDevAppJourney: Story = {
     await expectEditorTabVisible(canvas, 'Button.tsx');
 
     await userEvent.keyboard('{Control>}p{/Control}');
-    const commandPalette = await canvas.findByRole('dialog', { name: /Command Palette/ });
-    await expect(commandPalette).toBeVisible();
-    const commandSearch = within(commandPalette).getByLabelText('Search commands');
-    // Palette search uses pointer-events:none; drive input via focus + keyboard.
-    commandSearch.focus();
-    await userEvent.keyboard('Open README');
+    const quickOpen = await canvas.findByRole('dialog', { name: /Quick Open/ });
+    await expect(quickOpen).toBeVisible();
+    const quickOpenSearch = within(quickOpen).getByLabelText('Search files by name');
+    // Quick Open search uses pointer-events:none; drive input via focus + keyboard.
+    quickOpenSearch.focus();
+    await userEvent.keyboard('README');
+    await waitFor(() => {
+      expect(
+        within(quickOpen).getByRole('listbox', { name: 'Quick Open results' }),
+      ).toHaveTextContent('README.md');
+    });
     await userEvent.keyboard('{Enter}');
     await expectEditorTabVisible(canvas, 'README.md');
+
+    await userEvent.keyboard('{Control>}{Shift>}p{/Control}{/Shift}');
+    const commandPalette = await canvas.findByRole('dialog', { name: /Command Palette/ });
+    await expect(commandPalette).toBeVisible();
+    await userEvent.keyboard('{Escape}');
 
     await userEvent.click(canvas.getByRole('button', { name: 'Chat' }));
     await expectVisibleChatBubbleText(canvas, 'Share updates here while working in the workspace.');

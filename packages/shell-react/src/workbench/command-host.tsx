@@ -4,8 +4,14 @@ import {
 } from '@workbench-kit/platform';
 import {
   WorkbenchCommandPalette,
+  WorkbenchQuickOpen,
   WorkbenchShortcutCommandBridge,
   createWorkbenchShellCommands,
+  createWorkspaceFilesQuickOpenProvider,
+  resolveQuickOpenItemPath,
+  type QuickOpenItem,
+  type QuickOpenProvider,
+  type QuickOpenSelectContext,
   type WorkbenchCommandDescriptor,
   type WorkbenchCommandRunContext,
   type WorkbenchShellCommandContext,
@@ -22,32 +28,93 @@ import {
   resolveShellCommandActivities,
 } from './command-palette.js';
 import { resolveExtensionKeybindingCommand } from './keybinding-bridge.js';
+import { isWorkspaceResourceService, useWorkspaceResourceState } from './workspace-view-state.js';
+
+const WORKSPACE_OPEN_COMMAND_ID = 'workspace.open' as const;
 
 export interface WorkbenchCommandHostProps {
   additionalCommands?: readonly WorkbenchCommandDescriptor[];
+  /** Override command palette close control label (default English). */
+  commandPaletteCloseLabel?: string | undefined;
+  /** Override command palette empty-state copy (default English). */
+  commandPaletteEmptyLabel?: string | undefined;
+  /** Override command palette search placeholder (default English). */
+  commandPalettePlaceholder?: string | undefined;
+  /** Override command palette dialog title (default English). */
+  commandPaletteTitle?: string | undefined;
   enableCommandPalette?: boolean;
   enableExtensionKeybindings?: boolean;
+  /**
+   * When true (default), Ctrl/Cmd+P opens Quick Open instead of the command palette.
+   * Ctrl/Cmd+Shift+P still opens the command palette.
+   */
+  enableQuickOpen?: boolean;
   enableShortcutBridge?: boolean;
   onOpenSettings: () => void;
+  /**
+   * Called when a Quick Open item is selected. Return `true` to skip the default
+   * `workspace.open` path for file items.
+   */
+  onOpenQuickOpenItem?: (item: QuickOpenItem, context: QuickOpenSelectContext) => boolean | void;
   onRunCommand?: (
     command: WorkbenchCommandDescriptor,
     context: WorkbenchCommandRunContext,
   ) => boolean | void;
+  /** Override Quick Open close control label (default English). */
+  quickOpenCloseLabel?: string | undefined;
+  /** Override Quick Open empty-state copy (default English). */
+  quickOpenEmptyLabel?: string | undefined;
+  /** Override Quick Open search placeholder (default English). */
+  quickOpenPlaceholder?: string | undefined;
+  /**
+   * Extra / replacement Quick Open providers. When omitted, the host wires a
+   * workspace-files provider from the registered workspace host port.
+   */
+  quickOpenProviders?: readonly QuickOpenProvider[];
+  /** Override Quick Open dialog title (default English). */
+  quickOpenTitle?: string | undefined;
+  /** Optional recent paths elevated when the Quick Open query is empty. */
+  quickOpenRecentPaths?: readonly string[] | undefined;
 }
 
 export function WorkbenchCommandHost({
   additionalCommands = [],
+  commandPaletteCloseLabel = 'Close command palette',
+  commandPaletteEmptyLabel = 'No commands match your search',
+  commandPalettePlaceholder = 'Search commands',
+  commandPaletteTitle = 'Command Palette',
   enableCommandPalette = true,
   enableExtensionKeybindings = true,
+  enableQuickOpen = true,
   enableShortcutBridge = true,
   onOpenSettings,
+  onOpenQuickOpenItem,
   onRunCommand,
+  quickOpenCloseLabel = 'Close Quick Open',
+  quickOpenEmptyLabel = 'No matching files',
+  quickOpenPlaceholder = 'Search files by name',
+  quickOpenProviders,
+  quickOpenRecentPaths,
+  quickOpenTitle = 'Quick Open',
 }: WorkbenchCommandHostProps) {
-  const { executeCommand, extensionRegistry, keybindingOverrides, layoutService } = useWorkbench();
+  const {
+    executeCommand,
+    extensionRegistry,
+    keybindingOverrides,
+    layoutService,
+    workspaceHostPort,
+  } = useWorkbench();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState('');
+  const [quickOpenOpen, setQuickOpenOpen] = useState(false);
+  const [quickOpenQuery, setQuickOpenQuery] = useState('');
   const [layout, setLayout] = useState(() => layoutService.getState());
   const shellContextRef = useRef<WorkbenchShellCommandContext | undefined>(undefined);
+
+  const workspaceService = isWorkspaceResourceService(workspaceHostPort?.service)
+    ? workspaceHostPort.service
+    : undefined;
+  const workspaceState = useWorkspaceResourceState(workspaceService);
 
   useEffect(() => {
     const disposable = layoutService.onDidChangeLayout(({ state }) => {
@@ -127,16 +194,41 @@ export function WorkbenchCommandHost({
         shellCommands: shellCommandDefinitions,
         shellContext,
       }),
-    [additionalCommands, extensionRegistry, shellContext],
+    [additionalCommands, extensionRegistry, shellContext, shellCommandDefinitions],
   );
+
+  const resolvedQuickOpenProviders = useMemo(() => {
+    if (quickOpenProviders) {
+      return quickOpenProviders;
+    }
+
+    const files = workspaceState?.files ?? workspaceService?.getState().files ?? [];
+    return [
+      createWorkspaceFilesQuickOpenProvider({
+        files: () => workspaceService?.getState().files ?? files,
+        recentPaths: quickOpenRecentPaths,
+      }),
+    ];
+  }, [quickOpenProviders, quickOpenRecentPaths, workspaceService, workspaceState?.files]);
 
   const closePalette = useCallback(() => {
     setPaletteOpen(false);
   }, []);
 
   const openPalette = useCallback((query = '') => {
+    setQuickOpenOpen(false);
     setPaletteQuery(query);
     setPaletteOpen(true);
+  }, []);
+
+  const closeQuickOpen = useCallback(() => {
+    setQuickOpenOpen(false);
+  }, []);
+
+  const openQuickOpen = useCallback((query = '') => {
+    setPaletteOpen(false);
+    setQuickOpenQuery(query);
+    setQuickOpenOpen(true);
   }, []);
 
   const runPaletteCommand = useCallback(
@@ -155,13 +247,35 @@ export function WorkbenchCommandHost({
     [closePalette, executeCommand, onRunCommand],
   );
 
+  const runQuickOpenItem = useCallback(
+    (item: QuickOpenItem, context: QuickOpenSelectContext) => {
+      const finish = () => {
+        closeQuickOpen();
+      };
+
+      if (onOpenQuickOpenItem?.(item, context)) {
+        finish();
+        return;
+      }
+
+      const path = resolveQuickOpenItemPath(item);
+      if (!path) {
+        finish();
+        return;
+      }
+
+      void executeCommand(WORKSPACE_OPEN_COMMAND_ID, { path }).finally(finish);
+    },
+    [closeQuickOpen, executeCommand, onOpenQuickOpenItem],
+  );
+
   useEffect(() => {
-    if (!enableCommandPalette) {
+    if (!enableCommandPalette && !enableQuickOpen) {
       return undefined;
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (matchesWorkbenchCommandPaletteShortcut(event)) {
+      if (enableCommandPalette && matchesWorkbenchCommandPaletteShortcut(event)) {
         event.preventDefault();
         openPalette('>');
         return;
@@ -169,7 +283,14 @@ export function WorkbenchCommandHost({
 
       if (matchesWorkbenchQuickAccessShortcut(event)) {
         event.preventDefault();
-        openPalette();
+        if (enableQuickOpen) {
+          openQuickOpen();
+          return;
+        }
+
+        if (enableCommandPalette) {
+          openPalette();
+        }
       }
     };
 
@@ -177,7 +298,7 @@ export function WorkbenchCommandHost({
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [enableCommandPalette, openPalette]);
+  }, [enableCommandPalette, enableQuickOpen, openPalette, openQuickOpen]);
 
   useEffect(() => {
     if (!enableExtensionKeybindings) {
@@ -228,14 +349,30 @@ export function WorkbenchCommandHost({
       ) : null}
       {enableCommandPalette ? (
         <WorkbenchCommandPalette
+          closeLabel={commandPaletteCloseLabel}
           commands={paletteCommands}
+          emptyLabel={commandPaletteEmptyLabel}
           open={paletteOpen}
-          placeholder="Search commands"
+          placeholder={commandPalettePlaceholder}
           query={paletteQuery}
-          title="Command Palette"
+          title={commandPaletteTitle}
           onClose={closePalette}
           onQueryChange={setPaletteQuery}
           onRunCommand={runPaletteCommand}
+        />
+      ) : null}
+      {enableQuickOpen ? (
+        <WorkbenchQuickOpen
+          closeLabel={quickOpenCloseLabel}
+          emptyLabel={quickOpenEmptyLabel}
+          open={quickOpenOpen}
+          placeholder={quickOpenPlaceholder}
+          providers={resolvedQuickOpenProviders}
+          query={quickOpenQuery}
+          title={quickOpenTitle}
+          onClose={closeQuickOpen}
+          onQueryChange={setQuickOpenQuery}
+          onSelectItem={runQuickOpenItem}
         />
       ) : null}
     </>

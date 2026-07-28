@@ -12,6 +12,7 @@ import type {
 import { atomicWriteText } from './atomic-write.js';
 import { quarantineFileUnderRoot } from './quarantine.js';
 import { resolvePathUnderRoot } from './path-under-root.js';
+import { createDiagnostic, splitRelativeKey } from './storage-helpers.js';
 
 export interface NodeJsonDocumentStoreOptions<T> {
   readonly rootPath: string;
@@ -20,18 +21,6 @@ export interface NodeJsonDocumentStoreOptions<T> {
   readonly kind: string;
   readonly schemaVersion: number;
   readonly migrate?: JsonDocumentMigration<T>;
-}
-
-function splitRelativeKey(relativeKey: string): string[] {
-  return relativeKey.split(/[/\\]+/).filter(Boolean);
-}
-
-function createDiagnostic(
-  code: StorageDiagnostic['code'],
-  message: string,
-  relativeKey: string,
-): StorageDiagnostic {
-  return { code, message, relativeKey };
 }
 
 async function quarantineAndDiagnose(

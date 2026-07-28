@@ -118,6 +118,26 @@ export interface LocalizationContribution {
   translations: Record<string, string>;
 }
 
+/**
+ * Convenience alias for a bottom-panel view container + single view.
+ * Normalized at load into `viewContainers.panel` + `views`.
+ */
+export interface PanelContribution {
+  id: string;
+  title: string;
+  viewId: string;
+}
+
+export type StatusBarContributionAlignment = 'left' | 'right';
+
+export interface StatusBarContribution {
+  alignment: StatusBarContributionAlignment;
+  command?: string;
+  id: string;
+  priority?: number;
+  text: string;
+}
+
 export interface ExtensionContributes {
   activities?: ActivityContribution[];
   commands?: CommandContribution[];
@@ -127,6 +147,8 @@ export interface ExtensionContributes {
   keybindings?: KeybindingContribution[];
   localizations?: LocalizationContribution[];
   menus?: MenuContribution[];
+  panels?: PanelContribution[];
+  statusBar?: StatusBarContribution[];
   themes?: ThemeContribution[];
   views?: Record<string, ViewContribution[]>;
   viewContainers?: Record<string, ViewContainerContribution[]>;

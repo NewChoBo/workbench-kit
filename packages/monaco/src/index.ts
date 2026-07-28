@@ -1,8 +1,8 @@
-export type { OnMount } from '@monaco-editor/react';
+export type { DiffOnMount, OnMount } from '@monaco-editor/react';
 export type { IDisposable, editor } from 'monaco-editor';
 export type { WorkbenchMonaco } from './monaco-loader.js';
 
-export { Editor, loader, monaco } from './monaco-loader.js';
+export { DiffEditor, Editor, loader, monaco } from './monaco-loader.js';
 export {
   createMonacoWorker,
   installMonacoEnvironment,
@@ -45,3 +45,7 @@ export {
   type WorkbenchMonacoEditorProps,
   type WorkbenchMonacoEditorTheme,
 } from './WorkbenchMonacoEditor.js';
+export {
+  WorkbenchMonacoDiffEditor,
+  type WorkbenchMonacoDiffEditorProps,
+} from './WorkbenchMonacoDiffEditor.js';

@@ -368,6 +368,16 @@ function validateContributes(entry, violations, repoRoot) {
     ['label', stringValue(item.label)],
     ['translations', isRecord(item.translations)],
   ]);
+  validateContributionArray(entry, contributes, 'panels', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['title', stringValue(item.title)],
+    ['viewId', stringValue(item.viewId)],
+  ]);
+  validateContributionArray(entry, contributes, 'statusBar', violations, repoRoot, (item) => [
+    ['id', stringValue(item.id)],
+    ['alignment', item.alignment === 'left' || item.alignment === 'right'],
+    ['text', stringValue(item.text)],
+  ]);
   validateConfigurationContribution(entry, contributes.configuration, violations, repoRoot);
   validateMenuContributions(entry, contributes, violations, repoRoot);
   validateContributionArrayMap(

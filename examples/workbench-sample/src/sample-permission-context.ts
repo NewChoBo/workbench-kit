@@ -35,6 +35,8 @@ const SAMPLE_DEMO_EXTENSION_IDS = [
   'workbench-kit.samples.hello-world',
   'workbench-kit.samples.jdw',
   'workbench-kit.samples.field-remap',
+  'workbench-kit.samples.panel-output',
+  'workbench-kit.samples.status-bar',
   'workbench-kit.samples.theme-alt',
 ] as const;
 

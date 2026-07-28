@@ -60,6 +60,15 @@ export {
   isWorkbenchCommandRunnable,
 } from './workbench/commands/CommandPalette';
 export {
+  DEFAULT_QUICK_OPEN_SEARCH_DEBOUNCE_MS,
+  WORKSPACE_FILES_QUICK_OPEN_PROVIDER_ID,
+  WorkbenchQuickOpen,
+  createWorkspaceFilesQuickOpenProvider,
+  getNextQuickOpenItemIndex,
+  isQuickOpenItemSelectable,
+  resolveQuickOpenItemPath,
+} from './workbench/commands/WorkbenchQuickOpen';
+export {
   WorkbenchShortcutCommandBridge,
   getWorkbenchShortcutCommandBindings,
   getWorkbenchShortcutFromEvent,
@@ -87,6 +96,13 @@ export type {
   WorkbenchCommandStatus,
   WorkbenchCommandSuggestProps,
 } from './workbench/commands/CommandPalette';
+export type {
+  CreateWorkspaceFilesQuickOpenProviderOptions,
+  QuickOpenItem,
+  QuickOpenProvider,
+  QuickOpenSelectContext,
+  WorkbenchQuickOpenProps,
+} from './workbench/commands/WorkbenchQuickOpen';
 export type {
   UseWorkbenchShortcutCommandsOptions,
   WorkbenchShortcutCommandBinding,

@@ -164,6 +164,22 @@ describe('parseWorkbenchLayoutConfig', () => {
     ).toBe(90);
   });
 
+  it('parses panel size percent and active view container', () => {
+    expect(
+      parseWorkbenchLayoutConfig({
+        panel: {
+          activeViewContainer: 'panelOutput',
+          sizePercent: 34,
+          visible: true,
+        },
+      }).panel,
+    ).toEqual({
+      activeViewContainer: 'panelOutput',
+      sizePercent: 34,
+      visible: true,
+    });
+  });
+
   it('parses activity bar item order', () => {
     expect(
       parseWorkbenchLayoutConfig({
