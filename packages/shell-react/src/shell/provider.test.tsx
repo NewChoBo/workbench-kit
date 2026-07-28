@@ -1182,6 +1182,17 @@ describe('WorkbenchProvider', () => {
     document.body.append(container);
     const root = createRoot(container);
     const storage = createMemoryStorage();
+    storage.setItem(
+      'workbench-kit/.workbench/layout',
+      JSON.stringify({
+        panel: {
+          activeViewContainer: 'panelOutput',
+          sizePercent: 40,
+          visible: true,
+        },
+        sideBar: { visible: true },
+      }),
+    );
 
     await act(async () => {
       root.render(
@@ -1189,12 +1200,6 @@ describe('WorkbenchProvider', () => {
           extensionsConfig={{
             enabled: ['workbench-kit.builtin.explorer', 'workbench-kit.samples.panel-output'],
             recommendations: [],
-          }}
-          initialLayout={{
-            panel: {
-              sizePercent: 40,
-              visible: true,
-            },
           }}
           layoutStorage={storage}
           persistLayout
@@ -1215,6 +1220,24 @@ describe('WorkbenchProvider', () => {
     expect(
       bottomPanel?.querySelector('[data-panel-view-container-id="panelOutput"]'),
     ).not.toBeNull();
+    expect(bottomPanel?.closest('.ui-workbench-split-view')?.getAttribute('style') ?? '').toContain(
+      '60%',
+    );
+
+    const panelToggle = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Hide Panel"], button[aria-label="Show Panel"]',
+    );
+    expect(panelToggle?.getAttribute('aria-pressed')).toBe('true');
+
+    await act(async () => {
+      panelToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    await act(async () => {
+      panelToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
 
     const persisted = parseWorkbenchLayoutConfig(
       JSON.parse(storage.getItem('workbench-kit/.workbench/layout') ?? '{}') as unknown,

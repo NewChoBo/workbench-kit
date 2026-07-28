@@ -123,7 +123,7 @@ describe('WorkbenchShell', () => {
     );
 
     expect(markup).toContain('panel body');
-    expect(markup).toContain('--ui-workbench-split-primary-size: 65%');
+    expect(markup).toContain('--ui-workbench-split-primary-size:65%');
   });
 
   it('renders a top activity bar above the workbench body', () => {
