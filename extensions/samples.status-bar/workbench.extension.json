@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "workbench-kit.samples.status-bar",
+  "name": "samples-status-bar",
+  "displayName": "Status Bar + Panels Sample",
+  "version": "0.0.0",
+  "publisher": "workbench-kit",
+  "engines": {
+    "workbench": "^0.0.0",
+    "extensionApi": "^0.0.0"
+  },
+  "activationEvents": [
+    "onStartup",
+    "onCommand:workbench-kit.samples.status-bar.ping",
+    "onView:workbench-kit.samples.status-bar.problems"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "workbench-kit.samples.status-bar.ping",
+        "title": "Status Bar Sample: Ping"
+      }
+    ],
+    "panels": [
+      {
+        "id": "sampleProblems",
+        "title": "Problems",
+        "viewId": "workbench-kit.samples.status-bar.problems"
+      }
+    ],
+    "statusBar": [
+      {
+        "id": "workbench-kit.samples.status-bar.left",
+        "alignment": "left",
+        "priority": 10,
+        "text": "Sample Left",
+        "command": "workbench-kit.samples.status-bar.ping"
+      },
+      {
+        "id": "workbench-kit.samples.status-bar.right",
+        "alignment": "right",
+        "priority": 5,
+        "text": "Sample Right"
+      }
+    ]
+  }
+}

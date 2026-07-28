@@ -128,8 +128,9 @@ Low priority — defer until standalone shell and host bootstrap are stable in p
       Platform slot policy and React layout primitives landed; see `SideBarViewTabStrip` dual-slot story.
 - [x] **P3** Panel regions (bottom output host) with contribution views, resize, and
       visibility commands. Hosts `viewContainers.panel` via shell-react
-      `renderDefaultBottomPanel`; sample: `samples.panel-output`. Terminal emulator
-      and `#128` `contributes.panels` / `statusBar` schema aliases remain separate.
+      `renderDefaultBottomPanel`; sample: `samples.panel-output`. `#128`
+      `contributes.panels` / `statusBar` schema aliases landed (sample:
+      `samples.status-bar`). Terminal emulator remains separate.
 - [x] **P3** Layout persistence adapter MVP for sidebar width, panel visibility/height,
       active panel view container, and activity visibility/order via
       `WorkbenchProvider` host storage adapters.

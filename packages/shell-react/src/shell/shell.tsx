@@ -65,9 +65,11 @@ import {
 import { SETTINGS_EXTENSION_ID, WORKBENCH_PREFERENCE_SCOPES } from './settings-constants.js';
 import { createSettingsCategories, type WorkbenchThemeOption } from './settings.js';
 import {
+  createContributedWorkbenchStatusSections,
   createDefaultWorkbenchStatusSections,
   createWorkbenchShellActivityItems,
 } from './model.js';
+import { mergeWorkbenchStatusSections } from '../workbench/status-sections.js';
 import { renderDefaultBottomPanel, renderDefaultPrimarySidebar } from './view-host.js';
 import { WorkbenchShellTitleBarLayoutControls } from './titlebar-layout-controls.js';
 import { WorkbenchProfileModal, type WorkbenchProfileInput } from '../workbench/profile-modal.js';
@@ -227,12 +229,15 @@ export function WorkbenchShell({
   const resolvedStatusSections = useMemo(
     () =>
       statusSections ??
-      createDefaultWorkbenchStatusSections({
-        dependencyDiagnostics: extensionRegistry.getDependencyDiagnostics(),
-        extensionCount: extensionRegistry.getExtensions().length,
-        missingExtensionIds,
-        profile,
-      }),
+      mergeWorkbenchStatusSections(
+        createDefaultWorkbenchStatusSections({
+          dependencyDiagnostics: extensionRegistry.getDependencyDiagnostics(),
+          extensionCount: extensionRegistry.getExtensions().length,
+          missingExtensionIds,
+          profile,
+        }),
+        createContributedWorkbenchStatusSections(extensionRegistry.statusBar.getStatusBarItems()),
+      ),
     [extensionRegistry, missingExtensionIds, profile, statusSections],
   );
   const activeViewContainerId = layout.sideBar.activeViewContainer;
@@ -530,9 +535,22 @@ export function WorkbenchShell({
         return;
       }
 
+      const contributed = extensionRegistry.statusBar.getStatusBarItem(item.id);
+      if (contributed?.command) {
+        void executeCommand(contributed.command).catch(() => undefined);
+        return;
+      }
+
       onStatusItemActivate?.(item);
     },
-    [accountManagement, onStatusItemActivate, profile, showProfileModal],
+    [
+      accountManagement,
+      executeCommand,
+      extensionRegistry,
+      onStatusItemActivate,
+      profile,
+      showProfileModal,
+    ],
   );
 
   return (
