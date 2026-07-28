@@ -42,6 +42,14 @@
       "icon": "output"
     },
     {
+      "id": "workbench-kit.samples.status-bar",
+      "displayName": "Status Bar + Panels Sample",
+      "description": "Demonstrates contributes.panels and contributes.statusBar contribution points.",
+      "category": "utility",
+      "manifestUrl": "workbench-kit.samples.status-bar",
+      "icon": "info"
+    },
+    {
       "id": "workbench-kit.samples.jdw",
       "displayName": "JDW Lab",
       "description": "Adds a JDW Lab activity for canonical Widget Tree design/code authoring.",

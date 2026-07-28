@@ -4,6 +4,7 @@ import type {
   ConfigurationContribution,
   EditorContribution,
   MenuContribution,
+  StatusBarContribution,
   ViewContainerContribution,
   ViewContribution,
   ViewProvider,
@@ -18,6 +19,10 @@ export interface WorkbenchViewContainerContribution extends ViewContainerContrib
 }
 
 export interface WorkbenchActivityContribution extends ActivityContribution {
+  extensionId?: string;
+}
+
+export interface WorkbenchStatusBarContribution extends StatusBarContribution {
   extensionId?: string;
 }
 
@@ -288,6 +293,43 @@ export class ActivityRegistry implements Disposable {
   dispose(): void {
     this.activitiesById.clear();
     this.onDidRegisterActivityEmitter.dispose();
+  }
+}
+
+export class StatusBarRegistry implements Disposable {
+  private readonly itemsById = new Map<string, WorkbenchStatusBarContribution>();
+  private readonly onDidRegisterStatusBarItemEmitter =
+    new Emitter<WorkbenchStatusBarContribution>();
+
+  readonly onDidRegisterStatusBarItem = this.onDidRegisterStatusBarItemEmitter.event;
+
+  getStatusBarItem(itemId: string): WorkbenchStatusBarContribution | undefined {
+    return this.itemsById.get(itemId);
+  }
+
+  getStatusBarItems(): readonly WorkbenchStatusBarContribution[] {
+    return [...this.itemsById.values()];
+  }
+
+  registerStatusBarItem(item: WorkbenchStatusBarContribution): Disposable {
+    if (this.itemsById.has(item.id)) {
+      throw new Error(`Status bar item "${item.id}" is already registered.`);
+    }
+
+    this.itemsById.set(item.id, item);
+    this.onDidRegisterStatusBarItemEmitter.fire(item);
+
+    return toDisposable(() => {
+      const current = this.itemsById.get(item.id);
+      if (current === item) {
+        this.itemsById.delete(item.id);
+      }
+    });
+  }
+
+  dispose(): void {
+    this.itemsById.clear();
+    this.onDidRegisterStatusBarItemEmitter.dispose();
   }
 }
 

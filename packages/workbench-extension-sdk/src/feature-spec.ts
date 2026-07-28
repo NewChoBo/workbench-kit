@@ -6,6 +6,8 @@ import type {
   KeybindingContribution,
   LocalizationContribution,
   MenuContribution,
+  PanelContribution,
+  StatusBarContribution,
   ThemeContribution,
   ViewContainerContribution,
   ViewContribution,
@@ -77,9 +79,11 @@ export interface ExtensionFeatureSpec {
   readonly localizations: readonly LocalizationContribution[];
   readonly menus: readonly MenuContribution[];
   readonly name: string;
+  readonly panels: readonly PanelContribution[];
   readonly permissions: readonly string[];
   readonly publisher: string;
   readonly settings: readonly ExtensionSettingFeatureSpec[];
+  readonly statusBar: readonly StatusBarContribution[];
   readonly themes: readonly ThemeContribution[];
   readonly version: string;
   readonly viewContainers: readonly ExtensionViewContainerFeatureSpec[];

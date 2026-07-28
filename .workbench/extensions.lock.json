@@ -65,6 +65,10 @@
       "integrity": "sha256:8360318773bae4eee7d631a198fddb21e26bf632c479e145cd2bfea81a60cd5d",
       "version": "0.0.0"
     },
+    "workbench-kit.samples.status-bar": {
+      "integrity": "sha256:055b93ec5ea85c448c317bebfd97302dc30c721d0943ca18920f2157d685c269",
+      "version": "0.0.0"
+    },
     "workbench-kit.samples.theme-alt": {
       "integrity": "sha256:a56767633cc9ef652fe730abc903bea9edf362f24204633c1936b886c14142ce",
       "version": "0.0.0"

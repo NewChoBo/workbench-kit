@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   normalizeMenuContributions,
+  normalizePanels,
+  normalizeStatusBar,
   normalizeViewContainers,
   normalizeViews,
   toCommandDefinition,
@@ -77,6 +79,70 @@ describe('extension contribution normalizers', () => {
         containerId: 'sample',
         id: 'sample.view',
         name: 'Sample View',
+      },
+    ]);
+  });
+
+  it('expands panels into panel view containers and views', () => {
+    expect(
+      normalizePanels([
+        {
+          id: 'problems',
+          title: 'Problems',
+          viewId: 'sample.problems',
+        },
+      ]),
+    ).toEqual({
+      containers: [
+        {
+          id: 'problems',
+          location: 'panel',
+          title: 'Problems',
+        },
+      ],
+      views: [
+        {
+          containerId: 'problems',
+          id: 'sample.problems',
+          name: 'Problems',
+        },
+      ],
+    });
+  });
+
+  it('keeps valid statusBar contributions and drops invalid entries', () => {
+    expect(
+      normalizeStatusBar([
+        {
+          alignment: 'left',
+          id: 'sample.left',
+          priority: 10,
+          text: 'Left',
+          command: 'sample.ping',
+        },
+        {
+          alignment: 'center',
+          id: 'sample.bad',
+          text: 'Bad',
+        },
+        {
+          alignment: 'right',
+          id: 'sample.right',
+          text: 'Right',
+        },
+      ]),
+    ).toEqual([
+      {
+        alignment: 'left',
+        command: 'sample.ping',
+        id: 'sample.left',
+        priority: 10,
+        text: 'Left',
+      },
+      {
+        alignment: 'right',
+        id: 'sample.right',
+        text: 'Right',
       },
     ]);
   });

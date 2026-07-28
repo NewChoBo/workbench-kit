@@ -1,8 +1,13 @@
 import type { ReactNode } from 'react';
-import type { ActivityBarItem, StatusBarSectionModel } from '@workbench-kit/react/workbench/shell';
+import type {
+  ActivityBarItem,
+  StatusBarItemModel,
+  StatusBarSectionModel,
+} from '@workbench-kit/react/workbench/shell';
 import type {
   ExtensionDependencyDiagnosticSeverity,
   WorkbenchActivityContribution,
+  WorkbenchStatusBarContribution,
   WorkbenchViewContainerContribution,
   WorkbenchViewContribution,
 } from '@workbench-kit/workbench-core';
@@ -63,6 +68,63 @@ export function createWorkbenchShellActivityItems({
       label: container?.title ?? firstView.name ?? containerId,
     };
   });
+}
+
+function compareStatusBarPriority(
+  left: WorkbenchStatusBarContribution,
+  right: WorkbenchStatusBarContribution,
+): number {
+  const leftPriority = left.priority ?? 0;
+  const rightPriority = right.priority ?? 0;
+  if (leftPriority !== rightPriority) {
+    return rightPriority - leftPriority;
+  }
+
+  return left.id.localeCompare(right.id);
+}
+
+function toStatusBarItemModel(item: WorkbenchStatusBarContribution): StatusBarItemModel {
+  return {
+    id: item.id,
+    label: item.text,
+    order: item.priority,
+    title: item.text,
+  };
+}
+
+/** Map extension `contributes.statusBar` items into shell status sections. */
+export function createContributedWorkbenchStatusSections(
+  items: readonly WorkbenchStatusBarContribution[],
+): StatusBarSectionModel[] {
+  const leftItems = items
+    .filter((item) => item.alignment === 'left')
+    .sort(compareStatusBarPriority)
+    .map(toStatusBarItemModel);
+  const rightItems = items
+    .filter((item) => item.alignment === 'right')
+    .sort(compareStatusBarPriority)
+    .map(toStatusBarItemModel);
+
+  return [
+    ...(leftItems.length > 0
+      ? [
+          {
+            align: 'start' as const,
+            id: 'extension-status-left',
+            items: leftItems,
+          },
+        ]
+      : []),
+    ...(rightItems.length > 0
+      ? [
+          {
+            align: 'end' as const,
+            id: 'extension-status-right',
+            items: rightItems,
+          },
+        ]
+      : []),
+  ];
 }
 
 export function createDefaultWorkbenchStatusSections({

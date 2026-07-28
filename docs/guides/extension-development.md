@@ -94,14 +94,16 @@ Every contributed command should have a matching `onCommand:` or `onStartup` act
 
 ### Contribution points
 
-| Point                      | Declares                                                 | Runtime registration                   |
-| -------------------------- | -------------------------------------------------------- | -------------------------------------- |
-| `commands`                 | Command metadata (title, category, icon)                 | `context.commands.registerCommand()`   |
-| `views` / `viewContainers` | Sidebar (`activitybar`) and bottom panel (`panel`) views | `context.views.registerViewProvider()` |
-| `menus`                    | Command placement (palette, view title, context)         | Host merges from manifest              |
-| `keybindings`              | Key → command mapping                                    | Host merges from manifest              |
-| `configuration`            | Settings schema defaults                                 | Host settings service                  |
-| `activities`               | Activity bar entries                                     | Host layout                            |
+| Point                      | Declares                                                              | Runtime registration                                                                  |
+| -------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `commands`                 | Command metadata (title, category, icon)                              | `context.commands.registerCommand()`                                                  |
+| `views` / `viewContainers` | Sidebar (`activitybar`) and bottom panel (`panel`) views              | `context.views.registerViewProvider()`                                                |
+| `panels`                   | Bottom-panel container+view alias (`id`/`title`/`viewId`)             | Expanded into `viewContainers.panel` + `views`; provider via `registerViewProvider()` |
+| `statusBar`                | Status bar items (`alignment` left/right, `text`, optional `command`) | Host merges into shell status sections                                                |
+| `menus`                    | Command placement (palette, view title, context)                      | Host merges from manifest                                                             |
+| `keybindings`              | Key → command mapping                                                 | Host merges from manifest                                                             |
+| `configuration`            | Settings schema defaults                                              | Host settings service                                                                 |
+| `activities`               | Activity bar entries                                                  | Host layout                                                                           |
 
 Type shapes: [Contribution Contracts](../architecture/contribution-contracts.md).
 

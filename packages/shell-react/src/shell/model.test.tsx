@@ -7,6 +7,7 @@ import type {
 } from '@workbench-kit/workbench-core';
 
 import {
+  createContributedWorkbenchStatusSections,
   createDefaultWorkbenchStatusSections,
   createWorkbenchShellActivityItems,
   getWorkbenchShellCodiconClassName,
@@ -77,6 +78,62 @@ describe('shell model', () => {
     ).toEqual([
       ['workbench.explorer', 'Explorer', false],
       ['workbench.search', 'Search', true],
+    ]);
+  });
+
+  it('maps contributed status bar items into left and right sections', () => {
+    expect(
+      createContributedWorkbenchStatusSections([
+        {
+          alignment: 'right',
+          id: 'sample.right.low',
+          priority: 1,
+          text: 'Right Low',
+        },
+        {
+          alignment: 'left',
+          id: 'sample.left',
+          priority: 10,
+          text: 'Left',
+        },
+        {
+          alignment: 'right',
+          id: 'sample.right.high',
+          priority: 20,
+          text: 'Right High',
+        },
+      ]),
+    ).toEqual([
+      {
+        align: 'start',
+        id: 'extension-status-left',
+        items: [
+          {
+            id: 'sample.left',
+            label: 'Left',
+            order: 10,
+            title: 'Left',
+          },
+        ],
+      },
+      {
+        align: 'end',
+        id: 'extension-status-right',
+        items: [
+          {
+            id: 'sample.right.high',
+            label: 'Right High',
+            order: 20,
+            title: 'Right High',
+          },
+          {
+            id: 'sample.right.low',
+            label: 'Right Low',
+            order: 1,
+            title: 'Right Low',
+          },
+        ],
+      },
     ]);
   });
 

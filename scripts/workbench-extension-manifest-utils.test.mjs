@@ -196,6 +196,77 @@ describe('workbench extension manifest validation', () => {
     expect(violations).toEqual([]);
   });
 
+  it('reports invalid panels and statusBar contribution shapes', () => {
+    const violations = validateWorkbenchExtensionManifests(
+      [
+        createManifestEntry(
+          createValidManifest({
+            contributes: {
+              panels: [
+                {
+                  id: 'problems',
+                  title: 'Problems',
+                },
+              ],
+              statusBar: [
+                {
+                  id: 'sample.status',
+                  alignment: 'center',
+                  text: 'Status',
+                },
+              ],
+            },
+          }),
+        ),
+      ],
+      repoRoot,
+    );
+
+    expect(violations).toEqual([
+      expect.objectContaining({
+        location: 'extensions/builtin.test/workbench.extension.json#contributes.panels[0].viewId',
+        rule: 'manifest-contributes',
+      }),
+      expect.objectContaining({
+        location:
+          'extensions/builtin.test/workbench.extension.json#contributes.statusBar[0].alignment',
+        rule: 'manifest-contributes',
+      }),
+    ]);
+  });
+
+  it('allows valid panels and statusBar contributions', () => {
+    const violations = validateWorkbenchExtensionManifests(
+      [
+        createManifestEntry(
+          createValidManifest({
+            contributes: {
+              panels: [
+                {
+                  id: 'problems',
+                  title: 'Problems',
+                  viewId: 'sample.problems',
+                },
+              ],
+              statusBar: [
+                {
+                  id: 'sample.status',
+                  alignment: 'left',
+                  priority: 10,
+                  text: 'Status',
+                  command: 'sample.ping',
+                },
+              ],
+            },
+          }),
+        ),
+      ],
+      repoRoot,
+    );
+
+    expect(violations).toEqual([]);
+  });
+
   it('requires theme contributions to declare a mode', () => {
     const violations = validateWorkbenchExtensionManifests(
       [
