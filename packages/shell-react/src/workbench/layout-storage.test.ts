@@ -80,7 +80,11 @@ describe('workbench-layout-storage', () => {
           visible: true,
         },
         auxiliaryBar: { visible: true },
-        panel: { visible: false },
+        panel: {
+          activeViewContainer: 'panelOutput',
+          sizePercent: 34,
+          visible: true,
+        },
         sideBar: {
           activeViewContainer: 'aiChat',
           sizePercent: 28,
@@ -98,7 +102,11 @@ describe('workbench-layout-storage', () => {
         visible: true,
       },
       auxiliaryBar: { visible: true },
-      panel: { visible: false },
+      panel: {
+        activeViewContainer: 'panelOutput',
+        sizePercent: 34,
+        visible: true,
+      },
       sideBar: {
         activeViewContainer: 'aiChat',
         sizePercent: 28,

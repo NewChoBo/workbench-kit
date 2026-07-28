@@ -30,6 +30,8 @@ export function workbenchLayoutConfigToInput(
       visible: config.auxiliaryBar.visible,
     },
     panel: {
+      activeViewContainer: config.panel.activeViewContainer,
+      sizePercent: config.panel.sizePercent,
       visible: config.panel.visible,
     },
     sideBar: {
@@ -58,6 +60,10 @@ export function workbenchLayoutStateToStorageValue(
     },
     panel: {
       visible: state.panel.visible,
+      ...(state.panel.activeViewContainer
+        ? { activeViewContainer: state.panel.activeViewContainer }
+        : {}),
+      ...(state.panel.sizePercent !== undefined ? { sizePercent: state.panel.sizePercent } : {}),
     },
     sideBar: {
       visible: state.sideBar.visible,

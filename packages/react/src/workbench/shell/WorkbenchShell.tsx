@@ -8,6 +8,16 @@ import { DEFAULT_PRIMARY_SIDEBAR_SIZE_PX } from './shellState';
 import { suppressNativeBrowserContextMenu } from '../commands/workbenchContextMenu';
 import { WorkbenchOverlaysProvider } from '../chrome/workbenchOverlaysContext';
 
+const DEFAULT_BOTTOM_PANEL_SIZE_PERCENT = 30;
+
+function clampBottomPanelSizePercent(value: number): number {
+  return Math.min(70, Math.max(10, value));
+}
+
+function clampBottomPanelPrimarySizePercent(value: number): number {
+  return Math.min(90, Math.max(30, value));
+}
+
 export type WorkbenchShellActivityBarPosition = 'left' | 'top';
 
 export interface WorkbenchShellProps {
@@ -25,6 +35,12 @@ export interface WorkbenchShellProps {
   bottomPanel?: {
     isVisible: boolean;
     node: ReactNode;
+    /**
+     * Panel track size as a percent of the vertical editor+panel split.
+     * When set with `onSizePercentChange`, the split is controlled.
+     */
+    sizePercent?: number;
+    onSizePercentChange?: (sizePercent: number) => void;
     className?: string;
     style?: CSSProperties;
   };
@@ -88,17 +104,36 @@ export function WorkbenchShell({
   const isBottomPanelCollapsed = bottomPanel !== undefined && !bottomPanel.isVisible;
   const isAuxiliarySidebarCollapsed = auxiliarySidebar !== undefined && !auxiliarySidebar.isVisible;
 
+  const bottomPanelSizePercent =
+    bottomPanel?.onSizePercentChange !== undefined
+      ? (bottomPanel.sizePercent ?? DEFAULT_BOTTOM_PANEL_SIZE_PERCENT)
+      : undefined;
+  const bottomPanelPrimarySizePercent =
+    bottomPanelSizePercent !== undefined
+      ? clampBottomPanelPrimarySizePercent(100 - bottomPanelSizePercent)
+      : undefined;
+
   const editorArea = bottomPanel ? (
     <SplitView
       className={cx(
         bottomPanel.className,
         isBottomPanelCollapsed && 'ui-workbench-split-view--secondary-collapsed',
       )}
-      defaultPrimarySizePercent={70}
+      defaultPrimarySizePercent={100 - DEFAULT_BOTTOM_PANEL_SIZE_PERCENT}
       maxPrimarySizePercent={90}
       minPrimarySizePercent={30}
+      onPrimarySizePercentChange={
+        bottomPanel.onSizePercentChange
+          ? (primarySizePercent) => {
+              bottomPanel.onSizePercentChange?.(
+                clampBottomPanelSizePercent(100 - primarySizePercent),
+              );
+            }
+          : undefined
+      }
       orientation="vertical"
       primary={secondaryArea}
+      primarySizePercent={bottomPanelPrimarySizePercent}
       secondary={bottomPanel.node}
     />
   ) : (

@@ -54,6 +54,9 @@ describe('LayoutService', () => {
     service.setActivityBarItemOrder(['search', 'explorer', 'chatting', 'aiChat']);
     service.setActivityBarHiddenItemIds(['aiChat', 'chatting', 'aiChat']);
     service.setSideBarSizePercent(32);
+    service.setPanelVisible(true);
+    service.setPanelSizePercent(28);
+    service.setActivePanelViewContainer('panelOutput');
 
     expect(service.getState()).toEqual({
       activityBar: {
@@ -65,7 +68,9 @@ describe('LayoutService', () => {
         visible: false,
       },
       panel: {
-        visible: false,
+        activeViewContainer: 'panelOutput',
+        sizePercent: 28,
+        visible: true,
       },
       sideBar: {
         activeViewContainer: 'search',
@@ -75,6 +80,9 @@ describe('LayoutService', () => {
     });
     expect(changes).toEqual([
       'false:explorer',
+      'false:search',
+      'false:search',
+      'false:search',
       'false:search',
       'false:search',
       'false:search',

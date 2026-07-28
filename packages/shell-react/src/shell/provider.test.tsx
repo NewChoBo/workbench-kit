@@ -1177,6 +1177,61 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 
+  it('hosts contributed bottom panel views and persists panel size', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const storage = createMemoryStorage();
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: [
+              'workbench-kit.builtin.explorer',
+              'workbench-kit.samples.panel-output',
+            ],
+            recommendations: [],
+          }}
+          initialLayout={{
+            panel: {
+              sizePercent: 40,
+              visible: true,
+            },
+          }}
+          layoutStorage={storage}
+          persistLayout
+        >
+          <TestWorkbenchShell editorArea={<main>Editor Area</main>} title="Panel Host" />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await flushReactEffects();
+
+    const bottomPanel = container.querySelector('.workbench-bottom-panel');
+    expect(bottomPanel).not.toBeNull();
+    expect(bottomPanel?.textContent).toContain('Output');
+    expect(bottomPanel?.textContent).toContain(
+      'Sample Output — bottom panel contribution host demo.',
+    );
+    expect(
+      bottomPanel?.querySelector('[data-panel-view-container-id="panelOutput"]'),
+    ).not.toBeNull();
+
+    const persisted = parseWorkbenchLayoutConfig(
+      JSON.parse(storage.getItem('workbench-kit/.workbench/layout') ?? '{}') as unknown,
+    );
+    expect(persisted.panel.visible).toBe(true);
+    expect(persisted.panel.sizePercent).toBe(40);
+    expect(persisted.panel.activeViewContainer).toBe('panelOutput');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('hides unused panel and auxiliary title-bar layout toggles when disabled', async () => {
     const container = document.createElement('div');
     document.body.append(container);

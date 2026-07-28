@@ -27,6 +27,7 @@ describe('bundled workbench extensions', () => {
       'workbench-kit.samples.jdw',
       'workbench-kit.samples.json-preview',
       'workbench-kit.samples.locale-ko',
+      'workbench-kit.samples.panel-output',
       'workbench-kit.samples.theme-alt',
     ]);
 
