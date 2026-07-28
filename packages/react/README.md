@@ -63,6 +63,35 @@ Full walkthrough: [Getting Started](../../docs/guides/getting-started.md).
 
 Import **only** through `exports`. Do not deep-import `src/` paths.
 
+## Quick Open providers
+
+`WorkbenchQuickOpen` is a file/provider overlay distinct from the command palette.
+Hosts (or `@workbench-kit/shell-react` `WorkbenchCommandHost`) pass pluggable
+providers; the default workspace-files provider wraps
+`searchWorkspaceFiles` from `@workbench-kit/workspace`.
+
+```ts
+import {
+  WorkbenchQuickOpen,
+  createWorkspaceFilesQuickOpenProvider,
+  type QuickOpenProvider,
+} from '@workbench-kit/react/workbench';
+
+const providers: QuickOpenProvider[] = [
+  createWorkspaceFilesQuickOpenProvider({
+    files: workspaceFiles,
+    recentPaths: ['src/App.tsx'],
+  }),
+];
+```
+
+Contract:
+
+- `provider.search(query)` returns items (sync or `Promise`)
+- Empty query → all files, with optional `recentPaths` elevated first
+- Enter selects the active item; Escape closes (modal focus trap)
+- Shell default: Ctrl/Cmd+P opens Quick Open; Ctrl/Cmd+Shift+P opens the command palette
+
 ## Learn more
 
 | Doc                                                                    | Purpose                       |

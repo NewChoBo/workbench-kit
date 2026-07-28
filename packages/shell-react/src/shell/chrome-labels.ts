@@ -1,6 +1,7 @@
 /**
  * Host-overridable chrome strings for WorkbenchShell surfaces
- * (ActivityBar / StatusBar aria, secondary Profile/Settings, command palette).
+ * (ActivityBar / StatusBar aria, secondary Profile/Settings, command palette,
+ * Quick Open).
  *
  * Resolution order per string: `labels[key]` → `t(capabilityId, default)` → English default.
  * Kit does not ship locale packs — hosts inject `t` or partial `labels`.
@@ -27,6 +28,10 @@ export interface WorkbenchShellChromeLabels {
   readonly commandPalettePlaceholder: string;
   readonly commandPaletteCloseLabel: string;
   readonly commandPaletteEmptyLabel: string;
+  readonly quickOpenTitle: string;
+  readonly quickOpenPlaceholder: string;
+  readonly quickOpenCloseLabel: string;
+  readonly quickOpenEmptyLabel: string;
 }
 
 export const defaultWorkbenchShellChromeLabels: WorkbenchShellChromeLabels = {
@@ -39,6 +44,10 @@ export const defaultWorkbenchShellChromeLabels: WorkbenchShellChromeLabels = {
   commandPalettePlaceholder: 'Search commands',
   commandPaletteCloseLabel: 'Close command palette',
   commandPaletteEmptyLabel: 'No commands match your search',
+  quickOpenTitle: 'Quick Open',
+  quickOpenPlaceholder: 'Search files by name',
+  quickOpenCloseLabel: 'Close Quick Open',
+  quickOpenEmptyLabel: 'No matching files',
 };
 
 /** Stable capability ids for optional `t()` injection (not free prose). */
@@ -52,6 +61,10 @@ export const workbenchShellChromeLabelKeys = {
   commandPalettePlaceholder: 'commandPalette.placeholder',
   commandPaletteCloseLabel: 'commandPalette.close',
   commandPaletteEmptyLabel: 'commandPalette.empty',
+  quickOpenTitle: 'quickOpen.title',
+  quickOpenPlaceholder: 'quickOpen.placeholder',
+  quickOpenCloseLabel: 'quickOpen.close',
+  quickOpenEmptyLabel: 'quickOpen.empty',
 } as const satisfies Record<keyof WorkbenchShellChromeLabels, string>;
 
 export function resolveWorkbenchShellChromeLabels(
@@ -77,5 +90,9 @@ export function resolveWorkbenchShellChromeLabels(
     commandPalettePlaceholder: resolve('commandPalettePlaceholder'),
     commandPaletteCloseLabel: resolve('commandPaletteCloseLabel'),
     commandPaletteEmptyLabel: resolve('commandPaletteEmptyLabel'),
+    quickOpenTitle: resolve('quickOpenTitle'),
+    quickOpenPlaceholder: resolve('quickOpenPlaceholder'),
+    quickOpenCloseLabel: resolve('quickOpenCloseLabel'),
+    quickOpenEmptyLabel: resolve('quickOpenEmptyLabel'),
   };
 }
