@@ -304,6 +304,66 @@ describe('ExtensionRegistry', () => {
     expect(registry.views.getViewProvider('workbench-kit.builtin.explorer.tree')).toBeDefined();
   });
 
+  it('normalizes panels and statusBar contributions', () => {
+    const registry = new ExtensionRegistry();
+    registry.registerExtension({
+      manifest: {
+        schemaVersion: 1,
+        id: 'workbench-kit.samples.status-bar',
+        name: 'samples-status-bar',
+        displayName: 'Status Bar Sample',
+        version: '0.0.0',
+        publisher: 'workbench-kit',
+        engines: {
+          workbench: '^0.0.0',
+          extensionApi: '^0.0.0',
+        },
+        activationEvents: ['onStartup'],
+        contributes: {
+          panels: [
+            {
+              id: 'sampleProblems',
+              title: 'Problems',
+              viewId: 'workbench-kit.samples.status-bar.problems',
+            },
+          ],
+          statusBar: [
+            {
+              alignment: 'left',
+              command: 'workbench-kit.samples.status-bar.ping',
+              id: 'workbench-kit.samples.status-bar.left',
+              priority: 10,
+              text: 'Sample Left',
+            },
+          ],
+        },
+      },
+    });
+
+    expect(registry.views.getViewContainers('panel')).toEqual([
+      {
+        id: 'sampleProblems',
+        location: 'panel',
+        title: 'Problems',
+      },
+    ]);
+    expect(registry.views.getView('workbench-kit.samples.status-bar.problems')).toMatchObject({
+      containerId: 'sampleProblems',
+      id: 'workbench-kit.samples.status-bar.problems',
+      name: 'Problems',
+    });
+    expect(registry.statusBar.getStatusBarItems()).toEqual([
+      {
+        alignment: 'left',
+        command: 'workbench-kit.samples.status-bar.ping',
+        extensionId: 'workbench-kit.samples.status-bar',
+        id: 'workbench-kit.samples.status-bar.left',
+        priority: 10,
+        text: 'Sample Left',
+      },
+    ]);
+  });
+
   it('normalizes views, view containers, menus, activities, and configuration', () => {
     const registry = new ExtensionRegistry();
     registry.registerExtension({

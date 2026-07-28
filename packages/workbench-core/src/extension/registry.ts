@@ -25,6 +25,7 @@ import {
   ConfigurationRegistry,
   EditorRegistry,
   MenuRegistry,
+  StatusBarRegistry,
   ViewRegistry,
 } from '../contributions/registries.js';
 import { CapabilityRegistry, type CapabilityProvider } from '../capability/registry.js';
@@ -49,6 +50,8 @@ import { createExtensionFeatureSpecs } from './feature-spec.js';
 import {
   normalizeConfiguration,
   normalizeMenuContributions,
+  normalizePanels,
+  normalizeStatusBar,
   normalizeViewContainers,
   normalizeViews,
   toCommandDefinition,
@@ -78,6 +81,7 @@ export interface ExtensionRegistryOptions {
   keybindings?: KeybindingRegistry;
   localizations?: LocalizationRegistry;
   menus?: MenuRegistry;
+  statusBar?: StatusBarRegistry;
   themes?: ThemeRegistry;
   viewHostFactories?: ViewHostFactoryRegistry;
   views?: ViewRegistry;
@@ -141,6 +145,7 @@ export class ExtensionRegistry implements Disposable {
   readonly keybindings: KeybindingRegistry;
   readonly localizations: LocalizationRegistry;
   readonly menus: MenuRegistry;
+  readonly statusBar: StatusBarRegistry;
   readonly themes: ThemeRegistry;
   readonly viewHostFactories: ViewHostFactoryRegistry;
   readonly views: ViewRegistry;
@@ -161,6 +166,7 @@ export class ExtensionRegistry implements Disposable {
     this.keybindings = options.keybindings ?? new KeybindingRegistry();
     this.localizations = options.localizations ?? new LocalizationRegistry();
     this.menus = options.menus ?? new MenuRegistry();
+    this.statusBar = options.statusBar ?? new StatusBarRegistry();
     this.themes = options.themes ?? new ThemeRegistry();
     this.views = options.views ?? new ViewRegistry();
     this.capabilityRegistry = options.capabilityRegistry ?? new CapabilityRegistry();
@@ -383,6 +389,7 @@ export class ExtensionRegistry implements Disposable {
     this.keybindings.dispose();
     this.localizations.dispose();
     this.menus.dispose();
+    this.statusBar.dispose();
     this.themes.dispose();
     this.views.dispose();
     this.editors.dispose();
@@ -520,6 +527,15 @@ export class ExtensionRegistry implements Disposable {
       disposables.add(this.menus.registerMenuItem(menu));
     }
 
+    const panels = normalizePanels(contributes.panels);
+    for (const container of panels.containers) {
+      disposables.add(this.views.registerViewContainer(container));
+    }
+
+    for (const view of panels.views) {
+      disposables.add(this.views.registerView(view));
+    }
+
     for (const container of normalizeViewContainers(contributes.viewContainers)) {
       disposables.add(this.views.registerViewContainer(container));
     }
@@ -532,6 +548,15 @@ export class ExtensionRegistry implements Disposable {
       disposables.add(
         this.activities.registerActivity({
           ...activity,
+          extensionId: description.manifest.id,
+        }),
+      );
+    }
+
+    for (const statusBarItem of normalizeStatusBar(contributes.statusBar)) {
+      disposables.add(
+        this.statusBar.registerStatusBarItem({
+          ...statusBarItem,
           extensionId: description.manifest.id,
         }),
       );

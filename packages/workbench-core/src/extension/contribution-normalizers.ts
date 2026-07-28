@@ -2,6 +2,8 @@ import type { CommandDefinition, KeybindingDefinition } from '@workbench-kit/pla
 import type {
   ConfigurationContribution,
   MenuContribution,
+  PanelContribution,
+  StatusBarContribution,
   ViewContainerContribution,
   ViewContribution,
 } from '@workbench-kit/workbench-extension-sdk';
@@ -109,5 +111,66 @@ export function normalizeViews(value: unknown): WorkbenchViewContribution[] {
         containerId: partialView.containerId ?? containerId,
       } as WorkbenchViewContribution;
     });
+  });
+}
+
+export interface NormalizedPanelContributions {
+  readonly containers: readonly WorkbenchViewContainerContribution[];
+  readonly views: readonly WorkbenchViewContribution[];
+}
+
+/** Expand `contributes.panels` into panel view containers + views. */
+export function normalizePanels(value: unknown): NormalizedPanelContributions {
+  if (!Array.isArray(value)) {
+    return { containers: [], views: [] };
+  }
+
+  const containers: WorkbenchViewContainerContribution[] = [];
+  const views: WorkbenchViewContribution[] = [];
+
+  for (const entry of value) {
+    if (!isRecord(entry)) {
+      continue;
+    }
+
+    const panel = entry as Partial<PanelContribution>;
+    if (
+      typeof panel.id !== 'string' ||
+      typeof panel.title !== 'string' ||
+      typeof panel.viewId !== 'string'
+    ) {
+      continue;
+    }
+
+    containers.push({
+      id: panel.id,
+      location: 'panel',
+      title: panel.title,
+    });
+    views.push({
+      containerId: panel.id,
+      id: panel.viewId,
+      name: panel.title,
+    });
+  }
+
+  return { containers, views };
+}
+
+export function normalizeStatusBar(value: unknown): StatusBarContribution[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((entry): entry is StatusBarContribution => {
+    if (!isRecord(entry)) {
+      return false;
+    }
+
+    return (
+      typeof entry.id === 'string' &&
+      typeof entry.text === 'string' &&
+      (entry.alignment === 'left' || entry.alignment === 'right')
+    );
   });
 }
