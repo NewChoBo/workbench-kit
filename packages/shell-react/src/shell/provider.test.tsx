@@ -1187,10 +1187,7 @@ describe('WorkbenchProvider', () => {
       root.render(
         <WorkbenchProvider
           extensionsConfig={{
-            enabled: [
-              'workbench-kit.builtin.explorer',
-              'workbench-kit.samples.panel-output',
-            ],
+            enabled: ['workbench-kit.builtin.explorer', 'workbench-kit.samples.panel-output'],
             recommendations: [],
           }}
           initialLayout={{
