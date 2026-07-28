@@ -491,6 +491,10 @@ export function WorkbenchShell({
       commandPalettePlaceholder:
         hostProps.commandPalettePlaceholder ?? chromeLabels.commandPalettePlaceholder,
       commandPaletteTitle: hostProps.commandPaletteTitle ?? chromeLabels.commandPaletteTitle,
+      quickOpenCloseLabel: hostProps.quickOpenCloseLabel ?? chromeLabels.quickOpenCloseLabel,
+      quickOpenEmptyLabel: hostProps.quickOpenEmptyLabel ?? chromeLabels.quickOpenEmptyLabel,
+      quickOpenPlaceholder: hostProps.quickOpenPlaceholder ?? chromeLabels.quickOpenPlaceholder,
+      quickOpenTitle: hostProps.quickOpenTitle ?? chromeLabels.quickOpenTitle,
       onRunCommand: (command, context) => {
         if (command.id === MANAGE_COMMANDS_COMMAND_ID) {
           layoutService.setActiveViewContainer(BUILTIN_COMMANDS_VIEW_CONTAINER_ID);

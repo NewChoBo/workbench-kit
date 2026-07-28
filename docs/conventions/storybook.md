@@ -71,7 +71,7 @@ Integration required set:
 These stories render the sample app directly instead of using synthetic package
 fixtures. The long journey story should cover dev-app surfaces that would otherwise
 require a separate browser E2E smoke: startup editor state, search result opening,
-command palette, chat, AI chat composer, settings, profile permission overrides, and
+Quick Open, command palette, chat, AI chat composer, settings, profile permission overrides, and
 sign-out. Add new required stories only when they cover a stable sample-host
 workflow and can be verified by `test:storybook-play:required`.
 

@@ -775,7 +775,8 @@ Kit does **not** ship locale packs. Hosts inject chrome copy via:
 
 Stable shell keys (see `workbenchShellChromeLabelKeys`): `shell.activityBar`, `shell.statusBar`,
 `shell.profile`, `shell.profileTitle`, `shell.settings`, `commandPalette.title`,
-`commandPalette.placeholder`, `commandPalette.close`, `commandPalette.empty`.
+`commandPalette.placeholder`, `commandPalette.close`, `commandPalette.empty`,
+`quickOpen.title`, `quickOpen.placeholder`, `quickOpen.close`, `quickOpen.empty`.
 
 ```tsx
 <WorkbenchShell
