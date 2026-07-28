@@ -35,6 +35,11 @@ import {
   sortActivityBarItems,
 } from '@workbench-kit/react/workbench/activityBarOrder';
 import { useWorkbench } from './provider.js';
+import {
+  resolveWorkbenchShellChromeLabels,
+  type WorkbenchShellChromeLabels,
+  type WorkbenchTranslate,
+} from './chrome-labels.js';
 import { WorkbenchCommandHost, type WorkbenchCommandHostProps } from '../workbench/command-host.js';
 import {
   MANAGE_ACCOUNTS_COMMAND_ID,
@@ -102,6 +107,11 @@ export interface WorkbenchShellProps {
   editorArea?: ReactNode;
   helpContent?: ReactNode;
   helpTitle?: ReactNode;
+  /**
+   * Partial chrome label overrides for ActivityBar / StatusBar / secondary items /
+   * command palette. Wins over `t` when both are set for the same key.
+   */
+  labels?: Partial<WorkbenchShellChromeLabels> | undefined;
   lightPreset?: string | undefined;
   onDarkPresetChange?: ((preset: string) => void) | undefined;
   onLightPresetChange?: ((preset: string) => void) | undefined;
@@ -116,6 +126,11 @@ export interface WorkbenchShellProps {
   rootClassName?: string;
   shellPreset?: string | undefined;
   statusSections?: StatusBarSectionModel[];
+  /**
+   * Optional `t(key, fallback)` injection for shell chrome strings.
+   * Missing `t` keeps English defaults from `resolveWorkbenchShellChromeLabels`.
+   */
+  t?: WorkbenchTranslate | undefined;
   theme?: string;
   themeOptions?: readonly WorkbenchThemeOption[] | undefined;
   title?: ReactNode;
@@ -148,6 +163,7 @@ export function WorkbenchShell({
   editorArea,
   helpContent,
   helpTitle = 'Workbench Help',
+  labels: labelOverrides,
   lightPreset,
   locale = 'en',
   onDarkPresetChange,
@@ -162,6 +178,7 @@ export function WorkbenchShell({
   rootClassName,
   shellPreset = DEFAULT_SHELL_PRESET,
   statusSections,
+  t,
   theme,
   themeOptions,
   title = 'Workbench',
@@ -243,11 +260,18 @@ export function WorkbenchShell({
   const canOpenSettingsValue = contextKeyService.get(
     WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS,
   );
+  const chromeLabels = useMemo(
+    () => resolveWorkbenchShellChromeLabels(labelOverrides, t),
+    [labelOverrides, t],
+  );
   const secondaryActivityItems = createWorkbenchSecondaryActivityItems({
     hasProfile: profile !== undefined,
     isProfileOpen,
     isSettingsOpen,
     showSettings: canOpenSettingsValue !== false,
+    profileLabel: chromeLabels.profileLabel,
+    profileTitle: chromeLabels.profileTitle,
+    settingsLabel: chromeLabels.settingsLabel,
   });
 
   useEffect(() => {
@@ -429,6 +453,13 @@ export function WorkbenchShell({
     return {
       ...hostProps,
       additionalCommands,
+      commandPaletteCloseLabel:
+        hostProps.commandPaletteCloseLabel ?? chromeLabels.commandPaletteCloseLabel,
+      commandPaletteEmptyLabel:
+        hostProps.commandPaletteEmptyLabel ?? chromeLabels.commandPaletteEmptyLabel,
+      commandPalettePlaceholder:
+        hostProps.commandPalettePlaceholder ?? chromeLabels.commandPalettePlaceholder,
+      commandPaletteTitle: hostProps.commandPaletteTitle ?? chromeLabels.commandPaletteTitle,
       onRunCommand: (command, context) => {
         if (command.id === MANAGE_COMMANDS_COMMAND_ID) {
           layoutService.setActiveViewContainer(BUILTIN_COMMANDS_VIEW_CONTAINER_ID);
@@ -455,7 +486,7 @@ export function WorkbenchShell({
         return hostProps.onRunCommand?.(command, context) ?? false;
       },
     };
-  }, [commandHost, layoutService]);
+  }, [chromeLabels, commandHost, layoutService]);
 
   const handleStatusItemActivate = useCallback(
     (item: StatusBarItemModel) => {
@@ -481,6 +512,7 @@ export function WorkbenchShell({
   return (
     <ReactWorkbenchShell
       activityBar={{
+        'aria-label': chromeLabels.activityBarAriaLabel,
         visible: layout.activityBar.visible,
         items: visibleActivityItems,
         reorderable: true,
@@ -506,6 +538,7 @@ export function WorkbenchShell({
         },
       }}
       compactStatus={compactStatus}
+      statusBarAriaLabel={chromeLabels.statusBarAriaLabel}
       onStatusItemActivate={handleStatusItemActivate}
       primarySidebar={{
         isVisible: layout.sideBar.visible,
@@ -563,7 +596,7 @@ export function WorkbenchShell({
               footer={<Button onClick={() => setSettingsOpen(false)}>Close</Button>}
               scopes={[...WORKBENCH_PREFERENCE_SCOPES]}
               searchValue={settingsSearchValue}
-              title="Settings"
+              title={chromeLabels.settingsLabel}
               titleSuffix={
                 <Badge variant="muted">
                   {settingsContributionCount === 1

@@ -760,6 +760,34 @@ do not query Controls DOM. Panel forwards the same props. Chrome nouns (`Binding
 palette copy) accept `labels` / optional `t(key, fallback)` on Flow and Panel — hosts can
 override to “Field maps” / “Mappings” without CSS text hacks (`resolveFieldRemapChromeLabels`).
 
+---
+
+## Shell chrome label / `t()` injection (#126)
+
+Kit does **not** ship locale packs. Hosts inject chrome copy via:
+
+| Surface                  | API                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| `WorkbenchShell`         | `labels?: Partial<WorkbenchShellChromeLabels>` and/or `t?: WorkbenchTranslate` |
+| Field Remap Flow / Panel | `labels` / `t` (`FieldRemapChromeLabels` / `FieldRemapTranslate`)              |
+
+**Resolution order** (per string): `labels[key]` → `t(capabilityId, EnglishDefault)` → English default.
+
+Stable shell keys (see `workbenchShellChromeLabelKeys`): `shell.activityBar`, `shell.statusBar`,
+`shell.profile`, `shell.profileTitle`, `shell.settings`, `commandPalette.title`,
+`commandPalette.placeholder`, `commandPalette.close`, `commandPalette.empty`.
+
+```tsx
+<WorkbenchShell
+  locale={locale}
+  t={(key, fallback) => registry.localizations.translate(locale, key, fallback)}
+  // or labels={{ settingsLabel: '설정', commandPaletteTitle: '명령 팔레트' }}
+/>
+```
+
+Sample: `examples/workbench-sample` wires `t` from the active locale; KO strings live in
+`extensions/samples.locale-ko`. Missing `t` keeps English defaults.
+
 **Embed recipe:** import `@workbench-kit/shell-react/field-remap` (+ optional
 `…/field-remap/view.css`). Persist `MappingEdge[]` via controlled panel props; evaluate with
 `convertMappedInputs` (or `convertToShape` when you already own conversion/shape registries).

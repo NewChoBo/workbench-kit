@@ -287,6 +287,14 @@ export {
   type WorkbenchSecondaryActivityRoute,
 } from './shell/secondary-actions.js';
 export {
+  defaultWorkbenchShellChromeLabels,
+  resolveWorkbenchShellChromeLabels,
+  workbenchShellChromeLabelKeys,
+  type WorkbenchI18n,
+  type WorkbenchShellChromeLabels,
+  type WorkbenchTranslate,
+} from './shell/chrome-labels.js';
+export {
   WorkbenchProfileModal,
   type WorkbenchProfileDetail,
   type WorkbenchProfileInput,

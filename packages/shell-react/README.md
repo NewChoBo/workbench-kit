@@ -92,6 +92,21 @@ const flowActionsRef = useRef<FieldRemapFlowActions | null>(null);
 />;
 ```
 
+## Shell chrome labels / `t()`
+
+`WorkbenchShell` accepts optional `labels` and `t(key, fallback)` for high-visibility chrome
+(ActivityBar / StatusBar aria names, Profile/Settings secondary items, command palette).
+English defaults apply when neither is set. See
+`resolveWorkbenchShellChromeLabels` / `workbenchShellChromeLabelKeys` and
+[Consumer Capabilities — Shell chrome label injection](../../docs/workbench/consumer-capabilities.md#shell-chrome-label--t-injection-126).
+
+```tsx
+<WorkbenchShell
+  t={(key, fallback) => hostTranslate(key, fallback)}
+  labels={{ settingsLabel: 'Settings' }}
+/>
+```
+
 ## Related docs
 
 - [Component Map](../../docs/guides/component-map.md)
