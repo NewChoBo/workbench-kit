@@ -4,24 +4,37 @@
   "private": false,
   "type": "module",
   "scripts": {
+    "build": "tsup",
     "test": "vitest run src",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit"
   },
   "exports": {
     ".": "./src/index.ts",
     "./node": "./src/node/index.ts",
-    "./atomic-write": "./src/node/atomic-write.ts",
+    "./atomic-write": {
+      "types": "./src/node/atomic-write.ts",
+      "require": "./dist/atomic-write.cjs",
+      "import": "./src/node/atomic-write.ts",
+      "default": "./src/node/atomic-write.ts"
+    },
     "./resize-rect": "./src/window/resize-rect.ts",
-    "./tray-close-policy": "./src/window/tray-close-policy.ts",
+    "./tray-close-policy": {
+      "types": "./src/window/tray-close-policy.ts",
+      "require": "./dist/tray-close-policy.cjs",
+      "import": "./src/window/tray-close-policy.ts",
+      "default": "./src/window/tray-close-policy.ts"
+    },
     "./versioned-browser-state": "./src/storage/versioned-browser-state.ts"
   },
   "dependencies": {
     "@workbench-kit/base": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^24.12.0"
+    "@types/node": "^24.12.0",
+    "tsup": "^8.5.0"
   },
   "files": [
+    "dist",
     "src",
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",

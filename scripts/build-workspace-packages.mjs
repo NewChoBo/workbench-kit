@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 
-const packages = ['@workbench-kit/contracts', '@workbench-kit/jdw'];
+const packages = ['@workbench-kit/contracts', '@workbench-kit/jdw', '@workbench-kit/platform'];
 
 for (const packageName of packages) {
   console.log(`[build-workspace] Building ${packageName}...`);

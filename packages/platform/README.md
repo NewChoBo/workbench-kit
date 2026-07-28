@@ -59,6 +59,27 @@ Other Node/window helpers:
 | `@workbench-kit/platform/tray-close-policy`       | Tray close policy helpers       |
 | `@workbench-kit/platform/versioned-browser-state` | Versioned browser state adapter |
 
+## Electron main (CommonJS) consumption
+
+Pure leaf helpers ship dual `exports` so a CommonJS Electron `main` process can
+`require()` them from the published `@prototype` tarball (no host-local forks):
+
+```js
+const { atomicWriteText } = require('@workbench-kit/platform/atomic-write');
+const {
+  shouldHideOnClose,
+  shouldQuitWhenAllWindowsClosed,
+} = require('@workbench-kit/platform/tray-close-policy');
+```
+
+- ESM / TypeScript hosts keep using the same subpaths via `import` (source leaves).
+- CJS resolution uses prebuilt `dist/*.cjs` (built in workspace/`publish.yml` via
+  `pnpm build:workspace`).
+- CI smoke: `pnpm check:platform-cjs-leaves` (pack → `require` parity).
+
+Hosts still own BrowserWindow / tray wiring, when tray mode is active, and
+storage paths written via `atomicWriteText`.
+
 ## Related docs
 
 - [Getting Started](../../docs/guides/getting-started.md)
