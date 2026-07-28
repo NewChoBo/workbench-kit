@@ -30,6 +30,7 @@ activation handlers.
 | `samples.json-preview` | JSON document preview editor contribution sample.                         |
 | `samples.jdw`          | JDW Lab activity plus `*.jdw.json` form/preview document view providers.  |
 | `samples.locale-ko`    | Korean display-language localization contribution sample.                 |
+| `samples.panel-output` | Bottom-panel Output view via `viewContainers.panel` for the shell host.   |
 | `samples.theme-alt`    | Alternate dark color theme (`Dark Blue Alt`) for Settings → Appearance.   |
 
 ## Rules

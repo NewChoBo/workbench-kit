@@ -244,6 +244,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/workbench-extension-sdk
 
+  extensions/samples.panel-output:
+    dependencies:
+      '@workbench-kit/workbench-extension-sdk':
+        specifier: workspace:*
+        version: link:../../packages/workbench-extension-sdk
+
   extensions/samples.theme-alt:
     dependencies:
       '@workbench-kit/workbench-extension-sdk':

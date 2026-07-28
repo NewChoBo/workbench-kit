@@ -40,6 +40,8 @@ export interface WorkbenchLayoutConfig {
     readonly visible: boolean;
   };
   readonly panel: {
+    readonly activeViewContainer?: string;
+    readonly sizePercent?: number;
     readonly visible: boolean;
   };
   readonly sideBar: {
@@ -160,7 +162,7 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
     'layout config activityBar',
   );
   assertKnownKeys(auxiliaryBar, ['visible'], 'layout config auxiliaryBar');
-  assertKnownKeys(panel, ['visible'], 'layout config panel');
+  assertKnownKeys(panel, ['activeViewContainer', 'sizePercent', 'visible'], 'layout config panel');
   assertKnownKeys(
     sideBar,
     ['activeViewContainer', 'sizePercent', 'visible'],
@@ -185,6 +187,8 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
       ),
     },
     panel: {
+      ...readOptionalLayoutId(panel, 'activeViewContainer'),
+      ...readOptionalSizePercent(panel, 'sizePercent'),
       visible: readOptionalBoolean(panel, 'visible', DEFAULT_WORKBENCH_LAYOUT_CONFIG.panel.visible),
     },
     sideBar: {

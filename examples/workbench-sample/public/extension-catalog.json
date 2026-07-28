@@ -34,6 +34,14 @@
       "icon": "extensions"
     },
     {
+      "id": "workbench-kit.samples.panel-output",
+      "displayName": "Panel Output Sample",
+      "description": "Contributes an Output view to the shell bottom panel host.",
+      "category": "utility",
+      "manifestUrl": "workbench-kit.samples.panel-output",
+      "icon": "output"
+    },
+    {
       "id": "workbench-kit.samples.jdw",
       "displayName": "JDW Lab",
       "description": "Adds a JDW Lab activity for canonical Widget Tree design/code authoring.",

@@ -126,10 +126,13 @@ Low priority — defer until standalone shell and host bootstrap are stable in p
 
 - [x] **P3** Secondary sidebar region (primary Activity Bar + secondary tab strip, placement DnD).
       Platform slot policy and React layout primitives landed; see `SideBarViewTabStrip` dual-slot story.
-- [ ] **P3** Panel regions (bottom terminal/output) with resize and visibility commands.
-- [x] **P3** Layout persistence adapter MVP for sidebar width, panel visibility, and
-      activity visibility/order via `WorkbenchProvider` host storage adapters.
-      Panel height persistence remains tied to the future panel sizing model.
+- [x] **P3** Panel regions (bottom output host) with contribution views, resize, and
+      visibility commands. Hosts `viewContainers.panel` via shell-react
+      `renderDefaultBottomPanel`; sample: `samples.panel-output`. Terminal emulator
+      and `#128` `contributes.panels` / `statusBar` schema aliases remain separate.
+- [x] **P3** Layout persistence adapter MVP for sidebar width, panel visibility/height,
+      active panel view container, and activity visibility/order via
+      `WorkbenchProvider` host storage adapters.
 
 ## Playground & sandbox (P1–P3)
 
