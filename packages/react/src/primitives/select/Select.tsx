@@ -16,25 +16,13 @@ import type { ControlWidth } from '../text-input/TextInput';
 import { cxCodicon } from '../../utils/codicon';
 import { cx } from '../../utils/cx';
 import { getEnabledOptionIndex, parseOptions } from './options';
+import { resolvePortalContainer } from '../searchable-multi-select/overlay';
 import { isTriggerVisible, measureOverlayPosition, overlayListboxStyle } from './overlay';
 import type { OverlayPosition, ParsedOption } from './types';
 
 export interface SelectProps extends ComponentPropsWithRef<'select'> {
   controlWidth?: ControlWidth;
   onValueChange?: (value: string, event: ChangeEvent<HTMLSelectElement>) => void;
-}
-
-/**
- * Portaling straight to `document.body` escapes the workbench root (`[data-theme-preset]`),
- * which re-declares theme tokens locally and shadows whatever a contributed theme overrides
- * on `document.documentElement`. Prefer themed hosts / overlay roots when present.
- */
-function resolvePortalContainer(trigger: HTMLElement | null): HTMLElement {
-  return (
-    trigger?.closest<HTMLElement>(
-      '[data-theme-preset], [data-theme], .ui-workbench-host-root, .ide-workbench-overlays',
-    ) ?? document.body
-  );
 }
 
 export function Select({
