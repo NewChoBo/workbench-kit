@@ -1,4 +1,4 @@
-import { useMemo, type JSX } from 'react';
+import type { JSX } from 'react';
 import { Button } from '@workbench-kit/react/primitives';
 import type { ValueTransformRegistry } from '@workbench-kit/field-remap';
 
@@ -28,10 +28,9 @@ export function FieldRemapConvertPalette({
   onAddSplit,
   chromeLabels = defaultFieldRemapChromeLabels,
 }: FieldRemapConvertPaletteProps): JSX.Element {
-  const catalog = useMemo(
-    () => transforms.list().filter((definition) => definition.id !== 'identity'),
-    [transforms],
-  );
+  // The registry supports replacing definitions through `register`; resolve
+  // display metadata on each host render even when the registry object is stable.
+  const catalog = transforms.list().filter((definition) => definition.id !== 'identity');
 
   return (
     <aside

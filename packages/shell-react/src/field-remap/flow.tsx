@@ -60,6 +60,7 @@ import {
   type FieldRemapTargetObjectNodeData,
   type FieldRemapTransformNodeData,
 } from './flow-adapter.js';
+import { createFieldRemapGraphSyncKey, createTransformRegistrySignature } from './flow-sync-key.js';
 import {
   addTransformStepToEdge,
   bindDraftSource,
@@ -414,6 +415,7 @@ function FieldRemapFlowCanvas({
     const first = transforms.list().find((definition) => definition.id !== 'identity');
     return first?.id ?? '';
   });
+  const transformRegistrySignature = createTransformRegistrySignature(transforms);
 
   const graph = useMemo(
     () =>
@@ -427,7 +429,17 @@ function FieldRemapFlowCanvas({
         targetTitle,
         drafts,
       }),
-    [sources, targets, edges, transforms, operators, sourceTitle, targetTitle, drafts],
+    [
+      sources,
+      targets,
+      edges,
+      transforms,
+      operators,
+      sourceTitle,
+      targetTitle,
+      drafts,
+      transformRegistrySignature,
+    ],
   );
 
   const nodesWithSelection = useMemo(
@@ -461,22 +473,15 @@ function FieldRemapFlowCanvas({
   const [nodes, setNodes, onNodesChange] = useNodesState(nodesWithSelection);
   const [flowEdges, setFlowEdges, onFlowEdgesChange] = useEdgesState(graph.edges);
 
-  // Sync controlled graph by topology/selection signature only. Depending on
-  // `nodesWithSelection` (new array each paint) re-enters xyflow StoreUpdater and
-  // can hit "Maximum update depth exceeded" in embed hosts with tight flex layouts.
-  const graphSyncKey = useMemo(
-    () =>
-      [
-        ...graph.nodes.map((node) => node.id),
-        ...graph.edges.map(
-          (edge) =>
-            `${edge.id}:${edge.source}:${edge.target}:${edge.sourceHandle ?? ''}:${edge.targetHandle ?? ''}`,
-        ),
-        selection ? JSON.stringify(selection) : '',
-        ...drafts.map((draft) => draft.localId),
-      ].join('|'),
-    [drafts, graph.edges, graph.nodes, selection],
-  );
+  // Depending directly on `nodesWithSelection` (a new array after each graph
+  // calculation) re-enters XYFlow's StoreUpdater. The explicit signature keeps
+  // that loop guard while still tracking every value copied into rendered nodes.
+  const graphSyncKey = createFieldRemapGraphSyncKey({
+    nodes: nodesWithSelection,
+    edges: graph.edges,
+    selection,
+    transformRegistrySignature,
+  });
   const nodesWithSelectionRef = useRef(nodesWithSelection);
   const graphEdgesRef = useRef(graph.edges);
   nodesWithSelectionRef.current = nodesWithSelection;
@@ -611,7 +616,18 @@ function FieldRemapFlowCanvas({
       onEdgesChange([...withoutTarget, result.edge]);
       setSelection({ kind: 'edge', edgeId: result.edge.id });
     },
-    [connectionContext, drafts, edges, onEdgesChange, setSelection, sources, targets, transforms],
+    [
+      connectionContext,
+      drafts,
+      edges,
+      onEdgesChange,
+      onOperatorsChange,
+      operators,
+      setSelection,
+      sources,
+      targets,
+      transforms,
+    ],
   );
 
   const onEdgesDelete = useCallback(
@@ -694,7 +710,7 @@ function FieldRemapFlowCanvas({
         stepIndex: data.stepIndex,
       });
     },
-    [edges, onEdgesChange, setSelection],
+    [edges, onEdgesChange, onOperatorsChange, operators, selection, setSelection],
   );
 
   const onKeyDown = useCallback(

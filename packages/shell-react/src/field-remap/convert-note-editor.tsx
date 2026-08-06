@@ -49,10 +49,9 @@ export function ConvertNoteEditor({
 
   const portTypes = useMemo(() => edgePortTypes(edge, sources, targets), [edge, sources, targets]);
 
-  const optionFields = useMemo(
-    () => optionFieldsForStep(transforms, transformId),
-    [transforms, transformId],
-  );
+  // ValueTransformRegistry is intentionally mutable (`register`). Resolve its
+  // display contract on render so a host rerender sees replacement definitions.
+  const optionFields = optionFieldsForStep(transforms, transformId);
 
   const optionValue = useMemo(() => {
     if (!transformId) {
@@ -63,18 +62,14 @@ export function ConvertNoteEditor({
     );
   }, [chain, edge.transformOptionSteps, edge.transformOptions, stepIndex, transformId]);
 
-  const replaceCatalog = useMemo(
-    () =>
-      listCompatibleTransforms({
-        registry: transforms,
-        edge,
-        stepIndex,
-        sourceType: portTypes.sourceType,
-        targetType: portTypes.targetType,
-        mode: 'replace',
-      }),
-    [edge, portTypes.sourceType, portTypes.targetType, stepIndex, transforms],
-  );
+  const replaceCatalog = listCompatibleTransforms({
+    registry: transforms,
+    edge,
+    stepIndex,
+    sourceType: portTypes.sourceType,
+    targetType: portTypes.targetType,
+    mode: 'replace',
+  });
 
   if (!transformId) {
     return null;

@@ -4,8 +4,13 @@ import { createRoot, type Root } from 'react-dom/client';
 import { act, createRef, type ComponentProps } from 'react';
 import {
   createBuiltinValueTransformRegistry,
+  createValueTransformRegistry,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
+  type MappingEdge,
+  type MappingOperator,
+  type SourceField,
+  type TargetSlot,
 } from '@workbench-kit/field-remap';
 
 import { FieldRemapFlowMapper, type FieldRemapFlowActions } from './flow.js';
@@ -40,6 +45,12 @@ describe('FieldRemapFlowMapper host chrome', () => {
     document.body.append(container);
     root = createRoot(container);
 
+    await rerenderMapper(overrides);
+  }
+
+  async function rerenderMapper(
+    overrides: Partial<ComponentProps<typeof FieldRemapFlowMapper>> = {},
+  ): Promise<void> {
     const sample = getFieldRemapSample('nested-ab');
     const sources = sourceFieldsFromPlainObject(sample.source, {
       idPrefix: sample.sourceIdPrefix,
@@ -65,6 +76,151 @@ describe('FieldRemapFlowMapper host chrome', () => {
       await Promise.resolve();
     });
   }
+
+  it('resyncs controlled node content when render metadata changes without topology changes', async () => {
+    const sources: readonly SourceField[] = [
+      { id: 'source:name', label: 'Original source field', dataType: 'string' },
+    ];
+    const targets: readonly TargetSlot[] = [
+      { id: 'target:name', label: 'Original target field', dataType: 'string' },
+    ];
+    const edges: readonly MappingEdge[] = [
+      {
+        id: 'edge:name',
+        sourceFieldId: 'source:name',
+        targetSlotId: 'target:name',
+        transformIds: ['test:normalize'],
+      },
+    ];
+    const transforms = createValueTransformRegistry();
+    const registerTransform = (label: string, optionLabel: string) => {
+      transforms.register({
+        id: 'test:normalize',
+        label,
+        inputTypes: ['string', 'object'],
+        outputType: 'string',
+        optionFields: [{ key: 'pattern', label: optionLabel, kind: 'string' }],
+        apply: (value) => value,
+      });
+    };
+    registerTransform('Original transform', 'Original option');
+
+    await renderMapper({
+      sources,
+      targets,
+      edges,
+      transforms,
+      sourceTitle: 'Original source',
+      targetTitle: 'Original target',
+      selection: { kind: 'transformStep', edgeId: 'edge:name', stepIndex: 0 },
+    });
+
+    expect(
+      container!.querySelector('[data-testid="field-remap-source-schema"]')?.textContent,
+    ).toContain('Original source field');
+    expect(container!.textContent).toContain('Original transform');
+    expect(container!.textContent).toContain('Original option');
+
+    registerTransform('Updated transform', 'Updated option');
+    await rerenderMapper({
+      sources,
+      targets,
+      edges,
+      transforms,
+      sourceTitle: 'Original source',
+      targetTitle: 'Original target',
+      selection: { kind: 'transformStep', edgeId: 'edge:name', stepIndex: 0 },
+    });
+
+    expect(container!.textContent).toContain('Updated transform');
+    expect(container!.textContent).toContain('Updated option');
+    expect(container!.textContent).not.toContain('Original transform');
+    expect(container!.textContent).not.toContain('Original option');
+
+    await rerenderMapper({
+      sources: [{ id: 'source:name', label: 'Updated source field', dataType: 'object' }],
+      targets: [{ id: 'target:name', label: 'Updated target field', dataType: 'array' }],
+      edges,
+      transforms,
+      sourceTitle: 'Updated source',
+      targetTitle: 'Updated target',
+      selection: { kind: 'transformStep', edgeId: 'edge:name', stepIndex: 0 },
+    });
+
+    const sourceNode = container!.querySelector('[data-testid="field-remap-source-schema"]');
+    const targetNode = container!.querySelector('[data-testid="field-remap-target-schema"]');
+    expect(sourceNode?.textContent).toContain('Updated source');
+    expect(sourceNode?.textContent).toContain('Updated source field');
+    expect(sourceNode?.textContent).toContain('object');
+    expect(targetNode?.textContent).toContain('Updated target');
+    expect(targetNode?.textContent).toContain('Updated target field');
+    expect(targetNode?.textContent).toContain('array');
+    expect(container!.textContent).toContain('Updated transform');
+    expect(container!.textContent).not.toContain('Original transform');
+  });
+
+  it('uses the latest operator callback, data, and selection after a controlled rerender', async () => {
+    const sources: readonly SourceField[] = [
+      { id: 'source:first', label: 'First', dataType: 'string' },
+      { id: 'source:second', label: 'Second', dataType: 'string' },
+    ];
+    const targets: readonly TargetSlot[] = [
+      { id: 'target:value', label: 'Value', dataType: 'string' },
+    ];
+    const edges: readonly MappingEdge[] = [];
+    const firstOperator: MappingOperator = {
+      kind: 'combine',
+      id: 'combine:first',
+      inputFieldIds: ['source:first'],
+      outputSlotId: 'target:value',
+    };
+    const secondOperator: MappingOperator = {
+      kind: 'combine',
+      id: 'combine:second',
+      inputFieldIds: ['source:second'],
+      outputSlotId: '',
+    };
+    const transforms = createBuiltinValueTransformRegistry();
+    const onEdgesChange = vi.fn();
+    const previousOnOperatorsChange = vi.fn();
+    const currentOnOperatorsChange = vi.fn();
+    const onSelectionChange = vi.fn();
+
+    await renderMapper({
+      sources,
+      targets,
+      edges,
+      transforms,
+      operators: [firstOperator],
+      onEdgesChange,
+      onOperatorsChange: previousOnOperatorsChange,
+      selection: null,
+      onSelectionChange,
+    });
+    await rerenderMapper({
+      sources,
+      targets,
+      edges,
+      transforms,
+      operators: [firstOperator, secondOperator],
+      onEdgesChange,
+      onOperatorsChange: currentOnOperatorsChange,
+      selection: { kind: 'operator', operatorId: firstOperator.id },
+      onSelectionChange,
+    });
+
+    const operatorNode = container!.querySelector(
+      `[data-testid="field-remap-op-${firstOperator.id}"]`,
+    );
+    expect(operatorNode).toBeTruthy();
+    await act(async () => {
+      operatorNode!.dispatchEvent(new MouseEvent('click', { bubbles: true, altKey: true }));
+    });
+
+    expect(previousOnOperatorsChange).not.toHaveBeenCalled();
+    expect(currentOnOperatorsChange).toHaveBeenCalledWith([secondOperator]);
+    expect(onSelectionChange).toHaveBeenCalledWith(null);
+  });
 
   it('omits MiniMap when showMinimap is false', async () => {
     await renderMapper({ showMinimap: false });
