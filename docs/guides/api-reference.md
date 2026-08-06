@@ -32,7 +32,7 @@ Governance: [Public API Governance](../conventions/public-api-governance.md).
 | `@workbench-kit/adapters`                | `packages/adapters`                | Repository and transport adapters                     |
 | `@workbench-kit/services`                | `packages/services`                | Workbench flow orchestration                          |
 | `@workbench-kit/react`                   | `packages/react`                   | React primitives and workbench components             |
-| `@workbench-kit/jdw-editor`              | `packages/jdw-editor`              | Screen spec editor UI and pipeline hooks              |
+| `@workbench-kit/jdw-editor`              | `packages/jdw-editor`              | Compile-once template explorer for WidgetTreeLab      |
 
 **Private preview (monorepo only):** `workbench-core`, `shell-react`, `monaco`.
 

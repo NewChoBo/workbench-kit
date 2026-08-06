@@ -24,7 +24,7 @@ workbench-kit/
 │   ├── runtime/                   # Runtime utilities
 │   ├── workspace/                 # Workspace path/tree utilities
 │   ├── json-widget/               # @workbench-kit/jdw engine
-│   └── jdw-editor/                # Screen spec editor
+│   └── jdw-editor/                # Compile-once JDW sample explorer
 ├── extensions/
 │   ├── builtin.accounts/
 │   ├── builtin.chat/
@@ -140,7 +140,7 @@ server process.
 | `runtime`             | Mock runtime and events                                       |
 | `workspace`           | Framework-neutral workspace paths and tree                    |
 | `json-widget` (`jdw`) | JDW parse, layout, screen-spec, widget documents              |
-| `jdw-editor`          | Screen spec editor UI                                         |
+| `jdw-editor`          | Compile-once template explorer for `WidgetTreeLab`            |
 
 `workspace` keeps public reducer/action APIs in `virtualWorkspace.ts`; reusable
 normalization, conflict, selection, and expansion helpers live in

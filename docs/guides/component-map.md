@@ -62,11 +62,11 @@ do not expect them in the Storybook sidebar until owners register them.
 
 ## JDW / widget tree
 
-| Surface           | Import                             | Storybook               | Sample | Notes                        |
-| ----------------- | ---------------------------------- | ----------------------- | ------ | ---------------------------- |
-| Widget tree lab   | `@workbench-kit/react/widget-tree` | JDW/WidgetTree/Lab      | Yes    | Authoring / preview lab      |
-| JDW preview       | `@workbench-kit/react/jdw`         | via sample / jdw-editor | Yes    | Engine: `@workbench-kit/jdw` |
-| Template scaffold | `@workbench-kit/jdw-editor`        | jdw-editor stories      | —      | Screen-spec editor package   |
+| Surface           | Import                             | Storybook               | Sample | Notes                           |
+| ----------------- | ---------------------------------- | ----------------------- | ------ | ------------------------------- |
+| Widget tree lab   | `@workbench-kit/react/widget-tree` | JDW/WidgetTree/Lab      | Yes    | Authoring / preview lab         |
+| JDW preview       | `@workbench-kit/react/jdw`         | via sample / jdw-editor | Yes    | Engine: `@workbench-kit/jdw`    |
+| Template scaffold | `@workbench-kit/jdw-editor`        | jdw-editor stories      | —      | Compile once into WidgetTreeLab |
 
 ## Field remap
 

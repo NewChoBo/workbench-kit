@@ -41,20 +41,20 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 | `./workbench` (CommandPalette wiring, command registries)           | Move to `shell-react` + `workbench-core`; remaining exports are presentational or demo-only during migration     |
 | `./workbench/demo`                                                  | Private Storybook/workspace-only helpers; excluded from npm export and package files                             |
 | `./workbench/settings`, `./workbench/auth`, `./workbench/workspace` | Move to `extensions/builtin.*` + thin `shell-react` hosts                                                        |
-| `./jdw`, `./widget-tree`, `./widget-asset`, `./widget-studio`       | Stay in `react` for rendering, fixtures, and domain UI; editor-specific ScreenSpec surfaces live in `jdw-editor` |
+| `./jdw`, `./widget-tree`, `./widget-asset`, `./widget-studio`       | Stay in `react` for rendering, fixtures, and domain UI; `jdw-editor` only assembles the compile-once sample flow |
 | `./jdw/preview`, `./jdw/samples`                                    | Narrow public JDW subpaths for editor packages that must avoid the broad `./jdw` barrel                          |
 
 ## Domain Stack (unchanged boundary)
 
-| Package                     | Current state              | Target role                           | Action                                                      |
-| --------------------------- | -------------------------- | ------------------------------------- | ----------------------------------------------------------- |
-| `@workbench-kit/contracts`  | Published shared types     | Chat, save, patch, widget contracts   | **Keep**                                                    |
-| `@workbench-kit/services`   | Orchestration services     | Domain service layer                  | **Keep**                                                    |
-| `@workbench-kit/adapters`   | Host/repo/runtime adapters | Adapter implementations               | **Keep**                                                    |
-| `@workbench-kit/runtime`    | Mock runtime               | Runtime utilities                     | **Keep**                                                    |
-| `@workbench-kit/workspace`  | Path/tree utilities        | Workspace path model                  | **Keep** — may share types with `workbench-config` later    |
-| `@workbench-kit/jdw`        | JDW engine (`json-widget`) | JSON widget document engine           | **Keep**                                                    |
-| `@workbench-kit/jdw-editor` | Screen spec editor         | Editor UI and sample explorer for JDW | **Keep** — depends on `react`; `react` must not depend back |
+| Package                     | Current state              | Target role                               | Action                                                      |
+| --------------------------- | -------------------------- | ----------------------------------------- | ----------------------------------------------------------- |
+| `@workbench-kit/contracts`  | Published shared types     | Chat, save, patch, widget contracts       | **Keep**                                                    |
+| `@workbench-kit/services`   | Orchestration services     | Domain service layer                      | **Keep**                                                    |
+| `@workbench-kit/adapters`   | Host/repo/runtime adapters | Adapter implementations                   | **Keep**                                                    |
+| `@workbench-kit/runtime`    | Mock runtime               | Runtime utilities                         | **Keep**                                                    |
+| `@workbench-kit/workspace`  | Path/tree utilities        | Workspace path model                      | **Keep** — may share types with `workbench-config` later    |
+| `@workbench-kit/jdw`        | JDW engine (`json-widget`) | JSON widget document engine               | **Keep**                                                    |
+| `@workbench-kit/jdw-editor` | JDW sample explorer        | Compile templates once into WidgetTreeLab | **Keep** — depends on `react`; `react` must not depend back |
 
 ## Extensions (repository)
 

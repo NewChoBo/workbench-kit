@@ -117,7 +117,7 @@ flowchart TB
 | Workbench core | `packages/workbench-core/`          | `ExtensionRegistry`, registries, `EditorService`         |
 | Shell React    | `packages/shell-react/`             | `WorkbenchProvider`, shell assembly                      |
 | React kit      | `packages/react/`                   | Primitives, workbench UI, JDW render, widget-tree        |
-| JDW editor     | `packages/jdw-editor/`              | Screen-spec authoring UI                                 |
+| JDW explorer   | `packages/jdw-editor/`              | Compile-once template sample flow                        |
 | Extensions     | `extensions/*`                      | Built-in contributions                                   |
 | Sample host    | `examples/workbench-sample/`        | Lane A validation harness                                |
 
@@ -133,7 +133,7 @@ flowchart TB
 | `react/jdw`          | `packages/react/src/jdw/`          | No        | `JdwPreview`, `renderJdw`, CSS backend      |
 | `widget-tree`        | `packages/react/src/widget-tree/`  | No        | Tree/inspector lab; consumes `JdwPreview`   |
 | `json-config`        | `packages/react/src/json-config/`  | Partial   | Generic JSON workbench; optional preview    |
-| `jdw-editor`         | `packages/jdw-editor/`             | No        | Screen-spec → JDW compile UI                |
+| `jdw-editor`         | `packages/jdw-editor/`             | No        | Template → `WidgetTreeLab` sample flow      |
 | `widget-asset`       | `packages/react/src/widget-asset/` | No        | Asset manifest editor                       |
 
 ### 3.2 JDW data flow (parse → layout → render)
@@ -331,12 +331,12 @@ Checked against `check-workbench-dependency-graph.mjs` rules and spot-read of cr
 
 ## 7. React Import Patterns
 
-| Consumer      | Imports from `@workbench-kit/react`                                   | Pattern                      |
-| ------------- | --------------------------------------------------------------------- | ---------------------------- |
-| `shell-react` | `./workbench/shell` only                                              | Chrome delegation            |
-| `jdw-editor`  | `./jdw/preview`, `./jdw/samples`, `./primitives`, `./workbench/shell` | Feature package on react kit |
-| Extensions    | Primitives, workbench subsets                                         | Via allowed dep list         |
-| `widget-tree` | Internal `../jdw/JdwPreview`                                          | In-package relative import   |
+| Consumer      | Imports from `@workbench-kit/react`                       | Pattern                      |
+| ------------- | --------------------------------------------------------- | ---------------------------- |
+| `shell-react` | `./workbench/shell` only                                  | Chrome delegation            |
+| `jdw-editor`  | `./jdw`, `./jdw/samples`, `./primitives`, `./widget-tree` | Feature package on react kit |
+| Extensions    | Primitives, workbench subsets                             | Via allowed dep list         |
+| `widget-tree` | Internal `../jdw/JdwPreview`                              | In-package relative import   |
 
 **Note:** Public JDW entrypoints: `./jdw`, `./jdw/preview`, and `./jdw/samples`.
 JSON configuration lives under `./json-config`.

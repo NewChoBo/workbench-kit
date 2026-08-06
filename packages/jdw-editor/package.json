@@ -24,7 +24,7 @@
   "peerDependencies": {
     "react": "^19.0.0"
   },
-  "description": "JDW template-to-WidgetTreeLab sample flow with deprecated Screen Spec compatibility editors.",
+  "description": "Compile-once JDW template explorer for the canonical WidgetTreeLab authoring surface.",
   "publishConfig": {
     "access": "public",
     "tag": "prototype",

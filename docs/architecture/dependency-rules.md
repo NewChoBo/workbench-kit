@@ -22,7 +22,7 @@ Dependency direction enforces a VS Code–like layering: UI-independent core at 
 | `runtime`                    | `contracts`                                                                                                                   |
 | `workspace`                  | _(minimal / none)_                                                                                                            |
 | `jdw` (`json-widget`)        | `contracts` (if needed)                                                                                                       |
-| `jdw-editor`                 | `jdw`, `react` (peer); owns ScreenSpec editor UI and JDW sample explorer                                                      |
+| `jdw-editor`                 | `jdw`, `react` (peer); owns the compile-once JDW template sample explorer                                                     |
 | `field-remap`                | _(nothing in-repo)_ — field remap runtime (`convertToShape`, edges, ValueTransform registry)                                  |
 
 ### Extension Boundary

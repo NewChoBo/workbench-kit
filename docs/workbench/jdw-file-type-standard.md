@@ -83,10 +83,10 @@ Screen Spec metadata is outside runtime widget JSON:
 `WidgetTreeLab` is the active design/code UI for new JDW sample and product
 entries. Screen Spec templates may seed that surface through
 `compileScreenSpecToJson`, and their built-in blocks are available through
-`createScreenSpecPaletteAssetCatalog`. `ScreenSpecWorkbench` and
-`ScreenSpecEditor` remain compatibility-only deprecated APIs; their
-`ScreenNodePath` to `WidgetPath` synchronization must stay inside that
-compatibility editor.
+`createScreenSpecPaletteAssetCatalog`. `@workbench-kit/jdw-editor` exposes
+`JdwSampleScreenExplorer`, which compiles a selected template once and opens the
+resulting JDW document in `WidgetTreeLab`. The Screen Spec engine and data parser
+remain in `@workbench-kit/jdw`; there is no parallel Screen Spec editor surface.
 
 ## Removed Compatibility Paths
 
