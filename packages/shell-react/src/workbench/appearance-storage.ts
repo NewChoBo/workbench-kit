@@ -7,10 +7,15 @@ import {
   type WorkbenchColorSchemePreference,
 } from '@workbench-kit/react/workbench';
 import {
-  createBrowserWorkbenchStorage,
   type WorkbenchStorageReader,
   type WorkbenchStorageWriter,
 } from '@workbench-kit/workbench-core';
+
+import {
+  readLocalJsonStorage,
+  resolveLocalWorkbenchStorage,
+  writeLocalJsonStorage,
+} from '../storage/local-json-storage.js';
 
 export type { WorkbenchAppearanceSettings } from '@workbench-kit/react/workbench/themePresets';
 
@@ -24,28 +29,19 @@ export const DEFAULT_WORKBENCH_APPEARANCE: WorkbenchAppearanceSettings = {
 };
 
 export function isWorkbenchAppearancePersistenceAvailable(): boolean {
-  return createBrowserWorkbenchStorage({ kind: 'local' }) !== undefined;
+  return resolveLocalWorkbenchStorage() !== undefined;
 }
 
 export function readPersistedWorkbenchAppearance(
   storageKey = DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
 ): WorkbenchAppearanceSettings {
-  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
-  if (!resolvedStorage) {
-    return DEFAULT_WORKBENCH_APPEARANCE;
-  }
-
-  try {
-    const raw = resolvedStorage.getItem(storageKey);
-    if (!raw) {
-      return DEFAULT_WORKBENCH_APPEARANCE;
-    }
-
-    return normalizeWorkbenchAppearance(JSON.parse(raw) as unknown);
-  } catch {
-    return DEFAULT_WORKBENCH_APPEARANCE;
-  }
+  return readLocalJsonStorage(
+    storageKey,
+    normalizeWorkbenchAppearance,
+    () => DEFAULT_WORKBENCH_APPEARANCE,
+    storage,
+  );
 }
 
 export function writePersistedWorkbenchAppearance(
@@ -53,16 +49,7 @@ export function writePersistedWorkbenchAppearance(
   storageKey = DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
   storage?: WorkbenchStorageWriter,
 ): void {
-  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
-  if (!resolvedStorage) {
-    return;
-  }
-
-  try {
-    resolvedStorage.setItem(storageKey, JSON.stringify(settings, null, 2));
-  } catch {
-    // Ignore quota and security errors so the shell keeps working offline.
-  }
+  writeLocalJsonStorage(storageKey, settings, storage);
 }
 
 function normalizeWorkbenchAppearance(value: unknown): WorkbenchAppearanceSettings {

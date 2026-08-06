@@ -1,5 +1,4 @@
 import {
-  createBrowserWorkbenchStorage,
   type EditorGroupState,
   type EditorLayoutDirection,
   type EditorLayoutNode,
@@ -10,11 +9,16 @@ import {
 } from '@workbench-kit/workbench-core';
 
 import { isRecord } from '../is-record.js';
+import {
+  readLocalJsonStorage,
+  resolveLocalWorkbenchStorage,
+  writeLocalJsonStorage,
+} from '../storage/local-json-storage.js';
 
 export const DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY = 'workbench-kit/.workbench/editors';
 
 export function isWorkbenchEditorStatePersistenceAvailable(): boolean {
-  return createBrowserWorkbenchStorage({ kind: 'local' }) !== undefined;
+  return resolveLocalWorkbenchStorage() !== undefined;
 }
 
 export function editorStateToStorageValue(state: EditorState): EditorState {
@@ -42,17 +46,7 @@ export function readPersistedEditorState(
   storageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
 ): EditorState | undefined {
-  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
-  if (!resolvedStorage) return undefined;
-
-  try {
-    const raw = resolvedStorage.getItem(storageKey);
-    if (!raw) return undefined;
-
-    return parseEditorStateStorageValue(JSON.parse(raw) as unknown);
-  } catch {
-    return undefined;
-  }
+  return readLocalJsonStorage(storageKey, parseEditorStateStorageValue, () => undefined, storage);
 }
 
 export function writePersistedEditorState(
@@ -60,14 +54,9 @@ export function writePersistedEditorState(
   storageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   storage?: WorkbenchStorageWriter,
 ): void {
-  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
-  if (!resolvedStorage) return;
-
-  try {
-    resolvedStorage.setItem(storageKey, JSON.stringify(editorStateToStorageValue(state), null, 2));
-  } catch {
-    // Ignore quota and security errors so the shell keeps working offline.
-  }
+  writeLocalJsonStorage(storageKey, state, storage, {
+    toStorageValue: editorStateToStorageValue,
+  });
 }
 
 function parseEditorStateStorageValue(value: unknown): EditorState | undefined {

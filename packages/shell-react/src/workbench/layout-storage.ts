@@ -3,7 +3,6 @@ import {
   type WorkbenchLayoutConfig,
 } from '@workbench-kit/workbench-config';
 import {
-  createBrowserWorkbenchStorage,
   createWorkbenchLayoutState,
   type WorkbenchStorageReader,
   type WorkbenchStorageWriter,
@@ -11,10 +10,16 @@ import {
   type WorkbenchLayoutStateInput,
 } from '@workbench-kit/workbench-core';
 
+import {
+  readLocalJsonStorage,
+  resolveLocalWorkbenchStorage,
+  writeLocalJsonStorage,
+} from '../storage/local-json-storage.js';
+
 export const DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY = 'workbench-kit/.workbench/layout';
 
 export function isWorkbenchLayoutPersistenceAvailable(): boolean {
-  return createBrowserWorkbenchStorage({ kind: 'local' }) !== undefined;
+  return resolveLocalWorkbenchStorage() !== undefined;
 }
 
 export function workbenchLayoutConfigToInput(
@@ -81,17 +86,12 @@ export function readPersistedWorkbenchLayout(
   storageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
 ): WorkbenchLayoutStateInput | undefined {
-  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
-  if (!resolvedStorage) return undefined;
-
-  try {
-    const raw = resolvedStorage.getItem(storageKey);
-    if (!raw) return undefined;
-
-    return workbenchLayoutConfigToInput(parseWorkbenchLayoutConfig(JSON.parse(raw) as unknown));
-  } catch {
-    return undefined;
-  }
+  return readLocalJsonStorage(
+    storageKey,
+    (value) => workbenchLayoutConfigToInput(parseWorkbenchLayoutConfig(value)),
+    () => undefined,
+    storage,
+  );
 }
 
 export function writePersistedWorkbenchLayout(
@@ -99,17 +99,9 @@ export function writePersistedWorkbenchLayout(
   storageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   storage?: WorkbenchStorageWriter,
 ): void {
-  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
-  if (!resolvedStorage) return;
-
-  try {
-    resolvedStorage.setItem(
-      storageKey,
-      JSON.stringify(workbenchLayoutStateToStorageValue(state), null, 2),
-    );
-  } catch {
-    // Ignore quota and security errors so the shell keeps working offline.
-  }
+  writeLocalJsonStorage(storageKey, state, storage, {
+    toStorageValue: workbenchLayoutStateToStorageValue,
+  });
 }
 
 export function resolvePersistedWorkbenchLayout(
