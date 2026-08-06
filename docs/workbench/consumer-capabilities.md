@@ -1,8 +1,8 @@
 # Consumer Capabilities Reference
 
-**Status:** Active consumer contract  
-**Last updated:** 2026-07-27  
-**Audience:** Host applications that compose `@workbench-kit/react` (browser, desktop, VS Code webviews, sample host)
+- **Status:** Active consumer contract
+- **Last updated:** 2026-08-06
+- **Audience:** Host applications that compose `@workbench-kit/react` (browser, desktop, VS Code webviews, sample host)
 
 This document is the **integration contract** for reusable workbench UI. It inventories primitives and shell surfaces that a reference desktop consumer actually wires today. It is not a Storybook catalog — use Storybook and `examples/workbench-sample` for visual exploration.
 
@@ -29,11 +29,14 @@ Use official subpath exports from `@workbench-kit/react`. Do not import from `pa
 | `@workbench-kit/platform/resize-rect`             | Leaf — `resizeRect`                                                    |
 | `@workbench-kit/platform/tray-close-policy`       | Leaf — tray hide/quit helpers                                          |
 | `@workbench-kit/platform/atomic-write`            | Leaf — Node `atomicWriteText`                                          |
-| `@workbench-kit/react/layout`                     | Sidebar frames, editor frame, section stacks                           |
+| `@workbench-kit/react/layout`                     | Sidebar/editor frames, section stacks, controlled preview canvas       |
 | `@workbench-kit/react/editor-tabs`                | Tab strip drag-and-drop helpers                                        |
 | `@workbench-kit/react/overlay`                    | Context menus; anchored overlay panel positioning helper               |
 | `@workbench-kit/react/modal`                      | Low-level modal frame (prefer management wrapper when applicable)      |
 | `@workbench-kit/react/workbench/shell`            | Activity bar, shell layout, view editor, title bar                     |
+| `@workbench-kit/react/workbench/standalone`       | Assembled standalone shell and host bootstrap/state contracts          |
+| `@workbench-kit/react/workbench/command-ui`       | Command palette, Quick Open, shortcut bridge                           |
+| `@workbench-kit/react/workbench/theme`            | Theme resolution and controlled theme hook                             |
 | `@workbench-kit/react/workbench/chat`             | Chat panel, composer, message list/item, conversation bar              |
 | `@workbench-kit/react/workbench/management`       | Dialog frames, integrations shell, notices                             |
 | `@workbench-kit/react/workbench/workspace`        | Workspace explorer, editor panel, selection helpers                    |

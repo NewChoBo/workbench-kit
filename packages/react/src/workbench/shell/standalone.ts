@@ -99,3 +99,15 @@ export type WorkbenchStandaloneBootstrapEvent<TActivityId extends string = strin
   | { type: 'activity-change'; payload: WorkbenchActivityChangeEvent<TActivityId> }
   | { type: 'status-message'; message: string }
   | { type: 'error'; error: Error };
+
+export * from './WorkbenchStandaloneShell';
+export {
+  createWorkbenchStandaloneShellStateSnapshot,
+  useWorkbenchStandaloneShellContext,
+} from './workbenchStandaloneShellReactContext';
+export type {
+  WorkbenchStandaloneShellStateChange,
+  WorkbenchStandaloneShellStateChangeKind,
+  WorkbenchStandaloneShellStateSnapshot,
+} from './workbenchStandaloneShellReactContext';
+export { useWorkbenchStandaloneShellStateSync } from './useWorkbenchStandaloneShellStateSync';

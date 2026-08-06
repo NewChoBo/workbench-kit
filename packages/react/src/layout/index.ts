@@ -151,6 +151,8 @@ export type {
 } from './propertyFieldFilter';
 export { WorkbenchMediaPreviewViewport } from './WorkbenchMediaPreviewViewport';
 export type { WorkbenchMediaPreviewViewportProps } from './WorkbenchMediaPreviewViewport';
+export { WorkbenchPreviewCanvas } from './WorkbenchCanvas';
+export type { WorkbenchPreviewCanvasProps } from './WorkbenchCanvas';
 export {
   clampPreviewViewportZoom,
   computePreviewViewportFitScale,
