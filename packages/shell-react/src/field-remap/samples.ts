@@ -31,12 +31,6 @@ export interface FieldRemapSampleDefinition {
   readonly operators?: readonly MappingOperator[];
 }
 
-/** Alias kept so older URIs still open a known sample. */
-export const FIELD_REMAP_LEGACY_SAMPLE_ALIASES: Readonly<Record<string, FieldRemapSampleId>> = {
-  'interactive-bindings': 'nested-ab',
-  't-order-invoice': 't-event-time',
-};
-
 export const FIELD_REMAP_SAMPLES: readonly FieldRemapSampleDefinition[] = [
   {
     id: 'nested-ab',
@@ -386,14 +380,7 @@ export function isFieldRemapSampleId(value: string): value is FieldRemapSampleId
 }
 
 export function resolveFieldRemapSampleId(value: string | undefined): FieldRemapSampleId {
-  if (!value) {
-    return 'nested-ab';
-  }
-  const aliased = FIELD_REMAP_LEGACY_SAMPLE_ALIASES[value];
-  if (aliased) {
-    return aliased;
-  }
-  if (isFieldRemapSampleId(value)) {
+  if (value && isFieldRemapSampleId(value)) {
     return value;
   }
   return 'nested-ab';

@@ -13,9 +13,6 @@ export const FIELD_REMAP_SAMPLE_META = {
   't-event-time': { title: 'T_EVENT → T_SLOT' },
   't-emp-dept': { title: 'T_EMP → T_EMP_ROW' },
   't-product-catalog': { title: 'T_PRODUCT → T_CATALOG_ITEM' },
-  // Legacy aliases
-  'interactive-bindings': { title: 'A → B' },
-  't-order-invoice': { title: 'T_EVENT → T_SLOT' },
   documentation: { title: 'Field Remap docs' },
 } as const;
 
@@ -30,11 +27,6 @@ export interface FieldRemapEditorHostRenderData {
 export interface FieldRemapEditorHostOptions {
   readonly resourceUri: string;
 }
-
-const LEGACY_ALIASES: Readonly<Record<string, string>> = {
-  'interactive-bindings': 'nested-ab',
-  't-order-invoice': 't-event-time',
-};
 
 export function buildFieldRemapEditorUri(surfaceId: string): string {
   return `${FIELD_REMAP_URI_PREFIX}${encodeURIComponent(surfaceId)}`;
@@ -55,7 +47,7 @@ export function parseFieldRemapEditorUri(resourceUri: string): string | undefine
     if (!surfaceId) {
       return undefined;
     }
-    return LEGACY_ALIASES[surfaceId] ?? surfaceId;
+    return surfaceId;
   } catch {
     return undefined;
   }

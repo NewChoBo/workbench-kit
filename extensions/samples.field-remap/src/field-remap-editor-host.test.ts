@@ -14,9 +14,6 @@ describe('field-remap-editor-host', () => {
     expect(uri).toBe('workbench://field-remap/t-user-contact');
     expect(parseFieldRemapEditorUri(uri)).toBe('t-user-contact');
     expect(parseFieldRemapEditorUri(buildFieldRemapEditorUri('nested-ab'))).toBe('nested-ab');
-    expect(parseFieldRemapEditorUri(buildFieldRemapEditorUri('interactive-bindings'))).toBe(
-      'nested-ab',
-    );
     expect(parseFieldRemapEditorUri('workspace://file/README.md')).toBeUndefined();
   });
 
