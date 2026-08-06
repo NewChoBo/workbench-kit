@@ -7,7 +7,7 @@
   ],
   "type": "module",
   "scripts": {
-    "test": "pnpm exec vitest run --config ../../vitest.config.ts src/widget-tree",
+    "test": "pnpm exec vitest run --config ../../vitest.config.ts src",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "typecheck:exact-optional": "tsc -p typecheck-exact-optional/tsconfig.emit.json && tsc -p typecheck-exact-optional/tsconfig.json --noEmit"
   },
@@ -62,7 +62,6 @@
     "!src/**/*.stories.tsx"
   ],
   "dependencies": {
-    "@dnd-kit/core": "^6.3.1",
     "@vscode/codicons": "^0.0.45",
     "@workbench-kit/adapters": "workspace:*",
     "@workbench-kit/contracts": "workspace:*",

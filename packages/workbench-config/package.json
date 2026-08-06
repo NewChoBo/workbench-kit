@@ -10,10 +10,6 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "dependencies": {
-    "@workbench-kit/base": "workspace:*",
-    "@workbench-kit/platform": "workspace:*"
-  },
   "files": [
     "src",
     "!src/**/*.test.ts",

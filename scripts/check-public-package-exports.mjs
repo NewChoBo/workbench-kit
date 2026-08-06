@@ -63,6 +63,7 @@ for (const workspacePackage of workspacePackages) {
   }
 }
 
+validateCssOnlySideEffects();
 validateReactPrivateStorySurfaces();
 
 if (violations.length > 0) {
@@ -121,7 +122,26 @@ function validatePublishPackage(workspacePackage) {
 
   validateExports(workspacePackage);
   validatePackageFiles(workspacePackage);
+  validatePackageTestScript(workspacePackage);
   validateLegacyEntryPoints(workspacePackage, ['main', 'types']);
+}
+
+function validatePackageTestScript(workspacePackage) {
+  const sourceRoot = path.join(workspacePackage.directory, 'src');
+  if (!fs.existsSync(sourceRoot)) {
+    return;
+  }
+
+  const hasTests = fs
+    .readdirSync(sourceRoot, { recursive: true })
+    .some((entry) => typeof entry === 'string' && /\.test\.tsx?$/u.test(entry));
+  if (hasTests && !workspacePackage.packageJson.scripts?.test) {
+    violations.push({
+      location: `${relativePath(workspacePackage.packageJsonPath)}#scripts.test`,
+      message: `${workspacePackage.packageJson.name} contains source tests but has no package-local test command.`,
+      rule: 'missing-package-test-script',
+    });
+  }
 }
 
 function validatePrivatePreviewPackage(workspacePackage) {
@@ -250,6 +270,30 @@ function validateLegacyEntryPoints(workspacePackage, fields) {
   }
 }
 
+function validateCssOnlySideEffects() {
+  for (const packageName of ['@workbench-kit/react', '@workbench-kit/shell-react']) {
+    const workspacePackage = packageByName.get(packageName);
+    if (!workspacePackage) {
+      continue;
+    }
+
+    const { packageJson } = workspacePackage;
+    const sideEffects = packageJson.sideEffects;
+    const hasRequiredCssPattern = Array.isArray(sideEffects) && sideEffects.includes('**/*.css');
+    const hasNonCssPattern =
+      Array.isArray(sideEffects) &&
+      sideEffects.some((pattern) => typeof pattern !== 'string' || !pattern.endsWith('.css'));
+
+    if (!hasRequiredCssPattern || hasNonCssPattern) {
+      violations.push({
+        location: `${relativePath(workspacePackage.packageJsonPath)}#sideEffects`,
+        message: `${packageName} must keep JavaScript tree-shakeable while preserving only imported CSS side effects.`,
+        rule: 'css-only-tree-shaking-side-effects',
+      });
+    }
+  }
+}
+
 function validateReactPrivateStorySurfaces() {
   const reactPackage = packageByName.get('@workbench-kit/react');
   if (!reactPackage) {
@@ -259,15 +303,6 @@ function validateReactPrivateStorySurfaces() {
   const { packageJson } = reactPackage;
   const location = relativePath(reactPackage.packageJsonPath);
   const exportPaths = Object.keys(packageJson.exports ?? {});
-
-  if (!Array.isArray(packageJson.sideEffects) || !packageJson.sideEffects.includes('**/*.css')) {
-    violations.push({
-      location: `${location}#sideEffects`,
-      message:
-        '@workbench-kit/react must keep JavaScript tree-shakeable while preserving imported CSS side effects.',
-      rule: 'react-tree-shaking-side-effects',
-    });
-  }
 
   if (exportPaths.some((exportPath) => exportPath.startsWith('./workbench/demo'))) {
     violations.push({

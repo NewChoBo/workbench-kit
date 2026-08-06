@@ -4,6 +4,7 @@
   "private": false,
   "type": "module",
   "scripts": {
+    "test": "pnpm exec vitest run --config ../../vitest.config.ts src",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {

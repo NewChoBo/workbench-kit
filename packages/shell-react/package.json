@@ -2,6 +2,9 @@
   "name": "@workbench-kit/shell-react",
   "version": "0.0.2-prototype.0.2.6",
   "private": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "type": "module",
   "scripts": {
     "test": "vitest run --config vitest.config.ts src",
