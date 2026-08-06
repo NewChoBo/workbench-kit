@@ -94,7 +94,8 @@ These caused `ENEEDAUTH` / `401 token is invalid` during batch publish:
 6. Prefer global `npm@11` in CI (installed in `publish.yml`)
 7. `actions/setup-node` in this repo must **not** set `registry-url` (breaks OIDC)
 
-Preflight (`preflight-npm-publish.mjs`) dry-runs **all** packages already on npm, not just one probe package.
+Preflight (`preflight-npm-publish.mjs`) dry-runs a representative first/last sample of packages
+already on npm. The real publish still walks every package in `NPM_PUBLISH_ORDER`.
 
 ## Monorepo Dependency Consistency
 
@@ -122,10 +123,10 @@ pnpm validate
 If UI play is unavailable in the environment, say so and stop — do not tag on
 `validate:fast` alone for a release that will hit `publish.yml`.
 
-Optional extra (OIDC / auth):
+Optional CI OIDC/auth smoke (local shells do not have GitHub OIDC):
 
 ```powershell
-pnpm publish:packages:dry-run   # or workflow_dispatch dry-run in CI
+gh workflow run publish.yml --ref main -f mode=dry-run -f npm_tag=prototype
 ```
 
 Script changes under `scripts/` must pass `pnpm format:check` (covered by
