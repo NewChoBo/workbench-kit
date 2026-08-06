@@ -1,42 +1,16 @@
-import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { runCommand } from './lib/run-command.mjs';
+
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const platformDir = path.join(repoRoot, 'packages', 'platform');
 
-function run(command, args, options = {}) {
-  if (process.platform === 'win32') {
-    // Absolute node (or other) paths with spaces break under `cmd /s /c` because
-    // `/s` strips the first/last quote of the command string. Invoke those
-    // directly; keep the cmd shim for PATH-resolved tools (pnpm/npm/tar).
-    if (path.isAbsolute(command)) {
-      return execFileSync(command, args, options);
-    }
-
-    return execFileSync(
-      process.env.ComSpec || 'cmd.exe',
-      ['/d', '/s', '/c', [command, ...args].map(quoteCmdArg).join(' ')],
-      options,
-    );
-  }
-
-  return execFileSync(command, args, options);
-}
-
-function quoteCmdArg(value) {
-  const text = String(value);
-  if (/^[A-Za-z0-9_@%+=:,./\\-]+$/.test(text)) {
-    return text;
-  }
-  return `"${text.replace(/(["^&|<>])/g, '^$1')}"`;
-}
-
 console.log('[check-platform-cjs-leaves] Building @workbench-kit/platform…');
-run('pnpm', ['--filter', '@workbench-kit/platform', 'build'], {
+runCommand('pnpm', ['--filter', '@workbench-kit/platform', 'build'], {
   cwd: repoRoot,
   stdio: 'inherit',
 });
@@ -49,7 +23,7 @@ fs.mkdirSync(consumerDir, { recursive: true });
 
 try {
   console.log('[check-platform-cjs-leaves] npm pack…');
-  const packOutput = run('npm', ['pack', '--pack-destination', packDir], {
+  const packOutput = runCommand('npm', ['pack', '--pack-destination', packDir], {
     cwd: platformDir,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
@@ -60,7 +34,7 @@ try {
   }
 
   const tarballPath = path.join(packDir, tarballName);
-  run('tar', ['-xzf', tarballPath, '-C', packDir], { stdio: 'inherit' });
+  runCommand('tar', ['-xzf', tarballPath, '-C', packDir], { stdio: 'inherit' });
   const packedRoot = path.join(packDir, 'package');
 
   for (const leaf of ['atomic-write.cjs', 'tray-close-policy.cjs']) {
@@ -127,7 +101,7 @@ try {
     throw new Error('createRequire failed to load tray-close-policy exports.');
   }
 
-  run(process.execPath, [consumerEntry], { cwd: consumerDir, stdio: 'inherit' });
+  runCommand(process.execPath, [consumerEntry], { cwd: consumerDir, stdio: 'inherit' });
   console.log('[check-platform-cjs-leaves] OK');
 } finally {
   fs.rmSync(fixtureRoot, { recursive: true, force: true });

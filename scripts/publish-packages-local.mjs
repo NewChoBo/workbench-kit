@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import {
   NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
   buildNpmPublishArgs,
   packageDirectoryNameForPackageName,
 } from './npm-publish-config.mjs';
+import { runCommand } from './lib/run-command.mjs';
 
 const root = process.cwd();
 const dryRun = process.argv.includes('--dry-run');
@@ -107,30 +107,9 @@ function readJson(filePath) {
 function run(command, args, options = {}) {
   const { env: envOverride, ...restOptions } = options;
   const env = envOverride ? { ...process.env, ...envOverride } : process.env;
-
-  if (process.platform === 'win32') {
-    return execFileSync(
-      process.env.ComSpec || 'cmd.exe',
-      ['/d', '/s', '/c', [command, ...args].map(quoteCmdArg).join(' ')],
-      {
-        cwd: root,
-        env,
-        ...restOptions,
-      },
-    );
-  }
-
-  return execFileSync(command, args, {
+  return runCommand(command, args, {
     cwd: root,
     env,
     ...restOptions,
   });
-}
-
-function quoteCmdArg(value) {
-  const text = String(value);
-  if (/^[A-Za-z0-9_@%+=:,./\\-]+$/.test(text)) {
-    return text;
-  }
-  return `"${text.replace(/(["^&|<>])/g, '^$1')}"`;
 }

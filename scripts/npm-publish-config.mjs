@@ -1,5 +1,6 @@
 import fs from 'node:fs';
-import { execFileSync } from 'node:child_process';
+
+import { runCommand } from './lib/run-command.mjs';
 
 export const NPM_REGISTRY = process.env.NPM_CONFIG_REGISTRY || 'https://registry.npmjs.org/';
 
@@ -107,7 +108,7 @@ function pathJoinCwdNpmrc() {
 
 export function npmViewExists(specOrName, registry = NPM_REGISTRY) {
   try {
-    execFileSync('npm', ['view', specOrName, 'version', '--registry', registry], {
+    runCommand('npm', ['view', specOrName, 'version', '--registry', registry], {
       stdio: 'ignore',
     });
     return true;

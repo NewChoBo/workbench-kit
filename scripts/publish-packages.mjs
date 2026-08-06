@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import {
   NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
@@ -12,6 +11,7 @@ import {
   parsePublishMode,
   requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
+import { runCommand } from './lib/run-command.mjs';
 
 const root = process.cwd();
 const { dryRun, updatesOnly } = parsePublishMode();
@@ -93,7 +93,7 @@ function publishWithTrustedAuth(args) {
 function sleepMs(ms) {
   const seconds = Math.max(1, Math.ceil(ms / 1000));
   try {
-    execFileSync('sleep', [String(seconds)], { stdio: 'ignore' });
+    runCommand('sleep', [String(seconds)], { stdio: 'ignore' });
   } catch {
     const end = Date.now() + ms;
     while (Date.now() < end) {
@@ -150,28 +150,8 @@ function readJson(filePath) {
 
 function run(command, args, options = {}) {
   clearNpmRegistryAuth();
-
-  if (process.platform === 'win32') {
-    return execFileSync(
-      process.env.ComSpec || 'cmd.exe',
-      ['/d', '/s', '/c', [command, ...args].map(quoteCmdArg).join(' ')],
-      {
-        cwd: root,
-        ...options,
-      },
-    );
-  }
-
-  return execFileSync(command, args, {
+  return runCommand(command, args, {
     cwd: root,
     ...options,
   });
-}
-
-function quoteCmdArg(value) {
-  const text = String(value);
-  if (/^[A-Za-z0-9_@%+=:,./\\-]+$/.test(text)) {
-    return text;
-  }
-  return `"${text.replace(/(["^&|<>])/g, '^$1')}"`;
 }
