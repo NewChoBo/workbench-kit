@@ -260,6 +260,15 @@ function validateReactPrivateStorySurfaces() {
   const location = relativePath(reactPackage.packageJsonPath);
   const exportPaths = Object.keys(packageJson.exports ?? {});
 
+  if (!Array.isArray(packageJson.sideEffects) || !packageJson.sideEffects.includes('**/*.css')) {
+    violations.push({
+      location: `${location}#sideEffects`,
+      message:
+        '@workbench-kit/react must keep JavaScript tree-shakeable while preserving imported CSS side effects.',
+      rule: 'react-tree-shaking-side-effects',
+    });
+  }
+
   if (exportPaths.some((exportPath) => exportPath.startsWith('./workbench/demo'))) {
     violations.push({
       location: `${location}#exports`,
