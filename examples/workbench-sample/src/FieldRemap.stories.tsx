@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { FieldRemapDemo } from './FieldRemapDemo';
 
@@ -91,13 +91,13 @@ export const IoBrowseChrome: Story = {
   tags: ['storybook-play-required', 'storybook-play-sample'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByTestId('field-remap-io-browse')).toBeVisible();
-    await expect(canvas.getByText('PersonProfile@1')).toBeVisible();
+    const ioBrowse = within(canvas.getByTestId('field-remap-io-browse'));
+    await expect(ioBrowse.getByText('PersonProfile@1')).toBeVisible();
     // Browse rows render `path` (e.g. profile.internal_id), not bare label text.
-    await expect(canvas.queryByText('profile.internal_id')).toBeNull();
+    await expect(ioBrowse.queryByText('profile.internal_id')).toBeNull();
     await userEvent.click(canvas.getByLabelText('Show hidden fields'));
-    await expect(canvas.getByText('profile.internal_id')).toBeVisible();
-    await expect(canvas.getByText('Hidden')).toBeVisible();
+    await expect(await ioBrowse.findByText('profile.internal_id')).toBeVisible();
+    await expect(ioBrowse.getByText('Hidden')).toBeVisible();
     const bindingsHeading = canvasElement.querySelector(
       '.workbench-field-remap-flow__bindings > h4',
     );
@@ -133,7 +133,7 @@ export const CombineSplit: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('field-remap-convert-palette')).toBeVisible();
     await expect(canvas.getByTestId('field-remap-add-combine')).toBeVisible();
-    await expect(canvas.getByTestId('field-remap-op-op-name')).toBeVisible();
+    await waitFor(() => expect(canvas.getByTestId('field-remap-op-op-name')).toBeVisible());
     await expect(await canvas.findByTestId('field-remap-result')).toHaveTextContent('Ada');
   },
 };
