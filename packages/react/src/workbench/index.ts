@@ -228,6 +228,7 @@ export type {
   CreateWorkspaceFilesQuickOpenProviderOptions,
   QuickOpenItem,
   QuickOpenProvider,
+  QuickOpenSearchContext,
   QuickOpenSelectContext,
   WorkbenchQuickOpenProps,
 } from './commands/WorkbenchQuickOpen';

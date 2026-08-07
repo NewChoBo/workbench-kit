@@ -26,6 +26,14 @@ const provider: QuickOpenProvider = {
   },
 };
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
 describe('WorkbenchQuickOpen interactions', () => {
   it('debounces provider search and selects with Enter', async () => {
     vi.useFakeTimers();
@@ -137,6 +145,157 @@ describe('WorkbenchQuickOpen interactions', () => {
     await act(async () => {
       root.unmount();
     });
+    container.remove();
+  });
+
+  it('publishes provider results independently in deterministic provider order', async () => {
+    const slowResults = createDeferred<Array<{ id: string; label: string }>>();
+    const selectedProviders: string[] = [];
+    const failedProviders: string[] = [];
+    const providers: QuickOpenProvider[] = [
+      {
+        id: 'slow.symbols',
+        label: 'Symbols',
+        search: () => slowResults.promise,
+      },
+      {
+        id: 'failed.actions',
+        label: 'Actions',
+        search: () => Promise.reject(new Error('provider unavailable')),
+      },
+      {
+        id: 'fast.files',
+        label: 'Files',
+        search: () => [{ detail: 'src', id: 'shared', label: 'fast.ts' }],
+      },
+    ];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchQuickOpen
+          debounceMs={0}
+          providers={providers}
+          onClose={() => undefined}
+          onProviderError={(_error, failedProvider) => failedProviders.push(failedProvider.id)}
+          onSelectItem={(_item, context) => selectedProviders.push(context.providerId)}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain('fast.ts');
+    expect(container.textContent).toContain('Files');
+    expect(container.textContent).not.toContain('slow.ts');
+    expect(failedProviders).toEqual(['failed.actions']);
+    expect(container.querySelector('[role="listbox"]')?.getAttribute('aria-busy')).toBe('true');
+
+    await act(async () => {
+      slowResults.resolve([{ id: 'shared', label: 'slow.ts' }]);
+      await slowResults.promise;
+    });
+
+    const resultLabels = Array.from(
+      container.querySelectorAll('.ui-workbench-command-item__label'),
+    ).map((label) => label.textContent);
+    expect(resultLabels).toEqual(['slow.ts', 'fast.ts']);
+    expect(
+      container.querySelector('[data-active="true"] .ui-workbench-command-item__label')
+        ?.textContent,
+    ).toBe('fast.ts');
+    expect(container.querySelector('[role="listbox"]')?.hasAttribute('aria-busy')).toBe(false);
+
+    await act(async () => {
+      container
+        .querySelectorAll<HTMLButtonElement>('[role="option"]')[1]
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(selectedProviders).toEqual(['fast.files']);
+
+    await act(async () => root.unmount());
+    container.remove();
+  });
+
+  it('aborts stale provider searches and ignores their late results', async () => {
+    const staleResults = createDeferred<Array<{ id: string; label: string }>>();
+    const signals: AbortSignal[] = [];
+    const cancellableProvider: QuickOpenProvider = {
+      id: 'cancellable',
+      label: 'Cancellable',
+      search: (query, context) => {
+        signals.push(context!.signal);
+        return query === 'stale'
+          ? staleResults.promise
+          : [{ id: 'current', label: 'current result' }];
+      },
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchQuickOpen
+          debounceMs={0}
+          providers={[cancellableProvider]}
+          query="stale"
+          onClose={() => undefined}
+        />,
+      );
+    });
+    expect(signals[0]?.aborted).toBe(false);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchQuickOpen
+          debounceMs={0}
+          providers={[cancellableProvider]}
+          query="current"
+          onClose={() => undefined}
+        />,
+      );
+    });
+    expect(signals[0]?.aborted).toBe(true);
+    expect(container.textContent).toContain('current result');
+
+    await act(async () => {
+      staleResults.resolve([{ id: 'stale', label: 'stale result' }]);
+      await staleResults.promise;
+    });
+    expect(container.textContent).not.toContain('stale result');
+
+    await act(async () => root.unmount());
+    expect(signals[1]?.aborted).toBe(true);
+    container.remove();
+  });
+
+  it('can restrict search to one provider', async () => {
+    const searchFirst = vi.fn(() => [{ id: 'first', label: 'first result' }]);
+    const searchSecond = vi.fn(() => [{ id: 'second', label: 'second result' }]);
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchQuickOpen
+          debounceMs={0}
+          providerId="second"
+          providers={[
+            { id: 'first', label: 'First', search: searchFirst },
+            { id: 'second', label: 'Second', search: searchSecond },
+          ]}
+          onClose={() => undefined}
+        />,
+      );
+    });
+
+    expect(searchFirst).not.toHaveBeenCalled();
+    expect(searchSecond).toHaveBeenCalledOnce();
+    expect(container.textContent).toContain('second result');
+
+    await act(async () => root.unmount());
     container.remove();
   });
 });

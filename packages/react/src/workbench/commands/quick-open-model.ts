@@ -1,5 +1,5 @@
 export interface QuickOpenItem {
-  /** Stable item id (often a workspace path). */
+  /** Stable within its provider (often a workspace path). */
   id: string;
   label: string;
   description?: string | undefined;
@@ -10,10 +10,19 @@ export interface QuickOpenItem {
   data?: unknown;
 }
 
+export interface QuickOpenSearchContext {
+  /** Aborted when the query, provider set, or open state changes. */
+  signal: AbortSignal;
+}
+
 export interface QuickOpenProvider {
+  /** Unique within the provider set passed to Quick Open. */
   id: string;
   label: string;
-  search: (query: string) => Promise<QuickOpenItem[]> | QuickOpenItem[];
+  search: (
+    query: string,
+    context?: QuickOpenSearchContext,
+  ) => Promise<QuickOpenItem[]> | QuickOpenItem[];
 }
 
 export interface QuickOpenSelectContext {

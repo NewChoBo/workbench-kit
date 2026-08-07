@@ -30,6 +30,12 @@ interface WorkbenchQuickOpenKeyEvent {
   preventDefault: () => void;
 }
 
+interface QuickOpenResult {
+  item: QuickOpenItem;
+  key: string;
+  provider: QuickOpenProvider;
+}
+
 function useControllableQuery({
   defaultQuery = '',
   query,
@@ -63,11 +69,12 @@ export interface WorkbenchQuickOpenProps extends Omit<
   emptyLabel?: ReactNode | undefined;
   onActiveItemChange?: ((itemId: string) => void) | undefined;
   onClose: () => void;
+  onProviderError?: ((error: unknown, provider: QuickOpenProvider) => void) | undefined;
   onQueryChange?: ((query: string) => void) | undefined;
   onSelectItem?: ((item: QuickOpenItem, context: QuickOpenSelectContext) => void) | undefined;
   open?: boolean | undefined;
   placeholder?: string | undefined;
-  /** When omitted, the first provider is used. */
+  /** Restrict search to one provider. When omitted, all providers contribute. */
   providerId?: string | undefined;
   providers: readonly QuickOpenProvider[];
   query?: string | undefined;
@@ -84,6 +91,7 @@ export function WorkbenchQuickOpen({
   emptyLabel = 'No matching files',
   onActiveItemChange,
   onClose,
+  onProviderError,
   onQueryChange,
   onSelectItem,
   open = true,
@@ -99,33 +107,49 @@ export function WorkbenchQuickOpen({
   const listId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uncontrolledActiveItemId, setUncontrolledActiveItemId] = useState<string>();
-  const [items, setItems] = useState<QuickOpenItem[]>([]);
+  const [uncontrolledActiveResultKey, setUncontrolledActiveResultKey] = useState<string>();
+  const [results, setResults] = useState<QuickOpenResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const onProviderErrorRef = useRef(onProviderError);
   const [resolvedQuery, setResolvedQuery] = useControllableQuery({
     defaultQuery,
     onQueryChange,
     query,
   });
 
-  const activeProvider = useMemo(() => {
+  useEffect(() => {
+    onProviderErrorRef.current = onProviderError;
+  }, [onProviderError]);
+
+  const activeProviders = useMemo(() => {
     if (providerId) {
-      return providers.find((provider) => provider.id === providerId) ?? providers[0];
+      const provider = providers.find((candidate) => candidate.id === providerId);
+      return provider ? [provider] : [];
     }
-    return providers[0];
+    return providers;
   }, [providerId, providers]);
 
-  const resolvedActiveItemId = activeItemId ?? uncontrolledActiveItemId ?? items[0]?.id;
-  const activeIndex = items.findIndex((item) => item.id === resolvedActiveItemId);
-  const activeItem = activeIndex >= 0 ? items[activeIndex] : items.find(isQuickOpenItemSelectable);
+  const items = useMemo(() => results.map(({ item }) => item), [results]);
+  const controlledActiveResult = activeItemId
+    ? results.find(({ item }) => item.id === activeItemId && isQuickOpenItemSelectable(item))
+    : undefined;
+  const uncontrolledActiveResult = results.find(
+    ({ item, key }) => key === uncontrolledActiveResultKey && isQuickOpenItemSelectable(item),
+  );
+  const activeResult =
+    controlledActiveResult ??
+    uncontrolledActiveResult ??
+    results.find(({ item }) => isQuickOpenItemSelectable(item));
+  const resolvedActiveResultKey = activeResult?.key;
+  const activeIndex = activeResult ? results.indexOf(activeResult) : -1;
 
   const updateActiveItem = useCallback(
-    (itemId: string | undefined) => {
-      if (!itemId) return;
+    (result: QuickOpenResult | undefined) => {
+      if (!result) return;
       if (activeItemId === undefined) {
-        setUncontrolledActiveItemId(itemId);
+        setUncontrolledActiveResultKey(result.key);
       }
-      onActiveItemChange?.(itemId);
+      onActiveItemChange?.(result.item.id);
     },
     [activeItemId, onActiveItemChange],
   );
@@ -139,25 +163,44 @@ export function WorkbenchQuickOpen({
   });
 
   useEffect(() => {
-    if (!open || !activeProvider) {
-      setItems([]);
+    if (!open || activeProviders.length === 0) {
+      setResults([]);
       setSearching(false);
       return undefined;
     }
 
+    const controller = new AbortController();
     let cancelled = false;
     const runSearch = async () => {
+      setResults([]);
       setSearching(true);
-      try {
-        const nextItems = await Promise.resolve(activeProvider.search(resolvedQuery));
-        if (!cancelled) {
-          setItems(nextItems);
+      const providerResults = activeProviders.map<QuickOpenResult[] | undefined>(() => undefined);
+      const publishAvailableResults = () => {
+        setResults(providerResults.flatMap((providerItems) => providerItems ?? []));
+      };
+      const searches = activeProviders.map(async (provider, providerIndex) => {
+        try {
+          const providerItems = await Promise.resolve(
+            provider.search(resolvedQuery, { signal: controller.signal }),
+          );
+          if (cancelled) return;
+
+          providerResults[providerIndex] = providerItems.map((item, itemIndex) => ({
+            item,
+            key: `${providerIndex}:${itemIndex}:${provider.id}:${item.id}`,
+            provider,
+          }));
+          publishAvailableResults();
+        } catch (error) {
+          if (cancelled) return;
+          providerResults[providerIndex] = [];
+          publishAvailableResults();
+          onProviderErrorRef.current?.(error, provider);
         }
-      } finally {
-        if (!cancelled) {
-          setSearching(false);
-        }
-      }
+      });
+
+      await Promise.allSettled(searches);
+      if (!cancelled) setSearching(false);
     };
 
     // Empty query (recent / top-level) should paint immediately; debounce typed queries.
@@ -166,6 +209,7 @@ export function WorkbenchQuickOpen({
       void runSearch();
       return () => {
         cancelled = true;
+        controller.abort();
       };
     }
 
@@ -175,30 +219,35 @@ export function WorkbenchQuickOpen({
 
     return () => {
       cancelled = true;
+      controller.abort();
       window.clearTimeout(timer);
     };
-  }, [activeProvider, debounceMs, open, resolvedQuery]);
+  }, [activeProviders, debounceMs, open, resolvedQuery]);
 
   useEffect(() => {
     if (!open) return;
     if (activeItemId !== undefined) return;
 
-    setUncontrolledActiveItemId((currentItemId) => {
-      const nextItemId = items.find(isQuickOpenItemSelectable)?.id;
-      return currentItemId === nextItemId ? currentItemId : nextItemId;
+    setUncontrolledActiveResultKey((currentResultKey) => {
+      const currentResult = results.find(({ key }) => key === currentResultKey);
+      if (currentResult && isQuickOpenItemSelectable(currentResult.item)) {
+        return currentResultKey;
+      }
+
+      return results.find(({ item }) => isQuickOpenItemSelectable(item))?.key;
     });
-  }, [activeItemId, items, open]);
+  }, [activeItemId, open, results]);
 
   const selectItem = useCallback(
-    (item: QuickOpenItem, index: number) => {
-      if (!isQuickOpenItemSelectable(item) || !activeProvider) return;
-      onSelectItem?.(item, {
+    (result: QuickOpenResult, index: number) => {
+      if (!isQuickOpenItemSelectable(result.item)) return;
+      onSelectItem?.(result.item, {
         index,
-        providerId: activeProvider.id,
+        providerId: result.provider.id,
         query: resolvedQuery,
       });
     },
-    [activeProvider, onSelectItem, resolvedQuery],
+    [onSelectItem, resolvedQuery],
   );
 
   const handleQuickOpenKeyDown = useCallback(
@@ -216,9 +265,9 @@ export function WorkbenchQuickOpen({
       }
 
       if (event.key === 'Enter') {
-        if (!activeItem) return;
+        if (!activeResult) return;
         event.preventDefault();
-        selectItem(activeItem, Math.max(activeIndex, 0));
+        selectItem(activeResult, Math.max(activeIndex, 0));
         return;
       }
 
@@ -258,10 +307,10 @@ export function WorkbenchQuickOpen({
       }
 
       if (nextIndex >= 0) {
-        updateActiveItem(items[nextIndex]?.id);
+        updateActiveItem(results[nextIndex]);
       }
     },
-    [activeIndex, activeItem, items, selectItem, updateActiveItem],
+    [activeIndex, activeResult, items, results, selectItem, updateActiveItem],
   );
 
   useEffect(() => {
@@ -283,14 +332,14 @@ export function WorkbenchQuickOpen({
   };
 
   useEffect(() => {
-    if (!resolvedActiveItemId) return;
+    if (!resolvedActiveResultKey) return;
 
     const activeElement = Array.from(
       dialogRef.current?.querySelectorAll<HTMLElement>('[data-quick-open-id]') ?? [],
-    ).find((element) => element.dataset.quickOpenId === resolvedActiveItemId);
+    ).find((element) => element.dataset.quickOpenId === resolvedActiveResultKey);
 
     activeElement?.scrollIntoView?.({ block: 'nearest' });
-  }, [items, resolvedActiveItemId]);
+  }, [resolvedActiveResultKey, results]);
 
   if (!open) return null;
 
@@ -322,7 +371,7 @@ export function WorkbenchQuickOpen({
           <TextInput
             ref={inputRef}
             aria-activedescendant={
-              activeItem ? `${listId}-${activeItem.id.replace(/[^\w-]/g, '_')}` : undefined
+              activeResult ? `${listId}-${activeResult.key.replace(/[^\w-]/g, '_')}` : undefined
             }
             aria-controls={listId}
             aria-label={placeholder}
@@ -342,29 +391,30 @@ export function WorkbenchQuickOpen({
           className={cx('ui-workbench-command-list', 'ui-workbench-scrollbar')}
           role="listbox"
         >
-          {items.length === 0 ? (
+          {results.length === 0 ? (
             <EmptyState compact icon="codicon-search">
               {emptyLabel}
             </EmptyState>
           ) : (
-            items.map((item, index) => {
-              const active = item.id === resolvedActiveItemId;
-              const itemDomId = `${listId}-${item.id.replace(/[^\w-]/g, '_')}`;
+            results.map((result, index) => {
+              const { item, key, provider } = result;
+              const active = key === resolvedActiveResultKey;
+              const itemDomId = `${listId}-${key.replace(/[^\w-]/g, '_')}`;
               const descriptionId = item.description ? `${itemDomId}-description` : undefined;
 
               return (
                 <Button
-                  key={item.id}
+                  key={key}
                   id={itemDomId}
                   aria-describedby={descriptionId}
                   aria-selected={active}
                   className="ui-workbench-command-item"
                   data-active={active ? 'true' : undefined}
-                  data-quick-open-id={item.id}
+                  data-quick-open-id={key}
                   disabled={item.disabled}
                   role="option"
-                  onClick={() => selectItem(item, index)}
-                  onMouseEnter={() => updateActiveItem(item.id)}
+                  onClick={() => selectItem(result, index)}
+                  onMouseEnter={() => updateActiveItem(result)}
                 >
                   <span className="ui-workbench-command-item__icon">
                     {item.icon ? <i aria-hidden="true" className={cxCodicon(item.icon)} /> : null}
@@ -380,11 +430,8 @@ export function WorkbenchQuickOpen({
                   <span className="ui-workbench-command-item__meta">
                     {item.detail ? (
                       <span className="ui-workbench-command-item__category">{item.detail}</span>
-                    ) : activeProvider ? (
-                      <span className="ui-workbench-command-item__category">
-                        {activeProvider.label}
-                      </span>
                     ) : null}
+                    <span className="ui-workbench-command-item__category">{provider.label}</span>
                   </span>
                 </Button>
               );
@@ -396,7 +443,12 @@ export function WorkbenchQuickOpen({
   );
 }
 
-export type { QuickOpenItem, QuickOpenProvider, QuickOpenSelectContext } from './quick-open-model';
+export type {
+  QuickOpenItem,
+  QuickOpenProvider,
+  QuickOpenSearchContext,
+  QuickOpenSelectContext,
+} from './quick-open-model';
 export {
   DEFAULT_QUICK_OPEN_SEARCH_DEBOUNCE_MS,
   getNextQuickOpenItemIndex,

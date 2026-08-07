@@ -87,7 +87,16 @@ const providers: QuickOpenProvider[] = [
 
 Contract:
 
-- `provider.search(query)` returns items (sync or `Promise`)
+- `provider.search(query, { signal })` returns items (sync or `Promise`); the context is
+  optional so simple and existing single-provider implementations can keep a one-argument function
+- Without `providerId`, providers search concurrently and contribute results as they settle;
+  final grouping is deterministic by declared provider order, then provider item order
+- A rejected or slow provider does not block results from other providers; query/provider changes
+  abort the prior signal and late results are ignored
+- `onProviderError` can observe an isolated provider failure without failing the whole search
+- Every result shows its provider label, and selection reports the matching `providerId`
+- Provider IDs are unique; item IDs only need to be stable within their provider
+- Set `providerId` to restrict the overlay to one provider
 - Empty query → all files, with optional `recentPaths` elevated first
 - Enter selects the active item; Escape closes (modal focus trap)
 - Shell default: Ctrl/Cmd+P opens Quick Open; Ctrl/Cmd+Shift+P opens the command palette
