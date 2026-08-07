@@ -111,6 +111,9 @@ shell defaults; they are extension-owned so disabling the sample removes the
 surfaces. Shell maps the extension render markers to `JdwWidgetFormView` /
 `JdwWidgetPreviewView`.
 
+Sample sidebar React projections use sample-scoped `ViewHostFactory` adapters supplied by the
+sample host. Generic shell modules only map canonical built-ins and ordinary React nodes.
+
 ## Deactivation
 
 On workbench shutdown or extension disable, `deactivate` runs and all `ExtensionContext.subscriptions` disposables are disposed.

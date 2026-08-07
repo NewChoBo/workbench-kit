@@ -134,7 +134,7 @@ interface ViewHost {
 }
 ```
 
-Runtime view providers are registered in `activate()` via `context.views.registerViewProvider(...)`. `shell-react` maps `ViewProvider` results to React nodes when possible; the SDK stays UI-framework neutral (`unknown` / callback registration).
+Runtime view providers are registered in `activate()` via `context.views.registerViewProvider(...)`. `shell-react` maps canonical built-in results directly; integrating hosts pass feature-specific React projection factories through `WorkbenchProvider.viewHostFactories`. The SDK stays UI-framework neutral (`unknown` / callback registration).
 
 Canonical view-container locations are `activitybar` (primary side bar),
 `auxiliarybar` (secondary side bar), and `panel` (bottom panel). `shell-react`

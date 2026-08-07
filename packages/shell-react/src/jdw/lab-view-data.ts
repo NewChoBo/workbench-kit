@@ -1,4 +1,5 @@
 export const SAMPLE_JDW_LAB_VIEW_RENDER_KIND = 'workbench-kit.samples.jdw.view' as const;
+export const SAMPLE_JDW_LAB_VIEW_ID = 'workbench-kit.samples.jdw.panel' as const;
 
 export interface SampleJdwLabViewRenderData {
   readonly kind: typeof SAMPLE_JDW_LAB_VIEW_RENDER_KIND;

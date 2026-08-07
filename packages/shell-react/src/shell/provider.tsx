@@ -34,6 +34,7 @@ import {
   type WorkbenchEditorSavePort,
   type WorkbenchExtensionDescription,
   type WorkbenchLayoutStateInput,
+  type ViewHostFactory,
 } from '@workbench-kit/workbench-core';
 import {
   ContextKeyService,
@@ -140,6 +141,8 @@ export interface WorkbenchProviderProps {
   persistLayout?: boolean;
   persistLocalPreferences?: boolean;
   userCommands?: readonly WorkbenchUserCommandDefinition[];
+  /** Host-owned framework adapters registered before extension activation. */
+  viewHostFactories?: readonly ViewHostFactory[] | undefined;
   workspaceHostPort?: WorkbenchWorkspaceHostPort | undefined;
 }
 
@@ -212,6 +215,7 @@ export function WorkbenchProvider({
   persistLayout,
   persistLocalPreferences,
   userCommands = [],
+  viewHostFactories,
   workspaceHostPort,
 }: WorkbenchProviderProps) {
   const hostAvailableExtensions = availableExtensions ?? DEFAULT_AVAILABLE_EXTENSIONS;
@@ -335,6 +339,9 @@ export function WorkbenchProvider({
 
   const services = useMemo<WorkbenchProviderServices>(() => {
     const extensionRegistry = new ExtensionRegistry();
+    const viewHostFactoryDisposables = (viewHostFactories ?? []).map((factory) =>
+      extensionRegistry.viewHostFactories.register(factory),
+    );
     const editorDocumentViewProviders = extensionRegistry.editorDocumentViews;
     const editorDocumentViewProviderDisposables = [
       ...(includeDefaultDocumentViewProviders === false
@@ -433,6 +440,9 @@ export function WorkbenchProvider({
         for (const disposable of editorDocumentViewProviderDisposables) {
           disposable.dispose();
         }
+        for (const disposable of viewHostFactoryDisposables) {
+          disposable.dispose();
+        }
         extensionRegistry.dispose();
         layoutService.dispose();
         preferenceService.dispose();
@@ -465,6 +475,7 @@ export function WorkbenchProvider({
     resolvedInitialLayout,
     resolvedInitialLocalPreferences,
     userCommands,
+    viewHostFactories,
     workspaceHostPort,
   ]);
 

@@ -20,10 +20,6 @@ import { BuiltinExplorerView } from '../explorer/view.js';
 import { isBuiltinExplorerViewRenderData } from '../explorer/view-data.js';
 import { BuiltinExtensionsView } from '../extensions/view.js';
 import { isBuiltinExtensionsViewRenderData } from '../extensions/view-data.js';
-import { SampleJdwLabView } from '../jdw/lab-view.js';
-import { isSampleJdwLabViewRenderData } from '../jdw/lab-view-data.js';
-import { SampleFieldRemapView } from '../field-remap/view.js';
-import { isSampleFieldRemapViewRenderData } from '../field-remap/view-data.js';
 import { BuiltinSearchView } from '../explorer/search-view.js';
 import { isBuiltinSearchViewRenderData } from '../explorer/search-view-data.js';
 
@@ -318,19 +314,6 @@ export function toWorkbenchViewHostReactNode(
         catalogUrl={options.catalogUrl}
       />
     );
-  }
-
-  if (isSampleJdwLabViewRenderData(value)) {
-    return (
-      <SampleJdwLabView
-        templateJdwPath={value.templateJdwPath}
-        widgetTreePath={value.widgetTreePath}
-      />
-    );
-  }
-
-  if (isSampleFieldRemapViewRenderData(value)) {
-    return <SampleFieldRemapView />;
   }
 
   return toReactNode(value, fallback);

@@ -80,7 +80,11 @@ export {
   isBuiltinEditorMarkdownPreviewRenderData,
   type BuiltinEditorMarkdownPreviewRenderData,
 } from './editor/markdown-document-view-data.js';
-export { SampleJdwLabView, type SampleJdwLabViewProps } from './jdw/lab-view.js';
+export {
+  SAMPLE_JDW_LAB_VIEW_HOST_FACTORY,
+  SampleJdwLabView,
+  type SampleJdwLabViewProps,
+} from './jdw/lab-view.js';
 export { JdwWidgetFormView, type JdwWidgetFormViewProps } from './jdw/widget-form-view.js';
 export { JdwWidgetPreviewView, type JdwWidgetPreviewViewProps } from './jdw/widget-preview-view.js';
 export {
@@ -186,6 +190,7 @@ export {
   type FieldRemapSampleId,
 } from './field-remap/samples.js';
 export {
+  SAMPLE_FIELD_REMAP_VIEW_HOST_FACTORY,
   SampleFieldRemapView,
   buildFieldRemapEditorUri,
   parseFieldRemapEditorSampleId,

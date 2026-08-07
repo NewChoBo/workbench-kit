@@ -21,6 +21,8 @@ import {
   getWorkbenchCommandPaletteShortcutLabel,
   isWorkspaceResourceService,
   mergeWorkbenchStatusSections,
+  SAMPLE_FIELD_REMAP_VIEW_HOST_FACTORY,
+  SAMPLE_JDW_LAB_VIEW_HOST_FACTORY,
   usePersistedWorkbenchAppearance,
   WorkbenchProvider,
   WorkbenchDevtoolsShell,
@@ -34,6 +36,11 @@ import {
 const SAMPLE_AVAILABLE_EXTENSIONS = [
   ...BUILTIN_WORKBENCH_EXTENSIONS,
   ...SAMPLE_WORKBENCH_EXTENSIONS,
+] as const;
+
+const SAMPLE_VIEW_HOST_FACTORIES = [
+  SAMPLE_JDW_LAB_VIEW_HOST_FACTORY,
+  SAMPLE_FIELD_REMAP_VIEW_HOST_FACTORY,
 ] as const;
 
 import {
@@ -158,6 +165,7 @@ function SampleAuthenticatedWorkbench({
       layoutStorageKey={DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY}
       persistLayout
       userCommands={workbenchUserCommands}
+      viewHostFactories={SAMPLE_VIEW_HOST_FACTORIES}
       workspaceHostPort={workspaceHostPort}
     >
       <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={initialWorkspace}>

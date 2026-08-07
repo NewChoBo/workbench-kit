@@ -1,4 +1,5 @@
 import { WorkbenchActionSidebar } from '@workbench-kit/react/layout';
+import type { ViewHostFactory } from '@workbench-kit/workbench-core';
 
 import './lab-view.css';
 
@@ -7,6 +8,7 @@ import { useActiveEditorTab } from '../editor/use-editor.js';
 import { useActiveWorkspacePath } from '../explorer/use-active-workspace-path.js';
 import {
   isSampleJdwLabViewRenderData,
+  SAMPLE_JDW_LAB_VIEW_ID,
   SAMPLE_JDW_LAB_VIEW_RENDER_KIND,
   type SampleJdwLabViewRenderData,
 } from './lab-view-data.js';
@@ -23,6 +25,31 @@ export interface SampleJdwLabViewProps {
   readonly templateJdwPath?: string | undefined;
   readonly widgetTreePath?: string | undefined;
 }
+
+export const SAMPLE_JDW_LAB_VIEW_HOST_FACTORY: ViewHostFactory = {
+  id: 'workbench-kit.samples.jdw.react-view-host',
+  priority: 100,
+  canCreate: ({ viewId }) => viewId === SAMPLE_JDW_LAB_VIEW_ID,
+  create: ({ provider }) => {
+    const host = provider.resolveViewHost();
+    const render = host.render.bind(host);
+
+    host.render = () => {
+      const renderData = render();
+
+      return isSampleJdwLabViewRenderData(renderData) ? (
+        <SampleJdwLabView
+          templateJdwPath={renderData.templateJdwPath}
+          widgetTreePath={renderData.widgetTreePath}
+        />
+      ) : (
+        renderData
+      );
+    };
+
+    return host;
+  },
+};
 
 function pathMatches(activePath: string | undefined, candidate: string): boolean {
   if (!activePath) {

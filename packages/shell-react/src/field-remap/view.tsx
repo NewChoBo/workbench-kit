@@ -1,5 +1,6 @@
 import type { JSX } from 'react';
 import { WorkbenchActionSidebar } from '@workbench-kit/react/layout';
+import type { ViewHostFactory } from '@workbench-kit/workbench-core';
 
 import './view.css';
 
@@ -10,6 +11,7 @@ import {
 } from './samples.js';
 import {
   isSampleFieldRemapViewRenderData,
+  SAMPLE_FIELD_REMAP_VIEW_ID,
   SAMPLE_FIELD_REMAP_VIEW_RENDER_KIND,
   type SampleFieldRemapViewRenderData,
 } from './view-data.js';
@@ -42,6 +44,23 @@ export function parseFieldRemapEditorSampleId(resourceUri: string): FieldRemapSa
 export interface SampleFieldRemapViewProps {
   readonly className?: string | undefined;
 }
+
+export const SAMPLE_FIELD_REMAP_VIEW_HOST_FACTORY: ViewHostFactory = {
+  id: 'workbench-kit.samples.field-remap.react-view-host',
+  priority: 100,
+  canCreate: ({ viewId }) => viewId === SAMPLE_FIELD_REMAP_VIEW_ID,
+  create: ({ provider }) => {
+    const host = provider.resolveViewHost();
+    const render = host.render.bind(host);
+
+    host.render = () => {
+      const renderData = render();
+      return isSampleFieldRemapViewRenderData(renderData) ? <SampleFieldRemapView /> : renderData;
+    };
+
+    return host;
+  },
+};
 
 /** Sidebar: catalog of field-remap / table-mapping samples. */
 export function SampleFieldRemapView({ className }: SampleFieldRemapViewProps = {}): JSX.Element {

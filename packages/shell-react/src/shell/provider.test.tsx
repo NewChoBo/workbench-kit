@@ -8,6 +8,7 @@ import { parseWorkbenchLayoutConfig } from '@workbench-kit/workbench-config';
 import type {
   EditorState,
   LayoutService,
+  ViewHostFactory,
   WorkbenchExtensionDescription,
 } from '@workbench-kit/workbench-core';
 import {
@@ -1933,9 +1934,21 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 
-  it('notifies view host lifecycle hooks while preserving provider rendering', async () => {
+  it('notifies view host lifecycle hooks through a host-supplied view factory', async () => {
     const events: string[] = [];
     const extension = createLifecycleProbeExtension(events);
+    const viewHostFactory: ViewHostFactory = {
+      id: 'workbench-kit.lifecycle-probe.react-view-host',
+      priority: 10,
+      canCreate: ({ viewId }) => viewId === 'workbench-kit.lifecycle-probe.view',
+      create: ({ provider }) => {
+        const host = provider.resolveViewHost();
+        return {
+          ...host,
+          render: () => <button type="button">Factory Lifecycle Probe</button>,
+        };
+      },
+    };
     const container = document.createElement('div');
     document.body.append(container);
     const root = createRoot(container);
@@ -1954,6 +1967,7 @@ describe('WorkbenchProvider', () => {
               visible: true,
             },
           })}
+          viewHostFactories={[viewHostFactory]}
         >
           <TestWorkbenchShell editorArea={<main>Editor Area</main>} />
         </WorkbenchProvider>,
@@ -1965,10 +1979,10 @@ describe('WorkbenchProvider', () => {
     });
 
     const button = Array.from(container.querySelectorAll('button')).find(
-      (candidate) => candidate.textContent === 'Lifecycle Probe',
+      (candidate) => candidate.textContent === 'Factory Lifecycle Probe',
     );
 
-    expect(container.textContent).toContain('Lifecycle Probe');
+    expect(container.textContent).toContain('Factory Lifecycle Probe');
     expect(events).toContain('show');
 
     await act(async () => {
