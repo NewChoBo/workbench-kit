@@ -1,8 +1,18 @@
-import type { ComponentPropsWithRef, ReactNode } from 'react';
+import type {
+  ComponentPropsWithRef,
+  KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
+  ReactNode,
+} from 'react';
 import { EmptyState } from '../../primitives/empty-state';
 import { cxCodicon } from '../../utils/codicon';
 import { cx } from '../../utils/cx';
-import { getWorkbenchStatusLabel, isWorkbenchStatusBusy, type WorkbenchStatus } from './status';
+import {
+  getWorkbenchStatusLabel,
+  isWorkbenchStatusBusy,
+  isWorkbenchStatusDisabled,
+  type WorkbenchStatus,
+} from './status';
 
 export type WorkbenchTimelineEventKind =
   'message' | 'operation-call' | 'operation-result' | 'file-write' | 'progress' | 'error';
@@ -178,6 +188,49 @@ export interface WorkbenchTimelineItemProps extends Omit<
   variant?: WorkbenchTimelineVariant;
 }
 
+type WorkbenchTimelineActivationEvent =
+  ReactKeyboardEvent<HTMLElement> | ReactMouseEvent<HTMLElement>;
+
+const timelineInteractiveDescendantSelector =
+  'a[href],button,input,select,textarea,[contenteditable],[role="button"],[role="link"]';
+
+function createTimelineActivationProps(
+  event: WorkbenchTimelineEvent,
+  onEventActivate: WorkbenchTimelineProps['onEventActivate'],
+): Pick<
+  WorkbenchTimelineItemProps,
+  'aria-description' | 'aria-disabled' | 'aria-keyshortcuts' | 'onClick' | 'onKeyDown' | 'tabIndex'
+> {
+  if (onEventActivate === undefined) return {};
+  if (isWorkbenchStatusDisabled(getWorkbenchTimelineEventStatus(event))) {
+    return { 'aria-disabled': true, tabIndex: -1 };
+  }
+
+  const activate = (activationEvent: WorkbenchTimelineActivationEvent) => {
+    const { currentTarget, target } = activationEvent;
+    const fromNestedControl =
+      target instanceof Element &&
+      target !== currentTarget &&
+      target.closest(timelineInteractiveDescendantSelector) !== null;
+    if (activationEvent.defaultPrevented || fromNestedControl) return;
+
+    if ('key' in activationEvent) {
+      if (activationEvent.key !== 'Enter' && activationEvent.key !== ' ') return;
+      activationEvent.preventDefault();
+    }
+
+    onEventActivate(event);
+  };
+
+  return {
+    'aria-description': 'Press Enter or Space to activate.',
+    'aria-keyshortcuts': 'Enter Space',
+    onClick: activate,
+    onKeyDown: activate,
+    tabIndex: 0,
+  };
+}
+
 export function WorkbenchTimelineItem({
   className,
   event,
@@ -247,6 +300,8 @@ export function WorkbenchTimelineItem({
 export interface WorkbenchTimelineProps extends Omit<ComponentPropsWithRef<'div'>, 'children'> {
   emptyLabel?: ReactNode;
   events: readonly WorkbenchTimelineEvent[];
+  /** Activates an enabled event from pointer or Enter/Space input. */
+  onEventActivate?: (event: WorkbenchTimelineEvent) => void;
   renderMetadata?: WorkbenchTimelineRenderMetadata;
   renderPayload?: WorkbenchTimelineRenderPayload;
   variant?: WorkbenchTimelineVariant;
@@ -256,6 +311,7 @@ export function WorkbenchTimeline({
   className,
   emptyLabel = 'No timeline events',
   events,
+  onEventActivate,
   renderMetadata,
   renderPayload,
   variant = 'expanded',
@@ -290,6 +346,7 @@ export function WorkbenchTimeline({
           renderMetadata={renderMetadata}
           renderPayload={renderPayload}
           variant={variant}
+          {...createTimelineActivationProps(event, onEventActivate)}
         />
       ))}
     </div>
