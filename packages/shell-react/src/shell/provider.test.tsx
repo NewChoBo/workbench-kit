@@ -39,6 +39,7 @@ import {
   WorkbenchShell,
   useEditorService,
   useWorkbench,
+  type WorkbenchContextValue,
   type WorkbenchStorageAdapter,
   type WorkbenchShellProps,
 } from '../index.js';
@@ -372,6 +373,25 @@ function LayoutServiceProbe({ onReady }: { onReady: (service: LayoutService) => 
   return null;
 }
 
+type WorkbenchServiceIdentitySnapshot = Pick<
+  WorkbenchContextValue,
+  'editorService' | 'extensionRegistry' | 'layoutService'
+>;
+
+function WorkbenchServiceIdentityProbe({
+  onSnapshot,
+}: {
+  onSnapshot: (snapshot: WorkbenchServiceIdentitySnapshot) => void;
+}) {
+  const { editorService, extensionRegistry, layoutService } = useWorkbench();
+
+  useEffect(() => {
+    onSnapshot({ editorService, extensionRegistry, layoutService });
+  });
+
+  return null;
+}
+
 describe('WorkbenchProvider', () => {
   beforeEach(() => {
     globalThis.localStorage?.clear();
@@ -390,6 +410,73 @@ describe('WorkbenchProvider', () => {
     );
 
     expect(markup).toContain('<span>1</span>');
+  });
+
+  it('keeps core services and startup activation stable across parent rerenders', async () => {
+    const activate = vi.fn();
+    const availableExtensions: readonly WorkbenchExtensionDescription[] = [
+      {
+        manifest: {
+          activationEvents: ['onStartup'],
+          displayName: 'Stable Services Probe',
+          engines: {
+            extensionApi: '^0.0.0',
+            workbench: '^0.0.0',
+          },
+          id: 'workbench-kit.stable-services-probe',
+          name: 'stable-services-probe',
+          publisher: 'workbench-kit',
+          schemaVersion: 1,
+          version: '0.0.0',
+        },
+        module: { activate },
+      },
+    ];
+    const snapshots: WorkbenchServiceIdentitySnapshot[] = [];
+    const onSnapshot = (snapshot: WorkbenchServiceIdentitySnapshot) => {
+      snapshots.push(snapshot);
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const renderProvider = (label: string) => (
+      <WorkbenchProvider
+        availableExtensions={availableExtensions}
+        persistEditorState={false}
+        persistKeybindingOverrides={false}
+        persistLayout={false}
+        persistLocalPreferences={false}
+      >
+        <WorkbenchServiceIdentityProbe onSnapshot={onSnapshot} />
+        <span>{label}</span>
+      </WorkbenchProvider>
+    );
+
+    await act(async () => {
+      root.render(renderProvider('First render'));
+    });
+    await flushReactEffects();
+
+    const firstSnapshot = snapshots[snapshots.length - 1];
+    expect(firstSnapshot).toBeDefined();
+    expect(activate).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      root.render(renderProvider('Second render'));
+    });
+    await flushReactEffects();
+
+    const secondSnapshot = snapshots[snapshots.length - 1];
+    expect(secondSnapshot?.layoutService).toBe(firstSnapshot?.layoutService);
+    expect(secondSnapshot?.editorService).toBe(firstSnapshot?.editorService);
+    expect(secondSnapshot?.extensionRegistry).toBe(firstSnapshot?.extensionRegistry);
+    expect(activate).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain('Second render');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
   });
 
   it('registers host themes from bootstrap props', () => {
@@ -463,6 +550,33 @@ describe('WorkbenchProvider', () => {
     expect(markup).toContain('aria-pressed="true"');
     expect(markup).toContain('Editor Area');
     expect(markup).toContain('extensions: 1');
+  });
+
+  it('composes host overlays inside the workbench overlay container', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider>
+          <TestWorkbenchShell
+            editorArea={<main>Editor Area</main>}
+            overlays={<div data-testid="host-overlay">Host Overlay</div>}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    const overlaysContainer = container.querySelector('.ide-workbench-overlays');
+    const hostOverlay = container.querySelector('[data-testid="host-overlay"]');
+    expect(overlaysContainer).toBeTruthy();
+    expect(hostOverlay?.parentElement).toBe(overlaysContainer);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
   });
 
   it('hides configured primary activity bar items from layout state', () => {

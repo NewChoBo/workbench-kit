@@ -102,6 +102,9 @@ const DEFAULT_AVAILABLE_EXTENSIONS = [
   ...SAMPLE_WORKBENCH_EXTENSIONS,
 ] as const;
 
+const EMPTY_HOST_THEMES: readonly WorkbenchHostThemeRegistration[] = Object.freeze([]);
+const EMPTY_USER_COMMANDS: readonly WorkbenchUserCommandDefinition[] = Object.freeze([]);
+
 export interface WorkbenchProviderProps {
   availableExtensions?: readonly WorkbenchExtensionDescription[];
   children: ReactNode;
@@ -195,7 +198,7 @@ export function WorkbenchProvider({
   extensionIntegrityMode = 'off',
   extensionsConfig,
   extensionsLock,
-  hostThemes = [],
+  hostThemes = EMPTY_HOST_THEMES,
   initialEditorState,
   initialKeybindingOverrides,
   initialLayout,
@@ -214,7 +217,7 @@ export function WorkbenchProvider({
   persistKeybindingOverrides,
   persistLayout,
   persistLocalPreferences,
-  userCommands = [],
+  userCommands = EMPTY_USER_COMMANDS,
   viewHostFactories,
   workspaceHostPort,
 }: WorkbenchProviderProps) {

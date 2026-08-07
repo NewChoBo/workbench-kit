@@ -4,6 +4,7 @@ export {
   WorkbenchProvider,
   useWorkbench,
   type WorkbenchContextValue,
+  type WorkbenchProviderProps,
   type WorkbenchStorageAdapter,
   type WorkbenchWorkspaceHostPort,
 } from './shell/provider.js';

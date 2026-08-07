@@ -127,6 +127,8 @@ export interface WorkbenchShellProps {
   onLocaleChange?: ((locale: string) => void) | undefined;
   locale?: string | undefined;
   onStatusItemActivate?: (item: StatusBarItemModel) => void;
+  /** Host-owned dialogs and command surfaces rendered inside the shell overlay container. */
+  overlays?: ReactNode;
   primarySidebar?: ReactNode;
   profile?: WorkbenchProfileInput | undefined;
   profileExtraContent?: ReactNode;
@@ -179,6 +181,7 @@ export function WorkbenchShell({
   onShellPresetChange,
   onThemeChange,
   onStatusItemActivate,
+  overlays,
   primarySidebar,
   profile,
   profileExtraContent,
@@ -681,6 +684,7 @@ export function WorkbenchShell({
       shellPreset={shellPreset}
       overlays={
         <>
+          {overlays}
           {commandHost !== false ? (
             <WorkbenchCommandHost
               {...(resolvedCommandHost === false ? {} : resolvedCommandHost)}
