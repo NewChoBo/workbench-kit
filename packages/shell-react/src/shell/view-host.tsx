@@ -5,7 +5,12 @@ import type {
   ViewHost,
   ViewHostFactoryRegistry,
   ViewProvider,
+  WorkbenchViewContribution,
 } from '@workbench-kit/workbench-core';
+import {
+  filterWorkbenchContributionsByWhenClause,
+  type WorkbenchContextKeySnapshot,
+} from '@workbench-kit/platform';
 
 import { BuiltinChatView } from '../chat/view.js';
 import { isBuiltinChatViewRenderData } from '../chat/view-data.js';
@@ -27,10 +32,11 @@ export function renderDefaultPrimarySidebar(
   activeViewContainerId: string | undefined,
   catalogUrl?: string | undefined,
   catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined,
+  contextKeys: WorkbenchContextKeySnapshot = {},
 ) {
   const views = activeViewContainerId
-    ? extensionRegistry.views.getViews(activeViewContainerId)
-    : extensionRegistry.views.getViews();
+    ? getVisibleWorkbenchViews(extensionRegistry, activeViewContainerId, contextKeys)
+    : filterWorkbenchContributionsByWhenClause(extensionRegistry.views.getViews(), contextKeys);
   if (views.length === 0) {
     return <aside aria-label="Primary sidebar" />;
   }
@@ -38,20 +44,29 @@ export function renderDefaultPrimarySidebar(
   return (
     <aside
       aria-label="Primary sidebar"
-      className="workbench-primary-side-bar shell-react-primary-sidebar"
+      className="workbench-primary-side-bar shell-react-sidebar-host"
     >
-      {views.map((view) => (
-        <section key={view.id} data-view-id={view.id}>
-          <WorkbenchViewHost
-            catalogTrustPolicy={catalogTrustPolicy}
-            catalogUrl={catalogUrl}
-            fallback={view.name}
-            provider={extensionRegistry.views.getViewProvider(view.id)}
-            viewHostFactories={extensionRegistry.viewHostFactories}
-            viewId={view.id}
-          />
-        </section>
-      ))}
+      {renderWorkbenchViews(extensionRegistry, views, { catalogTrustPolicy, catalogUrl })}
+    </aside>
+  );
+}
+
+export function renderDefaultAuxiliarySidebar(
+  extensionRegistry: Pick<ExtensionRegistry, 'viewHostFactories' | 'views'>,
+  contextKeys: WorkbenchContextKeySnapshot,
+  catalogUrl?: string | undefined,
+  catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined,
+) {
+  const views = extensionRegistry.views
+    .getViewContainers('auxiliarybar')
+    .flatMap((container) => getVisibleWorkbenchViews(extensionRegistry, container.id, contextKeys));
+
+  return (
+    <aside
+      aria-label="Secondary Side Bar"
+      className="workbench-auxiliary-side-bar shell-react-sidebar-host"
+    >
+      {renderWorkbenchViews(extensionRegistry, views, { catalogTrustPolicy, catalogUrl })}
     </aside>
   );
 }
@@ -62,6 +77,7 @@ export function renderDefaultBottomPanel(
   options: {
     catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
     catalogUrl?: string | undefined;
+    contextKeys?: WorkbenchContextKeySnapshot | undefined;
     onActiveViewContainerChange?: ((viewContainerId: string) => void) | undefined;
   } = {},
 ) {
@@ -80,7 +96,11 @@ export function renderDefaultBottomPanel(
       ? activeViewContainerId
       : containers[0]?.id;
   const views = resolvedActiveViewContainerId
-    ? extensionRegistry.views.getViews(resolvedActiveViewContainerId)
+    ? getVisibleWorkbenchViews(
+        extensionRegistry,
+        resolvedActiveViewContainerId,
+        options.contextKeys ?? {},
+      )
     : [];
 
   return (
@@ -111,22 +131,54 @@ export function renderDefaultBottomPanel(
         {views.length === 0 ? (
           <div className="workbench-bottom-panel__empty">No views in this panel container.</div>
         ) : (
-          views.map((view) => (
-            <section key={view.id} data-view-id={view.id} className="workbench-bottom-panel__view">
-              <WorkbenchViewHost
-                catalogTrustPolicy={options.catalogTrustPolicy}
-                catalogUrl={options.catalogUrl}
-                fallback={view.name}
-                provider={extensionRegistry.views.getViewProvider(view.id)}
-                viewHostFactories={extensionRegistry.viewHostFactories}
-                viewId={view.id}
-              />
-            </section>
-          ))
+          renderWorkbenchViews(extensionRegistry, views, {
+            catalogTrustPolicy: options.catalogTrustPolicy,
+            catalogUrl: options.catalogUrl,
+            sectionClassName: 'workbench-bottom-panel__view',
+          })
         )}
       </div>
     </section>
   );
+}
+
+export function getVisibleWorkbenchViews(
+  extensionRegistry: Pick<ExtensionRegistry, 'views'>,
+  viewContainerId: string,
+  contextKeys: WorkbenchContextKeySnapshot,
+): WorkbenchViewContribution[] {
+  return filterWorkbenchContributionsByWhenClause(
+    extensionRegistry.views.getViews(viewContainerId),
+    contextKeys,
+  );
+}
+
+function renderWorkbenchViews(
+  extensionRegistry: Pick<ExtensionRegistry, 'viewHostFactories' | 'views'>,
+  views: readonly WorkbenchViewContribution[],
+  options: {
+    catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
+    catalogUrl?: string | undefined;
+    sectionClassName?: string | undefined;
+  },
+): ReactNode {
+  return views.map((view) => (
+    <section
+      key={view.id}
+      className={options.sectionClassName}
+      data-view-container-id={view.containerId}
+      data-view-id={view.id}
+    >
+      <WorkbenchViewHost
+        catalogTrustPolicy={options.catalogTrustPolicy}
+        catalogUrl={options.catalogUrl}
+        fallback={view.name}
+        provider={extensionRegistry.views.getViewProvider(view.id)}
+        viewHostFactories={extensionRegistry.viewHostFactories}
+        viewId={view.id}
+      />
+    </section>
+  ));
 }
 
 export function WorkbenchViewHost({

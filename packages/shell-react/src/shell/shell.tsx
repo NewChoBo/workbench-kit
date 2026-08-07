@@ -70,7 +70,12 @@ import {
   createWorkbenchShellActivityItems,
 } from './model.js';
 import { mergeWorkbenchStatusSections } from '../workbench/status-sections.js';
-import { renderDefaultBottomPanel, renderDefaultPrimarySidebar } from './view-host.js';
+import {
+  getVisibleWorkbenchViews,
+  renderDefaultAuxiliarySidebar,
+  renderDefaultBottomPanel,
+  renderDefaultPrimarySidebar,
+} from './view-host.js';
 import { WorkbenchShellTitleBarLayoutControls } from './titlebar-layout-controls.js';
 import { WorkbenchProfileModal, type WorkbenchProfileInput } from '../workbench/profile-modal.js';
 import { useContextKeyRevision } from '../commands/use-context-key-revision.js';
@@ -205,6 +210,10 @@ export function WorkbenchShell({
     preferenceService,
   } = useWorkbench();
   const contextKeyRevision = useContextKeyRevision(contextKeyService);
+  const contextKeySnapshot = useMemo(
+    () => contextKeyService.createSnapshot(),
+    [contextKeyRevision, contextKeyService],
+  );
   const forceRender = useForceRender();
   const [preferenceRevision, bumpPreferenceRevision] = useReducer((count: number) => count + 1, 0);
   const [isHelpOpen, setHelpOpen] = useState(false);
@@ -247,9 +256,9 @@ export function WorkbenchShell({
     () =>
       filterActivitiesByWhenClause(
         extensionRegistry.activities.getActivities(),
-        contextKeyService.createSnapshot(),
+        contextKeySnapshot,
       ),
-    [contextKeyRevision, contextKeyService, extensionRegistry],
+    [contextKeySnapshot, extensionRegistry],
   );
   const activityItems = sortActivityBarItems(
     createWorkbenchShellActivityItems({
@@ -429,20 +438,44 @@ export function WorkbenchShell({
       return;
     }
 
-    for (const view of extensionRegistry.views.getViews(activeViewContainerId)) {
+    for (const view of getVisibleWorkbenchViews(
+      extensionRegistry,
+      activeViewContainerId,
+      contextKeySnapshot,
+    )) {
       void extensionRegistry.activateView(view.id).then(forceRender);
     }
-  }, [activeViewContainerId, extensionRegistry, forceRender]);
+  }, [activeViewContainerId, contextKeySnapshot, extensionRegistry, forceRender]);
 
   useEffect(() => {
     if (!activePanelViewContainerId) {
       return;
     }
 
-    for (const view of extensionRegistry.views.getViews(activePanelViewContainerId)) {
+    for (const view of getVisibleWorkbenchViews(
+      extensionRegistry,
+      activePanelViewContainerId,
+      contextKeySnapshot,
+    )) {
       void extensionRegistry.activateView(view.id).then(forceRender);
     }
-  }, [activePanelViewContainerId, extensionRegistry, forceRender]);
+  }, [activePanelViewContainerId, contextKeySnapshot, extensionRegistry, forceRender]);
+
+  useEffect(() => {
+    if (!layout.auxiliaryBar.visible) {
+      return;
+    }
+
+    for (const container of extensionRegistry.views.getViewContainers('auxiliarybar')) {
+      for (const view of getVisibleWorkbenchViews(
+        extensionRegistry,
+        container.id,
+        contextKeySnapshot,
+      )) {
+        void extensionRegistry.activateView(view.id).then(forceRender);
+      }
+    }
+  }, [contextKeySnapshot, extensionRegistry, forceRender, layout.auxiliaryBar.visible]);
 
   useEffect(() => {
     if (extensionRegistry.capabilityRegistry.has(WORKBENCH_SETTINGS_CAPABILITY_ID)) {
@@ -601,6 +634,7 @@ export function WorkbenchShell({
             activeViewContainerId,
             catalogUrl,
             catalogTrustPolicy,
+            contextKeySnapshot,
           ),
         onSizePxChange: (sizePx) => {
           layoutService.setSideBarSizePercent(
@@ -613,13 +647,19 @@ export function WorkbenchShell({
       }}
       auxiliarySidebar={{
         isVisible: layout.auxiliaryBar.visible,
-        node: <aside aria-label="Secondary Side Bar" className="workbench-auxiliary-side-bar" />,
+        node: renderDefaultAuxiliarySidebar(
+          extensionRegistry,
+          contextKeySnapshot,
+          catalogUrl,
+          catalogTrustPolicy,
+        ),
       }}
       bottomPanel={{
         isVisible: layout.panel.visible,
         node: renderDefaultBottomPanel(extensionRegistry, activePanelViewContainerId, {
           catalogTrustPolicy,
           catalogUrl,
+          contextKeys: contextKeySnapshot,
           onActiveViewContainerChange: (viewContainerId) => {
             layoutService.setActivePanelViewContainer(viewContainerId);
             if (!layout.panel.visible) {

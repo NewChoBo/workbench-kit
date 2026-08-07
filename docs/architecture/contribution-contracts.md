@@ -136,6 +136,11 @@ interface ViewHost {
 
 Runtime view providers are registered in `activate()` via `context.views.registerViewProvider(...)`. `shell-react` maps `ViewProvider` results to React nodes when possible; the SDK stays UI-framework neutral (`unknown` / callback registration).
 
+Canonical view-container locations are `activitybar` (primary side bar),
+`auxiliarybar` (secondary side bar), and `panel` (bottom panel). `shell-react`
+evaluates each view's `when` clause against the current context keys before
+activating or mounting that view.
+
 ## Editor Host Factories
 
 Editor host factories create runtime editor hosts for resolved editor tabs.

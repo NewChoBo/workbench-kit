@@ -3,19 +3,19 @@
 .workbench-search-view,
 .workbench-chat-view,
 .workbench-primary-sidebar .ui-sidebar-view,
-.shell-react-primary-sidebar {
+.shell-react-sidebar-host {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
 }
 
-.shell-react-primary-sidebar > section {
+.shell-react-sidebar-host > section {
   /* section is semantic only; view host frame carries sidebar flex sizing */
   display: contents;
 }
 
-.shell-react-primary-sidebar [data-view-host-id] {
+.shell-react-sidebar-host [data-view-host-id] {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;

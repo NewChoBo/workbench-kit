@@ -1252,6 +1252,53 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 
+  it('hosts auxiliary view contributions and applies their when clauses', async () => {
+    const extension = createAuxiliaryViewProbeExtension();
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const renderShell = async (inspectorMode: string) => {
+      await act(async () => {
+        root.render(
+          <WorkbenchProvider
+            availableExtensions={[extension]}
+            contextKeyValues={{ 'inspector.mode': inspectorMode }}
+            extensionsConfig={{
+              enabled: ['workbench-kit.auxiliary-view-probe'],
+              recommendations: [],
+            }}
+            initialLayout={parseWorkbenchLayoutConfig({
+              auxiliaryBar: { visible: true },
+            })}
+          >
+            <TestWorkbenchShell editorArea={<main>Editor Area</main>} />
+          </WorkbenchProvider>,
+        );
+      });
+      await flushReactEffects();
+    };
+
+    await renderShell('properties');
+    await waitForText(container, 'Properties Tool Window');
+
+    const auxiliarySidebar = container.querySelector('.workbench-auxiliary-side-bar');
+    expect(auxiliarySidebar).not.toBeNull();
+    expect(auxiliarySidebar?.querySelector('[data-view-container-id="inspector"]')).not.toBeNull();
+    expect(auxiliarySidebar?.textContent).toContain('Properties Tool Window');
+    expect(auxiliarySidebar?.textContent).not.toContain('Structure Tool Window');
+
+    await renderShell('structure');
+    await waitForText(container, 'Structure Tool Window');
+
+    expect(auxiliarySidebar?.textContent).toContain('Structure Tool Window');
+    expect(auxiliarySidebar?.textContent).not.toContain('Properties Tool Window');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('hides unused panel and auxiliary title-bar layout toggles when disabled', async () => {
     const container = document.createElement('div');
     document.body.append(container);
@@ -2057,6 +2104,72 @@ function createLifecycleProbeExtension(events: string[]): WorkbenchExtensionDesc
             onDidShow: () => events.push('show'),
             render: () => <button type="button">Lifecycle Probe</button>,
             title: 'Lifecycle Probe',
+          }),
+        });
+      },
+    },
+  };
+}
+
+function createAuxiliaryViewProbeExtension(): WorkbenchExtensionDescription {
+  const propertiesViewId = 'workbench-kit.auxiliary-view-probe.properties';
+  const structureViewId = 'workbench-kit.auxiliary-view-probe.structure';
+
+  return {
+    manifest: {
+      activationEvents: [`onView:${propertiesViewId}`, `onView:${structureViewId}`],
+      contributes: {
+        viewContainers: {
+          auxiliarybar: [
+            {
+              icon: 'inspect',
+              id: 'inspector',
+              title: 'Inspector',
+            },
+          ],
+        },
+        views: {
+          inspector: [
+            {
+              containerId: 'inspector',
+              id: propertiesViewId,
+              name: 'Properties',
+              when: 'inspector.mode == properties',
+            },
+            {
+              containerId: 'inspector',
+              id: structureViewId,
+              name: 'Structure',
+              when: 'inspector.mode == structure',
+            },
+          ],
+        },
+      },
+      displayName: 'Auxiliary View Probe',
+      engines: {
+        extensionApi: '^0.0.0',
+        workbench: '^0.0.0',
+      },
+      id: 'workbench-kit.auxiliary-view-probe',
+      name: 'auxiliary-view-probe',
+      publisher: 'workbench-kit',
+      schemaVersion: 1,
+      version: '0.0.0',
+    },
+    module: {
+      activate(context) {
+        context.views.registerViewProvider({
+          viewId: propertiesViewId,
+          resolveViewHost: () => ({
+            dispose() {},
+            render: () => 'Properties Tool Window',
+          }),
+        });
+        context.views.registerViewProvider({
+          viewId: structureViewId,
+          resolveViewHost: () => ({
+            dispose() {},
+            render: () => 'Structure Tool Window',
           }),
         });
       },

@@ -72,6 +72,13 @@ Uses shell chrome from `react` to show activity icons from contributed activitie
 
 Hosts sidebar views registered for the active activity (e.g. Explorer, Search). M4 activates views for the active container and renders SDK view providers when extensions register them; registry-backed labels remain the fallback.
 
+### SecondarySideBar
+
+Hosts views from containers contributed at `viewContainers.auxiliarybar`.
+`LayoutService` owns region visibility, while the same registry-backed view
+host and context-key `when` evaluation used by the primary side bar mounts the
+right-side Tool Window content.
+
 ### EditorArea
 
 Tabbed editor region backed by `EditorService`. Editor resolver contributions
@@ -101,9 +108,9 @@ overrides, but the provider registry is the canonical shell source.
 
 ### BottomPanel
 
-Deferred bottom dock for future panel views such as terminal, problems, or
-output. `LayoutService` owns the framework-neutral panel visibility state, but
-the current sample host focuses on activity/sidebar/editor/status surfaces.
+Hosts contributed `panel` view containers such as terminal, problems, or
+output. `LayoutService` owns visibility, size, and the active container; view
+`when` clauses use the same context-key projection as both side bars.
 
 ### StatusBar
 
