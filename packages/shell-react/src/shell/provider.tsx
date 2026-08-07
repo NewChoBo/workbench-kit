@@ -473,7 +473,11 @@ export function WorkbenchProvider({
       return undefined;
     }
 
-    const disposable = services.layoutService.onDidChangeLayout(({ state }) => {
+    const disposable = services.layoutService.onDidChangeLayout(({ state, transient }) => {
+      if (transient) {
+        return;
+      }
+
       writePersistedWorkbenchLayout(state, layoutStorageKey, layoutStorage);
     });
 

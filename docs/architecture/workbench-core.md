@@ -60,7 +60,11 @@ Manages framework-neutral workbench layout state: activity bar visibility,
 sidebar visibility, active sidebar view container, and panel visibility. It
 accepts the parsed `.workbench/layout.default.json` contract from
 `workbench-config`; personal layout deltas and last-opened UI state remain local
-ignored state.
+ignored state. Focus mode temporarily hides the activity bar, primary sidebar,
+auxiliary sidebar, and bottom panel. Its first activation snapshots the complete
+layout; repeated activation is a no-op, and deactivation restores that snapshot.
+Focus-mode changes are marked transient so persistence adapters retain the
+pre-focus layout.
 
 ### ViewHostFactoryRegistry
 

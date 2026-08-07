@@ -5,7 +5,11 @@ import { act, StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { parseWorkbenchLayoutConfig } from '@workbench-kit/workbench-config';
-import type { EditorState, WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
+import type {
+  EditorState,
+  LayoutService,
+  WorkbenchExtensionDescription,
+} from '@workbench-kit/workbench-core';
 import {
   createWorkbenchHostThemeRegistration,
   REQUIRED_THEME_TOKEN_KEYS,
@@ -353,6 +357,16 @@ function SidebarVisibilityProbe({ onChange }: { onChange: (visible: boolean) => 
       disposable.dispose();
     };
   }, [layoutService, onChange]);
+
+  return null;
+}
+
+function LayoutServiceProbe({ onReady }: { onReady: (service: LayoutService) => void }) {
+  const { layoutService } = useWorkbench();
+
+  useEffect(() => {
+    onReady(layoutService);
+  }, [layoutService, onReady]);
 
   return null;
 }
@@ -1292,6 +1306,65 @@ describe('WorkbenchProvider', () => {
 
     expect(auxiliarySidebar?.textContent).toContain('Structure Tool Window');
     expect(auxiliarySidebar?.textContent).not.toContain('Properties Tool Window');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('does not persist transient focus mode layout changes', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const storage = createMemoryStorage();
+    const storageKey = 'workbench-kit/.workbench/layout/focus-mode-test';
+    const persistedBeforeFocus = JSON.stringify({
+      activityBar: { visible: true },
+      auxiliaryBar: { visible: true },
+      panel: {
+        activeViewContainer: 'output',
+        sizePercent: 38,
+        visible: true,
+      },
+      sideBar: {
+        activeViewContainer: 'explorer',
+        sizePercent: 30,
+        visible: true,
+      },
+    });
+    storage.setItem(storageKey, persistedBeforeFocus);
+    let layoutService: LayoutService | undefined;
+    const captureLayoutService = (service: LayoutService) => {
+      layoutService = service;
+    };
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider layoutStorage={storage} layoutStorageKey={storageKey} persistLayout>
+          <LayoutServiceProbe onReady={captureLayoutService} />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    expect(layoutService).toBeDefined();
+
+    act(() => {
+      layoutService?.setFocusModeActive(true);
+      layoutService?.setActiveViewContainer('search');
+      layoutService?.setPanelSizePercent(20);
+    });
+
+    expect(storage.getItem(storageKey)).toBe(persistedBeforeFocus);
+
+    act(() => {
+      layoutService?.setFocusModeActive(false);
+    });
+
+    expect(JSON.parse(storage.getItem(storageKey) ?? '{}')).toEqual(
+      JSON.parse(persistedBeforeFocus),
+    );
 
     await act(async () => {
       root.unmount();

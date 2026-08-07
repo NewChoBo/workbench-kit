@@ -31,6 +31,8 @@ export type WorkbenchLayoutStateInput = Partial<{
 export interface WorkbenchLayoutChangeEvent {
   readonly previousState: WorkbenchLayoutState;
   readonly state: WorkbenchLayoutState;
+  /** Transient layout changes must not replace the user's persisted layout. */
+  readonly transient: boolean;
 }
 
 export const DEFAULT_WORKBENCH_LAYOUT_STATE: WorkbenchLayoutState = {
@@ -51,6 +53,7 @@ export const DEFAULT_WORKBENCH_LAYOUT_STATE: WorkbenchLayoutState = {
 
 export class LayoutService implements Disposable {
   private readonly onDidChangeLayoutEmitter = new Emitter<WorkbenchLayoutChangeEvent>();
+  private focusModeSnapshot: WorkbenchLayoutState | undefined;
   private state: WorkbenchLayoutState;
 
   readonly onDidChangeLayout = this.onDidChangeLayoutEmitter.event;
@@ -61,6 +64,41 @@ export class LayoutService implements Disposable {
 
   getState(): WorkbenchLayoutState {
     return cloneLayoutState(this.state);
+  }
+
+  isFocusModeActive(): boolean {
+    return this.focusModeSnapshot !== undefined;
+  }
+
+  /**
+   * Applies or restores the built-in distraction-free layout.
+   *
+   * Repeated activation and deactivation are no-ops. While focus mode is active,
+   * layout changes remain transient and deactivation restores the first snapshot.
+   */
+  setFocusModeActive(active: boolean): void {
+    if (active) {
+      if (this.focusModeSnapshot) {
+        return;
+      }
+
+      this.focusModeSnapshot = cloneLayoutState(this.state);
+      this.update({
+        activityBar: { visible: false },
+        auxiliaryBar: { visible: false },
+        panel: { visible: false },
+        sideBar: { visible: false },
+      });
+      return;
+    }
+
+    if (!this.focusModeSnapshot) {
+      return;
+    }
+
+    const snapshot = this.focusModeSnapshot;
+    this.focusModeSnapshot = undefined;
+    this.setState(snapshot);
   }
 
   reset(state: WorkbenchLayoutStateInput = {}): void {
@@ -181,6 +219,7 @@ export class LayoutService implements Disposable {
     this.onDidChangeLayoutEmitter.fire({
       previousState,
       state: nextState,
+      transient: this.isFocusModeActive(),
     });
   }
 }

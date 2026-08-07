@@ -113,6 +113,64 @@ describe('LayoutService', () => {
     });
   });
 
+  it('restores the first layout snapshot after idempotent focus mode transitions', () => {
+    const service = new LayoutService({
+      activityBar: {
+        hiddenItemIds: ['search'],
+        itemOrder: ['explorer', 'search'],
+        visible: true,
+      },
+      auxiliaryBar: { visible: true },
+      panel: {
+        activeViewContainer: 'output',
+        sizePercent: 36,
+        visible: true,
+      },
+      sideBar: {
+        activeViewContainer: 'explorer',
+        sizePercent: 28,
+        visible: true,
+      },
+    });
+    const initialState = service.getState();
+    const changes: Array<{ readonly transient: boolean }> = [];
+    service.onDidChangeLayout((event) => {
+      changes.push({ transient: event.transient });
+    });
+
+    service.setFocusModeActive(true);
+    service.setFocusModeActive(true);
+
+    expect(service.isFocusModeActive()).toBe(true);
+    expect(service.getState()).toEqual({
+      ...initialState,
+      activityBar: { ...initialState.activityBar, visible: false },
+      auxiliaryBar: { visible: false },
+      panel: { ...initialState.panel, visible: false },
+      sideBar: { ...initialState.sideBar, visible: false },
+    });
+    expect(changes).toEqual([{ transient: true }]);
+
+    service.setActivityBarHiddenItemIds(['explorer']);
+    service.setActiveViewContainer('search');
+    service.setSideBarSizePercent(44);
+    service.setActivePanelViewContainer('problems');
+    service.setPanelSizePercent(24);
+    service.setAuxiliaryBarVisible(true);
+
+    expect(changes.every(({ transient }) => transient)).toBe(true);
+
+    service.setFocusModeActive(false);
+
+    expect(service.isFocusModeActive()).toBe(false);
+    expect(service.getState()).toEqual(initialState);
+    expect(changes.at(-1)).toEqual({ transient: false });
+
+    const changeCount = changes.length;
+    service.setFocusModeActive(false);
+    expect(changes).toHaveLength(changeCount);
+  });
+
   it('exports the default public layout contract', () => {
     expect(DEFAULT_WORKBENCH_LAYOUT_STATE).toEqual({
       activityBar: {
