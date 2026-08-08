@@ -181,6 +181,7 @@ import { FieldRemapFlowMapper } from '@workbench-kit/shell-react/field-remap';
 import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
 import { WorkbenchProvider } from '@workbench-kit/shell-react/provider';
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react/layout-storage';
+import { useExtensionRegistryCommandDescriptors } from '@workbench-kit/shell-react/registry-command-descriptors';
 
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
 
@@ -199,6 +200,7 @@ const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
   WorkbenchQuickOpen,
   WorkbenchShortcutCommandBridge,
   WorkbenchStandaloneShell,
+  useExtensionRegistryCommandDescriptors,
   commands: createWorkbenchShellCommands({ activities: [] }),
   quickOpenProvider,
   quickOpenPath: resolveQuickOpenItemPath({ id: 'README.md', label: 'README.md' }),

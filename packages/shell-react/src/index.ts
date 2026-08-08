@@ -242,6 +242,7 @@ export {
   type WorkbenchChatCommandSurfaceOptions,
 } from './chat/command-surface.js';
 export { useWorkbenchCommandDescriptors } from './commands/use-command-descriptors.js';
+export { useExtensionRegistryCommandDescriptors } from './commands/use-extension-registry-command-descriptors.js';
 export {
   executeWorkbenchUserCommandAction,
   registerWorkbenchUserCommands,

@@ -46,7 +46,9 @@ host wants the Kit editor, or omit it for a product-owned editor region.
 
 Performance-sensitive hosts should import orchestration from the focused
 `provider`, `host-shell`, `shell`, `command-host`, `command-palette`, and
-`command-descriptors` subpaths. The root barrel remains the discovery surface,
+`command-descriptors` subpaths. Hosts that already own the canonical extension
+registry can use `registry-command-descriptors` without importing Provider
+context into that leaf bundle. The root barrel remains the discovery surface,
 not the default runtime import graph.
 
 Use `host-shell` when the product owns sidebar, editor, panel, and overlay content.
