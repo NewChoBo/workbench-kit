@@ -26,6 +26,10 @@ Use `@workbench-kit/react/styles.css` when the host also renders Auth or Chat.
 Component-only consumers can instead combine token styles with
 `@workbench-kit/react/primitives.css`.
 
+The packed-consumer gate measures the production `core.css` path, including its
+referenced static assets, and fails when its CSS or total initial gzip budget
+regresses. Budget changes require an explicit initial-load review.
+
 ## Quick start
 
 ```tsx

@@ -15,6 +15,13 @@ const consumerDir = path.join(fixtureRoot, 'consumer');
 const nodeModulesDir = path.join(consumerDir, 'node_modules');
 const outputDir = path.join(consumerDir, 'dist');
 
+// Keep a little deliberate headroom for normal fixes, while forcing larger
+// public-surface growth to include an explicit bundle-budget review.
+const PACKED_CONSUMER_BUDGETS = Object.freeze({
+  cssGzipBytes: 52_000,
+  initialGzipBytes: 240_000,
+});
+
 // Runtime closure reached by the public imports in the generated consumer.
 // Monaco is installed as it would be for a real consumer, but must not enter the
 // manifest's transitive static entry closure.
@@ -252,6 +259,7 @@ function verifyOutput() {
 
   const staticEntries = collectStaticEntries(manifest, entryKey);
   const cssFiles = new Set(staticEntries.flatMap((entry) => entry.css ?? []));
+  const staticAssetFiles = new Set(staticEntries.flatMap((entry) => entry.assets ?? []));
   const sources = [];
   let bytes = 0;
   let gzipBytes = 0;
@@ -279,6 +287,18 @@ function verifyOutput() {
 
   const cssBytes = cssAssets.reduce((total, asset) => total + asset.byteLength, 0);
   const cssGzipBytes = gzipSync(Buffer.concat(cssAssets)).byteLength;
+  const staticAssets = [...staticAssetFiles].map((file) =>
+    fs.readFileSync(path.join(outputDir, file)),
+  );
+  const staticAssetBytes = staticAssets.reduce((total, asset) => total + asset.byteLength, 0);
+  const staticAssetGzipBytes = staticAssets.reduce(
+    (total, asset) => total + gzipSync(asset).byteLength,
+    0,
+  );
+  const initialGzipBytes = gzipBytes + cssGzipBytes + staticAssetGzipBytes;
+
+  assertWithinBudget('CSS gzip', cssGzipBytes, PACKED_CONSUMER_BUDGETS.cssGzipBytes);
+  assertWithinBudget('initial gzip', initialGzipBytes, PACKED_CONSUMER_BUDGETS.initialGzipBytes);
 
   // Vite may emit unreferenced Monaco workers while scanning the React barrel.
   // Only the manifest's transitive static JS closure is part of initial load.
@@ -296,7 +316,14 @@ function verifyOutput() {
   }
 
   console.log(
-    `[check-packed-consumer] OK (${staticEntries.length} static chunks, JS ${bytes} bytes / ${gzipBytes} gzip bytes, CSS ${cssBytes} bytes / ${cssGzipBytes} gzip bytes in ${cssFiles.size} assets).`,
+    `[check-packed-consumer] OK (${staticEntries.length} static chunks, JS ${bytes} bytes / ${gzipBytes} gzip bytes, CSS ${cssBytes} bytes / ${cssGzipBytes} gzip bytes in ${cssFiles.size} assets, static assets ${staticAssetBytes} bytes / ${staticAssetGzipBytes} gzip bytes in ${staticAssetFiles.size} files, initial ${initialGzipBytes} / ${PACKED_CONSUMER_BUDGETS.initialGzipBytes} gzip bytes).`,
+  );
+}
+
+function assertWithinBudget(label, actualBytes, budgetBytes) {
+  if (actualBytes <= budgetBytes) return;
+  throw new Error(
+    `Packed consumer ${label} exceeds its budget: ${actualBytes} > ${budgetBytes} bytes. Review the initial dependency and CSS surface before raising the budget.`,
   );
 }
 
