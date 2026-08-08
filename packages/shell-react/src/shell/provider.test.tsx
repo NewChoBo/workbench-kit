@@ -46,6 +46,7 @@ import {
 } from '../index.js';
 import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
 import { EditorArea } from '../editor/area.js';
+import { WorkbenchHostShell } from './host-shell.js';
 import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
 
 const TEST_AVAILABLE_EXTENSIONS = [
@@ -578,6 +579,31 @@ describe('WorkbenchProvider', () => {
     expect(markup).toContain('aria-pressed="true"');
     expect(markup).toContain('Editor Area');
     expect(markup).toContain('extensions: 1');
+  });
+
+  it('renders the lean host shell with product-owned content slots', () => {
+    const markup = renderToStaticMarkup(
+      <WorkbenchProvider
+        availableExtensions={BUILTIN_WORKBENCH_EXTENSIONS}
+        extensionsConfig={{
+          enabled: ['workbench-kit.builtin.explorer'],
+          recommendations: [],
+        }}
+        initialLayout={{ sideBar: { activeViewContainer: 'explorer', visible: true } }}
+      >
+        <WorkbenchHostShell
+          editorArea={<main>Product editor</main>}
+          primarySidebar={<aside>Product sidebar</aside>}
+          titleBar={<header>Product title</header>}
+        />
+      </WorkbenchProvider>,
+    );
+
+    expect(markup).toContain('Product title');
+    expect(markup).toContain('Product sidebar');
+    expect(markup).toContain('Product editor');
+    expect(markup).toContain('aria-label="Explorer"');
+    expect(markup).not.toContain('aria-label="Settings"');
   });
 
   it('composes host overlays inside the workbench overlay container', async () => {

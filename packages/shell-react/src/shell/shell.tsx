@@ -78,29 +78,13 @@ import {
 import { WorkbenchShellTitleBarLayoutControls } from './titlebar-layout-controls.js';
 import { WorkbenchProfileModal, type WorkbenchProfileInput } from '../workbench/profile-modal.js';
 import { useContextKeyRevision } from '../commands/use-context-key-revision.js';
+import {
+  WORKBENCH_HOST_PRIMARY_SIDEBAR_MAX_PX,
+  WORKBENCH_HOST_PRIMARY_SIDEBAR_MIN_PX,
+  workbenchHostPrimarySidebarSizePercentFromPx,
+  workbenchHostPrimarySidebarSizePxFromPercent,
+} from './layout-metrics.js';
 export type { WorkbenchLocaleOption, WorkbenchThemeOption } from './settings.js';
-
-/** Virtual width used to bridge layout `sizePercent` into pixel SplitView units. */
-const SHELL_REACT_SIDEBAR_LAYOUT_REFERENCE_WIDTH_PX = 1200;
-const SHELL_REACT_PRIMARY_SIDEBAR_MIN_PX = 200;
-const SHELL_REACT_PRIMARY_SIDEBAR_MAX_PX = 480;
-
-function clampShellReactPrimarySidebarSizePx(sizePx: number): number {
-  if (!Number.isFinite(sizePx)) {
-    return SHELL_REACT_PRIMARY_SIDEBAR_MIN_PX;
-  }
-  return Math.min(
-    SHELL_REACT_PRIMARY_SIDEBAR_MAX_PX,
-    Math.max(SHELL_REACT_PRIMARY_SIDEBAR_MIN_PX, Math.round(sizePx)),
-  );
-}
-
-function shellReactPrimarySidebarSizePxFromPercent(sizePercent: number | undefined): number {
-  const percent = Number.isFinite(sizePercent) ? (sizePercent as number) : 20;
-  return clampShellReactPrimarySidebarSizePx(
-    (percent / 100) * SHELL_REACT_SIDEBAR_LAYOUT_REFERENCE_WIDTH_PX,
-  );
-}
 
 export interface WorkbenchShellProps {
   accountManagement?: WorkbenchAccountManagementInput | undefined;
@@ -627,8 +611,8 @@ export function WorkbenchShell({
         isVisible: layout.sideBar.visible,
         // Provider layout still stores sideBar.sizePercent; convert at the shell boundary
         // until workbench-core persists pixel widths directly.
-        maxPrimarySizePx: SHELL_REACT_PRIMARY_SIDEBAR_MAX_PX,
-        minPrimarySizePx: SHELL_REACT_PRIMARY_SIDEBAR_MIN_PX,
+        maxPrimarySizePx: WORKBENCH_HOST_PRIMARY_SIDEBAR_MAX_PX,
+        minPrimarySizePx: WORKBENCH_HOST_PRIMARY_SIDEBAR_MIN_PX,
         node:
           primarySidebar ??
           renderDefaultPrimarySidebar(
@@ -639,13 +623,9 @@ export function WorkbenchShell({
             contextKeySnapshot,
           ),
         onSizePxChange: (sizePx) => {
-          layoutService.setSideBarSizePercent(
-            (clampShellReactPrimarySidebarSizePx(sizePx) /
-              SHELL_REACT_SIDEBAR_LAYOUT_REFERENCE_WIDTH_PX) *
-              100,
-          );
+          layoutService.setSideBarSizePercent(workbenchHostPrimarySidebarSizePercentFromPx(sizePx));
         },
-        primarySizePx: shellReactPrimarySidebarSizePxFromPercent(layout.sideBar.sizePercent),
+        primarySizePx: workbenchHostPrimarySidebarSizePxFromPercent(layout.sideBar.sizePercent),
       }}
       auxiliarySidebar={{
         isVisible: layout.auxiliaryBar.visible,

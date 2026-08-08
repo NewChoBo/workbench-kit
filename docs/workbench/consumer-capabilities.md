@@ -30,6 +30,7 @@ Use official subpath exports from `@workbench-kit/react`. Do not import from `pa
 | `@workbench-kit/platform/tray-close-policy`       | Leaf — tray hide/quit helpers                                          |
 | `@workbench-kit/shell-react/layout-storage`       | Leaf — framework-free layout persistence helpers                       |
 | `@workbench-kit/shell-react/provider`             | Leaf — host context and extension inventory                            |
+| `@workbench-kit/shell-react/host-shell`           | Leaf — product-owned content slots with Kit layout/chrome              |
 | `@workbench-kit/shell-react/shell`                | Leaf — assembled shell without an implicit editor                      |
 | `@workbench-kit/shell-react/command-host`         | Leaf — command host orchestration                                      |
 | `@workbench-kit/shell-react/command-palette`      | Leaf — shortcut and palette helpers                                    |

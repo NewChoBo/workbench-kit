@@ -17,6 +17,7 @@
     "./command-palette": "./src/workbench/command-palette.ts",
     "./field-remap": "./src/field-remap/index.ts",
     "./field-remap/view.css": "./src/field-remap/view.css",
+    "./host-shell": "./src/shell/host-shell.tsx",
     "./layout-storage": "./src/workbench/layout-storage.ts",
     "./provider": "./src/shell/provider.tsx",
     "./shell": "./src/shell/shell.tsx"

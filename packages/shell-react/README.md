@@ -39,9 +39,14 @@ available from the non-React `@workbench-kit/shell-react/layout-storage` subpath
 host wants the Kit editor, or omit it for a product-owned editor region.
 
 Performance-sensitive hosts should import orchestration from the focused
-`provider`, `shell`, `command-host`, `command-palette`, and
+`provider`, `host-shell`, `shell`, `command-host`, `command-palette`, and
 `command-descriptors` subpaths. The root barrel remains the discovery surface,
 not the default runtime import graph.
+
+Use `host-shell` when the product owns sidebar, editor, panel, and overlay content.
+It keeps Kit layout, Activity Bar ordering, resize persistence, and status routing
+without loading the full Settings/Profile/Help assembly. Use `shell` for the
+batteries-included management experience.
 
 Prefer this package when the host needs provider + shell orchestration. For
 layout-only chrome without host services, start from
