@@ -70,13 +70,14 @@ export function sortActivityBarItems<T extends { id: string }>(
 ): T[] {
   const order = itemOrder?.length ? itemOrder : fallbackOrder;
   const orderIndex = new Map(order.map((id, index) => [id, index]));
+  const contributionIndex = new Map(items.map((item, index) => [item.id, index]));
 
   return [...items].sort((left, right) => {
     const leftIndex = orderIndex.get(left.id);
     const rightIndex = orderIndex.get(right.id);
 
     if (leftIndex === undefined && rightIndex === undefined) {
-      return left.id.localeCompare(right.id);
+      return (contributionIndex.get(left.id) ?? 0) - (contributionIndex.get(right.id) ?? 0);
     }
 
     if (leftIndex === undefined) return 1;

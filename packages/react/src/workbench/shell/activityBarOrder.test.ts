@@ -73,15 +73,17 @@ describe('sortActivityBarItems', () => {
 
   it('appends unknown items after known order entries', () => {
     const items = [
-      { id: 'extensions', label: 'Extensions' },
+      { id: 'windows', label: 'Windows' },
       { id: 'explorer', label: 'Explorer' },
+      { id: 'contents', label: 'Contents' },
       { id: 'search', label: 'Search' },
     ];
 
     expect(sortActivityBarItems(items).map((item) => item.id)).toEqual([
       'explorer',
       'search',
-      'extensions',
+      'windows',
+      'contents',
     ]);
   });
 });
