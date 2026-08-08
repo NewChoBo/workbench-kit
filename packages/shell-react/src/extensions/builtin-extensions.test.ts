@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  BUILTIN_WORKBENCH_EXTENSIONS,
-  ExtensionRegistry,
-  SAMPLE_WORKBENCH_EXTENSIONS,
-} from '../index.js';
+import { ExtensionRegistry } from '@workbench-kit/workbench-core';
 
-describe('bundled workbench extensions', () => {
-  it('exports built-in and sample extension manifests', () => {
+import { BUILTIN_WORKBENCH_EXTENSIONS } from './builtin-extensions.js';
+
+describe('built-in workbench extensions', () => {
+  it('exports built-in extension manifests with activators', () => {
     expect(BUILTIN_WORKBENCH_EXTENSIONS.map(({ manifest }) => manifest.id)).toEqual([
       'workbench-kit.builtin.accounts',
       'workbench-kit.builtin.chat',
@@ -21,24 +19,8 @@ describe('bundled workbench extensions', () => {
       'workbench-kit.builtin.workspace',
     ]);
 
-    expect(SAMPLE_WORKBENCH_EXTENSIONS.map(({ manifest }) => manifest.id)).toEqual([
-      'workbench-kit.samples.field-remap',
-      'workbench-kit.samples.hello-world',
-      'workbench-kit.samples.jdw',
-      'workbench-kit.samples.json-preview',
-      'workbench-kit.samples.locale-ko',
-      'workbench-kit.samples.panel-output',
-      'workbench-kit.samples.status-bar',
-      'workbench-kit.samples.theme-alt',
-    ]);
-
     expect(
       BUILTIN_WORKBENCH_EXTENSIONS.every(
-        (extension) => typeof extension.module?.activate === 'function',
-      ),
-    ).toBe(true);
-    expect(
-      SAMPLE_WORKBENCH_EXTENSIONS.every(
         (extension) => typeof extension.module?.activate === 'function',
       ),
     ).toBe(true);
@@ -46,15 +28,10 @@ describe('bundled workbench extensions', () => {
 
   it('registers bundled manifest contributions through ExtensionRegistry', () => {
     const registry = new ExtensionRegistry();
-    registry.registerExtensions([...BUILTIN_WORKBENCH_EXTENSIONS, ...SAMPLE_WORKBENCH_EXTENSIONS]);
+    registry.registerExtensions(BUILTIN_WORKBENCH_EXTENSIONS);
 
     expect(registry.commands.getCommand('workbench-kit.builtin.settings.open')).toMatchObject({
       title: 'Open Settings',
-    });
-    expect(
-      registry.commands.getCommand('workbench-kit.samples.hello-world.sayHello'),
-    ).toMatchObject({
-      title: 'Hello World: Say Hello',
     });
     expect(registry.views.getView('workbench-kit.builtin.explorer.tree')).toMatchObject({
       containerId: 'explorer',

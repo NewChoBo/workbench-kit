@@ -3,10 +3,75 @@ import { describe, expect, it } from 'vitest';
 import { parseWorkbenchExtensionsConfigJson } from '@workbench-kit/workbench-config';
 
 import {
-  BUILTIN_WORKBENCH_EXTENSIONS,
   ExtensionRegistry,
   resolveWorkbenchExtensions,
+  type WorkbenchExtensionDescription,
 } from '../index.js';
+
+const BUILTIN_WORKBENCH_EXTENSIONS: readonly WorkbenchExtensionDescription[] = [
+  createTestExtension('workbench-kit.builtin.accounts', 'Accounts'),
+  createTestExtension(
+    'workbench-kit.builtin.explorer',
+    'Explorer',
+    (context) => {
+      context.commands.registerCommand('workspace.newFile', () => undefined);
+      context.commands.registerCommand('workbench-kit.builtin.explorer.refresh', () => undefined);
+      context.views.registerViewProvider({
+        viewId: 'workbench-kit.builtin.explorer.tree',
+        resolveViewHost: () => ({
+          dispose() {},
+          render: () => ({ kind: 'workbench-kit.builtin.explorer.view' }),
+          title: 'Explorer',
+        }),
+      });
+    },
+    {
+      views: {
+        explorer: [{ id: 'workbench-kit.builtin.explorer.tree', name: 'Explorer' }],
+      },
+    },
+  ),
+  createTestExtension(
+    'workbench-kit.builtin.settings',
+    'Settings',
+    (context) => {
+      context.commands.registerCommand('workbench-kit.builtin.settings.open', () => undefined);
+    },
+    {
+      commands: [
+        {
+          command: 'workbench-kit.builtin.settings.open',
+          title: 'Open Settings',
+        },
+      ],
+    },
+  ),
+];
+
+function createTestExtension(
+  id: string,
+  displayName: string,
+  activate?: NonNullable<WorkbenchExtensionDescription['module']>['activate'],
+  contributes: WorkbenchExtensionDescription['manifest']['contributes'] = {},
+): WorkbenchExtensionDescription {
+  return {
+    manifest: {
+      schemaVersion: 1,
+      id,
+      name: id.split('.').at(-1) ?? id,
+      displayName,
+      version: '0.0.0',
+      publisher: 'workbench-kit',
+      engines: { extensionApi: '^0.0.0', workbench: '^0.0.0' },
+      activationEvents:
+        id === 'workbench-kit.builtin.explorer'
+          ? ['onView:workbench-kit.builtin.explorer.tree']
+          : ['onStartup'],
+      contributes,
+    },
+    module: activate ? { activate } : undefined,
+  };
+}
 
 describe('resolveWorkbenchExtensions', () => {
   it('selects enabled bundled extensions from workspace config', () => {

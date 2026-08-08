@@ -24,6 +24,7 @@ const packageRules = toRuleMap({
     '@workbench-kit/tokens',
     '@workbench-kit/workbench-config',
     '@workbench-kit/workbench-core',
+    '@workbench-kit/workbench-extension-sdk',
     '@workbench-kit/workspace',
   ],
   '@workbench-kit/monaco': ['@workbench-kit/base', '@workbench-kit/platform'],

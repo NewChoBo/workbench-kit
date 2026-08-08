@@ -122,7 +122,8 @@ export function activate(context: ExtensionContext): void {
 }
 ```
 
-Richer built-in example with views, menus, and activities: `extensions/builtin.explorer/`.
+Richer built-in example with views, menus, and activities:
+`packages/shell-react/src/extensions/builtin/explorer/`.
 
 Deep dive: [Extension Development](./extension-development.md) and [Extension System](../architecture/extension-system.md).
 
@@ -151,7 +152,7 @@ Deep dive: [Extension Development](./extension-development.md) and [Extension Sy
    pnpm build:workbench-extensions
    ```
 
-   Regenerates `packages/workbench-core/src/generated/bundled-extensions.ts`.
+   Regenerates the `shell-react` built-in bundle, the sample-host bundle, and the extension lock.
 
 6. **Validate:**
 

@@ -31,6 +31,7 @@
     "@workbench-kit/tokens": "workspace:*",
     "@workbench-kit/workbench-config": "workspace:*",
     "@workbench-kit/workbench-core": "workspace:*",
+    "@workbench-kit/workbench-extension-sdk": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
     "@xyflow/react": "^12.11.2",
     "jsonata": "^2.2.0",

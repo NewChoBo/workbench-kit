@@ -51,7 +51,7 @@ export function useExtensionManagementModel({
   installTrustStorageKey = DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
 }: UseExtensionManagementModelOptions = {}) {
   const workbench = useWorkbench();
-  const { extensionRegistry } = workbench;
+  const { availableExtensions, extensionRegistry } = workbench;
   const resolvedInstalledExtensionsStorage =
     installedExtensionsStorage ?? workbench.installedExtensionsStorage;
   const resolvedInstalledExtensionsStorageKey =
@@ -138,20 +138,26 @@ export function useExtensionManagementModel({
   }, [catalogTrustPolicy, catalogUrl]);
 
   const installedEntries = useMemo<readonly ExtensionManagementEntry[]>(() => {
-    return createExtensionManagementEntries({ extensionRegistry, installedRecords });
-  }, [extensionRegistry, installedRecords]);
+    return createExtensionManagementEntries({
+      availableExtensions,
+      extensionRegistry,
+      installedRecords,
+    });
+  }, [availableExtensions, extensionRegistry, installedRecords]);
 
   const browseEntries = useMemo<readonly ExtensionCatalogBrowseEntry[]>(() => {
     return createExtensionCatalogBrowseEntries({
+      availableExtensions,
       catalogEntries,
       extensionRegistry,
       installedRecords,
     });
-  }, [catalogEntries, extensionRegistry, installedRecords]);
+  }, [availableExtensions, catalogEntries, extensionRegistry, installedRecords]);
 
   const installCatalogEntry = useCallback(
     (entry: ExtensionCatalogBrowseEntry, options?: ExtensionInstallOptions) => {
       const installContext = createExtensionInstallPlanningContext({
+        availableExtensions,
         catalogEntries,
         extensionRegistry,
         installedRecords,
@@ -186,6 +192,7 @@ export function useExtensionManagementModel({
       }
     },
     [
+      availableExtensions,
       catalogEntries,
       extensionRegistry,
       installedRecords,

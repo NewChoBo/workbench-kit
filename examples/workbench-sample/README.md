@@ -16,8 +16,9 @@ pnpm install
 pnpm build:workbench-extensions
 ```
 
-`build:workbench-extensions` regenerates `packages/workbench-core/src/generated/bundled-extensions.ts`
-when extension sources change. The committed generated file is enough for normal dev.
+`build:workbench-extensions` regenerates the published built-in bundle in `shell-react`, this
+example's private sample bundle, and the extension lock when extension sources change. The
+committed generated files are enough for normal dev.
 
 ## Run
 

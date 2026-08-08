@@ -20,7 +20,7 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 - `docs/architecture/*` baseline
 - `schemas/workbench/*`
 - Package skeletons (`base`, `platform`, `workbench-*`, `monaco`)
-- `extensions/builtin.*` manifests
+- package-owned built-in manifests under `shell-react`
 - Root `.workbench` sample
 
 **Exit criteria**
@@ -52,7 +52,7 @@ Delivery phases for the workbench architecture. **Migration milestones (M0–M5)
 - ExtensionRegistry + activation
 - MenuRegistry, ViewRegistry (types + register API)
 - LayoutService (in-memory + `.workbench/layout.default.json`)
-- Extension bundle script for `extensions/builtin.*`
+- Extension bundle script for package-owned built-ins and repository samples
 - `workbench-config` validates and loads workspace files
 
 **Exit criteria**

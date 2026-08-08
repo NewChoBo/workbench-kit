@@ -7,7 +7,7 @@ This document defines how Workbench Kit moves from the **current published stack
 1. **One canonical platform API** — `@workbench-kit/platform` owns commands, context keys, and keybindings after migration.
 2. **One canonical shell** — `@workbench-kit/shell-react` owns workbench assembly; `@workbench-kit/react` keeps primitives and presentational chrome.
 3. **Domain packages stay** — `contracts`, `services`, `adapters`, `jdw`, etc. are not folded into the shell.
-4. **Extensions are the integration surface** — built-in features ship as `extensions/builtin.*`, not as hidden `react` internals.
+4. **Extensions are the integration surface** — built-in features ship inside `shell-react`, not as hidden `react` internals or package-external source imports.
 5. **No compatibility shims** — monorepo stories, demos, and prototype consumers migrate directly to the target package surfaces.
 
 ## Current vs Target (summary)
@@ -16,7 +16,7 @@ This document defines how Workbench Kit moves from the **current published stack
 | ---------------------- | --------------------------------------------- | -------------------------------------------- |
 | Commands / when        | `@workbench-kit/platform`                     | `@workbench-kit/platform`                    |
 | Workbench host         | `react/src/workbench/*` demos + manual wiring | `workbench-core` + `shell-react`             |
-| Settings / explorer UI | Inside `react` exports                        | `extensions/builtin.*`                       |
+| Settings / explorer UI | Inside `react` exports                        | package-owned `shell-react` built-ins        |
 | Extension manifest     | `workbench.extension.json` (skeleton)         | Loaded by `workbench-core` ExtensionRegistry |
 | Config                 | Ad hoc + stories                              | `.workbench` via `workbench-config`          |
 
@@ -53,12 +53,14 @@ imports.
 
 **Goal:** Extension manifest → registry wiring.
 
-**Status:** Done. `workbench-core` provides `ExtensionRegistry`, menu/view/activity/config registries, `LayoutService`, bundled built-in/sample manifests, configured extension resolution, and command execution that activates `onCommand:` extensions before invoking registered handlers.
+**Status:** Done. `workbench-core` provides `ExtensionRegistry`, menu/view/activity/config
+registries, `LayoutService`, configured extension resolution, and command execution that activates
+`onCommand:` extensions before invoking registered handlers. Bundle ownership lives outside core.
 
 | Step | Action                                                                                          |
 | ---- | ----------------------------------------------------------------------------------------------- |
 | 1    | Implement `ExtensionRegistry`, contribution merge into `CommandRegistry` / `KeybindingRegistry` |
-| 2    | Build-time bundle `extensions/builtin.*` into host manifest list                                |
+| 2    | Build-time bundle package-owned built-ins into the shell manifest list                          |
 | 3    | Implement minimal activation (`onStartup`, `onCommand:`)                                        |
 | 4    | `workbench-config` loads `.workbench/extensions.json`                                           |
 

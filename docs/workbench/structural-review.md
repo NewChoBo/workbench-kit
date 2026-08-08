@@ -194,14 +194,14 @@ extensions with matching layout support before being considered first-class.
 
 ### 4.1 Components
 
-| Piece               | Package / path                         | Role                                               |
-| ------------------- | -------------------------------------- | -------------------------------------------------- |
-| Extension SDK       | `workbench-extension-sdk`              | Manifest schema, `ExtensionContext`, contributions |
-| Core registries     | `workbench-core`                       | Views, commands, menus, capabilities, editor       |
-| React shell         | `shell-react`                          | `WorkbenchProvider`, `WorkbenchShell`              |
-| React chrome        | `@workbench-kit/react/workbench/shell` | Activity bar, sidebar, status (presentation)       |
-| Sample host         | `examples/workbench-sample`            | Bundled extensions + editor/auth/workspace smoke   |
-| Built-in extensions | `extensions/builtin.*`                 | Explorer, settings, workspace, accounts            |
+| Piece               | Package / path                                  | Role                                               |
+| ------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| Extension SDK       | `workbench-extension-sdk`                       | Manifest schema, `ExtensionContext`, contributions |
+| Core registries     | `workbench-core`                                | Views, commands, menus, capabilities, editor       |
+| React shell         | `shell-react`                                   | `WorkbenchProvider`, `WorkbenchShell`              |
+| React chrome        | `@workbench-kit/react/workbench/shell`          | Activity bar, sidebar, status (presentation)       |
+| Sample host         | `examples/workbench-sample`                     | Bundled extensions + editor/auth/workspace smoke   |
+| Built-in extensions | `packages/shell-react/src/extensions/builtin/*` | Explorer, settings, workspace, accounts            |
 
 ### 4.2 Extension activation flow
 
@@ -291,7 +291,7 @@ tab-local state into extension host factory creation.
 
 Lane A editor/explorer should bind **`WorkspaceResourceUri` only** for virtual workspace files.
 
-2026-06-25 D3 cleanup: `extensions/builtin.editor` now resolves workspace files
+2026-06-25 D3 cleanup: the `shell-react` editor built-in now resolves workspace files
 and derives editor labels through `@workbench-kit/workspace` URI parser helpers.
 `packages/shell-react/src/editor/resource.ts` also uses the workspace parser
 helper. `workbench-core` still keeps boundary-local URI predicates because the

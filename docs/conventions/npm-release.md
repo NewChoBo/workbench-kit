@@ -11,7 +11,8 @@ rules reflect issues found while standing up trusted publishing in June 2026.
 | `NPM_CI_PUBLISH_PACKAGES`                               | Must stay aligned with `NPM_PUBLISH_ORDER` (same set) |
 
 All `packages/*` workspace packages publish under `@prototype`. Repository-local
-`extensions/*` packages stay private and are not published.
+Repository sample `extensions/*` packages stay private and are not published. Default built-ins
+ship inside `@workbench-kit/shell-react` and are covered by the packed-consumer gate.
 
 Adding a new public package requires:
 

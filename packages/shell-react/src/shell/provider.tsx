@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  BUILTIN_WORKBENCH_EXTENSIONS,
   collectConfigurationDefaults,
   createEditorService,
   ExtensionRegistry,
@@ -21,7 +20,6 @@ import {
   registerHostWorkbenchThemes,
   resolveInstalledAvailableExtensions,
   resolveWorkbenchExtensions,
-  SAMPLE_WORKBENCH_EXTENSIONS,
   DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
   verifyWorkbenchExtensionsAgainstLock,
@@ -36,6 +34,7 @@ import {
   type WorkbenchLayoutStateInput,
   type ViewHostFactory,
 } from '@workbench-kit/workbench-core';
+import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
 import {
   ContextKeyService,
   createWorkbenchPermissionContextKeys,
@@ -97,10 +96,7 @@ export interface WorkbenchWorkspaceHostPort extends WorkbenchEditorSavePort {
 
 export type { WorkbenchStorageAdapter };
 
-const DEFAULT_AVAILABLE_EXTENSIONS = [
-  ...BUILTIN_WORKBENCH_EXTENSIONS,
-  ...SAMPLE_WORKBENCH_EXTENSIONS,
-] as const;
+const DEFAULT_AVAILABLE_EXTENSIONS = BUILTIN_WORKBENCH_EXTENSIONS;
 
 const EMPTY_HOST_THEMES: readonly WorkbenchHostThemeRegistration[] = Object.freeze([]);
 const EMPTY_USER_COMMANDS: readonly WorkbenchUserCommandDefinition[] = Object.freeze([]);
@@ -151,6 +147,7 @@ export interface WorkbenchProviderProps {
 
 export interface WorkbenchContextValue {
   activateCommand(commandId: string): Promise<readonly { readonly extensionId: string }[]>;
+  availableExtensions: readonly WorkbenchExtensionDescription[];
   contextKeyService: ContextKeyService;
   editorDocumentViewProviders: EditorDocumentViewProviderRegistry;
   editorService: EditorService;
@@ -170,6 +167,7 @@ export interface WorkbenchContextValue {
 
 interface WorkbenchProviderServices {
   activateStartup(): void;
+  availableExtensions: readonly WorkbenchExtensionDescription[];
   dispose(): void;
   editorDocumentViewProviders: EditorDocumentViewProviderRegistry;
   editorService: EditorService;
@@ -429,6 +427,7 @@ export function WorkbenchProvider({
       activateStartup: () => {
         void ensureStartupActivation();
       },
+      availableExtensions: resolvedAvailableExtensions,
       dispose: () => {
         saveCommandDisposable?.dispose();
         userCommandDisposables.dispose();
@@ -565,6 +564,7 @@ export function WorkbenchProvider({
   const value = useMemo<WorkbenchContextValue>(
     () => ({
       activateCommand: (commandId) => services.extensionRegistry.activateCommand(commandId),
+      availableExtensions: services.availableExtensions,
       contextKeyService,
       editorDocumentViewProviders: services.editorDocumentViewProviders,
       editorService: services.editorService,

@@ -1,18 +1,21 @@
 # Extension Development
 
-How repository-local workbench extensions are structured, activated, bundled, and validated.
+How package-owned built-ins and repository-local sample extensions are structured, activated,
+bundled, and validated.
 
 ## Overview
 
 Workbench Kit uses a **custom extension system** (not VS Code extension API compatibility). Extensions declare contributions in `workbench.extension.json` and register runtime behavior in `src/index.ts` through `@workbench-kit/workbench-extension-sdk`.
 
-| Concept               | Location                                                      |
-| --------------------- | ------------------------------------------------------------- |
-| Extension packages    | `extensions/builtin.*`, `extensions/samples.*`                |
-| Manifest schema       | `schemas/workbench/extension-manifest.schema.json`            |
-| SDK types and context | `@workbench-kit/workbench-extension-sdk`                      |
-| Bundled artifact      | `packages/workbench-core/src/generated/bundled-extensions.ts` |
-| Workspace enablement  | `.workbench/extensions.json`                                  |
+| Concept               | Location                                                    |
+| --------------------- | ----------------------------------------------------------- |
+| Built-in modules      | `packages/shell-react/src/extensions/builtin/*`             |
+| Sample packages       | `extensions/samples.*`                                      |
+| Manifest schema       | `schemas/workbench/extension-manifest.schema.json`          |
+| SDK types and context | `@workbench-kit/workbench-extension-sdk`                    |
+| Built-in bundle       | `packages/shell-react/src/extensions/builtin-extensions.ts` |
+| Sample bundle         | `examples/workbench-sample/src/sample-extensions.ts`        |
+| Workspace enablement  | `.workbench/extensions.json`                                |
 
 Architecture background: [Extension System](../architecture/extension-system.md).
 
@@ -20,12 +23,13 @@ Architecture background: [Extension System](../architecture/extension-system.md)
 
 ## Built-in vs sample extensions
 
-| Kind     | Path pattern           | Purpose                                                      |
-| -------- | ---------------------- | ------------------------------------------------------------ |
-| Built-in | `extensions/builtin.*` | First-party workbench features (explorer, chat, settings, …) |
-| Sample   | `extensions/samples.*` | Minimal examples for extension authors                       |
+| Kind     | Path pattern                                    | Purpose                                                      |
+| -------- | ----------------------------------------------- | ------------------------------------------------------------ |
+| Built-in | `packages/shell-react/src/extensions/builtin/*` | First-party workbench features (explorer, chat, settings, …) |
+| Sample   | `extensions/samples.*`                          | Minimal examples for extension authors                       |
 
-Both follow the same manifest rules and bundle pipeline. Built-ins are listed in [extensions/README.md](../../extensions/README.md).
+Both follow the same manifest rules and bundle pipeline. Built-ins ship in the same tarball as
+`shell-react`; samples remain private workspace packages.
 
 **Out of scope today:** runtime installation of arbitrary npm extensions, marketplace execution, VS Code extension compatibility. External extensions may arrive later as pre-built, integrity-checked artifacts — see [Security Boundary](../architecture/security-boundary.md).
 
@@ -33,7 +37,7 @@ Both follow the same manifest rules and bundle pipeline. Built-ins are listed in
 
 ## Package layout
 
-Each extension is a private ESM workspace package:
+Each sample extension is a private ESM workspace package:
 
 ```
 extensions/samples.hello-world/
@@ -135,7 +139,8 @@ Type shapes: [Contribution Contracts](../architecture/contribution-contracts.md)
 
 ### Richer example
 
-`extensions/builtin.explorer/workbench.extension.json` adds view containers, activities, views, and view-title menus alongside workspace commands.
+`packages/shell-react/src/extensions/builtin/explorer/workbench.extension.json` adds view
+containers, activities, views, and view-title menus alongside workspace commands.
 
 ---
 

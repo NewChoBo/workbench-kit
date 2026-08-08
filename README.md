@@ -140,7 +140,8 @@ as `v0.0.1-prototype.0` or `workbench-kit-v0.0.1-prototype.0`.
 
 All `packages/*` publish through `NPM_PUBLISH_ORDER` under the `@prototype`
 dist-tag, including `monaco`, `workbench-core`, `shell-react`, and
-`electron-shell`. Repository-local `extensions/*` packages are not published.
+`electron-shell`. Repository-local sample `extensions/*` packages are not published; default
+built-ins ship with `shell-react`.
 
 ## Documentation
 

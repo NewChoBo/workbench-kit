@@ -54,7 +54,7 @@ Full detail: [`docs/conventions/npm-release.md`](docs/conventions/npm-release.md
 | ----------------------- | ----------------------------------------------------------------------------- |
 | Public publish set      | `NPM_PUBLISH_ORDER` in `scripts/npm-publish-config.mjs` (19 packages)         |
 | CI publish set          | Same as `NPM_PUBLISH_ORDER` — do not maintain a smaller allowlist             |
-| Not published           | `extensions/*` (repo-local only)                                              |
+| Not published           | sample `extensions/*` (repo-local only); built-ins ship in `shell-react`      |
 | First release / updates | **`pnpm validate` on tip →** push tag `v<version>` → `publish.yml` (npm OIDC) |
 | Local fallback          | `pnpm publish:packages:local` only when Trusted Publisher unavailable         |
 | Consumer install tag    | `@prototype` (CI does not move `latest`)                                      |

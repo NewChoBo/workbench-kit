@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { BUILTIN_WORKBENCH_EXTENSIONS, ExtensionRegistry } from '@workbench-kit/workbench-core';
+import { ExtensionRegistry } from '@workbench-kit/workbench-core';
+
+import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
 
 describe('builtin.editor markdown document view provider', () => {
   it('registers markdown preview provider on startup activation', async () => {

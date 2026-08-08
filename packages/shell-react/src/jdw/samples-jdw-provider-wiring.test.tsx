@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 
 import { useEditorDocumentViewProviders } from '../editor/use-editor.js';
 import { WorkbenchProvider, useWorkbench } from '../shell/provider.js';
+import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
+import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
 
 const testGlobal = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -42,6 +44,7 @@ describe('samples.jdw provider wiring through WorkbenchProvider', () => {
     await act(async () => {
       root.render(
         <WorkbenchProvider
+          availableExtensions={[...BUILTIN_WORKBENCH_EXTENSIONS, ...SAMPLE_WORKBENCH_EXTENSIONS]}
           extensionsConfig={{
             enabled: ['workbench-kit.builtin.editor', 'workbench-kit.samples.jdw'],
             recommendations: [],

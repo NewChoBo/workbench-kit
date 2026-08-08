@@ -1,5 +1,7 @@
 export const WORKBENCH_KIT_WORKBENCH_REACT_VERSION = '0.0.0' as const;
 
+export { BUILTIN_WORKBENCH_EXTENSIONS } from './extensions/builtin-extensions.js';
+
 export {
   WorkbenchProvider,
   useWorkbench,

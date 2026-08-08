@@ -43,6 +43,13 @@ import {
   type WorkbenchStorageAdapter,
   type WorkbenchShellProps,
 } from '../index.js';
+import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
+import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
+
+const TEST_AVAILABLE_EXTENSIONS = [
+  ...BUILTIN_WORKBENCH_EXTENSIONS,
+  ...SAMPLE_WORKBENCH_EXTENSIONS,
+] as const;
 import { WORKBENCH_APPEARANCE_FIELD_LABELS } from '@workbench-kit/react/workbench';
 import {
   BUILTIN_EXPLORER_MOVE_COMMAND_ID,
@@ -517,6 +524,7 @@ describe('WorkbenchProvider', () => {
 
     const markup = renderToStaticMarkup(
       <WorkbenchProvider
+        availableExtensions={TEST_AVAILABLE_EXTENSIONS}
         installedExtensionsStorage={installedExtensionsStorage}
         installedExtensionsStorageKey={installedExtensionsStorageKey}
       >
@@ -1326,6 +1334,7 @@ describe('WorkbenchProvider', () => {
     await act(async () => {
       root.render(
         <WorkbenchProvider
+          availableExtensions={TEST_AVAILABLE_EXTENSIONS}
           extensionsConfig={{
             enabled: ['workbench-kit.builtin.explorer', 'workbench-kit.samples.panel-output'],
             recommendations: [],

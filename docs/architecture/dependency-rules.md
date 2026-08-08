@@ -4,26 +4,27 @@ Dependency direction enforces a VS Code–like layering: UI-independent core at 
 
 ## Allowed Dependencies
 
-| Package                      | May depend on                                                                                                                 |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `base`                       | _(nothing in-repo)_                                                                                                           |
-| `platform`                   | `base`                                                                                                                        |
-| `tokens`                     | _(no React; optional dev-only tooling)_                                                                                       |
-| `react`                      | `tokens`, `platform`, domain packages used by presentational surfaces; workspace-only demos use local helpers over services   |
-| `workbench-extension-sdk`    | `base`, `platform` (types and minimal utilities only)                                                                         |
-| `workbench-config`           | `base`, `platform`, schemas (as data)                                                                                         |
-| `workbench-core`             | `base`, `platform`, `workbench-extension-sdk`, `workbench-config`                                                             |
-| `shell-react`                | `react`, `workbench-core`, `workbench-config`, `platform`, `tokens`, `workspace`; may host sample surfaces with `field-remap` |
-| `monaco`                     | `base`, `platform` (optional); may peer `react` for editor UI                                                                 |
-| Built-in / sample extensions | `workbench-extension-sdk`                                                                                                     |
-| `contracts`                  | _(nothing in-repo required; keep acyclic)_                                                                                    |
-| `services`                   | `contracts`                                                                                                                   |
-| `adapters`                   | `contracts`, `runtime`, `workspace`, optionally `jdw`                                                                         |
-| `runtime`                    | `contracts`                                                                                                                   |
-| `workspace`                  | _(minimal / none)_                                                                                                            |
-| `jdw` (`json-widget`)        | `contracts` (if needed)                                                                                                       |
-| `jdw-editor`                 | `jdw`, `react` (peer); owns the compile-once JDW template sample explorer                                                     |
-| `field-remap`                | _(nothing in-repo)_ — field remap runtime (`convertToShape`, edges, ValueTransform registry)                                  |
+| Package                        | May depend on                                                                                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `base`                         | _(nothing in-repo)_                                                                                                           |
+| `platform`                     | `base`                                                                                                                        |
+| `tokens`                       | _(no React; optional dev-only tooling)_                                                                                       |
+| `react`                        | `tokens`, `platform`, domain packages used by presentational surfaces; workspace-only demos use local helpers over services   |
+| `workbench-extension-sdk`      | `base`, `platform` (types and minimal utilities only)                                                                         |
+| `workbench-config`             | `base`, `platform`, schemas (as data)                                                                                         |
+| `workbench-core`               | `base`, `platform`, `workbench-extension-sdk`, `workbench-config`                                                             |
+| `shell-react`                  | `react`, `workbench-core`, `workbench-config`, `platform`, `tokens`, `workspace`; may host sample surfaces with `field-remap` |
+| `monaco`                       | `base`, `platform` (optional); may peer `react` for editor UI                                                                 |
+| Built-ins inside `shell-react` | `workbench-extension-sdk`, `platform`, `workspace`                                                                            |
+| Repository sample extensions   | `workbench-extension-sdk` (plus explicit sample dependencies)                                                                 |
+| `contracts`                    | _(nothing in-repo required; keep acyclic)_                                                                                    |
+| `services`                     | `contracts`                                                                                                                   |
+| `adapters`                     | `contracts`, `runtime`, `workspace`, optionally `jdw`                                                                         |
+| `runtime`                      | `contracts`                                                                                                                   |
+| `workspace`                    | _(minimal / none)_                                                                                                            |
+| `jdw` (`json-widget`)          | `contracts` (if needed)                                                                                                       |
+| `jdw-editor`                   | `jdw`, `react` (peer); owns the compile-once JDW template sample explorer                                                     |
+| `field-remap`                  | _(nothing in-repo)_ — field remap runtime (`convertToShape`, edges, ValueTransform registry)                                  |
 
 ### Extension Boundary
 
@@ -48,9 +49,9 @@ Dependency direction enforces a VS Code–like layering: UI-independent core at 
 ## Dependency Graph (high level)
 
 ```
-extensions ──► workbench-extension-sdk ──► platform ──► base
-                    ▲
-shell-react ──► react ──► tokens
+sample extensions ──► workbench-extension-sdk ──► platform ──► base
+                              ▲
+shell-react (built-ins) ──► react ──► tokens
        │              │
        └──────► workbench-core ──► workbench-config
 ```
@@ -70,7 +71,7 @@ node ./scripts/check-workbench-dependency-graph.mjs
 ```
 
 The script checks package dependencies and TypeScript import/export edges for
-`packages/*` and `extensions/*`, and rejects public packages that runtime- or
+`packages/*` and repository-only sample `extensions/*`, and rejects public packages that runtime- or
 peer-depend on private workspace packages. It also rejects runtime workspace
 dependency cycles. It is wired into `pnpm validate`. Future work may replace or
 augment it with `dependency-cruiser` or ESLint restricted-path rules.

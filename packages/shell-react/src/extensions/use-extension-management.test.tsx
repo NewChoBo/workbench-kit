@@ -7,6 +7,8 @@ import type { WorkbenchStorageAdapter } from '@workbench-kit/workbench-core';
 
 import { WorkbenchProvider } from '../shell/provider.js';
 import { useExtensionManagementModel } from './use-extension-management.js';
+import { BUILTIN_WORKBENCH_EXTENSIONS } from './builtin-extensions.js';
+import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
 
 type ExtensionManagementModel = ReturnType<typeof useExtensionManagementModel>;
 
@@ -93,6 +95,7 @@ describe('useExtensionManagementModel', () => {
       root.render(
         <StrictMode>
           <WorkbenchProvider
+            availableExtensions={[...BUILTIN_WORKBENCH_EXTENSIONS, ...SAMPLE_WORKBENCH_EXTENSIONS]}
             // Keep samples available for planning, but do not pre-enable them or
             // install becomes an already-enabled no-op with no storage write.
             extensionsConfig={{ enabled: [], recommendations: [] }}

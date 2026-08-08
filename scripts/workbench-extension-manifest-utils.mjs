@@ -38,39 +38,57 @@ const requiredThemeTokenKeys = [
 ];
 
 export async function readWorkbenchExtensionManifestEntries(repoRoot) {
-  const extensionsRoot = path.join(repoRoot, 'extensions');
-  const directoryEntries = await readdir(extensionsRoot, { withFileTypes: true });
-  const directories = directoryEntries
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort((left, right) => left.localeCompare(right));
-
   const entries = [];
 
-  for (const directory of directories) {
-    const extensionDirectory = path.join(extensionsRoot, directory);
-    const manifestPath = path.join(extensionDirectory, 'workbench.extension.json');
+  const locations = [
+    {
+      directoryName: (name) => `builtin.${name}`,
+      packaging: 'shell-builtin',
+      root: path.join(repoRoot, 'packages', 'shell-react', 'src', 'extensions', 'builtin'),
+    },
+    {
+      directoryName: (name) => name,
+      packaging: 'repository-local',
+      root: path.join(repoRoot, 'extensions'),
+    },
+  ];
 
-    if (!existsSync(manifestPath)) {
-      continue;
+  for (const location of locations) {
+    const directoryEntries = await readdir(location.root, { withFileTypes: true });
+    const directories = directoryEntries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort((left, right) => left.localeCompare(right));
+
+    for (const sourceDirectory of directories) {
+      const directory = location.directoryName(sourceDirectory);
+      const extensionDirectory = path.join(location.root, sourceDirectory);
+      const manifestPath = path.join(extensionDirectory, 'workbench.extension.json');
+
+      if (!existsSync(manifestPath)) {
+        continue;
+      }
+
+      const modulePath = path.join(extensionDirectory, 'src', 'index.ts');
+      const packageJsonPath = path.join(extensionDirectory, 'package.json');
+
+      entries.push({
+        directory,
+        extensionDirectory,
+        extensionPath: path.join('extensions', directory).replaceAll(path.sep, '/'),
+        manifest: JSON.parse(await readFile(manifestPath, 'utf8')),
+        manifestPath,
+        modulePath,
+        packageJson: existsSync(packageJsonPath)
+          ? JSON.parse(await readFile(packageJsonPath, 'utf8'))
+          : undefined,
+        packageJsonPath,
+        packaging: location.packaging,
+      });
     }
-
-    const packageJsonPath = path.join(extensionDirectory, 'package.json');
-
-    entries.push({
-      directory,
-      extensionDirectory,
-      extensionPath: path.join('extensions', directory).replaceAll(path.sep, '/'),
-      manifest: JSON.parse(await readFile(manifestPath, 'utf8')),
-      manifestPath,
-      packageJson: existsSync(packageJsonPath)
-        ? JSON.parse(await readFile(packageJsonPath, 'utf8'))
-        : undefined,
-      packageJsonPath,
-    });
   }
 
-  return entries;
+  return entries.sort((left, right) => left.directory.localeCompare(right.directory));
 }
 
 export function validateWorkbenchExtensionManifests(entries, repoRoot) {
@@ -181,6 +199,18 @@ function validateManifestShape(entry, violations, repoRoot) {
 }
 
 function validateExtensionPackage(entry, violations, repoRoot) {
+  if (entry.modulePath && !existsSync(entry.modulePath)) {
+    violations.push({
+      location: relativePath(entry.modulePath, repoRoot),
+      message: 'Extension directory must include src/index.ts.',
+      rule: 'extension-module-missing',
+    });
+  }
+
+  if (entry.packaging === 'shell-builtin') {
+    return;
+  }
+
   if (!entry.packageJson) {
     violations.push({
       location: relativePath(entry.packageJsonPath, repoRoot),

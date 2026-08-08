@@ -22,6 +22,9 @@ const packageNames = [
   '@workbench-kit/base',
   '@workbench-kit/contracts',
   '@workbench-kit/platform',
+  '@workbench-kit/workbench-extension-sdk',
+  '@workbench-kit/workbench-config',
+  '@workbench-kit/workbench-core',
   '@workbench-kit/runtime',
   '@workbench-kit/workspace',
   '@workbench-kit/adapters',
@@ -155,16 +158,22 @@ import { WorkbenchStandaloneShell } from '@workbench-kit/react/workbench/standal
 import { resolveWorkbenchTheme } from '@workbench-kit/react/workbench/theme';
 import { DARK_THEME_PRESET_OPTIONS } from '@workbench-kit/react/workbench/themePresets';
 import { FieldRemapFlowMapper } from '@workbench-kit/shell-react/field-remap';
+import {
+  BUILTIN_WORKBENCH_EXTENSIONS,
+  WorkbenchProvider,
+} from '@workbench-kit/shell-react';
 
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
 
 globalThis.__workbenchKitPackedConsumer = Object.freeze({
   ContextMenu,
+  BUILTIN_WORKBENCH_EXTENSIONS,
   DARK_THEME_PRESET_OPTIONS,
   FieldRemapFlowMapper,
   StatusBar,
   WorkbenchCommandPalette,
   WorkbenchPreviewCanvas,
+  WorkbenchProvider,
   WorkbenchPropertyOverrideLabel,
   WorkbenchQuickOpen,
   WorkbenchShortcutCommandBridge,

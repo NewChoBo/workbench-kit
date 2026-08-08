@@ -28,10 +28,6 @@ export type {
   WorkbenchEditorServiceCapability,
   WorkbenchSettingsCapability,
 } from '@workbench-kit/workbench-extension-sdk';
-export {
-  BUILTIN_WORKBENCH_EXTENSIONS,
-  SAMPLE_WORKBENCH_EXTENSIONS,
-} from './generated/bundled-extensions.js';
 export { CapabilityRegistry, type CapabilityProvider } from './capability/registry.js';
 export {
   createEditorDocumentViewProviderRegistry,

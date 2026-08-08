@@ -5,19 +5,23 @@ import { act, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import {
-  BUILTIN_WORKBENCH_EXTENSIONS,
-  type WorkbenchExtensionDescription,
-} from '@workbench-kit/workbench-core';
+import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
 import { WORKSPACE_EXPLORER_DRAG_DATA_TYPE } from '@workbench-kit/react/workbench/workspace/explorer';
 import { EditorArea } from './area.js';
 import type { EditorDocumentViewProvider } from './view-providers.js';
 import { WorkbenchProvider } from '../shell/provider.js';
+import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
+import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
 import { useEditorService } from './use-editor.js';
 
 const testGlobal = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
 };
+
+const TEST_AVAILABLE_EXTENSIONS = [
+  ...BUILTIN_WORKBENCH_EXTENSIONS,
+  ...SAMPLE_WORKBENCH_EXTENSIONS,
+] as const;
 
 testGlobal.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -1099,6 +1103,7 @@ describe('EditorArea', () => {
     await act(async () => {
       root.render(
         <WorkbenchProvider
+          availableExtensions={TEST_AVAILABLE_EXTENSIONS}
           extensionsConfig={{
             enabled: ['workbench-kit.builtin.editor', 'workbench-kit.samples.jdw'],
             recommendations: [],
@@ -1741,6 +1746,7 @@ describe('EditorArea', () => {
     await act(async () => {
       root.render(
         <WorkbenchProvider
+          availableExtensions={TEST_AVAILABLE_EXTENSIONS}
           extensionsConfig={{
             enabled: ['workbench-kit.builtin.editor', 'workbench-kit.samples.jdw'],
             recommendations: [],
@@ -1876,6 +1882,7 @@ describe('EditorArea', () => {
     await act(async () => {
       root.render(
         <WorkbenchProvider
+          availableExtensions={TEST_AVAILABLE_EXTENSIONS}
           extensionsConfig={{
             enabled: ['workbench-kit.builtin.editor', 'workbench-kit.samples.jdw'],
             recommendations: [],
@@ -1961,6 +1968,7 @@ describe('EditorArea', () => {
     await act(async () => {
       root.render(
         <WorkbenchProvider
+          availableExtensions={TEST_AVAILABLE_EXTENSIONS}
           extensionsConfig={{
             enabled: ['workbench-kit.builtin.editor', 'workbench-kit.samples.jdw'],
             recommendations: [],

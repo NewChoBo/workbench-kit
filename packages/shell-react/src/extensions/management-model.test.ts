@@ -5,6 +5,13 @@ import {
   createExtensionCatalogBrowseEntries,
   createExtensionManagementEntries,
 } from './management-model.js';
+import { BUILTIN_WORKBENCH_EXTENSIONS } from './builtin-extensions.js';
+import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
+
+const AVAILABLE_EXTENSIONS = [
+  ...BUILTIN_WORKBENCH_EXTENSIONS,
+  ...SAMPLE_WORKBENCH_EXTENSIONS,
+] as const;
 
 const helloWorldCatalogEntry: ExtensionCatalogEntry = {
   category: 'utility',
@@ -19,6 +26,7 @@ describe('extension-management-model', () => {
     const registry = new ExtensionRegistry();
 
     const entries = createExtensionCatalogBrowseEntries({
+      availableExtensions: AVAILABLE_EXTENSIONS,
       catalogEntries: [helloWorldCatalogEntry],
       extensionRegistry: registry,
       installedRecords: [],
@@ -43,6 +51,7 @@ describe('extension-management-model', () => {
     const registry = new ExtensionRegistry();
 
     const entries = createExtensionManagementEntries({
+      availableExtensions: AVAILABLE_EXTENSIONS,
       extensionRegistry: registry,
       installedRecords: [
         {

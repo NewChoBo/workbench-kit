@@ -1,26 +1,11 @@
 # Workbench Extensions
 
-Extensions in this directory are repository-local packages consumed by the
-`workbench-core` bundled extension pipeline. They use
+Extensions in this directory are repository-local sample packages consumed only by the sample-host
+bundle pipeline. They use
 `workbench.extension.json` for contribution metadata and `src/index.ts` for
 activation handlers.
 
 **Guides:** [Extension Development](../docs/guides/extension-development.md) · [Use Case Scenarios](../docs/guides/use-cases.md)
-
-## Built-In Extensions
-
-| Extension             | Runtime role                                                                                        |
-| --------------------- | --------------------------------------------------------------------------------------------------- |
-| `builtin.accounts`    | Account status command, account menu entry, account capability lookup, and account configuration.   |
-| `builtin.chat`        | Chat and AI Chat activities, sidebar views, and slash command execution through workbench commands. |
-| `builtin.commands`    | Commands activity, registry sidebar, focus/refresh commands, and view title refresh action.         |
-| `builtin.editor`      | Built-in text editor contribution, Markdown preview document view, and React shell host rendering.  |
-| `builtin.explorer`    | Explorer activity/view; declares `workbench.workspace` + `workspace.read`/`write`.                  |
-| `builtin.keybindings` | Default workbench keybindings such as `ctrl+s` for `editor.save`.                                   |
-| `builtin.search`      | Search activity container and sidebar view provider.                                                |
-| `builtin.settings`    | Open settings command, command palette entry, and settings configuration for modal settings hosts.  |
-| `builtin.workspace`   | Workspace info command; declares `workbench.workspace` + `workspace.read`.                          |
-| `builtin.extensions`  | Extensions activity, marketplace sidebar, and extension management commands.                        |
 
 ## Samples
 
@@ -41,8 +26,10 @@ activation handlers.
   `ExtensionContext`.
 - Extension packages must not import `shell-react` or private package source
   paths.
-- Host installation, marketplace loading, and trust escalation remain outside
-  these repository-local built-ins.
+- Host installation, marketplace loading, and trust escalation remain outside these samples.
+
+Published built-ins live in `packages/shell-react/src/extensions/builtin/` so their generated bundle
+and implementations are contained by the same npm package.
 
 ## Validation
 

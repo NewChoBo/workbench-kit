@@ -14,15 +14,15 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 
 ## Shell Stack (target architecture)
 
-| Package                                  | Current state                                                                     | Target role                                                                          | Action                                                                      |
-| ---------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `@workbench-kit/base`                    | Phase 5: public-ready foundation package                                          | Foundation utilities                                                                 | **Keep**                                                                    |
-| `@workbench-kit/platform`                | Phase 5: public-ready canonical platform package                                  | Canonical platform services (commands, context, keybindings, auth/account contracts) | **Keep** — **absorbed `core`**                                              |
-| `@workbench-kit/workbench-core`          | Phase 4: registries, extension activation, layout, bundled modules (`@prototype`) | Extension registry, menu/view/layout registries, host orchestration                  | **Keep**                                                                    |
-| `@workbench-kit/shell-react`             | Phase 3: provider and registry-backed shell wiring (`@prototype`)                 | WorkbenchProvider, shell wiring, palette/account entry                               | **Keep** — **absorbs `react/workbench` orchestration**                      |
-| `@workbench-kit/workbench-extension-sdk` | Phase 5: public-ready manifest plus command/view provider context APIs            | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
-| `@workbench-kit/workbench-config`        | Phase 5: public-ready `.workbench` extension/layout config parsing                | `.workbench` load/merge/validate                                                     | **Keep**                                                                    |
-| `@workbench-kit/monaco`                  | Skeleton                                                                          | Editor integration                                                                   | **Keep** (optional)                                                         |
+| Package                                  | Current state                                                          | Target role                                                                          | Action                                                                      |
+| ---------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `@workbench-kit/base`                    | Phase 5: public-ready foundation package                               | Foundation utilities                                                                 | **Keep**                                                                    |
+| `@workbench-kit/platform`                | Phase 5: public-ready canonical platform package                       | Canonical platform services (commands, context, keybindings, auth/account contracts) | **Keep** — **absorbed `core`**                                              |
+| `@workbench-kit/workbench-core`          | Registries, extension activation, layout (`@prototype`)                | Extension registry, menu/view/layout registries, host orchestration                  | **Keep** — no repository-only module imports                                |
+| `@workbench-kit/shell-react`             | Provider, built-ins, and registry-backed shell wiring (`@prototype`)   | WorkbenchProvider, built-in bundle, shell wiring, palette/account entry              | **Keep** — **absorbs `react/workbench` orchestration**                      |
+| `@workbench-kit/workbench-extension-sdk` | Phase 5: public-ready manifest plus command/view provider context APIs | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
+| `@workbench-kit/workbench-config`        | Phase 5: public-ready `.workbench` extension/layout config parsing     | `.workbench` load/merge/validate                                                     | **Keep**                                                                    |
+| `@workbench-kit/monaco`                  | Skeleton                                                               | Editor integration                                                                   | **Keep** (optional)                                                         |
 
 ## UI Stack
 
@@ -40,7 +40,7 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 | `./workbench/shell` (WorkbenchShell layout only)                    | Stay in `react`; `shell-react` composes it without loading the broader `./workbench` surface                     |
 | `./workbench` (CommandPalette wiring, command registries)           | Move to `shell-react` + `workbench-core`; remaining exports are presentational or demo-only during migration     |
 | `./workbench/demo`                                                  | Private Storybook/workspace-only helpers; excluded from npm export and package files                             |
-| `./workbench/settings`, `./workbench/auth`, `./workbench/workspace` | Move to `extensions/builtin.*` + thin `shell-react` hosts                                                        |
+| `./workbench/settings`, `./workbench/auth`, `./workbench/workspace` | Move to package-owned built-ins + thin `shell-react` hosts                                                       |
 | `./jdw`, `./widget-tree`, `./widget-asset`, `./widget-studio`       | Stay in `react` for rendering, fixtures, and domain UI; `jdw-editor` only assembles the compile-once sample flow |
 | `./jdw/preview`, `./jdw/samples`                                    | Narrow public JDW subpaths for editor packages that must avoid the broad `./jdw` barrel                          |
 
@@ -58,10 +58,10 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 
 ## Extensions (repository)
 
-| Location               | Target role                                                  | Action                                                               |
-| ---------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------- |
-| `extensions/builtin.*` | First-party feature minimums with manifest/module activation | **Keep** — absorb richer UI from `react/workbench` where appropriate |
-| `extensions/samples.*` | Samples                                                      | **Keep**                                                             |
+| Location                                        | Target role                                                            | Action                                                                   |
+| ----------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `packages/shell-react/src/extensions/builtin/*` | Published first-party feature minimums with manifest/module activation | **Keep inside `shell-react`** — the default shell is their runtime owner |
+| `extensions/samples.*`                          | Repository-only samples                                                | **Keep private** — explicit sample-host composition only                 |
 
 ## Naming Clarification
 
@@ -75,9 +75,9 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 ## Dependency Target Graph
 
 ```
-extensions ──► workbench-extension-sdk ──► platform ──► base
-                    ▲
-shell-react ──► react ──► tokens
+sample extensions ──► workbench-extension-sdk ──► platform ──► base
+                              ▲
+shell-react (built-ins) ──► react ──► tokens
        │              │
        └──────► workbench-core ──► workbench-config
                       │

@@ -11,9 +11,6 @@ import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/worksp
 import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
 import {
   BUILTIN_WORKBENCH_EXTENSIONS,
-  SAMPLE_WORKBENCH_EXTENSIONS,
-} from '@workbench-kit/workbench-core';
-import {
   createWorkspaceResourceStatusItems,
   DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
   DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
@@ -32,6 +29,7 @@ import {
   useWorkspaceResourceState,
   type WorkbenchProfileInput,
 } from '@workbench-kit/shell-react';
+import { SAMPLE_WORKBENCH_EXTENSIONS } from './sample-extensions.js';
 
 const SAMPLE_AVAILABLE_EXTENSIONS = [
   ...BUILTIN_WORKBENCH_EXTENSIONS,

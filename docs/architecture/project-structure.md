@@ -14,7 +14,8 @@ workbench-kit/
 │   ├── tokens/                    # Design tokens (no React)
 │   ├── react/                     # React primitives and lightweight workbench chrome
 │   ├── workbench-core/            # Registries, layout service, extension registry
-│   ├── shell-react/           # React workbench shell (ActivityBar, panels, palette)
+│   ├── shell-react/               # React shell + published built-in extensions
+│   │   └── src/extensions/builtin/
 │   ├── workbench-extension-sdk/   # Stable extension contribution types and helpers
 │   ├── workbench-config/          # `.workbench` config loading and validation
 │   ├── monaco/                    # Optional Monaco editor integration placeholder
@@ -25,16 +26,7 @@ workbench-kit/
 │   ├── workspace/                 # Workspace path/tree utilities
 │   ├── json-widget/               # @workbench-kit/jdw engine
 │   └── jdw-editor/                # Compile-once JDW sample explorer
-├── extensions/
-│   ├── builtin.accounts/
-│   ├── builtin.chat/
-│   ├── builtin.commands/
-│   ├── builtin.editor/
-│   ├── builtin.explorer/
-│   ├── builtin.keybindings/
-│   ├── builtin.search/
-│   ├── builtin.settings/
-│   ├── builtin.workspace/
+├── extensions/                   # Repository-only samples
 │   ├── samples.hello-world/
 │   ├── samples.theme-alt/
 │   ├── samples.locale-ko/
@@ -95,9 +87,13 @@ instead of recreating legacy compatibility paths.
 
 ## Extensions
 
-Built-in extensions live under `extensions/builtin.*` and ship as repository-local, build-time bundled artifacts. They contribute commands, views, menus, settings, and activities through `workbench.extension.json` and the extension SDK.
+Built-in extensions live inside `packages/shell-react/src/extensions/builtin/*`. Their generated
+description bundle and implementation sources ship in the same npm tarball, so the public shell
+never reaches outside its package. They contribute commands, views, menus, settings, and activities
+through `workbench.extension.json` and the extension SDK.
 
-Sample extensions under `extensions/samples.*` demonstrate minimal contribution patterns without production functionality.
+Sample extensions under `extensions/samples.*` remain private and are composed explicitly by
+`examples/workbench-sample`; `WorkbenchProvider` does not enable sample behavior by default.
 
 ### Extension taxonomy (MVP)
 

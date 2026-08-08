@@ -7,7 +7,7 @@ Workbench Kit uses a **custom extension system** for repository-local and bundle
 ### In scope
 
 - Stable contribution model via `@workbench-kit/workbench-extension-sdk`
-- Built-in extensions shipped from `extensions/builtin.*` in this repository
+- Built-in extensions shipped inside `@workbench-kit/shell-react`
 - Build-time bundled extension artifacts consumed by the workbench host
 - Contribution points: commands, keybindings, menus, views, settings, activities, layout metadata
 
@@ -74,11 +74,10 @@ refuses to generate a bundle from invalid manifests.
 
 ## Built-in Extensions
 
-Repository-local extensions under `extensions/builtin.*` provide first-party
-workbench features. They follow the same manifest and SDK rules as sample
-extensions. The generated bundle includes both manifest data and the entry
-module, so `.workbench/extensions.json` controls which built-ins are registered
-and activatable.
+Package-owned extensions under `packages/shell-react/src/extensions/builtin/*` provide first-party
+workbench features. They follow the same manifest and SDK rules as sample extensions. The generated
+bundle and entry modules ship together in `shell-react`, so `.workbench/extensions.json` controls
+which built-ins are registered and activatable without package-external imports.
 
 | Extension             | Current role                                                                      |
 | --------------------- | --------------------------------------------------------------------------------- |
@@ -100,7 +99,7 @@ above for the sample host and keeps the most visible workbench features in
 
 `extensions/samples.hello-world` demonstrates minimal activation and a single command contribution without production logic.
 
-`extensions/builtin.editor` contributes the text editor host **and** Markdown
+`packages/shell-react/src/extensions/builtin/editor` contributes the text editor host **and** Markdown
 preview document view for `*.md` / `*.mdx`. That preview used to live as a shell
 default; it is extension-owned so disabling the built-in removes the surface.
 Shell maps the extension render marker to `WorkbenchMarkdownPreview`.

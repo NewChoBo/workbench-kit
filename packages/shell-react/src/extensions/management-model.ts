@@ -1,6 +1,4 @@
 import {
-  BUILTIN_WORKBENCH_EXTENSIONS,
-  SAMPLE_WORKBENCH_EXTENSIONS,
   createExtensionFeatureSpec,
   createExtensionInstallPlan,
   resolveBundledExtensionByManifestUrl,
@@ -20,12 +18,8 @@ import type {
   ExtensionManagementFeatureSummary,
 } from '@workbench-kit/react/workbench/management';
 
-export const BUNDLED_EXTENSIONS = [
-  ...BUILTIN_WORKBENCH_EXTENSIONS,
-  ...SAMPLE_WORKBENCH_EXTENSIONS,
-] as const;
-
 export interface CreateExtensionManagementEntriesInput {
+  readonly availableExtensions: readonly WorkbenchExtensionDescription[];
   readonly extensionRegistry: ExtensionRegistry;
   readonly installedRecords: readonly InstalledExtensionRecord[];
 }
@@ -42,38 +36,44 @@ export interface ExtensionInstallPlanningContext extends CreateExtensionManageme
 }
 
 export function createExtensionManagementEntries({
+  availableExtensions,
   extensionRegistry,
   installedRecords,
 }: CreateExtensionManagementEntriesInput): readonly ExtensionManagementEntry[] {
   const installedById = new Map(installedRecords.map((record) => [record.id, record]));
-  const extensionFeatures = createExtensionManagementFeatureMaps(extensionRegistry);
-  const bundledEntries = BUNDLED_EXTENSIONS.map((extension) => {
-    const installed = installedById.get(extension.manifest.id);
-    const isBuiltin = extension.manifest.id.startsWith('workbench-kit.builtin.');
-    const featureState = resolveExtensionManagementFeatureState(
-      extension.manifest.id,
-      extensionFeatures,
-    );
+  const extensionFeatures = createExtensionManagementFeatureMaps(
+    availableExtensions,
+    extensionRegistry,
+  );
+  const bundledEntries = availableExtensions
+    .map((extension) => {
+      const installed = installedById.get(extension.manifest.id);
+      const isBuiltin = extension.manifest.id.startsWith('workbench-kit.builtin.');
+      const featureState = resolveExtensionManagementFeatureState(
+        extension.manifest.id,
+        extensionFeatures,
+      );
 
-    return {
-      category: installed?.category ?? (isBuiltin ? 'builtin' : 'sample'),
-      description: extension.manifest.displayName,
-      diagnostics: featureState.diagnostics,
-      displayName: extension.manifest.displayName,
-      enabled: isBuiltin ? true : (installed?.enabled ?? false),
-      features: featureState.features,
-      id: extension.manifest.id,
-      installedAt: installed?.installedAt,
-      manifestUrl: installed?.manifestUrl,
-      source: isBuiltin ? ('bundled' as const) : ('installed' as const),
-    } satisfies ExtensionManagementEntry;
-  }).filter((entry) => entry.source === 'bundled' || installedById.has(entry.id));
+      return {
+        category: installed?.category ?? (isBuiltin ? 'builtin' : 'sample'),
+        description: extension.manifest.displayName,
+        diagnostics: featureState.diagnostics,
+        displayName: extension.manifest.displayName,
+        enabled: isBuiltin ? true : (installed?.enabled ?? false),
+        features: featureState.features,
+        id: extension.manifest.id,
+        installedAt: installed?.installedAt,
+        manifestUrl: installed?.manifestUrl,
+        source: isBuiltin ? ('bundled' as const) : ('installed' as const),
+      } satisfies ExtensionManagementEntry;
+    })
+    .filter((entry) => entry.source === 'bundled' || installedById.has(entry.id));
 
   const activeExtensions = extensionRegistry
     .getExtensions()
     .filter(
       (extension) =>
-        !BUNDLED_EXTENSIONS.some((bundled) => bundled.manifest.id === extension.manifest.id),
+        !availableExtensions.some((bundled) => bundled.manifest.id === extension.manifest.id),
     )
     .map((extension) => {
       const installed = installedById.get(extension.manifest.id);
@@ -102,12 +102,14 @@ export function createExtensionManagementEntries({
 }
 
 export function createExtensionCatalogBrowseEntries({
+  availableExtensions,
   catalogEntries,
   extensionRegistry,
   installedRecords,
 }: CreateExtensionCatalogBrowseEntriesInput): readonly ExtensionCatalogBrowseEntry[] {
   const installedIds = new Set(installedRecords.map((record) => record.id));
   const installContext = createExtensionInstallPlanningContext({
+    availableExtensions,
     catalogEntries,
     extensionRegistry,
     installedRecords,
@@ -135,23 +137,24 @@ export function createExtensionCatalogBrowseEntries({
 }
 
 export function createExtensionInstallPlanningContext({
+  availableExtensions,
   catalogEntries,
   extensionRegistry,
   installedRecords,
 }: CreateExtensionCatalogBrowseEntriesInput): ExtensionInstallPlanningContext {
-  const availableExtensions = mergeUniqueExtensionDescriptions([
-    ...BUNDLED_EXTENSIONS,
+  const installableExtensions = mergeUniqueExtensionDescriptions([
+    ...availableExtensions,
     ...extensionRegistry.getExtensions(),
   ]);
 
   return {
-    availableExtensions,
+    availableExtensions: installableExtensions,
     enabledExtensionIds: extensionRegistry
       .getExtensions()
       .map((extension) => extension.manifest.id),
     extensionRegistry,
     hostCapabilityIds: extensionRegistry.capabilityRegistry.listProviderIds(),
-    installSources: createExtensionInstallSources(catalogEntries, availableExtensions),
+    installSources: createExtensionInstallSources(catalogEntries, installableExtensions),
     installedRecords,
   };
 }
@@ -215,10 +218,13 @@ function mergeUniqueExtensionDescriptions(
   return [...byId.values()];
 }
 
-function createExtensionManagementFeatureMaps(extensionRegistry: ExtensionRegistry) {
+function createExtensionManagementFeatureMaps(
+  availableExtensions: readonly WorkbenchExtensionDescription[],
+  extensionRegistry: ExtensionRegistry,
+) {
   return {
     bundledFeaturesById: new Map(
-      BUNDLED_EXTENSIONS.map((extension) => [
+      availableExtensions.map((extension) => [
         extension.manifest.id,
         createExtensionFeatureSpec(extension),
       ]),

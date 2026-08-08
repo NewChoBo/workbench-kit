@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ExtensionRegistry, SAMPLE_WORKBENCH_EXTENSIONS } from '@workbench-kit/workbench-core';
+import { ExtensionRegistry } from '@workbench-kit/workbench-core';
+import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
 
 describe('samples.jdw document view providers', () => {
   it('registers form and preview providers on startup activation', async () => {

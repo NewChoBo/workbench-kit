@@ -38,7 +38,7 @@ share raw string literals:
 | `WORKBENCH_AUTH_CAPABILITY_ID`    | `workbench.auth`    | `WorkbenchAuthProvider`         |
 | `WORKBENCH_SECRETS_CAPABILITY_ID` | `workbench.secrets` | `WorkbenchSecretStorageService` |
 
-`extensions/builtin.accounts` declares `capabilities.requires:
+`packages/shell-react/src/extensions/builtin/accounts` declares `capabilities.requires:
 ["workbench.auth"]` and contributes the account command/menu/config entry point.
 It does not own token storage.
 
@@ -52,7 +52,7 @@ Pluggable provider contract:
 - `getSessions()` — list active sessions (metadata only)
 - `getAccessToken(session, scopes?)` — internal; not written to `.workbench`
 
-Built-in `extensions/builtin.accounts` contributes the account UI/command entry
+The `shell-react` accounts built-in contributes the account UI/command entry
 point. Provider registration remains host-owned until the capability registry is
 promoted from a host option to a first-class workbench-core registry.
 
