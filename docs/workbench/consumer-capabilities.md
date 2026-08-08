@@ -29,6 +29,13 @@ Use official subpath exports from `@workbench-kit/react`. Do not import from `pa
 | `@workbench-kit/platform/resize-rect`             | Leaf — `resizeRect`                                                    |
 | `@workbench-kit/platform/tray-close-policy`       | Leaf — tray hide/quit helpers                                          |
 | `@workbench-kit/shell-react/layout-storage`       | Leaf — framework-free layout persistence helpers                       |
+| `@workbench-kit/shell-react/provider`             | Leaf — host context and extension inventory                            |
+| `@workbench-kit/shell-react/shell`                | Leaf — assembled shell without an implicit editor                      |
+| `@workbench-kit/shell-react/command-host`         | Leaf — command host orchestration                                      |
+| `@workbench-kit/shell-react/command-palette`      | Leaf — shortcut and palette helpers                                    |
+| `@workbench-kit/shell-react/command-descriptors`  | Leaf — resolved command descriptor hook                                |
+| `@workbench-kit/workbench-core/layout`            | Leaf — framework-free layout state                                     |
+| `@workbench-kit/workbench-core/storage`           | Leaf — storage reader/writer contracts                                 |
 | `@workbench-kit/platform/atomic-write`            | Leaf — Node `atomicWriteText`                                          |
 | `@workbench-kit/react/layout`                     | Sidebar/editor frames, section stacks, controlled preview canvas       |
 | `@workbench-kit/react/editor-tabs`                | Tab strip drag-and-drop helpers                                        |
@@ -63,7 +70,7 @@ Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workb
 
 **VS Code analogue:** `Workbench` grid with `ActivityBar`, `SideBarPart`, `EditorPart`.
 
-**Consumer pattern:** Host passes React nodes for sidebar/editor; keeps routing and IPC outside the kit.
+**Consumer pattern:** Host passes React nodes for sidebar/editor; keeps routing and IPC outside the kit. `WorkbenchShell` does not create `EditorArea` implicitly, so products only pay for the editor implementation they choose.
 
 ---
 

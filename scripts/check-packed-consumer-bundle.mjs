@@ -171,7 +171,7 @@ import { WorkbenchStandaloneShell } from '@workbench-kit/react/workbench/standal
 import { resolveWorkbenchTheme } from '@workbench-kit/react/workbench/theme';
 import { DARK_THEME_PRESET_OPTIONS } from '@workbench-kit/react/workbench/themePresets';
 import { FieldRemapFlowMapper } from '@workbench-kit/shell-react/field-remap';
-import { WorkbenchProvider } from '@workbench-kit/shell-react';
+import { WorkbenchProvider } from '@workbench-kit/shell-react/provider';
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react/layout-storage';
 
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });

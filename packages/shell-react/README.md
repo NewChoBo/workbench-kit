@@ -17,16 +17,15 @@ Peer: React 19.
 ## Quick start
 
 ```tsx
-import {
-  BUILTIN_WORKBENCH_EXTENSIONS,
-  WorkbenchProvider,
-  WorkbenchShell,
-} from '@workbench-kit/shell-react';
+import { BUILTIN_WORKBENCH_EXTENSIONS } from '@workbench-kit/shell-react';
+import { EditorArea } from '@workbench-kit/shell-react';
+import { WorkbenchProvider } from '@workbench-kit/shell-react/provider';
+import { WorkbenchShell } from '@workbench-kit/shell-react/shell';
 
 export function App() {
   return (
     <WorkbenchProvider availableExtensions={BUILTIN_WORKBENCH_EXTENSIONS}>
-      <WorkbenchShell title="Workbench" primarySidebar={<aside />} />
+      <WorkbenchShell title="Workbench" primarySidebar={<aside />} editorArea={<EditorArea />} />
     </WorkbenchProvider>
   );
 }
@@ -36,6 +35,13 @@ export function App() {
 extension list; hosts that want the Kit Explorer/Search/Settings set opt into
 `BUILTIN_WORKBENCH_EXTENSIONS` explicitly. Pure layout persistence helpers are
 available from the non-React `@workbench-kit/shell-react/layout-storage` subpath.
+`WorkbenchShell` also has no implicit editor surface: pass `editorArea` when the
+host wants the Kit editor, or omit it for a product-owned editor region.
+
+Performance-sensitive hosts should import orchestration from the focused
+`provider`, `shell`, `command-host`, `command-palette`, and
+`command-descriptors` subpaths. The root barrel remains the discovery surface,
+not the default runtime import graph.
 
 Prefer this package when the host needs provider + shell orchestration. For
 layout-only chrome without host services, start from

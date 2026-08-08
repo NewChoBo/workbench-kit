@@ -45,6 +45,7 @@ import {
   type WorkbenchShellProps,
 } from '../index.js';
 import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
+import { EditorArea } from '../editor/area.js';
 import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
 
 const TEST_AVAILABLE_EXTENSIONS = [
@@ -172,7 +173,7 @@ const testGlobal = globalThis as typeof globalThis & {
 testGlobal.IS_REACT_ACT_ENVIRONMENT = true;
 
 function TestWorkbenchShell(props: Omit<WorkbenchShellProps, 'commandHost'>) {
-  return <WorkbenchShell {...props} commandHost={false} />;
+  return <WorkbenchShell editorArea={<EditorArea />} {...props} commandHost={false} />;
 }
 
 function createMemoryStorage(): WorkbenchStorageAdapter {

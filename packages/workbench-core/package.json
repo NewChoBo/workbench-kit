@@ -8,7 +8,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./layout": "./src/layout/service.ts",
+    "./storage": "./src/storage.ts"
   },
   "files": [
     "src",

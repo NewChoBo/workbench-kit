@@ -27,7 +27,6 @@ import {
   useResolvedWorkbenchTheme,
 } from '@workbench-kit/react/workbench';
 
-import { EditorArea } from '../editor/area.js';
 import { BUILTIN_COMMANDS_VIEW_CONTAINER_ID } from '../commands/view-data.js';
 import { BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID } from '../extensions/view-data.js';
 import {
@@ -198,7 +197,7 @@ export function WorkbenchShell({
   showPanelLayoutToggle = true,
   showAuxiliarySidebarLayoutToggle = true,
 }: WorkbenchShellProps) {
-  const resolvedEditorArea = editorArea ?? <EditorArea />;
+  const resolvedEditorArea = editorArea ?? null;
   const resolvedWorkbenchTheme = useResolvedWorkbenchTheme(theme ?? 'system');
   const activeThemePreset =
     lightPreset !== undefined && darkPreset !== undefined

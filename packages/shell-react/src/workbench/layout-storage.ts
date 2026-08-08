@@ -4,11 +4,13 @@ import {
 } from '@workbench-kit/workbench-config';
 import {
   createWorkbenchLayoutState,
-  type WorkbenchStorageReader,
-  type WorkbenchStorageWriter,
   type WorkbenchLayoutState,
   type WorkbenchLayoutStateInput,
-} from '@workbench-kit/workbench-core';
+} from '@workbench-kit/workbench-core/layout';
+import type {
+  WorkbenchStorageReader,
+  WorkbenchStorageWriter,
+} from '@workbench-kit/workbench-core/storage';
 
 import {
   readLocalJsonStorage,
