@@ -1,0 +1,28 @@
+.ui-app-icon {
+  --ui-app-icon-size: 20px;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-app-icon-size);
+  height: var(--ui-app-icon-size);
+  overflow: hidden;
+  border-radius: var(--shell-radius-xs, var(--radius-sm, 2px));
+}
+
+.ui-app-icon[data-size='sm'] {
+  --ui-app-icon-size: 16px;
+}
+
+.ui-app-icon[data-size='lg'] {
+  --ui-app-icon-size: 32px;
+}
+
+.ui-app-icon__image,
+.ui-app-icon > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

@@ -1236,6 +1236,7 @@ describe('WorkbenchProvider', () => {
           }}
         >
           <TestWorkbenchShell
+            appIcon={<span data-testid="host-app-icon">WK</span>}
             editorArea={<main>Editor Area</main>}
             helpContent={<p>Open example.jdw.json to preview the sample.</p>}
             title="Workbench Sample"
@@ -1252,6 +1253,7 @@ describe('WorkbenchProvider', () => {
     expect(titleBar?.textContent).toContain('Workbench Sample');
     expect(titleBar?.textContent).toContain('4 files');
     expect(titleBar?.textContent).toContain('Sample Action');
+    expect(titleBar?.querySelector('[data-testid="host-app-icon"]')?.textContent).toBe('WK');
 
     const helpButton = container.querySelector<HTMLButtonElement>('button[aria-label="Help"]');
     expect(helpButton).toBeDefined();
@@ -1293,6 +1295,8 @@ describe('WorkbenchProvider', () => {
     });
 
     await flushReactEffects();
+
+    expect(container.querySelector('.workbench-shell-titlebar__app-icon')).toBeNull();
 
     const primaryToggle = container.querySelector<HTMLButtonElement>(
       'button[aria-label="Hide Primary Side Bar"], button[aria-label="Show Primary Side Bar"]',

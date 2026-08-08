@@ -1,5 +1,7 @@
 export { AbsoluteBox } from './absolute-box/AbsoluteBox';
 export type { AbsoluteBoxProps, WorkbenchRect } from './absolute-box/AbsoluteBox';
+export { AppIcon } from './app-icon/AppIcon';
+export type { AppIconProps, AppIconSize } from './app-icon/AppIcon';
 export { Badge } from './badge/Badge';
 export type { BadgeProps } from './badge/Badge';
 export { Button } from './button/Button';

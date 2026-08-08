@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react';
 import { Modal } from '@workbench-kit/react/modal';
-import { TilepaperAppIcon } from '@workbench-kit/react';
 import { Badge, Button, IconButton } from '@workbench-kit/react/primitives';
 import {
   WorkbenchSettingsModal,
@@ -89,6 +88,8 @@ export type { WorkbenchLocaleOption, WorkbenchThemeOption } from './settings.js'
 export interface WorkbenchShellProps {
   accountManagement?: WorkbenchAccountManagementInput | undefined;
   additionalSettingsCategories?: readonly WorkbenchSettingsCategory[] | undefined;
+  /** Host-owned product mark shown by the default title bar. */
+  appIcon?: ReactNode;
   catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
   catalogUrl?: string | undefined;
   commandHost?: false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'>;
@@ -147,6 +148,7 @@ const OPEN_SETTINGS_COMMAND_ID = 'workbench-kit.builtin.settings.open';
 export function WorkbenchShell({
   accountManagement,
   additionalSettingsCategories,
+  appIcon,
   catalogTrustPolicy,
   catalogUrl = '/extension-catalog.json',
   commandHost,
@@ -383,6 +385,7 @@ export function WorkbenchShell({
   const resolvedTitleBar =
     titleBar === undefined ? (
       <WorkbenchShellTitleBar
+        appIcon={appIcon}
         helpContent={helpContent}
         isAuxiliarySidebarVisible={layout.auxiliaryBar.visible}
         isPanelVisible={layout.panel.visible}
@@ -725,6 +728,7 @@ export function WorkbenchShell({
 }
 
 function WorkbenchShellTitleBar({
+  appIcon,
   helpContent,
   isAuxiliarySidebarVisible,
   isPanelVisible,
@@ -739,6 +743,7 @@ function WorkbenchShellTitleBar({
   onTogglePanel,
   onTogglePrimarySidebar,
 }: {
+  appIcon: ReactNode | undefined;
   helpContent: ReactNode | undefined;
   isAuxiliarySidebarVisible: boolean;
   isPanelVisible: boolean;
@@ -756,9 +761,11 @@ function WorkbenchShellTitleBar({
   return (
     <>
       <div className="workbench-shell-titlebar__identity">
-        <span aria-hidden className="workbench-shell-titlebar__app-icon">
-          <TilepaperAppIcon compact />
-        </span>
+        {appIcon ? (
+          <span aria-hidden className="workbench-shell-titlebar__app-icon">
+            {appIcon}
+          </span>
+        ) : null}
         <span className="workbench-shell-titlebar__title">{title}</span>
         {titleMeta ? <span className="workbench-shell-titlebar__meta">{titleMeta}</span> : null}
       </div>

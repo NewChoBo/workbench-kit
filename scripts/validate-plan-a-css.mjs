@@ -141,11 +141,28 @@ function collectImports(filePath, visited) {
 const mainVisited = new Set();
 collectImports(stylesPath, mainVisited);
 
+const coreStylesPath = path.join(reactSrc, 'styles/core.css');
+const coreVisited = new Set();
+collectImports(coreStylesPath, coreVisited);
+
 const primitivesBundlePath = path.join(reactSrc, 'primitives/styles.css');
 const primitivesVisited = new Set();
 collectImports(primitivesBundlePath, primitivesVisited);
 
-const visited = new Set([...mainVisited, ...primitivesVisited]);
+const visited = new Set([...mainVisited, ...coreVisited, ...primitivesVisited]);
+
+function isOptionalCoreFeature(file) {
+  const relative = path.relative(reactSrc, file).replaceAll('\\', '/');
+  return relative.startsWith('workbench/auth/') || relative.startsWith('workbench/chat/');
+}
+
+const unexpectedCoreFeatures = [...coreVisited].filter(isOptionalCoreFeature);
+const missingCoreFiles = [...mainVisited].filter(
+  (file) => file !== stylesPath && !isOptionalCoreFeature(file) && !coreVisited.has(file),
+);
+const unexpectedCoreFiles = [...coreVisited].filter(
+  (file) => file !== coreStylesPath && !mainVisited.has(file),
+);
 
 const tsxCssImports = collectTsxCssImports(reactSrc);
 for (const file of tsxCssImports) {
@@ -203,8 +220,29 @@ const allowedOrphans = new Set([path.normalize(path.join(reactSrc, 'primitives/s
 const unexpectedOrphans = orphanCss.filter((file) => !allowedOrphans.has(path.normalize(file)));
 
 console.log(
-  `Validated ${mainVisited.size} CSS files from styles.css, ${primitivesVisited.size} from primitives/styles.css, ${tsxCssImports.size} from TSX imports`,
+  `Validated ${mainVisited.size} CSS files from styles.css, ${coreVisited.size} from styles/core.css, ${primitivesVisited.size} from primitives/styles.css, ${tsxCssImports.size} from TSX imports`,
 );
+
+if (unexpectedCoreFeatures.length > 0) {
+  console.error('Core CSS includes optional Auth or Chat styles:');
+  for (const file of unexpectedCoreFeatures) {
+    console.error(`  - ${path.relative(repoRoot, file)}`);
+  }
+}
+
+if (missingCoreFiles.length > 0) {
+  console.error('Core CSS is missing non-optional full bundle styles:');
+  for (const file of missingCoreFiles) {
+    console.error(`  - ${path.relative(repoRoot, file)}`);
+  }
+}
+
+if (unexpectedCoreFiles.length > 0) {
+  console.error('Core CSS includes styles outside the full bundle:');
+  for (const file of unexpectedCoreFiles) {
+    console.error(`  - ${path.relative(repoRoot, file)}`);
+  }
+}
 
 if (unexpectedOrphans.length > 0) {
   console.warn('CSS files not reachable from styles.css hub or TSX imports:');
@@ -228,6 +266,14 @@ if (missingPrimitiveTsxImports.length > 0) {
 }
 
 if (missingLayoutTsxImports.length > 0) {
+  process.exitCode = 1;
+}
+
+if (unexpectedCoreFeatures.length > 0) {
+  process.exitCode = 1;
+}
+
+if (missingCoreFiles.length > 0 || unexpectedCoreFiles.length > 0) {
   process.exitCode = 1;
 }
 

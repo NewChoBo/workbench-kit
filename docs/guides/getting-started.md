@@ -39,13 +39,15 @@ npm view @workbench-kit/react@prototype version
 
 ## 2. Import kit CSS once
 
-At the app entry (or Storybook preview), load styles before mounting UI:
+At the app entry (or Storybook preview), load the core host styles before mounting UI:
 
 ```ts
-import '@workbench-kit/tokens/styles.css';
-import '@workbench-kit/react/styles.css';
-import '@workbench-kit/react/primitives.css';
+import '@workbench-kit/react/styles/core.css';
 ```
+
+The core entry includes tokens, Codicons, primitives, shell chrome, and the standard
+Workbench feature styles. Use `@workbench-kit/react/styles.css` instead when the host
+also renders the optional Auth or Chat surfaces. Do not import both bundles.
 
 Hosts may alias kit CSS variables to their own theme tokens after these imports.
 

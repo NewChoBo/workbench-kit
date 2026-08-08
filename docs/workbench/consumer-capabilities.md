@@ -50,10 +50,10 @@ Use official subpath exports from `@workbench-kit/react`. Do not import from `pa
 | `@workbench-kit/react/workbench/management`       | Dialog frames, integrations shell, notices                             |
 | `@workbench-kit/react/workbench/workspace`        | Workspace explorer, editor panel, selection helpers                    |
 | `@workbench-kit/workspace`                        | Pure path/selection/virtual-workspace helpers (no React)               |
-| `@workbench-kit/react/brand`                      | Product icon mark                                                      |
-| `@workbench-kit/contracts`                        | Cross-host DTOs and authoring workbench state                          |
+| `@workbench-kit/contracts`                        | Cross-host DTOs and capability contracts                               |
 
-Import kit CSS once at the app entry (`@workbench-kit/react/styles.css`, `@workbench-kit/react/primitives.css`).
+Import one CSS bundle at the app entry: `@workbench-kit/react/styles/core.css` for a
+standard host, or `@workbench-kit/react/styles.css` when Auth or Chat is rendered.
 
 ---
 

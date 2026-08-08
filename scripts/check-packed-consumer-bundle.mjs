@@ -150,7 +150,7 @@ function writeConsumer() {
   );
   fs.writeFileSync(
     path.join(consumerDir, 'src', 'main.ts'),
-    `import '@workbench-kit/react/styles.css';
+    `import '@workbench-kit/react/styles/core.css';
 import '@workbench-kit/shell-react/field-remap/view.css';
 import {
   WorkbenchPreviewCanvas,
@@ -266,12 +266,19 @@ function verifyOutput() {
   }
   if (sources.length === 0) throw new Error('Initial chunks emitted no source-map evidence.');
 
-  const css = [...cssFiles]
-    .map((file) => fs.readFileSync(path.join(outputDir, file), 'utf8'))
-    .join('\n');
+  const cssAssets = [...cssFiles].map((file) => fs.readFileSync(path.join(outputDir, file)));
+  const css = cssAssets.map((asset) => asset.toString('utf8')).join('\n');
   for (const selector of ['.ui-button', '.workbench-field-remap-editor-surface']) {
     if (!css.includes(selector)) throw new Error(`Packed consumer CSS is missing ${selector}.`);
   }
+  for (const selector of ['.workbench-profile-card', '.chat-panel-drop-target']) {
+    if (css.includes(selector)) {
+      throw new Error(`Core Workbench CSS unexpectedly includes optional selector ${selector}.`);
+    }
+  }
+
+  const cssBytes = cssAssets.reduce((total, asset) => total + asset.byteLength, 0);
+  const cssGzipBytes = gzipSync(Buffer.concat(cssAssets)).byteLength;
 
   // Vite may emit unreferenced Monaco workers while scanning the React barrel.
   // Only the manifest's transitive static JS closure is part of initial load.
@@ -289,7 +296,7 @@ function verifyOutput() {
   }
 
   console.log(
-    `[check-packed-consumer] OK (${staticEntries.length} static chunks, ${bytes} bytes / ${gzipBytes} gzip bytes, ${cssFiles.size} CSS assets).`,
+    `[check-packed-consumer] OK (${staticEntries.length} static chunks, JS ${bytes} bytes / ${gzipBytes} gzip bytes, CSS ${cssBytes} bytes / ${cssGzipBytes} gzip bytes in ${cssFiles.size} assets).`,
   );
 }
 

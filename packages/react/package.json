@@ -19,7 +19,6 @@
     "./editor-tabs": "./src/workbench/editor-tabs/index.ts",
     "./icons": "./src/icons/index.ts",
     "./overlay": "./src/overlay/index.ts",
-    "./brand": "./src/brand/index.ts",
     "./primitives": "./src/primitives/index.ts",
     "./primitives.css": "./src/primitives/styles.css",
     "./workbench/auth": "./src/workbench/auth/index.ts",
@@ -52,6 +51,7 @@
     "./widget-tree": "./src/widget-tree/index.ts",
     "./widget-asset": "./src/widget-asset/index.ts",
     "./widget-studio": "./src/widget-studio/index.ts",
+    "./styles/core.css": "./src/styles/core.css",
     "./styles.css": "./src/styles.css",
     "./workbench-menu-surfaces.css": "./src/workbench-menu-surfaces.css"
   },

@@ -1,7 +1,5 @@
 export { Modal } from './modal/Modal';
 export type { ModalBodyLayout, ModalBodyPadding, ModalProps } from './modal/Modal';
-export { TilepaperAppIcon } from './brand/TilepaperAppIcon';
-export type { TilepaperAppIconProps } from './brand/TilepaperAppIcon';
 export {
   WorkbenchIcon,
   WorkbenchIconProvider,
@@ -604,6 +602,8 @@ export type {
 } from './workbench/shell/StatusBar';
 export { AbsoluteBox } from './primitives';
 export type { AbsoluteBoxProps, WorkbenchRect } from './primitives';
+export { AppIcon } from './primitives';
+export type { AppIconProps, AppIconSize } from './primitives';
 export { Badge } from './primitives';
 export type { BadgeProps } from './primitives';
 export { Button } from './primitives';

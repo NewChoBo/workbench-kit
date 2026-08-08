@@ -135,8 +135,22 @@
 }
 
 .workbench-login-brand-mark {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
   width: 100%;
   aspect-ratio: 1;
+  border: 1px solid var(--color-border);
+  border-radius: clamp(28px, 8vw, 72px);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.workbench-login-brand-mark__glyph {
+  font-size: clamp(72px, 14vw, 160px);
+  font-weight: 650;
+  letter-spacing: -0.08em;
+  line-height: 1;
 }
 
 .workbench-login-view__footer-brand {

@@ -1,5 +1,6 @@
 /* Primitives component styles — co-located per component folder.
  * Leaf files are imported from owning TSX for HMR; this hub keeps CSS-only bundles working. */
+@import './app-icon/app-icon.css';
 @import './badge/badge.css';
 @import './button/button.css';
 @import './chip/chip.css';

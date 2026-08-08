@@ -15,13 +15,16 @@ Peer: React 19.
 
 ## Styles
 
-Import once at app entry:
+Import one bundle at the app entry. Most hosts should use the core bundle, which
+excludes the optional Auth and Chat surfaces:
 
 ```ts
-import '@workbench-kit/tokens/styles.css';
-import '@workbench-kit/react/styles.css';
-import '@workbench-kit/react/primitives.css';
+import '@workbench-kit/react/styles/core.css';
 ```
+
+Use `@workbench-kit/react/styles.css` when the host also renders Auth or Chat.
+Component-only consumers can instead combine token styles with
+`@workbench-kit/react/primitives.css`.
 
 ## Quick start
 
@@ -50,18 +53,31 @@ Full walkthrough: [Getting Started](../../docs/guides/getting-started.md).
 
 ## Common subpaths
 
-| Subpath                                    | Purpose                                 |
-| ------------------------------------------ | --------------------------------------- |
-| `@workbench-kit/react/primitives`          | Buttons, editor chrome, library layouts |
-| `@workbench-kit/react/workbench/shell`     | Workbench shell / activity bar          |
-| `@workbench-kit/react/workbench/workspace` | Explorer, workspace editor panel        |
-| `@workbench-kit/react/workbench/chat`      | Chat panel and message surfaces         |
-| `@workbench-kit/react/overlay`             | Context menus, anchored overlays        |
-| `@workbench-kit/react/modal`               | Low-level modal frame                   |
-| `@workbench-kit/react/jdw`                 | JDW preview bridges                     |
-| `@workbench-kit/react/styles.css`          | Shell chrome CSS                        |
+| Subpath                                    | Purpose                              |
+| ------------------------------------------ | ------------------------------------ |
+| `@workbench-kit/react/primitives`          | App icons, controls, library layouts |
+| `@workbench-kit/react/workbench/shell`     | Workbench shell / activity bar       |
+| `@workbench-kit/react/workbench/workspace` | Explorer, workspace editor panel     |
+| `@workbench-kit/react/workbench/chat`      | Chat panel and message surfaces      |
+| `@workbench-kit/react/overlay`             | Context menus, anchored overlays     |
+| `@workbench-kit/react/modal`               | Low-level modal frame                |
+| `@workbench-kit/react/jdw`                 | JDW preview bridges                  |
+| `@workbench-kit/react/styles/core.css`     | Core host CSS without Auth and Chat  |
+| `@workbench-kit/react/styles.css`          | Full CSS including Auth and Chat     |
 
 Import **only** through `exports`. Do not deep-import `src/` paths.
+
+## Host-owned app icon
+
+`AppIcon` standardizes icon sizing and image fitting without embedding a product
+mark. Supply either an image or custom content; the host remains responsible for
+the artwork.
+
+```tsx
+import { AppIcon } from '@workbench-kit/react/primitives';
+
+const appIcon = <AppIcon alt="Example app" src="/app-icon.svg" />;
+```
 
 ## Quick Open providers
 

@@ -60,16 +60,8 @@
   object-position: center;
 }
 
-.workbench-shell-titlebar__app-icon > .tilepaper-app-icon,
 .workbench-shell-titlebar__app-icon > svg {
   shape-rendering: geometricPrecision;
-}
-
-.tilepaper-app-icon {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
 }
 
 .workbench-shell-titlebar__title {

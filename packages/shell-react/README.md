@@ -17,6 +17,7 @@ Peer: React 19.
 ## Quick start
 
 ```tsx
+import { AppIcon } from '@workbench-kit/react/primitives';
 import { BUILTIN_WORKBENCH_EXTENSIONS } from '@workbench-kit/shell-react';
 import { EditorArea } from '@workbench-kit/shell-react';
 import { WorkbenchProvider } from '@workbench-kit/shell-react/provider';
@@ -25,7 +26,12 @@ import { WorkbenchShell } from '@workbench-kit/shell-react/shell';
 export function App() {
   return (
     <WorkbenchProvider availableExtensions={BUILTIN_WORKBENCH_EXTENSIONS}>
-      <WorkbenchShell title="Workbench" primarySidebar={<aside />} editorArea={<EditorArea />} />
+      <WorkbenchShell
+        appIcon={<AppIcon alt="" src="/app-icon.svg" />}
+        title="Workbench"
+        primarySidebar={<aside />}
+        editorArea={<EditorArea />}
+      />
     </WorkbenchProvider>
   );
 }
@@ -52,6 +58,14 @@ Prefer this package when the host needs provider + shell orchestration. For
 layout-only chrome without host services, start from
 `@workbench-kit/react/workbench/shell` — see
 [Getting Started](../../docs/guides/getting-started.md).
+
+## Host-owned branding
+
+The default title bar does not embed a product mark. Pass the host-owned mark through
+`appIcon`, omit it for a text-only identity, or replace the complete `titleBar` surface.
+The shell wraps `appIcon` as decorative content, so interactive controls do not belong
+in this slot. `AppIcon` from `@workbench-kit/react/primitives` is the optional sizing
+and image-fit helper; it does not include fallback artwork.
 
 ## Field Remap embed (slim subpath)
 

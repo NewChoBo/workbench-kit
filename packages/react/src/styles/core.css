@@ -1,0 +1,17 @@
+/* Core Workbench host styles.
+ * Auth and Chat are intentionally excluded so hosts only pay for those
+ * product surfaces when they opt into the full `styles.css` bundle. */
+@import '@workbench-kit/tokens/styles.css';
+@import '@vscode/codicons/dist/codicon.css';
+@import '../scrollbars.css';
+@import '../workbench-menu-surfaces.css';
+@import '../workbench/settings/settings.css';
+@import '../layout/layout.css';
+@import '../overlay/overlay.css';
+@import '../workbench/chrome/workbench-chrome.css';
+@import '../workbench/management/management.css';
+@import '../workbench/views/views.css';
+@import '../workbench/workspace/workspace.css';
+@import '../primitives/primitives.css';
+@import '../workbench/widgets/widgets.css';
+@import '../modal/modal.css';
