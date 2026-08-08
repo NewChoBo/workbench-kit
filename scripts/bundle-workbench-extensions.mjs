@@ -99,7 +99,10 @@ function readExtensionGroup(prefix, outputPath) {
 }
 
 function relativeImportPath(fromDirectory, targetPath) {
-  const relativePath = path.relative(fromDirectory, targetPath).replaceAll(path.sep, '/');
+  const relativePath = path
+    .relative(fromDirectory, targetPath)
+    .replaceAll(path.sep, '/')
+    .replace(/\.(?:[cm]?ts|tsx)$/u, '.js');
   return relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
 }
 

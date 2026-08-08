@@ -49,6 +49,12 @@ try {
   linkExternalPackages();
   writeConsumer();
 
+  console.log('[check-packed-consumer] Typechecking external TypeScript consumer...');
+  runCommand('pnpm', ['exec', 'tsc', '--project', path.join(consumerDir, 'tsconfig.json')], {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  });
+
   console.log('[check-packed-consumer] Building external production consumer...');
   runCommand(
     'pnpm',
@@ -103,6 +109,13 @@ function linkExternalPackages() {
     }
   }
 
+  for (const dependencyName of ['@types/react', '@types/react-dom']) {
+    requirements.set(dependencyName, {
+      optional: false,
+      requestedBy: 'packed TypeScript consumer',
+    });
+  }
+
   for (const [dependencyName, requirement] of requirements) {
     const source = [repoRoot, ...packageNames.map(packageDir)]
       .map((root) => packagePath(path.join(root, 'node_modules'), dependencyName))
@@ -131,12 +144,12 @@ function writeConsumer() {
     `<!doctype html>
 <html lang="en">
   <head><meta charset="UTF-8" /></head>
-  <body><script type="module" src="/src/main.js"></script></body>
+  <body><script type="module" src="/src/main.ts"></script></body>
 </html>
 `,
   );
   fs.writeFileSync(
-    path.join(consumerDir, 'src', 'main.js'),
+    path.join(consumerDir, 'src', 'main.ts'),
     `import '@workbench-kit/react/styles.css';
 import '@workbench-kit/shell-react/field-remap/view.css';
 import {
@@ -165,7 +178,8 @@ import {
 
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
 
-globalThis.__workbenchKitPackedConsumer = Object.freeze({
+(globalThis as typeof globalThis & { __workbenchKitPackedConsumer?: unknown })
+  .__workbenchKitPackedConsumer = Object.freeze({
   ContextMenu,
   BUILTIN_WORKBENCH_EXTENSIONS,
   DARK_THEME_PRESET_OPTIONS,
@@ -188,6 +202,26 @@ globalThis.__workbenchKitPackedConsumer = Object.freeze({
   }),
 });
 `,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'tsconfig.json'),
+    `${JSON.stringify(
+      {
+        compilerOptions: {
+          jsx: 'react-jsx',
+          lib: ['ES2022', 'DOM'],
+          module: 'ESNext',
+          moduleResolution: 'Bundler',
+          noEmit: true,
+          skipLibCheck: true,
+          strict: true,
+          target: 'ES2022',
+        },
+        include: ['src/main.ts'],
+      },
+      null,
+      2,
+    )}\n`,
   );
   fs.writeFileSync(
     path.join(consumerDir, 'vite.config.mjs'),
