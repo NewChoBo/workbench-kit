@@ -9,7 +9,10 @@ import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-cor
 import { WORKSPACE_EXPLORER_DRAG_DATA_TYPE } from '@workbench-kit/react/workbench/workspace/explorer';
 import { EditorArea } from './area.js';
 import type { EditorDocumentViewProvider } from './view-providers.js';
-import { WorkbenchProvider } from '../shell/provider.js';
+import {
+  WorkbenchProvider as BareWorkbenchProvider,
+  type WorkbenchProviderProps,
+} from '../shell/provider.js';
 import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
 import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
 import { useEditorService } from './use-editor.js';
@@ -22,6 +25,13 @@ const TEST_AVAILABLE_EXTENSIONS = [
   ...BUILTIN_WORKBENCH_EXTENSIONS,
   ...SAMPLE_WORKBENCH_EXTENSIONS,
 ] as const;
+
+function WorkbenchProvider({
+  availableExtensions = TEST_AVAILABLE_EXTENSIONS,
+  ...props
+}: WorkbenchProviderProps) {
+  return <BareWorkbenchProvider availableExtensions={availableExtensions} {...props} />;
+}
 
 testGlobal.IS_REACT_ACT_ENVIRONMENT = true;
 

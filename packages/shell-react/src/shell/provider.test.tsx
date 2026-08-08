@@ -35,11 +35,12 @@ Object.defineProperty(Element.prototype, 'scrollIntoView', {
 import {
   DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
   DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
-  WorkbenchProvider,
+  WorkbenchProvider as BareWorkbenchProvider,
   WorkbenchShell,
   useEditorService,
   useWorkbench,
   type WorkbenchContextValue,
+  type WorkbenchProviderProps,
   type WorkbenchStorageAdapter,
   type WorkbenchShellProps,
 } from '../index.js';
@@ -50,6 +51,13 @@ const TEST_AVAILABLE_EXTENSIONS = [
   ...BUILTIN_WORKBENCH_EXTENSIONS,
   ...SAMPLE_WORKBENCH_EXTENSIONS,
 ] as const;
+
+function WorkbenchProvider({
+  availableExtensions = TEST_AVAILABLE_EXTENSIONS,
+  ...props
+}: WorkbenchProviderProps) {
+  return <BareWorkbenchProvider availableExtensions={availableExtensions} {...props} />;
+}
 import { WORKBENCH_APPEARANCE_FIELD_LABELS } from '@workbench-kit/react/workbench';
 import {
   BUILTIN_EXPLORER_MOVE_COMMAND_ID,
@@ -404,9 +412,20 @@ describe('WorkbenchProvider', () => {
     globalThis.localStorage?.clear();
   });
 
+  it('starts without implicit extensions when the host provides none', () => {
+    const markup = renderToStaticMarkup(
+      <BareWorkbenchProvider>
+        <CommandProbe />
+      </BareWorkbenchProvider>,
+    );
+
+    expect(markup).toContain('<span>0</span>');
+  });
+
   it('provides configured core registries to React children', () => {
     const markup = renderToStaticMarkup(
       <WorkbenchProvider
+        availableExtensions={BUILTIN_WORKBENCH_EXTENSIONS}
         extensionsConfig={{
           enabled: ['workbench-kit.builtin.explorer'],
           recommendations: [],
@@ -567,7 +586,7 @@ describe('WorkbenchProvider', () => {
 
     await act(async () => {
       root.render(
-        <WorkbenchProvider>
+        <WorkbenchProvider availableExtensions={BUILTIN_WORKBENCH_EXTENSIONS}>
           <TestWorkbenchShell
             editorArea={<main>Editor Area</main>}
             overlays={<div data-testid="host-overlay">Host Overlay</div>}

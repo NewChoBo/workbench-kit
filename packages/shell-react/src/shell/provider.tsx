@@ -34,7 +34,6 @@ import {
   type WorkbenchLayoutStateInput,
   type ViewHostFactory,
 } from '@workbench-kit/workbench-core';
-import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
 import {
   ContextKeyService,
   createWorkbenchPermissionContextKeys,
@@ -96,12 +95,12 @@ export interface WorkbenchWorkspaceHostPort extends WorkbenchEditorSavePort {
 
 export type { WorkbenchStorageAdapter };
 
-const DEFAULT_AVAILABLE_EXTENSIONS = BUILTIN_WORKBENCH_EXTENSIONS;
-
+const EMPTY_AVAILABLE_EXTENSIONS: readonly WorkbenchExtensionDescription[] = Object.freeze([]);
 const EMPTY_HOST_THEMES: readonly WorkbenchHostThemeRegistration[] = Object.freeze([]);
 const EMPTY_USER_COMMANDS: readonly WorkbenchUserCommandDefinition[] = Object.freeze([]);
 
 export interface WorkbenchProviderProps {
+  /** Extensions available to this host. Defaults to none; hosts opt into built-ins explicitly. */
   availableExtensions?: readonly WorkbenchExtensionDescription[];
   children: ReactNode;
   contextKeyValues?: Readonly<Record<string, ContextKeyValue>> | undefined;
@@ -219,7 +218,7 @@ export function WorkbenchProvider({
   viewHostFactories,
   workspaceHostPort,
 }: WorkbenchProviderProps) {
-  const hostAvailableExtensions = availableExtensions ?? DEFAULT_AVAILABLE_EXTENSIONS;
+  const hostAvailableExtensions = availableExtensions ?? EMPTY_AVAILABLE_EXTENSIONS;
   const deferredDisposeRef = useRef<DeferredProviderDispose | undefined>(undefined);
   const shouldPersistEditorState =
     persistEditorState ??

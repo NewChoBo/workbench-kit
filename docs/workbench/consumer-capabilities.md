@@ -28,6 +28,7 @@ Use official subpath exports from `@workbench-kit/react`. Do not import from `pa
 | `@workbench-kit/platform/versioned-browser-state` | Leaf — `createVersionedBrowserStateAdapter`                            |
 | `@workbench-kit/platform/resize-rect`             | Leaf — `resizeRect`                                                    |
 | `@workbench-kit/platform/tray-close-policy`       | Leaf — tray hide/quit helpers                                          |
+| `@workbench-kit/shell-react/layout-storage`       | Leaf — framework-free layout persistence helpers                       |
 | `@workbench-kit/platform/atomic-write`            | Leaf — Node `atomicWriteText`                                          |
 | `@workbench-kit/react/layout`                     | Sidebar/editor frames, section stacks, controlled preview canvas       |
 | `@workbench-kit/react/editor-tabs`                | Tab strip drag-and-drop helpers                                        |

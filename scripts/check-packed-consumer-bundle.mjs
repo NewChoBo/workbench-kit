@@ -171,18 +171,16 @@ import { WorkbenchStandaloneShell } from '@workbench-kit/react/workbench/standal
 import { resolveWorkbenchTheme } from '@workbench-kit/react/workbench/theme';
 import { DARK_THEME_PRESET_OPTIONS } from '@workbench-kit/react/workbench/themePresets';
 import { FieldRemapFlowMapper } from '@workbench-kit/shell-react/field-remap';
-import {
-  BUILTIN_WORKBENCH_EXTENSIONS,
-  WorkbenchProvider,
-} from '@workbench-kit/shell-react';
+import { WorkbenchProvider } from '@workbench-kit/shell-react';
+import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react/layout-storage';
 
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
 
 (globalThis as typeof globalThis & { __workbenchKitPackedConsumer?: unknown })
   .__workbenchKitPackedConsumer = Object.freeze({
   ContextMenu,
-  BUILTIN_WORKBENCH_EXTENSIONS,
   DARK_THEME_PRESET_OPTIONS,
+  DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   FieldRemapFlowMapper,
   StatusBar,
   WorkbenchCommandPalette,
@@ -204,6 +202,13 @@ const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'builtins.ts'),
+    `import { BUILTIN_WORKBENCH_EXTENSIONS } from '@workbench-kit/shell-react';
+
+export const packedBuiltins = BUILTIN_WORKBENCH_EXTENSIONS;
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'tsconfig.json'),
     `${JSON.stringify(
       {
@@ -217,7 +222,7 @@ const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
           strict: true,
           target: 'ES2022',
         },
-        include: ['src/main.ts'],
+        include: ['src/**/*.ts'],
       },
       null,
       2,

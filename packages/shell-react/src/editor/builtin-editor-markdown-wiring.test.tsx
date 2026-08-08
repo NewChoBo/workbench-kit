@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { useEditorDocumentViewProviders } from './use-editor.js';
 import { WorkbenchProvider, useWorkbench } from '../shell/provider.js';
+import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
 
 const testGlobal = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -42,6 +43,7 @@ describe('builtin.editor markdown provider wiring through WorkbenchProvider', ()
     await act(async () => {
       root.render(
         <WorkbenchProvider
+          availableExtensions={BUILTIN_WORKBENCH_EXTENSIONS}
           extensionsConfig={{
             enabled: ['workbench-kit.builtin.editor'],
             recommendations: [],

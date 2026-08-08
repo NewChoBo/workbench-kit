@@ -26,12 +26,12 @@ status entries from `workbench-core` registries.
 React context provider that:
 
 - Bootstraps `workbench-core` services (`ExtensionRegistry`, `EditorService`, `LayoutService`)
-- Accepts initial `.workbench` extension configuration and optional extension manifest list
+- Accepts initial `.workbench` extension configuration and a host-owned extension list
 - Accepts parsed `.workbench/layout.default.json` data as `initialLayout`
-- Resolves enabled and missing extensions from bundled manifests by default
-- Applies browser install-state filtering to the default bundled extension set;
-  explicitly supplied `availableExtensions` are treated as the host-owned
-  extension list and resolve directly from `extensionsConfig`
+- Starts with no implicit extensions. Hosts explicitly pass product extensions,
+  `BUILTIN_WORKBENCH_EXTENSIONS`, or both through `availableExtensions`.
+- Applies browser install-state filtering to the supplied extension list and
+  resolves it directly from `extensionsConfig`.
 - Persists extension install state, workbench layout, keybinding overrides,
   local preferences, and editor restore state when the corresponding `persist*`
   flags are enabled. Browser `localStorage` is the default adapter; hosts can

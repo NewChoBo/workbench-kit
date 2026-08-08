@@ -17,16 +17,25 @@ Peer: React 19.
 ## Quick start
 
 ```tsx
-import { WorkbenchProvider, WorkbenchShell } from '@workbench-kit/shell-react';
+import {
+  BUILTIN_WORKBENCH_EXTENSIONS,
+  WorkbenchProvider,
+  WorkbenchShell,
+} from '@workbench-kit/shell-react';
 
 export function App() {
   return (
-    <WorkbenchProvider>
+    <WorkbenchProvider availableExtensions={BUILTIN_WORKBENCH_EXTENSIONS}>
       <WorkbenchShell title="Workbench" primarySidebar={<aside />} />
     </WorkbenchProvider>
   );
 }
 ```
+
+`WorkbenchProvider` has no implicit extensions. Product hosts pass their own
+extension list; hosts that want the Kit Explorer/Search/Settings set opt into
+`BUILTIN_WORKBENCH_EXTENSIONS` explicitly. Pure layout persistence helpers are
+available from the non-React `@workbench-kit/shell-react/layout-storage` subpath.
 
 Prefer this package when the host needs provider + shell orchestration. For
 layout-only chrome without host services, start from
