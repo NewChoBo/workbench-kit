@@ -35,7 +35,7 @@ export function useWorkbenchDevtoolsSnapshot(): WorkbenchDevtoolsSnapshot {
           editorService.onDidChangeEditors(() => {
             notifyChange(onStoreChange);
           }),
-          extensionRegistry.commands.onDidRegisterCommand(() => {
+          extensionRegistry.commands.onDidChangeCommands(() => {
             notifyChange(onStoreChange);
           }),
           extensionRegistry.menus.onDidRegisterMenuItem(() => {

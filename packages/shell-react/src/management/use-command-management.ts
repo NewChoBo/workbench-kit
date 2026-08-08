@@ -19,7 +19,7 @@ export function useCommandManagementModel() {
   const [refreshToken, refreshRegistry] = useReducer((count: number) => count + 1, 0);
 
   useEffect(() => {
-    const commandDisposable = extensionRegistry.commands.onDidRegisterCommand(() => {
+    const commandDisposable = extensionRegistry.commands.onDidChangeCommands(() => {
       refreshRegistry();
     });
 

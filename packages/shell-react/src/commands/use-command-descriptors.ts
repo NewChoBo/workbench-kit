@@ -17,7 +17,7 @@ export function useWorkbenchCommandDescriptors(
   const [refreshToken, refreshCommands] = useReducer((count: number) => count + 1, 0);
 
   useEffect(() => {
-    const disposable = extensionRegistry.commands.onDidRegisterCommand(() => {
+    const disposable = extensionRegistry.commands.onDidChangeCommands(() => {
       refreshCommands();
     });
 

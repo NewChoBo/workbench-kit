@@ -4,8 +4,10 @@ import { type CommandDefinition } from './types.js';
 
 export class CommandRegistry<TContext = void> implements Disposable {
   private readonly commands = new Map<string, CommandDefinition<TContext>>();
+  private readonly onDidChangeCommandsEmitter = new Emitter<void>();
   private readonly onDidRegisterCommandEmitter = new Emitter<CommandDefinition<TContext>>();
 
+  readonly onDidChangeCommands = this.onDidChangeCommandsEmitter.event;
   readonly onDidRegisterCommand = this.onDidRegisterCommandEmitter.event;
 
   constructor(commands: Iterable<CommandDefinition<TContext>> = []) {
@@ -33,11 +35,13 @@ export class CommandRegistry<TContext = void> implements Disposable {
 
     this.commands.set(definition.id, definition);
     this.onDidRegisterCommandEmitter.fire(definition);
+    this.onDidChangeCommandsEmitter.fire(undefined);
 
     return toDisposable(() => {
       const current = this.commands.get(definition.id);
       if (current === definition) {
         this.commands.delete(definition.id);
+        this.onDidChangeCommandsEmitter.fire(undefined);
       }
     });
   }
@@ -63,7 +67,12 @@ export class CommandRegistry<TContext = void> implements Disposable {
   }
 
   dispose(): void {
+    const hadCommands = this.commands.size > 0;
     this.commands.clear();
+    if (hadCommands) {
+      this.onDidChangeCommandsEmitter.fire(undefined);
+    }
+    this.onDidChangeCommandsEmitter.dispose();
     this.onDidRegisterCommandEmitter.dispose();
   }
 }
