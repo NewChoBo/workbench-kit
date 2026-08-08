@@ -1,6 +1,6 @@
 # Workbench Current State
 
-Updated: 2026-07-12
+Updated: 2026-08-08
 
 This is the active source of truth for the Workbench Kit workbench track. Older
 session, slice, closeout, delegation, dated review, and recommendation notes
@@ -8,41 +8,41 @@ were folded into this file and removed. Git history remains the archive.
 
 ## Current Direction
 
-- Lane A is complete. WB-23 through WB-31 are closed, including the sample host,
-  lifecycle/factory/capability registries, virtual workspace resource
-  transactions, editor service, built-in explorer, preference scopes, and
-  devtools inspectors.
-- Track D cleanup from the Lane A closeout is closed: static capability seeds,
-  editor-facing workspace URI parsing, editor host context trim, JDW preview
-  validation duplication, source range polish, semantic source validation
-  problems, outline navigation, root-drop handling, and workspace host save
-  gating are no longer the active backlog.
-- **WidgetTreeLab JDW authoring is complete for Now** (UX-1–UX-5, Apply/editor
-  state parity, Design/Code shortcuts, editor-session zoom/pan). Further GUI
-  editor chrome (Form DnD polish, Screen Spec Form expansion, Monaco UX) is
-  **paused**.
-- **Active JDW sequence (2026-07-12):**
-  1. **JSON → draw** — **complete** (JD-0…JD-5 + JD-6). Plan:
-     [jdw-json-draw-completion.md](./jdw-json-draw-completion.md).
-     Flutter reference: [json-dynamic-widget-reference.md](./json-dynamic-widget-reference.md).
-  2. **Spec structure** — next; define Screen Spec (or successor) on top of proven JDW
-  3. **Spec Form** — authoring Form surface on that Spec
-     Do not expand Spec Form until Spec structure is defined.
-- Host-backed storage / install-state remains the next **shell** priority after
-  the current JDW JSON-draw pass (or in parallel only when it does not block JDW).
+- The primary direction is a product-neutral Android Studio / VS Code-shaped
+  workbench: Activity Bar, Tool Windows, Editor tabs, Panel, command/search,
+  state restore, settings, and extension lifecycle. JDW and Field Remap are
+  optional capabilities, not the shell roadmap driver.
+- Lane A and the closeout cleanup are complete: lifecycle/capability registries,
+  virtual workspace transactions, editor service, Explorer, preference scopes,
+  devtools, and JDW JSON → draw are stable baseline capabilities.
+- Built-ins are package-owned and explicitly selected by hosts. Samples remain
+  repository-only. `WorkbenchProvider` has no hidden extension inventory.
+- Published root and leaf exports are checked from packed tarballs by both a
+  TypeScript consumer and a production bundle. Layout persistence has a
+  framework-free leaf export; unrelated capability bundles must stay out of the
+  initial static closure.
+- The active sequence is now:
+  1. product-consumer adoption and package-boundary hardening;
+  2. Tool Window / Panel / Editor / Focus command and restore convergence;
+  3. unified command/search provider contracts and recoverable state UX;
+  4. compiled JS + declaration publishing where source-only exports still force
+     consumer compiler policy.
 - Workbench Kit stays generic. Product repositories inject host adapters and
   own product policy, filesystem, user-data/workspace persistence, trust,
   marketplace, and runtime effects.
 
 ## Active Documents
 
-| Document                                                               | Owns                                                    |
-| ---------------------------------------------------------------------- | ------------------------------------------------------- |
-| [README.md](./README.md)                                               | Workbench doc index and lifecycle rules                 |
-| [current-state.md](./current-state.md)                                 | Current status, direction, storage/install-state policy |
-| [jdw-json-draw-completion.md](./jdw-json-draw-completion.md)           | JSON→draw stage plan (JD-0…JD-5)                        |
-| [json-dynamic-widget-reference.md](./json-dynamic-widget-reference.md) | Flutter JDW deep analysis → kit adopt/adapt/defer       |
-| [jdw-editor-ux-plan.md](./jdw-editor-ux-plan.md)                       | JDW editor UX state and remaining policy questions      |
+| Document                                                             | Owns                                                    |
+| -------------------------------------------------------------------- | ------------------------------------------------------- |
+| [`../../PLAN.ko.md`](../../PLAN.ko.md)                               | Current priorities and release checklist                |
+| [README.md](./README.md)                                             | Workbench doc index and lifecycle rules                 |
+| [current-state.md](./current-state.md)                               | Current status, direction, storage/install-state policy |
+| [consumer-capabilities.md](./consumer-capabilities.md)               | Public integration contract and capability inventory    |
+| [consumer-integration-backlog.md](./consumer-integration-backlog.md) | Evidence-backed reusable gaps                           |
+
+JDW completion and reference documents remain capability history. They do not
+set shell priority while JDW expansion is paused.
 
 Supporting reference documents can stay when they describe stable contracts or
 active architecture, but they must link back here for roadmap/status decisions.
