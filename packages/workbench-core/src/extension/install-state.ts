@@ -208,7 +208,11 @@ export function toggleInstalledExtensionEnabled(
   }
 
   const next = [...current];
-  next[index] = { ...next[index], enabled };
+  const target = next[index];
+  if (!target) {
+    return current;
+  }
+  next[index] = { ...target, enabled };
   saveInstalledExtensions(next, storageKey, storage);
   return next;
 }
