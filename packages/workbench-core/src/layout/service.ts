@@ -83,12 +83,18 @@ export class LayoutService implements Disposable {
       }
 
       this.focusModeSnapshot = cloneLayoutState(this.state);
-      this.update({
-        activityBar: { visible: false },
-        auxiliaryBar: { visible: false },
-        panel: { visible: false },
-        sideBar: { visible: false },
-      });
+      this.setState(
+        createWorkbenchLayoutState(
+          {
+            activityBar: { visible: false },
+            auxiliaryBar: { visible: false },
+            panel: { visible: false },
+            sideBar: { visible: false },
+          },
+          this.state,
+        ),
+        true,
+      );
       return;
     }
 
@@ -98,7 +104,7 @@ export class LayoutService implements Disposable {
 
     const snapshot = this.focusModeSnapshot;
     this.focusModeSnapshot = undefined;
-    this.setState(snapshot);
+    this.setState(snapshot, true);
   }
 
   reset(state: WorkbenchLayoutStateInput = {}): void {
@@ -209,9 +215,9 @@ export class LayoutService implements Disposable {
     this.onDidChangeLayoutEmitter.dispose();
   }
 
-  private setState(nextState: WorkbenchLayoutState): void {
+  private setState(nextState: WorkbenchLayoutState, forceEvent = false): void {
     const previousState = this.state;
-    if (isSameLayoutState(previousState, nextState)) {
+    if (!forceEvent && isSameLayoutState(previousState, nextState)) {
       return;
     }
 

@@ -171,6 +171,22 @@ describe('LayoutService', () => {
     expect(changes).toHaveLength(changeCount);
   });
 
+  it('emits focus mode transitions when the chrome layout is already hidden', () => {
+    const service = new LayoutService({
+      activityBar: { visible: false },
+      auxiliaryBar: { visible: false },
+      panel: { visible: false },
+      sideBar: { visible: false },
+    });
+    const transitions: boolean[] = [];
+    service.onDidChangeLayout(({ transient }) => transitions.push(transient));
+
+    service.setFocusModeActive(true);
+    service.setFocusModeActive(false);
+
+    expect(transitions).toEqual([true, false]);
+  });
+
   it('exports the default public layout contract', () => {
     expect(DEFAULT_WORKBENCH_LAYOUT_STATE).toEqual({
       activityBar: {
