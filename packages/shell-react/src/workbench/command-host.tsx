@@ -151,11 +151,15 @@ export function WorkbenchCommandHost({
 
   const shellContext = useMemo<WorkbenchShellCommandContext>(
     () => ({
+      isFocusModeActive: layoutService.isFocusModeActive(),
       isPrimarySidebarVisible: layout.sideBar.visible,
       openSettings: onOpenSettings,
       showActivity: (activityId) => {
         layoutService.setActiveViewContainer(activityId);
         layoutService.setSideBarVisible(true);
+      },
+      toggleFocusMode: () => {
+        layoutService.setFocusModeActive(!layoutService.isFocusModeActive());
       },
       togglePrimarySidebar: () => {
         layoutService.setSideBarVisible(!layout.sideBar.visible);

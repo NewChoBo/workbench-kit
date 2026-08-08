@@ -1,6 +1,7 @@
 import { CommandRegistry } from '@workbench-kit/platform';
 import {
   WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
+  WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID,
   WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID,
   createWorkbenchShellCommands,
   getWorkbenchShowActivityCommandId,
@@ -15,9 +16,11 @@ function createShellContext(
   overrides: Partial<WorkbenchShellCommandContext> = {},
 ): WorkbenchShellCommandContext {
   return {
+    isFocusModeActive: false,
     isPrimarySidebarVisible: true,
     openSettings: () => calls.push('settings'),
     showActivity: (activityId) => calls.push(`activity:${activityId}`),
+    toggleFocusMode: () => calls.push('focus'),
     togglePrimarySidebar: () => calls.push('sidebar'),
     ...overrides,
   };
@@ -36,10 +39,11 @@ describe('registerWorkbenchShellCommandHandlers', () => {
     );
 
     await registry.getCommand(getWorkbenchShowActivityCommandId('explorer'))?.handler?.();
+    await registry.getCommand(WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID)?.handler?.();
     await registry.getCommand(WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID)?.handler?.();
     await registry.getCommand(WORKBENCH_OPEN_SETTINGS_COMMAND_ID)?.handler?.();
 
-    expect(calls).toEqual(['activity:explorer', 'sidebar', 'settings']);
+    expect(calls).toEqual(['activity:explorer', 'focus', 'sidebar', 'settings']);
 
     registration.dispose();
 

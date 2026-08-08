@@ -6,6 +6,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import {
   WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
+  WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID,
   WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID,
   WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
   WORKBENCH_COMMAND_SURFACE_EDITOR,
@@ -38,9 +39,11 @@ function createContext(
   overrides: Partial<WorkbenchShellCommandContext<TestActivityId>> = {},
 ): WorkbenchShellCommandContext<TestActivityId> {
   return {
+    isFocusModeActive: false,
     isPrimarySidebarVisible: true,
     openSettings: () => undefined,
     showActivity: () => undefined,
+    toggleFocusMode: () => undefined,
     togglePrimarySidebar: () => undefined,
     ...overrides,
   };
@@ -145,6 +148,16 @@ describe('workbench shell command presets', () => {
       },
       { id: 'workbench-shell-separator', type: 'separator' },
       {
+        commandId: WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID,
+        danger: undefined,
+        disabled: false,
+        icon: 'codicon-screen-full',
+        id: WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID,
+        label: 'Enter Focus Mode',
+        shortcut: 'Ctrl/Cmd+Shift+F11',
+        type: 'command',
+      },
+      {
         commandId: WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID,
         danger: undefined,
         disabled: false,
@@ -172,6 +185,7 @@ describe('workbench shell command presets', () => {
       .map((entry) => entry.surfaces ?? []);
 
     expect(menuSurfaces).toEqual([
+      [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR],
       [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR],
       [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR],
       [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR],
@@ -214,20 +228,23 @@ describe('workbench shell command presets', () => {
     const context = createContext({
       openSettings: () => calls.push('settings'),
       showActivity: (activityId) => calls.push(`activity:${activityId}`),
+      toggleFocusMode: () => calls.push('focus'),
       togglePrimarySidebar: () => calls.push('sidebar'),
     });
 
     executeCommand(registry, getWorkbenchShowActivityCommandId('search'), context);
+    executeCommand(registry, WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID, context);
     executeCommand(registry, WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID, context);
     executeCommand(registry, WORKBENCH_OPEN_SETTINGS_COMMAND_ID, context);
 
-    expect(calls).toEqual(['activity:search', 'sidebar', 'settings']);
+    expect(calls).toEqual(['activity:search', 'focus', 'sidebar', 'settings']);
   });
 
   it('can create activity-only shell menus', () => {
     const registry = createCommandRegistry(
       createWorkbenchShellCommands({
         activities,
+        includeFocusModeToggle: false,
         includeSettings: false,
         includeSidebarToggle: false,
       }),

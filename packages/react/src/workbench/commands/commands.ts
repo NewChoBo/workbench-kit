@@ -13,6 +13,7 @@ import {
 import type { ContextMenuItem } from '../../overlay/ContextMenu';
 
 export const WORKBENCH_OPEN_SETTINGS_COMMAND_ID = 'workbench.openSettings';
+export const WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID = 'workbench.toggleFocusMode';
 export const WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID = 'workbench.togglePrimarySidebar';
 export const WORKBENCH_EDITOR_SAVE_COMMAND_ID = 'editor.save';
 export const WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID = 'editor.discardChanges';
@@ -54,9 +55,11 @@ export interface WorkbenchShellCommandActivity<TActivityId extends string = stri
 }
 
 export interface WorkbenchShellCommandContext<TActivityId extends string = string> {
+  isFocusModeActive?: boolean | undefined;
   isPrimarySidebarVisible: boolean;
   openSettings: () => void;
   showActivity: (activityId: TActivityId) => void;
+  toggleFocusMode?: (() => void) | undefined;
   togglePrimarySidebar: () => void;
 }
 
@@ -96,6 +99,7 @@ function applyWorkbenchCommandOverrides<TContext>(
 
 export interface WorkbenchShellCommandPresetOptions<TActivityId extends string = string> {
   activities: WorkbenchShellCommandActivity<TActivityId>[];
+  includeFocusModeToggle?: boolean | undefined;
   includeSettings?: boolean | undefined;
   includeSidebarToggle?: boolean | undefined;
   menuSeparatorId?: string | undefined;
@@ -159,6 +163,7 @@ export function getWorkbenchShowActivityCommandId(activityId: string) {
 
 export function createWorkbenchShellCommands<TActivityId extends string>({
   activities,
+  includeFocusModeToggle = true,
   includeSettings = true,
   includeSidebarToggle = true,
   settingsIcon = 'codicon-settings-gear',
@@ -178,6 +183,19 @@ export function createWorkbenchShellCommands<TActivityId extends string>({
   }));
 
   const shellCommands: CommandDefinition<WorkbenchShellCommandContext<TActivityId>>[] = [];
+
+  if (includeFocusModeToggle) {
+    shellCommands.push({
+      id: WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID,
+      icon: 'codicon-screen-full',
+      isEnabled: ({ toggleFocusMode }) => toggleFocusMode !== undefined,
+      label: ({ isFocusModeActive }) =>
+        isFocusModeActive ? 'Exit Focus Mode' : 'Enter Focus Mode',
+      run: ({ toggleFocusMode }) => toggleFocusMode?.(),
+      shortcut: 'Ctrl/Cmd+Shift+F11',
+      title: 'Toggle Focus Mode',
+    });
+  }
 
   if (includeSidebarToggle) {
     shellCommands.push({
@@ -207,6 +225,7 @@ export function createWorkbenchShellCommands<TActivityId extends string>({
 
 export function createWorkbenchShellMenuEntries<TActivityId extends string>({
   activities,
+  includeFocusModeToggle = true,
   includeSettings = true,
   includeSidebarToggle = true,
   menuSeparatorId = 'workbench-shell-separator',
@@ -222,6 +241,15 @@ export function createWorkbenchShellMenuEntries<TActivityId extends string>({
     ),
   );
   const shellEntries: CommandMenuEntry<WorkbenchShellCommandContext<TActivityId>>[] = [];
+
+  if (includeFocusModeToggle) {
+    shellEntries.push(
+      commandMenuEntry<WorkbenchShellCommandContext<TActivityId>>(
+        WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID,
+        { surfaces: [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR] },
+      ),
+    );
+  }
 
   if (includeSidebarToggle) {
     shellEntries.push(

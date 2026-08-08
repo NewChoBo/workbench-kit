@@ -28,6 +28,7 @@ export interface IntegratedShellCommandContext
 
 const integratedShellWorkbenchCommands = createWorkbenchShellCommands<IntegratedShellActivityId>({
   activities: integratedShellCommandActivities,
+  includeFocusModeToggle: false,
 });
 
 const integratedShellCommandContributions: CommandContributionInput<IntegratedShellCommandContext>[] =
