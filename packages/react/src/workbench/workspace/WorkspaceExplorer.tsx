@@ -30,7 +30,7 @@ import {
 import { WorkspaceFileIcon } from './WorkspaceFileIcon';
 import type { WorkspaceTreeNode } from './types';
 
-export const WORKSPACE_EXPLORER_DRAG_DATA_TYPE = 'application/x-newchobo-ui-workspace-paths';
+export const WORKSPACE_EXPLORER_DRAG_DATA_TYPE = 'application/x-workbench-kit-workspace-paths';
 export const WORKSPACE_EXPLORER_DRAG_METADATA_DATA_TYPE = `${WORKSPACE_EXPLORER_DRAG_DATA_TYPE}.metadata`;
 
 export type WorkspaceExplorerSelectionChangeReason =

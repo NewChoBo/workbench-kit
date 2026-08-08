@@ -101,8 +101,8 @@ describe('library contracts', () => {
     const roundtrip = parseLibraryDragPayload(payload);
     expect(payload.includes('"a"')).toBe(true);
     expect(roundtrip).toMatchObject({ itemIds: ['a', 'b'], sourceIds: ['local'] });
-    expect(LIBRARY_DRAG_DATA_TYPE).toBe('application/x-newchobo-ui-library-items');
-    expect(LIBRARY_DRAG_IDS_DATA_TYPE).toBe('application/x-newchobo-ui-library-item-ids');
+    expect(LIBRARY_DRAG_DATA_TYPE).toBe('application/x-workbench-kit-library-items');
+    expect(LIBRARY_DRAG_IDS_DATA_TYPE).toBe('application/x-workbench-kit-library-item-ids');
   });
 
   it('uses sort mode type in compile-time contracts', () => {

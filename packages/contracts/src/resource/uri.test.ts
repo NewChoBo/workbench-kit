@@ -9,34 +9,34 @@ import {
 
 describe('resource URI contracts', () => {
   it('normalizes generic resource URIs and rejects values without a scheme', () => {
-    expect(normalizeResourceUri(' tilepaper-authoring://launchpad/home ')).toBe(
-      'tilepaper-authoring://launchpad/home',
+    expect(normalizeResourceUri(' workbench-resource://document/home ')).toBe(
+      'workbench-resource://document/home',
     );
-    expect(normalizeResourceUri(' tilepaper-source:/launchpads/main.json ')).toBe(
-      'tilepaper-source:/launchpads/main.json',
+    expect(normalizeResourceUri(' sample-source:/documents/main.json ')).toBe(
+      'sample-source:/documents/main.json',
     );
     expect(() => normalizeResourceUri('launchpads/home')).toThrow(/scheme/);
     expect(() => normalizeResourceUri('   ')).toThrow(/required/);
   });
 
   it('creates stable identity keys', () => {
-    expect(createResourceIdentity('tilepaper-authoring://launchpad/home')).toEqual({
-      key: 'tilepaper-authoring://launchpad/home',
-      uri: 'tilepaper-authoring://launchpad/home',
+    expect(createResourceIdentity('workbench-resource://document/home')).toEqual({
+      key: 'workbench-resource://document/home',
+      uri: 'workbench-resource://document/home',
     });
-    expect(createResourceIdentityKey('tilepaper-source:/launchpads/main.json')).toBe(
-      'tilepaper-source:/launchpads/main.json',
+    expect(createResourceIdentityKey('sample-source:/documents/main.json')).toBe(
+      'sample-source:/documents/main.json',
     );
     expect(
       isSameResourceUri(
-        'tilepaper-authoring://launchpad/home',
-        ' tilepaper-authoring://launchpad/home ',
+        'workbench-resource://document/home',
+        ' workbench-resource://document/home ',
       ),
     ).toBe(true);
     expect(
       isSameResourceUri(
-        ' tilepaper-source:/launchpads/main.json ',
-        'tilepaper-source:/launchpads/main.json',
+        ' sample-source:/documents/main.json ',
+        'sample-source:/documents/main.json',
       ),
     ).toBe(true);
   });

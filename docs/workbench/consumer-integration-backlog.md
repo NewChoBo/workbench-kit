@@ -11,7 +11,7 @@ This document tracks Workbench Kit features and improvements identified while in
 Use this backlog when:
 
 - Prioritizing `@workbench-kit/react` primitives ahead of consumer-local UI.
-- Deciding whether a consumer adapter (`tilepaper-ui`, renderer host) should stay local or move into the kit.
+- Deciding whether a consumer adapter (product UI, renderer host) should stay local or move into the kit.
 - Planning Storybook / `workbench-sample` coverage for library and shell flows.
 
 Related kit docs: [consumer-capabilities.md](./consumer-capabilities.md), [current-state.md](./current-state.md), [future-capabilities.md](./future-capabilities.md), [layout-css-improvement-plan-2026-06-20.md](./layout-css-improvement-plan-2026-06-20.md).

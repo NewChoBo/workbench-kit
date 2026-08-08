@@ -9,8 +9,8 @@ describe('editor-resource', () => {
 
   it('keeps folder and non-workspace resources unchanged', () => {
     expect(pathForResource('workspace://folder/src')).toBe('workspace://folder/src');
-    expect(pathForResource('tilepaper-source:/launchpads/main.json')).toBe(
-      'tilepaper-source:/launchpads/main.json',
+    expect(pathForResource('sample-source:/documents/main.json')).toBe(
+      'sample-source:/documents/main.json',
     );
   });
 });

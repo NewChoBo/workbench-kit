@@ -16,6 +16,6 @@ describe('builtin.editor resource URI helpers', () => {
   it('rejects workspace folders and non-workspace URIs', () => {
     expect(isWorkspaceFileResourceUri('workspace://folder/src')).toBe(false);
     expect(pathForWorkspaceFileResource('workspace://folder/src')).toBeUndefined();
-    expect(pathForWorkspaceFileResource('tilepaper-source:/launchpads/main.json')).toBeUndefined();
+    expect(pathForWorkspaceFileResource('sample-source:/documents/main.json')).toBeUndefined();
   });
 });

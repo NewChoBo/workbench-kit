@@ -99,9 +99,8 @@ Internal-name denylist tokens live only in
 `scripts/check-public-references.mjs`. Secret heuristics live in
 `scripts/check-secrets.mjs`.
 
-Legacy consumer-branded protocol or sample identifiers that remain in published
-kit APIs are **separate rename debt**—do not add new private host names while
-that cleanup is pending.
+Consumer-branded protocol, MIME, sample, and UI identifiers are not valid public
+Kit APIs. Use neutral capability names and keep product adapters in the integrating host.
 
 Before merge to `develop` or `main`, confirm:
 

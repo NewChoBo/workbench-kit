@@ -13,11 +13,17 @@ const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 const selfPath = relative(repoRoot, fileURLToPath(import.meta.url)).replace(/\\/g, '/');
 
 /**
- * Denylist for private host / sibling-repo leakage.
- * Do not add consumer product protocol brands that are still part of published
- * kit APIs here until those APIs are renamed in a dedicated change.
+ * Denylist for private host / sibling-repo leakage and consumer-branded public APIs.
  */
 const forbiddenPatterns = [
+  {
+    name: 'consumer-product-brand',
+    regex: /\btilepaper\b/i,
+  },
+  {
+    name: 'legacy-consumer-package-brand',
+    regex: /\bnewchobo[-_]?ui\b/i,
+  },
   {
     name: 'internal-sibling-repo-path',
     regex: /vue3[-_]?chatbot/i,
@@ -47,6 +53,7 @@ const forbiddenPatterns = [
 const skippedDirectoryNames = new Set([
   '.git',
   '.claude', // local agent settings (often gitignored); not a publish surface
+  '.tmp-types', // generated declaration output from exact-optional typechecks
   'node_modules',
   'dist',
   'out',

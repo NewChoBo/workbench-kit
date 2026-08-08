@@ -172,12 +172,12 @@ describe('contract helpers', () => {
   });
 
   it('exports resource uri normalization from public index', () => {
-    expect(normalizeResourceUri(' tilepaper-source:/launchpads/main.json ')).toBe(
-      'tilepaper-source:/launchpads/main.json',
+    expect(normalizeResourceUri(' sample-source:/documents/main.json ')).toBe(
+      'sample-source:/documents/main.json',
     );
-    expect(createResourceIdentity('tilepaper-source:/launchpads/main.json')).toEqual({
-      key: 'tilepaper-source:/launchpads/main.json',
-      uri: 'tilepaper-source:/launchpads/main.json',
+    expect(createResourceIdentity('sample-source:/documents/main.json')).toEqual({
+      key: 'sample-source:/documents/main.json',
+      uri: 'sample-source:/documents/main.json',
     });
   });
 

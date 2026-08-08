@@ -81,7 +81,7 @@ Configure on [npmjs.com](https://www.npmjs.com) for each public package (or org 
 | Workflow filename   | `publish.yml`                                                           |
 | Environment         | **leave blank** unless `publish.yml` uses a matching GitHub Environment |
 
-Git remote must point at `NewChoBo/workbench-kit`, not legacy `newchobo-ui-package`.
+Git remote must point at the canonical `NewChoBo/workbench-kit` repository.
 
 ### OIDC auth rules (do not regress)
 

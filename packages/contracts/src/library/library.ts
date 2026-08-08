@@ -91,8 +91,8 @@ export interface LibraryDragPayload {
   sourceIds?: readonly string[];
 }
 
-export const LIBRARY_DRAG_DATA_TYPE = 'application/x-newchobo-ui-library-items';
-export const LIBRARY_DRAG_IDS_DATA_TYPE = 'application/x-newchobo-ui-library-item-ids';
+export const LIBRARY_DRAG_DATA_TYPE = 'application/x-workbench-kit-library-items';
+export const LIBRARY_DRAG_IDS_DATA_TYPE = 'application/x-workbench-kit-library-item-ids';
 
 export interface LibraryQueryOptions {
   query?: LibraryQuery;
