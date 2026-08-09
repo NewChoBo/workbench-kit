@@ -194,6 +194,12 @@ function CommandProbe() {
   return <span>{workbench.extensionRegistry.getExtensions().length}</span>;
 }
 
+function ContextKeyValueProbe({ contextKey }: { contextKey: string }) {
+  const { contextKeyService } = useWorkbench();
+
+  return <span>{String(contextKeyService.get(contextKey))}</span>;
+}
+
 function CommandTitleProbe({ commandId }: { commandId: string }) {
   const workbench = useWorkbench();
 
@@ -392,7 +398,7 @@ function LayoutServiceProbe({ onReady }: { onReady: (service: LayoutService) => 
 
 type WorkbenchServiceIdentitySnapshot = Pick<
   WorkbenchContextValue,
-  'editorService' | 'extensionRegistry' | 'layoutService'
+  'contextKeyService' | 'editorService' | 'extensionRegistry' | 'layoutService'
 >;
 
 function WorkbenchServiceIdentityProbe({
@@ -400,10 +406,10 @@ function WorkbenchServiceIdentityProbe({
 }: {
   onSnapshot: (snapshot: WorkbenchServiceIdentitySnapshot) => void;
 }) {
-  const { editorService, extensionRegistry, layoutService } = useWorkbench();
+  const { contextKeyService, editorService, extensionRegistry, layoutService } = useWorkbench();
 
   useEffect(() => {
-    onSnapshot({ editorService, extensionRegistry, layoutService });
+    onSnapshot({ contextKeyService, editorService, extensionRegistry, layoutService });
   });
 
   return null;
@@ -438,6 +444,55 @@ describe('WorkbenchProvider', () => {
     );
 
     expect(markup).toContain('<span>1</span>');
+  });
+
+  it('provides initial host context keys to the first child render', () => {
+    const markup = renderToStaticMarkup(
+      <BareWorkbenchProvider contextKeyValues={{ 'workbench-kit.test.initial-context': true }}>
+        <ContextKeyValueProbe contextKey="workbench-kit.test.initial-context" />
+      </BareWorkbenchProvider>,
+    );
+
+    expect(markup).toContain('<span>true</span>');
+  });
+
+  it('applies host context key prop updates without replacing the service', async () => {
+    const snapshots: WorkbenchServiceIdentitySnapshot[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const renderProvider = (enabled: boolean) => (
+      <BareWorkbenchProvider
+        contextKeyValues={{ 'workbench-kit.test.dynamic-context': enabled }}
+        persistEditorState={false}
+        persistKeybindingOverrides={false}
+        persistLayout={false}
+        persistLocalPreferences={false}
+      >
+        <WorkbenchServiceIdentityProbe onSnapshot={(snapshot) => snapshots.push(snapshot)} />
+      </BareWorkbenchProvider>
+    );
+
+    await act(async () => {
+      root.render(renderProvider(true));
+    });
+    await flushReactEffects();
+
+    const initialService = snapshots[snapshots.length - 1]?.contextKeyService;
+    expect(initialService?.get('workbench-kit.test.dynamic-context')).toBe(true);
+
+    await act(async () => {
+      root.render(renderProvider(false));
+    });
+    await flushReactEffects();
+
+    expect(snapshots[snapshots.length - 1]?.contextKeyService).toBe(initialService);
+    expect(initialService?.get('workbench-kit.test.dynamic-context')).toBe(false);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
   });
 
   it('keeps core services and startup activation stable across parent rerenders', async () => {
@@ -498,6 +553,7 @@ describe('WorkbenchProvider', () => {
     expect(secondSnapshot?.layoutService).toBe(firstSnapshot?.layoutService);
     expect(secondSnapshot?.editorService).toBe(firstSnapshot?.editorService);
     expect(secondSnapshot?.extensionRegistry).toBe(firstSnapshot?.extensionRegistry);
+    expect(secondSnapshot?.contextKeyService).toBe(firstSnapshot?.contextKeyService);
     expect(activate).toHaveBeenCalledTimes(1);
     expect(container.textContent).toContain('Second render');
 

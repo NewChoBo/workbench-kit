@@ -1,18 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import type { ContextKeyService } from '@workbench-kit/platform';
 
 export function useContextKeyRevision(contextKeyService: ContextKeyService): number {
-  const [revision, setRevision] = useState(0);
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      const disposable = contextKeyService.onDidChangeContext(onStoreChange);
 
-  useEffect(() => {
-    const disposable = contextKeyService.onDidChangeContext(() => {
-      setRevision((current) => current + 1);
-    });
+      return () => {
+        disposable.dispose();
+      };
+    },
+    [contextKeyService],
+  );
+  const getSnapshot = useCallback(() => contextKeyService.getRevision(), [contextKeyService]);
 
-    return () => {
-      disposable.dispose();
-    };
-  }, [contextKeyService]);
-
-  return revision;
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

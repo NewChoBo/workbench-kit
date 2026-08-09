@@ -185,6 +185,24 @@ interface DeferredProviderDispose {
 
 const WorkbenchContext = createContext<WorkbenchContextValue | undefined>(undefined);
 
+function createInitialContextKeyService(
+  contextKeyValues: Readonly<Record<string, ContextKeyValue>> | undefined,
+): ContextKeyService {
+  const service = new ContextKeyService();
+
+  for (const [key, value] of Object.entries(
+    createWorkbenchPermissionContextKeys({ role: 'owner' }),
+  )) {
+    service.set(key, value);
+  }
+
+  for (const [key, value] of Object.entries(contextKeyValues ?? {})) {
+    service.set(key, value);
+  }
+
+  return service;
+}
+
 export function WorkbenchProvider({
   availableExtensions,
   children,
@@ -267,15 +285,7 @@ export function WorkbenchProvider({
   const [keybindingOverrides, setKeybindingOverridesState] = useState(
     resolvedInitialKeybindingOverrides,
   );
-  const contextKeyService = useMemo(() => {
-    const service = new ContextKeyService();
-    for (const [key, value] of Object.entries(
-      createWorkbenchPermissionContextKeys({ role: 'owner' }),
-    )) {
-      service.set(key, value);
-    }
-    return service;
-  }, []);
+  const [contextKeyService] = useState(() => createInitialContextKeyService(contextKeyValues));
 
   useEffect(() => {
     return () => {

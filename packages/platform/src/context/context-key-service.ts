@@ -6,6 +6,7 @@ import { type ContextKeyChangeEvent, type ContextKeyValue } from './context-key-
 export class ContextKeyService implements Disposable {
   private readonly onDidChangeContextEmitter = new Emitter<ContextKeyChangeEvent>();
   private readonly values = new Map<string, ContextKeyValue>();
+  private revision = 0;
 
   readonly onDidChangeContext = this.onDidChangeContextEmitter.event;
 
@@ -20,6 +21,7 @@ export class ContextKeyService implements Disposable {
 
     const previousValue = this.values.get(key);
     this.values.delete(key);
+    this.revision += 1;
     this.onDidChangeContextEmitter.fire({
       key,
       previousValue,
@@ -34,6 +36,11 @@ export class ContextKeyService implements Disposable {
 
   evaluateWhen(when: string | undefined): boolean {
     return evaluateWhenClause(when, this.createSnapshot());
+  }
+
+  /** Monotonic snapshot token for external-store subscriptions. */
+  getRevision(): number {
+    return this.revision;
   }
 
   get(key: string): ContextKeyValue {
@@ -52,6 +59,7 @@ export class ContextKeyService implements Disposable {
       this.values.set(key, value);
     }
 
+    this.revision += 1;
     this.onDidChangeContextEmitter.fire({
       key,
       previousValue,
