@@ -18,6 +18,7 @@ import {
 } from '@workbench-kit/react/workbench';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useContextKeyRevision } from '../commands/use-context-key-revision.js';
 import { useWorkbench } from '../shell/provider.js';
 import { registerWorkbenchShellCommandHandlers } from './shell-command-registration.js';
 import {
@@ -98,6 +99,7 @@ export function WorkbenchCommandHost({
   quickOpenTitle = 'Quick Open',
 }: WorkbenchCommandHostProps) {
   const {
+    contextKeyService,
     executeCommand,
     extensionRegistry,
     keybindingOverrides,
@@ -110,6 +112,11 @@ export function WorkbenchCommandHost({
   const [quickOpenQuery, setQuickOpenQuery] = useState('');
   const [layout, setLayout] = useState(() => layoutService.getState());
   const shellContextRef = useRef<WorkbenchShellCommandContext | undefined>(undefined);
+  const contextKeyRevision = useContextKeyRevision(contextKeyService);
+  const contextKeySnapshot = useMemo(
+    () => contextKeyService.createSnapshot(),
+    [contextKeyRevision, contextKeyService],
+  );
 
   const workspaceService = isWorkspaceResourceService(workspaceHostPort?.service)
     ? workspaceHostPort.service
@@ -126,19 +133,41 @@ export function WorkbenchCommandHost({
     };
   }, [layoutService]);
 
-  const shellActivities = useMemo(
+  const managedShellActivities = useMemo(
     () => resolveShellCommandActivities(extensionRegistry),
     [extensionRegistry],
   );
+  const visibleShellActivities = useMemo(
+    () => resolveShellCommandActivities(extensionRegistry, contextKeySnapshot),
+    [contextKeySnapshot, extensionRegistry],
+  );
+  const visibleShellActivityIdSet = new Set(visibleShellActivities.map((activity) => activity.id));
+  const visibleShellActivitySignature = managedShellActivities
+    .map((activity) => (visibleShellActivityIdSet.has(activity.id) ? '1' : '0'))
+    .join('');
 
   const shellCommandDefinitions = useMemo(
     () =>
       createWorkbenchShellCommands({
-        activities: shellActivities,
+        activities: managedShellActivities.filter(
+          (_activity, index) => visibleShellActivitySignature[index] === '1',
+        ),
         includeSettings: true,
         includeSidebarToggle: true,
       }),
-    [shellActivities],
+    [managedShellActivities, visibleShellActivitySignature],
+  );
+
+  const managedShellCommandIds = useMemo(
+    () =>
+      new Set(
+        createWorkbenchShellCommands({
+          activities: managedShellActivities,
+          includeSettings: true,
+          includeSidebarToggle: true,
+        }).map((command) => command.id),
+      ),
+    [managedShellActivities],
   );
 
   const shellCommandRegistry = useMemo(
@@ -194,11 +223,19 @@ export function WorkbenchCommandHost({
       buildWorkbenchPaletteCommands({
         additionalCommands,
         extensionCommandFeaturesById: collectExtensionCommandFeaturesById(extensionRegistry),
-        extensionCommands: extensionRegistry.commands.getCommands(),
+        extensionCommands: extensionRegistry.commands
+          .getCommands()
+          .filter((command) => !managedShellCommandIds.has(command.id)),
         shellCommands: shellCommandDefinitions,
         shellContext,
       }),
-    [additionalCommands, extensionRegistry, shellContext, shellCommandDefinitions],
+    [
+      additionalCommands,
+      extensionRegistry,
+      managedShellCommandIds,
+      shellContext,
+      shellCommandDefinitions,
+    ],
   );
 
   const resolvedQuickOpenProviders = useMemo(() => {

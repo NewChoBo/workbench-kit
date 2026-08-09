@@ -4,7 +4,11 @@ import type {
   WorkbenchShellCommandActivity,
   WorkbenchShellCommandContext,
 } from '@workbench-kit/react/workbench';
-import type { ExtensionCommandFeatureSpec, ExtensionRegistry } from '@workbench-kit/workbench-core';
+import {
+  filterActivitiesByWhenClause,
+  type ExtensionCommandFeatureSpec,
+  type ExtensionRegistry,
+} from '@workbench-kit/workbench-core';
 
 export const WORKBENCH_COMMAND_PALETTE_SHORTCUT = 'Ctrl+Shift+P';
 export const WORKBENCH_QUICK_ACCESS_SHORTCUT = 'Ctrl+P';
@@ -44,10 +48,16 @@ export function resolveExtensionCommandIcon(icon: ExtensionCommand['icon']): str
 
 export function resolveShellCommandActivities(
   extensionRegistry: ExtensionRegistry,
+  contextKeys?: object | undefined,
 ): WorkbenchShellCommandActivity[] {
   const activities = extensionRegistry.activities.getActivities();
   if (activities.length > 0) {
-    return activities
+    const visibleActivities =
+      contextKeys === undefined
+        ? activities
+        : filterActivitiesByWhenClause(activities, contextKeys);
+
+    return visibleActivities
       .map((activity) => ({
         icon: formatWorkbenchCommandIcon(activity.icon),
         id: activity.viewContainerId,

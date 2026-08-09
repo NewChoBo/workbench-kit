@@ -7,6 +7,7 @@ import {
 } from '@workbench-kit/react/workbench/management';
 import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench';
 
+import { useContextKeyRevision } from '../commands/use-context-key-revision.js';
 import { useWorkbench } from '../shell/provider.js';
 import {
   collectExtensionCommandFeaturesById,
@@ -14,7 +15,12 @@ import {
 } from '../workbench/command-palette.js';
 
 export function useCommandManagementModel() {
-  const { executeCommand, extensionRegistry } = useWorkbench();
+  const { contextKeyService, executeCommand, extensionRegistry } = useWorkbench();
+  const contextKeyRevision = useContextKeyRevision(contextKeyService);
+  const contextKeySnapshot = useMemo(
+    () => contextKeyService.createSnapshot(),
+    [contextKeyRevision, contextKeyService],
+  );
   const [lastRun, setLastRun] = useState<CommandManagementRunState | undefined>();
   const [refreshToken, refreshRegistry] = useReducer((count: number) => count + 1, 0);
 
@@ -29,8 +35,8 @@ export function useCommandManagementModel() {
   }, [extensionRegistry]);
 
   const groups = useMemo(
-    () => buildCommandManagementModelGroups(extensionRegistry, refreshToken),
-    [extensionRegistry, refreshToken],
+    () => buildCommandManagementModelGroups(extensionRegistry, refreshToken, contextKeySnapshot),
+    [contextKeySnapshot, extensionRegistry, refreshToken],
   );
 
   const totalCount = countCommandManagementEntries(groups);
@@ -71,19 +77,28 @@ export function useCommandManagementModel() {
 export function buildCommandManagementModelGroups(
   extensionRegistry: ExtensionRegistry,
   _refreshToken = 0,
+  contextKeys?: object | undefined,
 ) {
-  const shellCommands = createWorkbenchShellCommands({
+  const managedShellCommands = createWorkbenchShellCommands({
     activities: resolveShellCommandActivities(extensionRegistry),
     includeSettings: true,
     includeSidebarToggle: true,
   });
-  const shellCommandIds = new Set(shellCommands.map((command) => command.id));
+  const managedShellCommandIds = new Set(managedShellCommands.map((command) => command.id));
+  const shellCommands =
+    contextKeys === undefined
+      ? managedShellCommands
+      : createWorkbenchShellCommands({
+          activities: resolveShellCommandActivities(extensionRegistry, contextKeys),
+          includeSettings: true,
+          includeSidebarToggle: true,
+        });
   const commandFeaturesById = collectExtensionCommandFeaturesById(extensionRegistry);
 
   return buildCommandManagementGroups({
     extensionCommands: collectExtensionCommandEntries(
       extensionRegistry,
-      shellCommandIds,
+      managedShellCommandIds,
       commandFeaturesById,
     ),
     keybindingsByCommandId: collectKeybindingsByCommandId(extensionRegistry),
