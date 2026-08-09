@@ -22,6 +22,14 @@ Related:
 | Component leaf  | `{bem-block}.css` co-located with owning TSX                                              |
 | TSX             | `import './{bem-block}.css'` for HMR and explicit ownership                               |
 | Hub duplicate   | Leaf also listed in feature `primitives.css` / `layout/**/index.css` for CSS-only bundles |
+| Focused entry   | Public `styles/*.css` profiles use neutral capability names and an explicit import graph  |
+
+Focused entries must not use a consumer or product name. `foundation.css` owns shared
+tokens/icons/scrollbars and `overlay.css` owns ContextMenu base + density. The existing
+`workbench-menu-surfaces.css` compatibility entry composes ContextMenu and command-list
+density leaves without owning either base surface. `core.css` and `styles.css` remain the
+broad Workbench compatibility contracts. Adding another public CSS entry requires a
+distinct package capability and packed-consumer evidence; a thin alias is not sufficient.
 
 ### File naming
 
@@ -117,6 +125,7 @@ Unresolved string ids still fall back to codicon rendering.
 
 ```powershell
 node scripts/validate-plan-a-css.mjs
+node scripts/check-packed-consumer-bundle.mjs
 pnpm --filter @workbench-kit/react run typecheck
 pnpm --filter @workbench-kit/react exec vitest run src/icons src/layout
 # After CSS graph changes affecting consumers, rebuild the integrating host app.

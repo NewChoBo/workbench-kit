@@ -15,8 +15,9 @@ Peer: React 19.
 
 ## Styles
 
-Import one bundle at the app entry. Most hosts should use the core bundle, which
-excludes the optional Auth and Chat surfaces:
+Import one bundle at the app entry. A host that renders the broad Workbench feature
+set should use the core bundle, which excludes only the optional Auth and Chat
+surfaces:
 
 ```ts
 import '@workbench-kit/react/styles/core.css';
@@ -26,9 +27,31 @@ Use `@workbench-kit/react/styles.css` when the host also renders Auth or Chat.
 Component-only consumers can instead combine token styles with
 `@workbench-kit/react/primitives.css`.
 
-The packed-consumer gate measures the production `core.css` path, including its
-referenced static assets, and fails when its CSS or total initial gzip budget
-regresses. Budget changes require an explicit initial-load review.
+Focused entries avoid loading unrelated feature hubs:
+
+| Entry                                        | Owns                                                                                       |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `@workbench-kit/react/styles/foundation.css` | Theme tokens, Codicons, and shared scrollbars                                              |
+| `@workbench-kit/react/styles/overlay.css`    | Context-menu overlay rules and compact context-menu density; import after `foundation.css` |
+| `@workbench-kit/react/styles/core.css`       | Broad Workbench feature set except Auth and Chat                                           |
+| `@workbench-kit/react/styles.css`            | Full compatibility bundle                                                                  |
+
+For a non-shell surface that only uses co-located component styles and overlays:
+
+```ts
+import '@workbench-kit/react/styles/foundation.css';
+import '@workbench-kit/react/styles/overlay.css';
+```
+
+Use `core.css` for Workbench shell routes: shell composition commonly reaches Layout,
+Settings, Views, Workspace, and modal styles that a narrower name would not safely imply.
+When routes emit separate async CSS chunks, inspect the production manifest because
+bundlers can repeat a shared CSS import across chunks.
+
+The packed-consumer gate measures production `core.css` and focused overlay paths from
+packed tarballs. It checks required/forbidden selectors, the focused-to-core ratio,
+referenced static assets, and gzip budgets. Budget changes require an explicit initial-load
+review.
 
 ## Quick start
 
@@ -57,17 +80,19 @@ Full walkthrough: [Getting Started](../../docs/guides/getting-started.md).
 
 ## Common subpaths
 
-| Subpath                                    | Purpose                              |
-| ------------------------------------------ | ------------------------------------ |
-| `@workbench-kit/react/primitives`          | App icons, controls, library layouts |
-| `@workbench-kit/react/workbench/shell`     | Workbench shell / activity bar       |
-| `@workbench-kit/react/workbench/workspace` | Explorer, workspace editor panel     |
-| `@workbench-kit/react/workbench/chat`      | Chat panel and message surfaces      |
-| `@workbench-kit/react/overlay`             | Context menus, anchored overlays     |
-| `@workbench-kit/react/modal`               | Low-level modal frame                |
-| `@workbench-kit/react/jdw`                 | JDW preview bridges                  |
-| `@workbench-kit/react/styles/core.css`     | Core host CSS without Auth and Chat  |
-| `@workbench-kit/react/styles.css`          | Full CSS including Auth and Chat     |
+| Subpath                                      | Purpose                              |
+| -------------------------------------------- | ------------------------------------ |
+| `@workbench-kit/react/primitives`            | App icons, controls, library layouts |
+| `@workbench-kit/react/workbench/shell`       | Workbench shell / activity bar       |
+| `@workbench-kit/react/workbench/workspace`   | Explorer, workspace editor panel     |
+| `@workbench-kit/react/workbench/chat`        | Chat panel and message surfaces      |
+| `@workbench-kit/react/overlay`               | Context menus, anchored overlays     |
+| `@workbench-kit/react/modal`                 | Low-level modal frame                |
+| `@workbench-kit/react/jdw`                   | JDW preview bridges                  |
+| `@workbench-kit/react/styles/foundation.css` | Theme/icon/scrollbar foundation      |
+| `@workbench-kit/react/styles/overlay.css`    | Focused context-menu overlay CSS     |
+| `@workbench-kit/react/styles/core.css`       | Core host CSS without Auth and Chat  |
+| `@workbench-kit/react/styles.css`            | Full CSS including Auth and Chat     |
 
 Import **only** through `exports`. Do not deep-import `src/` paths.
 
@@ -143,3 +168,5 @@ pnpm dev:storybook
 Storybook stays a curated set of interaction stories — not a full package gallery.
 Demo and story modules under this package are for development; published consumers
 rely on the `exports` map and CSS entry points above.
+Storybook and the sample host intentionally keep `styles.css` so they exercise the
+full compatibility graph; focused production consumers are covered by the packed gate.

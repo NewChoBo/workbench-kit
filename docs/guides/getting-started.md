@@ -51,6 +51,19 @@ also renders the optional Auth or Chat surfaces. Do not import both bundles.
 
 Hosts may alias kit CSS variables to their own theme tokens after these imports.
 
+For a non-shell surface with co-located component CSS and overlays, compose the two
+neutral capability entries:
+
+```ts
+import '@workbench-kit/react/styles/foundation.css';
+import '@workbench-kit/react/styles/overlay.css';
+```
+
+Keep `core.css` for Workbench shell routes: they commonly reach Layout, Settings,
+Management, Views, Workspace, widget-authoring, or modal styles. Load focused entries
+in the route that owns them; a global foundation entry plus an async core entry can be
+duplicated by CSS code splitting.
+
 ## 3. Minimal shell sketch
 
 Use official **subpath exports** only. Do not import from `packages/react/src/...`.

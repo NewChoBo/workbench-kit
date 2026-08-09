@@ -64,6 +64,7 @@ for (const workspacePackage of workspacePackages) {
 }
 
 validateCssOnlySideEffects();
+validateReactStyleExports();
 validateReactPrivateStorySurfaces();
 
 if (violations.length > 0) {
@@ -289,6 +290,47 @@ function validateCssOnlySideEffects() {
         location: `${relativePath(workspacePackage.packageJsonPath)}#sideEffects`,
         message: `${packageName} must keep JavaScript tree-shakeable while preserving only imported CSS side effects.`,
         rule: 'css-only-tree-shaking-side-effects',
+      });
+    }
+  }
+}
+
+function validateReactStyleExports() {
+  const reactPackage = packageByName.get('@workbench-kit/react');
+  if (!reactPackage) {
+    return;
+  }
+
+  const requiredStyleExports = {
+    './styles/core.css': './src/styles/core.css',
+    './styles/foundation.css': './src/styles/foundation.css',
+    './styles/overlay.css': './src/styles/overlay.css',
+    './styles.css': './src/styles.css',
+  };
+  const exports = reactPackage.packageJson.exports ?? {};
+  const location = relativePath(reactPackage.packageJsonPath);
+  const reviewedStyleExports = new Set(Object.keys(requiredStyleExports));
+
+  for (const [exportPath, expectedTarget] of Object.entries(requiredStyleExports)) {
+    if (exports[exportPath] !== expectedTarget) {
+      violations.push({
+        location: `${location}#exports`,
+        message: `${exportPath} must target ${expectedTarget}.`,
+        rule: 'react-style-export-contract',
+      });
+    }
+  }
+
+  for (const exportPath of Object.keys(exports)) {
+    if (
+      exportPath.startsWith('./styles/') &&
+      exportPath.endsWith('.css') &&
+      !reviewedStyleExports.has(exportPath)
+    ) {
+      violations.push({
+        location: `${location}#exports`,
+        message: `${exportPath} is a public CSS contract without focused-entry review coverage.`,
+        rule: 'react-unreviewed-style-export',
       });
     }
   }

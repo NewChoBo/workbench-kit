@@ -1,3 +1,4 @@
+import '../views/command-list.css';
 import { useEffect, useId, useRef, type ComponentPropsWithRef, type ReactNode } from 'react';
 import { Button } from '../../primitives/button';
 import { EmptyState } from '../../primitives/empty-state';

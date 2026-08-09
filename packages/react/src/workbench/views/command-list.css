@@ -1,3 +1,5 @@
+@import './command-list-density.css';
+
 .ui-workbench-command-list {
   max-height: min(430px, calc(100vh - 190px));
   overflow: auto;

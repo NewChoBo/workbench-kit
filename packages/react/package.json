@@ -52,6 +52,8 @@
     "./widget-asset": "./src/widget-asset/index.ts",
     "./widget-studio": "./src/widget-studio/index.ts",
     "./styles/core.css": "./src/styles/core.css",
+    "./styles/foundation.css": "./src/styles/foundation.css",
+    "./styles/overlay.css": "./src/styles/overlay.css",
     "./styles.css": "./src/styles.css",
     "./workbench-menu-surfaces.css": "./src/workbench-menu-surfaces.css"
   },

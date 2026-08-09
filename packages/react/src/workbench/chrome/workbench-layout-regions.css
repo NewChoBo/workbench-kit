@@ -40,3 +40,16 @@
   --panel-bg-75: var(--color-primary-side-bar-bg-75);
   background: var(--panel-bg);
 }
+
+/* Primary-sidebar residency owns its intentionally hidden native scrollbars. */
+.workbench-primary-sidebar .ui-sidebar-view__body,
+.workbench-primary-sidebar .ui-workbench-sidebar-section__content {
+  scrollbar-gutter: auto;
+  scrollbar-width: none;
+}
+
+.workbench-primary-sidebar .ui-sidebar-view__body::-webkit-scrollbar,
+.workbench-primary-sidebar .ui-workbench-sidebar-section__content::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

@@ -53,8 +53,12 @@ Use official subpath exports from `@workbench-kit/react`. Do not import from `pa
 | `@workbench-kit/workspace`                                | Pure path/selection/virtual-workspace helpers (no React)               |
 | `@workbench-kit/contracts`                                | Cross-host DTOs and capability contracts                               |
 
-Import one CSS bundle at the app entry: `@workbench-kit/react/styles/core.css` for a
-standard host, or `@workbench-kit/react/styles.css` when Auth or Chat is rendered.
+Import `@workbench-kit/react/styles/core.css` for the broad Workbench feature set, or
+`@workbench-kit/react/styles.css` when Auth or Chat is rendered. A non-shell route can
+compose `styles/foundation.css` + `styles/overlay.css` when its React components already
+provide their co-located leaf styles. Workbench shell routes should retain `core.css`;
+the focused entries deliberately omit unrelated feature hubs. See the React package
+README for the exact ownership matrix.
 
 ---
 

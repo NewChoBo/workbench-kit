@@ -1,7 +1,6 @@
 @import '@workbench-kit/tokens/styles.css';
 @import '@vscode/codicons/dist/codicon.css';
 @import './scrollbars.css';
-@import './workbench-menu-surfaces.css';
 @import './workbench/settings/settings.css';
 @import './layout/layout.css';
 @import './overlay/overlay.css';

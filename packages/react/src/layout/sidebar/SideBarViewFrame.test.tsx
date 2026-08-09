@@ -95,15 +95,23 @@ describe('SideBarViewFrame stable slots', () => {
     expect(markup).not.toContain('ui-scroll-area--stable-gutter');
   });
 
-  it('keeps the primary sidebar body on the no-gutter scrollbar policy', () => {
+  it('keeps the primary sidebar no-gutter policy owned by Workbench chrome', () => {
     const scrollbarsCss = readFileSync(
       join(dirname(fileURLToPath(import.meta.url)), '../../scrollbars.css'),
       'utf8',
     ).replace(/\r\n/g, '\n');
+    const workbenchLayoutCss = readFileSync(
+      join(
+        dirname(fileURLToPath(import.meta.url)),
+        '../../workbench/chrome/workbench-layout-regions.css',
+      ),
+      'utf8',
+    ).replace(/\r\n/g, '\n');
 
     expect(scrollbarsCss).toContain('[data-theme]');
-    expect(scrollbarsCss).toContain('.workbench-primary-sidebar .ui-sidebar-view__body');
-    expect(scrollbarsCss).toContain(
+    expect(scrollbarsCss).not.toContain('.workbench-primary-sidebar .ui-sidebar-view__body');
+    expect(workbenchLayoutCss).toContain('.workbench-primary-sidebar .ui-sidebar-view__body');
+    expect(workbenchLayoutCss).toContain(
       '.workbench-primary-sidebar .ui-sidebar-view__body::-webkit-scrollbar',
     );
   });

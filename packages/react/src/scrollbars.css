@@ -117,9 +117,7 @@
   background-clip: content-box;
 }
 
-.ui-workbench-scrollbar--hidden,
-.workbench-primary-sidebar .ui-sidebar-view__body,
-.workbench-primary-sidebar .ui-workbench-sidebar-section__content {
+.ui-workbench-scrollbar--hidden {
   scrollbar-gutter: auto;
   scrollbar-width: none;
 }
@@ -136,9 +134,7 @@
 }
 
 .ui-workbench-scrollbar--hidden::-webkit-scrollbar,
-.ui-workbench-scrollbar--overlay::-webkit-scrollbar,
-.workbench-primary-sidebar .ui-sidebar-view__body::-webkit-scrollbar,
-.workbench-primary-sidebar .ui-workbench-sidebar-section__content::-webkit-scrollbar {
+.ui-workbench-scrollbar--overlay::-webkit-scrollbar {
   width: 0;
   height: 0;
 }

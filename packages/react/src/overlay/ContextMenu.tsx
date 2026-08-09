@@ -1,3 +1,4 @@
+import './context-menu.css';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { Button } from '../primitives/button';
 import { cxCodicon } from '../utils/codicon';

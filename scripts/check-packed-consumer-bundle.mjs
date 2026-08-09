@@ -14,11 +14,13 @@ const packDir = path.join(fixtureRoot, 'pack');
 const consumerDir = path.join(fixtureRoot, 'consumer');
 const nodeModulesDir = path.join(consumerDir, 'node_modules');
 const outputDir = path.join(consumerDir, 'dist');
+const focusedOverlayOutputDir = path.join(consumerDir, 'dist-focused-overlay');
 
 // Keep a little deliberate headroom for normal fixes, while forcing larger
 // public-surface growth to include an explicit bundle-budget review.
 const PACKED_CONSUMER_BUDGETS = Object.freeze({
   cssGzipBytes: 52_000,
+  focusedOverlayCssGzipBytes: 11_500,
   initialGzipBytes: 240_000,
 });
 
@@ -69,7 +71,35 @@ try {
     { cwd: repoRoot, stdio: 'inherit' },
   );
 
-  verifyOutput();
+  const coreMetrics = verifyOutput();
+
+  buildFocusedStyleConsumer('focused-overlay');
+  verifyFocusedStyleOutput({
+    budgetBytes: PACKED_CONSUMER_BUDGETS.focusedOverlayCssGzipBytes,
+    coreCssGzipBytes: coreMetrics.cssGzipBytes,
+    forbiddenSelectors: [
+      '.chat-panel-drop-target',
+      '.ui-modal',
+      '.ui-workbench-activity-bar',
+      '.ui-workbench-command-item',
+      '.ui-workbench-command-list',
+      '.widget-tree-workbench',
+      '.workbench-settings-modal',
+      '.workspace-editor',
+    ],
+    label: 'focused overlay',
+    maxCoreRatio: 0.25,
+    outputDirectory: focusedOverlayOutputDir,
+    requiredSelectors: [
+      '--font-size-xs:',
+      '.codicon',
+      '.ui-button',
+      '.ui-context-menu',
+      '.ui-context-menu__item',
+      '.ui-context-menu__item.ui-button',
+      '.ui-scroll-area',
+    ],
+  });
 } finally {
   assertSafeFixturePath();
   fs.rmSync(fixtureRoot, { recursive: true, force: true });
@@ -220,6 +250,16 @@ export const packedBuiltins = BUILTIN_WORKBENCH_EXTENSIONS;
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'focused-overlay.ts'),
+    `import '@workbench-kit/react/styles/foundation.css';
+import '@workbench-kit/react/styles/overlay.css';
+import { ContextMenu } from '@workbench-kit/react/overlay';
+
+(globalThis as typeof globalThis & { __workbenchKitFocusedOverlay?: unknown })
+  .__workbenchKitFocusedOverlay = Object.freeze({ ContextMenu });
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'tsconfig.json'),
     `${JSON.stringify(
       {
@@ -251,6 +291,36 @@ export const packedBuiltins = BUILTIN_WORKBENCH_EXTENSIONS;
   },
 };
 `,
+  );
+  writeFocusedViteConfig(
+    'focused-overlay',
+    path.join(consumerDir, 'src', 'focused-overlay.ts'),
+    focusedOverlayOutputDir,
+  );
+}
+
+function writeFocusedViteConfig(name, input, outputDirectory) {
+  fs.writeFileSync(
+    path.join(consumerDir, `vite.${name}.config.mjs`),
+    `export default {
+  root: ${JSON.stringify(consumerDir)},
+  build: {
+    emptyOutDir: true,
+    manifest: true,
+    outDir: ${JSON.stringify(outputDirectory)},
+    rollupOptions: { input: ${JSON.stringify(input)} },
+  },
+};
+`,
+  );
+}
+
+function buildFocusedStyleConsumer(name) {
+  console.log(`[check-packed-consumer] Building ${name} CSS consumer...`);
+  runCommand(
+    'pnpm',
+    ['exec', 'vite', 'build', '--config', path.join(consumerDir, `vite.${name}.config.mjs`)],
+    { cwd: repoRoot, stdio: 'inherit' },
   );
 }
 
@@ -319,6 +389,51 @@ function verifyOutput() {
 
   console.log(
     `[check-packed-consumer] OK (${staticEntries.length} static chunks, JS ${bytes} bytes / ${gzipBytes} gzip bytes, CSS ${cssBytes} bytes / ${cssGzipBytes} gzip bytes in ${cssFiles.size} assets, static assets ${staticAssetBytes} bytes / ${staticAssetGzipBytes} gzip bytes in ${staticAssetFiles.size} files, initial ${initialGzipBytes} / ${PACKED_CONSUMER_BUDGETS.initialGzipBytes} gzip bytes).`,
+  );
+
+  return { cssBytes, cssGzipBytes };
+}
+
+function verifyFocusedStyleOutput({
+  budgetBytes,
+  coreCssGzipBytes,
+  forbiddenSelectors,
+  label,
+  maxCoreRatio,
+  outputDirectory,
+  requiredSelectors,
+}) {
+  const manifest = readJson(path.join(outputDirectory, '.vite', 'manifest.json'));
+  const entryKey = Object.keys(manifest).find((key) => manifest[key].isEntry);
+  if (!entryKey) throw new Error(`${label} consumer emitted no Vite entry.`);
+
+  const staticEntries = collectStaticEntries(manifest, entryKey);
+  const cssFiles = new Set(staticEntries.flatMap((entry) => entry.css ?? []));
+  const cssAssets = [...cssFiles].map((file) => fs.readFileSync(path.join(outputDirectory, file)));
+  const css = cssAssets.map((asset) => asset.toString('utf8')).join('\n');
+
+  for (const selector of requiredSelectors) {
+    if (!css.includes(selector)) throw new Error(`${label} CSS is missing ${selector}.`);
+  }
+  for (const selector of forbiddenSelectors) {
+    if (css.includes(selector)) {
+      throw new Error(`${label} CSS unexpectedly includes ${selector}.`);
+    }
+  }
+
+  const cssBytes = cssAssets.reduce((total, asset) => total + asset.byteLength, 0);
+  const cssGzipBytes = gzipSync(Buffer.concat(cssAssets)).byteLength;
+  assertWithinBudget(`${label} CSS gzip`, cssGzipBytes, budgetBytes);
+
+  const ratio = cssGzipBytes / coreCssGzipBytes;
+  if (ratio > maxCoreRatio) {
+    throw new Error(
+      `${label} CSS lost its focused advantage: ${(ratio * 100).toFixed(1)}% of core > ${(maxCoreRatio * 100).toFixed(0)}%.`,
+    );
+  }
+
+  console.log(
+    `[check-packed-consumer] ${label} OK (CSS ${cssBytes} bytes / ${cssGzipBytes} gzip bytes, ${(ratio * 100).toFixed(1)}% of core).`,
   );
 }
 

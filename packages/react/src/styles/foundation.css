@@ -1,0 +1,4 @@
+/* Shared theme, icon, and scrollbar foundation for focused CSS compositions. */
+@import '@workbench-kit/tokens/styles.css';
+@import '@vscode/codicons/dist/codicon.css';
+@import '../scrollbars.css';

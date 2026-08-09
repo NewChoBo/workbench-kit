@@ -149,8 +149,56 @@ const primitivesBundlePath = path.join(reactSrc, 'primitives/styles.css');
 const primitivesVisited = new Set();
 collectImports(primitivesBundlePath, primitivesVisited);
 
-const visited = new Set([...mainVisited, ...coreVisited, ...primitivesVisited]);
+const focusedEntryNames = ['foundation.css', 'overlay.css'];
+const focusedEntryGraphs = new Map(
+  focusedEntryNames.map((entryName) => {
+    const entryPath = path.join(reactSrc, 'styles', entryName);
+    const entryVisited = new Set();
+    collectImports(entryPath, entryVisited);
+    return [entryName, entryVisited];
+  }),
+);
+const menuCompatibilityEntryPath = path.join(reactSrc, 'workbench-menu-surfaces.css');
+const menuCompatibilityVisited = new Set();
+collectImports(menuCompatibilityEntryPath, menuCompatibilityVisited);
 
+const visited = new Set([
+  ...mainVisited,
+  ...coreVisited,
+  ...primitivesVisited,
+  ...[...focusedEntryGraphs.values()].flatMap((entryVisited) => [...entryVisited]),
+  ...menuCompatibilityVisited,
+]);
+
+function relativeReactPath(file) {
+  return path.relative(reactSrc, file).replaceAll('\\', '/');
+}
+
+function findUnexpectedFocusedFiles(entryName, isAllowed) {
+  return [...(focusedEntryGraphs.get(entryName) ?? [])].filter(
+    (file) => !isAllowed(relativeReactPath(file)),
+  );
+}
+
+const unexpectedFoundationFiles = findUnexpectedFocusedFiles(
+  'foundation.css',
+  (relative) => relative === 'styles/foundation.css' || relative === 'scrollbars.css',
+);
+const unexpectedOverlayFiles = findUnexpectedFocusedFiles(
+  'overlay.css',
+  (relative) => relative === 'styles/overlay.css' || relative.startsWith('overlay/'),
+);
+const unexpectedMenuCompatibilityFiles = [...menuCompatibilityVisited].filter((file) => {
+  const relative = relativeReactPath(file);
+  return ![
+    'overlay/context-menu-density.css',
+    'workbench-menu-surfaces.css',
+    'workbench/views/command-list-density.css',
+  ].includes(relative);
+});
+const foundationSidebarLeaks = [...(focusedEntryGraphs.get('foundation.css') ?? [])].filter(
+  (file) => fs.readFileSync(file, 'utf8').includes('.workbench-primary-sidebar'),
+);
 function isOptionalCoreFeature(file) {
   const relative = path.relative(reactSrc, file).replaceAll('\\', '/');
   return relative.startsWith('workbench/auth/') || relative.startsWith('workbench/chat/');
@@ -180,18 +228,19 @@ const missingPrimitiveTsxImports = [...primitivesHubLeaves].filter(
   (file) => !tsxCssImports.has(file) && !primitivesTsxImportExceptions.has(file),
 );
 
-const layoutHubChecks = [
+const componentHubChecks = [
+  { hub: path.join(reactSrc, 'overlay/overlay.css'), exceptions: new Set() },
   { hub: path.join(reactSrc, 'layout/panel/index.css'), exceptions: new Set() },
   { hub: path.join(reactSrc, 'layout/sidebar/index.css'), exceptions: new Set() },
 ];
 
 /** @type {string[]} */
-const missingLayoutTsxImports = [];
-for (const { hub, exceptions } of layoutHubChecks) {
+const missingComponentTsxImports = [];
+for (const { hub, exceptions } of componentHubChecks) {
   if (!fs.existsSync(hub)) continue;
   for (const file of collectFeatureHubLeaves(hub)) {
     if (!tsxCssImports.has(file) && !exceptions.has(file)) {
-      missingLayoutTsxImports.push(file);
+      missingComponentTsxImports.push(file);
     }
   }
 }
@@ -203,9 +252,9 @@ if (missingPrimitiveTsxImports.length > 0) {
   }
 }
 
-if (missingLayoutTsxImports.length > 0) {
-  console.error('Layout CSS hub entries missing a TSX side-effect import:');
-  for (const file of missingLayoutTsxImports) {
+if (missingComponentTsxImports.length > 0) {
+  console.error('Component CSS hub entries missing a TSX side-effect import:');
+  for (const file of missingComponentTsxImports) {
     console.error(`  - ${path.relative(repoRoot, file)}`);
   }
 }
@@ -220,8 +269,33 @@ const allowedOrphans = new Set([path.normalize(path.join(reactSrc, 'primitives/s
 const unexpectedOrphans = orphanCss.filter((file) => !allowedOrphans.has(path.normalize(file)));
 
 console.log(
-  `Validated ${mainVisited.size} CSS files from styles.css, ${coreVisited.size} from styles/core.css, ${primitivesVisited.size} from primitives/styles.css, ${tsxCssImports.size} from TSX imports`,
+  `Validated ${mainVisited.size} CSS files from styles.css, ${coreVisited.size} from styles/core.css, ${primitivesVisited.size} from primitives/styles.css, ${focusedEntryGraphs.size} focused entry graphs, 1 menu compatibility graph, ${tsxCssImports.size} from TSX imports`,
 );
+
+for (const [entryName, files] of [
+  ['foundation.css', unexpectedFoundationFiles],
+  ['overlay.css', unexpectedOverlayFiles],
+]) {
+  if (files.length === 0) continue;
+  console.error(`Focused CSS entry styles/${entryName} crosses its feature boundary:`);
+  for (const file of files) {
+    console.error(`  - ${path.relative(repoRoot, file)}`);
+  }
+}
+
+if (unexpectedMenuCompatibilityFiles.length > 0) {
+  console.error('workbench-menu-surfaces.css imports files outside its compatibility boundary:');
+  for (const file of unexpectedMenuCompatibilityFiles) {
+    console.error(`  - ${path.relative(repoRoot, file)}`);
+  }
+}
+
+if (foundationSidebarLeaks.length > 0) {
+  console.error('Foundation CSS contains Workbench primary-sidebar selectors:');
+  for (const file of foundationSidebarLeaks) {
+    console.error(`  - ${path.relative(repoRoot, file)}`);
+  }
+}
 
 if (unexpectedCoreFeatures.length > 0) {
   console.error('Core CSS includes optional Auth or Chat styles:');
@@ -265,7 +339,7 @@ if (missingPrimitiveTsxImports.length > 0) {
   process.exitCode = 1;
 }
 
-if (missingLayoutTsxImports.length > 0) {
+if (missingComponentTsxImports.length > 0) {
   process.exitCode = 1;
 }
 
@@ -274,6 +348,15 @@ if (unexpectedCoreFeatures.length > 0) {
 }
 
 if (missingCoreFiles.length > 0 || unexpectedCoreFiles.length > 0) {
+  process.exitCode = 1;
+}
+
+if (
+  unexpectedFoundationFiles.length > 0 ||
+  unexpectedOverlayFiles.length > 0 ||
+  unexpectedMenuCompatibilityFiles.length > 0 ||
+  foundationSidebarLeaks.length > 0
+) {
   process.exitCode = 1;
 }
 
