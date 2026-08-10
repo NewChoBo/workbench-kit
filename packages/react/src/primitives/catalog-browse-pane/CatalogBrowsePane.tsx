@@ -240,25 +240,27 @@ export function CatalogBrowsePane({
         >
           {items.map((item) => {
             const selected = selectedItemId === item.id;
-            if (renderGridItem) {
-              return <Fragment key={item.id}>{renderGridItem(item, { selected })}</Fragment>;
-            }
             return (
-              <CatalogBrowseCard
-                data-ui-catalog-browse-item={item.id}
-                imageAlt={item.imageAlt ?? item.label}
-                imageUrl={item.imageUrl ?? null}
-                key={item.id}
-                label={item.label}
-                meta={item.meta ?? undefined}
-                onClick={() => onOpenItem(item.id)}
-                onContextMenu={(event) => {
-                  onItemContextMenu?.(item.id, item.label, event);
-                }}
-                selected={selected}
-                tooltip={item.label}
-                variant="cover"
-              />
+              <CatalogBrowseItemWrapper itemId={item.id} key={item.id}>
+                {renderGridItem ? (
+                  renderGridItem(item, { selected })
+                ) : (
+                  <CatalogBrowseCard
+                    data-ui-catalog-browse-item={item.id}
+                    imageAlt={item.imageAlt ?? item.label}
+                    imageUrl={item.imageUrl ?? null}
+                    label={item.label}
+                    meta={item.meta ?? undefined}
+                    onClick={() => onOpenItem(item.id)}
+                    onContextMenu={(event) => {
+                      onItemContextMenu?.(item.id, item.label, event);
+                    }}
+                    selected={selected}
+                    tooltip={item.label}
+                    variant="cover"
+                  />
+                )}
+              </CatalogBrowseItemWrapper>
             );
           })}
           <BrowseScrollFooter
@@ -326,6 +328,24 @@ export function CatalogBrowsePane({
           />
         </ScrollArea>
       ) : null}
+    </div>
+  );
+}
+
+function CatalogBrowseItemWrapper({
+  children,
+  itemId,
+}: {
+  readonly children: ReactNode;
+  readonly itemId: string;
+}): ReactNode {
+  return (
+    <div
+      className="ui-catalog-browse__item"
+      data-ui-catalog-browse-item-container={itemId}
+      role="listitem"
+    >
+      {children}
     </div>
   );
 }

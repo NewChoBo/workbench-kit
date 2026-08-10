@@ -50,6 +50,10 @@
   min-height: 0;
 }
 
+.ui-catalog-browse__item {
+  min-width: 0;
+}
+
 .ui-catalog-browse__grid {
   align-content: start;
   display: grid;
