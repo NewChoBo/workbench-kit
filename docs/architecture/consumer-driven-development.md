@@ -26,13 +26,21 @@ the host implementation with the published API.
 
 ## Ownership model
 
-| Workbench Kit owns | Integrating host owns |
-| --- | --- |
-| Domain-neutral algorithms and state machines | Product data models and workflows |
-| Reusable workbench, UI, editor, mapping, and platform primitives | Product navigation, catalogs, copy, branding, and defaults |
-| Generic Electron main/preload/security boundaries | Product IPC channel names, URL catalogs, paths, and lifecycle policy |
-| Public contracts, focused exports, examples, and packed-consumer fixtures | Composition roots and adapters that bind product services to Kit contracts |
-| Cross-host compatibility and package validation | End-to-end product behavior and product-specific acceptance tests |
+### Workbench Kit owns
+
+- domain-neutral algorithms and state machines;
+- reusable workbench, UI, editor, mapping, and platform primitives;
+- generic Electron main, preload, and security boundaries;
+- public contracts, focused exports, examples, and packed-consumer fixtures;
+- cross-host compatibility and package validation.
+
+### Integrating hosts own
+
+- product data models and workflows;
+- product navigation, catalogs, copy, branding, and defaults;
+- product IPC channel names, URL catalogs, paths, and lifecycle policy;
+- composition roots and adapters that bind product services to Kit contracts;
+- end-to-end product behavior and product-specific acceptance tests.
 
 Ownership follows behavior, not the repository where the first implementation
 appeared.
@@ -128,15 +136,19 @@ behavior are understood.
 
 Before implementation, classify the requested change.
 
-| Question | If yes |
-| --- | --- |
-| Can the behavior be named without a product concept? | Prefer Workbench Kit |
-| Can product choices be passed as data, callbacks, or ports? | Prefer Workbench Kit |
-| Would another Electron, browser, or workbench host plausibly use it? | Prefer Workbench Kit |
-| Is the capability already partially duplicated across Kit and a host? | Consolidate in Workbench Kit |
-| Does the behavior depend on a product schema, catalog, workflow, or identity? | Keep that layer in the host |
-| Is it only composition between existing generic capabilities? | Keep composition in the host |
-| Is the behavior still an unproven product experiment? | Keep it in the host until stable |
+- If the behavior can be named without a product concept, prefer Workbench Kit.
+- If product choices can be passed as data, callbacks, or ports, prefer Workbench
+  Kit.
+- If another Electron, browser, or workbench host could plausibly use it, prefer
+  Workbench Kit.
+- If the capability is already partially duplicated across Kit and a host,
+  consolidate it in Workbench Kit.
+- If the behavior depends on a product schema, catalog, workflow, or identity,
+  keep that layer in the host.
+- If it only composes existing generic capabilities, keep the composition in the
+  host.
+- If it is still an unproven product experiment, keep it in the host until the
+  behavior stabilizes.
 
 When classification is mixed, split the task:
 
@@ -259,6 +271,5 @@ leave product identity, policy, and composition in the integrating host.
 - [ ] Kit checks and public-boundary checks pass.
 - [ ] The API is published before the host depends on it.
 - [ ] The host uses one exact Workbench Kit version cohort.
-- [ ] Duplicate host mechanics and temporary shims are removed or have a precise
-      removal trigger.
+- [ ] Duplicate host mechanics are removed or have an exact removal trigger.
 - [ ] Both repositories' plans and status notes reflect the final ownership.
