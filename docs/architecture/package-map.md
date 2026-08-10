@@ -23,7 +23,7 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 | `@workbench-kit/workbench-extension-sdk` | Phase 5: public-ready manifest plus command/view provider context APIs | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
 | `@workbench-kit/workbench-config`        | Phase 5: public-ready `.workbench` extension/layout config parsing     | `.workbench` load/merge/validate                                                     | **Keep**                                                                    |
 | `@workbench-kit/monaco`                  | Skeleton                                                               | Editor integration                                                                   | **Keep** (optional)                                                         |
-| `@workbench-kit/electron-shell`          | Published injectable main/preload helpers                              | Electron security, window-control, asset, and secret-vault primitives                | **Keep** — product policy and channel names stay host-owned                 |
+| `@workbench-kit/electron-shell`          | Published injectable main/preload helpers                              | Electron lifecycle, security, window-control, asset, and secret-vault primitives     | **Keep** — product policy and channel names stay host-owned                 |
 
 ## UI Stack
 

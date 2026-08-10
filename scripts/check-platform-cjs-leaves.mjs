@@ -109,11 +109,13 @@ function verifyLegacyTypeScriptSubpaths(consumerDir) {
   fs.writeFileSync(
     typeEntry,
     [
+      "import { createApplicationQuitGuard } from '@workbench-kit/electron-shell/application-quit-guard';",
       "import { openAllowlistedExternalLink } from '@workbench-kit/electron-shell/external-links';",
       "import { createAllowlistedInvoke } from '@workbench-kit/electron-shell/preload';",
       "import { requireOwnedWindowForSender } from '@workbench-kit/electron-shell/sender-security';",
       "import { createWindowControlsBridge } from '@workbench-kit/electron-shell/window-controls';",
       '',
+      'void createApplicationQuitGuard;',
       'void openAllowlistedExternalLink;',
       'void createAllowlistedInvoke;',
       'void requireOwnedWindowForSender;',
@@ -154,6 +156,7 @@ function verifyElectronShellLeaves() {
   );
   try {
     for (const leaf of [
+      'lifecycle/application-quit-guard.js',
       'security/open-allowlisted-external-link.js',
       'security/require-owned-window-for-sender.js',
       'window/window-controls.js',
@@ -172,9 +175,11 @@ function verifyElectronShellLeaves() {
       [
         "'use strict';",
         "const assert = require('node:assert/strict');",
+        "const { createApplicationQuitGuard } = require('@workbench-kit/electron-shell/application-quit-guard');",
         "const { openAllowlistedExternalLink } = require('@workbench-kit/electron-shell/external-links');",
         "const { requireOwnedWindowForSender } = require('@workbench-kit/electron-shell/sender-security');",
         "const { registerWindowControlIpc } = require('@workbench-kit/electron-shell/window-controls');",
+        'assert.equal(typeof createApplicationQuitGuard, "function");',
         'assert.equal(typeof openAllowlistedExternalLink, "function");',
         'assert.equal(typeof requireOwnedWindowForSender, "function");',
         'assert.equal(typeof registerWindowControlIpc, "function");',

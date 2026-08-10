@@ -6,6 +6,9 @@
   "types": "./src/index.ts",
   "typesVersions": {
     "*": {
+      "application-quit-guard": [
+        "src/lifecycle/application-quit-guard.ts"
+      ],
       "external-links": [
         "src/security/open-allowlisted-external-link.ts"
       ],
@@ -28,6 +31,12 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./application-quit-guard": {
+      "types": "./src/lifecycle/application-quit-guard.ts",
+      "require": "./dist/lifecycle/application-quit-guard.js",
+      "import": "./src/lifecycle/application-quit-guard.ts",
+      "default": "./src/lifecycle/application-quit-guard.ts"
+    },
     "./external-links": {
       "types": "./src/security/open-allowlisted-external-link.ts",
       "require": "./dist/security/open-allowlisted-external-link.js",
@@ -56,7 +65,7 @@
     "!src/**/*.stories.ts",
     "!src/**/*.stories.tsx"
   ],
-  "description": "Electron main-process helpers for Workbench Kit hosts (window controls, asset protocol, secret vault) plus a typed preload scaffold.",
+  "description": "Electron main-process helpers for Workbench Kit hosts (quit lifecycle, window controls, asset protocol, secret vault) plus a typed preload scaffold.",
   "publishConfig": {
     "access": "public",
     "tag": "prototype",

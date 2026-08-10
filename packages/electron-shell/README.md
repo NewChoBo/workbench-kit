@@ -1,8 +1,8 @@
 # `@workbench-kit/electron-shell`
 
-Electron **main-process** helpers (window controls, asset protocol, secret vault)
-and a typed **preload** scaffold. The package stays Electron-free — hosts inject
-narrow `ipcMain` / `ipcRenderer` / `contextBridge` surfaces.
+Electron **main-process** helpers (application quit lifecycle, window controls,
+asset protocol, secret vault) and a typed **preload** scaffold. The package stays
+Electron-free — hosts inject narrow Electron surfaces.
 
 Published on npm with the **`prototype`** dist tag.
 
@@ -16,6 +16,7 @@ pnpm add @workbench-kit/electron-shell@prototype
 
 ```ts
 import {
+  createApplicationQuitGuard,
   registerWindowControlIpc,
   createEncryptedSecretVault,
   requireOwnedWindowForSender,
@@ -30,6 +31,7 @@ host-owned.
 
 ```ts
 import { openAllowlistedExternalLink } from '@workbench-kit/electron-shell/external-links';
+import { createApplicationQuitGuard } from '@workbench-kit/electron-shell/application-quit-guard';
 import { requireOwnedWindowForSender } from '@workbench-kit/electron-shell/sender-security';
 import {
   createWindowControlsBridge,
@@ -40,6 +42,37 @@ import {
 `registerWindowControlIpc` validates the sender through the host-injected window
 resolver. `createWindowControlsBridge().toggleMaximized()` resolves to the final
 maximized state returned by the main handler.
+
+## Application quit guard (`./application-quit-guard`)
+
+Electron's `before-quit` event must be vetoed synchronously, even when checking
+dirty state or asking for a decision is asynchronous. The guard coordinates that
+flow while the host retains ownership of application state, prompts, save/discard
+operations, and event registration.
+
+```ts
+const quitGuard = createApplicationQuitGuard({
+  isDirty: (signal) => documentStore.isDirty({ signal }),
+  requestDecision: (signal) => quitPrompt.requestDecision({ signal }),
+  save: (signal) => documentStore.saveAll({ signal }),
+  discard: (signal) => documentStore.discardAll({ signal }),
+  resumeQuit: () => electronApp.quit(),
+  timeoutMs: 30_000,
+});
+
+electronApp.on('before-quit', (event) => {
+  void quitGuard.handleBeforeQuit(event);
+});
+```
+
+Repeated quit events are coalesced into the active request. After save or discard,
+the guard rechecks dirty state and resumes only when clean. Errors, timeout, and a
+still-dirty recheck fail closed. `cancelPending()` aborts an obsolete request and
+invalidates any late completion; call it when the owning lifecycle is replaced.
+The injected `resumeQuit` port must re-enter the registered guard synchronously;
+an asynchronous wrapper is treated as a fresh request. OS shutdown paths that do
+not emit `before-quit`, and updater flows that emit it after windows close, remain
+host-owned lifecycle concerns outside this guard.
 
 For external links, keep the product allowlist outside the Kit and pass only an
 opaque link id into the generic helper:
