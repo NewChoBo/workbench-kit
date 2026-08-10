@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 import { runCommand } from './lib/run-command.mjs';
-import { ensureGeneratedWorkspaceExportTargets } from './lib/workspace-export-targets.mjs';
 import { packageDirectoryNameForPackageName } from './npm-publish-config.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -49,20 +48,16 @@ const packageNames = [
 const manifests = new Map(
   packageNames.map((name) => [name, readJson(path.join(packageDir(name), 'package.json'))]),
 );
-const workspacePackages = packageNames.map((name) => ({
-  directory: packageDir(name),
-  packageJson: manifests.get(name),
-}));
 
 fs.mkdirSync(packDir, { recursive: true });
 fs.mkdirSync(nodeModulesDir, { recursive: true });
 
 try {
   assertExternalFixture();
-  ensureGeneratedWorkspaceExportTargets({
-    logPrefix: 'check-packed-consumer',
-    repoRoot,
-    workspacePackages,
+  console.log('[check-packed-consumer] Building fresh workspace artifacts...');
+  runCommand('pnpm', ['build:workspace'], {
+    cwd: repoRoot,
+    stdio: 'inherit',
   });
   packageNames.forEach(packPackage);
   linkExternalPackages();
