@@ -6,10 +6,18 @@
   "types": "./src/index.ts",
   "typesVersions": {
     "*": {
-      "external-links": ["src/security/open-allowlisted-external-link.ts"],
-      "preload": ["src/preload/index.ts"],
-      "sender-security": ["src/security/require-owned-window-for-sender.ts"],
-      "window-controls": ["src/window/window-controls.ts"]
+      "external-links": [
+        "src/security/open-allowlisted-external-link.ts"
+      ],
+      "preload": [
+        "src/preload/index.ts"
+      ],
+      "sender-security": [
+        "src/security/require-owned-window-for-sender.ts"
+      ],
+      "window-controls": [
+        "src/window/window-controls.ts"
+      ]
     }
   },
   "scripts": {
