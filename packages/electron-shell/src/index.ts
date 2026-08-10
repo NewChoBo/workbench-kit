@@ -3,7 +3,6 @@ export {
   type ApplicationQuitDecision,
   type ApplicationQuitEvent,
   type ApplicationQuitGuard,
-  type ApplicationQuitGuardPhase,
   type ApplicationQuitGuardResult,
   type ApplicationQuitProceedReason,
   type CreateApplicationQuitGuardOptions,

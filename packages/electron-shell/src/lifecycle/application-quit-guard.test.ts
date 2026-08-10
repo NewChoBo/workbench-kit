@@ -64,7 +64,6 @@ describe('createApplicationQuitGuard', () => {
     expect(resumeQuit).toHaveBeenCalledTimes(1);
     expect(resumedResult).toBeUndefined();
     expect(resumedEvent.preventDefault).not.toHaveBeenCalled();
-    expect(guard.getPhase()).toBe('idle');
   });
 
   it('keeps a dirty application open when the decision is cancel', async () => {
@@ -79,20 +78,13 @@ describe('createApplicationQuitGuard', () => {
 
   it('saves, rechecks, and resumes only after dirty state clears', async () => {
     let dirty = true;
-    const phases: string[] = [];
-    const guardReference: { current?: ApplicationQuitGuard } = {};
     const save = vi.fn(() => {
-      phases.push(guardReference.current?.getPhase() ?? 'missing');
       dirty = false;
     });
-    const isDirty = vi.fn(() => {
-      phases.push(guardReference.current?.getPhase() ?? 'missing');
-      return dirty;
-    });
+    const isDirty = vi.fn(() => dirty);
     const guard = createApplicationQuitGuard(
       createOptions({ isDirty, requestDecision: () => 'save', save }),
     );
-    guardReference.current = guard;
 
     await expect(guard.handleBeforeQuit(createEvent())).resolves.toEqual({
       status: 'proceed',
@@ -100,7 +92,6 @@ describe('createApplicationQuitGuard', () => {
     });
     expect(save).toHaveBeenCalledTimes(1);
     expect(isDirty).toHaveBeenCalledTimes(2);
-    expect(phases).toEqual(['checking', 'saving', 'rechecking']);
   });
 
   it('discards, rechecks, and resumes only after dirty state clears', async () => {
@@ -222,13 +213,15 @@ describe('createApplicationQuitGuard', () => {
     vi.useFakeTimers();
     try {
       const check = createDeferred<boolean>();
+      let checkCount = 0;
       let observedSignal: AbortSignal | undefined;
       const resumeQuit = vi.fn();
       const guard = createApplicationQuitGuard(
         createOptions({
           isDirty: (signal) => {
             observedSignal = signal;
-            return check.promise;
+            checkCount += 1;
+            return checkCount === 1 ? check.promise : false;
           },
           resumeQuit,
           timeoutMs: 25,
@@ -246,7 +239,12 @@ describe('createApplicationQuitGuard', () => {
       check.reject(new Error('late check failure'));
       await settleMicrotasks();
       expect(resumeQuit).not.toHaveBeenCalled();
-      expect(guard.getPhase()).toBe('idle');
+
+      await expect(guard.handleBeforeQuit(createEvent())).resolves.toEqual({
+        status: 'proceed',
+        reason: 'clean',
+      });
+      expect(resumeQuit).toHaveBeenCalledOnce();
     } finally {
       vi.useRealTimers();
     }
@@ -271,7 +269,6 @@ describe('createApplicationQuitGuard', () => {
     expect(guard.cancelPending()).toBe(true);
     expect(guard.cancelPending()).toBe(false);
     expect(firstSignal?.aborted).toBe(true);
-    expect(guard.getPhase()).toBe('idle');
     await expect(oldResult).resolves.toEqual({ status: 'cancelled' });
 
     const newResult = guard.handleBeforeQuit(createEvent());

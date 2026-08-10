@@ -4,9 +4,6 @@ export interface ApplicationQuitEvent {
 
 export type ApplicationQuitDecision = 'cancel' | 'discard' | 'save';
 
-export type ApplicationQuitGuardPhase =
-  'idle' | 'checking' | 'confirming' | 'saving' | 'discarding' | 'rechecking' | 'resuming';
-
 export type ApplicationQuitProceedReason = 'clean' | 'discarded' | 'saved';
 
 export type ApplicationQuitGuardResult =
@@ -50,9 +47,12 @@ export interface ApplicationQuitGuard {
    * Returns undefined only for the one synchronous re-entry allowed by `resumeQuit`.
    */
   handleBeforeQuit(event: ApplicationQuitEvent): Promise<ApplicationQuitGuardResult> | undefined;
-  /** Abort and invalidate the current request. Returns false when no request is pending. */
+  /**
+   * Abort and invalidate the current request. Late guard completion is ignored, but an
+   * already-started callback must honor its AbortSignal to stop its own side effects.
+   * Returns false when no request is pending.
+   */
   cancelPending(): boolean;
-  getPhase(): ApplicationQuitGuardPhase;
 }
 
 type AbortKind = 'cancelled' | 'timeout';
@@ -119,7 +119,6 @@ export function createApplicationQuitGuard(
   const timeoutMs = options.timeoutMs;
   validateTimeoutMs(timeoutMs);
 
-  let phase: ApplicationQuitGuardPhase = 'idle';
   let generation = 0;
   let inFlight: Promise<ApplicationQuitGuardResult> | null = null;
   let pendingController: AbortController | null = null;
@@ -143,18 +142,12 @@ export function createApplicationQuitGuard(
     }
 
     const isCurrent = (): boolean => requestGeneration === generation;
-    const setPhase = (nextPhase: ApplicationQuitGuardPhase): void => {
-      if (isCurrent()) {
-        phase = nextPhase;
-      }
-    };
     const run = <Value>(operation: () => Value | Promise<Value>): Promise<Value> =>
       raceWithAbort(operation, controller.signal, () => abortKind);
 
     const recheckAndResume = async (
       reason: Exclude<ApplicationQuitProceedReason, 'clean'>,
     ): Promise<ApplicationQuitGuardResult> => {
-      setPhase('rechecking');
       const dirty = await run(() => options.isDirty(controller.signal));
       if (dirty !== false && dirty !== true) {
         throw new TypeError('Application quit guard isDirty must return a boolean.');
@@ -166,7 +159,6 @@ export function createApplicationQuitGuard(
     };
 
     const resume = (reason: ApplicationQuitProceedReason): ApplicationQuitGuardResult => {
-      setPhase('resuming');
       // The decision is now irreversible. `cancelPending` must not report a cancellable request
       // while the host is synchronously re-entering before-quit.
       if (isCurrent()) {
@@ -184,7 +176,6 @@ export function createApplicationQuitGuard(
 
     const execute = async (): Promise<ApplicationQuitGuardResult> => {
       try {
-        setPhase('checking');
         const dirty = await run(() => options.isDirty(controller.signal));
         if (dirty !== false && dirty !== true) {
           throw new TypeError('Application quit guard isDirty must return a boolean.');
@@ -193,18 +184,15 @@ export function createApplicationQuitGuard(
           return resume('clean');
         }
 
-        setPhase('confirming');
         const decision = await run(() => options.requestDecision(controller.signal));
         if (decision === 'cancel') {
           return { status: 'cancelled' };
         }
         if (decision === 'save') {
-          setPhase('saving');
           await run(() => options.save(controller.signal));
           return await recheckAndResume('saved');
         }
         if (decision === 'discard') {
-          setPhase('discarding');
           await run(() => options.discard(controller.signal));
           return await recheckAndResume('discarded');
         }
@@ -225,7 +213,6 @@ export function createApplicationQuitGuard(
         if (isCurrent()) {
           inFlight = null;
           pendingController = null;
-          phase = 'idle';
         }
       }
     };
@@ -257,12 +244,8 @@ export function createApplicationQuitGuard(
       generation += 1;
       inFlight = null;
       pendingController = null;
-      phase = 'idle';
       controller.abort();
       return true;
-    },
-    getPhase() {
-      return phase;
     },
   };
 }
