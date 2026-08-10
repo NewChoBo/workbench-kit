@@ -4,15 +4,16 @@ Workbench Kit architecture documents for the VS Code–like workbench shell, ext
 
 ## Start Here
 
-| Document                                      | Purpose                                                    |
-| --------------------------------------------- | ---------------------------------------------------------- |
-| [Guides](../guides/README.md)                 | Use cases, extension development, API reference index      |
-| [Package Map](./package-map.md)               | Every package: current role, target role, migration action |
-| [Migration Strategy](./migration-strategy.md) | Direct migration plan (`platform`, shell -> `shell-react`) |
-| [Phase Roadmap](./phase-roadmap.md)           | Phased delivery and exit criteria                          |
-| [Project Structure](./project-structure.md)   | Repository layout                                          |
-| [Dependency Rules](./dependency-rules.md)     | Allowed and forbidden package edges                        |
-| [Security Boundary](./security-boundary.md)   | Public package and extension trust boundary                |
+| Document                                                         | Purpose                                                    |
+| ---------------------------------------------------------------- | ---------------------------------------------------------- |
+| [Guides](../guides/README.md)                                    | Use cases, extension development, API reference index      |
+| [Package Map](./package-map.md)                                  | Every package: current role, target role, migration action |
+| [Consumer-driven Development](./consumer-driven-development.md)   | Kit ownership, host promotion, release, and Codex order    |
+| [Migration Strategy](./migration-strategy.md)                    | Direct migration plan (`platform`, shell -> `shell-react`) |
+| [Phase Roadmap](./phase-roadmap.md)                              | Phased delivery and exit criteria                          |
+| [Project Structure](./project-structure.md)                      | Repository layout                                          |
+| [Dependency Rules](./dependency-rules.md)                        | Allowed and forbidden package edges                        |
+| [Security Boundary](./security-boundary.md)                      | Public package and extension trust boundary                |
 
 ## Workbench Layers
 
