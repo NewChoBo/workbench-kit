@@ -1,6 +1,11 @@
 import { runCommand } from './lib/run-command.mjs';
 
-const packages = ['@workbench-kit/contracts', '@workbench-kit/jdw', '@workbench-kit/platform'];
+const packages = [
+  '@workbench-kit/contracts',
+  '@workbench-kit/electron-shell',
+  '@workbench-kit/jdw',
+  '@workbench-kit/platform',
+];
 
 for (const packageName of packages) {
   console.log(`[build-workspace] Building ${packageName}...`);

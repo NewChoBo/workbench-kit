@@ -22,6 +22,40 @@ import {
 } from '@workbench-kit/electron-shell';
 ```
 
+## Focused entries
+
+Performance-sensitive hosts can import only the reusable Electron boundary they
+need. Product channel names, URL catalogs, storage paths, and policy remain
+host-owned.
+
+```ts
+import { openAllowlistedExternalLink } from '@workbench-kit/electron-shell/external-links';
+import { requireOwnedWindowForSender } from '@workbench-kit/electron-shell/sender-security';
+import {
+  createWindowControlsBridge,
+  registerWindowControlIpc,
+} from '@workbench-kit/electron-shell/window-controls';
+```
+
+`registerWindowControlIpc` validates the sender through the host-injected window
+resolver. `createWindowControlsBridge().toggleMaximized()` resolves to the final
+maximized state returned by the main handler.
+
+For external links, keep the product allowlist outside the Kit and pass only an
+opaque link id into the generic helper:
+
+```ts
+const PRODUCT_LINKS = {
+  docs: 'https://example.com/docs',
+} as const;
+
+await openAllowlistedExternalLink({
+  allowlist: PRODUCT_LINKS,
+  linkId: 'docs',
+  openExternal: (url) => electronShell.openExternal(url),
+});
+```
+
 ## Typed preload scaffold (`./preload`)
 
 Secure renderer↔main pattern: allowlisted invoke/subscribe + `contextBridge`
@@ -74,12 +108,13 @@ declare global {
 }
 
 await window.workbenchKit.window.minimize();
+const isMaximized = await window.workbenchKit.window.toggleMaximized();
 ```
 
 ### Enablement checklist
 
 1. `contextIsolation: true`, `nodeIntegration: false` on BrowserWindow
-2. Register main IPC with `registerWindowControlIpc` + `requireOwnedWindowForSender`
+2. Register main IPC with `registerWindowControlIpc` + an owned-window resolver
 3. Build preload with `createWorkbenchKitPreloadApi` + `exposeWorkbenchKitPreload`
 4. Do **not** expose `ipcRenderer`, `require`, or Node builtins to the page
 5. Keep channel names host-owned; only allowlist channels the scaffold will call
