@@ -27,6 +27,30 @@ monorepo must not include this repository’s `packages/*` in its own
 tag → `publish.yml`, then hosts bump pins. Do not expect hosts to ship product commits that
 require unreleased kit APIs.
 
+## Consumer-driven ownership
+
+Workbench Kit is the default owner of reusable mechanics. Integrating hosts own
+product policy, composition, data models, copy, identifiers, and thin adapters.
+When a host implementation is more mature but product-independent, promote its
+behavior contract into Workbench Kit, release it, then remove the duplicate host
+implementation.
+
+Full policy and Codex execution order:
+[`docs/architecture/consumer-driven-development.md`](docs/architecture/consumer-driven-development.md).
+
+For cross-repository tasks, Codex must:
+
+1. classify responsibilities as generic, product policy, or composition;
+2. implement and validate generic behavior in Workbench Kit first;
+3. merge the Kit PR into `develop` only after required checks pass;
+4. publish before a host commits a dependency on the new API;
+5. bump the host to one exact published Kit version cohort;
+6. keep only product policy and a narrow adapter in the host;
+7. delete replaced mechanics or record an exact compatibility-shim removal trigger.
+
+Public Kit code, documentation, commits, and PR text must remain neutral and must
+not identify private hosts while following this workflow.
+
 ## Before you change code
 
 1. Read surrounding code and match existing naming, exports, and validation lanes.
