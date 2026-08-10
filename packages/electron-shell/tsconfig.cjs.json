@@ -12,6 +12,7 @@
     "types": []
   },
   "include": [
+    "src/lifecycle/application-quit-guard.ts",
     "src/security/open-allowlisted-external-link.ts",
     "src/security/require-owned-window-for-sender.ts",
     "src/window/window-controls.ts"

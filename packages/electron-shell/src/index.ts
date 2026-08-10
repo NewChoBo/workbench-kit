@@ -1,4 +1,14 @@
 export {
+  createApplicationQuitGuard,
+  type ApplicationQuitDecision,
+  type ApplicationQuitEvent,
+  type ApplicationQuitGuard,
+  type ApplicationQuitGuardPhase,
+  type ApplicationQuitGuardResult,
+  type ApplicationQuitProceedReason,
+  type CreateApplicationQuitGuardOptions,
+} from './lifecycle/application-quit-guard.js';
+export {
   createEncryptedSecretVault,
   EncryptionUnavailableError,
   type CreateEncryptedSecretVaultOptions,
