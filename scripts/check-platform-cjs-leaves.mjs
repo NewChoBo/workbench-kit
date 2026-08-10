@@ -103,6 +103,49 @@ function verifyPlatformLeaves() {
   }
 }
 
+function verifyLegacyTypeScriptSubpaths(consumerDir) {
+  const typeEntry = path.join(consumerDir, 'smoke.ts');
+  const tsconfigPath = path.join(consumerDir, 'tsconfig.json');
+  fs.writeFileSync(
+    typeEntry,
+    [
+      "import { openAllowlistedExternalLink } from '@workbench-kit/electron-shell/external-links';",
+      "import { createAllowlistedInvoke } from '@workbench-kit/electron-shell/preload';",
+      "import { requireOwnedWindowForSender } from '@workbench-kit/electron-shell/sender-security';",
+      "import { createWindowControlsBridge } from '@workbench-kit/electron-shell/window-controls';",
+      '',
+      'void openAllowlistedExternalLink;',
+      'void createAllowlistedInvoke;',
+      'void requireOwnedWindowForSender;',
+      'void createWindowControlsBridge;',
+      '',
+    ].join('\n'),
+  );
+  fs.writeFileSync(
+    tsconfigPath,
+    JSON.stringify(
+      {
+        compilerOptions: {
+          module: 'CommonJS',
+          moduleResolution: 'Node',
+          noEmit: true,
+          skipLibCheck: true,
+          strict: true,
+          target: 'ES2022',
+          types: [],
+        },
+        include: ['smoke.ts'],
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+  runCommand('pnpm', ['exec', 'tsc', '-p', tsconfigPath], {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  });
+}
+
 function verifyElectronShellLeaves() {
   const fixture = packWorkspacePackage(
     '@workbench-kit/electron-shell',
@@ -121,6 +164,8 @@ function verifyElectronShellLeaves() {
     }
 
     linkPackedPackage(fixture.consumerDir, fixture.packedRoot, 'electron-shell');
+    verifyLegacyTypeScriptSubpaths(fixture.consumerDir);
+
     const consumerEntry = path.join(fixture.consumerDir, 'smoke.cjs');
     fs.writeFileSync(
       consumerEntry,
