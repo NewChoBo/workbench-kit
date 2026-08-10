@@ -44,7 +44,8 @@ export interface RegisterWindowControlIpcOptions {
 
 export interface WindowControlsBridge {
   minimize(): Promise<void>;
-  toggleMaximized(): Promise<void>;
+  /** Toggle the host window and resolve to its final maximized state. */
+  toggleMaximized(): Promise<boolean>;
   close(): Promise<void>;
   isMaximized(): Promise<boolean>;
   onMaximizedChanged(listener: (maximized: boolean) => void): () => void;
@@ -133,7 +134,8 @@ export function createWindowControlsBridge(
       await invoke(channels.minimize);
     },
     toggleMaximized: async () => {
-      await invoke(channels.toggleMaximized);
+      const value = await invoke(channels.toggleMaximized);
+      return Boolean(value);
     },
     close: async () => {
       await invoke(channels.close);

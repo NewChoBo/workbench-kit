@@ -23,6 +23,7 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 | `@workbench-kit/workbench-extension-sdk` | Phase 5: public-ready manifest plus command/view provider context APIs | Stable extension API                                                                 | **Keep** — expand per [Contribution Contracts](./contribution-contracts.md) |
 | `@workbench-kit/workbench-config`        | Phase 5: public-ready `.workbench` extension/layout config parsing     | `.workbench` load/merge/validate                                                     | **Keep**                                                                    |
 | `@workbench-kit/monaco`                  | Skeleton                                                               | Editor integration                                                                   | **Keep** (optional)                                                         |
+| `@workbench-kit/electron-shell`          | Published injectable main/preload helpers                              | Electron security, window-control, asset, and secret-vault primitives                | **Keep** — product policy and channel names stay host-owned                 |
 
 ## UI Stack
 
@@ -46,15 +47,17 @@ Migration mode: **bulk replacement allowed** for in-repo work; prototype consume
 
 ## Domain Stack (unchanged boundary)
 
-| Package                     | Current state              | Target role                               | Action                                                      |
-| --------------------------- | -------------------------- | ----------------------------------------- | ----------------------------------------------------------- |
-| `@workbench-kit/contracts`  | Published shared types     | Chat, save, patch, widget contracts       | **Keep**                                                    |
-| `@workbench-kit/services`   | Orchestration services     | Domain service layer                      | **Keep**                                                    |
-| `@workbench-kit/adapters`   | Host/repo/runtime adapters | Adapter implementations                   | **Keep**                                                    |
-| `@workbench-kit/runtime`    | Mock runtime               | Runtime utilities                         | **Keep**                                                    |
-| `@workbench-kit/workspace`  | Path/tree utilities        | Workspace path model                      | **Keep** — may share types with `workbench-config` later    |
-| `@workbench-kit/jdw`        | JDW engine (`json-widget`) | JSON widget document engine               | **Keep**                                                    |
-| `@workbench-kit/jdw-editor` | JDW sample explorer        | Compile templates once into WidgetTreeLab | **Keep** — depends on `react`; `react` must not depend back |
+| Package                      | Current state                    | Target role                                     | Action                                                      |
+| ---------------------------- | -------------------------------- | ----------------------------------------------- | ----------------------------------------------------------- |
+| `@workbench-kit/contracts`   | Published shared types           | Chat, save, patch, widget contracts             | **Keep**                                                    |
+| `@workbench-kit/services`    | Orchestration services           | Domain service layer                            | **Keep**                                                    |
+| `@workbench-kit/adapters`    | Host/repo/runtime adapters       | Adapter implementations                         | **Keep**                                                    |
+| `@workbench-kit/runtime`     | Mock runtime                     | Runtime utilities                               | **Keep**                                                    |
+| `@workbench-kit/workspace`   | Path/tree utilities              | Workspace path model                            | **Keep** — may share types with `workbench-config` later    |
+| `@workbench-kit/jdw`         | JDW engine (`json-widget`)       | JSON widget document engine                     | **Keep**                                                    |
+| `@workbench-kit/jdw-editor`  | JDW sample explorer              | Compile templates once into WidgetTreeLab       | **Keep** — depends on `react`; `react` must not depend back |
+| `@workbench-kit/field-remap` | Published framework-neutral core | Field shape mapping and transform runtime       | **Keep** — React authoring UI remains a separate shell leaf |
+| `@workbench-kit/logging`     | Published framework-neutral core | Structured logging utilities for host consumers | **Keep**                                                    |
 
 ## Extensions (repository)
 

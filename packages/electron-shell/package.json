@@ -3,15 +3,53 @@
   "version": "0.0.2-prototype.0.2.6",
   "private": false,
   "type": "module",
+  "types": "./src/index.ts",
+  "typesVersions": {
+    "*": {
+      "external-links": [
+        "src/security/open-allowlisted-external-link.ts"
+      ],
+      "preload": [
+        "src/preload/index.ts"
+      ],
+      "sender-security": [
+        "src/security/require-owned-window-for-sender.ts"
+      ],
+      "window-controls": [
+        "src/window/window-controls.ts"
+      ]
+    }
+  },
   "scripts": {
+    "prebuild": "node scripts/clean-dist.mjs",
+    "build": "tsc -p tsconfig.cjs.json && node scripts/write-cjs-package.mjs",
     "test": "vitest run src",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
     ".": "./src/index.ts",
-    "./preload": "./src/preload/index.ts"
+    "./external-links": {
+      "types": "./src/security/open-allowlisted-external-link.ts",
+      "require": "./dist/security/open-allowlisted-external-link.js",
+      "import": "./src/security/open-allowlisted-external-link.ts",
+      "default": "./src/security/open-allowlisted-external-link.ts"
+    },
+    "./preload": "./src/preload/index.ts",
+    "./sender-security": {
+      "types": "./src/security/require-owned-window-for-sender.ts",
+      "require": "./dist/security/require-owned-window-for-sender.js",
+      "import": "./src/security/require-owned-window-for-sender.ts",
+      "default": "./src/security/require-owned-window-for-sender.ts"
+    },
+    "./window-controls": {
+      "types": "./src/window/window-controls.ts",
+      "require": "./dist/window/window-controls.js",
+      "import": "./src/window/window-controls.ts",
+      "default": "./src/window/window-controls.ts"
+    }
   },
   "files": [
+    "dist",
     "src",
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",

@@ -109,6 +109,9 @@ describe('registerWindowControlIpc', () => {
 describe('createWindowControlsBridge', () => {
   it('invokes injected channels and subscribes to maximized changes', async () => {
     const invoke = vi.fn(async (channel: string) => {
+      if (channel === channels.toggleMaximized) {
+        return false;
+      }
       if (channel === channels.isMaximized) {
         return true;
       }
@@ -126,7 +129,7 @@ describe('createWindowControlsBridge', () => {
 
     const bridge = createWindowControlsBridge({ channels, invoke, subscribe });
     await bridge.minimize();
-    await bridge.toggleMaximized();
+    await expect(bridge.toggleMaximized()).resolves.toBe(false);
     await bridge.close();
     await expect(bridge.isMaximized()).resolves.toBe(true);
 
