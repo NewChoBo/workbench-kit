@@ -3,6 +3,15 @@
   "version": "0.0.2-prototype.0.2.6",
   "private": false,
   "type": "module",
+  "types": "./src/index.ts",
+  "typesVersions": {
+    "*": {
+      "external-links": ["src/security/open-allowlisted-external-link.ts"],
+      "preload": ["src/preload/index.ts"],
+      "sender-security": ["src/security/require-owned-window-for-sender.ts"],
+      "window-controls": ["src/window/window-controls.ts"]
+    }
+  },
   "scripts": {
     "prebuild": "node scripts/clean-dist.mjs",
     "build": "tsc -p tsconfig.cjs.json && node scripts/write-cjs-package.mjs",
