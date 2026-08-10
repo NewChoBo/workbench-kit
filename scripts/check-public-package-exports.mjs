@@ -3,7 +3,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { NPM_PUBLISH_ORDER, packageDirectoryNameForPackageName } from './npm-publish-config.mjs';
-import { runCommand } from './lib/run-command.mjs';
+import {
+  collectExportTargets,
+  ensureGeneratedWorkspaceExportTargets,
+} from './lib/workspace-export-targets.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packagesRoot = path.join(repoRoot, 'packages');
@@ -26,7 +29,11 @@ const packageByName = new Map(
   ]),
 );
 
-buildMissingGeneratedExportTargets();
+ensureGeneratedWorkspaceExportTargets({
+  logPrefix: 'check-public-exports',
+  repoRoot,
+  workspacePackages,
+});
 
 for (const packageName of NPM_PUBLISH_ORDER) {
   const workspacePackage = packageByName.get(packageName);
@@ -393,52 +400,6 @@ function validateReactPrivateStorySurfaces() {
       rule: 'react-workbench-story-re-export',
     });
   }
-}
-
-function collectExportTargets(value) {
-  if (typeof value === 'string') {
-    return [value];
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap(collectExportTargets);
-  }
-
-  if (typeof value === 'object' && value !== null) {
-    return Object.values(value).flatMap(collectExportTargets);
-  }
-
-  return [];
-}
-
-function buildMissingGeneratedExportTargets() {
-  const missingTargets = new Set(
-    workspacePackages.flatMap((workspacePackage) => {
-      const { packageJson } = workspacePackage;
-      const entryTargets = [
-        ...collectExportTargets(packageJson.exports),
-        packageJson.main,
-        packageJson.types,
-      ];
-
-      return entryTargets
-        .filter((target) => typeof target === 'string' && target.startsWith('./dist/'))
-        .filter((target) => !fs.existsSync(path.join(workspacePackage.directory, target)))
-        .map((target) => `${packageJson.name}:${target}`);
-    }),
-  );
-
-  if (missingTargets.size === 0) {
-    return;
-  }
-
-  console.log(
-    `[check-public-exports] Building workspace artifacts for ${missingTargets.size} missing generated target(s)...`,
-  );
-  runCommand('pnpm', ['build:workspace'], {
-    cwd: repoRoot,
-    stdio: 'inherit',
-  });
 }
 
 function readWorkspacePackages() {
