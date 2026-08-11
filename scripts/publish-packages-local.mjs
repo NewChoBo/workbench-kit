@@ -8,6 +8,7 @@ import {
 } from './npm-publish-config.mjs';
 import { runCommand } from './lib/run-command.mjs';
 import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
+import { preparePublishCandidates } from './lib/prepare-publish-candidates.mjs';
 
 const root = process.cwd();
 const dryRun = process.argv.includes('--dry-run');
@@ -17,18 +18,27 @@ const packDir = path.join(root, '.npm-pack');
 
 assertLocalNpmAuth();
 
-resetDirectory(packDir);
-buildFreshWorkspaceArtifacts({ logPrefix: 'publish-local', repoRoot: root });
-
-for (const packageName of NPM_PUBLISH_ORDER) {
-  const packageDir = packageDirFor(packageName);
-  const pkg = readJson(path.join(packageDir, 'package.json'));
-  const spec = `${pkg.name}@${pkg.version}`;
-
-  if (newOnly && isPublished(spec)) {
+const packages = NPM_PUBLISH_ORDER.map((packageName) => {
+  const directory = packageDirFor(packageName);
+  return { directory, packageJson: readJson(path.join(directory, 'package.json')) };
+});
+const publishCandidates = preparePublishCandidates({
+  isPackagePublished: () => true,
+  isVersionPublished: isPublished,
+  onPrepare: () => {
+    resetDirectory(packDir);
+    buildFreshWorkspaceArtifacts({ logPrefix: 'publish-local', repoRoot: root });
+  },
+  onSkip: ({ spec }) => {
     console.log(`skip ${spec}: already on npm`);
-    continue;
-  }
+  },
+  packages,
+  publishNewPackages: true,
+  skipPublishedVersions: newOnly,
+});
+
+for (const { packageJson: pkg } of publishCandidates) {
+  const spec = `${pkg.name}@${pkg.version}`;
 
   const tarball = packPackage(pkg.name);
   const args = buildNpmPublishArgs({ tarball, distTag, dryRun, provenance: false });

@@ -13,6 +13,7 @@ import {
 } from './npm-publish-config.mjs';
 import { runCommand } from './lib/run-command.mjs';
 import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
+import { preparePublishCandidates } from './lib/prepare-publish-candidates.mjs';
 
 const root = process.cwd();
 const { dryRun, updatesOnly } = parsePublishMode();
@@ -29,26 +30,33 @@ if (updatesOnly) {
 }
 
 const publishOrder = NPM_PUBLISH_ORDER;
+const packages = publishOrder.map((packageName) => {
+  const directory = packageDirFor(packageName);
+  return { directory, packageJson: readJson(path.join(directory, 'package.json')) };
+});
+const publishCandidates = preparePublishCandidates({
+  isPackagePublished: (packageName) => npmViewExists(packageName),
+  isVersionPublished: isPublished,
+  onPrepare: () => {
+    resetDirectory(packDir);
+    buildFreshWorkspaceArtifacts({ logPrefix: 'publish', repoRoot: root });
+  },
+  onSkip: ({ reason, spec }) => {
+    if (reason === 'version-published') {
+      console.log(`skip ${spec}: already published`);
+      return;
+    }
 
-resetDirectory(packDir);
-buildFreshWorkspaceArtifacts({ logPrefix: 'publish', repoRoot: root });
-
-for (const packageName of publishOrder) {
-  const packageDir = packageDirFor(packageName);
-  const pkg = readJson(path.join(packageDir, 'package.json'));
-  const spec = `${pkg.name}@${pkg.version}`;
-
-  if (isPublished(spec)) {
-    console.log(`skip ${spec}: already published`);
-    continue;
-  }
-
-  if (updatesOnly && !npmViewExists(pkg.name)) {
     console.log(
       `skip ${spec}: package not on npm yet (enable CI first-publish by setting NPM_PUBLISH_UPDATES_ONLY=false)`,
     );
-    continue;
-  }
+  },
+  packages,
+  publishNewPackages: !updatesOnly,
+});
+
+for (const { packageJson: pkg } of publishCandidates) {
+  const spec = `${pkg.name}@${pkg.version}`;
 
   const tarball = packPackage(pkg.name);
   const args = buildNpmPublishArgs({ tarball, distTag, dryRun });
