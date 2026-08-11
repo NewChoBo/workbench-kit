@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   VirtualWorkspaceState,
   WorkspaceChangeEvent,
   WorkspaceResourceService,
 } from '@workbench-kit/workspace';
+
+const EMPTY_WORKSPACE_FILES: VirtualWorkspaceState['files'] = [];
 
 export function isWorkspaceResourceService(value: unknown): value is WorkspaceResourceService {
   return (
@@ -32,4 +34,19 @@ export function useWorkspaceResourceState(
   }, [workspaceService]);
 
   return state;
+}
+
+export function useWorkspaceTextDocuments(workspaceService: WorkspaceResourceService | undefined) {
+  const workspaceState = useWorkspaceResourceState(workspaceService);
+  const files =
+    workspaceState?.files ?? workspaceService?.getState().files ?? EMPTY_WORKSPACE_FILES;
+  const documentsByPath = useMemo(
+    () => new Map(files.map((file) => [file.path.replace(/\\/g, '/'), file.content])),
+    [files],
+  );
+  const loadDocument = useCallback(
+    (documentPath: string) => documentsByPath.get(documentPath.replace(/\\/g, '/')) ?? null,
+    [documentsByPath],
+  );
+  return { files, loadDocument };
 }

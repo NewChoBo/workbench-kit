@@ -1,11 +1,10 @@
-import { useCallback, useMemo } from 'react';
 import { JdwPreviewViewport } from '@workbench-kit/react/jdw/preview-viewport';
 import { BUILTIN_JDW_REGISTRY } from '@workbench-kit/react/jdw';
 
 import { useWorkbench } from '../shell/provider.js';
 import {
   isWorkspaceResourceService,
-  useWorkspaceResourceState,
+  useWorkspaceTextDocuments,
 } from '../workbench/workspace-view-state.js';
 
 export interface JdwWidgetPreviewViewProps {
@@ -13,8 +12,6 @@ export interface JdwWidgetPreviewViewProps {
   readonly content: string;
   readonly className?: string | undefined;
 }
-
-const EMPTY_WORKSPACE_FILES: readonly { readonly path: string; readonly content: string }[] = [];
 
 /**
  * Preview viewport for JDW documents. Expands workspace `type: "ref"` imports
@@ -25,22 +22,7 @@ export function JdwWidgetPreviewView({ path, content, className }: JdwWidgetPrev
   const workspaceService = isWorkspaceResourceService(workspaceHostPort?.service)
     ? workspaceHostPort.service
     : undefined;
-  const workspaceState = useWorkspaceResourceState(workspaceService);
-  const files =
-    workspaceState?.files ?? workspaceService?.getState().files ?? EMPTY_WORKSPACE_FILES;
-
-  const filesByPath = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const file of files) {
-      map.set(file.path.replace(/\\/g, '/'), file.content);
-    }
-    return map;
-  }, [files]);
-
-  const loadDocument = useCallback(
-    (documentPath: string) => filesByPath.get(documentPath.replace(/\\/g, '/')) ?? null,
-    [filesByPath],
-  );
+  const { loadDocument } = useWorkspaceTextDocuments(workspaceService);
 
   return (
     <JdwPreviewViewport

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { resolveWidgetStudioAssetCatalog } from '@workbench-kit/react/widget-studio';
 import { WidgetTreeLab } from '@workbench-kit/react/widget-tree';
 import { BUILTIN_JDW_REGISTRY } from '@workbench-kit/react/jdw';
@@ -6,7 +6,7 @@ import { BUILTIN_JDW_REGISTRY } from '@workbench-kit/react/jdw';
 import { useWorkbench } from '../shell/provider.js';
 import {
   isWorkspaceResourceService,
-  useWorkspaceResourceState,
+  useWorkspaceTextDocuments,
 } from '../workbench/workspace-view-state.js';
 
 export interface JdwWidgetFormViewProps {
@@ -14,8 +14,6 @@ export interface JdwWidgetFormViewProps {
   readonly content: string;
   readonly onContentChange: (content: string) => void;
 }
-
-const EMPTY_WORKSPACE_FILES: readonly { readonly path: string; readonly content: string }[] = [];
 
 /**
  * Form authoring surface for JDW widgets. Builds the Assets palette from built-in
@@ -28,22 +26,7 @@ export function JdwWidgetFormView({ path, content, onContentChange }: JdwWidgetF
   const workspaceService = isWorkspaceResourceService(workspaceHostPort?.service)
     ? workspaceHostPort.service
     : undefined;
-  const workspaceState = useWorkspaceResourceState(workspaceService);
-  const files =
-    workspaceState?.files ?? workspaceService?.getState().files ?? EMPTY_WORKSPACE_FILES;
-
-  const filesByPath = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const file of files) {
-      map.set(file.path.replace(/\\/g, '/'), file.content);
-    }
-    return map;
-  }, [files]);
-
-  const loadDocument = useCallback(
-    (documentPath: string) => filesByPath.get(documentPath.replace(/\\/g, '/')) ?? null,
-    [filesByPath],
-  );
+  const { files, loadDocument } = useWorkspaceTextDocuments(workspaceService);
 
   const assetCatalog = useMemo(
     () =>
