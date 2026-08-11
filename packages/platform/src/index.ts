@@ -19,6 +19,7 @@ export { createMemorySecretStorage } from './auth/memory-secret-storage.js';
 export {
   clearBrowserStorageByPrefixes,
   collectStorageKeysByPrefix,
+  tryGetBrowserStorage,
   type BrowserStorageKind,
   type ClearBrowserStorageByPrefixesOptions,
 } from './storage/browser-storage.js';

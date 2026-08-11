@@ -2,12 +2,21 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { clearBrowserStorageByPrefixes, collectStorageKeysByPrefix } from './browser-storage.js';
+import {
+  clearBrowserStorageByPrefixes,
+  collectStorageKeysByPrefix,
+  tryGetBrowserStorage,
+} from './browser-storage.js';
 
 describe('browser-storage', () => {
   afterEach(() => {
     localStorage.clear();
     sessionStorage.clear();
+  });
+
+  it('resolves the selected browser storage', () => {
+    expect(tryGetBrowserStorage('local')).toBe(localStorage);
+    expect(tryGetBrowserStorage('session')).toBe(sessionStorage);
   });
 
   it('collects keys by prefix', () => {

@@ -19,7 +19,8 @@ import { CommandRegistry, ContextKeyService, KeybindingService } from '@workbenc
 ```
 
 Useful browser helpers also export from the package root (for example
-`createVersionedBrowserStateAdapter`, `clearBrowserStorageByPrefixes`).
+`createVersionedBrowserStateAdapter`, `tryGetBrowserStorage`,
+`clearBrowserStorageByPrefixes`).
 
 ## Secondary-window residency
 

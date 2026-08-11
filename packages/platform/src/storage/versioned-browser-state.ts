@@ -1,3 +1,5 @@
+import { tryGetBrowserStorage } from './browser-storage.js';
+
 /**
  * Versioned browser-storage helper for chrome-layout persistence (sidebar
  * visibility/width, etc.). Exact-reject on `kind` / `schemaVersion` mismatch
@@ -33,24 +35,11 @@ export interface VersionedBrowserStateAdapter<T extends object> {
   write(value: T): void;
 }
 
-function tryLocalStorage(): BrowserKeyValueStorage | null {
-  if (typeof globalThis === 'undefined') {
-    return null;
-  }
-
-  try {
-    const storage = globalThis.localStorage;
-    return storage ?? null;
-  } catch {
-    return null;
-  }
-}
-
 function resolveStorage(
   storage: BrowserKeyValueStorage | null | undefined,
 ): BrowserKeyValueStorage | null {
   if (storage === undefined) {
-    return tryLocalStorage();
+    return tryGetBrowserStorage('local');
   }
   return storage;
 }

@@ -4,15 +4,15 @@ export interface ClearBrowserStorageByPrefixesOptions {
   kinds?: readonly BrowserStorageKind[];
 }
 
-function getStorage(kind: BrowserStorageKind): Storage | undefined {
+export function tryGetBrowserStorage(kind: BrowserStorageKind): Storage | null {
   if (typeof globalThis === 'undefined') {
-    return undefined;
+    return null;
   }
 
   try {
     return kind === 'local' ? globalThis.localStorage : globalThis.sessionStorage;
   } catch {
-    return undefined;
+    return null;
   }
 }
 
@@ -39,7 +39,7 @@ export function clearBrowserStorageByPrefixes(
   const uniquePrefixes = [...new Set(prefixes.filter((prefix) => prefix.length > 0))];
 
   for (const kind of kinds) {
-    const storage = getStorage(kind);
+    const storage = tryGetBrowserStorage(kind);
     if (!storage) continue;
 
     for (const prefix of uniquePrefixes) {
