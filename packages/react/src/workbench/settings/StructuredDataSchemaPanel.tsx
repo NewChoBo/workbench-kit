@@ -98,6 +98,24 @@ interface WorkbenchStructuredDataSchemaSectionView {
   value: unknown;
 }
 
+interface SchemaSectionRenderOptions {
+  classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
+  fieldErrors?: Record<string, ReactNode> | undefined;
+  getFieldErrorId?: ((dataPath: string) => string | undefined) | undefined;
+  labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
+  localErrorKeys?: ReadonlySet<string> | undefined;
+  onDataValueChange: (path: string[], value: unknown) => void;
+  onValidateField?: (
+    dataPath: string,
+    definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
+    value: unknown,
+  ) => void;
+  readOnly: boolean;
+}
+
+type SchemaSectionRenderProps = WorkbenchStructuredDataSchemaSectionView &
+  SchemaSectionRenderOptions;
+
 const defaultSchemaPanelClassNames: Required<WorkbenchStructuredDataSchemaPanelClassNames> = {
   checkbox: 'ui-workbench-structured-data-schema-panel__checkbox',
   empty: 'ui-workbench-structured-data-schema-panel__empty',
@@ -245,20 +263,7 @@ function renderSchemaFormSection({
   schema,
   section,
   value,
-}: WorkbenchStructuredDataSchemaSectionView & {
-  classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
-  fieldErrors?: Record<string, ReactNode> | undefined;
-  getFieldErrorId?: ((dataPath: string) => string | undefined) | undefined;
-  labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
-  localErrorKeys?: ReadonlySet<string> | undefined;
-  onDataValueChange: (path: string[], value: unknown) => void;
-  onValidateField?: (
-    dataPath: string,
-    definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
-    value: unknown,
-  ) => void;
-  readOnly: boolean;
-}) {
+}: SchemaSectionRenderProps) {
   const fields = section.fields ?? [];
   if (fields.length) {
     return (
@@ -379,20 +384,8 @@ function renderSchemaTableSection({
   section,
   value,
   ...sectionView
-}: WorkbenchStructuredDataSchemaSectionView & {
-  classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
-  fieldErrors?: Record<string, ReactNode> | undefined;
-  getFieldErrorId?: ((dataPath: string) => string | undefined) | undefined;
-  labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
-  localErrorKeys?: ReadonlySet<string> | undefined;
-  onDataValueChange: (path: string[], value: unknown) => void;
-  onValidateField?: (
-    dataPath: string,
-    definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
-    value: unknown,
-  ) => void;
+}: SchemaSectionRenderProps & {
   preferredTableColumns?: readonly string[] | undefined;
-  readOnly: boolean;
 }) {
   const rows = getWorkbenchStructuredDataSchemaTableRows(value);
   const columns = getWorkbenchStructuredDataSchemaDocumentTableColumns({
@@ -569,22 +562,10 @@ function renderSchemaPanelSection({
   preferredTableColumns,
   readOnly,
   sectionView,
-}: {
+}: SchemaSectionRenderOptions & {
   anchorId?: string | undefined;
-  classNames?: WorkbenchStructuredDataSchemaPanelClassNames | undefined;
-  fieldErrors?: Record<string, ReactNode> | undefined;
-  getFieldErrorId?: ((dataPath: string) => string | undefined) | undefined;
   headerActions?: ReactNode | undefined;
-  labels?: WorkbenchStructuredDataSchemaPanelLabels | undefined;
-  localErrorKeys?: ReadonlySet<string> | undefined;
-  onDataValueChange: (path: string[], value: unknown) => void;
-  onValidateField?: (
-    dataPath: string,
-    definition: WorkbenchStructuredDataSchemaFieldDefinition | undefined,
-    value: unknown,
-  ) => void;
   preferredTableColumns?: readonly string[] | undefined;
-  readOnly: boolean;
   sectionView: WorkbenchStructuredDataSchemaSectionView;
 }) {
   const { section, value } = sectionView;
