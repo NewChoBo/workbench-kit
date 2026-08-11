@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from 'react';
 import { IconButton, WorkbenchBanner, WorkbenchBannerMessage } from '../../primitives/index';
-import { cx } from '../../utils/cx';
 
 export type WorkbenchNoticeTone = 'error' | 'info' | 'success' | 'warning';
 export type WorkbenchNoticePosition = 'bottom-center' | 'bottom-right';
@@ -150,16 +149,16 @@ export function WorkbenchNoticeViewport({
 
   return (
     <div
-      aria-live="polite"
-      className={resolveNoticeViewportClassName(position)}
+      className="ui-workbench-notice-viewport"
       data-position={position}
+      style={resolveNoticeViewportStyle(position)}
       {...(dataAttributes ?? {})}
     >
       {visibleNotices.map((notice) => (
         <WorkbenchBanner
-          className="pointer-events-auto"
           data-tone={notice.tone}
           key={notice.id}
+          role={notice.tone === 'error' ? 'alert' : 'status'}
           style={resolveNoticeBannerStyle(notice.tone)}
           tone={notice.tone === 'warning' ? 'warning' : 'default'}
           {...(notice.dataAttributes ?? {})}
@@ -187,13 +186,6 @@ export function useWorkbenchNotice(): WorkbenchNoticeController {
   return controller;
 }
 
-function resolveNoticeViewportClassName(position: WorkbenchNoticePosition): string {
-  return cx(
-    'pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col gap-2 px-4',
-    position === 'bottom-center' ? 'items-center' : 'items-end',
-  );
-}
-
 function resolveNoticeBannerStyle(tone: WorkbenchNoticeTone): CSSProperties {
   return {
     borderColor:
@@ -204,5 +196,21 @@ function resolveNoticeBannerStyle(tone: WorkbenchNoticeTone): CSSProperties {
           : undefined,
     maxWidth: 'min(520px, calc(100vw - 32px))',
     minWidth: 'min(420px, calc(100vw - 32px))',
+    pointerEvents: 'auto',
+  };
+}
+
+function resolveNoticeViewportStyle(position: WorkbenchNoticePosition): CSSProperties {
+  return {
+    alignItems: position === 'bottom-center' ? 'center' : 'flex-end',
+    bottom: 16,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    insetInline: 0,
+    paddingInline: 16,
+    pointerEvents: 'none',
+    position: 'fixed',
+    zIndex: 50,
   };
 }

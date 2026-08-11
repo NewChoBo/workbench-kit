@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 
-import { StoryEventLog } from '../../workbench/story/StorySidebarFrame';
+import { useWorkbenchNotice, WorkbenchNoticeProvider } from '../../workbench/management';
 import { StoryWorkbenchShellFrame } from '../../workbench/story/StoryWorkbenchShellFrame';
 import { Button } from '../button';
 import { Checkbox } from '../checkbox';
@@ -19,7 +19,11 @@ const meta = {
     layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
-  render: () => <ControlsHarness />,
+  render: () => (
+    <WorkbenchNoticeProvider>
+      <ControlsForm />
+    </WorkbenchNoticeProvider>
+  ),
 } satisfies Meta;
 
 export default meta;
@@ -51,20 +55,20 @@ export const FormControls: Story = {
     await expect(scopeSelect).toHaveTextContent('Critical');
 
     await userEvent.click(canvas.getByRole('button', { name: 'Reload controls' }));
-    await expect(canvas.getByRole('status', { name: 'Control event log' })).toHaveTextContent(
-      'Reload requested',
-    );
+    await expect(canvas.getByRole('status')).toHaveTextContent('Reload requested');
   },
   tags: ['storybook-play-required'],
 };
 
-function ControlsHarness() {
+function ControlsForm() {
+  const notice = useWorkbenchNotice();
+  const showNotice = (message: string, tone: 'info' | 'success' | 'warning') =>
+    notice.showNotice({ durationMs: 0, message, tone });
   const [projectName, setProjectName] = useState('Sample workspace');
   const [retryCount, setRetryCount] = useState(2);
   const [reviewScope, setReviewScope] = useState('changed');
   const [syncEnabled, setSyncEnabled] = useState(false);
   const [notes, setNotes] = useState('Use Storybook for stable UI regression checks.');
-  const [status, setStatus] = useState('Ready');
 
   return (
     <StoryWorkbenchShellFrame variant="settings">
@@ -122,22 +126,22 @@ function ControlsHarness() {
         </Field>
 
         <div className="ui-story-settings-form__actions">
-          <Button icon="codicon-check" variant="primary" onClick={() => setStatus('Saved')}>
+          <Button
+            icon="codicon-check"
+            variant="primary"
+            onClick={() => showNotice('Saved', 'success')}
+          >
             Save
           </Button>
-          <Button variant="danger" onClick={() => setStatus('Discarded')}>
+          <Button variant="danger" onClick={() => showNotice('Discarded', 'warning')}>
             Discard
           </Button>
           <IconButton
             icon="codicon-refresh"
             label="Reload controls"
-            onClick={() => setStatus('Reload requested')}
+            onClick={() => showNotice('Reload requested', 'info')}
           />
         </div>
-
-        <StoryEventLog aria-label="Control event log" compact>
-          {status}
-        </StoryEventLog>
       </form>
     </StoryWorkbenchShellFrame>
   );

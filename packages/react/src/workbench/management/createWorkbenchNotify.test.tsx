@@ -50,6 +50,10 @@ describe('createWorkbenchNotify', () => {
 
     expect(controller!.notices).toHaveLength(1);
     expect(controller!.notices[0]?.tone).toBe('info');
+    const viewport = container.querySelector<HTMLElement>('.ui-workbench-notice-viewport');
+    expect(viewport?.getAttribute('data-position')).toBe('bottom-right');
+    expect(viewport?.style.position).toBe('fixed');
+    expect(container.querySelector('[role="status"]')).not.toBeNull();
 
     const actionButton = container.querySelector<HTMLButtonElement>(
       '.ui-workbench-notify-message__action',
@@ -64,7 +68,11 @@ describe('createWorkbenchNotify', () => {
     expect(controller!.notices.find((notice) => notice.id === infoId)).toBeUndefined();
 
     await act(async () => {
-      notify.error('Failed');
+      notify.error('Failed', { durationMs: 0 });
+    });
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+
+    await act(async () => {
       notify.clear();
     });
     expect(controller!.notices).toHaveLength(0);
